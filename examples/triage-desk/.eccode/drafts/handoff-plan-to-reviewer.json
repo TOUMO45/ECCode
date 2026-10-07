@@ -1,0 +1,48 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "plan",
+  "objective": "Independent review of the TriageDesk delivery plan (plan gate, submission sub-muyntlor-01a9f206) against the approved spec and the design review's minor findings DES-8, DES-9 and DES-10.",
+  "context": "The design was approved in rev-muynhokz-01357080 with minors DES-8 (Unicode-aware product-token mask), DES-9 (tune-mode exit-2 last line) and info DES-10 (task 11 must depend on task 6). Implementation will be done by real parallel subagents, so phases are small, ownership is per exact file, and each task's verification command runs only its own tests. Phase gates are sequential in ECCode, so parallelism is inside a phase, capped by config.maxConcurrency=2.",
+  "inputs": [
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/plan/plan.md",
+    ".eccode/artifacts/plan/checks/scaffold-check.js",
+    ".eccode/artifacts/plan/checks/dataset-precheck.js",
+    ".eccode/artifacts/plan/checks/readme-check.js",
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/reviews/rev-muynhokz-01357080.json"
+  ],
+  "dependencies": ["design gate approved (rev-muynhokz-01357080)"],
+  "expectedOutput": "A plan-gate review (approve or changes_requested) with evidence-backed criteria and findings.",
+  "acceptanceCriteria": [
+    "plan.json validates (eccode plan validate) with no ownership-overlap warnings; every spec file has exactly one owning task",
+    "DES-8 is in t04's acceptance criteria, DES-9 in t08's, and t11-rules depends on t06 (DES-10)",
+    "DES-2 holds: t11 uses npm run eval:tune only, with the verbatim attestation; t08 and t16 never run full mode; t17 (delivery-lead) is the first full-mode run",
+    "The E5 freeze (three eccode evidence file records) is in phase foundation, before any rules file can exist",
+    "Every task has a verification command runnable from the project root, and the phase criteria name commands"
+  ],
+  "completedWork": "Wrote plan.json: 5 phases (foundation, core-modules, pipeline, rules-and-wiring, integration) and 17 tasks with owners, dependencies, spec-section inputs, exact file ownership, acceptance criteria and commands. Wrote plan.md: phase and parallelism table, task table, rationale, deviations from the spec workflow (tasks 10+11 merged so injection.js has one owning task; task 14 split into t12 hygiene in phase 4 plus t14/t15; added helpers.test.js, app.test.js and fixture directories; an optional staticDir for createServer; design-vectors.js left unedited because it is an approved, hash-audited artifact), the finding mapping, the contracts-first table, the critical path, schedule risks and a draft release checklist. Wrote three plan check scripts used as verification commands (t01, t02 pre-freeze, t16) and exercised them on passing and failing synthetic fixtures in the scratchpad.",
+  "filesChanged": [
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/plan/plan.md",
+    ".eccode/artifacts/plan/checks/scaffold-check.js",
+    ".eccode/artifacts/plan/checks/dataset-precheck.js",
+    ".eccode/artifacts/plan/checks/readme-check.js"
+  ],
+  "evidence": ["ev:ev-muynu051-0178325b", "ev:ev-muynubgv-0188f807"],
+  "remainingIssues": [
+    "The three check scripts under .eccode/artifacts/plan/checks/ are referenced by plan.json but were not attached to the submission as artifacts. They are on disk for review, and ev:ev-muynubgv-0188f807 runs them on synthetic fixtures. A reviewer cannot cite them as artifact: refs for this gate. If the reviewer wants them hashed, request changes and I will resubmit with them attached.",
+    "ev:ev-muynu07r-0139a268 and ev:ev-muynu7ai-01c82056 are failed runs of the same fixture check. The first failed on shell quoting (it ran in the project root, where no eval files exist). The second ran against a README fixture I had deliberately broken in an earlier negative test. They are superseded by ev:ev-muynubgv-0188f807.",
+    "17 tasks versus the spec's 16: one merge (10+11) and two splits of task 14. The rationale is in plan.md.",
+    "t06 adds an optional createServer staticDir option (default public/), an extension of the C6.5 shape that leaves the default unchanged.",
+    "config.maxConcurrency=2 limits phases 2 and 5, so wave order is suggested in plan.md.",
+    "Pending user decisions Q1, Q4, Q7 and OQ-D3 can still affect t09."
+  ],
+  "nextAction": "technical-reviewer: review plan submission sub-muyntlor-01a9f206. Re-run `eccode plan validate .eccode/artifacts/plan/plan.json` as evidence, check DES-8/9/10 and DES-2 placement, ownership disjointness and that verification commands are runnable from the project root.",
+  "lessonsConsulted": [
+    "memory search 'planning node' --layer workflow --check-env: no records",
+    "memory search 'parallel tasks ownership plan' --scope all --check-env: no records",
+    "memory search 'planning' --scope all --check-env: no records; no lesson cited"
+  ]
+}
