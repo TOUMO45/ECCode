@@ -1,0 +1,48 @@
+{
+  "from": "devops-engineer",
+  "to": "delivery-lead",
+  "task": "t16-readme",
+  "objective": "Write README.md per spec §Deployment run shape: install, start, test, eval (tune/full/live), configuration, privacy, security model, limitations and rollback, with the DES-1 and DES-6 warnings and the RISK-11 process-manager guidance.",
+  "context": "Facts were taken from src/ (config.js, server.js, log.js, triage/redact.js, triage/service.js, triage/anthropic-provider.js, prompt.js), eval/run.js, public/index.html, spec C1-C6.1 and §Deployment, and the t06/t11/t12/t13/t05/t07 handoffs. The pinned readme-check.js sha256 a9a0128f...3993 was verified against plan.md before use and was not modified.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/plan/plan.md",
+    ".eccode/artifacts/plan/checks/readme-check.js",
+    "src/",
+    "eval/run.js",
+    ".eccode/handoffs/"
+  ],
+  "dependencies": [
+    "t14-contract-http",
+    "t15-contract-modes-privacy"
+  ],
+  "expectedOutput": "README.md that passes the pinned readme-check and states only what the code actually does.",
+  "acceptanceCriteria": [
+    "readme-check.js PASS with verified sha256",
+    "Every documented command runs: npm test, npm run eval:tune, npm start, node src/server.js, node --env-file=.env src/server.js, GET /api/health",
+    "Full npm run eval (holdout) is documented as the verification step and was NOT run by this task",
+    "RISK-11: README tells process managers/containers to run node src/server.js directly",
+    "Configuration rules (empty PORT= error, empty ANTHROPIC_API_KEY = fallback, ANTHROPIC_BASE_URL ignored, TRIAGE_ANTHROPIC_BASE_URL rules, TRIAGE_ALLOW_REMOTE) match config.js"
+  ],
+  "completedWork": "README.md was added. It covers what the app is, its two modes, install (none; Node >=22), start (npm start, node --env-file=.env src/server.js, the RISK-11 warning to run node src/server.js directly under process managers and containers, shutdown, startup error lines), the health check and an API summary, test, eval (tune, full and live, the holdout discipline and exit codes), configuration (a table of all 8 C6.1 variables, the empty-value rules, and the DES-1 and DES-6 warnings), privacy (what is redacted, that names and addresses are not, RISK-9 imperfections, metadata-only logs), the security model (loopback default; the Host/Origin guard is not auth), limitations (fallback is not model quality, live NOT RUN (RISK-7), lexical hygiene, detector false positives, UI untested in a real browser) and rollback (unset ANTHROPIC_API_KEY, git revert). Every claim was checked against src/. The exact PORT= error text, the non-loopback refusal, the ' 1' rejection, http base URL refusal without echoing the value, ANTHROPIC_BASE_URL being ignored, and the empty-key and empty-base-URL defaults are all asserted by the smoke script .eccode/drafts/t16-readme-smoke.js.",
+  "filesChanged": [
+    "README.md",
+    ".eccode/drafts/t16-readme-smoke.js",
+    ".eccode/drafts/t16-handoff.json"
+  ],
+  "evidence": [
+    "ev:ev-muyqx9xs-01f02cdc",
+    "ev:ev-muyqxcmi-01d58f92",
+    "ev:ev-muyqxitt-01bf4764",
+    "ev:ev-muyqxmp4-01bf70ef",
+    "ev:ev-muyqxn5o-014c7a3c"
+  ],
+  "remainingIssues": [
+    "RISK-11 is documented, not fixed. package.json still has \"start\": \"node src/server.js\" (the spec fixes the exact scripts, and package.json is outside the t16 globs). Changing it to \"exec node src/server.js\" would need a spec decision.",
+    "The smoke runs npm start with PORT=0 instead of the default 3000 to avoid port clashes. Its npm-start exit check accepts any exit code after a group SIGINT, because the npm wrapper's exit code is not under test.",
+    "Full-mode npm run eval and npm run eval -- --provider live were deliberately not run. Both score the holdout and belong to verification (t17). Live mode remains NOT RUN without a key (RISK-7).",
+    "The README is English-only and not reviewed by a human. The AC16 live-notice wording is quoted from public/index.html."
+  ],
+  "nextAction": "delivery-lead: run t17 integration verification (full npm run eval, plus the readme-check in the integration review).",
+  "lessonsConsulted": []
+}
