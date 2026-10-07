@@ -1,6 +1,6 @@
 {
-  "seq": 9,
-  "lastHash": "e1f3e9d3c14928dd0b9057a62bd51210370bfc34b7110c3858bd4cc58324908c",
+  "seq": 24,
+  "lastHash": "2b13078ec745fbe11ae166711bf299872fe93c91513e70bde68a059106b62f50",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -16,10 +16,26 @@
     "architecture": {
       "id": "architecture",
       "kind": "architecture",
-      "status": "in_progress",
+      "status": "submitted",
       "iterations": 0,
-      "authors": [],
-      "submissions": [],
+      "authors": [
+        "product-architect"
+      ],
+      "submissions": [
+        {
+          "id": "sub-muyloqv9-015ebd44",
+          "actor": "product-architect",
+          "at": "2026-10-07T21:09:16.677Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/architecture/brief.md",
+              "sha256": "105ac2e175cedb99cbff036e3a9c234423920a75bc1c91cb68509ba66c248229"
+            }
+          ],
+          "respondsTo": null,
+          "notes": "Iteration 1. Memory searched (4 queries); only hit mem-k-muyljkrt-01991ac7 rejected (DOES-NOT-APPLY: node>=18). Runtime evidence ev:ev-muylm2jz-017e07c4. Q1/Q3/Q4 need user decisions."
+        }
+      ],
       "reviews": [],
       "openFindings": [],
       "approvedBy": null,
@@ -118,7 +134,50 @@
   },
   "reviews": {},
   "rejectedReviews": [],
-  "handoffs": {},
+  "handoffs": {
+    "ho-muylp5jn-012f0637": {
+      "from": "product-architect",
+      "to": "architecture-reviewer",
+      "gate": "architecture",
+      "objective": "Independently review the TriageDesk architecture brief (submission sub-muyloqv9-015ebd44) and approve it or request changes at the architecture gate.",
+      "context": "TriageDesk is a small local Node.js 22 web app: an agent pastes a support ticket and gets a category, an urgency, a one-sentence summary and an editable suggested reply. It calls the Anthropic Messages API through raw fetch, falls back to a clearly labelled deterministic rule-based classifier, and must be safe against prompt injection. Constraints: zero npm dependencies, no database, a single page, and an eval suite with explicit thresholds (fixed in the brief's 'Evaluation metrics and thresholds' table). Memory search found one lesson (mem-k-muyljkrt-01991ac7, 'need node-fetch/axios because global fetch is missing'); its check verdict was DOES-NOT-APPLY (requires Node <18, environment has 22.22.0), so it was rejected and not cited. The model id claude-opus-5-5 and the request shape (output_config.format json_schema, effort low, anthropic-version 2023-06-01) come from the claude-api reference cached 2026-10-06. They were not verified by a live call because no API key is set (A5, RISK-7). The submission's runtime evidence is ev:ev-muylm2jz-017e07c4. An earlier evidence run, ev:ev-muyllyra-018a7124, failed only because of shell quoting in the command and carries no product signal.",
+      "inputs": [
+        ".eccode/artifacts/architecture/brief.md",
+        "eccode status --json (project idea)",
+        "eccode risk register RISK-1..RISK-8"
+      ],
+      "dependencies": [],
+      "expectedOutput": "An architecture gate review (approve or changes_requested) with findings referenced by id, covering requirement testability, AC traceability, trust boundaries and injection controls, the fallback design, the eval thresholds, and the scope exclusions.",
+      "acceptanceCriteria": [
+        "Every required section (Users, Problem, Requirements, Acceptance Criteria, Architecture, Assumptions, Open Questions, Risks) is present and substantive",
+        "Each AC traces to an R/NFR and is decidable by a test or an inspection",
+        "Prompt-injection controls (NFR2, AC7, AC9) and the eval thresholds are explicit and measurable",
+        "Unverified claims (model id, API surface, live quality) are labelled as assumptions or risks rather than stated as fact"
+      ],
+      "completedWork": "Wrote the architecture brief: users, problem, R1-R10 and NFR1-NFR10, workflows W1-W4, AC1-AC15 with an eval metric and threshold table, scope with reasons for each exclusion, components and a data-flow diagram with trust boundaries TB1-TB4, a decision table with alternatives, constraints, success criteria, A1-A8 and Q1-Q6. Recorded RISK-1..RISK-8 in the risk register. Recorded runtime-capability evidence (Node 22.22.0: global fetch, AbortSignal.timeout, node:test, node:http). Submitted the architecture gate.",
+      "filesChanged": [
+        ".eccode/artifacts/architecture/brief.md"
+      ],
+      "evidence": [
+        "ev:ev-muylm2jz-017e07c4"
+      ],
+      "remainingIssues": [
+        "Q1 (user): live model default claude-opus-5-5 vs the cheaper claude-haiku-5-5",
+        "Q3 (user): will an API key be provided so the live eval can run, or is fallback-only verification acceptable with live thresholds marked unverified?",
+        "Q4 (user): may raw ticket text (possible PII) be sent to the Anthropic API, or is redaction required first?",
+        "Q2/Q5/Q6 have proposed defaults (taxonomy as in A3; no server-side refusal fallback beta; no URLs in replies) that the reviewer may accept",
+        "A5/RISK-7: model id and request shape are not verified live; no API key is set in this environment",
+        "The choice of raw fetch over the official @anthropic-ai/sdk is a deliberate trade-off for the zero-dependency constraint; the reviewer should confirm it"
+      ],
+      "nextAction": "architecture-reviewer: review submission sub-muyloqv9-015ebd44 against the brief and record approve or changes_requested via eccode gate review architecture; escalate Q1, Q3 and Q4 to the user through the orchestrator.",
+      "lessonsConsulted": [
+        "mem-k-muyljkrt-01991ac7"
+      ],
+      "id": "ho-muylp5jn-012f0637",
+      "recordedBy": "product-architect",
+      "at": "2026-10-07T21:09:35.711Z"
+    }
+  },
   "runs": {
     "run-muyljoyv-01246c7a": {
       "id": "run-muyljoyv-01246c7a",
@@ -126,17 +185,143 @@
       "task": null,
       "gate": "architecture",
       "startedAt": "2026-10-07T21:05:20.936Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T21:10:02.044Z",
+      "durationMinutes": 4.69,
+      "costUsd": 0,
+      "tokens": 150754,
+      "note": null
+    },
+    "run-muylpq1g-010af6a3": {
+      "id": "run-muylpq1g-010af6a3",
+      "agent": "architecture-reviewer",
+      "task": null,
+      "gate": "architecture",
+      "startedAt": "2026-10-07T21:10:02.263Z",
       "status": "running",
       "attempt": 1
     }
   },
-  "risks": {},
-  "decisions": {},
+  "risks": {
+    "RISK-1": {
+      "id": "RISK-1",
+      "title": "Prompt injection in ticket text manipulates classification/reply or leaks system prompt",
+      "severity": "high",
+      "mitigation": "Fixed system prompt + delimited/neutralised ticket, no tools, json_schema output, strict validator (enums, lengths, no URL/email in reply), display-only output, heuristic flag + UI warning, eval injection_safety=1.00 on >=8 attacks, human review",
+      "owner": "ai-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:09:13.907Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-2": {
+      "id": "RISK-2",
+      "title": "Automation bias: agents send drafts unread or mistake fallback output for AI output",
+      "severity": "high",
+      "mitigation": "Permanent text source label + fallback reason, injection warning, copy-only (no send), 'not AI-generated' wording tested (AC5)",
+      "owner": "frontend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:09:13.961Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-3": {
+      "id": "RISK-3",
+      "title": "Live model slow/unavailable/refuses/returns invalid or hallucinated output",
+      "severity": "medium",
+      "mitigation": "20s timeout, single attempt, deterministic fallback with reason, strict validator, effort low, fallback_rate and raw_model_validity metrics",
+      "owner": "ai-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:09:14.012Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-4": {
+      "id": "RISK-4",
+      "title": "Eval not meaningful: fallback rules overfit a small same-team dataset",
+      "severity": "medium",
+      "mitigation": "Dataset authored and frozen by test-engineer, ~30% holdout reported separately, thresholds fixed in brief before rules exist, sample size stated",
+      "owner": "test-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:09:14.064Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-5": {
+      "id": "RISK-5",
+      "title": "API key leak or key-spend abuse via exposed unauthenticated server",
+      "severity": "high",
+      "mitigation": "Key from env only, never echoed (AC10/AC14), bind 127.0.0.1 by default, body and max_tokens caps, one call per request; auth + rate limiting required before any non-local deployment",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:09:14.117Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-6": {
+      "id": "RISK-6",
+      "title": "Ticket PII logged locally or sent to third party without awareness",
+      "severity": "medium",
+      "mitigation": "Metadata-only logs tested with marker (AC10), no persistence, live-mode UI notice, Q4 escalated to user",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:09:14.167Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-7": {
+      "id": "RISK-7",
+      "title": "Model id / Messages API surface unverified live (claude-opus-5-5, output_config.format, effort) from cached reference",
+      "severity": "medium",
+      "mitigation": "Model via ANTHROPIC_MODEL env, /api/health reports model, 4xx -> fallback model_error, request-shape contract test (AC9), confirm on first live call, report unverified status honestly",
+      "owner": "ai-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:09:14.217Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-8": {
+      "id": "RISK-8",
+      "title": "XSS via ticket or model text rendered as HTML",
+      "severity": "medium",
+      "mitigation": "textContent-only rendering, CSP default-src 'self' without inline script, grep check for HTML sinks (AC11)",
+      "owner": "frontend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:09:14.269Z",
+      "updatedBy": "product-architect"
+    }
+  },
+  "decisions": {
+    "dec-muylppww-0153033b": {
+      "id": "dec-muylppww-0153033b",
+      "title": "Q1 default live model",
+      "decision": "Default ANTHROPIC_MODEL=claude-haiku-5-5 (overridable via env); orchestrator default pending user confirmation",
+      "rationale": "Classification/summarization of short tickets does not need the largest model; lower latency and cost; reversible by env var.",
+      "alternatives": "claude-opus-5-5 (higher quality, higher cost/latency)",
+      "lessons": [],
+      "at": "2026-10-07T21:10:02.097Z",
+      "by": "orchestrator"
+    },
+    "dec-muylppyk-01dc6d62": {
+      "id": "dec-muylppyk-01dc6d62",
+      "title": "Q3 no API key in this environment",
+      "decision": "Deliver with fallback-path evidence; live-model evals reported as NOT RUN, live thresholds unverified",
+      "rationale": "No ANTHROPIC_API_KEY is available in the build environment; claiming live quality would be unverified.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-07T21:10:02.157Z",
+      "by": "orchestrator"
+    },
+    "dec-muylpq02-01e822f8": {
+      "id": "dec-muylpq02-01e822f8",
+      "title": "Q4 personal data sent to the model",
+      "decision": "Redact email addresses and phone numbers from ticket text before any live-model call; document it; orchestrator default pending user confirmation",
+      "rationale": "Privacy by default; reversible; reduces RISK-6 without blocking the feature.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-07T21:10:02.213Z",
+      "by": "orchestrator"
+    }
+  },
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 0,
-    "tokens": 0
+    "runtimeMinutes": 4.69,
+    "tokens": 150754
   },
   "delivery": null
 }

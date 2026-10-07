@@ -1,0 +1,39 @@
+{
+  "from": "product-architect",
+  "to": "architecture-reviewer",
+  "gate": "architecture",
+  "objective": "Independently review the TriageDesk architecture brief (submission sub-muyloqv9-015ebd44) and approve it or request changes at the architecture gate.",
+  "context": "TriageDesk is a small local Node.js 22 web app: an agent pastes a support ticket and gets a category, an urgency, a one-sentence summary and an editable suggested reply. It calls the Anthropic Messages API through raw fetch, falls back to a clearly labelled deterministic rule-based classifier, and must be safe against prompt injection. Constraints: zero npm dependencies, no database, a single page, and an eval suite with explicit thresholds (fixed in the brief's 'Evaluation metrics and thresholds' table). Memory search found one lesson (mem-k-muyljkrt-01991ac7, 'need node-fetch/axios because global fetch is missing'); its check verdict was DOES-NOT-APPLY (requires Node <18, environment has 22.22.0), so it was rejected and not cited. The model id claude-opus-5-5 and the request shape (output_config.format json_schema, effort low, anthropic-version 2023-06-01) come from the claude-api reference cached 2026-10-06. They were not verified by a live call because no API key is set (A5, RISK-7). The submission's runtime evidence is ev:ev-muylm2jz-017e07c4. An earlier evidence run, ev:ev-muyllyra-018a7124, failed only because of shell quoting in the command and carries no product signal.",
+  "inputs": [
+    ".eccode/artifacts/architecture/brief.md",
+    "eccode status --json (project idea)",
+    "eccode risk register RISK-1..RISK-8"
+  ],
+  "dependencies": [],
+  "expectedOutput": "An architecture gate review (approve or changes_requested) with findings referenced by id, covering requirement testability, AC traceability, trust boundaries and injection controls, the fallback design, the eval thresholds, and the scope exclusions.",
+  "acceptanceCriteria": [
+    "Every required section (Users, Problem, Requirements, Acceptance Criteria, Architecture, Assumptions, Open Questions, Risks) is present and substantive",
+    "Each AC traces to an R/NFR and is decidable by a test or an inspection",
+    "Prompt-injection controls (NFR2, AC7, AC9) and the eval thresholds are explicit and measurable",
+    "Unverified claims (model id, API surface, live quality) are labelled as assumptions or risks rather than stated as fact"
+  ],
+  "completedWork": "Wrote the architecture brief: users, problem, R1-R10 and NFR1-NFR10, workflows W1-W4, AC1-AC15 with an eval metric and threshold table, scope with reasons for each exclusion, components and a data-flow diagram with trust boundaries TB1-TB4, a decision table with alternatives, constraints, success criteria, A1-A8 and Q1-Q6. Recorded RISK-1..RISK-8 in the risk register. Recorded runtime-capability evidence (Node 22.22.0: global fetch, AbortSignal.timeout, node:test, node:http). Submitted the architecture gate.",
+  "filesChanged": [
+    ".eccode/artifacts/architecture/brief.md"
+  ],
+  "evidence": [
+    "ev:ev-muylm2jz-017e07c4"
+  ],
+  "remainingIssues": [
+    "Q1 (user): live model default claude-opus-5-5 vs the cheaper claude-haiku-5-5",
+    "Q3 (user): will an API key be provided so the live eval can run, or is fallback-only verification acceptable with live thresholds marked unverified?",
+    "Q4 (user): may raw ticket text (possible PII) be sent to the Anthropic API, or is redaction required first?",
+    "Q2/Q5/Q6 have proposed defaults (taxonomy as in A3; no server-side refusal fallback beta; no URLs in replies) that the reviewer may accept",
+    "A5/RISK-7: model id and request shape are not verified live; no API key is set in this environment",
+    "The choice of raw fetch over the official @anthropic-ai/sdk is a deliberate trade-off for the zero-dependency constraint; the reviewer should confirm it"
+  ],
+  "nextAction": "architecture-reviewer: review submission sub-muyloqv9-015ebd44 against the brief and record approve or changes_requested via eccode gate review architecture; escalate Q1, Q3 and Q4 to the user through the orchestrator.",
+  "lessonsConsulted": [
+    "mem-k-muyljkrt-01991ac7"
+  ]
+}
