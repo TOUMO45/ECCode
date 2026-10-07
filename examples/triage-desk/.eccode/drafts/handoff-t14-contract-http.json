@@ -1,0 +1,31 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "t14-contract-http",
+  "objective": "Contract tests for the HTTP surface, Host/Origin guard, package.json and fallback performance (spec task 14, part 1).",
+  "context": "Tests drive the real composition: in-process buildApp (explicit env, injected capture() fetch stub, quiet logger, listen(0,'127.0.0.1')) and the real `node src/server.js` via test/helpers/spawn-server.js (explicit env, PORT=0, live runs point TRIAGE_ANTHROPIC_BASE_URL at closed 127.0.0.1:9). Requests use test/helpers/http-client.js (node:http) so Host/Origin can be set or omitted; the empty-Host case uses a raw socket because node:http substitutes its default Host for an empty host header.",
+  "inputs": [".eccode/artifacts/design/spec.md", ".eccode/artifacts/architecture/brief.md"],
+  "dependencies": ["t03-test-helpers", "t13-app-wiring", "t07-ui"],
+  "expectedOutput": "test/contract/{http,http-guard,package,perf}.test.js passing serially and in npm test",
+  "acceptanceCriteria": [
+    "http.test.js: AC1 (all 400/413/415 cases), AC2 (validateResponse on every 200), AC11 headers on every response type + traversal 404, AC14 health in both modes, C5 messages exact",
+    "http-guard.test.js: AC17 in full (foreign Host on POST/health/static, missing Host, 20 KB + foreign Host -> 403, foreign and null Origin, localhost and [::1] positives, OPTIONS 405, fetch stub count 0)",
+    "package.test.js: AC12; perf.test.js: AC13 p95 < 50 ms over 200 sequential fallback service.analyse calls",
+    "Contract tests exercise the real modules through buildApp/createServer"
+  ],
+  "completedWork": "http.test.js (10 tests): 200s for 1/8000-char, padded, extra-key and parameterised content-type tickets, each checked with validateResponse and exact key order; every C3 400 case with exact C5 message and no input echo; 413 at 16385 bytes, 20 KB, 8000x3-byte chars and chunked stream (16384 bytes boundary is not 413); 415 for 6 media types, missing content-type and 20 KB text/plain; live 200 source=model with exactly one fetch call; health GET/HEAD/405 in both modes (no key in body/headers); static files byte-equal to public/ with C4 content types, HEAD and 405 Allow; 15 traversal/non-allowlisted paths -> 404; 500 internal_error via real createServer with a throwing service; spawned-process health in both modes, triage, 404 and headers. Every response checks CSP/nosniff/no-referrer/no-store, no Access-Control-*, JSON content-type and exact content-length. http-guard.test.js (9 tests): 12 foreign-Host variants (incl. foreign name with right port, wrong port, no port, rebinding suffix, userinfo) -> 403 + Connection: close; empty Host and HTTP/1.0 no Host (raw socket) -> 403; missing Host on POST/health/static -> 403; 25x 20 KB + foreign Host -> 403, 20 KB no Host -> 403, foreign Host + text/plain -> 403, 20 KB + foreign Origin -> 403 forbidden_origin; 8 bad Origins incl. null -> 403; DELETE with Origin null -> 403; OPTIONS (with preflight headers) -> 405 Allow POST, no CORS; fetch stub count 0 after all rejections; positives localhost+Origin, [::1] without Origin, 127.0.0.1+Origin, upper-case Host, cross-allowlisted Origin -> 200 with one fetch each; GET health with foreign Origin -> 200; same key cases against the spawned process. package.test.js (4 tests): no dependency fields, no node_modules, exact scripts, engines {node:'>=22'}, exact field set, no type, script targets exist. perf.test.js (1 test): 200 sequential fallback analyses (every 10th near 8000 chars), all validateResponse-valid, p95 ~1.6 ms (< 50 ms), zero fetch calls. Verified no spawned server processes left behind (checked /proc).",
+  "filesChanged": [
+    "test/contract/http.test.js",
+    "test/contract/http-guard.test.js",
+    "test/contract/package.test.js",
+    "test/contract/perf.test.js"
+  ],
+  "evidence": ["ev:ev-muyqsgjb-015646a8", "ev:ev-muyqssz8-0183709b"],
+  "remainingIssues": [
+    "No product defects found: all 24 contract tests pass against the current src/ without changes.",
+    "AC17 text uses port 3000 in Host/Origin positives; tests use the actual ephemeral port, per C1 (allowlist is bound to server.address().port).",
+    "AC13 timeout-bound clause is covered by t15 (triage-modes.test.js), not here."
+  ],
+  "nextAction": "technical-reviewer: review test/contract/{http,http-guard,package,perf}.test.js against spec C1-C5, AC1/2/11/12/13/14/17",
+  "lessonsConsulted": []
+}

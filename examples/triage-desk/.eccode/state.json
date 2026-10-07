@@ -1,6 +1,6 @@
 {
-  "seq": 441,
-  "lastHash": "e34fbd80cbb37f378e6c6e519203ebcb906acb1f4015b4c50c9870c5516a8b1d",
+  "seq": 460,
+  "lastHash": "e867141a3b57d03927d59cad0caa8f5fc761dcf65af4d31cc8c8bac12b685cdf",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -1590,24 +1590,30 @@
         "method": "Contract tests with node:test (serial)",
         "command": "node --test --test-concurrency=1 test/contract/http.test.js test/contract/http-guard.test.js test/contract/package.test.js test/contract/perf.test.js"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "test-engineer",
-        "at": "2026-10-07T23:28:51.353Z",
-        "baseCommit": "9ec65d73cfb7fede7f776d363698375408231ff8",
-        "runId": "run-muyqnppg-01bf5c82"
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "test-engineer",
           "at": "2026-10-07T23:28:51.353Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "test-engineer",
+          "at": "2026-10-07T23:32:43.008Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "test-engineer",
+      "handoffId": "ho-muyqt7jf-010d536a",
+      "filesChanged": [
+        "test/contract/http.test.js",
+        "test/contract/http-guard.test.js",
+        "test/contract/package.test.js",
+        "test/contract/perf.test.js"
+      ]
     },
     "t15-contract-modes-privacy": {
       "id": "t15-contract-modes-privacy",
@@ -1649,24 +1655,29 @@
         "method": "Contract tests with node:test (serial)",
         "command": "node --test --test-concurrency=1 test/contract/triage-modes.test.js test/contract/redaction-egress.test.js test/contract/privacy.test.js"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "test-engineer",
-        "at": "2026-10-07T23:28:50.460Z",
-        "baseCommit": "9ec65d73cfb7fede7f776d363698375408231ff8",
-        "runId": "run-muyqnprf-014879dd"
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "test-engineer",
           "at": "2026-10-07T23:28:50.460Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "test-engineer",
+          "at": "2026-10-07T23:32:21.462Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "test-engineer",
+      "handoffId": "ho-muyqsqww-01916725",
+      "filesChanged": [
+        "test/contract/triage-modes.test.js",
+        "test/contract/redaction-egress.test.js",
+        "test/contract/privacy.test.js"
+      ]
     },
     "t16-readme": {
       "id": "t16-readme",
@@ -4709,6 +4720,82 @@
       "task": null,
       "recordedBy": "security-reviewer",
       "at": "2026-10-07T23:27:44.468Z"
+    },
+    "ev-muyqs2hf-01e11d03": {
+      "id": "ev-muyqs2hf-01e11d03",
+      "kind": "command",
+      "label": "t15 contract tests: triage modes + redirect, redaction egress, privacy",
+      "command": "node --test --test-concurrency=1 test/contract/triage-modes.test.js test/contract/redaction-egress.test.js test/contract/privacy.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1732,
+      "log": ".eccode/evidence/ev-muyqs2hf-01e11d03.log",
+      "logSha256": "3a9f0f861ffc3e2cfbe175da9bd541dcc400117bc7b431a36c34d3fa1096b9db",
+      "outputTail": "  duration_ms: 7.168121\n  type: 'test'\n  ...\n# Subtest: AC4 (o): configured endpoint answers 308 → fallback model_error and the redirect target receives 0 requests\nok 32 - AC4 (o): configured endpoint answers 308 → fallback model_error and the redirect target receives 0 requests\n  ---\n  duration_ms: 6.016223\n  type: 'test'\n  ...\n# Subtest: PL-3: npm run eval:tune exits 0 or 1 (never 2) and ends with a TUNE_EVAL line\nok 33 - PL-3: npm run eval:tune exits 0 or 1 (never 2) and ends with a TUNE_EVAL line\n  ---\n  duration_ms: 179.671747\n  type: 'test'\n  ...\n1..33\n# tests 33\n# suites 0\n# pass 33\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1674.119787\n",
+      "gate": null,
+      "task": "t15-contract-modes-privacy",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T23:31:49.793Z"
+    },
+    "ev-muyqs8mc-019452dd": {
+      "id": "ev-muyqs8mc-019452dd",
+      "kind": "command",
+      "label": "full offline suite npm test",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7881,
+      "log": ".eccode/evidence/ev-muyqs8mc-019452dd.log",
+      "logSha256": "f9a997cb4792691c5dfe45533110bd2a65b3cc77575ff4e7c0973cb61d6d4d89",
+      "outputTail": "  duration_ms: 2.133185\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 429 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 3.887599\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 430 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 3.293727\n  type: 'test'\n  ...\n1..430\n# tests 434\n# suites 0\n# pass 434\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 7698.583228\n",
+      "gate": null,
+      "task": "t15-contract-modes-privacy",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T23:31:57.745Z"
+    },
+    "ev-muyqsgjb-015646a8": {
+      "id": "ev-muyqsgjb-015646a8",
+      "kind": "command",
+      "label": "t14 contract tests: http, http-guard, package, perf (serial)",
+      "command": "node --test --test-concurrency=1 test/contract/http.test.js test/contract/http-guard.test.js test/contract/package.test.js test/contract/perf.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 966,
+      "log": ".eccode/evidence/ev-muyqsgjb-015646a8.log",
+      "logSha256": "5dc0a6f159d856dacf8ab8c5915a76fd96d9805dad9d92d5acccaead87751c8b",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: AC12: the scripts reference files that exist\nok 23 - AC12: the scripts reference files that exist\n  ---\n  duration_ms: 0.170924\n  type: 'test'\n  ...\n# AC13 fallback latency: p95=1.279 ms, max=10.489 ms over 200 calls\n# Subtest: AC13: fallback p95 latency over 200 sequential service.analyse calls is under 50 ms\nok 24 - AC13: fallback p95 latency over 200 sequential service.analyse calls is under 50 ms\n  ---\n  duration_ms: 66.584666\n  type: 'test'\n  ...\n1..24\n# tests 24\n# suites 0\n# pass 24\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 908.400656\n",
+      "gate": null,
+      "task": "t14-contract-http",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T23:32:08.002Z"
+    },
+    "ev-muyqssz8-0183709b": {
+      "id": "ev-muyqssz8-0183709b",
+      "kind": "command",
+      "label": "full offline suite npm test (after t14 files)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8144,
+      "log": ".eccode/evidence/ev-muyqssz8-0183709b.log",
+      "logSha256": "6d39b1ad3c56b9f2a121523073ed026bf1dd3ce801ae02ed64edcd9c95e6f7f4",
+      "outputTail": "  duration_ms: 1.510729\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 434 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 3.603564\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 435 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 2.318466\n  type: 'test'\n  ...\n1..435\n# tests 439\n# suites 0\n# pass 439\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 7966.591393\n",
+      "gate": null,
+      "task": "t14-contract-http",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T23:32:24.133Z"
     }
   },
   "reviews": {
@@ -7280,6 +7367,100 @@
       "id": "ho-muyqhm42-0118420f",
       "recordedBy": "backend-engineer",
       "at": "2026-10-07T23:23:42.046Z"
+    },
+    "ho-muyqsqww-01916725": {
+      "from": "test-engineer",
+      "to": "orchestrator",
+      "task": "t15-contract-modes-privacy",
+      "objective": "Contract tests for triage modes (fallback, live, AC4 failure mapping incl. AC4(o) redirect), AC16 redaction at egress, and AC10 privacy incl. DES-1 parent-env isolation (spec task 14, part 2); plus PL-3 eval:tune exit-code check.",
+      "context": "Built against spec C3, C6.4, C6.5, C7, D3 (AC16 additions), Security T6/T11 and Testing Strategy. In-process tests pass explicit env objects; spawned tests use spawn-server (explicit child env). Live paths use fake-fetch stubs or the real globalThis.fetch against loopback fake-anthropic with a dummy key; no real key, no network beyond loopback, no full-mode eval (PL-3 test runs `npm run eval:tune` only, with env {PATH}).",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#Testing Strategy",
+        ".eccode/artifacts/design/spec.md#C6.4 Provider interface (server ↔ AI module boundary)",
+        ".eccode/artifacts/design/spec.md#C7 Outbound contract: Anthropic Messages API (live mode only)",
+        ".eccode/artifacts/design/spec.md#D3 Redaction algorithm (R11) — ARCH-10 fix **[refinement]**",
+        ".eccode/artifacts/design/spec.md#Security",
+        ".eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        ".eccode/artifacts/design/design-vectors.js",
+        "test/helpers/fake-anthropic.js",
+        "test/helpers/fake-fetch.js",
+        "test/helpers/spawn-server.js",
+        "test/helpers/http-client.js"
+      ],
+      "dependencies": [
+        "t03-test-helpers",
+        "t13-app-wiring",
+        "t07-ui"
+      ],
+      "expectedOutput": "Three passing contract test files covering AC3, AC4 (a)-(o), AC13 timeout bound, C3 response model = configured model, AC16 with D3 additions, AC10/AC14 privacy and DES-1 isolation; PL-3 tune-eval check.",
+      "acceptanceCriteria": [
+        "triage-modes.test.js: AC3 (deep-equal, stub never called), AC4 (a)–(n) end-to-end over HTTP, AC13 timeout bound; AC4 (o) DES-1: in-process buildApp with the real globalThis.fetch and TRIAGE_ANTHROPIC_BASE_URL=http://127.0.0.1:<A>; fake-anthropic A answers 307 and, in a second case, 308 to http://localhost:<B>/v1/messages; response is 200 source fallback, fallbackReason model_error, and B received 0 requests",
+        "redaction-egress.test.js: AC16 with the D3 additions, using an hasLuhnWindow oracle re-implemented in the test from D3",
+        "privacy.test.js: AC10 with spawned servers in fallback mode (ANTHROPIC_API_KEY: '' explicit) and live mode against fake-anthropic; marker ticket and fake key never in stdout/stderr or any response; parent-env isolation case sets parent ANTHROPIC_API_KEY and TRIAGE_ANTHROPIC_BASE_URL (restored in finally) and the child reports mode fallback and baseUrlCustom false"
+      ],
+      "completedWork": "triage-modes.test.js (24 tests): AC3 unset and empty key (deep-equal, stub count 0); AC4 (a)-(l) plus a non-following 3xx stub, each 200 fallback with the mapped reason and exactly one fetch call; (m) enum normalisation; (n) thinking-first; response/health/outbound model equal the configured model even when the upstream body names another (t04 note); AC13 never() returns timeout within 300+500 ms and the signal is aborted; live mode with real fetch against fake-anthropic (C7 headers/path); AC4(o) 307 and 308 with real fetch: fallback model_error, A count 1, B count 0; PL-3 `npm run eval:tune` exits 0 or 1, no ECCODE_EVAL, last line TUNE_EVAL mode tune. redaction-egress.test.js (4 tests): oracle self-check; AC16 + ARCH-10 probes via capture stub and on the wire via fake-anthropic: (a) brief list + phone fragments absent, raw </ticket> appears only as the wrapper delimiter (and in the constant system prompt), (b) digit tokens, (c) independent hasLuhnWindow, (d) placeholders, (e) no < > between delimiters, (f) controls kept; injectionSuspected equals detector on original; logs carry counts not content; fallback after invalid_output never echoes content. privacy.test.js (5 tests): fallback spawn with ANTHROPIC_API_KEY '' and parent ANTHROPIC_API_KEY/TRIAGE_ANTHROPIC_BASE_URL/ANTHROPIC_BASE_URL set (restored in finally) -> mode fallback, baseUrlCustom false; second isolation case with an empty test env (child env is exactly PATH+PORT); ANTHROPIC_BASE_URL ignored (spawned and in-process: outbound URL stays https://api.anthropic.com/v1/messages via stub); live spawn against fake-anthropic with upstream bodies echoing the marker and key: no marker/key/base URL in stdout/stderr, no key in any response body/header, configured model reported, upstreamStatus logged as metadata. No product defects found.",
+      "filesChanged": [
+        "test/contract/triage-modes.test.js",
+        "test/contract/redaction-egress.test.js",
+        "test/contract/privacy.test.js"
+      ],
+      "evidence": [
+        "ev:ev-muyqs2hf-01e11d03",
+        "ev:ev-muyqs8mc-019452dd"
+      ],
+      "remainingIssues": [
+        "AC16 live-mode notice text (NFR4) is an inspection item, not covered by these tests.",
+        "Memory search returned only an unrelated ECCode store record (mem-d-muym8opn-0104129a); not cited."
+      ],
+      "nextAction": "orchestrator: once t14 completes, proceed to t16-readme (its npm test run covers the complete contract suite).",
+      "lessonsConsulted": [],
+      "id": "ho-muyqsqww-01916725",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T23:32:21.486Z"
+    },
+    "ho-muyqt7jf-010d536a": {
+      "from": "test-engineer",
+      "to": "delivery-lead",
+      "task": "t14-contract-http",
+      "objective": "Contract tests for the HTTP surface, Host/Origin guard, package.json and fallback performance (spec task 14, part 1).",
+      "context": "Tests drive the real composition: in-process buildApp (explicit env, injected capture() fetch stub, quiet logger, listen(0,'127.0.0.1')) and the real `node src/server.js` via test/helpers/spawn-server.js (explicit env, PORT=0, live runs point TRIAGE_ANTHROPIC_BASE_URL at closed 127.0.0.1:9). Requests use test/helpers/http-client.js (node:http) so Host/Origin can be set or omitted; the empty-Host case uses a raw socket because node:http substitutes its default Host for an empty host header.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md",
+        ".eccode/artifacts/architecture/brief.md"
+      ],
+      "dependencies": [
+        "t03-test-helpers",
+        "t13-app-wiring",
+        "t07-ui"
+      ],
+      "expectedOutput": "test/contract/{http,http-guard,package,perf}.test.js passing serially and in npm test",
+      "acceptanceCriteria": [
+        "http.test.js: AC1 (all 400/413/415 cases), AC2 (validateResponse on every 200), AC11 headers on every response type + traversal 404, AC14 health in both modes, C5 messages exact",
+        "http-guard.test.js: AC17 in full (foreign Host on POST/health/static, missing Host, 20 KB + foreign Host -> 403, foreign and null Origin, localhost and [::1] positives, OPTIONS 405, fetch stub count 0)",
+        "package.test.js: AC12; perf.test.js: AC13 p95 < 50 ms over 200 sequential fallback service.analyse calls",
+        "Contract tests exercise the real modules through buildApp/createServer"
+      ],
+      "completedWork": "http.test.js (10 tests): 200s for 1/8000-char, padded, extra-key and parameterised content-type tickets, each checked with validateResponse and exact key order; every C3 400 case with exact C5 message and no input echo; 413 at 16385 bytes, 20 KB, 8000x3-byte chars and chunked stream (16384 bytes boundary is not 413); 415 for 6 media types, missing content-type and 20 KB text/plain; live 200 source=model with exactly one fetch call; health GET/HEAD/405 in both modes (no key in body/headers); static files byte-equal to public/ with C4 content types, HEAD and 405 Allow; 15 traversal/non-allowlisted paths -> 404; 500 internal_error via real createServer with a throwing service; spawned-process health in both modes, triage, 404 and headers. Every response checks CSP/nosniff/no-referrer/no-store, no Access-Control-*, JSON content-type and exact content-length. http-guard.test.js (9 tests): 12 foreign-Host variants (incl. foreign name with right port, wrong port, no port, rebinding suffix, userinfo) -> 403 + Connection: close; empty Host and HTTP/1.0 no Host (raw socket) -> 403; missing Host on POST/health/static -> 403; 25x 20 KB + foreign Host -> 403, 20 KB no Host -> 403, foreign Host + text/plain -> 403, 20 KB + foreign Origin -> 403 forbidden_origin; 8 bad Origins incl. null -> 403; DELETE with Origin null -> 403; OPTIONS (with preflight headers) -> 405 Allow POST, no CORS; fetch stub count 0 after all rejections; positives localhost+Origin, [::1] without Origin, 127.0.0.1+Origin, upper-case Host, cross-allowlisted Origin -> 200 with one fetch each; GET health with foreign Origin -> 200; same key cases against the spawned process. package.test.js (4 tests): no dependency fields, no node_modules, exact scripts, engines {node:'>=22'}, exact field set, no type, script targets exist. perf.test.js (1 test): 200 sequential fallback analyses (every 10th near 8000 chars), all validateResponse-valid, p95 ~1.6 ms (< 50 ms), zero fetch calls. Verified no spawned server processes left behind (checked /proc).",
+      "filesChanged": [
+        "test/contract/http.test.js",
+        "test/contract/http-guard.test.js",
+        "test/contract/package.test.js",
+        "test/contract/perf.test.js"
+      ],
+      "evidence": [
+        "ev:ev-muyqsgjb-015646a8",
+        "ev:ev-muyqssz8-0183709b"
+      ],
+      "remainingIssues": [
+        "No product defects found: all 24 contract tests pass against the current src/ without changes.",
+        "AC17 text uses port 3000 in Host/Origin positives; tests use the actual ephemeral port, per C1 (allowlist is bound to server.address().port).",
+        "AC13 timeout-bound clause is covered by t15 (triage-modes.test.js), not here."
+      ],
+      "nextAction": "technical-reviewer: review test/contract/{http,http-guard,package,perf}.test.js against spec C1-C5, AC1/2/11/12/13/14/17",
+      "lessonsConsulted": [],
+      "id": "ho-muyqt7jf-010d536a",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T23:32:43.027Z"
     }
   },
   "runs": {
@@ -7888,8 +8069,13 @@
       "task": "t15-contract-modes-privacy",
       "gate": null,
       "startedAt": "2026-10-07T23:28:26.677Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T23:32:44.740Z",
+      "durationMinutes": 4.3,
+      "costUsd": 0,
+      "tokens": 142391,
+      "note": null
     }
   },
   "risks": {
@@ -8069,8 +8255,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 189.18,
-    "tokens": 5433602
+    "runtimeMinutes": 193.48,
+    "tokens": 5575993
   },
   "delivery": null
 }

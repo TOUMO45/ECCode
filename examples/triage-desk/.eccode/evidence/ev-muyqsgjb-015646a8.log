@@ -1,0 +1,158 @@
+$ node --test --test-concurrency=1 test/contract/http.test.js test/contract/http-guard.test.js test/contract/package.test.js test/contract/perf.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: AC17: foreign Host is 403 forbidden_host on POST /api/triage, GET /api/health and GET /
+ok 1 - AC17: foreign Host is 403 forbidden_host on POST /api/triage, GET /api/health and GET /
+  ---
+  duration_ms: 36.815786
+  type: 'test'
+  ...
+# Subtest: AC17: an empty Host header is 403 (raw socket)
+ok 2 - AC17: an empty Host header is 403 (raw socket)
+  ---
+  duration_ms: 3.294842
+  type: 'test'
+  ...
+# Subtest: AC17: a request with no Host header is 403 forbidden_host (not Node's own 400)
+ok 3 - AC17: a request with no Host header is 403 forbidden_host (not Node's own 400)
+  ---
+  duration_ms: 4.573952
+  type: 'test'
+  ...
+# Subtest: AC17: 20 KB body with a foreign (or missing) Host is 403, not 413, every time
+ok 4 - AC17: 20 KB body with a foreign (or missing) Host is 403, not 413, every time
+  ---
+  duration_ms: 44.250624
+  type: 'test'
+  ...
+# Subtest: AC17: foreign and null Origin on POST with an allowlisted Host are 403 forbidden_origin
+ok 5 - AC17: foreign and null Origin on POST with an allowlisted Host are 403 forbidden_origin
+  ---
+  duration_ms: 9.175865
+  type: 'test'
+  ...
+# Subtest: AC17: OPTIONS /api/triage is 405 with no Access-Control-* header (no CORS preflight)
+ok 6 - AC17: OPTIONS /api/triage is 405 with no Access-Control-* header (no CORS preflight)
+  ---
+  duration_ms: 3.367473
+  type: 'test'
+  ...
+# Subtest: AC17: after all rejected requests the fetch stub call count is 0
+ok 7 - AC17: after all rejected requests the fetch stub call count is 0
+  ---
+  duration_ms: 0.296901
+  type: 'test'
+  ...
+# Subtest: AC17 positives: localhost Host + matching Origin, [::1] Host without Origin, 127.0.0.1 all return 200
+ok 8 - AC17 positives: localhost Host + matching Origin, [::1] Host without Origin, 127.0.0.1 all return 200
+  ---
+  duration_ms: 22.428805
+  type: 'test'
+  ...
+# Subtest: AC17 in the real process (spawn-server): foreign Host, missing Host, 20 KB + foreign Host, OPTIONS
+ok 9 - AC17 in the real process (spawn-server): foreign Host, missing Host, 20 KB + foreign Host, OPTIONS
+  ---
+  duration_ms: 65.275356
+  type: 'test'
+  ...
+# Subtest: AC1: valid tickets (1 and 8000 chars, padded, extra keys, content-type params) return 200 and pass AC2
+ok 10 - AC1: valid tickets (1 and 8000 chars, padded, extra keys, content-type params) return 200 and pass AC2
+  ---
+  duration_ms: 55.112538
+  type: 'test'
+  ...
+# Subtest: AC1/C3: every 400 case returns the exact C5 code and message (first failure wins)
+ok 11 - AC1/C3: every 400 case returns the exact C5 code and message (first failure wins)
+  ---
+  duration_ms: 27.688905
+  type: 'test'
+  ...
+# Subtest: AC1/C3: body over 16384 bytes returns 413 (Content-Length fast path, boundary, chunked stream)
+ok 12 - AC1/C3: body over 16384 bytes returns 413 (Content-Length fast path, boundary, chunked stream)
+  ---
+  duration_ms: 7.05358
+  type: 'test'
+  ...
+# Subtest: AC1/C3: non-JSON content types return 415 before the body is read
+ok 13 - AC1/C3: non-JSON content types return 415 before the body is read
+  ---
+  duration_ms: 9.711712
+  type: 'test'
+  ...
+# Subtest: AC2: live-mode 200 from a valid model output validates and reports source model
+ok 14 - AC2: live-mode 200 from a valid model output validates and reports source model
+  ---
+  duration_ms: 3.509938
+  type: 'test'
+  ...
+# Subtest: AC14: GET/HEAD /api/health in fallback and live mode
+ok 15 - AC14: GET/HEAD /api/health in fallback and live mode
+  ---
+  duration_ms: 8.476689
+  type: 'test'
+  ...
+# Subtest: C4/AC11: static files have the C4 content types, file bytes, security headers; HEAD has no body
+ok 16 - C4/AC11: static files have the C4 content types, file bytes, security headers; HEAD has no body
+  ---
+  duration_ms: 23.352625
+  type: 'test'
+  ...
+# Subtest: AC11: traversal and non-allowlisted paths return 404 JSON with every security header
+ok 17 - AC11: traversal and non-allowlisted paths return 404 JSON with every security header
+  ---
+  duration_ms: 19.025186
+  type: 'test'
+  ...
+# Subtest: C5: 500 internal_error when the injected service throws (real createServer, fixed message, no leak)
+ok 18 - C5: 500 internal_error when the injected service throws (real createServer, fixed message, no leak)
+  ---
+  duration_ms: 3.298028
+  type: 'test'
+  ...
+# Subtest: Real process (spawn-server): health in both modes, headers, static, 404, and AC2 over the wire
+ok 19 - Real process (spawn-server): health in both modes, headers, static, 404, and AC2 over the wire
+  ---
+  duration_ms: 133.808502
+  type: 'test'
+  ...
+# Subtest: AC12: no dependencies or devDependencies of any kind
+ok 20 - AC12: no dependencies or devDependencies of any kind
+  ---
+  duration_ms: 0.726484
+  type: 'test'
+  ...
+# Subtest: §Deployment: exact scripts
+ok 21 - §Deployment: exact scripts
+  ---
+  duration_ms: 1.096114
+  type: 'test'
+  ...
+# Subtest: §Deployment: engines.node and the exact package fields, no "type"
+ok 22 - §Deployment: engines.node and the exact package fields, no "type"
+  ---
+  duration_ms: 0.343385
+  type: 'test'
+  ...
+# Subtest: AC12: the scripts reference files that exist
+ok 23 - AC12: the scripts reference files that exist
+  ---
+  duration_ms: 0.170924
+  type: 'test'
+  ...
+# AC13 fallback latency: p95=1.279 ms, max=10.489 ms over 200 calls
+# Subtest: AC13: fallback p95 latency over 200 sequential service.analyse calls is under 50 ms
+ok 24 - AC13: fallback p95 latency over 200 sequential service.analyse calls is under 50 ms
+  ---
+  duration_ms: 66.584666
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 908.400656

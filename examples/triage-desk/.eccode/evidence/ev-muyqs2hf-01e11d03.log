@@ -1,0 +1,211 @@
+$ node --test --test-concurrency=1 test/contract/triage-modes.test.js test/contract/redaction-egress.test.js test/contract/privacy.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: AC10 fallback mode (ANTHROPIC_API_KEY explicitly empty) + DES-1 parent-env isolation
+ok 1 - AC10 fallback mode (ANTHROPIC_API_KEY explicitly empty) + DES-1 parent-env isolation
+  ---
+  duration_ms: 79.554935
+  type: 'test'
+  ...
+# Subtest: DES-1: with no key in the test env at all, a parent ANTHROPIC_API_KEY still does not reach the child
+ok 2 - DES-1: with no key in the test env at all, a parent ANTHROPIC_API_KEY still does not reach the child
+  ---
+  duration_ms: 51.889894
+  type: 'test'
+  ...
+# Subtest: T11(c): ANTHROPIC_BASE_URL is ignored by the child (baseUrlCustom false, no custom_base_url warning)
+ok 3 - T11(c): ANTHROPIC_BASE_URL is ignored by the child (baseUrlCustom false, no custom_base_url warning)
+  ---
+  duration_ms: 50.094756
+  type: 'test'
+  ...
+# Subtest: T11(c) in-process: ANTHROPIC_BASE_URL alone leaves the outbound URL at https://api.anthropic.com
+ok 4 - T11(c) in-process: ANTHROPIC_BASE_URL alone leaves the outbound URL at https://api.anthropic.com
+  ---
+  duration_ms: 20.415609
+  type: 'test'
+  ...
+# Subtest: AC10/AC14 live mode against fake-anthropic: marker and key never in stdout/stderr or any response
+ok 5 - AC10/AC14 live mode against fake-anthropic: marker and key never in stdout/stderr or any response
+  ---
+  duration_ms: 160.785894
+  type: 'test'
+  ...
+# Subtest: oracle self-check: hasLuhnWindow finds hidden card windows and ignores non-Luhn controls
+ok 6 - oracle self-check: hasLuhnWindow finds hidden card windows and ignores non-Luhn controls
+  ---
+  duration_ms: 0.993031
+  type: 'test'
+  ...
+# Subtest: AC16: capturing fetch stub — outbound body has no email, card (incl. ARCH-10 probes), phone or raw </ticket>
+ok 7 - AC16: capturing fetch stub — outbound body has no email, card (incl. ARCH-10 probes), phone or raw </ticket>
+  ---
+  duration_ms: 32.072233
+  type: 'test'
+  ...
+# Subtest: AC16 on the wire: the real fetch body received by fake-anthropic is redacted the same way
+ok 8 - AC16 on the wire: the real fetch body received by fake-anthropic is redacted the same way
+  ---
+  duration_ms: 50.883543
+  type: 'test'
+  ...
+# Subtest: AC16 fallback after a model error uses the original text, but nothing unredacted ever left the process
+ok 9 - AC16 fallback after a model error uses the original text, but nothing unredacted ever left the process
+  ---
+  duration_ms: 9.691295
+  type: 'test'
+  ...
+# Subtest: AC3: without ANTHROPIC_API_KEY the response is fallback/no_api_key, deterministic, and the transport is never called
+ok 10 - AC3: without ANTHROPIC_API_KEY the response is fallback/no_api_key, deterministic, and the transport is never called
+  ---
+  duration_ms: 45.657045
+  type: 'test'
+  ...
+# Subtest: AC3: an empty ANTHROPIC_API_KEY is fallback mode as well
+ok 11 - AC3: an empty ANTHROPIC_API_KEY is fallback mode as well
+  ---
+  duration_ms: 5.0842
+  type: 'test'
+  ...
+# Subtest: AC4 (a) transport throws → 200 source fallback, fallbackReason model_error, at most one fetch call
+ok 12 - AC4 (a) transport throws → 200 source fallback, fallbackReason model_error, at most one fetch call
+  ---
+  duration_ms: 5.504418
+  type: 'test'
+  ...
+# Subtest: AC4 (b) transport never resolves → 200 source fallback, fallbackReason timeout, at most one fetch call
+ok 13 - AC4 (b) transport never resolves → 200 source fallback, fallbackReason timeout, at most one fetch call
+  ---
+  duration_ms: 305.643854
+  type: 'test'
+  ...
+# Subtest: AC4 (c) HTTP 404 with JSON error body (wrong model id) → 200 source fallback, fallbackReason model_error, at most one fetch call
+ok 14 - AC4 (c) HTTP 404 with JSON error body (wrong model id) → 200 source fallback, fallbackReason model_error, at most one fetch call
+  ---
+  duration_ms: 5.535647
+  type: 'test'
+  ...
+# Subtest: AC4 (d) HTTP 429 → 200 source fallback, fallbackReason model_error, at most one fetch call
+ok 15 - AC4 (d) HTTP 429 → 200 source fallback, fallbackReason model_error, at most one fetch call
+  ---
+  duration_ms: 3.039854
+  type: 'test'
+  ...
+# Subtest: AC4 (e) HTTP 529 → 200 source fallback, fallbackReason model_error, at most one fetch call
+ok 16 - AC4 (e) HTTP 529 → 200 source fallback, fallbackReason model_error, at most one fetch call
+  ---
+  duration_ms: 3.096927
+  type: 'test'
+  ...
+# Subtest: AC4 (f) HTTP 500 → 200 source fallback, fallbackReason model_error, at most one fetch call
+ok 17 - AC4 (f) HTTP 500 → 200 source fallback, fallbackReason model_error, at most one fetch call
+  ---
+  duration_ms: 4.035872
+  type: 'test'
+  ...
+# Subtest: AC4 (g) stop_reason refusal → 200 source fallback, fallbackReason refusal, at most one fetch call
+ok 18 - AC4 (g) stop_reason refusal → 200 source fallback, fallbackReason refusal, at most one fetch call
+  ---
+  duration_ms: 4.244963
+  type: 'test'
+  ...
+# Subtest: AC4 (h) stop_reason max_tokens → 200 source fallback, fallbackReason truncated, at most one fetch call
+ok 19 - AC4 (h) stop_reason max_tokens → 200 source fallback, fallbackReason truncated, at most one fetch call
+  ---
+  duration_ms: 3.158485
+  type: 'test'
+  ...
+# Subtest: AC4 (i) non-JSON text block → 200 source fallback, fallbackReason invalid_output, at most one fetch call
+ok 20 - AC4 (i) non-JSON text block → 200 source fallback, fallbackReason invalid_output, at most one fetch call
+  ---
+  duration_ms: 3.00521
+  type: 'test'
+  ...
+# Subtest: AC4 (j) out-of-enum category → 200 source fallback, fallbackReason invalid_output, at most one fetch call
+ok 21 - AC4 (j) out-of-enum category → 200 source fallback, fallbackReason invalid_output, at most one fetch call
+  ---
+  duration_ms: 4.189082
+  type: 'test'
+  ...
+# Subtest: AC4 (k) reply containing a URL → 200 source fallback, fallbackReason invalid_output, at most one fetch call
+ok 22 - AC4 (k) reply containing a URL → 200 source fallback, fallbackReason invalid_output, at most one fetch call
+  ---
+  duration_ms: 2.564837
+  type: 'test'
+  ...
+# Subtest: AC4 (l) two-sentence summary → 200 source fallback, fallbackReason invalid_output, at most one fetch call
+ok 23 - AC4 (l) two-sentence summary → 200 source fallback, fallbackReason invalid_output, at most one fetch call
+  ---
+  duration_ms: 2.62564
+  type: 'test'
+  ...
+# Subtest: AC4 3xx from a non-following transport → 200 source fallback, fallbackReason model_error, at most one fetch call
+ok 24 - AC4 3xx from a non-following transport → 200 source fallback, fallbackReason model_error, at most one fetch call
+  ---
+  duration_ms: 2.481613
+  type: 'test'
+  ...
+# Subtest: AC4 (m) enum case is normalised: Billing/HIGH → source model, billing/high (V3)
+ok 25 - AC4 (m) enum case is normalised: Billing/HIGH → source model, billing/high (V3)
+  ---
+  duration_ms: 2.361041
+  type: 'test'
+  ...
+# Subtest: AC4 (n) a thinking block before the text block → parsed from the text block, source model
+ok 26 - AC4 (n) a thinking block before the text block → parsed from the text block, source model
+  ---
+  duration_ms: 2.280652
+  type: 'test'
+  ...
+# Subtest: C3: response model equals the configured model, not the model named in the upstream body
+ok 27 - C3: response model equals the configured model, not the model named in the upstream body
+  ---
+  duration_ms: 3.771012
+  type: 'test'
+  ...
+# Subtest: C3: default configured model is claude-haiku-5-5 in the response and the outbound body
+ok 28 - C3: default configured model is claude-haiku-5-5 in the response and the outbound body
+  ---
+  duration_ms: 3.313766
+  type: 'test'
+  ...
+# Subtest: AC13: a transport that never settles returns fallback timeout within TRIAGE_TIMEOUT_MS + 500 ms
+ok 29 - AC13: a transport that never settles returns fallback timeout within TRIAGE_TIMEOUT_MS + 500 ms
+  ---
+  duration_ms: 302.716933
+  type: 'test'
+  ...
+# Subtest: live mode: real globalThis.fetch against fake-anthropic → source model; C7 headers and URL
+ok 30 - live mode: real globalThis.fetch against fake-anthropic → source model; C7 headers and URL
+  ---
+  duration_ms: 45.140549
+  type: 'test'
+  ...
+# Subtest: AC4 (o): configured endpoint answers 307 → fallback model_error and the redirect target receives 0 requests
+ok 31 - AC4 (o): configured endpoint answers 307 → fallback model_error and the redirect target receives 0 requests
+  ---
+  duration_ms: 7.168121
+  type: 'test'
+  ...
+# Subtest: AC4 (o): configured endpoint answers 308 → fallback model_error and the redirect target receives 0 requests
+ok 32 - AC4 (o): configured endpoint answers 308 → fallback model_error and the redirect target receives 0 requests
+  ---
+  duration_ms: 6.016223
+  type: 'test'
+  ...
+# Subtest: PL-3: npm run eval:tune exits 0 or 1 (never 2) and ends with a TUNE_EVAL line
+ok 33 - PL-3: npm run eval:tune exits 0 or 1 (never 2) and ends with a TUNE_EVAL line
+  ---
+  duration_ms: 179.671747
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1674.119787

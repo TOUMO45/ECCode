@@ -1,0 +1,47 @@
+{
+  "from": "test-engineer",
+  "to": "orchestrator",
+  "task": "t15-contract-modes-privacy",
+  "objective": "Contract tests for triage modes (fallback, live, AC4 failure mapping incl. AC4(o) redirect), AC16 redaction at egress, and AC10 privacy incl. DES-1 parent-env isolation (spec task 14, part 2); plus PL-3 eval:tune exit-code check.",
+  "context": "Built against spec C3, C6.4, C6.5, C7, D3 (AC16 additions), Security T6/T11 and Testing Strategy. In-process tests pass explicit env objects; spawned tests use spawn-server (explicit child env). Live paths use fake-fetch stubs or the real globalThis.fetch against loopback fake-anthropic with a dummy key; no real key, no network beyond loopback, no full-mode eval (PL-3 test runs `npm run eval:tune` only, with env {PATH}).",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#Testing Strategy",
+    ".eccode/artifacts/design/spec.md#C6.4 Provider interface (server ↔ AI module boundary)",
+    ".eccode/artifacts/design/spec.md#C7 Outbound contract: Anthropic Messages API (live mode only)",
+    ".eccode/artifacts/design/spec.md#D3 Redaction algorithm (R11) — ARCH-10 fix **[refinement]**",
+    ".eccode/artifacts/design/spec.md#Security",
+    ".eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+    ".eccode/artifacts/design/design-vectors.js",
+    "test/helpers/fake-anthropic.js",
+    "test/helpers/fake-fetch.js",
+    "test/helpers/spawn-server.js",
+    "test/helpers/http-client.js"
+  ],
+  "dependencies": [
+    "t03-test-helpers",
+    "t13-app-wiring",
+    "t07-ui"
+  ],
+  "expectedOutput": "Three passing contract test files covering AC3, AC4 (a)-(o), AC13 timeout bound, C3 response model = configured model, AC16 with D3 additions, AC10/AC14 privacy and DES-1 isolation; PL-3 tune-eval check.",
+  "acceptanceCriteria": [
+    "triage-modes.test.js: AC3 (deep-equal, stub never called), AC4 (a)–(n) end-to-end over HTTP, AC13 timeout bound; AC4 (o) DES-1: in-process buildApp with the real globalThis.fetch and TRIAGE_ANTHROPIC_BASE_URL=http://127.0.0.1:<A>; fake-anthropic A answers 307 and, in a second case, 308 to http://localhost:<B>/v1/messages; response is 200 source fallback, fallbackReason model_error, and B received 0 requests",
+    "redaction-egress.test.js: AC16 with the D3 additions, using an hasLuhnWindow oracle re-implemented in the test from D3",
+    "privacy.test.js: AC10 with spawned servers in fallback mode (ANTHROPIC_API_KEY: '' explicit) and live mode against fake-anthropic; marker ticket and fake key never in stdout/stderr or any response; parent-env isolation case sets parent ANTHROPIC_API_KEY and TRIAGE_ANTHROPIC_BASE_URL (restored in finally) and the child reports mode fallback and baseUrlCustom false"
+  ],
+  "completedWork": "triage-modes.test.js (24 tests): AC3 unset and empty key (deep-equal, stub count 0); AC4 (a)-(l) plus a non-following 3xx stub, each 200 fallback with the mapped reason and exactly one fetch call; (m) enum normalisation; (n) thinking-first; response/health/outbound model equal the configured model even when the upstream body names another (t04 note); AC13 never() returns timeout within 300+500 ms and the signal is aborted; live mode with real fetch against fake-anthropic (C7 headers/path); AC4(o) 307 and 308 with real fetch: fallback model_error, A count 1, B count 0; PL-3 `npm run eval:tune` exits 0 or 1, no ECCODE_EVAL, last line TUNE_EVAL mode tune. redaction-egress.test.js (4 tests): oracle self-check; AC16 + ARCH-10 probes via capture stub and on the wire via fake-anthropic: (a) brief list + phone fragments absent, raw </ticket> appears only as the wrapper delimiter (and in the constant system prompt), (b) digit tokens, (c) independent hasLuhnWindow, (d) placeholders, (e) no < > between delimiters, (f) controls kept; injectionSuspected equals detector on original; logs carry counts not content; fallback after invalid_output never echoes content. privacy.test.js (5 tests): fallback spawn with ANTHROPIC_API_KEY '' and parent ANTHROPIC_API_KEY/TRIAGE_ANTHROPIC_BASE_URL/ANTHROPIC_BASE_URL set (restored in finally) -> mode fallback, baseUrlCustom false; second isolation case with an empty test env (child env is exactly PATH+PORT); ANTHROPIC_BASE_URL ignored (spawned and in-process: outbound URL stays https://api.anthropic.com/v1/messages via stub); live spawn against fake-anthropic with upstream bodies echoing the marker and key: no marker/key/base URL in stdout/stderr, no key in any response body/header, configured model reported, upstreamStatus logged as metadata. No product defects found.",
+  "filesChanged": [
+    "test/contract/triage-modes.test.js",
+    "test/contract/redaction-egress.test.js",
+    "test/contract/privacy.test.js"
+  ],
+  "evidence": [
+    "ev:ev-muyqs2hf-01e11d03",
+    "ev:ev-muyqs8mc-019452dd"
+  ],
+  "remainingIssues": [
+    "AC16 live-mode notice text (NFR4) is an inspection item, not covered by these tests.",
+    "Memory search returned only an unrelated ECCode store record (mem-d-muym8opn-0104129a); not cited."
+  ],
+  "nextAction": "orchestrator: once t14 completes, proceed to t16-readme (its npm test run covers the complete contract suite).",
+  "lessonsConsulted": []
+}
