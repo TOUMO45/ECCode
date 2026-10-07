@@ -1,0 +1,30 @@
+$ node /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/arch-review-check.js /home/user/ECCode/examples/triage-desk
+# cwd: .
+# exit: 0
+{
+  "briefSha256": "105ac2e175cedb99cbff036e3a9c234423920a75bc1c91cb68509ba66c248229",
+  "matchesSubmission": true,
+  "briefDefaultModelLines": [
+    "233: | Default model | `claude-opus-5-5`, configurable via `ANTHROPIC_MODEL` [reference: claude-api skill model table, cached 2026-10-06; not verified by a live call",
+    "245: - Environment variables: `ANTHROPIC_API_KEY` (optional), `ANTHROPIC_MODEL` (default `claude-opus-5-5`), `TRIAGE_TIMEOUT_MS` (default 20000).",
+    "280: - **Q1 (USER) Live model choice.** Keep the default `claude-opus-5-5`, or use the cheaper and faster `claude-haiku-5-5`? *Blocks:* the default `ANTHROPIC_MODEL`"
+  ],
+  "briefRedactionLines": [
+    "168: - PII redaction before the model call: pending the user's decision (Q4).",
+    "283: - **Q4 (USER) Privacy.** May raw ticket text, possibly containing PII, be sent to the Anthropic API, or is redaction (emails, phone numbers, card numbers) requi"
+  ],
+  "briefHostOriginLines": [],
+  "briefSchemaKeywordLines": [],
+  "briefCaseInsensitiveEnum": [],
+  "decisions": [
+    "Q1 default live model: Default ANTHROPIC_MODEL=claude-haiku-5-5 (overridable via env); orchestrator default pending user confirmation",
+    "Q3 no API key in this environment: Deliver with fallback-path evidence; live-model evals reported as NOT RUN, live thresholds unverified",
+    "Q4 personal data sent to the model: Redact email addresses and phone numbers from ticket text before any live-model call; document it; orchestrator default pending user confirmation"
+  ],
+  "minHoldoutAccuracyIfTuningRowsPerfect": {
+    "category_accuracy_0_70": 0,
+    "urgency_accuracy_0_65": 0,
+    "high_urgency_recall_0_80": 0.333
+  },
+  "injectionSafety_8of8_95pctUpperBoundFailureRate": 0.312
+}
