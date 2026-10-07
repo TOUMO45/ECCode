@@ -1,6 +1,6 @@
 {
-  "seq": 415,
-  "lastHash": "c38056ca11be012234d2f907d23112e72ee1d5516016d9945dd3e610b4bc3ee6",
+  "seq": 421,
+  "lastHash": "d569a8da65e017a070fdb46bde12802257ad224869b1c40f22bd6d87e730cb94",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -1451,24 +1451,29 @@
         "method": "Composition smoke tests with node:test",
         "command": "node --test test/unit/app.test.js"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "backend-engineer",
-        "at": "2026-10-07T23:19:24.390Z",
-        "baseCommit": "8f93a1608662e45d3df1a00a76af23e905aa7a03",
-        "runId": "run-muyqblkb-014d3d1c"
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "backend-engineer",
           "at": "2026-10-07T23:19:24.390Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-07T23:23:42.025Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "backend-engineer",
+      "handoffId": "ho-muyqhm42-0118420f",
+      "filesChanged": [
+        "src/app.js",
+        "src/server.js",
+        "test/unit/app.test.js"
+      ]
     },
     "t14-contract-http": {
       "id": "t14-contract-http",
@@ -4401,6 +4406,25 @@
       "task": "t13-app-wiring",
       "recordedBy": "backend-engineer",
       "at": "2026-10-07T23:22:49.851Z"
+    },
+    "ev-muyqgpjd-012ca535": {
+      "id": "ev-muyqgpjd-012ca535",
+      "kind": "command",
+      "label": "full suite: npm test",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 5862,
+      "log": ".eccode/evidence/ev-muyqgpjd-012ca535.log",
+      "logSha256": "d9a284efa10a19bcf5b47314ce933108212a748801c5ba9d8d20d482d06fa089",
+      "outputTail": "  duration_ms: 1.754011\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 377 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 3.169848\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 378 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 2.751568\n  type: 'test'\n  ...\n1..378\n# tests 382\n# suites 0\n# pass 382\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 5662.233339\n",
+      "gate": null,
+      "task": "t13-app-wiring",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T23:22:59.799Z"
     }
   },
   "reviews": {
@@ -6822,6 +6846,61 @@
       "id": "ho-muyqfwaw-01f7277b",
       "recordedBy": "test-engineer",
       "at": "2026-10-07T23:22:21.935Z"
+    },
+    "ho-muyqhm42-0118420f": {
+      "from": "backend-engineer",
+      "to": "delivery-lead",
+      "task": "t13-app-wiring",
+      "objective": "Implement the composition root src/app.js buildApp({env, fetchImpl, log}) and the entry point src/server.js per spec C6.5 / NFR10, with composition smoke tests in test/unit/app.test.js.",
+      "context": "Wires t05 redact, t06 config/log/http-server, t09 anthropic-provider, t10 service and t11 injection/fallback-provider. Fallback wiring must match the eval runner (E1). Live mode only when config.apiKey is set. No API key exists in this environment, so the live path is tested only against fake-fetch stubs (in-process) and fake-anthropic (spawned server).",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#C6.5 Composition (app.js) and entry (server.js)",
+        ".eccode/artifacts/design/spec.md#Component responsibilities",
+        ".eccode/artifacts/design/spec.md#Evaluation plan",
+        ".eccode/artifacts/design/spec.md#D1 Entities",
+        "handoffs of t05-redact, t06-http-config-log-input, t09-anthropic-provider, t10-service, t11-rules"
+      ],
+      "dependencies": [
+        "t05-redact",
+        "t06-http-config-log-input",
+        "t09-anthropic-provider",
+        "t10-service",
+        "t11-rules"
+      ],
+      "expectedOutput": "buildApp returning {config, service, server} (not listening); server.js that loads config, listens, logs listening + warnings, exits 1 on config error and 0 on SIGINT/SIGTERM.",
+      "acceptanceCriteria": [
+        "buildApp({env, fetchImpl, log}) per C6.5 returns {config, service, server} (not listening); it is the only module that requires every module; the live provider is created only when config.apiKey is set, with config.baseUrl and the injected fetchImpl",
+        "The fallback-mode service is built with exactly createTriageService({provider: null, detectInjection, fallbackAnalyse, redact}), identical to the eval runner wiring (E1)",
+        "server.js: config error -> one stderr line \"config error: <message>\" and exit 1; logs `listening` then one `warning` per config.warnings entry; SIGINT/SIGTERM -> server.close() and exit 0, forced exit after 2 s",
+        "unit/app.test.js: fallback buildApp with an explicit env (never process.env) answers GET /api/health with mode fallback and POST /api/triage with 200 whose body passes validateResponse; live mode with a fake-fetch stub returns source model; spawning server.js with HOST=0.0.0.0 via spawn-server exits 1 with a config error naming HOST"
+      ],
+      "completedWork": "src/app.js: buildApp({env = process.env, fetchImpl = globalThis.fetch, log = createLogger()}) calls loadConfig(env) (throws ConfigError), builds the fallback service with exactly createTriageService({provider: null, detectInjection, fallbackAnalyse, redact}) when config.apiKey is null, otherwise createAnthropicProvider({apiKey, model, baseUrl, timeoutMs, maxTokens} from config, fetchImpl) and createTriageService({provider, detectInjection, fallbackAnalyse, redact}); then createServer({config, service, log}) (default public/ staticDir). Returns {config, service, server}, not listening. The per-request log line is written by http-server.js (t06) from service meta; buildApp passes the same log to it. src/server.js: main() builds the app from process.env with globalThis.fetch and a stdout logger. A ConfigError prints exactly one stderr line 'config error: <message>' (the message names the variable, never its value) and sets exit code 1; any other startup error prints 'startup error: <code|name>' and exits 1; a listen error (e.g. EADDRINUSE) prints 'listen error: <code>' and exits 1. On listen it logs listening {host, port (actual bound port, so PORT=0 works), mode, model, timeoutMs, maxTokens, baseUrlCustom}, then one warning {code} per config.warnings. SIGTERM/SIGINT: server.close() then closeIdleConnections(), exit 0 on close; an unref'd 2 s timer forces exit (code 1). test/unit/app.test.js (11 tests): buildApp shape and not listening; explicit env wins over a parent process.env key; ConfigError without echoing the value; fallback HTTP health + triage (validateResponse ok, no_api_key, one request log line, no ticket content in logs); E1 equivalence vs the reference createTriageService over 4 tickets (response and meta, latency zeroed); live in-process with capture(messageOk) (source model, URL = config.baseUrl + '/v1/messages', x-api-key, redirect 'error', email redacted before egress, request log with upstreamStatus/redactions/usage, key never logged); config values (base URL, model, max tokens) reach the provider; spawned HOST=0.0.0.0 -> exit 1, one 'config error: HOST ...' stderr line not containing 0.0.0.0, empty stdout; spawned invalid TRIAGE_TIMEOUT_MS -> no value echoed; spawned fallback -> exact listening key order/values, health 200, request log, SIGTERM -> {code 0, signal null}; spawned live via fake-anthropic (dummy key, TRIAGE_ANTHROPIC_BASE_URL loopback) -> listening mode live, baseUrlCustom true, exactly one custom_base_url warning after listening, POST triage source model, fake received /v1/messages with the key and no raw email, SIGINT -> exit 0. Test-first: red run before implementation (ev:ev-muyqdta5-015d1d58). npm start smoke (ev:ev-muyqghv3-01038cad): listening line {host 127.0.0.1, mode fallback, model claude-haiku-5-5, timeoutMs 20000, maxTokens 2048, baseUrlCustom false}, GET /api/health with Host 127.0.0.1:<port> -> 200 {status ok, mode fallback, model null}, SIGTERM to the process group -> no live process within 58 ms, 0 stderr bytes. Full suite 382/382 pass (ev:ev-muyqgpjd-012ca535).",
+      "filesChanged": [
+        "src/app.js",
+        "src/server.js",
+        "test/unit/app.test.js"
+      ],
+      "evidence": [
+        "ev:ev-muyqdta5-015d1d58",
+        "ev:ev-muyqeh5v-01999e04",
+        "ev:ev-muyqghv3-01038cad",
+        "ev:ev-muyqgpjd-012ca535",
+        "ev:ev-muyqeq3m-01bde381",
+        "ev:ev-muyqevuo-01f19e86"
+      ],
+      "remainingIssues": [
+        "npm start signal forwarding (found by the smoke runs, failed evidence ev:ev-muyqeq3m-01bde381 and ev:ev-muyqevuo-01f19e86): /bin/sh is dash, which does not exec the single command of 'sh -c node src/server.js'. When only the npm process gets SIGTERM (as some process managers do), npm signals sh, sh dies and node src/server.js is orphaned and keeps listening. Signalling the process group (terminal Ctrl-C, or kill -- -pgid) works: the server exits 0 within ~60 ms. A fix is outside this task's globs: package.json \"start\": \"exec node src/server.js\" (or running node src/server.js directly). Recommend t16 (README/package.json owner) apply it or document 'node src/server.js' for process managers.",
+        "The 2 s forced exit uses exit code 1 (spec says 'force exit after 2 s' without a code). Interpretation: a forced exit means connections were still open, so it is reported as non-zero. Not exercised by a test (would need a stalled in-flight request); the clean path (exit 0) is tested for SIGTERM and SIGINT.",
+        "In this sandbox an orphaned process lingers as a zombie until PID 1 (/process_api) reaps it, so 'kill -0' polling overstates shutdown time (~1.8 s observed). /proc state showed Z within 200 ms. Not a server issue; noted so later timing checks use /proc state, not kill -0.",
+        "Process note: files src/app.js, src/server.js and an earlier version of .eccode/drafts/t13-npm-start-smoke.js were included in commit 2423ea9 ('Demo: t12 held-out hygiene done') by the orchestrator's commit while this task was in progress. Content is this task's work; ownership unchanged.",
+        "Not tested: a real Anthropic API call (no key). The live evidence is about the wiring against fake-fetch and fake-anthropic, not about model behaviour (RISK-7 stays open).",
+        "Not tested here: AC4 (o) redirect end-to-end with real globalThis.fetch against fake-anthropic 307/308, contract/http tests via buildApp, and the AC16 outbound-body check with card/phone/</ticket> markers: these are t14/t15 contract tests. app.test.js covers email redaction before egress only."
+      ],
+      "nextAction": "test-engineer: t14/t15 contract tests (http, http-guard, triage-modes incl. AC4 (o) redirect with real fetch, redaction-egress AC16, privacy parent-env isolation) against buildApp and spawnServer; delivery-lead/t16 owner: change package.json start to 'exec node src/server.js' or document direct node for process managers.",
+      "lessonsConsulted": [],
+      "id": "ho-muyqhm42-0118420f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T23:23:42.046Z"
     }
   },
   "runs": {
@@ -7379,6 +7458,20 @@
       "task": "t13-app-wiring",
       "gate": null,
       "startedAt": "2026-10-07T23:19:01.365Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T23:24:10.790Z",
+      "durationMinutes": 5.16,
+      "costUsd": 0,
+      "tokens": 139681,
+      "note": null
+    },
+    "run-muyqi8fs-0157865b": {
+      "id": "run-muyqi8fs-0157865b",
+      "agent": "delivery-lead",
+      "task": null,
+      "gate": "phase:rules-and-wiring",
+      "startedAt": "2026-10-07T23:24:10.946Z",
       "status": "running",
       "attempt": 1
     }
@@ -7483,6 +7576,16 @@
       "status": "mitigated",
       "updatedAt": "2026-10-07T23:01:18.778Z",
       "updatedBy": "orchestrator"
+    },
+    "RISK-11": {
+      "id": "RISK-11",
+      "title": "npm start under dash does not exec node: SIGTERM to npm alone orphans the server",
+      "severity": "medium",
+      "mitigation": "Document running 'node src/server.js' directly under process managers (t16 README); change start script to 'exec node src/server.js' in a later revision (package.json is owned by approved phase foundation)",
+      "owner": "devops-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T23:24:10.871Z",
+      "updatedBy": "orchestrator"
     }
   },
   "decisions": {
@@ -7550,8 +7653,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 179.77,
-    "tokens": 5105749
+    "runtimeMinutes": 184.93,
+    "tokens": 5245430
   },
   "delivery": null
 }
