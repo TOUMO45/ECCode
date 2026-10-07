@@ -1,0 +1,30 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "t05-redact",
+  "objective": "Implement src/triage/redact.js: redact(text) -> {text, counts:{email, card, phone}} per spec D3 / R11 (email -> Luhn group-window card scan (ARCH-10) -> bounded phone), pure, with unit tests carrying the binding design vectors and the DES-4 timing budget.",
+  "context": "Contract: spec C6.3 redact.js signature; algorithm: spec D3 (ARCH-10 group-aligned sub-window Luhn scan, DES-7 NBSP/TAB separators, {6,14} bounded phone pattern, ISO-date exclusion, DES-4 non-linear cost with 200 ms median-of-3 budget). Implementation follows the approved reference redact() in design-vectors.js exactly (same regexes, same window scan, same placeholder joining). Non-string input throws TypeError (the reference would also throw a TypeError on .replace). No memory records matched 'redact regex luhn performance'.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#D3 Redaction algorithm (R11) — ARCH-10 fix **[refinement]**",
+    ".eccode/artifacts/design/spec.md#C6.3 Triage domain modules",
+    ".eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+    ".eccode/artifacts/design/design-vectors.js"
+  ],
+  "dependencies": ["t01-scaffold"],
+  "expectedOutput": "src/triage/redact.js exporting { redact } (pure; counts only, content never logged) and test/unit/redact.test.js, ready for t13-app-wiring (triage service applies redact() before neutralise() in live mode) and t11-rules.",
+  "acceptanceCriteria": [
+    "redact(text) -> {text, counts:{email, card, phone}} implementing D3 in order (emails, Luhn group-window cards, bounded phones); pure",
+    "unit/redact.test.js runs CARD_CASES and PHONE_CASES from .eccode/artifacts/design/design-vectors.js verbatim (incl. NBSP/tab separators and the adjacent-card collapse), the AC16 ticket, and per-class counts",
+    "ADVERSARIAL_INPUTS (6 x 8,000 chars): median of 3 runs < REDACT_BUDGET_MS (200 ms) for each input (DES-4)"
+  ],
+  "completedWork": "src/triage/redact.js implements D3: EMAIL regex -> [REDACTED_EMAIL]; digit runs (single space/NBSP/TAB/hyphen separators) split into groups, every group-aligned 13-19 digit window Luhn-checked, each maximal marked stretch replaced by one [REDACTED_CARD] (single group > 19 digits is atomic); bounded PHONE regex with 7-15 digit and ISO-date checks -> [REDACTED_PHONE]; returns fresh {email, card, phone} counts; TypeError on non-string. test/unit/redact.test.js (43 tests, node:test) copies CARD_CASES, PHONE_CASES (incl. DES-7 pushes), ADVERSARIAL_INPUTS, REDACT_BUDGET_MS, the AC16 ticket/MUST_NOT_APPEAR list and the luhn/hasLuhnWindow/digitTokens oracles verbatim; adds AC16 + ARCH-10 additions, adjacent-card collapse count (1), per-class counts, order (email before card before phone), atomic >19-digit group, date/version controls, purity and TypeError checks, and the DES-4 timing tests with per-run diagnostics. Test-first: failing run ev:ev-muyp2zyv-017a59c3 (module missing) before implementation. Measured medians (ev:ev-muyp3uet-01842bab, Node 22, median of 3 runs): email_localpart_no_at 32.55 ms, email_domain_no_tld 33.33 ms, phone_digits_dots 37.14 ms, digits_only 35.96 ms, digit_nbsp 4.16 ms, card_worst_design 0.62 ms; all < 200 ms. Differential check against the approved reference redact() over 20,000 seeded random inputs: 0 mismatches in text or counts and no Luhn window left (ev:ev-muyp3uzo-01869d88; script .eccode/drafts/t05-redact-differential.js).",
+  "filesChanged": ["src/triage/redact.js", "test/unit/redact.test.js"],
+  "evidence": ["ev:ev-muyp2zyv-017a59c3", "ev:ev-muyp3uet-01842bab", "ev:ev-muyp3uzo-01869d88"],
+  "remainingIssues": [
+    "The '</ticket>' marker from the brief's AC16 list is not removed by redact(); it is removed by neutralise() (R12(e), prompt.js). The unit test asserts redact() leaves it intact; the end-to-end AC16 check on the outbound body belongs to the integration test after t13-app-wiring.",
+    "Accepted per spec D3/RISK-9 (unchanged): two adjacent cards in one digit run collapse to one placeholder (counts.card = 1); IPv4 addresses and date+time are over-redacted as phones; dotted/double-spaced cards and digits glued to letters are under-redacted.",
+    "DES-4 timings are wall-clock on this machine; the 200 ms budget has ~5x margin over the measured ~33-37 ms worst medians, but a heavily loaded CI host could approach it."
+  ],
+  "nextAction": "backend-engineer (t13-app-wiring): call redact() in the triage service after the no-key fallback branch and before neutralise(), log only result.counts, and run the AC16 capturing-fetch integration test on the outbound body.",
+  "lessonsConsulted": []
+}

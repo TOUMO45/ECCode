@@ -1,0 +1,47 @@
+{
+  "from": "frontend-engineer",
+  "to": "delivery-lead",
+  "task": "t07-ui",
+  "objective": "Build the single-page UI in public/ (index.html, app.js, styles.css) exactly per spec §Frontend / Accessibility, C2, C3, C5, C6.6 and D1.5, and node:test coverage in test/unit/ui.test.js (AC5, AC6, AC11, AC15, AC16 notice).",
+  "context": "Contracts: C6.6 (four helpers exported under Node only, DOM wiring only when document exists), C2 health body {status, mode, model}, C3 request {ticket} and the 8-key TriageResponse, C5 error codes mapped to the §Frontend error table, D1.5 reason texts, NFR4 notice text (brief), CSP from C1 (no inline script/style, so state uses the hidden attribute and classes). Zero dependencies, vanilla JS, CommonJS-compatible classic script. Memory search ('frontend ui textContent xss accessibility aria-live vanilla') returned only mem-d-muym8opn-0104129a (event-sourced snapshot divergence), which is unrelated to this UI, so nothing was cited.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#Frontend / Accessibility",
+    ".eccode/artifacts/design/spec.md#C2 `GET /api/health` (also HEAD)",
+    ".eccode/artifacts/design/spec.md#C3 `POST /api/triage`",
+    ".eccode/artifacts/design/spec.md#C5 Error codes (complete list)",
+    ".eccode/artifacts/design/spec.md#C6.6 Browser helpers (public/app.js, exported only under Node)",
+    ".eccode/artifacts/design/spec.md#D1 Entities",
+    ".eccode/artifacts/design/spec.md#Security",
+    ".eccode/artifacts/architecture/brief.md#NFR4 / NFR6 / AC5 / AC6 / AC11 / AC15 / AC16",
+    ".eccode/artifacts/plan/plan.md"
+  ],
+  "dependencies": ["t01-scaffold"],
+  "expectedOutput": "public/index.html, public/app.js, public/styles.css and test/unit/ui.test.js; `node --test test/unit/ui.test.js` passes.",
+  "acceptanceCriteria": [
+    "C6.6 helpers exported under Node only: sourceLabel, fallbackReasonText, errorMessage, modeBadgeText with the exact strings (incl. \"not AI-generated\" for all 6 fallback reasons and \"Mode unknown (health check failed)\")",
+    "Static checks in ui.test.js: no HTML sinks in public/ (only textContent; AC11), fetch targets only /api/triage and /api/health (AC6), index.html has labels and an aria-live region",
+    "All UI states in §Frontend are implemented; the AC16 privacy notice text is present; the reply is editable and copyable (AC6, inspected at verification)"
+  ],
+  "completedWork": "index.html follows the §Frontend element list verbatim (ids, label texts, maxlength 8000, aria-describedby, role=status badge with 'Checking mode…', #status aria-live=polite, #result section aria-labelledby, hidden live notice with the exact NFR4 text, hidden injection warning with the exact text, dl Category/Urgency/Summary, editable #reply textarea with its label, native Copy reply/Reset buttons); one deferred /app.js script and one /styles.css link, no inline script, style or on* attributes. app.js: the four C6.6 helpers (exact strings; sourceLabel labels anything whose source is not 'model' as 'Deterministic fallback — not AI-generated (reason: <code> — <text>)'; unknown codes get 'unknown reason'; modeBadgeText returns the unknown text for null or an unrecognised mode), exported only when `module` exists; DOM wiring only when `document` exists. Wiring implements every §Frontend state: idle; client validation (empty/whitespace → no request, 'Paste a ticket before analysing.', focus stays on #ticket); loading (button disabled, aria-busy=true on the form, 'Analysing…', re-submission blocked incl. Ctrl+Enter); success (all fields via textContent, #reply.value and the original kept, warning shown iff injectionSuspected, status 'Analysis complete: category <c>, urgency <u>. <source label>.'); error (errorMessage(status, error.code) or status 0 on a network throw; previous result hidden; ticket kept; a 2xx with a non-TriageResponse body is treated as a server error); copy (navigator.clipboard.writeText(reply.value), success/failure texts, failure focuses and selects the reply); reset (reply.value = original). Health: one GET /api/health on load; non-2xx, network error, bad JSON or an unknown mode give 'Mode unknown (health check failed)'; the live notice is shown only for mode live. Counter 'n / 8000 characters' on input. Ctrl+Enter / Cmd+Enter submit. Network: only fetch('/api/health') and fetch('/api/triage', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ticket: value})}) with relative URLs and no credentials option. Client state is only {busy, original, health}; no storage. styles.css: colour tokens on :root with the spec values, 3px solid #1a5fb4 focus-visible outline with 2px offset, [hidden]{display:none !important}, bordered warning, single-column layout with 16px gutters and 100% wide textareas, #status min-height to avoid layout shift, dl collapses to one column under 30rem. ui.test.js (25 tests): helper strings (all 6 reasons, error table incl. 0/403/413/415/other, badge texts), exact export set; static checks (public/ has exactly the 3 C4 files; no innerHTML/outerHTML/insertAdjacentHTML/document.write/eval/new Function/DOMParser/createContextualFragment/srcdoc/string timers; CSP-safe HTML; fetch targets only the two endpoints and no XHR/WebSocket/EventSource/sendBeacon/dynamic import/external resources; all §Frontend elements, label/for pairs, ARIA id references, no positive tabindex; verbatim NFR4 notice and warning text; WCAG contrast computed from the CSS tokens); DOM behaviour run in node:vm against a fake DOM built from index.html's ids (fails if app.js looks up an id that index.html lacks): health live/fallback/failure, counter, client validation and focus, request shape, busy state and blocked re-submission, success rendering for model and fallback+injection (with an HTML-looking summary kept as text), 9 error responses, Ctrl/Cmd+Enter vs plain Enter, edit/copy/reset, copy failure (rejected and missing clipboard). Failing-first run before public/ existed: ev:ev-muyp0usd-0198e6d8 (ev:ev-muyp0s5r-013108a6 is a harness mistake: `cd` into a relative path that does not exist from the project root; it ran no tests). Mutation check: 11 deliberate regressions of public/ (HTML sink, label wording, external fetch, busy guard, error-state hiding, badge contrast, live region, reply label, reset, NFR4 notice, injection warning) each make ui.test.js fail (ev:ev-muyp2wc9-01fd37a7; script .eccode/drafts/t07-ui-mutation-check.sh, works on temp copies). Contrast computed from the CSS tokens (WCAG 2.x formula; the test asserts the minimums): body text 17.40:1, fallback badge 12.01:1, warning 11.46:1, live badge 10.55:1, unknown badge 10.69:1, muted hint 8.86:1, notice text on surface 15.96:1, button 6.29:1, disabled button 5.51:1; non-text: focus ring 6.29:1, borders 5.33:1, warning border 6.61:1.",
+  "filesChanged": [
+    "public/index.html",
+    "public/app.js",
+    "public/styles.css",
+    "test/unit/ui.test.js"
+  ],
+  "evidence": [
+    "ev:ev-muyp0usd-0198e6d8",
+    "ev:ev-muyp2upp-01c034ee",
+    "ev:ev-muyp2wc9-01fd37a7",
+    "ev:ev-muyp3114-017772b9"
+  ],
+  "remainingIssues": [
+    "Not tested in a real browser: no browser is available in this environment. The DOM behaviour is verified against a fake DOM in node:vm; keyboard-only Tab order, visible focus rendering, screen-reader announcement of #status, clipboard permission behaviour and the 360px layout need the AC15 inspection checklist at verification (AC6 and AC15 are [I] criteria).",
+    "Not tested end-to-end against the real server: src/app.js and the static routes (t06, in progress concurrently) were not available, so the C4 Content-Type/CSP delivery of these files is unverified here (covered by t14 contract tests).",
+    "Interpretation, not a deviation: the 403 message keeps the literal placeholder text '(http://127.0.0.1:<port>)' exactly as the §Frontend table writes it, because C6.6 fixes the signature errorMessage(status, code) with no port input. If the designer intended the actual port to be substituted, the contract needs a port parameter; flag for technical-designer.",
+    "Additions within the contract: dd ids result-category/result-urgency/result-summary (the spec names the dl but no ids), CSS classes on the badge and source label for colour, a hint class, and reply focus+select on copy failure. The unknown-reason label text 'unknown reason' is not specified by D1.5 (the server never sends an unknown code per C3).",
+    "Full-suite regression ev:ev-muyp3114-017772b9 FAILED only because test/unit/redact.test.js cannot find src/triage/redact.js (another task's file, not yet written); 216 of 217 tests pass, including ui.test.js."
+  ],
+  "nextAction": "test-engineer (t14/t15): serve public/ through the real http-server in the contract tests; verification gate: run the AC6/AC15 inspection checklist in a browser at 360px and with keyboard only (Tab, Enter, Ctrl+Enter) and a screen reader for the #status announcements.",
+  "lessonsConsulted": []
+}
