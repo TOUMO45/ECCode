@@ -31,11 +31,18 @@
       "at": "2026-10-07T22:26:17.855Z"
     }
   },
-  "status": "evaluated",
+  "status": "approved",
   "proposedBy": "learning-debugger",
   "proposedAt": "2026-10-07T22:26:13.585Z",
   "baseSha256": "a75c0fcbd7652c27327917323c1a507d997ece83bc8209e4d566827af8d67e1f",
-  "reviews": [],
+  "reviews": [
+    {
+      "at": "2026-10-07T22:28:00.798Z",
+      "by": "architecture-reviewer",
+      "decision": "approve",
+      "notes": "Independent review. (1) Diff: wrote proposal change.content to a scratch file outside the repo and diffed against skills/review-gate/SKILL.md (sha256 a75c0fcb... = baseSha256, unchanged): pure additions (one paragraph after the step-4 example, one approving re-review JSON block under step 5); frontmatter, refusal list, changes_requested example, severity guide and anti-patterns preserved verbatim. New text checked against schemas/review.schema.json (decision enum [approve, changes_requested], resolvedFindings requires id/resolution>=10/evidence>=1, findings[] allowed empty) and lib/gates.js checkReview (approve: all criteria met with evidence, no open blocking/major, earlier findings in resolvedFindings, phase approvals cite a reviewer-run passing check after submission; changes_requested needs a blocking/major finding) and lib/schema.js error format (`$.decision: must be one of approve, changes_requested (got ...)`): consistent. The approving example is a phase gate (PH1) so artifact: refs to any project file are allowed and ev-ghi789 is described as the reviewer's post-resubmission check, matching the engine. No rule loosened: schema, engine and templates/review.json untouched; placeholder stays invalid. (2) Eval: read .eccode/drafts/eval-review-gate-skill.js; baseline rerun ev:ev-muyohc5x-019c2fa6 = 4/7 (a,b,b2 fail; regressions c-f pass), candidate on scratch copy via REVIEW_GATE_SKILL_PATH ev:ev-muyohc8k-01d6cf5a = 7/7, matching recorded ev-muyofsis-01bceee7 / ev-muyofsl7-01e5e4d6. Mutation sensitivity ev:ev-muyohlgk-01800691 and ev:ev-muyohpoc-013d7390: 'approved' in example, unmet criterion in approval, missing resolvedFindings, dropped changes_requested example, renamed heading, and removed refusal wording each turn the relevant case to FAIL, so the cases are not vacuous. Limits (non-blocking): (f) checks frontmatter+headings only, not body text (covered here by the diff); b2 approximates checkReview without state, so it cannot check the reviewer-run-check rule; exit code depends only on regression cases (the engine's passed-count comparison covers representative ones). (3) Proportionality: two occurrences, cause inferred (lesson confidence low, verified by security-reviewer), docs-only additive change costing ~25 lines with no behavioural or permission impact - proportionate; effect should be measured by decision-enum review.rejected counts later. Note: the proposal's observation cites ev:ev-muyo96d3-01a13297, which resolves in examples/triage-desk's record, not this toolkit record (provenance, not a defect). Adoption remains the user's decision."
+    }
+  ],
   "history": [
     {
       "at": "2026-10-07T22:26:13.586Z",
@@ -53,6 +60,11 @@
       "by": "learning-debugger",
       "event": "evaluated:candidate",
       "evidence": "ev-muyofsl7-01e5e4d6"
+    },
+    {
+      "at": "2026-10-07T22:28:00.798Z",
+      "by": "architecture-reviewer",
+      "event": "approve"
     }
   ]
 }
