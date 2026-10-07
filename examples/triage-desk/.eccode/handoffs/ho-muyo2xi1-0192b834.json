@@ -1,0 +1,43 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "plan",
+  "objective": "Re-review the TriageDesk delivery plan (plan gate, submission sub-muyo2cvo-017a28b9), which responds to rev-muynzxmn-01519250 (PLAN-1..PLAN-4).",
+  "context": "Iteration 1 was valid and complete. It was sent back for two majors: t16 could run npm test while t15 was still in progress (PLAN-1), and the three plan check scripts were not pinned (PLAN-2). It also had two minors: t17's && chain (PLAN-3), and t07 dependencies plus the third DES-8 vector (PLAN-4). The orchestrator is separately tightening the toolkit so that task completion allows edits only under .eccode/drafts/**, not anywhere under .eccode/**.",
+  "inputs": [
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/plan/plan.md",
+    ".eccode/artifacts/plan/checks/dataset-precheck.js",
+    ".eccode/artifacts/plan/checks/scaffold-check.js",
+    ".eccode/artifacts/plan/checks/readme-check.js",
+    ".eccode/reviews/rev-muynzxmn-01519250.json"
+  ],
+  "dependencies": [
+    "design gate approved (rev-muynhokz-01357080)"
+  ],
+  "expectedOutput": "A plan-gate review (approve or changes_requested) of sub-muyo2cvo-017a28b9 with evidence-backed criteria.",
+  "acceptanceCriteria": [
+    "PLAN-1: t16-readme depends on t13, t14 and t15; plan.md waves are t14 ∥ t15, then t16, then t17; t16's criterion says its npm test covers the complete contract suite",
+    "PLAN-2: the three check scripts are submission artifacts; every phase has a criterion that .eccode/artifacts/plan/checks/** is unmodified and that the reviewer confirms the sha256 values before relying on script output; t01, t02 and t16 must not modify the checks; the phase submission routine checks the hashes first",
+    "PLAN-3: t17's verification is three separately recorded eccode evidence run steps, with the full-mode eval run exactly once",
+    "PLAN-4: t07-ui is in the t14 and t15 dependencies; the core-modules DES-8 criterion lists all three reject vectors",
+    "eccode plan validate still passes"
+  ],
+  "completedWork": "plan.json: added t14 and t15 to t16's dependencies and reworded t16's command criterion (PLAN-1). Added a pinned-instruments criterion with the three sha256 values to all five phases, and a no-modify criterion to t01, t02 and t16 (PLAN-2). Replaced t17's && chain with three separately recorded evidence-run steps, and reworded the design-vectors criterion (PLAN-3). Added t07-ui to the t14 and t15 dependencies, and added the Arabic-Indic digit vector to the core-modules DES-8 criterion (PLAN-4). plan.md: added an iteration-2 change table; a sha256 column and a pinning rule to the check-script table (the dataset-precheck row also said t17 uses the script, which t17 never did, so that is corrected); updated the wave table, the task table, the integration rationale and the critical path; added a hash-check step to the phase submission routine. The check scripts themselves are unchanged from iteration 1.",
+  "filesChanged": [
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/plan/plan.md"
+  ],
+  "evidence": [
+    "ev:ev-muyo2k5r-01b27283",
+    "ev:ev-muyo2k7m-01ccdcf0"
+  ],
+  "remainingIssues": [
+    "Until the orchestrator's toolkit change lands (task completion limited to .eccode/drafts/**), the protection of .eccode/artifacts/plan/checks/** rests on the plan criteria and the per-phase sha256 check, not on the engine.",
+    "t14 and t15 now depend on t07-ui. That dependency is already satisfied by phase order, so the schedule is unchanged. t16 now runs after t14 and t15, which puts it on the integration critical path (t15 → t16 → t17)."
+  ],
+  "nextAction": "technical-reviewer: review submission sub-muyo2cvo-017a28b9 against rev-muynzxmn-01519250. Re-run eccode plan validate and sha256sum on the three check scripts, and compare the results with the hashes in plan.md and plan.json.",
+  "lessonsConsulted": [
+    "Iteration 1 memory searches (planning node / parallel tasks ownership plan / planning): no records; no lesson cited"
+  ]
+}

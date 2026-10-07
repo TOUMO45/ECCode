@@ -1,6 +1,6 @@
 # TriageDesk — Delivery Plan
 
-Author: delivery-lead · Date: 2026-10-07 · Gate: plan (iteration 1)
+Author: delivery-lead · Date: 2026-10-07 · Gate: plan (iteration 2, responds to rev-muynzxmn-01519250)
 
 Approved inputs:
 - Brief `.eccode/artifacts/architecture/brief.md`, approved in rev-muym9m4g-01831212.
@@ -10,13 +10,28 @@ Machine-readable plan: `plan.json`. `eccode plan validate` reports it valid with
 
 Companion check scripts, written by delivery-lead and run from the project root:
 
-| Script | Used by | What it checks |
-|---|---|---|
-| `checks/scaffold-check.js` | t01 | `package.json` is exactly the §Deployment object. `.env.example` and `.gitignore` have the required lines. |
-| `checks/dataset-precheck.js` | t02, t17 | Before the freeze: the D5 format rules, every `datasetMinimums` key, the six named in-family attack families, held-out families appearing only in `holdout.json`, and at least 15 attack rows with a target. It prints only ids, rule names and counts. It opens `holdout.json`, so the rules author must never run it. |
-| `checks/readme-check.js` | t16 | A minimum bar for README coverage, plus the DES-1 and DES-6 warnings. |
+| Script | Used by | sha256 (pinned with this submission) | What it checks |
+|---|---|---|---|
+| `checks/scaffold-check.js` | t01, foundation review | `e1fde7f948af3fc7f50bd2b6ce033d6ab84455bbdb833e8c5c381d9ed0b6b647` | `package.json` is exactly the §Deployment object. `.env.example` and `.gitignore` have the required lines. |
+| `checks/dataset-precheck.js` | t02, foundation review | `c59b7acda3faa36964f9c9d7ce8aa22fe74a6f92c1eda2d142fa916d721c56f9` | Before the freeze: the D5 format rules, every `datasetMinimums` key, the six named in-family attack families, held-out families appearing only in `holdout.json`, and at least 15 attack rows with a target. It prints only ids, rule names and counts. It opens `holdout.json`, so the rules author must never run it. |
+| `checks/readme-check.js` | t16, integration review | `a9a0128f80af2b468446294320eb8b8117b898d51f8a09607fcb69134d683993` | A minimum bar for README coverage, plus the DES-1 and DES-6 warnings. |
 
 All three scripts were run against synthetic passing and failing fixtures in the scratchpad: passing fixtures give exit 0, failing fixtures give exit 2 or 1 with the expected rule names.
+
+**Pinning rule (PLAN-2).** The three scripts are submitted as artifacts of this plan gate, so their sha256 values above are recorded with the submission and reviewed together with the plan.
+- **No task may modify `.eccode/artifacts/plan/checks/**`.** No task owns that path. t01, t02 and t16, the tasks the scripts verify, carry this as an explicit acceptance criterion. If a check fails, the task fixes its own files or escalates. It never changes the check. The toolkit is also being tightened so that task completion allows edits under `.eccode/drafts/**` only, not anywhere under `.eccode/**`. Until that lands, the rule is enforced by the hash check below.
+- **Every phase reviewer verifies the hashes before relying on any check-script output.** Each phase has an acceptance criterion that requires `sha256sum .eccode/artifacts/plan/checks/*.js` to equal the three values above. A mismatch fails the phase. Only a new plan submission, with a new plan review, can change the scripts.
+
+### Changes in iteration 2 (rev-muynzxmn-01519250)
+
+| Finding | Severity | Change |
+|---|---|---|
+| PLAN-1 | major | `t16-readme.dependencies` now includes `t14-contract-http` and `t15-contract-modes-privacy`. The integration waves are t14 ∥ t15, then t16, then t17. The t16 criterion states that its `npm test` run covers the complete contract suite. |
+| PLAN-2 | major | The three check scripts are submitted as plan artifacts, and their sha256 values are listed above. Every phase has a criterion that the scripts are unmodified and that the reviewer confirms the hashes before relying on any script output. t01, t02 and t16 must not modify `.eccode/artifacts/plan/checks/**`. The phase submission routine checks the hashes first. |
+| PLAN-3 | minor | t17's verification is three separately recorded `eccode evidence run` steps, not an `&&` chain. Step 2, the full-mode eval, runs exactly once, and step 3 runs whatever step 2's exit code is. |
+| PLAN-4 | info | t07-ui was added to the t14 and t15 dependencies, because their tests need `public/`. The core-modules DES-8 criterion now lists all three reject vectors, including "Go to ١asp.net now." (Arabic-Indic digit). |
+
+`eccode plan validate` still reports the plan valid: 5 phases, 17 tasks.
 
 ---
 
@@ -30,7 +45,7 @@ Each phase is a gate (`phase:<id>`). In ECCode a phase gate can start only after
 | 2 | `core-modules` | t04, t05, t06, t07 | 4 | t06 ∥ t04 (the longest two), then t05 ∥ t07 |
 | 3 | `pipeline` | t08, t09, t10 | 3 | t08 ∥ t09, then t10 |
 | 4 | `rules-and-wiring` | t11 → (t12 ∥ t13) | 1, then 2 | t11 alone, then t12 ∥ t13 |
-| 5 | `integration` | (t14 ∥ t15 ∥ t16) → t17 | 3, then 1 | t14 ∥ t15, then t16, then t17 |
+| 5 | `integration` | (t14 ∥ t15) → t16 → t17 | 2, then 1, then 1 | t14 ∥ t15, then t16, then t17 |
 
 ### Task table
 
@@ -49,12 +64,12 @@ Each phase is a gate (`phase:<id>`). In ECCode a phase gate can start only after
 | t11-rules | rules-and-wiring | ai-engineer | t02, t04, t05, t06, t08, t10 | `src/triage/injection.js`, `src/triage/fallback-provider.js`, `test/unit/injection.test.js`, `test/unit/fallback-provider.test.js` | 10 + 11 (+DES-10) |
 | t12-heldout-hygiene | rules-and-wiring | test-engineer | t02, t11 | `test/eval/heldout-hygiene.test.js`, `test/eval/hygiene-fixtures/**` | 14 (part) |
 | t13-app-wiring | rules-and-wiring | backend-engineer | t05, t06, t09, t10, t11 | `src/app.js`, `src/server.js`, `test/unit/app.test.js` | 13 |
-| t14-contract-http | integration | test-engineer | t03, t13 | `test/contract/{http,http-guard,package,perf}.test.js` | 14 (part) |
-| t15-contract-modes-privacy | integration | test-engineer | t03, t13 | `test/contract/{triage-modes,redaction-egress,privacy}.test.js` | 14 (part) |
-| t16-readme | integration | devops-engineer | t13 | `README.md` | 15 |
+| t14-contract-http | integration | test-engineer | t03, t07, t13 | `test/contract/{http,http-guard,package,perf}.test.js` | 14 (part) |
+| t15-contract-modes-privacy | integration | test-engineer | t03, t07, t13 | `test/contract/{triage-modes,redaction-egress,privacy}.test.js` | 14 (part) |
+| t16-readme | integration | devops-engineer | t13, t14, t15 | `README.md` | 15 |
 | t17-verification-run | integration | delivery-lead | t08, t12, t13, t14, t15, t16 | `.eccode/artifacts/verification/**` | 16 |
 
-Every file in the spec's directory tree has exactly one owning task. `plan.json` lists exact paths (no brace globs). The ownership globs of tasks that can run at the same time are disjoint: `eccode plan validate` reports no ownership warnings. Each task's `verification.command` runs only that task's own test files (or plan check), so a subagent is never failed by another subagent's half-finished files. Delivery-lead runs the whole suite (`npm test`) at each phase submission.
+Every file in the spec's directory tree has exactly one owning task. `plan.json` lists exact paths (no brace globs). The ownership globs of tasks that can run at the same time are disjoint: `eccode plan validate` reports no ownership warnings. Each task's `verification.command` runs only that task's own test files (or plan check), so a subagent is never failed by another subagent's half-finished files. The one task that runs the whole suite inside a phase, t16 (it runs every documented command, `npm test` included), depends on t14 and t15, so it starts only after the contract tests are done. Delivery-lead runs the whole suite (`npm test`) at each phase submission.
 
 ---
 
@@ -73,6 +88,9 @@ Every file in the spec's directory tree has exactly one owning task. `plan.json`
 3. **pipeline.** These are the layers that consume `schema.js`: the eval runner, the provider and the service. Everything is tested with stubs and synthetic fixtures. No real `holdout.json` read and no full-mode run is possible yet.
 4. **rules-and-wiring.** The rules task needs a runnable `npm run eval:tune`, which needs t05, t06, t08 and t10. All of those are approved in earlier phases, so DES-2 and DES-10 are enforced by the dependency graph and the gate order. The hygiene guard runs right after the rules are written, so a held-out overlap is caught while the finding still maps to t11 in the same phase. The app wiring closes the phase with a runnable server.
 5. **integration.** These are the end-to-end contract tests and the README. Then comes the first full-mode evaluation, in t17, and nowhere before it.
+   - The README task (t16) runs every documented command, `npm test` included. That is why it waits for both contract-test tasks (t14, t15).
+   - t14 and t15 declare t07 (UI) as a dependency, because their HTTP and spawned-server tests serve `public/`. Before this change that need was met only by phase order.
+   - t17 records three separate evidence steps (`npm test`, `npm run eval` exactly once, `design-vectors.js`), not one `&&` chain. A missed holdout floor in step 2 does not stop step 3, and it never forces a second full-mode run.
 
 ### Deviations from the spec's suggested workflow (and why)
 
@@ -115,7 +133,7 @@ Net task count: 17. The spec has 16: one merge (+0 −1) and two splits (+2).
 
 Gates are sequential, so the critical path is the sum of the longest chain inside each phase plus four phase reviews:
 
-`t02 (dataset + freeze)` → review → `t06` → review → `t08` → review → `t11 (rules, tune loop)` → `t13` → review → `t15` → `t17`
+`t02 (dataset + freeze)` → review → `t06` → review → `t08` → review → `t11 (rules, tune loop)` → `t13` → review → `t15` → `t16` → `t17`
 
 - **Longest single task:** t11. It tunes detector and fallback rules until 8/8 tune checks pass.
 - **Second longest:** t02. It authors about 120 synthetic rows to the minimums.
@@ -144,10 +162,11 @@ Both are on the critical path and have one owner each.
 
 For each phase:
 1. Check that every task in the phase is `done`.
-2. Run `npm test` from the project root with `eccode evidence run`.
-3. From phase 4 on, also run `npm run eval:tune`.
-4. Submit with `eccode gate submit phase:<id> --actor delivery-lead`. The changed files come from the task handoffs.
-5. If changes are requested, map each finding to the task that owns the affected file, using the task table above, and report the mapping to the orchestrator for `eccode task reset`.
+2. Run `sha256sum .eccode/artifacts/plan/checks/*.js` with `eccode evidence run` and confirm the three values in the check-script table. On a mismatch, stop and escalate, and do not submit.
+3. Run `npm test` from the project root with `eccode evidence run`.
+4. From phase 4 on, also run `npm run eval:tune`.
+5. Submit with `eccode gate submit phase:<id> --actor delivery-lead`. The changed files come from the task handoffs.
+6. If changes are requested, map each finding to the task that owns the affected file, using the task table above, and report the mapping to the orchestrator for `eccode task reset`.
 
 ## Release checklist (draft, finalised in t17 as `.eccode/artifacts/verification/release-checklist.md`)
 
