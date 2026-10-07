@@ -1,0 +1,277 @@
+$ node --test test/unit/redact.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: exports redact as a function
+ok 1 - exports redact as a function
+  ---
+  duration_ms: 1.111863
+  type: 'test'
+  ...
+# Subtest: returns {text, counts:{email, card, phone}} with zero counts for clean text
+ok 2 - returns {text, counts:{email, card, phone}} with zero counts for clean text
+  ---
+  duration_ms: 1.700333
+  type: 'test'
+  ...
+# Subtest: empty string is returned unchanged with zero counts
+ok 3 - empty string is returned unchanged with zero counts
+  ---
+  duration_ms: 0.165394
+  type: 'test'
+  ...
+# Subtest: is pure: repeated calls give equal results and fresh count objects
+ok 4 - is pure: repeated calls give equal results and fresh count objects
+  ---
+  duration_ms: 0.927764
+  type: 'test'
+  ...
+# Subtest: rejects non-string input with a TypeError
+ok 5 - rejects non-string input with a TypeError
+  ---
+  duration_ms: 0.402751
+  type: 'test'
+  ...
+# Subtest: AC16 ticket: markers removed, controls kept, per-class counts
+ok 6 - AC16 ticket: markers removed, controls kept, per-class counts
+  ---
+  duration_ms: 0.632785
+  type: 'test'
+  ...
+# Subtest: AC16 ticket with the ARCH-10 additions: no digit token or Luhn window survives
+ok 7 - AC16 ticket with the ARCH-10 additions: no digit token or Luhn window survives
+  ---
+  duration_ms: 0.346251
+  type: 'test'
+  ...
+# Subtest: placeholders use square brackets only and cannot form a delimiter
+ok 8 - placeholders use square brackets only and cannot form a delimiter
+  ---
+  duration_ms: 0.17519
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 12/27 was charged."
+ok 9 - CARD_CASES: "Card 4111 1111 1111 1111 12/27 was charged."
+  ---
+  duration_ms: 0.483798
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 123 please refund."
+ok 10 - CARD_CASES: "Card 4111 1111 1111 1111 123 please refund."
+  ---
+  duration_ms: 0.408422
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Call 555 0137 4111 1111 1111 1111 thanks."
+ok 11 - CARD_CASES: "Call 555 0137 4111 1111 1111 1111 thanks."
+  ---
+  duration_ms: 0.179163
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 was charged."
+ok 12 - CARD_CASES: "Card 4111 1111 1111 1111 was charged."
+  ---
+  duration_ms: 0.066135
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 2027 was charged."
+ok 13 - CARD_CASES: "Card 4111 1111 1111 1111 2027 was charged."
+  ---
+  duration_ms: 0.051384
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "4111-1111-1111-1111-12"
+ok 14 - CARD_CASES: "4111-1111-1111-1111-12"
+  ---
+  duration_ms: 0.045385
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "ref 99 4111111111111111"
+ok 15 - CARD_CASES: "ref 99 4111111111111111"
+  ---
+  duration_ms: 0.039532
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Amex 3782 822463 10005 exp 09/28"
+ok 16 - CARD_CASES: "Amex 3782 822463 10005 exp 09/28"
+  ---
+  duration_ms: 0.041091
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Order 1234567812345678 shipped"
+ok 17 - CARD_CASES: "Order 1234567812345678 shipped"
+  ---
+  duration_ms: 0.037687
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 thanks"
+ok 18 - CARD_CASES: "Card 4111 1111 1111 1111 thanks"
+  ---
+  duration_ms: 0.037422
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111\\t1111\\t1111\\t1111 thanks"
+ok 19 - CARD_CASES: "Card 4111\\t1111\\t1111\\t1111 thanks"
+  ---
+  duration_ms: 0.03353
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 12/27"
+ok 20 - CARD_CASES: "Card 4111 1111 1111 1111 12/27"
+  ---
+  duration_ms: 0.043055
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "card 4111111111111111 5500005555555559 thanks"
+ok 21 - CARD_CASES: "card 4111111111111111 5500005555555559 thanks"
+  ---
+  duration_ms: 0.035661
+  type: 'test'
+  ...
+# Subtest: phone + card run: no digits survive
+ok 22 - phone + card run: no digits survive
+  ---
+  duration_ms: 0.234778
+  type: 'test'
+  ...
+# Subtest: two adjacent cards collapse into one placeholder (documented count understatement, DES-7)
+ok 23 - two adjacent cards collapse into one placeholder (documented count understatement, DES-7)
+  ---
+  duration_ms: 0.098482
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "call +1 (555) 013-7742 now"
+ok 24 - PHONE_CASES: "call +1 (555) 013-7742 now"
+  ---
+  duration_ms: 0.082032
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "call 555.013.7743."
+ok 25 - PHONE_CASES: "call 555.013.7743."
+  ---
+  duration_ms: 0.034797
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "ring +44 20 7946 0958"
+ok 26 - PHONE_CASES: "ring +44 20 7946 0958"
+  ---
+  duration_ms: 0.062265
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "call 555 013 7742 2026-10-07"
+ok 27 - PHONE_CASES: "call 555 013 7742 2026-10-07"
+  ---
+  duration_ms: 0.054773
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "since 2026-10-07 nothing works"
+ok 28 - PHONE_CASES: "since 2026-10-07 nothing works"
+  ---
+  duration_ms: 0.05085
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "version 2.1.3 and build 12345"
+ok 29 - PHONE_CASES: "version 2.1.3 and build 12345"
+  ---
+  duration_ms: 0.031725
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "call 555 013 7742 now"
+ok 30 - PHONE_CASES: "call 555 013 7742 now"
+  ---
+  duration_ms: 0.033325
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "call 555\\t013\\t7742 now"
+ok 31 - PHONE_CASES: "call 555\\t013\\t7742 now"
+  ---
+  duration_ms: 0.031935
+  type: 'test'
+  ...
+# Subtest: per-class counts
+ok 32 - per-class counts
+  ---
+  duration_ms: 0.186521
+  type: 'test'
+  ...
+# Subtest: order: email first, so digits inside an email are not counted as a phone or card
+ok 33 - order: email first, so digits inside an email are not counted as a phone or card
+  ---
+  duration_ms: 0.202617
+  type: 'test'
+  ...
+# Subtest: order: card before phone, so a card is counted as a card, not a phone
+ok 34 - order: card before phone, so a card is counted as a card, not a phone
+  ---
+  duration_ms: 0.080551
+  type: 'test'
+  ...
+# Subtest: a single digit group longer than 19 digits is atomic and never a card
+ok 35 - a single digit group longer than 19 digits is atomic and never a card
+  ---
+  duration_ms: 0.114597
+  type: 'test'
+  ...
+# Subtest: dates and short numbers are not phones
+ok 36 - dates and short numbers are not phones
+  ---
+  duration_ms: 0.070401
+  type: 'test'
+  ...
+# Subtest: DES-4 adversarial email_localpart_no_at: median of 3 runs < 200 ms
+ok 37 - DES-4 adversarial email_localpart_no_at: median of 3 runs < 200 ms
+  ---
+  duration_ms: 115.063967
+  type: 'test'
+  ...
+# redactor adversarial email_localpart_no_at runs 36.68/37.41/40.46 ms, median 37.41 ms
+# Subtest: DES-4 adversarial email_domain_no_tld: median of 3 runs < 200 ms
+ok 38 - DES-4 adversarial email_domain_no_tld: median of 3 runs < 200 ms
+  ---
+  duration_ms: 105.626207
+  type: 'test'
+  ...
+# redactor adversarial email_domain_no_tld runs 34.19/34.53/36.48 ms, median 34.53 ms
+# Subtest: DES-4 adversarial phone_digits_dots: median of 3 runs < 200 ms
+ok 39 - DES-4 adversarial phone_digits_dots: median of 3 runs < 200 ms
+  ---
+  duration_ms: 124.597437
+  type: 'test'
+  ...
+# redactor adversarial phone_digits_dots runs 37.22/41.93/45.11 ms, median 41.93 ms
+# Subtest: DES-4 adversarial digits_only: median of 3 runs < 200 ms
+ok 40 - DES-4 adversarial digits_only: median of 3 runs < 200 ms
+  ---
+  duration_ms: 112.586068
+  type: 'test'
+  ...
+# redactor adversarial digits_only runs 34.97/35.10/42.16 ms, median 35.10 ms
+# Subtest: DES-4 adversarial digit_nbsp: median of 3 runs < 200 ms
+ok 41 - DES-4 adversarial digit_nbsp: median of 3 runs < 200 ms
+  ---
+  duration_ms: 16.883437
+  type: 'test'
+  ...
+# redactor adversarial digit_nbsp runs 4.18/4.28/8.12 ms, median 4.28 ms
+# Subtest: DES-4 adversarial card_worst_design: median of 3 runs < 200 ms
+ok 42 - DES-4 adversarial card_worst_design: median of 3 runs < 200 ms
+  ---
+  duration_ms: 2.079689
+  type: 'test'
+  ...
+# redactor adversarial card_worst_design runs 0.59/0.59/0.67 ms, median 0.59 ms
+# Subtest: card-shaped adversarial output keeps no Luhn window
+ok 43 - card-shaped adversarial output keeps no Luhn window
+  ---
+  duration_ms: 1.128678
+  type: 'test'
+  ...
+1..43
+# tests 43
+# suites 0
+# pass 43
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 589.392162
