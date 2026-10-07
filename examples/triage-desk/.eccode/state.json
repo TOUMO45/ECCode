@@ -1,6 +1,6 @@
 {
-  "seq": 511,
-  "lastHash": "1ebe40c304df842f3e7ec92c892e4f644f7c897b277a48dd6b965dc74d1d9030",
+  "seq": 519,
+  "lastHash": "a39703a3dc0010a12ec978dbbb3e91b58ec3c0532598e7a3cc24fff2f967a69d",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -202,8 +202,8 @@
     "verification": {
       "id": "verification",
       "kind": "verification",
-      "status": "submitted",
-      "iterations": 0,
+      "status": "changes_requested",
+      "iterations": 1,
       "authors": [
         "delivery-lead"
       ],
@@ -546,8 +546,25 @@
           "notes": "Full-mode eval 24/25: holdout high_urgency_recall 0.571 < 0.70 (RISK-12, user decision pending). PI-1/PI-2 applied."
         }
       ],
-      "reviews": [],
-      "openFindings": [],
+      "reviews": [
+        "rev-muyresnd-018b7c44"
+      ],
+      "openFindings": [
+        {
+          "id": "VER-1",
+          "severity": "blocking",
+          "title": "Approved Success Criterion 2 / AC8 holdout floor not met: holdout high_urgency_recall 0.571 (n=7) < 0.70",
+          "detail": "The only full-mode fallback eval (ev:ev-muyqzv9i-018cf19d, run once per E5) prints 'METRIC high_urgency_recall scope=holdout value=0.571 n=7 threshold=>=0.70 FAIL', 'RESULT FAIL 24/25', exit 1. The brief's Success Criterion 2 requires exit 0 with every holdout floor met, and thresholds.json enforces holdoutMin 0.70. Eval inputs are unchanged since freeze (ev:ev-muyrdya6-016ba8f5), so the miss is real, not a data artefact; tune-mode recall was 1.000, consistent with the overfitting RISK-4 anticipated. This is the user-safety-relevant metric (missed high-urgency tickets). RISK-12 is open with no recorded user decision. This reviewer did not and may not re-run full-mode eval (would be holdout run #2).",
+          "evidence": [
+            "ev:ev-muyqzv9i-018cf19d",
+            "ev:ev-muyrdya6-016ba8f5",
+            "artifact:eval/thresholds.json",
+            "artifact:.eccode/artifacts/verification/report.md"
+          ],
+          "recommendation": "Resolution condition (either): (a) an explicit USER decision recorded (eccode decision) and linked on RISK-12 that accepts the fallback holdout high-recall miss as a known limitation and amends Success Criterion 2 / the AC8 holdout floor for this release (stating the accepted value 0.571, n=7, and that the fallback is a labelled safety net, not the classifier of record), with the report/checklist updated to cite that decision; OR (b) a recorded user decision authorising a rules revision to t11 (src/triage/fallback-provider.js) tuned on tune rows only, validated by a full-mode eval that exits 0 on a fresh, previously unseen holdout (or reported explicitly as holdout run #2 with the blindness caveat if the user accepts reuse), with new freeze hashes recorded before the rules change, plus npm test re-run passing.",
+          "reviewId": "rev-muyresnd-018b7c44"
+        }
+      ],
       "approvedBy": null,
       "approvedSubmission": null,
       "escalation": null,
@@ -5650,6 +5667,101 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-07T23:45:35.699Z"
+    },
+    "ev-muyrcykm-017b4a4f": {
+      "id": "ev-muyrcykm-017b4a4f",
+      "kind": "command",
+      "label": "verification review: npm test (offline, fallback)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8260,
+      "log": ".eccode/evidence/ev-muyrcykm-017b4a4f.log",
+      "logSha256": "2ec537437d54fccb92ec480372ea5f487719a44fa0bae8f8a20501f73faa97ae",
+      "outputTail": "  duration_ms: 2.085683\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 434 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 3.408286\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 435 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 2.336433\n  type: 'test'\n  ...\n1..435\n# tests 439\n# suites 0\n# pass 439\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 8053.755108\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T23:48:04.500Z"
+    },
+    "ev-muyrd3fh-01f0b509": {
+      "id": "ev-muyrd3fh-01f0b509",
+      "kind": "command",
+      "label": "verification review: eccode audit",
+      "command": "node /home/user/ECCode/bin/eccode.js --root . audit",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 2,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 1056,
+      "log": ".eccode/evidence/ev-muyrd3fh-01f0b509.log",
+      "logSha256": "8b7821b1cdfbadb8d565fffe57cd5c7600796f6836831fa28af096493be0aeea",
+      "outputTail": "Audit FAILED:\n- .eccode/artifacts/verification/report.md modified after approval (phase:integration)\n- .eccode/artifacts/verification/release-checklist.md modified after approval (phase:integration)\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T23:48:10.799Z"
+    },
+    "ev-muyrdya6-016ba8f5": {
+      "id": "ev-muyrdya6-016ba8f5",
+      "kind": "command",
+      "label": "verification review: eval files still match freeze sha256",
+      "command": "printf \"%s  eval/dataset.json\\n%s  eval/holdout.json\\n%s  eval/thresholds.json\\n\" b024a838c13391823b61010af90f019e9d859e01858bc96d5cd7a847a15a0689 e7cbbfd2c4013ab08b8841d7bb2f6512022717c46c8a7a0cf9629983f11ba913 ee4703c1ae54f708eaa1c6f3ca80dd329b758b17ae9aae9916f80f11f46797b5 | sha256sum -c -",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7,
+      "log": ".eccode/evidence/ev-muyrdya6-016ba8f5.log",
+      "logSha256": "b560a0de981eacf47205efc437d414e1b196e860dd89b9a8c913b8a30b6d9096",
+      "outputTail": "eval/dataset.json: OK\neval/holdout.json: OK\neval/thresholds.json: OK\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T23:48:50.782Z"
+    },
+    "ev-muyreol2-01500bbb": {
+      "id": "ev-muyreol2-01500bbb",
+      "kind": "command",
+      "label": "verification review: recorded full eval log - injection/detector checks all PASS (AC7, SC4)",
+      "command": "grep -E '^(INJECTION injection_leak|INJECTION injection_steer|METRIC injection_flag_recall scope=in-family|METRIC injection_flag_fpr)' .eccode/evidence/ev-muyqzv9i-018cf19d.log | tee /dev/stderr | grep -c ' PASS$' | grep -qx 4 && echo '4/4 injection/detector checks PASS'",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8,
+      "log": ".eccode/evidence/ev-muyreol2-01500bbb.log",
+      "logSha256": "22ef1af4c09041ed24586093cac6188839d0593ae929caef0fd8d97ca042a711",
+      "outputTail": "4/4 injection/detector checks PASS\n\n[stderr]\ntee: /dev/stderr: No such device or address\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T23:49:24.869Z"
+    },
+    "ev-muyreonu-0169e4f1": {
+      "id": "ev-muyreonu-0169e4f1",
+      "kind": "command",
+      "label": "verification review: recorded full eval log - all 13 dataset-minimum CHECK lines PASS",
+      "command": "n=$(grep -c '^CHECK ' .eccode/evidence/ev-muyqzv9i-018cf19d.log); p=$(grep -c '^CHECK .* PASS$' .eccode/evidence/ev-muyqzv9i-018cf19d.log); echo \"$p/$n CHECK lines PASS\"; [ \"$n\" -gt 0 ] && [ \"$p\" = \"$n\" ]",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8,
+      "log": ".eccode/evidence/ev-muyreonu-0169e4f1.log",
+      "logSha256": "756a1a10515bde1c12de6b576a22f8ecbea62d7c391df81b2940b167e07c0d98",
+      "outputTail": "13/13 CHECK lines PASS\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T23:49:24.969Z"
     }
   },
   "reviews": {
@@ -7343,6 +7455,124 @@
       "reviewer": "technical-reviewer",
       "at": "2026-10-07T23:45:46.274Z",
       "submissionId": "sub-muyr6zvv-012a45b0"
+    },
+    "rev-muyresnd-018b7c44": {
+      "decision": "changes_requested",
+      "summary": "Delivered product meets every acceptance criterion that tests can decide (npm test 439/439 re-run by this reviewer, ev:ev-muyrcykm-017b4a4f), and the eval dataset, holdout and thresholds still match the freeze (ev:ev-muyrdya6-016ba8f5). It does NOT meet Success Criterion 2 / AC8's enforced condition: the single recorded full-mode fallback eval (ev:ev-muyqzv9i-018cf19d) exits 1 with 24/25 checks because holdout high_urgency_recall = 0.571 (4/7) < 0.70 floor. The verification report states this honestly; RISK-12 is open with the user decision pending. Approval is not possible until that criterion is either met by evidence or formally amended by a recorded user decision.",
+      "criteria": [
+        {
+          "id": "SC1",
+          "description": "npm test passes offline, every [T] AC covered by named tests (AC1-AC4, AC7-AC14, AC16, AC17; AC12 zero deps)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyrcykm-017b4a4f",
+            "artifact:package.json",
+            "artifact:.eccode/artifacts/verification/report.md"
+          ]
+        },
+        {
+          "id": "SC2",
+          "description": "npm run eval (fallback) exits 0: every all-rows threshold AND every holdout floor met (AC8 / thresholds.json fallback.high_urgency_recall.holdoutMin 0.70)",
+          "met": false,
+          "evidence": [
+            "ev:ev-muyqzv9i-018cf19d",
+            "artifact:eval/thresholds.json"
+          ]
+        },
+        {
+          "id": "SC2b",
+          "description": "Dataset minimum counts met and eval files match the pre-rules freeze sha256 (exactly one full-mode run recorded)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyrdya6-016ba8f5",
+            "ev:ev-muyreonu-0169e4f1",
+            "artifact:.eccode/artifacts/verification/report.md"
+          ]
+        },
+        {
+          "id": "SC3",
+          "description": "Live eval reported as NOT RUN without a key; live thresholds recorded as unverified; no live-quality claim",
+          "met": true,
+          "evidence": [
+            "artifact:.eccode/artifacts/verification/report.md",
+            "artifact:.eccode/artifacts/verification/release-checklist.md"
+          ]
+        },
+        {
+          "id": "SC4",
+          "description": "Injection: fallback injection_leak 0 failures in 27 with 3/N bound; injection_steer 2/23 (0.087) <= 0.25; in-family flag recall 1.000 >= 0.90; FPR 0.083 <= 0.10 (AC7); live injection NOT RUN; no ticket/key material in logs (AC10 tests)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyreol2-01500bbb",
+            "ev:ev-muyrcykm-017b4a4f",
+            "artifact:.eccode/artifacts/verification/report.md"
+          ]
+        },
+        {
+          "id": "SC5",
+          "description": "Keyboard-only W1/W2 in <= 3 actions; AC5/AC6/AC15 browser inspection (contrast not tool-measured, disclosed)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyr13oz-01d57136",
+            "artifact:.eccode/artifacts/verification/ui-360.png",
+            "artifact:.eccode/artifacts/verification/ui-1280.png",
+            "artifact:.eccode/artifacts/verification/ui-360-xss.png"
+          ]
+        },
+        {
+          "id": "SC6",
+          "description": "package.json has zero dependencies and the app starts with a single command",
+          "met": true,
+          "evidence": [
+            "artifact:package.json",
+            "ev:ev-muyrcykm-017b4a4f",
+            "ev:ev-muyr13oz-01d57136"
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "VER-1",
+          "severity": "blocking",
+          "title": "Approved Success Criterion 2 / AC8 holdout floor not met: holdout high_urgency_recall 0.571 (n=7) < 0.70",
+          "detail": "The only full-mode fallback eval (ev:ev-muyqzv9i-018cf19d, run once per E5) prints 'METRIC high_urgency_recall scope=holdout value=0.571 n=7 threshold=>=0.70 FAIL', 'RESULT FAIL 24/25', exit 1. The brief's Success Criterion 2 requires exit 0 with every holdout floor met, and thresholds.json enforces holdoutMin 0.70. Eval inputs are unchanged since freeze (ev:ev-muyrdya6-016ba8f5), so the miss is real, not a data artefact; tune-mode recall was 1.000, consistent with the overfitting RISK-4 anticipated. This is the user-safety-relevant metric (missed high-urgency tickets). RISK-12 is open with no recorded user decision. This reviewer did not and may not re-run full-mode eval (would be holdout run #2).",
+          "evidence": [
+            "ev:ev-muyqzv9i-018cf19d",
+            "ev:ev-muyrdya6-016ba8f5",
+            "artifact:eval/thresholds.json",
+            "artifact:.eccode/artifacts/verification/report.md"
+          ],
+          "recommendation": "Resolution condition (either): (a) an explicit USER decision recorded (eccode decision) and linked on RISK-12 that accepts the fallback holdout high-recall miss as a known limitation and amends Success Criterion 2 / the AC8 holdout floor for this release (stating the accepted value 0.571, n=7, and that the fallback is a labelled safety net, not the classifier of record), with the report/checklist updated to cite that decision; OR (b) a recorded user decision authorising a rules revision to t11 (src/triage/fallback-provider.js) tuned on tune rows only, validated by a full-mode eval that exits 0 on a fresh, previously unseen holdout (or reported explicitly as holdout run #2 with the blindness caveat if the user accepts reuse), with new freeze hashes recorded before the rules change, plus npm test re-run passing."
+        },
+        {
+          "id": "VER-2",
+          "severity": "info",
+          "title": "eccode audit currently fails: verification report/checklist differ from the versions approved at phase:integration",
+          "detail": "eccode audit (ev:ev-muyrd3fh-01f0b509) reports report.md and release-checklist.md 'modified after approval (phase:integration)'. The git diff f04c597..70b95c2 shows only clarifying edits (RISK-12 cross-references, RISK-10 row, run-count wording); no results changed. The current versions are the ones in this submission, so the audit will clear once a verification approval supersedes them.",
+          "evidence": [
+            "ev:ev-muyrd3fh-01f0b509",
+            "artifact:.eccode/artifacts/verification/report.md",
+            "artifact:.eccode/artifacts/verification/release-checklist.md"
+          ],
+          "recommendation": "No action beyond re-running eccode audit after the verification gate is approved; avoid editing gate-approved artifacts outside a new submission."
+        },
+        {
+          "id": "VER-3",
+          "severity": "info",
+          "title": "Residual risks disclosed, not blocking under the written criteria",
+          "detail": "Held-out-family injection flag recall 0.444 (n=9, reported-only metric per AC7); AC15 contrast not tool-measured; AC6 network-request check unit-test only; live path NOT RUN (RISK-7). All are disclosed in the report and checklist and have no enforced threshold that is missed.",
+          "evidence": [
+            "ev:ev-muyqzv9i-018cf19d",
+            "artifact:.eccode/artifacts/verification/report.md"
+          ],
+          "recommendation": "Carry RISK-1/RISK-7 with owners into release notes; measure contrast with a tool before a public release."
+        }
+      ],
+      "id": "rev-muyresnd-018b7c44",
+      "gate": "verification",
+      "reviewer": "security-reviewer",
+      "at": "2026-10-07T23:49:30.121Z",
+      "submissionId": "sub-muyrbtk0-015d6203"
     }
   },
   "rejectedReviews": [
@@ -7373,6 +7603,16 @@
         "criterion C3: cites ev:ev-muyqzv9i-018cf19d, which failed (exit 1); failed checks cannot support a met criterion"
       ],
       "decision": "approve"
+    },
+    {
+      "gate": "verification",
+      "reviewer": "security-reviewer",
+      "at": "2026-10-07T23:49:17.547Z",
+      "reasons": [
+        "criterion SC2b: cites ev:ev-muyqzv9i-018cf19d, which failed (exit 1); failed checks cannot support a met criterion",
+        "criterion SC4: cites ev:ev-muyqzv9i-018cf19d, which failed (exit 1); failed checks cannot support a met criterion"
+      ],
+      "decision": "changes_requested"
     }
   ],
   "handoffs": {
@@ -9251,8 +9491,13 @@
       "task": null,
       "gate": "verification",
       "startedAt": "2026-10-07T23:47:26.318Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T23:49:54.564Z",
+      "durationMinutes": 2.47,
+      "costUsd": 0,
+      "tokens": 107139,
+      "note": null
     }
   },
   "risks": {
@@ -9442,8 +9687,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 212.33,
-    "tokens": 6190560
+    "runtimeMinutes": 214.8,
+    "tokens": 6297699
   },
   "delivery": null
 }

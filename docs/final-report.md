@@ -75,6 +75,16 @@ This report sorts its claims into three groups: **Verified** (backed by tests, e
   - The candidate scored 7/7 against a 4/7 baseline. The eval cases were mutation-tested by the reviewer.
   - It was approved by an independent reviewer and is **not adopted**: adoption requires the user.
 
+**Verification gate outcome.**
+- The independent security-reviewer re-ran `npm test` (439/439) and checked the recorded eval log. They recorded **changes_requested** with blocking finding VER-1, review `rev-muyresnd-018b7c44`. The reason: an approved success criterion (SC2, the holdout floor) is not met, and no user decision is recorded.
+- `eccode deliver` then **refused** with exit code 2:
+  - verification is `changes_requested`;
+  - two verification documents were modified after their last approval.
+- The workflow is complete up to the point where only the user can decide (RISK-12):
+  - (a) accept the miss as a known fallback limitation and amend SC2 for this release;
+  - (b) authorise a rules revision validated on a fresh holdout.
+- All 8 other gates are approved. All 17 tasks are done.
+
 **Toolkit defects found and fixed during the demo** (each with a reproduction test first):
 
 | Defect | Found by |

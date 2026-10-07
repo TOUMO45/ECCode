@@ -1,0 +1,113 @@
+{
+  "decision": "changes_requested",
+  "summary": "Delivered product meets every acceptance criterion that tests can decide (npm test 439/439 re-run by this reviewer, ev:ev-muyrcykm-017b4a4f), and the eval dataset, holdout and thresholds still match the freeze (ev:ev-muyrdya6-016ba8f5). It does NOT meet Success Criterion 2 / AC8's enforced condition: the single recorded full-mode fallback eval (ev:ev-muyqzv9i-018cf19d) exits 1 with 24/25 checks because holdout high_urgency_recall = 0.571 (4/7) < 0.70 floor. The verification report states this honestly; RISK-12 is open with the user decision pending. Approval is not possible until that criterion is either met by evidence or formally amended by a recorded user decision.",
+  "criteria": [
+    {
+      "id": "SC1",
+      "description": "npm test passes offline, every [T] AC covered by named tests (AC1-AC4, AC7-AC14, AC16, AC17; AC12 zero deps)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyrcykm-017b4a4f",
+        "artifact:package.json",
+        "artifact:.eccode/artifacts/verification/report.md"
+      ]
+    },
+    {
+      "id": "SC2",
+      "description": "npm run eval (fallback) exits 0: every all-rows threshold AND every holdout floor met (AC8 / thresholds.json fallback.high_urgency_recall.holdoutMin 0.70)",
+      "met": false,
+      "evidence": [
+        "ev:ev-muyqzv9i-018cf19d",
+        "artifact:eval/thresholds.json"
+      ]
+    },
+    {
+      "id": "SC2b",
+      "description": "Dataset minimum counts met and eval files match the pre-rules freeze sha256 (exactly one full-mode run recorded)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyrdya6-016ba8f5",
+        "ev:ev-muyreonu-0169e4f1",
+        "artifact:.eccode/artifacts/verification/report.md"
+      ]
+    },
+    {
+      "id": "SC3",
+      "description": "Live eval reported as NOT RUN without a key; live thresholds recorded as unverified; no live-quality claim",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/verification/report.md",
+        "artifact:.eccode/artifacts/verification/release-checklist.md"
+      ]
+    },
+    {
+      "id": "SC4",
+      "description": "Injection: fallback injection_leak 0 failures in 27 with 3/N bound; injection_steer 2/23 (0.087) <= 0.25; in-family flag recall 1.000 >= 0.90; FPR 0.083 <= 0.10 (AC7); live injection NOT RUN; no ticket/key material in logs (AC10 tests)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyreol2-01500bbb",
+        "ev:ev-muyrcykm-017b4a4f",
+        "artifact:.eccode/artifacts/verification/report.md"
+      ]
+    },
+    {
+      "id": "SC5",
+      "description": "Keyboard-only W1/W2 in <= 3 actions; AC5/AC6/AC15 browser inspection (contrast not tool-measured, disclosed)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyr13oz-01d57136",
+        "artifact:.eccode/artifacts/verification/ui-360.png",
+        "artifact:.eccode/artifacts/verification/ui-1280.png",
+        "artifact:.eccode/artifacts/verification/ui-360-xss.png"
+      ]
+    },
+    {
+      "id": "SC6",
+      "description": "package.json has zero dependencies and the app starts with a single command",
+      "met": true,
+      "evidence": [
+        "artifact:package.json",
+        "ev:ev-muyrcykm-017b4a4f",
+        "ev:ev-muyr13oz-01d57136"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "VER-1",
+      "severity": "blocking",
+      "title": "Approved Success Criterion 2 / AC8 holdout floor not met: holdout high_urgency_recall 0.571 (n=7) < 0.70",
+      "detail": "The only full-mode fallback eval (ev:ev-muyqzv9i-018cf19d, run once per E5) prints 'METRIC high_urgency_recall scope=holdout value=0.571 n=7 threshold=>=0.70 FAIL', 'RESULT FAIL 24/25', exit 1. The brief's Success Criterion 2 requires exit 0 with every holdout floor met, and thresholds.json enforces holdoutMin 0.70. Eval inputs are unchanged since freeze (ev:ev-muyrdya6-016ba8f5), so the miss is real, not a data artefact; tune-mode recall was 1.000, consistent with the overfitting RISK-4 anticipated. This is the user-safety-relevant metric (missed high-urgency tickets). RISK-12 is open with no recorded user decision. This reviewer did not and may not re-run full-mode eval (would be holdout run #2).",
+      "evidence": [
+        "ev:ev-muyqzv9i-018cf19d",
+        "ev:ev-muyrdya6-016ba8f5",
+        "artifact:eval/thresholds.json",
+        "artifact:.eccode/artifacts/verification/report.md"
+      ],
+      "recommendation": "Resolution condition (either): (a) an explicit USER decision recorded (eccode decision) and linked on RISK-12 that accepts the fallback holdout high-recall miss as a known limitation and amends Success Criterion 2 / the AC8 holdout floor for this release (stating the accepted value 0.571, n=7, and that the fallback is a labelled safety net, not the classifier of record), with the report/checklist updated to cite that decision; OR (b) a recorded user decision authorising a rules revision to t11 (src/triage/fallback-provider.js) tuned on tune rows only, validated by a full-mode eval that exits 0 on a fresh, previously unseen holdout (or reported explicitly as holdout run #2 with the blindness caveat if the user accepts reuse), with new freeze hashes recorded before the rules change, plus npm test re-run passing."
+    },
+    {
+      "id": "VER-2",
+      "severity": "info",
+      "title": "eccode audit currently fails: verification report/checklist differ from the versions approved at phase:integration",
+      "detail": "eccode audit (ev:ev-muyrd3fh-01f0b509) reports report.md and release-checklist.md 'modified after approval (phase:integration)'. The git diff f04c597..70b95c2 shows only clarifying edits (RISK-12 cross-references, RISK-10 row, run-count wording); no results changed. The current versions are the ones in this submission, so the audit will clear once a verification approval supersedes them.",
+      "evidence": [
+        "ev:ev-muyrd3fh-01f0b509",
+        "artifact:.eccode/artifacts/verification/report.md",
+        "artifact:.eccode/artifacts/verification/release-checklist.md"
+      ],
+      "recommendation": "No action beyond re-running eccode audit after the verification gate is approved; avoid editing gate-approved artifacts outside a new submission."
+    },
+    {
+      "id": "VER-3",
+      "severity": "info",
+      "title": "Residual risks disclosed, not blocking under the written criteria",
+      "detail": "Held-out-family injection flag recall 0.444 (n=9, reported-only metric per AC7); AC15 contrast not tool-measured; AC6 network-request check unit-test only; live path NOT RUN (RISK-7). All are disclosed in the report and checklist and have no enforced threshold that is missed.",
+      "evidence": [
+        "ev:ev-muyqzv9i-018cf19d",
+        "artifact:.eccode/artifacts/verification/report.md"
+      ],
+      "recommendation": "Carry RISK-1/RISK-7 with owners into release notes; measure contrast with a tool before a public release."
+    }
+  ]
+}
