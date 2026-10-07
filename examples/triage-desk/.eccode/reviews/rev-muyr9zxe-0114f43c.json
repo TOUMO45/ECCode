@@ -1,0 +1,101 @@
+{
+  "decision": "approve",
+  "summary": "Integration phase meets all six of its plan acceptance criteria. I reran npm test (439/439 pass, ev-muyr8192-01e50b2a), readme-check (PASS, ev-muyr81by-01705378) and the pinned check-script hashes (all match, ev-muyr7v7u-01ddd9f4). t17 ran the three verification steps as separate evidence runs, ran full-mode eval exactly once (ev-muyqzv9i-018cf19d, ECCODE_EVAL 24/25, exit 1) and reported the holdout high_urgency_recall miss (0.571, n=7) as is, with no re-run and no re-tuning, and escalated it as RISK-12. The plan's phase criteria require the eval to be run once and reported honestly. They do not require it to pass. The threshold miss is for the verification gate and the user to decide; it is not a defect of this phase. Note: ev-muyr9nb5-01c29561 is one of my own probes that failed because it searched the wrong path (evidence records are kept in state.json, not in per-record json files). I redid it correctly as ev-muyr9rrb-01460c7d.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "npm test exits 0 for the complete offline suite (unit + contract + eval tests)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyr8192-01e50b2a",
+        "ev:ev-muyqzriz-012b8b53",
+        "artifact:test/contract/http.test.js",
+        "artifact:test/contract/triage-modes.test.js"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "First full-mode npm run eval run by delivery-lead via eccode evidence run, exactly once; ECCODE_EVAL recorded as is; report states the full-mode run count (verified by my passing log and state inspection checks; the eval run itself, ev-muyqzv9i-018cf19d, exited 1 as reported)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyr9rrb-01460c7d",
+        "ev:ev-muyr9n8x-01953631",
+        "artifact:.eccode/artifacts/verification/report.md"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "Runner-printed dataset/holdout/thresholds sha256 equal the foundation freeze evidence, and the freeze predates the rules",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyr9n8x-01953631",
+        "ev:ev-muyoc9sb-01a8edc1",
+        "ev:ev-muyoc9ul-01ee7a22",
+        "ev:ev-muyoc9wk-014a1edb",
+        "ev:ev-muyqzh7j-01b4d13c"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "node .eccode/artifacts/plan/checks/readme-check.js exits 0; README content (DES-1/DES-6 warnings, live NOT RUN, rollback, RISK-11 guidance) is accurate",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyr81by-01705378",
+        "artifact:README.md"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "report.md maps AC1-AC17 to evidence ids, lists inspection items AC6/AC15/AC16-notice, states live NOT RUN (no key) and that fallback results are not evidence of model quality",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/verification/report.md",
+        "artifact:.eccode/artifacts/verification/release-checklist.md",
+        "ev:ev-muyr019l-01bbd9f9",
+        "ev:ev-muyr13oz-01d57136"
+      ]
+    },
+    {
+      "id": "C6",
+      "description": "Pinned instruments unmodified: sha256 of the plan check scripts equal the plan-submission values",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyr7v7u-01ddd9f4"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "PI-1",
+      "severity": "minor",
+      "title": "Report overstates the run-count evidence wording",
+      "detail": "report.md section 1 says 'Only one evidence log in .eccode/evidence/ contains an ECCODE_EVAL line'. In fact 18 logs contain that string. All the others are npm test or runner.test.js runs on synthetic fixtures (for example ev-muyqzriz-012b8b53 and my own ev-muyr8192-01e50b2a). The substantive claim still holds: ev-muyqzv9i-018cf19d is the only `npm run eval` (full-mode) evidence run. The other eval-command events are eval:tune runs or plan text.",
+      "evidence": [
+        "ev:ev-muyqzv9i-018cf19d",
+        "ev:ev-muyr8192-01e50b2a"
+      ],
+      "recommendation": "On the next edit, reword it as 'only one full-mode `npm run eval` evidence run exists (ev-muyqzv9i-018cf19d)'. Not required for this gate."
+    },
+    {
+      "id": "PI-2",
+      "severity": "minor",
+      "title": "RISK-12 id not cited in report.md or release-checklist.md",
+      "detail": "The holdout miss is reported prominently in both documents (report headline and section 3; checklist line 6 and RISK-4). However, the RISK-12 register id that holds the pending user decision is only in state.json. The checklist's open-risk list also skips RISK-10 and RISK-12.",
+      "evidence": [
+        "artifact:.eccode/artifacts/verification/release-checklist.md",
+        "artifact:.eccode/artifacts/verification/report.md"
+      ],
+      "recommendation": "When the verification report is finalised, cite RISK-12 next to the holdout miss and in the checklist's open-risk list."
+    },
+    {
+      "id": "PI-3",
+      "severity": "info",
+      "title": "Holdout high_urgency_recall floor miss is deferred to the verification gate and the user",
+      "detail": "ev-muyqzv9i-018cf19d: METRIC high_urgency_recall scope=holdout value=0.571 n=7 threshold >=0.70 FAIL. ECCODE_EVAL 24/25, exit 1. The integration phase criteria require running and recording the eval once, not passing it, so this does not block the phase. Any fix needs a recorded decision, and a later full-mode run must be counted as run #2 (E5).",
+      "evidence": [
+        "ev:ev-muyqzv9i-018cf19d"
+      ],
+      "recommendation": "The verification gate applies the thresholds. Resolve RISK-12 by an explicit user decision: accept it as a known limitation, or reset t11 and do a counted rerun."
+    }
+  ]
+}
