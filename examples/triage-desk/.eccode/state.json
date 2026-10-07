@@ -1,6 +1,6 @@
 {
-  "seq": 182,
-  "lastHash": "3613db5097668937be443c337e254092830bb601229bfad049ffd9437ae80fa0",
+  "seq": 195,
+  "lastHash": "283090dca0b3465e937f83bebf5e2e3209f4e041a3bb122b9c8b2e0008f3fc29",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -509,10 +509,22 @@
         "method": "Helper self-test with node:test",
         "command": "node --test test/helpers/helpers.test.js"
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "test-engineer",
+        "at": "2026-10-07T22:20:32.499Z",
+        "baseCommit": "c7213deff50c5dd9233c5e4e19eb2092c95a9fd0",
+        "runId": "run-muyo83l4-01c8f9b7"
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "test-engineer",
+          "at": "2026-10-07T22:20:32.499Z",
+          "attempt": 1
+        }
+      ],
       "completedBy": null,
       "handoffId": null
     },
@@ -2099,6 +2111,63 @@
       "task": "t01-scaffold",
       "recordedBy": "devops-engineer",
       "at": "2026-10-07T22:19:52.473Z"
+    },
+    "ev-muyo92zp-019ff7ac": {
+      "id": "ev-muyo92zp-019ff7ac",
+      "kind": "command",
+      "label": "repro: reviewer docs never state decision literal 'approve' (review-gate skill example is changes_requested only; technical/security reviewer docs); template placeholder invalid; ev 128/160 'approved' rejections",
+      "command": "node examples/triage-desk/.eccode/drafts/check-review-decision-docs.js /home/user/ECCode /home/user/ECCode/examples/triage-desk",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 39,
+      "log": ".eccode/evidence/ev-muyo92zp-019ff7ac.log",
+      "logSha256": "3e7663d5ac4405e117a97dba568a4e4b0a501c9a347eea2de6a5e04fde1576be",
+      "outputTail": "\n[stderr]\nnode:internal/modules/cjs/loader:1386\n  throw err;\n  ^\n\nError: Cannot find module '/home/user/ECCode/examples/triage-desk/examples/triage-desk/.eccode/drafts/check-review-decision-docs.js'\n    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)\n    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)\n    at Function._load (node:internal/modules/cjs/loader:1192:37)\n    at TracingChannel.traceSync (node:diagnostics_channel:328:14)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)\n    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)\n    at node:internal/main/run_main_module:36:49 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v22.22.0\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "learning-debugger",
+      "at": "2026-10-07T22:21:04.747Z"
+    },
+    "ev-muyo96d3-01a13297": {
+      "id": "ev-muyo96d3-01a13297",
+      "kind": "command",
+      "label": "repro: reviewer docs never state decision literal 'approve' (review-gate skill example is changes_requested only; technical/security reviewer docs); template placeholder invalid; ev 128/160 'approved' rejections",
+      "command": "node .eccode/drafts/check-review-decision-docs.js",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 74,
+      "log": ".eccode/evidence/ev-muyo96d3-01a13297.log",
+      "logSha256": "bb592d176b6f3a7919a190f769914a1be023da3a6fb1c07a13ef925a9febeb9e",
+      "outputTail": "schema decision enum: [\"approve\",\"changes_requested\"]\n\"approved\" accepted by schema: false\ntemplate decision placeholder: \"approve | changes_requested\" -> valid as-is: false\nreview-gate SKILL.md JSON example decisions: [\"changes_requested\"]\nreview-gate SKILL.md states literal `approve` / \"approve\": false\nagents/architecture-reviewer.md states literal `approve`: true\nagents/security-reviewer.md states literal `approve`: false\nagents/technical-reviewer.md states literal `approve`: false\nevent:128 technical-reviewer gate=design got=\"approved\" -> next accepted: event:129 decision=\"approve\"\nevent:160 technical-reviewer gate=plan got=\"approved\" -> next accepted: event:161 decision=\"approve\"\narchitecture-reviewer: decision-enum rejections before its first accepted approve on each gate: 0 (first approve event:59)\ntechnical-reviewer: decision-enum rejections before its first accepted approve on each gate: 2 (first approve event:129)\nGAPS (4):\n- skills/review-gate/SKILL.md has no example with \"decision\": \"approve\"\n- skills/review-gate/SKILL.md never states the literal approve value\n- agents/security-reviewer.md never states the literal decision value \"approve\"\n- agents/technical-reviewer.md never states the literal decision value \"approve\"\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "learning-debugger",
+      "at": "2026-10-07T22:21:09.120Z"
+    },
+    "ev-muyoba7q-013f7fc2": {
+      "id": "ev-muyoba7q-013f7fc2",
+      "kind": "command",
+      "label": "t03 red: helpers self-test before helpers exist (expected fail)",
+      "command": "node --test test/helpers/helpers.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 136,
+      "log": ".eccode/evidence/ev-muyoba7q-013f7fc2.log",
+      "logSha256": "0d1eb79b63d12a78545cd514b0be0b150353c28df98aef6ef55e02878b38ff08",
+      "outputTail": "#   ]\n# }\n# Node.js v22.22.0\n# Subtest: test/helpers/helpers.test.js\nnot ok 1 - test/helpers/helpers.test.js\n  ---\n  duration_ms: 60.933409\n  type: 'test'\n  location: '/home/user/ECCode/examples/triage-desk/test/helpers/helpers.test.js:1:1'\n  failureType: 'testCodeFailure'\n  exitCode: 1\n  signal: ~\n  error: 'test failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 69.650021\n",
+      "gate": null,
+      "task": "t03-test-helpers",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T22:22:47.421Z"
     }
   },
   "reviews": {
@@ -3803,8 +3872,13 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-07T22:19:48.102Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T22:22:35.605Z",
+      "durationMinutes": 2.79,
+      "costUsd": 0,
+      "tokens": 96193,
+      "note": null
     },
     "run-muyo83l4-01c8f9b7": {
       "id": "run-muyo83l4-01c8f9b7",
@@ -3812,6 +3886,15 @@
       "task": "t03-test-helpers",
       "gate": null,
       "startedAt": "2026-10-07T22:20:18.864Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-muyob15b-01375c8b": {
+      "id": "run-muyob15b-01375c8b",
+      "agent": "security-reviewer",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-07T22:22:35.671Z",
       "status": "running",
       "attempt": 1
     }
@@ -3973,8 +4056,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 85.1,
-    "tokens": 2541431
+    "runtimeMinutes": 87.89,
+    "tokens": 2637624
   },
   "delivery": null
 }

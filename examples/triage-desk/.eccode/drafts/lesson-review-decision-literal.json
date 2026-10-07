@@ -1,0 +1,29 @@
+{
+  "layer": "workflow",
+  "trust": "internal",
+  "content": {
+    "title": "Gate reviews refused for decision \"approved\": reviewer-facing docs never state the literal \"approve\" or show an approving example",
+    "kind": "recurring-finding",
+    "observation": "The engine refused two technical-reviewer gate reviews with the same schema error, `$.decision: must be one of approve, changes_requested (got \"approved\")`: the design re-review (event:128) and the plan re-review (event:160). Both were the reviewer's first approving review on that gate; its earlier changes_requested reviews (event:106, event:148) were accepted. Each time the reviewer resubmitted with \"approve\" about 3 s later (event:129, event:161), so the cost was one refused review per approval plus a review.rejected count in metrics, not a wrong decision. A recorded check (ev:ev-muyo96d3-01a13297) shows what the reviewer was given: (1) skills/review-gate/SKILL.md has one JSON example and its decision is \"changes_requested\". It never states the literal `approve`, and its prose says \"approval\" and \"to approve\". (2) templates/review.json gives the pipe placeholder \"approve | changes_requested\". That is not itself a valid value, which is fine because it forces a choice, but it is the only place the token appears. (3) agents/technical-reviewer.md says only \"Approve only when everything is met. Otherwise request changes.\" and never names the field value. agents/security-reviewer.md never mentions `decision` at all. (4) agents/architecture-reviewer.md does state \"`decision`: `approve` only if ...\". The architecture-reviewer's approve (event:59) was accepted on the first try. That contrast is a single data point (n=1 against n=2) and a correlation, not a controlled comparison. The docs gap is confirmed deterministically. That the gap caused the \"approved\" spelling is inferred: it fits the evidence, but no experiment isolated it.",
+    "occurrences": [
+      { "ref": "event:128", "at": "2026-10-07T21:59:43.598Z", "note": "technical-reviewer, design gate re-review: decision \"approved\" refused by schema; accepted as \"approve\" at event:129 (+3 s)." },
+      { "ref": "event:160", "at": "2026-10-07T22:18:05.893Z", "note": "technical-reviewer, plan gate re-review: same error, same reviewer role, about 18 min later; accepted as \"approve\" at event:161 (+3 s). The first occurrence did not prevent the second, so there is no carry-over between reviewer invocations." }
+    ],
+    "recommendation": "Make the exact enum value explicit where reviewers decide. This is a docs-only change; do not loosen schemas/review.schema.json to accept \"approved\" as an alias, because that is an approval-rule change. (a) skills/review-gate/SKILL.md, step 4: directly after the existing example add: \"`decision` must be exactly `\\\"approve\\\"` or `\\\"changes_requested\\\"`. Any other string (`approved`, `approval`, `reject`) is refused as a schema error.\" Then add, under step 5, a complete approving re-review example in a ```json block with \"decision\": \"approve\", all criteria met: true with ev: evidence, \"findings\": [], and a resolvedFindings entry. (b) agents/technical-reviewer.md, section \"Write the review\": replace \"Approve only when everything is met. Otherwise request changes.\" with the wording already used in agents/architecture-reviewer.md: \"`decision`: `approve` only if every criterion is `met: true` with evidence and no blocking or major finding is open. Otherwise `changes_requested`, with at least one `blocking` or `major` finding. These are the only two accepted values.\" (c) agents/security-reviewer.md, section \"Rules\": add the same `decision` bullet. Keep the templates/review.json placeholder invalid, because a valid default could let a review approve without an explicit choice. Evaluation: `node .eccode/drafts/check-review-decision-docs.js` (from the project root) exits 1 today and should exit 0 after the change. For regression, the schema enum is unchanged, \"approved\" is still refused, and the toolkit test suite passes. Measure the effect by counting decision-enum review.rejected events in later deliveries.",
+    "evidence": ["ev:ev-muyo96d3-01a13297"],
+    "appliesWhen": [
+      "A reviewer agent writes gate-review JSON validated against schemas/review.schema.json (decision enum approve | changes_requested)",
+      "review.rejected events whose reason starts with `$.decision: must be one of` (for example got \"approved\" or \"approval\")",
+      "Reviewer-facing docs (agents/<reviewer>.md, skills/review-gate/SKILL.md) describe the decision in prose (\"approve\", \"approval\") without stating the literal field value or showing an approving example",
+      "Any other agent-authored JSON whose enum value differs from the natural-language past tense (verify vs verified, approve vs approved) and whose docs give only a placeholder"
+    ],
+    "notApplicableWhen": [
+      "review.rejected for other reasons (unmet criteria, unresolved findings, missing reviewer-run check, changed artifacts); those are substantive refusals, not a wording mismatch",
+      "Docs already state the literal `approve` and show an approving example (the check exits 0) and the error still recurs; look for another cause, such as a stale cached copy of the docs or a different template source",
+      "A proposal to change the schema or the engine's accepted values: out of scope for a docs/skill improvement"
+    ],
+    "environment": { "toolkit": "ECCode (schemas/review.schema.json decision enum: approve, changes_requested)" },
+    "confidence": "low",
+    "tags": ["review-gate", "gate-review", "schema-validation", "decision-enum", "reviewer-docs", "technical-reviewer", "security-reviewer", "templates", "recurring-finding"]
+  }
+}

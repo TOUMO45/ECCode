@@ -1,0 +1,20 @@
+$ node .eccode/drafts/check-review-decision-docs.js
+# cwd: .
+# exit: 1
+schema decision enum: ["approve","changes_requested"]
+"approved" accepted by schema: false
+template decision placeholder: "approve | changes_requested" -> valid as-is: false
+review-gate SKILL.md JSON example decisions: ["changes_requested"]
+review-gate SKILL.md states literal `approve` / "approve": false
+agents/architecture-reviewer.md states literal `approve`: true
+agents/security-reviewer.md states literal `approve`: false
+agents/technical-reviewer.md states literal `approve`: false
+event:128 technical-reviewer gate=design got="approved" -> next accepted: event:129 decision="approve"
+event:160 technical-reviewer gate=plan got="approved" -> next accepted: event:161 decision="approve"
+architecture-reviewer: decision-enum rejections before its first accepted approve on each gate: 0 (first approve event:59)
+technical-reviewer: decision-enum rejections before its first accepted approve on each gate: 2 (first approve event:129)
+GAPS (4):
+- skills/review-gate/SKILL.md has no example with "decision": "approve"
+- skills/review-gate/SKILL.md never states the literal approve value
+- agents/security-reviewer.md never states the literal decision value "approve"
+- agents/technical-reviewer.md never states the literal decision value "approve"
