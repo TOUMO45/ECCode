@@ -1,0 +1,573 @@
+$ node .eccode/artifacts/design/design-vectors.js && npm test
+# cwd: .
+# exit: 1
+redactor card-shaped 8000 chars: 3.77 ms
+redactor adversarial email_localpart_no_at median: 33.60 ms
+redactor adversarial email_domain_no_tld median: 32.31 ms
+redactor adversarial phone_digits_dots median: 34.09 ms
+redactor adversarial digits_only median: 31.95 ms
+redactor adversarial digit_nbsp median: 4.29 ms
+redactor adversarial card_worst_design median: 0.60 ms
+all design vectors pass
+
+> triage-desk@0.1.0 test
+> node --test --test-concurrency=1 "test/**/*.test.js"
+
+TAP version 13
+# Subtest: http-client: default Host is 127.0.0.1:<port>, JSON parsed, status and headers returned
+ok 1 - http-client: default Host is 127.0.0.1:<port>, JSON parsed, status and headers returned
+  ---
+  duration_ms: 21.576749
+  type: 'test'
+  ...
+# Subtest: http-client: foreign Host, missing Host (setHost=false) and Origin are sent as given
+ok 2 - http-client: foreign Host, missing Host (setHost=false) and Origin are sent as given
+  ---
+  duration_ms: 8.3081
+  type: 'test'
+  ...
+# Subtest: http-client: body encoding (string raw, object as JSON) with explicit Content-Length
+ok 3 - http-client: body encoding (string raw, object as JSON) with explicit Content-Length
+  ---
+  duration_ms: 5.480071
+  type: 'test'
+  ...
+# Subtest: http-client: HEAD gives an empty body and json null; non-JSON body gives json null
+ok 4 - http-client: HEAD gives an empty body and json null; non-JSON body gives json null
+  ---
+  duration_ms: 3.959366
+  type: 'test'
+  ...
+# Subtest: http-client: rejects (does not hang) when nothing listens
+ok 5 - http-client: rejects (does not hang) when nothing listens
+  ---
+  duration_ms: 2.223327
+  type: 'test'
+  ...
+# Subtest: fake-fetch: respond(status, json|text) exposes status and text()
+ok 6 - fake-fetch: respond(status, json|text) exposes status and text()
+  ---
+  duration_ms: 0.484527
+  type: 'test'
+  ...
+# Subtest: fake-fetch: messageOk builds a Messages API body with a text block and usage
+ok 7 - fake-fetch: messageOk builds a Messages API body with a text block and usage
+  ---
+  duration_ms: 0.516704
+  type: 'test'
+  ...
+# Subtest: fake-fetch: thinkingFirst puts a thinking block before the text block
+ok 8 - fake-fetch: thinkingFirst puts a thinking block before the text block
+  ---
+  duration_ms: 0.213781
+  type: 'test'
+  ...
+# Subtest: fake-fetch: never() stays pending, even after the signal aborts
+ok 9 - fake-fetch: never() stays pending, even after the signal aborts
+  ---
+  duration_ms: 2.413253
+  type: 'test'
+  ...
+# Subtest: fake-fetch: throws() rejects with a TypeError by default, or the given error
+ok 10 - fake-fetch: throws() rejects with a TypeError by default, or the given error
+  ---
+  duration_ms: 0.968421
+  type: 'test'
+  ...
+# Subtest: fake-fetch: capture(inner) records url, init and parsed body, counts calls, delegates to inner
+ok 11 - fake-fetch: capture(inner) records url, init and parsed body, counts calls, delegates to inner
+  ---
+  duration_ms: 1.225224
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: binds 127.0.0.1, serves a programmed 200 and records the request
+ok 12 - fake-anthropic: binds 127.0.0.1, serves a programmed 200 and records the request
+  ---
+  duration_ms: 75.094609
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: unprogrammed server answers 500, not a success
+ok 13 - fake-anthropic: unprogrammed server answers 500, not a success
+  ---
+  duration_ms: 4.446803
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: redirect(307) — fetch with redirect:'error' throws and the target counts 0 requests
+ok 14 - fake-anthropic: redirect(307) — fetch with redirect:'error' throws and the target counts 0 requests
+  ---
+  duration_ms: 15.848423
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: redirect(308) — fetch with redirect:'error' throws and the target counts 0 requests
+ok 15 - fake-anthropic: redirect(308) — fetch with redirect:'error' throws and the target counts 0 requests
+  ---
+  duration_ms: 13.907182
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: redirect() rejects a non-3xx status
+ok 16 - fake-anthropic: redirect() rejects a non-3xx status
+  ---
+  duration_ms: 1.073195
+  type: 'test'
+  ...
+# Subtest: spawn-server: buildChildEnv is exactly {PATH, ...testEnv, PORT:"0"} and copies nothing else from process.env
+ok 17 - spawn-server: buildChildEnv is exactly {PATH, ...testEnv, PORT:"0"} and copies nothing else from process.env
+  ---
+  duration_ms: 0.439461
+  type: 'test'
+  ...
+# Subtest: spawn-server: child sees only PATH, testEnv and PORT=0 (parent secrets do not leak); port read from listening line
+ok 18 - spawn-server: child sees only PATH, testEnv and PORT=0 (parent secrets do not leak); port read from listening line
+  ---
+  duration_ms: 54.173924
+  type: 'test'
+  ...
+# Subtest: spawn-server: stop() terminates the child and the port stops accepting
+ok 19 - spawn-server: stop() terminates the child and the port stops accepting
+  ---
+  duration_ms: 43.153533
+  type: 'test'
+  ...
+# Subtest: spawn-server: a child that exits before listening rejects with its exit code and stderr
+ok 20 - spawn-server: a child that exits before listening rejects with its exit code and stderr
+  ---
+  duration_ms: 29.292158
+  type: 'test'
+  ...
+# Subtest: spawn-server: a child that never logs listening is killed after timeoutMs
+ok 21 - spawn-server: a child that never logs listening is killed after timeoutMs
+  ---
+  duration_ms: 506.708695
+  type: 'test'
+  ...
+# node:internal/modules/cjs/loader:1386
+#   throw err;
+#   ^
+# Error: Cannot find module '../../src/config.js'
+# Require stack:
+# - /home/user/ECCode/examples/triage-desk/test/unit/config.test.js
+#     at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+#     at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+#     at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+#     at Function._load (node:internal/modules/cjs/loader:1192:37)
+#     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+#     at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+#     at Module.require (node:internal/modules/cjs/loader:1463:12)
+#     at require (node:internal/modules/helpers:147:16)
+#     at Object.<anonymous> (/home/user/ECCode/examples/triage-desk/test/unit/config.test.js:9:37)
+#     at Module._compile (node:internal/modules/cjs/loader:1706:14) {
+#   code: 'MODULE_NOT_FOUND',
+#   requireStack: [ '/home/user/ECCode/examples/triage-desk/test/unit/config.test.js' ]
+# }
+# Node.js v22.22.0
+# Subtest: test/unit/config.test.js
+not ok 2 - test/unit/config.test.js
+  ---
+  duration_ms: 70.872803
+  type: 'test'
+  location: '/home/user/ECCode/examples/triage-desk/test/unit/config.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# node:internal/modules/cjs/loader:1386
+#   throw err;
+#   ^
+# Error: Cannot find module '../../src/log.js'
+# Require stack:
+# - /home/user/ECCode/examples/triage-desk/test/unit/log.test.js
+#     at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+#     at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+#     at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+#     at Function._load (node:internal/modules/cjs/loader:1192:37)
+#     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+#     at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+#     at Module.require (node:internal/modules/cjs/loader:1463:12)
+#     at require (node:internal/modules/helpers:147:16)
+#     at Object.<anonymous> (/home/user/ECCode/examples/triage-desk/test/unit/log.test.js:6:26)
+#     at Module._compile (node:internal/modules/cjs/loader:1706:14) {
+#   code: 'MODULE_NOT_FOUND',
+#   requireStack: [ '/home/user/ECCode/examples/triage-desk/test/unit/log.test.js' ]
+# }
+# Node.js v22.22.0
+# Subtest: test/unit/log.test.js
+not ok 3 - test/unit/log.test.js
+  ---
+  duration_ms: 62.670451
+  type: 'test'
+  location: '/home/user/ECCode/examples/triage-desk/test/unit/log.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: exports exactly the C6.3 names
+ok 24 - exports exactly the C6.3 names
+  ---
+  duration_ms: 4.640707
+  type: 'test'
+  ...
+# Subtest: PROMPT_MARKER is TDSK-SYS-7Q2
+ok 25 - PROMPT_MARKER is TDSK-SYS-7Q2
+  ---
+  duration_ms: 0.511997
+  type: 'test'
+  ...
+# Subtest: SYSTEM_PROMPT is exactly the specified text
+ok 26 - SYSTEM_PROMPT is exactly the specified text
+  ---
+  duration_ms: 0.250348
+  type: 'test'
+  ...
+# Subtest: SYSTEM_PROMPT pins the marker, the isolation phrases and the length budget (spec pin list)
+ok 27 - SYSTEM_PROMPT pins the marker, the isolation phrases and the length budget (spec pin list)
+  ---
+  duration_ms: 0.459967
+  type: 'test'
+  ...
+# Subtest: neutralise maps < to U+FF1C and > to U+FF1E
+ok 28 - neutralise maps < to U+FF1C and > to U+FF1E
+  ---
+  duration_ms: 0.408979
+  type: 'test'
+  ...
+# Subtest: neutralise is idempotent and leaves no ASCII angle brackets
+ok 29 - neutralise is idempotent and leaves no ASCII angle brackets
+  ---
+  duration_ms: 0.566846
+  type: 'test'
+  ...
+# Subtest: neutralise rejects non-string input with TypeError
+ok 30 - neutralise rejects non-string input with TypeError
+  ---
+  duration_ms: 0.782257
+  type: 'test'
+  ...
+# Subtest: buildRequestBody: exact top-level keys, defaults (model claude-haiku-5-5, max_tokens 2048)
+ok 31 - buildRequestBody: exact top-level keys, defaults (model claude-haiku-5-5, max_tokens 2048)
+  ---
+  duration_ms: 0.506214
+  type: 'test'
+  ...
+# Subtest: buildRequestBody passes the configured model and max tokens through
+ok 32 - buildRequestBody passes the configured model and max tokens through
+  ---
+  duration_ms: 0.954725
+  type: 'test'
+  ...
+# Subtest: buildRequestBody: output_config is effort low + json_schema with OUTPUT_SCHEMA, which passes the AC9 walk
+ok 33 - buildRequestBody: output_config is effort low + json_schema with OUTPUT_SCHEMA, which passes the AC9 walk
+  ---
+  duration_ms: 1.058068
+  type: 'test'
+  ...
+# Subtest: buildRequestBody sends no tools, thinking, sampling parameters (S3), stop_sequences, stream or metadata
+ok 34 - buildRequestBody sends no tools, thinking, sampling parameters (S3), stop_sequences, stream or metadata
+  ---
+  duration_ms: 0.536117
+  type: 'test'
+  ...
+# Subtest: buildRequestBody: one user message, ticket neutralised and only inside the <ticket> delimiters (AC9)
+ok 35 - buildRequestBody: one user message, ticket neutralised and only inside the <ticket> delimiters (AC9)
+  ---
+  duration_ms: 0.468952
+  type: 'test'
+  ...
+# Subtest: buildRequestBody keeps the ticket otherwise verbatim (no trimming, placeholders preserved)
+ok 36 - buildRequestBody keeps the ticket otherwise verbatim (no trimming, placeholders preserved)
+  ---
+  duration_ms: 0.26163
+  type: 'test'
+  ...
+# Subtest: buildRequestBody is pure: deep-equal output for identical input, and bodies do not share mutable state
+ok 37 - buildRequestBody is pure: deep-equal output for identical input, and bodies do not share mutable state
+  ---
+  duration_ms: 0.693189
+  type: 'test'
+  ...
+# Subtest: buildRequestBody rejects invalid arguments with TypeError (programming errors)
+ok 38 - buildRequestBody rejects invalid arguments with TypeError (programming errors)
+  ---
+  duration_ms: 0.748522
+  type: 'test'
+  ...
+# Subtest: prompt.js is pure CommonJS: strict mode, requires only ./schema.js, no I/O, clock or randomness
+ok 39 - prompt.js is pure CommonJS: strict mode, requires only ./schema.js, no I/O, clock or randomness
+  ---
+  duration_ms: 0.808439
+  type: 'test'
+  ...
+# Subtest: exports exactly the C6.3 names
+ok 40 - exports exactly the C6.3 names
+  ---
+  duration_ms: 2.453108
+  type: 'test'
+  ...
+# Subtest: enums have the C6.3 values and are frozen
+ok 41 - enums have the C6.3 values and are frozen
+  ---
+  duration_ms: 0.633453
+  type: 'test'
+  ...
+# Subtest: OUTPUT_SCHEMA equals D2 exactly and is deep-frozen
+ok 42 - OUTPUT_SCHEMA equals D2 exactly and is deep-frozen
+  ---
+  duration_ms: 0.433736
+  type: 'test'
+  ...
+# Subtest: checkSchemaKeywords accepts OUTPUT_SCHEMA and the D2 literal
+ok 43 - checkSchemaKeywords accepts OUTPUT_SCHEMA and the D2 literal
+  ---
+  duration_ms: 0.287593
+  type: 'test'
+  ...
+# Subtest: checkSchemaKeywords self-check: rejects maxLength (AC9)
+ok 44 - checkSchemaKeywords self-check: rejects maxLength (AC9)
+  ---
+  duration_ms: 0.175041
+  type: 'test'
+  ...
+# Subtest: checkSchemaKeywords rejects every non-allowlisted keyword at any depth
+ok 45 - checkSchemaKeywords rejects every non-allowlisted keyword at any depth
+  ---
+  duration_ms: 0.525155
+  type: 'test'
+  ...
+# Subtest: checkSchemaKeywords rejects object nodes whose additionalProperties is not exactly false
+ok 46 - checkSchemaKeywords rejects object nodes whose additionalProperties is not exactly false
+  ---
+  duration_ms: 0.380607
+  type: 'test'
+  ...
+# Subtest: checkSchemaKeywords rejects non-object nodes and malformed properties
+ok 47 - checkSchemaKeywords rejects non-object nodes and malformed properties
+  ---
+  duration_ms: 1.482086
+  type: 'test'
+  ...
+# Subtest: V1 accepts every accept vector
+ok 48 - V1 accepts every accept vector
+  ---
+  duration_ms: 0.783284
+  type: 'test'
+  ...
+# Subtest: V1 rejects every reject vector
+ok 49 - V1 rejects every reject vector
+  ---
+  duration_ms: 0.492455
+  type: 'test'
+  ...
+# Subtest: V1 edge cases: length bounds, CR, trailing space, every month abbreviation, non-strings
+ok 50 - V1 edge cases: length bounds, CR, trailing space, every month abbreviation, non-strings
+  ---
+  duration_ms: 0.299981
+  type: 'test'
+  ...
+# Subtest: V2 accepts every accept vector (brief, ARCH-11, DES-3)
+ok 51 - V2 accepts every accept vector (brief, ARCH-11, DES-3)
+  ---
+  duration_ms: 1.99008
+  type: 'test'
+  ...
+# Subtest: V2 rejects every reject vector (brief, ARCH-11, DES-3)
+ok 52 - V2 rejects every reject vector (brief, ARCH-11, DES-3)
+  ---
+  duration_ms: 0.159254
+  type: 'test'
+  ...
+# Subtest: DES-8: a Unicode letter, mark or digit before a product token blocks the mask (reject)
+ok 53 - DES-8: a Unicode letter, mark or digit before a product token blocks the mask (reject)
+  ---
+  duration_ms: 0.766151
+  type: 'test'
+  ...
+# Subtest: DES-8: further Unicode rejects (combining mark, format chars, long-s case folding)
+ok 54 - DES-8: further Unicode rejects (combining mark, format chars, long-s case folding)
+  ---
+  duration_ms: 0.16537
+  type: 'test'
+  ...
+# Subtest: DES-8: curly closing quotes are accepted after a product token
+ok 55 - DES-8: curly closing quotes are accepted after a product token
+  ---
+  duration_ms: 0.309172
+  type: 'test'
+  ...
+# Subtest: V2: the mask applies only to the bare-domain rule; the other five rules see the raw text
+ok 56 - V2: the mask applies only to the bare-domain rule; the other five rules see the raw text
+  ---
+  duration_ms: 0.08072
+  type: 'test'
+  ...
+# Subtest: V2 is stateless across calls (no lastIndex leakage from global regexes)
+ok 57 - V2 is stateless across calls (no lastIndex leakage from global regexes)
+  ---
+  duration_ms: 0.07785
+  type: 'test'
+  ...
+# Subtest: V2 treats non-strings as not containing a link (shape errors are V4)
+ok 58 - V2 treats non-strings as not containing a link (shape errors are V4)
+  ---
+  duration_ms: 0.063789
+  type: 'test'
+  ...
+# Subtest: V3 normaliseEnum: brief and design vectors
+ok 59 - V3 normaliseEnum: brief and design vectors
+  ---
+  duration_ms: 0.125408
+  type: 'test'
+  ...
+# Subtest: validateTriage accepts a valid object and returns the Triage in canonical key order
+ok 60 - validateTriage accepts a valid object and returns the Triage in canonical key order
+  ---
+  duration_ms: 0.301308
+  type: 'test'
+  ...
+# Subtest: validateTriage normalises enum case (V3, AC4 m)
+ok 61 - validateTriage normalises enum case (V3, AC4 m)
+  ---
+  duration_ms: 0.117131
+  type: 'test'
+  ...
+# Subtest: validateTriage error codes for AC4 j/k/l shaped outputs
+ok 62 - validateTriage error codes for AC4 j/k/l shaped outputs
+  ---
+  duration_ms: 0.347136
+  type: 'test'
+  ...
+# Subtest: validateTriage V4 shape: not a plain object gives keys
+ok 63 - validateTriage V4 shape: not a plain object gives keys
+  ---
+  duration_ms: 0.228815
+  type: 'test'
+  ...
+# Subtest: validateTriage V4 shape: missing or extra keys give keys
+ok 64 - validateTriage V4 shape: missing or extra keys give keys
+  ---
+  duration_ms: 0.189621
+  type: 'test'
+  ...
+# Subtest: validateTriage V4 types: every field must be a string
+ok 65 - validateTriage V4 types: every field must be a string
+  ---
+  duration_ms: 0.112967
+  type: 'test'
+  ...
+# Subtest: validateTriage V4 reply length: trimmed >= 1 and length <= 1200
+ok 66 - validateTriage V4 reply length: trimmed >= 1 and length <= 1200
+  ---
+  duration_ms: 2.313254
+  type: 'test'
+  ...
+# Subtest: validateTriage returns every applicable error code in a fixed order
+ok 67 - validateTriage returns every applicable error code in a fixed order
+  ---
+  duration_ms: 0.130826
+  type: 'test'
+  ...
+# Subtest: validateTriage does not mutate its input and is deterministic
+ok 68 - validateTriage does not mutate its input and is deterministic
+  ---
+  duration_ms: 0.107672
+  type: 'test'
+  ...
+# Subtest: validateResponse accepts valid model and fallback responses, every fallback reason, keys in any order
+ok 69 - validateResponse accepts valid model and fallback responses, every fallback reason, keys in any order
+  ---
+  duration_ms: 0.363904
+  type: 'test'
+  ...
+# Subtest: validateResponse: exactly 8 keys
+ok 70 - validateResponse: exactly 8 keys
+  ---
+  duration_ms: 0.218766
+  type: 'test'
+  ...
+# Subtest: validateResponse: strict lower-case enums, no normalisation
+ok 71 - validateResponse: strict lower-case enums, no normalisation
+  ---
+  duration_ms: 0.135248
+  type: 'test'
+  ...
+# Subtest: validateResponse: summary V1/V2 and reply length/V2
+ok 72 - validateResponse: summary V1/V2 and reply length/V2
+  ---
+  duration_ms: 1.443957
+  type: 'test'
+  ...
+# Subtest: validateResponse: source and fallbackReason consistency (fallbackReason null iff source = model)
+ok 73 - validateResponse: source and fallbackReason consistency (fallbackReason null iff source = model)
+  ---
+  duration_ms: 0.225225
+  type: 'test'
+  ...
+# Subtest: validateResponse: model consistent with source (string iff model, null iff fallback)
+ok 74 - validateResponse: model consistent with source (string iff model, null iff fallback)
+  ---
+  duration_ms: 0.350879
+  type: 'test'
+  ...
+# Subtest: validateResponse: injectionSuspected must be a boolean
+ok 75 - validateResponse: injectionSuspected must be a boolean
+  ---
+  duration_ms: 0.20969
+  type: 'test'
+  ...
+# Subtest: validateResponse collects several errors at once
+ok 76 - validateResponse collects several errors at once
+  ---
+  duration_ms: 0.086268
+  type: 'test'
+  ...
+# Subtest: schema.js is pure CommonJS: strict mode, no requires, no I/O, clock or randomness
+ok 77 - schema.js is pure CommonJS: strict mode, no requires, no I/O, clock or randomness
+  ---
+  duration_ms: 0.493441
+  type: 'test'
+  ...
+# node:internal/modules/cjs/loader:1386
+#   throw err;
+#   ^
+# Error: Cannot find module '../../src/ticket-input.js'
+# Require stack:
+# - /home/user/ECCode/examples/triage-desk/test/unit/ticket-input.test.js
+#     at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+#     at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+#     at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+#     at Function._load (node:internal/modules/cjs/loader:1192:37)
+#     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+#     at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+#     at Module.require (node:internal/modules/cjs/loader:1463:12)
+#     at require (node:internal/modules/helpers:147:16)
+#     at Object.<anonymous> (/home/user/ECCode/examples/triage-desk/test/unit/ticket-input.test.js:6:33)
+#     at Module._compile (node:internal/modules/cjs/loader:1706:14) {
+#   code: 'MODULE_NOT_FOUND',
+#   requireStack: [
+#     '/home/user/ECCode/examples/triage-desk/test/unit/ticket-input.test.js'
+#   ]
+# }
+# Node.js v22.22.0
+# Subtest: test/unit/ticket-input.test.js
+not ok 6 - test/unit/ticket-input.test.js
+  ---
+  duration_ms: 56.459179
+  type: 'test'
+  location: '/home/user/ECCode/examples/triage-desk/test/unit/ticket-input.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..78
+# tests 78
+# suites 0
+# pass 75
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1306.383083
