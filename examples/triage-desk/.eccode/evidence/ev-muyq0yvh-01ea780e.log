@@ -1,0 +1,47 @@
+$ node /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/pipeline-probe.js
+# cwd: .
+# exit: 0
+PASS real fetch 307 -> model_error/fetch_threw and redirect target receives 0 requests
+PASS real fetch 308 -> fetch_threw, target 0
+PASS real fetch 200 via fake-anthropic -> ok with usage, exact headers
+PASS stub 300 -> redirect_refused, text() not called
+PASS stub 301 -> redirect_refused, text() not called
+PASS stub 302 -> redirect_refused, text() not called
+PASS stub 303 -> redirect_refused, text() not called
+PASS stub 307 -> redirect_refused, text() not called
+PASS stub 308 -> redirect_refused, text() not called
+PASS stub 399 -> redirect_refused, text() not called
+PASS never-settling fetch times out near timeoutMs
+PASS never-settling text() times out, status kept
+PASS fetch receives an AbortSignal that aborts on timeout and init.redirect=error
+PASS adversarial: sync throw -> resolves LiveResult with fixed detail
+PASS adversarial: non-function fetchImpl -> resolves LiveResult with fixed detail
+PASS adversarial: resolves null -> resolves LiveResult with fixed detail
+PASS adversarial: resolves string status -> resolves LiveResult with fixed detail
+PASS adversarial: status getter throws -> resolves LiveResult with fixed detail
+PASS adversarial: text not a function (200) -> resolves LiveResult with fixed detail
+PASS adversarial: text resolves number -> resolves LiveResult with fixed detail
+PASS adversarial: text rejects -> resolves LiveResult with fixed detail
+PASS adversarial: thenable that throws -> resolves LiveResult with fixed detail
+PASS adversarial: body null JSON -> resolves LiveResult with fixed detail
+PASS adversarial: body array JSON -> resolves LiveResult with fixed detail
+PASS adversarial: content not array -> resolves LiveResult with fixed detail
+PASS adversarial: text block JSON null -> resolves LiveResult with fixed detail
+PASS adversarial: text block JSON array -> resolves LiveResult with fixed detail
+PASS adversarial: triage with __proto__ key -> resolves LiveResult with fixed detail
+PASS adversarial: http 500 text rejects -> resolves LiveResult with fixed detail
+PASS non-string ticket -> resolves (buildRequestBody throw caught), no fetch
+PASS thinking-first content + 401 mapping + refusal/max_tokens
+PASS RISK-10: 300k-char summary/reply rejected fast as invalid_output
+PASS one fetch per analyse (no retries) on 529
+PASS service live ok: detect(original) -> redact(original) -> provider(redacted); never unredacted
+PASS service live failure: fallback on ORIGINAL text with live.reason, model null
+PASS service provider null: no redact, no provider, no_api_key, redactions null
+PASS service provider rejects -> model_error/provider_threw, no content in meta
+PASS service provider returns undefined -> model_error/provider_threw, no content in meta
+PASS service provider bogus reason -> model_error/provider_threw, no content in meta
+PASS service: throwing detectInjection / fallbackAnalyse propagate; redact throw -> no provider call
+PASS service.js source requires none of injection/fallback-provider/anthropic-provider/redact
+PASS provider end-to-end through service: real provider never sees unredacted email
+PASS tune mode never passes --holdout to fs/path; full mode nonexistent holdout -> exit 2 ECCODE_EVAL 0/1
+PROBE OK 43/43

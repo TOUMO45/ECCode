@@ -1,0 +1,88 @@
+{
+  "decision": "approve",
+  "summary": "Pipeline phase (t08 eval runner, t09 Anthropic provider, t10 service) conforms to C6.4, C7, R12, E1-E4, DES-1/2/5/9. Independently verified: pinned check-script hashes match, npm test 337/337, the three task test files 78/78, and a 43-case reviewer probe (real fetch with redirect:'error' against fake-anthropic 307/308 never reaches the redirect target, timeouts on never-settling fetch and body, analyse() never rejects under 16 adversarial stubs, RISK-10 300k-char output rejected in <500 ms, service R12 order with the provider never seeing unredacted text, tune mode never passes --holdout to fs/path, DES-9 last lines). No full-mode run on the real holdout exists. Only minor/info findings remain.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Pinned instruments: .eccode/artifacts/plan/checks/*.js hashes equal the plan-recorded values (dataset-precheck c59b7a..., readme-check a9a012..., scaffold-check e1fde7...) and the directory is unmodified",
+      "met": true,
+      "evidence": ["ev:ev-muypy8ln-01be8edf"]
+    },
+    {
+      "id": "C2",
+      "description": "npm test exits 0 including the new unit/anthropic-provider, unit/service and eval/runner tests; each task's verification command passes",
+      "met": true,
+      "evidence": ["ev:ev-muypyf0v-0117d202", "ev:ev-muyq14mv-012e4827"]
+    },
+    {
+      "id": "C3",
+      "description": "Provider follows the C6.4 10-step algorithm and C7: one POST to baseUrl+/v1/messages with exact headers, redirect:'error', abort-raced fetch and body read, 3xx -> redirect_refused without text(), fetch throw -> fetch_threw, usage mapping, thinking-first content, refusal/max_tokens mapping, never rejects, no retries, no dependencies",
+      "met": true,
+      "evidence": ["ev:ev-muyq0yvh-01ea780e", "ev:ev-muyq14mv-012e4827", "artifact:src/triage/anthropic-provider.js", "artifact:test/unit/anthropic-provider.test.js"]
+    },
+    {
+      "id": "C4",
+      "description": "DES-1 end to end with real fetch: a 307/308 from fake-anthropic gives model_error/fetch_threw and the redirect target receives zero requests (key and body never leave the configured origin)",
+      "met": true,
+      "evidence": ["ev:ev-muyq0yvh-01ea780e"]
+    },
+    {
+      "id": "C5",
+      "description": "RISK-10 (SEC-CM-1) mitigated at the provider call site: over-long summary/reply rejected as invalid_output before V2 runs; accept/reject outcome identical to validateTriage because V1/V4 bound the same lengths",
+      "met": true,
+      "evidence": ["ev:ev-muyq0yvh-01ea780e", "artifact:src/triage/anthropic-provider.js"]
+    },
+    {
+      "id": "C6",
+      "description": "Service follows R12: detect on original text; provider null -> fallback/no_api_key with redactions null and no redact/provider calls; otherwise redact -> provider(redacted); failure -> fallback on ORIGINAL text with live.reason, model null; throwing or malformed provider -> model_error/provider_threw with no content in meta; detector/fallback throws propagate; service.js requires no concrete collaborator",
+      "met": true,
+      "evidence": ["ev:ev-muyq0yvh-01ea780e", "ev:ev-muyq14mv-012e4827", "artifact:src/triage/service.js", "artifact:test/unit/service.test.js"]
+    },
+    {
+      "id": "C7",
+      "description": "Eval runner E1-E4/DES-2/DES-5/DES-9: lazy src requires; fallback wiring is createTriageService({provider:null,...}) with no env reads; tune mode never passes --holdout to fs/path, prints NOT SCORED, 8 checks, TUNE_EVAL last, never ECCODE_EVAL (even when echoing arguments); full mode 25 checks derived from thresholds.json; exit 2 last lines per DES-9; AC8 holdout-floor case exits 1",
+      "met": true,
+      "evidence": ["ev:ev-muyq0yvh-01ea780e", "ev:ev-muyq14mv-012e4827", "artifact:eval/run.js", "artifact:eval/metrics.js", "artifact:test/eval/runner.test.js"]
+    },
+    {
+      "id": "C8",
+      "description": "No test reads the real eval/holdout.json and no full-mode eval has been run; eval data files and plan checks are unmodified",
+      "met": true,
+      "evidence": ["ev:ev-muyq14mv-012e4827", "artifact:test/eval/fixtures/synthetic.js"]
+    }
+  ],
+  "findings": [
+    {
+      "id": "PL-1",
+      "severity": "minor",
+      "title": "Non-2xx error bodies are read before http_<status> is returned",
+      "detail": "For 4xx/5xx the provider awaits res.text() (under the timeout) before returning http_<status>. A 500/529 whose body hangs or errors is therefore reported as timeout or fetch_threw instead of http_<status> (probe case 'http 500 text rejects' -> fetch_threw, ev:ev-muyq0yvh-01ea780e). This follows the literal C6.4 step order (text() is read in step 3), so it is conformant, but the fallbackReason/detail can be less precise and a slow error body consumes the timeout budget.",
+      "evidence": ["ev:ev-muyq0yvh-01ea780e", "artifact:src/triage/anthropic-provider.js"],
+      "recommendation": "Optional: return model_error/http_<status> for non-2xx without awaiting the body (or with a best-effort cancel). Resolved when a test shows a 500 with a rejecting body yields http_500. Not required for this gate."
+    },
+    {
+      "id": "PL-2",
+      "severity": "minor",
+      "title": "RISK-10 quadratic V2 still reachable through schema.js callers other than the provider",
+      "detail": "The length gate lives only in anthropic-provider.js. eval/metrics.js calls validateResponse and containsLinkOrEmail on every scored response; with --results the responses come from a local file and are unbounded. Inputs are local and operator-supplied, so this is a robustness issue, not an exploitable path; the live and fallback execution paths are bounded (provider gate, <=600-char templates).",
+      "evidence": ["artifact:eval/metrics.js", "artifact:src/triage/anthropic-provider.js"],
+      "recommendation": "Move the length gate into schema.js (validateTriage/validateResponse/containsLinkOrEmail) in a later revision, as the t09 handoff already recommends. Resolved when containsLinkOrEmail on a 300k-char string returns within a bounded time."
+    },
+    {
+      "id": "PL-3",
+      "severity": "info",
+      "title": "Integration contract notes for t11/t13 (untested paths)",
+      "detail": "(a) Real-module fallback execution and npm run eval:tune exit 2 until t11 adds injection.js and fallback-provider.js. (b) The --provider live branch with a key (buildApp + USAGE line) is untested until t13 adds app.js; it calls buildApp({env, log: createLogger(() => {})}) and relies on the default fetchImpl and on service.mode === 'live'. (c) createTriageService refuses provider === undefined, so app.js must pass provider: null explicitly in fallback mode (matches C6.4/C6.5).",
+      "evidence": ["artifact:eval/run.js", "artifact:src/triage/service.js"],
+      "recommendation": "t13/t15: add a test running eval/run.js --provider live against fake-anthropic via TRIAGE_ANTHROPIC_BASE_URL (synthetic dataset, --holdout pointing at a synthetic file), and after t11 a test that npm run eval:tune exits 0 or 1. The next phase reviewer should confirm."
+    },
+    {
+      "id": "PL-4",
+      "severity": "info",
+      "title": "Spec-silent interpretation choices accepted",
+      "detail": "Accepted as reasonable and content-free: non-object JSON body -> body_not_json; malformed response object or buildRequestBody TypeError -> fetch_threw; malformed LiveResult or reason 'no_api_key' from a provider -> provider_threw; RISK-10 gate reports only length codes (subset of validateTriage codes); an enforced check with n=0 fails; --results must cover every scored id; extra 'results ... sha256' header line in --results mode.",
+      "evidence": ["ev:ev-muyq0yvh-01ea780e"],
+      "recommendation": "No action; record in the verification report as interpretations."
+    }
+  ]
+}
