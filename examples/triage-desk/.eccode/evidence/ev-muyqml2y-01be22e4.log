@@ -1,0 +1,7 @@
+$ node -e "const {detectInjection}=require(\"./src/triage/injection.js\"); for (const n of [4000,8000,16000,32000]) { const s=\"a.\".repeat(n/2); const t=process.hrtime.bigint(); detectInjection(s); console.log(n, (Number(process.hrtime.bigint()-t)/1e6).toFixed(1)+\"ms\"); }"
+# cwd: .
+# exit: 0
+4000 8.5ms
+8000 23.1ms
+16000 77.9ms
+32000 277.7ms

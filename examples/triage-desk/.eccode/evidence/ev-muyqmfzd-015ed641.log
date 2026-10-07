@@ -1,0 +1,41 @@
+$ node /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/sec-probe.js .
+# cwd: .
+# exit: 0
+PASS fallback: 7 adversarial tickets, no canary/URL/markup/ticket-substring in summary/reply
+PASS fallback total on malformed ticket/detection
+  ignore-chain     len=16378 detect=1.3ms fallback=2.4ms rules=
+  ignore-noterm    len=16354 detect=1.4ms fallback=1.8ms rules=
+  extract-noterm   len=16352 detect=1.2ms fallback=1.7ms rules=
+  domain-dots      len=16384 detect=89.2ms fallback=1.2ms rules=
+  domain-hyph      len=16384 detect=74.0ms fallback=1.3ms rules=
+  domain-mixed     len=16407 detect=50.4ms fallback=0.2ms rules=INJ_LINK
+  alnum-run        len=16384 detect=1.3ms fallback=2.1ms rules=
+  chat-token       len=16384 detect=0.5ms fallback=0.3ms rules=
+  delim-line       len=16384 detect=0.4ms fallback=0.6ms rules=
+  delim-lines      len=16380 detect=1.4ms fallback=1.0ms rules=
+  brackets         len=16384 detect=1.3ms fallback=2.3ms rules=
+  role-lines       len=16380 detect=1.5ms fallback=1.2ms rules=
+  spaces           len=16384 detect=0.4ms fallback=0.9ms rules=
+  periods          len=16384 detect=1.2ms fallback=0.3ms rules=
+  newlines         len=16384 detect=3.8ms fallback=0.2ms rules=
+  label            len=16380 detect=0.6ms fallback=2.8ms rules=
+  you-are-now      len=16380 detect=0.5ms fallback=1.1ms rules=
+  mixed-unicode    len=16380 detect=0.2ms fallback=1.1ms rules=
+  link-sentences   len=16023 detect=0.6ms fallback=0.3ms rules=INJ_LINK
+PASS detector+fallback never throw on 19 adversarial 16KB inputs
+PASS detector worst-case 89.2ms (domain-dots) < 250ms on 16KB
+PASS fallback worst-case 2.8ms < 250ms on 16KB
+PASS detector total on non-string input
+PASS no key ({}) -> fallback mode
+PASS no key ({"ANTHROPIC_API_KEY":""}) -> fallback mode
+PASS no key ({"ANTHROPIC_API_KEY":"   "}) -> fallback mode
+PASS no key: fetch never invoked
+PASS key set -> live mode
+PASS live: exactly one POST /v1/messages to fake
+PASS live: request body contains no raw card/email/phone
+PASS live: key only in x-api-key header, not in body
+PASS live: response source model, no key in response/meta
+  meta.redactions={"email":1,"card":1,"phone":1}
+PASS config errors (11 bad envs): no value echoed in message/stack
+PASS every bad env rejected with ConfigError
+ALL PASS

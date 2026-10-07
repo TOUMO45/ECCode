@@ -1,0 +1,27 @@
+{
+  "decision": "approve",
+  "summary": "Security review of sub-muyqje7c-01fe6bf4. Fallback output is fixed (category, urgency) templates with no ticket interpolation; detector and fallback are total and fast on adversarial input within the 8000-char cap; app.js builds the live provider only when ANTHROPIC_API_KEY is non-blank, the live path sends only redacted text with the key in x-api-key only; config errors never echo values. npm test 382/382, hygiene test 6/6, pinned check-script hashes match.",
+  "criteria": [
+    { "id": "S1", "description": "Fallback summary/reply never echo ticket text, canaries, URLs or markup (7 adversarial tickets incl. canary tokens, URLs, fake tags, chat tokens, bidi/NUL); fallback total on malformed ticket/detection",
+      "met": true, "evidence": ["ev:ev-muyqmfzd-015ed641", "artifact:src/triage/fallback-provider.js"] },
+    { "id": "S2", "description": "Detector and fallback never throw and stay fast on 19 adversarial 16KB inputs and non-string input (worst detector ~90-130ms at 16KB, ~20ms at the 8000-char production cap)",
+      "met": true, "evidence": ["ev:ev-muyqmfzd-015ed641", "ev:ev-muyqml2y-01be22e4", "artifact:src/triage/injection.js"] },
+    { "id": "S3", "description": "app.js: no/empty/blank key -> fallback mode, fetch never invoked; key set -> live mode, exactly one POST /v1/messages to fake-anthropic, body has no raw card/email/phone, key only in x-api-key header and not in response/meta",
+      "met": true, "evidence": ["ev:ev-muyqmfzd-015ed641", "artifact:src/app.js"] },
+    { "id": "S4", "description": "Config errors (11 bad envs incl. HOST, PORT, model, base URL with credentials, timeouts, allow-remote) are ConfigError and never echo the value in message or stack; server.js prints only ConfigError message or a sanitised code",
+      "met": true, "evidence": ["ev:ev-muyqmfzd-015ed641", "artifact:src/server.js"] },
+    { "id": "S5", "description": "Full suite passes on the submitted files", "met": true, "evidence": ["ev:ev-muyqmt6w-01536eca"] },
+    { "id": "S6", "description": "Held-out hygiene test passes (lexical only, per delivery-lead note)", "met": true, "evidence": ["ev:ev-muyqmlep-0138d392", "artifact:test/eval/heldout-hygiene.test.js"] },
+    { "id": "S7", "description": "Pinned check-script hashes match plan (dataset-precheck c59b7acd..., readme-check a9a0128f..., scaffold-check e1fde7f9...)", "met": true, "evidence": ["ev:ev-muyqml56-01874738"] }
+  ],
+  "findings": [
+    { "id": "RW-SEC-1", "severity": "minor", "title": "LINKISH scheme alternative is quadratic on long dotted/hyphenated runs",
+      "detail": "detectInjection on 'a.'/'a-' repeated scales O(n^2): 8.5ms@4k, 23ms@8k, 78ms@16k, 278ms@32k chars (ev:ev-muyqml2y-01be22e4). Likely cause: \\b[a-z][a-z0-9+.-]*:\\/\\/ in LINKISH restarts at every word boundary and scans to the end of the sentence. Bounded in production by MAX_TICKET_CHARS=8000 (~20ms worst), so not exploitable as DoS today, but the module's comment claims linear-ish cost and it would degrade if the cap were raised.",
+      "evidence": ["ev:ev-muyqml2y-01be22e4"],
+      "recommendation": "Bound the scheme run (e.g. [a-z][a-z0-9+.-]{0,31}:\\/\\/) and add a timing regression test on an 8000-char dotted run." },
+    { "id": "RW-SEC-2", "severity": "info", "title": "Hygiene test is lexical only; RISK-11 npm-start orphan noted",
+      "detail": "Acknowledged per delivery-lead notes: heldout-hygiene detects copied phrases/canaries/URLs lexically, not paraphrased leakage; RISK-11 (npm start leaves an orphaned child on signal) is recorded with README mitigation planned in t16. Not re-verified here beyond running the hygiene test (ev:ev-muyqmlep-0138d392).",
+      "evidence": ["ev:ev-muyqmlep-0138d392"],
+      "recommendation": "Keep RISK-11 open until the t16 README mitigation lands." }
+  ]
+}

@@ -1,6 +1,6 @@
 {
-  "seq": 429,
-  "lastHash": "e1525f156b2e6de45fe9f24af8397fb2df9a682a7e2e90861ad6fadff18f0524",
+  "seq": 439,
+  "lastHash": "2c46814ca645e3b05b0c4f9bd58299df1eb83b1d7edb3c3228179ef3a216bf33",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -520,7 +520,7 @@
     "phase:rules-and-wiring": {
       "id": "phase:rules-and-wiring",
       "kind": "phase",
-      "status": "submitted",
+      "status": "approved",
       "iterations": 0,
       "authors": [
         "delivery-lead"
@@ -592,18 +592,20 @@
           "notes": null
         }
       ],
-      "reviews": [],
+      "reviews": [
+        "rev-muyqn7k2-013f3a2e"
+      ],
       "openFindings": [],
-      "approvedBy": null,
-      "approvedSubmission": null,
+      "approvedBy": "security-reviewer",
+      "approvedSubmission": "sub-muyqje7c-01fe6bf4",
       "escalation": null,
       "startedAt": "2026-10-07T23:11:57.686Z",
-      "approvedAt": null
+      "approvedAt": "2026-10-07T23:28:03.074Z"
     },
     "phase:integration": {
       "id": "phase:integration",
       "kind": "phase",
-      "status": "pending",
+      "status": "in_progress",
       "iterations": 0,
       "authors": [],
       "submissions": [],
@@ -612,7 +614,7 @@
       "approvedBy": null,
       "approvedSubmission": null,
       "escalation": null,
-      "startedAt": null,
+      "startedAt": "2026-10-07T23:28:26.483Z",
       "approvedAt": null
     }
   },
@@ -4588,6 +4590,101 @@
       "task": "t13-app-wiring",
       "recordedBy": "delivery-lead",
       "at": "2026-10-07T23:24:58.402Z"
+    },
+    "ev-muyqmfzd-015ed641": {
+      "id": "ev-muyqmfzd-015ed641",
+      "kind": "command",
+      "label": "sec probe: fallback no-echo, detector ReDoS timing 16KB, app wiring no-key/live redaction via fake-anthropic, config error no-echo",
+      "command": "node /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/sec-probe.js .",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 430,
+      "log": ".eccode/evidence/ev-muyqmfzd-015ed641.log",
+      "logSha256": "6031843a98562dde2e6e82eb10fd4abc89a6ac3d6e01a82ea247b7445676c0a4",
+      "outputTail": "  spaces           len=16384 detect=0.4ms fallback=0.9ms rules=\n  periods          len=16384 detect=1.2ms fallback=0.3ms rules=\n  newlines         len=16384 detect=3.8ms fallback=0.2ms rules=\n  label            len=16380 detect=0.6ms fallback=2.8ms rules=\n  you-are-now      len=16380 detect=0.5ms fallback=1.1ms rules=\n  mixed-unicode    len=16380 detect=0.2ms fallback=1.1ms rules=\n  link-sentences   len=16023 detect=0.6ms fallback=0.3ms rules=INJ_LINK\nPASS detector+fallback never throw on 19 adversarial 16KB inputs\nPASS detector worst-case 89.2ms (domain-dots) < 250ms on 16KB\nPASS fallback worst-case 2.8ms < 250ms on 16KB\nPASS detector total on non-string input\nPASS no key ({}) -> fallback mode\nPASS no key ({\"ANTHROPIC_API_KEY\":\"\"}) -> fallback mode\nPASS no key ({\"ANTHROPIC_API_KEY\":\"   \"}) -> fallback mode\nPASS no key: fetch never invoked\nPASS key set -> live mode\nPASS live: exactly one POST /v1/messages to fake\nPASS live: request body contains no raw card/email/phone\nPASS live: key only in x-api-key header, not in body\nPASS live: response source model, no key in response/meta\n  meta.redactions={\"email\":1,\"card\":1,\"phone\":1}\nPASS config errors (11 bad envs): no value echoed in message/stack\nPASS every bad env rejected with ConfigError\nALL PASS\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T23:27:27.348Z"
+    },
+    "ev-muyqml2y-01be22e4": {
+      "id": "ev-muyqml2y-01be22e4",
+      "kind": "command",
+      "label": "detector scaling on dotted/hyphen runs (quadratic, bounded by 8000-char cap)",
+      "command": "node -e \"const {detectInjection}=require(\\\"./src/triage/injection.js\\\"); for (const n of [4000,8000,16000,32000]) { const s=\\\"a.\\\".repeat(n/2); const t=process.hrtime.bigint(); detectInjection(s); console.log(n, (Number(process.hrtime.bigint()-t)/1e6).toFixed(1)+\\\"ms\\\"); }\"",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 438,
+      "log": ".eccode/evidence/ev-muyqml2y-01be22e4.log",
+      "logSha256": "0f3beff985d538c7303a2230e864aa4292838976f065f24c920f2fa5131d8086",
+      "outputTail": "4000 8.5ms\n8000 23.1ms\n16000 77.9ms\n32000 277.7ms\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T23:27:33.959Z"
+    },
+    "ev-muyqml56-01874738": {
+      "id": "ev-muyqml56-01874738",
+      "kind": "command",
+      "label": "pinned check-script hashes",
+      "command": "sha256sum .eccode/artifacts/plan/checks/*.js && sha256sum .eccode/artifacts/plan/checks/*.js | grep -c -e c59b7acda3faa36964f9c9d7ce8aa22fe74a6f92c1eda2d142fa916d721c56f9 -e a9a0128f80af2b468446294320eb8b8117b898d51f8a09607fcb69134d683993 -e e1fde7f948af3fc7f50bd2b6ce033d6ab84455bbdb833e8c5c381d9ed0b6b647 | grep -qx 3",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 9,
+      "log": ".eccode/evidence/ev-muyqml56-01874738.log",
+      "logSha256": "5caba7e8c9d2a7e64b949995bae5ffbf36d6d308b1106ec7820989f3999aab79",
+      "outputTail": "c59b7acda3faa36964f9c9d7ce8aa22fe74a6f92c1eda2d142fa916d721c56f9  .eccode/artifacts/plan/checks/dataset-precheck.js\na9a0128f80af2b468446294320eb8b8117b898d51f8a09607fcb69134d683993  .eccode/artifacts/plan/checks/readme-check.js\ne1fde7f948af3fc7f50bd2b6ce033d6ab84455bbdb833e8c5c381d9ed0b6b647  .eccode/artifacts/plan/checks/scaffold-check.js\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T23:27:34.041Z"
+    },
+    "ev-muyqmlep-0138d392": {
+      "id": "ev-muyqmlep-0138d392",
+      "kind": "command",
+      "label": "heldout hygiene test",
+      "command": "node --test test/eval/heldout-hygiene.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 265,
+      "log": ".eccode/evidence/ev-muyqmlep-0138d392.log",
+      "logSha256": "5d413cc50c094c3bf430a3b6770eaec73abccbb6eda5aed4d12adeebd4a80b0d",
+      "outputTail": "      duration_ms: 1.878114\n      type: 'test'\n      ...\n    # Subtest: mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path\n    ok 2 - mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path\n      ---\n      duration_ms: 123.42051\n      type: 'test'\n      ...\n    1..2\nok 2 - held-out hygiene self-check\n  ---\n  duration_ms: 125.743302\n  type: 'test'\n  ...\n1..2\n# tests 6\n# suites 0\n# pass 6\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 208.03873\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T23:27:34.385Z"
+    },
+    "ev-muyqmt6w-01536eca": {
+      "id": "ev-muyqmt6w-01536eca",
+      "kind": "command",
+      "label": "npm test (full suite)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 5824,
+      "log": ".eccode/evidence/ev-muyqmt6w-01536eca.log",
+      "logSha256": "933500ca234ca6f76001735298dd680ed07fb074d43b5439b3f159685031fe22",
+      "outputTail": "  duration_ms: 1.736769\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 377 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 3.391024\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 378 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 2.839474\n  type: 'test'\n  ...\n1..378\n# tests 382\n# suites 0\n# pass 382\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 5618.782999\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T23:27:44.468Z"
     }
   },
   "reviews": {
@@ -6080,6 +6177,101 @@
       "reviewer": "technical-reviewer",
       "at": "2026-10-07T23:11:34.964Z",
       "submissionId": "sub-muypvw1n-017e0160"
+    },
+    "rev-muyqn7k2-013f3a2e": {
+      "decision": "approve",
+      "summary": "Security review of sub-muyqje7c-01fe6bf4. Fallback output is fixed (category, urgency) templates with no ticket interpolation; detector and fallback are total and fast on adversarial input within the 8000-char cap; app.js builds the live provider only when ANTHROPIC_API_KEY is non-blank, the live path sends only redacted text with the key in x-api-key only; config errors never echo values. npm test 382/382, hygiene test 6/6, pinned check-script hashes match.",
+      "criteria": [
+        {
+          "id": "S1",
+          "description": "Fallback summary/reply never echo ticket text, canaries, URLs or markup (7 adversarial tickets incl. canary tokens, URLs, fake tags, chat tokens, bidi/NUL); fallback total on malformed ticket/detection",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyqmfzd-015ed641",
+            "artifact:src/triage/fallback-provider.js"
+          ]
+        },
+        {
+          "id": "S2",
+          "description": "Detector and fallback never throw and stay fast on 19 adversarial 16KB inputs and non-string input (worst detector ~90-130ms at 16KB, ~20ms at the 8000-char production cap)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyqmfzd-015ed641",
+            "ev:ev-muyqml2y-01be22e4",
+            "artifact:src/triage/injection.js"
+          ]
+        },
+        {
+          "id": "S3",
+          "description": "app.js: no/empty/blank key -> fallback mode, fetch never invoked; key set -> live mode, exactly one POST /v1/messages to fake-anthropic, body has no raw card/email/phone, key only in x-api-key header and not in response/meta",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyqmfzd-015ed641",
+            "artifact:src/app.js"
+          ]
+        },
+        {
+          "id": "S4",
+          "description": "Config errors (11 bad envs incl. HOST, PORT, model, base URL with credentials, timeouts, allow-remote) are ConfigError and never echo the value in message or stack; server.js prints only ConfigError message or a sanitised code",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyqmfzd-015ed641",
+            "artifact:src/server.js"
+          ]
+        },
+        {
+          "id": "S5",
+          "description": "Full suite passes on the submitted files",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyqmt6w-01536eca"
+          ]
+        },
+        {
+          "id": "S6",
+          "description": "Held-out hygiene test passes (lexical only, per delivery-lead note)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyqmlep-0138d392",
+            "artifact:test/eval/heldout-hygiene.test.js"
+          ]
+        },
+        {
+          "id": "S7",
+          "description": "Pinned check-script hashes match plan (dataset-precheck c59b7acd..., readme-check a9a0128f..., scaffold-check e1fde7f9...)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyqml56-01874738"
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "RW-SEC-1",
+          "severity": "minor",
+          "title": "LINKISH scheme alternative is quadratic on long dotted/hyphenated runs",
+          "detail": "detectInjection on 'a.'/'a-' repeated scales O(n^2): 8.5ms@4k, 23ms@8k, 78ms@16k, 278ms@32k chars (ev:ev-muyqml2y-01be22e4). Likely cause: \\b[a-z][a-z0-9+.-]*:\\/\\/ in LINKISH restarts at every word boundary and scans to the end of the sentence. Bounded in production by MAX_TICKET_CHARS=8000 (~20ms worst), so not exploitable as DoS today, but the module's comment claims linear-ish cost and it would degrade if the cap were raised.",
+          "evidence": [
+            "ev:ev-muyqml2y-01be22e4"
+          ],
+          "recommendation": "Bound the scheme run (e.g. [a-z][a-z0-9+.-]{0,31}:\\/\\/) and add a timing regression test on an 8000-char dotted run."
+        },
+        {
+          "id": "RW-SEC-2",
+          "severity": "info",
+          "title": "Hygiene test is lexical only; RISK-11 npm-start orphan noted",
+          "detail": "Acknowledged per delivery-lead notes: heldout-hygiene detects copied phrases/canaries/URLs lexically, not paraphrased leakage; RISK-11 (npm start leaves an orphaned child on signal) is recorded with README mitigation planned in t16. Not re-verified here beyond running the hygiene test (ev:ev-muyqmlep-0138d392).",
+          "evidence": [
+            "ev:ev-muyqmlep-0138d392"
+          ],
+          "recommendation": "Keep RISK-11 open until the t16 README mitigation lands."
+        }
+      ],
+      "id": "rev-muyqn7k2-013f3a2e",
+      "gate": "phase:rules-and-wiring",
+      "reviewer": "security-reviewer",
+      "at": "2026-10-07T23:28:03.074Z",
+      "submissionId": "sub-muyqje7c-01fe6bf4"
     }
   },
   "rejectedReviews": [
@@ -7649,6 +7841,29 @@
       "task": null,
       "gate": "phase:rules-and-wiring",
       "startedAt": "2026-10-07T23:25:44.312Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T23:28:26.421Z",
+      "durationMinutes": 2.7,
+      "costUsd": 0,
+      "tokens": 102599,
+      "note": null
+    },
+    "run-muyqnppg-01bf5c82": {
+      "id": "run-muyqnppg-01bf5c82",
+      "agent": "test-engineer",
+      "task": "t14-contract-http",
+      "gate": null,
+      "startedAt": "2026-10-07T23:28:26.607Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-muyqnprf-014879dd": {
+      "id": "run-muyqnprf-014879dd",
+      "agent": "test-engineer",
+      "task": "t15-contract-modes-privacy",
+      "gate": null,
+      "startedAt": "2026-10-07T23:28:26.677Z",
       "status": "running",
       "attempt": 1
     }
@@ -7830,8 +8045,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 186.48,
-    "tokens": 5331003
+    "runtimeMinutes": 189.18,
+    "tokens": 5433602
   },
   "delivery": null
 }
