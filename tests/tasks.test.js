@@ -152,3 +152,28 @@ test('budget limits block new work', () => {
   assert.match(err.details.recovery, /user's explicit authorization/);
   expectCode(() => runs.startRun(ctx.store, ctx.config, 'product-architect'), 'BUDGET_EXCEEDED');
 });
+
+test('scope checks work when the project is a subdirectory of a larger git repo', () => {
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+  const { execFileSync } = require('child_process');
+  const { init } = require('../lib/project');
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'mono-'));
+  execFileSync('git', ['init', '-q'], { cwd: repo });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: repo });
+  const dir = path.join(repo, 'examples', 'app');
+  fs.mkdirSync(dir, { recursive: true });
+  const store = init(dir, { name: 'Sub', idea: 'project nested in a monorepo' });
+  const ctx = { dir, store, config: loadConfig(dir) };
+  approveThroughPlan(ctx);
+  write(dir, 'src/server/app.js', 'module.exports = 1;\n');
+  execFileSync('git', ['add', '-A'], { cwd: repo });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '-m', 'baseline'], { cwd: repo });
+  gates.startGate(store, ctx.config, 'phase:core', 'orchestrator');
+  tasks.claim(store, ctx.config, 'api', 'backend-engineer');
+  write(dir, 'src/server/app.js', 'module.exports = 2;\n'); // tracked file modified
+  const ev = passCheck(store, 'backend-engineer');
+  tasks.complete(store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/app.js']));
+  assert.strictEqual(store.state().tasks.api.status, 'done');
+});
