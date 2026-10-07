@@ -1,6 +1,6 @@
 {
-  "seq": 176,
-  "lastHash": "2e9bc4d4c03a02460217b8e580c94b385cf4a3ded6c820e2f8e1070c04a94bcf",
+  "seq": 180,
+  "lastHash": "669d896a7923ecce5b1c430b9e5ce3c92f09579d541d0127432552073fe67594",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -394,24 +394,29 @@
         "method": "Plan check script asserting the exact package.json object and required .env.example/.gitignore lines",
         "command": "node .eccode/artifacts/plan/checks/scaffold-check.js"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "devops-engineer",
-        "at": "2026-10-07T22:19:22.659Z",
-        "baseCommit": "4f4807568161d8c50ed23c885e39f216f6230f50",
-        "runId": "run-muyo5w54-014967f6"
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "devops-engineer",
           "at": "2026-10-07T22:19:22.659Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "devops-engineer",
+          "at": "2026-10-07T22:20:04.362Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "devops-engineer",
+      "handoffId": "ho-muyo7se1-0155daab",
+      "filesChanged": [
+        "package.json",
+        ".env.example",
+        ".gitignore"
+      ]
     },
     "t02-eval-dataset": {
       "id": "t02-eval-dataset",
@@ -3457,6 +3462,47 @@
       "id": "ho-muyo2xi1-0192b834",
       "recordedBy": "delivery-lead",
       "at": "2026-10-07T22:16:17.697Z"
+    },
+    "ho-muyo7se1-0155daab": {
+      "from": "devops-engineer",
+      "to": "delivery-lead",
+      "task": "t01-scaffold",
+      "objective": "Package scaffold per spec §Deployment: package.json, .env.example, .gitignore (spec task 1)",
+      "context": "package.json and .env.example copied verbatim from .eccode/artifacts/design/spec.md#Deployment; variables match #C6.1 config.js. CommonJS, zero dependencies, Node >=22 (local v22.22.0).",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#Deployment",
+        ".eccode/artifacts/design/spec.md#Directory tree and ownership",
+        ".eccode/artifacts/design/spec.md#C6.1 config.js",
+        ".eccode/artifacts/plan/checks/scaffold-check.js"
+      ],
+      "dependencies": [],
+      "expectedOutput": "package.json equal to the §Deployment object; .env.example equal to the §Deployment block; .gitignore with .env and node_modules/",
+      "acceptanceCriteria": [
+        "package.json is exactly the §Deployment object: scripts start, test (node --test --test-concurrency=1 \"test/**/*.test.js\"), eval, eval:tune; engines.node \">=22\"; no dependencies, devDependencies or \"type\" field (NFR1, AC12)",
+        ".env.example matches §Deployment line for line; ANTHROPIC_API_KEY is empty; ANTHROPIC_BASE_URL is not defined (DES-1)",
+        ".gitignore contains .env and node_modules/",
+        "Does not modify .eccode/artifacts/plan/checks/** (pinned plan instruments, sha256 recorded with the plan submission); a check failure is fixed in the owned files or escalated, never by changing the check"
+      ],
+      "completedWork": "Created package.json (exact §Deployment object: name, version, private, description, license, engines.node >=22, scripts start/test/eval/eval:tune; no dependencies, devDependencies or type field). Created .env.example byte-identical to the §Deployment block (ANTHROPIC_API_KEY empty, only TRIAGE_ANTHROPIC_BASE_URL commented, ANTHROPIC_BASE_URL not defined, TRIAGE_ALLOW_REMOTE commented). Created .gitignore with .env and node_modules/. The plan check scaffold-check.js passes and its sha256 is unchanged (e1fde7f9...b647).",
+      "filesChanged": [
+        "package.json",
+        ".env.example",
+        ".gitignore"
+      ],
+      "evidence": [
+        "ev:ev-muyo7c9b-0141325a",
+        "ev:ev-muyo7j83-0193f206"
+      ],
+      "remainingIssues": [
+        "npm start/test/eval scripts reference src/server.js, test/** and eval/run.js, which do not exist yet (owned by t02/t03/t06+); they will fail until those tasks land.",
+        "README.md (devops-engineer, spec §Deployment run shape, rollback and DES-1/DES-6 warnings) is not part of t01; it is planned for t16.",
+        "Evidence ev:ev-muyo7caz-013afe78 is a FAILED run of my own extra check: the evidence runner executes via /bin/sh, which rejected bash process substitution. It says nothing about the deliverables; the same check passed as a node script in ev:ev-muyo7j83-0193f206."
+      ],
+      "nextAction": "delivery-lead: confirm the scaffold-check.js hash, then unblock t03 (depends on t01) and the core-modules tasks t04-t07.",
+      "lessonsConsulted": [],
+      "id": "ho-muyo7se1-0155daab",
+      "recordedBy": "devops-engineer",
+      "at": "2026-10-07T22:20:04.372Z"
     }
   },
   "runs": {

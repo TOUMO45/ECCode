@@ -1,0 +1,38 @@
+{
+  "from": "devops-engineer",
+  "to": "delivery-lead",
+  "task": "t01-scaffold",
+  "objective": "Package scaffold per spec §Deployment: package.json, .env.example, .gitignore (spec task 1)",
+  "context": "package.json and .env.example copied verbatim from .eccode/artifacts/design/spec.md#Deployment; variables match #C6.1 config.js. CommonJS, zero dependencies, Node >=22 (local v22.22.0).",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#Deployment",
+    ".eccode/artifacts/design/spec.md#Directory tree and ownership",
+    ".eccode/artifacts/design/spec.md#C6.1 config.js",
+    ".eccode/artifacts/plan/checks/scaffold-check.js"
+  ],
+  "dependencies": [],
+  "expectedOutput": "package.json equal to the §Deployment object; .env.example equal to the §Deployment block; .gitignore with .env and node_modules/",
+  "acceptanceCriteria": [
+    "package.json is exactly the §Deployment object: scripts start, test (node --test --test-concurrency=1 \"test/**/*.test.js\"), eval, eval:tune; engines.node \">=22\"; no dependencies, devDependencies or \"type\" field (NFR1, AC12)",
+    ".env.example matches §Deployment line for line; ANTHROPIC_API_KEY is empty; ANTHROPIC_BASE_URL is not defined (DES-1)",
+    ".gitignore contains .env and node_modules/",
+    "Does not modify .eccode/artifacts/plan/checks/** (pinned plan instruments, sha256 recorded with the plan submission); a check failure is fixed in the owned files or escalated, never by changing the check"
+  ],
+  "completedWork": "Created package.json (exact §Deployment object: name, version, private, description, license, engines.node >=22, scripts start/test/eval/eval:tune; no dependencies, devDependencies or type field). Created .env.example byte-identical to the §Deployment block (ANTHROPIC_API_KEY empty, only TRIAGE_ANTHROPIC_BASE_URL commented, ANTHROPIC_BASE_URL not defined, TRIAGE_ALLOW_REMOTE commented). Created .gitignore with .env and node_modules/. The plan check scaffold-check.js passes and its sha256 is unchanged (e1fde7f9...b647).",
+  "filesChanged": [
+    "package.json",
+    ".env.example",
+    ".gitignore"
+  ],
+  "evidence": [
+    "ev:ev-muyo7c9b-0141325a",
+    "ev:ev-muyo7j83-0193f206"
+  ],
+  "remainingIssues": [
+    "npm start/test/eval scripts reference src/server.js, test/** and eval/run.js, which do not exist yet (owned by t02/t03/t06+); they will fail until those tasks land.",
+    "README.md (devops-engineer, spec §Deployment run shape, rollback and DES-1/DES-6 warnings) is not part of t01; it is planned for t16.",
+    "Evidence ev:ev-muyo7caz-013afe78 is a FAILED run of my own extra check: the evidence runner executes via /bin/sh, which rejected bash process substitution. It says nothing about the deliverables; the same check passed as a node script in ev:ev-muyo7j83-0193f206."
+  ],
+  "nextAction": "delivery-lead: confirm the scaffold-check.js hash, then unblock t03 (depends on t01) and the core-modules tasks t04-t07.",
+  "lessonsConsulted": []
+}
