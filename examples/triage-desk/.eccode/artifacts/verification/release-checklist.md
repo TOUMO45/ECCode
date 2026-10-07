@@ -3,7 +3,7 @@
 Status key: [x] verified (evidence cited) · [ ] open / needs a decision · [~] partly verified
 
 ## Blocking decision
-- [ ] **The full-mode eval failed 1 of 25 checks**: holdout high_urgency_recall is 0.571 (n=7) against a floor of 0.70 (ev:ev-muyqzv9i-018cf19d). Before release the orchestrator or user must choose one:
+- [ ] **The full-mode eval failed 1 of 25 checks (RISK-12)**: holdout high_urgency_recall is 0.571 (n=7) against a floor of 0.70 (ev:ev-muyqzv9i-018cf19d). Before release the orchestrator or user must choose one:
   - (a) accept it as a known fallback limitation, with a recorded decision; or
   - (b) reset t11-rules under a recorded decision. Tuning uses tune rows only, and the re-run is reported as full-mode run #2.
 
@@ -59,4 +59,6 @@ Status key: [x] verified (evidence cited) · [ ] open / needs a decision · [~] 
 - [ ] RISK-7 (medium) API surface checked against docs only. Needs a live run.
 - [x] RISK-8 (medium) XSS: unit tests plus the real-browser payload check.
 - [~] RISK-9 (medium) redaction misses: names, addresses and account ids are not redacted (disclosed).
+- [x] RISK-10 (low) validator cost on long model output: mitigated by the length gate at the provider call site.
 - [ ] RISK-11 (medium) `npm start` under dash can orphan the server. Run `node src/server.js` under a supervisor.
+- [ ] RISK-12 (medium, owner ai-engineer) full-mode eval misses the holdout high_urgency_recall floor (0.571, n=7, floor 0.70; ev:ev-muyqzv9i-018cf19d). **Open: user decision pending** (see Blocking decision).

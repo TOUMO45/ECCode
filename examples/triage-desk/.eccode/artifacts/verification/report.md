@@ -21,7 +21,7 @@ All results come from the **deterministic fallback provider**. They are evidence
 | 3 | design-vectors | `node .eccode/artifacts/design/design-vectors.js` | ev:ev-muyr019l-01bbd9f9 | **PASSED** "all design vectors pass" |
 | extra | browser-check | `node .eccode/drafts/t17-browser-check.js` (headless Chromium via Playwright) | ev:ev-muyr13oz-01d57136 | **PASSED** 18/18 |
 
-**Full-mode run count: 1.** Only one evidence log in `.eccode/evidence/` contains an `ECCODE_EVAL` line (ev-muyqzv9i-018cf19d). Any later full-mode run must be counted against this report (E5).
+**Full-mode run count: 1.** Exactly one full-mode `npm run eval` run exists: ev-muyqzv9i-018cf19d. Any later full-mode run must be counted against this report (E5).
 
 ## 2. Freeze integrity and held-out hygiene
 
@@ -64,7 +64,7 @@ Rows: benign=80, attack=27 (18 in-family, 9 held-out), holdout=25, instruction-l
 - n=7 is small: one more correct row would give 0.714 (pass). The floor is nevertheless enforced as written.
 
 ### Escalation
-- The holdout floor miss is a finding against **t11-rules** (`src/triage/fallback-provider.js`, owner ai-engineer).
+- The holdout floor miss is recorded as **RISK-12** (open; user decision pending). It is a finding against **t11-rules** (`src/triage/fallback-provider.js`, owner ai-engineer).
 - Any fix needs a recorded decision. Tuning must use tune rows only (DES-2); the holdout rows must not be inspected.
 - A second full-mode run must be reported as run #2, and the held-out numbers from it can no longer be read as blind.
 - The orchestrator or user decides whether to (a) accept the miss as a known limitation of the fallback, or (b) reset t11 under that decision.
@@ -150,7 +150,7 @@ The adversarial phone redaction (about 38 ms median) costs more than the whole f
 
 ## 7. Known limitations
 
-1. **The fallback misses the holdout high-urgency floor** (4/7) and catches only 4/9 held-out-family injection attempts. The fallback is a safety net, not a classifier of record. The UI labels it "not AI-generated", which mitigates automation bias (RISK-2) but does not fix accuracy.
+1. **The fallback misses the holdout high-urgency floor** (4/7, RISK-12) and catches only 4/9 held-out-family injection attempts. The fallback is a safety net, not a classifier of record. The UI labels it "not AI-generated", which mitigates automation bias (RISK-2) but does not fix accuracy.
 2. The live path is untested against the real API (RISK-7). The model id, the structured-output schema restrictions and the effort parameter are checked against docs only.
 3. There is no authentication. The server is safe on loopback only (RISK-5); remote binding needs `TRIAGE_ALLOW_REMOTE`, and the README warns about it.
 4. Redaction covers email, phone and card numbers only. Names, addresses and account ids reach Anthropic in live mode (RISK-9), and the notice says so.
@@ -170,6 +170,6 @@ The adversarial phone redaction (about 38 ms median) costs more than the whole f
 | RISK-7 API surface checked against docs only | medium | **Open**: live NOT RUN, no key |
 | RISK-8 XSS | medium | Mitigated: AC11 tests plus the real-browser payload check |
 | RISK-9 redaction misses | medium | Partly mitigated (AC16, design vectors). Unredacted classes are disclosed in the notice. Open |
+| RISK-10 validator cost on long model output | low | Mitigated: over-long summary/reply rejected as invalid_output at the provider call site before V2 runs (300k chars rejected in <500 ms) |
 | RISK-11 `npm start` orphaning under dash | medium | Open; documented workaround |
-
-(RISK-10 is not in the open-risk list.)
+| RISK-12 full-mode eval misses the holdout high_urgency_recall floor (0.571, n=7, ≥ 0.70) | medium | **Open. User decision pending**: accept as a known fallback limitation, or reset t11-rules and re-run as full-mode run #2 (ev:ev-muyqzv9i-018cf19d) |
