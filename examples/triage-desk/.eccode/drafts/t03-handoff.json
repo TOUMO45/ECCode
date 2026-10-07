@@ -1,0 +1,46 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "t03-test-helpers",
+  "objective": "Shared test helpers per spec §Testing Strategy: http-client (node:http, agent:false), fake-fetch stubs, fake-anthropic loopback server, spawn-server with an explicit child env (DES-1), plus a helper self-test.",
+  "context": "Contracts: spec §Testing Strategy (helper APIs), C6.4 (provider uses only res.status and res.text(); never() must stay pending so the provider's abort race is exercised), C7 (Messages API body: content[] text block, stop_reason, usage), C1 (Host/Origin control needs node:http because fetch cannot set Host), D1.6 (listening line carries port). DES-1: child env is exactly {PATH: process.env.PATH, ...testEnv, PORT:'0'}. src/server.js does not exist yet, so spawn-server is self-tested against a fixture stand-in under test/helpers/fixtures/.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#Testing Strategy",
+    ".eccode/artifacts/design/spec.md#C6.4 Provider interface (server ↔ AI module boundary)",
+    ".eccode/artifacts/design/spec.md#C7 Outbound contract: Anthropic Messages API (live mode only)",
+    ".eccode/artifacts/design/spec.md#C1 HTTP pipeline and common rules (http-server.js)",
+    ".eccode/artifacts/design/http-probe.js",
+    ".eccode/artifacts/plan/plan.md"
+  ],
+  "dependencies": [],
+  "expectedOutput": "test/helpers/{http-client,fake-fetch,fake-anthropic,spawn-server}.js usable by t06, t09, t14 and t15, and a passing helpers.test.js.",
+  "acceptanceCriteria": [
+    "request({port, method, path, headers, body, setHost=true}) on node:http with agent:false, supporting foreign/missing Host and Origin; returns {status, headers, body, json}",
+    "fake-fetch: respond, messageOk(obj,{stop_reason, thinkingFirst, usage}), never, throws, capture(inner) with call count",
+    "fake-anthropic records requests, serves programmed responses including redirect(307|308, location), counts requests",
+    "spawn-server builds child env as {PATH, ...testEnv, PORT:'0'} and copies nothing else from process.env (DES-1); reads port from the listening line; captures stdout/stderr; kills the child on teardown",
+    "helpers.test.js self-tests fake-fetch and fake-anthropic (200, 307/308 redirect with second instance counting 0) on 127.0.0.1 only; does not spawn src/server.js",
+    "No network access beyond loopback"
+  ],
+  "completedWork": "Implemented the four helpers and a 21-case node:test self-test, all passing (ev:ev-muyodvof-01e95e26, ~0.9 s). APIs: http-client.request({port, method, path, headers, body, setHost=true, hostname='127.0.0.1', timeoutMs=10000}) -> {status, headers, body, json|null}; a `host` header (any case) overrides Host, setHost:false with no host header sends none; string/Buffer body sent byte-for-byte, other values JSON-stringified with content-type application/json only if none given; content-length always set unless supplied; rejects on transport errors (ECONNREFUSED/ECONNRESET/ETIMEDOUT). fake-fetch: respond(status, jsonOrText), messageBody(obj, opts) (body object), messageOk(obj, {stop_reason='end_turn', thinkingFirst=false, usage, model}) (stub; body also on stub.body; usage default {input_tokens:120, output_tokens:40}, usage:null omits the key; a string obj is used verbatim as the text block), never() (never settles even on abort), throws(err=TypeError('fetch failed')) (rejects), capture(inner) (records {url, init, body: parsed|null, rawBody} before delegating; .calls, .count). fake-anthropic: startFakeAnthropic() -> {port, address, url, requests[{method,path,headers,body,json}], count (on arrival), reply(status, jsonOrText, {once, headers}), replyMessage(obj, opts, {once}), redirect(3xx, location, {once}), reset(), close()}; binds 127.0.0.1 (loopback-only enforced); unprogrammed requests get 500 api_error. spawn-server: buildChildEnv(testEnv) and spawnServer({env, entry='src/server.js', cwd=project root, timeoutMs=10000}) -> {child, env, port, listening, stdout(), stderr(), logs(), waitForLog(pred,{timeoutMs}), stop()}; spawns process.execPath (no PATH lookup), rejects with exitCode/stderr on early exit, kills and rejects on listening timeout, stop() is SIGTERM then SIGKILL after 3 s and idempotent, plus a process-exit SIGKILL safety net. Self-test covers: Host default/foreign/missing/[::1] and Origin; body encodings and 20 KB body; HEAD; ECONNREFUSED rejection; capture url/init/parsed body/count (also with never inner); never() pending before and after abort; thinkingFirst order; fake-anthropic programmed 200 + recorded headers/body, once-queue, reset, unprogrammed 500; 307 and 308 to a second instance at http://localhost:<B>: fetch redirect:'error' throws TypeError and B counts 0, with a follow-mode control proving B's counter is live (B counts 1 via localhost); DES-1 with parent ANTHROPIC_API_KEY/TRIAGE_ANTHROPIC_BASE_URL set: child env keys are exactly the test keys + PATH + PORT, PORT forced to '0', parent key absent from child output; early-exit and timeout paths. A mutation check (spawn-server spreading process.env, on a scratch copy) is caught by two self-test cases (ev:ev-muyodwft-010ec996). TDD red run before implementation: ev:ev-muyoba7q-013f7fc2 (failed as expected).",
+  "filesChanged": [
+    "test/helpers/http-client.js",
+    "test/helpers/fake-fetch.js",
+    "test/helpers/fake-anthropic.js",
+    "test/helpers/spawn-server.js",
+    "test/helpers/helpers.test.js",
+    "test/helpers/fixtures/env-probe-server.js"
+  ],
+  "evidence": [
+    "ev:ev-muyodvof-01e95e26",
+    "ev:ev-muyodwft-010ec996",
+    "ev:ev-muyoba7q-013f7fc2"
+  ],
+  "remainingIssues": [
+    "spawn-server has not been run against the real src/server.js (not built yet; t13). It relies on src/server.js logging the D1.6 listening line {event:'listening', port:<number>} on stdout; first real exercise is t15 privacy.test.js.",
+    "The files were already committed to git by the orchestrating session in commits 6d1ff7b and aee61eb (alongside other work), not by this task; content in HEAD equals the verified working tree.",
+    "Added test/helpers/fixtures/env-probe-server.js (inside test/helpers/**) as a src/server.js stand-in for the spawn-server self-test; it is not named *.test.js, so the npm test glob does not run it directly."
+  ],
+  "nextAction": "delivery-lead: review t03; then backend-engineer (t06) and ai-engineer (t09) can use fake-fetch/http-client, and test-engineer t14/t15 can use spawn-server and fake-anthropic.",
+  "lessonsConsulted": []
+}
