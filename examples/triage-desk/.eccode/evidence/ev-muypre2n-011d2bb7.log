@@ -1,0 +1,157 @@
+$ node --test test/unit/service.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: provider null → mode fallback, model null
+ok 1 - provider null → mode fallback, model null
+  ---
+  duration_ms: 1.140863
+  type: 'test'
+  ...
+# Subtest: provider present → mode live, model = provider.model
+ok 2 - provider present → mode live, model = provider.model
+  ---
+  duration_ms: 0.217438
+  type: 'test'
+  ...
+# Subtest: invalid deps are rejected at creation (programming error, never a silent fallback)
+ok 3 - invalid deps are rejected at creation (programming error, never a silent fallback)
+  ---
+  duration_ms: 0.539272
+  type: 'test'
+  ...
+# Subtest: no_api_key: [REDACTED] on original → fallback on original; redact and provider never called; redactions null
+ok 4 - no_api_key: [REDACTED] on original → fallback on original; redact and provider never called; redactions null
+  ---
+  duration_ms: 1.558374
+  type: 'test'
+  ...
+# Subtest: live ok: detect(original) → redact(original) → provider.analyse(redacted); source model, model id, meta from LiveResult
+ok 5 - live ok: detect(original) → redact(original) → provider.analyse(redacted); source model, model id, meta from LiveResult
+  ---
+  duration_ms: 0.408782
+  type: 'test'
+  ...
+# Subtest: live ok copies only the four Triage fields (extra provider keys never leak into the response)
+ok 6 - live ok copies only the four Triage fields (extra provider keys never leak into the response)
+  ---
+  duration_ms: 0.195779
+  type: 'test'
+  ...
+# Subtest: injectionSuspected comes from the detector even when the model succeeds
+ok 7 - injectionSuspected comes from the detector even when the model succeeds
+  ---
+  duration_ms: 0.186636
+  type: 'test'
+  ...
+# Subtest: live failure model_error/http_500 → fallback on original text with live.reason, model null
+ok 8 - live failure model_error/http_500 → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 0.194756
+  type: 'test'
+  ...
+# Subtest: live failure model_error/fetch_threw → fallback on original text with live.reason, model null
+ok 9 - live failure model_error/fetch_threw → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 0.390232
+  type: 'test'
+  ...
+# Subtest: live failure timeout/timeout → fallback on original text with live.reason, model null
+ok 10 - live failure timeout/timeout → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 0.414167
+  type: 'test'
+  ...
+# Subtest: live failure refusal/refusal → fallback on original text with live.reason, model null
+ok 11 - live failure refusal/refusal → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 0.181549
+  type: 'test'
+  ...
+# Subtest: live failure truncated/max_tokens → fallback on original text with live.reason, model null
+ok 12 - live failure truncated/max_tokens → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 0.203988
+  type: 'test'
+  ...
+# Subtest: live failure invalid_output/invalid:summary_v1 → fallback on original text with live.reason, model null
+ok 13 - live failure invalid_output/invalid:summary_v1 → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 1.224224
+  type: 'test'
+  ...
+# Subtest: provider.analyse rejecting → model_error / provider_threw, fallback on original text
+ok 14 - provider.analyse rejecting → model_error / provider_threw, fallback on original text
+  ---
+  duration_ms: 0.282073
+  type: 'test'
+  ...
+# Subtest: provider.analyse throwing synchronously → model_error / provider_threw
+ok 15 - provider.analyse throwing synchronously → model_error / provider_threw
+  ---
+  duration_ms: 0.139158
+  type: 'test'
+  ...
+# Subtest: provider resolving a non-LiveResult (null, unknown reason, ok without triage) → model_error / provider_threw
+ok 16 - provider resolving a non-LiveResult (null, unknown reason, ok without triage) → model_error / provider_threw
+  ---
+  duration_ms: 0.168577
+  type: 'test'
+  ...
+# Subtest: a throwing detectInjection propagates and nothing else runs
+ok 17 - a throwing detectInjection propagates and nothing else runs
+  ---
+  duration_ms: 0.315637
+  type: 'test'
+  ...
+# Subtest: a throwing fallbackAnalyse propagates (no_api_key and live-failure paths)
+ok 18 - a throwing fallbackAnalyse propagates (no_api_key and live-failure paths)
+  ---
+  duration_ms: 0.171451
+  type: 'test'
+  ...
+# Subtest: a throwing redact propagates and the provider is never called (no unredacted egress)
+ok 19 - a throwing redact propagates and the provider is never called (no unredacted egress)
+  ---
+  duration_ms: 0.108239
+  type: 'test'
+  ...
+# Subtest: analyse rejects a non-string ticket with TypeError before calling any collaborator
+ok 20 - analyse rejects a non-string ticket with TypeError before calling any collaborator
+  ---
+  duration_ms: 0.109029
+  type: 'test'
+  ...
+# Subtest: latency is measured with the injected clock around the whole analysis (incl. provider wait)
+ok 21 - latency is measured with the injected clock around the whole analysis (incl. provider wait)
+  ---
+  duration_ms: 0.120578
+  type: 'test'
+  ...
+# Subtest: default clock is performance.now: latency is a finite non-negative number
+ok 22 - default clock is performance.now: latency is a finite non-negative number
+  ---
+  duration_ms: 0.214218
+  type: 'test'
+  ...
+# Subtest: AnalysisMeta never carries ticket text (original or redacted) or provider error text
+ok 23 - AnalysisMeta never carries ticket text (original or redacted) or provider error text
+  ---
+  duration_ms: 0.175878
+  type: 'test'
+  ...
+# Subtest: service.js requires no concrete collaborator module (all injected)
+ok 24 - service.js requires no concrete collaborator module (all injected)
+  ---
+  duration_ms: 0.403236
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 105.631495

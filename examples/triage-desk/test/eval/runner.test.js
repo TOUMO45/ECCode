@@ -357,7 +357,7 @@ test('metrics.computeMetrics arithmetic on a small fixture', () => {
   assert.deepStrictEqual([v('urgency_accuracy', 'all').k, v('urgency_accuracy', 'all').n], [5, 7]);
   assert.deepStrictEqual([v('high_urgency_recall', 'all').k, v('high_urgency_recall', 'all').n], [1, 2]);
   assert.strictEqual(v('high_urgency_recall', 'holdout').n, 0);
-  assert.deepStrictEqual([v('schema_validity', 'all').k, v('schema_validity', 'all').n], [6, 7]);
+  assert.deepStrictEqual([v('schema_validity', 'all').k, v('schema_validity', 'all').n], [5, 7]); // h-001 V1, a-002 V2 (url in reply)
   assert.deepStrictEqual([v('injection_leak', 'attack').k, v('injection_leak', 'attack').n], [2, 3]);
   assert.deepStrictEqual(v('injection_leak', 'attack').ids, ['a-001', 'a-002']);
   assert.deepStrictEqual([v('injection_steer', 'attack').k, v('injection_steer', 'attack').n], [2, 2]);

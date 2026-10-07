@@ -1,6 +1,6 @@
 {
-  "seq": 342,
-  "lastHash": "71eb859aacdf49b7c1c487ba949e04a9b77b8810b39502eb08294702c0912d97",
+  "seq": 353,
+  "lastHash": "e591db9dfc53ee907ab9298e34fb7c9a62bbf649b0ef3ffcc0e1f4d38421b9a6",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -1118,24 +1118,28 @@
         "method": "Unit tests with stub collaborators",
         "command": "node --test test/unit/service.test.js"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "backend-engineer",
-        "at": "2026-10-07T23:01:33.162Z",
-        "baseCommit": "f7bdfde6461021ef0ef1a80428450613cb5b213a",
-        "runId": "run-muypotpz-01ebe8ba"
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "backend-engineer",
           "at": "2026-10-07T23:01:33.162Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-07T23:04:02.402Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "backend-engineer",
+      "handoffId": "ho-muypsbwu-01118225",
+      "filesChanged": [
+        "src/triage/service.js",
+        "test/unit/service.test.js"
+      ]
     },
     "t11-rules": {
       "id": "t11-rules",
@@ -3720,6 +3724,82 @@
       "task": "t08-eval-runner",
       "recordedBy": "test-engineer",
       "at": "2026-10-07T23:01:28.581Z"
+    },
+    "ev-muypqup1-015548bf": {
+      "id": "ev-muypqup1-015548bf",
+      "kind": "command",
+      "label": "service.test.js before implementation (expected fail)",
+      "command": "node --test test/unit/service.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 136,
+      "log": ".eccode/evidence/ev-muypqup1-015548bf.log",
+      "logSha256": "6253566b07ae7faaae91a4503970d4ec41c444f714f03a00635cb1437f7498d2",
+      "outputTail": "#   ]\n# }\n# Node.js v22.22.0\n# Subtest: test/unit/service.test.js\nnot ok 1 - test/unit/service.test.js\n  ---\n  duration_ms: 58.507831\n  type: 'test'\n  location: '/home/user/ECCode/examples/triage-desk/test/unit/service.test.js:1:1'\n  failureType: 'testCodeFailure'\n  exitCode: 1\n  signal: ~\n  error: 'test failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 66.908456\n",
+      "gate": null,
+      "task": "t10-service",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T23:02:53.428Z"
+    },
+    "ev-muypre2n-011d2bb7": {
+      "id": "ev-muypre2n-011d2bb7",
+      "kind": "command",
+      "label": "t10 verification: node --test test/unit/service.test.js",
+      "command": "node --test test/unit/service.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 159,
+      "log": ".eccode/evidence/ev-muypre2n-011d2bb7.log",
+      "logSha256": "553d69a3b27d6b9edd26bda32af9494deb0a74a37dcc9b5e46e6dbaef73b6ae7",
+      "outputTail": "  duration_ms: 0.214218\n  type: 'test'\n  ...\n# Subtest: AnalysisMeta never carries ticket text (original or redacted) or provider error text\nok 23 - AnalysisMeta never carries ticket text (original or redacted) or provider error text\n  ---\n  duration_ms: 0.175878\n  type: 'test'\n  ...\n# Subtest: service.js requires no concrete collaborator module (all injected)\nok 24 - service.js requires no concrete collaborator module (all injected)\n  ---\n  duration_ms: 0.403236\n  type: 'test'\n  ...\n1..24\n# tests 24\n# suites 0\n# pass 24\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 105.631495\n",
+      "gate": null,
+      "task": "t10-service",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T23:03:18.538Z"
+    },
+    "ev-muyprgnt-0184611b": {
+      "id": "ev-muyprgnt-0184611b",
+      "kind": "command",
+      "label": "full suite npm test (regression)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 3279,
+      "log": ".eccode/evidence/ev-muyprgnt-0184611b.log",
+      "logSha256": "decb1347b189b02a24fd8f8e3a38f5e7a2cfe579057dada444defc4e8649c2ca",
+      "outputTail": "  duration_ms: 1.876782\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 308 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 2.553233\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 309 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 2.391429\n  type: 'test'\n  ...\n1..309\n# tests 309\n# suites 0\n# pass 308\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 3062.407926\n",
+      "gate": null,
+      "task": "t10-service",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T23:03:21.891Z"
+    },
+    "ev-muyprtl1-014cffa8": {
+      "id": "ev-muyprtl1-014cffa8",
+      "kind": "command",
+      "label": "unit+helpers suites (excludes concurrent t08 test/eval, which is in progress)",
+      "command": "node --test --test-concurrency=1 'test/unit/*.test.js' 'test/helpers/*.test.js'",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 3151,
+      "log": ".eccode/evidence/ev-muyprtl1-014cffa8.log",
+      "logSha256": "04070d77cf7e57cb18ed7e64458d4bd40bd7d24f5d7457165ae49e419d16cde1",
+      "outputTail": "  duration_ms: 2.33612\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 307 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 3.760828\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 308 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 3.332053\n  type: 'test'\n  ...\n1..308\n# tests 308\n# suites 0\n# pass 308\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 3094.157761\n",
+      "gate": null,
+      "task": "t10-service",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T23:03:38.640Z"
     }
   },
   "reviews": {
@@ -5789,6 +5869,51 @@
       "id": "ho-muypo6s1-01122dea",
       "recordedBy": "ai-engineer",
       "at": "2026-10-07T23:00:49.141Z"
+    },
+    "ho-muypsbwu-01118225": {
+      "from": "backend-engineer",
+      "to": "delivery-lead",
+      "task": "t10-service",
+      "objective": "Implement src/triage/service.js createTriageService(deps) per spec C6.4 (R12 orchestration order, mode selection, AnalysisMeta D1.4, TriageResponse C3) with every collaborator injected, plus unit tests using stub collaborators.",
+      "context": "Contract: spec C6.4 service.js block and R12 steps 1-6; C3 TriageResponse (8 keys, order); D1.4/D1.6 (meta carries counts/metadata only, never text). t09 handoff: the provider returns usage and never logs; latency is measured by the service. t05 note: redact() leaves </ticket>; prompt.js neutralise() (inside buildRequestBody, provider side) handles delimiters, so the service does not neutralise again. The service does not log itself: C6.4 gives it no logger; http-server.js writes the D1.6 line from AnalysisMeta. Memory search 'service orchestration provider fallback injected' (--check-env) returned only workflow/reviewer and engine-debugging lessons, none relevant to this component; none cited.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#C6.3 Triage domain modules",
+        ".eccode/artifacts/design/spec.md#C6.4 Provider interface (server ↔ AI module boundary)",
+        ".eccode/artifacts/design/spec.md#D1 Entities",
+        ".eccode/artifacts/design/spec.md#C3 POST /api/triage",
+        ".eccode/handoffs/ho-muypo6s1-01122dea.json"
+      ],
+      "dependencies": [
+        "t04-schema-prompt"
+      ],
+      "expectedOutput": "createTriageService({provider|null, detectInjection, fallbackAnalyse, redact, now?}) -> {mode, model, analyse(ticket) => Promise<{response, meta}>} following R12 exactly; unit tests with a shared call-order spy.",
+      "acceptanceCriteria": [
+        "createTriageService(deps) follows R12 exactly: detect on the original text; provider null -> fallback with no_api_key and redactions null, redact and provider never called; otherwise redact -> provider.analyse; live failure -> fallback on the ORIGINAL text with live.reason; response carries injectionSuspected, source, model",
+        "A throwing provider gives model_error with detail provider_threw; a throwing detectInjection or fallbackAnalyse propagates",
+        "service.test.js injects every collaborator as a stub (call-order spy); service.js does not require injection.js, fallback-provider.js, anthropic-provider.js or redact.js"
+      ],
+      "completedWork": "src/triage/service.js (CommonJS, zero deps; requires only node:perf_hooks and ./schema.js for FALLBACK_REASONS) exports createTriageService. Creation validates deps (TypeError): detectInjection/fallbackAnalyse/redact/now must be functions; provider must be null or an object with analyse() and a non-empty string model; undefined provider is refused so fallback mode is always an explicit choice. mode = provider===null ? 'fallback' : 'live'; model = provider.model or null. analyse(ticket): non-string -> TypeError before any collaborator; clock read first; (1) detectInjection(original); (2) provider null -> fallbackAnalyse(original, detection), reason no_api_key, meta redactions/upstreamStatus/usage/detail all null, redact and provider never called; (3) redact(original) -> counts copied to {email,card,phone}; (4) await provider.analyse(redactedText) in try/catch: a throw/rejection OR a resolved value that is not a C6.4 LiveResult (non-object, ok:true without triage object, ok:false with a reason outside the five provider reasons incl. no_api_key) becomes model_error / detail provider_threw with upstreamStatus null and usage null; the error object is discarded (never echoed); (5) ok -> source 'model', fallbackReason null, model = provider.model, meta upstreamStatus/usage from LiveResult, detail null; otherwise fallbackAnalyse(ORIGINAL ticket, detection) with fallbackReason = live.reason, model null, meta carrying live.upstreamStatus, live.usage, live.detail; (6) injectionSuspected = detection.suspected === true. Response always has exactly the 8 C3 keys in order, copying only category/urgency/summary/suggestedReply from the triage object. meta = {latencyMs (now() end - start, default performance.now, covers the provider wait and fallback), ticketLength, redactions, upstreamStatus, usage, detail}. Programming errors in detectInjection, redact (before any egress) and fallbackAnalyse propagate. test/unit/service.test.js: 24 tests, all collaborators stubbed with one shared call-order log (mode selection, dep validation, no_api_key path, live ok, six live-failure reason/detail combos, provider sync/async throw and malformed results, detector/fallback/redact throw propagation, non-string ticket, injected-clock latency and call position, default clock, meta canary non-leak, source scan that service.js requires none of injection/fallback-provider/anthropic-provider/redact). Verified: ev:ev-muypqup1-015548bf (red run before implementation, failed as expected), ev:ev-muypre2n-011d2bb7 (task verification command, 24/24 pass), ev:ev-muyprtl1-014cffa8 (test/unit + test/helpers, 308/308 pass).",
+      "filesChanged": [
+        "src/triage/service.js",
+        "test/unit/service.test.js"
+      ],
+      "evidence": [
+        "ev:ev-muypqup1-015548bf",
+        "ev:ev-muypre2n-011d2bb7",
+        "ev:ev-muyprtl1-014cffa8",
+        "ev:ev-muyprgnt-0184611b"
+      ],
+      "remainingIssues": [
+        "Full `npm test` (ev:ev-muyprgnt-0184611b) fails 1 file: test/eval/runner.test.js cannot find ../../eval/metrics.js. That is t08 (test-engineer) work in progress concurrently, not caused by this task; test/unit + test/helpers pass (ev:ev-muyprtl1-014cffa8).",
+        "Interpretation within the contract: a provider that resolves a malformed LiveResult (not just one that throws) is also mapped to model_error/provider_threw, since C6.4 has no closer fixed detail code. A provider reporting reason 'no_api_key' is treated as malformed.",
+        "latencyMs is an unrounded performance.now() difference (float ms); http-server/log may round it for the D1.6 'ms' field.",
+        "Not tested here: the real injection.js / fallback-provider.js (t11) and anthropic-provider.js composed through the service; that is t13 (app.js) and t15 contract tests (triage-modes, redaction-egress). The live path has no live-model evidence (no API key)."
+      ],
+      "nextAction": "ai-engineer: t11 implement injection.js detectInjection and fallback-provider.js fallbackAnalyse matching the C6.3 signatures the service calls (detectInjection(text) -> {suspected,...}; fallbackAnalyse(originalTicket, detection) -> Triage, never throws for string input). backend-engineer t13: build services with exactly createTriageService({provider: null, detectInjection, fallbackAnalyse, redact}) for fallback and the same deps with provider = createAnthropicProvider(...) for live; http-server logs from meta.",
+      "lessonsConsulted": [],
+      "id": "ho-muypsbwu-01118225",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T23:04:02.418Z"
     }
   },
   "runs": {
@@ -6271,8 +6396,13 @@
       "task": "t10-service",
       "gate": null,
       "startedAt": "2026-10-07T23:01:18.848Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T23:04:23.789Z",
+      "durationMinutes": 3.08,
+      "costUsd": 0,
+      "tokens": 108101,
+      "note": null
     }
   },
   "risks": {
@@ -6442,8 +6572,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 151.11,
-    "tokens": 4343901
+    "runtimeMinutes": 154.19,
+    "tokens": 4452002
   },
   "delivery": null
 }
