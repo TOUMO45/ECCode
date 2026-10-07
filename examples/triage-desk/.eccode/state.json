@@ -1,6 +1,6 @@
 {
-  "seq": 94,
-  "lastHash": "c48a42d3bf8d1b49b15a2cff894cee513229dbab02c1876fc77895b737efc7ae",
+  "seq": 99,
+  "lastHash": "01724ffa844dd49a769d2d46856ba4d28b911884ba4c5c39dbf5ed396a5e643e",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -67,10 +67,34 @@
     "design": {
       "id": "design",
       "kind": "design",
-      "status": "in_progress",
+      "status": "submitted",
       "iterations": 0,
-      "authors": [],
-      "submissions": [],
+      "authors": [
+        "technical-designer"
+      ],
+      "submissions": [
+        {
+          "id": "sub-muymrwkc-01d4ce2e",
+          "actor": "technical-designer",
+          "at": "2026-10-07T21:39:43.644Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/design/spec.md",
+              "sha256": "2eca9c341d16a4e18b14501046470f1bdceb39c724e46bd45de47729772e7be5"
+            },
+            {
+              "path": ".eccode/artifacts/design/design-vectors.js",
+              "sha256": "155bb00bd05abb5b629a94848760a1e6c501c816e713f08a5ad4ec91d93ee131"
+            },
+            {
+              "path": ".eccode/artifacts/design/http-probe.js",
+              "sha256": "89be22061ada124482893c32e54ef2d679da4e15416227cfea00fc4f46ebe7ca"
+            }
+          ],
+          "respondsTo": null,
+          "notes": "Iteration 1. Resolves ARCH-10 (group-window Luhn scan + 3 probe vectors in AC16, sub-window oracle; also bounded phone pattern), ARCH-11 (prompt rule + V2 product-token mask with 7 anti-hole reject vectors; V1 month abbreviations), ARCH-12 (eval/holdout.json split, attestation, hygiene test). Evidence: ev:ev-muymgxlq-0175737d (design vectors), ev:ev-muymgxxk-01aac351 (node:http probe: requireHostHeader:false needed for 403 on missing Host; fetch cannot set Host), ev:ev-muymgy0l-01a4d4d1 (brief vectors regression). New API constraint: no temperature/top_p/top_k on Haiku 5.5. Memory: 6 queries, no applies verdicts. Open: OQ-D1 two dataset files, OQ-D2 ANTHROPIC_BASE_URL seam, OQ-D3 raw fetch vs SDK (Q7)."
+        }
+      ],
       "reviews": [],
       "openFindings": [],
       "approvedBy": null,
@@ -1057,6 +1081,58 @@
       "id": "ho-muym4jzy-01521a3a",
       "recordedBy": "product-architect",
       "at": "2026-10-07T21:21:34.277Z"
+    },
+    "ho-muymsb2c-016f91c4": {
+      "from": "technical-designer",
+      "to": "technical-reviewer",
+      "gate": "design",
+      "objective": "Independent review of the TriageDesk technical specification (design gate, submission sub-muymrwkc-01d4ce2e) against the approved architecture brief, including closure of ARCH-10/11/12.",
+      "context": "Architecture approved in rev-muym9m4g-01831212 with conditions: ARCH-10 (card redaction sub-window bug; reviewer said a missing fix is major at this gate), ARCH-11 (V2/V1 false rejections), ARCH-12 (held-out rows visibility). Orchestrator decisions dec-muylppww (Haiku default), dec-muylppyk (no key: live NOT RUN), dec-muylpq02 (redaction), dec-muylvas4 (zero deps) are honoured; all still pending user confirmation.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md",
+        ".eccode/artifacts/design/design-vectors.js",
+        ".eccode/artifacts/design/http-probe.js",
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/reviews/rev-muym9m4g-01831212.json"
+      ],
+      "dependencies": [
+        "architecture gate approved (sub-muym3xbz-0110077b)"
+      ],
+      "expectedOutput": "A design-gate review (approve or changes_requested) with evidence-backed criteria and findings.",
+      "acceptanceCriteria": [
+        "Spec has the required headings (Components, Interface Contracts, Data Design, Security, Testing Strategy, Deployment) plus Frontend, AI/LLM Design and Evaluations, Observability/Performance/Recovery, Technology Choices, Implementation Workflow",
+        "Every brief requirement maps to a component and a test (spec traceability table)",
+        "ARCH-10 closed: design-vectors.js passes the three probe inputs and the hasLuhnWindow sub-window oracle; re-run node .eccode/artifacts/design/design-vectors.js",
+        "ARCH-11 closed without weakening any brief reject vector",
+        "HTTP contracts (C1-C5), provider interface (C6.4), outbound body (C7), eval formats (D5, E1-E4 incl. ECCODE_EVAL line) and npm scripts are exact enough for parallel implementation"
+      ],
+      "completedWork": "Wrote spec.md with exact module tree and one owner per file, HTTP contracts (pipeline order, headers, error table), JS function signatures for every module boundary including the provider LiveResult contract, the exact system prompt and request body, the D3 redaction algorithm (group-window Luhn scan fixing ARCH-10, bounded phone pattern), V1-V4 refinements (ARCH-11), eval dataset/holdout/thresholds formats, the runner CLI and output with ECCODE_EVAL (25 fallback checks), threat table, UI states/a11y, recovery table, technology choices with alternatives, test file -> AC map with exact commands, package.json scripts, and a 16-task parallel workflow. Built and ran a reference vectors file and an HTTP behaviour probe.",
+      "filesChanged": [
+        ".eccode/artifacts/design/spec.md",
+        ".eccode/artifacts/design/design-vectors.js",
+        ".eccode/artifacts/design/http-probe.js"
+      ],
+      "evidence": [
+        "ev:ev-muymgxlq-0175737d",
+        "ev:ev-muymgxxk-01aac351",
+        "ev:ev-muymgy0l-01a4d4d1"
+      ],
+      "remainingIssues": [
+        "OQ-D1: eval split into eval/dataset.json + eval/holdout.json refines the brief's single dataset file; the verification-gate freeze must hash all three eval files",
+        "OQ-D2: ANTHROPIC_BASE_URL added as a test/proxy seam; the API key is sent to whatever URL is configured (threat T11)",
+        "OQ-D3 / Q7: raw fetch instead of the official SDK (claude-api skill default) rests on dec-muylvas4, pending user confirmation",
+        "Request-body shape, Haiku 5.5 sampling-parameter 400 and pricing come from the claude-api skill reference (cached 2026-10-06) and docs D1/D2; not verified by a live call",
+        "V2 product-token mask lets four real vendor domains (asp.net, ado.net, vb.net, socket.io) pass as plain text (accepted residual, T4)",
+        "Known over-redaction (IPv4 as phone, date+time, Luhn-coincident digit windows) accepted under RISK-9; RISK-9 text in the risk register not yet updated to mention the bounded phone pattern and these cases",
+        "Fallback keyword lists and detector patterns are intentionally not specified (authored after dataset freeze by ai-engineer)"
+      ],
+      "nextAction": "technical-reviewer: review design gate submission sub-muymrwkc-01d4ce2e; re-run node .eccode/artifacts/design/design-vectors.js and node .eccode/artifacts/design/http-probe.js as evidence, and check ARCH-10/11/12 closure",
+      "lessonsConsulted": [
+        "memory search (6 queries, --check-env --scope all): mem-k-muyljkrt-01991ac7 DOES-NOT-APPLY (node<18); mem-d-muym8opn-0104129a not relevant (ECCode store internals, provisional); no applies verdicts"
+      ],
+      "id": "ho-muymsb2c-016f91c4",
+      "recordedBy": "technical-designer",
+      "at": "2026-10-07T21:40:02.440Z"
     }
   },
   "runs": {
@@ -1150,8 +1226,13 @@
       "task": null,
       "gate": "design",
       "startedAt": "2026-10-07T21:26:17.822Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T21:40:25.941Z",
+      "durationMinutes": 14.14,
+      "costUsd": 0,
+      "tokens": 283432,
+      "note": null
     },
     "run-muymdg22-01dedeff": {
       "id": "run-muymdg22-01dedeff",
@@ -1180,6 +1261,15 @@
       "costUsd": 0,
       "tokens": 98059,
       "note": null
+    },
+    "run-muymstac-017680fb": {
+      "id": "run-muymstac-017680fb",
+      "agent": "technical-reviewer",
+      "task": null,
+      "gate": "design",
+      "startedAt": "2026-10-07T21:40:26.056Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -1324,13 +1414,23 @@
       "lessons": [],
       "at": "2026-10-07T21:32:53.817Z",
       "by": "orchestrator"
+    },
+    "dec-muymst8r-012f17da": {
+      "id": "dec-muymst8r-012f17da",
+      "title": "Design open question 1: split eval files",
+      "decision": "Accept eval/dataset.json + eval/holdout.json split; freeze hash covers dataset, holdout and thresholds",
+      "rationale": "Directly resolves ARCH-12 visibility concern; verification gate checks all three hashes.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-07T21:40:25.998Z",
+      "by": "orchestrator"
     }
   },
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 30.22,
-    "tokens": 1054763
+    "runtimeMinutes": 44.36,
+    "tokens": 1338195
   },
   "delivery": null
 }
