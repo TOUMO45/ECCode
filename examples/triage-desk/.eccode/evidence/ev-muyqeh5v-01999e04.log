@@ -1,0 +1,79 @@
+$ node --test test/unit/app.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: buildApp returns {config, service, server} with the server not listening
+ok 1 - buildApp returns {config, service, server} with the server not listening
+  ---
+  duration_ms: 2.768644
+  type: 'test'
+  ...
+# Subtest: buildApp reads the explicit env, never process.env
+ok 2 - buildApp reads the explicit env, never process.env
+  ---
+  duration_ms: 0.592635
+  type: 'test'
+  ...
+# Subtest: buildApp throws ConfigError on an invalid env and the message does not echo the value
+ok 3 - buildApp throws ConfigError on an invalid env and the message does not echo the value
+  ---
+  duration_ms: 0.525961
+  type: 'test'
+  ...
+# Subtest: fallback buildApp answers /api/health (mode fallback) and /api/triage (200, schema-valid, logged)
+ok 4 - fallback buildApp answers /api/health (mode fallback) and /api/triage (200, schema-valid, logged)
+  ---
+  duration_ms: 35.297898
+  type: 'test'
+  ...
+# Subtest: fallback wiring is exactly createTriageService({provider: null, detectInjection, fallbackAnalyse, redact}) (E1)
+ok 5 - fallback wiring is exactly createTriageService({provider: null, detectInjection, fallbackAnalyse, redact}) (E1)
+  ---
+  duration_ms: 7.419803
+  type: 'test'
+  ...
+# Subtest: live buildApp with a fake-fetch stub returns source model and sends only redacted text to config.baseUrl
+ok 6 - live buildApp with a fake-fetch stub returns source model and sends only redacted text to config.baseUrl
+  ---
+  duration_ms: 7.530623
+  type: 'test'
+  ...
+# Subtest: live buildApp passes config.baseUrl, model, timeout and maxTokens to the provider
+ok 7 - live buildApp passes config.baseUrl, model, timeout and maxTokens to the provider
+  ---
+  duration_ms: 1.225854
+  type: 'test'
+  ...
+# Subtest: server.js with HOST=0.0.0.0 exits 1 with one "config error" line naming HOST
+ok 8 - server.js with HOST=0.0.0.0 exits 1 with one "config error" line naming HOST
+  ---
+  duration_ms: 43.075754
+  type: 'test'
+  ...
+# Subtest: server.js config error never echoes the offending value
+ok 9 - server.js config error never echoes the offending value
+  ---
+  duration_ms: 38.194994
+  type: 'test'
+  ...
+# Subtest: server.js fallback: listening line, health over HTTP, SIGTERM exits 0
+ok 10 - server.js fallback: listening line, health over HTTP, SIGTERM exits 0
+  ---
+  duration_ms: 49.3542
+  type: 'test'
+  ...
+# Subtest: server.js live via fake-anthropic: warning after listening, source model, request log, SIGINT exits 0
+ok 11 - server.js live via fake-anthropic: warning after listening, source model, request log, SIGINT exits 0
+  ---
+  duration_ms: 95.533025
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 368.475027

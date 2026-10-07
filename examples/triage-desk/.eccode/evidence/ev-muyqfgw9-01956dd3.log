@@ -1,0 +1,225 @@
+$ node --test --test-concurrency=1 test/eval/runner.test.js test/eval/heldout-hygiene.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: held-out hygiene: rules files share no canary, url or held-out-only 5-word sequence with eval/holdout.json
+    # Subtest: src/triage/injection.js
+    ok 1 - src/triage/injection.js
+      ---
+      duration_ms: 1.960916
+      type: 'test'
+      ...
+    # Subtest: src/triage/fallback-provider.js
+    ok 2 - src/triage/fallback-provider.js
+      ---
+      duration_ms: 3.262757
+      type: 'test'
+      ...
+    1..2
+ok 1 - held-out hygiene: rules files share no canary, url or held-out-only 5-word sequence with eval/holdout.json
+  ---
+  duration_ms: 11.125167
+  type: 'test'
+  ...
+# Subtest: held-out hygiene self-check
+    # Subtest: synthetic fixtures: seeded 5-word sequence, canary and url are detected with id-only messages
+    ok 1 - synthetic fixtures: seeded 5-word sequence, canary and url are detected with id-only messages
+      ---
+      duration_ms: 1.854504
+      type: 'test'
+      ...
+    # Subtest: mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path
+    ok 2 - mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path
+      ---
+      duration_ms: 106.538126
+      type: 'test'
+      ...
+    1..2
+ok 2 - held-out hygiene self-check
+  ---
+  duration_ms: 108.799356
+  type: 'test'
+  ...
+# Subtest: full mode, all checks pass: exit 0, 25 enforced checks derived from thresholds, ECCODE_EVAL last
+ok 3 - full mode, all checks pass: exit 0, 25 enforced checks derived from thresholds, ECCODE_EVAL last
+  ---
+  duration_ms: 46.459317
+  type: 'test'
+  ...
+# Subtest: AC8: all-row thresholds pass but one holdout floor is missed -> exit 1, failing line, passed < total
+ok 4 - AC8: all-row thresholds pass but one holdout floor is missed -> exit 1, failing line, passed < total
+  ---
+  duration_ms: 40.036956
+  type: 'test'
+  ...
+# Subtest: full mode: injection leak with failures prints no 3/N bound and fails; steer rate line
+ok 5 - full mode: injection leak with failures prints no 3/N bound and fails; steer rate line
+  ---
+  duration_ms: 44.008712
+  type: 'test'
+  ...
+# Subtest: full mode: dataset minimum not met is a counted CHECK failure (exit 1), not exit 2
+ok 6 - full mode: dataset minimum not met is a counted CHECK failure (exit 1), not exit 2
+  ---
+  duration_ms: 45.037999
+  type: 'test'
+  ...
+# Subtest: total is derived from thresholds.json, never hard-coded
+ok 7 - total is derived from thresholds.json, never hard-coded
+  ---
+  duration_ms: 44.329395
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: duplicate id inside a file
+ok 8 - dataset-format error -> exit 2: duplicate id inside a file
+  ---
+  duration_ms: 31.131918
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: id reused across files
+ok 9 - dataset-format error -> exit 2: id reused across files
+  ---
+  duration_ms: 34.138956
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: bad id pattern
+ok 10 - dataset-format error -> exit 2: bad id pattern
+  ---
+  duration_ms: 62.51357
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: ticket too long
+ok 11 - dataset-format error -> exit 2: ticket too long
+  ---
+  duration_ms: 40.096181
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: attack row without attack object
+ok 12 - dataset-format error -> exit 2: attack row without attack object
+  ---
+  duration_ms: 32.92167
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: target equals true label
+ok 13 - dataset-format error -> exit 2: target equals true label
+  ---
+  duration_ms: 38.058543
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: bad canary
+ok 14 - dataset-format error -> exit 2: bad canary
+  ---
+  duration_ms: 56.96083
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: held-out flag in dataset
+ok 15 - dataset-format error -> exit 2: held-out flag in dataset
+  ---
+  duration_ms: 53.215344
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: instructionLike on attack
+ok 16 - dataset-format error -> exit 2: instructionLike on attack
+  ---
+  duration_ms: 32.03772
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: wrong split for file
+ok 17 - dataset-format error -> exit 2: wrong split for file
+  ---
+  duration_ms: 34.477029
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: wrong file kind
+ok 18 - dataset-format error -> exit 2: wrong file kind
+  ---
+  duration_ms: 34.887475
+  type: 'test'
+  ...
+# Subtest: exit 2 in full mode: usage errors, missing files, invalid JSON, bad thresholds, incomplete results
+ok 19 - exit 2 in full mode: usage errors, missing files, invalid JSON, bad thresholds, incomplete results
+  ---
+  duration_ms: 334.526658
+  type: 'test'
+  ...
+# Subtest: tune mode with a non-existent --holdout: exit 0, NOT SCORED, 8 checks, TUNE_EVAL last, no ECCODE_EVAL
+ok 20 - tune mode with a non-existent --holdout: exit 0, NOT SCORED, 8 checks, TUNE_EVAL last, no ECCODE_EVAL
+  ---
+  duration_ms: 51.507261
+  type: 'test'
+  ...
+# Subtest: tune mode failing check: exit 1, verbose prints dataset ids only, still no ECCODE_EVAL
+ok 21 - tune mode failing check: exit 1, verbose prints dataset ids only, still no ECCODE_EVAL
+  ---
+  duration_ms: 54.094448
+  type: 'test'
+  ...
+# Subtest: DES-9: tune-mode exit 2 ends with TUNE_EVAL {passed:0,total:1} and never prints ECCODE_EVAL
+ok 22 - DES-9: tune-mode exit 2 ends with TUNE_EVAL {passed:0,total:1} and never prints ECCODE_EVAL
+  ---
+  duration_ms: 275.548849
+  type: 'test'
+  ...
+# Subtest: tune mode dataset error (single-file rules) -> exit 2 with dataset error line
+ok 23 - tune mode dataset error (single-file rules) -> exit 2 with dataset error line
+  ---
+  duration_ms: 34.727973
+  type: 'test'
+  ...
+# Subtest: tune mode never opens, stats or resolves the --holdout path (fs/path trap)
+ok 24 - tune mode never opens, stats or resolves the --holdout path (fs/path trap)
+  ---
+  duration_ms: 10.126006
+  type: 'test'
+  ...
+# Subtest: --results mode never loads src execution modules (stub root whose modules throw on load)
+ok 25 - --results mode never loads src execution modules (stub root whose modules throw on load)
+  ---
+  duration_ms: 5.180025
+  type: 'test'
+  ...
+# Subtest: missing fallback provider module -> clear error, exit 2 (both modes)
+ok 26 - missing fallback provider module -> clear error, exit 2 (both modes)
+  ---
+  duration_ms: 4.934467
+  type: 'test'
+  ...
+# Subtest: fallback execution path composes createTriageService({provider:null, detectInjection, fallbackAnalyse, redact}) and reads no env var
+ok 27 - fallback execution path composes createTriageService({provider:null, detectInjection, fallbackAnalyse, redact}) and reads no env var
+  ---
+  duration_ms: 6.000097
+  type: 'test'
+  ...
+# Subtest: --provider live without a key prints NOT RUN and enforces the fallback evaluation
+ok 28 - --provider live without a key prints NOT RUN and enforces the fallback evaluation
+  ---
+  duration_ms: 3.83695
+  type: 'test'
+  ...
+# Subtest: metrics.computeMetrics arithmetic on a small fixture
+ok 29 - metrics.computeMetrics arithmetic on a small fixture
+  ---
+  duration_ms: 0.766941
+  type: 'test'
+  ...
+# Subtest: metrics: live-only metrics (raw_model_validity, fallback_rate, truncated count)
+ok 30 - metrics: live-only metrics (raw_model_validity, fallback_rate, truncated count)
+  ---
+  duration_ms: 0.253311
+  type: 'test'
+  ...
+# Subtest: metrics.checkDataset applies the D5 rules with precheck rule names
+ok 31 - metrics.checkDataset applies the D5 rules with precheck rule names
+  ---
+  duration_ms: 0.39014
+  type: 'test'
+  ...
+1..31
+# tests 35
+# suites 0
+# pass 35
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1734.847644
