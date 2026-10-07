@@ -3,7 +3,7 @@
   "layer": "debugging",
   "scope": "project",
   "project": "TriageDesk",
-  "status": "provisional",
+  "status": "rejected",
   "trust": "internal",
   "createdAt": "2026-10-07T21:24:47.006Z",
   "createdBy": "learning-debugger",
@@ -106,12 +106,86 @@
       }
     }
   ],
-  "reviews": [],
-  "evidenceSnapshots": {},
+  "reviews": [
+    {
+      "at": "2026-10-07T21:27:59.862Z",
+      "reviewer": "technical-reviewer",
+      "decision": "reject",
+      "notes": "FIX AND ROOT CAUSE CONFIRMED; LESSON NEEDS REVISION (env overclaim + over-broad appliesWhen). Checked: (1) Evidence chain: repro ev:ev-muym6mgn-016c806e really failed (exit 1, 3/3 not ok, 'state.json snapshot lost the title' while replay assertion passed) and verification ev:ev-muym78ex-01d9b8e9 is the identical command and passed 3/3; suite ev:ev-muym7byu-01f25152 45/45; experiment ev:ev-muym6v1n-011b942a shows spread keeps own undefined key, JSON round-trip keeps 'T'. All four logSha256 values recomputed and match the logs. (2) Reruns by me: regression test ev:ev-muymb01x-01ec5e0e pass 3/3; full suite ev:ev-muymb2za-016a248d pass 46/46 (now incl. 2f3398c audit test). (3) Independent repro: same test against HEAD~1 lib/store.js in a scratch copy fails 3/3 (ev:ev-muymb3qy-01495ec2). Scratch mechanism script outside repo: pre-fix reduce(in-memory)=undefined vs reduce(persisted)='T', snapshot!=replay, commit() returned corrupted state (ev:ev-muymb3xk-01517ccc, exit 1 by design); post-fix snapshot==replay, returned state correct, audit ok (ev:ev-muymb3uf-019c7deb). Fix is root-cause/general: commit now reduces JSON.parse of the exact persisted line, so live reduce and replay get identical input for every event type; hash computation unchanged (still sha256(prevHash+JSON.stringify(body)), undefined keys dropped identically), store.audit ok in scratch pre/post and 'eccode audit' OK on triage-desk (74 events). Read reducer: risk.recorded is the only merge-over-existing reducer whose result depends on undefined-vs-absent keys, so the 'only visible casualty' claim holds. Only commit() return value changed shape; no in-tree caller reads .event. Demo RISK-1 snapshot deep-equals replay (key order differs, content equal). REQUIRED REVISIONS: (a) environment {node: '>=18.17'} overclaims: the skill defines environment as versions the fix was VERIFIED on; it was run only on 22.22.0 (debugger) and now 20.20.0 by me (fail-before ev:ev-muymbyv4-01332d57, pass-after ev:ev-muymby0c-012fa681, suite 46/46 ev:ev-muymc241-015f6d71). 18.17-19.x is untested; the prose disclosure in tradeoffs is good but --check-env reads the field and would report 'applies' on 18.x. Set environment node '>=20' and notApplicableWhen 'env:node <20' (keep the ES-semantics argument for 18.x as an untested hypothesis in prose), citing the v20 ev ids. (b) appliesWhen bullet 'Any ECCode record whose snapshot disagrees with Store.rebuild()' is over-broad: divergence is a symptom with other possible causes (hand-edited state.json, non-pure reducer); after 1f3c540 this mechanism cannot produce new divergence. Narrow it to snapshots written by a pre-1f3c540 Store.commit where the missing fields are ones a partial update omitted, and name 'eccode rebuild'/'eccode audit' (2f3398c) as the repair/detection instead of deleting state.json. (c) minor: 'all 45 existing toolkit tests pass' - the 45 include the 3 new regression tests (42 pre-existing); reword. No change needed to code or tests.",
+      "rev": 1
+    }
+  ],
+  "evidenceSnapshots": {
+    "ev-muym6mgn-016c806e": {
+      "id": "ev-muym6mgn-016c806e",
+      "kind": "command",
+      "label": "repro: risk update wipes fields",
+      "command": "node --test /home/user/ECCode/tests/regression-risk-update.test.js",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-07T21:23:10.778Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muym78ex-01d9b8e9": {
+      "id": "ev-muym78ex-01d9b8e9",
+      "kind": "command",
+      "label": "fix verified: risk update",
+      "command": "node --test /home/user/ECCode/tests/regression-risk-update.test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-07T21:23:39.228Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muym7byu-01f25152": {
+      "id": "ev-muym7byu-01f25152",
+      "kind": "command",
+      "label": "toolkit regression suite",
+      "command": "npm test --prefix /home/user/ECCode",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-07T21:23:43.833Z",
+      "recordedBy": "learning-debugger"
+    }
+  },
   "citations": [],
   "checks": [
     {
       "at": "2026-10-07T21:24:48.826Z",
+      "by": "orchestrator",
+      "verdict": "provisional",
+      "reasons": [
+        "status provisional: not independently verified; treat as a hypothesis"
+      ]
+    },
+    {
+      "at": "2026-10-07T21:26:43.537Z",
+      "by": "orchestrator",
+      "verdict": "provisional",
+      "reasons": [
+        "status provisional: not independently verified; treat as a hypothesis"
+      ]
+    },
+    {
+      "at": "2026-10-07T21:26:43.623Z",
+      "by": "orchestrator",
+      "verdict": "provisional",
+      "reasons": [
+        "status provisional: not independently verified; treat as a hypothesis"
+      ]
+    },
+    {
+      "at": "2026-10-07T21:26:43.787Z",
+      "by": "orchestrator",
+      "verdict": "provisional",
+      "reasons": [
+        "status provisional: not independently verified; treat as a hypothesis"
+      ]
+    },
+    {
+      "at": "2026-10-07T21:26:43.859Z",
       "by": "orchestrator",
       "verdict": "provisional",
       "reasons": [
