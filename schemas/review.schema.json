@@ -1,0 +1,59 @@
+{
+  "$id": "eccode/review",
+  "title": "Gate review",
+  "description": "An independent review of the latest submission of a gate. Evidence references use 'ev:<evidenceId>' or 'artifact:<path>[#anchor]'.",
+  "type": "object",
+  "required": ["decision", "summary", "criteria", "findings"],
+  "additionalProperties": false,
+  "properties": {
+    "decision": { "enum": ["approve", "changes_requested"] },
+    "summary": { "type": "string", "minLength": 20 },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "met", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 5 },
+          "met": { "type": "boolean" },
+          "evidence": { "type": "array", "items": { "type": "string", "pattern": "^(ev:|artifact:)" } },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "title", "detail", "recommendation"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
+          "severity": { "enum": ["blocking", "major", "minor", "info"] },
+          "title": { "type": "string", "minLength": 5 },
+          "detail": { "type": "string", "minLength": 10 },
+          "evidence": { "type": "array", "items": { "type": "string", "pattern": "^(ev:|artifact:)" } },
+          "recommendation": { "type": "string", "minLength": 5 },
+          "status": { "enum": ["open", "resolved"] }
+        }
+      }
+    },
+    "resolvedFindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "resolution", "evidence"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "resolution": { "type": "string", "minLength": 10 },
+          "evidence": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^(ev:|artifact:)" } }
+        }
+      }
+    },
+    "lessonsConsulted": { "type": "array", "items": { "type": "string" } }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$id": "eccode/handoff",
+  "title": "Agent handoff",
+  "description": "What one agent passes to the next. Every field the brief requires is mandatory; evidence entries must be 'ev:<evidenceId>' references that resolve in the project record.",
+  "type": "object",
+  "required": ["from", "to", "objective", "context", "inputs", "expectedOutput", "acceptanceCriteria", "completedWork", "evidence", "remainingIssues", "nextAction"],
+  "additionalProperties": false,
+  "properties": {
+    "from": { "type": "string", "minLength": 2 },
+    "to": { "type": "string", "minLength": 2 },
+    "task": { "type": "string" },
+    "gate": { "type": "string" },
+    "objective": { "type": "string", "minLength": 10 },
+    "context": { "type": "string", "minLength": 10 },
+    "inputs": { "type": "array", "items": { "type": "string" } },
+    "dependencies": { "type": "array", "items": { "type": "string" } },
+    "expectedOutput": { "type": "string", "minLength": 5 },
+    "acceptanceCriteria": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 3 } },
+    "completedWork": { "type": "string", "minLength": 10 },
+    "filesChanged": { "type": "array", "items": { "type": "string" } },
+    "evidence": { "type": "array", "items": { "type": "string", "pattern": "^ev:" } },
+    "remainingIssues": { "type": "array", "items": { "type": "string" } },
+    "nextAction": { "type": "string", "minLength": 5 },
+    "lessonsConsulted": { "type": "array", "items": { "type": "string" } }
+  }
+}

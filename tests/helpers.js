@@ -1,0 +1,164 @@
+'use strict';
+// Test fixtures: throwaway git projects and shortcuts for driving gates.
+
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { execFileSync } = require('child_process');
+const { init } = require('../lib/project');
+const { loadConfig } = require('../lib/config');
+const gates = require('../lib/gates');
+const evidence = require('../lib/evidence');
+const { writeJson } = require('../lib/util');
+
+const ARCH_MD = `# Brief
+## Users
+Support agents.
+## Problem
+Ticket triage is slow.
+## Requirements
+- R1 classify tickets
+## Acceptance Criteria
+- AC1 category returned
+## Architecture
+Single Node service.
+## Assumptions
+- A1
+## Open Questions
+- Q1
+## Risks
+- RISK1
+`;
+
+const DESIGN_MD = `# Spec
+## Components
+x
+## Interface Contracts
+x
+## Data Design
+x
+## Security
+x
+## Testing Strategy
+x
+## Deployment
+x
+`;
+
+function tmpProject({ configOverrides } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-test-'));
+  execFileSync('git', ['init', '-q'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  const store = init(dir, { name: 'Test', idea: 'Test idea for the pipeline' });
+  if (configOverrides) {
+    const file = path.join(dir, '.eccode', 'config.json');
+    const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
+    for (const [k, v] of Object.entries(configOverrides)) cfg[k] = { ...cfg[k], ...v };
+    writeJson(file, cfg);
+  }
+  return { dir, store, config: loadConfig(dir) };
+}
+
+function write(dir, rel, content) {
+  const abs = path.join(dir, rel);
+  fs.mkdirSync(path.dirname(abs), { recursive: true });
+  fs.writeFileSync(abs, content);
+  return rel;
+}
+
+function approval(criteria, extra = {}) {
+  return {
+    decision: 'approve',
+    summary: 'All criteria verified against the submitted artifacts.',
+    criteria: criteria.map((evidenceRefs, i) => ({ id: `C${i + 1}`, description: `criterion ${i + 1}`, met: true, evidence: evidenceRefs })),
+    findings: [],
+    ...extra,
+  };
+}
+
+function rejection(findingId = 'F1', extra = {}) {
+  return {
+    decision: 'changes_requested',
+    summary: 'Blocking gap found in the submitted artifacts.',
+    criteria: [{ id: 'C1', description: 'criterion one', met: false, evidence: [] }],
+    findings: [{ id: findingId, severity: 'blocking', title: 'Missing requirement', detail: 'The brief omits rate limiting.', recommendation: 'Add a rate-limit requirement.' }],
+    ...extra,
+  };
+}
+
+/** Drive architecture → design → plan to approved with valid reviews. */
+function approveThroughPlan(ctx, plan) {
+  const { dir, store, config } = ctx;
+  gates.startGate(store, config, 'architecture', 'orchestrator');
+  write(dir, '.eccode/artifacts/brief.md', ARCH_MD);
+  gates.submit(store, config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
+  gates.recordReview(store, config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md#Requirements']]));
+  gates.startGate(store, config, 'design', 'orchestrator');
+  write(dir, '.eccode/artifacts/spec.md', DESIGN_MD);
+  gates.submit(store, config, 'design', 'technical-designer', { artifacts: ['.eccode/artifacts/spec.md'] });
+  gates.recordReview(store, config, 'design', 'technical-reviewer', approval([['artifact:.eccode/artifacts/spec.md']]));
+  gates.startGate(store, config, 'plan', 'orchestrator');
+  write(dir, '.eccode/artifacts/plan.json', JSON.stringify(plan || samplePlan(), null, 2));
+  gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] });
+  gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/plan.json']]));
+}
+
+function samplePlan() {
+  return {
+    phases: [{ id: 'core', name: 'Core', goal: 'Build the core service', acceptanceCriteria: ['server responds'] }],
+    tasks: [
+      task('api', 'backend-engineer', ['src/server/**']),
+      task('ui', 'frontend-engineer', ['src/web/**']),
+      task('tests', 'test-engineer', ['tests/**'], ['api']),
+    ],
+  };
+}
+
+function task(id, owner, files, dependencies = [], phase = 'core') {
+  return {
+    id,
+    phase,
+    title: `Task ${id} work`,
+    owner,
+    dependencies,
+    inputs: ['.eccode/artifacts/spec.md'],
+    outputs: [`${id} output`],
+    files,
+    acceptanceCriteria: [`${id} works`],
+    verification: { method: 'run checks', command: 'true' },
+  };
+}
+
+function passCheck(store, actor, label = 'check') {
+  return evidence.runCommand(store, actor, { label, command: 'node -e "process.exit(0)"' });
+}
+
+function handoffFor(taskId, from, evIds, filesChanged) {
+  return {
+    from,
+    to: 'delivery-lead',
+    task: taskId,
+    objective: `Complete task ${taskId}`,
+    context: 'Implemented per the approved spec.',
+    inputs: ['.eccode/artifacts/spec.md'],
+    expectedOutput: 'Working code',
+    acceptanceCriteria: [`${taskId} works`],
+    completedWork: 'Implemented the feature and its checks.',
+    filesChanged,
+    evidence: evIds.map((id) => `ev:${id}`),
+    remainingIssues: [],
+    nextAction: 'Phase review',
+  };
+}
+
+function expectCode(fn, code) {
+  try {
+    fn();
+  } catch (err) {
+    if (err.code === code) return err;
+    throw new Error(`expected ${code}, got ${err.code}: ${err.message}`);
+  }
+  throw new Error(`expected ${code}, but call succeeded`);
+}
+
+module.exports = { tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD };
