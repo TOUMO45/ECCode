@@ -1,6 +1,6 @@
 {
-  "seq": 421,
-  "lastHash": "d569a8da65e017a070fdb46bde12802257ad224869b1c40f22bd6d87e730cb94",
+  "seq": 429,
+  "lastHash": "e1525f156b2e6de45fe9f24af8397fb2df9a682a7e2e90861ad6fadff18f0524",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -520,10 +520,78 @@
     "phase:rules-and-wiring": {
       "id": "phase:rules-and-wiring",
       "kind": "phase",
-      "status": "in_progress",
+      "status": "submitted",
       "iterations": 0,
-      "authors": [],
-      "submissions": [],
+      "authors": [
+        "delivery-lead"
+      ],
+      "submissions": [
+        {
+          "id": "sub-muyqje7c-01fe6bf4",
+          "actor": "delivery-lead",
+          "at": "2026-10-07T23:25:05.064Z",
+          "artifacts": [
+            {
+              "path": "src/triage/injection.js",
+              "sha256": "5a2148506c8e6b068839dce864678ec35f19a781ce2f693e8bbc6a8173c62324"
+            },
+            {
+              "path": "src/triage/fallback-provider.js",
+              "sha256": "0d8fd7d65779cda1b433f0639935e0e9685b56b2931924d2764111d003d374a1"
+            },
+            {
+              "path": "test/unit/injection.test.js",
+              "sha256": "2cfee0a4e1940667c03f5eb32b3c4efa3d747e9d72aeb5bd9d1e0aa61b264232"
+            },
+            {
+              "path": "test/unit/fallback-provider.test.js",
+              "sha256": "cdee39d19e90ead0626bd8f47f31404c07650bb03b2e99ea258095a454e9712b"
+            },
+            {
+              "path": "test/eval/heldout-hygiene.test.js",
+              "sha256": "a1e15ca95c4f888cf8d193a4647f53e30449ecab206ee9b62c564879c6226962"
+            },
+            {
+              "path": "test/eval/hygiene-fixtures/holdout.json",
+              "sha256": "35f7f2aa9513c78903c53c2ad5f93c8f425da920f4f0ff0a1a5f91f99333c635"
+            },
+            {
+              "path": "test/eval/hygiene-fixtures/dataset.json",
+              "sha256": "a0deb5eec34f7c7e65d3c12939d425f16e139d9916bd024cf797b6446bbc306a"
+            },
+            {
+              "path": "test/eval/hygiene-fixtures/rules-template.js",
+              "sha256": "42baa34dc30fd98a9657ec59264e37206d508232f864d71a4b0c1fd20bddcf73"
+            },
+            {
+              "path": "test/eval/hygiene-fixtures/rules-seeded-phrase.js",
+              "sha256": "0c3f3bf3979032aa845a108594da7829191864b00b949f54e044838a9ddfca8e"
+            },
+            {
+              "path": "test/eval/hygiene-fixtures/rules-seeded-canary.js",
+              "sha256": "fee93f353a6c2f21250c98a300e97bf56a7299f6f8724d2de8eed24a8491db3b"
+            },
+            {
+              "path": "test/eval/hygiene-fixtures/rules-seeded-url.js",
+              "sha256": "b5f4bc6a0f52e7dea8cb93e906cb02a60fc8205f1dc0123c8e638f848acfe7a2"
+            },
+            {
+              "path": "src/app.js",
+              "sha256": "126966c4c23e28cde488594b7f734b07560dee340c4093a838db2ab6fed686fe"
+            },
+            {
+              "path": "src/server.js",
+              "sha256": "7dab690b1d73ea607fa35123e61b5e2b6fabcfb714c9ea01c1d31902786fe6f2"
+            },
+            {
+              "path": "test/unit/app.test.js",
+              "sha256": "4e9ec46fa6e778f483b0c2c084213a29fb155d9da5c7f1b23d1eb601047d708e"
+            }
+          ],
+          "respondsTo": null,
+          "notes": null
+        }
+      ],
       "reviews": [],
       "openFindings": [],
       "approvedBy": null,
@@ -4425,6 +4493,101 @@
       "task": "t13-app-wiring",
       "recordedBy": "backend-engineer",
       "at": "2026-10-07T23:22:59.799Z"
+    },
+    "ev-muyqiwtq-012d673d": {
+      "id": "ev-muyqiwtq-012d673d",
+      "kind": "command",
+      "label": "pinned check-script hashes (rules-and-wiring)",
+      "command": "sha256sum .eccode/artifacts/plan/checks/*.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8,
+      "log": ".eccode/evidence/ev-muyqiwtq-012d673d.log",
+      "logSha256": "5caba7e8c9d2a7e64b949995bae5ffbf36d6d308b1106ec7820989f3999aab79",
+      "outputTail": "c59b7acda3faa36964f9c9d7ce8aa22fe74a6f92c1eda2d142fa916d721c56f9  .eccode/artifacts/plan/checks/dataset-precheck.js\na9a0128f80af2b468446294320eb8b8117b898d51f8a09607fcb69134d683993  .eccode/artifacts/plan/checks/readme-check.js\ne1fde7f948af3fc7f50bd2b6ce033d6ab84455bbdb833e8c5c381d9ed0b6b647  .eccode/artifacts/plan/checks/scaffold-check.js\n",
+      "gate": "phase:rules-and-wiring",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:24:42.553Z"
+    },
+    "ev-muyqj7y7-010cdbbd": {
+      "id": "ev-muyqj7y7-010cdbbd",
+      "kind": "command",
+      "label": "full npm test (rules-and-wiring)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 5258,
+      "log": ".eccode/evidence/ev-muyqj7y7-010cdbbd.log",
+      "logSha256": "f93cc04dde88d06c6f943618b83fcb6432ee8af2c794ba836a273d7522a0e7c3",
+      "outputTail": "  duration_ms: 1.723524\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 377 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 3.58322\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 378 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 2.571552\n  type: 'test'\n  ...\n1..378\n# tests 382\n# suites 0\n# pass 382\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 5076.159833\n",
+      "gate": "phase:rules-and-wiring",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:24:56.971Z"
+    },
+    "ev-muyqj8cf-016da375": {
+      "id": "ev-muyqj8cf-016da375",
+      "kind": "command",
+      "label": "t11 verification: injection+fallback unit tests and eval:tune",
+      "command": "node --test test/unit/injection.test.js test/unit/fallback-provider.test.js && npm run eval:tune",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 368,
+      "log": ".eccode/evidence/ev-muyqj8cf-016da375.log",
+      "logSha256": "2b26e0de2a6f2e2e009c3b373ec68d604902ad5cb1775185af6961f687085234",
+      "outputTail": "# duration_ms 120.067871\n\n> triage-desk@0.1.0 eval:tune\n> node eval/run.js --split tune\n\ndataset eval/dataset.json sha256 b024a838c13391823b61010af90f019e9d859e01858bc96d5cd7a847a15a0689\nthresholds eval/thresholds.json sha256 ee4703c1ae54f708eaa1c6f3ca80dd329b758b17ae9aae9916f80f11f46797b5\nprovider fallback (deterministic rules; NOT evidence of model quality)\nholdout: NOT SCORED (tune mode)\nrows tune=55 attack=18 instructionLike=8\nCHECK datasetMinimums NOT CHECKED (tune mode)\nMETRIC category_accuracy scope=tune value=0.973 n=73 threshold=>=0.70 PASS\nMETRIC category_accuracy scope=attack value=0.889 n=18 threshold=info INFO\nMETRIC urgency_accuracy scope=tune value=0.945 n=73 threshold=>=0.65 PASS\nMETRIC urgency_accuracy scope=attack value=0.944 n=18 threshold=info INFO\nMETRIC high_urgency_recall scope=tune value=1.000 n=14 threshold=>=0.80 PASS\nMETRIC schema_validity scope=tune value=1.000 n=73 threshold=>=1.00 PASS\nINJECTION injection_leak 0 failures in 18 (95% upper bound ~3/N = 16.7%) threshold=0 PASS\nINJECTION injection_steer 0 failures in 16 (rate 0.000) (95% upper bound ~3/N = 18.8%) threshold=<=0.25 PASS\nINJECTION attack_success 0 failures in 18 (95% upper bound ~3/N = 16.7%) threshold=reported INFO\nMETRIC injection_flag_recall scope=in-family value=1.000 n=18 threshold=>=0.90 PASS\nMETRIC injection_flag_fpr scope=instructionLike value=0.000 n=8 threshold=<=0.10 PASS\nRESULT TUNE-ONLY PASS 8/8 tune checks passed (not a verification result)\nTUNE_EVAL {\"mode\":\"tune\",\"passed\":8,\"total\":8}\n",
+      "gate": "phase:rules-and-wiring",
+      "task": "t11-rules",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:24:57.482Z"
+    },
+    "ev-muyqj8nl-01a8a7f3": {
+      "id": "ev-muyqj8nl-01a8a7f3",
+      "kind": "command",
+      "label": "t12-heldout-hygiene verification",
+      "command": "node --test test/eval/heldout-hygiene.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 260,
+      "log": ".eccode/evidence/ev-muyqj8nl-01a8a7f3.log",
+      "logSha256": "5e2e079abd2a12a7e07ff0e5de500a37f44e727da7810a84c064059a6d5b93a4",
+      "outputTail": "      duration_ms: 1.724635\n      type: 'test'\n      ...\n    # Subtest: mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path\n    ok 2 - mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path\n      ---\n      duration_ms: 117.871118\n      type: 'test'\n      ...\n    1..2\nok 2 - held-out hygiene self-check\n  ---\n  duration_ms: 120.167368\n  type: 'test'\n  ...\n1..2\n# tests 6\n# suites 0\n# pass 6\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 203.81695\n",
+      "gate": "phase:rules-and-wiring",
+      "task": "t12-heldout-hygiene",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:24:57.884Z"
+    },
+    "ev-muyqj91y-01b3f425": {
+      "id": "ev-muyqj91y-01b3f425",
+      "kind": "command",
+      "label": "t13-app-wiring verification",
+      "command": "node --test test/unit/app.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 443,
+      "log": ".eccode/evidence/ev-muyqj91y-01b3f425.log",
+      "logSha256": "c069ae3de3b2145be2304211b77a50bc57a1302b5d791549cb29b6ee3d134146",
+      "outputTail": "  duration_ms: 39.112819\n  type: 'test'\n  ...\n# Subtest: server.js fallback: listening line, health over HTTP, SIGTERM exits 0\nok 10 - server.js fallback: listening line, health over HTTP, SIGTERM exits 0\n  ---\n  duration_ms: 52.514658\n  type: 'test'\n  ...\n# Subtest: server.js live via fake-anthropic: warning after listening, source model, request log, SIGINT exits 0\nok 11 - server.js live via fake-anthropic: warning after listening, source model, request log, SIGINT exits 0\n  ---\n  duration_ms: 106.967918\n  type: 'test'\n  ...\n1..11\n# tests 11\n# suites 0\n# pass 11\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 387.38873\n",
+      "gate": "phase:rules-and-wiring",
+      "task": "t13-app-wiring",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:24:58.402Z"
     }
   },
   "reviews": {
@@ -7472,6 +7635,20 @@
       "task": null,
       "gate": "phase:rules-and-wiring",
       "startedAt": "2026-10-07T23:24:10.946Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T23:25:44.238Z",
+      "durationMinutes": 1.55,
+      "costUsd": 0,
+      "tokens": 85573,
+      "note": null
+    },
+    "run-muyqk8h8-018bc357": {
+      "id": "run-muyqk8h8-018bc357",
+      "agent": "security-reviewer",
+      "task": null,
+      "gate": "phase:rules-and-wiring",
+      "startedAt": "2026-10-07T23:25:44.312Z",
       "status": "running",
       "attempt": 1
     }
@@ -7653,8 +7830,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 184.93,
-    "tokens": 5245430
+    "runtimeMinutes": 186.48,
+    "tokens": 5331003
   },
   "delivery": null
 }

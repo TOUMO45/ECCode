@@ -1,0 +1,51 @@
+$ node --test test/eval/heldout-hygiene.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: held-out hygiene: rules files share no canary, url or held-out-only 5-word sequence with eval/holdout.json
+    # Subtest: src/triage/injection.js
+    ok 1 - src/triage/injection.js
+      ---
+      duration_ms: 2.104943
+      type: 'test'
+      ...
+    # Subtest: src/triage/fallback-provider.js
+    ok 2 - src/triage/fallback-provider.js
+      ---
+      duration_ms: 3.276366
+      type: 'test'
+      ...
+    1..2
+ok 1 - held-out hygiene: rules files share no canary, url or held-out-only 5-word sequence with eval/holdout.json
+  ---
+  duration_ms: 12.341927
+  type: 'test'
+  ...
+# Subtest: held-out hygiene self-check
+    # Subtest: synthetic fixtures: seeded 5-word sequence, canary and url are detected with id-only messages
+    ok 1 - synthetic fixtures: seeded 5-word sequence, canary and url are detected with id-only messages
+      ---
+      duration_ms: 1.724635
+      type: 'test'
+      ...
+    # Subtest: mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path
+    ok 2 - mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path
+      ---
+      duration_ms: 117.871118
+      type: 'test'
+      ...
+    1..2
+ok 2 - held-out hygiene self-check
+  ---
+  duration_ms: 120.167368
+  type: 'test'
+  ...
+1..2
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 203.81695
