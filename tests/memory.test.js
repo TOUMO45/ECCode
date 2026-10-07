@@ -1,0 +1,252 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { execFileSync, spawnSync } = require('child_process');
+const evidence = require('../lib/evidence');
+const { Memory, current } = require('../lib/memory/records');
+const { satisfies, matchEnv } = require('../lib/memory/env');
+const { tmpProject, write, expectCode } = require('./helpers');
+
+const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
+
+function withSharedDir() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-shared-'));
+  process.env.ECCODE_SHARED_MEMORY = dir;
+  return dir;
+}
+
+/** Create the reproduction (fails) then the fix (passes) for the same check. */
+function reproAndFix(ctx) {
+  write(ctx.dir, 'check.js', 'process.exit(require("fs").existsSync("fixed") ? 0 : 1)\n');
+  const repro = evidence.runCommand(ctx.store, 'learning-debugger', { label: 'repro', command: 'node check.js', purpose: 'reproduction' });
+  write(ctx.dir, 'fixed', 'yes');
+  const fix = evidence.runCommand(ctx.store, 'learning-debugger', { label: 'fix verified', command: 'node check.js' });
+  return { repro, fix };
+}
+
+function lesson(ev, overrides = {}) {
+  return {
+    title: 'JSON body parse fails on missing content-type',
+    problem: 'POST /api/triage returned 500 when clients omitted the Content-Type header.',
+    symptoms: ['HTTP 500 on POST without content-type', 'SyntaxError: Unexpected token in JSON'],
+    component: 'api/server',
+    environment: { node: '>=18' },
+    fingerprint: 'api-json-parse-500',
+    reproduction: { steps: ['POST without header'], evidence: ev ? [`ev:${ev.repro.id}`] : [] },
+    rootCause: { explanation: 'The handler parsed the body unconditionally and let SyntaxError escape as 500.', evidence: ev ? [`ev:${ev.repro.id}`] : [] },
+    failedAttempts: [{ approach: 'Wrap only JSON.parse in try/catch', whyFailed: 'Empty bodies still crashed the validator downstream' }],
+    solution: { description: 'Validate content-type and parse defensively; return 400 with a typed error.', tradeoffs: 'Rejects lenient clients that send JSON without the header.' },
+    verification: { evidence: ev ? [`ev:${ev.fix.id}`] : [], regressionTest: 'node check.js' },
+    sources: [{ title: 'Node.js JSON.parse docs', url: 'https://nodejs.org/api/', checkedAt: '2026-10-07' }],
+    appliesWhen: ['Node HTTP handlers parsing JSON request bodies'],
+    notApplicableWhen: ['Frameworks that already enforce content-type (e.g. express.json with type option)'],
+    confidence: 'high',
+    tags: ['json', 'http', '500'],
+    ...overrides,
+  };
+}
+
+test('semver ranges used for applicability checks', () => {
+  assert.ok(satisfies('20.11.1', '>=18 <22'));
+  assert.ok(!satisfies('22.1.0', '>=18 <22'));
+  assert.ok(satisfies('4.18.2', '^4'));
+  assert.ok(!satisfies('5.0.0', '^4.17'));
+  assert.ok(satisfies('16.20.0', '<18 || >=22'));
+  assert.ok(satisfies('1.2.9', '~1.2.3'));
+  assert.ok(satisfies('3.4.5', '3.x'));
+  assert.deepStrictEqual(matchEnv({ os: 'linux' }, { os: 'linux' }).ok, true);
+  assert.match(matchEnv({ express: '^4' }, { node: '20.0.0' }).unknown[0], /express/);
+});
+
+test('lessons start provisional; verification needs a non-author reviewer and a check that flips from failing to passing', () => {
+  withSharedDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+
+  // A lesson with only a passing test is not proof.
+  const pass = evidence.runCommand(ctx.store, 'learning-debugger', { label: 'only passing', command: 'node -e "0"' });
+  const weak = mem.add('learning-debugger', { layer: 'debugging', content: lesson({ repro: pass, fix: pass }) });
+  assert.strictEqual(weak.status, 'provisional');
+  let err = expectCode(() => mem.review(weak.id, 'technical-reviewer', { decision: 'verify', notes: 'Checked the evidence trail end to end.' }), 'LESSON_NOT_VERIFIABLE');
+  assert.match(err.message, /no reproduction check that failed before the fix/);
+
+  // Different commands for repro and fix: still not proof.
+  write(ctx.dir, 'other.js', 'process.exit(0)\n');
+  const r1 = evidence.runCommand(ctx.store, 'learning-debugger', { label: 'repro', command: 'node -e "process.exit(1)"', purpose: 'reproduction' });
+  const f1 = evidence.runCommand(ctx.store, 'learning-debugger', { label: 'unrelated pass', command: 'node other.js' });
+  const mismatched = mem.add('learning-debugger', { layer: 'debugging', content: lesson({ repro: r1, fix: f1 }) });
+  err = expectCode(() => mem.review(mismatched.id, 'technical-reviewer', { decision: 'verify', notes: 'Checked the evidence trail end to end.' }), 'LESSON_NOT_VERIFIABLE');
+  assert.match(err.message, /passing test alone does not prove/);
+
+  // Reproduction unavailable keeps it provisional.
+  const noRepro = mem.add('learning-debugger', { layer: 'debugging', content: lesson(null, { reproduction: { unavailable: 'only occurs on customer hardware' } }) });
+  err = expectCode(() => mem.review(noRepro.id, 'technical-reviewer', { decision: 'verify', notes: 'Checked the evidence trail end to end.' }), 'LESSON_NOT_VERIFIABLE');
+  assert.match(err.message, /stays provisional/);
+
+  const ev = reproAndFix(ctx);
+  const good = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev) });
+  err = expectCode(() => mem.review(good.id, 'learning-debugger', { decision: 'verify', notes: 'Self review attempt should be refused.' }), 'LESSON_NOT_VERIFIABLE');
+  assert.match(err.message, /authored or revised/);
+  const verified = mem.review(good.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran node check.js: fails before, passes after; root cause matches the stack trace.' });
+  assert.strictEqual(verified.status, 'verified');
+  assert.strictEqual(verified.evidenceSnapshots[ev.repro.id].status, 'failed');
+
+  // Revision invalidates verification but keeps history.
+  const revised = mem.revise(good.id, 'learning-debugger', { confidence: 'medium' }, 'tone down confidence');
+  assert.strictEqual(revised.status, 'provisional');
+  assert.strictEqual(revised.revisions.length, 2);
+  assert.strictEqual(revised.revisions[0].content.confidence, 'high');
+});
+
+test('a verified lesson survives a session restart and is retrieved for a related problem; outdated ones are rejected', () => {
+  const shared = withSharedDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const ev = reproAndFix(ctx);
+  const rec = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev) });
+  mem.review(rec.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran the failing check after the fix: passes.' });
+  const old = mem.add('learning-debugger', {
+    layer: 'debugging',
+    content: lesson(null, {
+      title: 'JSON parse crash on legacy Node body-parser',
+      environment: { node: '<14' },
+      fingerprint: 'legacy-bodyparser',
+      reproduction: { unavailable: 'legacy runtime no longer available' },
+    }),
+  });
+
+  // "Restart": a separate process with no shared in-memory state.
+  const env = { ...process.env, ECCODE_SHARED_MEMORY: shared };
+  const out = spawnSync(process.execPath, [BIN, 'memory', 'search', 'request body JSON parsing returns 500 error', '--check-env', '--json', '--root', ctx.dir], { env, encoding: 'utf8' });
+  assert.strictEqual(out.status, 0, out.stderr);
+  const results = JSON.parse(out.stdout);
+  const top = results[0];
+  assert.strictEqual(top.id, rec.id);
+  assert.strictEqual(top.check.verdict, 'applies');
+  const legacy = results.find((r) => r.id === old.id);
+  assert.ok(legacy, 'legacy lesson is retrieved as a candidate');
+  assert.strictEqual(legacy.check.verdict, 'does-not-apply');
+  assert.match(legacy.check.reasons.join(' '), /node: lesson requires <14/);
+
+  // Text output frames records as evidence, not instructions.
+  const text = execFileSync(process.execPath, [BIN, 'memory', 'search', 'JSON parse 500', '--root', ctx.dir], { env, encoding: 'utf8' });
+  assert.match(text, /NOT an instruction/);
+});
+
+test('stale and superseded lessons are flagged rather than trusted', () => {
+  withSharedDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const ev = reproAndFix(ctx);
+  const a = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev) });
+  mem.review(a.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran the failing check after the fix: passes.' });
+  process.env.ECCODE_NOW = new Date(Date.now() + 400 * 86400000).toISOString();
+  try {
+    assert.strictEqual(mem.check(a.id).verdict, 'stale');
+  } finally {
+    delete process.env.ECCODE_NOW;
+  }
+  const b = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev, { title: 'JSON body parse fails: refined lesson v2' }) });
+  const dup = mem.duplicates(0.8).find((p) => [p.a, p.b].includes(a.id) && [p.a, p.b].includes(b.id));
+  assert.ok(dup, 'near-duplicate lessons are detected for consolidation');
+  expectCode(() => mem.supersede(a.id, b.id, 'learning-debugger', 'refined'), 'INVALID_TRANSITION'); // b not verified yet
+  mem.review(b.id, 'security-reviewer', { decision: 'verify', notes: 'Same evidence chain, clearer root cause wording.' });
+  mem.supersede(a.id, b.id, 'learning-debugger', 'refined wording and scope');
+  assert.strictEqual(mem.check(a.id).verdict, 'superseded');
+  assert.strictEqual(mem.get(a.id).revisions.length, 1, 'history preserved');
+  const ids = mem.search('JSON body parse').map((r) => r.id);
+  assert.ok(!ids.includes(a.id));
+  assert.ok(ids.includes(b.id));
+  assert.ok(mem.search('JSON body parse', { includeSuperseded: true }).some((r) => r.id === a.id));
+});
+
+test('promotion to shared memory requires verification, a non-author promoter and clean content', () => {
+  const shared = withSharedDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const ev = reproAndFix(ctx);
+  const leaky = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev, { problem: 'Crash reported by alice@example.com from /home/alice/app when posting JSON.' }) });
+  expectCode(() => mem.promote(leaky.id, 'technical-reviewer'), 'INVALID_TRANSITION');
+  mem.review(leaky.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran the failing check after the fix: passes.' });
+  expectCode(() => mem.promote(leaky.id, 'learning-debugger'), 'REVIEW_REJECTED');
+  const err = expectCode(() => mem.promote(leaky.id, 'technical-reviewer'), 'PRIVATE_DATA');
+  assert.match(err.message, /email address/);
+  assert.match(err.message, /absolute user path/);
+  mem.revise(leaky.id, 'learning-debugger', { problem: 'POST /api/triage returned 500 when clients omitted the Content-Type header.' }, 'remove private data');
+  mem.review(leaky.id, 'security-reviewer', { decision: 'verify', notes: 'Private data removed; evidence unchanged and still valid.' });
+  const copy = mem.promote(leaky.id, 'technical-reviewer');
+  assert.ok(fs.existsSync(path.join(shared, 'records', `${copy.id}.json`)));
+  assert.strictEqual(copy.scope, 'shared');
+  assert.strictEqual(copy.project, null);
+
+  const project = mem.add('orchestrator', { layer: 'project', content: { title: 'Triage API contract', kind: 'interface', body: 'POST /api/triage returns {category, urgency}.' } });
+  expectCode(() => mem.promote(project.id, 'technical-reviewer'), 'SCOPE');
+  const untrusted = mem.add('learning-debugger', { layer: 'knowledge', trust: 'untrusted', content: { title: 'Blog says disable TLS checks', summary: 'A forum post recommends NODE_TLS_REJECT_UNAUTHORIZED=0 to fix certificate errors.', sources: [{ title: 'forum', url: 'https://example.com', checkedAt: '2026-10-07' }], appliesWhen: ['never in production'], notApplicableWhen: [], confidence: 'low' } });
+  expectCode(() => mem.promote(untrusted.id, 'technical-reviewer'), 'INVALID_TRANSITION');
+});
+
+test('self-improvement: protected paths, grounding, evaluation, independent review, user adoption, rollback', () => {
+  withSharedDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const improve = require('../lib/memory/improve');
+  const ev = reproAndFix(ctx);
+  const l = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev) });
+  write(ctx.dir, 'skills/checklist.md', '# Review checklist\n- tests pass\n');
+  write(ctx.dir, 'eval.js', 'const t=require("fs").readFileSync("skills/checklist.md","utf8");const cases=[/tests pass/.test(t),/content-type/i.test(t)];console.log("ECCODE_EVAL "+JSON.stringify({passed:cases.filter(Boolean).length,total:cases.length}));\n');
+  const base = {
+    title: 'Add content-type check to review checklist',
+    observation: 'Two reviews missed missing content-type validation.',
+    lessons: [l.id],
+    target: 'skills/checklist.md',
+    change: { type: 'append', content: '- request content-type validated before parsing\n' },
+    rationale: 'Lesson shows 500s from unvalidated bodies.',
+    evaluation: { command: 'node eval.js', cases: 'checklist coverage cases' },
+  };
+  expectCode(() => improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', { ...base, target: '.eccode/config.json' }), 'PROTECTED_PATH');
+  expectCode(() => improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', base), 'UNGROUNDED'); // lesson still provisional
+  mem.review(l.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran the failing check after the fix: passes.' });
+
+  const prop = improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', base);
+  improve.evaluate(ctx.store, 'learning-debugger', prop.id, 'baseline');
+  const evald = improve.evaluate(ctx.store, 'learning-debugger', prop.id, 'candidate');
+  assert.strictEqual(evald.evaluation.baseline.passed, 1);
+  assert.strictEqual(evald.evaluation.candidate.passed, 2);
+  assert.strictEqual(fs.readFileSync(path.join(ctx.dir, 'skills/checklist.md'), 'utf8'), '# Review checklist\n- tests pass\n', 'candidate evaluation restores the file');
+  expectCode(() => improve.review(ctx.store, 'learning-debugger', prop.id, 'approve', 'Looks good to me, I wrote it.'), 'REVIEW_REJECTED');
+  improve.review(ctx.store, 'technical-reviewer', prop.id, 'approve', 'Candidate passes 2/2 vs 1/2 baseline; change is additive.');
+  expectCode(() => improve.adopt(ctx.store, ctx.config, 'orchestrator', prop.id), 'USER_AUTH_REQUIRED');
+  const adopted = improve.adopt(ctx.store, ctx.config, 'user', prop.id);
+  assert.strictEqual(adopted.version, 1);
+  assert.match(fs.readFileSync(path.join(ctx.dir, 'skills/checklist.md'), 'utf8'), /content-type/);
+  improve.rollback(ctx.store, 'orchestrator', prop.id, 'regression found in later eval', { regression: true });
+  assert.strictEqual(fs.readFileSync(path.join(ctx.dir, 'skills/checklist.md'), 'utf8'), '# Review checklist\n- tests pass\n');
+
+  // A regressing candidate cannot be approved.
+  const bad = improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', { ...base, change: { type: 'replace', content: '# Review checklist\n' } });
+  improve.evaluate(ctx.store, 'learning-debugger', bad.id, 'baseline');
+  improve.evaluate(ctx.store, 'learning-debugger', bad.id, 'candidate');
+  expectCode(() => improve.review(ctx.store, 'technical-reviewer', bad.id, 'approve', 'Trying to approve a regression.'), 'EVALUATION_FAILED');
+
+  const m = require('../lib/memory/metrics').compute(ctx.store, ctx.config);
+  assert.strictEqual(m.summary.workflowChangeRegressions, 1);
+  assert.strictEqual(m.summary.workflowChangesAdopted, 1);
+  assert.notStrictEqual(m.summary.medianTimeToVerifiedFixMinutes, undefined);
+});
+
+test('metrics count rejections, repeated bugs and recurrence after a fix', () => {
+  withSharedDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const ev = reproAndFix(ctx);
+  const first = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev, { occurredAt: '2026-01-01T00:00:00Z' }) });
+  mem.review(first.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran the failing check after the fix: passes.' });
+  mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev, { title: 'JSON parse 500 came back after refactor', occurredAt: new Date(Date.now() + 60000).toISOString() }) });
+  const m = require('../lib/memory/metrics').compute(ctx.store, ctx.config).summary;
+  assert.strictEqual(m.repeatedBugFingerprints, '1/1 fingerprints seen more than once');
+  assert.strictEqual(m.recurrenceAfterFix, 1);
+  assert.ok(current(first).title);
+});

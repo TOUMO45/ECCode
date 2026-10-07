@@ -1,0 +1,15 @@
+{
+  "$id": "eccode/memory-project",
+  "title": "Project memory entry",
+  "description": "Requirements, architecture, decisions, constraints, interfaces, dependencies and progress for one project. Never promoted to shared memory.",
+  "type": "object",
+  "required": ["title", "kind", "body"],
+  "additionalProperties": false,
+  "properties": {
+    "title": { "type": "string", "minLength": 5 },
+    "kind": { "enum": ["requirement", "architecture", "decision", "constraint", "interface", "dependency", "progress"] },
+    "body": { "type": "string", "minLength": 10 },
+    "links": { "type": "array", "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}

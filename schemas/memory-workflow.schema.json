@@ -1,0 +1,29 @@
+{
+  "$id": "eccode/memory-workflow",
+  "title": "Workflow lesson",
+  "description": "A recurring review finding, ineffective approach, or verified process improvement.",
+  "type": "object",
+  "required": ["title", "observation", "occurrences", "recommendation", "confidence"],
+  "additionalProperties": false,
+  "properties": {
+    "title": { "type": "string", "minLength": 8 },
+    "kind": { "enum": ["recurring-finding", "ineffective-approach", "process-improvement"] },
+    "observation": { "type": "string", "minLength": 15 },
+    "occurrences": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["ref", "at"],
+        "properties": { "ref": { "type": "string" }, "at": { "type": "string" }, "note": { "type": "string" } }
+      }
+    },
+    "recommendation": { "type": "string", "minLength": 10 },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "appliesWhen": { "type": "array", "items": { "type": "string" } },
+    "notApplicableWhen": { "type": "array", "items": { "type": "string" } },
+    "environment": { "type": "object" },
+    "confidence": { "enum": ["low", "medium", "high"] },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}
