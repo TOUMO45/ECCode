@@ -1,6 +1,6 @@
 {
-  "seq": 5,
-  "lastHash": "f40bf9835ff8ddc68d5384ea26af7f61389b4a012a1bae6cf85fdf07f4dbd69a",
+  "seq": 10,
+  "lastHash": "da3155798d91caa9e92b7ab25ece25bc3f5c5d98d66242f1de7ebaf97c61d206",
   "project": {
     "name": "ECCode toolkit maintenance",
     "idea": "Dogfooding: improvements to ECCode's own skills, checklists and templates go through the controlled self-improvement cycle",
@@ -114,6 +114,63 @@
       "task": null,
       "recordedBy": "learning-debugger",
       "at": "2026-10-07T22:26:17.853Z"
+    },
+    "ev-muyohc5x-019c2fa6": {
+      "id": "ev-muyohc5x-019c2fa6",
+      "kind": "command",
+      "label": "rerun baseline eval",
+      "command": "node .eccode/drafts/eval-review-gate-skill.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 46,
+      "log": ".eccode/evidence/ev-muyohc5x-019c2fa6.log",
+      "logSha256": "580bb40915cd23c52bcc15853b012d3386c10808f7c193fe669c4f3bf1905f17",
+      "outputTail": "FAIL [representative] a: states literal \"approve\" and that other strings are refused (no paragraph names `\"approve\"`, `\"changes_requested\"`, and says \"approved\" is refused)\nFAIL [representative] b: contains an approving JSON example that validates against review.schema.json (no ```json block with \"decision\": \"approve\")\nFAIL [representative] b2: approving example is engine-consistent (all met with ev:, no open blocking/major, resolvedFindings)\nPASS [regression] c: still contains a valid changes_requested example with a blocking/major finding\nPASS [regression] d: schema decision enum is exactly [approve, changes_requested] ([\"approve\",\"changes_requested\"])\nPASS [regression] e: schema still rejects decision \"approved\", \"approval\", \"reject\"\nPASS [regression] f: frontmatter name/description and original headings still present\nregression cases: all pass\nECCODE_EVAL {\"passed\":4,\"total\":7}\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "architecture-reviewer",
+      "at": "2026-10-07T22:27:29.878Z"
+    },
+    "ev-muyohc8k-01d6cf5a": {
+      "id": "ev-muyohc8k-01d6cf5a",
+      "kind": "command",
+      "label": "candidate eval on scratch copy of proposed content (REVIEW_GATE_SKILL_PATH)",
+      "command": "env REVIEW_GATE_SKILL_PATH=/tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/candidate-SKILL.md node .eccode/drafts/eval-review-gate-skill.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 41,
+      "log": ".eccode/evidence/ev-muyohc8k-01d6cf5a.log",
+      "logSha256": "36bcdb1ace15898505a376f902afb4d5c6e5305b51b4f9c5cfce6f643d822bad",
+      "outputTail": "PASS [representative] a: states literal \"approve\" and that other strings are refused\nPASS [representative] b: contains an approving JSON example that validates against review.schema.json\nPASS [representative] b2: approving example is engine-consistent (all met with ev:, no open blocking/major, resolvedFindings)\nPASS [regression] c: still contains a valid changes_requested example with a blocking/major finding\nPASS [regression] d: schema decision enum is exactly [approve, changes_requested] ([\"approve\",\"changes_requested\"])\nPASS [regression] e: schema still rejects decision \"approved\", \"approval\", \"reject\"\nPASS [regression] f: frontmatter name/description and original headings still present\nregression cases: all pass\nECCODE_EVAL {\"passed\":7,\"total\":7}\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "architecture-reviewer",
+      "at": "2026-10-07T22:27:29.974Z"
+    },
+    "ev-muyohlgk-01800691": {
+      "id": "ev-muyohlgk-01800691",
+      "kind": "command",
+      "label": "mutation sensitivity of review-gate eval on scratch candidate copies",
+      "command": "sh /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/mutate.sh /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 281,
+      "log": ".eccode/evidence/ev-muyohlgk-01800691.log",
+      "logSha256": "072e5aad2b7233dbc9bf69fed6809304684f58fc287b6bf0d0e7fbb7b6af4150",
+      "outputTail": "[approved-in-example] FAIL [representative] b: contains an approving JSON example that validates against review.schema.json (no ```json block with \"decision\": \"approve\")\n[approved-in-example] FAIL [representative] b2: approving example is engine-consistent (all met with ev:, no open blocking/major, resolvedFindings)\n[no-resolvedFindings] FAIL [representative] b: contains an approving JSON example that validates against review.schema.json ($.resolvedFindingsX: unknown property)\n[no-resolvedFindings] FAIL [representative] b2: approving example is engine-consistent (all met with ev:, no open blocking/major, resolvedFindings)\n[cr-example-dropped] FAIL [regression] c: still contains a valid changes_requested example with a blocking/major finding\n[heading-changed] FAIL [regression] f: frontmatter name/description and original headings still present (missing: ## Severity guide)\n[refusal-wording-removed] FAIL [representative] a: states literal \"approve\" and that other strings are refused (no paragraph names `\"approve\"`, `\"changes_requested\"`, and says \"approved\" is refused)\nmutation run complete\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "architecture-reviewer",
+      "at": "2026-10-07T22:27:41.926Z"
     }
   },
   "reviews": {},
@@ -126,6 +183,20 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-07T22:24:37.116Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T22:26:55.621Z",
+      "durationMinutes": 2.31,
+      "costUsd": 0,
+      "tokens": 86808,
+      "note": null
+    },
+    "run-muyoglrv-01b8fa7f": {
+      "id": "run-muyoglrv-01b8fa7f",
+      "agent": "architecture-reviewer",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-07T22:26:55.676Z",
       "status": "running",
       "attempt": 1
     }
@@ -135,8 +206,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 0,
-    "tokens": 0
+    "runtimeMinutes": 2.31,
+    "tokens": 86808
   },
   "delivery": null
 }

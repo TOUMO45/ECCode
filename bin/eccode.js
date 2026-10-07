@@ -75,6 +75,10 @@ Other
 Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR), --json
 `;
 
+function shellQuote(arg) {
+  return /^[A-Za-z0-9_\/.,:=@%+-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, "'\\''")}'`;
+}
+
 function findRoot(flags) {
   if (flags.root) return path.resolve(flags.root);
   if (process.env.ECCODE_ROOT) return path.resolve(process.env.ECCODE_ROOT);
@@ -233,7 +237,10 @@ function main(argv) {
     }
     case 'evidence': {
       if (sub === 'run') {
-        const command = need(args.rest && args.rest.join(' '), 'command after --');
+        // One argument is a shell command string; several arguments are an
+        // argv vector whose quoting must survive (e.g. sh -c '<a && b>').
+        const rest = args.rest || [];
+        const command = need(rest.length === 1 ? rest[0] : rest.map(shellQuote).join(' '), 'command after --');
         const ev = evidence.runCommand(store, need(actor, '--actor'), {
           label: need(flags.label, '--label'),
           command,

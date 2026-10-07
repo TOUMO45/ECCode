@@ -184,3 +184,20 @@ test('run usage corrections are append-only and adjust totals by the delta', () 
   assert.strictEqual(ctx.store.audit().ok, true);
   expectCode(() => runs.correctRun(ctx.store, id, 'orchestrator', { tokens: 1 }), 'INVALID_INPUT');
 });
+
+test('evidence run preserves argument quoting from the CLI (sh -c with compound commands)', () => {
+  const ctx = tmpProject();
+  const { spawnSync } = require('child_process');
+  const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const run = (args) => spawnSync(process.execPath, [bin, 'evidence', 'run', '--actor', 'test-engineer', '--label', 'q', '--json', '--root', ctx.dir, '--', ...args], { encoding: 'utf8' });
+  let res = run(['sh', '-c', 'test -d .eccode && echo "it works"']);
+  assert.strictEqual(res.status, 0, res.stderr);
+  let ev = JSON.parse(res.stdout);
+  assert.strictEqual(ev.status, 'passed');
+  assert.match(ev.outputTail, /it works/);
+  res = run(['node', '-e', 'process.exit(require("fs").existsSync(".eccode") ? 0 : 3)']);
+  assert.strictEqual(JSON.parse(res.stdout).status, 'passed');
+  res = run(['echo one && echo two']); // a single argument is a shell command string
+  ev = JSON.parse(res.stdout);
+  assert.match(ev.outputTail, /one\ntwo/);
+});
