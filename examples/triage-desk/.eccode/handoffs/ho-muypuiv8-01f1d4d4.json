@@ -1,0 +1,64 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "t08-eval-runner",
+  "objective": "Eval runner (full + tune modes) and pure metrics per spec E1-E4, D5, DES-2, DES-5, DES-9 (spec task 8)",
+  "context": "eval/run.js is the CLI (npm run eval = full, npm run eval:tune = tune). eval/metrics.js is pure scoring (checkDataset, checkThresholds, datasetCounts, computeMetrics, buildChecks); it requires only src/triage/schema.js and prompt.js (t04). src execution modules (ticket-input, service, injection, fallback-provider, redact; app.js + log.js for live) are required lazily only when rows are executed. All runner tests use synthetic fixtures under test/eval/fixtures/ (generated datasets meeting every datasetMinimum, stub/throwing/partial src roots); none reads the real eval/holdout.json. The real eval was NOT run in full mode (t17 owns the first full-mode run).",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#Evaluation plan",
+    ".eccode/artifacts/design/spec.md#D5 Evaluation dataset files",
+    ".eccode/artifacts/architecture/brief.md#Evaluation metrics and thresholds (part of AC7/AC8)",
+    ".eccode/reviews/rev-muynhokz-01357080.json#DES-9",
+    ".eccode/artifacts/plan/checks/dataset-precheck.js"
+  ],
+  "dependencies": [
+    "t02-eval-dataset",
+    "t04-schema-prompt"
+  ],
+  "expectedOutput": "eval/run.js, eval/metrics.js, test/eval/runner.test.js, test/eval/fixtures/** (synthetic only)",
+  "acceptanceCriteria": [
+    "E1 flags/defaults; lazy src requires; fallback path composes createTriageService({provider:null, detectInjection, fallbackAnalyse, redact}) and reads no env var -- tested in-process with a stub src root and a process.env Proxy that records zero reads",
+    "Tune mode never opens/stats/resolves --holdout (fs+path trap test), prints 'holdout: NOT SCORED (tune mode)', enforces exactly 8 checks, last line TUNE_EVAL {\"mode\":\"tune\",...}, never prints ECCODE_EVAL (output filter also rewrites the substring if it appears in an echoed path)",
+    "DES-9: full-mode exit 2 ends ECCODE_EVAL {\"passed\":0,\"total\":1}; tune-mode exit 2 (incl. --split tune --provider live) ends TUNE_EVAL {\"mode\":\"tune\",\"passed\":0,\"total\":1} with no ECCODE_EVAL substring",
+    "E2/E4 lines (3 decimals, 3/N bound only on 0-failure lines, no 'safe', no ticket text/summaries/replies/canaries); total derived from thresholds.json (25 fallback / 24 live / 8 tune with the frozen thresholds); checkDataset uses the precheck's D5 rule names and exits 2 with 'dataset error: <file> <id> <rule>'",
+    "AC8 test: synthetic dataset meeting minimums, --results passing all-row thresholds but missing the category holdout floor -> exit 1, failing METRIC line printed, ECCODE_EVAL {\"passed\":24,\"total\":25}",
+    "Real eval not run in full mode in this task"
+  ],
+  "completedWork": "Implemented eval/metrics.js and eval/run.js test-first (failing run ev:ev-muypp18b-011a2484). runner.test.js has 29 tests: full-mode pass (25/25), AC8 holdout-floor failure, leak/steer/attack_success lines, dataset-minimum CHECK failure (exit 1), thresholds-derived total (23/23 when two keys removed), 11 dataset-format exit-2 cases, usage/file/thresholds/results exit-2 cases, tune pass/fail/exit-2 (DES-9) cases, tune holdout fs/path trap, lazy-load proof (throwing src root never loaded in --results mode), missing provider module -> 'error: cannot load <path> (MODULE_NOT_FOUND)' exit 2 in both modes, fallback wiring + zero env reads, --provider live without key -> 'live: NOT RUN' + fallback enforcement, and metric arithmetic incl. live-only metrics. Verified: ev:ev-muypther-013e6ff1 (29/29 pass), ev:ev-muyptpub-01ba4b4d (npm test 337/337 pass), ev:ev-muyptq0w-01b0b96e (npm run eval:tune on the real dataset.json today exits 2 with 'cannot load src/triage/injection.js (MODULE_NOT_FOUND)' and TUNE_EVAL last line; holdout never opened).",
+  "filesChanged": [
+    "eval/run.js",
+    "eval/metrics.js",
+    "test/eval/runner.test.js",
+    "test/eval/fixtures/synthetic.js",
+    "test/eval/fixtures/thresholds.json",
+    "test/eval/fixtures/src-stub/ticket-input.js",
+    "test/eval/fixtures/src-stub/triage/service.js",
+    "test/eval/fixtures/src-stub/triage/injection.js",
+    "test/eval/fixtures/src-stub/triage/fallback-provider.js",
+    "test/eval/fixtures/src-stub/triage/redact.js",
+    "test/eval/fixtures/src-throwing/app.js",
+    "test/eval/fixtures/src-throwing/ticket-input.js",
+    "test/eval/fixtures/src-throwing/triage/service.js",
+    "test/eval/fixtures/src-throwing/triage/injection.js",
+    "test/eval/fixtures/src-throwing/triage/fallback-provider.js",
+    "test/eval/fixtures/src-throwing/triage/redact.js",
+    "test/eval/fixtures/src-no-fallback/ticket-input.js",
+    "test/eval/fixtures/src-no-fallback/triage/service.js",
+    "test/eval/fixtures/src-no-fallback/triage/injection.js",
+    "test/eval/fixtures/src-no-fallback/triage/redact.js"
+  ],
+  "evidence": [
+    "ev:ev-muypther-013e6ff1",
+    "ev:ev-muyptpub-01ba4b4d",
+    "ev:ev-muyptq0w-01b0b96e",
+    "ev:ev-muypp18b-011a2484"
+  ],
+  "remainingIssues": [
+    "Live execution path (--provider live with a key: buildApp + sequential analyse + USAGE line) is NOT TESTED: app.js does not exist yet and tests use no real keys; only the no-key branch is tested (stub src root).",
+    "Real-module fallback execution is NOT TESTED until t11 adds src/triage/injection.js and fallback-provider.js; today npm run eval:tune exits 2 with the missing-module error (ev:ev-muyptq0w-01b0b96e).",
+    "Interpretation choices (spec silent): an enforced check with n=0 is FAIL (value=n/a); --results must contain every scored row id (missing -> exit 2 'results error'); an extra 'results <file> sha256 <hex> (precomputed, rows not executed)' header line is printed in --results mode; FAILED_ROWS lines (--verbose) are printed only for failing enforced checks; truncated count prints as 'COUNT truncated k in N threshold=reported INFO'; thresholds are printed with 2 decimals (0.70) and computed values with 3.",
+    "E5 content-guidance checks from the plan precheck (in-family family list, held-out family not in dataset, >=15 attack rows with a target) are not repeated by the runner; it applies the D5 format rules plus datasetMinimums CHECKs."
+  ],
+  "nextAction": "ai-engineer (t11): measure rules only with `npm run eval:tune` (never full mode); delivery-lead (t17): first full-mode run `npm run eval` after t11/t13 land.",
+  "lessonsConsulted": []
+}

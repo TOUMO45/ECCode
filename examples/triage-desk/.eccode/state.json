@@ -1,6 +1,6 @@
 {
-  "seq": 353,
-  "lastHash": "e591db9dfc53ee907ab9298e34fb7c9a62bbf649b0ef3ffcc0e1f4d38421b9a6",
+  "seq": 360,
+  "lastHash": "97eb3dae66e46da16004d21f3d3a3b48c98c6b20933708484a5930dcf72eefa8",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -1008,24 +1008,46 @@
         "method": "Runner tests with node:test on synthetic fixtures",
         "command": "node --test test/eval/runner.test.js"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "test-engineer",
-        "at": "2026-10-07T22:57:37.222Z",
-        "baseCommit": "34130a655d2b366b87bef2f9d67d869c0a64db58",
-        "runId": "run-muypjfii-0121d7a9"
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "test-engineer",
           "at": "2026-10-07T22:57:37.222Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "test-engineer",
+          "at": "2026-10-07T23:05:44.733Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "test-engineer",
+      "handoffId": "ho-muypuiv8-01f1d4d4",
+      "filesChanged": [
+        "eval/run.js",
+        "eval/metrics.js",
+        "test/eval/runner.test.js",
+        "test/eval/fixtures/synthetic.js",
+        "test/eval/fixtures/thresholds.json",
+        "test/eval/fixtures/src-stub/ticket-input.js",
+        "test/eval/fixtures/src-stub/triage/service.js",
+        "test/eval/fixtures/src-stub/triage/injection.js",
+        "test/eval/fixtures/src-stub/triage/fallback-provider.js",
+        "test/eval/fixtures/src-stub/triage/redact.js",
+        "test/eval/fixtures/src-throwing/app.js",
+        "test/eval/fixtures/src-throwing/ticket-input.js",
+        "test/eval/fixtures/src-throwing/triage/service.js",
+        "test/eval/fixtures/src-throwing/triage/injection.js",
+        "test/eval/fixtures/src-throwing/triage/fallback-provider.js",
+        "test/eval/fixtures/src-throwing/triage/redact.js",
+        "test/eval/fixtures/src-no-fallback/ticket-input.js",
+        "test/eval/fixtures/src-no-fallback/triage/service.js",
+        "test/eval/fixtures/src-no-fallback/triage/injection.js",
+        "test/eval/fixtures/src-no-fallback/triage/redact.js"
+      ]
     },
     "t09-anthropic-provider": {
       "id": "t09-anthropic-provider",
@@ -3800,6 +3822,63 @@
       "task": "t10-service",
       "recordedBy": "backend-engineer",
       "at": "2026-10-07T23:03:38.640Z"
+    },
+    "ev-muypther-013e6ff1": {
+      "id": "ev-muypther-013e6ff1",
+      "kind": "command",
+      "label": "t08 verification: node --test test/eval/runner.test.js (synthetic fixtures only)",
+      "command": "node --test test/eval/runner.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1469,
+      "log": ".eccode/evidence/ev-muypther-013e6ff1.log",
+      "logSha256": "20bbabc435c2cd027d7139e8f2ba8dca27d87d811ad66ccc8ceadb85d82888f1",
+      "outputTail": "  duration_ms: 0.719908\n  type: 'test'\n  ...\n# Subtest: metrics: live-only metrics (raw_model_validity, fallback_rate, truncated count)\nok 28 - metrics: live-only metrics (raw_model_validity, fallback_rate, truncated count)\n  ---\n  duration_ms: 0.280747\n  type: 'test'\n  ...\n# Subtest: metrics.checkDataset applies the D5 rules with precheck rule names\nok 29 - metrics.checkDataset applies the D5 rules with precheck rule names\n  ---\n  duration_ms: 0.339173\n  type: 'test'\n  ...\n1..29\n# tests 29\n# suites 0\n# pass 29\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1402.636358\n",
+      "gate": null,
+      "task": "t08-eval-runner",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T23:04:56.173Z"
+    },
+    "ev-muyptpub-01ba4b4d": {
+      "id": "ev-muyptpub-01ba4b4d",
+      "kind": "command",
+      "label": "full npm test suite (all test/**/*.test.js)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 4538,
+      "log": ".eccode/evidence/ev-muyptpub-01ba4b4d.log",
+      "logSha256": "6bf0d68ef6d8febdc6132ba939577315dd0acb17a63751eaee6dc2227a5cca9c",
+      "outputTail": "  duration_ms: 1.590256\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 336 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 3.335905\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 337 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 2.364106\n  type: 'test'\n  ...\n1..337\n# tests 337\n# suites 0\n# pass 337\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 4343.791503\n",
+      "gate": null,
+      "task": "t08-eval-runner",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T23:05:07.102Z"
+    },
+    "ev-muyptq0w-01b0b96e": {
+      "id": "ev-muyptq0w-01b0b96e",
+      "kind": "command",
+      "label": "npm run eval:tune before t11: expect exit 2 with missing-module error and TUNE_EVAL last line (real dataset.json only, holdout never opened)",
+      "command": "npm run eval:tune; test $? -eq 2",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 170,
+      "log": ".eccode/evidence/ev-muyptq0w-01b0b96e.log",
+      "logSha256": "6c45badcf5c98cfff9e22b6cdeb64796c25baace12873ecb52cce40783b003ef",
+      "outputTail": "\n> triage-desk@0.1.0 eval:tune\n> node eval/run.js --split tune\n\nerror: cannot load src/triage/injection.js (MODULE_NOT_FOUND); executing rows needs the src/ triage modules (use --results <file> to score precomputed results)\nTUNE_EVAL {\"mode\":\"tune\",\"passed\":0,\"total\":1}\n",
+      "gate": null,
+      "task": "t08-eval-runner",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T23:05:07.339Z"
     }
   },
   "reviews": {
@@ -5914,6 +5993,73 @@
       "id": "ho-muypsbwu-01118225",
       "recordedBy": "backend-engineer",
       "at": "2026-10-07T23:04:02.418Z"
+    },
+    "ho-muypuiv8-01f1d4d4": {
+      "from": "test-engineer",
+      "to": "delivery-lead",
+      "task": "t08-eval-runner",
+      "objective": "Eval runner (full + tune modes) and pure metrics per spec E1-E4, D5, DES-2, DES-5, DES-9 (spec task 8)",
+      "context": "eval/run.js is the CLI (npm run eval = full, npm run eval:tune = tune). eval/metrics.js is pure scoring (checkDataset, checkThresholds, datasetCounts, computeMetrics, buildChecks); it requires only src/triage/schema.js and prompt.js (t04). src execution modules (ticket-input, service, injection, fallback-provider, redact; app.js + log.js for live) are required lazily only when rows are executed. All runner tests use synthetic fixtures under test/eval/fixtures/ (generated datasets meeting every datasetMinimum, stub/throwing/partial src roots); none reads the real eval/holdout.json. The real eval was NOT run in full mode (t17 owns the first full-mode run).",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#Evaluation plan",
+        ".eccode/artifacts/design/spec.md#D5 Evaluation dataset files",
+        ".eccode/artifacts/architecture/brief.md#Evaluation metrics and thresholds (part of AC7/AC8)",
+        ".eccode/reviews/rev-muynhokz-01357080.json#DES-9",
+        ".eccode/artifacts/plan/checks/dataset-precheck.js"
+      ],
+      "dependencies": [
+        "t02-eval-dataset",
+        "t04-schema-prompt"
+      ],
+      "expectedOutput": "eval/run.js, eval/metrics.js, test/eval/runner.test.js, test/eval/fixtures/** (synthetic only)",
+      "acceptanceCriteria": [
+        "E1 flags/defaults; lazy src requires; fallback path composes createTriageService({provider:null, detectInjection, fallbackAnalyse, redact}) and reads no env var -- tested in-process with a stub src root and a process.env Proxy that records zero reads",
+        "Tune mode never opens/stats/resolves --holdout (fs+path trap test), prints 'holdout: NOT SCORED (tune mode)', enforces exactly 8 checks, last line TUNE_EVAL {\"mode\":\"tune\",...}, never prints ECCODE_EVAL (output filter also rewrites the substring if it appears in an echoed path)",
+        "DES-9: full-mode exit 2 ends ECCODE_EVAL {\"passed\":0,\"total\":1}; tune-mode exit 2 (incl. --split tune --provider live) ends TUNE_EVAL {\"mode\":\"tune\",\"passed\":0,\"total\":1} with no ECCODE_EVAL substring",
+        "E2/E4 lines (3 decimals, 3/N bound only on 0-failure lines, no 'safe', no ticket text/summaries/replies/canaries); total derived from thresholds.json (25 fallback / 24 live / 8 tune with the frozen thresholds); checkDataset uses the precheck's D5 rule names and exits 2 with 'dataset error: <file> <id> <rule>'",
+        "AC8 test: synthetic dataset meeting minimums, --results passing all-row thresholds but missing the category holdout floor -> exit 1, failing METRIC line printed, ECCODE_EVAL {\"passed\":24,\"total\":25}",
+        "Real eval not run in full mode in this task"
+      ],
+      "completedWork": "Implemented eval/metrics.js and eval/run.js test-first (failing run ev:ev-muypp18b-011a2484). runner.test.js has 29 tests: full-mode pass (25/25), AC8 holdout-floor failure, leak/steer/attack_success lines, dataset-minimum CHECK failure (exit 1), thresholds-derived total (23/23 when two keys removed), 11 dataset-format exit-2 cases, usage/file/thresholds/results exit-2 cases, tune pass/fail/exit-2 (DES-9) cases, tune holdout fs/path trap, lazy-load proof (throwing src root never loaded in --results mode), missing provider module -> 'error: cannot load <path> (MODULE_NOT_FOUND)' exit 2 in both modes, fallback wiring + zero env reads, --provider live without key -> 'live: NOT RUN' + fallback enforcement, and metric arithmetic incl. live-only metrics. Verified: ev:ev-muypther-013e6ff1 (29/29 pass), ev:ev-muyptpub-01ba4b4d (npm test 337/337 pass), ev:ev-muyptq0w-01b0b96e (npm run eval:tune on the real dataset.json today exits 2 with 'cannot load src/triage/injection.js (MODULE_NOT_FOUND)' and TUNE_EVAL last line; holdout never opened).",
+      "filesChanged": [
+        "eval/run.js",
+        "eval/metrics.js",
+        "test/eval/runner.test.js",
+        "test/eval/fixtures/synthetic.js",
+        "test/eval/fixtures/thresholds.json",
+        "test/eval/fixtures/src-stub/ticket-input.js",
+        "test/eval/fixtures/src-stub/triage/service.js",
+        "test/eval/fixtures/src-stub/triage/injection.js",
+        "test/eval/fixtures/src-stub/triage/fallback-provider.js",
+        "test/eval/fixtures/src-stub/triage/redact.js",
+        "test/eval/fixtures/src-throwing/app.js",
+        "test/eval/fixtures/src-throwing/ticket-input.js",
+        "test/eval/fixtures/src-throwing/triage/service.js",
+        "test/eval/fixtures/src-throwing/triage/injection.js",
+        "test/eval/fixtures/src-throwing/triage/fallback-provider.js",
+        "test/eval/fixtures/src-throwing/triage/redact.js",
+        "test/eval/fixtures/src-no-fallback/ticket-input.js",
+        "test/eval/fixtures/src-no-fallback/triage/service.js",
+        "test/eval/fixtures/src-no-fallback/triage/injection.js",
+        "test/eval/fixtures/src-no-fallback/triage/redact.js"
+      ],
+      "evidence": [
+        "ev:ev-muypther-013e6ff1",
+        "ev:ev-muyptpub-01ba4b4d",
+        "ev:ev-muyptq0w-01b0b96e",
+        "ev:ev-muypp18b-011a2484"
+      ],
+      "remainingIssues": [
+        "Live execution path (--provider live with a key: buildApp + sequential analyse + USAGE line) is NOT TESTED: app.js does not exist yet and tests use no real keys; only the no-key branch is tested (stub src root).",
+        "Real-module fallback execution is NOT TESTED until t11 adds src/triage/injection.js and fallback-provider.js; today npm run eval:tune exits 2 with the missing-module error (ev:ev-muyptq0w-01b0b96e).",
+        "Interpretation choices (spec silent): an enforced check with n=0 is FAIL (value=n/a); --results must contain every scored row id (missing -> exit 2 'results error'); an extra 'results <file> sha256 <hex> (precomputed, rows not executed)' header line is printed in --results mode; FAILED_ROWS lines (--verbose) are printed only for failing enforced checks; truncated count prints as 'COUNT truncated k in N threshold=reported INFO'; thresholds are printed with 2 decimals (0.70) and computed values with 3.",
+        "E5 content-guidance checks from the plan precheck (in-family family list, held-out family not in dataset, >=15 attack rows with a target) are not repeated by the runner; it applies the D5 format rules plus datasetMinimums CHECKs."
+      ],
+      "nextAction": "ai-engineer (t11): measure rules only with `npm run eval:tune` (never full mode); delivery-lead (t17): first full-mode run `npm run eval` after t11/t13 land.",
+      "lessonsConsulted": [],
+      "id": "ho-muypuiv8-01f1d4d4",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T23:05:44.751Z"
     }
   },
   "runs": {
@@ -6373,8 +6519,13 @@
       "task": "t08-eval-runner",
       "gate": null,
       "startedAt": "2026-10-07T22:57:07.154Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T23:06:09.897Z",
+      "durationMinutes": 9.05,
+      "costUsd": 0,
+      "tokens": 167474,
+      "note": null
     },
     "run-muypjfkb-014a9f30": {
       "id": "run-muypjfkb-014a9f30",
@@ -6403,6 +6554,15 @@
       "costUsd": 0,
       "tokens": 108101,
       "note": null
+    },
+    "run-muypv2cn-01b20e1b": {
+      "id": "run-muypv2cn-01b20e1b",
+      "agent": "delivery-lead",
+      "task": null,
+      "gate": "phase:pipeline",
+      "startedAt": "2026-10-07T23:06:09.969Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -6572,8 +6732,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 154.19,
-    "tokens": 4452002
+    "runtimeMinutes": 163.24,
+    "tokens": 4619476
   },
   "delivery": null
 }
