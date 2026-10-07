@@ -31,8 +31,8 @@ child.stdout.on('data', (d) => {
       const check = () => {
         const { execFileSync } = require('node:child_process');
         let rows = '';
-        try { rows = execFileSync('ps', ['-o', 'pid=,stat=,args=', '-g', String(child.pid)], { encoding: 'utf8' }); } catch { rows = ''; }
-        const alive = rows.split('\n').filter((r) => r.trim() !== '' && !/^\s*\d+\s+Z/.test(r));
+        try { rows = execFileSync('ps', ['-e', '-o', 'pgid=,stat=,args='], { encoding: 'utf8' }); } catch { rows = ''; }
+        const alive = rows.split('\n').map((r) => r.trim().split(/\s+/)).filter((c) => c[0] === String(child.pid) && !c[1].startsWith('Z')).map((c) => c.slice(2).join(' '));
         if (alive.length === 0) {
           console.log(`server process group fully exited (no live process) within ${Date.now() - t0} ms of SIGTERM`);
           console.log('stdout lines:', out.trim().split('\n').length, 'stderr bytes:', err.length);
