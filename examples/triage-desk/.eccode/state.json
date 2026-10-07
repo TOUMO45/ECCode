@@ -1,6 +1,6 @@
 {
-  "seq": 157,
-  "lastHash": "bc399a81684809497f08036b13d561cca36b06fb9366ab30631a8d12cbb3b842",
+  "seq": 167,
+  "lastHash": "0d0e18fb0962474e67ad01eab849565ccbdf38377bdfdf573158919a099105b1",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -135,7 +135,7 @@
     "plan": {
       "id": "plan",
       "kind": "plan",
-      "status": "submitted",
+      "status": "approved",
       "iterations": 1,
       "authors": [
         "delivery-lead"
@@ -189,42 +189,15 @@
         }
       ],
       "reviews": [
-        "rev-muynzxmn-01519250"
+        "rev-muynzxmn-01519250",
+        "rev-muyo5b73-01354dbc"
       ],
-      "openFindings": [
-        {
-          "id": "PLAN-1",
-          "severity": "major",
-          "title": "t16-readme runs `npm test` but does not depend on t14/t15, so it can run against another subagent's half-finished contract tests",
-          "detail": "t16's third acceptance criterion requires every documented command except full-mode eval to be run once from the project root and to work. The documented commands include `npm test`, whose glob `test/**/*.test.js` covers t14's and t15's files. t16 depends only on t13-app-wiring. I simulated the integration phase with the engine's own readyTasks() and the plan's dependencies at maxConcurrency=2 (ev:ev-muynyxxl-01ff66ef). All of t14, t15 and t16 are ready at once. After t14 completes while t15 is still claimed, t16 is the next ready task. Its `npm test` run then either fails on t15's in-progress files, so t16 fails or burns retries for reasons outside its ownership, or it passes on an incomplete suite, so the README's claim that `npm test` works is not established. This contradicts plan.md's own claim that a subagent is never failed by another subagent's half-finished files.",
-          "evidence": [
-            "ev:ev-muynyxxl-01ff66ef",
-            "artifact:.eccode/artifacts/plan/plan.json",
-            "artifact:.eccode/artifacts/plan/plan.md"
-          ],
-          "recommendation": "Resolved when either (a) t16.dependencies includes t14-contract-http and t15-contract-modes-privacy, with the plan.md wave table updated to show t14 ∥ t15, then t16, then t17; or (b) t16's acceptance criterion excludes `npm test` from the commands t16 runs (t17 already runs the full suite) and says so explicitly. `eccode plan validate` must still pass.",
-          "reviewId": "rev-muynzxmn-01519250"
-        },
-        {
-          "id": "PLAN-2",
-          "severity": "major",
-          "title": "The plan check scripts that verify t01, t02 and t16 and gate two phases are not in the submission, have no owner, and are editable by any task",
-          "detail": "The verification.command values of t01-scaffold, t02-eval-dataset and t16-readme, and the criteria of the foundation and integration phases, call .eccode/artifacts/plan/checks/{scaffold-check,dataset-precheck,readme-check}.js. The plan submission hashes only plan.json and plan.md. No task's file globs cover these scripts, and lib/tasks.js ALWAYS_ALLOWED (`.eccode/**`) lets any task change them without an ownership error at completion (ev:ev-muynyxxl-01ff66ef). So the instruments are neither reviewed nor pinned by this gate. The worst case is dataset-precheck.js, the pre-freeze guard for the frozen evaluation data (E5/D6). The test-engineer in t02 runs it against their own dataset and could change it without the engine or a later reviewer noticing. I read all three scripts, and on inspection they implement what plan.md describes. scaffold-check accepts the spec's exact §Deployment package.json and .env.example and rejects a mutated package.json (ev:ev-muynynlv-01f7a511). The problem is pinning, not content.",
-          "evidence": [
-            "ev:ev-muynyxxl-01ff66ef",
-            "ev:ev-muynynlv-01f7a511",
-            "artifact:.eccode/artifacts/plan/plan.json",
-            "artifact:.eccode/artifacts/plan/plan.md"
-          ],
-          "recommendation": "Resolved when the resubmission includes the three check scripts as submission artifacts, so their sha256 values are recorded with the plan. plan.md must also state that no implementation task may modify .eccode/artifacts/plan/checks/**. The foundation and integration phase criteria (or the phase submission routine) must require the phase reviewer to confirm the scripts' sha256 values still equal the plan submission before relying on their output.",
-          "reviewId": "rev-muynzxmn-01519250"
-        }
-      ],
-      "approvedBy": null,
-      "approvedSubmission": null,
+      "openFindings": [],
+      "approvedBy": "technical-reviewer",
+      "approvedSubmission": "sub-muyo2cvo-017a28b9",
       "escalation": null,
       "startedAt": "2026-10-07T22:00:09.131Z",
-      "approvedAt": null
+      "approvedAt": "2026-10-07T22:18:08.751Z"
     },
     "verification": {
       "id": "verification",
@@ -244,7 +217,7 @@
     "phase:foundation": {
       "id": "phase:foundation",
       "kind": "phase",
-      "status": "pending",
+      "status": "in_progress",
       "iterations": 0,
       "authors": [],
       "submissions": [],
@@ -253,7 +226,7 @@
       "approvedBy": null,
       "approvedSubmission": null,
       "escalation": null,
-      "startedAt": null,
+      "startedAt": "2026-10-07T22:18:35.794Z",
       "approvedAt": null
     },
     "phase:core-modules": {
@@ -2002,6 +1975,44 @@
       "task": null,
       "recordedBy": "delivery-lead",
       "at": "2026-10-07T22:16:00.472Z"
+    },
+    "ev-muyo4n3o-016d6a83": {
+      "id": "ev-muyo4n3o-016d6a83",
+      "kind": "command",
+      "label": "plan validate (iteration 2)",
+      "command": "node /home/user/ECCode/bin/eccode.js plan validate .eccode/artifacts/plan/plan.json",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 59,
+      "log": ".eccode/evidence/ev-muyo4n3o-016d6a83.log",
+      "logSha256": "be03bb99c1780d901a0cb3bd8c0ee8279dba34ca5d50417f534f4f3ab4e1fa50",
+      "outputTail": "Plan valid: 5 phase(s), 17 task(s).\n",
+      "gate": "plan",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-07T22:17:37.531Z"
+    },
+    "ev-muyo4n75-012220fa": {
+      "id": "ev-muyo4n75-012220fa",
+      "kind": "command",
+      "label": "re-review PLAN-1..4: readyTasks sim, pinned hashes, toolkit scope",
+      "command": "node /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/plan-rereview.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 60,
+      "log": ".eccode/evidence/ev-muyo4n75-012220fa.log",
+      "logSha256": "9868d6caf09d3c4cb7090d8df92b8cbe6d3b0693072c5a059118150c4fb5d1d9",
+      "outputTail": "t14+t15 done -> ready: t16-readme\nPASS PLAN-1 t16 ready only after t14 and t15; t17 still waits\nPASS PLAN-1 t17 ready after t16\nPASS PLAN-1 t16 AC states its npm test run covers complete suite\nlatest submission: sub-muyo2cvo-017a28b9 respondsTo rev-muynzxmn-01519250\nPASS PLAN-2 dataset-precheck.js in submission artifacts, sha256 c59b7acda3fa matches disk\nPASS PLAN-2 dataset-precheck.js pinned hash present in plan.json criteria and plan.md\nPASS PLAN-2 readme-check.js in submission artifacts, sha256 a9a0128f80af matches disk\nPASS PLAN-2 readme-check.js pinned hash present in plan.json criteria and plan.md\nPASS PLAN-2 scaffold-check.js in submission artifacts, sha256 e1fde7f948af matches disk\nPASS PLAN-2 scaffold-check.js pinned hash present in plan.json criteria and plan.md\nPASS PLAN-2 no task owns .eccode/artifacts/plan/checks/**\nPASS PLAN-2 every phase has the pinned-hash criterion (foundation,core-modules,pipeline,rules-and-wiring,integration)\nPASS PLAN-2 t01-scaffold AC forbids modifying checks\nPASS PLAN-2 t02-eval-dataset AC forbids modifying checks\nPASS PLAN-2 t16-readme AC forbids modifying checks\nPASS PLAN-2 plan.md states no task may modify checks/**\nlib/tasks.js ALWAYS_ALLOWED = ['.eccode/drafts/**']\nPASS PLAN-2 task completion no longer always-allows checks/**\nPASS PLAN-3 t17 = three separate evidence runs, npm run eval once\nPASS PLAN-4 t14-contract-http depends on t07-ui\nPASS PLAN-4 t15-contract-modes-privacy depends on t07-ui\nPASS PLAN-4 core-modules DES-8 criterion lists all three reject vectors\nALL PASS\n",
+      "gate": "plan",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-07T22:17:37.663Z"
     }
   },
   "reviews": {
@@ -2931,6 +2942,128 @@
       "reviewer": "technical-reviewer",
       "at": "2026-10-07T22:13:57.887Z",
       "submissionId": "sub-muyntlor-01a9f206"
+    },
+    "rev-muyo5b73-01354dbc": {
+      "decision": "approve",
+      "summary": "Iteration 2 (sub-muyo2cvo-017a28b9) resolves both major findings and both lower-severity ones. PLAN-1: t16 now depends on t14 and t15. The engine's readyTasks() simulation at maxConcurrency=2 shows t16 becomes ready only after both are done, and t17 only after t16. PLAN-2: the three check scripts are submission artifacts. Their recorded sha256 values equal the files on disk and the values pinned in plan.md and in a hash criterion on every phase. No task owns checks/**, t01/t02/t16 forbid modifying them, and the toolkit now limits task completion to .eccode/drafts/**. The scripts are byte-identical to the versions whose content I verified in review 1. PLAN-3 and PLAN-4 are fixed. plan validate passes.",
+      "criteria": [
+        {
+          "id": "C1",
+          "description": "Plan passes `eccode plan validate` (schema, phases, owners, deps, no cycles, no ownership warnings)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyo4n3o-016d6a83",
+            "artifact:.eccode/artifacts/plan/plan.json"
+          ]
+        },
+        {
+          "id": "C2",
+          "description": "Coverage, task completeness and disjoint ownership from review 1 are preserved: the only changes are dependency additions, acceptance criteria and t17's verification shape (diff read in full)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyo4n3o-016d6a83",
+            "artifact:.eccode/artifacts/plan/plan.json",
+            "artifact:.eccode/artifacts/plan/plan.md"
+          ]
+        },
+        {
+          "id": "C3",
+          "description": "Dependency correctness: no task's required checks run files owned by a task that can still be in progress (PLAN-1)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyo4n75-012220fa",
+            "artifact:.eccode/artifacts/plan/plan.json"
+          ]
+        },
+        {
+          "id": "C4",
+          "description": "Phases independently verifiable with pinned, reviewed instruments: the check scripts are in the submission with sha256 values, every phase requires a hash check before their output is relied on, and no task can change them through task completion (PLAN-2)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyo4n75-012220fa",
+            "artifact:.eccode/artifacts/plan/checks/dataset-precheck.js",
+            "artifact:.eccode/artifacts/plan/checks/scaffold-check.js",
+            "artifact:.eccode/artifacts/plan/checks/readme-check.js",
+            "artifact:.eccode/artifacts/plan/plan.md"
+          ]
+        },
+        {
+          "id": "C5",
+          "description": "DES-2/E5 discipline is intact: t17 runs the full-mode eval exactly once as a separate evidence step, and design-vectors runs whatever the eval's exit code (PLAN-3)",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyo4n75-012220fa",
+            "artifact:.eccode/artifacts/plan/plan.json"
+          ]
+        },
+        {
+          "id": "C6",
+          "description": "Buildable under maxConcurrency=2: integration waves are t14 ∥ t15, then t16, then t17, and plan.md's wave table and critical path match",
+          "met": true,
+          "evidence": [
+            "ev:ev-muyo4n75-012220fa",
+            "artifact:.eccode/artifacts/plan/plan.md"
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "PLAN-5",
+          "severity": "info",
+          "title": "plan.md still describes the toolkit tightening as pending",
+          "detail": "plan.md says the toolkit 'is also being tightened' to allow only .eccode/drafts/** at task completion, and that the hash check enforces the rule 'until that lands'. It has landed (lib/tasks.js ALWAYS_ALLOWED = ['.eccode/drafts/**'], ev:ev-muyo4n75-012220fa). The hash check is still the right backstop. delivery-lead is both a document author (the guard allows it to write .eccode/artifacts/**) and t17's owner, so edits made outside task completion are caught only by the per-phase sha256 criterion.",
+          "evidence": [
+            "ev:ev-muyo4n75-012220fa",
+            "artifact:.eccode/artifacts/plan/plan.md"
+          ],
+          "recommendation": "Optional: update the wording at the next plan revision. Phase reviewers must actually run the sha256 check that each phase criterion requires."
+        }
+      ],
+      "resolvedFindings": [
+        {
+          "id": "PLAN-1",
+          "resolution": "t16-readme.dependencies now includes t14-contract-http and t15-contract-modes-privacy, and t16's criterion says its npm test run covers the complete suite. I re-ran the engine readyTasks() simulation at maxConcurrency=2. At phase start only t14 and t15 are ready. With t14 done and t15 still claimed, nothing is ready. t16 becomes ready only when both are done, and t17 after t16. The plan.md wave table shows t14 ∥ t15, then t16, then t17. plan validate still passes.",
+          "evidence": [
+            "ev:ev-muyo4n75-012220fa",
+            "ev:ev-muyo4n3o-016d6a83",
+            "artifact:.eccode/artifacts/plan/plan.json",
+            "artifact:.eccode/artifacts/plan/plan.md"
+          ]
+        },
+        {
+          "id": "PLAN-2",
+          "resolution": "Fixed in four places. (1) dataset-precheck.js, readme-check.js and scaffold-check.js are artifacts of sub-muyo2cvo-017a28b9, and their recorded sha256 values equal the files on disk. (2) Those values are pinned in plan.md and in a 'Pinned instruments' criterion on all five phases, and a mismatch fails the phase. The phase submission routine also checks the hashes first. (3) No task owns checks/**. t01, t02 and t16 carry a criterion forbidding changes to it, and plan.md states the rule. (4) The toolkit's task-completion ALWAYS_ALLOWED is now ['.eccode/drafts/**'], which no longer covers checks/**. The scripts are byte-identical to the versions I verified in review 1 (no git diff since f0a68c9), so that content verification (ev:ev-muynynlv-01f7a511) still holds.",
+          "evidence": [
+            "ev:ev-muyo4n75-012220fa",
+            "ev:ev-muynynlv-01f7a511",
+            "artifact:.eccode/artifacts/plan/checks/dataset-precheck.js",
+            "artifact:.eccode/artifacts/plan/checks/readme-check.js",
+            "artifact:.eccode/artifacts/plan/checks/scaffold-check.js",
+            "artifact:.eccode/artifacts/plan/plan.md"
+          ]
+        },
+        {
+          "id": "PLAN-3",
+          "resolution": "t17's verification is now three separate `eccode evidence run` steps joined by ';', not '&&'. `npm run eval` appears exactly once, and the method says step 3 runs whatever step 2's exit code is, with no second full-mode run.",
+          "evidence": [
+            "ev:ev-muyo4n75-012220fa",
+            "artifact:.eccode/artifacts/plan/plan.json"
+          ]
+        },
+        {
+          "id": "PLAN-4",
+          "resolution": "t07-ui was added to the t14 and t15 dependencies, and the core-modules DES-8 criterion now lists all three reject vectors, including the Arabic-Indic digit one.",
+          "evidence": [
+            "ev:ev-muyo4n75-012220fa",
+            "artifact:.eccode/artifacts/plan/plan.json"
+          ]
+        }
+      ],
+      "id": "rev-muyo5b73-01354dbc",
+      "gate": "plan",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-07T22:18:08.751Z",
+      "submissionId": "sub-muyo2cvo-017a28b9"
     }
   },
   "rejectedReviews": [
@@ -2938,6 +3071,15 @@
       "gate": "design",
       "reviewer": "technical-reviewer",
       "at": "2026-10-07T21:59:43.598Z",
+      "reasons": [
+        "$.decision: must be one of approve, changes_requested (got \"approved\")"
+      ],
+      "decision": "approved"
+    },
+    {
+      "gate": "plan",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-07T22:18:05.893Z",
       "reasons": [
         "$.decision: must be one of approve, changes_requested (got \"approved\")"
       ],
@@ -3444,8 +3586,23 @@
       "endedAt": "2026-10-07T22:14:21.402Z",
       "durationMinutes": 3.92,
       "costUsd": 0,
-      "tokens": 180000,
-      "note": "token count not reported in hand-back; estimate"
+      "tokens": 147857,
+      "note": "token count not reported in hand-back; estimate",
+      "corrections": [
+        {
+          "at": "2026-10-07T22:18:59.036Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 180000,
+            "costUsd": 0
+          },
+          "to": {
+            "tokens": 147857,
+            "costUsd": 0
+          },
+          "reason": "closed with an estimate before the usage block arrived; reported 147857"
+        }
+      ]
     },
     "run-muyo0ftd-01ccd0a6": {
       "id": "run-muyo0ftd-01ccd0a6",
@@ -3467,6 +3624,44 @@
       "task": null,
       "gate": "plan",
       "startedAt": "2026-10-07T22:16:37.814Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T22:18:35.723Z",
+      "durationMinutes": 1.97,
+      "costUsd": 0,
+      "tokens": 100709,
+      "note": "estimate; usage block not yet delivered at close",
+      "corrections": [
+        {
+          "at": "2026-10-07T22:18:59.093Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 120000,
+            "costUsd": 0
+          },
+          "to": {
+            "tokens": 100709,
+            "costUsd": 0
+          },
+          "reason": "closed with an estimate before the usage block arrived; reported 100709"
+        }
+      ]
+    },
+    "run-muyo5w54-014967f6": {
+      "id": "run-muyo5w54-014967f6",
+      "agent": "devops-engineer",
+      "task": "t01-scaffold",
+      "gate": null,
+      "startedAt": "2026-10-07T22:18:35.903Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-muyo5w6t-0147620d": {
+      "id": "run-muyo5w6t-0147620d",
+      "agent": "test-engineer",
+      "task": "t02-eval-dataset",
+      "gate": null,
+      "startedAt": "2026-10-07T22:18:35.964Z",
       "status": "running",
       "attempt": 1
     }
@@ -3628,8 +3823,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 81.42,
-    "tokens": 2392369
+    "runtimeMinutes": 83.39,
+    "tokens": 2460935
   },
   "delivery": null
 }

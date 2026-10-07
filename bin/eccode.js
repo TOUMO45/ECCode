@@ -41,6 +41,7 @@ Evidence & records
   handoff record --actor <a> --file <handoff.json>
   run start --actor <agent> [--task t] [--gate g]       (prints run id)
   run end <runId> --actor orchestrator --status ok|failed [--tokens n] [--cost-usd x] [--note n]
+  run correct <runId> --actor orchestrator [--tokens n] [--cost-usd x] --reason <text>   (append-only)
   risk add --id R1 --title t --severity low|medium|high|critical [--mitigation m] [--owner o] --actor a
   risk update --id R1 --status open|mitigated|accepted|closed --actor a
   decision add --title t --decision d --rationale r [--alternatives a] [--lesson <memId>]... --actor a
@@ -282,6 +283,9 @@ function main(argv) {
           note: flags.note,
         });
         print(flags, `Run ${arg} closed. Totals: $${state.totals.costUsd}, ${state.totals.runtimeMinutes} min, ${state.totals.tokens} tokens.`, state.totals);
+      } else if (sub === 'correct') {
+        const { state } = runs.correctRun(store, need(arg, '<runId>'), need(actor, '--actor'), { tokens: flags.tokens, costUsd: flags['cost-usd'], reason: need(flags.reason, '--reason') });
+        print(flags, `Run ${arg} corrected. Totals: $${state.totals.costUsd}, ${state.totals.tokens} tokens.`, state.totals);
       } else throw new EccodeError('USAGE', `Unknown run subcommand ${sub}`);
       return 0;
     }

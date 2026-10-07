@@ -172,3 +172,15 @@ test('audit detects a snapshot that diverges from replay; rebuild repairs it', (
   assert.strictEqual(ctx.store.audit().ok, true);
   assert.strictEqual(ctx.store.state().gates.plan.approvedBy, 'technical-reviewer');
 });
+
+test('run usage corrections are append-only and adjust totals by the delta', () => {
+  const ctx = tmpProject();
+  const id = runs.startRun(ctx.store, ctx.config, 'technical-reviewer');
+  runs.endRun(ctx.store, ctx.config, id, 'orchestrator', { tokens: 120000 });
+  runs.correctRun(ctx.store, id, 'orchestrator', { tokens: 100709, reason: 'estimate replaced by reported usage' });
+  const st = ctx.store.state();
+  assert.strictEqual(st.totals.tokens, 100709);
+  assert.strictEqual(st.runs[id].corrections[0].from.tokens, 120000);
+  assert.strictEqual(ctx.store.audit().ok, true);
+  expectCode(() => runs.correctRun(ctx.store, id, 'orchestrator', { tokens: 1 }), 'INVALID_INPUT');
+});

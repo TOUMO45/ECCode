@@ -1,0 +1,117 @@
+{
+  "decision": "approve",
+  "summary": "Iteration 2 (sub-muyo2cvo-017a28b9) resolves both major findings and both lower-severity ones. PLAN-1: t16 now depends on t14 and t15. The engine's readyTasks() simulation at maxConcurrency=2 shows t16 becomes ready only after both are done, and t17 only after t16. PLAN-2: the three check scripts are submission artifacts. Their recorded sha256 values equal the files on disk and the values pinned in plan.md and in a hash criterion on every phase. No task owns checks/**, t01/t02/t16 forbid modifying them, and the toolkit now limits task completion to .eccode/drafts/**. The scripts are byte-identical to the versions whose content I verified in review 1. PLAN-3 and PLAN-4 are fixed. plan validate passes.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Plan passes `eccode plan validate` (schema, phases, owners, deps, no cycles, no ownership warnings)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyo4n3o-016d6a83",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "Coverage, task completeness and disjoint ownership from review 1 are preserved: the only changes are dependency additions, acceptance criteria and t17's verification shape (diff read in full)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyo4n3o-016d6a83",
+        "artifact:.eccode/artifacts/plan/plan.json",
+        "artifact:.eccode/artifacts/plan/plan.md"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "Dependency correctness: no task's required checks run files owned by a task that can still be in progress (PLAN-1)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyo4n75-012220fa",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "Phases independently verifiable with pinned, reviewed instruments: the check scripts are in the submission with sha256 values, every phase requires a hash check before their output is relied on, and no task can change them through task completion (PLAN-2)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyo4n75-012220fa",
+        "artifact:.eccode/artifacts/plan/checks/dataset-precheck.js",
+        "artifact:.eccode/artifacts/plan/checks/scaffold-check.js",
+        "artifact:.eccode/artifacts/plan/checks/readme-check.js",
+        "artifact:.eccode/artifacts/plan/plan.md"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "DES-2/E5 discipline is intact: t17 runs the full-mode eval exactly once as a separate evidence step, and design-vectors runs whatever the eval's exit code (PLAN-3)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyo4n75-012220fa",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    },
+    {
+      "id": "C6",
+      "description": "Buildable under maxConcurrency=2: integration waves are t14 ∥ t15, then t16, then t17, and plan.md's wave table and critical path match",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyo4n75-012220fa",
+        "artifact:.eccode/artifacts/plan/plan.md"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "PLAN-5",
+      "severity": "info",
+      "title": "plan.md still describes the toolkit tightening as pending",
+      "detail": "plan.md says the toolkit 'is also being tightened' to allow only .eccode/drafts/** at task completion, and that the hash check enforces the rule 'until that lands'. It has landed (lib/tasks.js ALWAYS_ALLOWED = ['.eccode/drafts/**'], ev:ev-muyo4n75-012220fa). The hash check is still the right backstop. delivery-lead is both a document author (the guard allows it to write .eccode/artifacts/**) and t17's owner, so edits made outside task completion are caught only by the per-phase sha256 criterion.",
+      "evidence": [
+        "ev:ev-muyo4n75-012220fa",
+        "artifact:.eccode/artifacts/plan/plan.md"
+      ],
+      "recommendation": "Optional: update the wording at the next plan revision. Phase reviewers must actually run the sha256 check that each phase criterion requires."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "PLAN-1",
+      "resolution": "t16-readme.dependencies now includes t14-contract-http and t15-contract-modes-privacy, and t16's criterion says its npm test run covers the complete suite. I re-ran the engine readyTasks() simulation at maxConcurrency=2. At phase start only t14 and t15 are ready. With t14 done and t15 still claimed, nothing is ready. t16 becomes ready only when both are done, and t17 after t16. The plan.md wave table shows t14 ∥ t15, then t16, then t17. plan validate still passes.",
+      "evidence": [
+        "ev:ev-muyo4n75-012220fa",
+        "ev:ev-muyo4n3o-016d6a83",
+        "artifact:.eccode/artifacts/plan/plan.json",
+        "artifact:.eccode/artifacts/plan/plan.md"
+      ]
+    },
+    {
+      "id": "PLAN-2",
+      "resolution": "Fixed in four places. (1) dataset-precheck.js, readme-check.js and scaffold-check.js are artifacts of sub-muyo2cvo-017a28b9, and their recorded sha256 values equal the files on disk. (2) Those values are pinned in plan.md and in a 'Pinned instruments' criterion on all five phases, and a mismatch fails the phase. The phase submission routine also checks the hashes first. (3) No task owns checks/**. t01, t02 and t16 carry a criterion forbidding changes to it, and plan.md states the rule. (4) The toolkit's task-completion ALWAYS_ALLOWED is now ['.eccode/drafts/**'], which no longer covers checks/**. The scripts are byte-identical to the versions I verified in review 1 (no git diff since f0a68c9), so that content verification (ev:ev-muynynlv-01f7a511) still holds.",
+      "evidence": [
+        "ev:ev-muyo4n75-012220fa",
+        "ev:ev-muynynlv-01f7a511",
+        "artifact:.eccode/artifacts/plan/checks/dataset-precheck.js",
+        "artifact:.eccode/artifacts/plan/checks/readme-check.js",
+        "artifact:.eccode/artifacts/plan/checks/scaffold-check.js",
+        "artifact:.eccode/artifacts/plan/plan.md"
+      ]
+    },
+    {
+      "id": "PLAN-3",
+      "resolution": "t17's verification is now three separate `eccode evidence run` steps joined by ';', not '&&'. `npm run eval` appears exactly once, and the method says step 3 runs whatever step 2's exit code is, with no second full-mode run.",
+      "evidence": [
+        "ev:ev-muyo4n75-012220fa",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    },
+    {
+      "id": "PLAN-4",
+      "resolution": "t07-ui was added to the t14 and t15 dependencies, and the core-modules DES-8 criterion now lists all three reject vectors, including the Arabic-Indic digit one.",
+      "evidence": [
+        "ev:ev-muyo4n75-012220fa",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    }
+  ]
+}
