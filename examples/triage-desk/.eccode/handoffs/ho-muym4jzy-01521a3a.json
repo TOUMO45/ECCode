@@ -1,0 +1,38 @@
+{
+  "from": "product-architect",
+  "to": "architecture-reviewer",
+  "gate": "architecture",
+  "objective": "Re-review the revised architecture brief (iteration 2, submission sub-muym3xbz-0110077b) against rev-muylut9q-014dc18b and decide approve or changes_requested.",
+  "context": "Revision responds to ARCH-1..ARCH-9. Orchestrator decisions folded in: dec-muylppww (Haiku default), dec-muylppyk (no key, live NOT RUN), dec-muylpq02 (redaction, extended to Luhn-valid card numbers), dec-muylvas4 (zero deps). Docs re-checked 2026-10-07: structured-outputs.md (D1) and effort.md (D2). The 'Review Response' section of the brief maps each finding to the changed sections.",
+  "inputs": [
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/artifacts/architecture/brief-vectors.js",
+    ".eccode/reviews/rev-muylut9q-014dc18b.json"
+  ],
+  "dependencies": [],
+  "expectedOutput": "A review JSON for gate architecture covering C1-C8, with every prior finding marked resolved or re-raised by id.",
+  "acceptanceCriteria": [
+    "ARCH-1: Haiku default + R11/R12 redaction with card numbers, AC16, NFR4 notice, RISK-9",
+    "ARCH-2: NFR2 schema keyword allowlist, AC9 recursive schema walk, V3 enum-case policy tested by AC4(m)",
+    "ARCH-3: NFR3 Host allowlist + Origin check before body parsing, no CORS, AC17, RISK-5 re-rated",
+    "ARCH-4: enforced holdout floors with non-zero exit, minimum holdout counts, sha256 freeze before rules commits checked at verification",
+    "ARCH-5: attack targets/canary/url per row, separate leak/steer/attack_success metrics, >=20 attacks with held-out families, 'k failures in N' reporting, live NOT RUN in Success Criterion 4"
+  ],
+  "completedWork": "brief.md rewritten for iteration 2 with a Review Response section; baseline patterns for redaction (R11), single-sentence (V1), no-link (V2), enum case (V3) and the schema walker are executable in brief-vectors.js and pass (ev:ev-muylz82a-01c7d490). Risks RISK-1, RISK-3..RISK-7 updated and RISK-9 added in the register. Resubmitted as sub-muym3xbz-0110077b with --responds-to rev-muylut9q-014dc18b.",
+  "filesChanged": [
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/artifacts/architecture/brief-vectors.js"
+  ],
+  "evidence": [
+    "ev:ev-muylz82a-01c7d490",
+    "ev:ev-muylm2jz-017e07c4"
+  ],
+  "remainingIssues": [
+    "ARCH-5 deviation for reviewer judgement: fallback injection_steer threshold is <=0.25 rather than 0 (leaks stay at 0); rationale in the 'Note on fallback steering'.",
+    "Live model behaviour (Haiku 5.5 request shape, restricted schema acceptance, max_tokens 2048 sufficiency) is checked against docs only; no live call possible (no key).",
+    "User confirmations pending: Q1 Haiku default, Q4 card-number redaction extension, Q7 zero dependencies.",
+    "Tooling note: 'eccode risk update' without --title/--severity/--owner overwrote those fields with undefined; repaired by re-issuing full updates. Should be fixed in lib/runs.js/bin/eccode.js."
+  ],
+  "nextAction": "architecture-reviewer: review sub-muym3xbz-0110077b against rev-muylut9q-014dc18b and record the decision with eccode gate review architecture.",
+  "lessonsConsulted": []
+}

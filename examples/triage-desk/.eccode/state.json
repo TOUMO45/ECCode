@@ -1,6 +1,6 @@
 {
-  "seq": 29,
-  "lastHash": "6df37a3c82b0b97815a1fcdb47697b929c4706e4c3268f040ef4aff74a908e6f",
+  "seq": 48,
+  "lastHash": "6383bbfb2bd5c7b0bdc1611cc49e1f20f253f45c905d51a4ffe42f6567690f71",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -16,7 +16,7 @@
     "architecture": {
       "id": "architecture",
       "kind": "architecture",
-      "status": "changes_requested",
+      "status": "submitted",
       "iterations": 1,
       "authors": [
         "product-architect"
@@ -34,6 +34,23 @@
           ],
           "respondsTo": null,
           "notes": "Iteration 1. Memory searched (4 queries); only hit mem-k-muyljkrt-01991ac7 rejected (DOES-NOT-APPLY: node>=18). Runtime evidence ev:ev-muylm2jz-017e07c4. Q1/Q3/Q4 need user decisions."
+        },
+        {
+          "id": "sub-muym3xbz-0110077b",
+          "actor": "product-architect",
+          "at": "2026-10-07T21:21:04.895Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/architecture/brief.md",
+              "sha256": "c37def2ea2542f3bfa8926d4d36aeddfb56f5a79d15d71a747dc124bd1ac5a2f"
+            },
+            {
+              "path": ".eccode/artifacts/architecture/brief-vectors.js",
+              "sha256": "7701ff0e00a9eb7a01780e5142075cdf04eb2afc54d9b13c11b10288870ffced"
+            }
+          ],
+          "respondsTo": "rev-muylut9q-014dc18b",
+          "notes": "Iteration 2. Resolves ARCH-1..ARCH-5, addresses ARCH-6..ARCH-9 (see Review Response). Docs D1/D2 checked 2026-10-07. Pattern vectors verified ev:ev-muylz82a-01c7d490. Memory searched (5 queries, no hits). User confirmations pending: Q1, Q4 (card extension), Q7."
         }
       ],
       "reviews": [
@@ -220,6 +237,25 @@
       "task": null,
       "recordedBy": "architecture-reviewer",
       "at": "2026-10-07T21:12:00.270Z"
+    },
+    "ev-muylz82a-01c7d490": {
+      "id": "ev-muylz82a-01c7d490",
+      "kind": "command",
+      "label": "architecture: brief baseline patterns and test vectors (ARCH-1/2/7)",
+      "command": "node .eccode/artifacts/architecture/brief-vectors.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 40,
+      "log": ".eccode/evidence/ev-muylz82a-01c7d490.log",
+      "logSha256": "3831fe8e096764e5382b5d23b52b6e783d146cc4b19e47c152f6a3ca784b1b70",
+      "outputTail": "all brief vectors pass\n",
+      "gate": "architecture",
+      "task": null,
+      "recordedBy": "product-architect",
+      "at": "2026-10-07T21:17:25.524Z"
     }
   },
   "reviews": {
@@ -465,6 +501,47 @@
       "id": "ho-muylp5jn-012f0637",
       "recordedBy": "product-architect",
       "at": "2026-10-07T21:09:35.711Z"
+    },
+    "ho-muym4jzy-01521a3a": {
+      "from": "product-architect",
+      "to": "architecture-reviewer",
+      "gate": "architecture",
+      "objective": "Re-review the revised architecture brief (iteration 2, submission sub-muym3xbz-0110077b) against rev-muylut9q-014dc18b and decide approve or changes_requested.",
+      "context": "Revision responds to ARCH-1..ARCH-9. Orchestrator decisions folded in: dec-muylppww (Haiku default), dec-muylppyk (no key, live NOT RUN), dec-muylpq02 (redaction, extended to Luhn-valid card numbers), dec-muylvas4 (zero deps). Docs re-checked 2026-10-07: structured-outputs.md (D1) and effort.md (D2). The 'Review Response' section of the brief maps each finding to the changed sections.",
+      "inputs": [
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/artifacts/architecture/brief-vectors.js",
+        ".eccode/reviews/rev-muylut9q-014dc18b.json"
+      ],
+      "dependencies": [],
+      "expectedOutput": "A review JSON for gate architecture covering C1-C8, with every prior finding marked resolved or re-raised by id.",
+      "acceptanceCriteria": [
+        "ARCH-1: Haiku default + R11/R12 redaction with card numbers, AC16, NFR4 notice, RISK-9",
+        "ARCH-2: NFR2 schema keyword allowlist, AC9 recursive schema walk, V3 enum-case policy tested by AC4(m)",
+        "ARCH-3: NFR3 Host allowlist + Origin check before body parsing, no CORS, AC17, RISK-5 re-rated",
+        "ARCH-4: enforced holdout floors with non-zero exit, minimum holdout counts, sha256 freeze before rules commits checked at verification",
+        "ARCH-5: attack targets/canary/url per row, separate leak/steer/attack_success metrics, >=20 attacks with held-out families, 'k failures in N' reporting, live NOT RUN in Success Criterion 4"
+      ],
+      "completedWork": "brief.md rewritten for iteration 2 with a Review Response section; baseline patterns for redaction (R11), single-sentence (V1), no-link (V2), enum case (V3) and the schema walker are executable in brief-vectors.js and pass (ev:ev-muylz82a-01c7d490). Risks RISK-1, RISK-3..RISK-7 updated and RISK-9 added in the register. Resubmitted as sub-muym3xbz-0110077b with --responds-to rev-muylut9q-014dc18b.",
+      "filesChanged": [
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/artifacts/architecture/brief-vectors.js"
+      ],
+      "evidence": [
+        "ev:ev-muylz82a-01c7d490",
+        "ev:ev-muylm2jz-017e07c4"
+      ],
+      "remainingIssues": [
+        "ARCH-5 deviation for reviewer judgement: fallback injection_steer threshold is <=0.25 rather than 0 (leaks stay at 0); rationale in the 'Note on fallback steering'.",
+        "Live model behaviour (Haiku 5.5 request shape, restricted schema acceptance, max_tokens 2048 sufficiency) is checked against docs only; no live call possible (no key).",
+        "User confirmations pending: Q1 Haiku default, Q4 card-number redaction extension, Q7 zero dependencies.",
+        "Tooling note: 'eccode risk update' without --title/--severity/--owner overwrote those fields with undefined; repaired by re-issuing full updates. Should be fixed in lib/runs.js/bin/eccode.js."
+      ],
+      "nextAction": "architecture-reviewer: review sub-muym3xbz-0110077b against rev-muylut9q-014dc18b and record the decision with eccode gate review architecture.",
+      "lessonsConsulted": [],
+      "id": "ho-muym4jzy-01521a3a",
+      "recordedBy": "product-architect",
+      "at": "2026-10-07T21:21:34.277Z"
     }
   },
   "runs": {
@@ -502,6 +579,29 @@
       "task": null,
       "gate": "architecture",
       "startedAt": "2026-10-07T21:14:22.492Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T21:22:11.170Z",
+      "durationMinutes": 7.81,
+      "costUsd": 0,
+      "tokens": 166419,
+      "note": null
+    },
+    "run-muym5cif-01044cc4": {
+      "id": "run-muym5cif-01044cc4",
+      "agent": "architecture-reviewer",
+      "task": null,
+      "gate": "architecture",
+      "startedAt": "2026-10-07T21:22:11.227Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-muym5cjy-01ae62d3": {
+      "id": "run-muym5cjy-01ae62d3",
+      "agent": "learning-debugger",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-07T21:22:11.281Z",
       "status": "running",
       "attempt": 1
     }
@@ -509,13 +609,13 @@
   "risks": {
     "RISK-1": {
       "id": "RISK-1",
-      "title": "Prompt injection in ticket text manipulates classification/reply or leaks system prompt",
-      "severity": "high",
-      "mitigation": "Fixed system prompt + delimited/neutralised ticket, no tools, json_schema output, strict validator (enums, lengths, no URL/email in reply), display-only output, heuristic flag + UI warning, eval injection_safety=1.00 on >=8 attacks, human review",
-      "owner": "ai-engineer",
+      "mitigation": "NFR2 controls (fixed prompt with marker, redacted+neutralised ticket, no tools, restricted json_schema, V1-V4), detector flag + UI warning, fallback drops detector-matched sentences before scoring, metrics injection_leak=0 / injection_steer (fallback<=0.25, live 0) / attack_success on >=20 attacks incl >=2 held-out families reported as 'k failures in N'; residual: fallback keyword steering, covered by flag + human review",
       "status": "open",
-      "updatedAt": "2026-10-07T21:09:13.907Z",
-      "updatedBy": "product-architect"
+      "updatedAt": "2026-10-07T21:21:17.379Z",
+      "updatedBy": "product-architect",
+      "title": "Prompt injection in ticket text manipulates classification/reply or leaks system prompt; residual: fallback keyword steering",
+      "severity": "high",
+      "owner": "ai-engineer"
     },
     "RISK-2": {
       "id": "RISK-2",
@@ -529,53 +629,53 @@
     },
     "RISK-3": {
       "id": "RISK-3",
-      "title": "Live model slow/unavailable/refuses/returns invalid or hallucinated output",
-      "severity": "medium",
-      "mitigation": "20s timeout, single attempt, deterministic fallback with reason, strict validator, effort low, fallback_rate and raw_model_validity metrics",
-      "owner": "ai-engineer",
+      "title": "Live model (Haiku 5.5) slow/unavailable/refuses/truncates (adaptive thinking counts toward max_tokens)/returns invalid output",
+      "mitigation": "20s timeout, single attempt, effort low explicit, max_tokens 2048 with rationale (configurable), truncated reason+count, non-2xx -> model_error, V1-V4 validator, deterministic fallback with reason, fallback_rate and raw_model_validity metrics",
       "status": "open",
-      "updatedAt": "2026-10-07T21:09:14.012Z",
-      "updatedBy": "product-architect"
+      "updatedAt": "2026-10-07T21:21:17.455Z",
+      "updatedBy": "product-architect",
+      "severity": "medium",
+      "owner": "ai-engineer"
     },
     "RISK-4": {
       "id": "RISK-4",
-      "title": "Eval not meaningful: fallback rules overfit a small same-team dataset",
-      "severity": "medium",
-      "mitigation": "Dataset authored and frozen by test-engineer, ~30% holdout reported separately, thresholds fixed in brief before rules exist, sample size stated",
-      "owner": "test-engineer",
+      "mitigation": "Dataset by test-engineer: >=60 benign rows, holdout >=20 with per-class minimums checked by runner; holdout floors (threshold-0.10) enforced with non-zero exit (AC8); dataset+thresholds sha256 recorded as evidence before any rules commit and checked by verification gate; N printed per metric",
       "status": "open",
-      "updatedAt": "2026-10-07T21:09:14.064Z",
-      "updatedBy": "product-architect"
+      "updatedAt": "2026-10-07T21:21:17.519Z",
+      "updatedBy": "product-architect",
+      "title": "Eval not meaningful: fallback rules overfit a small same-team dataset, or dataset edited after rules exist",
+      "severity": "medium",
+      "owner": "test-engineer"
     },
     "RISK-5": {
       "id": "RISK-5",
-      "title": "API key leak or key-spend abuse via exposed unauthenticated server",
-      "severity": "high",
-      "mitigation": "Key from env only, never echoed (AC10/AC14), bind 127.0.0.1 by default, body and max_tokens caps, one call per request; auth + rate limiting required before any non-local deployment",
-      "owner": "backend-engineer",
+      "title": "API key leak or key-spend abuse (incl. DNS rebinding from a malicious web page) via unauthenticated local server",
+      "mitigation": "Key from env only, never echoed (AC10/AC14); Host allowlist (127.0.0.1/localhost/[::1]:PORT) + Origin check before body parsing, no CORS headers (NFR3, AC17); bind 127.0.0.1; body and max_tokens caps; one call per request. Likelihood re-rated Low after Host/Origin check (inherent Medium); impact High. Auth + rate limiting required before non-local deployment",
       "status": "open",
-      "updatedAt": "2026-10-07T21:09:14.117Z",
-      "updatedBy": "product-architect"
+      "updatedAt": "2026-10-07T21:21:17.583Z",
+      "updatedBy": "product-architect",
+      "severity": "high",
+      "owner": "backend-engineer"
     },
     "RISK-6": {
       "id": "RISK-6",
+      "mitigation": "Metadata-only logs tested with marker (AC10), no persistence, R11 redaction of emails/phones/Luhn-valid cards before live call (AC16), live-mode notice naming redacted classes and what is not removed",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:21:17.637Z",
+      "updatedBy": "product-architect",
       "title": "Ticket PII logged locally or sent to third party without awareness",
       "severity": "medium",
-      "mitigation": "Metadata-only logs tested with marker (AC10), no persistence, live-mode UI notice, Q4 escalated to user",
-      "owner": "backend-engineer",
-      "status": "open",
-      "updatedAt": "2026-10-07T21:09:14.167Z",
-      "updatedBy": "product-architect"
+      "owner": "backend-engineer"
     },
     "RISK-7": {
       "id": "RISK-7",
-      "title": "Model id / Messages API surface unverified live (claude-opus-5-5, output_config.format, effort) from cached reference",
-      "severity": "medium",
-      "mitigation": "Model via ANTHROPIC_MODEL env, /api/health reports model, 4xx -> fallback model_error, request-shape contract test (AC9), confirm on first live call, report unverified status honestly",
-      "owner": "ai-engineer",
+      "title": "Model id / Messages API surface (claude-haiku-5-5, output_config.format restricted schema, effort) checked against docs only, not live",
+      "mitigation": "Model via ANTHROPIC_MODEL, /api/health reports model, restricted schema keyword allowlist + AC9 schema walk, any non-2xx -> model_error visible in UI (AC4 c-f), first live call confirms, unverified status reported honestly",
       "status": "open",
-      "updatedAt": "2026-10-07T21:09:14.217Z",
-      "updatedBy": "product-architect"
+      "updatedAt": "2026-10-07T21:21:17.687Z",
+      "updatedBy": "product-architect",
+      "severity": "medium",
+      "owner": "ai-engineer"
     },
     "RISK-8": {
       "id": "RISK-8",
@@ -585,6 +685,16 @@
       "owner": "frontend-engineer",
       "status": "open",
       "updatedAt": "2026-10-07T21:09:14.269Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-9": {
+      "id": "RISK-9",
+      "title": "Redaction misses: unusual phone/card formats, obfuscated emails and unredacted classes (names, addresses, account ids) reach Anthropic; over-redaction lowers live accuracy",
+      "severity": "medium",
+      "mitigation": "Ordered deterministic patterns email->Luhn card->phone with binding test vectors (R11, AC16, ev:ev-muylz82a-01c7d490); UI notice states redacted classes and that others are not removed; fallback mode sends nothing; per-class counts logged without content; user may decline live mode",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:21:00.616Z",
       "updatedBy": "product-architect"
     }
   },
@@ -633,8 +743,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 9.03,
-    "tokens": 340099
+    "runtimeMinutes": 16.84,
+    "tokens": 506518
   },
   "delivery": null
 }
