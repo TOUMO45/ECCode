@@ -1,0 +1,2045 @@
+$ npm test
+# cwd: .
+# exit: 0
+
+> triage-desk@0.1.0 test
+> node --test --test-concurrency=1 "test/**/*.test.js"
+
+TAP version 13
+# Subtest: full mode, all checks pass: exit 0, 25 enforced checks derived from thresholds, ECCODE_EVAL last
+ok 1 - full mode, all checks pass: exit 0, 25 enforced checks derived from thresholds, ECCODE_EVAL last
+  ---
+  duration_ms: 50.045724
+  type: 'test'
+  ...
+# Subtest: AC8: all-row thresholds pass but one holdout floor is missed -> exit 1, failing line, passed < total
+ok 2 - AC8: all-row thresholds pass but one holdout floor is missed -> exit 1, failing line, passed < total
+  ---
+  duration_ms: 43.578079
+  type: 'test'
+  ...
+# Subtest: full mode: injection leak with failures prints no 3/N bound and fails; steer rate line
+ok 3 - full mode: injection leak with failures prints no 3/N bound and fails; steer rate line
+  ---
+  duration_ms: 45.478852
+  type: 'test'
+  ...
+# Subtest: full mode: dataset minimum not met is a counted CHECK failure (exit 1), not exit 2
+ok 4 - full mode: dataset minimum not met is a counted CHECK failure (exit 1), not exit 2
+  ---
+  duration_ms: 44.562897
+  type: 'test'
+  ...
+# Subtest: total is derived from thresholds.json, never hard-coded
+ok 5 - total is derived from thresholds.json, never hard-coded
+  ---
+  duration_ms: 45.114413
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: duplicate id inside a file
+ok 6 - dataset-format error -> exit 2: duplicate id inside a file
+  ---
+  duration_ms: 41.133581
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: id reused across files
+ok 7 - dataset-format error -> exit 2: id reused across files
+  ---
+  duration_ms: 39.669231
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: bad id pattern
+ok 8 - dataset-format error -> exit 2: bad id pattern
+  ---
+  duration_ms: 37.609309
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: ticket too long
+ok 9 - dataset-format error -> exit 2: ticket too long
+  ---
+  duration_ms: 35.312959
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: attack row without attack object
+ok 10 - dataset-format error -> exit 2: attack row without attack object
+  ---
+  duration_ms: 37.683822
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: target equals true label
+ok 11 - dataset-format error -> exit 2: target equals true label
+  ---
+  duration_ms: 38.532395
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: bad canary
+ok 12 - dataset-format error -> exit 2: bad canary
+  ---
+  duration_ms: 36.824957
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: held-out flag in dataset
+ok 13 - dataset-format error -> exit 2: held-out flag in dataset
+  ---
+  duration_ms: 36.80644
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: instructionLike on attack
+ok 14 - dataset-format error -> exit 2: instructionLike on attack
+  ---
+  duration_ms: 37.215217
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: wrong split for file
+ok 15 - dataset-format error -> exit 2: wrong split for file
+  ---
+  duration_ms: 38.384805
+  type: 'test'
+  ...
+# Subtest: dataset-format error -> exit 2: wrong file kind
+ok 16 - dataset-format error -> exit 2: wrong file kind
+  ---
+  duration_ms: 40.625895
+  type: 'test'
+  ...
+# Subtest: exit 2 in full mode: usage errors, missing files, invalid JSON, bad thresholds, incomplete results
+ok 17 - exit 2 in full mode: usage errors, missing files, invalid JSON, bad thresholds, incomplete results
+  ---
+  duration_ms: 363.308788
+  type: 'test'
+  ...
+# Subtest: tune mode with a non-existent --holdout: exit 0, NOT SCORED, 8 checks, TUNE_EVAL last, no ECCODE_EVAL
+ok 18 - tune mode with a non-existent --holdout: exit 0, NOT SCORED, 8 checks, TUNE_EVAL last, no ECCODE_EVAL
+  ---
+  duration_ms: 45.966263
+  type: 'test'
+  ...
+# Subtest: tune mode failing check: exit 1, verbose prints dataset ids only, still no ECCODE_EVAL
+ok 19 - tune mode failing check: exit 1, verbose prints dataset ids only, still no ECCODE_EVAL
+  ---
+  duration_ms: 41.798055
+  type: 'test'
+  ...
+# Subtest: DES-9: tune-mode exit 2 ends with TUNE_EVAL {passed:0,total:1} and never prints ECCODE_EVAL
+ok 20 - DES-9: tune-mode exit 2 ends with TUNE_EVAL {passed:0,total:1} and never prints ECCODE_EVAL
+  ---
+  duration_ms: 212.882942
+  type: 'test'
+  ...
+# Subtest: tune mode dataset error (single-file rules) -> exit 2 with dataset error line
+ok 21 - tune mode dataset error (single-file rules) -> exit 2 with dataset error line
+  ---
+  duration_ms: 38.743723
+  type: 'test'
+  ...
+# Subtest: tune mode never opens, stats or resolves the --holdout path (fs/path trap)
+ok 22 - tune mode never opens, stats or resolves the --holdout path (fs/path trap)
+  ---
+  duration_ms: 10.987798
+  type: 'test'
+  ...
+# Subtest: --results mode never loads src execution modules (stub root whose modules throw on load)
+ok 23 - --results mode never loads src execution modules (stub root whose modules throw on load)
+  ---
+  duration_ms: 5.680374
+  type: 'test'
+  ...
+# Subtest: missing fallback provider module -> clear error, exit 2 (both modes)
+ok 24 - missing fallback provider module -> clear error, exit 2 (both modes)
+  ---
+  duration_ms: 5.541126
+  type: 'test'
+  ...
+# Subtest: fallback execution path composes createTriageService({provider:null, detectInjection, fallbackAnalyse, redact}) and reads no env var
+ok 25 - fallback execution path composes createTriageService({provider:null, detectInjection, fallbackAnalyse, redact}) and reads no env var
+  ---
+  duration_ms: 5.9966
+  type: 'test'
+  ...
+# Subtest: --provider live without a key prints NOT RUN and enforces the fallback evaluation
+ok 26 - --provider live without a key prints NOT RUN and enforces the fallback evaluation
+  ---
+  duration_ms: 3.657587
+  type: 'test'
+  ...
+# Subtest: metrics.computeMetrics arithmetic on a small fixture
+ok 27 - metrics.computeMetrics arithmetic on a small fixture
+  ---
+  duration_ms: 0.731937
+  type: 'test'
+  ...
+# Subtest: metrics: live-only metrics (raw_model_validity, fallback_rate, truncated count)
+ok 28 - metrics: live-only metrics (raw_model_validity, fallback_rate, truncated count)
+  ---
+  duration_ms: 0.258451
+  type: 'test'
+  ...
+# Subtest: metrics.checkDataset applies the D5 rules with precheck rule names
+ok 29 - metrics.checkDataset applies the D5 rules with precheck rule names
+  ---
+  duration_ms: 0.398563
+  type: 'test'
+  ...
+# Subtest: http-client: default Host is 127.0.0.1:<port>, JSON parsed, status and headers returned
+ok 30 - http-client: default Host is 127.0.0.1:<port>, JSON parsed, status and headers returned
+  ---
+  duration_ms: 26.58647
+  type: 'test'
+  ...
+# Subtest: http-client: foreign Host, missing Host (setHost=false) and Origin are sent as given
+ok 31 - http-client: foreign Host, missing Host (setHost=false) and Origin are sent as given
+  ---
+  duration_ms: 8.298933
+  type: 'test'
+  ...
+# Subtest: http-client: body encoding (string raw, object as JSON) with explicit Content-Length
+ok 32 - http-client: body encoding (string raw, object as JSON) with explicit Content-Length
+  ---
+  duration_ms: 6.86177
+  type: 'test'
+  ...
+# Subtest: http-client: HEAD gives an empty body and json null; non-JSON body gives json null
+ok 33 - http-client: HEAD gives an empty body and json null; non-JSON body gives json null
+  ---
+  duration_ms: 3.790431
+  type: 'test'
+  ...
+# Subtest: http-client: rejects (does not hang) when nothing listens
+ok 34 - http-client: rejects (does not hang) when nothing listens
+  ---
+  duration_ms: 2.354264
+  type: 'test'
+  ...
+# Subtest: fake-fetch: respond(status, json|text) exposes status and text()
+ok 35 - fake-fetch: respond(status, json|text) exposes status and text()
+  ---
+  duration_ms: 0.465337
+  type: 'test'
+  ...
+# Subtest: fake-fetch: messageOk builds a Messages API body with a text block and usage
+ok 36 - fake-fetch: messageOk builds a Messages API body with a text block and usage
+  ---
+  duration_ms: 0.407667
+  type: 'test'
+  ...
+# Subtest: fake-fetch: thinkingFirst puts a thinking block before the text block
+ok 37 - fake-fetch: thinkingFirst puts a thinking block before the text block
+  ---
+  duration_ms: 0.208837
+  type: 'test'
+  ...
+# Subtest: fake-fetch: never() stays pending, even after the signal aborts
+ok 38 - fake-fetch: never() stays pending, even after the signal aborts
+  ---
+  duration_ms: 2.003282
+  type: 'test'
+  ...
+# Subtest: fake-fetch: throws() rejects with a TypeError by default, or the given error
+ok 39 - fake-fetch: throws() rejects with a TypeError by default, or the given error
+  ---
+  duration_ms: 0.426205
+  type: 'test'
+  ...
+# Subtest: fake-fetch: capture(inner) records url, init and parsed body, counts calls, delegates to inner
+ok 40 - fake-fetch: capture(inner) records url, init and parsed body, counts calls, delegates to inner
+  ---
+  duration_ms: 0.974559
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: binds 127.0.0.1, serves a programmed 200 and records the request
+ok 41 - fake-anthropic: binds 127.0.0.1, serves a programmed 200 and records the request
+  ---
+  duration_ms: 62.1068
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: unprogrammed server answers 500, not a success
+ok 42 - fake-anthropic: unprogrammed server answers 500, not a success
+  ---
+  duration_ms: 4.068983
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: redirect(307) — fetch with redirect:'error' throws and the target counts 0 requests
+ok 43 - fake-anthropic: redirect(307) — fetch with redirect:'error' throws and the target counts 0 requests
+  ---
+  duration_ms: 11.586627
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: redirect(308) — fetch with redirect:'error' throws and the target counts 0 requests
+ok 44 - fake-anthropic: redirect(308) — fetch with redirect:'error' throws and the target counts 0 requests
+  ---
+  duration_ms: 13.886741
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: redirect() rejects a non-3xx status
+ok 45 - fake-anthropic: redirect() rejects a non-3xx status
+  ---
+  duration_ms: 0.832726
+  type: 'test'
+  ...
+# Subtest: spawn-server: buildChildEnv is exactly {PATH, ...testEnv, PORT:"0"} and copies nothing else from process.env
+ok 46 - spawn-server: buildChildEnv is exactly {PATH, ...testEnv, PORT:"0"} and copies nothing else from process.env
+  ---
+  duration_ms: 0.439216
+  type: 'test'
+  ...
+# Subtest: spawn-server: child sees only PATH, testEnv and PORT=0 (parent secrets do not leak); port read from listening line
+ok 47 - spawn-server: child sees only PATH, testEnv and PORT=0 (parent secrets do not leak); port read from listening line
+  ---
+  duration_ms: 48.114064
+  type: 'test'
+  ...
+# Subtest: spawn-server: stop() terminates the child and the port stops accepting
+ok 48 - spawn-server: stop() terminates the child and the port stops accepting
+  ---
+  duration_ms: 36.270044
+  type: 'test'
+  ...
+# Subtest: spawn-server: a child that exits before listening rejects with its exit code and stderr
+ok 49 - spawn-server: a child that exits before listening rejects with its exit code and stderr
+  ---
+  duration_ms: 27.034446
+  type: 'test'
+  ...
+# Subtest: spawn-server: a child that never logs listening is killed after timeoutMs
+ok 50 - spawn-server: a child that never logs listening is killed after timeoutMs
+  ---
+  duration_ms: 505.979135
+  type: 'test'
+  ...
+# Subtest: provider exposes model and analyse
+ok 51 - provider exposes model and analyse
+  ---
+  duration_ms: 1.037475
+  type: 'test'
+  ...
+# Subtest: C7/AC9: one POST to baseUrl + /v1/messages with exact headers, redirect:error, signal and the built body
+ok 52 - C7/AC9: one POST to baseUrl + /v1/messages with exact headers, redirect:error, signal and the built body
+  ---
+  duration_ms: 5.296856
+  type: 'test'
+  ...
+# Subtest: AC4 m / step 9-10: valid output with mixed-case enums is normalised; usage mapped
+ok 53 - AC4 m / step 9-10: valid output with mixed-case enums is normalised; usage mapped
+  ---
+  duration_ms: 0.851125
+  type: 'test'
+  ...
+# Subtest: AC4 n: a thinking block before the text block is skipped
+ok 54 - AC4 n: a thinking block before the text block is skipped
+  ---
+  duration_ms: 0.689878
+  type: 'test'
+  ...
+# Subtest: step 7: a text-typed block without a string text is skipped for the next valid one
+ok 55 - step 7: a text-typed block without a string text is skipped for the next valid one
+  ---
+  duration_ms: 0.607219
+  type: 'test'
+  ...
+# Subtest: step 10: usage is null unless both token counts are numbers
+ok 56 - step 10: usage is null unless both token counts are numbers
+  ---
+  duration_ms: 0.913481
+  type: 'test'
+  ...
+# Subtest: AC4 a: fetch throws TypeError -> model_error/fetch_threw, one call, no usage
+ok 57 - AC4 a: fetch throws TypeError -> model_error/fetch_threw, one call, no usage
+  ---
+  duration_ms: 1.935457
+  type: 'test'
+  ...
+# Subtest: fetchImpl that throws synchronously -> model_error/fetch_threw (analyse never rejects)
+ok 58 - fetchImpl that throws synchronously -> model_error/fetch_threw (analyse never rejects)
+  ---
+  duration_ms: 0.612104
+  type: 'test'
+  ...
+# Subtest: res.text() rejecting -> model_error/fetch_threw with the upstream status
+ok 59 - res.text() rejecting -> model_error/fetch_threw with the upstream status
+  ---
+  duration_ms: 0.770778
+  type: 'test'
+  ...
+# Subtest: AC4 b: a fetch that never settles (ignores abort) times out -> timeout
+ok 60 - AC4 b: a fetch that never settles (ignores abort) times out -> timeout
+  ---
+  duration_ms: 152.588886
+  type: 'test'
+  ...
+# Subtest: timeout covers the body read: text() that never settles -> timeout with status
+ok 61 - timeout covers the body read: text() that never settles -> timeout with status
+  ---
+  duration_ms: 120.841915
+  type: 'test'
+  ...
+# Subtest: a fetch that rejects with AbortError when aborted still maps to timeout
+ok 62 - a fetch that rejects with AbortError when aborted still maps to timeout
+  ---
+  duration_ms: 50.8824
+  type: 'test'
+  ...
+# Subtest: timer is cleared: a fast success leaves the signal unaborted after timeoutMs
+ok 63 - timer is cleared: a fast success leaves the signal unaborted after timeoutMs
+  ---
+  duration_ms: 81.055151
+  type: 'test'
+  ...
+# Subtest: DES-1: 307 (and every 3xx) -> model_error/redirect_refused without reading the body
+ok 64 - DES-1: 307 (and every 3xx) -> model_error/redirect_refused without reading the body
+  ---
+  duration_ms: 1.338299
+  type: 'test'
+  ...
+# Subtest: AC4 c-f: HTTP 404/429/529/500 (and 400/401) -> model_error/http_<status>, one call
+ok 65 - AC4 c-f: HTTP 404/429/529/500 (and 400/401) -> model_error/http_<status>, one call
+  ---
+  duration_ms: 0.614558
+  type: 'test'
+  ...
+# Subtest: step 5: non-JSON body -> model_error/body_not_json
+ok 66 - step 5: non-JSON body -> model_error/body_not_json
+  ---
+  duration_ms: 0.36243
+  type: 'test'
+  ...
+# Subtest: AC4 g/h: stop_reason refusal -> refusal; max_tokens -> truncated; usage attached
+ok 67 - AC4 g/h: stop_reason refusal -> refusal; max_tokens -> truncated; usage attached
+  ---
+  duration_ms: 0.479653
+  type: 'test'
+  ...
+# Subtest: step 7: no text block -> invalid_output/no_text_block
+ok 68 - step 7: no text block -> invalid_output/no_text_block
+  ---
+  duration_ms: 0.477829
+  type: 'test'
+  ...
+# Subtest: AC4 i: text block that is not JSON -> invalid_output/text_not_json
+ok 69 - AC4 i: text block that is not JSON -> invalid_output/text_not_json
+  ---
+  duration_ms: 0.305377
+  type: 'test'
+  ...
+# Subtest: AC4 j/k/l: validator failures -> invalid_output/invalid:<codes>
+ok 70 - AC4 j/k/l: validator failures -> invalid_output/invalid:<codes>
+  ---
+  duration_ms: 0.923612
+  type: 'test'
+  ...
+# Subtest: buildRequestBody TypeError is guarded: non-string ticket -> model_error, no fetch, never rejects
+ok 71 - buildRequestBody TypeError is guarded: non-string ticket -> model_error, no fetch, never rejects
+  ---
+  duration_ms: 0.243182
+  type: 'test'
+  ...
+# Subtest: detail never carries content: upstream error text and model output are not echoed
+ok 72 - detail never carries content: upstream error text and model output are not echoed
+  ---
+  duration_ms: 0.60717
+  type: 'test'
+  ...
+# Subtest: RISK-10: 32k-char "a.a.a." summary and reply -> invalid_output quickly (< 100 ms), V2 never sees it
+ok 73 - RISK-10: 32k-char "a.a.a." summary and reply -> invalid_output quickly (< 100 ms), V2 never sees it
+  ---
+  duration_ms: 1.028147
+  type: 'test'
+  ...
+# Subtest: RISK-10: each field gated independently at the spec limits (200 / 1200)
+ok 74 - RISK-10: each field gated independently at the spec limits (200 / 1200)
+  ---
+  duration_ms: 3.259536
+  type: 'test'
+  ...
+# Subtest: analyse never rejects across every stub kind
+ok 75 - analyse never rejects across every stub kind
+  ---
+  duration_ms: 32.64898
+  type: 'test'
+  ...
+# Subtest: defaults with an empty env
+ok 76 - defaults with an empty env
+  ---
+  duration_ms: 2.719902
+  type: 'test'
+  ...
+# Subtest: reads only the C6.1 variables (no other key is accessed)
+ok 77 - reads only the C6.1 variables (no other key is accessed)
+  ---
+  duration_ms: 0.29748
+  type: 'test'
+  ...
+# Subtest: unrelated variables have no effect
+ok 78 - unrelated variables have no effect
+  ---
+  duration_ms: 0.146696
+  type: 'test'
+  ...
+# Subtest: DES-1: ANTHROPIC_BASE_URL alone is ignored
+ok 79 - DES-1: ANTHROPIC_BASE_URL alone is ignored
+  ---
+  duration_ms: 0.202369
+  type: 'test'
+  ...
+# Subtest: DES-1: the copied BASE_URL_CASES table matches design-vectors.js exactly
+ok 80 - DES-1: the copied BASE_URL_CASES table matches design-vectors.js exactly
+  ---
+  duration_ms: 1.671721
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://api.anthropic.com" → https://api.anthropic.com
+ok 81 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://api.anthropic.com" → https://api.anthropic.com
+  ---
+  duration_ms: 0.375049
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://api.anthropic.com/" → https://api.anthropic.com
+ok 82 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://api.anthropic.com/" → https://api.anthropic.com
+  ---
+  duration_ms: 0.221467
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://gateway.example/anthropic/" → https://gateway.example/anthropic
+ok 83 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://gateway.example/anthropic/" → https://gateway.example/anthropic
+  ---
+  duration_ms: 0.09787
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://127.0.0.1:9" → http://127.0.0.1:9
+ok 84 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://127.0.0.1:9" → http://127.0.0.1:9
+  ---
+  duration_ms: 0.322596
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://localhost:8080" → http://localhost:8080
+ok 85 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://localhost:8080" → http://localhost:8080
+  ---
+  duration_ms: 1.401764
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://[::1]:9" → http://[::1]:9
+ok 86 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://[::1]:9" → http://[::1]:9
+  ---
+  duration_ms: 0.271481
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "HTTP://LOCALHOST:9/" → http://localhost:9
+ok 87 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "HTTP://LOCALHOST:9/" → http://localhost:9
+  ---
+  duration_ms: 0.089337
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://remote.example" → reject
+ok 88 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://remote.example" → reject
+  ---
+  duration_ms: 0.32628
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://127.0.0.2:9" → reject
+ok 89 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://127.0.0.2:9" → reject
+  ---
+  duration_ms: 0.277471
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://localhost.evil.example" → reject
+ok 90 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "http://localhost.evil.example" → reject
+  ---
+  duration_ms: 0.111374
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://u:p@x.example" → reject
+ok 91 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://u:p@x.example" → reject
+  ---
+  duration_ms: 0.056609
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://u@x.example" → reject
+ok 92 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://u@x.example" → reject
+  ---
+  duration_ms: 0.0468
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://x.example/?q" → reject
+ok 93 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://x.example/?q" → reject
+  ---
+  duration_ms: 0.040489
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://x.example/?" → reject
+ok 94 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://x.example/?" → reject
+  ---
+  duration_ms: 0.040153
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://x.example/\#f" → reject
+ok 95 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "https://x.example/\#f" → reject
+  ---
+  duration_ms: 0.038672
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "ftp://x.example" → reject
+ok 96 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "ftp://x.example" → reject
+  ---
+  duration_ms: 0.090968
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "file:///etc/passwd" → reject
+ok 97 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "file:///etc/passwd" → reject
+  ---
+  duration_ms: 0.056962
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "not a url" → reject
+ok 98 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "not a url" → reject
+  ---
+  duration_ms: 0.063282
+  type: 'test'
+  ...
+# Subtest: DES-1: TRIAGE_ANTHROPIC_BASE_URL "" → reject
+ok 99 - DES-1: TRIAGE_ANTHROPIC_BASE_URL "" → reject
+  ---
+  duration_ms: 0.033125
+  type: 'test'
+  ...
+# Subtest: DES-1: whitespace-only TRIAGE_ANTHROPIC_BASE_URL counts as unset
+ok 100 - DES-1: whitespace-only TRIAGE_ANTHROPIC_BASE_URL counts as unset
+  ---
+  duration_ms: 0.100487
+  type: 'test'
+  ...
+# Subtest: DES-1: a set TRIAGE_ANTHROPIC_BASE_URL equal to the default is still custom
+ok 101 - DES-1: a set TRIAGE_ANTHROPIC_BASE_URL equal to the default is still custom
+  ---
+  duration_ms: 0.154738
+  type: 'test'
+  ...
+# Subtest: DES-1: rejected base URL with a secret-looking value never echoes it
+ok 102 - DES-1: rejected base URL with a secret-looking value never echoes it
+  ---
+  duration_ms: 0.125017
+  type: 'test'
+  ...
+# Subtest: DES-6: loopback HOST values need no opt-in
+ok 103 - DES-6: loopback HOST values need no opt-in
+  ---
+  duration_ms: 0.097646
+  type: 'test'
+  ...
+# Subtest: DES-6: HOST=0.0.0.0 without opt-in throws a ConfigError naming HOST
+ok 104 - DES-6: HOST=0.0.0.0 without opt-in throws a ConfigError naming HOST
+  ---
+  duration_ms: 0.109065
+  type: 'test'
+  ...
+# Subtest: DES-6: other non-loopback HOST values are refused without opt-in
+ok 105 - DES-6: other non-loopback HOST values are refused without opt-in
+  ---
+  duration_ms: 0.272085
+  type: 'test'
+  ...
+# Subtest: DES-6: TRIAGE_ALLOW_REMOTE=1 loads a non-loopback HOST with the non_loopback_host warning
+ok 106 - DES-6: TRIAGE_ALLOW_REMOTE=1 loads a non-loopback HOST with the non_loopback_host warning
+  ---
+  duration_ms: 0.072426
+  type: 'test'
+  ...
+# Subtest: DES-6: TRIAGE_ALLOW_REMOTE=1 with a loopback HOST adds no warning
+ok 107 - DES-6: TRIAGE_ALLOW_REMOTE=1 with a loopback HOST adds no warning
+  ---
+  duration_ms: 0.053913
+  type: 'test'
+  ...
+# Subtest: DES-6: warnings keep table order when both apply
+ok 108 - DES-6: warnings keep table order when both apply
+  ---
+  duration_ms: 0.222328
+  type: 'test'
+  ...
+# Subtest: TRIAGE_ALLOW_REMOTE values other than unset, "", "0", "1" throw
+ok 109 - TRIAGE_ALLOW_REMOTE values other than unset, "", "0", "1" throw
+  ---
+  duration_ms: 0.223203
+  type: 'test'
+  ...
+# Subtest: HOST empty after trim throws
+ok 110 - HOST empty after trim throws
+  ---
+  duration_ms: 0.082722
+  type: 'test'
+  ...
+# Subtest: PORT: integer 0–65535
+ok 111 - PORT: integer 0–65535
+  ---
+  duration_ms: 0.482581
+  type: 'test'
+  ...
+# Subtest: ANTHROPIC_API_KEY: [REDACTED] empty means null
+ok 112 - ANTHROPIC_API_KEY: [REDACTED] empty means null
+  ---
+  duration_ms: 0.222004
+  type: 'test'
+  ...
+# Subtest: ANTHROPIC_MODEL: pattern /^[A-Za-z0-9._:-]{1,100}$/
+ok 113 - ANTHROPIC_MODEL: pattern /^[A-Za-z0-9._:-]{1,100}$/
+  ---
+  duration_ms: 0.312016
+  type: 'test'
+  ...
+# Subtest: TRIAGE_TIMEOUT_MS: integer 100–120000
+ok 114 - TRIAGE_TIMEOUT_MS: integer 100–120000
+  ---
+  duration_ms: 0.223235
+  type: 'test'
+  ...
+# Subtest: TRIAGE_MAX_TOKENS: integer 256–16000
+ok 115 - TRIAGE_MAX_TOKENS: integer 256–16000
+  ---
+  duration_ms: 0.182599
+  type: 'test'
+  ...
+# Subtest: ConfigError is an Error subclass with name ConfigError
+ok 116 - ConfigError is an Error subclass with name ConfigError
+  ---
+  duration_ms: 0.077765
+  type: 'test'
+  ...
+# Subtest: ConfigError messages never contain the value (all variables)
+ok 117 - ConfigError messages never contain the value (all variables)
+  ---
+  duration_ms: 0.245567
+  type: 'test'
+  ...
+# Subtest: loadConfig does not mutate env and is deterministic
+ok 118 - loadConfig does not mutate env and is deterministic
+  ---
+  duration_ms: 0.176234
+  type: 'test'
+  ...
+# Subtest: the full C6.5 test env from the spec loads
+ok 119 - the full C6.5 test env from the spec loads
+  ---
+  duration_ms: 0.757316
+  type: 'test'
+  ...
+# Subtest: C2: GET /api/health in fallback mode
+ok 120 - C2: GET /api/health in fallback mode
+  ---
+  duration_ms: 33.891356
+  type: 'test'
+  ...
+# Subtest: C2/AC14: GET /api/health in live mode reports the model and never the key
+ok 121 - C2/AC14: GET /api/health in live mode reports the model and never the key
+  ---
+  duration_ms: 6.133128
+  type: 'test'
+  ...
+# Subtest: C2: HEAD /api/health has the same status and headers and no body
+ok 122 - C2: HEAD /api/health has the same status and headers and no body
+  ---
+  duration_ms: 5.669277
+  type: 'test'
+  ...
+# Subtest: C2: other methods on /api/health → 405 with Allow: GET, HEAD
+ok 123 - C2: other methods on /api/health → 405 with Allow: GET, HEAD
+  ---
+  duration_ms: 13.710014
+  type: 'test'
+  ...
+# Subtest: C1.1: allowlisted Host values (port 0 → actual port) are accepted, case-insensitively
+ok 124 - C1.1: allowlisted Host values (port 0 → actual port) are accepted, case-insensitively
+  ---
+  duration_ms: 9.219943
+  type: 'test'
+  ...
+# Subtest: C1.1/AC17: foreign, missing or wrong-port Host → 403 forbidden_host with Connection: close
+ok 125 - C1.1/AC17: foreign, missing or wrong-port Host → 403 forbidden_host with Connection: close
+  ---
+  duration_ms: 49.030562
+  type: 'test'
+  ...
+# Subtest: C1.1: Host is checked before routing and method (unknown path and OPTIONS also give 403)
+ok 126 - C1.1: Host is checked before routing and method (unknown path and OPTIONS also give 403)
+  ---
+  duration_ms: 6.164728
+  type: 'test'
+  ...
+# Subtest: C1.1/AC17: 20 KB body with a foreign Host → 403, not 413
+ok 127 - C1.1/AC17: 20 KB body with a foreign Host → 403, not 413
+  ---
+  duration_ms: 26.897975
+  type: 'test'
+  ...
+# Subtest: C1.1: foreign Host is rejected before any body byte is sent (headers only, large Content-Length)
+ok 128 - C1.1: foreign Host is rejected before any body byte is sent (headers only, large Content-Length)
+  ---
+  duration_ms: 3.941712
+  type: 'test'
+  ...
+# Subtest: C1.1: non-loopback config.host adds <HOST>:P (opt-in)
+ok 129 - C1.1: non-loopback config.host adds <HOST>:P (opt-in)
+  ---
+  duration_ms: 5.056276
+  type: 'test'
+  ...
+# Subtest: C1.1: a named config.host is lower-cased into the allowlist
+ok 130 - C1.1: a named config.host is lower-cased into the allowlist
+  ---
+  duration_ms: 3.339058
+  type: 'test'
+  ...
+# Subtest: C1.1: an IPv6 config.host is allowlisted as [addr]:P
+ok 131 - C1.1: an IPv6 config.host is allowlisted as [addr]:P
+  ---
+  duration_ms: 5.261937
+  type: 'test'
+  ...
+# Subtest: C1.1: loopback config.host values add nothing beyond the three names
+ok 132 - C1.1: loopback config.host values add nothing beyond the three names
+  ---
+  duration_ms: 4.812481
+  type: 'test'
+  ...
+# Subtest: C1.1: port is read at request time; on port 80 the bare names are also allowed
+ok 133 - C1.1: port is read at request time; on port 80 the bare names are also allowed
+  ---
+  duration_ms: 18.94845
+  type: 'test'
+  ...
+# Subtest: C1.1: without port 80 the bare names are refused
+ok 134 - C1.1: without port 80 the bare names are refused
+  ---
+  duration_ms: 3.068061
+  type: 'test'
+  ...
+# Subtest: C1.2/AC17: foreign or null Origin on POST → 403 forbidden_origin; service never called
+ok 135 - C1.2/AC17: foreign or null Origin on POST → 403 forbidden_origin; service never called
+  ---
+  duration_ms: 12.080491
+  type: 'test'
+  ...
+# Subtest: C1.2/AC17: allowlisted Origin, or no Origin, is allowed
+ok 136 - C1.2/AC17: allowlisted Origin, or no Origin, is allowed
+  ---
+  duration_ms: 5.311347
+  type: 'test'
+  ...
+# Subtest: C1.2: Origin is not checked for GET and HEAD
+ok 137 - C1.2: Origin is not checked for GET and HEAD
+  ---
+  duration_ms: 2.593637
+  type: 'test'
+  ...
+# Subtest: C1.2: Origin is checked before route, method and content type
+ok 138 - C1.2: Origin is checked before route, method and content type
+  ---
+  duration_ms: 3.831248
+  type: 'test'
+  ...
+# Subtest: C1.3/AC11: exact path match after stripping the query; no decoding or normalisation
+ok 139 - C1.3/AC11: exact path match after stripping the query; no decoding or normalisation
+  ---
+  duration_ms: 14.165403
+  type: 'test'
+  ...
+# Subtest: C1.4/AC17: OPTIONS /api/triage → 405 Allow: POST and no Access-Control-* header
+ok 140 - C1.4/AC17: OPTIONS /api/triage → 405 Allow: POST and no Access-Control-* header
+  ---
+  duration_ms: 1.578076
+  type: 'test'
+  ...
+# Subtest: C1.4: wrong methods get 405 with the route Allow header
+ok 141 - C1.4: wrong methods get 405 with the route Allow header
+  ---
+  duration_ms: 6.192519
+  type: 'test'
+  ...
+# Subtest: C4: static files are served from staticDir with fixed content types
+ok 142 - C4: static files are served from staticDir with fixed content types
+  ---
+  duration_ms: 7.287262
+  type: 'test'
+  ...
+# Subtest: C4: files are read once when createServer is called
+ok 143 - C4: files are read once when createServer is called
+  ---
+  duration_ms: 4.667872
+  type: 'test'
+  ...
+# Subtest: C4: a missing static file makes createServer throw (fail fast at startup)
+ok 144 - C4: a missing static file makes createServer throw (fail fast at startup)
+  ---
+  duration_ms: 1.164531
+  type: 'test'
+  ...
+# Subtest: C3: 200 passes the trimmed ticket to the service and returns its response
+ok 145 - C3: 200 passes the trimmed ticket to the service and returns its response
+  ---
+  duration_ms: 1.799044
+  type: 'test'
+  ...
+# Subtest: C1: accepted requests keep the connection open (Connection: close only on rejections)
+ok 146 - C1: accepted requests keep the connection open (Connection: close only on rejections)
+  ---
+  duration_ms: 3.673908
+  type: 'test'
+  ...
+# Subtest: C1.1: an empty Host header (raw socket) → 403 forbidden_host
+ok 147 - C1.1: an empty Host header (raw socket) → 403 forbidden_host
+  ---
+  duration_ms: 2.168346
+  type: 'test'
+  ...
+# Subtest: C3: Content-Type media type must be application/json (parameters and case ignored) → else 415
+ok 148 - C3: Content-Type media type must be application/json (parameters and case ignored) → else 415
+  ---
+  duration_ms: 12.38015
+  type: 'test'
+  ...
+# Subtest: C3: 415 is decided before the body is read
+ok 149 - C3: 415 is decided before the body is read
+  ---
+  duration_ms: 1.553906
+  type: 'test'
+  ...
+# Subtest: C3: Content-Length > 16384 → 413 at once, before any body byte is sent
+ok 150 - C3: Content-Length > 16384 → 413 at once, before any body byte is sent
+  ---
+  duration_ms: 2.337968
+  type: 'test'
+  ...
+# Subtest: C3: exactly 16384 bytes is read (then validated), 16385 is 413
+ok 151 - C3: exactly 16384 bytes is read (then validated), 16385 is 413
+  ---
+  duration_ms: 2.674963
+  type: 'test'
+  ...
+# Subtest: C3: streamed (chunked) body is counted and cut off at 16384 bytes → 413
+ok 152 - C3: streamed (chunked) body is counted and cut off at 16384 bytes → 413
+  ---
+  duration_ms: 44.38511
+  type: 'test'
+  ...
+# Subtest: C3: chunked body under the cap is accepted and UTF-8 split across chunks decodes correctly
+ok 153 - C3: chunked body under the cap is accepted and UTF-8 split across chunks decodes correctly
+  ---
+  duration_ms: 21.433217
+  type: 'test'
+  ...
+# Subtest: C3/C5: validation table over HTTP with exact messages
+ok 154 - C3/C5: validation table over HTTP with exact messages
+  ---
+  duration_ms: 22.300187
+  type: 'test'
+  ...
+# Subtest: C5/T9: invalid JSON response never echoes the input or a parser message
+ok 155 - C5/T9: invalid JSON response never echoes the input or a parser message
+  ---
+  duration_ms: 1.914384
+  type: 'test'
+  ...
+# Subtest: C3: a service that throws gives 500 internal_error, an error event without message, and the server keeps running
+ok 156 - C3: a service that throws gives 500 internal_error, an error event without message, and the server keeps running
+  ---
+  duration_ms: 3.376524
+  type: 'test'
+  ...
+# Subtest: C3: a service that rejects with a non-Error still gives 500
+ok 157 - C3: a service that rejects with a non-Error still gives 500
+  ---
+  duration_ms: 2.036626
+  type: 'test'
+  ...
+# Subtest: D1.6: one metadata-only request line per request; triage fields from response and meta
+ok 158 - D1.6: one metadata-only request line per request; triage fields from response and meta
+  ---
+  duration_ms: 4.95977
+  type: 'test'
+  ...
+# Subtest: D1.6: rejected triage requests log errorCode and null triage fields
+ok 159 - D1.6: rejected triage requests log errorCode and null triage fields
+  ---
+  duration_ms: 5.926153
+  type: 'test'
+  ...
+# Subtest: C1 order with a fake service: nothing after the first failing step runs
+ok 160 - C1 order with a fake service: nothing after the first failing step runs
+  ---
+  duration_ms: 7.416815
+  type: 'test'
+  ...
+# Subtest: createServer uses requireHostHeader:false (a Host-less request reaches the handler and gets 403, not Node's 400)
+ok 161 - createServer uses requireHostHeader:false (a Host-less request reaches the handler and gets 403, not Node's 400)
+  ---
+  duration_ms: 2.106781
+  type: 'test'
+  ...
+# Subtest: writes exactly one single-line JSON string per call (no trailing newline passed to write)
+ok 162 - writes exactly one single-line JSON string per call (no trailing newline passed to write)
+  ---
+  duration_ms: 1.97155
+  type: 'test'
+  ...
+# Subtest: default writer writes to stdout with a newline
+ok 163 - default writer writes to stdout with a newline
+  ---
+  duration_ms: 0.37132
+  type: 'test'
+  ...
+# Subtest: request record: full D1.6 key set in order, triage fields copied
+ok 164 - request record: full D1.6 key set in order, triage fields copied
+  ---
+  duration_ms: 1.642134
+  type: 'test'
+  ...
+# Subtest: request record: missing fields are null; live fields copied
+ok 165 - request record: missing fields are null; live fields copied
+  ---
+  duration_ms: 1.544974
+  type: 'test'
+  ...
+# Subtest: allowlist drops unknown fields (ticket text, headers, url, key, message, stack)
+ok 166 - allowlist drops unknown fields (ticket text, headers, url, key, message, stack)
+  ---
+  duration_ms: 0.444274
+  type: 'test'
+  ...
+# Subtest: allowlisted keys with content-bearing values are dropped to null or normalised
+ok 167 - allowlisted keys with content-bearing values are dropped to null or normalised
+  ---
+  duration_ms: 0.267874
+  type: 'test'
+  ...
+# Subtest: method is one of the D1.6 set or OTHER; route is a known path or other
+ok 168 - method is one of the D1.6 set or OTHER; route is a known path or other
+  ---
+  duration_ms: 0.535061
+  type: 'test'
+  ...
+# Subtest: error event carries only rid, errorCode and errorName (no message or stack)
+ok 169 - error event carries only rid, errorCode and errorName (no message or stack)
+  ---
+  duration_ms: 0.403844
+  type: 'test'
+  ...
+# Subtest: error event: a non-identifier errorName is not copied verbatim
+ok 170 - error event: a non-identifier errorName is not copied verbatim
+  ---
+  duration_ms: 0.448108
+  type: 'test'
+  ...
+# Subtest: listening event carries baseUrlCustom and no URL
+ok 171 - listening event carries baseUrlCustom and no URL
+  ---
+  duration_ms: 0.457381
+  type: 'test'
+  ...
+# Subtest: listening event in fallback mode: model null, baseUrlCustom false
+ok 172 - listening event in fallback mode: model null, baseUrlCustom false
+  ---
+  duration_ms: 0.244663
+  type: 'test'
+  ...
+# Subtest: warning event carries only code
+ok 173 - warning event carries only code
+  ---
+  duration_ms: 0.187211
+  type: 'test'
+  ...
+# Subtest: warning event with an unknown code writes code null
+ok 174 - warning event with an unknown code writes code null
+  ---
+  duration_ms: 0.083041
+  type: 'test'
+  ...
+# Subtest: event() refuses unknown event names instead of serialising them
+ok 175 - event() refuses unknown event names instead of serialising them
+  ---
+  duration_ms: 0.316824
+  type: 'test'
+  ...
+# Subtest: fields argument may be omitted or non-object
+ok 176 - fields argument may be omitted or non-object
+  ---
+  duration_ms: 0.221229
+  type: 'test'
+  ...
+# Subtest: t is the current time in ISO format
+ok 177 - t is the current time in ISO format
+  ---
+  duration_ms: 0.171715
+  type: 'test'
+  ...
+# Subtest: exports exactly the C6.3 names
+ok 178 - exports exactly the C6.3 names
+  ---
+  duration_ms: 3.149032
+  type: 'test'
+  ...
+# Subtest: PROMPT_MARKER is TDSK-SYS-7Q2
+ok 179 - PROMPT_MARKER is TDSK-SYS-7Q2
+  ---
+  duration_ms: 0.21304
+  type: 'test'
+  ...
+# Subtest: SYSTEM_PROMPT is exactly the specified text
+ok 180 - SYSTEM_PROMPT is exactly the specified text
+  ---
+  duration_ms: 0.155635
+  type: 'test'
+  ...
+# Subtest: SYSTEM_PROMPT pins the marker, the isolation phrases and the length budget (spec pin list)
+ok 181 - SYSTEM_PROMPT pins the marker, the isolation phrases and the length budget (spec pin list)
+  ---
+  duration_ms: 0.254011
+  type: 'test'
+  ...
+# Subtest: neutralise maps < to U+FF1C and > to U+FF1E
+ok 182 - neutralise maps < to U+FF1C and > to U+FF1E
+  ---
+  duration_ms: 0.305234
+  type: 'test'
+  ...
+# Subtest: neutralise is idempotent and leaves no ASCII angle brackets
+ok 183 - neutralise is idempotent and leaves no ASCII angle brackets
+  ---
+  duration_ms: 0.295788
+  type: 'test'
+  ...
+# Subtest: neutralise rejects non-string input with TypeError
+ok 184 - neutralise rejects non-string input with TypeError
+  ---
+  duration_ms: 0.41351
+  type: 'test'
+  ...
+# Subtest: buildRequestBody: exact top-level keys, defaults (model claude-haiku-5-5, max_tokens 2048)
+ok 185 - buildRequestBody: exact top-level keys, defaults (model claude-haiku-5-5, max_tokens 2048)
+  ---
+  duration_ms: 0.236331
+  type: 'test'
+  ...
+# Subtest: buildRequestBody passes the configured model and max tokens through
+ok 186 - buildRequestBody passes the configured model and max tokens through
+  ---
+  duration_ms: 0.502835
+  type: 'test'
+  ...
+# Subtest: buildRequestBody: output_config is effort low + json_schema with OUTPUT_SCHEMA, which passes the AC9 walk
+ok 187 - buildRequestBody: output_config is effort low + json_schema with OUTPUT_SCHEMA, which passes the AC9 walk
+  ---
+  duration_ms: 0.623614
+  type: 'test'
+  ...
+# Subtest: buildRequestBody sends no tools, thinking, sampling parameters (S3), stop_sequences, stream or metadata
+ok 188 - buildRequestBody sends no tools, thinking, sampling parameters (S3), stop_sequences, stream or metadata
+  ---
+  duration_ms: 0.30822
+  type: 'test'
+  ...
+# Subtest: buildRequestBody: one user message, ticket neutralised and only inside the <ticket> delimiters (AC9)
+ok 189 - buildRequestBody: one user message, ticket neutralised and only inside the <ticket> delimiters (AC9)
+  ---
+  duration_ms: 0.200338
+  type: 'test'
+  ...
+# Subtest: buildRequestBody keeps the ticket otherwise verbatim (no trimming, placeholders preserved)
+ok 190 - buildRequestBody keeps the ticket otherwise verbatim (no trimming, placeholders preserved)
+  ---
+  duration_ms: 0.092829
+  type: 'test'
+  ...
+# Subtest: buildRequestBody is pure: deep-equal output for identical input, and bodies do not share mutable state
+ok 191 - buildRequestBody is pure: deep-equal output for identical input, and bodies do not share mutable state
+  ---
+  duration_ms: 0.344349
+  type: 'test'
+  ...
+# Subtest: buildRequestBody rejects invalid arguments with TypeError (programming errors)
+ok 192 - buildRequestBody rejects invalid arguments with TypeError (programming errors)
+  ---
+  duration_ms: 0.507046
+  type: 'test'
+  ...
+# Subtest: prompt.js is pure CommonJS: strict mode, requires only ./schema.js, no I/O, clock or randomness
+ok 193 - prompt.js is pure CommonJS: strict mode, requires only ./schema.js, no I/O, clock or randomness
+  ---
+  duration_ms: 0.565974
+  type: 'test'
+  ...
+# Subtest: exports redact as a function
+ok 194 - exports redact as a function
+  ---
+  duration_ms: 1.124864
+  type: 'test'
+  ...
+# Subtest: returns {text, counts:{email, card, phone}} with zero counts for clean text
+ok 195 - returns {text, counts:{email, card, phone}} with zero counts for clean text
+  ---
+  duration_ms: 1.497605
+  type: 'test'
+  ...
+# Subtest: empty string is returned unchanged with zero counts
+ok 196 - empty string is returned unchanged with zero counts
+  ---
+  duration_ms: 0.147896
+  type: 'test'
+  ...
+# Subtest: is pure: repeated calls give equal results and fresh count objects
+ok 197 - is pure: repeated calls give equal results and fresh count objects
+  ---
+  duration_ms: 0.886358
+  type: 'test'
+  ...
+# Subtest: rejects non-string input with a TypeError
+ok 198 - rejects non-string input with a TypeError
+  ---
+  duration_ms: 0.401123
+  type: 'test'
+  ...
+# Subtest: AC16 ticket: markers removed, controls kept, per-class counts
+ok 199 - AC16 ticket: markers removed, controls kept, per-class counts
+  ---
+  duration_ms: 0.630588
+  type: 'test'
+  ...
+# Subtest: AC16 ticket with the ARCH-10 additions: no digit token or Luhn window survives
+ok 200 - AC16 ticket with the ARCH-10 additions: no digit token or Luhn window survives
+  ---
+  duration_ms: 0.394656
+  type: 'test'
+  ...
+# Subtest: placeholders use square brackets only and cannot form a delimiter
+ok 201 - placeholders use square brackets only and cannot form a delimiter
+  ---
+  duration_ms: 1.401279
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 12/27 was charged."
+ok 202 - CARD_CASES: "Card 4111 1111 1111 1111 12/27 was charged."
+  ---
+  duration_ms: 0.639817
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 123 please refund."
+ok 203 - CARD_CASES: "Card 4111 1111 1111 1111 123 please refund."
+  ---
+  duration_ms: 0.342084
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Call 555 0137 4111 1111 1111 1111 thanks."
+ok 204 - CARD_CASES: "Call 555 0137 4111 1111 1111 1111 thanks."
+  ---
+  duration_ms: 0.13555
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 was charged."
+ok 205 - CARD_CASES: "Card 4111 1111 1111 1111 was charged."
+  ---
+  duration_ms: 0.062095
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 2027 was charged."
+ok 206 - CARD_CASES: "Card 4111 1111 1111 1111 2027 was charged."
+  ---
+  duration_ms: 0.052699
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "4111-1111-1111-1111-12"
+ok 207 - CARD_CASES: "4111-1111-1111-1111-12"
+  ---
+  duration_ms: 0.043337
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "ref 99 4111111111111111"
+ok 208 - CARD_CASES: "ref 99 4111111111111111"
+  ---
+  duration_ms: 0.038928
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Amex 3782 822463 10005 exp 09/28"
+ok 209 - CARD_CASES: "Amex 3782 822463 10005 exp 09/28"
+  ---
+  duration_ms: 0.059895
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Order 1234567812345678 shipped"
+ok 210 - CARD_CASES: "Order 1234567812345678 shipped"
+  ---
+  duration_ms: 0.044045
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 thanks"
+ok 211 - CARD_CASES: "Card 4111 1111 1111 1111 thanks"
+  ---
+  duration_ms: 0.065184
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111\\t1111\\t1111\\t1111 thanks"
+ok 212 - CARD_CASES: "Card 4111\\t1111\\t1111\\t1111 thanks"
+  ---
+  duration_ms: 0.037106
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "Card 4111 1111 1111 1111 12/27"
+ok 213 - CARD_CASES: "Card 4111 1111 1111 1111 12/27"
+  ---
+  duration_ms: 0.040632
+  type: 'test'
+  ...
+# Subtest: CARD_CASES: "card 4111111111111111 5500005555555559 thanks"
+ok 214 - CARD_CASES: "card 4111111111111111 5500005555555559 thanks"
+  ---
+  duration_ms: 0.036155
+  type: 'test'
+  ...
+# Subtest: phone + card run: no digits survive
+ok 215 - phone + card run: no digits survive
+  ---
+  duration_ms: 0.139341
+  type: 'test'
+  ...
+# Subtest: two adjacent cards collapse into one placeholder (documented count understatement, DES-7)
+ok 216 - two adjacent cards collapse into one placeholder (documented count understatement, DES-7)
+  ---
+  duration_ms: 0.055619
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "call +1 (555) 013-7742 now"
+ok 217 - PHONE_CASES: "call +1 (555) 013-7742 now"
+  ---
+  duration_ms: 0.06317
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "call 555.013.7743."
+ok 218 - PHONE_CASES: "call 555.013.7743."
+  ---
+  duration_ms: 0.034715
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "ring +44 20 7946 0958"
+ok 219 - PHONE_CASES: "ring +44 20 7946 0958"
+  ---
+  duration_ms: 0.032245
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "call 555 013 7742 2026-10-07"
+ok 220 - PHONE_CASES: "call 555 013 7742 2026-10-07"
+  ---
+  duration_ms: 0.04979
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "since 2026-10-07 nothing works"
+ok 221 - PHONE_CASES: "since 2026-10-07 nothing works"
+  ---
+  duration_ms: 0.038591
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "version 2.1.3 and build 12345"
+ok 222 - PHONE_CASES: "version 2.1.3 and build 12345"
+  ---
+  duration_ms: 0.051538
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "call 555 013 7742 now"
+ok 223 - PHONE_CASES: "call 555 013 7742 now"
+  ---
+  duration_ms: 0.048499
+  type: 'test'
+  ...
+# Subtest: PHONE_CASES: "call 555\\t013\\t7742 now"
+ok 224 - PHONE_CASES: "call 555\\t013\\t7742 now"
+  ---
+  duration_ms: 0.097177
+  type: 'test'
+  ...
+# Subtest: per-class counts
+ok 225 - per-class counts
+  ---
+  duration_ms: 0.274221
+  type: 'test'
+  ...
+# Subtest: order: email first, so digits inside an email are not counted as a phone or card
+ok 226 - order: email first, so digits inside an email are not counted as a phone or card
+  ---
+  duration_ms: 0.100706
+  type: 'test'
+  ...
+# Subtest: order: card before phone, so a card is counted as a card, not a phone
+ok 227 - order: card before phone, so a card is counted as a card, not a phone
+  ---
+  duration_ms: 0.076773
+  type: 'test'
+  ...
+# Subtest: a single digit group longer than 19 digits is atomic and never a card
+ok 228 - a single digit group longer than 19 digits is atomic and never a card
+  ---
+  duration_ms: 0.121922
+  type: 'test'
+  ...
+# Subtest: dates and short numbers are not phones
+ok 229 - dates and short numbers are not phones
+  ---
+  duration_ms: 0.104943
+  type: 'test'
+  ...
+# Subtest: DES-4 adversarial email_localpart_no_at: median of 3 runs < 200 ms
+ok 230 - DES-4 adversarial email_localpart_no_at: median of 3 runs < 200 ms
+  ---
+  duration_ms: 107.600367
+  type: 'test'
+  ...
+# redactor adversarial email_localpart_no_at runs 35.49/35.73/35.86 ms, median 35.73 ms
+# Subtest: DES-4 adversarial email_domain_no_tld: median of 3 runs < 200 ms
+ok 231 - DES-4 adversarial email_domain_no_tld: median of 3 runs < 200 ms
+  ---
+  duration_ms: 108.154045
+  type: 'test'
+  ...
+# redactor adversarial email_domain_no_tld runs 35.70/35.93/36.18 ms, median 35.93 ms
+# Subtest: DES-4 adversarial phone_digits_dots: median of 3 runs < 200 ms
+ok 232 - DES-4 adversarial phone_digits_dots: median of 3 runs < 200 ms
+  ---
+  duration_ms: 112.942662
+  type: 'test'
+  ...
+# redactor adversarial phone_digits_dots runs 35.50/37.77/39.31 ms, median 37.77 ms
+# Subtest: DES-4 adversarial digits_only: median of 3 runs < 200 ms
+ok 233 - DES-4 adversarial digits_only: median of 3 runs < 200 ms
+  ---
+  duration_ms: 103.06945
+  type: 'test'
+  ...
+# redactor adversarial digits_only runs 33.63/33.71/35.34 ms, median 33.71 ms
+# Subtest: DES-4 adversarial digit_nbsp: median of 3 runs < 200 ms
+ok 234 - DES-4 adversarial digit_nbsp: median of 3 runs < 200 ms
+  ---
+  duration_ms: 16.31269
+  type: 'test'
+  ...
+# redactor adversarial digit_nbsp runs 3.86/4.52/7.63 ms, median 4.52 ms
+# Subtest: DES-4 adversarial card_worst_design: median of 3 runs < 200 ms
+ok 235 - DES-4 adversarial card_worst_design: median of 3 runs < 200 ms
+  ---
+  duration_ms: 2.044768
+  type: 'test'
+  ...
+# redactor adversarial card_worst_design runs 0.60/0.61/0.66 ms, median 0.61 ms
+# Subtest: card-shaped adversarial output keeps no Luhn window
+ok 236 - card-shaped adversarial output keeps no Luhn window
+  ---
+  duration_ms: 1.409836
+  type: 'test'
+  ...
+# Subtest: exports exactly the C6.3 names
+ok 237 - exports exactly the C6.3 names
+  ---
+  duration_ms: 1.953099
+  type: 'test'
+  ...
+# Subtest: enums have the C6.3 values and are frozen
+ok 238 - enums have the C6.3 values and are frozen
+  ---
+  duration_ms: 0.537317
+  type: 'test'
+  ...
+# Subtest: OUTPUT_SCHEMA equals D2 exactly and is deep-frozen
+ok 239 - OUTPUT_SCHEMA equals D2 exactly and is deep-frozen
+  ---
+  duration_ms: 0.417088
+  type: 'test'
+  ...
+# Subtest: checkSchemaKeywords accepts OUTPUT_SCHEMA and the D2 literal
+ok 240 - checkSchemaKeywords accepts OUTPUT_SCHEMA and the D2 literal
+  ---
+  duration_ms: 0.228497
+  type: 'test'
+  ...
+# Subtest: checkSchemaKeywords self-check: rejects maxLength (AC9)
+ok 241 - checkSchemaKeywords self-check: rejects maxLength (AC9)
+  ---
+  duration_ms: 0.202047
+  type: 'test'
+  ...
+# Subtest: checkSchemaKeywords rejects every non-allowlisted keyword at any depth
+ok 242 - checkSchemaKeywords rejects every non-allowlisted keyword at any depth
+  ---
+  duration_ms: 0.42494
+  type: 'test'
+  ...
+# Subtest: checkSchemaKeywords rejects object nodes whose additionalProperties is not exactly false
+ok 243 - checkSchemaKeywords rejects object nodes whose additionalProperties is not exactly false
+  ---
+  duration_ms: 0.387878
+  type: 'test'
+  ...
+# Subtest: checkSchemaKeywords rejects non-object nodes and malformed properties
+ok 244 - checkSchemaKeywords rejects non-object nodes and malformed properties
+  ---
+  duration_ms: 0.208096
+  type: 'test'
+  ...
+# Subtest: V1 accepts every accept vector
+ok 245 - V1 accepts every accept vector
+  ---
+  duration_ms: 0.551526
+  type: 'test'
+  ...
+# Subtest: V1 rejects every reject vector
+ok 246 - V1 rejects every reject vector
+  ---
+  duration_ms: 0.398011
+  type: 'test'
+  ...
+# Subtest: V1 edge cases: length bounds, CR, trailing space, every month abbreviation, non-strings
+ok 247 - V1 edge cases: length bounds, CR, trailing space, every month abbreviation, non-strings
+  ---
+  duration_ms: 0.332596
+  type: 'test'
+  ...
+# Subtest: V2 accepts every accept vector (brief, ARCH-11, DES-3)
+ok 248 - V2 accepts every accept vector (brief, ARCH-11, DES-3)
+  ---
+  duration_ms: 1.951182
+  type: 'test'
+  ...
+# Subtest: V2 rejects every reject vector (brief, ARCH-11, DES-3)
+ok 249 - V2 rejects every reject vector (brief, ARCH-11, DES-3)
+  ---
+  duration_ms: 0.240046
+  type: 'test'
+  ...
+# Subtest: DES-8: a Unicode letter, mark or digit before a product token blocks the mask (reject)
+ok 250 - DES-8: a Unicode letter, mark or digit before a product token blocks the mask (reject)
+  ---
+  duration_ms: 0.784438
+  type: 'test'
+  ...
+# Subtest: DES-8: further Unicode rejects (combining mark, format chars, long-s case folding)
+ok 251 - DES-8: further Unicode rejects (combining mark, format chars, long-s case folding)
+  ---
+  duration_ms: 0.140246
+  type: 'test'
+  ...
+# Subtest: DES-8: curly closing quotes are accepted after a product token
+ok 252 - DES-8: curly closing quotes are accepted after a product token
+  ---
+  duration_ms: 0.372597
+  type: 'test'
+  ...
+# Subtest: V2: the mask applies only to the bare-domain rule; the other five rules see the raw text
+ok 253 - V2: the mask applies only to the bare-domain rule; the other five rules see the raw text
+  ---
+  duration_ms: 0.098286
+  type: 'test'
+  ...
+# Subtest: V2 is stateless across calls (no lastIndex leakage from global regexes)
+ok 254 - V2 is stateless across calls (no lastIndex leakage from global regexes)
+  ---
+  duration_ms: 0.084749
+  type: 'test'
+  ...
+# Subtest: V2 treats non-strings as not containing a link (shape errors are V4)
+ok 255 - V2 treats non-strings as not containing a link (shape errors are V4)
+  ---
+  duration_ms: 0.130681
+  type: 'test'
+  ...
+# Subtest: V3 normaliseEnum: brief and design vectors
+ok 256 - V3 normaliseEnum: brief and design vectors
+  ---
+  duration_ms: 0.159174
+  type: 'test'
+  ...
+# Subtest: validateTriage accepts a valid object and returns the Triage in canonical key order
+ok 257 - validateTriage accepts a valid object and returns the Triage in canonical key order
+  ---
+  duration_ms: 0.291106
+  type: 'test'
+  ...
+# Subtest: validateTriage normalises enum case (V3, AC4 m)
+ok 258 - validateTriage normalises enum case (V3, AC4 m)
+  ---
+  duration_ms: 0.118447
+  type: 'test'
+  ...
+# Subtest: validateTriage error codes for AC4 j/k/l shaped outputs
+ok 259 - validateTriage error codes for AC4 j/k/l shaped outputs
+  ---
+  duration_ms: 0.287142
+  type: 'test'
+  ...
+# Subtest: validateTriage V4 shape: not a plain object gives keys
+ok 260 - validateTriage V4 shape: not a plain object gives keys
+  ---
+  duration_ms: 0.206604
+  type: 'test'
+  ...
+# Subtest: validateTriage V4 shape: missing or extra keys give keys
+ok 261 - validateTriage V4 shape: missing or extra keys give keys
+  ---
+  duration_ms: 0.159919
+  type: 'test'
+  ...
+# Subtest: validateTriage V4 types: every field must be a string
+ok 262 - validateTriage V4 types: every field must be a string
+  ---
+  duration_ms: 0.094282
+  type: 'test'
+  ...
+# Subtest: validateTriage V4 reply length: trimmed >= 1 and length <= 1200
+ok 263 - validateTriage V4 reply length: trimmed >= 1 and length <= 1200
+  ---
+  duration_ms: 2.18356
+  type: 'test'
+  ...
+# Subtest: validateTriage returns every applicable error code in a fixed order
+ok 264 - validateTriage returns every applicable error code in a fixed order
+  ---
+  duration_ms: 0.13471
+  type: 'test'
+  ...
+# Subtest: validateTriage does not mutate its input and is deterministic
+ok 265 - validateTriage does not mutate its input and is deterministic
+  ---
+  duration_ms: 0.149354
+  type: 'test'
+  ...
+# Subtest: validateResponse accepts valid model and fallback responses, every fallback reason, keys in any order
+ok 266 - validateResponse accepts valid model and fallback responses, every fallback reason, keys in any order
+  ---
+  duration_ms: 0.310223
+  type: 'test'
+  ...
+# Subtest: validateResponse: exactly 8 keys
+ok 267 - validateResponse: exactly 8 keys
+  ---
+  duration_ms: 0.202635
+  type: 'test'
+  ...
+# Subtest: validateResponse: strict lower-case enums, no normalisation
+ok 268 - validateResponse: strict lower-case enums, no normalisation
+  ---
+  duration_ms: 0.13429
+  type: 'test'
+  ...
+# Subtest: validateResponse: summary V1/V2 and reply length/V2
+ok 269 - validateResponse: summary V1/V2 and reply length/V2
+  ---
+  duration_ms: 1.087039
+  type: 'test'
+  ...
+# Subtest: validateResponse: source and fallbackReason consistency (fallbackReason null iff source = model)
+ok 270 - validateResponse: source and fallbackReason consistency (fallbackReason null iff source = model)
+  ---
+  duration_ms: 0.123745
+  type: 'test'
+  ...
+# Subtest: validateResponse: model consistent with source (string iff model, null iff fallback)
+ok 271 - validateResponse: model consistent with source (string iff model, null iff fallback)
+  ---
+  duration_ms: 0.163688
+  type: 'test'
+  ...
+# Subtest: validateResponse: injectionSuspected must be a boolean
+ok 272 - validateResponse: injectionSuspected must be a boolean
+  ---
+  duration_ms: 0.128831
+  type: 'test'
+  ...
+# Subtest: validateResponse collects several errors at once
+ok 273 - validateResponse collects several errors at once
+  ---
+  duration_ms: 0.060214
+  type: 'test'
+  ...
+# Subtest: schema.js is pure CommonJS: strict mode, no requires, no I/O, clock or randomness
+ok 274 - schema.js is pure CommonJS: strict mode, no requires, no I/O, clock or randomness
+  ---
+  duration_ms: 0.441163
+  type: 'test'
+  ...
+# Subtest: provider null → mode fallback, model null
+ok 275 - provider null → mode fallback, model null
+  ---
+  duration_ms: 1.036205
+  type: 'test'
+  ...
+# Subtest: provider present → mode live, model = provider.model
+ok 276 - provider present → mode live, model = provider.model
+  ---
+  duration_ms: 0.202022
+  type: 'test'
+  ...
+# Subtest: invalid deps are rejected at creation (programming error, never a silent fallback)
+ok 277 - invalid deps are rejected at creation (programming error, never a silent fallback)
+  ---
+  duration_ms: 0.497678
+  type: 'test'
+  ...
+# Subtest: no_api_key: [REDACTED] on original → fallback on original; redact and provider never called; redactions null
+ok 278 - no_api_key: [REDACTED] on original → fallback on original; redact and provider never called; redactions null
+  ---
+  duration_ms: 1.612279
+  type: 'test'
+  ...
+# Subtest: live ok: detect(original) → redact(original) → provider.analyse(redacted); source model, model id, meta from LiveResult
+ok 279 - live ok: detect(original) → redact(original) → provider.analyse(redacted); source model, model id, meta from LiveResult
+  ---
+  duration_ms: 0.429288
+  type: 'test'
+  ...
+# Subtest: live ok copies only the four Triage fields (extra provider keys never leak into the response)
+ok 280 - live ok copies only the four Triage fields (extra provider keys never leak into the response)
+  ---
+  duration_ms: 0.1686
+  type: 'test'
+  ...
+# Subtest: injectionSuspected comes from the detector even when the model succeeds
+ok 281 - injectionSuspected comes from the detector even when the model succeeds
+  ---
+  duration_ms: 0.174908
+  type: 'test'
+  ...
+# Subtest: live failure model_error/http_500 → fallback on original text with live.reason, model null
+ok 282 - live failure model_error/http_500 → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 0.270837
+  type: 'test'
+  ...
+# Subtest: live failure model_error/fetch_threw → fallback on original text with live.reason, model null
+ok 283 - live failure model_error/fetch_threw → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 0.353413
+  type: 'test'
+  ...
+# Subtest: live failure timeout/timeout → fallback on original text with live.reason, model null
+ok 284 - live failure timeout/timeout → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 0.390602
+  type: 'test'
+  ...
+# Subtest: live failure refusal/refusal → fallback on original text with live.reason, model null
+ok 285 - live failure refusal/refusal → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 0.175112
+  type: 'test'
+  ...
+# Subtest: live failure truncated/max_tokens → fallback on original text with live.reason, model null
+ok 286 - live failure truncated/max_tokens → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 0.217914
+  type: 'test'
+  ...
+# Subtest: live failure invalid_output/invalid:summary_v1 → fallback on original text with live.reason, model null
+ok 287 - live failure invalid_output/invalid:summary_v1 → fallback on original text with live.reason, model null
+  ---
+  duration_ms: 1.178726
+  type: 'test'
+  ...
+# Subtest: provider.analyse rejecting → model_error / provider_threw, fallback on original text
+ok 288 - provider.analyse rejecting → model_error / provider_threw, fallback on original text
+  ---
+  duration_ms: 0.333866
+  type: 'test'
+  ...
+# Subtest: provider.analyse throwing synchronously → model_error / provider_threw
+ok 289 - provider.analyse throwing synchronously → model_error / provider_threw
+  ---
+  duration_ms: 0.129511
+  type: 'test'
+  ...
+# Subtest: provider resolving a non-LiveResult (null, unknown reason, ok without triage) → model_error / provider_threw
+ok 290 - provider resolving a non-LiveResult (null, unknown reason, ok without triage) → model_error / provider_threw
+  ---
+  duration_ms: 0.193515
+  type: 'test'
+  ...
+# Subtest: a throwing detectInjection propagates and nothing else runs
+ok 291 - a throwing detectInjection propagates and nothing else runs
+  ---
+  duration_ms: 0.249844
+  type: 'test'
+  ...
+# Subtest: a throwing fallbackAnalyse propagates (no_api_key and live-failure paths)
+ok 292 - a throwing fallbackAnalyse propagates (no_api_key and live-failure paths)
+  ---
+  duration_ms: 0.150683
+  type: 'test'
+  ...
+# Subtest: a throwing redact propagates and the provider is never called (no unredacted egress)
+ok 293 - a throwing redact propagates and the provider is never called (no unredacted egress)
+  ---
+  duration_ms: 0.157273
+  type: 'test'
+  ...
+# Subtest: analyse rejects a non-string ticket with TypeError before calling any collaborator
+ok 294 - analyse rejects a non-string ticket with TypeError before calling any collaborator
+  ---
+  duration_ms: 0.099946
+  type: 'test'
+  ...
+# Subtest: latency is measured with the injected clock around the whole analysis (incl. provider wait)
+ok 295 - latency is measured with the injected clock around the whole analysis (incl. provider wait)
+  ---
+  duration_ms: 0.12928
+  type: 'test'
+  ...
+# Subtest: default clock is performance.now: latency is a finite non-negative number
+ok 296 - default clock is performance.now: latency is a finite non-negative number
+  ---
+  duration_ms: 0.147666
+  type: 'test'
+  ...
+# Subtest: AnalysisMeta never carries ticket text (original or redacted) or provider error text
+ok 297 - AnalysisMeta never carries ticket text (original or redacted) or provider error text
+  ---
+  duration_ms: 0.150033
+  type: 'test'
+  ...
+# Subtest: service.js requires no concrete collaborator module (all injected)
+ok 298 - service.js requires no concrete collaborator module (all injected)
+  ---
+  duration_ms: 0.290686
+  type: 'test'
+  ...
+# Subtest: module exports exactly validateTicketInput
+ok 299 - module exports exactly validateTicketInput
+  ---
+  duration_ms: 2.90377
+  type: 'test'
+  ...
+# Subtest: valid ticket is returned trimmed
+ok 300 - valid ticket is returned trimmed
+  ---
+  duration_ms: 0.405498
+  type: 'test'
+  ...
+# Subtest: unknown extra keys are ignored
+ok 301 - unknown extra keys are ignored
+  ---
+  duration_ms: 0.208879
+  type: 'test'
+  ...
+# Subtest: parsed value that is not a plain object → invalid_request
+ok 302 - parsed value that is not a plain object → invalid_request
+  ---
+  duration_ms: 0.560546
+  type: 'test'
+  ...
+# Subtest: non-plain objects → invalid_request
+ok 303 - non-plain objects → invalid_request
+  ---
+  duration_ms: 1.649224
+  type: 'test'
+  ...
+# Subtest: null-prototype object with a string ticket is accepted
+ok 304 - null-prototype object with a string ticket is accepted
+  ---
+  duration_ms: 0.239146
+  type: 'test'
+  ...
+# Subtest: ticket missing or not a string → invalid_request
+ok 305 - ticket missing or not a string → invalid_request
+  ---
+  duration_ms: 0.255896
+  type: 'test'
+  ...
+# Subtest: inherited ticket property does not count
+ok 306 - inherited ticket property does not count
+  ---
+  duration_ms: 0.235961
+  type: 'test'
+  ...
+# Subtest: empty or whitespace-only ticket → ticket_empty
+ok 307 - empty or whitespace-only ticket → ticket_empty
+  ---
+  duration_ms: 0.441595
+  type: 'test'
+  ...
+# Subtest: length boundary: 8000 after trim passes, 8001 fails
+ok 308 - length boundary: 8000 after trim passes, 8001 fails
+  ---
+  duration_ms: 0.575435
+  type: 'test'
+  ...
+# Subtest: length counts UTF-16 code units
+ok 309 - length counts UTF-16 code units
+  ---
+  duration_ms: 0.457249
+  type: 'test'
+  ...
+# Subtest: first failure wins (ordering of the C3 table)
+ok 310 - first failure wins (ordering of the C3 table)
+  ---
+  duration_ms: 0.421289
+  type: 'test'
+  ...
+# Subtest: pure: same input gives deep-equal output and input is not mutated
+ok 311 - pure: same input gives deep-equal output and input is not mutated
+  ---
+  duration_ms: 0.228773
+  type: 'test'
+  ...
+# Subtest: error results never echo the ticket
+ok 312 - error results never echo the ticket
+  ---
+  duration_ms: 0.216903
+  type: 'test'
+  ...
+# Subtest: C6.6: app.js exports exactly the four helpers under Node
+ok 313 - C6.6: app.js exports exactly the four helpers under Node
+  ---
+  duration_ms: 2.249813
+  type: 'test'
+  ...
+# Subtest: D1.5: fallbackReasonText gives the exact text for all six codes
+ok 314 - D1.5: fallbackReasonText gives the exact text for all six codes
+  ---
+  duration_ms: 0.359791
+  type: 'test'
+  ...
+# Subtest: AC5: sourceLabel for a model result
+ok 315 - AC5: sourceLabel for a model result
+  ---
+  duration_ms: 0.202843
+  type: 'test'
+  ...
+# Subtest: AC5: sourceLabel for every fallback reason says "not AI-generated" with code and text
+ok 316 - AC5: sourceLabel for every fallback reason says "not AI-generated" with code and text
+  ---
+  duration_ms: 0.38989
+  type: 'test'
+  ...
+# Subtest: AC5: anything that is not source "model" is never labelled as AI output
+ok 317 - AC5: anything that is not source "model" is never labelled as AI output
+  ---
+  duration_ms: 0.320314
+  type: 'test'
+  ...
+# Subtest: §Frontend error table: errorMessage
+ok 318 - §Frontend error table: errorMessage
+  ---
+  duration_ms: 0.171863
+  type: 'test'
+  ...
+# Subtest: modeBadgeText for live, fallback and failed health
+ok 319 - modeBadgeText for live, fallback and failed health
+  ---
+  duration_ms: 0.191752
+  type: 'test'
+  ...
+# Subtest: public/ contains exactly index.html, app.js and styles.css (C4 serves only these)
+ok 320 - public/ contains exactly index.html, app.js and styles.css (C4 serves only these)
+  ---
+  duration_ms: 0.121054
+  type: 'test'
+  ...
+# Subtest: AC11: no HTML sinks or dynamic code evaluation anywhere in public/
+ok 321 - AC11: no HTML sinks or dynamic code evaluation anywhere in public/
+  ---
+  duration_ms: 1.063526
+  type: 'test'
+  ...
+# Subtest: CSP: index.html has no inline script, inline style or event-handler attributes
+ok 322 - CSP: index.html has no inline script, inline style or event-handler attributes
+  ---
+  duration_ms: 1.624421
+  type: 'test'
+  ...
+# Subtest: AC6: the only network requests are fetch('/api/health') and fetch('/api/triage')
+ok 323 - AC6: the only network requests are fetch('/api/health') and fetch('/api/triage')
+  ---
+  duration_ms: 1.211983
+  type: 'test'
+  ...
+# Subtest: AC15/NFR6: index.html structure, labels and live regions
+ok 324 - AC15/NFR6: index.html structure, labels and live regions
+  ---
+  duration_ms: 1.063325
+  type: 'test'
+  ...
+# Subtest: AC16/NFR4: the live-mode notice text is verbatim; the warning text is exact
+ok 325 - AC16/NFR4: the live-mode notice text is verbatim; the warning text is exact
+  ---
+  duration_ms: 0.721505
+  type: 'test'
+  ...
+# Subtest: NFR6: colour tokens in styles.css meet the spec values and WCAG AA
+ok 326 - NFR6: colour tokens in styles.css meet the spec values and WCAG AA
+  ---
+  duration_ms: 1.138888
+  type: 'test'
+  ...
+# Subtest: load: fallback health sets the badge and keeps the live notice hidden
+ok 327 - load: fallback health sets the badge and keeps the live notice hidden
+  ---
+  duration_ms: 17.976116
+  type: 'test'
+  ...
+# Subtest: load: live health shows the live badge and the NFR4 notice
+ok 328 - load: live health shows the live badge and the NFR4 notice
+  ---
+  duration_ms: 1.440997
+  type: 'test'
+  ...
+# Subtest: load: failed health (network error, 500, bad JSON) gives "Mode unknown"
+ok 329 - load: failed health (network error, 500, bad JSON) gives "Mode unknown"
+  ---
+  duration_ms: 3.017765
+  type: 'test'
+  ...
+# Subtest: character counter updates on input
+ok 330 - character counter updates on input
+  ---
+  duration_ms: 1.42375
+  type: 'test'
+  ...
+# Subtest: client validation: whitespace-only ticket sends no request and keeps focus on the textarea
+ok 331 - client validation: whitespace-only ticket sends no request and keeps focus on the textarea
+  ---
+  duration_ms: 1.760729
+  type: 'test'
+  ...
+# Subtest: loading then success: request shape, busy state, rendering and announcement
+ok 332 - loading then success: request shape, busy state, rendering and announcement
+  ---
+  duration_ms: 1.933138
+  type: 'test'
+  ...
+# Subtest: success with fallback + injection: label says not AI-generated and the warning is shown
+ok 333 - success with fallback + injection: label says not AI-generated and the warning is shown
+  ---
+  duration_ms: 1.857538
+  type: 'test'
+  ...
+# Subtest: error states: server errors and network failure hide the old result and keep the ticket
+ok 334 - error states: server errors and network failure hide the old result and keep the ticket
+  ---
+  duration_ms: 10.92408
+  type: 'test'
+  ...
+# Subtest: Ctrl+Enter and Cmd+Enter in \#ticket submit; plain Enter does not
+ok 335 - Ctrl+Enter and Cmd+Enter in \#ticket submit; plain Enter does not
+  ---
+  duration_ms: 1.610003
+  type: 'test'
+  ...
+# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text
+ok 336 - AC6: the reply is editable, Reset restores the original, Copy copies the current text
+  ---
+  duration_ms: 3.185476
+  type: 'test'
+  ...
+# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually
+ok 337 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually
+  ---
+  duration_ms: 2.701335
+  type: 'test'
+  ...
+1..337
+# tests 337
+# suites 0
+# pass 337
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4622.947115
