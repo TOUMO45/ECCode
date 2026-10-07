@@ -20,7 +20,14 @@ const path = require('path');
 const IMPLEMENTERS = new Set(['frontend-engineer', 'backend-engineer', 'ai-engineer', 'test-engineer', 'devops-engineer', 'learning-debugger', 'delivery-lead']);
 const ROLES = new Set([...IMPLEMENTERS, 'product-architect', 'architecture-reviewer', 'technical-designer', 'technical-reviewer', 'security-reviewer']);
 const RECORD_FILES = /(^|\/)\.eccode\/(events\.jsonl|state\.json|config\.json|evidence\/|improvements\/|memory\/records\/)/;
-const DRAFT_AREAS = ['.eccode/artifacts/**', '.eccode/reviews/drafts/**', '.eccode/drafts/**'];
+// Where each kind of role may write under .eccode/ (drafts are shared scratch).
+const DOC_AUTHORS = new Set(['product-architect', 'technical-designer', 'delivery-lead']);
+const REVIEWERS = new Set(['architecture-reviewer', 'technical-reviewer', 'security-reviewer']);
+function draftAreas(role) {
+  if (DOC_AUTHORS.has(role)) return ['.eccode/artifacts/**', '.eccode/drafts/**'];
+  if (REVIEWERS.has(role)) return ['.eccode/reviews/drafts/**', '.eccode/drafts/**'];
+  return ['.eccode/drafts/**'];
+}
 
 function out(decision, reason) {
   process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: decision, permissionDecisionReason: reason } }));
@@ -80,7 +87,7 @@ function main(input) {
     if (rel.startsWith('..') || path.isAbsolute(rel)) return; // outside the project (e.g. scratch dirs)
     if (RECORD_FILES.test(rel)) out('deny', `${rel} is part of the ECCode record and is written only by the eccode CLI.`);
     if (!role || role.startsWith('other:')) return; // main session or non-ECCode agent
-    if (matchesAny(rel, DRAFT_AREAS)) return;
+    if (matchesAny(rel, draftAreas(role))) return;
     if (IMPLEMENTERS.has(role)) {
       const { Store } = require(path.join(lib, 'store'));
       const state = new Store(root).state();

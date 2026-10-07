@@ -177,3 +177,18 @@ test('scope checks work when the project is a subdirectory of a larger git repo'
   tasks.complete(store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/app.js']));
   assert.strictEqual(store.state().tasks.api.status, 'done');
 });
+
+test('tasks cannot modify records or approved artifacts under .eccode/ (only .eccode/drafts/)', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  const { store, config, dir } = ctx;
+  gates.startGate(store, config, 'phase:core', 'orchestrator');
+  tasks.claim(store, config, 'api', 'backend-engineer');
+  write(dir, 'src/server/app.js', 'module.exports = 3;\n');
+  write(dir, '.eccode/artifacts/spec.md', '# tampered approved spec\n');
+  write(dir, '.eccode/drafts/handoff.json', '{}\n');
+  const ev = passCheck(store, 'backend-engineer');
+  const err = expectCode(() => tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/app.js', '.eccode/artifacts/spec.md'])), 'INVALID_HANDOFF');
+  assert.match(err.message, /outside task ownership.*\.eccode\/artifacts\/spec\.md/);
+  tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/app.js', '.eccode/drafts/handoff.json']));
+});

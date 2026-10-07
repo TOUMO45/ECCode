@@ -108,3 +108,11 @@ test('AGENTS.md export covers every role and the workflow for other harnesses', 
   }
   assert.match(md, /sequentially in one context/);
 });
+
+test('guard: implementers cannot write approved artifacts; document authors can', () => {
+  const ctx = tmpProject();
+  const w = (agent, file) => hook(GUARD, { cwd: ctx.dir, tool_name: 'Write', agent_type: `eccode:${agent}`, tool_input: { file_path: file } });
+  assert.strictEqual(w('product-architect', '.eccode/artifacts/architecture/brief.md'), null);
+  assert.strictEqual(w('backend-engineer', '.eccode/artifacts/plan/checks/scaffold-check.js').permissionDecision, 'deny');
+  assert.strictEqual(w('technical-reviewer', '.eccode/artifacts/design/spec.md').permissionDecision, 'deny');
+});
