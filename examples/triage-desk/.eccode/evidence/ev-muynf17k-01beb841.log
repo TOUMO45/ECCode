@@ -1,0 +1,91 @@
+$ node /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/des-rereview-probe.js .eccode/artifacts/design/design-vectors.js
+# cwd: .
+# exit: 0
+redactor card-shaped 8000 chars: 4.45 ms
+redactor adversarial email_localpart_no_at median: 36.69 ms
+redactor adversarial email_domain_no_tld median: 38.51 ms
+redactor adversarial phone_digits_dots median: 39.14 ms
+redactor adversarial digits_only median: 38.52 ms
+redactor adversarial digit_nbsp median: 4.76 ms
+redactor adversarial card_worst_design median: 0.66 ms
+all design vectors pass
+{
+  "redirect_301": {
+    "ok": false,
+    "reason": "model_error",
+    "detail": "fetch_threw"
+  },
+  "redirect_302": {
+    "ok": false,
+    "reason": "model_error",
+    "detail": "fetch_threw"
+  },
+  "redirect_303": {
+    "ok": false,
+    "reason": "model_error",
+    "detail": "fetch_threw"
+  },
+  "redirect_307": {
+    "ok": false,
+    "reason": "model_error",
+    "detail": "fetch_threw"
+  },
+  "redirect_308": {
+    "ok": false,
+    "reason": "model_error",
+    "detail": "fetch_threw"
+  },
+  "sameOrigin307": {
+    "ok": false,
+    "reason": "model_error",
+    "detail": "fetch_threw"
+  },
+  "stub307": {
+    "ok": false,
+    "reason": "model_error",
+    "detail": "redirect_refused"
+  },
+  "neverStub": {
+    "ok": false,
+    "reason": "timeout",
+    "detail": "timeout"
+  },
+  "requestsAtB": 0,
+  "keyAtB": false,
+  "baseUrlEdge": {
+    "http://0x7f.0.0.1:9": "http://127.0.0.1:9",
+    "http://2130706433:9": "http://127.0.0.1:9",
+    "http://127.0.0.1.:9": "http://127.0.0.1:9",
+    "http://localhost.:9": "REJECT",
+    "http://[::ffff:127.0.0.1]:9": "REJECT",
+    "http://[0:0:0:0:0:0:0:1]:9": "http://[::1]:9",
+    "https://x.example/@evil.example": "https://x.example/@evil.example",
+    "https://x.example\\@evil.example": "https://x.example/@evil.example",
+    " https://api.anthropic.com ": "https://api.anthropic.com",
+    "https://api.anthropic.com/v1": "https://api.anthropic.com/v1",
+    "javascript:alert(1)": "REJECT",
+    "https://": "REJECT",
+    "https:x.example": "https://x.example",
+    "HTTPS://API.ANTHROPIC.COM": "https://api.anthropic.com"
+  },
+  "loopbackHost": {
+    "0": false,
+    " 127.0.0.1 ": true,
+    "127.0.0.1.": false,
+    "127.1": false,
+    "::ffff:127.0.0.1": false,
+    "Localhost": true
+  },
+  "maskEdge": {
+    "Go to éasp.net now.": "ACCEPT",
+    "Go to ñsocket.io now.": "ACCEPT",
+    "Go to ١asp.net now.": "ACCEPT",
+    "Go to _asp.net now.": "ACCEPT",
+    "Go to asp.net.": "ACCEPT",
+    "Go to asp.net。evil.com now.": "reject",
+    "Go to asp.net. evil.com now.": "reject",
+    "See asp.net.” now.": "reject",
+    "Go to xn--asp-x.net now.": "reject"
+  }
+}
+re-review probe pass

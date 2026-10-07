@@ -1,0 +1,44 @@
+$ node .eccode/artifacts/design/http-probe.js
+# cwd: .
+# exit: 0
+{
+  "without_drain": {
+    "got403": 200,
+    "failed": 0,
+    "errors": []
+  },
+  "with_req_resume": {
+    "got403": 200,
+    "failed": 0,
+    "errors": []
+  },
+  "missingHost": 403,
+  "customHostAndOrigin": {
+    "status": 200,
+    "body": "{\"n\":14,\"origin\":\"http://localhost:42307\"}"
+  },
+  "fetchHeaders": {
+    "host": "127.0.0.1:45585",
+    "origin": "http://attacker.example:3000"
+  },
+  "redirectDefaultFollow": {
+    "status": 200,
+    "requestsAtOtherOrigin": 1,
+    "xApiKeyAtOtherOrigin": "present"
+  },
+  "redirectError": {
+    "307": {
+      "outcome": "threw TypeError",
+      "requestsAtOtherOrigin": 0
+    },
+    "308": {
+      "outcome": "threw TypeError",
+      "requestsAtOtherOrigin": 0
+    }
+  },
+  "redirectErrorOn200": {
+    "status": 200,
+    "body": "{\"ok\":true}"
+  }
+}
+http probe pass

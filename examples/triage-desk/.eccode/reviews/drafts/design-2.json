@@ -1,0 +1,172 @@
+{
+  "decision": "approve",
+  "summary": "Re-review of sub-muynca23-01dd53b5. Both majors are closed in the spec text, and the reference vectors and my own probes back that up. DES-1: C6.4/C7 make `redirect: 'error'` mandatory, with a 3xx stub mapping to redirect_refused and the real fetch throw mapping to fetch_threw. The base URL moved to the app-specific TRIAGE_ANTHROPIC_BASE_URL, limited to https or http to loopback, with no userinfo, query or fragment, and ANTHROPIC_BASE_URL is never read. spawn-server builds the child env explicitly. Each of these has a named test. My probe applied the specified algorithm with the real Node 22 fetch: 301, 302, 303, 307, 308 and a same-origin redirect all became model_error/fetch_threw, with 0 requests and no key at the other origin (ev:ev-muynf17k-01beb841). DES-2: the new tune mode never opens holdout.json and never prints ECCODE_EVAL. Tasks 10 and 11 are tune-only, with a verbatim attestation. The first full run moves to task 16 (delivery-lead). Hygiene failures print only the row id and the file path. design-vectors.js and http-probe.js both pass on my re-run (ev:ev-muynecja-012eae7c, ev:ev-muynecy9-0119e964). The minor findings DES-3 to DES-7 are addressed. The task order is buildable and file ownership stays disjoint. Two new minor findings and one info do not block: the DES-3 mask lookbehind is ASCII-only, which reopens rejection of 'éasp.net'-style IDN hosts the brief baseline caught; and the full/tune exit-2 last-line wording conflicts.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Spec still matches the approved brief; every R/NFR/AC (plus the new secrets-egress and tune-mode items) maps to a component and a named test",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#Requirement → component → test traceability",
+        "artifact:.eccode/artifacts/design/spec.md#Testing Strategy"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "Interface contracts complete after revision: C6.1 config table (TRIAGE_ANTHROPIC_BASE_URL, TRIAGE_ALLOW_REMOTE, warnings), C6.4 fetchImpl init type with redirect:'error' and the redirect_refused/fetch_threw detail codes, C6.5 explicit env, D1.6 listening/warning records",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#C6.1 config.js",
+        "artifact:.eccode/artifacts/design/spec.md#C6.4 Provider interface (server ↔ AI module boundary)",
+        "artifact:.eccode/artifacts/design/spec.md#C7 Outbound contract: Anthropic Messages API (live mode only)",
+        "ev:ev-muynecy9-0119e964"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "Redaction vectors (ARCH-10 + DES-7 NBSP/TAB) and brief vectors still pass; DES-4 cost claim corrected with an adversarial budget that has real margin",
+      "met": true,
+      "evidence": [
+        "ev:ev-muynecja-012eae7c",
+        "artifact:.eccode/artifacts/design/design-vectors.js",
+        "artifact:.eccode/artifacts/design/spec.md#D3 Redaction algorithm (R11) — ARCH-10 fix **[refinement]**"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "Validators V1-V4 schema-validated server-side; DES-3 mask accepts sentence-final product tokens; all earlier and new reject vectors still reject (one Unicode-prefix residual recorded as DES-8, minor)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muynecja-012eae7c",
+        "ev:ev-muynf17k-01beb841",
+        "artifact:.eccode/artifacts/design/design-vectors.js"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "Secrets: the API key can only reach the intended endpoint. No redirect following, no cleartext to non-loopback, no userinfo/query/fragment, no inheritance of the SDK-wide base URL, and no parent-env leakage into spawned tests",
+      "met": true,
+      "evidence": [
+        "ev:ev-muynf17k-01beb841",
+        "ev:ev-muynecy9-0119e964",
+        "ev:ev-muynecja-012eae7c",
+        "artifact:.eccode/artifacts/design/spec.md#C6.1 config.js",
+        "artifact:.eccode/artifacts/design/spec.md#C6.4 Provider interface (server ↔ AI module boundary)",
+        "artifact:.eccode/artifacts/design/spec.md#Security",
+        "artifact:.eccode/artifacts/design/spec.md#Testing Strategy"
+      ]
+    },
+    {
+      "id": "C6",
+      "description": "HTTP security unchanged and verified (Host allowlist before body, Origin check, no CORS, CSP, fixed errors); DES-6 non-loopback HOST refused without TRIAGE_ALLOW_REMOTE=1",
+      "met": true,
+      "evidence": [
+        "ev:ev-muynecy9-0119e964",
+        "ev:ev-muynf17k-01beb841",
+        "artifact:.eccode/artifacts/design/spec.md#C1 HTTP pipeline and common rules (http-server.js)",
+        "artifact:.eccode/artifacts/design/spec.md#C6.1 config.js"
+      ]
+    },
+    {
+      "id": "C7",
+      "description": "AI design: untrusted-input isolation, no tools, restricted schema, timeout/single attempt, every failure mapped to a fallback reason (now including redirect), INJ_DELIM lookalikes (DES-7), live NOT RUN acknowledged",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#AI / LLM Design and Evaluations",
+        "artifact:.eccode/artifacts/design/spec.md#D1 Entities",
+        "ev:ev-muynf17k-01beb841"
+      ]
+    },
+    {
+      "id": "C8",
+      "description": "Eval design: thresholds frozen before rules, and the holdout is isolated from the rules author's feedback loop by mechanism (tune mode never opens holdout.json, no ECCODE_EVAL in tune output, first full run at task 16, hygiene messages carry only id + file), not by attestation alone",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#E5 Integrity: freeze, holdout and held-out visibility (ARCH-4, ARCH-12)",
+        "artifact:.eccode/artifacts/design/spec.md#Evaluation plan",
+        "artifact:.eccode/artifacts/design/spec.md#Implementation Workflow"
+      ]
+    },
+    {
+      "id": "C9",
+      "description": "Cost and latency budgets realistic; redactor budget (< 200 ms median-of-3) holds with ~5x margin on my re-run (36-40 ms)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muynecja-012eae7c",
+        "artifact:.eccode/artifacts/design/spec.md#Observability, Performance and Recovery",
+        "artifact:.eccode/artifacts/design/spec.md#Timeouts, retries, fallback, cost"
+      ]
+    },
+    {
+      "id": "C10",
+      "description": "Implementation workflow buildable with disjoint file ownership after the revision: ticket-input.js with task 6, lazy src requires in run.js, task 11 waits for 5/8/10/12, single owner for task 16",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#Implementation Workflow",
+        "artifact:.eccode/artifacts/design/spec.md#Directory tree and ownership"
+      ]
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "DES-1",
+      "resolution": "All four parts of the resolution condition are in the spec, each with a named test. (1) C6.4 adds redirect:'error' to the fetchImpl init type and makes it mandatory in step 3. A thrown error maps to model_error/fetch_threw, and step 4 maps a 3xx status to model_error/redirect_refused without reading the body. C7 'Transport options' states the same rule. The tests are anthropic-provider.test.js (init.redirect === 'error', a 307 stub and a TypeError stub) and triage-modes.test.js AC4 (o) (real fetch, 307 and 308 to localhost:B, 0 requests at B). My probe ran the specified steps 2-4 with the real Node 22.22.0 fetch. 301, 302, 303, 307, 308 and a same-origin 307 all gave model_error/fetch_threw, with 0 requests and no x-api-key at the second origin. A 307 stub gave redirect_refused without calling text(), and a never-settling stub still timed out (ev:ev-muynf17k-01beb841). The designer's http-probe also passes on my re-run (ev:ev-muynecy9-0119e964): 307 and 308 throw with redirect:'error', the default follow sends the key on, and a 200 is unaffected. (2) checkBaseUrl requires https, or http only for 127.0.0.1, localhost or [::1]. It rejects raw '?' and '#', userinfo, query and hash, and the ConfigError names only the variable. All 19 BASE_URL_CASES pass (ev:ev-muynecja-012eae7c), including the 4 required vectors. My edge cases (ev:ev-muynf17k-01beb841) found no hole: 0x7f.0.0.1, 2130706433 and 127.0.0.1. canonicalise to 127.0.0.1, which is loopback; localhost., ::ffff:127.0.0.1, javascript: and an empty host are rejected; and backslash or '@' in the path keeps the host. (3) The variable is renamed to TRIAGE_ANTHROPIC_BASE_URL and ANTHROPIC_BASE_URL is never read. On top of that, baseUrlCustom appears in the listening event, a custom_base_url warning is logged, and the README carries a warning. The test is config.test.js (ANTHROPIC_BASE_URL alone is ignored). OQ-D3 keeps these guarantees if the SDK is adopted later. (4) spawn-server builds its env as {PATH, ...testEnv, PORT} and never spreads process.env. privacy.test.js sets ANTHROPIC_API_KEY='' explicitly and adds a parent-env isolation case (a fake key and base URL in the parent; the child must report fallback mode and baseUrlCustom:false). The eval runner's fallback path reads no environment variable.",
+      "evidence": [
+        "ev:ev-muynf17k-01beb841",
+        "ev:ev-muynecy9-0119e964",
+        "ev:ev-muynecja-012eae7c",
+        "artifact:.eccode/artifacts/design/spec.md#C6.1 config.js",
+        "artifact:.eccode/artifacts/design/spec.md#C6.4 Provider interface (server ↔ AI module boundary)",
+        "artifact:.eccode/artifacts/design/spec.md#C7 Outbound contract: Anthropic Messages API (live mode only)",
+        "artifact:.eccode/artifacts/design/spec.md#Testing Strategy",
+        "artifact:.eccode/artifacts/design/design-vectors.js"
+      ]
+    },
+    {
+      "id": "DES-2",
+      "resolution": "All four parts are specified. (1) E1 adds `--split tune` (npm run eval:tune). It never opens, stats or resolves --holdout. It scores only dataset.json rows on 8 computable checks and prints 'holdout: NOT SCORED (tune mode)'. It never prints the substring ECCODE_EVAL: its last line is TUNE_EVAL {\"mode\":\"tune\",...}. It is fallback-only, so `--provider live` is a usage error. I checked that ECCode's evaluator (lib/memory/improve.js:90) matches /ECCODE_EVAL\\s+(\\{.*\\})/ anywhere in a log, so a distinct line prefix is the right mechanism. Tune verbose output prints only failing dataset.json ids. (2) E5 'No feedback path' and the workflow constraints make tasks 10 and 11 tune-only, with the verbatim handoff attestation. The first full-mode run is at task 16 (delivery-lead, single owner), and the verification report must count any later full-mode runs. Task 11 now depends on 5, 8, 10 and 12, so tune mode is actually runnable there without app.js. (3) Hygiene failures use only assert.fail('held-out overlap: row <id> in <path>'). Value-printing asserts and held-out text in titles are banned, and there is a self-check on the message regex, which matches the D5 id format /^[a-z]-\\d{3}$/. No other npm test reads the real holdout. (4) runner.test.js runs tune mode with a non-existent --holdout path and expects no exit 2, no ECCODE_EVAL substring and total 8. This is a design-gate finding, so no executable runner exists yet; the evidence is the spec text plus the named tests, to be re-run at the phase gate.",
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#Evaluation plan",
+        "artifact:.eccode/artifacts/design/spec.md#E5 Integrity: freeze, holdout and held-out visibility (ARCH-4, ARCH-12)",
+        "artifact:.eccode/artifacts/design/spec.md#Implementation Workflow",
+        "artifact:.eccode/artifacts/design/spec.md#Testing Strategy"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "DES-8",
+      "severity": "minor",
+      "title": "DES-3 product-token mask lookbehind is ASCII-only, so a Unicode letter or digit before the token (an IDN host such as 'éasp.net') now passes V2, which the brief baseline rejected",
+      "detail": "PRODUCT_TOKENS uses `(?<![\\w.@/:-])`, and \\w is ASCII-only without the `u` flag. 'Go to éasp.net now.', 'Go to ñsocket.io now.' and 'Go to ١asp.net now.' are all accepted by hasLink in design-vectors.js (ev:ev-muynf17k-01beb841). The brief's LINK_PATTERNS bare-domain rule rejects 'éasp.net', because \\b falls between 'é' and 'a' and 'asp.net' matches. So the mask reopens a case the baseline closed. The impact is narrow: V2 already misses all-non-ASCII IDN hosts, the reply is rendered with textContent, and the attacker needs the model to emit a specific registrable IDN. That is why this is minor, not major. Also noted: 'See asp.net.” now.' (curly closing quote) is rejected. That is a harmless false reject because the lookahead lists only ASCII closing quotes.",
+      "evidence": [
+        "ev:ev-muynf17k-01beb841",
+        "artifact:.eccode/artifacts/design/design-vectors.js",
+        "artifact:.eccode/artifacts/design/spec.md#D4 Output validators (V1–V4) — ARCH-11 refinements **[refinement]**"
+      ],
+      "recommendation": "Resolved when schema.js makes the lookbehind Unicode-aware, e.g. `/(?<![\\p{L}\\p{N}\\p{M}_.@/:-])(?:asp\\.net|ado\\.net|vb\\.net|socket\\.io)(?=...)/giu`, and adds the reject vectors 'Go to éasp.net now.' and 'Go to ñsocket.io now.' to unit/schema.test.js (and design-vectors.js), with all existing accept and reject vectors still passing. Optionally add ’ and ” to the closing-quote set in the lookahead. This can be carried into task 4 without another design iteration."
+    },
+    {
+      "id": "DES-9",
+      "severity": "minor",
+      "title": "Exit-2 last line is specified two ways: the 'Both modes' bullet says ECCODE_EVAL {\"passed\":0,\"total\":1}, the tune section says TUNE_EVAL",
+      "detail": "E4's tune block says 'On exit 2 the last line is TUNE_EVAL {\"mode\":\"tune\",\"passed\":0,\"total\":1}', and E1 says tune mode never prints the substring ECCODE_EVAL. But the shared 'Both modes: Exit codes' bullet says that on exit 2 the runner prints ECCODE_EVAL {\"passed\":0,\"total\":1}. runner.test.js asserts the absence of ECCODE_EVAL only for the exit-0/1 tune case. For the `--split tune --provider live` exit-2 case it asserts only the exit code. The safe reading wins in practice, and a 0/1 ECCODE_EVAL is a failing result, never a false pass. But an implementer could follow the 'Both modes' text.",
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#Evaluation plan",
+        "artifact:.eccode/artifacts/design/spec.md#Testing Strategy"
+      ],
+      "recommendation": "Resolved when the 'Both modes' exit-2 bullet says 'full mode prints ECCODE_EVAL {\"passed\":0,\"total\":1}; tune mode prints TUNE_EVAL {\"mode\":\"tune\",\"passed\":0,\"total\":1}', and runner.test.js also asserts no ECCODE_EVAL substring for `--split tune --provider live` (exit 2). The delivery-lead can carry this into the task 8 acceptance criteria."
+    },
+    {
+      "id": "DES-10",
+      "severity": "info",
+      "title": "Task 11's tune runs also need src/ticket-input.js (task 6), which is not in its dependency list",
+      "detail": "E1 says each executed ticket goes through validateTicketInput, which run.js requires lazily from src/ticket-input.js (task 6). Task 11 depends on 2, 4, 5, 8, 10 and 12, not on 6. The backend owner's sequence (5 → 6 → 12) makes this hold in practice, but nothing forces it.",
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#Implementation Workflow",
+        "artifact:.eccode/artifacts/design/spec.md#Evaluation plan"
+      ],
+      "recommendation": "The delivery-lead adds task 6 to task 11's dependencies in the plan."
+    }
+  ]
+}
