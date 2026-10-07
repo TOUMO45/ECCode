@@ -1,4 +1,5 @@
 {
+  "id": "imp-muyofpap-01971797",
   "title": "review-gate skill: state the literal decision values and show an approving re-review example",
   "observation": "Lesson mem-sw-muyoa34v-0117203a (verified, shared): the engine refused two technical-reviewer gate reviews with `$.decision: must be one of approve, changes_requested (got \"approved\")` (events 128 and 160), each the reviewer's first approving review on that gate, each resubmitted with \"approve\" seconds later (events 129, 161). Recorded check ev:ev-muyo96d3-01a13297 shows skills/review-gate/SKILL.md has only a changes_requested JSON example and never states the literal `approve`; its prose says \"approval\" / \"to approve\". The causal link is inferred (fits the evidence, not isolated by experiment); the docs gap itself is confirmed deterministically.",
   "lessons": [
@@ -12,6 +13,46 @@
   "rationale": "Docs-only fix at the point where reviewers write the decision, as the lesson recommends (part a). Adds, directly after the step-4 example, an explicit rule that `decision` must be exactly \"approve\" or \"changes_requested\" and that \"approved\"/\"approval\"/\"reject\"/the template placeholder are refused as schema errors; and adds under step 5 a complete approving re-review JSON example (all criteria met with ev: evidence, findings [], resolvedFindings entry for PH1-1) that validates against schemas/review.schema.json. All existing content (frontmatter, refusal list, changes_requested example, severity guide, anti-patterns) is kept verbatim. The schema, engine, and templates/review.json are untouched: loosening the enum to accept \"approved\" would be an approval-rule change and is out of scope; the template placeholder stays invalid so a review cannot approve without an explicit choice. Parts (b) and (c) of the lesson (agents/technical-reviewer.md, agents/security-reviewer.md) are separate targets and would be separate proposals. Expected effect: fewer decision-enum review.rejected events in later deliveries.",
   "evaluation": {
     "command": "node .eccode/drafts/eval-review-gate-skill.js",
-    "cases": "Representative: (a) a paragraph states the literal `\"approve\"` and `\"changes_requested\"` and says \"approved\" is refused; (b) a ```json block with decision \"approve\" validates via lib/schema validateNamed(\"review\"); (b2) that approving example is engine-consistent (every criterion met with ev: evidence, no open blocking/major finding, non-empty resolvedFindings). Regression: (c) a valid changes_requested example with a blocking/major finding is still present; (d) schemas/review.schema.json decision enum is exactly [approve, changes_requested]; (e) validateNamed still rejects \"approved\", \"approval\", \"reject\"; (f) frontmatter name/description and the original headings are unchanged. Prints ECCODE_EVAL {passed,total}; exits 0 iff all regression cases pass."
-  }
+    "cases": "Representative: (a) a paragraph states the literal `\"approve\"` and `\"changes_requested\"` and says \"approved\" is refused; (b) a ```json block with decision \"approve\" validates via lib/schema validateNamed(\"review\"); (b2) that approving example is engine-consistent (every criterion met with ev: evidence, no open blocking/major finding, non-empty resolvedFindings). Regression: (c) a valid changes_requested example with a blocking/major finding is still present; (d) schemas/review.schema.json decision enum is exactly [approve, changes_requested]; (e) validateNamed still rejects \"approved\", \"approval\", \"reject\"; (f) frontmatter name/description and the original headings are unchanged. Prints ECCODE_EVAL {passed,total}; exits 0 iff all regression cases pass.",
+    "baseline": {
+      "evidence": "ev-muyofsis-01bceee7",
+      "passed": 4,
+      "total": 7,
+      "exitCode": 0,
+      "by": "learning-debugger",
+      "at": "2026-10-07T22:26:17.767Z"
+    },
+    "candidate": {
+      "evidence": "ev-muyofsl7-01e5e4d6",
+      "passed": 7,
+      "total": 7,
+      "exitCode": 0,
+      "by": "learning-debugger",
+      "at": "2026-10-07T22:26:17.855Z"
+    }
+  },
+  "status": "evaluated",
+  "proposedBy": "learning-debugger",
+  "proposedAt": "2026-10-07T22:26:13.585Z",
+  "baseSha256": "a75c0fcbd7652c27327917323c1a507d997ece83bc8209e4d566827af8d67e1f",
+  "reviews": [],
+  "history": [
+    {
+      "at": "2026-10-07T22:26:13.586Z",
+      "by": "learning-debugger",
+      "event": "proposed"
+    },
+    {
+      "at": "2026-10-07T22:26:17.767Z",
+      "by": "learning-debugger",
+      "event": "evaluated:baseline",
+      "evidence": "ev-muyofsis-01bceee7"
+    },
+    {
+      "at": "2026-10-07T22:26:17.855Z",
+      "by": "learning-debugger",
+      "event": "evaluated:candidate",
+      "evidence": "ev-muyofsl7-01e5e4d6"
+    }
+  ]
 }
