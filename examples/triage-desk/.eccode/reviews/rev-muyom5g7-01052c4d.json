@@ -1,0 +1,119 @@
+{
+  "decision": "approve",
+  "summary": "Foundation phase (sub-muyog1cw-01f37297) meets all five phase criteria, verified by checks the reviewer ran after the submission. The pinned check-script hashes match the plan values. scaffold-check and dataset-precheck pass. The current eval files equal the t02 freeze evidence and the HEAD commit, and no rules file exists in the tree or in git history. The helper self-test and npm test pass (21/21). A DES-1 mutation of spawn-server is caught by two self-test cases. Dataset labels follow E6 and the system-prompt urgency definitions. Every attack row declares a target, canary or url, and each canary or url appears in its ticket. The held-out families are absent from dataset.json, with 0 shared 5-grams. All personal data is synthetic. Four non-blocking findings are recorded for later phases.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Pinned instruments: sha256 of .eccode/artifacts/plan/checks/*.js equals the plan values (dataset-precheck c59b7acd..., readme-check a9a0128f..., scaffold-check e1fde7f9...), checked before relying on any check output",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyoj0wx-014372e5"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "scaffold-check exits 0: package.json is exactly the spec §Deployment object (scripts start/test/eval/eval:tune, engines.node >=22, no dependencies, devDependencies or type); .env.example matches §Deployment line for line (ANTHROPIC_API_KEY empty, ANTHROPIC_BASE_URL not defined, TRIAGE_* commented); .gitignore has .env and node_modules/. The reviewer also read all three files and compared them with spec §Deployment directly",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyoj105-0112e725",
+        "artifact:package.json",
+        "artifact:.env.example",
+        "artifact:.gitignore"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "dataset-precheck exits 0 (D5 format, all 13 datasetMinimums, the six in-family families, held-out families only in holdout.json, 23 >= 15 attack rows with a target). thresholds.json deep-equals the D5 block. Synthetic-data scan: all emails and urls use example domains, phones use 555, the one Luhn-valid number is a test card. Each canary and url appears in its ticket. Held-out families and 5-grams are absent from dataset.json. The reviewer also read every row: labels are plausible under E6",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyoj13b-01ee254f",
+        "ev:ev-muyol0uj-0114b3d6",
+        "artifact:eval/dataset.json",
+        "artifact:eval/holdout.json",
+        "artifact:eval/thresholds.json"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "E5 freeze: three `eccode evidence file` records exist (dataset b024a838..., holdout e7cbbfd2..., thresholds ee4703c1...). The current files match them, and so does the HEAD commit aee61eb. Neither src/triage/injection.js nor src/triage/fallback-provider.js exists in the tree or in any git history",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyoc9sb-01a8edc1",
+        "ev:ev-muyoc9ul-01ee7a22",
+        "ev:ev-muyoc9wk-014a1edb",
+        "ev:ev-muyojhwo-01bcd17b",
+        "ev:ev-muyojhz1-0180de5c"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "node --test test/helpers/helpers.test.js exits 0 on loopback only (21/21), and npm test exits 0 with the spec glob",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyoj4sp-01298fb7",
+        "ev:ev-muyoj5nt-017cc128"
+      ]
+    },
+    {
+      "id": "C6",
+      "description": "Helpers conform to spec §Testing Strategy and DES-1. buildChildEnv is exactly {PATH, ...testEnv, PORT:'0'}, spawns process.execPath and copies nothing else from process.env; an independent mutation that spreads process.env fails 2 self-test cases. http-client uses node:http with agent:false; a host header in any case overrides Host; setHost:false sends no Host; Origin is passed through. fake-fetch implements respond, messageOk (thinkingFirst, usage), never (stays pending after abort), throws and capture. fake-anthropic binds loopback only, counts requests on arrival and serves 307/308 redirects; target B counts 0 requests under redirect:'error', with a live-counter control",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyol4tx-01f46626",
+        "ev:ev-muyoj4sp-01298fb7",
+        "artifact:test/helpers/spawn-server.js",
+        "artifact:test/helpers/http-client.js",
+        "artifact:test/helpers/fake-fetch.js",
+        "artifact:test/helpers/fake-anthropic.js",
+        "artifact:test/helpers/helpers.test.js",
+        "artifact:test/helpers/fixtures/env-probe-server.js"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "FND-1",
+      "severity": "minor",
+      "title": "fake-fetch responses do not record whether the body was read",
+      "detail": "The pipeline-phase criterion and the unit/anthropic-provider row in spec §Testing Strategy require that \"a stub answering 307 gives model_error/redirect_refused without reading the body\". makeResponse() in test/helpers/fake-fetch.js returns text()/json() closures that track no reads, so respond(307, ...) cannot prove the body was left unread. t09 would have to hand-roll its own stub.",
+      "evidence": [
+        "artifact:test/helpers/fake-fetch.js"
+      ],
+      "recommendation": "Resolved when makeResponse exposes a read counter, for example `res.bodyReads` incremented by text() and json(), and helpers.test.js covers it. Alternatively, t09's handoff shows a local stub that asserts text() was never called."
+    },
+    {
+      "id": "FND-2",
+      "severity": "info",
+      "title": "Tune-mode flag FPR has 8 instructionLike rows, so one false positive fails it",
+      "detail": "dataset.json has 8 instructionLike benign rows; the union has 12. In tune mode (E3), injection_flag_fpr <= 0.10 tolerates 0/8, because 1/8 = 0.125. Full mode tolerates 1/12 = 0.083. In-family flag_recall >= 0.90 over 18 rows tolerates at most 1 miss. These numbers are consistent with the spec, but t11 should expect the tune check to be stricter than the full one.",
+      "evidence": [
+        "ev:ev-muyoj13b-01ee254f",
+        "artifact:eval/dataset.json"
+      ],
+      "recommendation": "No change to the frozen files. delivery-lead should pass this note to t11 (rules author) as tuning context, without holdout content."
+    },
+    {
+      "id": "FND-3",
+      "severity": "info",
+      "title": "Redirect self-test control relies on localhost reaching 127.0.0.1",
+      "detail": "The 307/308 tests use Location http://localhost:<B>, matching AC4(o). B binds 127.0.0.1 only. The follow-mode control (B counts 1) passes here, but on a host where localhost resolves only to ::1 the control fails, while the redirect:'error' assertion would still hold.",
+      "evidence": [
+        "ev:ev-muyoj4sp-01298fb7",
+        "artifact:test/helpers/helpers.test.js"
+      ],
+      "recommendation": "Optional: t15 can reuse the same pattern. If CI shows a flake, bind B with host 'localhost' or use 127.0.0.1 in the control request."
+    },
+    {
+      "id": "FND-4",
+      "severity": "info",
+      "title": "Labels come from a single labeller, and some rows are borderline by design",
+      "detail": "I read every row and found the labels plausible under E6 and the system-prompt urgency definitions. Rows such as b-052 and h-024 (phishing reports, labelled other/high) and b-029 (lost 2FA but still signed in on one device, labelled account/medium) are defensible but contestable. The t02 handoff already discloses this. Their effect on the accuracy metrics is small.",
+      "evidence": [
+        "ev:ev-muyol0uj-0114b3d6",
+        "artifact:eval/dataset.json",
+        "artifact:eval/holdout.json"
+      ],
+      "recommendation": "No change, because the files are frozen. The verification report should state that the labels have a single author (E7 honesty)."
+    }
+  ]
+}
