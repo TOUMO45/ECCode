@@ -1,0 +1,101 @@
+$ node .eccode/reviews/drafts/sec-core-http-probe.js .
+# cwd: .
+# exit: 0
+PASS foreign Host + 20KB body -> 403 forbidden_host (not 413) :: 403 null
+PASS foreign Host + bad CT + big body -> 403 (Host first) :: 403
+PASS foreign Host + chunked 20KB -> 403 :: 403
+PASS foreign Host + Expect:100-continue -> 403 without 100 Continue :: HTTP/1.1 403 Forbidden has100=false
+PASS allowed Host + CL 99999999 + Expect -> 413 without 100 Continue :: HTTP/1.1 413 Payload Too Large has100=false
+PASS Host "localhost.:38221" -> 403 :: 403
+PASS Host "LOCALHOST:38221" -> 200 :: 200
+PASS Host "localhost:38221" -> 200 :: 200
+PASS Host "[::1]:38221" -> 200 :: 200
+PASS Host "[0:0:0:0:0:0:0:1]:38221" -> 403 :: 403
+PASS Host "127.1:38221" -> 403 :: 403
+PASS Host "0x7f000001:38221" -> 403 :: 403
+PASS Host "2130706433:38221" -> 403 :: 403
+PASS Host "127.0.0.1" -> 403 :: 403
+PASS Host "127.0.0.1:038221" -> 403 :: 403
+PASS Host "127.0.0.1:38222" -> 403 :: 403
+PASS Host "evil.com:38221" -> 403 :: 403
+PASS Host "127.0.0.1.nip.io:38221" -> 403 :: 403
+PASS Host "localhost:38221@evil.com" -> 403 :: 403
+PASS Host "evil.com#@127.0.0.1:38221" -> 403 :: 403
+PASS Host "127.0.0.1:38221.evil.com" -> 403 :: 403
+PASS Host "[::ffff:127.0.0.1]:38221" -> 403 :: 403
+PASS Host "::1:38221" -> 403 :: 403
+PASS Host "" -> 403 :: 403
+PASS Host "127.0.0.1:38221 evil" -> 403 :: 403
+PASS Host "localhost:38221\t" -> 200 :: 200
+PASS missing Host (HTTP/1.1) -> 403 :: 403
+PASS missing Host (HTTP/1.0) -> 403 :: 403
+PASS duplicate Host (foreign first) -> 403 or parser 400 :: 403
+INFO duplicate Host (allowed first) -> 200
+PASS absolute-form request-target -> 404 (exact path match) :: 404
+PASS POST Origin "null" -> 403 :: 403
+PASS POST Origin "" -> 403 :: 403
+PASS POST Origin "http://evil.com" -> 403 :: 403
+PASS POST Origin "https://127.0.0.1:38221" -> 403 :: 403
+PASS POST Origin "http://127.0.0.1:38221/" -> 403 :: 403
+PASS POST Origin "http://localhost.:38221" -> 403 :: 403
+PASS POST Origin "http://LOCALHOST:38221" -> 403 :: 403
+PASS POST Origin "http://127.0.0.1:38221" -> 200 :: 200
+PASS POST Origin "http://localhost:38221" -> 200 :: 200
+PASS POST Origin "http://[::1]:38221" -> 200 :: 200
+PASS POST Origin "http://127.0.0.1:38221.evil.com" -> 403 :: 403
+PASS POST Origin "http://evil.com, http://127.0.0.1:38221" -> 403 :: 403
+PASS duplicate Origin (evil first) -> 403 :: 403
+PASS cross-origin POST with 20KB body -> 403 forbidden_origin (not 413) :: 403
+PASS PUT cross-origin -> 403 before 405 :: 403
+PASS DELETE cross-origin -> 403 before 405 :: 403
+PASS PATCH cross-origin -> 403 before 405 :: 403
+PASS OPTIONS preflight -> 405, Allow: POST, no ACAO :: 405 allow=POST
+PASS OPTIONS cross-origin -> 403 :: 403
+PASS Content-Type "text/plain" -> 415 :: 415
+PASS Content-Type "application/x-www-form-urlencoded" -> 415 :: 415
+PASS Content-Type "multipart/form-data; boundary=x" -> 415 :: 415
+PASS Content-Type "application/json-patch+json" -> 415 :: 415
+PASS Content-Type "application/jsonx" -> 415 :: 415
+PASS Content-Type "application/json; charset=utf-8" -> 200 :: 200
+PASS Content-Type "APPLICATION/JSON" -> 200 :: 200
+PASS Content-Type " application/json ;x=y" -> 200 :: 200
+PASS Content-Type "text/plain; application/json" -> 415 :: 415
+PASS Content-Type null -> 415 :: 415
+PASS 415 with 20KB body (before body read) :: 415
+PASS exactly 16384 bytes -> 200 :: 200 len=16384
+PASS 16385 bytes (CL) -> 413 :: 413
+PASS 16385 bytes chunked -> 413 :: 413
+PASS multi-chunk total 16385 -> 413 :: 413
+PASS 8000 two-byte chars (16014 B) -> 200 :: 200
+PASS body "{" -> 400 invalid_json, no echo :: 400
+PASS body "" -> 400 invalid_json, no echo :: 400
+PASS body "[]" -> 400 invalid_request, no echo :: 400
+PASS body "null" -> 400 invalid_request, no echo :: 400
+PASS body "\"x\"" -> 400 invalid_request, no echo :: 400
+PASS body "{\"ticket\":1}" -> 400 invalid_request, no echo :: 400
+PASS body "{\"__proto__\":{\"ticket\":\"x\"}}" -> 400 invalid_request, no echo :: 400
+PASS body "{\"ticket\":\"   \"}" -> 400 ticket_empty, no echo :: 400
+PASS body "{\"ticket\":\"aaaaaaaaaaaaaaaaaaa" -> 400 ticket_too_long, no echo :: 400
+PASS body "{\"ticket\":\"CANARY-SECRET-7731\"" -> 400 invalid_json, no echo :: 400
+PASS service throws -> 500 Internal error., no message/stack/canary :: {"error":{"code":"internal_error","message":"Internal error."}}
+PASS GET /../package.json -> 404 :: 404
+PASS GET /%2e%2e/package.json -> 404 :: 404
+PASS GET //index.html -> 404 :: 404
+PASS GET /index.html/ -> 404 :: 404
+PASS GET /INDEX.HTML -> 404 :: 404
+PASS GET /app.js%00 -> 404 :: 404
+PASS GET /public/app.js -> 404 :: 404
+PASS GET /favicon.ico -> 404 :: 404
+PASS GET /api/health/ -> 404 :: 404
+PASS GET /index.html?query -> 200 html with security headers :: 200
+PASS HEAD health -> 200 headers, no body :: 200
+PASS health body never contains the key :: {"status":"ok","mode":"live","model":"claude-haiku-5-5"}
+PASS POST /api/health -> 405 Allow: GET, HEAD :: 405
+INFO parser-rejected request -> HTTP/1.1 400 Bad Request; security headers present: false; body=""
+INFO CL+TE smuggling attempt -> HTTP/1.1 400 Bad Request
+PASS log lines contain no canary/key/ticket text/host/origin/error message :: 91 lines
+INFO log keys: t,event,rid,method,route,status,ms,errorCode,ticketLength,source,fallbackReason,injectionSuspected,redactions,upstreamStatus,detail,usage,errorName
+PASS meta.detail carrying ticket text is dropped (detail regex)
+INFO service.analyse called 9 times
+
+0 failure(s)

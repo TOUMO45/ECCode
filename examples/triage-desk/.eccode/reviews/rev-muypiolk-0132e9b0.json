@@ -1,0 +1,179 @@
+{
+  "decision": "approve",
+  "summary": "Security review of sub-muyp6003-014a87e3 (18 artifacts), done by reading the code and running my own probes. The HTTP shell enforces the C1 order: Host, then Origin, then route, then method, then 415/413, then body. A foreign Host or Origin with a 20 KB, chunked or Expect: 100-continue body gets 403, not 413, and no 100 Continue is sent. DNS-rebinding Host variants are refused: trailing dot, numeric and short IPv4, IPv6 long and mapped forms, wrong port, userinfo or suffix tricks, an empty Host and a missing Host. Origin 'null', empty, https and trailing-slash values get 403. No response carries Access-Control-* headers. Security headers are present on every handler response. Bodies over 16384 bytes get 413 whether the limit is reached through Content-Length or chunked transfer. A 500 or 4xx response never echoes input, and logs hold metadata only. Config enforces the DES-1 base-URL rules and the DES-6 loopback rule, and its errors never echo values. Redaction leaves no Luhn window on ARCH-10 or DES-7 vectors or on 3000 fuzzed embedded cards, and it stays within its time budget on 12 extra adversarial inputs. V1-V4 behave as specified, and the DES-8 deviation is strictly stricter. The prompt isolates the ticket, sends no tools or sampling parameters, and keeps the system prompt constant. The UI uses only textContent and value sinks. Pinned check-script hashes match, the full suite passes 259/259, design vectors pass, and only the 18 owned files changed. Approved with one minor finding (validator cost on long model output, recorded as RISK-10) and five info observations.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Pinned instruments: sha256 of .eccode/artifacts/plan/checks/*.js equals the plan values (dataset-precheck c59b7acd..., readme-check a9a0128f..., scaffold-check e1fde7f9...) and no change to checks/** since the phase base",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyp844n-01065832",
+        "ev:ev-muyp8gdu-01794a79"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "npm test exits 0 (helpers self-test plus the schema, prompt, redact, config, log, ticket-input, http-server and ui unit tests), rerun by the reviewer after the submission",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyp8cls-01f10bab",
+        "ev:ev-muyphdl4-01e7991b"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "node .eccode/artifacts/design/design-vectors.js still prints 'all design vectors pass'",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyp8d3x-01152e56"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "DES-8 resolved: the product-token mask lookbehind is Unicode-aware. unit/schema.test.js holds the three required reject vectors. Earlier accept and reject vectors pass. The t04 deviation (ASCII case classes with the 'gu' flags, plus \\p{Cf}) only adds rejections: the long-s 'aſp.net', soft hyphen, ZWJ and combining-mark variants are rejected, and the accept vectors still pass",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyphdl4-01e7991b",
+        "ev:ev-muypgo9y-01c9b8e3",
+        "artifact:src/triage/schema.js",
+        "artifact:test/unit/schema.test.js"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "No file outside the phase tasks' ownership globs changed: git diff a54af19 (excluding .eccode) lists exactly the 18 submitted files",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyp8gdu-01794a79"
+      ]
+    },
+    {
+      "id": "C6",
+      "description": "T2 DNS rebinding and cross-site requests. The Host allowlist runs first and holds against rebinding and port tricks. The Origin check covers every non-GET/HEAD method, including null and duplicate Origin headers. OPTIONS gets 405. No Access-Control-* header is sent. Every pre-body rejection carries Connection: close, and no 100 Continue is sent before the checks pass",
+      "met": true,
+      "evidence": [
+        "ev:ev-muypb2dn-01ca2892",
+        "artifact:src/http-server.js"
+      ]
+    },
+    {
+      "id": "C7",
+      "description": "T8/T9 input limits and error leakage. 415 is decided before the body is read. 413 applies above 16384 bytes, whether the size comes from Content-Length or a streamed or chunked body. invalid_json and invalid_request are handled as specified, including a __proto__ ticket. A service exception gives a fixed 500 body with no message or stack. Static routes use an exact-match map, so traversal and encoding variants get 404. Health never exposes the key",
+      "met": true,
+      "evidence": [
+        "ev:ev-muypb2dn-01ca2892",
+        "artifact:src/http-server.js",
+        "artifact:src/ticket-input.js"
+      ]
+    },
+    {
+      "id": "C8",
+      "description": "T6 logs are metadata only. The ticket text, a canary in the API key, the Host and Origin values and the service error message never appear in any log line. meta.detail carrying ticket text is dropped by the DETAIL allowlist",
+      "met": true,
+      "evidence": [
+        "ev:ev-muypb2dn-01ca2892",
+        "artifact:src/log.js"
+      ]
+    },
+    {
+      "id": "C9",
+      "description": "T11/T12 config. TRIAGE_ANTHROPIC_BASE_URL accepts https, or http only to a loopback host. It rejects userinfo, query, fragment, empty ?/#, file/javascript/ws schemes and http to localhost. or 127.0.0.2. ANTHROPIC_BASE_URL is ignored. A non-loopback HOST is refused without TRIAGE_ALLOW_REMOTE=1. ConfigError messages never contain the value or the key. The config object is frozen",
+      "met": true,
+      "evidence": [
+        "ev:ev-muypgo9y-01c9b8e3",
+        "artifact:src/config.js"
+      ]
+    },
+    {
+      "id": "C10",
+      "description": "T5 redaction (D3/ARCH-10/DES-7). No Luhn-valid window survives the ARCH-10 cases, NBSP, tab or mixed separators, card plus CVV or expiry, phone plus card, or 3000 fuzzed embedded cards. Emails and NBSP/tab phones are redacted. 12 extra adversarial inputs each have a median under 200 ms",
+      "met": true,
+      "evidence": [
+        "ev:ev-muypgo9y-01c9b8e3",
+        "ev:ev-muyp8d3x-01152e56",
+        "artifact:src/triage/redact.js"
+      ]
+    },
+    {
+      "id": "C11",
+      "description": "T1 prompt construction. The request body has only the keys model, max_tokens, system, messages and output_config (effort low, json_schema). It has no tools, thinking or sampling parameters. The system prompt is constant. The ticket sits only inside the delimiters, with no ASCII < or > in between, including on input with </ticket>, <system>, CRLF and lookalike brackets. neutralise is idempotent",
+      "met": true,
+      "evidence": [
+        "ev:ev-muypgo9y-01c9b8e3",
+        "artifact:src/triage/prompt.js"
+      ]
+    },
+    {
+      "id": "C12",
+      "description": "V1-V4 and validateResponse. Single-sentence checks, link and email rejection, and enum normalisation all hold, including Turkish dotted I, NUL and __proto__ values. validateTriage enforces exact own keys and rejects inherited keys, arrays and null. Responses use strict enums. checkSchemaKeywords rejects maxLength. OUTPUT_SCHEMA is deep-frozen",
+      "met": true,
+      "evidence": [
+        "ev:ev-muypgo9y-01c9b8e3",
+        "artifact:src/triage/schema.js"
+      ]
+    },
+    {
+      "id": "C13",
+      "description": "T3 UI XSS. public/ has no innerHTML, outerHTML, insertAdjacentHTML, document.write, eval, new Function, on* attributes or inline script or style. Server and model data are written only through textContent or textarea.value. className values come from fixed literals after validation. fetch targets only /api/health and /api/triage. Nothing is stored client-side",
+      "met": true,
+      "evidence": [
+        "ev:ev-muypgo9y-01c9b8e3",
+        "artifact:public/app.js",
+        "artifact:public/index.html"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "SEC-CM-1",
+      "severity": "minor",
+      "title": "V2 link validator is O(n^2) on long model output; validateTriage applies it without a length gate",
+      "detail": "textFieldErrors runs containsLinkOrEmail on summary and suggestedReply whatever their length. Its six regexes (obfuscated-email, bare-domain, host-path, email, scheme) rescan from every word boundary. A ticket can steer the model toward degenerate output such as 'a.a.a.' or '1.1.1.'. On such output validateTriage takes a median of 508 ms with 8,000 characters in each field and 6.6-8.2 s with 32,000 characters. TRIAGE_MAX_TOKENS can be set up to 16000, which allows output that long. The work blocks the single-threaded server's event loop. The output then fails V1 or V4 anyway. Impact is limited: the server is local and single-user, the model must cooperate, the operator controls max_tokens, and each run costs one paid model call. The worst case at the default 2048 tokens is about a quarter of a second. The same check on spec-length input (1,200 characters) takes about 6 ms. Recorded as RISK-10.",
+      "evidence": [
+        "ev:ev-muypgo9y-01c9b8e3"
+      ],
+      "recommendation": "In validateTriage/validateResponse, run containsLinkOrEmail only when summary.length <= 200 and suggestedReply.length <= 1200. Otherwise report summary_v1 or reply_length alone. Add a unit test that a 32k-character 'a.' reply is rejected in under 50 ms. Do this before or with t09 (anthropic-provider) wiring."
+    },
+    {
+      "id": "SEC-CM-2",
+      "severity": "info",
+      "title": "Cards written in non-ASCII digits (full-width U+FF10-FF19, Arabic-Indic) are not redacted",
+      "detail": "redact('card ４１１１ １１１１ １１１１ １１１１') returns the text unchanged with card=0. D3 uses \\d, which matches ASCII digits only, and the reference implementation behaves the same way. This class is not among the RISK-9 under-redaction cases listed in D3. Such input is unlikely in English tickets, but full-width digits can come from IME or CJK clipboard text.",
+      "evidence": [
+        "ev:ev-muypgo9y-01c9b8e3"
+      ],
+      "recommendation": "Either list it under RISK-9 / D3 'Known under-redaction', or apply NFKC (or a digit-only fold) to a copy for detection before the card and phone passes. Leave this to the design owner. It does not block this phase."
+    },
+    {
+      "id": "SEC-CM-3",
+      "severity": "info",
+      "title": "Requests rejected by Node's HTTP parser get Node's bare 400 without C1 security headers (delivery-lead note confirmed)",
+      "detail": "Two requests were rejected by Node's parser before the handler ran: one with 'Content-Length: abc' and one with CL+TE together, a smuggling attempt. Both got 'HTTP/1.1 400 Bad Request' with an empty body and no CSP or nosniff headers. The body is empty and nothing can render, so there is no exploitable impact. CL+TE smuggling is rejected.",
+      "evidence": [
+        "ev:ev-muypb2dn-01ca2892"
+      ],
+      "recommendation": "Optional: add server.on('clientError') that writes a fixed 400 with SECURITY_HEADERS and closes the socket. Otherwise keep it documented as accepted."
+    },
+    {
+      "id": "SEC-CM-4",
+      "severity": "info",
+      "title": "V2 residuals inherited from the brief rules: ideographic or full-width dots, defanged '[.]' and IDN-only labels pass",
+      "detail": "The following are not rejected: 'evil。com', 'evil[.]com', 'еvil．com' and '例え.com'. The six V2 rules are ASCII-only, and D4 keeps them unchanged on purpose. The implementation matches the spec. The output is display-only (textContent and textarea), the system prompt forbids domains, and a human copy step follows. This is noted for T4 and RISK-1 visibility. It is not an implementation defect.",
+      "evidence": [
+        "ev:ev-muypgo9y-01c9b8e3"
+      ],
+      "recommendation": "Consider an NFKC fold and treating U+3002, U+FF0E and U+FF61 as '.' before V2 in a later design revision. Track it under RISK-1/T4."
+    },
+    {
+      "id": "SEC-CM-5",
+      "severity": "info",
+      "title": "V1 rejects only CR/LF, so U+2028/U+2029 line separators pass inside a summary; the 403 UI text keeps a literal '<port>'",
+      "detail": "isSingleSentence('Foo\\u2028bar.') returns true. The spec says 'no CR/LF', so this is spec-conformant, but some renderers show U+2028 as a line break. The '(http://127.0.0.1:<port>)' text in errorMessage(403) is written with textContent, so the literal '<port>' is inert and has no security impact. Its wording belongs to the technical designer (t07 note).",
+      "evidence": [
+        "ev:ev-muypgo9y-01c9b8e3",
+        "artifact:public/app.js"
+      ],
+      "recommendation": "Optional: extend the V1 line-break check to /[\\r\\n\\u0085\\u2028\\u2029]/. Let the designer settle the 403 wording."
+    }
+  ]
+}
