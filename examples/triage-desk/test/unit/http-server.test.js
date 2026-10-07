@@ -195,7 +195,7 @@ test('C1.1/AC17: foreign, missing or wrong-port Host → 403 forbidden_host with
   const s = await start(t);
   const bad = ['attacker.example:3000', `attacker.example:${s.port}`, `127.0.0.1:${s.port + 1}`, '127.0.0.1', 'localhost',
     '[::1]', `127.0.0.1:${s.port}.attacker.example`, `127.0.0.2:${s.port}`, `::1:${s.port}`, `127.0.0.1:0${s.port}`,
-    ` 127.0.0.1:${s.port}x`, `localhost.:${s.port}`, ''];
+    ` 127.0.0.1:${s.port}x`, `localhost.:${s.port}`];
   for (const host of bad) {
     for (const [method, p] of [['GET', '/api/health'], ['GET', '/'], ['POST', '/api/triage']]) {
       const res = await s.req({ method, path: p, headers: { host, 'content-type': 'application/json' }, body: method === 'POST' ? { ticket: 'hello' } : undefined });
@@ -414,7 +414,40 @@ test('C3: 200 passes the trimmed ticket to the service and returns its response'
   assert.deepEqual(Object.keys(res.json), Object.keys(TRIAGE_RESPONSE));
   assert.deepEqual(s.service.calls, ['I was charged twice.']);
   assertSecurityHeaders(res);
-  assert.notEqual(res.headers.connection, 'close');
+});
+
+test('C1: accepted requests keep the connection open (Connection: close only on rejections)', async (t) => {
+  const s = await start(t);
+  const agent = new http.Agent({ keepAlive: true });
+  t.after(() => agent.destroy());
+  const get = (p, extra = {}) => new Promise((resolve, reject) => {
+    const r = http.request({ hostname: '127.0.0.1', port: s.port, path: p, agent, ...extra }, (res) => {
+      res.resume();
+      res.on('end', () => resolve(res));
+    });
+    r.on('error', reject);
+    r.end();
+  });
+  assert.equal((await get('/api/health')).headers.connection, 'keep-alive');
+  assert.equal((await get('/')).headers.connection, 'keep-alive');
+  assert.equal((await get('/nope')).headers.connection, 'close');
+});
+
+test('C1.1: an empty Host header (raw socket) → 403 forbidden_host', async (t) => {
+  const s = await start(t);
+  const net = require('node:net');
+  const reply = await new Promise((resolve, reject) => {
+    const sock = net.connect(s.port, '127.0.0.1', () => {
+      sock.write('GET /api/health HTTP/1.1\r\nHost: \r\nConnection: close\r\n\r\n');
+    });
+    let data = '';
+    sock.setEncoding('utf8');
+    sock.on('data', (d) => { data += d; });
+    sock.on('end', () => resolve(data));
+    sock.on('error', reject);
+  });
+  assert.match(reply, /^HTTP\/1\.1 403 /);
+  assert.ok(reply.includes('"forbidden_host"'));
 });
 
 test('C3: Content-Type media type must be application/json (parameters and case ignored) → else 415', async (t) => {

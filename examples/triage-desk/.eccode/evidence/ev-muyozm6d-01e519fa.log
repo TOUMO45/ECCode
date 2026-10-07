@@ -1,0 +1,147 @@
+$ node .eccode/artifacts/design/design-vectors.js && node --test test/helpers/helpers.test.js
+# cwd: .
+# exit: 0
+redactor card-shaped 8000 chars: 3.65 ms
+redactor adversarial email_localpart_no_at median: 34.46 ms
+redactor adversarial email_domain_no_tld median: 34.55 ms
+redactor adversarial phone_digits_dots median: 41.84 ms
+redactor adversarial digits_only median: 36.03 ms
+redactor adversarial digit_nbsp median: 4.52 ms
+redactor adversarial card_worst_design median: 0.58 ms
+all design vectors pass
+TAP version 13
+# Subtest: http-client: default Host is 127.0.0.1:<port>, JSON parsed, status and headers returned
+ok 1 - http-client: default Host is 127.0.0.1:<port>, JSON parsed, status and headers returned
+  ---
+  duration_ms: 20.458415
+  type: 'test'
+  ...
+# Subtest: http-client: foreign Host, missing Host (setHost=false) and Origin are sent as given
+ok 2 - http-client: foreign Host, missing Host (setHost=false) and Origin are sent as given
+  ---
+  duration_ms: 7.737865
+  type: 'test'
+  ...
+# Subtest: http-client: body encoding (string raw, object as JSON) with explicit Content-Length
+ok 3 - http-client: body encoding (string raw, object as JSON) with explicit Content-Length
+  ---
+  duration_ms: 5.032025
+  type: 'test'
+  ...
+# Subtest: http-client: HEAD gives an empty body and json null; non-JSON body gives json null
+ok 4 - http-client: HEAD gives an empty body and json null; non-JSON body gives json null
+  ---
+  duration_ms: 3.41818
+  type: 'test'
+  ...
+# Subtest: http-client: rejects (does not hang) when nothing listens
+ok 5 - http-client: rejects (does not hang) when nothing listens
+  ---
+  duration_ms: 2.194877
+  type: 'test'
+  ...
+# Subtest: fake-fetch: respond(status, json|text) exposes status and text()
+ok 6 - fake-fetch: respond(status, json|text) exposes status and text()
+  ---
+  duration_ms: 0.418521
+  type: 'test'
+  ...
+# Subtest: fake-fetch: messageOk builds a Messages API body with a text block and usage
+ok 7 - fake-fetch: messageOk builds a Messages API body with a text block and usage
+  ---
+  duration_ms: 0.42074
+  type: 'test'
+  ...
+# Subtest: fake-fetch: thinkingFirst puts a thinking block before the text block
+ok 8 - fake-fetch: thinkingFirst puts a thinking block before the text block
+  ---
+  duration_ms: 0.233009
+  type: 'test'
+  ...
+# Subtest: fake-fetch: never() stays pending, even after the signal aborts
+ok 9 - fake-fetch: never() stays pending, even after the signal aborts
+  ---
+  duration_ms: 1.909824
+  type: 'test'
+  ...
+# Subtest: fake-fetch: throws() rejects with a TypeError by default, or the given error
+ok 10 - fake-fetch: throws() rejects with a TypeError by default, or the given error
+  ---
+  duration_ms: 0.36924
+  type: 'test'
+  ...
+# Subtest: fake-fetch: capture(inner) records url, init and parsed body, counts calls, delegates to inner
+ok 11 - fake-fetch: capture(inner) records url, init and parsed body, counts calls, delegates to inner
+  ---
+  duration_ms: 0.945271
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: binds 127.0.0.1, serves a programmed 200 and records the request
+ok 12 - fake-anthropic: binds 127.0.0.1, serves a programmed 200 and records the request
+  ---
+  duration_ms: 53.774981
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: unprogrammed server answers 500, not a success
+ok 13 - fake-anthropic: unprogrammed server answers 500, not a success
+  ---
+  duration_ms: 3.10738
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: redirect(307) — fetch with redirect:'error' throws and the target counts 0 requests
+ok 14 - fake-anthropic: redirect(307) — fetch with redirect:'error' throws and the target counts 0 requests
+  ---
+  duration_ms: 10.512035
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: redirect(308) — fetch with redirect:'error' throws and the target counts 0 requests
+ok 15 - fake-anthropic: redirect(308) — fetch with redirect:'error' throws and the target counts 0 requests
+  ---
+  duration_ms: 12.696781
+  type: 'test'
+  ...
+# Subtest: fake-anthropic: redirect() rejects a non-3xx status
+ok 16 - fake-anthropic: redirect() rejects a non-3xx status
+  ---
+  duration_ms: 0.719101
+  type: 'test'
+  ...
+# Subtest: spawn-server: buildChildEnv is exactly {PATH, ...testEnv, PORT:"0"} and copies nothing else from process.env
+ok 17 - spawn-server: buildChildEnv is exactly {PATH, ...testEnv, PORT:"0"} and copies nothing else from process.env
+  ---
+  duration_ms: 0.398063
+  type: 'test'
+  ...
+# Subtest: spawn-server: child sees only PATH, testEnv and PORT=0 (parent secrets do not leak); port read from listening line
+ok 18 - spawn-server: child sees only PATH, testEnv and PORT=0 (parent secrets do not leak); port read from listening line
+  ---
+  duration_ms: 44.982764
+  type: 'test'
+  ...
+# Subtest: spawn-server: stop() terminates the child and the port stops accepting
+ok 19 - spawn-server: stop() terminates the child and the port stops accepting
+  ---
+  duration_ms: 33.233284
+  type: 'test'
+  ...
+# Subtest: spawn-server: a child that exits before listening rejects with its exit code and stderr
+ok 20 - spawn-server: a child that exits before listening rejects with its exit code and stderr
+  ---
+  duration_ms: 28.132109
+  type: 'test'
+  ...
+# Subtest: spawn-server: a child that never logs listening is killed after timeoutMs
+ok 21 - spawn-server: a child that never logs listening is killed after timeoutMs
+  ---
+  duration_ms: 509.933845
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 819.084246

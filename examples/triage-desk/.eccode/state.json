@@ -1,6 +1,6 @@
 {
-  "seq": 268,
-  "lastHash": "8898fa47f24243f13da104eae1654c4f1e5e29496b2b8065c8aae50ef490e309",
+  "seq": 282,
+  "lastHash": "837254c23a242042e5029f2ef8f90f64b387f00df4cc2b172da6bcccb2bb0e4d",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -772,24 +772,34 @@
         "method": "Unit tests with node:test",
         "command": "node --test test/unit/config.test.js test/unit/log.test.js test/unit/ticket-input.test.js test/unit/http-server.test.js"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "backend-engineer",
-        "at": "2026-10-07T22:32:14.855Z",
-        "baseCommit": "a54af191f1370d9d20aa61f55082bae1133b7a6c",
-        "runId": "run-muyomp9q-015512c7"
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "backend-engineer",
           "at": "2026-10-07T22:32:14.855Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-07T22:42:34.011Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "backend-engineer",
+      "handoffId": "ho-muyp0ps6-01a71861",
+      "filesChanged": [
+        "src/http-server.js",
+        "src/config.js",
+        "src/log.js",
+        "src/ticket-input.js",
+        "test/unit/http-server.test.js",
+        "test/unit/config.test.js",
+        "test/unit/log.test.js",
+        "test/unit/ticket-input.test.js"
+      ]
     },
     "t07-ui": {
       "id": "t07-ui",
@@ -829,10 +839,22 @@
         "method": "Unit and static tests with node:test",
         "command": "node --test test/unit/ui.test.js"
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "frontend-engineer",
+        "at": "2026-10-07T22:39:48.647Z",
+        "baseCommit": "31b9513513b69c9c349a2e0e0d6ab4760120c046",
+        "runId": "run-muyowsm5-015632ab"
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "frontend-engineer",
+          "at": "2026-10-07T22:39:48.647Z",
+          "attempt": 1
+        }
+      ],
       "completedBy": null,
       "handoffId": null
     },
@@ -2904,6 +2926,139 @@
       "task": "t06-http-config-log-input",
       "recordedBy": "backend-engineer",
       "at": "2026-10-07T22:38:32.501Z"
+    },
+    "ev-muyozhld-016a0617": {
+      "id": "ev-muyozhld-016a0617",
+      "kind": "command",
+      "label": "t06 verification: node --test config/log/ticket-input/http-server unit tests",
+      "command": "node --test test/unit/config.test.js test/unit/log.test.js test/unit/ticket-input.test.js test/unit/http-server.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 544,
+      "log": ".eccode/evidence/ev-muyozhld-016a0617.log",
+      "logSha256": "8a5070ddd721dbf3c53b50c55139008f22251d7115c3b77fa425d2fa387c5f8d",
+      "outputTail": "  duration_ms: 0.534265\n  type: 'test'\n  ...\n# Subtest: pure: same input gives deep-equal output and input is not mutated\nok 115 - pure: same input gives deep-equal output and input is not mutated\n  ---\n  duration_ms: 0.158056\n  type: 'test'\n  ...\n# Subtest: error results never echo the ticket\nok 116 - error results never echo the ticket\n  ---\n  duration_ms: 0.133937\n  type: 'test'\n  ...\n1..116\n# tests 116\n# suites 0\n# pass 116\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 486.995261\n",
+      "gate": null,
+      "task": "t06-http-config-log-input",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T22:41:36.729Z"
+    },
+    "ev-muyozkrq-015ef6ee": {
+      "id": "ev-muyozkrq-015ef6ee",
+      "kind": "command",
+      "label": "t06 flakiness: verification command 5x in a row, --test-concurrency=1 as npm test",
+      "command": "for i in 1 2 3 4 5; do node --test --test-concurrency=1 test/unit/config.test.js test/unit/log.test.js test/unit/ticket-input.test.js test/unit/http-server.test.js > /dev/null || { echo \"run $i FAILED\"; exit 1; }; echo \"run $i ok\"; done",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 4049,
+      "log": ".eccode/evidence/ev-muyozkrq-015ef6ee.log",
+      "logSha256": "5b538e731935585d6333df3e2fa57766fc3b6dbdf7d9f0c1685643f481e03728",
+      "outputTail": "run 1 ok\nrun 2 ok\nrun 3 ok\nrun 4 ok\nrun 5 ok\n",
+      "gate": null,
+      "task": "t06-http-config-log-input",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T22:41:40.849Z"
+    },
+    "ev-muyozl1r-0101ef18": {
+      "id": "ev-muyozl1r-0101ef18",
+      "kind": "command",
+      "label": "t06 probe: client abort mid-body / after 413, Expect: 100-continue on rejected and accepted requests",
+      "command": "node .eccode/drafts/t06-abort-probe.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 278,
+      "log": ".eccode/evidence/ev-muyozl1r-0101ef18.log",
+      "logSha256": "b086be18745a98208ac5213a16738633995c3b850fc7c6cabb66e3449843135b",
+      "outputTail": "{\"requestLines\":[[\"/api/triage\",null,null],[\"/api/triage\",413,\"payload_too_large\"],[\"/api/triage\",403,\"forbidden_host\"],[\"/api/triage\",200,null],[\"/api/health\",200,null]],\"errorEvents\":0,\"calls\":1,\"expectContinueRejected\":{\"status\":403,\"continued\":false},\"expectContinueAccepted\":{\"status\":200,\"continued\":true},\"healthAfter\":200}\n",
+      "gate": null,
+      "task": "t06-http-config-log-input",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T22:41:41.207Z"
+    },
+    "ev-muyozm6d-01e519fa": {
+      "id": "ev-muyozm6d-01e519fa",
+      "kind": "command",
+      "label": "regression: approved design vectors + t03 helpers self-test",
+      "command": "node .eccode/artifacts/design/design-vectors.js && node --test test/helpers/helpers.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1375,
+      "log": ".eccode/evidence/ev-muyozm6d-01e519fa.log",
+      "logSha256": "782c7fa8321696ba0a2690b1fc6652b81afc8516605bb6191436a138fe267efa",
+      "outputTail": "  duration_ms: 33.233284\n  type: 'test'\n  ...\n# Subtest: spawn-server: a child that exits before listening rejects with its exit code and stderr\nok 20 - spawn-server: a child that exits before listening rejects with its exit code and stderr\n  ---\n  duration_ms: 28.132109\n  type: 'test'\n  ...\n# Subtest: spawn-server: a child that never logs listening is killed after timeoutMs\nok 21 - spawn-server: a child that never logs listening is killed after timeoutMs\n  ---\n  duration_ms: 509.933845\n  type: 'test'\n  ...\n1..21\n# tests 21\n# suites 0\n# pass 21\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 819.084246\n",
+      "gate": null,
+      "task": "t06-http-config-log-input",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T22:41:42.672Z"
+    },
+    "ev-muyozywx-01930f5a": {
+      "id": "ev-muyozywx-01930f5a",
+      "kind": "command",
+      "label": "regression: npm test (full suite present at this point: helpers, t04, t06)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 2019,
+      "log": ".eccode/evidence/ev-muyozywx-01930f5a.log",
+      "logSha256": "92303bf44311b16341a119fe4cd67b759804395a1b92670e5ba2bb9da5949fbe",
+      "outputTail": "  duration_ms: 0.186081\n  type: 'test'\n  ...\n# Subtest: pure: same input gives deep-equal output and input is not mutated\nok 190 - pure: same input gives deep-equal output and input is not mutated\n  ---\n  duration_ms: 0.105412\n  type: 'test'\n  ...\n# Subtest: error results never echo the ticket\nok 191 - error results never echo the ticket\n  ---\n  duration_ms: 0.114265\n  type: 'test'\n  ...\n1..191\n# tests 191\n# suites 0\n# pass 191\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1815.605136\n",
+      "gate": null,
+      "task": "t06-http-config-log-input",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T22:41:59.180Z"
+    },
+    "ev-muyp0s5r-013108a6": {
+      "id": "ev-muyp0s5r-013108a6",
+      "kind": "command",
+      "label": "t07 ui tests (failing-first: public/ not built yet)",
+      "command": "cd examples/triage-desk && node --test test/unit/ui.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 2,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 5,
+      "log": ".eccode/evidence/ev-muyp0s5r-013108a6.log",
+      "logSha256": "951b0000b7cd187e517dda1b6f9c303bbbaacea33ee5796e32453c22a4956155",
+      "outputTail": "\n[stderr]\n/bin/sh: 1: cd: can't cd to examples/triage-desk\n",
+      "gate": null,
+      "task": "t07-ui",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-07T22:42:37.080Z"
+    },
+    "ev-muyp0usd-0198e6d8": {
+      "id": "ev-muyp0usd-0198e6d8",
+      "kind": "command",
+      "label": "t07 ui tests (failing-first: public/ not built yet)",
+      "command": "node --test test/unit/ui.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 117,
+      "log": ".eccode/evidence/ev-muyp0usd-0198e6d8.log",
+      "logSha256": "207b19b4be044feee9b7b9d5f0f577ab165fa6e3c6f6eab4ce44317d0a63e9ac",
+      "outputTail": "#   requireStack: [ '/home/user/ECCode/examples/triage-desk/test/unit/ui.test.js' ]\n# }\n# Node.js v22.22.0\n# Subtest: test/unit/ui.test.js\nnot ok 1 - test/unit/ui.test.js\n  ---\n  duration_ms: 56.70084\n  type: 'test'\n  location: '/home/user/ECCode/examples/triage-desk/test/unit/ui.test.js:1:1'\n  failureType: 'testCodeFailure'\n  exitCode: 1\n  signal: ~\n  error: 'test failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 64.365343\n",
+      "gate": null,
+      "task": "t07-ui",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-07T22:42:40.486Z"
     }
   },
   "reviews": {
@@ -4585,6 +4740,66 @@
       "id": "ho-muyow30q-017561ab",
       "recordedBy": "ai-engineer",
       "at": "2026-10-07T22:38:57.897Z"
+    },
+    "ho-muyp0ps6-01a71861": {
+      "from": "backend-engineer",
+      "to": "delivery-lead",
+      "task": "t06-http-config-log-input",
+      "objective": "Implement src/http-server.js, src/config.js, src/log.js and src/ticket-input.js with unit tests, exactly per spec C1-C5, C6.1, C6.2, C6.4 (validateTicketInput), C6.5 and D1.6 (spec task 6, DES-1, DES-5, DES-6).",
+      "context": "Built test-first against the approved spec (.eccode/artifacts/design/spec.md) and design-vectors.js (checkBaseUrl, isLoopbackHost, BASE_URL_CASES). http-server.test.js uses a fake service and a temporary static fixture directory via the optional createServer staticDir option, so it never depends on public/ (t07). Note: the orchestrator commit 31b9513 ('Demo: t04 done') swept up six of my in-progress files mid-task; the final content is in the working tree, and git diff against the claim base a54af191 shows all eight files changed.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#C1-C5, C6.1, C6.2, C6.4, C6.5, D1, Security, Testing Strategy",
+        ".eccode/artifacts/design/design-vectors.js",
+        ".eccode/artifacts/design/http-probe.js",
+        ".eccode/artifacts/plan/plan.md",
+        "test/helpers/http-client.js"
+      ],
+      "dependencies": [
+        "t01-scaffold",
+        "t03-test-helpers"
+      ],
+      "expectedOutput": "createServer({config, service, log, staticDir?}) -> http.Server (not listening); loadConfig(env) -> frozen Config, ConfigError; createLogger(write) -> {request, event, error}; validateTicketInput(parsedBody) -> {ok, ticket} | {ok:false, status:400, code, message}.",
+      "acceptanceCriteria": [
+        "config: reads only the C6.1 variables (Proxy-recorded access test); every BASE_URL_CASES vector (table copy checked against design-vectors.js for drift); ANTHROPIC_BASE_URL alone ignored; set TRIAGE_ANTHROPIC_BASE_URL -> baseUrlCustom true + custom_base_url warning; HOST=0.0.0.0 without opt-in throws ConfigError naming HOST (exact DES-6 text); TRIAGE_ALLOW_REMOTE=1 loads with non_loopback_host; TRIAGE_ALLOW_REMOTE=yes throws; ConfigError messages never contain the value",
+        "log: D1.6 allowlist only (unknown keys dropped, content-bearing values in allowlisted keys nulled); error event has only t/event/rid/errorCode/errorName; listening carries baseUrlCustom and no URL; warning carries only code",
+        "ticket-input: C3 table, first failure wins, pure; required directly by http-server",
+        "http-server: C1 order with a fake service (Host -> Origin -> route -> method -> 415 -> 413 -> validation, proven with headers-only requests); Host allowlist variants (port 0, IPv6 HOST as [addr]:P, port 80 bare names via request-time server.address()); Origin check incl. null/empty/https/trailing slash; Content-Length 413 fast path and streamed 413; security headers on every response type, no Access-Control-*; metadata-only request log line",
+        "http-server.test.js does not depend on public/: static behaviour tested against a temp fixture dir via staticDir"
+      ],
+      "completedWork": "src/config.js: loadConfig/ConfigError per C6.1 with the reference checkBaseUrl and isLoopbackHost logic; result frozen; warnings in table order. src/ticket-input.js: pure validateTicketInput for C3 rows 2-5 (plain-object check, own 'ticket' string, trimmed 1-8000 UTF-16 units) with C5 messages. src/log.js: createLogger with per-event allowlists (request/listening/warning/error), value type checks, method->OTHER and route->other mapping, unknown event names throw TypeError. src/http-server.js: http.createServer({requireHostHeader:false}); Host allowlist from the actual listening port at request time; Origin check for non-GET/HEAD; exact route match after stripping the query; 405 with Allow; Connection: close + req.resume() on every pre-body rejection (403/404/405/413/415); 415 then Content-Length 413 then byte-counted streaming 413 at 16384; invalid_json for empty/unparseable body; C5 fixed messages; security headers on every response; static files read once from staticDir (default public/); health from config (mode live iff apiKey); service errors -> 500 internal_error + error event (name only); one request log line per request. Also: Expect: 100-continue is answered only after all pre-body checks pass. 116 unit tests across the four files.",
+      "filesChanged": [
+        "src/http-server.js",
+        "src/config.js",
+        "src/log.js",
+        "src/ticket-input.js",
+        "test/unit/http-server.test.js",
+        "test/unit/config.test.js",
+        "test/unit/log.test.js",
+        "test/unit/ticket-input.test.js"
+      ],
+      "evidence": [
+        "ev:ev-muyovjfx-011d3616",
+        "ev:ev-muyozhld-016a0617",
+        "ev:ev-muyozkrq-015ef6ee",
+        "ev:ev-muyozl1r-0101ef18",
+        "ev:ev-muyozm6d-01e519fa",
+        "ev:ev-muyozywx-01930f5a"
+      ],
+      "remainingIssues": [
+        "Interpretation (spec silent): the C3 row 'empty body or JSON.parse throws -> invalid_json' is decided in http-server.js, because the C6.4 signature validateTicketInput(parsedBody) receives an already-parsed value; ticket-input.js covers rows 2-5.",
+        "Interpretation (spec silent on order): 415 is checked before the Content-Length 413 fast path; both precede any body read.",
+        "Interpretation: only an unset variable takes its default. An empty HOST, PORT, ANTHROPIC_MODEL, TRIAGE_TIMEOUT_MS or TRIAGE_MAX_TOKENS is a ConfigError. Empty ANTHROPIC_API_KEY means null and empty TRIAGE_ANTHROPIC_BASE_URL means default, as C6.1 states. TRIAGE_ALLOW_REMOTE is matched exactly (' 1' is rejected). t16 README may want to mention that 'PORT=' in .env is an error.",
+        "Origin is compared exactly (case-sensitive) to 'http://' + allowlisted value; Host is lower-cased as C1 says.",
+        "createServer throws at construction if index.html, app.js or styles.css is missing from staticDir (fail fast). t13 app.test.js and t14/t15 therefore need public/ from t07 or must pass staticDir.",
+        "Requests that Node's HTTP parser rejects before the handler runs (malformed request line, invalid Content-Length, oversized headers) get Node's default 400 without the C1 security headers. C5 has no code for them; not handled.",
+        "A client that aborts mid-body gets no response; the request log line has status null (probe ev:ev-muyozl1r-0101ef18).",
+        "For t13 (server.js): call log.event('listening', {host, port, mode, model, timeoutMs, maxTokens, baseUrlCustom}) then log.event('warning', {code}) per config.warnings; log.js drops any other field. createServer's log defaults to createLogger() when omitted."
+      ],
+      "nextAction": "delivery-lead: include t06 in the core-modules phase submission (npm test); test-engineer (t14): run contract/http.test.js and http-guard.test.js against createServer via buildApp once t13 lands",
+      "lessonsConsulted": [],
+      "id": "ho-muyp0ps6-01a71861",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-07T22:42:34.024Z"
     }
   },
   "runs": {
@@ -4974,8 +5189,13 @@
       "task": "t06-http-config-log-input",
       "gate": null,
       "startedAt": "2026-10-07T22:31:40.150Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T22:43:03.200Z",
+      "durationMinutes": 11.38,
+      "costUsd": 0,
+      "tokens": 215235,
+      "note": null
     },
     "run-muyowsm5-015632ab": {
       "id": "run-muyowsm5-015632ab",
@@ -4983,6 +5203,15 @@
       "task": "t07-ui",
       "gate": null,
       "startedAt": "2026-10-07T22:39:31.044Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-muyp1cd3-0134ab9b": {
+      "id": "run-muyp1cd3-0134ab9b",
+      "agent": "backend-engineer",
+      "task": "t05-redact",
+      "gate": null,
+      "startedAt": "2026-10-07T22:43:03.265Z",
       "status": "running",
       "attempt": 1
     }
@@ -5144,8 +5373,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 115.13,
-    "tokens": 3465568
+    "runtimeMinutes": 126.51,
+    "tokens": 3680803
   },
   "delivery": null
 }

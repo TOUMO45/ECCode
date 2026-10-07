@@ -1,0 +1,57 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "t06-http-config-log-input",
+  "objective": "Implement src/http-server.js, src/config.js, src/log.js and src/ticket-input.js with unit tests, exactly per spec C1-C5, C6.1, C6.2, C6.4 (validateTicketInput), C6.5 and D1.6 (spec task 6, DES-1, DES-5, DES-6).",
+  "context": "Built test-first against the approved spec (.eccode/artifacts/design/spec.md) and design-vectors.js (checkBaseUrl, isLoopbackHost, BASE_URL_CASES). http-server.test.js uses a fake service and a temporary static fixture directory via the optional createServer staticDir option, so it never depends on public/ (t07). Note: the orchestrator commit 31b9513 ('Demo: t04 done') swept up six of my in-progress files mid-task; the final content is in the working tree, and git diff against the claim base a54af191 shows all eight files changed.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#C1-C5, C6.1, C6.2, C6.4, C6.5, D1, Security, Testing Strategy",
+    ".eccode/artifacts/design/design-vectors.js",
+    ".eccode/artifacts/design/http-probe.js",
+    ".eccode/artifacts/plan/plan.md",
+    "test/helpers/http-client.js"
+  ],
+  "dependencies": [
+    "t01-scaffold",
+    "t03-test-helpers"
+  ],
+  "expectedOutput": "createServer({config, service, log, staticDir?}) -> http.Server (not listening); loadConfig(env) -> frozen Config, ConfigError; createLogger(write) -> {request, event, error}; validateTicketInput(parsedBody) -> {ok, ticket} | {ok:false, status:400, code, message}.",
+  "acceptanceCriteria": [
+    "config: reads only the C6.1 variables (Proxy-recorded access test); every BASE_URL_CASES vector (table copy checked against design-vectors.js for drift); ANTHROPIC_BASE_URL alone ignored; set TRIAGE_ANTHROPIC_BASE_URL -> baseUrlCustom true + custom_base_url warning; HOST=0.0.0.0 without opt-in throws ConfigError naming HOST (exact DES-6 text); TRIAGE_ALLOW_REMOTE=1 loads with non_loopback_host; TRIAGE_ALLOW_REMOTE=yes throws; ConfigError messages never contain the value",
+    "log: D1.6 allowlist only (unknown keys dropped, content-bearing values in allowlisted keys nulled); error event has only t/event/rid/errorCode/errorName; listening carries baseUrlCustom and no URL; warning carries only code",
+    "ticket-input: C3 table, first failure wins, pure; required directly by http-server",
+    "http-server: C1 order with a fake service (Host -> Origin -> route -> method -> 415 -> 413 -> validation, proven with headers-only requests); Host allowlist variants (port 0, IPv6 HOST as [addr]:P, port 80 bare names via request-time server.address()); Origin check incl. null/empty/https/trailing slash; Content-Length 413 fast path and streamed 413; security headers on every response type, no Access-Control-*; metadata-only request log line",
+    "http-server.test.js does not depend on public/: static behaviour tested against a temp fixture dir via staticDir"
+  ],
+  "completedWork": "src/config.js: loadConfig/ConfigError per C6.1 with the reference checkBaseUrl and isLoopbackHost logic; result frozen; warnings in table order. src/ticket-input.js: pure validateTicketInput for C3 rows 2-5 (plain-object check, own 'ticket' string, trimmed 1-8000 UTF-16 units) with C5 messages. src/log.js: createLogger with per-event allowlists (request/listening/warning/error), value type checks, method->OTHER and route->other mapping, unknown event names throw TypeError. src/http-server.js: http.createServer({requireHostHeader:false}); Host allowlist from the actual listening port at request time; Origin check for non-GET/HEAD; exact route match after stripping the query; 405 with Allow; Connection: close + req.resume() on every pre-body rejection (403/404/405/413/415); 415 then Content-Length 413 then byte-counted streaming 413 at 16384; invalid_json for empty/unparseable body; C5 fixed messages; security headers on every response; static files read once from staticDir (default public/); health from config (mode live iff apiKey); service errors -> 500 internal_error + error event (name only); one request log line per request. Also: Expect: 100-continue is answered only after all pre-body checks pass. 116 unit tests across the four files.",
+  "filesChanged": [
+    "src/http-server.js",
+    "src/config.js",
+    "src/log.js",
+    "src/ticket-input.js",
+    "test/unit/http-server.test.js",
+    "test/unit/config.test.js",
+    "test/unit/log.test.js",
+    "test/unit/ticket-input.test.js"
+  ],
+  "evidence": [
+    "ev:ev-muyovjfx-011d3616",
+    "ev:ev-muyozhld-016a0617",
+    "ev:ev-muyozkrq-015ef6ee",
+    "ev:ev-muyozl1r-0101ef18",
+    "ev:ev-muyozm6d-01e519fa",
+    "ev:ev-muyozywx-01930f5a"
+  ],
+  "remainingIssues": [
+    "Interpretation (spec silent): the C3 row 'empty body or JSON.parse throws -> invalid_json' is decided in http-server.js, because the C6.4 signature validateTicketInput(parsedBody) receives an already-parsed value; ticket-input.js covers rows 2-5.",
+    "Interpretation (spec silent on order): 415 is checked before the Content-Length 413 fast path; both precede any body read.",
+    "Interpretation: only an unset variable takes its default. An empty HOST, PORT, ANTHROPIC_MODEL, TRIAGE_TIMEOUT_MS or TRIAGE_MAX_TOKENS is a ConfigError. Empty ANTHROPIC_API_KEY means null and empty TRIAGE_ANTHROPIC_BASE_URL means default, as C6.1 states. TRIAGE_ALLOW_REMOTE is matched exactly (' 1' is rejected). t16 README may want to mention that 'PORT=' in .env is an error.",
+    "Origin is compared exactly (case-sensitive) to 'http://' + allowlisted value; Host is lower-cased as C1 says.",
+    "createServer throws at construction if index.html, app.js or styles.css is missing from staticDir (fail fast). t13 app.test.js and t14/t15 therefore need public/ from t07 or must pass staticDir.",
+    "Requests that Node's HTTP parser rejects before the handler runs (malformed request line, invalid Content-Length, oversized headers) get Node's default 400 without the C1 security headers. C5 has no code for them; not handled.",
+    "A client that aborts mid-body gets no response; the request log line has status null (probe ev:ev-muyozl1r-0101ef18).",
+    "For t13 (server.js): call log.event('listening', {host, port, mode, model, timeoutMs, maxTokens, baseUrlCustom}) then log.event('warning', {code}) per config.warnings; log.js drops any other field. createServer's log defaults to createLogger() when omitted."
+  ],
+  "nextAction": "delivery-lead: include t06 in the core-modules phase submission (npm test); test-engineer (t14): run contract/http.test.js and http-guard.test.js against createServer via buildApp once t13 lands",
+  "lessonsConsulted": []
+}

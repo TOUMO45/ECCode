@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TriageDesk</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<header class="site-header">
+<h1>TriageDesk</h1>
+<p id="mode-badge" class="badge badge-checking" role="status">Checking mode…</p>
+</header>
+<main>
+<p id="live-notice" class="notice" hidden>Ticket text is sent to Anthropic for analysis. Email addresses, phone numbers and payment card numbers are replaced with placeholders first. Names, addresses and other details are not removed.</p>
+
+<form id="triage-form" novalidate>
+<label for="ticket">Customer ticket</label>
+<textarea id="ticket" name="ticket" maxlength="8000" rows="12" aria-describedby="ticket-count ticket-help"></textarea>
+<p id="ticket-help" class="hint">Paste the ticket text. Press Ctrl+Enter to analyse.</p>
+<p id="ticket-count" class="hint">0 / 8000 characters</p>
+<button type="submit" id="analyse">Analyse</button>
+</form>
+
+<p id="status" aria-live="polite"></p>
+
+<section id="result" aria-labelledby="result-heading" hidden>
+<h2 id="result-heading">Result</h2>
+<p id="source-label" class="source-label"></p>
+<p id="injection-warning" hidden>Warning: This ticket contains text that looks like instructions to the AI. Review the result carefully.</p>
+<dl class="fields">
+<dt>Category</dt>
+<dd id="result-category"></dd>
+<dt>Urgency</dt>
+<dd id="result-urgency"></dd>
+<dt>Summary</dt>
+<dd id="result-summary"></dd>
+</dl>
+<label for="reply">Suggested reply (editable)</label>
+<textarea id="reply" rows="10"></textarea>
+<div class="actions">
+<button type="button" id="copy">Copy reply</button>
+<button type="button" id="reset">Reset</button>
+</div>
+</section>
+</main>
+</body>
+</html>
