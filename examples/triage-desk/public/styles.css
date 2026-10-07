@@ -1,0 +1,236 @@
+/* TriageDesk styles (spec §Frontend / Accessibility, NFR6).
+   No inline styles anywhere (CSP): state is shown with the hidden attribute and classes.
+   Contrast of every token pair is checked by test/unit/ui.test.js. */
+:root {
+  --text: #1a1a1a;
+  --bg: #ffffff;
+  --muted: #4a4a4a;
+  --border: #6b6b6b;
+  --surface: #f5f5f5;
+  --focus: #1a5fb4;
+  --live-text: #0f3d1c;
+  --live-bg: #e3f1e6;
+  --fallback-text: #3d2e00;
+  --fallback-bg: #fff4ce;
+  --unknown-text: #333333;
+  --unknown-bg: #ececec;
+  --warning-text: #5c1a00;
+  --warning-bg: #fdecea;
+  --warning-border: #a33a1a;
+  --button-text: #ffffff;
+  --button-bg: #1a5fb4;
+  --button-disabled-bg: #5e6a78;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  font-size: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0 16px 32px;
+  color: var(--text);
+  background: var(--bg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.site-header,
+main {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 16px 0 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 1.375rem;
+}
+
+.badge {
+  margin: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-weight: 600;
+  color: var(--unknown-text);
+  background: var(--unknown-bg);
+}
+
+.badge-live {
+  color: var(--live-text);
+  background: var(--live-bg);
+}
+
+.badge-fallback {
+  color: var(--fallback-text);
+  background: var(--fallback-bg);
+}
+
+.badge-unknown,
+.badge-checking {
+  color: var(--unknown-text);
+  background: var(--unknown-bg);
+}
+
+.notice {
+  margin: 16px 0 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-left-width: 6px;
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+form {
+  margin-top: 16px;
+}
+
+label {
+  display: block;
+  margin: 16px 0 4px;
+  font-weight: 600;
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  background: var(--bg);
+  font: inherit;
+  resize: vertical;
+}
+
+.hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+button {
+  min-height: 44px;
+  padding: 8px 18px;
+  border: 2px solid var(--button-bg);
+  border-radius: 4px;
+  color: var(--button-text);
+  background: var(--button-bg);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  border-color: var(--button-disabled-bg);
+  background: var(--button-disabled-bg);
+  cursor: progress;
+}
+
+#analyse {
+  margin-top: 12px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+#status {
+  min-height: 1.5em;
+  margin: 16px 0;
+  font-weight: 600;
+}
+
+#result {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.source-label {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.source-model {
+  color: var(--live-text);
+  background: var(--live-bg);
+}
+
+.source-fallback {
+  color: var(--fallback-text);
+  background: var(--fallback-bg);
+}
+
+#injection-warning {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 2px solid var(--warning-border);
+  border-radius: 4px;
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  font-weight: 600;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.fields dt {
+  font-weight: 600;
+}
+
+.fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+@media (max-width: 30rem) {
+  .fields {
+    grid-template-columns: 1fr;
+  }
+
+  .fields dd {
+    margin-bottom: 8px;
+  }
+}

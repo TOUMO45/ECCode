@@ -185,6 +185,7 @@ if (typeof document !== 'undefined') {
       } catch (_) {
         announce('Copy failed — select the reply text and press Ctrl+C.');
         reply.focus();
+        reply.select();
       }
     }
 
