@@ -1,0 +1,93 @@
+$ node /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/review-probe.js .eccode/artifacts/design/design-vectors.js
+# cwd: .
+# exit: 0
+redactor worst-case 8000 chars: 4.32 ms
+all design vectors pass
+{
+ "redirect_default": {
+  "status": 200,
+  "seenAtOtherOrigin": [
+   {
+    "xApiKey": "FAKE-KEY-123",
+    "method": "POST",
+    "body": "{\"ticket\":\"redacted text\"}"
+   }
+  ]
+ },
+ "redirect_error": "threw TypeError",
+ "timing_ms": {
+  "email_localpart_no_at": 36.6,
+  "email_many_at": 0.1,
+  "email_domain_no_tld": 37.4,
+  "email_mixed": 35.9,
+  "phone_paren_groups": 2.4,
+  "phone_digits_dots": 38.2,
+  "digits_only": 35.8,
+  "digit_spaces": 4.8,
+  "card_worst_design": 0.7
+ },
+ "v2_sentence_final": [
+  {
+   "s": "Customer reports a crash in VB.NET.",
+   "v1": true,
+   "rejectedByV2": true
+  },
+  {
+   "s": "Customer reports errors in ASP.NET.",
+   "v1": true,
+   "rejectedByV2": true
+  },
+  {
+   "s": "Socket.io connections drop after the update to Socket.io.",
+   "v1": true,
+   "rejectedByV2": true
+  },
+  {
+   "s": "Customer uses ASP.NET, and it fails.",
+   "v1": true,
+   "rejectedByV2": false
+  },
+  {
+   "s": "Customer cannot connect via socket.io?",
+   "v1": true,
+   "rejectedByV2": false
+  }
+ ],
+ "redact_edges": [
+  {
+   "in": "card 4111111111111111 5500005555555559 thanks",
+   "out": "card [REDACTED_CARD] thanks",
+   "luhnLeft": false
+  },
+  {
+   "in": "card 4111.1111.1111.1111 thanks",
+   "out": "card [REDACTED_PHONE].1111 thanks",
+   "luhnLeft": false
+  },
+  {
+   "in": "card 4111  1111 1111 1111 thanks",
+   "out": "card 4111  [REDACTED_PHONE] thanks",
+   "luhnLeft": false
+  },
+  {
+   "in": "card 4111 1111 1111 1111 thanks",
+   "out": "card 4111 1111 1111 1111 thanks",
+   "luhnLeft": false
+  },
+  {
+   "in": "card 41111111111111111227 thanks",
+   "out": "card 41111111111111111227 thanks",
+   "luhnLeft": false
+  },
+  {
+   "in": "tel 5550137742 call5550137742",
+   "out": "tel [REDACTED_PHONE] call5550137742",
+   "luhnLeft": false
+  },
+  {
+   "in": "mail first.last+tag@sub.example.co.uk now",
+   "out": "mail [REDACTED_EMAIL] now",
+   "luhnLeft": false
+  }
+ ]
+}
