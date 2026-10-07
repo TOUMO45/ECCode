@@ -1,0 +1,124 @@
+{
+  "id": "mem-d-muym8opn-0104129a",
+  "layer": "debugging",
+  "scope": "project",
+  "project": "TriageDesk",
+  "status": "provisional",
+  "trust": "internal",
+  "createdAt": "2026-10-07T21:24:47.006Z",
+  "createdBy": "learning-debugger",
+  "revisions": [
+    {
+      "rev": 1,
+      "at": "2026-10-07T21:24:47.006Z",
+      "by": "learning-debugger",
+      "reason": "created",
+      "content": {
+        "title": "Partial update wipes fields: event-sourced store reduced the in-memory event (undefined keys) instead of the persisted JSON",
+        "problem": "`eccode risk update --id RISK-1 --status mitigated` without --title/--severity/--owner removed those fields from the risk in the materialized project state (state.json, which `eccode status` and every later command read). The append-only log (events.jsonl) was correct. Because state() trusts the snapshot when its seq/hash match the last event, the corrupted snapshot became the effective state and later commits built on it. The only workaround was to re-send every field.",
+        "symptoms": [
+          "After `eccode risk update --id <R> --status <s> --actor <a>`, state.json risks[<R>] has no title/severity/owner (mitigation also lost if omitted)",
+          "Re-running the update with all fields restores them",
+          "state.json differs from the state rebuilt by replaying events.jsonl (Store.rebuild()); replay keeps the fields",
+          "Regression test failure: 'state.json snapshot lost the title' while the 'replay of events.jsonl lost the title' assertion passes"
+        ],
+        "component": "ECCode lib/store.js Store.commit (event-sourced record); surfaced via lib/runs.js recordRisk + lib/reducer.js risk.recorded merge",
+        "environment": {
+          "node": ">=18.17"
+        },
+        "fingerprint": "eccode:store.commit:live-reduce-diverges-from-replay:undefined-overwrites-on-spread-merge",
+        "occurredAt": "2026-10-07T21:21:00.157Z",
+        "reproduction": {
+          "steps": [
+            "In a fresh temp project (tests/helpers.js tmpProject): eccode risk add --id RISK-1 --title 'Prompt injection' --severity high --mitigation validator --owner ai-engineer --actor product-architect",
+            "eccode risk update --id RISK-1 --status mitigated --actor product-architect",
+            "Compare .eccode/state.json risks.RISK-1 with new Store(dir).rebuild().risks.RISK-1: the snapshot lacks title/severity/mitigation/owner, the replay has them",
+            "Command: node --test tests/regression-risk-update.test.js (3 tests; all failed before the fix)"
+          ],
+          "evidence": [
+            "ev:ev-muym6mgn-016c806e"
+          ]
+        },
+        "rootCause": {
+          "explanation": "Store.commit built the event object in memory, appended JSON.stringify(event) to events.jsonl, then called reduce(state, event) on the in-memory object, not on what was persisted. The CLI passes omitted flags as explicit keys with value undefined ({title: undefined, severity: undefined, owner: undefined, ...}). JSON.stringify omits undefined-valued object properties, so the log line is correct and replay merges correctly. But the risk.recorded reducer merges with object spread `{ ...existing, ...d }`, and spread copies own enumerable properties including those whose value is undefined, so the live reduction overwrote title/severity/owner with undefined; writeJson(state.json) then dropped those keys. Net effect: the snapshot (used as truth whenever its seq/hash match the log tail) diverged from the log. The code comment in recordRisk assumed 'undefined fields are dropped by JSON serialization, so updates keep previous values' - true for the log, false for the in-process reduce. Discriminating evidence: the regression test showed replay correct and snapshot wrong (ev:ev-muym6mgn-016c806e); a minimal experiment showed `{...{title:'T'}, ...{title:undefined}}` has own key title=undefined while a JSON round-trip merge keeps 'T' (ev:ev-muym6v1n-011b942a, exits 1 by design to show the mismatch). This is a general class (live state computed from a different representation than the one replayed), not specific to risks; risks were the only reducer that merges partial updates over existing records, so they were the first visible casualty.",
+          "evidence": [
+            "ev:ev-muym6mgn-016c806e",
+            "ev:ev-muym6v1n-011b942a",
+            "artifact:lib/store.js#commit",
+            "artifact:lib/reducer.js#risk.recorded"
+          ]
+        },
+        "failedAttempts": [
+          {
+            "approach": "Original design assumption (recordRisk comment): rely on JSON serialization to drop undefined fields so the reducer merge keeps earlier values",
+            "whyFailed": "Serialization only applied to the log; Store.commit reduced the unserialized object, so the snapshot saw undefined-valued keys and the spread merge overwrote existing values"
+          },
+          {
+            "approach": "Workaround used during the demo: re-run `risk update` with every field filled",
+            "whyFailed": "Masks the symptom per call; any later partial update re-corrupts the snapshot, and the snapshot/log divergence remains undetected for other event types"
+          }
+        ],
+        "solution": {
+          "description": "Root fix in lib/store.js Store.commit: serialize the event once (`const line = JSON.stringify({...body, hash})`), append that line, then reduce `JSON.parse(line)` - i.e. reduce exactly what was persisted. Live reduction and replay now consume identical input, so the snapshot always equals a replay for every event type. Comment in lib/runs.js recordRisk corrected to describe the real mechanism. Regression test tests/regression-risk-update.test.js asserts field preservation via the CLI, deep equality of state.json / store.state() with Store.rebuild(), and the store-level invariant with undefined-valued data.",
+          "tradeoffs": "One extra JSON.parse per commit (negligible versus the fsync'd append and snapshot write). The `event` returned by commit() is now the JSON-normalized copy (no undefined keys, Dates as strings); all 45 existing toolkit tests pass, but an out-of-tree caller relying on object identity or non-JSON values in event.data would see a change. Alternatives rejected: stripping undefined in recordRisk or in the CLI (fixes risks only, leaves the class open for future merge reducers); making the reducer skip undefined (fixes only reducers that remember to do it). The fix does not heal snapshots already corrupted before it; deleting .eccode/state.json forces a rebuild from events.jsonl (the demo's RISK-1 had already been restored by a full re-update, and its snapshot now deep-equals replay). Verification ran only on Node 22.22.0/linux; the node >=18.17 range is the toolkit's engines floor and rests on ECMAScript semantics (object spread, JSON.stringify omission) rather than a run on older Node."
+        },
+        "verification": {
+          "evidence": [
+            "ev:ev-muym78ex-01d9b8e9",
+            "ev:ev-muym7byu-01f25152"
+          ],
+          "regressionTest": "node --test tests/regression-risk-update.test.js && npm test (in the ECCode toolkit root)"
+        },
+        "sources": [
+          {
+            "title": "MDN JSON.stringify() - undefined, Function and Symbol values are omitted when found in an object (mdn/content source)",
+            "url": "https://raw.githubusercontent.com/mdn/content/main/files/en-us/web/javascript/reference/global_objects/json/stringify/index.md",
+            "checkedAt": "2026-10-07"
+          },
+          {
+            "title": "MDN Spread syntax - Spread in object literals / Overriding properties: identical names take the last value assigned (mdn/content source)",
+            "url": "https://raw.githubusercontent.com/mdn/content/main/files/en-us/web/javascript/reference/operators/spread_syntax/index.md",
+            "checkedAt": "2026-10-07"
+          }
+        ],
+        "appliesWhen": [
+          "An event-sourced or snapshot+log store computes live state by reducing an in-memory event object while replay reduces the serialized (JSON) form",
+          "Reducers merge partial updates with object spread or Object.assign and callers pass optional fields as explicit undefined (e.g. CLI flags mapped straight into a data object)",
+          "Symptom pattern: a partial update erases fields in the materialized state but replaying the log gives the right answer",
+          "Any ECCode record whose snapshot (.eccode/state.json) disagrees with Store.rebuild()"
+        ],
+        "notApplicableWhen": [
+          "env:node <18.17",
+          "The live path already reduces the persisted/parsed form, or state is only ever rebuilt from the log",
+          "Fields are lost in the log itself (events.jsonl lines lack the data): the cause is upstream of commit, not snapshot divergence",
+          "Intentional clears: a caller that sends null to clear a field (null survives JSON and still overwrites; that is expected)",
+          "Non-JSON persistence formats (structuredClone, v8.serialize, MessagePack) that preserve undefined - the divergence mechanism differs"
+        ],
+        "confidence": "high",
+        "tags": [
+          "event-sourcing",
+          "snapshot-replay-divergence",
+          "json-undefined",
+          "object-spread",
+          "partial-update",
+          "eccode-store"
+        ]
+      }
+    }
+  ],
+  "reviews": [],
+  "evidenceSnapshots": {},
+  "citations": [],
+  "checks": [
+    {
+      "at": "2026-10-07T21:24:48.826Z",
+      "by": "orchestrator",
+      "verdict": "provisional",
+      "reasons": [
+        "status provisional: not independently verified; treat as a hypothesis"
+      ]
+    }
+  ],
+  "supersededBy": null,
+  "supersedes": []
+}

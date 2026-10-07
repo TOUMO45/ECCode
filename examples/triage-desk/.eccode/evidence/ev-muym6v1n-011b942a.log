@@ -1,0 +1,6 @@
+$ node -e "const existing={id:'R',title:'T'}; const d={id:'R',title:undefined,status:'mitigated'}; const live={...existing,...d}; const logged=JSON.parse(JSON.stringify(d)); const replay={...existing,...logged}; console.log('hasOwn title in live merge:',Object.hasOwn(live,'title'),'value:',live.title); console.log('replay merge title:',replay.title); console.log('JSON.stringify(live):',JSON.stringify(live)); process.exit(live.title===replay.title?0:1)"
+# cwd: .
+# exit: 1
+hasOwn title in live merge: true value: undefined
+replay merge title: T
+JSON.stringify(live): {"id":"R","status":"mitigated"}

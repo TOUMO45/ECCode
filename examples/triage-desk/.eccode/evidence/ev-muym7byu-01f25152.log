@@ -1,0 +1,287 @@
+$ npm test --prefix /home/user/ECCode
+# cwd: .
+# exit: 0
+
+> eccode@0.1.0 test
+> node --test tests/*.test.js
+
+TAP version 13
+# Subtest: gates cannot start before their predecessor is approved
+ok 1 - gates cannot start before their predecessor is approved
+  ---
+  duration_ms: 174.657227
+  type: 'test'
+  ...
+# Subtest: submissions missing required sections are refused
+ok 2 - submissions missing required sections are refused
+  ---
+  duration_ms: 128.680831
+  type: 'test'
+  ...
+# Subtest: only configured authors may submit; paths outside the project are refused
+ok 3 - only configured authors may submit; paths outside the project are refused
+  ---
+  duration_ms: 120.087376
+  type: 'test'
+  ...
+# Subtest: the author cannot approve their own artifact, and the refusal is recorded
+ok 4 - the author cannot approve their own artifact, and the refusal is recorded
+  ---
+  duration_ms: 177.256389
+  type: 'test'
+  ...
+# Subtest: unauthorized reviewer roles are refused
+ok 5 - unauthorized reviewer roles are refused
+  ---
+  duration_ms: 179.838498
+  type: 'test'
+  ...
+# Subtest: approval without resolvable evidence is refused (rubber-stamp protection)
+ok 6 - approval without resolvable evidence is refused (rubber-stamp protection)
+  ---
+  duration_ms: 137.978318
+  type: 'test'
+  ...
+# Subtest: schema-invalid reviews are refused
+ok 7 - schema-invalid reviews are refused
+  ---
+  duration_ms: 111.7265
+  type: 'test'
+  ...
+# Subtest: reviews of an artifact that changed after submission are refused
+ok 8 - reviews of an artifact that changed after submission are refused
+  ---
+  duration_ms: 121.722822
+  type: 'test'
+  ...
+# Subtest: changes requested → resubmission must respond → approval must resolve earlier findings
+ok 9 - changes requested → resubmission must respond → approval must resolve earlier findings
+  ---
+  duration_ms: 148.631823
+  type: 'test'
+  ...
+# Subtest: repeated rejections escalate; only the user can reopen
+ok 10 - repeated rejections escalate; only the user can reopen
+  ---
+  duration_ms: 214.098056
+  type: 'test'
+  ...
+# Subtest: guard: no opinion outside ECCode projects
+ok 11 - guard: no opinion outside ECCode projects
+  ---
+  duration_ms: 102.509879
+  type: 'test'
+  ...
+# Subtest: guard: binds --actor to the running subagent and blocks impersonation
+ok 12 - guard: binds --actor to the running subagent and blocks impersonation
+  ---
+  duration_ms: 512.909177
+  type: 'test'
+  ...
+# Subtest: guard: protects the record from direct edits
+ok 13 - guard: protects the record from direct edits
+  ---
+  duration_ms: 237.218141
+  type: 'test'
+  ...
+# Subtest: guard: implementers edit only inside their claimed task ownership; reviewers write drafts only
+ok 14 - guard: implementers edit only inside their claimed task ownership; reviewers write drafts only
+  ---
+  duration_ms: 559.743241
+  type: 'test'
+  ...
+# Subtest: guard: ECCODE_HOOKS=off disables it
+ok 15 - guard: ECCODE_HOOKS=off disables it
+  ---
+  duration_ms: 192.405812
+  type: 'test'
+  ...
+# Subtest: session-start injects the resume brief only for ECCode projects
+ok 16 - session-start injects the resume brief only for ECCode projects
+  ---
+  duration_ms: 220.292286
+  type: 'test'
+  ...
+# Subtest: project install copies components, rewrites paths, merges hooks idempotently and the installed CLI works
+ok 17 - project install copies components, rewrites paths, merges hooks idempotently and the installed CLI works
+  ---
+  duration_ms: 213.596582
+  type: 'test'
+  ...
+# Subtest: AGENTS.md export covers every role and the workflow for other harnesses
+ok 18 - AGENTS.md export covers every role and the workflow for other harnesses
+  ---
+  duration_ms: 1.234093
+  type: 'test'
+  ...
+# Subtest: semver ranges used for applicability checks
+ok 19 - semver ranges used for applicability checks
+  ---
+  duration_ms: 3.935465
+  type: 'test'
+  ...
+# Subtest: lessons start provisional; verification needs a non-author reviewer and a check that flips from failing to passing
+ok 20 - lessons start provisional; verification needs a non-author reviewer and a check that flips from failing to passing
+  ---
+  duration_ms: 528.704554
+  type: 'test'
+  ...
+# Subtest: a verified lesson survives a session restart and is retrieved for a related problem; outdated ones are rejected
+ok 21 - a verified lesson survives a session restart and is retrieved for a related problem; outdated ones are rejected
+  ---
+  duration_ms: 302.888362
+  type: 'test'
+  ...
+# Subtest: stale and superseded lessons are flagged rather than trusted
+ok 22 - stale and superseded lessons are flagged rather than trusted
+  ---
+  duration_ms: 195.425918
+  type: 'test'
+  ...
+# Subtest: promotion to shared memory requires verification, a non-author promoter and clean content
+ok 23 - promotion to shared memory requires verification, a non-author promoter and clean content
+  ---
+  duration_ms: 210.26643
+  type: 'test'
+  ...
+# Subtest: self-improvement: protected paths, grounding, evaluation, independent review, user adoption, rollback
+ok 24 - self-improvement: protected paths, grounding, evaluation, independent review, user adoption, rollback
+  ---
+  duration_ms: 473.872423
+  type: 'test'
+  ...
+# Subtest: metrics count rejections, repeated bugs and recurrence after a fix
+ok 25 - metrics count rejections, repeated bugs and recurrence after a fix
+  ---
+  duration_ms: 198.356748
+  type: 'test'
+  ...
+# Subtest: risk update with only --status keeps title, severity, mitigation and owner
+ok 26 - risk update with only --status keeps title, severity, mitigation and owner
+  ---
+  duration_ms: 256.672359
+  type: 'test'
+  ...
+# Subtest: materialized state equals the state rebuilt by replaying events.jsonl
+ok 27 - materialized state equals the state rebuilt by replaying events.jsonl
+  ---
+  duration_ms: 330.080648
+  type: 'test'
+  ...
+# Subtest: Store.commit: in-process reduction matches replay when data contains undefined values (any event type)
+ok 28 - Store.commit: in-process reduction matches replay when data contains undefined values (any event type)
+  ---
+  duration_ms: 100.883369
+  type: 'test'
+  ...
+# Subtest: state survives a lost snapshot and a torn final log line
+ok 29 - state survives a lost snapshot and a torn final log line
+  ---
+  duration_ms: 197.514079
+  type: 'test'
+  ...
+# Subtest: interrupted runs are recovered: claims released, attempt counted, work resumable
+ok 30 - interrupted runs are recovered: claims released, attempt counted, work resumable
+  ---
+  duration_ms: 135.910917
+  type: 'test'
+  ...
+# Subtest: stale detection only flags runs older than the threshold unless --all
+ok 31 - stale detection only flags runs older than the threshold unless --all
+  ---
+  duration_ms: 129.267501
+  type: 'test'
+  ...
+# Subtest: audit detects edits to the event log
+ok 32 - audit detects edits to the event log
+  ---
+  duration_ms: 380.708157
+  type: 'test'
+  ...
+# Subtest: delivery is refused until every gate passes and when reviewed files change afterwards
+ok 33 - delivery is refused until every gate passes and when reviewed files change afterwards
+  ---
+  duration_ms: 311.458615
+  type: 'test'
+  ...
+# Subtest: happy path produces a verified final handoff
+ok 34 - happy path produces a verified final handoff
+  ---
+  duration_ms: 322.245897
+  type: 'test'
+  ...
+# Subtest: evidence logs redact secrets and record exit codes
+ok 35 - evidence logs redact secrets and record exit codes
+  ---
+  duration_ms: 101.929031
+  type: 'test'
+  ...
+# Subtest: handoffs must come from the acting agent and cite real evidence
+ok 36 - handoffs must come from the acting agent and cite real evidence
+  ---
+  duration_ms: 147.770598
+  type: 'test'
+  ...
+# Subtest: concurrent writers never corrupt the log
+ok 37 - concurrent writers never corrupt the log
+  ---
+  duration_ms: 228.509921
+  type: 'test'
+  ...
+# Subtest: plan validation catches cycles, unknown deps/owners and backwards phase deps
+ok 38 - plan validation catches cycles, unknown deps/owners and backwards phase deps
+  ---
+  duration_ms: 3.256797
+  type: 'test'
+  ...
+# Subtest: the plan gate refuses an invalid plan artifact
+ok 39 - the plan gate refuses an invalid plan artifact
+  ---
+  duration_ms: 117.394274
+  type: 'test'
+  ...
+# Subtest: claims enforce ownership, dependencies, concurrency and file-overlap rules
+ok 40 - claims enforce ownership, dependencies, concurrency and file-overlap rules
+  ---
+  duration_ms: 265.003788
+  type: 'test'
+  ...
+# Subtest: task completion requires a valid handoff, fresh passing evidence and in-scope files
+ok 41 - task completion requires a valid handoff, fresh passing evidence and in-scope files
+  ---
+  duration_ms: 299.406374
+  type: 'test'
+  ...
+# Subtest: phase approval needs a check executed by the reviewer after submission; implementers cannot review
+ok 42 - phase approval needs a check executed by the reviewer after submission; implementers cannot review
+  ---
+  duration_ms: 312.755302
+  type: 'test'
+  ...
+# Subtest: failed tasks are retried up to the limit, then escalate to the user
+ok 43 - failed tasks are retried up to the limit, then escalate to the user
+  ---
+  duration_ms: 127.438141
+  type: 'test'
+  ...
+# Subtest: budget limits block new work
+ok 44 - budget limits block new work
+  ---
+  duration_ms: 130.203664
+  type: 'test'
+  ...
+# Subtest: scope checks work when the project is a subdirectory of a larger git repo
+ok 45 - scope checks work when the project is a subdirectory of a larger git repo
+  ---
+  duration_ms: 285.276119
+  type: 'test'
+  ...
+1..45
+# tests 45
+# suites 0
+# pass 45
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4100.540082
