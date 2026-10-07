@@ -1,6 +1,6 @@
 {
-  "seq": 85,
-  "lastHash": "555c2a56e728358f94dea0554bbbc93eacacd639c067f4e3bb3f1f57687f7dae",
+  "seq": 94,
+  "lastHash": "c48a42d3bf8d1b49b15a2cff894cee513229dbab02c1876fc77895b737efc7ae",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -473,6 +473,82 @@
       "task": null,
       "recordedBy": "security-reviewer",
       "at": "2026-10-07T21:29:49.062Z"
+    },
+    "ev-muymg8r8-01d955e9": {
+      "id": "ev-muymg8r8-01d955e9",
+      "kind": "command",
+      "label": "security probe: hash chain + snapshot tamper + __proto__ payload through post-fix Store.commit",
+      "command": "node /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/sr-review/probe.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 55,
+      "log": ".eccode/evidence/ev-muymg8r8-01d955e9.log",
+      "logSha256": "266191844d284be3840bb0b704ab32f6a478076ad4d9bf17213cd34549ef2876",
+      "outputTail": "OK   audit ok after partial update\nOK   returned event has no undefined keys\nOK   state.lastHash equals persisted last hash\nOK   snapshot keeps title\nOK   event tamper detected by audit\nINFO state() after snapshot tamper returns severity = low\nOK   snapshot tamper detected by audit (snapshot==replay)\nOK   rebuild repairs snapshot\nOK   no Object.prototype pollution\nOK   audit ok after __proto__ payload\nOK   snapshot equals replay after __proto__ payload\nnode v22.22.0; failures: 0\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T21:30:39.575Z"
+    },
+    "ev-muymgxlq-0175737d": {
+      "id": "ev-muymgxlq-0175737d",
+      "kind": "command",
+      "label": "design: redaction/V1/V2/V3/schema reference vectors (ARCH-10, ARCH-11)",
+      "command": "node .eccode/artifacts/design/design-vectors.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 52,
+      "log": ".eccode/evidence/ev-muymgxlq-0175737d.log",
+      "logSha256": "47dc819c7cd4f5b81aaf2a48f7e3eeb033ed3d3ed97fcb645203cda6f5e18871",
+      "outputTail": "redactor worst-case 8000 chars: 4.08 ms\nall design vectors pass\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-07T21:31:11.778Z"
+    },
+    "ev-muymgxxk-01aac351": {
+      "id": "ev-muymgxxk-01aac351",
+      "kind": "command",
+      "label": "design: node:http reject-before-body, missing Host, fetch Host override probe",
+      "command": "node .eccode/artifacts/design/http-probe.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 371,
+      "log": ".eccode/evidence/ev-muymgxxk-01aac351.log",
+      "logSha256": "330df889aae9e6678fb73ca7c4a4d2f38cd539c60ba09b97c496908a21ef66cc",
+      "outputTail": "{\n  \"without_drain\": {\n    \"got403\": 200,\n    \"failed\": 0,\n    \"errors\": []\n  },\n  \"with_req_resume\": {\n    \"got403\": 200,\n    \"failed\": 0,\n    \"errors\": []\n  },\n  \"missingHost\": 403,\n  \"customHostAndOrigin\": {\n    \"status\": 200,\n    \"body\": \"{\\\"n\\\":14,\\\"origin\\\":\\\"http://localhost:36637\\\"}\"\n  },\n  \"fetchHeaders\": {\n    \"host\": \"127.0.0.1:33137\",\n    \"origin\": \"http://attacker.example:3000\"\n  }\n}\nhttp probe pass\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-07T21:31:12.205Z"
+    },
+    "ev-muymgy0l-01a4d4d1": {
+      "id": "ev-muymgy0l-01a4d4d1",
+      "kind": "command",
+      "label": "design: architecture brief vectors still pass (regression)",
+      "command": "node .eccode/artifacts/architecture/brief-vectors.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 50,
+      "log": ".eccode/evidence/ev-muymgy0l-01a4d4d1.log",
+      "logSha256": "3831fe8e096764e5382b5d23b52b6e783d146cc4b19e47c152f6a3ca784b1b70",
+      "outputTail": "all brief vectors pass\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-07T21:31:12.313Z"
     }
   },
   "reviews": {
@@ -1097,8 +1173,13 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-07T21:29:35.085Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T21:31:36.166Z",
+      "durationMinutes": 2.02,
+      "costUsd": 0,
+      "tokens": 98059,
+      "note": null
     }
   },
   "risks": {
@@ -1233,13 +1314,23 @@
       "lessons": [],
       "at": "2026-10-07T21:14:22.422Z",
       "by": "orchestrator"
+    },
+    "dec-muymj4c6-013c6f4f": {
+      "id": "dec-muymj4c6-013c6f4f",
+      "title": "Promotion privacy defect found and fixed",
+      "decision": "Retracted the first shared copy of mem-d-muym8opn-0104129a (it contained absolute paths from evidence snapshots), fixed promote() to share a minimized, scrubbed copy with a fail-closed full-copy scan, re-promoted",
+      "rationale": "Orchestrator verification after promotion found /home/user paths; sanitizer scanned only lesson content while promote copied evidence snapshots and history. Regression test added. The leaked copy never left this sandbox (~/.eccode).",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-07T21:32:53.817Z",
+      "by": "orchestrator"
     }
   },
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 28.2,
-    "tokens": 956704
+    "runtimeMinutes": 30.22,
+    "tokens": 1054763
   },
   "delivery": null
 }

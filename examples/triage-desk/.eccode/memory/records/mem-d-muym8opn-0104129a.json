@@ -3,7 +3,7 @@
   "layer": "debugging",
   "scope": "project",
   "project": "TriageDesk",
-  "status": "provisional",
+  "status": "verified",
   "trust": "internal",
   "createdAt": "2026-10-07T21:24:47.006Z",
   "createdBy": "learning-debugger",
@@ -218,6 +218,13 @@
       "decision": "reject",
       "notes": "FIX AND ROOT CAUSE CONFIRMED; LESSON NEEDS REVISION (env overclaim + over-broad appliesWhen). Checked: (1) Evidence chain: repro ev:ev-muym6mgn-016c806e really failed (exit 1, 3/3 not ok, 'state.json snapshot lost the title' while replay assertion passed) and verification ev:ev-muym78ex-01d9b8e9 is the identical command and passed 3/3; suite ev:ev-muym7byu-01f25152 45/45; experiment ev:ev-muym6v1n-011b942a shows spread keeps own undefined key, JSON round-trip keeps 'T'. All four logSha256 values recomputed and match the logs. (2) Reruns by me: regression test ev:ev-muymb01x-01ec5e0e pass 3/3; full suite ev:ev-muymb2za-016a248d pass 46/46 (now incl. 2f3398c audit test). (3) Independent repro: same test against HEAD~1 lib/store.js in a scratch copy fails 3/3 (ev:ev-muymb3qy-01495ec2). Scratch mechanism script outside repo: pre-fix reduce(in-memory)=undefined vs reduce(persisted)='T', snapshot!=replay, commit() returned corrupted state (ev:ev-muymb3xk-01517ccc, exit 1 by design); post-fix snapshot==replay, returned state correct, audit ok (ev:ev-muymb3uf-019c7deb). Fix is root-cause/general: commit now reduces JSON.parse of the exact persisted line, so live reduce and replay get identical input for every event type; hash computation unchanged (still sha256(prevHash+JSON.stringify(body)), undefined keys dropped identically), store.audit ok in scratch pre/post and 'eccode audit' OK on triage-desk (74 events). Read reducer: risk.recorded is the only merge-over-existing reducer whose result depends on undefined-vs-absent keys, so the 'only visible casualty' claim holds. Only commit() return value changed shape; no in-tree caller reads .event. Demo RISK-1 snapshot deep-equals replay (key order differs, content equal). REQUIRED REVISIONS: (a) environment {node: '>=18.17'} overclaims: the skill defines environment as versions the fix was VERIFIED on; it was run only on 22.22.0 (debugger) and now 20.20.0 by me (fail-before ev:ev-muymbyv4-01332d57, pass-after ev:ev-muymby0c-012fa681, suite 46/46 ev:ev-muymc241-015f6d71). 18.17-19.x is untested; the prose disclosure in tradeoffs is good but --check-env reads the field and would report 'applies' on 18.x. Set environment node '>=20' and notApplicableWhen 'env:node <20' (keep the ES-semantics argument for 18.x as an untested hypothesis in prose), citing the v20 ev ids. (b) appliesWhen bullet 'Any ECCode record whose snapshot disagrees with Store.rebuild()' is over-broad: divergence is a symptom with other possible causes (hand-edited state.json, non-pure reducer); after 1f3c540 this mechanism cannot produce new divergence. Narrow it to snapshots written by a pre-1f3c540 Store.commit where the missing fields are ones a partial update omitted, and name 'eccode rebuild'/'eccode audit' (2f3398c) as the repair/detection instead of deleting state.json. (c) minor: 'all 45 existing toolkit tests pass' - the 45 include the 3 new regression tests (42 pre-existing); reword. No change needed to code or tests.",
       "rev": 1
+    },
+    {
+      "at": "2026-10-07T21:31:06.959Z",
+      "reviewer": "security-reviewer",
+      "decision": "verify",
+      "notes": "VERIFY rev 2. Rejection reasons fixed: (a) environment now node '>=20' with notApplicableWhen 'env:node <20'; 18.x moved to prose as an explicit untested hypothesis. The Node 20 claim is backed: /opt/node20/bin/node is v20.20.0, pre-fix fails 0/3 (ev:ev-muymbyv4-01332d57), post-fix passes 3/3 (ev:ev-muymby0c-012fa681), suite 46/46 (ev:ev-muymc241-015f6d71). (b) the ECCode appliesWhen bullet is narrowed to pre-1f3c540 snapshots whose missing fields a partial update omitted, with eccode audit/rebuild (2f3398c) as detection/repair; a matching notApplicableWhen covers post-1f3c540 divergence. (c) test count is reworded to 42 pre-existing + 3 new = 45. I confirmed this with git grep test( counts (42 at 1f3c540^, 45 at 1f3c540), and ev:ev-muym7byu-01f25152 shows 45/45. Re-verified substance: my rerun of the same regression command passes 3/3 (ev:ev-muymf5s2-01d768f3). All 10 cited ev ids exist with the claimed status/purpose/exit: repro ev:ev-muym6mgn-016c806e, ev:ev-muymb3qy-01495ec2 and ev:ev-muymbyv4-01332d57 failed 0/3 as reproduction; ev:ev-muym6v1n-011b942a exits 1 by design; checks ev:ev-muym78ex-01d9b8e9, ev:ev-muym7byu-01f25152, ev:ev-muymb01x-01ec5e0e, ev:ev-muymb2za-016a248d, ev:ev-muymby0c-012fa681 and ev:ev-muymc241-015f6d71 passed. I recomputed sha256 of every log output and all match logSha256 in events.jsonl. The only spread-merge-over-existing reducer is risk.recorded (lib/reducer.js:222), and no in-tree caller reads commit().event. Security/integrity: the 1f3c540 diff leaves hash input unchanged (sha256(prevHash+JSON.stringify(body)) over the same body). JSON.parse only re-reads the line the process just wrote, so no untrusted input is added. My probe (ev:ev-muymg8r8-01d955e9) shows: audit ok after a partial update; lastHash equals the persisted hash; an edited event is flagged as a content hash mismatch; a __proto__ payload causes no prototype pollution and audit stays ok. eccode audit on triage-desk: OK, 85 events, chain intact. Pre-existing info finding, not caused by this fix: state() trusts state.json whenever seq/lastHash match, so a hand-edited snapshot is served until audit flags the divergence (probe confirms) and eccode rebuild repairs it. Privacy: rev 2 content has no emails, user paths, IPs or secrets; the scan's sk- hits are false positives from RISK-/risk-. Claims stay within the evidence.",
+      "rev": 2
     }
   ],
   "evidenceSnapshots": {
@@ -253,6 +260,72 @@
       "exitCode": 0,
       "at": "2026-10-07T21:23:43.833Z",
       "recordedBy": "learning-debugger"
+    },
+    "ev-muymb3qy-01495ec2": {
+      "id": "ev-muymb3qy-01495ec2",
+      "kind": "command",
+      "label": "review independent repro: regression test against pre-fix lib/store.js (HEAD~1) in scratch copy, expected FAIL",
+      "command": "cd /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/tr-review/pre && node --test tests/regression-risk-update.test.js",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-07T21:26:39.804Z",
+      "recordedBy": "technical-reviewer"
+    },
+    "ev-muymbyv4-01332d57": {
+      "id": "ev-muymbyv4-01332d57",
+      "kind": "command",
+      "label": "review env check: regression test on Node v20.20.0 against pre-fix store.js scratch copy, expected FAIL",
+      "command": "cd /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/tr-review/pre && /opt/node20/bin/node --test tests/regression-risk-update.test.js",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-07T21:27:20.133Z",
+      "recordedBy": "technical-reviewer"
+    },
+    "ev-muymb01x-01ec5e0e": {
+      "id": "ev-muymb01x-01ec5e0e",
+      "kind": "command",
+      "label": "review rerun: regression-risk-update test (post-fix)",
+      "command": "node --test /home/user/ECCode/tests/regression-risk-update.test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-07T21:26:35.016Z",
+      "recordedBy": "technical-reviewer"
+    },
+    "ev-muymb2za-016a248d": {
+      "id": "ev-muymb2za-016a248d",
+      "kind": "command",
+      "label": "review rerun: full toolkit suite",
+      "command": "npm test --prefix /home/user/ECCode",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-07T21:26:38.810Z",
+      "recordedBy": "technical-reviewer"
+    },
+    "ev-muymby0c-012fa681": {
+      "id": "ev-muymby0c-012fa681",
+      "kind": "command",
+      "label": "review env check: regression test on Node v20.20.0 (post-fix)",
+      "command": "/opt/node20/bin/node --test /home/user/ECCode/tests/regression-risk-update.test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-07T21:27:19.023Z",
+      "recordedBy": "technical-reviewer"
+    },
+    "ev-muymc241-015f6d71": {
+      "id": "ev-muymc241-015f6d71",
+      "kind": "command",
+      "label": "review env check: full toolkit suite on Node v20.20.0",
+      "command": "cd /home/user/ECCode && /opt/node20/bin/node --test tests/*.test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-07T21:27:24.340Z",
+      "recordedBy": "technical-reviewer"
     }
   },
   "citations": [],
@@ -307,5 +380,7 @@
     }
   ],
   "supersededBy": null,
-  "supersedes": []
+  "supersedes": [],
+  "lastVerifiedAt": "2026-10-07T21:31:06.959Z",
+  "promotedAs": "mem-sd-muym8opn-0104129a"
 }

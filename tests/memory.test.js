@@ -250,3 +250,24 @@ test('metrics count rejections, repeated bugs and recurrence after a fix', () =>
   assert.strictEqual(m.recurrenceAfterFix, 1);
   assert.ok(current(first).title);
 });
+
+test('promotion never leaks private data from evidence snapshots, review notes or old revisions', () => {
+  const shared = withSharedDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  write(ctx.dir, 'check.js', 'process.exit(require("fs").existsSync("fixed") ? 0 : 1)\n');
+  const abs = path.join(ctx.dir, 'check.js');
+  const repro = evidence.runCommand(ctx.store, 'learning-debugger', { label: 'repro', command: `node ${abs} # by alice@example.com`, purpose: 'reproduction' });
+  write(ctx.dir, 'fixed', 'yes');
+  const fix = evidence.runCommand(ctx.store, 'learning-debugger', { label: 'fix', command: `node ${abs} # by alice@example.com` });
+  const rec = mem.add('learning-debugger', { layer: 'debugging', content: lesson({ repro, fix }, { problem: 'Seen on /home/alice/app by the team: POST returned 500 on bad JSON.' }) });
+  mem.revise(rec.id, 'learning-debugger', { problem: 'POST /api/triage returned 500 when clients omitted the Content-Type header.' }, 'remove path');
+  mem.review(rec.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran in /home/bob/checkout; passes after the fix.' });
+  const copy = mem.promote(rec.id, 'security-reviewer');
+  const text = fs.readFileSync(path.join(shared, 'records', `${copy.id}.json`), 'utf8');
+  for (const leak of [ctx.dir, '/home/alice', '/home/bob', 'alice@example.com', os.tmpdir()]) {
+    assert.ok(!text.includes(leak), `shared copy leaks ${leak}`);
+  }
+  assert.strictEqual(copy.revisions.length, 1, 'only the reviewed revision is shared');
+  assert.ok(Object.keys(copy.evidenceSnapshots).length >= 2, 'evidence travels, sanitized');
+});
