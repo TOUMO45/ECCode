@@ -1,6 +1,6 @@
 {
-  "seq": 478,
-  "lastHash": "7aafc3b54d7b78bf1097588aedaa6231bb6f093c789afd74aacd4bc420d9eadd",
+  "seq": 479,
+  "lastHash": "750c1107349b90bfe4d7d9522c2aad459cad93f3f881cf680919be643977966a",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -1780,10 +1780,22 @@
         "method": "Three separately recorded eccode evidence run steps, run in this order and each recorded regardless of the previous step's exit code: (1) `npm test` (label full-suite); (2) `npm run eval` (label first-full-eval), exactly once and never re-run inside this task; (3) `node .eccode/artifacts/design/design-vectors.js` (label design-vectors). A non-zero exit from step 2 does not stop step 3 and never triggers a second full-mode run",
         "command": "eccode evidence run --actor delivery-lead --label full-suite --task t17-verification-run -- npm test ; eccode evidence run --actor delivery-lead --label first-full-eval --task t17-verification-run -- npm run eval ; eccode evidence run --actor delivery-lead --label design-vectors --task t17-verification-run -- node .eccode/artifacts/design/design-vectors.js"
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "delivery-lead",
+        "at": "2026-10-07T23:37:16.805Z",
+        "baseCommit": "3c84fe9307264d25f86f1a17e2737de810af9dfd",
+        "runId": "run-muyqykem-016fdddb"
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "delivery-lead",
+          "at": "2026-10-07T23:37:16.805Z",
+          "attempt": 1
+        }
+      ],
       "completedBy": null,
       "handoffId": null
     }

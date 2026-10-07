@@ -1,0 +1,21 @@
+{
+  "layer": "workflow",
+  "trust": "internal",
+  "content": {
+    "title": "Orchestrator closed agent runs with estimated tokens before the usage report arrived",
+    "kind": "recurring-finding",
+    "observation": "In the TriageDesk demo the orchestrator three times closed a run with an estimated token count (once while batching the close into another command) before the harness delivered the subagent's usage block, overstating recorded tokens until corrected with 'eccode run correct'.",
+    "occurrences": [
+      { "ref": "triage-desk:run-muynve26-01d8a248", "at": "2026-10-07T22:12:00Z", "note": "estimate 180000 vs reported 147857" },
+      { "ref": "triage-desk:run-muyo3d0w-014ed172", "at": "2026-10-07T22:19:00Z", "note": "estimate 120000 vs reported 100709" },
+      { "ref": "triage-desk:run-muyqtq38-01686993", "at": "2026-10-07T23:39:00Z", "note": "estimate 90000 vs reported 117700 (under-count)" }
+    ],
+    "recommendation": "Close a run only after the task-notification usage block has arrived (call ReadNotifications if the hand-back message arrives first); never batch run closing with unrelated commands; use 'eccode run correct' when a mistake slips through. Consider making 'run end' refuse a missing --tokens unless --no-usage is given.",
+    "evidence": [],
+    "appliesWhen": ["An orchestrator records agent usage from harness notifications that can arrive after the agent's hand-back message"],
+    "notApplicableWhen": ["Usage is read programmatically from a single synchronous result"],
+    "environment": {},
+    "confidence": "medium",
+    "tags": ["orchestration", "accounting", "self-observed"]
+  }
+}
