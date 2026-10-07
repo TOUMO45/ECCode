@@ -1,0 +1,82 @@
+{
+  "id": "mem-k-muyljkrt-01991ac7",
+  "layer": "knowledge",
+  "scope": "project",
+  "project": "TriageDesk",
+  "status": "provisional",
+  "trust": "internal",
+  "createdAt": "2026-10-07T21:05:15.497Z",
+  "createdBy": "orchestrator",
+  "revisions": [
+    {
+      "rev": 1,
+      "at": "2026-10-07T21:05:15.497Z",
+      "by": "orchestrator",
+      "reason": "created",
+      "content": {
+        "title": "HTTP calls to LLM APIs need node-fetch/axios because global fetch is missing",
+        "kind": "limitation",
+        "summary": "On Node.js versions before 18 there is no global fetch; code calling LLM HTTP APIs with fetch() throws ReferenceError: fetch is not defined. Use node-fetch or axios as an HTTP client.",
+        "details": "Seeded by the orchestrator as prior knowledge from an older project to exercise applicability checks. Node.js 18 made an experimental global fetch available by default.",
+        "environment": {
+          "node": "<18"
+        },
+        "tradeoffs": "Adds a runtime dependency that is unnecessary on modern Node.",
+        "sources": [
+          {
+            "title": "Node.js 18 release announcement (global fetch available by default)",
+            "url": "https://nodejs.org/en/blog/announcements/v18-release-announce",
+            "checkedAt": "2026-10-07"
+          }
+        ],
+        "appliesWhen": [
+          "Runtime is Node.js older than 18"
+        ],
+        "notApplicableWhen": [
+          "env:node >=18"
+        ],
+        "confidence": "high",
+        "tags": [
+          "fetch",
+          "http client",
+          "llm api",
+          "node"
+        ]
+      }
+    }
+  ],
+  "reviews": [],
+  "evidenceSnapshots": {},
+  "citations": [],
+  "checks": [
+    {
+      "at": "2026-10-07T21:05:38.144Z",
+      "by": "orchestrator",
+      "verdict": "does-not-apply",
+      "reasons": [
+        "node: lesson requires <18, environment has 22.22.0",
+        "notApplicableWhen env:node >=18 holds (have 22.22.0)"
+      ]
+    },
+    {
+      "at": "2026-10-07T21:05:38.202Z",
+      "by": "orchestrator",
+      "verdict": "does-not-apply",
+      "reasons": [
+        "node: lesson requires <18, environment has 22.22.0",
+        "notApplicableWhen env:node >=18 holds (have 22.22.0)"
+      ]
+    },
+    {
+      "at": "2026-10-07T21:05:38.322Z",
+      "by": "orchestrator",
+      "verdict": "does-not-apply",
+      "reasons": [
+        "node: lesson requires <18, environment has 22.22.0",
+        "notApplicableWhen env:node >=18 holds (have 22.22.0)"
+      ]
+    }
+  ],
+  "supersededBy": null,
+  "supersedes": []
+}
