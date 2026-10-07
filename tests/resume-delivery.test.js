@@ -157,3 +157,18 @@ test('concurrent writers never corrupt the log', async () => {
   assert.strictEqual(Object.keys(st.risks).length, 6);
   assert.strictEqual(ctx.store.audit().ok, true);
 });
+
+test('audit detects a snapshot that diverges from replay; rebuild repairs it', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  const file = path.join(ctx.dir, '.eccode/state.json');
+  const snap = JSON.parse(fs.readFileSync(file, 'utf8'));
+  snap.gates.plan.approvedBy = 'nobody';
+  fs.writeFileSync(file, JSON.stringify(snap));
+  const res = ctx.store.audit();
+  assert.strictEqual(res.ok, false);
+  assert.match(res.errors.join('\n'), /diverges from a replay/);
+  ctx.store.rebuildSnapshot();
+  assert.strictEqual(ctx.store.audit().ok, true);
+  assert.strictEqual(ctx.store.state().gates.plan.approvedBy, 'technical-reviewer');
+});

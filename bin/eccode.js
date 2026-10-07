@@ -15,7 +15,8 @@ Project
   status [--json|--brief]                Gates, tasks, budget and the next action
   resume                                 Resume brief for a new session (read-only)
   recover [--all]                        Close interrupted runs, release their claims
-  audit                                  Verify the event hash chain and approved artifacts
+  audit                                  Verify the hash chain, snapshot==replay, and approved artifacts
+  rebuild                                Rewrite state.json by replaying events.jsonl
   deliver --actor delivery-lead          Produce the verified final handoff
 
 Gates (architecture, design, plan, phase:<id>, verification)
@@ -147,6 +148,11 @@ function main(argv) {
     case 'recover': {
       const rec = runs.recover(store, config, { all: Boolean(flags.all) });
       print(flags, rec.length ? rec.map((r) => `recovered run ${r.run || '-'} (${r.agent}) task=${r.task || '-'} released=${r.released}${r.escalated ? ' ESCALATED' : ''}`).join('\n') : 'Nothing to recover.', rec);
+      return 0;
+    }
+    case 'rebuild': {
+      const st = store.rebuildSnapshot();
+      print(flags, `Snapshot rebuilt from ${st.seq} events.`, { seq: st.seq });
       return 0;
     }
     case 'audit': {
