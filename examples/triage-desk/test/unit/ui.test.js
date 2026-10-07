@@ -151,8 +151,8 @@ test('AC15/NFR6: index.html structure, labels and live regions', () => {
   assert.match(html, /<form id="triage-form" novalidate>/);
   assert.match(html, /<label for="ticket">Customer ticket<\/label>/);
   assert.match(html, /<textarea id="ticket" name="ticket" maxlength="8000" rows="12" aria-describedby="ticket-count ticket-help">/);
-  assert.match(html, /<p id="ticket-help">Paste the ticket text\. Press Ctrl\+Enter to analyse\.<\/p>/);
-  assert.match(html, /<p id="ticket-count">0 \/ 8000 characters<\/p>/);
+  assert.match(html, /<p id="ticket-help"[^>]*>Paste the ticket text\. Press Ctrl\+Enter to analyse\.<\/p>/);
+  assert.match(html, /<p id="ticket-count"[^>]*>0 \/ 8000 characters<\/p>/);
   assert.match(html, /<button type="submit" id="analyse">Analyse<\/button>/);
   assert.match(html, /<p id="status" aria-live="polite"><\/p>/);
   assert.match(html, /<section id="result" aria-labelledby="result-heading" hidden>/);
@@ -359,7 +359,8 @@ test('loading then success: request shape, busy state, rendering and announcemen
   assert.equal(calls.length, 2);
   assert.equal(calls[1].url, '/api/triage');
   assert.equal(calls[1].init.method, 'POST');
-  assert.deepEqual(calls[1].init.headers, { 'Content-Type': 'application/json' });
+  // JSON round-trip: the object comes from the vm realm, so its prototype differs from this realm's.
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[1].init.headers)), { 'Content-Type': 'application/json' });
   assert.deepEqual(JSON.parse(calls[1].init.body), { ticket: '  I was charged twice.  ' });
   assert.equal(Object.keys(calls[1].init).sort().join(','), 'body,headers,method');
 
