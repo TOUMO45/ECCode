@@ -14,14 +14,14 @@ This report sorts its claims into three groups: **Verified** (backed by tests, e
 | 4 | Executable orchestration and review workflows | `lib/` engine + `bin/eccode.js`, `skills/orchestrate` |
 | 5 | Templates for requirements, specs, plans, handoffs, reviews, lessons, proposals and progress | `templates/` |
 | 6 | Installation, configuration, usage, troubleshooting | [docs/usage.md](usage.md), [README](../README.md) |
-| 7 | Automated checks | `tests/` (52 tests), `scripts/validate-toolkit.js`, `claude plugin validate --strict` |
+| 7 | Automated checks | `tests/` (51 tests), `scripts/validate-toolkit.js`, `claude plugin validate --strict` |
 | 8 | Demonstration: web app with an AI feature through the full workflow | `examples/triage-desk/` (app + unedited `.eccode/` record) |
 | 8b | Learning cycle across projects and sessions | `examples/learning-cycle/legacy-project/`, shared lessons |
 | 9 | This report | `docs/final-report.md` |
 
 ## 2. Verified toolkit capabilities
 
-`npm run check` runs the static validation of 12 agents, 7 skills and 6 commands, then **52/52 tests**. `claude plugin validate` passes `--strict` for the manifest, agents, skills and commands. The plugin installed through Claude Code 2.1.293 (`claude plugin install eccode@eccode`, isolated config dir).
+`npm run check` runs the static validation of 12 agents, 7 skills and 6 commands, then **51/51 tests**. `claude plugin validate` passes `--strict` for the manifest, agents, skills and commands. The plugin installed through Claude Code 2.1.293 (`claude plugin install eccode@eccode`, isolated config dir).
 
 | Requirement | How it is enforced | Test evidence |
 |---|---|---|
