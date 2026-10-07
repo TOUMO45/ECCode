@@ -1,0 +1,35 @@
+{
+  "from": "delivery-lead",
+  "to": "orchestrator",
+  "task": "t17-verification-run",
+  "objective": "Run the integration verification (spec task 16): full suite, the first and only full-mode eval, design vectors, then write the verification report and the release checklist draft.",
+  "context": "Plan PLAN-3: three separately recorded evidence steps; the full eval runs exactly once whatever its outcome (DES-2/E5). Additional real-browser check for the AC6/AC15 inspection items. Fallback provider only: there is no ANTHROPIC_API_KEY, so live is NOT RUN.",
+  "inputs": [".eccode/artifacts/design/spec.md", ".eccode/artifacts/architecture/brief.md", ".eccode/artifacts/plan/plan.md", "t02 freeze evidence ev-muyoc9sb-01a8edc1, ev-muyoc9ul-01ee7a22, ev-muyoc9wk-014a1edb"],
+  "dependencies": ["t08-eval-runner", "t12-heldout-hygiene", "t13-app-wiring", "t14-contract-http", "t15-contract-modes-privacy", "t16-readme"],
+  "expectedOutput": ".eccode/artifacts/verification/report.md and release-checklist.md mapping every AC to evidence, with the first full-eval results reported as they are",
+  "acceptanceCriteria": [
+    "npm test exits 0 (ev:ev-muyqzriz-012b8b53, 439/439)",
+    "First full-mode npm run eval run exactly once and reported as is (ev:ev-muyqzv9i-018cf19d, exit 1, 24/25: holdout high_urgency_recall 0.571 < 0.70); not re-run",
+    "Runner sha256 values equal the t02 freeze; the freeze (22:23:33Z) predates the first rules commit 8f93a16 (23:18:59Z)",
+    "design-vectors.js passes as its own step (ev:ev-muyr019l-01bbd9f9)",
+    "report.md maps every AC to evidence, lists the inspection items, marks live as NOT RUN; release-checklist.md drafted"
+  ],
+  "completedWork": "Verified the pinned check-script hashes and the eval-file hashes (ev-muyqzh7j) and ran the held-out hygiene test (6/6). Step 1: npm test passed 439/439. Step 2: the first full-mode eval ran once and FAILED one enforced check, holdout high_urgency_recall 0.571 (n=7) against floor 0.70. ECCODE_EVAL {\"passed\":24,\"total\":25}. All other metrics pass, including injection_leak 0 failures in 27 and steer 2 in 23. Step 3: design vectors pass. A headless Chromium check of the real server at 360 and 1280 px passed 18/18: keyboard submit, fallback label, aria-live, AC6 copy/reset, no horizontal scroll, XSS payload rendered as text. Screenshots are saved. Wrote report.md and release-checklist.md.",
+  "filesChanged": [
+    ".eccode/artifacts/verification/report.md",
+    ".eccode/artifacts/verification/release-checklist.md",
+    ".eccode/artifacts/verification/ui-360.png",
+    ".eccode/artifacts/verification/ui-360-xss.png",
+    ".eccode/artifacts/verification/ui-1280.png",
+    ".eccode/artifacts/verification/ui-1280-xss.png"
+  ],
+  "evidence": ["ev:ev-muyqzh7j-01b4d13c", "ev:ev-muyqzlcx-01d7f182", "ev:ev-muyqzriz-012b8b53", "ev:ev-muyqzv9i-018cf19d", "ev:ev-muyr019l-01bbd9f9", "ev:ev-muyr13oz-01d57136"],
+  "remainingIssues": [
+    "FULL EVAL FAIL: holdout high_urgency_recall 0.571 (4/7) < floor 0.70. Finding against t11-rules (fallback-provider.js). Needs a recorded decision: accept, or reset t11 (tune rows only), with any re-run counted as full-mode run #2",
+    "Held-out-family injection flag recall is 0.444 (n=9, no threshold); RISK-1 residual",
+    "Live-model eval NOT RUN (no API key); live thresholds and the real API surface are unverified (RISK-7)",
+    "AC15 contrast ratio not tool-measured; AC16 notice checked by text inspection only (live mode needed); AC6 'no other network requests' not captured in the browser run",
+    "Open risks RISK-1, 4, 7, 9 and 11 need an owner's accept/mitigate sign-off"
+  ],
+  "nextAction": "orchestrator: decide on the holdout-floor miss (accept, or reset t11-rules under a recorded decision); then delivery-lead submits phase:integration and the verification gate with report.md, release-checklist.md and every deliverable file"
+}

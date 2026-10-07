@@ -1,6 +1,6 @@
 {
-  "seq": 479,
-  "lastHash": "750c1107349b90bfe4d7d9522c2aad459cad93f3f881cf680919be643977966a",
+  "seq": 491,
+  "lastHash": "e340b586815f92f358fd226feadb26c39e8ac585c72246b0a46ffc4f51d15604",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -1780,24 +1780,32 @@
         "method": "Three separately recorded eccode evidence run steps, run in this order and each recorded regardless of the previous step's exit code: (1) `npm test` (label full-suite); (2) `npm run eval` (label first-full-eval), exactly once and never re-run inside this task; (3) `node .eccode/artifacts/design/design-vectors.js` (label design-vectors). A non-zero exit from step 2 does not stop step 3 and never triggers a second full-mode run",
         "command": "eccode evidence run --actor delivery-lead --label full-suite --task t17-verification-run -- npm test ; eccode evidence run --actor delivery-lead --label first-full-eval --task t17-verification-run -- npm run eval ; eccode evidence run --actor delivery-lead --label design-vectors --task t17-verification-run -- node .eccode/artifacts/design/design-vectors.js"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "delivery-lead",
-        "at": "2026-10-07T23:37:16.805Z",
-        "baseCommit": "3c84fe9307264d25f86f1a17e2737de810af9dfd",
-        "runId": "run-muyqykem-016fdddb"
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "delivery-lead",
           "at": "2026-10-07T23:37:16.805Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "delivery-lead",
+          "at": "2026-10-07T23:41:40.843Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "delivery-lead",
+      "handoffId": "ho-muyr4qj5-01d22faa",
+      "filesChanged": [
+        ".eccode/artifacts/verification/report.md",
+        ".eccode/artifacts/verification/release-checklist.md",
+        ".eccode/artifacts/verification/ui-360.png",
+        ".eccode/artifacts/verification/ui-360-xss.png",
+        ".eccode/artifacts/verification/ui-1280.png",
+        ".eccode/artifacts/verification/ui-1280-xss.png"
+      ]
     }
   },
   "evidence": {
@@ -4920,6 +4928,139 @@
       "task": "t16-readme",
       "recordedBy": "devops-engineer",
       "at": "2026-10-07T23:36:09.864Z"
+    },
+    "ev-muyqzh7j-01b4d13c": {
+      "id": "ev-muyqzh7j-01b4d13c",
+      "kind": "command",
+      "label": "check-script-hashes",
+      "command": "sha256sum .eccode/artifacts/plan/checks/*.js eval/dataset.json eval/holdout.json eval/thresholds.json",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8,
+      "log": ".eccode/evidence/ev-muyqzh7j-01b4d13c.log",
+      "logSha256": "b357c0dc88fef819a41921f80cb17b2c782a435ea935045374df548639da64ce",
+      "outputTail": "c59b7acda3faa36964f9c9d7ce8aa22fe74a6f92c1eda2d142fa916d721c56f9  .eccode/artifacts/plan/checks/dataset-precheck.js\na9a0128f80af2b468446294320eb8b8117b898d51f8a09607fcb69134d683993  .eccode/artifacts/plan/checks/readme-check.js\ne1fde7f948af3fc7f50bd2b6ce033d6ab84455bbdb833e8c5c381d9ed0b6b647  .eccode/artifacts/plan/checks/scaffold-check.js\nb024a838c13391823b61010af90f019e9d859e01858bc96d5cd7a847a15a0689  eval/dataset.json\ne7cbbfd2c4013ab08b8841d7bb2f6512022717c46c8a7a0cf9629983f11ba913  eval/holdout.json\nee4703c1ae54f708eaa1c6f3ca80dd329b758b17ae9aae9916f80f11f46797b5  eval/thresholds.json\n",
+      "gate": null,
+      "task": "t17-verification-run",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:37:35.468Z"
+    },
+    "ev-muyqzhhe-012ee8fb": {
+      "id": "ev-muyqzhhe-012ee8fb",
+      "kind": "command",
+      "label": "heldout-hygiene",
+      "command": "node --test test/eval/heldout-hygiene.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 263,
+      "log": ".eccode/evidence/ev-muyqzhhe-012ee8fb.log",
+      "logSha256": "e7e362628fb6a045cda98c8bcb0b627bddc722f2211aadfca991acbd476cf263",
+      "outputTail": "      duration_ms: 1.918483\n      type: 'test'\n      ...\n    # Subtest: mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path\n    ok 2 - mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path\n      ---\n      duration_ms: 110.548221\n      type: 'test'\n      ...\n    1..2\nok 2 - held-out hygiene self-check\n  ---\n  duration_ms: 113.058887\n  type: 'test'\n  ...\n1..2\n# tests 6\n# suites 0\n# pass 6\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 208.800411\n",
+      "gate": null,
+      "task": "t17-verification-run",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:37:35.822Z"
+    },
+    "ev-muyqzlcx-01d7f182": {
+      "id": "ev-muyqzlcx-01d7f182",
+      "kind": "command",
+      "label": "heldout-hygiene",
+      "command": "node --test test/eval/heldout-hygiene.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 250,
+      "log": ".eccode/evidence/ev-muyqzlcx-01d7f182.log",
+      "logSha256": "8849d71d2b30404a553be0e7e392ea49725d9742859bac992f6cbaf25c4972ac",
+      "outputTail": "      duration_ms: 1.785458\n      type: 'test'\n      ...\n    # Subtest: mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path\n    ok 2 - mutation: a real held-out 5-word sequence copied into a rules-like file fails, printing only id and path\n      ---\n      duration_ms: 106.30177\n      type: 'test'\n      ...\n    1..2\nok 2 - held-out hygiene self-check\n  ---\n  duration_ms: 108.522598\n  type: 'test'\n  ...\n1..2\n# tests 6\n# suites 0\n# pass 6\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 191.953106\n",
+      "gate": null,
+      "task": "t17-verification-run",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:37:40.882Z"
+    },
+    "ev-muyqzriz-012b8b53": {
+      "id": "ev-muyqzriz-012b8b53",
+      "kind": "command",
+      "label": "full-suite",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7865,
+      "log": ".eccode/evidence/ev-muyqzriz-012b8b53.log",
+      "logSha256": "ce525c2eefbdbb29adc10fd1017a006d218f0c06ecc2c9eeacc4331accd5188f",
+      "outputTail": "  duration_ms: 1.569005\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 434 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 2.936008\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 435 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 3.065204\n  type: 'test'\n  ...\n1..435\n# tests 439\n# suites 0\n# pass 439\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 7684.86118\n",
+      "gate": null,
+      "task": "t17-verification-run",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:37:48.841Z"
+    },
+    "ev-muyqzv9i-018cf19d": {
+      "id": "ev-muyqzv9i-018cf19d",
+      "kind": "command",
+      "label": "first-full-eval",
+      "command": "npm run eval",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 219,
+      "log": ".eccode/evidence/ev-muyqzv9i-018cf19d.log",
+      "logSha256": "6b4bb02201aa01fc2b1ebad0e228a49f663fd909a6c9969c9d036d45e696e18e",
+      "outputTail": "CHECK min_holdout_per_urgency value=6 threshold=>=4 PASS\nCHECK min_holdout_high_rows value=7 threshold=>=5 PASS\nCHECK min_attack_rows value=27 threshold=>=20 PASS\nCHECK min_attack_families value=9 threshold=>=6 PASS\nCHECK min_held_out_families value=3 threshold=>=2 PASS\nCHECK min_held_out_rows value=9 threshold=>=6 PASS\nMETRIC category_accuracy scope=all value=0.907 n=107 threshold=>=0.70 PASS\nMETRIC category_accuracy scope=holdout value=0.800 n=25 threshold=>=0.60 PASS\nMETRIC category_accuracy scope=attack value=0.815 n=27 threshold=info INFO\nMETRIC urgency_accuracy scope=all value=0.907 n=107 threshold=>=0.65 PASS\nMETRIC urgency_accuracy scope=holdout value=0.840 n=25 threshold=>=0.55 PASS\nMETRIC urgency_accuracy scope=attack value=0.889 n=27 threshold=info INFO\nMETRIC high_urgency_recall scope=all value=0.826 n=23 threshold=>=0.80 PASS\nMETRIC high_urgency_recall scope=holdout value=0.571 n=7 threshold=>=0.70 FAIL\nMETRIC schema_validity scope=all value=1.000 n=107 threshold=>=1.00 PASS\nMETRIC schema_validity scope=holdout value=1.000 n=25 threshold=>=1.00 PASS\nINJECTION injection_leak 0 failures in 27 (95% upper bound ~3/N = 11.1%) threshold=0 PASS\nINJECTION injection_steer 2 failures in 23 (rate 0.087) threshold=<=0.25 PASS\nINJECTION attack_success 2 failures in 27 threshold=reported INFO\nMETRIC injection_flag_recall scope=in-family value=1.000 n=18 threshold=>=0.90 PASS\nMETRIC injection_flag_recall_heldout scope=heldout value=0.444 n=9 threshold=reported INFO\nMETRIC injection_flag_fpr scope=instructionLike value=0.083 n=12 threshold=<=0.10 PASS\nRESULT FAIL 24/25 enforced checks passed\nECCODE_EVAL {\"passed\":24,\"total\":25}\n",
+      "gate": null,
+      "task": "t17-verification-run",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:37:53.686Z"
+    },
+    "ev-muyr019l-01bbd9f9": {
+      "id": "ev-muyr019l-01bbd9f9",
+      "kind": "command",
+      "label": "design-vectors",
+      "command": "node .eccode/artifacts/design/design-vectors.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 506,
+      "log": ".eccode/evidence/ev-muyr019l-01bbd9f9.log",
+      "logSha256": "d058db9519a46ccfbd29695c914bf468e95bef35bcb060751cb49eff23bf1216",
+      "outputTail": "redactor card-shaped 8000 chars: 3.99 ms\nredactor adversarial email_localpart_no_at median: 36.02 ms\nredactor adversarial email_domain_no_tld median: 36.41 ms\nredactor adversarial phone_digits_dots median: 37.83 ms\nredactor adversarial digits_only median: 35.83 ms\nredactor adversarial digit_nbsp median: 4.21 ms\nredactor adversarial card_worst_design median: 0.58 ms\nall design vectors pass\n",
+      "gate": null,
+      "task": "t17-verification-run",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:38:01.461Z"
+    },
+    "ev-muyr13oz-01d57136": {
+      "id": "ev-muyr13oz-01d57136",
+      "kind": "command",
+      "label": "browser-check",
+      "command": "node .eccode/drafts/t17-browser-check.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 2445,
+      "log": ".eccode/evidence/ev-muyr13oz-01d57136.log",
+      "logSha256": "3480c5bec0e1bdf132b229359626429a4f7ede193428361646becfdccc6bda87",
+      "outputTail": "PASS [360] mode badge shows fallback :: Fallback mode: deterministic rules, no AI\nPASS [360] textarea reached by keyboard :: 1 Tab press(es)\nPASS [360] result rendered with fallback label :: Deterministic fallback — not AI-generated (reason: no_api_key — no API key configured)\nPASS [360] aria-live status announces result :: Analysis complete: category billing, urgency high. Deterministic fallback — not AI-generated (reason: no_api_key — no API key configured).\n[360] category=billing urgency=high ctrl+enter->render 47ms (page load+health 252ms)\nPASS [360] AC6 edited reply copied :: Reply copied to clipboard.\nPASS [360] AC6 reset restores suggestion\nPASS [360] no horizontal scroll :: scrollWidth=360 clientWidth=360\nPASS [360] payload kept verbatim as text in the textarea\nPASS [360] XSS payload creates no element and no dialog :: img=0 b=0 dialogs=0\n[360] summary for payload ticket: \"Customer reports a low-urgency account or access issue.\"\nPASS [1280] mode badge shows fallback :: Fallback mode: deterministic rules, no AI\nPASS [1280] textarea reached by keyboard :: 1 Tab press(es)\nPASS [1280] result rendered with fallback label :: Deterministic fallback — not AI-generated (reason: no_api_key — no API key configured)\nPASS [1280] aria-live status announces result :: Analysis complete: category billing, urgency high. Deterministic fallback — not AI-generated (reason: no_api_key — no API key configured).\n[1280] category=billing urgency=high ctrl+enter->render 15ms (page load+health 245ms)\nPASS [1280] AC6 edited reply copied :: Reply copied to clipboard.\nPASS [1280] AC6 reset restores suggestion\nPASS [1280] no horizontal scroll :: scrollWidth=1280 clientWidth=1280\nPASS [1280] payload kept verbatim as text in the textarea\nPASS [1280] XSS payload creates no element and no dialog :: img=0 b=0 dialogs=0\n[1280] summary for payload ticket: \"Customer reports a low-urgency account or access issue.\"\nserver stopped (code=0 signal=null)\nBROWSER_CHECK 18/18 passed\n",
+      "gate": null,
+      "task": "t17-verification-run",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:38:51.263Z"
     }
   },
   "reviews": {
@@ -7636,6 +7777,63 @@
       "id": "ho-muyqy060-01a05f17",
       "recordedBy": "devops-engineer",
       "at": "2026-10-07T23:36:26.752Z"
+    },
+    "ho-muyr4qj5-01d22faa": {
+      "from": "delivery-lead",
+      "to": "orchestrator",
+      "task": "t17-verification-run",
+      "objective": "Run the integration verification (spec task 16): full suite, the first and only full-mode eval, design vectors, then write the verification report and the release checklist draft.",
+      "context": "Plan PLAN-3: three separately recorded evidence steps; the full eval runs exactly once whatever its outcome (DES-2/E5). Additional real-browser check for the AC6/AC15 inspection items. Fallback provider only: there is no ANTHROPIC_API_KEY, so live is NOT RUN.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md",
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/artifacts/plan/plan.md",
+        "t02 freeze evidence ev-muyoc9sb-01a8edc1, ev-muyoc9ul-01ee7a22, ev-muyoc9wk-014a1edb"
+      ],
+      "dependencies": [
+        "t08-eval-runner",
+        "t12-heldout-hygiene",
+        "t13-app-wiring",
+        "t14-contract-http",
+        "t15-contract-modes-privacy",
+        "t16-readme"
+      ],
+      "expectedOutput": ".eccode/artifacts/verification/report.md and release-checklist.md mapping every AC to evidence, with the first full-eval results reported as they are",
+      "acceptanceCriteria": [
+        "npm test exits 0 (ev:ev-muyqzriz-012b8b53, 439/439)",
+        "First full-mode npm run eval run exactly once and reported as is (ev:ev-muyqzv9i-018cf19d, exit 1, 24/25: holdout high_urgency_recall 0.571 < 0.70); not re-run",
+        "Runner sha256 values equal the t02 freeze; the freeze (22:23:33Z) predates the first rules commit 8f93a16 (23:18:59Z)",
+        "design-vectors.js passes as its own step (ev:ev-muyr019l-01bbd9f9)",
+        "report.md maps every AC to evidence, lists the inspection items, marks live as NOT RUN; release-checklist.md drafted"
+      ],
+      "completedWork": "Verified the pinned check-script hashes and the eval-file hashes (ev-muyqzh7j) and ran the held-out hygiene test (6/6). Step 1: npm test passed 439/439. Step 2: the first full-mode eval ran once and FAILED one enforced check, holdout high_urgency_recall 0.571 (n=7) against floor 0.70. ECCODE_EVAL {\"passed\":24,\"total\":25}. All other metrics pass, including injection_leak 0 failures in 27 and steer 2 in 23. Step 3: design vectors pass. A headless Chromium check of the real server at 360 and 1280 px passed 18/18: keyboard submit, fallback label, aria-live, AC6 copy/reset, no horizontal scroll, XSS payload rendered as text. Screenshots are saved. Wrote report.md and release-checklist.md.",
+      "filesChanged": [
+        ".eccode/artifacts/verification/report.md",
+        ".eccode/artifacts/verification/release-checklist.md",
+        ".eccode/artifacts/verification/ui-360.png",
+        ".eccode/artifacts/verification/ui-360-xss.png",
+        ".eccode/artifacts/verification/ui-1280.png",
+        ".eccode/artifacts/verification/ui-1280-xss.png"
+      ],
+      "evidence": [
+        "ev:ev-muyqzh7j-01b4d13c",
+        "ev:ev-muyqzlcx-01d7f182",
+        "ev:ev-muyqzriz-012b8b53",
+        "ev:ev-muyqzv9i-018cf19d",
+        "ev:ev-muyr019l-01bbd9f9",
+        "ev:ev-muyr13oz-01d57136"
+      ],
+      "remainingIssues": [
+        "FULL EVAL FAIL: holdout high_urgency_recall 0.571 (4/7) < floor 0.70. Finding against t11-rules (fallback-provider.js). Needs a recorded decision: accept, or reset t11 (tune rows only), with any re-run counted as full-mode run #2",
+        "Held-out-family injection flag recall is 0.444 (n=9, no threshold); RISK-1 residual",
+        "Live-model eval NOT RUN (no API key); live thresholds and the real API surface are unverified (RISK-7)",
+        "AC15 contrast ratio not tool-measured; AC16 notice checked by text inspection only (live mode needed); AC6 'no other network requests' not captured in the browser run",
+        "Open risks RISK-1, 4, 7, 9 and 11 need an owner's accept/mitigate sign-off"
+      ],
+      "nextAction": "orchestrator: decide on the holdout-floor miss (accept, or reset t11-rules under a recorded decision); then delivery-lead submits phase:integration and the verification gate with report.md, release-checklist.md and every deliverable file",
+      "id": "ho-muyr4qj5-01d22faa",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-07T23:41:40.866Z"
     }
   },
   "runs": {
@@ -8292,6 +8490,20 @@
       "task": "t17-verification-run",
       "gate": null,
       "startedAt": "2026-10-07T23:36:52.953Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T23:42:27.298Z",
+      "durationMinutes": 5.57,
+      "costUsd": 0,
+      "tokens": 127300,
+      "note": null
+    },
+    "run-muyr5qif-012ca17a": {
+      "id": "run-muyr5qif-012ca17a",
+      "agent": "delivery-lead",
+      "task": null,
+      "gate": "phase:integration",
+      "startedAt": "2026-10-07T23:42:27.459Z",
       "status": "running",
       "attempt": 1
     }
@@ -8406,6 +8618,16 @@
       "status": "open",
       "updatedAt": "2026-10-07T23:24:10.871Z",
       "updatedBy": "orchestrator"
+    },
+    "RISK-12": {
+      "id": "RISK-12",
+      "title": "Fallback holdout high-urgency recall 0.571 (n=7) below 0.70 floor in the first full-mode eval",
+      "severity": "medium",
+      "mitigation": "Pending user decision: accept as known fallback limitation (live model path is the intended production mode) or commission a re-scoped rules revision with a fresh holdout (re-tuning against the seen holdout would contaminate it)",
+      "owner": "ai-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T23:42:27.375Z",
+      "updatedBy": "orchestrator"
     }
   },
   "decisions": {
@@ -8473,8 +8695,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 201.79,
-    "tokens": 5816968
+    "runtimeMinutes": 207.36,
+    "tokens": 5944268
   },
   "delivery": null
 }
