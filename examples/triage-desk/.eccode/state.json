@@ -1,6 +1,6 @@
 {
-  "seq": 167,
-  "lastHash": "0d0e18fb0962474e67ad01eab849565ccbdf38377bdfdf573158919a099105b1",
+  "seq": 176,
+  "lastHash": "2e9bc4d4c03a02460217b8e580c94b385cf4a3ded6c820e2f8e1070c04a94bcf",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -394,10 +394,22 @@
         "method": "Plan check script asserting the exact package.json object and required .env.example/.gitignore lines",
         "command": "node .eccode/artifacts/plan/checks/scaffold-check.js"
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "devops-engineer",
+        "at": "2026-10-07T22:19:22.659Z",
+        "baseCommit": "4f4807568161d8c50ed23c885e39f216f6230f50",
+        "runId": "run-muyo5w54-014967f6"
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "devops-engineer",
+          "at": "2026-10-07T22:19:22.659Z",
+          "attempt": 1
+        }
+      ],
       "completedBy": null,
       "handoffId": null
     },
@@ -438,10 +450,22 @@
         "method": "Pre-freeze D5 format and minimums check, then freeze evidence records",
         "command": "node .eccode/artifacts/plan/checks/dataset-precheck.js"
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "test-engineer",
+        "at": "2026-10-07T22:19:22.793Z",
+        "baseCommit": "4f4807568161d8c50ed23c885e39f216f6230f50",
+        "runId": "run-muyo5w6t-0147620d"
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "test-engineer",
+          "at": "2026-10-07T22:19:22.793Z",
+          "attempt": 1
+        }
+      ],
       "completedBy": null,
       "handoffId": null
     },
@@ -2013,6 +2037,63 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-07T22:17:37.663Z"
+    },
+    "ev-muyo7c9b-0141325a": {
+      "id": "ev-muyo7c9b-0141325a",
+      "kind": "command",
+      "label": "scaffold-check: exact package.json, .env.example and .gitignore lines",
+      "command": "node .eccode/artifacts/plan/checks/scaffold-check.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 41,
+      "log": ".eccode/evidence/ev-muyo7c9b-0141325a.log",
+      "logSha256": "000476d6a6e9f7b69c85b382cf751de6610c2f25f19ea2824dd17d054c4ad4f1",
+      "outputTail": "PASS package.json equals spec §Deployment (no dependencies, devDependencies or type)\nPASS .env.example lists every C6.1 variable with the spec defaults\nPASS .gitignore ignores .env and node_modules/\nscaffold-check PASS\n",
+      "gate": null,
+      "task": "t01-scaffold",
+      "recordedBy": "devops-engineer",
+      "at": "2026-10-07T22:19:43.445Z"
+    },
+    "ev-muyo7caz-013afe78": {
+      "id": "ev-muyo7caz-013afe78",
+      "kind": "command",
+      "label": "spec §Deployment .env.example line-for-line diff + plan check sha256",
+      "command": "bash -c diff <(sed -n '/^\\*\\*Environment/,/^There is no dotenv/p' .eccode/artifacts/design/spec.md | sed '1,2d;$d' | sed '$d') .env.example && echo 'e1fde7f948af3fc7f50bd2b6ce033d6ab84455bbdb833e8c5c381d9ed0b6b647  .eccode/artifacts/plan/checks/scaffold-check.js' | sha256sum -c -",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 2,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 4,
+      "log": ".eccode/evidence/ev-muyo7caz-013afe78.log",
+      "logSha256": "463ddfe30a776302bd12cefc85bc0cb19aa4d002580e14eee784eeeb381878b6",
+      "outputTail": "\n[stderr]\n/bin/sh: 1: Syntax error: \"(\" unexpected\n",
+      "gate": null,
+      "task": "t01-scaffold",
+      "recordedBy": "devops-engineer",
+      "at": "2026-10-07T22:19:43.505Z"
+    },
+    "ev-muyo7j83-0193f206": {
+      "id": "ev-muyo7j83-0193f206",
+      "kind": "command",
+      "label": ".env.example equals spec §Deployment block exactly + plan check sha256 unchanged",
+      "command": "node .eccode/drafts/t01-env-diff.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 46,
+      "log": ".eccode/evidence/ev-muyo7j83-0193f206.log",
+      "logSha256": "0ab09e4a8a1c6e38d495e971d3db96978a0c249a547078867c4a83c5abe6c770",
+      "outputTail": "PASS .env.example equals spec §Deployment block (12 lines)\nPASS scaffold-check.js sha256 matches plan\n",
+      "gate": null,
+      "task": "t01-scaffold",
+      "recordedBy": "devops-engineer",
+      "at": "2026-10-07T22:19:52.473Z"
     }
   },
   "reviews": {
@@ -3662,6 +3743,15 @@
       "task": "t02-eval-dataset",
       "gate": null,
       "startedAt": "2026-10-07T22:18:35.964Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-muyo7fun-01ba6e44": {
+      "id": "run-muyo7fun-01ba6e44",
+      "agent": "learning-debugger",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-07T22:19:48.102Z",
       "status": "running",
       "attempt": 1
     }
