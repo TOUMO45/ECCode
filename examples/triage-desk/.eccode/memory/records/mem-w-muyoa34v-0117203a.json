@@ -3,7 +3,7 @@
   "layer": "workflow",
   "scope": "project",
   "project": "TriageDesk",
-  "status": "provisional",
+  "status": "verified",
   "trust": "internal",
   "createdAt": "2026-10-07T22:21:51.597Z",
   "createdBy": "learning-debugger",
@@ -113,7 +113,15 @@
       }
     }
   ],
-  "reviews": [],
+  "reviews": [
+    {
+      "at": "2026-10-07T22:23:59.084Z",
+      "reviewer": "security-reviewer",
+      "decision": "verify",
+      "notes": "Independently verified. (1) Occurrences: event log has exactly two decision-enum review.rejected events, seq 128 (design) and 160 (plan), both technical-reviewer, got \"approved\", each followed ~3 s later by an accepted approve (129, 161); prevHash chain intact across 203 events (ev:ev-muyocjft-010056eb). (2) Docs read directly: review-gate SKILL.md has only a changes_requested example and never states the literal approve; technical-reviewer.md says only 'Approve only when everything is met'; security-reviewer.md never mentions decision; templates/review.json has the invalid pipe placeholder; architecture-reviewer.md line 32 states the literal; schema enum is [approve, changes_requested]. (3) Re-ran the author's check: exits 1 with 4 gaps matching the docs (ev:ev-muyobxy2-01ca1f8e). Read its source: it derives the enum from the schema, reviewer roles from config, and uses a delimiter-bounded regex so 'approved'/'approver' and the pipe placeholder do not count. Sensitivity: on a scratch copy with the recommended edits applied it exits 0 (ev:ev-muyoc8u1-010a58f5), so it is not a never-passing check. (4) Honesty: confidence low, causation explicitly stated as inferred, n=1 vs n=2 contrast flagged as correlation; recommendation is docs-only, keeps schema strict and template placeholder invalid (no approval-rule loosening) - proportionate. Caveats, non-blocking: an unexcluded contributing cause is that the engine's own state vocabulary is 'approved' (gate status/approvedBy in gate show --json, which reviewers are told to run first) plus a general past-tense prior; appliesWhen item 4 (any agent-authored JSON enum) extrapolates beyond the evidence; check script cosmetic: rejectsBefore unused and the per-gate label prints a total against the global first approve (exit code unaffected).",
+      "rev": 2
+    }
+  ],
   "evidenceSnapshots": {},
   "citations": [],
   "checks": [
@@ -135,5 +143,7 @@
     }
   ],
   "supersededBy": null,
-  "supersedes": []
+  "supersedes": [],
+  "lastVerifiedAt": "2026-10-07T22:23:59.084Z",
+  "promotedAs": "mem-sw-muyoa34v-0117203a"
 }

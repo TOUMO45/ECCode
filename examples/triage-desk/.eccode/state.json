@@ -1,6 +1,6 @@
 {
-  "seq": 195,
-  "lastHash": "283090dca0b3465e937f83bebf5e2e3209f4e041a3bb122b9c8b2e0008f3fc29",
+  "seq": 210,
+  "lastHash": "545a39f0ab737527ce31266f30ec6e22111a708c150a1fc50e2e966467ca9745",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -455,24 +455,29 @@
         "method": "Pre-freeze D5 format and minimums check, then freeze evidence records",
         "command": "node .eccode/artifacts/plan/checks/dataset-precheck.js"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "test-engineer",
-        "at": "2026-10-07T22:19:22.793Z",
-        "baseCommit": "4f4807568161d8c50ed23c885e39f216f6230f50",
-        "runId": "run-muyo5w6t-0147620d"
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "test-engineer",
           "at": "2026-10-07T22:19:22.793Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "test-engineer",
+          "at": "2026-10-07T22:23:56.036Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "test-engineer",
+      "handoffId": "ho-muyocr5f-01def9cd",
+      "filesChanged": [
+        "eval/dataset.json",
+        "eval/holdout.json",
+        "eval/thresholds.json"
+      ]
     },
     "t03-test-helpers": {
       "id": "t03-test-helpers",
@@ -2168,6 +2173,162 @@
       "task": "t03-test-helpers",
       "recordedBy": "test-engineer",
       "at": "2026-10-07T22:22:47.421Z"
+    },
+    "ev-muyobxy2-01ca1f8e": {
+      "id": "ev-muyobxy2-01ca1f8e",
+      "kind": "command",
+      "label": "rerun docs check",
+      "command": "node .eccode/drafts/check-review-decision-docs.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 40,
+      "log": ".eccode/evidence/ev-muyobxy2-01ca1f8e.log",
+      "logSha256": "bb592d176b6f3a7919a190f769914a1be023da3a6fb1c07a13ef925a9febeb9e",
+      "outputTail": "schema decision enum: [\"approve\",\"changes_requested\"]\n\"approved\" accepted by schema: false\ntemplate decision placeholder: \"approve | changes_requested\" -> valid as-is: false\nreview-gate SKILL.md JSON example decisions: [\"changes_requested\"]\nreview-gate SKILL.md states literal `approve` / \"approve\": false\nagents/architecture-reviewer.md states literal `approve`: true\nagents/security-reviewer.md states literal `approve`: false\nagents/technical-reviewer.md states literal `approve`: false\nevent:128 technical-reviewer gate=design got=\"approved\" -> next accepted: event:129 decision=\"approve\"\nevent:160 technical-reviewer gate=plan got=\"approved\" -> next accepted: event:161 decision=\"approve\"\narchitecture-reviewer: decision-enum rejections before its first accepted approve on each gate: 0 (first approve event:59)\ntechnical-reviewer: decision-enum rejections before its first accepted approve on each gate: 2 (first approve event:129)\nGAPS (4):\n- skills/review-gate/SKILL.md has no example with \"decision\": \"approve\"\n- skills/review-gate/SKILL.md never states the literal approve value\n- agents/security-reviewer.md never states the literal decision value \"approve\"\n- agents/technical-reviewer.md never states the literal decision value \"approve\"\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T22:23:18.177Z"
+    },
+    "ev-muyoc4hc-010b81a8": {
+      "id": "ev-muyoc4hc-010b81a8",
+      "kind": "command",
+      "label": "t02 D5 dataset precheck (pre-freeze)",
+      "command": "node .eccode/artifacts/plan/checks/dataset-precheck.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 48,
+      "log": ".eccode/evidence/ev-muyoc4hc-010b81a8.log",
+      "logSha256": "d811ec84e6962104b05ee9935ae0ce51b96e9d424261acbc61abe0fcac019405",
+      "outputTail": "COUNT benignRows=80\nCOUNT perCategory=13\nCOUNT perUrgency=19\nCOUNT highRows=19\nCOUNT instructionLikeBenign=12\nCOUNT holdoutRows=25\nCOUNT holdoutPerCategory=4\nCOUNT holdoutPerUrgency=6\nCOUNT holdoutHighRows=7\nCOUNT attackRows=27\nCOUNT attackFamilies=9\nCOUNT heldOutFamilies=3\nCOUNT heldOutRows=9\nCOUNT attackRowsWithTarget=23\ndataset-precheck PASS rows=107\n",
+      "gate": null,
+      "task": "t02-eval-dataset",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T22:23:26.647Z"
+    },
+    "ev-muyoc4k8-01b318cc": {
+      "id": "ev-muyoc4k8-01b318cc",
+      "kind": "command",
+      "label": "t02 thresholds verbatim vs spec D5 + synthetic-data scan + split counts",
+      "command": "node .eccode/drafts/t02-extra-check.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 45,
+      "log": ".eccode/evidence/ev-muyoc4k8-01b318cc.log",
+      "logSha256": "9112ea33b3b3c0b46656895e8e5ff37637ec58d3da5293f0c8e498eaaf375d3f",
+      "outputTail": "COUNT dataset tune category=account=11\nCOUNT dataset tune category=billing=12\nCOUNT dataset tune category=feature_request=10\nCOUNT dataset tune category=other=9\nCOUNT dataset tune category=technical=13\nCOUNT dataset tune instructionLike=8\nCOUNT dataset tune urgency=high=12\nCOUNT dataset tune urgency=low=27\nCOUNT dataset tune urgency=medium=16\nCOUNT holdout attack family=fake_quoted_thread=3\nCOUNT holdout attack family=polite_indirect_request=3\nCOUNT holdout attack family=split_line_instructions=3\nCOUNT holdout holdout category=account=5\nCOUNT holdout holdout category=billing=5\nCOUNT holdout holdout category=feature_request=5\nCOUNT holdout holdout category=other=4\nCOUNT holdout holdout category=technical=6\nCOUNT holdout holdout instructionLike=4\nCOUNT holdout holdout urgency=high=7\nCOUNT holdout holdout urgency=low=12\nCOUNT holdout holdout urgency=medium=6\nCOUNT holdout split=attack=9\nCOUNT holdout split=holdout=25\nt02-extra-check PASS\n",
+      "gate": null,
+      "task": "t02-eval-dataset",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T22:23:26.754Z"
+    },
+    "ev-muyoc8u1-010a58f5": {
+      "id": "ev-muyoc8u1-010a58f5",
+      "kind": "command",
+      "label": "docs check flips to 0 on scratch copy with recommended fix applied (sensitivity)",
+      "command": "node .eccode/drafts/check-review-decision-docs.js /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/fixtk /home/user/ECCode/examples/triage-desk",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 43,
+      "log": ".eccode/evidence/ev-muyoc8u1-010a58f5.log",
+      "logSha256": "1090951827928e1dbb73bc541af9374a2e0feb4479ee449be80f9291e29449db",
+      "outputTail": "schema decision enum: [\"approve\",\"changes_requested\"]\n\"approved\" accepted by schema: false\ntemplate decision placeholder: \"approve | changes_requested\" -> valid as-is: false\nreview-gate SKILL.md JSON example decisions: [\"changes_requested\",\"approve\"]\nreview-gate SKILL.md states literal `approve` / \"approve\": true\nagents/architecture-reviewer.md states literal `approve`: true\nagents/security-reviewer.md states literal `approve`: true\nagents/technical-reviewer.md states literal `approve`: true\nevent:128 technical-reviewer gate=design got=\"approved\" -> next accepted: event:129 decision=\"approve\"\nevent:160 technical-reviewer gate=plan got=\"approved\" -> next accepted: event:161 decision=\"approve\"\narchitecture-reviewer: decision-enum rejections before its first accepted approve on each gate: 0 (first approve event:59)\ntechnical-reviewer: decision-enum rejections before its first accepted approve on each gate: 2 (first approve event:129)\nOK: reviewer-facing docs state the decision literal and show an approving example\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T22:23:32.288Z"
+    },
+    "ev-muyoc9sb-01a8edc1": {
+      "id": "ev-muyoc9sb-01a8edc1",
+      "kind": "file",
+      "label": "freeze",
+      "path": "eval/dataset.json",
+      "sha256": "b024a838c13391823b61010af90f019e9d859e01858bc96d5cd7a847a15a0689",
+      "bytes": 26721,
+      "note": "t02 freeze of eval/dataset.json after dataset-precheck PASS (ev:ev-muyoc4hc-010b81a8)",
+      "status": "recorded",
+      "gate": null,
+      "task": "t02-eval-dataset",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T22:23:33.522Z"
+    },
+    "ev-muyoc9ul-01ee7a22": {
+      "id": "ev-muyoc9ul-01ee7a22",
+      "kind": "file",
+      "label": "freeze",
+      "path": "eval/holdout.json",
+      "sha256": "e7cbbfd2c4013ab08b8841d7bb2f6512022717c46c8a7a0cf9629983f11ba913",
+      "bytes": 12656,
+      "note": "t02 freeze of eval/holdout.json after dataset-precheck PASS (ev:ev-muyoc4hc-010b81a8)",
+      "status": "recorded",
+      "gate": null,
+      "task": "t02-eval-dataset",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T22:23:33.605Z"
+    },
+    "ev-muyoc9wk-014a1edb": {
+      "id": "ev-muyoc9wk-014a1edb",
+      "kind": "file",
+      "label": "freeze",
+      "path": "eval/thresholds.json",
+      "sha256": "ee4703c1ae54f708eaa1c6f3ca80dd329b758b17ae9aae9916f80f11f46797b5",
+      "bytes": 1492,
+      "note": "t02 freeze of eval/thresholds.json after dataset-precheck PASS (ev:ev-muyoc4hc-010b81a8)",
+      "status": "recorded",
+      "gate": null,
+      "task": "t02-eval-dataset",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T22:23:33.675Z"
+    },
+    "ev-muyocdue-01bf9525": {
+      "id": "ev-muyocdue-01bf9525",
+      "kind": "command",
+      "label": "independent event-log check: decision-enum rejections, chain links, engine gate-status vocabulary",
+      "command": "node -e const fs=require(\"fs\");const ev=fs.readFileSync(\".eccode/events.jsonl\",\"utf8\").trim().split(\"\\n\").map(JSON.parse);let br=0;for(let i=1;i<ev.length;i++)if(ev[i].prevHash!==ev[i-1].hash)br++;console.log(\"events\",ev.length,\"broken links\",br);const rj=ev.filter(e=>e.type===\"review.rejected\");for(const e of rj)console.log(\"rejected\",e.seq,e.actor,e.data.gate,JSON.stringify(e.data.reasons));for(const e of ev)if(e.type===\"review.recorded\")console.log(\"recorded\",e.seq,e.actor,e.data.gate,e.data.review.decision);const g=fs.readFileSync(\"/home/user/ECCode/lib/gates.js\",\"utf8\");console.log(\"lib/gates.js uses gate status literal approved:\",/status !== .approved./.test(g));process.exit(rj.filter(e=>/decision/.test(e.data.reasons[0])).map(e=>e.seq).join()===\"128,160\"&&br===0?0:1)",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 2,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 5,
+      "log": ".eccode/evidence/ev-muyocdue-01bf9525.log",
+      "logSha256": "463ddfe30a776302bd12cefc85bc0cb19aa4d002580e14eee784eeeb381878b6",
+      "outputTail": "\n[stderr]\n/bin/sh: 1: Syntax error: \"(\" unexpected\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T22:23:38.782Z"
+    },
+    "ev-muyocjft-010056eb": {
+      "id": "ev-muyocjft-010056eb",
+      "kind": "command",
+      "label": "independent event-log check: decision-enum rejections at 128/160, chain links intact",
+      "command": "node /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/eventcheck.js /home/user/ECCode/examples/triage-desk",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 40,
+      "log": ".eccode/evidence/ev-muyocjft-010056eb.log",
+      "logSha256": "6823327903d4fc8a72143f97e6fe905e0b86534780801c8908ccb084c509f13b",
+      "outputTail": "events 203 broken prevHash links 0\nrejected 128 2026-10-07T21:59:43.598Z technical-reviewer design [\"$.decision: must be one of approve, changes_requested (got \\\"approved\\\")\"]\nrejected 160 2026-10-07T22:18:05.893Z technical-reviewer plan [\"$.decision: must be one of approve, changes_requested (got \\\"approved\\\")\"]\nrecorded 26 2026-10-07T21:13:59.726Z architecture-reviewer architecture changes_requested\nrecorded 59 2026-10-07T21:25:30.304Z architecture-reviewer architecture approve\nrecorded 106 2026-10-07T21:45:56.057Z technical-reviewer design changes_requested\nrecorded 129 2026-10-07T21:59:46.355Z technical-reviewer design approve\nrecorded 148 2026-10-07T22:13:57.887Z technical-reviewer plan changes_requested\nrecorded 161 2026-10-07T22:18:08.751Z technical-reviewer plan approve\nengine gate-status literal 'approved' used in lib/gates.js: true\ndecision-enum rejections: 128,160\n",
+      "gate": null,
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-07T22:23:46.032Z"
     }
   },
   "reviews": {
@@ -3572,6 +3733,53 @@
       "id": "ho-muyo7se1-0155daab",
       "recordedBy": "devops-engineer",
       "at": "2026-10-07T22:20:04.372Z"
+    },
+    "ho-muyocr5f-01def9cd": {
+      "from": "test-engineer",
+      "to": "delivery-lead",
+      "task": "t02-eval-dataset",
+      "objective": "Author eval/dataset.json, eval/holdout.json and eval/thresholds.json per spec D5/E5/E6 and the brief thresholds table, pass the pinned dataset precheck, then record the freeze (one evidence file record per file) before any rules file exists.",
+      "context": "Format and minimums from spec D5; content guidance and freeze rule from spec E5; labels follow the E6 rubric and the system-prompt urgency definitions; thresholds copied from the D5 JSON block (= brief table, holdout floors = threshold - 0.10). All text is synthetic: example.com/.net/.org/.example hosts, 555 phone numbers, test card numbers only. Pinned check .eccode/artifacts/plan/checks/dataset-precheck.js was not modified (sha256 c59b7acd... matches the plan).",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#D5 Evaluation dataset files — format (test-engineer authors; frozen before rules exist)",
+        ".eccode/artifacts/design/spec.md#Evaluation plan",
+        ".eccode/artifacts/architecture/brief.md#Evaluation metrics and thresholds (part of AC7/AC8)",
+        ".eccode/artifacts/plan/plan.md"
+      ],
+      "dependencies": [],
+      "expectedOutput": "Three frozen eval files that pass dataset-precheck.js, plus three freeze evidence records (sha256) made after the precheck passed and before any rules file exists.",
+      "acceptanceCriteria": [
+        "node .eccode/artifacts/plan/checks/dataset-precheck.js exits 0 (ev:ev-muyoc4hc-010b81a8)",
+        "thresholds.json values are copied verbatim from D5/the brief table; holdout floors = threshold - 0.10 (deep-equal check ev:ev-muyoc4k8-01b318cc)",
+        "Labels follow the E6 rubric; all text is synthetic (synthetic-data scan ev:ev-muyoc4k8-01b318cc)",
+        "Freeze evidence recorded for each file after the precheck passed: ev:ev-muyoc9sb-01a8edc1 (dataset), ev:ev-muyoc9ul-01ee7a22 (holdout), ev:ev-muyoc9wk-014a1edb (thresholds)",
+        "Handoff and evidence notes carry only row ids and counts",
+        "Did not modify .eccode/artifacts/plan/checks/**"
+      ],
+      "completedWork": "eval/dataset.json: 73 rows = 55 tune benign (b-001..b-055: billing 12, technical 13, account 11, feature_request 10, other 9; high 12, medium 16, low 27; instructionLike 8) + 18 in-family attack rows (a-001..a-018, heldOutFamily false; 3 each of instruction_override, role_spoofing, delimiter_spoofing, prompt_extraction, link_insertion, label_forcing). eval/holdout.json: 34 rows = 25 holdout benign (h-001..h-025: billing 5, technical 6, account 5, feature_request 5, other 4; high 7, medium 6, low 12; instructionLike 4) + 9 held-out-family attack rows (x-001..x-009, heldOutFamily true; 3 each of fake_quoted_thread, split_line_instructions, polite_indirect_request — none of these families appear in dataset.json). Union counts: benign 80 (min per category 13, min per urgency 19, high 19, instructionLike 12), attack 27 across 9 families, 23 attack rows with a target, 9 unique canaries. eval/thresholds.json copied from the D5 block. Precheck PASS rows=107. Freeze sha256: dataset b024a838c13391823b61010af90f019e9d859e01858bc96d5cd7a847a15a0689, holdout e7cbbfd2c4013ab08b8841d7bb2f6512022717c46c8a7a0cf9629983f11ba913, thresholds ee4703c1ae54f708eaa1c6f3ca80dd329b758b17ae9aae9916f80f11f46797b5.",
+      "filesChanged": [
+        "eval/dataset.json",
+        "eval/holdout.json",
+        "eval/thresholds.json"
+      ],
+      "evidence": [
+        "ev:ev-muyoc4hc-010b81a8",
+        "ev:ev-muyoc4k8-01b318cc",
+        "ev:ev-muyoc9sb-01a8edc1",
+        "ev:ev-muyoc9ul-01ee7a22",
+        "ev:ev-muyoc9wk-014a1edb"
+      ],
+      "remainingIssues": [
+        "The eval files are not committed yet; the freeze ordering check (E5) relies on the foundation phase being committed before any src/triage/injection.js or src/triage/fallback-provider.js commit.",
+        "Any further edit to the three files invalidates the freeze hashes and needs a recorded decision plus fresh evidence (D6).",
+        "Labels are single-author judgments under E6; a few rows are borderline by design (e.g. other/high phishing reports, feature_request/medium rollout blockers). No second labeller was used.",
+        "Supplementary check script lives in .eccode/drafts/t02-extra-check.js (scratch, not a project deliverable)."
+      ],
+      "nextAction": "delivery-lead: confirm the precheck hash, review the foundation phase and commit eval/** before any rules task starts; ai-engineer (t11) must read only eval/dataset.json and use npm run eval:tune.",
+      "lessonsConsulted": [],
+      "id": "ho-muyocr5f-01def9cd",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T22:23:56.047Z"
     }
   },
   "runs": {
@@ -3863,8 +4071,13 @@
       "task": "t02-eval-dataset",
       "gate": null,
       "startedAt": "2026-10-07T22:18:35.964Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T22:24:30.885Z",
+      "durationMinutes": 5.92,
+      "costUsd": 0,
+      "tokens": 131086,
+      "note": null
     },
     "run-muyo7fun-01ba6e44": {
       "id": "run-muyo7fun-01ba6e44",
@@ -3895,8 +4108,13 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-07T22:22:35.671Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T22:24:30.945Z",
+      "durationMinutes": 1.92,
+      "costUsd": 0,
+      "tokens": 87099,
+      "note": null
     }
   },
   "risks": {
@@ -4056,8 +4274,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 87.89,
-    "tokens": 2637624
+    "runtimeMinutes": 95.73,
+    "tokens": 2855809
   },
   "delivery": null
 }

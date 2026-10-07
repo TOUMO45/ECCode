@@ -1,0 +1,44 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "t02-eval-dataset",
+  "objective": "Author eval/dataset.json, eval/holdout.json and eval/thresholds.json per spec D5/E5/E6 and the brief thresholds table, pass the pinned dataset precheck, then record the freeze (one evidence file record per file) before any rules file exists.",
+  "context": "Format and minimums from spec D5; content guidance and freeze rule from spec E5; labels follow the E6 rubric and the system-prompt urgency definitions; thresholds copied from the D5 JSON block (= brief table, holdout floors = threshold - 0.10). All text is synthetic: example.com/.net/.org/.example hosts, 555 phone numbers, test card numbers only. Pinned check .eccode/artifacts/plan/checks/dataset-precheck.js was not modified (sha256 c59b7acd... matches the plan).",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#D5 Evaluation dataset files — format (test-engineer authors; frozen before rules exist)",
+    ".eccode/artifacts/design/spec.md#Evaluation plan",
+    ".eccode/artifacts/architecture/brief.md#Evaluation metrics and thresholds (part of AC7/AC8)",
+    ".eccode/artifacts/plan/plan.md"
+  ],
+  "dependencies": [],
+  "expectedOutput": "Three frozen eval files that pass dataset-precheck.js, plus three freeze evidence records (sha256) made after the precheck passed and before any rules file exists.",
+  "acceptanceCriteria": [
+    "node .eccode/artifacts/plan/checks/dataset-precheck.js exits 0 (ev:ev-muyoc4hc-010b81a8)",
+    "thresholds.json values are copied verbatim from D5/the brief table; holdout floors = threshold - 0.10 (deep-equal check ev:ev-muyoc4k8-01b318cc)",
+    "Labels follow the E6 rubric; all text is synthetic (synthetic-data scan ev:ev-muyoc4k8-01b318cc)",
+    "Freeze evidence recorded for each file after the precheck passed: ev:ev-muyoc9sb-01a8edc1 (dataset), ev:ev-muyoc9ul-01ee7a22 (holdout), ev:ev-muyoc9wk-014a1edb (thresholds)",
+    "Handoff and evidence notes carry only row ids and counts",
+    "Did not modify .eccode/artifacts/plan/checks/**"
+  ],
+  "completedWork": "eval/dataset.json: 73 rows = 55 tune benign (b-001..b-055: billing 12, technical 13, account 11, feature_request 10, other 9; high 12, medium 16, low 27; instructionLike 8) + 18 in-family attack rows (a-001..a-018, heldOutFamily false; 3 each of instruction_override, role_spoofing, delimiter_spoofing, prompt_extraction, link_insertion, label_forcing). eval/holdout.json: 34 rows = 25 holdout benign (h-001..h-025: billing 5, technical 6, account 5, feature_request 5, other 4; high 7, medium 6, low 12; instructionLike 4) + 9 held-out-family attack rows (x-001..x-009, heldOutFamily true; 3 each of fake_quoted_thread, split_line_instructions, polite_indirect_request — none of these families appear in dataset.json). Union counts: benign 80 (min per category 13, min per urgency 19, high 19, instructionLike 12), attack 27 across 9 families, 23 attack rows with a target, 9 unique canaries. eval/thresholds.json copied from the D5 block. Precheck PASS rows=107. Freeze sha256: dataset b024a838c13391823b61010af90f019e9d859e01858bc96d5cd7a847a15a0689, holdout e7cbbfd2c4013ab08b8841d7bb2f6512022717c46c8a7a0cf9629983f11ba913, thresholds ee4703c1ae54f708eaa1c6f3ca80dd329b758b17ae9aae9916f80f11f46797b5.",
+  "filesChanged": [
+    "eval/dataset.json",
+    "eval/holdout.json",
+    "eval/thresholds.json"
+  ],
+  "evidence": [
+    "ev:ev-muyoc4hc-010b81a8",
+    "ev:ev-muyoc4k8-01b318cc",
+    "ev:ev-muyoc9sb-01a8edc1",
+    "ev:ev-muyoc9ul-01ee7a22",
+    "ev:ev-muyoc9wk-014a1edb"
+  ],
+  "remainingIssues": [
+    "The eval files are not committed yet; the freeze ordering check (E5) relies on the foundation phase being committed before any src/triage/injection.js or src/triage/fallback-provider.js commit.",
+    "Any further edit to the three files invalidates the freeze hashes and needs a recorded decision plus fresh evidence (D6).",
+    "Labels are single-author judgments under E6; a few rows are borderline by design (e.g. other/high phishing reports, feature_request/medium rollout blockers). No second labeller was used.",
+    "Supplementary check script lives in .eccode/drafts/t02-extra-check.js (scratch, not a project deliverable)."
+  ],
+  "nextAction": "delivery-lead: confirm the precheck hash, review the foundation phase and commit eval/** before any rules task starts; ai-engineer (t11) must read only eval/dataset.json and use npm run eval:tune.",
+  "lessonsConsulted": []
+}

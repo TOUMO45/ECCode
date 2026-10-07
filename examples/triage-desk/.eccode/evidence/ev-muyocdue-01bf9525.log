@@ -1,0 +1,6 @@
+$ node -e const fs=require("fs");const ev=fs.readFileSync(".eccode/events.jsonl","utf8").trim().split("\n").map(JSON.parse);let br=0;for(let i=1;i<ev.length;i++)if(ev[i].prevHash!==ev[i-1].hash)br++;console.log("events",ev.length,"broken links",br);const rj=ev.filter(e=>e.type==="review.rejected");for(const e of rj)console.log("rejected",e.seq,e.actor,e.data.gate,JSON.stringify(e.data.reasons));for(const e of ev)if(e.type==="review.recorded")console.log("recorded",e.seq,e.actor,e.data.gate,e.data.review.decision);const g=fs.readFileSync("/home/user/ECCode/lib/gates.js","utf8");console.log("lib/gates.js uses gate status literal approved:",/status !== .approved./.test(g));process.exit(rj.filter(e=>/decision/.test(e.data.reasons[0])).map(e=>e.seq).join()==="128,160"&&br===0?0:1)
+# cwd: .
+# exit: 2
+
+[stderr]
+/bin/sh: 1: Syntax error: "(" unexpected
