@@ -1,6 +1,6 @@
 {
-  "seq": 323,
-  "lastHash": "38b6c703c168a965d654bba3d3ca2481f2013d0e944ce30e27e743daa5d87e9f",
+  "seq": 340,
+  "lastHash": "af1c46a05d1e7f7df377fc2ad245a52c916969dc783f1f15c3231137175de120",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -1062,24 +1062,28 @@
         "method": "Unit tests with fake-fetch stubs",
         "command": "node --test test/unit/anthropic-provider.test.js"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "ai-engineer",
-        "at": "2026-10-07T22:57:39.619Z",
-        "baseCommit": "34130a655d2b366b87bef2f9d67d869c0a64db58",
-        "runId": "run-muypjfkb-014a9f30"
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "ai-engineer",
           "at": "2026-10-07T22:57:39.619Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "ai-engineer",
+          "at": "2026-10-07T23:00:49.126Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "ai-engineer",
+      "handoffId": "ho-muypo6s1-01122dea",
+      "filesChanged": [
+        "src/triage/anthropic-provider.js",
+        "test/unit/anthropic-provider.test.js"
+      ]
     },
     "t10-service": {
       "id": "t10-service",
@@ -3609,6 +3613,82 @@
       "task": null,
       "recordedBy": "security-reviewer",
       "at": "2026-10-07T22:55:31.347Z"
+    },
+    "ev-muypmd8r-018c1a6c": {
+      "id": "ev-muypmd8r-018c1a6c",
+      "kind": "command",
+      "label": "TDD red: provider tests before implementation",
+      "command": "node --test test/unit/anthropic-provider.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 128,
+      "log": ".eccode/evidence/ev-muypmd8r-018c1a6c.log",
+      "logSha256": "496061866e32798d78b5868575d06ebefd5f35a1890731b2db5428acb80a502a",
+      "outputTail": "#   ]\n# }\n# Node.js v22.22.0\n# Subtest: test/unit/anthropic-provider.test.js\nnot ok 1 - test/unit/anthropic-provider.test.js\n  ---\n  duration_ms: 58.58014\n  type: 'test'\n  location: '/home/user/ECCode/examples/triage-desk/test/unit/anthropic-provider.test.js:1:1'\n  failureType: 'testCodeFailure'\n  exitCode: 1\n  signal: ~\n  error: 'test failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 67.083895\n",
+      "gate": null,
+      "task": "t09-anthropic-provider",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-07T22:59:24.182Z"
+    },
+    "ev-muypnaj3-01d37d63": {
+      "id": "ev-muypnaj3-01d37d63",
+      "kind": "command",
+      "label": "RISK-10 probe: ungated validateTriage vs gated analyse on 32k a.a.a. output",
+      "command": "node .eccode/drafts/t09-risk10-probe.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8349,
+      "log": ".eccode/evidence/ev-muypnaj3-01d37d63.log",
+      "logSha256": "1e192c82449cfc132cd98b7c7827ccab07209bb04578fff1de845bf72dee54cd",
+      "outputTail": "{\"ungatedValidateTriageMs\":8301,\"ungatedErrors\":[\"summary_v1\",\"reply_length\"],\"gatedAnalyseMs\":1.87,\"gatedResult\":{\"reason\":\"invalid_output\",\"detail\":\"invalid:summary_v1,reply_length\"}}\n",
+      "gate": null,
+      "task": "t09-anthropic-provider",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-07T23:00:07.323Z"
+    },
+    "ev-muypnb2j-0102da46": {
+      "id": "ev-muypnb2j-0102da46",
+      "kind": "command",
+      "label": "t09 verification: provider unit tests (green)",
+      "command": "node --test test/unit/anthropic-provider.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 617,
+      "log": ".eccode/evidence/ev-muypnb2j-0102da46.log",
+      "logSha256": "6e38f60d5d021ee992c4cea1dec1e45b4f52b7744e9d5276695b800f472e1294",
+      "outputTail": "  duration_ms: 0.94958\n  type: 'test'\n  ...\n# Subtest: RISK-10: each field gated independently at the spec limits (200 / 1200)\nok 24 - RISK-10: each field gated independently at the spec limits (200 / 1200)\n  ---\n  duration_ms: 3.034755\n  type: 'test'\n  ...\n# Subtest: analyse never rejects across every stub kind\nok 25 - analyse never rejects across every stub kind\n  ---\n  duration_ms: 31.19769\n  type: 'test'\n  ...\n1..25\n# tests 25\n# suites 0\n# pass 25\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 548.243022\n",
+      "gate": null,
+      "task": "t09-anthropic-provider",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-07T23:00:08.021Z"
+    },
+    "ev-muypnh4g-01984d42": {
+      "id": "ev-muypnh4g-01984d42",
+      "kind": "command",
+      "label": "full npm test (regression)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 3108,
+      "log": ".eccode/evidence/ev-muypnh4g-01984d42.log",
+      "logSha256": "9caa70f4426815d0836ea7ca7b86cea8662ce430da5f077b2f055e23aac5ba80",
+      "outputTail": "  duration_ms: 1.876423\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 283 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 3.751896\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 284 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 2.745903\n  type: 'test'\n  ...\n1..284\n# tests 284\n# suites 0\n# pass 284\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2917.580902\n",
+      "gate": null,
+      "task": "t09-anthropic-provider",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-07T23:00:15.866Z"
     }
   },
   "reviews": {
@@ -5628,6 +5708,56 @@
       "id": "ho-muyp4gwg-01a95372",
       "recordedBy": "backend-engineer",
       "at": "2026-10-07T22:45:29.140Z"
+    },
+    "ho-muypo6s1-01122dea": {
+      "from": "ai-engineer",
+      "to": "delivery-lead",
+      "task": "t09-anthropic-provider",
+      "objective": "Implement src/triage/anthropic-provider.js per spec C6.4 (10-step algorithm, never-rejecting analyse, one redirect-refusing fetch with a hard timeout) and C7, with unit tests for AC4 a-n at provider level and DES-1; mitigate security finding SEC-CM-1 / RISK-10 at the call site.",
+      "context": "Contracts: spec C6.4 (createAnthropicProvider(opts) -> {model, analyse}; LiveResult; fixed detail codes; uses only res.status and res.text()), C7 (URL baseUrl + '/v1/messages', exactly three headers, body from prompt.js buildRequestBody, redirect:'error'), §Timeouts (one attempt, no retries). API shape (POST /v1/messages, x-api-key, anthropic-version 2023-06-01, response stop_reason / content[] text blocks / usage.input_tokens+output_tokens) checked 2026-10-07 against the claude-api skill reference, as recorded by t04; no live call (no key). Security review rev-muypiolk-0132e9b0 SEC-CM-1 / RISK-10: schema.js V2 is quadratic in text length; schema.js is in an approved phase and was not modified, so the gate is in the provider. Memory search 'anthropic provider fetch timeout redirect abort' (--check-env) found no applicable lesson (mem-k-muyljkrt-01991ac7 DOES-NOT-APPLY: Node 22.22.0).",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#C6.4 Provider interface (server ↔ AI module boundary)",
+        ".eccode/artifacts/design/spec.md#C7 Outbound contract: Anthropic Messages API (live mode only)",
+        ".eccode/artifacts/design/spec.md#Timeouts, retries, fallback, cost",
+        ".eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        ".eccode/reviews/rev-muypiolk-0132e9b0.json#SEC-CM-1",
+        ".eccode/drafts/t04-handoff.json"
+      ],
+      "dependencies": [
+        "t04-schema-prompt",
+        "t03-test-helpers"
+      ],
+      "expectedOutput": "createAnthropicProvider(opts) returning {model, analyse(redactedTicket) => Promise<LiveResult>} that never rejects, makes at most one fetch, and maps every outcome to the C6.4 reasons and fixed detail codes; unit tests with fake-fetch stubs.",
+      "acceptanceCriteria": [
+        "Implements the C6.4 10-step algorithm in order; analyse never rejects; uses only res.status and res.text(); at most one fetch call per analyse; no SDK or other dependency",
+        "AC4 (a)-(n) at provider level incl. never() stub times out, thinking-first content, usage mapping, headers and URL (baseUrl + /v1/messages)",
+        "DES-1: a capture stub asserts init.redirect === 'error'; a 307 stub gives model_error/redirect_refused without calling text(); a stub throwing TypeError gives model_error/fetch_threw",
+        "RISK-10: model output with summary > 200 or suggestedReply > 1200 chars is rejected (invalid_output) before validateTriage/V2; a 32k-char 'a.a.a.' payload returns fallback in < 100 ms"
+      ],
+      "completedWork": "src/triage/anthropic-provider.js (zero deps, CommonJS) exports createAnthropicProvider({apiKey, model, baseUrl, timeoutMs, maxTokens, fetchImpl}) -> {model, analyse}. analyse follows C6.4 in order: (1) buildRequestBody inside the try, so its TypeError (t04 note) becomes model_error/fetch_threw with no fetch call; (2) AbortController + setTimeout(timeoutMs); (3) one fetchImpl(baseUrl + '/v1/messages', {method:'POST', headers:{content-type, x-api-key, anthropic-version:2023-06-01}, body: JSON.stringify(body), signal, redirect:'error'}), and then res.text(), each raced against the abort signal (a never-settling stub still times out); abort -> timeout/'timeout', any other throw (incl. sync throw, non-function fetchImpl, non-object response or non-integer status) -> model_error/fetch_threw; timer cleared in finally; abort listeners removed after settle; (4) 3xx -> model_error/redirect_refused without reading the body, other non-2xx -> model_error/http_<status> (body read under the timeout, per step order); (5) unparseable or non-object body -> model_error/body_not_json; (6) stop_reason refusal -> refusal/'refusal', max_tokens -> truncated/'max_tokens'; (7) first content element with type 'text' and string text (thinking skipped) else invalid_output/no_text_block; (8) text not JSON -> invalid_output/text_not_json; RISK-10 gate: if summary is a string > 200 chars or suggestedReply a string > 1200 chars -> invalid_output/invalid:<summary_v1|reply_length> (the same codes, in the same order, validateTriage itself reports for such output) without calling validateTriage; (9) validateTriage -> invalid_output/invalid:<codes> or {ok:true, triage (enums normalised), upstreamStatus, usage}; (10) usage {inputTokens, outputTokens} when both are numbers, else null, attached to every result where the body was parsed. upstreamStatus is the HTTP status once known, else null. detail is always a fixed code; no content is echoed (tested with a canary). test/unit/anthropic-provider.test.js: 25 tests (headers/URL/redirect/signal/body capture; AC4 a-n; DES-1 for 300-399 with a no-read stub that counts text()/json() calls (FND-1); sync throw; text() rejection; timeouts on fetch and on the body read, and abort-rejecting fetch; timer cleared; usage mapping; buildRequestBody guard; canary non-echo; RISK-10 32k payload < 100 ms and limit boundaries 200/201 and 1200/1201; never-rejects sweep). RISK-10 resolved at the call site: probe ev:ev-muypnaj3-01d37d63 shows ungated validateTriage takes 8301 ms on the 32k 'a.a.a.' output while gated analyse takes 1.87 ms with the identical detail 'invalid:summary_v1,reply_length'.",
+      "filesChanged": [
+        "src/triage/anthropic-provider.js",
+        "test/unit/anthropic-provider.test.js"
+      ],
+      "evidence": [
+        "ev:ev-muypmd8r-018c1a6c",
+        "ev:ev-muypnb2j-0102da46",
+        "ev:ev-muypnaj3-01d37d63",
+        "ev:ev-muypnh4g-01984d42"
+      ],
+      "remainingIssues": [
+        "RISK-10 is resolved only at this call site. schema.js validateTriage/validateResponse are unchanged (approved phase), so any other caller that validates unbounded text (e.g. t08 eval/run.js calling validateResponse on fallback or live results, t15 contract tests) still has the quadratic V2 cost; fallback output is bounded (<= 600-char templates) so the eval's fallback path is not exposed. Recommend the schema owner add the length gate inside schema.js in a later revision (the review's original recommendation).",
+        "Usage/latency logging: per C6.4 the provider has no logger and returns usage in LiveResult; latency is measured and logged by service.js (t10) via AnalysisMeta and the D1.6 request log. The provider itself logs nothing, so no prompt content can leak from it.",
+        "Interpretation within the contract: a buildRequestBody TypeError (invalid model/maxTokens/non-string ticket) and a malformed response object (null, non-integer status) map to model_error/fetch_threw, the C6.4 catch-all ('any other throw'), since the fixed detail list has no closer code. A JSON body that parses to a non-object (e.g. 'null') maps to model_error/body_not_json. Non-2xx, non-3xx bodies are read (under the timeout) before http_<status> is returned, following the step order; if that read fails the result is fetch_threw/timeout with the status.",
+        "createAnthropicProvider does not validate opts at creation (config.js validates them); invalid values surface as model_error or timeout at analyse time.",
+        "Not tested: no live Anthropic call (no API key). Results here are evidence about the pipeline against stubs, not about model behaviour or real API shape drift (RISK-7 remains open until a live call).",
+        "Not tested here: real-fetch behaviour with redirect:'error' against fake-anthropic 307 (AC4 o end-to-end) - that is t15's spawned-server test; the provider-level stub tests cover the contract."
+      ],
+      "nextAction": "backend-engineer: t10-service - wrap provider.analyse per C6.4 R12 (try/catch -> provider_threw, latency measurement, usage into AnalysisMeta); backend-engineer t13 wires createAnthropicProvider with config + globalThis.fetch; schema owner (ai-engineer) to consider moving the RISK-10 length gate into schema.js in a later revision.",
+      "lessonsConsulted": [],
+      "id": "ho-muypo6s1-01122dea",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-07T23:00:49.141Z"
     }
   },
   "runs": {
@@ -6096,6 +6226,20 @@
       "task": "t09-anthropic-provider",
       "gate": null,
       "startedAt": "2026-10-07T22:57:07.219Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T23:01:18.704Z",
+      "durationMinutes": 4.19,
+      "costUsd": 0,
+      "tokens": 130824,
+      "note": null
+    },
+    "run-muypotpz-01ebe8ba": {
+      "id": "run-muypotpz-01ebe8ba",
+      "agent": "backend-engineer",
+      "task": "t10-service",
+      "gate": null,
+      "startedAt": "2026-10-07T23:01:18.848Z",
       "status": "running",
       "attempt": 1
     }
@@ -6195,11 +6339,11 @@
       "id": "RISK-10",
       "title": "Output validator V2 (and V1 boundary regex) is O(n^2) on long, attacker-steerable model output: validateTriage runs V2 on summary/suggestedReply of any length, ~0.5 s at 8k chars and 5-8 s at 32k chars (TRIAGE_MAX_TOKENS up to 16000) blocking the single-threaded server",
       "severity": "low",
-      "mitigation": "Gate V2 behind the V1/V4 length limits (skip containsLinkOrEmail when summary > 200 or reply > 1200 chars, since the result is invalid_output anyway); V2 on 1200 chars costs ~6 ms. Owner of schema.js (ai-engineer) or the provider/service task t09/t10 before live wiring. Evidence ev:ev-muypgo9y-01c9b8e3",
+      "mitigation": "Provider length gate before validateTriage (summary<=200, reply<=1200): 32k adversarial output 8301ms -> 1.87ms (ev-muypnaj3-01d37d63). Other validateTriage callers remain exposed; schema-level gate recommended later.",
       "owner": "ai-engineer",
-      "status": "open",
-      "updatedAt": "2026-10-07T22:55:31.420Z",
-      "updatedBy": "security-reviewer"
+      "status": "mitigated",
+      "updatedAt": "2026-10-07T23:01:18.778Z",
+      "updatedBy": "orchestrator"
     }
   },
   "decisions": {
@@ -6267,8 +6411,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 146.92,
-    "tokens": 4213077
+    "runtimeMinutes": 151.11,
+    "tokens": 4343901
   },
   "delivery": null
 }

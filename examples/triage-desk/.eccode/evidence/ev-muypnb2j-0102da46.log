@@ -1,0 +1,163 @@
+$ node --test test/unit/anthropic-provider.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: provider exposes model and analyse
+ok 1 - provider exposes model and analyse
+  ---
+  duration_ms: 1.252603
+  type: 'test'
+  ...
+# Subtest: C7/AC9: one POST to baseUrl + /v1/messages with exact headers, redirect:error, signal and the built body
+ok 2 - C7/AC9: one POST to baseUrl + /v1/messages with exact headers, redirect:error, signal and the built body
+  ---
+  duration_ms: 4.586501
+  type: 'test'
+  ...
+# Subtest: AC4 m / step 9-10: valid output with mixed-case enums is normalised; usage mapped
+ok 3 - AC4 m / step 9-10: valid output with mixed-case enums is normalised; usage mapped
+  ---
+  duration_ms: 0.694628
+  type: 'test'
+  ...
+# Subtest: AC4 n: a thinking block before the text block is skipped
+ok 4 - AC4 n: a thinking block before the text block is skipped
+  ---
+  duration_ms: 0.598342
+  type: 'test'
+  ...
+# Subtest: step 7: a text-typed block without a string text is skipped for the next valid one
+ok 5 - step 7: a text-typed block without a string text is skipped for the next valid one
+  ---
+  duration_ms: 0.504622
+  type: 'test'
+  ...
+# Subtest: step 10: usage is null unless both token counts are numbers
+ok 6 - step 10: usage is null unless both token counts are numbers
+  ---
+  duration_ms: 0.694923
+  type: 'test'
+  ...
+# Subtest: AC4 a: fetch throws TypeError -> model_error/fetch_threw, one call, no usage
+ok 7 - AC4 a: fetch throws TypeError -> model_error/fetch_threw, one call, no usage
+  ---
+  duration_ms: 0.603377
+  type: 'test'
+  ...
+# Subtest: fetchImpl that throws synchronously -> model_error/fetch_threw (analyse never rejects)
+ok 8 - fetchImpl that throws synchronously -> model_error/fetch_threw (analyse never rejects)
+  ---
+  duration_ms: 0.766073
+  type: 'test'
+  ...
+# Subtest: res.text() rejecting -> model_error/fetch_threw with the upstream status
+ok 9 - res.text() rejecting -> model_error/fetch_threw with the upstream status
+  ---
+  duration_ms: 0.660197
+  type: 'test'
+  ...
+# Subtest: AC4 b: a fetch that never settles (ignores abort) times out -> timeout
+ok 10 - AC4 b: a fetch that never settles (ignores abort) times out -> timeout
+  ---
+  duration_ms: 153.307999
+  type: 'test'
+  ...
+# Subtest: timeout covers the body read: text() that never settles -> timeout with status
+ok 11 - timeout covers the body read: text() that never settles -> timeout with status
+  ---
+  duration_ms: 121.137599
+  type: 'test'
+  ...
+# Subtest: a fetch that rejects with AbortError when aborted still maps to timeout
+ok 12 - a fetch that rejects with AbortError when aborted still maps to timeout
+  ---
+  duration_ms: 51.054483
+  type: 'test'
+  ...
+# Subtest: timer is cleared: a fast success leaves the signal unaborted after timeoutMs
+ok 13 - timer is cleared: a fast success leaves the signal unaborted after timeoutMs
+  ---
+  duration_ms: 80.963422
+  type: 'test'
+  ...
+# Subtest: DES-1: 307 (and every 3xx) -> model_error/redirect_refused without reading the body
+ok 14 - DES-1: 307 (and every 3xx) -> model_error/redirect_refused without reading the body
+  ---
+  duration_ms: 1.229461
+  type: 'test'
+  ...
+# Subtest: AC4 c-f: HTTP 404/429/529/500 (and 400/401) -> model_error/http_<status>, one call
+ok 15 - AC4 c-f: HTTP 404/429/529/500 (and 400/401) -> model_error/http_<status>, one call
+  ---
+  duration_ms: 0.527541
+  type: 'test'
+  ...
+# Subtest: step 5: non-JSON body -> model_error/body_not_json
+ok 16 - step 5: non-JSON body -> model_error/body_not_json
+  ---
+  duration_ms: 0.290496
+  type: 'test'
+  ...
+# Subtest: AC4 g/h: stop_reason refusal -> refusal; max_tokens -> truncated; usage attached
+ok 17 - AC4 g/h: stop_reason refusal -> refusal; max_tokens -> truncated; usage attached
+  ---
+  duration_ms: 0.470249
+  type: 'test'
+  ...
+# Subtest: step 7: no text block -> invalid_output/no_text_block
+ok 18 - step 7: no text block -> invalid_output/no_text_block
+  ---
+  duration_ms: 0.656256
+  type: 'test'
+  ...
+# Subtest: AC4 i: text block that is not JSON -> invalid_output/text_not_json
+ok 19 - AC4 i: text block that is not JSON -> invalid_output/text_not_json
+  ---
+  duration_ms: 0.430271
+  type: 'test'
+  ...
+# Subtest: AC4 j/k/l: validator failures -> invalid_output/invalid:<codes>
+ok 20 - AC4 j/k/l: validator failures -> invalid_output/invalid:<codes>
+  ---
+  duration_ms: 0.884375
+  type: 'test'
+  ...
+# Subtest: buildRequestBody TypeError is guarded: non-string ticket -> model_error, no fetch, never rejects
+ok 21 - buildRequestBody TypeError is guarded: non-string ticket -> model_error, no fetch, never rejects
+  ---
+  duration_ms: 0.457092
+  type: 'test'
+  ...
+# Subtest: detail never carries content: upstream error text and model output are not echoed
+ok 22 - detail never carries content: upstream error text and model output are not echoed
+  ---
+  duration_ms: 0.772393
+  type: 'test'
+  ...
+# Subtest: RISK-10: 32k-char "a.a.a." summary and reply -> invalid_output quickly (< 100 ms), V2 never sees it
+ok 23 - RISK-10: 32k-char "a.a.a." summary and reply -> invalid_output quickly (< 100 ms), V2 never sees it
+  ---
+  duration_ms: 0.94958
+  type: 'test'
+  ...
+# Subtest: RISK-10: each field gated independently at the spec limits (200 / 1200)
+ok 24 - RISK-10: each field gated independently at the spec limits (200 / 1200)
+  ---
+  duration_ms: 3.034755
+  type: 'test'
+  ...
+# Subtest: analyse never rejects across every stub kind
+ok 25 - analyse never rejects across every stub kind
+  ---
+  duration_ms: 31.19769
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 548.243022
