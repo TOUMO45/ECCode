@@ -1,6 +1,6 @@
 {
-  "seq": 210,
-  "lastHash": "545a39f0ab737527ce31266f30ec6e22111a708c150a1fc50e2e966467ca9745",
+  "seq": 212,
+  "lastHash": "4f6b1b0b5d37ede815dc956225adeab756c6caec5cc9748f30fc95de8fb4dbc6",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -2329,6 +2329,44 @@
       "task": null,
       "recordedBy": "security-reviewer",
       "at": "2026-10-07T22:23:46.032Z"
+    },
+    "ev-muyodvof-01e95e26": {
+      "id": "ev-muyodvof-01e95e26",
+      "kind": "command",
+      "label": "t03 verification: helper self-test (node:test, loopback only)",
+      "command": "node --test test/helpers/helpers.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 898,
+      "log": ".eccode/evidence/ev-muyodvof-01e95e26.log",
+      "logSha256": "bc2c094a6077a89199ac43f1139876a5501107928b855af5c4196078502db44f",
+      "outputTail": "  duration_ms: 35.865957\n  type: 'test'\n  ...\n# Subtest: spawn-server: a child that exits before listening rejects with its exit code and stderr\nok 20 - spawn-server: a child that exits before listening rejects with its exit code and stderr\n  ---\n  duration_ms: 26.701221\n  type: 'test'\n  ...\n# Subtest: spawn-server: a child that never logs listening is killed after timeoutMs\nok 21 - spawn-server: a child that never logs listening is killed after timeoutMs\n  ---\n  duration_ms: 506.855461\n  type: 'test'\n  ...\n1..21\n# tests 21\n# suites 0\n# pass 21\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 839.934558\n",
+      "gate": null,
+      "task": "t03-test-helpers",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T22:24:48.550Z"
+    },
+    "ev-muyodwft-010ec996": {
+      "id": "ev-muyodwft-010ec996",
+      "kind": "command",
+      "label": "t03 DES-1 mutation: spreading process.env into child env is caught by self-test",
+      "command": "sh /tmp/claude-0/-home-user-ECCode/d6824f10-195b-5fa2-ac4d-3e86b02701bb/scratchpad/mutation-env-leak.sh",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 925,
+      "log": ".eccode/evidence/ev-muyodwft-010ec996.log",
+      "logSha256": "62a27e83cd3881ff70d720edc55a180b312955d15a8a91521f46e09b46f5df2c",
+      "outputTail": "not ok 17 - spawn-server: buildChildEnv is exactly {PATH, ...testEnv, PORT:\"0\"} and copies nothing else from process.env\nnot ok 18 - spawn-server: child sees only PATH, testEnv and PORT=0 (parent secrets do not leak); port read from listening line\n# pass 19\n# fail 2\nmutant killed\n",
+      "gate": null,
+      "task": "t03-test-helpers",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-07T22:24:49.537Z"
     }
   },
   "reviews": {
