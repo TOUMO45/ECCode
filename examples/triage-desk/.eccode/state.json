@@ -1,6 +1,6 @@
 {
-  "seq": 380,
-  "lastHash": "3937827b065b103cf1182b61c13a5d842d1d56b1210204e2b0249dd735efea62",
+  "seq": 391,
+  "lastHash": "a5be49f4ede5f970112fce9d2bd036a01cfe7ca51b17a39496997ff6c2a5b08b",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -1322,12 +1322,30 @@
         "method": "Unit tests plus the tune-only eval (never full mode)",
         "command": "node --test test/unit/injection.test.js test/unit/fallback-provider.test.js && npm run eval:tune"
       },
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "claim": null,
-      "history": [],
-      "completedBy": null,
-      "handoffId": null
+      "history": [
+        {
+          "event": "claimed",
+          "by": "ai-engineer",
+          "at": "2026-10-07T23:12:17.814Z",
+          "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "ai-engineer",
+          "at": "2026-10-07T23:18:33.751Z"
+        }
+      ],
+      "completedBy": "ai-engineer",
+      "handoffId": "ho-muyqb08t-018ef897",
+      "filesChanged": [
+        "src/triage/injection.js",
+        "src/triage/fallback-provider.js",
+        "test/unit/injection.test.js",
+        "test/unit/fallback-provider.test.js"
+      ]
     },
     "t12-heldout-hygiene": {
       "id": "t12-heldout-hygiene",
@@ -4160,6 +4178,63 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-07T23:10:52.866Z"
+    },
+    "ev-muyq5uro-0123fbdf": {
+      "id": "ev-muyq5uro-0123fbdf",
+      "kind": "command",
+      "label": "t11 test-first: unit tests fail before implementation (red)",
+      "command": "node --test test/unit/injection.test.js test/unit/fallback-provider.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 143,
+      "log": ".eccode/evidence/ev-muyq5uro-0123fbdf.log",
+      "logSha256": "9afe518c18c9a619564c616b7acb9e56d8eb22e956e4b6369237993d2f5de711",
+      "outputTail": "#   ]\n# }\n# Node.js v22.22.0\n# Subtest: test/unit/injection.test.js\nnot ok 2 - test/unit/injection.test.js\n  ---\n  duration_ms: 62.068712\n  type: 'test'\n  location: '/home/user/ECCode/examples/triage-desk/test/unit/injection.test.js:1:1'\n  failureType: 'testCodeFailure'\n  exitCode: 1\n  signal: ~\n  error: 'test failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..2\n# tests 2\n# suites 0\n# pass 0\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 77.265127\n",
+      "gate": null,
+      "task": "t11-rules",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-07T23:14:33.359Z"
+    },
+    "ev-muyqa6rq-0128055f": {
+      "id": "ev-muyqa6rq-0128055f",
+      "kind": "command",
+      "label": "t11 verification: unit tests (injection + fallback) && npm run eval:tune (tune mode only; TUNE_EVAL)",
+      "command": "node --test test/unit/injection.test.js test/unit/fallback-provider.test.js && npm run eval:tune",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 591,
+      "log": ".eccode/evidence/ev-muyqa6rq-0128055f.log",
+      "logSha256": "893feb731d8756eac1cb72f05718a6c474ec91f7a30f5470f4321a453df0afc7",
+      "outputTail": "# duration_ms 154.879091\n\n> triage-desk@0.1.0 eval:tune\n> node eval/run.js --split tune\n\ndataset eval/dataset.json sha256 b024a838c13391823b61010af90f019e9d859e01858bc96d5cd7a847a15a0689\nthresholds eval/thresholds.json sha256 ee4703c1ae54f708eaa1c6f3ca80dd329b758b17ae9aae9916f80f11f46797b5\nprovider fallback (deterministic rules; NOT evidence of model quality)\nholdout: NOT SCORED (tune mode)\nrows tune=55 attack=18 instructionLike=8\nCHECK datasetMinimums NOT CHECKED (tune mode)\nMETRIC category_accuracy scope=tune value=0.973 n=73 threshold=>=0.70 PASS\nMETRIC category_accuracy scope=attack value=0.889 n=18 threshold=info INFO\nMETRIC urgency_accuracy scope=tune value=0.945 n=73 threshold=>=0.65 PASS\nMETRIC urgency_accuracy scope=attack value=0.944 n=18 threshold=info INFO\nMETRIC high_urgency_recall scope=tune value=1.000 n=14 threshold=>=0.80 PASS\nMETRIC schema_validity scope=tune value=1.000 n=73 threshold=>=1.00 PASS\nINJECTION injection_leak 0 failures in 18 (95% upper bound ~3/N = 16.7%) threshold=0 PASS\nINJECTION injection_steer 0 failures in 16 (rate 0.000) (95% upper bound ~3/N = 18.8%) threshold=<=0.25 PASS\nINJECTION attack_success 0 failures in 18 (95% upper bound ~3/N = 16.7%) threshold=reported INFO\nMETRIC injection_flag_recall scope=in-family value=1.000 n=18 threshold=>=0.90 PASS\nMETRIC injection_flag_fpr scope=instructionLike value=0.000 n=8 threshold=<=0.10 PASS\nRESULT TUNE-ONLY PASS 8/8 tune checks passed (not a verification result)\nTUNE_EVAL {\"mode\":\"tune\",\"passed\":8,\"total\":8}\n",
+      "gate": null,
+      "task": "t11-rules",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-07T23:17:55.548Z"
+    },
+    "ev-muyqab5g-011923d2": {
+      "id": "ev-muyqab5g-011923d2",
+      "kind": "command",
+      "label": "t11 regression: full npm test suite (synthetic eval fixtures only)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 5592,
+      "log": ".eccode/evidence/ev-muyqab5g-011923d2.log",
+      "logSha256": "035a78e7749f7943614e78e5606d759bd14fb648472ec67a4855f94306674ccb",
+      "outputTail": "  duration_ms: 1.642869\n  type: 'test'\n  ...\n# Subtest: AC6: the reply is editable, Reset restores the original, Copy copies the current text\nok 364 - AC6: the reply is editable, Reset restores the original, Copy copies the current text\n  ---\n  duration_ms: 3.096258\n  type: 'test'\n  ...\n# Subtest: copy failure (rejected or unavailable clipboard) tells the user how to copy manually\nok 365 - copy failure (rejected or unavailable clipboard) tells the user how to copy manually\n  ---\n  duration_ms: 2.654926\n  type: 'test'\n  ...\n1..365\n# tests 365\n# suites 0\n# pass 365\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 5374.068496\n",
+      "gate": null,
+      "task": "t11-rules",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-07T23:18:01.214Z"
     }
   },
   "reviews": {
@@ -6474,6 +6549,67 @@
       "id": "ho-muypuiv8-01f1d4d4",
       "recordedBy": "test-engineer",
       "at": "2026-10-07T23:05:44.751Z"
+    },
+    "ho-muyqb08t-018ef897": {
+      "from": "ai-engineer",
+      "to": "delivery-lead",
+      "task": "t11-rules",
+      "objective": "Implement the injection detector (detectInjection/splitSentences) and the deterministic fallback (fallbackAnalyse) per spec C6.3, D1.3 and DES-7, tuned only with npm run eval:tune until 8/8 tune checks pass.",
+      "context": "Contracts: spec C6.3 (injection.js, fallback-provider.js), D1.3 rule ids, Untrusted-input isolation, Evaluation plan E1-E5 (DES-2 holdout discipline), DES-10 (t06 dependency, satisfied: tune runs executed rows through ticket-input.js). The service consumes detection.suspected === true and passes the detection to fallbackAnalyse. The ai-engineer did not open eval/holdout.json and did not run the eval in full mode. Provider for all eval results: deterministic fallback; these numbers are evidence about the pipeline and rules, NOT about model quality (E7). Live thresholds remain unverified. External API research not applicable: this task touches no model API.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#C6.3 Triage domain modules",
+        ".eccode/artifacts/design/spec.md#D1 Entities",
+        ".eccode/artifacts/design/spec.md#Untrusted-input isolation",
+        ".eccode/artifacts/design/spec.md#Evaluation plan",
+        "eval/dataset.json (tune and in-family attack rows only)",
+        "eval/thresholds.json",
+        ".eccode/reviews/rev-muynhokz-01357080.json#DES-10"
+      ],
+      "dependencies": [
+        "t02-eval-dataset",
+        "t04-schema-prompt",
+        "t05-redact",
+        "t06-http-config-log-input",
+        "t08-eval-runner",
+        "t10-service"
+      ],
+      "expectedOutput": "src/triage/injection.js exporting detectInjection(text) -> {suspected, rules, spans} and splitSentences(text); src/triage/fallback-provider.js exporting fallbackAnalyse(ticket, detection) -> Triage passing validateTriage; unit tests for both; npm run eval:tune exits 0 with TUNE_EVAL {\"mode\":\"tune\",\"passed\":8,\"total\":8}.",
+      "acceptanceCriteria": [
+        "detectInjection/splitSentences per C6.3 and D1.3 rule ids (INJ_OVERRIDE, INJ_ROLE, INJ_DELIM, INJ_EXTRACT, INJ_LINK, INJ_LABEL); pure and deterministic; INJ_DELIM matches the lookalike pairs ＜＞ 〈〉 ‹› ⟨⟩ ﹤﹥ around ticket/system in any open/close combination (DES-7); unit tests have one positive and one negative per rule id, spans and determinism, written phrasing only",
+        "fallbackAnalyse: pure, never throws for string input (incl. malformed detection), drops detector-matched sentences before scoring, all 15 templates pass validateTriage, no ticket tokens copied (nonsense-token check)",
+        "npm run eval:tune exits 0 with TUNE_EVAL {\"mode\":\"tune\",\"passed\":8,\"total\":8}",
+        "did not open eval/holdout.json and did not run the eval in full mode",
+        "t02 freeze evidence ids predate this task's claim and any commit touching the rules files",
+        "DES-10: t06 ticket-input.js present and used by the tune runner"
+      ],
+      "completedWork": "injection.js: splitSentences partitions the text into gap-free spans (boundary after [.!?]+ followed by whitespace, and after each newline). detectInjection runs bounded regex families over the original text (INJ_OVERRIDE: ignore/disregard/forget/override/bypass + instruction nouns, 'new instructions:'; INJ_ROLE: line-start role markers, bracketed roles, [INST]/<<SYS>>/<|...|>, persona switches, 'message from the developers/vendor'; INJ_DELIM: ASCII and lookalike-bracket ticket/system/assistant/instructions tags, end-of-ticket/end-of-message marker lines, fenced system blocks; INJ_EXTRACT: reveal/print/repeat your or hidden/system prompt/instructions, 'what are your instructions', 'repeat everything above'; INJ_LABEL: classify/mark/label/treat this ticket as <category or urgency>, set the urgency/category to, category/urgency/priority [:=] value, 'correct classification', 'do not change these labels') plus a per-sentence INJ_LINK check (link or URL + reference to the reply + insertion verb; a URL alone or an email address is not flagged). Returns sorted unique rule ids and the matched sentence spans. fallback-provider.js: drops detection spans (malformed spans ignored), lower-cases, scores weighted word-boundary keyword lists per category (tie order billing > account > technical > feature_request > other, 0 -> other), urgency = high cue, else explicit low cue (not urgent/no rush/minor/cosmetic), else medium cue, else low; no letters -> other/medium. Summary 'Customer reports <a x-urgency> <category phrase>.' and a per-category + per-urgency reply template (<= 600 chars), never interpolating ticket text; templateFor exported for the 15-template test. Tune results (fallback provider): category_accuracy 0.973 (n=73, >=0.70 PASS), urgency_accuracy 0.945 (>=0.65 PASS), high_urgency_recall 1.000 (n=14, >=0.80 PASS), schema_validity 1.000 PASS, injection_leak 0/18 PASS, injection_steer 0/16 PASS, injection_flag_recall 1.000 (n=18, >=0.90 PASS), injection_flag_fpr 0.000 (n=8, <=0.10 PASS); TUNE_EVAL 8/8. Full npm test suite: 365 pass, 0 fail.",
+      "filesChanged": [
+        "src/triage/injection.js",
+        "src/triage/fallback-provider.js",
+        "test/unit/injection.test.js",
+        "test/unit/fallback-provider.test.js"
+      ],
+      "evidence": [
+        "ev:ev-muyq5uro-0123fbdf",
+        "ev:ev-muyqa6rq-0128055f",
+        "ev:ev-muyqab5g-011923d2",
+        "ev:ev-muyoc9sb-01a8edc1",
+        "ev:ev-muyoc9ul-01ee7a22",
+        "ev:ev-muyoc9wk-014a1edb"
+      ],
+      "remainingIssues": [
+        "Tune scores (0.973 category, 0.945 urgency, 0 false positives) are high on 73 rows the rules were tuned on; expect lower holdout numbers. Generalisation is unmeasured until the first full-mode run at verification (t17 per plan).",
+        "Detector false-positive rate is measured on only 8 instructionLike tune rows (FND-2): one false positive on holdout would be 1/N; the rules deliberately require an instruction noun (override), a classifier value (label) or reply-reference + insertion verb (link) to limit this, but plausible benign phrasings such as 'Priority: high' in a customer-written header or 'treat this as a high-urgency billing issue' will be flagged.",
+        "Held-out families (e.g. quoted-thread or split-line instructions) have no dedicated rule; held-out flag recall is reported only (no threshold) and is unknown to this author.",
+        "The fallback provider results are NOT evidence of model quality (E7); live thresholds remain unverified without an API key.",
+        "Rules files are not yet committed; E5 ordering (freeze evidence at 2026-10-07T22:23:33Z precedes the claim at 23:12:17Z) must also hold for the first commit, which is later by construction.",
+        "test/eval/heldout-hygiene.test.js (t12) has not run against these files yet; it is the check for held-out 5-gram/canary overlap."
+      ],
+      "nextAction": "test-engineer: t12-heldout-hygiene - run the held-out overlap guard against src/triage/injection.js and src/triage/fallback-provider.js; backend-engineer: t13-app-wiring with createTriageService({provider:null, detectInjection, fallbackAnalyse, redact}).",
+      "lessonsConsulted": [],
+      "id": "ho-muyqb08t-018ef897",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-07T23:18:33.771Z"
     }
   },
   "runs": {
@@ -7003,8 +7139,13 @@
       "task": "t11-rules",
       "gate": null,
       "startedAt": "2026-10-07T23:11:57.812Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T23:18:58.961Z",
+      "durationMinutes": 7.02,
+      "costUsd": 0,
+      "tokens": 159732,
+      "note": null
     }
   },
   "risks": {
@@ -7174,8 +7315,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 169.03,
-    "tokens": 4846770
+    "runtimeMinutes": 176.05,
+    "tokens": 5006502
   },
   "delivery": null
 }

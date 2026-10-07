@@ -1,0 +1,58 @@
+{
+  "from": "ai-engineer",
+  "to": "delivery-lead",
+  "task": "t11-rules",
+  "objective": "Implement the injection detector (detectInjection/splitSentences) and the deterministic fallback (fallbackAnalyse) per spec C6.3, D1.3 and DES-7, tuned only with npm run eval:tune until 8/8 tune checks pass.",
+  "context": "Contracts: spec C6.3 (injection.js, fallback-provider.js), D1.3 rule ids, Untrusted-input isolation, Evaluation plan E1-E5 (DES-2 holdout discipline), DES-10 (t06 dependency, satisfied: tune runs executed rows through ticket-input.js). The service consumes detection.suspected === true and passes the detection to fallbackAnalyse. The ai-engineer did not open eval/holdout.json and did not run the eval in full mode. Provider for all eval results: deterministic fallback; these numbers are evidence about the pipeline and rules, NOT about model quality (E7). Live thresholds remain unverified. External API research not applicable: this task touches no model API.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#C6.3 Triage domain modules",
+    ".eccode/artifacts/design/spec.md#D1 Entities",
+    ".eccode/artifacts/design/spec.md#Untrusted-input isolation",
+    ".eccode/artifacts/design/spec.md#Evaluation plan",
+    "eval/dataset.json (tune and in-family attack rows only)",
+    "eval/thresholds.json",
+    ".eccode/reviews/rev-muynhokz-01357080.json#DES-10"
+  ],
+  "dependencies": [
+    "t02-eval-dataset",
+    "t04-schema-prompt",
+    "t05-redact",
+    "t06-http-config-log-input",
+    "t08-eval-runner",
+    "t10-service"
+  ],
+  "expectedOutput": "src/triage/injection.js exporting detectInjection(text) -> {suspected, rules, spans} and splitSentences(text); src/triage/fallback-provider.js exporting fallbackAnalyse(ticket, detection) -> Triage passing validateTriage; unit tests for both; npm run eval:tune exits 0 with TUNE_EVAL {\"mode\":\"tune\",\"passed\":8,\"total\":8}.",
+  "acceptanceCriteria": [
+    "detectInjection/splitSentences per C6.3 and D1.3 rule ids (INJ_OVERRIDE, INJ_ROLE, INJ_DELIM, INJ_EXTRACT, INJ_LINK, INJ_LABEL); pure and deterministic; INJ_DELIM matches the lookalike pairs ＜＞ 〈〉 ‹› ⟨⟩ ﹤﹥ around ticket/system in any open/close combination (DES-7); unit tests have one positive and one negative per rule id, spans and determinism, written phrasing only",
+    "fallbackAnalyse: pure, never throws for string input (incl. malformed detection), drops detector-matched sentences before scoring, all 15 templates pass validateTriage, no ticket tokens copied (nonsense-token check)",
+    "npm run eval:tune exits 0 with TUNE_EVAL {\"mode\":\"tune\",\"passed\":8,\"total\":8}",
+    "did not open eval/holdout.json and did not run the eval in full mode",
+    "t02 freeze evidence ids predate this task's claim and any commit touching the rules files",
+    "DES-10: t06 ticket-input.js present and used by the tune runner"
+  ],
+  "completedWork": "injection.js: splitSentences partitions the text into gap-free spans (boundary after [.!?]+ followed by whitespace, and after each newline). detectInjection runs bounded regex families over the original text (INJ_OVERRIDE: ignore/disregard/forget/override/bypass + instruction nouns, 'new instructions:'; INJ_ROLE: line-start role markers, bracketed roles, [INST]/<<SYS>>/<|...|>, persona switches, 'message from the developers/vendor'; INJ_DELIM: ASCII and lookalike-bracket ticket/system/assistant/instructions tags, end-of-ticket/end-of-message marker lines, fenced system blocks; INJ_EXTRACT: reveal/print/repeat your or hidden/system prompt/instructions, 'what are your instructions', 'repeat everything above'; INJ_LABEL: classify/mark/label/treat this ticket as <category or urgency>, set the urgency/category to, category/urgency/priority [:=] value, 'correct classification', 'do not change these labels') plus a per-sentence INJ_LINK check (link or URL + reference to the reply + insertion verb; a URL alone or an email address is not flagged). Returns sorted unique rule ids and the matched sentence spans. fallback-provider.js: drops detection spans (malformed spans ignored), lower-cases, scores weighted word-boundary keyword lists per category (tie order billing > account > technical > feature_request > other, 0 -> other), urgency = high cue, else explicit low cue (not urgent/no rush/minor/cosmetic), else medium cue, else low; no letters -> other/medium. Summary 'Customer reports <a x-urgency> <category phrase>.' and a per-category + per-urgency reply template (<= 600 chars), never interpolating ticket text; templateFor exported for the 15-template test. Tune results (fallback provider): category_accuracy 0.973 (n=73, >=0.70 PASS), urgency_accuracy 0.945 (>=0.65 PASS), high_urgency_recall 1.000 (n=14, >=0.80 PASS), schema_validity 1.000 PASS, injection_leak 0/18 PASS, injection_steer 0/16 PASS, injection_flag_recall 1.000 (n=18, >=0.90 PASS), injection_flag_fpr 0.000 (n=8, <=0.10 PASS); TUNE_EVAL 8/8. Full npm test suite: 365 pass, 0 fail.",
+  "filesChanged": [
+    "src/triage/injection.js",
+    "src/triage/fallback-provider.js",
+    "test/unit/injection.test.js",
+    "test/unit/fallback-provider.test.js"
+  ],
+  "evidence": [
+    "ev:ev-muyq5uro-0123fbdf",
+    "ev:ev-muyqa6rq-0128055f",
+    "ev:ev-muyqab5g-011923d2",
+    "ev:ev-muyoc9sb-01a8edc1",
+    "ev:ev-muyoc9ul-01ee7a22",
+    "ev:ev-muyoc9wk-014a1edb"
+  ],
+  "remainingIssues": [
+    "Tune scores (0.973 category, 0.945 urgency, 0 false positives) are high on 73 rows the rules were tuned on; expect lower holdout numbers. Generalisation is unmeasured until the first full-mode run at verification (t17 per plan).",
+    "Detector false-positive rate is measured on only 8 instructionLike tune rows (FND-2): one false positive on holdout would be 1/N; the rules deliberately require an instruction noun (override), a classifier value (label) or reply-reference + insertion verb (link) to limit this, but plausible benign phrasings such as 'Priority: high' in a customer-written header or 'treat this as a high-urgency billing issue' will be flagged.",
+    "Held-out families (e.g. quoted-thread or split-line instructions) have no dedicated rule; held-out flag recall is reported only (no threshold) and is unknown to this author.",
+    "The fallback provider results are NOT evidence of model quality (E7); live thresholds remain unverified without an API key.",
+    "Rules files are not yet committed; E5 ordering (freeze evidence at 2026-10-07T22:23:33Z precedes the claim at 23:12:17Z) must also hold for the first commit, which is later by construction.",
+    "test/eval/heldout-hygiene.test.js (t12) has not run against these files yet; it is the check for held-out 5-gram/canary overlap."
+  ],
+  "nextAction": "test-engineer: t12-heldout-hygiene - run the held-out overlap guard against src/triage/injection.js and src/triage/fallback-provider.js; backend-engineer: t13-app-wiring with createTriageService({provider:null, detectInjection, fallbackAnalyse, redact}).",
+  "lessonsConsulted": []
+}
