@@ -1,6 +1,6 @@
 {
-  "seq": 108,
-  "lastHash": "db660bb9a658fd662a38ddc17c74d3cdc530392d4e0d68c7e97894d2c313ae76",
+  "seq": 120,
+  "lastHash": "2023cfe141c105a3fd530b599178f2097b4b345acf4cc8e9a34cd3fa8dacaba4",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -67,7 +67,7 @@
     "design": {
       "id": "design",
       "kind": "design",
-      "status": "changes_requested",
+      "status": "submitted",
       "iterations": 1,
       "authors": [
         "technical-designer"
@@ -93,6 +93,27 @@
           ],
           "respondsTo": null,
           "notes": "Iteration 1. Resolves ARCH-10 (group-window Luhn scan + 3 probe vectors in AC16, sub-window oracle; also bounded phone pattern), ARCH-11 (prompt rule + V2 product-token mask with 7 anti-hole reject vectors; V1 month abbreviations), ARCH-12 (eval/holdout.json split, attestation, hygiene test). Evidence: ev:ev-muymgxlq-0175737d (design vectors), ev:ev-muymgxxk-01aac351 (node:http probe: requireHostHeader:false needed for 403 on missing Host; fetch cannot set Host), ev:ev-muymgy0l-01a4d4d1 (brief vectors regression). New API constraint: no temperature/top_p/top_k on Haiku 5.5. Memory: 6 queries, no applies verdicts. Open: OQ-D1 two dataset files, OQ-D2 ANTHROPIC_BASE_URL seam, OQ-D3 raw fetch vs SDK (Q7)."
+        },
+        {
+          "id": "sub-muynca23-01dd53b5",
+          "actor": "technical-designer",
+          "at": "2026-10-07T21:55:34.252Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/design/spec.md",
+              "sha256": "4d4a1a4788f4970e01628c7f29760a908c61371a4dbc356cb0487d542618abb2"
+            },
+            {
+              "path": ".eccode/artifacts/design/design-vectors.js",
+              "sha256": "9970c39ba9edfb4dd717539864e08a0994bba589bc1f85910dfe5c41fbe19494"
+            },
+            {
+              "path": ".eccode/artifacts/design/http-probe.js",
+              "sha256": "86e82ad5870b67d1a8bfc5ef6b225fc7711a5a58b425805d3c472c1ec5221ed8"
+            }
+          ],
+          "respondsTo": "rev-muymzvx5-01a6ccf9",
+          "notes": "Iteration 2. DES-1: provider fetch uses redirect:'error' (3xx -> model_error redirect_refused / fetch_threw), base URL renamed to TRIAGE_ANTHROPIC_BASE_URL (ANTHROPIC_BASE_URL never read) and constrained to https or http-to-loopback without userinfo/query/fragment, baseUrlCustom + warning event, spawn-server builds env explicitly, privacy parent-env isolation test, AC4(o) redirect contract test. DES-2: eval --split tune (npm run eval:tune) never opens holdout.json, 8 tune checks, prints 'holdout: NOT SCORED (tune mode)', never prints ECCODE_EVAL (TUNE_EVAL line); tasks 10/11 tune-only with verbatim attestation; first full run at task 16 (delivery-lead); hygiene failures print row id + file only; runner tune test with non-existent --holdout. DES-3 mask positive lookahead (+6 accept, +6 reject vectors). DES-4 claim corrected, adversarial inputs budget <200ms (measured 35-51ms). DES-5 validateTicketInput -> src/ticket-input.js (task 6), lazy requires in run.js, task 16 single owner. DES-6 non-loopback HOST refused without TRIAGE_ALLOW_REMOTE=1. DES-7 NBSP/TAB separators, INJ_DELIM lookalikes; adjacent-card collapse and dotted card documented. Evidence: ev:ev-muyn4zke-019e45ac, ev:ev-muyn4zyu-013e6c6b, ev:ev-muyn501z-016e7008."
         }
       ],
       "reviews": [
@@ -661,6 +682,63 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-07T21:43:14.129Z"
+    },
+    "ev-muyn4zke-019e45ac": {
+      "id": "ev-muyn4zke-019e45ac",
+      "kind": "command",
+      "label": "design iter 2: design vectors (DES-1 base URL, DES-3 mask, DES-4 adversarial redactor budget, DES-6 loopback HOST, DES-7 NBSP/TAB)",
+      "command": "node .eccode/artifacts/design/design-vectors.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 572,
+      "log": ".eccode/evidence/ev-muyn4zke-019e45ac.log",
+      "logSha256": "20e9bd8734674beb4f1321c3dd064d8028857568b1153301691b31e1ce14b40c",
+      "outputTail": "redactor card-shaped 8000 chars: 4.25 ms\nredactor adversarial email_localpart_no_at median: 37.01 ms\nredactor adversarial email_domain_no_tld median: 36.37 ms\nredactor adversarial phone_digits_dots median: 50.71 ms\nredactor adversarial digits_only median: 35.63 ms\nredactor adversarial digit_nbsp median: 4.60 ms\nredactor adversarial card_worst_design median: 0.78 ms\nall design vectors pass\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-07T21:49:54.065Z"
+    },
+    "ev-muyn4zyu-013e6c6b": {
+      "id": "ev-muyn4zyu-013e6c6b",
+      "kind": "command",
+      "label": "design iter 2: node:http + fetch redirect probe (DES-1: redirect:'error' throws on 307/308, 0 requests at other origin)",
+      "command": "node .eccode/artifacts/design/http-probe.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 461,
+      "log": ".eccode/evidence/ev-muyn4zyu-013e6c6b.log",
+      "logSha256": "11e11a4f4c7549bde076b0ede6f12dba1845825c6315b694e84ab0a639cedca3",
+      "outputTail": "    \"host\": \"127.0.0.1:42247\",\n    \"origin\": \"http://attacker.example:3000\"\n  },\n  \"redirectDefaultFollow\": {\n    \"status\": 200,\n    \"requestsAtOtherOrigin\": 1,\n    \"xApiKeyAtOtherOrigin\": \"present\"\n  },\n  \"redirectError\": {\n    \"307\": {\n      \"outcome\": \"threw TypeError\",\n      \"requestsAtOtherOrigin\": 0\n    },\n    \"308\": {\n      \"outcome\": \"threw TypeError\",\n      \"requestsAtOtherOrigin\": 0\n    }\n  },\n  \"redirectErrorOn200\": {\n    \"status\": 200,\n    \"body\": \"{\\\"ok\\\":true}\"\n  }\n}\nhttp probe pass\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-07T21:49:54.587Z"
+    },
+    "ev-muyn501z-016e7008": {
+      "id": "ev-muyn501z-016e7008",
+      "kind": "command",
+      "label": "design iter 2: architecture brief vectors still pass (regression)",
+      "command": "node .eccode/artifacts/architecture/brief-vectors.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 50,
+      "log": ".eccode/evidence/ev-muyn501z-016e7008.log",
+      "logSha256": "3831fe8e096764e5382b5d23b52b6e783d146cc4b19e47c152f6a3ca784b1b70",
+      "outputTail": "all brief vectors pass\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-07T21:49:54.699Z"
     }
   },
   "reviews": {
@@ -1408,6 +1486,59 @@
       "id": "ho-muymsb2c-016f91c4",
       "recordedBy": "technical-designer",
       "at": "2026-10-07T21:40:02.440Z"
+    },
+    "ho-muyncr8a-01d724d8": {
+      "from": "technical-designer",
+      "to": "technical-reviewer",
+      "gate": "design",
+      "objective": "Re-review the TriageDesk technical specification, iteration 2 (submission sub-muynca23-01dd53b5), which responds to rev-muymzvx5-01a6ccf9 (DES-1..DES-7).",
+      "context": "rev-muymzvx5-01a6ccf9 requested changes. There were two majors: DES-1 (API key egress through fetch redirects, an unconstrained ANTHROPIC_BASE_URL and env inheritance in the test helper) and DES-2 (no tune-only eval path, so holdout isolation was attestation-only). There were also minors DES-3..DES-6 and info DES-7. spec.md has a new 'Review Response > Design review rev-muymzvx5-01a6ccf9' table that maps each resolution condition to a spec change and a named test.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md",
+        ".eccode/artifacts/design/design-vectors.js",
+        ".eccode/artifacts/design/http-probe.js",
+        ".eccode/reviews/rev-muymzvx5-01a6ccf9.json",
+        ".eccode/artifacts/architecture/brief.md"
+      ],
+      "dependencies": [
+        "architecture gate approved (sub-muym3xbz-0110077b)"
+      ],
+      "expectedOutput": "A design-gate review (approve or changes_requested) of sub-muynca23-01dd53b5 that closes or re-opens each of DES-1..DES-7 with evidence.",
+      "acceptanceCriteria": [
+        "DES-1 (1): C6.4/C7 pass redirect:'error'; 3xx maps to model_error/redirect_refused and the throw to model_error/fetch_threw; tests named in unit/anthropic-provider.test.js and contract/triage-modes.test.js AC4 (o) (0 requests at the second server). Re-run node .eccode/artifacts/design/http-probe.js",
+        "DES-1 (2): C6.1 accepts TRIAGE_ANTHROPIC_BASE_URL only as https, or as http to 127.0.0.1/localhost/[::1], and rejects userinfo, query and fragment; all 4 reviewer vectors are in BASE_URL_CASES. Re-run node .eccode/artifacts/design/design-vectors.js",
+        "DES-1 (3): the variable is renamed and ANTHROPIC_BASE_URL is never read; baseUrlCustom and a warning event are added as well",
+        "DES-1 (4): spawn-server.js builds the child env explicitly; privacy.test.js sets ANTHROPIC_API_KEY='' and adds a parent-env isolation case",
+        "DES-2: E1 --split tune never opens holdout.json and never prints ECCODE_EVAL (TUNE_EVAL instead); tasks 10/11 are tune-only with the verbatim attestation; the first full run is at task 16; hygiene messages carry the row id and file only; runner.test.js has a non-existent --holdout case",
+        "DES-3..DES-7 are handled as stated in the Review Response table; every brief vector still passes (node .eccode/artifacts/architecture/brief-vectors.js)"
+      ],
+      "completedWork": "Revised spec.md (C6.1 config, C6.4 provider, C7 transport, D1.3 INJ_DELIM lookalikes, D1.6 log events, D3 separators and corrected cost claim, D4 mask, E1/E3/E4/E5 tune mode and holdout policy, Security T8/T10/T11/T12, Testing Strategy helpers and test rows, Deployment scripts and .env.example, Implementation Workflow tasks 6/8/11/16, Review Response, Open Questions OQ-D2/OQ-D3/OQ-D4). Extended design-vectors.js with checkBaseUrl and 19 cases, isLoopbackHost, the DES-3 mask with 6 new accept and 6 new reject vectors, NBSP/TAB card and phone vectors, the adjacent-card collapse vector, and ADVERSARIAL_INPUTS with a median-of-3 budget under 200 ms. Extended http-probe.js with the redirect probe for 307 and 308, which checks 0 requests at the other origin and that a 200 is unaffected.",
+      "filesChanged": [
+        ".eccode/artifacts/design/spec.md",
+        ".eccode/artifacts/design/design-vectors.js",
+        ".eccode/artifacts/design/http-probe.js"
+      ],
+      "evidence": [
+        "ev:ev-muyn4zke-019e45ac",
+        "ev:ev-muyn4zyu-013e6c6b",
+        "ev:ev-muyn501z-016e7008"
+      ],
+      "remainingIssues": [
+        "OQ-D2: TRIAGE_ANTHROPIC_BASE_URL is still a test/proxy seam. It is constrained, but it does receive the key.",
+        "OQ-D4: TRIAGE_ALLOW_REMOTE is a new opt-in variable that is not in the brief. The default is to refuse a non-loopback HOST.",
+        "OQ-D3 / Q7: raw fetch instead of the SDK. If the SDK is adopted, baseURL must be passed explicitly and the redirect:'error' guarantee re-established (noted in OQ-D3).",
+        "DES-4: the redactor stays O(n^2) in the worst case, bounded by the 8,000-character cap (35-51 ms measured, budget 200 ms). It was not rewritten.",
+        "DES-7 residuals accepted: two cards in one digit run give one placeholder (count 1, nothing leaks); a dotted card leaves its last 4 digits (RISK-9).",
+        "The ARCH-12 attestation remains a declaration for 'did not open the file'. What changed is that the rules author no longer needs a path that touches the holdout.",
+        "Live thresholds are still unverified (no key)."
+      ],
+      "nextAction": "technical-reviewer: review design submission sub-muynca23-01dd53b5 against rev-muymzvx5-01a6ccf9. Re-run design-vectors.js, http-probe.js and brief-vectors.js as evidence.",
+      "lessonsConsulted": [
+        "memory search iteration 2 ('fetch redirect api key', 'eval holdout tune overfitting', --check-env --scope all): mem-k-muyljkrt-01991ac7 DOES-NOT-APPLY (node<18); mem-d-muym8opn-0104129a env-APPLIES but its subject is the ECCode event store, not relevant; nothing cited"
+      ],
+      "id": "ho-muyncr8a-01d724d8",
+      "recordedBy": "technical-designer",
+      "at": "2026-10-07T21:55:56.514Z"
     }
   },
   "runs": {
@@ -1557,6 +1688,34 @@
       "task": null,
       "gate": "design",
       "startedAt": "2026-10-07T21:46:14.338Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-07T21:56:18.450Z",
+      "durationMinutes": 10.07,
+      "costUsd": 0,
+      "tokens": 211920,
+      "note": null
+    },
+    "run-muync3nt-01128fef": {
+      "id": "run-muync3nt-01128fef",
+      "agent": "technical-designer",
+      "task": null,
+      "gate": "design",
+      "startedAt": "2026-10-07T21:55:25.965Z",
+      "status": "failed",
+      "attempt": 1,
+      "endedAt": "2026-10-07T21:56:18.523Z",
+      "durationMinutes": 0.88,
+      "costUsd": 0,
+      "tokens": 0,
+      "note": "opened by mistake by technical-designer; no work attributed"
+    },
+    "run-muynd89e-01da5200": {
+      "id": "run-muynd89e-01da5200",
+      "agent": "technical-reviewer",
+      "task": null,
+      "gate": "design",
+      "startedAt": "2026-10-07T21:56:18.582Z",
       "status": "running",
       "attempt": 1
     }
@@ -1718,8 +1877,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 50.16,
-    "tokens": 1560733
+    "runtimeMinutes": 61.11,
+    "tokens": 1772653
   },
   "delivery": null
 }

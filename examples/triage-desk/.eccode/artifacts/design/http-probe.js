@@ -1,6 +1,8 @@
 // Probe for spec §Interface Contracts C1/C5 and §Testing Strategy: can a node:http server answer 403
 // before reading a 20 KB body without the client seeing ECONNRESET, and can a node:http client
 // send an arbitrary / missing Host and an Origin header? Run: node http-probe.js
+// Iteration 2 (DES-1): does global fetch with redirect:'error' refuse a 307/308 from the configured base URL
+// WITHOUT sending x-api-key or the body to the redirect target (a different origin), while a 200 still works?
 'use strict';
 const http = require('node:http');
 const assert = require('node:assert');
@@ -69,6 +71,48 @@ function request(port, { method = 'POST', host, setHost = true, headers = {}, bo
     results.fetchHeaders = await r.json();
   } catch (e) { results.fetchHeaders = 'error: ' + e.message; }
   await new Promise((r) => srv.close(r));
+
+  // DES-1: redirect handling of the provider's fetch call (C6.4 step 3, C7).
+  {
+    const seenAtB = [];
+    const b = http.createServer((req, res) => {
+      let body = ''; req.on('data', (c) => { body += c; });
+      req.on('end', () => { seenAtB.push({ xApiKey: req.headers['x-api-key'] ? 'present' : 'absent', bodyBytes: body.length }); res.end('{}'); });
+    });
+    await new Promise((r) => b.listen(0, '127.0.0.1', r));
+    let mode = 307;
+    const a = http.createServer((req, res) => {
+      req.resume();
+      if (mode === 200) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"ok":true}'); return; }
+      res.writeHead(mode, { Location: 'http://localhost:' + b.address().port + '/collect' }); res.end();
+    });
+    await new Promise((r) => a.listen(0, '127.0.0.1', r));
+    const url = 'http://127.0.0.1:' + a.address().port + '/v1/messages';
+    const init = { method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': 'FAKE-KEY-PROBE' }, body: '{"t":"redacted"}' };
+    // Observation only (the threat): default redirect mode follows a cross-origin 307.
+    const followed = await fetch(url, init);
+    results.redirectDefaultFollow = { status: followed.status, requestsAtOtherOrigin: seenAtB.length, xApiKeyAtOtherOrigin: seenAtB[0] ? seenAtB[0].xApiKey : null };
+    seenAtB.length = 0;
+    // Mitigation: redirect:'error' must throw and send nothing to the other origin, for 307 and 308.
+    results.redirectError = {};
+    for (const m of [307, 308]) {
+      mode = m;
+      let outcome;
+      try { const r = await fetch(url, { ...init, redirect: 'error' }); outcome = 'no throw, status ' + r.status; }
+      catch (e) { outcome = 'threw ' + e.name; }
+      results.redirectError[m] = { outcome, requestsAtOtherOrigin: seenAtB.length };
+      assert.strictEqual(outcome, 'threw TypeError', 'redirect:error must throw on ' + m);
+      assert.strictEqual(seenAtB.length, 0, 'nothing may reach the redirect target on ' + m);
+    }
+    // Happy path unaffected.
+    mode = 200;
+    const ok = await fetch(url, { ...init, redirect: 'error' });
+    results.redirectErrorOn200 = { status: ok.status, body: await ok.text() };
+    assert.strictEqual(ok.status, 200);
+    await new Promise((r) => a.close(r));
+    await new Promise((r) => b.close(r));
+  }
+
   console.log(JSON.stringify(results, null, 2));
   assert.strictEqual(results.with_req_resume.got403, 200, 'drained 403 must be reliable');
   console.log('http probe pass');

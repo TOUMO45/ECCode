@@ -1,0 +1,50 @@
+{
+  "from": "technical-designer",
+  "to": "technical-reviewer",
+  "gate": "design",
+  "objective": "Re-review the TriageDesk technical specification, iteration 2 (submission sub-muynca23-01dd53b5), which responds to rev-muymzvx5-01a6ccf9 (DES-1..DES-7).",
+  "context": "rev-muymzvx5-01a6ccf9 requested changes. There were two majors: DES-1 (API key egress through fetch redirects, an unconstrained ANTHROPIC_BASE_URL and env inheritance in the test helper) and DES-2 (no tune-only eval path, so holdout isolation was attestation-only). There were also minors DES-3..DES-6 and info DES-7. spec.md has a new 'Review Response > Design review rev-muymzvx5-01a6ccf9' table that maps each resolution condition to a spec change and a named test.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/design/design-vectors.js",
+    ".eccode/artifacts/design/http-probe.js",
+    ".eccode/reviews/rev-muymzvx5-01a6ccf9.json",
+    ".eccode/artifacts/architecture/brief.md"
+  ],
+  "dependencies": [
+    "architecture gate approved (sub-muym3xbz-0110077b)"
+  ],
+  "expectedOutput": "A design-gate review (approve or changes_requested) of sub-muynca23-01dd53b5 that closes or re-opens each of DES-1..DES-7 with evidence.",
+  "acceptanceCriteria": [
+    "DES-1 (1): C6.4/C7 pass redirect:'error'; 3xx maps to model_error/redirect_refused and the throw to model_error/fetch_threw; tests named in unit/anthropic-provider.test.js and contract/triage-modes.test.js AC4 (o) (0 requests at the second server). Re-run node .eccode/artifacts/design/http-probe.js",
+    "DES-1 (2): C6.1 accepts TRIAGE_ANTHROPIC_BASE_URL only as https, or as http to 127.0.0.1/localhost/[::1], and rejects userinfo, query and fragment; all 4 reviewer vectors are in BASE_URL_CASES. Re-run node .eccode/artifacts/design/design-vectors.js",
+    "DES-1 (3): the variable is renamed and ANTHROPIC_BASE_URL is never read; baseUrlCustom and a warning event are added as well",
+    "DES-1 (4): spawn-server.js builds the child env explicitly; privacy.test.js sets ANTHROPIC_API_KEY='' and adds a parent-env isolation case",
+    "DES-2: E1 --split tune never opens holdout.json and never prints ECCODE_EVAL (TUNE_EVAL instead); tasks 10/11 are tune-only with the verbatim attestation; the first full run is at task 16; hygiene messages carry the row id and file only; runner.test.js has a non-existent --holdout case",
+    "DES-3..DES-7 are handled as stated in the Review Response table; every brief vector still passes (node .eccode/artifacts/architecture/brief-vectors.js)"
+  ],
+  "completedWork": "Revised spec.md (C6.1 config, C6.4 provider, C7 transport, D1.3 INJ_DELIM lookalikes, D1.6 log events, D3 separators and corrected cost claim, D4 mask, E1/E3/E4/E5 tune mode and holdout policy, Security T8/T10/T11/T12, Testing Strategy helpers and test rows, Deployment scripts and .env.example, Implementation Workflow tasks 6/8/11/16, Review Response, Open Questions OQ-D2/OQ-D3/OQ-D4). Extended design-vectors.js with checkBaseUrl and 19 cases, isLoopbackHost, the DES-3 mask with 6 new accept and 6 new reject vectors, NBSP/TAB card and phone vectors, the adjacent-card collapse vector, and ADVERSARIAL_INPUTS with a median-of-3 budget under 200 ms. Extended http-probe.js with the redirect probe for 307 and 308, which checks 0 requests at the other origin and that a 200 is unaffected.",
+  "filesChanged": [
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/design/design-vectors.js",
+    ".eccode/artifacts/design/http-probe.js"
+  ],
+  "evidence": [
+    "ev:ev-muyn4zke-019e45ac",
+    "ev:ev-muyn4zyu-013e6c6b",
+    "ev:ev-muyn501z-016e7008"
+  ],
+  "remainingIssues": [
+    "OQ-D2: TRIAGE_ANTHROPIC_BASE_URL is still a test/proxy seam. It is constrained, but it does receive the key.",
+    "OQ-D4: TRIAGE_ALLOW_REMOTE is a new opt-in variable that is not in the brief. The default is to refuse a non-loopback HOST.",
+    "OQ-D3 / Q7: raw fetch instead of the SDK. If the SDK is adopted, baseURL must be passed explicitly and the redirect:'error' guarantee re-established (noted in OQ-D3).",
+    "DES-4: the redactor stays O(n^2) in the worst case, bounded by the 8,000-character cap (35-51 ms measured, budget 200 ms). It was not rewritten.",
+    "DES-7 residuals accepted: two cards in one digit run give one placeholder (count 1, nothing leaks); a dotted card leaves its last 4 digits (RISK-9).",
+    "The ARCH-12 attestation remains a declaration for 'did not open the file'. What changed is that the rules author no longer needs a path that touches the holdout.",
+    "Live thresholds are still unverified (no key)."
+  ],
+  "nextAction": "technical-reviewer: review design submission sub-muynca23-01dd53b5 against rev-muymzvx5-01a6ccf9. Re-run design-vectors.js, http-probe.js and brief-vectors.js as evidence.",
+  "lessonsConsulted": [
+    "memory search iteration 2 ('fetch redirect api key', 'eval holdout tune overfitting', --check-env --scope all): mem-k-muyljkrt-01991ac7 DOES-NOT-APPLY (node<18); mem-d-muym8opn-0104129a env-APPLIES but its subject is the ECCode event store, not relevant; nothing cited"
+  ]
+}

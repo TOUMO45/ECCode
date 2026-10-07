@@ -3,14 +3,24 @@
 //   - card redaction (ARCH-10: group-aligned sub-window scan),
 //   - phone redaction (bounded unit count, so an over-long greedy match cannot hide a phone),
 //   - V1 month abbreviations and V2 product-token mask (ARCH-11).
+// Iteration 2 (review rev-muymzvx5-01a6ccf9):
+//   - DES-3: product-token mask accepts sentence-final punctuation;
+//   - DES-4: adversarial redactor inputs with an honest (non-linear) budget;
+//   - DES-7: NBSP and TAB are card/phone group separators;
+//   - DES-1: checkBaseUrl (TRIAGE_ANTHROPIC_BASE_URL) reference + vectors;
+//   - DES-6: isLoopbackHost (HOST opt-in) reference + vectors.
 // Every brief vector is re-asserted here unchanged. Run: node design-vectors.js
 'use strict';
 const assert = require('node:assert');
 
 // ---------------- Redaction (R11, D3) ----------------
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}/g;
-const DIGIT_RUN = /\d+(?:[ -]\d+)*/g; // groups of digits joined by exactly one space or hyphen
-const PHONE = /(?<![\w+])\+?(?:\(\d{1,4}\)|\d)(?:[ .-]?(?:\(\d{1,4}\)|\d)){6,14}(?!\w)/g;
+// groups of digits joined by exactly one separator: space, NBSP (U+00A0), TAB or hyphen (DES-7 adds NBSP/TAB)
+const SEP = '[ \\u00a0\\t-]';
+const DIGIT_RUN = new RegExp('\\d+(?:' + SEP + '\\d+)*', 'g');
+const SEP_SPLIT = new RegExp('(' + SEP + ')');
+const SEP_SPLIT_DROP = new RegExp(SEP);
+const PHONE = /(?<![\w+])\+?(?:\(\d{1,4}\)|\d)(?:[ .\u00a0\t-]?(?:\(\d{1,4}\)|\d)){6,14}(?!\w)/g;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function luhn(d) {
@@ -40,7 +50,7 @@ function cardMarks(groups) {
 function redactCards(text) {
   let count = 0;
   const out = text.replace(DIGIT_RUN, (run) => {
-    const parts = run.split(/([ -])/); // even index = digit group, odd index = separator
+    const parts = run.split(SEP_SPLIT); // even index = digit group, odd index = separator
     const groups = parts.filter((_, i) => i % 2 === 0);
     const mark = cardMarks(groups);
     if (!mark.includes(true)) return run;
@@ -71,7 +81,7 @@ function neutralise(t) { return t.replace(/</g, '＜').replace(/>/g, '＞'); }
 /** AC16 oracle: true when any digit run still holds a Luhn-valid group-aligned 13-19 digit window. */
 function hasLuhnWindow(text) {
   const runs = text.match(DIGIT_RUN) || [];
-  return runs.some((run) => cardMarks(run.split(/[ -]/)).includes(true));
+  return runs.some((run) => cardMarks(run.split(SEP_SPLIT_DROP)).includes(true));
 }
 function digitTokens(text) { return text.replace(/\D/g, ' ').split(/\s+/).filter(Boolean); }
 
@@ -109,6 +119,12 @@ const CARD_CASES = [
   ['ref 99 4111111111111111', 'ref 99 [REDACTED_CARD]'],
   ['Amex 3782 822463 10005 exp 09/28', 'Amex [REDACTED_CARD] exp 09/28'],
   ['Order 1234567812345678 shipped', 'Order 1234567812345678 shipped'],
+  // DES-7: NBSP and TAB separators (pasted from email clients / tables)
+  ['Card 4111\u00a01111\u00a01111\u00a01111 thanks', 'Card [REDACTED_CARD] thanks'],
+  ['Card 4111\t1111\t1111\t1111 thanks', 'Card [REDACTED_CARD] thanks'],
+  ['Card 4111\u00a01111\u00a01111\u00a01111\u00a012/27', 'Card [REDACTED_CARD]\u00a012/27'],
+  // Accepted (RISK-9, safe direction): two adjacent cards collapse into ONE placeholder (count 1, not 2)
+  ['card 4111111111111111 5500005555555559 thanks', 'card [REDACTED_CARD] thanks'],
 ];
 for (const [input, expected] of CARD_CASES) {
   const out = redact(input).text;
@@ -129,6 +145,9 @@ const PHONE_CASES = [
   ['since 2026-10-07 nothing works', 'since 2026-10-07 nothing works'],
   ['version 2.1.3 and build 12345', 'version 2.1.3 and build 12345'],
 ];
+PHONE_CASES.push(['call 555\u00a0013\u00a07742 now', 'call [REDACTED_PHONE] now']); // DES-7
+PHONE_CASES.push(['call 555\t013\t7742 now', 'call [REDACTED_PHONE] now']);       // DES-7
+assert.strictEqual(redact('card 4111111111111111 5500005555555559 thanks').counts.card, 1); // documented collapse
 for (const [input, expected] of PHONE_CASES) {
   const out = redact(input).text;
   if (expected !== null) assert.strictEqual(out, expected, input);
@@ -177,7 +196,10 @@ for (const s of V1_REJECT) assert(!oneSentence(s), 'V1 should reject: ' + JSON.s
 // ---------------- V2 no links / emails (D4) ----------------
 const TLD = 'com|net|org|io|co|ai|app|dev|info|biz|xyz|me|ly|gl|us|uk|de|eu|ru|cn|in|fr';
 // ARCH-11: known dotted product names are masked ONLY for the bare-domain rule (rule 3).
-const PRODUCT_TOKENS = /(?<![\w.@/:-])(?:asp\.net|ado\.net|vb\.net|socket\.io)(?![\w./:@-])/gi;
+// DES-3: the token is masked only when followed by end of text, whitespace, sentence/clause punctuation or a
+// closing quote/bracket, or by a single '.' that itself ends the text or precedes whitespace/closing quote.
+// Anything that could continue a host or path ('.x', '..', './', '/', ':', '@', '-', word chars) blocks the mask.
+const PRODUCT_TOKENS = /(?<![\w.@/:-])(?:asp\.net|ado\.net|vb\.net|socket\.io)(?=$|[\s,;!?"')\]]|\.(?:$|[\s"')\]]))/gi;
 const V2_RULES = [
   { id: 'scheme', re: /\b[a-z][a-z0-9+.-]*:\/\//i },
   { id: 'www', re: /\bwww\./i },
@@ -199,6 +221,13 @@ const V2_ACCEPT = [
   'Customer reports ASP.NET errors after the update.', // ARCH-11
   'Socket.io connections drop every minute.', // ARCH-11
   'The VB.NET client and ADO.NET driver both fail.',
+  // DES-3: sentence-final product tokens
+  'Customer reports errors in ASP.NET.',
+  'Customer reports a crash in VB.NET.',
+  'Socket.io connections drop after the update to Socket.io.',
+  'Customer uses ASP.NET, and it fails.',
+  'Customer cannot connect via socket.io?',
+  'The ADO.NET driver fails!',
 ];
 const V2_REJECT = [
   'Visit https://example.com for help.',
@@ -217,6 +246,13 @@ const V2_REJECT = [
   'Open https://asp.net now.',
   'Mail admin@socket.io today.',
   'Go to socket.io.evil.ru now.',
+  // DES-3: the relaxed lookahead must still reject host continuations
+  'Go to asp.net.evil.com.',
+  'Go to socket.io.evil.ru.',
+  'Go to vb.net.x.co now.',
+  'See asp.net..evil.com now.',
+  'See asp.net.-evil.com now.',
+  'Open asp.net./reset now.',
 ];
 for (const s of V2_ACCEPT) assert(!hasLink(s), 'V2 should accept: ' + s);
 for (const s of V2_REJECT) assert(hasLink(s), 'V2 should reject: ' + s);
@@ -248,7 +284,7 @@ assert(schemaOk(OUTPUT_SCHEMA));
 assert(!schemaOk({ ...OUTPUT_SCHEMA, properties: { ...OUTPUT_SCHEMA.properties, summary: { type: 'string', maxLength: 200 } } }));
 assert(!schemaOk({ ...OUTPUT_SCHEMA, additionalProperties: undefined }));
 
-// ---------------- Performance sanity for the redactor (8,000-char worst case) ----------------
+// ---------------- Performance sanity for the redactor (8,000-char card-shaped input; NOT the worst case, see DES-4 below) ----------------
 {
   const worst = ('4111 1111 1111 1111 12 ').repeat(350).slice(0, 8000);
   const t0 = process.hrtime.bigint();
@@ -256,8 +292,81 @@ assert(!schemaOk({ ...OUTPUT_SCHEMA, additionalProperties: undefined }));
   const ms = Number(process.hrtime.bigint() - t0) / 1e6;
   assert(!hasLuhnWindow(out));
   assert(ms < 50, 'redactor too slow on worst case: ' + ms + ' ms');
-  console.log('redactor worst-case 8000 chars: ' + ms.toFixed(2) + ' ms');
+  console.log('redactor card-shaped 8000 chars: ' + ms.toFixed(2) + ' ms');
 }
 
+// DES-4: the redactor is NOT linear-time. These 8,000-char adversarial inputs trigger regex
+// rescanning (O(n^2) bounded by the 8,000-char cap); measured ~35-40 ms on Node 22. Budget: median of
+// 3 runs < 200 ms each (5x margin). unit/redact.test.js copies ADVERSARIAL_INPUTS and the budget verbatim.
+const ADVERSARIAL_INPUTS = {
+  email_localpart_no_at: 'a.'.repeat(4000),
+  email_domain_no_tld: 'a@' + 'a.'.repeat(3999),
+  phone_digits_dots: '1.'.repeat(4000),
+  digits_only: '1'.repeat(8000),
+  digit_nbsp: '1\u00a0'.repeat(4000),
+  card_worst_design: ('4111 1111 1111 1111 12 ').repeat(350).slice(0, 8000),
+};
+const REDACT_BUDGET_MS = 200;
+for (const [name, input] of Object.entries(ADVERSARIAL_INPUTS)) {
+  assert.strictEqual(input.length, 8000, name);
+  const runs = [];
+  for (let k = 0; k < 3; k++) {
+    const t0 = process.hrtime.bigint(); redact(input); runs.push(Number(process.hrtime.bigint() - t0) / 1e6);
+  }
+  const med = runs.sort((a, b) => a - b)[1];
+  assert(med < REDACT_BUDGET_MS, 'redactor over budget on ' + name + ': ' + med + ' ms');
+  console.log('redactor adversarial ' + name + ' median: ' + med.toFixed(2) + ' ms');
+}
+
+// ---------------- DES-1: TRIAGE_ANTHROPIC_BASE_URL validation (config.js, C6.1) ----------------
+// Returns {ok:true, baseUrl} (canonical: origin + pathname without trailing '/') or {ok:false}.
+// The caller throws ConfigError('TRIAGE_ANTHROPIC_BASE_URL is invalid') - the value is never echoed.
+const LOOPBACK_URL_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]']);
+function checkBaseUrl(raw) {
+  if (typeof raw !== 'string') return { ok: false };
+  const v = raw.trim();
+  if (v === '' || /[?#]/.test(v)) return { ok: false };           // no query/fragment, even empty ones
+  let u;
+  try { u = new URL(v); } catch { return { ok: false }; }
+  if (u.username !== '' || u.password !== '' || u.search !== '' || u.hash !== '') return { ok: false };
+  if (u.protocol === 'https:') { /* any host */ }
+  else if (u.protocol === 'http:') { if (!LOOPBACK_URL_HOSTS.has(u.hostname)) return { ok: false }; }
+  else return { ok: false };
+  return { ok: true, baseUrl: u.origin + u.pathname.replace(/\/+$/, '') };
+}
+const BASE_URL_CASES = [
+  ['https://api.anthropic.com', 'https://api.anthropic.com'],
+  ['https://api.anthropic.com/', 'https://api.anthropic.com'],
+  ['https://gateway.example/anthropic/', 'https://gateway.example/anthropic'],
+  ['http://127.0.0.1:9', 'http://127.0.0.1:9'],
+  ['http://localhost:8080', 'http://localhost:8080'],
+  ['http://[::1]:9', 'http://[::1]:9'],
+  ['HTTP://LOCALHOST:9/', 'http://localhost:9'],
+  ['http://remote.example', null],       // cleartext to a non-loopback host
+  ['http://127.0.0.2:9', null],
+  ['http://localhost.evil.example', null],
+  ['https://u:p@x.example', null],       // userinfo
+  ['https://u@x.example', null],
+  ['https://x.example/?q', null],        // query
+  ['https://x.example/?', null],         // empty query
+  ['https://x.example/#f', null],        // fragment
+  ['ftp://x.example', null],
+  ['file:///etc/passwd', null],
+  ['not a url', null],
+  ['', null],
+];
+for (const [input, expected] of BASE_URL_CASES) {
+  const r = checkBaseUrl(input);
+  if (expected === null) assert.strictEqual(r.ok, false, 'base URL should be rejected: ' + input);
+  else { assert.strictEqual(r.ok, true, 'base URL should be accepted: ' + input); assert.strictEqual(r.baseUrl, expected, input); }
+}
+
+// ---------------- DES-6: HOST must be loopback unless TRIAGE_ALLOW_REMOTE=1 (config.js, C6.1) ----------------
+const LOOPBACK_BIND_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
+function isLoopbackHost(host) { return LOOPBACK_BIND_HOSTS.has(String(host).trim().toLowerCase()); }
+for (const h of ['127.0.0.1', 'localhost', '::1', 'LOCALHOST']) assert(isLoopbackHost(h), 'loopback: ' + h);
+for (const h of ['0.0.0.0', '::', '192.168.1.10', '10.0.0.5', 'myhost.local', '[::1]']) assert(!isLoopbackHost(h), 'not loopback: ' + h);
+
 console.log('all design vectors pass');
-module.exports = { redact, neutralise, luhn, hasLuhnWindow, oneSentence, hasLink, schemaOk };
+module.exports = { redact, neutralise, luhn, hasLuhnWindow, oneSentence, hasLink, schemaOk, checkBaseUrl, isLoopbackHost,
+  CARD_CASES, PHONE_CASES, ADVERSARIAL_INPUTS, REDACT_BUDGET_MS, BASE_URL_CASES };
