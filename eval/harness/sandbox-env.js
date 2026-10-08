@@ -60,9 +60,16 @@ function trialEnv(cond) {
 function prepareState(cond, state) {
   for (const d of ['home', 'claude-config', 'bin', 'eccode-shared']) fs.mkdirSync(path.join(state, d), { recursive: true });
   if (cond !== 'C0') fs.writeFileSync(path.join(state, 'bin', 'eccode'), `#!/bin/sh\nexec node "${SBX}/toolkit/bin/eccode.js" "$@"\n`, { mode: 0o755 });
+  // Refresh the session token atomically: parallel sessions of one condition
+  // share the state dir, so it is never deleted between sessions (only when
+  // a whole run ends, via dropToken).
   const tokenFile = process.env.CLAUDE_SESSION_INGRESS_TOKEN_FILE;
-  if (tokenFile && fs.existsSync(tokenFile)) fs.copyFileSync(tokenFile, path.join(state, '.ingress_token'));
-  fs.chmodSync(path.join(state, '.ingress_token'), 0o600);
+  if (tokenFile && fs.existsSync(tokenFile)) {
+    const tmp = path.join(state, `.ingress_token.${process.pid}.${Date.now()}`);
+    fs.copyFileSync(tokenFile, tmp);
+    fs.chmodSync(tmp, 0o600);
+    fs.renameSync(tmp, path.join(state, '.ingress_token'));
+  }
 }
 
 function dropToken(state) {

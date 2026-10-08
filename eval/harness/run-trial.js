@@ -101,7 +101,7 @@ function grade(task, work, state, toolkit) {
   const files = fs.readdirSync(graderDir).filter((f) => f.endsWith('.test.js')).map((f) => `${SBX}/extra/${f}`);
   const g = runInSandboxSync({ work, state, toolkit, extra: graderDir, env, cmd: process.execPath, args: ['--test', '--test-concurrency=1', ...files] });
   const gOut = `${g.stdout || ''}${g.stderr || ''}`;
-  const graded = { checks: parseTap(gOut), tail: gOut.split('\n').filter((l) => /^(not ok|# |\s+(error|expected|actual):)/.test(l)).slice(0, 80).join('\n') };
+  const graded = { checks: parseTap(gOut), raw: gOut, tail: gOut.split('\n').filter((l) => /^(not ok|# |\s+(error|expected|actual):)/.test(l)).slice(0, 80).join('\n') };
   return { visible, graded, score: score(visible, graded) };
 }
 
@@ -153,7 +153,7 @@ async function main() {
       });
     });
   } finally {
-    dropToken(state);
+    if (arg('drop-token') === '1') dropToken(state);
   }
   const wallMs = Date.now() - started;
   const sum = summarize(transcript);
@@ -184,6 +184,7 @@ async function main() {
     intervention: intervention(sum, timedOut, work),
     finishedAt: new Date().toISOString(),
   };
+  fs.writeFileSync(path.join(outDir, 'grader.tap'), g.graded.raw);
   fs.writeFileSync(path.join(outDir, 'result.json'), JSON.stringify(result, null, 2));
   console.log(JSON.stringify({ task: task.id, condition: cond, phase, success: g.score.success, ac: `${g.score.acPassed}/${g.score.acTotal}`, regressions: g.score.regressions, traps: g.score.failedTraps, costUsd: sum.costUsd, wallMin: Math.round(wallMs / 6000) / 10, intervention: result.intervention }));
 }

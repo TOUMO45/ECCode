@@ -26,6 +26,36 @@ function archive(repo, ref, dest, paths = []) {
   execFileSync('tar', ['-x', '-C', dest], { input: tar });
 }
 
+/**
+ * Comparable models: both toolkits pin some agents/skills to other models in
+ * their frontmatter (ECCode: opus reviewers; ECC: opus and haiku agents), which
+ * CLAUDE_CODE_SUBAGENT_MODEL does not override. For the evaluation every pin is
+ * rewritten to `inherit`, so all agents run on the evaluation model. Nothing
+ * else in either toolkit is changed. Returns the list of rewritten files.
+ */
+function normalizeModels(dir) {
+  const changed = [];
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) {
+        if (e.name !== 'node_modules' && e.name !== '.git') walk(p);
+        continue;
+      }
+      if (!e.name.endsWith('.md')) continue;
+      const text = fs.readFileSync(p, 'utf8');
+      const m = /^---\n([\s\S]*?)\n---/.exec(text);
+      if (!m || !/^model:\s*\S/m.test(m[1])) continue;
+      const fm = m[1].replace(/^model:\s*.*$/m, 'model: inherit');
+      if (fm === m[1]) continue;
+      fs.writeFileSync(p, `---\n${fm}\n---${text.slice(m[0].length)}`);
+      changed.push(path.relative(dir, p));
+    }
+  };
+  walk(dir);
+  return changed;
+}
+
 const out = path.resolve(arg('out') || 'eval-run/toolkits');
 const eccClone = path.resolve(arg('ecc-clone'));
 const repoRoot = path.join(__dirname, '..', '..');
@@ -34,7 +64,9 @@ const dirty = execFileSync('git', ['-C', repoRoot, 'status', '--porcelain', '--'
 archive(repoRoot, eccodeCommit, path.join(out, 'eccode'), ECCODE_PATHS);
 const eccHead = execFileSync('git', ['-C', eccClone, 'rev-parse', ECC_COMMIT], { encoding: 'utf8' }).trim();
 archive(eccClone, eccHead, path.join(out, 'ecc'));
-const meta = { eccode: { commit: eccodeCommit, uncommittedToolkitChanges: Boolean(dirty) }, ecc: { repo: 'https://github.com/affaan-m/ECC', commit: eccHead }, exportedAt: new Date().toISOString() };
+const normalized = { eccode: normalizeModels(path.join(out, 'eccode')), ecc: normalizeModels(path.join(out, 'ecc')) };
+const meta = { eccode: { commit: eccodeCommit, uncommittedToolkitChanges: Boolean(dirty), modelPinsNormalized: normalized.eccode.length }, ecc: { repo: 'https://github.com/affaan-m/ECC', commit: eccHead, modelPinsNormalized: normalized.ecc.length }, normalization: 'frontmatter model: pins rewritten to inherit in both toolkits', exportedAt: new Date().toISOString() };
+fs.writeFileSync(path.join(out, 'normalized-files.json'), JSON.stringify(normalized, null, 2));
 fs.writeFileSync(path.join(out, 'toolkits.json'), JSON.stringify(meta, null, 2));
 console.log(JSON.stringify(meta));
 if (dirty) console.error('WARNING: toolkit files have uncommitted changes; the export uses HEAD only.');
