@@ -19,7 +19,8 @@ Project
                                          Check the record against files (and re-run recorded checks); exit 3 on blocking issues
   recover [--all]                        Close interrupted runs, release their claims
   audit                                  Verify the hash chain, snapshot==replay, and approved artifacts
-  rebuild                                Rewrite state.json by replaying events.jsonl
+  rebuild [--force --actor user]         Rewrite state.json by replaying events.jsonl
+                                         (--force: the user accepts a rolled-back log, LOG_ROLLBACK)
   deliver --actor delivery-lead          Produce the verified final handoff
 
 Gates (architecture, design, plan, phase:<id>, verification)
@@ -171,13 +172,14 @@ function main(argv) {
       return 0;
     }
     case 'rebuild': {
-      const st = store.rebuildSnapshot();
+      const st = store.rebuildSnapshot({ force: Boolean(flags.force), actor });
       print(flags, `Snapshot rebuilt from ${st.seq} events.`, { seq: st.seq });
       return 0;
     }
     case 'audit': {
       const res = store.audit();
-      const changes = require('../lib/delivery').unreviewedChanges(store.state(), store.root);
+      // Replay, not the snapshot: audit must work (and report) on a rolled-back log.
+      const changes = require('../lib/delivery').unreviewedChanges(store.rebuild(), store.root);
       const ok = res.ok && !changes.length;
       print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}`, { ...res, unreviewedChanges: changes, ok });
       return ok ? 0 : 2;

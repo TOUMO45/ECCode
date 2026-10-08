@@ -68,6 +68,7 @@ test('interrupted runs are recovered: claims released, attempt counted, work res
 test('stale detection only flags runs older than the threshold unless --all', () => {
   const ctx = tmpProject();
   const { store, config } = ctx;
+  process.env.ECCODE_TEST = '1'; // ECCODE_NOW is honoured only in test mode
   process.env.ECCODE_NOW = '2026-01-01T00:00:00.000Z';
   try {
     runs.startRun(store, config, 'product-architect');
@@ -77,6 +78,7 @@ test('stale detection only flags runs older than the threshold unless --all', ()
     assert.strictEqual(runs.recover(store, config).length, 1);
   } finally {
     delete process.env.ECCODE_NOW;
+    delete process.env.ECCODE_TEST;
   }
 });
 
