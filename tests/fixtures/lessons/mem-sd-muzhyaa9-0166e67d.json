@@ -1,0 +1,134 @@
+{
+  "id": "mem-sd-muzhyaa9-0166e67d",
+  "layer": "debugging",
+  "scope": "shared",
+  "project": null,
+  "status": "verified",
+  "trust": "internal",
+  "createdAt": "2026-10-08T12:12:29.460Z",
+  "createdBy": "learning-debugger",
+  "lastVerifiedAt": "2026-10-08T12:13:23.485Z",
+  "revisions": [
+    {
+      "rev": 1,
+      "at": "2026-10-08T12:12:29.460Z",
+      "by": "learning-debugger",
+      "reason": "created",
+      "content": {
+        "title": "Money-moving POST endpoints (refunds, payouts, credits, charges) must honour the Idempotency-Key header",
+        "problem": "POST /api/customers/:id/credits ignored Idempotency-Key, so a retried request issued a second credit and raised the balance twice.",
+        "symptoms": [
+          "repeating a POST with the same Idempotency-Key header returned 201 with a new id instead of the original response",
+          "duplicate credit/refund/payout/charge created on client retry"
+        ],
+        "component": "HTTP POST endpoints that move money (credits)",
+        "environment": {
+          "node": ">=18",
+          "dependencies": "acme-kit vendored, zero deps"
+        },
+        "fingerprint": "money-post-ignores-idempotency-key",
+        "reproduction": {
+          "steps": [
+            "node --test test/idempotency.test.js (same key twice, expect same status+body and one credit row)"
+          ],
+          "evidence": [
+            "ev:ev-muzhxkbc-01a3919f"
+          ]
+        },
+        "rootCause": {
+          "explanation": "Handler never read the Idempotency-Key header. Source: QA feedback, rule PAY-3: \"Acme payments rule PAY-3: a POST endpoint that moves money (refunds, payouts, credits, charges) honours the Idempotency-Key request header. A repeated request with the same key returns the original status and body, and creates nothing new. A request without the header behaves normally.\"",
+          "evidence": [
+            "ev:ev-muzhxkbc-01a3919f"
+          ]
+        },
+        "failedAttempts": [
+          {
+            "approach": "Considered acme-kit memo() to cache the handler",
+            "whyFailed": "memo keys on the first argument only and caches per call rather than per successful outcome; ttlCache with an explicit scoped key fits."
+          }
+        ],
+        "solution": {
+          "description": "Read the Idempotency-Key header after body parsing and validation. Store successful responses (status+body) in a ttlCache keyed by endpoint|customer|key with a payload fingerprint (canonical JSON). Same key and payload: replay stored response, issue nothing. Same key, different payload: 422. Do not store failures. Keep lookup and store synchronous (or store an in-flight promise) so concurrent duplicates cannot both pass. No header: unchanged.",
+          "tradeoffs": "In-process store: lost on restart and not shared across instances; a shared store is needed for multi-instance. 24h TTL is a choice. Different-payload status 422 chosen to fit the acme-kit error table."
+        },
+        "verification": {
+          "evidence": [
+            "ev:ev-muzhxwhk-01a92f1d"
+          ],
+          "regressionTest": "npm test"
+        },
+        "sources": [
+          {
+            "title": "QA feedback, rule PAY-3",
+            "kind": "qa-feedback",
+            "trust": "internal",
+            "checkedAt": "2026-10-08"
+          }
+        ],
+        "appliesWhen": [
+          "Adding or changing any POST endpoint that moves money: refunds, payouts, credits, charges",
+          "QA or reviewers report duplicate money movement on retry"
+        ],
+        "notApplicableWhen": [
+          "GET/read-only endpoints",
+          "POST endpoints that do not move money (e.g. profile or settings updates)",
+          "Endpoints whose repeated call is naturally idempotent (PUT/DELETE by id)"
+        ],
+        "confidence": "medium",
+        "tags": [
+          "refund",
+          "payout",
+          "charge",
+          "credit",
+          "idempotency",
+          "idempotency-key",
+          "PAY-3",
+          "payments"
+        ]
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "at": "2026-10-08T12:13:23.485Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "rev": 1,
+      "notes": "Repro ev-muzhxkbc-01a3919f (node --test test/idempotency.test.js, exit 1, 5/8 fail) and fix ev-muzhxwhk-01a92f1d (same command, exit 0, 8/8) match; I re-ran it green (ev-muzhz0mr-0157da58) and npm test 42/42 (ev-muzhz0ai-01efed3b). Generic org rule PAY-3, no secrets or customer data."
+    }
+  ],
+  "evidenceSnapshots": {
+    "ev-muzhxkbc-01a3919f": {
+      "id": "ev-muzhxkbc-01a3919f",
+      "kind": "command",
+      "label": "repro: repeated Idempotency-Key creates a second credit (PAY-3)",
+      "command": "node --test test/idempotency.test.js",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-08T12:11:55.802Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muzhxwhk-01a92f1d": {
+      "id": "ev-muzhxwhk-01a92f1d",
+      "kind": "command",
+      "label": "fix verified: Idempotency-Key replay (PAY-3)",
+      "command": "node --test test/idempotency.test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-08T12:12:11.579Z",
+      "recordedBy": "learning-debugger"
+    }
+  },
+  "citations": [],
+  "checks": [],
+  "supersededBy": null,
+  "supersedes": [],
+  "provenance": {
+    "originalId": "mem-d-muzhyaa9-0166e67d",
+    "originalRevisions": 1,
+    "promotedAt": "2026-10-08T12:13:23.567Z",
+    "promotedBy": "technical-reviewer"
+  }
+}

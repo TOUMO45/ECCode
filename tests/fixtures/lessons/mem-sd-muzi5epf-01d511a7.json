@@ -1,0 +1,132 @@
+{
+  "id": "mem-sd-muzi5epf-01d511a7",
+  "layer": "debugging",
+  "scope": "shared",
+  "project": null,
+  "status": "verified",
+  "trust": "internal",
+  "createdAt": "2026-10-08T12:18:01.782Z",
+  "createdBy": "learning-debugger",
+  "lastVerifiedAt": "2026-10-08T12:18:37.023Z",
+  "revisions": [
+    {
+      "rev": 1,
+      "at": "2026-10-08T12:18:01.782Z",
+      "by": "learning-debugger",
+      "reason": "created",
+      "content": {
+        "title": "New or changed collection (list) endpoints must follow the org response-envelope and paging convention, not just the task text",
+        "problem": "A list endpoint returned a bare JSON array and had no paging, violating the organisation's collection-endpoint guideline; QA rejected it (AC8/AC9).",
+        "symptoms": [
+          "GET collection endpoint returns a bare array instead of {\"items\": [...], \"total\": n}",
+          "no ?limit / ?offset support",
+          "invalid limit not rejected with 422 validation_failed fields [\"limit\"]"
+        ],
+        "component": "HTTP list/collection endpoints (notes routes)",
+        "environment": {
+          "node": "22.22.0",
+          "os": "linux",
+          "arch": "x64"
+        },
+        "fingerprint": "org-rule-AG-7-collection-envelope-paging",
+        "reproduction": {
+          "steps": [
+            "node --test test/notes-list-create.test.js (AG-7 tests failed before the fix)"
+          ],
+          "evidence": [
+            "ev:ev-muzi40g0-01f16c72"
+          ]
+        },
+        "rootCause": {
+          "explanation": "QA feedback quoted Acme guideline AG-7: \"collection endpoints return {\"items\": [...], \"total\": <number of matching records>}. They accept ?limit (default 50, max 100; invalid values are rejected with 422 validation_failed, fields: [\"limit\"]) and ?offset (default 0). Bare JSON arrays are allowed only on legacy endpoints that already return them.\" The earlier change followed TASK.md only and did not look for org conventions, which are not in the task text.",
+          "evidence": [
+            "ev:ev-muzi40g0-01f16c72"
+          ]
+        },
+        "failedAttempts": [
+          {
+            "approach": "Implemented the feature from TASK.md alone (bare array list, no audit write).",
+            "whyFailed": "TASK.md does not contain organisational rules; the org conventions (vendor/acme-kit/README.md, Acme guidelines and compliance rules) were never consulted, so QA rejected it."
+          }
+        ],
+        "solution": {
+          "description": "Before implementing an endpoint, look for org conventions (vendor/acme-kit/README.md, guidelines, existing endpoints, QA/review feedback). Return {items,total} where total counts all matching records after filters and before limit/offset; parse limit (default 50, 1..100) and offset (default 0, >=0) strictly with a digits-only check, reject invalid values with problem(res,422,'validation_failed',...,{fields:['limit']}) (offset invalid -> fields ['offset']); slice after filtering/sorting. Update existing tests that expect a bare array.",
+          "tradeoffs": "Breaking response-shape change for existing consumers of the new endpoint; whole result is filtered/sorted in memory before slicing. Invalid offset field name is a judgement call beyond the quoted rule."
+        },
+        "verification": {
+          "evidence": [
+            "ev:ev-muzi4ps0-01a44d4d"
+          ],
+          "regressionTest": "npm test"
+        },
+        "sources": [
+          {
+            "title": "acme-kit README (org conventions)",
+            "checkedAt": "2026-10-08",
+            "trust": "internal"
+          }
+        ],
+        "appliesWhen": [
+          "adding or changing an HTTP endpoint that lists a collection of records",
+          "adding filtering or paging to a list API",
+          "a task text specifies behaviour but org guidelines may add response-format rules"
+        ],
+        "notApplicableWhen": [
+          "legacy endpoints that already return a bare array, such as the tag cloud GET /api/tags (mobile app parses it as-is); do not change them",
+          "single-resource endpoints (GET /api/notes/:id)",
+          "write endpoints that return the created record"
+        ],
+        "confidence": "medium",
+        "tags": [
+          "AG-7",
+          "pagination",
+          "api-conventions",
+          "org-rules"
+        ]
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "at": "2026-10-08T12:18:37.023Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "rev": 1,
+      "notes": "Verified against fix: reran npm test and regression (ev:ev-muzi5xba-01f1be84, ev:ev-muzi5xrs-01353f1e); solution matches code and tests. Contains org/project-specific details (Acme, internal paths, endpoints), so keep project-scoped."
+    }
+  ],
+  "evidenceSnapshots": {
+    "ev-muzi40g0-01f16c72": {
+      "id": "ev-muzi40g0-01f16c72",
+      "kind": "command",
+      "label": "repro: AG-7 list envelope + SEC-12 audit row missing",
+      "command": "node --test test/notes-list-create.test.js",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-08T12:16:56.643Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muzi4ps0-01a44d4d": {
+      "id": "ev-muzi4ps0-01a44d4d",
+      "kind": "command",
+      "label": "fix verified: AG-7 list envelope + SEC-12 audit row",
+      "command": "node --test test/notes-list-create.test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-08T12:17:29.475Z",
+      "recordedBy": "learning-debugger"
+    }
+  },
+  "citations": [],
+  "checks": [],
+  "supersededBy": null,
+  "supersedes": [],
+  "provenance": {
+    "originalId": "mem-d-muzi5epf-01d511a7",
+    "originalRevisions": 1,
+    "promotedAt": "2026-10-08T12:49:24.978Z",
+    "promotedBy": "technical-reviewer"
+  }
+}

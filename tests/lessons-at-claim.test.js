@@ -71,6 +71,30 @@ test('claiming a task retrieves the matching verified lesson and records it on t
   assert.strictEqual(ctx.store.state().tasks.credits.claim.lessons[0].id, ctx.lesson.id);
 });
 
+test('a precise lesson outranks long generic ones: topic fields (title, tags, appliesWhen) count more than body text, with light stemming', () => {
+  const ctx = setup();
+  const generic = 'The request handler validates the body, returns the response, writes the data and handles the endpoint error for every request that arrives at the service api and its tests';
+  // Verified distractors with long bodies full of words that every endpoint task shares.
+  const verifiedDistractor = (n, title) => {
+    write(ctx.dir, `check${n}.js`, `process.exit(require("fs").existsSync("fixed${n}") ? 0 : 1)\n`);
+    const repro = evidence.runCommand(ctx.store, 'learning-debugger', { label: `repro ${n}`, command: `node check${n}.js`, purpose: 'reproduction' });
+    write(ctx.dir, `fixed${n}`, 'yes');
+    const fix = evidence.runCommand(ctx.store, 'learning-debugger', { label: `fix ${n}`, command: `node check${n}.js` });
+    const rec = ctx.mem.add('learning-debugger', { layer: 'debugging', content: {
+      title, problem: `${generic}. ${generic}.`, symptoms: [`${generic} (${n})`], component: 'request handling', environment: { node: '>=18' }, fingerprint: `generic-${n}`,
+      reproduction: { steps: ['run'], evidence: [`ev:${repro.id}`] }, rootCause: { explanation: `${generic}. ${generic}. ${generic}. ${generic}.`, evidence: [`ev:${repro.id}`] },
+      failedAttempts: [{ approach: 'guess', whyFailed: 'nothing' }], solution: { description: `${generic}. Apply it to every endpoint request.`, tradeoffs: 'none' },
+      verification: { evidence: [`ev:${fix.id}`], regressionTest: `node check${n}.js` }, sources: [], appliesWhen: ['Any request handling code'], notApplicableWhen: ['Static assets'], confidence: 'low', tags: ['misc'] } });
+    ctx.mem.review(rec.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran the failing check after the fix: it passes.' });
+    return rec;
+  };
+  for (const [n, title] of [[1, 'Request handlers must validate input'], [2, 'Endpoints must return structured errors'], [3, 'Every request must be logged with its outcome'], [4, 'Responses must carry a request id']]) verifiedDistractor(n, title);
+  const { event } = tasks.claim(ctx.store, ctx.config, 'credits', 'backend-engineer');
+  const ids = (event.data.lessons || []).map((l) => l.id);
+  assert.ok(ids.includes(ctx.lesson.id), `the idempotency lesson must be retrieved, got ${JSON.stringify(event.data.lessons)}`);
+  assert.strictEqual(ids[0], ctx.lesson.id, 'and ranked first');
+});
+
 test('nothing is retrieved for an unrelated task, or when learning is off', () => {
   // Same lesson store, but the task text shares nothing with it.
   const unrelated = setup({ taskTitle: 'Rename the CSS class used by the sidebar', idea: 'Tidy the stylesheet of the dashboard', criteria: ['The sidebar renders with the new class', 'Visual regression screenshots are unchanged'] });
@@ -123,4 +147,21 @@ test('CLI: task claim shows the retrieved lessons as evidence and the decision t
   assert.match(res.stdout, /VERIFIED LESSONS/);
   assert.match(res.stdout, /Idempotency-Key/);
   assert.match(res.stdout, /lessonDecisions/);
+});
+
+test('real trial data: the idempotency lesson is retrieved and ranked first for the credits task, behind none of three longer lessons', () => {
+  const { retrieveForTask } = require('../lib/lessons');
+  const fixDir = path.join(__dirname, 'fixtures', 'lessons');
+  const shared = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-fixshared-'));
+  fs.mkdirSync(path.join(shared, 'records'));
+  for (const f of fs.readdirSync(fixDir)) if (f.endsWith('.json')) fs.copyFileSync(path.join(fixDir, f), path.join(shared, 'records', f));
+  process.env.ECCODE_SHARED_MEMORY = shared;
+  process.env.ECCODE_LEARNING = 'on';
+  const fx = JSON.parse(fs.readFileSync(path.join(fixDir, 'e1-task.json.txt'), 'utf8'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-fixproj-'));
+  execFileSync('git', ['init', '-q'], { cwd: dir });
+  const store = init(dir, { name: fx.project.name, idea: fx.project.idea, profile: 'change' });
+  const out = retrieveForTask(store, loadConfig(dir), fx.task, fx.project);
+  assert.strictEqual(out[0].id, 'mem-sd-muzhyaa9-0166e67d', JSON.stringify(out.map((o) => [o.id, o.priority])));
+  assert.ok(out.length <= 5);
 });

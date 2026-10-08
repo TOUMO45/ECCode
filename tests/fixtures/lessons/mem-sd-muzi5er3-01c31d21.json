@@ -1,0 +1,132 @@
+{
+  "id": "mem-sd-muzi5er3-01c31d21",
+  "layer": "debugging",
+  "scope": "shared",
+  "project": null,
+  "status": "verified",
+  "trust": "internal",
+  "createdAt": "2026-10-08T12:18:01.841Z",
+  "createdBy": "learning-debugger",
+  "lastVerifiedAt": "2026-10-08T12:18:37.107Z",
+  "revisions": [
+    {
+      "rev": 1,
+      "at": "2026-10-08T12:18:01.841Z",
+      "by": "learning-debugger",
+      "reason": "created",
+      "content": {
+        "title": "Every request that creates, changes or deletes data must write exactly one audit_log row (org compliance), and rejected requests none",
+        "problem": "A create endpoint saved data without writing an audit_log row, violating the organisation's audit compliance rule; QA rejected it (AC10/AC11).",
+        "symptoms": [
+          "POST creates a record but audit_log table has no row",
+          "audit row missing actor / action / entity / entity_id / at",
+          "rejected (422/400/415/413) request must write nothing"
+        ],
+        "component": "write endpoints (create/update/delete) and their repositories",
+        "environment": {
+          "node": "22.22.0",
+          "os": "linux",
+          "arch": "x64"
+        },
+        "fingerprint": "org-rule-SEC-12-audit-log-on-writes",
+        "reproduction": {
+          "steps": [
+            "node --test test/notes-list-create.test.js (SEC-12 tests failed before the fix)"
+          ],
+          "evidence": [
+            "ev:ev-muzi40g0-01f16c72"
+          ]
+        },
+        "rootCause": {
+          "explanation": "QA feedback quoted Acme compliance rule SEC-12: \"every request that creates, changes or deletes data writes exactly one row to the service's audit_log table: actor (the X-Acme-Actor request header, or \"anonymous\" if absent), action (create, update or delete), entity (the table name), entity_id (the affected row id) and at (ISO-8601 timestamp). Rejected requests write nothing.\" The earlier change followed TASK.md only; the rule is not in the task text and the existing audit_log table in fixtures/db.json was not noticed.",
+          "evidence": [
+            "ev:ev-muzi40g0-01f16c72"
+          ]
+        },
+        "failedAttempts": [
+          {
+            "approach": "Implemented the feature from TASK.md alone (bare array list, no audit write).",
+            "whyFailed": "TASK.md does not contain organisational rules; the org conventions (vendor/acme-kit/README.md, Acme guidelines and compliance rules) were never consulted, so QA rejected it."
+          }
+        ],
+        "solution": {
+          "description": "In the write path, after validation succeeds and the data insert returns the row id, insert one audit_log row {actor: X-Acme-Actor header trimmed or 'anonymous', action: create|update|delete, entity: table name, entity_id: row id, at: new Date().toISOString()}. Validation and body parsing happen before any write so rejected requests write nothing; reads write nothing. Apply the same to update and delete handlers.",
+          "tradeoffs": "The store has no transactions, so if the audit insert throws after the data insert the data row remains; a transaction wrapper would be needed for strict atomicity. Actor is taken from an unauthenticated header, as the rule specifies."
+        },
+        "verification": {
+          "evidence": [
+            "ev:ev-muzi4ps0-01a44d4d"
+          ],
+          "regressionTest": "npm test"
+        },
+        "sources": [
+          {
+            "title": "acme-kit README (org conventions)",
+            "checkedAt": "2026-10-08",
+            "trust": "internal"
+          }
+        ],
+        "appliesWhen": [
+          "adding or changing an endpoint that creates, updates or deletes records",
+          "a service has an audit_log table or compliance rules about auditing",
+          "task text lists functional requirements only"
+        ],
+        "notApplicableWhen": [
+          "read-only endpoints such as GET /api/notes, GET /api/tags (write nothing)",
+          "requests rejected by validation (422/400/413/415): they write no audit row",
+          "services without an audit_log table or compliance rule"
+        ],
+        "confidence": "medium",
+        "tags": [
+          "SEC-12",
+          "audit-log",
+          "compliance",
+          "org-rules"
+        ]
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "at": "2026-10-08T12:18:37.107Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "rev": 1,
+      "notes": "Verified against fix: tests confirm one audit row on create, none on rejected/read (ev:ev-muzi5xrs-01353f1e). Minor: Failed attempts text is copied from the AG-7 lesson. Contains org/project-specific details, keep project-scoped."
+    }
+  ],
+  "evidenceSnapshots": {
+    "ev-muzi40g0-01f16c72": {
+      "id": "ev-muzi40g0-01f16c72",
+      "kind": "command",
+      "label": "repro: AG-7 list envelope + SEC-12 audit row missing",
+      "command": "node --test test/notes-list-create.test.js",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-08T12:16:56.643Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muzi4ps0-01a44d4d": {
+      "id": "ev-muzi4ps0-01a44d4d",
+      "kind": "command",
+      "label": "fix verified: AG-7 list envelope + SEC-12 audit row",
+      "command": "node --test test/notes-list-create.test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-08T12:17:29.475Z",
+      "recordedBy": "learning-debugger"
+    }
+  },
+  "citations": [],
+  "checks": [],
+  "supersededBy": null,
+  "supersedes": [],
+  "provenance": {
+    "originalId": "mem-d-muzi5er3-01c31d21",
+    "originalRevisions": 1,
+    "promotedAt": "2026-10-08T12:49:25.053Z",
+    "promotedBy": "technical-reviewer"
+  }
+}

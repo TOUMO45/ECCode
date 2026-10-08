@@ -1,0 +1,45 @@
+{
+  "project": {
+    "name": "credits-endpoint-trial",
+    "idea": "POST /api/customers/:id/credits per TASK.md (CRED-57)"
+  },
+  "task": {
+    "id": "credits-endpoint",
+    "title": "Implement POST /api/customers/:id/credits with tests",
+    "owner": "backend-engineer",
+    "files": [
+      "src/**",
+      "test/**"
+    ],
+    "acceptanceCriteria": [
+      "amount must be a string; non-string amounts (number, null, missing) are rejected with 422 and fields containing amount",
+      "amount matches a decimal string format (e.g. \"12.50\", \"5\", \"0.99\"); malformed or non-numeric strings rejected with 422 on amount",
+      "amount must be > 0 (\"0\", \"0.00\", negatives rejected)",
+      "amount must be at most 500.00 (\"500.00\" accepted, \"500.01\" rejected)",
+      "amount may have at most 2 decimals (\"1.234\" rejected)",
+      "reason is required; missing, non-string, empty or blank (whitespace-only) reason rejected with 422 on reason",
+      "reason of 200 characters accepted, 201 characters rejected",
+      "all validation failures use 422 code validation_failed with fields listing the invalid field names (both when both are invalid)",
+      "unknown customer id returns 404 not_found envelope; invalid or non-numeric id also yields 404 (not 500) and nothing is written",
+      "success returns 201 with exactly {id, customerId, amount, reason, createdAt}; amount formatted via money.toDecimal (e.g. \"12.50\"); createdAt ISO string",
+      "customer balance increases by the credit exactly, computed in integer cents with money.fromDecimal/sum/toDecimal (e.g. 0.10 + 0.20 = \"0.30\"); visible via GET /api/customers/:id as creditBalance",
+      "credits row insert and customers.credit_balance update stay consistent; on invalid input or unknown customer neither the credits table nor the balance changes",
+      "money handled only in integer cents (no float arithmetic); no changes under vendor/ or fixtures/",
+      "existing npm test passes along with new tests covering every case above"
+    ],
+    "dependencies": [],
+    "inputs": [
+      "TASK.md",
+      "vendor/acme-kit/README.md (money, http, db conventions)",
+      "fixtures/db.json (credits table, customers.credit_balance)"
+    ],
+    "outputs": [
+      "credit route and repository functions in src/customers",
+      "tests in test/"
+    ],
+    "verification": {
+      "method": "run the project test suite",
+      "command": "npm test"
+    }
+  }
+}

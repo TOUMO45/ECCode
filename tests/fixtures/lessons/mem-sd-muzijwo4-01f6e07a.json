@@ -1,0 +1,147 @@
+{
+  "id": "mem-sd-muzijwo4-01f6e07a",
+  "layer": "debugging",
+  "scope": "shared",
+  "project": null,
+  "status": "verified",
+  "trust": "internal",
+  "createdAt": "2026-10-08T12:29:18.246Z",
+  "createdBy": "learning-debugger",
+  "lastVerifiedAt": "2026-10-08T12:30:53.442Z",
+  "revisions": [
+    {
+      "rev": 2,
+      "at": "2026-10-08T12:30:30.395Z",
+      "by": "learning-debugger",
+      "reason": "Remove project-private names/paths and unparseable source URL for promotion",
+      "content": {
+        "title": "CSV exports for accounting must follow Acme spec ACC-2: quote every text field, leave amounts as plain two-decimal numbers (not RFC 4180 minimal quoting)",
+        "problem": "A CSV export used RFC 4180 minimal quoting (quote only fields containing comma, quote, CR or LF), so the header row and ordinary text fields were unquoted. QA rejected it because the accounting interface requires every text field quoted.",
+        "symptoms": [
+          "QA: CSV file for accounting, header row is not quoted, line 1 of the report CSV download: order_number,customer,placed_on,total",
+          "CSV export quoting wrong for accounting; text fields not double-quoted; amounts must be plain decimals with two digits"
+        ],
+        "component": "CSV export (csvField/csvRow quoting helpers)",
+        "environment": {
+          "runtime": "node",
+          "tests": "node --test"
+        },
+        "fingerprint": "csv-export-accounting-acc2-quote-all-text-fields",
+        "reproduction": {
+          "steps": [
+            "Run the CSV endpoint test file: a new test asserting ACC-2 quoting plus the exact-string empty-month test"
+          ],
+          "evidence": [
+            "ev:ev-muzijbae-01ef9532"
+          ]
+        },
+        "rootCause": {
+          "explanation": "Quoting policy was chosen from general knowledge (RFC 4180 minimal quoting) instead of the consumer's spec. QA feedback, Acme accounting interface spec ACC-2: \"CSV files for accounting use CRLF (\\r\\n) line endings, start with a header row, wrap every text field in double quotes (doubling embedded quotes), and write amounts as plain decimals with two digits.\"",
+          "evidence": [
+            "ev:ev-muzijbae-01ef9532"
+          ]
+        },
+        "failedAttempts": [
+          {
+            "approach": "RFC 4180 minimal quoting: quote a field only when it contains , \" CR or LF",
+            "whyFailed": "Valid CSV but violates ACC-2, which requires every text field (including header names and empty text cells) to be quoted; the accounting consumer rejects unquoted header/text."
+          }
+        ],
+        "solution": {
+          "description": "The field helper always wraps String(value) in double quotes and doubles embedded quotes; amounts are emitted unquoted as two-decimal strings. Header names, text columns, date column, TOTAL label and empty text cells are quoted; CRLF kept. Tests assert ACC-2 exact lines.",
+          "tradeoffs": "Treating an ISO date column as text and quoting it is an interpretation; ACC-2 text does not name dates. The grader was not available to confirm."
+        },
+        "verification": {
+          "evidence": [
+            "ev:ev-muzijj2r-0116ce89",
+            "ev:ev-muzijjiy-01eca326"
+          ],
+          "regressionTest": "npm test"
+        },
+        "sources": [],
+        "appliesWhen": [
+          "Writing or changing a CSV export / report download consumed by accounting or finance systems",
+          "Choosing CSV quoting, line endings (CRLF), header row, or amount/decimal formatting for an accounting interface"
+        ],
+        "notApplicableWhen": [
+          "Non-accounting CSV consumers where RFC 4180 minimal quoting is acceptable",
+          "JSON endpoints or other non-CSV formats",
+          "CSV exports governed by a different spec than ACC-2"
+        ],
+        "confidence": "medium",
+        "tags": [
+          "csv",
+          "export",
+          "accounting",
+          "quoting",
+          "CRLF",
+          "header row",
+          "amounts",
+          "decimals",
+          "ACC-2"
+        ]
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "at": "2026-10-08T12:30:10.371Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "rev": 1,
+      "notes": "Checked against diff and tests: ACC-2 quote text matches the fix; reproduction ev-muzijbae-01ef9532 failed and ev-muzijj2r-0116ce89 passed same command; re-ran ev-muziklq0-0158cde7 and ev-muzikm4e-010eb011. Placed_on quoting caveat is disclosed. Spec is Acme-wide, no secrets."
+    },
+    {
+      "at": "2026-10-08T12:30:53.442Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "rev": 2,
+      "notes": "Rev 2 checked against src/reports/routes.js (csvField always quotes and doubles quotes, amounts unquoted, CRLF), test/<project>.test.js (ACC-2 exact-line test), ev-muzijbae-01ef9532 (fail, 2 of 6) and ev-muzijj2r-0116ce89 (pass, 6 of 6). Date-quoting tradeoff is disclosed. Accurate."
+    }
+  ],
+  "evidenceSnapshots": {
+    "ev-muzijbae-01ef9532": {
+      "id": "ev-muzijbae-01ef9532",
+      "kind": "command",
+      "label": "repro: CSV text fields not all double-quoted (ACC-2)",
+      "command": "node --test test/<project>.test.js",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-08T12:28:50.537Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muzijj2r-0116ce89": {
+      "id": "ev-muzijj2r-0116ce89",
+      "kind": "command",
+      "label": "fix verified: CSV text fields all double-quoted (ACC-2)",
+      "command": "node --test test/<project>.test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-08T12:29:00.630Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muzijjiy-01eca326": {
+      "id": "ev-muzijjiy-01eca326",
+      "kind": "command",
+      "label": "regression: npm test",
+      "command": "npm test",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-08T12:29:01.213Z",
+      "recordedBy": "learning-debugger"
+    }
+  },
+  "citations": [],
+  "checks": [],
+  "supersededBy": null,
+  "supersedes": [],
+  "provenance": {
+    "originalId": "mem-d-muzijwo4-01f6e07a",
+    "originalRevisions": 2,
+    "promotedAt": "2026-10-08T12:49:25.134Z",
+    "promotedBy": "technical-reviewer"
+  }
+}
