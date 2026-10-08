@@ -1,0 +1,29 @@
+'use strict';
+const { json, problem } = require('../../vendor/acme-kit/http');
+const repo = require('./repository');
+const { computeTotals } = require('./service');
+
+function register(router, db) {
+  router.add('GET', '/api/invoices', async (req, res) => {
+    const out = repo.listInvoices(db).map((inv) => ({ id: inv.id, number: inv.number, customer: inv.customer, total: computeTotals(inv, repo.linesFor(db, inv.id)).total }));
+    json(res, 200, out);
+  });
+
+  router.add('GET', '/api/invoices/:id', async (req, res, { params }) => {
+    const inv = repo.getInvoice(db, params.id);
+    if (!inv) return problem(res, 404, 'not_found', `Invoice ${params.id} not found`);
+    json(res, 200, { id: inv.id, number: inv.number, customer: inv.customer, ...computeTotals(inv, repo.linesFor(db, inv.id)) });
+  });
+
+  // Accounting's import format: one row per line, then a TOTAL row.
+  router.add('GET', '/api/invoices/:id/export.csv', async (req, res, { params }) => {
+    const inv = repo.getInvoice(db, params.id);
+    if (!inv) return problem(res, 404, 'not_found', `Invoice ${params.id} not found`);
+    const totals = computeTotals(inv, repo.linesFor(db, inv.id));
+    const rows = ['description,unit_price,quantity,line_total', ...totals.lines.map((l) => `${l.description},${l.unitPrice},${l.quantity},${l.lineTotal}`), `TOTAL,,,${totals.total}`];
+    res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8' });
+    res.end(rows.join('\n') + '\n');
+  });
+}
+
+module.exports = { register };
