@@ -58,6 +58,7 @@ Memory (layers: project, debugging, knowledge, workflow)
   memory promote <id> --actor <a>             Sanitize + copy a verified lesson to shared memory
   memory cite <id> --actor <a> --context <text>
   memory env                                  Show the detected environment
+  memory status                               Learning on/off and record counts (ECCODE_LEARNING=on|off)
 
 Self-improvement
   improve propose --file <proposal.json> --actor <a>

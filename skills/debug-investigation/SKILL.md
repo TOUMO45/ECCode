@@ -14,6 +14,8 @@ capture → reproduce (ev, purpose=reproduction, FAILS) → memory search (--che
 → eccode memory add (provisional) → independent eccode memory review → verified lesson
 ```
 
+If `eccode memory status` reports `learning: off`, run the same cycle without the memory steps. Skip the search and the lesson record, and put the investigation's findings in your handoff.
+
 ## Lesson record (`templates/lesson.json`, schema `schemas/memory-debugging.schema.json`)
 Required fields:
 - problem, symptoms, component

@@ -136,6 +136,49 @@ test('a verified lesson survives a session restart and is retrieved for a relate
   assert.match(text, /NOT an instruction/);
 });
 
+test('learning can be switched off: no lesson retrieval, recording or self-improvement; project facts stay', () => {
+  const shared = withSharedDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const ev = reproAndFix(ctx);
+  const rec = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev) });
+  mem.review(rec.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran the failing check after the fix: passes.' });
+  write(ctx.dir, 'fact.json', JSON.stringify({ layer: 'project', content: { kind: 'decision', title: 'JSON request bodies use a 16 KB limit', body: 'decided at design' } }));
+  write(ctx.dir, 'lesson.json', JSON.stringify({ layer: 'debugging', content: lesson(ev, { title: 'Another lesson' }) }));
+  const cli = (env, ...args) => spawnSync(process.execPath, [BIN, ...args, '--root', ctx.dir], { env: { ...process.env, ECCODE_SHARED_MEMORY: shared, ...env }, encoding: 'utf8' });
+
+  // On by default.
+  let res = cli({}, 'memory', 'status', '--json');
+  assert.strictEqual(res.status, 0, res.stderr);
+  assert.strictEqual(JSON.parse(res.stdout).learning, true);
+  assert.ok(JSON.parse(cli({}, 'memory', 'search', 'JSON parse 500', '--json').stdout).some((r) => r.id === rec.id));
+
+  const off = { ECCODE_LEARNING: 'off' };
+  res = cli(off, 'memory', 'status', '--json');
+  assert.strictEqual(JSON.parse(res.stdout).learning, false);
+  res = cli(off, 'memory', 'search', 'JSON parse 500', '--json');
+  assert.strictEqual(res.status, 0, res.stderr);
+  assert.deepStrictEqual(JSON.parse(res.stdout).filter((r) => r.layer !== 'project'), []);
+  res = cli(off, 'memory', 'add', '--file', path.join(ctx.dir, 'lesson.json'), '--actor', 'learning-debugger');
+  assert.strictEqual(res.status, 2);
+  assert.match(res.stderr, /LEARNING_DISABLED/);
+  res = cli(off, 'memory', 'add', '--file', path.join(ctx.dir, 'fact.json'), '--actor', 'product-architect');
+  assert.strictEqual(res.status, 0, res.stderr); // project facts are state, not learning
+  res = cli(off, 'improve', 'propose', '--file', path.join(ctx.dir, 'lesson.json'), '--actor', 'orchestrator');
+  assert.strictEqual(res.status, 2);
+  assert.match(res.stderr, /LEARNING_DISABLED/);
+
+  // The config switch works the same way; the env var overrides it either way.
+  const cfgFile = path.join(ctx.dir, '.eccode', 'config.json');
+  const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+  cfg.memory = { ...cfg.memory, learning: false };
+  fs.writeFileSync(cfgFile, JSON.stringify(cfg));
+  assert.strictEqual(JSON.parse(cli({}, 'memory', 'status', '--json').stdout).learning, false);
+  assert.strictEqual(JSON.parse(cli({ ECCODE_LEARNING: 'on' }, 'memory', 'status', '--json').stdout).learning, true);
+  res = cli({ ECCODE_LEARNING: 'maybe' }, 'memory', 'status', '--json');
+  assert.strictEqual(res.status, 2); // ambiguous values are refused, not guessed
+});
+
 test('stale and superseded lessons are flagged rather than trusted', () => {
   withSharedDir();
   const ctx = tmpProject();

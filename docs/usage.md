@@ -62,6 +62,7 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 | `pricing.usdPerMillionTokens` | null | Used to estimate cost when only token counts are reported |
 | `review.requiredSections` | see file | Headings that must appear in architecture and design artifacts |
 | `roles.<gate>.authors/reviewers` | see file | Who may submit and who may approve. You can add ECC language reviewers here |
+| `memory.learning` | true | `false` turns learning off: no lesson retrieval or recording, no promotion, no self-improvement proposals. Project facts are still recorded, and rollback stays available. `ECCODE_LEARNING=on\|off` overrides it. |
 | `memory.staleAfterDays` | 180 | Age after which a lesson must be revalidated |
 | `memory.embedCommand` | null | Optional external embedder for semantic retrieval |
 | `memory.sharedDir` | `~/.eccode/memory` | Shared lesson store. `ECCODE_SHARED_MEMORY` overrides it |
@@ -74,6 +75,7 @@ Environment variables:
 - `ECCODE_HOOKS=off`: disable the hooks.
 - `ECCODE_SEQUENTIAL_ROLES=1`: allow the main session to act as roles. Use it only in disclosed sequential mode.
 - `ECCODE_SHARED_MEMORY`: shared memory location.
+- `ECCODE_LEARNING=on|off`: override `memory.learning`. Any other value is refused.
 - `ECCODE_NOW`: pin the clock (for tests).
 
 ## Use

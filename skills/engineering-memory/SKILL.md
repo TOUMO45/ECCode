@@ -15,6 +15,7 @@ description: How ECCode agents read and write the four-layer engineering memory 
 Project memory never leaves its project. **Shared memory** (`~/.eccode/memory`, or the path in `ECCODE_SHARED_MEMORY`) receives only verified, sanitized, non-author-promoted lessons. Promotion is refused when the scan finds secrets, emails, user paths, IPs or the project name.
 
 ## Retrieval (every decision point)
+Once per session, run `eccode memory status`. If it reports `learning: off`, skip lesson retrieval, lesson recording and promotion, say so in your handoff, and keep recording project facts (`layer: project`) as usual.
 ```
 eccode memory search "<problem words, component, technology>" --check-env [--layer debugging]
 ```
