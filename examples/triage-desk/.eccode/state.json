@@ -1,6 +1,6 @@
 {
-  "seq": 519,
-  "lastHash": "a39703a3dc0010a12ec978dbbb3e91b58ec3c0532598e7a3cc24fff2f967a69d",
+  "seq": 522,
+  "lastHash": "852e7a68af8b3bd439ca7e739d79022da848acd055dfafb5bf8b026072f02dd1",
   "project": {
     "name": "TriageDesk",
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
@@ -9615,11 +9615,11 @@
       "id": "RISK-12",
       "title": "Fallback holdout high-urgency recall 0.571 (n=7) below 0.70 floor in the first full-mode eval",
       "severity": "medium",
-      "mitigation": "Pending user decision: accept as known fallback limitation (live model path is the intended production mode) or commission a re-scoped rules revision with a fresh holdout (re-tuning against the seen holdout would contaminate it)",
+      "mitigation": "User decision 2026-10-08: accept holdout high_urgency_recall 0.571 (n=7) < 0.70 as a known limitation of the deterministic fallback for this release; Success Criterion 2 / AC8 holdout floor amended for this release only; the fallback is a labelled safety net, the live model is the intended classifier (live evals NOT RUN, RISK-7).",
       "owner": "ai-engineer",
-      "status": "open",
-      "updatedAt": "2026-10-07T23:42:27.375Z",
-      "updatedBy": "orchestrator"
+      "status": "accepted",
+      "updatedAt": "2026-10-08T06:00:50.717Z",
+      "updatedBy": "user"
     }
   },
   "decisions": {
@@ -9682,6 +9682,26 @@
       "lessons": [],
       "at": "2026-10-07T21:40:25.998Z",
       "by": "orchestrator"
+    },
+    "dec-muz4ocip-016d36bd": {
+      "id": "dec-muz4ocip-016d36bd",
+      "title": "RISK-12 accepted; SC2 amended for this release",
+      "decision": "Accept the fallback holdout high-urgency recall miss (0.571, n=7, floor 0.70) as a known limitation; amend SC2/AC8 for this release",
+      "rationale": "Re-tuning against the already-seen holdout would contaminate it; the fallback is a clearly labelled safety net; all other 24 checks, 439 tests and 8 gates passed",
+      "alternatives": "Rules revision validated on a fresh holdout (deferred)",
+      "lessons": [],
+      "at": "2026-10-08T06:00:50.800Z",
+      "by": "user"
+    },
+    "dec-muz4ocl7-01aaa32d": {
+      "id": "dec-muz4ocl7-01aaa32d",
+      "title": "Confirm orchestrator defaults Q1/Q4/Q7",
+      "decision": "Confirmed: default live model claude-haiku-5-5 (env-overridable); redact emails, Luhn-valid cards and phones before live calls; zero runtime npm dependencies",
+      "rationale": "User confirmation of defaults previously recorded as pending",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-08T06:00:50.893Z",
+      "by": "user"
     }
   },
   "citations": [],

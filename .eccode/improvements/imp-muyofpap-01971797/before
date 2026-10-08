@@ -44,31 +44,8 @@ Each refusal is logged (`review.rejected`) and counted in metrics.
 }
 ```
 
-   `decision` must be exactly `"approve"` or `"changes_requested"`. These are the only two values the schema accepts. Any other string (`"approved"`, `"approval"`, `"reject"`, or the template placeholder `"approve | changes_requested"`) is refused as a schema error: `$.decision: must be one of approve, changes_requested`. Use `"approve"` only when every criterion is `met: true` with evidence and no blocking or major finding is open. Otherwise use `"changes_requested"` with at least one blocking or major finding.
-
 5. On re-review, include one entry per earlier finding:
    `"resolvedFindings": [{ "id": "PH1-1", "resolution": "Handler returns 400; regression test added.", "evidence": ["ev:<rerun id>"] }]`
-
-   A complete approving re-review of the same gate, after the author fixed PH1-1. `ev:ev-ghi789` stands for the check the reviewer re-ran after the resubmission:
-
-```json
-{
-  "decision": "approve",
-  "summary": "Resubmission fixes PH1-1: malformed JSON now returns 400 and the contract still holds.",
-  "criteria": [
-    { "id": "C1", "description": "Endpoints conform to the interface contract", "met": true,
-      "evidence": ["ev:ev-ghi789", "artifact:src/server/routes.js"] },
-    { "id": "C2", "description": "Invalid input rejected with documented 4xx", "met": true,
-      "evidence": ["ev:ev-ghi789"] }
-  ],
-  "findings": [],
-  "resolvedFindings": [
-    { "id": "PH1-1", "resolution": "POST /api/triage with body '{' returns 400 {error:'invalid_json'}; regression test added.",
-      "evidence": ["ev:ev-ghi789"] }
-  ]
-}
-```
-
 6. `eccode gate review <gate> --actor <you> --file <draft>`
 
 ## Severity guide
