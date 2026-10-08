@@ -1,0 +1,1 @@
+const t=require('fs').readFileSync('skills/review-gate/SKILL.md','utf8');const cases=["ACC-2","PAY-3","AG-7","SEC-12"].map((r)=>t.includes(r));console.log('ECCODE_EVAL '+JSON.stringify({passed:cases.filter(Boolean).length,total:cases.length}));

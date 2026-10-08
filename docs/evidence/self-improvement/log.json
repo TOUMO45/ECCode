@@ -1,0 +1,77 @@
+[
+  {
+    "label": "init scratch project",
+    "command": "eccode init --name Self improvement demo --idea Demonstrate a grounded, evaluated, reversible workflow change --profile change",
+    "exit": 0,
+    "output": "Initialized ECCode project in /srv/eccode-eval/self-improvement/project/.eccode"
+  },
+  {
+    "label": "propose (learning-debugger), grounded in verified lessons",
+    "command": "eccode improve propose --file /srv/eccode-eval/self-improvement/project/.eccode/drafts/proposal.json --actor learning-debugger",
+    "exit": 0,
+    "output": "Proposal imp-mv037iu8-01bc3b29 recorded for skills/review-gate/SKILL.md. Next: evaluate baseline and candidate."
+  },
+  {
+    "label": "evaluate baseline",
+    "command": "eccode improve evaluate imp-mv037iu8-01bc3b29 --actor learning-debugger --variant baseline",
+    "exit": 0,
+    "output": "baseline: 0/4 (exit 0, ev:ev-mv037ixr-01bd087e). Status proposed."
+  },
+  {
+    "label": "evaluate candidate",
+    "command": "eccode improve evaluate imp-mv037iu8-01bc3b29 --actor learning-debugger --variant candidate",
+    "exit": 0,
+    "output": "candidate: 4/4 (exit 0, ev:ev-mv037j0q-0108fd8d). Status evaluated. Verdict: candidate 4/4 vs baseline 0/4"
+  },
+  {
+    "label": "self-review is refused (the proposer cannot approve)",
+    "command": "eccode improve review imp-mv037iu8-01bc3b29 --actor learning-debugger --decision approve --notes I wrote it and it looks good to me.",
+    "exit": 2,
+    "output": "eccode: [REVIEW_REJECTED] The proposer cannot review their own proposal"
+  },
+  {
+    "label": "independent review session",
+    "sessionId": "b9306984-40a1-4168-a75f-1dd1724a179c",
+    "costUsd": 0.066396
+  },
+  {
+    "label": "proposal status after review",
+    "command": "eccode improve list",
+    "exit": 0,
+    "output": "imp-mv037iu8-01bc3b29 [approved] skills/review-gate/SKILL.md — Add a house-rules checklist to the review-gate skill"
+  },
+  {
+    "label": "adoption by orchestrator is refused (user only)",
+    "command": "eccode improve adopt imp-mv037iu8-01bc3b29 --actor orchestrator",
+    "exit": 2,
+    "output": "eccode: [USER_AUTH_REQUIRED] Adopting a workflow change requires the user (--actor user)"
+  },
+  {
+    "label": "adopt (SIMULATED user decision by the operator script: the CLI cannot prove a human typed it)",
+    "command": "eccode improve adopt imp-mv037iu8-01bc3b29 --actor user",
+    "exit": 0,
+    "output": "Adopted imp-mv037iu8-01bc3b29 as skills/review-gate/SKILL.md v1. Rollback: eccode improve rollback imp-mv037iu8-01bc3b29 --actor user --reason ..."
+  },
+  {
+    "label": "live skill after adoption",
+    "changed": true,
+    "eval": "ECCODE_EVAL {\"passed\":4,\"total\":4}"
+  },
+  {
+    "label": "rollback (user): reversibility",
+    "command": "eccode improve rollback imp-mv037iu8-01bc3b29 --actor user --reason demonstration: the change must be reversible",
+    "exit": 0,
+    "output": "Rolled back imp-mv037iu8-01bc3b29; skills/review-gate/SKILL.md restored."
+  },
+  {
+    "label": "live skill after rollback",
+    "restoredByteForByte": true,
+    "eval": "ECCODE_EVAL {\"passed\":0,\"total\":4}"
+  },
+  {
+    "label": "metrics",
+    "command": "eccode metrics --json",
+    "exit": 0,
+    "output": "{\n  \"summary\": {\n    \"reviewRejectionRate\": \"n/a (0 reviews)\",\n    \"reviewsRefusedByGateRules\": 0,\n    \"repeatedBugFingerprints\": \"0/0 fingerprints seen more than once\",\n    \"medianTimeToVerifiedFixMinutes\": \"n/a (no verified fixes)\",\n    \"recurrenceAfterFix\": 0,\n    \"lessonApplicabilityChecks\": {},\n    \"lessonRelevanceDecisions\": {},\n    \"lessonDecisions\": {\n      \"applied\": 0,\n      \"not-applicable (evidence)\": 0,\n      \"not-applicable (reason only)\": 0\n    },\n    \"lessonCitations\": 0,\n    \"reworksOpened\": 0,\n    \"workflowChangesAdopted\": 1,\n    \"workflowChangeRegressions\": 0\n  },\n  \"detail\": {\n    \"byGateKind\": {},\n    \"verifiedFixes\": 0,\n    \"debuggingRecords\": 0,\n    \"proposals\": [\n      {\n        \"id\": \"imp-mv037iu8-01bc3b29\",\n        \"status\": \"rolled_back\",\n        \"target\": \"skills/review-gate/SKILL.md\"\n      }\n    ]\n  }\n}"
+  }
+]

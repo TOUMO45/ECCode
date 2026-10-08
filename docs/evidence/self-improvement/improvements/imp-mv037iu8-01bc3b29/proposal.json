@@ -1,0 +1,97 @@
+{
+  "id": "imp-mv037iu8-01bc3b29",
+  "title": "Add a house-rules checklist to the review-gate skill",
+  "observation": "Verified lessons from QA failures show that reviewers can only enforce organisational rules they are told about; the rules appear nowhere in the repositories.",
+  "lessons": [
+    "mem-sd-muzlgxnt-011aa1cb",
+    "mem-sd-muzljnq3-015dcbf0",
+    "mem-sd-muzm3qo6-0127d486",
+    "mem-sd-muzm3qpw-01da8afd"
+  ],
+  "target": "skills/review-gate/SKILL.md",
+  "change": {
+    "type": "append",
+    "content": "\n## House rules checklist (derived from verified lessons)\nBefore approving a phase, check the diff against these rules. Each one was learned from a QA failure and verified by an independent review.\n- **ACC-2**: CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting (lesson mem-sd-muzlgxnt-011aa1cb)\n- **PAY-3**: A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement (lesson mem-sd-muzljnq3-015dcbf0)\n- **AG-7/SEC-12**: New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array (lesson mem-sd-muzm3qo6-0127d486)\n- **AG-7/SEC-12**: Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step (lesson mem-sd-muzm3qpw-01da8afd)\n"
+  },
+  "rationale": "Each listed rule comes from a verified, independently reviewed lesson and was missed by a first implementation. Giving reviewers the list lets them catch the same class of defect before QA.",
+  "evaluation": {
+    "command": "node eval-skill.js",
+    "cases": "one case per cited rule (ACC-2, PAY-3, AG-7, SEC-12): does the skill text cover it?",
+    "baseline": {
+      "evidence": "ev-mv037ixr-01bd087e",
+      "command": "node eval-skill.js",
+      "passed": 0,
+      "total": 4,
+      "exitCode": 0,
+      "by": "learning-debugger",
+      "at": "2026-10-08T22:07:32.515Z"
+    },
+    "candidate": {
+      "evidence": "ev-mv037j0q-0108fd8d",
+      "command": "node eval-skill.js",
+      "passed": 4,
+      "total": 4,
+      "exitCode": 0,
+      "by": "learning-debugger",
+      "at": "2026-10-08T22:07:32.621Z"
+    }
+  },
+  "status": "rolled_back",
+  "proposedBy": "learning-debugger",
+  "proposedAt": "2026-10-08T22:07:32.385Z",
+  "baseSha256": "6b921fc1239496c124b48ad0a0624489604c17f9d808d408d6f814edbe50ccc2",
+  "reviews": [
+    {
+      "at": "2026-10-08T22:07:47.668Z",
+      "by": "technical-reviewer",
+      "decision": "approve",
+      "notes": "Target SKILL.md hash matches baseSha256 (6b921fc1...). Change is append-only (new section, nothing existing altered). All 4 cited lessons are status=verified with independent technical-reviewer verification; the ACC-2, PAY-3, AG-7 and SEC-12 summaries match their root-cause rules. Re-ran eval: baseline 0/4 (ev-mv037rm3-01fd3fb9); candidate simulated on a scratch copy 4/4, so no regression. Caveat: the eval only checks that the rule IDs appear in the text, so it measures coverage, not whether reviewers apply the rules. Scoping notes (legacy endpoints, non-money POSTs) are omitted from the checklist, which is a minor concern."
+    }
+  ],
+  "history": [
+    {
+      "at": "2026-10-08T22:07:32.385Z",
+      "by": "learning-debugger",
+      "event": "proposed"
+    },
+    {
+      "at": "2026-10-08T22:07:32.515Z",
+      "by": "learning-debugger",
+      "event": "evaluated:baseline",
+      "evidence": "ev-mv037ixr-01bd087e"
+    },
+    {
+      "at": "2026-10-08T22:07:32.621Z",
+      "by": "learning-debugger",
+      "event": "evaluated:candidate",
+      "evidence": "ev-mv037j0q-0108fd8d"
+    },
+    {
+      "at": "2026-10-08T22:07:47.668Z",
+      "by": "technical-reviewer",
+      "event": "approve"
+    },
+    {
+      "at": "2026-10-08T22:07:54.810Z",
+      "by": "user",
+      "event": "adopted",
+      "version": 1
+    },
+    {
+      "at": "2026-10-08T22:07:54.904Z",
+      "by": "user",
+      "event": "rolled_back",
+      "reason": "demonstration: the change must be reversible"
+    }
+  ],
+  "version": 1,
+  "afterSha256": "c9e903c7c1383266b7f6ebec0cd0caf213844d8bd01ec9978e6e960f0c11be2c",
+  "adoptedBy": "user",
+  "adoptedAt": "2026-10-08T22:07:54.810Z",
+  "rollback": {
+    "at": "2026-10-08T22:07:54.904Z",
+    "by": "user",
+    "reason": "demonstration: the change must be reversible",
+    "regression": false
+  }
+}

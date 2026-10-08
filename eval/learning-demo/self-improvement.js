@@ -60,6 +60,7 @@ const checklist = ['', '## House rules checklist (derived from verified lessons)
 // The evaluation: how many of the cited rules does the skill text cover? (Each case = one rule id.)
 const wanted = [...new Set(covered.flatMap((l) => l.rules))];
 fs.writeFileSync(path.join(project, 'eval-skill.js'), `const t=require('fs').readFileSync('skills/review-gate/SKILL.md','utf8');const cases=${JSON.stringify(wanted)}.map((r)=>t.includes(r));console.log('ECCODE_EVAL '+JSON.stringify({passed:cases.filter(Boolean).length,total:cases.length}));\n`);
+fs.mkdirSync(path.join(project, '.eccode', 'drafts'), { recursive: true });
 fs.writeFileSync(path.join(project, '.eccode', 'drafts', 'proposal.json'), JSON.stringify({
   title: 'Add a house-rules checklist to the review-gate skill',
   observation: 'Verified lessons from QA failures show that reviewers can only enforce organisational rules they are told about; the rules appear nowhere in the repositories.',
@@ -79,8 +80,8 @@ const selfReview = cli('self-review is refused (the proposer cannot approve)', [
 
 // Independent review by a real, fresh session in the technical-reviewer role.
 async function reviewSession() {
-  prepareState('C1', state);
-  const env = { ...trialEnv('C1'), ECCODE_SHARED_MEMORY: `${SBX}/state/shared` };
+  prepareState('C2', state);
+  const env = { ...trialEnv('C2'), ECCODE_SHARED_MEMORY: `${SBX}/state/shared` };
   fs.cpSync(shared, path.join(state, 'shared'), { recursive: true });
   const prompt = `CLI: eccode (on PATH). The project is the current directory. A self-improvement proposal ${id} is evaluated and waiting for independent review (eccode improve list). You are the independent reviewer. Inspect it: the target file, the change, the lessons it is grounded in (eccode memory show <id>), the evaluation numbers, and re-run the evaluation command yourself. Approve only if the change is additive, grounded in the cited lessons and the candidate beats the baseline without regression; otherwise reject. Record your decision with eccode improve review ${id} --actor technical-reviewer --decision approve|reject --notes "<what you checked>". Report the decision.`;
   const args = ['-p', prompt, '--agent', 'eccode:technical-reviewer', '--output-format', 'stream-json', '--verbose', '--model', 'claude-sonnet-5-5', '--max-budget-usd', '3', '--permission-mode', 'bypassPermissions', '--plugin-dir', `${SBX}/toolkit`];
