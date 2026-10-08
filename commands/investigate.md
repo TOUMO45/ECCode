@@ -18,6 +18,8 @@ Open a run for the dispatch (`eccode run start --actor orchestrator --agent lear
 
 When the agent reports a lesson id, dispatch an independent reviewer (`technical-reviewer` or `security-reviewer`) to run `eccode memory review`.
 
-If the reviewer verifies it and the lesson is not specific to this project's private details, have that reviewer (not the author) run `eccode memory promote <id>` so other projects can retrieve it. Promotion runs a privacy scan and refuses unsafe content. Skip every memory step when `eccode memory status` reports `learning: off`.
+If the reviewer verifies it, have that reviewer (not the author) run `eccode memory promote <id> --actor <reviewer>`. **Do not skip this step:** shared memory is the only way another project can retrieve the lesson. Promotion runs a privacy scan: the project's own name and non-URL source strings are scrubbed automatically, but secrets, emails, IP addresses, user paths and private URLs block it. If it is blocked, have the author fix the named finding with `eccode memory revise` and review again.
+
+Before you report, run `eccode memory list --layer debugging`: every verified lesson must show `→ shared as ...`. A lesson that stays `(not promoted)` is lost to every other project, so say so in the report. Skip every memory step when `eccode memory status` reports `learning: off`.
 
 Report the lesson's final status, its shared id if promoted, and the evidence ids.
