@@ -208,6 +208,32 @@ test('run end refuses to close a run without usage unless --no-usage is explicit
   assert.strictEqual(ctx.store.audit().ok, true);
 });
 
+test('the orchestrator opens a run on behalf of a role (--agent); the run belongs to that role', () => {
+  const ctx = tmpProject();
+  const id = runs.startRun(ctx.store, ctx.config, 'orchestrator', { agent: 'delivery-lead', gate: 'plan' });
+  assert.strictEqual(ctx.store.state().runs[id].agent, 'delivery-lead');
+  // Without --agent the acting role is the run's agent, as before.
+  const own = runs.startRun(ctx.store, ctx.config, 'backend-engineer', {});
+  assert.strictEqual(ctx.store.state().runs[own].agent, 'backend-engineer');
+  // An unknown role name is refused rather than recorded.
+  expectCode(() => runs.startRun(ctx.store, ctx.config, 'orchestrator', { agent: 'not a role!' }), 'INVALID_INPUT');
+  // Recovery still releases the claim of the role the run was opened for.
+  assert.strictEqual(ctx.store.audit().ok, true);
+});
+
+test('CLI: run start --actor orchestrator --agent <role> prints a run id and the guard allows the command from the main session', () => {
+  const ctx = tmpProject();
+  const { spawnSync } = require('child_process');
+  const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const res = spawnSync(process.execPath, [bin, 'run', 'start', '--actor', 'orchestrator', '--agent', 'technical-reviewer', '--gate', 'plan', '--root', ctx.dir], { encoding: 'utf8' });
+  assert.strictEqual(res.status, 0, res.stderr);
+  const id = res.stdout.trim();
+  assert.strictEqual(ctx.store.state().runs[id].agent, 'technical-reviewer');
+  const guard = path.join(__dirname, '..', 'scripts', 'hooks', 'guard.js');
+  const g = spawnSync(process.execPath, [guard], { input: JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'eccode run start --actor orchestrator --agent technical-reviewer --gate plan' }, cwd: ctx.dir }), encoding: 'utf8', env: { ...process.env, ECCODE_ROOT: ctx.dir } });
+  assert.doesNotMatch(g.stdout, /"deny"/);
+});
+
 test('run end --no-usage is accepted by the CLI and a bare run end is refused with exit 2', () => {
   const ctx = tmpProject();
   const { spawnSync } = require('child_process');

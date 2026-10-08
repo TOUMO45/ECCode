@@ -7,7 +7,7 @@ Use the `debug-investigation` skill. Dispatch the `learning-debugger` agent with
 
 $ARGUMENTS
 
-Open a run (`eccode run start`) for the dispatch and close it afterwards.
+Open a run for the dispatch (`eccode run start --actor orchestrator --agent learning-debugger`) and close it afterwards with the agent's reported usage.
 
 When the agent reports a lesson id, dispatch an independent reviewer (`technical-reviewer` or `security-reviewer`) to run `eccode memory review`.
 

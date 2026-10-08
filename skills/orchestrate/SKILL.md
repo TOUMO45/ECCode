@@ -35,11 +35,13 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
 
 ## 2. Run accounting (every dispatch)
 ```
-RUN=$(eccode run start --actor <role> [--task <id>] [--gate <gate>])
+RUN=$(eccode run start --actor orchestrator --agent <role> [--task <id>] [--gate <gate>])
 # … dispatch the agent …
 eccode run end $RUN --actor orchestrator --status ok|failed --tokens <usage.total_tokens from the Agent result>
 ```
 If the harness reports cost, add `--cost-usd`. Otherwise the engine estimates cost from tokens when `pricing.usdPerMillionTokens` is configured. When a run start is refused with `BUDGET_EXCEEDED`, stop and ask the user.
+
+The main session never acts as a role, so it opens the run **for** the role with `--actor orchestrator --agent <role>`.
 
 Close a run only after the agent's usage figures have arrived. They can arrive after the hand-back message, so read the task notification first. Never estimate, and never batch `run end` with unrelated commands. `run end` refuses a close without `--tokens`/`--cost-usd` (`USAGE_MISSING`). If the agent genuinely reported nothing (crash, timeout), close with `--no-usage`; the run stays marked `usageReported: false` until `eccode run correct` fills it in.
 

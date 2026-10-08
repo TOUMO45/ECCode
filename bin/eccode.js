@@ -43,7 +43,7 @@ Evidence & records
   evidence file <path> --actor <a> [--label l] [--note n]
   evidence list [--json] | evidence show <id>
   handoff record --actor <a> --file <handoff.json>
-  run start --actor <agent> [--task t] [--gate g]       (prints run id)
+  run start --actor <role|orchestrator> [--agent <role>] [--task t] [--gate g]   (prints run id; the orchestrator opens runs for the role it dispatches)
   run end <runId> --actor orchestrator --status ok|failed (--tokens n [--cost-usd x] | --no-usage) [--note n]
   run correct <runId> --actor orchestrator [--tokens n] [--cost-usd x] --reason <text>   (append-only)
   risk add --id R1 --title t --severity low|medium|high|critical [--mitigation m] [--owner o] --actor a
@@ -328,7 +328,7 @@ function main(argv) {
     }
     case 'run': {
       if (sub === 'start') {
-        const id = runs.startRun(store, config, need(actor, '--actor'), { task: flags.task, gate: flags.gate });
+        const id = runs.startRun(store, config, need(actor, '--actor'), { task: flags.task, gate: flags.gate, agent: flags.agent });
         print(flags, id, { id });
       } else if (sub === 'end') {
         const { state } = runs.endRun(store, config, need(arg, '<runId>'), need(actor, '--actor'), {
