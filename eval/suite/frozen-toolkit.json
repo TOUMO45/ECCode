@@ -1,0 +1,14 @@
+{
+  "frozenAt": "2026-10-08T13:31:19Z",
+  "eccodeCommit": "97a3957248a2c308069113558d286deeceb3bacf",
+  "eccCommit": "ef648e01899ba3e8dc6371642deaaf64b4477775",
+  "suiteFrozenFile": "eval/suite/frozen.json",
+  "targetsFile": "eval/suite/targets.json",
+  "targetsDeclaredAt": "2026-10-08T11:20:12Z (git commit 38e2ce8)",
+  "disclosures": [
+    "The targets were committed before any toolkit change that was tuned on evaluation results, and before any holdout trial. Before they were declared I had seen two single-task pilot trials on tune tasks (cost ratio ECCode/ECC about 3.6x on one task); cost target E4 (3x per success) was chosen with that in mind.",
+    "ECCode was changed after the targets were declared, using the tune split and pilots only: lean change mode, rework path, headline-weighted lesson retrieval enforced at task claim, promotion scrubbing, free-text environment entries, Stop hook (completion gate). See git log between 38e2ce8 and the frozen commit.",
+    "The holdout set was written by a separate agent and not read by the toolkit maintainer. Task names and validation summaries (counts of checks, rule and trap tags) were visible to the maintainer; check names, task texts and fixtures were not.",
+    "Both toolkits have their frontmatter model pins rewritten to 'inherit' so every agent runs on the evaluation model (export-toolkits.js)."
+  ]
+}
