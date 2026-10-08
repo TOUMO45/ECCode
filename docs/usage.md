@@ -18,7 +18,7 @@ Or from a shell: `claude plugin marketplace add <repo-or-path>`, then `claude pl
 This installs:
 - 12 agents (`eccode:product-architect`, …);
 - skills and commands (`/eccode:start`, `/eccode:change`, `/eccode:resume`, `/eccode:status`, `/eccode:investigate`, `/eccode:deliver`, `/eccode:improve`);
-- the two hooks.
+- the three hooks (resume brief, guard, completion gate for unattended runs).
 
 Inside agent and skill text, the CLI is `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js`.
 
@@ -33,7 +33,7 @@ This copies the files into the project's `.claude/` directory:
 - `commands/eccode/`
 - runtime → `.claude/eccode/`
 
-It also **merges** two hook entries into `.claude/settings.json`. Existing settings and hooks are kept, and re-running the command is idempotent. The CLI is then `node .claude/eccode/bin/eccode.js`.
+It also **merges** three hook entries into `.claude/settings.json`. Existing settings and hooks are kept, and re-running the command is idempotent. The CLI is then `node .claude/eccode/bin/eccode.js`.
 
 `--scope user` installs into `~/.claude` for every project.
 
