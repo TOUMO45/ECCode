@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseArgs } = require('../lib/cli-args');
-const { EccodeError, readJson } = require('../lib/util');
+const { EccodeError, readJson, own } = require('../lib/util');
 
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
@@ -17,9 +17,10 @@ Project
   resume                                 Resume brief for a new session, with read-only reconciliation
   reconcile --actor <a> [--verify] [--max-checks n]
                                          Check the record against files (and re-run recorded checks); exit 3 on blocking issues
-  recover [--all]                        Close interrupted runs, release their claims
+  recover [--all] --actor orchestrator|user   Close interrupted runs, release their claims
   audit                                  Verify the hash chain, snapshot==replay, and approved artifacts
-  rebuild                                Rewrite state.json by replaying events.jsonl
+  rebuild [--force --actor user]         Rewrite state.json by replaying events.jsonl
+                                         (--force: the user accepts a rolled-back log, LOG_ROLLBACK)
   deliver --actor delivery-lead          Produce the verified final handoff
 
 Gates (architecture, design, plan, phase:<id>, verification)
@@ -70,7 +71,7 @@ Self-improvement
   improve evaluate <id> --actor <a> --variant baseline|candidate -- <command...>
   improve review <id> --actor <reviewer> --decision approve|reject --notes <text>
   improve adopt <id> --actor user|orchestrator
-  improve rollback <id> --actor <a> --reason <text>
+  improve rollback <id> --actor user|orchestrator --reason <text> [--regression]
   improve list
 
 Other
@@ -102,6 +103,36 @@ function need(value, name) {
   return value;
 }
 
+/** A numeric flag (undefined when absent); malformed values are a usage error, not a crash or a silent NaN. */
+function numberFlag(flags, name, { min = 0, integer = false } = {}) {
+  const v = flags[name];
+  if (v === undefined) return undefined;
+  const n = typeof v === 'string' && v.trim() !== '' ? Number(v) : NaN;
+  if (!Number.isFinite(n) || n < min || (integer && !Number.isInteger(n))) {
+    throw new EccodeError('USAGE', `--${name} expects ${integer ? 'a whole number' : 'a number'} >= ${min} (got ${JSON.stringify(v)})`);
+  }
+  return n;
+}
+
+// Positional arguments (group, subcommand, argument) each command takes.
+// Extra ones are refused rather than dropped: `--artifact a.md b/*.md` must
+// not silently submit only a.md.
+const POSITIONALS = {
+  init: 1, install: 1, status: 1, resume: 1, reconcile: 1, recover: 1, rebuild: 1, audit: 1, deliver: 1, metrics: 1,
+  export: 2, handoff: 2, risk: 2, decision: 2,
+  gate: 3, plan: 3, task: 3, evidence: 3, run: 3, memory: 3, improve: 3,
+  'task list': 2, 'task next': 2, 'evidence run': 2, 'evidence list': 2, 'run start': 2,
+  'memory status': 2, 'memory add': 2, 'memory list': 2, 'memory duplicates': 2, 'memory env': 2, 'improve propose': 2, 'improve list': 2,
+};
+
+function checkPositionals(positionals) {
+  const [group, sub] = positionals;
+  const max = POSITIONALS[`${group} ${sub}`] || POSITIONALS[group];
+  if (max && positionals.length > max) {
+    throw new EccodeError('USAGE', `Unexpected argument(s): ${positionals.slice(max).join(' ')} (repeat a flag for each value, e.g. --artifact a.md --artifact b.md; quote multi-word values)`);
+  }
+}
+
 function print(flags, human, json) {
   if (flags.json) process.stdout.write(JSON.stringify(json === undefined ? human : json, null, 2) + '\n');
   else process.stdout.write((typeof human === 'string' ? human : JSON.stringify(human, null, 2)) + '\n');
@@ -119,6 +150,7 @@ function main(argv) {
     process.stdout.write(HELP);
     return 0;
   }
+  checkPositionals(args._);
   const root = findRoot(flags);
   const actor = flags.actor || process.env.ECCODE_ACTOR;
   const { openProject, init } = require('../lib/project');
@@ -133,7 +165,7 @@ function main(argv) {
 
   const { store, config } = openProject(root);
   const memoryGroups = { memory: '../lib/memory/cli', improve: '../lib/memory/improve-cli' };
-  if (memoryGroups[group]) return require(memoryGroups[group]).run({ store, config, sub, arg, flags, rest: args.rest, actor, print, need, loadJsonFile, root });
+  if (memoryGroups[group]) return require(memoryGroups[group]).run({ store, config, sub, arg, flags, rest: args.rest, actor, print, need, numberFlag, loadJsonFile, root });
   store.assertInitialized();
   const gates = require('../lib/gates');
   const tasks = require('../lib/tasks');
@@ -160,24 +192,25 @@ function main(argv) {
     }
     case 'reconcile': {
       const { reconcile, formatIssues } = require('../lib/reconcile');
-      const rep = reconcile(store, config, need(actor, '--actor'), { verify: Boolean(flags.verify), maxChecks: flags['max-checks'] ? Number(flags['max-checks']) : undefined });
+      const rep = reconcile(store, config, need(actor, '--actor'), { verify: Boolean(flags.verify), maxChecks: numberFlag(flags, 'max-checks', { min: 1, integer: true }) });
       const checks = rep.checks.map((c) => `- re-ran ev:${c.previous} → ev:${c.rerun} ${c.status.toUpperCase()}: ${c.command}`);
       print(flags, [formatIssues(rep.issues), checks.length ? `Checks re-run:\n${checks.join('\n')}` : rep.verified ? 'Checks re-run: none recorded' : 'Checks not re-run (add --verify).'].join('\n'), rep);
       return rep.ok ? 0 : 3;
     }
     case 'recover': {
-      const rec = runs.recover(store, config, { all: Boolean(flags.all) });
+      const rec = runs.recover(store, config, { all: Boolean(flags.all), actor: need(actor, '--actor') });
       print(flags, rec.length ? rec.map((r) => `recovered run ${r.run || '-'} (${r.agent}) task=${r.task || '-'} released=${r.released}${r.escalated ? ' ESCALATED' : ''}`).join('\n') : 'Nothing to recover.', rec);
       return 0;
     }
     case 'rebuild': {
-      const st = store.rebuildSnapshot();
+      const st = store.rebuildSnapshot({ force: Boolean(flags.force), actor });
       print(flags, `Snapshot rebuilt from ${st.seq} events.`, { seq: st.seq });
       return 0;
     }
     case 'audit': {
       const res = store.audit();
-      const changes = require('../lib/delivery').unreviewedChanges(store.state(), store.root);
+      // Replay, not the snapshot: audit must work (and report) on a rolled-back log.
+      const changes = require('../lib/delivery').unreviewedChanges(store.rebuild(), store.root);
       const ok = res.ok && !changes.length;
       print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}`, { ...res, unreviewedChanges: changes, ok });
       return ok ? 0 : 2;
@@ -215,7 +248,7 @@ function main(argv) {
         gates.reopenGate(store, gateId, need(actor, '--actor'), need(flags.resolution, '--resolution'));
         print(flags, `Gate ${gateId} reopened by user decision.`);
       } else if (sub === 'show') {
-        const g = store.state().gates[gateId];
+        const g = own(store.state().gates, gateId);
         if (!g) throw new EccodeError('UNKNOWN_GATE', `Unknown gate ${gateId}`);
         print(flags, g);
       } else throw new EccodeError('USAGE', `Unknown gate subcommand ${sub}`);
@@ -263,7 +296,7 @@ function main(argv) {
           gate: flags.gate,
           task: flags.task,
           purpose: flags.purpose || 'check',
-          timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
+          timeoutMs: flags.timeout === undefined ? undefined : Math.round(numberFlag(flags, 'timeout', { min: 1 }) * 1000),
         });
         print(flags, `Evidence ev:${ev.id} — ${ev.status.toUpperCase()} (exit ${ev.exitCode}, ${ev.durationMs}ms)\n${ev.outputTail}`, ev);
         return 0;
@@ -275,7 +308,7 @@ function main(argv) {
       }
       const state = store.state();
       if (sub === 'show') {
-        const ev = state.evidence[need(arg, '<id>').replace(/^ev:/, '')];
+        const ev = own(state.evidence, need(arg, '<id>').replace(/^ev:/, ''));
         if (!ev) throw new EccodeError('NOT_FOUND', `No evidence ${arg}`);
         print(flags, ev);
         return 0;
@@ -314,7 +347,7 @@ function main(argv) {
     }
     case 'risk': {
       const fields = { id: need(flags.id, '--id'), title: flags.title, severity: flags.severity, mitigation: flags.mitigation, owner: flags.owner, status: flags.status || (sub === 'add' ? 'open' : undefined) };
-      if (sub === 'update' && !fields.status) fields.status = store.state().risks[fields.id] ? store.state().risks[fields.id].status : 'open';
+      if (sub === 'update' && !fields.status) fields.status = own(store.state().risks, fields.id) ? own(store.state().risks, fields.id).status : 'open';
       runs.recordRisk(store, need(actor, '--actor'), fields);
       print(flags, `Risk ${fields.id} recorded (${fields.status}).`);
       return 0;

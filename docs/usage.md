@@ -67,16 +67,16 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 | `memory.embedCommand` | null | Optional external embedder for semantic retrieval |
 | `memory.sharedDir` | `~/.eccode/memory` | Shared lesson store. `ECCODE_SHARED_MEMORY` overrides it |
 | `improvement.requireUserForAdoption` | true | Workflow changes need `--actor user` |
-| `improvement.protectedPaths` | config, settings, hooks, engine | Paths self-improvement can never change |
+| `improvement.protectedPaths` | config, settings, record, hooks, engine | Paths self-improvement can never change. The built-in list is always applied; this key can only add to it |
 
 Environment variables:
 - `ECCODE_ROOT`: project root.
-- `ECCODE_ACTOR`: default actor.
+- `ECCODE_ACTOR`: default actor. The guard denies setting it inline in a command (`ECCODE_ACTOR=x eccode …`); pass `--actor`.
 - `ECCODE_HOOKS=off`: disable the hooks.
 - `ECCODE_SEQUENTIAL_ROLES=1`: allow the main session to act as roles. Use it only in disclosed sequential mode.
 - `ECCODE_SHARED_MEMORY`: shared memory location.
 - `ECCODE_LEARNING=on|off`: override `memory.learning`. Any other value is refused.
-- `ECCODE_NOW`: pin the clock (for tests).
+- `ECCODE_NOW`: pin the clock. Honoured only with `ECCODE_TEST=1` (test suites); otherwise ignored, because gate order rules compare timestamps.
 
 ## Use
 
@@ -106,7 +106,9 @@ eccode evidence run --actor technical-reviewer --label "tests" -- npm test
 eccode gate review architecture --actor architecture-reviewer --file review.json
 eccode status --brief          # always shows the NEXT action
 ```
-`eccode help` lists every command. Exit codes: `0` ok, `1` usage error, `2` refused by a workflow rule. `memory check` returns `3` when a lesson doesn't apply.
+`eccode help` lists every command. Exit codes: `0` ok, `1` usage error (including a flag given twice, e.g. two `--actor`, and unexpected extra arguments: repeat `--artifact` for each file), `2` refused by a workflow rule. `memory check` returns `3` when a lesson doesn't apply.
+
+Actor restrictions: `run correct`, `recover` and `improve rollback` need `--actor orchestrator` or `--actor user`; `rebuild --force` (accepting a rolled-back log) needs `--actor user`.
 
 ## Troubleshooting
 
@@ -121,10 +123,14 @@ eccode status --brief          # always shows the NEXT action
 | `[OWNERSHIP_CONFLICT]` / `[CONCURRENCY_LIMIT]` | Another active task overlaps, or the cap is reached | Wait, or re-plan the ownership globs |
 | `[INVALID_HANDOFF] … outside task ownership` | Files were changed outside the task's globs | Revert them, or ask the orchestrator to re-plan |
 | `[INVALID_HANDOFF] … unchanged since claim` | The listed files don't differ in git | List only the files that actually changed |
+| `[INVALID_HANDOFF] … no task declares` | git shows files changed during the claim outside the task's ownership that no task accounts for | Revert them, or have the task that owns them declare them |
+| `[LOG_ROLLBACK]` | `events.jsonl` is behind or different from `state.json` (e.g. restored from git) | Restore the newer log. If the user decides the shorter log is the truth: `eccode rebuild --force --actor user` |
+| `[UNVERIFIED]` / `[UNGROUNDED]` | A lesson marked verified has no verifying review of its current revision in the event log | Review it again: `eccode memory review <id> --decision verify` |
 | `[BUDGET_EXCEEDED]` | Recorded spend or runtime has reached the limit | Stop and ask the user. Raising limits needs their authorization |
 | Gate shows `escalated` | Too many rejections | The user decides: `eccode gate reopen <gate> --actor user --resolution "…"` |
-| Open runs after a crash | The previous session died | `eccode recover --all` |
-| `Audit FAILED` | The event log was edited or an approved file changed | Restore from git. Changes to approved files need a new review |
-| Guard denies an edit | Wrong role or file, or no claim | Follow the reason text. `ECCODE_HOOKS=off` disables hooks for debugging only |
+| Open runs after a crash | The previous session died | `eccode recover --all --actor orchestrator` |
+| `Audit FAILED` | The event log was edited or rolled back, timestamps go backwards, or an approved file changed | Restore from git. Changes to approved files need a new review |
+| Guard denies an edit | Wrong role or file, no claim, or an unreadable record | Follow the reason text. `ECCODE_HOOKS=off` disables hooks for debugging only |
+| Guard denies a `git` command | `checkout`/`restore`/`reset`/`stash`/`clean` on `.eccode/` or the whole tree would roll back the record | Restore project files by path (`git checkout -- src/x.js`) |
 | `eccode` not found | Plugin bin directory isn't on PATH | Use `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` or `node .claude/eccode/bin/eccode.js` |
 | `[LESSON_NOT_VERIFIABLE]` | The lesson lacks a check that fails before the fix and passes after, or similar evidence | Record the reproduction and verification with the **same** command |

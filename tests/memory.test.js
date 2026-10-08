@@ -221,11 +221,13 @@ test('stale and superseded lessons are flagged rather than trusted', () => {
   const ev = reproAndFix(ctx);
   const a = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev) });
   mem.review(a.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran the failing check after the fix: passes.' });
+  process.env.ECCODE_TEST = '1'; // ECCODE_NOW is honoured only in test mode
   process.env.ECCODE_NOW = new Date(Date.now() + 400 * 86400000).toISOString();
   try {
     assert.strictEqual(mem.check(a.id).verdict, 'stale');
   } finally {
     delete process.env.ECCODE_NOW;
+    delete process.env.ECCODE_TEST;
   }
   const b = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev, { title: 'JSON body parse fails: refined lesson v2' }) });
   const dup = mem.duplicates(0.8).find((p) => [p.a, p.b].includes(a.id) && [p.a, p.b].includes(b.id));

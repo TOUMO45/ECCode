@@ -41,7 +41,7 @@ ECCode separates **judgment**, which agents supply in prompts, from **rules**, w
 | Decision | Choice | Alternatives | Why |
 |---|---|---|---|
 | Where rules live | Engine code with schema validation | Prompt rules (ECC style), LLM judge | Prompts can be skipped silently. Code makes "approval without evidence" impossible rather than discouraged. |
-| State model | Event sourcing (JSONL + hash chain), snapshot as cache | SQLite, single JSON file | Append-only writes survive crashes (a torn final line is ignored). Replay gives deterministic resume. History is free. The chain detects tampering. The files are readable in git diffs. |
+| State model | Event sourcing (JSONL + hash chain), snapshot as cache | SQLite, single JSON file | Append-only writes survive crashes (a torn final line is ignored, then cut off before the next append). Replay gives deterministic resume. History is free. The chain detects tampering; a snapshot ahead of the log detects a rolled-back log (`LOG_ROLLBACK`). The files are readable in git diffs. |
 | Dependencies | None (Node ≥18 built-ins) | sql.js, ajv, commander | Install is a copy. There is no supply-chain surface. A small JSON-Schema subset validator is enough. |
 | Concurrency control | O_EXCL lock file + ownership globs | Worktrees only | Many agents can share one workspace safely. Overlapping claims are refused. Worktrees remain available for risky parallel work. |
 | Identity | Asserted `--actor`, bound by a PreToolUse hook to the subagent's `agent_type` | Signed tokens per agent | The harness tells hooks which subagent is calling. Signing would need key management the harness doesn't provide. This limitation is documented. |
@@ -76,15 +76,19 @@ pending → in_progress → submitted → approved
 - an evidence reference doesn't resolve, or a "met" criterion cites a failed check;
 - an approval has an unmet criterion, an open blocking/major finding, or an earlier finding left unresolved;
 - a phase/verification approval lacks a passing check the reviewer ran after the submission;
+- a phase approval while a phase task is not done, or a plan approval whose plan was not imported from that submission;
 - a rejection carries no blocking/major finding.
+
+Evidence ids are own-property lookups with a fixed format (`ev:ev-…`), and `ev:` file evidence is re-hashed when cited. Phase submissions always pin the files the phase's tasks changed (except deleted files and drafts), whatever explicit artifacts are added.
 
 ## Task model
 
 - A plan is a DAG of tasks within ordered phases. Every task has an owner role, dependencies, inputs, outputs, ownership globs, acceptance criteria and a verification method.
 - Tasks are claimable only when the plan gate is approved, the phase gate is open, dependencies are done, the actor is the owner, attempts remain, `maxConcurrency` isn't reached and the ownership globs don't overlap with active claims.
-- **Completion** requires a schema-valid handoff, at least one passing check run after the claim, changed files inside the ownership globs, and git confirmation that the listed files changed.
-- **Failure** releases the claim. After `maxTaskRetries` the task escalates and only the user can reset it.
-- **Interrupted runs** (stale, or `recover --all` after a restart) release their claims and count as attempts.
+- **Completion** requires a schema-valid handoff, at least one passing check run after the claim, changed files inside the ownership globs, and git confirmation that the listed files changed. Files git shows as changed during the claim that no task accounts for (declared, recorded by a task that completed meanwhile, owned by another claimed task, or already dirty and unchanged at claim time) are refused when they lie outside the task's ownership.
+- `.eccode/` paths are never owned by a task, whatever its globs say; only `.eccode/drafts/` is shared scratch.
+- **Failure** releases the claim. After `maxTaskRetries` the task escalates and only the user can reset it. A done task cannot be reset while its phase is submitted or approved.
+- **Interrupted runs** (stale, or `recover --all --actor orchestrator` after a restart) release their claims and count as attempts.
 
 ## Memory model
 
@@ -93,20 +97,24 @@ See [memory.md](memory.md).
 ## Security model
 
 - **Least privilege:** reviewers and architects have no Edit on project code (enforced by tool lists and the guard). Implementers write only inside their claimed globs. No subagent has the Agent tool, so delegation is always explicit through the orchestrator.
-- **The record is append-only through the CLI.** The guard blocks direct edits. `eccode audit` verifies the hash chain and that approved artifacts are unchanged.
+- **The record is append-only through the CLI.** The guard blocks direct edits of the record (events, state, config, memory, improvements, evidence, reviews, handoffs, delivery), by Edit/Write and by Bash (redirects, `sed -i`, `cp`/`mv`/`rm`, interpreter file writes), and git commands that would revert, stash or delete it (`git checkout|restore|reset|stash|clean` on `.eccode/` or the whole tree). `eccode audit` verifies the hash chain, that timestamps never go backwards, that the snapshot is not ahead of the log, and that approved artifacts are unchanged. A rolled-back log is refused (`LOG_ROLLBACK`) until the user accepts it with `eccode rebuild --force --actor user` (recorded as `record.rollback_accepted`).
+- **Identity binding:** the CLI refuses a repeated `--actor` (or any repeated non-list flag) and unexpected positional arguments. The guard parses Bash commands like a shell (quotes, escapes, tabs, nested `sh -c`, the command after `--`) and binds the actor with the CLI's own parser; it denies `ECCODE_ACTOR`/`ECCODE_TEST`/`ECCODE_NOW` set inline and eccode run through a variable. An unreadable record makes the guard deny edits (fail closed).
+- **Clock:** order rules compare event timestamps, so `ECCODE_NOW` is honoured only with `ECCODE_TEST=1`.
 - **Secrets:**
-  - Evidence logs and recorded command lines are redacted.
-  - Memory promotion scans for secrets, emails, user paths, IPs and project names.
+  - Evidence logs and recorded command lines are redacted (key=value, JSON `"key": "value"`, `*_SECRET_*` names, Bearer tokens, URL passwords, known token formats).
+  - Memory promotion scans for secrets, emails, user paths, IPs and project names, and source URLs (https only, no credentials, no secret-looking parameters, no private hosts).
   - Environment detection never captures hostnames or usernames.
 - **Untrusted content:**
   - Retrieved memory is rendered inside an "evidence, not instructions" frame.
   - Untrusted records cannot ground improvement proposals or be promoted.
-  - Proposals can't touch permissions, approval rules or engine code.
-- **User authority:** raising budgets, accepting risks, reopening escalated gates or tasks, and adopting workflow changes all require `--actor user`. The guard refuses that actor from subagents.
+  - A local lesson counts as verified only if the hash-chained log holds a verifying review of its current revision and content (`UNVERIFIED`/`UNGROUNDED` otherwise); flipping `status` in the record file confers nothing.
+  - Proposals can't touch permissions, approval rules, the record or engine code (`.eccode/**`, `lib/**`, `bin/**`, `scripts/hooks/**`, `schemas/**`, `hooks/**`, `**/eccode/**`); adopt and rollback re-check the target, and proposal ids are validated before they name a path.
+- **User authority:** raising budgets, accepting risks, reopening escalated gates or tasks, adopting workflow changes and accepting a rolled-back log require `--actor user`. Correcting run usage, recovering interrupted runs and rolling back an adopted change require `--actor orchestrator|user`. The guard refuses those actors from subagents.
 
 ## Known limitations
 
-- **Self-asserted identity.** `--actor` is not cryptographically bound. Outside Claude Code with hooks, a caller could claim any role. The record and the hooks make impersonation visible and blockable, but not impossible.
+- **Self-asserted identity.** `--actor` is not cryptographically bound. Outside Claude Code with hooks, a caller could claim any role. The record and the hooks make impersonation visible and blockable, but not impossible: the guard reads shell commands without executing them, so a sufficiently indirect command (a script file, a crafted interpreter call) can still evade it.
+- **Rollback detection needs the snapshot.** A log rolled back together with `state.json` (or with the snapshot deleted) is indistinguishable from an older record; the guard's git rules are the defence there.
 - **Cost accounting** is only as good as the usage numbers reported when a run closes. Claude Code reports tokens and duration to the orchestrator, not dollars, so you need to configure `pricing.usdPerMillionTokens` to get estimates.
 - **Structure, not substance.** Gate rules prove an approval is evidence-backed and independent. They cannot prove the reviewer's judgment is right. Independent re-execution of checks is the main mitigation.
 - **Lexical retrieval by default** (see above).

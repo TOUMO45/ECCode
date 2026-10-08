@@ -33,14 +33,22 @@ process.stdin.on('end', () => {
     const { inspect, formatIssues } = require(path.join(lib, 'reconcile'));
     const store = new Store(root);
     const audit = store.audit();
-    const state = store.state();
+    let state;
+    try {
+      state = store.state();
+    } catch (err) {
+      // e.g. LOG_ROLLBACK: say so instead of resuming from a record that is not trustworthy.
+      const text = `## ECCode record cannot be used\n[${err.code || 'ERROR'}] ${err.message}${err.details && err.details.recovery ? `\nrecovery: ${err.details.recovery}` : ''}\nStop and report this to the user before any other ECCode command.`;
+      process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: text } }));
+      return;
+    }
     const brief = formatBrief(summary(state, loadConfig(root)));
     const text = [
       '## ECCode delivery in progress (from the persistent project record)',
       brief,
       formatIssues(inspect(store, state)),
       audit.ok ? '' : `WARNING: event log integrity check failed: ${audit.errors.slice(0, 3).join('; ')}`,
-      'Use the `orchestrate` skill to continue. First run `eccode reconcile --verify --actor orchestrator` and resolve BLOCKING items. Open runs from a previous session are interrupted: recover them with `eccode recover --all` before dispatching.',
+      'Use the `orchestrate` skill to continue. First run `eccode reconcile --verify --actor orchestrator` and resolve BLOCKING items. Open runs from a previous session are interrupted: recover them with `eccode recover --all --actor orchestrator` before dispatching.',
     ]
       .filter(Boolean)
       .join('\n');

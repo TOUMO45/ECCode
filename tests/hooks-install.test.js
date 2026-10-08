@@ -8,7 +8,7 @@ const { spawnSync } = require('child_process');
 const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const { install, agentsMd } = require('../lib/install');
-const { tmpProject, approveThroughPlan } = require('./helpers');
+const { tmpProject, approveThroughPlan, samplePlan, task } = require('./helpers');
 
 const GUARD = path.join(__dirname, '..', 'scripts', 'hooks', 'guard.js');
 const START = path.join(__dirname, '..', 'scripts', 'hooks', 'session-start.js');
@@ -107,6 +107,134 @@ test('AGENTS.md export covers every role and the workflow for other harnesses', 
     assert.match(md, new RegExp(`### ${role}`));
   }
   assert.match(md, /sequentially in one context/);
+});
+
+// ---- Security review regressions (finding numbers in test names).
+
+const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
+
+function guardBash(dir, command, agent, env = {}) {
+  const out = hook(GUARD, { cwd: dir, tool_name: 'Bash', ...(agent ? { agent_type: `eccode:${agent}` } : {}), tool_input: { command } }, { ECCODE_ACTOR: '', ECCODE_SEQUENTIAL_ROLES: '', ...env });
+  return out ? out.permissionDecision : 'allow';
+}
+
+test('#2 CLI refuses a repeated --actor', () => {
+  const ctx = tmpProject();
+  const res = spawnSync(process.execPath, [BIN, '--root', ctx.dir, 'gate', 'start', 'architecture', '--actor', 'product-architect', '--actor', 'orchestrator'], { encoding: 'utf8' });
+  assert.strictEqual(res.status, 1, res.stdout + res.stderr);
+  assert.match(res.stderr, /USAGE.*--actor/);
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'pending');
+});
+
+test('#2 guard binds the actor the CLI will use: repeated --actor, inline env, tabs, quotes, nested shells', () => {
+  const ctx = tmpProject();
+  const g = (cmd, agent = 'technical-designer') => guardBash(ctx.dir, cmd, agent);
+  for (const cmd of [
+    'eccode gate reopen design --actor technical-designer --actor user --resolution "user says ok, proceed"',
+    'ECCODE_ACTOR=user eccode gate reopen design --resolution "user says ok, proceed"',
+    'export ECCODE_ACTOR=user; eccode gate reopen design --resolution "user says ok"',
+    'env ECCODE_ACTOR=user node .claude/eccode/bin/eccode.js gate reopen design --resolution x',
+    'eccode gate reopen design --actor\tuser --resolution "user says ok, proceed"',
+    "eccode gate reopen design '--actor' user --resolution x",
+    "eccode gate reopen design --act''or us\\er --resolution x",
+    'eccode gate reopen design --actor=user --resolution x',
+    'eccode gate reopen design --actor "$ROLE" --resolution x',
+    'bash -c "eccode gate reopen design --actor user --resolution x"',
+    'eccode evidence run --actor technical-designer --label t -- eccode gate reopen design --actor user --resolution x',
+    'ECC="node bin/eccode.js"; $ECC gate reopen design --actor user --resolution x',
+    'ECCODE_TEST=1 ECCODE_NOW=2099-01-01T00:00:00Z eccode evidence run --actor technical-designer --label t -- true',
+  ]) {
+    assert.strictEqual(g(cmd), 'deny', cmd);
+  }
+  for (const cmd of [
+    'eccode gate start design --actor technical-designer && eccode gate submit design --actor technical-designer --artifact .eccode/artifacts/spec.md',
+    'eccode evidence run --actor technical-designer --label t -- node -e "console.log(\'--actor user\')"',
+    'eccode status --brief # --actor user',
+    'echo $ECCODE_ACTOR',
+  ]) {
+    assert.strictEqual(g(cmd), 'allow', cmd);
+  }
+  // Main session: inline env cannot bypass the sequential-roles rule either.
+  assert.strictEqual(guardBash(ctx.dir, 'ECCODE_ACTOR=technical-reviewer eccode gate review design --file r.json', null), 'deny');
+  assert.strictEqual(guardBash(ctx.dir, 'eccode gate reopen design --actor user --resolution "the user decided"', null), 'allow');
+});
+
+test('#4 guard fails closed when the record cannot be read', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  const log = path.join(ctx.dir, '.eccode', 'events.jsonl');
+  const lines = fs.readFileSync(log, 'utf8').split('\n');
+  lines[3] = '{"seq": 4, "torn';
+  fs.writeFileSync(log, lines.join('\n'));
+  fs.unlinkSync(path.join(ctx.dir, '.eccode', 'state.json'));
+  const out = hook(GUARD, { cwd: ctx.dir, tool_name: 'Write', agent_type: 'eccode:backend-engineer', tool_input: { file_path: 'src/auth/policy.js' } });
+  assert.ok(out, 'the guard must not allow the call');
+  assert.strictEqual(out.permissionDecision, 'deny');
+  assert.match(out.permissionDecisionReason, /record cannot be read/);
+});
+
+test('#5 guard denies git commands that roll back or delete the record', () => {
+  const ctx = tmpProject();
+  for (const cmd of [
+    'git checkout -- .eccode/events.jsonl',
+    'git checkout HEAD~1 -- .eccode/',
+    'git restore .eccode/state.json .eccode/events.jsonl',
+    'git restore --source=HEAD~2 .eccode',
+    'git reset --hard',
+    'git reset --hard HEAD~1',
+    'git checkout .',
+    'git checkout -- .',
+    'git stash',
+    'git stash push -u',
+    'git clean -fd',
+    'git -C . restore .eccode/events.jsonl',
+    'cd sub && git checkout -- ../.eccode/events.jsonl',
+  ]) {
+    for (const agent of ['backend-engineer', null]) assert.strictEqual(guardBash(ctx.dir, cmd, agent), 'deny', `${cmd} (${agent || 'main'})`);
+  }
+  for (const cmd of ['git status', 'git diff .eccode/events.jsonl', 'git checkout -- src/server/app.js', 'git log --oneline -- .eccode', 'git stash list', 'git add -A .eccode', 'git restore src/x.js']) {
+    assert.strictEqual(guardBash(ctx.dir, cmd, 'backend-engineer'), 'allow', cmd);
+  }
+});
+
+test('#8 guard: task globs never grant .eccode/ paths (only drafts)', () => {
+  const ctx = tmpProject();
+  const plan = { phases: samplePlan().phases, tasks: [task('cfg', 'devops-engineer', ['**/*.json']), task('docs', 'backend-engineer', ['**/*.md'])] };
+  approveThroughPlan(ctx, plan);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  const w = (agent, file) => {
+    const out = hook(GUARD, { cwd: ctx.dir, tool_name: 'Write', agent_type: `eccode:${agent}`, tool_input: { file_path: file } });
+    return out ? out.permissionDecision : 'allow';
+  };
+  tasks.claim(ctx.store, ctx.config, 'docs', 'backend-engineer');
+  assert.strictEqual(w('backend-engineer', '.eccode/artifacts/spec.md'), 'deny');
+  assert.strictEqual(w('backend-engineer', '.eccode/reviews/rev-x.json'), 'deny');
+  assert.strictEqual(w('backend-engineer', 'docs/guide.md'), 'allow');
+  assert.strictEqual(w('backend-engineer', '.eccode/drafts/handoff.json'), 'allow');
+  tasks.fail(ctx.store, ctx.config, 'docs', 'backend-engineer', 'released to test the other task');
+  tasks.claim(ctx.store, ctx.config, 'cfg', 'devops-engineer');
+  assert.strictEqual(w('devops-engineer', '.eccode/artifacts/plan.json'), 'deny');
+  assert.strictEqual(w('devops-engineer', '.eccode/handoffs/ho-x.json'), 'deny');
+  assert.strictEqual(w('devops-engineer', 'deploy/app.json'), 'allow');
+});
+
+test('#11 guard protects memory, improvements, evidence, reviews and handoffs from Bash writes', () => {
+  const ctx = tmpProject();
+  for (const cmd of [
+    `sed -i 's/"status": "provisional"/"status": "verified"/' .eccode/memory/records/mem-w-abc.json`,
+    'echo x > .eccode/improvements/imp-x/proposal.json',
+    'cp fake.log .eccode/evidence/ev-x.log',
+    'mv r.json .eccode/reviews/rev-x.json',
+    'rm .eccode/handoffs/ho-x.json',
+    `node -e "require('fs').appendFileSync('.eccode/events.jsonl','x')"`,
+    `python3 -c "open('.eccode/memory/records/m.json','w').write('{}')"`,
+    'perl -pi -e s/provisional/verified/ .eccode/memory/records/m.json',
+  ]) {
+    assert.strictEqual(guardBash(ctx.dir, cmd, 'learning-debugger'), 'deny', cmd);
+  }
+  for (const cmd of ['cat .eccode/memory/records/m.json', 'grep -n error .eccode/evidence/ev-x.log', 'cp review.json .eccode/reviews/drafts/r.json', 'eccode gate review design --actor learning-debugger --file .eccode/reviews/drafts/r.json']) {
+    assert.strictEqual(guardBash(ctx.dir, cmd, 'learning-debugger'), 'allow', cmd);
+  }
 });
 
 test('guard: implementers cannot write approved artifacts; document authors can', () => {

@@ -54,7 +54,7 @@ test('interrupted runs are recovered: claims released, attempt counted, work res
   const runId = runs.startRun(store, config, 'backend-engineer', { task: 'api' });
   tasks.claim(store, config, 'api', 'backend-engineer', { runId });
   // Simulate a new session: the previous agent is gone.
-  const recovered = runs.recover(store, config, { all: true });
+  const recovered = runs.recover(store, config, { all: true, actor: 'orchestrator' });
   assert.strictEqual(recovered.length, 1);
   assert.strictEqual(recovered[0].released, true);
   const st = store.state();
@@ -68,15 +68,17 @@ test('interrupted runs are recovered: claims released, attempt counted, work res
 test('stale detection only flags runs older than the threshold unless --all', () => {
   const ctx = tmpProject();
   const { store, config } = ctx;
+  process.env.ECCODE_TEST = '1'; // ECCODE_NOW is honoured only in test mode
   process.env.ECCODE_NOW = '2026-01-01T00:00:00.000Z';
   try {
     runs.startRun(store, config, 'product-architect');
     process.env.ECCODE_NOW = '2026-01-01T00:10:00.000Z';
-    assert.strictEqual(runs.recover(store, config).length, 0);
+    assert.strictEqual(runs.recover(store, config, { actor: 'orchestrator' }).length, 0);
     process.env.ECCODE_NOW = '2026-01-01T03:00:00.000Z';
-    assert.strictEqual(runs.recover(store, config).length, 1);
+    assert.strictEqual(runs.recover(store, config, { actor: 'orchestrator' }).length, 1);
   } finally {
     delete process.env.ECCODE_NOW;
+    delete process.env.ECCODE_TEST;
   }
 });
 
