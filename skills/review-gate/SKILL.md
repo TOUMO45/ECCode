@@ -71,7 +71,11 @@ Each refusal is logged (`review.rejected`) and counted in metrics.
 
 6. `eccode gate review <gate> --actor <you> --file <draft>`
 
-## Lessons in the handoffs
+## Lessons in the plan and the handoffs
+When a submission records decisions on verified lessons (plan: `plan.lessonDecisions`; phase: each task's `lessonDecisions`; `eccode gate show <gate>` lists them as `lessonDecisionsToJudge`), the engine will not accept your approval without a criterion with id `lessons` that cites evidence. Read each lesson (`eccode memory show <id>`) and decide:
+- **Plan:** an `incorporated` lesson must be named in the task's `inputs` and appear as an acceptance criterion; a `not-applicable` one must name a condition that really holds. A ticket that is silent about a rule is not such a condition: an organisation's rules exist for what tickets leave unsaid. Request changes if the plan sets aside a rule that applies.
+- **Phase:** see below.
+
 If a task handoff carries `lessonDecisions`, check each against the diff and the tests. An `applied` lesson must be visible in the code **and** covered by a test; re-run that test yourself and cite it. A `not-applicable` decision with only a written reason deserves a look: does the cited condition really hold here? A lesson applied wrongly or dismissed wrongly is a blocking finding. Record the lesson ids you used in `lessonsConsulted`.
 
 ## Severity guide

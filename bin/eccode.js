@@ -259,7 +259,8 @@ function main(argv) {
       } else if (sub === 'show') {
         const g = own(store.state().gates, gateId);
         if (!g) throw new EccodeError('UNKNOWN_GATE', `Unknown gate ${gateId}`);
-        print(flags, g);
+        const toJudge = require('../lib/lessons').decisionsToJudge(store.state(), gateId);
+        print(flags, toJudge.length ? { ...g, lessonDecisionsToJudge: toJudge } : g);
       } else throw new EccodeError('USAGE', `Unknown gate subcommand ${sub}`);
       return 0;
     }

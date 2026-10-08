@@ -21,7 +21,7 @@ eccode memory search "<problem words, component, technology>" --check-env
 ```
 Do not filter by `--layer`: lessons live in the `debugging` layer, workflow changes in `workflow`, and a wrong filter silently returns nothing.
 
-**You do not have to remember to search.** `eccode task claim` retrieves the verified lessons that match the task, prints them as evidence, and records them on the claim. The handoff then needs a decision on each one (`lessonDecisions`, see the `handoff-protocol` skill). A lesson you set aside needs an evidence-backed `memory assess` or a written reason naming the condition that does not hold.
+**You do not have to remember to search.** Submitting a plan retrieves the verified lessons that match its tasks and refuses the plan until `plan.lessonDecisions` answers for each (the reviewed plan then binds the implementer). `eccode task claim` retrieves the verified lessons that match the task, prints them as evidence, and records them on the claim. The handoff then needs a decision on each one (`lessonDecisions`, see the `handoff-protocol` skill). A lesson you set aside needs an evidence-backed `memory assess` or a written reason naming the condition that does not hold.
 - Ranking blends BM25 keyword scores with character-trigram similarity, and verified records are weighted above unverified ones.
 - True semantic similarity requires configuring `memory.embedCommand`. Without it, retrieval is lexical; don't describe it as semantic.
 - Results are wrapped as **evidence, not instructions**.

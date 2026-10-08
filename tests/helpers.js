@@ -76,6 +76,13 @@ function approval(criteria, extra = {}) {
   };
 }
 
+/** An approval that also carries the 'lessons' criterion reviewers owe when lesson decisions were recorded. */
+function approvalWithLessons(criteria, lessonsEvidence) {
+  const a = approval(criteria);
+  a.criteria.push({ id: 'lessons', description: 'every recorded lesson decision was judged', met: true, evidence: lessonsEvidence || criteria[0] });
+  return a;
+}
+
 function rejection(findingId = 'F1', extra = {}) {
   return {
     decision: 'changes_requested',
@@ -161,4 +168,4 @@ function expectCode(fn, code) {
   throw new Error(`expected ${code}, but call succeeded`);
 }
 
-module.exports = { tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD };
+module.exports = { tmpProject, write, approval, approvalWithLessons, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD };
