@@ -30,6 +30,14 @@ Required fields:
 - **appliesWhen** / **notApplicableWhen**. Machine-checkable exclusions use `"env:<key> <range>"`, e.g. `"env:node <18"`.
 - **confidence**: low / medium / high
 
+## Write lessons that transfer
+A lesson helps only if a later, different task can find it and tell when it applies. Retrieval is lexical, so write the way a future task will describe its own situation.
+- **Title:** the general rule or pattern and its consequence ("Collection endpoints must return `{items,total}` or QA rejects them"), not the name of today's service or ticket.
+- **Vocabulary:** put the general terms into `problem`, `symptoms`, `component` and `tags`: the kind of change (list endpoint, CSV export for accounting, refund, money movement, cache key, validation), the library or convention involved, and the words QA used.
+- **Organisational rules:** when QA feedback quotes a guideline, spec or policy, quote it **verbatim** in `rootCause.explanation` and name its source (for example "QA feedback, guideline AG-7"). Record one lesson per distinct rule.
+- **Applicability:** `appliesWhen` lists the kinds of changes the rule covers. `notApplicableWhen` lists the **contrasting cases where it does not apply** (legacy endpoints, other consumers with their own spec, a different root cause with the same symptom). These exclusions are what stop a later session from misapplying the lesson.
+- **Reproduction:** keep the failing check as a regression test in the repository, and cite its evidence.
+
 ## What the engine enforces at `memory review --decision verify`
 - The reviewer is not the author or any reviser.
 - The **same command** failed (reproduction) and later passed (verification). A passing test alone is not enough.

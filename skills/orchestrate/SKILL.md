@@ -90,7 +90,7 @@ Use this for a bug fix or a bounded change in code that already exists. A new pr
 1. **Init** (you): `eccode init --name "<short name>" --idea "<the request>" --profile change`. The gates are `plan` → `phase:<id>`…. There are no architecture, design or verification gates.
 2. **Plan** (dispatch 1, `delivery-lead`). It starts the gate itself, reads the request and the code it touches, writes `.eccode/artifacts/plan/plan.json` (start from `eccode plan example`) and submits it. For a small change, use one phase and one task owned by the implementer who will do the work.
    - Acceptance criteria come **from the request**: every stated requirement, error case and constraint, plus "existing tests still pass".
-   - Search memory first (§6). If a lesson `applies`, the plan cites it.
+   - Search memory first (§6) with words from the request: the kind of change, the component, the domain. For every lesson that `applies` here, name its id in the task `inputs` and turn it into an **acceptance criterion** of the task. A lesson you set aside (`does-not-apply`) is recorded with `eccode memory assess`, with the experiment or reading that showed it does not fit.
    - **For a defect,** the task's first step is a failing reproduction (`--purpose reproduction`), and the plan says so.
    - The task's `files` cover the code to change **and** the tests to add.
 3. **Plan review** (dispatch 2, `technical-reviewer`, independent). It checks that the criteria cover the request, the ownership is right, and a defect has a reproduction.

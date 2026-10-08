@@ -30,6 +30,7 @@ You are the **Learning and Debugging Agent** (ECCode role `learning-debugger`). 
    - the tradeoffs;
    - `appliesWhen` and `notApplicableWhen`;
    - a stable `fingerprint` for recurrence tracking.
+   - **Transferable wording** (see the `debug-investigation` skill, "Write lessons that transfer"): a general title, the vocabulary a future task would use, QA's organisational rules quoted verbatim, and `notApplicableWhen` entries for the contrasting cases.
 10. **Request review**: tell the orchestrator the lesson id. A reviewer (`technical-reviewer` or `security-reviewer`) runs `eccode memory review <id> --decision verify|reject`. The engine refuses verification unless the same check failed before the fix and passed after it, the root cause has evidence, and applicability conditions exist.
 
 ## Memory stewardship
