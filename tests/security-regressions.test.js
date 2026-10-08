@@ -469,16 +469,23 @@ test('#7 legitimate parallel and sequential work is attributable (claimed, compl
   tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
   tasks.claim(ctx.store, ctx.config, 'ui', 'frontend-engineer');
   write(ctx.dir, 'src/server/a.js', '// api\n');
+  write(ctx.dir, 'src/web/partial.js', '// ui, half done\n');
+  // ui's agent crashes mid-work: its partial file stays attributable to ui (claimed in api's window).
+  tasks.fail(ctx.store, ctx.config, 'ui', 'frontend-engineer', 'agent crashed');
+  tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [passCheck(ctx.store, 'backend-engineer').id], ['src/server/a.js']));
+  tasks.reset(ctx.store, 'api', 'orchestrator', 'rework after an internal finding');
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  tasks.claim(ctx.store, ctx.config, 'ui', 'frontend-engineer');
   write(ctx.dir, 'src/web/b.js', '// ui in progress\n');
-  // api completes while ui is still working: ui's file is attributable to ui's claim.
+  // api completes while ui is still working: ui's files are attributable to ui's claim.
+  write(ctx.dir, 'src/server/a.js', '// api v2\n');
   tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [passCheck(ctx.store, 'backend-engineer').id], ['src/server/a.js']));
   // ui completes after api: api's file is attributable to api's completion.
   write(ctx.dir, 'src/web/b.js', '// ui\n');
+  fs.rmSync(path.join(ctx.dir, 'src/web/partial.js'));
   tasks.complete(ctx.store, ctx.config, 'ui', 'frontend-engineer', handoffFor('ui', 'frontend-engineer', [passCheck(ctx.store, 'frontend-engineer').id], ['src/web/b.js']));
-  // Sequential work, then rework: files of earlier tasks are already on disk at each claim.
+  // Sequential work: files of earlier tasks are already on disk at the claim.
   doTask(ctx, 'tests', 'test-engineer', ['tests/c.test.js']);
-  tasks.reset(ctx.store, 'api', 'orchestrator', 'rework after an internal finding');
-  doTask(ctx, 'api', 'backend-engineer', ['src/server/a.js']);
   assert.ok(Object.values(ctx.store.state().tasks).every((t) => t.status === 'done'));
 });
 
@@ -652,6 +659,12 @@ test('#11 a local lesson flipped to verified in its JSON file is not trusted (pr
   const proposal = { title: 't', observation: 'o', lessons: [rec.id], target: 'notes.md', change: { type: 'append', content: 'x' }, rationale: 'r', evaluation: { command: 'true' } };
   expectCode(() => improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', proposal), 'UNGROUNDED');
   expectCode(() => mem.promote(rec.id, 'security-reviewer'), 'UNVERIFIED');
+  assert.strictEqual(mem.check(rec.id).verdict, 'provisional');
+  // Claiming to be a shared record (or another record) in the local file does not skip the log check.
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('"scope": "project"', '"scope": "shared"'));
+  expectCode(() => improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', proposal), 'UNGROUNDED');
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(`"id": "${rec.id}"`, `"id": "${rec.id.replace('mem-w-', 'mem-sw-')}"`));
+  expectCode(() => mem.get(rec.id), 'INVALID_RECORD');
 });
 
 test('#11 verification binds the reviewed revision and content; edits after review are not trusted', () => {
