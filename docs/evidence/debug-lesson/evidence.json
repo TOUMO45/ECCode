@@ -1,0 +1,49 @@
+{
+  "C1-quote-cache": {
+    "lessonsOfferedAtPlan": [
+      "Memoised or cached function: every argument that affects the result must be in the cache key (cached authorization decisions key on user + resource + action)"
+    ],
+    "planDecisions": [
+      {
+        "id": "mem-sd-mv03aqzv-01e259b5",
+        "decision": "incorporated",
+        "note": "src/quotes/service.js memoises engine.unitPrice(sku, qty) with the vendor memo default key (first argument only), so qty is missing from the key.",
+        "tasks": [
+          "fix-quote-cache-key"
+        ]
+      }
+    ],
+    "claimDecisions": [
+      {
+        "id": "mem-sd-mv03aqzv-01e259b5",
+        "decision": "applied",
+        "note": "Explicit memo key JSON.stringify([sku, Number(qty)]); cache and TTL kept, no vendor edits."
+      }
+    ],
+    "assessments": [],
+    "graderSuccess": true
+  },
+  "M6-menu-costing": {
+    "lessonsOfferedAtPlan": [
+      "Memoised or cached function: every argument that affects the result must be in the cache key (cached authorization decisions key on user + resource + action)"
+    ],
+    "planDecisions": [
+      {
+        "id": "mem-sd-mv03aqzv-01e259b5",
+        "decision": "not-applicable",
+        "note": "Not applicable when: the failure is a stale value after the underlying data changed (TTL/invalidation), which is the main defect here. costs is a ttlCache keyed by the single dishId argument and menuReport is memoised on its single menuId argument, so no key collision exists. The covers defect is cached-object mutation, not a key problem.",
+        "basis": "reason"
+      }
+    ],
+    "claimDecisions": [
+      {
+        "id": "mem-sd-mv03aqzv-01e259b5",
+        "decision": "not-applicable",
+        "note": "Not applicable when: the failure is a stale value after the underlying data changed (invalidation), not a key collision. costs and menuReport are keyed by their single argument, which fully determines the result; the covers defect was cached-object mutation.",
+        "basis": "reason"
+      }
+    ],
+    "assessments": [],
+    "graderSuccess": true
+  }
+}

@@ -1,0 +1,147 @@
+[
+  {
+    "id": "mem-sd-mv03aqzv-01e259b5",
+    "layer": "debugging",
+    "scope": "shared",
+    "project": null,
+    "status": "verified",
+    "trust": "internal",
+    "createdAt": "2026-10-08T22:10:02.924Z",
+    "createdBy": "learning-debugger",
+    "lastVerifiedAt": "2026-10-08T22:10:30.327Z",
+    "revisions": [
+      {
+        "rev": 1,
+        "at": "2026-10-08T22:10:02.924Z",
+        "by": "learning-debugger",
+        "reason": "created",
+        "content": {
+          "title": "Memoised or cached function: every argument that affects the result must be in the cache key (cached authorization decisions key on user + resource + action)",
+          "problem": "A shared-kit memo helper keys on the first argument by default. A custom key covering only user and site omitted the action, so a cached decision for one action was returned for another. Results depended on request order: a contractor refused costs, then denied the work order view, or a view allowed then costs allowed. Users saw 403/404 or wrongly granted access depending on what they requested first.",
+          "symptoms": [
+            "Same request returns 200 or 403 depending on which request came earlier",
+            "Cached permission check returns the answer for a different action or permission",
+            "Access works after a refresh/cache expiry but not on the first call after another endpoint",
+            "Directory/slow-dependency call count lower than the number of distinct decisions"
+          ],
+          "component": "caching / memoisation wrapper around an authorization check",
+          "environment": {
+            "runtime": "node",
+            "test runner": "node --test",
+            "cache": "shared-kit memo with custom key function and TTL"
+          },
+          "fingerprint": "memo-key-omits-result-affecting-arg",
+          "reproduction": {
+            "steps": [
+              "Run the access cache tests, which interleave requests varying only the later arguments (action), and count calls to the slow directory lookup"
+            ],
+            "evidence": [
+              "ev:ev-mv035yms-0168a842"
+            ]
+          },
+          "rootCause": {
+            "explanation": "The memo key function returned a string from user and site only, ignoring the action argument, which determines the permitted roles. Distinct decisions collided on one cache entry, so the first decision computed for a (user, site) was reused for every action. The shared kit's default is also first-argument-only, which invites this mistake.",
+            "evidence": [
+              "ev:ev-mv035yms-0168a842"
+            ]
+          },
+          "failedAttempts": [
+            {
+              "approach": "Trust the tests that exercised one action per user",
+              "whyFailed": "Order dependence only shows when calls vary just the later arguments and interleave"
+            },
+            {
+              "approach": "Explain the user reports as a per-site denial",
+              "whyFailed": "The report was explained by a refused costs request cached before the view on the user's own site, not by a site denial; the initial test also had a wrong expectation for a supervisor assigned to two sites"
+            }
+          ],
+          "solution": {
+            "description": "Give the memo an explicit key containing all result-affecting arguments, normalised: JSON.stringify([user, Number(siteId), action]). JSON array avoids separator collisions; Number() makes string and number ids share an entry. Keep the cache and TTL; no vendor edits.",
+            "tradeoffs": "Cache is still unbounded and a TTL delays revocation of access changes; the number of entries grows with distinct user/site/action combinations."
+          },
+          "verification": {
+            "evidence": [
+              "ev:ev-mv03a9s1-011232ec",
+              "ev:ev-mv03aa4r-010a8b8d"
+            ],
+            "regressionTest": "npm test"
+          },
+          "sources": [],
+          "appliesWhen": [
+            "Adding or reviewing a cache, memo or key function for a function with several arguments",
+            "Caching authorization or permission decisions",
+            "A result depends on request order or on what was called earlier",
+            "Using a library memo whose default key is the first argument only"
+          ],
+          "notApplicableWhen": [
+            "The function takes a single argument that fully determines the result",
+            "The failure is a stale value after the underlying data changed (TTL or invalidation issue) rather than a key collision",
+            "No caching is involved"
+          ],
+          "confidence": "medium",
+          "tags": [
+            "cache",
+            "memoize",
+            "cache-key",
+            "authorization",
+            "test-design"
+          ]
+        }
+      }
+    ],
+    "reviews": [
+      {
+        "at": "2026-10-08T22:10:30.327Z",
+        "reviewer": "technical-reviewer",
+        "decision": "verify",
+        "rev": 1,
+        "notes": "Accurate and generic; backed by fail ev-mv035yms-0168a842 and pass ev-mv03a9s1-011232ec, and my reruns ev-mv03b4xg-018c0dcd, ev-mv03b9d3-0176d0ba. Source matches the described key."
+      }
+    ],
+    "evidenceSnapshots": {
+      "ev-mv035yms-0168a842": {
+        "id": "ev-mv035yms-0168a842",
+        "kind": "command",
+        "label": "repro: MNT-142 access decision depends on request order",
+        "command": "node --test test/access-cache.test.js",
+        "purpose": "reproduction",
+        "status": "failed",
+        "exitCode": 1,
+        "at": "2026-10-08T22:06:19.542Z",
+        "recordedBy": "learning-debugger"
+      },
+      "ev-mv03a9s1-011232ec": {
+        "id": "ev-mv03a9s1-011232ec",
+        "kind": "command",
+        "label": "fix verified: MNT-142 access decision depends on request order",
+        "command": "node --test test/access-cache.test.js",
+        "purpose": "reproduction",
+        "status": "passed",
+        "exitCode": 0,
+        "at": "2026-10-08T22:09:40.613Z",
+        "recordedBy": "learning-debugger"
+      },
+      "ev-mv03aa4r-010a8b8d": {
+        "id": "ev-mv03aa4r-010a8b8d",
+        "kind": "command",
+        "label": "npm test after fix",
+        "command": "npm test",
+        "purpose": "check",
+        "status": "passed",
+        "exitCode": 0,
+        "at": "2026-10-08T22:09:41.071Z",
+        "recordedBy": "learning-debugger"
+      }
+    },
+    "citations": [],
+    "checks": [],
+    "supersededBy": null,
+    "supersedes": [],
+    "provenance": {
+      "originalId": "mem-d-mv03aqzv-01e259b5",
+      "originalRevisions": 1,
+      "promotedAt": "2026-10-08T22:10:30.378Z",
+      "promotedBy": "technical-reviewer"
+    }
+  }
+]

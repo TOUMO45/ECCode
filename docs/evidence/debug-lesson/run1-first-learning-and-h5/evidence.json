@@ -1,0 +1,50 @@
+{
+  "C1-quote-cache": {
+    "lessonsOfferedAtPlan": [
+      "Memoised or cached function: every argument that affects the result must be in the cache key (cached authorization decisions key on user + resource + action)"
+    ],
+    "planDecisions": [
+      {
+        "id": "mem-sd-mv03aqzv-01e259b5",
+        "decision": "incorporated",
+        "note": "Task input and acceptance criterion: memo key must include sku and qty.",
+        "tasks": [
+          "fix-quote-cache-key"
+        ]
+      }
+    ],
+    "claimDecisions": [
+      {
+        "id": "mem-sd-mv03aqzv-01e259b5",
+        "decision": "applied",
+        "note": "Explicit memo key JSON.stringify([sku, Number(qty)]) in quote service; covered by the order-independence and cache-hit tests in test/quotes.test.js."
+      }
+    ],
+    "assessments": [],
+    "graderSuccess": true
+  },
+  "H5-parking-occupancy": {
+    "lessonsOfferedAtPlan": [
+      "Memoised or cached function: every argument that affects the result must be in the cache key (cached authorization decisions key on user + resource + action)"
+    ],
+    "planDecisions": [
+      {
+        "id": "mem-sd-mv03aqzv-01e259b5",
+        "decision": "incorporated",
+        "note": "Same family of bug: the occupancy cache is keyed by a raw lot id, which is a string from route params but a number in invalidation, so entries collide or miss. The rule that cache keys be normalised (Number(id)) applies.",
+        "tasks": [
+          "fix-occupancy-cache"
+        ]
+      }
+    ],
+    "claimDecisions": [
+      {
+        "id": "mem-sd-mv03aqzv-01e259b5",
+        "decision": "applied",
+        "note": "Applied the Number(id) key normalisation so string route params and numeric lot.id share one cache entry; covered by the enter/leave/capacity tests and the cache-reuse test. Applied by analogy: the defect is a type mismatch plus missing invalidation, not a multi-argument collision."
+      }
+    ],
+    "assessments": [],
+    "graderSuccess": true
+  }
+}
