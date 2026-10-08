@@ -54,6 +54,7 @@ function trialEnv(cond) {
     env.PATH = `${SBX}/state/bin:${env.PATH}`;
     env.ECCODE_SHARED_MEMORY = `${SBX}/state/eccode-shared`;
     env.ECCODE_LEARNING = cond === 'C1' ? 'off' : 'on';
+    env.ECCODE_UNATTENDED = '1'; // nobody answers: the Stop hook keeps the workflow from being skipped
   }
   return env;
 }

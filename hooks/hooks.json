@@ -1,11 +1,15 @@
 {
-  "description": "ECCode: resume brief at session start; identity, ownership and record-integrity guard before tool calls. Disable with ECCODE_HOOKS=off.",
+  "description": "ECCode: resume brief at session start; identity, ownership and record-integrity guard before tool calls; completion gate for unattended workflows (ECCODE_UNATTENDED=1). Disable with ECCODE_HOOKS=off.",
   "hooks": {
     "SessionStart": [
       {
         "matcher": "startup|resume|clear|compact",
         "hooks": [
-          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/session-start.js\"", "timeout": 15 }
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/session-start.js\"",
+            "timeout": 15
+          }
         ]
       }
     ],
@@ -13,7 +17,22 @@
       {
         "matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/guard.js\"", "timeout": 15 }
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/guard.js\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/stop.js\"",
+            "timeout": 15
+          }
         ]
       }
     ]

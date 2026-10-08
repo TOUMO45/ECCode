@@ -87,7 +87,10 @@ test('project install copies components, rewrites paths, merges hooks idempotent
   install({ target: dir }); // idempotent
   const settings = JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8'));
   assert.deepStrictEqual(settings.permissions, { allow: ['Bash(npm test)'] }, 'existing settings preserved');
-  assert.strictEqual(settings.hooks.Stop.length, 1);
+  // The user's own Stop hook is kept, ECCode's completion gate is added once (idempotent across two installs).
+  assert.strictEqual(settings.hooks.Stop.length, 2);
+  assert.ok(settings.hooks.Stop.some((g) => g.hooks.some((h) => h.command === 'echo bye')), 'existing Stop hook preserved');
+  assert.strictEqual(settings.hooks.Stop.filter((g) => g.hooks.some((h) => String(h.command).includes('eccode/scripts/hooks/stop.js'))).length, 1);
   assert.strictEqual(settings.hooks.PreToolUse.length, 1);
   assert.strictEqual(settings.hooks.SessionStart.length, 1);
   assert.ok(fs.existsSync(path.join(dir, '.claude', 'agents', 'technical-reviewer.md')));

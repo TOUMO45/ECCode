@@ -77,6 +77,7 @@ Environment variables:
 - `ECCODE_SEQUENTIAL_ROLES=1`: allow the main session to act as roles. Use it only in disclosed sequential mode.
 - `ECCODE_SHARED_MEMORY`: shared memory location.
 - `ECCODE_LEARNING=on|off`: override `memory.learning`. Any other value is refused.
+- `ECCODE_UNATTENDED=1`: the session has no human to answer questions (a headless `claude -p` run). The Stop hook then refuses to let a session started with `/eccode:start`, `/eccode:change` or `/eccode:resume` end before the delivery is complete or a user decision is pending, because an unattended orchestrator may otherwise judge the process too heavy for a small change and skip it. Interactive sessions are never blocked; at most 4 stops per session are blocked.
 - `ECCODE_NOW`: pin the clock. Honoured only with `ECCODE_TEST=1` (test suites); otherwise ignored, because gate order rules compare timestamps.
 
 ## Use
