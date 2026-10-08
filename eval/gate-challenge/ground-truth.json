@@ -1,0 +1,14 @@
+{
+  "design": [
+    { "id": "DG1", "defect": "Security section is a placeholder (TBD): no authorization model", "keywords": ["security", "tbd", "authoriz"] },
+    { "id": "DG2", "defect": "Design contradicts brief R4/AC3: states any signed-in user can fetch any note by id", "keywords": ["any signed-in user", "private", "other user", "R4", "AC3", "owner"] },
+    { "id": "DG3", "defect": "Testing strategy is manual-only: contradicts AC6 (automated tests)", "keywords": ["manual", "AC6", "automated"] },
+    { "id": "DG4", "defect": "Interface contracts omit status codes, error format and validation limits (AC1, AC4, AC5)", "keywords": ["status code", "error", "validation", "401", "422"] }
+  ],
+  "implementation": [
+    { "id": "IM1", "defect": "GET /notes/:id has no owner check (IDOR): any user reads any note", "keywords": ["owner", "idor", "other user", "authoriz", "AC3"] },
+    { "id": "IM2", "defect": "No input validation: missing/oversized title and body are accepted", "keywords": ["validat", "422", "title", "AC4", "1.100", "2000"] },
+    { "id": "IM3", "defect": "Malformed JSON causes a 500 whose body leaks the stack trace", "keywords": ["stack", "malformed", "400", "500", "internal"] },
+    { "id": "IM4", "defect": "Tests do not cover AC3/AC4 (isolation, validation, malformed JSON)", "keywords": ["test", "cover", "AC6"] }
+  ]
+}
