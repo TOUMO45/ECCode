@@ -23,7 +23,7 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
 |---|---|
 | **12 agents** | product-architect · architecture-reviewer · technical-designer · technical-reviewer · delivery-lead · learning-debugger · frontend / backend / ai / test / devops engineers · security-reviewer |
 | **7 skills** | `orchestrate` (lead orchestrator playbook) · review-gate · handoff-protocol · verification-evidence · debug-investigation · engineering-memory · self-improvement |
-| **6 commands** | `/eccode:start` · `/eccode:resume` · `/eccode:status` · `/eccode:investigate` · `/eccode:deliver` · `/eccode:improve` |
+| **7 commands** | `/eccode:start` · `/eccode:change` · `/eccode:resume` · `/eccode:status` · `/eccode:investigate` · `/eccode:deliver` · `/eccode:improve` |
 | **2 hooks** | SessionStart injects a resume brief. PreToolUse is a guard that ties `--actor` to the subagent actually running, enforces file ownership and protects the record. |
 | **Engine + CLI** | Zero-dependency Node ≥18: gates, tasks, evidence, runs and budgets, recovery, delivery, memory, self-improvement, metrics |
 | **Memory** | Four layers (project, debugging, knowledge, workflow). A lesson is verified only when **the same check failed before the fix and passed after it**, a reviewer who is not the author signs off, and it carries applicability conditions checked against the current environment. Lessons can be promoted to shared memory after a privacy scan. |

@@ -17,7 +17,7 @@ Or from a shell: `claude plugin marketplace add <repo-or-path>`, then `claude pl
 
 This installs:
 - 12 agents (`eccode:product-architect`, …);
-- skills and commands (`/eccode:start`, `/eccode:resume`, `/eccode:status`, `/eccode:investigate`, `/eccode:deliver`, `/eccode:improve`);
+- skills and commands (`/eccode:start`, `/eccode:change`, `/eccode:resume`, `/eccode:status`, `/eccode:investigate`, `/eccode:deliver`, `/eccode:improve`);
 - the two hooks.
 
 Inside agent and skill text, the CLI is `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js`.
@@ -87,7 +87,15 @@ In Claude Code, `/eccode:start <idea>` makes the main session follow the `orches
 4. runs each implementation phase (claims → work → handoffs → phase review);
 5. runs verification (independent re-execution) and `eccode deliver`.
 
-`/eccode:status` shows where things stand. `/eccode:resume` continues after an interruption. The SessionStart hook also injects the resume brief automatically.
+`/eccode:change <request>` handles a bug fix or bounded change in an existing codebase using the `change` profile:
+1. a reviewed plan whose acceptance criteria come from the request, with a failing reproduction first for defects;
+2. owned tasks with evidence;
+3. an independent phase review that re-runs the checks;
+4. `eccode deliver`.
+
+There are no architecture, design or verification gates in this profile.
+
+`/eccode:status` shows where things stand. `/eccode:resume` continues after an interruption: it reconciles the record with the files and re-runs the recorded checks before any new work (`eccode reconcile --verify`). The SessionStart hook also injects the resume brief automatically.
 
 Running the workflow by hand with the CLI (useful in any harness):
 ```bash

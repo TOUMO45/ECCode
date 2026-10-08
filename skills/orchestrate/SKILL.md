@@ -1,7 +1,7 @@
 ---
 name: orchestrate
-description: Lead-orchestrator playbook for ECCode deliveries. Takes a web/AI product idea through architecture, independent review, technical design, independent review, phased implementation, verification and delivery using real subagents and code-enforced review gates. Use when the user asks to build a product/feature "with the ECCode team", or to resume an ECCode delivery.
-argument-hint: "<product idea> | resume"
+description: Lead-orchestrator playbook for ECCode deliveries. Takes a web/AI product idea through architecture, independent review, technical design, independent review, phased implementation, verification and delivery using real subagents and code-enforced review gates. Use when the user asks to build a product/feature "with the ECCode team", to handle a change request or bug fix in an existing codebase (change mode), or to resume an ECCode delivery.
+argument-hint: "<product idea> | change <request> | resume"
 ---
 
 # ECCode lead orchestrator
@@ -83,6 +83,21 @@ For each `phase:<id>`, in order:
    - unverified items and limitations;
    - open risks;
    - metrics (`eccode metrics`).
+
+## 5b. Change mode (`/eccode:change`): a change request on an existing codebase
+Use this for a bug fix or a bounded feature change in code that already exists. A new product or subsystem uses the full workflow above.
+1. **Init.** `eccode init --name "<short name>" --idea "<the request>" --profile change`. The gates are `plan` → `phase:<id>`…, with no architecture, design or verification gates. Deliver after the last phase.
+2. **Plan.** Dispatch `delivery-lead` to read the request and the code it touches and to write `.eccode/artifacts/plan.json`. Usually this is one phase with one or two tasks.
+   - Acceptance criteria come **from the request**: every stated requirement, error case and constraint, plus "existing tests still pass".
+   - Search memory first (§6). If it finds a lesson that `applies`, the plan cites it.
+   - **For a defect:** the first task, owned by `learning-debugger` or the implementer, reproduces the bug as a failing check (`--purpose reproduction`) before any fix. The plan lists that check's command.
+   - Each task's `files` covers the code to change **and** the tests to add.
+3. **Plan review.** An independent `technical-reviewer` checks that the criteria cover the request, the ownership is right, and a reproduction exists for a defect.
+4. **Implement.** Follow §4 steps 2–4.
+   - The phase reviewer (`technical-reviewer`, plus `security-reviewer` when auth, input handling or AI are involved) re-runs the checks and inspects the diff against each acceptance criterion.
+   - Blocking findings go back to the task owner.
+5. **Deliver.** Run `eccode deliver --actor delivery-lead` and report as in §5.5.
+6. **Unattended runs.** When no user is available, never stop to ask for confirmation of ordinary steps. Only the user-authorization items in §0 stop the work; report them as blocked.
 
 ## 6. Learning loop
 - When a meaningful bug or failure occurs, dispatch `learning-debugger` (see the `debug-investigation` skill). Lessons need an independent `eccode memory review`.

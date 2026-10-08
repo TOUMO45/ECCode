@@ -11,7 +11,8 @@ const { EccodeError, readJson } = require('../lib/util');
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
 Project
-  init --name <n> --idea <text>          Create .eccode/ in the project root
+  init --name <n> --idea <text> [--profile delivery|change]
+                                         Create .eccode/ (change: plan -> phases for a change request)
   status [--json|--brief]                Gates, tasks, budget and the next action
   resume                                 Resume brief for a new session, with read-only reconciliation
   reconcile --actor <a> [--verify] [--max-checks n]
@@ -121,7 +122,7 @@ function main(argv) {
   const { openProject, init } = require('../lib/project');
 
   if (group === 'init') {
-    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator' });
+    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', profile: flags.profile || 'delivery' });
     print(flags, `Initialized ECCode project in ${store.dir}`, { root: store.root });
     return 0;
   }
