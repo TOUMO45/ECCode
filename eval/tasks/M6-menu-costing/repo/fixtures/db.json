@@ -1,0 +1,65 @@
+{
+  "tables": {
+    "ingredients": {
+      "columns": { "name": "TEXT", "unit": "TEXT", "price": "DECIMAL(10,2)" },
+      "rows": [
+        { "id": 1, "name": "Plum tomatoes", "unit": "g", "price": "4.80" },
+        { "id": 2, "name": "Olive oil", "unit": "ml", "price": "11.20" },
+        { "id": 3, "name": "Onion", "unit": "g", "price": "1.60" },
+        { "id": 4, "name": "Minced beef", "unit": "g", "price": "12.90" },
+        { "id": 5, "name": "Lasagne sheets", "unit": "g", "price": "3.40" },
+        { "id": 6, "name": "Whole milk", "unit": "ml", "price": "1.10" },
+        { "id": 7, "name": "Butter", "unit": "g", "price": "9.00" },
+        { "id": 8, "name": "Plain flour", "unit": "g", "price": "1.20" },
+        { "id": 9, "name": "Mozzarella", "unit": "g", "price": "8.50" },
+        { "id": 10, "name": "Fresh basil", "unit": "each", "price": "1.25" }
+      ]
+    },
+    "dishes": {
+      "columns": { "name": "TEXT", "portions": "INTEGER" },
+      "rows": [
+        { "id": 1, "name": "Tomato sauce", "portions": 10 },
+        { "id": 2, "name": "Bechamel", "portions": 8 },
+        { "id": 3, "name": "Lasagne al forno", "portions": 6 },
+        { "id": 4, "name": "Pizza margherita", "portions": 4 }
+      ]
+    },
+    "dish_lines": {
+      "columns": { "dish_id": "INTEGER", "ingredient_id": "INTEGER", "sub_dish_id": "INTEGER", "quantity": "INTEGER" },
+      "rows": [
+        { "id": 1, "dish_id": 1, "ingredient_id": 1, "sub_dish_id": null, "quantity": 2000 },
+        { "id": 2, "dish_id": 1, "ingredient_id": 2, "sub_dish_id": null, "quantity": 100 },
+        { "id": 3, "dish_id": 1, "ingredient_id": 3, "sub_dish_id": null, "quantity": 300 },
+        { "id": 4, "dish_id": 1, "ingredient_id": 10, "sub_dish_id": null, "quantity": 2 },
+        { "id": 5, "dish_id": 2, "ingredient_id": 6, "sub_dish_id": null, "quantity": 1000 },
+        { "id": 6, "dish_id": 2, "ingredient_id": 7, "sub_dish_id": null, "quantity": 80 },
+        { "id": 7, "dish_id": 2, "ingredient_id": 8, "sub_dish_id": null, "quantity": 80 },
+        { "id": 8, "dish_id": 3, "ingredient_id": 4, "sub_dish_id": null, "quantity": 600 },
+        { "id": 9, "dish_id": 3, "ingredient_id": 5, "sub_dish_id": null, "quantity": 250 },
+        { "id": 10, "dish_id": 3, "ingredient_id": 9, "sub_dish_id": null, "quantity": 200 },
+        { "id": 11, "dish_id": 3, "ingredient_id": null, "sub_dish_id": 1, "quantity": 4 },
+        { "id": 12, "dish_id": 3, "ingredient_id": null, "sub_dish_id": 2, "quantity": 3 },
+        { "id": 13, "dish_id": 4, "ingredient_id": 8, "sub_dish_id": null, "quantity": 500 },
+        { "id": 14, "dish_id": 4, "ingredient_id": 9, "sub_dish_id": null, "quantity": 250 },
+        { "id": 15, "dish_id": 4, "ingredient_id": null, "sub_dish_id": 1, "quantity": 2 },
+        { "id": 16, "dish_id": 4, "ingredient_id": 2, "sub_dish_id": null, "quantity": 40 }
+      ]
+    },
+    "menus": {
+      "columns": { "name": "TEXT" },
+      "rows": [
+        { "id": 1, "name": "Lunch menu" },
+        { "id": 2, "name": "Sauces and bases" }
+      ]
+    },
+    "menu_items": {
+      "columns": { "menu_id": "INTEGER", "dish_id": "INTEGER", "sell_price": "DECIMAL(10,2)" },
+      "rows": [
+        { "id": 1, "menu_id": 1, "dish_id": 3, "sell_price": "12.50" },
+        { "id": 2, "menu_id": 1, "dish_id": 4, "sell_price": "9.00" },
+        { "id": 3, "menu_id": 2, "dish_id": 1, "sell_price": "3.00" },
+        { "id": 4, "menu_id": 2, "dish_id": 2, "sell_price": "1.00" }
+      ]
+    }
+  }
+}

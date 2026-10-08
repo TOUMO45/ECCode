@@ -10,7 +10,7 @@ Keep the fields the rental has today and add the charge: `days`, `lateDays`, `re
 - Each full block of 7 days costs the weekly rate; the days left over cost the daily rate, but never more than one weekly rate. Under 7 days the same "never more than a week" rule applies.
 - An item returned after its due date also pays a late fee: 150% of the daily rate for every day it is late. The late fee is worked out for all late days together and rounded to the cent (halves go up).
 - Sales tax is the category's rate (`categories.tax_bp`) on the subtotal (rental plus late fee), rounded to the cent with halves going up. Tax-exempt customers pay none. `total` is subtotal plus tax. The deposit is shown but is not part of the total.
-- Rentals that are still out are charged up to their due date. Cancelled rentals cost nothing (all amounts `0.00`, `days` and `lateDays` 0).
+- Rentals that are still out are charged up to their due date. Cancelled rentals cost nothing (`rental`, `lateFee`, `subtotal`, `tax` and `total` are `0.00`; `days` and `lateDays` are 0).
 
 **Rentals list: `GET /api/rentals`**
 The newest start date first (then the newest rental number). It can be filtered with `customerId` and `status`. Every rental in it carries the same fields as the single-rental answer.

@@ -9,7 +9,7 @@ test('the catalogue is a plain array with rates as decimal strings', async () =>
     const { status, body } = await app.get('/api/items');
     assert.strictEqual(status, 200);
     assert.strictEqual(body.length, 5);
-    assert.deepStrictEqual(body[1], { id: 2, sku: 'HI-TE60', name: 'Hilti TE 60 Rotary Hammer', category: 'power-tools', dailyRate: '65.00', weeklyRate: '260.00', deposit: '250.00' });
+    assert.deepStrictEqual(body[1], { id: 2, sku: 'HI-TE60', name: 'Hilti TE 60 Rotary Hammer', category: 'power-tools', dailyRate: '70.00', weeklyRate: '280.00', deposit: '250.00' });
   } finally {
     await app.close();
   }
@@ -31,7 +31,7 @@ test('a rental shows its dates and status', async () => {
   try {
     const { status, body } = await app.get('/api/rentals/6');
     assert.strictEqual(status, 200);
-    assert.deepStrictEqual(body, {
+    const expected = {
       id: 6,
       customerId: 1,
       itemId: 2,
@@ -41,7 +41,8 @@ test('a rental shows its dates and status', async () => {
       dueDate: '2026-03-12',
       returnedOn: null,
       status: 'out',
-    });
+    };
+    for (const [k, v] of Object.entries(expected)) assert.deepStrictEqual(body[k], v, k);
   } finally {
     await app.close();
   }

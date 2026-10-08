@@ -1,0 +1,52 @@
+{
+  "tables": {
+    "campaigns": {
+      "columns": { "slug": "TEXT", "title": "TEXT", "goal": "DECIMAL(12,2)", "starts_on": "TEXT", "ends_on": "TEXT", "status": "TEXT", "match_cap": "DECIMAL(12,2)" },
+      "rows": [
+        { "id": 1, "slug": "river-cleanup", "title": "Riverbank Clean-up Fund", "goal": "5000.00", "starts_on": "2026-02-01", "ends_on": "2026-03-31", "status": "live", "match_cap": "1000.00" },
+        { "id": 2, "slug": "library-roof", "title": "Library Roof Appeal", "goal": "20000.00", "starts_on": "2026-01-01", "ends_on": "2026-03-10", "status": "live", "match_cap": "0.00" },
+        { "id": 3, "slug": "winter-coats", "title": "Winter Coats Drive", "goal": "1500.00", "starts_on": "2025-11-01", "ends_on": "2026-01-31", "status": "closed", "match_cap": "0.00" },
+        { "id": 4, "slug": "community-garden", "title": "Community Garden Beds", "goal": "2500.00", "starts_on": "2026-04-01", "ends_on": "2026-06-30", "status": "draft", "match_cap": "0.00" },
+        { "id": 5, "slug": "youth-kit", "title": "Youth Football Kit", "goal": "3000.00", "starts_on": "2026-03-11", "ends_on": "2026-05-31", "status": "live", "match_cap": "0.00" }
+      ]
+    },
+    "donors": {
+      "columns": { "name": "TEXT", "email": "TEXT" },
+      "rows": [
+        { "id": 1, "name": "Siobhán O'Brien-Walsh", "email": "siobhan@obrien-walsh.example" },
+        { "id": 2, "name": "Greene, Marcus \"Mac\"", "email": "mac.greene@greenebuild.example" },
+        { "id": 3, "name": "Anita Raghavan", "email": "anita.raghavan@example.org" },
+        { "id": 4, "name": "Tobias Lindqvist", "email": "tobias.l@lindqvist.example" },
+        { "id": 5, "name": "Fatima Al-Sayed", "email": "fatima.alsayed@example.com" }
+      ]
+    },
+    "donations": {
+      "columns": {
+        "campaign_id": "INTEGER",
+        "donor_id": "INTEGER",
+        "amount": "DECIMAL(12,2)",
+        "fee": "DECIMAL(12,2)",
+        "covered": "BOOLEAN",
+        "matched": "DECIMAL(12,2)",
+        "anonymous": "BOOLEAN",
+        "created_at": "TIMESTAMP"
+      },
+      "rows": [
+        { "id": 1, "campaign_id": 1, "donor_id": 3, "amount": "100.00", "fee": "3.20", "covered": false, "matched": "96.80", "anonymous": false, "created_at": "2026-02-03T10:00:00Z" },
+        { "id": 2, "campaign_id": 1, "donor_id": 1, "amount": "250.00", "fee": "7.55", "covered": true, "matched": "250.00", "anonymous": false, "created_at": "2026-02-10T14:30:00Z" },
+        { "id": 3, "campaign_id": 1, "donor_id": 4, "amount": "500.00", "fee": "14.80", "covered": false, "matched": "485.20", "anonymous": true, "created_at": "2026-02-17T09:15:00Z" },
+        { "id": 4, "campaign_id": 1, "donor_id": 2, "amount": "150.00", "fee": "4.65", "covered": false, "matched": "145.35", "anonymous": false, "created_at": "2026-02-24T18:45:00Z" },
+        { "id": 5, "campaign_id": 2, "donor_id": 3, "amount": "1000.00", "fee": "29.30", "covered": true, "matched": "0.00", "anonymous": false, "created_at": "2026-02-14T12:00:00Z" },
+        { "id": 6, "campaign_id": 2, "donor_id": 5, "amount": "20.00", "fee": "0.88", "covered": false, "matched": "0.00", "anonymous": false, "created_at": "2026-03-09T08:00:00Z" },
+        { "id": 7, "campaign_id": 3, "donor_id": 1, "amount": "40.00", "fee": "1.46", "covered": false, "matched": "0.00", "anonymous": false, "created_at": "2025-12-15T10:00:00Z" },
+        { "id": 8, "campaign_id": 3, "donor_id": 2, "amount": "35.00", "fee": "1.32", "covered": true, "matched": "0.00", "anonymous": false, "created_at": "2025-12-31T23:30:00Z" },
+        { "id": 9, "campaign_id": 3, "donor_id": 4, "amount": "60.00", "fee": "2.04", "covered": false, "matched": "0.00", "anonymous": true, "created_at": "2026-01-01T00:10:00Z" },
+        { "id": 10, "campaign_id": 3, "donor_id": 3, "amount": "12.50", "fee": "0.66", "covered": true, "matched": "0.00", "anonymous": false, "created_at": "2026-01-20T16:00:00Z" }
+      ]
+    },
+    "audit_log": {
+      "columns": { "actor": "TEXT", "action": "TEXT", "entity": "TEXT", "entity_id": "INTEGER", "at": "TIMESTAMP" },
+      "rows": []
+    }
+  }
+}
