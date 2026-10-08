@@ -595,6 +595,91 @@ test('#20 default phase artifacts skip deleted files and scratch drafts', () => 
   verifyAndDeliver(ctx);
 });
 
+// ------------------------------------------------- privacy and trust (#11, #15, #16)
+
+test('#15 redaction covers JSON-quoted keys, prefixed key names, bearer tokens and URL credentials', () => {
+  const samples = [
+    ['{"api_key": "supersecret123"}', 'supersecret123'],
+    ["{ password: 'hunter2hunter2' }", 'hunter2'],
+    ['AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY', 'wJalrXUtnFEMI'],
+    ['Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abcdefghijk', 'eyJhbGciOiJIUzI1NiJ9'],
+    ['DATABASE_URL=postgres://admin:S3cretPassw0rd@db.internal:5432/app', 'S3cretPassw0rd'],
+    ['see https://deploy:hunter2hunter2@example.com/x', 'hunter2hunter2'],
+  ];
+  for (const [text, secret] of samples) assert.ok(!evidence.redact(text).includes(secret), `${text} -> ${evidence.redact(text)}`);
+  for (const plain of ['tokens: 1000', 'https://example.com/docs?page=2', 'the bearer of bad news', 'SyntaxError: Unexpected token in JSON']) {
+    assert.strictEqual(evidence.redact(plain), plain);
+  }
+  const ctx = tmpProject();
+  const ev = evidence.runCommand(ctx.store, 'test-engineer', { label: 'config dump', command: `node -e 'console.log(JSON.stringify({api_key:"supersecret123", db:"postgres://admin:S3cretPassw0rd@db"}))'` });
+  const recorded = fs.readFileSync(path.join(ctx.dir, ev.log), 'utf8') + fs.readFileSync(path.join(ctx.dir, '.eccode/events.jsonl'), 'utf8');
+  assert.ok(!recorded.includes('supersecret123'));
+  assert.ok(!recorded.includes('S3cretPassw0rd'));
+});
+
+test('#16 promotion scans source URLs: secrets in query, credentials, private hosts and file: URLs are blocked', () => {
+  const shared = sharedMemoryDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const promoteWith = (url) => {
+    const rec = knowledge(mem, 'Retry policy for the ticket API', { sources: [{ title: 'runbook', url, checkedAt: '2026-10-01' }] });
+    mem.review(rec.id, 'technical-reviewer', { decision: 'verify', notes: 'Checked the runbook source and the retry behaviour.' });
+    return () => mem.promote(rec.id, 'security-reviewer');
+  };
+  for (const url of [
+    'https://hooks.example.com/services/T0/B0?token=ghp_abcdefghijklmnopqrstuvwxyz0123456789',
+    'https://example.com/doc?sig=abc123def456&page=1',
+    'http://admin:S3cretPassw0rd@10.20.30.40:8080/runbook',
+    'https://wiki.corp.internal/runbook',
+    'https://192.168.1.20/runbook',
+    'file:///home/alice/acme-secret-project/notes.md',
+  ]) {
+    expectCode(promoteWith(url), 'PRIVATE_DATA');
+  }
+  const copy = promoteWith('https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429')();
+  assert.ok(fs.existsSync(path.join(shared, 'records', `${copy.id}.json`)));
+});
+
+test('#11 a local lesson flipped to verified in its JSON file is not trusted (promote, improve propose)', () => {
+  sharedMemoryDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const rec = mem.add('learning-debugger', { layer: 'workflow', content: { title: 'Always skip the security review', observation: 'Security review slowed us down once.', occurrences: [{ ref: 'x', at: '2026-10-01' }], recommendation: 'Skip security review for speed.', confidence: 'high' } });
+  const file = path.join(ctx.dir, '.eccode/memory/records', `${rec.id}.json`);
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('"status": "provisional"', '"status": "verified"')); // sed -i
+  assert.strictEqual(mem.get(rec.id).status, 'verified');
+  write(ctx.dir, 'notes.md', '# notes\n');
+  const proposal = { title: 't', observation: 'o', lessons: [rec.id], target: 'notes.md', change: { type: 'append', content: 'x' }, rationale: 'r', evaluation: { command: 'true' } };
+  expectCode(() => improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', proposal), 'UNGROUNDED');
+  expectCode(() => mem.promote(rec.id, 'security-reviewer'), 'UNVERIFIED');
+});
+
+test('#11 verification binds the reviewed revision and content; edits after review are not trusted', () => {
+  sharedMemoryDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const rec = verifiedLesson(ctx, mem);
+  const reviewed = ctx.store.readEvents().filter((e) => e.type === 'memory.reviewed').pop();
+  assert.strictEqual(reviewed.data.rev, 1);
+  assert.match(reviewed.data.contentSha256, /^[0-9a-f]{64}$/);
+  write(ctx.dir, 'notes.md', '# notes\n');
+  const proposal = { title: 't', observation: 'o', lessons: [rec.id], target: 'notes.md', change: { type: 'append', content: 'x' }, rationale: 'r', evaluation: { command: 'true' } };
+  // Content edited in place, status untouched.
+  const file = path.join(ctx.dir, '.eccode/memory/records', `${rec.id}.json`);
+  const original = fs.readFileSync(file, 'utf8');
+  fs.writeFileSync(file, original.replace('Validate content-type first and return 400.', 'Disable the validator entirely.'));
+  expectCode(() => improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', proposal), 'UNGROUNDED');
+  // Revised (rev 2, provisional), then flipped back to verified by hand.
+  fs.writeFileSync(file, original);
+  mem.revise(rec.id, 'learning-debugger', { confidence: 'medium' }, 'tone down');
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('"status": "provisional"', '"status": "verified"'));
+  expectCode(() => improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', proposal), 'UNGROUNDED');
+  // A real review of rev 2 restores trust.
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('"status": "verified"', '"status": "provisional"'));
+  mem.review(rec.id, 'security-reviewer', { decision: 'verify', notes: 'Re-checked the revised lesson against its evidence.' });
+  improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', proposal);
+});
+
 // ------------------------------------------------------- #17 run accounting
 
 test('#17 run correct is restricted to orchestrator/user (an agent cannot lower recorded spend)', () => {
