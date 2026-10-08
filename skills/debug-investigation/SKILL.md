@@ -22,7 +22,7 @@ If the failing code belongs to an approved phase (or the project was delivered),
 ## Lesson record (`templates/lesson.json`, schema `schemas/memory-debugging.schema.json`)
 Required fields:
 - problem, symptoms, component
-- **environment**: version constraints the fix was verified on, e.g. `{"node": ">=20", "express": "^4"}`. `eccode memory env` shows the current environment.
+- **environment**: **machine-checkable** constraints only, e.g. `{"node": ">=20", "express": "^4"}`; `eccode memory env` shows what can be detected. Free text here is not checked (it is shown as context). Put situations such as "plain node:http service" in `appliesWhen`.
 - **fingerprint**: a stable failure signature, used to track recurrence.
 - **reproduction**: `{steps, evidence:[ev ids]}`, or `{unavailable: reason}`. The second form keeps the lesson provisional.
 - **rootCause**: `{explanation, evidence}`
