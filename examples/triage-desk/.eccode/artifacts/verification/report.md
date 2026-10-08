@@ -6,9 +6,28 @@ Author: delivery-lead · Date: 2026-10-07 · Run: run-muyqykem-016fdddb · Base 
 > `METRIC high_urgency_recall scope=holdout value=0.571 n=7 threshold=>=0.70 FAIL` (4 of 7 held-out `high` rows predicted `high`; the floor needs 5 of 7).
 > `ECCODE_EVAL {"passed":24,"total":25}`, exit 1 (ev:ev-muyqzv9i-018cf19d).
 > Per plan PLAN-3 / DES-2 / E5 this was the first and only full-mode run. It was **not** re-run and nothing was re-tuned in this task. The failure is escalated (section 3).
+> **Update 2026-10-08:** the user accepted this miss (RISK-12 `accepted`, dec-muz4ocip-016d36bd) and amended SC2/AC8 for this release only. Results are unchanged. See "User decision on RISK-12 (2026-10-08)".
 > Every other check passes: `npm test` 439/439, design vectors, held-out hygiene, freeze integrity and the 18-check browser run.
 
 All results come from the **deterministic fallback provider**. They are evidence about the pipeline, not about model quality. **Live-model evaluation was NOT RUN** because no `ANTHROPIC_API_KEY` is available (RISK-7).
+
+## User decision on RISK-12 (2026-10-08)
+
+Responds to review rev-muyresnd-018b7c44, finding VER-1 (resolution (a)). The user recorded these decisions in the project record (`state.json` decisions, `by: user`, 2026-10-08):
+
+- **dec-muz4ocip-016d36bd — "RISK-12 accepted; SC2 amended for this release"**
+  > Decision: "Accept the fallback holdout high-urgency recall miss (0.571, n=7, floor 0.70) as a known limitation; amend SC2/AC8 for this release"
+  > Rationale: "Re-tuning against the already-seen holdout would contaminate it; the fallback is a clearly labelled safety net; all other 24 checks, 439 tests and 8 gates passed"
+  > Alternatives: "Rules revision validated on a fresh holdout (deferred)"
+- **RISK-12** status is now `accepted` (updated by user, 2026-10-08).
+- **dec-muz4ocl7-01aaa32d — "Confirm orchestrator defaults Q1/Q4/Q7"**
+  > "Confirmed: default live model claude-haiku-5-5 (env-overridable); redact emails, Luhn-valid cards and phones before live calls; zero runtime npm dependencies"
+  - This confirms the orchestrator defaults Q1 (dec-muylppww-0153033b), Q4 (dec-muylpq02-01e822f8) and Q7 (dec-muylvas4-01704481); they are no longer pending.
+
+What this means for this report:
+- The **Success Criterion 2 / AC8 holdout floor for high_urgency_recall is amended for this release only**. The miss is accepted as a known limitation of the deterministic fallback. It is not a pass, and the floor is unchanged for later releases.
+- **Results are unchanged.** Nothing was re-run or re-tuned: `ECCODE_EVAL {"passed":24,"total":25}`, holdout high_urgency_recall **0.571 (n=7)** against the 0.70 floor (ev:ev-muyqzv9i-018cf19d). Full-mode run count is still 1, so the holdout stays blind.
+- **Live-model evals remain NOT RUN** (no `ANTHROPIC_API_KEY`; RISK-7). Live thresholds are unverified.
 
 ## 1. Evidence recorded in this task
 
@@ -64,7 +83,7 @@ Rows: benign=80, attack=27 (18 in-family, 9 held-out), holdout=25, instruction-l
 - n=7 is small: one more correct row would give 0.714 (pass). The floor is nevertheless enforced as written.
 
 ### Escalation
-- The holdout floor miss is recorded as **RISK-12** (open; user decision pending). It is a finding against **t11-rules** (`src/triage/fallback-provider.js`, owner ai-engineer).
+- The holdout floor miss is recorded as **RISK-12** (now `accepted` by user decision dec-muz4ocip-016d36bd, option (a); see "User decision on RISK-12 (2026-10-08)"). It is a finding against **t11-rules** (`src/triage/fallback-provider.js`, owner ai-engineer).
 - Any fix needs a recorded decision. Tuning must use tune rows only (DES-2); the holdout rows must not be inspected.
 - A second full-mode run must be reported as run #2, and the held-out numbers from it can no longer be read as blind.
 - The orchestrator or user decides whether to (a) accept the miss as a known limitation of the fallback, or (b) reset t11 under that decision.
@@ -150,7 +169,7 @@ The adversarial phone redaction (about 38 ms median) costs more than the whole f
 
 ## 7. Known limitations
 
-1. **The fallback misses the holdout high-urgency floor** (4/7, RISK-12) and catches only 4/9 held-out-family injection attempts. The fallback is a safety net, not a classifier of record. The UI labels it "not AI-generated", which mitigates automation bias (RISK-2) but does not fix accuracy.
+1. **The fallback misses the holdout high-urgency floor** (4/7, RISK-12, accepted by user decision dec-muz4ocip-016d36bd for this release) and catches only 4/9 held-out-family injection attempts. The fallback is a safety net, not a classifier of record. The UI labels it "not AI-generated", which mitigates automation bias (RISK-2) but does not fix accuracy.
 2. The live path is untested against the real API (RISK-7). The model id, the structured-output schema restrictions and the effort parameter are checked against docs only.
 3. There is no authentication. The server is safe on loopback only (RISK-5); remote binding needs `TRIAGE_ALLOW_REMOTE`, and the README warns about it.
 4. Redaction covers email, phone and card numbers only. Names, addresses and account ids reach Anthropic in live mode (RISK-9), and the notice says so.
@@ -172,4 +191,4 @@ The adversarial phone redaction (about 38 ms median) costs more than the whole f
 | RISK-9 redaction misses | medium | Partly mitigated (AC16, design vectors). Unredacted classes are disclosed in the notice. Open |
 | RISK-10 validator cost on long model output | low | Mitigated: over-long summary/reply rejected as invalid_output at the provider call site before V2 runs (300k chars rejected in <500 ms) |
 | RISK-11 `npm start` orphaning under dash | medium | Open; documented workaround |
-| RISK-12 full-mode eval misses the holdout high_urgency_recall floor (0.571, n=7, ≥ 0.70) | medium | **Open. User decision pending**: accept as a known fallback limitation, or reset t11-rules and re-run as full-mode run #2 (ev:ev-muyqzv9i-018cf19d) |
+| RISK-12 full-mode eval misses the holdout high_urgency_recall floor (0.571, n=7, ≥ 0.70) | medium | **Accepted by user** (dec-muz4ocip-016d36bd, 2026-10-08): known fallback limitation; SC2/AC8 holdout floor amended for this release only; results unchanged (ev:ev-muyqzv9i-018cf19d) |

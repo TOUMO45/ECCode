@@ -3,9 +3,16 @@
 Status key: [x] verified (evidence cited) · [ ] open / needs a decision · [~] partly verified
 
 ## Blocking decision
-- [ ] **The full-mode eval failed 1 of 25 checks (RISK-12)**: holdout high_urgency_recall is 0.571 (n=7) against a floor of 0.70 (ev:ev-muyqzv9i-018cf19d). Before release the orchestrator or user must choose one:
-  - (a) accept it as a known fallback limitation, with a recorded decision; or
-  - (b) reset t11-rules under a recorded decision. Tuning uses tune rows only, and the re-run is reported as full-mode run #2.
+- [x] **Resolved by user decision.** The full-mode eval failed 1 of 25 checks (RISK-12): holdout high_urgency_recall is 0.571 (n=7) against a floor of 0.70 (ev:ev-muyqzv9i-018cf19d). The user chose option (a):
+  - (a) accept it as a known fallback limitation, with a recorded decision — **chosen** (dec-muz4ocip-016d36bd);
+  - ~~(b) reset t11-rules under a recorded decision~~ — not taken.
+
+## User decision on RISK-12 (2026-10-08)
+- [x] dec-muz4ocip-016d36bd (by user), "RISK-12 accepted; SC2 amended for this release": "Accept the fallback holdout high-urgency recall miss (0.571, n=7, floor 0.70) as a known limitation; amend SC2/AC8 for this release". RISK-12 status: `accepted`.
+- [x] The SC2/AC8 holdout floor is amended **for this release only**.
+- [x] Results are unchanged: `ECCODE_EVAL {"passed":24,"total":25}`, holdout high_urgency_recall 0.571 (n=7). Nothing was re-run or re-tuned; full-mode run count is still 1.
+- [ ] Live-model evals remain **NOT RUN** (RISK-7).
+- [x] dec-muz4ocl7-01aaa32d (by user), "Confirm orchestrator defaults Q1/Q4/Q7": Q1 default model claude-haiku-5-5 (env-overridable), Q4 redaction of emails, Luhn-valid cards and phones before live calls, and Q7 zero runtime npm dependencies are confirmed.
 
 ## Install from docs
 - [x] Node ≥ 22. There are no dependencies and no `npm install` is needed (README §Install).
@@ -61,4 +68,4 @@ Status key: [x] verified (evidence cited) · [ ] open / needs a decision · [~] 
 - [~] RISK-9 (medium) redaction misses: names, addresses and account ids are not redacted (disclosed).
 - [x] RISK-10 (low) validator cost on long model output: mitigated by the length gate at the provider call site.
 - [ ] RISK-11 (medium) `npm start` under dash can orphan the server. Run `node src/server.js` under a supervisor.
-- [ ] RISK-12 (medium, owner ai-engineer) full-mode eval misses the holdout high_urgency_recall floor (0.571, n=7, floor 0.70; ev:ev-muyqzv9i-018cf19d). **Open: user decision pending** (see Blocking decision).
+- [x] RISK-12 (medium, owner ai-engineer) full-mode eval misses the holdout high_urgency_recall floor (0.571, n=7, floor 0.70; ev:ev-muyqzv9i-018cf19d). **Accepted by user** (dec-muz4ocip-016d36bd); SC2/AC8 floor amended for this release only (see User decision on RISK-12).
