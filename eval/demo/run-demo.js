@@ -146,16 +146,30 @@ async function session(n, prompt, { killTrigger }) {
 
 const T0 = Date.now();
 
-/** The account's usage limit ends a session with a message naming the reset time; wait for it instead of burning sessions. */
-const LIMIT = /hit your (session|usage|weekly|rate)? ?limit[^\n]*resets (\d{1,2})(?::(\d{2}))?\s*(am|pm)/i;
+/**
+ * The account's usage limit ends a session with a message naming the reset time ("resets 2:50pm (UTC)" or
+ * "resets Oct 10, 3pm (UTC)"). Wait for it instead of burning sessions. A session that fails instantly
+ * for any other reason twice in a row also stops the run: it will not get better by being repeated.
+ */
+const LIMIT = /hit your (?:session|usage|weekly|rate)? ?limit[^\n]*?resets (?:([A-Z][a-z]{2}) (\d{1,2}),? )?(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i;
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+const MAX_WAIT_HOURS = 60;
 async function waitForLimit(rec) {
   const m = LIMIT.exec(`${rec.finalText || ''}`);
   if (!m) return false;
-  let hour = Number(m[2]) % 12 + (m[4].toLowerCase() === 'pm' ? 12 : 0);
+  const hour = (Number(m[3]) % 12) + (m[5].toLowerCase() === 'pm' ? 12 : 0);
   const reset = new Date();
-  reset.setUTCHours(hour, Number(m[3] || 0), 0, 0);
-  if (reset.getTime() <= Date.now()) reset.setUTCDate(reset.getUTCDate() + 1);
+  reset.setUTCHours(hour, Number(m[4] || 0), 0, 0);
+  if (m[1]) {
+    reset.setUTCMonth(MONTHS.indexOf(m[1].toLowerCase()), Number(m[2]));
+    if (reset.getTime() < Date.now() - 86400000) reset.setUTCFullYear(reset.getUTCFullYear() + 1);
+  } else if (reset.getTime() <= Date.now()) reset.setUTCDate(reset.getUTCDate() + 1);
   const waitMs = reset.getTime() - Date.now() + 90000;
+  if (waitMs > MAX_WAIT_HOURS * 3600000) {
+    console.log(`usage limit resets at ${reset.toISOString()}, more than ${MAX_WAIT_HOURS} h away; stopping`);
+    log.push({ label: 'usage-limit-stop', until: reset.toISOString(), at: new Date().toISOString() });
+    return 'stop';
+  }
   console.log(`usage limit reached; waiting until ${reset.toISOString()} (+90 s)`);
   log.push({ label: 'usage-limit-wait', until: reset.toISOString(), at: new Date().toISOString() });
   await new Promise((r) => setTimeout(r, waitMs));
@@ -170,6 +184,7 @@ async function waitForLimit(rec) {
   console.log('plugin installed from the documented marketplace method');
   snapshot('0-before-start');
   let total = 0;
+  let instant = 0;
   const idea = 'Build the product described in SCOPE.md in this directory. Read SCOPE.md first: its acceptance criteria D1-D10 are the agreed scope and must be carried into the architecture brief unchanged.';
   const first = await session(1, `/eccode:start ${idea}`, { killTrigger: true });
   total += first.costUsd || 0;
@@ -185,7 +200,19 @@ async function waitForLimit(rec) {
     const r = await session(n, '/eccode:resume', { killTrigger: false });
     total += r.costUsd || 0;
     snapshot(`${n}-after-session-${n}`);
-    if (await waitForLimit(r)) n -= 1; // a session the limit stopped does not count against --max-sessions
+    const waited = await waitForLimit(r);
+    if (waited === 'stop') break;
+    if (waited) {
+      n -= 1; // a session the limit stopped does not count against --max-sessions
+      instant = 0;
+      continue;
+    }
+    instant = (r.costUsd || 0) === 0 && r.wallMin < 0.3 ? instant + 1 : 0;
+    if (instant >= 2) {
+      console.log('two sessions in a row failed instantly without a recognised cause; stopping instead of repeating them');
+      log.push({ label: 'instant-failures-stop', at: new Date().toISOString(), lastText: r.finalText });
+      break;
+    }
   }
   dropToken(state);
   const audit = spawnSync(process.execPath, [path.join(toolkit, 'bin', 'eccode.js'), 'audit', '--root', work], { encoding: 'utf8' });

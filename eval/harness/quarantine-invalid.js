@@ -23,7 +23,7 @@ const arg = (n, d) => {
 const run = path.resolve(arg('run'));
 const split = arg('split', 'holdout');
 const dry = process.argv.includes('--dry-run');
-const PATTERN = /you'?ve hit your (session|usage|weekly|rate)? ?limit|session limit ·|usage limit reached/i;
+const PATTERN = /you'?ve hit your (session|usage|weekly|rate)? ?limit|(session|weekly) limit ·|usage limit reached/i;
 
 const base = path.join(run, 'trials', split);
 const quarantine = path.join(run, 'trials', `${split}-invalid`);
