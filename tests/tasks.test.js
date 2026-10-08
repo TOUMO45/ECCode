@@ -87,6 +87,10 @@ test('task completion requires a valid handoff, fresh passing evidence and in-sc
   expectCode(() => tasks.complete(store, config, 'api', 'backend-engineer', incomplete), 'INVALID_HANDOFF');
 
   expectCode(() => tasks.complete(store, config, 'api', 'frontend-engineer', handoffFor('api', 'frontend-engineer', [ok.id], ['src/server/app.js'])), 'OWNERSHIP');
+  // Leaving README.md out of the handoff does not hide it: git shows it changed during the claim.
+  err = expectCode(() => tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ok.id], ['src/server/app.js'])), 'INVALID_HANDOFF');
+  assert.match(err.message, /no task declares.*README\.md/);
+  require('fs').rmSync(require('path').join(dir, 'README.md'));
   tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ok.id], ['src/server/app.js']));
   const t = store.state().tasks.api;
   assert.strictEqual(t.status, 'done');

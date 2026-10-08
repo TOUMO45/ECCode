@@ -389,6 +389,212 @@ test('#14 protected paths cover the installed engine, toolkit internals and the 
   }
 });
 
+// ------------------------------------------ gates, tasks, delivery (#6–#8, #10, #18–#20)
+
+const { deliver, unreviewedChanges } = require('../lib/delivery');
+const { execFileSync } = require('child_process');
+const { task: planTask, passCheck, DESIGN_MD } = require('./helpers');
+
+function gitCommit(dir, msg = 'base') {
+  execFileSync('git', ['add', '-A'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', msg], { cwd: dir });
+}
+
+function doTask(ctx, id, owner, files) {
+  tasks.claim(ctx.store, ctx.config, id, owner);
+  for (const f of files) write(ctx.dir, f, `// ${id}\n`);
+  return tasks.complete(ctx.store, ctx.config, id, owner, handoffFor(id, owner, [passCheck(ctx.store, owner).id], files));
+}
+
+function approvePhase(ctx) {
+  const ev = passCheck(ctx.store, 'technical-reviewer');
+  gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', approval([[`ev:${ev.id}`]]));
+}
+
+function verifyAndDeliver(ctx, artifacts = []) {
+  gates.startGate(ctx.store, ctx.config, 'verification', 'orchestrator');
+  write(ctx.dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green.\n');
+  gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verification.md', ...artifacts] });
+  const ev = passCheck(ctx.store, 'security-reviewer');
+  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`]]));
+  return deliver(ctx.store, 'delivery-lead');
+}
+
+test('#6 explicit phase artifacts never replace the code the tasks changed (it is always pinned)', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  doTask(ctx, 'api', 'backend-engineer', ['src/server/a.js']);
+  doTask(ctx, 'ui', 'frontend-engineer', ['src/web/b.js']);
+  doTask(ctx, 'tests', 'test-engineer', ['tests/c.test.js']);
+  write(ctx.dir, 'docs/phase-notes.md', '# notes\nphase done\n');
+  gates.submit(ctx.store, ctx.config, 'phase:core', 'delivery-lead', { artifacts: ['docs/phase-notes.md'] });
+  const sub = ctx.store.state().gates['phase:core'].submissions[0];
+  assert.deepStrictEqual(sub.artifacts.map((a) => a.path).sort(), ['docs/phase-notes.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js']);
+  approvePhase(ctx);
+  fs.writeFileSync(path.join(ctx.dir, 'src/server/a.js'), 'require("child_process").exec(process.env.X)\n');
+  assert.deepStrictEqual(unreviewedChanges(ctx.store.state(), ctx.dir).map((c) => c.path), ['src/server/a.js']);
+});
+
+test('#7 completion refuses undeclared changes outside the task (another task\'s files or nobody\'s)', () => {
+  const ctx = tmpProject();
+  write(ctx.dir, 'src/auth/policy.js', 'module.exports = { requireAuth: true };\n');
+  write(ctx.dir, 'README.md', 'user notes, uncommitted before the work started\n');
+  approveThroughPlan(ctx);
+  execFileSync('git', ['add', 'src/auth/policy.js'], { cwd: ctx.dir });
+  gitCommit(ctx.dir);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  write(ctx.dir, 'src/server/a.js', '// api\n');
+  write(ctx.dir, 'src/auth/policy.js', 'module.exports = { requireAuth: false };\n'); // via Bash, outside any ownership
+  write(ctx.dir, 'src/web/sneaky.js', '// inside ui ownership; ui is not claimed\n');
+  const ev = passCheck(ctx.store, 'backend-engineer');
+  const err = expectCode(() => tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/a.js'])), 'INVALID_HANDOFF');
+  assert.match(err.message, /src\/auth\/policy\.js/);
+  assert.match(err.message, /src\/web\/sneaky\.js/);
+  assert.doesNotMatch(err.message, /README\.md/, 'files already dirty (unchanged) at claim time are not blamed on the task');
+  fs.rmSync(path.join(ctx.dir, 'src/web/sneaky.js'));
+  execFileSync('git', ['checkout', '--', 'src/auth/policy.js'], { cwd: ctx.dir });
+  write(ctx.dir, 'README.md', 'edited during the task\n');
+  const err2 = expectCode(() => tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/a.js'])), 'INVALID_HANDOFF');
+  assert.match(err2.message, /README\.md/);
+  write(ctx.dir, 'README.md', 'user notes, uncommitted before the work started\n');
+  tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/a.js']));
+});
+
+test('#7 legitimate parallel and sequential work is attributable (claimed, completed and reset tasks)', () => {
+  const ctx = tmpProject({ configOverrides: { limits: { maxConcurrency: 3 } } });
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  tasks.claim(ctx.store, ctx.config, 'ui', 'frontend-engineer');
+  write(ctx.dir, 'src/server/a.js', '// api\n');
+  write(ctx.dir, 'src/web/b.js', '// ui in progress\n');
+  // api completes while ui is still working: ui's file is attributable to ui's claim.
+  tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [passCheck(ctx.store, 'backend-engineer').id], ['src/server/a.js']));
+  // ui completes after api: api's file is attributable to api's completion.
+  write(ctx.dir, 'src/web/b.js', '// ui\n');
+  tasks.complete(ctx.store, ctx.config, 'ui', 'frontend-engineer', handoffFor('ui', 'frontend-engineer', [passCheck(ctx.store, 'frontend-engineer').id], ['src/web/b.js']));
+  // Sequential work, then rework: files of earlier tasks are already on disk at each claim.
+  doTask(ctx, 'tests', 'test-engineer', ['tests/c.test.js']);
+  tasks.reset(ctx.store, 'api', 'orchestrator', 'rework after an internal finding');
+  doTask(ctx, 'api', 'backend-engineer', ['src/server/a.js']);
+  assert.ok(Object.values(ctx.store.state().tasks).every((t) => t.status === 'done'));
+});
+
+test('#8 task globs never reach into .eccode/ (config, artifacts), only .eccode/drafts/', () => {
+  const ctx = tmpProject();
+  const plan = { phases: samplePlan().phases, tasks: [planTask('cfg', 'devops-engineer', ['**/*.json']), planTask('docs', 'backend-engineer', ['**/*.md'])] };
+  approveThroughPlan(ctx, plan);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  tasks.claim(ctx.store, ctx.config, 'cfg', 'devops-engineer');
+  const cfgFile = path.join(ctx.dir, '.eccode/config.json');
+  const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+  cfg.limits.maxCostUsd = 1e9;
+  fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2));
+  write(ctx.dir, 'deploy/app.json', '{}');
+  write(ctx.dir, '.eccode/drafts/notes.json', '{}');
+  const ev = passCheck(ctx.store, 'devops-engineer');
+  const err = expectCode(() => tasks.complete(ctx.store, ctx.config, 'cfg', 'devops-engineer', handoffFor('cfg', 'devops-engineer', [ev.id], ['deploy/app.json', '.eccode/config.json'])), 'INVALID_HANDOFF');
+  assert.match(err.message, /outside task ownership.*\.eccode\/config\.json/);
+  tasks.complete(ctx.store, ctx.config, 'cfg', 'devops-engineer', handoffFor('cfg', 'devops-engineer', [ev.id], ['deploy/app.json', '.eccode/drafts/notes.json']));
+  tasks.claim(ctx.store, ctx.config, 'docs', 'backend-engineer');
+  write(ctx.dir, '.eccode/artifacts/spec.md', '# tampered approved spec\n');
+  write(ctx.dir, 'docs/guide.md', '# guide\n');
+  const ev2 = passCheck(ctx.store, 'backend-engineer');
+  expectCode(() => tasks.complete(ctx.store, ctx.config, 'docs', 'backend-engineer', handoffFor('docs', 'backend-engineer', [ev2.id], ['docs/guide.md', '.eccode/artifacts/spec.md'])), 'INVALID_HANDOFF');
+});
+
+test('#10 a plan submission interrupted before its import cannot be approved; delivery needs phases and tasks', () => {
+  const ctx = tmpProject();
+  const { store, config, dir } = ctx;
+  gates.startGate(store, config, 'architecture', 'orchestrator');
+  write(dir, '.eccode/artifacts/brief.md', ARCH_MD);
+  gates.submit(store, config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
+  gates.recordReview(store, config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  gates.startGate(store, config, 'design', 'orchestrator');
+  write(dir, '.eccode/artifacts/spec.md', DESIGN_MD);
+  gates.submit(store, config, 'design', 'technical-designer', { artifacts: ['.eccode/artifacts/spec.md'] });
+  gates.recordReview(store, config, 'design', 'technical-reviewer', approval([['artifact:.eccode/artifacts/spec.md']]));
+  gates.startGate(store, config, 'plan', 'orchestrator');
+  write(dir, '.eccode/artifacts/plan.json', JSON.stringify(samplePlan()));
+  const realCommit = store.commit.bind(store);
+  store.commit = (type, ...rest) => {
+    if (type === 'plan.imported') throw new Error('simulated crash before plan.imported');
+    return realCommit(type, ...rest);
+  };
+  assert.throws(() => gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] }), /simulated crash/);
+  store.commit = realCommit;
+  const err = expectCode(() => gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/plan.json']])), 'REVIEW_REJECTED');
+  assert.match(err.message, /not imported/);
+  // A record written by an older engine could still hold such an approval: delivery refuses it.
+  const sub = store.state().gates.plan.submissions[0];
+  store.commit('review.recorded', 'technical-reviewer', { gate: 'plan', review: approval([['artifact:.eccode/artifacts/plan.json']]), reviewId: util.newId('rev'), submissionId: sub.id });
+  const derr = expectCode(() => verifyAndDeliver(ctx), 'DELIVERY_BLOCKED');
+  assert.match(derr.message, /no phases|no tasks/);
+});
+
+test('#18 a done task cannot be reset while its phase is submitted or approved; approval needs every task done', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  doTask(ctx, 'api', 'backend-engineer', ['src/server/a.js']);
+  doTask(ctx, 'ui', 'frontend-engineer', ['src/web/b.js']);
+  doTask(ctx, 'tests', 'test-engineer', ['tests/c.test.js']);
+  gates.submit(ctx.store, ctx.config, 'phase:core', 'delivery-lead');
+  expectCode(() => tasks.reset(ctx.store, 'api', 'orchestrator', 'rework requested in chat'), 'INVALID_TRANSITION');
+  // A reset recorded by an older engine: the phase cannot be approved around it.
+  ctx.store.commit('task.reset', 'orchestrator', { task: 'api', reason: 'legacy reset' });
+  const ev = passCheck(ctx.store, 'technical-reviewer');
+  const err = expectCode(() => gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', approval([[`ev:${ev.id}`]])), 'REVIEW_REJECTED');
+  assert.match(err.message, /api\(pending\)/);
+  const ctx2 = tmpProject();
+  approveThroughPlan(ctx2);
+  gates.startGate(ctx2.store, ctx2.config, 'phase:core', 'orchestrator');
+  doTask(ctx2, 'api', 'backend-engineer', ['src/server/a.js']);
+  doTask(ctx2, 'ui', 'frontend-engineer', ['src/web/b.js']);
+  doTask(ctx2, 'tests', 'test-engineer', ['tests/c.test.js']);
+  gates.submit(ctx2.store, ctx2.config, 'phase:core', 'delivery-lead');
+  approvePhase(ctx2);
+  expectCode(() => tasks.reset(ctx2.store, 'api', 'orchestrator', 'late rework'), 'INVALID_TRANSITION');
+});
+
+test('#19 ev: file evidence is re-hashed when cited; a changed or deleted file is refused', () => {
+  const ctx = tmpProject();
+  write(ctx.dir, 'docs/threat-model.md', '# Threat model\nAll endpoints require auth.\n');
+  const fe = evidence.recordFile(ctx.store, 'architecture-reviewer', { file: 'docs/threat-model.md', label: 'threat model inspected' });
+  assert.strictEqual(evidence.resolveRef(ctx.store.state(), ctx.dir, `ev:${fe.id}`).ok, true);
+  fs.writeFileSync(path.join(ctx.dir, 'docs/threat-model.md'), '# Threat model\nAuth is optional.\n');
+  gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator');
+  write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD);
+  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
+  const err = expectCode(() => gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([[`ev:${fe.id}`]])), 'REVIEW_REJECTED');
+  assert.match(err.message, /changed since/);
+  fs.rmSync(path.join(ctx.dir, 'docs/threat-model.md'));
+  assert.match(evidence.resolveRef(ctx.store.state(), ctx.dir, `ev:${fe.id}`).reason, /deleted/);
+});
+
+test('#20 default phase artifacts skip deleted files and scratch drafts', () => {
+  const ctx = tmpProject();
+  write(ctx.dir, 'src/server/old.js', '// legacy\n');
+  gitCommit(ctx.dir);
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  fs.rmSync(path.join(ctx.dir, 'src/server/old.js'));
+  write(ctx.dir, 'src/server/new.js', '// new\n');
+  write(ctx.dir, '.eccode/drafts/handoff-api.json', '{}');
+  tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [passCheck(ctx.store, 'backend-engineer').id], ['src/server/old.js', 'src/server/new.js', '.eccode/drafts/handoff-api.json']));
+  doTask(ctx, 'ui', 'frontend-engineer', ['src/web/b.js']);
+  doTask(ctx, 'tests', 'test-engineer', ['tests/c.test.js']);
+  gates.submit(ctx.store, ctx.config, 'phase:core', 'delivery-lead');
+  const paths = ctx.store.state().gates['phase:core'].submissions[0].artifacts.map((a) => a.path).sort();
+  assert.deepStrictEqual(paths, ['src/server/new.js', 'src/web/b.js', 'tests/c.test.js']);
+  approvePhase(ctx);
+  fs.rmSync(path.join(ctx.dir, '.eccode/drafts'), { recursive: true }); // routine scratch cleanup
+  verifyAndDeliver(ctx);
+});
+
 test('#22 memory ids are validated before they are used as paths', () => {
   const ctx = tmpProject();
   write(ctx.dir, 'x.json', '{"id":"x","layer":"project","revisions":[{"content":{"title":"t"}}],"reviews":[]}');
