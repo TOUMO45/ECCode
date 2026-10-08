@@ -71,7 +71,7 @@ Self-improvement
   improve evaluate <id> --actor <a> --variant baseline|candidate -- <command...>
   improve review <id> --actor <reviewer> --decision approve|reject --notes <text>
   improve adopt <id> --actor user|orchestrator
-  improve rollback <id> --actor <a> --reason <text>
+  improve rollback <id> --actor user|orchestrator --reason <text> [--regression]
   improve list
 
 Other

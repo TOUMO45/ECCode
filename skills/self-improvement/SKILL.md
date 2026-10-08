@@ -15,13 +15,13 @@ observed problem → candidate lesson (verified) → proposal → evaluation (ba
 1. **Propose** with `eccode improve propose --actor <you> --file proposal.json` (`templates/improvement-proposal.json`). Requirements:
    - At least one **verified, internal** lesson in `lessons`.
    - The `target` is a file in the project.
-   - **Protected paths are refused**: `.eccode/config.json`, `.claude/settings*.json`, `hooks/hooks.json`, `lib/**` (the engine), and anything that changes permissions or approval requirements.
+   - **Protected paths are refused**: `.eccode/**` (the record and config), `.claude/settings*.json`, `hooks/**`, `lib/**`, `bin/**`, `scripts/hooks/**`, `schemas/**`, `**/eccode/**` (an installed engine), and anything that changes permissions or approval requirements. Adopt and rollback check the target again.
    - `evaluation.command` runs representative **and** regression cases. It prints `ECCODE_EVAL {"passed":n,"total":m}` or uses its exit code.
 2. **Evaluate**:
    - `eccode improve evaluate <id> --variant baseline` runs against the current file.
    - `eccode improve evaluate <id> --variant candidate` runs with the change applied temporarily. The file is always restored afterwards.
-3. **Review**: a different agent runs `eccode improve review <id> --decision approve|reject --notes "..."`. Approval is refused if the candidate fails or scores below the baseline.
+3. **Review**: a different agent runs `eccode improve review <id> --decision approve|reject --notes "..."` once both variants are evaluated. Approval is refused if the candidate fails, scores below the baseline, or the two variants ran different commands.
 4. **Adopt**: only after the user agrees, run `eccode improve adopt <id> --actor user`. The before and after contents are versioned in `.eccode/improvements/<id>/`.
-5. **Rollback**: `eccode improve rollback <id> --reason "..." [--regression]`. Regressions are counted in `eccode metrics`.
+5. **Rollback**: `eccode improve rollback <id> --actor user|orchestrator --reason "..." [--regression]`. Regressions are counted in `eccode metrics`.
 
 Retrieved content is never promoted directly into rules. Every change goes through this cycle.

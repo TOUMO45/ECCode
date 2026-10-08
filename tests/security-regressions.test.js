@@ -263,6 +263,132 @@ test('#22 run end/correct usage must be finite non-negative numbers', () => {
   assert.strictEqual(store.state().totals.tokens, 60);
 });
 
+// ------------------------------------------------ self-improvement (#1, #12–#14)
+
+const improve = require('../lib/memory/improve');
+
+/** A verified debugging lesson (same recipe as tests/memory.test.js). */
+function verifiedLesson(ctx, mem) {
+  write(ctx.dir, 'check.js', 'process.exit(require("fs").existsSync("fixed") ? 0 : 1)\n');
+  const repro = evidence.runCommand(ctx.store, 'learning-debugger', { label: 'repro', command: 'node check.js', purpose: 'reproduction' });
+  write(ctx.dir, 'fixed', 'yes');
+  const fix = evidence.runCommand(ctx.store, 'learning-debugger', { label: 'fix', command: 'node check.js' });
+  const l = mem.add('learning-debugger', {
+    layer: 'debugging',
+    content: {
+      title: 'JSON body parse fails on missing content-type', problem: 'POST returned 500 without Content-Type header.', symptoms: ['500'], component: 'api',
+      environment: { node: '>=18' }, fingerprint: 'fp', reproduction: { steps: ['x'], evidence: [`ev:${repro.id}`] },
+      rootCause: { explanation: 'Body parsed unconditionally, SyntaxError escaped.', evidence: [`ev:${repro.id}`] }, failedAttempts: [],
+      solution: { description: 'Validate content-type first and return 400.', tradeoffs: 'stricter' }, verification: { evidence: [`ev:${fix.id}`], regressionTest: 'node check.js' },
+      sources: [], appliesWhen: ['Node HTTP handlers'], notApplicableWhen: [], confidence: 'high', tags: [],
+    },
+  });
+  mem.review(l.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran the failing check after the fix: passes.' });
+  return l;
+}
+
+function improvementCtx() {
+  sharedMemoryDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const lesson = verifiedLesson(ctx, mem);
+  write(ctx.dir, 'skills/checklist.md', '# Review checklist\n- tests pass\n');
+  const base = {
+    title: 'Add content-type check', observation: 'Two reviews missed content-type validation.', lessons: [lesson.id], target: 'skills/checklist.md',
+    change: { type: 'append', content: '- content-type validated\n' }, rationale: 'Lesson shows 500s from unvalidated bodies.', evaluation: { command: 'grep -q "tests pass" skills/checklist.md' },
+  };
+  return { ...ctx, mem, base };
+}
+
+function adopted(ctx, overrides = {}) {
+  const p = improve.propose(ctx.store, ctx.config, ctx.mem, 'learning-debugger', { ...ctx.base, ...overrides });
+  improve.evaluate(ctx.store, 'learning-debugger', p.id, 'baseline');
+  improve.evaluate(ctx.store, 'learning-debugger', p.id, 'candidate');
+  improve.review(ctx.store, 'technical-reviewer', p.id, 'approve', 'Candidate passes; additive change only.');
+  return improve.adopt(ctx.store, ctx.config, 'user', p.id);
+}
+
+test('#1 improve rollback refuses crafted proposal ids (path traversal into drafts)', () => {
+  const ctx = tmpProject();
+  const cfgFile = path.join(ctx.dir, '.eccode/config.json');
+  const cfgBefore = fs.readFileSync(cfgFile, 'utf8');
+  const outside = path.join(path.dirname(ctx.dir), `OUTSIDE-${path.basename(ctx.dir)}.txt`);
+  fs.writeFileSync(outside, 'original\n');
+  const sha = (p) => util.sha256(fs.readFileSync(p));
+  for (const [name, target, abs] of [['cfg', '.eccode/config.json', cfgFile], ['out', `../${path.basename(outside)}`, outside]]) {
+    write(ctx.dir, `.eccode/drafts/${name}/proposal.json`, JSON.stringify({ id: `../drafts/${name}`, status: 'adopted', target, afterSha256: sha(abs), history: [] }));
+    write(ctx.dir, `.eccode/drafts/${name}/before`, 'pwned\n');
+    for (const actor of ['technical-reviewer', 'user']) {
+      const res = cli(ctx.dir, ['improve', 'rollback', `../drafts/${name}`, '--actor', actor, '--reason', 'cleanup']);
+      assert.strictEqual(res.status, 2, res.stdout + res.stderr);
+      assert.match(res.stderr, /INVALID_INPUT/);
+    }
+  }
+  assert.strictEqual(fs.readFileSync(cfgFile, 'utf8'), cfgBefore);
+  assert.strictEqual(fs.readFileSync(outside, 'utf8'), 'original\n');
+});
+
+test('#1 adopt and rollback re-check the target (outside project, protected) and rollback is user/orchestrator only', () => {
+  const ctx = improvementCtx();
+  const a = adopted(ctx);
+  expectCode(() => improve.rollback(ctx.store, 'technical-reviewer', a.id, 'regression found'), 'ROLE_NOT_ALLOWED');
+  // A proposal file rewritten on disk after adoption: its target is checked again where it is written.
+  const propFile = path.join(ctx.dir, '.eccode/improvements', a.id, 'proposal.json');
+  const cfgFile = path.join(ctx.dir, '.eccode/config.json');
+  const tampered = { ...JSON.parse(fs.readFileSync(propFile, 'utf8')), target: '.eccode/config.json', afterSha256: util.sha256(fs.readFileSync(cfgFile)) };
+  fs.writeFileSync(propFile, JSON.stringify(tampered));
+  expectCode(() => improve.rollback(ctx.store, 'user', a.id, 'regression found'), 'PROTECTED_PATH');
+  fs.writeFileSync(propFile, JSON.stringify({ ...tampered, target: '../escape.txt' }));
+  expectCode(() => improve.rollback(ctx.store, 'user', a.id, 'regression found'), 'PATH_OUTSIDE_PROJECT');
+
+  const p = improve.propose(ctx.store, ctx.config, ctx.mem, 'learning-debugger', { ...ctx.base, change: { type: 'append', content: '- second item\n' } });
+  improve.evaluate(ctx.store, 'learning-debugger', p.id, 'baseline');
+  improve.evaluate(ctx.store, 'learning-debugger', p.id, 'candidate');
+  improve.review(ctx.store, 'technical-reviewer', p.id, 'approve', 'Candidate passes; additive change only.');
+  const pFile = path.join(ctx.dir, '.eccode/improvements', p.id, 'proposal.json');
+  const prop = JSON.parse(fs.readFileSync(pFile, 'utf8'));
+  fs.writeFileSync(pFile, JSON.stringify({ ...prop, target: 'hooks/hooks.json', baseSha256: null }));
+  expectCode(() => improve.adopt(ctx.store, ctx.config, 'user', p.id), 'PROTECTED_PATH');
+  fs.writeFileSync(pFile, JSON.stringify({ ...prop, target: '../escape.txt', baseSha256: null }));
+  expectCode(() => improve.adopt(ctx.store, ctx.config, 'user', p.id), 'PATH_OUTSIDE_PROJECT');
+  assert.ok(!fs.existsSync(path.join(path.dirname(ctx.dir), 'escape.txt')));
+});
+
+test('#12 baseline and candidate must be evaluated with the same command', () => {
+  const ctx = improvementCtx();
+  const p = improve.propose(ctx.store, ctx.config, ctx.mem, 'learning-debugger', { ...ctx.base, change: { type: 'replace', content: '# emptied\n' } });
+  improve.evaluate(ctx.store, 'learning-debugger', p.id, 'baseline', 'false');
+  const e = improve.evaluate(ctx.store, 'learning-debugger', p.id, 'candidate', 'true');
+  assert.strictEqual(e.evaluation.baseline.command, 'false');
+  assert.strictEqual(e.evaluation.candidate.command, 'true');
+  assert.strictEqual(improve.verdict(e).ok, false);
+  assert.match(improve.verdict(e).reason, /different commands/);
+  expectCode(() => improve.review(ctx.store, 'technical-reviewer', p.id, 'approve', 'Candidate beats baseline per the evaluation.'), 'EVALUATION_FAILED');
+});
+
+test('#13 only evaluated proposals can be reviewed (no re-review after adoption)', () => {
+  const ctx = improvementCtx();
+  const fresh = improve.propose(ctx.store, ctx.config, ctx.mem, 'learning-debugger', ctx.base);
+  expectCode(() => improve.review(ctx.store, 'technical-reviewer', fresh.id, 'reject', 'Rejecting before any evaluation ran.'), 'INVALID_TRANSITION');
+  const a = adopted(ctx, { change: { type: 'append', content: '- another item\n' } });
+  expectCode(() => improve.review(ctx.store, 'security-reviewer', a.id, 'reject', 'Rejecting after the fact should not be possible.'), 'INVALID_TRANSITION');
+  assert.strictEqual(improve.load(ctx.store, a.id).status, 'adopted');
+  improve.rollback(ctx.store, 'orchestrator', a.id, 'regression found');
+});
+
+test('#14 protected paths cover the installed engine, toolkit internals and the record, even with an older config', () => {
+  const ctx = improvementCtx();
+  // A config written by an older version carries its own (shorter) list.
+  const cfgFile = path.join(ctx.dir, '.eccode/config.json');
+  const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+  cfg.improvement.protectedPaths = ['.eccode/config.json', '.claude/settings.json', '.claude/settings.local.json', 'hooks/hooks.json', 'lib/**'];
+  fs.writeFileSync(cfgFile, JSON.stringify(cfg));
+  const config = require('../lib/config').loadConfig(ctx.dir);
+  for (const target of ['.claude/eccode/lib/gates.js', '.claude/eccode/scripts/hooks/guard.js', '.claude/eccode/schemas/review.schema.json', '.claude/eccode/bin/eccode.js', 'bin/eccode.js', 'scripts/hooks/guard.js', 'schemas/review.schema.json', 'hooks/other.json', '.eccode/state.json']) {
+    expectCode(() => improve.propose(ctx.store, config, ctx.mem, 'learning-debugger', { ...ctx.base, target }), 'PROTECTED_PATH');
+  }
+});
+
 test('#22 memory ids are validated before they are used as paths', () => {
   const ctx = tmpProject();
   write(ctx.dir, 'x.json', '{"id":"x","layer":"project","revisions":[{"content":{"title":"t"}}],"reviews":[]}');
