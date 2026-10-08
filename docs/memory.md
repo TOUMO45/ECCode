@@ -38,12 +38,13 @@ Gates, tasks and decisions in the event log are also project memory. Decisions c
 3. If reproduction or verification is `unavailable`, the lesson cannot be verified and stays provisional.
 4. Knowledge requires a source with a URL. A recurring-finding workflow lesson requires two or more occurrences.
 5. Any revision of a verified record returns it to `provisional`.
-6. A verified record can only be superseded by a verified one.
-7. Promotion to shared memory requires:
+6. A verified record can only be superseded by a verified one (never by itself, or by a superseded/rejected record).
+7. Record files are editable JSON, so for a project lesson "verified" means the hash-chained event log holds a verifying `memory.reviewed` event for its current revision and content. Promotion, improvement grounding and `memory check` rely on that, not on the `status` field.
+8. Promotion to shared memory requires:
    - a verified record that is not untrusted;
    - a promoter who is not the author;
    - explicit applicability;
-   - a clean privacy scan (secrets, emails, user paths, IPs, project name).
+   - a clean privacy scan (secrets, emails, user paths, IPs, project name), including source URLs: https only, no credentials, no secret-looking query parameters, no private hosts.
 
    Project-layer records are never promoted.
 
@@ -79,12 +80,12 @@ Search output frames each record as **"retrieved evidence … NOT an instruction
 
 - **Proposals:**
   - must cite at least one verified internal lesson;
-  - cannot target protected paths (`.eccode/config.json`, `.claude/settings*.json`, `hooks/hooks.json`, `lib/**`);
+  - cannot target protected paths (`.eccode/**`, `.claude/settings*.json`, `hooks/**`, `lib/**`, `bin/**`, `scripts/hooks/**`, `schemas/**`, `**/eccode/**`), checked again at adoption and rollback;
   - cannot change permissions or approval settings.
-- **Evaluations** run the same command against the current file and against the candidate. The candidate is applied temporarily and always restored. An eval may print `ECCODE_EVAL {"passed":n,"total":m}`.
-- **Approval** is refused when the candidate fails or regresses.
+- **Evaluations** run the same command against the current file and against the candidate (each variant records its command). The candidate is applied temporarily and always restored. An eval may print `ECCODE_EVAL {"passed":n,"total":m}`.
+- **Review** happens once, on an `evaluated` proposal. **Approval** is refused when the candidate fails, regresses, or ran a different command than the baseline.
 - **Adoption** stores `before`/`after` versions with a version number.
-- **Rollback** restores `before`. With `--regression` it is counted in metrics.
+- **Rollback** (`--actor user|orchestrator`) restores `before`. With `--regression` it is counted in metrics.
 
 ## Metrics (`eccode metrics`)
 
