@@ -110,6 +110,25 @@ const lastReviewId = (gate) => JSON.parse(fs.readFileSync(path.join(work, '.ecco
 const reviewOf = (id) => JSON.parse(fs.readFileSync(path.join(work, '.eccode', 'state.json'), 'utf8')).reviews[id];
 const gateStatus = (gate) => JSON.parse(fs.readFileSync(path.join(work, '.eccode', 'state.json'), 'utf8')).gates[gate].status;
 
+/**
+ * Review a submitted gate with a fresh reviewer session. While the reviewer
+ * requests changes, a fresh author session revises against the findings and
+ * resubmits (--responds-to), and a fresh reviewer re-reviews, up to maxRounds.
+ */
+async function reviewLoop(gate, { reviewerRole, authorRole, artifact, label, maxRounds = 3, authorExtra = '' }) {
+  for (let round = 1; round <= maxRounds; round++) {
+    await roleSession(`review-${label}-${round}`, reviewerRole, reviewPrompt(gate, reviewerRole));
+    const id = lastReviewId(gate);
+    const rv = id && reviewOf(id);
+    steps.push({ label: `${gate} review ${round}`, reviewId: id, decision: rv && rv.decision, findings: rv && (rv.findings || []).map((f) => ({ id: f.id, severity: f.severity, title: f.title })), resolvedFindings: rv && rv.resolvedFindings, gate: gateStatus(gate) });
+    if (gateStatus(gate) !== 'changes_requested') return gateStatus(gate);
+    const findings = (rv.findings || []).map((f) => `- ${f.id} [${f.severity}] ${f.title}: ${f.detail} Recommendation: ${f.recommendation}`).join('\n');
+    await roleSession(`revise-${label}-${round}`, authorRole, `CLI: eccode (on PATH). The project is the current directory. Your submission for gate "${gate}" was rejected by review ${id}. Open findings:\n${findings}\n\nRevise ${artifact} so that it addresses every finding, then resubmit with eccode gate submit ${gate} --actor ${authorRole} --artifact ${artifact} --responds-to ${id}. ${authorExtra}Report what you changed.`);
+    if (gateStatus(gate) !== 'submitted') return gateStatus(gate);
+  }
+  return gateStatus(gate);
+}
+
 (async () => {
   cli('init (delivery profile)', ['init', '--name', 'Notes Vault', '--idea', 'A private notes API: each user creates, lists, reads and deletes only their own notes.']);
 
@@ -120,10 +139,9 @@ const gateStatus = (gate) => JSON.parse(fs.readFileSync(path.join(work, '.eccode
   cli('architecture: start', ['gate', 'start', 'architecture', '--actor', 'orchestrator']);
   copy('brief.md', '.eccode/artifacts/brief.md');
   cli('architecture: submit (product-architect)', ['gate', 'submit', 'architecture', '--actor', 'product-architect', '--artifact', '.eccode/artifacts/brief.md']);
-  const arch = await roleSession('review-architecture', 'architecture-reviewer', reviewPrompt('architecture', 'architecture-reviewer'));
-  steps.push({ label: 'architecture gate status', status: gateStatus('architecture'), note: 'a sound brief; a rejection here would be a reviewer false positive' });
-  if (gateStatus('architecture') !== 'approved') {
-    console.log('architecture not approved; the challenge continues only if approved. Stopping.');
+  const archStatus = await reviewLoop('architecture', { reviewerRole: 'architecture-reviewer', authorRole: 'product-architect', artifact: '.eccode/artifacts/brief.md', label: 'architecture' });
+  if (archStatus !== 'approved') {
+    console.log(`architecture ended as ${archStatus}; stopping.`);
     return finish(1);
   }
 
@@ -138,22 +156,9 @@ const gateStatus = (gate) => JSON.parse(fs.readFileSync(path.join(work, '.eccode
   write('probe-review.json', JSON.stringify(review(true, { evidence: [] })));
   cli('probe: approval without evidence is refused', ['gate', 'review', 'design', '--actor', 'technical-reviewer', '--file', path.join(work, 'probe-review.json')], { expectRefusal: 'REVIEW_REJECTED|evidence' });
 
-  const d1 = await roleSession('review-design-1', 'technical-reviewer', reviewPrompt('design', 'technical-reviewer'));
-  const d1Review = reviewOf(lastReviewId('design'));
-  steps.push({ label: 'design review 1', decision: d1Review && d1Review.decision, findings: d1Review && d1Review.findings, gate: gateStatus('design') });
-
-  // ---- Design: CORRECTION by a real technical-designer session --------------------------------
-  if (gateStatus('design') === 'changes_requested') {
-    const findings = (d1Review.findings || []).map((f) => `- ${f.id} [${f.severity}] ${f.title}: ${f.detail} Recommendation: ${f.recommendation}`).join('\n');
-    await roleSession('revise-design', 'technical-designer', `CLI: eccode (on PATH). The project is the current directory. Your design for gate "design" was rejected by review ${lastReviewId('design')}. Open findings:\n${findings}\n\nRevise .eccode/artifacts/design.md so that it addresses every finding against the approved brief (.eccode/artifacts/brief.md), then resubmit with eccode gate submit design --actor technical-designer --artifact .eccode/artifacts/design.md --responds-to ${lastReviewId('design')}. Report what you changed.`);
-    if (gateStatus('design') === 'submitted') {
-      await roleSession('review-design-2', 'technical-reviewer', reviewPrompt('design', 'technical-reviewer'));
-      const d2Review = reviewOf(lastReviewId('design'));
-      steps.push({ label: 'design review 2 (after correction)', decision: d2Review && d2Review.decision, resolvedFindings: d2Review && d2Review.resolvedFindings, gate: gateStatus('design') });
-    }
-  }
-  if (gateStatus('design') !== 'approved') {
-    console.log(`design ended as ${gateStatus('design')}; stopping before the plan.`);
+  const designStatus = await reviewLoop('design', { reviewerRole: 'technical-reviewer', authorRole: 'technical-designer', artifact: '.eccode/artifacts/design.md', label: 'design', authorExtra: 'Check the revised design against the approved brief (.eccode/artifacts/brief.md). ' });
+  if (designStatus !== 'approved') {
+    console.log(`design ended as ${designStatus}; stopping before the plan.`);
     return finish(1);
   }
 
@@ -164,9 +169,9 @@ const gateStatus = (gate) => JSON.parse(fs.readFileSync(path.join(work, '.eccode
     tasks: [{ id: 'api', phase: 'core', title: 'Implement notes API with tests', owner: 'backend-engineer', dependencies: [], inputs: ['.eccode/artifacts/brief.md', '.eccode/artifacts/design.md'], outputs: ['src/server.js', 'src/store.js', 'test/notes.test.js'], files: ['src/**', 'test/**', 'package.json'], acceptanceCriteria: ['AC1', 'AC2', 'AC3', 'AC4', 'AC5', 'AC6', 'AC7'], verification: { method: 'run the test suite', command: 'node --test' } }],
   }, null, 2));
   cli('plan: submit (delivery-lead)', ['gate', 'submit', 'plan', '--actor', 'delivery-lead', '--artifact', '.eccode/artifacts/plan.json']);
-  await roleSession('review-plan', 'technical-reviewer', reviewPrompt('plan', 'technical-reviewer'));
-  if (gateStatus('plan') !== 'approved') {
-    console.log(`plan ended as ${gateStatus('plan')}; stopping.`);
+  const planStatus = await reviewLoop('plan', { reviewerRole: 'technical-reviewer', authorRole: 'delivery-lead', artifact: '.eccode/artifacts/plan.json', label: 'plan' });
+  if (planStatus !== 'approved') {
+    console.log(`plan ended as ${planStatus}; stopping.`);
     return finish(1);
   }
 
@@ -184,21 +189,17 @@ const gateStatus = (gate) => JSON.parse(fs.readFileSync(path.join(work, '.eccode
   write('handoff.json', JSON.stringify({ from: 'backend-engineer', to: 'delivery-lead', task: 'api', objective: 'Implement the notes API', context: 'Per approved brief and design', inputs: ['.eccode/artifacts/design.md'], expectedOutput: 'Working API with tests', acceptanceCriteria: ['AC1-AC7'], completedWork: 'Endpoints and tests implemented; test suite passes.', filesChanged: ['src/server.js', 'src/store.js', 'test/notes.test.js', 'package.json'], evidence: [`ev:${evId}`], remainingIssues: [], nextAction: 'phase review' }));
   cli('task: complete with handoff', ['task', 'complete', 'api', '--actor', 'backend-engineer', '--handoff', path.join(work, 'handoff.json')]);
   cli('phase: submit (delivery-lead)', ['gate', 'submit', 'phase:core', '--actor', 'delivery-lead']);
-  await roleSession('review-phase-1', 'security-reviewer', reviewPrompt('phase:core', 'security-reviewer'));
-  const p1 = reviewOf(lastReviewId('phase:core'));
-  steps.push({ label: 'phase review 1', decision: p1 && p1.decision, findings: p1 && p1.findings, gate: gateStatus('phase:core') });
-
-  // ---- Implementation: CORRECTION by a real backend-engineer session ------------------------------
-  if (gateStatus('phase:core') === 'changes_requested') {
+  // Review / correct loop for the phase: the corrections are real backend-engineer sessions.
+  for (let round = 1; round <= 3; round++) {
+    await roleSession(`review-phase-${round}`, 'security-reviewer', reviewPrompt('phase:core', 'security-reviewer'));
     const rid = lastReviewId('phase:core');
-    const findings = (p1.findings || []).map((f) => `- ${f.id} [${f.severity}] ${f.title}: ${f.detail} Recommendation: ${f.recommendation}`).join('\n');
-    cli('task: reset for rework (orchestrator)', ['task', 'reset', 'api', '--actor', 'orchestrator', '--reason', `review ${rid} found blocking defects`]);
-    await roleSession('fix-implementation', 'backend-engineer', `CLI: eccode (on PATH). The project is the current directory. Phase "core" was rejected by review ${rid}. Open findings:\n${findings}\n\nTask "api" has been reset. Claim it (eccode task claim api --actor backend-engineer), fix every finding in the code AND add automated tests that would have caught each defect, run the tests with eccode evidence run --actor backend-engineer --label <label> --task api -- node --test, complete the task with a handoff (the handoff JSON schema is in schemas/handoff.schema.json of the toolkit, and your agent instructions describe it), then resubmit the phase: eccode gate submit phase:core --actor delivery-lead is the delivery-lead's job, so as an implementer use --actor backend-engineer with --responds-to ${rid}. Report what you changed.`);
-    if (gateStatus('phase:core') === 'submitted') {
-      await roleSession('review-phase-2', 'security-reviewer', reviewPrompt('phase:core', 'security-reviewer'));
-      const p2 = reviewOf(lastReviewId('phase:core'));
-      steps.push({ label: 'phase review 2 (after correction)', decision: p2 && p2.decision, resolvedFindings: p2 && p2.resolvedFindings, gate: gateStatus('phase:core') });
-    }
+    const rv = reviewOf(rid);
+    steps.push({ label: `phase review ${round}`, reviewId: rid, decision: rv && rv.decision, findings: rv && (rv.findings || []).map((f) => ({ id: f.id, severity: f.severity, title: f.title })), resolvedFindings: rv && rv.resolvedFindings, gate: gateStatus('phase:core') });
+    if (gateStatus('phase:core') !== 'changes_requested') break;
+    const findings = (rv.findings || []).map((f) => `- ${f.id} [${f.severity}] ${f.title}: ${f.detail} Recommendation: ${f.recommendation}`).join('\n');
+    cli(`task: reset for rework after review ${round} (orchestrator)`, ['task', 'reset', 'api', '--actor', 'orchestrator', '--reason', `review ${rid} found blocking defects`]);
+    await roleSession(`fix-implementation-${round}`, 'backend-engineer', `CLI: eccode (on PATH). The project is the current directory. Phase "core" was rejected by review ${rid}. Open findings:\n${findings}\n\nTask "api" has been reset. Claim it (eccode task claim api --actor backend-engineer), fix every finding in the code AND add automated tests that would have caught each defect, run the tests with eccode evidence run --actor backend-engineer --label <label> --task api -- node --test, complete the task with a handoff (start from eccode template handoff), then resubmit the phase as an implementer with eccode gate submit phase:core --actor backend-engineer --responds-to ${rid}. Report what you changed.`);
+    if (gateStatus('phase:core') !== 'submitted') break;
   }
   finish(0);
 })();
