@@ -73,17 +73,14 @@ This report sorts its claims into three groups: **Verified** (backed by tests, e
 - **Controlled self-improvement:**
   - Two reviews refused for `"decision": "approved"` were turned into a workflow lesson, then a proposal against `skills/review-gate/SKILL.md`.
   - The candidate scored 7/7 against a 4/7 baseline. The eval cases were mutation-tested by the reviewer.
-  - It was approved by an independent reviewer and is **not adopted**: adoption requires the user.
+  - It was approved by an independent reviewer and **adopted by the user** as v1, with a rollback path. The post-adoption eval passed.
 
 **Verification gate outcome.**
-- The independent security-reviewer re-ran `npm test` (439/439) and checked the recorded eval log. They recorded **changes_requested** with blocking finding VER-1, review `rev-muyresnd-018b7c44`. The reason: an approved success criterion (SC2, the holdout floor) is not met, and no user decision is recorded.
-- `eccode deliver` then **refused** with exit code 2:
-  - verification is `changes_requested`;
-  - two verification documents were modified after their last approval.
-- The workflow is complete up to the point where only the user can decide (RISK-12):
-  - (a) accept the miss as a known fallback limitation and amend SC2 for this release;
-  - (b) authorise a rules revision validated on a fresh holdout.
-- All 8 other gates are approved. All 17 tasks are done.
+1. The first verification review was **changes_requested**, with blocking finding VER-1: approved Success Criterion 2 (the holdout floor) was not met. `eccode deliver` refused with exit code 2.
+2. The orchestrator asked the user. On 2026-10-08 the user **accepted RISK-12** (amending SC2/AC8 for this release only), confirmed the defaults, and **adopted** the review-gate improvement. These were recorded as `--actor user` events 520–522. The orchestrator transcribed them from the user's answers; the CLI cannot prove a human typed them (VER-2, see §5.1).
+3. The delivery-lead cited the decision without changing any result. security-reviewer then verified that the decision events are in the chain, that the results are unchanged against the original eval log, that `npm test` passes 439/439, and that the frozen hashes are intact. They **approved** the verification gate.
+4. `eccode audit` passed with 536 events and approved artifacts unchanged. `eccode deliver` then produced the **verified final handoff**, [`examples/triage-desk/.eccode/delivery/final-handoff.md`](../examples/triage-desk/.eccode/delivery/final-handoff.md).
+5. Final totals: 9/9 gates approved, of which **4 were rejected once first**. 13 reviews were recorded and **5 were refused by gate rules**. 17/17 tasks were done, over about 219 agent-minutes and about 6.5M tokens.
 
 **Toolkit defects found and fixed during the demo** (each with a reproduction test first):
 
@@ -101,13 +98,13 @@ This report sorts its claims into three groups: **Verified** (backed by tests, e
 
 | Metric | Value | Note |
 |---|---|---|
-| Review rejection rate | 3/10 | All three were first drafts of document gates |
-| Reviews refused by gate rules | 2 | Both a malformed `decision` value |
+| Review rejection rate | 4/13 | First drafts of the three document gates, plus the first verification |
+| Reviews refused by gate rules | 5 | 2× malformed `decision` value, 3× a "met" criterion citing the failed eval run |
 | Repeated-bug fingerprints | 0/1 | Single-project sample |
 | Median time to verified fix | 10.1 min | n=1 |
 | Recurrence after fix | 0 | The legacy-project case was pre-fix data, not a recurrence |
 | Applicability checks | 66 applies / 22 does-not-apply / 7 provisional | "Applies" means the environment matches, not that the lesson is relevant; agents judged relevance themselves |
-| Workflow changes adopted / regressions | 0 / 0 | One approved proposal awaits the user |
+| Workflow changes adopted / regressions | 1 / 0 | Review-gate skill v1, adopted by the user; post-adoption eval passed |
 
 Sample sizes are small. These are observations from one delivery, not trends.
 
@@ -124,10 +121,7 @@ Sample sizes are small. These are observations from one delivery, not trends.
 
 ## 6. Remaining work
 
-- **User decisions:**
-  - RISK-12: accept the holdout miss as a known fallback limitation, or commission a revision with a fresh holdout.
-  - Adopt the review-gate improvement `imp-muyofpap-01971797`.
-  - Confirm the orchestrator defaults: Q1 Haiku default, Q4 card redaction, Q7 zero dependencies.
+- **Fallback rules revision (VER-3):** the fallback's high-urgency recall (0.571) and its held-out-family injection recall (0.444) are accepted for this release. Improving them needs a rules revision validated on a **fresh**, unseen holdout.
 - A hotfix task type, so approved-phase files can be changed under re-review. That would clear RISK-10's schema-level gate and RISK-11's `exec` in package.json.
 - Make `run end` require usage figures, as the provisional lesson recommends.
 - Run the guard hook live in a plugin-installed session, and run the live-model evals with a key.

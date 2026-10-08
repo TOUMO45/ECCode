@@ -1,0 +1,1410 @@
+{
+  "project": {
+    "name": "TriageDesk",
+    "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
+    "createdAt": "2026-10-07T21:04:52.506Z"
+  },
+  "gates": [
+    {
+      "id": "architecture",
+      "approvedBy": "architecture-reviewer",
+      "iterations": 1
+    },
+    {
+      "id": "design",
+      "approvedBy": "technical-reviewer",
+      "iterations": 1
+    },
+    {
+      "id": "plan",
+      "approvedBy": "technical-reviewer",
+      "iterations": 1
+    },
+    {
+      "id": "phase:foundation",
+      "approvedBy": "technical-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:core-modules",
+      "approvedBy": "security-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:pipeline",
+      "approvedBy": "technical-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:rules-and-wiring",
+      "approvedBy": "security-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:integration",
+      "approvedBy": "technical-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "verification",
+      "approvedBy": "security-reviewer",
+      "iterations": 1
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-muyllyra-018a7124",
+      "label": "runtime-capabilities",
+      "status": "failed",
+      "exitCode": 2,
+      "recordedBy": "product-architect"
+    },
+    {
+      "id": "ev-muylm2jz-017e07c4",
+      "label": "runtime-capabilities",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "product-architect"
+    },
+    {
+      "id": "ev-muyls93g-01b3405c",
+      "label": "brief-consistency-and-eval-arithmetic",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "architecture-reviewer"
+    },
+    {
+      "id": "ev-muylz82a-01c7d490",
+      "label": "architecture: brief baseline patterns and test vectors (ARCH-1/2/7)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "product-architect"
+    },
+    {
+      "id": "ev-muym6mgn-016c806e",
+      "label": "repro: risk update wipes fields",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "learning-debugger"
+    },
+    {
+      "id": "ev-muym6v1n-011b942a",
+      "label": "experiment: object spread copies undefined-valued keys; JSON round-trip drops them",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "learning-debugger"
+    },
+    {
+      "id": "ev-muym6zly-019e5cb3",
+      "label": "architecture re-review: rerun brief-vectors.js (ARCH-1/2/7 baseline patterns)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "architecture-reviewer"
+    },
+    {
+      "id": "ev-muym78ex-01d9b8e9",
+      "label": "fix verified: risk update",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "learning-debugger"
+    },
+    {
+      "id": "ev-muym7byu-01f25152",
+      "label": "toolkit regression suite",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "learning-debugger"
+    },
+    {
+      "id": "ev-muym7oav-0127baed",
+      "label": "architecture re-review: adversarial probe of brief-vectors.js redaction/V1/V2 patterns (informational)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "architecture-reviewer"
+    },
+    {
+      "id": "ev-muymb01x-01ec5e0e",
+      "label": "review rerun: regression-risk-update test (post-fix)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muymb2za-016a248d",
+      "label": "review rerun: full toolkit suite",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muymb3qy-01495ec2",
+      "label": "review independent repro: regression test against pre-fix lib/store.js (HEAD~1) in scratch copy, expected FAIL",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muymb3uf-019c7deb",
+      "label": "review mechanism check: in-memory vs persisted reduce, snapshot==replay, audit (post-fix scratch copy)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muymb3xk-01517ccc",
+      "label": "review mechanism check on pre-fix copy (expected exit 1: snapshot!=replay)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muymby0c-012fa681",
+      "label": "review env check: regression test on Node v20.20.0 (post-fix)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muymbyv4-01332d57",
+      "label": "review env check: regression test on Node v20.20.0 against pre-fix store.js scratch copy, expected FAIL",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muymc241-015f6d71",
+      "label": "review env check: full toolkit suite on Node v20.20.0",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muymf5s2-01d768f3",
+      "label": "rerun regression",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muymg8r8-01d955e9",
+      "label": "security probe: hash chain + snapshot tamper + __proto__ payload through post-fix Store.commit",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muymgxlq-0175737d",
+      "label": "design: redaction/V1/V2/V3/schema reference vectors (ARCH-10, ARCH-11)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-designer"
+    },
+    {
+      "id": "ev-muymgxxk-01aac351",
+      "label": "design: node:http reject-before-body, missing Host, fetch Host override probe",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-designer"
+    },
+    {
+      "id": "ev-muymgy0l-01a4d4d1",
+      "label": "design: architecture brief vectors still pass (regression)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-designer"
+    },
+    {
+      "id": "ev-muymthcz-01062461",
+      "label": "rerun design-vectors.js (D3/D4 reference + binding vectors)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muymthp4-01f396c5",
+      "label": "rerun http-probe.js (C1 node:http behaviours)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muymwez0-01deadbe",
+      "label": "reviewer probe: fetch cross-origin redirect forwards x-api-key; redactor adversarial timing; V2 sentence-final product tokens; redaction edges",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyn4zke-019e45ac",
+      "label": "design iter 2: design vectors (DES-1 base URL, DES-3 mask, DES-4 adversarial redactor budget, DES-6 loopback HOST, DES-7 NBSP/TAB)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-designer"
+    },
+    {
+      "id": "ev-muyn4zyu-013e6c6b",
+      "label": "design iter 2: node:http + fetch redirect probe (DES-1: redirect:'error' throws on 307/308, 0 requests at other origin)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-designer"
+    },
+    {
+      "id": "ev-muyn501z-016e7008",
+      "label": "design iter 2: architecture brief vectors still pass (regression)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-designer"
+    },
+    {
+      "id": "ev-muynecja-012eae7c",
+      "label": "re-review: design reference vectors (iteration 2)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muynecy9-0119e964",
+      "label": "re-review: node:http/fetch probe (iteration 2)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muynefid-01c1267a",
+      "label": "re-review: http-probe header",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muynf17k-01beb841",
+      "label": "re-review probe: C6.4 redirect:'error' with real fetch (301/302/303/307/308, same-origin), stub 3xx, timeout; checkBaseUrl/isLoopbackHost/mask edge cases",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muynu051-0178325b",
+      "label": "plan-validate",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muynu07r-0139a268",
+      "label": "plan-checks-synthetic",
+      "status": "failed",
+      "exitCode": 2,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muynu7ai-01c82056",
+      "label": "plan-checks-synthetic-fixtures",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muynubgv-0188f807",
+      "label": "plan-checks-synthetic-fixtures",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muynwxjc-01df5aa4",
+      "label": "plan validate",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muynynhu-0159ff49",
+      "label": "ownership: pairwise overlap, spec-tree single owner, verification files owned",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muynynlv-01f7a511",
+      "label": "scaffold-check vs spec Deployment fixture (pass + mutated fail)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muynyxxl-01ff66ef",
+      "label": "integration readiness simulation (t16 vs t14/t15) and plan-check ownership",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyo2k5r-01b27283",
+      "label": "plan-validate-iter2",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyo2k7m-01ccdcf0",
+      "label": "check-scripts-sha256",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyo4n3o-016d6a83",
+      "label": "plan validate (iteration 2)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyo4n75-012220fa",
+      "label": "re-review PLAN-1..4: readyTasks sim, pinned hashes, toolkit scope",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyo7c9b-0141325a",
+      "label": "scaffold-check: exact package.json, .env.example and .gitignore lines",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-muyo7caz-013afe78",
+      "label": "spec §Deployment .env.example line-for-line diff + plan check sha256",
+      "status": "failed",
+      "exitCode": 2,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-muyo7j83-0193f206",
+      "label": ".env.example equals spec §Deployment block exactly + plan check sha256 unchanged",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-muyo92zp-019ff7ac",
+      "label": "repro: reviewer docs never state decision literal 'approve' (review-gate skill example is changes_requested only; technical/security reviewer docs); template placeholder invalid; ev 128/160 'approved' rejections",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "learning-debugger"
+    },
+    {
+      "id": "ev-muyo96d3-01a13297",
+      "label": "repro: reviewer docs never state decision literal 'approve' (review-gate skill example is changes_requested only; technical/security reviewer docs); template placeholder invalid; ev 128/160 'approved' rejections",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "learning-debugger"
+    },
+    {
+      "id": "ev-muyoba7q-013f7fc2",
+      "label": "t03 red: helpers self-test before helpers exist (expected fail)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyobxy2-01ca1f8e",
+      "label": "rerun docs check",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyoc4hc-010b81a8",
+      "label": "t02 D5 dataset precheck (pre-freeze)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyoc4k8-01b318cc",
+      "label": "t02 thresholds verbatim vs spec D5 + synthetic-data scan + split counts",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyoc8u1-010a58f5",
+      "label": "docs check flips to 0 on scratch copy with recommended fix applied (sensitivity)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyoc9sb-01a8edc1",
+      "label": "freeze",
+      "status": "recorded",
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyoc9ul-01ee7a22",
+      "label": "freeze",
+      "status": "recorded",
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyoc9wk-014a1edb",
+      "label": "freeze",
+      "status": "recorded",
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyocdue-01bf9525",
+      "label": "independent event-log check: decision-enum rejections, chain links, engine gate-status vocabulary",
+      "status": "failed",
+      "exitCode": 2,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyocjft-010056eb",
+      "label": "independent event-log check: decision-enum rejections at 128/160, chain links intact",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyodvof-01e95e26",
+      "label": "t03 verification: helper self-test (node:test, loopback only)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyodwft-010ec996",
+      "label": "t03 DES-1 mutation: spreading process.env into child env is caught by self-test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyofps9-01b9ad26",
+      "label": "pinned checks sha256",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyofu9j-0139d453",
+      "label": "foundation: npm test (full suite)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyofuch-01e776c5",
+      "label": "foundation: scaffold-check",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyofuf4-01eb6a59",
+      "label": "foundation: dataset-precheck",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyofv5m-01dadd4b",
+      "label": "foundation: helpers self-test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyog1au-0122d958",
+      "label": "foundation: E5 freeze ordering (no rules files in tree or git history)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyogar7-0144d00d",
+      "label": "foundation: E5 freeze ordering (no rules files in tree or git history) — rerun, previous attempt ev-muyog1au lost quoting",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyoj0wx-014372e5",
+      "label": "foundation review: pinned check-script sha256",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyoj105-0112e725",
+      "label": "foundation review: scaffold-check",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyoj13b-01ee254f",
+      "label": "foundation review: dataset-precheck",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyoj4sp-01298fb7",
+      "label": "foundation review: helpers self-test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyoj5nt-017cc128",
+      "label": "foundation review: npm test (whole suite)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyojhwo-01bcd17b",
+      "label": "foundation review: current eval sha256 equals freeze evidence (dataset b024a838.., holdout e7cbbfd2.., thresholds ee4703c1..)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyojhz1-0180de5c",
+      "label": "foundation review: E5 ordering - no rules files in tree or any git history",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyol0uj-0114b3d6",
+      "label": "foundation review: thresholds deep-equal D5, synthetic-data/PII scan, canary+url in ticket, held-out families and 5-grams absent from dataset.json",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyol4tx-01f46626",
+      "label": "foundation review: DES-1 mutation (spawn-server spreads process.env) is caught by helpers self-test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyot68l-0195349a",
+      "label": "failing-first: schema+prompt unit tests before implementation",
+      "status": "failed",
+      "exitCode": 2,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muyot988-015b069e",
+      "label": "failing-first: schema+prompt unit tests before implementation",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muyourms-01cf7af3",
+      "label": "DES-8 probe: new vectors fail on the approved reference regex, pass on schema.js; giu long-s folding",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muyouvn6-010a60ad",
+      "label": "t04 verification: node --test schema+prompt unit tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muyoux7a-0111e04d",
+      "label": "regression: approved design vectors and full npm test suite",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muyov7fz-017b9cd0",
+      "label": "regression: approved design vectors + helpers + t04 unit tests (excludes t06 in-progress files)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muyovjfx-011d3616",
+      "label": "t06 unit tests (failing first: modules not yet written)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyozhld-016a0617",
+      "label": "t06 verification: node --test config/log/ticket-input/http-server unit tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyozkrq-015ef6ee",
+      "label": "t06 flakiness: verification command 5x in a row, --test-concurrency=1 as npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyozl1r-0101ef18",
+      "label": "t06 probe: client abort mid-body / after 413, Expect: 100-continue on rejected and accepted requests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyozm6d-01e519fa",
+      "label": "regression: approved design vectors + t03 helpers self-test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyozywx-01930f5a",
+      "label": "regression: npm test (full suite present at this point: helpers, t04, t06)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyp0s5r-013108a6",
+      "label": "t07 ui tests (failing-first: public/ not built yet)",
+      "status": "failed",
+      "exitCode": 2,
+      "recordedBy": "frontend-engineer"
+    },
+    {
+      "id": "ev-muyp0usd-0198e6d8",
+      "label": "t07 ui tests (failing-first: public/ not built yet)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "frontend-engineer"
+    },
+    {
+      "id": "ev-muyp2upp-01c034ee",
+      "label": "t07 verification: node --test test/unit/ui.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "frontend-engineer"
+    },
+    {
+      "id": "ev-muyp2wc9-01fd37a7",
+      "label": "t07 mutation check: 11 mutations of public/ each fail ui.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "frontend-engineer"
+    },
+    {
+      "id": "ev-muyp2zyv-017a59c3",
+      "label": "failing-first: redact unit tests before implementation",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyp3114-017772b9",
+      "label": "regression: npm test (full suite incl. concurrent t06 work-in-progress)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "frontend-engineer"
+    },
+    {
+      "id": "ev-muyp3uet-01842bab",
+      "label": "t05 verification: node --test test/unit/redact.test.js (CARD/PHONE vectors, AC16, counts, DES-4 timing)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyp3uzo-01869d88",
+      "label": "t05 differential: src redact vs approved reference redact, 20000 seeded inputs",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyp5de6-01e7da49",
+      "label": "core-modules: pinned check-script sha256",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyp5lgv-01e0dd0c",
+      "label": "core-modules: full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyp5lnw-01679473",
+      "label": "t04 verification",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyp5m7l-01e1202c",
+      "label": "t05 verification",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyp5mns-01942bff",
+      "label": "t06 verification",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyp5mwc-015dca3f",
+      "label": "t07 verification",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyp5ndj-01ea77ab",
+      "label": "core-modules: design-vectors regression",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyp844n-01065832",
+      "label": "pinned check-script hashes",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyp8688-01772491",
+      "label": "npm test full suite",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyp8cls-01f10bab",
+      "label": "npm test full suite (exit code of npm, not tail)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyp8d3x-01152e56",
+      "label": "design vectors still pass",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyp8d6q-0103ecf3",
+      "label": "files changed since phase start vs ownership globs",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyp8gdu-01794a79",
+      "label": "project files (non-.eccode) changed since phase base a54af19",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muypb2dn-01ca2892",
+      "label": "security probe: Host/Origin ordering, rebinding Host variants, CORS, headers, CT, 413, JSON, 500 leakage, static paths, log content",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muypgo9y-01c9b8e3",
+      "label": "security probe: config base-URL/HOST/env vectors, redact ARCH-10/DES-7 + card fuzz + extra ReDoS inputs, V1-V4 vectors, V2 cost on long model output, prompt isolation, UI sinks",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyphdl4-01e7991b",
+      "label": "DES-8 unit vectors present and schema/prompt/redact/http/config/log/ticket-input/ui suites pass individually",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muypmd8r-018c1a6c",
+      "label": "TDD red: provider tests before implementation",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muypnaj3-01d37d63",
+      "label": "RISK-10 probe: ungated validateTriage vs gated analyse on 32k a.a.a. output",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muypnb2j-0102da46",
+      "label": "t09 verification: provider unit tests (green)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muypnh4g-01984d42",
+      "label": "full npm test (regression)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muypp18b-011a2484",
+      "label": "test-first: runner tests fail before eval/run.js and eval/metrics.js exist",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muypqup1-015548bf",
+      "label": "service.test.js before implementation (expected fail)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muypre2n-011d2bb7",
+      "label": "t10 verification: node --test test/unit/service.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyprgnt-0184611b",
+      "label": "full suite npm test (regression)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyprtl1-014cffa8",
+      "label": "unit+helpers suites (excludes concurrent t08 test/eval, which is in progress)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muypther-013e6ff1",
+      "label": "t08 verification: node --test test/eval/runner.test.js (synthetic fixtures only)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyptpub-01ba4b4d",
+      "label": "full npm test suite (all test/**/*.test.js)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyptq0w-01b0b96e",
+      "label": "npm run eval:tune before t11: expect exit 2 with missing-module error and TUNE_EVAL last line (real dataset.json only, holdout never opened)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muypvj3b-015a59df",
+      "label": "phase pipeline: pinned check-script hashes",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muypvqea-01f5833f",
+      "label": "phase pipeline: full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muypvrnx-0142b6e1",
+      "label": "phase pipeline: t08-eval-runner verification",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muypvs6j-01471527",
+      "label": "phase pipeline: t09-anthropic-provider verification",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muypvsd5-01883252",
+      "label": "phase pipeline: t10-service verification",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muypy8ln-01be8edf",
+      "label": "pinned check-script hashes (plan pipeline criterion)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muypyf0v-0117d202",
+      "label": "rerun full npm test after pipeline submission",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyq0yvh-01ea780e",
+      "label": "reviewer probe: real-fetch 307/308 vs fake-anthropic, timeouts, adversarial stubs, RISK-10 timing, service R12 order/egress, tune never touches --holdout, DES-9",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyq14mv-012e4827",
+      "label": "phase verification commands: t08/t09/t10 focused test files + git diff scope (no holdout/plan-checks changes)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyq5uro-0123fbdf",
+      "label": "t11 test-first: unit tests fail before implementation (red)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muyqa6rq-0128055f",
+      "label": "t11 verification: unit tests (injection + fallback) && npm run eval:tune (tune mode only; TUNE_EVAL)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muyqab5g-011923d2",
+      "label": "t11 regression: full npm test suite (synthetic eval fixtures only)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-muyqdta5-015d1d58",
+      "label": "red: app.test.js before app.js/server.js exist",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyqeh5v-01999e04",
+      "label": "task verification: node --test test/unit/app.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyqeq3m-01bde381",
+      "label": "smoke: npm start, GET /api/health, SIGTERM",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyqevuo-01f19e86",
+      "label": "smoke: npm start, GET /api/health, SIGTERM to npm (forwarded)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyqffgk-0110f022",
+      "label": "held-out hygiene test vs real t11 rules + self-check",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyqfgw9-01956dd3",
+      "label": "eval test suite (runner + hygiene)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyqghv3-01038cad",
+      "label": "smoke: npm start, GET /api/health with Host, SIGTERM to process group",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyqgpjd-012ca535",
+      "label": "full suite: npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muyqiwtq-012d673d",
+      "label": "pinned check-script hashes (rules-and-wiring)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyqj7y7-010cdbbd",
+      "label": "full npm test (rules-and-wiring)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyqj8cf-016da375",
+      "label": "t11 verification: injection+fallback unit tests and eval:tune",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyqj8nl-01a8a7f3",
+      "label": "t12-heldout-hygiene verification",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyqj91y-01b3f425",
+      "label": "t13-app-wiring verification",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyqmfzd-015ed641",
+      "label": "sec probe: fallback no-echo, detector ReDoS timing 16KB, app wiring no-key/live redaction via fake-anthropic, config error no-echo",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyqml2y-01be22e4",
+      "label": "detector scaling on dotted/hyphen runs (quadratic, bounded by 8000-char cap)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyqml56-01874738",
+      "label": "pinned check-script hashes",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyqmlep-0138d392",
+      "label": "heldout hygiene test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyqmt6w-01536eca",
+      "label": "npm test (full suite)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyqs2hf-01e11d03",
+      "label": "t15 contract tests: triage modes + redirect, redaction egress, privacy",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyqs8mc-019452dd",
+      "label": "full offline suite npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyqsgjb-015646a8",
+      "label": "t14 contract tests: http, http-guard, package, perf (serial)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyqssz8-0183709b",
+      "label": "full offline suite npm test (after t14 files)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-muyqx9xs-01f02cdc",
+      "label": "sha256 of pinned readme-check.js matches plan.md",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-muyqxcmi-01d58f92",
+      "label": "readme-check (pinned plan check)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-muyqxitt-01bf4764",
+      "label": "npm test (full suite)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-muyqxmp4-01bf70ef",
+      "label": "npm run eval:tune (tune split only, no holdout)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-muyqxn5o-014c7a3c",
+      "label": "README documented commands smoke: npm start, node src/server.js, node --env-file, health, config errors",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-muyqzh7j-01b4d13c",
+      "label": "check-script-hashes",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyqzhhe-012ee8fb",
+      "label": "heldout-hygiene",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyqzlcx-01d7f182",
+      "label": "heldout-hygiene",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyqzriz-012b8b53",
+      "label": "full-suite",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyqzv9i-018cf19d",
+      "label": "first-full-eval",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyr019l-01bbd9f9",
+      "label": "design-vectors",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyr13oz-01d57136",
+      "label": "browser-check",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyr69oz-018956fd",
+      "label": "integration: pinned check-script hashes",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyr6sn9-01d3030e",
+      "label": "integration: npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyr6suv-01515b55",
+      "label": "integration: eval:tune",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-muyr7v7u-01ddd9f4",
+      "label": "phase-integration rerun: pinned check hashes",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyr8192-01e50b2a",
+      "label": "phase-integration rerun: npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyr81by-01705378",
+      "label": "phase-integration rerun: readme-check",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyr9n8x-01953631",
+      "label": "phase-integration: verify first-full-eval log records ECCODE_EVAL and freeze sha256 lines",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyr9nb5-01c29561",
+      "label": "phase-integration: exactly one full-mode npm run eval evidence record",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyr9rrb-01460c7d",
+      "label": "phase-integration: exactly one full-mode npm run eval evidence record in state",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muyrcykm-017b4a4f",
+      "label": "verification review: npm test (offline, fallback)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyrd3fh-01f0b509",
+      "label": "verification review: eccode audit",
+      "status": "failed",
+      "exitCode": 2,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyrdya6-016ba8f5",
+      "label": "verification review: eval files still match freeze sha256",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyreol2-01500bbb",
+      "label": "verification review: recorded full eval log - injection/detector checks all PASS (AC7, SC4)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muyreonu-0169e4f1",
+      "label": "verification review: recorded full eval log - all 13 dataset-minimum CHECK lines PASS",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muz4rtnu-01eba046",
+      "label": "verification re-review: audit hash chain, snapshot==replay",
+      "status": "failed",
+      "exitCode": 2,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muz4rtrr-011e9a4f",
+      "label": "verification re-review: RISK-12 accepted + decisions recorded by actor user in hash-chained log; single full-mode eval",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muz4rtv1-01c429a3",
+      "label": "verification re-review: report/checklist cite user decision, results unchanged vs ev-muyqzv9i log",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muz4rtxg-016135f8",
+      "label": "verification re-review: eval inputs match freeze sha256 and first-full-eval log integrity",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muz4s14h-011bf384",
+      "label": "verification re-review: npm test (offline full suite)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muz4sgqs-013dd869",
+      "label": "verification re-review: eval inputs match freeze sha256; first-full-eval log body matches recorded logSha256",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-muz4st62-0172d9be",
+      "label": "verification re-review: event hash chain + content hashes + snapshot==replay (Store.audit only)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    }
+  ],
+  "totals": {
+    "costUsd": 0,
+    "runtimeMinutes": 219.01,
+    "tokens": 6494020
+  },
+  "auditEvents": 536
+}

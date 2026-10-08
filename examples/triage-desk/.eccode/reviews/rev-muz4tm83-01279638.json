@@ -1,0 +1,127 @@
+{
+  "decision": "approve",
+  "summary": "Resubmission sub-muz4pt2i-01b2f7f7 resolves VER-1 via resolution (a). I checked the hash-chained log myself: RISK-12 was re-recorded with status 'accepted' by actor 'user' (seq 520), and decisions dec-muz4ocip-016d36bd and dec-muz4ocl7-01aaa32d were recorded by actor 'user' (seq 521, 522), before the resubmission (seq 524). The first decision explicitly accepts the 0.571 (n=7) vs 0.70 holdout miss and amends SC2/AC8 for this release only. The chain, content hashes and snapshot replay all verify (ev:ev-muz4st62-0172d9be). The report and checklist cite the decision accurately and change no result: 24/25, holdout high_urgency_recall 0.571 n=7 still FAIL, full-mode run count 1. These match the untampered first-full-eval log (ev:ev-muz4rtv1-01c429a3, ev:ev-muz4sgqs-013dd869). There is still exactly one full-mode eval record. The eval inputs still match the freeze hashes. I re-ran npm test: 439/439 pass (ev:ev-muz4s14h-011bf384). Two of my own probes failed, and the failures are my errors, not the submission's: ev-muz4rtxg-016135f8 hashed the eval log file including the engine's 3-line header, and the engine hashes only the output body (corrected in ev-muz4sgqs-013dd869). ev-muz4rtnu-01eba046 ran the CLI 'audit', which also flags report.md and release-checklist.md as changed since the phase:integration approval. That flag is expected: these two files are re-reviewed artifacts of this gate, and approving this gate makes their latest approved hash the current one. The hash-chain part of the audit passes (ev-muz4st62-0172d9be).",
+  "criteria": [
+    {
+      "id": "SC1",
+      "description": "npm test passes offline; every [T] AC covered by named tests (AC1-AC4, AC7-AC14, AC16, AC17; AC12 zero deps)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muz4s14h-011bf384",
+        "artifact:package.json",
+        "artifact:.eccode/artifacts/verification/report.md"
+      ]
+    },
+    {
+      "id": "SC2",
+      "description": "Fallback eval: every all-rows threshold met; holdout floors met EXCEPT high_urgency_recall holdout 0.571 (n=7) < 0.70, which the user accepted and amended for this release only (RISK-12 accepted, dec-muz4ocip-016d36bd, both actor=user in the verified hash chain); the report keeps the miss as a FAIL, not a pass",
+      "met": true,
+      "evidence": [
+        "ev:ev-muz4rtrr-011e9a4f",
+        "ev:ev-muz4st62-0172d9be",
+        "ev:ev-muz4rtv1-01c429a3",
+        "artifact:.eccode/artifacts/verification/report.md",
+        "artifact:eval/thresholds.json"
+      ]
+    },
+    {
+      "id": "SC2b",
+      "description": "Eval files still match the pre-rules freeze sha256; the first-full-eval log is untampered; exactly one full-mode run recorded (holdout still blind)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muz4sgqs-013dd869",
+        "ev:ev-muz4rtrr-011e9a4f",
+        "artifact:eval/dataset.json",
+        "artifact:eval/holdout.json"
+      ]
+    },
+    {
+      "id": "SC2c",
+      "description": "Report and release checklist cite the user decision accurately, scope the amendment to this release only, and alter no result (24/25, 0.571 n=7, run count 1)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muz4rtv1-01c429a3",
+        "artifact:.eccode/artifacts/verification/report.md",
+        "artifact:.eccode/artifacts/verification/release-checklist.md"
+      ]
+    },
+    {
+      "id": "SC3",
+      "description": "Live eval reported as NOT RUN without a key; live thresholds recorded as unverified; no claim about live-model quality",
+      "met": true,
+      "evidence": [
+        "ev:ev-muz4rtv1-01c429a3",
+        "artifact:.eccode/artifacts/verification/report.md",
+        "artifact:.eccode/artifacts/verification/release-checklist.md"
+      ]
+    },
+    {
+      "id": "SC4",
+      "description": "Injection: injection_leak 0/27; injection_steer 2/23 <= 0.25; in-family flag recall 1.000; FPR 0.083 <= 0.10 (read from the first-full-eval log, whose integrity this reviewer verified); no ticket or key material in logs (AC10 tests in npm test)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muz4sgqs-013dd869",
+        "ev:ev-muz4s14h-011bf384"
+      ]
+    },
+    {
+      "id": "SC5",
+      "description": "Keyboard-only W1/W2 in <= 3 actions; AC5/AC6/AC15 browser inspection (screenshots unchanged from the first submission)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muyr13oz-01d57136",
+        "artifact:.eccode/artifacts/verification/ui-360.png",
+        "artifact:.eccode/artifacts/verification/ui-1280.png",
+        "artifact:.eccode/artifacts/verification/ui-360-xss.png",
+        "artifact:.eccode/artifacts/verification/ui-1280-xss.png"
+      ]
+    },
+    {
+      "id": "SC6",
+      "description": "package.json has zero dependencies; app starts with a single command",
+      "met": true,
+      "evidence": [
+        "ev:ev-muz4s14h-011bf384",
+        "artifact:package.json"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "VER-2",
+      "severity": "info",
+      "title": "The event log cannot prove that 'actor: user' was a human",
+      "detail": "Events 520-522 carry actor 'user', and the hash chain verifies (ev:ev-muz4st62-0172d9be). However, the CLI accepts '--actor user' from any caller. The events fall between run-muyrc542 (ended 23:49:54) and run-muz4oqf9 (started 06:01:08), so no agent run was open when they were written. That timing is consistent with a direct user action. Even so, the log alone cannot prove human authorship.",
+      "evidence": [
+        "ev:ev-muz4rtrr-011e9a4f",
+        "ev:ev-muz4st62-0172d9be"
+      ],
+      "recommendation": "Orchestrator: confirm with the user in the delivery handoff that they personally made dec-muz4ocip-016d36bd. Engine improvement: authenticate or attest the 'user' actor."
+    },
+    {
+      "id": "VER-3",
+      "severity": "info",
+      "title": "Fallback holdout high-urgency recall miss carried forward as accepted risk",
+      "detail": "Holdout high_urgency_recall stays at 0.571 (4/7) and held-out-family injection flag recall at 0.444. This release accepts them under RISK-12 and dec-muz4ocip-016d36bd. The decision defers the alternative: a rules revision validated on a fresh holdout.",
+      "evidence": [
+        "ev:ev-muyqzv9i-018cf19d",
+        "ev:ev-muz4rtrr-011e9a4f"
+      ],
+      "recommendation": "Next release: revise t11 rules on tune rows only and validate against a new, unseen holdout frozen before the change."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "VER-1",
+      "resolution": "Resolution (a) is met. The user recorded RISK-12 as 'accepted' (seq 520, actor user) and decision dec-muz4ocip-016d36bd (seq 521, actor user). The decision accepts the fallback holdout high_urgency_recall of 0.571 (n=7) against the 0.70 floor as a known limitation and amends SC2/AC8 for this release only, with the fallback stated to be a labelled safety net. The hash chain verifies, and both records precede resubmission sub-muz4pt2i-01b2f7f7 (seq 524). The report and checklist cite the decision in the section 'User decision on RISK-12 (2026-10-08)'. Results are unchanged: 24/25, 0.571 n=7 still reported as FAIL, full-mode run count 1, matching the untampered first-full-eval log. No second full-mode run exists, eval inputs match the freeze, and npm test passes 439/439.",
+      "evidence": [
+        "ev:ev-muz4rtrr-011e9a4f",
+        "ev:ev-muz4st62-0172d9be",
+        "ev:ev-muz4rtv1-01c429a3",
+        "ev:ev-muz4sgqs-013dd869",
+        "ev:ev-muz4s14h-011bf384",
+        "artifact:.eccode/artifacts/verification/report.md#user-decision-on-risk-12-2026-10-08"
+      ]
+    }
+  ]
+}
