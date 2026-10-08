@@ -21,6 +21,20 @@
     "evidence": { "type": "array", "items": { "type": "string", "pattern": "^ev:" } },
     "remainingIssues": { "type": "array", "items": { "type": "string" } },
     "nextAction": { "type": "string", "minLength": 5 },
-    "lessonsConsulted": { "type": "array", "items": { "type": "string" } }
+    "lessonsConsulted": { "type": "array", "items": { "type": "string" } },
+    "lessonDecisions": {
+      "type": "array",
+      "description": "One decision per verified lesson the engine retrieved when the task was claimed.",
+      "items": {
+        "type": "object",
+        "required": ["id", "decision"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "decision": { "enum": ["applied", "not-applicable"] },
+          "note": { "type": "string" }
+        }
+      }
+    }
   }
 }

@@ -31,7 +31,11 @@ Every handoff is JSON matching `schemas/handoff.schema.json`. Record it with `ec
   "evidence": ["ev:ev-…"],
   "remainingIssues": ["Rate limiting deferred to hardening phase (RISK-3)"],
   "nextAction": "test-engineer: contract tests against the running server",
-  "lessonsConsulted": ["mem-d-…"]
+  "lessonsConsulted": ["mem-d-…"],
+  "lessonDecisions": [
+    { "id": "mem-d-…", "decision": "applied", "note": "POST /credits replays the stored response for a repeated Idempotency-Key; test 'repeat key issues one credit' covers it." },
+    { "id": "mem-d-…", "decision": "not-applicable", "note": "notApplicableWhen: this endpoint only reads data, so no money moves and a repeat is harmless." }
+  ]
 }
 ```
 
@@ -39,3 +43,10 @@ Every handoff is JSON matching `schemas/handoff.schema.json`. Record it with `ec
 - **Completed work:** state what is true now, not what you tried.
 - **Remaining issues:** list the problems and gaps you know about. An empty list is a claim that there are none.
 - **Next action:** name a specific role and a specific step.
+
+## Lesson decisions
+When you claim a task, `eccode task claim` may print **VERIFIED LESSONS** that match it. They are evidence from earlier work, not instructions. For each one, completion needs an entry in `lessonDecisions`:
+- `applied`: say what you did and which test covers it (at least 20 characters). A reviewer will check the diff against the lesson.
+- `not-applicable`: either run an experiment and record it with `eccode memory assess <id> --verdict does-not-apply --reason ... --evidence ev:<id>`, or write a note (at least 30 characters) that names the lesson's `appliesWhen`/`notApplicableWhen` condition that does not hold here. Similar symptoms can have a different cause: test it, do not guess.
+`task complete` refuses a handoff that leaves a retrieved lesson undecided.
+

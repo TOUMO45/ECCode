@@ -278,7 +278,8 @@ function main(argv) {
         print(flags, list.map((t) => `${t.id} [${t.status}] phase=${t.phase} owner=${t.owner} attempts=${t.attempts} — ${t.title}`).join('\n') || '(none)', list);
       } else if (sub === 'claim') {
         const { event } = tasks.claim(store, config, need(arg, '<task>'), need(actor, '--actor'), { runId: flags.run });
-        print(flags, `Claimed ${arg} (base ${event.data.baseCommit || 'no git'}).`, event.data);
+        const lessons = require('../lib/lessons').renderForClaim(store, config, event.data.lessons || []);
+        print(flags, `Claimed ${arg} (base ${event.data.baseCommit || 'no git'}).${lessons}`, event.data);
       } else if (sub === 'complete') {
         tasks.complete(store, config, need(arg, '<task>'), need(actor, '--actor'), loadJsonFile(need(flags.handoff, '--handoff')));
         print(flags, `Task ${arg} completed with validated handoff.`);

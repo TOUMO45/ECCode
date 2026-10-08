@@ -100,3 +100,12 @@ All figures are computed from the event log and memory records:
 - workflow changes adopted, and regressions introduced by them.
 
 Each figure states its sample size, so small samples aren't presented as trends.
+
+## Lessons at the decision point (retrieval is enforced, not remembered)
+A pilot of the learning loop showed that agents which *do* retrieve a verified lesson can still read past it. Retrieval and application therefore sit in the engine:
+1. **Claim:** `eccode task claim` builds a query from the task (title, acceptance criteria, file globs) and the project idea, retrieves matching **verified** lessons, keeps those whose environment conditions hold here, prints them as evidence, and records them on the claim. A lesson qualifies only if enough distinct topical words of the task appear in it (`matched >= 3`). Ranking scores are relative to the best document, so a lone lesson would otherwise match everything.
+2. **Complete:** the handoff needs `lessonDecisions` for every retrieved lesson: `applied` (with a note) or `not-applicable` (with an evidence-backed `memory assess` or a note naming the condition that does not hold). `task complete` refuses otherwise. Applied lessons are cited automatically.
+3. **Review:** reviewers check each decision against the diff and the tests (`review-gate` skill).
+4. **Metrics:** `lessonDecisions` counts applied, evidence-backed dismissals and reason-only dismissals.
+Turn the whole mechanism off with `ECCODE_LEARNING=off`.
+

@@ -71,6 +71,9 @@ Each refusal is logged (`review.rejected`) and counted in metrics.
 
 6. `eccode gate review <gate> --actor <you> --file <draft>`
 
+## Lessons in the handoffs
+If a task handoff carries `lessonDecisions`, check each against the diff and the tests. An `applied` lesson must be visible in the code **and** covered by a test; re-run that test yourself and cite it. A `not-applicable` decision with only a written reason deserves a look: does the cited condition really hold here? A lesson applied wrongly or dismissed wrongly is a blocking finding. Record the lesson ids you used in `lessonsConsulted`.
+
 ## Severity guide
 | Severity | Meaning | Blocks approval |
 |---|---|---|
