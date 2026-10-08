@@ -16,6 +16,9 @@ capture → reproduce (ev, purpose=reproduction, FAILS) → memory search (--che
 
 If `eccode memory status` reports `learning: off`, run the same cycle without the memory steps. Skip the search and the lesson record, and put the investigation's findings in your handoff.
 
+## No project yet
+An investigation in a directory without an ECCode project still goes through the process: the orchestrator runs `eccode init --profile change` with the symptom as the request, the plan has one task owned by `learning-debugger`, and the gates are the usual two (plan, phase). Fixing the bug without a record would also lose the lesson.
+
 ## Fixing code that was already approved
 If the failing code belongs to an approved phase (or the project was delivered), its files are pinned and edits are refused. Do not look for a way around the gates. The orchestrator opens a **rework** (`eccode rework open ...`): a new phase gate with one narrowly scoped task, independent review, and a re-delivery. Claim that task, reproduce first (`--purpose reproduction`), fix, re-run the same check, complete with a handoff, and submit `phase:rework-N`. Reworks are limited (`limits.maxReworks`): a defect that comes back repeatedly points at the plan or the tests, and the user decides.
 

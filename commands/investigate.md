@@ -7,6 +7,8 @@ Use the `debug-investigation` skill. Dispatch the `learning-debugger` agent with
 
 $ARGUMENTS
 
+**If there is no ECCode project in this directory yet** (`eccode status` says so), do not skip the process because "there is nothing to attach it to". Create one in change mode with the symptom as the request, and run the normal change path with the debugger as the task owner: `eccode init --name "<short name>" --idea "<the symptom, in the reporter's words>" --profile change`, then the `delivery-lead` writes a one-task plan (`owner: learning-debugger`, first step a failing reproduction), an independent `technical-reviewer` approves it, the debugger claims the task, reproduces, fixes and submits `phase:<id>`, an independent reviewer approves, and `eccode deliver --actor orchestrator` closes it. The lesson steps below are unchanged and are what this command is for.
+
 **If the failing code was already approved or delivered** (its phase gate is approved, so its files are pinned), the fix goes through a rework, never around the gates:
 1. Open it: `eccode rework open --actor orchestrator --reason "<failing check and symptom>" --files "<glob of the files to change>" --files "<glob of the tests>" --owner learning-debugger [--evidence ev:<failing reproduction>]`. The scope must be narrow (never `**`).
 2. The debugger claims the rework task and reproduces the failure with a failing check (`--purpose reproduction`) first, then fixes it and re-runs the **same** check. It completes the task with a handoff and submits the gate `phase:rework-N`.
