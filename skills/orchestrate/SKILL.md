@@ -85,19 +85,22 @@ For each `phase:<id>`, in order:
    - metrics (`eccode metrics`).
 
 ## 5b. Change mode (`/eccode:change`): a change request on an existing codebase
-Use this for a bug fix or a bounded feature change in code that already exists. A new product or subsystem uses the full workflow above.
-1. **Init.** `eccode init --name "<short name>" --idea "<the request>" --profile change`. The gates are `plan` → `phase:<id>`…, with no architecture, design or verification gates. Deliver after the last phase.
-2. **Plan.** Dispatch `delivery-lead` to read the request and the code it touches and to write `.eccode/artifacts/plan.json`. Usually this is one phase with one or two tasks.
+Use this for a bug fix or a bounded change in code that already exists. A new product or subsystem uses the full workflow above. The gates are the same as in a full delivery, so independence and evidence are not relaxed. The path is lean: **4 dispatches** for a typical small change.
+
+1. **Init** (you): `eccode init --name "<short name>" --idea "<the request>" --profile change`. The gates are `plan` → `phase:<id>`…. There are no architecture, design or verification gates.
+2. **Plan** (dispatch 1, `delivery-lead`). It starts the gate itself, reads the request and the code it touches, writes `.eccode/artifacts/plan/plan.json` (start from `eccode plan example`) and submits it. For a small change, use one phase and one task owned by the implementer who will do the work.
    - Acceptance criteria come **from the request**: every stated requirement, error case and constraint, plus "existing tests still pass".
-   - Search memory first (§6). If it finds a lesson that `applies`, the plan cites it.
-   - **For a defect:** the first task, owned by `learning-debugger` or the implementer, reproduces the bug as a failing check (`--purpose reproduction`) before any fix. The plan lists that check's command.
-   - Each task's `files` covers the code to change **and** the tests to add.
-3. **Plan review.** An independent `technical-reviewer` checks that the criteria cover the request, the ownership is right, and a reproduction exists for a defect.
-4. **Implement.** Follow §4 steps 2–4.
-   - The phase reviewer (`technical-reviewer`, plus `security-reviewer` when auth, input handling or AI are involved) re-runs the checks and inspects the diff against each acceptance criterion.
-   - Blocking findings go back to the task owner.
-5. **Deliver.** Run `eccode deliver --actor delivery-lead` and report as in §5.5.
-6. **Unattended runs.** When no user is available, never stop to ask for confirmation of ordinary steps. Only the user-authorization items in §0 stop the work; report them as blocked.
+   - Search memory first (§6). If a lesson `applies`, the plan cites it.
+   - **For a defect,** the task's first step is a failing reproduction (`--purpose reproduction`), and the plan says so.
+   - The task's `files` cover the code to change **and** the tests to add.
+3. **Plan review** (dispatch 2, `technical-reviewer`, independent). It checks that the criteria cover the request, the ownership is right, and a defect has a reproduction.
+4. **Implement and submit** (dispatch 3, the task owner). It starts the phase gate, then claims, reproduces or writes tests first, implements, runs the project's checks, completes with a handoff, **and submits the phase** (implementers are phase authors). Several independent tasks may use parallel dispatches (§4.2).
+5. **Phase review** (dispatch 4, `technical-reviewer`, plus `security-reviewer` when auth, input handling, money movement or AI are involved). Reviewers re-run the checks and inspect the diff against each acceptance criterion. Blocking findings go back to the task owner (§4.6).
+6. **Deliver** (you): `eccode deliver --actor orchestrator`, then report as in §5.5.
+
+**Dispatch prompts are short.** Give the CLI string, the project path, the gate or task id, and where the inputs are. Do not paste file contents or the whole request again: agents read the repository themselves. Say what **done** means for that dispatch.
+
+**Unattended runs.** When no user is available, never stop to ask for confirmation of ordinary steps. Only the user-authorization items in §0 stop the work; report them as blocked.
 
 ## 6. Learning loop
 - When a meaningful bug or failure occurs, dispatch `learning-debugger` (see the `debug-investigation` skill). Lessons need an independent `eccode memory review`.
