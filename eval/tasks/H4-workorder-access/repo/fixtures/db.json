@@ -1,0 +1,55 @@
+{
+  "tables": {
+    "users": {
+      "columns": { "username": "TEXT", "name": "TEXT", "role": "TEXT" },
+      "rows": [
+        { "id": 1, "username": "dana.ruiz", "name": "Dana Ruiz", "role": "technician" },
+        { "id": 2, "username": "lee.chen", "name": "Lee Chen", "role": "contractor" },
+        { "id": 3, "username": "priya.shah", "name": "Priya Shah", "role": "supervisor" },
+        { "id": 4, "username": "omar.haddad", "name": "Omar Haddad", "role": "technician" },
+        { "id": 5, "username": "grace.obi", "name": "Grace Obi", "role": "supervisor" }
+      ]
+    },
+    "sites": {
+      "columns": { "name": "TEXT", "city": "TEXT" },
+      "rows": [
+        { "id": 1, "name": "Riverside Campus", "city": "Leeds" },
+        { "id": 2, "name": "Northgate Depot", "city": "Leeds" },
+        { "id": 3, "name": "Harbour Office", "city": "Hull" }
+      ]
+    },
+    "site_assignments": {
+      "columns": { "user_id": "INTEGER", "site_id": "INTEGER" },
+      "rows": [
+        { "id": 1, "user_id": 1, "site_id": 1 },
+        { "id": 2, "user_id": 2, "site_id": 1 },
+        { "id": 3, "user_id": 3, "site_id": 1 },
+        { "id": 4, "user_id": 3, "site_id": 2 },
+        { "id": 5, "user_id": 4, "site_id": 2 },
+        { "id": 6, "user_id": 5, "site_id": 2 }
+      ]
+    },
+    "work_orders": {
+      "columns": { "site_id": "INTEGER", "title": "TEXT", "status": "TEXT", "priority": "TEXT", "opened_at": "TIMESTAMP" },
+      "rows": [
+        { "id": 1, "site_id": 1, "title": "Replace chiller pump seal", "status": "open", "priority": "high", "opened_at": "2026-10-01T07:12:00Z" },
+        { "id": 2, "site_id": 2, "title": "Swap HVAC filters, levels 3-5", "status": "in_progress", "priority": "medium", "opened_at": "2026-10-02T09:30:00Z" },
+        { "id": 3, "site_id": 1, "title": "Adjust fire door closer, stairwell B", "status": "open", "priority": "low", "opened_at": "2026-10-03T14:05:00Z" },
+        { "id": 4, "site_id": 3, "title": "Repair loading bay roller door", "status": "open", "priority": "high", "opened_at": "2026-10-04T06:50:00Z" },
+        { "id": 5, "site_id": 2, "title": "Emergency lighting test failed, bay 7", "status": "open", "priority": "high", "opened_at": "2026-10-05T16:20:00Z" }
+      ]
+    },
+    "work_order_costs": {
+      "columns": { "work_order_id": "INTEGER", "description": "TEXT", "amount": "DECIMAL(10,2)" },
+      "rows": [
+        { "id": 1, "work_order_id": 1, "description": "Mechanical seal kit", "amount": "182.40" },
+        { "id": 2, "work_order_id": 1, "description": "Labour, 3.5 h", "amount": "227.50" },
+        { "id": 3, "work_order_id": 1, "description": "Coolant top-up", "amount": "36.15" },
+        { "id": 4, "work_order_id": 2, "description": "F7 bag filters (12)", "amount": "318.00" },
+        { "id": 5, "work_order_id": 2, "description": "Labour, 6 h", "amount": "390.00" },
+        { "id": 6, "work_order_id": 4, "description": "Roller door motor", "amount": "1240.00" },
+        { "id": 7, "work_order_id": 5, "description": "Emergency luminaire", "amount": "86.90" }
+      ]
+    }
+  }
+}
