@@ -51,7 +51,10 @@ const copy = (from, rel) => write(rel, fs.readFileSync(path.join(FIX, from), 'ut
 
 /** Run the eccode CLI as the driver; record the outcome as a step. */
 function cli(label, args, { expectRefusal = null } = {}) {
-  const r = sh(process.execPath, [CLI, ...args, '--root', work]);
+  // --root must come before a `-- <command>` separator or it would become part of the command.
+  const sep = args.indexOf('--');
+  const full = sep === -1 ? [...args, '--root', work] : [...args.slice(0, sep), '--root', work, ...args.slice(sep)];
+  const r = sh(process.execPath, [CLI, ...full]);
   const refused = r.status === 2;
   const rec = { label, command: `eccode ${args.join(' ')}`, exit: r.status, refused, output: (r.stdout + r.stderr).trim().slice(0, 900) };
   if (expectRefusal) {
@@ -151,10 +154,10 @@ async function reviewLoop(gate, { reviewerRole, authorRole, artifact, label, max
   cli('design v0 (no Security / Testing Strategy headings): engine refuses the submission', ['gate', 'submit', 'design', '--actor', 'technical-designer', '--artifact', '.eccode/artifacts/design.md'], { expectRefusal: 'MISSING_SECTIONS|missing required sections' });
   copy('design-v1.md', '.eccode/artifacts/design.md');
   cli('design v1 (all headings, hollow content): submit', ['gate', 'submit', 'design', '--actor', 'technical-designer', '--artifact', '.eccode/artifacts/design.md']);
-  write('probe-review.json', JSON.stringify(review(true, { evidence: ['artifact:.eccode/artifacts/design.md'] })));
-  cli('probe: the design author cannot approve their own design', ['gate', 'review', 'design', '--actor', 'technical-designer', '--file', path.join(work, 'probe-review.json')], { expectRefusal: 'REVIEW_REJECTED|not an authorized reviewer|author' });
-  write('probe-review.json', JSON.stringify(review(true, { evidence: [] })));
-  cli('probe: approval without evidence is refused', ['gate', 'review', 'design', '--actor', 'technical-reviewer', '--file', path.join(work, 'probe-review.json')], { expectRefusal: 'REVIEW_REJECTED|evidence' });
+  write('.eccode/drafts/probe-review.json', JSON.stringify(review(true, { evidence: ['artifact:.eccode/artifacts/design.md'] })));
+  cli('probe: the design author cannot approve their own design', ['gate', 'review', 'design', '--actor', 'technical-designer', '--file', path.join(work, '.eccode/drafts/probe-review.json')], { expectRefusal: 'REVIEW_REJECTED|not an authorized reviewer|author' });
+  write('.eccode/drafts/probe-review.json', JSON.stringify(review(true, { evidence: [] })));
+  cli('probe: approval without evidence is refused', ['gate', 'review', 'design', '--actor', 'technical-reviewer', '--file', path.join(work, '.eccode/drafts/probe-review.json')], { expectRefusal: 'REVIEW_REJECTED|evidence' });
 
   const designStatus = await reviewLoop('design', { reviewerRole: 'technical-reviewer', authorRole: 'technical-designer', artifact: '.eccode/artifacts/design.md', label: 'design', authorExtra: 'Check the revised design against the approved brief (.eccode/artifacts/brief.md). ' });
   if (designStatus !== 'approved') {
@@ -186,8 +189,8 @@ async function reviewLoop(gate, { reviewerRole, authorRole, artifact, label, max
   cli('evidence: test run (the planted tests pass)', ['evidence', 'run', '--actor', 'backend-engineer', '--label', 'node --test', '--task', 'api', '--', 'node', '--test']);
   const evList = JSON.parse(sh(process.execPath, [CLI, 'evidence', 'list', '--json', '--root', work]).stdout);
   const evId = evList[evList.length - 1].id;
-  write('handoff.json', JSON.stringify({ from: 'backend-engineer', to: 'delivery-lead', task: 'api', objective: 'Implement the notes API', context: 'Per approved brief and design', inputs: ['.eccode/artifacts/design.md'], expectedOutput: 'Working API with tests', acceptanceCriteria: ['AC1-AC7'], completedWork: 'Endpoints and tests implemented; test suite passes.', filesChanged: ['src/server.js', 'src/store.js', 'test/notes.test.js', 'package.json'], evidence: [`ev:${evId}`], remainingIssues: [], nextAction: 'phase review' }));
-  cli('task: complete with handoff', ['task', 'complete', 'api', '--actor', 'backend-engineer', '--handoff', path.join(work, 'handoff.json')]);
+  write('.eccode/drafts/handoff.json', JSON.stringify({ from: 'backend-engineer', to: 'delivery-lead', task: 'api', objective: 'Implement the notes API', context: 'Per approved brief and design', inputs: ['.eccode/artifacts/design.md'], expectedOutput: 'Working API with tests', acceptanceCriteria: ['AC1-AC7'], completedWork: 'Endpoints and tests implemented; test suite passes.', filesChanged: ['src/server.js', 'src/store.js', 'test/notes.test.js', 'package.json'], evidence: [`ev:${evId}`], remainingIssues: [], nextAction: 'phase review' }));
+  cli('task: complete with handoff', ['task', 'complete', 'api', '--actor', 'backend-engineer', '--handoff', path.join(work, '.eccode/drafts/handoff.json')]);
   cli('phase: submit (delivery-lead)', ['gate', 'submit', 'phase:core', '--actor', 'delivery-lead']);
   // Review / correct loop for the phase: the corrections are real backend-engineer sessions.
   for (let round = 1; round <= 3; round++) {

@@ -61,6 +61,19 @@ test('semver ranges used for applicability checks', () => {
   assert.match(matchEnv({ express: '^4' }, { node: '20.0.0' }).unknown[0], /express/);
 });
 
+test('free-text environment entries are informational, not an unverifiable mismatch; real constraints still bind', () => {
+  const env = { node: '22.22.0', os: 'linux' };
+  const free = matchEnv({ node: '>=18', dependencies: 'acme-kit vendored, zero deps', stack: 'plain node:http service' }, env);
+  assert.strictEqual(free.ok, true);
+  assert.deepStrictEqual(free.mismatches, []);
+  assert.deepStrictEqual(free.unknown, []);
+  assert.strictEqual(free.notes.length, 2);
+  // A package constraint that cannot be checked here is still unknown, and a wrong runtime is still a mismatch.
+  assert.strictEqual(matchEnv({ express: '^4' }, env).unknown.length, 1);
+  assert.strictEqual(matchEnv({ node: '<18' }, env).mismatches.length, 1);
+  assert.strictEqual(matchEnv({ os: 'darwin' }, env).mismatches.length, 1);
+});
+
 test('lessons start provisional; verification needs a non-author reviewer and a check that flips from failing to passing', () => {
   withSharedDir();
   const ctx = tmpProject();
