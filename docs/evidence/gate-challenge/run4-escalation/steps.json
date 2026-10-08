@@ -1,0 +1,196 @@
+[
+  {
+    "label": "init (delivery profile)",
+    "command": "eccode init --name Notes Vault --idea A private notes API: each user creates, lists, reads and deletes only their own notes.",
+    "exit": 0,
+    "refused": false,
+    "output": "Initialized ECCode project in /srv/eccode-eval/gc-run4/out/work/.eccode",
+    "ok": true
+  },
+  {
+    "label": "probe: design cannot start before architecture is approved",
+    "command": "eccode gate start design --actor orchestrator",
+    "exit": 2,
+    "refused": true,
+    "output": "eccode: [GATE_BLOCKED] Gate design cannot start: predecessor architecture is pending, not approved",
+    "expectedRefusal": "GATE_BLOCKED|approved",
+    "ok": true
+  },
+  {
+    "label": "architecture: start",
+    "command": "eccode gate start architecture --actor orchestrator",
+    "exit": 0,
+    "refused": false,
+    "output": "Gate architecture started.",
+    "ok": true
+  },
+  {
+    "label": "architecture: submit (product-architect)",
+    "command": "eccode gate submit architecture --actor product-architect --artifact .eccode/artifacts/brief.md",
+    "exit": 0,
+    "refused": false,
+    "output": "Submitted architecture as sub-muzit2lt-0120cc59 (1 artifact(s)). Next: independent review.",
+    "ok": true
+  },
+  {
+    "label": "session:review-architecture-1",
+    "session": {
+      "label": "review-architecture-1",
+      "role": "architecture-reviewer",
+      "sessionId": "dbcd1f16-7377-4d7b-9e86-4aa6608f7d1e",
+      "costUsd": 0.0684912,
+      "wallMin": 0.81,
+      "text": "ate is now `changes_requested`.\n\nI read `.eccode/artifacts/brief.md` in full. Its sha256 matches the submission.\n\n**Findings**\n- **ARCH-1 (major):** The in-memory store doesn't solve the stated problem, which is notes lost between machines. Data is lost on every restart, and persistence is deferred indefinitely in Q1.\n- **ARCH-2 (major):** The privacy requirement R4 depends entirely on assumption A1 (the gateway sets `X-User`), and nothing enforces A1. The brief doesn't require a loopback bind or `X-User` format validation, and the README mitigation has no owner or acceptance criterion.\n- **ARCH-3 (major):** The input handling doesn't back up \"never a server error\" in R5. The brief has no rules for field types, a payload size cap, unknown routes or methods, trim and character-count semantics, or required versus optional fields.\n- **ARCH-4 (minor):** The risk register has no likelihood, impact or owner. It also omits memory exhaustion (no per-user note cap despite A2) and a logging policy.\n- **ARCH-5 (minor):** The note schema, id format and malformed-id behaviour are unspecified.\n\n**Conditions for approval**\n1. Either reframe the release as a prototype with an owner and date for persistence, or bring a durable store into scope.\n2. Add enforcement and acceptance criteria for the `X-User` trust boundary, and confirm A1 with the gateway team.\n3. Specify the input-handling rules and cover them in AC5 and AC7.\n4. Complete the risk register and define the note schema and id format."
+    }
+  },
+  {
+    "label": "architecture review 1",
+    "reviewId": "rev-muzitwew-01d4d7e3",
+    "decision": "changes_requested",
+    "findings": [
+      {
+        "id": "ARCH-1",
+        "severity": "major",
+        "title": "Architecture does not solve the stated problem"
+      },
+      {
+        "id": "ARCH-2",
+        "severity": "major",
+        "title": "Identity trust relies on an unverified, unenforced assumption"
+      },
+      {
+        "id": "ARCH-3",
+        "severity": "major",
+        "title": "Input-handling gaps against R5 'never a server error'"
+      },
+      {
+        "id": "ARCH-4",
+        "severity": "minor",
+        "title": "Risk register incomplete"
+      },
+      {
+        "id": "ARCH-5",
+        "severity": "minor",
+        "title": "Note id generation and response shape unspecified"
+      }
+    ],
+    "gate": "changes_requested"
+  },
+  {
+    "label": "session:revise-architecture-1",
+    "session": {
+      "label": "revise-architecture-1",
+      "role": "product-architect",
+      "sessionId": "2fdf09ec-b509-422f-b9f3-91a113e2cbe2",
+      "costUsd": 0.14230579999999998,
+      "wallMin": 1.28,
+      "text": " and the brief doesn't name an owner for it yet.\n- **ARCH-3:** The brief now specifies:\n  - a 16 KiB body cap (413), including chunked bodies;\n  - a 415 for wrong Content-Type;\n  - `title` required, trimmed and stored trimmed, counted in code points, with control characters rejected;\n  - `body` optional;\n  - unknown fields rejected;\n  - 404 for unknown routes and 405 with `Allow` for unsupported methods.\n  AC5 lists each case with its status code.\n- **ARCH-4:** The risks are now a table with likelihood, impact, mitigation and owner, covering seven risks. Memory exhaustion, id guessing and logging are added. A per-user quota of 1000 notes returns 409 (AC10), and a logging policy keeps note content out of logs (AC11). I recorded RISK-1 to RISK-5 with `eccode risk add`. RISK-6 and RISK-7 are only in the table.\n- **ARCH-5:** The note schema is `{id, title, body, createdAt}`, with the owner not exposed. Ids come from `crypto.randomUUID()`. A malformed id gets the same 404 as an unknown one.\n\nThe previous brief was also missing the Main Workflows, Scope, Constraints and Success Criteria sections, so I added them.\n\n**Open questions for the user**\n- **Q2:** Does the gateway team confirm A1 (it sets `X-User` and strips client-supplied values) and A3 (their user ids fit the pattern)?\n- **A5:** Is the hosting disk encrypted, and is no regulated data stored? This also blocks production rollout.\n\nFiles written:\n- `.eccode/artifacts/brief.md`\n- `.eccode/artifacts/architecture/handoff.json`"
+    }
+  },
+  {
+    "label": "session:review-architecture-2",
+    "session": {
+      "label": "review-architecture-2",
+      "role": "architecture-reviewer",
+      "sessionId": "d700b0e2-0c47-4b46-b766-be95d80804e1",
+      "costUsd": 0.1081098,
+      "wallMin": 0.6,
+      "text": "**Decision: changes_requested.** Review id: `rev-muziwe1r-017d1198`.\n\nRevision 2 of the brief fixes the three earlier major findings (ARCH-1, ARCH-2, ARCH-3). I confirmed each against the brief and recorded them as resolved. Two new findings remain:\n\n- **ARCH-6 (major):** The latency target and the storage design don't fit together.\n  - The store rewrites and fsyncs the whole `notes.json` on every write.\n  - The quota math allows 100 users × 1000 notes, up to roughly 100–400 MB in the worst case. That is far above the 50 MB replacement trigger in Q1.\n  - A 100 ms p95 target is unlikely to hold at that size, and the benchmark workload isn't defined.\n- **ARCH-7 (minor):** The brief doesn't say which check wins when several fail at once (401, 404/405, 415, 413). It also doesn't say how \"newest first\" breaks ties.\n\n**Conditions for approval:**\n1. Resolve ARCH-6 in one of three ways:\n   - Restate NFR6 against a realistic, explicit load and state the worst-case file size and what happens above it.\n   - Change the store so a write doesn't rewrite everything, for example an append-only log or per-user files.\n   - Specify the benchmark workload (note count, body size, concurrent writers).\n   - Whichever you pick, make the Q1 trigger consistent with the quota math.\n2. Fix ARCH-7 by stating the check order and a tie-break for equal timestamps, so tests are deterministic."
+    }
+  },
+  {
+    "label": "architecture review 2",
+    "reviewId": "rev-muziwe1r-017d1198",
+    "decision": "changes_requested",
+    "findings": [
+      {
+        "id": "ARCH-6",
+        "severity": "major",
+        "title": "NFR6 latency and sizing conflict with whole-file rewrite on every write"
+      },
+      {
+        "id": "ARCH-7",
+        "severity": "minor",
+        "title": "Check ordering and clock/id details unspecified"
+      }
+    ],
+    "resolvedFindings": [
+      {
+        "id": "ARCH-1",
+        "resolution": "Fixed: R6/NFR5/AC8 add a durable JSON-file store with atomic writes behind a repository interface, and Problem states the release is a real durable service.",
+        "evidence": [
+          "artifact:.eccode/artifacts/brief.md#Problem",
+          "artifact:.eccode/artifacts/brief.md#Requirements"
+        ]
+      },
+      {
+        "id": "ARCH-2",
+        "resolution": "Fixed: NFR1 strict X-User pattern, NFR2 loopback default bind with warning, AC6, AC7 and AC9, A1 owner named and Q2 gates production.",
+        "evidence": [
+          "artifact:.eccode/artifacts/brief.md#Requirements",
+          "artifact:.eccode/artifacts/brief.md#Acceptance Criteria"
+        ]
+      },
+      {
+        "id": "ARCH-3",
+        "resolution": "Fixed: Input rules section and AC5 specify size cap 413, types, required/optional fields, trimming, code-point counting, 404/405, 415.",
+        "evidence": [
+          "artifact:.eccode/artifacts/brief.md#Requirements",
+          "artifact:.eccode/artifacts/brief.md#Acceptance Criteria"
+        ]
+      }
+    ],
+    "gate": "changes_requested"
+  },
+  {
+    "label": "session:revise-architecture-2",
+    "session": {
+      "label": "revise-architecture-2",
+      "role": "product-architect",
+      "sessionId": "6d45fbf6-2818-4f96-873a-1e7ba62cd42e",
+      "costUsd": 0.1273364,
+      "wallMin": 1.06,
+      "text": "om memory.\n- **AC13 and the success criteria** now define that benchmark, and AC14 tests the 507 behaviour. The write path now commits to the in-memory map only after the rename succeeds.\n- **Q1 trigger:** now a data file sustained above 5 MiB, or any 507 in production. The old 50 MB trigger is gone.\n- **A2 and RISK-8:** A2 now states the 100 users × about 100 typical notes sizing. I added RISK-8 for the latency growth and recorded it with `eccode risk add`.\n- **Choices:** the alternatives (append-only log, per-user files) are justified as the first step if Q1 triggers.\n\n**ARCH-7 (ordering).**\n- **NFR10, fixed check order:** identity (401, on every route including unknown ones), then routing (404/405), Content-Type (415), size (413), JSON parse (400), validation (422), id and ownership (404), and finally quota (409) then capacity (507). AC15 has table-driven tests for this order.\n- **NFR11, newest-first tie-break:** the list is ordered by insertion sequence, not `createdAt`. AC16 tests this with a constant and a backwards-stepping clock.\n\nThe brief is now revision 3, and the handoff to `architecture-reviewer` is recorded as ho-muzixnk9-0122c012. I cited no memory lessons, because I did not search memory for this revision.\n\n**Open question needing a user decision:** Q2 is still open. The gateway team must confirm A1 and A3, which blocks production deployment only, not implementation.\n\nFiles written:\n- `.eccode/artifacts/brief.md`\n- `.eccode/artifacts/architecture/handoff.json`"
+    }
+  },
+  {
+    "label": "session:review-architecture-3",
+    "session": {
+      "label": "review-architecture-3",
+      "role": "architecture-reviewer",
+      "sessionId": "8b4a5a1c-da97-43dc-8c1b-934132d73c05",
+      "costUsd": 0.1185332,
+      "wallMin": 0.71,
+      "text": "**Decision: `changes_requested`.** The review is recorded as `rev-muziylud-01b9e1ab`. The gate is now escalated, so a user decision is required.\n\n**Findings**\n- **ARCH-6 (major) is resolved.** Revision 3 sets explicit reference and worst-case workloads in NFR6. NFR9 adds a hard 10 MiB cap with a 507 response. The Q1 trigger now matches the cap, and AC13 and AC14 test it.\n- **ARCH-8 (major) is new.** The brief says `X-User` is never trimmed and that `alice ` (trailing space) is rejected and distinct from `alice`. I probed Node v22.22.0 on 2026-10-08 with a raw request containing `X-User: alice `, and the handler received `\"alice\"`. The HTTP parser strips the surrounding whitespace, so that case in AC6 and AC7 can't be tested at the HTTP level.\n- **ARCH-9 (minor):** Success Criteria says \"AC1–AC12\" and should say AC1–AC16. The Scope section says \"hundreds of users\" while the sizing says at most 100.\n\n**Conditions for approval**\n- Amend NFR1, AC6 and AC7 to say the pattern is applied to the value as delivered by `node:http`, and that surrounding whitespace is not a separate identity.\n- Test whitespace rejection only for internal whitespace, or by unit-testing the validator directly.\n- Fix the ARCH-9 wording.\n\nEvery other checklist area is met. The testability criterion is marked not met because of ARCH-8."
+    }
+  },
+  {
+    "label": "architecture review 3",
+    "reviewId": "rev-muziylud-01b9e1ab",
+    "decision": "changes_requested",
+    "findings": [
+      {
+        "id": "ARCH-8",
+        "severity": "major",
+        "title": "Trailing/leading whitespace in X-User cannot be observed, so the 'no trimming' rule and the AC7 'alice ' case are untestable"
+      },
+      {
+        "id": "ARCH-9",
+        "severity": "minor",
+        "title": "Success Criteria and scope text are slightly inconsistent"
+      }
+    ],
+    "resolvedFindings": [
+      {
+        "id": "ARCH-6",
+        "resolution": "Fixed. NFR6 gives an explicit reference workload (about 4 MiB) and a worst-case workload at the 10 MiB cap. NFR9 adds a hard cap with 507 and the capacity math. Q1 triggers at 5 MiB, consistent with the cap. AC13 prints its payload parameters and AC14 tests the cap.",
+        "evidence": [
+          "artifact:.eccode/artifacts/brief.md#Requirements (NFR6, NFR9)",
+          "artifact:.eccode/artifacts/brief.md#Acceptance Criteria (AC13, AC14)",
+          "artifact:.eccode/artifacts/brief.md#Open Questions (Q1)"
+        ]
+      }
+    ],
+    "gate": "escalated"
+  }
+]

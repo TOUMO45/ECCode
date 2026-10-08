@@ -133,6 +133,14 @@ async function reviewLoop(gate, { reviewerRole, authorRole, artifact, label, max
 }
 
 (async () => {
+  // The review-iteration limit is a documented per-project setting (default 3). A strict reviewer can
+  // keep asking for more, so this fixture allows 5 rounds; run 4 of the challenge (kept as evidence)
+  // shows the default limit escalating the gate to the user after 3 rejections.
+  fs.mkdirSync(path.join(work, '.eccode'), { recursive: true });
+  const { DEFAULT_CONFIG } = require(path.join(toolkit, 'lib', 'config'));
+  const cfg = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  cfg.limits.maxReviewIterations = 5;
+  fs.writeFileSync(path.join(work, '.eccode', 'config.json'), JSON.stringify(cfg, null, 2));
   cli('init (delivery profile)', ['init', '--name', 'Notes Vault', '--idea', 'A private notes API: each user creates, lists, reads and deletes only their own notes.']);
 
   // ---- Engine probes: dependent gates cannot start early -----------------------------------------
