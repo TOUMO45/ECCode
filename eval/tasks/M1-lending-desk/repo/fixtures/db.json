@@ -1,0 +1,93 @@
+{
+  "tables": {
+    "members": {
+      "columns": { "name": "TEXT", "card_no": "TEXT", "tier": "TEXT" },
+      "rows": [
+        { "id": 1, "name": "Marguerite Okafor", "card_no": "L-1001", "tier": "adult" },
+        { "id": 2, "name": "Tomás Reyes", "card_no": "L-1002", "tier": "junior" },
+        { "id": 3, "name": "Harold Whitfield", "card_no": "L-1003", "tier": "senior" },
+        { "id": 4, "name": "Ingrid Solheim", "card_no": "L-1004", "tier": "adult" },
+        { "id": 5, "name": "Priya Nair", "card_no": "L-1005", "tier": "adult" }
+      ]
+    },
+    "books": {
+      "columns": { "title": "TEXT", "author": "TEXT", "media": "TEXT", "replacement_price": "DECIMAL(10,2)" },
+      "rows": [
+        { "id": 1, "title": "The Left Hand of Darkness", "author": "Ursula K. Le Guin", "media": "book", "replacement_price": "18.99" },
+        { "id": 2, "title": "Piranesi", "author": "Susanna Clarke", "media": "book", "replacement_price": "16.50" },
+        { "id": 3, "title": "Spirited Away", "author": "Hayao Miyazaki", "media": "dvd", "replacement_price": "24.00" },
+        { "id": 4, "title": "Braiding Sweetgrass", "author": "Robin Wall Kimmerer", "media": "book", "replacement_price": "21.00" },
+        { "id": 5, "title": "Kiki's Delivery Service", "author": "Hayao Miyazaki", "media": "dvd", "replacement_price": "12.00" },
+        { "id": 6, "title": "The Overstory", "author": "Richard Powers", "media": "book", "replacement_price": "19.50" }
+      ]
+    },
+    "copies": {
+      "columns": { "book_id": "INTEGER", "barcode": "TEXT" },
+      "rows": [
+        { "id": 1, "book_id": 1, "barcode": "LHD-01" },
+        { "id": 2, "book_id": 1, "barcode": "LHD-02" },
+        { "id": 3, "book_id": 2, "barcode": "PIR-01" },
+        { "id": 4, "book_id": 3, "barcode": "SPI-01" },
+        { "id": 5, "book_id": 4, "barcode": "BRS-01" },
+        { "id": 6, "book_id": 5, "barcode": "KIK-01" },
+        { "id": 7, "book_id": 6, "barcode": "OVR-01" },
+        { "id": 8, "book_id": 6, "barcode": "OVR-02" },
+        { "id": 9, "book_id": 2, "barcode": "PIR-02" },
+        { "id": 10, "book_id": 4, "barcode": "BRS-02" },
+        { "id": 11, "book_id": 3, "barcode": "SPI-02" },
+        { "id": 12, "book_id": 2, "barcode": "PIR-03" },
+        { "id": 13, "book_id": 5, "barcode": "KIK-02" }
+      ]
+    },
+    "loans": {
+      "columns": {
+        "copy_id": "INTEGER",
+        "member_id": "INTEGER",
+        "checked_out_on": "TEXT",
+        "due_on": "TEXT",
+        "returned_on": "TEXT",
+        "renewals": "INTEGER",
+        "fine_amount": "DECIMAL(10,2)",
+        "fine_paid": "BOOLEAN"
+      },
+      "rows": [
+        { "id": 1, "copy_id": 1, "member_id": 1, "checked_out_on": "2026-02-24", "due_on": "2026-03-17", "returned_on": null, "renewals": 0, "fine_amount": null, "fine_paid": false },
+        { "id": 2, "copy_id": 5, "member_id": 3, "checked_out_on": "2026-02-10", "due_on": "2026-03-10", "returned_on": null, "renewals": 1, "fine_amount": null, "fine_paid": false },
+        { "id": 3, "copy_id": 7, "member_id": 2, "checked_out_on": "2026-02-06", "due_on": "2026-03-20", "returned_on": null, "renewals": 2, "fine_amount": null, "fine_paid": false },
+        { "id": 4, "copy_id": 3, "member_id": 4, "checked_out_on": "2026-02-26", "due_on": "2026-03-19", "returned_on": null, "renewals": 0, "fine_amount": null, "fine_paid": false },
+        { "id": 5, "copy_id": 4, "member_id": 1, "checked_out_on": "2026-01-20", "due_on": "2026-02-10", "returned_on": null, "renewals": 0, "fine_amount": null, "fine_paid": false },
+        { "id": 6, "copy_id": 8, "member_id": 4, "checked_out_on": "2026-02-05", "due_on": "2026-02-26", "returned_on": null, "renewals": 0, "fine_amount": null, "fine_paid": false },
+        { "id": 7, "copy_id": 2, "member_id": 3, "checked_out_on": "2026-02-20", "due_on": "2026-03-20", "returned_on": null, "renewals": 0, "fine_amount": null, "fine_paid": false },
+        { "id": 8, "copy_id": 9, "member_id": 1, "checked_out_on": "2025-12-01", "due_on": "2025-12-22", "returned_on": "2025-12-20", "renewals": 0, "fine_amount": "0.00", "fine_paid": true },
+        { "id": 9, "copy_id": 10, "member_id": 4, "checked_out_on": "2025-11-03", "due_on": "2025-11-24", "returned_on": "2025-12-04", "renewals": 0, "fine_amount": "2.50", "fine_paid": false },
+        { "id": 10, "copy_id": 10, "member_id": 4, "checked_out_on": "2025-12-10", "due_on": "2025-12-31", "returned_on": "2026-01-10", "renewals": 0, "fine_amount": "2.50", "fine_paid": false },
+        { "id": 11, "copy_id": 4, "member_id": 4, "checked_out_on": "2025-09-01", "due_on": "2025-09-22", "returned_on": "2025-11-01", "renewals": 0, "fine_amount": "20.00", "fine_paid": true },
+        { "id": 12, "copy_id": 5, "member_id": 5, "checked_out_on": "2025-11-10", "due_on": "2025-12-01", "returned_on": "2025-12-11", "renewals": 0, "fine_amount": "2.50", "fine_paid": false },
+        { "id": 13, "copy_id": 9, "member_id": 5, "checked_out_on": "2025-12-15", "due_on": "2026-01-05", "returned_on": "2026-01-14", "renewals": 0, "fine_amount": "2.25", "fine_paid": false },
+        { "id": 14, "copy_id": 4, "member_id": 5, "checked_out_on": "2025-08-01", "due_on": "2025-08-22", "returned_on": "2025-09-30", "renewals": 0, "fine_amount": "12.00", "fine_paid": true },
+        { "id": 15, "copy_id": 10, "member_id": 2, "checked_out_on": "2026-02-12", "due_on": "2026-02-26", "returned_on": null, "renewals": 0, "fine_amount": null, "fine_paid": false },
+        { "id": 16, "copy_id": 6, "member_id": 2, "checked_out_on": "2026-01-26", "due_on": "2026-02-09", "returned_on": null, "renewals": 0, "fine_amount": null, "fine_paid": false }
+      ]
+    },
+    "holds": {
+      "columns": { "book_id": "INTEGER", "member_id": "INTEGER", "placed_on": "TEXT", "status": "TEXT" },
+      "rows": [
+        { "id": 1, "book_id": 2, "member_id": 5, "placed_on": "2026-03-02", "status": "waiting" },
+        { "id": 2, "book_id": 4, "member_id": 5, "placed_on": "2026-01-15", "status": "cancelled" },
+        { "id": 3, "book_id": 6, "member_id": 2, "placed_on": "2026-01-20", "status": "fulfilled" }
+      ]
+    },
+    "closures": {
+      "columns": { "date": "TEXT", "reason": "TEXT" },
+      "rows": [
+        { "id": 1, "date": "2026-02-14", "reason": "Staff training day" },
+        { "id": 2, "date": "2026-02-16", "reason": "Presidents Day" },
+        { "id": 3, "date": "2026-03-01", "reason": "Building maintenance" }
+      ]
+    },
+    "audit_log": {
+      "columns": { "actor": "TEXT", "action": "TEXT", "entity": "TEXT", "entity_id": "INTEGER", "at": "TIMESTAMP" },
+      "rows": []
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "tables": {
+    "plans": {
+      "columns": { "code": "TEXT", "name": "TEXT", "price_per_seat": "DECIMAL(10,2)", "seat_limit": "INTEGER" },
+      "rows": [
+        { "id": 1, "code": "starter", "name": "Starter", "price_per_seat": "9.00", "seat_limit": 5 },
+        { "id": 2, "code": "team", "name": "Team", "price_per_seat": "24.99", "seat_limit": 25 },
+        { "id": 3, "code": "business", "name": "Business", "price_per_seat": "49.50", "seat_limit": 200 }
+      ]
+    },
+    "accounts": {
+      "columns": { "name": "TEXT", "timezone": "TEXT" },
+      "rows": [
+        { "id": 1, "name": "Brightwater Studio", "timezone": "America/New_York" },
+        { "id": 2, "name": "Kōwhai Design", "timezone": "Pacific/Auckland" },
+        { "id": 3, "name": "Nordlys AS", "timezone": "Europe/Oslo" },
+        { "id": 4, "name": "Halcyon Labs", "timezone": "America/Los_Angeles" },
+        { "id": 5, "name": "Pemberton & Sons", "timezone": "Europe/London" }
+      ]
+    },
+    "subscriptions": {
+      "columns": {
+        "account_id": "INTEGER",
+        "plan_id": "INTEGER",
+        "seats": "INTEGER",
+        "status": "TEXT",
+        "cycle_start": "TEXT",
+        "cycle_end": "TEXT",
+        "credit_balance": "DECIMAL(10,2)",
+        "pending_charge": "DECIMAL(10,2)",
+        "cancelled_on": "TEXT"
+      },
+      "rows": [
+        { "id": 1, "account_id": 1, "plan_id": 2, "seats": 8, "status": "active", "cycle_start": "2026-03-01", "cycle_end": "2026-04-01", "credit_balance": "0.00", "pending_charge": "0.00", "cancelled_on": null },
+        { "id": 2, "account_id": 2, "plan_id": 1, "seats": 3, "status": "active", "cycle_start": "2026-02-20", "cycle_end": "2026-03-20", "credit_balance": "0.00", "pending_charge": "0.00", "cancelled_on": null },
+        { "id": 3, "account_id": 3, "plan_id": 3, "seats": 12, "status": "active", "cycle_start": "2026-03-05", "cycle_end": "2026-04-05", "credit_balance": "15.00", "pending_charge": "0.00", "cancelled_on": null },
+        { "id": 4, "account_id": 4, "plan_id": 2, "seats": 4, "status": "trialing", "cycle_start": "2026-03-01", "cycle_end": "2026-03-15", "credit_balance": "0.00", "pending_charge": "0.00", "cancelled_on": null },
+        { "id": 5, "account_id": 5, "plan_id": 1, "seats": 2, "status": "cancelled", "cycle_start": "2026-02-01", "cycle_end": "2026-03-01", "credit_balance": "3.10", "pending_charge": "0.00", "cancelled_on": "2026-02-10" }
+      ]
+    },
+    "audit_log": {
+      "columns": { "actor": "TEXT", "action": "TEXT", "entity": "TEXT", "entity_id": "INTEGER", "at": "TIMESTAMP" },
+      "rows": []
+    }
+  }
+}

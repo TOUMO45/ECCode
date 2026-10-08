@@ -1,0 +1,1349 @@
+[
+  {
+    "task": "H1-fleet-fuel-export",
+    "rep": "r1",
+    "relation": "related",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "csv-export",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 36
+      },
+      {
+        "task": "csv-export",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 27
+      },
+      {
+        "task": "csv-export",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 24
+      },
+      {
+        "task": "csv-export",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 23
+      }
+    ],
+    "decisions": [
+      {
+        "task": "csv-export",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "applied",
+        "note": "Every text field and header name is always double-quoted with doubled quotes, CRLF kept, amounts unquoted; test/exports.test.js asserts raw output text."
+      },
+      {
+        "task": "csv-export",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "This endpoint is a read-only GET and moves no money, so Idempotency-Key does not apply."
+      },
+      {
+        "task": "csv-export",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Read-only GET endpoint creates, changes and deletes no data, so no audit_log row is written."
+      },
+      {
+        "task": "csv-export",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "The endpoint returns a CSV file for a whole month per the ticket, not a JSON collection, so the items/total envelope and limit/offset do not apply."
+      }
+    ],
+    "applied": 1,
+    "setAside": 3
+  },
+  {
+    "task": "H1-fleet-fuel-export",
+    "rep": "r2",
+    "relation": "related",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 46
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 28
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 30
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 34
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 46
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 28
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 30
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 34
+      }
+    ],
+    "decisions": [
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "The condition does not hold that this ticket falls under ACC-2: the approved contract (TASK.md and plan) specifies the exact unquoted header and RFC 4180 minimal quoting, and no ACC-2 text is cited here. Flagged in remainingIssues for the reviewer to confirm."
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Does not apply because this is a read-only GET endpoint that moves no money; the lesson only covers POST endpoints."
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Does not apply because the endpoint returns a CSV file for one month, not a JSON collection with limit/offset; the contract fixes the body format."
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Does not apply because the endpoint is read-only GET and creates, changes and deletes no data, so no audit_log row is due."
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "applied",
+        "note": "csvField always quotes text fields (header, date, plate, driver, station) and doubles quotes; id and amounts unquoted via num(); CRLF kept. Covered by raw-text assertions in test/exports.test.js (September export, empty plate, CR/LF row, empty month)."
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Read-only GET export endpoint; the lesson covers POST endpoints that move money, so the condition does not hold."
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "The endpoint returns a CSV file for one month, not a JSON list/collection endpoint with limit/offset; the AG-7 envelope does not apply."
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Read-only GET endpoint that creates, updates and deletes nothing, so no audit_log row is required by SEC-12."
+      }
+    ],
+    "applied": 1,
+    "setAside": 7
+  },
+  {
+    "task": "H1-fleet-fuel-export",
+    "rep": "r3",
+    "relation": "related",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 29
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 22
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 20
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 18
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 30
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 13
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 14
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 12
+      }
+    ],
+    "decisions": [
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Condition does not hold: this ticket and approved plan explicitly require RFC 4180 quoting (only fields with commas, quotes or newlines), and spec ACC-2 is not present in this project; flagged in remainingIssues for confirmation. CRLF endings were adopted."
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Read-only GET endpoint; it moves no money and takes no POST, so Idempotency-Key does not apply."
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Read-only GET endpoint that creates, changes or deletes no data, so no audit_log row is required."
+      },
+      {
+        "task": "fuel-export",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "The endpoint returns a CSV file, not a JSON collection; the ticket defines the exact columns and one row per purchase, so no items/total envelope or pagination applies."
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "applied",
+        "note": "field() now always wraps in double quotes (doubling quotes); header and text columns routed through it, amounts unquoted. Covered by raw-text assertions in test/export.test.js."
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Rule PAY-3 concerns POST endpoints moving money; this task only changes a read-only GET CSV serializer."
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Rule SEC-12 audit rows apply to create/update/delete endpoints; this export is a read-only GET and writes no data."
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "AG-7 envelope applies to new JSON list endpoints; this endpoint returns CSV and is not a paginated collection."
+      }
+    ],
+    "applied": 1,
+    "setAside": 7
+  },
+  {
+    "task": "H2-courier-instant-payouts",
+    "rep": "r1",
+    "relation": "related",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 61
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 56
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 40
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 26
+      }
+    ],
+    "decisions": [
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "applied",
+        "note": "Idempotency-Key handled with per courier+endpoint table created in src/db.js, lookup and insert in one sync step; covered by Idempotency-Key tests in test/payouts.test.js."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "applied",
+        "note": "One audit_log row written synchronously after the payout insert, none on rejections; covered by the audit_log test in test/payouts.test.js."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Applies only to list/collection GET endpoints; this task adds a single-resource write endpoint, no collection is returned."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Applies only to CSV accounting exports; this task has no CSV output, only JSON endpoints."
+      }
+    ],
+    "applied": 2,
+    "setAside": 2
+  },
+  {
+    "task": "H2-courier-instant-payouts",
+    "rep": "r2",
+    "relation": "related",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 37
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 25
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 21
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 12
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 37
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 25
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 21
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 12
+      }
+    ],
+    "decisions": [
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Ticket and plan define no Idempotency-Key requirement and the lesson's fix needs a table in src/db.js, outside this task's files globs; flagged in remainingIssues for a decision."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "The approved plan explicitly decided audit_log writes are out of scope since TASK.md and README require none; flagged in remainingIssues for a decision."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "This task adds a single-resource write endpoint and no list or collection endpoint, so the pagination envelope condition does not hold."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No CSV export is involved in this task; it only adds a JSON POST endpoint, so the accounting CSV condition does not hold."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "applied",
+        "note": "Idempotency-Key handled in the payout route with per-db store; covered by replay, different-body and concurrent duplicate tests."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "applied",
+        "note": "audited() helper writes one audit_log row synchronously; covered by exact-field, anonymous and rejected-request tests."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Single-resource POST endpoint, no list or collection endpoint is added, so pagination does not apply."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No CSV export is involved; this task only adds a JSON POST endpoint."
+      }
+    ],
+    "applied": 2,
+    "setAside": 6
+  },
+  {
+    "task": "H2-courier-instant-payouts",
+    "rep": "r3",
+    "relation": "related",
+    "success": false,
+    "failedChecks": [
+      "AC6 [org:idempotency] a repeated request with the same Idempotency-Key returns the original response and pays out once"
+    ],
+    "lessonsOffered": [
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 36
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 22
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 24
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 12
+      }
+    ],
+    "decisions": [
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Idempotency-Key handling was explicitly ruled out of scope (F3) by the reviewer for this phase; flagged in remainingIssues instead."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "applied",
+        "note": "Payout insert writes exactly one audit_log row (actor from X-Acme-Actor or anonymous) synchronously; rejected requests write nothing; covered in test/payouts.test.js."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No list/collection endpoint is added; the task adds only a single-resource POST, so the {items,total} envelope does not apply."
+      },
+      {
+        "task": "instant-payout",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No CSV export is involved in this task; it only adds a JSON payout endpoint, so the ACC-2 quoting rule does not apply."
+      }
+    ],
+    "applied": 1,
+    "setAside": 3
+  },
+  {
+    "task": "H3-lab-instrument-bookings",
+    "rep": "r1",
+    "relation": "related",
+    "success": false,
+    "failedChecks": [
+      "AC7 [org:list-envelope] the bookings list uses the collection envelope with a default page of 50",
+      "AC8 [org:list-envelope] limit and offset page through the bookings; invalid limits are 422"
+    ],
+    "lessonsOffered": [
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 21
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 19
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 23
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 8
+      }
+    ],
+    "decisions": [
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "applied",
+        "note": "Added audited() in src/bookings/audit.js, called after validation and conflict checks; covered by the audit_log test in test/bookings.test.js."
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "The acceptance criteria for this task define the list as the instrument's bookings with no limit/offset or envelope; AG-7 is not in this project's contract, so a bare array is kept. Flagged for the lead to confirm."
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Booking creation does not move money (no refund, payout, credit or charge), so the Idempotency-Key rule PAY-3 does not apply."
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No CSV export is part of this task; the accounting CSV quoting spec ACC-2 does not apply to JSON booking endpoints."
+      }
+    ],
+    "applied": 1,
+    "setAside": 3
+  },
+  {
+    "task": "H3-lab-instrument-bookings",
+    "rep": "r2",
+    "relation": "related",
+    "success": false,
+    "failedChecks": [
+      "AC7 [org:list-envelope] the bookings list uses the collection envelope with a default page of 50",
+      "AC8 [org:list-envelope] limit and offset page through the bookings; invalid limits are 422"
+    ],
+    "lessonsOffered": [
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 24
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 21
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 22
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 14
+      }
+    ],
+    "decisions": [
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "applied",
+        "note": "Added src/audit.js audited() helper; POST writes one audit_log row synchronously after validation; covered by test 'creates write exactly one audit_log row, rejected requests none'."
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "AG-7 is a QA rule from another service; this task's contract (TASK.md, plan) specifies the list as the instrument's bookings array with no limit/total, and a default limit of 50 would truncate instrument 1 (62 bookings). Flagged as an open question below."
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Booking an instrument does not move money (refund, payout, credit or charge), so the Idempotency-Key rule PAY-3 does not apply to this POST."
+      },
+      {
+        "task": "bookings-api",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No CSV export for accounting is part of this task; the endpoints return JSON only."
+      }
+    ],
+    "applied": 1,
+    "setAside": 3
+  },
+  {
+    "task": "H3-lab-instrument-bookings",
+    "rep": "r3",
+    "relation": "related",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "api",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 52
+      },
+      {
+        "task": "api",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 42
+      },
+      {
+        "task": "api",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 44
+      },
+      {
+        "task": "api",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 21
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 19
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 14
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 15
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 5
+      }
+    ],
+    "decisions": [
+      {
+        "task": "api",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "applied",
+        "note": "audited() in src/bookings/audit.js writes one audit_log row synchronously with the insert, only after validation; covered by the audit tests in test/bookings.test.js (header present, trimmed, absent, blank, each 4xx class, GET)."
+      },
+      {
+        "task": "api",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "applied",
+        "note": "List endpoint returns {items,total} with strict /^\\d+$/ limit (1..100, default 50) and offset parsing, 422 with fields; covered by the paging tests in test/bookings.test.js."
+      },
+      {
+        "task": "api",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Lesson applies to POST endpoints that move money (refund, credit); booking an instrument moves no money, and the plan does not require Idempotency-Key."
+      },
+      {
+        "task": "api",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Lesson applies to CSV accounting exports; this task adds only JSON endpoints and has no CSV output."
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No new create/update/delete endpoint was added; this change only touches request guarding and a GET query parser."
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No POST endpoint that moves money is involved; this is a path and query validation fix."
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "applied",
+        "note": "Kept strict limit/offset parsing with 422 validation_failed and fields; extended it to repeated params, covered by test/app-robustness.test.js."
+      },
+      {
+        "task": "rework-1",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No CSV export or accounting output is involved in this change."
+      }
+    ],
+    "applied": 3,
+    "setAside": 5
+  },
+  {
+    "task": "H4-workorder-access",
+    "rep": "r1",
+    "relation": "related",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "fix-access-cache-key",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 8
+      },
+      {
+        "task": "fix-access-cache-key",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 10
+      },
+      {
+        "task": "fix-access-cache-key",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 11
+      },
+      {
+        "task": "fix-access-cache-key",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 9
+      }
+    ],
+    "decisions": [
+      {
+        "task": "fix-access-cache-key",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Task is a read-only access cache key bug; no POST endpoint moving money is added or changed."
+      },
+      {
+        "task": "fix-access-cache-key",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No create, update or delete endpoint is added or changed; only a read-path cache key is fixed."
+      },
+      {
+        "task": "fix-access-cache-key",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No list or collection endpoint is added or changed by this cache key fix."
+      },
+      {
+        "task": "fix-access-cache-key",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No CSV export for accounting is involved in this access cache key fix."
+      }
+    ],
+    "applied": 0,
+    "setAside": 4
+  },
+  {
+    "task": "H4-workorder-access",
+    "rep": "r2",
+    "relation": "related",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "fix-access-key",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 12
+      },
+      {
+        "task": "fix-access-key",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 4
+      },
+      {
+        "task": "fix-access-key",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 12
+      },
+      {
+        "task": "fix-access-key",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 11
+      }
+    ],
+    "decisions": [
+      {
+        "task": "fix-access-key",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Read-only GET access checks; no POST endpoint moving money is touched."
+      },
+      {
+        "task": "fix-access-key",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No CSV export is involved in this access cache bug fix at all."
+      },
+      {
+        "task": "fix-access-key",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No create/update/delete endpoint is added or changed; only read access checks."
+      },
+      {
+        "task": "fix-access-key",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No list/collection endpoint is added; only single-resource GETs are affected."
+      }
+    ],
+    "applied": 0,
+    "setAside": 4
+  },
+  {
+    "task": "H4-workorder-access",
+    "rep": "r3",
+    "relation": "related",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "fix-cache-key",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 16
+      },
+      {
+        "task": "fix-cache-key",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 9
+      },
+      {
+        "task": "fix-cache-key",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 5
+      },
+      {
+        "task": "fix-cache-key",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 7
+      }
+    ],
+    "decisions": [
+      {
+        "task": "fix-cache-key",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Task is a read-only access cache key fix; no POST endpoint moves money, so Idempotency-Key does not apply."
+      },
+      {
+        "task": "fix-cache-key",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No create/update/delete endpoint or data write is added; the change only fixes a cache key, so audit_log rule does not apply."
+      },
+      {
+        "task": "fix-cache-key",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No CSV export is involved in this access cache fix, so the ACC-2 quoting rule does not apply."
+      },
+      {
+        "task": "fix-cache-key",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No list/collection endpoint is added or changed; only the internal memo key changes, so the AG-7 envelope does not apply."
+      }
+    ],
+    "applied": 0,
+    "setAside": 4
+  },
+  {
+    "task": "H5-parking-occupancy",
+    "rep": "r1",
+    "relation": "decoy",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "fix-occupancy",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 11
+      },
+      {
+        "task": "fix-occupancy",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 16
+      },
+      {
+        "task": "fix-occupancy",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 6
+      }
+    ],
+    "decisions": [
+      {
+        "task": "fix-occupancy",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Lesson concerns new list endpoints with pagination envelope; this task changes no collection endpoint."
+      },
+      {
+        "task": "fix-occupancy",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Lesson concerns POST endpoints moving money with Idempotency-Key; entries and exits move no money."
+      },
+      {
+        "task": "fix-occupancy",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Lesson concerns accounting CSV exports; this task has no CSV output at all."
+      }
+    ],
+    "applied": 0,
+    "setAside": 3
+  },
+  {
+    "task": "H5-parking-occupancy",
+    "rep": "r2",
+    "relation": "decoy",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 4
+      },
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 4
+      },
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 5
+      }
+    ],
+    "decisions": [
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "The exit endpoint does not move money (no refund, payout, credit or charge), so the Idempotency-Key rule's condition does not hold."
+      },
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "This task has no CSV export or accounting serializer, so the ACC-2 quoting condition does not hold."
+      },
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No new list or collection endpoint or pagination is added here, so the AG-7 envelope condition does not hold."
+      }
+    ],
+    "applied": 0,
+    "setAside": 3
+  },
+  {
+    "task": "H5-parking-occupancy",
+    "rep": "r3",
+    "relation": "decoy",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 4
+      },
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 11
+      },
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 7
+      },
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 6
+      }
+    ],
+    "decisions": [
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No CSV export is touched; this task only changes occupancy caching and gate logic."
+      },
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No endpoint that moves money is added or changed; entries and exit only open and close parking sessions."
+      },
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No new list or collection endpoint is added; occupancy and entries return single resources."
+      },
+      {
+        "task": "fix-occupancy-cache",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "No new write endpoint and this service has no audit_log table in fixtures/db.json (only lots and parking_sessions), so the audit condition does not hold."
+      }
+    ],
+    "applied": 0,
+    "setAside": 4
+  },
+  {
+    "task": "H6-ticket-gate-export",
+    "rep": "r1",
+    "relation": "decoy",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "gate-list",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 22
+      },
+      {
+        "task": "gate-list",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 19
+      },
+      {
+        "task": "gate-list",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 16
+      },
+      {
+        "task": "gate-list",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 18
+      }
+    ],
+    "decisions": [
+      {
+        "task": "gate-list",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "ACC-2 quote-everything applies to accounting CSVs; this is the Gatekeeper export whose strict spec forbids quoting plain values, covered by raw-body tests."
+      },
+      {
+        "task": "gate-list",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Idempotency-Key applies to POST endpoints that move money; this endpoint is a read-only GET."
+      },
+      {
+        "task": "gate-list",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "SEC-12 audit rows apply to create/update/delete requests; this endpoint is a read-only GET that writes nothing."
+      },
+      {
+        "task": "gate-list",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "AG-7 {items,total} envelope is for JSON collection endpoints; this endpoint returns a CSV file defined by the Gatekeeper spec."
+      }
+    ],
+    "applied": 0,
+    "setAside": 4
+  },
+  {
+    "task": "H6-ticket-gate-export",
+    "rep": "r2",
+    "relation": "decoy",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 22
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 23
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 21
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 16
+      }
+    ],
+    "decisions": [
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Applies to accounting CSV (ACC-2: quote everything, CRLF); this is a Gatekeeper export whose own spec in TASK.md forbids quoting unneeded values and requires LF."
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "AG-7 envelope applies to JSON collection endpoints; this endpoint returns a CSV file with a fixed format defined by Gatekeeper, no pagination or JSON items."
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Idempotency-Key rule is for POST endpoints that move money; this is a read-only GET and moves no money."
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "SEC-12 audit rows apply to create/update/delete requests; this is a read-only GET that writes no data."
+      }
+    ],
+    "applied": 0,
+    "setAside": 4
+  },
+  {
+    "task": "H6-ticket-gate-export",
+    "rep": "r3",
+    "relation": "decoy",
+    "success": true,
+    "failedChecks": [],
+    "lessonsOffered": [
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "matched": 30
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+        "matched": 19
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "matched": 17
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+        "matched": 16
+      }
+    ],
+    "decisions": [
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzlgxnt-011aa1cb",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Applies to accounting CSV exports (ACC-2, quote everything, CRLF); this export is for Gatekeeper, whose spec requires minimal quoting and LF endings."
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzm3qo6-0127d486",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "AG-7 covers JSON collection endpoints; this endpoint returns a CSV file whose format is fixed by the Gatekeeper spec, not a paginated list."
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzljnq3-015dcbf0",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Concerns POST endpoints that move money; this is a read-only GET and moves no money."
+      },
+      {
+        "task": "gate-list-csv",
+        "id": "mem-sd-muzm3qpw-01da8afd",
+        "decision": "not-applicable",
+        "basis": "reason",
+        "note": "Audit rule applies to create/update/delete endpoints; this read-only GET writes no data."
+      }
+    ],
+    "applied": 0,
+    "setAside": 4
+  }
+]

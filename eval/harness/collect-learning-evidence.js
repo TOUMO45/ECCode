@@ -116,6 +116,7 @@ for (const l of lessons) {
 }
 L.push('', 'Each record also carries symptoms, environment, root cause, failed attempts, sources, the verified fix and applicability limits (see `lessons/`).', '');
 L.push('## What the fresh holdout sessions did with those lessons (C2)', '');
+L.push('Counts include every claim of a task in the trial (a task that went back to its owner after a review is claimed again, so its lessons are offered again).', '');
 L.push('| Task | Relation | Rep | Hidden grader | Lessons offered | Applied | Set aside |', '|---|---|---|---|---|---|---|');
 for (const h of holdout) L.push(`| ${h.task} | ${h.relation} | ${h.rep} | ${h.success === null ? 'n/a' : h.success ? 'pass' : 'FAIL'} | ${h.lessonsOffered.length} | ${h.applied} | ${h.setAside} |`);
 L.push('');

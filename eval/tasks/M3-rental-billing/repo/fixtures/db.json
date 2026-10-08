@@ -1,0 +1,48 @@
+{
+  "tables": {
+    "categories": {
+      "columns": { "name": "TEXT", "tax_bp": "INTEGER" },
+      "rows": [
+        { "id": 1, "name": "power-tools", "tax_bp": 825 },
+        { "id": 2, "name": "camera", "tax_bp": 825 },
+        { "id": 3, "name": "safety", "tax_bp": 0 }
+      ]
+    },
+    "items": {
+      "columns": { "sku": "TEXT", "name": "TEXT", "category": "TEXT", "daily_rate": "DECIMAL(10,2)", "weekly_rate": "DECIMAL(10,2)", "deposit": "DECIMAL(10,2)" },
+      "rows": [
+        { "id": 1, "sku": "MK-LS1219", "name": "Makita 12\" Sliding Compound Miter Saw, 15A", "category": "power-tools", "daily_rate": "45.00", "weekly_rate": "180.00", "deposit": "150.00" },
+        { "id": 2, "sku": "HI-TE60", "name": "Hilti TE 60 Rotary Hammer", "category": "power-tools", "daily_rate": "65.00", "weekly_rate": "260.00", "deposit": "250.00" },
+        { "id": 3, "sku": "CN-R6M2", "name": "Canon EOS R6 II Body", "category": "camera", "daily_rate": "85.00", "weekly_rate": "340.00", "deposit": "500.00" },
+        { "id": 4, "sku": "SF-HARN", "name": "Fall-arrest harness kit", "category": "safety", "daily_rate": "12.50", "weekly_rate": "50.00", "deposit": "40.00" },
+        { "id": 5, "sku": "TL-TS10", "name": "Tile saw 10\" wet, with stand", "category": "power-tools", "daily_rate": "32.50", "weekly_rate": "130.00", "deposit": "100.00" }
+      ]
+    },
+    "customers": {
+      "columns": { "name": "TEXT", "email": "TEXT", "tax_exempt": "BOOLEAN" },
+      "rows": [
+        { "id": 1, "name": "Redfern Builders Ltd", "email": "accounts@redfernbuilders.example", "tax_exempt": false },
+        { "id": 2, "name": "Sunnyvale Public Schools", "email": "facilities@sunnyvale-schools.example", "tax_exempt": true },
+        { "id": 3, "name": "Olu Adeyemi Photography", "email": "olu@adeyemi.example", "tax_exempt": false },
+        { "id": 4, "name": "Marlowe & Daughters, Joiners", "email": "office@marlowejoiners.example", "tax_exempt": false }
+      ]
+    },
+    "rentals": {
+      "columns": { "customer_id": "INTEGER", "item_id": "INTEGER", "start_date": "TEXT", "due_date": "TEXT", "returned_on": "TEXT", "status": "TEXT" },
+      "rows": [
+        { "id": 1, "customer_id": 1, "item_id": 2, "start_date": "2026-02-02", "due_date": "2026-02-11", "returned_on": "2026-02-11", "status": "returned" },
+        { "id": 2, "customer_id": 1, "item_id": 3, "start_date": "2026-02-10", "due_date": "2026-02-16", "returned_on": "2026-02-16", "status": "returned" },
+        { "id": 3, "customer_id": 1, "item_id": 1, "start_date": "2026-02-20", "due_date": "2026-02-23", "returned_on": "2026-02-26", "status": "returned" },
+        { "id": 4, "customer_id": 1, "item_id": 5, "start_date": "2026-02-26", "due_date": "2026-03-01", "returned_on": "2026-03-01", "status": "returned" },
+        { "id": 5, "customer_id": 1, "item_id": 4, "start_date": "2026-02-21", "due_date": "2026-02-28", "returned_on": "2026-02-28", "status": "returned" },
+        { "id": 6, "customer_id": 1, "item_id": 2, "start_date": "2026-03-05", "due_date": "2026-03-12", "returned_on": null, "status": "out" },
+        { "id": 7, "customer_id": 1, "item_id": 3, "start_date": "2026-02-14", "due_date": "2026-02-18", "returned_on": null, "status": "cancelled" },
+        { "id": 8, "customer_id": 1, "item_id": 1, "start_date": "2026-01-29", "due_date": "2026-01-31", "returned_on": "2026-01-31", "status": "returned" },
+        { "id": 9, "customer_id": 2, "item_id": 2, "start_date": "2026-02-09", "due_date": "2026-02-12", "returned_on": "2026-02-12", "status": "returned" },
+        { "id": 10, "customer_id": 4, "item_id": 1, "start_date": "2026-02-12", "due_date": "2026-02-26", "returned_on": "2026-02-26", "status": "returned" },
+        { "id": 11, "customer_id": 3, "item_id": 3, "start_date": "2026-02-03", "due_date": "2026-02-05", "returned_on": "2026-02-04", "status": "returned" },
+        { "id": 12, "customer_id": 3, "item_id": 4, "start_date": "2026-02-17", "due_date": "2026-02-17", "returned_on": "2026-02-17", "status": "returned" }
+      ]
+    }
+  }
+}

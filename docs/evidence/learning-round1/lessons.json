@@ -1,0 +1,354 @@
+[
+  {
+    "task": "B1-notes-api",
+    "projectRecordId": "mem-d-muzm3qo6-0127d486",
+    "title": "New list/collection endpoints must use the Acme {items,total} envelope with limit/offset validation, not a bare array",
+    "status": "verified",
+    "createdBy": "learning-debugger",
+    "reviews": [
+      {
+        "reviewer": "technical-reviewer",
+        "decision": "verify",
+        "notes": "Verified against code/tests (ev:ev-muzm4t8z-01b97604): title general, AG-7 quoted verbatim, notApplicableWhen sensible."
+      }
+    ],
+    "independentReview": true,
+    "symptoms": [
+      "GET /api/notes returned a bare array",
+      "collection endpoint response is not {\"items\": [...], \"total\": n}",
+      "?limit / ?offset ignored or not validated",
+      "invalid limit should be 422 validation_failed fields [\"limit\"]"
+    ],
+    "environment": {
+      "node": ">=18"
+    },
+    "rootCause": "Implementation followed the ticket and returned a bare array. Verbatim, guideline AG-7: \"collection endpoints return {\\\"items\\\": [...], \\\"total\\\": <number of matching records>}. They accept ?limit (default 50, max 100; invalid values are rejected with 422 validation_failed, fields: [\\\"limit\\\"]) and ?offset (default 0). Bare JSON arrays are allowed only on legacy endpoints that already return them.\" Source: QA feedback, guideline AG-7. The rule lives in QA feedback, not the ticket or vendor/acme-kit README, so it was never consulted up front.",
+    "failedAttempts": [
+      {
+        "approach": "Return the filtered, sorted array directly (what the ticket described)",
+        "whyFailed": "Bare arrays are allowed only for legacy endpoints that already return them; GET /api/notes is new."
+      }
+    ],
+    "sources": [
+      {
+        "title": "QA feedback, guideline AG-7",
+        "trust": "untrusted",
+        "checkedAt": "2026-10-08"
+      }
+    ],
+    "fix": "Return {items: page, total: matching.length} where total counts every record matching the filter (e.g. ?tag) before limit/offset. Parse limit/offset as strict base-10 digit strings (/^\\d+$/): limit 1..100 default 50 (0, >100, empty, decimal, negative, non-numeric rejected), offset >= 0 default 0 (invalid rejected, our decision, documented in README). Throw HttpError(422,\"validation_failed\",...,{fields}) listing \"limit\" and/or \"offset\". Update existing tests that asserted bare arrays; leave legacy endpoints (GET /api/tags) unchanged. Up front: read vendor/acme-kit README and look at existing conventions before designing a new endpoint.",
+    "appliesWhen": [
+      "Adding a new list/collection endpoint in an Acme service",
+      "Adding pagination (limit/offset) or a total count to an endpoint",
+      "Writing tests for a GET that returns many records"
+    ],
+    "notApplicableWhen": [
+      "Legacy endpoints that already return bare arrays, e.g. GET /api/tags (mobile parses it); keep their format",
+      "Single-resource endpoints such as GET /api/notes/:id",
+      "Write endpoints (POST/PUT/DELETE)"
+    ],
+    "verificationEvidence": [
+      {
+        "label": "repro: AG-7 envelope/pagination and SEC-12 audit missing",
+        "purpose": "reproduction",
+        "status": "failed",
+        "command": "npm test"
+      },
+      {
+        "label": "fix verified: AG-7 envelope/pagination and SEC-12 audit",
+        "purpose": "check",
+        "status": "passed",
+        "command": "npm test"
+      }
+    ],
+    "promotedTo": "mem-sd-muzm3qo6-0127d486"
+  },
+  {
+    "task": "B1-notes-api",
+    "projectRecordId": "mem-d-muzm3qpw-01da8afd",
+    "title": "Every new create/update/delete endpoint must write exactly one audit_log row (actor, action, entity, entity_id, at) in the same synchronous step",
+    "status": "verified",
+    "createdBy": "learning-debugger",
+    "reviews": [
+      {
+        "reviewer": "technical-reviewer",
+        "decision": "verify",
+        "notes": "Verified against code/tests (ev:ev-muzm4t8z-01b97604): title general, SEC-12 quoted verbatim, notApplicableWhen sensible."
+      }
+    ],
+    "independentReview": true,
+    "symptoms": [
+      "audit_log table is empty after a write request",
+      "create/update/delete endpoint without audit row",
+      "missing X-Acme-Actor handling, anonymous actor",
+      "rejected request must write nothing"
+    ],
+    "environment": {
+      "node": ">=18"
+    },
+    "rootCause": "Implementation covered only the functional ticket. Verbatim, rule SEC-12: \"every request that creates, changes or deletes data writes exactly one row to the service's audit_log table: actor (the X-Acme-Actor request header, or \\\"anonymous\\\" if absent), action (create, update or delete), entity (the table name), entity_id (the affected row id) and at (ISO-8601 timestamp). Rejected requests write nothing.\" Source: QA feedback, rule SEC-12. The rule was not in the ticket; the pre-existing audit_log table in fixtures/db.json was the up-front clue.",
+    "failedAttempts": [
+      {
+        "approach": "Implement only the ticket behaviour (insert the note)",
+        "whyFailed": "No audit row; violates SEC-12."
+      },
+      {
+        "approach": "Considered writing the audit row in a separate awaited step",
+        "whyFailed": "An await between data change and audit insert allows a note without its row (crash/interleaving); do both synchronously."
+      }
+    ],
+    "sources": [
+      {
+        "title": "QA feedback, rule SEC-12",
+        "trust": "untrusted",
+        "checkedAt": "2026-10-08"
+      }
+    ],
+    "fix": "Add a reusable helper audited(db, req, {action, entity}, write) that runs the synchronous write, then inserts the audit_log row with actor = trimmed X-Acme-Actor or \"anonymous\" (absent, empty or whitespace), entity_id = result.id, at = new Date().toISOString(). No await between the two. Call it only after validation so rejected requests (422/400/413/415) write nothing. Tests: one row with exact fields, anonymous variants, no rows for rejected requests and reads. Here it lives at src/notes/audit.js (task scope); move to src/audit.js to share across modules.",
+    "appliesWhen": [
+      "Adding a new create, update or delete endpoint in an Acme service",
+      "Adding any code path that inserts, updates or removes rows",
+      "Reviewing a feature for audit/security rules not in the ticket"
+    ],
+    "notApplicableWhen": [
+      "Read-only GET endpoints",
+      "Requests rejected by validation (they must write nothing)",
+      "Writes to the audit_log table itself"
+    ],
+    "verificationEvidence": [
+      {
+        "label": "repro: AG-7 envelope/pagination and SEC-12 audit missing",
+        "purpose": "reproduction",
+        "status": "failed",
+        "command": "npm test"
+      },
+      {
+        "label": "fix verified: AG-7 envelope/pagination and SEC-12 audit",
+        "purpose": "check",
+        "status": "passed",
+        "command": "npm test"
+      }
+    ],
+    "promotedTo": "mem-sd-muzm3qpw-01da8afd"
+  },
+  {
+    "task": "E1-store-credit",
+    "projectRecordId": "mem-d-muzlj39u-018f15ce",
+    "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+    "status": "superseded",
+    "createdBy": "learning-debugger",
+    "reviews": [
+      {
+        "reviewer": "learning-debugger",
+        "decision": "superseded",
+        "notes": "Corrected: table moved to src/db.js (fixtures outside task ownership); evidence refs updated"
+      }
+    ],
+    "independentReview": false,
+    "symptoms": [
+      "POST /api/customers/2/credits twice with Idempotency-Key console-7f3a9c returned 201 id 6 then 201 id 7 (same amount 20.00 and reason)",
+      "duplicate money movement on retry or double click; refund, payout, credit or charge created twice",
+      "repeated request with the same key creates a new row instead of replaying the original status and body"
+    ],
+    "environment": {
+      "node": "22.22.0",
+      "os": "linux",
+      "arch": "x64"
+    },
+    "rootCause": "The handler never read the Idempotency-Key header and kept no record of processed keys, so every POST executed addCredit. Organisational rule PAY-3, source 'QA feedback, rule PAY-3', verbatim: \"a POST endpoint that moves money (refunds, payouts, credits, charges) honours the Idempotency-Key request header. A repeated request with the same key returns the original status and body, and creates nothing new. A request without the header behaves normally.\"",
+    "failedAttempts": [
+      {
+        "approach": "Searched memory for prior lessons on idempotency, duplicate POSTs and repeated requests",
+        "whyFailed": "No matching memory records existed, so the design came from the PAY-3 text and the acme-kit conventions."
+      },
+      {
+        "approach": "Considered de-duplicating by comparing amount and reason against recent credits",
+        "whyFailed": "Rejected before implementing: legitimate identical credits would be blocked and keyless requests must keep behaving normally. Only the client-supplied key identifies a retry."
+      }
+    ],
+    "sources": [
+      {
+        "title": "QA feedback, rule PAY-3",
+        "url": "internal:qa-feedback/PAY-3",
+        "checkedAt": "2026-10-08",
+        "trust": "internal"
+      },
+      {
+        "title": "vendor/acme-kit/README.md error envelope (409 conflict, 422 validation_failed)",
+        "url": "file:vendor/acme-kit/README.md",
+        "checkedAt": "2026-10-08",
+        "trust": "internal"
+      }
+    ],
+    "fix": "Add an idempotency_keys table (customer_id, endpoint, idem_key, request_hash, status, response, created_at). Scope the key per customer and endpoint. Read the header after the 404 check, so unknown customers store nothing. A present but empty or over-255-char key is 422 naming Idempotency-Key. After body validation, run lookup, addCredit and key recording in one synchronous step with no await in between (withIdempotency in repository.js), so concurrent duplicates create exactly one credit. A hit with the same normalized request (cents and trimmed reason) replays the stored status and body verbatim. A hit with a different request is 422 validation_failed with fields ['Idempotency-Key']. No header leaves the old path untouched. Apply the same wrapper to every future refund, payout or charge POST.",
+    "appliesWhen": [
+      "adding or changing a POST endpoint that moves money: refund, payout, credit, charge, top-up, transfer",
+      "a client may retry or double-submit (support console, checkout, webhook-driven calls)",
+      "QA or finance reports duplicate credits, double refunds or double charges",
+      "task text mentions Idempotency-Key, idempotent, replay or retry-safe"
+    ],
+    "notApplicableWhen": [
+      "read-only GET endpoints",
+      "POST endpoints that do not move money (e.g. notes, preferences, search)",
+      "PUT or DELETE that are naturally idempotent by resource id",
+      "bugs where a keyless request is wrongly deduplicated; the rule says a request without the header behaves normally"
+    ],
+    "verificationEvidence": [],
+    "promotedTo": "mem-sd-muzljnq3-015dcbf0"
+  },
+  {
+    "task": "E1-store-credit",
+    "projectRecordId": "mem-d-muzljnq3-015dcbf0",
+    "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+    "status": "verified",
+    "createdBy": "learning-debugger",
+    "reviews": [
+      {
+        "reviewer": "technical-reviewer",
+        "decision": "verify",
+        "notes": "Reviewed against the approved phase:rework-1 diff and re-run tests (ev:ev-muzlkobm-01e9e79d, ev:ev-muzlkovr-01d4f5a2). Root cause, solution and tradeoffs match the code; applicability and non-applicability scopes are specific and transferable to refund/payout/charge POSTs."
+      },
+      {
+        "reviewer": "technical-reviewer",
+        "decision": "verify",
+        "notes": "Re-checked rev 2 against approved code: idempotency_keys table in src/db.js, withIdempotency in src/customers/repository.js, header validation and 422 handling in src/customers/routes.js match the lesson. Only sources changed."
+      }
+    ],
+    "independentReview": true,
+    "symptoms": [
+      "POST /api/customers/2/credits twice with Idempotency-Key console-7f3a9c returned 201 id 6 then 201 id 7 (same amount 20.00 and reason)",
+      "duplicate money movement on retry or double click; refund, payout, credit or charge created twice",
+      "repeated request with the same key creates a new row instead of replaying the original status and body"
+    ],
+    "environment": {
+      "node": "22.22.0",
+      "os": "linux",
+      "arch": "x64"
+    },
+    "rootCause": "The handler never read the Idempotency-Key header and kept no record of processed keys, so every POST executed addCredit. Organisational rule PAY-3, source 'QA feedback, rule PAY-3', verbatim: \"a POST endpoint that moves money (refunds, payouts, credits, charges) honours the Idempotency-Key request header. A repeated request with the same key returns the original status and body, and creates nothing new. A request without the header behaves normally.\"",
+    "failedAttempts": [
+      {
+        "approach": "Searched memory for prior lessons on idempotency, duplicate POSTs and repeated requests",
+        "whyFailed": "No matching memory records existed, so the design came from the PAY-3 text and the acme-kit conventions."
+      },
+      {
+        "approach": "Considered de-duplicating by comparing amount and reason against recent credits",
+        "whyFailed": "Rejected before implementing: legitimate identical credits would be blocked and keyless requests must keep behaving normally. Only the client-supplied key identifies a retry."
+      }
+    ],
+    "sources": [
+      {
+        "title": "QA feedback, rule PAY-3",
+        "checkedAt": "2026-10-08",
+        "trust": "internal"
+      },
+      {
+        "title": "Acme service toolkit README, error envelope section (409 conflict, 422 validation_failed)",
+        "checkedAt": "2026-10-08",
+        "trust": "internal"
+      }
+    ],
+    "fix": "Add an idempotency_keys table, created in loadDb in src/db.js (customer_id, endpoint, idem_key, request_hash, status, response, created_at). Scope the key per customer and endpoint. Read the header after the 404 check, so unknown customers store nothing. A present but empty or over-255-char key is 422 naming Idempotency-Key. After body validation, run lookup, addCredit and key recording in one synchronous step with no await in between (withIdempotency in repository.js), so concurrent duplicates create exactly one credit. A hit with the same normalized request (cents and trimmed reason) replays the stored status and body verbatim. A hit with a different request is 422 validation_failed with fields ['Idempotency-Key']. No header leaves the old path untouched. Apply the same wrapper to every future refund, payout or charge POST.",
+    "appliesWhen": [
+      "adding or changing a POST endpoint that moves money: refund, payout, credit, charge, top-up, transfer",
+      "a client may retry or double-submit (support console, checkout, webhook-driven calls)",
+      "QA or finance reports duplicate credits, double refunds or double charges",
+      "task text mentions Idempotency-Key, idempotent, replay or retry-safe"
+    ],
+    "notApplicableWhen": [
+      "read-only GET endpoints",
+      "POST endpoints that do not move money (e.g. notes, preferences, search)",
+      "PUT or DELETE that are naturally idempotent by resource id",
+      "bugs where a keyless request is wrongly deduplicated; the rule says a request without the header behaves normally"
+    ],
+    "verificationEvidence": [
+      {
+        "label": "repro: duplicate Idempotency-Key creates second credit (PAY-3)",
+        "purpose": "reproduction",
+        "status": "failed",
+        "command": "node --test test/idempotency.test.js"
+      },
+      {
+        "label": "fix verified: duplicate Idempotency-Key replays original (PAY-3), table in src/db.js",
+        "purpose": "check",
+        "status": "passed",
+        "command": "node --test test/idempotency.test.js"
+      },
+      {
+        "label": "regression: npm test (after db.js move)",
+        "purpose": "check",
+        "status": "passed",
+        "command": "npm test"
+      }
+    ],
+    "promotedTo": "mem-sd-muzljnq3-015dcbf0"
+  },
+  {
+    "task": "F1-sales-export",
+    "projectRecordId": "mem-d-muzlgxnt-011aa1cb",
+    "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+    "status": "verified",
+    "createdBy": "learning-debugger",
+    "reviews": [
+      {
+        "reviewer": "technical-reviewer",
+        "decision": "verify",
+        "notes": "Checked against csv.js and csv.test.js and approved gate phase:rework-1 (npm test ev-muzlhelz-013bbd98 passes). Always-quote fix, unquoted amounts, CRLF and raw-text assertion are all present; the failed-attempt note (round-trip parser cannot detect missing quotes) is accurate. Scope limits are appropriate."
+      }
+    ],
+    "independentReview": true,
+    "symptoms": [
+      "header row is not quoted, /api/reports/sales.csv?month=2026-09 line 1: order_number,customer,placed_on,total",
+      "CSV for accounting import: text fields not wrapped in double quotes",
+      "CSV valid per RFC 4180 but fails organisational format spec"
+    ],
+    "environment": {
+      "node": ">=18"
+    },
+    "rootCause": "Implementation assumed RFC 4180 minimal quoting; the organisational rule is stricter. Verbatim, Acme accounting interface spec ACC-2: \"CSV files for accounting use CRLF (\\r\\n) line endings, start with a header row, wrap every text field in double quotes (doubling embedded quotes), and write amounts as plain decimals with two digits.\" Source: QA feedback, Acme accounting interface spec ACC-2.",
+    "failedAttempts": [
+      {
+        "approach": "Original design: quote only when needed (RFC 4180) and test via a round-trip parser",
+        "whyFailed": "A parser that accepts both quoted and unquoted fields cannot detect missing quotes; tests passed while the spec was violated."
+      }
+    ],
+    "sources": [
+      {
+        "title": "QA feedback, Acme accounting interface spec ACC-2",
+        "trust": "untrusted",
+        "checkedAt": "2026-10-08"
+      }
+    ],
+    "fix": "Make the field escaper always wrap in double quotes (doubling embedded quotes, after formula neutralisation) and route header names, dates, TOTAL label and empty text fields through it; leave amounts as unquoted two-decimal numbers; keep CRLF. Assert raw output text in tests, not only parsed rows.",
+    "appliesWhen": [
+      "CSV exports for accounting in Acme services",
+      "Writing or testing a CSV serializer that must follow an organisational format spec stricter than RFC 4180"
+    ],
+    "notApplicableWhen": [
+      "Other consumers that have their own CSV spec",
+      "JSON endpoints",
+      "Amount/numeric columns, which stay unquoted"
+    ],
+    "verificationEvidence": [
+      {
+        "label": "repro: AC8 header/text fields not quoted",
+        "purpose": "reproduction",
+        "status": "failed",
+        "command": "node --test --test-name-pattern=ACC-2 test/csv.test.js"
+      },
+      {
+        "label": "fix verified: AC8 quoting",
+        "purpose": "check",
+        "status": "passed",
+        "command": "node --test --test-name-pattern=ACC-2 test/csv.test.js"
+      },
+      {
+        "label": "regression: npm test",
+        "purpose": "check",
+        "status": "passed",
+        "command": "npm test"
+      }
+    ],
+    "promotedTo": "mem-sd-muzlgxnt-011aa1cb"
+  }
+]

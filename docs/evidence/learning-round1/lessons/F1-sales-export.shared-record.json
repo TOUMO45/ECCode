@@ -1,0 +1,142 @@
+{
+  "id": "mem-sd-muzlgxnt-011aa1cb",
+  "layer": "debugging",
+  "scope": "shared",
+  "project": null,
+  "status": "verified",
+  "trust": "internal",
+  "createdAt": "2026-10-08T13:50:58.412Z",
+  "createdBy": "learning-debugger",
+  "lastVerifiedAt": "2026-10-08T13:51:32.963Z",
+  "revisions": [
+    {
+      "rev": 1,
+      "at": "2026-10-08T13:50:58.412Z",
+      "by": "learning-debugger",
+      "reason": "created",
+      "content": {
+        "title": "CSV exports for accounting must quote every text field per Acme spec ACC-2, not minimal RFC 4180 quoting",
+        "problem": "The sales CSV used minimal RFC 4180 quoting (quote only when a field has comma, quote or newline), so the header row, dates and TOTAL label were unquoted and the accounting interface rejected or failed QA (AC8).",
+        "symptoms": [
+          "header row is not quoted, /api/reports/sales.csv?month=2026-09 line 1: order_number,customer,placed_on,total",
+          "CSV for accounting import: text fields not wrapped in double quotes",
+          "CSV valid per RFC 4180 but fails organisational format spec"
+        ],
+        "component": "CSV export serializer (src/reports/csv.js)",
+        "environment": {
+          "node": ">=18"
+        },
+        "fingerprint": "csv-accounting-acc2-always-quote-text-fields",
+        "reproduction": {
+          "steps": [
+            "node --test --test-name-pattern=ACC-2 test/csv.test.js (asserts raw text of header and rows)"
+          ],
+          "evidence": [
+            "ev:ev-muzlgaw3-018ecdcb"
+          ]
+        },
+        "rootCause": {
+          "explanation": "Implementation assumed RFC 4180 minimal quoting; the organisational rule is stricter. Verbatim, Acme accounting interface spec ACC-2: \"CSV files for accounting use CRLF (\\r\\n) line endings, start with a header row, wrap every text field in double quotes (doubling embedded quotes), and write amounts as plain decimals with two digits.\" Source: QA feedback, Acme accounting interface spec ACC-2.",
+          "evidence": [
+            "ev:ev-muzlgaw3-018ecdcb"
+          ]
+        },
+        "failedAttempts": [
+          {
+            "approach": "Original design: quote only when needed (RFC 4180) and test via a round-trip parser",
+            "whyFailed": "A parser that accepts both quoted and unquoted fields cannot detect missing quotes; tests passed while the spec was violated."
+          }
+        ],
+        "solution": {
+          "description": "Make the field escaper always wrap in double quotes (doubling embedded quotes, after formula neutralisation) and route header names, dates, TOTAL label and empty text fields through it; leave amounts as unquoted two-decimal numbers; keep CRLF. Assert raw output text in tests, not only parsed rows.",
+          "tradeoffs": "Slightly larger files; only valid for consumers that accept always-quoted CSV (ACC-2 does). Numeric columns must stay unquoted."
+        },
+        "verification": {
+          "evidence": [
+            "ev:ev-muzlgmcf-0111e15a",
+            "ev:ev-muzlgmt5-0170df87"
+          ],
+          "regressionTest": "npm test"
+        },
+        "sources": [
+          {
+            "title": "QA feedback, Acme accounting interface spec ACC-2",
+            "trust": "untrusted",
+            "checkedAt": "2026-10-08"
+          }
+        ],
+        "appliesWhen": [
+          "CSV exports for accounting in Acme services",
+          "Writing or testing a CSV serializer that must follow an organisational format spec stricter than RFC 4180"
+        ],
+        "notApplicableWhen": [
+          "Other consumers that have their own CSV spec",
+          "JSON endpoints",
+          "Amount/numeric columns, which stay unquoted"
+        ],
+        "confidence": "medium",
+        "tags": [
+          "csv",
+          "quoting",
+          "acme",
+          "ACC-2",
+          "accounting"
+        ]
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "at": "2026-10-08T13:51:32.963Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "rev": 1,
+      "notes": "Checked against csv.js and csv.test.js and approved gate phase:rework-1 (npm test ev-muzlhelz-013bbd98 passes). Always-quote fix, unquoted amounts, CRLF and raw-text assertion are all present; the failed-attempt note (round-trip parser cannot detect missing quotes) is accurate. Scope limits are appropriate."
+    }
+  ],
+  "evidenceSnapshots": {
+    "ev-muzlgaw3-018ecdcb": {
+      "id": "ev-muzlgaw3-018ecdcb",
+      "kind": "command",
+      "label": "repro: AC8 header/text fields not quoted",
+      "command": "node --test --test-name-pattern=ACC-2 test/csv.test.js",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-08T13:50:28.904Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muzlgmcf-0111e15a": {
+      "id": "ev-muzlgmcf-0111e15a",
+      "kind": "command",
+      "label": "fix verified: AC8 quoting",
+      "command": "node --test --test-name-pattern=ACC-2 test/csv.test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-08T13:50:43.747Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muzlgmt5-0170df87": {
+      "id": "ev-muzlgmt5-0170df87",
+      "kind": "command",
+      "label": "regression: npm test",
+      "command": "npm test",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-08T13:50:44.348Z",
+      "recordedBy": "learning-debugger"
+    }
+  },
+  "citations": [],
+  "checks": [],
+  "supersededBy": null,
+  "supersedes": [],
+  "provenance": {
+    "originalId": "mem-d-muzlgxnt-011aa1cb",
+    "originalRevisions": 1,
+    "promotedAt": "2026-10-08T13:51:33.024Z",
+    "promotedBy": "technical-reviewer"
+  }
+}

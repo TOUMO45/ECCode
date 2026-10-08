@@ -1,0 +1,173 @@
+{
+  "id": "mem-sd-muzljnq3-015dcbf0",
+  "layer": "debugging",
+  "scope": "shared",
+  "project": null,
+  "status": "verified",
+  "trust": "internal",
+  "createdAt": "2026-10-08T13:53:05.502Z",
+  "createdBy": "learning-debugger",
+  "lastVerifiedAt": "2026-10-08T13:55:15.085Z",
+  "revisions": [
+    {
+      "rev": 2,
+      "at": "2026-10-08T13:54:38.934Z",
+      "by": "learning-debugger",
+      "reason": "Privacy scan: replace internal:/file: source URLs with title-only sources",
+      "content": {
+        "title": "A POST endpoint that moves money (refund, payout, credit, charge) must honour the Idempotency-Key header, or retries duplicate the money movement",
+        "problem": "POST /api/customers/:id/credits ignored the Idempotency-Key header, so a retried or double-submitted console request issued the store credit twice and raised the customer balance twice. QA acceptance AC6 failed on this. The original feature spec never mentioned retries, so the rule was only found in QA feedback.",
+        "symptoms": [
+          "POST /api/customers/2/credits twice with Idempotency-Key console-7f3a9c returned 201 id 6 then 201 id 7 (same amount 20.00 and reason)",
+          "duplicate money movement on retry or double click; refund, payout, credit or charge created twice",
+          "repeated request with the same key creates a new row instead of replaying the original status and body"
+        ],
+        "component": "money-moving POST endpoints (src/customers/routes.js, src/customers/repository.js, src/db.js)",
+        "environment": {
+          "node": "22.22.0",
+          "os": "linux",
+          "arch": "x64"
+        },
+        "fingerprint": "money-post-ignores-idempotency-key",
+        "reproduction": {
+          "steps": [
+            "node --test test/idempotency.test.js (POST the same credit twice with one Idempotency-Key; expect the same id and one new row)"
+          ],
+          "evidence": [
+            "ev:ev-muzli8cn-01700337"
+          ]
+        },
+        "rootCause": {
+          "explanation": "The handler never read the Idempotency-Key header and kept no record of processed keys, so every POST executed addCredit. Organisational rule PAY-3, source 'QA feedback, rule PAY-3', verbatim: \"a POST endpoint that moves money (refunds, payouts, credits, charges) honours the Idempotency-Key request header. A repeated request with the same key returns the original status and body, and creates nothing new. A request without the header behaves normally.\"",
+          "evidence": [
+            "ev:ev-muzli8cn-01700337"
+          ]
+        },
+        "failedAttempts": [
+          {
+            "approach": "Searched memory for prior lessons on idempotency, duplicate POSTs and repeated requests",
+            "whyFailed": "No matching memory records existed, so the design came from the PAY-3 text and the acme-kit conventions."
+          },
+          {
+            "approach": "Considered de-duplicating by comparing amount and reason against recent credits",
+            "whyFailed": "Rejected before implementing: legitimate identical credits would be blocked and keyless requests must keep behaving normally. Only the client-supplied key identifies a retry."
+          }
+        ],
+        "solution": {
+          "description": "Add an idempotency_keys table, created in loadDb in src/db.js (customer_id, endpoint, idem_key, request_hash, status, response, created_at). Scope the key per customer and endpoint. Read the header after the 404 check, so unknown customers store nothing. A present but empty or over-255-char key is 422 naming Idempotency-Key. After body validation, run lookup, addCredit and key recording in one synchronous step with no await in between (withIdempotency in repository.js), so concurrent duplicates create exactly one credit. A hit with the same normalized request (cents and trimmed reason) replays the stored status and body verbatim. A hit with a different request is 422 validation_failed with fields ['Idempotency-Key']. No header leaves the old path untouched. Apply the same wrapper to every future refund, payout or charge POST.",
+          "tradeoffs": "Only 2xx results are stored. 4xx and 409 balance-overflow results are not, so the client can fix the request and retry with the same key, and a state-dependent 409 is not frozen. Keys never expire, so the table grows, and a TTL job is needed in production. Atomicity relies on the single-threaded in-memory store; with a real SQL driver use a transaction and a unique (customer_id, endpoint, idem_key) index. Different-body reuse is 422 per the acme-kit error envelope (409 is for state conflicts)."
+        },
+        "verification": {
+          "evidence": [
+            "ev:ev-muzljjba-0143e6c1",
+            "ev:ev-muzljjv0-0192a990"
+          ],
+          "regressionTest": "npm test"
+        },
+        "sources": [
+          {
+            "title": "QA feedback, rule PAY-3",
+            "checkedAt": "2026-10-08",
+            "trust": "internal"
+          },
+          {
+            "title": "Acme service toolkit README, error envelope section (409 conflict, 422 validation_failed)",
+            "checkedAt": "2026-10-08",
+            "trust": "internal"
+          }
+        ],
+        "appliesWhen": [
+          "adding or changing a POST endpoint that moves money: refund, payout, credit, charge, top-up, transfer",
+          "a client may retry or double-submit (support console, checkout, webhook-driven calls)",
+          "QA or finance reports duplicate credits, double refunds or double charges",
+          "task text mentions Idempotency-Key, idempotent, replay or retry-safe"
+        ],
+        "notApplicableWhen": [
+          "read-only GET endpoints",
+          "POST endpoints that do not move money (e.g. notes, preferences, search)",
+          "PUT or DELETE that are naturally idempotent by resource id",
+          "bugs where a keyless request is wrongly deduplicated; the rule says a request without the header behaves normally"
+        ],
+        "confidence": "medium",
+        "tags": [
+          "idempotency",
+          "money-movement",
+          "refund",
+          "payout",
+          "charge",
+          "credit",
+          "PAY-3",
+          "http"
+        ]
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "at": "2026-10-08T13:54:11.764Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "rev": 1,
+      "notes": "Reviewed against the approved phase:rework-1 diff and re-run tests (ev:ev-muzlkobm-01e9e79d, ev:ev-muzlkovr-01d4f5a2). Root cause, solution and tradeoffs match the code; applicability and non-applicability scopes are specific and transferable to refund/payout/charge POSTs."
+    },
+    {
+      "at": "2026-10-08T13:55:15.085Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "rev": 2,
+      "notes": "Re-checked rev 2 against approved code: idempotency_keys table in src/db.js, withIdempotency in src/customers/repository.js, header validation and 422 handling in src/customers/routes.js match the lesson. Only sources changed."
+    }
+  ],
+  "evidenceSnapshots": {
+    "ev-muzli8cn-01700337": {
+      "id": "ev-muzli8cn-01700337",
+      "kind": "command",
+      "label": "repro: duplicate Idempotency-Key creates second credit (PAY-3)",
+      "command": "node --test test/idempotency.test.js",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-08T13:51:58.923Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muzljjba-0143e6c1": {
+      "id": "ev-muzljjba-0143e6c1",
+      "kind": "command",
+      "label": "fix verified: duplicate Idempotency-Key replays original (PAY-3), table in src/db.js",
+      "command": "node --test test/idempotency.test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-08T13:52:59.787Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-muzljjv0-0192a990": {
+      "id": "ev-muzljjv0-0192a990",
+      "kind": "command",
+      "label": "regression: npm test (after db.js move)",
+      "command": "npm test",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-08T13:53:00.496Z",
+      "recordedBy": "learning-debugger"
+    }
+  },
+  "citations": [],
+  "checks": [
+    {
+      "at": "2026-10-08T14:06:29.635Z",
+      "by": "orchestrator",
+      "verdict": "applies",
+      "reasons": []
+    }
+  ],
+  "supersededBy": null,
+  "supersedes": [],
+  "provenance": {
+    "originalId": "mem-d-muzljnq3-015dcbf0",
+    "originalRevisions": 2,
+    "promotedAt": "2026-10-08T13:55:15.151Z",
+    "promotedBy": "technical-reviewer"
+  }
+}

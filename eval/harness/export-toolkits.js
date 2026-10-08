@@ -6,6 +6,7 @@
 //   ecc/     affaan-m/ECC at the pinned commit (git archive of a clone)
 // Writes <out>/toolkits.json with both commit ids.
 //   node eval/harness/export-toolkits.js --out <dir> --ecc-clone <path>
+//   node eval/harness/export-toolkits.js --out <dir> --reuse-ecc <earlier export dir>   (same baseline bytes, new ECCode export)
 
 const fs = require('fs');
 const path = require('path');
@@ -57,14 +58,27 @@ function normalizeModels(dir) {
 }
 
 const out = path.resolve(arg('out') || 'eval-run/toolkits');
-const eccClone = path.resolve(arg('ecc-clone'));
+const reuseEcc = arg('reuse-ecc') ? path.resolve(arg('reuse-ecc')) : null;
+const eccClone = reuseEcc ? null : path.resolve(arg('ecc-clone'));
 const repoRoot = path.join(__dirname, '..', '..');
 const eccodeCommit = execFileSync('git', ['-C', repoRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 const dirty = execFileSync('git', ['-C', repoRoot, 'status', '--porcelain', '--', ...ECCODE_PATHS], { encoding: 'utf8' }).trim();
 archive(repoRoot, eccodeCommit, path.join(out, 'eccode'), ECCODE_PATHS);
-const eccHead = execFileSync('git', ['-C', eccClone, 'rev-parse', ECC_COMMIT], { encoding: 'utf8' }).trim();
-archive(eccClone, eccHead, path.join(out, 'ecc'));
-const normalized = { eccode: normalizeModels(path.join(out, 'eccode')), ecc: normalizeModels(path.join(out, 'ecc')) };
+let eccHead;
+let eccNormalized;
+if (reuseEcc) {
+  // The baseline is byte-for-byte the earlier, already normalized export.
+  const earlier = JSON.parse(fs.readFileSync(path.join(reuseEcc, 'toolkits.json'), 'utf8'));
+  eccHead = earlier.ecc.commit;
+  fs.rmSync(path.join(out, 'ecc'), { recursive: true, force: true });
+  fs.cpSync(path.join(reuseEcc, 'ecc'), path.join(out, 'ecc'), { recursive: true });
+  eccNormalized = JSON.parse(fs.readFileSync(path.join(reuseEcc, 'normalized-files.json'), 'utf8')).ecc;
+} else {
+  eccHead = execFileSync('git', ['-C', eccClone, 'rev-parse', ECC_COMMIT], { encoding: 'utf8' }).trim();
+  archive(eccClone, eccHead, path.join(out, 'ecc'));
+  eccNormalized = normalizeModels(path.join(out, 'ecc'));
+}
+const normalized = { eccode: normalizeModels(path.join(out, 'eccode')), ecc: eccNormalized };
 const meta = { eccode: { commit: eccodeCommit, uncommittedToolkitChanges: Boolean(dirty), modelPinsNormalized: normalized.eccode.length }, ecc: { repo: 'https://github.com/affaan-m/ECC', commit: eccHead, modelPinsNormalized: normalized.ecc.length }, normalization: 'frontmatter model: pins rewritten to inherit in both toolkits', exportedAt: new Date().toISOString() };
 fs.writeFileSync(path.join(out, 'normalized-files.json'), JSON.stringify(normalized, null, 2));
 fs.writeFileSync(path.join(out, 'toolkits.json'), JSON.stringify(meta, null, 2));
