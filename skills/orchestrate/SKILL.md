@@ -89,7 +89,7 @@ For each `phase:<id>`, in order:
 ## 5b. Change mode (`/eccode:change`): a change request on an existing codebase
 Use this for a bug fix or a bounded change in code that already exists. A new product or subsystem uses the full workflow above. The gates are the same as in a full delivery, so independence and evidence are not relaxed. The path is lean: **4 dispatches** for a typical small change.
 
-1. **Init** (you): `eccode init --name "<short name>" --idea "<the request>" --profile change`. The gates are `plan` → `phase:<id>`…. There are no architecture, design or verification gates.
+1. **Init** (you): `eccode init --name "<short name>" --idea "<the request, in the requester's own words: copy its title and key sentences>" --profile change`. Lesson retrieval keys on this text and on the task titles, so do not reduce the request to "implement TASK.md". The gates are `plan` → `phase:<id>`…. There are no architecture, design or verification gates.
 2. **Plan** (dispatch 1, `delivery-lead`). It starts the gate itself, reads the request and the code it touches, writes `.eccode/artifacts/plan/plan.json` (start from `eccode template plan`) and submits it. For a small change, use one phase and one task owned by the implementer who will do the work.
    - Acceptance criteria come **from the request**: every stated requirement, error case and constraint, plus "existing tests still pass".
    - Search memory first (§6) with words from the request: the kind of change, the component, the domain. For every lesson that `applies` here, name its id in the task `inputs` and turn it into an **acceptance criterion** of the task. A lesson you set aside (`does-not-apply`) is recorded with `eccode memory assess`, with the experiment or reading that showed it does not fit.

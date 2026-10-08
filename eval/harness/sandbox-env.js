@@ -39,7 +39,9 @@ function trialEnv(cond) {
   for (const k of CA_VARS) if (env[k]) env[k] = CA_COPY;
   Object.assign(env, {
     HOME: `${SBX}/state/home`,
-    CLAUDE_CONFIG_DIR: `${SBX}/state/claude-config`,
+    // The default location (~/.claude under the per-condition HOME): ECC's /learn writes global skills to
+    // ~/.claude/skills, which later sessions of the same condition must be able to load.
+    CLAUDE_CONFIG_DIR: `${SBX}/state/home/.claude`,
     CLAUDE_SESSION_INGRESS_TOKEN_FILE: `${SBX}/state/.ingress_token`,
     IS_SANDBOX: '1',
     TMPDIR: '/tmp',
@@ -58,7 +60,7 @@ function trialEnv(cond) {
 
 /** Prepare a host state dir for a condition: home, config, CLI wrapper, fresh session token. */
 function prepareState(cond, state) {
-  for (const d of ['home', 'claude-config', 'bin', 'eccode-shared']) fs.mkdirSync(path.join(state, d), { recursive: true });
+  for (const d of ['home/.claude', 'bin', 'eccode-shared']) fs.mkdirSync(path.join(state, d), { recursive: true });
   if (cond !== 'C0') fs.writeFileSync(path.join(state, 'bin', 'eccode'), `#!/bin/sh\nexec node "${SBX}/toolkit/bin/eccode.js" "$@"\n`, { mode: 0o755 });
   // Refresh the session token atomically: parallel sessions of one condition
   // share the state dir, so it is never deleted between sessions (only when

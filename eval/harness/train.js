@@ -91,7 +91,10 @@ async function main() {
     const snap = path.join(run, 'snapshots', cond);
     fs.rmSync(snap, { recursive: true, force: true });
     copyDir(state, snap);
-    for (const d of ['projects', 'sessions', 'todos', 'shell-snapshots', 'file-history', 'debug', 'plans', 'statsig', 'backups']) fs.rmSync(path.join(snap, 'claude-config', d), { recursive: true, force: true });
+    // Session data goes (transcripts, todos, shell snapshots); what a toolkit chose to keep stays
+    // (ECCode's shared memory, ECC's skills/learned and its own state under ~/.claude).
+    for (const d of ['projects', 'sessions', 'todos', 'shell-snapshots', 'file-history', 'debug', 'plans', 'statsig', 'backups', 'session-env', 'cache', 'ide', 'telemetry']) fs.rmSync(path.join(snap, 'home', '.claude', d), { recursive: true, force: true });
+    fs.rmSync(path.join(snap, 'home', '.claude.json'), { force: true });
     fs.rmSync(path.join(snap, '.ingress_token'), { force: true });
   }
   console.log(`training done: ${results.length} (condition, task) pairs; snapshots in ${path.join(run, 'snapshots')}`);

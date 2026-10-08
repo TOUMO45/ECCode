@@ -38,8 +38,13 @@ function arg(name, def) {
 
 function promptFor(cond, task, phase, feedback) {
   if (phase === 'feedback') {
-    const body = `QA re-tested your change to this service. These acceptance checks still fail:\n\n${feedback}\n\nFind the root cause and fix it, with a regression test. Afterwards, use your toolkit's learning features to retain what you learned, so future tasks in Acme services avoid this mistake.`;
-    return cond === 'C0' ? `/ecc:orch-fix-defect ${body}` : `/eccode:investigate ${body}`;
+    const body = `QA re-tested your change to this service. These acceptance checks still fail:\n\n${feedback}\n\nFind the root cause and fix it, with a regression test, and retain what you learned so future tasks in Acme services avoid this mistake.`;
+    // Each toolkit is pointed at its own documented route to persist a lesson across sessions and projects:
+    // ECCode's /eccode:investigate (reviewed lesson, promotion to shared memory) is built into its command;
+    // for ECC the equivalent is its /learn command, which saves a reusable skill under ~/.claude/skills.
+    return cond === 'C0'
+      ? `/ecc:orch-fix-defect QA re-tested your change to this service. These acceptance checks still fail:\n\n${feedback}\n\nFind the root cause and fix it, with a regression test. When the fix is verified, run ECC's /learn command to save what you learned as a reusable skill under ~/.claude/skills (approval is pre-granted for this unattended run), so future tasks in Acme services avoid this mistake.`
+      : `/eccode:investigate ${body}`;
   }
   const what = task.kind === 'bug' ? 'Fix the defect described in TASK.md in the current directory.' : 'Implement the change requested in TASK.md in the current directory.';
   if (cond === 'C0') return `${task.kind === 'bug' ? '/ecc:orch-fix-defect' : '/ecc:orch-add-feature'} ${what}`;

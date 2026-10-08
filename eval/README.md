@@ -52,7 +52,7 @@ Each task is an Acme service that vendors `kit/acme-kit`. It comes with a `TASK.
 1. **Predeclare** (`suite/targets.json`, committed before any tuning) the metrics and numerical targets.
 2. **Tune** ECCode only on the tune split (pilots).
 3. **Freeze** the ECCode commit and export both toolkits (`harness/export-toolkits.js`).
-4. **Train.** For each condition and tune task, run an attempt session. If hidden checks fail, run one feedback session that lists the failing checks and their messages, in the same working copy. Then snapshot the condition's state. Harness-level session transcripts are removed from the snapshot; toolkit memory stays.
+4. **Train.** (Each toolkit is pointed at its own documented route to keep a lesson across sessions: `/eccode:investigate` for ECCode, whose reviewed lessons are promoted to shared memory; `/learn` for ECC, which saves a skill under `~/.claude/skills`. Each condition has its own HOME, so nothing leaks between conditions.) For each condition and tune task, run an attempt session. If hidden checks fail, run one feedback session that lists the failing checks and their messages, in the same working copy. Then snapshot the condition's state. Harness-level session transcripts are removed from the snapshot; toolkit memory stays.
 5. **Holdout.** For each condition × holdout task × repeat, run one attempt session from a fresh copy of that condition's snapshot.
 6. **Report** (`harness/report.js`): per-trial results, aggregates with Wilson intervals, target verdicts, and every failure listed.
 
