@@ -1,0 +1,29 @@
+{
+  "task": "A1-invoice-total",
+  "session1": {
+    "sessionId": "155c8b1a-bcce-4dfe-96b1-7702fe9a9ca7",
+    "killedBySignal": true,
+    "costUsd": null,
+    "recordSeqAtKill": 16
+  },
+  "session2": {
+    "sessionId": "15660577-1b9a-466b-b8ea-91c9d8cfed08",
+    "differentSession": true,
+    "costUsd": 0.6058116000000002,
+    "result": "and 59.41. That holds in the list, the detail endpoint and the CSV.\n- **Consistency:** each CSV TOTAL row matches the JSON total, and the 404 response for a missing invoice is unchanged.\n- **Tests:** `npm test` passes 8 of 8. The reproduction test failed 2 of 3 before the fix.\n- **Cause and fix:** the shipping fee and unit prices were being added as strings or floats (invoice 4's total came out as `'54.4234.99'`). The code now works in integer cents. The fix is in `src/invoices/repository.js`, `service.js` and `routes.js`, and the CSV route now reuses `computeTotals` instead of doing its own math. I did not touch `vendor/`.\n- **Evidence:** the review is `rev-muzl0ah1-01befd3a`. The post-fix checks are `ev:ev-muzkyz0d-01c0ce1b` (engineer's `npm test`), `ev:ev-muzkzsmv-019052d2` (reviewer's `npm test`) and `ev:ev-muzkzsu5-01883449` (reviewer's reproduction run).\n\n**The blocking reconcile item:** `check-regressed` on `npm test` was not a real regression. The interrupted engineer's new reproduction test was failing as intended. After the fix it passes.\n\n**Open points, neither blocking:**\n- **Rounding rule:** the discount rounds half away from zero, via `money.percent`. Nobody has confirmed this rule with accounting.\n- **Fractional quantities:** a fractional line quantity would make the money functions throw instead of round. The fixtures only use whole quantities.\n\nNo budget was spent: cost is $0 of the $25 limit and runtime was 3.7 of 480 minutes. Nothing was pushed or deployed."
+  },
+  "reconciledInSession2": true,
+  "recoveredInterruptedRuns": 1,
+  "finalGates": {
+    "plan": "approved",
+    "phase:core": "approved"
+  },
+  "delivered": true,
+  "auditOk": true,
+  "audit": "Audit OK: 36 events, chain intact, approved artifacts unchanged.",
+  "grade": {
+    "success": true,
+    "ac": "5/5",
+    "regressions": []
+  }
+}

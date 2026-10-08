@@ -1,0 +1,9 @@
+$ node -e '
+const {createDb}=require('\''./vendor/acme-kit/db'\'');const {computeTotals}=require('\''./src/invoices/service'\'');
+const db=createDb(require('\''./fixtures/db.json'\''));
+for(const i of [2,3,4]){const t=computeTotals(db.get('\''invoices'\'',i),db.all('\''invoice_lines'\'',{invoice_id:i}));console.log(i,t.subtotal,t.discount,t.shipping,t.total)}'
+# cwd: .
+# exit: 0
+2 120.00 0.00 15.00 12015.00
+3 2.01 1.00 0.00 1.00
+4 60.47 6.05 4.99 54.4234.99

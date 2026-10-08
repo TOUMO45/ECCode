@@ -1,0 +1,14 @@
+$ node -e '
+const {start}=require('\''./test/helpers'\'');(async()=>{const a=await start();for(const id of [1,2,3,4]){const j=(await a.get('\''/api/invoices/'\''+id)).body;console.log(id,j.subtotal,j.discount,j.shipping,j.total);console.log((await a.get('\''/api/invoices/'\''+id+'\''/export.csv'\'')).body.trim().split('\''\n'\'').pop())}console.log((await a.get('\''/api/invoices'\'')).body.map(i=>i.total).join());console.log(JSON.stringify(await a.get('\''/api/invoices/99'\'')));await a.close()})()'
+# cwd: .
+# exit: 0
+1 50.00 0.00 0.00 50.00
+TOTAL,,,50.00
+2 120.00 0.00 15.00 135.00
+TOTAL,,,135.00
+3 2.01 1.01 0.00 1.00
+TOTAL,,,1.00
+4 60.47 6.05 4.99 59.41
+TOTAL,,,59.41
+50.00,135.00,1.00,59.41
+{"status":404,"headers":{},"body":{"error":{"code":"not_found","detail":"Invoice 99 not found"}}}

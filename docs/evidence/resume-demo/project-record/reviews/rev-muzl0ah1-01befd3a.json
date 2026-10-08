@@ -1,0 +1,69 @@
+{
+  "decision": "approve",
+  "summary": "Read the full diff of repository.js, service.js, routes.js and test/totals.test.js (hashes match the submission). Re-ran npm test (8/8) and a reproduction of invoices 1-4 on detail, list and CSV myself; all values match the plan.",
+  "criteria": [
+    {
+      "id": "AC1",
+      "description": "GET /api/invoices/2 returns total 135.00; shipping DECIMAL no longer concatenated",
+      "met": true,
+      "evidence": [
+        "ev:ev-muzkzsu5-01883449",
+        "artifact:src/invoices/repository.js"
+      ]
+    },
+    {
+      "id": "AC2",
+      "description": "Subtotal, discount, shipping, total and line totals exact to the cent on list, detail and CSV",
+      "met": true,
+      "evidence": [
+        "ev:ev-muzkzsu5-01883449",
+        "artifact:src/invoices/service.js"
+      ]
+    },
+    {
+      "id": "AC3",
+      "description": "Discount via money.percent, half away from zero (INV-1043 discount 1.01 total 1.00; INV-1044 6.05 / 59.41)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muzkzsu5-01883449",
+        "artifact:src/invoices/service.js"
+      ]
+    },
+    {
+      "id": "AC4",
+      "description": "CSV TOTAL row and line totals equal JSON values for every fixture invoice (CSV reuses computeTotals)",
+      "met": true,
+      "evidence": [
+        "ev:ev-muzkzsmv-019052d2",
+        "artifact:src/invoices/routes.js",
+        "artifact:test/totals.test.js"
+      ]
+    },
+    {
+      "id": "AC5",
+      "description": "Existing tests pass and npm test is green; failing reproduction recorded before the fix; response shapes and 404 envelope unchanged",
+      "met": true,
+      "evidence": [
+        "ev:ev-muzkzsmv-019052d2",
+        "ev:ev-muzkzsu5-01883449"
+      ],
+      "notes": "Author reproduction run ev-muzkyisu-01056fc9 shows 2 failing tests before the fix; my repro shows 404 envelope for /api/invoices/99 intact."
+    }
+  ],
+  "findings": [
+    {
+      "id": "PC-1",
+      "severity": "info",
+      "title": "Rounding rule assumed from acme-kit",
+      "detail": "Half away from zero comes from money.percent and was not confirmed against accounting's spreadsheet; fixture values match the task expectations.",
+      "recommendation": "Mention in the final handoff that accounting should confirm the rounding rule; no code change needed."
+    },
+    {
+      "id": "PC-2",
+      "severity": "info",
+      "title": "Line total multiplies integer cents by quantity unchecked",
+      "detail": "computeTotals uses unit_price * quantity; exact for integer quantities (fixtures), but a fractional quantity would make money.sum/toDecimal throw rather than round.",
+      "recommendation": "Optional: validate quantity as an integer at the repository boundary in a future change."
+    }
+  ]
+}

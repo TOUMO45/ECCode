@@ -1,0 +1,18 @@
+{
+  "decision": "approve",
+  "summary": "Read TASK.md, plan.json/plan.md, src/invoices/*, vendor/acme-kit money/db/README and fixtures; plan validates, reproduced the defect on current code, and the plan's root causes and expected values (50.00, 135.00, 1.00, 59.41; discount 1.01 and 6.05) check out against money.js semantics.",
+  "criteria": [
+    {"id":"C1","description":"TASK: INV-1042 total 135.00 (shipping string concatenation) is addressed","met":true,"evidence":["ev:ev-muzkw2se-010c76ef","artifact:.eccode/artifacts/plan/plan.json"]},
+    {"id":"C2","description":"TASK: subtotal/discount/shipping/total exact to the cent on every endpoint (list, detail, CSV), checked in general not only INV-1042","met":true,"evidence":["ev:ev-muzkw2se-010c76ef","artifact:.eccode/artifacts/plan/plan.json"]},
+    {"id":"C3","description":"TASK: CSV totals match JSON API (CSV duplicate math in routes.js replaced by shared computeTotals)","met":true,"evidence":["artifact:.eccode/artifacts/plan/plan.json","artifact:.eccode/artifacts/plan/plan.md"]},
+    {"id":"C4","description":"TASK: existing behaviour preserved, npm test passes (5/5 baseline)","met":true,"evidence":["ev:ev-muzkw0bm-01e14a94","artifact:.eccode/artifacts/plan/plan.json"]},
+    {"id":"C5","description":"Task has owner, dependencies, inputs, outputs, file ownership, acceptance criteria and verification; plan validates; no parallel overlap (single task)","met":true,"evidence":["artifact:.eccode/artifacts/plan/plan.json"]},
+    {"id":"C6","description":"Defect has a reproduction step and the fix follows acme-kit money conventions (fromDecimal at repository boundary, percent, toDecimal)","met":true,"evidence":["ev:ev-muzkw2se-010c76ef","artifact:.eccode/artifacts/plan/plan.json"]}
+  ],
+  "findings": [
+    {"id":"F1","severity":"minor","title":"Reproduction step is not concrete in the plan","detail":"The plan says to write a failing reproduction test first but gives no command or expected failing values. I reproduced it: current computeTotals gives INV-1042 total 12015.00 and INV-1044 total 54.4234.99 (also string concatenation), and INV-1043 discount 1.00 instead of 1.01 (ev:ev-muzkw2se-010c76ef).","evidence":["ev:ev-muzkw2se-010c76ef"],"recommendation":"Engineer should have the reproduction test assert these values and record it as failing before the fix; resolved when the handoff cites that failing run."},
+    {"id":"F2","severity":"minor","title":"Root cause 2 example for INV-1044 is imprecise","detail":"plan.md cites 60.47*10%=6.047 as a cent error, but toFixed gives 6.05 today; INV-1044 is currently wrong because of the shipping concatenation. The cent error is real on INV-1043 (1.005 prints 1.00). Fix targets are still correct.","evidence":["ev:ev-muzkw2se-010c76ef"],"recommendation":"No plan change needed; ensure tests assert discount 1.01 for INV-1043 and the 59.41 total for INV-1044."},
+    {"id":"F3","severity":"info","title":"Rounding rule needs accounting confirmation; response shape detail","detail":"Half away from zero is the acme-kit convention and is flagged as a risk in the plan. Also keep lines[].unitPrice as the 2-decimal string and lineTotal as a string, as today.","evidence":["artifact:.eccode/artifacts/plan/plan.md"],"recommendation":"Mention in the final handoff that the rounding rule was assumed from acme-kit and should be confirmed against accounting's spreadsheet."}
+  ],
+  "resolvedFindings": []
+}

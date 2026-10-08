@@ -1,0 +1,53 @@
+{
+  "phases": [
+    {
+      "id": "core",
+      "name": "Fix invoice money arithmetic",
+      "goal": "All invoice totals are computed once, in integer cents via vendor/acme-kit/money, and shared by the list, detail and CSV endpoints.",
+      "acceptanceCriteria": [
+        "GET /api/invoices/2 returns total 135.00 (shipping DECIMAL string no longer concatenated)",
+        "Subtotal, discount, shipping, total and line totals are exact to the cent on every endpoint showing them: list, detail, CSV",
+        "Discount is rounded to the cent half away from zero via money.percent (INV-1043 discount 1.01, total 1.00; INV-1044 subtotal 60.47, discount 6.05, total 59.41)",
+        "CSV TOTAL row and line totals equal the JSON API values for every fixture invoice",
+        "Existing tests pass and npm test is green"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "fix-invoice-totals",
+      "phase": "core",
+      "title": "Fix BILL-311: integer-cent invoice totals shared by JSON and CSV, with regression tests",
+      "owner": "backend-engineer",
+      "dependencies": [],
+      "inputs": [
+        "TASK.md",
+        "vendor/acme-kit/README.md (Money, DECIMAL values are strings)",
+        "vendor/acme-kit/money.js"
+      ],
+      "outputs": [
+        "failing reproduction test first (purpose reproduction), then the fix",
+        "service.computeTotals using money.fromDecimal/sum/percent/toDecimal",
+        "CSV route reusing computeTotals instead of its own float math",
+        "regression tests for all fixture invoices and CSV==JSON"
+      ],
+      "components": ["invoices"],
+      "files": [
+        "src/**",
+        "test/**"
+      ],
+      "acceptanceCriteria": [
+        "First step: a failing reproduction test (run with --purpose reproduction) shows INV-1042 total 12015.00 instead of 135.00 and the cent errors on INV-1043/1044",
+        "Root cause 1 fixed: DECIMAL strings (shipping_fee, unit_price) converted with money.fromDecimal at the repository boundary, no string concatenation or float math",
+        "Root cause 2 fixed: discount computed with money.percent (half away from zero), not unrounded floats then toFixed",
+        "Root cause 3 fixed: CSV route uses the same computeTotals as the JSON endpoints so CSV TOTAL and line totals equal JSON",
+        "GET /api/invoices (list), GET /api/invoices/:id and the CSV export all show correct totals for invoices 1-4 (50.00, 135.00, 1.00, 59.41)",
+        "Response shapes unchanged: string amounts with 2 decimals, 404 envelope intact; existing tests pass (npm test)"
+      ],
+      "verification": {
+        "method": "run the project test suite, including new regression tests",
+        "command": "npm test"
+      }
+    }
+  ]
+}

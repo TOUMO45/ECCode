@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "limits": {
+    "maxConcurrency": 2,
+    "maxReviewIterations": 3,
+    "maxTaskRetries": 2,
+    "maxReworks": 3,
+    "maxRuntimeMinutes": 480,
+    "maxCostUsd": 25,
+    "staleRunMinutes": 60
+  },
+  "review": {
+    "requiredSections": {
+      "architecture": [
+        "Users",
+        "Problem",
+        "Requirements",
+        "Acceptance Criteria",
+        "Architecture",
+        "Assumptions",
+        "Open Questions",
+        "Risks"
+      ],
+      "design": [
+        "Components",
+        "Interface Contracts",
+        "Data Design",
+        "Security",
+        "Testing Strategy",
+        "Deployment"
+      ]
+    },
+    "minEvidencePerApproval": 1
+  },
+  "roles": {
+    "architecture": {
+      "authors": [
+        "product-architect"
+      ],
+      "reviewers": [
+        "architecture-reviewer"
+      ]
+    },
+    "design": {
+      "authors": [
+        "technical-designer"
+      ],
+      "reviewers": [
+        "technical-reviewer"
+      ]
+    },
+    "plan": {
+      "authors": [
+        "delivery-lead"
+      ],
+      "reviewers": [
+        "technical-reviewer"
+      ]
+    },
+    "phase": {
+      "authors": [
+        "delivery-lead",
+        "frontend-engineer",
+        "backend-engineer",
+        "ai-engineer",
+        "test-engineer",
+        "devops-engineer",
+        "learning-debugger"
+      ],
+      "reviewers": [
+        "technical-reviewer",
+        "security-reviewer"
+      ]
+    },
+    "verification": {
+      "authors": [
+        "delivery-lead",
+        "test-engineer"
+      ],
+      "reviewers": [
+        "technical-reviewer",
+        "security-reviewer"
+      ]
+    }
+  },
+  "pricing": {
+    "usdPerMillionTokens": null
+  },
+  "memory": {
+    "learning": true,
+    "staleAfterDays": 180,
+    "sharedDir": null,
+    "embedCommand": null,
+    "duplicateThreshold": 0.82
+  },
+  "improvement": {
+    "requireUserForAdoption": true,
+    "protectedPaths": [
+      ".eccode/config.json",
+      ".claude/settings.json",
+      ".claude/settings.local.json",
+      "hooks/hooks.json",
+      "lib/**",
+      ".eccode/**",
+      "**/eccode/**",
+      "bin/**",
+      "scripts/hooks/**",
+      "schemas/**",
+      "hooks/**"
+    ]
+  }
+}

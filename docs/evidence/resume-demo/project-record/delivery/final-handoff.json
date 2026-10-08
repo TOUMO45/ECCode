@@ -1,0 +1,91 @@
+{
+  "project": {
+    "name": "Invoice totals garbled with shipping fee (BILL-311)",
+    "idea": "Bug: invoice totals are garbled when a shipping fee is present. GET /api/invoices/2 returns total 12015.00 (expected 135.00). CSV export wrong the same way. Some discounted invoices are off by a cent; check totals are right in general. Totals exact to the cent on every endpoint, CSV matches JSON API, npm test passes.",
+    "createdAt": "2026-10-08T13:33:39.094Z",
+    "profile": "change"
+  },
+  "gates": [
+    {
+      "id": "plan",
+      "approvedBy": "technical-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:core",
+      "approvedBy": "technical-reviewer",
+      "iterations": 0
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-muzkw0bm-01e14a94",
+      "label": "baseline npm test (plan review)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muzkw2se-010c76ef",
+      "label": "reproduce BILL-311 on current code (INV-1042/1043/1044 JSON+CSV)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muzkxju0-01c34a5d",
+      "label": "BILL-311 reproduction (expected to fail)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muzkxsry-01b0405b",
+      "label": "reconcile: reproduce BILL-311 on current code (INV-1042/1043/1044 JSON+CSV)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-muzkxtei-0274b2b7",
+      "label": "reconcile: baseline npm test (plan review)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-muzkyisu-01056fc9",
+      "label": "reproduce BILL-311",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muzkyz0d-01c0ce1b",
+      "label": "npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-muzkzsmv-019052d2",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-muzkzsu5-01883449",
+      "label": "repro INV-1042/1043/1044 detail+csv",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    }
+  ],
+  "totals": {
+    "costUsd": 0,
+    "runtimeMinutes": 3.7,
+    "tokens": 83306
+  },
+  "auditEvents": 35
+}
