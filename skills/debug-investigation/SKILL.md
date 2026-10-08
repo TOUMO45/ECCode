@@ -31,6 +31,7 @@ Required fields:
 - **confidence**: low / medium / high
 
 ## Write lessons that transfer
+Start from `eccode template lesson`.
 A lesson helps only if a later, different task can find it and tell when it applies. Retrieval is lexical, so write the way a future task will describe its own situation.
 - **Title:** the general rule or pattern and its consequence ("Collection endpoints must return `{items,total}` or QA rejects them"), not the name of today's service or ticket.
 - **Vocabulary:** put the general terms into `problem`, `symptoms`, `component` and `tags`: the kind of change (list endpoint, CSV export for accounting, refund, money movement, cache key, validation), the library or convention involved, and the words QA used.

@@ -5,6 +5,8 @@ description: The ECCode handoff contract between agents - objective, context, in
 
 # ECCode handoffs
 
+Start from `eccode template handoff` (a valid skeleton) and fill it in.
+
 Every handoff is JSON matching `schemas/handoff.schema.json`. Record it with `eccode handoff record --actor <you> --file <f>`, or pass it to `eccode task complete`. The engine checks:
 
 - every required field is present;

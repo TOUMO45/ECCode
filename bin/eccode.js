@@ -23,6 +23,9 @@ Project
                                          (--force: the user accepts a rolled-back log, LOG_ROLLBACK)
   deliver --actor delivery-lead          Produce the verified final handoff
 
+Templates
+  template review|plan|handoff|lesson   Print a valid JSON skeleton to start from (it validates as printed)
+
 Gates (architecture, design, plan, phase:<id>, verification)
   gate start <gate> --actor <role>
   gate submit <gate> --actor <role> --artifact <path>... [--responds-to <reviewId>] [--notes <text>]
@@ -118,7 +121,7 @@ function numberFlag(flags, name, { min = 0, integer = false } = {}) {
 // Extra ones are refused rather than dropped: `--artifact a.md b/*.md` must
 // not silently submit only a.md.
 const POSITIONALS = {
-  init: 1, install: 1, status: 1, resume: 1, reconcile: 1, recover: 1, rebuild: 1, audit: 1, deliver: 1, metrics: 1,
+  init: 1, install: 1, template: 2, status: 1, resume: 1, reconcile: 1, recover: 1, rebuild: 1, audit: 1, deliver: 1, metrics: 1,
   export: 2, handoff: 2, risk: 2, decision: 2,
   gate: 3, plan: 3, task: 3, evidence: 3, run: 3, memory: 3, improve: 3,
   'task list': 2, 'task next': 2, 'evidence run': 2, 'evidence list': 2, 'run start': 2,
@@ -158,6 +161,10 @@ function main(argv) {
   if (group === 'init') {
     const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', profile: flags.profile || 'delivery' });
     print(flags, `Initialized ECCode project in ${store.dir}`, { root: store.root });
+    return 0;
+  }
+  if (group === 'template') {
+    process.stdout.write(JSON.stringify(require('../lib/templates').template(need(sub, '<review|plan|handoff|lesson>')), null, 2) + '\n');
     return 0;
   }
   if (group === 'install') return require('../lib/install').cli(flags, print);

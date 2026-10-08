@@ -23,7 +23,7 @@ Each refusal is logged (`review.rejected`) and counted in metrics.
 1. `eccode gate show <gate> --json`: identify the latest submission, its artifacts and any open findings.
 2. Read every artifact. For code, read the diff and the surrounding code.
 3. Run checks yourself: `eccode evidence run --actor <you> --label "<what>" -- <cmd>`. Note the `ev:` ids.
-4. Write `.eccode/reviews/drafts/<gate>-<n>.json`:
+4. Start from `eccode template review > .eccode/reviews/drafts/<gate>-<n>.json` (a valid skeleton), then edit it. The shape:
 
 ```json
 {
