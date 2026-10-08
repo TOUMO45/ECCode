@@ -48,7 +48,7 @@ process.stdin.on('end', () => {
       brief,
       formatIssues(inspect(store, state)),
       audit.ok ? '' : `WARNING: event log integrity check failed: ${audit.errors.slice(0, 3).join('; ')}`,
-      'Use the `orchestrate` skill to continue. First run `eccode reconcile --verify --actor orchestrator` and resolve BLOCKING items. Open runs from a previous session are interrupted: recover them with `eccode recover --all` before dispatching.',
+      'Use the `orchestrate` skill to continue. First run `eccode reconcile --verify --actor orchestrator` and resolve BLOCKING items. Open runs from a previous session are interrupted: recover them with `eccode recover --all --actor orchestrator` before dispatching.',
     ]
       .filter(Boolean)
       .join('\n');

@@ -123,7 +123,7 @@ eccode status --brief          # always shows the NEXT action
 | `[INVALID_HANDOFF] … unchanged since claim` | The listed files don't differ in git | List only the files that actually changed |
 | `[BUDGET_EXCEEDED]` | Recorded spend or runtime has reached the limit | Stop and ask the user. Raising limits needs their authorization |
 | Gate shows `escalated` | Too many rejections | The user decides: `eccode gate reopen <gate> --actor user --resolution "…"` |
-| Open runs after a crash | The previous session died | `eccode recover --all` |
+| Open runs after a crash | The previous session died | `eccode recover --all --actor orchestrator` |
 | `Audit FAILED` | The event log was edited or an approved file changed | Restore from git. Changes to approved files need a new review |
 | Guard denies an edit | Wrong role or file, or no claim | Follow the reason text. `ECCODE_HOOKS=off` disables hooks for debugging only |
 | `eccode` not found | Plugin bin directory isn't on PATH | Use `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` or `node .claude/eccode/bin/eccode.js` |

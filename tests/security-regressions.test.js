@@ -595,6 +595,40 @@ test('#20 default phase artifacts skip deleted files and scratch drafts', () => 
   verifyAndDeliver(ctx);
 });
 
+// ------------------------------------------------------- #17 run accounting
+
+test('#17 run correct is restricted to orchestrator/user (an agent cannot lower recorded spend)', () => {
+  const ctx = tmpProject({ configOverrides: { limits: { maxCostUsd: 1 } } });
+  const id = runs.startRun(ctx.store, ctx.config, 'product-architect', { gate: 'architecture' });
+  runs.endRun(ctx.store, ctx.config, id, 'orchestrator', { costUsd: 5, tokens: 100000 });
+  expectCode(() => runs.correctRun(ctx.store, id, 'product-architect', { costUsd: '0', tokens: '0', reason: 'recount' }), 'ROLE_NOT_ALLOWED');
+  expectCode(() => gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator'), 'BUDGET_EXCEEDED');
+  runs.correctRun(ctx.store, id, 'user', { costUsd: '0.5', reason: 'the user checked the invoice' });
+  assert.strictEqual(ctx.store.state().runs[id].corrections[0].by, 'user');
+});
+
+test('#17 recover is restricted to orchestrator/user and records the real caller', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  const runId = runs.startRun(ctx.store, ctx.config, 'backend-engineer', { task: 'api' });
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer', { runId });
+  tasks.claim(ctx.store, ctx.config, 'ui', 'frontend-engineer'); // orphaned claim, no run
+  expectCode(() => runs.recover(ctx.store, ctx.config, { all: true, actor: 'frontend-engineer' }), 'ROLE_NOT_ALLOWED');
+  expectCode(() => runs.recover(ctx.store, ctx.config, { all: true }), 'ROLE_NOT_ALLOWED');
+  let res = cli(ctx.dir, ['recover', '--all']);
+  assert.strictEqual(res.status, 1, res.stdout + res.stderr);
+  assert.match(res.stderr, /--actor/);
+  assert.strictEqual(ctx.store.state().tasks.api.status, 'claimed');
+  res = cli(ctx.dir, ['recover', '--all', '--actor', 'user']);
+  assert.strictEqual(res.status, 0, res.stderr);
+  const st = ctx.store.state();
+  assert.strictEqual(st.tasks.api.history.slice(-1)[0].by, 'user');
+  assert.strictEqual(st.tasks.ui.history.slice(-1)[0].by, 'user');
+  const ended = ctx.store.readEvents().find((e) => e.type === 'run.ended' && e.data.id === runId);
+  assert.strictEqual(ended.actor, 'user');
+});
+
 test('#22 memory ids are validated before they are used as paths', () => {
   const ctx = tmpProject();
   write(ctx.dir, 'x.json', '{"id":"x","layer":"project","revisions":[{"content":{"title":"t"}}],"reviews":[]}');

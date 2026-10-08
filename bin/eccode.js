@@ -17,7 +17,7 @@ Project
   resume                                 Resume brief for a new session, with read-only reconciliation
   reconcile --actor <a> [--verify] [--max-checks n]
                                          Check the record against files (and re-run recorded checks); exit 3 on blocking issues
-  recover [--all]                        Close interrupted runs, release their claims
+  recover [--all] --actor orchestrator|user   Close interrupted runs, release their claims
   audit                                  Verify the hash chain, snapshot==replay, and approved artifacts
   rebuild [--force --actor user]         Rewrite state.json by replaying events.jsonl
                                          (--force: the user accepts a rolled-back log, LOG_ROLLBACK)
@@ -198,7 +198,7 @@ function main(argv) {
       return rep.ok ? 0 : 3;
     }
     case 'recover': {
-      const rec = runs.recover(store, config, { all: Boolean(flags.all) });
+      const rec = runs.recover(store, config, { all: Boolean(flags.all), actor: need(actor, '--actor') });
       print(flags, rec.length ? rec.map((r) => `recovered run ${r.run || '-'} (${r.agent}) task=${r.task || '-'} released=${r.released}${r.escalated ? ' ESCALATED' : ''}`).join('\n') : 'Nothing to recover.', rec);
       return 0;
     }

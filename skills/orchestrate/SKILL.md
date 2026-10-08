@@ -30,7 +30,7 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
   - **BLOCKING `approved-artifact`:** a reviewed file changed after approval. Restore it from git, or ask the user whether to reopen that gate. Never continue on top of it.
   - **BLOCKING `check-regressed`:** a check that passed is now failing. Treat it as a bug and use `debug-investigation` before any new work.
   - **`claimed-task` with partial files:** the interrupted agent left work on disk. Tell the next owner to inspect it and either keep or discard it on purpose.
-  - Then, if a previous session left runs open, run `eccode recover --all`. That releases their claims and counts the attempts. Continue from the reported **NEXT** action.
+  - Then, if a previous session left runs open, run `eccode recover --all --actor orchestrator`. That releases their claims and counts the attempts. Continue from the reported **NEXT** action.
 - **Limits.** The defaults in `.eccode/config.json` are `maxConcurrency`, `maxReviewIterations`, `maxTaskRetries`, `maxRuntimeMinutes`, `maxCostUsd` and `staleRunMinutes`. Tell the user what they are; change them only if the user asks.
 
 ## 2. Run accounting (every dispatch)
@@ -107,7 +107,7 @@ Use this for a bug fix or a bounded feature change in code that already exists. 
 ## 7. Failure handling
 | Situation | Action |
 |---|---|
-| Agent crashed or timed out | `run end --status failed --no-usage` (or with the usage it did report). Then `eccode recover` (or `--all` after a restart) and retry within limits |
+| Agent crashed or timed out | `run end --status failed --no-usage` (or with the usage it did report). Then `eccode recover --actor orchestrator` (add `--all` after a restart) and retry within limits |
 | Engine refusal | It is a rule, not a bug. Fix the cause and never bypass it by editing `.eccode/` files |
 | Repeated rejections | The gate escalates automatically. Present the recovery options and ask the user |
 | Budget or runtime exhausted | Stop, summarize state, ask the user |
