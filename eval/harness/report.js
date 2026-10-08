@@ -4,6 +4,8 @@
 // every metric and target verdict exactly as predeclared in suite/targets.json.
 //
 //   node eval/harness/report.js --run <runDir> --out <dir> [--split holdout]
+//        [--exclude <task>:<check>[,<task>:<check>...]]   SENSITIVITY analysis only: drop named hidden checks
+//        from the success definition (e.g. a check found to contradict its TASK.md). Not the official verdict.
 
 const fs = require('fs');
 const path = require('path');
@@ -20,6 +22,30 @@ const split = argv('split', 'holdout');
 const targets = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'suite', 'targets.json'), 'utf8'));
 const tasks = new Map(listTasks().map((t) => [t.id, t]));
 const CONDS = ['C0', 'C1', 'C2'];
+const exclude = (argv('exclude', '') || '').split(',').filter(Boolean).map((x) => x.split(':'));
+
+/** Remove excluded hidden checks from one trial's grade (a check that failed leaves the failed list; one that passed leaves the totals). */
+function withoutExcluded(r) {
+  const ex = exclude.filter(([task]) => task === r.task).map(([, check]) => check);
+  if (!ex.length) return r;
+  const g = { ...r.grade };
+  const idOf = (name) => name.split(/\s+/)[0];
+  for (const check of ex) {
+    const failedIdx = g.failed.findIndex((n) => idOf(n) === check);
+    if (failedIdx >= 0) g.failed = g.failed.filter((_, i) => i !== failedIdx);
+    else g.acPassed -= 1;
+    g.acTotal -= 1;
+    if (!g.orgChecks.some((c) => c.id === check) && g.discoverable) {
+      g.discoverable = { passed: g.discoverable.passed - (failedIdx >= 0 ? 0 : 1), total: g.discoverable.total - 1 };
+    }
+    g.regressions = g.regressions.filter((id) => id !== check);
+  }
+  const names = g.failed;
+  g.failedTraps = [...new Set(names.flatMap((n) => [...n.matchAll(/\[trap:([\w-]+)\]/g)].map((m) => m[1])))];
+  g.failedOrg = [...new Set(names.flatMap((n) => [...n.matchAll(/\[org:([\w-]+)\]/g)].map((m) => m[1])))];
+  g.success = g.visibleOk && g.acTotal > 0 && g.acPassed === g.acTotal && g.regressions.length === 0;
+  return { ...r, grade: g };
+}
 
 function wilson(k, n, z = 1.96) {
   if (!n) return [0, 0];
@@ -42,7 +68,7 @@ function loadTrials() {
     for (const task of fs.readdirSync(path.join(base, cond))) {
       for (const rep of fs.readdirSync(path.join(base, cond, task))) {
         const f = path.join(base, cond, task, rep, 'attempt', 'result.json');
-        if (fs.existsSync(f)) out.push(JSON.parse(fs.readFileSync(f, 'utf8')));
+        if (fs.existsSync(f)) out.push(withoutExcluded(JSON.parse(fs.readFileSync(f, 'utf8'))));
       }
     }
   }
@@ -146,6 +172,7 @@ function main() {
 
   const L = [];
   L.push('# ECCode evaluation results (R7)', '');
+  if (exclude.length) L.push(`> **SENSITIVITY ANALYSIS, not the official verdict.** Excluded hidden checks: ${exclude.map((x) => x.join(' ')).join(', ')}.`, '');
   L.push(`Generated ${summary.generatedAt} from \`${path.relative(process.cwd(), run) || run}\`. Toolkits: ECCode \`${toolkits ? toolkits.eccode.commit.slice(0, 12) : '?'}\`, ECC \`${toolkits ? toolkits.ecc.commit.slice(0, 12) : '?'}\`. Targets were predeclared in \`eval/suite/targets.json\`.`, '');
   L.push('## Target verdicts', '', '| Target | Met | Detail |', '|---|---|---|');
   for (const x of v.mandatory) L.push(`| ${x.id} | ${x.met ? '✅ met' : x.informative ? '❌ not met' : '❌ not informative'} | ${x.detail} |`);
