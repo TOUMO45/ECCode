@@ -59,6 +59,8 @@ Memory (layers: project, debugging, knowledge, workflow)
   memory supersede <oldId> --by <newId> --actor <a> --reason <text>
   memory duplicates [--threshold 0.8]
   memory promote <id> --actor <a>             Sanitize + copy a verified lesson to shared memory
+  memory assess <id> --actor <a> --verdict applies|does-not-apply --reason <text> --evidence ev:<id> [...]
+                                             Does a retrieved lesson fit THIS problem's cause? (needs an experiment)
   memory cite <id> --actor <a> --context <text>
   memory env                                  Show the detected environment
   memory status                               Learning on/off and record counts (ECCODE_LEARNING=on|off)

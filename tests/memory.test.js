@@ -179,6 +179,41 @@ test('learning can be switched off: no lesson retrieval, recording or self-impro
   assert.strictEqual(res.status, 2); // ambiguous values are refused, not guessed
 });
 
+test('relevance assessments: a lesson is rejected for a problem with a different cause, with evidence', () => {
+  const shared = withSharedDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const ev = reproAndFix(ctx);
+  const rec = mem.add('learning-debugger', { layer: 'debugging', content: lesson(ev) });
+  mem.review(rec.id, 'technical-reviewer', { decision: 'verify', notes: 'Re-ran the failing check after the fix: passes.' });
+  // Same symptom, different cause: the experiment shows the lesson's root cause is absent.
+  write(ctx.dir, 'probe.js', 'process.exit(0)\n');
+  const probe = evidence.runCommand(ctx.store, 'backend-engineer', { label: 'content-type present on failing requests', command: 'node probe.js' });
+  const cli = (...args) => spawnSync(process.execPath, [BIN, ...args, '--root', ctx.dir], { env: { ...process.env, ECCODE_SHARED_MEMORY: shared }, encoding: 'utf8' });
+
+  let res = cli('memory', 'assess', rec.id, '--actor', 'backend-engineer', '--verdict', 'does-not-apply', '--reason', 'Requests carry Content-Type; the 500 comes from a schema mismatch.', '--evidence', `ev:${probe.id}`);
+  assert.strictEqual(res.status, 0, res.stderr);
+  const after = mem.get(rec.id);
+  assert.strictEqual(after.assessments.length, 1);
+  assert.strictEqual(after.assessments[0].verdict, 'does-not-apply');
+  assert.deepStrictEqual(after.assessments[0].evidence, [`ev:${probe.id}`]);
+  assert.strictEqual(after.status, 'verified', 'rejecting a lesson for one problem does not invalidate it');
+
+  // Verdicts need evidence that exists, and a known verdict.
+  res = cli('memory', 'assess', rec.id, '--actor', 'backend-engineer', '--verdict', 'does-not-apply', '--reason', 'no proof');
+  assert.strictEqual(res.status, 2);
+  assert.match(res.stderr, /needs at least one --evidence/);
+  res = cli('memory', 'assess', rec.id, '--actor', 'backend-engineer', '--verdict', 'does-not-apply', '--reason', 'bogus', '--evidence', 'ev:ev-nope');
+  assert.strictEqual(res.status, 2);
+  res = cli('memory', 'assess', rec.id, '--actor', 'backend-engineer', '--verdict', 'maybe', '--reason', 'x', '--evidence', `ev:${probe.id}`);
+  assert.strictEqual(res.status, 2);
+
+  // Metrics count relevance decisions separately from environment checks.
+  res = cli('metrics', '--json');
+  assert.strictEqual(res.status, 0, res.stderr);
+  assert.deepStrictEqual(JSON.parse(res.stdout).summary.lessonRelevanceDecisions, { 'does-not-apply': 1 });
+});
+
 test('stale and superseded lessons are flagged rather than trusted', () => {
   withSharedDir();
   const ctx = tmpProject();
