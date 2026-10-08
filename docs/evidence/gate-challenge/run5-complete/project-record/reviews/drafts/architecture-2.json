@@ -1,0 +1,23 @@
+{
+  "decision": "approve",
+  "summary": "Rev 2 resolves ARCH-1..3: file persistence in scope with atomic writes, request/note caps, strict X-User validation with loopback default. Residual minor points noted.",
+  "criteria": [
+    {"id":"completeness","description":"Users, scope, limits, identity, persistence, logging, error contract explicit.","met":true,"evidence":["artifact:.eccode/artifacts/brief.md#Requirements","artifact:.eccode/artifacts/brief.md#Scope"]},
+    {"id":"testability","description":"AC1-AC11 are concrete with statuses, check order, and named test values.","met":true,"evidence":["artifact:.eccode/artifacts/brief.md#Acceptance Criteria"]},
+    {"id":"assumptions","description":"A1-A4 stated with blocking effect; A1 backed by loopback default and Q2 owner.","met":true,"evidence":["artifact:.eccode/artifacts/brief.md#Assumptions","artifact:.eccode/artifacts/brief.md#Open Questions"]},
+    {"id":"complexity","description":"Zero-dependency node:http plus file repository is proportionate.","met":true,"evidence":["artifact:.eccode/artifacts/brief.md#Architecture"]},
+    {"id":"feasibility","description":"Scale (500 notes x 100 users, 2KB bodies) is trivially feasible for whole-file rewrite; NFR3 measurable.","met":true,"evidence":["artifact:.eccode/artifacts/brief.md#Constraints","artifact:.eccode/artifacts/brief.md#Success Criteria"]},
+    {"id":"security_privacy","description":"Trust boundary explicit, Map storage, 404 for non-owners, no content in logs, 0600 file.","met":true,"evidence":["artifact:.eccode/artifacts/brief.md#Architecture","artifact:.eccode/artifacts/brief.md#Constraints"]},
+    {"id":"ai_features","description":"No AI features; not applicable.","met":true,"evidence":["artifact:.eccode/artifacts/brief.md#Architecture"]},
+    {"id":"risk_register","description":"Seven risks with likelihood, impact, mitigation, owner.","met":true,"evidence":["artifact:.eccode/artifacts/brief.md#Risks"]}
+  ],
+  "findings": [
+    {"id":"ARCH-7","severity":"minor","title":"Crash-leftover temp file blocks restart","detail":"AC8 refuses to start on a leftover temp file, but NFR4 crashes mid-write can produce exactly that, causing manual recovery. Safe but operationally harsh; no runbook (artifact:.eccode/artifacts/brief.md#Acceptance Criteria AC8).","recommendation":"Document the recovery procedure in the README, or define safe temp-file handling at design."},
+    {"id":"ARCH-8","severity":"minor","title":"Distinct user count unbounded","detail":"Notes are capped per user but the number of users is not; relies on the gateway authenticating users (A1).","recommendation":"State a total-store cap or explicitly rely on the gateway in the README."}
+  ],
+  "resolvedFindings": [
+    {"id":"ARCH-1","resolution":"Fixed: R6, AC8, NFR4 add file persistence with atomic rename; Q1 has owner and date.","evidence":["artifact:.eccode/artifacts/brief.md#Problem","artifact:.eccode/artifacts/brief.md#Architecture"]},
+    {"id":"ARCH-2","resolution":"Fixed: R8, AC7 add 16 KB cap (413), 500-note cap (409), rate limiting assigned to gateway.","evidence":["artifact:.eccode/artifacts/brief.md#Acceptance Criteria"]},
+    {"id":"ARCH-3","resolution":"Fixed: AC6 regex, duplicate-header handling, __proto__ test, Map storage, AC9 loopback bind with warning.","evidence":["artifact:.eccode/artifacts/brief.md#Acceptance Criteria"]}
+  ]
+}

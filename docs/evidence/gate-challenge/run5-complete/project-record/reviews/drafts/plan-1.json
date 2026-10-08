@@ -1,0 +1,85 @@
+{
+ "decision": "changes_requested",
+ "summary": "plan.json validates structurally (1 phase, 1 task) but does not cover the approved brief/design: AC8-AC11 are absent, outputs do not match the design's file layout, and the phase criteria use wrong AC numbering.",
+ "criteria": [
+  {
+   "id": "spec_coverage",
+   "description": "Tasks cover the spec",
+   "met": false,
+   "evidence": [
+    "artifact:.eccode/artifacts/plan.json"
+   ],
+   "notes": "Plan covers AC1-AC7 only. Brief requires AC1-AC11 (R6 persistence, AC9 bind host, AC10 log privacy, AC11 test coverage)."
+  },
+  {
+   "id": "task_completeness",
+   "description": "Owner, deps, inputs, outputs, file ownership, acceptance, verification",
+   "met": false,
+   "evidence": [
+    "artifact:.eccode/artifacts/plan.json"
+   ],
+   "notes": "Fields present, but outputs list 3 files while design lists file-repository.js, validate.js, identity.js, body.js, logger.js, service.js, app.js and 8 test files. Verification 'node --test' does not state which tests prove which AC."
+  },
+  {
+   "id": "phase_verifiability",
+   "description": "Phases independently verifiable",
+   "met": false,
+   "evidence": [
+    "artifact:.eccode/artifacts/plan.json#phases"
+   ],
+   "notes": "Phase criteria say 'AC7: automated tests cover AC1-AC6', which contradicts the brief (AC7 is limits, AC11 is test coverage). One monolithic task gives no intermediate verifiable steps; design Implementation Workflow has 3 steps with parallelism."
+  },
+  {
+   "id": "validate",
+   "description": "eccode plan validate passes",
+   "met": true,
+   "evidence": [
+    "artifact:.eccode/artifacts/plan.json"
+   ],
+   "notes": "Plan valid: 1 phase, 1 task."
+  }
+ ],
+ "findings": [
+  {
+   "id": "PLAN-1",
+   "severity": "blocking",
+   "title": "AC8-AC11 not planned",
+   "detail": "Durable file persistence (AC8, RISK-2 high), loopback bind and warning (AC9, RISK-1 high), log privacy (AC10) and the AC11 coverage criterion are not in any task's acceptance criteria.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan.json"
+   ],
+   "recommendation": "Add AC8-AC11 to task and phase acceptance criteria. Resolved when every AC1-AC11 appears in a task and the phase."
+  },
+  {
+   "id": "PLAN-2",
+   "severity": "major",
+   "title": "Outputs and file ownership do not match design",
+   "detail": "Design specifies src/file-repository.js etc. and tests persistence/security/limits/logging/api; plan lists only server.js, store.js, notes.test.js. Ownership globs would allow it but outputs are not verifiable against the design.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan.json"
+   ],
+   "recommendation": "List the design's modules and test files as outputs, optionally split into tasks following the design's Implementation Workflow with dependencies. Resolved when outputs map to the design."
+  },
+  {
+   "id": "PLAN-3",
+   "severity": "major",
+   "title": "Wrong AC numbering in phase criteria",
+   "detail": "'AC7: automated tests cover AC1-AC6' conflicts with brief where AC7 is size/note limits and AC11 is test coverage.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan.json#phases"
+   ],
+   "recommendation": "Restate phase criteria as AC1-AC11 using the brief's numbering."
+  },
+  {
+   "id": "PLAN-4",
+   "severity": "minor",
+   "title": "Verification should map to AC traceability matrix",
+   "detail": "Single 'node --test' command; design says CI must fail if a test file is missing.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan.json"
+   ],
+   "recommendation": "Reference the matrix and name required test files in verification."
+  }
+ ],
+ "resolvedFindings": []
+}

@@ -1,0 +1,59 @@
+$ npm test
+# cwd: .
+# exit: 0
+
+> notes-vault@0.1.0 test
+> node --test
+
+TAP version 13
+# Subtest: a user creates, lists, reads and deletes their own note
+ok 1 - a user creates, lists, reads and deletes their own note
+  ---
+  duration_ms: 83.503743
+  type: 'test'
+  ...
+# Subtest: requests without X-User are rejected
+ok 2 - requests without X-User are rejected
+  ---
+  duration_ms: 7.605455
+  type: 'test'
+  ...
+# Subtest: F1: another user cannot read or delete a note (404, note survives)
+ok 3 - F1: another user cannot read or delete a note (404, note survives)
+  ---
+  duration_ms: 83.995744
+  type: 'test'
+  ...
+# Subtest: F2: malformed JSON gives 400 without stack traces
+ok 4 - F2: malformed JSON gives 400 without stack traces
+  ---
+  duration_ms: 12.424468
+  type: 'test'
+  ...
+# Subtest: F2: invalid field types give 400 validation_error
+ok 5 - F2: invalid field types give 400 validation_error
+  ---
+  duration_ms: 27.901821
+  type: 'test'
+  ...
+# Subtest: F2: unexpected errors return a generic 500 with no stack
+ok 6 - F2: unexpected errors return a generic 500 with no stack
+  ---
+  duration_ms: 6.964268
+  type: 'test'
+  ...
+# Subtest: F3: oversized body is rejected
+ok 7 - F3: oversized body is rejected
+  ---
+  duration_ms: 16.106132
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 236.633015

@@ -1,0 +1,14 @@
+{
+  "decision": "changes_requested",
+  "summary": "Reviewed server.js/store.js. Tests pass, but a probe shows any authenticated user can read another user's note (IDOR) and errors leak stack traces.",
+  "criteria": [
+    {"id":"C1","description":"Users can only access their own notes","met":false,"evidence":["ev:ev-muzjj2nv-0164a6a4","artifact:src/server.js"]},
+    {"id":"C2","description":"Core CRUD works and tests pass","met":true,"evidence":["artifact:test/notes.test.js"]}
+  ],
+  "findings": [
+    {"id":"F1","severity":"blocking","title":"IDOR: GET /notes/:id lacks owner check","detail":"src/server.js GET-by-id returns store.get(id) without comparing note.owner to X-User. Probe: mallory read alice's note with 200 (ev:ev-muzjj2nv-0164a6a4). DELETE does check ownership; GET does not.","evidence":["ev:ev-muzjj2nv-0164a6a4"],"recommendation":"Return 404 when note.owner !== user, same as DELETE; add a cross-user test for GET and DELETE."},
+    {"id":"F2","severity":"blocking","title":"Error responses leak stack traces; malformed JSON gives 500","detail":"catch block returns err.stack in the 500 body. Invalid JSON POST returned 500 with a SyntaxError message (ev:ev-muzjj2nv-0164a6a4). Exposes internal paths.","evidence":["ev:ev-muzjj2nv-0164a6a4"],"recommendation":"Return 400 for parse/validation errors, and a generic 500 message while logging the stack server-side. Validate title/body types."},
+    {"id":"F3","severity":"info","title":"No body size limit or auth beyond a spoofable X-User header","detail":"readBody is unbounded, and X-User is trusted as identity. Not demonstrated as in scope for this phase.","evidence":["artifact:src/server.js"],"recommendation":"Cap body size (e.g. 1MB); document X-User as a placeholder until real authn."}
+  ],
+  "resolvedFindings": []
+}

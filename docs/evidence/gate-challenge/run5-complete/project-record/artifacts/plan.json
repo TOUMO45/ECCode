@@ -1,0 +1,94 @@
+{
+  "phases": [
+    {
+      "id": "core",
+      "name": "Core API",
+      "goal": "Implement the notes API, file persistence, security controls and the full test suite per design rev 2",
+      "acceptanceCriteria": [
+        "AC1: POST /notes returns 201 and the full note per schema; title 1-100 after trim, body max 2000",
+        "AC2: GET /notes returns only the caller's notes, newest first",
+        "AC3: GET /notes/:id returns the note only to its owner; 404 for others, unknown and non-UUID ids",
+        "AC4: DELETE /notes/:id returns 204 only for the owner; otherwise 404 and nothing deleted",
+        "AC5: all errors follow the {error:{code,message}} contract (400, 404, 405 with Allow, 415, 422, fixed 500) with no stack or path leaks",
+        "AC6: X-User strictly validated (regex, duplicate header, comma) giving 401 before body parsing; __proto__ works as an isolated user",
+        "AC7: body over 16 KB gives 413 and the connection closes; 501st note gives 409 note_limit_reached; delete re-allows create",
+        "AC8: notes and deletions survive restart; leftover .tmp or corrupt data file makes the service refuse to start (exit 1, stderr message) and the file is never overwritten; atomic temp+rename writes; file mode 0600",
+        "AC9: default bind 127.0.0.1; HOST/PORT env override; non-loopback HOST logs the trusted-gateway startup warning",
+        "AC10: one log line per request (method, route template, status, duration); sentinel title/body never appears in logs",
+        "AC11: automated tests cover AC1-AC10 per the design's AC traceability matrix, and NFR3 perf check (p95 < 50 ms) passes; all required test files exist"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "api",
+      "phase": "core",
+      "title": "Implement notes API, file persistence, security controls and tests",
+      "owner": "backend-engineer",
+      "dependencies": [],
+      "inputs": [
+        ".eccode/artifacts/brief.md (AC1-AC11, R1-R8, NFR1-NFR4, RISK-1, RISK-2)",
+        ".eccode/artifacts/design.md (Components, Interface Contracts, Data Design, Security, Testing Strategy, AC-to-test traceability matrix, Implementation Workflow)"
+      ],
+      "outputs": [
+        "src/server.js",
+        "src/config.js",
+        "src/app.js",
+        "src/identity.js",
+        "src/body.js",
+        "src/validate.js",
+        "src/service.js",
+        "src/repository.js",
+        "src/file-repository.js",
+        "src/logger.js",
+        "src/errors.js",
+        "test/validate.test.js",
+        "test/identity.test.js",
+        "test/file-repository.test.js",
+        "test/api.test.js",
+        "test/security.test.js",
+        "test/limits.test.js",
+        "test/persistence.test.js",
+        "test/logging.test.js",
+        "test/perf.js",
+        "package.json",
+        "README.md"
+      ],
+      "components": [
+        "Entry point",
+        "Config",
+        "HTTP app",
+        "Identity",
+        "Body reader",
+        "Validation",
+        "Note service",
+        "Repository interface",
+        "FileNoteRepository",
+        "Logger",
+        "Errors"
+      ],
+      "files": [
+        "src/**",
+        "test/**",
+        "package.json"
+      ],
+      "acceptanceCriteria": [
+        "AC1: create returns 201 with full schema note (api.test.js)",
+        "AC2: list is owner-only, newest first, tie-break by insertion (api.test.js)",
+        "AC3: non-owner/unknown/non-UUID GET gives identical 404 (security.test.js)",
+        "AC4: non-owner DELETE gives 404 and deletes nothing; owner gets 204 (security.test.js)",
+        "AC5: error contract and forced-500 no-leak test (api.test.js)",
+        "AC6: X-User validation table, duplicate header, __proto__/constructor isolation (security.test.js)",
+        "AC7: 16 KB cap with 413 and connection close, 500-note cap with 409 (limits.test.js)",
+        "AC8: restart persistence, leftover .tmp and corrupt file refuse to start with file unchanged, failed flush rollback, mode 0600 (persistence.test.js, file-repository.test.js)",
+        "AC9: default 127.0.0.1, HOST/PORT overrides, non-loopback warning on stderr (security.test.js)",
+        "AC10: sentinel title/body absent from logs, one line per request with route template (logging.test.js)",
+        "AC11: every test file in the design traceability matrix exists and passes; perf.js p95 < 50 ms (NFR3)"
+      ],
+      "verification": {
+        "method": "Run the full suite and perf check per design Testing Strategy; first confirm all required test files exist (api, security, limits, persistence, logging, validate, identity, file-repository, perf) so a missing file fails CI; results map to the AC traceability matrix. Order of work: Follow the design's Implementation Workflow in order: (1) config, errors, identity, validate + unit tests; (2) FileNoteRepository + persistence tests, body reader, logger; (3) service, app, server + integration, security, limits and logging tests; (4) perf.js and README (single instance, gateway/X-User trust, DATA_FILE, HOST/PORT, backup, rollback). Zero runtime dependencies. Satisfy the design's AC-to-test traceability matrix; every AC1-AC11 must have its named test file/cases.",
+        "command": "for f in api security limits persistence logging validate identity file-repository; do test -f test/$f.test.js || { echo missing test/$f.test.js; exit 1; }; done && test -f test/perf.js && node --test test/ && node test/perf.js"
+      }
+    }
+  ]
+}

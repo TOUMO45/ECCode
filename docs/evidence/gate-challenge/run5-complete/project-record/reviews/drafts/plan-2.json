@@ -1,0 +1,19 @@
+{
+ "decision":"approve",
+ "summary":"Revised plan covers AC1-AC11 with brief numbering, outputs match the design's modules and test files, verification names required test files and the traceability matrix. plan validate passes.",
+ "criteria":[
+  {"id":"spec_coverage","description":"Tasks cover the spec","met":true,"evidence":["artifact:.eccode/artifacts/plan.json"],"notes":"AC1-AC11 each appear in both the phase and task criteria and match brief.md lines 45-62 (AC8 persistence/refuse-to-start, AC9 loopback+warning, AC10 log sentinel, AC11 coverage)."},
+  {"id":"task_completeness","description":"Owner, deps, inputs, outputs, ownership, acceptance, verification","met":true,"evidence":["artifact:.eccode/artifacts/plan.json"],"notes":"Outputs list all design.md components (config, app, identity, body, validate, service, repository, file-repository, logger, errors, server) and the test files. Ownership globs src/**, test/**, package.json cover them. Single task, so no parallel overlap. Verification command fails if any required test file is missing."},
+  {"id":"phase_verifiability","description":"Phase independently verifiable","met":true,"evidence":["artifact:.eccode/artifacts/plan.json#phases"],"notes":"Phase criteria are testable and use brief numbering. The task embeds the design's ordered workflow steps."},
+  {"id":"validate","description":"eccode plan validate passes","met":true,"evidence":["artifact:.eccode/artifacts/plan.json"],"notes":"Plan valid: 1 phase(s), 1 task(s)."}
+ ],
+ "findings":[
+  {"id":"PLAN-5","severity":"info","title":"Single monolithic task","detail":"All work is in one task; intermediate steps are only ordered in the verification text.","evidence":["artifact:.eccode/artifacts/plan.json"],"recommendation":"Optional: if the phase gate proves hard to review, split by workflow step. No action required for approval."}
+ ],
+ "resolvedFindings":[
+  {"id":"PLAN-1","evidence":["artifact:.eccode/artifacts/plan.json"],"resolution":"AC8-AC11 now in task and phase criteria."},
+  {"id":"PLAN-2","evidence":["artifact:.eccode/artifacts/plan.json"],"resolution":"Outputs now map to the design's modules and test files."},
+  {"id":"PLAN-3","evidence":["artifact:.eccode/artifacts/plan.json#phases"],"resolution":"Phase criteria renumbered AC1-AC11 per brief."},
+  {"id":"PLAN-4","evidence":["artifact:.eccode/artifacts/plan.json"],"resolution":"Verification names required test files and the traceability matrix."}
+ ]
+}

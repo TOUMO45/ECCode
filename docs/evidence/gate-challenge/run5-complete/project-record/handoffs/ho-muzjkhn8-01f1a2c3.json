@@ -1,0 +1,30 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "api",
+  "objective": "Fix review findings F1-F3 from rev-muzjj8vq-01c8f7c9 for the notes API and add tests that would have caught them.",
+  "context": "Review findings F1 (IDOR on GET /notes/:id), F2 (stack trace leak, 500 on malformed JSON), F3 (unbounded body, X-User placeholder).",
+  "inputs": [
+    "src/server.js",
+    "src/store.js",
+    "test/notes.test.js"
+  ],
+  "expectedOutput": "Patched src/server.js and new regression tests; all tests pass.",
+  "acceptanceCriteria": [
+    "GET by id returns 404 for non-owners",
+    "Malformed JSON/invalid types return 400; unexpected errors return a generic 500 with no stack",
+    "Body size is capped"
+  ],
+  "completedWork": "F1: GET /notes/:id now returns 404 when note.owner !== X-User, same as DELETE. F2: added HttpError and parseNote; invalid JSON gives 400 invalid_json, non-object or bad title/body gives 400 validation_error; the catch block returns a generic 500 and logs the stack server-side only. Also fixed DELETE 204 to send no body. F3: readBody caps at MAX_BODY_BYTES (default 1 MiB) and returns 413; X-User is documented in a code comment as a placeholder identity. Tests added in test/security.test.js: cross-user GET and DELETE, malformed JSON, type validation, generic 500, oversized body.",
+  "filesChanged": [
+    "src/server.js",
+    "test/security.test.js"
+  ],
+  "evidence": [
+    "ev:ev-muzjk7be-01ff3092"
+  ],
+  "remainingIssues": [
+    "X-User is still a spoofable placeholder identity; real authn is out of scope for this phase."
+  ],
+  "nextAction": "Reviewer re-reviews phase:core."
+}

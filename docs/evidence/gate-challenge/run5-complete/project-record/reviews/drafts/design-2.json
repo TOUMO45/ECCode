@@ -1,0 +1,22 @@
+{
+  "decision": "approve",
+  "summary": "Revision 2 (sha 070f0176...) resolves DES-1 to DES-4. Every requirement R1-R8 and AC1-AC11 maps to a component and an automated test. Contracts, data design, security controls and failure modes match the approved brief. No AI features.",
+  "criteria": [
+    {"id":"brief_traceability","description":"Every requirement maps to a component and a test","met":true,"evidence":["artifact:.eccode/artifacts/design.md#Requirements map","artifact:.eccode/artifacts/design.md#AC-to-test traceability matrix"],"notes":"R1-R8 map to components. AC1-AC11 and NFR3 map to named test files and cases."},
+    {"id":"interface_contracts","description":"Schemas, errors, auth and limits are complete","met":true,"evidence":["artifact:.eccode/artifacts/design.md#Interface Contracts"],"notes":"Note schema, error table, per-endpoint statuses, identity rules, size cap and check order match the brief."},
+    {"id":"data_design","description":"Data design is sound and covers failure modes","met":true,"evidence":["artifact:.eccode/artifacts/design.md#Data Design"],"notes":"Map<user,Map<id,note>>, temp file plus fsync plus atomic rename, serialized queue with rollback, refusal to start on leftover tmp or corrupt file, 500-note cap."},
+    {"id":"security","description":"Security design present and consistent with brief","met":true,"evidence":["artifact:.eccode/artifacts/design.md#Security","artifact:.eccode/artifacts/design.md#Deployment"],"notes":"No TBD remains. Owner-only access with 404, X-User validation before body read, loopback bind, content-free logs, 0600 file."},
+    {"id":"test_strategy","description":"Automated tests cover the acceptance criteria","met":true,"evidence":["artifact:.eccode/artifacts/design.md#Testing Strategy"],"notes":"node:test matrix including __proto__ user, sentinel log test, forced 500, restart and corrupt-file tests."},
+    {"id":"ai_features","description":"No AI features; not applicable","met":true,"evidence":["artifact:.eccode/artifacts/design.md"]}
+  ],
+  "findings": [
+    {"id":"DES-5","severity":"minor","title":"Logger scope vs 500 handler logging","detail":"The Logger takes only four fields, but the Security section says the 500 handler also logs the error class name and a request counter. The channel for that is unspecified. The 'exactly one line per request' test in AC10 could conflict.","evidence":["artifact:.eccode/artifacts/design.md#Components","artifact:.eccode/artifacts/design.md#Security"],"recommendation":"At implementation, either add a separate fixed-field error log method or drop the extra line. Resolved when the logging test passes with a forced 500."},
+    {"id":"DES-6","severity":"info","title":"Check order with Content-Length 413","detail":"Content-Type (415) is checked before the size check, as in the brief. Implementers should keep that order in the 413 fast path.","evidence":["artifact:.eccode/artifacts/design.md#Request pipeline"],"recommendation":"Cover with a test that sends an oversize body with a bad Content-Type and expects 415."}
+  ],
+  "resolvedFindings": [
+    {"id":"DES-1","evidence":["artifact:.eccode/artifacts/design.md#Deployment","artifact:.eccode/artifacts/design.md#Security"],"resolution":"The sentence is gone. Deployment now says access is owner-only with 404 for non-owners, mapped to the AC3 and AC4 tests."},
+    {"id":"DES-2","evidence":["artifact:.eccode/artifacts/design.md#Security","artifact:.eccode/artifacts/design.md#Identity (AC6, R7, trust boundary)"],"resolution":"Security section is fully specified. No TBD remains."},
+    {"id":"DES-3","evidence":["artifact:.eccode/artifacts/design.md#Data Design","artifact:.eccode/artifacts/design.md#Interface Contracts"],"resolution":"Persistence, limits, error contract and the nested Map are all specified."},
+    {"id":"DES-4","evidence":["artifact:.eccode/artifacts/design.md#AC-to-test traceability matrix"],"resolution":"Automated test plan with an AC-to-test matrix."}
+  ]
+}

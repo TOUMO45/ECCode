@@ -1,0 +1,19 @@
+{
+ "decision":"changes_requested",
+ "summary":"The design does not implement the approved brief. Security is 'TBD', the deployment text lets any signed-in user read any note by id (violating R4/AC3), persistence, validation and limits are absent, and testing is manual only (violating AC11).",
+ "criteria":[
+  {"id":"brief_traceability","description":"Every requirement maps to a component and a test","met":false,"evidence":["artifact:.eccode/artifacts/design.md#Components","artifact:.eccode/artifacts/design.md"],"notes":"R4-R8 and AC5-AC10 have no component or test mapping."},
+  {"id":"interface_contracts","description":"Schemas, errors, auth and limits are complete","met":false,"evidence":["artifact:.eccode/artifacts/design.md#Interface Contracts"],"notes":"Only four route names. No note schema, status codes, error contract, X-User validation or limits."},
+  {"id":"data_design","description":"Data design is sound and covers failure modes","met":false,"evidence":["artifact:.eccode/artifacts/design.md#Data Design"],"notes":"Plain in-memory Map; no per-user isolation, no file persistence, no atomic writes (R6, NFR4, AC8)."},
+  {"id":"security","description":"Security design present and consistent with brief","met":false,"evidence":["artifact:.eccode/artifacts/design.md#Security","artifact:.eccode/artifacts/design.md#Deployment"],"notes":"Security is TBD. Deployment sentence contradicts privacy."},
+  {"id":"test_strategy","description":"Automated tests cover the acceptance criteria","met":false,"evidence":["artifact:.eccode/artifacts/design.md#Testing Strategy"],"notes":"Manual curl testing contradicts AC11."},
+  {"id":"ai_features","description":"No AI features; not applicable","met":true,"evidence":["artifact:.eccode/artifacts/design.md"]}
+ ],
+ "findings":[
+  {"id":"DES-1","severity":"blocking","title":"Any signed-in user can fetch any note by id","detail":"The Deployment section states any signed-in user can fetch a note by id. This contradicts R4, AC3 and AC4 (owner-only access, 404 for non-owners) and RISK-5.","evidence":["artifact:.eccode/artifacts/design.md#Deployment","artifact:.eccode/artifacts/design.md"],"recommendation":"Remove the sentence. Specify an owner check on every read and delete, returning 404 for non-owners; resolved when the design states this and maps it to a test."},
+  {"id":"DES-2","severity":"blocking","title":"Security section is TBD","detail":"Security is deferred to implementation. The design must specify X-User validation (regex, duplicate header, 401 before body parsing), loopback bind, and no content in logs.","evidence":["artifact:.eccode/artifacts/design.md#Security"],"recommendation":"Specify AC6, AC9 and AC10 controls and the trust boundary; resolved when no TBD remains."},
+  {"id":"DES-3","severity":"blocking","title":"Persistence, limits and error contract missing","detail":"No FileNoteRepository, temp-file plus atomic rename, startup refusal on corrupt or leftover file, 16 KB cap, 500-note cap, note schema, or error shape and statuses (AC1, AC5, AC7, AC8). The data design is a single flat Map rather than Map<user, Map<id, note>>.","evidence":["artifact:.eccode/artifacts/design.md#Data Design","artifact:.eccode/artifacts/design.md"],"recommendation":"Add full contracts and data design per the brief; resolved when each of R1-R8 maps to a component."},
+  {"id":"DES-4","severity":"major","title":"Manual testing only","detail":"AC11 requires automated tests for AC1-AC10. No traceability matrix.","evidence":["artifact:.eccode/artifacts/design.md#Testing Strategy"],"recommendation":"Provide an automated test plan (node:test) with an AC-to-test matrix, including the __proto__ user, sentinel log test, forced 500 and restart tests."}
+ ],
+ "lessonsConsulted":[]
+}

@@ -1,0 +1,238 @@
+{
+  "finishedAt": "2026-10-08T12:58:32.670Z",
+  "gates": {
+    "architecture": {
+      "status": "approved",
+      "iterations": 1,
+      "reviews": [
+        {
+          "id": "rev-muzjb5ui-01c5a2e0",
+          "reviewer": "architecture-reviewer",
+          "decision": "changes_requested"
+        },
+        {
+          "id": "rev-muzjdct3-01ad478e",
+          "reviewer": "architecture-reviewer",
+          "decision": "approve"
+        }
+      ]
+    },
+    "design": {
+      "status": "approved",
+      "iterations": 1,
+      "reviews": [
+        {
+          "id": "rev-muzjdvwb-0134d972",
+          "reviewer": "technical-reviewer",
+          "decision": "changes_requested"
+        },
+        {
+          "id": "rev-muzjghxt-014de4aa",
+          "reviewer": "technical-reviewer",
+          "decision": "approve"
+        }
+      ]
+    },
+    "plan": {
+      "status": "approved",
+      "iterations": 1,
+      "reviews": [
+        {
+          "id": "rev-muzjhdkm-0179d325",
+          "reviewer": "technical-reviewer",
+          "decision": "changes_requested"
+        },
+        {
+          "id": "rev-muzjilsi-01bdd958",
+          "reviewer": "technical-reviewer",
+          "decision": "approve"
+        }
+      ]
+    },
+    "verification": {
+      "status": "pending",
+      "iterations": 0,
+      "reviews": []
+    },
+    "phase:core": {
+      "status": "approved",
+      "iterations": 1,
+      "reviews": [
+        {
+          "id": "rev-muzjj8vq-01c8f7c9",
+          "reviewer": "security-reviewer",
+          "decision": "changes_requested"
+        },
+        {
+          "id": "rev-muzjle71-01a22f90",
+          "reviewer": "security-reviewer",
+          "decision": "approve"
+        }
+      ]
+    }
+  },
+  "rejectedByEngine": 11,
+  "probes": [
+    {
+      "label": "probe: design cannot start before architecture is approved",
+      "refused": true,
+      "matchedExpected": true
+    },
+    {
+      "label": "design v0 (no Security / Testing Strategy headings): engine refuses the submission",
+      "refused": true,
+      "matchedExpected": true
+    },
+    {
+      "label": "probe: the design author cannot approve their own design",
+      "refused": true,
+      "matchedExpected": true
+    },
+    {
+      "label": "probe: approval without evidence is refused",
+      "refused": true,
+      "matchedExpected": true
+    },
+    {
+      "label": "probe: a task cannot be claimed before its phase gate starts",
+      "refused": true,
+      "matchedExpected": true
+    }
+  ],
+  "detection": {
+    "design": [
+      {
+        "id": "DG1",
+        "defect": "Security section is a placeholder (TBD): no authorization model",
+        "mentionedInFirstRejection": true
+      },
+      {
+        "id": "DG2",
+        "defect": "Design contradicts brief R4/AC3: states any signed-in user can fetch any note by id",
+        "mentionedInFirstRejection": true
+      },
+      {
+        "id": "DG3",
+        "defect": "Testing strategy is manual-only: contradicts AC7 (automated tests)",
+        "mentionedInFirstRejection": true
+      },
+      {
+        "id": "DG4",
+        "defect": "Interface contracts omit status codes, error format and validation limits (AC1, AC5, AC6)",
+        "mentionedInFirstRejection": true
+      }
+    ],
+    "implementation": [
+      {
+        "id": "IM1",
+        "defect": "GET /notes/:id has no owner check (IDOR): any user reads any note",
+        "mentionedInFirstRejection": true
+      },
+      {
+        "id": "IM2",
+        "defect": "No input validation: missing/oversized title and body are accepted",
+        "mentionedInFirstRejection": true
+      },
+      {
+        "id": "IM3",
+        "defect": "Malformed JSON causes a 500 whose body leaks the stack trace",
+        "mentionedInFirstRejection": true
+      },
+      {
+        "id": "IM4",
+        "defect": "Tests do not cover AC3/AC5 (isolation, validation, malformed JSON)",
+        "mentionedInFirstRejection": true
+      }
+    ]
+  },
+  "sessions": [
+    {
+      "label": "review-architecture-1",
+      "role": "architecture-reviewer",
+      "sessionId": "1371aea4-a4cb-401a-be0f-61dbd4dfcada",
+      "costUsd": 0.1035346,
+      "wallMin": 0.78
+    },
+    {
+      "label": "revise-architecture-1",
+      "role": "product-architect",
+      "sessionId": "9104eef0-ea8d-48cd-b65b-5367f0b6d450",
+      "costUsd": 0.143459,
+      "wallMin": 1.04
+    },
+    {
+      "label": "review-architecture-2",
+      "role": "architecture-reviewer",
+      "sessionId": "891ac2da-764a-4426-942c-282c4235af64",
+      "costUsd": 0.11733840000000001,
+      "wallMin": 0.61
+    },
+    {
+      "label": "review-design-1",
+      "role": "technical-reviewer",
+      "sessionId": "a5312931-e5ae-472e-85b8-43b535e5a213",
+      "costUsd": 0.08472879999999999,
+      "wallMin": 0.43
+    },
+    {
+      "label": "revise-design-1",
+      "role": "technical-designer",
+      "sessionId": "e406d414-f723-496b-a48a-656a853b7df0",
+      "costUsd": 0.17717,
+      "wallMin": 1.53
+    },
+    {
+      "label": "review-design-2",
+      "role": "technical-reviewer",
+      "sessionId": "92ef1220-7dd7-493f-9f87-87b7d5900fb5",
+      "costUsd": 0.1277648,
+      "wallMin": 0.61
+    },
+    {
+      "label": "review-plan-1",
+      "role": "technical-reviewer",
+      "sessionId": "ee0c2778-f024-402d-85dc-77ca93392953",
+      "costUsd": 0.1047136,
+      "wallMin": 0.57
+    },
+    {
+      "label": "revise-plan-1",
+      "role": "delivery-lead",
+      "sessionId": "b091645a-f63b-42ad-b058-db449e78e678",
+      "costUsd": 0.1116386,
+      "wallMin": 0.53
+    },
+    {
+      "label": "review-plan-2",
+      "role": "technical-reviewer",
+      "sessionId": "fe4ec2d3-1511-4b18-aad2-a63418364a11",
+      "costUsd": 0.08404840000000001,
+      "wallMin": 0.42
+    },
+    {
+      "label": "review-phase-1",
+      "role": "security-reviewer",
+      "sessionId": "a94035ae-0b61-4556-8b76-af5cd2818c69",
+      "costUsd": 0.058645,
+      "wallMin": 0.49
+    },
+    {
+      "label": "fix-implementation-1",
+      "role": "backend-engineer",
+      "sessionId": "60bf0ce9-89c9-4d22-aeba-f9d8a58b5af9",
+      "costUsd": 0.17132460000000002,
+      "wallMin": 1
+    },
+    {
+      "label": "review-phase-2",
+      "role": "security-reviewer",
+      "sessionId": "01b52245-7f3a-4125-8f2a-d3ef47ff6aa3",
+      "costUsd": 0.0880738,
+      "wallMin": 0.66
+    }
+  ],
+  "totalCostUsd": 1.3724396,
+  "auditOk": true,
+  "audit": "Audit OK: 53 events, chain intact, approved artifacts unchanged.",
+  "complete": true
+}
