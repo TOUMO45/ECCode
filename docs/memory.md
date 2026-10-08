@@ -101,11 +101,12 @@ All figures are computed from the event log and memory records:
 
 Each figure states its sample size, so small samples aren't presented as trends.
 
-## Lessons at the decision point (retrieval is enforced, not remembered)
-A pilot of the learning loop showed that agents which *do* retrieve a verified lesson can still read past it. Retrieval and application therefore sit in the engine:
-1. **Claim:** `eccode task claim` builds a query from the task (title, acceptance criteria, file globs) and the project idea, retrieves matching **verified** lessons, keeps those whose environment conditions hold here, prints them as evidence, and records them on the claim. A lesson qualifies only if enough distinct topical words of the task appear in it (`matched >= 3`). Ranking scores are relative to the best document, so a lone lesson would otherwise match everything.
-2. **Complete:** the handoff needs `lessonDecisions` for every retrieved lesson: `applied` (with a note) or `not-applicable` (with an evidence-backed `memory assess` or a note naming the condition that does not hold). `task complete` refuses otherwise. Applied lessons are cited automatically.
-3. **Review:** reviewers check each decision against the diff and the tests (`review-gate` skill).
-4. **Metrics:** `lessonDecisions` counts applied, evidence-backed dismissals and reason-only dismissals.
-Turn the whole mechanism off with `ECCODE_LEARNING=off`.
-
+## Lessons at the decision points (retrieval and judgement are enforced, not remembered)
+A pilot of the learning loop showed that agents which *do* retrieve a verified lesson can still read past it. The first official evaluation then showed the subtler failure: an implementer set an applicable house rule aside with a plausible reason ("the ticket does not mention it") and an independent reviewer approved. Retrieval, application and judgement therefore all sit in the engine:
+1. **Plan:** `eccode gate submit plan` retrieves the verified lessons that match any task of the plan and refuses until `plan.lessonDecisions` answers for each. `incorporated` means the lesson id is in the `inputs` of every matching task and the rule is one of its acceptance criteria; `not-applicable` needs an evidence-backed `memory assess` or a note naming the condition that does not hold. The refusal prints the lesson cards and says that a ticket's silence is not a reason to skip a rule.
+2. **Plan review:** a plan that records lesson decisions cannot be approved without a `lessons` criterion (with evidence) in which the reviewer judges each of them.
+3. **Claim:** `eccode task claim` builds a query from the task (title, acceptance criteria, file globs) and the project idea, retrieves matching **verified** lessons, keeps those whose environment conditions hold here, prints them as evidence, and records them on the claim. A lesson qualifies only if enough distinct topical words of the task appear in it (`matched >= 3`). Ranking scores are relative to the best document, so a lone lesson would otherwise match everything. Lessons the approved plan incorporated are always shown, marked as binding.
+4. **Complete:** the handoff needs `lessonDecisions` for every retrieved lesson: `applied` (with a note) or `not-applicable` (with an evidence-backed `memory assess` or a note naming the condition that does not hold). A binding lesson cannot be set aside. `task complete` refuses otherwise. Applied lessons are cited automatically.
+5. **Phase review:** the approval needs the same `lessons` criterion. `eccode gate show <gate>` lists the decisions to judge (`lessonDecisionsToJudge`).
+6. **Metrics:** `lessonDecisions` counts applied, evidence-backed dismissals and reason-only dismissals.
+The mechanism cannot check that a reason is *true*: the independent reviewer does. Turn it all off with `ECCODE_LEARNING=off`.
