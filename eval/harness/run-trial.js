@@ -1,30 +1,34 @@
 #!/usr/bin/env node
 'use strict';
-// Run ONE headless trial: a fresh Claude Code session (isolated config dir and
-// HOME, only the condition's toolkit loaded) works on a task, then the hidden
-// grader scores the result. Writes <out>/result.json, transcript.jsonl,
-// stderr.log and final.diff.
+// Run ONE sandboxed headless trial: a fresh Claude Code session works on a
+// task with only the condition's toolkit loaded, then the hidden grader scores
+// the working copy. Trial sessions run in their own mount and PID namespace
+// (see sandbox.sh): they cannot see the evaluation suite, graders, other
+// trials, the operator's session data or credentials.
 //
-//   node eval/harness/run-trial.js --task <id> --condition C0|C1|C2 --out <dir>
+//   node eval/harness/run-trial.js --task <id> --condition C0|C1|C2 --trial <dir>
 //        --toolkits <dir> --state <condition state dir>
-//        [--phase attempt|feedback --feedback-file <f> --workdir <dir>]
-//        [--budget-usd 5] [--timeout-min 40] [--model claude-sonnet-5-5]
+//        [--phase attempt|feedback --feedback-file <f>]   (feedback reuses <trial>/work)
+//        [--budget-usd 5] [--timeout-min 40] [--model claude-sonnet-5-5] [--rep n]
+//
+// Writes <trial>/<phase>/{result.json,transcript.jsonl,stderr.log,final.diff}.
 //
 // Conditions (same model, tools, budget, timeout and prompt wording):
-//   C0  original ECC (affaan-m/ECC, pinned commit), its native workflows and learning
+//   C0  original ECC (affaan-m/ECC at the pinned commit): native workflows and learning
 //   C1  ECCode with learning OFF (ECCODE_LEARNING=off)
-//   C2  ECCode with verified learning ON (shared memory in the state dir)
+//   C2  ECCode with verified learning ON (shared memory lives in the state dir)
 
 const fs = require('fs');
 const path = require('path');
-const { spawn, spawnSync } = require('child_process');
-const { listTasks, materialize, runVisible, runGrader, score } = require('./lib');
+const { spawnSync } = require('child_process');
+const { listTasks, materialize, parseTap, score } = require('./lib');
+const { SBX, trialEnv, prepareState, dropToken, spawnInSandbox, runInSandboxSync } = require('./sandbox-env');
 
 const UNATTENDED = [
   'This is an unattended evaluation run. No human will read or answer anything during this session.',
   'Complete the request end to end in the current working directory: change the code, add or update tests, and run them.',
   'Ordinary confirmations (plans, commits, gates that would normally ask the user) are pre-approved by the operator. Do not stop to ask questions.',
-  'Do not push, deploy, open pull requests or contact external services. Stay inside the current working directory, plus the toolkit\'s own state directories.',
+  'Do not push, deploy, open pull requests or contact external services.',
 ].join(' ');
 
 function arg(name, def) {
@@ -42,29 +46,9 @@ function promptFor(cond, task, phase, feedback) {
   return `/eccode:change ${what}`;
 }
 
-function conditionEnv(cond, toolkits, state) {
-  const env = { ...process.env };
-  for (const k of ['CLAUDE_CODE_SYNC_PLUGINS', 'CLAUDE_CODE_SYNC_SKILLS', 'CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD', 'CLAUDE_ADDITIONAL_DIRECTORIES', 'ECCODE_LEARNING', 'ECCODE_SHARED_MEMORY', 'ECCODE_ACTOR', 'ECCODE_ROOT']) delete env[k];
-  fs.mkdirSync(path.join(state, 'home'), { recursive: true });
-  fs.mkdirSync(path.join(state, 'claude-config'), { recursive: true });
-  Object.assign(env, { HOME: path.join(state, 'home'), CLAUDE_CONFIG_DIR: path.join(state, 'claude-config'), IS_SANDBOX: '1' });
-  let pluginDir;
-  if (cond === 'C0') pluginDir = path.join(toolkits, 'ecc');
-  else {
-    pluginDir = path.join(toolkits, 'eccode');
-    const binDir = path.join(state, 'bin');
-    fs.mkdirSync(binDir, { recursive: true });
-    fs.writeFileSync(path.join(binDir, 'eccode'), `#!/bin/sh\nexec node "${path.join(pluginDir, 'bin', 'eccode.js')}" "$@"\n`, { mode: 0o755 });
-    env.PATH = `${binDir}:${env.PATH}`;
-    env.ECCODE_SHARED_MEMORY = path.join(state, 'eccode-shared');
-    env.ECCODE_LEARNING = cond === 'C1' ? 'off' : 'on';
-  }
-  return { env, pluginDir };
-}
-
 /** Summarise the stream-json transcript: final result, cost, turns, subagents, tool use. */
 function summarize(transcriptFile) {
-  const out = { result: null, costUsd: null, durationMs: null, numTurns: null, subtype: null, isError: null, toolUses: 0, agentDispatches: 0, models: {} };
+  const out = { result: null, costUsd: null, durationMs: null, numTurns: null, subtype: null, isError: null, toolUses: 0, agentDispatches: 0, models: [], sessionId: null };
   if (!fs.existsSync(transcriptFile)) return out;
   for (const line of fs.readFileSync(transcriptFile, 'utf8').split('\n')) {
     if (!line.trim()) continue;
@@ -74,17 +58,15 @@ function summarize(transcriptFile) {
     } catch {
       continue;
     }
+    if (j.type === 'system' && j.subtype === 'init') out.sessionId = j.session_id;
     if (j.type === 'assistant' && j.message && Array.isArray(j.message.content)) {
       for (const c of j.message.content) {
-        if (c.type === 'tool_use') {
-          out.toolUses++;
-          if (c.name === 'Agent' || c.name === 'Task') out.agentDispatches++;
-        }
+        if (c.type !== 'tool_use') continue;
+        out.toolUses++;
+        if (c.name === 'Agent' || c.name === 'Task') out.agentDispatches++;
       }
     }
-    if (j.type === 'result') {
-      Object.assign(out, { result: j.result, costUsd: j.total_cost_usd, durationMs: j.duration_ms, numTurns: j.num_turns, subtype: j.subtype, isError: j.is_error, models: Object.keys(j.modelUsage || {}) });
-    }
+    if (j.type === 'result') Object.assign(out, { result: j.result, costUsd: j.total_cost_usd, durationMs: j.duration_ms, numTurns: j.num_turns, subtype: j.subtype, isError: j.is_error, models: Object.keys(j.modelUsage || {}) });
   }
   return out;
 }
@@ -96,9 +78,8 @@ function intervention(sum, timedOut, work) {
   if (timedOut) reasons.push('timeout');
   if (sum.subtype && sum.subtype !== 'success') reasons.push(`ended: ${sum.subtype}`);
   if (!sum.result && !timedOut) reasons.push('no final result');
-  const text = String(sum.result || '');
-  const tail = text.trim().split('\n').slice(-6).join('\n');
-  if (QUESTION.test(tail) || /\?\s*$/.test(text.trim())) reasons.push('ended asking the user');
+  const text = String(sum.result || '').trim();
+  if (QUESTION.test(text.split('\n').slice(-6).join('\n')) || /\?\s*$/.test(text)) reasons.push('ended asking the user');
   const stateFile = path.join(work, '.eccode', 'state.json');
   if (fs.existsSync(stateFile)) {
     try {
@@ -110,75 +91,101 @@ function intervention(sum, timedOut, work) {
   return { needed: reasons.length > 0, reasons };
 }
 
+/** Visible tests and hidden grader, both inside the sandbox, after the session has ended. */
+function grade(task, work, state, toolkit) {
+  const env = { PATH: process.env.PATH, HOME: `${SBX}/state/home`, NODE_ENV: 'test', TASK_ROOT: `${SBX}/work` };
+  const vis = runInSandboxSync({ work, state, toolkit, env, cmd: process.execPath, args: ['--test'] });
+  const visOut = `${vis.stdout || ''}${vis.stderr || ''}`;
+  const visible = { ok: vis.status === 0, exitCode: vis.status, tail: visOut.split('\n').slice(-30).join('\n') };
+  const graderDir = path.join(task.dir, 'grader');
+  const files = fs.readdirSync(graderDir).filter((f) => f.endsWith('.test.js')).map((f) => `${SBX}/extra/${f}`);
+  const g = runInSandboxSync({ work, state, toolkit, extra: graderDir, env, cmd: process.execPath, args: ['--test', '--test-concurrency=1', ...files] });
+  const gOut = `${g.stdout || ''}${g.stderr || ''}`;
+  const graded = { checks: parseTap(gOut), tail: gOut.split('\n').filter((l) => /^(not ok|# |\s+(error|expected|actual):)/.test(l)).slice(0, 80).join('\n') };
+  return { visible, graded, score: score(visible, graded) };
+}
+
 async function main() {
   const taskId = arg('task');
   const cond = arg('condition');
-  const outDir = path.resolve(arg('out'));
-  const toolkits = path.resolve(arg('toolkits'));
-  const state = path.resolve(arg('state'));
+  const trialDir = arg('trial') && path.resolve(arg('trial'));
+  const toolkits = arg('toolkits') && path.resolve(arg('toolkits'));
+  const state = arg('state') && path.resolve(arg('state'));
   const phase = arg('phase', 'attempt');
   const budget = arg('budget-usd', '5');
   const timeoutMin = Number(arg('timeout-min', '40'));
   const model = arg('model', 'claude-sonnet-5-5');
-  if (!taskId || !['C0', 'C1', 'C2'].includes(cond) || !arg('out') || !arg('toolkits') || !arg('state')) {
-    console.error('usage: run-trial.js --task <id> --condition C0|C1|C2 --out <dir> --toolkits <dir> --state <dir> [--phase attempt|feedback --feedback-file f --workdir d]');
+  if (!taskId || !['C0', 'C1', 'C2'].includes(cond) || !trialDir || !toolkits || !state) {
+    console.error('usage: run-trial.js --task <id> --condition C0|C1|C2 --trial <dir> --toolkits <dir> --state <dir> [--phase attempt|feedback --feedback-file f]');
     process.exit(2);
   }
   const task = listTasks().find((t) => t.id === taskId);
   if (!task) throw new Error(`unknown task ${taskId}`);
+  const work = path.join(trialDir, 'work');
+  if (phase === 'attempt') {
+    if (fs.existsSync(work)) throw new Error(`${work} exists; trials never reuse a working copy for a new attempt`);
+    materialize(task, { into: work });
+  } else if (!fs.existsSync(work)) throw new Error(`feedback phase needs the attempt's working copy at ${work}`);
+  const outDir = path.join(trialDir, phase);
   fs.mkdirSync(outDir, { recursive: true });
-  const work = arg('workdir') ? path.resolve(arg('workdir')) : materialize(task);
+  const base = spawnSync('git', ['rev-list', '--max-parents=0', 'HEAD'], { cwd: work, encoding: 'utf8' }).stdout.trim().split('\n')[0];
+  const toolkit = path.join(toolkits, cond === 'C0' ? 'ecc' : 'eccode');
   const feedback = phase === 'feedback' ? fs.readFileSync(arg('feedback-file'), 'utf8') : null;
-  const { env, pluginDir } = conditionEnv(cond, toolkits, state);
-  const prompt = promptFor(cond, task, phase, feedback);
-  const cliArgs = ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--model', model, '--max-budget-usd', String(budget), '--permission-mode', 'bypassPermissions', '--plugin-dir', pluginDir, '--append-system-prompt', UNATTENDED];
+  prepareState(cond, state);
+  const env = trialEnv(cond);
+  const args = ['-p', promptFor(cond, task, phase, feedback), '--output-format', 'stream-json', '--verbose', '--model', model, '--max-budget-usd', String(budget), '--permission-mode', 'bypassPermissions', '--plugin-dir', `${SBX}/toolkit`, '--append-system-prompt', UNATTENDED];
   const transcript = path.join(outDir, 'transcript.jsonl');
   const started = Date.now();
-  const timedOut = await new Promise((resolve) => {
-    const child = spawn('claude', cliArgs, { cwd: work, env, stdio: ['ignore', fs.openSync(transcript, 'w'), fs.openSync(path.join(outDir, 'stderr.log'), 'w')], detached: true });
-    let killed = false;
-    const timer = setTimeout(() => {
-      killed = true;
-      try {
-        process.kill(-child.pid, 'SIGKILL');
-      } catch {}
-    }, timeoutMin * 60000);
-    child.on('exit', () => {
-      clearTimeout(timer);
-      resolve(killed);
+  let timedOut = false;
+  try {
+    timedOut = await new Promise((resolve) => {
+      const child = spawnInSandbox({ work, state, toolkit, env, cmd: 'claude', args, stdout: fs.openSync(transcript, 'w'), stderr: fs.openSync(path.join(outDir, 'stderr.log'), 'w') });
+      let killed = false;
+      const timer = setTimeout(() => {
+        killed = true;
+        try {
+          process.kill(-child.pid, 'SIGKILL');
+        } catch {}
+      }, timeoutMin * 60000);
+      child.on('exit', () => {
+        clearTimeout(timer);
+        resolve(killed);
+      });
     });
-  });
+  } finally {
+    dropToken(state);
+  }
   const wallMs = Date.now() - started;
   const sum = summarize(transcript);
   spawnSync('git', ['add', '-A'], { cwd: work });
-  const diff = spawnSync('git', ['diff', '--cached', 'HEAD', '--', '.', ':(exclude).eccode'], { cwd: work, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).stdout || '';
+  const diff = spawnSync('git', ['diff', '--cached', base, '--', '.', ':(exclude).eccode'], { cwd: work, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).stdout || '';
   spawnSync('git', ['reset', '-q'], { cwd: work });
-  fs.writeFileSync(path.join(outDir, `final.diff`), diff);
-  const visible = runVisible(work);
-  const grade = runGrader(task, work);
-  const s = score(visible, grade);
+  fs.writeFileSync(path.join(outDir, 'final.diff'), diff);
+  const g = grade(task, work, state, toolkit);
   const result = {
     task: task.id,
     family: task.family,
     split: task.split,
     relation: task.relation || null,
     condition: cond,
+    rep: Number(arg('rep', '1')),
     phase,
     model,
     budgetUsd: Number(budget),
-    workdir: work,
+    trialDir,
     wallMs,
     timedOut,
     ...sum,
     resultText: String(sum.result || '').slice(-4000),
-    grade: s,
-    graderTail: grade.tail,
-    visibleTail: visible.ok ? '' : visible.tail,
+    grade: g.score,
+    graderTail: g.graded.tail,
+    visibleTail: g.visible.ok ? '' : g.visible.tail,
+    diffLines: diff.split('\n').length,
     intervention: intervention(sum, timedOut, work),
     finishedAt: new Date().toISOString(),
   };
   fs.writeFileSync(path.join(outDir, 'result.json'), JSON.stringify(result, null, 2));
-  console.log(JSON.stringify({ task: task.id, condition: cond, phase, success: s.success, ac: `${s.acPassed}/${s.acTotal}`, regressions: s.regressions, traps: s.failedTraps, costUsd: sum.costUsd, wallMin: Math.round(wallMs / 6000) / 10, intervention: result.intervention }));
+  console.log(JSON.stringify({ task: task.id, condition: cond, phase, success: g.score.success, ac: `${g.score.acPassed}/${g.score.acTotal}`, regressions: g.score.regressions, traps: g.score.failedTraps, costUsd: sum.costUsd, wallMin: Math.round(wallMs / 6000) / 10, intervention: result.intervention }));
 }
 
 main().catch((err) => {

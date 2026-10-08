@@ -1,0 +1,40 @@
+{
+  "declaredAt": "2026-10-08",
+  "declaredBefore": "any toolkit tuning on evaluation results and any holdout trial",
+  "sets": {
+    "REL": "holdout tasks with relation=related (4 tasks x repeats)",
+    "DEC": "holdout tasks with relation=decoy (2 tasks x repeats)",
+    "ALL": "all holdout tasks"
+  },
+  "definitions": {
+    "success": "visible tests pass AND every hidden AC check passes AND every hidden REG check passes",
+    "orgPassRate": "passed [org:*] checks / all [org:*] checks, over the set",
+    "discoverablePassRate": "passed AC checks without an [org:*] tag / all such AC checks, over the set",
+    "regressions": "number of trials with at least one failing REG check",
+    "repeatedMistakes": "number of holdout trials that fail a check tagged [org:x] or [trap:x] where the same condition received QA feedback naming a failed check with that tag during training",
+    "interventions": "trials that ended asking the user, escalated to the user, ran out of budget/turns, or timed out",
+    "costUsd": "total_cost_usd reported by the Claude Code CLI for the session (subagents included)",
+    "costPerSuccess": "sum of costUsd over the set / number of successful trials in the set"
+  },
+  "mandatory": [
+    { "id": "L1", "what": "Learning raises org-rule compliance on unfamiliar tasks", "metric": "orgPassRate", "set": "REL", "rule": "C2 - C1 >= 0.40" },
+    { "id": "L2", "what": "Learning halves repeated mistakes", "metric": "repeatedMistakes", "set": "REL", "rule": "C2 <= 0.5 * C1 AND C1 >= 3 (fewer than 3 C1 repeated mistakes = not informative = not met)" },
+    { "id": "L3", "what": "Learning raises task success on related unfamiliar tasks", "metric": "success rate", "set": "REL", "rule": "C2 - C1 >= 0.25" },
+    { "id": "L4", "what": "Learning does no harm when a lesson must be rejected", "metric": "success count", "set": "DEC", "rule": "C2 >= C1 - 1" },
+    { "id": "L5", "what": "Learning overhead is bounded", "metric": "mean costUsd", "set": "REL", "rule": "C2 <= 1.5 * C1" },
+    { "id": "E1", "what": "Enhanced ECC with learning beats original ECC", "metric": "success rate", "set": "ALL", "rule": "C2 - C0 >= 0.20" },
+    { "id": "E2", "what": "No more regressions than original ECC", "metric": "regressions", "set": "ALL", "rule": "C2 <= C0" },
+    { "id": "E3", "what": "No more human intervention than original ECC", "metric": "interventions", "set": "ALL", "rule": "C2 <= C0 AND C2 <= 2" },
+    { "id": "E4", "what": "Cost per successful task is bounded", "metric": "costPerSuccess", "set": "ALL", "rule": "C2 <= 3.0 * C0" }
+  ],
+  "claims": [
+    { "id": "O1", "what": "Orchestration alone adds value on discoverable requirements (claimed only if met)", "metric": "discoverablePassRate", "set": "ALL", "rule": "C1 - C0 >= 0.05" },
+    { "id": "O2", "what": "Orchestration alone does not add regressions", "metric": "regressions", "set": "ALL", "rule": "C1 <= C0" },
+    { "id": "O3", "what": "Orchestration cost ratio (reported, no target)", "metric": "mean costUsd and mean wall time", "set": "ALL", "rule": "report C1/C0" }
+  ],
+  "reporting": [
+    "per task x condition: successes out of repeats (pass^k consistency), AC and org pass rates, cost, wall time",
+    "95% Wilson intervals for rates; small samples are stated as such",
+    "every failed target and every unsuccessful case is listed with its cause"
+  ]
+}

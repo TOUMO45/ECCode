@@ -3,7 +3,7 @@
 // Validate every eval task (or those named on the command line):
 //   original repo : visible tests pass, >=1 hidden AC fails, every REG passes
 //   solution/     : visible tests pass, every hidden check passes
-//   naive/        : visible tests pass, >=1 [trap:*] check fails (if present)
+//   naive/        : visible tests pass, >=1 [trap:*] or [org:*] check fails (if present)
 //   vendored kit  : identical to eval/kit/acme-kit
 // Prints one JSON line per task. Exit 1 if any task is invalid.
 // --quiet-names omits check names (used for sealed holdout tasks).
@@ -30,7 +30,7 @@ for (const task of listTasks().filter((t) => !only.length || only.includes(t.id)
     const vis = runVisible(work);
     const grade = runGrader(task, work);
     const s = score(vis, grade);
-    out[label] = { visibleOk: vis.ok, acPassed: s.acPassed, acTotal: s.acTotal, regressions: s.regressions, failedTraps: s.failedTraps, ...(quiet ? {} : { failed: s.failed }) };
+    out[label] = { visibleOk: vis.ok, acPassed: s.acPassed, acTotal: s.acTotal, regressions: s.regressions, failedTraps: s.failedTraps, failedOrg: s.failedOrg, ...(quiet ? {} : { failed: s.failed }) };
     if (!vis.ok) problems.push(`${label}: visible tests fail\n${vis.tail}`);
     if (!grade.checks.length) problems.push(`${label}: grader produced no checks\n${grade.tail}`);
     if (label === 'original') {
@@ -38,7 +38,7 @@ for (const task of listTasks().filter((t) => !only.length || only.includes(t.id)
       if (s.regressions.length) problems.push(`original: regression checks fail: ${s.regressions.join(', ')}`);
     }
     if (label === 'solution' && !s.success) problems.push(`solution: not all hidden checks pass (${s.failed.join('; ')})`);
-    if (label === 'naive' && !s.failedTraps.length) problems.push('naive: no [trap:*] check fails');
+    if (label === 'naive' && !s.failedTraps.length && !s.failedOrg.length) problems.push('naive: no [trap:*] or [org:*] check fails');
     fs.rmSync(work, { recursive: true, force: true });
   }
   out.valid = problems.length === 0;

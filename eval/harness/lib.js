@@ -53,7 +53,7 @@ function parseTap(out) {
     const m = /^(not )?ok \d+ - (.*)$/.exec(line);
     if (!m) continue;
     const name = m[2].replace(/\s+#\s*(SKIP|TODO).*$/, '').trim();
-    results.push({ id: name.split(/\s+/)[0], name, ok: !m[1], traps: [...name.matchAll(/\[trap:([\w-]+)\]/g)].map((x) => x[1]) });
+    results.push({ id: name.split(/\s+/)[0], name, ok: !m[1], traps: [...name.matchAll(/\[trap:([\w-]+)\]/g)].map((x) => x[1]), org: [...name.matchAll(/\[org:([\w-]+)\]/g)].map((x) => x[1]) });
   }
   return results;
 }
@@ -90,6 +90,12 @@ function score(visible, grade) {
     regressions: reg.filter((c) => !c.ok).map((c) => c.id),
     visibleOk: visible.ok,
     failedTraps: [...new Set(grade.checks.filter((c) => !c.ok).flatMap((c) => c.traps))],
+    failedOrg: [...new Set(grade.checks.filter((c) => !c.ok).flatMap((c) => c.org))],
+    orgChecks: grade.checks.filter((c) => c.org.length).map((c) => ({ id: c.id, org: c.org, ok: c.ok })),
+    discoverable: (() => {
+      const d = grade.checks.filter((c) => c.id.startsWith('AC') && !c.org.length);
+      return { passed: d.filter((c) => c.ok).length, total: d.length };
+    })(),
     failed: grade.checks.filter((c) => !c.ok).map((c) => c.name),
   };
 }
