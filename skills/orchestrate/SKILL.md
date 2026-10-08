@@ -37,6 +37,8 @@ eccode run end $RUN --actor orchestrator --status ok|failed --tokens <usage.tota
 ```
 If the harness reports cost, add `--cost-usd`. Otherwise the engine estimates cost from tokens when `pricing.usdPerMillionTokens` is configured. When a run start is refused with `BUDGET_EXCEEDED`, stop and ask the user.
 
+Close a run only after the agent's usage figures have arrived. They can arrive after the hand-back message, so read the task notification first. Never estimate, and never batch `run end` with unrelated commands. `run end` refuses a close without `--tokens`/`--cost-usd` (`USAGE_MISSING`). If the agent genuinely reported nothing (crash, timeout), close with `--no-usage`; the run stays marked `usageReported: false` until `eccode run correct` fills it in.
+
 ## 3. The workflow
 ```
 Idea → architecture → [architecture-reviewer] → design → [technical-reviewer] → plan → [technical-reviewer]
@@ -86,7 +88,7 @@ For each `phase:<id>`, in order:
 ## 7. Failure handling
 | Situation | Action |
 |---|---|
-| Agent crashed or timed out | `run end --status failed`. Then `eccode recover` (or `--all` after a restart) and retry within limits |
+| Agent crashed or timed out | `run end --status failed --no-usage` (or with the usage it did report). Then `eccode recover` (or `--all` after a restart) and retry within limits |
 | Engine refusal | It is a rule, not a bug. Fix the cause and never bypass it by editing `.eccode/` files |
 | Repeated rejections | The gate escalates automatically. Present the recovery options and ask the user |
 | Budget or runtime exhausted | Stop, summarize state, ask the user |

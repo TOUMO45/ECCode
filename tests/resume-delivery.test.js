@@ -185,6 +185,41 @@ test('run usage corrections are append-only and adjust totals by the delta', () 
   expectCode(() => runs.correctRun(ctx.store, id, 'orchestrator', { tokens: 1 }), 'INVALID_INPUT');
 });
 
+test('run end refuses to close a run without usage unless --no-usage is explicit', () => {
+  const ctx = tmpProject();
+  const id = runs.startRun(ctx.store, ctx.config, 'technical-reviewer');
+  expectCode(() => runs.endRun(ctx.store, ctx.config, id, 'orchestrator', {}), 'USAGE_MISSING');
+  assert.strictEqual(ctx.store.state().runs[id].status, 'running');
+  // An explicit zero is a reported figure, not a missing one.
+  const zero = runs.startRun(ctx.store, ctx.config, 'technical-reviewer');
+  runs.endRun(ctx.store, ctx.config, zero, 'orchestrator', { tokens: 0 });
+  assert.strictEqual(ctx.store.state().runs[zero].usageReported, true);
+  // A crashed agent may report nothing: closing is allowed but the gap stays visible.
+  runs.endRun(ctx.store, ctx.config, id, 'orchestrator', { status: 'failed', noUsage: true });
+  const st = ctx.store.state();
+  assert.strictEqual(st.runs[id].status, 'failed');
+  assert.strictEqual(st.runs[id].usageReported, false);
+  assert.strictEqual(st.totals.tokens, 0);
+  // run correct fills the gap later and marks the usage as reported.
+  runs.correctRun(ctx.store, id, 'orchestrator', { tokens: 5000, reason: 'usage arrived after close' });
+  assert.strictEqual(ctx.store.state().runs[id].usageReported, true);
+  assert.strictEqual(ctx.store.audit().ok, true);
+});
+
+test('run end --no-usage is accepted by the CLI and a bare run end is refused with exit 2', () => {
+  const ctx = tmpProject();
+  const { spawnSync } = require('child_process');
+  const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const cli = (...args) => spawnSync(process.execPath, [bin, ...args, '--root', ctx.dir], { encoding: 'utf8' });
+  const id = cli('run', 'start', '--actor', 'test-engineer').stdout.trim();
+  let res = cli('run', 'end', id, '--actor', 'orchestrator', '--status', 'ok');
+  assert.strictEqual(res.status, 2, res.stdout + res.stderr);
+  assert.match(res.stderr, /USAGE_MISSING|usage/i);
+  res = cli('run', 'end', id, '--actor', 'orchestrator', '--status', 'failed', '--no-usage');
+  assert.strictEqual(res.status, 0, res.stderr);
+  assert.strictEqual(ctx.store.state().runs[id].usageReported, false);
+});
+
 test('evidence run preserves argument quoting from the CLI (sh -c with compound commands)', () => {
   const ctx = tmpProject();
   const { spawnSync } = require('child_process');
