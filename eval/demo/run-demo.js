@@ -145,6 +145,23 @@ async function session(n, prompt, { killTrigger }) {
 }
 
 const T0 = Date.now();
+
+/** The account's usage limit ends a session with a message naming the reset time; wait for it instead of burning sessions. */
+const LIMIT = /hit your (session|usage|weekly|rate)? ?limit[^\n]*resets (\d{1,2})(?::(\d{2}))?\s*(am|pm)/i;
+async function waitForLimit(rec) {
+  const m = LIMIT.exec(`${rec.finalText || ''}`);
+  if (!m) return false;
+  let hour = Number(m[2]) % 12 + (m[4].toLowerCase() === 'pm' ? 12 : 0);
+  const reset = new Date();
+  reset.setUTCHours(hour, Number(m[3] || 0), 0, 0);
+  if (reset.getTime() <= Date.now()) reset.setUTCDate(reset.getUTCDate() + 1);
+  const waitMs = reset.getTime() - Date.now() + 90000;
+  console.log(`usage limit reached; waiting until ${reset.toISOString()} (+90 s)`);
+  log.push({ label: 'usage-limit-wait', until: reset.toISOString(), at: new Date().toISOString() });
+  await new Promise((r) => setTimeout(r, waitMs));
+  return true;
+}
+
 (async () => {
   if (!install()) {
     console.error('plugin installation failed; see install.json');
@@ -168,6 +185,7 @@ const T0 = Date.now();
     const r = await session(n, '/eccode:resume', { killTrigger: false });
     total += r.costUsd || 0;
     snapshot(`${n}-after-session-${n}`);
+    if (await waitForLimit(r)) n -= 1; // a session the limit stopped does not count against --max-sessions
   }
   dropToken(state);
   const audit = spawnSync(process.execPath, [path.join(toolkit, 'bin', 'eccode.js'), 'audit', '--root', work], { encoding: 'utf8' });
