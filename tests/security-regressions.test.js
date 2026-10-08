@@ -137,3 +137,138 @@ test('#9 audit reports event timestamps that go backwards', () => {
   assert.strictEqual(res.ok, false);
   assert.match(res.errors.join('\n'), /timestamp goes backwards/);
 });
+
+// ------------------------------------------- #3 prototype-chain id lookups
+
+const gates = require('../lib/gates');
+const tasks = require('../lib/tasks');
+const evidence = require('../lib/evidence');
+const { Memory } = require('../lib/memory/records');
+const { write, approval, approveThroughPlan, handoffFor, samplePlan, ARCH_MD } = require('./helpers');
+
+function sharedMemoryDir() {
+  process.env.ECCODE_SHARED_MEMORY = fs.mkdtempSync(path.join(require('os').tmpdir(), 'eccode-shared-'));
+  return process.env.ECCODE_SHARED_MEMORY;
+}
+
+function knowledge(mem, title, extra = {}) {
+  return mem.add('learning-debugger', {
+    layer: 'knowledge',
+    content: { title, summary: 'The ticket API rate-limits bursts; use exponential backoff.', sources: [{ title: 'docs', url: 'https://example.com/docs', checkedAt: '2026-10-01' }], appliesWhen: ['calling the ticket API'], notApplicableWhen: [], confidence: 'medium', ...extra },
+  });
+}
+
+test('#3 evidence refs never resolve to inherited properties (ev:constructor, ev:__proto__, ...)', () => {
+  const ctx = tmpProject();
+  const st = ctx.store.state();
+  for (const ref of ['ev:constructor', 'ev:__proto__', 'ev:toString', 'ev:hasOwnProperty']) {
+    assert.strictEqual(evidence.resolveRef(st, ctx.dir, ref).ok, false, ref);
+  }
+  gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator');
+  write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD);
+  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
+  expectCode(() => gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['ev:constructor'], ['ev:__proto__']])), 'REVIEW_REJECTED');
+  const h = handoffFor('x', 'product-architect', [], []);
+  delete h.task;
+  h.evidence = ['ev:hasOwnProperty'];
+  expectCode(() => tasks.recordHandoff(ctx.store, 'product-architect', h), 'INVALID_HANDOFF');
+});
+
+test('#3 memory assess and lesson verification do not accept inherited evidence ids', () => {
+  sharedMemoryDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const rec = knowledge(mem, 'Retry policy for the ticket API');
+  expectCode(() => mem.assess(rec.id, 'backend-engineer', { verdict: 'does-not-apply', reason: 'no experiment', evidence: ['ev:constructor'] }), 'INVALID_EVIDENCE');
+  assert.deepStrictEqual(mem.snapshotEvidence({ evidenceSnapshots: {} }, ['ev:toString'], ctx.store.state()), [{ ref: 'ev:toString', missing: true }]);
+});
+
+test('#3 task, run, risk, gate and evidence ids are own-property lookups (no TypeError, no inherited match)', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  const { store, config } = ctx;
+  gates.startGate(store, config, 'phase:core', 'orchestrator');
+  for (const id of ['toString', 'constructor', '__proto__']) {
+    expectCode(() => tasks.claim(store, config, id, 'backend-engineer'), 'UNKNOWN_TASK');
+    expectCode(() => tasks.reset(store, id, 'orchestrator', 'rework'), 'UNKNOWN_TASK');
+    expectCode(() => runs.endRun(store, config, id, 'orchestrator', { tokens: 1 }), 'UNKNOWN_RUN');
+  }
+  expectCode(() => runs.recordRisk(store, 'delivery-lead', { id: 'toString', status: 'closed' }), 'INVALID_INPUT');
+  expectCode(() => runs.recordRisk(store, 'delivery-lead', { id: '__proto__', title: 'x', severity: 'low' }), 'INVALID_INPUT');
+  for (const args of [['gate', 'show', 'constructor'], ['evidence', 'show', 'constructor'], ['task', 'claim', 'toString', '--actor', 'backend-engineer'], ['run', 'end', 'constructor', '--actor', 'orchestrator', '--tokens', '1']]) {
+    const res = cli(ctx.dir, args);
+    assert.strictEqual(res.status, 2, `${args.join(' ')}: ${res.stdout}${res.stderr}`);
+    assert.doesNotMatch(res.stderr, /internal error/);
+  }
+  const bad = samplePlan();
+  bad.tasks[0].id = 'constructor';
+  assert.match(tasks.validatePlan(bad, config).join('\n'), /reserved/);
+});
+
+// ------------------------------------------------ #21 self-supersession
+
+test('#21 a record cannot supersede itself (or be superseded by a superseded/rejected one)', () => {
+  sharedMemoryDir();
+  const ctx = tmpProject();
+  const mem = new Memory(ctx.store, ctx.config);
+  const a = knowledge(mem, 'Retry policy one');
+  expectCode(() => mem.supersede(a.id, a.id, 'backend-engineer', 'cleanup'), 'INVALID_INPUT');
+  assert.strictEqual(mem.get(a.id).status, 'provisional');
+  const b = knowledge(mem, 'Retry policy two');
+  const c = knowledge(mem, 'Retry policy three');
+  mem.supersede(b.id, c.id, 'backend-engineer', 'merged');
+  expectCode(() => mem.supersede(a.id, b.id, 'backend-engineer', 'merged into a superseded record'), 'INVALID_TRANSITION');
+});
+
+// ------------------------------------------ #22 CLI parsing and validation
+
+test('#22 CLI refuses unexpected positionals instead of dropping them (unquoted glob after --artifact)', () => {
+  const ctx = tmpProject();
+  gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator');
+  write(ctx.dir, 'brief.md', ARCH_MD);
+  write(ctx.dir, 'docs/a.md', '# A\n');
+  write(ctx.dir, 'docs/b.md', '# B\n');
+  const res = cli(ctx.dir, ['gate', 'submit', 'architecture', '--actor', 'product-architect', '--artifact', 'brief.md', 'docs/a.md', 'docs/b.md']);
+  assert.strictEqual(res.status, 1, res.stdout + res.stderr);
+  assert.match(res.stderr, /USAGE.*docs\/a\.md/);
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'in_progress');
+});
+
+test('#22 CLI input errors are clean EccodeErrors, not internal errors', () => {
+  const ctx = tmpProject();
+  write(ctx.dir, 'src/x.js', '1');
+  const cases = [
+    [['evidence', 'file', 'src', '--actor', 'test-engineer'], 2],
+    [['evidence', 'run', '--actor', 'test-engineer', '--label', 'l', '--timeout', '5m', '--', 'true'], 1],
+    [['memory', 'search', 'x', '--limit', 'many'], 1],
+    [['reconcile', '--actor', 'orchestrator', '--max-checks', 'all'], 1],
+  ];
+  for (const [args, code] of cases) {
+    const res = cli(ctx.dir, args);
+    assert.strictEqual(res.status, code, `${args.join(' ')}: ${res.stdout}${res.stderr}`);
+    assert.doesNotMatch(res.stderr, /internal error/, args.join(' '));
+  }
+});
+
+test('#22 run end/correct usage must be finite non-negative numbers', () => {
+  const ctx = tmpProject();
+  const { store, config } = ctx;
+  for (const usage of [{ tokens: '-800000' }, { tokens: 'abc' }, { tokens: 'Infinity' }, { costUsd: '-1' }, { costUsd: 'NaN' }, { tokens: ' ' }]) {
+    const id = runs.startRun(store, config, 'backend-engineer');
+    expectCode(() => runs.endRun(store, config, id, 'orchestrator', usage), 'INVALID_INPUT');
+    assert.strictEqual(store.state().runs[id].status, 'running');
+    runs.endRun(store, config, id, 'orchestrator', { tokens: '10' });
+    expectCode(() => runs.correctRun(store, id, 'orchestrator', { ...usage, reason: 'bad figure' }), 'INVALID_INPUT');
+  }
+  assert.strictEqual(store.state().totals.tokens, 60);
+});
+
+test('#22 memory ids are validated before they are used as paths', () => {
+  const ctx = tmpProject();
+  write(ctx.dir, 'x.json', '{"id":"x","layer":"project","revisions":[{"content":{"title":"t"}}],"reviews":[]}');
+  for (const id of ['../../../../x', '../../x', 'mem-d-../../x']) {
+    const res = cli(ctx.dir, ['memory', 'show', id]);
+    assert.strictEqual(res.status, 2, res.stdout + res.stderr);
+    assert.match(res.stderr, /INVALID_INPUT/);
+  }
+});
