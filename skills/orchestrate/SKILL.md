@@ -26,7 +26,11 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
 
 ## 1. Start or resume
 - **New:** `eccode init --name "<name>" --idea "<idea>"`, then show the user `eccode status --brief`.
-- **Resume:** `eccode resume`. If a previous session left runs open, run `eccode recover --all`. That releases their claims and counts the attempts. Continue from the reported **NEXT** action.
+- **Resume:** `eccode resume`, then `eccode reconcile --verify --actor orchestrator`. Reconcile compares the record with the working tree and re-runs the checks that done tasks and approvals relied on. Each re-run is recorded as evidence.
+  - **BLOCKING `approved-artifact`:** a reviewed file changed after approval. Restore it from git, or ask the user whether to reopen that gate. Never continue on top of it.
+  - **BLOCKING `check-regressed`:** a check that passed is now failing. Treat it as a bug and use `debug-investigation` before any new work.
+  - **`claimed-task` with partial files:** the interrupted agent left work on disk. Tell the next owner to inspect it and either keep or discard it on purpose.
+  - Then, if a previous session left runs open, run `eccode recover --all`. That releases their claims and counts the attempts. Continue from the reported **NEXT** action.
 - **Limits.** The defaults in `.eccode/config.json` are `maxConcurrency`, `maxReviewIterations`, `maxTaskRetries`, `maxRuntimeMinutes`, `maxCostUsd` and `staleRunMinutes`. Tell the user what they are; change them only if the user asks.
 
 ## 2. Run accounting (every dispatch)

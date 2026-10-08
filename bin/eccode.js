@@ -13,7 +13,9 @@ const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 Project
   init --name <n> --idea <text>          Create .eccode/ in the project root
   status [--json|--brief]                Gates, tasks, budget and the next action
-  resume                                 Resume brief for a new session (read-only)
+  resume                                 Resume brief for a new session, with read-only reconciliation
+  reconcile --actor <a> [--verify] [--max-checks n]
+                                         Check the record against files (and re-run recorded checks); exit 3 on blocking issues
   recover [--all]                        Close interrupted runs, release their claims
   audit                                  Verify the hash chain, snapshot==replay, and approved artifacts
   rebuild                                Rewrite state.json by replaying events.jsonl
@@ -147,9 +149,18 @@ function main(argv) {
       const state = store.state();
       const sum = status.summary(state, config);
       const lastHandoffs = Object.values(state.handoffs).slice(-3).map((h) => `- ${h.at} ${h.from}→${h.to}: ${h.nextAction}`);
-      const text = [status.formatBrief(sum), lastHandoffs.length ? 'Recent handoffs:\n' + lastHandoffs.join('\n') : ''].filter(Boolean).join('\n');
-      print(flags, text, { ...sum, recentHandoffs: lastHandoffs });
+      const { inspect, formatIssues } = require('../lib/reconcile');
+      const issues = inspect(store, state); // read-only: resume never writes to the record
+      const text = [status.formatBrief(sum), formatIssues(issues), lastHandoffs.length ? 'Recent handoffs:\n' + lastHandoffs.join('\n') : ''].filter(Boolean).join('\n');
+      print(flags, text, { ...sum, reconcile: issues, recentHandoffs: lastHandoffs });
       return 0;
+    }
+    case 'reconcile': {
+      const { reconcile, formatIssues } = require('../lib/reconcile');
+      const rep = reconcile(store, config, need(actor, '--actor'), { verify: Boolean(flags.verify), maxChecks: flags['max-checks'] ? Number(flags['max-checks']) : undefined });
+      const checks = rep.checks.map((c) => `- re-ran ev:${c.previous} → ev:${c.rerun} ${c.status.toUpperCase()}: ${c.command}`);
+      print(flags, [formatIssues(rep.issues), checks.length ? `Checks re-run:\n${checks.join('\n')}` : rep.verified ? 'Checks re-run: none recorded' : 'Checks not re-run (add --verify).'].join('\n'), rep);
+      return rep.ok ? 0 : 3;
     }
     case 'recover': {
       const rec = runs.recover(store, config, { all: Boolean(flags.all) });

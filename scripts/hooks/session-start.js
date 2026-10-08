@@ -30,14 +30,17 @@ process.stdin.on('end', () => {
     const { Store } = require(path.join(lib, 'store'));
     const { loadConfig } = require(path.join(lib, 'config'));
     const { summary, formatBrief } = require(path.join(lib, 'status'));
+    const { inspect, formatIssues } = require(path.join(lib, 'reconcile'));
     const store = new Store(root);
     const audit = store.audit();
-    const brief = formatBrief(summary(store.state(), loadConfig(root)));
+    const state = store.state();
+    const brief = formatBrief(summary(state, loadConfig(root)));
     const text = [
       '## ECCode delivery in progress (from the persistent project record)',
       brief,
+      formatIssues(inspect(store, state)),
       audit.ok ? '' : `WARNING: event log integrity check failed: ${audit.errors.slice(0, 3).join('; ')}`,
-      'Use the `orchestrate` skill to continue. Open runs from a previous session are interrupted: recover them with `eccode recover --all` before dispatching.',
+      'Use the `orchestrate` skill to continue. First run `eccode reconcile --verify --actor orchestrator` and resolve BLOCKING items. Open runs from a previous session are interrupted: recover them with `eccode recover --all` before dispatching.',
     ]
       .filter(Boolean)
       .join('\n');
