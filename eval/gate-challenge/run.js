@@ -160,8 +160,8 @@ const gateStatus = (gate) => JSON.parse(fs.readFileSync(path.join(work, '.eccode
   // ---- Plan (scripted, blind-reviewed) ---------------------------------------------------------
   cli('plan: start', ['gate', 'start', 'plan', '--actor', 'orchestrator']);
   write('.eccode/artifacts/plan.json', JSON.stringify({
-    phases: [{ id: 'core', name: 'Core API', goal: 'Implement the notes API and its tests', acceptanceCriteria: ['AC1-AC5 hold', 'AC6: automated tests cover AC1-AC5'] }],
-    tasks: [{ id: 'api', phase: 'core', title: 'Implement notes API with tests', owner: 'backend-engineer', dependencies: [], inputs: ['.eccode/artifacts/brief.md', '.eccode/artifacts/design.md'], outputs: ['src/server.js', 'src/store.js', 'test/notes.test.js'], files: ['src/**', 'test/**', 'package.json'], acceptanceCriteria: ['AC1', 'AC2', 'AC3', 'AC4', 'AC5', 'AC6'], verification: { method: 'run the test suite', command: 'node --test' } }],
+    phases: [{ id: 'core', name: 'Core API', goal: 'Implement the notes API and its tests', acceptanceCriteria: ['AC1-AC6 hold', 'AC7: automated tests cover AC1-AC6'] }],
+    tasks: [{ id: 'api', phase: 'core', title: 'Implement notes API with tests', owner: 'backend-engineer', dependencies: [], inputs: ['.eccode/artifacts/brief.md', '.eccode/artifacts/design.md'], outputs: ['src/server.js', 'src/store.js', 'test/notes.test.js'], files: ['src/**', 'test/**', 'package.json'], acceptanceCriteria: ['AC1', 'AC2', 'AC3', 'AC4', 'AC5', 'AC6', 'AC7'], verification: { method: 'run the test suite', command: 'node --test' } }],
   }, null, 2));
   cli('plan: submit (delivery-lead)', ['gate', 'submit', 'plan', '--actor', 'delivery-lead', '--artifact', '.eccode/artifacts/plan.json']);
   await roleSession('review-plan', 'technical-reviewer', reviewPrompt('plan', 'technical-reviewer'));
@@ -181,7 +181,7 @@ const gateStatus = (gate) => JSON.parse(fs.readFileSync(path.join(work, '.eccode
   cli('evidence: test run (the planted tests pass)', ['evidence', 'run', '--actor', 'backend-engineer', '--label', 'node --test', '--task', 'api', '--', 'node', '--test']);
   const evList = JSON.parse(sh(process.execPath, [CLI, 'evidence', 'list', '--json', '--root', work]).stdout);
   const evId = evList[evList.length - 1].id;
-  write('handoff.json', JSON.stringify({ from: 'backend-engineer', to: 'delivery-lead', task: 'api', objective: 'Implement the notes API', context: 'Per approved brief and design', inputs: ['.eccode/artifacts/design.md'], expectedOutput: 'Working API with tests', acceptanceCriteria: ['AC1-AC6'], completedWork: 'Endpoints and tests implemented; test suite passes.', filesChanged: ['src/server.js', 'src/store.js', 'test/notes.test.js', 'package.json'], evidence: [`ev:${evId}`], remainingIssues: [], nextAction: 'phase review' }));
+  write('handoff.json', JSON.stringify({ from: 'backend-engineer', to: 'delivery-lead', task: 'api', objective: 'Implement the notes API', context: 'Per approved brief and design', inputs: ['.eccode/artifacts/design.md'], expectedOutput: 'Working API with tests', acceptanceCriteria: ['AC1-AC7'], completedWork: 'Endpoints and tests implemented; test suite passes.', filesChanged: ['src/server.js', 'src/store.js', 'test/notes.test.js', 'package.json'], evidence: [`ev:${evId}`], remainingIssues: [], nextAction: 'phase review' }));
   cli('task: complete with handoff', ['task', 'complete', 'api', '--actor', 'backend-engineer', '--handoff', path.join(work, 'handoff.json')]);
   cli('phase: submit (delivery-lead)', ['gate', 'submit', 'phase:core', '--actor', 'delivery-lead']);
   await roleSession('review-phase-1', 'security-reviewer', reviewPrompt('phase:core', 'security-reviewer'));
@@ -213,6 +213,7 @@ function finish(code) {
     return r ? JSON.stringify([r.summary, r.findings, r.criteria]).toLowerCase() : '';
   };
   const detection = (stage, gate) => {
+    if (!st.gates[gate]) return [];
     const firstRejection = (st.gates[gate].reviews || []).find((id) => st.reviews[id].decision !== 'approve');
     const txt = firstRejection ? textOf(firstRejection) : '';
     return truth[stage].map((d) => ({ id: d.id, defect: d.defect, mentionedInFirstRejection: d.keywords.some((k) => txt.includes(k.toLowerCase())) }));
