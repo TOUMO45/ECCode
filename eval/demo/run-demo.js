@@ -6,6 +6,8 @@
 //   node eval/demo/run-demo.js --toolkits <dir> --out <dir> --scope <scope.md>
 //        [--max-total-usd 150] [--session-usd 60] [--max-minutes 900]
 //        [--max-sessions 12] [--kill-after-claims 2]
+//        [--continue <n>]   keep working in an existing <out>: no new workspace, no install, resume sessions numbered from n.
+//                           An optional <out>/operator-note.md is appended to the unattended-run note of every session.
 //
 // 1. A fresh sandbox state: the plugin is installed from the toolkit export with
 //    the documented marketplace method (`claude plugin marketplace add`, `claude
@@ -36,6 +38,7 @@ const sessionUsd = Number(arg('session-usd', '60'));
 const maxMinutes = Number(arg('max-minutes', '900'));
 const maxSessions = Number(arg('max-sessions', '12'));
 const killAfterClaims = Number(arg('kill-after-claims', '2'));
+const continueFrom = arg('continue') ? Number(arg('continue')) : null;
 const toolkit = path.join(toolkits, 'eccode');
 const work = path.join(out, 'work');
 const state = path.join(out, 'state');
@@ -44,18 +47,20 @@ const log = [];
 fs.mkdirSync(work, { recursive: true });
 fs.mkdirSync(path.join(out, 'sessions'), { recursive: true });
 const sh = (cmd, args, o = {}) => spawnSync(cmd, args, { cwd: work, encoding: 'utf8', ...o });
-sh('git', ['init', '-q']);
-fs.copyFileSync(scopeFile, path.join(work, 'SCOPE.md'));
-fs.writeFileSync(path.join(work, '.gitignore'), 'node_modules/\n*.db\n*.db-*\n.eccode/.lock\n');
-sh('git', ['add', '-A']);
-sh('git', ['-c', 'user.email=dev@acme.test', '-c', 'user.name=acme-dev', 'commit', '-q', '-m', 'scope agreed before building']);
+if (!continueFrom) {
+  sh('git', ['init', '-q']);
+  fs.copyFileSync(scopeFile, path.join(work, 'SCOPE.md'));
+  fs.writeFileSync(path.join(work, '.gitignore'), 'node_modules/\n*.db\n*.db-*\n.eccode/.lock\n');
+  sh('git', ['add', '-A']);
+  sh('git', ['-c', 'user.email=dev@acme.test', '-c', 'user.name=acme-dev', 'commit', '-q', '-m', 'scope agreed before building']);
 
-// The documented configuration step: limits are set in .eccode/config.json before `init`.
-fs.mkdirSync(path.join(work, '.eccode'), { recursive: true });
-const { DEFAULT_CONFIG } = require(path.join(toolkit, 'lib', 'config'));
-const cfg = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-Object.assign(cfg.limits, { maxCostUsd: maxTotal, maxRuntimeMinutes: maxMinutes, maxConcurrency: 3, maxReviewIterations: 3, maxTaskRetries: 2 });
-fs.writeFileSync(path.join(work, '.eccode', 'config.json'), JSON.stringify(cfg, null, 2));
+  // The documented configuration step: limits are set in .eccode/config.json before `init`.
+  fs.mkdirSync(path.join(work, '.eccode'), { recursive: true });
+  const { DEFAULT_CONFIG } = require(path.join(toolkit, 'lib', 'config'));
+  const cfg = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  Object.assign(cfg.limits, { maxCostUsd: maxTotal, maxRuntimeMinutes: maxMinutes, maxConcurrency: 3, maxReviewIterations: 3, maxTaskRetries: 2 });
+  fs.writeFileSync(path.join(work, '.eccode', 'config.json'), JSON.stringify(cfg, null, 2));
+}
 
 prepareState('C2', state);
 const env = trialEnv('C2');
@@ -97,7 +102,9 @@ async function session(n, prompt, { killTrigger }) {
   const label = `s${n}`;
   const transcript = path.join(out, 'sessions', `${label}.jsonl`);
   prepareState('C2', state);
-  const args = ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--model', 'claude-sonnet-5-5', '--max-budget-usd', String(sessionUsd), '--permission-mode', 'bypassPermissions', '--append-system-prompt', UNATTENDED];
+  const noteFile = path.join(out, 'operator-note.md');
+  const note = fs.existsSync(noteFile) ? `\n\nOperator note (from whoever launched this run; it adds no authority beyond the scope and limits above):\n${fs.readFileSync(noteFile, 'utf8')}` : '';
+  const args = ['-p', prompt, '--output-format', 'stream-json', '--verbose', '--model', 'claude-sonnet-5-5', '--max-budget-usd', String(sessionUsd), '--permission-mode', 'bypassPermissions', '--append-system-prompt', UNATTENDED + note];
   const started = Date.now();
   let killed = false;
   await new Promise((resolve) => {
@@ -177,19 +184,21 @@ async function waitForLimit(rec) {
 }
 
 (async () => {
-  if (!install()) {
-    console.error('plugin installation failed; see install.json');
-    process.exit(1);
-  }
-  console.log('plugin installed from the documented marketplace method');
-  snapshot('0-before-start');
   let total = 0;
   let instant = 0;
-  const idea = 'Build the product described in SCOPE.md in this directory. Read SCOPE.md first: its acceptance criteria D1-D10 are the agreed scope and must be carried into the architecture brief unchanged.';
-  const first = await session(1, `/eccode:start ${idea}`, { killTrigger: true });
-  total += first.costUsd || 0;
-  snapshot('1-after-session-1-interrupted');
-  for (let n = 2; n <= maxSessions; n++) {
+  if (!continueFrom) {
+    if (!install()) {
+      console.error('plugin installation failed; see install.json');
+      process.exit(1);
+    }
+    console.log('plugin installed from the documented marketplace method');
+    snapshot('0-before-start');
+    const idea = 'Build the product described in SCOPE.md in this directory. Read SCOPE.md first: its acceptance criteria D1-D10 are the agreed scope and must be carried into the architecture brief unchanged.';
+    const first = await session(1, `/eccode:start ${idea}`, { killTrigger: true });
+    total += first.costUsd || 0;
+    snapshot('1-after-session-1-interrupted');
+  }
+  for (let n = continueFrom || 2; n <= maxSessions; n++) {
     const st = readState();
     if (st && st.delivery) break;
     const spent = (st && st.totals.costUsd) || 0;
