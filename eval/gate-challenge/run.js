@@ -169,7 +169,7 @@ async function reviewLoop(gate, { reviewerRole, authorRole, artifact, label, max
     tasks: [{ id: 'api', phase: 'core', title: 'Implement notes API with tests', owner: 'backend-engineer', dependencies: [], inputs: ['.eccode/artifacts/brief.md', '.eccode/artifacts/design.md'], outputs: ['src/server.js', 'src/store.js', 'test/notes.test.js'], files: ['src/**', 'test/**', 'package.json'], acceptanceCriteria: ['AC1', 'AC2', 'AC3', 'AC4', 'AC5', 'AC6', 'AC7'], verification: { method: 'run the test suite', command: 'node --test' } }],
   }, null, 2));
   cli('plan: submit (delivery-lead)', ['gate', 'submit', 'plan', '--actor', 'delivery-lead', '--artifact', '.eccode/artifacts/plan.json']);
-  const planStatus = await reviewLoop('plan', { reviewerRole: 'technical-reviewer', authorRole: 'delivery-lead', artifact: '.eccode/artifacts/plan.json', label: 'plan' });
+  const planStatus = await reviewLoop('plan', { reviewerRole: 'technical-reviewer', authorRole: 'delivery-lead', artifact: '.eccode/artifacts/plan.json', label: 'plan', authorExtra: 'The work is small: keep the plan as ONE phase "core" with ONE task "api" owned by backend-engineer (files src/**, test/**, package.json) and address the findings inside that structure (acceptance criteria, inputs, verification command, task description). Validate with eccode plan validate before resubmitting. ' });
   if (planStatus !== 'approved') {
     console.log(`plan ended as ${planStatus}; stopping.`);
     return finish(1);
