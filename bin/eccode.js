@@ -46,6 +46,8 @@ Evidence & records
   evidence file <path> --actor <a> [--label l] [--note n]
   evidence list [--json] | evidence show <id>
   handoff record --actor <a> --file <handoff.json>
+  rework open --actor orchestrator|user --reason <text> --files <glob>... --owner <role> [--evidence ev:<id>]...
+                                         A defect found after approval or delivery: opens phase:rework-N with one scoped task
   run start --actor <role|orchestrator> [--agent <role>] [--task t] [--gate g]   (prints run id; the orchestrator opens runs for the role it dispatches)
   run end <runId> --actor orchestrator --status ok|failed (--tokens n [--cost-usd x] | --no-usage) [--note n]
   run correct <runId> --actor orchestrator [--tokens n] [--cost-usd x] --reason <text>   (append-only)
@@ -123,7 +125,7 @@ function numberFlag(flags, name, { min = 0, integer = false } = {}) {
 const POSITIONALS = {
   init: 1, install: 1, template: 2, status: 1, resume: 1, reconcile: 1, recover: 1, rebuild: 1, audit: 1, deliver: 1, metrics: 1,
   export: 2, handoff: 2, risk: 2, decision: 2,
-  gate: 3, plan: 3, task: 3, evidence: 3, run: 3, memory: 3, improve: 3,
+  gate: 3, plan: 3, task: 3, rework: 2, evidence: 3, run: 3, memory: 3, improve: 3,
   'task list': 2, 'task next': 2, 'evidence run': 2, 'evidence list': 2, 'run start': 2,
   'memory status': 2, 'memory add': 2, 'memory list': 2, 'memory duplicates': 2, 'memory env': 2, 'improve propose': 2, 'improve list': 2,
 };
@@ -350,6 +352,13 @@ function main(argv) {
         const { state } = runs.correctRun(store, need(arg, '<runId>'), need(actor, '--actor'), { tokens: flags.tokens, costUsd: flags['cost-usd'], reason: need(flags.reason, '--reason') });
         print(flags, `Run ${arg} corrected. Totals: $${state.totals.costUsd}, ${state.totals.tokens} tokens.`, state.totals);
       } else throw new EccodeError('USAGE', `Unknown run subcommand ${sub}`);
+      return 0;
+    }
+    case 'rework': {
+      if (sub !== 'open') throw new EccodeError('USAGE', 'Usage: eccode rework open --actor orchestrator --reason <text> --files <glob>... --owner <role> [--evidence ev:<id>]... [--title <text>]');
+      const rw = require('../lib/rework').openRework(store, config, need(actor, '--actor'), { reason: flags.reason, files: [].concat(flags.files || []), owner: flags.owner, evidence: [].concat(flags.evidence || []), title: flags.title });
+      const { id, gate } = rw;
+      print(flags, `Rework ${id} opened: gate ${gate} is in progress with task ${id} owned by ${flags.owner}. Dispatch the owner (claim the task, add a failing regression test, fix, complete), then submit and independently review ${gate}, then eccode deliver again.`, { id, gate, task: id });
       return 0;
     }
     case 'risk': {

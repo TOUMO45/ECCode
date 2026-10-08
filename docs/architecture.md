@@ -89,6 +89,7 @@ Evidence ids are own-property lookups with a fixed format (`ev:ev-…`), and `ev
 - `.eccode/` paths are never owned by a task, whatever its globs say; only `.eccode/drafts/` is shared scratch.
 - **Failure** releases the claim. After `maxTaskRetries` the task escalates and only the user can reset it. A done task cannot be reset while its phase is submitted or approved.
 - **Interrupted runs** (stale, or `recover --all --actor orchestrator` after a restart) release their claims and count as attempts.
+- **Rework** (defects found after approval or delivery). Approved gates are never reopened silently and their files stay pinned. `eccode rework open` (orchestrator or user only) adds a phase gate `phase:rework-N` with one task whose ownership globs are narrow (never the whole tree, never `.eccode/`). It goes through the normal claim → handoff → independent phase review path, and `deliver` then writes a new final handoff (`final-handoff-2.md`, …; the earlier ones stay). One rework is open at a time, `limits.maxReworks` bounds how many the orchestrator may open before the user decides, and in a full delivery the user must reopen an approved verification gate first.
 
 ## Memory model
 

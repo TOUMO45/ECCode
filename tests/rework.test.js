@@ -1,0 +1,159 @@
+'use strict';
+// Rework: a defect found after a phase was approved (or after delivery) gets
+// its own phase gate with a scoped task, an independent review and a
+// re-delivery. Approved gates are never reopened silently, and the scope of a
+// rework is bounded.
+const test = require('node:test');
+const assert = require('node:assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { execFileSync, spawnSync } = require('child_process');
+const { init } = require('../lib/project');
+const { loadConfig } = require('../lib/config');
+const gates = require('../lib/gates');
+const tasks = require('../lib/tasks');
+const evidence = require('../lib/evidence');
+const { deliver } = require('../lib/delivery');
+const { openRework } = require('../lib/rework');
+const { write, samplePlan, passCheck, handoffFor, approval, expectCode, tmpProject, approveThroughPlan } = require('./helpers');
+
+const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
+
+/** A change-profile project that has been delivered once. */
+function deliveredProject() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-rework-'));
+  execFileSync('git', ['init', '-q'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  const store = init(dir, { name: 'Fix totals', idea: 'Invoice totals are wrong when a shipping fee is present', profile: 'change' });
+  const config = loadConfig(dir);
+  gates.startGate(store, config, 'plan', 'orchestrator');
+  write(dir, '.eccode/artifacts/plan.json', JSON.stringify(samplePlan(), null, 2));
+  gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] });
+  gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/plan.json']]));
+  gates.startGate(store, config, 'phase:core', 'orchestrator');
+  for (const [id, owner, file] of [['api', 'backend-engineer', 'src/server/a.js'], ['ui', 'frontend-engineer', 'src/web/b.js'], ['tests', 'test-engineer', 'tests/c.test.js']]) {
+    tasks.claim(store, config, id, owner);
+    write(dir, file, `// ${id}\n`);
+    tasks.complete(store, config, id, owner, handoffFor(id, owner, [passCheck(store, owner).id], [file]));
+  }
+  gates.submit(store, config, 'phase:core', 'delivery-lead');
+  const ev = passCheck(store, 'technical-reviewer');
+  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', approval([[`ev:${ev.id}`]]));
+  deliver(store, 'orchestrator');
+  return { dir, store, config };
+}
+
+test('rework: a defect found after delivery is fixed under a new phase gate, reviewed independently, and re-delivered', () => {
+  const ctx = deliveredProject();
+  const { dir, store, config } = ctx;
+  // Without a rework the approved files are locked: editing them by hand breaks the audit.
+  assert.strictEqual(store.audit().ok, true);
+
+  const repro = evidence.runCommand(store, 'backend-engineer', { label: 'repro: QA check fails', command: 'node -e "process.exit(1)"', purpose: 'reproduction' });
+  const rw = openRework(store, config, 'orchestrator', { reason: 'QA: totals still wrong when a discount applies', files: ['src/server/**', 'tests/**'], owner: 'backend-engineer', evidence: [`ev:${repro.id}`] });
+  assert.strictEqual(rw.id, 'rework-1');
+  assert.strictEqual(rw.gate, 'phase:rework-1');
+  let st = store.state();
+  assert.deepStrictEqual(st.gateOrder, ['plan', 'phase:core', 'phase:rework-1']);
+  assert.strictEqual(st.gates['phase:core'].status, 'approved', 'approved gates stay approved');
+  assert.strictEqual(st.gates['phase:rework-1'].status, 'in_progress');
+  assert.strictEqual(st.tasks['rework-1'].owner, 'backend-engineer');
+
+  // Only the owner may claim; edits outside the scope are refused at completion.
+  expectCode(() => tasks.claim(store, config, 'rework-1', 'frontend-engineer'), 'OWNERSHIP');
+  tasks.claim(store, config, 'rework-1', 'backend-engineer');
+  write(dir, 'src/server/a.js', '// api, fixed\n');
+  write(dir, 'src/web/b.js', '// ui, edited outside the rework scope\n');
+  const ev1 = passCheck(store, 'backend-engineer');
+  expectCode(() => tasks.complete(store, config, 'rework-1', 'backend-engineer', handoffFor('rework-1', 'backend-engineer', [ev1.id], ['src/server/a.js', 'src/web/b.js'])), 'INVALID_HANDOFF');
+  fs.writeFileSync(path.join(dir, 'src/web/b.js'), '// ui\n'); // restore the file that the rework may not touch
+  tasks.complete(store, config, 'rework-1', 'backend-engineer', handoffFor('rework-1', 'backend-engineer', [ev1.id], ['src/server/a.js']));
+
+  // Independent review: the owner can neither submit-and-approve nor approve.
+  gates.submit(store, config, 'phase:rework-1', 'delivery-lead');
+  const bad = passCheck(store, 'backend-engineer');
+  expectCode(() => gates.recordReview(store, config, 'phase:rework-1', 'backend-engineer', approval([[`ev:${bad.id}`]])), 'REVIEW_REJECTED');
+  const ev2 = passCheck(store, 'technical-reviewer');
+  gates.recordReview(store, config, 'phase:rework-1', 'technical-reviewer', approval([[`ev:${ev2.id}`]]));
+  assert.strictEqual(store.state().gates['phase:rework-1'].status, 'approved');
+
+  // Re-delivery produces a second verified handoff; the first stays.
+  const res = deliver(store, 'orchestrator');
+  assert.match(res.report, /final-handoff-2\.md$/);
+  assert.ok(fs.existsSync(path.join(dir, '.eccode/delivery/final-handoff.md')));
+  assert.ok(fs.existsSync(path.join(dir, res.report)));
+  assert.strictEqual(store.audit().ok, true);
+  expectCode(() => deliver(store, 'orchestrator'), 'ALREADY_DELIVERED');
+});
+
+test('rework: who may open it, with what scope, and how often', () => {
+  const ctx = deliveredProject();
+  const { store, config } = ctx;
+  const base = { reason: 'QA found a defect after delivery', files: ['src/**'], owner: 'backend-engineer' };
+  expectCode(() => openRework(store, config, 'backend-engineer', base), 'ROLE_NOT_ALLOWED'); // agents cannot open their own rework
+  expectCode(() => openRework(store, config, 'orchestrator', { ...base, reason: '' }), 'INVALID_INPUT');
+  expectCode(() => openRework(store, config, 'orchestrator', { ...base, files: [] }), 'INVALID_INPUT');
+  expectCode(() => openRework(store, config, 'orchestrator', { ...base, files: ['.eccode/config.json'] }), 'INVALID_INPUT'); // never the record
+  expectCode(() => openRework(store, config, 'orchestrator', { ...base, files: ['**/*'] }), 'INVALID_INPUT'); // never the whole tree
+  expectCode(() => openRework(store, config, 'orchestrator', { ...base, owner: 'nobody' }), 'INVALID_INPUT');
+  expectCode(() => openRework(store, config, 'orchestrator', { ...base, evidence: ['ev:does-not-exist'] }), 'INVALID_EVIDENCE');
+  openRework(store, config, 'user', base);
+  expectCode(() => openRework(store, config, 'orchestrator', base), 'INVALID_TRANSITION'); // one open rework at a time
+});
+
+test('rework: bounded by limits.maxReworks', () => {
+  const ctx = deliveredProject();
+  const { dir, store } = ctx;
+  const cfgFile = path.join(dir, '.eccode', 'config.json');
+  const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+  cfg.limits.maxReworks = 1;
+  fs.writeFileSync(cfgFile, JSON.stringify(cfg));
+  const config = loadConfig(dir);
+  const base = { reason: 'QA found a defect', files: ['src/**'], owner: 'backend-engineer' };
+  openRework(store, config, 'orchestrator', base);
+  tasks.claim(store, config, 'rework-1', 'backend-engineer');
+  write(dir, 'src/server/a.js', '// fixed\n');
+  tasks.complete(store, config, 'rework-1', 'backend-engineer', handoffFor('rework-1', 'backend-engineer', [passCheck(store, 'backend-engineer').id], ['src/server/a.js']));
+  gates.submit(store, config, 'phase:rework-1', 'delivery-lead');
+  const ev = passCheck(store, 'technical-reviewer');
+  gates.recordReview(store, config, 'phase:rework-1', 'technical-reviewer', approval([[`ev:${ev.id}`]]));
+  const err = expectCode(() => openRework(store, config, 'orchestrator', base), 'REWORK_LIMIT');
+  assert.match(err.message, /user/i);
+});
+
+test('rework in a full delivery: refused once verification is approved unless the user reopens that gate first', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  const { dir, store, config } = ctx;
+  gates.startGate(store, config, 'phase:core', 'orchestrator');
+  for (const [id, owner, file] of [['api', 'backend-engineer', 'src/server/a.js'], ['ui', 'frontend-engineer', 'src/web/b.js'], ['tests', 'test-engineer', 'tests/c.test.js']]) {
+    tasks.claim(store, config, id, owner);
+    write(dir, file, `// ${id}\n`);
+    tasks.complete(store, config, id, owner, handoffFor(id, owner, [passCheck(store, owner).id], [file]));
+  }
+  gates.submit(store, config, 'phase:core', 'delivery-lead');
+  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', approval([[`ev:${passCheck(store, 'technical-reviewer').id}`]]));
+  gates.startGate(store, config, 'verification', 'orchestrator');
+  write(dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green.\n');
+  gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verification.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'] });
+  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${passCheck(store, 'security-reviewer').id}`, 'artifact:.eccode/artifacts/verification.md']]));
+  const base = { reason: 'QA found a defect after verification', files: ['src/**'], owner: 'backend-engineer' };
+  const err = expectCode(() => openRework(store, config, 'orchestrator', base), 'USER_AUTH_REQUIRED');
+  assert.match(err.message, /gate reopen verification/);
+});
+
+test('CLI: eccode rework open prints the ids; status shows the next action; metrics count reworks', () => {
+  const ctx = deliveredProject();
+  const cli = (...a) => spawnSync(process.execPath, [BIN, ...a, '--root', ctx.dir], { encoding: 'utf8' });
+  const res = cli('rework', 'open', '--actor', 'orchestrator', '--reason', 'QA: list endpoint returns a bare array', '--files', 'src/**', '--files', 'tests/**', '--owner', 'backend-engineer');
+  assert.strictEqual(res.status, 0, res.stderr);
+  assert.match(res.stdout, /rework-1/);
+  assert.match(res.stdout, /phase:rework-1/);
+  const status = cli('status', '--brief');
+  assert.match(status.stdout, /NEXT: dispatch-tasks|rework-1/);
+  const m = cli('metrics', '--json');
+  assert.strictEqual(JSON.parse(m.stdout).summary.reworksOpened, 1);
+  const bad = cli('rework', 'open', '--actor', 'backend-engineer', '--reason', 'x', '--files', 'src/**', '--owner', 'backend-engineer');
+  assert.strictEqual(bad.status, 2);
+});

@@ -109,6 +109,13 @@ Use this for a bug fix or a bounded change in code that already exists. A new pr
 - Before architecture, design, implementation and review dispatches, include memory search terms so that agents retrieve relevant lessons. Lessons are evidence and must pass `--check-env`.
 - For recurring findings, consider the `self-improvement` skill. Adoption always needs the user.
 
+## 6b. Defects found after approval or delivery (QA, a failing re-check, a lesson-driven fix)
+Approved files are pinned, so a fix cannot be made quietly. Open a **rework**: `eccode rework open --actor orchestrator --reason "<what is wrong and how it was found>" --files <glob> [--files <glob>] --owner <implementer role> [--evidence ev:<failing check>]`. The scope must be narrow (the files the fix and its test need, never `**`, never `.eccode/`). It creates the gate `phase:rework-N` with one task. Then:
+1. Dispatch the owner: claim, failing reproduction first, fix, same check passes, handoff, submit the gate.
+2. Dispatch an independent reviewer (`technical-reviewer`; add `security-reviewer` for auth, input handling, money or AI).
+3. `eccode deliver --actor orchestrator` produces a new final handoff; the earlier one stays.
+Only one rework is open at a time. After `limits.maxReworks` the user decides (`REWORK_LIMIT`). In a full delivery whose verification gate is approved, the user must reopen verification first.
+
 ## 7. Failure handling
 | Situation | Action |
 |---|---|

@@ -56,6 +56,7 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 | `limits.maxConcurrency` | 2 | Tasks that can be claimed at the same time |
 | `limits.maxReviewIterations` | 3 | Rejections per gate before the gate escalates to the user |
 | `limits.maxTaskRetries` | 2 | Failed attempts allowed per task after the first one, before escalation |
+| `limits.maxReworks` | 3 | Reworks (scoped fixes for defects found after approval or delivery, `eccode rework open`) the orchestrator may open before the user must decide |
 | `limits.maxRuntimeMinutes` | 480 | Total runtime of recorded agent runs |
 | `limits.maxCostUsd` | 25 | Total spend recorded for agent runs |
 | `limits.staleRunMinutes` | 60 | How long a run can stay open before it counts as interrupted |
