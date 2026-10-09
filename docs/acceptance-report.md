@@ -23,7 +23,7 @@ Date: 2026-10-09. Branch `claude/brave-bardeen-6y5ng9`. Models: `claude-sonnet-5
 
 ## 2. Agent collaboration: Passed
 - Distinct roles with enforced separation: product-architect, architecture-reviewer, technical-designer, technical-reviewer, delivery-lead, learning-debugger, security-reviewer and frontend / backend / ai / test / devops engineers ([agents/](../agents)).
-- **What actually ran** is in the record, not in a summary: the Groundwork record ([examples/groundwork/.eccode](../examples/groundwork/.eccode), 606 events) holds 71 agent runs by 12 roles, 16 owned tasks, 23 schema-validated handoffs (inputs, outputs, evidence, remaining issues), 261 evidence records (55 failing commands kept), recorded decisions, risks and findings, and phase gates that integrate the work. [Evidence README](evidence/groundwork/README.md) has the statistics and the session history.
+- **What actually ran** is in the record, not in a summary: the Groundwork record ([examples/groundwork/.eccode](../examples/groundwork/.eccode), 731 events) holds 81 agent runs by 12 roles, 17 owned tasks, 25 schema-validated handoffs (inputs, outputs, evidence, remaining issues), 323 evidence records (65 failing commands kept), recorded decisions, risks and findings, and phase gates that integrate the work. [Evidence README](evidence/groundwork/README.md) has the statistics and the session history.
 - Limits: usage figures for runs are reported by the orchestrator, not measured by the engine; `--actor` is tied to the real subagent by the PreToolUse hook, which was active in the plugin-installed Groundwork run but not in the earlier TriageDesk demonstration.
 
 ## 3. Review gates: Passed (mechanics proven; judgement is not guaranteed)
