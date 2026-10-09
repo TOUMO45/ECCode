@@ -127,3 +127,4 @@ Only one rework is open at a time. After `limits.maxReworks` the user decides (`
 | Repeated rejections | The gate escalates automatically. Present the recovery options and ask the user |
 | Budget or runtime exhausted | Stop, summarize state, ask the user |
 | `eccode audit` fails | Stop; the record or approved artifacts were modified. Report to the user |
+| A review, check or handoff is missing | **Yours to dispatch, not the user's to decide.** Dispatch the reviewer or re-run the check; ask the user only for the actions the engine reserves for `--actor user` (a `USER_AUTH_REQUIRED` refusal: accepting risks, reopening an escalated task or an approved verification gate, a rework past the cap, adopting a rolled-back log) and for scope or compliance questions. In the round-2 evaluation the one human escalation counted against ECCode was an orchestrator asking the user to "reopen the gate" for a missing security review it could have dispatched itself |

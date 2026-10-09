@@ -23,9 +23,11 @@ This branch (`claude/funny-feynman-rt1io9`) starts from the full `claude/brave-b
 - `orchestrate` skill: choose between the full delivery and change mode before starting, with the evaluation's cost finding as the reason.
 - `docs/architecture.md` "Record compatibility" and `docs/usage.md` "Releases and compatibility".
 - `docs/final-report.md` §5 records what this increment closed and diagnoses Groundwork's cosmetic `null` (native `append` with a `null` child) without editing the delivered record.
+- `orchestrate` skill §7: a missing review, check or handoff is the orchestrator's to dispatch; the user is asked only for `USER_AUTH_REQUIRED` actions and scope or compliance questions (the rule the round-2 E3 escalation violated).
+- Three hand-over packages so that each open item closes with one reply: `docs/sign-off.md` (product-owner decisions with the exact `--actor user` commands), `eval/suite/round3-protocol-DRAFT.md` (a new, pre-registrable claim for a third evaluation round, not a rescue of R7) and `docs/security-review-request.md` (scope and method for an outside human review).
 
 ### Tests
-- 144 (136 on the base branch, plus 5 record-replay tests and 3 delivery/CLI tests).
+- 155 (136 on the base branch, plus 5 record-replay tests, 3 delivery/CLI tests, 2 rework tests and 9 red-team regressions).
 
 ## 0.1.0 — 2026-10-07
 
