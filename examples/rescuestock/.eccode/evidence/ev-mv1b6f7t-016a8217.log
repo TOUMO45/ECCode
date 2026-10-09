@@ -1,0 +1,19 @@
+$ node -e '
+var fs=require("node:fs"),cr=require("node:crypto");
+var p=".eccode/artifacts/architecture/brief.md";var b=fs.readFileSync(p,"utf8");var g=fs.readFileSync("docs/build/goal.md","utf8");
+var sec=function(h){var i=b.indexOf("\n## "+h+"\n");var j=b.indexOf("\n## ",i+4);return b.slice(i,j===-1?b.length:j)};
+var ac=sec("Acceptance Criteria");var ids=[];for(var i=1;i<=39;i++)ids.push("RS-"+String(i).padStart(2,"0"));for(var k=1;k<=6;k++)ids.push("NFR"+k);
+var missingAC=ids.filter(function(id){return ac.indexOf("\n- "+id+(id.indexOf("NFR")===0&&k?"":"")+"")===-1&&ac.indexOf("\n- "+id+":")===-1&&ac.indexOf("\n- "+id+" (")===-1});
+var goalIds=(g.match(/RS-\d\d/g)||[]).filter(function(x,i,a){return a.indexOf(x)===i});
+var notInBrief=goalIds.filter(function(x){return b.indexOf(x)===-1});
+var count=function(s){return b.split(s).length-1};
+var bLines=ac.split("\n").filter(function(l){return l.indexOf("[B")!==-1||l.indexOf("B: test:browser")!==-1});
+var bWithoutScript=bLines.filter(function(l){return l.indexOf("test:browser")===-1}).map(function(l){return l.slice(0,12)});
+console.log(JSON.stringify({sha256:cr.createHash("sha256").update(fs.readFileSync(p)).digest("hex"),
+ headings:(b.match(/^#{2,3} .*/gm)||[]).length,missingAC:missingAC,goalRsIds:goalIds.length,goalIdsMissingFromBrief:notInBrief,
+ counts:{cancelling:count("cancelling"),refunding:count("refunding"),failed_needs_attention:count("failed_needs_attention"),authorization_pending:count("authorization_pending"),capture_pending:count("capture_pending"),"Test prices, not market prices":count("Test prices, not market prices"),"paypal-sandbox":count("paypal-sandbox"),"Unverified with blocker A6/Q2":count("Unverified with blocker A6/Q2"),"BEGIN IMMEDIATE":count("BEGIN IMMEDIATE"),"adopted unchanged":count("adopted unchanged"),"on_hand (bundles)":count("on_hand (bundles)"),"so:<supplierOrderId>:capture:1":count("so:<supplierOrderId>:capture:1")},
+ browserACs:bLines.length,browserACsWithoutTestBrowser:bWithoutScript}));
+'
+# cwd: .
+# exit: 0
+{"sha256":"f2d88ddf8c6425cd521747e5d6fda0dc6a45cfe86985cb366367e85ebd56005c","headings":25,"missingAC":[],"goalRsIds":33,"goalIdsMissingFromBrief":[],"counts":{"cancelling":5,"refunding":4,"failed_needs_attention":9,"authorization_pending":13,"capture_pending":11,"Test prices, not market prices":4,"paypal-sandbox":2,"Unverified with blocker A6/Q2":4,"BEGIN IMMEDIATE":10,"adopted unchanged":0,"on_hand (bundles)":1,"so:<supplierOrderId>:capture:1":2},"browserACs":9,"browserACsWithoutTestBrowser":[]}

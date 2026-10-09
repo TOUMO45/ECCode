@@ -1,0 +1,161 @@
+$ node -e '
+"use strict";
+var T=function(h,m){return h*60+m};
+var BASE={A:{q:100,p:3000,f:1000,r:T(10,0),ok:true,oh:1},B:{q:100,p:3600,f:800,r:T(10,30),ok:true,oh:1},C:{q:200,p:4800,f:500,r:T(10,0),ok:false,oh:1},D:{q:200,p:6800,f:1200,r:T(11,20),ok:true,oh:1},E:{q:100,p:4500,f:1000,r:T(10,40),ok:true,oh:1}};
+var solve=function(cat,req,opt){opt=opt||{};var ig=opt.ignore||{};var rej={},cand=[];
+ Object.keys(cat).sort().forEach(function(k){var o=cat[k];if(!o.ok){rej[k]="INCOMPATIBLE_LID_DIAMETER";return}if(!ig.deadline&&req.deadline<o.r){rej[k]="READY_AFTER_DEADLINE";return}if(o.oh<=0){rej[k]="OUT_OF_STOCK";return}cand.push(k)});
+ var all=[],m=cand.map(function(_){return 0});
+ var rec=function(i){if(i===cand.length){var qty=0,tot=0,sup=[],rd=0,lab=[];cand.forEach(function(k,j){if(0<m[j]){var o=cat[k];qty+=m[j]*o.q;tot+=m[j]*o.p+o.f;sup.push(k);lab.push(1<m[j]?k+"x"+m[j]:k);rd=Math.max(rd,o.r)}});if(sup.length)all.push({qty:qty,tot:tot,sup:sup,lab:lab.join("+"),rd:rd,pk:sup.length});return}
+  var o=cat[cand[i]];var mx=Math.min(o.oh,Math.ceil(req.n/o.q));for(var x=0;x<=mx;x++){m[i]=x;rec(i+1)}};
+ rec(0);
+ var viol=function(c){var v=[];if(c.qty<req.n)v.push("INSUFFICIENT_QTY");if(!ig.maxPickups&&req.maxPickups<c.pk)v.push("TOO_MANY_PICKUPS");if(!ig.budget&&req.budget<c.tot)v.push("OVER_BUDGET");return v};
+ var cmp=function(a,b){var x=[a.tot,a.pk,a.rd,a.sup.join("")],y=[b.tot,b.pk,b.rd,b.sup.join("")];for(var i=0;i<4;i++){if(x[i]<y[i])return -1;if(y[i]<x[i])return 1}return 0};
+ var feas=all.filter(function(c){return viol(c).length===0}).sort(cmp);
+ var fmt=function(c){return c?{plan:c.lab,total:c.tot,pickups:c.pk,ready:Math.floor(c.rd/60)+":"+String(c.rd%60).padStart(2,"0")}:null};
+ var res={best:fmt(feas[0]),rejections:rej};
+ if(!feas.length&&!opt.noExplain){var codes={};
+  cand.forEach(function(k){var o=cat[k],cs=[];if(Math.min(o.oh,Math.ceil(req.n/o.q))*o.q<req.n)cs.push("INSUFFICIENT_QTY");var cov=all.filter(function(c){return !(c.qty<req.n)&&c.sup.indexOf(k)!==-1}).sort(cmp)[0];if(cov)viol(cov).forEach(function(v){if(cs.indexOf(v)===-1)cs.push(v)});codes[k]=cs});
+  var relax=[];[["budget","OVER_BUDGET"],["deadline","READY_AFTER_DEADLINE"],["maxPickups","TOO_MANY_PICKUPS"]].forEach(function(a){var g={};g[a[0]]=true;var r=solve(cat,req,{ignore:g,noExplain:true});if(r.best)relax.push({relax:a[0],code:a[1],yields:r.best})});
+  res.candidateCodes=codes;res.relaxations=relax;res.blocking=relax.length?relax.map(function(r){return r.code}):["INSUFFICIENT_QTY"]}
+ return res};
+var REQ={n:200,deadline:T(11,0),budget:12000,maxPickups:2};
+var clone=function(ch){var c=JSON.parse(JSON.stringify(BASE));Object.keys(ch||{}).forEach(function(k){Object.assign(c[k],ch[k])});return c};
+var rq=function(x){return Object.assign({},REQ,x||{})};
+var out={};
+out.RS06=solve(clone(),REQ);out.RS06_guard_A_onhand2=solve(clone({A:{oh:2}}),REQ).best;
+out.RS09=solve(clone({B:{oh:0}}),REQ).best;out.RS10=solve(clone({B:{oh:0}}),rq({budget:9000}));out.RS11=solve(clone(),rq({maxPickups:1}));
+var ok=[];for(var a=0;a<3;a++)for(var b=0;b<3;b++)for(var e=0;e<3;e++){var c=clone({A:{oh:a},B:{oh:b},E:{oh:e}}),nb=clone({A:{oh:a},B:{oh:0},E:{oh:e}});
+ var r6=solve(c,REQ).best,r9=solve(nb,REQ).best,r10=solve(nb,rq({budget:9000})).best,r11=solve(c,rq({maxPickups:1})).best;
+ if(r6&&r6.plan==="A+B"&&r6.total===8400&&r9&&r9.plan==="A+E"&&r9.total===9500&&!r10&&!r11)ok.push("A"+a+"B"+b+"E"+e)}
+out.inventoriesSatisfyingRS06_09_10_11_of27=ok;
+console.log(JSON.stringify(out,null,1));
+var lcg=function(seed){var s=seed|0;return function(_){s=(Math.imul(s,1664525)+1013904223)|0;return (s+2147483648)/4294967296}};
+var worst=0,fc=0;for(var seed=1;seed<=200;seed++){var R=lcg(seed*7919);var ri=function(lo,hi){return lo+Math.floor(R(0)*(hi-lo+1))};var cat={};
+ for(var i=0;i<12;i++)cat["S"+String(i).padStart(2,"0")]={q:[50,100,200][ri(0,2)],p:ri(1000,10000),f:ri(0,1500),r:ri(T(9,30),T(12,0)),ok:!(R(0)<0.15),oh:ri(0,2)};
+ var req={n:100*ri(1,4),deadline:ri(T(10,0),T(12,0)),budget:ri(5000,40000),maxPickups:ri(1,3)};
+ var t0=process.hrtime.bigint();var r=solve(cat,req);var ms=Number(process.hrtime.bigint()-t0)/1e6;if(r.best)fc++;worst=Math.max(worst,ms)}
+console.log(JSON.stringify({nfr5:{catalogs:200,offers:12,feasible:fc,worstMs_unpruned_incl_infeasible_explanations:Number(worst.toFixed(1))},node:process.version}));
+'
+# cwd: .
+# exit: 0
+{
+ "RS06": {
+  "best": {
+   "plan": "A+B",
+   "total": 8400,
+   "pickups": 2,
+   "ready": "10:30"
+  },
+  "rejections": {
+   "C": "INCOMPATIBLE_LID_DIAMETER",
+   "D": "READY_AFTER_DEADLINE"
+  }
+ },
+ "RS06_guard_A_onhand2": {
+  "plan": "Ax2",
+  "total": 7000,
+  "pickups": 1,
+  "ready": "10:00"
+ },
+ "RS09": {
+  "plan": "A+E",
+  "total": 9500,
+  "pickups": 2,
+  "ready": "10:40"
+ },
+ "RS10": {
+  "best": null,
+  "rejections": {
+   "B": "OUT_OF_STOCK",
+   "C": "INCOMPATIBLE_LID_DIAMETER",
+   "D": "READY_AFTER_DEADLINE"
+  },
+  "candidateCodes": {
+   "A": [
+    "INSUFFICIENT_QTY",
+    "OVER_BUDGET"
+   ],
+   "E": [
+    "INSUFFICIENT_QTY",
+    "OVER_BUDGET"
+   ]
+  },
+  "relaxations": [
+   {
+    "relax": "budget",
+    "code": "OVER_BUDGET",
+    "yields": {
+     "plan": "A+E",
+     "total": 9500,
+     "pickups": 2,
+     "ready": "10:40"
+    }
+   },
+   {
+    "relax": "deadline",
+    "code": "READY_AFTER_DEADLINE",
+    "yields": {
+     "plan": "D",
+     "total": 8000,
+     "pickups": 1,
+     "ready": "11:20"
+    }
+   }
+  ],
+  "blocking": [
+   "OVER_BUDGET",
+   "READY_AFTER_DEADLINE"
+  ]
+ },
+ "RS11": {
+  "best": null,
+  "rejections": {
+   "C": "INCOMPATIBLE_LID_DIAMETER",
+   "D": "READY_AFTER_DEADLINE"
+  },
+  "candidateCodes": {
+   "A": [
+    "INSUFFICIENT_QTY",
+    "TOO_MANY_PICKUPS"
+   ],
+   "B": [
+    "INSUFFICIENT_QTY",
+    "TOO_MANY_PICKUPS"
+   ],
+   "E": [
+    "INSUFFICIENT_QTY",
+    "TOO_MANY_PICKUPS"
+   ]
+  },
+  "relaxations": [
+   {
+    "relax": "deadline",
+    "code": "READY_AFTER_DEADLINE",
+    "yields": {
+     "plan": "D",
+     "total": 8000,
+     "pickups": 1,
+     "ready": "11:20"
+    }
+   },
+   {
+    "relax": "maxPickups",
+    "code": "TOO_MANY_PICKUPS",
+    "yields": {
+     "plan": "A+B",
+     "total": 8400,
+     "pickups": 2,
+     "ready": "10:30"
+    }
+   }
+  ],
+  "blocking": [
+   "READY_AFTER_DEADLINE",
+   "TOO_MANY_PICKUPS"
+  ]
+ },
+ "inventoriesSatisfyingRS06_09_10_11_of27": [
+  "A1B1E1"
+ ]
+}
+{"nfr5":{"catalogs":200,"offers":12,"feasible":141,"worstMs_unpruned_incl_infeasible_explanations":113},"node":"v22.22.0"}

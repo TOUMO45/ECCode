@@ -1,0 +1,69 @@
+$ node -e '
+"use strict";
+var ACTIVE_OLD=["approved","authorization_pending","authorized","capture_pending","captured","unknown"];
+var derive=function(R){
+ var vs=R.versions;var nonSup=vs.filter(function(v){return v.status!=="superseded"});var P=nonSup.length?nonSup[nonSup.length-1]:null;
+ var ops=[];vs.forEach(function(v){v.ops.forEach(function(o){ops.push(o)})});
+ if(!R.confirmed||!R.budget||!R.deadline)return "needs_input";
+ if(ops.some(function(o){return o.st==="refund_failed"||o.void_failed||(o.st==="unknown"&&15<(o.age||0))||(o.st.slice(-8)==="_pending"&&1440<(o.age||0))})||vs.some(function(v){return v.res&&v.res.st==="reconciling"&&v.res.esc}))return "failed_needs_attention";
+ if(ops.some(function(o){return o.st==="refund_requested"||o.st==="refund_pending"}))return "refunding";
+ if(vs.some(function(v){return (v.status==="superseded"||v.status==="non_executable")&&(v.ops.some(function(o){return ACTIVE_OLD.indexOf(o.st)!==-1})||(v.res&&v.res.st==="reconciling"))}))return "cancelling";
+ if(R.run&&!R.run.feasible&&(!P||P.at<R.run.at))return "no_feasible_plan";
+ if(P&&P.status==="non_executable"&&P===vs[vs.length-1])return "cancelled";
+ var allCap=P&&P.ops.length&&P.ops.every(function(o){return o.st==="captured"});
+ if(P&&P.status==="executed"&&P.sos.every(function(s){return s==="collected"})&&allCap)return "collected";
+ if(P&&P.status==="executed"&&allCap&&P.sos.every(function(s){return s==="ready"||s==="collected"}))return "ready_for_pickup";
+ if(P&&P.status==="executed")return "purchase_confirmed";
+ if(P&&((P.status==="approved"&&P.res&&P.res.st==="active"&&P.ops.length&&P.ops.every(function(o){return o.st==="authorized"}))||P.status==="executing"))return "payment_authorized";
+ if(P&&P.status==="approved"&&P.res&&P.res.st==="active")return "stock_reserved";
+ if(P&&(P.status==="proposed"||P.status==="approved")&&!(P.res&&P.res.st==="active"))return "plan_found";
+ if(R.confirmed&&!R.run)return "requirements_confirmed";
+ return "UNMATCHED"};
+var base=function(versions,run){return {confirmed:true,budget:12000,deadline:"11:00",run:run||{feasible:true,at:1},versions:versions}};
+var V=function(status,at,res,ops,sos){return {status:status,at:at,res:res?{st:res}:null,ops:(ops||[]).map(function(s){return typeof s==="string"?{st:s}:s}),sos:sos||[]}};
+var cases=[
+ ["RS-36(i) refund_pending while every order collected",base([V("executed",1,"consumed",["captured","refund_pending"],["collected","collected"])]),"refunding"],
+ ["RS-36(i) refund_requested on an old version",base([V("non_executable",1,"reconciling",["refund_requested","voided"]),V("proposed",2,null,[])]),"refunding"],
+ ["RS-36(ii) refusal, other op authorized, new version proposed",base([V("non_executable",1,"released",["authorized","voided"],["refused","cancelled"]),V("proposed",2,null,[])]),"cancelling"],
+ ["RS-36(ii) non_executable with authorization_pending",base([V("non_executable",1,"released",["authorization_pending"])]),"cancelling"],
+ ["RS-36(ii) non_executable with unknown 5 min",base([V("non_executable",1,"released",[{st:"unknown",age:5}])]),"cancelling"],
+ ["RS-36(ii) non_executable with unknown 20 min",base([V("non_executable",1,"released",[{st:"unknown",age:20}])]),"failed_needs_attention"],
+ ["RS-36(ii) refund_failed",base([V("non_executable",1,"reconciling",["refund_failed","voided"])]),"failed_needs_attention"],
+ ["RS-36(ii) void_failed",base([V("non_executable",1,"released",[{st:"authorized",void_failed:1}])]),"failed_needs_attention"],
+ ["RS-36(iii) one ready one collected",base([V("executed",1,"consumed",["captured","captured"],["ready","collected"])]),"ready_for_pickup"],
+ ["RS-36(iii) all collected all captured",base([V("executed",1,"consumed",["captured","captured"],["collected","collected"])]),"collected"],
+ ["RS-36(iv) voids done after refusal, new version proposed",base([V("non_executable",1,"released",["voided","voided"],["refused","cancelled"]),V("proposed",2,null,[])]),"plan_found"],
+ ["RS-13 superseded with authorization outstanding",base([V("superseded",1,"released",["authorized","authorized"]),V("proposed",2,null,[])]),"cancelling"],
+ ["RS-22 compensation in progress",base([V("non_executable",1,"reconciling",["refund_pending","authorized"])]),"refunding"],
+ ["RS-22 compensation finished",base([V("non_executable",1,"released",["refunded","voided"])]),"cancelled"],
+ ["RS-21 pending authorization on current plan",base([V("approved",1,"active",["authorized","authorization_pending"])]),"stock_reserved"],
+ ["executing with capture_pending within limit",base([V("executing",1,"consumed",["captured","capture_pending"])]),"payment_authorized"],
+ ["RS-33 infeasible",base([],{feasible:false,at:1}),"no_feasible_plan"],
+ ["GAP: lost authorize resolved to authorized after supersession, 2000 min later",base([V("superseded",1,"released",[{st:"authorized",age:2000}]),V("proposed",2,null,[])]),"(observe)"]
+];
+var fails=0;cases.forEach(function(c){var got=derive(c[1]);var pass=c[2]==="(observe)"||got===c[2];if(!pass)fails++;console.log((pass?"ok  ":"FAIL")+" "+c[0]+" -- "+got+(c[2]==="(observe)"?"":" (expected "+c[2]+")"))});
+var PS=["proposed","approved","executing","executed","non_executable"],RS=[null,"active","consumed","expired","released","reconciling"],OS=["created","approved","authorization_pending","authorized","capture_pending","captured","unknown","voided","authorization_failed","refund_requested","refund_pending","refunded","refund_failed"],SS=["awaiting_supplier","confirmed","refused","cancelled","ready","collected"];
+var n=0,un=0,ex=[];PS.forEach(function(p){RS.forEach(function(r){OS.forEach(function(o1){OS.forEach(function(o2){SS.forEach(function(s){n++;var g=derive(base([V(p,1,r,[o1,o2],[s,s])]));if(g==="UNMATCHED"){un++;if(ex.length<3)ex.push([p,r,o1,o2,s].join("/"))}})})})})});
+console.log(JSON.stringify({combinations:n,unmatched:un,examples:ex,assertionFailures:fails}));
+'
+# cwd: .
+# exit: 0
+ok   RS-36(i) refund_pending while every order collected -- refunding (expected refunding)
+ok   RS-36(i) refund_requested on an old version -- refunding (expected refunding)
+ok   RS-36(ii) refusal, other op authorized, new version proposed -- cancelling (expected cancelling)
+ok   RS-36(ii) non_executable with authorization_pending -- cancelling (expected cancelling)
+ok   RS-36(ii) non_executable with unknown 5 min -- cancelling (expected cancelling)
+ok   RS-36(ii) non_executable with unknown 20 min -- failed_needs_attention (expected failed_needs_attention)
+ok   RS-36(ii) refund_failed -- failed_needs_attention (expected failed_needs_attention)
+ok   RS-36(ii) void_failed -- failed_needs_attention (expected failed_needs_attention)
+ok   RS-36(iii) one ready one collected -- ready_for_pickup (expected ready_for_pickup)
+ok   RS-36(iii) all collected all captured -- collected (expected collected)
+ok   RS-36(iv) voids done after refusal, new version proposed -- plan_found (expected plan_found)
+ok   RS-13 superseded with authorization outstanding -- cancelling (expected cancelling)
+ok   RS-22 compensation in progress -- refunding (expected refunding)
+ok   RS-22 compensation finished -- cancelled (expected cancelled)
+ok   RS-21 pending authorization on current plan -- stock_reserved (expected stock_reserved)
+ok   executing with capture_pending within limit -- payment_authorized (expected payment_authorized)
+ok   RS-33 infeasible -- no_feasible_plan (expected no_feasible_plan)
+ok   GAP: lost authorize resolved to authorized after supersession, 2000 min later -- cancelling
+{"combinations":30420,"unmatched":600,"examples":["proposed/active/created/created/awaiting_supplier","proposed/active/created/created/confirmed","proposed/active/created/created/refused"],"assertionFailures":0}

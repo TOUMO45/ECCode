@@ -1,0 +1,12 @@
+$ env 'NODE_OPTIONS=--experimental-sqlite --disable-warning=ExperimentalWarning' node --experimental-sqlite -e '
+var cp=require("node:child_process");
+var s=require("node:sqlite");var d=new s.DatabaseSync(":memory:");d.exec("PRAGMA busy_timeout = 5000");
+var bt=d.prepare("PRAGMA busy_timeout").get();
+var child=cp.spawnSync(process.execPath,["-e","console.log(JSON.stringify({childExecArgv:process.execArgv,childNodeOptions:process.env.NODE_OPTIONS,sqlite:typeof require(\"node:sqlite\").DatabaseSync}))"],{encoding:"utf8"});
+console.log(JSON.stringify({node:process.version,parentExecArgv:process.execArgv,busy_timeout:bt}));
+console.log(child.stdout.trim(), child.stderr.trim()||"(no stderr)");
+'
+# cwd: .
+# exit: 0
+{"node":"v22.22.0","parentExecArgv":["--experimental-sqlite","-e","\nvar cp=require(\"node:child_process\");\nvar s=require(\"node:sqlite\");var d=new s.DatabaseSync(\":memory:\");d.exec(\"PRAGMA busy_timeout = 5000\");\nvar bt=d.prepare(\"PRAGMA busy_timeout\").get();\nvar child=cp.spawnSync(process.execPath,[\"-e\",\"console.log(JSON.stringify({childExecArgv:process.execArgv,childNodeOptions:process.env.NODE_OPTIONS,sqlite:typeof require(\\\"node:sqlite\\\").DatabaseSync}))\"],{encoding:\"utf8\"});\nconsole.log(JSON.stringify({node:process.version,parentExecArgv:process.execArgv,busy_timeout:bt}));\nconsole.log(child.stdout.trim(), child.stderr.trim()||\"(no stderr)\");\n"],"busy_timeout":{"timeout":5000}}
+{"childExecArgv":["-e","console.log(JSON.stringify({childExecArgv:process.execArgv,childNodeOptions:process.env.NODE_OPTIONS,sqlite:typeof require(\"node:sqlite\").DatabaseSync}))"],"childNodeOptions":"--experimental-sqlite --disable-warning=ExperimentalWarning","sqlite":"function"} (no stderr)
