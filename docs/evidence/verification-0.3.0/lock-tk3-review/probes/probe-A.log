@@ -1,0 +1,11 @@
+readFileSync(state.json) OUTSIDE LOCK
+readFileSync(events.jsonl) OUTSIDE LOCK
+readFileSync(events.jsonl) inside lock
+readFileSync(state.json) inside lock
+readFileSync(events.jsonl) inside lock
+appendFileSync(events.jsonl) inside lock
+writeFileSync(events.jsonl) inside lock
+writeFileSync(state.json.<tmp>) inside lock
+renameSync(state.json.<tmp> -> state.json) inside lock
+
+2 read(s) of the record outside the lock; 1 rename(s) over state.json inside the lock

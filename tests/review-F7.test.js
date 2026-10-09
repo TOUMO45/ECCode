@@ -17,7 +17,7 @@ const tasks = require('../lib/tasks');
 const runs = require('../lib/runs');
 const reconcile = require('../lib/reconcile');
 const { Store } = require('../lib/store');
-const { tmpProject, write, approveThroughPlan, approval, coverage, passCheck, handoffFor, samplePlan, expectCode, ARCH_MD, DESIGN_MD } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, approval, coverage, passCheck, handoffFor, samplePlan, expectCode, spawnCli, assertAllExitZero, ARCH_MD, DESIGN_MD } = require('./helpers');
 
 const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
 const cli = (dir, args) => spawnSync(process.execPath, [BIN, ...args, '--root', dir], { encoding: 'utf8' });
@@ -128,14 +128,11 @@ test('F7 a truncated (torn) state.json is a lost cache: state() rebuilds it and 
 
 test('F7 two concurrent writers produce one consistent chain under the snapshot check', async () => {
   const ctx = tmpProject();
-  const procs = Array.from({ length: 6 }, (_, i) =>
-    new Promise((resolve) => {
-      const p = spawn(process.execPath, [BIN, 'risk', 'add', '--id', `R${i}`, '--title', `risk ${i}`, '--severity', 'low', '--actor', 'delivery-lead', '--root', ctx.dir]);
-      p.on('exit', resolve);
-    }),
+  // stderr is kept (TK-3): on Windows one of these children exited 1 in CI run 66 with no message captured.
+  const results = await Promise.all(
+    Array.from({ length: 6 }, (_, i) => spawnCli(['risk', 'add', '--id', `R${i}`, '--title', `risk ${i}`, '--severity', 'low', '--actor', 'delivery-lead', '--root', ctx.dir])),
   );
-  const codes = await Promise.all(procs);
-  assert.deepStrictEqual(codes, [0, 0, 0, 0, 0, 0]);
+  assertAllExitZero(results);
   const st = new Store(ctx.dir).state();
   assert.deepStrictEqual(Object.keys(st.risks).sort(), ['R0', 'R1', 'R2', 'R3', 'R4', 'R5']);
   assert.strictEqual(ctx.store.audit().ok, true);

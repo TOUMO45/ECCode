@@ -9,7 +9,7 @@ const runs = require('../lib/runs');
 const evidence = require('../lib/evidence');
 const { deliver } = require('../lib/delivery');
 const { Store } = require('../lib/store');
-const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, coverage, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, coverage, expectCode, spawnCli, assertAllExitZero } = require('./helpers');
 
 /** The delivery pins the release tree: reviewed work is committed before `deliver`. */
 function commitAll(dir, msg = 'reviewed work') {
@@ -153,16 +153,11 @@ test('handoffs must come from the acting agent and cite real evidence', () => {
 
 test('concurrent writers never corrupt the log', async () => {
   const ctx = tmpProject();
-  const { spawn } = require('child_process');
-  const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
-  const procs = Array.from({ length: 6 }, (_, i) =>
-    new Promise((resolve) => {
-      const p = spawn(process.execPath, [bin, 'risk', 'add', '--id', `R${i}`, '--title', `risk ${i}`, '--severity', 'low', '--actor', 'delivery-lead', '--root', ctx.dir]);
-      p.on('exit', resolve);
-    }),
+  // stderr is kept (TK-3): on Windows one of these children exited 1 in four CI runs with no message captured.
+  const results = await Promise.all(
+    Array.from({ length: 6 }, (_, i) => spawnCli(['risk', 'add', '--id', `R${i}`, '--title', `risk ${i}`, '--severity', 'low', '--actor', 'delivery-lead', '--root', ctx.dir])),
   );
-  const codes = await Promise.all(procs);
-  assert.deepStrictEqual(codes, [0, 0, 0, 0, 0, 0]);
+  assertAllExitZero(results);
   const st = new Store(ctx.dir).state();
   assert.strictEqual(Object.keys(st.risks).length, 6);
   assert.strictEqual(ctx.store.audit().ok, true);

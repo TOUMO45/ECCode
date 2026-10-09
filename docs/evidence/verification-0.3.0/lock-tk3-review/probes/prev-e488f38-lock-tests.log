@@ -1,0 +1,80 @@
+exit=137 (137 = killed while spinning)
+TAP version 13
+# Subtest: withLock: a write refused on the freshly opened lock closes the fd, removes the lock file and rethrows (review F4)
+not ok 1 - withLock: a write refused on the freshly opened lock closes the fd, removes the lock file and rethrows (review F4)
+  ---
+  duration_ms: 2028.606828
+  type: 'test'
+  location: '/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/prev-e488f38/tests/lock-transient-errors.test.js:181:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The validation function is expected to return "true". Received false
+    
+    Caught error:
+    
+    EccodeError: Could not acquire lock /tmp/eccode-lock-TNIk3m/.lock within 2000ms
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: [Function (anonymous)]
+  actual:
+    name: 'EccodeError'
+    details:
+  error: 'Could not acquire lock /tmp/eccode-lock-TNIk3m/.lock within 2000ms'
+  code: 'LOCK_TIMEOUT'
+  name: 'EccodeError'
+  stack: |-
+    withLock (/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/prev-e488f38/lib/util.js:108:15)
+    /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/prev-e488f38/tests/lock-transient-errors.test.js:195:23
+    getActual (node:assert:609:5)
+    Function.throws (node:assert:757:24)
+    TestContext.<anonymous> (/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/prev-e488f38/tests/lock-transient-errors.test.js:195:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/prev-e488f38/tests/lock-transient-errors.test.js:195:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: lib/util exports sleepSync: bin/eccode.js imports it for the EAGAIN retry of its terminal reader (review F8)
+not ok 2 - lib/util exports sleepSync: bin/eccode.js imports it for the EAGAIN retry of its terminal reader (review F8)
+  ---
+  duration_ms: 0.777296
+  type: 'test'
+  location: '/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/prev-e488f38/tests/lock-transient-errors.test.js:202:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'undefined'
+    - 'function'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'function'
+  actual: 'undefined'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/prev-e488f38/tests/lock-transient-errors.test.js:204:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2040.187832
+exit=1

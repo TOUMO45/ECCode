@@ -207,4 +207,31 @@ function expectCode(fn, code) {
   throw new Error(`expected ${code}, but call succeeded`);
 }
 
-module.exports = { tmpProject, write, approval, approvalWithLessons, coverage, coverageWithLessons, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD, initRepo, SHARED_MEMORY };
+/**
+ * Spawn the CLI without waiting for it; resolves {code, stdout, stderr} once
+ * the process and its pipes are closed, so a child that fails under
+ * concurrency (TK-3: the Windows flake) leaves its message in the test output.
+ * Both pipes are drained: an unread pipe would block a chatty child.
+ */
+function spawnCli(args, opts = {}) {
+  const { spawn } = require('child_process');
+  return new Promise((resolve) => {
+    const p = spawn(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), ...args], { ...opts, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    p.stdout.on('data', (chunk) => (stdout += chunk));
+    p.stderr.on('data', (chunk) => (stderr += chunk));
+    p.on('close', (code) => resolve({ code, stdout, stderr }));
+  });
+}
+
+/** Every spawned child exited 0; otherwise the failing children's output is the assertion message. */
+function assertAllExitZero(results) {
+  const codes = results.map((r) => r.code);
+  const failed = results
+    .map((r, i) => (r.code === 0 ? null : `[child ${i}] exit ${r.code}\nstderr: ${r.stderr.trim() || '(empty)'}\nstdout: ${(r.stdout || '').trim() || '(empty)'}`))
+    .filter(Boolean);
+  require('node:assert').deepStrictEqual(codes, codes.map(() => 0), `exit codes ${JSON.stringify(codes)}\n${failed.join('\n')}`);
+}
+
+module.exports = { tmpProject, write, approval, approvalWithLessons, coverage, coverageWithLessons, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, spawnCli, assertAllExitZero, ARCH_MD, DESIGN_MD, initRepo, SHARED_MEMORY };

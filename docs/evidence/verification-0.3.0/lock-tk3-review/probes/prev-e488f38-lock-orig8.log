@@ -1,0 +1,59 @@
+TAP version 13
+# Subtest: withLock: EPERM from open is transient on the lock file; the callback runs once
+ok 1 - withLock: EPERM from open is transient on the lock file; the callback runs once
+  ---
+  duration_ms: 81.21619
+  type: 'test'
+  ...
+# Subtest: withLock: EACCES from open is transient on the lock file; the callback runs once
+ok 2 - withLock: EACCES from open is transient on the lock file; the callback runs once
+  ---
+  duration_ms: 77.375575
+  type: 'test'
+  ...
+# Subtest: withLock: EBUSY from open is transient on the lock file; the callback runs once
+ok 3 - withLock: EBUSY from open is transient on the lock file; the callback runs once
+  ---
+  duration_ms: 77.313983
+  type: 'test'
+  ...
+# Subtest: withLock: two contenders — the holder releases while the other stats, Windows answers EPERM then EACCES (delete pending), the lock is still acquired
+ok 4 - withLock: two contenders — the holder releases while the other stats, Windows answers EPERM then EACCES (delete pending), the lock is still acquired
+  ---
+  duration_ms: 53.700761
+  type: 'test'
+  ...
+# Subtest: withLock: a stale lock whose unlink Windows refuses is retried at the poll interval and bounded by timeoutMs, not spun on
+ok 5 - withLock: a stale lock whose unlink Windows refuses is retried at the poll interval and bounded by timeoutMs, not spun on
+  ---
+  duration_ms: 205.423597
+  type: 'test'
+  ...
+# Subtest: withLock: the holder retries a release that Windows refuses, so the next writer does not wait for staleness
+ok 6 - withLock: the holder retries a release that Windows refuses, so the next writer does not wait for staleness
+  ---
+  duration_ms: 52.69133
+  type: 'test'
+  ...
+# Subtest: withLock: a non-transient open error (ENOSPC) is thrown at once, unchanged, without running the callback
+ok 7 - withLock: a non-transient open error (ENOSPC) is thrown at once, unchanged, without running the callback
+  ---
+  duration_ms: 1.443398
+  type: 'test'
+  ...
+# Subtest: withLock: a lock held for longer than timeoutMs still ends in LOCK_TIMEOUT when the open keeps answering EBUSY
+ok 8 - withLock: a lock held for longer than timeoutMs still ends in LOCK_TIMEOUT when the open keeps answering EBUSY
+  ---
+  duration_ms: 152.796867
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 716.965846
+exit=0
