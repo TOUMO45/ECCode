@@ -1,0 +1,19 @@
+[ok] F8.race maxActiveRuns=4, 3 open, three concurrent run start -> ok
+[ok] F8.reserve.equal $5 spent + 1 open + 1 new at $3 = $11 against a $11 cap (not greater: allowed) -> ok
+[ok] F8.reserve.over a fourth: $5 + 3 x $3 = $14 > $11 -> BUDGET_EXCEEDED: Budget exhausted: cost $5 + $9 reserved for 3 run(s) in flight (2 open + 1 new, $3 each) > limit $11.
+[ok] F8.reserve.justOver $5 + 2 x $3 = $11 > $10.99 -> BUDGET_EXCEEDED: Budget exhausted: cost $5 + $6 reserved for 2 run(s) in flight (1 open + 1 new, $3 each) > limit $10.99.
+[ok] F8.spent.equal recorded spend equal to the cap ($5 of $5): refused (>=), unlike the reservation (>) -> BUDGET_EXCEEDED: Budget exhausted: cost $5 >= limit $5.
+[ok] F8.cli.endWithoutUsage run end with neither --tokens nor --no-usage -> USAGE_MISSING: eccode: [USAGE_MISSING] Run run-mv16h7ez-01c1f005: give --tokens and/or --cost-usd from the agent's reported usage. If the agent reported none (crash, timeout),
+[ok] F8.cli.noUsage run end --no-usage -> ok
+[ok] F8.cli.lowerBound status --brief says the spend is a lower bound and names the run -> ok
+[ok] F8.cli.lowerBound.json status --json: budget.lowerBound and runsWithUnknownUsage -> ok
+[ok] F8.cli.tokensNoPricing run end --tokens 1234 without a cost and without pricing -> ok
+[ok] F8.cli.tokensNoPricing.cost the run's cost is unknown (null), tokens counted, run listed as unknown usage -> ok
+[ok] F8.cli.tokensZero run end --tokens 0 (an explicit zero is a reported figure) -> ok
+[ok] F8.cli.tokensZero.cost cost $0, usageReported true (documented semantics: an explicit 0 is not unknown) -> ok
+[ok] F8.recover a run started at 10:00 recovered at 12:00 -> ok
+[ok] F8.recover.bySubagent recover run by a subagent role -> ROLE_NOT_ALLOWED: Recovery is performed by orchestrator or user (--actor), not backend-engineer
+[ok] F8.config.zeroRuns limits.maxActiveRuns: 0 -> INVALID_CONFIG: limits.maxActiveRuns must be a positive number (got 0)
+[ok] F8.config.negativeRuns limits.maxActiveRuns: -1 -> INVALID_CONFIG: limits.maxActiveRuns must be a positive number (got -1)
+[ok] F8.config.fractionalRuns limits.maxActiveRuns: 1.5 -> ok
+[ok] F8.usage.negative run end --cost-usd -5 (would lower the recorded spend) -> INVALID_INPUT: --cost-usd must be a finite non-negative number (got -5)

@@ -1,0 +1,21 @@
+[ok] F2.rename.gitView what git shows the engine after a staged git mv: diff --name-only folds the rename into the new path -> ok
+[ok] F2.rename.newOnly handoff declares only the new path of a git mv (the old path is gone from the tree) -> ok
+[ok] F2.rename.phasePins phase submission pins the files that exist (a deleted path is not an artifact) -> ok
+[ok] F2.rename.unreviewed unreviewedChanges after a reviewed rename -> ok
+[ok] F2.rename.deliver delivery after the rename (new path pinned by the phase; the old path was never declared) -> ok
+[ok] F2.delete.undeclared owned file deleted during the claim but not declared -> INVALID_HANDOFF: Task completion rejected:
+[ok] F2.delete.declared deletion declared in the handoff -> ok
+[ok] F2.delete.phase phase approval with a deleted file among the task changes -> ok
+[ok] F2.delete.unreviewed unreviewedChanges: the reviewed deletion is not reported -> ok
+[ok] F2.delete.deliver delivery after a reviewed deletion (overblocking check) -> ok
+[ok] F2.userDirty.claim claim with an uncommitted owned file written by the user -> DIRTY_OWNERSHIP: Task api owns files that are already changed in the working tree: src/server/pre.js. Commit or revert them before claiming (git add + git commit, git checkout -
+[ok] F2.userCommitted.claim claim after the user committed it -> ok
+[ok] F2.userCommitted.complete completion declares only the task's own change (pre.js is base) -> ok
+[ok] F2.ignore.unreviewed dist/** ignored, src/server/extra.js reported -> ok
+[ok] F2.ignore.deliver delivery with an untracked unreviewed file -> DELIVERY_BLOCKED: Delivery refused:
+[ok] F2.ignore.deliverClean delivery once the file is removed (dist/ stays, ignored) -> ok
+[ok] F2.between.beforeVerification unreviewedChanges before the verification gate is approved -> ok
+[ok] F2.between.afterVerification unreviewedChanges after the verification approval (the file is in none of its artifacts) -> ok
+[ok] F2.between.deliver delivery with src/server/backdoor.js committed and reviewed by no gate -> ok
+[ok] F2.between.audit eccode audit after that delivery -> ok
+[ok] F2.between.pinned is backdoor.js pinned by any approved submission? -> ok

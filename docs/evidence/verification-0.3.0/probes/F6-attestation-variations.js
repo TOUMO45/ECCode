@@ -109,7 +109,8 @@ try {
   const extra = JSON.parse(lines[1]);
   extra.seq = 3; // a forged third line that does not link to line 2's hash
   fs.writeFileSync(INDEX, originalIndex + JSON.stringify(extra) + '\n');
-  step('F6.index.forgedAppend', 'a third line appended with a stale prevHash', 'ok', caught(view(memB, two.id)));
+  const appended = view(memB, two.id);
+  step('F6.index.forgedAppend', 'a third line appended with a stale prevHash (the chain breaks AFTER the two good lines)', 'documented', { ok: true, value: { ...appended, auditExit: cli(b.dir, ['memory', 'audit', '--scope', 'shared']).exit } }, appended.quarantined ? 'quarantined' : 'by design: lines before the first broken link stay trusted (readAttestationIndex), so the two attested records still apply; memory audit reports the corrupt index (exit code recorded)');
   restore();
 
   // The record file for id one replaced by record two's content (a valid attested record) under id one.

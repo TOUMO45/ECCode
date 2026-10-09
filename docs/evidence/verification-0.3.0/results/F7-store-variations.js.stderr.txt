@@ -1,0 +1,19 @@
+[ok] F7.forge.state state() on a snapshot whose content differs from the log (seq/lastHash intact) -> SNAPSHOT_DIVERGED: Refusing to use the project record: state.json diverges from a replay of events.jsonl at state.gates.architecture.status (snapshot "approved", replay "pending")
+[ok] F7.forge.commit gate start design on it -> SNAPSHOT_DIVERGED: Refusing to use the project record: state.json diverges from a replay of events.jsonl at state.gates.architecture.status (snapshot "approved", replay "pending")
+[ok] F7.forge.rebuild eccode rebuild --actor orchestrator repairs it -> ok
+[ok] F7.forge.after then the forged approval is gone -> GATE_BLOCKED: Gate design cannot start: predecessor architecture is pending, not approved
+[ok] F7.torn.crash.state state() with a torn fragment after the last complete event -> ok
+[ok] F7.torn.crash.audit audit before any repair -> ok
+[ok] F7.torn.crash.commit the next commit cuts the fragment and appends cleanly -> ok
+[ok] F7.torn.crash.after audit, seq and the event count after the repair -> ok
+[ok] F7.torn.fault.state state() when the last recorded event itself is torn (snapshot ahead of the readable log) -> LOG_ROLLBACK: Refusing to use the project record: state.json is at event #3 but events.jsonl ends at #2: the log was rolled back.
+[ok] F7.torn.fault.commit a commit on it -> LOG_ROLLBACK: Refusing to use the project record: state.json is at event #3 but events.jsonl ends at #2: the log was rolled back.
+[ok] F7.torn.fault.audit audit names the condition -> ok
+[ok] F7.concurrent 4 risk adds + 4 evidence runs spawned at once -> ok
+[ok] F7.gap.crash task.completed committed, handoff.recorded never written -> ok
+[ok] F7.gap.audit audit: ok with a warning naming the recovery command -> ok
+[ok] F7.gap.resume eccode resume on the gap -> ok
+[ok] F7.gap.recover eccode handoff record --actor backend-engineer --file <handoff.json> -> ok
+[ok] F7.gap.after audit after the recovery: no warning -> ok
+[ok] F7.rewrite event 2 edited (critical -> low), every later hash and stateHash recomputed, snapshot rewritten -> ok
+[ok] F7.forgedUserEvent a risk.recorded accepted event with actor user appended offline with valid hashes -> ok

@@ -1,0 +1,38 @@
+$ node -e '
+const fs=require("node:fs");const b=fs.readFileSync(".eccode/artifacts/architecture/brief.md","utf8");const g=fs.readFileSync("docs/build/goal.md","utf8");
+const cnt=(t,re)=>(t.match(re)||[]).length;
+const terms={"refunding":/\brefunding\b/g,"failed_needs_attention":/failed_needs_attention/g,"cancelling (aggregate state)":/\bcancelling\b/g,"authorization/capture PENDING state":/(authorization|capture)_?pending|PENDING/g,"on_hand":/on_hand/g,"Sandbox transactions labelled":/Sandbox transactions/g,"test prices":/test prices/gi,"test:browser / browser script":/test:browser|npm run test:b/g,"executing / claim":/executing|exclusive claim/g,"busy_timeout":/busy_timeout|busy timeout/gi,"experimental-sqlite":/experimental-sqlite/g,"SameSite":/SameSite/gi,"rate limit":/rate.limit/gi,"derivation table":/derivation|derived from/gi,"void":/void/gi,"plan.md adopted unchanged":/adopted unchanged/g};
+for(const [k,re] of Object.entries(terms))console.log(("brief:"+k).padEnd(48),cnt(b,re),"| goal:",cnt(g,re));
+const line=(t,id)=>t.split("\n").find(l=>l.includes(id));
+console.log("\nGOAL  RS-31:",line(g,"**RS-31**"));console.log("BRIEF RS-31:",line(b,"- RS-31:"));
+console.log("GOAL  labelling:",line(g,"All demonstration data"));console.log("BRIEF RS-34:",line(b,"- RS-34:"));
+console.log("table rows for suppliers A-E in brief:",cnt(b,/^\| [A-E] \|/gm),"; in goal:",cnt(g,/^\| [A-E] \|/gm));
+console.log("BRIEF arch line:",line(b,"adopted unchanged").slice(0,260));
+console.log("BRIEF NFR3:",line(b,"- NFR3"));
+'
+# cwd: .
+# exit: 0
+brief:refunding                                  0 | goal: 1
+brief:failed_needs_attention                     0 | goal: 1
+brief:cancelling (aggregate state)               0 | goal: 1
+brief:authorization/capture PENDING state        0 | goal: 0
+brief:on_hand                                    2 | goal: 0
+brief:Sandbox transactions labelled              0 | goal: 1
+brief:test prices                                0 | goal: 1
+brief:test:browser / browser script              0 | goal: 0
+brief:executing / claim                          0 | goal: 0
+brief:busy_timeout                               0 | goal: 0
+brief:experimental-sqlite                        0 | goal: 0
+brief:SameSite                                   0 | goal: 0
+brief:rate limit                                 0 | goal: 0
+brief:derivation table                           3 | goal: 0
+brief:void                                       6 | goal: 1
+brief:plan.md adopted unchanged                  1 | goal: 0
+
+GOAL  RS-31: - **RS-31** Request → review → plan → reservation → PayPal approvals → supplier confirmations → capture → readiness → collection.
+BRIEF RS-31: - RS-31: Browser journey at 360 px and 1280 px: request → review → plan → reservation → PayPal approvals (fake adapter page) → supplier confirmations → capture → readiness → collection, with screenshots. [B]
+GOAL  labelling: All demonstration data, simulations, test providers and Sandbox transactions are labelled in the UI and the API (`"simulated": true`, provider badges, a persistent banner when a fake adapter is active).
+BRIEF RS-34: - RS-34: API payloads from fake adapters carry `"simulated": true`; UI shows provider badges and a persistent banner while a fake adapter is active. [D; B]
+table rows for suppliers A-E in brief: 0 ; in goal: 5
+BRIEF arch line: **Shape:** one Node process (zero runtime dependencies) serving a JSON API under `/api` and static ES-module SPA; SQLite file via `node:sqlite` (WAL, `BEGIN IMMEDIATE`); outbound calls only to the AI provider (Claude Code CLI subprocess or Anthropic API) and P
+BRIEF NFR3: - NFR3 (RS-NF-3) Real-model extraction suite and real PayPal Sandbox suite are separate from the deterministic suite and labelled.

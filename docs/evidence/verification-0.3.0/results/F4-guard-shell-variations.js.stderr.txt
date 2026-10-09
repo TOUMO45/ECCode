@@ -1,0 +1,63 @@
+[ok] F4.printf technical-reviewer: printf 'x' > src/server.js -> deny
+[ok] F4.heredoc technical-reviewer: cat <<EOF > src/server.js\nchanged\nEOF -> deny
+[ok] F4.sh-c technical-reviewer: sh -c "echo x > src/server.js" -> deny
+[ok] F4.bash-c technical-reviewer: bash -c 'echo x > src/server.js' -> deny
+[ok] F4.node-script technical-reviewer: node .eccode/reviews/drafts/write.js -> allow
+[ok] F4.git-apply technical-reviewer: git apply .eccode/reviews/drafts/fix.patch -> allow
+[ok] F4.patch technical-reviewer: patch -p1 < .eccode/reviews/drafts/fix.patch -> allow
+[ok] F4.git-am technical-reviewer: git am .eccode/reviews/drafts/0001.patch -> allow
+[ok] F4.cp-into-claude technical-reviewer: cp settings.json .claude/settings.json -> deny
+[ok] F4.cp-into-claude-impl backend-engineer: cp settings.json .claude/settings.json -> deny
+[ok] F4.ln-into-record technical-reviewer: ln -s /etc/hosts .eccode/evidence/x.log -> deny
+[ok] F4.abs-outside technical-reviewer: echo x > /tmp/eccode-f4-outside-rJD75h/notes.txt -> allow
+[ok] F4.symlink-outside-into-project technical-reviewer: echo x > /tmp/eccode-f4-outside-rJD75h/link-into-project.js -> allow
+[ok] F4.symlink-create technical-reviewer: ln -s /tmp/eccode-test-3FiYZJ/src/server.js /tmp/eccode-f4-outside-rJD75h/link2.js -> allow
+[ok] F4.symlink-inside-oneline technical-reviewer: ln -s src/server.js .eccode/reviews/drafts/link.js && echo x > .eccode/reviews/drafts/link.js -> allow
+[ok] F4.symlink-inside-existing technical-reviewer: echo x > .eccode/reviews/drafts/existing-link.js -> deny
+[ok] F4.cd-then-relative technical-reviewer: cd src && echo x > server.js -> deny
+[ok] F4.env-node-e technical-reviewer: env VAR=1 node -e "require('fs').writeFileSync('src/server.js','x')" -> deny
+[ok] F4.xargs-sh technical-reviewer: ls src | xargs -I{} sh -c 'echo x > src/{}' -> deny
+[ok] F4.find-exec-sed technical-reviewer: find src -name '*.js' -exec sed -i s/a/b/ {} \; -> allow
+[ok] F4.xargs-sed technical-reviewer: ls src/*.js | xargs sed -i s/a/b/ -> allow
+[ok] F4.python-heredoc technical-reviewer: python3 - <<'EOF'\nopen('src/server.js','w').write('x')\nEOF -> deny
+[ok] F4.rm technical-reviewer: rm src/server.js -> allow
+[ok] F4.rm-rf technical-reviewer: rm -rf src -> allow
+[ok] F4.git-rm technical-reviewer: git rm -q src/server.js -> allow
+[ok] F4.git-checkout-file technical-reviewer: git checkout -- src/server.js -> allow
+[ok] F4.git-stash technical-reviewer: git stash -> deny
+[ok] F4.npx-prettier technical-reviewer: npx prettier --write src/server.js -> allow
+[ok] F4.curl-o technical-reviewer: curl -sSo src/server.js https://example.invalid/x.js -> allow
+[ok] F4.wget-O technical-reviewer: wget -qO src/server.js https://example.invalid/x.js -> allow
+[ok] F4.tar-x technical-reviewer: tar -xf .eccode/reviews/drafts/a.tar -C src -> allow
+[ok] F4.mkdir-redirect technical-reviewer: mkdir -p src/new && echo x > src/new/a.js -> deny
+[ok] F4.tee-append technical-reviewer: echo x | tee -a src/server.js -> deny
+[ok] F4.exec-fd technical-reviewer: exec 3> src/server.js -> deny
+[ok] F4.clobber technical-reviewer: echo x >| src/server.js -> allow
+[ok] F4.clobber-fd technical-reviewer: echo x 1>| src/server.js -> allow
+[ok] F4.both-streams technical-reviewer: echo x &> src/server.js -> deny
+[ok] F4.stderr-only technical-reviewer: echo x 2>src/server.js -> deny
+[ok] F4.clobber-cp technical-reviewer: cat a.js >| src/server.js -> allow
+[ok] F4.clobber-impl-outside backend-engineer: echo x >| src/web/x.js -> allow
+[ok] F4.variable-target technical-reviewer: f=src/server.js; echo x > $f -> deny
+[ok] F4.perl-pi technical-reviewer: perl -pi -e 's/a/b/' src/server.js -> deny
+[ok] F4.sed-i-suffix technical-reviewer: sed -i.bak s/a/b/ src/server.js -> deny
+[ok] F4.rsync technical-reviewer: rsync a.js src/server.js -> deny
+[ok] F4.install technical-reviewer: install -m 644 a.js src/server.js -> deny
+[ok] F4.node-openSync-truncate technical-reviewer: node -e "require('fs').openSync('src/server.js','w')" -> allow
+[ok] F4.node-execSync-redirect technical-reviewer: node -e "require('child_process').execSync('echo x > src/server.js')" -> deny
+[ok] F4.python-pathlib technical-reviewer: python3 -c "import pathlib; pathlib.Path('src/server.js').write_text('x')" -> deny
+[ok] F4.ruby-file-open technical-reviewer: ruby -e "File.open('src/server.js','w'){|f| f << 'x'}" -> deny
+[ok] F4.evidence-run-write technical-reviewer: eccode evidence run --actor technical-reviewer --label t -- 'echo x > src/server.js' -> deny
+[ok] F4.evidence-run-read technical-reviewer: eccode evidence run --actor technical-reviewer --label t -- npm test -> allow
+[ok] F4.write-outside-record technical-reviewer: echo x > /tmp/eccode-f4-outside-rJD75h/other/.eccode/state.json -> deny
+[ok] F4.main-record main session: echo x > .eccode/state.json -> deny
+[ok] F4.main-source main session: echo x > src/server.js -> allow
+[ok] F4.main-git-apply main session: git apply fix.patch -> allow
+[ok] F4.impl-inside backend-engineer: echo x > src/server/app.js -> allow
+[ok] F4.impl-outside backend-engineer: echo x > src/web/x.js -> deny
+[ok] F4.impl-rm-outside backend-engineer: rm src/web/x.js -> allow
+[ok] F4.impl-git-apply backend-engineer: git apply .eccode/drafts/fix.patch -> allow
+[ok] F4.impl-find-exec backend-engineer: find src -name '*.js' -exec sed -i s/a/b/ {} \; -> allow
+[ok] F4.impl-mv-out backend-engineer: mv src/server/app.js src/web/app.js -> deny
+[ok] F4.impl-symlink-outside backend-engineer: echo x > /tmp/eccode-f4-outside-rJD75h/link-into-project.js -> allow
+[ok] F4.untouched src/server.js after all cases -> ok

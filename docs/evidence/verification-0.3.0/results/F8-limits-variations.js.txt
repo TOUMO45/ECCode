@@ -1,0 +1,281 @@
+{
+  "probe": "F8-limits-variations",
+  "repo": "/home/user/ECCode",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T16:26:47.912Z",
+  "steps": [
+    {
+      "id": "F8.race",
+      "description": "maxActiveRuns=4, 3 open, three concurrent run start",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "results": [
+            {
+              "code": 2,
+              "code2": "RUN_LIMIT"
+            },
+            {
+              "code": 0
+            },
+            {
+              "code": 2,
+              "code2": "RUN_LIMIT"
+            }
+          ],
+          "openAfter": 4,
+          "auditOk": true
+        }
+      }
+    },
+    {
+      "id": "F8.reserve.equal",
+      "description": "$5 spent + 1 open + 1 new at $3 = $11 against a $11 cap (not greater: allowed)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "run-mv16h73z-06d3e3bd"
+      }
+    },
+    {
+      "id": "F8.reserve.over",
+      "description": "a fourth: $5 + 3 x $3 = $14 > $11",
+      "expect": "refused:BUDGET_EXCEEDED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "BUDGET_EXCEEDED",
+        "message": "Budget exhausted: cost $5 + $9 reserved for 3 run(s) in flight (2 open + 1 new, $3 each) > limit $11.",
+        "details": {
+          "recovery": "Stop and report to the user. Raising limits in .eccode/config.json requires the user's explicit authorization.",
+          "unknownUsage": []
+        }
+      }
+    },
+    {
+      "id": "F8.reserve.justOver",
+      "description": "$5 + 2 x $3 = $11 > $10.99",
+      "expect": "refused:BUDGET_EXCEEDED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "BUDGET_EXCEEDED",
+        "message": "Budget exhausted: cost $5 + $6 reserved for 2 run(s) in flight (1 open + 1 new, $3 each) > limit $10.99.",
+        "details": {
+          "recovery": "Stop and report to the user. Raising limits in .eccode/config.json requires the user's explicit authorization.",
+          "unknownUsage": []
+        }
+      }
+    },
+    {
+      "id": "F8.spent.equal",
+      "description": "recorded spend equal to the cap ($5 of $5): refused (>=), unlike the reservation (>)",
+      "expect": "refused:BUDGET_EXCEEDED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "BUDGET_EXCEEDED",
+        "message": "Budget exhausted: cost $5 >= limit $5.",
+        "details": {
+          "recovery": "Stop and report to the user. Raising limits in .eccode/config.json requires the user's explicit authorization.",
+          "unknownUsage": []
+        }
+      }
+    },
+    {
+      "id": "F8.cli.endWithoutUsage",
+      "description": "run end with neither --tokens nor --no-usage",
+      "expect": "refused:USAGE_MISSING",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "exit": 2,
+        "code": "USAGE_MISSING",
+        "stdout": "",
+        "message": "eccode: [USAGE_MISSING] Run run-mv16h7ez-01c1f005: give --tokens and/or --cost-usd from the agent's reported usage. If the agent reported none (crash, timeout), close it with --no-usage and fill it in later with 'eccode run correct'."
+      }
+    },
+    {
+      "id": "F8.cli.noUsage",
+      "description": "run end --no-usage",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "stdout": "Run run-mv16h7ez-01c1f005 closed. Totals: $0, 0 min, 0 tokens.",
+        "message": ""
+      }
+    },
+    {
+      "id": "F8.cli.lowerBound",
+      "description": "status --brief says the spend is a lower bound and names the run",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": "Budget: $0/25 (1 run with unknown usage; spend is a lower bound), 0/480 min"
+      }
+    },
+    {
+      "id": "F8.cli.lowerBound.json",
+      "description": "status --json: budget.lowerBound and runsWithUnknownUsage",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "count": 1,
+          "ids": [
+            "run-mv16h7ez-01c1f005"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F8.cli.tokensNoPricing",
+      "description": "run end --tokens 1234 without a cost and without pricing",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "stdout": "Run run-mv16h7nz-019a4690 closed. Totals: $0, 0 min, 1234 tokens.",
+        "message": ""
+      }
+    },
+    {
+      "id": "F8.cli.tokensNoPricing.cost",
+      "description": "the run's cost is unknown (null), tokens counted, run listed as unknown usage",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "costUsd": null,
+          "tokens": 1234,
+          "unknown": {
+            "count": 2,
+            "ids": [
+              "run-mv16h7ez-01c1f005",
+              "run-mv16h7nz-019a4690"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "F8.cli.tokensZero",
+      "description": "run end --tokens 0 (an explicit zero is a reported figure)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "stdout": "Run run-mv16h7rm-01549764 closed. Totals: $0, 0 min, 1234 tokens.",
+        "message": ""
+      }
+    },
+    {
+      "id": "F8.cli.tokensZero.cost",
+      "description": "cost $0, usageReported true (documented semantics: an explicit 0 is not unknown)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "costUsd": 0,
+          "tokens": 0,
+          "usageReported": true
+        }
+      }
+    },
+    {
+      "id": "F8.recover",
+      "description": "a run started at 10:00 recovered at 12:00",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "durationMinutes": 120,
+          "costUsd": null,
+          "tokens": null,
+          "totals": {
+            "costUsd": 0,
+            "runtimeMinutes": 120,
+            "tokens": 0
+          },
+          "status": "Budget: $0/25 (1 run with unknown usage; spend is a lower bound), 120/480 min"
+        }
+      }
+    },
+    {
+      "id": "F8.recover.bySubagent",
+      "description": "recover run by a subagent role",
+      "expect": "refused:ROLE_NOT_ALLOWED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "ROLE_NOT_ALLOWED",
+        "message": "Recovery is performed by orchestrator or user (--actor), not backend-engineer",
+        "details": {}
+      }
+    },
+    {
+      "id": "F8.config.zeroRuns",
+      "description": "limits.maxActiveRuns: 0",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_CONFIG",
+        "message": "limits.maxActiveRuns must be a positive number (got 0)",
+        "details": {}
+      }
+    },
+    {
+      "id": "F8.config.negativeRuns",
+      "description": "limits.maxActiveRuns: -1",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_CONFIG",
+        "message": "limits.maxActiveRuns must be a positive number (got -1)",
+        "details": {}
+      }
+    },
+    {
+      "id": "F8.config.fractionalRuns",
+      "description": "limits.maxActiveRuns: 1.5",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "ok": true,
+          "value": "run-mv16h87s-0f66d169"
+        }
+      }
+    },
+    {
+      "id": "F8.usage.negative",
+      "description": "run end --cost-usd -5 (would lower the recorded spend)",
+      "expect": "refused:INVALID_INPUT",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_INPUT",
+        "message": "--cost-usd must be a finite non-negative number (got -5)",
+        "details": {}
+      }
+    }
+  ],
+  "unexpected": 0,
+  "finishedAt": "2026-10-09T16:26:50.353Z"
+}

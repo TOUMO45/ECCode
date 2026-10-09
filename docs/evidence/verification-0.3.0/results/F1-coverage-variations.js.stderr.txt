@@ -1,0 +1,29 @@
+[ok] F1.table.required required ids derived from a Markdown TABLE under Acceptance Criteria -> ok
+[ok] F1.table.attack approve "the document has a title" citing a non-existent section -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] F1.lookalike.lowercase ids ac1 + AC2 (AC1 omitted, lower-case look-alike) -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] F1.lookalike.cyrillic ids АC1 (Cyrillic A) + AC2 (AC1 omitted) -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] F1.lookalike.ac01 ids AC01 + AC2 (zero-padded look-alike, AC1 omitted) -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] F1.duplicate AC1 twice, AC2 omitted -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] F1.table.legit full coverage AC1 + AC2 against the table brief is approved (overblocking check) -> ok
+[ok] F1.table.status architecture gate status after the legitimate approval -> ok
+[ok] F1.reflow brief reflowed (whitespace only) after submission, then a full-coverage approval -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] F1.reflow.restored bytes restored: the same approval passes -> ok
+[ok] F1.config.noheading.required config review.criteriaSections names a heading the brief lacks: required ids -> ok
+[ok] F1.config.noheading.attack then "the document has a title" (valid anchor) is accepted: coverage is not enforced -> ok
+[ok] F1.noids.required brief lists two acceptance criteria without ids: required ids -> ok
+[ok] F1.noids.attack approval "the document has a title" against a brief with un-numbered criteria -> ok
+[ok] F1.noids.status gate status -> ok
+[ok] F1.plan.badpath plan approval citing artifact:plan.json#phases.9.goal (no such path) -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] F1.plan.badphase plan approval covering phase:nope instead of phase:core -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] F1.plan.legit plan approval citing #phases.0.goal and #tasks.api.verification -> ok
+[ok] F1.verification.required required ids for the verification gate -> ok
+[ok] F1.verification.omitAC2 verification approval covering AC1 only -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] F1.verification.legit verification approval covering AC1 and AC2 -> ok
+[ok] F1.edited.guard guard: technical-designer `echo … > brief.md` (the approved architecture artifact) -> allow
+[ok] F1.edited.designRequired required ids for design after AC2 was removed from the approved brief on disk -> ok
+[ok] F1.edited.designApproval design approval covering AC1 only (AC2 was in the approved brief) -> ok
+[ok] F1.edited.unreviewedBeforeVerification unreviewedChanges before the verification gate -> ok
+[ok] F1.edited.verificationRequired required ids for verification -> ok
+[ok] F1.edited.verificationApproval verification approval covering AC1 only -> ok
+[ok] F1.edited.deliver delivery after the brief was edited post-approval and re-pinned by the verification gate -> ok
+[ok] F1.edited.audit eccode audit after the delivery -> ok

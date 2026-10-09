@@ -1,0 +1,36 @@
+[ok] F5.guard.equals main session: --actor=user -> deny
+[ok] F5.guard.subagentEquals technical-reviewer: --actor=user -> deny
+[ok] F5.guard.User main session: --actor User (capitalised) -> allow
+[ok] F5.guard.envExported main session: exported ECCODE_ACTOR=user, no --actor -> deny
+[ok] F5.guard.envInline main session: ECCODE_TEST=1 set inline -> deny
+[ok] F5.guard.shellFunction main session: eccode wrapped in a shell function, --actor user on the call -> allow
+[ok] F5.guard.copiedBinary main session: the CLI copied to /tmp/e and run from there -> deny
+[ok] F5.guard.impersonateRole technical-reviewer subagent: wrapped eccode acting as backend-engineer -> allow
+[ok] F5.guard.directImpersonate technical-reviewer subagent: eccode task claim api --actor backend-engineer (direct) -> deny
+[ok] F5.cli.equals CLI: gate reopen --actor=user, stdin closed -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] --actor user needs a person at a terminal (stdin and stdout are not a TTY): run this command yourself in a terminal, or grant a bou
+[ok] F5.cli.User CLI: gate reopen --actor User -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] Reopening gate architecture is reserved for the user; User cannot do it alone. Either the user runs this in a terminal: eccode gate
+[ok] F5.cli.UserRisk CLI: risk update --status accepted --actor User -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] Accepting risk R1 is reserved for the user; User cannot do it alone. Either the user runs this in a terminal: eccode risk update --
+[ok] F5.cli.envExported CLI: exported ECCODE_ACTOR=user, no --actor -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] --actor user needs a person at a terminal (stdin and stdout are not a TTY): run this command yourself in a terminal, or grant a bou
+[ok] F5.cli.yesPiped CLI: "yes" piped on stdin is not a terminal -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] --actor user needs a person at a terminal (stdin and stdout are not a TTY): run this command yourself in a terminal, or grant a bou
+[ok] F5.cli.nothingAppended no event was appended by the refused commands -> ok
+[ok] F5.cli.testSwitch CLI: ECCODE_TEST=1 exported in the environment makes --actor user work without a terminal -> ok
+[ok] F5.dlg.grantAnyTarget user grants gate.reopen with no target (any gate), 1 use -> ok
+[ok] F5.dlg.wrongRole technical-reviewer spends the orchestrator delegation -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] Delegation dlg-mv16h1wa-01118496 was granted to orchestrator, not technical-reviewer. Reopening gate architecture is reserved for t
+[ok] F5.dlg.wrongAction orchestrator spends the gate.reopen delegation on risk.accept -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] Delegation dlg-mv16h1wa-01118496 allows gate.reopen, not risk.accept. Accepting risk R1 is reserved for the user; orchestrator cann
+[ok] F5.dlg.spent orchestrator reopens architecture with it -> ok
+[ok] F5.dlg.replay the same delegation a second time (exhausted) -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] Delegation dlg-mv16h1wa-01118496 is exhausted (1 of 1 uses spent). Reopening gate architecture is reserved for the user; orchestrat
+[ok] F5.dlg.wrongTarget a delegation for design spent on architecture -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] Delegation dlg-mv16h25y-0dd6abcd is for target design, not architecture. Reopening gate architecture is reserved for the user; orch
+[ok] F5.dlg.revokeByAgent orchestrator revokes a delegation -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] Only the user revokes a delegation (eccode delegate revoke <id> --actor user, at a terminal); orchestrator cannot.
+[ok] F5.dlg.revoke the user revokes it (ECCODE_TEST=1 stands in for the terminal) -> ok
+[ok] F5.dlg.afterRevoke the revoked delegation spent on its own target -> INVALID_TRANSITION: eccode: [INVALID_TRANSITION] Gate design is pending, not escalated
+[ok] F5.dlg.expired a 1-minute delegation spent 2 minutes later (ECCODE_NOW pinned ahead for the spend only) -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] Delegation dlg-mv16h2ed-0f019177 expired at 2026-10-09T16:27:42.661Z. Reopening gate architecture is reserved for the user; orchest
+[ok] F5.dlg.grantByOrchestrator orchestrator grants itself a delegation -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] Only the user grants a delegation (eccode delegate grant --actor user, at a terminal); orchestrator cannot, and a delegation cannot
+[ok] F5.dlg.grantNoTTY user grants a delegation without a terminal -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] --actor user needs a person at a terminal (stdin and stdout are not a TTY): run this command yourself in a terminal
+[ok] F5.dlg.legit the valid delegation d3 reopens architecture (overblocking check) -> ok
+[ok] F5.dlg.audit audit after the delegation traffic -> ok
+[ok] F5.decision.onBehalfNoDelegation decision add --on-behalf-of user without a delegation -> USER_AUTH_REQUIRED: eccode: [USER_AUTH_REQUIRED] Recording a decision as the user's is reserved for the user; orchestrator cannot do it alone. Either the user runs this in a termin
+[ok] F5.decision.withDelegation decision add --on-behalf-of user --delegation -> ok
+[ok] F5.risk.acceptByOrchestrator orchestrator accepts a high risk -> USER_AUTH_REQUIRED: Accepting risk RISK-H is reserved for the user; orchestrator cannot do it alone. Either the user runs this in a terminal: eccode risk update --id RISK-H --statu
+[ok] F5.risk.deliverOpenHigh delivery with an open high risk -> DELIVERY_BLOCKED: Delivery refused:
+[ok] F5.risk.deliverMitigated delivery once the risk is mitigated (overblocking check) -> ok
+[ok] F5.risk.policyEmpty release.blockRiskSeverities: [] and an open critical risk -> ok

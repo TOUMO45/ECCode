@@ -1,0 +1,21 @@
+$ node -e '
+const {DatabaseSync}=require("node:sqlite");const {spawn}=require("node:child_process");
+const dir="/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/";const stamp=Date.now();
+const child=["const {DatabaseSync}=require(\"node:sqlite\");const d=new DatabaseSync(process.argv[1]);",
+"if(+process.argv[2])d.exec(\"PRAGMA busy_timeout=\"+process.argv[2]);",
+"try{d.exec(\"BEGIN IMMEDIATE\");const r=d.prepare(\"UPDATE inventory SET reserved=reserved+1 WHERE id=1 AND reserved+1<=on_hand\").run();",
+"const t=Date.now();while(Date.now()-t<300){}d.exec(\"COMMIT\");console.log(r.changes?\"RESERVED\":\"OUT_OF_STOCK\")}catch(e){console.log(\"ERROR \"+e.message)}"].join("");
+function run(to){return new Promise(res=>{const f=dir+"rs14-"+stamp+"-"+to+".db";
+ const d=new DatabaseSync(f);d.exec("PRAGMA journal_mode=WAL;CREATE TABLE inventory(id INTEGER PRIMARY KEY,on_hand INTEGER,reserved INTEGER,CHECK(reserved<=on_hand),CHECK(reserved>=0));INSERT INTO inventory VALUES(1,1,0);");d.close();
+ const outs=[];let n=0;for(let i=0;i<2;i++){const p=spawn(process.execPath,["-e",child,f,String(to)]);let o="";p.stdout.on("data",x=>o+=x);p.on("close",()=>{outs.push(o.trim());if(++n===2){const d2=new DatabaseSync(f);res({to,outs,row:d2.prepare("SELECT on_hand,reserved FROM inventory").get()})}})}})}
+(async()=>{console.log("node",process.version);for(const to of [0,3000]){const r=await run(to);console.log("busy_timeout="+r.to+" ->",r.outs.sort().join(" | "),"final",JSON.stringify(r.row))}})();
+'
+# cwd: .
+# exit: 0
+node v22.22.0
+busy_timeout=0 -> ERROR database is locked | RESERVED final {"on_hand":1,"reserved":1}
+busy_timeout=3000 -> OUT_OF_STOCK | RESERVED final {"on_hand":1,"reserved":1}
+
+[stderr]
+(node:1266) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

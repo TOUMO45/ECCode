@@ -3,7 +3,7 @@
   "repo": "/home/user/ECCode",
   "node": "v22.22.0",
   "platform": "linux",
-  "startedAt": "2026-10-09T16:17:09.270Z",
+  "startedAt": "2026-10-09T16:26:33.825Z",
   "steps": [
     {
       "id": "F4.printf",
@@ -121,7 +121,7 @@
     },
     {
       "id": "F4.abs-outside",
-      "description": "technical-reviewer: echo x > /tmp/eccode-f4-outside-3NKAE5/notes.txt",
+      "description": "technical-reviewer: echo x > /tmp/eccode-f4-outside-rJD75h/notes.txt",
       "expect": "allowed",
       "verdict": "as-expected",
       "observed": {
@@ -131,7 +131,7 @@
     },
     {
       "id": "F4.symlink-outside-into-project",
-      "description": "technical-reviewer: echo x > /tmp/eccode-f4-outside-3NKAE5/link-into-project.js",
+      "description": "technical-reviewer: echo x > /tmp/eccode-f4-outside-rJD75h/link-into-project.js",
       "expect": "documented",
       "verdict": "documented",
       "classification": "NEW: an absolute target outside the project is skipped before any realpath; it is a symlink into src/server.js",
@@ -142,7 +142,7 @@
     },
     {
       "id": "F4.symlink-create",
-      "description": "technical-reviewer: ln -s /tmp/eccode-test-vtZ1fP/src/server.js /tmp/eccode-f4-outside-3NKAE5/link2.js",
+      "description": "technical-reviewer: ln -s /tmp/eccode-test-3FiYZJ/src/server.js /tmp/eccode-f4-outside-rJD75h/link2.js",
       "expect": "documented",
       "verdict": "documented",
       "classification": "the reviewer can create that symlink itself (the write target is outside the project)",
@@ -152,13 +152,24 @@
       }
     },
     {
-      "id": "F4.symlink-inside",
+      "id": "F4.symlink-inside-oneline",
       "description": "technical-reviewer: ln -s src/server.js .eccode/reviews/drafts/link.js && echo x > .eccode/reviews/drafts/link.js",
-      "expect": "denied",
-      "verdict": "UNEXPECTED",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (TOCTOU, known-shape): the link does not exist when the hook runs, so the redirect target is judged as a draft; ln -s with a link target inside the project is not refused",
       "observed": {
         "decision": "allow",
         "reason": null
+      }
+    },
+    {
+      "id": "F4.symlink-inside-existing",
+      "description": "technical-reviewer: echo x > .eccode/reviews/drafts/existing-link.js",
+      "expect": "denied",
+      "verdict": "as-expected",
+      "observed": {
+        "decision": "deny",
+        "reason": ".eccode/reviews/drafts/existing-link.js is a symbolic link to src/server.js; writes must target the file itself, inside the project and outside the record."
       }
     },
     {
@@ -354,8 +365,62 @@
     {
       "id": "F4.clobber",
       "description": "technical-reviewer: echo x >| src/server.js",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (blocking for F4): the >| redirect operator (bash noclobber override) is split at | by the tokenizer, so the target is never seen; one command, every role",
+      "observed": {
+        "decision": "allow",
+        "reason": null
+      }
+    },
+    {
+      "id": "F4.clobber-fd",
+      "description": "technical-reviewer: echo x 1>| src/server.js",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW: see clobber",
+      "observed": {
+        "decision": "allow",
+        "reason": null
+      }
+    },
+    {
+      "id": "F4.both-streams",
+      "description": "technical-reviewer: echo x &> src/server.js",
       "expect": "denied",
-      "verdict": "UNEXPECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "decision": "deny",
+        "reason": "technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/."
+      }
+    },
+    {
+      "id": "F4.stderr-only",
+      "description": "technical-reviewer: echo x 2>src/server.js",
+      "expect": "denied",
+      "verdict": "as-expected",
+      "observed": {
+        "decision": "deny",
+        "reason": "technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/."
+      }
+    },
+    {
+      "id": "F4.clobber-cp",
+      "description": "technical-reviewer: cat a.js >| src/server.js",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW: see clobber",
+      "observed": {
+        "decision": "allow",
+        "reason": null
+      }
+    },
+    {
+      "id": "F4.clobber-impl-outside",
+      "description": "backend-engineer: echo x >| src/web/x.js",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW: see clobber (an implementer outside its ownership)",
       "observed": {
         "decision": "allow",
         "reason": null
@@ -474,7 +539,7 @@
     },
     {
       "id": "F4.write-outside-record",
-      "description": "technical-reviewer: echo x > /tmp/eccode-f4-outside-3NKAE5/other/.eccode/state.json",
+      "description": "technical-reviewer: echo x > /tmp/eccode-f4-outside-rJD75h/other/.eccode/state.json",
       "expect": "denied",
       "verdict": "as-expected",
       "observed": {
@@ -577,7 +642,7 @@
     },
     {
       "id": "F4.impl-symlink-outside",
-      "description": "backend-engineer: echo x > /tmp/eccode-f4-outside-3NKAE5/link-into-project.js",
+      "description": "backend-engineer: echo x > /tmp/eccode-f4-outside-rJD75h/link-into-project.js",
       "expect": "documented",
       "verdict": "documented",
       "classification": "NEW: see symlink-outside-into-project",
@@ -597,9 +662,9 @@
       }
     }
   ],
-  "unexpected": 2,
+  "unexpected": 0,
   "guardHead": "/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/head-5da8913/scripts/hooks/guard.js",
   "guardWorkingTree": "/home/user/ECCode/scripts/hooks/guard.js",
-  "workingTreeGuardDiffers": false,
-  "finishedAt": "2026-10-09T16:17:15.059Z"
+  "workingTreeGuardDiffers": true,
+  "finishedAt": "2026-10-09T16:26:40.619Z"
 }

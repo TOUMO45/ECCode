@@ -1,0 +1,16 @@
+$ node -e '
+const fs=require("node:fs");
+const c=fs.readFileSync("/home/user/ECCode/examples/groundwork/src/http/cookies.js","utf8").split("\n");
+c.forEach((l,i)=>{if(/SameSite/i.test(l))console.log("groundwork/src/http/cookies.js:"+(i+1)+": "+l.trim())});
+const p=fs.readFileSync("docs/build/plan.md","utf8").split("\n").find(l=>/Groundwork/.test(l));console.log("plan.md:",p.slice(0,240));
+const gt=fs.readFileSync("/home/user/ECCode/lib/gates.js","utf8").split("\n");gt.forEach((l,i)=>{if(/const CRITERION_ID/.test(l))console.log("lib/gates.js:"+(i+1)+": "+l.trim())});
+const re=/^[A-Z][A-Z0-9]*-?\d+$/;for(const id of ["RS-01","NFR1","RS-NF-1"])console.log(id,"matches criterion grammar:",re.test(id));
+'
+# cwd: .
+# exit: 0
+groundwork/src/http/cookies.js:19: let s = `${name}=${value}; Path=/; SameSite=Strict`;
+plan.md: - **Runtime:** Node ≥ 22.5, ESM. `node:http`, `node:sqlite` (WAL, `BEGIN IMMEDIATE` transactions), `node:crypto`. No npm dependencies, no lockfile. Same as the delivered Groundwork example, whose auth/session/CSRF/router/migration patterns 
+lib/gates.js:197: const CRITERION_ID = /^[A-Z][A-Z0-9]*-?\d+$/;
+RS-01 matches criterion grammar: true
+NFR1 matches criterion grammar: true
+RS-NF-1 matches criterion grammar: false

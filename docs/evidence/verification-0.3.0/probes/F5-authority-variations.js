@@ -131,18 +131,9 @@ try {
   step('F5.dlg.revoke', 'the user revokes it (ECCODE_TEST=1 stands in for the terminal)', 'ok', cli(ctx.dir, ['delegate', 'revoke', d2.id, '--actor', 'user', '--reason', 'User changed their mind'], { ECCODE_TEST: '1' }));
   const d3 = authority.grant(ctx.store, 'user', { to: 'orchestrator', action: 'gate.reopen', target: 'architecture', reason: 'User decided: proceed with the narrower scope' });
   step('F5.dlg.afterRevoke', 'the revoked delegation spent on its own target', 'refused', cli(ctx.dir, ['gate', 'reopen', 'design', '--actor', 'orchestrator', '--delegation', d2.id, '--resolution', 'using a revoked delegation']));
-  const t0 = Date.now() - 10 * 60000; // in the past, so the pinned clock never runs ahead of later real-time events
-  const d4 = (() => {
-    process.env.ECCODE_TEST = '1';
-    process.env.ECCODE_NOW = new Date(t0).toISOString();
-    try {
-      return authority.grant(ctx.store, 'user', { to: 'orchestrator', action: 'gate.reopen', target: 'architecture', expires: 1, reason: 'User decided: a one-minute window' });
-    } finally {
-      delete process.env.ECCODE_TEST;
-      delete process.env.ECCODE_NOW;
-    }
-  })();
-  step('F5.dlg.expired', 'a 1-minute delegation spent 2 minutes later (ECCODE_NOW pinned)', 'refused:USER_AUTH_REQUIRED', cli(ctx.dir, ['gate', 'reopen', 'architecture', '--actor', 'orchestrator', '--delegation', d4.id, '--resolution', 'too late for this delegation'], { ECCODE_TEST: '1', ECCODE_NOW: new Date(t0 + 2 * 60000).toISOString() }));
+  // The grant is written at the real time; only the (refused, nothing-appending) spend runs on a pinned clock two minutes ahead.
+  const d4 = authority.grant(ctx.store, 'user', { to: 'orchestrator', action: 'gate.reopen', target: 'architecture', expires: 1, reason: 'User decided: a one-minute window' });
+  step('F5.dlg.expired', 'a 1-minute delegation spent 2 minutes later (ECCODE_NOW pinned ahead for the spend only)', 'refused:USER_AUTH_REQUIRED', cli(ctx.dir, ['gate', 'reopen', 'architecture', '--actor', 'orchestrator', '--delegation', d4.id, '--resolution', 'too late for this delegation'], { ECCODE_TEST: '1', ECCODE_NOW: new Date(Date.now() + 2 * 60000).toISOString() }));
   step('F5.dlg.grantByOrchestrator', 'orchestrator grants itself a delegation', 'refused:USER_AUTH_REQUIRED', cli(ctx.dir, ['delegate', 'grant', '--actor', 'orchestrator', '--to', 'orchestrator', '--action', 'gate.reopen', '--reason', 'an agent minting its own authority']));
   step('F5.dlg.grantNoTTY', 'user grants a delegation without a terminal', 'refused:USER_AUTH_REQUIRED', cli(ctx.dir, ['delegate', 'grant', '--actor', 'user', '--to', 'orchestrator', '--action', 'gate.reopen', '--reason', 'the user said so, allegedly']));
   step('F5.dlg.legit', 'the valid delegation d3 reopens architecture (overblocking check)', 'ok', cli(ctx.dir, ['gate', 'reopen', 'architecture', '--actor', 'orchestrator', '--delegation', d3.id, '--resolution', 'User decided: proceed with the narrower scope']));

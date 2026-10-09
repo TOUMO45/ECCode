@@ -3,7 +3,7 @@
   "repo": "/home/user/ECCode",
   "node": "v22.22.0",
   "platform": "linux",
-  "startedAt": "2026-10-09T16:23:01.229Z",
+  "startedAt": "2026-10-09T16:26:45.181Z",
   "steps": [
     {
       "id": "F6.untouched",
@@ -209,9 +209,9 @@
           "verdict": "provisional",
           "quarantined": true,
           "reasons": [
-            "marked verified, but shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is c"
+            "marked verified, but shared record is not in the attestation index (/tmp/eccode-f6-shared-uzAWFP/attestations.jsonl is c"
           ],
-          "unverifiedReason": "shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is corrupt: line 1: expec",
+          "unverifiedReason": "shared record is not in the attestation index (/tmp/eccode-f6-shared-uzAWFP/attestations.jsonl is corrupt: line 1: expec",
           "search": {
             "quarantined": true,
             "weightedDown": true
@@ -230,9 +230,9 @@
           "verdict": "provisional",
           "quarantined": true,
           "reasons": [
-            "marked verified, but shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is c"
+            "marked verified, but shared record is not in the attestation index (/tmp/eccode-f6-shared-uzAWFP/attestations.jsonl is c"
           ],
-          "unverifiedReason": "shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is corrupt: line 1: expec",
+          "unverifiedReason": "shared record is not in the attestation index (/tmp/eccode-f6-shared-uzAWFP/attestations.jsonl is corrupt: line 1: expec",
           "search": {
             "quarantined": true,
             "weightedDown": true
@@ -251,9 +251,9 @@
           "verdict": "provisional",
           "quarantined": true,
           "reasons": [
-            "marked verified, but shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is c"
+            "marked verified, but shared record is not in the attestation index (/tmp/eccode-f6-shared-uzAWFP/attestations.jsonl is c"
           ],
-          "unverifiedReason": "shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is corrupt: line 1: expec",
+          "unverifiedReason": "shared record is not in the attestation index (/tmp/eccode-f6-shared-uzAWFP/attestations.jsonl is corrupt: line 1: expec",
           "search": {
             "quarantined": true,
             "weightedDown": true
@@ -263,11 +263,12 @@
     },
     {
       "id": "F6.index.forgedAppend",
-      "description": "a third line appended with a stale prevHash",
-      "expect": "ok",
-      "verdict": "UNEXPECTED",
+      "description": "a third line appended with a stale prevHash (the chain breaks AFTER the two good lines)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "by design: lines before the first broken link stay trusted (readAttestationIndex), so the two attested records still apply; memory audit reports the corrupt index (exit code recorded)",
       "observed": {
-        "ok": false,
+        "ok": true,
         "value": {
           "verdict": "applies",
           "quarantined": false,
@@ -276,7 +277,8 @@
           "search": {
             "quarantined": false,
             "weightedDown": false
-          }
+          },
+          "auditExit": 2
         }
       }
     },
@@ -340,7 +342,7 @@
       "observed": {
         "ok": false,
         "code": "SCOPE",
-        "message": "mem-sd-mv16cbq0-03c7e382 is a shared record and cannot be revised: shared records change only by promoting a new verified revision. Revise the project record it came from (eccode memory revise mem-d-mv16cbq0-03c7e382), have it verified (eccode memory review mem-d-mv16cbq0-03c7e382 --decision verify) and promote it again (eccode memory promote mem-d-mv16cbq0-03c7e382); the old shared record is then superseded. To judge it for one problem without changing it: eccode memory assess mem-sd-mv16cbq0-03c7e382.",
+        "message": "mem-sd-mv16h4jd-03070ca7 is a shared record and cannot be revised: shared records change only by promoting a new verified revision. Revise the project record it came from (eccode memory revise mem-d-mv16h4jd-03070ca7), have it verified (eccode memory review mem-d-mv16h4jd-03070ca7 --decision verify) and promote it again (eccode memory promote mem-d-mv16h4jd-03070ca7); the old shared record is then superseded. To judge it for one problem without changing it: eccode memory assess mem-sd-mv16h4jd-03070ca7.",
         "details": {}
       }
     },
@@ -352,7 +354,7 @@
       "observed": {
         "ok": false,
         "code": "SCOPE",
-        "message": "mem-sd-mv16cbq0-03c7e382 is a shared record and cannot be reviewed: shared records change only by promoting a new verified revision. Revise the project record it came from (eccode memory revise mem-d-mv16cbq0-03c7e382), have it verified (eccode memory review mem-d-mv16cbq0-03c7e382 --decision verify) and promote it again (eccode memory promote mem-d-mv16cbq0-03c7e382); the old shared record is then superseded. To judge it for one problem without changing it: eccode memory assess mem-sd-mv16cbq0-03c7e382.",
+        "message": "mem-sd-mv16h4jd-03070ca7 is a shared record and cannot be reviewed: shared records change only by promoting a new verified revision. Revise the project record it came from (eccode memory revise mem-d-mv16h4jd-03070ca7), have it verified (eccode memory review mem-d-mv16h4jd-03070ca7 --decision verify) and promote it again (eccode memory promote mem-d-mv16h4jd-03070ca7); the old shared record is then superseded. To judge it for one problem without changing it: eccode memory assess mem-sd-mv16h4jd-03070ca7.",
         "details": {}
       }
     },
@@ -368,7 +370,7 @@
       }
     }
   ],
-  "unexpected": 1,
-  "sharedDir": "/tmp/eccode-f6-shared-UB2arn",
-  "finishedAt": "2026-10-09T16:23:01.997Z"
+  "unexpected": 0,
+  "sharedDir": "/tmp/eccode-f6-shared-uzAWFP",
+  "finishedAt": "2026-10-09T16:26:46.133Z"
 }

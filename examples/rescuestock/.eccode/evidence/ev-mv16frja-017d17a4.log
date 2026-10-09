@@ -1,0 +1,13 @@
+$ node --experimental-sqlite -e '
+const s=require("node:sqlite");const d=new s.DatabaseSync(":memory:",{timeout:1000});
+console.log("node",process.version,"node:sqlite loads with --experimental-sqlite; DatabaseSync timeout option accepted:",typeof d.exec==="function");
+console.log("process.execArgv",JSON.stringify(process.execArgv));
+'
+# cwd: .
+# exit: 0
+node v22.22.0 node:sqlite loads with --experimental-sqlite; DatabaseSync timeout option accepted: true
+process.execArgv ["--experimental-sqlite","-e","\nconst s=require(\"node:sqlite\");const d=new s.DatabaseSync(\":memory:\",{timeout:1000});\nconsole.log(\"node\",process.version,\"node:sqlite loads with --experimental-sqlite; DatabaseSync timeout option accepted:\",typeof d.exec===\"function\");\nconsole.log(\"process.execArgv\",JSON.stringify(process.execArgv));\n"]
+
+[stderr]
+(node:1366) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

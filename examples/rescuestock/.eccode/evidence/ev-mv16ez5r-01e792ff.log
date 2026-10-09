@@ -1,0 +1,57 @@
+$ node -e '
+const S={A:{q:100,p:3000,f:1000,r:600,ok:1},B:{q:100,p:3600,f:800,r:630,ok:1},C:{q:200,p:4800,f:500,r:600,ok:0},D:{q:200,p:6800,f:1200,r:680,ok:1},E:{q:100,p:4500,f:1000,r:640,ok:1}};
+const N=200;
+function solve(o){const inv=o.inv,dl=o.deadline||660,bud=o.budget||12000,mp=o.maxP||2,ex=o.exclude||[];
+ const rej=[];const cand=[];
+ for(const k of Object.keys(S)){if(ex.includes(k)||!inv[k])continue;const s=S[k];
+  if(!s.ok){rej.push(k+":INCOMPATIBLE_LID_DIAMETER");continue}
+  if(s.r>dl){rej.push(k+":READY_AFTER_DEADLINE");continue}
+  cand.push(k)}
+ let best=null;const ms=cand.map(k=>Math.min(inv[k],Math.ceil(N/S[k].q)));
+ const cur=new Array(cand.length).fill(0);
+ (function rec(i){if(i===cand.length){let u=0,t=0,pk=0,r=0,lbl=[];
+   cand.forEach((k,j)=>{const m=cur[j];if(m){u+=m*S[k].q;t+=m*S[k].p+S[k].f;pk++;r=Math.max(r,S[k].r);lbl.push(k+(m>1?"x"+m:""))}});
+   if(u>=N&&pk<=mp&&t<=bud){const c=[t,pk,r,lbl.join("+")];if(!best||c[0]<best[0]||(c[0]===best[0]&&(c[1]<best[1]||(c[1]===best[1]&&c[2]<best[2]))))best=c}return}
+  for(let m=0;m<=ms[i];m++){cur[i]=m;rec(i+1)}})(0);
+ const hm=x=>Math.floor(x/60)+":"+String(x%60).padStart(2,"0");
+ return best?best[3]+" total="+best[0]+" pickups="+best[1]+" ready="+hm(best[2])+" rejections="+rej.join(","):"NO PLAN rejections="+rej.join(",")}
+const one={A:1,B:1,C:1,D:1,E:1};
+console.log("RS-06 base, 1 bundle each      :",solve({inv:one}));
+console.log("RS-09 without B                 :",solve({inv:one,exclude:["B"]}));
+console.log("RS-10 without B, budget 9000    :",solve({inv:one,exclude:["B"],budget:9000}));
+console.log("RS-11 max pickups 1             :",solve({inv:one,maxP:1}));
+console.log("-- inventory sensitivity --");
+console.log("A on_hand=2 base                :",solve({inv:{...one,A:2}}));
+console.log("A on_hand=2 max pickups 1       :",solve({inv:{...one,A:2},maxP:1}));
+console.log("B on_hand=2 base                :",solve({inv:{...one,B:2}}));
+console.log("E on_hand=2 max pickups 1       :",solve({inv:{...one,E:2},maxP:1}));
+const ok=[];for(let a=0;a<=2;a++)for(let b=0;b<=2;b++)for(let e=0;e<=2;e++){const inv={A:a,B:b,C:1,D:1,E:e};
+ const r6=solve({inv}).startsWith("A+B total=8400 pickups=2 ready=10:30");
+ const r9=solve({inv,exclude:["B"]}).startsWith("A+E total=9500");
+ const r10=solve({inv,exclude:["B"],budget:9000}).startsWith("NO PLAN");
+ const r11=solve({inv,maxP:1}).startsWith("NO PLAN");
+ if(r6&&r9&&r10&&r11)ok.push("A="+a+",B="+b+",E="+e)}
+console.log("inventories (A,B,E in 0..2) satisfying RS-06,09,10,11 together:",ok.join(" ; "));
+console.log("-- RS-10 suggestion check (without B, budget 9000) --");
+console.log("raise budget to 9500            :",solve({inv:one,exclude:["B"],budget:9500}));
+console.log("deadline 11:20                  :",solve({inv:one,exclude:["B"],budget:9000,deadline:680}));
+console.log("max pickups 3                   :",solve({inv:one,exclude:["B"],budget:9000,maxP:3}));
+console.log("max pickups 5                   :",solve({inv:one,exclude:["B"],budget:9000,maxP:5}));
+'
+# cwd: .
+# exit: 0
+RS-06 base, 1 bundle each      : A+B total=8400 pickups=2 ready=10:30 rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
+RS-09 without B                 : A+E total=9500 pickups=2 ready=10:40 rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
+RS-10 without B, budget 9000    : NO PLAN rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
+RS-11 max pickups 1             : NO PLAN rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
+-- inventory sensitivity --
+A on_hand=2 base                : Ax2 total=7000 pickups=1 ready=10:00 rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
+A on_hand=2 max pickups 1       : Ax2 total=7000 pickups=1 ready=10:00 rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
+B on_hand=2 base                : Bx2 total=8000 pickups=1 ready=10:30 rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
+E on_hand=2 max pickups 1       : Ex2 total=10000 pickups=1 ready=10:40 rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
+inventories (A,B,E in 0..2) satisfying RS-06,09,10,11 together: A=1,B=1,E=1
+-- RS-10 suggestion check (without B, budget 9000) --
+raise budget to 9500            : A+E total=9500 pickups=2 ready=10:40 rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
+deadline 11:20                  : D total=8000 pickups=1 ready=11:20 rejections=C:INCOMPATIBLE_LID_DIAMETER
+max pickups 3                   : NO PLAN rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
+max pickups 5                   : NO PLAN rejections=C:INCOMPATIBLE_LID_DIAMETER,D:READY_AFTER_DEADLINE
