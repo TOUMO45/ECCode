@@ -1,6 +1,6 @@
 {
-  "seq": 214,
-  "lastHash": "b01672093253ae79132cbea5051a0c636e4c7467de1d689ffcfd6d3e27dd3487",
+  "seq": 221,
+  "lastHash": "a625d1cd114c90de326d2f48a618b0051facd6f998781145ef7ecdd77e02c5e8",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -890,37 +890,55 @@
         "command": "ls test/helpers/net-guard.js test/helpers/node-proc.js test/helpers/server-proc.js test/helpers/app-harness.js test/unit/helpers/net-guard.test.js test/integration/start-health.test.js test/integration/start-old-node.test.js test/scan/package.test.js test/api/health-config.test.js scripts/report-p95.js scripts/clean-checkout.sh >/dev/null && npm test && sh scripts/clean-checkout.sh",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "test-engineer",
-        "at": "2026-10-09T21:06:50.412Z",
-        "baseCommit": "a95cb893e7d531c0ff0d058ec9bc4c885ade1ea6",
-        "runId": null,
-        "dirtyAtClaim": {
-          "README.md": "6e66930d2d9b2919acde4bcbe2237712d7644cf06d7504a884a69306e3d11017",
-          "test/scan/env-example.test.js": "62a6d0690975862b6105622ad5c0e0e2da4d15198a8008f8246e28110e78f8aa"
-        },
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.829,
-            "matched": 33,
-            "priority": 46.5,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "test-engineer",
           "at": "2026-10-09T21:06:50.412Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "test-engineer",
+          "at": "2026-10-09T21:19:22.530Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "test-engineer",
+      "handoffId": "ho-mv1gxflu-01a9c110",
+      "filesChanged": [
+        "scripts/clean-checkout.sh",
+        "scripts/report-p95.js",
+        "scripts/reset-test-out.js",
+        "test/api/health-config.test.js",
+        "test/helpers/app-harness.js",
+        "test/helpers/fixtures.js",
+        "test/helpers/net-guard.js",
+        "test/helpers/node-proc.js",
+        "test/helpers/playwright.js",
+        "test/helpers/print-proc.js",
+        "test/helpers/server-proc.js",
+        "test/integration/start-health.test.js",
+        "test/integration/start-old-node.test.js",
+        "test/scan/package.test.js",
+        "test/unit/helpers/app-harness.test.js",
+        "test/unit/helpers/fixtures.test.js",
+        "test/unit/helpers/net-guard.test.js",
+        "test/unit/helpers/node-proc.test.js",
+        "test/unit/helpers/playwright.test.js",
+        "test/unit/helpers/report-p95.test.js",
+        "test/unit/helpers/server-proc.test.js"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "Applies-when condition not met: this task builds test helpers and scripts, not a hook or guard that maps file writes to a project record. The only related point, taking the project root from the script's own location instead of the outer repository, is built into scripts/clean-checkout.sh and exercised by the passing clean-checkout run.",
+          "basis": "reason"
+        }
+      ]
     },
     "c1-auth-rbac": {
       "id": "c1-auth-rbac",
@@ -3937,6 +3955,46 @@
       "task": "b4-env-readme",
       "recordedBy": "devops-engineer",
       "at": "2026-10-09T21:05:38.651Z"
+    },
+    "ev-mv1gppzk-014ca419": {
+      "id": "ev-mv1gppzk-014ca419",
+      "kind": "command",
+      "label": "b3 verification (failing state: start-health, start-old-node, package scan, health-config and the two scripts do not exist yet)",
+      "command": "ls test/helpers/net-guard.js test/helpers/node-proc.js test/helpers/server-proc.js test/helpers/app-harness.js test/unit/helpers/net-guard.test.js test/integration/start-health.test.js test/integration/start-old-node.test.js test/scan/package.test.js test/api/health-config.test.js scripts/report-p95.js scripts/clean-checkout.sh >/dev/null && npm test && sh scripts/clean-checkout.sh",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 2,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 9,
+      "log": ".eccode/evidence/ev-mv1gppzk-014ca419.log",
+      "logSha256": "33d6dd248eb2ab34ff3100081c74b4f82f0358eee244098ccdaed1a2a3e40e7d",
+      "logFileSha256": "a8b5c573b7e24e68a271e5bd82ebd9d2bfa19ec23eae951e462f74b1f6eaaacb",
+      "outputTail": "\n[stderr]\nls: cannot access 'test/integration/start-health.test.js': No such file or directory\nls: cannot access 'test/integration/start-old-node.test.js': No such file or directory\nls: cannot access 'test/scan/package.test.js': No such file or directory\nls: cannot access 'test/api/health-config.test.js': No such file or directory\nls: cannot access 'scripts/clean-checkout.sh': No such file or directory\n",
+      "gate": null,
+      "task": "b3-test-harness",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-09T21:13:22.719Z"
+    },
+    "ev-mv1gwcdw-01e502bd": {
+      "id": "ev-mv1gwcdw-01e502bd",
+      "kind": "command",
+      "label": "b3 verification",
+      "command": "ls test/helpers/net-guard.js test/helpers/node-proc.js test/helpers/server-proc.js test/helpers/app-harness.js test/unit/helpers/net-guard.test.js test/integration/start-health.test.js test/integration/start-old-node.test.js test/scan/package.test.js test/api/health-config.test.js scripts/report-p95.js scripts/clean-checkout.sh >/dev/null && npm test && sh scripts/clean-checkout.sh",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 32239,
+      "log": ".eccode/evidence/ev-mv1gwcdw-01e502bd.log",
+      "logSha256": "59aaee24abdb4197fe7497dae530b14f89e82e6041880a6e472b8a588e08c06d",
+      "logFileSha256": "695c22003ca611836920e7279329145757ab042b94b1bb61c5beb46571f42a28",
+      "outputTail": "  type: 'test'\n  ...\n1..355\n# tests 364\n# suites 3\n# pass 364\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 14531.432547\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 18 requests, p50 2.3 ms, p95 15.1 ms (limit: p95 < 300 ms)\nNFR5 suite time: 14.7 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n\n==> clean-checkout: npm start, then GET /api/health\nGET /api/health -> 200 ok (port 41005)\n\n==> clean-checkout: ok\nclean-checkout: npm install, npm test and npm start passed in an empty copy\n",
+      "gate": null,
+      "task": "b3-test-harness",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-09T21:18:31.669Z"
     }
   },
   "reviews": {
@@ -8285,6 +8343,89 @@
       "id": "ho-mv1gg814-01ae09b4",
       "recordedBy": "devops-engineer",
       "at": "2026-10-09T21:05:59.627Z"
+    },
+    "ho-mv1gxflu-01a9c110": {
+      "from": "test-engineer",
+      "to": "delivery-lead",
+      "task": "b3-test-harness",
+      "objective": "Offline test harness for RescueStock: net guard, node-proc, server-proc, app-harness, fixtures and playwright helpers, the p95/suite-time report, the start and old-Node tests, the package scan, the health/config contract test and the clean-checkout script (phase b-foundation, last task).",
+      "context": "Built against spec revision 3 (Testing Strategy: Layout, Commands, Integration start-health and start-old-node, Timing; Deployment: Node floor, ARCH-24) and brief NFR1/NFR5. Depends on b1 (src/app.js, src/index.js, src/main.js, config, routes health/config, scripts/check-node.cjs, scripts/seed.js), b2 (fixture file) and b4 (.env.example, README). package.json (b1) was not edited; its scripts already call the files built here (pretest reset-test-out.js, test --import net-guard.js, posttest report-p95.js).",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#testing-strategy",
+        ".eccode/artifacts/design/spec.md#deployment",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria",
+        ".eccode/handoffs/ho-mv1gazew-01706543.json",
+        ".eccode/handoffs/ho-mv1gcn88-01fd3ee4.json",
+        ".eccode/handoffs/ho-mv1gg814-01ae09b4.json"
+      ],
+      "dependencies": [
+        "b1-foundation-core",
+        "b2-domain",
+        "b4-env-readme"
+      ],
+      "expectedOutput": "test/helpers/{net-guard,node-proc,server-proc,app-harness,fixtures,playwright}.js; scripts/{report-p95,reset-test-out}.js and clean-checkout.sh; start-health, start-old-node, package scan, health-config and net-guard self-tests; npm test passing offline with the guard.",
+      "acceptanceCriteria": [
+        "net-guard.js patches net.connect, net.Socket.prototype.connect, tls.connect, dns.lookup and globalThis.fetch; any non-loopback host throws NETWORK_BLOCKED and fails the test (self-test included)",
+        "node-proc.js passes the allow-listed execArgv and merges --experimental-sqlite --disable-warning=ExperimentalWarning into NODE_OPTIONS (keeping an existing value) when Node < 22.13 (ARCH-24); server-proc.js starts src/index.js with PORT=0, a temp RS_DB_PATH, fake adapters, RS_TEST_OFFLINE=1, RS_TEST_HOOKS=1 and reads the listening port from stdout; app-harness.js runs createApp in-process with a fixed clock and records request latency to test/.out/latency.jsonl",
+        "NFR1: test/scan/package.test.js checks dependencies, devDependencies, engines and the check-node prefix of every flagged script; start-old-node.test.js runs the exact start string through /bin/sh -c with /opt/node20/bin and /opt/node21/bin (or RS_OLD_NODE_BINS) first on PATH and asserts exit != 0 and stderr matching 'needs Node >= 22.13 (found'; start-health.test.js spawns the start equivalent and gets /api/health 200",
+        "scripts/clean-checkout.sh copies the project's git-tracked and unignored files (excluding .eccode/) into an empty temp directory, runs npm install, npm test and npm start there, and asserts GET /api/health 200; it uses only variable names, never secrets",
+        "scripts/report-p95.js reads test/.out/latency.jsonl, fails at p95 >= 300 ms and at a suite time >= 5 min from the pretest timestamp",
+        "npm test passes offline with the net guard, launches no browser, and its output names each test with its criterion id"
+      ],
+      "completedWork": "net-guard.js patches net.connect/createConnection, Socket.prototype.connect, tls.connect, dns.lookup, dns.promises.lookup and fetch (strings, URLs, Requests); loopback = localhost names, 127/8, ::1, ::ffff:127.x; unix paths and existing sockets pass. A blocked call throws NETWORK_BLOCKED at the call site, is recorded, and a process that exits 0 with an untaken record is forced to exit 1, so a swallowed attempt still fails the test file (takeBlocked() acknowledges deliberate blocks; setQuiet silences stderr for the self-test). Observed: node --test children inherit '--import ./test/helpers/net-guard.js' and also '--test-concurrency=4', so node-proc.js keeps only --experimental-sqlite, --disable-warning=* and the net-guard import (normalised to an absolute path), always adds the guard, drops NODE_TEST_CONTEXT, and merges the sqlite flags into NODE_OPTIONS (existing value kept, no duplicates) when the version is < 22.13. server-proc.js (startServer) runs src/index.js through node-proc with PORT=0, HOST=127.0.0.1, temp RS_DB_PATH/RS_UPLOAD_DIR, RS_PAYMENT_PROVIDER=fake, RS_MODEL_PROVIDER=fake, RS_TEST_OFFLINE=1, RS_TEST_HOOKS=1, RS_DEMO_DATE, RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY=1000, RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER=1; it clears inherited RS_*/PORT/HOST/ANTHROPIC_* names, reads the port from the listening JSON line, exposes request/stop/kill/cleanup, and reports an early exit with stderr instead of hanging. app-harness.js runs createApp in-process (fixed clock 2026-10-20 09:00 Amman, temp SQLite, fake adapters, optional RS-FIX-1 seed with a test-only demo password) and appends one JSON line per request to test/.out/latency.jsonl. fixtures.js: RS-FIX-1 loader, demo users, a cookie/CSRF client with signIn/register/signOut per the Authentication contract. playwright.js: resolvePlaywright (local @playwright/test, then global via RS_GLOBAL_NODE_MODULES, NODE_PATH, <node prefix>/lib/node_modules) and a launchChromium that npm test never calls. scripts/reset-test-out.js empties test/.out and writes suite-start.json; scripts/report-p95.js computes nearest-rank p95, fails at >= 300 ms, at >= 300 s since the pretest timestamp, and on missing/empty/malformed data. test/scan/package.test.js (rules as functions, also run against broken objects), start-old-node.test.js (runs the exact start and seed strings under /bin/sh -c on the real Node 20.20.0 and 21.7.3, asserts exit != 0, the floor message with the found version, empty stdout; skips with a reason when no older Node exists), start-health.test.js (gate, then src/index.js with the flags parsed from the start script; 200 {status:ok}, requestId equals X-Request-Id, 421 for a foreign Host, SIGTERM exits 0), test/api/health-config.test.js (200 shapes, requestId rules, 405, 421, 503 DB_BUSY with Retry-After 1 on a closed database, /api/config key set and types, sentinel-value and key-name scans for secrets, client ids and merchant ids under a Sandbox configuration). Unit tests for every helper under test/unit/helpers. scripts/clean-checkout.sh copies tracked plus unignored files (git ls-files --cached --others --exclude-standard, minus .eccode/, node_modules, data, test/.out) into mktemp, runs npm install (registry reachable here: 'added 3 packages'), npm test, and npm start with PORT=0 reading the port from the listening line, asserts GET /api/health = '200 ok', stops the process group, removes the temp dir; it unsets RS_*/PORT/HOST/key variables by name and prints no environment. Results: npm test 364 tests, 364 pass, 0 fail, 0 skipped; p95 15.1 ms over 18 recorded requests; suite 14.7 s; clean-checkout exit 0.",
+      "filesChanged": [
+        "scripts/clean-checkout.sh",
+        "scripts/report-p95.js",
+        "scripts/reset-test-out.js",
+        "test/api/health-config.test.js",
+        "test/helpers/app-harness.js",
+        "test/helpers/fixtures.js",
+        "test/helpers/net-guard.js",
+        "test/helpers/node-proc.js",
+        "test/helpers/playwright.js",
+        "test/helpers/print-proc.js",
+        "test/helpers/server-proc.js",
+        "test/integration/start-health.test.js",
+        "test/integration/start-old-node.test.js",
+        "test/scan/package.test.js",
+        "test/unit/helpers/app-harness.test.js",
+        "test/unit/helpers/fixtures.test.js",
+        "test/unit/helpers/net-guard.test.js",
+        "test/unit/helpers/node-proc.test.js",
+        "test/unit/helpers/playwright.test.js",
+        "test/unit/helpers/report-p95.test.js",
+        "test/unit/helpers/server-proc.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv1gwcdw-01e502bd",
+        "ev:ev-mv1gppzk-014ca419"
+      ],
+      "remainingIssues": [
+        "Criterion ids in test names: every test written in this task is named with its id (NFR1, NFR3, NFR4, NFR5, NFR6, RS-34), but about 113 of the 367 ok lines in the npm test output come from b1/b2 files and carry no criterion id (for example test/unit/db/*.test.js, parts of test/unit/config/*.test.js, test/unit/domain/*). The sixth acceptance criterion is therefore met for b3's tests, not for the whole suite; renaming those tests is outside b3's file ownership. The phase review should route it to b1/b2, and a later scan test could enforce the prefix once they are renamed.",
+        "The failing-state run (ev:ev-mv1gppzk-014ca419) was recorded after the net guard, node-proc, server-proc, app-harness, fixtures, playwright and report/reset scripts already existed; it fails on the six files that did not exist yet (start-health, start-old-node, package scan, health-config, clean-checkout.sh), not on an empty tree.",
+        "The Node 22.5-22.12 branch of node-proc (NODE_OPTIONS merge) is verified by simulating the version (unit tests, plus a real child started with version 22.12.0 that receives the merged NODE_OPTIONS next to an existing value); no real Node 22.5-22.12 exists on this host. start-old-node ran against real Node 20.20.0 and 21.7.3.",
+        "start-health.test.js mirrors the start script (gate, then node <flags> src/index.js with PORT=0) rather than running 'npm start' on a fixed port; the literal 'npm start' is exercised only by scripts/clean-checkout.sh.",
+        "scripts/clean-checkout.sh does not run 'npm run seed' (a README step): the seed prints generated demo credentials to the terminal and the criterion lists only install, test and start. It needs git, npm, node and the npm registry; if the registry is unreachable it stops with 'npm install failed' instead of skipping the step.",
+        "Latency samples exist only for requests made through app-harness.request (18 now, from health-config and the harness unit tests, which use the default recording). Later API test files must use the harness client for NFR5's p95 to cover them; report-p95.js fails when there are no samples.",
+        "fixtures.js signIn/register follow the Authentication contract (GET /api/auth/csrf, POST /api/auth/signin|register with X-CSRF-Token, cookie rs_sid) and are tested against a scripted stand-in only; the auth routes (task c1) do not exist yet, so the first c1 API test must confirm the helper against the real routes.",
+        "The spec layout also lists test/helpers/paypal-stub.js and webhook-signer.js; they are not in b3's outputs and belong with the payments tasks.",
+        "A deliberate network block in a future test must call takeBlocked() (see test/unit/helpers/net-guard.test.js); otherwise the guard fails the test file at exit, by design.",
+        "No defect found in package.json: the scripts pretest/test/posttest that npm test needs are present and correct, so none is routed to the phase review. No defect found in b1/b2/b4 code during this task; /api/health and /api/config, the 405/421/503 paths, check-node.cjs and .env.example behaved as specified."
+      ],
+      "nextAction": "delivery-lead: dispatch the independent phase review for b-foundation (b1, b2, b3, b4); route the missing criterion ids in b1/b2 test names to their owners; backend-engineer (c1) to run the first API test with createClient().signIn against the real auth routes.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "Applies-when condition not met: this task builds test helpers and scripts, not a hook or guard that maps file writes to a project record. The only related point, taking the project root from the script's own location instead of the outer repository, is built into scripts/clean-checkout.sh and exercised by the passing clean-checkout run."
+        }
+      ],
+      "id": "ho-mv1gxflu-01a9c110",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-09T21:19:22.571Z"
     }
   },
   "runs": {
@@ -8594,6 +8735,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-09T21:06:16.658Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T21:20:15.502Z",
+      "durationMinutes": 13.98,
+      "costUsd": null,
+      "tokens": 183851,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv1gykma-017e4e84": {
+      "id": "run-mv1gykma-017e4e84",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T21:20:15.613Z",
       "status": "running",
       "attempt": 1
     }
@@ -8852,11 +9008,18 @@
       "by": "orchestrator"
     }
   },
-  "citations": [],
+  "citations": [
+    {
+      "lesson": "mem-sd-mv1audrd-013b7102",
+      "context": "task b3-test-harness: reviewed; clean-checkout.sh resolves the project root from its own location, not from the outer repository",
+      "at": "2026-10-09T21:18:36.581Z",
+      "by": "test-engineer"
+    }
+  ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 249.75,
-    "tokens": 3389526
+    "runtimeMinutes": 263.73,
+    "tokens": 3573377
   },
   "delivery": null
 }
