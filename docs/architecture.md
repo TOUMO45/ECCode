@@ -80,7 +80,7 @@ pending → in_progress → submitted → approved
 - a phase approval while a phase task is not done, or a plan approval whose plan was not imported from that submission;
 - a rejection carries no blocking/major finding.
 
-Evidence ids are own-property lookups with a fixed format (`ev:ev-…`), and `ev:` file evidence is re-hashed when cited. Phase submissions always pin the files the phase's tasks changed (except deleted files and drafts), whatever explicit artifacts are added.
+Evidence ids are own-property lookups with a fixed format (`ev:ev-…`), and `ev:` file evidence is re-hashed when cited. Phase submissions always pin the files the phase's tasks changed (except deleted files and drafts), whatever explicit artifacts are added; the set is the union of every completion the task recorded, not only the latest handoff, so a rework after `task reset` that lists only the files it touched does not shrink the review set.
 
 ## Task model
 
