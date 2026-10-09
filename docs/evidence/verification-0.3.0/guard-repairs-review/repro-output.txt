@@ -1,0 +1,45 @@
+== F1. main session: clobber redirect onto the record (expected deny)
+allow
+allow
+   (same target with a plain > redirect, for contrast)
+deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+== F2. main session: a record created inside the record unprotects the record for Write/Edit
+   before:
+deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+   guard's answer to the planting command:
+allow
+   planted: artifacts config.json delivery events.jsonl evidence handoffs memory reviews state.json 
+   after (expected deny):
+allow
+allow
+allow
+allow
+== F3. reviewer subagent: wrapper forms the SHELL_WRAPPER regex misses (expected deny)
+allow
+allow
+allow
+allow
+allow
+allow
+allow
+allow
+allow
+   (the forms the commit covers, for contrast)
+deny: The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, 
+deny: The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, 
+== F4. identity gate skipped when the raw text does not contain 'eccode' (expected deny)
+allow
+allow
+allow
+== F5. NEW-9 through variable indirection of the name (expected deny)
+allow
+allow
+== F6. pre-existing: main session replaces the whole record directory (expected deny)
+allow
+allow
+== F7. quoted bar: bash writes a file named | in the cwd, the guard judges the next word
+deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/rev
+   (what bash does with it)
+1
+== F8. false positive: an unrelated function next to a comment that mentions the CLI (expected allow)
+deny: The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, 

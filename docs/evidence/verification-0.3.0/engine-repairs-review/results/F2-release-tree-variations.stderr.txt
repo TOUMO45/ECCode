@@ -1,0 +1,43 @@
+[ok] F2.rename.gitView what git shows the engine after a staged git mv: diff --name-only folds the rename into the new path -> ok
+[ok] F2.rename.newOnly handoff declares only the new path of a git mv (the old path is gone from the tree) -> INVALID_HANDOFF: Task completion rejected:
+[ok] F2.rename.both handoff declares both paths (old deleted, new added) -> ok
+[ok] F2.rename.phasePins phase submission pins the files that exist (a deleted path is not an artifact) -> ok
+[ok] F2.rename.unreviewed unreviewedChanges after a reviewed rename -> ok
+[ok] F2.rename.deliver delivery after the rename (new path pinned by the phase; the old path was never declared) -> ok
+[ok] F2.delete.undeclared owned file deleted during the claim but not declared -> INVALID_HANDOFF: Task completion rejected:
+[ok] F2.delete.declared deletion declared in the handoff -> ok
+[ok] F2.delete.phase phase approval with a deleted file among the task changes -> ok
+[ok] F2.delete.unreviewed unreviewedChanges: the reviewed deletion is not reported -> ok
+[ok] F2.delete.deliver delivery after a reviewed deletion (overblocking check) -> ok
+[ok] F2.userDirty.claim claim with an uncommitted owned file written by the user -> DIRTY_OWNERSHIP: Task api owns files that are already changed in the working tree: src/server/pre.js. Commit or revert them before claiming (git add + git commit, git checkout -
+[ok] F2.userCommitted.claim claim after the user committed it -> ok
+[ok] F2.userCommitted.complete completion declares only the task's own change (pre.js is base) -> ok
+[ok] F2.ignore.unreviewed dist/** ignored, src/server/extra.js reported -> ok
+[ok] F2.ignore.deliver delivery with an untracked unreviewed file -> DELIVERY_BLOCKED: Delivery refused:
+[ok] F2.ignore.deliverClean delivery once the file is removed (dist/ stays, ignored) -> ok
+[ok] F2.between.beforeVerification unreviewedChanges before the verification gate is approved -> ok
+/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/repair/lib/gates.js:564
+    throw err;
+    ^
+
+EccodeError: Review rejected by gate rules:
+- the release tree holds changes no review covers, not pinned by submission sub-mv17tme9-28dc1e90: src/server/backdoor.js added after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved
+    at /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/repair/lib/gates.js:556:33
+    at /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/repair/lib/store.js:206:29
+    at withLock (/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/repair/lib/util.js:102:12)
+    at Store.commit (/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/repair/lib/store.js:203:12)
+    at Object.recordReview (/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/repair/lib/gates.js:554:18)
+    at verify (/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/review-probes/F2-release-tree-variations.js:39:9)
+    at Object.<anonymous> (/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/review-probes/F2-release-tree-variations.js:134:3)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32) {
+  code: 'REVIEW_REJECTED',
+  details: {
+    reasons: [
+      'the release tree holds changes no review covers, not pinned by submission sub-mv17tme9-28dc1e90: src/server/backdoor.js added after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved'
+    ]
+  }
+}
+
+Node.js v22.22.0

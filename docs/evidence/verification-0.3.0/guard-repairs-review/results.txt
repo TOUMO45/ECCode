@@ -1,0 +1,633 @@
+# Guard probes against /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/guardfix/scripts/hooks/guard.js
+# node v22.22.0; 313 probes; 32 mismatches with the reviewer's expectation
+
+section | id | role | tool | decision | expect | ok | note | reason
+NEW-6 | clobber | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-nospace | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-fd1 | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-fd2 | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-append | technical-reviewer | Bash | deny | deny | ok | bash syntax error; over-deny harmless | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-both | technical-reviewer | Bash | deny | deny | ok | bash syntax error; over-deny harmless | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-quoted-target | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-dquoted-target | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-tab | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-sh-c | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-bash-c-dq | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-then-pipe | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-after-pipe | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | tee | technical-reviewer | Bash | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | clobber-impl-noclaim | backend-engineer | Bash | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NEW-6 | clobber-record | backend-engineer | Bash | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NEW-6 | clobber-record-main | main | Bash | allow | deny | MISMATCH |  | 
+NEW-6 | clobber-draft-reviewer | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-6 | clobber-draft-generic | backend-engineer | Bash | allow | allow | ok |  | 
+NEW-6 | pipe-plain | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-6 | pipe-nospace | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-6 | or-list | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-6 | pipe-stderr | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-6 | dup-then-pipe | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-6 | stderr-dup-pipe | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-6 | devnull-pipe | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-6 | quoted-bar-reviewer | technical-reviewer | Bash | deny | deny | ok | over-deny: bash writes ./| and src/server.js is only an argument | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | escaped-bar-reviewer | technical-reviewer | Bash | deny | deny | ok | over-deny, same | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NEW-6 | quoted-bar-impl | backend-engineer | Bash | allow | deny | MISMATCH | bash writes <cwd>/| (outside src/server/**); guard binds the next word | 
+NEW-6 | impl-inside-claim | backend-engineer | Bash | allow | allow | ok |  | 
+NEW-6 | impl-outside-claim | backend-engineer | Bash | deny | deny | ok |  | src/web/a.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than 
+NESTED | draft-write-outer-cwd | technical-reviewer | Write | allow | allow | ok |  | 
+NESTED | draft-edit-outer-cwd | architecture-reviewer | Edit | allow | allow | ok |  | 
+NESTED | artifact-write-outer-cwd | product-architect | Write | allow | allow | ok |  | 
+NESTED | artifact-write-reviewer-outer-cwd | technical-reviewer | Write | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NESTED | draft-redirect-outer-cwd | technical-reviewer | Bash | allow | allow | ok |  | 
+NESTED | draft-clobber-outer-cwd | technical-reviewer | Bash | allow | allow | ok |  | 
+NESTED | draft-cp-outer-cwd | technical-reviewer | Bash | allow | allow | ok |  | 
+NESTED | draft-tee-outer-cwd | technical-reviewer | Bash | allow | allow | ok |  | 
+NESTED | artifact-redirect-outer-cwd | technical-designer | Bash | allow | allow | ok |  | 
+NESTED | inner-record-write-outer-cwd-main-state.json | main | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-main-state.json | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-main-events.jsonl | main | Write | deny | deny | ok |  | .eccode/events.jsonl is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-main-events.jsonl | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-main-config.json | main | Write | deny | deny | ok |  | .eccode/config.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-main-config.json | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-main-reviews/architecture-1.json | main | Write | deny | deny | ok |  | .eccode/reviews/architecture-1.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-main-reviews/architecture-1.json | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-main-memory/m.json | main | Write | deny | deny | ok |  | .eccode/memory/m.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-main-memory/m.json | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-main-evidence/e.log | main | Write | deny | deny | ok |  | .eccode/evidence/e.log is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-main-evidence/e.log | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-cp-outer-cwd-main | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-abs-outer-cwd-main | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-technical-reviewer-state.json | technical-reviewer | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-technical-reviewer-state.json | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-technical-reviewer-events.jsonl | technical-reviewer | Write | deny | deny | ok |  | .eccode/events.jsonl is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-technical-reviewer-events.jsonl | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-technical-reviewer-config.json | technical-reviewer | Write | deny | deny | ok |  | .eccode/config.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-technical-reviewer-config.json | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-technical-reviewer-reviews/architecture-1.json | technical-reviewer | Write | deny | deny | ok |  | .eccode/reviews/architecture-1.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-technical-reviewer-reviews/architecture-1.json | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-technical-reviewer-memory/m.json | technical-reviewer | Write | deny | deny | ok |  | .eccode/memory/m.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-technical-reviewer-memory/m.json | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-technical-reviewer-evidence/e.log | technical-reviewer | Write | deny | deny | ok |  | .eccode/evidence/e.log is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-technical-reviewer-evidence/e.log | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-cp-outer-cwd-technical-reviewer | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-abs-outer-cwd-technical-reviewer | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-backend-engineer-state.json | backend-engineer | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-backend-engineer-state.json | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-backend-engineer-events.jsonl | backend-engineer | Write | deny | deny | ok |  | .eccode/events.jsonl is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-backend-engineer-events.jsonl | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-backend-engineer-config.json | backend-engineer | Write | deny | deny | ok |  | .eccode/config.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-backend-engineer-config.json | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-backend-engineer-reviews/architecture-1.json | backend-engineer | Write | deny | deny | ok |  | .eccode/reviews/architecture-1.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-backend-engineer-reviews/architecture-1.json | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-backend-engineer-memory/m.json | backend-engineer | Write | deny | deny | ok |  | .eccode/memory/m.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-backend-engineer-memory/m.json | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-backend-engineer-evidence/e.log | backend-engineer | Write | deny | deny | ok |  | .eccode/evidence/e.log is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-backend-engineer-evidence/e.log | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-cp-outer-cwd-backend-engineer | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-abs-outer-cwd-backend-engineer | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-product-architect-state.json | product-architect | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-product-architect-state.json | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-product-architect-events.jsonl | product-architect | Write | deny | deny | ok |  | .eccode/events.jsonl is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-product-architect-events.jsonl | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-product-architect-config.json | product-architect | Write | deny | deny | ok |  | .eccode/config.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-product-architect-config.json | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-product-architect-reviews/architecture-1.json | product-architect | Write | deny | deny | ok |  | .eccode/reviews/architecture-1.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-product-architect-reviews/architecture-1.json | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-product-architect-memory/m.json | product-architect | Write | deny | deny | ok |  | .eccode/memory/m.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-product-architect-memory/m.json | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-outer-cwd-product-architect-evidence/e.log | product-architect | Write | deny | deny | ok |  | .eccode/evidence/e.log is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-outer-cwd-product-architect-evidence/e.log | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-cp-outer-cwd-product-architect | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-abs-outer-cwd-product-architect | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-git-checkout-record-outer-cwd | main | Bash | deny | deny | ok |  | git checkout on .eccode/ can roll back or delete the ECCode record (.eccode/). Restore or discard specific project files by path instead (e.
+NESTED | draft-write-inner-cwd | technical-reviewer | Write | allow | allow | ok |  | 
+NESTED | draft-edit-inner-cwd | architecture-reviewer | Edit | allow | allow | ok |  | 
+NESTED | artifact-write-inner-cwd | product-architect | Write | allow | allow | ok |  | 
+NESTED | artifact-write-reviewer-inner-cwd | technical-reviewer | Write | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NESTED | draft-redirect-inner-cwd | technical-reviewer | Bash | allow | allow | ok |  | 
+NESTED | draft-clobber-inner-cwd | technical-reviewer | Bash | allow | allow | ok |  | 
+NESTED | draft-cp-inner-cwd | technical-reviewer | Bash | allow | allow | ok |  | 
+NESTED | draft-tee-inner-cwd | technical-reviewer | Bash | allow | allow | ok |  | 
+NESTED | artifact-redirect-inner-cwd | technical-designer | Bash | allow | allow | ok |  | 
+NESTED | inner-record-write-inner-cwd-main-state.json | main | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-main-state.json | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-main-events.jsonl | main | Write | deny | deny | ok |  | .eccode/events.jsonl is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-main-events.jsonl | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-main-config.json | main | Write | deny | deny | ok |  | .eccode/config.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-main-config.json | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-main-reviews/architecture-1.json | main | Write | deny | deny | ok |  | .eccode/reviews/architecture-1.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-main-reviews/architecture-1.json | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-main-memory/m.json | main | Write | deny | deny | ok |  | .eccode/memory/m.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-main-memory/m.json | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-main-evidence/e.log | main | Write | deny | deny | ok |  | .eccode/evidence/e.log is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-main-evidence/e.log | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-cp-inner-cwd-main | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-abs-inner-cwd-main | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-technical-reviewer-state.json | technical-reviewer | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-technical-reviewer-state.json | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-technical-reviewer-events.jsonl | technical-reviewer | Write | deny | deny | ok |  | .eccode/events.jsonl is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-technical-reviewer-events.jsonl | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-technical-reviewer-config.json | technical-reviewer | Write | deny | deny | ok |  | .eccode/config.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-technical-reviewer-config.json | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-technical-reviewer-reviews/architecture-1.json | technical-reviewer | Write | deny | deny | ok |  | .eccode/reviews/architecture-1.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-technical-reviewer-reviews/architecture-1.json | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-technical-reviewer-memory/m.json | technical-reviewer | Write | deny | deny | ok |  | .eccode/memory/m.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-technical-reviewer-memory/m.json | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-technical-reviewer-evidence/e.log | technical-reviewer | Write | deny | deny | ok |  | .eccode/evidence/e.log is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-technical-reviewer-evidence/e.log | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-cp-inner-cwd-technical-reviewer | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-abs-inner-cwd-technical-reviewer | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-backend-engineer-state.json | backend-engineer | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-backend-engineer-state.json | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-backend-engineer-events.jsonl | backend-engineer | Write | deny | deny | ok |  | .eccode/events.jsonl is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-backend-engineer-events.jsonl | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-backend-engineer-config.json | backend-engineer | Write | deny | deny | ok |  | .eccode/config.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-backend-engineer-config.json | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-backend-engineer-reviews/architecture-1.json | backend-engineer | Write | deny | deny | ok |  | .eccode/reviews/architecture-1.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-backend-engineer-reviews/architecture-1.json | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-backend-engineer-memory/m.json | backend-engineer | Write | deny | deny | ok |  | .eccode/memory/m.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-backend-engineer-memory/m.json | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-backend-engineer-evidence/e.log | backend-engineer | Write | deny | deny | ok |  | .eccode/evidence/e.log is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-backend-engineer-evidence/e.log | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-cp-inner-cwd-backend-engineer | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-abs-inner-cwd-backend-engineer | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-product-architect-state.json | product-architect | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-product-architect-state.json | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-product-architect-events.jsonl | product-architect | Write | deny | deny | ok |  | .eccode/events.jsonl is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-product-architect-events.jsonl | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-product-architect-config.json | product-architect | Write | deny | deny | ok |  | .eccode/config.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-product-architect-config.json | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-product-architect-reviews/architecture-1.json | product-architect | Write | deny | deny | ok |  | .eccode/reviews/architecture-1.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-product-architect-reviews/architecture-1.json | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-product-architect-memory/m.json | product-architect | Write | deny | deny | ok |  | .eccode/memory/m.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-product-architect-memory/m.json | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-write-inner-cwd-product-architect-evidence/e.log | product-architect | Write | deny | deny | ok |  | .eccode/evidence/e.log is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-record-redirect-inner-cwd-product-architect-evidence/e.log | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-cp-inner-cwd-product-architect | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-record-abs-inner-cwd-product-architect | product-architect | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | inner-git-checkout-record-inner-cwd | main | Bash | deny | deny | ok |  | git checkout on .eccode/ can roll back or delete the ECCode record (.eccode/). Restore or discard specific project files by path instead (e.
+NESTED | inner-src-noclaim-write | backend-engineer | Write | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NESTED | inner-src-noclaim-redirect | backend-engineer | Bash | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NESTED | inner-src-noclaim-from-outer | backend-engineer | Bash | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NESTED | inner-src-reviewer | technical-reviewer | Write | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+NESTED | inner-src-main | main | Write | allow | allow | ok |  | 
+NESTED | inner-src-claim-write-inner-cwd | backend-engineer | Write | allow | allow | ok |  | 
+NESTED | inner-src-claim-write-rel | backend-engineer | Write | allow | allow | ok |  | 
+NESTED | inner-src-claim-redirect-inner-cwd | backend-engineer | Bash | allow | allow | ok |  | 
+NESTED | inner-src-claim-clobber | backend-engineer | Bash | allow | allow | ok |  | 
+NESTED | inner-src-claim-cp | backend-engineer | Bash | allow | allow | ok |  | 
+NESTED | inner-src-claim-tee | backend-engineer | Bash | allow | allow | ok |  | 
+NESTED | inner-src-claim-sed | backend-engineer | Bash | allow | allow | ok |  | 
+NESTED | inner-src-claim-from-outer-cwd | backend-engineer | Bash | allow | allow | ok |  | 
+NESTED | inner-src-claim-write-from-outer-cwd | backend-engineer | Write | allow | allow | ok |  | 
+NESTED | outer-src-from-inner-climb | backend-engineer | Bash | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NESTED | outer-src-from-inner-climb-write | backend-engineer | Write | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NESTED | outer-src-from-inner-abs | backend-engineer | Bash | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NESTED | outer-src-from-inner-dotdot-inside | backend-engineer | Bash | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NESTED | outer-record-from-inner-climb | backend-engineer | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | outer-record-from-inner-climb-bash | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+NESTED | outer-draft-from-inner-climb | technical-reviewer | Write | allow | allow | ok |  | 
+NESTED | outer-docs-from-inner | backend-engineer | Bash | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NESTED | outer-other-example | backend-engineer | Write | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NESTED | symlink-file-into-outer-record | backend-engineer | Write | deny | deny | ok |  | src/link-state.json is a symbolic link to ../../.eccode/state.json; writes must target the file itself, inside the project and outside the r
+NESTED | symlink-file-into-outer-record-bash | backend-engineer | Bash | deny | deny | ok |  | src/link-state.json is a symbolic link to ../../.eccode/state.json; writes must target the file itself, inside the project and outside the r
+NESTED | symlink-dir-into-outer-record | backend-engineer | Write | deny | deny | ok |  | src/rec/state.json resolves to ../../.eccode/state.json; writes must target the file itself, inside the project and outside the record.
+NESTED | symlink-dir-into-outer-record-bash | backend-engineer | Bash | deny | deny | ok |  | src/rec/state.json resolves to ../../.eccode/state.json; writes must target the file itself, inside the project and outside the record.
+NESTED | symlink-dir-into-outer-src | backend-engineer | Write | deny | deny | ok |  | src/osrc/server.js resolves to ../../src/server.js; writes must target the file itself, inside the project and outside the record.
+NESTED | symlink-dir-into-outer-src-bash | backend-engineer | Bash | deny | deny | ok |  | src/osrc/server.js resolves to ../../src/server.js; writes must target the file itself, inside the project and outside the record.
+NESTED | main-inner-record | main | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | main-outer-record-from-inner | main | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+NESTED | inner-actor-user | main | Bash | deny | deny | ok |  | --actor user is reserved for a person at a terminal. Ask the user to run this command themselves: eccode gate reopen design --actor user --r
+NESTED | inner-role-mismatch | technical-reviewer | Bash | deny | deny | ok |  | Identity mismatch: this subagent is technical-reviewer but the command acts as "backend-engineer". Each agent records work only under its ow
+NESTED | inner-role-ok | backend-engineer | Bash | allow | allow | ok |  | 
+NESTED | symlink-dir-same-project | backend-engineer | Write | allow | deny | MISMATCH | pre-existing: a symlinked directory inside the claim resolves to lib/ (not ..), so the lexical path is judged | 
+BOGUS-ROOT | bogus-touch | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+BOGUS-ROOT | bogus-redirect | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+BOGUS-ROOT | bogus-cp-file | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+BOGUS-ROOT | bogus-cp-dir | backend-engineer | Bash | allow | allow | ok | guard-visible channel: copies the whole real record into the claim (cp target src/server/.eccode is owned) | 
+BOGUS-ROOT | bogus-cp-dir-variant | backend-engineer | Bash | allow | allow | ok | a prepared directory copied into place | 
+BOGUS-ROOT | bogus-mv-dir | backend-engineer | Bash | allow | allow | ok |  | 
+BOGUS-ROOT | bogus-rsync | backend-engineer | Bash | allow | allow | ok |  | 
+BOGUS-ROOT | bogus-cli-init | backend-engineer | Bash | allow | allow | ok | the CLI itself creates src/server/.eccode/events.jsonl; any actor is accepted by init | 
+BOGUS-ROOT | bogus-cli-init-reviewer | technical-reviewer | Bash | allow | allow | ok |  | 
+BOGUS-ROOT | bogus-cli-init-main | main | Bash | allow | allow | ok | main session creates .eccode/.eccode/events.jsonl through the CLI | 
+BOGUS-ROOT | bogus-cp-dir-main | main | Bash | allow | allow | ok |  | 
+BOGUS-ROOT | bogus-cli-init-outside-claim | backend-engineer | Bash | allow | allow | ok | the CLI writes outside the claim; the guard does not check ownership of CLI writes | 
+BOGUS-ROOT | pre-bogus-write | backend-engineer | Bash | allow | allow | ok |  | 
+BOGUS-ROOT | post-bogus-copy-write-inside | backend-engineer | Bash | deny | deny | ok | copied record: claims are src/server/** relative to the bogus root -> b.js is outside -> the implementer locks itself out | b.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than drafts).
+BOGUS-ROOT | post-bogus-copy-write-tool | backend-engineer | Write | deny | deny | ok | same | b.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than drafts).
+BOGUS-ROOT | post-bogus-copy-record-of-bogus | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+BOGUS-ROOT | post-bogus-copy-outside | backend-engineer | Bash | deny | deny | ok | outside the bogus root: still the real record | src/web/a.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than 
+BOGUS-ROOT | crafted-write-inside | backend-engineer | Bash | allow | allow | ok | inside the real claim anyway | 
+BOGUS-ROOT | crafted-write-git | backend-engineer | Bash | deny | deny | ok |  | .git/hooks/pre-commit is git metadata (ignore rules, hooks); subagents never write it.
+BOGUS-ROOT | crafted-outside | backend-engineer | Bash | deny | deny | ok | the crafted record cannot reach above its own directory | src/web/a.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than 
+BOGUS-ROOT | crafted-real-record | backend-engineer | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+BOGUS-ROOT | nonprefix-yaml-before | backend-engineer | Bash | deny | deny | ok |  | src/config.yaml is outside the ownership of backend-engineer's claimed task(s): js [src/**/*.js] (tasks never own .eccode/ paths other than 
+BOGUS-ROOT | nonprefix-bogus-cp | backend-engineer | Bash | deny | deny | ok | src/.eccode is not owned by src/**/*.js | src/.eccode is outside the ownership of backend-engineer's claimed task(s): js [src/**/*.js] (tasks never own .eccode/ paths other than draf
+BOGUS-ROOT | nonprefix-bogus-cli-init | backend-engineer | Bash | allow | allow | ok | the CLI may create the empty record at src/ | 
+BOGUS-ROOT | nonprefix-yaml-after-empty | backend-engineer | Bash | deny | deny | ok | empty bogus record: no claim -> deny (self lock-out) | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+BOGUS-ROOT | nonprefix-js-after-empty | backend-engineer | Bash | deny | deny | ok | the implementer has locked itself out of its own claim | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+BOGUS-ROOT | nonprefix-yaml-after-crafted | backend-engineer | Bash | allow | deny | MISMATCH | LOOSENING if allow: real claim is src/**/*.js; crafted src/.eccode claims ** | 
+BOGUS-ROOT | nonprefix-yaml-after-crafted-write | backend-engineer | Write | allow | deny | MISMATCH | same, Write tool | 
+BOGUS-ROOT | engine-completion-with-crafted-record | backend-engineer | engine | INVALID_HANDOFF: Task completion rejected:
+- files changed since the claim that no task declares (revert them, or have the owning task declare them): src/.eccode/.gitignore (in no task's ownership), src/.eccode/artifacts/brief.md (in no task's ownership), src/.eccode/artifacts/plan.json (in no task's ownership), src/.eccode/artifacts/spec.md (in no task's ownership), src/.eccode/config.json (in no task's ownership), src/.eccode/events.jsonl (in no task's ownership), src/.eccode/state.json (in no task's ownership), src/config.yaml (in no task's ownership) | refused (unaccounted files) | ok |  | 
+BOGUS-ROOT | main-record-before | main | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+BOGUS-ROOT | main-events-before | main | Edit | deny | deny | ok |  | .eccode/events.jsonl is part of the ECCode record and is written only by the eccode CLI.
+BOGUS-ROOT | main-init-inside-record | main | Bash | allow | allow | ok | guard-visible step 1 | 
+BOGUS-ROOT | main-record-after | main | Write | allow | deny | MISMATCH | BYPASS if allow: nearest root is .eccode/.eccode, rel = state.json | 
+BOGUS-ROOT | main-events-after | main | Edit | allow | deny | MISMATCH |  | 
+BOGUS-ROOT | main-config-after | main | Write | allow | deny | MISMATCH |  | 
+BOGUS-ROOT | main-review-after | main | Write | allow | deny | MISMATCH |  | 
+BOGUS-ROOT | main-memory-after | main | Write | allow | deny | MISMATCH |  | 
+BOGUS-ROOT | main-evidence-after | main | Write | allow | deny | MISMATCH |  | 
+BOGUS-ROOT | main-record-after-bash | main | Bash | deny | deny | ok | the textual SHELL_WRITE regex still holds on bash | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+BOGUS-ROOT | main-record-after-bash-abs | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+BOGUS-ROOT | reviewer-record-after | technical-reviewer | Write | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+BOGUS-ROOT | reviewer-review-after | technical-reviewer | Write | deny | deny | ok |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+BOGUS-ROOT | reviewer-draft-after | technical-reviewer | Write | deny | allow | MISMATCH | collateral: with the bogus root the reviewer loses its draft area too | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+BOGUS-ROOT | impl-json-record-before | backend-engineer | Write | deny | deny | ok |  | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+BOGUS-ROOT | impl-json-init-inside-record | backend-engineer | Bash | allow | allow | ok | guard-visible step 1 (identity matches) | 
+BOGUS-ROOT | impl-json-record-after | backend-engineer | Write | deny | deny | ok | BYPASS if allow: rel = state.json matches **/*.json (owns() only excludes paths that still start with .eccode/) | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+BOGUS-ROOT | impl-json-config-after | backend-engineer | Write | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+BOGUS-ROOT | main-rsync-whole-record | main | Bash | allow | deny | MISMATCH | pre-existing: the record patterns need a file name after .eccode/ | 
+BOGUS-ROOT | main-cp-whole-record | main | Bash | allow | deny | MISMATCH | pre-existing | 
+BOGUS-ROOT | impl-rsync-whole-record | backend-engineer | Bash | deny | deny | ok |  | backend-engineer has no claimed task. Claim one first (eccode task claim <id> --actor backend-engineer); edits are allowed only inside its f
+NEW-9 | inline | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | inline-quoted | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | inline-squoted-name | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | env | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | env-i | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | env-S | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | export-semicolon | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | export-and | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | assign-semicolon | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | declare-x | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | sh-c | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | bash-c-export | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | eval | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | export-alone | learning-debugger | Bash | deny | deny | ok | fail closed on any command (persistent shells) | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | export-alone-root | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | hooks-off-alone | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | sequential-alone | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | exported-in-environment | learning-debugger | Bash | allow | allow | ok | the environment is the user's; unaffected | 
+NEW-9 | exported-root-in-environment | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-9 | root-flag | learning-debugger | Bash | allow | allow | ok | note: --root <elsewhere> is the flag form of ECCODE_ROOT and stays allowed | 
+NEW-9 | indirect-name | learning-debugger | Bash | allow | deny | MISMATCH | variable indirection of the NAME (bash exports ECCODE_SHARED_MEMORY) | 
+NEW-9 | indirect-printf | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | split-name-no-cli | learning-debugger | Bash | allow | deny | MISMATCH | raw text has neither eccode nor ECCODE_: the identity gate is skipped (persistent shells) | 
+NEW-9 | split-name-with-cli | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+NEW-9 | read-from-file | learning-debugger | Bash | allow | deny | MISMATCH | a sourced file the guard cannot read (residual 1) | 
+NEW-9 | unrelated-var | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-9 | prefix-lookalike | technical-reviewer | Bash | allow | allow | ok | ECCODE_ROOTX is not ECCODE_ROOT | 
+NEW-7 | fn-braces | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | fn-braces-impersonate | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | fn-nospace | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | fn-keyword | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | fn-keyword-parens | technical-reviewer | Bash | allow | deny | MISMATCH | valid bash (function NAME () compound) | 
+NEW-7 | fn-keyword-subshell | technical-reviewer | Bash | allow | deny | MISMATCH |  | 
+NEW-7 | fn-subshell-body | technical-reviewer | Bash | allow | deny | MISMATCH | valid bash: body is a subshell | 
+NEW-7 | fn-if-body | technical-reviewer | Bash | allow | deny | MISMATCH | valid bash: body is an if compound | 
+NEW-7 | fn-leading-space | technical-reviewer | Bash | allow | deny | MISMATCH |  | 
+NEW-7 | fn-after-then | technical-reviewer | Bash | allow | deny | MISMATCH |  | 
+NEW-7 | fn-in-group | technical-reviewer | Bash | allow | deny | MISMATCH |  | 
+NEW-7 | fn-after-and | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | fn-newlines | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | fn-newline-before-brace | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | fn-defined-later-line | technical-reviewer | Bash | deny | deny | ok | bash runs e before it exists (error), still refused | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | bash-c-fn | technical-reviewer | Bash | allow | deny | MISMATCH | the wrapper check is not applied to nested command strings | 
+NEW-7 | bash-c-fn-user | main | Bash | allow | deny | MISMATCH |  | 
+NEW-7 | sh-c-fn-dq | technical-reviewer | Bash | allow | deny | MISMATCH |  | 
+NEW-7 | evidence-run-fn | backend-engineer | Bash | allow | deny | MISMATCH | the CLI runs the string in a shell; the nested call acts as another role | 
+NEW-7 | alias | technical-reviewer | Bash | deny | deny | ok | aliases do not expand in non-interactive bash; over-deny harmless | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | alias-expand | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | eval-string | main | Bash | deny | deny | ok |  | --actor user is reserved for a person at a terminal. Ask the user to run this command themselves: eval "eccode gate reopen design --actor us
+NEW-7 | eval-impersonate | technical-reviewer | Bash | deny | deny | ok |  | Identity mismatch: this subagent is technical-reviewer but the command acts as "backend-engineer". Each agent records work only under its ow
+NEW-7 | subst | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: "$" runs a command through a variable or substitution; call the eccode CLI directly
+NEW-7 | subst-impersonate | technical-reviewer | Bash | deny | deny | ok |  | Identity mismatch: this subagent is technical-reviewer but the command acts as "backend-engineer". Each agent records work only under its ow
+NEW-7 | backtick | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: "`eccode" runs a command through a variable or substitution; call the eccode CLI di
+NEW-7 | var-command | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: "$c" runs a command through a variable or substitution; call the eccode CLI directl
+NEW-7 | split-word | technical-reviewer | Bash | allow | deny | MISMATCH | raw text has no eccode: identity gate skipped? | 
+NEW-7 | split-word-user | main | Bash | allow | deny | MISMATCH |  | 
+NEW-7 | escaped-word | technical-reviewer | Bash | allow | deny | MISMATCH |  | 
+NEW-7 | exec-cli | technical-reviewer | Bash | deny | deny | ok |  | Identity mismatch: this subagent is technical-reviewer but the command acts as "backend-engineer". Each agent records work only under its ow
+NEW-7 | command-cli | technical-reviewer | Bash | deny | deny | ok |  | Identity mismatch: this subagent is technical-reviewer but the command acts as "backend-engineer". Each agent records work only under its ow
+NEW-7 | fp-unrelated-fn | technical-reviewer | Bash | allow | allow | ok |  | 
+NEW-7 | fp-unrelated-fn-comment | technical-reviewer | Bash | deny | allow | MISMATCH | a comment mentioning eccode next to an unrelated function | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | fp-fn-then-cli | technical-reviewer | Bash | deny | deny | ok | by design: any function in a line that calls the CLI is refused (acceptable over-deny) | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+NEW-7 | fp-grep-fn | technical-reviewer | Bash | allow | allow | ok | a quoted pattern, not a definition: prefix before e is a quote | 
+NEW-7 | fp-evidence-run-fn | backend-engineer | Bash | allow | allow | ok | a function in the evidence command that never calls the CLI | 
+NEW-7 | plain | technical-reviewer | Bash | allow | allow | ok |  | 
+
+## Inputs
+NEW-6/clobber: "echo x >| src/server.js"
+NEW-6/clobber-nospace: "echo x >|src/server.js"
+NEW-6/clobber-fd1: "echo x 1>| src/server.js"
+NEW-6/clobber-fd2: "echo x 2>| src/server.js"
+NEW-6/clobber-append: "echo x >>| src/server.js"
+NEW-6/clobber-both: "echo x &>| src/server.js"
+NEW-6/clobber-quoted-target: "echo x >| 'src/server.js'"
+NEW-6/clobber-dquoted-target: "echo x >| \"src/server.js\""
+NEW-6/clobber-tab: "echo x >|\tsrc/server.js"
+NEW-6/clobber-sh-c: "sh -c 'echo x >| src/server.js'"
+NEW-6/clobber-bash-c-dq: "bash -c \"echo x >| src/server.js\""
+NEW-6/clobber-then-pipe: "echo x >| src/server.js | cat"
+NEW-6/clobber-after-pipe: "cat a | tee >| src/server.js"
+NEW-6/tee: "echo x | tee src/server.js"
+NEW-6/clobber-impl-noclaim: "echo x >| src/server.js"
+NEW-6/clobber-record: "echo x >| .eccode/state.json"
+NEW-6/clobber-record-main: "echo x >| .eccode/events.jsonl"
+NEW-6/clobber-draft-reviewer: "echo x >| .eccode/reviews/drafts/r.json"
+NEW-6/clobber-draft-generic: "echo x >| .eccode/drafts/n.md"
+NEW-6/pipe-plain: "cat src/server.js | grep x"
+NEW-6/pipe-nospace: "cat src/server.js |grep x"
+NEW-6/or-list: "test -f src/server.js || echo missing"
+NEW-6/pipe-stderr: "cat src/server.js |& grep x"
+NEW-6/dup-then-pipe: "node t.js 2>&1 | tail -5"
+NEW-6/stderr-dup-pipe: "echo x >&2 | cat"
+NEW-6/devnull-pipe: "echo x > /dev/null | cat"
+NEW-6/quoted-bar-reviewer: "echo x >\"|\" src/server.js"
+NEW-6/escaped-bar-reviewer: "echo x >\\| src/server.js"
+NEW-6/quoted-bar-impl: "echo x >\"|\" src/server/a.js"
+NEW-6/impl-inside-claim: "echo x >| src/server/a.js"
+NEW-6/impl-outside-claim: "echo x >| src/web/a.js"
+NESTED/draft-write-outer-cwd: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/drafts/architecture-1.json"
+NESTED/draft-edit-outer-cwd: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/drafts/architecture-1.json"
+NESTED/artifact-write-outer-cwd: "/tmp/eccode-test-41llZ5/examples/app/.eccode/artifacts/brief.md"
+NESTED/artifact-write-reviewer-outer-cwd: "/tmp/eccode-test-41llZ5/examples/app/.eccode/artifacts/brief.md"
+NESTED/draft-redirect-outer-cwd: "echo x > examples/app/.eccode/reviews/drafts/architecture-1.json"
+NESTED/draft-clobber-outer-cwd: "echo x >| examples/app/.eccode/reviews/drafts/architecture-1.json"
+NESTED/draft-cp-outer-cwd: "cp /tmp/r.json examples/app/.eccode/reviews/drafts/architecture-1.json"
+NESTED/draft-tee-outer-cwd: "echo x | tee examples/app/.eccode/reviews/drafts/architecture-1.json"
+NESTED/artifact-redirect-outer-cwd: "echo x > examples/app/.eccode/artifacts/brief.md"
+NESTED/inner-record-write-outer-cwd-main-state.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-redirect-outer-cwd-main-state.json: "echo x > examples/app/.eccode/state.json"
+NESTED/inner-record-write-outer-cwd-main-events.jsonl: "/tmp/eccode-test-41llZ5/examples/app/.eccode/events.jsonl"
+NESTED/inner-record-redirect-outer-cwd-main-events.jsonl: "echo x > examples/app/.eccode/events.jsonl"
+NESTED/inner-record-write-outer-cwd-main-config.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/config.json"
+NESTED/inner-record-redirect-outer-cwd-main-config.json: "echo x > examples/app/.eccode/config.json"
+NESTED/inner-record-write-outer-cwd-main-reviews/architecture-1.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-redirect-outer-cwd-main-reviews/architecture-1.json: "echo x > examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-write-outer-cwd-main-memory/m.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/memory/m.json"
+NESTED/inner-record-redirect-outer-cwd-main-memory/m.json: "echo x > examples/app/.eccode/memory/m.json"
+NESTED/inner-record-write-outer-cwd-main-evidence/e.log: "/tmp/eccode-test-41llZ5/examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-redirect-outer-cwd-main-evidence/e.log: "echo x > examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-cp-outer-cwd-main: "cp a examples/app/.eccode/state.json"
+NESTED/inner-record-abs-outer-cwd-main: "echo x > /tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-write-outer-cwd-technical-reviewer-state.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-redirect-outer-cwd-technical-reviewer-state.json: "echo x > examples/app/.eccode/state.json"
+NESTED/inner-record-write-outer-cwd-technical-reviewer-events.jsonl: "/tmp/eccode-test-41llZ5/examples/app/.eccode/events.jsonl"
+NESTED/inner-record-redirect-outer-cwd-technical-reviewer-events.jsonl: "echo x > examples/app/.eccode/events.jsonl"
+NESTED/inner-record-write-outer-cwd-technical-reviewer-config.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/config.json"
+NESTED/inner-record-redirect-outer-cwd-technical-reviewer-config.json: "echo x > examples/app/.eccode/config.json"
+NESTED/inner-record-write-outer-cwd-technical-reviewer-reviews/architecture-1.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-redirect-outer-cwd-technical-reviewer-reviews/architecture-1.json: "echo x > examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-write-outer-cwd-technical-reviewer-memory/m.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/memory/m.json"
+NESTED/inner-record-redirect-outer-cwd-technical-reviewer-memory/m.json: "echo x > examples/app/.eccode/memory/m.json"
+NESTED/inner-record-write-outer-cwd-technical-reviewer-evidence/e.log: "/tmp/eccode-test-41llZ5/examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-redirect-outer-cwd-technical-reviewer-evidence/e.log: "echo x > examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-cp-outer-cwd-technical-reviewer: "cp a examples/app/.eccode/state.json"
+NESTED/inner-record-abs-outer-cwd-technical-reviewer: "echo x > /tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-write-outer-cwd-backend-engineer-state.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-redirect-outer-cwd-backend-engineer-state.json: "echo x > examples/app/.eccode/state.json"
+NESTED/inner-record-write-outer-cwd-backend-engineer-events.jsonl: "/tmp/eccode-test-41llZ5/examples/app/.eccode/events.jsonl"
+NESTED/inner-record-redirect-outer-cwd-backend-engineer-events.jsonl: "echo x > examples/app/.eccode/events.jsonl"
+NESTED/inner-record-write-outer-cwd-backend-engineer-config.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/config.json"
+NESTED/inner-record-redirect-outer-cwd-backend-engineer-config.json: "echo x > examples/app/.eccode/config.json"
+NESTED/inner-record-write-outer-cwd-backend-engineer-reviews/architecture-1.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-redirect-outer-cwd-backend-engineer-reviews/architecture-1.json: "echo x > examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-write-outer-cwd-backend-engineer-memory/m.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/memory/m.json"
+NESTED/inner-record-redirect-outer-cwd-backend-engineer-memory/m.json: "echo x > examples/app/.eccode/memory/m.json"
+NESTED/inner-record-write-outer-cwd-backend-engineer-evidence/e.log: "/tmp/eccode-test-41llZ5/examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-redirect-outer-cwd-backend-engineer-evidence/e.log: "echo x > examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-cp-outer-cwd-backend-engineer: "cp a examples/app/.eccode/state.json"
+NESTED/inner-record-abs-outer-cwd-backend-engineer: "echo x > /tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-write-outer-cwd-product-architect-state.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-redirect-outer-cwd-product-architect-state.json: "echo x > examples/app/.eccode/state.json"
+NESTED/inner-record-write-outer-cwd-product-architect-events.jsonl: "/tmp/eccode-test-41llZ5/examples/app/.eccode/events.jsonl"
+NESTED/inner-record-redirect-outer-cwd-product-architect-events.jsonl: "echo x > examples/app/.eccode/events.jsonl"
+NESTED/inner-record-write-outer-cwd-product-architect-config.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/config.json"
+NESTED/inner-record-redirect-outer-cwd-product-architect-config.json: "echo x > examples/app/.eccode/config.json"
+NESTED/inner-record-write-outer-cwd-product-architect-reviews/architecture-1.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-redirect-outer-cwd-product-architect-reviews/architecture-1.json: "echo x > examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-write-outer-cwd-product-architect-memory/m.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/memory/m.json"
+NESTED/inner-record-redirect-outer-cwd-product-architect-memory/m.json: "echo x > examples/app/.eccode/memory/m.json"
+NESTED/inner-record-write-outer-cwd-product-architect-evidence/e.log: "/tmp/eccode-test-41llZ5/examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-redirect-outer-cwd-product-architect-evidence/e.log: "echo x > examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-cp-outer-cwd-product-architect: "cp a examples/app/.eccode/state.json"
+NESTED/inner-record-abs-outer-cwd-product-architect: "echo x > /tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-git-checkout-record-outer-cwd: "git checkout -- examples/app/.eccode"
+NESTED/draft-write-inner-cwd: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/drafts/architecture-1.json"
+NESTED/draft-edit-inner-cwd: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/drafts/architecture-1.json"
+NESTED/artifact-write-inner-cwd: "/tmp/eccode-test-41llZ5/examples/app/.eccode/artifacts/brief.md"
+NESTED/artifact-write-reviewer-inner-cwd: "/tmp/eccode-test-41llZ5/examples/app/.eccode/artifacts/brief.md"
+NESTED/draft-redirect-inner-cwd: "echo x > .eccode/reviews/drafts/architecture-1.json"
+NESTED/draft-clobber-inner-cwd: "echo x >| .eccode/reviews/drafts/architecture-1.json"
+NESTED/draft-cp-inner-cwd: "cp /tmp/r.json .eccode/reviews/drafts/architecture-1.json"
+NESTED/draft-tee-inner-cwd: "echo x | tee .eccode/reviews/drafts/architecture-1.json"
+NESTED/artifact-redirect-inner-cwd: "echo x > .eccode/artifacts/brief.md"
+NESTED/inner-record-write-inner-cwd-main-state.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-redirect-inner-cwd-main-state.json: "echo x > .eccode/state.json"
+NESTED/inner-record-write-inner-cwd-main-events.jsonl: "/tmp/eccode-test-41llZ5/examples/app/.eccode/events.jsonl"
+NESTED/inner-record-redirect-inner-cwd-main-events.jsonl: "echo x > .eccode/events.jsonl"
+NESTED/inner-record-write-inner-cwd-main-config.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/config.json"
+NESTED/inner-record-redirect-inner-cwd-main-config.json: "echo x > .eccode/config.json"
+NESTED/inner-record-write-inner-cwd-main-reviews/architecture-1.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-redirect-inner-cwd-main-reviews/architecture-1.json: "echo x > .eccode/reviews/architecture-1.json"
+NESTED/inner-record-write-inner-cwd-main-memory/m.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/memory/m.json"
+NESTED/inner-record-redirect-inner-cwd-main-memory/m.json: "echo x > .eccode/memory/m.json"
+NESTED/inner-record-write-inner-cwd-main-evidence/e.log: "/tmp/eccode-test-41llZ5/examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-redirect-inner-cwd-main-evidence/e.log: "echo x > .eccode/evidence/e.log"
+NESTED/inner-record-cp-inner-cwd-main: "cp a .eccode/state.json"
+NESTED/inner-record-abs-inner-cwd-main: "echo x > /tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-write-inner-cwd-technical-reviewer-state.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-redirect-inner-cwd-technical-reviewer-state.json: "echo x > .eccode/state.json"
+NESTED/inner-record-write-inner-cwd-technical-reviewer-events.jsonl: "/tmp/eccode-test-41llZ5/examples/app/.eccode/events.jsonl"
+NESTED/inner-record-redirect-inner-cwd-technical-reviewer-events.jsonl: "echo x > .eccode/events.jsonl"
+NESTED/inner-record-write-inner-cwd-technical-reviewer-config.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/config.json"
+NESTED/inner-record-redirect-inner-cwd-technical-reviewer-config.json: "echo x > .eccode/config.json"
+NESTED/inner-record-write-inner-cwd-technical-reviewer-reviews/architecture-1.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-redirect-inner-cwd-technical-reviewer-reviews/architecture-1.json: "echo x > .eccode/reviews/architecture-1.json"
+NESTED/inner-record-write-inner-cwd-technical-reviewer-memory/m.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/memory/m.json"
+NESTED/inner-record-redirect-inner-cwd-technical-reviewer-memory/m.json: "echo x > .eccode/memory/m.json"
+NESTED/inner-record-write-inner-cwd-technical-reviewer-evidence/e.log: "/tmp/eccode-test-41llZ5/examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-redirect-inner-cwd-technical-reviewer-evidence/e.log: "echo x > .eccode/evidence/e.log"
+NESTED/inner-record-cp-inner-cwd-technical-reviewer: "cp a .eccode/state.json"
+NESTED/inner-record-abs-inner-cwd-technical-reviewer: "echo x > /tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-write-inner-cwd-backend-engineer-state.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-redirect-inner-cwd-backend-engineer-state.json: "echo x > .eccode/state.json"
+NESTED/inner-record-write-inner-cwd-backend-engineer-events.jsonl: "/tmp/eccode-test-41llZ5/examples/app/.eccode/events.jsonl"
+NESTED/inner-record-redirect-inner-cwd-backend-engineer-events.jsonl: "echo x > .eccode/events.jsonl"
+NESTED/inner-record-write-inner-cwd-backend-engineer-config.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/config.json"
+NESTED/inner-record-redirect-inner-cwd-backend-engineer-config.json: "echo x > .eccode/config.json"
+NESTED/inner-record-write-inner-cwd-backend-engineer-reviews/architecture-1.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-redirect-inner-cwd-backend-engineer-reviews/architecture-1.json: "echo x > .eccode/reviews/architecture-1.json"
+NESTED/inner-record-write-inner-cwd-backend-engineer-memory/m.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/memory/m.json"
+NESTED/inner-record-redirect-inner-cwd-backend-engineer-memory/m.json: "echo x > .eccode/memory/m.json"
+NESTED/inner-record-write-inner-cwd-backend-engineer-evidence/e.log: "/tmp/eccode-test-41llZ5/examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-redirect-inner-cwd-backend-engineer-evidence/e.log: "echo x > .eccode/evidence/e.log"
+NESTED/inner-record-cp-inner-cwd-backend-engineer: "cp a .eccode/state.json"
+NESTED/inner-record-abs-inner-cwd-backend-engineer: "echo x > /tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-write-inner-cwd-product-architect-state.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-record-redirect-inner-cwd-product-architect-state.json: "echo x > .eccode/state.json"
+NESTED/inner-record-write-inner-cwd-product-architect-events.jsonl: "/tmp/eccode-test-41llZ5/examples/app/.eccode/events.jsonl"
+NESTED/inner-record-redirect-inner-cwd-product-architect-events.jsonl: "echo x > .eccode/events.jsonl"
+NESTED/inner-record-write-inner-cwd-product-architect-config.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/config.json"
+NESTED/inner-record-redirect-inner-cwd-product-architect-config.json: "echo x > .eccode/config.json"
+NESTED/inner-record-write-inner-cwd-product-architect-reviews/architecture-1.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/reviews/architecture-1.json"
+NESTED/inner-record-redirect-inner-cwd-product-architect-reviews/architecture-1.json: "echo x > .eccode/reviews/architecture-1.json"
+NESTED/inner-record-write-inner-cwd-product-architect-memory/m.json: "/tmp/eccode-test-41llZ5/examples/app/.eccode/memory/m.json"
+NESTED/inner-record-redirect-inner-cwd-product-architect-memory/m.json: "echo x > .eccode/memory/m.json"
+NESTED/inner-record-write-inner-cwd-product-architect-evidence/e.log: "/tmp/eccode-test-41llZ5/examples/app/.eccode/evidence/e.log"
+NESTED/inner-record-redirect-inner-cwd-product-architect-evidence/e.log: "echo x > .eccode/evidence/e.log"
+NESTED/inner-record-cp-inner-cwd-product-architect: "cp a .eccode/state.json"
+NESTED/inner-record-abs-inner-cwd-product-architect: "echo x > /tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/inner-git-checkout-record-inner-cwd: "git checkout -- .eccode"
+NESTED/inner-src-noclaim-write: "/tmp/eccode-test-41llZ5/examples/app/src/x.js"
+NESTED/inner-src-noclaim-redirect: "echo x > src/x.js"
+NESTED/inner-src-noclaim-from-outer: "echo x > examples/app/src/x.js"
+NESTED/inner-src-reviewer: "/tmp/eccode-test-41llZ5/examples/app/src/x.js"
+NESTED/inner-src-main: "/tmp/eccode-test-41llZ5/examples/app/src/x.js"
+NESTED/inner-src-claim-write-inner-cwd: "/tmp/eccode-test-41llZ5/examples/app/src/x.js"
+NESTED/inner-src-claim-write-rel: "src/x.js"
+NESTED/inner-src-claim-redirect-inner-cwd: "echo x > src/x.js"
+NESTED/inner-src-claim-clobber: "echo x >| src/new.js"
+NESTED/inner-src-claim-cp: "cp /tmp/a src/y.js"
+NESTED/inner-src-claim-tee: "echo x | tee src/y.js"
+NESTED/inner-src-claim-sed: "sed -i s/a/b/ src/x.js"
+NESTED/inner-src-claim-from-outer-cwd: "echo x > examples/app/src/x.js"
+NESTED/inner-src-claim-write-from-outer-cwd: "/tmp/eccode-test-41llZ5/examples/app/src/x.js"
+NESTED/outer-src-from-inner-climb: "echo x > ../../src/server.js"
+NESTED/outer-src-from-inner-climb-write: "../../src/server.js"
+NESTED/outer-src-from-inner-abs: "echo x > /tmp/eccode-test-41llZ5/src/server.js"
+NESTED/outer-src-from-inner-dotdot-inside: "echo x > src/../../../src/server.js"
+NESTED/outer-record-from-inner-climb: "../../.eccode/state.json"
+NESTED/outer-record-from-inner-climb-bash: "echo x > ../../.eccode/state.json"
+NESTED/outer-draft-from-inner-climb: "../../.eccode/reviews/drafts/r.json"
+NESTED/outer-docs-from-inner: "echo x > ../../docs/notes.md"
+NESTED/outer-other-example: "/tmp/eccode-test-41llZ5/examples/other/src/y.js"
+NESTED/symlink-file-into-outer-record: "/tmp/eccode-test-41llZ5/examples/app/src/link-state.json"
+NESTED/symlink-file-into-outer-record-bash: "echo x > src/link-state.json"
+NESTED/symlink-dir-into-outer-record: "/tmp/eccode-test-41llZ5/examples/app/src/rec/state.json"
+NESTED/symlink-dir-into-outer-record-bash: "echo x > src/rec/state.json"
+NESTED/symlink-dir-into-outer-src: "/tmp/eccode-test-41llZ5/examples/app/src/osrc/server.js"
+NESTED/symlink-dir-into-outer-src-bash: "echo x > src/osrc/server.js"
+NESTED/main-inner-record: "/tmp/eccode-test-41llZ5/examples/app/.eccode/state.json"
+NESTED/main-outer-record-from-inner: "/tmp/eccode-test-41llZ5/.eccode/state.json"
+NESTED/inner-actor-user: "eccode gate reopen design --actor user --resolution ok"
+NESTED/inner-role-mismatch: "eccode task claim core --actor backend-engineer"
+NESTED/inner-role-ok: "eccode task claim core --actor backend-engineer"
+NESTED/symlink-dir-same-project: "/tmp/eccode-test-41llZ5/examples/app/src/tolib/z.js"
+BOGUS-ROOT/bogus-touch: "mkdir -p src/server/.eccode && touch src/server/.eccode/events.jsonl"
+BOGUS-ROOT/bogus-redirect: "mkdir -p src/server/.eccode; echo x > src/server/.eccode/events.jsonl"
+BOGUS-ROOT/bogus-cp-file: "cp .eccode/events.jsonl src/server/.eccode/events.jsonl"
+BOGUS-ROOT/bogus-cp-dir: "cp -r .eccode src/server/.eccode"
+BOGUS-ROOT/bogus-cp-dir-variant: "cp -r src/server/tpl src/server/.eccode"
+BOGUS-ROOT/bogus-mv-dir: "mv src/server/tpl src/server/.eccode"
+BOGUS-ROOT/bogus-rsync: "rsync -a src/server/tpl/ src/server/.eccode/"
+BOGUS-ROOT/bogus-cli-init: "eccode init --root src/server --name x --idea y --actor backend-engineer"
+BOGUS-ROOT/bogus-cli-init-reviewer: "eccode init --root .eccode/reviews/drafts --name x --idea y --actor technical-reviewer"
+BOGUS-ROOT/bogus-cli-init-main: "eccode init --root .eccode --name x --idea y"
+BOGUS-ROOT/bogus-cp-dir-main: "cp -r .eccode .eccode/.eccode"
+BOGUS-ROOT/bogus-cli-init-outside-claim: "eccode init --root src/web --name x --idea y --actor backend-engineer"
+BOGUS-ROOT/pre-bogus-write: "echo x > src/server/b.js"
+BOGUS-ROOT/post-bogus-copy-write-inside: "echo x > src/server/b.js"
+BOGUS-ROOT/post-bogus-copy-write-tool: "/tmp/eccode-test-dBI3S3/src/server/b.js"
+BOGUS-ROOT/post-bogus-copy-record-of-bogus: "echo x > src/server/.eccode/state.json"
+BOGUS-ROOT/post-bogus-copy-outside: "echo x > src/web/a.js"
+BOGUS-ROOT/crafted-write-inside: "echo x > src/server/b.js"
+BOGUS-ROOT/crafted-write-git: "echo x > src/server/.git/hooks/pre-commit"
+BOGUS-ROOT/crafted-outside: "echo x > src/web/a.js"
+BOGUS-ROOT/crafted-real-record: "/tmp/eccode-test-dBI3S3/.eccode/state.json"
+BOGUS-ROOT/nonprefix-yaml-before: "echo x > src/config.yaml"
+BOGUS-ROOT/nonprefix-bogus-cp: "cp -r src/tpl src/.eccode"
+BOGUS-ROOT/nonprefix-bogus-cli-init: "eccode init --root src --name x --idea y --actor backend-engineer"
+BOGUS-ROOT/nonprefix-yaml-after-empty: "echo x > src/config.yaml"
+BOGUS-ROOT/nonprefix-js-after-empty: "echo x > src/a.js"
+BOGUS-ROOT/nonprefix-yaml-after-crafted: "echo x > src/config.yaml"
+BOGUS-ROOT/nonprefix-yaml-after-crafted-write: "/tmp/eccode-test-sEaqPF/src/config.yaml"
+BOGUS-ROOT/engine-completion-with-crafted-record: "task complete js (src/.eccode/* and src/config.yaml present)"
+BOGUS-ROOT/main-record-before: "/tmp/eccode-test-pExYfj/.eccode/state.json"
+BOGUS-ROOT/main-events-before: "/tmp/eccode-test-pExYfj/.eccode/events.jsonl"
+BOGUS-ROOT/main-init-inside-record: "eccode init --root .eccode --name x --idea y"
+BOGUS-ROOT/main-record-after: "/tmp/eccode-test-pExYfj/.eccode/state.json"
+BOGUS-ROOT/main-events-after: "/tmp/eccode-test-pExYfj/.eccode/events.jsonl"
+BOGUS-ROOT/main-config-after: "/tmp/eccode-test-pExYfj/.eccode/config.json"
+BOGUS-ROOT/main-review-after: "/tmp/eccode-test-pExYfj/.eccode/reviews/architecture-1.json"
+BOGUS-ROOT/main-memory-after: "/tmp/eccode-test-pExYfj/.eccode/memory/m-1.json"
+BOGUS-ROOT/main-evidence-after: "/tmp/eccode-test-pExYfj/.eccode/evidence/ev-1.log"
+BOGUS-ROOT/main-record-after-bash: "echo x > .eccode/state.json"
+BOGUS-ROOT/main-record-after-bash-abs: "echo x > /tmp/eccode-test-pExYfj/.eccode/state.json"
+BOGUS-ROOT/reviewer-record-after: "/tmp/eccode-test-pExYfj/.eccode/state.json"
+BOGUS-ROOT/reviewer-review-after: "/tmp/eccode-test-pExYfj/.eccode/reviews/design-1.json"
+BOGUS-ROOT/reviewer-draft-after: "/tmp/eccode-test-pExYfj/.eccode/reviews/drafts/d.json"
+BOGUS-ROOT/impl-json-record-before: "/tmp/eccode-test-y3gYD4/.eccode/state.json"
+BOGUS-ROOT/impl-json-init-inside-record: "eccode init --root .eccode --name x --idea y --actor backend-engineer"
+BOGUS-ROOT/impl-json-record-after: "/tmp/eccode-test-y3gYD4/.eccode/state.json"
+BOGUS-ROOT/impl-json-config-after: "/tmp/eccode-test-y3gYD4/.eccode/config.json"
+BOGUS-ROOT/main-rsync-whole-record: "rsync -a /tmp/forged/ .eccode/"
+BOGUS-ROOT/main-cp-whole-record: "cp -r /tmp/forged/. .eccode"
+BOGUS-ROOT/impl-rsync-whole-record: "rsync -a /tmp/forged/ .eccode/"
+NEW-9/inline: "ECCODE_SHARED_MEMORY=/tmp/forged eccode memory search race --actor learning-debugger"
+NEW-9/inline-quoted: "ECCODE_SHARED_MEMORY=\"/tmp/forged\" eccode memory search race --actor learning-debugger"
+NEW-9/inline-squoted-name: "'ECCODE_SHARED_MEMORY'=/tmp/x eccode memory search race --actor learning-debugger"
+NEW-9/env: "env ECCODE_SHARED_MEMORY=/tmp/x eccode memory search race --actor learning-debugger"
+NEW-9/env-i: "env -i ECCODE_SHARED_MEMORY=/tmp/x node bin/eccode.js memory search race --actor learning-debugger"
+NEW-9/env-S: "env -S 'ECCODE_SHARED_MEMORY=/tmp/x eccode memory search race --actor learning-debugger'"
+NEW-9/export-semicolon: "export ECCODE_SHARED_MEMORY=/tmp/x; eccode memory search race --actor learning-debugger"
+NEW-9/export-and: "export ECCODE_ROOT=/tmp/x && eccode gate start design --actor orchestrator"
+NEW-9/assign-semicolon: "ECCODE_SHARED_MEMORY=/tmp/x ; eccode memory search race --actor learning-debugger"
+NEW-9/declare-x: "declare -x ECCODE_ROOT=/tmp/x; eccode status"
+NEW-9/sh-c: "sh -c 'ECCODE_SHARED_MEMORY=/tmp/x eccode memory search race --actor learning-debugger'"
+NEW-9/bash-c-export: "bash -c \"export ECCODE_SHARED_MEMORY=/tmp/x; eccode memory search race --actor learning-debugger\""
+NEW-9/eval: "eval \"ECCODE_SHARED_MEMORY=/tmp/x eccode memory search race --actor learning-debugger\""
+NEW-9/export-alone: "export ECCODE_SHARED_MEMORY=/tmp/x"
+NEW-9/export-alone-root: "export ECCODE_ROOT=/tmp/x"
+NEW-9/hooks-off-alone: "export ECCODE_HOOKS=off"
+NEW-9/sequential-alone: "ECCODE_SEQUENTIAL_ROLES=1 true"
+NEW-9/exported-in-environment: "eccode memory search race --actor learning-debugger"
+NEW-9/exported-root-in-environment: "eccode status --brief"
+NEW-9/root-flag: "eccode memory search race --actor learning-debugger --root /tmp/forged"
+NEW-9/indirect-name: "V=ECCODE_SHARED_MEMORY; export $V=/tmp/x; eccode memory search race --actor learning-debugger"
+NEW-9/indirect-printf: "printf -v ECCODE_SHARED_MEMORY /tmp/x; export ECCODE_SHARED_MEMORY; eccode memory search race --actor learning-debugger"
+NEW-9/split-name-no-cli: "export ECC''ODE_SHARED_MEMORY=/tmp/x"
+NEW-9/split-name-with-cli: "export ECC''ODE_SHARED_MEMORY=/tmp/x; eccode memory search race --actor learning-debugger"
+NEW-9/read-from-file: "set -a; . ./env.sh; set +a; eccode memory search race --actor learning-debugger"
+NEW-9/unrelated-var: "FOO=1 eccode status --brief"
+NEW-9/prefix-lookalike: "ECCODE_ROOTX=1 eccode status --brief"
+NEW-7/fn-braces: "e() { eccode \"$@\"; }; e gate reopen design --actor user --resolution ok"
+NEW-7/fn-braces-impersonate: "e() { eccode \"$@\"; }; e task claim api --actor backend-engineer"
+NEW-7/fn-nospace: "e(){ eccode \"$@\"; }; e task claim api --actor backend-engineer"
+NEW-7/fn-keyword: "function e { eccode \"$@\"; }; e task claim api --actor backend-engineer"
+NEW-7/fn-keyword-parens: "function e() { eccode \"$@\"; }; e task claim api --actor backend-engineer"
+NEW-7/fn-keyword-subshell: "function e ( eccode \"$@\" ); e task claim api --actor backend-engineer"
+NEW-7/fn-subshell-body: "e() ( eccode \"$@\" ); e task claim api --actor backend-engineer"
+NEW-7/fn-if-body: "e() if true; then eccode \"$@\"; fi; e task claim api --actor backend-engineer"
+NEW-7/fn-leading-space: "  e() { eccode \"$@\"; }; e task claim api --actor backend-engineer"
+NEW-7/fn-after-then: "if true; then e() { eccode \"$@\"; }; fi; e task claim api --actor backend-engineer"
+NEW-7/fn-in-group: "{ e() { eccode \"$@\"; }; }; e task claim api --actor backend-engineer"
+NEW-7/fn-after-and: "true && e() { eccode \"$@\"; }; e task claim api --actor backend-engineer"
+NEW-7/fn-newlines: "e() {\n  eccode \"$@\"\n}\ne task claim api --actor backend-engineer"
+NEW-7/fn-newline-before-brace: "e()\n{\n  eccode \"$@\"\n}\ne gate reopen design --actor user"
+NEW-7/fn-defined-later-line: "e task claim api --actor backend-engineer\ne() { eccode \"$@\"; }"
+NEW-7/bash-c-fn: "bash -c 'e() { eccode \"$@\"; }; e task claim api --actor backend-engineer'"
+NEW-7/bash-c-fn-user: "bash -c 'e() { eccode \"$@\"; }; e gate reopen design --actor user'"
+NEW-7/sh-c-fn-dq: "sh -c \"e() { eccode \\\"\\$@\\\"; }; e task claim api --actor backend-engineer\""
+NEW-7/evidence-run-fn: "eccode evidence run --actor backend-engineer --label t -- 'e() { eccode \"$@\"; }; e gate review design --actor technical-reviewer'"
+NEW-7/alias: "alias e=eccode; e task claim api --actor backend-engineer"
+NEW-7/alias-expand: "shopt -s expand_aliases; alias e=eccode; e task claim api --actor backend-engineer"
+NEW-7/eval-string: "eval \"eccode gate reopen design --actor user\""
+NEW-7/eval-impersonate: "eval 'eccode task claim api --actor backend-engineer'"
+NEW-7/subst: "$(eccode gate reopen design --actor user)"
+NEW-7/subst-impersonate: "x=$(eccode task claim api --actor backend-engineer); echo $x"
+NEW-7/backtick: "`eccode task claim api --actor backend-engineer`"
+NEW-7/var-command: "c=eccode; $c task claim api --actor backend-engineer"
+NEW-7/split-word: "node bin/ecc\"ode\".js task claim api --actor backend-engineer"
+NEW-7/split-word-user: "node bin/ecc'ode'.js gate reopen design --actor user"
+NEW-7/escaped-word: "node bin/ecc\\ode.js task claim api --actor backend-engineer"
+NEW-7/exec-cli: "exec eccode task claim api --actor backend-engineer"
+NEW-7/command-cli: "command eccode task claim api --actor backend-engineer"
+NEW-7/fp-unrelated-fn: "f() { echo hi; }; f"
+NEW-7/fp-unrelated-fn-comment: "f() { echo hi; }; f # see the eccode docs"
+NEW-7/fp-fn-then-cli: "f() { echo hi; }; f; eccode status --brief"
+NEW-7/fp-grep-fn: "grep -n 'e() {' scripts/x.sh && eccode status --brief"
+NEW-7/fp-evidence-run-fn: "eccode evidence run --actor backend-engineer --label t -- 'f() { npm test; }; f'"
+NEW-7/plain: "eccode status --brief"

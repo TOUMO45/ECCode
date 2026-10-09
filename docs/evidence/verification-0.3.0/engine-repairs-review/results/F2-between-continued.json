@@ -1,0 +1,174 @@
+{
+  "probe": "F2-between-continued (review of the repairs)",
+  "repo": "/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/repair",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T17:08:54.338Z",
+  "steps": [
+    {
+      "id": "F2.between.beforeVerification",
+      "description": "unreviewedChanges before the verification gate is approved",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": "src/server/backdoor.js",
+            "gate": "phase:core",
+            "problem": "added after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F2.between.verificationApproval",
+      "description": "verification approval while src/server/backdoor.js is committed and listed by no gate",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- the release tree holds changes no review covers, not pinned by submission sub-mv17zcoh-0g52c3a0: src/server/backdoor.js added after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved",
+        "details": {
+          "reasons": [
+            "the release tree holds changes no review covers, not pinned by submission sub-mv17zcoh-0g52c3a0: src/server/backdoor.js added after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F2.between.reasonNamesFile",
+      "description": "the refusal names the file and the gate it postdates",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "the release tree holds changes no review covers, not pinned by submission sub-mv17zcoh-0g52c3a0: src/server/backdoor.js added after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+        ]
+      }
+    },
+    {
+      "id": "F2.between.afterRefusal",
+      "description": "unreviewedChanges after the refused approval (still reported)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": "src/server/backdoor.js",
+            "gate": "phase:core",
+            "problem": "added after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F2.between.deliver",
+      "description": "delivery with the file committed and reviewed by no gate",
+      "expect": "refused:DELIVERY_BLOCKED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "DELIVERY_BLOCKED",
+        "message": "Delivery refused:\n- gate verification is submitted\n- src/server/backdoor.js added after approval (phase:core)\n- every file listed above must be reviewed (submit it with a rework or the next gate), restored to its reviewed content, or, for generated files, listed in release.ignore (.eccode/config.json) before delivery",
+        "details": {
+          "problems": [
+            "gate verification is submitted",
+            "src/server/backdoor.js added after approval (phase:core)",
+            "every file listed above must be reviewed (submit it with a rework or the next gate), restored to its reviewed content, or, for generated files, listed in release.ignore (.eccode/config.json) before delivery"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F2.between.auditBlocked",
+      "description": "eccode audit exit while the file is unreviewed (2 = unreviewed changes)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "exit": 2,
+        "value": [
+          "Audit FAILED:",
+          "- src/server/backdoor.js added after approval (phase:core)"
+        ]
+      }
+    },
+    {
+      "id": "F2.between.listSubmit",
+      "description": "verification resubmitted WITH src/server/backdoor.js",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":32,\"ts\":\"2026-10-09T17:08:55.636Z\",\"type\":\"gate.submitted\",\"actor\":\"delivery-lead\",\"data\":{\"gate\":\"verification\",\"respondsTo\":null,\"notes\":null,\"submissionId\":\"sub-mv17zcur-0i93b10f\",\"artifacts\":[{\"path\":\".eccode/artifacts/verification.md\",\"sha256\":\"932e31c7db0e4c01f1dc5cd25f8adfd685ac86610f7246bbe3e20d8cdf155891\"},{\"path\":\"src/server/a.js\",\"sha256\":\"566b6ff7aae6fc40653f91178b89037b47e0c4a3228f8d81c8c153c0acd84438\"},{\"path\":\"src/web/b.js\",\"sha256\":\"74fa266c76d81d65235ea10a872103ca6c1a035480f5b7b42179b9e59f4b59eb\"},{\"path\":\"tests/c.test.js\",\"sha256\":\"917813357927155c58a050a8ff9b…"
+      }
+    },
+    {
+      "id": "F2.between.listApproval",
+      "description": "verification approval once the file is listed (overblocking check)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":34,\"ts\":\"2026-10-09T17:08:55.719Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned\",\"met\":true,\"evidence\":[\"ev:ev-mv17zcvq-0j169b02\"]}],\"findings\":[]},\"reviewId\":\"rev-mv17zcx3-0kba0280\",\"submissionId\":\"sub-mv17zcur-0i93b10f\"},\"prevHash\":\"646e640254beb47b354d120c290ac1fb34c44c8381524536183eef51b597af4d\",\"stateHash\":\"10a81c23008b73fb91e5de1c12cba49126cec1dc7477c7505850915f86eaed89\",\"hash\"…"
+      }
+    },
+    {
+      "id": "F2.between.afterApproval",
+      "description": "unreviewedChanges after the approval",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "F2.between.deliverListed",
+      "description": "delivery once the file was reviewed",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "ceb4f5f19ddc518ae43df57700bd420fe65c0c64"
+        }
+      }
+    },
+    {
+      "id": "F2.between.audit",
+      "description": "eccode audit after that delivery",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "value": "Audit OK: 35 events, chain intact, approved artifacts unchanged."
+      }
+    },
+    {
+      "id": "F2.between.pinned",
+      "description": "is backdoor.js pinned by an approved submission now?",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "pinned": true,
+          "releaseCommit": "ceb4f5f19ddc518ae43df57700bd420fe65c0c64",
+          "inTree": [
+            "src/server/a.js",
+            "src/server/backdoor.js"
+          ]
+        }
+      }
+    }
+  ],
+  "unexpected": 0,
+  "finishedAt": "2026-10-09T17:08:55.886Z"
+}

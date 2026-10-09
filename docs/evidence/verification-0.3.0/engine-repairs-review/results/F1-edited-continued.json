@@ -1,0 +1,352 @@
+{
+  "probe": "F1-edited-continued (review of the repairs)",
+  "repo": "/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/repair",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T17:08:52.875Z",
+  "steps": [
+    {
+      "id": "F1.edited.archApproval",
+      "description": "architecture approved covering AC1 + AC2",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":4,\"ts\":\"2026-10-09T17:08:53.266Z\",\"type\":\"review.recorded\",\"actor\":\"architecture-reviewer\",\"data\":{\"gate\":\"architecture\",\"review\":{\"decision\":\"approve\",\"summary\":\"Criteria checked against the submitted brief.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1 verified against the brief\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]},{\"id\":\"AC2\",\"description\":\"AC2 verified against the brief\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]}],\"findings\":[]},\"reviewId\":\"rev-mv17zb0x-0214b22b\",\"…"
+      }
+    },
+    {
+      "id": "F1.edited.designSubmit",
+      "description": "design submission (spec.md only) while the approved brief is edited on disk",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":6,\"ts\":\"2026-10-09T17:08:53.289Z\",\"type\":\"gate.submitted\",\"actor\":\"technical-designer\",\"data\":{\"gate\":\"design\",\"respondsTo\":null,\"notes\":null,\"submissionId\":\"sub-mv17zb1l-037ab56a\",\"artifacts\":[{\"path\":\".eccode/artifacts/spec.md\",\"sha256\":\"bc19e45aa3a6f34c87aeaa5a90a2a1085103f1c5d69e06fd3f65cda1ca435de3\"}],\"commit\":\"1ea575074f82daf6229c96c06eeecb9f5e3fe0b8\",\"tree\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},\"prevHash\":\"578ea268401fdf62a1f98fb2244665152b7dc7b12b360d8b1807adec7d7d67a2\",\"stateHash\":\"bdb1c70ee9809de7ff6cf17a6bda6ec9ccf241ad7d0132b07e386cbab9…"
+      }
+    },
+    {
+      "id": "F1.edited.designRequired",
+      "description": "required ids for design after AC2 was removed from the approved brief on disk",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the file from git (git checkout -- .eccode/artifacts/architecture/brief.md, or git log -- .eccode/artifacts/architecture/brief.md to find the approved version); a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "F1.edited.gateShowDesign",
+      "description": "eccode gate show design",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "exit": 2,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": "eccode: [APPROVED_ARTIFACT_CHANGED] .eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the file from git (git checkout -- .eccode/artifacts/architecture/brief.md, or git log -- .eccode/artifacts/architecture/brief.md to find the approved version); a revision is submitted as a new artifact of a later gate, never written into the approved file."
+      }
+    },
+    {
+      "id": "F1.edited.designApproval",
+      "description": "design approval covering AC1 only (AC2 was in the approved brief)",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the file from git (git checkout -- .eccode/artifacts/architecture/brief.md, or git log -- .eccode/artifacts/architecture/brief.md to find the approved version); a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "F1.edited.designFullApproval",
+      "description": "design approval covering AC1 + AC2 while the brief on disk differs from the pin (still refused: nothing is derived from an unreviewed edit)",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the file from git (git checkout -- .eccode/artifacts/architecture/brief.md, or git log -- .eccode/artifacts/architecture/brief.md to find the approved version); a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "F1.edited.designChangesRequested",
+      "description": "a changes_requested review while the brief differs from the pin",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the file from git (git checkout -- .eccode/artifacts/architecture/brief.md, or git log -- .eccode/artifacts/architecture/brief.md to find the approved version); a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "F1.edited.designState",
+      "description": "design gate still submitted, no review recorded",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "status": "submitted",
+          "reviews": 0
+        }
+      }
+    },
+    {
+      "id": "F1.edited.restoreFromGit",
+      "description": "git checkout -- brief.md (the recovery the message names) restores the pinned bytes",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": true
+      }
+    },
+    {
+      "id": "F1.edited.designRequiredRestored",
+      "description": "required ids for design once the bytes are restored",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1",
+          "AC2"
+        ]
+      }
+    },
+    {
+      "id": "F1.edited.designOnlyAC1Restored",
+      "description": "design approval covering AC1 only against the restored brief",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- approval does not cover the required criteria: AC2; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show design lists them with their descriptions)",
+        "details": {
+          "reasons": [
+            "approval does not cover the required criteria: AC2; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show design lists them with their descriptions)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.edited.designLegit",
+      "description": "design approval covering AC1 + AC2 (overblocking check)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":8,\"ts\":\"2026-10-09T17:08:53.363Z\",\"type\":\"review.recorded\",\"actor\":\"technical-reviewer\",\"data\":{\"gate\":\"design\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned for every ticket\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/spec.md#Components\"]},{\"id\":\"AC2\",\"description\":\"AC2: 429 returned above the configured rate\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/spec.md#Components\"]}],\"findings\":[]},\"reviewId\":\"rev-mv17zb3n-04d0b1aa\",\"submissionId\":\"sub-mv17z…"
+      }
+    },
+    {
+      "id": "F1.edited.unreviewedBeforeVerification",
+      "description": "unreviewedChanges before the verification gate",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": ".eccode/artifacts/architecture/brief.md",
+            "gate": "architecture",
+            "problem": "modified after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F1.edited.verificationSubmitWithBrief",
+      "description": "verification submission listing the edited brief (re-pin attempt)",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the file from git (git checkout -- .eccode/artifacts/architecture/brief.md, or git log -- .eccode/artifacts/architecture/brief.md to find the approved version); a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "F1.edited.verificationSubmitWithoutBrief",
+      "description": "verification submission WITHOUT the brief (the edit stays on disk)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":30,\"ts\":\"2026-10-09T17:08:53.897Z\",\"type\":\"gate.submitted\",\"actor\":\"delivery-lead\",\"data\":{\"gate\":\"verification\",\"respondsTo\":null,\"notes\":null,\"submissionId\":\"sub-mv17zbih-0g4314f2\",\"artifacts\":[{\"path\":\".eccode/artifacts/verification.md\",\"sha256\":\"932e31c7db0e4c01f1dc5cd25f8adfd685ac86610f7246bbe3e20d8cdf155891\"},{\"path\":\"src/server/a.js\",\"sha256\":\"566b6ff7aae6fc40653f91178b89037b47e0c4a3228f8d81c8c153c0acd84438\"},{\"path\":\"src/web/b.js\",\"sha256\":\"74fa266c76d81d65235ea10a872103ca6c1a035480f5b7b42179b9e59f4b59eb\"},{\"path\":\"tests/c.test.js\",\"sha256\":\"917813357927155c58a050a8ff9b…"
+      }
+    },
+    {
+      "id": "F1.edited.verificationRequired",
+      "description": "required ids for verification while the brief differs from the pin",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the file from git (git checkout -- .eccode/artifacts/architecture/brief.md, or git log -- .eccode/artifacts/architecture/brief.md to find the approved version); a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "F1.edited.gateShowVerification",
+      "description": "eccode gate show verification",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "exit": 2,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": "eccode: [APPROVED_ARTIFACT_CHANGED] .eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the file from git (git checkout -- .eccode/artifacts/architecture/brief.md, or git log -- .eccode/artifacts/architecture/brief.md to find the approved version); a revision is submitted as a new artifact of a later gate, never written into the approved file."
+      }
+    },
+    {
+      "id": "F1.edited.verificationApproval",
+      "description": "verification approval covering AC1 only (brief not in the artifact list)",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the file from git (git checkout -- .eccode/artifacts/architecture/brief.md, or git log -- .eccode/artifacts/architecture/brief.md to find the approved version); a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "F1.edited.verificationFullApproval",
+      "description": "verification approval covering AC1 + AC2 while the brief differs (refused too)",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the file from git (git checkout -- .eccode/artifacts/architecture/brief.md, or git log -- .eccode/artifacts/architecture/brief.md to find the approved version); a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "F1.edited.deliverWhileEdited",
+      "description": "deliver() while the brief differs from the pin and verification is unapproved",
+      "expect": "refused:DELIVERY_BLOCKED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "DELIVERY_BLOCKED",
+        "message": "Delivery refused:\n- gate verification is submitted\n- .eccode/artifacts/architecture/brief.md modified after approval (architecture)\n- every file listed above must be reviewed (submit it with a rework or the next gate), restored to its reviewed content, or, for generated files, listed in release.ignore (.eccode/config.json) before delivery",
+        "details": {
+          "problems": [
+            "gate verification is submitted",
+            ".eccode/artifacts/architecture/brief.md modified after approval (architecture)",
+            "every file listed above must be reviewed (submit it with a rework or the next gate), restored to its reviewed content, or, for generated files, listed in release.ignore (.eccode/config.json) before delivery"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.edited.verificationRequiredRestored",
+      "description": "required ids for verification once restored",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1",
+          "AC2"
+        ]
+      }
+    },
+    {
+      "id": "F1.edited.verificationOnlyAC1Restored",
+      "description": "verification approval covering AC1 only against the restored brief",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- approval does not cover the required criteria: AC2; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show verification lists them with their descriptions)",
+        "details": {
+          "reasons": [
+            "approval does not cover the required criteria: AC2; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show verification lists them with their descriptions)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.edited.verificationLegit",
+      "description": "verification approval covering AC1 + AC2",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":33,\"ts\":\"2026-10-09T17:08:54.111Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned for every ticket\",\"met\":true,\"evidence\":[\"ev:ev-mv17zbj9-0h3ac6ba\"]},{\"id\":\"AC2\",\"description\":\"AC2: 429 returned above the configured rate\",\"met\":true,\"evidence\":[\"ev:ev-mv17zbj9-0h3ac6ba\"]}],\"findings\":[]},\"reviewId\":\"rev-mv17zbof-0ifc96e5\",\"submissionId\":\"sub-mv17zbih-0g4314f2\"},\"prevHash\":\"96b82ff706e…"
+      }
+    },
+    {
+      "id": "F1.edited.deliver",
+      "description": "delivery after the legitimate flow",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "ddca0f375765f2495b67e23cc9ac62bc4f2e2197"
+        }
+      }
+    },
+    {
+      "id": "F1.edited.audit",
+      "description": "eccode audit after the delivery",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "value": "Audit OK: 34 events, chain intact, approved artifacts unchanged."
+      }
+    }
+  ],
+  "unexpected": 0,
+  "finishedAt": "2026-10-09T17:08:54.266Z"
+}
