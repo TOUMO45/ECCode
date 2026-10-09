@@ -1,0 +1,2343 @@
+{
+  "project": {
+    "name": "Groundwork",
+    "idea": "Groundwork: incident postmortems the AI cannot make up. Full scope and acceptance criteria D1-D10 in SCOPE.md (carry unchanged into architecture brief).",
+    "createdAt": "2026-10-08T20:38:41.994Z"
+  },
+  "gates": [
+    {
+      "id": "architecture",
+      "approvedBy": "architecture-reviewer",
+      "iterations": 1
+    },
+    {
+      "id": "design",
+      "approvedBy": "technical-reviewer",
+      "iterations": 1
+    },
+    {
+      "id": "plan",
+      "approvedBy": "technical-reviewer",
+      "iterations": 2
+    },
+    {
+      "id": "phase:foundation",
+      "approvedBy": "technical-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:core-backend",
+      "approvedBy": "security-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:eval",
+      "approvedBy": "technical-reviewer",
+      "iterations": 1
+    },
+    {
+      "id": "phase:ui",
+      "approvedBy": "security-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:release",
+      "approvedBy": "security-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:rework-1",
+      "approvedBy": "technical-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:rework-2",
+      "approvedBy": "technical-reviewer",
+      "iterations": 2
+    },
+    {
+      "id": "phase:rework-3",
+      "approvedBy": "technical-reviewer",
+      "iterations": 0
+    },
+    {
+      "id": "phase:rework-4",
+      "approvedBy": "technical-reviewer",
+      "iterations": 1
+    },
+    {
+      "id": "verification",
+      "approvedBy": "technical-reviewer",
+      "iterations": 0
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-mv00suv3-0147e1a9",
+      "label": "rerun claude -p isolation init event with --json-schema",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv00uow5-01c2fd74",
+      "label": "re-run isolation init check on final argv",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv00ym3i-01e9d465",
+      "label": "plan validate",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv010c14-0105d372",
+      "label": "rerun plan validate on resubmission",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv011vzo-01c548d7",
+      "label": "rerun plan validate",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv015yhu-01ea9b31",
+      "label": "db/schema/config/contract unit tests",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-mv0160et-015f6c38",
+      "label": "db/schema/config/contract unit tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-mv017cl9-01466477",
+      "label": "reconcile: db/schema/config/contract unit tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv017cmt-02a9d922",
+      "label": "reconcile: rerun plan validate",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv017dym-036a4bb4",
+      "label": "reconcile: re-run isolation init check on final argv",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv017dyv-041fd9cb",
+      "label": "reconcile: rerun claude -p isolation init event with --json-schema",
+      "status": "failed",
+      "exitCode": 127,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv01bxi1-01d4bbaf",
+      "label": "verifier+notes unit tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-mv01gtex-0175a046",
+      "label": "AI unit tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv01gts1-01c82069",
+      "label": "regression: verify+notes+db tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv01hpo7-01307b78",
+      "label": "unit-suite",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv01hprf-01741890",
+      "label": "plan-validate",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv01hpu5-019e8e6c",
+      "label": "zero-deps",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv01iiev-01d1d1e8",
+      "label": "rerun unit tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv01izk3-01c2a2c7",
+      "label": "unit tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv01izrx-01d499fa",
+      "label": "cli isolation + redos probe",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv01vixs-01d593a7",
+      "label": "auth/http unit+API tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-mv01vnoy-01109a93",
+      "label": "full deterministic suite (regression)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-mv022uu6-01fc1e00",
+      "label": "API integration tests (task verification)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-mv022zp5-013414f9",
+      "label": "unit suite (regression)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "backend-engineer"
+    },
+    {
+      "id": "ev-mv023wwy-01eb1500",
+      "label": "core-backend full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv023x06-01f7e1d3",
+      "label": "plan validate",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0260f5-0111455e",
+      "label": "security probe core-backend live",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv026hqq-01feb8ca",
+      "label": "full npm test after submission",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv02fyni-01bd7f84",
+      "label": "thresholds + datasets + M1b/M1c node:test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv02g4in-01b85263",
+      "label": "full npm test regression",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv02lidz-01295960",
+      "label": "manifest test",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv02lu47-01ee2ed5",
+      "label": "manifest test",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv02luhd-01d70db8",
+      "label": "eval thresholds regression",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv02m26h-018c5dc6",
+      "label": "manifest test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv02me7y-01426973",
+      "label": "live CLI small run: injections only, 1 rep, cap 0.5 USD",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv02mkw4-01e8720e",
+      "label": "verifier corpus eval (M1b, M1c)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv02ml6p-01a975d1",
+      "label": "fallback eval on tune set (genuine M2 FAIL, see report)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv02mnhu-01afa2f0",
+      "label": "unit/eval tests regression",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv02mnol-01e3d750",
+      "label": "usage error without provider exits 64",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv02q2il-011ab435",
+      "label": "eval tests (task verification)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv02racy-0114b465",
+      "label": "full-test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv02raov-0133c943",
+      "label": "eval-verifier",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv02rb2i-01590629",
+      "label": "eval-fallback",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv02rb8d-01641fb9",
+      "label": "plan-validate",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv02t132-01a36c6f",
+      "label": "rerun full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv02t1ec-01f0e6ce",
+      "label": "rerun verifier eval tune",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv02t1nl-01ef4ec8",
+      "label": "rerun verifier eval holdout",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv02t1qy-01bc6b4f",
+      "label": "plan validate",
+      "status": "failed",
+      "exitCode": 2,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv02t4sl-010fcadc",
+      "label": "plan validate",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv02w1ki-015cf954",
+      "label": "rerun full tests phase:eval",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv02w1xn-01806044",
+      "label": "rerun fallback eval M2",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv02w79f-011f55f1",
+      "label": "plan validate re-review",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv031m4y-01b5b61a",
+      "label": "syntax check and testid tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "frontend-engineer"
+    },
+    {
+      "id": "ev-mv031ow3-01a42c61",
+      "label": "static server test with real public/",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "frontend-engineer"
+    },
+    {
+      "id": "ev-mv039blb-01b99656",
+      "label": "npm run test:browser (first run)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv03ffwr-0153c72b",
+      "label": "reconcile: static server test with real public/",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv03fg4g-02a4ac87",
+      "label": "reconcile: syntax check and testid tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv03fg6e-03767b21",
+      "label": "reconcile: plan validate re-review",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv03fm3x-041c75f7",
+      "label": "reconcile: rerun full tests phase:eval",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv03fmb6-053cc1d3",
+      "label": "reconcile: rerun verifier eval tune",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv03fne0-06190b34",
+      "label": "reconcile: eval tests (task verification)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv03fnjg-071c15e3",
+      "label": "reconcile: usage error without provider exits 64",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv03fq8k-08a51091",
+      "label": "reconcile: unit/eval tests regression",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv03fqdc-0995a0e1",
+      "label": "reconcile: manifest test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv03fqp3-0a5537cd",
+      "label": "reconcile: eval thresholds regression",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv03k3j2-01cbf1d3",
+      "label": "browser journey run 1",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv03oq2p-01e72789",
+      "label": "browser journey run 2",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv03pn5z-0158e9c1",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv03q3mf-013d4b49",
+      "label": "phase:ui security probe: static traversal, headers, CORS",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv03sgon-015ab136",
+      "label": "rerun browser journey",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv03sh8f-013062cb",
+      "label": "frontend unit + syntax",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv03uhev-01907211",
+      "label": "live CLI tests (first)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv042ea3-0198a59c",
+      "label": "CLI tune eval run 1 (3 reps, p1)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv04ag45-0112e593",
+      "label": "CLI tune eval run 2 (3 reps, p2)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv04b4k5-016789b3",
+      "label": "browser test after last tuning change",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv04b6gf-01b373ee",
+      "label": "holdout fallback run (1 of 1)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv04hu9w-0157413c",
+      "label": "holdout CLI run (1 of 1)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv04iyup-011166a3",
+      "label": "task verification command",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv04lz7d-0197d538",
+      "label": "clean-checkout copy: npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-mv04m5kp-010c52dc",
+      "label": "npm test (task verification)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-mv04me16-01c2d331",
+      "label": "documented commands in clean copy: seed, set-password, start, health, SIGTERM, eval verifier/fallback, test:live skip",
+      "status": "failed",
+      "exitCode": 143,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-mv04mlo9-01320996",
+      "label": "npm run test:browser in clean copy",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-mv04mrma-01d8885c",
+      "label": "documented commands in clean copy (rerun, direct node start for SIGTERM)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-mv04npol-01be265b",
+      "label": "documented commands in clean copy: seed, set-password, start, health, SIGTERM, eval verifier/fallback, test:live skip (final)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-mv04pfzm-012db269",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv04pw0s-015e53c1",
+      "label": "rerun test:browser",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv04pw9t-015c69d5",
+      "label": "rerun eval verifier (tune)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv04ujbh-01196468",
+      "label": "reconcile: documented commands in clean copy: seed, set-password, start, health, SIGTERM, eval verifier/fallback, test:live skip (final)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv04ujc3-029418fe",
+      "label": "reconcile: npm run test:browser in clean copy",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv04up38-034fd9a3",
+      "label": "reconcile: npm test (task verification)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv04up3s-04931f1c",
+      "label": "reconcile: clean-checkout copy: npm test",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv04vhuk-05bc4b81",
+      "label": "reconcile: task verification command",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv04vppz-06800382",
+      "label": "reconcile: browser test after last tuning change",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv04yhyb-01a45c58",
+      "label": "npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv04zate-0105107e",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv051eo9-07455918",
+      "label": "reconcile: CLI tune eval run 2 (3 reps, p2)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0521z9-08c659c5",
+      "label": "reconcile: live CLI tests (first)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv052203-09cbf95e",
+      "label": "reconcile: phase:ui security probe: static traversal, headers, CORS",
+      "status": "failed",
+      "exitCode": 127,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05229b-0a44eb85",
+      "label": "reconcile: static server test with real public/",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv052g8p-01a4f1c9",
+      "label": "reconcile: rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv052g96-029f30b2",
+      "label": "reconcile: documented commands in clean copy: seed, set-password, start, health, SIGTERM, eval verifier/fallback, test:live skip (final)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv052g9r-039da361",
+      "label": "reconcile: npm run test:browser in clean copy",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv052ga8-04c8b08d",
+      "label": "reconcile: clean-checkout copy: npm test",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv053kdr-05c7cd0c",
+      "label": "reconcile: task verification command",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv053s51-06573d25",
+      "label": "reconcile: browser test after last tuning change",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv055psm-019034df",
+      "label": "reconcile: rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv055pt7-0237238b",
+      "label": "reconcile: documented commands in clean copy: seed, set-password, start, health, SIGTERM, eval verifier/fallback, test:live skip (final)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv055ptu-03514f16",
+      "label": "reconcile: npm run test:browser in clean copy",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv055pue-04a866da",
+      "label": "reconcile: clean-checkout copy: npm test",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv056rq3-05ab957b",
+      "label": "reconcile: task verification command",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv056zbi-0628e9ce",
+      "label": "reconcile: browser test after last tuning change",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv058bht-010a15d3",
+      "label": "regression: fallback/prompt unit + fallback-tune tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv058ijg-01ba8147",
+      "label": "full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv058lk4-01705e41",
+      "label": "eval fallback provider tune set (not model-quality evidence)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv059irh-018e1661",
+      "label": "rerun full test suite",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv059nco-01ace003",
+      "label": "rerun prompt/fallback unit+tune tests",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv059r4b-07bfd854",
+      "label": "reconcile: CLI tune eval run 2 (3 reps, p2)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv059tav-0170c2d4",
+      "label": "rerun ai unit tests and fallback tune test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv05aexb-08d77723",
+      "label": "reconcile: live CLI tests (first)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05aey4-09bff038",
+      "label": "reconcile: phase:ui security probe: static traversal, headers, CORS",
+      "status": "failed",
+      "exitCode": 127,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05af7z-0a098c37",
+      "label": "reconcile: static server test with real public/",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05bx04-016657d3",
+      "label": "reconcile: eval fallback provider tune set (not model-quality evidence)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05c305-029e49db",
+      "label": "reconcile: full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05c37q-03a5d30a",
+      "label": "reconcile: regression: fallback/prompt unit + fallback-tune tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05c38d-0446b5c3",
+      "label": "reconcile: documented commands in clean copy: seed, set-password, start, health, SIGTERM, eval verifier/fallback, test:live skip (final)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05c38v-0564abd4",
+      "label": "reconcile: npm run test:browser in clean copy",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05c39d-0686bc44",
+      "label": "reconcile: clean-checkout copy: npm test",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05d4pk-07214501",
+      "label": "reconcile: task verification command",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05dc80-08769eea",
+      "label": "reconcile: browser test after last tuning change",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05fg8f-0158fabc",
+      "label": "rerun full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv05fgg5-01fa0f0d",
+      "label": "rerun fallback eval tune set (scratch log dir; no model quality)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv05j6me-09676608",
+      "label": "reconcile: CLI tune eval run 2 (3 reps, p2)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05jvgn-0ad051fa",
+      "label": "reconcile: live CLI tests (first)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05kd4e-01a9887b",
+      "label": "reconcile: eval fallback provider tune set (not model-quality evidence)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05kj4t-0211acb5",
+      "label": "reconcile: full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05kjba-03a62183",
+      "label": "reconcile: regression: fallback/prompt unit + fallback-tune tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05kjby-043d5ed5",
+      "label": "reconcile: documented commands in clean copy: seed, set-password, start, health, SIGTERM, eval verifier/fallback, test:live skip (final)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05kjci-051137ee",
+      "label": "reconcile: npm run test:browser in clean copy",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05kjd2-069599eb",
+      "label": "reconcile: clean-checkout copy: npm test",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05liev-071dd163",
+      "label": "reconcile: task verification command",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05lpy8-0886301c",
+      "label": "reconcile: browser test after last tuning change",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05nr3u-015a1b4d",
+      "label": "rerun full npm test (rework-2 re-review 3)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv05nray-015109fb",
+      "label": "rerun fallback eval tune set (scratch log dir; no model quality)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv05py6h-010514d0",
+      "label": "repro: clean copy cd target from earlier session scratchpad is absent",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "learning-debugger"
+    },
+    {
+      "id": "ev-mv05q4b0-01af603f",
+      "label": "clean copy (tracked+untracked non-ignored files, no .eccode) npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "learning-debugger"
+    },
+    {
+      "id": "ev-mv05qcd4-014f93eb",
+      "label": "clean copy npm run test:browser",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "learning-debugger"
+    },
+    {
+      "id": "ev-mv05rarf-099a4a0d",
+      "label": "reconcile: CLI tune eval run 2 (3 reps, p2)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05ry0w-0a0721c0",
+      "label": "reconcile: live CLI tests (first)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05s5xk-012d94b7",
+      "label": "reconcile: eval fallback provider tune set (not model-quality evidence)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05sbqk-02562ad4",
+      "label": "reconcile: full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05sbxj-0364a2ef",
+      "label": "reconcile: regression: fallback/prompt unit + fallback-tune tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05sby4-04ffb38b",
+      "label": "reconcile: documented commands in clean copy: seed, set-password, start, health, SIGTERM, eval verifier/fallback, test:live skip (final)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05sbyt-05be0de2",
+      "label": "reconcile: npm run test:browser in clean copy",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05sbzg-062ff34d",
+      "label": "reconcile: clean-checkout copy: npm test",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05thya-07f21d31",
+      "label": "reconcile: task verification command",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05tpkw-08f757b1",
+      "label": "reconcile: browser test after last tuning change",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv05vf2p-01c1330f",
+      "label": "rerun full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv05yim3-01f7c60b",
+      "label": "rerun unit tests (working tree)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv05yqtk-01dc84b4",
+      "label": "self-contained clean copy npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv060row-01324883",
+      "label": "reconcile: eval fallback provider tune set (not model-quality evidence)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv060xi5-0243f2c0",
+      "label": "reconcile: full npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv060xoi-031ff29d",
+      "label": "reconcile: regression: fallback/prompt unit + fallback-tune tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv061yfa-044ea651",
+      "label": "reconcile: task verification command",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0625we-0569be76",
+      "label": "reconcile: browser test after last tuning change",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv068z1z-0627a7ea",
+      "label": "reconcile: CLI tune eval run 2 (3 reps, p2)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv069r5t-07d78764",
+      "label": "reconcile: live CLI tests (first)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv069r6o-08cbc7bf",
+      "label": "reconcile: phase:ui security probe: static traversal, headers, CORS",
+      "status": "failed",
+      "exitCode": 127,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv069rhc-094fff7a",
+      "label": "reconcile: static server test with real public/",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv069rqa-0a0be473",
+      "label": "reconcile: syntax check and testid tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06oxbg-011fcbea",
+      "label": "npm test after docs update",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "devops-engineer"
+    },
+    {
+      "id": "ev-mv06pndm-01e0b6c1",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv06pnjn-01d1c0a9",
+      "label": "verifier+holdout offline (no model)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv06pzg3-019659e0",
+      "label": "verifier tune offline",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv06rbja-017b8c22",
+      "label": "reconcile: npm test after docs update",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06rbos-02588002",
+      "label": "reconcile: eval fallback provider tune set (not model-quality evidence)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06rbvn-03f51e6a",
+      "label": "reconcile: regression: fallback/prompt unit + fallback-tune tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06sd8d-04016220",
+      "label": "reconcile: task verification command",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06skq6-057b74bd",
+      "label": "reconcile: browser test after last tuning change",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06wy8n-01aee794",
+      "label": "verifier eval M1b/M1c tune+corpus",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv06x4oz-01a41c73",
+      "label": "npm test",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv06ybzy-063f660e",
+      "label": "reconcile: CLI tune eval run 2 (3 reps, p2)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06yzp7-07d2a7ea",
+      "label": "reconcile: live CLI tests (first)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06yzq6-087ec726",
+      "label": "reconcile: phase:ui security probe: static traversal, headers, CORS",
+      "status": "failed",
+      "exitCode": 127,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06yzzt-093b03a0",
+      "label": "reconcile: static server test with real public/",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06z08e-0a656de5",
+      "label": "reconcile: syntax check and testid tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv06zmvp-018453e0",
+      "label": "holdout3-manifest",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "test-engineer"
+    },
+    {
+      "id": "ev-mv0732rr-0138c458",
+      "label": "full CLI tune run (provider cli)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv0796mi-013bf743",
+      "label": "full CLI tune run 2 (confirm M4)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv079txj-016d85ea",
+      "label": "verifier unit tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv079u43-015d0136",
+      "label": "verifier eval M1b/M1c",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv07a7zh-01f6f89a",
+      "label": "verifier eval M1b/M1c (post-claim)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv07a8b2-01b8181e",
+      "label": "verifier unit tests (post-claim)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv07jkwz-016bdaa8",
+      "label": "holdout3-fallback",
+      "status": "failed",
+      "exitCode": 64,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv07jl44-016c2ed7",
+      "label": "holdout3-cli",
+      "status": "failed",
+      "exitCode": 64,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv07ju2a-015f3c20",
+      "label": "holdout3-fallback",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv07q6zs-01a855fd",
+      "label": "holdout3-cli",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv07sakt-012ce6df",
+      "label": "npm test after holdout3 docs",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv07tqyn-01202f7c",
+      "label": "npm-test-final",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv085t04-01319e23",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv085t6l-01523855",
+      "label": "offline verifier holdout3 (no log append)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv0899c5-01f28c1d",
+      "label": "rerun npm test after provenance submission",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv0899ji-0118ae46",
+      "label": "offline verifier holdout3 recheck",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv08aet2-018e7f59",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv08aiwk-01781f21",
+      "label": "offline verifier holdout",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv08cdmv-01fe5a49",
+      "label": "reconcile: offline verifier holdout3 recheck",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv08cdrf-02380db8",
+      "label": "reconcile: offline verifier holdout3 (no log append)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv08cjq6-033fa701",
+      "label": "reconcile: npm-test-final",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv08cjv2-04d3ed17",
+      "label": "reconcile: holdout3-cli",
+      "status": "failed",
+      "exitCode": 64,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv08cjzp-053bf96f",
+      "label": "reconcile: holdout3-fallback",
+      "status": "failed",
+      "exitCode": 64,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv08ck94-06d7c1a7",
+      "label": "reconcile: verifier unit tests (post-claim)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv08ckdv-07928c3e",
+      "label": "reconcile: verifier eval M1b/M1c (post-claim)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv08i4sz-083fa321",
+      "label": "reconcile: full CLI tune run 2 (confirm M4)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv08j6bo-09552451",
+      "label": "reconcile: task verification command",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv08jem9-0a9ea658",
+      "label": "reconcile: browser test after last tuning change",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv08kmqd-019b3e58",
+      "label": "F8 regression fails before fix",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv08kpnc-01a54421",
+      "label": "F8 regression passes after fix",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv08kvty-01196acc",
+      "label": "npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv08m145-0158e1e4",
+      "label": "npm test final",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "ai-engineer"
+    },
+    {
+      "id": "ev-mv08nh94-014ad60f",
+      "label": "rerun npm test (rework-3)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv08nkei-015c82d8",
+      "label": "budget.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv08nkhz-01b8d96a",
+      "label": "checkBudget on real usage.log",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv08pocw-0106d3cb",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv08pom8-01829dcc",
+      "label": "rerun offline verifier eval",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv08pz6n-0195e605",
+      "label": "npm test (unit/api/eval)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv08pzut-01650205",
+      "label": "rerun browser tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv08q5m9-011f3774",
+      "label": "security probe: env allowlist, argv, delimiter escaping",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv08qeo9-01be5b7d",
+      "label": "live CLI isolation test (1 call)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv08qetb-019f5a69",
+      "label": "unit tests for ai providers, verifier",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv08qjvd-0140ae58",
+      "label": "budget tests + checkBudget on real usage.log",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv08qlrw-01701501",
+      "label": "checkBudget on real usage.log (cli full non-holdout)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv08qmmi-01154d4f",
+      "label": "rerun live tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv08s4m5-01f02921",
+      "label": "verification: npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv08sc9f-01432277",
+      "label": "verification: test:browser",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv08syjt-0128c8fe",
+      "label": "verification: test:live",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv08sypz-01e6f633",
+      "label": "verification: verifier eval",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv098js9-01ee2915",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv098rlx-01114719",
+      "label": "rerun test:browser",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv099fab-0113b888",
+      "label": "rerun test:live",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv099fj7-01147048",
+      "label": "rerun verifier eval",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv09bx89-016ba0d8",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv09dado-01d9e848",
+      "label": "rerun npm test (verification re-review 3)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv09e97m-01b3025d",
+      "label": "reconcile: checkBudget on real usage.log (cli full non-holdout)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09edm2-021692f1",
+      "label": "reconcile: live CLI isolation test (1 call)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09ednw-03d3a01d",
+      "label": "reconcile: security probe: env allowlist, argv, delimiter escaping",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09ejlp-0409419b",
+      "label": "reconcile: npm test (unit/api/eval)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09ejnn-058da678",
+      "label": "reconcile: checkBudget on real usage.log",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09ejsg-0604c3f9",
+      "label": "reconcile: budget.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09ejxb-070c79e9",
+      "label": "reconcile: offline verifier holdout",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09ek20-08f36437",
+      "label": "reconcile: offline verifier holdout3 recheck",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09ek6l-09986701",
+      "label": "reconcile: offline verifier holdout3 (no log append)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09ekbn-0a787615",
+      "label": "reconcile: holdout3-cli",
+      "status": "failed",
+      "exitCode": 64,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09f2r1-01808b11",
+      "label": "reconcile: checkBudget on real usage.log (cli full non-holdout)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09f7xy-0281903b",
+      "label": "reconcile: live CLI isolation test (1 call)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09f7zn-0368b7f5",
+      "label": "reconcile: security probe: env allowlist, argv, delimiter escaping",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09fdzv-048bb822",
+      "label": "reconcile: npm test (unit/api/eval)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09fe1y-05879298",
+      "label": "reconcile: checkBudget on real usage.log",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09fe6c-061c6f3f",
+      "label": "reconcile: budget.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09feb7-07c63055",
+      "label": "reconcile: offline verifier holdout",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09feg7-080adbc2",
+      "label": "reconcile: offline verifier holdout3 recheck",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09fekt-097ecba8",
+      "label": "reconcile: offline verifier holdout3 (no log append)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09feq9-0abeed5d",
+      "label": "reconcile: holdout3-cli",
+      "status": "failed",
+      "exitCode": 64,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09zpa2-0146306c",
+      "label": "reconcile: checkBudget on real usage.log (cli full non-holdout)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09zvo0-022d2525",
+      "label": "reconcile: live CLI isolation test (1 call)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv09zvpv-03e276f6",
+      "label": "reconcile: security probe: env allowlist, argv, delimiter escaping",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a01uw-04f18e32",
+      "label": "reconcile: npm test (unit/api/eval)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a01wv-051a464e",
+      "label": "reconcile: checkBudget on real usage.log",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a021l-068c6887",
+      "label": "reconcile: budget.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a026a-071fe463",
+      "label": "reconcile: offline verifier holdout",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a02b5-084b3852",
+      "label": "reconcile: offline verifier holdout3 recheck",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a02fx-0986d435",
+      "label": "reconcile: offline verifier holdout3 (no log append)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a02m3-0ab9659f",
+      "label": "reconcile: holdout3-cli",
+      "status": "failed",
+      "exitCode": 64,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a2xqu-013e446e",
+      "label": "closure-npm-test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a42b2-01bbd35f",
+      "label": "reconcile: checkBudget on real usage.log (cli full non-holdout)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a47ns-02586618",
+      "label": "reconcile: live CLI isolation test (1 call)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a47ph-035a855d",
+      "label": "reconcile: security probe: env allowlist, argv, delimiter escaping",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a4dkw-04d1ffab",
+      "label": "reconcile: npm test (unit/api/eval)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a4dn8-05cd80a1",
+      "label": "reconcile: checkBudget on real usage.log",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a4ds5-0609614e",
+      "label": "reconcile: budget.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a4dx2-070c1e99",
+      "label": "reconcile: offline verifier holdout",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a4e1w-080c79ca",
+      "label": "reconcile: offline verifier holdout3 recheck",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a4e6u-09e17b2e",
+      "label": "reconcile: offline verifier holdout3 (no log append)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a4ebu-0a0756db",
+      "label": "reconcile: holdout3-cli",
+      "status": "failed",
+      "exitCode": 64,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a778h-01fc522a",
+      "label": "reconcile: checkBudget on real usage.log (cli full non-holdout)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a7cmz-024d7a07",
+      "label": "reconcile: live CLI isolation test (1 call)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a7cow-03485708",
+      "label": "reconcile: security probe: env allowlist, argv, delimiter escaping",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a7inu-0440c7b4",
+      "label": "reconcile: npm test (unit/api/eval)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a7iqc-051a3a33",
+      "label": "reconcile: checkBudget on real usage.log",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a7iv1-06d85635",
+      "label": "reconcile: budget.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a7izw-073174bb",
+      "label": "reconcile: offline verifier holdout",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a7j4u-087612d9",
+      "label": "reconcile: offline verifier holdout3 recheck",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a7j9i-09dc5a23",
+      "label": "reconcile: offline verifier holdout3 (no log append)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a7jec-0aaf36c4",
+      "label": "reconcile: holdout3-cli",
+      "status": "failed",
+      "exitCode": 64,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a9ing-0171d836",
+      "label": "reconcile: checkBudget on real usage.log (cli full non-holdout)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a9p6u-02404516",
+      "label": "reconcile: live CLI isolation test (1 call)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a9p8j-03ef02ef",
+      "label": "reconcile: security probe: env allowlist, argv, delimiter escaping",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a9v0n-04c39da0",
+      "label": "reconcile: npm test (unit/api/eval)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a9v2z-0591714a",
+      "label": "reconcile: checkBudget on real usage.log",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a9v7a-06bbb3d8",
+      "label": "reconcile: budget.test.js",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a9vbx-070e80d7",
+      "label": "reconcile: offline verifier holdout",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a9vh3-088807a6",
+      "label": "reconcile: offline verifier holdout3 recheck",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a9vmp-09a4c7be",
+      "label": "reconcile: offline verifier holdout3 (no log append)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0a9vsk-0acb24a2",
+      "label": "reconcile: holdout3-cli",
+      "status": "failed",
+      "exitCode": 64,
+      "recordedBy": "orchestrator"
+    },
+    {
+      "id": "ev-mv0aghmp-017ea150",
+      "label": "rework-4: npm test (docs-only change)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0aiug6-01c4e4a6",
+      "label": "rerun npm test (rework-4 review)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv0al84w-01414c0e",
+      "label": "rework-4 attempt 2: npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0amnsj-01c4c776",
+      "label": "rework-4 attempt 3: npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0aoadv-019c912d",
+      "label": "rerun npm test for rework-4",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv0aoaie-01e84adb",
+      "label": "verify 22 restored files identical to retired copies; commit 6eb29f4 touches only 22 files",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv0apqho-01ab7df8",
+      "label": "verification: eccode audit",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0apwf4-012ce6d7",
+      "label": "verification: npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0apwli-01b9fb79",
+      "label": "verification: verifier eval",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0aq6cc-01b6e176",
+      "label": "verification: npm run test:browser",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0aqs0x-0169f95c",
+      "label": "verification: npm run test:live",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0ar5ur-017f4b2d",
+      "label": "verification D9: clean-checkout clone of HEAD, install-free npm test, seed, start, health",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0arjnp-01afbbe5",
+      "label": "verification D9: clean-checkout clone of HEAD, npm test, seed, start, health, stop",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0as846-017d3f5d",
+      "label": "verification D9: clean clone of HEAD 6eb29f4 as committed (expected FAIL: holdout dir still has the 22 retired files)",
+      "status": "failed",
+      "exitCode": 1,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0ashe0-0144607e",
+      "label": "verification D9: clean clone of HEAD 6eb29f4 + exact uncommitted working-tree diff (rework-4 deletions, README, docs): npm test, seed, start, health, stop",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "delivery-lead"
+    },
+    {
+      "id": "ev-mv0aw84v-0121546a",
+      "label": "npm test (security review)",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv0aw8og-0143416d",
+      "label": "rerun npm test",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv0awgh8-01d087b4",
+      "label": "rerun browser tests",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv0ax43y-015e59ff",
+      "label": "security probe: live app headers, auth, CSRF, IDOR, traversal, rate limit, error leak",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "security-reviewer"
+    },
+    {
+      "id": "ev-mv0ax9tq-0162a6f0",
+      "label": "clean-checkout clone of HEAD 2e142e9: npm test, seed, start, health, stop",
+      "status": "failed",
+      "exitCode": 127,
+      "recordedBy": "technical-reviewer"
+    },
+    {
+      "id": "ev-mv0axnvr-014c23f5",
+      "label": "clean-checkout clone of HEAD 2e142e9: npm test, seed, start, health, stop",
+      "status": "passed",
+      "exitCode": 0,
+      "recordedBy": "technical-reviewer"
+    }
+  ],
+  "totals": {
+    "costUsd": 0,
+    "runtimeMinutes": 177.81,
+    "tokens": 3293188
+  },
+  "auditEvents": 730
+}

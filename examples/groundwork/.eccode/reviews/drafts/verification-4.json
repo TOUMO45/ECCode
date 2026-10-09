@@ -1,0 +1,70 @@
+{
+  "decision": "approve",
+  "summary": "I re-ran eccode audit (OK, exit 0), npm test (285/285), test:browser (28/28) and an independent clean-checkout of HEAD 2e142e9 (README steps: no install, npm test 285/285, seed, start, /api/health ok, SIGTERM stops). I judged V1-V4 on the facts. The M1c threshold (max 0.02) is unchanged since it was first committed and holdout 3 meets it (1/434). What deviated are the team's own run-count caps, which SCOPE.md does not set, and spend stayed inside the user's USD150/900 min authorization. I find no remaining item that SCOPE.md reserves for a named human, so I approve. I did not run holdout or full CLI tune runs, as instructed. The failed evidence ev-mv0ax9tq-0162a6f0 is my own tooling slip (the script file did not exist yet), not a product failure; the passing rerun is ev-mv0axnvr-014c23f5.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Deterministic checks pass at HEAD (audit, unit/API/eval suite, real-Chromium journey at 360 and 1280 px)",
+      "met": true,
+      "evidence": ["ev:ev-mv0aw8og-0143416d", "ev:ev-mv0awgh8-01d087b4", "artifact:.eccode/artifacts/verification/report.md"]
+    },
+    {
+      "id": "C2",
+      "description": "D9: clean-checkout run verified by someone other than the author, following the README",
+      "met": true,
+      "evidence": ["ev:ev-mv0axnvr-014c23f5", "artifact:README.md"]
+    },
+    {
+      "id": "C3",
+      "description": "D8: thresholds unchanged and met on the only unbiased holdout; deviations disclosed accurately",
+      "met": true,
+      "evidence": ["artifact:docs/eval-results.md", "artifact:eval/holdout-runs.log", "artifact:eval/usage.log"]
+    },
+    {
+      "id": "C4",
+      "description": "D10: every open risk is listed with its residual; no known blocking defect; record is audit-clean",
+      "met": true,
+      "evidence": ["artifact:.eccode/artifacts/verification/release-checklist.md", "artifact:.eccode/artifacts/verification/report.md"]
+    }
+  ],
+  "findings": [
+    {
+      "id": "V5",
+      "severity": "info",
+      "title": "Q3 asks that the user be told at delivery; this is a delivery duty, not an approval condition",
+      "detail": "The brief (Q3) says the user has not explicitly confirmed the D8 thresholds and should be told at delivery. The delivery summary should state plainly: holdouts 1 and 2 failed M1c (3.07%, 2.50%); holdout 3 passed (1/434, Wilson upper bound about 1.29%, author independence self-reported, verifier tuned on holdouts 1 and 2); 12 tune runs against the team cap of 8 (the 12th covered by no operator decision); engine costUsd is 0 so the USD150 bound rests on eval/usage.log (USD 1.55) plus runtime 167.9 of 900 min; RISK-1, 2, 10, 14 stay open; hold3-08 is an unfixed false flag in the safe direction. The docs already say this.",
+      "evidence": ["artifact:docs/eval-results.md", "artifact:.eccode/artifacts/verification/report.md"],
+      "recommendation": "Include the above in the delivery message. Nothing for the user to approve before the gate closes. If the user wants a different threshold or stronger semantic checks, that is a new decision after delivery."
+    },
+    {
+      "id": "V6",
+      "severity": "info",
+      "title": "Verification report text lags HEAD",
+      "detail": "report.md and release-checklist.md cite HEAD 6eb29f4 plus uncommitted changes and warn that a clean clone fails at HEAD. HEAD is now 2e142e9 with those changes committed, and my clean clone of 2e142e9 passes. The caveat is obsolete and not misleading in the unsafe direction.",
+      "evidence": ["ev:ev-mv0axnvr-014c23f5"],
+      "recommendation": "No change needed for approval. Cite ev-mv0axnvr-014c23f5 as the independent D9 evidence."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "V1",
+      "evidence": ["artifact:eval/thresholds.json", "artifact:eval/holdout-runs.log", "artifact:docs/eval-results.md", "ev:ev-mv0axnvr-014c23f5"],
+      "resolution": "I was wrong to treat this as needing a user decision. Q3 reserves for the user a change to a threshold. eval/thresholds.json m1c.max is 0.02 and has one commit (679e3bc, the snapshot) with no later edit, so no threshold changed. The failed holdouts were reported FAIL and retired, not retried to a pass; holdout 3 was evaluated once per provider and meets M1c (1/434 = 0.23%) and M1-M4. The raised holdout cap (2 to 3) is the team's own procedural cap from the architecture brief and dec-mv05ytch, not a user-stated limit; SCOPE.md D8 requires a labelled tune set, a never-tuned holdout, thresholds fixed in advance and separate provider evaluation, all of which hold. The remaining weaknesses (n=434, self-reported author independence) are measured and disclosed in the docs, and RISK-2 and RISK-14 are listed as open."
+    },
+    {
+      "id": "V2",
+      "evidence": ["artifact:eval/usage.log", "artifact:eval/lib/budget.js", "artifact:docs/eval-results.md"],
+      "resolution": "SCOPE.md sets no run-count cap. It authorizes USD150 and 900 min. The 8-run cap is a team and operator limit; the 12 full runs (11 covered by operator decisions, the 12th an automatic reconcile --verify re-run costing about USD 0.097) are disclosed accurately in the Deviations table. The guard bug was fixed in rework-3 with a regression test and me re-running npm test, which includes test/eval/budget.test.js. Spend is USD 1.55 of a USD 40 eval cap and 167.9 of 900 min. This is a process breach of the team's own cap with no user-authorized limit crossed, so it does not need user acceptance."
+    },
+    {
+      "id": "V3",
+      "evidence": ["artifact:.eccode/reviews/rev-mv0aor6x-01fde66f.json", "ev:ev-mv0axnvr-014c23f5"],
+      "resolution": "Superseded by rework-4. phase:rework-4 (status approved) carried an independent technical review (rev-mv0aor6x-01fde66f) of the release content, README, docs and eval, and repaired the record of the 22 retired holdout-1 files. eccode audit now exits 0 (726 events, chain intact, approved artifacts unchanged). The earlier draft phase-release-4.json is not needed."
+    },
+    {
+      "id": "V4",
+      "evidence": ["artifact:.eccode/artifacts/verification/report.md", "artifact:docs/eval-results.md", "ev:ev-mv0axnvr-014c23f5"],
+      "resolution": "D10 requires that no blocking defect is known and that every open risk is listed; SCOPE.md does not require per-risk human acceptance. The report and docs list RISK-1, 2, 10 and 14 as open with mitigation and measured residual, and the others as mitigated with evidence. RISK-1 (lexical verifier) and RISK-10 (notes sent to an external provider) are inherent, documented in the README and UI, and not defects. hold3-08 wrongly blocks a correct statement, the safe direction, and was left unfixed on purpose to keep holdout 3 clean. The clean-checkout install, the other part of V4, I ran myself on a fresh clone at 2e142e9 and it passes."
+    }
+  ]
+}

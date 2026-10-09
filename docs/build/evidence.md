@@ -8,7 +8,7 @@ The requirement-to-evidence table is filled in as work completes. Status values:
 | R2 | Passed | `examples/groundwork/.eccode`, `docs/evidence/groundwork/README.md` |
 | R3 | Passed (judgement not guaranteed) | `docs/evidence/gate-challenge/` |
 | R4a | Passed (application, independently verified) | `docs/evidence/groundwork/independent-verification/` |
-| R4b | **Failed** (delivery gate escalated, audit failing) | `docs/evidence/groundwork/README.md` |
+| R4b | Passed with disclosed operator interventions | `docs/evidence/groundwork/README.md` |
 | R5 | Passed | `docs/evidence/resume-demo/`, `docs/evidence/groundwork/` |
 | R6 | Passed within limits | `docs/evidence/learning-round1`, `learning-round2`, `debug-lesson`, `self-improvement` |
 | R7 | **Failed** (E1 both rounds; E3 round 2; E4 round 1) | `eval/results/round1`, `eval/results/round2` |

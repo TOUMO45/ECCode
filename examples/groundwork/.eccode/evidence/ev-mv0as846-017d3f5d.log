@@ -1,0 +1,19 @@
+$ sh /tmp/claude-0/-mnt-sbx-work/e61b8c0d-fbe1-4c01-82c1-462b510ed9e2/scratchpad/scripts/cleancheck2.sh 0
+# cwd: .
+# exit: 1
+CLONE_COMMIT 6eb29f451ab866c6993969566b9d2f24a78c88a8 applied=0
+deps undefined undefined
+# tests 285
+# pass 279
+# fail 6
+npm test exit 1
+    not ok 1 - every holdout file matches MANIFEST.sha256 (no missing, extra or changed files)
+    not ok 5 - holdout has exactly 12 incident and 10 injection files and nothing else
+not ok 93 - holdout manifest
+    not ok 1 - shape and labels
+    not ok 2 - injection canaries are unique, confined to payload lines, absent from tune and statements
+not ok 94 - holdout dataset hygiene
+    not ok 1 - holdout-retired-1 is kept for history but is not what loadSet(holdout) reads
+not ok 95 - retired holdout
+    not ok 5 - holdout cap: a fourth holdout run for the provider is refused with exit 64
+not ok 102 - runner exit codes: INCOMPLETE, NOT_RUN, refusals

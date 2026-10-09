@@ -1,0 +1,35 @@
+{
+  "decision": "changes_requested",
+  "summary": "Security review of the verification gate. I re-ran npm test (285/285) and probed a live instance (temp DB, free port, stopped afterwards). Auth, session, CSRF, IDOR, rate limit, error envelope, static serving, prompt construction and CLI environment allowlisting all behaved as designed; I found no blocking or major code defect. I cannot approve: V1, V2, V3 and V4 are still open, and each needs a named human decision that no reviewer or agent can supply. RISK-10 (notes leave the host) needs a named data owner or product owner to accept its residual or set a retention policy. I accept nothing on anyone's behalf.",
+  "criteria": [
+    {"id": "D6", "description": "Access controls: scrypt, HttpOnly SameSite cookies, CSRF, team-scoped roles with IDOR proof, login rate limit, audit", "met": true,
+     "evidence": ["ev:ev-mv0aw84v-0121546a", "ev:ev-mv0ax43y-015e59ff"]},
+    {"id": "D5", "description": "Validation and error handling without internal leakage", "met": true,
+     "evidence": ["ev:ev-mv0ax43y-015e59ff"]},
+    {"id": "D4-sec", "description": "Retrieved notes are data, never instructions; CLI provider isolated (no tools, scrubbed env, temp cwd)", "met": true,
+     "evidence": ["ev:ev-mv0aw84v-0121546a", "artifact:src/ai/cli.js", "artifact:src/ai/prompt.js"]},
+    {"id": "D10-sec", "description": "Every open risk listed and none hidden; RISK-10 residual disclosed", "met": true,
+     "evidence": ["artifact:.eccode/artifacts/verification/report.md", "artifact:README.md"]},
+    {"id": "Q3", "description": "Acceptance of M1c result, holdout cap raise, run-cap overrun and open high risks by a named human", "met": false,
+     "evidence": ["artifact:.eccode/artifacts/verification/report.md"]}
+  ],
+  "findings": [
+    {"id": "S1", "severity": "major", "title": "NEEDS A NAMED HUMAN: RISK-10 (incident notes sent to Anthropic via CLI or API) has no accepted residual and no retention policy",
+     "detail": "The default and the 'Automatic' choice route note text off host whenever the CLI or API provider is available (src/services/providers.js resolve and list default). Any responder can trigger this; there is no per-team or per-incident opt-in and no consent gate. Nothing is purged automatically (README Privacy note). The disclosure is accurate and the UI labels the off-host providers, so this is a policy decision, not a code defect. Only the person who owns the data-handling policy for the organisation can accept or reject it. Name required: the product owner, together with whoever owns data classification for the incident data. The operator and the agents cannot stand in.",
+     "evidence": ["artifact:src/services/providers.js", "artifact:README.md", "ev:ev-mv0ax43y-015e59ff"],
+     "recommendation": "A named human records, in the decision log, either acceptance of RISK-10 residual for the intended use (with the data classes allowed), or a requirement such as default-to-fallback, opt-in per team, or a retention limit."},
+    {"id": "S2", "severity": "minor", "title": "Off-host warning is not shown for 'Automatic' and disappears after the first draft",
+     "detail": "In public/js/views/incident.js the 'Automatic' option has no '(sends notes off host)' label although it resolves to anthropic or cli, and the hint text 'Providers marked ... transmit the notes' is replaced by 'Regenerating replaces all statements' once a draft exists. Provider options themselves stay labelled and the preselected default is the labelled provider, so exposure is low.",
+     "evidence": ["artifact:public/js/views/incident.js"],
+     "recommendation": "Label Automatic as 'may send notes off host' when an off-host provider is the default, and keep the privacy hint alongside the regenerate warning."},
+    {"id": "S3", "severity": "minor", "title": "SEC-1/2: CLI child inherits HOME and CLAUDE_CONFIG_DIR; documented only in the report, not in README or operations.md",
+     "detail": "buildEnv in src/ai/cli.js forwards PATH, HOME, CLAUDE_CONFIG_DIR, LANG, LC_ALL and TMPDIR. I ran buildEnv with a hostile environment: ANTHROPIC_API_KEY, AWS_SECRET_ACCESS_KEY, GITHUB_TOKEN and GW_SEED_PASSWORD were all dropped; ANTHROPIC_API_KEY is dropped even when listed in GW_CLI_ENV_PASS; names with shell metacharacters are filtered by config. So the CLI's own login credentials in HOME are reachable by the child process, but the child has no tools (live init test: tools exactly [StructuredOutput]), safe-mode, no setting sources, no MCP, and a fresh empty cwd. Residual: a CLI flag regression or a model-side bypass could expose that credential store. This is the deliberate trade-off needed for the CLI to authenticate. docs/operations.md says nothing about it.",
+     "evidence": ["artifact:src/ai/cli.js", "artifact:test/live/cli-isolation.test.js", "artifact:.eccode/artifacts/verification/report.md"],
+     "recommendation": "Add one sentence to docs/operations.md that the CLI child can read the operator's CLI credentials in HOME/CLAUDE_CONFIG_DIR, and that GW_CLI_ENV_PASS must not carry secrets other than what the CLI needs. Re-run test:live on each CLI upgrade."},
+    {"id": "S4", "severity": "info", "title": "Login limiter is keyed per username and IP, in memory",
+     "detail": "Probe: 5 bad logins for one username gave 401 x5 then 429; X-Forwarded-For is ignored (socket address used, so it cannot be spoofed to evade); 8 different usernames from one IP all returned 401, so password spraying across usernames is not throttled and every attempt costs a scrypt hash. The counter resets on restart. Acceptable for a local single-node demo bound to 127.0.0.1. Cookies are not Secure unless GW_COOKIE_SECURE=1, and the seed accounts share a documented password, so these are not safe on a shared network.",
+     "evidence": ["ev:ev-mv0ax43y-015e59ff"],
+     "recommendation": "Before any non-local use: add a per-IP limiter, set GW_COOKIE_SECURE=1 behind TLS, and change seed passwords. Record as a deployment condition."}
+  ],
+  "resolvedFindings": []
+}

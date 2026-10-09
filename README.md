@@ -52,7 +52,7 @@ See [docs/usage.md](docs/usage.md) for installation, configuration, usage and tr
 Full status per requirement: [docs/acceptance-report.md](docs/acceptance-report.md). Short version:
 - **Inside ECCode, verified learning works**: on unseen tasks it meets organisational rules that no ticket mentions 100 % of the time against 12.5 % with learning off (round 2), and it sets a lesson aside, naming the reason, where it does not apply.
 - **Against the original ECC it does not win.** On a predeclared, sealed-holdout comparison (two rounds, same model and budgets) the original ECC with its own `/learn` route matched or beat ECCode on success (100 % vs 83 %, then 61 % vs 61 %) at 2.9–4.6× lower cost per success. The targets for "beats original ECC" were not met. What ECCode adds is enforcement and auditability: engine-enforced independent review, a tamper-evident record, resumability. See [eval/results](eval/results).
-- The team built and tested a real web + AI application ([`examples/groundwork`](examples/groundwork): 285 tests, real-browser journey, live provider, evaluations with thresholds that were not moved). Its delivery gate is **not closed** (human decisions pending), and the project is **not accepted** as having met its own completion criteria.
+- The team built and tested a real web + AI application ([`examples/groundwork`](examples/groundwork): 285 tests, real-browser journey, live provider, evaluations with thresholds that were not moved). It was delivered through the gates, but only after operator interventions a product owner would normally make (disclosed), and the project is **not accepted** as having met its own completion criteria because the comparison with the original ECC failed.
 
 ## Demonstration
 

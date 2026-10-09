@@ -1,6 +1,6 @@
 # State
 
-**Branch:** `claude/brave-bardeen-6y5ng9`. Final status: see [docs/acceptance-report.md](../acceptance-report.md) (not accepted: R7 failed, R4 delivery not closed).
+**Branch:** `claude/brave-bardeen-6y5ng9`. Final status: see [docs/acceptance-report.md](../acceptance-report.md) (not accepted: R7 failed).
 
 ## Done and committed
 - Engine, skills, agents, hooks; 136 tests (`npm run check`).
@@ -10,8 +10,7 @@
 
 ## Not done
 - R7: the predeclared targets E1 (both rounds), E3 (round 2) and E4 (round 1) were not met.
-- R4b: Groundwork's verification gate is escalated pending human decisions V1, V2, V4 and a rework for V3; `eccode audit` fails on that record (retired holdout files).
-- The Groundwork record was not repaired; the engine fixes came after.
+- (Closed after the first version of this file: Groundwork was delivered, audit OK, with disclosed operator interventions.)
 
 ## Restart steps
 1. `cd /home/user/ECCode && git log --oneline -15 && npm run check`

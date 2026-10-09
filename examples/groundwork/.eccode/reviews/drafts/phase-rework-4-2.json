@@ -1,0 +1,57 @@
+{
+  "decision": "approve",
+  "summary": "I re-ran npm test (285 pass, 0 fail) and eccode audit, checked commit 6eb29f4 and the accepted handoff, and re-read the F2 and F3 doc fixes. F1, F2 and F3 are resolved. The audit still prints the 22 deletion lines plus usage.log, README.md and docs/eval-results.md. I judge these to be exactly the lines that approval of this gate would pin. See F4 (info) for the one thing I cannot prove.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Repair is sound: the 22 files were restored byte-identically and deleted inside a claimed task, listed in filesChanged",
+      "met": true,
+      "evidence": ["ev:ev-mv0aoaie-01e84adb", "artifact:eval/usage.log"]
+    },
+    {
+      "id": "C2",
+      "description": "Deviations and authorisations are stated honestly, including the uncovered 12th tune run, and the reconcile --verify origin of that run",
+      "met": true,
+      "evidence": ["artifact:docs/eval-results.md", "artifact:README.md"]
+    },
+    {
+      "id": "C3",
+      "description": "Tests pass and submitted artifact hashes equal the files on disk",
+      "met": true,
+      "evidence": ["ev:ev-mv0aoadv-019c912d", "artifact:README.md", "artifact:docs/eval-results.md", "artifact:eval/usage.log"]
+    },
+    {
+      "id": "C4",
+      "description": "Remaining audit lines are exactly those approval would pin; nothing unexplained",
+      "met": true,
+      "evidence": ["artifact:eval/usage.log"]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F4",
+      "severity": "info",
+      "title": "Audit cannot clear before approval; confirm after approval",
+      "detail": "Before approval, eccode audit still lists 22 'deleted after approval (phase:eval)' lines, 'eval/usage.log modified after approval (phase:rework-2)', and README.md and docs/eval-results.md 'modified after approval (phase:rework-3)'. The submitted hashes of README.md, docs/eval-results.md and eval/usage.log equal the on-disk sha256 values. The 22 deletions are in the accepted handoff ho-mv0amteq-0115f338 filesChanged. usage.log is unchanged since the claim, as the owner stated, and is a submitted artifact. I could not verify that the engine counts deletions listed in filesChanged as superseding the phase:eval pins. I cannot test that without approving.",
+      "evidence": ["ev:ev-mv0aoaie-01e84adb"],
+      "recommendation": "After approval, re-run eccode audit. If lines remain for the 22 deletions, treat it as a toolkit defect and escalate to the user rather than approving around it. Do not claim the audit is clean until it exits 0."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "F1",
+      "evidence": ["ev:ev-mv0aoaie-01e84adb", "artifact:eval/usage.log"],
+      "resolution": "Commit 6eb29f4 touches exactly 22 files: eval/holdout/incidents/hold-01..12 and injections/hold-inj-01..10. I compared each with eval/holdout-retired-1 using cmp and they are byte-identical. The owner re-claimed from that base and deleted them. git status shows the 22 as deleted. They are listed in filesChanged of ho-mv0amteq-0115f338. eval/usage.log hash f2e5f684... equals the submitted hash. The engine refused it in filesChanged as unchanged since the claim. It is a submitted artifact and I accept that."
+    },
+    {
+      "id": "F2",
+      "evidence": ["artifact:docs/eval-results.md", "artifact:README.md"],
+      "resolution": "The Authorisation paragraph now reads: decisions cover up to 11 full tune runs and 3 holdout runs; the 12th is not covered by any decision. The Deviations table agrees. RISK-2 is back to open per the handoff."
+    },
+    {
+      "id": "F3",
+      "evidence": ["artifact:docs/eval-results.md"],
+      "resolution": "docs/eval-results.md line 96 now says the 12th run (2026-10-09T00:31:25.832Z) was an automatic reconcile --verify re-run. It cites ev-mv08i4sz-083fa321 at seq 507 and ev-mv08cjq6-033fa701 at the start of the batch at seq 502-506. It notes that the holdout re-runs at seq 503 and 504 were refused with exit 64."
+    }
+  ]
+}

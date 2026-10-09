@@ -4,6 +4,8 @@ Groundwork turns raw incident notes into a structured postmortem draft (summary,
 
 Zero npm dependencies. Node's built-in `node:http` and `node:sqlite` only.
 
+Deviations from the agreed run-count caps, holdout use, spend and risk dispositions are stated in [docs/eval-results.md](docs/eval-results.md#deviations) and [Risk dispositions](docs/eval-results.md#risk-dispositions).
+
 Deeper docs: [docs/operations.md](docs/operations.md) (health, logs, shutdown, backup, rollback) and [docs/eval-results.md](docs/eval-results.md) (measured AI evaluation results, including the failures).
 
 ## Prerequisites
@@ -120,8 +122,8 @@ Options: `--set incidents|injections|all`, `--reps 1..5`, `--model <alias>`, `--
 Cost and run rules (enforced by `eval/lib/budget.js` from the append-only `eval/usage.log`):
 
 - Live runs use a small model (default `haiku`) and print token and cost usage.
-- Per-run cap USD 3 (`runCostCapUsd`); aggregate cap USD 40 across logged runs (`totalCostCapUsd`). A run that would push the logged total over the cap is refused (exit 2). The delivery plan tightened this further to about USD 8 of eval spend. `eval/usage.log` has 15 entries totalling USD 1.454 (3 holdout CLI runs plus non-holdout runs), excluding unitemised diagnostics and live tests.
-- At most 8 full tune CLI runs in `usage.log` (`eval/lib/budget.js`). Honest count: `usage.log` holds **12** non-holdout full (`set=all`) CLI tune runs, so the cap of 8 was **overrun by 4**. The guard was a no-op until the rework-3 fix: `isFullTune()` matched only COMPLETE/INCOMPLETE, while `eval/run.js` writes PASS/FAIL/INCOMPLETE, so it counted 0 runs and never refused. It now counts PASS/FAIL/INCOMPLETE, so with 12 logged any further full CLI tune run is refused. The earlier plan of 3 live tune runs was also exceeded (several were automatic `reconcile --verify` re-runs). The overruns are disclosed and not accepted by anyone (see docs/eval-results.md).
+- Per-run cap USD 3 (`runCostCapUsd`); aggregate cap USD 40 across logged runs (`totalCostCapUsd`). A run that would push the logged total over the cap is refused (exit 2). The delivery plan tightened this further to about USD 8 of eval spend. `eval/usage.log` has 16 entries totalling USD 1.552 (3 holdout CLI runs plus 13 non-holdout runs), excluding unitemised diagnostics and live tests.
+- At most 8 full tune CLI runs in `usage.log` (`eval/lib/budget.js`). Honest count: `usage.log` holds **12** non-holdout full (`set=all`) CLI tune runs, so the cap of 8 was **overrun by 4**. The guard was a no-op until the rework-3 fix: `isFullTune()` matched only COMPLETE/INCOMPLETE, while `eval/run.js` writes PASS/FAIL/INCOMPLETE, so it counted 0 runs and never refused. It now counts PASS/FAIL/INCOMPLETE, so with 12 logged any further full CLI tune run is refused. The earlier plan of 3 live tune runs was also exceeded (several were automatic `reconcile --verify` re-runs). The overruns are disclosed in the Deviations section of docs/eval-results.md; the operator's decisions cover 11 full tune runs and 3 holdouts per provider; the 12th full tune run is not covered, and no product owner has accepted any of it.
 - The holdout set is never tuned on and is excluded from `npm test`. The original cap was 2 holdout runs per provider (`eval/holdout-runs.log`); the operator extended it to 3 (`MAX_HOLDOUT_RUNS` in `eval/lib/budget.js`) so the third and final sealed holdout could be run. **All 3 are now used for each provider**, so no further holdout run is allowed. A hash manifest (`eval/holdout/MANIFEST.sha256`) is checked by a test so holdout files cannot be edited unnoticed. A holdout run is reported as measured; do not rerun it to obtain a pass.
 - Two earlier holdouts are retired and were used as tune data in the final verifier fix: `eval/holdout-retired-1/` (failed M1c, 3.07%) and `eval/holdout-retired-2/` (cases `hold2-*`, failed M1c, 2.50%). The current sealed holdout is `eval/holdout/` (cases `hold3-*`, manifest hash `b0c36134893e8fb81161a27f5b31a752a7046a2e684abd5eaa3059f877fc98f9`). Do not tune on it.
 - Every change to `src/ai/prompt.js`, `src/ai/fallback.js` or `src/verify/stopwords.js` must be recorded in `eval/tuning-log.md`.
@@ -182,7 +184,7 @@ A verified statement cites lines that exist, every time, number and name in it a
 - **`node:sqlite` is experimental** on Node 22; the API could differ on other Node versions. Pinned to `>=22.5`.
 - **Local demo scope**: no SSO, email, TLS termination or multi-instance deployment. Cookies are HttpOnly and SameSite; set `GW_COOKIE_SECURE=1` behind HTTPS.
 - **No `.env.example`** is shipped (see Configuration).
-- **Operational gaps**: no metrics endpoint or latency and error counters (logs only, see docs/operations.md); SIGTERM sent only to the `npm start` wrapper does not stop the server, so run `node --disable-warning=ExperimentalWarning src/index.js` under a service manager; backups and rollback are manual; the earlier eval tune-run overrun is not accepted by anyone.
+- **Operational gaps**: no metrics endpoint or latency and error counters (logs only, see docs/operations.md); SIGTERM sent only to the `npm start` wrapper does not stop the server, so run `node --disable-warning=ExperimentalWarning src/index.js` under a service manager; backups and rollback are manual; the eval tune-run overrun is disclosed under Deviations in docs/eval-results.md and not accepted by any product owner.
 - **Browser test needs a global Playwright** and does not run on a host without it.
 - Backups are a manual copy of the SQLite files (see docs/operations.md).
 

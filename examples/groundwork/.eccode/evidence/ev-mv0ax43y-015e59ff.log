@@ -1,0 +1,65 @@
+$ bash /tmp/claude-0/-mnt-sbx-work/e61b8c0d-fbe1-4c01-82c1-462b510ed9e2/scratchpad/secprobe.sh
+# cwd: .
+# exit: 0
+--- headers/health
+HTTP/1.1 200 OK
+X-Request-Id: a7513767b24060a8
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+Cross-Origin-Opener-Policy: same-origin
+Cache-Control: no-store
+Content-Type: application/json; charset=utf-8
+Content-Length: 51
+Date: Fri, 09 Oct 2026 01:43:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+--- no-auth access
+{"error":{"code":"UNAUTHENTICATED","message":"Authentication required","requestId":"53cf442d26df3039"}} 401
+--- static traversal
+/..%2f..%2fpackage.json 404
+/%2e%2e/package.json 404
+/.env 404
+/data/t.db 404
+/../src/app.js 404
+/src/app.js 404
+--- login CSRF flow
+login without csrf:
+{"error":{"code":"CSRF_FAILED","message":"CSRF validation failed","requestId":"29cdfa5b3bd9dcd4"}}
+login with evil origin:
+{"error":{"code":"CSRF_FAILED","message":"CSRF validation failed","requestId":"8f6ac5d8ceb7d423"}}
+good login:
+HTTP/1.1 200 OK
+Set-Cookie: gw_sid=uYi-mUUpv-K6PIwXe5Xxpyxlxeq4L5gAi-fohUWzo2U; Path=/; SameSite=Strict; HttpOnly
+Set-Cookie: gw_csrf=NYUm3AwOz91O76uME8Q0pPIR6PHN0Ct0MY3yAn9bhUI; Path=/; SameSite=Strict
+--- mutation w/o csrf header (with session)
+{"error":{"code":"CSRF_FAILED","message":"CSRF validation failed","requestId":"aa6949664a2faf6a"}}
+--- IDOR: payments-lead vs platform data
+{"incidents":[]}
+incident 1 404
+notes 1 404
+draft-generate 1 404
+incident 2 404
+notes 2 404
+draft-generate 2 404
+incident 999 404
+notes 999 404
+draft-generate 999 404
+--- malformed / injection inputs
+{"error":{"code":"INVALID_JSON","message":"Request body is not valid JSON","requestId":"3bd448156ab3858b"}}
+{"error":{"code":"VALIDATION_FAILED","message":"Request validation failed","requestId":"67eed586f989d53c","details":{"fields":[{"path":"__proto__","message":"is not allowed"}]}}}
+--- rate limit (7 bad logins, same user)
+401 401 401 401 401 429 429 
+--- spray across 8 distinct usernames
+401 401 401 401 401 401 401 401 
+--- X-Forwarded-For spoof against limiter (new user)
+401 401 401 401 401 429 429 
+--- 404 / 405 shape
+{"error":{"code":"NOT_FOUND","message":"Not found","requestId":"04f4874d7e372820"}}
+{"error":{"code":"METHOD_NOT_ALLOWED","message":"Method not allowed","requestId":"c926e6bf6dc455b1","details":{"allow":["GET","HEAD"]}}}
+--- password / secret in server log
+0
+--- DB perms
+600

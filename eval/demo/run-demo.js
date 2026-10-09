@@ -186,6 +186,8 @@ async function waitForLimit(rec) {
 (async () => {
   let total = 0;
   let instant = 0;
+  let idle = 0;
+  let lastSeq = (readState() || {}).seq;
   if (!continueFrom) {
     if (!install()) {
       console.error('plugin installation failed; see install.json');
@@ -215,6 +217,15 @@ async function waitForLimit(rec) {
       n -= 1; // a session the limit stopped does not count against --max-sessions
       instant = 0;
       continue;
+    }
+    // A session that changed nothing in the record, twice in a row, will not be helped by a third.
+    const seqNow = (readState() || {}).seq;
+    idle = seqNow === lastSeq ? idle + 1 : 0;
+    lastSeq = seqNow;
+    if (idle >= 2) {
+      console.log('two sessions in a row left the record unchanged; stopping instead of repeating them');
+      log.push({ label: 'no-progress-stop', at: new Date().toISOString(), seq: seqNow });
+      break;
     }
     instant = (r.costUsd || 0) === 0 && r.wallMin < 0.3 ? instant + 1 : 0;
     if (instant >= 2) {

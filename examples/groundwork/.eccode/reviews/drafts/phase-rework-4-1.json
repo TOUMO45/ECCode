@@ -1,0 +1,79 @@
+{
+  "decision": "changes_requested",
+  "summary": "I recomputed the numbers in README and docs/eval-results.md against eval/usage.log, eval/holdout-runs.log, the holdout 3 report and the decision events. They match. I re-ran npm test (285 pass, 0 fail) and eccode audit. The audit still fails, so I cannot approve. The audit output is 22 'deleted after approval (phase:eval)' lines, 'eval/usage.log modified after approval (phase:rework-2)', and README.md and docs/eval-results.md 'modified after approval (phase:rework-3)'. The last two are this submission's own artifacts and should clear once it is approved. The first two groups need the restore-then-delete repair before approval.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Deviations and risk dispositions state numbers that match usage.log, holdout-runs.log, reports and recorded decisions",
+      "met": true,
+      "evidence": ["artifact:docs/eval-results.md#Deviations", "artifact:eval/usage.log", "ev:ev-mv0aiug6-01c4e4a6"]
+    },
+    {
+      "id": "C2",
+      "description": "Authorisations are stated honestly, including the 12th full tune run",
+      "met": true,
+      "evidence": ["artifact:docs/eval-results.md#Authorisation", "artifact:README.md"]
+    },
+    {
+      "id": "C3",
+      "description": "hold3-08 analysis is accurate",
+      "met": true,
+      "evidence": ["artifact:docs/eval-results.md#Deviations", "artifact:eval/usage.log"]
+    },
+    {
+      "id": "C4",
+      "description": "README and docs match the code",
+      "met": true,
+      "evidence": ["artifact:README.md", "ev:ev-mv0aiug6-01c4e4a6"]
+    },
+    {
+      "id": "C5",
+      "description": "Record integrity: eccode audit passes",
+      "met": false,
+      "evidence": ["artifact:eval/usage.log", "artifact:README.md", "artifact:docs/eval-results.md"]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "blocking",
+      "title": "eccode audit fails: 22 retired holdout-1 deletions and usage.log are unresolved",
+      "detail": "I ran eccode audit on the current tree. It reports 22 lines of the form 'eval/holdout/{incidents/hold-01..12,injections/hold-inj-01..10}.json deleted after approval (phase:eval)'. It also reports 'eval/usage.log modified after approval (phase:rework-2)'. I checked the 22 retired copies in eval/holdout-retired-1/ against the sha256 values pinned in sub-mv02vh78-010deeca of phase:eval. All 22 are byte-identical and none of the old paths exist. So the content is not in doubt, but the engine record does not accept the deletions. The submission notes say deleted paths can be neither submitted as artifacts nor listed in filesChanged. A narrative in docs/eval-results.md ('Record repair') does not make the audit pass.",
+      "evidence": ["artifact:eval/usage.log", "artifact:docs/eval-results.md#Deviations"],
+      "recommendation": "Resolution condition: eccode audit exits 0 after the repair, which I will re-run. The orchestrator's plan is acceptable. Reopen a task whose owner is allowed to touch eval/holdout/**. Restore the 22 files from eval/holdout-retired-1 so they are byte-identical to the phase:eval hashes. Then delete them so they count as changed since claim, and list them in filesChanged. The same task must submit eval/usage.log as an artifact at its final bytes. No further logged runs may be appended after submission. If the engine still refuses, that is a toolkit defect to escalate to the user; do not approve around it."
+    },
+    {
+      "id": "F2",
+      "severity": "major",
+      "title": "RISK-2 mitigation text in the engine record says the 12 tune runs were operator-authorised",
+      "detail": "The RISK-2 mitigation event says 'acceptance of run-count deviations (12 tune runs vs 8 ...; operator-authorised within SCOPE.md USD150/900min)'. The docs are more accurate. dec-mv05ytch-0186a47a set 8 runs and dec-mv06pxds-01667e31 allowed 'at most 3 more', so 11. I counted usage.log myself: 12 non-holdout set=all runs. The 12th is 2026-10-09T00:31:25Z. It was the automatic reconcile --verify re-run at seq 502-504, run after holdout 3, and no decision covers it. The 'Authorisation' paragraph in docs/eval-results.md also opens with 'The extra runs were authorised by the operator', which is true of 11 only. The Deviations table and README line 126 state the 12th correctly. The record and the opening sentence contradict them.",
+      "evidence": ["artifact:docs/eval-results.md#Authorisation", "artifact:eval/usage.log"],
+      "recommendation": "Resolution condition: reword the first sentence of Authorisation to 'authorised up to 11 runs; the 12th is not covered', and add a risk update for RISK-2 that does not say all 12 were authorised."
+    },
+    {
+      "id": "F3",
+      "severity": "minor",
+      "title": "The docs say the logs do not record why the 00:31 run was made, but the evidence trail does",
+      "detail": "Evidence events ev-mv08cjq6 to ev-mv08cjzp at 00:31:17-25Z show the run came from reconcile --verify. The holdout re-runs in the same batch were refused by the cap guard, which shows the guard working. This weakens neither the disclosure nor the fact that no decision covers the run.",
+      "evidence": ["artifact:eval/usage.log"],
+      "recommendation": "Say that the run was an automatic reconcile --verify re-run, citing those evidence ids."
+    },
+    {
+      "id": "F4",
+      "severity": "info",
+      "title": "Spend and runtime versus SCOPE.md",
+      "detail": "SCOPE.md authorises the user's USD 150 and 900 minutes. It sets no run-count caps. Those caps come from the team and the operator. The 12th run therefore breaches the operator decision, not the user's authorisation. Logged eval spend is USD 1.5515 and the 12th run cost USD 0.097. Recorded runtime is 162.42 of 900 minutes. Recorded costUsd is 0, so total real spend cannot be shown from the engine record. The docs say so correctly.",
+      "evidence": ["artifact:eval/usage.log"],
+      "recommendation": "No change. The user must be told that the engine's costUsd is 0, so the USD 150 bound rests on usage.log only."
+    },
+    {
+      "id": "F5",
+      "severity": "info",
+      "title": "hold3-08 analysis checked",
+      "detail": "The flagged statement cites only line 1 ('Customers in Sweden ...'). The statement says 'Swedish customers', and the verifier raised NAME_NOT_IN_SOURCE. The report field m1cFalseFlags lists only hold3-08. The Wilson 95% interval I computed for 1/434 is 0.04% to 1.29%, matching the docs. The caveats are stated accurately: one event is a thin basis, it was not fixed, and the verifier errs toward blocking. The line 'Reset emails are reaching Swedish inboxes' elsewhere in the case does not mask the flag.",
+      "evidence": ["artifact:docs/eval-results.md#Deviations"],
+      "recommendation": "No change."
+    }
+  ],
+  "resolvedFindings": []
+}

@@ -1,0 +1,60 @@
+{
+  "from": "delivery-lead",
+  "to": "delivery-lead",
+  "task": "rework-4",
+  "objective": "Make eccode audit pass: put the deletion of retired holdout-1 files and the later usage.log appends into reviewed work; add Deviations and Risk dispositions; check README/docs accuracy.",
+  "context": "Operator reopened verification; nothing waived. Decisions dec-mv05ytch-0186a47a, dec-mv06pxds-01667e31, dec-mv0acn9a-01b09c56 (operator, not product owner). No code, tests, thresholds or .eccode files edited.",
+  "inputs": [
+    "SCOPE.md",
+    "README.md",
+    "docs/eval-results.md",
+    "docs/operations.md",
+    "eval/usage.log",
+    "eval/holdout-runs.log",
+    "eval/tuning-log.md",
+    "eval/reports/cli-all-holdout-2026-10-09T00-09-05-400Z.json"
+  ],
+  "expectedOutput": "Audit-clean record of the holdout-1 retirement; Deviations and Risk dispositions sections; accurate README.",
+  "acceptanceCriteria": [
+    "Deleted holdout-1 paths listed in filesChanged and verified identical to retired copies",
+    "eval/usage.log listed in filesChanged",
+    "Deviations section with numbers from usage.log and holdout-runs.log",
+    "Risk dispositions for open risks without marking any accepted",
+    "README/docs match code and reports; npm test passes"
+  ],
+  "completedWork": "Attempt 2 after review rev-mv0ajprp-018539ce. Restored the 22 files from eval/holdout-retired-1, hash-verified against phase:eval submission sub-mv02vh78-010deeca (audit then showed no deletion lines), then deleted them inside this task. F2: reworded Authorisation (decisions cover 11 full tune runs and 3 holdouts; 12th uncovered, breach of the operator cap, within the USER USD150/900min authorisation); F3: the 12th run (usage.log 2026-10-09T00:31:25.832Z) is the reconcile --verify re-run ev-mv08i4sz-083fa321 (seq 507, 259.7 s), started right after the seq 502-506 batch in which holdout re-runs (seq 503, 504) were refused with exit 64. RISK-2 and RISK-14 set back to open with docs text; RISK-1 and RISK-10 remain open. eval/usage.log not changed or appended. Attempt 3: re-claimed from base commit 6eb29f4 (which restores the 22 files, byte-identical to eval/holdout-retired-1), deleted the 22 files inside the task; git now shows them as deleted. eval/usage.log is not in filesChanged: the engine refused it as unchanged since claim (INVALID_HANDOFF). It is unchanged and no runs were appended; it is submitted as a gate artifact at its current bytes.",
+  "filesChanged": [
+    "eval/holdout/incidents/hold-01.json",
+    "eval/holdout/incidents/hold-02.json",
+    "eval/holdout/incidents/hold-03.json",
+    "eval/holdout/incidents/hold-04.json",
+    "eval/holdout/incidents/hold-05.json",
+    "eval/holdout/incidents/hold-06.json",
+    "eval/holdout/incidents/hold-07.json",
+    "eval/holdout/incidents/hold-08.json",
+    "eval/holdout/incidents/hold-09.json",
+    "eval/holdout/incidents/hold-10.json",
+    "eval/holdout/incidents/hold-11.json",
+    "eval/holdout/incidents/hold-12.json",
+    "eval/holdout/injections/hold-inj-01.json",
+    "eval/holdout/injections/hold-inj-02.json",
+    "eval/holdout/injections/hold-inj-03.json",
+    "eval/holdout/injections/hold-inj-04.json",
+    "eval/holdout/injections/hold-inj-05.json",
+    "eval/holdout/injections/hold-inj-06.json",
+    "eval/holdout/injections/hold-inj-07.json",
+    "eval/holdout/injections/hold-inj-08.json",
+    "eval/holdout/injections/hold-inj-09.json",
+    "eval/holdout/injections/hold-inj-10.json",
+    "README.md",
+    "docs/eval-results.md"
+  ],
+  "evidence": [
+    "ev:ev-mv0amnsj-01c4c776"
+  ],
+  "remainingIssues": [
+    "Risks RISK-1, 2, 10, 14 need a product owner.",
+    "The 12th tune run is covered by no decision."
+  ],
+  "nextAction": "Reviewer checks phase:rework-4, then verification is resubmitted."
+}
