@@ -147,6 +147,7 @@ Actor restrictions: `run correct`, `recover` and `improve rollback` need `--acto
 | Guard denies a `git` command | `checkout`/`restore`/`reset`/`stash`/`clean` on `.eccode/` or the whole tree would roll back the record | Restore project files by path (`git checkout -- src/x.js`) |
 | `eccode` not found | Plugin bin directory isn't on PATH | Use `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` or `node .claude/eccode/bin/eccode.js` |
 | `[LESSON_NOT_VERIFIABLE]` | The lesson lacks a check that fails before the fix and passes after, or similar evidence | Record the reproduction and verification with the **same** command |
+| `memory check` says `QUARANTINED`, `memory audit` exits 2, or `[SCOPE] … shared record and cannot be revised` | A shared record's promotion attestation no longer holds (its file was edited after promotion, its `attestations.jsonl` line is missing or the chain is broken, or it was promoted by an older engine), or someone tried to change a shared record in place | Never edit shared records by hand. Revise the lesson in the project it came from, have it verified and `eccode memory promote <id>` again: the new copy gets a new shared id and the old one is superseded. `eccode memory show <sharedId>` prints the reason |
 
 ## Releases and compatibility
 

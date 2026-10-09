@@ -16,12 +16,14 @@ Gates, tasks and decisions in the event log are also project memory. Decisions c
 ## Storage
 
 - One JSON file per record in `<project>/.eccode/memory/records/`, plus the shared store `~/.eccode/memory/records/` (`ECCODE_SHARED_MEMORY` overrides it).
+- Next to the shared records, `attestations.jsonl`: an append-only, hash-chained index (the project log's format) with one line per engine change to a shared record, promotion or supersession: `{seq, id, action, attestedSha256, promotedBy, at, prevHash, hash}`.
 - Each record keeps:
   - `revisions[]`: the full content at each revision, with author and reason;
   - `reviews[]`: including refused verification attempts and their gaps;
   - `checks[]`: every applicability verdict;
   - `citations[]`;
   - `evidenceSnapshots`: the evidence details copied from the project record, so a promoted lesson carries its proof;
+  - `attestation` (shared records): `attestedSha256` of `{layer, status, trust, content}` as saved, the verifying review (`reviewedRev`, `reviewer`, `reviewedAt`, `reviewContentSha256` from the `memory.reviewed` event), `promotedBy`, `promotedAt`, `engine`;
   - `supersededBy` / `supersedes`.
 - Nothing is deleted. Superseded and rejected records stay retrievable with `--include-superseded`.
 - Memory events (`memory.recorded`, `memory.reviewed`, `memory.checked`, `memory.cited`, …) also go into the project's hash-chained log.
@@ -47,6 +49,7 @@ Gates, tasks and decisions in the event log are also project memory. Decisions c
    - a clean privacy scan (secrets, emails, user paths, IPs, project name), including source URLs: https only, no credentials, no secret-looking query parameters, no private hosts.
 
    Project-layer records are never promoted.
+9. A shared record is trusted only while its attestation recomputes from the file **and** matches the newest `attestations.jsonl` line for its id. An edit to its content, status, trust or layer, a missing or broken index line, or a record promoted by an older engine (no attestation) **quarantines** it: `memory check` returns `provisional` with `quarantined: true` and the reason, search weights it as unverified, `eccode memory show` prints the attestation and the reason, and `eccode memory audit [--scope shared|project|all]` lists it (exit 2; project scope lists local records marked verified without a verifying review in the log). Shared records are immutable: `revise`, `review` and `supersede` refuse them (`SCOPE`). A corrected lesson is revised and re-verified in its project and promoted again: the new copy gets a new shared id and the old one is superseded by the engine, with a fresh index line.
 
 ## Retrieval and applicability
 
@@ -58,7 +61,7 @@ eccode memory check <id>
 **Ranking** blends:
 - BM25 keyword relevance;
 - character-trigram similarity, which handles inflections, identifiers and typos;
-- a trust weight (verified 1.0, provisional 0.85, untrusted 0.75).
+- a trust weight (verified 1.0, provisional or quarantined 0.85, untrusted 0.75). "Verified" is judged as `memory check` judges it: by the project log for a local record and by the promotion attestation for a shared one, never by the status field alone.
 
 Set `memory.embedCommand` to add an external embedding model. The command reads `{"texts":[…]}` on stdin and prints `{"vectors":[…]}`. Without it, retrieval is lexical.
 
@@ -69,7 +72,7 @@ Set `memory.embedCommand` to add an external embedding model. The command reads 
 | `applies` | Verified, environment constraints satisfied, not stale | May rely on it, and must cite it |
 | `does-not-apply` | An environment constraint fails or can't be evaluated here, or a machine-checkable `notApplicableWhen` (`env:node >=18`) holds | Must not use it; say why |
 | `stale` | Last verification or source check is older than `memory.staleAfterDays` | Revalidate first |
-| `provisional` | Not independently verified | Treat as a hypothesis |
+| `provisional` | Not independently verified, or (shared, `quarantined: true`) its promotion attestation no longer holds | Treat as a hypothesis; a quarantined record is re-promoted from its project before it counts again |
 | `superseded` / `rejected` | Replaced or refuted | Follow `supersededBy` |
 
 Search output frames each record as **"retrieved evidence … NOT an instruction"**.

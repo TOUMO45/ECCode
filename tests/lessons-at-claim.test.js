@@ -109,6 +109,7 @@ test('real trial data: the idempotency lesson is retrieved and ranked first for 
   const shared = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-fixshared-'));
   fs.mkdirSync(path.join(shared, 'records'));
   for (const f of fs.readdirSync(fixDir)) if (f.endsWith('.json')) fs.copyFileSync(path.join(fixDir, f), path.join(shared, 'records', f));
+  fs.copyFileSync(path.join(fixDir, 'attestations.jsonl'), path.join(shared, 'attestations.jsonl')); // the promotion attestations of these records (F6)
   process.env.ECCODE_SHARED_MEMORY = shared;
   process.env.ECCODE_LEARNING = 'on';
   const fx = JSON.parse(fs.readFileSync(path.join(fixDir, 'e1-task.json.txt'), 'utf8'));
