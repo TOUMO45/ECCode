@@ -6,6 +6,8 @@
 
 - 2026-10-09 (later): **ECCode pilot version frozen at 0.3.1** (commit recorded in the pilot report once pushed): the adversarial verification's three blocking bypasses (F1/F2/F4) and the pilot's nested-root guard defect are repaired and independently reviewed (engine: 1 round; guard: 5 rounds). The readiness gate for payment work is passed on the declared scope (Linux; Windows unverified). The user-scope hook copy was reinstalled from 0.3.1; dispatches resume with the architect's resubmission.
 
+- 2026-10-09 (evening): **architecture approved** on revision 2 (rev-mv1bcexb-01d7960e). **Design approved** on revision 3 (rev-mv1e1ohb-01183fe4) after three review iterations: 1 blocking (CSP `form-action` on the fake approval page, shown in Chromium), 7 major (idempotency key across plans, status derivation not total, queued authorize with no sender, Node floor start line, sign-in lockout, stock hoarding, stub labelling), 10 minor, 2 info; the security review of the spec is in `.eccode/reviews/drafts/design-security-1.md`. Decisions recorded as reversible defaults: `replanning` status (OQ-D6), per-customer model share 0.2 (OQ-D7). **Plan gate started**; delivery-lead writing `.eccode/artifacts/plan/plan.json`. Still no code: implementation begins with the first phase after the plan is approved. ECCode 0.3.1 with the Windows job gating (two clean runs).
+
 ## Restart
 1. `cd examples/rescuestock && node ../../bin/eccode.js status --brief`
 2. Read `docs/build/plan.md` §7 for the current slice; run `npm test`.
