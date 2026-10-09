@@ -3,7 +3,7 @@
   "layer": "debugging",
   "scope": "project",
   "project": "ECCode toolkit maintenance",
-  "status": "provisional",
+  "status": "verified",
   "trust": "internal",
   "createdAt": "2026-10-09T18:29:02.382Z",
   "createdBy": "learning-debugger",
@@ -417,6 +417,13 @@
       "decision": "verify",
       "notes": "Re-review of rev 2. All five rev-1 findings are resolved. [major] symptoms[3]: the false path symptom is replaced by 'target inside the role's own draft/artifact area of the NESTED record'. symptoms[0] now says the message has no path, which matches a088c6a L446. appliesWhen[3] and notApplicableWhen[0] use the corrected discriminator. [major] Implementer form: added to symptoms[4], appliesWhen[4] and rootCause, and stated as read from the code (a088c6a checkEdit, new Store(root) with root = outer), not reproduced. That matches the old guard source. notApplicableWhen[1] is now limited to cases where the nested record holds no matching claim either. [minor] failedAttempts: renumbered to the six reviewed commits, with the 3fa6298 H1/H2 round added. The 80ddab0/d0e2a3b split is stated, 9c4d5aa is shown as approved with I1, and all of it matches REVIEW.md. [minor] Hash pinning: the check prints the guard's sha256. The author's logs pin it: ev-mv1b0cid-0189968e FAILED exit 1 with sha 25bb07dc.. (= git show a088c6a:scripts/hooks/guard.js); ev-mv1b0exx-018a8c87 PASSED exit 0 with sha d43f4b54.. (= scripts/hooks/guard.js). Both used the identical command and their log file hashes match the records. [info] The source titles now carry the promotion scrub note. Reviewer re-ran the revised check: ev-mv1b2m24-015857b8 (a088c6a copy, sha 25bb07dc.., FAILED exit 1, pilot message) and ev-mv1b2m9m-0185b2f4 (current guard, sha d43f4b54.., PASSED exit 0). Earlier reviewer evidence: ev-mv1awc9p-01af8d8c, ev-mv1awbyi-01602693, and the regression suites 30/30 in ev-mv1awqqr-01a41555. The root cause matches the code (a088c6a L453/L463-464/L446; current L640/L659/L178). Environment node>=18.17 matches package.json engines. The fingerprint is stable. No secrets or emails.",
       "rev": 2
+    },
+    {
+      "at": "2026-10-09T18:39:39.532Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "notes": "Re-review of rev 3. Field-by-field diff of rev 2 against rev 3: only sources changed. Analysis, evidence ids and sha256 values are identical to the rev 2 I verified. Scan of the rev 3 content found 0 matches for file:, /home/, /tmp/, /root, email addresses and scratchpad paths. Every source is an https://github.com/TOUMO45/ECCode/blob/<full sha>/ link. All three SHAs (ad69e6d4..., 1fcda260..., a088c6a2...) resolve to commits on origin (origin/claude/serene-heisenberg-h9o5vo). The source titles hold against git: the CHANGELOG 'restructured on real paths' section is present at ad69e6d and absent at 1fcda26; REVIEW.md is present at ad69e6d and absent at 1fcda26; guard.js has sha256 d43f4b54.. at both 1fcda26 and ad69e6d; the a088c6a guard has sha256 25bb07dc..; both pilot runs appear in the pilot report at ad69e6d; the NESTED/REVIEW tests exist at 1fcda26. The rev 2 verification evidence still applies: ev-mv1b2m24-015857b8 (old guard FAILED), ev-mv1b2m9m-0185b2f4 (current guard PASSED) and ev-mv1awqqr-01a41555 (regression suites 30/30).",
+      "rev": 3
     }
   ],
   "evidenceSnapshots": {
@@ -489,5 +496,6 @@
   ],
   "supersededBy": null,
   "supersedes": [],
-  "lastVerifiedAt": "2026-10-09T18:35:36.403Z"
+  "lastVerifiedAt": "2026-10-09T18:39:39.532Z",
+  "promotedAs": "mem-sd-mv1audrd-013b7102"
 }
