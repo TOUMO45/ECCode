@@ -1,0 +1,45 @@
+{
+  "from": "devops-engineer",
+  "to": "delivery-lead",
+  "task": "b4-env-readme",
+  "objective": "Ship the environment template, first README, MIT licence and the NFR4 env-example scan for RescueStock.",
+  "context": "Built against spec.md revision 3 Deployment (Environment variables, README), Security (secrets handling) and b1's handoff ho-mv1gazew-01706543. src/config.js refuses placeholder-shaped secrets (including unused PayPal and Anthropic ones), so every secret line in .env.example is commented out and the README and the file header say why. Memory lesson mem-sd-mv1audrd-013b7102 was retrieved at claim.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/drafts/b1-handoff.json",
+    "src/config.js"
+  ],
+  "dependencies": ["b1-foundation-core"],
+  "expectedOutput": ".env.example, README.md, LICENSE and test/scan/env-example.test.js, with the scan passing.",
+  "acceptanceCriteria": [
+    ".env.example lists every variable of the spec's Deployment table plus RS_REGISTER_PER_IP_PER_HOUR, secrets as <placeholder> only, non-secret defaults as in the table",
+    "NFR4: test/scan/env-example.test.js asserts that every value is a placeholder or a listed non-secret default and that every process.env name read by src/config.js appears in .env.example",
+    "README.md documents npm install (npm registry only), npm run seed, npm start with the manual two-step start line, npm test, the Node >= 22.13 floor with the Q9 22.5 branch note, and the MIT licence; it names variables only, never values"
+  ],
+  "completedWork": "Wrote .env.example with all 66 names src/config.js reads (every Deployment table variable plus RS_REGISTER_PER_IP_PER_HOUR): non-secret defaults as active lines, every secret (ANTHROPIC_API_KEY, RS_ADMIN_PASSWORD, RS_DEMO_PASSWORD, RS_FAKE_WEBHOOK_SECRET, and RS_PAYPAL_{A..E,DEFAULT}_{CLIENT_ID,CLIENT_SECRET,WEBHOOK_ID}) as a commented-out <placeholder>, and computed defaults (RS_PUBLIC_URL, RS_DEMO_DATE, RS_LIVE_MODEL, RS_LIVE_PAYPAL) commented out. Wrote README.md: what is simulated (payments fake by default, PayPal Sandbox only with no real money, extraction through the local claude CLI with a labelled simulated fallback, demo data), requirements, the Node 22.13 floor and the Q9 22.5 branch note, clean-checkout steps (npm install from the npm registry, npm run seed, npm start with the manual two-step line, npm test), browser and live suites, configuration and the placeholder-refusal behaviour, public deployment advice including RS_REGISTER_PER_IP_PER_HOUR, demo accounts, the operator note for demo retakes, retention and backup, health, logs and rollback, and the MIT licence. Wrote LICENSE (MIT, 'RescueStock contributors'). Wrote test/scan/env-example.test.js with nine NFR4-named tests: no duplicates and line shape; every name config reads (recorded through a Proxy over the environment plus a source scan) is in .env.example; every value is a placeholder or the listed default with no token-shaped text; secret lines stay commented out; the active lines load into a valid config; an uncommented placeholder secret is refused by variable name only; README steps, start line equal to package.json start, Node floor, Q9 note, labels; README assigns no value to a secret and mentions only known variables; LICENSE content. I also ran npm run seed from a verbatim copy of .env.example against a scratch database path and it succeeded.",
+  "filesChanged": [
+    ".env.example",
+    "README.md",
+    "LICENSE",
+    "test/scan/env-example.test.js"
+  ],
+  "evidence": ["ev:ev-mv1gfrxe-01aa3e25", "ev:ev-mv1gdiqu-010e761b"],
+  "remainingIssues": [
+    "ev:ev-mv1gdiqu-010e761b is the pre-work failing state, but it was recorded as separate arguments (not one shell string), so it failed with exit 2 from a mangled ls command line rather than from the missing README; the passing run ev:ev-mv1gfrxe-01aa3e25 uses the declared command as one string.",
+    "The README describes designed behaviour (spec revision 3); most routes, the admin account, the fake approval listener, the extraction fallback to fake and the retention sweep are not built yet (b1 left them as stubs). Re-read the README against the running application once those tasks land, in particular the Operations and Demo accounts sections.",
+    "The README start-with-env-file line uses node --env-file=.env; Node 22 exits with an error if that file does not exist. This is stated in the README. npm start does not load .env.",
+    "The rollback section is a procedure (previous commit, restore the pre-upgrade backup, mode switches); no test exercises it, and migrations are forward-only, so running older code on a newer database is not supported.",
+    "Admin account creation is not in the seed (b1); the README says the admin role signs in with RS_ADMIN_PASSWORD, which the auth task (c1) must honour."
+  ],
+  "nextAction": "delivery-lead: dispatch an independent review of b4 (README claims against src/config.js and the spec Deployment section); then re-check the README Operations and Demo accounts sections after the auth and extraction tasks land.",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "appliesWhen covers a PreToolUse hook or guard that maps file writes to a project root across several records; this task writes docs, an env template and a scan test and builds no such code. The guard did not misjudge my writes: every denial named the target project's own claim (b4-env-readme) and was a correct ownership refusal for a scratch path outside the claim."
+    }
+  ]
+}
