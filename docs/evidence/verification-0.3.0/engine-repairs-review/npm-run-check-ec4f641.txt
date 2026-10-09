@@ -1,0 +1,1504 @@
+
+> eccode@0.3.0 check
+> node scripts/validate-toolkit.js && node --test tests/*.test.js
+
+Toolkit validation passed: 12 agents, 7 skills, 7 commands, hooks wired, package 0.3.0 (373 files).
+TAP version 13
+# Subtest: change profile: plan is the first gate and no verification gate follows the phases
+ok 1 - change profile: plan is the first gate and no verification gate follows the phases
+  ---
+  duration_ms: 948.783893
+  type: 'test'
+  ...
+# Subtest: default profile is unchanged and unknown profiles are refused
+ok 2 - default profile is unchanged and unknown profiles are refused
+  ---
+  duration_ms: 115.645229
+  type: 'test'
+  ...
+# Subtest: CLI: init --profile change
+ok 3 - CLI: init --profile change
+  ---
+  duration_ms: 180.343822
+  type: 'test'
+  ...
+# Subtest: gates cannot start before their predecessor is approved
+ok 4 - gates cannot start before their predecessor is approved
+  ---
+  duration_ms: 143.800565
+  type: 'test'
+  ...
+# Subtest: submissions missing required sections are refused
+ok 5 - submissions missing required sections are refused
+  ---
+  duration_ms: 158.851061
+  type: 'test'
+  ...
+# Subtest: only configured authors may submit; paths outside the project are refused
+ok 6 - only configured authors may submit; paths outside the project are refused
+  ---
+  duration_ms: 127.0412
+  type: 'test'
+  ...
+# Subtest: the author cannot approve their own artifact, and the refusal is recorded
+ok 7 - the author cannot approve their own artifact, and the refusal is recorded
+  ---
+  duration_ms: 187.603572
+  type: 'test'
+  ...
+# Subtest: unauthorized reviewer roles are refused
+ok 8 - unauthorized reviewer roles are refused
+  ---
+  duration_ms: 175.831292
+  type: 'test'
+  ...
+# Subtest: approval without resolvable evidence is refused (rubber-stamp protection)
+ok 9 - approval without resolvable evidence is refused (rubber-stamp protection)
+  ---
+  duration_ms: 205.582451
+  type: 'test'
+  ...
+# Subtest: schema-invalid reviews are refused
+ok 10 - schema-invalid reviews are refused
+  ---
+  duration_ms: 157.12989
+  type: 'test'
+  ...
+# Subtest: reviews of an artifact that changed after submission are refused
+ok 11 - reviews of an artifact that changed after submission are refused
+  ---
+  duration_ms: 148.570753
+  type: 'test'
+  ...
+# Subtest: changes requested → resubmission must respond → approval must resolve earlier findings
+ok 12 - changes requested → resubmission must respond → approval must resolve earlier findings
+  ---
+  duration_ms: 190.522724
+  type: 'test'
+  ...
+# Subtest: repeated rejections escalate; only the user can reopen
+ok 13 - repeated rejections escalate; only the user can reopen
+  ---
+  duration_ms: 193.77713
+  type: 'test'
+  ...
+# Subtest: the user can waive named findings (or all) when reopening; the rest stay open
+ok 14 - the user can waive named findings (or all) when reopening; the rest stay open
+  ---
+  duration_ms: 188.908155
+  type: 'test'
+  ...
+# Subtest: NEW-6: the clobber redirect >| is a redirect with a target, for every role and both spellings
+ok 15 - NEW-6: the clobber redirect >| is a redirect with a target, for every role and both spellings
+  ---
+  duration_ms: 957.609135
+  type: 'test'
+  ...
+# Subtest: NEW-9: ECCODE_SHARED_MEMORY, ECCODE_ROOT, ECCODE_SEQUENTIAL_ROLES and ECCODE_HOOKS cannot be set inline on an eccode command
+ok 16 - NEW-9: ECCODE_SHARED_MEMORY, ECCODE_ROOT, ECCODE_SEQUENTIAL_ROLES and ECCODE_HOOKS cannot be set inline on an eccode command
+  ---
+  duration_ms: 520.456645
+  type: 'test'
+  ...
+# Subtest: NEW-7: a shell function or alias defined around the CLI in the same line is refused
+ok 17 - NEW-7: a shell function or alias defined around the CLI in the same line is refused
+  ---
+  duration_ms: 473.243223
+  type: 'test'
+  ...
+# Subtest: NESTED: a project nested in a repository with its own record is judged by its own record
+ok 18 - NESTED: a project nested in a repository with its own record is judged by its own record
+  ---
+  duration_ms: 774.289852
+  type: 'test'
+  ...
+# Subtest: guard: no opinion outside ECCode projects
+ok 19 - guard: no opinion outside ECCode projects
+  ---
+  duration_ms: 54.694303
+  type: 'test'
+  ...
+# Subtest: guard: binds --actor to the running subagent and blocks impersonation
+ok 20 - guard: binds --actor to the running subagent and blocks impersonation
+  ---
+  duration_ms: 467.320179
+  type: 'test'
+  ...
+# Subtest: guard: protects the record from direct edits
+ok 21 - guard: protects the record from direct edits
+  ---
+  duration_ms: 283.71329
+  type: 'test'
+  ...
+# Subtest: guard: implementers edit only inside their claimed task ownership; reviewers write drafts only
+ok 22 - guard: implementers edit only inside their claimed task ownership; reviewers write drafts only
+  ---
+  duration_ms: 689.868158
+  type: 'test'
+  ...
+# Subtest: guard: ECCODE_HOOKS=off disables it
+ok 23 - guard: ECCODE_HOOKS=off disables it
+  ---
+  duration_ms: 189.407877
+  type: 'test'
+  ...
+# Subtest: session-start injects the resume brief only for ECCode projects
+ok 24 - session-start injects the resume brief only for ECCode projects
+  ---
+  duration_ms: 226.1297
+  type: 'test'
+  ...
+# Subtest: project install copies components, rewrites paths, merges hooks idempotently and the installed CLI works
+ok 25 - project install copies components, rewrites paths, merges hooks idempotently and the installed CLI works
+  ---
+  duration_ms: 150.641517
+  type: 'test'
+  ...
+# Subtest: AGENTS.md export covers every role and the workflow for other harnesses
+ok 26 - AGENTS.md export covers every role and the workflow for other harnesses
+  ---
+  duration_ms: 1.25718
+  type: 'test'
+  ...
+# Subtest: \#2 CLI refuses a repeated --actor
+ok 27 - \#2 CLI refuses a repeated --actor
+  ---
+  duration_ms: 160.854061
+  type: 'test'
+  ...
+# Subtest: \#2 guard binds the actor the CLI will use: repeated --actor, inline env, tabs, quotes, nested shells
+ok 28 - \#2 guard binds the actor the CLI will use: repeated --actor, inline env, tabs, quotes, nested shells
+  ---
+  duration_ms: 1297.372588
+  type: 'test'
+  ...
+# Subtest: \#4 guard fails closed when the record cannot be read
+ok 29 - \#4 guard fails closed when the record cannot be read
+  ---
+  duration_ms: 255.975722
+  type: 'test'
+  ...
+# Subtest: \#5 guard denies git commands that roll back or delete the record
+ok 30 - \#5 guard denies git commands that roll back or delete the record
+  ---
+  duration_ms: 1898.294014
+  type: 'test'
+  ...
+# Subtest: \#8 guard: task globs never grant .eccode/ paths (only drafts)
+ok 31 - \#8 guard: task globs never grant .eccode/ paths (only drafts)
+  ---
+  duration_ms: 668.186456
+  type: 'test'
+  ...
+# Subtest: \#11 guard protects memory, improvements, evidence, reviews and handoffs from Bash writes
+ok 32 - \#11 guard protects memory, improvements, evidence, reviews and handoffs from Bash writes
+  ---
+  duration_ms: 816.196595
+  type: 'test'
+  ...
+# Subtest: guard: implementers cannot write approved artifacts; document authors can
+ok 33 - guard: implementers cannot write approved artifacts; document authors can
+  ---
+  duration_ms: 260.220493
+  type: 'test'
+  ...
+# Subtest: claiming a task retrieves the matching verified lesson and records it on the claim
+ok 34 - claiming a task retrieves the matching verified lesson and records it on the claim
+  ---
+  duration_ms: 332.52721
+  type: 'test'
+  ...
+# Subtest: a precise lesson outranks long generic ones: topic fields (title, tags, appliesWhen) count more than body text, with light stemming
+ok 35 - a precise lesson outranks long generic ones: topic fields (title, tags, appliesWhen) count more than body text, with light stemming
+  ---
+  duration_ms: 768.403536
+  type: 'test'
+  ...
+# Subtest: nothing is retrieved for an unrelated task, or when learning is off
+ok 36 - nothing is retrieved for an unrelated task, or when learning is off
+  ---
+  duration_ms: 513.981154
+  type: 'test'
+  ...
+# Subtest: completion needs a decision on every retrieved lesson; applied decisions are cited
+ok 37 - completion needs a decision on every retrieved lesson; applied decisions are cited
+  ---
+  duration_ms: 657.858361
+  type: 'test'
+  ...
+# Subtest: not-applicable needs an evidence-backed assessment or a substantive reason
+ok 38 - not-applicable needs an evidence-backed assessment or a substantive reason
+  ---
+  duration_ms: 533.919892
+  type: 'test'
+  ...
+# Subtest: a substantive written reason is accepted as a weaker dismissal and counted in metrics
+ok 39 - a substantive written reason is accepted as a weaker dismissal and counted in metrics
+  ---
+  duration_ms: 385.294971
+  type: 'test'
+  ...
+# Subtest: CLI: task claim shows the retrieved lessons as evidence and the decision the handoff needs
+ok 40 - CLI: task claim shows the retrieved lessons as evidence and the decision the handoff needs
+  ---
+  duration_ms: 364.852065
+  type: 'test'
+  ...
+# Subtest: real trial data: the idempotency lesson is retrieved and ranked first for the credits task, behind none of three longer lessons
+ok 41 - real trial data: the idempotency lesson is retrieved and ranked first for the credits task, behind none of three longer lessons
+  ---
+  duration_ms: 104.916896
+  type: 'test'
+  ...
+# Subtest: a plan that matches a verified lesson is refused until it answers for it, and the refusal shows the lesson and the rule about silence
+ok 42 - a plan that matches a verified lesson is refused until it answers for it, and the refusal shows the lesson and the rule about silence
+  ---
+  duration_ms: 279.250847
+  type: 'test'
+  ...
+# Subtest: "incorporated" must reach the task: the lesson id in its inputs; "not-applicable" needs a real reason
+ok 43 - "incorporated" must reach the task: the lesson id in its inputs; "not-applicable" needs a real reason
+  ---
+  duration_ms: 237.914721
+  type: 'test'
+  ...
+# Subtest: the plan reviewer cannot approve without judging the recorded lesson decisions
+ok 44 - the plan reviewer cannot approve without judging the recorded lesson decisions
+  ---
+  duration_ms: 240.311432
+  type: 'test'
+  ...
+# Subtest: a lesson the approved plan incorporated binds the implementer: shown as required at claim, dismissal refused, applying it accepted
+ok 45 - a lesson the approved plan incorporated binds the implementer: shown as required at claim, dismissal refused, applying it accepted
+  ---
+  duration_ms: 477.628711
+  type: 'test'
+  ...
+# Subtest: the phase reviewer must judge the implementer's lesson decisions too, and sees them in `gate show`
+ok 46 - the phase reviewer must judge the implementer's lesson decisions too, and sees them in `gate show`
+  ---
+  duration_ms: 559.853782
+  type: 'test'
+  ...
+# Subtest: with learning off nothing is asked of the plan or the reviewer
+ok 47 - with learning off nothing is asked of the plan or the reviewer
+  ---
+  duration_ms: 264.302085
+  type: 'test'
+  ...
+# Subtest: semver ranges used for applicability checks
+ok 48 - semver ranges used for applicability checks
+  ---
+  duration_ms: 3.162919
+  type: 'test'
+  ...
+# Subtest: free-text environment entries are informational, not an unverifiable mismatch; real constraints still bind
+ok 49 - free-text environment entries are informational, not an unverifiable mismatch; real constraints still bind
+  ---
+  duration_ms: 1.065347
+  type: 'test'
+  ...
+# Subtest: lessons start provisional; verification needs a non-author reviewer and a check that flips from failing to passing
+ok 50 - lessons start provisional; verification needs a non-author reviewer and a check that flips from failing to passing
+  ---
+  duration_ms: 450.530115
+  type: 'test'
+  ...
+# Subtest: a verified lesson survives a session restart and is retrieved for a related problem; outdated ones are rejected
+ok 51 - a verified lesson survives a session restart and is retrieved for a related problem; outdated ones are rejected
+  ---
+  duration_ms: 355.122537
+  type: 'test'
+  ...
+# Subtest: learning can be switched off: no lesson retrieval, recording or self-improvement; project facts stay
+ok 52 - learning can be switched off: no lesson retrieval, recording or self-improvement; project facts stay
+  ---
+  duration_ms: 864.654097
+  type: 'test'
+  ...
+# Subtest: relevance assessments: a lesson is rejected for a problem with a different cause, with evidence
+ok 53 - relevance assessments: a lesson is rejected for a problem with a different cause, with evidence
+  ---
+  duration_ms: 682.327696
+  type: 'test'
+  ...
+# Subtest: stale and superseded lessons are flagged rather than trusted
+ok 54 - stale and superseded lessons are flagged rather than trusted
+  ---
+  duration_ms: 217.633981
+  type: 'test'
+  ...
+# Subtest: promotion to shared memory requires verification, a non-author promoter and clean content
+ok 55 - promotion to shared memory requires verification, a non-author promoter and clean content
+  ---
+  duration_ms: 196.563476
+  type: 'test'
+  ...
+# Subtest: self-improvement: protected paths, grounding, evaluation, independent review, user adoption, rollback
+ok 56 - self-improvement: protected paths, grounding, evaluation, independent review, user adoption, rollback
+  ---
+  duration_ms: 497.088785
+  type: 'test'
+  ...
+# Subtest: metrics count rejections, repeated bugs and recurrence after a fix
+ok 57 - metrics count rejections, repeated bugs and recurrence after a fix
+  ---
+  duration_ms: 239.477315
+  type: 'test'
+  ...
+# Subtest: promotion never leaks private data from evidence snapshots, review notes or old revisions
+ok 58 - promotion never leaks private data from evidence snapshots, review notes or old revisions
+  ---
+  duration_ms: 214.421909
+  type: 'test'
+  ...
+# Subtest: the project name and a non-URL source string no longer block promotion; they are scrubbed from the shared copy
+ok 59 - the project name and a non-URL source string no longer block promotion; they are scrubbed from the shared copy
+  ---
+  duration_ms: 220.406657
+  type: 'test'
+  ...
+# Subtest: real leaks still block promotion (secret, email, IP, user path, private URL)
+ok 60 - real leaks still block promotion (secret, email, IP, user path, private URL)
+  ---
+  duration_ms: 864.274684
+  type: 'test'
+  ...
+# Subtest: reconcile reports interrupted claims with their partial work and open runs, without blocking
+ok 61 - reconcile reports interrupted claims with their partial work and open runs, without blocking
+  ---
+  duration_ms: 348.142553
+  type: 'test'
+  ...
+# Subtest: reconcile blocks on approved artifacts changed after approval and on checks that no longer pass
+ok 62 - reconcile blocks on approved artifacts changed after approval and on checks that no longer pass
+  ---
+  duration_ms: 357.48258
+  type: 'test'
+  ...
+# Subtest: verify re-runs recorded checks that still pass and reports them as confirmed
+ok 63 - verify re-runs recorded checks that still pass and reports them as confirmed
+  ---
+  duration_ms: 353.358986
+  type: 'test'
+  ...
+# Subtest: CLI: reconcile exits 3 on blocking issues; resume shows reconciliation read-only
+ok 64 - CLI: reconcile exits 3 on blocking issues; resume shows reconciliation read-only
+  ---
+  duration_ms: 588.493151
+  type: 'test'
+  ...
+# Subtest: shipped record examples/triage-desk: hash chain intact, snapshot equals replay, approved artifacts unchanged
+ok 65 - shipped record examples/triage-desk: hash chain intact, snapshot equals replay, approved artifacts unchanged
+  ---
+  duration_ms: 2154.016155
+  type: 'test'
+  ...
+# Subtest: shipped record examples/groundwork: hash chain intact, snapshot equals replay, approved artifacts unchanged
+ok 66 - shipped record examples/groundwork: hash chain intact, snapshot equals replay, approved artifacts unchanged
+  ---
+  duration_ms: 4993.466025
+  type: 'test'
+  ...
+# Subtest: shipped record examples/learning-cycle/legacy-project: hash chain intact, snapshot equals replay, approved artifacts unchanged
+ok 67 - shipped record examples/learning-cycle/legacy-project: hash chain intact, snapshot equals replay, approved artifacts unchanged
+  ---
+  duration_ms: 1.831502
+  type: 'test'
+  ...
+# Subtest: shipped record .: hash chain intact, snapshot equals replay, approved artifacts unchanged
+ok 68 - shipped record .: hash chain intact, snapshot equals replay, approved artifacts unchanged
+  ---
+  duration_ms: 1.92137
+  type: 'test'
+  ...
+# Subtest: the shipped records carry the evidence the reports cite
+ok 69 - the shipped records carry the evidence the reports cite
+  ---
+  duration_ms: 3702.479739
+  type: 'test'
+  ...
+# Subtest: RT1 a symlink inside task ownership cannot be declared, and the guard denies writes through it
+ok 70 - RT1 a symlink inside task ownership cannot be declared, and the guard denies writes through it
+  ---
+  duration_ms: 502.243981
+  type: 'test'
+  ...
+# Subtest: RT2 changes inside ownership that the handoff does not declare are refused, so every change is pinned
+ok 71 - RT2 changes inside ownership that the handoff does not declare are refused, so every change is pinned
+  ---
+  duration_ms: 344.469697
+  type: 'test'
+  ...
+# Subtest: RT3 plan ids rework-N are reserved, and a rework cannot collide with an existing task or gate
+ok 72 - RT3 plan ids rework-N are reserved, and a rework cannot collide with an existing task or gate
+  ---
+  duration_ms: 1.203576
+  type: 'test'
+  ...
+# Subtest: RT4 audit and state report a tampered log as CORRUPT_LOG instead of crashing
+ok 73 - RT4 audit and state report a tampered log as CORRUPT_LOG instead of crashing
+  ---
+  duration_ms: 850.06937
+  type: 'test'
+  ...
+# Subtest: RT5 repeated ** segments are collapsed and plans refuse more than three
+ok 74 - RT5 repeated ** segments are collapsed and plans refuse more than three
+  ---
+  duration_ms: 1.024792
+  type: 'test'
+  ...
+# Subtest: RT6 implementer shell writes obey ownership: redirects, tee, cp and sed -i outside the claim are denied, .git metadata always
+ok 75 - RT6 implementer shell writes obey ownership: redirects, tee, cp and sed -i outside the claim are denied, .git metadata always
+  ---
+  duration_ms: 1191.859597
+  type: 'test'
+  ...
+# Subtest: RT7 .claude/ and .git/ are never owned: plans refuse globs reaching them, completion refuses the files
+ok 76 - RT7 .claude/ and .git/ are never owned: plans refuse globs reaching them, completion refuses the files
+  ---
+  duration_ms: 180.850003
+  type: 'test'
+  ...
+# Subtest: RT8 secrets in labels, notes, handoffs and reviews are redacted before they reach the record
+ok 77 - RT8 secrets in labels, notes, handoffs and reviews are redacted before they reach the record
+  ---
+  duration_ms: 188.259596
+  type: 'test'
+  ...
+# Subtest: RT9 a blocking finding raised and marked resolved in the same review needs evidence
+ok 78 - RT9 a blocking finding raised and marked resolved in the same review needs evidence
+  ---
+  duration_ms: 137.855137
+  type: 'test'
+  ...
+# Subtest: risk update with only --status keeps title, severity, mitigation and owner
+ok 79 - risk update with only --status keeps title, severity, mitigation and owner
+  ---
+  duration_ms: 288.206046
+  type: 'test'
+  ...
+# Subtest: materialized state equals the state rebuilt by replaying events.jsonl
+ok 80 - materialized state equals the state rebuilt by replaying events.jsonl
+  ---
+  duration_ms: 343.057105
+  type: 'test'
+  ...
+# Subtest: Store.commit: in-process reduction matches replay when data contains undefined values (any event type)
+ok 81 - Store.commit: in-process reduction matches replay when data contains undefined values (any event type)
+  ---
+  duration_ms: 138.996675
+  type: 'test'
+  ...
+# Subtest: an unreviewed submission can be replaced after the file was corrected; the earlier one stays on record as superseded
+ok 82 - an unreviewed submission can be replaced after the file was corrected; the earlier one stays on record as superseded
+  ---
+  duration_ms: 222.800418
+  type: 'test'
+  ...
+# Subtest: only the submitter may replace a submission, and nothing can be replaced once a review exists
+ok 83 - only the submitter may replace a submission, and nothing can be replaced once a review exists
+  ---
+  duration_ms: 152.864044
+  type: 'test'
+  ...
+# Subtest: state survives a lost snapshot and a torn final log line
+ok 84 - state survives a lost snapshot and a torn final log line
+  ---
+  duration_ms: 225.020264
+  type: 'test'
+  ...
+# Subtest: interrupted runs are recovered: claims released, attempt counted, work resumable
+ok 85 - interrupted runs are recovered: claims released, attempt counted, work resumable
+  ---
+  duration_ms: 241.705152
+  type: 'test'
+  ...
+# Subtest: stale detection only flags runs older than the threshold unless --all
+ok 86 - stale detection only flags runs older than the threshold unless --all
+  ---
+  duration_ms: 119.670179
+  type: 'test'
+  ...
+# Subtest: audit detects edits to the event log
+ok 87 - audit detects edits to the event log
+  ---
+  duration_ms: 212.804387
+  type: 'test'
+  ...
+# Subtest: delivery is refused until every gate passes and when reviewed files change afterwards
+ok 88 - delivery is refused until every gate passes and when reviewed files change afterwards
+  ---
+  duration_ms: 718.798204
+  type: 'test'
+  ...
+# Subtest: happy path produces a verified final handoff
+ok 89 - happy path produces a verified final handoff
+  ---
+  duration_ms: 981.2865
+  type: 'test'
+  ...
+# Subtest: evidence logs redact secrets and record exit codes
+ok 90 - evidence logs redact secrets and record exit codes
+  ---
+  duration_ms: 181.897676
+  type: 'test'
+  ...
+# Subtest: handoffs must come from the acting agent and cite real evidence
+ok 91 - handoffs must come from the acting agent and cite real evidence
+  ---
+  duration_ms: 156.159204
+  type: 'test'
+  ...
+# Subtest: concurrent writers never corrupt the log
+ok 92 - concurrent writers never corrupt the log
+  ---
+  duration_ms: 338.900441
+  type: 'test'
+  ...
+# Subtest: audit detects a snapshot that diverges from replay; rebuild repairs it
+ok 93 - audit detects a snapshot that diverges from replay; rebuild repairs it
+  ---
+  duration_ms: 201.85502
+  type: 'test'
+  ...
+# Subtest: run usage corrections are append-only and adjust totals by the delta
+ok 94 - run usage corrections are append-only and adjust totals by the delta
+  ---
+  duration_ms: 120.716783
+  type: 'test'
+  ...
+# Subtest: run end refuses to close a run without usage unless --no-usage is explicit
+ok 95 - run end refuses to close a run without usage unless --no-usage is explicit
+  ---
+  duration_ms: 109.64833
+  type: 'test'
+  ...
+# Subtest: the orchestrator opens a run on behalf of a role (--agent); the run belongs to that role
+ok 96 - the orchestrator opens a run on behalf of a role (--agent); the run belongs to that role
+  ---
+  duration_ms: 120.208368
+  type: 'test'
+  ...
+# Subtest: CLI: run start --actor orchestrator --agent <role> prints a run id and the guard allows the command from the main session
+ok 97 - CLI: run start --actor orchestrator --agent <role> prints a run id and the guard allows the command from the main session
+  ---
+  duration_ms: 255.217808
+  type: 'test'
+  ...
+# Subtest: run end --no-usage is accepted by the CLI and a bare run end is refused with exit 2
+ok 98 - run end --no-usage is accepted by the CLI and a bare run end is refused with exit 2
+  ---
+  duration_ms: 409.845215
+  type: 'test'
+  ...
+# Subtest: evidence run preserves argument quoting from the CLI (arguments with spaces and quotes, compound commands)
+ok 99 - evidence run preserves argument quoting from the CLI (arguments with spaces and quotes, compound commands)
+  ---
+  duration_ms: 549.668843
+  type: 'test'
+  ...
+# Subtest: audit distinguishes an edit submitted for re-review in a later gate from an unreviewed edit
+ok 100 - audit distinguishes an edit submitted for re-review in a later gate from an unreviewed edit
+  ---
+  duration_ms: 913.121731
+  type: 'test'
+  ...
+# Subtest: the final handoff lists every --actor user event as entered on the user's behalf
+ok 101 - the final handoff lists every --actor user event as entered on the user's behalf
+  ---
+  duration_ms: 921.777473
+  type: 'test'
+  ...
+# Subtest: JSON inputs resolve from the project root as well as the cwd, and a missing file is a clean refusal
+ok 102 - JSON inputs resolve from the project root as well as the cwd, and a missing file is a clean refusal
+  ---
+  duration_ms: 361.844914
+  type: 'test'
+  ...
+# Subtest: F1 the probe: approving "the document has a title" against a non-existent section is refused
+ok 103 - F1 the probe: approving "the document has a title" against a non-existent section is refused
+  ---
+  duration_ms: 164.530257
+  type: 'test'
+  ...
+# Subtest: F1 full coverage with real anchors (heading text or slug, any case) is approved
+ok 104 - F1 full coverage with real anchors (heading text or slug, any case) is approved
+  ---
+  duration_ms: 130.858582
+  type: 'test'
+  ...
+# Subtest: F1 duplicate criterion ids are refused, whatever the decision
+ok 105 - F1 duplicate criterion ids are refused, whatever the decision
+  ---
+  duration_ms: 167.845951
+  type: 'test'
+  ...
+# Subtest: F1 ids that look required but are not (AC9, task:nope) are refused as unknown; C1 and security stay free-form
+ok 106 - F1 ids that look required but are not (AC9, task:nope) are refused as unknown; C1 and security stay free-form
+  ---
+  duration_ms: 873.917571
+  type: 'test'
+  ...
+# Subtest: F1 the design review must cover every acceptance criterion of the approved brief
+ok 107 - F1 the design review must cover every acceptance criterion of the approved brief
+  ---
+  duration_ms: 166.897006
+  type: 'test'
+  ...
+# Subtest: F1 plan reviews cover phase ids; phase reviews cover task ids; verification covers the acceptance criteria
+ok 108 - F1 plan reviews cover phase ids; phase reviews cover task ids; verification covers the acceptance criteria
+  ---
+  duration_ms: 643.926557
+  type: 'test'
+  ...
+# Subtest: F1 anchors in JSON files are dot paths and in other files line ranges
+ok 109 - F1 anchors in JSON files are dot paths and in other files line ranges
+  ---
+  duration_ms: 206.189226
+  type: 'test'
+  ...
+# Subtest: F1 CLI: eccode gate show lists the required criteria with their descriptions
+ok 110 - F1 CLI: eccode gate show lists the required criteria with their descriptions
+  ---
+  duration_ms: 519.07302
+  type: 'test'
+  ...
+# Subtest: F3 completion must cite a passing run of the declared verification command by the actor, after the claim
+ok 111 - F3 completion must cite a passing run of the declared verification command by the actor, after the claim
+  ---
+  duration_ms: 520.246824
+  type: 'test'
+  ...
+# Subtest: F3 a task with method-only verification keeps the any-passing-check rule
+ok 112 - F3 a task with method-only verification keeps the any-passing-check rule
+  ---
+  duration_ms: 307.694015
+  type: 'test'
+  ...
+# Subtest: F3 phase approval must cite reviewer runs of every verification command the phase declares
+ok 113 - F3 phase approval must cite reviewer runs of every verification command the phase declares
+  ---
+  duration_ms: 785.000648
+  type: 'test'
+  ...
+# Subtest: F3 a check that ran on different bytes than the tree has now is refused at completion and at review
+ok 114 - F3 a check that ran on different bytes than the tree has now is refused at completion and at review
+  ---
+  duration_ms: 816.663987
+  type: 'test'
+  ...
+# Subtest: F3 treeDigest: null without git, stable for the same bytes, blind to the record under .eccode/
+ok 115 - F3 treeDigest: null without git, stable for the same bytes, blind to the record under .eccode/
+  ---
+  duration_ms: 209.400036
+  type: 'test'
+  ...
+# Subtest: F3 a deleted evidence log blocks completion, review and reconciliation
+ok 116 - F3 a deleted evidence log blocks completion, review and reconciliation
+  ---
+  duration_ms: 731.663465
+  type: 'test'
+  ...
+# Subtest: F3 an altered evidence log is refused wherever it is cited
+ok 117 - F3 an altered evidence log is refused wherever it is cited
+  ---
+  duration_ms: 311.639497
+  type: 'test'
+  ...
+# Subtest: F3 records written before logFileSha256 existed are checked against the output digest, header stripped
+ok 118 - F3 records written before logFileSha256 existed are checked against the output digest, header stripped
+  ---
+  duration_ms: 120.272201
+  type: 'test'
+  ...
+# Subtest: F3 the shipped records still resolve every command evidence an approved review cited
+ok 119 - F3 the shipped records still resolve every command evidence an approved review cited
+  ---
+  duration_ms: 4040.035981
+  type: 'test'
+  ...
+# Subtest: F2 a file inside the task ownership that is already dirty at claim time is refused (DIRTY_OWNERSHIP)
+ok 120 - F2 a file inside the task ownership that is already dirty at claim time is refused (DIRTY_OWNERSHIP)
+  ---
+  duration_ms: 416.903391
+  type: 'test'
+  ...
+# Subtest: F2 a rejected attempt may stay on disk for the retry: content the phase submission pins is not unaccounted dirt
+ok 121 - F2 a rejected attempt may stay on disk for the retry: content the phase submission pins is not unaccounted dirt
+  ---
+  duration_ms: 802.104385
+  type: 'test'
+  ...
+# Subtest: F2 submissions record the commit and tree digest; the delivery records the release commit and the handoff states it
+ok 122 - F2 submissions record the commit and tree digest; the delivery records the release commit and the handoff states it
+  ---
+  duration_ms: 1198.307212
+  type: 'test'
+  ...
+# Subtest: F2 a new untracked file after the verification approval is an unreviewed change and the delivery is refused
+ok 123 - F2 a new untracked file after the verification approval is an unreviewed change and the delivery is refused
+  ---
+  duration_ms: 1163.700144
+  type: 'test'
+  ...
+# Subtest: F2 files committed after the verification approval are refused: the release tree is pinned at the approved commit
+ok 124 - F2 files committed after the verification approval are refused: the release tree is pinned at the approved commit
+  ---
+  duration_ms: 1150.041388
+  type: 'test'
+  ...
+# Subtest: F2 a deleted and a renamed file after the approval are refused
+ok 125 - F2 a deleted and a renamed file after the approval are refused
+  ---
+  duration_ms: 2247.929069
+  type: 'test'
+  ...
+# Subtest: F2 config.release.ignore excludes generated paths from the release-tree checks
+ok 126 - F2 config.release.ignore excludes generated paths from the release-tree checks
+  ---
+  duration_ms: 1198.257637
+  type: 'test'
+  ...
+# Subtest: F2 delivery refuses a dirty working tree, then records the release commit once it is clean
+ok 127 - F2 delivery refuses a dirty working tree, then records the release commit once it is clean
+  ---
+  duration_ms: 1146.862704
+  type: 'test'
+  ...
+# Subtest: F2 work in flight is not an unreviewed change: files of claimed tasks and open phases wait for their review
+ok 128 - F2 work in flight is not an unreviewed change: files of claimed tasks and open phases wait for their review
+  ---
+  duration_ms: 205.92719
+  type: 'test'
+  ...
+# Subtest: F2 old records are not judged retroactively: a submission without a recorded commit pins only its artifacts
+ok 129 - F2 old records are not judged retroactively: a submission without a recorded commit pins only its artifacts
+  ---
+  duration_ms: 3809.854876
+  type: 'test'
+  ...
+# Subtest: F5 an open critical or high risk blocks delivery and the message names the user command; mitigated and accepted risks pass
+ok 130 - F5 an open critical or high risk blocks delivery and the message names the user command; mitigated and accepted risks pass
+  ---
+  duration_ms: 2306.96627
+  type: 'test'
+  ...
+# Subtest: F5 the probe scenario: a deliverable project with an open critical risk is refused by the library and by the CLI
+ok 131 - F5 the probe scenario: a deliverable project with an open critical risk is refused by the library and by the CLI
+  ---
+  duration_ms: 2390.242858
+  type: 'test'
+  ...
+# Subtest: F4 reviewer shell writes to project files are denied exactly like the Write tool (the ten probe cases)
+ok 132 - F4 reviewer shell writes to project files are denied exactly like the Write tool (the ten probe cases)
+  ---
+  duration_ms: 961.963373
+  type: 'test'
+  ...
+# Subtest: F4 reviewers and document authors keep their draft areas through the shell; the rest of .eccode/ follows the Edit rules
+ok 133 - F4 reviewers and document authors keep their draft areas through the shell; the rest of .eccode/ follows the Edit rules
+  ---
+  duration_ms: 1025.352333
+  type: 'test'
+  ...
+# Subtest: F4 inline interpreter code that writes files is denied for every ECCode role with the Edit hint; the main session is unaffected
+ok 134 - F4 inline interpreter code that writes files is denied for every ECCode role with the Edit hint; the main session is unaffected
+  ---
+  duration_ms: 1895.731073
+  type: 'test'
+  ...
+# Subtest: F4 relative shell targets are resolved from the hook cwd; outside the project is not ours, into it is checked, after a cd it cannot be bound
+ok 135 - F4 relative shell targets are resolved from the hook cwd; outside the project is not ours, into it is checked, after a cd it cannot be bound
+  ---
+  duration_ms: 584.359578
+  type: 'test'
+  ...
+# Subtest: F5 --actor user is denied from every agent context: the main session, subagents, sequential mode, the environment
+ok 136 - F5 --actor user is denied from every agent context: the main session, subagents, sequential mode, the environment
+  ---
+  duration_ms: 776.317931
+  type: 'test'
+  ...
+# Subtest: F5 record and memory files outside the project (shared memory, another project) are written only by the CLI, from every context
+ok 137 - F5 record and memory files outside the project (shared memory, another project) are written only by the CLI, from every context
+  ---
+  duration_ms: 2514.101211
+  type: 'test'
+  ...
+# Subtest: F5 the CLI refuses --actor user without a terminal (USER_AUTH_REQUIRED) and appends nothing
+ok 138 - F5 the CLI refuses --actor user without a terminal (USER_AUTH_REQUIRED) and appends nothing
+  ---
+  duration_ms: 758.007445
+  type: 'test'
+  ...
+# Subtest: F5 ECCODE_TEST=1 is the suite's path: --actor user works without a terminal and is recorded as the user
+ok 139 - F5 ECCODE_TEST=1 is the suite's path: --actor user works without a terminal and is recorded as the user
+  ---
+  duration_ms: 251.740092
+  type: 'test'
+  ...
+# Subtest: F5 a person at a terminal sees what will be recorded and confirms with yes; anything else is refused
+ok 140 - F5 a person at a terminal sees what will be recorded and confirms with yes; anything else is refused
+  ---
+  duration_ms: 707.117575
+  type: 'test'
+  ...
+# Subtest: F5 a delegation lets the orchestrator reopen once: the event carries onBehalfOf and the delegation, delegation.used is appended, the second use is refused as exhausted
+ok 141 - F5 a delegation lets the orchestrator reopen once: the event carries onBehalfOf and the delegation, delegation.used is appended, the second use is refused as exhausted
+  ---
+  duration_ms: 665.341527
+  type: 'test'
+  ...
+# Subtest: F5 a delegation is bound to its action and its target; a delegation without a target covers any target of that action
+ok 142 - F5 a delegation is bound to its action and its target; a delegation without a target covers any target of that action
+  ---
+  duration_ms: 185.117485
+  type: 'test'
+  ...
+# Subtest: F5 an expired delegation is refused (clock pinned with ECCODE_NOW + ECCODE_TEST)
+ok 143 - F5 an expired delegation is refused (clock pinned with ECCODE_NOW + ECCODE_TEST)
+  ---
+  duration_ms: 196.593971
+  type: 'test'
+  ...
+# Subtest: F5 a revoked delegation is refused; only the user revokes
+ok 144 - F5 a revoked delegation is refused; only the user revokes
+  ---
+  duration_ms: 240.639086
+  type: 'test'
+  ...
+# Subtest: F5 a delegation granted to the orchestrator cannot be spent by a subagent role
+ok 145 - F5 a delegation granted to the orchestrator cannot be spent by a subagent role
+  ---
+  duration_ms: 284.894842
+  type: 'test'
+  ...
+# Subtest: F5 the reducer counts uses: two uses, then exhausted; delegations appear in the snapshot only once granted
+ok 146 - F5 the reducer counts uses: two uses, then exhausted; delegations appear in the snapshot only once granted
+  ---
+  duration_ms: 465.223697
+  type: 'test'
+  ...
+# Subtest: F5 delegate grant is validated and is the user's alone: no chains, bounded uses and expiry, targets only where they mean something
+ok 147 - F5 delegate grant is validated and is the user's alone: no chains, bounded uses and expiry, targets only where they mean something
+  ---
+  duration_ms: 175.352066
+  type: 'test'
+  ...
+# Subtest: F5 reopenGate refuses the orchestrator without a delegation, naming both commands
+ok 148 - F5 reopenGate refuses the orchestrator without a delegation, naming both commands
+  ---
+  duration_ms: 197.737443
+  type: 'test'
+  ...
+# Subtest: F5 risk accept refuses the orchestrator without a delegation and works with one; other statuses never need the user
+ok 149 - F5 risk accept refuses the orchestrator without a delegation and works with one; other statuses never need the user
+  ---
+  duration_ms: 222.05606
+  type: 'test'
+  ...
+# Subtest: F5 a rework past the cap refuses the orchestrator without a delegation and opens with one
+ok 150 - F5 a rework past the cap refuses the orchestrator without a delegation and opens with one
+  ---
+  duration_ms: 388.16349
+  type: 'test'
+  ...
+# Subtest: F5 a rework under the cap needs nobody, and the user still opens one directly past the cap
+ok 151 - F5 a rework under the cap needs nobody, and the user still opens one directly past the cap
+  ---
+  duration_ms: 536.37025
+  type: 'test'
+  ...
+# Subtest: F5 task reset of an escalated task refuses the orchestrator without a delegation and works with one
+ok 152 - F5 task reset of an escalated task refuses the orchestrator without a delegation and works with one
+  ---
+  duration_ms: 316.300829
+  type: 'test'
+  ...
+# Subtest: F5 rebuild --force on a rolled-back log refuses the orchestrator without a delegation and works with one
+ok 153 - F5 rebuild --force on a rolled-back log refuses the orchestrator without a delegation and works with one
+  ---
+  duration_ms: 375.802746
+  type: 'test'
+  ...
+# Subtest: F5 improve adopt refuses the orchestrator without a delegation and works with one
+ok 154 - F5 improve adopt refuses the orchestrator without a delegation and works with one
+  ---
+  duration_ms: 454.037095
+  type: 'test'
+  ...
+# Subtest: F5 a decision recorded as the user's refuses the orchestrator without a delegation; with one it carries onBehalfOf; the orchestrator's own decisions are unchanged
+ok 155 - F5 a decision recorded as the user's refuses the orchestrator without a delegation; with one it carries onBehalfOf; the orchestrator's own decisions are unchanged
+  ---
+  duration_ms: 210.463388
+  type: 'test'
+  ...
+# Subtest: F6 reproduction: a shared lesson whose solution was edited after promotion is quarantined in another project
+ok 156 - F6 reproduction: a shared lesson whose solution was edited after promotion is quarantined in another project
+  ---
+  duration_ms: 721.989137
+  type: 'test'
+  ...
+# Subtest: F6 tampered status or trust fields break the attestation too
+ok 157 - F6 tampered status or trust fields break the attestation too
+  ---
+  duration_ms: 1378.949958
+  type: 'test'
+  ...
+# Subtest: F6 an untouched promoted record carries a complete attestation, is in the index and still applies elsewhere
+ok 158 - F6 an untouched promoted record carries a complete attestation, is in the index and still applies elsewhere
+  ---
+  duration_ms: 496.564507
+  type: 'test'
+  ...
+# Subtest: F6 a shared record missing from the attestation index is quarantined; the others keep their line
+ok 159 - F6 a shared record missing from the attestation index is quarantined; the others keep their line
+  ---
+  duration_ms: 749.418725
+  type: 'test'
+  ...
+# Subtest: F6 a shared record promoted by an older engine (no attestation) is quarantined until re-promoted
+ok 160 - F6 a shared record promoted by an older engine (no attestation) is quarantined until re-promoted
+  ---
+  duration_ms: 492.080096
+  type: 'test'
+  ...
+# Subtest: F6 shared records are immutable: revise, review and supersede are refused; a new verified revision is re-promoted under a new id
+ok 161 - F6 shared records are immutable: revise, review and supersede are refused; a new verified revision is re-promoted under a new id
+  ---
+  duration_ms: 460.100146
+  type: 'test'
+  ...
+# Subtest: F7 a forged snapshot (status flipped, seq/lastHash intact) is refused: no commit builds on it, audit reports it, rebuild repairs it
+ok 162 - F7 a forged snapshot (status flipped, seq/lastHash intact) is refused: no commit builds on it, audit reports it, rebuild repairs it
+  ---
+  duration_ms: 289.645757
+  type: 'test'
+  ...
+# Subtest: F7 a snapshot forged to a non-existent event (seq/lastHash) stays LOG_ROLLBACK, as before
+ok 163 - F7 a snapshot forged to a non-existent event (seq/lastHash) stays LOG_ROLLBACK, as before
+  ---
+  duration_ms: 144.043466
+  type: 'test'
+  ...
+# Subtest: F7 a truncated (torn) state.json is a lost cache: state() rebuilds it and the next commit writes it back
+ok 164 - F7 a truncated (torn) state.json is a lost cache: state() rebuilds it and the next commit writes it back
+  ---
+  duration_ms: 187.998741
+  type: 'test'
+  ...
+# Subtest: F7 two concurrent writers produce one consistent chain under the snapshot check
+ok 165 - F7 two concurrent writers produce one consistent chain under the snapshot check
+  ---
+  duration_ms: 385.120858
+  type: 'test'
+  ...
+# Subtest: F7 a crash between task.completed and handoff.recorded does not block the record and the handoff can be recorded afterwards
+ok 166 - F7 a crash between task.completed and handoff.recorded does not block the record and the handoff can be recorded afterwards
+  ---
+  duration_ms: 801.532519
+  type: 'test'
+  ...
+# Subtest: F7 a crash between gate.submitted and plan.imported refuses approval until the author resubmits
+ok 167 - F7 a crash between gate.submitted and plan.imported refuses approval until the author resubmits
+  ---
+  duration_ms: 230.771374
+  type: 'test'
+  ...
+# Subtest: F7 every event the store appends carries the digest of the state it produced; the shipped records (without one) still verify by replay
+ok 168 - F7 every event the store appends carries the digest of the state it produced; the shipped records (without one) still verify by replay
+  ---
+  duration_ms: 2219.643759
+  type: 'test'
+  ...
+# Subtest: F8 fifth concurrent run is refused with RUN_LIMIT until one is closed or recovered
+ok 169 - F8 fifth concurrent run is refused with RUN_LIMIT until one is closed or recovered
+  ---
+  duration_ms: 366.223131
+  type: 'test'
+  ...
+# Subtest: F8 reserveUsdPerRun makes run start refuse before the cap is spent
+ok 170 - F8 reserveUsdPerRun makes run start refuse before the cap is spent
+  ---
+  duration_ms: 472.926501
+  type: 'test'
+  ...
+# Subtest: F8 run end --no-usage records null usage (never zero) and status counts the run as unknown
+ok 171 - F8 run end --no-usage records null usage (never zero) and status counts the run as unknown
+  ---
+  duration_ms: 360.019952
+  type: 'test'
+  ...
+# Subtest: F8 recover records the real elapsed time of an interrupted run and unknown usage
+ok 172 - F8 recover records the real elapsed time of an interrupted run and unknown usage
+  ---
+  duration_ms: 139.228081
+  type: 'test'
+  ...
+# Subtest: F8 totals stay exact numbers with unknown usage, estimates are flagged, and refusals point at run correct
+ok 173 - F8 totals stay exact numbers with unknown usage, estimates are flagged, and refusals point at run correct
+  ---
+  duration_ms: 239.250985
+  type: 'test'
+  ...
+# Subtest: F8 shipped records replay unchanged and their recovered runs count as unknown usage at read time
+ok 174 - F8 shipped records replay unchanged and their recovered runs count as unknown usage at read time
+  ---
+  duration_ms: 7117.744786
+  type: 'test'
+  ...
+# Subtest: F9/win32: record and memory files named with backslashes are denied on every platform, before any tokenizing
+ok 175 - F9/win32: record and memory files named with backslashes are denied on every platform, before any tokenizing
+  ---
+  duration_ms: 2369.13109
+  type: 'test'
+  ...
+# Subtest: F9/win32: the tokenizer keeps POSIX (Git Bash) semantics on every platform
+ok 176 - F9/win32: the tokenizer keeps POSIX (Git Bash) semantics on every platform
+  ---
+  duration_ms: 2.915902
+  type: 'test'
+  ...
+# Subtest: F9/win32: an eccode invocation by its quoted Windows path is still bound to its --actor
+ok 177 - F9/win32: an eccode invocation by its quoted Windows path is still bound to its --actor
+  ---
+  duration_ms: 266.678441
+  type: 'test'
+  ...
+# Subtest: F9/win32: RECORD_FILES matches record paths with either separator and nothing else
+ok 178 - F9/win32: RECORD_FILES matches record paths with either separator and nothing else
+  ---
+  duration_ms: 0.504984
+  type: 'test'
+  ...
+# Subtest: F9 shellQuote: one implementation in lib/util.js, POSIX quoting unchanged, cmd.exe grouping on win32
+ok 179 - F9 shellQuote: one implementation in lib/util.js, POSIX quoting unchanged, cmd.exe grouping on win32
+  ---
+  duration_ms: 9.307
+  type: 'test'
+  ...
+# Subtest: F9 fixtures: throwaway repos pin core.autocrlf=false so the byte hashes the record pins survive a checkout
+ok 180 - F9 fixtures: throwaway repos pin core.autocrlf=false so the byte hashes the record pins survive a checkout
+  ---
+  duration_ms: 147.118085
+  type: 'test'
+  ...
+# Subtest: F9 fixtures: no test depends on sh builtins or POSIX-only tools (cmd.exe has no true, false, grep or sh)
+ok 181 - F9 fixtures: no test depends on sh builtins or POSIX-only tools (cmd.exe has no true, false, grep or sh)
+  ---
+  duration_ms: 8.08916
+  type: 'test'
+  ...
+# Subtest: F9 package: lib/index.js is the entry point and exposes the engine API
+ok 182 - F9 package: lib/index.js is the entry point and exposes the engine API
+  ---
+  duration_ms: 110.159213
+  type: 'test'
+  ...
+# Subtest: F9 package: npm pack ships the engine, CLI, schemas and hooks, and no tests, examples or records
+ok 183 - F9 package: npm pack ships the engine, CLI, schemas and hooks, and no tests, examples or records
+  ---
+  duration_ms: 1249.344563
+  type: 'test'
+  ...
+# Subtest: F9 upgrade and rollback: a 0.1.0 record survives installing the current toolkit over it and rolling back
+ok 184 - F9 upgrade and rollback: a 0.1.0 record survives installing the current toolkit over it and rolling back
+  ---
+  duration_ms: 1257.492332
+  type: 'test'
+  ...
+# Subtest: rework: a defect found after delivery is fixed under a new phase gate, reviewed independently, and re-delivered
+ok 185 - rework: a defect found after delivery is fixed under a new phase gate, reviewed independently, and re-delivered
+  ---
+  duration_ms: 1599.421823
+  type: 'test'
+  ...
+# Subtest: rework: who may open it, with what scope, and how often
+ok 186 - rework: who may open it, with what scope, and how often
+  ---
+  duration_ms: 906.374888
+  type: 'test'
+  ...
+# Subtest: rework: bounded by limits.maxReworks
+ok 187 - rework: bounded by limits.maxReworks
+  ---
+  duration_ms: 1167.377005
+  type: 'test'
+  ...
+# Subtest: rework in a full delivery: refused once verification is approved unless the user reopens that gate first
+ok 188 - rework in a full delivery: refused once verification is approved unless the user reopens that gate first
+  ---
+  duration_ms: 866.971307
+  type: 'test'
+  ...
+# Subtest: CLI: eccode rework open prints the ids; status shows the next action; metrics count reworks
+ok 189 - CLI: eccode rework open prints the ids; status shows the next action; metrics count reworks
+  ---
+  duration_ms: 1062.519937
+  type: 'test'
+  ...
+# Subtest: rework: a file deleted by an approved rework is not an audit failure, one deleted behind the gates still is
+ok 190 - rework: a file deleted by an approved rework is not an audit failure, one deleted behind the gates still is
+  ---
+  duration_ms: 1409.325608
+  type: 'test'
+  ...
+# Subtest: delivery profile: a defect found after delivery needs the user to reopen verification, then a rework past the cap, re-verification and re-delivery
+ok 191 - delivery profile: a defect found after delivery needs the user to reopen verification, then a rework past the cap, re-verification and re-delivery
+  ---
+  duration_ms: 1872.680863
+  type: 'test'
+  ...
+# Subtest: rework extend: after a review shows the defect reaches another file, the orchestrator widens the scope of the pending rework task
+ok 192 - rework extend: after a review shows the defect reaches another file, the orchestrator widens the scope of the pending rework task
+  ---
+  duration_ms: 1114.91687
+  type: 'test'
+  ...
+# Subtest: \#4 a torn final line is repaired before the next append, so the log never becomes permanently corrupt
+ok 193 - \#4 a torn final line is repaired before the next append, so the log never becomes permanently corrupt
+  ---
+  duration_ms: 112.163215
+  type: 'test'
+  ...
+# Subtest: \#4 a complete final event that only lost its newline is kept
+ok 194 - \#4 a complete final event that only lost its newline is kept
+  ---
+  duration_ms: 130.318053
+  type: 'test'
+  ...
+# Subtest: \#5 a log rolled back behind its snapshot is refused (LOG_ROLLBACK) until the user accepts it
+ok 195 - \#5 a log rolled back behind its snapshot is refused (LOG_ROLLBACK) until the user accepts it
+  ---
+  duration_ms: 559.088867
+  type: 'test'
+  ...
+# Subtest: \#5 a log replaced by a different history is refused; a snapshot that is merely behind is still rebuilt
+ok 196 - \#5 a log replaced by a different history is refused; a snapshot that is merely behind is still rebuilt
+  ---
+  duration_ms: 281.159784
+  type: 'test'
+  ...
+# Subtest: \#9 ECCODE_NOW is honoured only when ECCODE_TEST=1
+ok 197 - \#9 ECCODE_NOW is honoured only when ECCODE_TEST=1
+  ---
+  duration_ms: 284.59263
+  type: 'test'
+  ...
+# Subtest: \#9 audit reports event timestamps that go backwards
+ok 198 - \#9 audit reports event timestamps that go backwards
+  ---
+  duration_ms: 149.601023
+  type: 'test'
+  ...
+# Subtest: \#3 evidence refs never resolve to inherited properties (ev:constructor, ev:__proto__, ...)
+ok 199 - \#3 evidence refs never resolve to inherited properties (ev:constructor, ev:__proto__, ...)
+  ---
+  duration_ms: 188.779836
+  type: 'test'
+  ...
+# Subtest: \#3 memory assess and lesson verification do not accept inherited evidence ids
+ok 200 - \#3 memory assess and lesson verification do not accept inherited evidence ids
+  ---
+  duration_ms: 122.833337
+  type: 'test'
+  ...
+# Subtest: \#3 task, run, risk, gate and evidence ids are own-property lookups (no TypeError, no inherited match)
+ok 201 - \#3 task, run, risk, gate and evidence ids are own-property lookups (no TypeError, no inherited match)
+  ---
+  duration_ms: 672.847458
+  type: 'test'
+  ...
+# Subtest: \#21 a record cannot supersede itself (or be superseded by a superseded/rejected one)
+ok 202 - \#21 a record cannot supersede itself (or be superseded by a superseded/rejected one)
+  ---
+  duration_ms: 145.221981
+  type: 'test'
+  ...
+# Subtest: \#22 CLI refuses unexpected positionals instead of dropping them (unquoted glob after --artifact)
+ok 203 - \#22 CLI refuses unexpected positionals instead of dropping them (unquoted glob after --artifact)
+  ---
+  duration_ms: 171.003268
+  type: 'test'
+  ...
+# Subtest: \#22 CLI input errors are clean EccodeErrors, not internal errors
+ok 204 - \#22 CLI input errors are clean EccodeErrors, not internal errors
+  ---
+  duration_ms: 451.7911
+  type: 'test'
+  ...
+# Subtest: \#22 run end/correct usage must be finite non-negative numbers
+ok 205 - \#22 run end/correct usage must be finite non-negative numbers
+  ---
+  duration_ms: 114.321559
+  type: 'test'
+  ...
+# Subtest: \#1 improve rollback refuses crafted proposal ids (path traversal into drafts)
+ok 206 - \#1 improve rollback refuses crafted proposal ids (path traversal into drafts)
+  ---
+  duration_ms: 418.75354
+  type: 'test'
+  ...
+# Subtest: \#1 adopt and rollback re-check the target (outside project, protected) and rollback is user/orchestrator only
+ok 207 - \#1 adopt and rollback re-check the target (outside project, protected) and rollback is user/orchestrator only
+  ---
+  duration_ms: 475.7541
+  type: 'test'
+  ...
+# Subtest: \#12 baseline and candidate must be evaluated with the same command
+ok 208 - \#12 baseline and candidate must be evaluated with the same command
+  ---
+  duration_ms: 356.435542
+  type: 'test'
+  ...
+# Subtest: \#13 only evaluated proposals can be reviewed (no re-review after adoption)
+ok 209 - \#13 only evaluated proposals can be reviewed (no re-review after adoption)
+  ---
+  duration_ms: 419.142184
+  type: 'test'
+  ...
+# Subtest: \#14 protected paths cover the installed engine, toolkit internals and the record, even with an older config
+ok 210 - \#14 protected paths cover the installed engine, toolkit internals and the record, even with an older config
+  ---
+  duration_ms: 214.003519
+  type: 'test'
+  ...
+# Subtest: \#6 explicit phase artifacts never replace the code the tasks changed (it is always pinned)
+ok 211 - \#6 explicit phase artifacts never replace the code the tasks changed (it is always pinned)
+  ---
+  duration_ms: 764.220098
+  type: 'test'
+  ...
+# Subtest: \#7 completion refuses undeclared changes outside the task (another task's files or nobody's)
+ok 212 - \#7 completion refuses undeclared changes outside the task (another task's files or nobody's)
+  ---
+  duration_ms: 586.558499
+  type: 'test'
+  ...
+# Subtest: \#7 legitimate parallel and sequential work is attributable (claimed, completed and reset tasks)
+ok 213 - \#7 legitimate parallel and sequential work is attributable (claimed, completed and reset tasks)
+  ---
+  duration_ms: 831.074389
+  type: 'test'
+  ...
+# Subtest: \#8 task globs never reach into .eccode/ (config, artifacts), only .eccode/drafts/
+ok 214 - \#8 task globs never reach into .eccode/ (config, artifacts), only .eccode/drafts/
+  ---
+  duration_ms: 458.952559
+  type: 'test'
+  ...
+# Subtest: \#10 a plan submission interrupted before its import cannot be approved; delivery needs phases and tasks
+ok 215 - \#10 a plan submission interrupted before its import cannot be approved; delivery needs phases and tasks
+  ---
+  duration_ms: 340.950367
+  type: 'test'
+  ...
+# Subtest: \#18 a done task cannot be reset while its phase is submitted or approved; approval needs every task done
+ok 216 - \#18 a done task cannot be reset while its phase is submitted or approved; approval needs every task done
+  ---
+  duration_ms: 1183.099706
+  type: 'test'
+  ...
+# Subtest: \#19 ev: file evidence is re-hashed when cited; a changed or deleted file is refused
+ok 217 - \#19 ev: file evidence is re-hashed when cited; a changed or deleted file is refused
+  ---
+  duration_ms: 165.411108
+  type: 'test'
+  ...
+# Subtest: \#20 default phase artifacts skip deleted files and scratch drafts
+ok 218 - \#20 default phase artifacts skip deleted files and scratch drafts
+  ---
+  duration_ms: 989.382977
+  type: 'test'
+  ...
+# Subtest: \#15 redaction covers JSON-quoted keys, prefixed key names, bearer tokens and URL credentials
+ok 219 - \#15 redaction covers JSON-quoted keys, prefixed key names, bearer tokens and URL credentials
+  ---
+  duration_ms: 201.702539
+  type: 'test'
+  ...
+# Subtest: \#16 promotion scans source URLs: secrets in query, credentials, private hosts and file: URLs are blocked
+ok 220 - \#16 promotion scans source URLs: secrets in query, credentials, private hosts and file: URLs are blocked
+  ---
+  duration_ms: 140.405258
+  type: 'test'
+  ...
+# Subtest: \#11 a local lesson flipped to verified in its JSON file is not trusted (promote, improve propose)
+ok 221 - \#11 a local lesson flipped to verified in its JSON file is not trusted (promote, improve propose)
+  ---
+  duration_ms: 134.897007
+  type: 'test'
+  ...
+# Subtest: \#11 verification binds the reviewed revision and content; edits after review are not trusted
+ok 222 - \#11 verification binds the reviewed revision and content; edits after review are not trusted
+  ---
+  duration_ms: 239.142753
+  type: 'test'
+  ...
+# Subtest: \#17 run correct is restricted to orchestrator/user (an agent cannot lower recorded spend)
+ok 223 - \#17 run correct is restricted to orchestrator/user (an agent cannot lower recorded spend)
+  ---
+  duration_ms: 122.713018
+  type: 'test'
+  ...
+# Subtest: \#17 recover is restricted to orchestrator/user and records the real caller
+ok 224 - \#17 recover is restricted to orchestrator/user and records the real caller
+  ---
+  duration_ms: 480.817759
+  type: 'test'
+  ...
+# Subtest: \#22 memory ids are validated before they are used as paths
+ok 225 - \#22 memory ids are validated before they are used as paths
+  ---
+  duration_ms: 321.555554
+  type: 'test'
+  ...
+# Subtest: an interactive session, or one not started with an /eccode command, is never blocked
+ok 226 - an interactive session, or one not started with an /eccode command, is never blocked
+  ---
+  duration_ms: 439.960778
+  type: 'test'
+  ...
+# Subtest: unattended /eccode:change with no project: blocked, told to run the workflow rather than do the work itself
+ok 227 - unattended /eccode:change with no project: blocked, told to run the workflow rather than do the work itself
+  ---
+  duration_ms: 189.347649
+  type: 'test'
+  ...
+# Subtest: unattended with an unfinished project: blocked with the NEXT action; delivered: allowed
+ok 228 - unattended with an unfinished project: blocked with the NEXT action; delivered: allowed
+  ---
+  duration_ms: 396.512567
+  type: 'test'
+  ...
+# Subtest: the hook gives up after a few blocks per session so it can never loop forever
+ok 229 - the hook gives up after a few blocks per session so it can never loop forever
+  ---
+  duration_ms: 429.287
+  type: 'test'
+  ...
+# Subtest: plan validation catches cycles, unknown deps/owners and backwards phase deps
+ok 230 - plan validation catches cycles, unknown deps/owners and backwards phase deps
+  ---
+  duration_ms: 3.935776
+  type: 'test'
+  ...
+# Subtest: the plan gate refuses an invalid plan artifact
+ok 231 - the plan gate refuses an invalid plan artifact
+  ---
+  duration_ms: 181.20316
+  type: 'test'
+  ...
+# Subtest: claims enforce ownership, dependencies, concurrency and file-overlap rules
+ok 232 - claims enforce ownership, dependencies, concurrency and file-overlap rules
+  ---
+  duration_ms: 453.725279
+  type: 'test'
+  ...
+# Subtest: task completion requires a valid handoff, fresh passing evidence and in-scope files
+ok 233 - task completion requires a valid handoff, fresh passing evidence and in-scope files
+  ---
+  duration_ms: 676.421031
+  type: 'test'
+  ...
+# Subtest: phase approval needs a check executed by the reviewer after submission; implementers cannot review
+ok 234 - phase approval needs a check executed by the reviewer after submission; implementers cannot review
+  ---
+  duration_ms: 843.670716
+  type: 'test'
+  ...
+# Subtest: failed tasks are retried up to the limit, then escalate to the user
+ok 235 - failed tasks are retried up to the limit, then escalate to the user
+  ---
+  duration_ms: 290.207512
+  type: 'test'
+  ...
+# Subtest: budget limits block new work
+ok 236 - budget limits block new work
+  ---
+  duration_ms: 125.022001
+  type: 'test'
+  ...
+# Subtest: scope checks work when the project is a subdirectory of a larger git repo
+ok 237 - scope checks work when the project is a subdirectory of a larger git repo
+  ---
+  duration_ms: 427.303635
+  type: 'test'
+  ...
+# Subtest: tasks cannot modify records or approved artifacts under .eccode/ (only .eccode/drafts/)
+ok 238 - tasks cannot modify records or approved artifacts under .eccode/ (only .eccode/drafts/)
+  ---
+  duration_ms: 356.357236
+  type: 'test'
+  ...
+# Subtest: every template validates against its schema exactly as printed
+ok 239 - every template validates against its schema exactly as printed
+  ---
+  duration_ms: 5.245033
+  type: 'test'
+  ...
+# Subtest: an unknown template is a usage error that lists the available ones
+ok 240 - an unknown template is a usage error that lists the available ones
+  ---
+  duration_ms: 0.440696
+  type: 'test'
+  ...
+# Subtest: CLI: eccode template <name> prints JSON that validates, without a project
+ok 241 - CLI: eccode template <name> prints JSON that validates, without a project
+  ---
+  duration_ms: 274.765701
+  type: 'test'
+  ...
+# Subtest: L3: verification.cwd with surrounding blanks or backslashes is refused by plan validation, forward-slash forms pass
+ok 242 - L3: verification.cwd with surrounding blanks or backslashes is refused by plan validation, forward-slash forms pass
+  ---
+  duration_ms: 119.935323
+  type: 'test'
+  ...
+# Subtest: L1: the changed-artifact refusal names the pinned digest and does not assume the file was committed
+ok 243 - L1: the changed-artifact refusal names the pinned digest and does not assume the file was committed
+  ---
+  duration_ms: 175.132565
+  type: 'test'
+  ...
+# Subtest: NEW-1 required criteria come from the pinned brief: an approved brief edited on disk is refused at gate show, review and a later submission
+ok 244 - NEW-1 required criteria come from the pinned brief: an approved brief edited on disk is refused at gate show, review and a later submission
+  ---
+  duration_ms: 1192.076872
+  type: 'test'
+  ...
+# Subtest: NEW-2 a brief whose criteria sections carry no ids cannot be approved; review.criteriaSections.architecture: [] disables the rule
+ok 245 - NEW-2 a brief whose criteria sections carry no ids cannot be approved; review.criteriaSections.architecture: [] disables the rule
+  ---
+  duration_ms: 965.980451
+  type: 'test'
+  ...
+# Subtest: NEW-3 a file committed after a phase approval that no gate lists blocks the verification approval; listed in the verification submission it passes
+ok 246 - NEW-3 a file committed after a phase approval that no gate lists blocks the verification approval; listed in the verification submission it passes
+  ---
+  duration_ms: 2507.600484
+  type: 'test'
+  ...
+# Subtest: NEW-4 a staged rename inside the ownership must declare the old path as well as the new one
+ok 247 - NEW-4 a staged rename inside the ownership must declare the old path as well as the new one
+  ---
+  duration_ms: 1207.705414
+  type: 'test'
+  ...
+# Subtest: NEW-5 the declared check is bound to its working directory: verification.cwd is accepted by the plan schema, and a run elsewhere is refused
+ok 248 - NEW-5 the declared check is bound to its working directory: verification.cwd is accepted by the plan schema, and a run elsewhere is refused
+  ---
+  duration_ms: 1248.369448
+  type: 'test'
+  ...
+1..248
+# tests 248
+# suites 0
+# pass 248
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 53723.219934
+exit=0

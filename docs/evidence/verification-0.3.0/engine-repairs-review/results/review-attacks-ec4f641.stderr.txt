@@ -1,0 +1,96 @@
+[ok] N1.crlf approved brief converted to CRLF (bytes differ, text identical) -> APPROVED_ARTIFACT_CHANGED: .eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change 
+[ok] N1.trailingNewline one newline appended to the approved brief -> APPROVED_ARTIFACT_CHANGED: .eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change 
+[ok] N1.restored bytes restored: design derives AC1 + AC2 again -> ok
+[ok] N1.deleted approved brief deleted from disk -> APPROVED_ARTIFACT_CHANGED: .eccode/artifacts/architecture/brief.md was deleted after the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through th
+[ok] N1.deleted.message the message says it was deleted (not "differs") -> ok
+[ok] N1.repinSameBytes design submission listing the approved brief at the pinned bytes -> ok
+[ok] N1.repinOtherBytes design submission listing the edited brief -> APPROVED_ARTIFACT_CHANGED: .eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change 
+[ok] N1.json.designRequired requiredCriteria(design) with the non-Markdown architecture artifact edited (only Markdown is hash-checked there) -> ok
+[ok] N1.json.designApproval design approval while the edited diagram.json differs from the architecture pin -> ok
+[ok] N1.json.unreviewed unreviewedChanges reports the edited diagram.json against architecture -> ok
+[ok] N1.json.repin verification submission listing the edited diagram.json -> APPROVED_ARTIFACT_CHANGED: .eccode/artifacts/architecture/diagram.json differs from the bytes pinned by the approved architecture submission (sha256 37e09edac26d…). Approved documents cha
+[ok] N1.json.verificationApproval verification approval without listing it (the edit is an unreviewed change of an approved artifact) -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] N1.json.deliver deliver() while diagram.json differs -> DELIVERY_BLOCKED: Delivery refused:
+[ok] N1.json.restoredApproval verification approval once diagram.json is restored -> ok
+[ok] N1.spec.repin verification submission listing the edited spec.md (pinned by design) -> APPROVED_ARTIFACT_CHANGED: .eccode/artifacts/spec.md differs from the bytes pinned by the approved design submission (sha256 bc19e45aa3a6…). Approved documents change only through the rev
+[ok] N1.spec.verificationApproval verification approval while spec.md differs from the design pin -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] N1.spec.reason the refusal names spec.md modified after approval (design) -> ok
+[ok] N1.iterate.changesRequested architecture changes_requested on the first brief -> ok
+[ok] N1.iterate.resubmit the author resubmits the revised brief BEFORE approval (the normal iteration, other bytes, same gate, --responds-to) -> ok
+[ok] N1.iterate.approve approval of the revised brief (resolving F1) -> ok
+[ok] N1.reopen.architecture eccode gate reopen architecture --actor user on the approved gate -> INVALID_TRANSITION: Gate architecture is approved; approved work changes through a rework (eccode rework open), not by reopening the gate
+[ok] N1.rework.brief a rework scoped to the brief -> INVALID_INPUT: A rework may not reach into the project record or its artifacts (.eccode/); only .eccode/drafts/ is always writable
+[ok] N1.plan.briefOwnership a plan task owning .eccode/artifacts/architecture/** -> ok
+[ok] N1.message the APPROVED_ARTIFACT_CHANGED message names the file, the gate, the restore command and the documented revision path -> ok
+[ok] N1.uncommitted.checkout git checkout -- brief.md when the brief was never committed (the message's recovery) -> undefined: error: pathspec '.eccode/artifacts/architecture/brief.md' did not match any file(s) known to git 
+[ok] N2.table.required ids in a Markdown table -> ok
+[ok] N2.table.approve table brief approved with AC1 + AC2 -> ok
+[ok] N2.tableNoIds a table under Acceptance Criteria whose rows carry no ids -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] N2.tableNoIds.reason the reason says the section lists no criterion ids -> ok
+[ok] N2.dod.required ids under "Definition of Done" with criteriaSections configured to it -> ok
+[ok] N2.dod.approve approval covering AC1 + AC2 under the configured heading -> ok
+[ok] N2.dod.verification verification approval covering the configured-heading ids -> ok
+[ok] N2.optout.arch criteriaSections.architecture: [] and a no-ids brief: architecture approval goes through -> ok
+[ok] N2.optout.verificationRequired with the rule off, verification falls back to phase:<id> coverage -> ok
+[ok] N2.optout.verification verification approval with the rule off -> ok
+[ok] N2.idsElsewhere ids listed under Requirements, the Acceptance Criteria section only points at them -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] N2.docs docs/usage.md documents the [] opt-out in the config table and the troubleshooting row -> ok
+[ok] N3.ignore.unreviewed dist/bundle.js committed between approvals under release.ignore is not reported -> ok
+[ok] N3.ignore.approve verification approval with the ignored file in the tree -> ok
+[ok] N3.ignore.deliver delivery (the ignore is the deliberate opt-out) -> ok
+[ok] N3.configIgnore.before verification approval with the stray file (refused) -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] N3.configIgnore.after the same approval after .eccode/config.json release.ignore was edited to name the stray file -> ok
+[ok] N3.inflight.unreviewed a file added (and committed) by an in-flight task of the unapproved phase:next is not reported -> ok
+[ok] N3.inflight.stray a file outside every ownership committed meanwhile IS reported -> ok
+[ok] N3.inflight.verification verification approval after both phases (overblocking check) -> ok
+[ok] N3.inflight.deliver delivery -> ok
+[ok] N3.deleted.unreviewed unreviewedChanges after a pinned file was deleted and committed -> ok
+[ok] N3.deleted.listGone the verification submission cannot list the deleted path -> NOT_FOUND: Artifact not found: src/web/b.js
+[ok] N3.deleted.approval verification approval with the unreviewed deletion -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] N3.deleted.deliver deliver() -> DELIVERY_BLOCKED: Delivery refused:
+[ok] N3.deleted.restoredApproval verification approval once the file is restored -> ok
+[ok] N3.renamed.from a rename committed after approval is reported with its old path (from), and the old pinned path as deleted -> undefined: undefined
+[ok] N3.renamed.approval verification approval listing the new path (the old pinned path left the tree unreviewed) -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] N3.renamed.reason the refusal names the deleted old path -> ok
+[ok] N3.renamed.fromCommitted rename after approval when the phase commit contains the file: reported as renamed with from -> ok
+[ok] N3.renamed.fromCommitted.approval verification approval listing the new path only -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] N3.early.unreviewed the early stray file is still reported after three later approvals on later commits -> ok
+[ok] N3.early.approval verification approval without it -> REVIEW_REJECTED: Review rejected by gate rules:
+[ok] N3.early.listed listed in the verification submission: approved -> ok
+[ok] N3.early.deliver delivery -> ok
+[ok] N3.ver2.pending the edit is pending re-review in verification -> ok
+[ok] N3.ver2.approval verification approval pins the new version (TriageDesk VER-2 flow, overblocking check) -> ok
+[ok] N3.ver2.deliver delivery -> ok
+[ok] N4.mvEdit.changed git mv + edit of the new file: both paths changed -> ok
+[ok] N4.mvEdit.newOnly handoff declaring new.js only -> INVALID_HANDOFF: Task completion rejected:
+[ok] N4.acrossDirs.changed rename across directories inside the ownership: both paths changed -> ok
+[ok] N4.acrossDirs.partial handoff declaring old.js, new.js and deep2.js but not sub/deep.js -> INVALID_HANDOFF: Task completion rejected:
+[ok] N4.committed.newOnly the moves committed during the claim, handoff still declaring only the new paths -> INVALID_HANDOFF: Task completion rejected:
+[ok] N4.committed.all all four paths declared -> ok
+[ok] N4.outOfOwnership git mv from the ownership into another task's area, both paths declared -> INVALID_HANDOFF: Task completion rejected:
+[ok] N4.untracked.newOnly fs.rename (unstaged): handoff declaring new.js only -> INVALID_HANDOFF: Task completion rejected:
+[ok] N4.untracked.both fs.rename: both declared -> ok
+[ok] N5.validate.trailingSlash verification.cwd "src/server/" -> ok
+[ok] N5.validate.dotSlash verification.cwd "./src/server" -> ok
+[ok] N5.validate.dot verification.cwd "." -> ok
+[ok] N5.validate.backslash verification.cwd "src\\server" (Windows separator) on Linux -> ok
+[ok] N5.validate.backslashDotDot verification.cwd "src\\..\\x" on Linux (no .. segment after splitting on /) -> ok
+[ok] N5.validate.spaces verification.cwd " src/server " (surrounding spaces) -> ok
+[ok] N5.validate.nonexistent verification.cwd "src/nope" (directory does not exist yet) -> ok
+[ok] N5.validate.dotdotInside verification.cwd "src/server/../server" (resolves inside, refused for the .. segment) -> ok
+[ok] N5.validate.bad:"/abs" verification.cwd "/abs" refused by validatePlan -> ok
+[ok] N5.validate.bad:"C:\\x" verification.cwd "C:\\x" refused by validatePlan -> ok
+[ok] N5.validate.bad:"../up" verification.cwd "../up" refused by validatePlan -> ok
+[ok] N5.validate.bad:"" verification.cwd "" refused by validatePlan -> ok
+[ok] N5.schema.cwdNumber plan schema refuses a non-string cwd -> INVALID_PLAN: Plan is invalid:
+[ok] N5.schema.cwdEmpty plan schema/validation refuses an empty cwd -> INVALID_PLAN: Plan is invalid:
+[ok] N5.trailingSlash.run declared "src/server/", run --cwd src/server -> ok
+[ok] N5.dotSlash.run declared "./src/server", run --cwd src/server/ -> ok
+[ok] N5.dot.runRoot declared ".", run at the root -> ok
+[ok] N5.nonexistent.run evidence run --cwd src/nope (directory absent) -> undefined: undefined
+[ok] N5.nonexistent.complete completion citing that run -> INVALID_HANDOFF: Task completion rejected:
+[ok] N5.nonexistent.rootRun completion citing a run at the root instead -> INVALID_HANDOFF: Task completion rejected:
+[ok] N5.symlink declared src/server, run --cwd src/link (symlink to it) -> INVALID_HANDOFF: Task completion rejected:
+[ok] N5.compat.noCwdField evidence recorded without a cwd field (older engine) matches a root-declared check and not a subdirectory one -> ok
+[ok] N5.cli.run eccode evidence run --cwd src/server/ -- <declared command> -> ok
+[ok] N5.cli.recordedCwd the recorded cwd is project-relative without the trailing slash -> ok

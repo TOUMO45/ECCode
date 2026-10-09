@@ -1,0 +1,387 @@
+{
+  "probe": "rereview-ec4f641",
+  "repo": "/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/repair",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T17:24:39.732Z",
+  "steps": [
+    {
+      "id": "L1.uncommitted.refused",
+      "description": "edited brief (uncommitted): design requiredCriteria",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 8c2f7e5ed1e5…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 8c2f7e5ed1e5e5460af9041a81d5a1e3ba49d05da411591b88e039852b0774e1) from git if the file was committed (git checkout -- .eccode/artifacts/architecture/brief.md; git log -- .eccode/artifacts/architecture/brief.md), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "8c2f7e5ed1e5e5460af9041a81d5a1e3ba49d05da411591b88e039852b0774e1"
+        }
+      }
+    },
+    {
+      "id": "L1.uncommitted.message",
+      "description": "message carries the full pinned sha256, the conditional git hint and the \"own copy\" alternative",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 8c2f7e5ed1e5…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 8c2f7e5ed1e5e5460af9041a81d5a1e3ba49d05da411591b88e039852b0774e1) from git if the file was committed (git checkout -- .eccode/artifacts/architecture/brief.md; git log -- .eccode/artifacts/architecture/brief.md), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file."
+      }
+    },
+    {
+      "id": "L1.uncommitted.gitCheckout",
+      "description": "git checkout -- brief.md (uncommitted)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "fails, as the message now says it can",
+      "observed": {
+        "ok": false,
+        "message": "error: pathspec '.eccode/artifacts/architecture/brief.md' did not match any file(s) known to git "
+      }
+    },
+    {
+      "id": "L1.uncommitted.ownCopy",
+      "description": "restored from the author's own copy: design derives AC1 + AC2 again",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1",
+          "AC2"
+        ]
+      }
+    },
+    {
+      "id": "L1.committed.refused",
+      "description": "edited brief (committed): design requiredCriteria",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 8c2f7e5ed1e5…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 8c2f7e5ed1e5e5460af9041a81d5a1e3ba49d05da411591b88e039852b0774e1) from git if the file was committed (git checkout -- .eccode/artifacts/architecture/brief.md; git log -- .eccode/artifacts/architecture/brief.md), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "8c2f7e5ed1e5e5460af9041a81d5a1e3ba49d05da411591b88e039852b0774e1"
+        }
+      }
+    },
+    {
+      "id": "L1.committed.message",
+      "description": "message carries the full pinned sha256, the conditional git hint and the \"own copy\" alternative",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 8c2f7e5ed1e5…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 8c2f7e5ed1e5e5460af9041a81d5a1e3ba49d05da411591b88e039852b0774e1) from git if the file was committed (git checkout -- .eccode/artifacts/architecture/brief.md; git log -- .eccode/artifacts/architecture/brief.md), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file."
+      }
+    },
+    {
+      "id": "L1.committed.gitCheckout",
+      "description": "git checkout -- brief.md (committed)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "restores the pinned bytes",
+      "observed": {
+        "ok": true
+      }
+    },
+    {
+      "id": "L1.committed.restored",
+      "description": "design derives AC1 + AC2 again",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1",
+          "AC2"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\"src\\\\server\"",
+      "description": "verification.cwd \"src\\\\server\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"src\\\\server\" must use forward slashes (the same spelling on every platform)"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\"src\\\\..\\\\x\"",
+      "description": "verification.cwd \"src\\\\..\\\\x\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"src\\\\..\\\\x\" must use forward slashes (the same spelling on every platform)"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\" src/server \"",
+      "description": "verification.cwd \" src/server \" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \" src/server \" must not start or end with blanks"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\"src/server \"",
+      "description": "verification.cwd \"src/server \" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"src/server \" must not start or end with blanks"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\" src/server\"",
+      "description": "verification.cwd \" src/server\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \" src/server\" must not start or end with blanks"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\"\\tsrc/server\"",
+      "description": "verification.cwd \"\\tsrc/server\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"\\tsrc/server\" must not start or end with blanks"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\"src/server\\n\"",
+      "description": "verification.cwd \"src/server\\n\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"src/server\\n\" must not start or end with blanks"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\"/abs\"",
+      "description": "verification.cwd \"/abs\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"/abs\" must be relative to the project root, not absolute"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\"C:\\\\x\"",
+      "description": "verification.cwd \"C:\\\\x\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"C:\\\\x\" must use forward slashes (the same spelling on every platform)"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\"../up\"",
+      "description": "verification.cwd \"../up\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"../up\" must stay inside the project (no .. segments)"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\"src/server/../server\"",
+      "description": "verification.cwd \"src/server/../server\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"src/server/../server\" must stay inside the project (no .. segments)"
+        ]
+      }
+    },
+    {
+      "id": "L3.refused:\"a\\\\b/c\"",
+      "description": "verification.cwd \"a\\\\b/c\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"a\\\\b/c\" must use forward slashes (the same spelling on every platform)"
+        ]
+      }
+    },
+    {
+      "id": "L3.accepted:\"src/server\"",
+      "description": "verification.cwd \"src/server\" accepted",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "errors": [],
+          "declaredCwd": "src/server"
+        }
+      }
+    },
+    {
+      "id": "L3.accepted:\"src/server/\"",
+      "description": "verification.cwd \"src/server/\" accepted",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "errors": [],
+          "declaredCwd": "src/server"
+        }
+      }
+    },
+    {
+      "id": "L3.accepted:\"./src/server\"",
+      "description": "verification.cwd \"./src/server\" accepted",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "errors": [],
+          "declaredCwd": "src/server"
+        }
+      }
+    },
+    {
+      "id": "L3.accepted:\".\"",
+      "description": "verification.cwd \".\" accepted",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "errors": [],
+          "declaredCwd": "."
+        }
+      }
+    },
+    {
+      "id": "L3.accepted:\"src/sub dir\"",
+      "description": "verification.cwd \"src/sub dir\" accepted",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "errors": [],
+          "declaredCwd": "src/sub dir"
+        }
+      }
+    },
+    {
+      "id": "L3.accepted:\"src/server/./x\"",
+      "description": "verification.cwd \"src/server/./x\" accepted",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "errors": [],
+          "declaredCwd": "src/server/x"
+        }
+      }
+    },
+    {
+      "id": "L3.planGate.backslash",
+      "description": "plan submission with cwd \"src\\\\server\"",
+      "expect": "refused:INVALID_PLAN",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_PLAN",
+        "message": "Plan is invalid:\n- task api: verification.cwd \"src\\\\server\" must use forward slashes (the same spelling on every platform)",
+        "details": {
+          "errors": [
+            "task api: verification.cwd \"src\\\\server\" must use forward slashes (the same spelling on every platform)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "L3.planGate.reason",
+      "description": "the reason says forward slashes",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "Plan is invalid:",
+          "- task api: verification.cwd \"src\\\\server\" must use forward slashes (the same spelling on every platform)"
+        ]
+      }
+    },
+    {
+      "id": "L3.spaceInName.root",
+      "description": "declared \"src/sub dir/\", run at the root",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- the cited run(s) of the task's declared verification command, ev:ev-mv18jm73-0fe8de72 in ., ran in a different working directory than the task declares (src/sub dir); the same command elsewhere is a different check. Run it again with eccode evidence run --actor backend-engineer --task api --label \"<label>\" --cwd src/sub dir -- node -e \"process.exit(0)\" api-check and cite the new ev: id",
+        "details": {
+          "errors": [
+            "the cited run(s) of the task's declared verification command, ev:ev-mv18jm73-0fe8de72 in ., ran in a different working directory than the task declares (src/sub dir); the same command elsewhere is a different check. Run it again with eccode evidence run --actor backend-engineer --task api --label \"<label>\" --cwd src/sub dir -- node -e \"process.exit(0)\" api-check and cite the new ev: id"
+          ]
+        }
+      }
+    },
+    {
+      "id": "L3.spaceInName.inCwd",
+      "description": "declared \"src/sub dir/\", run --cwd \"src/sub dir\"",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":16,\"ts\":\"2026-10-09T17:24:41.008Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv18jma9-0i4dda5a\",\"filesChanged\":[\"src/server/app.js\"]},\"prevHash\":\"413f87032ea65134f66f2b0abf34965585d7c50169f814ce62333029eb997df9\",\"stateHash\":\"24b5fdba4aea68daff5981d11b522d9299f89af92c49bc7fb909e0aeb146ec22\",\"hash\":\"b4c49a4dcd992219ea0f989c6477e3fc0779bad3b6e20391ac0279c758a8e133\"},\"state\":{\"seq\":16,\"lastHash\":\"b4c49a4dcd992219ea0f989c6477e3fc0779bad3b6e20391ac0279c758a8e133\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"20…"
+      }
+    }
+  ],
+  "unexpected": 0,
+  "finishedAt": "2026-10-09T17:24:41.052Z"
+}

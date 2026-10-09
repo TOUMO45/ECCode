@@ -44,6 +44,17 @@ function commitAll(dir) {
   execFileSync('git', ['add', '-A'], { cwd: dir });
   execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'files'], { cwd: dir });
 }
+/** Plant a copy of a record directory at `dst` (what cp -r, rsync or a script would do). */
+function plant(src, dst) {
+  fs.mkdirSync(dst, { recursive: true });
+  for (const name of fs.readdirSync(src)) {
+    if (name === '.eccode' || name === '.lock') continue;
+    const s = path.join(src, name);
+    const d = path.join(dst, name);
+    if (fs.statSync(s).isDirectory()) plant(s, d);
+    else fs.copyFileSync(s, d);
+  }
+}
 function nestedPair() {
   const outer = tmpProject();
   cleanup.push(outer.dir);
@@ -286,8 +297,11 @@ section = 'BOGUS-ROOT';
   probe('main-record-before', { cwd: ctx3.dir, tool: 'Write', file: rec('state.json'), role: null, expect: 'deny' });
   probe('main-events-before', { cwd: ctx3.dir, tool: 'Edit', file: rec('events.jsonl'), role: null, expect: 'deny' });
   b3('main-init-inside-record', 'eccode init --root .eccode --name x --idea y', null, 'allow', 'guard-visible step 1');
-  // simulate exactly what that CLI command does
-  init(rec(''), { name: 'x', idea: 'y' });
+  // simulate exactly what that CLI command did before d0e2a3b; lib now refuses it, so plant by copy instead
+  let initRefusal = 'ACCEPTED';
+  try { init(rec(''), { name: 'x', idea: 'y' }); } catch (err) { initRefusal = `${err.code}: ${err.message}`; }
+  results.push({ section, id: 'lib-init-inside-record', role: 'main', tool: 'engine', input: 'init(<proj>/.eccode)', decision: initRefusal.slice(0, 160), expect: 'INVALID_INPUT', ok: /^INVALID_INPUT/.test(initRefusal), note: '', reason: '' });
+  if (!fs.existsSync(rec('.eccode/events.jsonl'))) plant(rec(''), rec('.eccode'));
   probe('main-record-after', { cwd: ctx3.dir, tool: 'Write', file: rec('state.json'), role: null, expect: 'deny', note: 'BYPASS if allow: nearest root is .eccode/.eccode, rel = state.json' });
   probe('main-events-after', { cwd: ctx3.dir, tool: 'Edit', file: rec('events.jsonl'), role: null, expect: 'deny' });
   probe('main-config-after', { cwd: ctx3.dir, tool: 'Write', file: rec('config.json'), role: null, expect: 'deny' });
@@ -308,7 +322,7 @@ section = 'BOGUS-ROOT';
   tasks.claim(ctx4.store, ctx4.config, 'cfg', 'backend-engineer');
   probe('impl-json-record-before', { cwd: ctx4.dir, tool: 'Write', file: path.join(ctx4.dir, '.eccode', 'state.json'), role: impl, expect: 'deny' });
   probe('impl-json-init-inside-record', { cwd: ctx4.dir, command: 'eccode init --root .eccode --name x --idea y --actor backend-engineer', role: impl, expect: 'allow', note: 'guard-visible step 1 (identity matches)' });
-  init(path.join(ctx4.dir, '.eccode'), { name: 'x', idea: 'y' });
+  try { init(path.join(ctx4.dir, '.eccode'), { name: 'x', idea: 'y' }); } catch { plant(path.join(ctx4.dir, '.eccode'), path.join(ctx4.dir, '.eccode', '.eccode')); }
   probe('impl-json-record-after', { cwd: ctx4.dir, tool: 'Write', file: path.join(ctx4.dir, '.eccode', 'state.json'), role: impl, expect: 'deny', note: 'BYPASS if allow: rel = state.json matches **/*.json (owns() only excludes paths that still start with .eccode/)' });
   probe('impl-json-config-after', { cwd: ctx4.dir, tool: 'Write', file: path.join(ctx4.dir, '.eccode', 'config.json'), role: impl, expect: 'deny' });
   // pre-existing, for the record: whole-record replacement by the main session through a directory copy

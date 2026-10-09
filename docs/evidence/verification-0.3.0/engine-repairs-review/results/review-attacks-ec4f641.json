@@ -1,0 +1,1280 @@
+{
+  "probe": "review-attacks (independent review of the repairs)",
+  "repo": "/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/repair",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T17:24:48.846Z",
+  "steps": [
+    {
+      "id": "N1.crlf",
+      "description": "approved brief converted to CRLF (bytes differ, text identical)",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc) from git if the file was committed (git checkout -- .eccode/artifacts/architecture/brief.md; git log -- .eccode/artifacts/architecture/brief.md), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "N1.trailingNewline",
+      "description": "one newline appended to the approved brief",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc) from git if the file was committed (git checkout -- .eccode/artifacts/architecture/brief.md; git log -- .eccode/artifacts/architecture/brief.md), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "N1.restored",
+      "description": "bytes restored: design derives AC1 + AC2 again",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1",
+          "AC2"
+        ]
+      }
+    },
+    {
+      "id": "N1.deleted",
+      "description": "approved brief deleted from disk",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md was deleted after the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc) from git if the file was committed (git checkout -- .eccode/artifacts/architecture/brief.md; git log -- .eccode/artifacts/architecture/brief.md), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "N1.deleted.message",
+      "description": "the message says it was deleted (not \"differs\")",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": ".eccode/artifacts/architecture/brief.md was deleted after the approved architecture submission (sha256 ce9f009956ca…). A"
+      }
+    },
+    {
+      "id": "N1.repinSameBytes",
+      "description": "design submission listing the approved brief at the pinned bytes",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":7,\"ts\":\"2026-10-09T17:24:49.171Z\",\"type\":\"gate.submitted\",\"actor\":\"technical-designer\",\"data\":{\"gate\":\"design\",\"respondsTo\":null,\"notes\":null,\"submissionId\":\"sub-mv18jslu-04d6b414\",\"artifacts\":[{\"path\":\".eccode/artifacts/spec.md\",\"sha256\":\"bc19e45aa3a6f34c87aeaa5a90a2a1085103f1c5d69e06fd3f65cda1ca435de3\"},{\"path\":\".eccode/artifacts/architecture/brief.md\",\"sha256\":\"ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc\"}],\"supersedes\":\"sub-mv18jsl5-0355b3e4\",\"commit\":\"7ae5f08874038995be444d804ef9d4c2772d9ce8\",\"tree\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495…"
+      }
+    },
+    {
+      "id": "N1.repinOtherBytes",
+      "description": "design submission listing the edited brief",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc) from git if the file was committed (git checkout -- .eccode/artifacts/architecture/brief.md; git log -- .eccode/artifacts/architecture/brief.md), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/brief.md",
+          "gate": "architecture",
+          "sha256": "ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc"
+        }
+      }
+    },
+    {
+      "id": "N1.json.designRequired",
+      "description": "requiredCriteria(design) with the non-Markdown architecture artifact edited (only Markdown is hash-checked there)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1",
+          "AC2"
+        ]
+      }
+    },
+    {
+      "id": "N1.json.designApproval",
+      "description": "design approval while the edited diagram.json differs from the architecture pin",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "accepted: the design review does not consult unreviewedChanges; the edit is caught later (verification approval / delivery), see next steps",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":7,\"ts\":\"2026-10-09T17:24:49.557Z\",\"type\":\"review.recorded\",\"actor\":\"technical-reviewer\",\"data\":{\"gate\":\"design\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned for every ticket\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/spec.md#Components\"]},{\"id\":\"AC2\",\"description\":\"AC2: 429 returned above the configured rate\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/spec.md#Components\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18jswl-089266ae\",\"submissionId\":\"sub-mv18j…"
+      }
+    },
+    {
+      "id": "N1.json.unreviewed",
+      "description": "unreviewedChanges reports the edited diagram.json against architecture",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": ".eccode/artifacts/architecture/diagram.json",
+            "gate": "architecture",
+            "problem": "modified after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "N1.json.repin",
+      "description": "verification submission listing the edited diagram.json",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/architecture/diagram.json differs from the bytes pinned by the approved architecture submission (sha256 37e09edac26d…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 37e09edac26d6e87d263d400b3252d1a12b6a585ab5ac5331062cfdb59ab763c) from git if the file was committed (git checkout -- .eccode/artifacts/architecture/diagram.json; git log -- .eccode/artifacts/architecture/diagram.json), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/architecture/diagram.json",
+          "gate": "architecture",
+          "sha256": "37e09edac26d6e87d263d400b3252d1a12b6a585ab5ac5331062cfdb59ab763c"
+        }
+      }
+    },
+    {
+      "id": "N1.json.verificationApproval",
+      "description": "verification approval without listing it (the edit is an unreviewed change of an approved artifact)",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- the release tree holds changes no review covers, not pinned by submission sub-mv18jte8-0ka2b124: .eccode/artifacts/architecture/diagram.json modified after approval (architecture). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved",
+        "details": {
+          "reasons": [
+            "the release tree holds changes no review covers, not pinned by submission sub-mv18jte8-0ka2b124: .eccode/artifacts/architecture/diagram.json modified after approval (architecture). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N1.json.deliver",
+      "description": "deliver() while diagram.json differs",
+      "expect": "refused:DELIVERY_BLOCKED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "DELIVERY_BLOCKED",
+        "message": "Delivery refused:\n- gate verification is submitted\n- .eccode/artifacts/architecture/diagram.json modified after approval (architecture)\n- every file listed above must be reviewed (submit it with a rework or the next gate), restored to its reviewed content, or, for generated files, listed in release.ignore (.eccode/config.json) before delivery",
+        "details": {
+          "problems": [
+            "gate verification is submitted",
+            ".eccode/artifacts/architecture/diagram.json modified after approval (architecture)",
+            "every file listed above must be reviewed (submit it with a rework or the next gate), restored to its reviewed content, or, for generated files, listed in release.ignore (.eccode/config.json) before delivery"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N1.json.restoredApproval",
+      "description": "verification approval once diagram.json is restored",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":33,\"ts\":\"2026-10-09T17:24:50.394Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned for every ticket\",\"met\":true,\"evidence\":[\"ev:ev-mv18jti7-0ma2dcab\"]},{\"id\":\"AC2\",\"description\":\"AC2: 429 returned above the configured rate\",\"met\":true,\"evidence\":[\"ev:ev-mv18jti7-0ma2dcab\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18jtju-0n888d69\",\"submissionId\":\"sub-mv18jte8-0ka2b124\"},\"prevHash\":\"5c90c826b3a…"
+      }
+    },
+    {
+      "id": "N1.spec.repin",
+      "description": "verification submission listing the edited spec.md (pinned by design)",
+      "expect": "refused:APPROVED_ARTIFACT_CHANGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "APPROVED_ARTIFACT_CHANGED",
+        "message": ".eccode/artifacts/spec.md differs from the bytes pinned by the approved design submission (sha256 bc19e45aa3a6…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 bc19e45aa3a6f34c87aeaa5a90a2a1085103f1c5d69e06fd3f65cda1ca435de3) from git if the file was committed (git checkout -- .eccode/artifacts/spec.md; git log -- .eccode/artifacts/spec.md), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file.",
+        "details": {
+          "path": ".eccode/artifacts/spec.md",
+          "gate": "design",
+          "sha256": "bc19e45aa3a6f34c87aeaa5a90a2a1085103f1c5d69e06fd3f65cda1ca435de3"
+        }
+      }
+    },
+    {
+      "id": "N1.spec.verificationApproval",
+      "description": "verification approval while spec.md differs from the design pin",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- the release tree holds changes no review covers, not pinned by submission sub-mv18ju62-1316683d: .eccode/artifacts/spec.md modified after approval (design). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved",
+        "details": {
+          "reasons": [
+            "the release tree holds changes no review covers, not pinned by submission sub-mv18ju62-1316683d: .eccode/artifacts/spec.md modified after approval (design). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N1.spec.reason",
+      "description": "the refusal names spec.md modified after approval (design)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "the release tree holds changes no review covers, not pinned by submission sub-mv18ju62-1316683d: .eccode/artifacts/spec.md modified after approval (design). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+        ]
+      }
+    },
+    {
+      "id": "N1.iterate.changesRequested",
+      "description": "architecture changes_requested on the first brief",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":4,\"ts\":\"2026-10-09T17:24:51.510Z\",\"type\":\"review.recorded\",\"actor\":\"architecture-reviewer\",\"data\":{\"gate\":\"architecture\",\"review\":{\"decision\":\"changes_requested\",\"summary\":\"Blocking gap found in the submitted artifacts.\",\"criteria\":[{\"id\":\"C1\",\"description\":\"criterion one\",\"met\":false,\"evidence\":[]}],\"findings\":[{\"id\":\"F1\",\"severity\":\"blocking\",\"title\":\"Missing requirement\",\"detail\":\"The brief omits rate limiting.\",\"recommendation\":\"Add a rate-limit requirement.\"}]},\"reviewId\":\"rev-mv18jueu-161038c4\",\"submissionId\":\"sub-mv18jues-151bba58\"},\"prevHash\":\"551eb1bbf07eb7c18d9f0e5ff9…"
+      }
+    },
+    {
+      "id": "N1.iterate.resubmit",
+      "description": "the author resubmits the revised brief BEFORE approval (the normal iteration, other bytes, same gate, --responds-to)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":5,\"ts\":\"2026-10-09T17:24:51.530Z\",\"type\":\"gate.submitted\",\"actor\":\"product-architect\",\"data\":{\"gate\":\"architecture\",\"respondsTo\":\"rev-mv18jueu-161038c4\",\"notes\":null,\"submissionId\":\"sub-mv18jufe-177184f5\",\"artifacts\":[{\"path\":\".eccode/artifacts/architecture/brief.md\",\"sha256\":\"ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc\"}],\"commit\":\"f2f396c1b6198cf7dfad19060a93b882129ab96d\",\"tree\":\"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"},\"prevHash\":\"1ec1915d6c11083f7312a532a3df82c2e9583ff7eea7426d052093f39cccd2a9\",\"stateHash\":\"cde599e902659aa164e8…"
+      }
+    },
+    {
+      "id": "N1.iterate.approve",
+      "description": "approval of the revised brief (resolving F1)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":6,\"ts\":\"2026-10-09T17:24:51.532Z\",\"type\":\"review.recorded\",\"actor\":\"architecture-reviewer\",\"data\":{\"gate\":\"architecture\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned for every ticket\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]},{\"id\":\"AC2\",\"description\":\"AC2: 429 returned above the configured rate\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]}],\"findings\":[],\"resol…"
+      }
+    },
+    {
+      "id": "N1.reopen.architecture",
+      "description": "eccode gate reopen architecture --actor user on the approved gate",
+      "expect": "refused:INVALID_TRANSITION",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_TRANSITION",
+        "message": "Gate architecture is approved; approved work changes through a rework (eccode rework open), not by reopening the gate",
+        "details": {}
+      }
+    },
+    {
+      "id": "N1.rework.brief",
+      "description": "a rework scoped to the brief",
+      "expect": "refused:INVALID_INPUT",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_INPUT",
+        "message": "A rework may not reach into the project record or its artifacts (.eccode/); only .eccode/drafts/ is always writable",
+        "details": {}
+      }
+    },
+    {
+      "id": "N1.plan.briefOwnership",
+      "description": "a plan task owning .eccode/artifacts/architecture/**",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "N1.message",
+      "description": "the APPROVED_ARTIFACT_CHANGED message names the file, the gate, the restore command and the documented revision path",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": ".eccode/artifacts/architecture/brief.md differs from the bytes pinned by the approved architecture submission (sha256 ce9f009956ca…). Approved documents change only through the reviewed path: restore the approved bytes (sha256 ce9f009956cad9c602ab5a924bd1d4c8f5d07b07c8a372311c5260b4eb024dfc) from git if the file was committed (git checkout -- .eccode/artifacts/architecture/brief.md; git log -- .eccode/artifacts/architecture/brief.md), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file."
+      }
+    },
+    {
+      "id": "N1.uncommitted.checkout",
+      "description": "git checkout -- brief.md when the brief was never committed (the message's recovery)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "the named recovery fails for an uncommitted artifact: the pinned bytes exist only as a hash in the record",
+      "observed": {
+        "ok": false,
+        "message": "error: pathspec '.eccode/artifacts/architecture/brief.md' did not match any file(s) known to git "
+      }
+    },
+    {
+      "id": "N2.table.required",
+      "description": "ids in a Markdown table",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1",
+          "AC2"
+        ]
+      }
+    },
+    {
+      "id": "N2.table.approve",
+      "description": "table brief approved with AC1 + AC2",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":4,\"ts\":\"2026-10-09T17:24:51.940Z\",\"type\":\"review.recorded\",\"actor\":\"architecture-reviewer\",\"data\":{\"gate\":\"architecture\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned for every ticket\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]},{\"id\":\"AC2\",\"description\":\"AC2: 429 returned above the configured rate\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]}],\"findings\":[]},\"revi…"
+      }
+    },
+    {
+      "id": "N2.tableNoIds",
+      "description": "a table under Acceptance Criteria whose rows carry no ids",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- the \"Acceptance Criteria\" section(s) of .eccode/artifacts/architecture/brief.md list no criterion ids, so no later approval would have to cover any acceptance criterion; the author must list each criterion as an item with an id under that heading (\"- AC1: <criterion>\", or a \"| AC1 | <criterion> |\" table row) and resubmit (to turn this rule off deliberately, set review.criteriaSections.architecture to [] in .eccode/config.json)",
+        "details": {
+          "reasons": [
+            "the \"Acceptance Criteria\" section(s) of .eccode/artifacts/architecture/brief.md list no criterion ids, so no later approval would have to cover any acceptance criterion; the author must list each criterion as an item with an id under that heading (\"- AC1: <criterion>\", or a \"| AC1 | <criterion> |\" table row) and resubmit (to turn this rule off deliberately, set review.criteriaSections.architecture to [] in .eccode/config.json)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N2.tableNoIds.reason",
+      "description": "the reason says the section lists no criterion ids",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "the \"Acceptance Criteria\" section(s) of .eccode/artifacts/architecture/brief.md list no criterion ids, so no later approval would have to cover any acceptance criterion; the author must list each criterion as an item with an id under that heading (\"- AC1: <criterion>\", or a \"| AC1 | <criterion> |\" table row) and resubmit (to turn this rule off deliberately, set review.criteriaSections.architecture to [] in .eccode/config.json)"
+        ]
+      }
+    },
+    {
+      "id": "N2.dod.required",
+      "description": "ids under \"Definition of Done\" with criteriaSections configured to it",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1",
+          "AC2"
+        ]
+      }
+    },
+    {
+      "id": "N2.dod.approve",
+      "description": "approval covering AC1 + AC2 under the configured heading",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":4,\"ts\":\"2026-10-09T17:24:52.225Z\",\"type\":\"review.recorded\",\"actor\":\"architecture-reviewer\",\"data\":{\"gate\":\"architecture\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned for every ticket\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Definition of Done\"]},{\"id\":\"AC2\",\"description\":\"AC2: 429 returned above the configured rate\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Definition of Done\"]}],\"findings\":[]},\"review…"
+      }
+    },
+    {
+      "id": "N2.dod.verification",
+      "description": "verification approval covering the configured-heading ids",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":31,\"ts\":\"2026-10-09T17:24:52.773Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned for every ticket\",\"met\":true,\"evidence\":[\"ev:ev-mv18jvc7-1ucc3a98\"]},{\"id\":\"AC2\",\"description\":\"AC2: 429 returned above the configured rate\",\"met\":true,\"evidence\":[\"ev:ev-mv18jvc7-1ucc3a98\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18jvdx-1v0627e9\",\"submissionId\":\"sub-mv18jvbb-1tec45dc\"},\"prevHash\":\"95ec2a0017a…"
+      }
+    },
+    {
+      "id": "N2.optout.arch",
+      "description": "criteriaSections.architecture: [] and a no-ids brief: architecture approval goes through",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":4,\"ts\":\"2026-10-09T17:24:52.928Z\",\"type\":\"review.recorded\",\"actor\":\"architecture-reviewer\",\"data\":{\"gate\":\"architecture\",\"review\":{\"decision\":\"approve\",\"summary\":\"Criteria checked against the submitted brief.\",\"criteria\":[{\"id\":\"C1\",\"description\":\"The document has a title\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Risks\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18jvi8-1xd36b3d\",\"submissionId\":\"sub-mv18jvi7-1w07b729\"},\"prevHash\":\"19a4a79d3265b0b55b1296005eaa47bc1f56bec3fdac2d76b977d51560ea0ea6\",\"stateHash\":\"5cad0813732933c9c52d9d5daf09572083c11cc09a924b…"
+      }
+    },
+    {
+      "id": "N2.optout.verificationRequired",
+      "description": "with the rule off, verification falls back to phase:<id> coverage",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "phase:core"
+        ]
+      }
+    },
+    {
+      "id": "N2.optout.verification",
+      "description": "verification approval with the rule off",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":31,\"ts\":\"2026-10-09T17:24:53.531Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"phase:core\",\"description\":\"phase:core: Build the core service\",\"met\":true,\"evidence\":[\"ev:ev-mv18jvxr-2ce2a772\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18jvyz-2db123b0\",\"submissionId\":\"sub-mv18jvwz-2b6774f6\"},\"prevHash\":\"c82a370e6aec9212a8958609d345b31222c49a5a336cdd5a4723a928026922cc\",\"stateHash\":\"a4abf69d1b9278f1acf9eee47da48fbf6f75c3e7efb14e2f98d67…"
+      }
+    },
+    {
+      "id": "N2.idsElsewhere",
+      "description": "ids listed under Requirements, the Acceptance Criteria section only points at them",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- the \"Acceptance Criteria\" section(s) of .eccode/artifacts/architecture/brief.md list no criterion ids, so no later approval would have to cover any acceptance criterion; the author must list each criterion as an item with an id under that heading (\"- AC1: <criterion>\", or a \"| AC1 | <criterion> |\" table row) and resubmit (to turn this rule off deliberately, set review.criteriaSections.architecture to [] in .eccode/config.json)",
+        "details": {
+          "reasons": [
+            "the \"Acceptance Criteria\" section(s) of .eccode/artifacts/architecture/brief.md list no criterion ids, so no later approval would have to cover any acceptance criterion; the author must list each criterion as an item with an id under that heading (\"- AC1: <criterion>\", or a \"| AC1 | <criterion> |\" table row) and resubmit (to turn this rule off deliberately, set review.criteriaSections.architecture to [] in .eccode/config.json)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N2.docs",
+      "description": "docs/usage.md documents the [] opt-out in the config table and the troubleshooting row",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": 2
+      }
+    },
+    {
+      "id": "N3.ignore.unreviewed",
+      "description": "dist/bundle.js committed between approvals under release.ignore is not reported",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "N3.ignore.approve",
+      "description": "verification approval with the ignored file in the tree",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":31,\"ts\":\"2026-10-09T17:24:54.723Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned\",\"met\":true,\"evidence\":[\"ev:ev-mv18jwur-2v181957\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18jww3-2w09bf70\",\"submissionId\":\"sub-mv18jwtu-2u7509de\"},\"prevHash\":\"94ec085eae7e44bf58cacc224605c7659199dc0d9928acb2a5c55b34c9bb797f\",\"stateHash\":\"68808692d408368b00903fc2c6118627e851200bdc3976b5c4df19b4753b3be0\",\"hash\"…"
+      }
+    },
+    {
+      "id": "N3.ignore.deliver",
+      "description": "delivery (the ignore is the deliberate opt-out)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "206755f449b93adec84132930679a4903802e9be"
+        }
+      }
+    },
+    {
+      "id": "N3.configIgnore.before",
+      "description": "verification approval with the stray file (refused)",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- the release tree holds changes no review covers, not pinned by submission sub-mv18jxnx-3cc55364: src/server/backdoor.js added after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved",
+        "details": {
+          "reasons": [
+            "the release tree holds changes no review covers, not pinned by submission sub-mv18jxnx-3cc55364: src/server/backdoor.js added after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N3.configIgnore.after",
+      "description": "the same approval after .eccode/config.json release.ignore was edited to name the stray file",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "RESIDUAL (pre-existing): whoever can edit .eccode/config.json can exempt a path; the config is outside the release tree and is not pinned by any review",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":33,\"ts\":\"2026-10-09T17:24:55.889Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned\",\"met\":true,\"evidence\":[\"ev:ev-mv18jxqw-3e87ecae\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18jxsg-3ff0d88b\",\"submissionId\":\"sub-mv18jxnx-3cc55364\"},\"prevHash\":\"2b1df02106acfd8a80a570f130356c9d1dec0d1463ae3df471012f2115a9c0e5\",\"stateHash\":\"bf4e3f1a0541baaf17073c2bec13f6243aef822ddcb93254a42d8066a4092b18\",\"hash\"…"
+      }
+    },
+    {
+      "id": "N3.inflight.unreviewed",
+      "description": "a file added (and committed) by an in-flight task of the unapproved phase:next is not reported",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "N3.inflight.stray",
+      "description": "a file outside every ownership committed meanwhile IS reported",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": "src/other/stray.js",
+            "gate": "phase:core",
+            "problem": "added after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "N3.inflight.verification",
+      "description": "verification approval after both phases (overblocking check)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":39,\"ts\":\"2026-10-09T17:24:57.677Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned\",\"met\":true,\"evidence\":[\"ev:ev-mv18jz4d-412f26b5\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18jz65-42351d97\",\"submissionId\":\"sub-mv18jz3c-4073f092\"},\"prevHash\":\"d79c562026325ce3fb05bece39d94569151e44cb33d82213fb55ae4993bfc646\",\"stateHash\":\"80d80064931297c4fc3d13629fc1ca780efa6bcfab394706c643361701701d60\",\"hash\"…"
+      }
+    },
+    {
+      "id": "N3.inflight.deliver",
+      "description": "delivery",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "a28e8a1e1492079c384b1f987c659150d80f8ff3"
+        }
+      }
+    },
+    {
+      "id": "N3.deleted.unreviewed",
+      "description": "unreviewedChanges after a pinned file was deleted and committed",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": "src/web/b.js",
+            "gate": "phase:core",
+            "problem": "deleted after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "N3.deleted.listGone",
+      "description": "the verification submission cannot list the deleted path",
+      "expect": "refused:NOT_FOUND",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "NOT_FOUND",
+        "message": "Artifact not found: src/web/b.js",
+        "details": {}
+      }
+    },
+    {
+      "id": "N3.deleted.approval",
+      "description": "verification approval with the unreviewed deletion",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- the release tree holds changes no review covers, not pinned by submission sub-mv18jzzt-4i4a03a8: src/web/b.js deleted after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved",
+        "details": {
+          "reasons": [
+            "the release tree holds changes no review covers, not pinned by submission sub-mv18jzzt-4i4a03a8: src/web/b.js deleted after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N3.deleted.deliver",
+      "description": "deliver()",
+      "expect": "refused:DELIVERY_BLOCKED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "DELIVERY_BLOCKED",
+        "message": "Delivery refused:\n- gate verification is submitted\n- src/web/b.js deleted after approval (phase:core)\n- every file listed above must be reviewed (submit it with a rework or the next gate), restored to its reviewed content, or, for generated files, listed in release.ignore (.eccode/config.json) before delivery",
+        "details": {
+          "problems": [
+            "gate verification is submitted",
+            "src/web/b.js deleted after approval (phase:core)",
+            "every file listed above must be reviewed (submit it with a rework or the next gate), restored to its reviewed content, or, for generated files, listed in release.ignore (.eccode/config.json) before delivery"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N3.deleted.restoredApproval",
+      "description": "verification approval once the file is restored",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":33,\"ts\":\"2026-10-09T17:24:59.087Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned\",\"met\":true,\"evidence\":[\"ev:ev-mv18k07p-4k981875\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18k09b-4l1cf6b9\",\"submissionId\":\"sub-mv18jzzt-4i4a03a8\"},\"prevHash\":\"62af5bd2c279c80f26a02a45906b57202f6a45c0546be0cb7f9696f89e3bc450\",\"stateHash\":\"307d7a2d8d2f8f80841854f1ec43326aee73c708bc1e1acf532e8a9dfce1943b\",\"hash\"…"
+      }
+    },
+    {
+      "id": "N3.renamed.from",
+      "description": "a rename committed after approval is reported with its old path (from), and the old pinned path as deleted",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": false,
+        "value": [
+          {
+            "path": "src/server/a.js",
+            "gate": "phase:core",
+            "problem": "deleted after approval"
+          },
+          {
+            "path": "src/server/a2.js",
+            "gate": "phase:core",
+            "problem": "added after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "N3.renamed.approval",
+      "description": "verification approval listing the new path (the old pinned path left the tree unreviewed)",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- the release tree holds changes no review covers, not pinned by submission sub-mv18k109-51089e51: src/server/a.js deleted after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved",
+        "details": {
+          "reasons": [
+            "the release tree holds changes no review covers, not pinned by submission sub-mv18k109-51089e51: src/server/a.js deleted after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N3.renamed.reason",
+      "description": "the refusal names the deleted old path",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "the release tree holds changes no review covers, not pinned by submission sub-mv18k109-51089e51: src/server/a.js deleted after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+        ]
+      }
+    },
+    {
+      "id": "N3.renamed.fromCommitted",
+      "description": "rename after approval when the phase commit contains the file: reported as renamed with from",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": "src/server/a.js",
+            "gate": "phase:core",
+            "problem": "deleted after approval"
+          },
+          {
+            "path": "src/server/a2.js",
+            "from": "src/server/a.js",
+            "gate": "phase:core",
+            "problem": "renamed after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "N3.renamed.fromCommitted.approval",
+      "description": "verification approval listing the new path only",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- the release tree holds changes no review covers, not pinned by submission sub-mv18k1t4-5i6839be: src/server/a.js deleted after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved",
+        "details": {
+          "reasons": [
+            "the release tree holds changes no review covers, not pinned by submission sub-mv18k1t4-5i6839be: src/server/a.js deleted after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N3.early.unreviewed",
+      "description": "the early stray file is still reported after three later approvals on later commits",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": "tools/early.js",
+            "gate": "phase:core",
+            "problem": "added after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "N3.early.approval",
+      "description": "verification approval without it",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- the release tree holds changes no review covers, not pinned by submission sub-mv18k2q9-5zad429d: tools/early.js added after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved",
+        "details": {
+          "reasons": [
+            "the release tree holds changes no review covers, not pinned by submission sub-mv18k2q9-5zad429d: tools/early.js added after approval (phase:core). Each must be reviewed (listed in the verification submission at its current content, or fixed through a rework), restored to its reviewed content, or, for a generated file, named in release.ignore (.eccode/config.json) before verification can be approved"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N3.early.listed",
+      "description": "listed in the verification submission: approved",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":34,\"ts\":\"2026-10-09T17:25:02.493Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned for every ticket\",\"met\":true,\"evidence\":[\"ev:ev-mv18k2u4-62df2e3a\"]},{\"id\":\"AC2\",\"description\":\"AC2: 429 returned above the configured rate\",\"met\":true,\"evidence\":[\"ev:ev-mv18k2u4-62df2e3a\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18k2vx-639c1056\",\"submissionId\":\"sub-mv18k2ta-61bb9694\"},\"prevHash\":\"1683861efd0…"
+      }
+    },
+    {
+      "id": "N3.early.deliver",
+      "description": "delivery",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "2d62ac67f62b7fd2f8928b017d0e81c3448055e3"
+        }
+      }
+    },
+    {
+      "id": "N3.ver2.pending",
+      "description": "the edit is pending re-review in verification",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": "src/server/a.js",
+            "gate": "phase:core",
+            "problem": "modified after approval; the new version is submitted for review in verification",
+            "pending": "verification"
+          }
+        ]
+      }
+    },
+    {
+      "id": "N3.ver2.approval",
+      "description": "verification approval pins the new version (TriageDesk VER-2 flow, overblocking check)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":31,\"ts\":\"2026-10-09T17:25:03.604Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"All criteria verified against the submitted artifacts.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1: category returned\",\"met\":true,\"evidence\":[\"ev:ev-mv18k3pg-6kdcf065\"]}],\"findings\":[]},\"reviewId\":\"rev-mv18k3qr-6l6cbb18\",\"submissionId\":\"sub-mv18k3ny-6j018d08\"},\"prevHash\":\"68489c83878b65bb69fd7b15ae510b757f6537a3e95df72eab3dac3f65a0d629\",\"stateHash\":\"e0b124265235dca7ff12cca51c83a6b42f188546a11d110340b23254eab3ee14\",\"hash\"…"
+      }
+    },
+    {
+      "id": "N3.ver2.deliver",
+      "description": "delivery",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "7dc3f98f567988cf7ed4746f8d91ab78ef4b4774"
+        }
+      }
+    },
+    {
+      "id": "N4.mvEdit.changed",
+      "description": "git mv + edit of the new file: both paths changed",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "src/server/new.js",
+          "src/server/old.js"
+        ]
+      }
+    },
+    {
+      "id": "N4.mvEdit.newOnly",
+      "description": "handoff declaring new.js only",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/server/old.js",
+        "details": {
+          "errors": [
+            "files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/server/old.js"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N4.acrossDirs.changed",
+      "description": "rename across directories inside the ownership: both paths changed",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "src/server/new.js",
+          "src/server/old.js",
+          "src/server/other/deep2.js",
+          "src/server/sub/deep.js"
+        ]
+      }
+    },
+    {
+      "id": "N4.acrossDirs.partial",
+      "description": "handoff declaring old.js, new.js and deep2.js but not sub/deep.js",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/server/sub/deep.js",
+        "details": {
+          "errors": [
+            "files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/server/sub/deep.js"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N4.committed.newOnly",
+      "description": "the moves committed during the claim, handoff still declaring only the new paths",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/server/old.js, src/server/sub/deep.js",
+        "details": {
+          "errors": [
+            "files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/server/old.js, src/server/sub/deep.js"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N4.committed.all",
+      "description": "all four paths declared",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":17,\"ts\":\"2026-10-09T17:25:04.361Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv18k4b3-6y701306\",\"filesChanged\":[\"src/server/old.js\",\"src/server/new.js\",\"src/server/sub/deep.js\",\"src/server/other/deep2.js\"]},\"prevHash\":\"05def1f7f0ec3da8f71510b9397d06323193ed3952b5880edf598af43c288968\",\"stateHash\":\"87383292b0fba46f49e5a58c4dde13bca546d8e5790a3cfaa4607c3fefd78843\",\"hash\":\"46b154d96f8ade7dbf6152c504d54da166a5961b39acf743d1c0ae91ff5014aa\"},\"state\":{\"seq\":17,\"lastHash\":\"46b154d96f8ade7dbf6152c504d54da166a5961b39acf743d1c0ae91ff5014aa\",\"pr…"
+      }
+    },
+    {
+      "id": "N4.outOfOwnership",
+      "description": "git mv from the ownership into another task's area, both paths declared",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- files outside task ownership (src/server/**; .eccode/ only under drafts/): src/web/moved.js",
+        "details": {
+          "errors": [
+            "files outside task ownership (src/server/**; .eccode/ only under drafts/): src/web/moved.js"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N4.untracked.newOnly",
+      "description": "fs.rename (unstaged): handoff declaring new.js only",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/server/old.js",
+        "details": {
+          "errors": [
+            "files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/server/old.js"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N4.untracked.both",
+      "description": "fs.rename: both declared",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":15,\"ts\":\"2026-10-09T17:25:05.263Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv18k508-7f4e6eff\",\"filesChanged\":[\"src/server/old.js\",\"src/server/new.js\"]},\"prevHash\":\"da570e4314d332e5ae44befaf4a7f7296962accc12431e68325a23ad0125cbb2\",\"stateHash\":\"4c9c95f933f297d5336d5e224d943f39703298414d97ffbb794a625757eb4231\",\"hash\":\"2a8be2b6aa66f55913a3b6869c1a55a2441ad00ed168f6f613fbf5754da8195e\"},\"state\":{\"seq\":15,\"lastHash\":\"2a8be2b6aa66f55913a3b6869c1a55a2441ad00ed168f6f613fbf5754da8195e\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipel…"
+      }
+    },
+    {
+      "id": "N5.validate.trailingSlash",
+      "description": "verification.cwd \"src/server/\"",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "N5.validate.dotSlash",
+      "description": "verification.cwd \"./src/server\"",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "N5.validate.dot",
+      "description": "verification.cwd \".\"",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "N5.validate.backslash",
+      "description": "verification.cwd \"src\\\\server\" (Windows separator) on Linux",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "errors": [
+            "task api: verification.cwd \"src\\\\server\" must use forward slashes (the same spelling on every platform)"
+          ],
+          "declaredCwd": "src\\server"
+        }
+      }
+    },
+    {
+      "id": "N5.validate.backslashDotDot",
+      "description": "verification.cwd \"src\\\\..\\\\x\" on Linux (no .. segment after splitting on /)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "errors": [
+            "task api: verification.cwd \"src\\\\..\\\\x\" must use forward slashes (the same spelling on every platform)"
+          ],
+          "declaredCwd": "src\\..\\x"
+        }
+      }
+    },
+    {
+      "id": "N5.validate.spaces",
+      "description": "verification.cwd \" src/server \" (surrounding spaces)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "errors": [
+            "task api: verification.cwd \" src/server \" must not start or end with blanks"
+          ],
+          "declaredCwd": " src/server "
+        }
+      }
+    },
+    {
+      "id": "N5.validate.nonexistent",
+      "description": "verification.cwd \"src/nope\" (directory does not exist yet)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "N5.validate.dotdotInside",
+      "description": "verification.cwd \"src/server/../server\" (resolves inside, refused for the .. segment)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"src/server/../server\" must stay inside the project (no .. segments)"
+        ]
+      }
+    },
+    {
+      "id": "N5.validate.bad:\"/abs\"",
+      "description": "verification.cwd \"/abs\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"/abs\" must be relative to the project root, not absolute"
+        ]
+      }
+    },
+    {
+      "id": "N5.validate.bad:\"C:\\\\x\"",
+      "description": "verification.cwd \"C:\\\\x\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"C:\\\\x\" must use forward slashes (the same spelling on every platform)"
+        ]
+      }
+    },
+    {
+      "id": "N5.validate.bad:\"../up\"",
+      "description": "verification.cwd \"../up\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api: verification.cwd \"../up\" must stay inside the project (no .. segments)"
+        ]
+      }
+    },
+    {
+      "id": "N5.validate.bad:\"\"",
+      "description": "verification.cwd \"\" refused by validatePlan",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "$.tasks[0].verification.cwd: must be at least 1 non-blank characters"
+        ]
+      }
+    },
+    {
+      "id": "N5.schema.cwdNumber",
+      "description": "plan schema refuses a non-string cwd",
+      "expect": "refused",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_PLAN",
+        "message": "Plan is invalid:\n- $.tasks[0].verification.cwd: expected string, got integer",
+        "details": {
+          "errors": [
+            "$.tasks[0].verification.cwd: expected string, got integer"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N5.schema.cwdEmpty",
+      "description": "plan schema/validation refuses an empty cwd",
+      "expect": "refused",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_PLAN",
+        "message": "Plan is invalid:\n- $.tasks[0].verification.cwd: must be at least 1 non-blank characters",
+        "details": {
+          "errors": [
+            "$.tasks[0].verification.cwd: must be at least 1 non-blank characters"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N5.trailingSlash.run",
+      "description": "declared \"src/server/\", run --cwd src/server",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":15,\"ts\":\"2026-10-09T17:25:05.923Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv18k5ik-7v1e25c3\",\"filesChanged\":[\"src/server/app.js\"]},\"prevHash\":\"20427758f904ec0142a6b85221ec3735ecee17f5037e0bece6f0611ce257d4c6\",\"stateHash\":\"470937e03ffb86bb7e36869b29871b5fb57b668978e76247917d219e8b765ec0\",\"hash\":\"96eabd2f047cf95477ca2984c90b9bac7c79b4e2d2efd3f569431dec774318db\"},\"state\":{\"seq\":15,\"lastHash\":\"96eabd2f047cf95477ca2984c90b9bac7c79b4e2d2efd3f569431dec774318db\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"20…"
+      }
+    },
+    {
+      "id": "N5.dotSlash.run",
+      "description": "declared \"./src/server\", run --cwd src/server/",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":15,\"ts\":\"2026-10-09T17:25:06.174Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv18k5ph-8351e7cb\",\"filesChanged\":[\"src/server/app.js\"]},\"prevHash\":\"a9f63053ad15766780a14ba3a15c708d9e7051d87497bb0b3cd005785923a1e2\",\"stateHash\":\"87033adb0b8dc19b05ff823a78130a32d471009d5f9cdd54d5aa17e54ac2fb2e\",\"hash\":\"e57658f53febc1c8e1d63f83f0fc8f6cfc1b90fdd164a10986ea733f199d8ce0\"},\"state\":{\"seq\":15,\"lastHash\":\"e57658f53febc1c8e1d63f83f0fc8f6cfc1b90fdd164a10986ea733f199d8ce0\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"20…"
+      }
+    },
+    {
+      "id": "N5.dot.runRoot",
+      "description": "declared \".\", run at the root",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":15,\"ts\":\"2026-10-09T17:25:06.542Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv18k5zj-8bbc7b85\",\"filesChanged\":[\"src/server/app.js\"]},\"prevHash\":\"92ebc74d2de036cea9988e840ba3cdcb88d45dfdf4a60704c49112a48f2a7136\",\"stateHash\":\"8c73c025b3fdb2227a834dfdb9d5511486fa2fd5a51573fdb88e187e26bff33c\",\"hash\":\"4d9481f9da7ec8fa0aeefa5b830e0a98872fb15eee85f61180836c76491a17d2\"},\"state\":{\"seq\":15,\"lastHash\":\"4d9481f9da7ec8fa0aeefa5b830e0a98872fb15eee85f61180836c76491a17d2\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"20…"
+      }
+    },
+    {
+      "id": "N5.nonexistent.run",
+      "description": "evidence run --cwd src/nope (directory absent)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": false,
+        "value": {
+          "status": "failed",
+          "exitCode": 1,
+          "cwd": "src/nope",
+          "tail": "\n[error] spawnSync /bin/sh ENOENT"
+        }
+      }
+    },
+    {
+      "id": "N5.nonexistent.complete",
+      "description": "completion citing that run",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- handoff must cite a passing run of the task's declared verification command, executed by backend-engineer after the claim: node -e \"process.exit(0)\" api-check (cwd src/nope); cited: node -e \"process.exit(0)\" api-check (failed, by backend-engineer). Run it with eccode evidence run --actor backend-engineer --task api --label \"<label>\" --cwd src/nope -- node -e \"process.exit(0)\" api-check and cite the new ev: id",
+        "details": {
+          "errors": [
+            "handoff must cite a passing run of the task's declared verification command, executed by backend-engineer after the claim: node -e \"process.exit(0)\" api-check (cwd src/nope); cited: node -e \"process.exit(0)\" api-check (failed, by backend-engineer). Run it with eccode evidence run --actor backend-engineer --task api --label \"<label>\" --cwd src/nope -- node -e \"process.exit(0)\" api-check and cite the new ev: id"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N5.nonexistent.rootRun",
+      "description": "completion citing a run at the root instead",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- the cited run(s) of the task's declared verification command, ev:ev-mv18k6dl-8oe6a87f in ., ran in a different working directory than the task declares (src/nope); the same command elsewhere is a different check. Run it again with eccode evidence run --actor backend-engineer --task api --label \"<label>\" --cwd src/nope -- node -e \"process.exit(0)\" api-check and cite the new ev: id",
+        "details": {
+          "errors": [
+            "the cited run(s) of the task's declared verification command, ev:ev-mv18k6dl-8oe6a87f in ., ran in a different working directory than the task declares (src/nope); the same command elsewhere is a different check. Run it again with eccode evidence run --actor backend-engineer --task api --label \"<label>\" --cwd src/nope -- node -e \"process.exit(0)\" api-check and cite the new ev: id"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N5.symlink",
+      "description": "declared src/server, run --cwd src/link (symlink to it)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "refused (fail closed: the recorded cwd is the path as given)",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- the cited run(s) of the task's declared verification command, ev:ev-mv18k6lt-8w4982df in src/link, ran in a different working directory than the task declares (src/server); the same command elsewhere is a different check. Run it again with eccode evidence run --actor backend-engineer --task api --label \"<label>\" --cwd src/server -- node -e \"process.exit(0)\" api-check and cite the new ev: id\n- files changed since the claim that no task declares (revert them, or have the owning task declare them): src/link (in no task's ownership)",
+        "details": {
+          "errors": [
+            "the cited run(s) of the task's declared verification command, ev:ev-mv18k6lt-8w4982df in src/link, ran in a different working directory than the task declares (src/server); the same command elsewhere is a different check. Run it again with eccode evidence run --actor backend-engineer --task api --label \"<label>\" --cwd src/server -- node -e \"process.exit(0)\" api-check and cite the new ev: id",
+            "files changed since the claim that no task declares (revert them, or have the owning task declare them): src/link (in no task's ownership)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "N5.compat.noCwdField",
+      "description": "evidence recorded without a cwd field (older engine) matches a root-declared check and not a subdirectory one",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "root": true,
+          "sub": false
+        }
+      }
+    },
+    {
+      "id": "N5.cli.run",
+      "description": "eccode evidence run --cwd src/server/ -- <declared command>",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "message": "Evidence ev:ev-mv18k6vb-01ee0535 — PASSED (exit 0, 35ms)"
+      }
+    },
+    {
+      "id": "N5.cli.recordedCwd",
+      "description": "the recorded cwd is project-relative without the trailing slash",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "id": "ev-mv18k6vb-01ee0535",
+          "cwd": "src/server",
+          "command": "node -e 'process.exit(0)' api-check"
+        }
+      }
+    }
+  ],
+  "unexpected": 0,
+  "finishedAt": "2026-10-09T17:25:07.951Z"
+}
