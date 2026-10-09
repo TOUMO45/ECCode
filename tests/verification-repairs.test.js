@@ -167,3 +167,48 @@ test('NEW-1 required criteria come from the pinned brief: an approved brief edit
   assert.ok(fs.existsSync(path.join(dir, res.report)));
   assert.strictEqual(store.audit().ok, true);
 });
+
+// ---------------------------------------------------------------------------------------------- NEW-3
+
+test('NEW-3 a file committed after a phase approval that no gate lists blocks the verification approval; listed in the verification submission it passes', () => {
+  // The report\'s F2.between scenario: committed between the phase approval and the verification submission.
+  const ctx = tmpProject();
+  const { store, config, dir } = ctx;
+  commitAll(dir, 'base');
+  approveThroughPlan(ctx);
+  finishPhase(ctx);
+  commitAll(dir, 'phase work');
+  write(dir, 'src/server/backdoor.js', 'module.exports = "never reviewed";\n');
+  commitAll(dir, 'added between the phase approval and the verification submission');
+  assert.deepStrictEqual(delivery.unreviewedChanges(store.state(), dir, config), [{ path: 'src/server/backdoor.js', gate: 'phase:core', problem: 'added after approval' }]);
+  submitVerification(ctx); // lists verification.md and the three reviewed files only
+  const sev = passCheck(store, 'security-reviewer');
+  const err = expectCode(() => gates.recordReview(store, config, 'verification', 'security-reviewer', coverage(ctx, 'verification', [`ev:${sev.id}`])), 'REVIEW_REJECTED');
+  assert.match(err.message, /src\/server\/backdoor\.js added after approval \(phase:core\)/);
+  assert.match(err.message, /not pinned by submission/);
+  assert.strictEqual(store.state().gates.verification.status, 'submitted');
+  assert.strictEqual(store.state().delivery, null);
+  expectCode(() => delivery.deliver(store, 'delivery-lead', { config }), 'DELIVERY_BLOCKED');
+
+  // The baseline is the earliest approved submission's commit: a stray file committed WITH the phase work (so
+  // the phase submission's commit contains it) stays reported after the phase approval instead of vanishing.
+  const ctx2 = tmpProject();
+  commitAll(ctx2.dir, 'base');
+  approveThroughPlan(ctx2);
+  finishPhase(ctx2, { beforeSubmit: () => {
+    write(ctx2.dir, 'tools/backdoor.js', 'module.exports = "committed with the phase work, owned by no task";\n');
+    commitAll(ctx2.dir, 'phase work plus a stray file');
+  } });
+  assert.deepStrictEqual(delivery.unreviewedChanges(ctx2.store.state(), ctx2.dir, ctx2.config), [{ path: 'tools/backdoor.js', gate: 'phase:core', problem: 'added after approval' }]);
+  submitVerification(ctx2);
+  const sev2 = passCheck(ctx2.store, 'security-reviewer');
+  assert.match(expectCode(() => gates.recordReview(ctx2.store, ctx2.config, 'verification', 'security-reviewer', coverage(ctx2, 'verification', [`ev:${sev2.id}`])), 'REVIEW_REJECTED').message, /tools\/backdoor\.js added after approval/);
+  // The legitimate flow: the delivery-lead lists the file in the verification submission, so the approval pins it.
+  gates.submit(ctx2.store, ctx2.config, 'verification', 'delivery-lead', { artifacts: [...DELIVERABLES, 'tools/backdoor.js'] });
+  const sev3 = passCheck(ctx2.store, 'security-reviewer');
+  gates.recordReview(ctx2.store, ctx2.config, 'verification', 'security-reviewer', coverage(ctx2, 'verification', [`ev:${sev3.id}`]));
+  assert.strictEqual(ctx2.store.state().gates.verification.status, 'approved');
+  assert.deepStrictEqual(delivery.unreviewedChanges(ctx2.store.state(), ctx2.dir, ctx2.config), []);
+  const res = delivery.deliver(ctx2.store, 'delivery-lead', { config: ctx2.config });
+  assert.strictEqual(res.commit, git(ctx2.dir, 'rev-parse', 'HEAD'));
+});
