@@ -62,6 +62,7 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 | `limits.staleRunMinutes` | 60 | How long a run can stay open before it counts as interrupted |
 | `pricing.usdPerMillionTokens` | null | Used to estimate cost when only token counts are reported |
 | `review.requiredSections` | see file | Headings that must appear in architecture and design artifacts |
+| `review.criteriaSections` | `{ architecture: ["Acceptance Criteria"] }` | Headings under which the brief lists the acceptance-criteria ids (`- AC1 …`, `\| AC1 \| … \|`) every architecture, design and verification approval must cover; `eccode gate show <gate>` lists them |
 | `roles.<gate>.authors/reviewers` | see file | Who may submit and who may approve. You can add ECC language reviewers here |
 | `memory.learning` | true | `false` turns learning off: no lesson retrieval or recording, no promotion, no self-improvement proposals. Project facts are still recorded, and rollback stays available. `ECCODE_LEARNING=on\|off` overrides it. |
 | `memory.staleAfterDays` | 180 | Age after which a lesson must be revalidated |
@@ -121,6 +122,12 @@ Actor restrictions: `run correct`, `recover` and `improve rollback` need `--acto
 | `[REVIEW_REJECTED] … authored work` | The reviewer is an author or task owner of the gate | Dispatch a different reviewer role |
 | `[REVIEW_REJECTED] … changed after submission` | The artifact was edited after it was submitted | The author resubmits, then it is reviewed again |
 | `[REVIEW_REJECTED] … executed by the reviewer` | A phase or verification approval doesn't cite a check the reviewer ran | `eccode evidence run --actor <reviewer> …`, then cite the new `ev:` id |
+| `[REVIEW_REJECTED] … does not cover the required criteria` | The approval lacks a criterion for an id the gate requires (the brief's acceptance criteria, `phase:<id>`, `task:<id>`) | `eccode gate show <gate>` lists them; add one criterion per id, met, with evidence citing the section that proves it. Duplicate ids and ids that look required but are not (`AC9`, `task:nope`) are refused too |
+| `[REVIEW_REJECTED] … anchor "#…" not found` | An `artifact:<path>#<anchor>` names a heading, JSON dot path or line the file does not have | Cite a heading of the Markdown file (its text or slug), a dot path that exists in the JSON (`phases.0.id`, `tasks.<id>`), or `L<n>` / `L<a>-L<b>` inside the file |
+| `[REVIEW_REJECTED] … every verification command the phase's tasks declare` | A phase approval does not cite a reviewer run of each command the phase's tasks declare | Run each listed command with `eccode evidence run --actor <reviewer> …` after the submission and cite the ids |
+| `[INVALID_HANDOFF] … declared verification command` | The handoff cites no passing run, by the task owner after the claim, of the command the task declares | Run that command (as declared, whitespace aside) with `eccode evidence run --actor <owner> --task <id> -- <command>` and cite it |
+| `… ran on different bytes` / `… different source tree` | Files changed after the cited check ran (every command evidence pins the tree digest it ran on) | Run the check again after the last change (keep drafts under `.eccode/drafts/`, which the digest ignores) and cite the new id |
+| `… log … was deleted or changed since it was recorded` | An evidence log under `.eccode/evidence/` is missing or no longer matches its recorded digest | Run the check again (`eccode evidence run`). `eccode reconcile` reports such logs as `evidence-tampered` blocking issues |
 | `[RESPONSE_REQUIRED]` | Resubmitting after changes were requested | Add `--responds-to <reviewId>` |
 | `[OWNERSHIP_CONFLICT]` / `[CONCURRENCY_LIMIT]` | Another active task overlaps, or the cap is reached | Wait, or re-plan the ownership globs |
 | `[INVALID_HANDOFF] … outside task ownership` | Files were changed outside the task's globs | Revert them, or ask the orchestrator to re-plan |

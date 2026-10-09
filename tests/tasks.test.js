@@ -5,7 +5,7 @@ const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const evidence = require('../lib/evidence');
 const { loadConfig } = require('../lib/config');
-const { tmpProject, write, approveThroughPlan, samplePlan, task, passCheck, handoffFor, approval, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, samplePlan, task, passCheck, handoffFor, approval, coverage, expectCode } = require('./helpers');
 
 test('plan validation catches cycles, unknown deps/owners and backwards phase deps', () => {
   const config = loadConfig(require('os').tmpdir());
@@ -73,7 +73,7 @@ test('task completion requires a valid handoff, fresh passing evidence and in-sc
 
   const failing = evidence.runCommand(store, 'backend-engineer', { label: 'failing', command: 'node -e "process.exit(3)"' });
   let err = expectCode(() => tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [early.id, failing.id], ['src/server/app.js'])), 'INVALID_HANDOFF');
-  assert.match(err.message, /passing check/);
+  assert.match(err.message, /passing run of the task's declared verification command/);
 
   const ok = passCheck(store, 'backend-engineer');
   err = expectCode(() => tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ok.id], ['src/server/app.js', 'README.md'])), 'INVALID_HANDOFF');
@@ -91,7 +91,11 @@ test('task completion requires a valid handoff, fresh passing evidence and in-sc
   err = expectCode(() => tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ok.id], ['src/server/app.js'])), 'INVALID_HANDOFF');
   assert.match(err.message, /no task declares.*README\.md/);
   require('fs').rmSync(require('path').join(dir, 'README.md'));
-  tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ok.id], ['src/server/app.js']));
+  // The tree changed since `ok` ran (README.md is gone), so that check no longer vouches for it.
+  err = expectCode(() => tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ok.id], ['src/server/app.js'])), 'INVALID_HANDOFF');
+  assert.match(err.message, /ran on different bytes/);
+  const fresh = passCheck(store, 'backend-engineer');
+  tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [fresh.id], ['src/server/app.js']));
   const t = store.state().tasks.api;
   assert.strictEqual(t.status, 'done');
   assert.deepStrictEqual(t.filesChanged, ['src/server/app.js']);
@@ -123,7 +127,7 @@ test('phase approval needs a check executed by the reviewer after submission; im
   assert.match(err.message, /executed by the reviewer/);
 
   const own = passCheck(store, 'technical-reviewer', 'reviewer reran tests');
-  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', approval([[`ev:${own.id}`, 'artifact:src/server/a.js']]));
+  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${own.id}`, 'artifact:src/server/a.js']));
   assert.strictEqual(store.state().gates['phase:core'].status, 'approved');
 });
 

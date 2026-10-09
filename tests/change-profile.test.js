@@ -14,7 +14,7 @@ const { loadConfig } = require('../lib/config');
 const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const { deliver } = require('../lib/delivery');
-const { write, samplePlan, passCheck, handoffFor, approval, expectCode } = require('./helpers');
+const { write, samplePlan, passCheck, handoffFor, approval, coverage, expectCode } = require('./helpers');
 
 const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
 
@@ -36,7 +36,7 @@ test('change profile: plan is the first gate and no verification gate follows th
   gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] });
   // The author still cannot approve their own plan.
   expectCode(() => gates.recordReview(store, config, 'plan', 'delivery-lead', approval([['artifact:.eccode/artifacts/plan.json']])), 'REVIEW_REJECTED');
-  gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/plan.json']]));
+  gates.recordReview(store, config, 'plan', 'technical-reviewer', coverage(ctx, 'plan', ['artifact:.eccode/artifacts/plan.json#phases']));
   assert.deepStrictEqual(store.state().gateOrder, ['plan', 'phase:core']);
 
   gates.startGate(store, config, 'phase:core', 'orchestrator');
@@ -47,7 +47,7 @@ test('change profile: plan is the first gate and no verification gate follows th
   }
   gates.submit(store, config, 'phase:core', 'delivery-lead');
   const ev = passCheck(store, 'technical-reviewer');
-  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', approval([[`ev:${ev.id}`]]));
+  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${ev.id}`]));
   const res = deliver(store, 'delivery-lead');
   assert.ok(fs.existsSync(path.join(dir, res.report)));
   assert.strictEqual(store.audit().ok, true);

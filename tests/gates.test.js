@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 const gates = require('../lib/gates');
-const { tmpProject, write, approval, rejection, expectCode, ARCH_MD } = require('./helpers');
+const { tmpProject, write, approval, coverage, rejection, expectCode, ARCH_MD } = require('./helpers');
 
 function submitArch(ctx, content = ARCH_MD) {
   gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator');
@@ -112,7 +112,7 @@ test('changes requested → resubmission must respond → approval must resolve 
     ctx.config,
     'architecture',
     'architecture-reviewer',
-    approval([['artifact:.eccode/artifacts/brief.md#Requirements']], {
+    coverage(ctx, 'architecture', ['artifact:.eccode/artifacts/brief.md#Requirements'], {
       resolvedFindings: [{ id: 'F1', resolution: 'R2 adds a rate limit requirement.', evidence: ['artifact:.eccode/artifacts/brief.md#Requirements'] }],
     }),
   );

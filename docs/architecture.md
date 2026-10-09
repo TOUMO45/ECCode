@@ -73,9 +73,10 @@ pending → in_progress → submitted → approved
 
 - the reviewer authored or claimed work in the gate, or isn't a configured reviewer;
 - the submission is not the latest, or artifacts changed after it was submitted;
-- an evidence reference doesn't resolve, or a "met" criterion cites a failed check;
+- an evidence reference doesn't resolve (an `artifact:<path>#<anchor>` whose heading, JSON path or line does not exist; an `ev:` log deleted or changed since it was recorded), or a "met" criterion cites a failed check;
 - an approval has an unmet criterion, an open blocking/major finding, or an earlier finding left unresolved;
-- a phase/verification approval lacks a passing check the reviewer ran after the submission;
+- an approval does not cover every criterion the gate requires (`requiredCriteria`, listed by `eccode gate show`: the brief's acceptance-criteria ids for architecture, design and verification; `phase:<id>` for the plan; `task:<id>` and `phase:<id>` for a phase), repeats an id, or uses an id that looks required but is not;
+- a phase/verification approval lacks a passing check the reviewer ran after the submission, a phase approval lacks a cited reviewer run of each verification command its tasks declare, or a cited check ran on a different source tree than the one under review (every command evidence pins `tree`, a digest of HEAD plus the changed and untracked files outside `.eccode/`);
 - a phase approval while a phase task is not done, or a plan approval whose plan was not imported from that submission;
 - a rejection carries no blocking/major finding.
 
@@ -85,7 +86,7 @@ Evidence ids are own-property lookups with a fixed format (`ev:ev-…`), and `ev
 
 - A plan is a DAG of tasks within ordered phases. Every task has an owner role, dependencies, inputs, outputs, ownership globs, acceptance criteria and a verification method.
 - Tasks are claimable only when the plan gate is approved, the phase gate is open, dependencies are done, the actor is the owner, attempts remain, `maxConcurrency` isn't reached and the ownership globs don't overlap with active claims.
-- **Completion** requires a schema-valid handoff, at least one passing check run after the claim, changed files inside the ownership globs, and git confirmation that the listed files changed. Files git shows as changed during the claim that no task accounts for (declared, recorded by a task that completed meanwhile, owned by another claimed task, or already dirty and unchanged at claim time) are refused when they lie outside the task's ownership.
+- **Completion** requires a schema-valid handoff, a passing run by the owner after the claim of the verification command the task declares (any passing check when it declares a method only) on the bytes the tree holds now, changed files inside the ownership globs, and git confirmation that the listed files changed. Files git shows as changed during the claim that no task accounts for (declared, recorded by a task that completed meanwhile, owned by another claimed task, or already dirty and unchanged at claim time) are refused when they lie outside the task's ownership.
 - `.eccode/` paths are never owned by a task, whatever its globs say; only `.eccode/drafts/` is shared scratch.
 - **Failure** releases the claim. After `maxTaskRetries` the task escalates and only the user can reset it. A done task cannot be reset while its phase is submitted or approved.
 - **Interrupted runs** (stale, or `recover --all --actor orchestrator` after a restart) release their claims and count as attempts.

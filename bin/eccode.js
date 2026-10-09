@@ -272,10 +272,19 @@ function main(argv) {
         const left = store.state().gates[gateId].openFindings;
         print(flags, `Gate ${gateId} reopened by user decision.${left.length ? ` Still open (the next approval must resolve them with evidence): ${left.map((f) => f.id).join(', ')}.` : ''}`);
       } else if (sub === 'show') {
-        const g = own(store.state().gates, gateId);
+        const state = store.state();
+        const g = own(state.gates, gateId);
         if (!g) throw new EccodeError('UNKNOWN_GATE', `Unknown gate ${gateId}`);
-        const toJudge = require('../lib/lessons').decisionsToJudge(store.state(), gateId);
-        print(flags, toJudge.length ? { ...g, lessonDecisionsToJudge: toJudge } : g);
+        const toJudge = require('../lib/lessons').decisionsToJudge(state, gateId);
+        const requiredCriteria = gates.requiredCriteria(state, config, store.root, gateId);
+        const shown = { ...g, requiredCriteria, ...(toJudge.length ? { lessonDecisionsToJudge: toJudge } : {}) };
+        const noIds = g.kind === 'architecture' || g.kind === 'design'
+          ? ' - the brief lists no criterion ids (such as "- AC1 ...") under its Acceptance Criteria heading, so coverage cannot be checked; add ids and resubmit'
+          : ' (nothing submitted yet, or the plan cannot be read)';
+        const list = requiredCriteria.length
+          ? [`Required criteria for ${gateId} (an approval needs one criterion per id, met, citing the section that proves it):`, ...requiredCriteria.map((c) => `- ${c.id}: ${c.description}${c.source ? `  [${c.source}]` : ''}`)]
+          : [`Required criteria for ${gateId}: none derivable${noIds}`];
+        print(flags, `${list.join('\n')}\n${JSON.stringify(shown, null, 2)}`, shown);
       } else throw new EccodeError('USAGE', `Unknown gate subcommand ${sub}`);
       return 0;
     }

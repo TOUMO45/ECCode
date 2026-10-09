@@ -11,7 +11,7 @@ const tasks = require('../lib/tasks');
 const runs = require('../lib/runs');
 const evidence = require('../lib/evidence');
 const { reconcile } = require('../lib/reconcile');
-const { tmpProject, write, approveThroughPlan, handoffFor } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, samplePlan, handoffFor } = require('./helpers');
 
 const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
 const CHECK = 'node -e "process.exit(require(\'fs\').existsSync(\'src/server/a.js\') ? 0 : 1)"';
@@ -20,7 +20,9 @@ const CHECK = 'node -e "process.exit(require(\'fs\').existsSync(\'src/server/a.j
 function interruptedProject() {
   const ctx = tmpProject();
   const { dir, store, config } = ctx;
-  approveThroughPlan(ctx);
+  const plan = samplePlan();
+  plan.tasks[0].verification = { method: 'check that the server file exists', command: CHECK }; // the check the api task must cite
+  approveThroughPlan(ctx, plan);
   gates.startGate(store, config, 'phase:core', 'orchestrator');
   tasks.claim(store, config, 'api', 'backend-engineer');
   write(dir, 'src/server/a.js', 'module.exports = 1;\n');

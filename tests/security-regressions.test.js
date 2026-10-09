@@ -144,7 +144,7 @@ const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const evidence = require('../lib/evidence');
 const { Memory } = require('../lib/memory/records');
-const { write, approval, approveThroughPlan, handoffFor, samplePlan, ARCH_MD } = require('./helpers');
+const { write, approval, coverage, approveThroughPlan, handoffFor, samplePlan, ARCH_MD } = require('./helpers');
 
 function sharedMemoryDir() {
   process.env.ECCODE_SHARED_MEMORY = fs.mkdtempSync(path.join(require('os').tmpdir(), 'eccode-shared-'));
@@ -408,7 +408,7 @@ function doTask(ctx, id, owner, files) {
 
 function approvePhase(ctx) {
   const ev = passCheck(ctx.store, 'technical-reviewer');
-  gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', approval([[`ev:${ev.id}`]]));
+  gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${ev.id}`]));
 }
 
 function verifyAndDeliver(ctx, artifacts = []) {
@@ -416,7 +416,7 @@ function verifyAndDeliver(ctx, artifacts = []) {
   write(ctx.dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green.\n');
   gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verification.md', ...artifacts] });
   const ev = passCheck(ctx.store, 'security-reviewer');
-  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`]]));
+  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', coverage(ctx, 'verification', [`ev:${ev.id}`]));
   return deliver(ctx.store, 'delivery-lead');
 }
 
@@ -459,7 +459,9 @@ test('#7 completion refuses undeclared changes outside the task (another task\'s
   const err2 = expectCode(() => tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/a.js'])), 'INVALID_HANDOFF');
   assert.match(err2.message, /README\.md/);
   write(ctx.dir, 'README.md', 'user notes, uncommitted before the work started\n');
-  tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/a.js']));
+  // The files reverted since `ev` ran: the check is run again on the bytes that are completed.
+  const fresh = passCheck(ctx.store, 'backend-engineer');
+  tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [fresh.id], ['src/server/a.js']));
 });
 
 test('#7 legitimate parallel and sequential work is attributable (claimed, completed and reset tasks)', () => {
@@ -518,11 +520,11 @@ test('#10 a plan submission interrupted before its import cannot be approved; de
   gates.startGate(store, config, 'architecture', 'orchestrator');
   write(dir, '.eccode/artifacts/brief.md', ARCH_MD);
   gates.submit(store, config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
-  gates.recordReview(store, config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  gates.recordReview(store, config, 'architecture', 'architecture-reviewer', coverage(ctx, 'architecture', ['artifact:.eccode/artifacts/brief.md#Acceptance Criteria']));
   gates.startGate(store, config, 'design', 'orchestrator');
   write(dir, '.eccode/artifacts/spec.md', DESIGN_MD);
   gates.submit(store, config, 'design', 'technical-designer', { artifacts: ['.eccode/artifacts/spec.md'] });
-  gates.recordReview(store, config, 'design', 'technical-reviewer', approval([['artifact:.eccode/artifacts/spec.md']]));
+  gates.recordReview(store, config, 'design', 'technical-reviewer', coverage(ctx, 'design', ['artifact:.eccode/artifacts/spec.md#Components']));
   gates.startGate(store, config, 'plan', 'orchestrator');
   write(dir, '.eccode/artifacts/plan.json', JSON.stringify(samplePlan()));
   const realCommit = store.commit.bind(store);

@@ -83,6 +83,23 @@ function approvalWithLessons(criteria, lessonsEvidence) {
   return a;
 }
 
+/**
+ * An approving review that covers every criterion the gate requires (`eccode gate show <gate>`): one
+ * criterion per required id, met, citing `evidenceRefs`. A single C1 when the gate requires nothing.
+ */
+function coverage(ctx, gateId, evidenceRefs, extra = {}) {
+  const required = gates.requiredCriteria(ctx.store.state(), ctx.config, ctx.dir, gateId);
+  const criteria = (required.length ? required : [{ id: 'C1', description: 'criterion 1' }]).map((c) => ({ id: c.id, description: `${c.id}: ${c.description || 'verified'}`, met: true, evidence: evidenceRefs }));
+  return { decision: 'approve', summary: 'All criteria verified against the submitted artifacts.', criteria, findings: [], ...extra };
+}
+
+/** coverage() plus the 'lessons' criterion. */
+function coverageWithLessons(ctx, gateId, evidenceRefs, lessonsEvidence) {
+  const a = coverage(ctx, gateId, evidenceRefs);
+  a.criteria.push({ id: 'lessons', description: 'every recorded lesson decision was judged', met: true, evidence: lessonsEvidence || evidenceRefs });
+  return a;
+}
+
 function rejection(findingId = 'F1', extra = {}) {
   return {
     decision: 'changes_requested',
@@ -99,15 +116,15 @@ function approveThroughPlan(ctx, plan) {
   gates.startGate(store, config, 'architecture', 'orchestrator');
   write(dir, '.eccode/artifacts/brief.md', ARCH_MD);
   gates.submit(store, config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
-  gates.recordReview(store, config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md#Requirements']]));
+  gates.recordReview(store, config, 'architecture', 'architecture-reviewer', coverage(ctx, 'architecture', ['artifact:.eccode/artifacts/brief.md#Acceptance Criteria']));
   gates.startGate(store, config, 'design', 'orchestrator');
   write(dir, '.eccode/artifacts/spec.md', DESIGN_MD);
   gates.submit(store, config, 'design', 'technical-designer', { artifacts: ['.eccode/artifacts/spec.md'] });
-  gates.recordReview(store, config, 'design', 'technical-reviewer', approval([['artifact:.eccode/artifacts/spec.md']]));
+  gates.recordReview(store, config, 'design', 'technical-reviewer', coverage(ctx, 'design', ['artifact:.eccode/artifacts/spec.md#Testing Strategy']));
   gates.startGate(store, config, 'plan', 'orchestrator');
   write(dir, '.eccode/artifacts/plan.json', JSON.stringify(plan || samplePlan(), null, 2));
   gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] });
-  gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/plan.json']]));
+  gates.recordReview(store, config, 'plan', 'technical-reviewer', coverage(ctx, 'plan', ['artifact:.eccode/artifacts/plan.json#phases']));
 }
 
 function samplePlan() {
@@ -132,7 +149,8 @@ function task(id, owner, files, dependencies = [], phase = 'core') {
     outputs: [`${id} output`],
     files,
     acceptanceCriteria: [`${id} works`],
-    verification: { method: 'run checks', command: 'true' },
+    // The same command passCheck() runs, so a completion cites a run of the declared check.
+    verification: { method: 'run checks', command: 'node -e "process.exit(0)"' },
   };
 }
 
@@ -168,4 +186,4 @@ function expectCode(fn, code) {
   throw new Error(`expected ${code}, but call succeeded`);
 }
 
-module.exports = { tmpProject, write, approval, approvalWithLessons, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD };
+module.exports = { tmpProject, write, approval, approvalWithLessons, coverage, coverageWithLessons, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD };

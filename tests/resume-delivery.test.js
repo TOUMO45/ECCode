@@ -9,7 +9,7 @@ const runs = require('../lib/runs');
 const evidence = require('../lib/evidence');
 const { deliver } = require('../lib/delivery');
 const { Store } = require('../lib/store');
-const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, coverage, expectCode } = require('./helpers');
 
 function completePhase(ctx) {
   const { store, config, dir } = ctx;
@@ -22,7 +22,7 @@ function completePhase(ctx) {
   }
   gates.submit(store, config, 'phase:core', 'delivery-lead');
   const ev = passCheck(store, 'technical-reviewer');
-  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', approval([[`ev:${ev.id}`]]));
+  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${ev.id}`]));
 }
 
 function verify(ctx) {
@@ -31,7 +31,7 @@ function verify(ctx) {
   write(dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green.\n');
   gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verification.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'] });
   const ev = passCheck(store, 'security-reviewer', 'full suite rerun');
-  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verification.md']]));
+  gates.recordReview(store, config, 'verification', 'security-reviewer', coverage(ctx, 'verification', [`ev:${ev.id}`, 'artifact:.eccode/artifacts/verification.md']));
 }
 
 test('state survives a lost snapshot and a torn final log line', () => {
