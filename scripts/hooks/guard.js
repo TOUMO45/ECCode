@@ -136,8 +136,8 @@ function realize(abs) {
  * Does the command line create a link (ln, cp -s/-l, mklink), and is any operand of that link
  * computed (`ln -s $D lk`)? A write through a link made in the same line cannot be bound.
  */
-function createsLink(cmd) {
-  const out = { found: false, computed: false };
+function createsLink(cmd, base) {
+  const out = { found: false, computed: false, intoRecord: false };
   walkCommands(cmd, (words) => {
     const texts = words.map((w) => w.text);
     const at = commandIndex(texts);
@@ -145,7 +145,12 @@ function createsLink(cmd) {
     const name = texts[at].split('/').pop();
     if (name === 'ln' || name === 'mklink' || (name === 'cp' && texts.slice(at + 1).some((t) => /^-[a-zA-Z]*[sl]/.test(t)))) {
       out.found = true;
-      if (words.slice(at + 1).some((w) => w.dynamic)) out.computed = true;
+      for (const w of words.slice(at + 1)) {
+        if (w.dynamic) out.computed = true;
+        // An operand that already resolves into a record through existing links (`a -> .eccode`, then
+        // `ln -s a b`) is a record operand, whatever its spelling.
+        else if (!w.text.startsWith('-') && base && recordHit(path.resolve(base, w.text.replace(/^["']|["']$/g, '')))) out.intoRecord = true;
+      }
     }
   });
   return out;
@@ -533,8 +538,8 @@ function checkBash(cmd, role, root, cwd) {
   // cannot be bound (`ln -s "$PWD/.eccode" lk && echo x > lk/state.json`). Ordinary build lines
   // (`ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp`) pass: the rule fires only when the
   // line names a record or the link's operands are computed.
-  const link = targets.length > 1 ? createsLink(cmd) : null;
-  if (link && link.found && (mentionsRecord || link.computed)) {
+  const link = targets.length > 1 ? createsLink(cmd, cwd || root) : null;
+  if (link && link.found && (mentionsRecord || link.computed || link.intoRecord)) {
     out('deny', 'This command creates a link and writes files in the same command line, and the link points at a record or at a computed path; the guard cannot bind a write through a link that does not exist yet. Create the link in one command and write in the next, or use the Edit/Write tool.');
   }
   // Shell writes get the same answer as the Edit/Write tools for every ECCode role: a redirect,

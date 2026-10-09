@@ -197,10 +197,18 @@ test('REVIEW 3: a link created and written through in one line, and a dangling l
   // A computed link source is refused too (the record name is hidden in a variable).
   denied(bash(ctx.dir, 'D=.eccode; ln -s $D lk && echo x > lk/state.json', null), 'computed link source', reason);
   denied(bash(ctx.dir, 'D=$PWD; ln -s $D/.ecc"ode" lk && echo x > lk/state.json', null), 'computed prefix', reason);
+  // A link operand that already resolves into the record through an existing link (made in an earlier,
+  // single-target command) is a record operand: `a -> .eccode`, then `ln -s a b && echo > b/state.json`.
+  fs.symlinkSync(path.join(ctx.dir, '.eccode'), path.join(ctx.dir, 'a'));
+  denied(bash(ctx.dir, 'ln -s a b && echo FORGED > b/state.json', null), 'two-hop alias in two turns', reason);
+  denied(bash(ctx.dir, 'cp -s a b && echo x > b/config.json', null), 'cp -s two-hop alias', reason);
+  denied(bash(ctx.dir, 'ln -s ./a/memory m && echo x > m/forged.json', null), 'alias of a record subdirectory', reason);
+  allowed(bash(ctx.dir, 'ln -s src p && echo x > notes.txt', null), 'a link to a project directory beside a write');
   // Creating a link on its own is ordinary (judged on its own target); writing through it next time is judged for real.
   allowed(bash(ctx.dir, 'ln -s src/server.js alias.js', null), 'a plain link to a project file');
   // Record-free build and release lines with a literal link stay ordinary shell (review I1).
-  for (const c of ['ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp', 'ln -s a b && touch c', 'ln -s a b; rm -rf dist', 'ln -sf dist/current releases/latest && echo ok > releases/latest.txt', 'mkdir -p bin && ln -sf ../lib/cli.js bin/cli && chmod +x bin/cli']) {
+  // (`a` is the record alias made above, so these use other names.)
+  for (const c of ['ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp', 'ln -s p q && touch c', 'ln -s p q; rm -rf dist', 'ln -sf dist/current releases/latest && echo ok > releases/latest.txt', 'mkdir -p bin && ln -sf ../lib/cli.js bin/cli && chmod +x bin/cli']) {
     allowed(bash(ctx.dir, c, null), `main build line: ${c}`);
     // A role without a claim is still refused by the ownership rules, for the targets, not for the link.
     denied(bash(ctx.dir, c, 'devops-engineer'), `devops without a claim: ${c}`, /no claimed task/);
