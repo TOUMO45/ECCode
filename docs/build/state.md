@@ -11,6 +11,9 @@
 ## Follow-up branch `claude/funny-feynman-rt1io9` (2026-10-09)
 - Starts from this branch's head. Groundwork rework-5 fixed the open cosmetic defect through the gates (second delivery). Engine: post-delivery reopen of verification, rework extend, nine red-team fixes (RT1–RT9). Adds: record-replay tests over all shipped records, audit "pending re-review" warnings, user decisions in the final handoff, JSON path resolution from the project root, plan-glob warnings. 155 tests. Hand-over packages for the items that need a person: `docs/sign-off.md`, `eval/suite/round3-protocol-DRAFT.md`, `docs/security-review-request.md`. See `CHANGELOG.md` and `docs/final-report.md` §5.
 
+## Version 0.3.0 (2026-10-09, same branch)
+- The independent review bundle was uploaded and read; its nine findings (F1–F9) are closed with 78 regression tests in `tests/review-F*.test.js` (233 tests in all). Stricter engine: criteria coverage, declared checks, release tree, human channel with delegations, release-risk policy, memory attestation, snapshot digests, run limits, portability. Mapping: `docs/evidence/review-bundle/README.md`. Windows unverified (CI reports). Groundwork's Windows fixture failures left for a rework the owner can order.
+
 ## Not done
 - R7: the predeclared targets E1 (both rounds), E3 (round 2) and E4 (round 1) were not met.
 - (Closed after the first version of this file: Groundwork was delivered, audit OK, with disclosed operator interventions.)

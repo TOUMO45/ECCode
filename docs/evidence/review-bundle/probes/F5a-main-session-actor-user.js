@@ -1,5 +1,5 @@
-const REPO = require('path').resolve(__dirname, '../../../..');
 #!/usr/bin/env node
+const REPO = require('path').resolve(__dirname, '../../../..');
 'use strict';
 // Probe F5a-main-session-actor-user
 // Claim under test: an agent running in the MAIN session (no agent_type) can

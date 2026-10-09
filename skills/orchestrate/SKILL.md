@@ -30,6 +30,13 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
 
 ## 1. Start or resume
 - **Choose the path first.** The full delivery (architecture → design → plan → phases → verification) is for a new product or a feature that changes architecture, data or trust boundaries. A bounded change to an existing codebase (a bug, a contained feature, a change with a clear acceptance test) takes **change mode** (§5b, `--profile change`): plan → independent plan review → implementation → independent phase review → deliver, about four dispatches instead of a dozen. The evaluation found the full path costs several times more per success than the lean one buys; pick the heavy path only when its gates would catch something the lean path cannot (unknown users, new architecture, security-relevant design). Say which path you chose and why in one line.
+- **Three levels, decided before execution.** Classify the request first, record the level and the reason in `eccode decision add --actor orchestrator`, and do not change it quietly: if the work turns out to touch a higher level, stop and re-route with a new decision.
+  | Level | When | Path |
+  |---|---|---|
+  | **Low-risk** | A contained bug or change with a clear acceptance test, no new interface, data model, dependency or permission | Change mode with one implementer and one independent final reviewer (`technical-reviewer`); no separate planning dispatch beyond the plan the orchestrator writes |
+  | **Normal** | A feature with dependencies or interfaces between components | Change mode with a planning step (`delivery-lead` plan, independent plan review), then implementation and independent phase review |
+  | **High-impact** | Authentication, payments, migrations, public releases, AI evaluation thresholds, anything that changes a trust boundary | The full delivery: architecture and design with their reviews, `security-reviewer` on the phases that touch the boundary, verification |
+  Every level keeps complete criteria coverage, declared checks, the release-tree and authority rules: the engine enforces them whatever the path.
 - **New:** `eccode init --name "<name>" --idea "<idea>" [--profile delivery|change]`, then show the user `eccode status --brief`.
 - **Resume:** `eccode resume`, then `eccode reconcile --verify --actor orchestrator`. Reconcile compares the record with the working tree and re-runs the checks that done tasks and approvals relied on. Each re-run is recorded as evidence.
   - **BLOCKING `approved-artifact`:** a reviewed file changed after approval. Restore it from git, or ask the user whether to reopen that gate. Never continue on top of it.
