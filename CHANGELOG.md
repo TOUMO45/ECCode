@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.3 (unreleased)
+## 0.3.3 — 2026-10-09 (Windows lock and rename retries, TK-3; cause confirmed only by the Windows job)
 
 ### Locking and atomic writes (TK-3, open: two candidate causes, decided by the next captured stderr)
 - **The symptom.** The gating `toolkit (windows, node 22)` job failed four of the last ~25 runs of the pilot branch (runs 66, 67, 68 and 92; Linux and macOS passed every time), each time on one of the two tests that spawn six `risk add` CLI processes against one record (`tests/resume-delivery.test.js` "concurrent writers never corrupt the log"; run 66 on `tests/review-F7.test.js` "F7 two concurrent writers …"): one child exited 1 (`[0, 1, 0, 0, 0, 0]`) and its stderr was not captured. Exit 1 is the CLI's `internal error` branch (`bin/eccode.js`): a raw `fs` error escaped the engine, not an `EccodeError` (exit 2). Two races in the tree produce exactly that on Windows, and nothing recorded says which one fired; both are repaired below, neither is confirmed, and **TK-3 stays open until a Windows run captures the error** (both spawn tests now keep the children's stdout and stderr and print them with the exit codes on failure: `tests/helpers.js` `spawnCli`, `assertAllExitZero`). The independent review of the first repair (`docs/evidence/verification-0.3.0/lock-tk3-review/REVIEW.md`, read against libuv's `win/fs.c` and `win/error.c`) rates the rename race the likelier of the two.
