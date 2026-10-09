@@ -76,6 +76,58 @@ test('NEW-7: a shell function or alias defined around the CLI in the same line i
   allowed(bash(ctx.dir, 'eccode status --brief', 'technical-reviewer'), 'plain call');
 });
 
+test('REVIEW: a record planted inside a record never re-roots the guard; the record directory itself is the CLI\'s', () => {
+  const ctx = tmpProject();
+  const reason = /written only by the eccode CLI|part of an ECCode record|part of the ECCode record/;
+  // Planting through the CLI is refused by the engine; planting by copy is refused by the guard.
+  assert.throws(() => init(path.join(ctx.dir, '.eccode'), { name: 'x', idea: 'y' }), /inside an ECCode record directory/);
+  denied(bash(ctx.dir, 'cp -r .eccode .eccode/.eccode', null), 'main copies the record into itself', reason);
+  denied(bash(ctx.dir, 'rsync -a forged/ .eccode/', null), 'main rsync into the record', reason);
+  denied(bash(ctx.dir, 'cp -r forged/. .eccode', null), 'main cp -r into the record', reason);
+  denied(bash(ctx.dir, 'rm -rf .eccode', 'backend-engineer'), 'rm -rf the record', reason);
+  denied(bash(ctx.dir, 'tar -xf x.tar -C .eccode/', null), 'tar into the record', reason);
+  // Even with a planted record (made outside the guard), the outer record files stay the CLI's.
+  const planted = path.join(ctx.dir, '.eccode', '.eccode');
+  fs.mkdirSync(planted, { recursive: true });
+  fs.writeFileSync(path.join(planted, 'events.jsonl'), '');
+  for (const rel of ['.eccode/state.json', '.eccode/events.jsonl', '.eccode/config.json', '.eccode/reviews/rev-1.json', '.eccode/memory/records/m.json', '.eccode/evidence/ev-1.log']) {
+    denied(edit(ctx.dir, 'Write', path.join(ctx.dir, rel), null), `main Write ${rel} with a planted record`, reason);
+    denied(bash(ctx.dir, `echo x > ${rel}`, null), `main redirect ${rel} with a planted record`, reason);
+    denied(bash(ctx.dir, `echo x >| ${rel}`, null), `main clobber ${rel} with a planted record`, reason);
+  }
+  allowed(edit(ctx.dir, 'Write', path.join(ctx.dir, '.eccode', 'drafts', 'note.md'), 'technical-reviewer'), 'a draft stays a draft');
+  denied(bash(ctx.dir, 'echo x >| .eccode/events.jsonl', null), 'main clobber onto the log without a planted record', reason);
+});
+
+test('REVIEW: the CLI is recognised on tokenized words, wrappers in every bash form and depth, computed variable names', () => {
+  const ctx = tmpProject();
+  // Quoting tricks that hide the word "eccode" from the raw text.
+  denied(bash(ctx.dir, 'node bin/ecc"ode".js task claim api --actor backend-engineer', 'technical-reviewer'), 'quoted CLI name, impersonation', /Identity mismatch/);
+  denied(bash(ctx.dir, "node bin/ecc'ode'.js gate reopen design --actor user --resolution ok", null), 'quoted CLI name, --actor user', /reserved for a person/);
+  // Wrapper forms the first regex missed.
+  const wrap = /shell function or alias/;
+  for (const c of [
+    'function e() { eccode "$@"; }; e task claim api --actor backend-engineer',
+    'function e () { eccode "$@"; }; e task claim api --actor backend-engineer',
+    'e() ( eccode "$@" ); e task claim api --actor backend-engineer',
+    'e() if true; then eccode "$@"; fi; e task claim api --actor backend-engineer',
+    '  e() { eccode "$@"; }; e task claim api --actor backend-engineer',
+    'if true; then e() { eccode "$@"; }; fi; e task claim api --actor backend-engineer',
+    '{ e() { eccode "$@"; }; }; e task claim api --actor backend-engineer',
+    'bash -c \'e() { eccode "$@"; }; e task claim api --actor backend-engineer\'',
+    'sh -c "e() { eccode \\"\\$@\\"; }; e task claim api --actor backend-engineer"',
+    'e() {\n  eccode "$@"\n}\ne task claim api --actor backend-engineer',
+    'eccode evidence run --actor technical-reviewer --label t -- \'e() { eccode "$@"; }; e task claim api --actor backend-engineer\'',
+  ]) denied(bash(ctx.dir, c, 'technical-reviewer'), `wrapper: ${c.slice(0, 40)}`, wrap);
+  // Computed variable names.
+  denied(bash(ctx.dir, 'V=ECCODE_SHARED_MEMORY; export $V=/tmp/x; eccode memory search race --actor learning-debugger', 'learning-debugger'), 'computed export', /computed name|may not be set inline/);
+  denied(bash(ctx.dir, 'N=ECCODE_ACTOR; declare "$N"=user; eccode gate reopen design --resolution ok', null), 'computed declare', /computed name|may not be set inline/);
+  // No false positives: a function unrelated to the CLI, with the CLI only in a comment.
+  allowed(bash(ctx.dir, 'f() { echo hi; }; f # see the eccode docs', 'technical-reviewer'), 'function with the CLI in a comment');
+  allowed(bash(ctx.dir, 'eccode status --brief', null), 'plain');
+  allowed(bash(ctx.dir, 'npm test && eccode evidence list --json', 'technical-reviewer'), 'plain with &&');
+});
+
 test('NESTED: a project nested in a repository with its own record is judged by its own record', () => {
   // outer: a repository with its own ECCode record; inner: examples/app with another record.
   const outer = tmpProject();

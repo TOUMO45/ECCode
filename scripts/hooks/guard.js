@@ -51,13 +51,18 @@ const ROLES = new Set([...IMPLEMENTERS, 'product-architect', 'architecture-revie
 const RECORD_AREA = String.raw`\.eccode[\\/]+(?:events\.jsonl|state\.json|config\.json|\.lock|memory[\\/]+|improvements[\\/]+|evidence[\\/]+|handoffs[\\/]+|delivery[\\/]+|reviews[\\/]+(?!drafts[\\/]+))`;
 const RECORD_FILES = new RegExp(String.raw`(^|[\\/])${RECORD_AREA}`);
 // Shell commands that write their (later) path argument, and code that writes files.
-const SHELL_WRITE = new RegExp(String.raw`(>|\btee\b|\b(?:sed|perl)\s+(?:-\w+\s+)*-\w*i|\bmv\b|\bcp\b|\brm\b|\btruncate\b|\bdd\b|\bln\b|\binstall\b|\brsync\b|\btouch\b)[^|;&]*${RECORD_AREA}`);
+const SHELL_WRITE = new RegExp(String.raw`(>{1,2}\|?|\btee\b|\b(?:sed|perl)\s+(?:-\w+\s+)*-\w*i|\bmv\b|\bcp\b|\brm\b|\btruncate\b|\bdd\b|\bln\b|\binstall\b|\brsync\b|\btouch\b)[^|;&]*${RECORD_AREA}`);
+// Copying, syncing, moving, extracting into or deleting the record DIRECTORY itself (`cp -r forged/. .eccode`,
+// `rsync -a x/ .eccode/`, `rm -rf .eccode`): the directory is the record, whatever is written into it.
+const RECORD_DIR_WRITE = /\b(?:cp|rsync|mv|rm|tar|ln|install|rmdir)\b[^|;&]*(?:^|[\s"'=])(?:\.\/)?\.eccode[\\/]*(?=["'\s]|$)/;
 const CODE_WRITE = /\b(writeFileSync|writeFile|writeSync|appendFileSync|appendFile|createWriteStream|rmSync|rmdirSync|unlinkSync|unlink|renameSync|rename|copyFileSync|copyFile|cpSync|truncateSync|ftruncateSync|symlinkSync|fs\.rm|promises\.rm|write_text|write_bytes|os\.remove|os\.rename|os\.replace|os\.rmdir|os\.truncate|shutil\.\w+|File\.(?:write|delete)|IO\.write|FileUtils\.\w+|file_put_contents|fwrite|Deno\.(?:write\w*|remove\w*|rename|copyFile\w*|truncate\w*))\b|\bopen\s*\([^)]*['"][wax]b?\+?['"]/;
 // Variables that change who the CLI acts as, or its clock (order rules), when set inline.
 const IDENTITY_ENV = /^(?:ECCODE_ACTOR|ECCODE_TEST|ECCODE_NOW|ECCODE_ROOT|ECCODE_SHARED_MEMORY|ECCODE_SEQUENTIAL_ROLES|ECCODE_HOOKS)(?:=|$)/;
 // A shell function or alias defined in the same command line can hide the CLI from the words the
 // guard binds (`e() { eccode "$@"; }; e … --actor user`).
-const SHELL_WRAPPER = /(?:^|[;\n&|(]\s*)(?:function\s+[A-Za-z_]\w*|[A-Za-z_]\w*\s*\(\s*\))\s*\{|(?:^|[;\n&|(]\s*)alias\s+[A-Za-z_]\w*=/;
+// Unanchored: a definition can follow `then`, a `{`, a leading blank, sit inside `bash -c '…'` (checked at every
+// nesting depth) and take any compound body (`{ … }`, `( … )`, `if … fi`, `while`, `case`, `[[`).
+const SHELL_WRAPPER = /(?:^|[^\w"'$-])(?:function\s+[A-Za-z_][\w-]*(?:\s*\(\s*\))?|[A-Za-z_][\w-]*\s*\(\s*\))\s*(?:\{|\(|\bif\b|\bwhile\b|\buntil\b|\bfor\b|\bcase\b|\[\[|\n)|(?:^|[^\w"'$-])alias\s+[A-Za-z_][\w-]*=/;
 const ECCODE_WORD = /(^|[\\/])eccode(\.js)?$/;
 // git subcommands that can revert, stash or delete working-tree files.
 const GIT_REVERTING = new Set(['checkout', 'restore', 'reset', 'stash', 'clean', 'rm', 'mv']);
@@ -86,10 +91,20 @@ function out(decision, reason) {
   process.exit(0);
 }
 
+/** Is any segment of this absolute path a record directory? */
+function insideRecord(abs) {
+  return abs.split(/[\\/]/).includes('.eccode');
+}
+
+/**
+ * The nearest project root above `start`. A record planted inside another record
+ * (`.eccode/.eccode/events.jsonl`, by `cp -r` or `init --root .eccode`) never counts: the guard
+ * would otherwise judge the outer record's files as that bogus project's ordinary files.
+ */
 function findRoot(start) {
   let dir = start;
   for (;;) {
-    if (fs.existsSync(path.join(dir, '.eccode', 'events.jsonl'))) return dir;
+    if (!insideRecord(dir) && fs.existsSync(path.join(dir, '.eccode', 'events.jsonl'))) return dir;
     const parent = path.dirname(dir);
     if (parent === dir) return null;
     dir = parent;
@@ -203,6 +218,15 @@ function walkWords(words, raw, visit, depth) {
 
 // ------------------------------------------------------------------- identity
 
+/** Does any word the shell would see (at any nesting depth) name the CLI or one of its variables? */
+function mentionsCli(cmd) {
+  let found = false;
+  walkCommands(cmd, (words) => {
+    if (words.some((w) => /eccode|ECCODE_/.test(w.text))) found = true;
+  });
+  return found;
+}
+
 /**
  * Actors asserted by the eccode invocations in a command line, bound exactly
  * as the CLI binds them (lib/cli-args.js: last-wins is refused, --actor=x,
@@ -212,10 +236,20 @@ function eccodeActors(cmd) {
   const { parseArgs } = require(path.join(LIB, 'cli-args'));
   const actors = new Set();
   const problems = [];
-  const mentionsEccode = /eccode/.test(cmd);
-  if (mentionsEccode && SHELL_WRAPPER.test(cmd)) problems.push('a shell function or alias is defined in the same command line, so the eccode invocation behind it cannot be bound; call the eccode CLI directly');
-  walkCommands(cmd, (words) => {
+  // "Mentions the CLI" is decided on the words the shell would see (quotes removed, comments dropped),
+  // so `ecc"ode".js` counts and `# see the eccode docs` does not.
+  const mentionsEccode = mentionsCli(cmd);
+  const wrapperSeen = new Set();
+  walkCommands(cmd, (words, raw) => {
+    if (mentionsEccode && !wrapperSeen.has(raw) && SHELL_WRAPPER.test(raw)) {
+      wrapperSeen.add(raw);
+      problems.push('a shell function or alias is defined in the same command line, so the eccode invocation behind it cannot be bound; call the eccode CLI directly');
+    }
     if (words.some((w) => IDENTITY_ENV.test(w.text))) problems.push('ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCODE_SEQUENTIAL_ROLES / ECCODE_HOOKS may not be set inline; pass --actor <your role> and --root explicitly');
+    // `V=ECCODE_SHARED_MEMORY; export $V=/tmp/x` or `declare "$N"=…`: an assignment whose NAME is computed.
+    if (mentionsEccode && words.some((w, i) => (w.dynamic && /^[^=]*[$`][^=]*=/.test(w.text)) || (/^(?:export|declare|typeset|readonly|env|local)$/.test(w.text) && words.slice(i + 1).some((x) => x.dynamic && /=/.test(x.text))))) {
+      problems.push('a variable with a computed name is assigned in the same command line as the eccode CLI; set variables by their literal name, or not inline');
+    }
     const at = words.findIndex((w) => ECCODE_WORD.test(w.text));
     if (at === -1) {
       // The command word is the first word that is not a NAME=value assignment.
@@ -362,7 +396,7 @@ function inlineCodeWrite(cmd) {
 }
 
 function checkBash(cmd, role, root, cwd) {
-  if (SHELL_WRITE.test(cmd) || (new RegExp(RECORD_AREA).test(cmd) && CODE_WRITE.test(cmd))) {
+  if (SHELL_WRITE.test(cmd) || RECORD_DIR_WRITE.test(cmd) || (new RegExp(RECORD_AREA).test(cmd) && CODE_WRITE.test(cmd))) {
     out('deny', 'ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.');
   }
   // Shell writes get the same answer as the Edit/Write tools for every ECCode role: a redirect,
@@ -380,6 +414,8 @@ function checkBash(cmd, role, root, cwd) {
     }
     for (const t of targets) {
       const abs = path.resolve(cwd || root, t);
+      // Record files are the CLI's wherever they live, judged on the absolute path before any root is chosen.
+      if (RECORD_FILES.test(toPosix(abs))) out('deny', `${t} is part of an ECCode record and is written only by the eccode CLI.`);
       // A project nested in a repository with its own record (an example app) is judged by its own
       // record: the nearest .eccode/ above the target decides, not the outer one.
       const targetRoot = findRoot(path.dirname(abs)) || root;
@@ -395,7 +431,7 @@ function checkBash(cmd, role, root, cwd) {
   if (gitRisk) {
     out('deny', `${gitRisk} can roll back or delete the ECCode record (.eccode/). Restore or discard specific project files by path instead (e.g. git checkout -- src/x.js); record repairs are the user's decision.`);
   }
-  if (!/eccode|ECCODE_/.test(cmd)) return;
+  if (!mentionsCli(cmd)) return;
   const { actors, problems } = eccodeActors(cmd);
   if (problems.length) out('deny', `The guard cannot verify who this eccode command acts as: ${problems[0]}.`);
   if (actors.includes('user')) {
@@ -473,6 +509,11 @@ function main(input) {
     const target = ti.file_path || ti.notebook_path;
     if (!target) return;
     const abs = path.resolve(input.cwd || root, target);
+    // Record files are the CLI's wherever they live: judged on the absolute path before any root is chosen,
+    // so a record planted inside a record (.eccode/.eccode/) cannot turn the outer record into "project files".
+    if (RECORD_FILES.test(toPosix(abs))) {
+      out('deny', `ECCode record and memory files are written only by the eccode CLI, wherever they live (${abs}). Use eccode commands (eccode memory …, eccode improve …); never edit them directly.`);
+    }
     const fileRoot = findRoot(path.dirname(abs)) || root; // the nearest record above the file decides
     const rel = toPosix(path.relative(fileRoot, abs));
     if (outsideProject(rel)) {
