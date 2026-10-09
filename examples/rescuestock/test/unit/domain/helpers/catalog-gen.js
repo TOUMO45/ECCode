@@ -78,6 +78,52 @@ export function smallCatalog(seed) {
 }
 
 /**
+ * Medium random catalogs (SEC-B-1): larger stock and quantities than smallCatalog, for the planner against the slow
+ * exact reference (and, on small ranges, against the brute-force oracle). `ties` draws prices, prep fees and ready
+ * times from tiny sets so that many plans share a total, pickup count or ready time, which exercises the tie-breaks
+ * (supplier-code string, vector) and the pruning that relies on them.
+ */
+export function mediumCatalog(seed, { maxOffers = 6, maxAvail = 8, maxQuantitySteps = 16, ties = false } = {}) {
+  const rng = makeRng(seed);
+  const offerCount = rng.int(2, maxOffers);
+  const offers = [];
+  for (let i = 0; i < offerCount; i += 1) {
+    const sameSupplier = i > 0 && rng.chance(0.15);
+    const supplierCode = sameSupplier ? offers[rng.int(0, i - 1)].supplierCode : LETTERS[i];
+    const cups = rng.pick(ties ? [50, 100] : [50, 100, 200]);
+    const lids = rng.chance(0.2) ? rng.pick([50, 100, 200]) : cups;
+    offers.push({
+      offerId: i + 1,
+      offerVersion: 1,
+      supplierCode,
+      productId: i + 1,
+      productName: `bundle ${i + 1}`,
+      units: { cups, lids },
+      capacityMl: 250,
+      cupDiameterMm: 90,
+      lidDiameterMm: rng.chance(0.1) ? 95 : 90,
+      confirmedCompatible: false,
+      priceCents: ties ? rng.pick([1000, 2000, 3000]) : rng.int(5, 90) * 100,
+      prepFeeCents: ties ? rng.pick([0, 500]) : rng.pick([0, 300, 500, 800, 1000, 1500]),
+      readyAt: ties ? localTimeOnDate(DAY, rng.pick(['10:00', '10:30'])) : readyAt(rng, 9 * 60 + 30, 12 * 60),
+      availability: rng.chance(0.1) ? 0 : rng.int(1, maxAvail),
+      withdrawn: rng.chance(0.05),
+      demo: true,
+    });
+  }
+  const cupsNeeded = rng.int(1, maxQuantitySteps) * 100;
+  return {
+    requirement: { cups: cupsNeeded, lids: rng.chance(0.2) ? rng.int(1, maxQuantitySteps) * 100 : cupsNeeded, capacityMl: 250, diameterMm: 90, material: null },
+    budgetCents: rng.chance(0.3) ? null : rng.int(20, 400) * 100,
+    deadlineAt: rng.chance(0.3) ? null : localTimeOnDate(DAY, hhmm(rng.int(10 * 60 + 30, 12 * 60))),
+    maxPickups: rng.int(1, 5),
+    taxBp: rng.pick([0, 0, 1600, 825]),
+    offers,
+    excludeSupplierCodes: [],
+  };
+}
+
+/**
  * NFR5 generator (brief): 12 offers; bundle sizes {50,100,200}; required quantity 100-400 in steps of 100;
  * on_hand 0-2; price 1000-10000 cents; prep fee 0-1500 cents; ready 09:30-12:00; 15 % incompatible; max pickups
  * 1-3. The brief does not give a deadline or a budget: this generator fixes the deadline at 11:30 and draws the

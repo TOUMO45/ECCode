@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { plan } from '../../../src/domain/planner.js';
 import { oracle } from '../../../src/domain/oracle.js';
-import { smallCatalog } from './helpers/catalog-gen.js';
+import { mediumCatalog, smallCatalog } from './helpers/catalog-gen.js';
+import { referencePlan } from './helpers/reference-planner.js';
 import { fixtureInput, offerOf } from './helpers/fixture.js';
 
 const CATALOGS = 500;

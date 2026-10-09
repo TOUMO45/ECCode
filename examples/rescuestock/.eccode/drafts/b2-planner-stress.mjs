@@ -15,10 +15,10 @@ const LETTERS = 'ABCDEFGHIJKL';
 let worst = { ms: 0 }; let limits = 0; let slow = 0; const byShape = {};
 const hhmm = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 for (let c = 0; c < COUNT; c += 1) {
-  const shape = rng.pick(['api5', 'api5', 'wide12', 'plateau', 'multi', 'mixed']);
-  const count = shape === 'api5' ? 5 : shape === 'multi' ? rng.int(6, 12) : shape === 'plateau' ? rng.int(5, 12) : 12;
+  const shape = process.env.SHAPE || rng.pick(['api5', 'api5', 'wide12', 'plateau', 'multi', 'mixed']);
+  const count = shape === 'api5' || shape === 'plateau5' ? 5 : shape === 'multi' ? rng.int(6, 12) : shape === 'plateau' ? rng.int(5, 12) : 12;
   const stock = rng.pick([1, 5, 30, 100, 200, 1000, 100000, 100000]);
-  const equal = shape === 'plateau';
+  const equal = shape === 'plateau' || shape === 'plateau5';
   const offers = [];
   for (let i = 0; i < count; i += 1) {
     const size = rng.pick([50, 100, 200]);
@@ -38,7 +38,7 @@ for (let c = 0; c < COUNT; c += 1) {
     requirement: { cups: qty, lids: shape === 'mixed' && rng.chance(0.5) ? rng.pick([100, 1000, 20000]) : qty, capacityMl: 250, diameterMm: 90, material: null },
     budgetCents: rng.chance(0.3) ? null : rng.pick([1, 50000, 1000000, 100000000, 1000000000]),
     deadlineAt: rng.chance(0.5) ? null : localTimeOnDate('2026-10-20', '11:30'),
-    maxPickups: rng.int(1, 5), taxBp: rng.pick([0, 0, 1600]), offers, excludeSupplierCodes: [],
+    maxPickups: rng.int(1, 5), taxBp: process.env.TAX ? Number(process.env.TAX) : rng.pick([0, 0, 1600]), offers, excludeSupplierCodes: [],
   };
   const t = process.hrtime.bigint();
   let outcome;

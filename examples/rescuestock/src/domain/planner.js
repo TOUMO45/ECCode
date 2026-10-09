@@ -224,6 +224,29 @@ function buildBody(rec, survivors, ctx) {
   };
 }
 
+// A plan record (as the search produces) for an explicit multiplicity vector, evaluated from scratch.
+function evaluateVector(m, survivors, taxBp) {
+  const bySupplier = new Map();
+  let cups = 0;
+  let lids = 0;
+  let readyMs = 0;
+  for (let i = 0; i < survivors.length; i += 1) {
+    if (m[i] === 0) continue;
+    const o = survivors[i];
+    cups += m[i] * o.unitCups;
+    lids += m[i] * o.unitLids;
+    if (o.readyMs > readyMs) readyMs = o.readyMs;
+    const s = bySupplier.get(o.supplierCode) ?? { subtotalCents: 0, prepFeeCents: 0 };
+    s.subtotalCents += m[i] * o.priceCents;
+    if (o.prepFeeCents > s.prepFeeCents) s.prepFeeCents = o.prepFeeCents;
+    bySupplier.set(o.supplierCode, s);
+  }
+  let total = 0;
+  for (const s of bySupplier.values()) total += supplierOrderTotals({ ...s, taxBp }).totalCents;
+  const codes = [...bySupplier.keys()].sort().join(',');
+  return { m: m.slice(), total, pickups: bySupplier.size, readyMs, codes, cups, lids, uid: 'seed' };
+}
+
 function vectorSignature(rec, survivors) {
   const parts = [];
   for (let i = 0; i < survivors.length; i += 1) {
@@ -294,11 +317,27 @@ export function plan(input) {
   let enumerated = main.nodes;
   const candidateCodes = [];
   const candidateDetails = new Map();
+  // The cheapest cover ignoring pickups and budget answers every offer it uses; any other offer k is searched with that
+  // cover plus one bundle of k as its starting incumbent (a valid cover that contains k), which prunes hard.
+  const unconstrained = search(survivors, ctx.requirement, ctx.taxBp, { budget: NO_LIMIT, maxPickups: NO_LIMIT });
+  enumerated += unconstrained.nodes;
   for (const o of survivors) {
     const codes = [];
     const aloneCovers = o.bound * o.unitCups >= ctx.requirement.cups && o.bound * o.unitLids >= ctx.requirement.lids;
     if (!aloneCovers) codes.push('INSUFFICIENT_QTY');
-    const cover = search(survivors, ctx.requirement, ctx.taxBp, { budget: NO_LIMIT, maxPickups: NO_LIMIT }, { force: o.ci });
+    let cover;
+    if (unconstrained.best === null) {
+      cover = { best: null, nodes: 0 };
+    } else if (unconstrained.best.m[o.ci] > 0) {
+      cover = { best: unconstrained.best, nodes: 0 };
+    } else if (o.bound < 1) {
+      cover = { best: null, nodes: 0 };
+    } else {
+      const m = unconstrained.best.m.slice();
+      m[o.ci] = 1;
+      const seed = evaluateVector(m, survivors, ctx.taxBp);
+      cover = search(survivors, ctx.requirement, ctx.taxBp, { budget: NO_LIMIT, maxPickups: NO_LIMIT }, { force: o.ci, seed });
+    }
     enumerated += cover.nodes;
     if (cover.best !== null) {
       if (cover.best.pickups > ctx.maxPickups) codes.push('TOO_MANY_PICKUPS');

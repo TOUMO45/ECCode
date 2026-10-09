@@ -5,7 +5,7 @@
 ## Versions
 | Component | Version |
 |---|---|
-| ECCode toolkit | Runs 1–2 (architecture, first attempt): 0.3.0 at `5da8913`. Runs 3 on: 0.3.1 (checkpoint `1fcda26`, fixtures quoted in `d9c1cc6`), installed at user scope; the pilot version is frozen in `docs/build/state.md`. A mid-pilot repair (nested-root guard, `eccode/guard-repairs`) went through its own branch, regression tests and five independent review rounds before it was installed; nothing was hot-patched |
+| ECCode toolkit | Runs 1–2 (architecture, first attempt): 0.3.0 at `5da8913`. Runs 3 on: 0.3.1 (checkpoint `1fcda26`, fixtures quoted in `d9c1cc6`), installed at user scope; the pilot version is frozen in `docs/build/state.md`. A mid-pilot repair (nested-root guard, `eccode/guard-repairs`) went through its own branch, regression tests and five independent review rounds before it was installed; nothing was hot-patched. From phase B's third review iteration: **0.3.2** (merge `cdf515f`; TK-1 and TK-2, same discipline; guard script unchanged; decision `dec-mv1jb1w1-014069b1`) |
 | Host | Claude Code cloud session, Linux 6.18, Node 22.22.0 |
 | Orchestrator model | the session's model (`claude-fable-5-1` configured) |
 | Role agents | Runs 1–2: `general-purpose` subagents given the ECCode role prompts with `--actor <role>`, guard not installed (deviation D1). Runs 3 on: the twelve ECCode agent types registered by `eccode install --scope user`, with the PreToolUse guard active and identity bound by `agent_type` |

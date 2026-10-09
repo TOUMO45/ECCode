@@ -91,6 +91,7 @@ export function search(survivors, requirement, taxBp, cons, opts = {}) {
   const K = opts.keep ?? 1;
   const force = opts.force ?? -1;
   const top = [];
+  if (opts.seed) top.push(opts.seed); // a valid plan known in advance: the search only has to beat it
   let nodes = 0;
   const tick = () => {
     nodes += 1;
@@ -288,9 +289,28 @@ export function search(survivors, requirement, taxBp, cons, opts = {}) {
       return false;
     }
 
+    // Dominance. When no supplier has two members, the future of a node depends only on (j, cups, lids): the same
+    // members remain and the same coverage is missing. The K cheapest prefixes reaching a state are all that can matter
+    // (a later prefix of equal total has the larger vector and loses), so a node is cut when K earlier prefixes reached
+    // the same state at no greater total. This collapses the plateaus of equal-cost distributions.
+    const memo = t.suppliers === q ? Array.from({ length: q + 1 }, () => new Map()) : null;
+
     function dfs(j, cups, lids, total) {
       tick();
       if (hasRemovable(j, cups, lids)) return;
+      if (memo !== null && lids < 8388608) {
+        const key = cups * 8388608 + lids;
+        const seen = memo[j].get(key);
+        if (seen === undefined) {
+          memo[j].set(key, [total]);
+        } else {
+          if (seen.length >= K && total >= seen[K - 1]) return;
+          let x = seen.length;
+          while (x > 0 && total < seen[x - 1]) x -= 1;
+          seen.splice(x, 0, total);
+          if (seen.length > K) seen.pop();
+        }
+      }
       if (j === q) {
         if (cups >= needC && lids >= needL && !cannotImprove(t, total)) {
           insertSorted(top, { m: m.slice(), total, pickups: t.pickups, readyMs: t.readyMs, codes: t.codes, cups, lids, uid: t.uid }, K);
@@ -339,11 +359,17 @@ export function search(survivors, requirement, taxBp, cons, opts = {}) {
         const total1 = total - tot0 + tot1;
         if (total1 > budget) break;
         if (top.length >= K && total1 > top[K - 1].total) break;
+        const nextCups = cups + k * uc;
+        const nextLids = lids + k * ul;
+        if (memo !== null && nextLids < 8388608) {
+          const seen = memo[j + 1].get(nextCups * 8388608 + nextLids);
+          if (seen !== undefined && seen.length >= K && total1 >= seen[K - 1]) continue; // dominated, see above
+        }
         subTotal[l] = sub1;
         prepOf[l] = prep1;
         totOf[l] = tot1;
         m[member] = k;
-        dfs(j + 1, cups + k * uc, lids + k * ul, total1);
+        dfs(j + 1, nextCups, nextLids, total1);
       }
       subTotal[l] = sub0;
       prepOf[l] = prep0;
