@@ -1,6 +1,6 @@
 {
-  "seq": 229,
-  "lastHash": "b811ba7edab178f28c6395580e231bfc60dddf8439d6712fa9507deaa799b9ae",
+  "seq": 242,
+  "lastHash": "2f158d301a4ca179915d27a0283ec5c63c99aff6e0661527d071fb4621966e3c",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -307,8 +307,8 @@
     "phase:b-foundation": {
       "id": "phase:b-foundation",
       "kind": "phase",
-      "status": "submitted",
-      "iterations": 0,
+      "status": "changes_requested",
+      "iterations": 1,
       "authors": [
         "delivery-lead"
       ],
@@ -759,8 +759,25 @@
           "notes": "Phase B: 4 tasks done. npm test 364/364 offline under the net guard (ev:ev-mv1gzlml-01a895d5; p95 13.8 ms, suite 14.8 s). RS-06..RS-11, NFR1, NFR4 have named proving tests (submission.md table). Flagged for review: 119 unnamed b1/b2 test declarations (ev:ev-mv1h28ne-01779a6b); most are supporting tests, but six prove a design item without its id (ARCH-26 lease rule, SEC-10 share default, SEC-12 approval host, RS_TEST_HOOKS refusal, DB_BUSY mapping, default deny); two AppError classes; scrypt format for c1; commented-out .env.example secrets; upload timeout left to d3; PLANNER_LIMIT; derive input shape; weak pre-work evidence for b3/b4. Budget gate moved to before phase C by dec-mv1fgdkd-01182466."
         }
       ],
-      "reviews": [],
-      "openFindings": [],
+      "reviews": [
+        "rev-mv1hc5zg-01a3fc75"
+      ],
+      "openFindings": [
+        {
+          "id": "PB-1",
+          "severity": "blocking",
+          "title": "Concurrent start on a fresh database fails: PRAGMA journal_mode = WAL throws SQLITE_BUSY despite busy_timeout",
+          "detail": "src/db/connection.js sets `PRAGMA busy_timeout` and then `PRAGMA journal_mode = WAL` (L29-L30). When several processes open a new database file at the same time, SQLite can return SQLITE_BUSY for the journal-mode switch without calling the busy handler. It does this when waiting could deadlock: one connection holds a shared lock and needs an exclusive one while another holds or waits for a write lock.\n- In my phase run of `npm test`, 'NFR1: two processes starting at the same time apply each migration exactly once and both succeed' failed: a child exited with 'Error: database is locked' at openDb, connection.js:30 (ev:ev-mv1h5bbh-010aae6e, 363/364).\n- The reproduction ran that test 10 times in isolation; 1 failed with the same error (ev:ev-mv1h6fnx-0154466d).\nb1's criterion requires that 'a second process starting at the same time skips applied versions', and the spec calls migrations multi-process safe. The later multi-process tests (rs14, rs20, rs26, lease-takeover, return-crash), and any two-server deployment, start processes on one fresh file and would inherit the race as flaky failures or startup crashes. The delivery lead's 364/364 run and my b1/b3 runs passing does not contradict this: the failure is intermittent.",
+          "evidence": [
+            "ev:ev-mv1h5bbh-010aae6e",
+            "ev:ev-mv1h6fnx-0154466d",
+            "artifact:src/db/connection.js#L28-L31",
+            "artifact:test/unit/db/migrate.test.js#L227"
+          ],
+          "recommendation": "Owner: b1-foundation-core (backend-engineer), src/db/connection.js.\nFix: openDb retries the journal-mode switch, and any other SQLITE_BUSY raised while opening, with a short bounded back-off up to the busy timeout, then gives a clear error. A synchronous sleep such as Atomics.wait on a SharedArrayBuffer is fine.\nAdd a regression test (or raise the existing one to at least 25 rounds of 3 processes) named with its id.\nResolved when the reviewer's reruns pass: `npm test` and `node .eccode/drafts/tr-phb-migrate-race.mjs 20` with 0 failures.\nIf a retry does not remove the failures, dispatch learning-debugger on PB-1 to find the root cause.",
+          "reviewId": "rev-mv1hc5zg-01a3fc75"
+        }
+      ],
       "approvedBy": null,
       "approvedSubmission": null,
       "escalation": null,
@@ -1031,9 +1048,24 @@
         "command": "ls test/unit/config/hosts.test.js test/unit/config/secrets.test.js test/unit/config/node-version.test.js test/unit/config/limits.test.js test/unit/db/migrate.test.js test/unit/db/triggers.test.js test/unit/http/headers.test.js test/unit/seed/seed.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/config/**/*.test.js\" \"test/unit/db/**/*.test.js\" \"test/unit/http/**/*.test.js\" \"test/unit/seed/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "done",
+      "status": "claimed",
       "attempts": 1,
-      "claim": null,
+      "claim": {
+        "agent": "backend-engineer",
+        "at": "2026-10-09T21:32:01.570Z",
+        "baseCommit": "ea10b4103ebb1b12765bda441b90ebda9540e9cf",
+        "runId": null,
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.838,
+            "matched": 37,
+            "priority": 38,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -1045,6 +1077,18 @@
           "event": "completed",
           "by": "backend-engineer",
           "at": "2026-10-09T21:01:55.118Z"
+        },
+        {
+          "event": "reset",
+          "by": "orchestrator",
+          "at": "2026-10-09T21:31:30.724Z",
+          "reason": "Review rev-mv1hc5zg-01a3fc75: PB-1 blocking (openDb WAL switch returns SQLITE_BUSY under concurrent fresh start) and PB-2 minor (six tests lack design-item ids); owner fixes and re-completes"
+        },
+        {
+          "event": "claimed",
+          "by": "backend-engineer",
+          "at": "2026-10-09T21:32:01.570Z",
+          "attempt": 1
         }
       ],
       "completedBy": "backend-engineer",
@@ -1116,7 +1160,8 @@
           "note": "appliesWhen concerns a PreToolUse guard or hook mapping writes to a project root across several records; this task builds an application foundation and has no such code. notApplicableWhen holds: the claim denials I saw named the claimed tasks of the target project's own record and were correct ownership refusals for scratch paths.",
           "basis": "reason"
         }
-      ]
+      ],
+      "escalation": null
     },
     "b2-domain": {
       "id": "b2-domain",
@@ -4504,6 +4549,167 @@
       "task": null,
       "recordedBy": "security-reviewer",
       "at": "2026-10-09T21:25:03.848Z"
+    },
+    "ev-mv1h5bbh-010aae6e": {
+      "id": "ev-mv1h5bbh-010aae6e",
+      "kind": "command",
+      "label": "phase B suite",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 16645,
+      "log": ".eccode/evidence/ev-mv1h5bbh-010aae6e.log",
+      "logSha256": "7190a0eca1d39ef0856ec1dbb1e8fab11a99a01cd9a3f7984760c6baf7a0d974",
+      "logFileSha256": "38b16b92d78a7ba1d78ff99cd041b8b7d5f2db0053068220201aeaf17c5a5f96",
+      "outputTail": "  duration_ms: 394.903354\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 354 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 324.393559\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 355 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 422.111824\n  type: 'test'\n  ...\n1..355\n# tests 364\n# suites 3\n# pass 363\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 16304.187995\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "1d08148925b34c5bc17a2c01df9982a3a3050dcaa5468201754ed6295c03f008",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T21:25:30.180Z"
+    },
+    "ev-mv1h6fnx-0154466d": {
+      "id": "ev-mv1h6fnx-0154466d",
+      "kind": "command",
+      "label": "reviewer: reproduction - concurrent-start migration test (3 processes x 4 rounds on a fresh db) failure rate, sequential and 3-parallel",
+      "command": "node .eccode/drafts/tr-phb-migrate-race.mjs 10",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 14331,
+      "log": ".eccode/evidence/ev-mv1h6fnx-0154466d.log",
+      "logSha256": "e75371f16929318d4e439af71556fe0125c69f46785abdf4b621591746cf100a",
+      "logFileSha256": "19d2196edf46861aa86c6c7c7d83394709f0e6c57153d694bcb3b2da02de8086",
+      "outputTail": "sequential runs: 10, failed: 1 (database is locked: 1)\nparallel runs (3 at a time): 30, failed: 0 (database is locked: 0)\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T21:26:22.473Z"
+    },
+    "ev-mv1h8qn0-01c0fa75": {
+      "id": "ev-mv1h8qn0-01c0fa75",
+      "kind": "command",
+      "label": "reviewer: b1 declared verification",
+      "command": "ls test/unit/config/hosts.test.js test/unit/config/secrets.test.js test/unit/config/node-version.test.js test/unit/config/limits.test.js test/unit/db/migrate.test.js test/unit/db/triggers.test.js test/unit/http/headers.test.js test/unit/seed/seed.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/config/**/*.test.js\" \"test/unit/db/**/*.test.js\" \"test/unit/http/**/*.test.js\" \"test/unit/seed/**/*.test.js\"",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 11096,
+      "log": ".eccode/evidence/ev-mv1h8qn0-01c0fa75.log",
+      "logSha256": "754241e829f9103f8b2671f1c4b9214ccfb25b85606f0e5490b0cad8bc255216",
+      "logFileSha256": "8bfd8b650a475081b1ac1f13b97403e3ff0efa0609fee4f9bdcacc4c177ebd09",
+      "outputTail": "  duration_ms: 399.187423\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 170 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 262.278926\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 171 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 418.286946\n  type: 'test'\n  ...\n1..171\n# tests 171\n# suites 0\n# pass 171\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11022.62525\n",
+      "gate": "phase:b-foundation",
+      "task": "b1-foundation-core",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T21:28:10.009Z"
+    },
+    "ev-mv1h94yt-010d769d": {
+      "id": "ev-mv1h94yt-010d769d",
+      "kind": "command",
+      "label": "reviewer: b2 declared verification",
+      "command": "ls test/unit/domain/planner-fixture.test.js test/unit/domain/planner-oracle.property.test.js test/unit/domain/states.test.js test/unit/domain/derive.test.js test/unit/domain/money.test.js test/unit/domain/time.test.js test/unit/domain/compat.test.js test/unit/domain/explain.test.js test/timing/planner-generator.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/domain/**/*.test.js\" \"test/timing/**/*.test.js\"",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 13296,
+      "log": ".eccode/evidence/ev-mv1h94yt-010d769d.log",
+      "logSha256": "75ed1b2cb9718a590fa14431629a2734627b4a73e24dc41455d51b16defa578b",
+      "logFileSha256": "b543845c638b3d506a21624c098ef7db541aa632f0c75958bd6b2d92d0eec4ec",
+      "outputTail": "  duration_ms: 0.499697\n  type: 'test'\n  ...\n# Subtest: time: HH:MM parsing and formatting\nok 109 - time: HH:MM parsing and formatting\n  ---\n  duration_ms: 0.322955\n  type: 'test'\n  ...\n# Subtest: time: localDay is the Asia/Amman calendar day (daily counters), not the UTC day\nok 110 - time: localDay is the Asia/Amman calendar day (daily counters), not the UTC day\n  ---\n  duration_ms: 0.235711\n  type: 'test'\n  ...\n1..110\n# tests 110\n# suites 0\n# pass 110\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 13221.86172\n",
+      "gate": "phase:b-foundation",
+      "task": "b2-domain",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T21:28:28.584Z"
+    },
+    "ev-mv1h959y-01ee5954": {
+      "id": "ev-mv1h959y-01ee5954",
+      "kind": "command",
+      "label": "reviewer: b4 declared verification",
+      "command": "ls .env.example README.md LICENSE test/scan/env-example.test.js >/dev/null && node --test test/scan/env-example.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 220,
+      "log": ".eccode/evidence/ev-mv1h959y-01ee5954.log",
+      "logSha256": "49f8b745b4e0df4564ee370433fbf83b839d719c452ddb2d0b51a12dcee18548",
+      "logFileSha256": "5459df1f9f104698061f211df36fe3d0b85235c27c37831f4bac3844430172ed",
+      "outputTail": "  duration_ms: 1.570298\n  type: 'test'\n  ...\n# Subtest: NFR4: README names variables only; no secret variable is assigned a value and nothing is token-shaped\nok 8 - NFR4: README names variables only; no secret variable is assigned a value and nothing is token-shaped\n  ---\n  duration_ms: 1.206892\n  type: 'test'\n  ...\n# Subtest: NFR4: LICENSE is MIT and names the project, with no personal data\nok 9 - NFR4: LICENSE is MIT and names the project, with no personal data\n  ---\n  duration_ms: 0.454643\n  type: 'test'\n  ...\n1..9\n# tests 9\n# suites 0\n# pass 9\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 136.701194\n",
+      "gate": "phase:b-foundation",
+      "task": "b4-env-readme",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T21:28:28.984Z"
+    },
+    "ev-mv1h9yvi-018dc008": {
+      "id": "ev-mv1h9yvi-018dc008",
+      "kind": "command",
+      "label": "reviewer: b3 declared verification (npm test + clean checkout)",
+      "command": "ls test/helpers/net-guard.js test/helpers/node-proc.js test/helpers/server-proc.js test/helpers/app-harness.js test/unit/helpers/net-guard.test.js test/integration/start-health.test.js test/integration/start-old-node.test.js test/scan/package.test.js test/api/health-config.test.js scripts/report-p95.js scripts/clean-checkout.sh >/dev/null && npm test && sh scripts/clean-checkout.sh",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 34142,
+      "log": ".eccode/evidence/ev-mv1h9yvi-018dc008.log",
+      "logSha256": "6965c14a0524bfa36321d6cc5459a7cae2e476a63793f092ce18dadb6313514e",
+      "logFileSha256": "a2d8ff5e02ce590ab1c218fc0dd936140fa6c32e3202de860bc3bf9a2fce972d",
+      "outputTail": "  type: 'test'\n  ...\n1..355\n# tests 364\n# suites 3\n# pass 364\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 15118.925064\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 18 requests, p50 2.0 ms, p95 15.8 ms (limit: p95 < 300 ms)\nNFR5 suite time: 15.3 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n\n==> clean-checkout: npm start, then GET /api/health\nGET /api/health -> 200 ok (port 33595)\n\n==> clean-checkout: ok\nclean-checkout: npm install, npm test and npm start passed in an empty copy\n",
+      "gate": "phase:b-foundation",
+      "task": "b3-test-harness",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T21:29:07.342Z"
+    },
+    "ev-mv1ha378-01c9beab": {
+      "id": "ev-mv1ha378-01c9beab",
+      "kind": "command",
+      "label": "reviewer: migrations vs spec DDL, approvalPageCsp and app CSP strings, package.json scripts vs spec, planner vs independent brute force (RS-FIX-1 RS-06..RS-11 + 3000 random catalogs incl. codes and relaxations)",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/tr-phb-checks.mjs .eccode/artifacts/design/spec.md",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 506,
+      "log": ".eccode/evidence/ev-mv1ha378-01c9beab.log",
+      "logSha256": "68097a3db7d5fe94a0385dff7654f4680aadc24469570883fd448ff1f74884ba",
+      "logFileSha256": "d9584df89479db81f31239a0b5d6c47581bdfb9888f840cec6652b1f191cb88c",
+      "outputTail": "ok   app CSP string present verbatim in headers.js\nok   package.json script start equals the spec\nok   package.json script seed equals the spec\nok   package.json script pretest equals the spec\nok   package.json script test equals the spec\nok   package.json script posttest equals the spec\nok   package.json script test:browser equals the spec\nok   package.json script test:live-model equals the spec\nok   package.json script test:live-paypal equals the spec\nok   no dependencies; devDependencies only @playwright/test 1.56.1; engines >=22.13\nok   RS-06 A+B 8400, 2 pickups, 10:30\nok   RS-06 guard: A on_hand 2 -> Ax2 7000, 1 pickup\nok   RS-07 C INCOMPATIBLE_LID_DIAMETER\nok   RS-08 D READY_AFTER_DEADLINE\nok   RS-09 (B on_hand 0) A+E 9500, 2 pickups, 10:40\nok   RS-09 (B withdrawn) A+E 9500, 2 pickups, 10:40\nok   RS-10 infeasible, OVER_BUDGET blocking, A and E [INSUFFICIENT_QTY, OVER_BUDGET], exactly two relaxations (9500 A+E; 11:20 D 8000 1 pickup) | [[\"budget\",9500],[\"deadline\",\"2026-10-20T08:20:00.000Z\"]]\nok   RS-11 infeasible; A, B, E exactly [INSUFFICIENT_QTY, TOO_MANY_PICKUPS]; C, D keep their codes | [[\"deadline\",\"D\",8000],[\"maxPickups\",\"A+B\",8400]]\nok   brute force agrees on RS-FIX-1 base\nok   brute force agrees on RS-FIX-1 A2\nok   brute force agrees on RS-FIX-1 RS-10\nok   brute force agrees on RS-FIX-1 RS-11\nok   brute force agrees on 3000 random catalogs (807 feasible)\nfailures: 0\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T21:29:12.953Z"
+    },
+    "ev-mv1havho-019d0a9c": {
+      "id": "ev-mv1havho-019d0a9c",
+      "kind": "command",
+      "label": "reviewer: lesson mem-sd-mv1audrd-013b7102 not-applicable decisions: installed guard is the repaired per-target-root version",
+      "command": "sha256sum /home/user/ECCode/scripts/hooks/guard.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 9,
+      "log": ".eccode/evidence/ev-mv1havho-019d0a9c.log",
+      "logSha256": "93ec0c365055a3c3cd7cc4ca1695ad84fc63213ac0f3cd9ad44cabbe6347ff40",
+      "logFileSha256": "7e31300dc5be7636576548325f9f968beeec3cb6df0b8faabf1e562d834686bc",
+      "outputTail": "d43f4b548e86029a311b969b560fa84e56ac30aac598ff9faf234bf2d279c630  /home/user/ECCode/scripts/hooks/guard.js\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T21:29:49.622Z"
     }
   },
   "reviews": {
@@ -8250,6 +8456,130 @@
       "reviewer": "technical-reviewer",
       "at": "2026-10-09T20:37:20.822Z",
       "submissionId": "sub-mv1fa538-015d094f"
+    },
+    "rev-mv1hc5zg-01a3fc75": {
+      "decision": "changes_requested",
+      "summary": "Phase B review of sub-mv1h2gly-014b868a. I read the code against plan.json's task criteria, the approved design and the brief, and ran every declared verification command myself.\n\nWhat holds:\n- b1, b2, b4 and b3 pass: 171, 110, 9 and 364 tests, and the clean checkout passes (ev:ev-mv1h8qn0-01c0fa75, ev:ev-mv1h94yt-010d769d, ev:ev-mv1h959y-01ee5954, ev:ev-mv1h9yvi-018dc008).\n- My independent checks (ev:ev-mv1ha378-01c9beab):\n  - the five migrations equal the spec DDL;\n  - approvalPageCsp and the app CSP equal the spec strings;\n  - package.json scripts equal the spec;\n  - the planner matches the brief's RS-06..RS-11 wording exactly;\n  - on 3000 random catalogs (807 feasible), the planner agrees with my own brute force written from the brief's rules on best plan, rejections, per-candidate codes and relaxations.\n- derive.js matches the revision-2 table row by row, including 2(a)/(b), 3's unknown-refund clause, 4a, 5a and 14. states.js matches the brief's four tables and the OQ-D1 reasons.\n- Config, host check, body cap, static confinement, check-node.cjs and the harness meet their criteria.\n\nThe blocking defect: my own run of the phase suite failed (ev:ev-mv1h5bbh-010aae6e, 363/364).\n- NFR1's 'two processes starting at the same time' test died with SQLITE_BUSY 'database is locked' thrown by `PRAGMA journal_mode = WAL` in src/db/connection.js, although busy_timeout is set first.\n- A reproduction failed 1 of 10 isolated runs (ev:ev-mv1h6fnx-0154466d).\n- This is a production race on concurrent start against a fresh database. b1's criterion says such a start is safe, and the later multi-process tests (RS-14, RS-20, RS-26, lease-takeover) depend on it.\n\nMinor findings: six design-item tests lack their id, and two deviations need follow-ups in later tasks. The security reviewer's draft (phase-b-security-1.md) did not exist when I recorded this review.",
+      "criteria": [
+        {
+          "id": "task:b1-foundation-core",
+          "description": "b1 meets its acceptance criteria (package.json, Node gate, config incl. F-TR-17/SEC-5/SEC-3/SEC-19, log, db with migrations 001-005 and multi-process-safe start, http layer, health/config, seed)",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv1h5bbh-010aae6e",
+            "ev:ev-mv1h6fnx-0154466d",
+            "ev:ev-mv1h8qn0-01c0fa75",
+            "ev:ev-mv1ha378-01c9beab",
+            "artifact:src/db/connection.js#L28-L31",
+            "artifact:test/unit/db/migrate.test.js#L227"
+          ],
+          "notes": "Everything else in b1 holds on reading and in my checks:\n- migrations equal the spec;\n- check-node.cjs is flag-free ES5 and every flagged script is prefixed;\n- F-TR-17 cap (limits.test.js);\n- SEC-5 lengths (16/12/32 bytes) and placeholder refusal;\n- loopback base URLs only with RS_TEST_OFFLINE;\n- Host allow-list with 421;\n- JSON body cap of 65,536 bytes with 413;\n- static handler confined by realpath;\n- approvalPageCsp exact.\nUnmet only because the criterion 'a second process starting at the same time skips applied versions' fails intermittently (PB-1)."
+        },
+        {
+          "id": "task:b2-domain",
+          "description": "b2 meets its acceptance criteria (pure domain, RS-06..RS-11 tests, oracle property test, states, derive rows 1-14 with totality test, money/time, explain, NFR5 timing)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1h94yt-010d769d",
+            "ev:ev-mv1ha378-01c9beab",
+            "artifact:src/domain/planner.js#L462-L529",
+            "artifact:src/domain/derive.js#L141-L273",
+            "artifact:src/domain/states.js#L33-L77"
+          ],
+          "notes": "Planner: identical results to my brute force on RS-FIX-1 and on 3000 random catalogs, including multiplicity, rejections, per-candidate codes and relaxations. derive.js matches the revision-2 table row by row, so the F-TR-9 [I] inspection passes. Deviations judged acceptable:\n- PLANNER_LIMIT cap: a bound for threat T19; c2 must map it to a typed error (PB-3).\n- SPEC_MISMATCH recorded in the trace only (PB-3).\n- Relaxation order.\n- NFR5 generator's fixed deadline and budget: the brief gives none, and timing has a wide margin."
+        },
+        {
+          "id": "task:b4-env-readme",
+          "description": "b4 meets its acceptance criteria (.env.example names and placeholders, NFR4 scan, README essentials)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1h959y-01ee5954",
+            "artifact:.eccode/artifacts/phase-b/submission.md#evidence-quality-notes"
+          ],
+          "notes": "Commenting out the secrets in .env.example is the correct consequence of the SEC-5 placeholder refusal and is documented. The invalid pre-work run (ev-mv1gdiqu, recorded as separate arguments) is honestly disclosed. It does not matter: the ls guard makes the declared command fail before the files exist by construction (verified at the plan gate), and my run of the declared command passes."
+        },
+        {
+          "id": "task:b3-test-harness",
+          "description": "b3 meets its acceptance criteria (net guard, node-proc ARCH-24, server-proc, app-harness latency, package scan, start-old-node on real Node 20/21, start-health, clean-checkout.sh, report-p95)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1h9yvi-018dc008",
+            "artifact:scripts/clean-checkout.sh#L95-L147",
+            "artifact:test/helpers/node-proc.js#L1-L60"
+          ],
+          "notes": "The clean checkout ran npm install from the registry, npm test and npm start (health 200) in my run. start-old-node uses real /opt/node20 and /opt/node21. The 22.5-22.12 NODE_OPTIONS merge is simulated (USER-Q9) and disclosed. The late failing-state run is disclosed and does not matter, for the reason given under b4. start-health running the start equivalent, and clean-checkout not seeding, are both acceptable: the literal npm start runs in clean-checkout, and NFR1 lists install, test and start only."
+        },
+        {
+          "id": "phase:b-foundation",
+          "description": "Phase B goal and criteria RS-06..RS-11, NFR1, NFR4 proved; npm test passes offline; every test proving a criterion or finding carries its id",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv1h5bbh-010aae6e",
+            "ev:ev-mv1h9yvi-018dc008",
+            "ev:ev-mv1ha378-01c9beab",
+            "artifact:.eccode/artifacts/phase-b/submission.md#criteria-task-evidence"
+          ],
+          "notes": "RS-06..RS-11 and NFR4 are proved. Two items fail:\n- NFR1 and 'npm test passes' are not reliable: my phase run failed (PB-1).\n- Six design-item tests lack their id (PB-2, minor)."
+        },
+        {
+          "id": "lessons",
+          "description": "The four tasks' not-applicable decisions on mem-sd-mv1audrd-013b7102 hold",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1havho-019d0a9c",
+            "ev:ev-mv1eo87o-01c933d5"
+          ],
+          "notes": "The lesson is about a write guard resolving the wrong project root. No phase-B task builds such a guard, and the installed guard is the repaired version (sha256 d43f4b54...). Each task's written reason states a condition that really holds. clean-checkout.sh takes the project root from its own location and excludes .eccode/."
+        }
+      ],
+      "findings": [
+        {
+          "id": "PB-1",
+          "severity": "blocking",
+          "title": "Concurrent start on a fresh database fails: PRAGMA journal_mode = WAL throws SQLITE_BUSY despite busy_timeout",
+          "detail": "src/db/connection.js sets `PRAGMA busy_timeout` and then `PRAGMA journal_mode = WAL` (L29-L30). When several processes open a new database file at the same time, SQLite can return SQLITE_BUSY for the journal-mode switch without calling the busy handler. It does this when waiting could deadlock: one connection holds a shared lock and needs an exclusive one while another holds or waits for a write lock.\n- In my phase run of `npm test`, 'NFR1: two processes starting at the same time apply each migration exactly once and both succeed' failed: a child exited with 'Error: database is locked' at openDb, connection.js:30 (ev:ev-mv1h5bbh-010aae6e, 363/364).\n- The reproduction ran that test 10 times in isolation; 1 failed with the same error (ev:ev-mv1h6fnx-0154466d).\nb1's criterion requires that 'a second process starting at the same time skips applied versions', and the spec calls migrations multi-process safe. The later multi-process tests (rs14, rs20, rs26, lease-takeover, return-crash), and any two-server deployment, start processes on one fresh file and would inherit the race as flaky failures or startup crashes. The delivery lead's 364/364 run and my b1/b3 runs passing does not contradict this: the failure is intermittent.",
+          "evidence": [
+            "ev:ev-mv1h5bbh-010aae6e",
+            "ev:ev-mv1h6fnx-0154466d",
+            "artifact:src/db/connection.js#L28-L31",
+            "artifact:test/unit/db/migrate.test.js#L227"
+          ],
+          "recommendation": "Owner: b1-foundation-core (backend-engineer), src/db/connection.js.\nFix: openDb retries the journal-mode switch, and any other SQLITE_BUSY raised while opening, with a short bounded back-off up to the busy timeout, then gives a clear error. A synchronous sleep such as Atomics.wait on a SharedArrayBuffer is fine.\nAdd a regression test (or raise the existing one to at least 25 rounds of 3 processes) named with its id.\nResolved when the reviewer's reruns pass: `npm test` and `node .eccode/drafts/tr-phb-migrate-race.mjs 20` with 0 failures.\nIf a retry does not remove the failures, dispatch learning-debugger on PB-1 to find the root cause."
+        },
+        {
+          "id": "PB-2",
+          "severity": "minor",
+          "title": "Six tests that prove a design item do not carry its id",
+          "detail": "The phase criterion requires every test that proves a criterion or finding to start its name with that id. These do not:\n- 'RS_SAGA_LEASE_MS must be at least 3 times RS_PAYPAL_TIMEOUT_MS' (ARCH-26, limits.test.js:40);\n- 'RS_MODEL_CUSTOMER_DAILY_SHARE ... (default 0.2)' (SEC-10/OQ-D7, limits.test.js:66);\n- 'RS_FAKE_APPROVAL_HOST is 127.0.0.1 outside test mode' (SEC-12, hosts.test.js:116);\n- 'RS_TEST_HOOKS is refused when the Sandbox adapter is selected' (secrets.test.js:159);\n- 'SQLITE_BUSY after the busy timeout maps to 503 DB_BUSY' (connection.test.js:119; an RS-14-named variant exists in db-busy.test.js);\n- 'default deny: a route with a non-public policy answers 401' (ARCH-25, app.test.js:310).\nAll brief criteria of this phase are fully named. The gap affects only the evidence table's ability to cite design items by id, so it is minor, not major.",
+          "evidence": [
+            "ev:ev-mv1h8qn0-01c0fa75",
+            "artifact:test/unit/config/limits.test.js#L40",
+            "artifact:test/unit/config/hosts.test.js#L116",
+            "artifact:test/unit/http/app.test.js#L310"
+          ],
+          "recommendation": "Owner: b1-foundation-core (backend-engineer).\nRename the six tests with their ids (ARCH-26, SEC-10, SEC-12, the deployment item as 'SEC-3/T18' or its spec row, RS-14, ARCH-25) in the same rework as PB-1.\nResolved when a name scan of test/unit finds no test that checks a listed design item without its id."
+        },
+        {
+          "id": "PB-3",
+          "severity": "minor",
+          "title": "Deviations that need follow-ups in later tasks",
+          "detail": "I accept these deviations, but each creates an obligation the plan does not yet record:\n- PlannerLimitError (PLANNER_LIMIT) must not surface as an untyped 500 from POST /api/requests/:id/plan (c2).\n- Offers that fail the capacity or cup-diameter match are recorded only in the trace as SPEC_MISMATCH. The request page's 'What was rejected' (RS-35) will not show them, and no design code exists for them (G review, c5/g1).\n- The 60 s upload deadline must be enforced in the upload route (d3).\n- The seed's embedded RS-FIX-1 is not cross-checked against test/fixtures/rs-fix-1.json: both are only checked against the brief.\n- The two AppError classes rely on duck typing in the envelope; that is tested in app.test.js and acceptable.",
+          "evidence": [
+            "artifact:src/domain/planner.js#L140-L143",
+            "artifact:.eccode/artifacts/phase-b/submission.md#deviations-from-the-design-with-reasons"
+          ],
+          "recommendation": "Owners: c2 (map PLANNER_LIMIT to a catalogued error, e.g. 422 VALIDATION_FAILED, or 503 with a named code added to the catalog through the orchestrator); d3 (upload deadline); c5/g1 (decide with the orchestrator whether SPEC_MISMATCH offers are shown).\nResolved when each item is named in its task's acceptance criteria or handoff. Optionally, b2 adds a test asserting the seed constant equals the fixture file."
+        }
+      ],
+      "resolvedFindings": [],
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "id": "rev-mv1hc5zg-01a3fc75",
+      "gate": "phase:b-foundation",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-09T21:30:49.804Z",
+      "submissionId": "sub-mv1h2gly-014b868a"
     }
   },
   "rejectedReviews": [],
@@ -9330,8 +9660,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-09T21:24:01.722Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T21:31:30.580Z",
+      "durationMinutes": 7.48,
+      "costUsd": null,
+      "tokens": 89225,
+      "note": null,
+      "usageReported": true
     },
     "run-mv1h3f63-01201aad": {
       "id": "run-mv1h3f63-01201aad",
@@ -9339,6 +9675,15 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-09T21:24:01.832Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv1hd1mq-01264022": {
+      "id": "run-mv1hd1mq-01264022",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T21:31:30.846Z",
       "status": "running",
       "attempt": 1
     }
@@ -9607,8 +9952,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 267.66,
-    "tokens": 3622725
+    "runtimeMinutes": 275.14,
+    "tokens": 3711950
   },
   "delivery": null
 }

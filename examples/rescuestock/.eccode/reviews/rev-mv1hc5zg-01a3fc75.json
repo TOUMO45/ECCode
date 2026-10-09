@@ -1,0 +1,119 @@
+{
+  "decision": "changes_requested",
+  "summary": "Phase B review of sub-mv1h2gly-014b868a. I read the code against plan.json's task criteria, the approved design and the brief, and ran every declared verification command myself.\n\nWhat holds:\n- b1, b2, b4 and b3 pass: 171, 110, 9 and 364 tests, and the clean checkout passes (ev:ev-mv1h8qn0-01c0fa75, ev:ev-mv1h94yt-010d769d, ev:ev-mv1h959y-01ee5954, ev:ev-mv1h9yvi-018dc008).\n- My independent checks (ev:ev-mv1ha378-01c9beab):\n  - the five migrations equal the spec DDL;\n  - approvalPageCsp and the app CSP equal the spec strings;\n  - package.json scripts equal the spec;\n  - the planner matches the brief's RS-06..RS-11 wording exactly;\n  - on 3000 random catalogs (807 feasible), the planner agrees with my own brute force written from the brief's rules on best plan, rejections, per-candidate codes and relaxations.\n- derive.js matches the revision-2 table row by row, including 2(a)/(b), 3's unknown-refund clause, 4a, 5a and 14. states.js matches the brief's four tables and the OQ-D1 reasons.\n- Config, host check, body cap, static confinement, check-node.cjs and the harness meet their criteria.\n\nThe blocking defect: my own run of the phase suite failed (ev:ev-mv1h5bbh-010aae6e, 363/364).\n- NFR1's 'two processes starting at the same time' test died with SQLITE_BUSY 'database is locked' thrown by `PRAGMA journal_mode = WAL` in src/db/connection.js, although busy_timeout is set first.\n- A reproduction failed 1 of 10 isolated runs (ev:ev-mv1h6fnx-0154466d).\n- This is a production race on concurrent start against a fresh database. b1's criterion says such a start is safe, and the later multi-process tests (RS-14, RS-20, RS-26, lease-takeover) depend on it.\n\nMinor findings: six design-item tests lack their id, and two deviations need follow-ups in later tasks. The security reviewer's draft (phase-b-security-1.md) did not exist when I recorded this review.",
+  "criteria": [
+    {
+      "id": "task:b1-foundation-core",
+      "description": "b1 meets its acceptance criteria (package.json, Node gate, config incl. F-TR-17/SEC-5/SEC-3/SEC-19, log, db with migrations 001-005 and multi-process-safe start, http layer, health/config, seed)",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv1h5bbh-010aae6e",
+        "ev:ev-mv1h6fnx-0154466d",
+        "ev:ev-mv1h8qn0-01c0fa75",
+        "ev:ev-mv1ha378-01c9beab",
+        "artifact:src/db/connection.js#L28-L31",
+        "artifact:test/unit/db/migrate.test.js#L227"
+      ],
+      "notes": "Everything else in b1 holds on reading and in my checks:\n- migrations equal the spec;\n- check-node.cjs is flag-free ES5 and every flagged script is prefixed;\n- F-TR-17 cap (limits.test.js);\n- SEC-5 lengths (16/12/32 bytes) and placeholder refusal;\n- loopback base URLs only with RS_TEST_OFFLINE;\n- Host allow-list with 421;\n- JSON body cap of 65,536 bytes with 413;\n- static handler confined by realpath;\n- approvalPageCsp exact.\nUnmet only because the criterion 'a second process starting at the same time skips applied versions' fails intermittently (PB-1)."
+    },
+    {
+      "id": "task:b2-domain",
+      "description": "b2 meets its acceptance criteria (pure domain, RS-06..RS-11 tests, oracle property test, states, derive rows 1-14 with totality test, money/time, explain, NFR5 timing)",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1h94yt-010d769d",
+        "ev:ev-mv1ha378-01c9beab",
+        "artifact:src/domain/planner.js#L462-L529",
+        "artifact:src/domain/derive.js#L141-L273",
+        "artifact:src/domain/states.js#L33-L77"
+      ],
+      "notes": "Planner: identical results to my brute force on RS-FIX-1 and on 3000 random catalogs, including multiplicity, rejections, per-candidate codes and relaxations. derive.js matches the revision-2 table row by row, so the F-TR-9 [I] inspection passes. Deviations judged acceptable:\n- PLANNER_LIMIT cap: a bound for threat T19; c2 must map it to a typed error (PB-3).\n- SPEC_MISMATCH recorded in the trace only (PB-3).\n- Relaxation order.\n- NFR5 generator's fixed deadline and budget: the brief gives none, and timing has a wide margin."
+    },
+    {
+      "id": "task:b4-env-readme",
+      "description": "b4 meets its acceptance criteria (.env.example names and placeholders, NFR4 scan, README essentials)",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1h959y-01ee5954",
+        "artifact:.eccode/artifacts/phase-b/submission.md#evidence-quality-notes"
+      ],
+      "notes": "Commenting out the secrets in .env.example is the correct consequence of the SEC-5 placeholder refusal and is documented. The invalid pre-work run (ev-mv1gdiqu, recorded as separate arguments) is honestly disclosed. It does not matter: the ls guard makes the declared command fail before the files exist by construction (verified at the plan gate), and my run of the declared command passes."
+    },
+    {
+      "id": "task:b3-test-harness",
+      "description": "b3 meets its acceptance criteria (net guard, node-proc ARCH-24, server-proc, app-harness latency, package scan, start-old-node on real Node 20/21, start-health, clean-checkout.sh, report-p95)",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1h9yvi-018dc008",
+        "artifact:scripts/clean-checkout.sh#L95-L147",
+        "artifact:test/helpers/node-proc.js#L1-L60"
+      ],
+      "notes": "The clean checkout ran npm install from the registry, npm test and npm start (health 200) in my run. start-old-node uses real /opt/node20 and /opt/node21. The 22.5-22.12 NODE_OPTIONS merge is simulated (USER-Q9) and disclosed. The late failing-state run is disclosed and does not matter, for the reason given under b4. start-health running the start equivalent, and clean-checkout not seeding, are both acceptable: the literal npm start runs in clean-checkout, and NFR1 lists install, test and start only."
+    },
+    {
+      "id": "phase:b-foundation",
+      "description": "Phase B goal and criteria RS-06..RS-11, NFR1, NFR4 proved; npm test passes offline; every test proving a criterion or finding carries its id",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv1h5bbh-010aae6e",
+        "ev:ev-mv1h9yvi-018dc008",
+        "ev:ev-mv1ha378-01c9beab",
+        "artifact:.eccode/artifacts/phase-b/submission.md#criteria-task-evidence"
+      ],
+      "notes": "RS-06..RS-11 and NFR4 are proved. Two items fail:\n- NFR1 and 'npm test passes' are not reliable: my phase run failed (PB-1).\n- Six design-item tests lack their id (PB-2, minor)."
+    },
+    {
+      "id": "lessons",
+      "description": "The four tasks' not-applicable decisions on mem-sd-mv1audrd-013b7102 hold",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1havho-019d0a9c",
+        "ev:ev-mv1eo87o-01c933d5"
+      ],
+      "notes": "The lesson is about a write guard resolving the wrong project root. No phase-B task builds such a guard, and the installed guard is the repaired version (sha256 d43f4b54...). Each task's written reason states a condition that really holds. clean-checkout.sh takes the project root from its own location and excludes .eccode/."
+    }
+  ],
+  "findings": [
+    {
+      "id": "PB-1",
+      "severity": "blocking",
+      "title": "Concurrent start on a fresh database fails: PRAGMA journal_mode = WAL throws SQLITE_BUSY despite busy_timeout",
+      "detail": "src/db/connection.js sets `PRAGMA busy_timeout` and then `PRAGMA journal_mode = WAL` (L29-L30). When several processes open a new database file at the same time, SQLite can return SQLITE_BUSY for the journal-mode switch without calling the busy handler. It does this when waiting could deadlock: one connection holds a shared lock and needs an exclusive one while another holds or waits for a write lock.\n- In my phase run of `npm test`, 'NFR1: two processes starting at the same time apply each migration exactly once and both succeed' failed: a child exited with 'Error: database is locked' at openDb, connection.js:30 (ev:ev-mv1h5bbh-010aae6e, 363/364).\n- The reproduction ran that test 10 times in isolation; 1 failed with the same error (ev:ev-mv1h6fnx-0154466d).\nb1's criterion requires that 'a second process starting at the same time skips applied versions', and the spec calls migrations multi-process safe. The later multi-process tests (rs14, rs20, rs26, lease-takeover, return-crash), and any two-server deployment, start processes on one fresh file and would inherit the race as flaky failures or startup crashes. The delivery lead's 364/364 run and my b1/b3 runs passing does not contradict this: the failure is intermittent.",
+      "evidence": [
+        "ev:ev-mv1h5bbh-010aae6e",
+        "ev:ev-mv1h6fnx-0154466d",
+        "artifact:src/db/connection.js#L28-L31",
+        "artifact:test/unit/db/migrate.test.js#L227"
+      ],
+      "recommendation": "Owner: b1-foundation-core (backend-engineer), src/db/connection.js.\nFix: openDb retries the journal-mode switch, and any other SQLITE_BUSY raised while opening, with a short bounded back-off up to the busy timeout, then gives a clear error. A synchronous sleep such as Atomics.wait on a SharedArrayBuffer is fine.\nAdd a regression test (or raise the existing one to at least 25 rounds of 3 processes) named with its id.\nResolved when the reviewer's reruns pass: `npm test` and `node .eccode/drafts/tr-phb-migrate-race.mjs 20` with 0 failures.\nIf a retry does not remove the failures, dispatch learning-debugger on PB-1 to find the root cause."
+    },
+    {
+      "id": "PB-2",
+      "severity": "minor",
+      "title": "Six tests that prove a design item do not carry its id",
+      "detail": "The phase criterion requires every test that proves a criterion or finding to start its name with that id. These do not:\n- 'RS_SAGA_LEASE_MS must be at least 3 times RS_PAYPAL_TIMEOUT_MS' (ARCH-26, limits.test.js:40);\n- 'RS_MODEL_CUSTOMER_DAILY_SHARE ... (default 0.2)' (SEC-10/OQ-D7, limits.test.js:66);\n- 'RS_FAKE_APPROVAL_HOST is 127.0.0.1 outside test mode' (SEC-12, hosts.test.js:116);\n- 'RS_TEST_HOOKS is refused when the Sandbox adapter is selected' (secrets.test.js:159);\n- 'SQLITE_BUSY after the busy timeout maps to 503 DB_BUSY' (connection.test.js:119; an RS-14-named variant exists in db-busy.test.js);\n- 'default deny: a route with a non-public policy answers 401' (ARCH-25, app.test.js:310).\nAll brief criteria of this phase are fully named. The gap affects only the evidence table's ability to cite design items by id, so it is minor, not major.",
+      "evidence": [
+        "ev:ev-mv1h8qn0-01c0fa75",
+        "artifact:test/unit/config/limits.test.js#L40",
+        "artifact:test/unit/config/hosts.test.js#L116",
+        "artifact:test/unit/http/app.test.js#L310"
+      ],
+      "recommendation": "Owner: b1-foundation-core (backend-engineer).\nRename the six tests with their ids (ARCH-26, SEC-10, SEC-12, the deployment item as 'SEC-3/T18' or its spec row, RS-14, ARCH-25) in the same rework as PB-1.\nResolved when a name scan of test/unit finds no test that checks a listed design item without its id."
+    },
+    {
+      "id": "PB-3",
+      "severity": "minor",
+      "title": "Deviations that need follow-ups in later tasks",
+      "detail": "I accept these deviations, but each creates an obligation the plan does not yet record:\n- PlannerLimitError (PLANNER_LIMIT) must not surface as an untyped 500 from POST /api/requests/:id/plan (c2).\n- Offers that fail the capacity or cup-diameter match are recorded only in the trace as SPEC_MISMATCH. The request page's 'What was rejected' (RS-35) will not show them, and no design code exists for them (G review, c5/g1).\n- The 60 s upload deadline must be enforced in the upload route (d3).\n- The seed's embedded RS-FIX-1 is not cross-checked against test/fixtures/rs-fix-1.json: both are only checked against the brief.\n- The two AppError classes rely on duck typing in the envelope; that is tested in app.test.js and acceptable.",
+      "evidence": [
+        "artifact:src/domain/planner.js#L140-L143",
+        "artifact:.eccode/artifacts/phase-b/submission.md#deviations-from-the-design-with-reasons"
+      ],
+      "recommendation": "Owners: c2 (map PLANNER_LIMIT to a catalogued error, e.g. 422 VALIDATION_FAILED, or 503 with a named code added to the catalog through the orchestrator); d3 (upload deadline); c5/g1 (decide with the orchestrator whether SPEC_MISMATCH offers are shown).\nResolved when each item is named in its task's acceptance criteria or handoff. Optionally, b2 adds a test asserting the seed constant equals the fixture file."
+    }
+  ],
+  "resolvedFindings": [],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
