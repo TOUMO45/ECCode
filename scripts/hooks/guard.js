@@ -54,7 +54,10 @@ const RECORD_FILES = new RegExp(String.raw`(^|[\\/])${RECORD_AREA}`);
 const SHELL_WRITE = new RegExp(String.raw`(>|\btee\b|\b(?:sed|perl)\s+(?:-\w+\s+)*-\w*i|\bmv\b|\bcp\b|\brm\b|\btruncate\b|\bdd\b|\bln\b|\binstall\b|\brsync\b|\btouch\b)[^|;&]*${RECORD_AREA}`);
 const CODE_WRITE = /\b(writeFileSync|writeFile|writeSync|appendFileSync|appendFile|createWriteStream|rmSync|rmdirSync|unlinkSync|unlink|renameSync|rename|copyFileSync|copyFile|cpSync|truncateSync|ftruncateSync|symlinkSync|fs\.rm|promises\.rm|write_text|write_bytes|os\.remove|os\.rename|os\.replace|os\.rmdir|os\.truncate|shutil\.\w+|File\.(?:write|delete)|IO\.write|FileUtils\.\w+|file_put_contents|fwrite|Deno\.(?:write\w*|remove\w*|rename|copyFile\w*|truncate\w*))\b|\bopen\s*\([^)]*['"][wax]b?\+?['"]/;
 // Variables that change who the CLI acts as, or its clock (order rules), when set inline.
-const IDENTITY_ENV = /^(?:ECCODE_ACTOR|ECCODE_TEST|ECCODE_NOW)(?:=|$)/;
+const IDENTITY_ENV = /^(?:ECCODE_ACTOR|ECCODE_TEST|ECCODE_NOW|ECCODE_ROOT|ECCODE_SHARED_MEMORY|ECCODE_SEQUENTIAL_ROLES|ECCODE_HOOKS)(?:=|$)/;
+// A shell function or alias defined in the same command line can hide the CLI from the words the
+// guard binds (`e() { eccode "$@"; }; e … --actor user`).
+const SHELL_WRAPPER = /(?:^|[;\n&|(]\s*)(?:function\s+[A-Za-z_]\w*|[A-Za-z_]\w*\s*\(\s*\))\s*\{|(?:^|[;\n&|(]\s*)alias\s+[A-Za-z_]\w*=/;
 const ECCODE_WORD = /(^|[\\/])eccode(\.js)?$/;
 // git subcommands that can revert, stash or delete working-tree files.
 const GIT_REVERTING = new Set(['checkout', 'restore', 'reset', 'stash', 'clean', 'rm', 'mv']);
@@ -162,6 +165,8 @@ function splitCommands(src) {
       while (i + 1 < src.length && src[i + 1] !== '\n') i++;
     } else if (c === ' ' || c === '\t' || c === '\r') {
       endWord();
+    } else if (c === '|' && word && /^\d?>{1,2}$/.test(word.text)) {
+      add('|'); // `>|` is the clobber redirect operator, not a pipe: the target follows it
     } else if ('\n;&|()'.includes(c)) {
       endCommand();
     } else {
@@ -208,8 +213,9 @@ function eccodeActors(cmd) {
   const actors = new Set();
   const problems = [];
   const mentionsEccode = /eccode/.test(cmd);
+  if (mentionsEccode && SHELL_WRAPPER.test(cmd)) problems.push('a shell function or alias is defined in the same command line, so the eccode invocation behind it cannot be bound; call the eccode CLI directly');
   walkCommands(cmd, (words) => {
-    if (words.some((w) => IDENTITY_ENV.test(w.text))) problems.push('ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW may not be set inline; pass --actor <your role> explicitly');
+    if (words.some((w) => IDENTITY_ENV.test(w.text))) problems.push('ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCODE_SEQUENTIAL_ROLES / ECCODE_HOOKS may not be set inline; pass --actor <your role> and --root explicitly');
     const at = words.findIndex((w) => ECCODE_WORD.test(w.text));
     if (at === -1) {
       // The command word is the first word that is not a NAME=value assignment.
@@ -373,9 +379,13 @@ function checkBash(cmd, role, root, cwd) {
       out('deny', `This command changes directory (cd/pushd/popd) and then writes the relative path "${relative}", which the guard cannot bind to a file. Write it with a path relative to the project root in a command without cd, or use the Edit/Write tool so ownership can be checked.`);
     }
     for (const t of targets) {
-      const rel = toPosix(path.relative(root, path.resolve(cwd || root, t)));
+      const abs = path.resolve(cwd || root, t);
+      // A project nested in a repository with its own record (an example app) is judged by its own
+      // record: the nearest .eccode/ above the target decides, not the outer one.
+      const targetRoot = findRoot(path.dirname(abs)) || root;
+      const rel = toPosix(path.relative(targetRoot, abs));
       if (outsideProject(rel)) continue; // outside the project is not ours (record files there are caught above)
-      checkEdit(root, rel, role);
+      checkEdit(targetRoot, rel, role);
     }
   }
   let gitRisk = null;
@@ -450,7 +460,9 @@ function main(input) {
   if (process.env.ECCODE_HOOKS === 'off') return;
   const tool = input.tool_name;
   const ti = input.tool_input || {};
-  const root = findRoot(process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd());
+  // The hook's cwd (the shell's) finds the project before the harness's project dir does: a project
+  // nested inside a repository that has its own record (an example app) is its own project.
+  const root = findRoot(input.cwd || process.cwd()) || findRoot(process.env.CLAUDE_PROJECT_DIR || process.cwd());
   if (!root) return; // not an ECCode project: no opinion
   const { toPosix } = require(path.join(LIB, 'util'));
   const role = roleOf(input.agent_type);
@@ -461,7 +473,8 @@ function main(input) {
     const target = ti.file_path || ti.notebook_path;
     if (!target) return;
     const abs = path.resolve(input.cwd || root, target);
-    const rel = toPosix(path.relative(root, abs));
+    const fileRoot = findRoot(path.dirname(abs)) || root; // the nearest record above the file decides
+    const rel = toPosix(path.relative(fileRoot, abs));
     if (outsideProject(rel)) {
       // Outside the project (e.g. scratch dirs) is nobody's business, except the record of
       // another project or the shared memory under ~/.eccode/: those are the CLI's alone.
@@ -476,7 +489,7 @@ function main(input) {
       }
       return;
     }
-    checkEdit(root, rel, role);
+    checkEdit(fileRoot, rel, role);
   }
 }
 
