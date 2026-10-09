@@ -190,3 +190,97 @@ changes are F1 and F2; F3–F6 are small and optional.
 - The CI logs of runs 66, 67, 68 and 92 (no access from here).
 - The spawn tests under CPU load, or whether `stderr` from a child killed by the OS is
   complete; `assertAllExitZero` prints what it got.
+
+---
+
+# Round 2: commit 901f8a0 (`git diff e488f38..901f8a0`)
+
+Same reviewer, same rules. Node 22.22.0 / libuv 1.51.0, Linux. New logs and probes under
+`probes/` (`npm-check-round2.log`, `prev-e488f38-*.log`, `probe-G-*`).
+
+## Decision: approved
+
+Every round-1 finding that needed a change is resolved by code that I read line by line
+and exercised, the two regression files fail (or hang, for the F3 case) on e488f38's
+`lib/util.js` and pass on 901f8a0, the CHANGELOG and threat-model item 7 now present the
+rename race and the lock race as two bounded candidate causes with TK-3 kept open until a
+Windows run captures the error, and the one optional item (the preview read under the lock)
+is recorded as a follow-up rather than claimed. The three new observations below are
+informational; none needs a change before merge.
+
+## What I ran (round 2)
+
+- `npm run check` on 901f8a0: **274 tests, 274 pass, 0 fail** (`probes/npm-check-round2.log`).
+- Both regression files against e488f38's `lib/util.js` in a detached worktree of e488f38
+  (removed afterwards), run file by file because the F3 case spins there:
+  - `tests/write-atomic-retry.test.js`: **0 pass / 5 fail** (`probes/prev-e488f38-write-atomic.log`),
+    matching the claim.
+  - `tests/lock-transient-errors.test.js`: the original eight cases pass (8/8,
+    `probes/prev-e488f38-lock-orig8.log`); the F2 case fails on the message regex
+    (`probes/prev-e488f38-lock-F2.log`); the F4 and F8 cases fail
+    (`probes/prev-e488f38-lock-tests.log`, second run); the F3 case never returns — the
+    whole file run directly was killed by `timeout -s KILL 60` (exit 137, same log, first
+    line), consistent with round-1 probe B. A plain `node --test` of both files hung on it,
+    which is why the combined log `prev-e488f38-round2-tests.log` is empty.
+- Probe G (`probe-G-rename-retry-edges.js`, `probe-G.log`) on 901f8a0, for the questions
+  asked: target directory vanished, rename landed-but-reported-refused, success-path temp
+  files, bound.
+
+## Round-1 findings: resolution
+
+| Finding | Status | Evidence |
+|---|---|---|
+| F1 rename over `state.json` | Resolved (code + attribution) | `lib/util.js:34-74` `writeFileAtomic(file, content, { retryMs = 1500 })`: retries `renameSync` on `FILE_IN_USE = {EPERM, EACCES, EBUSY}` at 25 ms until `retryMs`, then unlinks the temp (best effort) and rethrows the original error; any other code is thrown at once with the temp removed. Five mocked cases, 5/5 fail on e488f38. CHANGELOG 0.3.3 and threat-model item 7 reworded: two candidate causes, rename rated likelier, TK-3 open, decided by the captured stderr. The preview read in `commitReserved` is still outside the lock; recorded in the CHANGELOG as a follow-up, which is what round 1 allowed. |
+| F2 timeout masks the code | Resolved | `lib/util.js:132-151`: `last` is the open error, overwritten by a non-`ENOENT` stat/unlink error; LOCK_TIMEOUT message ends in `(last error: <code> <message>)` and `details.lastError = {code, syscall, message}`. `last` is always defined at the timeout check (it is set on every contended iteration before the check). Test fails on e488f38, passes now. |
+| F3 stale `continue` spin | Resolved | `lib/util.js:142`: the stale unlink no longer `continue`s; the iteration falls through to the timeout check and the 25 ms poll. Test (stat stale, unlink no-op, open EPERM) hangs on e488f38 and times out at ~200 ms on 901f8a0. Cost: one extra 25 ms sleep after a stale break, acceptable. |
+| F4 write failure after open | Resolved | `lib/util.js:155-163`: `writeSync` moved out of the acquisition loop; on failure the fd is closed, `releaseLock` removes our file, the error is rethrown unchanged. Test checks the fd is `EBADF` and the file is gone; fails on e488f38. |
+| F5 release deletes whatever is at `lockFile` | Known, documented | Comment at `lib/util.js:168-171`, CHANGELOG "Known, unchanged (review F5)". Behaviour unchanged from 0.3.2; not blocking. |
+| F6 `spawnCli` stdout not drained | Resolved | `tests/helpers.js:216-226` (`spawnCli`): `stdio: ['ignore', 'pipe', 'pipe']`, both pipes collected; `assertAllExitZero` (just below) prints both on failure. |
+| F7 tests | No change needed | New cases follow the same mock/restore pattern (`t.after`, restore before `rmSync`; the F4 case restores `fs.writeSync` in its own `after`). Timing: F2 `timeoutMs: 100`, F3 `200` with `unlinks ≤ 12` (max 10 at 25 ms polls), F4 `< 500` for a path with no sleep; rename tests `< 1500` for two 25 ms sleeps and `[200, 2000)` with `2..12` attempts (probe G3b: 9 attempts, 202 ms). None can flake on a slow machine. |
+| F8 `sleepSync` not exported | Resolved | `lib/util.js:320` exports it; the test asserts every name `bin/eccode.js` destructures from `lib/util` is a function. Fails on e488f38. (The separately queued task `task_f8c57c1f` for this is now redundant and can be dismissed.) |
+
+## The rename retry, read for the questions asked
+
+- **Temp file on success paths:** the temp is the rename's source, so a successful rename
+  consumes it; probe G3a shows two consecutive writes leave no `*.tmp`. On the give-up and
+  non-transient paths the temp is unlinked (G1: `ENOENT` thrown after 1 attempt, no temp
+  because the directory itself is gone; G3b: `EBUSY` after 9 attempts, temp removed, target
+  untouched).
+- **A first rename that landed but was reported as an error:** a same-volume `MoveFileExW`
+  is one `NtSetInformationFile(FileRenameInformation)` call, so it cannot report failure
+  after replacing the target; the temp and the target are always in the same directory here,
+  so the cross-volume copy-then-delete path never applies. If it did happen (probe G2, forced
+  by the mock), the retry finds the temp gone and throws `ENOENT` from the second attempt
+  after 26 ms while the target holds the new content — a reported failure for a write that
+  landed, which is the safe direction for a caller that then re-reads. Informational, no change.
+- **Bound:** `Date.now() - start > retryMs` is checked on every failure before sleeping, so
+  the wait is at most `retryMs` plus one poll and one rename; `retryMs = 1500` is well inside
+  the lock's `timeoutMs = 10000`, so six writers each paying it at worst still cannot push a
+  contender into LOCK_TIMEOUT on that account alone.
+- **Target directory vanished:** `renameSync` answers `ENOENT` (Windows:
+  `ERROR_PATH_NOT_FOUND` → `ENOENT`), which is not in `FILE_IN_USE`, so it is thrown at once;
+  the temp unlink also fails `ENOENT` and is swallowed (G1). Correct.
+
+## New observations (informational, no change required)
+
+- **N1 — POSIX permission errors on a rename now cost up to 1.5 s before the same error.**
+  Every `writeFileAtomic` caller (`lib/store.js`, `lib/evidence.js:76`, `lib/delivery.js:403`,
+  `lib/memory/improve.js:139-227`) retries `EPERM`/`EACCES` from the rename for `retryMs` on
+  Linux and macOS, where the codes are never transient (a read-only directory fails earlier,
+  at the temp `writeFileSync`, so the common case is unaffected). The error is thrown
+  unchanged afterwards, so nothing is masked; it is a delay, and the CHANGELOG says so.
+  A `process.platform === 'win32'` gate would remove it at the cost of platform-stubbing
+  the tests; not worth it now.
+- **N2 — the F3 regression test hangs rather than fails if the spin ever returns.** On
+  e488f38 the case never returns and node:test produces no output for the file until killed.
+  If the stale-path bound regresses, CI will show a job timeout instead of a named failing
+  test. A future hardening is a per-file `--test-timeout` in `npm test` or a watchdog in
+  the case; not needed for this merge.
+- **N3 — `last.message` in the LOCK_TIMEOUT text repeats the lock path.** Node's fs errors
+  already carry the path, so the message now names it twice. Cosmetic.
+
+## Still not checked
+
+Nothing ran on Windows; the claim that the Windows job decides between the two causes
+rests on the captured stderr naming `open '.lock'` or `rename '...state.json'`. The suite
+ran on Node 22.22 only.

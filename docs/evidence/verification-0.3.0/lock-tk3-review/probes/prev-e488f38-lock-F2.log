@@ -1,0 +1,35 @@
+TAP version 13
+# Subtest: withLock: LOCK_TIMEOUT names the last error, so a permanent EACCES (read-only .eccode on POSIX) is not mistaken for contention (review F2)
+not ok 1 - withLock: LOCK_TIMEOUT names the last error, so a permanent EACCES (read-only .eccode on POSIX) is not mistaken for contention (review F2)
+  ---
+  duration_ms: 105.605892
+  type: 'test'
+  location: '/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/prev-e488f38/tests/lock-transient-errors.test.js:154:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /last error: EACCES .*mocked open/. Input:
+    
+    'Could not acquire lock /tmp/eccode-lock-anOxk9/.lock within 100ms'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: 'Could not acquire lock /tmp/eccode-lock-anOxk9/.lock within 100ms'
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/prev-e488f38/tests/lock-transient-errors.test.js:160:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 115.34036
+exit=1
