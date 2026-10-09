@@ -1,6 +1,6 @@
 {
-  "seq": 347,
-  "lastHash": "7061c3b213c2fd99c148d8ba3e77ecc70b9e9ff9d4a3780b4ea3c97c709a6f7f",
+  "seq": 348,
+  "lastHash": "6317c14b9c1849001120e6aeadccc4223bc3b9acfb96ac3961ea24079b23390f",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -13277,6 +13277,16 @@
       "alternatives": "no lockfile (install without integrity hashes)",
       "lessons": [],
       "at": "2026-10-09T22:36:35.047Z",
+      "by": "orchestrator"
+    },
+    "dec-mv1ltdwf-01923dd2": {
+      "id": "dec-mv1ltdwf-01923dd2",
+      "title": "Toolkit version checkpoint: 0.3.3 adopted (TK-3 Windows lock and rename retries)",
+      "decision": "From this point the pilot runs ECCode 0.3.3 (merge a621c59): bounded retries on the record lock and on the state-snapshot rename, both candidate causes of the Windows concurrent-writer failures; independently reviewed in two rounds; 274 tests; the guard script is unchanged.",
+      "rationale": "Same readiness rule as 0.3.2: separate branch, failing-first regression tests, independent review, explicit checkpoint. The repair touches only lock and atomic-write robustness; Linux behaviour on the happy path is unchanged, and a genuine permission error now costs up to 1.5 s before the same error (reviewer note N1).",
+      "alternatives": "stay on 0.3.2 and accept a flaky gating Windows job",
+      "lessons": [],
+      "at": "2026-10-09T23:36:11.731Z",
       "by": "orchestrator"
     }
   },
