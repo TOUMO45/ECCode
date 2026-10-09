@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.3.1 — 2026-10-09 (verification checkpoint)
+
+An independent adversarial verification of 0.3.0 (`docs/evidence/verification-0.3.0/REPORT.md`: a fresh agent context, probes per finding with variations, run on `5da8913`'s engine) found that F1, F2 and F4 were **not closed**: three new blocking bypasses, six non-blocking ones, no overblocking. The RescueStock pilot found a fourth defect in the guard. Every repair below was written failing-test-first on a separate branch and independently reviewed before merging; the lead's matrix is `docs/build/eccode-verification.md`. This is the version the pilot runs on.
+
+### Gates and evidence (F1, F2, F3)
+- **Required criteria come from the pinned bytes, not the file on disk** (NEW-1, blocking): design and verification derive their required criteria from the approved brief; if that file no longer matches the hash the architecture approval pinned, `gate show`, both review decisions and a later submission that lists the file are refused with `APPROVED_ARTIFACT_CHANGED` (restore it from git; a revision is a new artifact of a later submission). Before: a document author could rewrite the brief after approval, drop criteria, and verification re-pinned the edited file with `audit` reporting "approved artifacts unchanged".
+- **The release tree is compared from the first approved commit** (NEW-3, blocking): `unreviewedChanges`/`releaseTreeChanges` diff from the earliest approved submission's commit, and a verification approval is refused while any change is not pinned by that very submission at its current hash. Before: a file committed between a phase approval and the verification submission, listed by no gate, dropped out of the check once verification was approved and shipped in the release commit.
+- **A brief with no criteria ids cannot be approved** (NEW-2): when the configured criteria sections list no ids, the architecture and verification approvals are refused with the resubmit instruction; `review.criteriaSections.architecture: []` turns the rule off explicitly.
+- **A staged rename declares its old path** (NEW-4): completion accounting runs `git diff --no-renames`, so `git mv old new` with only `new` declared is refused; the release report still names `from`.
+- **The declared check is bound to its working directory** (NEW-5): plans may declare `verification.cwd` (relative, inside the project); completion and phase approval require the cited run's recorded cwd to equal it (default: the project root).
+
+### The guard (F4, F5, F6; pilot)
+- **`>|` is a redirect** (NEW-6, blocking): the clobber operator was split at its bar, so `echo x >| file` had no target and every role could write any file.
+- **Nested projects are judged by their own record** (pilot): the hook's cwd finds the project root before the harness's project directory, and every file target is judged by the nearest `.eccode/` above it. Before, a project at `examples/<app>/` inside a repository with its own record was judged by the outer record, so its reviewers and authors could not write their own draft and artifact areas (two pilot dispatches failed this way).
+- **`ECCODE_SHARED_MEMORY`, `ECCODE_ROOT`, `ECCODE_SEQUENTIAL_ROLES` and `ECCODE_HOOKS` may not be set inline** (NEW-9), like `ECCODE_ACTOR/TEST/NOW` before them.
+- **A shell function or alias wrapped around the CLI is refused** (NEW-7): the words behind it cannot be bound.
+- From the Windows CI run of 0.3.0 (2 of 233 failed): record and memory patterns accept both path separators and are applied to the raw command before tokenizing; the CLI is recognised by a quoted Windows path. The tokenizer keeps bash semantics on every platform (a first version that kept backslashes was rejected in review: `.eccode/drafts/.\./state.json` read as a draft while bash writes the record). Windows itself is still not run here.
+
+### Documented, not repaired (threat model §4)
+- Metadata outside a shared record's attested hash (reviewer name, evidence snapshot status) is unbound (NEW-8).
+- Known-shape shell writes the guard does not read as writes (`rm`, `git apply`, `patch`, `curl -o`, `tar -x`, a symlink that lives outside the project): residual 1.
+- The final handoff's sentence that user events "were confirmed by a person at a terminal" is qualified: an event forged offline with a valid hash passes `audit` (residual 3).
+- The npm tarball ships `docs/evidence/` (8 MB); hygiene, not a defect.
+
+### Release blockers that remain
+- The marketplace default branch still installs 0.1.0 (RB-1): merging this branch into the default branch is the user's push.
+- Windows: the CI job reports; a passing Windows run is required before Windows is claimed.
+
+### Tests
+- 246 (233 on 0.3.0, plus `tests/review-F9-win32-guard.test.js` 4, `tests/guard-verification-repairs.test.js` 4, `tests/verification-repairs.test.js` 5).
+
 ## 0.3.0 — 2026-10-09
 
 Closes the nine findings of the independent review bundle (`docs/evidence/review-bundle/`, review of commit `b8def3da` on 2026-10-09). Each finding was re-run as a probe against this branch's head before anything changed (F2 was already closed by RT2; the other eight reproduced), then repaired with a failing-first regression test. Mapping, probe scripts and the Windows logs: [docs/evidence/review-bundle/README.md](docs/evidence/review-bundle/README.md). Several rules are stricter than 0.2.0; the record format is compatible (old logs replay unchanged; see "Record compatibility" in `docs/architecture.md`).
