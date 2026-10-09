@@ -16,15 +16,14 @@ const tasks = require('../lib/tasks');
 const evidence = require('../lib/evidence');
 const { deliver } = require('../lib/delivery');
 const { openRework } = require('../lib/rework');
-const { write, samplePlan, passCheck, handoffFor, approval, expectCode, tmpProject, approveThroughPlan } = require('./helpers');
+const { initRepo, write, samplePlan, passCheck, handoffFor, approval, expectCode, tmpProject, approveThroughPlan } = require('./helpers');
 
 const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
 
 /** A change-profile project that has been delivered once. */
 function deliveredProject() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-rework-'));
-  execFileSync('git', ['init', '-q'], { cwd: dir });
-  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  initRepo(dir);
   const store = init(dir, { name: 'Fix totals', idea: 'Invoice totals are wrong when a shipping fee is present', profile: 'change' });
   const config = loadConfig(dir);
   gates.startGate(store, config, 'plan', 'orchestrator');

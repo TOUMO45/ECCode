@@ -9,6 +9,7 @@ const path = require('path');
 const { execFileSync, spawnSync } = require('child_process');
 const { init } = require('../lib/project');
 const gates = require('../lib/gates');
+const { initRepo } = require('./helpers');
 
 const HOOK = path.join(__dirname, '..', 'scripts', 'hooks', 'stop.js');
 
@@ -35,7 +36,7 @@ function run({ cwd, command, unattended = true, active = false, session = 'sess-
 
 function emptyDir() {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-stop-'));
-  execFileSync('git', ['init', '-q'], { cwd: d });
+  initRepo(d);
   return d;
 }
 

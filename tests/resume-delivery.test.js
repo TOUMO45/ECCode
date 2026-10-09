@@ -122,7 +122,7 @@ test('happy path produces a verified final handoff', () => {
 
 test('evidence logs redact secrets and record exit codes', () => {
   const ctx = tmpProject();
-  const ev = evidence.runCommand(ctx.store, 'test-engineer', { label: 'leaky', command: 'echo "ANTHROPIC key sk-ant-api03-abcdefghijklmnop and api_key=supersecret123"; exit 4' });
+  const ev = evidence.runCommand(ctx.store, 'test-engineer', { label: 'leaky', command: 'node -e "console.log(\'ANTHROPIC key sk-ant-api03-abcdefghijklmnop and api_key=supersecret123\'); process.exit(4)"' });
   assert.strictEqual(ev.exitCode, 4);
   assert.strictEqual(ev.status, 'failed');
   const log = fs.readFileSync(path.join(ctx.dir, ev.log), 'utf8');
@@ -248,19 +248,21 @@ test('run end --no-usage is accepted by the CLI and a bare run end is refused wi
   assert.strictEqual(ctx.store.state().runs[id].usageReported, false);
 });
 
-test('evidence run preserves argument quoting from the CLI (sh -c with compound commands)', () => {
+test('evidence run preserves argument quoting from the CLI (arguments with spaces and quotes, compound commands)', () => {
   const ctx = tmpProject();
   const { spawnSync } = require('child_process');
   const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
   const run = (args) => spawnSync(process.execPath, [bin, 'evidence', 'run', '--actor', 'test-engineer', '--label', 'q', '--json', '--root', ctx.dir, '--', ...args], { encoding: 'utf8' });
-  let res = run(['sh', '-c', 'test -d .eccode && echo "it works"']);
+  // Single quotes inside the argument: '\'' escaping on POSIX, plain grouping under cmd.exe.
+  let res = run(['node', '-e', "if (!require('fs').existsSync('.eccode')) process.exit(3); console.log('it works')"]);
   assert.strictEqual(res.status, 0, res.stderr);
   let ev = JSON.parse(res.stdout);
   assert.strictEqual(ev.status, 'passed');
   assert.match(ev.outputTail, /it works/);
+  // Double quotes inside the argument: the \" path on win32.
   res = run(['node', '-e', 'process.exit(require("fs").existsSync(".eccode") ? 0 : 3)']);
   assert.strictEqual(JSON.parse(res.stdout).status, 'passed');
-  res = run(['echo one && echo two']); // a single argument is a shell command string
+  res = run(['node -e "console.log(\'one\')" && node -e "console.log(\'two\')"']); // a single argument is a shell command string
   ev = JSON.parse(res.stdout);
   assert.match(ev.outputTail, /one\ntwo/);
 });

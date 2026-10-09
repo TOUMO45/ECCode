@@ -16,6 +16,8 @@ jobs:
         node: ['18.17', '20', '22']
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the upgrade/rollback test installs the 0.1.0 release from history
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
@@ -27,13 +29,22 @@ jobs:
         run: npm run check
 
   toolkit-windows:
-    # The engine is portable; the suite drives sh -c and POSIX paths in a few
-    # tests, so Windows is reported but does not gate merges yet.
-    name: toolkit (windows, node 22, experimental)
+    # The engine is portable. The five failures of the independent review's
+    # Windows run were in the suite, not the engine: fixtures that needed sh,
+    # grep, true/false or ";" (cmd.exe has none of them), POSIX-only argument
+    # quoting in `evidence run -- ...`, and test repos whose checkouts rewrote
+    # LF as CRLF under the runner's global core.autocrlf=true, so pinned byte
+    # hashes no longer matched. Fixed by portable `node -e` fixtures, a win32
+    # branch in shellQuote, core.autocrlf=false in every test repo and
+    # .gitattributes (eol=lf). Reported but not gating until this job has
+    # passed on the runner; then drop continue-on-error.
+    name: toolkit (windows, node 22, not gating yet)
     runs-on: windows-latest
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

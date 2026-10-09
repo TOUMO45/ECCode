@@ -5,7 +5,7 @@ const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const evidence = require('../lib/evidence');
 const { loadConfig } = require('../lib/config');
-const { tmpProject, write, approveThroughPlan, samplePlan, task, passCheck, handoffFor, approval, expectCode } = require('./helpers');
+const { initRepo, tmpProject, write, approveThroughPlan, samplePlan, task, passCheck, handoffFor, approval, expectCode } = require('./helpers');
 
 test('plan validation catches cycles, unknown deps/owners and backwards phase deps', () => {
   const config = loadConfig(require('os').tmpdir());
@@ -164,8 +164,7 @@ test('scope checks work when the project is a subdirectory of a larger git repo'
   const { execFileSync } = require('child_process');
   const { init } = require('../lib/project');
   const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'mono-'));
-  execFileSync('git', ['init', '-q'], { cwd: repo });
-  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: repo });
+  initRepo(repo);
   const dir = path.join(repo, 'examples', 'app');
   fs.mkdirSync(dir, { recursive: true });
   const store = init(dir, { name: 'Sub', idea: 'project nested in a monorepo' });

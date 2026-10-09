@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseArgs } = require('../lib/cli-args');
-const { EccodeError, readJson, own } = require('../lib/util');
+const { EccodeError, readJson, own, shellQuote } = require('../lib/util');
 
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
@@ -87,10 +87,6 @@ Other
 
 Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR), --json
 `;
-
-function shellQuote(arg) {
-  return /^[A-Za-z0-9_\/.,:=@%+-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, "'\\''")}'`;
-}
 
 function findRoot(flags) {
   if (flags.root) return path.resolve(flags.root);

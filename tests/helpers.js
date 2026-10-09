@@ -45,10 +45,22 @@ x
 x
 `;
 
+/**
+ * A throwaway repo whose checkouts never rewrite line endings: byte hashes of
+ * approved files are part of the record, and a machine with a global
+ * core.autocrlf=true would otherwise restore `// ui\n` as `// ui\r\n`. The
+ * setting is written with `git config` (repo-local, persisted), not `git -c`
+ * on `init`, which is not.
+ */
+function initRepo(dir) {
+  execFileSync('git', ['init', '-q'], { cwd: dir });
+  execFileSync('git', ['config', 'core.autocrlf', 'false'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+}
+
 function tmpProject({ configOverrides } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-test-'));
-  execFileSync('git', ['init', '-q'], { cwd: dir });
-  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  initRepo(dir);
   const store = init(dir, { name: 'Test', idea: 'Test idea for the pipeline' });
   if (configOverrides) {
     const file = path.join(dir, '.eccode', 'config.json');
@@ -168,4 +180,4 @@ function expectCode(fn, code) {
   throw new Error(`expected ${code}, but call succeeded`);
 }
 
-module.exports = { tmpProject, write, approval, approvalWithLessons, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD };
+module.exports = { initRepo, tmpProject, write, approval, approvalWithLessons, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD };

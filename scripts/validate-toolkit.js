@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const { DEFAULT_CONFIG } = require('../lib/config');
 
 const ROOT = path.join(__dirname, '..');
@@ -71,10 +72,43 @@ for (const groups of Object.values(hooks.hooks)) {
     }
   }
 }
-for (const f of ['plugin.json', 'marketplace.json']) JSON.parse(fs.readFileSync(path.join(ROOT, '.claude-plugin', f), 'utf8'));
+const plugin = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8'));
+const marketplace = JSON.parse(fs.readFileSync(path.join(ROOT, '.claude-plugin', 'marketplace.json'), 'utf8'));
+
+// Release reproducibility: the package entry point and every published path
+// exist, the manifests carry the package version, and `npm pack` ships the
+// entry point and the CLI (the exact release is what gets installed, not the checkout).
+const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+if (!pkg.main || !fs.existsSync(path.join(ROOT, pkg.main))) errors.push(`package.json: main "${pkg.main}" does not exist`);
+for (const f of pkg.files || []) if (!fs.existsSync(path.join(ROOT, f))) errors.push(`package.json: files entry "${f}" does not exist`);
+if (plugin.version !== pkg.version) errors.push(`.claude-plugin/plugin.json: version ${plugin.version} must equal package.json version ${pkg.version} (bump them together)`);
+for (const p of marketplace.plugins || []) if (p.version !== pkg.version) errors.push(`.claude-plugin/marketplace.json: plugin ${p.name} version ${p.version} must equal package.json version ${pkg.version} (bump them together)`);
+
+/** Paths `npm pack` would ship, or null when npm is not installed. */
+function npmPackFiles() {
+  const npm = process.env.npm_execpath; // set under `npm run`: run that npm with this node, no shell
+  const opts = { cwd: ROOT, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 };
+  const res = npm && /[\\/]npm-cli\.js$/.test(npm)
+    ? spawnSync(process.execPath, [npm, 'pack', '--dry-run', '--json'], opts)
+    : spawnSync('npm', ['pack', '--dry-run', '--json'], { ...opts, shell: process.platform === 'win32' });
+  if (res.error && res.error.code === 'ENOENT') return null;
+  if (res.status !== 0) {
+    errors.push(`npm pack --dry-run failed: ${(res.stderr || res.error && res.error.message || '').trim()}`);
+    return [];
+  }
+  try {
+    return JSON.parse(res.stdout)[0].files.map((f) => f.path);
+  } catch (e) {
+    errors.push(`npm pack --dry-run --json: unreadable output (${e.message})`);
+    return [];
+  }
+}
+const packed = npmPackFiles();
+if (packed === null) console.error('note: npm not found on PATH; the npm pack content check was skipped');
+else for (const f of ['lib/index.js', 'bin/eccode.js']) if (!packed.includes(f)) errors.push(`npm pack would not ship ${f}: add its directory to package.json "files"`);
 
 if (errors.length) {
   console.error(`Toolkit validation FAILED (${errors.length}):\n- ${errors.join('\n- ')}`);
   process.exit(1);
 }
-console.log(`Toolkit validation passed: ${agentNames.size} agents, ${fs.readdirSync(path.join(ROOT, 'skills')).length} skills, ${fs.readdirSync(path.join(ROOT, 'commands')).length} commands, hooks wired.`);
+console.log(`Toolkit validation passed: ${agentNames.size} agents, ${fs.readdirSync(path.join(ROOT, 'skills')).length} skills, ${fs.readdirSync(path.join(ROOT, 'commands')).length} commands, hooks wired, package ${pkg.version}${packed ? ` (${packed.length} files)` : ''}.`);

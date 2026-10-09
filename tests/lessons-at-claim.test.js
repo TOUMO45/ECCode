@@ -13,7 +13,7 @@ const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const evidence = require('../lib/evidence');
 const { Memory } = require('../lib/memory/records');
-const { write, passCheck, handoffFor, approval, approvalWithLessons, expectCode } = require('./helpers');
+const { initRepo, write, passCheck, handoffFor, approval, approvalWithLessons, expectCode } = require('./helpers');
 
 const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
 const { setup, finish } = require('./lesson-fixture');
@@ -113,7 +113,7 @@ test('real trial data: the idempotency lesson is retrieved and ranked first for 
   process.env.ECCODE_LEARNING = 'on';
   const fx = JSON.parse(fs.readFileSync(path.join(fixDir, 'e1-task.json.txt'), 'utf8'));
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-fixproj-'));
-  execFileSync('git', ['init', '-q'], { cwd: dir });
+  initRepo(dir);
   const store = init(dir, { name: fx.project.name, idea: fx.project.idea, profile: 'change' });
   const out = retrieveForTask(store, loadConfig(dir), fx.task, fx.project);
   assert.strictEqual(out[0].id, 'mem-sd-muzhyaa9-0166e67d', JSON.stringify(out.map((o) => [o.id, o.priority])));
