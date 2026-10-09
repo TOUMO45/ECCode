@@ -168,6 +168,46 @@ test('NEW-1 required criteria come from the pinned brief: an approved brief edit
   assert.strictEqual(store.audit().ok, true);
 });
 
+// ---------------------------------------------------------------------------------------------- NEW-2
+
+test('NEW-2 a brief whose criteria sections carry no ids cannot be approved; review.criteriaSections.architecture: [] disables the rule', () => {
+  const title = (ctx) => approve([crit('C1', [`artifact:${BRIEF_REL}#Risks`], 'The document has a title')]);
+  // The heading exists but lists no ids.
+  const ctx = tmpProject();
+  submitBrief(ctx, BRIEF_NO_IDS);
+  assert.deepStrictEqual(gates.requiredCriteria(ctx.store.state(), ctx.config, ctx.dir, 'architecture'), []);
+  let err = expectCode(() => gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', title(ctx)), 'REVIEW_REJECTED');
+  assert.match(err.message, /Acceptance Criteria/);
+  assert.match(err.message, /no criterion ids/);
+  assert.match(err.message, /- AC1: /);
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'submitted');
+  // The configured heading does not exist at all: refused too, naming the heading.
+  const ctx2 = tmpProject({ configOverrides: { review: { criteriaSections: { architecture: ['Definition of Done'] } } } });
+  submitBrief(ctx2, BRIEF_AC1_AC2);
+  err = expectCode(() => gates.recordReview(ctx2.store, ctx2.config, 'architecture', 'architecture-reviewer', title(ctx2)), 'REVIEW_REJECTED');
+  assert.match(err.message, /Definition of Done/);
+  assert.match(err.message, /- AC1: /);
+  // Explicitly empty: the rule is off, and an approval without acceptance ids goes through.
+  const ctx3 = tmpProject({ configOverrides: { review: { criteriaSections: { architecture: [] } } } });
+  assert.deepStrictEqual(ctx3.config.review.criteriaSections.architecture, []);
+  submitBrief(ctx3, BRIEF_NO_IDS);
+  gates.recordReview(ctx3.store, ctx3.config, 'architecture', 'architecture-reviewer', title(ctx3));
+  assert.strictEqual(ctx3.store.state().gates.architecture.status, 'approved');
+  // The verification gate applies the same rule: with the rule back on, the no-ids brief cannot pass verification either.
+  approveDesignAndPlan(ctx3);
+  finishPhase(ctx3);
+  const file = path.join(ctx3.dir, '.eccode', 'config.json');
+  const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
+  cfg.review.criteriaSections = { architecture: ['Acceptance Criteria'] };
+  writeJson(file, cfg);
+  const config = loadConfig(ctx3.dir);
+  submitVerification({ ...ctx3, config });
+  const sev = passCheck(ctx3.store, 'security-reviewer');
+  err = expectCode(() => gates.recordReview(ctx3.store, config, 'verification', 'security-reviewer', coverage({ ...ctx3, config }, 'verification', [`ev:${sev.id}`])), 'REVIEW_REJECTED');
+  assert.match(err.message, /no criterion ids/);
+  assert.strictEqual(ctx3.store.state().gates.verification.status, 'submitted');
+});
+
 // ---------------------------------------------------------------------------------------------- NEW-3
 
 test('NEW-3 a file committed after a phase approval that no gate lists blocks the verification approval; listed in the verification submission it passes', () => {
