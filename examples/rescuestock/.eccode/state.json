@@ -1,6 +1,6 @@
 {
-  "seq": 48,
-  "lastHash": "7a62f1a98be3cde758ee815a33a559d2608870657b3c2dc8938fb96349558e44",
+  "seq": 52,
+  "lastHash": "a235983a9e044bf1f359cbccff9ba7e5f216efc1a83b14231f08eae7c9b6a91c",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -16,7 +16,7 @@
     "architecture": {
       "id": "architecture",
       "kind": "architecture",
-      "status": "changes_requested",
+      "status": "submitted",
       "iterations": 1,
       "authors": [
         "product-architect"
@@ -34,6 +34,19 @@
           ],
           "respondsTo": null,
           "notes": "Brief restating RS-REQ-1 verbatim (RS-01..33, RS-NF-1..4 as NFR1-4), additions RS-34..39, NFR5-6"
+        },
+        {
+          "id": "sub-mv1awqkf-017ea892",
+          "actor": "product-architect",
+          "at": "2026-10-09T18:30:52.287Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/architecture/brief.md",
+              "sha256": "f2d88ddf8c6425cd521747e5d6fda0dc6a45cfe86985cb366367e85ebd56005c"
+            }
+          ],
+          "respondsTo": "rev-mv16o544-0127ccbf",
+          "notes": "Revision 2: self-contained brief addressing ARCH-1..21; placed after the 0.3.1 guard repair with three placement corrections (RS-32 stock-depletion trigger, in-flight authorize under the void rule, NFR1 under either Q9 answer)"
         }
       ],
       "reviews": [
@@ -1219,6 +1232,57 @@
       "id": "ho-mv15xaoa-019fa950",
       "recordedBy": "product-architect",
       "at": "2026-10-09T16:11:20.273Z"
+    },
+    "ho-mv1axhc8-01d4787f": {
+      "from": "product-architect",
+      "to": "architecture-reviewer",
+      "gate": "architecture",
+      "objective": "Re-review the RescueStock architecture brief, revision 2 (submission sub-mv1awqkf-017ea892, brief.md sha256 f2d88ddf8c6425cd521747e5d6fda0dc6a45cfe86985cb366367e85ebd56005c), which responds to review rev-mv16o544-0127ccbf. All seven major findings (ARCH-1, 2, 3, 4, 5, 6, 19), the minor findings (ARCH-7, 9, 10, 11, 12, 13, 16, 17, 18, 20, 21) and the info findings (ARCH-8, 14, 15) are addressed in a self-contained brief.",
+      "context": "The brief is now self-contained. Under Architecture it inlines: the RS-FIX-1 fixture with pinned inventory (1 bundle per supplier A-E); the planner rules (lexicographic objective, multiplicity bound, candidate codes, per-candidate codes, computed relaxations); four state machines with authorization_pending, capture_pending and refund_pending; a 13-row precedence table deriving the rescue status (including cancelling, refunding and failed_needs_attention); and the payment saga (exclusive approved->executing claim under BEGIN IMMEDIATE, reservation consumed in the same transaction, void rule for RS-13/15/17/18/21, point where supersession stops applying, restart and lease takeover). It also adds the PayPal return/session design (token-owner check, idempotent authorize, SameSite=Lax, fake approval page on a different site), idempotency rules, a data model and API summary, runtime model budget and rate limit, the degraded manual-entry path, the eval corpus test/fixtures/extraction/ EXT-1, and template-rendered explanations. Orchestrator decisions cited: dec-mv16pyxx-01bad0bf (Node >= 22.13), dec-mv16pz0g-01d5c4c2 (Q1/Q3/Q4/Q6/Q8 defaults), dec-mv16pz32-013c4cd1 (test script layout). All 45 criterion ids are kept; ACs were strengthened as the findings required. The only narrowing of a user requirement is the Node floor in NFR1 (RS-NF-1 says >= 22.5; the orchestrator decision says >= 22.13), which is flagged as Q9 for the user, and the NFR1 AC states the pass condition under either answer. The 'Where this brief goes beyond goal.md' subsection lists every extension. goal.md is unchanged. Provenance: the revision was written by an earlier product-architect context that could not place it because of the nested-root guard defect (preserved unchanged at docs/evidence/verification-0.3.0/pilot-blocked-nested-root/brief-r2.md, sha256 8f5d938c...). This context re-checked it against the review findings, goal.md and the recorded decisions, and placed it with three corrections, listed as the '(placement)' rows of the response table: (1) the admin stock-depletion fault now withdraws the offer and lets supersession cancel unconfirmed orders, so RS-32's old plan ends 'superseded' as its AC requires (previously the fault refused orders, which yields non_executable); (2) an operation in 'approved' with an authorize call still intent/unknown is voided at the provider after reconciliation instead of locally, so no authorization is orphaned; (3) the NFR1 AC states the Q9 'keep 22.5' alternative. Risks RISK-13..RISK-18 are in the register (RISK-15 mitigated). eccode memory search returned no records, so no lessons were cited.",
+      "inputs": [
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/reviews/rev-mv16o544-0127ccbf.json",
+        "docs/build/goal.md",
+        "docs/build/plan.md",
+        "docs/integration-research.md",
+        "decisions dec-mv16pyxx-01bad0bf, dec-mv16pz0g-01d5c4c2, dec-mv16pz32-013c4cd1"
+      ],
+      "expectedOutput": "A recorded review of submission sub-mv1awqkf-017ea892 of the architecture gate that resolves or re-opens each finding of rev-mv16o544-0127ccbf by id and covers the 45 required criteria.",
+      "acceptanceCriteria": [
+        "gate show architecture lists the same 45 required ids (RS-01..RS-39, NFR1..NFR6)",
+        "Each major finding (ARCH-1, 2, 3, 4, 5, 6, 19) is checked against the brief section named in its row of the 'Revision 2: response to review' table",
+        "The three '(placement)' corrections (RS-32 trigger, in-flight authorize under the void rule, NFR1 under either Q9 answer) are checked for consistency with the state machines and the saga",
+        "The pinned-inventory outcomes, the relaxations and the per-candidate codes are reproducible from ev:ev-mv1719y8-011f6742 and ev:ev-mv171l87-01672a57",
+        "Open questions that need the user (Q1-Q10, especially new Q9 Node floor and Q10 runtime model budget) are carried forward"
+      ],
+      "completedWork": "Placed revision 2 of brief.md (self-contained; finding-to-section table at the top) after verifying it against every finding of rev-mv16o544-0127ccbf, goal.md RS-REQ-1 and the three orchestrator decisions; made the three placement corrections described in context; confirmed by a local parse and by gate show that the brief lists exactly 45 criterion ids; submitted as sub-mv1awqkf-017ea892 with --responds-to rev-mv16o544-0127ccbf. Earlier context (not repeated here): two planner checks recorded as evidence (pinned inventory, multiplicity guard, relaxations, NFR5 generator timing at worst 11.8 ms over 200 seeds; per-candidate explanation rule) and RISK-13..RISK-18 recorded with eccode risk add.",
+      "filesChanged": [
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/artifacts/architecture/handoff-2.json"
+      ],
+      "evidence": [
+        "ev:ev-mv1719y8-011f6742",
+        "ev:ev-mv171l87-01672a57",
+        "ev:ev-mv16ez5r-01e792ff",
+        "ev:ev-mv16fndw-01e46e13",
+        "ev:ev-mv16frja-017d17a4",
+        "ev:ev-mv16ggcp-011ee455"
+      ],
+      "remainingIssues": [
+        "Q9: the Node floor was raised from the goal's 22.5 to 22.13 by an orchestrator decision, not by the user; NFR1 depends on the user's confirmation (fallback: --experimental-sqlite in every script, stated in the NFR1 AC)",
+        "Q10: runtime daily model budget default (USD 1.00/day) needs the user's confirmation",
+        "Q1, Q2, Q3, Q5, Q6, Q7: live PayPal and approval-page evidence (RS-18..26, RS-31b, RS-32b) can only be produced by the user; Unverified with blocker A6/Q2 until run",
+        "Q4 and Q8 carry recorded defaults (dec-mv16pz0g-01d5c4c2) that the user has not yet confirmed",
+        "ARCH-8: adding the NFR1..4 = RS-NF-1..4 mapping to docs/build/evidence.md and the acceptance-report template is outside product-architect's write scope (orchestrator)",
+        "NFR6 live-model ceiling changed from USD 1 (revision 1) to USD 5 to match dec-mv16pz0g-01d5c4c2; flagged in the 'goes beyond goal.md' list",
+        "docs/build/plan.md sections 3, 5 and 6 are superseded by the brief and should be marked as such by their owner",
+        "ev:ev-mv170be7-01065dd0 is a failed evidence run by product-architect (script file could not be written under the guard); it carries no finding"
+      ],
+      "nextAction": "architecture-reviewer: review submission sub-mv1awqkf-017ea892 of the architecture gate against rev-mv16o544-0127ccbf finding by finding, and record the review with eccode gate review architecture.",
+      "lessonsConsulted": [],
+      "id": "ho-mv1axhc8-01d4787f",
+      "recordedBy": "product-architect",
+      "at": "2026-10-09T18:31:26.994Z"
     }
   },
   "runs": {
@@ -1288,6 +1352,21 @@
       "task": null,
       "gate": "architecture",
       "startedAt": "2026-10-09T18:24:30.639Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T18:32:12.529Z",
+      "durationMinutes": 7.7,
+      "costUsd": null,
+      "tokens": 145724,
+      "note": "product-architect: revision 2 placed and submitted (sub-mv1awqkf-017ea892, responds to rev-mv16o544-0127ccbf); 45 criteria; handoff ho-mv1axhc8-01d4787f; three placement changes documented",
+      "usageReported": true
+    },
+    "run-mv1ay9m5-01d70b31": {
+      "id": "run-mv1ay9m5-01d70b31",
+      "agent": "architecture-reviewer",
+      "task": null,
+      "gate": "architecture",
+      "startedAt": "2026-10-09T18:32:03.638Z",
       "status": "running",
       "attempt": 1
     }
@@ -1519,8 +1598,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 49.93,
-    "tokens": 655080
+    "runtimeMinutes": 57.63,
+    "tokens": 800804
   },
   "delivery": null
 }
