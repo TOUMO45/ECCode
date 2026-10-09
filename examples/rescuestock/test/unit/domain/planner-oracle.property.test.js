@@ -96,3 +96,45 @@ test('RS-06: the oracle itself is independent of the planner (spot check against
   assert.equal(o.best.totalCents, 3000 + 3100 + 1000 + Math.floor((7100 * 1600 + 5000) / 10000)); // 7100 + 1136
   assert.equal(plan(input).best.totalCents, o.best.totalCents);
 });
+
+// ---------------------------------------------------------------- SEC-B-1: larger stock, quantities and ties
+
+test('SEC-B-1: planner equals the brute-force oracle on larger stock (availability up to 7, <= 4 offers, quantities up to 1600)', () => {
+  let feasible = 0;
+  for (let seed = 1; seed <= 100; seed += 1) {
+    if (compare(`medium ${seed}`, mediumCatalog(seed, { maxOffers: 4, maxAvail: 7, maxQuantitySteps: 16 }))) feasible += 1;
+  }
+  assert.ok(feasible >= 20 && feasible <= 90, `feasible catalogs: ${feasible}`);
+});
+
+test('SEC-B-1: planner equals the brute-force oracle on tie-heavy catalogs (equal prices, prep fees and ready times; availability up to 5)', () => {
+  let feasible = 0;
+  for (let seed = 1; seed <= 120; seed += 1) {
+    if (compare(`ties ${seed}`, mediumCatalog(seed, { maxOffers: 5, maxAvail: 5, maxQuantitySteps: 8, ties: true }))) feasible += 1;
+  }
+  assert.ok(feasible >= 20 && feasible <= 110, `feasible catalogs: ${feasible}`);
+});
+
+test('SEC-B-1: planner equals the slow exact reference planner on 250 medium catalogs (availability up to 12, <= 6 offers, quantities up to 3000), full output', () => {
+  const strip = (r) => {
+    const copy = structuredClone(r);
+    delete copy.trace.enumerated;
+    return copy;
+  };
+  let compared = 0;
+  let skipped = 0;
+  for (let seed = 1; seed <= 250; seed += 1) {
+    const input = mediumCatalog(seed, { maxOffers: 6, maxAvail: 12, maxQuantitySteps: 30, ties: seed % 3 === 0 });
+    let reference;
+    try {
+      reference = referencePlan(input);
+    } catch (e) {
+      if (e.code !== 'PLANNER_LIMIT') throw e;
+      skipped += 1; // the slow reference gave up (its search is exponential in stock); nothing to compare
+      continue;
+    }
+    assert.deepEqual(strip(plan(input)), strip(reference), `medium catalog ${seed}`);
+    compared += 1;
+  }
+  assert.ok(compared >= 200, `compared ${compared}, reference gave up on ${skipped}`);
+});
