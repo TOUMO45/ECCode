@@ -106,11 +106,23 @@ function insideRecord(abs) {
 function realize(abs) {
   let dir = path.resolve(abs);
   const rest = [];
-  for (;;) {
+  for (let hops = 0; hops < 64; hops++) {
     try {
       dir = fs.realpathSync(dir);
       break;
     } catch {
+      // Not resolvable as a whole: a dangling link (its target does not exist yet) is followed by
+      // hand so that `dangle -> .eccode/new.json` still lands in the record; otherwise climb.
+      let link = null;
+      try {
+        if (fs.lstatSync(dir).isSymbolicLink()) link = fs.readlinkSync(dir);
+      } catch {
+        // does not exist at all
+      }
+      if (link !== null) {
+        dir = path.resolve(path.dirname(dir), link);
+        continue;
+      }
       const parent = path.dirname(dir);
       if (parent === dir) break;
       rest.unshift(path.basename(dir));
@@ -118,6 +130,19 @@ function realize(abs) {
     }
   }
   return path.join(dir, ...rest);
+}
+
+/** Does the command line create a link (ln, cp -s/-l, mklink)? A write through it in the same line cannot be bound. */
+function createsLink(cmd) {
+  let found = false;
+  walkCommands(cmd, (words) => {
+    const texts = words.map((w) => w.text);
+    const at = commandIndex(texts);
+    if (at === -1) return;
+    const name = texts[at].split('/').pop();
+    if (name === 'ln' || name === 'mklink' || (name === 'cp' && texts.slice(at + 1).some((t) => /^-[a-zA-Z]*[sl]/.test(t)))) found = true;
+  });
+  return found;
 }
 
 // Everything under a record directory is the record, except the three draft areas. Judged on real and
@@ -483,6 +508,12 @@ function checkBash(cmd, role, root, cwd) {
     if (!recordHit(lexical)) continue;
     const real = realize(lexical);
     out('deny', `${t}${real !== lexical ? ` is, or lies under, a symbolic link resolving to ${real}, which` : ''} is part of an ECCode record. ${RECORD_MSG}`);
+  }
+  // A link created in this command line does not exist when the guard runs, so a write through it
+  // cannot be bound (`ln -s "$PWD/.eccode" lk && echo x > lk/state.json`): one line creates the link,
+  // the next may use it, and then it is judged on its real path.
+  if (targets.length > 1 && createsLink(cmd)) {
+    out('deny', 'This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not exist yet. Create the link in one command and write in the next, or use the Edit/Write tool.');
   }
   // Writers that take their targets from a pipe or a found list cannot be bound; refused when the
   // command names a record anywhere.

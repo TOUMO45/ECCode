@@ -184,6 +184,32 @@ test('REVIEW 2: function names bash accepts, expansions in the CLI word, compute
   }
 });
 
+test('REVIEW 3: a link created and written through in one line, and a dangling link that already exists, cannot reach the record', () => {
+  const ctx = tmpProject();
+  const reason = /creates a link and writes|part of an ECCode record|written only by the eccode CLI/;
+  // H1: same-line alias.
+  for (const c of [
+    'ln -s "$PWD/.eccode" lk && echo FORGED > lk/state.json',
+    `ln -s ${ctx.dir}/.eccode lk; echo x > lk/memory/m-forged.json`,
+    'ln -s .eccode/config.json cfg && echo "{}" > cfg',
+    'cp -s .eccode/state.json st && echo x > st',
+  ]) denied(bash(ctx.dir, c, null), `main: ${c}`, reason);
+  // Creating a link on its own is ordinary (judged on its own target); writing through it next time is judged for real.
+  allowed(bash(ctx.dir, 'ln -s src/server.js alias.js', null), 'a plain link to a project file');
+  fs.symlinkSync(path.join(ctx.dir, '.eccode'), path.join(ctx.dir, 'lk'));
+  denied(bash(ctx.dir, 'echo FORGED > lk/state.json', null), 'write through an existing alias', reason);
+  // H2: a dangling link whose target is a record file that does not exist yet.
+  fs.symlinkSync('.eccode/newrec.json', path.join(ctx.dir, 'dangle'));
+  denied(edit(ctx.dir, 'Write', path.join(ctx.dir, 'dangle'), null), 'main Write through a dangling link into the record', reason);
+  denied(bash(ctx.dir, 'echo x > dangle', null), 'main redirect through a dangling link into the record', reason);
+  fs.mkdirSync(path.join(ctx.dir, 'src'), { recursive: true });
+  fs.symlinkSync('../.eccode/memory/records/new.json', path.join(ctx.dir, 'src', 'd2'));
+  denied(bash(ctx.dir, 'echo x > src/d2', 'backend-engineer'), 'implementer through a dangling link into memory', reason);
+  // A dangling link that points at an ordinary new file is judged as that file.
+  fs.symlinkSync('notes/new.md', path.join(ctx.dir, 'd3'));
+  allowed(bash(ctx.dir, 'echo x > d3', null), 'main through a dangling link to a project file');
+});
+
 test('NESTED: a project nested in a repository with its own record is judged by its own record', () => {
   // outer: a repository with its own ECCode record; inner: examples/app with another record.
   const outer = tmpProject();
