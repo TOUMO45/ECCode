@@ -112,6 +112,14 @@ See [memory.md](memory.md).
   - Proposals can't touch permissions, approval rules, the record or engine code (`.eccode/**`, `lib/**`, `bin/**`, `scripts/hooks/**`, `schemas/**`, `hooks/**`, `**/eccode/**`); adopt and rollback re-check the target, and proposal ids are validated before they name a path.
 - **User authority:** raising budgets, accepting risks, reopening escalated gates or tasks, adopting workflow changes and accepting a rolled-back log require `--actor user`. Correcting run usage, recovering interrupted runs and rolling back an adopted change require `--actor orchestrator|user`. The guard refuses those actors from subagents.
 
+The attacker models behind these controls, each control's test, and the risks that stay open are in [threat-model.md](threat-model.md).
+
+## Record compatibility
+
+- **Old logs replay unchanged.** New snapshot fields are set only when the event carries them, so an engine upgrade reproduces an older record byte for byte; `tests/records-replay.test.js` proves it on every shipped record. Unknown event types are kept in the log and ignored by older engines.
+- **The log is the record; the snapshot is a cache.** `eccode rebuild` regenerates `state.json` from `events.jsonl` after an upgrade or a divergence. `config.version` marks the configuration schema; a config written by an older engine is merged over the current defaults.
+- **What is not promised:** an older engine reading a newer log will not know new rules (it treats new events as no-ops), so run the engine version that wrote the record, or newer.
+
 ## Known limitations
 
 - **Self-asserted identity.** `--actor` is not cryptographically bound. Outside Claude Code with hooks, a caller could claim any role. The record and the hooks make impersonation visible and blockable, but not impossible: the guard reads shell commands without executing them, so a sufficiently indirect command (a script file, a crafted interpreter call) can still evade it. `--actor user` events are entered by whoever runs the CLI (the orchestrator, or an operator); the final handoff lists every one of them under "User decisions" so a reader can check them against the conversation, but the CLI cannot tell a human from a script.

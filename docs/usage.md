@@ -141,3 +141,9 @@ Actor restrictions: `run correct`, `recover` and `improve rollback` need `--acto
 | Guard denies a `git` command | `checkout`/`restore`/`reset`/`stash`/`clean` on `.eccode/` or the whole tree would roll back the record | Restore project files by path (`git checkout -- src/x.js`) |
 | `eccode` not found | Plugin bin directory isn't on PATH | Use `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` or `node .claude/eccode/bin/eccode.js` |
 | `[LESSON_NOT_VERIFIABLE]` | The lesson lacks a check that fails before the fix and passes after, or similar evidence | Record the reproduction and verification with the **same** command |
+
+## Releases and compatibility
+
+- A release bumps `version` in `package.json`, `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` together, adds a dated entry to `CHANGELOG.md`, and passes `npm run check` (static validation, the test suite, and a replay of every shipped record) plus `claude plugin validate .claude-plugin/plugin.json --strict`.
+- CI (`.github/workflows/ci.yml`) runs `npm run check` on Ubuntu and macOS with Node 18.17, 20 and 22, runs the Groundwork example's deterministic suite on Node 22, and re-audits the shipped records. The Windows job is reported but does not gate merges yet.
+- Records written by older versions replay unchanged (see [architecture.md](architecture.md#record-compatibility)); run `eccode rebuild` after upgrading if `eccode audit` reports a divergent snapshot.

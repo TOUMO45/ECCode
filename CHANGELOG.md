@@ -11,8 +11,12 @@ This branch (`claude/funny-feynman-rt1io9`) starts from the full `claude/brave-b
 - **JSON inputs** (`--file`, `plan validate <file>`) resolve from the current directory, then the project root; a missing file is a `NOT_FOUND` refusal, not a stack trace.
 - **`plan validate` warns** about ownership globs that point into `.eccode/` (other than `drafts/`): they never grant ownership, so a plan listing them is mistaken about what its tasks may write.
 
-### Docs
-- `docs/final-report.md` §6 records what this increment closed; `docs/usage.md` and `docs/architecture.md` describe the audit warning and the handoff section.
+### Docs and process
+- `docs/threat-model.md`: assets, attacker models, every control with its test, residual risks.
+- `.github/workflows/ci.yml`: toolkit suite on Ubuntu and macOS (Node 18.17/20/22), Groundwork suite on Node 22, record re-audit; Windows experimental.
+- `orchestrate` skill: choose between the full delivery and change mode before starting, with the evaluation's cost finding as the reason.
+- `docs/architecture.md` "Record compatibility" and `docs/usage.md` "Releases and compatibility".
+- `docs/final-report.md` §5 records what this increment closed and diagnoses Groundwork's cosmetic `null` (native `append` with a `null` child) without editing the delivered record.
 
 ### Tests
 - 144 (136 on the base branch, plus 5 record-replay tests and 3 delivery/CLI tests).

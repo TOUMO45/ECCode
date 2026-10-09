@@ -76,3 +76,6 @@ I **hot-patched the toolkit copy used by this run** with fixes 1 and 2 after ses
 | D8 AI evals with thresholds fixed beforehand | met **only on the third holdout**; two earlier holdouts failed and are disclosed | see above |
 | D9 setup and reproducible run | met | every README command worked in the clean clone |
 | D10 no known blocking defects | met as judged by the independent verification review and by me; delivery closed with the operator interventions disclosed above | `final-handoff.md` |
+
+## Diagnosis of the open `null` (added 2026-10-09, record untouched)
+The stray text comes from two call sites in `public/js/views/incident.js` that pass a `null` child to the native DOM `append`: line 59 (`i.description ? h('p', …) : null` under the incident title) and line 261 (`d.isFallback ? h('p', …) : null` under "Draft review"). The app's own `h()` helper skips `null` children; `Element.append` renders them as the text "null". The fix is to filter the children (or build the containers through `h()`), plus the missing `.env.example`. Applying it needs a fifth rework on this record, and `limits.maxReworks` is 4: raising it is a user decision, so the fix is documented here and not applied.

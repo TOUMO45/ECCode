@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  toolkit:
+    name: toolkit (${{ matrix.os }}, node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node: ['18.17', '20', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Identify git for tests that commit
+        run: |
+          git config --global user.email "ci@example.invalid"
+          git config --global user.name "ci"
+      - name: Static validation and test suite (also replays every shipped record)
+        run: npm run check
+
+  toolkit-windows:
+    # The engine is portable; the suite drives sh -c and POSIX paths in a few
+    # tests, so Windows is reported but does not gate merges yet.
+    name: toolkit (windows, node 22, experimental)
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: git config --global user.email "ci@example.invalid" && git config --global user.name "ci"
+      - run: npm run check
+
+  groundwork:
+    name: examples/groundwork (ubuntu, node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Deterministic suite (no network, no model)
+        working-directory: examples/groundwork
+        run: npm test
+      - name: Records still audit after the suite ran
+        run: |
+          node bin/eccode.js --root examples/groundwork audit
+          node bin/eccode.js --root examples/triage-desk audit

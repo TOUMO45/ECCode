@@ -25,7 +25,8 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
   Ask the user with a focused question. Only `--actor user` commands record their answer, and you run those only after the user has actually answered.
 
 ## 1. Start or resume
-- **New:** `eccode init --name "<name>" --idea "<idea>"`, then show the user `eccode status --brief`.
+- **Choose the path first.** The full delivery (architecture → design → plan → phases → verification) is for a new product or a feature that changes architecture, data or trust boundaries. A bounded change to an existing codebase (a bug, a contained feature, a change with a clear acceptance test) takes **change mode** (§5b, `--profile change`): plan → independent plan review → implementation → independent phase review → deliver, about four dispatches instead of a dozen. The evaluation found the full path costs several times more per success than the lean one buys; pick the heavy path only when its gates would catch something the lean path cannot (unknown users, new architecture, security-relevant design). Say which path you chose and why in one line.
+- **New:** `eccode init --name "<name>" --idea "<idea>" [--profile delivery|change]`, then show the user `eccode status --brief`.
 - **Resume:** `eccode resume`, then `eccode reconcile --verify --actor orchestrator`. Reconcile compares the record with the working tree and re-runs the checks that done tasks and approvals relied on. Each re-run is recorded as evidence.
   - **BLOCKING `approved-artifact`:** a reviewed file changed after approval. Restore it from git, or ask the user whether to reopen that gate. Never continue on top of it.
   - **BLOCKING `check-regressed`:** a check that passed is now failing. Treat it as a bug and use `debug-investigation` before any new work.
