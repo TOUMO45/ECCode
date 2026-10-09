@@ -1,0 +1,53 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "phase:b-foundation",
+  "objective": "Independent review of phase b-foundation (submission sub-mv1h2gly-014b868a, 109 artifacts: the four tasks' changed files plus .eccode/artifacts/phase-b/submission.md).",
+  "context": "Tasks b1-foundation-core (ho-mv1gazew-01706543), b2-domain (ho-mv1gcn88-01fd3ee4), b4-env-readme (ho-mv1gg814-01ae09b4) and b3-test-harness (ho-mv1gxflu-01a9c110) are done. The approval must cover task:b1, task:b2, task:b4, task:b3 and phase:b-foundation, whose acceptance criteria claim RS-06..RS-11, NFR1 and NFR4 and list the prerequisites reviewed here (migrations, triggers, derive totality, states). It must also cover a 'lessons' criterion for the tasks' not-applicable decisions on mem-sd-mv1audrd-013b7102.",
+  "inputs": [
+    ".eccode/artifacts/phase-b/submission.md",
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/handoffs/ho-mv1gazew-01706543.json",
+    ".eccode/handoffs/ho-mv1gcn88-01fd3ee4.json",
+    ".eccode/handoffs/ho-mv1gg814-01ae09b4.json",
+    ".eccode/handoffs/ho-mv1gxflu-01a9c110.json"
+  ],
+  "dependencies": [
+    "b1-foundation-core",
+    "b2-domain",
+    "b4-env-readme",
+    "b3-test-harness"
+  ],
+  "expectedOutput": "A phase review with one criterion per required id (task:b1-foundation-core, task:b2-domain, task:b4-env-readme, task:b3-test-harness, phase:b-foundation) plus 'lessons'; security-reviewer optional for this phase per the plan (technical only).",
+  "acceptanceCriteria": [
+    "RS-06..RS-11 proved by the named planner-fixture and oracle property tests",
+    "NFR1 proved by the package scan, start-old-node on Node 20.20.0 and 21.7.3, start-health and the clean-checkout run",
+    "NFR4 proved by the env-example scan and the config secret tests",
+    "Prerequisites hold: migrations 001-005 match the spec, append-only triggers, derive totality (20,000 walks, row 14 never reached), states tables"
+  ],
+  "completedWork": "Read the four handoffs. Ran the phase's full suite myself: npm test 364/364 under the net guard. Scanned the b1/b2 test declarations for criterion ids: 132 named, 119 unnamed. Most unnamed tests are supporting tests, but six prove a design item without carrying its id, which is a gap against the plan's phase criterion. They are listed in submission.md note 1 with the files to rename. Wrote submission.md (deliveries, criterion -> task -> evidence table, cross-task notes, deviations with reasons, evidence-quality notes, live items untouched, budget decision) and submitted the gate.",
+  "filesChanged": [
+    ".eccode/artifacts/phase-b/submission.md",
+    ".eccode/drafts/phase-b-test-ids.mjs"
+  ],
+  "evidence": [
+    "ev:ev-mv1gzlml-01a895d5",
+    "ev:ev-mv1h28ne-01779a6b",
+    "ev:ev-mv1g9bkw-01abf3c8",
+    "ev:ev-mv1gckx7-015c929a",
+    "ev:ev-mv1gfrxe-01aa3e25",
+    "ev:ev-mv1gwcdw-01e502bd"
+  ],
+  "remainingIssues": [
+    "Unnamed tests proving design items: ARCH-26 lease rule, SEC-10 share default, SEC-12 approval host, RS_TEST_HOOKS refusal, DB_BUSY mapping, default deny (b1/b2 files); the reviewer decides whether a rename is required (a minor fix owned by backend-engineer)",
+    "Cross-task contracts the next phases depend on: scrypt hash format (c1), derive input shape and PlannerLimitError mapping (c2), upload 60 s deadline (d3), fixtures.js signIn against real auth routes (c1)",
+    "b4's pre-work failing run (ev:ev-mv1gdiqu-010e761b) is malformed; b3's (ev:ev-mv1gppzk-014ca419) was recorded after some helpers existed",
+    "The budget raise-or-descope decision is required before phase C (dec-mv1fgdkd-01182466); 263.73 of 480 minutes used"
+  ],
+  "nextAction": "technical-reviewer reviews sub-mv1h2gly-014b868a. After approval, and once the user's budget decision is recorded, the orchestrator starts phase:c-core-flow.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}

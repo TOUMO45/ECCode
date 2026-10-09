@@ -1,26 +1,22 @@
-// delivery-lead check (phase b-foundation): which tests in a TAP log of `npm test` carry no criterion or finding id?
-// Groups unnamed tests by test file and reports, per file, named/unnamed counts and the unnamed names.
-// Usage: node phase-b-test-ids.mjs <evidence log>
+// delivery-lead check (phase b-foundation): which test names in the test files carry no criterion or finding id?
+// Static scan of test/describe/it/suite calls whose first argument is a string literal. Per file it prints the
+// count of named and unnamed declarations and the unnamed names, so the phase review can judge whether an unnamed
+// test proves a criterion or only supports one.
+// Usage: node phase-b-test-ids.mjs <test file>...
 import { readFileSync } from 'node:fs';
 
 const ID = /^(RS-\d{2}|NFR\d|F-TR-\d+|SEC-\d+|ARCH-\d+|F-PL-\d+)\b/;
-const lines = readFileSync(process.argv[2], 'utf8').split('\n');
-const files = new Map();
-let file = null;
-for (const line of lines) {
-  const sub = line.match(/^# Subtest: (\/\S+\.test\.js)$/);
-  if (sub) { file = sub[1].replace(/^.*?\/rescuestock\//, ''); continue; }
-  const ok = line.match(/^\s+(?:not )?ok \d+ - (.*?)(?: # .*)?$/);
-  if (!ok || !file) continue;
-  const name = ok[1];
-  const entry = files.get(file) || { named: 0, unnamed: [] };
-  if (ID.test(name)) entry.named++; else entry.unnamed.push(name);
-  files.set(file, entry);
-}
+const CALL = /\b(?:test|it|describe|suite)(?:\.\w+)?\(\s*(['"`])((?:\\.|(?!\1).)*)\1/g;
 let total = 0;
-for (const [f, e] of [...files].sort()) {
-  total += e.unnamed.length;
-  console.log(`${f}: named ${e.named}, unnamed ${e.unnamed.length}`);
-  for (const n of e.unnamed) console.log(`    - ${n}`);
+let totalNamed = 0;
+for (const f of process.argv.slice(2)) {
+  const src = readFileSync(f, 'utf8');
+  const named = [];
+  const unnamed = [];
+  for (const m of src.matchAll(CALL)) (ID.test(m[2]) ? named : unnamed).push(m[2]);
+  total += unnamed.length;
+  totalNamed += named.length;
+  console.log(`${f}: named ${named.length}, unnamed ${unnamed.length}`);
+  for (const n of unnamed) console.log(`    - ${n}`);
 }
-console.log(`unnamed total: ${total}`);
+console.log(`declarations named: ${totalNamed}; unnamed: ${total}`);
