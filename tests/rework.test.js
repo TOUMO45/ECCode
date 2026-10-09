@@ -157,3 +157,29 @@ test('CLI: eccode rework open prints the ids; status shows the next action; metr
   const bad = cli('rework', 'open', '--actor', 'backend-engineer', '--reason', 'x', '--files', 'src/**', '--owner', 'backend-engineer');
   assert.strictEqual(bad.status, 2);
 });
+
+test('rework: a file deleted by an approved rework is not an audit failure, one deleted behind the gates still is', () => {
+  const ctx = deliveredProject();
+  const { dir, store, config } = ctx;
+  execFileSync('git', ['add', '-A'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '-m', 'delivered state'], { cwd: dir });
+
+  // Behind the gates: audit fails.
+  fs.unlinkSync(path.join(dir, 'src/web/b.js'));
+  assert.ok(store.audit().ok && require('../lib/delivery').unreviewedChanges(store.state(), dir).some((c) => c.path === 'src/web/b.js' && c.problem === 'deleted after approval'));
+  execFileSync('git', ['checkout', '--', 'src/web/b.js'], { cwd: dir });
+
+  // Through a rework: the deletion is part of the task's recorded changes and of the reviewed gate.
+  const repro = evidence.runCommand(store, 'backend-engineer', { label: 'repro', command: 'node -e "process.exit(1)"', purpose: 'reproduction' });
+  openRework(store, config, 'orchestrator', { reason: 'The old api module is obsolete and must go', files: ['src/server/**'], owner: 'backend-engineer', evidence: [`ev:${repro.id}`] });
+  tasks.claim(store, config, 'rework-1', 'backend-engineer');
+  fs.unlinkSync(path.join(dir, 'src/server/a.js'));
+  write(dir, 'src/server/a2.js', '// replacement\n'); // a phase needs at least one file to put under review
+  const ev1 = passCheck(store, 'backend-engineer');
+  tasks.complete(store, config, 'rework-1', 'backend-engineer', handoffFor('rework-1', 'backend-engineer', [ev1.id], ['src/server/a.js', 'src/server/a2.js']));
+  gates.submit(store, config, 'phase:rework-1', 'delivery-lead');
+  const ev2 = passCheck(store, 'technical-reviewer');
+  gates.recordReview(store, config, 'phase:rework-1', 'technical-reviewer', approval([[`ev:${ev2.id}`]]));
+  assert.deepStrictEqual(require('../lib/delivery').unreviewedChanges(store.state(), dir), []);
+  assert.doesNotThrow(() => deliver(store, 'orchestrator'));
+});
