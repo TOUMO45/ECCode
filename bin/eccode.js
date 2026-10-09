@@ -30,7 +30,7 @@ Gates (architecture, design, plan, phase:<id>, verification)
   gate start <gate> --actor <role>
   gate submit <gate> --actor <role> --artifact <path>... [--responds-to <reviewId>] [--notes <text>]
   gate review <gate> --actor <reviewer> --file <review.json>
-  gate reopen <gate> --actor user --resolution <text>
+  gate reopen <gate> --actor user --resolution <text> [--waive all|F1,F2]
   gate show <gate> [--json]
 
 Plan & tasks
@@ -254,8 +254,9 @@ function main(argv) {
         const g = store.state().gates[gateId];
         print(flags, `Review ${event.data.reviewId} recorded: ${review.decision}. Gate ${gateId} is now ${g.status}.${g.status === 'escalated' ? `\nESCALATED: ${g.escalation.recovery}` : ''}`, { reviewId: event.data.reviewId, gateStatus: g.status, escalation: g.escalation, iterations: state.gates[gateId].iterations });
       } else if (sub === 'reopen') {
-        gates.reopenGate(store, gateId, need(actor, '--actor'), need(flags.resolution, '--resolution'));
-        print(flags, `Gate ${gateId} reopened by user decision.`);
+        gates.reopenGate(store, gateId, need(actor, '--actor'), need(flags.resolution, '--resolution'), { waive: flags.waive });
+        const left = store.state().gates[gateId].openFindings;
+        print(flags, `Gate ${gateId} reopened by user decision.${left.length ? ` Still open (the next approval must resolve them with evidence): ${left.map((f) => f.id).join(', ')}.` : ''}`);
       } else if (sub === 'show') {
         const g = own(store.state().gates, gateId);
         if (!g) throw new EccodeError('UNKNOWN_GATE', `Unknown gate ${gateId}`);

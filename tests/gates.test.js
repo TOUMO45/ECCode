@@ -135,6 +135,22 @@ test('repeated rejections escalate; only the user can reopen', () => {
   assert.deepStrictEqual(g.escalation.unresolved.map((f) => f.id).sort(), ['F1', 'F2']);
   expectCode(() => gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'], respondsTo: event.data.reviewId }), 'INVALID_TRANSITION');
   expectCode(() => gates.reopenGate(ctx.store, 'architecture', 'orchestrator', 'Proceed with narrower scope'), 'USER_AUTH_REQUIRED');
+  expectCode(() => gates.reopenGate(ctx.store, 'architecture', 'user', 'User accepted narrower scope: no rate limiting in v1', { waive: 'F9' }), 'INVALID_INPUT');
   gates.reopenGate(ctx.store, 'architecture', 'user', 'User accepted narrower scope: no rate limiting in v1');
+  // Reopening is not acceptance: without --waive the findings stay open.
   assert.strictEqual(ctx.store.state().gates.architecture.status, 'in_progress');
+  assert.deepStrictEqual(ctx.store.state().gates.architecture.openFindings.map((f) => f.id).sort(), ['F1', 'F2']);
+});
+
+test('the user can waive named findings (or all) when reopening; the rest stay open', () => {
+  const ctx = tmpProject({ configOverrides: { limits: { maxReviewIterations: 2 } } });
+  submitArch(ctx);
+  let { event } = gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', rejection('F1'));
+  write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD + '\nrev2\n');
+  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'], respondsTo: event.data.reviewId });
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', rejection('F2'));
+  gates.reopenGate(ctx.store, 'architecture', 'user', 'User accepts F1 as a known limitation for v1', { waive: 'F1' });
+  const g = ctx.store.state().gates.architecture;
+  assert.deepStrictEqual(g.openFindings.map((f) => f.id), ['F2']);
+  assert.deepStrictEqual(g.waivedFindings.map((f) => [f.id, f.waivedBy]), [['F1', 'user']]);
 });
