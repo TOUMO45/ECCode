@@ -6,7 +6,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const gates = require('../lib/gates');
-const { tmpProject, write, approval, expectCode, ARCH_MD } = require('./helpers');
+const { tmpProject, write, approval, coverage, expectCode, ARCH_MD } = require('./helpers');
 
 function submitted(ctx) {
   gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator');
@@ -28,7 +28,7 @@ test('an unreviewed submission can be replaced after the file was corrected; the
   assert.strictEqual(g.submissions.length, 2);
   assert.strictEqual(g.submissions[1].supersedes, first.id);
   assert.strictEqual(g.status, 'submitted');
-  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', coverage(ctx, 'architecture', ['artifact:.eccode/artifacts/brief.md#Acceptance Criteria']));
   assert.strictEqual(ctx.store.state().gates.architecture.status, 'approved');
 });
 
@@ -36,6 +36,6 @@ test('only the submitter may replace a submission, and nothing can be replaced o
   const ctx = tmpProject({ configOverrides: { roles: { architecture: { authors: ['product-architect', 'technical-designer'], reviewers: ['architecture-reviewer'] } } } });
   submitted(ctx);
   expectCode(() => gates.submit(ctx.store, ctx.config, 'architecture', 'technical-designer', { artifacts: ['.eccode/artifacts/brief.md'] }), 'OWNERSHIP');
-  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', coverage(ctx, 'architecture', ['artifact:.eccode/artifacts/brief.md#Acceptance Criteria']));
   expectCode(() => gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] }), 'INVALID_TRANSITION');
 });

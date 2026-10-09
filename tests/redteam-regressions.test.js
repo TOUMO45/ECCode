@@ -16,7 +16,7 @@ const { openRework } = require('../lib/rework');
 const { Store } = require('../lib/store');
 const { loadConfig } = require('../lib/config');
 const { globToRegExp, matchesAny } = require('../lib/util');
-const { tmpProject, write, approveThroughPlan, samplePlan, task, passCheck, handoffFor, approval, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, samplePlan, task, passCheck, handoffFor, approval, coverage, expectCode } = require('./helpers');
 
 const GUARD = path.join(__dirname, '..', 'scripts', 'hooks', 'guard.js');
 const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
@@ -154,7 +154,7 @@ test('RT8 secrets in labels, notes, handoffs and reviews are redacted before the
   gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator');
   write(ctx.dir, '.eccode/artifacts/brief.md', require('./helpers').ARCH_MD);
   gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
-  const review = approval([['artifact:.eccode/artifacts/brief.md']], { summary: `Verified the brief; test key password=${secret} was used locally only.` });
+  const review = coverage(ctx, 'architecture', ['artifact:.eccode/artifacts/brief.md#Acceptance Criteria'], { summary: `Verified the brief; test key password=${secret} was used locally only.` });
   const { event } = gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', review);
   gates.archiveReview(ctx.store, event.data.reviewId, review);
   assert.ok(!fs.readFileSync(path.join(ctx.dir, '.eccode/events.jsonl'), 'utf8').includes(secret));
@@ -171,7 +171,7 @@ test('RT9 a blocking finding raised and marked resolved in the same review needs
   });
   const err = expectCode(() => gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', bad), 'REVIEW_REJECTED');
   assert.match(err.message, /F1 is marked resolved without evidence/);
-  const ok = approval([['artifact:.eccode/artifacts/brief.md']], {
+  const ok = coverage(ctx, 'architecture', ['artifact:.eccode/artifacts/brief.md#Acceptance Criteria'], {
     findings: [{ id: 'F1', severity: 'blocking', title: 'Auth design missing', detail: 'Fixed in the same pass.', recommendation: 'No further action needed.', status: 'resolved', evidence: ['artifact:.eccode/artifacts/brief.md#Architecture'] }],
   });
   gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', ok);

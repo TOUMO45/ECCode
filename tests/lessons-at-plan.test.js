@@ -9,7 +9,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
-const { write, approval, approvalWithLessons, expectCode } = require('./helpers');
+const { write, approval, coverage, coverageWithLessons, expectCode } = require('./helpers');
 const { setup, finish } = require('./lesson-fixture');
 
 const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
@@ -56,7 +56,7 @@ test('the plan reviewer cannot approve without judging the recorded lesson decis
   gates.submit(ctx.store, ctx.config, 'plan', 'delivery-lead', { artifacts: [PLAN] });
   const refused = expectCode(() => gates.recordReview(ctx.store, ctx.config, 'plan', 'technical-reviewer', approval([[`artifact:${PLAN}`]])), 'REVIEW_REJECTED');
   assert.match(refused.message, /criterion with id "lessons"/);
-  gates.recordReview(ctx.store, ctx.config, 'plan', 'technical-reviewer', approvalWithLessons([[`artifact:${PLAN}`]]));
+  gates.recordReview(ctx.store, ctx.config, 'plan', 'technical-reviewer', coverageWithLessons(ctx, 'plan', [`artifact:${PLAN}#phases`]));
   assert.strictEqual(ctx.store.state().gates.plan.status, 'approved');
   assert.deepStrictEqual(ctx.store.state().plan.lessonDecisions.map((d) => d.id), [ctx.lesson.id]);
 });
@@ -90,14 +90,14 @@ test('the phase reviewer must judge the implementer\'s lesson decisions too, and
   const ev = passCheck(ctx.store, 'technical-reviewer');
   const without = expectCode(() => gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', approval([[`ev:${ev.id}`]])), 'REVIEW_REJECTED');
   assert.match(without.message, /criterion with id "lessons"/);
-  gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', approvalWithLessons([[`ev:${ev.id}`]]));
+  gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', coverageWithLessons(ctx, 'phase:core', [`ev:${ev.id}`]));
   assert.strictEqual(ctx.store.state().gates['phase:core'].status, 'approved');
 });
 
 test('with learning off nothing is asked of the plan or the reviewer', () => {
   const ctx = setup({ planDecision: 'none', learning: 'off' });
   gates.submit(ctx.store, ctx.config, 'plan', 'delivery-lead', { artifacts: [PLAN] });
-  gates.recordReview(ctx.store, ctx.config, 'plan', 'technical-reviewer', approval([[`artifact:${PLAN}`]]));
+  gates.recordReview(ctx.store, ctx.config, 'plan', 'technical-reviewer', coverage(ctx, 'plan', [`artifact:${PLAN}#phases`]));
   assert.strictEqual(ctx.store.state().gates.plan.status, 'approved');
   delete process.env.ECCODE_LEARNING;
 });

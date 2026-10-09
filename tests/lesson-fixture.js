@@ -11,7 +11,7 @@ const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const evidence = require('../lib/evidence');
 const { Memory } = require('../lib/memory/records');
-const { write, passCheck, handoffFor, approvalWithLessons } = require('./helpers');
+const { write, passCheck, handoffFor, coverageWithLessons } = require('./helpers');
 
 /** A change-profile project with one task about money-moving POST endpoints and a verified idempotency lesson. */
 function setup({ taskTitle = 'Issue store credit through a POST endpoint', idea = 'Support wants to issue store credit to customers through the API', criteria = ['A credit is issued and the balance changes', 'Invalid amounts are rejected'], learning = 'on', planDecision = 'not-applicable' } = {}) {
@@ -49,12 +49,12 @@ function setup({ taskTitle = 'Issue store credit through a POST endpoint', idea 
   }[planDecision];
   const inputs = planDecision === 'incorporated' ? ['TASK.md', lesson.id] : ['TASK.md'];
   const plan = { ...(decisions.length ? { lessonDecisions: decisions } : {}), phases: [{ id: 'core', name: 'Core', goal: 'Implement the requested change and its tests', acceptanceCriteria: ['The endpoint works', 'Existing tests pass'] }],
-    tasks: [{ id: 'credits', phase: 'core', title: taskTitle, owner: 'backend-engineer', dependencies: [], inputs, outputs: ['endpoint', 'tests'], files: ['src/**', 'test/**'], acceptanceCriteria: criteria, verification: { method: 'run the tests', command: 'node --test' } }] };
+    tasks: [{ id: 'credits', phase: 'core', title: taskTitle, owner: 'backend-engineer', dependencies: [], inputs, outputs: ['endpoint', 'tests'], files: ['src/**', 'test/**'], acceptanceCriteria: criteria, verification: { method: 'run the tests', command: 'node -e "process.exit(0)"' } }] }; // the command passCheck() runs
   gates.startGate(store, config, 'plan', 'orchestrator');
   write(dir, '.eccode/artifacts/plan.json', JSON.stringify(plan));
   if (planDecision === 'none') return { dir, store, config, lesson, mem, plan };
   gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] });
-  gates.recordReview(store, config, 'plan', 'technical-reviewer', approvalWithLessons([['artifact:.eccode/artifacts/plan.json']]));
+  gates.recordReview(store, config, 'plan', 'technical-reviewer', coverageWithLessons({ dir, store, config }, 'plan', ['artifact:.eccode/artifacts/plan.json#phases']));
   gates.startGate(store, config, 'phase:core', 'orchestrator');
   return { dir, store, config, lesson, mem };
 }
