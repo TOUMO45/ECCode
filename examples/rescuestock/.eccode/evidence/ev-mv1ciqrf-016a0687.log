@@ -1,0 +1,25 @@
+$ node .eccode/drafts/tr-design-derive-totality.mjs
+# cwd: .
+# exit: 0
+ok       S01 confirmed, no run -> rule 13 requirements_confirmed  (expected requirements_confirmed)
+ok       S02 v1 proposed -> rule 12 plan_found  (expected plan_found)
+ok       S03 v1 approved, res active, ops created -> rule 11 stock_reserved  (expected stock_reserved)
+ok       S04 all authorized -> rule 10 payment_authorized  (expected payment_authorized)
+ok       S05 executing -> rule 10 payment_authorized  (expected payment_authorized)
+ok       S06 executed, all captured -> rule 9 purchase_confirmed  (expected purchase_confirmed)
+ok       S07 RS-36(iii) one ready one collected -> rule 8 ready_for_pickup  (expected ready_for_pickup)
+ok       S08 all collected -> rule 7 collected  (expected collected)
+ok       S09 RS-36(i) old version refund_pending, current all collected -> rule 3 refunding  (expected refunding)
+ok       S10 RS-36(ii) refusal, void outstanding, v2 proposed -> rule 4 cancelling  (expected cancelling)
+ok       S11 RS-36(ii) refund_failed -> rule 2 failed_needs_attention  (expected failed_needs_attention)
+ok       S12 RS-36(iv) voids done after refusal, v2 proposed -> rule 12 plan_found  (expected plan_found)
+GAP      S13 supersession (spec L724-725): v1 superseded, voids done, replan queued or offers_hash retries exhausted -> rule null <NO ROW MATCHES>
+ok       S14 supersession, replan stored infeasible -> rule 5 no_feasible_plan  (expected no_feasible_plan)
+ok       S15 executed, admin refund_order on A completed, B collected (OQ-D2 case) -> rule 5a(OQ-D2) cancelled  [brief rows only: rule null <NO ROW MATCHES>]
+ok       S16 compensation complete (CAPTURE_FAILED) -> rule 6 cancelled  (expected cancelled)
+ok       S17 post-claim AUTHORIZATION_EXPIRED, voids outstanding -> rule 4 cancelling  (expected cancelling)
+ok       S18 expiry, op approved with authorize call queued but never started, 3 days later -> rule 4 cancelling
+ok       S19 requirements changed, v2 requirements confirmed, no run for them -> rule 13 requirements_confirmed  (expected requirements_confirmed)
+ok       S20 reserve lost race: v1 non_executable OUT_OF_STOCK, replan pending -> rule 6 cancelled  (expected cancelled)
+non-terminal states in a closed version that never escalate (stay non-final forever): approved, authorized, captured, refund_requested
+RS-36 (i)-(iv) failures: 0; gaps/mismatches: 1

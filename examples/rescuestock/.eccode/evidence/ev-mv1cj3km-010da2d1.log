@@ -1,0 +1,12 @@
+$ node --disable-warning=ExperimentalWarning .eccode/drafts/sec-spec-model.mjs
+# cwd: .
+# exit: 1
+H1 reserve plan 7: {"status":201,"body":{"reservation":{"id":107,"planVersionId":7,"status":"active"}}}
+H1 reserve plan 9 with the same key: {"status":201,"replayed":true,"body":{"reservation":{"id":107,"planVersionId":7,"status":"active"}}}
+H1 plan 9 answered with plan 7's reservation (no 422): true
+H2 attacker (1 IP, 5 requests): 401,401,401,401,401 | real admin, other IP, correct password: {"status":429,"code":"RATE_LIMITED"} | after the next 5-guess cycle: 429
+H2 admin locked out by 5 anonymous requests per 15 min: true
+H6 attacker reserves each supplier bundle: 201,201,201,201,201 | live reservations held: 5 | victim reserve: {"status":409,"code":"OUT_OF_STOCK"}
+H6 one customer holds all seeded stock; others get OUT_OF_STOCK: true
+
+reproduced: {"H1":true,"H2":true,"H6":true} (all three paths reproduce)

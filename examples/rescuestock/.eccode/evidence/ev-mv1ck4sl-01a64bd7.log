@@ -1,0 +1,24 @@
+$ node --disable-warning=ExperimentalWarning .eccode/drafts/tr-design-ddl-race.mjs .eccode/artifacts/design/spec.md
+# cwd: .
+# exit: 1
+ok   spec has 5 sql blocks (001-005) | found 5
+ok   migration block 1 executes
+ok   migration block 2 executes
+ok   migration block 3 executes
+ok   migration block 4 executes
+ok   migration block 5 executes
+ok   RS-38 UPDATE inventory_ledger refused
+ok   RS-38 DELETE inventory_ledger refused
+ok   RS-38 UPDATE audit_events refused
+ok   RS-38 DELETE audit_events refused
+ok   CHECK reserved <= on_hand
+ok   RS-23/24 forged (invalid) rows do not occupy the transmission id
+ok   RS-23 second valid row with the same transmission id refused
+ok   provider_calls operation_key GLOB accepts so:<id>:capture:1
+ok   provider_calls UNIQUE key refuses a second so:1:capture:1
+ok   payment_operations 'unknown' requires prev_status and unknown_since
+ok   RS-14 two processes, busy_timeout 5000: one RESERVED, one OUT_OF_STOCK | OUT_OF_STOCK | RESERVED final {"on_hand":1,"reserved":1} reserveRows=1
+ok   RS-14 reserved <= on_hand after the race
+ok   RS-15 two concurrent expiry passes: exactly one EXPIRED, one NOOP, one expire ledger row | EXPIRED | NOOP expireRows=1
+FAIL RS-14 busy_timeout 0 vs held BEGIN IMMEDIATE: SQLITE_BUSY surfaces (to be mapped to 503 DB_BUSY) | ERROR 5 database is locked | OUT_OF_STOCK
+node v22.22.0; failures: 1
