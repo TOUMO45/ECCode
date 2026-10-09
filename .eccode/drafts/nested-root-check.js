@@ -15,6 +15,10 @@ const { spawnSync } = require('child_process');
 const guard = path.resolve(process.argv[2] || path.join(__dirname, '..', '..', 'scripts', 'hooks', 'guard.js'));
 const repo = path.resolve(__dirname, '..', '..');
 const { init } = require(path.join(repo, 'lib', 'project'));
+// Pin the file under test in the evidence log: the record's tree digest excludes .eccode/, so only
+// this line shows which guard copy ran.
+const guardSha256 = require('crypto').createHash('sha256').update(fs.readFileSync(guard)).digest('hex');
+console.log(`guard under test: ${guard}\nguard sha256: ${guardSha256}`);
 
 function hook(payload, env) {
   const res = spawnSync(process.execPath, [guard], { input: JSON.stringify(payload), encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: '', ECCODE_ACTOR: '', ECCODE_HOOKS: '', ...env } });
