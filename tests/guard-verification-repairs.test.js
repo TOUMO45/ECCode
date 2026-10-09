@@ -115,7 +115,7 @@ test('REVIEW: the CLI is recognised on tokenized words, wrappers in every bash f
     'if true; then e() { eccode "$@"; }; fi; e task claim api --actor backend-engineer',
     '{ e() { eccode "$@"; }; }; e task claim api --actor backend-engineer',
     'bash -c \'e() { eccode "$@"; }; e task claim api --actor backend-engineer\'',
-    'sh -c "e() { eccode \\"\\$@\\"; }; e task claim api --actor backend-engineer"',
+    'sh -c "e() { eccode \\"\\$@\\"; }; e task claim api --actor backend-engineer"', // hook input
     'e() {\n  eccode "$@"\n}\ne task claim api --actor backend-engineer',
     'eccode evidence run --actor technical-reviewer --label t -- \'e() { eccode "$@"; }; e task claim api --actor backend-engineer\'',
   ]) denied(bash(ctx.dir, c, 'technical-reviewer'), `wrapper: ${c.slice(0, 40)}`, wrap);
