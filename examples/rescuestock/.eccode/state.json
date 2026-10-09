@@ -1,6 +1,6 @@
 {
-  "seq": 71,
-  "lastHash": "c09541e32b00a6229f28912d36842d06c2486ec26f235b868457302fef5eb348",
+  "seq": 78,
+  "lastHash": "6ddde2adad9a5c4d1d0a3ece4806eee70435d08da59d9cb18d7e1b48c0cfe932",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -63,10 +63,26 @@
     "design": {
       "id": "design",
       "kind": "design",
-      "status": "in_progress",
+      "status": "submitted",
       "iterations": 0,
-      "authors": [],
-      "submissions": [],
+      "authors": [
+        "technical-designer"
+      ],
+      "submissions": [
+        {
+          "id": "sub-mv1c60sc-01174690",
+          "actor": "technical-designer",
+          "at": "2026-10-09T19:06:05.053Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/design/spec.md",
+              "sha256": "ea9c0c68c84ee761210a4271b4a5148a90623c54a085dab8281b3e73d4595b2c"
+            }
+          ],
+          "respondsTo": null,
+          "notes": "Design rev 1 against brief sub-mv1awqkf-017ea892; resolves ARCH-22..26; evidence ev:ev-mv1bgxsc-010de90b (execArgv/NODE_OPTIONS probe), ev:ev-mv1bh8wb-011b5cf0 (claude CLI stream-json flag constraints)"
+        }
+      ],
       "reviews": [],
       "openFindings": [],
       "approvedBy": null,
@@ -2152,6 +2168,57 @@
       "id": "ho-mv1axhc8-01d4787f",
       "recordedBy": "product-architect",
       "at": "2026-10-09T18:31:26.994Z"
+    },
+    "ho-mv1c6nxx-0187bb70": {
+      "from": "technical-designer",
+      "to": "technical-reviewer",
+      "gate": "design",
+      "objective": "Review the RescueStock technical design, revision 1 (submission sub-mv1c60sc-01174690, spec.md sha256 ea9c0c68c84ee761210a4271b4a5148a90623c54a085dab8281b3e73d4595b2c), against the approved architecture brief (sub-mv1awqkf-017ea892, approved by rev-mv1bcexb-01d7960e) and its 45 required criteria, and check that the five open minors ARCH-22..26 are resolved.",
+      "context": "The spec has the six required headings (Components, Interface Contracts, Data Design, Security, Testing Strategy, Deployment). It also covers Technology Choices, Background Processing (payment saga, void rule, reconciler, supersession), AI / LLM Design (wire schema, local validator, prompt, CLI and API adapters, fake, EXT-1 eval plan with thresholds), Frontend, Observability, Performance, Recovery, Implementation Workflow, Open Questions and a Criterion Traceability table (45 ids to design section and test file). The first table maps ARCH-22..26 to their resolutions. Decisions used: dec-mv16pyxx-01bad0bf, dec-mv16pz0g-01d5c4c2, dec-mv16pz32-013c4cd1. Memory search returned one toolkit-guard lesson (mem-sd-mv1audrd-013b7102), not applicable to the product, so it was not cited. External facts are listed with source and date: the PayPal claims stay 'verify' because the primary docs are blocked here; the Anthropic structured-output field was taken from the primary docs page on 2026-10-09; the CLI flag constraints were verified locally.",
+      "inputs": [
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/reviews/rev-mv1bcexb-01d7960e.json (findings ARCH-22..26)",
+        "docs/build/goal.md",
+        "docs/integration-research.md",
+        "decisions dec-mv16pyxx-01bad0bf, dec-mv16pz0g-01d5c4c2, dec-mv16pz32-013c4cd1",
+        "examples/groundwork/src (adapter, auth and db patterns, read only)"
+      ],
+      "expectedOutput": "A recorded review of design submission sub-mv1c60sc-01174690 covering the 45 required criteria and ARCH-22..26.",
+      "acceptanceCriteria": [
+        "gate show design lists the same 45 required ids (RS-01..RS-39, NFR1..NFR6)",
+        "ARCH-22: the void rule sets cancel_requested_at on every non-terminal operation; any transition into authorized with cancel_requested_at set queues exactly one void (so:<id>:void:1); [D] test void-rule-lost-authorize; row-2 escalation clause",
+        "ARCH-23: the claim uses the stored authorization_expires_at (no provider call before or inside the claim); the provider re-read happens after the claim, by the lease holder, with AUTHORIZATION_EXPIRED compensation; RS-20 wording unchanged",
+        "ARCH-24: node-proc helper passes the allow-listed execArgv and merges --experimental-sqlite into NODE_OPTIONS on Node < 22.13; the 22.5 pass condition includes RS-14, RS-20, RS-26 and lease-takeover (ev:ev-mv1bgxsc-010de90b)",
+        "ARCH-25: auth routes, cookie, TTL, rotation, provisioning, admin password, SQLite sign-in throttle with a [D] assertion, webhook route CSRF-exempt and signature-only",
+        "ARCH-26: PayPal timeout 20 s against a 60 s lease (config refuses lease < 3 x timeout); takeover increments lease_epoch and resolves every capture call in intent/unknown by reading provider state before any send; writes fenced on executor_id + lease_epoch (+ lease_until > now for call starts) and on a per-call send_token; lease-takeover test variants A/B assert exactly one capture per order",
+        "Interface contracts are exact enough to build both sides: method, path, request/response types, error codes from the one catalog, auth role, idempotency rules, limits",
+        "Data design: every table with types, constraints and indexes; append-only triggers on inventory_ledger and audit_events; numbered migrations 001-005"
+      ],
+      "completedWork": "Read the approved brief in full, plus goal.md, the research notes, the review findings and the recorded decisions. Ran two probes as evidence. ev:ev-mv1bgxsc-010de90b: node --test forwards execArgv to test files, grandchildren need NODE_OPTIONS or explicit execArgv, and the host presets NODE_OPTIONS=--max-old-space-size=8192, so the helper merges. ev:ev-mv1bh8wb-011b5cf0: the CLI's stream-json input requires stream-json output and --verbose. Checked the Anthropic structured-output docs (output_config.format, no beta header, supported schema subset). Wrote .eccode/artifacts/design/spec.md and submitted it. Key decisions: (1) a provider-call protocol (queue/start/record with send_token fencing, stale-intent rule of 2 x timeout, read-before-resend table per call kind); (2) a plan lease_epoch fence; (3) the post-claim authorization read; (4) ARCH-22 resolution hook; (5) supersession never triggered by other customers' reservations, so RS-14's loser gets OUT_OF_STOCK; (6) dedupe of webhooks only among valid signatures; (7) a provider-safe wire schema plus a stricter local validator with grounding checks; (8) node:test plus the Playwright library for test:browser (global install or devDependency); (9) seeded and self-registered accounts, admin from RS_ADMIN_PASSWORD.",
+      "filesChanged": [
+        ".eccode/artifacts/design/spec.md",
+        ".eccode/artifacts/design/handoff.json",
+        ".eccode/drafts/design-probe-execargv.test.mjs",
+        ".eccode/drafts/design-probe-cli-flags.mjs"
+      ],
+      "evidence": [
+        "ev:ev-mv1bgxsc-010de90b",
+        "ev:ev-mv1bh8wb-011b5cf0"
+      ],
+      "remainingIssues": [
+        "OQ-D1: design-level reasons beyond the brief's trigger lists (executing -> non_executable AUTHORIZATION_EXPIRED from ARCH-23; approved -> non_executable OUT_OF_STOCK; REQUEST_DELETED, DEMO_RESET; supersede reasons REPLANNED, AVAILABILITY_DROPPED). Default: adopt.",
+        "OQ-D2: the brief's derivation has no row for an executed plan after an admin post-execution refund. Default: P executed and any op refunded -> cancelled.",
+        "OQ-D3: customer self-registration default on (RS_ALLOW_SIGNUP=1).",
+        "OQ-D4: Anthropic model id claude-haiku-4-5-20251001 and the prices are configurable and marked verify.",
+        "OQ-D5: PayPal facts to confirm on the first Sandbox run (approval link rel, authorization statuses incl. EXPIRED, final_capture rejecting a second capture, PayPal-Request-Id replay and retention, capture/refund ids via GET order, webhook event names).",
+        "The CLI stream-json stdin/result shapes for image input are verified only at the first live-model run (cli-image-smoke); until then a recorded transcript is used.",
+        "Carried from the brief: Q1-Q8, Q9 (Node floor; both branches designed), Q10 (daily model budget USD 1.00)."
+      ],
+      "nextAction": "technical-reviewer: review design submission sub-mv1c60sc-01174690 with eccode gate review design, covering the 45 required criteria and ARCH-22..26.",
+      "lessonsConsulted": [],
+      "id": "ho-mv1c6nxx-0187bb70",
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:06:35.074Z"
     }
   },
   "runs": {
@@ -2251,6 +2318,30 @@
       "task": null,
       "gate": "design",
       "startedAt": "2026-10-09T18:43:58.124Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T19:07:08.102Z",
+      "durationMinutes": 23.17,
+      "costUsd": null,
+      "tokens": 268474,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv1c7djp-0122e4f5": {
+      "id": "run-mv1c7djp-0122e4f5",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T19:07:08.256Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv1c7dmr-01d56fb8": {
+      "id": "run-mv1c7dmr-01d56fb8",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T19:07:08.369Z",
       "status": "running",
       "attempt": 1
     }
@@ -2482,8 +2573,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 69.85,
-    "tokens": 979924
+    "runtimeMinutes": 93.02,
+    "tokens": 1248398
   },
   "delivery": null
 }
