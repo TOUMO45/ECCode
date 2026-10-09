@@ -159,7 +159,7 @@ for (const [lab, mut] of [['base', null], ['A2', (i) => { off(i, 'A').availabili
   const d = compare(fxInput(mut), lab); check(`brute force agrees on RS-FIX-1 ${lab}`, d === null, d || '');
 }
 // random catalogs
-let seed = 12345; const rnd = () => ((seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296);
+let seed = Number(process.env.TR_SEED || 12345); const rnd = () => ((seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296);
 const pick = (a) => a[Math.floor(rnd() * a.length)];
 let diffs = 0, feasibleN = 0; const firstDiffs = [];
 for (let n = 0; n < 3000; n++) {
