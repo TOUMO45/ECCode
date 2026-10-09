@@ -1,0 +1,789 @@
+{
+  "decision": "approve",
+  "summary": "Re-review of revision 2 (sub-mv1awqkf-017ea892, brief sha256 f2d88ddf...). I read the brief in full against goal.md and independently re-derived the planner outcomes (ev:ev-mv1b4ffi-01126af0), the rescue-status derivation table (ev:ev-mv1b5tno-019d3877), the AC coverage and goal-id fidelity (ev:ev-mv1b6f7t-016a8217) and the Node 22.5 fallback mechanics (ev:ev-mv1b64bb-01e7637d). All 7 earlier major findings (ARCH-1..6, ARCH-19) and every earlier minor and info finding are resolved. Every one of the 45 required criteria is met and testable. Five new minor findings (ARCH-22..26) are left for the design gate. The Node floor narrowing is acceptable only as recorded: pending the user's answer Q9, with a pass condition kept for the goal's 22.5.",
+  "criteria": [
+    {
+      "id": "RS-01",
+      "description": "Equivalent Arabic and English requests (RS-FIX-1 wording) yield identical core fields: product type, quantities, capacity, diameter, deadline, budget, max pickups. [D with fake provider; LM with real model over corpus `test/fixtures/extraction/` version EXT-1, equality on normalised fields]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#AI feature statement"
+      ]
+    },
+    {
+      "id": "RS-02",
+      "description": "A clear package image yields capacity/diameter specifications carrying `provenance: \"image\"`. [D fake; LM real]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#AI feature statement"
+      ]
+    },
+    {
+      "id": "RS-03",
+      "description": "An ambiguous image yields `unknown` for unreadable fields plus at least one clarification question, and no numeric value absent from the image. Degraded path: when the provider times out, errors, returns schema-invalid output, or is refused by the daily budget or rate limit, the extraction row has `schema_ok = false` and an error code, every field is `unknown`, the response carries `degraded: true`, and the request page shows the labelled notice \"Automatic reading unavailable — please enter the details\" with a manual field for every core field (provenance `manual`); confirming those fields creates a requirements version and planning proceeds. [D fake incl. faults timeout, invalid_json, schema_invalid; B: test:browser for the notice; LM real]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows"
+      ]
+    },
+    {
+      "id": "RS-04",
+      "description": "With budget or deadline missing, `POST /api/plans/:id/approve` and `POST /api/orders/:id/paypal/create` return 409 with a named reason (`MISSING_BUDGET` / `MISSING_DEADLINE`) and no reservation or payment operation is created. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows"
+      ]
+    },
+    {
+      "id": "RS-05",
+      "description": "Injection strings in image text and catalog text appear only as data in `fields_json`/catalog; after extraction no permission, amount, supplier, plan version or role differs from the control run; explanations stay template-rendered from planner codes, and when opt-in rephrasing is enabled the same control-run comparison holds and any output containing a number or supplier code absent from the trace is discarded in favour of the template text. [D fake with injection fixtures; LM real]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#AI feature statement",
+        "artifact:.eccode/artifacts/architecture/brief.md#Planner rules (`domain/planner.js`, pure; oracle `domain/oracle.js` for tests)"
+      ]
+    },
+    {
+      "id": "RS-06",
+      "description": "With RS-FIX-1 and its pinned inventory, the planner returns plan A+B with total 8400 cents (A 4000 + B 4400), 2 pickups, ready 10:30; multiplicity guard: with A's on_hand set to 2 the same planner returns A×2 at 7000 cents with 1 pickup (ev:ev-mv1719y8-011f6742); the oracle property test runs on random catalogs of ≤ 6 offers with on_hand 0–3, so multiplicities above 1 are exercised. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Canonical fixture (RS-FIX-1, inlined from goal.md; inventory pinned by this brief)",
+        "ev:ev-mv1b4ffi-01126af0"
+      ],
+      "notes": "Independent solver: A+B 8400, 2 pickups, 10:30; with A on_hand 2 it returns Ax2 at 7000 with 1 pickup."
+    },
+    {
+      "id": "RS-07",
+      "description": "Supplier C's bundle is listed under rejections with code `INCOMPATIBLE_LID_DIAMETER` (cups 90 mm, lids 95 mm, no confirmed compatibility row). [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Planner rules (`domain/planner.js`, pure; oracle `domain/oracle.js` for tests)",
+        "ev:ev-mv1b4ffi-01126af0"
+      ]
+    },
+    {
+      "id": "RS-08",
+      "description": "Supplier D's bundle is rejected with code `READY_AFTER_DEADLINE` (ready 11:20 > deadline 11:00). [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "ev:ev-mv1b4ffi-01126af0"
+      ]
+    },
+    {
+      "id": "RS-09",
+      "description": "With the pinned inventory and B removed (on_hand 0 or offer withdrawn; B listed `OUT_OF_STOCK` or withdrawn) the best plan is A+E at 9500 cents (A 4000 + E 5500), 2 pickups, ready 10:40. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Canonical fixture (RS-FIX-1, inlined from goal.md; inventory pinned by this brief)",
+        "ev:ev-mv1b4ffi-01126af0"
+      ],
+      "notes": "A+E 9500, 2 pickups, 10:40 reproduced."
+    },
+    {
+      "id": "RS-10",
+      "description": "With the pinned inventory, B removed and budget 9000 cents the planner returns no feasible plan, lists blocking constraints including `OVER_BUDGET`, gives A and E the per-candidate codes `INSUFFICIENT_QTY` and `OVER_BUDGET`, and returns exactly two computed relaxations: budget → 9500 cents yields A+E at 9500 cents, and deadline → 11:20 yields D alone at 8000 cents with 1 pickup; no max-pickups relaxation is emitted because raising max pickups yields no plan (ev:ev-mv1719y8-011f6742, ev:ev-mv171l87-01672a57). [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Planner rules (`domain/planner.js`, pure; oracle `domain/oracle.js` for tests)",
+        "ev:ev-mv1b4ffi-01126af0"
+      ],
+      "notes": "Reproduced: A and E carry INSUFFICIENT_QTY + OVER_BUDGET; exactly two relaxations (budget 9500 gives A+E 9500; deadline 11:20 gives D 8000, 1 pickup); no max-pickups relaxation."
+    },
+    {
+      "id": "RS-11",
+      "description": "With the pinned inventory and max pickups = 1 the canonical scenario is infeasible; each compatible, in-time candidate (A, B, E) carries exactly the per-candidate codes `INSUFFICIENT_QTY` (alone it supplies 100 of 200) and `TOO_MANY_PICKUPS` (its cheapest covering combination needs 2 suppliers), while C and D keep their RS-07/RS-08 codes (ev:ev-mv171l87-01672a57). [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Planner rules (`domain/planner.js`, pure; oracle `domain/oracle.js` for tests)",
+        "ev:ev-mv1b4ffi-01126af0"
+      ],
+      "notes": "Reproduced: A, B, E carry exactly INSUFFICIENT_QTY + TOO_MANY_PICKUPS under the cheapest-covering-combination rule; relaxations TOO_MANY_PICKUPS (A+B 8400) and READY_AFTER_DEADLINE (D 8000) match the brief."
+    },
+    {
+      "id": "RS-12",
+      "description": "A plan whose cups or lids total < required quantity cannot be produced as feasible, and approval of a tampered plan body is refused with 409. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Planner rules (`domain/planner.js`, pure; oracle `domain/oracle.js` for tests)"
+      ]
+    },
+    {
+      "id": "RS-13",
+      "description": "After the price of an offer used by an approved plan changes, while that supplier's order is not yet `confirmed` and the plan is not `executing`, the approved version becomes `superseded`, totals are recalculated in a new `proposed` version, and reserve/execute on the old version return 409 `PLAN_SUPERSEDED` until the new version is approved; every authorization on the old version ends `voided` (one void provider call each), its reservation is `released` (one ledger row per item), its supplier orders are `cancelled`, and the request shows \"Prices changed: review plan vN\"; a price change after that supplier confirmed, or after the claim to `executing`, does not supersede the plan (asserted). [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Payment saga (`services/payments.js`)",
+        "artifact:.eccode/artifacts/architecture/brief.md#State machines (`domain/states.js`; transitions outside these tables are refused and audited)"
+      ],
+      "notes": "Supersession stop point (supplier confirmed or plan executing) is stated and asserted."
+    },
+    {
+      "id": "RS-14",
+      "description": "Two separate OS processes, each connection with `PRAGMA busy_timeout = 5000`, reserve supplier A's last bundle (pinned inventory, on_hand = 1) concurrently against the same SQLite file; exactly one reservation is `active`, the other receives `OUT_OF_STOCK` (not a lock error and not a 500); `reserved <= on_hand` holds; a separate test with `busy_timeout = 0` and a held write lock shows SQLITE_BUSY mapped to 503 `DB_BUSY` with `Retry-After`. [D, multi-process]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Idempotency and concurrency",
+        "ev:ev-mv16fndw-01e46e13"
+      ]
+    },
+    {
+      "id": "RS-15",
+      "description": "An expired reservation is released exactly once: inventory returns to its prior value, the ledger holds one release row, and a second expiry pass is a no-op; an expiry pass run after the execute claim and before the first capture (reservation `consumed`) changes nothing; on expiry before execute every authorization of that plan ends `voided`, the plan is `non_executable` (`RESERVATION_EXPIRED`), and the request shows \"Reservation expired — no money was taken; re-plan with current stock\". [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#State machines (`domain/states.js`; transitions outside these tables are refused and audited)"
+      ],
+      "notes": "Expiry touches only active rows, so it is a no-op after the claim consumed the reservation."
+    },
+    {
+      "id": "RS-16",
+      "description": "Two `reserve` calls with the same `Idempotency-Key` and body return the same reservation id and create no second reservation or ledger row; the same key with a different body returns 422 `IDEMPOTENCY_KEY_REUSED` and changes nothing. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Idempotency and concurrency"
+      ]
+    },
+    {
+      "id": "RS-17",
+      "description": "Supplier refusal before the execute claim sets the order to `refused`; every outstanding authorization of that plan version ends `voided`, its reservation is `released`, the plan is `non_executable` (`SUPPLIER_REFUSED`), the rescue status reads `cancelling` while a void is outstanding, the customer request shows the refusal reason with the next step \"Review the new plan\", and a new plan version is computed excluding that supplier. [D; B: test:browser]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Payment saga (`services/payments.js`)",
+        "ev:ev-mv1b5tno-019d3877"
+      ]
+    },
+    {
+      "id": "RS-18",
+      "description": "Cancelling on PayPal (cancel URL) leaves that supplier's operation `created` with `buyer_cancelled_at` (no provider authorization exists) or `voided`, no capture call or capture row exists, and `execute` returns 409; the buyer is offered \"Try approval again\" and \"Abandon purchase\"; on \"Abandon purchase\" or reservation expiry every other supplier's outstanding authorization ends `voided`, the reservation is `released`, and the plan is `non_executable` (`PAYMENT_CANCELLED` or `RESERVATION_EXPIRED`). [D fake; LP]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#PayPal return and session (ARCH-10)"
+      ]
+    },
+    {
+      "id": "RS-19",
+      "description": "A client-supplied amount/currency/supplier on any payment route is ignored; the PayPal order amount equals the server-approved supplier-order total. [D; LP]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Architecture"
+      ]
+    },
+    {
+      "id": "RS-20",
+      "description": "Two server processes on the same SQLite file each receive N = 5 concurrent `execute` requests for the same plan: exactly one `approved → executing` claim commits (conditional UPDATE inside `BEGIN IMMEDIATE`), the other nine return the current state without any provider call, and the fake adapter (state persisted in the same database) records exactly one capture call per supplier order with `PayPal-Request-Id` equal to its deterministic operation key `so:<supplierOrderId>:capture:1`; three repeated hits on the PayPal return URL for one supplier order (refresh/back) produce exactly one authorize call. [D fake, multi-process; LP]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Payment saga (`services/payments.js`)",
+        "artifact:.eccode/artifacts/architecture/brief.md#PayPal return and session (ARCH-10)"
+      ],
+      "notes": "Testable as written; see minor ARCH-23 on the pre-claim provider read and ARCH-26 on lease takeover."
+    },
+    {
+      "id": "RS-21",
+      "description": "If one supplier's authorization is DENIED, no capture call occurs on any supplier order, the plan is `non_executable` (`AUTHORIZATION_FAILED`, naming the supplier), every other authorization ends `voided`, the reservation is `released`, and the buyer sees \"PayPal declined the payment for <supplier>. No money was taken; other authorizations were voided. Re-plan or try another PayPal account\"; an authorization answering PENDING leaves the operation `authorization_pending`, and `execute` returns 409 `AUTHORIZATION_PENDING` with no capture until the reconciler observes CREATED. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#State machines (`domain/states.js`; transitions outside these tables are refused and audited)"
+      ]
+    },
+    {
+      "id": "RS-22",
+      "description": "With capture failing on the second supplier, the first capture is refunded and every uncaptured authorization voided; statuses read `refund_requested → refund_pending → refunded|refund_failed`; the plan becomes `non_executable` (`CAPTURE_FAILED`); the reservation is `reconciling` until every refund is `refunded` and every void done, then `released` with restock ledger rows (with `refund_failed` it stays `reconciling` and the rescue status reads `failed_needs_attention`); handover is refused with 409 `HANDOVER_BLOCKED`; a capture answering PENDING leaves the operation `capture_pending`, handover stays blocked, and the next capture does not start until the reconciler resolves it. [D fake faults]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Payment saga (`services/payments.js`)",
+        "ev:ev-mv1b5tno-019d3877"
+      ]
+    },
+    {
+      "id": "RS-23",
+      "description": "Delivering the same webhook (same transmission id) twice applies its effect once. [D; LP]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows"
+      ]
+    },
+    {
+      "id": "RS-24",
+      "description": "A webhook with an invalid signature is rejected (4xx), recorded with `signature_status: invalid`, and applies no transition. [D; LP]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows"
+      ]
+    },
+    {
+      "id": "RS-25",
+      "description": "After a simulated lost response on capture, the operation is `unknown`; the reconciler fetches provider state and only then marks `captured` (COMPLETED), marks `capture_pending` (PENDING, polled until resolved), or re-sends with the same `PayPal-Request-Id` (no capture exists at the provider); no second capture occurs; a provider call left in `intent` at a restart is treated as `unknown`. [D fake]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#State machines (`domain/states.js`; transitions outside these tables are refused and audited)"
+      ]
+    },
+    {
+      "id": "RS-26",
+      "description": "Killing and restarting the server mid-saga preserves orders, payment operations, provider calls and recovery progress; after the saga lease expires, the reconciler takes it over and completes the saga. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Payment saga (`services/payments.js`)"
+      ]
+    },
+    {
+      "id": "RS-27",
+      "description": "Customer X requesting customer Y's request or order id receives 404/403 and no data, including `GET /api/paypal/return?token=` and `/cancel?token=` with Y's PayPal order token (404, no authorize call, no state change). [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#PayPal return and session (ARCH-10)"
+      ]
+    },
+    {
+      "id": "RS-28",
+      "description": "Supplier A patching supplier B's inventory receives 403 and B's inventory is unchanged. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#API contracts (JSON under `/api`; error envelope `{error:{code,message,requestId,details?}}`)"
+      ]
+    },
+    {
+      "id": "RS-29",
+      "description": "A scan of built frontend assets, API responses, logs, screenshots and submission files finds no client id/secret value; config redacts secrets in errors. [D scan; I]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Major choices and alternatives"
+      ]
+    },
+    {
+      "id": "RS-30",
+      "description": "Customer and supplier sessions calling admin fault/reset routes receive 403; unauthenticated 401. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Users"
+      ]
+    },
+    {
+      "id": "RS-31",
+      "description": "(a) Browser journey at 360 px and 1280 px: request → review → plan → reservation → PayPal approvals → supplier confirmations → capture → readiness → collection, with screenshots, using the fake adapter whose approval page is served from a different site (`127.0.0.1` while the app runs on `localhost`), so the `SameSite=Lax` session must survive the cross-site return [B: test:browser]; (b) the same journey through PayPal's hosted Sandbox approval page with a Sandbox buyer account, with screenshots [LP browser, user-run; Unverified with blocker A6/Q2 until the user runs it].",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Success Criteria",
+        "ev:ev-mv1b6f7t-016a8217"
+      ],
+      "notes": "Variant (b) through the hosted Sandbox approval page is user-run and marked Unverified with blocker A6/Q2; the demo video must show the Sandbox page."
+    },
+    {
+      "id": "RS-32",
+      "description": "(a) Browser journey: B becomes unavailable after approval (the admin stock-depletion fault withdraws B's offer before B confirms); the buyer reviews and approves the $95 (9500 cents) A+E plan; the old plan is `superseded`, its authorizations end `voided` and B's order is `cancelled`; the replacement flow completes through collection [B: test:browser, fake adapter on a different site]; (b) the same replacement journey with PayPal's hosted Sandbox approval page, with screenshots [LP browser, user-run; Unverified with blocker A6/Q2 until the user runs it].",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Success Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#API contracts (JSON under `/api`; error envelope `{error:{code,message,requestId,details?}}`)"
+      ],
+      "notes": "The stock-depletion fault now withdraws the offer, which supersedes (not non_executable), consistent with the AC; variant (b) is user-run and Unverified."
+    },
+    {
+      "id": "RS-33",
+      "description": "Browser journey: an infeasible request ends on an explanation screen with blocking constraints, per-candidate codes and computed relaxations; no reservation, order or payment operation exists. [B: test:browser]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows"
+      ]
+    },
+    {
+      "id": "RS-34",
+      "description": "Labelling, asserted for both payment adapters: (1) fake adapter payloads (payments and extraction) carry `\"simulated\": true`, and the UI shows a \"Simulated\" provider badge and a persistent banner while a fake adapter is active; (2) Sandbox adapter payloads carry `provider: \"paypal-sandbox\"` and `\"sandbox\": true`, and every payment element in the UI shows \"PayPal Sandbox — no real money\"; (3) seeded suppliers, offers and prices carry `\"demo\": true` rendered as a \"Demo data\" badge, and every screen that shows seeded prices shows \"Test prices, not market prices\"; config refuses any PayPal base URL other than the Sandbox host or a loopback stub. [D both adapters, with the Sandbox adapter pointed at a loopback stub base URL; B: test:browser both adapters]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements",
+        "ev:ev-mv1b6f7t-016a8217"
+      ],
+      "notes": "Covers fake adapters, the Sandbox adapter, seeded demo data and the test-prices notice, for both adapters."
+    },
+    {
+      "id": "RS-35",
+      "description": "The request page shows all six answers (requirements with provenance, decision trace, rejections, cents totals, offer vs commitment, compensation state and next step), with explanation text rendered from planner codes. [B: test:browser; I]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Users"
+      ]
+    },
+    {
+      "id": "RS-36",
+      "description": "State tables persist plan, reservation, payment-operation and fulfilment statuses separately; the rescue status endpoint is computed by the derivation table and a schema query shows no column storing it; derivation assertions: (i) any operation of any plan version in `refund_requested` or `refund_pending` yields `refunding`, even when every other order is collected; (ii) a supplier refusal or `non_executable` plan with an operation still `authorized`, `authorization_pending` or `unknown` (within the escalation limit) yields `cancelling`, and with `refund_failed`, a failed void or an over-age `unknown` it yields `failed_needs_attention`; (iii) `collected` only when every supplier order of the current plan is `collected` and every capture is `captured`, so one order `ready` and one `collected` yields `ready_for_pickup`; (iv) after every void completes following a refusal and a new version is proposed, the status is `plan_found`. [D; I]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Rescue status derivation (`domain/derive.js`; computed on read, never stored)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Data model (SQLite; money as INTEGER cents; times as ISO-8601 UTC strings)",
+        "ev:ev-mv1b5tno-019d3877"
+      ],
+      "notes": "Four derivation assertions; all reproduced by an independent implementation of the 13-row table. The only unmatched combinations (600 of 30420) are proposed plans with an active reservation, which the workflows cannot produce."
+    },
+    {
+      "id": "RS-37",
+      "description": "Admin reset returns 409 while any payment operation is `approved|authorization_pending|authorized|capture_pending|captured|refund_requested|refund_pending|unknown`; forced reset records a reason and archives rather than deletes payment operations and provider calls. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements"
+      ]
+    },
+    {
+      "id": "RS-38",
+      "description": "Any UPDATE/DELETE on `audit_events` or `inventory_ledger` fails; every reserve, release, expire, consume and restock writes a ledger row. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Data model (SQLite; money as INTEGER cents; times as ISO-8601 UTC strings)"
+      ]
+    },
+    {
+      "id": "RS-39",
+      "description": "Upload accepts only bodies whose magic bytes identify PNG, JPEG or WebP (a body declared `image/png` but carrying other bytes is rejected with 415) and of at most 5 MB (413 above); the stored name is random (128-bit); customer Y uploading to customer X's request receives 404 and no file is written; `DELETE /api/requests/:id` by the owner removes the image file and row, raw text and extraction text (409 `PAYMENT_IN_PROGRESS` while money is held; with settled payments the request is tombstoned and financial rows keep ids only); with a pinned clock the retention sweep deletes an image at 7 days + 1 minute and keeps it at 6 days 23 hours, writing an audit event. [D]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows",
+        "artifact:.eccode/artifacts/architecture/brief.md#Assumptions"
+      ]
+    },
+    {
+      "id": "NFR1",
+      "description": "On Node ≥ 22.13 (floor per `dec-mv16pyxx-01bad0bf`; RS-NF-1 states ≥ 22.5, see Q9) a clean clone runs `npm install` (npm registry only) then `npm test`, which passes with the non-loopback network guard active and launches no browser; `npm start` from the README serves `GET /api/health` with 200; `package.json` has no `dependencies` (only `devDependencies`: `@playwright/test`) and declares `engines.node >= 22.13`; on an older Node `npm start` exits non-zero with a message naming the required version. If the user answers Q9 by keeping 22.5, `engines.node` is `>=22.5`, every npm script and the README start command pass `--experimental-sqlite`, and the same checks apply from Node 22.5 (only Node 22.22 is available on this host, so a run on 22.5 is the user's). [D; I]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements",
+        "artifact:.eccode/artifacts/architecture/brief.md#Open Questions",
+        "ev:ev-mv16frja-017d17a4",
+        "ev:ev-mv1b64bb-01e7637d"
+      ],
+      "notes": "Met only as a pending narrowing: the 22.13 floor is an orchestrator decision awaiting the user's answer Q9, and the AC keeps a pass condition for the goal's 22.5 (flag in every script). If the user keeps 22.5, ARCH-24 applies."
+    },
+    {
+      "id": "NFR2",
+      "description": "Playwright checks at 360 px and 1280 px: keyboard-only completion of the happy path, visible focus, labelled controls, text status indicators; loading/empty/error/retry/timeout/expired-reservation/degraded-extraction states rendered. [B: test:browser]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements"
+      ]
+    },
+    {
+      "id": "NFR3",
+      "description": "Per `dec-mv16pz32-013c4cd1`, `npm test` (offline deterministic `node --test`), `npm run test:browser` (Playwright; the README documents the one-time `npx playwright install chromium`), `npm run test:live-model` (refuses to run unless `RS_LIVE_MODEL=1`) and `npm run test:live-paypal` (refuses unless `RS_LIVE_PAYPAL=1`) are separate scripts; live reports are labelled with suite, provider, model or merchant mode (per-supplier or single-credential) and corpus version. [I; D for the refusal without the flag]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Constraints",
+        "ev:ev-mv1b6f7t-016a8217"
+      ],
+      "notes": "Every [B] AC names npm run test:browser (9 of 9)."
+    },
+    {
+      "id": "NFR4",
+      "description": "Config reads secrets only from `process.env`; `.env.example` contains names and placeholders only; a test asserts no real-looking value. [D; I]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Constraints"
+      ]
+    },
+    {
+      "id": "NFR5",
+      "description": "The planner solves RS-FIX-1 and each of 200 seeded generator catalogs (seeds 1–200; 12 offers; bundle sizes {50, 100, 200}; required quantity 100–400 in steps of 100; on_hand 0–2; price 1000–10000 cents; prep fee 0–1500 cents; ready 09:30–12:00; 15 % incompatible; max pickups 1–3) in < 1 s each (a plain brute force needed at most 11.8 ms on this host, ev:ev-mv1719y8-011f6742); p95 latency over all HTTP calls made by the deterministic API tests with fake adapters (excluding the multi-process and restart tests) is < 300 ms as reported by the test harness; the deterministic suite completes offline in < 5 min. [D timing]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "ev:ev-mv1b4ffi-01126af0"
+      ],
+      "notes": "My unpruned solver, including the infeasible-case relaxations (four solves), needed at most 113 ms on a 200-catalog generator with the stated bounds, well under 1 s."
+    },
+    {
+      "id": "NFR6",
+      "description": "Every response and log line carries `requestId`; the RS-29 scan also asserts that no log line contains an `Authorization` header value, an access token, a client secret, a payer email or name, or a raw provider response body (ids and statuses only); config inspection shows `haiku` as the default model; runtime controls: with a fake per-call cost cap of USD 0.10 and `RS_MODEL_DAILY_BUDGET_USD=0.25`, the third extract is refused with 503 `MODEL_BUDGET_EXHAUSTED` without invoking the provider and enters the RS-03 degraded path, and an 11th extract or image upload by one customer within 10 minutes returns 429 `RATE_LIMITED` with `Retry-After`; the live model suite reports its cost and stays within the ceiling recorded in `dec-mv16pz0g-01d5c4c2` (USD 5 per run). [D; LM report; I]",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#AI feature statement"
+      ]
+    },
+    {
+      "id": "fidelity",
+      "description": "Every user requirement id RS-01..RS-33 and RS-NF-1..4 is present and not weakened; the only narrowing (Node floor) is flagged as pending Q9 with a 22.5 pass condition",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1b6f7t-016a8217",
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements",
+        "artifact:.eccode/artifacts/architecture/brief.md#Where this brief goes beyond goal.md (for the user's attention; goal.md is unchanged)"
+      ]
+    },
+    {
+      "id": "self-contained",
+      "description": "The brief is self-contained: fixture with inventory, planner rules, state machines, derivation, saga, data model and contracts are inline (ARCH-19)",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Architecture",
+        "artifact:.eccode/artifacts/architecture/brief.md#Canonical fixture (RS-FIX-1, inlined from goal.md; inventory pinned by this brief)",
+        "ev:ev-mv1b6f7t-016a8217"
+      ]
+    },
+    {
+      "id": "completeness",
+      "description": "Users, problem, workflows, constraints and scope boundaries explicit; authn/authz, retention, error handling, accessibility, observability, abuse and cost covered",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Users",
+        "artifact:.eccode/artifacts/architecture/brief.md#Problem",
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows",
+        "artifact:.eccode/artifacts/architecture/brief.md#Scope",
+        "artifact:.eccode/artifacts/architecture/brief.md#Constraints"
+      ],
+      "notes": "Residual gap: the authentication contract (ARCH-25, minor)."
+    },
+    {
+      "id": "testability",
+      "description": "Each acceptance criterion is decidable by a named suite or inspection and every requirement traces 1:1 to an AC",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "ev:ev-mv1b6f7t-016a8217"
+      ]
+    },
+    {
+      "id": "assumptions",
+      "description": "Risky assumptions are stated with what they block, and design-blocking questions have recorded defaults",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Assumptions",
+        "artifact:.eccode/artifacts/architecture/brief.md#Open Questions"
+      ]
+    },
+    {
+      "id": "complexity",
+      "description": "No component is unnecessary; simpler alternatives were considered",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Major choices and alternatives",
+        "artifact:.eccode/artifacts/architecture/brief.md#Scope"
+      ]
+    },
+    {
+      "id": "feasibility",
+      "description": "Technology limits, concurrency, latency and cost are feasible on the stated platform",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1b4ffi-01126af0",
+        "ev:ev-mv16fndw-01e46e13",
+        "ev:ev-mv1b64bb-01e7637d",
+        "artifact:.eccode/artifacts/architecture/brief.md#Constraints"
+      ]
+    },
+    {
+      "id": "security",
+      "description": "Trust boundaries, secrets, PII, prompt injection, least privilege and the PayPal return path are addressed",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Architecture",
+        "artifact:.eccode/artifacts/architecture/brief.md#PayPal return and session (ARCH-10)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Idempotency and concurrency"
+      ],
+      "notes": "Minor residuals ARCH-25 (auth contract) and ARCH-26 (lease fencing)."
+    },
+    {
+      "id": "ai",
+      "description": "AI adds real value, with an evaluation corpus and thresholds, a fallback on model failure, spend controls and human oversight",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#AI feature statement",
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows"
+      ]
+    },
+    {
+      "id": "risks",
+      "description": "Every material risk has likelihood, impact, mitigation and owner",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ]
+    },
+    {
+      "id": "no-reviewer-directives",
+      "description": "The submission contains no directives aimed at reviewers",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks",
+        "artifact:.eccode/artifacts/architecture/brief.md#Revision 2: response to review rev-mv16o544-0127ccbf"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "ARCH-22",
+      "severity": "minor",
+      "title": "The void rule does not cover an operation whose authorize response was lost (status unknown)",
+      "detail": "The payment-operation table moves an operation approved -> unknown when the authorize call gets no response. The void rule lists operations in created, in approved with no authorize call, in approved with an authorize call still in intent or unknown, in authorization_pending, and in authorized. It does not list an operation whose own status is unknown. An operation with a lost authorize response is therefore in none of these lists when supersession, refusal, abandonment or expiry fires. The reconciler later resolves it to authorized, and nothing persists a void intent for it. The provider authorization stays open until it expires. Derivation row 4 then shows cancelling indefinitely, and row 2 never escalates it. My implementation of the 13-row table returns cancelling for this case even after 2000 minutes (ev:ev-mv1b5tno-019d3877, GAP case). Placement correction 2 meant to close this, but its wording ('approved with an authorize call still in intent or unknown') matches only the restart case, where the operation is still approved.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Payment saga (`services/payments.js`)",
+        "artifact:.eccode/artifacts/architecture/brief.md#State machines (`domain/states.js`; transitions outside these tables are refused and audited)",
+        "ev:ev-mv1b5tno-019d3877"
+      ],
+      "recommendation": "Resolved when the design (1) extends the void rule to operations in unknown whose last call is authorize, so they are voided once the reconciler resolves them to authorized, and (2) adds a [D] assertion: lost authorize response, then supersession, then reconciliation gives exactly one void call and the operation ends voided. Optionally, row 2 also escalates an authorized operation of a superseded or non_executable version that has had no void intent for longer than the pending limit."
+    },
+    {
+      "id": "ARCH-23",
+      "severity": "minor",
+      "title": "RS-20 forbids any provider call by losing executors, but the saga re-reads expiration_time from the provider before the claim",
+      "detail": "Saga step 1 revalidates 'a provider expiration_time (re-read from the provider just before the claim)'. That read happens before BEGIN IMMEDIATE, so every one of the 10 concurrent execute requests in RS-20 performs it. RS-20 says the nine losers 'return the current state without any provider call'. As written, the implementation must break one of the two statements.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Payment saga (`services/payments.js`)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ],
+      "recommendation": "Resolved when saga step 1 and RS-20 agree. Either move the expiration re-read after the claim (by the lease holder, before the first capture; failure then runs the void rule) or narrow RS-20 to 'without any capture, void or refund call' and allow the read-only authorization GETs."
+    },
+    {
+      "id": "ARCH-24",
+      "severity": "minor",
+      "title": "NFR1's Node 22.5 branch does not reach child processes spawned by the multi-process tests",
+      "detail": "If the user answers Q9 by keeping 22.5, NFR1 says every npm script and the README start command pass --experimental-sqlite. RS-14, RS-20 and RS-26 spawn separate Node processes. A child spawned with process.execPath does not inherit execArgv; it does inherit NODE_OPTIONS. Checked on Node 22.22.0: the child's execArgv lacked --experimental-sqlite, while NODE_OPTIONS carrying --experimental-sqlite --disable-warning=ExperimentalWarning was inherited and accepted (ev:ev-mv1b64bb-01e7637d). On 22.5-22.12 those children could not load node:sqlite. This only matters under the 22.5 answer.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "ev:ev-mv1b64bb-01e7637d"
+      ],
+      "recommendation": "Resolved when the 22.5 branch of NFR1 sets the flag through NODE_OPTIONS in the npm scripts (or requires spawned test processes to pass process.execArgv), and states that the multi-process tests are part of the 22.5 pass condition."
+    },
+    {
+      "id": "ARCH-25",
+      "severity": "minor",
+      "title": "Authentication contract is missing from the self-contained brief; the webhook route conflicts with the CSRF rule",
+      "detail": "The architecture names 'auth (scrypt, sessions, CSRF, RBAC default-deny, owner scope)' and RS-27/28/30 depend on sessions. The API contracts, however, list no sign-in, sign-out or session routes, no session lifetime or rotation, no account provisioning (customer self sign-up or seeded demo accounts), and no throttling of sign-in attempts. Throttling matters most for the startup-provided admin password on a publicly reachable demo. The trust-boundary text also requires the CSRF header on 'every non-GET route'. That would block POST /api/webhooks/paypal/:merchantKey, which has no session and is authenticated by signature instead.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#API contracts (JSON under `/api`; error envelope `{error:{code,message,requestId,details?}}`)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Architecture"
+      ],
+      "recommendation": "Resolved when the design contracts list the auth routes, session TTL and rotation on sign-in, and how customer and supplier accounts are provisioned. They must also add a sign-in rate limit or lockout with a [D] assertion, and state that the webhook route is CSRF-exempt and authenticated by signature only."
+    },
+    {
+      "id": "ARCH-26",
+      "severity": "minor",
+      "title": "Saga lease takeover while the first executor is still inside a capture call is not fenced",
+      "detail": "The lease is 60 s and renewed per step. No PayPal HTTP timeout is stated, and 'intent treated as unknown' is stated only for startup. A reconciler in a second process that takes over an expired lease 'resumes at the first supplier order that is not captured'. That order is still authorized while the first process waits on its capture call. The deterministic UNIQUE key does not stop a re-send of the same provider_calls row, and the brief itself calls the provider-side PayPal-Request-Id only a backstop with unverified retention. Nothing says that late writes by the old executor are conditional on still holding the lease. The likelihood is low, but the impact is a double capture (RISK-3).",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Payment saga (`services/payments.js`)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Idempotency and concurrency",
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ],
+      "recommendation": "Resolved when the design states three things. (1) The PayPal call timeout is well below the lease (for example 20 s against 60 s). (2) On any takeover, every capture call in intent is treated as unknown and resolved by reading provider state before any re-send. (3) Saga writes are conditional on executor_id and lease_until (fencing). RS-26 or RS-20 must also gain an assertion: process 1 stalls mid-capture past the lease, process 2 takes over, and the fake provider records exactly one capture per supplier order."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "ARCH-1",
+      "resolution": "Inventory is pinned at on_hand = 1, reserved = 0 for A-E in the inlined fixture table, loaded by the seed with demo: true. RS-06/09/10/11/14 cite it. RS-06 adds the multiplicity guard (A on_hand 2 gives Ax2 at 7000), and the oracle property test uses on_hand 0-3. Independently confirmed: A1B1E1 is the only one of 27 inventories that satisfies RS-06/09/10/11, and every expected outcome reproduces.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Canonical fixture (RS-FIX-1, inlined from goal.md; inventory pinned by this brief)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "ev:ev-mv1b4ffi-01126af0"
+      ]
+    },
+    {
+      "id": "ARCH-2",
+      "resolution": "(a) authorization_pending, capture_pending and refund_pending are in the payment table with reconciler polling. Capture never starts from authorization_pending, and handover stays blocked while capture_pending (RS-21, RS-22, RS-25). (b) A 13-row precedence table derives every goal aggregate state, including cancelling, refunding and failed_needs_attention. (c) RS-36 carries four derivation assertions, all reproduced by an independent implementation.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#State machines (`domain/states.js`; transitions outside these tables are refused and audited)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Rescue status derivation (`domain/derive.js`; computed on read, never stored)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "ev:ev-mv1b5tno-019d3877"
+      ]
+    },
+    {
+      "id": "ARCH-3",
+      "resolution": "(1) The exclusive approved -> executing conditional UPDATE runs under BEGIN IMMEDIATE, with deterministic keys so:<id>:capture:1 inserted as intents. RS-20 uses two OS processes x 5 requests. (2) The reservation is consumed in the same transaction; expiry touches only active rows, and RS-15 asserts that an expiry pass after the claim changes nothing. (3) The void rule covers RS-13/15/17/18/21 and authorization expiry, with buyer next steps and assertions in each AC. (4) Supersession stops once the supplier order is confirmed or the plan is executing, and this is asserted in RS-13. Edge residuals are tracked as minors ARCH-22, ARCH-23 and ARCH-26.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Payment saga (`services/payments.js`)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ]
+    },
+    {
+      "id": "ARCH-4",
+      "resolution": "RS-34 and its AC cover fake adapters (simulated: true, badge, banner), the Sandbox adapter (provider: paypal-sandbox, sandbox: true, 'PayPal Sandbox - no real money'), seeded demo data (demo: true, 'Demo data' badge) and the 'Test prices, not market prices' notice. They are tested [D; B] for both adapters, and config refuses non-Sandbox hosts.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "ev:ev-mv1b6f7t-016a8217"
+      ]
+    },
+    {
+      "id": "ARCH-5",
+      "resolution": "(a) The brief adopts Node >= 22.13 as a narrowing pending the user's answer Q9 and keeps a 22.5 pass condition (--experimental-sqlite in every script). The busy timeout is set by PRAGMA, which works from 22.5; I confirmed PRAGMA busy_timeout = 5000 reads back 5000. (b) The script layout is npm test (offline node --test, launches no browser), npm run test:browser (Playwright, one-time browser install in the README), test:live-model and test:live-paypal. Every [B] AC names test:browser. A residual for the 22.5 branch is tracked as minor ARCH-24.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Constraints",
+        "artifact:.eccode/artifacts/architecture/brief.md#Open Questions",
+        "ev:ev-mv1b64bb-01e7637d",
+        "ev:ev-mv1b6f7t-016a8217"
+      ]
+    },
+    {
+      "id": "ARCH-6",
+      "resolution": "RS-31 and RS-32 each have (a) a deterministic [B] fake-adapter variant with the approval page on a different site and (b) a user-run [LP browser] variant through the hosted Sandbox approval page, marked Unverified with blocker A6/Q2. Success Criteria require the demo video to show the Sandbox approval page.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Success Criteria"
+      ]
+    },
+    {
+      "id": "ARCH-19",
+      "resolution": "The brief now inlines the RS-FIX-1 table with inventory, the planner rules (multiplicity bound, feasibility, objective, codes, relaxations), four state machines, the derivation table, the saga with claim and void rules, the data model and the API contracts. It declares itself authoritative over plan.md, and the phrase 'adopted unchanged' no longer occurs.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Architecture",
+        "artifact:.eccode/artifacts/architecture/brief.md#Planner rules (`domain/planner.js`, pure; oracle `domain/oracle.js` for tests)",
+        "ev:ev-mv1b6f7t-016a8217"
+      ]
+    },
+    {
+      "id": "ARCH-7",
+      "resolution": "Relaxations are computed by re-solving with one constraint removed. RS-10 asserts budget 9500 gives A+E and deadline 11:20 gives D at 8000, and that no max-pickups relaxation appears. Reproduced independently.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Planner rules (`domain/planner.js`, pure; oracle `domain/oracle.js` for tests)",
+        "ev:ev-mv1b4ffi-01126af0"
+      ]
+    },
+    {
+      "id": "ARCH-8",
+      "resolution": "The NFR1..4 = RS-NF-1..4 mapping is kept in the brief and now also appears in docs/build/evidence.md under 'Id mapping (ARCH-8)'.",
+      "evidence": [
+        "ev:ev-mv1b99e5-0130fce9",
+        "artifact:.eccode/artifacts/architecture/brief.md#RescueStock — Architecture Brief (revision 2)"
+      ]
+    },
+    {
+      "id": "ARCH-9",
+      "resolution": "The NFR5 AC defines the generator (seeds 1-200, 12 offers, bounds) and keeps p95 with a measurement rule. The NFR6 AC adds the log-content scan and the haiku default.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "ev:ev-mv1b4ffi-01126af0"
+      ]
+    },
+    {
+      "id": "ARCH-10",
+      "resolution": "The return/cancel handlers look up the operation by provider_order_id with an owner check (404 otherwise). Authorize is keyed so:<id>:authorize:1 and idempotent. The cookie is SameSite=Lax. The fake approval page is served from 127.0.0.1 while the app runs on localhost. RS-20 asserts that three repeated returns give one authorize call, and RS-27 asserts the cross-customer token case.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#PayPal return and session (ARCH-10)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ]
+    },
+    {
+      "id": "ARCH-11",
+      "resolution": "A daily model budget (RS_MODEL_DAILY_BUDGET_USD) and a per-customer rate limit of 10 per 10 minutes, counted in SQLite, are added. NFR6 asserts 503 MODEL_BUDGET_EXHAUSTED on the third call and 429 RATE_LIMITED on the 11th.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#AI feature statement",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ]
+    },
+    {
+      "id": "ARCH-12",
+      "resolution": "The degraded manual-entry path is specified and asserted in RS-03 [D; B]. The corpus is committed at test/fixtures/extraction/ with corpusVersion EXT-1.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows",
+        "artifact:.eccode/artifacts/architecture/brief.md#AI feature statement"
+      ]
+    },
+    {
+      "id": "ARCH-13",
+      "resolution": "Explanations are template-rendered from planner codes. Rephrasing is opt-in (RS_EXPLAIN_REPHRASE=1), labelled, and discarded if it contains a number or supplier code absent from the trace. RS-05 covers it.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Planner rules (`domain/planner.js`, pure; oracle `domain/oracle.js` for tests)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ]
+    },
+    {
+      "id": "ARCH-14",
+      "resolution": "A key reused with a different body gets 422 IDEMPOTENCY_KEY_REUSED. PayPal-Request-Id is the operation key, which encodes the call kind. Asserted in RS-16.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Idempotency and concurrency"
+      ]
+    },
+    {
+      "id": "ARCH-15",
+      "resolution": "The defaults are recorded as decision dec-mv16pz0g-01d5c4c2 and cited in Open Questions Q1/Q3/Q4/Q6/Q8, which stay open for the user.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Open Questions"
+      ]
+    },
+    {
+      "id": "ARCH-16",
+      "resolution": "RISK-13 (authorization expiry, re-read expiration_time, void and re-approve), RISK-14 (browser install) and RISK-15 (experimental node:sqlite), plus RISK-16..18, are added with likelihood, impact, mitigation and owner.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ]
+    },
+    {
+      "id": "ARCH-17",
+      "resolution": "RS-39 requires magic-byte detection (415 on mismatch) and an owner check (404 and no file written for another customer), each asserted.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ]
+    },
+    {
+      "id": "ARCH-18",
+      "resolution": "A2 states that the number of approvals equals the number of supplier orders and is shown up front. It names the live rows that single-credential mode weakens (RS-19/20/22/23/24), and the evidence table must label them.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Assumptions"
+      ]
+    },
+    {
+      "id": "ARCH-20",
+      "resolution": "Every connection sets PRAGMA busy_timeout = 5000. SQLITE_BUSY after the timeout maps to 503 DB_BUSY with Retry-After. RS-14 asserts that the loser gets OUT_OF_STOCK and covers the busy_timeout = 0 case.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Idempotency and concurrency",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "ev:ev-mv16fndw-01e46e13"
+      ]
+    },
+    {
+      "id": "ARCH-21",
+      "resolution": "An hourly automatic 7-day image sweep and DELETE /api/requests/:id (409 while money is held, tombstone after settlement) are added. Retention of raw text is stated for the README in A5. RS-39 asserts the sweep with a pinned clock.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows",
+        "artifact:.eccode/artifacts/architecture/brief.md#Assumptions",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ]
+    }
+  ],
+  "lessonsConsulted": []
+}
