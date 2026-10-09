@@ -183,3 +183,70 @@ test('rework: a file deleted by an approved rework is not an audit failure, one 
   assert.deepStrictEqual(require('../lib/delivery').unreviewedChanges(store.state(), dir), []);
   assert.doesNotThrow(() => deliver(store, 'orchestrator'));
 });
+
+test('delivery profile: a defect found after delivery needs the user to reopen verification, then a rework past the cap, re-verification and re-delivery', () => {
+  const ctx = tmpProject({ configOverrides: { limits: { maxReworks: 1 } } });
+  approveThroughPlan(ctx);
+  const { store, config, dir } = ctx;
+  gates.startGate(store, config, 'phase:core', 'orchestrator');
+  for (const [id, owner, file] of [['api', 'backend-engineer', 'src/server/a.js'], ['ui', 'frontend-engineer', 'src/web/b.js'], ['tests', 'test-engineer', 'tests/c.test.js']]) {
+    tasks.claim(store, config, id, owner);
+    write(dir, file, `// ${id}\n`);
+    tasks.complete(store, config, id, owner, handoffFor(id, owner, [passCheck(store, owner).id], [file]));
+  }
+  gates.submit(store, config, 'phase:core', 'delivery-lead');
+  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', approval([[`ev:${passCheck(store, 'technical-reviewer').id}`]]));
+  gates.startGate(store, config, 'verification', 'orchestrator');
+  write(dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green.\n');
+  const deliverables = ['.eccode/artifacts/verification.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'];
+  gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: deliverables });
+  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${passCheck(store, 'security-reviewer').id}`, 'artifact:.eccode/artifacts/verification.md']]));
+  deliver(store, 'delivery-lead');
+
+  // Found after delivery: the orchestrator cannot open a rework (verification is approved), and nobody but the user can reopen it.
+  const open = { reason: 'UI renders the text "null" under the title', files: ['src/web/**'], owner: 'frontend-engineer' };
+  expectCode(() => openRework(store, config, 'orchestrator', open), 'USER_AUTH_REQUIRED');
+  expectCode(() => gates.reopenGate(store, 'verification', 'orchestrator', 'reopen for the UI fix'), 'USER_AUTH_REQUIRED');
+  expectCode(() => gates.reopenGate(store, 'phase:core', 'user', 'reopen the phase instead'), 'INVALID_TRANSITION'); // approved phases change through reworks only
+  expectCode(() => gates.reopenGate(store, 'verification', 'user', 'reopen for the UI fix', { waive: 'all' }), 'INVALID_INPUT');
+  gates.reopenGate(store, 'verification', 'user', 'User authorised a rework for the UI defect; verification will be redone');
+  let st = store.state();
+  assert.strictEqual(st.gates.verification.status, 'in_progress');
+  assert.strictEqual(st.gates.verification.approvedBy, null);
+  assert.strictEqual(st.gates.verification.previousApprovals.length, 1);
+  assert.strictEqual(st.gates.verification.previousApprovals[0].approvedBy, 'security-reviewer');
+
+  // The cap (1) binds the orchestrator, not the user: the first rework is the orchestrator's, the second the user's.
+  const first = openRework(store, config, 'orchestrator', { reason: 'typo in the UI copy found after delivery', files: ['src/web/**'], owner: 'frontend-engineer' });
+  tasks.claim(store, config, first.task, 'frontend-engineer');
+  write(dir, 'src/web/b.js', '// ui, copy fixed\n');
+  tasks.complete(store, config, first.task, 'frontend-engineer', handoffFor(first.task, 'frontend-engineer', [passCheck(store, 'frontend-engineer').id], ['src/web/b.js']));
+  gates.submit(store, config, first.gate, 'delivery-lead');
+  gates.recordReview(store, config, first.gate, 'technical-reviewer', approval([[`ev:${passCheck(store, 'technical-reviewer').id}`]]));
+  expectCode(() => openRework(store, config, 'orchestrator', open), 'REWORK_LIMIT');
+  const rw = openRework(store, config, 'user', open);
+  st = store.state();
+  assert.strictEqual(rw.id, 'rework-2');
+  assert.deepStrictEqual(st.gateOrder.slice(-3), ['phase:rework-1', 'phase:rework-2', 'verification']);
+  assert.strictEqual(st.reworks[1].afterDelivery, true);
+
+  // The fix goes through claim, handoff and an independent phase review like any work.
+  tasks.claim(store, config, rw.task, 'frontend-engineer');
+  write(dir, 'src/web/b.js', '// ui, null child filtered\n');
+  tasks.complete(store, config, rw.task, 'frontend-engineer', handoffFor(rw.task, 'frontend-engineer', [passCheck(store, 'frontend-engineer').id], ['src/web/b.js']));
+  gates.submit(store, config, rw.gate, 'delivery-lead');
+  gates.recordReview(store, config, rw.gate, 'technical-reviewer', approval([[`ev:${passCheck(store, 'technical-reviewer').id}`]]));
+
+  // Verification is redone on the final files and the build is delivered again.
+  expectCode(() => deliver(store, 'delivery-lead'), 'DELIVERY_BLOCKED');
+  write(dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green after rework-2.\n');
+  gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: deliverables });
+  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${passCheck(store, 'security-reviewer').id}`, 'artifact:.eccode/artifacts/verification.md']]));
+  const res = deliver(store, 'delivery-lead');
+  assert.strictEqual(res.report, '.eccode/delivery/final-handoff-2.md');
+  const report = fs.readFileSync(path.join(dir, res.report), 'utf8');
+  assert.match(report, /`gate.reopened` verification reopened: User authorised a rework/);
+  assert.match(report, /`rework.opened` rework rework-2 opened: UI renders the text "null"/);
+  assert.strictEqual(store.audit().ok, true);
+  assert.deepStrictEqual(require('../lib/delivery').unreviewedChanges(store.state(), dir), []);
+});

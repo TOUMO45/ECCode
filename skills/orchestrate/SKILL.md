@@ -117,7 +117,7 @@ Approved files are pinned, so a fix cannot be made quietly. Open a **rework**: `
 1. Dispatch the owner: claim, failing reproduction first, fix, same check passes, handoff, submit the gate.
 2. Dispatch an independent reviewer (`technical-reviewer`; add `security-reviewer` for auth, input handling, money or AI).
 3. `eccode deliver --actor orchestrator` produces a new final handoff; the earlier one stays.
-Only one rework is open at a time. After `limits.maxReworks` the user decides (`REWORK_LIMIT`). In a full delivery whose verification gate is approved, the user must reopen verification first.
+Only one rework is open at a time. After `limits.maxReworks` the user decides (`REWORK_LIMIT`): a rework opened with `--actor user` is not bound by the cap. In a full delivery whose verification gate is approved (including after delivery), the user must reopen it first: `eccode gate reopen verification --actor user --resolution "<why>"`. The earlier approval stays on record under `previousApprovals`, the gate returns to `in_progress`, the rework runs, then `delivery-lead` resubmits verification with every deliverable file, an independent reviewer re-runs the full suite, and `eccode deliver` writes the next final handoff. Both user actions appear in the handoff's "User decisions" section.
 
 ## 7. Failure handling
 | Situation | Action |
