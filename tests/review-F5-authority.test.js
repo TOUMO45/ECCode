@@ -81,8 +81,7 @@ function escalatedTask() {
 /** A change-profile project with its plan approved, so reworks can be opened. */
 function changeProject(configOverrides) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-f5-'));
-  require('child_process').execFileSync('git', ['init', '-q'], { cwd: dir });
-  require('child_process').execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  H.initRepo(dir);
   const store = init(dir, { name: 'Fix totals', idea: 'Invoice totals are wrong when a shipping fee is present', profile: 'change' });
   if (configOverrides) {
     const file = path.join(dir, '.eccode', 'config.json');

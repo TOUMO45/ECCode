@@ -105,6 +105,7 @@ test('F9 fixtures: no test depends on sh builtins or POSIX-only tools (cmd.exe h
   const problems = [];
   for (const f of otherTestSources()) {
     fs.readFileSync(path.join(__dirname, f), 'utf8').split('\n').forEach((line, i) => {
+      if (/\/\/ hook input/.test(line)) return; // a command fed to the guard hook as text, never executed
       for (const [re, fix] of rules) if (re.test(line)) problems.push(`tests/${f}:${i + 1}: ${line.trim()}\n    ${fix}`);
     });
   }
@@ -217,7 +218,7 @@ test('F9 upgrade and rollback: a 0.1.0 record survives installing the current to
     const walk = (d) => {
       for (const e of fs.readdirSync(d, { withFileTypes: true })) {
         if (e.isDirectory()) walk(path.join(d, e.name));
-        else if (e.name.endsWith('.js')) for (const m of fs.readFileSync(path.join(d, e.name), 'utf8').matchAll(/\b(?:commit|emit)\('([a-z]+\.[a-z_]+)'/g)) out.add(m[1]);
+        else if (e.name.endsWith('.js')) for (const m of fs.readFileSync(path.join(d, e.name), 'utf8').matchAll(/\b(?:commit|emit)\('([a-z]+\.[a-z_]+)'|commitReserved\(store, \{ type: '([a-z]+\.[a-z_]+)'/g)) out.add(m[1] || m[2]);
       }
     };
     walk(dir);

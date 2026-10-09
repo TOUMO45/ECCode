@@ -111,7 +111,7 @@ test('F4 inline interpreter code that writes files is denied for every ECCode ro
     `node <<'EOF'\nrequire('fs').writeFileSync('src/server/app.js', 'x')\nEOF`,
     `echo "require('fs').writeFileSync('src/server/app.js','x')" | node`,
     `node <<< "require('fs').writeFileSync('src/server/app.js','x')"`,
-    `sh -c "node -e \\"require('fs').writeFileSync('src/server/app.js','x')\\""`,
+    `sh -c "node -e \\"require('fs').writeFileSync('src/server/app.js','x')\\""`, // hook input, never executed
     `env FOO=1 node -e "require('fs').writeFileSync('src/server/app.js','x')"`,
   ]) {
     denied(bash(ctx.dir, cmd, 'backend-engineer'), `implementer: ${cmd}`, hint);
