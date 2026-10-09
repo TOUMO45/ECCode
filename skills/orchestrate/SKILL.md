@@ -80,7 +80,7 @@ For each `phase:<id>`, in order:
 1. `gate start verification`.
 2. `delivery-lead` writes the verification report and submits it **with every deliverable file**.
 3. An independent reviewer re-runs the full suite and the evals.
-4. `eccode deliver --actor delivery-lead` produces `.eccode/delivery/final-handoff.md`.
+4. `eccode deliver --actor delivery-lead` produces `.eccode/delivery/final-handoff.md`. It is refused while the working tree is uncommitted (the delivery pins the release commit: commit the reviewed work, never unreviewed files), while any file changed since the last approved submission without a review, or while a critical or high risk is open: have its owner mitigate it, or ask the user to accept it (`eccode risk update --id R --status accepted --actor user` is the user's command).
 5. Report to the user:
    - **verified** capabilities, with evidence ids;
    - unverified items and limitations;

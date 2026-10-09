@@ -24,7 +24,7 @@ ECCode separates **judgment**, which agents supply in prompts, from **rules**, w
 │ evidence.js executes checks; records exit code, duration, redacted log + digest            │
 │ runs.js     agent runs: runtime/token/cost accounting, budgets, interruption recovery,     │
 │             risks, decisions                                                               │
-│ delivery.js final handoff, refused unless all gates approved and reviewed files unchanged  │
+│ delivery.js final handoff: all gates approved, reviewed files unchanged, tree pinned       │
 │ status.js   next action, resume brief                                                      │
 │ store.js    append-only hash-chained events.jsonl + rebuildable state.json, file lock      │
 │ memory/     4-layer memory, retrieval, applicability, lesson review, promotion, metrics,   │
@@ -90,6 +90,7 @@ Evidence ids are own-property lookups with a fixed format (`ev:ev-…`), and `ev
 - **Failure** releases the claim. After `maxTaskRetries` the task escalates and only the user can reset it. A done task cannot be reset while its phase is submitted or approved.
 - **Interrupted runs** (stale, or `recover --all --actor orchestrator` after a restart) release their claims and count as attempts.
 - **Rework** (defects found after approval or delivery). Approved gates are never reopened silently and their files stay pinned. `eccode rework open` (orchestrator or user only) adds a phase gate `phase:rework-N` with one task whose ownership globs are narrow (never the whole tree, never `.eccode/`). It goes through the normal claim → handoff → independent phase review path, and `deliver` then writes a new final handoff (`final-handoff-2.md`, …; the earlier ones stay). One rework is open at a time, `limits.maxReworks` bounds how many the orchestrator may open before the user decides (a user-opened rework is not bound), and in a full delivery the user must reopen an approved verification gate first (`gate reopen verification --actor user`): the earlier approval is kept under `previousApprovals`, the gate returns to `in_progress`, and verification is redone on the final files before the next delivery. Approved phases and documents can never be reopened; their files change only through a rework.
+- **Release tree and release-risk policy.** Every `gate.submitted` event records the commit and a digest of the working tree (HEAD plus the hashed `git status` entries outside `.eccode/`) the submission was made on, and `delivery.completed` records the release commit. `deliver` refuses a dirty working tree, any file git shows added, modified, deleted or renamed since the last approved submission's commit that no approved review pinned (`unreviewedChanges`, also reported by `audit`; work of phases still open is in flight, not unreviewed; `release.ignore` names generated paths), and any open risk whose severity is in `release.blockRiskSeverities` (default critical and high; mitigation is any role's work, acceptance is the user's). A claim is refused while files inside the task's ownership are already changed (`DIRTY_OWNERSHIP`), unless a submission pins exactly that content (an approved rework's uncommitted fix, or the rejected attempt a retry re-declares). Records whose submissions carry no commit (older engines) are not judged retroactively.
 
 ## Memory model
 
