@@ -48,8 +48,12 @@ test('change profile: plan is the first gate and no verification gate follows th
   gates.submit(store, config, 'phase:core', 'delivery-lead');
   const ev = passCheck(store, 'technical-reviewer');
   gates.recordReview(store, config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${ev.id}`]));
+  // The delivery pins the release tree: the reviewed work is committed first.
+  execFileSync('git', ['add', '-A'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '-m', 'reviewed work'], { cwd: dir });
   const res = deliver(store, 'delivery-lead');
   assert.ok(fs.existsSync(path.join(dir, res.report)));
+  assert.strictEqual(store.state().delivery.commit, execFileSync('git', ['rev-parse', 'HEAD'], { cwd: dir, encoding: 'utf8' }).trim());
   assert.strictEqual(store.audit().ok, true);
 });
 

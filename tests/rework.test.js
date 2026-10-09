@@ -20,6 +20,12 @@ const { write, samplePlan, passCheck, handoffFor, approval, coverage, expectCode
 
 const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
 
+/** The delivery pins the release tree: reviewed work is committed before every `deliver`. */
+function commitAll(dir, msg = 'reviewed work') {
+  execFileSync('git', ['add', '-A'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', msg], { cwd: dir });
+}
+
 /** A change-profile project that has been delivered once. */
 function deliveredProject() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-rework-'));
@@ -40,6 +46,7 @@ function deliveredProject() {
   gates.submit(store, config, 'phase:core', 'delivery-lead');
   const ev = passCheck(store, 'technical-reviewer');
   gates.recordReview(store, config, 'phase:core', 'technical-reviewer', coverage({ dir, store, config }, 'phase:core', [`ev:${ev.id}`]));
+  commitAll(dir);
   deliver(store, 'orchestrator');
   return { dir, store, config };
 }
@@ -80,6 +87,8 @@ test('rework: a defect found after delivery is fixed under a new phase gate, rev
   assert.strictEqual(store.state().gates['phase:rework-1'].status, 'approved');
 
   // Re-delivery produces a second verified handoff; the first stays.
+  expectCode(() => deliver(store, 'orchestrator'), 'DELIVERY_BLOCKED'); // the fix is not committed yet
+  commitAll(dir, 'rework-1');
   const res = deliver(store, 'orchestrator');
   assert.match(res.report, /final-handoff-2\.md$/);
   assert.ok(fs.existsSync(path.join(dir, '.eccode/delivery/final-handoff.md')));
@@ -182,6 +191,8 @@ test('rework: a file deleted by an approved rework is not an audit failure, one 
   const ev2 = passCheck(store, 'technical-reviewer');
   gates.recordReview(store, config, 'phase:rework-1', 'technical-reviewer', coverage({ dir, store, config }, 'phase:rework-1', [`ev:${ev2.id}`]));
   assert.deepStrictEqual(require('../lib/delivery').unreviewedChanges(store.state(), dir), []);
+  commitAll(dir, 'rework-1');
+  assert.deepStrictEqual(require('../lib/delivery').unreviewedChanges(store.state(), dir), [], 'the committed deletion is reviewed work');
   assert.doesNotThrow(() => deliver(store, 'orchestrator'));
 });
 
@@ -202,6 +213,7 @@ test('delivery profile: a defect found after delivery needs the user to reopen v
   const deliverables = ['.eccode/artifacts/verification.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'];
   gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: deliverables });
   gates.recordReview(store, config, 'verification', 'security-reviewer', coverage({ dir, store, config }, 'verification', [`ev:${passCheck(store, 'security-reviewer').id}`, 'artifact:.eccode/artifacts/verification.md']));
+  commitAll(dir);
   deliver(store, 'delivery-lead');
 
   // Found after delivery: the orchestrator cannot open a rework (verification is approved), and nobody but the user can reopen it.
@@ -243,6 +255,7 @@ test('delivery profile: a defect found after delivery needs the user to reopen v
   write(dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green after rework-2.\n');
   gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: deliverables });
   gates.recordReview(store, config, 'verification', 'security-reviewer', coverage({ dir, store, config }, 'verification', [`ev:${passCheck(store, 'security-reviewer').id}`, 'artifact:.eccode/artifacts/verification.md']));
+  commitAll(dir, 'reworks');
   const res = deliver(store, 'delivery-lead');
   assert.strictEqual(res.report, '.eccode/delivery/final-handoff-2.md');
   const report = fs.readFileSync(path.join(dir, res.report), 'utf8');

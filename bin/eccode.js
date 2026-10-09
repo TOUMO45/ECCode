@@ -246,8 +246,8 @@ function main(argv) {
       } catch {
         metrics = undefined;
       }
-      const res = require('../lib/delivery').deliver(store, need(actor, '--actor'), { metrics });
-      print(flags, `Delivered. Final handoff: ${res.report}`, res);
+      const res = require('../lib/delivery').deliver(store, need(actor, '--actor'), { metrics, config });
+      print(flags, `Delivered. Final handoff: ${res.report}${res.commit ? ` (release commit ${res.commit})` : ''}`, res);
       return 0;
     }
     case 'gate': {

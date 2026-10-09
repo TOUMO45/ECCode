@@ -54,4 +54,4 @@ eccode gate submit plan --actor delivery-lead --artifact .eccode/artifacts/plan/
   - open risks accepted or mitigated.
 
 ## Delivery
-When every gate is approved, run `eccode deliver --actor delivery-lead`. If it is refused, report the listed blockers verbatim. Never edit records to get past them.
+When every gate is approved, run `eccode deliver --actor delivery-lead`. It needs a committed working tree (the delivery pins the release commit), no file changed since the last approved submission without a review, and no open critical or high risk (mitigate it, or report it to the orchestrator for the user's acceptance; you cannot accept risks). If it is refused, report the listed blockers verbatim. Never edit records to get past them.

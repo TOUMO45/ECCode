@@ -70,6 +70,8 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 | `memory.sharedDir` | `~/.eccode/memory` | Shared lesson store. `ECCODE_SHARED_MEMORY` overrides it |
 | `improvement.requireUserForAdoption` | true | Workflow changes need `--actor user` |
 | `improvement.protectedPaths` | config, settings, record, hooks, engine | Paths self-improvement can never change. The built-in list is always applied; this key can only add to it |
+| `release.blockRiskSeverities` | `["critical", "high"]` | `deliver` is refused while a risk of these severities is `open`; `mitigated`, `accepted` (by the user, `--actor user`) and `closed` pass |
+| `release.ignore` | `[]` | Globs the release-tree checks leave out (generated files no review covers). Every other file that changed since the last approved submission's commit must be reviewed before delivery |
 
 Environment variables:
 - `ECCODE_ROOT`: project root.
@@ -97,6 +99,8 @@ In Claude Code, `/eccode:start <idea>` makes the main session follow the `orches
 4. `eccode deliver`.
 
 There are no architecture, design or verification gates in this profile.
+
+**Release policy.** The delivery is a commit. Every gate submission records the commit and a digest of the working tree it was made on, and `eccode deliver` refuses while the working tree is dirty outside `.eccode/` (`uncommitted changes: … commit or revert them`), while any file git shows added, modified, deleted or renamed since the last approved submission's commit was not pinned by an approved review (`eccode audit` reports the same entries), or while a risk whose severity is in `release.blockRiskSeverities` is still open: mitigate it (`eccode risk update --id R --status mitigated --mitigation "…" --actor <role>`) or have the user accept it (`eccode risk update --id R --status accepted --actor user`, run by the user). A task cannot be claimed while files inside its ownership are already changed in the working tree (`DIRTY_OWNERSHIP`): commit or revert them first, so that every owned byte a phase reviews is either the base commit or a change the task declares. The final handoff states the release commit and lists accepted risks with who accepted them. Generated files that no review covers go in `release.ignore`.
 
 `/eccode:status` shows where things stand. `/eccode:resume` continues after an interruption: it reconciles the record with the files and re-runs the recorded checks before any new work (`eccode reconcile --verify`). The SessionStart hook also injects the resume brief automatically.
 
@@ -160,6 +164,10 @@ Actor restrictions: `run correct`, `recover` and `improve rollback` need `--acto
 | `eccode` not found | Plugin bin directory isn't on PATH | Use `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` or `node .claude/eccode/bin/eccode.js` |
 | `[LESSON_NOT_VERIFIABLE]` | The lesson lacks a check that fails before the fix and passes after, or similar evidence | Record the reproduction and verification with the **same** command |
 | `memory check` says `QUARANTINED`, `memory audit` exits 2, or `[SCOPE] … shared record and cannot be revised` | A shared record's promotion attestation no longer holds (its file was edited after promotion, its `attestations.jsonl` line is missing or the chain is broken, or it was promoted by an older engine), or someone tried to change a shared record in place | Never edit shared records by hand. Revise the lesson in the project it came from, have it verified and `eccode memory promote <id>` again: the new copy gets a new shared id and the old one is superseded. `eccode memory show <sharedId>` prints the reason |
+| `[DIRTY_OWNERSHIP]` | Files inside the task's ownership were already changed before the claim (and no submission pins that content) | Commit or revert them (`git checkout -- <file>`, delete an untracked file), then claim again |
+| `[DELIVERY_BLOCKED] … uncommitted changes` | The working tree is dirty outside `.eccode/`; the delivery pins the release tree | Commit (or revert) the reviewed work, then `eccode deliver` again |
+| `[DELIVERY_BLOCKED] … added/modified/deleted/renamed after approval` | A file changed since the last approved submission's commit and no approved review pinned it | Have it reviewed (a rework, or the next gate's submission), restore it, or list a generated path in `release.ignore` |
+| `[DELIVERY_BLOCKED] RISK-… is open` | A risk of a severity in `release.blockRiskSeverities` has no disposition | Mitigate it (`eccode risk update --status mitigated --mitigation …`) or the user accepts it (`--status accepted --actor user`) |
 
 ## Releases and compatibility
 

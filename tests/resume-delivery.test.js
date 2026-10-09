@@ -11,6 +11,13 @@ const { deliver } = require('../lib/delivery');
 const { Store } = require('../lib/store');
 const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, coverage, expectCode } = require('./helpers');
 
+/** The delivery pins the release tree: reviewed work is committed before `deliver`. */
+function commitAll(dir, msg = 'reviewed work') {
+  const { execFileSync } = require('child_process');
+  execFileSync('git', ['add', '-A'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', msg], { cwd: dir });
+}
+
 function completePhase(ctx) {
   const { store, config, dir } = ctx;
   gates.startGate(store, config, 'phase:core', 'orchestrator');
@@ -111,6 +118,7 @@ test('happy path produces a verified final handoff', () => {
   completePhase(ctx);
   verify(ctx);
   runs.recordRisk(ctx.store, 'delivery-lead', { id: 'R1', title: 'LLM provider outage', severity: 'medium', mitigation: 'fallback classifier' });
+  commitAll(ctx.dir);
   const res = deliver(ctx.store, 'delivery-lead');
   const report = fs.readFileSync(path.join(ctx.dir, res.report), 'utf8');
   assert.match(report, /# Final Handoff — Test/);
@@ -300,6 +308,7 @@ test('the final handoff lists every --actor user event as entered on the user\'s
   runs.recordRisk(ctx.store, 'delivery-lead', { id: 'RISK-12', title: 'Fallback recall below floor', severity: 'high' });
   runs.recordRisk(ctx.store, 'user', { id: 'RISK-12', status: 'accepted' });
   runs.recordDecision(ctx.store, 'user', { title: 'OPERATOR (not the human user): amend SC2', decision: 'Accept 0.571 recall on the holdout', rationale: 'Fallback is a labelled safety net' });
+  commitAll(ctx.dir);
   const res = deliver(ctx.store, 'delivery-lead');
   const report = fs.readFileSync(path.join(ctx.dir, res.report), 'utf8');
   assert.match(report, /## User decisions \(recorded with `--actor user`\)/);

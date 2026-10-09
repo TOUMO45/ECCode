@@ -476,6 +476,12 @@ test('#7 legitimate parallel and sequential work is attributable (claimed, compl
   tasks.fail(ctx.store, ctx.config, 'ui', 'frontend-engineer', 'agent crashed');
   tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [passCheck(ctx.store, 'backend-engineer').id], ['src/server/a.js']));
   tasks.reset(ctx.store, 'api', 'orchestrator', 'rework after an internal finding');
+  // Nothing inside a task's ownership may be dirty at claim time (DIRTY_OWNERSHIP): the first version of
+  // api's file is committed before the rework claim, and the crashed ui agent's partial file is discarded.
+  expectCode(() => tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer'), 'DIRTY_OWNERSHIP');
+  execFileSync('git', ['add', 'src/server/a.js'], { cwd: ctx.dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '-m', 'api v1'], { cwd: ctx.dir });
+  fs.rmSync(path.join(ctx.dir, 'src/web/partial.js'));
   tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
   tasks.claim(ctx.store, ctx.config, 'ui', 'frontend-engineer');
   write(ctx.dir, 'src/web/b.js', '// ui in progress\n');
@@ -484,7 +490,6 @@ test('#7 legitimate parallel and sequential work is attributable (claimed, compl
   tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [passCheck(ctx.store, 'backend-engineer').id], ['src/server/a.js']));
   // ui completes after api: api's file is attributable to api's completion.
   write(ctx.dir, 'src/web/b.js', '// ui\n');
-  fs.rmSync(path.join(ctx.dir, 'src/web/partial.js'));
   tasks.complete(ctx.store, ctx.config, 'ui', 'frontend-engineer', handoffFor('ui', 'frontend-engineer', [passCheck(ctx.store, 'frontend-engineer').id], ['src/web/b.js']));
   // Sequential work: files of earlier tasks are already on disk at the claim.
   doTask(ctx, 'tests', 'test-engineer', ['tests/c.test.js']);
@@ -601,6 +606,7 @@ test('#20 default phase artifacts skip deleted files and scratch drafts', () => 
   assert.deepStrictEqual(paths, ['src/server/new.js', 'src/web/b.js', 'tests/c.test.js']);
   approvePhase(ctx);
   fs.rmSync(path.join(ctx.dir, '.eccode/drafts'), { recursive: true }); // routine scratch cleanup
+  gitCommit(ctx.dir, 'reviewed work'); // the delivery pins the release tree
   verifyAndDeliver(ctx);
 });
 
