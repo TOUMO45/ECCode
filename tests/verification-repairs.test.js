@@ -289,3 +289,66 @@ test('NEW-4 a staged rename inside the ownership must declare the old path as we
   gates.recordReview(store, config, 'verification', 'security-reviewer', coverage(ctx, 'verification', [`ev:${sev.id}`]));
   assert.ok(delivery.deliver(store, 'delivery-lead', { config }).commit);
 });
+
+// ---------------------------------------------------------------------------------------------- NEW-5
+
+test('NEW-5 the declared check is bound to its working directory: verification.cwd is accepted by the plan schema, and a run elsewhere is refused', () => {
+  const planWith = (verification) => {
+    const plan = samplePlan();
+    plan.tasks[0].verification = verification;
+    return plan;
+  };
+  const base = tmpProject();
+  assert.deepStrictEqual(tasks.validatePlan(planWith({ method: 'run the api checks', command: DECLARED, cwd: 'src/server' }), base.config), []);
+  assert.deepStrictEqual(tasks.validatePlan(planWith({ method: 'run the api checks', command: DECLARED, cwd: './src/server/' }), base.config), []);
+  for (const bad of ['../elsewhere', '/abs/path', 'src/../../x', '']) {
+    const errors = tasks.validatePlan(planWith({ method: 'run the api checks', command: DECLARED, cwd: bad }), base.config);
+    assert.ok(errors.some((e) => /verification\.cwd|cwd/.test(e)), `${JSON.stringify(bad)}: ${errors.join('; ')}`);
+  }
+  const openApi = (ctx) => {
+    gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+    tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+    write(ctx.dir, 'src/server/app.js', 'module.exports = 1;\n');
+  };
+  const run = (ctx, actor, extra = {}) => evidence.runCommand(ctx.store, actor, { label: 'api check', command: DECLARED, ...extra });
+  const complete = (ctx, ids) => tasks.complete(ctx.store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', ids, ['src/server/app.js']));
+
+  // No cwd declared means the project root: the same command string run in src/server is not the declared check.
+  const ctx = tmpProject();
+  approveThroughPlan(ctx, planWith({ method: 'run the api checks', command: DECLARED }));
+  openApi(ctx);
+  const elsewhere = run(ctx, 'backend-engineer', { cwd: 'src/server' });
+  assert.strictEqual(elsewhere.cwd, 'src/server');
+  let err = expectCode(() => complete(ctx, [elsewhere.id]), 'INVALID_HANDOFF');
+  assert.match(err.message, new RegExp(`ev:${elsewhere.id} in src/server`));
+  assert.match(err.message, /the project root/);
+  const atRoot = run(ctx, 'backend-engineer');
+  assert.strictEqual(atRoot.cwd, '.');
+  complete(ctx, [atRoot.id]);
+  assert.strictEqual(ctx.store.state().tasks.api.status, 'done');
+
+  // A declared cwd: a run at the root is refused, a run in that directory passes; the reviewer is held to it too.
+  const ctx2 = tmpProject();
+  approveThroughPlan(ctx2, planWith({ method: 'run the api checks', command: DECLARED, cwd: 'src/server' }));
+  openApi(ctx2);
+  const root = run(ctx2, 'backend-engineer');
+  err = expectCode(() => complete(ctx2, [root.id]), 'INVALID_HANDOFF');
+  assert.match(err.message, /different working directory than the task declares \(src\/server\)/);
+  assert.match(err.message, /--cwd src\/server/);
+  const inCwd = run(ctx2, 'backend-engineer', { cwd: 'src/server' });
+  complete(ctx2, [inCwd.id]);
+  assert.strictEqual(ctx2.store.state().tasks.api.status, 'done');
+  for (const [id, owner, file] of PHASE_FILES.slice(1)) {
+    tasks.claim(ctx2.store, ctx2.config, id, owner);
+    write(ctx2.dir, file, `// ${id}\n`);
+    tasks.complete(ctx2.store, ctx2.config, id, owner, handoffFor(id, owner, [passCheck(ctx2.store, owner).id], [file]));
+  }
+  gates.submit(ctx2.store, ctx2.config, 'phase:core', 'delivery-lead');
+  const reviewerDefault = passCheck(ctx2.store, 'technical-reviewer');
+  const reviewerRoot = run(ctx2, 'technical-reviewer');
+  err = expectCode(() => gates.recordReview(ctx2.store, ctx2.config, 'phase:core', 'technical-reviewer', coverage(ctx2, 'phase:core', [`ev:${reviewerDefault.id}`, `ev:${reviewerRoot.id}`])), 'REVIEW_REJECTED');
+  assert.match(err.message, /missing: node -e "process.exit\(0\)" api-check \(cwd src\/server\) \[api\]/);
+  const reviewerInCwd = run(ctx2, 'technical-reviewer', { cwd: 'src/server' });
+  gates.recordReview(ctx2.store, ctx2.config, 'phase:core', 'technical-reviewer', coverage(ctx2, 'phase:core', [`ev:${reviewerDefault.id}`, `ev:${reviewerInCwd.id}`]));
+  assert.strictEqual(ctx2.store.state().gates['phase:core'].status, 'approved');
+});
