@@ -118,8 +118,11 @@ test('rework: bounded by limits.maxReworks', () => {
   gates.submit(store, config, 'phase:rework-1', 'delivery-lead');
   const ev = passCheck(store, 'technical-reviewer');
   gates.recordReview(store, config, 'phase:rework-1', 'technical-reviewer', approval([[`ev:${ev.id}`]]));
-  const err = expectCode(() => openRework(store, config, 'orchestrator', base), 'REWORK_LIMIT');
-  assert.match(err.message, /user/i);
+  // Past the cap the decision is the user's: a USER_AUTH_REQUIRED refusal that names the cap and both ways forward (F5).
+  const err = expectCode(() => openRework(store, config, 'orchestrator', base), 'USER_AUTH_REQUIRED');
+  assert.match(err.message, /limits.maxReworks=1/);
+  assert.match(err.message, /eccode rework open --actor user/);
+  assert.match(err.message, /eccode delegate grant --actor user --to orchestrator --action rework.open --target rework-2/);
 });
 
 test('rework in a full delivery: refused once verification is approved unless the user reopens that gate first', () => {
@@ -223,7 +226,7 @@ test('delivery profile: a defect found after delivery needs the user to reopen v
   tasks.complete(store, config, first.task, 'frontend-engineer', handoffFor(first.task, 'frontend-engineer', [passCheck(store, 'frontend-engineer').id], ['src/web/b.js']));
   gates.submit(store, config, first.gate, 'delivery-lead');
   gates.recordReview(store, config, first.gate, 'technical-reviewer', approval([[`ev:${passCheck(store, 'technical-reviewer').id}`]]));
-  expectCode(() => openRework(store, config, 'orchestrator', open), 'REWORK_LIMIT');
+  expectCode(() => openRework(store, config, 'orchestrator', open), 'USER_AUTH_REQUIRED'); // past the cap: the user's decision (F5)
   const rw = openRework(store, config, 'user', open);
   st = store.state();
   assert.strictEqual(rw.id, 'rework-2');

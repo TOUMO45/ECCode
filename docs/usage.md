@@ -67,7 +67,7 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 | `memory.staleAfterDays` | 180 | Age after which a lesson must be revalidated |
 | `memory.embedCommand` | null | Optional external embedder for semantic retrieval |
 | `memory.sharedDir` | `~/.eccode/memory` | Shared lesson store. `ECCODE_SHARED_MEMORY` overrides it |
-| `improvement.requireUserForAdoption` | true | Workflow changes need `--actor user` |
+| `improvement.requireUserForAdoption` | true | Workflow changes need the user (`--actor user` at a terminal, or a delegation for `improve.adopt`) |
 | `improvement.protectedPaths` | config, settings, record, hooks, engine | Paths self-improvement can never change. The built-in list is always applied; this key can only add to it |
 
 Environment variables:
@@ -79,6 +79,7 @@ Environment variables:
 - `ECCODE_LEARNING=on|off`: override `memory.learning`. Any other value is refused.
 - `ECCODE_UNATTENDED=1`: the session has no human to answer questions (a headless `claude -p` run). The Stop hook then refuses to let a session started with `/eccode:start`, `/eccode:change` or `/eccode:resume` end before the delivery is complete or a user decision is pending, because an unattended orchestrator may otherwise judge the process too heavy for a small change and skip it. Interactive sessions are never blocked; at most 4 stops per session are blocked.
 - `ECCODE_NOW`: pin the clock. Honoured only with `ECCODE_TEST=1` (test suites); otherwise ignored, because gate order rules compare timestamps.
+- `ECCODE_TEST=1`: the test suite's switch. It pins the clock with `ECCODE_NOW` and lets `--actor user` run without a terminal. It must never be set in an agent's environment (the guard denies it inline); a session that has it cannot tell a person from a script.
 
 ## Use
 
@@ -110,7 +111,19 @@ eccode status --brief          # always shows the NEXT action
 ```
 `eccode help` lists every command. Exit codes: `0` ok, `1` usage error (including a flag given twice, e.g. two `--actor`, and unexpected extra arguments: repeat `--artifact` for each file), `2` refused by a workflow rule. `memory check` returns `3` when a lesson doesn't apply.
 
-Actor restrictions: `run correct`, `recover` and `improve rollback` need `--actor orchestrator` or `--actor user`; `rebuild --force` (accepting a rolled-back log) needs `--actor user`.
+Actor restrictions: `run correct`, `recover` and `improve rollback` need `--actor orchestrator` or `--actor user`; `rebuild --force` (accepting a rolled-back log) needs the user (next section).
+
+## Who can act as the user
+
+The engine reserves some decisions for the user: reopening an escalated gate or an approved verification gate (`gate reopen`), resetting an escalated task (`task reset`), a rework past `limits.maxReworks` (`rework open`), accepting a risk (`risk update --status accepted`), accepting a rolled-back log (`rebuild --force`), adopting a workflow change (`improve adopt`) and recording a decision as the user's (`decision add`). `--actor user` is only a string, so the CLI asks who is behind it. There are three ways a user acts, and the record shows which one:
+
+| Way | How | What the record shows |
+|---|---|---|
+| **A person at a terminal** | The user runs the `--actor user` command themselves. The CLI prints what is about to be recorded (`About to record as the user: gate reopen architecture (resolution: …)`) and waits for `yes` typed on the TTY. Without a terminal (a pipe, a script, an agent's shell tool) the command is refused with `USER_AUTH_REQUIRED` and nothing is recorded. | The event's `actor` is `user`; no `onBehalfOf`. |
+| **A bounded delegation** | The user grants, at a terminal, `eccode delegate grant --actor user --to orchestrator --action <action> [--target <id>] [--uses N] [--expires <minutes>] --reason "<what you decided>"` (defaults: 1 use, 240 minutes; at most 100 uses and 7 days). Actions: `gate.reopen`, `task.reset`, `rework.open`, `risk.accept`, `rebuild.force`, `improve.adopt`, `decision.record` (`limits.raise` is reserved for a later feature). A delegation without `--target` covers any target of its action; `rebuild.force` and `decision.record` take none. The agent then reruns the refused command with `--actor orchestrator --delegation <dlg-id>`. The use is spent first (`delegation.used`), then the action runs; a delegation that is exhausted, expired, revoked, granted to another role, or for another action or target is refused and spends nothing. `eccode delegate list` shows every delegation and its status; `eccode delegate revoke <id> --actor user --reason "…"` withdraws one. Delegations cannot be delegated. | `delegation.granted` by `user`; `delegation.used` by the agent; the action's event has the agent as `actor` and carries `onBehalfOf: "user"` and `delegation: "dlg-…"`. |
+| **The test suite** | `ECCODE_TEST=1` lets `--actor user` run without a terminal so tests can drive the engine. It is never set in an agent's environment. | `actor: user`, indistinguishable from a person: that is why the switch is for the suite only. |
+
+The orchestrator never runs `--actor user`. When the engine answers `USER_AUTH_REQUIRED`, the refusal names both ways forward (the exact command for the user to run in a terminal, and the `delegate grant` that would let the orchestrator act), and the orchestrator shows them to the user.
 
 ## Troubleshooting
 
@@ -129,7 +142,9 @@ Actor restrictions: `run correct`, `recover` and `improve rollback` need `--acto
 | `[LOG_ROLLBACK]` | `events.jsonl` is behind or different from `state.json` (e.g. restored from git) | Restore the newer log. If the user decides the shorter log is the truth: `eccode rebuild --force --actor user` |
 | `[UNVERIFIED]` / `[UNGROUNDED]` | A lesson marked verified has no verifying review of its current revision in the event log | Review it again: `eccode memory review <id> --decision verify` |
 | `[BUDGET_EXCEEDED]` | Recorded spend or runtime has reached the limit | Stop and ask the user. Raising limits needs their authorization |
-| Gate shows `escalated` | Too many rejections | The user decides: `eccode gate reopen <gate> --actor user --resolution "…" [--waive all\|F1,F2]`. Without `--waive` the findings stay open and the next approving review must resolve each with evidence; `--waive` records the ones the user accepts |
+| Gate shows `escalated` | Too many rejections | The user decides: `eccode gate reopen <gate> --actor user --resolution "…" [--waive all\|F1,F2]` in a terminal, or a delegation for `gate.reopen` (see "Who can act as the user"). Without `--waive` the findings stay open and the next approving review must resolve each with evidence; `--waive` records the ones the user accepts |
+| `[USER_AUTH_REQUIRED] --actor user needs a person at a terminal` | `--actor user` was run without a TTY (a script, a pipe, an agent's shell tool) or the confirmation was not `yes` | The user runs the command in a terminal and types `yes`, or grants a delegation (`eccode delegate grant …`) and the orchestrator reruns the command with `--delegation <id>` |
+| `[USER_AUTH_REQUIRED] … is reserved for the user` | An agent tried a reserved action without a delegation, or with one that does not cover it (exhausted, expired, revoked, another role, action or target) | The refusal names both commands: the user's own, or `eccode delegate grant …` followed by the command with `--delegation <id>`. `eccode delegate list` shows the delegations and their status |
 | `[INVALID_TRANSITION] … submissions require in_progress or changes_requested` | The gate already has a review, or is approved or escalated | An **unreviewed** submission can be replaced by its submitter (just submit again after correcting the file); after a review, respond to it with `--responds-to` |
 | `[PLAN_LESSONS]` | The plan matches verified lessons it does not answer for | Add `lessonDecisions` to the plan: `incorporated` (lesson id in the task's `inputs` and the rule as an acceptance criterion) or `not-applicable` (an assessment, or a note naming the condition that does not hold) |
 | `[REVIEW_REJECTED] … criterion with id "lessons"` | The submission records lesson decisions and the review does not judge them | Read each lesson (`eccode memory show <id>`), then add a `lessons` criterion with evidence; request changes if a decision is wrong. `eccode gate show <gate>` lists the decisions |

@@ -21,7 +21,7 @@ observed problem → candidate lesson (verified) → proposal → evaluation (ba
    - `eccode improve evaluate <id> --variant baseline` runs against the current file.
    - `eccode improve evaluate <id> --variant candidate` runs with the change applied temporarily. The file is always restored afterwards.
 3. **Review**: a different agent runs `eccode improve review <id> --decision approve|reject --notes "..."` once both variants are evaluated. Approval is refused if the candidate fails, scores below the baseline, or the two variants ran different commands.
-4. **Adopt**: only after the user agrees, run `eccode improve adopt <id> --actor user`. The before and after contents are versioned in `.eccode/improvements/<id>/`.
+4. **Adopt**: the user's decision, never typed in by an agent. The user runs `eccode improve adopt <id> --actor user` in a terminal, or grants `eccode delegate grant --actor user --to orchestrator --action improve.adopt --target <id> --reason "..."` and the orchestrator runs `eccode improve adopt <id> --actor orchestrator --delegation <dlg-id>`. The before and after contents are versioned in `.eccode/improvements/<id>/`.
 5. **Rollback**: `eccode improve rollback <id> --actor user|orchestrator --reason "..." [--regression]`. Regressions are counted in `eccode metrics`.
 
 Retrieved content is never promoted directly into rules. Every change goes through this cycle.

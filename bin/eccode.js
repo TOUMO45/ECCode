@@ -5,8 +5,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const tty = require('tty');
 const { parseArgs } = require('../lib/cli-args');
-const { EccodeError, readJson, own } = require('../lib/util');
+const { EccodeError, readJson, own, sleepSync } = require('../lib/util');
 
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
@@ -23,6 +24,15 @@ Project
                                          (--force: the user accepts a rolled-back log, LOG_ROLLBACK)
   deliver --actor delivery-lead          Produce the verified final handoff
 
+The user (a person at a terminal; agents never run --actor user)
+  --actor user                           Confirmed on the terminal: the CLI shows what will be recorded and waits for "yes".
+                                         Without a TTY it is refused (USER_AUTH_REQUIRED). ECCODE_TEST=1 is the test suite's switch only.
+  delegate grant --actor user --to <role> --action <a> [--target <id>] [--uses N] [--expires <minutes>] --reason <text>
+                                         Let <role> perform one reserved action on the user's behalf (default 1 use, 240 minutes).
+                                         Actions: gate.reopen task.reset rework.open risk.accept rebuild.force improve.adopt decision.record limits.raise
+  delegate list [--json] | delegate revoke <id> --actor user --reason <text>
+  --delegation <id>                      On a reserved command: act for the user under that delegation (recorded as onBehalfOf: user)
+
 Templates
   template review|plan|handoff|lesson   Print a valid JSON skeleton to start from (it validates as printed)
 
@@ -30,7 +40,7 @@ Gates (architecture, design, plan, phase:<id>, verification)
   gate start <gate> --actor <role>
   gate submit <gate> --actor <role> --artifact <path>... [--responds-to <reviewId>] [--notes <text>]
   gate review <gate> --actor <reviewer> --file <review.json>
-  gate reopen <gate> --actor user --resolution <text> [--waive all|F1,F2]
+  gate reopen <gate> --actor user --resolution <text> [--waive all|F1,F2]   (or --actor orchestrator --delegation <id>)
   gate show <gate> [--json]
 
 Plan & tasks
@@ -55,6 +65,7 @@ Evidence & records
   risk add --id R1 --title t --severity low|medium|high|critical [--mitigation m] [--owner o] --actor a
   risk update --id R1 --status open|mitigated|accepted|closed --actor a
   decision add --title t --decision d --rationale r [--alternatives a] [--lesson <memId>]... --actor a
+                                         [--on-behalf-of user --delegation <id>]: record it as the user's decision, not the agent's
 
 Memory (layers: project, debugging, knowledge, workflow)
   memory add --file <record.json> --actor <a> [--scope project|shared]
@@ -85,8 +96,65 @@ Other
   install --target <dir> [--scope project|user]   Copy agents/skills/commands/hooks into .claude/
   export agents-md [--out AGENTS.md]               Generic AGENTS.md for other harnesses
 
-Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR), --json
+Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR), --delegation <id>, --json
 `;
+
+// Commands that record nothing: an exported ECCODE_ACTOR=user must not turn `eccode status` into a prompt.
+const READ_ONLY = new Set(['help', 'status', 'resume', 'audit', 'template', 'metrics', 'export', 'install', 'gate show', 'task list', 'task next', 'evidence list', 'evidence show', 'plan validate', 'memory search', 'memory show', 'memory list', 'memory check', 'memory duplicates', 'memory env', 'memory status', 'improve list', 'delegate list']);
+// The reserved action behind each user-only command, for the delegation the refusal suggests.
+const ACTION_OF = { 'gate reopen': 'gate.reopen', 'task reset': 'task.reset', 'rework open': 'rework.open', 'risk update': 'risk.accept', 'rebuild': 'rebuild.force', 'improve adopt': 'improve.adopt', 'decision add': 'decision.record' };
+
+/** One line typed on the terminal (fd 0, blocking; EAGAIN is retried when the TTY is non-blocking). */
+function readLineSync() {
+  const buf = Buffer.alloc(256);
+  let line = '';
+  while (!line.includes('\n')) {
+    let n = 0;
+    try {
+      n = fs.readSync(0, buf, 0, buf.length, null);
+    } catch (err) {
+      if (err.code === 'EAGAIN') {
+        sleepSync(20);
+        continue;
+      }
+      if (err.code === 'EOF') break;
+      throw err;
+    }
+    if (n === 0) break;
+    line += buf.toString('utf8', 0, n);
+  }
+  return line.split('\n')[0].replace(/\r$/, '');
+}
+
+/**
+ * `--actor user` means a person is deciding. Outside the test suite (ECCODE_TEST=1, never set in an
+ * agent's environment) that person must be at the terminal: the CLI prints what is about to be
+ * recorded and waits for "yes" typed on the TTY. A pipe, a script or an agent's shell tool has no
+ * TTY and is refused before anything is recorded; an agent acting for the user needs a delegation.
+ */
+function confirmUserAtTerminal(args) {
+  if (process.env.ECCODE_TEST === '1') return;
+  const [group, sub, arg] = args._;
+  if (READ_ONLY.has(group) || READ_ONLY.has(`${group} ${sub}`)) return;
+  const f = args.flags;
+  const action = ACTION_OF[`${group} ${sub}`] || ACTION_OF[group];
+  const target = typeof arg === 'string' ? arg : typeof f.id === 'string' ? f.id : null;
+  const refuse = (why) => {
+    const grant = group === 'delegate' ? '' : `, or grant a bounded delegation (eccode delegate grant --actor user --to orchestrator --action ${action || '<action>'}${target ? ` --target ${target}` : ''} --reason "<what you decided>") so the orchestrator can act with --delegation <id>`;
+    throw new EccodeError('USER_AUTH_REQUIRED', `--actor user needs a person at a terminal (${why}): run this command yourself in a terminal${grant}`);
+  };
+  if (!tty.isatty(0) || !tty.isatty(1)) refuse('stdin and stdout are not a TTY');
+  const text = ['resolution', 'reason', 'decision', 'status', 'notes'].map((k) => (typeof f[k] === 'string' ? `${k}: ${f[k]}` : null)).filter(Boolean).join('; ');
+  process.stdout.write(`About to record as the user: ${[group, sub, arg].filter(Boolean).join(' ')}${text ? ` (${text})` : ''}\nType yes to confirm: `);
+  const answer = readLineSync().trim();
+  if (answer !== 'yes') refuse(`"${answer}" is not "yes"`);
+}
+
+/** An optional valued flag: undefined when absent; given without a value it is a usage error. */
+function optional(flags, name) {
+  if (flags[name] === true) throw new EccodeError('USAGE', `--${name} needs a value`);
+  return flags[name];
+}
 
 function shellQuote(arg) {
   return /^[A-Za-z0-9_\/.,:=@%+-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, "'\\''")}'`;
@@ -126,8 +194,8 @@ function numberFlag(flags, name, { min = 0, integer = false } = {}) {
 const POSITIONALS = {
   init: 1, install: 1, template: 2, status: 1, resume: 1, reconcile: 1, recover: 1, rebuild: 1, audit: 1, deliver: 1, metrics: 1,
   export: 2, handoff: 2, risk: 2, decision: 2,
-  gate: 3, plan: 3, task: 3, rework: 2, 'rework extend': 3, evidence: 3, run: 3, memory: 3, improve: 3,
-  'task list': 2, 'task next': 2, 'evidence run': 2, 'evidence list': 2, 'run start': 2,
+  gate: 3, plan: 3, task: 3, rework: 2, 'rework extend': 3, evidence: 3, run: 3, memory: 3, improve: 3, delegate: 3,
+  'task list': 2, 'task next': 2, 'evidence run': 2, 'evidence list': 2, 'run start': 2, 'delegate grant': 2, 'delegate list': 2,
   'memory status': 2, 'memory add': 2, 'memory list': 2, 'memory duplicates': 2, 'memory env': 2, 'improve propose': 2, 'improve list': 2,
 };
 
@@ -167,6 +235,8 @@ function main(argv) {
   const root = findRoot(flags);
   projectRoot = root;
   const actor = flags.actor || process.env.ECCODE_ACTOR;
+  if (actor === 'user') confirmUserAtTerminal(args);
+  const delegation = optional(flags, 'delegation');
   const { openProject, init } = require('../lib/project');
 
   if (group === 'init') {
@@ -221,7 +291,7 @@ function main(argv) {
       return 0;
     }
     case 'rebuild': {
-      const st = store.rebuildSnapshot({ force: Boolean(flags.force), actor });
+      const st = store.rebuildSnapshot({ force: Boolean(flags.force), actor, delegation });
       print(flags, `Snapshot rebuilt from ${st.seq} events.`, { seq: st.seq });
       return 0;
     }
@@ -268,9 +338,10 @@ function main(argv) {
         const g = store.state().gates[gateId];
         print(flags, `Review ${event.data.reviewId} recorded: ${review.decision}. Gate ${gateId} is now ${g.status}.${g.status === 'escalated' ? `\nESCALATED: ${g.escalation.recovery}` : ''}`, { reviewId: event.data.reviewId, gateStatus: g.status, escalation: g.escalation, iterations: state.gates[gateId].iterations });
       } else if (sub === 'reopen') {
-        gates.reopenGate(store, gateId, need(actor, '--actor'), need(flags.resolution, '--resolution'), { waive: flags.waive });
+        const { event } = gates.reopenGate(store, gateId, need(actor, '--actor'), need(flags.resolution, '--resolution'), { waive: flags.waive, delegation });
         const left = store.state().gates[gateId].openFindings;
-        print(flags, `Gate ${gateId} reopened by user decision.${left.length ? ` Still open (the next approval must resolve them with evidence): ${left.map((f) => f.id).join(', ')}.` : ''}`);
+        const by = event.data.delegation ? `by ${actor} on the user's behalf (delegation ${event.data.delegation})` : 'by user decision';
+        print(flags, `Gate ${gateId} reopened ${by}.${left.length ? ` Still open (the next approval must resolve them with evidence): ${left.map((f) => f.id).join(', ')}.` : ''}`, event.data);
       } else if (sub === 'show') {
         const g = own(store.state().gates, gateId);
         if (!g) throw new EccodeError('UNKNOWN_GATE', `Unknown gate ${gateId}`);
@@ -309,8 +380,8 @@ function main(argv) {
         const t = state.tasks[arg];
         print(flags, t.status === 'escalated' ? `Task ${arg} ESCALATED: ${t.escalation.recovery}` : `Task ${arg} failed (attempt ${t.attempts}); it may be retried.`, t);
       } else if (sub === 'reset') {
-        tasks.reset(store, need(arg, '<task>'), need(actor, '--actor'), need(flags.reason, '--reason'));
-        print(flags, `Task ${arg} reset to pending.`);
+        const { event } = tasks.reset(store, need(arg, '<task>'), need(actor, '--actor'), need(flags.reason, '--reason'), { delegation });
+        print(flags, `Task ${arg} reset to pending${event.data.delegation ? ` on the user's behalf (delegation ${event.data.delegation})` : ''}.`, event.data);
       } else throw new EccodeError('USAGE', `Unknown task subcommand ${sub}`);
       return 0;
     }
@@ -384,7 +455,7 @@ function main(argv) {
         return 0;
       }
       if (sub !== 'open') throw new EccodeError('USAGE', 'Usage: eccode rework open --actor orchestrator --reason <text> --files <glob>... --owner <role> [--evidence ev:<id>]... [--title <text>] | eccode rework extend <id> --actor orchestrator --files <glob>... --reason <text>');
-      const rw = require('../lib/rework').openRework(store, config, need(actor, '--actor'), { reason: flags.reason, files: [].concat(flags.files || []), owner: flags.owner, evidence: [].concat(flags.evidence || []), title: flags.title });
+      const rw = require('../lib/rework').openRework(store, config, need(actor, '--actor'), { reason: flags.reason, files: [].concat(flags.files || []), owner: flags.owner, evidence: [].concat(flags.evidence || []), title: flags.title, delegation });
       const { id, gate } = rw;
       print(flags, `Rework ${id} opened: gate ${gate} is in progress with task ${id} owned by ${flags.owner}. Dispatch the owner (claim the task, add a failing regression test, fix, complete), then submit and independently review ${gate}, then eccode deliver again.`, { id, gate, task: id });
       return 0;
@@ -392,8 +463,8 @@ function main(argv) {
     case 'risk': {
       const fields = { id: need(flags.id, '--id'), title: flags.title, severity: flags.severity, mitigation: flags.mitigation, owner: flags.owner, status: flags.status || (sub === 'add' ? 'open' : undefined) };
       if (sub === 'update' && !fields.status) fields.status = own(store.state().risks, fields.id) ? own(store.state().risks, fields.id).status : 'open';
-      runs.recordRisk(store, need(actor, '--actor'), fields);
-      print(flags, `Risk ${fields.id} recorded (${fields.status}).`);
+      const { event } = runs.recordRisk(store, need(actor, '--actor'), { ...fields, delegation });
+      print(flags, `Risk ${fields.id} recorded (${fields.status}${event.data.delegation ? `, on the user's behalf under delegation ${event.data.delegation}` : ''}).`, event.data);
       return 0;
     }
     case 'decision': {
@@ -403,6 +474,8 @@ function main(argv) {
         rationale: flags.rationale,
         alternatives: flags.alternatives,
         lessons: flags.lesson || [],
+        onBehalfOf: optional(flags, 'on-behalf-of'),
+        delegation,
       });
       print(flags, `Decision ${id} recorded.`, { id });
       return 0;
@@ -410,6 +483,27 @@ function main(argv) {
     case 'metrics': {
       const m = require('../lib/memory/metrics').compute(store, config);
       print(flags, require('../lib/memory/metrics').format(m), m);
+      return 0;
+    }
+    case 'delegate': {
+      const authority = require('../lib/authority');
+      if (sub === 'grant') {
+        const d = authority.grant(store, need(actor, '--actor'), {
+          to: need(flags.to, '--to'),
+          action: need(flags.action, '--action'),
+          target: optional(flags, 'target'),
+          uses: numberFlag(flags, 'uses', { min: 1, integer: true }),
+          expires: numberFlag(flags, 'expires', { min: 1 }),
+          reason: need(flags.reason, '--reason'),
+        });
+        print(flags, `Delegation ${d.id} granted: ${d.to} may ${d.action}${d.target ? ` on ${d.target}` : ''} ${d.uses} time(s) until ${d.expiresAt}, recorded as acting on the user's behalf. ${d.to} runs the command with --actor ${d.to} --delegation ${d.id}. Revoke: eccode delegate revoke ${d.id} --actor user --reason "<why>".`, d);
+      } else if (sub === 'list') {
+        const rows = authority.list(store.state());
+        print(flags, rows.map(authority.formatRow).join('\n') || '(none)', rows);
+      } else if (sub === 'revoke') {
+        authority.revoke(store, need(actor, '--actor'), need(arg, '<id>'), need(flags.reason, '--reason'));
+        print(flags, `Delegation ${arg} revoked.`, { id: arg, status: 'revoked' });
+      } else throw new EccodeError('USAGE', 'Usage: eccode delegate grant --actor user --to <role> --action <action> [--target <id>] [--uses N] [--expires <minutes>] --reason <text> | delegate list [--json] | delegate revoke <id> --actor user --reason <text>');
       return 0;
     }
     default:
