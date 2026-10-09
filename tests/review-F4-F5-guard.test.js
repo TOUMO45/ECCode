@@ -151,7 +151,9 @@ test('F4 relative shell targets are resolved from the hook cwd; outside the proj
   // A cd inside the command moves the write somewhere the guard cannot bind: fail closed, say what to do.
   denied(bash(ctx.dir, 'cd src && echo x > ../src/server.js', 'technical-reviewer'), 'cd then relative write', /changes directory[\s\S]*Edit\/Write tool/);
   denied(bash(ctx.dir, 'cd /tmp && echo x > notes.txt', 'technical-reviewer'), 'cd away then relative write', /changes directory/);
-  allowed(bash(ctx.dir, `cd /tmp && echo x > ${path.join(outside, 'notes.txt')}`, 'technical-reviewer'), 'cd then absolute write outside');
+  // The absolute path is quoted: on Windows an unquoted C:\... is read by Git Bash (and the guard) as
+  // C:..., a relative name, which a cd makes unbindable; quoted, it keeps its separators everywhere.
+  allowed(bash(ctx.dir, `cd /tmp && echo x > "${path.join(outside, 'notes.txt')}"`, 'technical-reviewer'), 'cd then absolute write outside');
   allowed(bash(ctx.dir, 'cd src && ls && cat server.js', 'technical-reviewer'), 'cd without a write');
 });
 

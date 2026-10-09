@@ -62,14 +62,12 @@ const GIT_REVERTING = new Set(['checkout', 'restore', 'reset', 'stash', 'clean',
 const WRAPPERS = new Set(['env', 'exec', 'command', 'builtin', 'nohup', 'nice', 'time', 'timeout', 'sudo', 'npx', 'xargs', 'stdbuf']);
 const CHDIR = new Set(['cd', 'pushd', 'popd']);
 const MAX_DEPTH = 4;
-// On Windows a backslash followed by a path character is a path separator (C:\Users\me\x.json), not a
-// shell escape: the tokenizer keeps it so that native paths stay absolute and the record patterns
-// still match. This reads stricter than Git Bash (which would drop the backslash) and therefore
-// fails closed. ECCODE_GUARD_PLATFORM overrides the platform for the test suite only.
-const WIN_PATH_CHAR = /[A-Za-z0-9_.~-]/;
-let platform = process.platform;
-if (process.env.ECCODE_TEST === '1' && process.env.ECCODE_GUARD_PLATFORM) platform = process.env.ECCODE_GUARD_PLATFORM;
-const isWin32 = () => platform === 'win32';
+// The tokenizer reads a command line the way the Bash tool's shell does on every platform,
+// including Git Bash on Windows: an unquoted backslash is an escape, so an unquoted native path
+// (C:\Users\me\x.json) is read as C:Usersmex.json, which is what bash would write. A native path the
+// agent quotes keeps its backslashes, and then the record patterns and the CLI word pattern above
+// accept both separators. Keeping backslashes unconditionally was tried and rejected in review: it
+// made `.eccode/drafts/.\./state.json` look like a draft while bash writes the record.
 
 // Where each kind of role may write under .eccode/ (drafts are shared scratch).
 const DOC_AUTHORS = new Set(['product-architect', 'technical-designer', 'delivery-lead']);
@@ -141,9 +139,7 @@ function splitCommands(src) {
   for (let i = 0; i < src.length; i++) {
     const c = src[i];
     if (c === '\\') {
-      const n = src[i + 1];
-      if (isWin32() && n !== undefined && WIN_PATH_CHAR.test(n)) { add('\\'); continue; }
-      if (n !== undefined && n !== '\n') add(n);
+      if (src[i + 1] !== undefined && src[i + 1] !== '\n') add(src[i + 1]);
       i++;
     } else if (c === "'") {
       const j = src.indexOf("'", i + 1);
@@ -497,5 +493,5 @@ if (require.main === module) {
   });
 } else {
   // Unit-test surface (tests/review-F9-win32-guard.test.js); the hook itself always runs as a script.
-  module.exports = { splitCommands, eccodeActors, RECORD_FILES, ECCODE_WORD, __setPlatform: (p) => { platform = p; } };
+  module.exports = { splitCommands, eccodeActors, RECORD_FILES, ECCODE_WORD };
 }
