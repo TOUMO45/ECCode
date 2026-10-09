@@ -1,0 +1,184 @@
+# Re-review probes against /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/guardfix/scripts/hooks/guard.js
+# node v22.22.0; 180 probes; 52 mismatches with the reviewer's expectation
+
+section | id | role | tool | decision | expect | ok | note | reason
+RECORD-DIR | fp-cp-from-drafts | main | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-cp-from-drafts-role | technical-reviewer | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-ls | technical-reviewer | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-ls-la | technical-reviewer | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-cat | technical-reviewer | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-cat-events | technical-reviewer | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-rm-draft-role | technical-reviewer | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-rm-review-draft | technical-reviewer | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-mv-into-review-drafts | technical-reviewer | Bash | deny | allow | MISMATCH |  | .eccode/reviews/drafts/ is part of an ECCode record and is written only by the eccode CLI.
+RECORD-DIR | fp-mv-into-drafts | backend-engineer | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-cp-into-artifacts | product-architect | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-du | main | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-find | main | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-git-status | main | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-rm-then-ls | main | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-echo-gitignore | main | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-mkdir | technical-reviewer | Bash | allow | allow | ok |  | 
+RECORD-DIR | fp-grep | technical-reviewer | Bash | allow | allow | ok |  | 
+RECORD-DIR | src-cp-backup | main | Bash | deny | allow | MISMATCH | read-only copy out of the project | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | src-tar-backup | main | Bash | deny | allow | MISMATCH | tar -c reads the record | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | src-rsync-backup | main | Bash | deny | allow | MISMATCH |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | src-rm-comment | main | Bash | deny | allow | MISMATCH | a comment | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-cp-dot | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-cp-dotslash | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-rsync | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-rsync-noslash | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-mv-over | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-mv-away | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-rm-rf | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-rm-rf-slash | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-tar-x | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-ln | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-quoted | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-abs | main | Bash | allow | deny | MISMATCH | absolute path to the record directory | 
+RECORD-DIR | dir-abs-rm | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | dir-abs-mv | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | dir-dotdot | main | Bash | allow | deny | MISMATCH | a prefixed relative path | 
+RECORD-DIR | dir-pwd | main | Bash | allow | deny | MISMATCH | dynamic prefix | 
+RECORD-DIR | dir-glob | main | Bash | allow | deny | MISMATCH | empties the record | 
+RECORD-DIR | dir-glob-mv | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-subdir-reviews | main | Bash | allow | deny | MISMATCH | record area without a trailing slash | 
+RECORD-DIR | dir-subdir-memory | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | dir-subdir-evidence-mv | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | dir-subdir-reviews-cp | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | dir-brace | main | Bash | allow | deny | MISMATCH | brace expansion | 
+RECORD-DIR | dir-split-quote | main | Bash | allow | deny | MISMATCH | quote-split name | 
+RECORD-DIR | dir-split-quote-cp | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | dir-rmdir-forced | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-find-delete | main | Bash | allow | deny | MISMATCH | find -delete empties the record | 
+RECORD-DIR | dir-find-exec-rm | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | dir-xargs-rm | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | dir-role-cp | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | dir-role-rm | technical-reviewer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | file-dq-name | main | Bash | allow | deny | MISMATCH | bash writes .eccode/state.json | 
+RECORD-DIR | file-split-dir | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | file-backslash | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | file-cp-dq | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | file-tee-dq | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | file-abs-dq | main | Bash | allow | deny | MISMATCH |  | 
+RECORD-DIR | file-clobber-main | main | Bash | deny | deny | ok | F1 of the first review | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | file-clobber-fd-main | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+RECORD-DIR | file-role-dq-name | technical-reviewer | Bash | deny | deny | ok | roles: tokenized abs check | .eccode/state.json is part of an ECCode record and is written only by the eccode CLI.
+RECORD-DIR | file-role-split | backend-engineer | Bash | deny | deny | ok |  | .eccode/events.jsonl is part of an ECCode record and is written only by the eccode CLI.
+RECORD-DIR | alias-ln-pwd | main | Bash | allow | deny | MISMATCH | creating the alias with a prefixed path | 
+RECORD-DIR | alias-write-main | main | Bash | allow | deny | MISMATCH | bash writes .eccode/state.json through the link | 
+RECORD-DIR | alias-write-main-tool | main | Write | deny | deny | ok |  | rec/state.json resolves to .eccode/state.json; writes must target the file itself, inside the project and outside the record.
+RECORD-DIR | alias-write-role | technical-reviewer | Bash | deny | deny | ok |  | rec/state.json resolves to .eccode/state.json; writes must target the file itself, inside the project and outside the record.
+RECORD-DIR | alias-cp-dir | main | Bash | allow | deny | MISMATCH | replacing the record through the alias | 
+PLANTED | init-inside-record | engine | engine | INVALID_INPUT: a project cannot be initialised inside an ECCode record directory (/tmp/eccode-test-rAR2Nf/.eccode) | INVALID_INPUT | ok |  | 
+PLANTED | init-inside-drafts | engine | engine | INVALID_INPUT: a project cannot be initialised inside an ECCode record directory (/tmp/eccode-test-rAR2Nf/.eccode/drafts) | INVALID_INPUT | ok |  | 
+PLANTED | init-inside-review-drafts | engine | engine | INVALID_INPUT: a project cannot be initialised inside an ECCode record directory (/tmp/eccode-test-rAR2Nf/.eccode/reviews/drafts/x) | INVALID_INPUT | ok |  | 
+PLANTED | init-dotdot-into-record | engine | engine | INVALID_INPUT: a project cannot be initialised inside an ECCode record directory (/tmp/eccode-test-rAR2Nf/.eccode/drafts) | INVALID_INPUT | ok |  | 
+PLANTED | init-nested-example | engine | engine | OK: created | OK | ok |  | 
+PLANTED | init-inside-claim | engine | engine | OK: created | OK (not refused; residual) | ok |  | 
+PLANTED | init-via-symlink-into-record | engine | engine | ENOENT: ENOENT: no such file or directory, mkdir '/tmp/eccode-test-rAR2Nf/work/.eccode/artifacts' | INVALID_INPUT | MISMATCH |  | 
+PLANTED | cli-init-root-record | cli | cli | rc=2 eccode: [INVALID_INPUT] a project cannot be initialised inside an ECCode record directory (/tmp/eccode-test-rAR2Nf/.eccode) | rc!=0 refused | ok |  | 
+PLANTED | cli-init-root-drafts-rel | cli | cli | rc=2 eccode: [INVALID_INPUT] a project cannot be initialised inside an ECCode record directory (/tmp/eccode-test-rAR2Nf/.eccode/drafts/new) | rc!=0 refused | ok |  | 
+PLANTED | cli-status-root-record | cli | cli | rc=2 eccode: [NOT_INITIALIZED] No ECCode project at /tmp/eccode-test-rAR2Nf/.eccode. Run "eccode init" first. | rc!=0 (not a project) | ok |  | 
+PLANTED | rec-state-after-plant | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/state.json). Use ecco
+PLANTED | rec-events-after-plant | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/events.jsonl). Use ec
+PLANTED | rec-config-after-plant | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/config.json). Use ecc
+PLANTED | rec-review-after-plant | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/reviews/architecture-
+PLANTED | rec-memory-after-plant | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/memory/m-1.json). Use
+PLANTED | rec-evidence-after-plant | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/evidence/ev-1.log). U
+PLANTED | rec-handoff-after-plant | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/handoffs/ho-1.json). 
+PLANTED | rec-delivery-after-plant | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/delivery/final.json).
+PLANTED | rec-lock-after-plant | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/.lock). Use eccode co
+PLANTED | rec-planted-own-state | main | Write | deny | deny | ok | the planted copy is itself a record path | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/.eccode/state.json). 
+PLANTED | rec-drafts-planted-state | technical-reviewer | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/drafts/.eccode/state.
+PLANTED | rec-review-drafts-planted-state | technical-reviewer | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/reviews/drafts/.eccod
+PLANTED | rec-reviewer-draft-still-ok | technical-reviewer | Write | allow | allow | ok | the reviewer keeps its draft area despite the planted records | 
+PLANTED | rec-reviewer-draft-deep | technical-reviewer | Write | allow | allow | ok | a draft path beneath the planted copy is still a draft of the real record (lexically) | 
+PLANTED | rec-impl-draft-still-ok | backend-engineer | Write | allow | allow | ok |  | 
+PLANTED | rec-artifact-author | product-architect | Write | allow | allow | ok |  | 
+PLANTED | rec-bash-after-plant | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+PLANTED | rec-bash-abs-after-plant | backend-engineer | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+PLANTED | rec-bash-planted-cp | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+PLANTED | claim-after-plant-inside | backend-engineer | Write | deny | deny | ok | self lock-out: planted claims are relative to src/server | b.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than drafts).
+PLANTED | claim-after-plant-nested-match | backend-engineer | Write | allow | allow | ok | inside the real claim anyway | 
+PLANTED | claim-after-plant-record | backend-engineer | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/src/server/.eccode/state.json
+PLANTED | claim-after-plant-outside | backend-engineer | Write | deny | deny | ok |  | src/web/a.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than 
+PLANTED | claim-after-plant-real-record | backend-engineer | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/state.json). Use ecco
+PLANTED | claim-after-plant-git | backend-engineer | Bash | deny | deny | ok |  | .git/config is git metadata (ignore rules, hooks); subagents never write it.
+PLANTED | symlink-rec-ln-abs | backend-engineer | Bash | deny | deny | ok | creating a link to the record directory by absolute path | .eccode2 is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than draf
+PLANTED | symlink-rec-ln-rel | backend-engineer | Bash | deny | deny | ok |  | .eccode2 is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than draf
+PLANTED | symlink-rec-state-via-link | main | Write | deny | deny | ok | lexical .eccode/state.json | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/src/web/.eccode/state.json). 
+PLANTED | symlink-rec-web-file | backend-engineer | Write | deny | deny | ok | root becomes src/web (through the link): real claims do not match x.js | x.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than drafts).
+PLANTED | symlink-rec-web-nested-match | backend-engineer | Write | allow | deny | MISMATCH | LOOSENING if allow: the real record through the link grants src/server/** under src/web | 
+PLANTED | symlink-rec-web-nested-match-bash | backend-engineer | Bash | allow | deny | MISMATCH | same by redirect | 
+PLANTED | symlink-alias-state | main | Write | allow | deny | MISMATCH | Write through an alias of the record (realpath check) | 
+PLANTED | symlink-alias-state-role | backend-engineer | Write | deny | deny | ok |  | state.json is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than dr
+PLANTED | nested-draft-still-ok | technical-reviewer | Write | allow | allow | ok |  | 
+PLANTED | nested-record-still-denied | technical-reviewer | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/examples/app/.eccode/state.js
+PLANTED | nested-dir-cp-from-outer | main | Bash | allow | deny | MISMATCH | replacing the nested record from the outer cwd | 
+PLANTED | nested-dir-rm-from-outer | main | Bash | allow | deny | MISMATCH |  | 
+PLANTED | nested-dir-rm-from-inner | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+PLANTED | nested-dir-cp-from-inner-abs | main | Bash | allow | deny | MISMATCH |  | 
+PLANTED | nested-outer-dir-from-inner | main | Bash | allow | deny | MISMATCH |  | 
+PLANTED | cwd-in-drafts-root | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-rAR2Nf/.eccode/state.json). Use ecco
+PLANTED | cwd-in-drafts-draft | backend-engineer | Write | allow | allow | ok | relative to cwd .eccode/drafts/n.md | 
+PLANTED | cwd-in-drafts-src | backend-engineer | Write | deny | allow | MISMATCH | the real root is found from the cwd by walking out of the record | b.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than drafts).
+PLANTED | cwd-in-drafts-src-outside | backend-engineer | Write | deny | deny | ok |  | zz.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than drafts)
+WRAPPER2 | fn-digit-name | technical-reviewer | Bash | allow | deny | MISMATCH | bash accepts a function name starting with a digit | 
+WRAPPER2 | fn-unicode-name | technical-reviewer | Bash | allow | deny | MISMATCH | bash accepts a non-ASCII name | 
+WRAPPER2 | fn-plus-name | technical-reviewer | Bash | allow | deny | MISMATCH |  | 
+WRAPPER2 | fn-pct-name | technical-reviewer | Bash | allow | deny | MISMATCH |  | 
+WRAPPER2 | fn-dot-name | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-keyword-parens | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-subshell | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-if | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-while | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-case | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-leading-space | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-then | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-group | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-bash-c | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-sh-c-dq | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-evidence-run | backend-engineer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-eval-quoted | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-printf-source | technical-reviewer | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fn-split-cli-word | technical-reviewer | Bash | deny | deny | ok |  | Identity mismatch: this subagent is technical-reviewer but the command acts as "backend-engineer". Each agent records work only under its ow
+WRAPPER2 | fn-split-cli-word-user | main | Bash | deny | deny | ok |  | --actor user is reserved for a person at a terminal. Ask the user to run this command themselves: node bin/ecc'ode'.js gate reopen design --
+WRAPPER2 | fn-escaped-cli-word | technical-reviewer | Bash | deny | deny | ok |  | Identity mismatch: this subagent is technical-reviewer but the command acts as "backend-engineer". Each agent records work only under its ow
+WRAPPER2 | cli-ansi-c | technical-reviewer | Bash | allow | deny | MISMATCH | ANSI-C quoting: bash runs bin/eccode.js | 
+WRAPPER2 | cli-empty-subst | technical-reviewer | Bash | allow | deny | MISMATCH | empty $'' splits the word; bash runs bin/eccode.js | 
+WRAPPER2 | cli-empty-var-suffix | technical-reviewer | Bash | allow | deny | MISMATCH | empty variable suffix on the CLI word | 
+WRAPPER2 | cli-empty-var-prefix | technical-reviewer | Bash | deny | deny | ok |  | Identity mismatch: this subagent is technical-reviewer but the command acts as "backend-engineer". Each agent records work only under its ow
+WRAPPER2 | cli-var-command-user | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: "$c" runs a command through a variable or substitution; call the eccode CLI directl
+WRAPPER2 | cli-array | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: "${a[@]}" runs a command through a variable or substitution; call the eccode CLI di
+WRAPPER2 | cli-plain-ok | technical-reviewer | Bash | allow | allow | ok |  | 
+WRAPPER2 | cli-path-ok | technical-reviewer | Bash | allow | allow | ok |  | 
+WRAPPER2 | fp-fn-unrelated | technical-reviewer | Bash | allow | allow | ok |  | 
+WRAPPER2 | fp-comment | technical-reviewer | Bash | allow | allow | ok |  | 
+WRAPPER2 | fp-grep-pattern | technical-reviewer | Bash | deny | allow | MISMATCH | a quoted grep pattern is walked as a nested command | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fp-grep-pattern-dq | technical-reviewer | Bash | allow | allow | ok | run() with no body opener | 
+WRAPPER2 | fp-node-e-arrow | technical-reviewer | Bash | allow | allow | ok | JS arrow, no NAME() | 
+WRAPPER2 | fp-node-e-call | technical-reviewer | Bash | allow | allow | ok | run() followed by ) not a body | 
+WRAPPER2 | fp-evidence-run-fn | backend-engineer | Bash | deny | allow | MISMATCH | now denied by design? a function that never calls the CLI | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fp-subshell-group | technical-reviewer | Bash | allow | allow | ok |  | 
+WRAPPER2 | fp-arith | technical-reviewer | Bash | allow | allow | ok |  | 
+WRAPPER2 | fp-if-then | technical-reviewer | Bash | allow | allow | ok |  | 
+WRAPPER2 | fp-for | technical-reviewer | Bash | allow | allow | ok |  | 
+WRAPPER2 | fp-case | technical-reviewer | Bash | allow | allow | ok | `a)` is not NAME() | 
+WRAPPER2 | fp-awk | technical-reviewer | Bash | deny | allow | MISMATCH | an awk function inside quotes | The guard cannot verify who this eccode command acts as: a shell function or alias is defined in the same command line, so the eccode invoca
+WRAPPER2 | fp-sed | technical-reviewer | Bash | allow | allow | ok |  | 
+ENV2 | indirect-export-eq | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a variable with a computed name is assigned in the same command line as the eccode 
+ENV2 | indirect-declare-eq | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a variable with a computed name is assigned in the same command line as the eccode 
+ENV2 | indirect-printf-v-export | learning-debugger | Bash | allow | deny | MISMATCH | bash sets and exports ECCODE_SHARED_MEMORY (bashsem) | 
+ENV2 | indirect-nameref | learning-debugger | Bash | allow | deny | MISMATCH | nameref export (bashsem: exported) | 
+ENV2 | indirect-read | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+ENV2 | indirect-eval-concat | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a variable with a computed name is assigned in the same command line as the eccode 
+ENV2 | indirect-env-dynamic | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: a variable with a computed name is assigned in the same command line as the eccode 
+ENV2 | split-name-alone | learning-debugger | Bash | deny | deny | ok | tokenized words now carry ECCODE_ | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+ENV2 | split-name-with-cli | learning-debugger | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+ENV2 | hooks-off-split | main | Bash | deny | deny | ok |  | The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCO
+ENV2 | fp-dynamic-unrelated | learning-debugger | Bash | allow | allow | ok | a computed VALUE is fine | 
+ENV2 | fp-dynamic-unrelated-export | learning-debugger | Bash | deny | allow | MISMATCH |  | The guard cannot verify who this eccode command acts as: a variable with a computed name is assigned in the same command line as the eccode 
+ENV2 | fp-local-in-fn-free-line | learning-debugger | Bash | deny | allow | MISMATCH | computed value, literal name | The guard cannot verify who this eccode command acts as: a variable with a computed name is assigned in the same command line as the eccode 
+ENV2 | fp-env-literal | learning-debugger | Bash | deny | allow | MISMATCH | literal name, computed value through env | The guard cannot verify who this eccode command acts as: a variable with a computed name is assigned in the same command line as the eccode 
+ENV2 | fp-assign-prefix-literal | learning-debugger | Bash | allow | allow | ok |  | 

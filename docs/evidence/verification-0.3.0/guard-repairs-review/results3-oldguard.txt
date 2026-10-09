@@ -1,0 +1,52 @@
+# Follow-up probes against /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/oldguard/scripts/hooks/guard.js
+# 23 probes; 12 mismatches
+
+id | role | tool | decision | expect | ok | note | reason
+alias-no-plant | main | Write | deny | deny | ok | without a planted record the realpath check holds | rec/state.json resolves to .eccode/state.json; writes must target the file itself, inside the project and outside the record.
+plant-step-pwd | main | Bash | allow | deny | MISMATCH | guard-visible planting of a record inside the record | 
+plant-step-rel | main | Bash | allow | deny | MISMATCH |  | 
+plant-step-rsync | main | Bash | allow | deny | MISMATCH |  | 
+alias-step | main | Bash | allow | deny | MISMATCH | guard-visible alias of the record | 
+alias-state-after-plant | main | Write | deny | deny | ok | CHAIN: planted root under the alias is not lexically inside a record | rec/state.json resolves to .eccode/state.json; writes must target the file itself, inside the project and outside the record.
+alias-events-after-plant | main | Edit | deny | deny | ok |  | rec/events.jsonl resolves to .eccode/events.jsonl; writes must target the file itself, inside the project and outside the record.
+alias-review-after-plant | main | Write | allow | deny | MISMATCH |  | 
+alias-config-after-plant | main | Write | deny | deny | ok |  | rec/config.json resolves to .eccode/config.json; writes must target the file itself, inside the project and outside the record.
+alias-bash-after-plant | main | Bash | allow | deny | MISMATCH |  | 
+alias-state-reviewer | technical-reviewer | Write | deny | deny | ok |  | rec/state.json resolves to .eccode/state.json; writes must target the file itself, inside the project and outside the record.
+direct-state-after-plant | main | Write | deny | deny | ok | the lexical path is still denied | .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+ln-record-into-claim-abs | backend-engineer | Bash | allow | allow | ok | target owned; source is a prefixed path (RECORD_DIR_WRITE misses it); harmless alone | 
+ln-record-into-claim-rel | backend-engineer | Bash | allow | allow | ok |  | 
+symlinked-root-lockout | backend-engineer | Write | allow | deny | MISMATCH | root becomes src/server through the link; real claims do not match b.js | 
+symlinked-root-record | backend-engineer | Write | deny | deny | ok |  | src/server/.eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+symlinked-root-outside | backend-engineer | Write | deny | deny | ok |  | src/web/a.js is outside the ownership of backend-engineer's claimed task(s): api [src/server/**] (tasks never own .eccode/ paths other than 
+init-via-symlink-into-record | engine | engine | OK: created true | INVALID_INPUT | MISMATCH | lexical check on the given path | 
+mv-review-drafts-slash | technical-reviewer | Bash | deny | allow | MISMATCH | trailing slash: resolve() strips it and reviews/ then matches the record area | .eccode/reviews/drafts is part of the ECCode record and is written only by the eccode CLI.
+mv-review-drafts-named | technical-reviewer | Bash | allow | allow | ok |  | 
+cp-review-drafts-slash | technical-reviewer | Bash | deny | allow | MISMATCH |  | .eccode/reviews/drafts is part of the ECCode record and is written only by the eccode CLI.
+mv-drafts-slash | technical-reviewer | Bash | deny | allow | MISMATCH |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+write-review-drafts-dir | technical-reviewer | Write | deny | allow | MISMATCH | degenerate but same normalisation | .eccode/reviews/drafts is part of the ECCode record and is written only by the eccode CLI.
+
+## Inputs
+alias-no-plant: "/tmp/eccode-test-7O2rQ1/rec/state.json"
+plant-step-pwd: "cp -r ./.eccode/. \"$PWD/.eccode/.eccode\""
+plant-step-rel: "mkdir -p .eccode/.eccode && cp -r ./.eccode/. .eccode/.eccode/"
+plant-step-rsync: "rsync -a ./.eccode/ ./.eccode/.eccode/"
+alias-step: "ln -s \"$PWD/.eccode\" rec"
+alias-state-after-plant: "/tmp/eccode-test-7O2rQ1/rec/state.json"
+alias-events-after-plant: "/tmp/eccode-test-7O2rQ1/rec/events.jsonl"
+alias-review-after-plant: "/tmp/eccode-test-7O2rQ1/rec/reviews/architecture-1.json"
+alias-config-after-plant: "/tmp/eccode-test-7O2rQ1/rec/config.json"
+alias-bash-after-plant: "echo x > rec/state.json"
+alias-state-reviewer: "/tmp/eccode-test-7O2rQ1/rec/state.json"
+direct-state-after-plant: "/tmp/eccode-test-7O2rQ1/.eccode/state.json"
+ln-record-into-claim-abs: "ln -s /tmp/eccode-test-ogJh5W/.eccode src/server/.eccode"
+ln-record-into-claim-rel: "ln -s ../../.eccode src/server/.eccode"
+symlinked-root-lockout: "/tmp/eccode-test-ogJh5W/src/server/b.js"
+symlinked-root-record: "/tmp/eccode-test-ogJh5W/src/server/.eccode/state.json"
+symlinked-root-outside: "/tmp/eccode-test-ogJh5W/src/web/a.js"
+init-via-symlink-into-record: "init(work -> .eccode/drafts)"
+mv-review-drafts-slash: "mv x.json .eccode/reviews/drafts/"
+mv-review-drafts-named: "mv x.json .eccode/reviews/drafts/x.json"
+cp-review-drafts-slash: "cp x.json .eccode/reviews/drafts/"
+mv-drafts-slash: "mv x.md .eccode/drafts/"
+write-review-drafts-dir: ".eccode/reviews/drafts/"

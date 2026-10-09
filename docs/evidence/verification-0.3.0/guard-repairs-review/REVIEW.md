@@ -121,3 +121,89 @@ F1: allow, allow (pre-existing)      F2 after planting: deny ×4 (regression in 
 Mismatch list from `probes.js` (section | id): NEW-6 clobber-record-main, quoted-bar-impl; NESTED symlink-dir-same-project; BOGUS-ROOT nonprefix-yaml-after-crafted, nonprefix-yaml-after-crafted-write, main-record-after, main-events-after, main-config-after, main-review-after, main-memory-after, main-evidence-after, reviewer-draft-after, main-rsync-whole-record, main-cp-whole-record; NEW-9 indirect-name, split-name-no-cli, read-from-file; NEW-7 fn-keyword-parens, fn-keyword-subshell, fn-subshell-body, fn-if-body, fn-leading-space, fn-after-then, fn-in-group, bash-c-fn, bash-c-fn-user, sh-c-fn-dq, evidence-run-fn, split-word, split-word-user, escaped-word, fp-unrelated-fn-comment.
 
 Nothing was committed; the worktree is unchanged apart from the test runs. Throwaway projects were created under the OS temp directory by the helpers and removed.
+
+---
+
+# Re-review of d0e2a3b (80ddab0 + test marker), branch `eccode/guard-repairs`
+
+**Verdict: changes requested.** F1, F2 (as reported), F3 (as reported), F4, F5 (as reported) and F8 are closed and the original probe set now has no unexplained mismatch. But re-attacking the new code finds one blocking chain that re-opens F2 through a symlink alias, and the new `RECORD_DIR_WRITE` / `SHELL_WRAPPER` / computed-name rules each have gaps of the same shape they were meant to close, plus one over-denial that will hit everyday commands.
+
+- Commits: `80ddab0` (guard, lib/project.js, tests) and `d0e2a3b` (test marker). Worktree clean before and after.
+- Evidence added: `probes-rerun-d0e2a3b.txt` (original 314 probes re-run), `probes2.js`/`results2.txt`/`probes2-output.txt` (180 new probes), `probes3.js`/`results3.txt`/`results3-oldguard.txt` (alias chain, also against a088c6a), `bashsem.sh`/`bashsem-output.txt` (bash 5.2 semantics of every new form), `tests-d0e2a3b.txt`.
+- Tests: the six guard files **73/73 pass**; `npm run check` **243/243 pass**, exit 0.
+
+## R1. Original probes re-run (314): 9 mismatches, all explained
+
+| id | now | classification |
+|---|---|---|
+| `bogus-cp-dir`, `bogus-cp-dir-main` (`cp -r .eccode src/server/.eccode`, `cp -r .eccode .eccode/.eccode`) | deny | improvement (my expectation recorded the old behaviour) |
+| `lib-init-inside-record` | `INVALID_INPUT` | fixed as described |
+| `quoted-bar-impl` | allow | F7, documented residual |
+| `symlink-dir-same-project` | allow | pre-existing residual (completion accounting catches it) |
+| `nonprefix-yaml-after-crafted(-write)` | allow | residual-1 crafted record, refused at completion (unchanged analysis) |
+| `read-from-file` | allow | residual 1 |
+| `fp-grep-fn` (`grep -n 'e() {' x.sh && eccode status`) | deny | new false positive: a quoted pattern is walked as a nested command (low) |
+| `fp-evidence-run-fn` (`evidence run -- 'f() { npm test; }; f'`) | deny | by design now; should be documented (an evidence command may not define a function) |
+
+Closed and verified: `clobber-record-main` (F1) deny; all `main-*-after` (F2) deny; all nine F3 wrapper forms deny; `split-word`, `split-word-user`, `escaped-word` (F4) deny; `indirect-name`, `split-name-no-cli` (F5) deny; `main-rsync-whole-record`, `main-cp-whole-record` (F6) deny; `fp-unrelated-fn-comment` (F8) allow.
+
+## R2. New findings
+
+| # | Severity | Status | Summary |
+|---|---|---|---|
+| G1 | **Blocking** | regression of the nested-root series (a088c6a denies the final step) | Main session, three guard-allowed steps, then the Write tool edits the record: (1) `mkdir -p .eccode/.eccode && cp -r ./.eccode/. .eccode/.eccode/` or `cp -r ./.eccode/. "$PWD/.eccode/.eccode"` → allow (`RECORD_DIR_WRITE` needs the bare word `.eccode`; `./.eccode/.` and `.eccode/.eccode/` do not qualify); (2) `ln -s "$PWD/.eccode" rec` → allow (prefixed path); (3) `Write rec/state.json`, `Edit rec/events.jsonl`, `Write rec/config.json`, `Write rec/reviews/architecture-1.json` → **allow**. Cause: `findRoot(dirname(/proj/rec/state.json))` sees `/proj/rec/.eccode/events.jsonl` through the link, `insideRecord('/proj/rec')` is lexical and false, so `rec` becomes the root, `rel=state.json`, and `realRel` then measures the real path against the real path of that bogus root (`state.json`: not `..`, not a record). `probes3.js` `alias-*-after-plant`; without the planted copy the same Write is denied (`alias-no-plant`); with the pre-series guard it is denied (`results3-oldguard.txt`). |
+| G2 | High | F6 only partly closed | `RECORD_DIR_WRITE` matches only a bare `.eccode`/`./.eccode` word. Allowed for the main session: `cp -r /tmp/forged/. <abs>/.eccode`, `rm -rf <abs>/.eccode`, `mv <abs>/.eccode /tmp/away`, `cp -r /tmp/forged/. src/../.eccode`, `cp -r /tmp/forged/. "$PWD/.eccode"`, `rm -rf .eccode/*`, `rm -f .eccode/{events.jsonl,state.json}`, `rm -rf .ecc''ode`, `cp -r /tmp/forged/. .ecc''ode`, `find .eccode -type f -delete`, `find .eccode -type f -exec rm {} +`, `ls .eccode/* \| xargs rm -f`, the nested record from the outer cwd (`cp -r /tmp/forged/. examples/app/.eccode`, `rm -rf examples/app/.eccode`) and the outer from the inner (`rm -rf ../../.eccode`). Record *areas* without a trailing slash were never matched (pre-existing): `rm -rf .eccode/reviews`, `rm -r .eccode/memory`, `mv .eccode/evidence /tmp/x`, `cp -r /tmp/forged/reviews .eccode/reviews` → allow. (`results2.txt` `dir-*`, `nested-dir-*`.) |
+| G3 | High | pre-existing, in scope of "shell targets judged on the absolute path" | The tokenized absolute-path record check for shell targets sits inside `if (eccodeRole(role))`, so the main session's record files are still protected only by the raw-text regexes: `echo x > .eccode/"state.json"`, `echo x > .ecc''ode/events.jsonl`, `echo x > .eccode/\state.json`, `cat f \| tee .eccode/"events.jsonl"`, `echo x > <abs>/.eccode/"config.json"` → **allow** for the main session (bash writes the real file, `bashsem-output.txt`). Roles are denied (`file-role-*`). |
+| G4 | High | NEW-7 still open | `SHELL_WRAPPER` requires `[A-Za-z_][\w-]*` names. Bash accepts, and the guard allows, `1e() { eccode "$@"; }; 1e task claim api --actor backend-engineer`, `é() {…}`, `e+() {…}`, `e%() {…}` from a reviewer (`results2.txt` `fn-digit-name`, `fn-unicode-name`, `fn-plus-name`, `fn-pct-name`; validity in `bashsem-output.txt`). |
+| G5 | High | pre-existing, identity binding | A CLI word carrying a dynamic marker is not bound and the command word is not dynamic, so no check runs: `node bin/$'eccode'.js task claim api --actor backend-engineer`, `node bin/ecc$''ode.js …`, `X=; node bin/eccode.js${X} …` → **allow** from a reviewer; bash runs `bin/eccode.js` (`bashsem-output.txt`). `${X}bin/eccode.js` is caught (the word still ends in `eccode.js`). Fix: a dynamic word that contains `eccode` cannot be bound → deny. |
+| G6 | Medium | new over-denial | The computed-name clause refuses any `export`/`declare`/`env`/`local` whose later argument is dynamic and contains `=`: `export OUT="$HOME/x"; eccode …`, `env FOO="$BAR" eccode …`, `local x=$y; eccode …` → **deny** (`fp-dynamic-unrelated-export`, `fp-env-literal`, `fp-local-in-fn-free-line`). `export PATH="$PWD/node_modules/.bin:$PATH"; eccode evidence run …` is an everyday shape. Only a dynamic *name* (`$` before the `=`) should count; the first clause already does that. |
+| G7 | Medium | NEW-9 still open | `N=ECCODE_SHARED_MEMORY; printf -v "$N" /tmp/x; export "$N"; eccode …` and `declare -n ref=ECCODE_SHARED_MEMORY; ref=/tmp/x; export ref; eccode …` → **allow**; both export the variable (`bashsem-output.txt`). |
+| G8 | Medium | pre-existing (a088c6a: same) | Symlink alias of the record without any planting: `ln -s "$PWD/.eccode" rec` → allow; then `echo x > rec/state.json` (main session; the Bash path never resolves links) → allow; `Write rec/reviews/architecture-1.json` (a *new* file under the alias) → allow because `realRel` returns null for a path that does not exist yet. Existing files through the alias are denied by the Write tool. |
+| G9 | Low | pre-existing | Trailing slash on a draft area: `mv x.json .eccode/reviews/drafts/`, `cp x.json .eccode/reviews/drafts/`, `mv x.md .eccode/drafts/` by a reviewer → **deny** (`path.resolve` strips the slash; `reviews/drafts` then matches `reviews/`, and `.eccode/drafts` does not match `.eccode/drafts/**`). The fully named target (`…/drafts/x.json`) is allowed. The coordinator's example command is therefore refused. |
+| G10 | Low | new over-denials | The record as a *source*: `cp -r .eccode /tmp/backup-eccode`, `tar czf /tmp/record.tgz .eccode`, `rsync -a .eccode/ /tmp/backup/`, and `rm -rf build # old .eccode junk` (comment) → deny. Quoted strings next to a CLI call: `grep -n 'e() {' x.sh && eccode …`, `awk 'function f(x) { … }' data; eccode …` → deny. |
+| G11 | Low | residual | `lib/project.js init` refuses `.eccode`, `.eccode/drafts`, `.eccode/reviews/drafts/x`, `src/../.eccode/drafts` (all `INVALID_INPUT`) but accepts a symlink into the record (`work -> .eccode/drafts` creates `.eccode/drafts/.eccode/…`); harmless to the guard (never re-roots inside a record) but it litters the record. `init(src/server)` inside a claim is still accepted (empty record → self lock-out; completion accounting sees the files). |
+
+## R3. What the re-attack confirmed as sound
+
+- Planted records at every depth never re-root through a lexical path: with copies at `.eccode/.eccode`, `.eccode/drafts/.eccode`, `.eccode/reviews/drafts/.eccode` and `src/server/.eccode`, every record file of the real record is denied for the main session and all roles via Write and Bash (`rec-*-after-plant`), the planted copies' own files are denied, reviewers keep their draft areas (`rec-reviewer-draft-still-ok`, `rec-reviewer-draft-deep`), authors keep artifacts, and the implementer is locked out of its own claim (`claim-after-plant-inside`) but cannot reach outside it or the real record.
+- A symlinked `.eccode` inside a claim (`ln -s <abs>/.eccode src/server/.eccode`, allowed as an owned target) only locks the implementer out; `src/server/.eccode/state.json` is denied lexically. The loosening I probed (`src/web/.eccode -> record` granting `src/web/src/server/x.js`) needs the link *outside* the implementer's claim, which the implementer cannot create and the main session does not need.
+- The nested example project keeps working after the outer record has planted copies; the hook cwd inside `.eccode/drafts` resolves relative paths correctly.
+- `RECORD_DIR_WRITE` has no false positive on `cp .eccode/drafts/a.json b.json`, `ls .eccode`, `ls -la .eccode/`, `cat .eccode/state.json`, `rm .eccode/drafts/tmp.txt`, `rm .eccode/reviews/drafts/old.json` (reviewer), `mv notes.md .eccode/drafts/notes.md`, `cp brief.md .eccode/artifacts/brief.md` (author), `du`, `find`, `git status`, `rm -rf build && ls .eccode`, `echo .eccode/.lock >> .gitignore`, `mkdir -p .eccode/drafts`, `grep`. It denies `cp -r /tmp/forged/. .eccode`, `./.eccode`, `".eccode"`, `rsync … .eccode/`, `mv /tmp/forged .eccode`, `mv .eccode /tmp/away`, `rm -rf .eccode`, `rm -rf -- .eccode`, `tar xf … -C .eccode`, `ln -s /tmp/forged .eccode`, for every role.
+- `eccode init --root .eccode` and `--root ./.eccode/drafts/new` are refused by the real CLI (rc 1); `eccode status --root .eccode` is not a project (rc 1).
+- Wrappers: all nine F3 forms plus `while`, `case`, `eval '…'`, `printf … > w.sh; . w.sh` are denied; `(cd src && npm test) && eccode …`, `$((1+2))`, `if eccode …; then`, `for`, `case … a)`, `node -e` arrows/calls, `run()` in a double-quoted grep are allowed.
+- Computed names: `export $V=`, `declare -x "$V"=`, `read …; export "$N"=`, `eval "export ${X}_MEMORY="`, `env "$V=/tmp/x"`, split names with or without the CLI, `export ECCODE_HO''OKS=off` are denied; `OUT=$(date +%s); eccode …` and `FOO=$BAR eccode …` allowed.
+
+## R4. Repairs needed before approval
+
+1. G1/G8: in `findRoot`, accept a candidate only if `<dir>/.eccode` is a real directory (`lstat`, not a symlink) *and* `insideRecord(realpath(dir))` is false; in `main()`/`checkBash`, also test `RECORD_FILES` against the real path of the target's existing parent directory joined with the file name, so a new file under an alias of the record is caught. Add the alias chain as a test.
+2. G2: match the record directory on tokenized targets, not raw text: for `cp/mv/rm/rsync/tar -C/ln/install/rmdir/find -delete/xargs rm`, resolve each positional against the cwd and deny when the resolved path *is* a `.eccode` directory or any record area beneath one (with or without trailing slash), for every role. Keep the raw regex only as a fast path.
+3. G3: move the absolute-path `RECORD_FILES` check on `bashWriteTargets` out of the `eccodeRole(role)` branch so the main session gets the tokenized answer too.
+4. G4: match any word followed by `()` (`\S+\s*\(\s*\)` with the same body openers) and `function\s+\S+`, rather than an identifier class; bash's function names are not identifiers.
+5. G5: deny when any word that contains `eccode` is dynamic (`w.dynamic`), as the file's own comment already promises for "eccode behind a variable".
+6. G6: drop the second clause of the computed-name rule (or restrict it to arguments whose `$` precedes the `=`).
+7. G7: deny `printf -v` with a dynamic name, `export`/`declare` with a dynamic bare name, and `declare -n` in a line that calls the CLI (or accept as residual and document).
+8. G9: normalise a trailing-slash target to `<dir>/` before matching so `.eccode/reviews/drafts/` is a draft area and `.eccode/drafts/` is allowed; or document that targets must be named.
+9. G10/G11: document (record-as-source over-denial, quoted-pattern over-denial, evidence commands may not define functions, init through a symlink).
+
+## R5. Exact commands and outputs (re-review)
+
+```
+$ cd <worktree> && git log --oneline -2
+d0e2a3b Tests: mark the sh -c probe string as hook input for the portability scan
+80ddab0 Guard: a record planted inside a record never re-roots the guard; …
+
+$ node --test tests/guard-verification-repairs.test.js tests/review-F4-F5-guard.test.js tests/hooks-install.test.js \
+    tests/redteam-regressions.test.js tests/security-regressions.test.js tests/review-F9-win32-guard.test.js
+# tests 73 / # pass 73 / # fail 0          (tests-d0e2a3b.txt)
+$ npm run check
+# tests 243 / # pass 243 / # fail 0, exit 0 (tests-d0e2a3b.txt)
+
+$ node probes.js      → 314 probes; 9 mismatches (probes-rerun-d0e2a3b.txt), all classified in R1
+$ node probes2.js     → 180 probes; 52 mismatches (results2.txt, probes2-output.txt): G2 ×24 incl. nested, G3 ×4, G4 ×4,
+                        G5 ×3, G6 ×3, G7 ×2, G8 ×3, G9 ×1, G10 ×7, G11 ×1 (ENOENT variant, redone in probes3),
+                        1 expectation error of mine (cwd-in-drafts-src: a planted copy at src/server was in play)
+$ node probes3.js     → 23 probes; 13 mismatches (results3.txt): G1 chain (plant-step-pwd, plant-step-rel, alias-step,
+                        alias-{state,events,review,config}-after-plant, alias-bash-after-plant), G11, G9 ×4
+$ GUARD_WT=<a088c6a guard> node probes3.js → alias-state/events/config-after-plant: deny (results3-oldguard.txt)
+$ bash bashsem.sh     → every probed bash form is valid and does what the finding says (bashsem-output.txt)
+```
