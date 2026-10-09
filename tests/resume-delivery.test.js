@@ -173,6 +173,79 @@ test('audit detects a snapshot that diverges from replay; rebuild repairs it', (
   assert.strictEqual(ctx.store.state().gates.plan.approvedBy, 'technical-reviewer');
 });
 
+test('a successful run closes only with harness-reported usage (never an estimate); --no-usage is explicit', () => {
+  const ctx = tmpProject();
+  const open = () => runs.startRun(ctx.store, ctx.config, 'technical-reviewer');
+  let id = open();
+  const err = expectCode(() => runs.endRun(ctx.store, ctx.config, id, 'orchestrator', {}), 'USAGE_REQUIRED');
+  assert.match(err.details.recovery, new RegExp(`run end ${id}`));
+  expectCode(() => runs.endRun(ctx.store, ctx.config, id, 'orchestrator', { tokens: 'about 90k' }), 'INVALID_INPUT');
+  expectCode(() => runs.endRun(ctx.store, ctx.config, id, 'orchestrator', { tokens: true }), 'INVALID_INPUT');
+  assert.strictEqual(ctx.store.state().runs[id].status, 'running', 'refusals leave the run open');
+  runs.endRun(ctx.store, ctx.config, id, 'orchestrator', { tokens: '147857' });
+  assert.strictEqual(ctx.store.state().runs[id].usageReported, true);
+  assert.strictEqual(ctx.store.state().totals.tokens, 147857);
+  id = open();
+  runs.endRun(ctx.store, ctx.config, id, 'orchestrator', { noUsage: true, note: 'harness reported no usage block' });
+  assert.strictEqual(ctx.store.state().runs[id].usageReported, false);
+  id = open();
+  runs.endRun(ctx.store, ctx.config, id, 'orchestrator', { status: 'failed' }); // failures need no usage
+  assert.strictEqual(ctx.store.state().runs[id].status, 'failed');
+  // CLI: --no-usage is a boolean flag, --tokens is required for ok.
+  const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const { spawnSync } = require('child_process');
+  id = open();
+  let res = spawnSync(process.execPath, [bin, '--root', ctx.dir, 'run', 'end', id, '--actor', 'orchestrator', '--status', 'ok'], { encoding: 'utf8' });
+  assert.strictEqual(res.status, 2);
+  assert.match(res.stderr, /\[USAGE_REQUIRED\]/);
+  res = spawnSync(process.execPath, [bin, '--root', ctx.dir, 'run', 'end', id, '--actor', 'orchestrator', '--status', 'ok', '--no-usage', '--note', 'none reported'], { encoding: 'utf8' });
+  assert.strictEqual(res.status, 0, res.stderr);
+  assert.strictEqual(ctx.store.audit().ok, true);
+});
+
+test('audit distinguishes an edit submitted for re-review in a later gate from an unreviewed edit', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  completePhase(ctx);
+  const { store, config, dir } = ctx;
+  const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const { spawnSync } = require('child_process');
+  const audit = () => spawnSync(process.execPath, [bin, '--root', dir, 'audit', '--json'], { encoding: 'utf8' });
+  // Verification submits the final version of a file the integration phase approved (the TriageDesk VER-2 situation).
+  fs.appendFileSync(path.join(dir, 'src/server/a.js'), '// clarifying edit for the release\n');
+  let res = audit();
+  assert.strictEqual(res.status, 2);
+  assert.strictEqual(JSON.parse(res.stdout).unreviewedChanges.length, 1);
+  gates.startGate(store, config, 'verification', 'orchestrator');
+  write(dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green.\n');
+  gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verification.md', 'src/server/a.js'] });
+  res = audit();
+  assert.strictEqual(res.status, 0, res.stderr);
+  const out = JSON.parse(res.stdout);
+  assert.deepStrictEqual(out.unreviewedChanges, []);
+  assert.strictEqual(out.pendingReview[0].pending, 'verification');
+  // A further edit after the submission is unreviewed again (and the review would be refused as stale).
+  fs.appendFileSync(path.join(dir, 'src/server/a.js'), '// sneaky\n');
+  assert.strictEqual(audit().status, 2);
+  expectCode(() => deliver(store, 'delivery-lead'), 'DELIVERY_BLOCKED');
+});
+
+test('the final handoff lists user decisions as orchestrator-transcribed events', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  completePhase(ctx);
+  verify(ctx);
+  runs.recordRisk(ctx.store, 'delivery-lead', { id: 'RISK-12', title: 'Fallback recall below floor', severity: 'high' });
+  runs.recordRisk(ctx.store, 'user', { id: 'RISK-12', status: 'accepted' });
+  runs.recordDecision(ctx.store, 'user', { title: 'Amend SC2 for this release', decision: 'Accept 0.571 recall on the holdout', rationale: 'Fallback is a labelled safety net' });
+  const res = deliver(ctx.store, 'delivery-lead');
+  const report = fs.readFileSync(path.join(ctx.dir, res.report), 'utf8');
+  assert.match(report, /## User decisions \(recorded with `--actor user`\)/);
+  assert.match(report, /not that a person typed it/);
+  assert.match(report, /`risk.recorded` RISK-12 accepted/);
+  assert.match(report, /`decision.recorded` Amend SC2 for this release: Accept 0.571 recall/);
+});
+
 test('run usage corrections are append-only and adjust totals by the delta', () => {
   const ctx = tmpProject();
   const id = runs.startRun(ctx.store, ctx.config, 'technical-reviewer');

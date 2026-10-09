@@ -35,7 +35,9 @@ RUN=$(eccode run start --actor <role> [--task <id>] [--gate <gate>])
 # … dispatch the agent …
 eccode run end $RUN --actor orchestrator --status ok|failed --tokens <usage.total_tokens from the Agent result>
 ```
-If the harness reports cost, add `--cost-usd`. Otherwise the engine estimates cost from tokens when `pricing.usdPerMillionTokens` is configured. When a run start is refused with `BUDGET_EXCEEDED`, stop and ask the user.
+- **Close a run only after the usage block has arrived.** The harness often delivers the agent's hand-back message before its usage notification; wait for it (read pending notifications first). The engine refuses `--status ok` without `--tokens` (`USAGE_REQUIRED`). Never type an estimate: if the harness reports no usage at all, pass `--no-usage` with a `--note` saying so. A figure that later turns out wrong is corrected with `eccode run correct` (append-only).
+- Close each run in its own command. Do not batch a `run end` with unrelated commands.
+- If the harness reports cost, add `--cost-usd`. Otherwise the engine estimates cost from tokens when `pricing.usdPerMillionTokens` is configured. When a run start is refused with `BUDGET_EXCEEDED`, stop and ask the user.
 
 ## 3. The workflow
 ```
@@ -66,6 +68,14 @@ For each `phase:<id>`, in order:
 5. **Independent review.** Have `delivery-lead` submit the phase. Then dispatch `technical-reviewer` (and `security-reviewer` for phases touching auth, input handling or AI). Reviewers re-run checks themselves.
 6. **Fix blocking findings.** Map each finding to its owning task, run `eccode task reset <id> --actor orchestrator --reason "<finding>"`, then redispatch. Re-submit with `--responds-to`. The reviewer must resolve each finding with evidence.
 7. **Record before dependent work.** The next phase cannot start until this gate is approved (enforced).
+8. **Commit at gate approvals, not mid-task.** A commit taken while implementers are working captures half-finished files under their claims. Commit after each phase approval (and after delivery), when every reviewed file is the version the gate recorded.
+
+### Fixes to files an approved gate already covers (hotfix)
+A later review, a verification run or a risk investigation can show that a file reviewed in an **approved** phase must change (for example, a schema-level fix or a `package.json` script). Editing it directly is refused at delivery as "modified after approval", and the normal rework path (`task reset`) only works while the phase is open. Use a hotfix task instead:
+1. Write the task (`templates/hotfix.json`: id, title, owner, ownership globs, acceptance criteria, verification command).
+2. `eccode task hotfix --file <task.json> --for <approved gate> --reason "<finding or risk id and what it fixes>" --actor orchestrator`. The engine opens `phase:hotfix-<n>` right after the last approved gate (always before verification) and adds the task to it. Add `--phase hotfix-<n>` to put several fixes into the same open hotfix phase.
+3. Run the hotfix phase like any other: `gate start`, dispatch the owner (claim → change inside the globs → handoff with a passing check), `delivery-lead` submits, an **independent** reviewer re-runs the checks and approves. The approved hashes supersede the earlier approval, so `eccode audit` and `eccode deliver` accept the new version.
+4. Hotfixes are refused once verification is approved: a verified build is delivered as verified, and later fixes are a new delivery. Ask the user when that is the situation.
 
 ## 5. Verification and delivery
 1. `gate start verification`.
@@ -90,4 +100,6 @@ For each `phase:<id>`, in order:
 | Engine refusal | It is a rule, not a bug. Fix the cause and never bypass it by editing `.eccode/` files |
 | Repeated rejections | The gate escalates automatically. Present the recovery options and ask the user |
 | Budget or runtime exhausted | Stop, summarize state, ask the user |
-| `eccode audit` fails | Stop; the record or approved artifacts were modified. Report to the user |
+| `eccode audit` fails | Stop; the record or approved artifacts were modified. Report to the user. A file listed under "Pending re-review" is not a failure: its new version is already submitted to a later gate |
+| An approved file must change | `eccode task hotfix …` (see §4); never edit it in place |
+| `run end` refused with `USAGE_REQUIRED` | Wait for the harness usage notification, then close the run with the reported tokens |

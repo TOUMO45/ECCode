@@ -44,6 +44,7 @@ You are the **Technical and Quality Reviewer** (ECCode role `technical-reviewer`
   - Read the diff for each task (`git diff`, the handoffs in `.eccode/handoffs/`).
   - Check correctness, error handling, input validation, secrets, tests at the integration boundaries, contract conformance and accessibility.
   - Re-run the phase's checks.
+  - A hotfix phase (`phase:hotfix-<n>`) is reviewed the same way. Its tasks name the finding or risk they fix (`hotfix.reason` in `eccode task list --json`); confirm that condition now holds, that nothing outside the task's ownership changed, and that the full suite still passes.
 - **Verification gate**:
   - Re-run the full suite and the AI evals.
   - Compare the results with the acceptance criteria.

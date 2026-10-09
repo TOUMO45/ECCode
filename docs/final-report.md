@@ -119,10 +119,26 @@ Sample sizes are small. These are observations from one delivery, not trends.
 7. **Mid-task commits.** The orchestrator's periodic commits sometimes captured implementers' in-progress files. Completion checks still passed, and the final reviewed content is what the gates recorded.
 8. **One-run evidence.** Gate effectiveness was demonstrated on one delivery. Reviewer quality varies, and the engine guarantees independence and evidence, not judgment.
 
-## 6. Remaining work
+## 6. Remaining work (as of 2026-10-07)
 
 - **Fallback rules revision (VER-3):** the fallback's high-urgency recall (0.571) and its held-out-family injection recall (0.444) are accepted for this release. Improving them needs a rules revision validated on a **fresh**, unseen holdout.
 - A hotfix task type, so approved-phase files can be changed under re-review. That would clear RISK-10's schema-level gate and RISK-11's `exec` in package.json.
 - Make `run end` require usage figures, as the provisional lesson recommends.
 - Run the guard hook live in a plugin-installed session, and run the live-model evals with a key.
 - Mirror agents to Codex and Gemini natively. Today `export agents-md` gives sequential, disclosed role execution only.
+
+## 7. Follow-up: what version 0.2.0 closed (2026-10-09)
+
+This section was added after a full re-read of the evidence above (the record, the reviews, the lesson drafts and §5–§6). Each item names the gap it closes and the test that proves it. The TriageDesk record itself is unchanged; `tests/records-replay.test.js` now replays all three shipped records on every test run, so a reducer change can no longer drift from the published evidence.
+
+| Gap in this report | Change | Evidence |
+|---|---|---|
+| §5.3 / §6: no hotfix path; RISK-10 and RISK-11 fixes went into later call sites or docs | `eccode task hotfix --for <approved gate>` opens `phase:hotfix-<n>` after the last approved gate; the fix is claimed, handed off and independently re-reviewed, and its hashes supersede the earlier approval. Refused after verification approval, for non-approved targets, for record-covering globs, and when files overlap an active claim | `tests/hotfix.test.js` (4 tests) |
+| §5.4 / §6 and the provisional lesson: runs closed with estimated tokens three times | `run end --status ok` refuses a missing or non-numeric `--tokens` (`USAGE_REQUIRED`); `--no-usage` records explicitly that the harness reported none. The orchestrate skill now says to wait for the usage block and never batch a `run end` | `tests/resume-delivery.test.js` "a successful run closes only with harness-reported usage" |
+| VER-2 (info): `eccode audit` reported FAILED while the final report versions were merely awaiting the verification review | Audit separates "pending re-review in `<gate>`" (same hash already submitted to a later gate; a warning) from an unreviewed edit (a failure). Delivery stays strict | `tests/resume-delivery.test.js` "audit distinguishes an edit submitted for re-review" |
+| §5.1 / VER-2: `--actor user` events are transcribed by the orchestrator | The final handoff lists every `--actor user` event under "User decisions", stating that the record shows what was entered, not that a person typed it | `tests/resume-delivery.test.js` "the final handoff lists user decisions" |
+| PLAN-2 (ownership hole fixed at completion time only) | Plan validation now refuses ownership globs that could cover the record (events, state, config, evidence, reviews, handoffs, memory); `.eccode/artifacts/…` may still be owned, as t17 did | `tests/hotfix.test.js` "plan validation refuses record-covering ownership globs" |
+| §5.7: mid-task commits captured in-progress files | Orchestrate skill: commit at gate approvals, not mid-task | prompt change, not testable |
+| CLI usability found during the re-read | `--file` and `plan validate <file>` resolve from the current directory, then the project root; a missing file is a `NOT_FOUND` refusal instead of a stack trace. Duplicate artifact paths spelled differently are deduplicated at submission | `tests/hotfix.test.js` "CLI wiring" |
+
+Still open from §6: the fallback rules revision on a fresh holdout (a product change, not a toolkit change), a live plugin-installed guard-hook session, live-model evals with a key, and native Codex/Gemini mirrors. The toolkit's own provisional lesson about run closing stays provisional in `.eccode/memory/records/`: the recommendation it carries is now enforced in code, but nobody independent has reviewed the lesson, so it is not marked verified.

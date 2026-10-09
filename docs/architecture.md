@@ -59,6 +59,8 @@ architecture ──▶ design ──▶ plan ──▶ phase:<p1> ──▶ … 
                                                                    (delivery-lead → independent reviewer)
 ```
 
+**Hotfix gates.** When a file covered by an approved gate must change (a later finding, a verification result, a risk), `eccode task hotfix --for <gate>` inserts `phase:hotfix-<n>` right after the last approved gate, always before `verification`, and adds the task to it. The fix is claimed, handed off and independently re-reviewed like any phase; its approved hashes supersede the earlier approval at delivery. Hotfixes are refused once verification is approved: a verified build is delivered as verified.
+
 **Gate states:**
 
 ```
@@ -85,6 +87,8 @@ pending → in_progress → submitted → approved
 - **Completion** requires a schema-valid handoff, at least one passing check run after the claim, changed files inside the ownership globs, and git confirmation that the listed files changed.
 - **Failure** releases the claim. After `maxTaskRetries` the task escalates and only the user can reset it.
 - **Interrupted runs** (stale, or `recover --all` after a restart) release their claims and count as attempts.
+- **Ownership globs never cover the record.** A plan or hotfix task whose globs could match `.eccode/` events, state, config, evidence, reviews, handoffs or memory is refused at validation. Tasks may own project files and the artifacts they produce under `.eccode/artifacts/`; approved artifacts are protected by their recorded hashes.
+- **Runs close with reported usage.** `run end --status ok` requires the token count the harness reported (`USAGE_REQUIRED` otherwise); `--no-usage` records explicitly that none was reported. Estimates never enter the record; `run correct` adjusts append-only.
 
 ## Memory model
 
@@ -106,7 +110,8 @@ See [memory.md](memory.md).
 
 ## Known limitations
 
-- **Self-asserted identity.** `--actor` is not cryptographically bound. Outside Claude Code with hooks, a caller could claim any role. The record and the hooks make impersonation visible and blockable, but not impossible.
+- **Self-asserted identity.** `--actor` is not cryptographically bound. Outside Claude Code with hooks, a caller could claim any role. The record and the hooks make impersonation visible and blockable, but not impossible. `--actor user` events are entered by the orchestrator on the user's behalf; the final handoff lists every one of them under "User decisions" so a reader can check them against the conversation, but the CLI cannot prove a person typed them.
+- **Post-verification fixes.** Hotfix gates cover fixes found before verification is approved. After that, the build is delivered as verified and any fix is a new delivery.
 - **Cost accounting** is only as good as the usage numbers reported when a run closes. Claude Code reports tokens and duration to the orchestrator, not dollars, so you need to configure `pricing.usdPerMillionTokens` to get estimates.
 - **Structure, not substance.** Gate rules prove an approval is evidence-backed and independent. They cannot prove the reviewer's judgment is right. Independent re-execution of checks is the main mitigation.
 - **Lexical retrieval by default** (see above).

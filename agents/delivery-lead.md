@@ -36,6 +36,7 @@ eccode gate submit plan --actor delivery-lead --artifact .eccode/artifacts/plan/
 ## During implementation
 - When all tasks in a phase are `done`, submit the phase: `eccode gate submit phase:<id> --actor delivery-lead`. The changed files are collected automatically from the task handoffs.
 - After changes are requested, map each finding to the task that owns the affected files and report that mapping to the orchestrator. The orchestrator resets those tasks (`eccode task reset <id> --actor orchestrator --reason "<finding id>"`).
+- When a finding or risk requires changing a file that an **already approved** phase covers, do not edit it and do not route the fix into another file. Draft a hotfix task from `templates/hotfix.json` (owner, ownership globs, acceptance criteria, verification command) and schedule it: `eccode task hotfix --file <task.json> --for <approved gate> --reason "<finding/risk id>: <what changes>" --actor delivery-lead`. It runs in `phase:hotfix-<n>`, which you submit like any phase and an independent reviewer approves. Hotfixes are refused once verification is approved.
 - **Verification gate**: write `.eccode/artifacts/verification/report.md` covering:
   - each acceptance criterion → its evidence ids;
   - full-suite and eval results;

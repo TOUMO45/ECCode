@@ -33,14 +33,17 @@ Plan & tasks
   task complete <id> --actor <owner> --handoff <handoff.json>
   task fail <id> --actor <owner> --reason <text>
   task reset <id> --actor <orchestrator|delivery-lead|user> --reason <text>
+  task hotfix --file <task.json> --for <approvedGate> --reason <text> [--phase hotfix-n] --actor <orchestrator|delivery-lead|user>
+                                         Scoped fix to files an approved gate covers; re-reviewed in its own phase gate
 
 Evidence & records
-  evidence run --actor <a> --label <l> [--purpose check|reproduction] [--gate g] [--task t] -- <command...>
+  evidence run --actor <a> --label <l> [--purpose check|reproduction] [--gate g] [--task t] [--cwd dir] [--timeout s] -- <command...>
   evidence file <path> --actor <a> [--label l] [--note n]
   evidence list [--json] | evidence show <id>
   handoff record --actor <a> --file <handoff.json>
   run start --actor <agent> [--task t] [--gate g]       (prints run id)
-  run end <runId> --actor orchestrator --status ok|failed [--tokens n] [--cost-usd x] [--note n]
+  run end <runId> --actor orchestrator --status ok|failed --tokens <n> [--cost-usd x] [--note n]
+                                         --tokens is the harness-reported usage (required for ok; --no-usage when none exists)
   run correct <runId> --actor orchestrator [--tokens n] [--cost-usd x] --reason <text>   (append-only)
   risk add --id R1 --title t --severity low|medium|high|critical [--mitigation m] [--owner o] --actor a
   risk update --id R1 --status open|mitigated|accepted|closed --actor a
@@ -101,8 +104,15 @@ function print(flags, human, json) {
   else process.stdout.write((typeof human === 'string' ? human : JSON.stringify(human, null, 2)) + '\n');
 }
 
+let projectRoot = null;
+
+/** JSON input: resolved from the current directory, then from the project root. */
 function loadJsonFile(file) {
-  return readJson(path.resolve(file));
+  const candidates = [path.resolve(file)];
+  if (projectRoot && !path.isAbsolute(file)) candidates.push(path.resolve(projectRoot, file));
+  const found = candidates.find((c) => fs.existsSync(c));
+  if (!found) throw new EccodeError('NOT_FOUND', `File not found: ${file}`);
+  return readJson(found);
 }
 
 function main(argv) {
@@ -114,6 +124,7 @@ function main(argv) {
     return 0;
   }
   const root = findRoot(flags);
+  projectRoot = root;
   const actor = flags.actor || process.env.ECCODE_ACTOR;
   const { openProject, init } = require('../lib/project');
 
@@ -162,9 +173,14 @@ function main(argv) {
     }
     case 'audit': {
       const res = store.audit();
-      const changes = require('../lib/delivery').unreviewedChanges(store.state(), store.root);
+      const all = require('../lib/delivery').unreviewedChanges(store.state(), store.root);
+      // A change already submitted for review in a later gate is normal flow
+      // (warning); an edit no gate has seen is an audit failure.
+      const changes = all.filter((c) => !c.pending);
+      const pending = all.filter((c) => c.pending);
       const ok = res.ok && !changes.length;
-      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}`, { ...res, unreviewedChanges: changes, ok });
+      const warn = pending.length ? `\nPending re-review (not failures):\n- ${pending.map((c) => `${c.path} ${c.problem} (approved at ${c.gate})`).join('\n- ')}` : '';
+      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.${warn}` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}${warn}`, { ...res, unreviewedChanges: changes, pendingReview: pending, ok });
       return ok ? 0 : 2;
     }
     case 'deliver': {
@@ -232,6 +248,15 @@ function main(argv) {
       } else if (sub === 'reset') {
         tasks.reset(store, need(arg, '<task>'), need(actor, '--actor'), need(flags.reason, '--reason'));
         print(flags, `Task ${arg} reset to pending.`);
+      } else if (sub === 'hotfix') {
+        const { event } = tasks.addHotfix(store, config, need(actor, '--actor'), {
+          task: loadJsonFile(need(flags.file, '--file')),
+          of: need(flags.for, '--for <approved gate>'),
+          reason: need(flags.reason, '--reason'),
+          phase: flags.phase,
+        });
+        const d = event.data;
+        print(flags, `Hotfix task ${d.task.id} added to ${d.gate} (inserted after ${d.after}, fixes ${d.of}).\nNext: eccode gate start ${d.gate} --actor orchestrator, then dispatch ${d.task.owner} to claim ${d.task.id}; the phase is reviewed independently like any other.`, d);
       } else throw new EccodeError('USAGE', `Unknown task subcommand ${sub}`);
       return 0;
     }
@@ -288,6 +313,7 @@ function main(argv) {
           costUsd: flags['cost-usd'],
           tokens: flags.tokens,
           note: flags.note,
+          noUsage: flags['no-usage'] === true,
         });
         print(flags, `Run ${arg} closed. Totals: $${state.totals.costUsd}, ${state.totals.runtimeMinutes} min, ${state.totals.tokens} tokens.`, state.totals);
       } else if (sub === 'correct') {

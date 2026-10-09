@@ -96,7 +96,26 @@ eccode evidence run --actor technical-reviewer --label "tests" -- npm test
 eccode gate review architecture --actor architecture-reviewer --file review.json
 eccode status --brief          # always shows the NEXT action
 ```
-`eccode help` lists every command. Exit codes: `0` ok, `1` usage error, `2` refused by a workflow rule. `memory check` returns `3` when a lesson doesn't apply.
+`eccode help` lists every command. Exit codes: `0` ok, `1` usage error, `2` refused by a workflow rule. `memory check` returns `3` when a lesson doesn't apply. JSON inputs (`--file`, `plan validate <file>`) are resolved from the current directory first, then from the project root.
+
+### Agent runs and usage
+```bash
+RUN=$(eccode run start --actor backend-engineer --task api)
+eccode run end $RUN --actor orchestrator --status ok --tokens 147857     # the figure the harness reported
+eccode run end $RUN --actor orchestrator --status ok --no-usage --note "harness reported no usage"
+eccode run correct $RUN --actor orchestrator --tokens 100709 --reason "estimate replaced by the reported figure"
+```
+A successful run cannot be closed without `--tokens` (error `USAGE_REQUIRED`) unless `--no-usage` states that the harness reported nothing. Estimates are never recorded as usage; `run correct` is append-only.
+
+### Fixing a file an approved gate already covers
+```bash
+cp templates/hotfix.json .eccode/drafts/hotfix.json      # id, owner, files, acceptanceCriteria, verification
+eccode task hotfix --file .eccode/drafts/hotfix.json --for phase:integration \
+  --reason "RISK-11: package.json start script must not use exec" --actor orchestrator
+eccode gate start phase:hotfix-1 --actor orchestrator
+# owner: task claim → change → task complete; delivery-lead: gate submit phase:hotfix-1; reviewer: gate review
+```
+The engine inserts `phase:hotfix-<n>` after the last approved gate (always before `verification`), so the fix is claimed, handed off and **independently re-reviewed** like any phase, and its approved hashes supersede the earlier approval. `--phase hotfix-<n>` adds further fixes to an open hotfix phase. Hotfixes are refused once verification is approved.
 
 ## Troubleshooting
 
@@ -114,7 +133,11 @@ eccode status --brief          # always shows the NEXT action
 | `[BUDGET_EXCEEDED]` | Recorded spend or runtime has reached the limit | Stop and ask the user. Raising limits needs their authorization |
 | Gate shows `escalated` | Too many rejections | The user decides: `eccode gate reopen <gate> --actor user --resolution "…"` |
 | Open runs after a crash | The previous session died | `eccode recover --all` |
-| `Audit FAILED` | The event log was edited or an approved file changed | Restore from git. Changes to approved files need a new review |
+| `[USAGE_REQUIRED]` on `run end` | A successful run was closed without the harness-reported token count | Wait for the usage notification and pass `--tokens`; `--no-usage` only when the harness reports none |
+| `Audit FAILED` | The event log was edited or an approved file changed | Restore from git. Changes to approved files go through `eccode task hotfix` and a new review. Files under "Pending re-review" are already submitted to a later gate and are not failures |
+| `[INVALID_TRANSITION] Gate … is …; hotfixes are for approved gates` | The target phase is still open | Use the normal rework path: `eccode task reset <id>` and resubmit |
+| `[INVALID_TRANSITION] Verification is already approved` on `task hotfix` | The build is verified | Deliver it as verified; later fixes are a new delivery. Ask the user |
+| `[INVALID_PLAN] … would cover the ECCode record` | A task's ownership glob matches `.eccode/` record files | Own project files and `.eccode/artifacts/…` only; drafts go under `.eccode/drafts/` |
 | Guard denies an edit | Wrong role or file, or no claim | Follow the reason text. `ECCODE_HOOKS=off` disables hooks for debugging only |
 | `eccode` not found | Plugin bin directory isn't on PATH | Use `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` or `node .claude/eccode/bin/eccode.js` |
 | `[LESSON_NOT_VERIFIABLE]` | The lesson lacks a check that fails before the fix and passes after, or similar evidence | Record the reproduction and verification with the **same** command |

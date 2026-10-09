@@ -62,6 +62,15 @@ for (const f of fs.readdirSync(path.join(ROOT, 'templates')).filter((x) => x.end
     errors.push(`templates/${f}: ${e.message}`);
   }
 }
+// Structural templates must satisfy the schemas the engine applies to them.
+{
+  const { validateNamed } = require('../lib/schema');
+  const read = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'templates', f), 'utf8'));
+  for (const e of validateNamed('plan', read('plan.json'))) errors.push(`templates/plan.json: ${e}`);
+  const hotfix = read('hotfix.json');
+  for (const e of validateNamed('plan', { phases: [{ id: 'hotfix-1', name: 'Hotfix 1', goal: 'template check only', acceptanceCriteria: ['template check'] }], tasks: [{ ...hotfix, phase: 'hotfix-1' }] }).filter((e) => e.startsWith('$.tasks'))) errors.push(`templates/hotfix.json: ${e}`);
+  if (!DEFAULT_CONFIG.roles.phase.authors.includes(hotfix.owner)) errors.push('templates/hotfix.json: owner must be a phase author');
+}
 const hooks = JSON.parse(fs.readFileSync(path.join(ROOT, 'hooks', 'hooks.json'), 'utf8'));
 for (const groups of Object.values(hooks.hooks)) {
   for (const g of groups) {

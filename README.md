@@ -14,8 +14,10 @@ In most agent frameworks, "the reviewer must approve before merging" is a senten
 - **Implementation without re-execution:** an implementation or verification approval doesn't cite a check that **the reviewer** ran after the submission.
 - **Unresolved findings:** blocking findings from the previous round are not explicitly resolved, with evidence.
 - **Out of order:** a stage starts before its predecessor is approved. After N rejections, the stage escalates to **you**.
+- **Silent edits after approval:** a reviewed file that changes afterwards blocks delivery. Fixing it goes through a **hotfix task** in its own phase gate, re-reviewed by someone who did not write it.
+- **Invented usage figures:** a successful agent run closes only with the token count the harness reported, never an estimate.
 
-Everything is recorded in an append-only, hash-chained event log, so work can resume after any interruption and the final handoff is generated from evidence rather than from agent summaries.
+Everything is recorded in an append-only, hash-chained event log, so work can resume after any interruption and the final handoff is generated from evidence rather than from agent summaries. User decisions entered on your behalf (`--actor user`) are listed in the handoff so you can check them.
 
 ## Components
 
@@ -25,7 +27,7 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
 | **7 skills** | `orchestrate` (lead orchestrator playbook) · review-gate · handoff-protocol · verification-evidence · debug-investigation · engineering-memory · self-improvement |
 | **6 commands** | `/eccode:start` · `/eccode:resume` · `/eccode:status` · `/eccode:investigate` · `/eccode:deliver` · `/eccode:improve` |
 | **2 hooks** | SessionStart injects a resume brief. PreToolUse is a guard that ties `--actor` to the subagent actually running, enforces file ownership and protects the record. |
-| **Engine + CLI** | Zero-dependency Node ≥18: gates, tasks, evidence, runs and budgets, recovery, delivery, memory, self-improvement, metrics |
+| **Engine + CLI** | Zero-dependency Node ≥18: gates, tasks and hotfixes, evidence, runs and budgets, recovery, audit, delivery, memory, self-improvement, metrics |
 | **Memory** | Four layers (project, debugging, knowledge, workflow). A lesson is verified only when **the same check failed before the fix and passed after it**, a reviewer who is not the author signs off, and it carries applicability conditions checked against the current environment. Lessons can be promoted to shared memory after a privacy scan. |
 
 ## Quick start
@@ -47,7 +49,7 @@ See [docs/usage.md](docs/usage.md) for installation, configuration, usage and tr
 
 ## Demonstration
 
-[`examples/triage-desk/`](examples/triage-desk) contains a complete delivery of **TriageDesk**, a small web app with an AI ticket-triage feature, run by real Claude Code subagents through every gate. Its `.eccode/` directory is the unedited record: reviews, rejections, evidence logs, handoffs, lessons and the final handoff. [`examples/learning-cycle/`](examples/learning-cycle) shows a lesson being reused in a different project. [docs/final-report.md](docs/final-report.md) lists what was verified, what wasn't, and what remains.
+[`examples/triage-desk/`](examples/triage-desk) contains a complete delivery of **TriageDesk**, a small web app with an AI ticket-triage feature, run by real Claude Code subagents through every gate. Its `.eccode/` directory is the unedited record: reviews, rejections, evidence logs, handoffs, lessons and the final handoff. [`examples/learning-cycle/`](examples/learning-cycle) shows a lesson being reused in a different project. [docs/final-report.md](docs/final-report.md) lists what was verified, what wasn't, and what remains; its follow-up section records which of those gaps later versions closed. The test suite replays all three shipped records on every run, so the engine can never drift from the evidence it published ([CHANGELOG.md](CHANGELOG.md)).
 
 ## License
 
