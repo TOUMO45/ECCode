@@ -151,3 +151,24 @@ test('NFR1: node src/index.js starts, logs the bound port and serves /api/health
     await new Promise((resolve) => child.once('exit', resolve));
   }
 });
+
+test('SEC-B-5: a pre-existing data/ and data/uploads/ open to others are tightened to 0700, other directories are not touched', async () => {
+  const { chmodSync, mkdirSync } = await import('node:fs');
+  const base = tempDir('rs-tighten-');
+  mkdirSync(join(base, 'data', 'uploads'), { recursive: true });
+  chmodSync(join(base, 'data'), 0o755);
+  chmodSync(join(base, 'data', 'uploads'), 0o775);
+  const config = loadConfig(testEnv(base, { RS_DB_PATH: join(base, 'data', 'app.db'), RS_UPLOAD_DIR: join(base, 'data', 'uploads') }));
+  const baseMode = modeOf(base);
+  const created = ensureRuntimeDirs(config);
+  assert.deepEqual(created, []);
+  assert.equal(modeOf(join(base, 'data')), 0o700);
+  assert.equal(modeOf(join(base, 'data', 'uploads')), 0o700);
+  assert.equal(modeOf(base), baseMode, 'the parent directory is not changed');
+
+  // A directory with another name (a shared one such as /tmp) keeps its mode.
+  const shared = tempDir('rs-shared-');
+  chmodSync(shared, 0o755);
+  ensureRuntimeDirs(loadConfig(testEnv(base, { RS_DB_PATH: join(shared, 'app.db'), RS_UPLOAD_DIR: join(base, 'data', 'uploads') })));
+  assert.equal(modeOf(shared), 0o755);
+});

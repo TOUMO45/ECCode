@@ -11,8 +11,17 @@ export const UPLOAD_REQUEST_TIMEOUT_MS = 60_000;
 export const KEEP_ALIVE_TIMEOUT_MS = 5_000;
 export const MAX_HEADER_BYTES = 16 * 1024;
 
-export function createHttpServer(handler) {
-  const server = createServer({ maxHeaderSize: MAX_HEADER_BYTES }, (req, res) => {
+// Node checks the header and request timeouts only on this interval; its default of 30 s made the
+// configured 10 s and 30 s limits fire at 30 s and 60 s (SEC-B-4).
+export const CONNECTIONS_CHECK_INTERVAL_MS = 1_000;
+export const MAX_CONNECTIONS = 512;
+
+// The timeout options exist so tests can use short values; the application passes none.
+export function createHttpServer(
+  handler,
+  { headersTimeout = HEADERS_TIMEOUT_MS, requestTimeout = REQUEST_TIMEOUT_MS, checkInterval = CONNECTIONS_CHECK_INTERVAL_MS } = {},
+) {
+  const server = createServer({ maxHeaderSize: MAX_HEADER_BYTES, connectionsCheckingInterval: checkInterval }, (req, res) => {
     // The handler turns every failure into a response; this is a last resort.
     Promise.resolve(handler(req, res)).catch(() => {
       if (!res.headersSent) {
@@ -24,12 +33,15 @@ export function createHttpServer(handler) {
       }
     });
   });
-  server.headersTimeout = HEADERS_TIMEOUT_MS;
-  server.requestTimeout = REQUEST_TIMEOUT_MS;
+  server.headersTimeout = headersTimeout;
+  server.requestTimeout = requestTimeout;
   server.keepAliveTimeout = KEEP_ALIVE_TIMEOUT_MS;
+  server.maxConnections = MAX_CONNECTIONS;
   server.on('clientError', (err, socket) => {
     if (socket.writable && !socket.destroyed) {
-      const code = err && err.code === 'HPE_HEADER_OVERFLOW' ? '431 Request Header Fields Too Large' : '400 Bad Request';
+      let code = '400 Bad Request';
+      if (err && err.code === 'HPE_HEADER_OVERFLOW') code = '431 Request Header Fields Too Large';
+      else if (err && err.code === 'ERR_HTTP_REQUEST_TIMEOUT') code = '408 Request Timeout';
       socket.end(`HTTP/1.1 ${code}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`);
     } else {
       socket.destroy();

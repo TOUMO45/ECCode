@@ -67,6 +67,9 @@ export function openDb(file, { busyTimeoutMs = DEFAULT_BUSY_TIMEOUT_MS } = {}) {
     retryWhileBusy(() => {
       db.exec('PRAGMA synchronous = NORMAL');
       db.exec('PRAGMA foreign_keys = ON');
+      // Without this, REPLACE conflict resolution deletes rows without firing DELETE triggers, which
+      // would let INSERT OR REPLACE rewrite the append-only audit_events and inventory_ledger (SEC-B-2).
+      db.exec('PRAGMA recursive_triggers = ON');
     }, budgetMs);
   } catch (err) {
     try {

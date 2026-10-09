@@ -73,6 +73,31 @@ function drain(req) {
   req.resume();
 }
 
+// Deepest nesting of objects and arrays a request body may have (SEC-B-3). Real bodies are 3-4 levels deep.
+export const JSON_MAX_DEPTH = 32;
+
+// True when the JSON text nests deeper than maxDepth. One pass over the text with no recursion,
+// skipping string contents, so a hostile body is refused before it is parsed.
+export function jsonNestsDeeperThan(text, maxDepth = JSON_MAX_DEPTH) {
+  let depth = 0;
+  let inString = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    if (inString) {
+      if (c === 0x5c) i += 1; // backslash: skip the escaped character
+      else if (c === 0x22) inString = false;
+    } else if (c === 0x22) {
+      inString = true;
+    } else if (c === 0x7b || c === 0x5b) {
+      depth += 1;
+      if (depth > maxDepth) return true;
+    } else if (c === 0x7d || c === 0x5d) {
+      depth -= 1;
+    }
+  }
+  return false;
+}
+
 function isJsonContentType(header) {
   if (typeof header !== 'string') return false;
   const media = header.split(';')[0].trim().toLowerCase();
@@ -91,6 +116,9 @@ export async function readJsonBody(req, { limit = JSON_BODY_LIMIT } = {}) {
   } catch {
     throw new AppError(400, 'INVALID_JSON');
   }
+  if (jsonNestsDeeperThan(text)) {
+    throw new AppError(422, 'VALIDATION_FAILED', { details: { fields: [{ field: 'body', rule: `depth:${JSON_MAX_DEPTH}` }] } });
+  }
   try {
     return JSON.parse(text);
   } catch {
@@ -107,13 +135,15 @@ export async function readJsonObject(req, options) {
   return body;
 }
 
-export function canonicalJson(value) {
+// Throws TypeError for a non-finite number or for nesting deeper than JSON_MAX_DEPTH (never a stack overflow).
+export function canonicalJson(value, depth = 1) {
   if (value === null || typeof value !== 'object') {
     if (typeof value === 'number' && !Number.isFinite(value)) throw new TypeError('canonicalJson cannot encode a non-finite number');
     const text = JSON.stringify(value);
     return text === undefined ? 'null' : text;
   }
-  if (Array.isArray(value)) return `[${value.map((v) => canonicalJson(v === undefined ? null : v)).join(',')}]`;
+  if (depth > JSON_MAX_DEPTH) throw new TypeError('canonicalJson input is nested too deeply');
+  if (Array.isArray(value)) return `[${value.map((v) => canonicalJson(v === undefined ? null : v, depth + 1)).join(',')}]`;
   const keys = Object.keys(value).filter((k) => value[k] !== undefined).sort();
-  return `{${keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(value[k])}`).join(',')}}`;
+  return `{${keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(value[k], depth + 1)}`).join(',')}}`;
 }

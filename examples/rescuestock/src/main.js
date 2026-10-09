@@ -1,8 +1,8 @@
 // Process entry logic: umask, configuration, directories, database, migrations,
 // application, listener, shutdown. src/index.js runs the Node version gate and
 // then imports this file (so node:sqlite is only loaded on a supported Node).
-import { mkdirSync, statSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { chmodSync, mkdirSync, statSync } from 'node:fs';
+import { basename, dirname, resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { createApp } from './app.js';
 import { systemClock } from './clock.js';
@@ -12,8 +12,22 @@ import { migrate } from './db/migrate.js';
 import { getOrCreateMeta } from './db/meta.js';
 import { createLogger } from './log.js';
 
-// data/ and data/uploads/ are created with mode 0700 (SEC-14). Directories that
-// already exist are left as they are: they may be shared (for example /tmp).
+// A pre-existing directory named data or uploads (the app's own, per SEC-14) that is owned by the
+// current user and open to group or others is tightened to 0700 (SEC-B-5). Any other existing
+// directory is left alone, because it may be shared (for example /tmp).
+const APP_DIR_NAMES = new Set(['data', 'uploads']);
+
+function tightenDir(dir) {
+  try {
+    const info = statSync(dir);
+    const ownedByUs = typeof process.getuid !== 'function' || info.uid === process.getuid();
+    if (ownedByUs && (info.mode & 0o077) !== 0) chmodSync(dir, 0o700);
+  } catch {
+    // Not ours to change; the files inside are still created owner-only by the umask.
+  }
+}
+
+// data/ and data/uploads/ are created with mode 0700 (SEC-14).
 export function ensureRuntimeDirs(config) {
   const dirs = [];
   if (config.dbPath !== ':memory:') dirs.push(dirname(resolve(config.dbPath)));
@@ -29,6 +43,8 @@ export function ensureRuntimeDirs(config) {
     if (!exists) {
       mkdirSync(dir, { recursive: true, mode: 0o700 });
       created.push(dir);
+    } else if (APP_DIR_NAMES.has(basename(dir))) {
+      tightenDir(dir);
     }
   }
   return created;
