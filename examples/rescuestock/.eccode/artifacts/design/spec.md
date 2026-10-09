@@ -1,9 +1,17 @@
-# RescueStock — Technical Design (revision 2)
+# RescueStock — Technical Design (revision 3)
 
-Author: technical-designer. Gate: design. Date: 2026-10-09. Revision 2 responds to review `rev-mv1cta5m-0114480d` (design submission `sub-mv1c60sc-01174690`) and to the security reviewer's draft `.eccode/reviews/drafts/design-security-1.md` (SEC-1..SEC-20).
+Author: technical-designer. Gate: design. Date: 2026-10-09. Revision 3 responds to review `rev-mv1dqjhw-015d8dfe` (submission `sub-mv1dcqpr-016ee2c9`); see "Findings disposition (revision 3)". Revision 2 responds to review `rev-mv1cta5m-0114480d` (design submission `sub-mv1c60sc-01174690`) and to the security reviewer's draft `.eccode/reviews/drafts/design-security-1.md` (SEC-1..SEC-20).
 Contract: the approved architecture brief `.eccode/artifacts/architecture/brief.md` (submission `sub-mv1awqkf-017ea892`, approved by review `rev-mv1bcexb-01d7960e`). Requirements version RS-REQ-1. Where this design and the brief seem to differ, the brief wins, except for the five places where the approving review asked the design to settle a detail (ARCH-22..26). Those places are listed in the first table and in Open Questions. No requirement text is changed. The 45 criterion ids (RS-01..RS-39, NFR1..NFR6) keep their meaning; the Criterion Traceability section maps each one to a design section and a test file.
 
 Recorded decisions used: `dec-mv16pyxx-01bad0bf` (Node ≥ 22.13; pass condition for 22.5 kept pending Q9), `dec-mv16pz0g-01d5c4c2` (Q1/Q3/Q4/Q6/Q8 defaults), `dec-mv16pz32-013c4cd1` (test script layout).
+
+## Findings disposition (revision 3)
+This is a narrow revision. Only the sections named below changed.
+| Finding | Severity | Disposition | Sections changed |
+|---|---|---|---|
+| F-TR-14 | blocking | **Fixed.** The fake approval listener no longer inherits the app's CSP. It sends exactly one CSP header, `default-src 'none'; style-src 'self'; form-action 'self' <RS_PUBLIC_URL origin>; frame-ancestors 'none'; base-uri 'none'` (`approvalPageCsp(appOrigin)`), and the paypal-stub approval page sends the same. Verified in Playwright's Chromium 141 (ev:ev-mv1dsh6c-019c5a8d): approve → `/api/paypal/return` and cancel → `/api/paypal/cancel`, both with the Lax cookie, for both pages; inheriting the app CSP as a second header is refused (negative control). A re-run that reads both CSP strings from this final spec text is listed in `revision-3-notes.md`. [B] round-trip assertion in journey-happy, journey-replacement and the keyboard-only path; [D] `test/api/fake-approval-headers.test.js` pins the header value. | Interface Contracts › Fake approval listener; Security › Security headers; Testing Strategy (helpers › paypal-stub, Integration › fake-approval-headers, E2E); Criterion Traceability RS-31, RS-32, NFR2 |
+| F-TR-15 | minor | **Fixed.** Every [B] file starts its own server on a fresh database; each journey registers a fresh customer. Harnesses set the daily request limit to 1000 and keep the live-reservation cap at 1. The README operator note covers demo retakes. The admin reset clears `request_create` rate events. | Testing Strategy › E2E; Deployment › README; Admin routes › Reset |
+| F-TR-16 | info | **Adopted.** OQ-D6 and OQ-D7 are in a "Decisions requested" table for the orchestrator to record. OQ-D7's reason is corrected: the share defaults to 0.2 in production, the NFR6 test pins 1, and a separate per-customer case was added. | Open Questions; AI › Runtime controls; Deployment env vars and README; SEC-10 row below |
 
 ## Findings disposition (revision 2)
 New evidence for this revision:
@@ -12,7 +20,7 @@ New evidence for this revision:
 - ev:ev-mv1d1u17-01b84ac4 (F-TR-1, SEC-1, SEC-2, SEC-9): the revised idempotency scope, throttle and reservation cap, executed in node:sqlite against the reviewer's attack paths H1, H2 and H6.
 - Re-runs of the reviewers' own checks on this revision:
   - ev:ev-mv1dbzry-01cf8ba0: structural spec walk, PASS.
-  - ev:ev-mv1dbzmk-013f9d68: probes H1–H15, 0 confirmed. These checks are text-level only; H13 is refuted because the per-customer share setting exists, but it defaults to off (see SEC-10).
+  - ev:ev-mv1dbzmk-013f9d68: probes H1–H15, 0 confirmed. These checks are text-level only; H13 is refuted because the per-customer share setting exists. In revision 2 it defaulted to off; from revision 3 it defaults to 0.2 (see SEC-10, OQ-D7).
   - The traceability check (45 ids, 0 problems) was re-run after the final edit; its id is in `revision-2-notes.md`.
 
 | Finding | Severity | Disposition | Section |
@@ -38,7 +46,7 @@ New evidence for this revision:
 | SEC-7 | minor | **Fixed.** `questions` is reduced to field names (enum). The question text is a server template. Image `originalWording` is capped at 80 characters, URLs and phone numbers are stripped, and it is labelled "Text read from the photo". EXT-1 injection assertion added. | AI › schema, normalisation, eval |
 | SEC-8 | minor | **Fixed.** The confirm body carries values only. The server derives provenance (it keeps the extraction's provenance only when the value is unchanged; otherwise `manual`). Test added. | Customer routes; AI |
 | SEC-9 | minor | **Fixed** with SEC-1: `username_key = lower(NFC(trim(username)))`; case-variant test. | Authentication |
-| SEC-10 | minor | **Partly fixed.** Per-customer model concurrency is 1 (429). The per-customer daily share `RS_MODEL_CUSTOMER_DAILY_SHARE` exists but defaults to `1` (off), because any share below the per-call cap ÷ budget would refuse NFR6's first two calls. The README recommends 0.2 together with `RS_ALLOW_SIGNUP=0` for public deployments. **Deferred to the plan:** whether to turn the share on by default, which is the user's choice (Q10). | AI › Runtime controls; Open Questions |
+| SEC-10 | minor | **Partly fixed.** Per-customer model concurrency is 1 (429). The per-customer daily share `RS_MODEL_CUSTOMER_DAILY_SHARE` exists but defaults to `1` (off), because any share below the per-call cap ÷ budget would refuse NFR6's first two calls. The README recommends 0.2 together with `RS_ALLOW_SIGNUP=0` for public deployments. **Deferred to the plan:** whether to turn the share on by default, which is the user's choice (Q10). **Revision 3 (F-TR-16):** that reason was wrong, because the NFR6 test can pin the share to 1 in its own environment. The share now defaults to 0.2 in production, and the NFR6 test pins 1. SEC-10 is fixed, with the default open to the user's change (OQ-D7). | AI › Runtime controls; Open Questions |
 | SEC-11 | minor | **Fixed.** A forced reset first queues voids for `authorized` operations and runs one bounded read-resolve pass (≤ 30 s) for `unknown`/`*_pending` operations. The response and audit event list every operation still stranded. Audit events for `faults`/`refund_order` name the actor and target ids. | Admin routes |
 | SEC-12 | minor | **Fixed.** The fake approval listener has a contract. | Interface Contracts › Fake approval listener |
 | SEC-13 | info | **Adopted.** Host allow-list (`RS_PUBLIC_URL` host, `localhost`, `127.0.0.1`, plus `RS_ALLOWED_HOSTS`) → 421 `MISDIRECTED_REQUEST`. | Conventions; Security |
@@ -389,7 +397,7 @@ An offer change (price, prep fee, ready time, withdrawal) creates a new offer ve
 - `stock_depletion` withdraws every active offer of that supplier (RS-32).
 - `supplier_refusal` refuses every open pre-claim order of that supplier, through the same service as the supplier route.
 - `refund_order` is allowed only for an operation `captured` under an `executed` plan. It runs `captured → refund_requested → …`.
-- **Reset:** without force, live reservations are released (void rule, reason `DEMO_RESET`). Every non-archived request is tombstoned: raw text nulled, extractions and images deleted, `archived_at` set. Payment operations and provider calls get `archived_at`, never DELETE. The catalog and inventory are restored to RS-FIX-1 with `adjust` ledger rows. Fake PayPal tables and fault flags are cleared. An audit event records the actor and the reason. Archived operations are ignored by the reconciler and the reset guard.
+- **Reset:** without force, live reservations are released (void rule, reason `DEMO_RESET`). Every non-archived request is tombstoned: raw text nulled, extractions and images deleted, `archived_at` set. Payment operations and provider calls get `archived_at`, never DELETE. The catalog and inventory are restored to RS-FIX-1 with `adjust` ledger rows. Fake PayPal tables and fault flags are cleared, and so are `request_create` rate events (revision 3, F-TR-15: demo retakes). An audit event records the actor and the reason. Archived operations are ignored by the reconciler and the reset guard.
 - **Forced reset (revision 2, SEC-11):** a forced reset voids authorized operations and resolves unknown ones before archiving, in two steps:
   1. It queues `so:<id>:void:1` for every `authorized` operation and sends those voids.
   2. It runs one read-resolve pass (provider call protocol §6) over `unknown` and `*_pending` operations, bounded to 30 s in total.
@@ -412,10 +420,16 @@ An offer change (price, prep fee, ready time, withdrawal) creates a new offer ve
 - Events mapped: `PAYMENT.AUTHORIZATION.CREATED` (pending → authorized), `PAYMENT.AUTHORIZATION.VOIDED`, `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.PENDING`, `PAYMENT.CAPTURE.DENIED`, `PAYMENT.CAPTURE.REFUNDED`, `CHECKOUT.ORDER.APPROVED` (informational; never authorizes). Event names: **verify**. Unknown types → `ignored`.
 
 ### Fake approval listener (revision 2, SEC-12; only when `RS_PAYMENT_PROVIDER=fake`)
-The fake approval page is labelled "Simulated payment approval — not PayPal", and the fake approval listener serves exactly the routes below (GET checkout page, POST approve and cancel). It is a second `node:http` listener on `RS_FAKE_APPROVAL_HOST` (default and only accepted value outside test mode: `127.0.0.1`) and `RS_FAKE_APPROVAL_PORT` (default 0). It refuses to start when `RS_PAYMENT_PROVIDER=paypal-sandbox`. It applies the same security headers and Host check as the app (its own host and port).
+The fake approval page is labelled "Simulated payment approval — not PayPal", and the fake approval listener serves exactly the routes below (GET checkout page, POST approve and cancel). It is a second `node:http` listener on `RS_FAKE_APPROVAL_HOST` (default and only accepted value outside test mode: `127.0.0.1`) and `RS_FAKE_APPROVAL_PORT` (default 0). It refuses to start when `RS_PAYMENT_PROVIDER=paypal-sandbox`. It applies the app's Host check (its own host and port) and the app's security headers, **except `Content-Security-Policy`, which it does not inherit** (revision 3, F-TR-14).
+- **Listener CSP (revision 3, F-TR-14):** every response of this listener carries exactly one `Content-Security-Policy` header, built by `approvalPageCsp(appOrigin)` in `src/http/headers.js`:
+  `default-src 'none'; style-src 'self'; form-action 'self' <appOrigin>; frame-ancestors 'none'; base-uri 'none'`
+  - `<appOrigin>` is the origin of `RS_PUBLIC_URL`, for example `http://localhost:3000`. It is the origin of the stored `return_url`/`cancel_url`.
+  - Chromium enforces `form-action` across the 303 redirect chain of a form submission. The app's own `form-action 'self'` would therefore block the approve/cancel redirect to the app, and two CSP headers are both enforced. So the app CSP is not sent here, and the app origin is listed explicitly.
+  - Verified in Playwright's Chromium 141 (ev:ev-mv1dsh6c-019c5a8d): approve lands on `/api/paypal/return` and cancel on `/api/paypal/cancel`, with the Lax cookie. With the app CSP inherited as a second header, the submission is refused.
+  - The test helper `paypal-stub.js` serves its approval page with the same `approvalPageCsp(appOrigin)` value.
 | Method, path | Behaviour |
 |---|---|
-| `GET /fake-paypal/checkout/:fakeOrderId` | HTML page titled and bannered "Simulated payment approval — not PayPal". It shows the amount and the merchant label from `fake_paypal_orders`, with buttons "Approve (simulated)" and "Cancel". Unknown id → 404. CSP `default-src 'none'; style-src 'self'; form-action 'self'`; no script. |
+| `GET /fake-paypal/checkout/:fakeOrderId` | HTML page titled and bannered "Simulated payment approval — not PayPal". It shows the amount and the merchant label from `fake_paypal_orders`, with buttons "Approve (simulated)" and "Cancel". Unknown id → 404. CSP = the listener CSP above (`form-action 'self' <appOrigin>`); no script. |
 | `POST /fake-paypal/checkout/:fakeOrderId/approve` | `CREATED → APPROVED` (CAS), then 303 to the stored `return_url` + `?token=<fakeOrderId>&PayerID=FAKEPAYER`. Already APPROVED → the same 303. Other status → 409 page. |
 | `POST /fake-paypal/checkout/:fakeOrderId/cancel` | No state change; 303 to the stored `cancel_url` + `?token=<fakeOrderId>` |
 
@@ -985,8 +999,10 @@ The detected type must equal the declared `Content-Type`.
 - JSON responses use `Content-Type: application/json`.
 - Images are served with the detected type, `nosniff`, `Content-Security-Policy: sandbox` and `Content-Disposition: inline; filename="image"`.
 
-**Security headers (all responses):**
+**Security headers (all app responses):**
 - `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`
+  - The app never posts a form to another origin; the SPA navigates to the approval URL with `location.assign`, which `form-action` does not govern.
+  - **Exception (revision 3, F-TR-14):** the fake approval listener and the paypal-stub approval page do not send this CSP. They send the single `approvalPageCsp(appOrigin)` header defined under Interface Contracts › Fake approval listener, which allows the app origin in `form-action`.
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: no-referrer` (the PayPal token never leaks in a Referer)
 - `X-Frame-Options: DENY`
@@ -1161,7 +1177,7 @@ Wire schema sent to the provider (Anthropic-compatible subset: no numeric or len
 Money for the model is held in **integer micro-dollars** (F-TR-12). `RS_MODEL_DAILY_BUDGET_USD`, `RS_MODEL_CALL_CAP_USD`, `RS_FAKE_MODEL_COST_USD` and the reported `total_cost_usd` are parsed from their decimal strings by string arithmetic (at most 6 decimals; more digits round half up at the 6th, so `0.0037` gives 3700). There is no floating-point comparison.
 1. **Rate (F-TR-10):** one `BEGIN IMMEDIATE` transaction counts `rate_events` (`u:<customerId>`, `extract_or_upload`, last 10 min). If ≥ 10 → roll back and answer 429 (a degraded row is stored in a separate transaction; the provider is not called). Else insert the event and commit. Count and insert are therefore atomic across processes. Uploads count too.
 2. **Concurrency (SEC-10):** in the budget transaction, a customer with a `model_spend` row in status `reserved` (an in-flight call) → 429 `RATE_LIMITED` (`model_concurrency`).
-3. **Budget:** in one `BEGIN IMMEDIATE`, today's spend = Σ `COALESCE(actual_micro_usd, reserved_micro_usd)` for the Asia/Amman day. If spend + cap > budget → 503 `MODEL_BUDGET_EXHAUSTED` (degraded row; provider not called). Spend + cap = budget is allowed. Else insert `reserved_micro_usd = cap`. Optional per-customer share: if `RS_MODEL_CUSTOMER_DAILY_SHARE` < 1, the same test applies to the customer's own spend against `share × budget`. It defaults to 1 (off); see the SEC-10 disposition.
+3. **Budget:** in one `BEGIN IMMEDIATE`, today's spend = Σ `COALESCE(actual_micro_usd, reserved_micro_usd)` for the Asia/Amman day. If spend + cap > budget → 503 `MODEL_BUDGET_EXHAUSTED` (degraded row; provider not called). Spend + cap = budget is allowed. Else insert `reserved_micro_usd = cap`. Per-customer share (SEC-10): if `RS_MODEL_CUSTOMER_DAILY_SHARE` < 1, the same test applies to the customer's own spend for the day against `floor(share × budget)`. A refusal answers 503 `MODEL_BUDGET_EXHAUSTED` with `details.scope = "customer"` (global refusals carry `"global"`) and enters the degraded path. Default 0.2 from revision 3: with budget 1.00 and cap 0.05 that is 200000 µ$, i.e. 4 cap-sized calls per customer per day, and far more at real settled costs. The NFR6 test pins `RS_MODEL_CUSTOMER_DAILY_SHARE=1`, because NFR6 asserts the global budget. A separate case, with fake cost = cap = 0.05 and the defaults, asserts that the 5th call of one customer is refused with `scope: "customer"` while another customer's call succeeds.
 4. After the call, settle `actual_micro_usd` = reported cost (CLI/API) or the fake cost, and set status `settled`. A crashed call's `reserved` row is settled at its cap by the reconciler after `2 × RS_MODEL_TIMEOUT_MS`.
 
 With cap 0.10, budget 0.25 and fake cost 0.10, the third extract is refused (200000 + 100000 > 250000 µ$), as NFR6 requires. Boundary cases in `test/api/model-budget-rate.test.js`: with budget 0.30 the third call is allowed (300000 = 300000), and with budget 0.299999 it is refused.
@@ -1303,7 +1319,8 @@ test/
                         + NODE_OPTIONS merged with "--experimental-sqlite --disable-warning=ExperimentalWarning" when Node < 22.13 (ARCH-24)
     server-proc.js      starts src/index.js via node-proc with PORT=0, temp RS_DB_PATH, fake adapters, RS_TEST_HOOKS=1; reads {"msg":"listening","port"} from stdout
     app-harness.js      in-process createApp({clock: fixedClock, …}) on 127.0.0.1:0; HTTP client that records latency to test/.out/latency.jsonl
-    paypal-stub.js      loopback HTTP server emulating the Sandbox endpoints (records request bodies; returns fake payer data to prove it is never logged)
+    paypal-stub.js      loopback HTTP server emulating the Sandbox endpoints (records request bodies; returns fake payer data to prove it is never logged);
+                        its approval page (GET page, POST approve/cancel → 303 to the app) sends approvalPageCsp(appOrigin) (F-TR-14)
     webhook-signer.js   signs fake events with RS_FAKE_WEBHOOK_SECRET
     playwright.js       loads @playwright/test (local) or global playwright; fails if Chromium cannot launch
     fixtures.js         RS-FIX-1 loader, users, sign-in helper
@@ -1350,6 +1367,12 @@ Every script that passes a version-specific flag to `node` begins with the flag-
     - Variant B: `freeze_before_capture_apply`. Process 2 reads no capture and re-sends with the same request id. After SIGCONT the frozen request applies as a replay.
     - Both assert exactly one non-replayed capture per supplier order and a plan `executed`. POSIX only; on win32 the test is reported as skipped with a reason, and this host is Linux.
   - `start-health`: `npm start`-equivalent spawn serves `GET /api/health` 200.
+  - **`fake-approval-headers` (revision 3, F-TR-14; [D], `test/api/fake-approval-headers.test.js`):**
+    - It starts the app with the fake adapter and `RS_PUBLIC_URL=http://localhost:<port>`, then requests `GET /fake-paypal/checkout/<id>` and the 303 responses of approve and cancel on the listener.
+    - It asserts that each response has **exactly one** `Content-Security-Policy` header, equal to the pinned string `default-src 'none'; style-src 'self'; form-action 'self' http://localhost:<port>; frame-ancestors 'none'; base-uri 'none'`.
+    - It asserts that `Location` is the stored return or cancel URL.
+    - It asserts that the app's own pages still send `form-action 'self'`.
+    - The same assertion runs against `paypal-stub.js`'s approval page.
   - **`start-old-node` (F-TR-4):**
     - It reads `scripts.start` (and `seed`, `test`, `test:browser`, `test:live-*`) from package.json and asserts each begins with `node scripts/check-node.cjs &&`.
     - For each older Node binary found (`/opt/node20/bin/node`, `/opt/node21/bin/node`, or paths in `RS_OLD_NODE_BINS`), it runs the **exact `start` string** through `/bin/sh -c` with that binary first on `PATH`. It asserts exit ≠ 0 and stderr matching `needs Node >= 22.13 (found`.
@@ -1360,7 +1383,13 @@ Every script that passes a version-specific flag to `node` begins with the flag-
     - (b) Same, but the reservation expires before the restart: the call ends `cancelled`, the operation `voided` (`voided_locally`), zero authorize calls, and the rescue status leaves `cancelling`.
     - (c) A `retryable` (429) authorize answer: the reconciler re-sends after `next_attempt_at`, with exactly one effective authorization.
 - **API scenario tests:** one file per criterion family (Criterion Traceability).
-- **E2E (browser):** journeys at 360 × 800 and 1280 × 800. The app runs on `http://localhost:<port>`; the fake approval page on `http://127.0.0.1:<port2>` (cross-site). Screenshots go to `test/browser/out/<test>-<width>.png`. Keyboard-only variant of the happy path. Both payment adapters for the labelling test (Sandbox adapter against paypal-stub, whose approval link points at a stub page on 127.0.0.1).
+- **E2E (browser):** journeys at 360 × 800 and 1280 × 800. The app runs on `http://localhost:<port>` (`RS_PUBLIC_URL` set to that origin by the harness); the fake approval page on `http://127.0.0.1:<port2>` (cross-site).
+  - **Approval round-trip assertion (revision 3, F-TR-14).** In `journey-happy` (RS-31(a)), and through the shared helper also in `journey-replacement` (RS-32(a)) and the NFR2 keyboard-only run:
+    - every "Approve (simulated)" click is followed by `page.waitForURL` on the app origin;
+    - the server log shows exactly one `GET /api/paypal/return` with the session's user id per approval;
+    - one "Cancel" click (RS-18 path) lands on `/api/paypal/cancel` with the session;
+    - no console message matching `Content Security Policy` is emitted on the approval page.
+  - **Fresh database per file (revision 3, F-TR-15).** Every `test/browser/*.test.js` file starts its own server through `server-proc.js` on a new temp `RS_DB_PATH`, seeded with RS-FIX-1. It never shares a database with another file. Within a file each journey signs in as its own fresh customer, created via `POST /api/auth/register` with a unique username, so the per-customer limits (10 requests per day, 1 live reservation) cannot be exhausted by earlier journeys. Browser and multi-process harnesses also pass `RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY=1000` and `RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER=1` explicitly, so the cap's behaviour stays the production one while the daily count cannot interfere. `test/api/abuse-limits.test.js` uses the defaults. Screenshots go to `test/browser/out/<test>-<width>.png`. Keyboard-only variant of the happy path. Both payment adapters for the labelling test (Sandbox adapter against paypal-stub, whose approval link points at a stub page on 127.0.0.1).
 - **Eval:** EXT-1 via the fake in [D]; the real model in [LM].
 - **Timing:** NFR5 generator (seeds 1–200, parameters as the brief) asserts < 1 s per catalog. `scripts/report-p95.js` reads `test/.out/latency.jsonl` (written by `app-harness.js`; the integration tests do not write to it) and fails at p95 ≥ 300 ms. The suite's total time is printed; < 5 min is asserted by `report-p95.js` from the pretest timestamp.
 
@@ -1397,8 +1426,8 @@ Every script that passes a version-specific flag to `node` begins with the flag-
 | RS-28 | Security T3 | `test/api/isolation.test.js` (D) |
 | RS-29 | Security › Secrets | `test/scan/secrets.test.js` (D); screenshots and submission (I) |
 | RS-30 | RBAC matrix | `test/api/isolation.test.js` (D) |
-| RS-31 | Frontend; fake approval listener | `test/browser/journey-happy.test.js` (B); `test/live/paypal/journey-sandbox.test.js` (LP, user-run) |
-| RS-32 | Supersession; admin stock_depletion | `test/browser/journey-replacement.test.js` (B); live variant (LP, user-run) |
+| RS-31 | Frontend; Fake approval listener (listener CSP) | `test/browser/journey-happy.test.js` (B; asserts each approval lands on `/api/paypal/return` with the session and no CSP violation, F-TR-14); `test/api/fake-approval-headers.test.js` (D; pinned listener CSP); `test/live/paypal/journey-sandbox.test.js` (LP, user-run) |
+| RS-32 | Supersession; admin stock_depletion; Fake approval listener | `test/browser/journey-replacement.test.js` (B; same approval round-trip assertion); live variant (LP, user-run) |
 | RS-33 | Frontend infeasible state | `test/browser/journey-infeasible.test.js` (B) |
 | RS-34 | Conventions › Labels; Frontend labels; Security T18 | `test/api/labelling.test.js` (D, both adapters; the Sandbox adapter against the loopback stub runs only with `RS_TEST_OFFLINE=1` and also asserts `labels.testMode` and the Test-mode banner text, SEC-3); `test/unit/config/hosts.test.js` (D: loopback refused without the flag); `test/browser/labelling.test.js` (B) |
 | RS-35 | Frontend request page | `test/browser/six-questions.test.js` (B); (I) |
@@ -1407,7 +1436,7 @@ Every script that passes a version-specific flag to `node` begins with the flag-
 | RS-38 | 001_core.sql triggers; ledger writes | `test/api/ledgers.test.js` (D) |
 | RS-39 | Retention and deletion; Security T12 | `test/api/uploads-retention.test.js` (D) |
 | NFR1 | Deployment › Node floor | `test/scan/package.test.js`, `test/integration/start-health.test.js`, `test/integration/start-old-node.test.js` (real start line on older Node; gate-prefix assertion), `test/unit/config/node-version.test.js` (D); (I) |
-| NFR2 | Frontend accessibility and states | `test/browser/a11y-states.test.js` (B) |
+| NFR2 | Frontend accessibility and states | `test/browser/a11y-states.test.js` (B; the keyboard-only happy path uses the same approval round-trip assertion) |
 | NFR3 | Testing Strategy › Commands | `test/scan/live-refusal.test.js` (D); (I) |
 | NFR4 | Security › Secrets | `test/scan/env-example.test.js` (D); (I) |
 | NFR5 | Performance | `test/timing/planner-generator.test.js`, `scripts/report-p95.js` (D) |
@@ -1491,7 +1520,7 @@ Design-specific tests:
 | `RS_ALLOW_SIGNUP` | 1 | README recommends 0 for a publicly reachable demo |
 | `RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER` | 1 | SEC-2 |
 | `RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY` | 10 | SEC-2 |
-| `RS_MODEL_CUSTOMER_DAILY_SHARE` | 1 | 0–1; 1 = off; README recommends 0.2 for public deployments (SEC-10) |
+| `RS_MODEL_CUSTOMER_DAILY_SHARE` | 0.2 | 0–1; 1 = off; NFR6's test pins 1 (SEC-10, OQ-D7, revision 3) |
 | `RS_ALLOWED_HOSTS` | (empty) | extra Host values (SEC-13) |
 | `RS_OLD_NODE_BINS` | (empty) | test-only: older Node binaries for `start-old-node` |
 | `RS_TRUST_PROXY` | 0 | |
@@ -1501,7 +1530,13 @@ Design-specific tests:
 
 **README** (devops-engineer):
 - Clean-checkout steps: `npm install` (npm registry only), `npm run seed`, `npm start`, `npm test`. The manual start line is `node scripts/check-node.cjs && node --disable-warning=ExperimentalWarning src/index.js`.
-- Demo accounts (SEC-5): with `RS_DEMO_PASSWORD` set, all seven demo accounts share it. That is suitable only for a single-operator demo; otherwise leave it unset to get per-account passwords. For a publicly reachable demo set `RS_ALLOW_SIGNUP=0` and `RS_MODEL_CUSTOMER_DAILY_SHARE=0.2` (SEC-2, SEC-10). `.gitignore` covers `.env` and `data/`.
+- Demo accounts (SEC-5): with `RS_DEMO_PASSWORD` set, all seven demo accounts share it. That is suitable only for a single-operator demo; otherwise leave it unset to get per-account passwords. For a publicly reachable demo set `RS_ALLOW_SIGNUP=0`, and keep `RS_MODEL_CUSTOMER_DAILY_SHARE` at its default 0.2 (SEC-2, SEC-10). `.gitignore` covers `.env` and `data/`.
+- **Operator note for demo runs and video retakes (revision 3, F-TR-15).** A demo account may create 10 requests per day and hold 1 live reservation.
+  - Between retakes, press "Abandon purchase" on an unfinished journey (or let the 30-minute reservation expire), so the next journey can reserve.
+  - Use `cafe1` and `cafe2` alternately, or register a fresh customer.
+  - For a recording session on a private machine, start with `RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY=100`. Or run the admin reset, which also clears `request_create` rate events (an admin-only, audited action; see Admin routes › Reset).
+  - Never raise `RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER` on a publicly reachable deployment.
+  - The user-run Sandbox journeys (RS-31(b), RS-32(b)) follow the same advice.
 - `npx playwright install chromium` once for `npm run test:browser`.
 - Live runbooks: model (cost ceiling) and PayPal (allow-list `api-m.sandbox.paypal.com` and `www.sandbox.paypal.com`; credentials as environment secrets; merchant modes; webhook URL optional).
 - Retention statement (images 7 days; raw text, extractions and demo accounts until deletion or reset).
@@ -1533,8 +1568,13 @@ For the orchestrator. None blocks implementation; each has a stated default.
   Default: adopt them. They are reasons within transitions the brief already allows, except the first, which reuses the existing `executing → non_executable` edge with a new reason.
 - **OQ-D2 (derivation after the admin "refund order" tool), revised in revision 2 (F-TR-5).** Row 5a gives `cancelled` only when every operation of an executed plan is refunded. A partial refund keeps rows 7–9 (for example `collected`) with a message naming the refunded order. Default: adopt.
 - **OQ-D3 (customer self-registration).** Default on (`RS_ALLOW_SIGNUP=1`), so judges can try the demo. Revision 2 makes this default defensible through the SEC-2 limits (one live reservation per customer, 10 requests per day). The README recommends `0` for a publicly reachable deployment.
-- **OQ-D6 (revision 2, extension of the aggregate status set).** `replanning` (rows 4a and 14) is added to the goal's set, like the brief's own extensions (rows 1, 5, 6, 13). Default: adopt.
-- **OQ-D7 (revision 2, SEC-10 deferral).** Should the per-customer daily model share default to 0.2 instead of off? Any share below the per-call cap ÷ budget would refuse NFR6's first two calls in its stated configuration, so the default stays 1 (off) unless the user (Q10) changes the budget defaults. Deferred to the plan and to the user.
+**Decisions requested (revision 3, F-TR-16).** Recording a decision (`eccode decision add`) is the orchestrator's action, so these are listed here for the orchestrator to record and show to the user:
+
+| Id | Decision requested | Design default | Status |
+|---|---|---|---|
+| OQ-D6 | Add `replanning` (rows 4a and 14) to the user's aggregate rescue-status set. It extends the goal's list like the brief's own extensions (rows 1, 5, 6, 13), and should appear in the brief's "goes beyond goal.md" list that the user sees. RS-36 (i)–(iv) are unchanged with it (reviewer probe ev:ev-mv1dkn6p-01cfa3c8; designer walk ev:ev-mv1d13ib-01f6f742). | adopt | **decision requested** (orchestrator to record; user to see) |
+| OQ-D7 | Default for `RS_MODEL_CUSTOMER_DAILY_SHARE`. Corrected reason (revision 3): nothing technical forces it off. NFR6's test can pin `RS_MODEL_CUSTOMER_DAILY_SHARE=1` in its own environment, because NFR6 asserts the global budget, and with the production defaults (budget 1.00, cap 0.05) a share of 0.2 allows 4 cap-sized calls per customer per day. The only question is whether 4 extractions per customer per day is acceptable for judges. | **0.2 in production, from revision 3**; `test/api/model-budget-rate.test.js` pins `1` for the NFR6 case and has a separate case for the share (the 5th cap-sized call of one customer → 503 `MODEL_BUDGET_EXHAUSTED`, `details.scope = "customer"`) | **decision requested** together with Q10 (the user may set 1 to turn it off) |
+
 - **OQ-D4 (Anthropic model id and prices).** `claude-haiku-4-5-20251001` is the default. The CLI alias `haiku` may resolve to a newer Haiku; prices are configurable and marked verify.
 - **OQ-D5 (PayPal facts to confirm on the first Sandbox run, Q2).** Approval link rel; authorization status set, including EXPIRED; `final_capture` rejecting a second capture; `PayPal-Request-Id` replay semantics and retention; capture and refund ids being findable through `GET /v2/checkout/orders/{id}`; webhook event names.
 - Carried forward from the brief: Q1–Q8, **Q9 (Node floor; the design implements both branches)** and **Q10 (daily model budget; default USD 1.00)**.

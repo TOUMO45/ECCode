@@ -1,6 +1,6 @@
 {
-  "seq": 116,
-  "lastHash": "62d30204a707bd8e8e6f274f52e1933bb68de5cd5429db8c49f2cea416edcca6",
+  "seq": 125,
+  "lastHash": "1a3a03b47fac75960f402ef856f8f9f87c2045bf10037c78abd965629508163a",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -63,7 +63,7 @@
     "design": {
       "id": "design",
       "kind": "design",
-      "status": "changes_requested",
+      "status": "submitted",
       "iterations": 2,
       "authors": [
         "technical-designer"
@@ -98,6 +98,27 @@
           ],
           "respondsTo": "rev-mv1cta5m-0114480d",
           "notes": "Design rev 2: resolves F-TR-1..4 and SEC-1..3 (majors), F-TR-5..13 and SEC-4..20 (SEC-10 partly deferred: share knob default off, OQ-D7). Evidence ev:ev-mv1cxbbt-01ff7b59, ev:ev-mv1d13ib-01f6f742, ev:ev-mv1d1u17-01b84ac4, ev:ev-mv1dbzry-01cf8ba0, ev:ev-mv1dbzmk-013f9d68, ev:ev-mv1dc6eq-01ea78b5"
+        },
+        {
+          "id": "sub-mv1dvx7j-016948c6",
+          "actor": "technical-designer",
+          "at": "2026-10-09T19:54:13.087Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/design/spec.md",
+              "sha256": "ef35826fe647eaf105892debf7844e84b0d3bf04e5d6caa30f07767a0a316521"
+            },
+            {
+              "path": ".eccode/artifacts/design/revision-2-notes.md",
+              "sha256": "1699de251936f8d11846878725320bc3d8065362677817aad9732427bb3f7bb1"
+            },
+            {
+              "path": ".eccode/artifacts/design/revision-3-notes.md",
+              "sha256": "3a0335cd0159aca8736ea6b40f3f990166984bb4f4fbb0221db51113e1055aaf"
+            }
+          ],
+          "respondsTo": "rev-mv1dqjhw-015d8dfe",
+          "notes": "Design rev 3 (narrow): F-TR-14 listener CSP form-action allows the app origin, app CSP not inherited, verified in Chromium (ev:ev-mv1dsh6c-019c5a8d, spec-bound ev:ev-mv1dvind-01a94f78); F-TR-15 fresh DB per browser file + README operator note; F-TR-16 decisions-requested table, share default 0.2 with NFR6 pinning 1. Traceability ev:ev-mv1dvisb-014427ac, structural walk ev:ev-mv1dvixu-01944161."
         }
       ],
       "reviews": [
@@ -1034,6 +1055,106 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-09T19:47:24.104Z"
+    },
+    "ev-mv1dsh6c-019c5a8d": {
+      "id": "ev-mv1dsh6c-019c5a8d",
+      "kind": "command",
+      "label": "design r3 probe (F-TR-14): revised single approval-page CSP (form-action 'self' + app origin) lets approve/cancel reach /api/paypal/return and /api/paypal/cancel with the Lax cookie in Chromium; inheriting the app CSP as a second header is refused",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/design-r3-formaction.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7342,
+      "log": ".eccode/evidence/ev-mv1dsh6c-019c5a8d.log",
+      "logSha256": "1c402643b69579efe841c2a88f5d494f9d8debf50d532095f0e09dd21ccd27a4",
+      "logFileSha256": "e1596ac908484afd2a1ac3a97c7a5d4c3a8becd1107cbf8ae1579620f83d53cc",
+      "outputTail": "R3-fake: approve -> /api/paypal/return cookie=true | cancel -> /api/paypal/cancel cookie=true | OK\nR3-stub: approve -> /api/paypal/return cookie=true | cancel -> /api/paypal/cancel cookie=true | OK\nNEG-two (app CSP inherited as a second header): approve -> null | refused=true | console: Refused to send form data to 'http://127.0.0.1:40137/fake-paypal/checkout/FAKE-0123ABCD/approve' because it violates the following Content S\npinned listener CSP: default-src 'none'; style-src 'self'; form-action 'self' http://localhost:<PORT>; frame-ancestors 'none'; base-uri 'none'\nchromium 141.0.7390.37\nF-TR-14 fix confirmed\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:51:32.387Z"
+    },
+    "ev-mv1dv52l-01a0db95": {
+      "id": "ev-mv1dv52l-01a0db95",
+      "kind": "command",
+      "label": "design r3 probe (F-TR-14) bound to the revised spec text: listener CSP and app CSP read from spec.md; approve/cancel reach /api/paypal/return and /api/paypal/cancel with the Lax cookie in Chromium; app CSP as a second header is refused",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/design-r3-formaction.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7357,
+      "log": ".eccode/evidence/ev-mv1dv52l-01a0db95.log",
+      "logSha256": "e37816fb964c2c5ab8e26e1557fd93de52138355e5d5b9a328279390927dfec6",
+      "logFileSha256": "2f797892dbd357494ca88f49f67b037281108b735139179712987ddbdb3d9196",
+      "outputTail": "spec /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md sha256=81fe5b643a08f770b946991f22f33e014b3a30247c45e6e3286e6aa19041d709\nlistener CSP from spec: default-src 'none'; style-src 'self'; form-action 'self' <appOrigin>; frame-ancestors 'none'; base-uri 'none'\napp CSP from spec: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'\nR3-fake: approve -> /api/paypal/return cookie=true | cancel -> /api/paypal/cancel cookie=true | OK\nR3-stub: approve -> /api/paypal/return cookie=true | cancel -> /api/paypal/cancel cookie=true | OK\nNEG-two (app CSP inherited as a second header): approve -> null | refused=true | console: Refused to send form data to 'http://127.0.0.1:42415/fake-paypal/checkout/FAKE-0123ABCD/approve' because it violates the following Content S\npinned listener CSP: default-src 'none'; style-src 'self'; form-action 'self' http://localhost:<PORT>; frame-ancestors 'none'; base-uri 'none'\nchromium 141.0.7390.37\nF-TR-14 fix confirmed\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:53:36.671Z"
+    },
+    "ev-mv1dvind-01a94f78": {
+      "id": "ev-mv1dvind-01a94f78",
+      "kind": "command",
+      "label": "design r3 final: F-TR-14 probe bound to the final spec text (CSP strings read from spec.md, sha printed)",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/design-r3-formaction.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7368,
+      "log": ".eccode/evidence/ev-mv1dvind-01a94f78.log",
+      "logSha256": "ee061e43f008d45260c1d10fc98b25ece94eecbb9860baf7ac2ac52447d0a867",
+      "logFileSha256": "275371975a0e6c9b094163af4b8cf5f37d9e765dd010c367002caa3915d079f4",
+      "outputTail": "spec /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md sha256=ef35826fe647eaf105892debf7844e84b0d3bf04e5d6caa30f07767a0a316521\nlistener CSP from spec: default-src 'none'; style-src 'self'; form-action 'self' <appOrigin>; frame-ancestors 'none'; base-uri 'none'\napp CSP from spec: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'\nR3-fake: approve -> /api/paypal/return cookie=true | cancel -> /api/paypal/cancel cookie=true | OK\nR3-stub: approve -> /api/paypal/return cookie=true | cancel -> /api/paypal/cancel cookie=true | OK\nNEG-two (app CSP inherited as a second header): approve -> null | refused=true | console: Refused to send form data to 'http://127.0.0.1:43807/fake-paypal/checkout/FAKE-0123ABCD/approve' because it violates the following Content S\npinned listener CSP: default-src 'none'; style-src 'self'; form-action 'self' http://localhost:<PORT>; frame-ancestors 'none'; base-uri 'none'\nchromium 141.0.7390.37\nF-TR-14 fix confirmed\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:53:54.264Z"
+    },
+    "ev-mv1dvisb-014427ac": {
+      "id": "ev-mv1dvisb-014427ac",
+      "kind": "command",
+      "label": "design r3 final: reviewer traceability check (45 ids)",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/tr-design-traceability.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/architecture/brief.md /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 57,
+      "log": ".eccode/evidence/ev-mv1dvisb-014427ac.log",
+      "logSha256": "c0f094e76bcf78ee63430d2bd6096bac8f5b218175faf474fbdd25e52a45d2b6",
+      "logFileSha256": "80ce69148d8d1f7993d0a6c925c7777223f2859c0162cc034025bd6991641ceb",
+      "outputTail": "RS-23: section=\"Webhooks\" tests=2 briefTags=[D,LP] specTags=[D,LP]\nRS-24: section=\"Webhooks\" tests=2 briefTags=[D,LP] specTags=[D,LP]\nRS-25: section=\"Provider call protocol §5–6\" tests=1 briefTags=[D] specTags=[D]\nRS-26: section=\"Saga step 6; Recovery; Sender table\" tests=1 briefTags=[D] specTags=[D]\nRS-27: section=\"Security T1/T2\" tests=1 briefTags=[D] specTags=[D]\nRS-28: section=\"Security T3\" tests=1 briefTags=[D] specTags=[D]\nRS-29: section=\"Security › Secrets\" tests=1 briefTags=[D,I] specTags=[D,I]\nRS-30: section=\"RBAC matrix\" tests=1 briefTags=[D] specTags=[D]\nRS-31: section=\"Frontend; Fake approval listener (listener CSP)\" tests=3 briefTags=[B,LP] specTags=[B,D,LP]\nRS-32: section=\"Supersession; admin stock_depletion; Fake approval listener\" tests=2 briefTags=[B,LP] specTags=[B,LP]\nRS-33: section=\"Frontend infeasible state\" tests=1 briefTags=[B] specTags=[B]\nRS-34: section=\"Conventions › Labels; Frontend labels; Security T18\" tests=3 briefTags=[D,B] specTags=[D,B]\nRS-35: section=\"Frontend request page\" tests=1 briefTags=[B,I] specTags=[B,I]\nRS-36: section=\"Background › Rescue status derivation (revision 2); Data Des\" tests=2 briefTags=[D,I] specTags=[D,I]\nRS-37: section=\"Admin reset\" tests=1 briefTags=[D] specTags=[D]\nRS-38: section=\"001_core.sql triggers; ledger writes\" tests=1 briefTags=[D] specTags=[D]\nRS-39: section=\"Retention and deletion; Security T12\" tests=1 briefTags=[D] specTags=[D]\nNFR1: section=\"Deployment › Node floor\" tests=4 briefTags=[D,I] specTags=[D,I]\nNFR2: section=\"Frontend accessibility and states\" tests=1 briefTags=[B] specTags=[B]\nNFR3: section=\"Testing Strategy › Commands\" tests=1 briefTags=[I,D] specTags=[D,I]\nNFR4: section=\"Security › Secrets\" tests=1 briefTags=[D,I] specTags=[D,I]\nNFR5: section=\"Performance\" tests=2 briefTags=[D] specTags=[D]\nNFR6: section=\"AI runtime controls; Observability\" tests=2 briefTags=[D,LM,I] specTags=[D,LM,I]\nbrief ids: 45; spec rows: 45; hard problems: 0; tag warnings: 0\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:53:54.441Z"
+    },
+    "ev-mv1dvixu-01944161": {
+      "id": "ev-mv1dvixu-01944161",
+      "kind": "command",
+      "label": "design r3 final: security structural spec walk",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/sec-design-spec-walk.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md --structural",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 80,
+      "log": ".eccode/evidence/ev-mv1dvixu-01944161.log",
+      "logSha256": "422d1bbdfd5304755aae523b5dca0f40a2cd4dac6b274b6559a1adeb317197b9",
+      "logFileSha256": "b3b90b1c38de3fa38c0604e273a71624c20f7c2150652ebe230519362197d50e",
+      "outputTail": "OK   RATE_LIMITED: by name x7\nOK   INTERNAL: by name x1\nOK   PROVIDER_ERROR: by name x1\nOK   DB_BUSY: by name x9\nOK   MODEL_BUDGET_EXHAUSTED: by name x4\nOK   PROVIDER_UNAVAILABLE: by name x4\n\n[3] GET routes with side effects\n     L306 GET /api/auth/csrf \n     L310 GET /api/auth/session \n     L333 GET /api/health \n     L334 GET /api/config \n     L339 GET /api/requests \n     L341 GET /api/requests/:id \n     L344 GET /api/requests/:id/image \n     L351 GET /api/paypal/return (side-effecting by brief: return/cancel)\n     L352 GET /api/paypal/cancel (side-effecting by brief: return/cancel)\n     L372 GET /api/supplier/orders \n     L377 GET /api/supplier/inventory \n     L389 GET /api/admin/timeline \n     L390 GET /api/admin/metrics \nOK   only 2 side-effecting GETs (PayPal return/cancel); owner check before any call stated: true\n\nstructural result: PASS (0 failures)\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:53:54.643Z"
     }
   },
   "reviews": {
@@ -4103,6 +4224,49 @@
       "id": "ho-mv1dd895-01787f57",
       "recordedBy": "technical-designer",
       "at": "2026-10-09T19:39:40.953Z"
+    },
+    "ho-mv1dwbhe-0178a1dd": {
+      "from": "technical-designer",
+      "to": "technical-reviewer",
+      "gate": "design",
+      "objective": "Review the RescueStock technical design, revision 3: submission sub-mv1dvx7j-016948c6 (spec.md sha256 ef35826fe647eaf105892debf7844e84b0d3bf04e5d6caa30f07767a0a316521; revision-2-notes.md; revision-3-notes.md). It responds to rev-mv1dqjhw-015d8dfe.",
+      "context": "This is a narrow revision; only the sections listed in the spec's 'Findings disposition (revision 3)' changed. F-TR-14: the fake approval listener and the paypal-stub approval page send exactly one CSP, default-src 'none'; style-src 'self'; form-action 'self' <RS_PUBLIC_URL origin>; frame-ancestors 'none'; base-uri 'none', and do not inherit the app CSP. Added: a [B] round-trip assertion (approve to /api/paypal/return, cancel to /api/paypal/cancel, with the session, no CSP console violation) and a [D] header test pinning the value. F-TR-15: fresh database per browser file, a fresh customer per journey, harness limits, a README operator note, and the admin reset clearing request_create rate events. F-TR-16: a 'Decisions requested' table for OQ-D6 and OQ-D7; the share defaults to 0.2 and the NFR6 test pins 1.",
+      "inputs": [
+        ".eccode/reviews/rev-mv1dqjhw-015d8dfe.json",
+        ".eccode/drafts/tr-design-r2-formaction.mjs (reviewer probe)",
+        ".eccode/drafts/design-r3-formaction.mjs (designer probe; reads the CSP strings from spec.md)"
+      ],
+      "expectedOutput": "A recorded review of design submission sub-mv1dvx7j-016948c6 that resolves or re-opens F-TR-14, F-TR-15 and F-TR-16 and covers the 45 required criteria.",
+      "acceptanceCriteria": [
+        "Every CSP the fake listener and the paypal-stub page send allows the app's return origin in form-action (a single header; the app CSP is not inherited)",
+        "A [B] assertion that approve and cancel land on the return and cancel routes with the session, and a [D] test pinning the listener CSP",
+        "Browser suites use a fresh database per file; README operator note present",
+        "OQ-D6 and OQ-D7 listed as 'decision requested'",
+        "gate show design still lists the 45 required ids"
+      ],
+      "completedWork": "Revised spec.md and wrote revision-3-notes.md. Verified the F-TR-14 fix in Playwright's Chromium 141 with a probe that reads both CSP strings from the final spec text: ev:ev-mv1dvind-01a94f78 (earlier runs ev:ev-mv1dsh6c-019c5a8d, ev:ev-mv1dv52l-01a0db95). The negative control shows that a second, inherited app CSP header blocks the submission. Re-ran the reviewers' traceability check (ev:ev-mv1dvisb-014427ac: 45 ids, 0 problems) and the structural spec walk (ev:ev-mv1dvixu-01944161: pass).",
+      "filesChanged": [
+        ".eccode/artifacts/design/spec.md",
+        ".eccode/artifacts/design/revision-3-notes.md",
+        ".eccode/artifacts/design/handoff-3.json",
+        ".eccode/drafts/design-r3-formaction.mjs"
+      ],
+      "evidence": [
+        "ev:ev-mv1dvind-01a94f78",
+        "ev:ev-mv1dsh6c-019c5a8d",
+        "ev:ev-mv1dv52l-01a0db95",
+        "ev:ev-mv1dvisb-014427ac",
+        "ev:ev-mv1dvixu-01944161"
+      ],
+      "remainingIssues": [
+        "OQ-D6 and OQ-D7: decisions requested from the orchestrator and user (recording a decision is the orchestrator's action)",
+        "Carried: OQ-D1..D5, Q1-Q10"
+      ],
+      "nextAction": "technical-reviewer: review design submission sub-mv1dvx7j-016948c6 with eccode gate review design, responding to rev-mv1dqjhw-015d8dfe.",
+      "lessonsConsulted": [],
+      "id": "ho-mv1dwbhe-0178a1dd",
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:54:31.603Z"
     }
   },
   "runs": {
@@ -4277,6 +4441,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-09T19:50:30.744Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T19:54:53.088Z",
+      "durationMinutes": 4.37,
+      "costUsd": null,
+      "tokens": 36738,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv1dwolw-0129f622": {
+      "id": "run-mv1dwolw-0129f622",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T19:54:48.612Z",
       "status": "running",
       "attempt": 1
     }
@@ -4508,8 +4687,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 148.45,
-    "tokens": 2048307
+    "runtimeMinutes": 152.82,
+    "tokens": 2085045
   },
   "delivery": null
 }

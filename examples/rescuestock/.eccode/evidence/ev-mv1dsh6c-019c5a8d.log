@@ -1,0 +1,9 @@
+$ node /home/user/ECCode/examples/rescuestock/.eccode/drafts/design-r3-formaction.mjs
+# cwd: .
+# exit: 0
+R3-fake: approve -> /api/paypal/return cookie=true | cancel -> /api/paypal/cancel cookie=true | OK
+R3-stub: approve -> /api/paypal/return cookie=true | cancel -> /api/paypal/cancel cookie=true | OK
+NEG-two (app CSP inherited as a second header): approve -> null | refused=true | console: Refused to send form data to 'http://127.0.0.1:40137/fake-paypal/checkout/FAKE-0123ABCD/approve' because it violates the following Content S
+pinned listener CSP: default-src 'none'; style-src 'self'; form-action 'self' http://localhost:<PORT>; frame-ancestors 'none'; base-uri 'none'
+chromium 141.0.7390.37
+F-TR-14 fix confirmed

@@ -1,0 +1,98 @@
+$ node /home/user/ECCode/examples/rescuestock/.eccode/drafts/sec-design-spec-walk.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md --structural
+# cwd: .
+# exit: 0
+spec /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md sha256 ef35826fe647eaf105892debf7844e84b0d3bf04e5d6caa30f07767a0a316521 lines 1596
+
+[1] mutating routes: auth (RBAC group), CSRF, idempotency
+OK   L307 POST /api/auth/register | auth: yes / yes / yes / yes | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L308 POST /api/auth/signin | auth: yes / yes / yes / yes | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L309 POST /api/auth/signout | auth: 401 / yes / yes / yes | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L340 POST /api/requests | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L342 DELETE /api/requests/:id | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L343 POST /api/requests/:id/image | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L345 POST /api/requests/:id/extract | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L346 POST /api/requests/:id/confirm | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L347 POST /api/requests/:id/plan | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L348 POST /api/plans/:id/approve | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (explicit in row)
+OK   L349 POST /api/plans/:id/reserve | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: Idempotency-Key (explicit)
+OK   L350 POST /api/orders/:id/paypal/create | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L353 POST /api/plans/:id/execute | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (explicit in row)
+OK   L354 POST /api/plans/:id/abandon | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L355 POST /api/orders/:id/receipt | auth: 401 (return/cancel: 303 to sign-in) / own only (else 404) / 403 / 403 | csrf: X-CSRF-Token | idem: state (explicit in row)
+OK   L373 POST /api/supplier/orders/:id/confirm | auth: 401 / 403 / own supplier only / 403 | csrf: X-CSRF-Token | idem: state (explicit in row)
+OK   L374 POST /api/supplier/orders/:id/refuse | auth: 401 / 403 / own supplier only / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L375 POST /api/supplier/orders/:id/ready | auth: 401 / 403 / own supplier only / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L376 POST /api/supplier/orders/:id/handover | auth: 401 / 403 / own supplier only / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L378 PATCH /api/supplier/inventory | auth: 401 / 403 / own supplier only / 403 | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L387 POST /api/admin/reset | auth: 401 / 403 / 403 / yes | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L388 POST /api/admin/faults | auth: 401 / 403 / 403 / yes | csrf: X-CSRF-Token | idem: state (blanket convention only)
+OK   L409 POST /api/webhooks/paypal/:merchantKey | auth: signature / signature / signature / signature | csrf: exempt: signature only | idem: transmission-id dedupe
+mutating routes: 23
+
+[2] every error-catalog code is produced somewhere
+OK   INVALID_JSON: by status 400 in route rows x1 (code name not used)
+OK   BAD_REQUEST: by status 400 in route rows x1 (code name not used)
+OK   IDEMPOTENCY_KEY_REQUIRED: by name x2
+OK   WEBHOOK_SIGNATURE_INVALID: by name x2
+OK   UNAUTHENTICATED: by name x1
+OK   INVALID_CREDENTIALS: by name x1
+OK   FORBIDDEN: by name x1
+OK   CSRF_FAILED: by name x1
+OK   SIGNUP_DISABLED: by name x1
+OK   NOT_FOUND: by status 404 in route rows x20 (code name not used)
+OK   METHOD_NOT_ALLOWED: by framework component only (router/body.js)
+OK   PLAN_CHANGED: by name x1
+OK   PLAN_SUPERSEDED: by name x6
+OK   PLAN_NOT_EXECUTABLE: by name x5
+OK   PLAN_INVALID: by name x1
+OK   PLAN_IN_PROGRESS: by name x2
+OK   MISSING_BUDGET: by name x3
+OK   MISSING_DEADLINE: by name x3
+OK   OUT_OF_STOCK: by name x13
+OK   ALREADY_RESERVED: by name x1
+OK   RESERVATION_LIMIT: by name x7
+OK   RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER: by name x6
+OK   RESERVATION_EXPIRED: by name x5
+OK   AUTHORIZATION_PENDING: by name x2
+OK   AUTHORIZATION_MISSING: by name x2
+OK   AUTHORIZATION_EXPIRED: by name x8
+OK   COMMITMENT_MISSING: by name x2
+OK   ORDER_EXECUTED: by name x1
+OK   HANDOVER_BLOCKED: by name x2
+OK   RESERVED_STOCK: by name x1
+OK   PAYMENT_IN_PROGRESS: by name x2
+OK   RESET_BLOCKED: by name x1
+OK   INVALID_STATE: by name x10
+OK   USERNAME_TAKEN: by name x2
+OK   FAULTS_UNAVAILABLE: by name x1
+OK   PAYLOAD_TOO_LARGE: by name x1
+OK   MISDIRECTED_REQUEST: by name x3
+OK   UNSUPPORTED_MEDIA_TYPE: by status 415 in route rows x1 (code name not used)
+OK   VALIDATION_FAILED: by name x3
+OK   IDEMPOTENCY_KEY_REUSED: by name x6
+OK   COMMITMENT_INVALID: by name x1
+OK   REQUIREMENTS_INCOMPLETE: by name x1
+OK   RATE_LIMITED: by name x7
+OK   INTERNAL: by name x1
+OK   PROVIDER_ERROR: by name x1
+OK   DB_BUSY: by name x9
+OK   MODEL_BUDGET_EXHAUSTED: by name x4
+OK   PROVIDER_UNAVAILABLE: by name x4
+
+[3] GET routes with side effects
+     L306 GET /api/auth/csrf 
+     L310 GET /api/auth/session 
+     L333 GET /api/health 
+     L334 GET /api/config 
+     L339 GET /api/requests 
+     L341 GET /api/requests/:id 
+     L344 GET /api/requests/:id/image 
+     L351 GET /api/paypal/return (side-effecting by brief: return/cancel)
+     L352 GET /api/paypal/cancel (side-effecting by brief: return/cancel)
+     L372 GET /api/supplier/orders 
+     L377 GET /api/supplier/inventory 
+     L389 GET /api/admin/timeline 
+     L390 GET /api/admin/metrics 
+OK   only 2 side-effecting GETs (PayPal return/cancel); owner check before any call stated: true
+
+structural result: PASS (0 failures)

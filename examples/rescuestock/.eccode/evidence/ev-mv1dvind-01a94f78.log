@@ -1,0 +1,12 @@
+$ node /home/user/ECCode/examples/rescuestock/.eccode/drafts/design-r3-formaction.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md
+# cwd: .
+# exit: 0
+spec /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md sha256=ef35826fe647eaf105892debf7844e84b0d3bf04e5d6caa30f07767a0a316521
+listener CSP from spec: default-src 'none'; style-src 'self'; form-action 'self' <appOrigin>; frame-ancestors 'none'; base-uri 'none'
+app CSP from spec: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'
+R3-fake: approve -> /api/paypal/return cookie=true | cancel -> /api/paypal/cancel cookie=true | OK
+R3-stub: approve -> /api/paypal/return cookie=true | cancel -> /api/paypal/cancel cookie=true | OK
+NEG-two (app CSP inherited as a second header): approve -> null | refused=true | console: Refused to send form data to 'http://127.0.0.1:43807/fake-paypal/checkout/FAKE-0123ABCD/approve' because it violates the following Content S
+pinned listener CSP: default-src 'none'; style-src 'self'; form-action 'self' http://localhost:<PORT>; frame-ancestors 'none'; base-uri 'none'
+chromium 141.0.7390.37
+F-TR-14 fix confirmed

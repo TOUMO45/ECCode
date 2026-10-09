@@ -1,0 +1,40 @@
+{
+  "from": "technical-designer",
+  "to": "technical-reviewer",
+  "gate": "design",
+  "objective": "Review the RescueStock technical design, revision 3: submission sub-mv1dvx7j-016948c6 (spec.md sha256 ef35826fe647eaf105892debf7844e84b0d3bf04e5d6caa30f07767a0a316521; revision-2-notes.md; revision-3-notes.md). It responds to rev-mv1dqjhw-015d8dfe.",
+  "context": "This is a narrow revision; only the sections listed in the spec's 'Findings disposition (revision 3)' changed. F-TR-14: the fake approval listener and the paypal-stub approval page send exactly one CSP, default-src 'none'; style-src 'self'; form-action 'self' <RS_PUBLIC_URL origin>; frame-ancestors 'none'; base-uri 'none', and do not inherit the app CSP. Added: a [B] round-trip assertion (approve to /api/paypal/return, cancel to /api/paypal/cancel, with the session, no CSP console violation) and a [D] header test pinning the value. F-TR-15: fresh database per browser file, a fresh customer per journey, harness limits, a README operator note, and the admin reset clearing request_create rate events. F-TR-16: a 'Decisions requested' table for OQ-D6 and OQ-D7; the share defaults to 0.2 and the NFR6 test pins 1.",
+  "inputs": [
+    ".eccode/reviews/rev-mv1dqjhw-015d8dfe.json",
+    ".eccode/drafts/tr-design-r2-formaction.mjs (reviewer probe)",
+    ".eccode/drafts/design-r3-formaction.mjs (designer probe; reads the CSP strings from spec.md)"
+  ],
+  "expectedOutput": "A recorded review of design submission sub-mv1dvx7j-016948c6 that resolves or re-opens F-TR-14, F-TR-15 and F-TR-16 and covers the 45 required criteria.",
+  "acceptanceCriteria": [
+    "Every CSP the fake listener and the paypal-stub page send allows the app's return origin in form-action (a single header; the app CSP is not inherited)",
+    "A [B] assertion that approve and cancel land on the return and cancel routes with the session, and a [D] test pinning the listener CSP",
+    "Browser suites use a fresh database per file; README operator note present",
+    "OQ-D6 and OQ-D7 listed as 'decision requested'",
+    "gate show design still lists the 45 required ids"
+  ],
+  "completedWork": "Revised spec.md and wrote revision-3-notes.md. Verified the F-TR-14 fix in Playwright's Chromium 141 with a probe that reads both CSP strings from the final spec text: ev:ev-mv1dvind-01a94f78 (earlier runs ev:ev-mv1dsh6c-019c5a8d, ev:ev-mv1dv52l-01a0db95). The negative control shows that a second, inherited app CSP header blocks the submission. Re-ran the reviewers' traceability check (ev:ev-mv1dvisb-014427ac: 45 ids, 0 problems) and the structural spec walk (ev:ev-mv1dvixu-01944161: pass).",
+  "filesChanged": [
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/design/revision-3-notes.md",
+    ".eccode/artifacts/design/handoff-3.json",
+    ".eccode/drafts/design-r3-formaction.mjs"
+  ],
+  "evidence": [
+    "ev:ev-mv1dvind-01a94f78",
+    "ev:ev-mv1dsh6c-019c5a8d",
+    "ev:ev-mv1dv52l-01a0db95",
+    "ev:ev-mv1dvisb-014427ac",
+    "ev:ev-mv1dvixu-01944161"
+  ],
+  "remainingIssues": [
+    "OQ-D6 and OQ-D7: decisions requested from the orchestrator and user (recording a decision is the orchestrator's action)",
+    "Carried: OQ-D1..D5, Q1-Q10"
+  ],
+  "nextAction": "technical-reviewer: review design submission sub-mv1dvx7j-016948c6 with eccode gate review design, responding to rev-mv1dqjhw-015d8dfe.",
+  "lessonsConsulted": []
+}
