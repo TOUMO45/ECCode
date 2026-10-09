@@ -143,8 +143,15 @@ function print(flags, human, json) {
   else process.stdout.write((typeof human === 'string' ? human : JSON.stringify(human, null, 2)) + '\n');
 }
 
+let projectRoot = null;
+
+/** JSON input: resolved from the current directory, then from the project root; missing is a clean refusal. */
 function loadJsonFile(file) {
-  return readJson(path.resolve(file));
+  const candidates = [path.resolve(file)];
+  if (projectRoot && !path.isAbsolute(file)) candidates.push(path.resolve(projectRoot, file));
+  const found = candidates.find((c) => fs.existsSync(c));
+  if (!found) throw new EccodeError('NOT_FOUND', `File not found: ${file}`);
+  return readJson(found);
 }
 
 function main(argv) {
@@ -157,6 +164,7 @@ function main(argv) {
   }
   checkPositionals(args._);
   const root = findRoot(flags);
+  projectRoot = root;
   const actor = flags.actor || process.env.ECCODE_ACTOR;
   const { openProject, init } = require('../lib/project');
 
@@ -219,9 +227,14 @@ function main(argv) {
     case 'audit': {
       const res = store.audit();
       // Replay, not the snapshot: audit must work (and report) on a rolled-back log.
-      const changes = require('../lib/delivery').unreviewedChanges(store.rebuild(), store.root);
+      const all = require('../lib/delivery').unreviewedChanges(store.rebuild(), store.root);
+      // A change already submitted for review in a later gate is normal flow (a warning); an edit no
+      // gate has seen is an audit failure. Delivery stays strict about both.
+      const changes = all.filter((c) => !c.pending);
+      const pending = all.filter((c) => c.pending);
       const ok = res.ok && !changes.length;
-      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}`, { ...res, unreviewedChanges: changes, ok });
+      const warn = pending.length ? `\nPending re-review (not failures):\n- ${pending.map((c) => `${c.path} ${c.problem} (approved at ${c.gate})`).join('\n- ')}` : '';
+      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.${warn}` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}${warn}`, { ...res, unreviewedChanges: changes, pendingReview: pending, ok });
       return ok ? 0 : 2;
     }
     case 'deliver': {
@@ -269,7 +282,12 @@ function main(argv) {
       if (sub !== 'validate') throw new EccodeError('USAGE', 'Usage: eccode plan validate <plan.json>');
       const plan = loadJsonFile(need(arg, '<plan.json>'));
       const errors = tasks.validatePlan(plan, config);
-      const warnings = errors.length ? [] : tasks.ownershipConflicts(plan.tasks).map(([a, b]) => `${a} and ${b} may run in parallel but share file ownership (they will be serialized)`);
+      const warnings = errors.length
+        ? []
+        : [
+            ...tasks.ownershipConflicts(plan.tasks).map(([a, b]) => `${a} and ${b} may run in parallel but share file ownership (they will be serialized)`),
+            ...tasks.recordGlobWarnings(plan.tasks),
+          ];
       print(flags, errors.length ? `Plan INVALID:\n- ${errors.join('\n- ')}` : `Plan valid: ${plan.phases.length} phase(s), ${plan.tasks.length} task(s).${warnings.length ? `\nWarnings:\n- ${warnings.join('\n- ')}` : ''}`, { errors, warnings });
       return errors.length ? 2 : 0;
     }

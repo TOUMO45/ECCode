@@ -58,6 +58,8 @@ Full status per requirement: [docs/acceptance-report.md](docs/acceptance-report.
 
 [`examples/triage-desk/`](examples/triage-desk) contains a complete delivery of **TriageDesk**, a small web app with an AI ticket-triage feature, run by real Claude Code subagents through every gate. Its `.eccode/` directory is the unedited record: reviews, rejections, evidence logs, handoffs, lessons and the final handoff. [`examples/learning-cycle/`](examples/learning-cycle) shows a lesson being reused in a different project. [docs/final-report.md](docs/final-report.md) says what was built and what went wrong; [docs/archive-triage-desk-report.md](docs/archive-triage-desk-report.md) is the report of that first demonstration.
 
+The test suite replays every shipped record (TriageDesk, Groundwork, the learning-cycle project and the toolkit's own) on each run, so the engine cannot drift from the evidence it publishes. Changes by version: [CHANGELOG.md](CHANGELOG.md).
+
 ## License
 
 MIT. See [LICENSE](LICENSE) and [NOTICE](NOTICE).

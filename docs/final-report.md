@@ -40,7 +40,15 @@ Three of these were hot-patched into the toolkit copy used by the running Ground
 6. **Identity** is bound to the real subagent only when the PreToolUse hook runs (it did in the plugin-installed Groundwork run).
 7. **Codex / Gemini:** only sequential role execution through `export agents-md`; no native multi-agent mirror.
 
-## 5. How to reproduce
+## 5. Follow-up on branch `claude/funny-feynman-rt1io9` (2026-10-09, version 0.2.0)
+After a full re-read of the evidence (the acceptance report, the evidence READMEs, the TriageDesk record and its verification review), the following toolkit changes were made on top of this branch's state; each has a test. They do not change any verdict above: R7 still fails, and Groundwork's close still rests on operator decisions.
+- **The shipped records are replayed by the suite** (`tests/records-replay.test.js`): TriageDesk, Groundwork, the learning-cycle project and the toolkit's own record are audited on every `npm run check`, and the figures the reports cite (approved gates, engine refusals, the operator's reopen of `verification`) are asserted. A reducer change can no longer drift from the published evidence.
+- **Audit no longer calls a pending re-review a failure.** The TriageDesk verification review logged VER-2 because `eccode audit` reported FAILED while the final report versions were merely awaiting the verification review. A modified file whose current hash a later, unapproved gate has already submitted is now a warning ("Pending re-review"); delivery stays strict.
+- **The final handoff lists every `--actor user` event.** Limitation 3 above (operator decisions are not user decisions) is now visible in the handoff itself, with the note that the record shows what was entered, not who typed it.
+- **CLI:** JSON inputs resolve from the project root as well as the cwd, a missing file is a clean `NOT_FOUND`, and `plan validate` warns about ownership globs into `.eccode/`.
+Suite: 144 tests. Still open: everything in §4.
+
+## 6. How to reproduce
 - Toolkit checks: `npm run check`; installation: `node scripts/verify-install.js --live`.
 - Evaluation: [eval/suite/run-commands.md](../eval/suite/run-commands.md) (roughly $100–150 and a few hours per round; needs `unshare`, Node ≥22 and the Claude Code CLI).
 - Groundwork: `cd examples/groundwork && npm test`; browser test needs Playwright and Chromium (see its README).

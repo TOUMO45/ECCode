@@ -114,7 +114,7 @@ See [memory.md](memory.md).
 
 ## Known limitations
 
-- **Self-asserted identity.** `--actor` is not cryptographically bound. Outside Claude Code with hooks, a caller could claim any role. The record and the hooks make impersonation visible and blockable, but not impossible: the guard reads shell commands without executing them, so a sufficiently indirect command (a script file, a crafted interpreter call) can still evade it.
+- **Self-asserted identity.** `--actor` is not cryptographically bound. Outside Claude Code with hooks, a caller could claim any role. The record and the hooks make impersonation visible and blockable, but not impossible: the guard reads shell commands without executing them, so a sufficiently indirect command (a script file, a crafted interpreter call) can still evade it. `--actor user` events are entered by whoever runs the CLI (the orchestrator, or an operator); the final handoff lists every one of them under "User decisions" so a reader can check them against the conversation, but the CLI cannot tell a human from a script.
 - **Rollback detection needs the snapshot.** A log rolled back together with `state.json` (or with the snapshot deleted) is indistinguishable from an older record; the guard's git rules are the defence there.
 - **Cost accounting** is only as good as the usage numbers reported when a run closes. Claude Code reports tokens and duration to the orchestrator, not dollars, so you need to configure `pricing.usdPerMillionTokens` to get estimates.
 - **Structure, not substance.** Gate rules prove an approval is evidence-backed and independent. They cannot prove the reviewer's judgment is right. Independent re-execution of checks is the main mitigation.

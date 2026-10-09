@@ -264,3 +264,67 @@ test('evidence run preserves argument quoting from the CLI (sh -c with compound 
   ev = JSON.parse(res.stdout);
   assert.match(ev.outputTail, /one\ntwo/);
 });
+
+test('audit distinguishes an edit submitted for re-review in a later gate from an unreviewed edit', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  completePhase(ctx);
+  const { store, config, dir } = ctx;
+  const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const { spawnSync } = require('child_process');
+  const audit = () => spawnSync(process.execPath, [bin, '--root', dir, 'audit', '--json'], { encoding: 'utf8' });
+  // Verification submits the final version of a file the phase approved (the TriageDesk VER-2 situation).
+  fs.appendFileSync(path.join(dir, 'src/server/a.js'), '// clarifying edit for the release\n');
+  let res = audit();
+  assert.strictEqual(res.status, 2);
+  assert.strictEqual(JSON.parse(res.stdout).unreviewedChanges.length, 1);
+  gates.startGate(store, config, 'verification', 'orchestrator');
+  write(dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green.\n');
+  gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verification.md', 'src/server/a.js'] });
+  res = audit();
+  assert.strictEqual(res.status, 0, res.stderr);
+  const out = JSON.parse(res.stdout);
+  assert.deepStrictEqual(out.unreviewedChanges, []);
+  assert.strictEqual(out.pendingReview[0].pending, 'verification');
+  // A further edit after the submission is unreviewed again (and the review would be refused as stale).
+  fs.appendFileSync(path.join(dir, 'src/server/a.js'), '// sneaky\n');
+  assert.strictEqual(audit().status, 2);
+  expectCode(() => deliver(store, 'delivery-lead'), 'DELIVERY_BLOCKED');
+});
+
+test('the final handoff lists every --actor user event as entered on the user\'s behalf', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  completePhase(ctx);
+  verify(ctx);
+  runs.recordRisk(ctx.store, 'delivery-lead', { id: 'RISK-12', title: 'Fallback recall below floor', severity: 'high' });
+  runs.recordRisk(ctx.store, 'user', { id: 'RISK-12', status: 'accepted' });
+  runs.recordDecision(ctx.store, 'user', { title: 'OPERATOR (not the human user): amend SC2', decision: 'Accept 0.571 recall on the holdout', rationale: 'Fallback is a labelled safety net' });
+  const res = deliver(ctx.store, 'delivery-lead');
+  const report = fs.readFileSync(path.join(ctx.dir, res.report), 'utf8');
+  assert.match(report, /## User decisions \(recorded with `--actor user`\)/);
+  assert.match(report, /not that a person typed it/);
+  assert.match(report, /`risk.recorded` RISK-12 accepted/);
+  assert.match(report, /`decision.recorded` OPERATOR \(not the human user\): amend SC2: Accept 0.571 recall/);
+});
+
+test('JSON inputs resolve from the project root as well as the cwd, and a missing file is a clean refusal', () => {
+  const ctx = tmpProject();
+  const { spawnSync } = require('child_process');
+  const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
+  write(ctx.dir, '.eccode/drafts/plan.json', JSON.stringify(require('./helpers').samplePlan()));
+  let res = spawnSync(process.execPath, [bin, '--root', ctx.dir, 'plan', 'validate', '.eccode/drafts/plan.json'], { encoding: 'utf8', cwd: require('os').tmpdir() });
+  assert.strictEqual(res.status, 0, res.stderr);
+  assert.match(res.stdout, /Plan valid/);
+  res = spawnSync(process.execPath, [bin, '--root', ctx.dir, 'plan', 'validate', 'nope.json'], { encoding: 'utf8' });
+  assert.strictEqual(res.status, 2);
+  assert.match(res.stderr, /\[NOT_FOUND\] File not found: nope.json/);
+  assert.doesNotMatch(res.stderr, /internal error/);
+  // Globs into .eccode/ are reported as warnings: they never grant ownership.
+  const plan = require('./helpers').samplePlan();
+  plan.tasks[0].files = ['.eccode/artifacts/report/**'];
+  write(ctx.dir, '.eccode/drafts/plan2.json', JSON.stringify(plan));
+  res = spawnSync(process.execPath, [bin, '--root', ctx.dir, 'plan', 'validate', '.eccode/drafts/plan2.json', '--json'], { encoding: 'utf8' });
+  assert.strictEqual(res.status, 0, res.stderr);
+  assert.match(JSON.parse(res.stdout).warnings.join('\n'), /api: ownership glob \.eccode\/artifacts\/report\/\*\* never grants ownership/);
+});

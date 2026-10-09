@@ -8,6 +8,9 @@
 - Evidence: install, gate challenge (R3), interrupt/resume (R5), Groundwork delivery with independent verification (R4a), learning (rounds 1 and 2), debugging lesson, self-improvement and rollback.
 - Toolkit defects found by this work and fixed with tests: lesson decisions at the plan, `/eccode:investigate` without a project, replaceable unreviewed submissions, reopen without waiving, audit of deletions by approved reworks.
 
+## Follow-up branch `claude/funny-feynman-rt1io9` (2026-10-09)
+- Starts from this branch's head. Adds: record-replay tests over all shipped records, audit "pending re-review" warnings, user decisions in the final handoff, JSON path resolution from the project root, plan-glob warnings. 144 tests. See `CHANGELOG.md` and `docs/final-report.md` §5.
+
 ## Not done
 - R7: the predeclared targets E1 (both rounds), E3 (round 2) and E4 (round 1) were not met.
 - (Closed after the first version of this file: Groundwork was delivered, audit OK, with disclosed operator interventions.)
