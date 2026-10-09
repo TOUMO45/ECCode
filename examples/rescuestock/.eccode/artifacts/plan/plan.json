@@ -133,7 +133,7 @@
         "src/db/connection.js, migrate.js, errors.js, migrations/001_core.sql .. 005_fake_paypal.sql",
         "src/http/* (server, router, body, envelope, cookies, headers incl. approvalPageCsp, static, request-id, validate)",
         "src/routes/index.js, health.js, config.js and empty route modules auth, requests, plans, orders, paypal, supplier, admin, webhooks",
-        "unit tests under test/unit/config, test/unit/db, test/unit/http, test/unit/seed"
+        "unit tests under test/unit/config, test/unit/db, test/unit/http, test/unit/seed, including at least test/unit/config/{hosts,secrets,node-version,limits}.test.js, test/unit/db/{migrate,triggers}.test.js, test/unit/http/headers.test.js and test/unit/seed/seed.test.js (named in the verification command)"
       ],
       "components": ["config", "db", "http", "seed", "node-gate"],
       "files": [
@@ -156,11 +156,13 @@
         "test/unit/seed/**"
       ],
       "acceptanceCriteria": [
+        ".gitignore covers data/, .env, reports/, test/.out/ and test/browser/out/ (runtime data and generated test output are never task changes)",
         "package.json exactly as spec Deployment: type module, private, MIT, engines.node >=22.13, no dependencies, devDependencies {@playwright/test: 1.56.1}, the scripts of Testing Strategy > Commands; every script that passes a flag to node starts with 'node scripts/check-node.cjs &&' (F-TR-4)",
         "scripts/check-node.cjs is CommonJS in ES5 syntax, flag-free, and prints 'RescueStock needs Node >= 22.13 (found X). See README.' and exits 1 on an older Node; src/index.js repeats the check before importing node:sqlite",
         "Migrations 001-005 reproduce the spec DDL verbatim (CHECKs, partial UNIQUE indexes, append-only triggers); migrate.js applies them in BEGIN IMMEDIATE with sha256 checksums, refuses a changed applied file, and a second process starting at the same time skips applied versions; every connection sets WAL, foreign_keys, busy_timeout from RS_DB_BUSY_TIMEOUT_MS by PRAGMA, synchronous NORMAL; db.tx refuses a returned promise and nested transactions; SQLITE_BUSY maps to 503 DB_BUSY with Retry-After 1",
         "Unit tests assert UPDATE and DELETE on audit_events and inventory_ledger fail (prerequisite of RS-38)",
         "config.js parses every variable of the Deployment env table plus RS_REGISTER_PER_IP_PER_HOUR (F-TR-17: integer, default 5, a value above 5 refused at startup unless RS_TEST_OFFLINE=1); secrets only from process.env wrapped in Secret; placeholder-shaped values (^<.*>$, changeme, password) refused naming the variable only, RS_ADMIN_PASSWORD >= 16, RS_DEMO_PASSWORD >= 12, RS_FAKE_WEBHOOK_SECRET >= 32 bytes (SEC-5); RS_SAGA_LEASE_MS >= 3 x RS_PAYPAL_TIMEOUT_MS; RS_PAYPAL_BASE_URL only https://api-m.sandbox.paypal.com and RS_ANTHROPIC_BASE_URL only https://api.anthropic.com, a loopback value only with RS_TEST_OFFLINE=1 (SEC-3, SEC-19) [test/unit/config/hosts.test.js, secrets.test.js, node-version.test.js]",
+        "F-TR-17 / F-PL-4: test/unit/config/limits.test.js has a case named 'F-TR-17: ...' asserting that RS_REGISTER_PER_IP_PER_HOUR defaults to 5, that 6 (or any value above 5) refuses startup naming the variable when RS_TEST_OFFLINE is unset, and that 1000 is accepted with RS_TEST_OFFLINE=1",
         "http: requestId on every response header and JSON body (accepted pattern or generated), fixed error envelope, JSON body cap 65,536 bytes, Host allow-list -> 421 MISDIRECTED_REQUEST (SEC-13), app security headers as spec Security, approvalPageCsp(appOrigin) exported from src/http/headers.js with the exact revision-3 string, no Access-Control-Allow-* header, static handler confined to public/ by realpath, server timeouts as spec",
         "log.js writes JSON lines with the field allow-list, truncation and control-character stripping, requestId on every line",
         "GET /api/health 200 {status: ok, requestId} and GET /api/config without any secret, client id or merchant id; main.js applies umask 077 and creates data/ and data/uploads/ with mode 0700 (SEC-14)",
@@ -168,8 +170,8 @@
         "Every test that proves a criterion or finding carries its id at the start of its name; tests open no non-loopback connection"
       ],
       "verification": {
-        "method": "unit tests for config, db, http and seed",
-        "command": "node --disable-warning=ExperimentalWarning --test \"test/unit/config/**/*.test.js\" \"test/unit/db/**/*.test.js\" \"test/unit/http/**/*.test.js\" \"test/unit/seed/**/*.test.js\"",
+        "method": "existence guard on this task's own test files (fails before the work), then the config, db, http and seed unit tests",
+        "command": "ls test/unit/config/hosts.test.js test/unit/config/secrets.test.js test/unit/config/node-version.test.js test/unit/config/limits.test.js test/unit/db/migrate.test.js test/unit/db/triggers.test.js test/unit/http/headers.test.js test/unit/seed/seed.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/config/**/*.test.js\" \"test/unit/db/**/*.test.js\" \"test/unit/http/**/*.test.js\" \"test/unit/seed/**/*.test.js\"",
         "cwd": "."
       }
     },
@@ -211,8 +213,8 @@
         "test/timing/planner-generator.test.js runs RS-FIX-1 and generator seeds 1-200 with the brief's parameters and asserts < 1 s each (NFR5 planner part)"
       ],
       "verification": {
-        "method": "domain unit, property and timing tests",
-        "command": "node --disable-warning=ExperimentalWarning --test \"test/unit/domain/**/*.test.js\" \"test/timing/**/*.test.js\"",
+        "method": "existence guard on this task's own test files, then the domain unit, property and timing tests",
+        "command": "ls test/unit/domain/planner-fixture.test.js test/unit/domain/planner-oracle.property.test.js test/unit/domain/states.test.js test/unit/domain/derive.test.js test/unit/domain/money.test.js test/unit/domain/time.test.js test/unit/domain/compat.test.js test/unit/domain/explain.test.js test/timing/planner-generator.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/domain/**/*.test.js\" \"test/timing/**/*.test.js\"",
         "cwd": "."
       }
     },
@@ -236,8 +238,8 @@
         "README.md documents npm install (npm registry only), npm run seed, npm start with the manual two-step start line, npm test, the Node >= 22.13 floor with the Q9 22.5 branch note, and the MIT licence; it names variables only, never values"
       ],
       "verification": {
-        "method": "env-example scan test",
-        "command": "node --test test/scan/env-example.test.js",
+        "method": "existence guard on this task's own files, then the env-example scan test",
+        "command": "ls .env.example README.md LICENSE test/scan/env-example.test.js >/dev/null && node --test test/scan/env-example.test.js",
         "cwd": "."
       }
     },
@@ -278,8 +280,8 @@
         "npm test passes offline with the net guard, launches no browser, and its output names each test with its criterion id"
       ],
       "verification": {
-        "method": "full offline suite plus the clean-checkout run (run with --timeout 1200)",
-        "command": "npm test && sh scripts/clean-checkout.sh",
+        "method": "existence guard on this task's own files, then the full offline suite (which runs them) and the clean-checkout run (run with --timeout 1800)",
+        "command": "ls test/helpers/net-guard.js test/helpers/node-proc.js test/helpers/server-proc.js test/helpers/app-harness.js test/unit/helpers/net-guard.test.js test/integration/start-health.test.js test/integration/start-old-node.test.js test/scan/package.test.js test/api/health-config.test.js scripts/report-p95.js scripts/clean-checkout.sh >/dev/null && npm test && sh scripts/clean-checkout.sh",
         "cwd": "."
       }
     },
@@ -317,7 +319,7 @@
       ],
       "verification": {
         "method": "auth API and unit tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/auth.test.js \"test/unit/auth/**/*.test.js\"",
+        "command": "ls test/api/auth.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/auth.test.js \"test/unit/auth/**/*.test.js\"",
         "cwd": "."
       }
     },
@@ -358,7 +360,7 @@
       ],
       "verification": {
         "method": "API tests for requests, plans, approval guards and derived status",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js",
+        "command": "ls test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js",
         "cwd": "."
       }
     },
@@ -408,7 +410,7 @@
       ],
       "verification": {
         "method": "API tests for reservations, limits, isolation, supplier orders, expiry and admin",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/reserve-idempotency.test.js test/api/abuse-limits.test.js test/api/isolation.test.js test/api/supplier-orders.test.js test/api/reservation-expiry.test.js test/api/admin-basic.test.js",
+        "command": "ls test/api/reserve-idempotency.test.js test/api/abuse-limits.test.js test/api/isolation.test.js test/api/supplier-orders.test.js test/api/reservation-expiry.test.js test/api/admin-basic.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/reserve-idempotency.test.js test/api/abuse-limits.test.js test/api/isolation.test.js test/api/supplier-orders.test.js test/api/reservation-expiry.test.js test/api/admin-basic.test.js",
         "cwd": "."
       }
     },
@@ -424,12 +426,13 @@
         ".eccode/artifacts/design/spec.md#security (Output encoding)",
         ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-33, RS-35, NFR2)"
       ],
-      "outputs": ["public/index.html, public/css/app.css, public/js/*, public/js/views/*, public/js/components/*", "test/fixtures/contracts/*.json (example responses for every route used)", "test/scan/frontend.test.js, test/unit/frontend/*"],
+      "outputs": ["public/index.html, public/css/app.css, public/js/*, public/js/views/*, public/js/components/*", "test/fixtures/contracts/*.json (example responses for every route used)", "test/scan/frontend.test.js, test/unit/frontend/format.test.js, test/unit/frontend/dashboards.test.js"],
       "components": ["frontend"],
       "files": [
         "public/**",
         "test/fixtures/contracts/**",
-        "test/unit/frontend/**",
+        "test/unit/frontend/format.test.js",
+        "test/unit/frontend/dashboards.test.js",
         "test/scan/frontend.test.js"
       ],
       "acceptanceCriteria": [
@@ -437,11 +440,11 @@
         "Request page sections 1-6 for the planning stages: status header with next step, 'What you need' with manual inputs for every core field, 'Why this plan' with trace comparisons, 'What was rejected' with blocking constraints, per-candidate codes and relaxation buttons, 'Total' from server cents with 'Test prices, not market prices', 'Supplier commitments' with Catalog offer and Supplier confirmed columns; Approve plan sends planHash and total; Reserve stores the Idempotency-Key in sessionStorage under reserve:<planVersionId>",
         "api.js adds X-CSRF-Token, parses the envelope, aborts at 15 s; states loading, empty, error (message + requestId + Retry) and timeout render; text status indicators, never color alone; data-testid hooks as listed in the spec",
         "DOM built with textContent and attribute setters only; test/scan/frontend.test.js asserts no innerHTML, no inline script or style attribute handlers, no secret-looking value in public/",
-        "test/fixtures/contracts/*.json hold example responses taken from the spec's contracts for every route the UI calls in this phase; format helpers tested in test/unit/frontend"
+        "test/fixtures/contracts/*.json hold example responses taken from the spec's contracts for every route the UI calls in this phase; format helpers tested in test/unit/frontend/format.test.js; dashboards.test.js checks the pure view-model functions of the request, supplier and admin views against the contract fixtures (section order, status text, relaxation buttons, Idempotency-Key reuse)"
       ],
       "verification": {
-        "method": "frontend scan and unit tests",
-        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "method": "existence guard on this task's own test files, then the frontend scan and all frontend unit tests",
+        "command": "ls test/scan/frontend.test.js test/unit/frontend/format.test.js test/unit/frontend/dashboards.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       }
     },
@@ -463,18 +466,20 @@
         "test/integration/rs14-two-process-reserve.test.js",
         "test/integration/rs14-db-busy.test.js",
         "test/api/contracts.test.js",
-        "test/browser/**"
+        "test/browser/helpers/**",
+        "test/browser/journey-infeasible.test.js"
       ],
       "acceptanceCriteria": [
         "RS-14 two-process reserve and DB_BUSY tests as in the spec, spawned through node-proc.js",
         "contracts.test.js drives a route table and checks status, envelope, requestId and success-body field types of every route present, against test/fixtures/contracts",
         "Browser harness: every test/browser file starts its own server through server-proc.js on a new temp database seeded with RS-FIX-1, RS_PUBLIC_URL on localhost, RS_TEST_OFFLINE=1, RS_REGISTER_PER_IP_PER_HOUR=1000, RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY=1000, RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER=1; each journey registers its own fresh customer (F-TR-15, F-TR-17); Playwright is loaded from the local @playwright/test or the global playwright and the run fails, never skips, when Chromium cannot launch",
         "RS-33 journey-infeasible at 360x800 and 1280x800 with screenshots in test/browser/out/ and a database check that no reservation, order or payment operation exists",
+        "Shared browser code (harness, sign-up helper, screenshot helper) lives in test/browser/helpers/ and is not named *.test.js",
         "npm test and npm run test:browser pass"
       ],
       "verification": {
-        "method": "full offline suite and browser suite (run with --timeout 1200)",
-        "command": "npm test && npm run test:browser",
+        "method": "existence guard on this task's own test files, then the full offline suite and the browser suite, whose globs run them (run with --timeout 1800)",
+        "command": "ls test/integration/rs14-two-process-reserve.test.js test/integration/rs14-db-busy.test.js test/api/contracts.test.js test/browser/journey-infeasible.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       }
     },
@@ -515,7 +520,7 @@
       ],
       "verification": {
         "method": "AI unit tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js",
+        "command": "ls test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js",
         "cwd": "."
       }
     },
@@ -557,7 +562,7 @@
       ],
       "verification": {
         "method": "adapter unit tests on transcript and loopback stub, fake-mode EXT-1 eval, live-runner refusal",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js",
+        "command": "ls test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js test/fixtures/extraction/manifest.json test/live/run-live-model.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js",
         "cwd": "."
       }
     },
@@ -605,7 +610,7 @@
       ],
       "verification": {
         "method": "extraction, upload, retention and model-gate API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
+        "command": "ls test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
         "cwd": "."
       }
     },
@@ -620,22 +625,25 @@
         ".eccode/artifacts/design/spec.md#shared-response-objects (FieldValue, Question, Extraction)",
         ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-03)"
       ],
-      "outputs": ["public/js/views/request-new.js, request-detail.js, components/fields-table.js, notice.js, badges.js updated", "test/fixtures/contracts for image, extract and confirm"],
+      "outputs": ["public/js/views/request-new.js, request-detail.js, components/fields-table.js, notice.js, badges.js updated", "test/fixtures/contracts for image, extract and confirm", "test/unit/frontend/extraction.test.js"],
       "components": ["frontend"],
       "files": [
         "public/**",
         "test/fixtures/contracts/**",
-        "test/unit/frontend/**",
+        "test/unit/frontend/format.test.js",
+        "test/unit/frontend/dashboards.test.js",
+        "test/unit/frontend/extraction.test.js",
         "test/scan/frontend.test.js"
       ],
       "acceptanceCriteria": [
         "#/requests/new: textarea dir=auto labelled 'Describe what you need, in Arabic or English', optional image input (png/jpeg/webp); submit creates, uploads, extracts",
         "'What you need' shows value, provenance badge ('From your text', 'From the photo', 'Entered by you', 'Not found'), original wording (dir=auto; image wording under 'Text read from the photo'), server-template questions; degraded state shows 'Automatic reading unavailable — please enter the details' with a manual input for every core field (data-testid degraded-notice); addressedToAssistant shows 'This request contains text addressed to an AI; it was ignored.'; a 'Simulated' extraction badge while the fake provider is active",
-        "textContent only (frontend scan passes); contract fixtures added for the new routes"
+        "textContent only (frontend scan passes); contract fixtures added for the new routes",
+        "test/unit/frontend/extraction.test.js checks the pure view-model of 'What you need' against the extraction fixtures: badge text per provenance, image wording label, degraded manual form with every core field, AI-addressed notice"
       ],
       "verification": {
-        "method": "frontend scan and unit tests",
-        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "method": "existence guard on this task's own test file, then the frontend scan and all frontend unit tests",
+        "command": "ls test/unit/frontend/extraction.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       }
     },
@@ -657,7 +665,8 @@
         "test/unit/ai/provider-contract.test.js",
         "test/scan/secrets.test.js",
         "test/api/contracts.test.js",
-        "test/browser/**"
+        "test/browser/helpers/**",
+        "test/browser/degraded-extraction.test.js"
       ],
       "acceptanceCriteria": [
         "provider-contract.test.js runs one shared suite against fake, CLI (stub binary replaying the transcript) and Anthropic (loopback stub): validated output, usage fields, each ProviderError code",
@@ -666,8 +675,8 @@
         "npm test and npm run test:browser pass"
       ],
       "verification": {
-        "method": "full offline suite and browser suite (run with --timeout 1200)",
-        "command": "npm test && npm run test:browser",
+        "method": "existence guard on this task's own test files, then the full offline suite and the browser suite, whose globs run them (run with --timeout 1800)",
+        "command": "ls test/unit/ai/provider-contract.test.js test/scan/secrets.test.js test/browser/degraded-extraction.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       }
     },
@@ -699,7 +708,7 @@
       ],
       "verification": {
         "method": "stub self-test under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/payments/paypal-stub.test.js",
+        "command": "ls test/unit/payments/provider-contract.js test/unit/payments/paypal-stub.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/payments/paypal-stub.test.js",
         "cwd": "."
       }
     },
@@ -738,7 +747,7 @@
       ],
       "verification": {
         "method": "payment adapter unit tests, shared contract suite on both adapters, listener header test",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test \"test/unit/payments/**/*.test.js\" test/api/fake-approval-headers.test.js",
+        "command": "ls test/unit/payments/fake.test.js test/unit/payments/sandbox.test.js test/unit/payments/merchants.test.js test/unit/payments/provider-contract.test.js test/api/fake-approval-headers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test \"test/unit/payments/**/*.test.js\" test/api/fake-approval-headers.test.js",
         "cwd": "."
       }
     },
@@ -785,7 +794,7 @@
       ],
       "verification": {
         "method": "payment-flow API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js test/api/isolation.test.js",
+        "command": "ls test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js test/api/isolation.test.js",
         "cwd": "."
       }
     },
@@ -812,7 +821,7 @@
       ],
       "verification": {
         "method": "webhook API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
+        "command": "ls test/api/webhooks.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
         "cwd": "."
       }
     },
@@ -852,7 +861,7 @@
       ],
       "verification": {
         "method": "saga and reconciler API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js",
+        "command": "ls test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js",
         "cwd": "."
       }
     },
@@ -867,23 +876,26 @@
         ".eccode/artifacts/design/spec.md#shared-response-objects (Payment, Order, Labels)",
         ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-18, RS-31, RS-34)"
       ],
-      "outputs": ["public/js/components/payments.js, commitments.js, status.js, banner.js; request-detail and supplier-orders views", "test/fixtures/contracts for payment routes"],
+      "outputs": ["public/js/components/payments.js, commitments.js, status.js, banner.js; request-detail and supplier-orders views", "test/fixtures/contracts for payment routes", "test/unit/frontend/payments.test.js"],
       "components": ["frontend"],
       "files": [
         "public/**",
         "test/fixtures/contracts/**",
-        "test/unit/frontend/**",
+        "test/unit/frontend/format.test.js",
+        "test/unit/frontend/dashboards.test.js",
+        "test/unit/frontend/payments.test.js",
         "test/scan/frontend.test.js"
       ],
       "acceptanceCriteria": [
         "'PayPal approvals: 1 of 2 — Supplier A — Approve with PayPal' with location.assign to the approval URL (no form post to another origin), badge 'Simulated' or 'PayPal Sandbox — no real money', single-credential notice 'All demo suppliers are paid to one Sandbox account'",
         "After a cancel: 'Try approval again' and 'Abandon purchase'; 'Complete purchase' when every supplier confirmed; 'Record receipt'; RESERVATION_LIMIT message with a link to the other request",
         "Orders of a non_executable plan read 'Cancelled — payment did not complete' with supplier actions hidden (F-TR-11); supplier view marks ready and records handover",
-        "poll.js refreshes every 2 s while the status is transient, backs off to 10 s after 2 min, pauses when hidden; textContent only; contract fixtures for the payment routes"
+        "poll.js refreshes every 2 s while the status is transient, backs off to 10 s after 2 min, pauses when hidden; textContent only; contract fixtures for the payment routes",
+        "test/unit/frontend/payments.test.js checks the pure payment view-model against the payment fixtures: approval counter text, badge per adapter, try-again/abandon after cancel, cancelled presentation with hidden supplier actions, poll interval schedule"
       ],
       "verification": {
-        "method": "frontend scan and unit tests",
-        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "method": "existence guard on this task's own test file, then the frontend scan and all frontend unit tests",
+        "command": "ls test/unit/frontend/payments.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       }
     },
@@ -904,7 +916,8 @@
         "test/helpers/**",
         "test/integration/rs20-two-process-execute.test.js",
         "test/api/contracts.test.js",
-        "test/browser/**",
+        "test/browser/helpers/**",
+        "test/browser/journey-happy.test.js",
         "test/live/paypal/**",
         "package.json"
       ],
@@ -912,11 +925,12 @@
         "RS-20 two processes x 5 concurrent execute: one claim, nine current-state answers, exactly N get_authorization + N capture calls in fake_paypal_calls and nothing else (F-TR-8), request ids so:<id>:capture:1",
         "RS-31(a) journey-happy at 360 and 1280 px with screenshots: app on http://localhost:<port>, fake approval page on http://127.0.0.1:<port2>; every 'Approve (simulated)' followed by waitForURL on the app origin, exactly one GET /api/paypal/return per approval with the session's user id in the server log, one Cancel landing on /api/paypal/cancel with the session, no 'Content Security Policy' console message (F-TR-14); the round-trip assertion is a shared helper reused in phases F and G",
         "LIVE-DEPENDENT: test/live/paypal/*.test.js cover RS-18, RS-19, RS-20, RS-23, RS-24 and journey-sandbox for RS-31(b)/RS-32(b) against the real Sandbox; they refuse (exit 2, named message) unless RS_LIVE_PAYPAL=1 and RS_PAYPAL_DEFAULT_CLIENT_ID, RS_PAYPAL_DEFAULT_CLIENT_SECRET, RS_PAYPAL_DEFAULT_WEBHOOK_ID (or per-supplier sets) are present; reports carry suite, provider and merchant mode; they are never run or reported as passed here (LIVE-P1, LIVE-P2); only the test:live-paypal line of package.json may change and it keeps the check-node prefix",
+        "The approval round-trip helper lives in test/browser/helpers/ so f4 and g3 reuse it",
         "npm test and npm run test:browser pass"
       ],
       "verification": {
-        "method": "full offline suite and browser suite (run with --timeout 1200)",
-        "command": "npm test && npm run test:browser",
+        "method": "existence guard on this task's own test files, then the full offline suite and the browser suite, whose globs run them (run with --timeout 1800)",
+        "command": "ls test/integration/rs20-two-process-execute.test.js test/browser/journey-happy.test.js test/live/paypal/journey-sandbox.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       }
     },
@@ -950,11 +964,12 @@
         "Supersession selection and effect exactly as the spec (price, prep fee, ready time, withdrawal, on_hand decrease; not after the affected supplier confirmed or the plan is executing; other customers' reservations never supersede); approved versions also get the void rule; messages 'Prices changed: review plan vN' or 'Review the new plan'",
         "Re-plan queue (F-TR-2): an entry is removed only with the new planning run or request deletion/archive; up to 3 recomputes on offers_hash change; failures back off with failed_drains and never drop the entry; after 5 failed drains the next step is REPLAN",
         "Supplier refusal before the claim: order refused, void rule (SUPPLIER_REFUSED), re-plan excluding that supplier; after the claim 409 ORDER_EXECUTED; the admin supplier_refusal and stock_depletion faults use the same services",
-        "RS-13, RS-15 (incl. expiry after the claim changing nothing and the exact message), RS-17 [D] tests named with their ids"
+        "RS-13, RS-15 (incl. expiry after the claim changing nothing and the exact message), RS-17 [D] tests named with their ids",
+        "F-PL-3 boundary (f1 runs beside f2): f1 changes no code in src/services/void-rule.js, reconciler.js, saga.js, calls.js, admin.js or src/routes/admin.js. It uses the void rule (complete since e2), the reconciler's expiry and re-plan-drain calls (wired by e4 to reservations.js and supersession.js) and the admin stock_depletion/supplier_refusal faults (c3, calling orders.js and supersession.js) as they are, and changes only the services it owns. If its tests show that one of those f2-owned files must change, f1 records the defect in its handoff and fails the task with that reason (task fail); it does not work around it. The orchestrator then re-sequences f1 after f2"
       ],
       "verification": {
-        "method": "supersession, refusal, expiry and re-plan API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/reservation-expiry.test.js test/api/replan-queue.test.js",
+        "method": "existence guard on this task's own test files, then the supersession, refusal, expiry and re-plan API tests under the net guard",
+        "command": "ls test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/replan-queue.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/reservation-expiry.test.js test/api/replan-queue.test.js",
         "cwd": "."
       }
     },
@@ -996,7 +1011,7 @@
       ],
       "verification": {
         "method": "compensation, admin and ledger API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js",
+        "command": "ls test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js",
         "cwd": "."
       }
     },
@@ -1011,22 +1026,26 @@
         ".eccode/artifacts/design/spec.md#shared-response-objects (RescueStatus, nextStep codes and sentences)",
         ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-13, RS-15, RS-17, RS-22, RS-32)"
       ],
-      "outputs": ["public/js/components/compensation.js and request-detail, supplier-orders, admin views", "test/fixtures/contracts for refusal, faults and compensation states"],
+      "outputs": ["public/js/components/compensation.js and request-detail, supplier-orders, admin views", "test/fixtures/contracts for refusal, faults and compensation states", "test/unit/frontend/recovery.test.js"],
       "components": ["frontend"],
       "files": [
         "public/**",
         "test/fixtures/contracts/**",
-        "test/unit/frontend/**",
+        "test/unit/frontend/format.test.js",
+        "test/unit/frontend/dashboards.test.js",
+        "test/unit/frontend/payments.test.js",
+        "test/unit/frontend/recovery.test.js",
         "test/scan/frontend.test.js"
       ],
       "acceptanceCriteria": [
         "'If something fails' lists per-order payment status text, voids and refunds outstanding with outcome, and the next step; replanning shows 'Finding a new plan with current stock…' and keeps polling; 'Prices changed: review plan vN', 'Review the new plan', 'Reservation expired — no money was taken; re-plan with current stock' with Re-plan, failed_needs_attention with 'Contact the organiser'",
         "Supplier refuse form (reason 1-300) and admin faults form (stock depletion, supplier refusal, refund order, fake PayPal and fake model faults, clear), reset with force and reason, timeline and metrics tables",
-        "textContent only; contract fixtures for the new states"
+        "textContent only; contract fixtures for the new states",
+        "test/unit/frontend/recovery.test.js checks the pure view-model of 'If something fails' and the status header against the recovery fixtures: the exact sentences, replanning polling, outstanding voids and refunds, next-step buttons"
       ],
       "verification": {
-        "method": "frontend scan and unit tests",
-        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "method": "existence guard on this task's own test file, then the frontend scan and all frontend unit tests",
+        "command": "ls test/unit/frontend/recovery.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       }
     },
@@ -1048,7 +1067,9 @@
         "test/integration/lease-takeover.test.js",
         "test/integration/return-crash.test.js",
         "test/api/contracts.test.js",
-        "test/browser/**"
+        "test/browser/helpers/**",
+        "test/browser/refusal.test.js",
+        "test/browser/journey-replacement.test.js"
       ],
       "acceptanceCriteria": [
         "RS-26: SIGKILL after the first capture, restart, lease expiry, reconciler completes, all rows preserved; lease-takeover variants A (freeze_after_capture_apply) and B (freeze_before_capture_apply) with SIGSTOP/SIGCONT, lease 1500 ms, timeout 500 ms, interval 200 ms: exactly one non-replayed capture per order and the plan executed (ARCH-26); return-crash (a), (b), (c) (F-TR-3)",
@@ -1056,8 +1077,8 @@
         "npm test and npm run test:browser pass"
       ],
       "verification": {
-        "method": "full offline suite and browser suite (run with --timeout 1200)",
-        "command": "npm test && npm run test:browser",
+        "method": "existence guard on this task's own test files, then the full offline suite and the browser suite, whose globs run them (run with --timeout 1800)",
+        "command": "ls test/integration/rs26-restart.test.js test/integration/lease-takeover.test.js test/integration/return-crash.test.js test/browser/refusal.test.js test/browser/journey-replacement.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       }
     },
@@ -1071,23 +1092,29 @@
         ".eccode/artifacts/design/spec.md#frontend (Accessibility, States, Labels, request page sections 1-8)",
         ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-34, RS-35, NFR2)"
       ],
-      "outputs": ["public/** final"],
+      "outputs": ["public/** final", "test/unit/frontend/a11y-labels.test.js"],
       "components": ["frontend"],
       "files": [
         "public/**",
         "test/fixtures/contracts/**",
-        "test/unit/frontend/**",
+        "test/unit/frontend/format.test.js",
+        "test/unit/frontend/dashboards.test.js",
+        "test/unit/frontend/extraction.test.js",
+        "test/unit/frontend/payments.test.js",
+        "test/unit/frontend/recovery.test.js",
+        "test/unit/frontend/a11y-labels.test.js",
         "test/scan/frontend.test.js"
       ],
       "acceptanceCriteria": [
         "Every control labelled, errors tied by aria-describedby, 3 px visible focus with >= 3:1 contrast, text contrast >= 4.5:1, skip link, focus to h1 on route change, announcements in #announcer, aria-disabled with a text reason, targets >= 44 px at 360 px, single column at 360 px with no horizontal scroll, two columns >= 1024 px",
         "Every data section renders loading, empty, error with Retry, timeout, expired-reservation, degraded-extraction and success states",
         "The request page answers the six questions in the spec's order with text from planner and derive codes",
-        "Persistent banners and badges for both adapters: 'Simulated payments and/or AI — nothing here is real', 'PayPal Sandbox — no real money' on every payment element, 'Demo data', 'Test prices, not market prices', single-credential notice, 'Test mode — local stubs, nothing is real' when labels.testMode"
+        "Persistent banners and badges for both adapters: 'Simulated payments and/or AI — nothing here is real', 'PayPal Sandbox — no real money' on every payment element, 'Demo data', 'Test prices, not market prices', single-credential notice, 'Test mode — local stubs, nothing is real' when labels.testMode",
+        "test/unit/frontend/a11y-labels.test.js checks the pure label and state view-models: banner and badge text for fake, Sandbox, single-credential and test mode from the Labels fixtures, every state rendered per section, and that every control descriptor carries a label"
       ],
       "verification": {
-        "method": "frontend scan and unit tests",
-        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "method": "existence guard on this task's own test file, then the frontend scan and all frontend unit tests",
+        "command": "ls test/unit/frontend/a11y-labels.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       }
     },
@@ -1119,35 +1146,48 @@
         "test/scan/docs.test.js asserts the README names every npm script, the start line, the playwright install line and the runbooks, and that docs contain no secret-looking value"
       ],
       "verification": {
-        "method": "docs and env-example scans",
-        "command": "node --test test/scan/docs.test.js test/scan/env-example.test.js",
+        "method": "existence guard on this task's own files, then the docs and env-example scans",
+        "command": "ls test/scan/docs.test.js docs/runbooks/live-model.md docs/runbooks/live-paypal.md >/dev/null && node --test test/scan/docs.test.js test/scan/env-example.test.js",
         "cwd": "."
       }
     },
     {
       "id": "g3-final-scans-browser",
       "phase": "g-release",
-      "title": "Final scans and browser checks: secrets over every artifact, labelling on both adapters, six answers, accessibility, live-suite refusal, SQL scan, performance report",
+      "title": "Final scans, browser checks and evidence table: secrets over every artifact, labelling on both adapters, six answers, accessibility, live-suite refusal, SQL scan, performance report, evidence table for all 45 criteria, final clean checkout",
       "owner": "test-engineer",
       "dependencies": ["g1-frontend-a11y-labels", "g2-docs-submission"],
       "inputs": [
-        ".eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria (RS-29, RS-34, RS-35, NFR2, NFR3, NFR5)",
+        ".eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria",
         ".eccode/artifacts/design/spec.md#testing-strategy (E2E, Timing)",
-        ".eccode/artifacts/architecture/brief.md#acceptance-criteria"
+        ".eccode/artifacts/design/spec.md#risks-touched-by-this-design (SEC-18)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria",
+        ".eccode/artifacts/architecture/brief.md#assumptions (A2, A4, A6), #open-questions (Q2, Q3, Q9)",
+        ".eccode/reviews/rev-mv1e1ohb-01183fe4.json (F-TR-18)",
+        ".eccode/artifacts/plan/plan.md (Live checks LIVE-M1, LIVE-P1, LIVE-P2)"
       ],
-      "outputs": ["test/scan/secrets.test.js (full), test/scan/sql.test.js, test/scan/live-refusal.test.js", "test/api/labelling.test.js", "test/browser/a11y-states.test.js, six-questions.test.js, labelling.test.js", "scripts/report-p95.js adjustments if needed"],
-      "components": ["test-infra", "browser", "security"],
+      "outputs": ["test/scan/secrets.test.js (full), test/scan/sql.test.js, test/scan/live-refusal.test.js", "test/api/labelling.test.js", "test/browser/a11y-states.test.js, six-questions.test.js, labelling.test.js", "scripts/report-p95.js adjustments if needed", "docs/evidence-table.md", "test/scan/evidence-table.test.js"],
+      "components": ["test-infra", "browser", "security", "docs", "verification"],
       "files": [
         "test/helpers/**",
         "test/scan/secrets.test.js",
         "test/scan/sql.test.js",
         "test/scan/live-refusal.test.js",
+        "test/scan/evidence-table.test.js",
         "test/api/labelling.test.js",
         "test/api/contracts.test.js",
-        "test/browser/**",
-        "scripts/report-p95.js"
+        "test/browser/helpers/**",
+        "test/browser/a11y-states.test.js",
+        "test/browser/six-questions.test.js",
+        "test/browser/labelling.test.js",
+        "scripts/report-p95.js",
+        "docs/evidence-table.md"
       ],
       "acceptanceCriteria": [
+        "Merged from the former g4 (F-PL-2): docs/evidence-table.md has one row per criterion RS-01..RS-39 and NFR1..NFR6 with suite tags, test files and names, and the ev: ids of the runs that prove it (the phase runs and this task's own runs before the final verification run)",
+        "Rows with live parts (RS-01, RS-02, RS-03, RS-05, NFR6 [LM]; RS-18, RS-19, RS-20, RS-23, RS-24 [LP]; RS-31(b), RS-32(b)) mark the live part Unverified with its blocker (LIVE-M1: A4/Q3; LIVE-P1/LIVE-P2: A6/Q2) and never claim a pass; RS-20/RS-26 Sandbox rows say they rest on the fake's model of PayPal until the live run (SEC-18); rows weakened by single-credential mode are labelled (A2); the NFR6 row states that the case runs with RS_MODEL_CUSTOMER_DAILY_SHARE=1 (F-TR-18); the RS-36 row names the derive.js inspection (F-TR-9); NFR1 notes that the 22.5 branch run is the user's (Q9)",
+        "test/scan/evidence-table.test.js asserts all 45 ids are present, every ev: id matches the record pattern, and every Unverified row names a blocker",
+        "scripts/clean-checkout.sh passes on the final tree",
         "RS-29: secrets.test.js scans public/ assets, recorded API responses, server logs, test/browser/out screenshots (text layer and file names), docs/submission and README for client ids, secrets and the planted test credentials; config errors are redacted",
         "RS-34 [D] labelling.test.js with both adapters (Sandbox adapter against paypal-stub only under RS_TEST_OFFLINE=1, asserting labels.testMode) and [B] labelling.test.js with both adapters",
         "RS-35 six-questions and NFR2 a11y-states (keyboard-only happy path with the approval round-trip helper, axe-free assertions on labels, focus, contrast tokens, target sizes, no horizontal scroll at 360 px, every state) at 360 and 1280 px",
@@ -1155,36 +1195,8 @@
         "npm test and npm run test:browser pass on the final tree"
       ],
       "verification": {
-        "method": "full offline suite and browser suite on the final tree (run with --timeout 1200)",
-        "command": "npm test && npm run test:browser",
-        "cwd": "."
-      }
-    },
-    {
-      "id": "g4-evidence-table",
-      "phase": "g-release",
-      "title": "Project evidence table for all 45 criteria with Unverified live rows, and the final clean-checkout run",
-      "owner": "test-engineer",
-      "dependencies": ["g3-final-scans-browser"],
-      "inputs": [
-        ".eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria",
-        ".eccode/artifacts/design/spec.md#risks-touched-by-this-design (SEC-18)",
-        ".eccode/artifacts/architecture/brief.md#assumptions (A2, A4, A6), #open-questions (Q2, Q3, Q9)",
-        ".eccode/reviews/rev-mv1e1ohb-01183fe4.json (F-TR-18)",
-        ".eccode/artifacts/plan/plan.md (Live checks LIVE-M1, LIVE-P1, LIVE-P2)"
-      ],
-      "outputs": ["docs/evidence-table.md", "test/scan/evidence-table.test.js"],
-      "components": ["docs", "verification"],
-      "files": ["docs/evidence-table.md", "test/scan/evidence-table.test.js"],
-      "acceptanceCriteria": [
-        "docs/evidence-table.md has one row per criterion RS-01..RS-39 and NFR1..NFR6 with suite tags, test files and names, and the ev: ids of the runs that prove it",
-        "Rows with live parts (RS-01, RS-02, RS-03, RS-05, NFR6 [LM]; RS-18, RS-19, RS-20, RS-23, RS-24 [LP]; RS-31(b), RS-32(b)) mark the live part Unverified with its blocker (LIVE-M1: A4/Q3; LIVE-P1/LIVE-P2: A6/Q2) and never claim a pass; RS-20/RS-26 Sandbox rows say they rest on the fake's model of PayPal until the live run (SEC-18); rows weakened by single-credential mode are labelled (A2); the NFR6 row states that the case runs with RS_MODEL_CUSTOMER_DAILY_SHARE=1 (F-TR-18); the RS-36 row names the derive.js inspection (F-TR-9); NFR1 notes that the 22.5 branch run is the user's (Q9)",
-        "test/scan/evidence-table.test.js asserts all 45 ids are present, every ev: id matches the record pattern, and every Unverified row names a blocker",
-        "scripts/clean-checkout.sh passes on the final tree"
-      ],
-      "verification": {
-        "method": "evidence-table scan and the final clean-checkout run (run with --timeout 1200)",
-        "command": "node --test test/scan/evidence-table.test.js && sh scripts/clean-checkout.sh",
+        "method": "existence guard on this task's own files, then the full offline suite and the browser suite on the final tree (whose globs run them) and the clean-checkout run (run with --timeout 2400)",
+        "command": "ls test/scan/sql.test.js test/scan/live-refusal.test.js test/scan/evidence-table.test.js test/api/labelling.test.js test/browser/a11y-states.test.js test/browser/six-questions.test.js test/browser/labelling.test.js docs/evidence-table.md >/dev/null && npm test && npm run test:browser && sh scripts/clean-checkout.sh",
         "cwd": "."
       }
     }

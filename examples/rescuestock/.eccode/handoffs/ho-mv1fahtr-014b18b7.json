@@ -1,0 +1,52 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "plan",
+  "objective": "Re-review of the RescueStock delivery plan, revision 2 (submission sub-mv1fa538-015d094f), which responds to review rev-mv1eznmd-01d2f5fe (F-PL-1 major; F-PL-2, F-PL-3 minor; F-PL-4 info).",
+  "context": "Revision 1 was sub-mv1eqk2q-01cc29a2. The phase split, criterion claims, live checks and the lesson decision are unchanged. The changes are listed in .eccode/artifacts/plan/revision-2-notes.md. One fact goes beyond the review's recommendation: on Node 22.22, node --test ignores a missing explicit file whenever any other pattern or file in the same command matches. Appending files (`npm test -- <file>`, `npm run test:browser -- <file>`) or listing a new file next to an old one would therefore still pre-pass (ev:ev-mv1f3hiv-01a9ae95). That is why every command now starts with an `ls` existence guard over files that only that task creates.",
+  "inputs": [
+    ".eccode/reviews/rev-mv1eznmd-01d2f5fe.json",
+    ".eccode/drafts/tr-plan-check.mjs",
+    ".eccode/drafts/tr-plan-probes.mjs",
+    ".eccode/drafts/plan-r2-cmd-probe.mjs",
+    ".eccode/drafts/plan-r2-guard-check.mjs",
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/artifacts/design/spec.md"
+  ],
+  "dependencies": [
+    "design"
+  ],
+  "expectedOutput": "A review of plan.json, plan.md and revision-2-notes.md covering phase:b-foundation .. phase:g-release and the lessons criterion.",
+  "acceptanceCriteria": [
+    "F-PL-1: tr-plan-check reports 0 pre-passing tasks and 0 hard problems; every command's ls guard lists only files the task creates first (plan-r2-guard-check 28/28)",
+    "F-PL-2: plan.md states that phase B waits for the recorded budget decision; g4 is merged into g3",
+    "F-PL-3: f1's acceptance criteria forbid changes to f2-owned files and say what happens if one is needed",
+    "F-PL-4: test/unit/config/limits.test.js with the 'F-TR-17: ...' case is in b1's guard"
+  ],
+  "completedWork": "Wrote an existence guard into every verification command and named per-task test files where commands used globs only. Narrowed the frontend unit-test ownership to per-phase files and the test-engineer browser ownership to own journeys plus test/browser/helpers/**. Added limits.test.js to b1 and the .gitignore coverage of test output. Merged g4 into g3. Added the f1 boundary criterion and the budget-decision precondition in plan.md. Probed node --test command shapes, wrote a stricter guard check, re-ran the reviewer's check and resubmitted with revision-2-notes.md.",
+  "filesChanged": [
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/plan/plan.md",
+    ".eccode/artifacts/plan/revision-2-notes.md",
+    ".eccode/drafts/plan-r2-cmd-probe.mjs",
+    ".eccode/drafts/plan-r2-guard-check.mjs",
+    ".eccode/drafts/probe-dedupe/t/a.test.js",
+    ".eccode/drafts/probe-dedupe/t/b.test.mjs"
+  ],
+  "evidence": [
+    "ev:ev-mv1f9xgc-01e839a6",
+    "ev:ev-mv1f9xrb-016eb638",
+    "ev:ev-mv1f9xxn-0119c41e",
+    "ev:ev-mv1f9y39-01a44448",
+    "ev:ev-mv1f3hiv-01a9ae95"
+  ],
+  "remainingIssues": [
+    "F-PL-2's budget decision (raise maxRuntimeMinutes or accept the descoping order) belongs to the user and must be recorded by the orchestrator before phase B starts",
+    "ev:ev-mv1f2j25-01e80d0f is a failed probe run of mine. My expectation was wrong: a missing explicit file next to a matching glob exits 0. That observation led to the ls guard; it is not a defect of the plan",
+    "Live checks LIVE-M1, LIVE-P1, LIVE-P2 and USER-Q9 stay Unverified until the user runs them; RISK-1 and RISK-2 stay open"
+  ],
+  "nextAction": "technical-reviewer re-reviews sub-mv1fa538-015d094f. After approval and the recorded budget decision, the orchestrator starts phase:b-foundation with b1 and b2 in parallel.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}

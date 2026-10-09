@@ -1,6 +1,6 @@
 {
-  "seq": 161,
-  "lastHash": "692e99e16c061c66d073d0813d6e033b826d7fc36b3ebc7d993f7905c5d93365",
+  "seq": 172,
+  "lastHash": "68efe0f41b3bba4d8b26d47d09181876402d971de44018860d8b86407bb45a77",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -142,7 +142,7 @@
     "plan": {
       "id": "plan",
       "kind": "plan",
-      "status": "changes_requested",
+      "status": "submitted",
       "iterations": 1,
       "authors": [
         "delivery-lead"
@@ -200,6 +200,72 @@
                 "g4-evidence-table"
               ],
               "matched": 34
+            }
+          ],
+          "lessonDecisions": [
+            {
+              "id": "mem-sd-mv1audrd-013b7102",
+              "decision": "not-applicable",
+              "note": "Assessed does-not-apply by delivery-lead with ev:ev-mv1eo87o-01c933d5. The lesson is about a PreToolUse guard that resolves the project root from the harness directory; no task in this plan builds a hook or guard mapping writes to a record (the approved brief and spec name no such component), and the guard that governs this nested record is already the repaired version the lesson names (sha256 d43f4b54..., per-target fileRoot). It matches every task only through shared project words. Operational consequence kept in the plan anyway: every ownership glob is relative to examples/rescuestock and no glob names .eccode/, .claude/ or hooks.",
+              "basis": "assessment"
+            }
+          ]
+        },
+        {
+          "id": "sub-mv1fa538-015d094f",
+          "actor": "delivery-lead",
+          "at": "2026-10-09T20:33:16.101Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/plan/plan.json",
+              "sha256": "f24269c89cdad0cfdf7a2f49c98869b6de1f0f6d31b10a9cf8c9972d49e0e8ba"
+            },
+            {
+              "path": ".eccode/artifacts/plan/plan.md",
+              "sha256": "b40a111238e08301abb716b8b2d88c99be5354d630862a329e1494135e1fec76"
+            },
+            {
+              "path": ".eccode/artifacts/plan/revision-2-notes.md",
+              "sha256": "65192cb3c9aea8245d831bb0a511a3ef5bb782d2096521f69ea3d697e3f44b64"
+            }
+          ],
+          "respondsTo": "rev-mv1eznmd-01d2f5fe",
+          "notes": "Revision 2 for rev-mv1eznmd-01d2f5fe. F-PL-1: every command starts with an ls existence guard over files only that task creates first (node --test ignores missing explicit files when anything else matches: ev:ev-mv1f3hiv-01a9ae95); tr-plan-check 0 pre-passing, 0 hard (ev:ev-mv1f9xrb-016eb638); guard check 28/28 (ev:ev-mv1f9xxn-0119c41e). F-PL-2: phase B waits for the recorded budget decision; g4 merged into g3 (28 tasks). F-PL-3: f1 changes no f2-owned file, fails and is re-sequenced if it must. F-PL-4: test/unit/config/limits.test.js in b1's guard. plan validate clean (ev:ev-mv1f9xgc-01e839a6); coverage 45/45 (ev:ev-mv1f9y39-01a44448).",
+          "lessons": [
+            {
+              "id": "mem-sd-mv1audrd-013b7102",
+              "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record",
+              "tasks": [
+                "b1-foundation-core",
+                "b2-domain",
+                "b4-env-readme",
+                "b3-test-harness",
+                "c1-auth-rbac",
+                "c2-requests-plans-view",
+                "c3-reservations-supplier-admin",
+                "c5-frontend-dashboards",
+                "c6-reserve-concurrency-browser",
+                "d1-ai-core",
+                "d2-ai-adapters-corpus",
+                "d3-extraction-service",
+                "d4-frontend-extraction",
+                "d5-extraction-contract-browser",
+                "e0-paypal-stub-contract",
+                "e1-payment-adapters",
+                "e2-payment-flow",
+                "e3-webhooks",
+                "e4-saga-reconciler",
+                "e5-frontend-payments",
+                "e6-execute-concurrency-browser",
+                "f1-supersession-refusal-expiry",
+                "f2-compensation-takeover-admin",
+                "f3-frontend-recovery",
+                "f4-restart-takeover-browser",
+                "g1-frontend-a11y-labels",
+                "g2-docs-submission",
+                "g3-final-scans-browser"
+              ],
+              "matched": 37
             }
           ],
           "lessonDecisions": [
@@ -449,10 +515,10 @@
         ]
       }
     ],
-    "importedAt": "2026-10-09T20:18:02.426Z",
+    "importedAt": "2026-10-09T20:33:16.132Z",
     "importedBy": "delivery-lead",
     "source": ".eccode/artifacts/plan/plan.json",
-    "submissionId": "sub-mv1eqk2q-01cc29a2",
+    "submissionId": "sub-mv1fa538-015d094f",
     "lessonDecisions": [
       {
         "id": "mem-sd-mv1audrd-013b7102",
@@ -484,7 +550,7 @@
         "src/db/connection.js, migrate.js, errors.js, migrations/001_core.sql .. 005_fake_paypal.sql",
         "src/http/* (server, router, body, envelope, cookies, headers incl. approvalPageCsp, static, request-id, validate)",
         "src/routes/index.js, health.js, config.js and empty route modules auth, requests, plans, orders, paypal, supplier, admin, webhooks",
-        "unit tests under test/unit/config, test/unit/db, test/unit/http, test/unit/seed"
+        "unit tests under test/unit/config, test/unit/db, test/unit/http, test/unit/seed, including at least test/unit/config/{hosts,secrets,node-version,limits}.test.js, test/unit/db/{migrate,triggers}.test.js, test/unit/http/headers.test.js and test/unit/seed/seed.test.js (named in the verification command)"
       ],
       "components": [
         "config",
@@ -513,11 +579,13 @@
         "test/unit/seed/**"
       ],
       "acceptanceCriteria": [
+        ".gitignore covers data/, .env, reports/, test/.out/ and test/browser/out/ (runtime data and generated test output are never task changes)",
         "package.json exactly as spec Deployment: type module, private, MIT, engines.node >=22.13, no dependencies, devDependencies {@playwright/test: 1.56.1}, the scripts of Testing Strategy > Commands; every script that passes a flag to node starts with 'node scripts/check-node.cjs &&' (F-TR-4)",
         "scripts/check-node.cjs is CommonJS in ES5 syntax, flag-free, and prints 'RescueStock needs Node >= 22.13 (found X). See README.' and exits 1 on an older Node; src/index.js repeats the check before importing node:sqlite",
         "Migrations 001-005 reproduce the spec DDL verbatim (CHECKs, partial UNIQUE indexes, append-only triggers); migrate.js applies them in BEGIN IMMEDIATE with sha256 checksums, refuses a changed applied file, and a second process starting at the same time skips applied versions; every connection sets WAL, foreign_keys, busy_timeout from RS_DB_BUSY_TIMEOUT_MS by PRAGMA, synchronous NORMAL; db.tx refuses a returned promise and nested transactions; SQLITE_BUSY maps to 503 DB_BUSY with Retry-After 1",
         "Unit tests assert UPDATE and DELETE on audit_events and inventory_ledger fail (prerequisite of RS-38)",
         "config.js parses every variable of the Deployment env table plus RS_REGISTER_PER_IP_PER_HOUR (F-TR-17: integer, default 5, a value above 5 refused at startup unless RS_TEST_OFFLINE=1); secrets only from process.env wrapped in Secret; placeholder-shaped values (^<.*>$, changeme, password) refused naming the variable only, RS_ADMIN_PASSWORD >= 16, RS_DEMO_PASSWORD >= 12, RS_FAKE_WEBHOOK_SECRET >= 32 bytes (SEC-5); RS_SAGA_LEASE_MS >= 3 x RS_PAYPAL_TIMEOUT_MS; RS_PAYPAL_BASE_URL only https://api-m.sandbox.paypal.com and RS_ANTHROPIC_BASE_URL only https://api.anthropic.com, a loopback value only with RS_TEST_OFFLINE=1 (SEC-3, SEC-19) [test/unit/config/hosts.test.js, secrets.test.js, node-version.test.js]",
+        "F-TR-17 / F-PL-4: test/unit/config/limits.test.js has a case named 'F-TR-17: ...' asserting that RS_REGISTER_PER_IP_PER_HOUR defaults to 5, that 6 (or any value above 5) refuses startup naming the variable when RS_TEST_OFFLINE is unset, and that 1000 is accepted with RS_TEST_OFFLINE=1",
         "http: requestId on every response header and JSON body (accepted pattern or generated), fixed error envelope, JSON body cap 65,536 bytes, Host allow-list -> 421 MISDIRECTED_REQUEST (SEC-13), app security headers as spec Security, approvalPageCsp(appOrigin) exported from src/http/headers.js with the exact revision-3 string, no Access-Control-Allow-* header, static handler confined to public/ by realpath, server timeouts as spec",
         "log.js writes JSON lines with the field allow-list, truncation and control-character stripping, requestId on every line",
         "GET /api/health 200 {status: ok, requestId} and GET /api/config without any secret, client id or merchant id; main.js applies umask 077 and creates data/ and data/uploads/ with mode 0700 (SEC-14)",
@@ -525,8 +593,8 @@
         "Every test that proves a criterion or finding carries its id at the start of its name; tests open no non-loopback connection"
       ],
       "verification": {
-        "method": "unit tests for config, db, http and seed",
-        "command": "node --disable-warning=ExperimentalWarning --test \"test/unit/config/**/*.test.js\" \"test/unit/db/**/*.test.js\" \"test/unit/http/**/*.test.js\" \"test/unit/seed/**/*.test.js\"",
+        "method": "existence guard on this task's own test files (fails before the work), then the config, db, http and seed unit tests",
+        "command": "ls test/unit/config/hosts.test.js test/unit/config/secrets.test.js test/unit/config/node-version.test.js test/unit/config/limits.test.js test/unit/db/migrate.test.js test/unit/db/triggers.test.js test/unit/http/headers.test.js test/unit/seed/seed.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/config/**/*.test.js\" \"test/unit/db/**/*.test.js\" \"test/unit/http/**/*.test.js\" \"test/unit/seed/**/*.test.js\"",
         "cwd": "."
       },
       "status": "pending",
@@ -579,8 +647,8 @@
         "test/timing/planner-generator.test.js runs RS-FIX-1 and generator seeds 1-200 with the brief's parameters and asserts < 1 s each (NFR5 planner part)"
       ],
       "verification": {
-        "method": "domain unit, property and timing tests",
-        "command": "node --disable-warning=ExperimentalWarning --test \"test/unit/domain/**/*.test.js\" \"test/timing/**/*.test.js\"",
+        "method": "existence guard on this task's own test files, then the domain unit, property and timing tests",
+        "command": "ls test/unit/domain/planner-fixture.test.js test/unit/domain/planner-oracle.property.test.js test/unit/domain/states.test.js test/unit/domain/derive.test.js test/unit/domain/money.test.js test/unit/domain/time.test.js test/unit/domain/compat.test.js test/unit/domain/explain.test.js test/timing/planner-generator.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/domain/**/*.test.js\" \"test/timing/**/*.test.js\"",
         "cwd": "."
       },
       "status": "pending",
@@ -625,8 +693,8 @@
         "README.md documents npm install (npm registry only), npm run seed, npm start with the manual two-step start line, npm test, the Node >= 22.13 floor with the Q9 22.5 branch note, and the MIT licence; it names variables only, never values"
       ],
       "verification": {
-        "method": "env-example scan test",
-        "command": "node --test test/scan/env-example.test.js",
+        "method": "existence guard on this task's own files, then the env-example scan test",
+        "command": "ls .env.example README.md LICENSE test/scan/env-example.test.js >/dev/null && node --test test/scan/env-example.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -679,8 +747,8 @@
         "npm test passes offline with the net guard, launches no browser, and its output names each test with its criterion id"
       ],
       "verification": {
-        "method": "full offline suite plus the clean-checkout run (run with --timeout 1200)",
-        "command": "npm test && sh scripts/clean-checkout.sh",
+        "method": "existence guard on this task's own files, then the full offline suite (which runs them) and the clean-checkout run (run with --timeout 1800)",
+        "command": "ls test/helpers/net-guard.js test/helpers/node-proc.js test/helpers/server-proc.js test/helpers/app-harness.js test/unit/helpers/net-guard.test.js test/integration/start-health.test.js test/integration/start-old-node.test.js test/scan/package.test.js test/api/health-config.test.js scripts/report-p95.js scripts/clean-checkout.sh >/dev/null && npm test && sh scripts/clean-checkout.sh",
         "cwd": "."
       },
       "status": "pending",
@@ -734,7 +802,7 @@
       ],
       "verification": {
         "method": "auth API and unit tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/auth.test.js \"test/unit/auth/**/*.test.js\"",
+        "command": "ls test/api/auth.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/auth.test.js \"test/unit/auth/**/*.test.js\"",
         "cwd": "."
       },
       "status": "pending",
@@ -792,7 +860,7 @@
       ],
       "verification": {
         "method": "API tests for requests, plans, approval guards and derived status",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js",
+        "command": "ls test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -859,7 +927,7 @@
       ],
       "verification": {
         "method": "API tests for reservations, limits, isolation, supplier orders, expiry and admin",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/reserve-idempotency.test.js test/api/abuse-limits.test.js test/api/isolation.test.js test/api/supplier-orders.test.js test/api/reservation-expiry.test.js test/api/admin-basic.test.js",
+        "command": "ls test/api/reserve-idempotency.test.js test/api/abuse-limits.test.js test/api/isolation.test.js test/api/supplier-orders.test.js test/api/reservation-expiry.test.js test/api/admin-basic.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/reserve-idempotency.test.js test/api/abuse-limits.test.js test/api/isolation.test.js test/api/supplier-orders.test.js test/api/reservation-expiry.test.js test/api/admin-basic.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -884,7 +952,7 @@
       "outputs": [
         "public/index.html, public/css/app.css, public/js/*, public/js/views/*, public/js/components/*",
         "test/fixtures/contracts/*.json (example responses for every route used)",
-        "test/scan/frontend.test.js, test/unit/frontend/*"
+        "test/scan/frontend.test.js, test/unit/frontend/format.test.js, test/unit/frontend/dashboards.test.js"
       ],
       "components": [
         "frontend"
@@ -892,7 +960,8 @@
       "files": [
         "public/**",
         "test/fixtures/contracts/**",
-        "test/unit/frontend/**",
+        "test/unit/frontend/format.test.js",
+        "test/unit/frontend/dashboards.test.js",
         "test/scan/frontend.test.js"
       ],
       "acceptanceCriteria": [
@@ -900,11 +969,11 @@
         "Request page sections 1-6 for the planning stages: status header with next step, 'What you need' with manual inputs for every core field, 'Why this plan' with trace comparisons, 'What was rejected' with blocking constraints, per-candidate codes and relaxation buttons, 'Total' from server cents with 'Test prices, not market prices', 'Supplier commitments' with Catalog offer and Supplier confirmed columns; Approve plan sends planHash and total; Reserve stores the Idempotency-Key in sessionStorage under reserve:<planVersionId>",
         "api.js adds X-CSRF-Token, parses the envelope, aborts at 15 s; states loading, empty, error (message + requestId + Retry) and timeout render; text status indicators, never color alone; data-testid hooks as listed in the spec",
         "DOM built with textContent and attribute setters only; test/scan/frontend.test.js asserts no innerHTML, no inline script or style attribute handlers, no secret-looking value in public/",
-        "test/fixtures/contracts/*.json hold example responses taken from the spec's contracts for every route the UI calls in this phase; format helpers tested in test/unit/frontend"
+        "test/fixtures/contracts/*.json hold example responses taken from the spec's contracts for every route the UI calls in this phase; format helpers tested in test/unit/frontend/format.test.js; dashboards.test.js checks the pure view-model functions of the request, supplier and admin views against the contract fixtures (section order, status text, relaxation buttons, Idempotency-Key reuse)"
       ],
       "verification": {
-        "method": "frontend scan and unit tests",
-        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "method": "existence guard on this task's own test files, then the frontend scan and all frontend unit tests",
+        "command": "ls test/scan/frontend.test.js test/unit/frontend/format.test.js test/unit/frontend/dashboards.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
       "status": "pending",
@@ -943,18 +1012,20 @@
         "test/integration/rs14-two-process-reserve.test.js",
         "test/integration/rs14-db-busy.test.js",
         "test/api/contracts.test.js",
-        "test/browser/**"
+        "test/browser/helpers/**",
+        "test/browser/journey-infeasible.test.js"
       ],
       "acceptanceCriteria": [
         "RS-14 two-process reserve and DB_BUSY tests as in the spec, spawned through node-proc.js",
         "contracts.test.js drives a route table and checks status, envelope, requestId and success-body field types of every route present, against test/fixtures/contracts",
         "Browser harness: every test/browser file starts its own server through server-proc.js on a new temp database seeded with RS-FIX-1, RS_PUBLIC_URL on localhost, RS_TEST_OFFLINE=1, RS_REGISTER_PER_IP_PER_HOUR=1000, RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY=1000, RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER=1; each journey registers its own fresh customer (F-TR-15, F-TR-17); Playwright is loaded from the local @playwright/test or the global playwright and the run fails, never skips, when Chromium cannot launch",
         "RS-33 journey-infeasible at 360x800 and 1280x800 with screenshots in test/browser/out/ and a database check that no reservation, order or payment operation exists",
+        "Shared browser code (harness, sign-up helper, screenshot helper) lives in test/browser/helpers/ and is not named *.test.js",
         "npm test and npm run test:browser pass"
       ],
       "verification": {
-        "method": "full offline suite and browser suite (run with --timeout 1200)",
-        "command": "npm test && npm run test:browser",
+        "method": "existence guard on this task's own test files, then the full offline suite and the browser suite, whose globs run them (run with --timeout 1800)",
+        "command": "ls test/integration/rs14-two-process-reserve.test.js test/integration/rs14-db-busy.test.js test/api/contracts.test.js test/browser/journey-infeasible.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       },
       "status": "pending",
@@ -1008,7 +1079,7 @@
       ],
       "verification": {
         "method": "AI unit tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js",
+        "command": "ls test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1068,7 +1139,7 @@
       ],
       "verification": {
         "method": "adapter unit tests on transcript and loopback stub, fake-mode EXT-1 eval, live-runner refusal",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js",
+        "command": "ls test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js test/fixtures/extraction/manifest.json test/live/run-live-model.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1132,7 +1203,7 @@
       ],
       "verification": {
         "method": "extraction, upload, retention and model-gate API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
+        "command": "ls test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1155,7 +1226,8 @@
       ],
       "outputs": [
         "public/js/views/request-new.js, request-detail.js, components/fields-table.js, notice.js, badges.js updated",
-        "test/fixtures/contracts for image, extract and confirm"
+        "test/fixtures/contracts for image, extract and confirm",
+        "test/unit/frontend/extraction.test.js"
       ],
       "components": [
         "frontend"
@@ -1163,17 +1235,20 @@
       "files": [
         "public/**",
         "test/fixtures/contracts/**",
-        "test/unit/frontend/**",
+        "test/unit/frontend/format.test.js",
+        "test/unit/frontend/dashboards.test.js",
+        "test/unit/frontend/extraction.test.js",
         "test/scan/frontend.test.js"
       ],
       "acceptanceCriteria": [
         "#/requests/new: textarea dir=auto labelled 'Describe what you need, in Arabic or English', optional image input (png/jpeg/webp); submit creates, uploads, extracts",
         "'What you need' shows value, provenance badge ('From your text', 'From the photo', 'Entered by you', 'Not found'), original wording (dir=auto; image wording under 'Text read from the photo'), server-template questions; degraded state shows 'Automatic reading unavailable — please enter the details' with a manual input for every core field (data-testid degraded-notice); addressedToAssistant shows 'This request contains text addressed to an AI; it was ignored.'; a 'Simulated' extraction badge while the fake provider is active",
-        "textContent only (frontend scan passes); contract fixtures added for the new routes"
+        "textContent only (frontend scan passes); contract fixtures added for the new routes",
+        "test/unit/frontend/extraction.test.js checks the pure view-model of 'What you need' against the extraction fixtures: badge text per provenance, image wording label, degraded manual form with every core field, AI-addressed notice"
       ],
       "verification": {
-        "method": "frontend scan and unit tests",
-        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "method": "existence guard on this task's own test file, then the frontend scan and all frontend unit tests",
+        "command": "ls test/unit/frontend/extraction.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
       "status": "pending",
@@ -1214,7 +1289,8 @@
         "test/unit/ai/provider-contract.test.js",
         "test/scan/secrets.test.js",
         "test/api/contracts.test.js",
-        "test/browser/**"
+        "test/browser/helpers/**",
+        "test/browser/degraded-extraction.test.js"
       ],
       "acceptanceCriteria": [
         "provider-contract.test.js runs one shared suite against fake, CLI (stub binary replaying the transcript) and Anthropic (loopback stub): validated output, usage fields, each ProviderError code",
@@ -1223,8 +1299,8 @@
         "npm test and npm run test:browser pass"
       ],
       "verification": {
-        "method": "full offline suite and browser suite (run with --timeout 1200)",
-        "command": "npm test && npm run test:browser",
+        "method": "existence guard on this task's own test files, then the full offline suite and the browser suite, whose globs run them (run with --timeout 1800)",
+        "command": "ls test/unit/ai/provider-contract.test.js test/scan/secrets.test.js test/browser/degraded-extraction.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       },
       "status": "pending",
@@ -1272,7 +1348,7 @@
       ],
       "verification": {
         "method": "stub self-test under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/payments/paypal-stub.test.js",
+        "command": "ls test/unit/payments/provider-contract.js test/unit/payments/paypal-stub.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/payments/paypal-stub.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1325,7 +1401,7 @@
       ],
       "verification": {
         "method": "payment adapter unit tests, shared contract suite on both adapters, listener header test",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test \"test/unit/payments/**/*.test.js\" test/api/fake-approval-headers.test.js",
+        "command": "ls test/unit/payments/fake.test.js test/unit/payments/sandbox.test.js test/unit/payments/merchants.test.js test/unit/payments/provider-contract.test.js test/api/fake-approval-headers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test \"test/unit/payments/**/*.test.js\" test/api/fake-approval-headers.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1387,7 +1463,7 @@
       ],
       "verification": {
         "method": "payment-flow API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js test/api/isolation.test.js",
+        "command": "ls test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js test/api/isolation.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1432,7 +1508,7 @@
       ],
       "verification": {
         "method": "webhook API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
+        "command": "ls test/api/webhooks.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1488,7 +1564,7 @@
       ],
       "verification": {
         "method": "saga and reconciler API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js",
+        "command": "ls test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1511,7 +1587,8 @@
       ],
       "outputs": [
         "public/js/components/payments.js, commitments.js, status.js, banner.js; request-detail and supplier-orders views",
-        "test/fixtures/contracts for payment routes"
+        "test/fixtures/contracts for payment routes",
+        "test/unit/frontend/payments.test.js"
       ],
       "components": [
         "frontend"
@@ -1519,18 +1596,21 @@
       "files": [
         "public/**",
         "test/fixtures/contracts/**",
-        "test/unit/frontend/**",
+        "test/unit/frontend/format.test.js",
+        "test/unit/frontend/dashboards.test.js",
+        "test/unit/frontend/payments.test.js",
         "test/scan/frontend.test.js"
       ],
       "acceptanceCriteria": [
         "'PayPal approvals: 1 of 2 — Supplier A — Approve with PayPal' with location.assign to the approval URL (no form post to another origin), badge 'Simulated' or 'PayPal Sandbox — no real money', single-credential notice 'All demo suppliers are paid to one Sandbox account'",
         "After a cancel: 'Try approval again' and 'Abandon purchase'; 'Complete purchase' when every supplier confirmed; 'Record receipt'; RESERVATION_LIMIT message with a link to the other request",
         "Orders of a non_executable plan read 'Cancelled — payment did not complete' with supplier actions hidden (F-TR-11); supplier view marks ready and records handover",
-        "poll.js refreshes every 2 s while the status is transient, backs off to 10 s after 2 min, pauses when hidden; textContent only; contract fixtures for the payment routes"
+        "poll.js refreshes every 2 s while the status is transient, backs off to 10 s after 2 min, pauses when hidden; textContent only; contract fixtures for the payment routes",
+        "test/unit/frontend/payments.test.js checks the pure payment view-model against the payment fixtures: approval counter text, badge per adapter, try-again/abandon after cancel, cancelled presentation with hidden supplier actions, poll interval schedule"
       ],
       "verification": {
-        "method": "frontend scan and unit tests",
-        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "method": "existence guard on this task's own test file, then the frontend scan and all frontend unit tests",
+        "command": "ls test/unit/frontend/payments.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
       "status": "pending",
@@ -1570,7 +1650,8 @@
         "test/helpers/**",
         "test/integration/rs20-two-process-execute.test.js",
         "test/api/contracts.test.js",
-        "test/browser/**",
+        "test/browser/helpers/**",
+        "test/browser/journey-happy.test.js",
         "test/live/paypal/**",
         "package.json"
       ],
@@ -1578,11 +1659,12 @@
         "RS-20 two processes x 5 concurrent execute: one claim, nine current-state answers, exactly N get_authorization + N capture calls in fake_paypal_calls and nothing else (F-TR-8), request ids so:<id>:capture:1",
         "RS-31(a) journey-happy at 360 and 1280 px with screenshots: app on http://localhost:<port>, fake approval page on http://127.0.0.1:<port2>; every 'Approve (simulated)' followed by waitForURL on the app origin, exactly one GET /api/paypal/return per approval with the session's user id in the server log, one Cancel landing on /api/paypal/cancel with the session, no 'Content Security Policy' console message (F-TR-14); the round-trip assertion is a shared helper reused in phases F and G",
         "LIVE-DEPENDENT: test/live/paypal/*.test.js cover RS-18, RS-19, RS-20, RS-23, RS-24 and journey-sandbox for RS-31(b)/RS-32(b) against the real Sandbox; they refuse (exit 2, named message) unless RS_LIVE_PAYPAL=1 and RS_PAYPAL_DEFAULT_CLIENT_ID, RS_PAYPAL_DEFAULT_CLIENT_SECRET, RS_PAYPAL_DEFAULT_WEBHOOK_ID (or per-supplier sets) are present; reports carry suite, provider and merchant mode; they are never run or reported as passed here (LIVE-P1, LIVE-P2); only the test:live-paypal line of package.json may change and it keeps the check-node prefix",
+        "The approval round-trip helper lives in test/browser/helpers/ so f4 and g3 reuse it",
         "npm test and npm run test:browser pass"
       ],
       "verification": {
-        "method": "full offline suite and browser suite (run with --timeout 1200)",
-        "command": "npm test && npm run test:browser",
+        "method": "existence guard on this task's own test files, then the full offline suite and the browser suite, whose globs run them (run with --timeout 1800)",
+        "command": "ls test/integration/rs20-two-process-execute.test.js test/browser/journey-happy.test.js test/live/paypal/journey-sandbox.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       },
       "status": "pending",
@@ -1632,11 +1714,12 @@
         "Supersession selection and effect exactly as the spec (price, prep fee, ready time, withdrawal, on_hand decrease; not after the affected supplier confirmed or the plan is executing; other customers' reservations never supersede); approved versions also get the void rule; messages 'Prices changed: review plan vN' or 'Review the new plan'",
         "Re-plan queue (F-TR-2): an entry is removed only with the new planning run or request deletion/archive; up to 3 recomputes on offers_hash change; failures back off with failed_drains and never drop the entry; after 5 failed drains the next step is REPLAN",
         "Supplier refusal before the claim: order refused, void rule (SUPPLIER_REFUSED), re-plan excluding that supplier; after the claim 409 ORDER_EXECUTED; the admin supplier_refusal and stock_depletion faults use the same services",
-        "RS-13, RS-15 (incl. expiry after the claim changing nothing and the exact message), RS-17 [D] tests named with their ids"
+        "RS-13, RS-15 (incl. expiry after the claim changing nothing and the exact message), RS-17 [D] tests named with their ids",
+        "F-PL-3 boundary (f1 runs beside f2): f1 changes no code in src/services/void-rule.js, reconciler.js, saga.js, calls.js, admin.js or src/routes/admin.js. It uses the void rule (complete since e2), the reconciler's expiry and re-plan-drain calls (wired by e4 to reservations.js and supersession.js) and the admin stock_depletion/supplier_refusal faults (c3, calling orders.js and supersession.js) as they are, and changes only the services it owns. If its tests show that one of those f2-owned files must change, f1 records the defect in its handoff and fails the task with that reason (task fail); it does not work around it. The orchestrator then re-sequences f1 after f2"
       ],
       "verification": {
-        "method": "supersession, refusal, expiry and re-plan API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/reservation-expiry.test.js test/api/replan-queue.test.js",
+        "method": "existence guard on this task's own test files, then the supersession, refusal, expiry and re-plan API tests under the net guard",
+        "command": "ls test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/replan-queue.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/reservation-expiry.test.js test/api/replan-queue.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1695,7 +1778,7 @@
       ],
       "verification": {
         "method": "compensation, admin and ledger API tests under the net guard",
-        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js",
+        "command": "ls test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1718,7 +1801,8 @@
       ],
       "outputs": [
         "public/js/components/compensation.js and request-detail, supplier-orders, admin views",
-        "test/fixtures/contracts for refusal, faults and compensation states"
+        "test/fixtures/contracts for refusal, faults and compensation states",
+        "test/unit/frontend/recovery.test.js"
       ],
       "components": [
         "frontend"
@@ -1726,17 +1810,21 @@
       "files": [
         "public/**",
         "test/fixtures/contracts/**",
-        "test/unit/frontend/**",
+        "test/unit/frontend/format.test.js",
+        "test/unit/frontend/dashboards.test.js",
+        "test/unit/frontend/payments.test.js",
+        "test/unit/frontend/recovery.test.js",
         "test/scan/frontend.test.js"
       ],
       "acceptanceCriteria": [
         "'If something fails' lists per-order payment status text, voids and refunds outstanding with outcome, and the next step; replanning shows 'Finding a new plan with current stock…' and keeps polling; 'Prices changed: review plan vN', 'Review the new plan', 'Reservation expired — no money was taken; re-plan with current stock' with Re-plan, failed_needs_attention with 'Contact the organiser'",
         "Supplier refuse form (reason 1-300) and admin faults form (stock depletion, supplier refusal, refund order, fake PayPal and fake model faults, clear), reset with force and reason, timeline and metrics tables",
-        "textContent only; contract fixtures for the new states"
+        "textContent only; contract fixtures for the new states",
+        "test/unit/frontend/recovery.test.js checks the pure view-model of 'If something fails' and the status header against the recovery fixtures: the exact sentences, replanning polling, outstanding voids and refunds, next-step buttons"
       ],
       "verification": {
-        "method": "frontend scan and unit tests",
-        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "method": "existence guard on this task's own test file, then the frontend scan and all frontend unit tests",
+        "command": "ls test/unit/frontend/recovery.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
       "status": "pending",
@@ -1775,7 +1863,9 @@
         "test/integration/lease-takeover.test.js",
         "test/integration/return-crash.test.js",
         "test/api/contracts.test.js",
-        "test/browser/**"
+        "test/browser/helpers/**",
+        "test/browser/refusal.test.js",
+        "test/browser/journey-replacement.test.js"
       ],
       "acceptanceCriteria": [
         "RS-26: SIGKILL after the first capture, restart, lease expiry, reconciler completes, all rows preserved; lease-takeover variants A (freeze_after_capture_apply) and B (freeze_before_capture_apply) with SIGSTOP/SIGCONT, lease 1500 ms, timeout 500 ms, interval 200 ms: exactly one non-replayed capture per order and the plan executed (ARCH-26); return-crash (a), (b), (c) (F-TR-3)",
@@ -1783,8 +1873,8 @@
         "npm test and npm run test:browser pass"
       ],
       "verification": {
-        "method": "full offline suite and browser suite (run with --timeout 1200)",
-        "command": "npm test && npm run test:browser",
+        "method": "existence guard on this task's own test files, then the full offline suite and the browser suite, whose globs run them (run with --timeout 1800)",
+        "command": "ls test/integration/rs26-restart.test.js test/integration/lease-takeover.test.js test/integration/return-crash.test.js test/browser/refusal.test.js test/browser/journey-replacement.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       },
       "status": "pending",
@@ -1807,7 +1897,8 @@
         ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-34, RS-35, NFR2)"
       ],
       "outputs": [
-        "public/** final"
+        "public/** final",
+        "test/unit/frontend/a11y-labels.test.js"
       ],
       "components": [
         "frontend"
@@ -1815,18 +1906,24 @@
       "files": [
         "public/**",
         "test/fixtures/contracts/**",
-        "test/unit/frontend/**",
+        "test/unit/frontend/format.test.js",
+        "test/unit/frontend/dashboards.test.js",
+        "test/unit/frontend/extraction.test.js",
+        "test/unit/frontend/payments.test.js",
+        "test/unit/frontend/recovery.test.js",
+        "test/unit/frontend/a11y-labels.test.js",
         "test/scan/frontend.test.js"
       ],
       "acceptanceCriteria": [
         "Every control labelled, errors tied by aria-describedby, 3 px visible focus with >= 3:1 contrast, text contrast >= 4.5:1, skip link, focus to h1 on route change, announcements in #announcer, aria-disabled with a text reason, targets >= 44 px at 360 px, single column at 360 px with no horizontal scroll, two columns >= 1024 px",
         "Every data section renders loading, empty, error with Retry, timeout, expired-reservation, degraded-extraction and success states",
         "The request page answers the six questions in the spec's order with text from planner and derive codes",
-        "Persistent banners and badges for both adapters: 'Simulated payments and/or AI — nothing here is real', 'PayPal Sandbox — no real money' on every payment element, 'Demo data', 'Test prices, not market prices', single-credential notice, 'Test mode — local stubs, nothing is real' when labels.testMode"
+        "Persistent banners and badges for both adapters: 'Simulated payments and/or AI — nothing here is real', 'PayPal Sandbox — no real money' on every payment element, 'Demo data', 'Test prices, not market prices', single-credential notice, 'Test mode — local stubs, nothing is real' when labels.testMode",
+        "test/unit/frontend/a11y-labels.test.js checks the pure label and state view-models: banner and badge text for fake, Sandbox, single-credential and test mode from the Labels fixtures, every state rendered per section, and that every control descriptor carries a label"
       ],
       "verification": {
-        "method": "frontend scan and unit tests",
-        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "method": "existence guard on this task's own test file, then the frontend scan and all frontend unit tests",
+        "command": "ls test/unit/frontend/a11y-labels.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
       "status": "pending",
@@ -1875,8 +1972,8 @@
         "test/scan/docs.test.js asserts the README names every npm script, the start line, the playwright install line and the runbooks, and that docs contain no secret-looking value"
       ],
       "verification": {
-        "method": "docs and env-example scans",
-        "command": "node --test test/scan/docs.test.js test/scan/env-example.test.js",
+        "method": "existence guard on this task's own files, then the docs and env-example scans",
+        "command": "ls test/scan/docs.test.js docs/runbooks/live-model.md docs/runbooks/live-paypal.md >/dev/null && node --test test/scan/docs.test.js test/scan/env-example.test.js",
         "cwd": "."
       },
       "status": "pending",
@@ -1889,39 +1986,56 @@
     "g3-final-scans-browser": {
       "id": "g3-final-scans-browser",
       "phase": "g-release",
-      "title": "Final scans and browser checks: secrets over every artifact, labelling on both adapters, six answers, accessibility, live-suite refusal, SQL scan, performance report",
+      "title": "Final scans, browser checks and evidence table: secrets over every artifact, labelling on both adapters, six answers, accessibility, live-suite refusal, SQL scan, performance report, evidence table for all 45 criteria, final clean checkout",
       "owner": "test-engineer",
       "dependencies": [
         "g1-frontend-a11y-labels",
         "g2-docs-submission"
       ],
       "inputs": [
-        ".eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria (RS-29, RS-34, RS-35, NFR2, NFR3, NFR5)",
+        ".eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria",
         ".eccode/artifacts/design/spec.md#testing-strategy (E2E, Timing)",
-        ".eccode/artifacts/architecture/brief.md#acceptance-criteria"
+        ".eccode/artifacts/design/spec.md#risks-touched-by-this-design (SEC-18)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria",
+        ".eccode/artifacts/architecture/brief.md#assumptions (A2, A4, A6), #open-questions (Q2, Q3, Q9)",
+        ".eccode/reviews/rev-mv1e1ohb-01183fe4.json (F-TR-18)",
+        ".eccode/artifacts/plan/plan.md (Live checks LIVE-M1, LIVE-P1, LIVE-P2)"
       ],
       "outputs": [
         "test/scan/secrets.test.js (full), test/scan/sql.test.js, test/scan/live-refusal.test.js",
         "test/api/labelling.test.js",
         "test/browser/a11y-states.test.js, six-questions.test.js, labelling.test.js",
-        "scripts/report-p95.js adjustments if needed"
+        "scripts/report-p95.js adjustments if needed",
+        "docs/evidence-table.md",
+        "test/scan/evidence-table.test.js"
       ],
       "components": [
         "test-infra",
         "browser",
-        "security"
+        "security",
+        "docs",
+        "verification"
       ],
       "files": [
         "test/helpers/**",
         "test/scan/secrets.test.js",
         "test/scan/sql.test.js",
         "test/scan/live-refusal.test.js",
+        "test/scan/evidence-table.test.js",
         "test/api/labelling.test.js",
         "test/api/contracts.test.js",
-        "test/browser/**",
-        "scripts/report-p95.js"
+        "test/browser/helpers/**",
+        "test/browser/a11y-states.test.js",
+        "test/browser/six-questions.test.js",
+        "test/browser/labelling.test.js",
+        "scripts/report-p95.js",
+        "docs/evidence-table.md"
       ],
       "acceptanceCriteria": [
+        "Merged from the former g4 (F-PL-2): docs/evidence-table.md has one row per criterion RS-01..RS-39 and NFR1..NFR6 with suite tags, test files and names, and the ev: ids of the runs that prove it (the phase runs and this task's own runs before the final verification run)",
+        "Rows with live parts (RS-01, RS-02, RS-03, RS-05, NFR6 [LM]; RS-18, RS-19, RS-20, RS-23, RS-24 [LP]; RS-31(b), RS-32(b)) mark the live part Unverified with its blocker (LIVE-M1: A4/Q3; LIVE-P1/LIVE-P2: A6/Q2) and never claim a pass; RS-20/RS-26 Sandbox rows say they rest on the fake's model of PayPal until the live run (SEC-18); rows weakened by single-credential mode are labelled (A2); the NFR6 row states that the case runs with RS_MODEL_CUSTOMER_DAILY_SHARE=1 (F-TR-18); the RS-36 row names the derive.js inspection (F-TR-9); NFR1 notes that the 22.5 branch run is the user's (Q9)",
+        "test/scan/evidence-table.test.js asserts all 45 ids are present, every ev: id matches the record pattern, and every Unverified row names a blocker",
+        "scripts/clean-checkout.sh passes on the final tree",
         "RS-29: secrets.test.js scans public/ assets, recorded API responses, server logs, test/browser/out screenshots (text layer and file names), docs/submission and README for client ids, secrets and the planted test credentials; config errors are redacted",
         "RS-34 [D] labelling.test.js with both adapters (Sandbox adapter against paypal-stub only under RS_TEST_OFFLINE=1, asserting labels.testMode) and [B] labelling.test.js with both adapters",
         "RS-35 six-questions and NFR2 a11y-states (keyboard-only happy path with the approval round-trip helper, axe-free assertions on labels, focus, contrast tokens, target sizes, no horizontal scroll at 360 px, every state) at 360 and 1280 px",
@@ -1929,53 +2043,8 @@
         "npm test and npm run test:browser pass on the final tree"
       ],
       "verification": {
-        "method": "full offline suite and browser suite on the final tree (run with --timeout 1200)",
-        "command": "npm test && npm run test:browser",
-        "cwd": "."
-      },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
-      "completedBy": null,
-      "handoffId": null
-    },
-    "g4-evidence-table": {
-      "id": "g4-evidence-table",
-      "phase": "g-release",
-      "title": "Project evidence table for all 45 criteria with Unverified live rows, and the final clean-checkout run",
-      "owner": "test-engineer",
-      "dependencies": [
-        "g3-final-scans-browser"
-      ],
-      "inputs": [
-        ".eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria",
-        ".eccode/artifacts/design/spec.md#risks-touched-by-this-design (SEC-18)",
-        ".eccode/artifacts/architecture/brief.md#assumptions (A2, A4, A6), #open-questions (Q2, Q3, Q9)",
-        ".eccode/reviews/rev-mv1e1ohb-01183fe4.json (F-TR-18)",
-        ".eccode/artifacts/plan/plan.md (Live checks LIVE-M1, LIVE-P1, LIVE-P2)"
-      ],
-      "outputs": [
-        "docs/evidence-table.md",
-        "test/scan/evidence-table.test.js"
-      ],
-      "components": [
-        "docs",
-        "verification"
-      ],
-      "files": [
-        "docs/evidence-table.md",
-        "test/scan/evidence-table.test.js"
-      ],
-      "acceptanceCriteria": [
-        "docs/evidence-table.md has one row per criterion RS-01..RS-39 and NFR1..NFR6 with suite tags, test files and names, and the ev: ids of the runs that prove it",
-        "Rows with live parts (RS-01, RS-02, RS-03, RS-05, NFR6 [LM]; RS-18, RS-19, RS-20, RS-23, RS-24 [LP]; RS-31(b), RS-32(b)) mark the live part Unverified with its blocker (LIVE-M1: A4/Q3; LIVE-P1/LIVE-P2: A6/Q2) and never claim a pass; RS-20/RS-26 Sandbox rows say they rest on the fake's model of PayPal until the live run (SEC-18); rows weakened by single-credential mode are labelled (A2); the NFR6 row states that the case runs with RS_MODEL_CUSTOMER_DAILY_SHARE=1 (F-TR-18); the RS-36 row names the derive.js inspection (F-TR-9); NFR1 notes that the 22.5 branch run is the user's (Q9)",
-        "test/scan/evidence-table.test.js asserts all 45 ids are present, every ev: id matches the record pattern, and every Unverified row names a blocker",
-        "scripts/clean-checkout.sh passes on the final tree"
-      ],
-      "verification": {
-        "method": "evidence-table scan and the final clean-checkout run (run with --timeout 1200)",
-        "command": "node --test test/scan/evidence-table.test.js && sh scripts/clean-checkout.sh",
+        "method": "existence guard on this task's own files, then the full offline suite and the browser suite on the final tree (whose globs run them) and the clean-checkout run (run with --timeout 2400)",
+        "command": "ls test/scan/sql.test.js test/scan/live-refusal.test.js test/scan/evidence-table.test.js test/api/labelling.test.js test/browser/a11y-states.test.js test/browser/six-questions.test.js test/browser/labelling.test.js docs/evidence-table.md >/dev/null && npm test && npm run test:browser && sh scripts/clean-checkout.sh",
         "cwd": "."
       },
       "status": "pending",
@@ -3262,6 +3331,126 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-09T20:24:02.828Z"
+    },
+    "ev-mv1f2j25-01e80d0f": {
+      "id": "ev-mv1f2j25-01e80d0f",
+      "kind": "command",
+      "label": "probe: node --test runs a file named by both a glob and an explicit path once, and fails on a missing explicit file",
+      "command": "P=.eccode/drafts/probe-dedupe/t; node --test \"$P/**/*.test.mjs\" \"$P/b.test.mjs\" 2>&1 | grep -E \"^# (tests|pass) \" ; node --test \"$P/**/*.test.mjs\" \"$P/b.test.mjs\" 2>&1 | grep -q \"^# tests 1$\" && ! node --test \"$P/**/*.test.mjs\" \"$P/missing.test.mjs\" >/dev/null 2>&1",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 504,
+      "log": ".eccode/evidence/ev-mv1f2j25-01e80d0f.log",
+      "logSha256": "ed0f7dc0671842b72bdef0b25a4ec262a60b48424d7bd3815bff07d20804a139",
+      "logFileSha256": "8788b274c7d005b748d23d2afcf9497771c3c7656ed38e8f03b8417e6a98a73f",
+      "outputTail": "# tests 1\n# pass 1\n",
+      "gate": "plan",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T20:27:21.021Z"
+    },
+    "ev-mv1f3hiv-01a9ae95": {
+      "id": "ev-mv1f3hiv-01a9ae95",
+      "kind": "command",
+      "label": "F-PL-1 probe: command shapes that pre-pass vs fail before a task's own files exist (missing explicit files are ignored when anything else matches; ls guard fails)",
+      "command": "node .eccode/drafts/plan-r2-cmd-probe.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 700,
+      "log": ".eccode/evidence/ev-mv1f3hiv-01a9ae95.log",
+      "logSha256": "1cb49121c97518827e9841065aee2d17bfbda6da17a262281a36e9e76b0e886c",
+      "logFileSha256": "24bbcf6486eed9e2b589a74db12d695c79e0104f35f3c6603fe7234e44457a35",
+      "outputTail": "OK         exit=0 expected=0 | glob matching nothing only\nOK         exit=1 expected=1 | explicit missing file only\nOK         exit=0 expected=0 | matching glob + explicit missing file (npm test -- <new file> shape)\nOK         exit=0 expected=0 | existing explicit file + explicit missing file (NG old new shape)\nOK         exit=0 expected=0 | glob + the same existing file named explicitly: runs once\nOK         exit=2 expected=nonzero | ls guard on the missing own file, then the suite\nnode v22.22.0; unexpected: 0\n",
+      "gate": "plan",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T20:28:05.680Z"
+    },
+    "ev-mv1f9xgc-01e839a6": {
+      "id": "ev-mv1f9xgc-01e839a6",
+      "kind": "command",
+      "label": "plan r2: plan validate",
+      "command": "node /home/user/ECCode/bin/eccode.js plan validate .eccode/artifacts/plan/plan.json",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 90,
+      "log": ".eccode/evidence/ev-mv1f9xgc-01e839a6.log",
+      "logSha256": "e9ea5b2c0b004f1f3889212591abcd037c926aa75b6553195ff548cfc681463b",
+      "logFileSha256": "b7a21863efe8abaa995647782fc63c559303fcf88d40cdfe1c99d8f5bcb68c9a",
+      "outputTail": "Plan valid: 6 phase(s), 28 task(s).\n",
+      "gate": "plan",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T20:33:06.266Z"
+    },
+    "ev-mv1f9xrb-016eb638": {
+      "id": "ev-mv1f9xrb-016eb638",
+      "kind": "command",
+      "label": "plan r2: reviewer's tr-plan-check (0 pre-passing tasks, 0 hard problems required)",
+      "command": "node .eccode/drafts/tr-plan-check.mjs .eccode/artifacts/plan/plan.json .eccode/artifacts/architecture/brief.md .eccode/artifacts/design/spec.md && node .eccode/drafts/tr-plan-check.mjs .eccode/artifacts/plan/plan.json .eccode/artifacts/architecture/brief.md .eccode/artifacts/design/spec.md | grep -q \"can pass before their work exists: 0 \"",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 251,
+      "log": ".eccode/evidence/ev-mv1f9xrb-016eb638.log",
+      "logSha256": "264a1068be5dc0adf7864e21e3cf38c91d8253deef8f67815e7ae530ce4cb4bc",
+      "logFileSha256": "b200e36bc18f912b3235334c402a4fe1483d12a67016c7608f2c433bc3d6915a",
+      "outputTail": "falsifiable  c3-reservations-supplier-admin: fails before work via test/api/reserve-idempotency.test.js, test/api/abuse-limits.test.js, test/api/isolation.test.js\nfalsifiable  c5-frontend-dashboards: fails before work via test/scan/frontend.test.js, test/unit/frontend/format.test.js, test/unit/frontend/dashboards.test.js\nfalsifiable  c6-reserve-concurrency-browser: fails before work via test/integration/rs14-two-process-reserve.test.js, test/integration/rs14-db-busy.test.js, test/api/contracts.test.js\nfalsifiable  d1-ai-core: fails before work via test/unit/ai/schema.test.js, test/unit/ai/prompt.test.js, test/unit/ai/fake.test.js\nfalsifiable  d2-ai-adapters-corpus: fails before work via test/unit/ai/cli.test.js, test/unit/ai/anthropic.test.js, test/unit/ai/live-runner-refusal.test.js\nfalsifiable  d3-extraction-service: fails before work via test/api/extract.test.js, test/api/extract-image.test.js, test/api/extract-degraded.test.js\nfalsifiable  d4-frontend-extraction: fails before work via test/unit/frontend/extraction.test.js\nfalsifiable  d5-extraction-contract-browser: fails before work via test/unit/ai/provider-contract.test.js, test/scan/secrets.test.js, test/browser/degraded-extraction.test.js\nfalsifiable  e0-paypal-stub-contract: fails before work via test/unit/payments/provider-contract.js, test/unit/payments/paypal-stub.test.js, test/unit/payments/paypal-stub.test.js\nfalsifiable  e1-payment-adapters: fails before work via test/unit/payments/fake.test.js, test/unit/payments/sandbox.test.js, test/unit/payments/merchants.test.js\nfalsifiable  e2-payment-flow: fails before work via test/api/paypal-create.test.js, test/api/paypal-cancel.test.js, test/api/amount-tampering.test.js\nfalsifiable  e3-webhooks: fails before work via test/api/webhooks.test.js, test/api/webhooks.test.js\nfalsifiable  e4-saga-reconciler: fails before work via test/api/execute.test.js, test/api/lost-response.test.js, test/api/authorization-pending.test.js\nfalsifiable  e5-frontend-payments: fails before work via test/unit/frontend/payments.test.js\nfalsifiable  e6-execute-concurrency-browser: fails before work via test/integration/rs20-two-process-execute.test.js, test/browser/journey-happy.test.js, test/live/paypal/journey-sandbox.test.js\nfalsifiable  f1-supersession-refusal-expiry: fails before work via test/api/supersession.test.js, test/api/supplier-refusal.test.js, test/api/replan-queue.test.js\nfalsifiable  f2-compensation-takeover-admin: fails before work via test/api/capture-compensation.test.js, test/api/void-capture-race.test.js, test/api/admin-reset.test.js\nfalsifiable  f3-frontend-recovery: fails before work via test/unit/frontend/recovery.test.js\nfalsifiable  f4-restart-takeover-browser: fails before work via test/integration/rs26-restart.test.js, test/integration/lease-takeover.test.js, test/integration/return-crash.test.js\nfalsifiable  g1-frontend-a11y-labels: fails before work via test/unit/frontend/a11y-labels.test.js\nfalsifiable  g2-docs-submission: fails before work via test/scan/docs.test.js, test/scan/docs.test.js\nfalsifiable  g3-final-scans-browser: fails before work via test/scan/sql.test.js, test/scan/live-refusal.test.js, test/scan/evidence-table.test.js\ntasks whose command can pass before their work exists: 0 ()\nhard problems: 0\n",
+      "gate": "plan",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T20:33:06.655Z"
+    },
+    "ev-mv1f9xxn-0119c41e": {
+      "id": "ev-mv1f9xxn-0119c41e",
+      "kind": "command",
+      "label": "plan r2: existence-guard check (every command starts with ls of files only that task creates first)",
+      "command": "node .eccode/drafts/plan-r2-guard-check.mjs .eccode/artifacts/plan/plan.json",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 89,
+      "log": ".eccode/evidence/ev-mv1f9xxn-0119c41e.log",
+      "logSha256": "66ee5187765abf8ad284a1f704ed23db261affcb8269dd77b204de8fdffd69ee",
+      "logFileSha256": "ffe044bc7fa516424102a162be41f6d2a794f114c6950b0cca46f1a05d6c6857",
+      "outputTail": "ok   c2-requests-plans-view: guard lists 4 file(s) the task creates first\nok   c3-reservations-supplier-admin: guard lists 6 file(s) the task creates first\nok   c5-frontend-dashboards: guard lists 3 file(s) the task creates first\nok   c6-reserve-concurrency-browser: guard lists 4 file(s) the task creates first\nok   d1-ai-core: guard lists 5 file(s) the task creates first\nok   d2-ai-adapters-corpus: guard lists 6 file(s) the task creates first\nok   d3-extraction-service: guard lists 7 file(s) the task creates first\nok   d4-frontend-extraction: guard lists 1 file(s) the task creates first\nok   d5-extraction-contract-browser: guard lists 3 file(s) the task creates first\nok   e0-paypal-stub-contract: guard lists 2 file(s) the task creates first\nok   e1-payment-adapters: guard lists 5 file(s) the task creates first\nok   e2-payment-flow: guard lists 5 file(s) the task creates first\nok   e3-webhooks: guard lists 1 file(s) the task creates first\nok   e4-saga-reconciler: guard lists 5 file(s) the task creates first\nok   e5-frontend-payments: guard lists 1 file(s) the task creates first\nok   e6-execute-concurrency-browser: guard lists 3 file(s) the task creates first\nok   f1-supersession-refusal-expiry: guard lists 3 file(s) the task creates first\nok   f2-compensation-takeover-admin: guard lists 5 file(s) the task creates first\nok   f3-frontend-recovery: guard lists 1 file(s) the task creates first\nok   f4-restart-takeover-browser: guard lists 5 file(s) the task creates first\nok   g1-frontend-a11y-labels: guard lists 1 file(s) the task creates first\nok   g2-docs-submission: guard lists 3 file(s) the task creates first\nok   g3-final-scans-browser: guard lists 8 file(s) the task creates first\ntasks: 28; failing: 0\n",
+      "gate": "plan",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T20:33:06.886Z"
+    },
+    "ev-mv1f9y39-01a44448": {
+      "id": "ev-mv1f9y39-01a44448",
+      "kind": "command",
+      "label": "plan r2: criterion coverage, each of 45 ids claimed by exactly one phase",
+      "command": "node .eccode/drafts/plan-coverage-check.mjs .eccode/artifacts/plan/plan.json .eccode/artifacts/architecture/brief.md",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 55,
+      "log": ".eccode/evidence/ev-mv1f9y39-01a44448.log",
+      "logSha256": "6980fcb3392f9f324067293ffef142ceb09e7f3478b4b251b62b1b87db6ca644",
+      "logFileSha256": "d7e90157001a9f7c5344197aac90c904b50ec7ea82108a2d02851a2cf5224f52",
+      "outputTail": "b-foundation: RS-06, RS-07, RS-08, RS-09, RS-10, RS-11, NFR1, NFR4 (8)\nc-core-flow: RS-12, RS-14, RS-16, RS-28, RS-30, RS-33, RS-36 (7)\nd-extraction: RS-01, RS-02, RS-03, RS-05, RS-39, NFR6 (6)\ne-payments: RS-04, RS-18, RS-19, RS-20, RS-21, RS-23, RS-24, RS-25, RS-27, RS-31 (10)\nf-compensation: RS-13, RS-15, RS-17, RS-22, RS-26, RS-32, RS-37, RS-38 (8)\ng-release: RS-29, RS-34, RS-35, NFR2, NFR3, NFR5 (6)\nbrief ids: 45; problems: 0\n",
+      "gate": "plan",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T20:33:07.090Z"
     }
   },
   "reviews": {
@@ -7137,6 +7326,61 @@
       "id": "ho-mv1er340-01a8d542",
       "recordedBy": "delivery-lead",
       "at": "2026-10-09T20:18:27.105Z"
+    },
+    "ho-mv1fahtr-014b18b7": {
+      "from": "delivery-lead",
+      "to": "technical-reviewer",
+      "gate": "plan",
+      "objective": "Re-review of the RescueStock delivery plan, revision 2 (submission sub-mv1fa538-015d094f), which responds to review rev-mv1eznmd-01d2f5fe (F-PL-1 major; F-PL-2, F-PL-3 minor; F-PL-4 info).",
+      "context": "Revision 1 was sub-mv1eqk2q-01cc29a2. The phase split, criterion claims, live checks and the lesson decision are unchanged. The changes are listed in .eccode/artifacts/plan/revision-2-notes.md. One fact goes beyond the review's recommendation: on Node 22.22, node --test ignores a missing explicit file whenever any other pattern or file in the same command matches. Appending files (`npm test -- <file>`, `npm run test:browser -- <file>`) or listing a new file next to an old one would therefore still pre-pass (ev:ev-mv1f3hiv-01a9ae95). That is why every command now starts with an `ls` existence guard over files that only that task creates.",
+      "inputs": [
+        ".eccode/reviews/rev-mv1eznmd-01d2f5fe.json",
+        ".eccode/drafts/tr-plan-check.mjs",
+        ".eccode/drafts/tr-plan-probes.mjs",
+        ".eccode/drafts/plan-r2-cmd-probe.mjs",
+        ".eccode/drafts/plan-r2-guard-check.mjs",
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/artifacts/design/spec.md"
+      ],
+      "dependencies": [
+        "design"
+      ],
+      "expectedOutput": "A review of plan.json, plan.md and revision-2-notes.md covering phase:b-foundation .. phase:g-release and the lessons criterion.",
+      "acceptanceCriteria": [
+        "F-PL-1: tr-plan-check reports 0 pre-passing tasks and 0 hard problems; every command's ls guard lists only files the task creates first (plan-r2-guard-check 28/28)",
+        "F-PL-2: plan.md states that phase B waits for the recorded budget decision; g4 is merged into g3",
+        "F-PL-3: f1's acceptance criteria forbid changes to f2-owned files and say what happens if one is needed",
+        "F-PL-4: test/unit/config/limits.test.js with the 'F-TR-17: ...' case is in b1's guard"
+      ],
+      "completedWork": "Wrote an existence guard into every verification command and named per-task test files where commands used globs only. Narrowed the frontend unit-test ownership to per-phase files and the test-engineer browser ownership to own journeys plus test/browser/helpers/**. Added limits.test.js to b1 and the .gitignore coverage of test output. Merged g4 into g3. Added the f1 boundary criterion and the budget-decision precondition in plan.md. Probed node --test command shapes, wrote a stricter guard check, re-ran the reviewer's check and resubmitted with revision-2-notes.md.",
+      "filesChanged": [
+        ".eccode/artifacts/plan/plan.json",
+        ".eccode/artifacts/plan/plan.md",
+        ".eccode/artifacts/plan/revision-2-notes.md",
+        ".eccode/drafts/plan-r2-cmd-probe.mjs",
+        ".eccode/drafts/plan-r2-guard-check.mjs",
+        ".eccode/drafts/probe-dedupe/t/a.test.js",
+        ".eccode/drafts/probe-dedupe/t/b.test.mjs"
+      ],
+      "evidence": [
+        "ev:ev-mv1f9xgc-01e839a6",
+        "ev:ev-mv1f9xrb-016eb638",
+        "ev:ev-mv1f9xxn-0119c41e",
+        "ev:ev-mv1f9y39-01a44448",
+        "ev:ev-mv1f3hiv-01a9ae95"
+      ],
+      "remainingIssues": [
+        "F-PL-2's budget decision (raise maxRuntimeMinutes or accept the descoping order) belongs to the user and must be recorded by the orchestrator before phase B starts",
+        "ev:ev-mv1f2j25-01e80d0f is a failed probe run of mine. My expectation was wrong: a missing explicit file next to a matching glob exits 0. That observation led to the ls guard; it is not a defect of the plan",
+        "Live checks LIVE-M1, LIVE-P1, LIVE-P2 and USER-Q9 stay Unverified until the user runs them; RISK-1 and RISK-2 stay open"
+      ],
+      "nextAction": "technical-reviewer re-reviews sub-mv1fa538-015d094f. After approval and the recorded budget decision, the orchestrator starts phase:b-foundation with b1 and b2 in parallel.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "id": "ho-mv1fahtr-014b18b7",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T20:33:32.634Z"
     }
   },
   "runs": {
@@ -7371,6 +7615,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-09T20:25:30.131Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T20:34:04.111Z",
+      "durationMinutes": 8.57,
+      "costUsd": null,
+      "tokens": 80606,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv1fb2d0-0122c8d9": {
+      "id": "run-mv1fb2d0-0122c8d9",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T20:33:59.245Z",
       "status": "running",
       "attempt": 1
     }
@@ -7622,8 +7881,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 183.49,
-    "tokens": 2517726
+    "runtimeMinutes": 192.06,
+    "tokens": 2598332
   },
   "delivery": null
 }

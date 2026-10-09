@@ -1,0 +1,10 @@
+$ node .eccode/drafts/plan-r2-cmd-probe.mjs
+# cwd: .
+# exit: 0
+OK         exit=0 expected=0 | glob matching nothing only
+OK         exit=1 expected=1 | explicit missing file only
+OK         exit=0 expected=0 | matching glob + explicit missing file (npm test -- <new file> shape)
+OK         exit=0 expected=0 | existing explicit file + explicit missing file (NG old new shape)
+OK         exit=0 expected=0 | glob + the same existing file named explicitly: runs once
+OK         exit=2 expected=nonzero | ls guard on the missing own file, then the suite
+node v22.22.0; unexpected: 0
