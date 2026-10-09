@@ -4,23 +4,42 @@
 //   1. The project record (.eccode/events.jsonl, state.json, config.json,
 //      memory, improvements, evidence, reviews, handoffs) is only written by
 //      the eccode CLI, never by hand, and git may not roll it back or delete it.
+//      This holds wherever such a file lives: this project, another project,
+//      or the shared memory under ~/.eccode/ (paths outside the project are
+//      otherwise nobody's business).
 //   2. Identity binding: inside a subagent, `eccode ... --actor X` must name
-//      the subagent's own role; subagents can never act as `user` or
-//      `orchestrator`. The actor is read exactly as the CLI will read it
-//      (shell quoting, tabs, nested `sh -c`, the command after `--`), and
+//      the subagent's own role; subagents can never act as `orchestrator`. The
+//      actor is read exactly as the CLI will read it (shell quoting, tabs,
+//      nested `sh -c`, the command after `--`, an exported ECCODE_ACTOR), and
 //      commands the guard cannot bind (repeated --actor, ECCODE_ACTOR set
-//      inline, eccode behind a variable) are denied. The main session may act
-//      as orchestrator/user, or as any role only when ECCODE_SEQUENTIAL_ROLES=1
-//      (disclosed sequential mode).
+//      inline, eccode behind a variable) are denied. `--actor user` is denied
+//      from EVERY agent context, the main session included: it is reserved for
+//      a person at a terminal, or for a bounded delegation the user granted
+//      (eccode delegate grant) used with --actor orchestrator --delegation <id>.
+//      The main session may act as orchestrator, or as any role only when
+//      ECCODE_SEQUENTIAL_ROLES=1 (disclosed sequential mode).
 //   3. File ownership: implementation subagents may edit project files only
 //      inside the globs of a task they have claimed (never .eccode/ paths
-//      other than drafts); other roles may only write drafts/artifacts under .eccode/.
+//      other than drafts); other roles may only write drafts/artifacts under
+//      .eccode/. A shell write gets the same answer as the Edit tool for every
+//      ECCode role: redirects, tee, cp/mv/ln/install/rsync, sed/perl -i, dd and
+//      touch targets are resolved from the hook's cwd (a relative path after a
+//      cd inside the command cannot be bound and is denied). Inline interpreter
+//      programs (node -e, python -c, perl/ruby -e, php -r, deno eval, a heredoc,
+//      here-string or pipe into a bare interpreter) that call a file-writing
+//      API are denied for every ECCode role, because the guard cannot see
+//      which files they would change; the main session is not affected.
+// Residual, stated in docs/threat-model.md: the guard reads commands without
+// running them, so a program it cannot read (a script file, code held in a
+// shell variable or built at run time, an interpreter it does not know) still
+// escapes the ownership rules; completion's git accounting is the backstop.
 // Decisions are returned as PreToolUse permissionDecision JSON. Unexpected
 // internal errors fail open (logged to stderr) so a guard bug cannot brick a
 // session; rule violations always deny, and so does a record that cannot be
 // read. Disable with ECCODE_HOOKS=off.
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const LIB = path.join(__dirname, '..', '..', 'lib');
@@ -31,12 +50,15 @@ const RECORD_AREA = String.raw`\.eccode\/(?:events\.jsonl|state\.json|config\.js
 const RECORD_FILES = new RegExp(String.raw`(^|\/)${RECORD_AREA}`);
 // Shell commands that write their (later) path argument, and code that writes files.
 const SHELL_WRITE = new RegExp(String.raw`(>|\btee\b|\b(?:sed|perl)\s+(?:-\w+\s+)*-\w*i|\bmv\b|\bcp\b|\brm\b|\btruncate\b|\bdd\b|\bln\b|\binstall\b|\brsync\b|\btouch\b)[^|;&]*${RECORD_AREA}`);
-const CODE_WRITE = /\b(writeFileSync|writeFile|writeSync|appendFileSync|appendFile|createWriteStream|rmSync|rmdirSync|unlinkSync|unlink|renameSync|rename|copyFileSync|copyFile|cpSync|truncateSync|ftruncateSync|symlinkSync|write_text|write_bytes|os\.remove|os\.rename|os\.replace|shutil\.\w+)\b|\bopen\s*\([^)]*['"][wax]b?\+?['"]/;
+const CODE_WRITE = /\b(writeFileSync|writeFile|writeSync|appendFileSync|appendFile|createWriteStream|rmSync|rmdirSync|unlinkSync|unlink|renameSync|rename|copyFileSync|copyFile|cpSync|truncateSync|ftruncateSync|symlinkSync|fs\.rm|promises\.rm|write_text|write_bytes|os\.remove|os\.rename|os\.replace|os\.rmdir|os\.truncate|shutil\.\w+|File\.(?:write|delete)|IO\.write|FileUtils\.\w+|file_put_contents|fwrite|Deno\.(?:write\w*|remove\w*|rename|copyFile\w*|truncate\w*))\b|\bopen\s*\([^)]*['"][wax]b?\+?['"]/;
 // Variables that change who the CLI acts as, or its clock (order rules), when set inline.
 const IDENTITY_ENV = /^(?:ECCODE_ACTOR|ECCODE_TEST|ECCODE_NOW)(?:=|$)/;
 const ECCODE_WORD = /(^|\/)eccode(\.js)?$/;
 // git subcommands that can revert, stash or delete working-tree files.
 const GIT_REVERTING = new Set(['checkout', 'restore', 'reset', 'stash', 'clean', 'rm', 'mv']);
+// Words that run the command after them (their own flags and numeric arguments are skipped).
+const WRAPPERS = new Set(['env', 'exec', 'command', 'builtin', 'nohup', 'nice', 'time', 'timeout', 'sudo', 'npx', 'xargs', 'stdbuf']);
+const CHDIR = new Set(['cd', 'pushd', 'popd']);
 const MAX_DEPTH = 4;
 
 // Where each kind of role may write under .eccode/ (drafts are shared scratch).
@@ -67,6 +89,16 @@ function roleOf(agentType) {
   if (!agentType) return null;
   const name = String(agentType).split(':').pop();
   return ROLES.has(name) ? name : `other:${name}`;
+}
+
+/** An ECCode role the ownership rules apply to (not the main session, not a non-ECCode agent). */
+function eccodeRole(role) {
+  return Boolean(role) && !role.startsWith('other:');
+}
+
+/** A project-relative path (from path.relative) that lies outside the project. */
+function outsideProject(rel) {
+  return rel === '..' || rel.startsWith('../') || path.isAbsolute(rel);
 }
 
 // ---------------------------------------------------------------- shell parsing
@@ -218,6 +250,21 @@ const WRITE_ALL_ARGS = new Set(['tee', 'touch', 'truncate']);
 const WRITE_LAST_ARG = new Set(['cp', 'mv', 'ln', 'install', 'rsync']);
 const WRITE_INPLACE = new Set(['sed', 'perl']);
 
+/**
+ * Index of the command word of a simple command: the first word that is not a
+ * NAME=value assignment, looking through wrappers (env, exec, nohup, npx, …)
+ * and their own flags or numeric arguments. -1 when there is none.
+ */
+function commandIndex(texts) {
+  for (let i = 0; i < texts.length; i++) {
+    const t = texts[i];
+    if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(t)) continue;
+    if (!WRAPPERS.has(t.split('/').pop())) return i;
+    while (i + 1 < texts.length && /^(?:-|\d+$)/.test(texts[i + 1])) i++;
+  }
+  return -1;
+}
+
 /** Paths a shell command line writes to, as literally as the guard can read them. */
 function bashWriteTargets(cmd) {
   const targets = [];
@@ -228,7 +275,7 @@ function bashWriteTargets(cmd) {
       if (/^\d?>{1,2}\|?$/.test(w) && texts[i + 1]) targets.push(texts[++i]);
       else if (/^\d?>{1,2}\|?[^&].*/.test(w)) targets.push(w.replace(/^\d?>{1,2}\|?/, ''));
     }
-    const cmdIdx = texts.findIndex((t) => !/^[A-Za-z_][A-Za-z0-9_]*=/.test(t));
+    const cmdIdx = commandIndex(texts);
     if (cmdIdx === -1) return;
     const name = texts[cmdIdx].split('/').pop();
     const args = texts.slice(cmdIdx + 1).filter((t) => !/^[<>|&;]/.test(t));
@@ -241,19 +288,85 @@ function bashWriteTargets(cmd) {
   return targets.filter((t) => t && !t.startsWith('/dev/'));
 }
 
+/** Does the command line change directory anywhere (cd, pushd, popd), so a later relative path cannot be bound? */
+function changesDirectory(cmd) {
+  let found = false;
+  walkCommands(cmd, (words) => {
+    const at = commandIndex(words.map((w) => w.text));
+    if (at !== -1 && CHDIR.has(words[at].text)) found = true;
+  });
+  return found;
+}
+
+/** The flag that makes an interpreter run the program given on its command line (null: not an interpreter). */
+function inlineFlag(name) {
+  if (/^(?:node|nodejs|bun)$/.test(name)) return /^-(?:[ep]+|-(?:eval|print)(?:=.*)?)$/;
+  if (/^(?:python[\d.]*|pypy\d*)$/.test(name)) return /^-[A-Za-z]*c$/;
+  if (name === 'perl') return /^-[A-Za-z0-9]*[eE]$/;
+  if (name === 'ruby') return /^-[A-Za-z0-9]*e$/;
+  if (name === 'php') return /^-r$/;
+  return null;
+}
+
+/**
+ * The first inline interpreter program in a command line that calls a file-writing
+ * API (CODE_WRITE): node -e/-p/--eval, python -c, perl/ruby -e, php -r, deno eval,
+ * or a bare interpreter fed by a heredoc, a here-string or a pipe (the program is
+ * then somewhere on the same command line). A script file is invisible to the
+ * guard and is not reported. Returns {name, api} or null.
+ */
+function inlineCodeWrite(cmd) {
+  let found = null;
+  walkCommands(cmd, (words, raw) => {
+    if (found) return;
+    const texts = words.map((w) => w.text);
+    const at = commandIndex(texts);
+    if (at === -1) return;
+    const name = texts[at].split('/').pop();
+    const flag = inlineFlag(name);
+    if (!flag && name !== 'deno') return;
+    const args = texts.slice(at + 1);
+    let program = null;
+    if (name === 'deno') {
+      if (args[0] === 'eval') program = args.slice(1).join(' ');
+    } else if (args.some((a) => flag.test(a))) {
+      program = args.join(' ');
+    } else {
+      // No program flag: the program is a script file unless it arrives on stdin.
+      const positional = [];
+      for (let i = 0; i < args.length; i++) {
+        const a = args[i];
+        if (/^\d?<{1,3}-?$/.test(a)) i++; // redirection operator, operand follows
+        else if (!/^\d?</.test(a) && !(a.startsWith('-') && a !== '-') && a !== '-') positional.push(a);
+      }
+      if (!positional.length) program = raw;
+    }
+    const api = program === null ? null : CODE_WRITE.exec(program);
+    if (api) found = { name, api: api[0] };
+  });
+  return found;
+}
+
 function checkBash(cmd, role, root, cwd) {
   if (SHELL_WRITE.test(cmd) || (new RegExp(RECORD_AREA).test(cmd) && CODE_WRITE.test(cmd))) {
     out('deny', 'ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.');
   }
-  // Shell writes obey the same ownership rules as the Edit/Write tools: a redirect, tee, cp or
-  // sed -i by an implementer lands only inside its claimed task (and never on the record).
-  if (role && IMPLEMENTERS.has(role)) {
+  // Shell writes get the same answer as the Edit/Write tools for every ECCode role: a redirect,
+  // tee, cp or sed -i lands only where that role may edit (a claimed task, a draft area).
+  if (eccodeRole(role)) {
+    const inline = inlineCodeWrite(cmd);
+    if (inline) {
+      out('deny', `Inline ${inline.name} code in this command calls a file-writing API (${inline.api}) and the guard cannot see which files it would change. Use the Edit/Write tool for file changes so ownership can be checked, or save the script under your draft area (.eccode/drafts/), run it from there and declare its outputs.`);
+    }
     const { toPosix } = require(path.join(LIB, 'util'));
-    for (const t of bashWriteTargets(cmd)) {
-      const abs = path.resolve(cwd || root, t.replace(/^["']|["']$/g, ''));
-      const rel = toPosix(path.relative(root, abs));
-      if (rel.startsWith('..') || path.isAbsolute(rel)) continue;
-      if (rel.startsWith('.eccode/')) continue; // the record areas are decided by RECORD_AREA above; drafts stay writable
+    const targets = bashWriteTargets(cmd).map((t) => t.replace(/^["']|["']$/g, '').replace(/^~(?=\/|$)/, os.homedir()));
+    const relative = targets.find((t) => !path.isAbsolute(t));
+    if (relative !== undefined && changesDirectory(cmd)) {
+      out('deny', `This command changes directory (cd/pushd/popd) and then writes the relative path "${relative}", which the guard cannot bind to a file. Write it with a path relative to the project root in a command without cd, or use the Edit/Write tool so ownership can be checked.`);
+    }
+    for (const t of targets) {
+      const rel = toPosix(path.relative(root, path.resolve(cwd || root, t)));
+      if (outsideProject(rel)) continue; // outside the project is not ours (record files there are caught above)
       checkEdit(root, rel, role);
     }
   }
@@ -267,6 +380,9 @@ function checkBash(cmd, role, root, cwd) {
   if (!/eccode|ECCODE_/.test(cmd)) return;
   const { actors, problems } = eccodeActors(cmd);
   if (problems.length) out('deny', `The guard cannot verify who this eccode command acts as: ${problems[0]}.`);
+  if (actors.includes('user')) {
+    out('deny', `--actor user is reserved for a person at a terminal. Ask the user to run this command themselves: ${cmd.trim()}, or to grant a bounded delegation (eccode delegate grant ...) and rerun with --actor orchestrator --delegation <id>.`);
+  }
   if (role) {
     const other = actors.find((a) => a !== role);
     if (other) out('deny', `Identity mismatch: this subagent is ${role} but the command acts as "${other}". Each agent records work only under its own role.`);
@@ -338,7 +454,20 @@ function main(input) {
     if (!target) return;
     const abs = path.resolve(input.cwd || root, target);
     const rel = toPosix(path.relative(root, abs));
-    if (rel.startsWith('..') || path.isAbsolute(rel)) return; // outside the project (e.g. scratch dirs)
+    if (outsideProject(rel)) {
+      // Outside the project (e.g. scratch dirs) is nobody's business, except the record of
+      // another project or the shared memory under ~/.eccode/: those are the CLI's alone.
+      let real = abs;
+      try {
+        real = fs.realpathSync(abs);
+      } catch {
+        // not there yet: judge the path as given
+      }
+      if (RECORD_FILES.test(toPosix(abs)) || RECORD_FILES.test(toPosix(real))) {
+        out('deny', `ECCode record and memory files are written only by the eccode CLI, wherever they live (${abs}). Use eccode commands (eccode memory …, eccode improve …); never edit them directly.`);
+      }
+      return;
+    }
     checkEdit(root, rel, role);
   }
 }

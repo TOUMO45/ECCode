@@ -159,7 +159,9 @@ test('#2 guard binds the actor the CLI will use: repeated --actor, inline env, t
   }
   // Main session: inline env cannot bypass the sequential-roles rule either.
   assert.strictEqual(guardBash(ctx.dir, 'ECCODE_ACTOR=technical-reviewer eccode gate review design --file r.json', null), 'deny');
-  assert.strictEqual(guardBash(ctx.dir, 'eccode gate reopen design --actor user --resolution "the user decided"', null), 'allow');
+  // Review F5: no agent context mints user authority, the main session included (tests/review-F4-F5-guard.test.js).
+  assert.strictEqual(guardBash(ctx.dir, 'eccode gate reopen design --actor user --resolution "the user decided"', null), 'deny');
+  assert.strictEqual(guardBash(ctx.dir, 'eccode gate reopen design --actor orchestrator --resolution "escalation"', null), 'allow');
 });
 
 test('#4 guard fails closed when the record cannot be read', () => {
@@ -235,9 +237,13 @@ test('#11 guard protects memory, improvements, evidence, reviews and handoffs fr
   ]) {
     assert.strictEqual(guardBash(ctx.dir, cmd, 'learning-debugger'), 'deny', cmd);
   }
-  for (const cmd of ['cat .eccode/memory/records/m.json', 'grep -n error .eccode/evidence/ev-x.log', 'cp review.json .eccode/reviews/drafts/r.json', 'eccode gate review design --actor learning-debugger --file .eccode/reviews/drafts/r.json']) {
+  for (const cmd of ['cat .eccode/memory/records/m.json', 'grep -n error .eccode/evidence/ev-x.log', 'cp review.json .eccode/drafts/r.json', 'eccode gate review design --actor learning-debugger --file .eccode/reviews/drafts/r.json']) {
     assert.strictEqual(guardBash(ctx.dir, cmd, 'learning-debugger'), 'allow', cmd);
   }
+  // Review drafts are not record-protected, but (review F4) a shell write obeys the Edit rules:
+  // they are a reviewer's draft area, not an implementer's.
+  assert.strictEqual(guardBash(ctx.dir, 'cp review.json .eccode/reviews/drafts/r.json', 'technical-reviewer'), 'allow');
+  assert.strictEqual(guardBash(ctx.dir, 'cp review.json .eccode/reviews/drafts/r.json', 'learning-debugger'), 'deny');
 });
 
 test('guard: implementers cannot write approved artifacts; document authors can', () => {
