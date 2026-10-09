@@ -1,0 +1,155 @@
+{
+  "decision": "approve",
+  "summary": "Re-review of plan revision 2 (sub-mv1fa538-015d094f; plan.json f24269c8..., plan.md b40a1112..., revision-2-notes.md 65192cb3...). All checks below were re-run after the submission.\n\nF-PL-1 is resolved. My probe confirms the delivery lead's finding (ev:ev-mv1fc5sm-0102d93f): on Node 22.22, `node --test` with an existing file or a matching glob next to a missing explicit file exits 0. My revision-1 recommendation (name the new files) would therefore not have been enough. The new `ls <files> >/dev/null &&` guard exits 2 before the files exist and 0 after, both under /bin/sh and in eccode evidence run's `shell: true` mode.\n\nMy revision-2 plan check (ev:ev-mv1fe3rh-0160b101) finds:\n- 28/28 commands start with a guard. Every guard file is explicit and owned by its task, and by no task in an earlier phase, in its dependency closure or in its phase. Every guard includes a test file that the command runs.\n- The 19 concurrent pairs still have disjoint ownership, with no record paths.\n- All 45 ids are claimed exactly once.\n- All 59 traceability test files are owned and run in their claiming phase.\n- All 113 test files the tasks name are owned by the task or by an earlier or dependency task.\n\nThe delivery lead's guard check, re-run, gives 28/28 (ev:ev-mv1fe3xu-01f0b894), and plan validate is clean (ev:ev-mv1fe448-01c5aeff).\n\nThe other findings are also resolved:\n- F-PL-2: the budget decision now precedes phase B, and g4 is merged into g3.\n- F-PL-3: f1 is barred from changing f2's files and must fail and be re-sequenced if it has to. That is enforceable, because ownership already excludes those files and the RS-15 void path runs through e2's void rule and e4's reconciler wiring into reservations.js, which f1 owns.\n- F-PL-4: limits.test.js is in b1's guard.\n\nThe .gitignore additions (test/.out/, test/browser/out/) hide only generated output from git-based completion accounting. The lesson decision still holds (ev:ev-mv1feiv1-01239edf).\n\nOne new minor (F-PL-5) remains open: e5 and f3 run all frontend unit tests but do not own d4's extraction.test.js.",
+  "criteria": [
+    {
+      "id": "phase:b-foundation",
+      "description": "Phase B (b1, b2, b4, b3) is independently verifiable and proves RS-06..RS-11, NFR1, NFR4",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1fe3rh-0160b101",
+        "ev:ev-mv1fc5sm-0102d93f",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.0",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.b2-domain.verification.command"
+      ],
+      "notes": "b1's guard includes limits.test.js (F-PL-4). b2's guard lists planner-fixture, planner-oracle.property, states, derive, money, time, compat, explain and planner-generator."
+    },
+    {
+      "id": "phase:c-core-flow",
+      "description": "Phase C (c1, c2, c3, c5, c6) is independently verifiable and proves RS-12, RS-14, RS-16, RS-28, RS-30, RS-33, RS-36",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1fe3rh-0160b101",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.1",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.c6-reserve-concurrency-browser.verification.command"
+      ]
+    },
+    {
+      "id": "phase:d-extraction",
+      "description": "Phase D (d1..d5) is independently verifiable and proves RS-01, RS-02, RS-03, RS-05, RS-39, NFR6 ([D]/[B])",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1fe3rh-0160b101",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.2",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.d5-extraction-contract-browser.verification.command"
+      ]
+    },
+    {
+      "id": "phase:e-payments",
+      "description": "Phase E (e0..e6) is independently verifiable and proves RS-04, RS-18..21, RS-23..25, RS-27, RS-31(a)",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1fe3rh-0160b101",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.3",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.e6-execute-concurrency-browser.verification.command"
+      ],
+      "notes": "Live PayPal parts stay outside the tasks. e6's guard checks that the live journey file exists but never runs it."
+    },
+    {
+      "id": "phase:f-compensation",
+      "description": "Phase F (f1..f4) is independently verifiable and proves RS-13, RS-15, RS-17, RS-22, RS-26, RS-32(a), RS-37, RS-38",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1fe3rh-0160b101",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.4",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.f1-supersession-refusal-expiry.acceptanceCriteria",
+        "artifact:.eccode/artifacts/plan/plan.md#concurrency-boundary-in-phase-f-f-pl-3"
+      ]
+    },
+    {
+      "id": "phase:g-release",
+      "description": "Phase G (g1, g2, g3 with the former g4) is independently verifiable and proves RS-29, RS-34, RS-35, NFR2, NFR3, NFR5",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1fe3rh-0160b101",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.5",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.g3-final-scans-browser.verification.command"
+      ],
+      "notes": "g3's merged command is: guard, then npm test, npm run test:browser and clean-checkout.sh, with --timeout 2400. The evidence table cites the phase runs and g3's own earlier runs, which avoids a circular reference to its final verification run."
+    },
+    {
+      "id": "lessons",
+      "description": "Lesson decision mem-sd-mv1audrd-013b7102 = not-applicable holds",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1feiv1-01239edf",
+        "ev:ev-mv1eo87o-01c933d5",
+        "ev:ev-mv1fe3rh-0160b101",
+        "artifact:.eccode/artifacts/plan/plan.md#memory-consulted"
+      ],
+      "notes": "The installed guard is still the repaired per-target-root version (sha256 d43f4b54...). No task builds a write guard, and no ownership glob reaches .eccode/, .claude/ or hooks."
+    },
+    {
+      "id": "area-ownership",
+      "description": "Narrowed ownership (frontend per-phase unit files, test/browser per-task files plus helpers) is disjoint for concurrent pairs and covers every file the tasks name",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1fe3rh-0160b101",
+        "artifact:.eccode/artifacts/plan/plan.md#task-overview-owner-own-files-in-the-guard-verification"
+      ],
+      "notes": "See F-PL-5 (minor) on e5/f3 and extraction.test.js."
+    },
+    {
+      "id": "area-gitignore",
+      "description": ".gitignore additions do not hide authored files from completion accounting",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1fe3rh-0160b101",
+        "artifact:.eccode/artifacts/plan/plan.md#task-overview-owner-own-files-in-the-guard-verification"
+      ],
+      "notes": "The engine counts task changes with git diff plus `ls-files --others --exclude-standard` (lib/project.js gitChangedFiles), so ignored paths are invisible to it. The added paths (data/, .env, reports/, test/.out/, test/browser/out/) hold only runtime data, latency logs and screenshots, none of them authored. The RS-29 scan still reads the screenshots on disk."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-PL-5",
+      "severity": "minor",
+      "title": "e5 and f3 run every frontend unit test but do not own d4's extraction.test.js",
+      "detail": "The frontend commands run \"test/unit/frontend/**/*.test.js\". e5 owns format, dashboards and payments; f3 owns format, dashboards, payments and recovery. Neither owns test/unit/frontend/extraction.test.js (d4), although both own public/**. If a payment or recovery change to a shared UI module legitimately changes what the extraction test asserts, e5 or f3 cannot update that test, and its own verification fails. g1 owns every per-phase file; e5 and f3 should too.",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.e5-frontend-payments.files",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.f3-frontend-recovery.files"
+      ],
+      "recommendation": "Resolved when e5 and f3 also own test/unit/frontend/extraction.test.js. These are sequential tasks in different phases, so disjointness is unaffected. Alternatively, the plan states that a needed change there is reported and handled by rework."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "F-PL-1",
+      "resolution": "Every command now starts with an ls existence guard over explicit files that only that task creates. My probe confirms that naming new files is not enough on Node 22.22, because a missing explicit file is ignored when anything else matches; the guard exits 2 before the files exist and 0 after, including under evidence run's shell mode. My revision-2 check finds 28/28 valid guards, each including a test the command runs. The delivery lead's guard check, re-run, gives 28/28.",
+      "evidence": [
+        "ev:ev-mv1fc5sm-0102d93f",
+        "ev:ev-mv1fe3rh-0160b101",
+        "ev:ev-mv1fe3xu-01f0b894",
+        "artifact:.eccode/artifacts/plan/plan.md#verification-commands-fail-before-the-work-exists-f-pl-1"
+      ]
+    },
+    {
+      "id": "F-PL-2",
+      "resolution": "plan.md now requires the user's budget decision (raise maxRuntimeMinutes, or accept the descoping order) to be recorded before the first phase-B dispatch. g4 is merged into g3, giving 28 tasks and a 19-dispatch critical path. Status shows 192/480 minutes used. The budget risk itself remains the user's decision.",
+      "evidence": [
+        "ev:ev-mv1fe448-01c5aeff",
+        "artifact:.eccode/artifacts/plan/plan.md#before-phase-b-starts-f-pl-2"
+      ]
+    },
+    {
+      "id": "F-PL-3",
+      "resolution": "f1 has a new acceptance criterion: it changes none of void-rule.js, reconciler.js, saga.js, calls.js, admin.js or routes/admin.js, and fails and is re-sequenced after f2 if it would need to. Ownership already excludes those files. RS-15's void path (e2's void rule, e4's reconciler expiry wired into reservations.js, which f1 owns) and the re-plan drain (into supersession.js, f1) need no f2-owned change. The constraint is therefore enforceable and its fallback is explicit.",
+      "evidence": [
+        "ev:ev-mv1fe3rh-0160b101",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.f1-supersession-refusal-expiry.acceptanceCriteria"
+      ]
+    },
+    {
+      "id": "F-PL-4",
+      "resolution": "b1 adds test/unit/config/limits.test.js with the F-TR-17 case (default 5; a value above 5 refused outside test mode; 1000 accepted with RS_TEST_OFFLINE=1). The file is in b1's ls guard and is run by its glob (checked by my r2 plan check).",
+      "evidence": [
+        "ev:ev-mv1fe3rh-0160b101",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.b1-foundation-core.verification.command"
+      ]
+    }
+  ],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}

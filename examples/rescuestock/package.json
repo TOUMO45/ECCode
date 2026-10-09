@@ -1,0 +1,24 @@
+{
+  "name": "rescuestock",
+  "version": "0.1.0",
+  "description": "RescueStock: rescue near-expiry stock by planning bundle purchases across suppliers.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node scripts/check-node.cjs && node --disable-warning=ExperimentalWarning src/index.js",
+    "seed": "node scripts/check-node.cjs && node --disable-warning=ExperimentalWarning scripts/seed.js",
+    "pretest": "node scripts/check-node.cjs && node scripts/reset-test-out.js",
+    "test": "node scripts/check-node.cjs && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-concurrency=4 \"test/unit/**/*.test.js\" \"test/api/**/*.test.js\" \"test/integration/**/*.test.js\" \"test/eval/**/*.test.js\" \"test/scan/**/*.test.js\" \"test/timing/**/*.test.js\"",
+    "posttest": "node scripts/report-p95.js",
+    "test:browser": "node scripts/check-node.cjs && node --disable-warning=ExperimentalWarning --test --test-concurrency=1 \"test/browser/**/*.test.js\"",
+    "test:live-model": "node scripts/check-node.cjs && node --disable-warning=ExperimentalWarning test/live/run-live-model.js",
+    "test:live-paypal": "node scripts/check-node.cjs && node --disable-warning=ExperimentalWarning --test --test-concurrency=1 \"test/live/paypal/**/*.test.js\""
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
