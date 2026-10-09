@@ -1,0 +1,23 @@
+ok   three completions union, order kept, duplicates collapsed
+ok   plan.imported resets the union (mirrors the reducer)
+ok   other tasks and other phases do not leak into a task
+ok   task.reset and task.claimed between completions change nothing
+ok   missing filesChanged / missing data / non-string task are tolerated
+FAIL a string filesChanged (not an array) is not iterated character by character: reducer stores the raw value; the union must not spray characters
++ actual - expected
+
++ [
++   's',
++   'r',
++   'c',
++   '/',
++   'x',
++   '.',
++   'j'
++ ]
+- []
+
+ok   __proto__ as a task id does not poison the map
+ok   snapshot field is unioned with the log (snapshot-only entry survives)
+info 200k task.completed events unioned in 115 ms
+ok   performance: 200k events

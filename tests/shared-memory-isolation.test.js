@@ -14,6 +14,11 @@ const H = require('./helpers');
 const { setup } = require('./lesson-fixture');
 
 test('a lesson promoted to this machine\'s ~/.eccode/memory is not retrieved by a fixture claim', () => {
+  // The isolation itself: requiring the helpers pointed the variable at a fresh directory before any fixture ran
+  // (on a suite without it both sides would be undefined, so the type is checked too).
+  assert.strictEqual(typeof H.SHARED_MEMORY, 'string', 'tests/helpers.js exports the directory it isolates shared memory to');
+  assert.strictEqual(process.env.ECCODE_SHARED_MEMORY, H.SHARED_MEMORY, 'every test process starts with ECCODE_SHARED_MEMORY set by tests/helpers.js');
+  assert.ok(fs.existsSync(H.SHARED_MEMORY) && !fs.existsSync(path.join(H.SHARED_MEMORY, 'records')), 'and that directory holds no records');
   const saved = { HOME: process.env.HOME, USERPROFILE: process.env.USERPROFILE, ECCODE_SHARED_MEMORY: process.env.ECCODE_SHARED_MEMORY };
   try {
     // A verified lesson, promoted to a shared store that is then installed as the fake home's ~/.eccode/memory.
@@ -30,11 +35,12 @@ test('a lesson promoted to this machine\'s ~/.eccode/memory is not retrieved by 
     const seen = tasks.claim(leaky.store, leaky.config, 'credits', 'backend-engineer').event.data.lessons || [];
     assert.deepStrictEqual(seen.map((l) => l.id), [shared.id], 'the fake home\'s shared store is reachable without isolation');
 
-    // The suite's default (what every test process starts with): the same claim retrieves nothing.
+    // With the suite's directory restored (setup() replaced it): the engine honours the variable over the home
+    // directory, so the same claim retrieves nothing.
     const isolated = setup({ withLesson: false });
     process.env.ECCODE_SHARED_MEMORY = H.SHARED_MEMORY;
     const none = tasks.claim(isolated.store, isolated.config, 'credits', 'backend-engineer').event.data.lessons || [];
-    assert.deepStrictEqual(none, [], 'helpers.js isolates the shared store from the machine\'s home directory');
+    assert.deepStrictEqual(none, [], 'the variable set by tests/helpers.js takes precedence over the machine\'s home directory');
     assert.ok(fs.existsSync(H.SHARED_MEMORY) && !fs.existsSync(path.join(H.SHARED_MEMORY, 'records', `${shared.id}.json`)));
   } finally {
     for (const [k, v] of Object.entries(saved)) {
