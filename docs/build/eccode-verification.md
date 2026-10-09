@@ -33,9 +33,33 @@ Run by the lead on 2026-10-09, Linux, Node 22.22.0, `ECCODE_TEST=1`. Raw outputs
 - Root cause: the guard tokenized native Windows paths with POSIX escaping, dropping separators: a shell write to a shared-memory record was not denied on Windows (fail-open), and an absolute path after a `cd` was denied as relative.
 - Repair: branch `eccode/win32-guard-paths`, commit `cde0b84` (record patterns accept both separators before tokenizing; the CLI is recognised by its Windows path; the tokenizer keeps path backslashes on win32, failing closed). 4 new tests; 237 pass on Linux. Independent review pending. **A Windows run is still required to confirm**; the CI job remains the confirmation.
 
-## Finding-by-finding verdicts
-Filled after the independent verifier's report (`docs/evidence/verification-0.3.0/REPORT.md`).
+## Finding-by-finding verdicts (independent verifier, 2026-10-09; report `docs/evidence/verification-0.3.0/REPORT.md`, probes and results alongside)
+The verifier was a fresh agent context that did not write the repairs. Engine probes ran on `5da8913`'s engine (`lib/`, `bin/`, `schemas/` identical through `279376b`); guard probes used a `git archive` snapshot of `5da8913`'s guard. Linux, Node 22.22. Zero unexpected steps; every accepted bypass is classified NEW or RESIDUAL in the result files.
 
-## Release blockers found so far
-- **RB-1** The documented install path (marketplace default branch) does not install 0.3.0. Resolution: merge the work branch into the default branch or point the marketplace at the release commit; re-verify with a clean plugin install.
-- **RB-2** Windows guard fail-open (above): repaired on a branch, pending independent review and a Windows run.
+| Finding | Demonstrated bypass on 0.3.0 | Variations | Verdict | New defects |
+|---|---|---|---|---|
+| F1 coverage | refused (`REVIEW_REJECTED`) | look-alike ids, duplicates, table criteria, anchors: refused/handled | **Not closed** | NEW-1 blocking: criteria derived from the brief **on disk**, not the pinned bytes; an edited brief launders the required list through verification. NEW-2: a brief with no ids has no required criteria |
+| F2 file coverage | refused (`INVALID_HANDOFF`, `DIRTY_OWNERSHIP`, `DELIVERY_BLOCKED`) | rename, deletion, untracked, committed after approval | **Not closed** | NEW-3 blocking: a file committed between a phase approval and the verification submission disappears from the release check once verification is approved. NEW-4: `git mv` leaves the old path undeclared |
+| F3 evidence binding | refused | whitespace, tree digest, altered log, wrong actor | Closed with residual | NEW-5 (non-blocking): `--cwd` not bound (schema refuses `verification.cwd`); environment not bound (documented) |
+| F4 reviewer shell writes | all ten probe cases and ~40 variants denied | | **Not closed** | NEW-6 blocking: `>|` clobber redirect allowed for every role. Known-shape escapes (rm, git apply, patch, curl -o, tar -x, symlink outside, …) documented as residual 1 |
+| F5 human channel | `--actor=user`, `User`, exported `ECCODE_ACTOR`, piped `yes`, every delegation misuse: refused | | Closed with residual | NEW-7 (non-blocking): a shell function wrapper hides the CLI from the guard; the CLI itself has no role binding |
+| F6 shared memory | one byte of solution/status/trust/layer, deleted or reordered index lines, replaced file: quarantined | | Closed with residual | NEW-8: metadata outside the hash (reviewer name, evidence status) unbound; NEW-9: inline `ECCODE_SHARED_MEMORY` allowed by the guard; residual 3 confirmed |
+| F7 trusted state | forged snapshot → `SNAPSHOT_DIVERGED`; crash-shaped torn tail recovers; fault-shaped tail → `LOG_ROLLBACK`; 8 concurrent writers consistent | | Closed with residual | rewrite-and-rehash of the whole chain undetected (residual 3); a forged `actor: user` event appended offline passes audit and the handoff calls it a confirmed user decision (wording over-claims) |
+| F8 limits | concurrent `run start` respects the cap; reservation arithmetic; unknown usage stays unknown | | **Closed** | — |
+| F9 release | validate, pack, offline tarball install, `require('eccode')`, eol policy, fixture scan, versions, upgrade/rollback | | Closed with residual | Windows not run; tarball ships 8 MB of docs/evidence (hygiene) |
+
+Overblocking: none found; every legitimate completion passed.
+
+## Repairs in progress (branch `eccode/verification-repairs`, worktree)
+| Defect | Repair | Status |
+|---|---|---|
+| NEW-6 `>|` | tokenizer keeps the bar of a clobber redirect in the operator word | committed, 4 tests, pending independent review |
+| Nested root (pilot) | hook cwd finds the root first; every target judged by the nearest record above it | committed, pending review |
+| NEW-9 | `ECCODE_SHARED_MEMORY/ROOT/SEQUENTIAL_ROLES/HOOKS` refused inline | committed, pending review |
+| NEW-7 | shell function/alias wrapper around the CLI refused | committed, pending review |
+| NEW-1, NEW-2, NEW-3, NEW-4, NEW-5 | engine repairs (implementer agent): pinned-bytes check for required criteria, baseline-commit release diff plus verification-approval check, no-ids refusal, `--no-renames`, `verification.cwd` bound | in progress |
+
+## Release blockers
+- **RB-1** The documented install path (marketplace default branch) does not install 0.3.0. Resolution: merge the work branch into the default branch or point the marketplace at the release commit; re-verify with a clean plugin install. Needs the user (a push to the default branch).
+- **RB-2** Windows: two guard tests fail on 5da8913; repaired and independently approved (`4fc7e87`, merged in `a088c6a`); a Windows run is still required.
+- **RB-3** NEW-1, NEW-3, NEW-6 (blocking): repairs above; the pilot's payment phases do not start until these are merged after independent review (readiness gate).
