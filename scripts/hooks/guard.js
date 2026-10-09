@@ -46,20 +46,28 @@ const LIB = path.join(__dirname, '..', '..', 'lib');
 const IMPLEMENTERS = new Set(['frontend-engineer', 'backend-engineer', 'ai-engineer', 'test-engineer', 'devops-engineer', 'learning-debugger', 'delivery-lead']);
 const ROLES = new Set([...IMPLEMENTERS, 'product-architect', 'architecture-reviewer', 'technical-designer', 'technical-reviewer', 'security-reviewer']);
 // Record areas written only by the CLI (review drafts are the reviewers' scratch area).
-const RECORD_AREA = String.raw`\.eccode\/(?:events\.jsonl|state\.json|config\.json|\.lock|memory\/|improvements\/|evidence\/|handoffs\/|delivery\/|reviews\/(?!drafts\/))`;
-const RECORD_FILES = new RegExp(String.raw`(^|\/)${RECORD_AREA}`);
+// Both separators are accepted, and repeated ones (a backslash doubled inside a quoted program): an agent on Windows writes native paths (C:\proj\.eccode\state.json)
+// and a command string is read before any path normalisation.
+const RECORD_AREA = String.raw`\.eccode[\\/]+(?:events\.jsonl|state\.json|config\.json|\.lock|memory[\\/]+|improvements[\\/]+|evidence[\\/]+|handoffs[\\/]+|delivery[\\/]+|reviews[\\/]+(?!drafts[\\/]+))`;
+const RECORD_FILES = new RegExp(String.raw`(^|[\\/])${RECORD_AREA}`);
 // Shell commands that write their (later) path argument, and code that writes files.
 const SHELL_WRITE = new RegExp(String.raw`(>|\btee\b|\b(?:sed|perl)\s+(?:-\w+\s+)*-\w*i|\bmv\b|\bcp\b|\brm\b|\btruncate\b|\bdd\b|\bln\b|\binstall\b|\brsync\b|\btouch\b)[^|;&]*${RECORD_AREA}`);
 const CODE_WRITE = /\b(writeFileSync|writeFile|writeSync|appendFileSync|appendFile|createWriteStream|rmSync|rmdirSync|unlinkSync|unlink|renameSync|rename|copyFileSync|copyFile|cpSync|truncateSync|ftruncateSync|symlinkSync|fs\.rm|promises\.rm|write_text|write_bytes|os\.remove|os\.rename|os\.replace|os\.rmdir|os\.truncate|shutil\.\w+|File\.(?:write|delete)|IO\.write|FileUtils\.\w+|file_put_contents|fwrite|Deno\.(?:write\w*|remove\w*|rename|copyFile\w*|truncate\w*))\b|\bopen\s*\([^)]*['"][wax]b?\+?['"]/;
 // Variables that change who the CLI acts as, or its clock (order rules), when set inline.
 const IDENTITY_ENV = /^(?:ECCODE_ACTOR|ECCODE_TEST|ECCODE_NOW)(?:=|$)/;
-const ECCODE_WORD = /(^|\/)eccode(\.js)?$/;
+const ECCODE_WORD = /(^|[\\/])eccode(\.js)?$/;
 // git subcommands that can revert, stash or delete working-tree files.
 const GIT_REVERTING = new Set(['checkout', 'restore', 'reset', 'stash', 'clean', 'rm', 'mv']);
 // Words that run the command after them (their own flags and numeric arguments are skipped).
 const WRAPPERS = new Set(['env', 'exec', 'command', 'builtin', 'nohup', 'nice', 'time', 'timeout', 'sudo', 'npx', 'xargs', 'stdbuf']);
 const CHDIR = new Set(['cd', 'pushd', 'popd']);
 const MAX_DEPTH = 4;
+// The tokenizer reads a command line the way the Bash tool's shell does on every platform,
+// including Git Bash on Windows: an unquoted backslash is an escape, so an unquoted native path
+// (C:\Users\me\x.json) is read as C:Usersmex.json, which is what bash would write. A native path the
+// agent quotes keeps its backslashes, and then the record patterns and the CLI word pattern above
+// accept both separators. Keeping backslashes unconditionally was tried and rejected in review: it
+// made `.eccode/drafts/.\./state.json` look like a draft while bash writes the record.
 
 // Where each kind of role may write under .eccode/ (drafts are shared scratch).
 const DOC_AUTHORS = new Set(['product-architect', 'technical-designer', 'delivery-lead']);
@@ -472,13 +480,18 @@ function main(input) {
   }
 }
 
-let raw = '';
-process.stdin.on('data', (c) => (raw += c));
-process.stdin.on('end', () => {
-  try {
-    main(JSON.parse(raw || '{}'));
-  } catch (err) {
-    process.stderr.write(`eccode guard: internal error, allowing tool call: ${err.message}\n`);
-  }
-  process.exit(0);
-});
+if (require.main === module) {
+  let raw = '';
+  process.stdin.on('data', (c) => (raw += c));
+  process.stdin.on('end', () => {
+    try {
+      main(JSON.parse(raw || '{}'));
+    } catch (err) {
+      process.stderr.write(`eccode guard: internal error, allowing tool call: ${err.message}\n`);
+    }
+    process.exit(0);
+  });
+} else {
+  // Unit-test surface (tests/review-F9-win32-guard.test.js); the hook itself always runs as a script.
+  module.exports = { splitCommands, eccodeActors, RECORD_FILES, ECCODE_WORD };
+}
