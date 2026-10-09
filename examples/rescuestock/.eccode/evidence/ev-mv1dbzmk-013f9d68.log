@@ -1,0 +1,77 @@
+$ node /home/user/ECCode/examples/rescuestock/.eccode/drafts/sec-design-spec-walk.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md --probes
+# cwd: .
+# exit: 0
+spec /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md sha256 6771847aff929e685175dffc4f0f5cb53f41102a20eab3597cb139c1d14f1aa5 lines 1552
+
+REFUTED   H1: Idempotency key reused on ANOTHER plan replays the first plan's reservation (no 422)
+   scope: null
+   hash: null
+   reserve row: `POST /api/plans/:id/reserve` | header `Idempotency-Key`; body `{}`
+
+REFUTED   H2: Anonymous caller locks out any known username (admin, supplier-a..e, cafe1/2), correct password refused
+   throttle: null
+   rule: null
+   known usernames: one supplier user per supplier (`supplier-a` … `supplier-e`) and two customers (`cafe1`, `cafe2`); The admin account `admin` is created
+   per-(username,IP) keying present: true
+
+REFUTED   H3: The literal .env.example placeholder passes the secret checks (demo password, fake webhook secret)
+   "<placeholder>".length = 13; demo min NaN (accepted: false); admin min 16 (accepted: false)
+   rows: | `RS_DEMO_PASSWORD` | `<placeholder>` | ≥ 12 chars; placeholder refused; shared by all demo accounts when set; unset → per-account random passwords (SEC-5) | ; | `RS_FAKE_WEBHOOK_SECRET` | `<placeholder>` | ≥ 32 bytes; placeholder refused; when unset a random key is generated once and stored in `meta` (SEC-5) |
+   any rule refusing placeholder values: true
+
+REFUTED   H4: Unsigned webhook flood: no rate limit, one stored row + one outbound PayPal verify call per POST, rows never purged
+   rate-limit section mentions webhooks: true
+   retention: null
+   insert: `FAILURE` or missing headers → insert a row with `signature_status = 'invalid'`
+   verify: Sandbox: `POST /v1/notifications/verify-webhook-signature`
+
+REFUTED   H5: RS_PAYPAL_BASE_URL=http://127.0.0.1:<port> runs under `npm start` and is labelled "PayPal Sandbox", not "Simulated"
+   base: null
+   label: With the Sandbox adapter, every payment element shows "PayPal Sandbox — no real money"
+   loopback gated to tests or labelled simulated: true
+
+REFUTED   H6: One self-registered customer can hold every supplier's stock for 30 min, repeatedly (no per-customer reservation cap, no payment needed)
+   seed: inventory `on_hand = 1, reserved = 0`
+   signup: Customers may also self-register (`RS_ALLOW_SIGNUP`, default `1`)
+   ttl: `expires_at = now + RS_RESERVATION_TTL_MIN` (default 30)
+   per-customer reservation cap present: true
+
+REFUTED   H7: CLI stdout cap is inconsistent between Security T25 and the CLI adapter
+   T25: stdout cap 8 MiB
+   adapter: stdout: NDJSON (cap 8 MiB)
+
+REFUTED   H8: Injected image text can surface verbatim as a model-authored "question" in the customer UI (field not enum-bound, text not templated)
+   schema: null
+   validator: null
+   question.field enum-bound: true
+
+REFUTED   H9: Customer can submit any value with provenance "image" or "user_text" at confirm
+   route: null
+   server derives provenance: true
+
+REFUTED   H10: Throttle key normalisation unspecified while the user lookup is case-insensitive
+   users: username TEXT NOT NULL UNIQUE COLLATE NOCASE
+   failures: login_failures (id INTEGER PRIMARY KEY, username_key TEXT NOT NULL
+   normalisation stated: true
+
+REFUTED   H11: Origin check accepts http(s)://<Host>; no Host header allow-list
+   origin: When an `Origin` header is present it must equal `RS_PUBLIC_URL`'s origin or `http(s)://<Host>`
+   host allow-list stated elsewhere: true
+
+REFUTED   H12: No file-mode rule for data/app.db (password hashes, sessions) and data/uploads/
+   mode rule present: true
+
+REFUTED   H13: One customer (or a handful of self-registered ones) can exhaust the shared daily model budget for everyone
+   budget: null
+   per-customer daily share: true
+
+REFUTED   H14: Forced reset strands authorized holds and unresolved captures (archived rows are ignored by the reconciler)
+   archive: Payment operations and provider calls get `archived_at`, never DELETE
+   reconciler: Archived operations are ignored by the reconciler and the reset guard
+   voids before archiving: true
+
+REFUTED   H15: Fake approval page/listener: no route contract, no stated id entropy, no "Simulated" label on the page itself
+   contract: true
+   page labelled: true
+
+probe result: 0 of 15 hypotheses CONFIRMED: none

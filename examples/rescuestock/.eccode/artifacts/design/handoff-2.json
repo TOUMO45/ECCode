@@ -1,0 +1,44 @@
+{
+  "from": "technical-designer",
+  "to": "technical-reviewer",
+  "gate": "design",
+  "objective": "Re-review the RescueStock technical design, revision 2: submission sub-mv1dcqpr-016ee2c9 (spec.md sha256 2b675ffa59684e4d6d3e7cb4d81ae0eee500ee10f93de5879863eddd7ac23efe, revision-2-notes.md sha256 1699de251936f8d11846878725320bc3d8065362677817aad9732427bb3f7bb1). It responds to rev-mv1cta5m-0114480d and to the security reviewer's draft design-security-1.md.",
+  "context": "Revision 2 adds a 'Findings disposition (revision 2)' section at the top of spec.md, with one row per finding (F-TR-1..13, SEC-1..20). revision-2-notes.md maps each finding id to the sections that resolve it and lists the new evidence. Majors: F-TR-1 (idempotency scope (user, key) with a path/body fingerprint, reservation-level UNIQUE key guard after purge), F-TR-2 (total derivation: row 4a replanning, defensive row 14, re-plan queue never drops entries, random-walk property test), F-TR-3 (sender table for every call kind, crash-after-commit test, row-2 escalation of approved with an outstanding authorize), F-TR-4 (flag-free check-node.cjs gate before every flagged node call, real start line tested on /opt/node20 and /opt/node21), SEC-1 ((username, IP) hard limit, cross-IP delay only, normalised keys), SEC-2 (1 live reservation per customer, 10 requests per day), SEC-3 (loopback PayPal/Anthropic URLs only with RS_TEST_OFFLINE=1, plus the Test-mode banner). The 45 required ids are unchanged, each with a section and a test (traceability check ev:ev-mv1dc6eq-01ea78b5).",
+  "inputs": [
+    ".eccode/reviews/rev-mv1cta5m-0114480d.json",
+    ".eccode/reviews/drafts/design-security-1.md",
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/drafts/tr-design-*.mjs and sec-*.mjs (reviewers' probes, re-run)"
+  ],
+  "expectedOutput": "A recorded review of design submission sub-mv1dcqpr-016ee2c9 that resolves or re-opens each finding of rev-mv1cta5m-0114480d by id and covers the 45 required criteria.",
+  "acceptanceCriteria": [
+    "Each major (F-TR-1..4, SEC-1..3) is checked against its stated resolution condition, in the sections named in revision-2-notes.md",
+    "The 'Findings disposition (revision 2)' section has a row for every minor and info finding (F-TR-5..13, SEC-4..20). SEC-10 is explicitly partly deferred (OQ-D7) with its reason (NFR6's stated configuration conflicts with a default share).",
+    "gate show design still lists the 45 required ids"
+  ],
+  "completedWork": "Revised spec.md and wrote revision-2-notes.md. New evidence: ev:ev-mv1cxbbt-01ff7b59 (start gate on older Node), ev:ev-mv1d13ib-01f6f742 (revised derivation total over a 20,000-walk model; it found and fixed an extra gap, an unknown admin refund, now in row 3), ev:ev-mv1d1u17-01b84ac4 (revised idempotency, throttle and caps block H1/H2/H6). Re-runs of the reviewers' checks: ev:ev-mv1dbzry-01cf8ba0 (structural walk PASS), ev:ev-mv1dbzmk-013f9d68 (probes 0/15 confirmed; text-level), ev:ev-mv1dc6eq-01ea78b5 (traceability 45/45). New design extensions flagged for the orchestrator: replanning status (OQ-D6), SEC-10 default (OQ-D7), plus the earlier OQ-D1 reasons.",
+  "filesChanged": [
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/design/revision-2-notes.md",
+    ".eccode/artifacts/design/handoff-2.json",
+    ".eccode/drafts/design-r2-node-gate.mjs",
+    ".eccode/drafts/design-r2-derive-walk.mjs",
+    ".eccode/drafts/design-r2-sec-model.mjs"
+  ],
+  "evidence": [
+    "ev:ev-mv1cxbbt-01ff7b59",
+    "ev:ev-mv1d13ib-01f6f742",
+    "ev:ev-mv1d1u17-01b84ac4",
+    "ev:ev-mv1dbzry-01cf8ba0",
+    "ev:ev-mv1dbzmk-013f9d68",
+    "ev:ev-mv1dc6eq-01ea78b5"
+  ],
+  "remainingIssues": [
+    "SEC-10 partly deferred: per-customer daily model share exists but defaults off (OQ-D7; user's choice with Q10).",
+    "OQ-D6: 'replanning' extends the goal's aggregate status set (rows 4a/14).",
+    "SEC-18 / OQ-D5: PayPal-Request-Id replay and final_capture behaviour stay verify until the user's Sandbox run.",
+    "Carried: OQ-D1..D5, Q1-Q10 (Q9 Node floor: both branches designed)."
+  ],
+  "nextAction": "technical-reviewer (with security-reviewer input): review design submission sub-mv1dcqpr-016ee2c9 with eccode gate review design, responding to rev-mv1cta5m-0114480d.",
+  "lessonsConsulted": []
+}

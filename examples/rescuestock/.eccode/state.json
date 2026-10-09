@@ -1,6 +1,6 @@
 {
-  "seq": 96,
-  "lastHash": "78df65459fbc8a5103a959979bddf2a47e73a8713a6ddbdae1a66f79a5ac458a",
+  "seq": 107,
+  "lastHash": "c58b869a92e67a09e8bad6b397cc1bc46598c1b2e98cb1d2b184d9681a35cb2b",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -63,7 +63,7 @@
     "design": {
       "id": "design",
       "kind": "design",
-      "status": "changes_requested",
+      "status": "submitted",
       "iterations": 1,
       "authors": [
         "technical-designer"
@@ -81,6 +81,23 @@
           ],
           "respondsTo": null,
           "notes": "Design rev 1 against brief sub-mv1awqkf-017ea892; resolves ARCH-22..26; evidence ev:ev-mv1bgxsc-010de90b (execArgv/NODE_OPTIONS probe), ev:ev-mv1bh8wb-011b5cf0 (claude CLI stream-json flag constraints)"
+        },
+        {
+          "id": "sub-mv1dcqpr-016ee2c9",
+          "actor": "technical-designer",
+          "at": "2026-10-09T19:39:18.207Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/design/spec.md",
+              "sha256": "2b675ffa59684e4d6d3e7cb4d81ae0eee500ee10f93de5879863eddd7ac23efe"
+            },
+            {
+              "path": ".eccode/artifacts/design/revision-2-notes.md",
+              "sha256": "1699de251936f8d11846878725320bc3d8065362677817aad9732427bb3f7bb1"
+            }
+          ],
+          "respondsTo": "rev-mv1cta5m-0114480d",
+          "notes": "Design rev 2: resolves F-TR-1..4 and SEC-1..3 (majors), F-TR-5..13 and SEC-4..20 (SEC-10 partly deferred: share knob default off, OQ-D7). Evidence ev:ev-mv1cxbbt-01ff7b59, ev:ev-mv1d13ib-01f6f742, ev:ev-mv1d1u17-01b84ac4, ev:ev-mv1dbzry-01cf8ba0, ev:ev-mv1dbzmk-013f9d68, ev:ev-mv1dc6eq-01ea78b5"
         }
       ],
       "reviews": [
@@ -840,6 +857,146 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-09T19:17:54.571Z"
+    },
+    "ev-mv1cxbbt-01ff7b59": {
+      "id": "ev-mv1cxbbt-01ff7b59",
+      "kind": "command",
+      "label": "design r2 probe (F-TR-4): flag-free check-node.cjs before the flagged node call names the required version on Node 20/21, both Q9 branches",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/design-r2-node-gate.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 583,
+      "log": ".eccode/evidence/ev-mv1cxbbt-01ff7b59.log",
+      "logSha256": "325cc8098ba43ed805f0a7877d438324cd1bf8e54ad03850321454d8dcb66cca",
+      "logFileSha256": "5eb77654cc4e73fde88bebd67a9a0cddff3a2a3534505a61b83a91b917b48674",
+      "outputTail": "v20.20.0 >=22.13 branch: exit=1 namesRequiredVersion=true started=false OK | RescueStock needs Node >= 22.13 (found 20.20.0). See README.\nv20.20.0 22.5 branch: exit=1 namesRequiredVersion=true started=false OK | RescueStock needs Node >= 22.5 (found 20.20.0). See README.\nv21.7.3 >=22.13 branch: exit=1 namesRequiredVersion=true started=false OK | RescueStock needs Node >= 22.13 (found 21.7.3). See README.\nv21.7.3 22.5 branch: exit=1 namesRequiredVersion=true started=false OK | RescueStock needs Node >= 22.5 (found 21.7.3). See README.\nv22.22.0 >=22.13 branch: exit=0 namesRequiredVersion=false started=true OK | STARTED 22.22.0\nv22.22.0 22.5 branch: exit=0 namesRequiredVersion=false started=true OK | STARTED 22.22.0\ngate-before-flags confirmed\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:27:18.471Z"
+    },
+    "ev-mv1d13ib-01f6f742": {
+      "id": "ev-mv1d13ib-01f6f742",
+      "kind": "command",
+      "label": "design r2 probe (F-TR-2/3/5): revised derivation rows; reviewer scenarios S09-S20 and a 20,000-walk random model never reach the fallback row",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/design-r2-derive-walk.mjs 12345",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1382,
+      "log": ".eccode/evidence/ev-mv1d13ib-01f6f742.log",
+      "logSha256": "c0274b9a9e5cea97c92e87a78cde5867500d19e5eecac57b239de630a1c9b072",
+      "logFileSha256": "c88f3ac65679c26293eabb50f0ccbd733eb06af3cca851c7f6425b990b9a2707",
+      "outputTail": "ok   S09 RS-36(i) -> row 3 refunding (expected refunding)\nok   S10 RS-36(ii) void outstanding -> row 4 cancelling (expected cancelling)\nok   S11 RS-36(ii) refund_failed -> row 2 failed_needs_attention (expected failed_needs_attention)\nok   S07 RS-36(iii) -> row 8 ready_for_pickup (expected ready_for_pickup)\nok   S12 RS-36(iv) -> row 12 plan_found (expected plan_found)\nok   S13 superseded, voids done, replan queued -> row 4a replanning (expected replanning)\nok   S15 executed, A refunded by admin, B collected -> row 7 collected (expected collected)\nok   S15b executed, both refunded by admin -> row 5a cancelled (expected cancelled)\nok   S18 approved with queued authorize, 3 days -> row 2 failed_needs_attention (expected failed_needs_attention)\nok   S20 reserve lost race, replan queued -> row 4a replanning (expected replanning)\nnon-terminal states in a closed version that never escalate: none\ncollect events applied: 121 | names pool size: 703 | collect in pool: 40\nrows hit: 1:237360 10:19850 11:179842 12:752197 13:331945 2:24239 3:3305 4:93337 4a:338250 5:371182 6:42479 7:541 8:1077 9:4396\nfallback row 14 reached: 0\nrevised derivation total over the walk; scenarios as expected\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:30:14.974Z"
+    },
+    "ev-mv1d1u17-01b84ac4": {
+      "id": "ev-mv1d1u17-01b84ac4",
+      "kind": "command",
+      "label": "design r2 probe (F-TR-1, SEC-1, SEC-2, SEC-9): revised idempotency scope, (username,IP) throttle with cross-IP delay, live-reservation cap block the reviewer's attack paths in node:sqlite",
+      "command": "node --disable-warning=ExperimentalWarning /home/user/ECCode/examples/rescuestock/.eccode/drafts/design-r2-sec-model.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 58,
+      "log": ".eccode/evidence/ev-mv1d1u17-01b84ac4.log",
+      "logSha256": "b594b0586bbaf2486e216e332c6e8ec09827b614bacfcef49d32c8c1b092b2f8",
+      "logFileSha256": "37d845dd241d4b3ae98de0c9000048e02e54d1618607c191b1354899e8c595bd",
+      "outputTail": "F-TR-1 plan 7: {\"status\":201} | same key on plan 9: {\"status\":422,\"code\":\"IDEMPOTENCY_KEY_REUSED\"} | rows before/after 1/1/1 -> 1/1/1 | replay plan 7: {\"status\":201,\"replayed\":true} | plan 9 after key purge: {\"status\":422,\"code\":\"IDEMPOTENCY_KEY_REUSED\",\"via\":\"reservation row\"}\nSEC-2 attacker reserves 5 plans: 201,409,409,409,409 | victim reserve: 201\nSEC-1 attacker (1 IP, case variants): 401,401,401,401,401 | 6th same IP: 429 | real admin other IP: {\"status\":200,\"delayMs\":0} | after 20 failures from 4 IPs: {\"status\":200,\"delayMs\":10000} | unknown user 5x then 6th: 401,401,401,401,401 429\n{\"FTR1\":true,\"SEC2\":true,\"SEC1\":true}\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:30:49.340Z"
+    },
+    "ev-mv1dbezm-017cc5ba": {
+      "id": "ev-mv1dbezm-017cc5ba",
+      "kind": "command",
+      "label": "design r2: reviewer traceability check re-run on revised spec (45 ids once each, section + test)",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/tr-design-traceability.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/architecture/brief.md /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 60,
+      "log": ".eccode/evidence/ev-mv1dbezm-017cc5ba.log",
+      "logSha256": "11d73b1a6f21a11960ff528d6b34cd0edcf053a55c0b23075dd371cdc773f4e8",
+      "logFileSha256": "032cf7db4460fd7c80ff2f79f86b477771277757c677d6079edbf29ba71cc87b",
+      "outputTail": "RS-23: section=\"Webhooks\" tests=2 briefTags=[D,LP] specTags=[D,LP]\nRS-24: section=\"Webhooks\" tests=2 briefTags=[D,LP] specTags=[D,LP]\nRS-25: section=\"Provider call protocol §5–6\" tests=1 briefTags=[D] specTags=[D]\nRS-26: section=\"Saga step 6; Recovery; Sender table\" tests=1 briefTags=[D] specTags=[D]\nRS-27: section=\"Security T1/T2\" tests=1 briefTags=[D] specTags=[D]\nRS-28: section=\"Security T3\" tests=1 briefTags=[D] specTags=[D]\nRS-29: section=\"Security › Secrets\" tests=1 briefTags=[D,I] specTags=[D,I]\nRS-30: section=\"RBAC matrix\" tests=1 briefTags=[D] specTags=[D]\nRS-31: section=\"Frontend; fake approval listener\" tests=2 briefTags=[B,LP] specTags=[B,LP]\nRS-32: section=\"Supersession; admin stock_depletion\" tests=2 briefTags=[B,LP] specTags=[B,LP]\nRS-33: section=\"Frontend infeasible state\" tests=1 briefTags=[B] specTags=[B]\nRS-34: section=\"Conventions › Labels; Frontend labels; Security T18\" tests=3 briefTags=[D,B] specTags=[D,B]\nRS-35: section=\"Frontend request page\" tests=1 briefTags=[B,I] specTags=[B,I]\nRS-36: section=\"Background › Rescue status derivation (revision 2); Data Des\" tests=2 briefTags=[D,I] specTags=[D,I]\nRS-37: section=\"Admin reset\" tests=1 briefTags=[D] specTags=[D]\nRS-38: section=\"001_core.sql triggers; ledger writes\" tests=1 briefTags=[D] specTags=[D]\nRS-39: section=\"Retention and deletion; Security T12\" tests=1 briefTags=[D] specTags=[D]\nNFR1: section=\"Deployment › Node floor\" tests=4 briefTags=[D,I] specTags=[D,I]\nNFR2: section=\"Frontend accessibility and states\" tests=1 briefTags=[B] specTags=[B]\nNFR3: section=\"Testing Strategy › Commands\" tests=1 briefTags=[I,D] specTags=[D,I]\nNFR4: section=\"Security › Secrets\" tests=1 briefTags=[D,I] specTags=[D,I]\nNFR5: section=\"Performance\" tests=2 briefTags=[D] specTags=[D]\nNFR6: section=\"AI runtime controls; Observability\" tests=2 briefTags=[D,LM,I] specTags=[D,LM,I]\nbrief ids: 45; spec rows: 45; hard problems: 0; tag warnings: 0\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:38:16.399Z"
+    },
+    "ev-mv1dbzmk-013f9d68": {
+      "id": "ev-mv1dbzmk-013f9d68",
+      "kind": "command",
+      "label": "design r2: security reviewer's spec walk re-run on revised spec (--probes: 0 of 15 hypotheses confirmed; text-level check, H13 refuted only because the share knob exists, default off per SEC-10 disposition)",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/sec-design-spec-walk.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md --probes",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 65,
+      "log": ".eccode/evidence/ev-mv1dbzmk-013f9d68.log",
+      "logSha256": "536881963ea9e68e1788fe3f3c29c20bbd2ddcf5ef35041f5ce6b3a553f4ed0f",
+      "logFileSha256": "63368a5cdb718db09b4e4b8dad3da1e0dfa1ae9c53398eac3ecbeb3fb6adaf9c",
+      "outputTail": "   failures: login_failures (id INTEGER PRIMARY KEY, username_key TEXT NOT NULL\n   normalisation stated: true\n\nREFUTED   H11: Origin check accepts http(s)://<Host>; no Host header allow-list\n   origin: When an `Origin` header is present it must equal `RS_PUBLIC_URL`'s origin or `http(s)://<Host>`\n   host allow-list stated elsewhere: true\n\nREFUTED   H12: No file-mode rule for data/app.db (password hashes, sessions) and data/uploads/\n   mode rule present: true\n\nREFUTED   H13: One customer (or a handful of self-registered ones) can exhaust the shared daily model budget for everyone\n   budget: null\n   per-customer daily share: true\n\nREFUTED   H14: Forced reset strands authorized holds and unresolved captures (archived rows are ignored by the reconciler)\n   archive: Payment operations and provider calls get `archived_at`, never DELETE\n   reconciler: Archived operations are ignored by the reconciler and the reset guard\n   voids before archiving: true\n\nREFUTED   H15: Fake approval page/listener: no route contract, no stated id entropy, no \"Simulated\" label on the page itself\n   contract: true\n   page labelled: true\n\nprobe result: 0 of 15 hypotheses CONFIRMED: none\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:38:43.148Z"
+    },
+    "ev-mv1dbzry-01cf8ba0": {
+      "id": "ev-mv1dbzry-01cf8ba0",
+      "kind": "command",
+      "label": "design r2: security reviewer's structural spec walk re-run on revised spec",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/sec-design-spec-walk.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md --structural",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 72,
+      "log": ".eccode/evidence/ev-mv1dbzry-01cf8ba0.log",
+      "logSha256": "63c88c454d6471fad67d649ca0f7b93714ba2d414bee61d1dafd5ded89acd0ed",
+      "logFileSha256": "65284b2d0c908371868b7ef63fc4d13a91a5300c9a7dda593fd3963d859c8e1e",
+      "outputTail": "OK   RATE_LIMITED: by name x7\nOK   INTERNAL: by name x1\nOK   PROVIDER_ERROR: by name x1\nOK   DB_BUSY: by name x9\nOK   MODEL_BUDGET_EXHAUSTED: by name x2\nOK   PROVIDER_UNAVAILABLE: by name x4\n\n[3] GET routes with side effects\n     L294 GET /api/auth/csrf \n     L298 GET /api/auth/session \n     L321 GET /api/health \n     L322 GET /api/config \n     L327 GET /api/requests \n     L329 GET /api/requests/:id \n     L332 GET /api/requests/:id/image \n     L339 GET /api/paypal/return (side-effecting by brief: return/cancel)\n     L340 GET /api/paypal/cancel (side-effecting by brief: return/cancel)\n     L360 GET /api/supplier/orders \n     L365 GET /api/supplier/inventory \n     L377 GET /api/admin/timeline \n     L378 GET /api/admin/metrics \nOK   only 2 side-effecting GETs (PayPal return/cancel); owner check before any call stated: true\n\nstructural result: PASS (0 failures)\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:38:43.340Z"
+    },
+    "ev-mv1dc6eq-01ea78b5": {
+      "id": "ev-mv1dc6eq-01ea78b5",
+      "kind": "command",
+      "label": "design r2 final: reviewer traceability check on final revised spec (45 ids once each, section + test)",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/drafts/tr-design-traceability.mjs /home/user/ECCode/examples/rescuestock/.eccode/artifacts/architecture/brief.md /home/user/ECCode/examples/rescuestock/.eccode/artifacts/design/spec.md",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 59,
+      "log": ".eccode/evidence/ev-mv1dc6eq-01ea78b5.log",
+      "logSha256": "11d73b1a6f21a11960ff528d6b34cd0edcf053a55c0b23075dd371cdc773f4e8",
+      "logFileSha256": "032cf7db4460fd7c80ff2f79f86b477771277757c677d6079edbf29ba71cc87b",
+      "outputTail": "RS-23: section=\"Webhooks\" tests=2 briefTags=[D,LP] specTags=[D,LP]\nRS-24: section=\"Webhooks\" tests=2 briefTags=[D,LP] specTags=[D,LP]\nRS-25: section=\"Provider call protocol §5–6\" tests=1 briefTags=[D] specTags=[D]\nRS-26: section=\"Saga step 6; Recovery; Sender table\" tests=1 briefTags=[D] specTags=[D]\nRS-27: section=\"Security T1/T2\" tests=1 briefTags=[D] specTags=[D]\nRS-28: section=\"Security T3\" tests=1 briefTags=[D] specTags=[D]\nRS-29: section=\"Security › Secrets\" tests=1 briefTags=[D,I] specTags=[D,I]\nRS-30: section=\"RBAC matrix\" tests=1 briefTags=[D] specTags=[D]\nRS-31: section=\"Frontend; fake approval listener\" tests=2 briefTags=[B,LP] specTags=[B,LP]\nRS-32: section=\"Supersession; admin stock_depletion\" tests=2 briefTags=[B,LP] specTags=[B,LP]\nRS-33: section=\"Frontend infeasible state\" tests=1 briefTags=[B] specTags=[B]\nRS-34: section=\"Conventions › Labels; Frontend labels; Security T18\" tests=3 briefTags=[D,B] specTags=[D,B]\nRS-35: section=\"Frontend request page\" tests=1 briefTags=[B,I] specTags=[B,I]\nRS-36: section=\"Background › Rescue status derivation (revision 2); Data Des\" tests=2 briefTags=[D,I] specTags=[D,I]\nRS-37: section=\"Admin reset\" tests=1 briefTags=[D] specTags=[D]\nRS-38: section=\"001_core.sql triggers; ledger writes\" tests=1 briefTags=[D] specTags=[D]\nRS-39: section=\"Retention and deletion; Security T12\" tests=1 briefTags=[D] specTags=[D]\nNFR1: section=\"Deployment › Node floor\" tests=4 briefTags=[D,I] specTags=[D,I]\nNFR2: section=\"Frontend accessibility and states\" tests=1 briefTags=[B] specTags=[B]\nNFR3: section=\"Testing Strategy › Commands\" tests=1 briefTags=[I,D] specTags=[D,I]\nNFR4: section=\"Security › Secrets\" tests=1 briefTags=[D,I] specTags=[D,I]\nNFR5: section=\"Performance\" tests=2 briefTags=[D] specTags=[D]\nNFR6: section=\"AI runtime controls; Observability\" tests=2 briefTags=[D,LM,I] specTags=[D,LM,I]\nbrief ids: 45; spec rows: 45; hard problems: 0; tag warnings: 0\n",
+      "gate": "design",
+      "task": null,
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:38:51.940Z"
     }
   },
   "reviews": {
@@ -3288,6 +3445,53 @@
       "id": "ho-mv1c6nxx-0187bb70",
       "recordedBy": "technical-designer",
       "at": "2026-10-09T19:06:35.074Z"
+    },
+    "ho-mv1dd895-01787f57": {
+      "from": "technical-designer",
+      "to": "technical-reviewer",
+      "gate": "design",
+      "objective": "Re-review the RescueStock technical design, revision 2: submission sub-mv1dcqpr-016ee2c9 (spec.md sha256 2b675ffa59684e4d6d3e7cb4d81ae0eee500ee10f93de5879863eddd7ac23efe, revision-2-notes.md sha256 1699de251936f8d11846878725320bc3d8065362677817aad9732427bb3f7bb1). It responds to rev-mv1cta5m-0114480d and to the security reviewer's draft design-security-1.md.",
+      "context": "Revision 2 adds a 'Findings disposition (revision 2)' section at the top of spec.md, with one row per finding (F-TR-1..13, SEC-1..20). revision-2-notes.md maps each finding id to the sections that resolve it and lists the new evidence. Majors: F-TR-1 (idempotency scope (user, key) with a path/body fingerprint, reservation-level UNIQUE key guard after purge), F-TR-2 (total derivation: row 4a replanning, defensive row 14, re-plan queue never drops entries, random-walk property test), F-TR-3 (sender table for every call kind, crash-after-commit test, row-2 escalation of approved with an outstanding authorize), F-TR-4 (flag-free check-node.cjs gate before every flagged node call, real start line tested on /opt/node20 and /opt/node21), SEC-1 ((username, IP) hard limit, cross-IP delay only, normalised keys), SEC-2 (1 live reservation per customer, 10 requests per day), SEC-3 (loopback PayPal/Anthropic URLs only with RS_TEST_OFFLINE=1, plus the Test-mode banner). The 45 required ids are unchanged, each with a section and a test (traceability check ev:ev-mv1dc6eq-01ea78b5).",
+      "inputs": [
+        ".eccode/reviews/rev-mv1cta5m-0114480d.json",
+        ".eccode/reviews/drafts/design-security-1.md",
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/drafts/tr-design-*.mjs and sec-*.mjs (reviewers' probes, re-run)"
+      ],
+      "expectedOutput": "A recorded review of design submission sub-mv1dcqpr-016ee2c9 that resolves or re-opens each finding of rev-mv1cta5m-0114480d by id and covers the 45 required criteria.",
+      "acceptanceCriteria": [
+        "Each major (F-TR-1..4, SEC-1..3) is checked against its stated resolution condition, in the sections named in revision-2-notes.md",
+        "The 'Findings disposition (revision 2)' section has a row for every minor and info finding (F-TR-5..13, SEC-4..20). SEC-10 is explicitly partly deferred (OQ-D7) with its reason (NFR6's stated configuration conflicts with a default share).",
+        "gate show design still lists the 45 required ids"
+      ],
+      "completedWork": "Revised spec.md and wrote revision-2-notes.md. New evidence: ev:ev-mv1cxbbt-01ff7b59 (start gate on older Node), ev:ev-mv1d13ib-01f6f742 (revised derivation total over a 20,000-walk model; it found and fixed an extra gap, an unknown admin refund, now in row 3), ev:ev-mv1d1u17-01b84ac4 (revised idempotency, throttle and caps block H1/H2/H6). Re-runs of the reviewers' checks: ev:ev-mv1dbzry-01cf8ba0 (structural walk PASS), ev:ev-mv1dbzmk-013f9d68 (probes 0/15 confirmed; text-level), ev:ev-mv1dc6eq-01ea78b5 (traceability 45/45). New design extensions flagged for the orchestrator: replanning status (OQ-D6), SEC-10 default (OQ-D7), plus the earlier OQ-D1 reasons.",
+      "filesChanged": [
+        ".eccode/artifacts/design/spec.md",
+        ".eccode/artifacts/design/revision-2-notes.md",
+        ".eccode/artifacts/design/handoff-2.json",
+        ".eccode/drafts/design-r2-node-gate.mjs",
+        ".eccode/drafts/design-r2-derive-walk.mjs",
+        ".eccode/drafts/design-r2-sec-model.mjs"
+      ],
+      "evidence": [
+        "ev:ev-mv1cxbbt-01ff7b59",
+        "ev:ev-mv1d13ib-01f6f742",
+        "ev:ev-mv1d1u17-01b84ac4",
+        "ev:ev-mv1dbzry-01cf8ba0",
+        "ev:ev-mv1dbzmk-013f9d68",
+        "ev:ev-mv1dc6eq-01ea78b5"
+      ],
+      "remainingIssues": [
+        "SEC-10 partly deferred: per-customer daily model share exists but defaults off (OQ-D7; user's choice with Q10).",
+        "OQ-D6: 'replanning' extends the goal's aggregate status set (rows 4a/14).",
+        "SEC-18 / OQ-D5: PayPal-Request-Id replay and final_capture behaviour stay verify until the user's Sandbox run.",
+        "Carried: OQ-D1..D5, Q1-Q10 (Q9 Node floor: both branches designed)."
+      ],
+      "nextAction": "technical-reviewer (with security-reviewer input): review design submission sub-mv1dcqpr-016ee2c9 with eccode gate review design, responding to rev-mv1cta5m-0114480d.",
+      "lessonsConsulted": [],
+      "id": "ho-mv1dd895-01787f57",
+      "recordedBy": "technical-designer",
+      "at": "2026-10-09T19:39:40.953Z"
     }
   },
   "runs": {
@@ -3432,6 +3636,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-09T19:24:54.466Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T19:40:18.847Z",
+      "durationMinutes": 15.41,
+      "costUsd": null,
+      "tokens": 185557,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv1ddw81-016c76bb": {
+      "id": "run-mv1ddw81-016c76bb",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T19:40:12.015Z",
       "status": "running",
       "attempt": 1
     }
@@ -3663,8 +3882,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 122.64,
-    "tokens": 1719309
+    "runtimeMinutes": 138.05,
+    "tokens": 1904866
   },
   "delivery": null
 }

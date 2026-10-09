@@ -1,0 +1,7 @@
+$ node --disable-warning=ExperimentalWarning /home/user/ECCode/examples/rescuestock/.eccode/drafts/design-r2-sec-model.mjs
+# cwd: .
+# exit: 0
+F-TR-1 plan 7: {"status":201} | same key on plan 9: {"status":422,"code":"IDEMPOTENCY_KEY_REUSED"} | rows before/after 1/1/1 -> 1/1/1 | replay plan 7: {"status":201,"replayed":true} | plan 9 after key purge: {"status":422,"code":"IDEMPOTENCY_KEY_REUSED","via":"reservation row"}
+SEC-2 attacker reserves 5 plans: 201,409,409,409,409 | victim reserve: 201
+SEC-1 attacker (1 IP, case variants): 401,401,401,401,401 | 6th same IP: 429 | real admin other IP: {"status":200,"delayMs":0} | after 20 failures from 4 IPs: {"status":200,"delayMs":10000} | unknown user 5x then 6th: 401,401,401,401,401 429
+{"FTR1":true,"SEC2":true,"SEC1":true}

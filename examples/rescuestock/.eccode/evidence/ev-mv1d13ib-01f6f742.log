@@ -1,0 +1,18 @@
+$ node /home/user/ECCode/examples/rescuestock/.eccode/drafts/design-r2-derive-walk.mjs 12345
+# cwd: .
+# exit: 0
+ok   S09 RS-36(i) -> row 3 refunding (expected refunding)
+ok   S10 RS-36(ii) void outstanding -> row 4 cancelling (expected cancelling)
+ok   S11 RS-36(ii) refund_failed -> row 2 failed_needs_attention (expected failed_needs_attention)
+ok   S07 RS-36(iii) -> row 8 ready_for_pickup (expected ready_for_pickup)
+ok   S12 RS-36(iv) -> row 12 plan_found (expected plan_found)
+ok   S13 superseded, voids done, replan queued -> row 4a replanning (expected replanning)
+ok   S15 executed, A refunded by admin, B collected -> row 7 collected (expected collected)
+ok   S15b executed, both refunded by admin -> row 5a cancelled (expected cancelled)
+ok   S18 approved with queued authorize, 3 days -> row 2 failed_needs_attention (expected failed_needs_attention)
+ok   S20 reserve lost race, replan queued -> row 4a replanning (expected replanning)
+non-terminal states in a closed version that never escalate: none
+collect events applied: 121 | names pool size: 703 | collect in pool: 40
+rows hit: 1:237360 10:19850 11:179842 12:752197 13:331945 2:24239 3:3305 4:93337 4a:338250 5:371182 6:42479 7:541 8:1077 9:4396
+fallback row 14 reached: 0
+revised derivation total over the walk; scenarios as expected
