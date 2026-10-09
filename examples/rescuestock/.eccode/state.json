@@ -1,6 +1,6 @@
 {
-  "seq": 242,
-  "lastHash": "2f158d301a4ca179915d27a0283ec5c63c99aff6e0661527d071fb4621966e3c",
+  "seq": 250,
+  "lastHash": "54f1a28364ab7234abcb829fd402a63d74c921909188d021ea37305dd9d14f1d",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -1048,24 +1048,9 @@
         "command": "ls test/unit/config/hosts.test.js test/unit/config/secrets.test.js test/unit/config/node-version.test.js test/unit/config/limits.test.js test/unit/db/migrate.test.js test/unit/db/triggers.test.js test/unit/http/headers.test.js test/unit/seed/seed.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/config/**/*.test.js\" \"test/unit/db/**/*.test.js\" \"test/unit/http/**/*.test.js\" \"test/unit/seed/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "backend-engineer",
-        "at": "2026-10-09T21:32:01.570Z",
-        "baseCommit": "ea10b4103ebb1b12765bda441b90ebda9540e9cf",
-        "runId": null,
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.838,
-            "matched": 37,
-            "priority": 38,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
@@ -1089,69 +1074,24 @@
           "by": "backend-engineer",
           "at": "2026-10-09T21:32:01.570Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-09T21:37:00.579Z"
         }
       ],
       "completedBy": "backend-engineer",
-      "handoffId": "ho-mv1gazew-01706543",
+      "handoffId": "ho-mv1hk3zz-01649535",
       "filesChanged": [
-        "package.json",
-        ".gitignore",
-        "scripts/check-node.cjs",
-        "scripts/seed.js",
-        "src/index.js",
-        "src/main.js",
-        "src/app.js",
-        "src/config.js",
-        "src/log.js",
-        "src/clock.js",
         "src/db/connection.js",
-        "src/db/errors.js",
-        "src/db/meta.js",
-        "src/db/migrate.js",
-        "src/db/migrations/001_core.sql",
-        "src/db/migrations/002_requests.sql",
-        "src/db/migrations/003_planning.sql",
-        "src/db/migrations/004_payments.sql",
-        "src/db/migrations/005_fake_paypal.sql",
-        "src/http/body.js",
-        "src/http/cookies.js",
-        "src/http/envelope.js",
-        "src/http/headers.js",
-        "src/http/host.js",
-        "src/http/request-id.js",
-        "src/http/router.js",
-        "src/http/server.js",
-        "src/http/static.js",
-        "src/http/validate.js",
-        "src/routes/index.js",
-        "src/routes/health.js",
-        "src/routes/config.js",
-        "src/routes/auth.js",
-        "src/routes/requests.js",
-        "src/routes/plans.js",
-        "src/routes/orders.js",
-        "src/routes/paypal.js",
-        "src/routes/supplier.js",
-        "src/routes/admin.js",
-        "src/routes/webhooks.js",
-        "test/unit/config/defaults.test.js",
         "test/unit/config/hosts.test.js",
         "test/unit/config/limits.test.js",
-        "test/unit/config/node-version.test.js",
         "test/unit/config/secrets.test.js",
-        "test/unit/config/startup.test.js",
         "test/unit/db/connection.test.js",
-        "test/unit/db/migrate-child.js",
-        "test/unit/db/migrate.test.js",
-        "test/unit/db/triggers.test.js",
-        "test/unit/http/app-fixture.js",
-        "test/unit/http/app.test.js",
-        "test/unit/http/db-busy.test.js",
-        "test/unit/http/headers.test.js",
-        "test/unit/http/log.test.js",
-        "test/unit/http/static.test.js",
-        "test/unit/http/validate.test.js",
-        "test/unit/seed/seed.test.js"
+        "test/unit/db/lock-holder.js",
+        "test/unit/db/open-race.test.js",
+        "test/unit/http/app.test.js"
       ],
       "lessonDecisions": [
         {
@@ -4710,6 +4650,86 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-09T21:29:49.622Z"
+    },
+    "ev-mv1hf138-016b38f3": {
+      "id": "ev-mv1hf138-016b38f3",
+      "kind": "command",
+      "label": "PB-1 reproduction",
+      "command": "node .eccode/drafts/tr-phb-migrate-race.mjs 40",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 56678,
+      "log": ".eccode/evidence/ev-mv1hf138-016b38f3.log",
+      "logSha256": "d6a6b6cb5973bf3a8b48573e49190e44afaccd69dcdab3a8a553d6875d173c36",
+      "logFileSha256": "58f1c0fbc81cd8960186ff76b0fa969387bf49d178c845989972ef33f3163d7a",
+      "outputTail": "sequential runs: 40, failed: 3 (database is locked: 3)\nparallel runs (3 at a time): 120, failed: 0 (database is locked: 0)\n",
+      "gate": null,
+      "task": "b1-foundation-core",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-09T21:33:03.490Z"
+    },
+    "ev-mv1hidob-01eb30b6": {
+      "id": "ev-mv1hidob-01eb30b6",
+      "kind": "command",
+      "label": "PB-1 verification",
+      "command": "node .eccode/drafts/tr-phb-migrate-race.mjs 40",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 62807,
+      "log": ".eccode/evidence/ev-mv1hidob-01eb30b6.log",
+      "logSha256": "4322e04868262eb5b5a35415f0aece9f178ae5a53b46d287ecd720c96e9a4ac6",
+      "logFileSha256": "c66384fe863b419ddc1e8666f0770529667388965867c7f26dbad0f11f4a2124",
+      "outputTail": "sequential runs: 40, failed: 0 (database is locked: 0)\nparallel runs (3 at a time): 120, failed: 0 (database is locked: 0)\n",
+      "gate": null,
+      "task": "b1-foundation-core",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-09T21:35:39.775Z"
+    },
+    "ev-mv1hj5be-01ed33dd": {
+      "id": "ev-mv1hj5be-01ed33dd",
+      "kind": "command",
+      "label": "b1 verification (declared command, as one shell string) after PB-1/PB-2",
+      "command": "ls test/unit/config/hosts.test.js test/unit/config/secrets.test.js test/unit/config/node-version.test.js test/unit/config/limits.test.js test/unit/db/migrate.test.js test/unit/db/triggers.test.js test/unit/http/headers.test.js test/unit/seed/seed.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/config/**/*.test.js\" \"test/unit/db/**/*.test.js\" \"test/unit/http/**/*.test.js\" \"test/unit/seed/**/*.test.js\"",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 11732,
+      "log": ".eccode/evidence/ev-mv1hj5be-01ed33dd.log",
+      "logSha256": "c201055839f00e1029b973318530d180b455422e7bee45173798eecb5521c524",
+      "logFileSha256": "d6d189d503f94413f17dddabeec34f20fbd8f2840698405c47f89e851d41b1bf",
+      "outputTail": "  duration_ms: 415.606851\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 176 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 288.760051\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 177 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 461.923324\n  type: 'test'\n  ...\n1..177\n# tests 177\n# suites 0\n# pass 177\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11666.10472\n",
+      "gate": null,
+      "task": "b1-foundation-core",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-09T21:36:15.599Z"
+    },
+    "ev-mv1hjizn-013960db": {
+      "id": "ev-mv1hjizn-013960db",
+      "kind": "command",
+      "label": "npm test after PB-1/PB-2",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 17382,
+      "log": ".eccode/evidence/ev-mv1hjizn-013960db.log",
+      "logSha256": "b99ceac0ca4cd41f7c163ed8d3ceb3ebfdab70516c419eb4f7fdb587ee946982",
+      "logFileSha256": "707a9aa166c6bcc0ce4726a7395769c36c2bc84bde08addad0af31131dd1f44e",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 361 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 476.854612\n  type: 'test'\n  ...\n1..361\n# tests 370\n# suites 3\n# pass 370\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 16926.468807\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 18 requests, p50 2.1 ms, p95 12.3 ms (limit: p95 < 300 ms)\nNFR5 suite time: 17.1 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": null,
+      "task": "b1-foundation-core",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-09T21:36:33.315Z"
     }
   },
   "reviews": {
@@ -9321,6 +9341,85 @@
       "id": "ho-mv1h2uci-01b319d9",
       "recordedBy": "delivery-lead",
       "at": "2026-10-09T21:23:34.848Z"
+    },
+    "ho-mv1hk3zz-01649535": {
+      "from": "backend-engineer",
+      "to": "delivery-lead",
+      "task": "b1-foundation-core",
+      "objective": "Foundation of the RescueStock backend: package.json, Node gate, config, log, clock, db (connection, migrations 001-005, migrate, errors), http layer, health and config routes, main/index entry points and the RS-FIX-1 seed, with unit tests.",
+      "context": "Built against spec.md revision 3 (Components, Interface Contracts, Data Design, Security, Deployment, Testing Strategy) and brief NFR1/NFR4. Node 22.22 with built-in node:sqlite; /opt/node20 and /opt/node21 exist and the gate tests ran against them (none skipped). b2-domain ran in parallel in the same tree; no b2 path was touched. Memory lesson mem-sd-mv1audrd-013b7102 retrieved at claim.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md",
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/artifacts/plan/plan.json"
+      ],
+      "dependencies": [],
+      "expectedOutput": "Files listed in plan task b1-foundation-core, with the unit tests named in its verification command passing.",
+      "acceptanceCriteria": [
+        ".gitignore covers data/, .env, reports/, test/.out/ and test/browser/out/",
+        "package.json exactly as spec Deployment, scripts of Testing Strategy > Commands, every flagged script prefixed with the gate (F-TR-4)",
+        "scripts/check-node.cjs is ES5 CommonJS, flag-free, exact message, exit 1; src/index.js repeats the check before node:sqlite",
+        "Migrations 001-005 verbatim; migrate.js with BEGIN IMMEDIATE, sha256, refusal of changed file, concurrent-start safety; connection PRAGMAs; db.tx refuses promise and nesting; SQLITE_BUSY -> 503 DB_BUSY Retry-After 1",
+        "UPDATE and DELETE on audit_events and inventory_ledger fail (RS-38 prerequisite)",
+        "config.js parses every Deployment variable plus RS_REGISTER_PER_IP_PER_HOUR; Secret wrapper; placeholder refusal; length rules; lease >= 3x timeout; host allow-lists (SEC-3, SEC-5, SEC-19)",
+        "F-TR-17 / F-PL-4 test in test/unit/config/limits.test.js",
+        "http layer: requestId, envelope, 64 KiB cap, Host allow-list 421, security headers, approvalPageCsp, no CORS, static confined by realpath, server timeouts",
+        "log.js JSON lines with allow-list, truncation, control-character stripping, requestId on every line",
+        "GET /api/health and GET /api/config without secrets; main.js umask 077 and 0700 directories (SEC-14)",
+        "scripts/seed.js loads RS-FIX-1 exactly, accounts supplier-a..e, cafe1, cafe2, shared or random passwords (SEC-5)",
+        "Tests carry criterion ids in their names; tests open no non-loopback connection"
+      ],
+      "completedWork": "REWORK after phase B review rev-mv1hc5zg-01a3fc75. PB-1 (blocking), root cause: on a fresh database file, PRAGMA journal_mode = WAL needs an exclusive lock. When another process holds or awaits a write lock while this connection holds a shared one, waiting could deadlock, so SQLite returns SQLITE_BUSY immediately and never calls the busy handler, so busy_timeout does not help. Reproduced with the reviewer's script (ev:ev-mv1hf138-016b38f3: 3 of 40 sequential runs failed with 'database is locked'; the script always exits 0, so the counts are the result) and with a minimal probe (.eccode/drafts/b1-pb1-probe.mjs, error code 5 from the WAL switch, about 1 in 180 opens). Fix in src/db/connection.js: openDb reads the journal mode first and switches only when the file is not WAL, and both that step and the later pragmas run under retryWhileBusy, a bounded back-off (2 ms doubling to 50 ms with jitter) on SQLITE_BUSY/LOCKED up to max(busyTimeoutMs, 1000 ms), after which the busy error is rethrown; the handle is closed on failure. New test/unit/db/open-race.test.js (all named PB-1): retry unit tests, bounded give-up against a real lock-holder process, success when the holder releases, and a stress of 25 rounds x 4 processes on a fresh file. The same reproduction command now shows 0 failures in 160 runs (ev:ev-mv1hidob-01eb30b6); six more stress runs also passed; npm test passes 370/370 (ev:ev-mv1hjizn-013960db); the declared verification command passes with 177 tests (ev:ev-mv1hj5be-01ed33dd). PB-2: six tests renamed with ARCH-26, SEC-10, SEC-12, SEC-3 (RS_TEST_HOOKS row), RS-14 and ARCH-25. Original work: Wrote package.json first (type module, engines >=22.13, zero dependencies, devDependency @playwright/test 1.56.1, the nine scripts of Testing Strategy > Commands verbatim). Wrote .gitignore, scripts/check-node.cjs (ES5, exports check/meetsFloor, prints the exact message and sets exit code 1), src/index.js (no static imports; floor check, then node:sqlite probe, then dynamic import of main.js), src/main.js (umask 077, config, directories created 0700, openDb, migrate, csrf_key and fake_webhook_secret in meta via INSERT OR IGNORE, listening line with the port, SIGINT/SIGTERM shutdown), src/app.js (createApp with injected db, clock, config, log, ai, payments; pipeline request id -> security headers -> Host allow-list 421 -> route or static -> policy -> handler; default deny of non-public policies when no authorize hook is supplied), src/config.js (every Deployment variable, Secret, ConfigError naming variables only, base-URL allow-lists, registration limit, lease rule), src/log.js, src/clock.js (also Intl-based zonedTimeToUtcMs and localDateInZone), src/db/* (connection with PRAGMAs and db.tx, migrate with BEGIN IMMEDIATE per file and checksums, errors, meta helpers, migrations 001-005 byte-identical to the spec fences, checked by ev:ev-mv1g5zww-0182816a), src/http/* (body, cookies, envelope with the full error catalog and AppError, headers with approvalPageCsp, host, request-id, router, server, static, validate), src/routes/* (health and config implemented; auth, requests, plans, orders, paypal, supplier, admin, webhooks are empty register() stubs), scripts/seed.js. Tests: 171 across test/unit/config, db, http and seed, including the eight files named in the verification command. The final run of the task command, recorded as the declared command string (ev:ev-mv1g9bkw-01abf3c8, also ev:ev-mv1g7ma5-01bc9fb8 wrapped in sh -c), passed with 171 tests and the same tests also pass under a loopback-only network guard at concurrency 4 (ev:ev-mv1g7yel-017eb8cd). The failing-state run before any work is ev:ev-mv1fm7gt-0123f65c (existence guard failed).",
+      "filesChanged": [
+        "src/db/connection.js",
+        "test/unit/config/hosts.test.js",
+        "test/unit/config/limits.test.js",
+        "test/unit/config/secrets.test.js",
+        "test/unit/db/connection.test.js",
+        "test/unit/db/lock-holder.js",
+        "test/unit/db/open-race.test.js",
+        "test/unit/http/app.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv1hj5be-01ed33dd",
+        "ev:ev-mv1hidob-01eb30b6",
+        "ev:ev-mv1hf138-016b38f3",
+        "ev:ev-mv1hjizn-013960db",
+        "ev:ev-mv1g9bkw-01abf3c8",
+        "ev:ev-mv1g7ma5-01bc9fb8",
+        "ev:ev-mv1g7yel-017eb8cd",
+        "ev:ev-mv1g5zww-0182816a",
+        "ev:ev-mv1g5zm5-016873ed",
+        "ev:ev-mv1fm7gt-0123f65c"
+      ],
+      "remainingIssues": [
+        "The reviewer's race script tr-phb-migrate-race.mjs always exits 0, so its pass/fail is read from the printed counts (0 failed in the PB-1 verification run), not from the exit code.",
+        "openDb now waits up to max(busy_timeout, 1000 ms) at open time even when RS_DB_BUSY_TIMEOUT_MS=0, because the WAL switch happens once per process at startup; ordinary statements still honour the configured timeout.",
+        "Upload timeout: the spec gives uploads 60 s, but Node has one server-wide requestTimeout. server.js sets 30 s and exports UPLOAD_REQUEST_TIMEOUT_MS; task d3 (upload route) must enforce its own 60 s deadline while streaming, or change the server value deliberately.",
+        "Password hash format is defined here (scripts/seed.js hashPassword): scrypt$16384$8$1$<salt base64url>$<64-byte key base64url>. Task c1 (src/auth/password.js) must verify exactly this format, since c1 does not own the seed; the dummy hash for unknown users must use the same parameters.",
+        "Config refuses placeholder-shaped values for every secret it reads (SEC-5, literal reading of the spec), including unused PayPal and Anthropic ones. A .env.example copied verbatim with <placeholder> values therefore fails startup and seed, naming the variable. Task b4 should ship .env.example with those lines commented out or explain it in the README.",
+        "Two AppError classes exist: src/domain/errors.js (b2, constructor (status, code, message, details)) and src/http/envelope.js. The HTTP layer adopts the domain one by duck typing (name AppError, status 400-599, code in the catalog), answering with the catalog message and only plain-object details; the envelope class also accepts the domain-style argument order. A domain error with a code outside the catalog becomes 500 INTERNAL by design.",
+        "The router requires a policy on every route and non-public policies are denied with 401 until task c1 passes an authorize hook to createApp (and adds the Origin/CSRF checks, session cookie handling and rate limits, none of which are in b1).",
+        "main.js starts only the HTTP server. The fake approval listener, reconciler and retention sweep are added by e1, e4 and d3. The model-provider fallback to fake when the claude binary is absent is left to d1/d3; config only forces fake under RS_TEST_OFFLINE=1.",
+        "config.publicUrl is null when RS_PUBLIC_URL is unset (PORT=0 has no port yet). Code needing the app origin must call deps.publicUrl() (http://localhost:<bound port> by default). The log allow-list has one addition to the spec list: port, needed for the harness 'listening' line.",
+        "scripts/seed.js embeds RS-FIX-1 as a constant; it was not cross-checked against test/fixtures/rs-fix-1.json (b2's file) because that file was not part of this task. The seed test asserts the brief table values.",
+        "The loopback-only guard used in ev:ev-mv1g7yel-017eb8cd is a scratch stand-in (.eccode/drafts/b1-net-guard.mjs) because test/helpers/net-guard.js belongs to b3; re-run these tests under the real guard once it exists.",
+        "The ES5 property of check-node.cjs is checked by a regex scan plus real runs on Node 20 and 21, not by an ES5 parser."
+      ],
+      "nextAction": "delivery-lead: dispatch an independent review of b1 (diff against spec revision 3), then release b4-env-readme and b3-test-harness, which depend on b1.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "appliesWhen concerns a PreToolUse guard or hook mapping writes to a project root across several records; this task builds an application foundation and has no such code. notApplicableWhen holds: the claim denials I saw named the claimed tasks of the target project's own record and were correct ownership refusals for scratch paths."
+        }
+      ],
+      "id": "ho-mv1hk3zz-01649535",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-09T21:37:00.622Z"
     }
   },
   "runs": {
@@ -9684,6 +9783,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-09T21:31:30.846Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T21:37:22.242Z",
+      "durationMinutes": 5.86,
+      "costUsd": null,
+      "tokens": 32593,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv1hkgsz-014163f9": {
+      "id": "run-mv1hkgsz-014163f9",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T21:37:17.105Z",
       "status": "running",
       "attempt": 1
     }
@@ -9952,8 +10066,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 275.14,
-    "tokens": 3711950
+    "runtimeMinutes": 281,
+    "tokens": 3744543
   },
   "delivery": null
 }

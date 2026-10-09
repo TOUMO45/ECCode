@@ -307,7 +307,7 @@ test('NFR4: GET /api/config returns labels and provider names and no secret, cli
   });
 });
 
-test('default deny: a route with a non-public policy answers 401 UNAUTHENTICATED when no authorize hook exists', async () => {
+test('ARCH-25: default deny: a route with a non-public policy answers 401 UNAUTHENTICATED when no authorize hook exists', async () => {
   await withApp({}, async (t) => {
     const res = await t.request({ path: '/api/test/private' });
     assert.equal(res.status, 401);

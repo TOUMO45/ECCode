@@ -156,7 +156,7 @@ test('NFR4: the Sandbox payment provider needs a complete credential set; the fa
   assert.equal(loadConfig(env).merchantMode, 'per-supplier');
 });
 
-test('RS_TEST_HOOKS is refused when the Sandbox adapter is selected', () => {
+test('SEC-3: RS_TEST_HOOKS is refused when the Sandbox adapter is selected', () => {
   const env = {
     RS_PAYMENT_PROVIDER: 'paypal-sandbox',
     RS_PAYPAL_DEFAULT_CLIENT_ID: 'cid',

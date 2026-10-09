@@ -113,7 +113,7 @@ test('RS_PUBLIC_URL must be an http(s) origin; https turns on secure cookies', (
   }
 });
 
-test('RS_FAKE_APPROVAL_HOST is 127.0.0.1 outside test mode; loopback names only in test mode', () => {
+test('SEC-12: RS_FAKE_APPROVAL_HOST is 127.0.0.1 outside test mode; loopback names only in test mode', () => {
   assert.equal(loadConfig({}).fakeApprovalHost, '127.0.0.1');
   assert.deepEqual(refusal({ RS_FAKE_APPROVAL_HOST: '0.0.0.0' }).variables, ['RS_FAKE_APPROVAL_HOST']);
   assert.deepEqual(refusal({ RS_FAKE_APPROVAL_HOST: 'localhost' }).variables, ['RS_FAKE_APPROVAL_HOST']);

@@ -116,7 +116,7 @@ test('db.tx rejects a non-function', () => {
   db.close();
 });
 
-test('SQLITE_BUSY after the busy timeout maps to 503 DB_BUSY with Retry-After: 1', () => {
+test('RS-14: SQLITE_BUSY after the busy timeout maps to 503 DB_BUSY with Retry-After: 1', () => {
   const { file, db: holder } = fileDb();
   holder.exec('CREATE TABLE t (id INTEGER PRIMARY KEY)');
   const waiter = openDb(file, { busyTimeoutMs: 0 });

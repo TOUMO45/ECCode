@@ -37,7 +37,7 @@ test('F-TR-17: RS_REGISTER_PER_IP_PER_HOUR must be an integer of at least 1', ()
   }
 });
 
-test('RS_SAGA_LEASE_MS must be at least 3 times RS_PAYPAL_TIMEOUT_MS', () => {
+test('ARCH-26: RS_SAGA_LEASE_MS must be at least 3 times RS_PAYPAL_TIMEOUT_MS', () => {
   const defaults = loadConfig({});
   assert.equal(defaults.sagaLeaseMs, 60000);
   assert.equal(defaults.paypalTimeoutMs, 20000);
@@ -63,7 +63,7 @@ test('RS_DB_BUSY_TIMEOUT_MS is an integer from 0 to 5000 (default 5000)', () => 
   }
 });
 
-test('RS_MODEL_CUSTOMER_DAILY_SHARE is a number from 0 to 1 (default 0.2)', () => {
+test('SEC-10: RS_MODEL_CUSTOMER_DAILY_SHARE is a number from 0 to 1 (default 0.2)', () => {
   assert.equal(loadConfig({}).modelCustomerDailyShare, 0.2);
   assert.equal(loadConfig({ RS_MODEL_CUSTOMER_DAILY_SHARE: '1' }).modelCustomerDailyShare, 1);
   assert.equal(loadConfig({ RS_MODEL_CUSTOMER_DAILY_SHARE: '0' }).modelCustomerDailyShare, 0);

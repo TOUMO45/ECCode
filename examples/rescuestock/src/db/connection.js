@@ -4,6 +4,7 @@
 // A returned promise aborts the transaction (no provider call or await may
 // happen inside a transaction) and nested transactions are refused.
 import { DatabaseSync } from 'node:sqlite';
+import { isBusyError } from './errors.js';
 
 export class TransactionError extends Error {
   constructor(code, message) {
@@ -14,6 +15,31 @@ export class TransactionError extends Error {
 }
 
 export const DEFAULT_BUSY_TIMEOUT_MS = 5000;
+// Opening a connection may wait at least this long for a competing process, even with busy_timeout 0,
+// because it happens once per process at startup (PB-1).
+export const OPEN_RETRY_MIN_BUDGET_MS = 1000;
+const BACKOFF_START_MS = 2;
+const BACKOFF_CAP_MS = 50;
+
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+// Runs fn(); on SQLITE_BUSY or SQLITE_LOCKED it sleeps with a growing, jittered back-off and tries
+// again until budgetMs has passed, then rethrows the last error. Never loops without a deadline.
+export function retryWhileBusy(fn, budgetMs) {
+  const deadline = Date.now() + budgetMs;
+  let delay = BACKOFF_START_MS;
+  for (;;) {
+    try {
+      return fn();
+    } catch (err) {
+      if (!isBusyError(err) || Date.now() >= deadline) throw err;
+      sleepSync(Math.min(delay, Math.max(1, deadline - Date.now())) + Math.floor(Math.random() * delay));
+      delay = Math.min(delay * 2, BACKOFF_CAP_MS);
+    }
+  }
+}
 
 function isThenable(value) {
   return value !== null && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
@@ -25,11 +51,31 @@ export function openDb(file, { busyTimeoutMs = DEFAULT_BUSY_TIMEOUT_MS } = {}) {
     throw new RangeError('busyTimeoutMs must be an integer from 0 to 5000');
   }
   const db = new DatabaseSync(file);
-  // busy_timeout first, so the journal_mode switch below also waits on a competing process.
-  db.exec(`PRAGMA busy_timeout = ${busyTimeoutMs}`);
-  db.exec('PRAGMA journal_mode = WAL');
-  db.exec('PRAGMA synchronous = NORMAL');
-  db.exec('PRAGMA foreign_keys = ON');
+  try {
+    // busy_timeout first: it covers ordinary lock waits on this connection.
+    db.exec(`PRAGMA busy_timeout = ${busyTimeoutMs}`);
+    // It does not cover the journal-mode switch (PB-1). Converting a fresh file to WAL needs an
+    // exclusive lock, and when another process holds or awaits a write lock while this connection
+    // holds a shared one, waiting could deadlock, so SQLite answers SQLITE_BUSY at once and never
+    // calls the busy handler. The switch is therefore retried by hand within a bounded budget.
+    const budgetMs = Math.max(busyTimeoutMs, OPEN_RETRY_MIN_BUDGET_MS);
+    retryWhileBusy(() => {
+      // Reading the mode takes no exclusive lock; only a file that is not yet WAL needs the switch.
+      const current = db.prepare('PRAGMA journal_mode').get();
+      if (String(Object.values(current)[0]).toLowerCase() !== 'wal') db.exec('PRAGMA journal_mode = WAL');
+    }, budgetMs);
+    retryWhileBusy(() => {
+      db.exec('PRAGMA synchronous = NORMAL');
+      db.exec('PRAGMA foreign_keys = ON');
+    }, budgetMs);
+  } catch (err) {
+    try {
+      db.close();
+    } catch {
+      // Already closed.
+    }
+    throw err;
+  }
 
   let active = false;
   function tx(fn) {
