@@ -1,0 +1,14 @@
+attempt 1 declaring a draft: NOT refused
+attempt 3 restoring q undeclared: refused as expected (INVALID_HANDOFF)
+completions recorded: 3
+snapshot filesChanged: ["src/server/b.js","src/server/c.js"]
+union: ["src/server/a.js","src/server/b.js",".eccode/drafts/api-notes.md","src/server/a2.js","src/server/q.js","src/server/c.js"]
+pinned at submit: ["src/server/a2.js","src/server/c.js"]  <- expected {a2, c}
+after approval unreviewedChanges: []
+audit clean: exit 0: Audit OK: 30 events, chain intact, approved artifacts unchanged.
+tamper a2 (edit): exit 2: Audit FAILED: | - src/server/a2.js modified after approval (phase:core)
+tamper c (delete): exit 2: Audit FAILED: | - src/server/c.js deleted after approval (phase:core)
+tamper b (recreate deleted): exit 2: Audit FAILED: | - src/server/b.js added after approval (phase:core)
+tamper a.js (recreate renamed-from): exit 2: Audit FAILED: | - src/server/a.js added after approval (phase:core)
+tamper q (restore baseline bytes of a reviewed deletion): exit 2: Audit FAILED: | - src/server/q.js added after approval (phase:core)
+audit clean again: exit 0: Audit OK: 30 events, chain intact, approved artifacts unchanged.

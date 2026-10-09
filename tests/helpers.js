@@ -5,6 +5,15 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
+
+// Shared memory is isolated per test process (TK-2): the engine's default shared store is ~/.eccode/memory, so a
+// lesson promoted on the developer's machine was retrieved by fixture claims and their handoffs, which answer no
+// lesson, were refused. Set before the engine is loaded; the CLI and hook children the tests spawn inherit
+// process.env. Tests that exercise the shared store point the variable at their own directory afterwards
+// (memory.test.js, lesson-fixture.js, promotion-scrub.test.js).
+const SHARED_MEMORY = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-shared-'));
+process.env.ECCODE_SHARED_MEMORY = SHARED_MEMORY;
+
 const { init } = require('../lib/project');
 const { loadConfig } = require('../lib/config');
 const gates = require('../lib/gates');
@@ -198,4 +207,4 @@ function expectCode(fn, code) {
   throw new Error(`expected ${code}, but call succeeded`);
 }
 
-module.exports = { tmpProject, write, approval, approvalWithLessons, coverage, coverageWithLessons, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD, initRepo };
+module.exports = { tmpProject, write, approval, approvalWithLessons, coverage, coverageWithLessons, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD, initRepo, SHARED_MEMORY };

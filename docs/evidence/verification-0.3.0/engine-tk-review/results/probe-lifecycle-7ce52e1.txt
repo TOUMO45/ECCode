@@ -1,0 +1,13 @@
+attempt 1 declaring a draft: NOT refused
+attempt 3 restoring q undeclared: refused as expected (INVALID_HANDOFF)
+completions recorded: 3
+snapshot filesChanged: ["src/server/b.js","src/server/c.js"]
+pinned at submit: ["src/server/c.js"]  <- UNEXPECTED (expected a2, c)
+after approval unreviewedChanges: [{"path":"src/server/a2.js","gate":"phase:core","problem":"added after approval"},{"path":"src/server/q.js","gate":"phase:core","problem":"deleted after approval"}]
+audit clean: exit 2: Audit FAILED: | - src/server/a2.js added after approval (phase:core) | - src/server/q.js deleted after approval (phase:core)
+tamper a2 (edit): exit 2: Audit FAILED: | - src/server/a2.js added after approval (phase:core) | - src/server/q.js deleted after approval (phase:core)
+tamper c (delete): exit 2: Audit FAILED: | - src/server/c.js deleted after approval (phase:core) | - src/server/a2.js added after approval (phase:core) | - src/server/q.js deleted after approval (phase:core)
+tamper b (recreate deleted): exit 2: Audit FAILED: | - src/server/a2.js added after approval (phase:core) | - src/server/b.js added after approval (phase:core) | - src/server/q.js deleted after approval (phase:core)
+tamper a.js (recreate renamed-from): exit 2: Audit FAILED: | - src/server/a2.js added after approval (phase:core) | - src/server/q.js deleted after approval (phase:core) | - src/server/a.js added after approval (phase:core)
+tamper q (restore baseline bytes of a reviewed deletion): exit 2: Audit FAILED: | - src/server/a2.js added after approval (phase:core) | - src/server/q.js deleted after approval (phase:core) | - src/server/q.js added after approval (phase:core)
+audit clean again: exit 2: Audit FAILED: | - src/server/a2.js added after approval (phase:core) | - src/server/q.js deleted after approval (phase:core)
