@@ -54,11 +54,13 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 | Key | Default | Meaning |
 |---|---|---|
 | `limits.maxConcurrency` | 2 | Tasks that can be claimed at the same time |
+| `limits.maxActiveRuns` | 4 | Agent runs that can be open at the same time; `run start` refuses the next one (`RUN_LIMIT`) until one is closed or recovered |
 | `limits.maxReviewIterations` | 3 | Rejections per gate before the gate escalates to the user |
 | `limits.maxTaskRetries` | 2 | Failed attempts allowed per task after the first one, before escalation |
 | `limits.maxReworks` | 3 | Reworks (scoped fixes for defects found after approval or delivery, `eccode rework open`) the orchestrator may open before the user must decide |
-| `limits.maxRuntimeMinutes` | 480 | Total runtime of recorded agent runs |
-| `limits.maxCostUsd` | 25 | Total spend recorded for agent runs |
+| `limits.maxRuntimeMinutes` | 480 | Total runtime of recorded agent runs (an interrupted run counts from its start to its recovery) |
+| `limits.maxCostUsd` | 25 | Total spend recorded for agent runs, as reported at `run end`: accounting, not hard enforcement (see the limits table below) |
+| `limits.reserveUsdPerRun` | null | Budget held back for every open run and for the next one before new work is allowed; `null` turns the reservation off |
 | `limits.staleRunMinutes` | 60 | How long a run can stay open before it counts as interrupted |
 | `pricing.usdPerMillionTokens` | null | Used to estimate cost when only token counts are reported |
 | `review.requiredSections` | see file | Headings that must appear in architecture and design artifacts |
@@ -79,6 +81,22 @@ Environment variables:
 - `ECCODE_LEARNING=on|off`: override `memory.learning`. Any other value is refused.
 - `ECCODE_UNATTENDED=1`: the session has no human to answer questions (a headless `claude -p` run). The Stop hook then refuses to let a session started with `/eccode:start`, `/eccode:change` or `/eccode:resume` end before the delivery is complete or a user decision is pending, because an unattended orchestrator may otherwise judge the process too heavy for a small change and skip it. Interactive sessions are never blocked; at most 4 stops per session are blocked.
 - `ECCODE_NOW`: pin the clock. Honoured only with `ECCODE_TEST=1` (test suites); otherwise ignored, because gate order rules compare timestamps.
+
+### Limits: what the engine enforces and what it only accounts
+
+Every limit is checked by the engine against the record when a command runs. What the record holds about spend and runtime is what the orchestrator reported after each run (`run end --tokens/--cost-usd`), so the dollar and minute limits are accounting of reported usage, not hard enforcement: the engine cannot meter tokens as they are consumed, hold a deadline, or stop a running agent. Only the host (Claude Code) can do that. A figure the engine was never given is recorded as unknown (`null`), never as `$0`, and `status`/`resume` then print `Budget: $X/$Y (N runs with unknown usage; spend is a lower bound)` (plus `$E of it estimated from tokens` when `pricing.usdPerMillionTokens` turned token counts into dollars) until `eccode run correct <runId> --tokens <n> --cost-usd <x> --reason <text> --actor orchestrator` fills the runs in.
+
+| Limit | The engine enforces | Self-reported by the orchestrator | Only the host can enforce |
+|---|---|---|---|
+| `maxConcurrency` | `task claim` refuses when that many tasks are claimed (`CONCURRENCY_LIMIT`) | — | That no more agents run than tasks are claimed |
+| `maxActiveRuns` | `run start` refuses when that many runs are open (`RUN_LIMIT`) | That every dispatch opens a run and every finished agent closes one | Cancelling an agent process that is still running |
+| `maxReviewIterations` | `gate review` escalates the gate to the user after that many rejections | — | — |
+| `maxTaskRetries` | `task claim` refuses a task whose attempts are used up and `task fail` escalates it to the user | — | — |
+| `maxReworks` | `rework open` refuses past the cap unless `--actor user` (`REWORK_LIMIT`) | — | — |
+| `maxRuntimeMinutes` | `run start`, `gate start`, `task claim` and `rework open` refuse once recorded runtime reaches the limit (`BUDGET_EXCEEDED`); minutes are counted when a run is closed, for an interrupted run from its start to its recovery | When runs are opened and closed | Deadlines: stopping an agent that is still running when the limit is reached |
+| `maxCostUsd` | The same commands refuse once recorded spend reaches the limit; while any run has unknown usage the figure is a lower bound and the refusal says so | `--tokens`/`--cost-usd` at `run end` (from the harness usage report) and `run correct`; without `pricing.usdPerMillionTokens`, tokens alone leave the dollar figure unknown, not `$0` | Actual spend: the engine cannot meter tokens as they are consumed or stop a run part-way |
+| `reserveUsdPerRun` | When set, the same commands refuse when recorded spend + (open runs + 1) × reserve would exceed `maxCostUsd`, so budget is held back for runs in flight | The reserve is the user's estimate of what one run costs | — |
+| `staleRunMinutes` | `recover` closes runs open longer than this as interrupted (usage unknown, duration start → recovery) and releases their claims; `status` lists them | That a run reported as interrupted really stopped | Process cancellation |
 
 ## Use
 
