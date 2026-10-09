@@ -68,7 +68,10 @@ test('#5 a log rolled back behind its snapshot is refused (LOG_ROLLBACK) until t
   res = cli(ctx.dir, ['rebuild', '--force', '--actor', 'orchestrator']);
   assert.strictEqual(res.status, 2, res.stdout + res.stderr);
   assert.match(res.stderr, /USER_AUTH_REQUIRED/);
-  res = cli(ctx.dir, ['rebuild', '--force', '--actor', 'user']);
+  res = cli(ctx.dir, ['rebuild', '--force', '--actor', 'user'], { ECCODE_TEST: '' }); // no TTY: a person is not at this terminal (F5)
+  assert.strictEqual(res.status, 2, res.stdout + res.stderr);
+  assert.match(res.stderr, /USER_AUTH_REQUIRED/);
+  res = cli(ctx.dir, ['rebuild', '--force', '--actor', 'user'], { ECCODE_TEST: '1' }); // the suite's path
   assert.strictEqual(res.status, 0, res.stderr);
   const st = ctx.store.state();
   assert.deepStrictEqual(Object.keys(st.risks), ['R1']);
@@ -319,7 +322,7 @@ test('#1 improve rollback refuses crafted proposal ids (path traversal into draf
     write(ctx.dir, `.eccode/drafts/${name}/proposal.json`, JSON.stringify({ id: `../drafts/${name}`, status: 'adopted', target, afterSha256: sha(abs), history: [] }));
     write(ctx.dir, `.eccode/drafts/${name}/before`, 'pwned\n');
     for (const actor of ['technical-reviewer', 'user']) {
-      const res = cli(ctx.dir, ['improve', 'rollback', `../drafts/${name}`, '--actor', actor, '--reason', 'cleanup']);
+      const res = cli(ctx.dir, ['improve', 'rollback', `../drafts/${name}`, '--actor', actor, '--reason', 'cleanup'], { ECCODE_TEST: '1' }); // the suite's path for --actor user (F5)
       assert.strictEqual(res.status, 2, res.stdout + res.stderr);
       assert.match(res.stderr, /INVALID_INPUT/);
     }
@@ -726,7 +729,7 @@ test('#17 recover is restricted to orchestrator/user and records the real caller
   assert.strictEqual(res.status, 1, res.stdout + res.stderr);
   assert.match(res.stderr, /--actor/);
   assert.strictEqual(ctx.store.state().tasks.api.status, 'claimed');
-  res = cli(ctx.dir, ['recover', '--all', '--actor', 'user']);
+  res = cli(ctx.dir, ['recover', '--all', '--actor', 'user'], { ECCODE_TEST: '1' }); // the suite's path for --actor user (F5)
   assert.strictEqual(res.status, 0, res.stderr);
   const st = ctx.store.state();
   assert.strictEqual(st.tasks.api.history.slice(-1)[0].by, 'user');
