@@ -36,11 +36,11 @@ jobs:
     # LF as CRLF under the runner's global core.autocrlf=true, so pinned byte
     # hashes no longer matched. Fixed by portable `node -e` fixtures, a win32
     # branch in shellQuote, core.autocrlf=false in every test repo and
-    # .gitattributes (eol=lf). Reported but not gating until this job has
-    # passed on the runner; then drop continue-on-error.
-    name: toolkit (windows, node 22, not gating yet)
+    # .gitattributes (eol=lf). The job reported without gating until its
+    # first clean run on the runner (253/253 on d9c1cc6, run 37974778884);
+    # it is gating from that run on.
+    name: toolkit (windows, node 22)
     runs-on: windows-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
