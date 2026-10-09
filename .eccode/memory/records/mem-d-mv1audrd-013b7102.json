@@ -3,7 +3,7 @@
   "layer": "debugging",
   "scope": "project",
   "project": "ECCode toolkit maintenance",
-  "status": "provisional",
+  "status": "verified",
   "trust": "internal",
   "createdAt": "2026-10-09T18:29:02.382Z",
   "createdBy": "learning-debugger",
@@ -265,6 +265,13 @@
       "decision": "reject",
       "notes": "Request changes (revise, then re-review). VERIFIED: (1) repro ev-mv1aqo8u-01378a06 FAILED exit 1 and verification ev-mv1aqrh5-0115da0c PASSED exit 0, identical command; their tree digests are equal only because treeDigest excludes .eccode/, so the records alone cannot show which guard copy ran. Reviewer reran on distinct files: a088c6a guard copy .eccode/drafts/guard-review-old.js (sha256 25bb07dc.., equal to git show a088c6a:scripts/hooks/guard.js) FAILED exit 1 with the pilot message (ev-mv1awc9p-01af8d8c); current scripts/hooks/guard.js (sha256 d43f4b54.., equal to the author's guard-under-test.js) PASSED exit 0 (ev-mv1awbyi-01602693); regression suites 30/30 (ev-mv1awqqr-01a41555). Both copies load the current lib/. (2) Root cause matches the code: a088c6a L453 root=findRoot(CLAUDE_PROJECT_DIR||cwd), L463-464 rel relative to the outer root, draftAreas L74-78, deny L446; current L640, L659 fileRoot=findRoot(path.dirname(abs))||root, findRoot L178. (4) The failed attempts match REVIEW.md (F2, G1/G8, J1 1995->7 bytes). Environment node>=18.17 matches package.json engines. Fingerprint is stable. (5) No secrets or emails. DEFECTS: [major] symptoms[3] ('the denial message names paths relative to the outer repository') is false for the reproduced roles: the reviewer/designer deny at a088c6a L446 contains no path, as the repro log shows. appliesWhen[3] and notApplicableWhen[0] use that path as the discriminator. Use instead: the denied target lies inside the role's own draft area of the NESTED record. [major] notApplicableWhen[1] excludes claim denials, but for implementer roles a wrong root shows up as exactly those messages. At a088c6a checkEdit reads new Store(root) of the OUTER record, so an implementer holding a claim in the nested record gets 'has no claimed task' or '<outer-relative path> is outside the ownership'. Qualify the bullet: the claim exists in the nested record and the message lists the outer record's claims or none. [minor] failedAttempts omits round 3fa6298 (H1, same-line link clobber); the round numbering ('Round 4 (beb7fbb)') does not match six reviewed commits; the RECORD_DIR_WRITE regexes came in 80ddab0 (d0e2a3b was the reviewed head). [minor] Make nested-root-check.js print the guard's sha256 so the evidence pins the file under test. [info] The sources use file:///home/user/... paths and the project name; sanitize before any promotion.",
       "rev": 1
+    },
+    {
+      "at": "2026-10-09T18:35:36.403Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "notes": "Re-review of rev 2. All five rev-1 findings are resolved. [major] symptoms[3]: the false path symptom is replaced by 'target inside the role's own draft/artifact area of the NESTED record'. symptoms[0] now says the message has no path, which matches a088c6a L446. appliesWhen[3] and notApplicableWhen[0] use the corrected discriminator. [major] Implementer form: added to symptoms[4], appliesWhen[4] and rootCause, and stated as read from the code (a088c6a checkEdit, new Store(root) with root = outer), not reproduced. That matches the old guard source. notApplicableWhen[1] is now limited to cases where the nested record holds no matching claim either. [minor] failedAttempts: renumbered to the six reviewed commits, with the 3fa6298 H1/H2 round added. The 80ddab0/d0e2a3b split is stated, 9c4d5aa is shown as approved with I1, and all of it matches REVIEW.md. [minor] Hash pinning: the check prints the guard's sha256. The author's logs pin it: ev-mv1b0cid-0189968e FAILED exit 1 with sha 25bb07dc.. (= git show a088c6a:scripts/hooks/guard.js); ev-mv1b0exx-018a8c87 PASSED exit 0 with sha d43f4b54.. (= scripts/hooks/guard.js). Both used the identical command and their log file hashes match the records. [info] The source titles now carry the promotion scrub note. Reviewer re-ran the revised check: ev-mv1b2m24-015857b8 (a088c6a copy, sha 25bb07dc.., FAILED exit 1, pilot message) and ev-mv1b2m9m-0185b2f4 (current guard, sha d43f4b54.., PASSED exit 0). Earlier reviewer evidence: ev-mv1awc9p-01af8d8c, ev-mv1awbyi-01602693, and the regression suites 30/30 in ev-mv1awqqr-01a41555. The root cause matches the code (a088c6a L453/L463-464/L446; current L640/L659/L178). Environment node>=18.17 matches package.json engines. The fingerprint is stable. No secrets or emails.",
+      "rev": 2
     }
   ],
   "evidenceSnapshots": {
@@ -300,6 +307,28 @@
       "exitCode": 0,
       "at": "2026-10-09T18:26:27.422Z",
       "recordedBy": "learning-debugger"
+    },
+    "ev-mv1b0cid-0189968e": {
+      "id": "ev-mv1b0cid-0189968e",
+      "kind": "command",
+      "label": "repro: nested project judged by the outer record (guard sha256 printed)",
+      "command": "node .eccode/drafts/nested-root-check.js .eccode/drafts/guard-under-test.js",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-09T18:33:40.738Z",
+      "recordedBy": "learning-debugger"
+    },
+    "ev-mv1b0exx-018a8c87": {
+      "id": "ev-mv1b0exx-018a8c87",
+      "kind": "command",
+      "label": "fix verified: nested project judged by its own record (guard sha256 printed)",
+      "command": "node .eccode/drafts/nested-root-check.js .eccode/drafts/guard-under-test.js",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-09T18:33:43.886Z",
+      "recordedBy": "learning-debugger"
     }
   },
   "citations": [],
@@ -314,5 +343,6 @@
     }
   ],
   "supersededBy": null,
-  "supersedes": []
+  "supersedes": [],
+  "lastVerifiedAt": "2026-10-09T18:35:36.403Z"
 }
