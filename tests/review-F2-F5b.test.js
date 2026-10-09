@@ -337,7 +337,10 @@ test('F5 the probe scenario: a deliverable project with an open critical risk is
   assert.match(res.stderr, /DELIVERY_BLOCKED/);
   assert.match(res.stderr, /RISK-X \[critical\] is open/);
   assert.strictEqual(ctx2.store.state().delivery, null);
-  assert.strictEqual(cli('risk', 'update', '--id', 'RISK-X', '--status', 'accepted', '--actor', 'user').status, 0);
+  // Acceptance is the user's: without a terminal the CLI refuses it (F5); the suite's switch stands in for the person.
+  assert.strictEqual(cli('risk', 'update', '--id', 'RISK-X', '--status', 'accepted', '--actor', 'user').status, 2);
+  const asUser = spawnSync(process.execPath, [BIN, 'risk', 'update', '--id', 'RISK-X', '--status', 'accepted', '--actor', 'user', '--root', ctx2.dir], { encoding: 'utf8', env: { ...process.env, ECCODE_TEST: '1' } });
+  assert.strictEqual(asUser.status, 0, asUser.stderr);
   res = cli('deliver', '--actor', 'delivery-lead');
   assert.strictEqual(res.status, 0, res.stderr);
   assert.match(res.stdout, /release commit [0-9a-f]{40}/);
