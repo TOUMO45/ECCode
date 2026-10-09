@@ -1,0 +1,11 @@
+$ node --disable-warning=ExperimentalWarning .eccode/drafts/tr-design-r3-share-reset.mjs .eccode/artifacts/design/spec.md
+# cwd: .
+# exit: 0
+defaults read from the spec env table: {"share":"0.2","cap":"0.05","budget":"1.00"}
+ok   (1) NFR6 config, share pinned to 1: ok, ok, refused:global | ok,ok,refused:global
+info (2) NFR6 config under the production default share 0.2: refused:customer,refused:customer,refused:customer
+ok   (3) defaults, cost = cap: customer 1 calls 1-4 ok, 5th refused:customer, customer 2 ok | ok,ok,ok,ok,refused:customer,ok
+ok   revised migrations 001-005 execute | 5 blocks
+ok   reset step: DELETE request_create rate events permitted; other rate events kept | [{"kind":"register","n":1}]
+ok   RS-38 still holds after the reset step: audit_events and inventory_ledger refuse DELETE
+failures: 0

@@ -1,0 +1,29 @@
+$ node --disable-warning=ExperimentalWarning .eccode/drafts/tr-design-r2-ddl-race.mjs .eccode/artifacts/design/spec.md
+# cwd: .
+# exit: 0
+ok   spec has 5 sql blocks (001-005) | found 5
+ok   migration block 1 executes
+ok   migration block 2 executes
+ok   migration block 3 executes
+ok   migration block 4 executes
+ok   migration block 5 executes
+ok   RS-38 UPDATE inventory_ledger refused
+ok   RS-38 DELETE inventory_ledger refused
+ok   RS-38 UPDATE audit_events refused
+ok   RS-38 DELETE audit_events refused
+ok   CHECK reserved <= on_hand
+ok   RS-23/24 invalid rows do not occupy the transmission id
+ok   RS-23 second valid row refused
+ok   F-TR-1 reservation with key K on plan 1 inserts
+ok   F-TR-1 same customer, same key K on plan 2 refused by UNIQUE (customer_id, idempotency_key)
+ok   F-TR-1 another customer may use the same key text
+ok   F-TR-1 idempotency_keys PK (user_id, key): a second fingerprint row for the same key refused
+ok   SEC-1 pair (admin, attacker IP) reaches the hard limit; pair (admin, other IP) does not; cross-IP total below the delay threshold | attackerPair=5 otherPair=0 userTotal=5
+ok   F-TR-12 model_spend takes integer micro-dollars
+ok   F-TR-2 replan_queue keeps failed_drains and next_attempt_at
+ok   SEC-2 two processes, same customer, two plans: one RESERVED, one RESERVATION_LIMIT | RESERVATION_LIMIT | RESERVED
+ok   RS-32 replacement plan reserves after the void rule released the old reservation (cap not hit) | RESERVED
+ok   RS-14 two customers race for A's last bundle: one RESERVED, one OUT_OF_STOCK; reserved <= on_hand | OUT_OF_STOCK | RESERVED final {"on_hand":1,"reserved":1}
+ok   RS-15 concurrent expiry passes: one EXPIRED, one NOOP, one expire ledger row | EXPIRED | NOOP expireRows=1
+ok   RS-14 busy_timeout 0 vs held BEGIN IMMEDIATE: SQLITE_BUSY surfaces | ERROR 5 database is locked | HELD
+node v22.22.0; failures: 0

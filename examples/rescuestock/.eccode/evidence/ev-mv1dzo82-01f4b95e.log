@@ -1,0 +1,9 @@
+$ env PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node .eccode/drafts/tr-design-r3-formaction.mjs .eccode/artifacts/design/spec.md
+# cwd: .
+# exit: 0
+listener CSP (spec): default-src 'none'; style-src 'self'; form-action 'self' <appOrigin>; frame-ancestors 'none'; base-uri 'none'
+app CSP (spec): default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'
+ok   spec listener CSP: Approve lands on /api/paypal/return with the Lax session, no CSP console error | {"finalPath":"/api/paypal/return","hits":[{"path":"/api/paypal/return","cookie":true}],"cspMsgs":[]}
+ok   spec listener CSP: Cancel lands on /api/paypal/cancel with the Lax session, no CSP console error | {"finalPath":"/api/paypal/cancel","hits":[{"path":"/api/paypal/cancel","cookie":true}],"cspMsgs":[]}
+ok   negative control: app CSP inherited as a second header -> Chromium refuses the approve submission | {"finalPath":"/fake-paypal/checkout/FAKE-1","hits":0,"csp":"Refused to send form data to 'http://127.0.0.1:35983/fake-paypal/checkout/FAKE-1/approve' because it violates the following Content Security"}
+chromium 141.0.7390.37; failures: 0

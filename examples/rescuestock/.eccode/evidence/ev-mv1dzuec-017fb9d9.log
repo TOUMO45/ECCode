@@ -1,0 +1,34 @@
+$ node .eccode/drafts/tr-design-r2-derive.mjs
+# cwd: .
+# exit: 0
+ok   S07 RS-36(iii) one ready one collected -> row 8 ready_for_pickup (expected ready_for_pickup)
+ok   S09 RS-36(i) old refund_pending, current collected -> row 3 refunding (expected refunding)
+ok   S10 RS-36(ii) refusal, void outstanding, replan queued -> row 4 cancelling (expected cancelling)
+ok   S11 RS-36(ii) refund_failed -> row 2 failed_needs_attention (expected failed_needs_attention)
+ok   S11b RS-36(ii) unknown past the limit -> row 2 failed_needs_attention (expected failed_needs_attention)
+ok   S12 RS-36(iv) voids done, v2 proposed, queue entry removed -> row 12 plan_found (expected plan_found)
+ok   S13 superseded, voids done, replan queued -> row 4a replanning (expected replanning)
+ok   S13b superseded, offers_hash retries exhausted (entry kept) -> row 4a replanning (expected replanning)
+ok   S15 executed, A refunded by admin, B collected -> row 7 collected (expected collected)
+ok   S15b executed, every order refunded -> row 5a cancelled (expected cancelled)
+ok   S15c executed, admin refund call unknown -> row 3 refunding (expected refunding)
+ok   S18 expiry, authorize queued never started: call cancelled, op voided locally -> row 6 cancelled (expected cancelled)
+ok   S18b approved with started authorize still unknown, 20 min -> row 2 failed_needs_attention (expected failed_needs_attention)
+ok   S18c approved, authorize retryable (429) re-queued, 20 min -> row 2 failed_needs_attention (expected failed_needs_attention)
+ok   S20 lost reserve race, replan queued -> row 4a replanning (expected replanning)
+ok   S21 requirements changed, new requirements, no run for them yet, no queue -> row 13 requirements_confirmed (expected requirements_confirmed)
+enumerated states: 493074; rows hit: {"2":47196,"3":186624,"4":205200,"5":13512,"6":3461,"7":21,"8":27,"9":33,"10":2808,"11":6804,"12":6,"13":2,"14":326,"4a":27027,"5a":27}
+row-14 states: reachable 0, unreachable 326; distinct shapes 38
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"captured","o2":"unknown<approved"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"captured","o2":"unknown<authorized"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"refunded","o2":"unknown<approved"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"refunded","o2":"unknown<authorized"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"unknown<approved","o2":"captured"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"unknown<approved","o2":"refunded"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"unknown<approved","o2":"unknown<approved"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"unknown<approved","o2":"unknown<authorized"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"unknown<authorized","o2":"captured"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"unknown<authorized","o2":"refunded"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"unknown<authorized","o2":"unknown<approved"} x9
+  UNREACHABLE {"pStatus":"executed","older":"non_executable-done","queue":false,"runKind":"feasibleP","res":"consumed","o1":"unknown<authorized","o2":"unknown<authorized"} x9
+RS-36 (i)-(iv) failures: 0; scenario differences: 0
