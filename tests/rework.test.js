@@ -250,3 +250,32 @@ test('delivery profile: a defect found after delivery needs the user to reopen v
   assert.strictEqual(store.audit().ok, true);
   assert.deepStrictEqual(require('../lib/delivery').unreviewedChanges(store.state(), dir), []);
 });
+
+test('rework extend: after a review shows the defect reaches another file, the orchestrator widens the scope of the pending rework task', () => {
+  const { dir, store, config } = deliveredProject();
+  const { extendRework } = require('../lib/rework');
+  const rw = openRework(store, config, 'orchestrator', { reason: 'null text rendered under the title', files: ['src/server/**'], owner: 'backend-engineer' });
+  tasks.claim(store, config, rw.task, 'backend-engineer');
+  expectCode(() => extendRework(store, config, 'orchestrator', { id: rw.id, files: ['src/web/**'], reason: 'same defect in the web view' }), 'INVALID_TRANSITION'); // claimed
+  write(dir, 'src/server/a.js', '// fixed here only\n');
+  tasks.complete(store, config, rw.task, 'backend-engineer', handoffFor(rw.task, 'backend-engineer', [passCheck(store, 'backend-engineer').id], ['src/server/a.js']));
+  gates.submit(store, config, rw.gate, 'delivery-lead');
+  const { event } = gates.recordReview(store, config, rw.gate, 'technical-reviewer', require('./helpers').rejection('R1', { findings: [{ id: 'R1', severity: 'major', title: 'Same defect in src/web', detail: 'The web view has the same null child.', recommendation: 'Extend the rework to src/web/**.' }] }));
+  tasks.reset(store, rw.task, 'orchestrator', 'R1: scope too narrow');
+  expectCode(() => extendRework(store, config, 'backend-engineer', { id: rw.id, files: ['src/web/**'], reason: 'same defect in the web view' }), 'ROLE_NOT_ALLOWED');
+  expectCode(() => extendRework(store, config, 'orchestrator', { id: rw.id, files: ['**'], reason: 'same defect in the web view' }), 'INVALID_INPUT');
+  extendRework(store, config, 'orchestrator', { id: rw.id, files: ['src/web/**'], reason: 'R1: same defect in the web view' });
+  let st = store.state();
+  assert.deepStrictEqual(st.tasks[rw.task].files, ['src/server/**', 'src/web/**']);
+  assert.strictEqual(st.reworks[0].extensions.length, 1);
+  tasks.claim(store, config, rw.task, 'backend-engineer');
+  write(dir, 'src/web/b.js', '// fixed in the web view too\n');
+  tasks.complete(store, config, rw.task, 'backend-engineer', handoffFor(rw.task, 'backend-engineer', [passCheck(store, 'backend-engineer').id], ['src/server/a.js', 'src/web/b.js']));
+  gates.submit(store, config, rw.gate, 'delivery-lead', { respondsTo: event.data.reviewId });
+  gates.recordReview(store, config, rw.gate, 'technical-reviewer', approval([[`ev:${passCheck(store, 'technical-reviewer').id}`]], { resolvedFindings: [{ id: 'R1', resolution: 'src/web fixed in the extended scope.', evidence: ['artifact:src/web/b.js'] }] }));
+  st = store.state();
+  assert.strictEqual(st.gates[rw.gate].status, 'approved');
+  assert.strictEqual(store.audit().ok, true);
+  const cli = spawnSync(process.execPath, [BIN, '--root', dir, 'rework', 'extend', rw.id, '--actor', 'orchestrator', '--files', 'tests/**', '--reason', 'another file'], { encoding: 'utf8' });
+  assert.strictEqual(cli.status, 2); // gate approved: no longer extendable
+});

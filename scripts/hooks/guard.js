@@ -213,9 +213,49 @@ function gitRecordRisk(words) {
   return null;
 }
 
-function checkBash(cmd, role) {
+// Commands whose non-flag arguments (or the last one) are written to.
+const WRITE_ALL_ARGS = new Set(['tee', 'touch', 'truncate']);
+const WRITE_LAST_ARG = new Set(['cp', 'mv', 'ln', 'install', 'rsync']);
+const WRITE_INPLACE = new Set(['sed', 'perl']);
+
+/** Paths a shell command line writes to, as literally as the guard can read them. */
+function bashWriteTargets(cmd) {
+  const targets = [];
+  walkCommands(cmd, (words) => {
+    const texts = words.map((w) => w.text);
+    for (let i = 0; i < texts.length; i++) {
+      const w = texts[i];
+      if (/^\d?>{1,2}\|?$/.test(w) && texts[i + 1]) targets.push(texts[++i]);
+      else if (/^\d?>{1,2}\|?[^&].*/.test(w)) targets.push(w.replace(/^\d?>{1,2}\|?/, ''));
+    }
+    const cmdIdx = texts.findIndex((t) => !/^[A-Za-z_][A-Za-z0-9_]*=/.test(t));
+    if (cmdIdx === -1) return;
+    const name = texts[cmdIdx].split('/').pop();
+    const args = texts.slice(cmdIdx + 1).filter((t) => !/^[<>|&;]/.test(t));
+    const positional = args.filter((a) => !a.startsWith('-'));
+    if (WRITE_ALL_ARGS.has(name)) targets.push(...positional);
+    else if (WRITE_LAST_ARG.has(name) && positional.length) targets.push(positional[positional.length - 1]);
+    else if (WRITE_INPLACE.has(name) && args.some((a) => /^-\w*i/.test(a))) targets.push(...positional.filter((p) => !/^(s|y)[^A-Za-z0-9]/.test(p) && !/[;{}]/.test(p)));
+    else if (name === 'dd') targets.push(...args.filter((a) => a.startsWith('of=')).map((a) => a.slice(3)));
+  });
+  return targets.filter((t) => t && !t.startsWith('/dev/'));
+}
+
+function checkBash(cmd, role, root, cwd) {
   if (SHELL_WRITE.test(cmd) || (new RegExp(RECORD_AREA).test(cmd) && CODE_WRITE.test(cmd))) {
     out('deny', 'ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.');
+  }
+  // Shell writes obey the same ownership rules as the Edit/Write tools: a redirect, tee, cp or
+  // sed -i by an implementer lands only inside its claimed task (and never on the record).
+  if (role && IMPLEMENTERS.has(role)) {
+    const { toPosix } = require(path.join(LIB, 'util'));
+    for (const t of bashWriteTargets(cmd)) {
+      const abs = path.resolve(cwd || root, t.replace(/^["']|["']$/g, ''));
+      const rel = toPosix(path.relative(root, abs));
+      if (rel.startsWith('..') || path.isAbsolute(rel)) continue;
+      if (rel.startsWith('.eccode/')) continue; // the record areas are decided by RECORD_AREA above; drafts stay writable
+      checkEdit(root, rel, role);
+    }
   }
   let gitRisk = null;
   walkCommands(cmd, (words) => {
@@ -238,9 +278,28 @@ function checkBash(cmd, role) {
 
 // ------------------------------------------------------------------ file edits
 
+/** Where a path really lands: through symlinks, relative to the project root (null if it does not exist yet). */
+function realRel(root, rel) {
+  const abs = path.join(root, rel);
+  try {
+    const { toPosix } = require(path.join(LIB, 'util'));
+    const real = fs.realpathSync(abs);
+    const out = toPosix(path.relative(fs.realpathSync(root), real));
+    return { real: out, symlink: fs.lstatSync(abs).isSymbolicLink() };
+  } catch {
+    return null;
+  }
+}
+
 function checkEdit(root, rel, role) {
   const { matchesAny } = require(path.join(LIB, 'util'));
   if (RECORD_FILES.test(rel)) out('deny', `${rel} is part of the ECCode record and is written only by the eccode CLI.`);
+  // A symlink inside a task's ownership can point at the record or outside the project.
+  const target = realRel(root, rel);
+  if (target && (target.symlink || target.real.startsWith('..') || RECORD_FILES.test(target.real))) {
+    out('deny', `${rel} ${target.symlink ? 'is a symbolic link' : 'resolves'} to ${target.real}; writes must target the file itself, inside the project and outside the record.`);
+  }
+  if (role && rel.startsWith('.git/')) out('deny', `${rel} is git metadata (ignore rules, hooks); subagents never write it.`);
   if (!role || role.startsWith('other:')) return; // main session or non-ECCode agent
   if (matchesAny(rel, draftAreas(role))) return;
   if (IMPLEMENTERS.has(role)) {
@@ -272,7 +331,7 @@ function main(input) {
   const { toPosix } = require(path.join(LIB, 'util'));
   const role = roleOf(input.agent_type);
 
-  if (tool === 'Bash') return checkBash(String(ti.command || ''), role);
+  if (tool === 'Bash') return checkBash(String(ti.command || ''), role, root, input.cwd);
 
   if (['Edit', 'Write', 'MultiEdit', 'NotebookEdit'].includes(tool)) {
     const target = ti.file_path || ti.notebook_path;
