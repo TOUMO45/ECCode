@@ -1,0 +1,55 @@
+$ node -e '
+"use strict";
+var FIX={A:{q:100,p:3000,f:1000,r:600,ok:true,onHand:1},B:{q:100,p:3600,f:800,r:630,ok:true,onHand:1},C:{q:200,p:4800,f:500,r:600,ok:false,onHand:1},D:{q:200,p:6800,f:1200,r:680,ok:true,onHand:1},E:{q:100,p:4500,f:1000,r:640,ok:true,onHand:1}};
+function hm(x){return Math.floor(x/60)+":"+String(x%60).padStart(2,"0")}
+function better(c,b){if(!b)return true;for(var i=0;i<4;i++){if(c[i]<b[i])return true;if(b[i]<c[i])return false}return false}
+function solve(cat,req){var N=req.N,budget=req.budget,deadline=req.deadline,maxP=req.maxP;var rej={},cand=[];
+ Object.keys(cat).sort().forEach(function(k){var s=cat[k];
+  if(!s.ok){rej[k]=["INCOMPATIBLE_LID_DIAMETER"];return}
+  if(deadline!=null&&deadline<s.r){rej[k]=["READY_AFTER_DEADLINE"];return}
+  if(s.onHand<=0){rej[k]=["OUT_OF_STOCK"];return}
+  cand.push(k)});
+ var bound=cand.map(function(k){return Math.min(cat[k].onHand,Math.ceil(N/cat[k].q))});var cur=cand.map(function(){return 0});
+ var best=null,viol={};cand.forEach(function(k){viol[k]={feasible:false,codes:new Set()}});
+ function rec(i){if(i===cand.length){var u=0,t=0,pk=0,r=0,used=[];
+   cand.forEach(function(k,j){var m=cur[j];if(m){u+=m*cat[k].q;t+=m*cat[k].p+cat[k].f;pk++;r=Math.max(r,cat[k].r);used.push(k+(1<m?"x"+m:""))}});
+   if(!pk)return;var codes=[];
+   if(u<N)codes.push("INSUFFICIENT_QTY");if(maxP!=null&&maxP<pk)codes.push("TOO_MANY_PICKUPS");if(budget!=null&&budget<t)codes.push("OVER_BUDGET");
+   cand.forEach(function(k,j){if(cur[j]){if(!codes.length)viol[k].feasible=true;else codes.forEach(function(c){viol[k].codes.add(c)})}});
+   if(!codes.length){var c=[t,pk,r,used.join("+")];if(better(c,best))best=c}
+   return}
+  for(var m=0;m<=bound[i];m++){cur[i]=m;rec(i+1)}}
+ rec(0);var expl={};cand.forEach(function(k){if(!viol[k].feasible)expl[k]=Array.from(viol[k].codes).sort()});return {best:best,rej:rej,expl:expl}}
+function fmt(o){return o.best?o.best[3]+" total="+o.best[0]+" pickups="+o.best[1]+" ready="+hm(o.best[2]):"NO PLAN"}
+function relax(cat,req){return [["budget","OVER_BUDGET",0],["deadline","READY_AFTER_DEADLINE",2],["maxP","TOO_MANY_PICKUPS",1]].map(function(a){
+ var q=Object.assign({},req);q[a[0]]=null;var r=solve(cat,q);
+ return r.best?a[1]+": relax "+a[0]+" to "+(a[0]==="deadline"?hm(r.best[2]):r.best[a[2]])+" gives "+fmt(r):a[0]+": no relaxation (still NO PLAN)"})}
+var base={N:200,budget:12000,deadline:660,maxP:2};
+function withInv(k,n){var c=JSON.parse(JSON.stringify(FIX));c[k].onHand=n;return c}
+function show(l,cat,req){var r=solve(cat,req);console.log(l.padEnd(32),fmt(r),"; rejections",JSON.stringify(r.rej),r.best?"":"; per-candidate "+JSON.stringify(r.expl));if(!r.best)relax(cat,req).forEach(function(x){console.log("    relaxation",x)})}
+show("RS-06 pinned inventory",FIX,base);
+show("RS-06 guard: A onHand=2",withInv("A",2),base);
+show("RS-09 B onHand=0",withInv("B",0),base);
+show("RS-10 B onHand=0, budget 9000",withInv("B",0),Object.assign({},base,{budget:9000}));
+show("RS-11 maxPickups=1",FIX,Object.assign({},base,{maxP:1}));
+function lcg(seed){var s=seed|0;return function(){s=(Math.imul(s,1664525)+1013904223)|0;return (s+2147483648)/4294967296}}
+var worst=0,ws=0;for(var seed=1;seed<=200;seed++){var rnd=lcg(seed);var pick=function(a){return a[Math.floor(rnd()*a.length)]};var cat={};
+ for(var i=0;i<12;i++)cat["S"+String(i).padStart(2,"0")]={q:pick([50,100,200]),p:1000+Math.floor(rnd()*9001),f:Math.floor(rnd()*1501),r:570+Math.floor(rnd()*151),ok:0.15<rnd(),onHand:Math.floor(rnd()*3)};
+ var req={N:pick([100,200,300,400]),budget:5000+Math.floor(rnd()*30000),deadline:600+Math.floor(rnd()*121),maxP:1+Math.floor(rnd()*3)};
+ var t0=process.hrtime.bigint();solve(cat,req);var ms=Number(process.hrtime.bigint()-t0)/1e6;if(worst<ms){worst=ms;ws=seed}}
+console.log("NFR5 generator (200 seeds, 12 offers, onHand 0..2, plain brute force without pruning): worst "+worst.toFixed(1)+" ms (seed "+ws+") on node "+process.version);
+'
+# cwd: .
+# exit: 0
+RS-06 pinned inventory           A+B total=8400 pickups=2 ready=10:30 ; rejections {"C":["INCOMPATIBLE_LID_DIAMETER"],"D":["READY_AFTER_DEADLINE"]} 
+RS-06 guard: A onHand=2          Ax2 total=7000 pickups=1 ready=10:00 ; rejections {"C":["INCOMPATIBLE_LID_DIAMETER"],"D":["READY_AFTER_DEADLINE"]} 
+RS-09 B onHand=0                 A+E total=9500 pickups=2 ready=10:40 ; rejections {"B":["OUT_OF_STOCK"],"C":["INCOMPATIBLE_LID_DIAMETER"],"D":["READY_AFTER_DEADLINE"]} 
+RS-10 B onHand=0, budget 9000    NO PLAN ; rejections {"B":["OUT_OF_STOCK"],"C":["INCOMPATIBLE_LID_DIAMETER"],"D":["READY_AFTER_DEADLINE"]} ; per-candidate {"A":["INSUFFICIENT_QTY","OVER_BUDGET"],"E":["INSUFFICIENT_QTY","OVER_BUDGET"]}
+    relaxation OVER_BUDGET: relax budget to 9500 gives A+E total=9500 pickups=2 ready=10:40
+    relaxation READY_AFTER_DEADLINE: relax deadline to 11:20 gives D total=8000 pickups=1 ready=11:20
+    relaxation maxP: no relaxation (still NO PLAN)
+RS-11 maxPickups=1               NO PLAN ; rejections {"C":["INCOMPATIBLE_LID_DIAMETER"],"D":["READY_AFTER_DEADLINE"]} ; per-candidate {"A":["INSUFFICIENT_QTY","OVER_BUDGET","TOO_MANY_PICKUPS"],"B":["INSUFFICIENT_QTY","OVER_BUDGET","TOO_MANY_PICKUPS"],"E":["INSUFFICIENT_QTY","OVER_BUDGET","TOO_MANY_PICKUPS"]}
+    relaxation budget: no relaxation (still NO PLAN)
+    relaxation READY_AFTER_DEADLINE: relax deadline to 11:20 gives D total=8000 pickups=1 ready=11:20
+    relaxation TOO_MANY_PICKUPS: relax maxP to 2 gives A+B total=8400 pickups=2 ready=10:30
+NFR5 generator (200 seeds, 12 offers, onHand 0..2, plain brute force without pruning): worst 11.8 ms (seed 196) on node v22.22.0

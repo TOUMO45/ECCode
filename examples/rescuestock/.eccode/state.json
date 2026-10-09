@@ -1,6 +1,6 @@
 {
-  "seq": 36,
-  "lastHash": "32812ce0d1355d7e9afdae899cce4a609a84d4496afb590894d2d5576103546e",
+  "seq": 47,
+  "lastHash": "af496c8534ba278ebb41dce29ec9be49cc9c99854538d92f8b5a33c8fa4677d7",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -336,6 +336,66 @@
       "task": null,
       "recordedBy": "architecture-reviewer",
       "at": "2026-10-09T16:26:14.120Z"
+    },
+    "ev-mv170be7-01065dd0": {
+      "id": "ev-mv170be7-01065dd0",
+      "kind": "command",
+      "label": "architecture: pinned-inventory planner, computed relaxations, NFR5 generator timing",
+      "command": "node /home/user/ECCode/examples/rescuestock/.eccode/artifacts/architecture/checks/planner-check.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 38,
+      "log": ".eccode/evidence/ev-mv170be7-01065dd0.log",
+      "logSha256": "97db92322b04258da5c5be1f8e2dafb029b6957151c9bb6e9e33e867410e2f41",
+      "logFileSha256": "bd038bfb54e2ab9f1b6fa5066f4f2bc713eed560db7adcc6a14cb17ddbb88b7c",
+      "outputTail": "\n[stderr]\nnode:internal/modules/cjs/loader:1386\n  throw err;\n  ^\n\nError: Cannot find module '/home/user/ECCode/examples/rescuestock/.eccode/artifacts/architecture/checks/planner-check.js'\n    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)\n    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)\n    at Function._load (node:internal/modules/cjs/loader:1192:37)\n    at TracingChannel.traceSync (node:diagnostics_channel:328:14)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)\n    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)\n    at node:internal/main/run_main_module:36:49 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v22.22.0\n",
+      "gate": "architecture",
+      "task": null,
+      "recordedBy": "product-architect",
+      "at": "2026-10-09T16:41:40.820Z"
+    },
+    "ev-mv1719y8-011f6742": {
+      "id": "ev-mv1719y8-011f6742",
+      "kind": "command",
+      "label": "architecture: pinned-inventory planner, computed relaxations, per-candidate codes, NFR5 generator timing",
+      "command": "node -e '\n\"use strict\";\nvar FIX={A:{q:100,p:3000,f:1000,r:600,ok:true,onHand:1},B:{q:100,p:3600,f:800,r:630,ok:true,onHand:1},C:{q:200,p:4800,f:500,r:600,ok:false,onHand:1},D:{q:200,p:6800,f:1200,r:680,ok:true,onHand:1},E:{q:100,p:4500,f:1000,r:640,ok:true,onHand:1}};\nfunction hm(x){return Math.floor(x/60)+\":\"+String(x%60).padStart(2,\"0\")}\nfunction better(c,b){if(!b)return true;for(var i=0;i<4;i++){if(c[i]<b[i])return true;if(b[i]<c[i])return false}return false}\nfunction solve(cat,req){var N=req.N,budget=req.budget,deadline=req.deadline,maxP=req.maxP;var rej={},cand=[];\n Object.keys(cat).sort().forEach(function(k){var s=cat[k];\n  if(!s.ok){rej[k]=[\"INCOMPATIBLE_LID_DIAMETER\"];return}\n  if(deadline!=null&&deadline<s.r){rej[k]=[\"READY_AFTER_DEADLINE\"];return}\n  if(s.onHand<=0){rej[k]=[\"OUT_OF_STOCK\"];return}\n  cand.push(k)});\n var bound=cand.map(function(k){return Math.min(cat[k].onHand,Math.ceil(N/cat[k].q))});var cur=cand.map(function(){return 0});\n var best=null,viol={};cand.forEach(function(k){viol[k]={feasible:false,codes:new Set()}});\n function rec(i){if(i===cand.length){var u=0,t=0,pk=0,r=0,used=[];\n   cand.forEach(function(k,j){var m=cur[j];if(m){u+=m*cat[k].q;t+=m*cat[k].p+cat[k].f;pk++;r=Math.max(r,cat[k].r);used.push(k+(1<m?\"x\"+m:\"\"))}});\n   if(!pk)return;var codes=[];\n   if(u<N)codes.push(\"INSUFFICIENT_QTY\");if(maxP!=null&&maxP<pk)codes.push(\"TOO_MANY_PICKUPS\");if(budget!=null&&budget<t)codes.push(\"OVER_BUDGET\");\n   cand.forEach(function(k,j){if(cur[j]){if(!codes.length)viol[k].feasible=true;else codes.forEach(function(c){viol[k].codes.add(c)})}});\n   if(!codes.length){var c=[t,pk,r,used.join(\"+\")];if(better(c,best))best=c}\n   return}\n  for(var m=0;m<=bound[i];m++){cur[i]=m;rec(i+1)}}\n rec(0);var expl={};cand.forEach(function(k){if(!viol[k].feasible)expl[k]=Array.from(viol[k].codes).sort()});return {best:best,rej:rej,expl:expl}}\nfunction fmt(o){return o.best?o.best[3]+\" total=\"+o.best[0]+\" pickups=\"+o.best[1]+\" ready=\"+hm(o.best[2]):\"NO PLAN\"}\nfunction relax(cat,req){return [[\"budget\",\"OVER_BUDGET\",0],[\"deadline\",\"READY_AFTER_DEADLINE\",2],[\"maxP\",\"TOO_MANY_PICKUPS\",1]].map(function(a){\n var q=Object.assign({},req);q[a[0]]=null;var r=solve(cat,q);\n return r.best?a[1]+\": relax \"+a[0]+\" to \"+(a[0]===\"deadline\"?hm(r.best[2]):r.best[a[2]])+\" gives \"+fmt(r):a[0]+\": no relaxation (still NO PLAN)\"})}\nvar base={N:200,budget:12000,deadline:660,maxP:2};\nfunction withInv(k,n){var c=JSON.parse(JSON.stringify(FIX));c[k].onHand=n;return c}\nfunction show(l,cat,req){var r=solve(cat,req);console.log(l.padEnd(32),fmt(r),\"; rejections\",JSON.stringify(r.rej),r.best?\"\":\"; per-candidate \"+JSON.stringify(r.expl));if(!r.best)relax(cat,req).forEach(function(x){console.log(\"    relaxation\",x)})}\nshow(\"RS-06 pinned inventory\",FIX,base);\nshow(\"RS-06 guard: A onHand=2\",withInv(\"A\",2),base);\nshow(\"RS-09 B onHand=0\",withInv(\"B\",0),base);\nshow(\"RS-10 B onHand=0, budget 9000\",withInv(\"B\",0),Object.assign({},base,{budget:9000}));\nshow(\"RS-11 maxPickups=1\",FIX,Object.assign({},base,{maxP:1}));\nfunction lcg(seed){var s=seed|0;return function(){s=(Math.imul(s,1664525)+1013904223)|0;return (s+2147483648)/4294967296}}\nvar worst=0,ws=0;for(var seed=1;seed<=200;seed++){var rnd=lcg(seed);var pick=function(a){return a[Math.floor(rnd()*a.length)]};var cat={};\n for(var i=0;i<12;i++)cat[\"S\"+String(i).padStart(2,\"0\")]={q:pick([50,100,200]),p:1000+Math.floor(rnd()*9001),f:Math.floor(rnd()*1501),r:570+Math.floor(rnd()*151),ok:0.15<rnd(),onHand:Math.floor(rnd()*3)};\n var req={N:pick([100,200,300,400]),budget:5000+Math.floor(rnd()*30000),deadline:600+Math.floor(rnd()*121),maxP:1+Math.floor(rnd()*3)};\n var t0=process.hrtime.bigint();solve(cat,req);var ms=Number(process.hrtime.bigint()-t0)/1e6;if(worst<ms){worst=ms;ws=seed}}\nconsole.log(\"NFR5 generator (200 seeds, 12 offers, onHand 0..2, plain brute force without pruning): worst \"+worst.toFixed(1)+\" ms (seed \"+ws+\") on node \"+process.version);\n'",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 118,
+      "log": ".eccode/evidence/ev-mv1719y8-011f6742.log",
+      "logSha256": "89a124c317ed7b813d5b6d5a37aff37f5af4a269f423d2e1f2d1e7c19c82b318",
+      "logFileSha256": "ec23b56e9afc8ee6402d50c54759359c204768badfc3bacc33715e93cce31655",
+      "outputTail": "RS-06 pinned inventory           A+B total=8400 pickups=2 ready=10:30 ; rejections {\"C\":[\"INCOMPATIBLE_LID_DIAMETER\"],\"D\":[\"READY_AFTER_DEADLINE\"]} \nRS-06 guard: A onHand=2          Ax2 total=7000 pickups=1 ready=10:00 ; rejections {\"C\":[\"INCOMPATIBLE_LID_DIAMETER\"],\"D\":[\"READY_AFTER_DEADLINE\"]} \nRS-09 B onHand=0                 A+E total=9500 pickups=2 ready=10:40 ; rejections {\"B\":[\"OUT_OF_STOCK\"],\"C\":[\"INCOMPATIBLE_LID_DIAMETER\"],\"D\":[\"READY_AFTER_DEADLINE\"]} \nRS-10 B onHand=0, budget 9000    NO PLAN ; rejections {\"B\":[\"OUT_OF_STOCK\"],\"C\":[\"INCOMPATIBLE_LID_DIAMETER\"],\"D\":[\"READY_AFTER_DEADLINE\"]} ; per-candidate {\"A\":[\"INSUFFICIENT_QTY\",\"OVER_BUDGET\"],\"E\":[\"INSUFFICIENT_QTY\",\"OVER_BUDGET\"]}\n    relaxation OVER_BUDGET: relax budget to 9500 gives A+E total=9500 pickups=2 ready=10:40\n    relaxation READY_AFTER_DEADLINE: relax deadline to 11:20 gives D total=8000 pickups=1 ready=11:20\n    relaxation maxP: no relaxation (still NO PLAN)\nRS-11 maxPickups=1               NO PLAN ; rejections {\"C\":[\"INCOMPATIBLE_LID_DIAMETER\"],\"D\":[\"READY_AFTER_DEADLINE\"]} ; per-candidate {\"A\":[\"INSUFFICIENT_QTY\",\"OVER_BUDGET\",\"TOO_MANY_PICKUPS\"],\"B\":[\"INSUFFICIENT_QTY\",\"OVER_BUDGET\",\"TOO_MANY_PICKUPS\"],\"E\":[\"INSUFFICIENT_QTY\",\"OVER_BUDGET\",\"TOO_MANY_PICKUPS\"]}\n    relaxation budget: no relaxation (still NO PLAN)\n    relaxation READY_AFTER_DEADLINE: relax deadline to 11:20 gives D total=8000 pickups=1 ready=11:20\n    relaxation TOO_MANY_PICKUPS: relax maxP to 2 gives A+B total=8400 pickups=2 ready=10:30\nNFR5 generator (200 seeds, 12 offers, onHand 0..2, plain brute force without pruning): worst 11.8 ms (seed 196) on node v22.22.0\n",
+      "gate": "architecture",
+      "task": null,
+      "recordedBy": "product-architect",
+      "at": "2026-10-09T16:42:25.604Z"
+    },
+    "ev-mv171l87-01672a57": {
+      "id": "ev-mv171l87-01672a57",
+      "kind": "command",
+      "label": "architecture: per-candidate explanation rule (alone-insufficient + cheapest covering combination) for RS-10/RS-11",
+      "command": "node -e '\n\"use strict\";\nvar FIX={A:{q:100,p:3000,f:1000,r:600,ok:true,onHand:1},B:{q:100,p:3600,f:800,r:630,ok:true,onHand:1},C:{q:200,p:4800,f:500,r:600,ok:false,onHand:1},D:{q:200,p:6800,f:1200,r:680,ok:true,onHand:1},E:{q:100,p:4500,f:1000,r:640,ok:true,onHand:1}};\nfunction better(c,b){if(!b)return true;for(var i=0;i<4;i++){if(c[i]<b[i])return true;if(b[i]<c[i])return false}return false}\nfunction explain(cat,req){var N=req.N,cand=[];\n Object.keys(cat).sort().forEach(function(k){var s=cat[k];if(s.ok&&!(req.deadline<s.r)&&0<s.onHand)cand.push(k)});\n var bound=cand.map(function(k){return Math.min(cat[k].onHand,Math.ceil(N/cat[k].q))});var cur=cand.map(function(){return 0});\n var cheapest={};\n function rec(i){if(i===cand.length){var u=0,t=0,pk=0,r=0,used=[];\n   cand.forEach(function(k,j){var m=cur[j];if(m){u+=m*cat[k].q;t+=m*cat[k].p+cat[k].f;pk++;r=Math.max(r,cat[k].r);used.push(k+(1<m?\"x\"+m:\"\"))}});\n   if(!pk||u<N)return;var c=[t,pk,r,used.join(\"+\")];\n   cand.forEach(function(k,j){if(cur[j]&&better(c,cheapest[k]))cheapest[k]=c});return}\n  for(var m=0;m<=bound[i];m++){cur[i]=m;rec(i+1)}}\n rec(0);var out={};\n cand.forEach(function(k,j){var codes=[];if(bound[j]*cat[k].q<N)codes.push(\"INSUFFICIENT_QTY\");var c=cheapest[k];\n  if(c){if(req.maxP<c[1])codes.push(\"TOO_MANY_PICKUPS\");if(req.budget<c[0])codes.push(\"OVER_BUDGET\")}\n  out[k]={codes:codes,cheapestCovering:c?c[3]+\" \"+c[0]+\" cents, \"+c[1]+\" pickups\":\"none\"}});return out}\nvar base={N:200,budget:12000,deadline:660,maxP:2};\nvar noB=JSON.parse(JSON.stringify(FIX));noB.B.onHand=0;\nconsole.log(\"RS-10 (B onHand=0, budget 9000):\",JSON.stringify(explain(noB,Object.assign({},base,{budget:9000}))));\nconsole.log(\"RS-11 (maxPickups=1)            :\",JSON.stringify(explain(FIX,Object.assign({},base,{maxP:1}))));\n'",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 40,
+      "log": ".eccode/evidence/ev-mv171l87-01672a57.log",
+      "logSha256": "9b187890087a20e999e26005f8f4db81cf7260831068726a7bec21f9556ff5a4",
+      "logFileSha256": "5b0c4de3f01f80fafbd0c1a89c2b334224f9acae4583076bc5235054037917b2",
+      "outputTail": "RS-10 (B onHand=0, budget 9000): {\"A\":{\"codes\":[\"INSUFFICIENT_QTY\",\"OVER_BUDGET\"],\"cheapestCovering\":\"A+E 9500 cents, 2 pickups\"},\"E\":{\"codes\":[\"INSUFFICIENT_QTY\",\"OVER_BUDGET\"],\"cheapestCovering\":\"A+E 9500 cents, 2 pickups\"}}\nRS-11 (maxPickups=1)            : {\"A\":{\"codes\":[\"INSUFFICIENT_QTY\",\"TOO_MANY_PICKUPS\"],\"cheapestCovering\":\"A+B 8400 cents, 2 pickups\"},\"B\":{\"codes\":[\"INSUFFICIENT_QTY\",\"TOO_MANY_PICKUPS\"],\"cheapestCovering\":\"A+B 8400 cents, 2 pickups\"},\"E\":{\"codes\":[\"INSUFFICIENT_QTY\",\"TOO_MANY_PICKUPS\"],\"cheapestCovering\":\"A+E 9500 cents, 2 pickups\"}}\n",
+      "gate": "architecture",
+      "task": null,
+      "recordedBy": "product-architect",
+      "at": "2026-10-09T16:42:40.213Z"
     }
   },
   "reviews": {
@@ -1213,8 +1273,14 @@
       "task": null,
       "gate": "architecture",
       "startedAt": "2026-10-09T16:33:38.361Z",
-      "status": "running",
-      "attempt": 1
+      "status": "failed",
+      "attempt": 1,
+      "endedAt": "2026-10-09T16:55:30.265Z",
+      "durationMinutes": 21.87,
+      "costUsd": null,
+      "tokens": 228734,
+      "note": "product-architect revision complete in scratch (brief-r2.md, handoff-2.json, preserved under docs/evidence/verification-0.3.0/pilot-blocked-nested-root/) but every write under the nested project's .eccode/artifacts/ was denied by the guard's nested-root defect; RISK-13..18 and 2 evidence runs were recorded. Resumes after the guard repair is reviewed and installed.",
+      "usageReported": true
     }
   },
   "risks": {
@@ -1337,6 +1403,66 @@
       "status": "open",
       "updatedAt": "2026-10-09T16:10:54.039Z",
       "updatedBy": "product-architect"
+    },
+    "RISK-13": {
+      "id": "RISK-13",
+      "title": "PayPal authorization expires or passes its honour window while the saga waits for supplier confirmations (validity periods unverified)",
+      "severity": "high",
+      "mitigation": "Re-read expiration_time at revalidation with a 10-minute margin; expired authorization voided and treated like DENIED (void rule, buyer re-approves under a new plan version); 30-minute reservation TTL bounds the wait; fake adapter models expiry",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:53:28.521Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-14": {
+      "id": "RISK-14",
+      "title": "Playwright browser download on clean clones is network beyond npm and may fail for judges",
+      "severity": "medium",
+      "mitigation": "Browser suites only under npm run test:browser (dec-mv16pz32-013c4cd1); npm test never launches a browser (NFR1/NFR3 ACs); README documents the one-time npx playwright install chromium",
+      "owner": "devops-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:53:28.760Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-15": {
+      "id": "RISK-15",
+      "title": "node:sqlite is experimental: flagged before Node 22.13, ExperimentalWarning on 22.22, API may change",
+      "severity": "medium",
+      "mitigation": "Node floor 22.13 or later (dec-mv16pyxx-01bad0bf) with engines field and startup check; --disable-warning=ExperimentalWarning; PRAGMA busy_timeout instead of the 22.16-only constructor option; thin db/ wrapper; residual: API churn in future Node versions",
+      "owner": "backend-engineer",
+      "status": "mitigated",
+      "updatedAt": "2026-10-09T16:53:38.606Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-16": {
+      "id": "RISK-16",
+      "title": "Session lost on the cross-site PayPal return (SameSite=Strict inherited from Groundwork) breaks authorization only against the real Sandbox",
+      "severity": "high",
+      "mitigation": "Session cookie SameSite=Lax; owner-checked idempotent return handler; fake approval page served from a different site in test:browser; RS-31/32 (b) live Sandbox variants",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:53:35.238Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-17": {
+      "id": "RISK-17",
+      "title": "Runtime model spend abuse (looping extract or upload) billed to the user's account",
+      "severity": "medium",
+      "mitigation": "Daily model budget RS_MODEL_DAILY_BUDGET_USD, per-customer rate limit of 10 calls per 10 minutes counted in SQLite, per-call cap; asserted deterministically in NFR6",
+      "owner": "ai-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:53:35.448Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-18": {
+      "id": "RISK-18",
+      "title": "Single-credential Sandbox mode makes live RS-19/20/22/23/24 evidence weaker than claimed",
+      "severity": "medium",
+      "mitigation": "Merchant mode recorded in every live report; weakened rows labelled in the evidence table (A2); per-supplier credentials requested from the user (Q1)",
+      "owner": "delivery-lead",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:53:35.696Z",
+      "updatedBy": "product-architect"
     }
   },
   "decisions": {
@@ -1384,8 +1510,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 28.06,
-    "tokens": 426346
+    "runtimeMinutes": 49.93,
+    "tokens": 655080
   },
   "delivery": null
 }

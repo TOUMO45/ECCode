@@ -1,0 +1,26 @@
+$ node -e '
+"use strict";
+var FIX={A:{q:100,p:3000,f:1000,r:600,ok:true,onHand:1},B:{q:100,p:3600,f:800,r:630,ok:true,onHand:1},C:{q:200,p:4800,f:500,r:600,ok:false,onHand:1},D:{q:200,p:6800,f:1200,r:680,ok:true,onHand:1},E:{q:100,p:4500,f:1000,r:640,ok:true,onHand:1}};
+function better(c,b){if(!b)return true;for(var i=0;i<4;i++){if(c[i]<b[i])return true;if(b[i]<c[i])return false}return false}
+function explain(cat,req){var N=req.N,cand=[];
+ Object.keys(cat).sort().forEach(function(k){var s=cat[k];if(s.ok&&!(req.deadline<s.r)&&0<s.onHand)cand.push(k)});
+ var bound=cand.map(function(k){return Math.min(cat[k].onHand,Math.ceil(N/cat[k].q))});var cur=cand.map(function(){return 0});
+ var cheapest={};
+ function rec(i){if(i===cand.length){var u=0,t=0,pk=0,r=0,used=[];
+   cand.forEach(function(k,j){var m=cur[j];if(m){u+=m*cat[k].q;t+=m*cat[k].p+cat[k].f;pk++;r=Math.max(r,cat[k].r);used.push(k+(1<m?"x"+m:""))}});
+   if(!pk||u<N)return;var c=[t,pk,r,used.join("+")];
+   cand.forEach(function(k,j){if(cur[j]&&better(c,cheapest[k]))cheapest[k]=c});return}
+  for(var m=0;m<=bound[i];m++){cur[i]=m;rec(i+1)}}
+ rec(0);var out={};
+ cand.forEach(function(k,j){var codes=[];if(bound[j]*cat[k].q<N)codes.push("INSUFFICIENT_QTY");var c=cheapest[k];
+  if(c){if(req.maxP<c[1])codes.push("TOO_MANY_PICKUPS");if(req.budget<c[0])codes.push("OVER_BUDGET")}
+  out[k]={codes:codes,cheapestCovering:c?c[3]+" "+c[0]+" cents, "+c[1]+" pickups":"none"}});return out}
+var base={N:200,budget:12000,deadline:660,maxP:2};
+var noB=JSON.parse(JSON.stringify(FIX));noB.B.onHand=0;
+console.log("RS-10 (B onHand=0, budget 9000):",JSON.stringify(explain(noB,Object.assign({},base,{budget:9000}))));
+console.log("RS-11 (maxPickups=1)            :",JSON.stringify(explain(FIX,Object.assign({},base,{maxP:1}))));
+'
+# cwd: .
+# exit: 0
+RS-10 (B onHand=0, budget 9000): {"A":{"codes":["INSUFFICIENT_QTY","OVER_BUDGET"],"cheapestCovering":"A+E 9500 cents, 2 pickups"},"E":{"codes":["INSUFFICIENT_QTY","OVER_BUDGET"],"cheapestCovering":"A+E 9500 cents, 2 pickups"}}
+RS-11 (maxPickups=1)            : {"A":{"codes":["INSUFFICIENT_QTY","TOO_MANY_PICKUPS"],"cheapestCovering":"A+B 8400 cents, 2 pickups"},"B":{"codes":["INSUFFICIENT_QTY","TOO_MANY_PICKUPS"],"cheapestCovering":"A+B 8400 cents, 2 pickups"},"E":{"codes":["INSUFFICIENT_QTY","TOO_MANY_PICKUPS"],"cheapestCovering":"A+E 9500 cents, 2 pickups"}}

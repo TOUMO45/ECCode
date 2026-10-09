@@ -1,0 +1,45 @@
+{
+  "from": "product-architect",
+  "to": "architecture-reviewer",
+  "gate": "architecture",
+  "objective": "Re-review the RescueStock architecture brief, revision 2, which responds to review rev-mv16o544-0127ccbf. All seven major findings (ARCH-1, 2, 3, 4, 5, 6, 19), the minor findings (ARCH-7, 9, 10, 11, 12, 13, 16, 17, 18, 20, 21) and the info findings (ARCH-8, 14, 15) are addressed in a self-contained brief.",
+  "context": "The brief is now self-contained. Under Architecture it inlines: the RS-FIX-1 fixture with pinned inventory (1 bundle per supplier A-E); the planner rules (lexicographic objective, multiplicity bound, candidate codes, per-candidate codes, computed relaxations); four state machines with authorization_pending, capture_pending and refund_pending; a 13-row precedence table deriving the rescue status (including cancelling, refunding and failed_needs_attention); and the payment saga (exclusive approved->executing claim under BEGIN IMMEDIATE, reservation consumed in the same transaction, void rule for RS-13/15/17/18/21, point where supersession stops applying, restart and lease takeover). It also adds the PayPal return/session design (token-owner check, idempotent authorize, SameSite=Lax, fake approval page on a different site), idempotency rules, a data model and API summary, runtime model budget and rate limit, the degraded manual-entry path, the eval corpus test/fixtures/extraction/ EXT-1, and template-rendered explanations. Orchestrator decisions cited: dec-mv16pyxx-01bad0bf (Node >= 22.13), dec-mv16pz0g-01d5c4c2 (Q1/Q3/Q4/Q6/Q8 defaults), dec-mv16pz32-013c4cd1 (test script layout). All 45 criterion ids are kept with their meaning unweakened; ACs were strengthened as the findings required. The 'Where this brief goes beyond goal.md' subsection lists every extension. goal.md is unchanged. Risks RISK-13..RISK-18 were recorded with eccode risk add; RISK-15 is set to mitigated (residual: API churn). eccode memory search returned no records, so no lessons were cited.",
+  "inputs": [
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/reviews/rev-mv16o544-0127ccbf.json",
+    "docs/build/goal.md",
+    "docs/build/plan.md",
+    "docs/integration-research.md",
+    "decisions dec-mv16pyxx-01bad0bf, dec-mv16pz0g-01d5c4c2, dec-mv16pz32-013c4cd1"
+  ],
+  "expectedOutput": "A recorded review of the revision-2 submission of the architecture gate that resolves or re-opens each finding of rev-mv16o544-0127ccbf by id.",
+  "acceptanceCriteria": [
+    "gate show architecture lists the same 45 required ids (RS-01..RS-39, NFR1..NFR6)",
+    "Each major finding (ARCH-1, 2, 3, 4, 5, 6, 19) is checked against the brief section named in its row of the 'Revision 2: response to review' table",
+    "The pinned-inventory outcomes, the relaxations and the per-candidate codes are reproducible from ev:ev-mv1719y8-011f6742 and ev:ev-mv171l87-01672a57",
+    "Open questions that need the user (Q1-Q10, especially new Q9 Node floor and Q10 runtime model budget) are carried forward"
+  ],
+  "completedWork": "Rewrote brief.md as revision 2 (self-contained; finding-to-section table at the top). Ran two planner checks as evidence: pinned inventory, multiplicity guard, relaxations and the NFR5 generator timing (worst 11.8 ms over 200 seeds, plain brute force); and the per-candidate explanation rule. Recorded RISK-13 (authorization expiry), RISK-14 (browser install), RISK-15 (experimental node:sqlite, mitigated), RISK-16 (session lost on PayPal return), RISK-17 (runtime model spend) and RISK-18 (single-credential evidence weakening).",
+  "filesChanged": [
+    ".eccode/artifacts/architecture/brief.md"
+  ],
+  "evidence": [
+    "ev:ev-mv1719y8-011f6742",
+    "ev:ev-mv171l87-01672a57",
+    "ev:ev-mv16ez5r-01e792ff",
+    "ev:ev-mv16fndw-01e46e13",
+    "ev:ev-mv16frja-017d17a4",
+    "ev:ev-mv16ggcp-011ee455"
+  ],
+  "remainingIssues": [
+    "Q9: the Node floor was raised from the goal's 22.5 to 22.13 by an orchestrator decision, not by the user; NFR1 depends on the user's confirmation (fallback: --experimental-sqlite in every script)",
+    "Q10: runtime daily model budget default (USD 1.00/day) needs the user's confirmation",
+    "Q1, Q2, Q3, Q5, Q6, Q7: live PayPal and approval-page evidence (RS-18..26, RS-31b, RS-32b) can only be produced by the user; Unverified with blocker A6/Q2 until run",
+    "ARCH-8: adding the NFR1..4 = RS-NF-1..4 mapping to docs/build/evidence.md and the acceptance-report template is outside product-architect's write scope (orchestrator)",
+    "NFR6 live-model ceiling changed from USD 1 (revision 1) to USD 5 to match dec-mv16pz0g-01d5c4c2; flagged in the 'goes beyond goal.md' list",
+    "docs/build/plan.md sections 3, 5 and 6 are superseded by the brief and should be marked as such by their owner",
+    "ev:ev-mv170be7-01065dd0 is a failed evidence run by product-architect (script file could not be written under the guard); it carries no finding"
+  ],
+  "nextAction": "architecture-reviewer: review the latest submission of the architecture gate against rev-mv16o544-0127ccbf finding by finding, and record the review with eccode gate review architecture.",
+  "lessonsConsulted": []
+}
