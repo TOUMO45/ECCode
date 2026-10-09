@@ -239,7 +239,8 @@ test('NESTED: a project nested in a repository with its own record is judged by 
   // examples/app/.eccode/reviews/drafts/... as an ordinary project file).
   allowed(edit(outer.dir, 'Write', draft, 'architecture-reviewer', env), 'inner draft by Write from the outer cwd');
   allowed(edit(inner, 'Write', draft, 'architecture-reviewer', env), 'inner draft by Write from the inner cwd');
-  allowed(bash(outer.dir, `echo x > ${draft}`, 'architecture-reviewer', env), 'inner draft by redirect from the outer cwd');
+  // Quoted: on Windows an unquoted C:\... in a bash command is read as escapes (Git Bash and the guard agree).
+  allowed(bash(outer.dir, `echo x > "${draft}"`, 'architecture-reviewer', env), 'inner draft by redirect from the outer cwd');
   // The inner record itself stays the CLI's, from either cwd and for every role.
   const innerState = path.join(inner, '.eccode', 'state.json');
   for (const role of [null, 'architecture-reviewer', 'backend-engineer']) {

@@ -210,6 +210,6 @@ test('F5 record and memory files outside the project (shared memory, another pro
   }
   // Plain files outside the project remain nobody's business.
   allowed(edit(ctx.dir, 'Write', path.join(home, 'notes.md'), 'technical-reviewer'), 'reviewer scratch file outside');
-  allowed(bash(ctx.dir, `echo x > ${path.join(home, 'notes.md')}`, 'technical-reviewer'), 'reviewer scratch redirect outside');
+  allowed(bash(ctx.dir, `echo x > "${path.join(home, 'notes.md')}"`, 'technical-reviewer'), 'reviewer scratch redirect outside'); // quoted: a native Windows path in bash
   allowed(bash(ctx.dir, `cat ${memory}`, 'learning-debugger'), 'reading shared memory');
 });
