@@ -208,24 +208,29 @@ function expectCode(fn, code) {
 }
 
 /**
- * Spawn the CLI without waiting for it; resolves {code, stderr} once the
- * process and its pipes are closed, so a child that fails under concurrency
- * (TK-3: the Windows lock flake) leaves its message in the test output.
+ * Spawn the CLI without waiting for it; resolves {code, stdout, stderr} once
+ * the process and its pipes are closed, so a child that fails under
+ * concurrency (TK-3: the Windows flake) leaves its message in the test output.
+ * Both pipes are drained: an unread pipe would block a chatty child.
  */
 function spawnCli(args, opts = {}) {
   const { spawn } = require('child_process');
   return new Promise((resolve) => {
-    const p = spawn(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), ...args], opts);
+    const p = spawn(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), ...args], { ...opts, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
     let stderr = '';
+    p.stdout.on('data', (chunk) => (stdout += chunk));
     p.stderr.on('data', (chunk) => (stderr += chunk));
-    p.on('close', (code) => resolve({ code, stderr }));
+    p.on('close', (code) => resolve({ code, stdout, stderr }));
   });
 }
 
-/** Every spawned child exited 0; otherwise the failing children's stderr is the assertion message. */
+/** Every spawned child exited 0; otherwise the failing children's output is the assertion message. */
 function assertAllExitZero(results) {
   const codes = results.map((r) => r.code);
-  const failed = results.map((r, i) => (r.code === 0 ? null : `[child ${i}] exit ${r.code}\n${r.stderr.trim() || '(no stderr)'}`)).filter(Boolean);
+  const failed = results
+    .map((r, i) => (r.code === 0 ? null : `[child ${i}] exit ${r.code}\nstderr: ${r.stderr.trim() || '(empty)'}\nstdout: ${(r.stdout || '').trim() || '(empty)'}`))
+    .filter(Boolean);
   require('node:assert').deepStrictEqual(codes, codes.map(() => 0), `exit codes ${JSON.stringify(codes)}\n${failed.join('\n')}`);
 }
 

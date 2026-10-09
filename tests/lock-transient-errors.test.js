@@ -150,3 +150,65 @@ test('withLock: a lock held for longer than timeoutMs still ends in LOCK_TIMEOUT
   expectCode(() => withLock(lock, () => 'never', { timeoutMs: 150 }), 'LOCK_TIMEOUT');
   assert.ok(Date.now() - started >= 150);
 });
+
+test('withLock: LOCK_TIMEOUT names the last error, so a permanent EACCES (read-only .eccode on POSIX) is not mistaken for contention (review F2)', (t) => {
+  const lock = lockPath(t);
+  mock('openSync', lock, () => {
+    throw fsError('EACCES', 'open', lock);
+  });
+  const err = expectCode(() => withLock(lock, () => 'never', { timeoutMs: 100 }), 'LOCK_TIMEOUT');
+  assert.match(err.message, /last error: EACCES .*mocked open/);
+  assert.strictEqual(err.details.lastError.code, 'EACCES');
+  assert.strictEqual(err.details.lastError.syscall, 'open');
+});
+
+test('withLock: a stale lock whose unlink "succeeds" without removing it, with the open refused, reaches the timeout instead of spinning (review F3)', (t) => {
+  const lock = lockPath(t);
+  fs.writeFileSync(lock, '{"pid":0}');
+  const old = (Date.now() - 120000) / 1000;
+  fs.utimesSync(lock, old, old);
+  const unlinks = mock('unlinkSync', lock, () => undefined); // reports success, removes nothing
+  mock('openSync', lock, () => {
+    throw fsError('EPERM', 'open', lock);
+  });
+  const started = Date.now();
+  expectCode(() => withLock(lock, () => 'never', { timeoutMs: 200 }), 'LOCK_TIMEOUT');
+  const elapsed = Date.now() - started;
+  assert.ok(elapsed >= 200 && elapsed < 2000, `timed out after ${elapsed}ms`);
+  assert.ok(unlinks.length <= 12, `${unlinks.length} stale breaks: one per poll`);
+});
+
+test('withLock: a write refused on the freshly opened lock closes the fd, removes the lock file and rethrows (review F4)', (t) => {
+  const lock = lockPath(t);
+  let fd;
+  mock('openSync', lock, (n, real) => (fd = real()));
+  const REAL_WRITE = fs.writeSync;
+  fs.writeSync = function (d, ...rest) {
+    if (d !== fd) return REAL_WRITE.call(fs, d, ...rest);
+    throw fsError('EBUSY', 'write', lock);
+  };
+  t.after(() => {
+    fs.writeSync = REAL_WRITE;
+  });
+  let ran = 0;
+  const started = Date.now();
+  assert.throws(() => withLock(lock, () => ++ran, { timeoutMs: 2000 }), (err) => err.code === 'EBUSY' && err.syscall === 'write');
+  assert.ok(Date.now() - started < 500, 'thrown at once, no polling on our own lock');
+  assert.strictEqual(ran, 0);
+  assert.strictEqual(fs.existsSync(lock), false, 'the lock file is given back');
+  assert.throws(() => fs.fstatSync(fd), /EBADF/, 'the fd is closed');
+});
+
+test('lib/util exports sleepSync: bin/eccode.js imports it for the EAGAIN retry of its terminal reader (review F8)', () => {
+  const util = require('../lib/util');
+  assert.strictEqual(typeof util.sleepSync, 'function');
+  const started = Date.now();
+  util.sleepSync(30);
+  assert.ok(Date.now() - started >= 25);
+  const src = fs.readFileSync(path.join(__dirname, '..', 'bin', 'eccode.js'), 'utf8');
+  const imported = /const \{([^}]*)\} = require\('\.\.\/lib\/util'\)/.exec(src);
+  assert.ok(imported, 'the CLI destructures lib/util');
+  for (const name of imported[1].split(',').map((s) => s.trim()).filter(Boolean)) {
+    assert.strictEqual(typeof util[name], 'function', `${name} is exported by lib/util`);
+  }
+});
