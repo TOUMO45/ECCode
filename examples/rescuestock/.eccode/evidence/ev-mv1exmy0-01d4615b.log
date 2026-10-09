@@ -1,0 +1,37 @@
+$ node .eccode/drafts/tr-plan-check.mjs .eccode/artifacts/plan/plan.json .eccode/artifacts/architecture/brief.md .eccode/artifacts/design/spec.md
+# cwd: .
+# exit: 0
+concurrent pairs checked: 19
+brief ids: 45; claimed exactly once: 45
+traceability test files checked: 59
+PRE-PASSING  b1-foundation-core: every referenced file pre-exists or the command is globs only: node --disable-warning=ExperimentalWarning --test "test/unit/config/**/*.test.js" "test/unit/db/**/*.test.js" 
+PRE-PASSING  b2-domain: every referenced file pre-exists or the command is globs only: node --disable-warning=ExperimentalWarning --test "test/unit/domain/**/*.test.js" "test/timing/**/*.test.js"
+falsifiable  b4-env-readme: fails before work via test/scan/env-example.test.js
+falsifiable  b3-test-harness: fails before work via scripts/clean-checkout.sh, test/helpers/net-guard.js, scripts/report-p95.js
+falsifiable  c1-auth-rbac: fails before work via test/api/auth.test.js
+falsifiable  c2-requests-plans-view: fails before work via test/api/approve-guards.test.js, test/api/requests-plans.test.js, test/api/rescue-status.test.js
+falsifiable  c3-reservations-supplier-admin: fails before work via test/api/reserve-idempotency.test.js, test/api/abuse-limits.test.js, test/api/isolation.test.js
+falsifiable  c5-frontend-dashboards: fails before work via test/scan/frontend.test.js
+PRE-PASSING  c6-reserve-concurrency-browser: every referenced file pre-exists or the command is globs only: npm test && npm run test:browser
+falsifiable  d1-ai-core: fails before work via test/unit/ai/schema.test.js, test/unit/ai/prompt.test.js, test/unit/ai/fake.test.js
+falsifiable  d2-ai-adapters-corpus: fails before work via test/unit/ai/cli.test.js, test/unit/ai/anthropic.test.js, test/unit/ai/live-runner-refusal.test.js
+falsifiable  d3-extraction-service: fails before work via test/api/extract.test.js, test/api/extract-image.test.js, test/api/extract-degraded.test.js
+PRE-PASSING  d4-frontend-extraction: every referenced file pre-exists or the command is globs only: node --test test/scan/frontend.test.js "test/unit/frontend/**/*.test.js"
+PRE-PASSING  d5-extraction-contract-browser: every referenced file pre-exists or the command is globs only: npm test && npm run test:browser
+falsifiable  e0-paypal-stub-contract: fails before work via test/unit/payments/paypal-stub.test.js
+falsifiable  e1-payment-adapters: fails before work via test/api/fake-approval-headers.test.js
+falsifiable  e2-payment-flow: fails before work via test/api/paypal-create.test.js, test/api/paypal-cancel.test.js, test/api/amount-tampering.test.js
+falsifiable  e3-webhooks: fails before work via test/api/webhooks.test.js
+falsifiable  e4-saga-reconciler: fails before work via test/api/execute.test.js, test/api/lost-response.test.js, test/api/authorization-pending.test.js
+PRE-PASSING  e5-frontend-payments: every referenced file pre-exists or the command is globs only: node --test test/scan/frontend.test.js "test/unit/frontend/**/*.test.js"
+PRE-PASSING  e6-execute-concurrency-browser: every referenced file pre-exists or the command is globs only: npm test && npm run test:browser
+falsifiable  f1-supersession-refusal-expiry: fails before work via test/api/supersession.test.js, test/api/supplier-refusal.test.js, test/api/replan-queue.test.js
+falsifiable  f2-compensation-takeover-admin: fails before work via test/api/capture-compensation.test.js, test/api/void-capture-race.test.js, test/api/admin-reset.test.js
+PRE-PASSING  f3-frontend-recovery: every referenced file pre-exists or the command is globs only: node --test test/scan/frontend.test.js "test/unit/frontend/**/*.test.js"
+PRE-PASSING  f4-restart-takeover-browser: every referenced file pre-exists or the command is globs only: npm test && npm run test:browser
+PRE-PASSING  g1-frontend-a11y-labels: every referenced file pre-exists or the command is globs only: node --test test/scan/frontend.test.js "test/unit/frontend/**/*.test.js"
+falsifiable  g2-docs-submission: fails before work via test/scan/docs.test.js
+PRE-PASSING  g3-final-scans-browser: every referenced file pre-exists or the command is globs only: npm test && npm run test:browser
+falsifiable  g4-evidence-table: fails before work via test/scan/evidence-table.test.js
+tasks whose command can pass before their work exists: 11 (b1-foundation-core, b2-domain, c6-reserve-concurrency-browser, d4-frontend-extraction, d5-extraction-contract-browser, e5-frontend-payments, e6-execute-concurrency-browser, f3-frontend-recovery, f4-restart-takeover-browser, g1-frontend-a11y-labels, g3-final-scans-browser)
+hard problems: 0

@@ -1,0 +1,174 @@
+{
+  "decision": "changes_requested",
+  "summary": "Review of plan submission sub-mv1eqk2q-01cc29a2 (plan.json 92e23914..., plan.md 9199cc75...), against the approved brief and design revision 3.\nWhat holds, from checks I ran myself:\n- `plan validate` is clean (ev:ev-mv1exo5j-01eb88f8).\n- Structure: all 29 tasks carry an owner, dependencies, inputs, outputs, files, acceptance criteria and a verification command with cwd '.' (ev:ev-mv1exmy0-01d4615b).\n- Dependency graph: no cycle and no dependency on a later phase.\n- Concurrency: all 19 concurrent pairs have disjoint ownership; the shared wiring files (src/app.js, src/main.js, src/routes/plans.js, package.json) are only ever owned by serialized tasks; no glob reaches .eccode/, .claude/ or hooks.\n- Coverage: all 45 ids are claimed by exactly one phase, and every one of the 59 [D]/[B] test files the design's traceability names is owned in or before its claiming phase and run by a verification command in that phase.\n- The criterion moves (RS-15 and RS-38 to F, RS-04 to E, RS-34, NFR3 and NFR5 to G, RS-36 to C) follow real dependencies.\n- The live checks are kept outside the tasks and marked Unverified.\n- The lesson decision is evidence-backed (ev:ev-mv1eya53-01fe0832).\nThe problem: on Node 22.22, a node --test command whose globs match nothing exits 0 with 0 tests (ev:ev-mv1exnz5-01303ad6). 11 of the 29 verification commands therefore pass before their task's work exists: b1 and b2 use globs only, the frontend tasks d4, e5, f3 and g1 rerun files that exist from c5, and the test-engineer tasks c6, d5, e6, f4 and g3 run only `npm test && npm run test:browser`. b2 is the task that proves RS-06..RS-11. Changes requested for that one major finding (F-PL-1).\nThe schedule risk (about 400-600 minutes of work against about 300 left) is recorded as F-PL-2 for the user's decision. It is not a reason to reject.",
+  "criteria": [
+    {
+      "id": "phase:b-foundation",
+      "description": "Phase B is independently verifiable and proves RS-06..RS-11, NFR1, NFR4 with tasks b1, b2, b4, b3",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv1exmy0-01d4615b",
+        "ev:ev-mv1exnz5-01303ad6",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.0",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.b2-domain.verification.command"
+      ],
+      "notes": "Coverage, ownership and order hold. b1's and b2's commands are globs only and pass with 0 tests before the work exists (F-PL-1)."
+    },
+    {
+      "id": "phase:c-core-flow",
+      "description": "Phase C is independently verifiable and proves RS-12, RS-14, RS-16, RS-28, RS-30, RS-33, RS-36",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv1exmy0-01d4615b",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.1",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.c6-reserve-concurrency-browser.verification.command"
+      ],
+      "notes": "c1, c2, c3 and c5 are falsifiable. c6 (rs14 integration tests, journey-infeasible) passes before its files exist (F-PL-1)."
+    },
+    {
+      "id": "phase:d-extraction",
+      "description": "Phase D is independently verifiable and proves RS-01, RS-02, RS-03, RS-05, RS-39, NFR6 ([D]/[B])",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv1exmy0-01d4615b",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.2",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.d4-frontend-extraction.verification.command"
+      ],
+      "notes": "d1, d2 and d3 are falsifiable. d4 and d5 pass before their work (F-PL-1). The NFR6 share pin is in d3 and in the phase criterion (F-TR-18)."
+    },
+    {
+      "id": "phase:e-payments",
+      "description": "Phase E is independently verifiable and proves RS-04, RS-18..21, RS-23..25, RS-27, RS-31(a)",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv1exmy0-01d4615b",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.3",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.e6-execute-concurrency-browser.verification.command"
+      ],
+      "notes": "e0..e4 are falsifiable. e5 and e6 (rs20, journey-happy with the approval round trip) pass before their work (F-PL-1). Live PayPal parts are not claimed."
+    },
+    {
+      "id": "phase:f-compensation",
+      "description": "Phase F is independently verifiable and proves RS-13, RS-15, RS-17, RS-22, RS-26, RS-32(a), RS-37, RS-38",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv1exmy0-01d4615b",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.4",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.f4-restart-takeover-browser.verification.command"
+      ],
+      "notes": "f1 and f2 are falsifiable. f3 and f4 (rs26, lease-takeover, return-crash, refusal and replacement journeys) pass before their work (F-PL-1). See F-PL-3 on the f1/f2 coupling."
+    },
+    {
+      "id": "phase:g-release",
+      "description": "Phase G is independently verifiable and proves RS-29, RS-34, RS-35, NFR2, NFR3, NFR5",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv1exmy0-01d4615b",
+        "artifact:.eccode/artifacts/plan/plan.json#phases.5",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.g3-final-scans-browser.verification.command"
+      ],
+      "notes": "g2 and g4 are falsifiable. g1 and g3 (labelling, six-questions, a11y-states, secrets/sql/live-refusal scans) pass before their work (F-PL-1)."
+    },
+    {
+      "id": "lessons",
+      "description": "Lesson decision mem-sd-mv1audrd-013b7102 = not-applicable holds",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1eya53-01fe0832",
+        "ev:ev-mv1eo87o-01c933d5",
+        "ev:ev-mv1exmy0-01d4615b",
+        "artifact:.eccode/artifacts/plan/plan.md#memory-consulted"
+      ],
+      "notes": "The lesson concerns a write guard that resolves the project root from the harness directory. No task builds such a guard. The installed guard is the repaired per-target-root version: its sha256 d43f4b54... matches the version the lesson names. No ownership glob reaches .eccode/, .claude/ or hooks (checked). My own assessment of the same lesson during the design review was also does-not-apply."
+    },
+    {
+      "id": "area-coverage",
+      "description": "Each of the 45 criteria is proved by exactly one phase whose commands run the traceability test files; criterion moves justified",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1exmy0-01d4615b",
+        "artifact:.eccode/artifacts/plan/plan.md#phasing-rationale"
+      ]
+    },
+    {
+      "id": "area-ownership",
+      "description": "Disjoint ownership for concurrent tasks; shared wiring files serialized; no record paths; acyclic graph",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1exmy0-01d4615b",
+        "ev:ev-mv1exo5j-01eb88f8",
+        "artifact:.eccode/artifacts/plan/plan.md#task-overview-owner-ownership-verification"
+      ]
+    },
+    {
+      "id": "area-live-checks",
+      "description": "LIVE-M1, LIVE-P1, LIVE-P2, USER-Q9 listed as unverified with blockers; no task verification depends on them; d2/e1/e6 verified by stubs and fixtures",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1exmy0-01d4615b",
+        "artifact:.eccode/artifacts/plan/plan.md#live-checks-not-tasks-never-reported-as-passed-until-run"
+      ],
+      "notes": "Neither npm test's globs nor test:browser's include test/live/**. d2, e1 and e6 are marked LIVE-DEPENDENT and use the stubs; g4 marks live rows Unverified."
+    },
+    {
+      "id": "area-open-findings",
+      "description": "F-TR-1..18, SEC-1..20 and ARCH-22..26 are each mapped to a task",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.md#placement-of-the-open-minors-and-the-findings-dispositions"
+      ],
+      "notes": "F-TR-17: RS_REGISTER_PER_IP_PER_HOUR goes beyond the spec's literal text, but it was one of the resolution options I gave. Production keeps 5 per IP per hour: the default is 5, values above 5 are refused unless RS_TEST_OFFLINE=1, and auth.test.js asserts the 6th registration gets 429. See F-PL-4 for naming the config test. F-TR-18 is stated in d3, in phase D's criterion and in g4."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-PL-1",
+      "severity": "major",
+      "title": "11 of 29 verification commands pass before the task's work exists",
+      "detail": "On Node 22.22, `node --test` with a glob that matches nothing exits 0 with '# tests 0'. A missing explicit file or a missing --import module exits 1 (ev:ev-mv1exnz5-01303ad6). For each command, my plan check looked for a referenced file that the task itself creates first (ev:ev-mv1exmy0-01d4615b). These have none:\n- b1-foundation-core and b2-domain: globs only. b2 proves RS-06..RS-11 and the derivation totality.\n- d4, e5, f3, g1: the same command as c5, `node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"`, whose files exist from c5.\n- c6, d5, e6, f4, g3: `npm test && npm run test:browser`, which are glob-based scripts. Before the task's integration and browser files exist, these pass on whatever exists.\nThe plan gate requires each verification to fail before the work and pass after. The phase reviewers must rerun exactly these commands, so a green run would not show that the task's own tests exist or pass.",
+      "evidence": [
+        "ev:ev-mv1exnz5-01303ad6",
+        "ev:ev-mv1exmy0-01d4615b",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.b2-domain.verification.command",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.g3-final-scans-browser.verification.command"
+      ],
+      "recommendation": "Resolved when every task's command names at least one test file that the task itself creates, so my plan check reports 0 pre-passing tasks. Examples:\n- b1: test/unit/config/hosts.test.js, test/unit/db/migrate.test.js.\n- b2: test/unit/domain/planner-fixture.test.js, planner-oracle.property.test.js, derive.test.js, states.test.js, test/timing/planner-generator.test.js.\n- The frontend tasks: a per-phase file such as test/unit/frontend/extraction.test.js, payments.test.js, recovery.test.js, a11y-labels.test.js.\n- The test-engineer tasks: keep `npm test` and append their own files explicitly, e.g. `npm test && npm run test:browser -- test/browser/journey-infeasible.test.js && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/integration/rs14-two-process-reserve.test.js test/integration/rs14-db-busy.test.js`."
+    },
+    {
+      "id": "F-PL-2",
+      "severity": "minor",
+      "title": "The schedule likely exceeds the remaining runtime budget",
+      "detail": "status reports 177/480 minutes used, so about 300 remain. The plan's own estimate is 400-600 minutes (29 implementer dispatches, a 20-dispatch critical path, 6 phase reviews, maxConcurrency 2). The plan is close to minimal under one owner per task. The only same-owner, serial merge that does not lengthen the critical path is g3 + g4 (both test-engineer), which saves one dispatch. Other merges would mix owners or serialize concurrent work (e3/e4, d2/d3, f1/f2). The plan already routes the choice to the user (limits.raise or a descoping order). Waiting until the end of phase C risks stopping mid-phase with half-built money paths.",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.md#risks-to-the-schedule",
+        "artifact:.eccode/artifacts/plan/plan.md#critical-path"
+      ],
+      "recommendation": "Resolved when the orchestrator has the user's decision (raise maxRuntimeMinutes, or accept the stated descoping order) recorded before the first implementer dispatch of phase B. Optionally merge g4 into g3."
+    },
+    {
+      "id": "F-PL-3",
+      "severity": "minor",
+      "title": "Concurrent f1 and f2 are coupled through files only f2 owns",
+      "detail": "f1 (supersession, refusal, RS-15 expiry, re-plan queue) and f2 (saga, reconciler, calls, void-rule, admin) run concurrently with disjoint ownership. However:\n- f1's RS-15 ('expiry before execute voids every authorization') and the F-TR-2 drain behaviour exercise void-rule.js and reconciler.js, which only f2 owns in phase F.\n- The admin stock_depletion and supplier_refusal faults that f1 says 'use the same services' live in admin.js, which f2 owns.\nIf f1 needs a change in those files, it is blocked until f2 lands.",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.f1-supersession-refusal-expiry.acceptanceCriteria",
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.f2-compensation-takeover-admin.files"
+      ],
+      "recommendation": "Resolved when either f1 depends on f2, or f1's acceptance criteria state that it changes no void-rule, reconciler or admin code and only tests the behaviour that e2/e4/c3 already built, so any needed change goes to f2."
+    },
+    {
+      "id": "F-PL-4",
+      "severity": "info",
+      "title": "Name the test that enforces the production register cap",
+      "detail": "b1 refuses RS_REGISTER_PER_IP_PER_HOUR above 5 unless RS_TEST_OFFLINE=1 (F-TR-17). b1's criteria name hosts.test.js, secrets.test.js and node-version.test.js, but no test for this refusal.",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json#tasks.b1-foundation-core.acceptanceCriteria"
+      ],
+      "recommendation": "Add the case, named 'F-TR-17: ...', to a named config test, e.g. test/unit/config/limits.test.js, and list that file in b1's command (which also helps F-PL-1)."
+    }
+  ],
+  "resolvedFindings": [],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
