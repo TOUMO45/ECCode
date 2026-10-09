@@ -200,3 +200,28 @@ Each commit says "no scoping needed". I judge the claims true:
 Note: commit `5692ccc` ("Evidence: repair reviews in progress (snapshot)", made by the lead while this review ran) captured `npm-run-check.txt` mid-run (partial, no TAP summary); the file in this directory is the complete run and supersedes that snapshot.
 
 The probes create throwaway projects under `os.tmpdir()` and delete them; they never modify the worktree or the repository. The guard of this repository denied one Bash heredoc that carried probe text (it pattern-matched `… .id}` as a substituted eccode invocation), which I worked around by editing the file with the editor tool; no engine behaviour is involved.
+
+## Re-review of ec4f641 (follow-up to L1 and L3)
+
+**Outcome: the approval stands.** Commit `ec4f641` ("Engine: changed-artifact refusal names the pinned digest without assuming a commit; verification.cwd refuses blanks and backslashes") changes two lines of engine code (`lib/gates.js` `assertUnchangedSinceApproval`, `lib/tasks.js` `cwdProblem`) and adds `tests/verification-repairs-followups.test.js` (two tests). I re-ran the message and cwd-spelling probes against it, re-ran the full attack probe, and re-ran the suite. L1 and L3 are closed; L2 stays open as a documented reporting inaccuracy (no bypass), which I accept.
+
+Evidence: `probes/rereview-ec4f641.js` → `results/rereview-ec4f641.{json,stderr.txt}` (30 steps, 0 UNEXPECTED); `results/review-attacks-ec4f641.{json,stderr.txt}` (the §2 attack probe on ec4f641: 96 steps, 0 UNEXPECTED, identical ids and verdicts to the a50a316 run except the two `N5.backslash.run*` steps, which no longer exist because the backslash plan is now refused at the plan gate); `npm-run-check-ec4f641.txt`.
+
+**L1 closed.** The `APPROVED_ARTIFACT_CHANGED` message now reads "restore the approved bytes (sha256 <full 64-hex digest>) from git if the file was committed (git checkout -- <path>; git log -- <path>), otherwise from your own copy; a revision is submitted as a new artifact of a later gate, never written into the approved file". Verified in both states (`L1.uncommitted.*`, `L1.committed.*`): the full pinned sha256 equals the digest in the approved submission's artifact record; with the artifact committed, `git checkout --` restores it and design derives AC1+AC2 again; without a commit, `git checkout --` fails as the message now allows for, and restoring from the author's copy brings the gate back (`L1.uncommitted.ownCopy` ok).
+
+**L3 closed.** `validatePlan` now refuses, with a reason naming the task: `src\server`, `src\..\x`, `C:\x`, `a\b/c` ("must use forward slashes (the same spelling on every platform)"); `" src/server "`, `"src/server "`, `" src/server"`, `"\tsrc/server"`, `"src/server\n"` ("must not start or end with blanks"); `/abs`, `../up`, `src/server/../server` as before. Accepted and normalised identically by `declaredCwd`: `src/server`, `src/server/`, `./src/server`, `.`, `src/server/./x` → `src/server/x`, and a directory name with an inner space `src/sub dir` (a run at the root is refused, a run `--cwd "src/sub dir"` completes the task: `L3.spaceInName.*`). A plan carrying a backslash cwd is refused at the plan gate (`INVALID_PLAN`, `L3.planGate.*`). The accepted set is now a subset of what `projectRelative` normalises the same way on every platform, so the declared and recorded spellings agree.
+
+**Suite on ec4f641:**
+
+```
+npm run check                         # npm-run-check-ec4f641.txt
+Toolkit validation passed: 12 agents, 7 skills, 7 commands, hooks wired, package 0.3.0 (373 files).
+ok 242 - L3: verification.cwd with surrounding blanks or backslashes is refused by plan validation, forward-slash forms pass
+ok 243 - L1: the changed-artifact refusal names the pinned digest and does not assume the file was committed
+ok 244..248 - NEW-1 … NEW-5
+# tests 248 / # pass 248 / # fail 0 / # cancelled 0 / # skipped 0 ; exit=0
+```
+
+Compatibility: unchanged from §5 (no reducer, store or event type touched; the `cwdProblem` tightening applies only to plans validated from now on, and no shipped plan declares a cwd).
+
+Commits reviewed, final: `9319875`, `0bf8810`, `36f904f`, `c4d5575`, `a50a316`, `ec4f641`. Worktree clean after the re-review; nothing committed by me.
