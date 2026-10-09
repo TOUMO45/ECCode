@@ -64,13 +64,11 @@ test('unattended with an unfinished project: blocked with the NEXT action; deliv
   assert.strictEqual(out.decision, 'block');
   assert.match(out.reason, /NEXT: /);
   assert.match(out.reason, /plan/);
-  // A pending user decision (escalated gate) is a legitimate place to stop.
-  const st = JSON.parse(fs.readFileSync(path.join(d, '.eccode', 'state.json'), 'utf8'));
-  st.gates.plan.status = 'escalated';
-  st.gates.plan.escalation = { recovery: 'Ask the user to decide' };
-  fs.writeFileSync(path.join(d, '.eccode', 'state.json'), JSON.stringify(st));
+  // A pending user decision (escalated gate) is a legitimate place to stop. The escalation goes
+  // through the record: a state.json edited by hand is refused (SNAPSHOT_DIVERGED), not read.
+  store.commit('gate.escalated', 'orchestrator', { gate: 'plan', reason: 'review iterations exhausted', unresolved: [], recovery: 'Ask the user to decide' });
+  assert.strictEqual(store.state().gates.plan.status, 'escalated');
   assert.strictEqual(run({ cwd: d, command: 'eccode:change' }), null);
-  assert.ok(store);
 });
 
 test('the hook gives up after a few blocks per session so it can never loop forever', () => {

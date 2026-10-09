@@ -127,6 +127,7 @@ Actor restrictions: `run correct`, `recover` and `improve rollback` need `--acto
 | `[INVALID_HANDOFF] … unchanged since claim` | The listed files don't differ in git | List only the files that actually changed |
 | `[INVALID_HANDOFF] … no task declares` | git shows files changed during the claim outside the task's ownership that no task accounts for | Revert them, or have the task that owns them declare them |
 | `[LOG_ROLLBACK]` | `events.jsonl` is behind or different from `state.json` (e.g. restored from git) | Restore the newer log. If the user decides the shorter log is the truth: `eccode rebuild --force --actor user` |
+| `[SNAPSHOT_DIVERGED]` | `state.json` differs from a replay of `events.jsonl` (edited, or written by another tool); nothing is built on it | `eccode audit` shows the difference; `eccode rebuild --actor orchestrator` rewrites it from the log (nothing is lost) |
 | `[UNVERIFIED]` / `[UNGROUNDED]` | A lesson marked verified has no verifying review of its current revision in the event log | Review it again: `eccode memory review <id> --decision verify` |
 | `[BUDGET_EXCEEDED]` | Recorded spend or runtime has reached the limit | Stop and ask the user. Raising limits needs their authorization |
 | Gate shows `escalated` | Too many rejections | The user decides: `eccode gate reopen <gate> --actor user --resolution "…" [--waive all\|F1,F2]`. Without `--waive` the findings stay open and the next approving review must resolve each with evidence; `--waive` records the ones the user accepts |
