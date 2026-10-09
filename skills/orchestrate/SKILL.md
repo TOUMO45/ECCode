@@ -36,7 +36,7 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
   - **BLOCKING `check-regressed`:** a check that passed is now failing. Treat it as a bug and use `debug-investigation` before any new work.
   - **`claimed-task` with partial files:** the interrupted agent left work on disk. Tell the next owner to inspect it and either keep or discard it on purpose.
   - Then, if a previous session left runs open, run `eccode recover --all --actor orchestrator`. That releases their claims and counts the attempts. Continue from the reported **NEXT** action.
-- **Limits.** The defaults in `.eccode/config.json` are `maxConcurrency`, `maxReviewIterations`, `maxTaskRetries`, `maxRuntimeMinutes`, `maxCostUsd` and `staleRunMinutes`. Tell the user what they are; change them only if the user asks.
+- **Limits.** The defaults in `.eccode/config.json` are `maxConcurrency`, `maxActiveRuns`, `maxReviewIterations`, `maxTaskRetries`, `maxRuntimeMinutes`, `maxCostUsd`, `reserveUsdPerRun` and `staleRunMinutes`. Tell the user what they are; change them only if the user asks. The dollar and minute limits are accounting of the usage you report, not hard enforcement (docs/usage.md, "Limits: what the engine enforces and what it only accounts").
 
 ## 2. Run accounting (every dispatch)
 ```
@@ -44,7 +44,7 @@ RUN=$(eccode run start --actor orchestrator --agent <role> [--task <id>] [--gate
 # … dispatch the agent …
 eccode run end $RUN --actor orchestrator --status ok|failed --tokens <usage.total_tokens from the Agent result>
 ```
-If the harness reports cost, add `--cost-usd`. Otherwise the engine estimates cost from tokens when `pricing.usdPerMillionTokens` is configured. When a run start is refused with `BUDGET_EXCEEDED`, stop and ask the user.
+If the harness reports cost, add `--cost-usd`. Otherwise the engine estimates cost from tokens when `pricing.usdPerMillionTokens` is configured; without pricing, tokens alone leave the dollar figure unknown (not $0) and `status` says the spend is a lower bound. When a run start is refused with `BUDGET_EXCEEDED`, first fill in any runs the refusal lists as unknown usage (`eccode run correct`), then stop and ask the user. `RUN_LIMIT` means `maxActiveRuns` runs are open: close the finished ones or `eccode recover --actor orchestrator`.
 
 The main session never acts as a role, so it opens the run **for** the role with `--actor orchestrator --agent <role>`.
 
