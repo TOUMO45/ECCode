@@ -1,6 +1,6 @@
 {
-  "seq": 93,
-  "lastHash": "aeef0f6c4f514def8a2d8eb904b12a23dd8eb3d3449bc4f026f20e99013597a4",
+  "seq": 96,
+  "lastHash": "78df65459fbc8a5103a959979bddf2a47e73a8713a6ddbdae1a66f79a5ac458a",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -63,8 +63,8 @@
     "design": {
       "id": "design",
       "kind": "design",
-      "status": "submitted",
-      "iterations": 0,
+      "status": "changes_requested",
+      "iterations": 1,
       "authors": [
         "technical-designer"
       ],
@@ -83,8 +83,108 @@
           "notes": "Design rev 1 against brief sub-mv1awqkf-017ea892; resolves ARCH-22..26; evidence ev:ev-mv1bgxsc-010de90b (execArgv/NODE_OPTIONS probe), ev:ev-mv1bh8wb-011b5cf0 (claude CLI stream-json flag constraints)"
         }
       ],
-      "reviews": [],
-      "openFindings": [],
+      "reviews": [
+        "rev-mv1cta5m-0114480d"
+      ],
+      "openFindings": [
+        {
+          "id": "F-TR-1",
+          "severity": "major",
+          "title": "Reserve idempotency ignores the plan id: a reused key replays another plan's reservation",
+          "detail": "Interface Contracts > Conventions: the scope is (user id, route template, key) and the body hash is sha256 of the canonical parsed body. For POST /api/plans/:id/reserve the body is always {} and unknown fields are ignored, so a key first used on plan X and then sent to plan Y finds the same (user, '/api/plans/:id/reserve', key, sha256('{}')) row. It replays X's 200/201 response (reservation and orders of X) instead of 422 IDEMPOTENCY_KEY_REUSED. reservations.operation_key 'res:<customerId>:<key>' (003_planning.sql) is UNIQUE per customer as well, so plan Y can never be reserved under that key, and the collision's error is unspecified once the key row is purged. The security reviewer reproduced the replay on the spec's DDL: 'reserve plan 9 with the same key: {status:201, replayed:true, ... planVersionId:7}' (ev:ev-mv1cj3km-010da2d1; their SEC-4, rated minor there). I rate it major because RS-16 requires that reusing a key for a different request change nothing and return 422, and the contract is frozen for parallel implementers. The SPA stores keys per planVersionId, which hides the defect in the UI but not in the API.",
+          "evidence": [
+            "ev:ev-mv1cj3km-010da2d1",
+            "artifact:.eccode/artifacts/design/spec.md#conventions-apply-to-every-route",
+            "artifact:.eccode/artifacts/design/spec.md#003_planningsql",
+            "artifact:.eccode/artifacts/design/spec.md#frontend"
+          ],
+          "recommendation": "Resolved when the request fingerprint includes the concrete path (or the plan id) as well as the body: either the scope is (user, method + concrete path, key) or the hash covers {planId, body}, and operation_key includes the plan id. The spec must also state the error for an operation-key collision. Add a [D] case to reserve-idempotency.test.js: the same key on a second plan returns 422 IDEMPOTENCY_KEY_REUSED with no reservation, ledger or order rows.",
+          "reviewId": "rev-mv1cta5m-0114480d"
+        },
+        {
+          "id": "F-TR-2",
+          "severity": "major",
+          "title": "Rescue-status derivation is not total: superseded plan awaiting its replan matches no row",
+          "detail": "P is 'the newest version that is not superseded'. After supersession (Supersession > Effect and Replan), the only version is superseded until the replan stores a new one. Storing it checks offers_hash with up to 3 retries and has no defined outcome once the retries run out. The queue may also wait for the next reconciler tick after a crash. In that state rows 1-4 do not match once the voids are done. Row 5 needs an infeasible latest run, rows 6-12 need P, and row 13 needs no planning run. My derivation probe implements the brief's 13 rows, the spec's ARCH-22 clause and the OQ-D2 row. It confirms RS-36 (i)-(iv) and reports scenario S13 as '<NO ROW MATCHES>' (ev:ev-mv1ciqrf-016a0687). The same probe shows the brief's rows alone also leave OQ-D2's case unmatched, which the spec already patches. deriveRescueStatus's contract returns rule 1..13 with no fallback. GET /api/requests/:id therefore has no defined status in a state RS-32's journey passes through while the SPA polls every 2 s.",
+          "evidence": [
+            "ev:ev-mv1ciqrf-016a0687",
+            "artifact:.eccode/artifacts/design/spec.md#supersession-servicessupersessionjs",
+            "artifact:.eccode/artifacts/design/spec.md#internal-module-contracts-shared-by-parallel-implementers"
+          ],
+          "recommendation": "Resolved when the spec defines a total derivation. Add an explicit row, or a definition of P, for 'no current version, replan queued or retries exhausted', with a status from the goal's set or a stated extension and a nextStep (for example WAIT, or REPLAN after the retries run out). Define what happens when the 3 offers_hash retries run out (re-queue or store infeasible). Add a derive.test.js property test: every combination of plan, reservation, operation and fulfilment states reachable through domain/states.js maps to exactly one row and never to undefined.",
+          "reviewId": "rev-mv1cta5m-0114480d"
+        },
+        {
+          "id": "F-TR-3",
+          "severity": "major",
+          "title": "Queued authorize intents have no sender after a crash or a retryable answer; the operation is stranded in 'approved'",
+          "detail": "The return handler commits 'created -> approved' and queues so:<id>:authorize:1 (started_at NULL) in one transaction. It then runs the call protocol in a later transaction. If the process dies between the two, the call stays queued. Stale-intent recovery matches only 'started_at <= now - 2 x timeout', so it never matches. Reconciler step 6 sends only 'queued void, refund and capture intents'. A repeated return hit answers 303 with no call because the status is no longer 'created'. A 'retryable' answer (401/403/429) also puts the call back to queued. Recovery says it is 're-queued with back-off ... then every tick', but no reconciler step sends authorize. SEC-6 shows that an anonymous webhook flood can induce PayPal 429s on a merchant credential. Consequences: execute returns AUTHORIZATION_PENDING indefinitely. When the void rule fires (expiry, abandon), an 'approved' operation with an authorize call in intent is left 'for later', but nothing resolves it. Row 4 then reports 'cancelling' forever, and row 2 never escalates 'approved' (the probe lists 'approved' among the states that never escalate, scenario S18, ev:ev-mv1ciqrf-016a0687). DELETE /api/requests/:id is refused (PAYMENT_IN_PROGRESS) and admin reset is blocked unless forced.",
+          "evidence": [
+            "ev:ev-mv1ciqrf-016a0687",
+            "artifact:.eccode/artifacts/design/spec.md#provider-call-protocol-servicescallsjs-every-mutating-paypal-call",
+            "artifact:.eccode/artifacts/design/spec.md#return-handler-and-authorization-rs-20-second-half-rs-27",
+            "artifact:.eccode/artifacts/design/spec.md#reconciler-servicesreconcilerjs",
+            "artifact:.eccode/artifacts/design/spec.md#recovery"
+          ],
+          "recommendation": "Resolved when, for every call kind, the spec names the component that sends a queued (started_at NULL) or retryable call and when it does so. For authorize, either the reconciler sends it (it is provably unsent), or, if cancel_requested_at is set, the call becomes 'cancelled' and the operation is voided locally. Row 2 must also escalate an operation left in 'approved' with an outstanding authorize call past the unknown limit. Add a [D] test: a fault hook stops the process after the return-handler commit; after a restart and reconcile, exactly one authorize call has been made, or the call is cancelled and the operation 'voided', and the request leaves 'cancelling'.",
+          "reviewId": "rev-mv1cta5m-0114480d"
+        },
+        {
+          "id": "F-TR-4",
+          "severity": "major",
+          "title": "NFR1: on an older Node, npm start fails with 'bad option' before the version gate can name the required version",
+          "detail": "Deployment: npm start is 'node --disable-warning=ExperimentalWarning src/index.js'. In the 22.5 branch, every script also gets '--experimental-sqlite' right after 'node'. Node parses these flags before src/index.js runs. My check ran both command shapes on the older Node binaries on this host (ev:ev-mv1cir59-01e77df9). On v20.20.0 and v21.7.3 the 22.5-branch command exits 9 with 'bad option: --experimental-sqlite' and does not name the required version. The >=22.13-branch command does reach the gate there. However, the Node 20 changelog shows --disable-warning was introduced in 20.11.0, so Node 18 and Node 20.0-20.10 fail the default command the same way. npm only warns on engines. The planned test (test/unit/config/node-version.test.js) unit-tests the gate function on this host's Node 22.22, so it cannot see the defect. NFR1 requires that 'on an older Node npm start exits non-zero with a message naming the required version'.",
+          "evidence": [
+            "ev:ev-mv1cir59-01e77df9",
+            "artifact:.eccode/artifacts/design/spec.md#deployment",
+            "artifact:.eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria"
+          ],
+          "recommendation": "Resolved when the start path runs the version gate before any version-specific node flag is parsed. For example: 'start' runs a flag-free 'node scripts/check-node.js' first, or src/index.js re-spawns itself with the flags after the check, or the warning is filtered in code instead of by flag. The same applies to the 22.5 branch. Add a [D] or inspection test that runs the actual npm start command line on an older Node binary when one is available (this host has /opt/node20 and /opt/node21), or at least asserts that the start script begins with a flag-free gate.",
+          "reviewId": "rev-mv1cta5m-0114480d"
+        },
+        {
+          "id": "SEC-1",
+          "severity": "major",
+          "title": "Anyone can lock any known account (admin included) out of sign-in",
+          "detail": "Folded in from the security reviewer (.eccode/reviews/drafts/design-security-1.md, SEC-1); I also confirmed it from the spec text. Authentication > Throttle refuses a sign-in 'when the username has >= 5 failures in the last 15 min ... before the password is checked, so the correct password is also refused', and T8 asserts that behaviour. The seed publishes fixed usernames (admin, supplier-a..e, cafe1, cafe2). The security reviewer's executable model printed 'attacker (1 IP, 5 requests): 401 x5 | real admin, other IP, correct password: 429 RATE_LIMITED | after the next 5-guess cycle: 429' (ev:ev-mv1cj3km-010da2d1; spec text quoted in ev:ev-mv1chwnv-0109783d H2). Locking out the suppliers stalls confirmations, so reservations expire and the void rule fires. A live demo can be stalled with 40 requests per 15 minutes.",
+          "evidence": [
+            "ev:ev-mv1cj3km-010da2d1",
+            "ev:ev-mv1chwnv-0109783d",
+            "artifact:.eccode/artifacts/design/spec.md#authentication-arch-25",
+            "artifact:.eccode/artifacts/design/spec.md#security"
+          ],
+          "recommendation": "Resolved as the security reviewer states. The hard refusal is keyed on (username, IP) with a per-IP global limit. Across IPs a username gets a progressive delay, or a higher threshold that still checks the password. Failures for unknown usernames are counted the same way, so 429-versus-401 does not enumerate accounts. Username keys are normalised (SEC-9). T8 changes to: '6th attempt from the same IP gives 429; the correct password from another IP gives 200'.",
+          "reviewId": "rev-mv1cta5m-0114480d"
+        },
+        {
+          "id": "SEC-2",
+          "severity": "major",
+          "title": "One customer can hold every supplier's stock, repeatedly, without paying",
+          "detail": "Folded in from the security reviewer (SEC-2), and consistent with my reading of Reservation and Authentication > Provisioning. Self-registration is on by default (OQ-D3). Requests can be confirmed manually, which needs no model budget. Seeded on_hand is 1 per supplier, and nothing caps live reservations per customer. One customer can therefore reserve every bundle with fresh Idempotency-Keys and repeat after each 30-minute TTL, while every other customer's reserve fails OUT_OF_STOCK and their plans go non_executable. Reproduced on the spec's DDL: 'attacker reserves each supplier bundle: 201 x5 | live reservations held: 5 | victim reserve: 409 OUT_OF_STOCK' (ev:ev-mv1cj3km-010da2d1; spec text in ev:ev-mv1chwnv-0109783d H6).",
+          "evidence": [
+            "ev:ev-mv1cj3km-010da2d1",
+            "ev:ev-mv1chwnv-0109783d",
+            "artifact:.eccode/artifacts/design/spec.md#reservation-servicesreservationsjs",
+            "artifact:.eccode/artifacts/design/spec.md#authentication-arch-25"
+          ],
+          "recommendation": "Resolved as the security reviewer states. Add a per-customer cap on live reservations (default 1, for example RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER), refused with a catalogued 409 or 429 code, and a per-customer daily limit on request creation. Assert both in an API test. Optionally, shorten the TTL until the first PayPal approval.",
+          "reviewId": "rev-mv1cta5m-0114480d"
+        },
+        {
+          "id": "SEC-3",
+          "severity": "major",
+          "title": "A loopback PayPal stub under npm start is labelled 'PayPal Sandbox', not 'Simulated' (RS-34)",
+          "detail": "Folded in from the security reviewer (SEC-3). T18 and the wire mapping accept RS_PAYPAL_BASE_URL=http://127.0.0.1:<port> and a loopback approval host for the paypal-sandbox adapter, with no restriction to tests. Under npm start that produces provider 'paypal-sandbox', simulated:false and sandbox:true, the 'PayPal Sandbox — no real money' badge and no Simulated banner, for a flow that is simulated. RS-34 requires everything that is not real to be labelled. The labelling test asserts the Sandbox labels against this stub. Evidence: spec text quoted in ev:ev-mv1chwnv-0109783d (H5).",
+          "evidence": [
+            "ev:ev-mv1chwnv-0109783d",
+            "artifact:.eccode/artifacts/design/spec.md#security",
+            "artifact:.eccode/artifacts/design/spec.md#frontend",
+            "artifact:.eccode/artifacts/design/spec.md#paypal-sandbox-wire-mapping-paymentssandboxjs-every-row-verify-on-sandbox"
+          ],
+          "recommendation": "Resolved when a loopback PayPal base URL and approval host are accepted only under RS_TEST_OFFLINE=1 or RS_TEST_HOOKS=1, and npm start refuses them at startup. The alternative is that loopback mode is labelled simulated:true and sandbox:false, shows the Simulated banner and uses a distinct badge. Either way, add a config test and a labelling test for each case.",
+          "reviewId": "rev-mv1cta5m-0114480d"
+        }
+      ],
       "approvedBy": null,
       "approvedSubmission": null,
       "escalation": null,
@@ -2311,6 +2411,735 @@
       "reviewer": "architecture-reviewer",
       "at": "2026-10-09T18:43:03.695Z",
       "submissionId": "sub-mv1awqkf-017ea892"
+    },
+    "rev-mv1cta5m-0114480d": {
+      "decision": "changes_requested",
+      "summary": "Technical review of design submission sub-mv1c60sc-01174690 (spec.md sha256 ea9c0c68...). I read the whole spec against the approved brief and ran my own checks. All 45 ids are traced to a section and a test (ev:ev-mv1cik0q-01d57f54). The five SQL migrations execute on node:sqlite; the append-only triggers, the valid-only webhook dedupe and the two-process reserve and expiry races behave as specified (ev:ev-mv1cl880-01d942d2). Every pinned CLI flag exists (ev:ev-mv1cirha-01fe9dfc), and both designer probes reproduce (ev:ev-mv1ciryi-01696a01, ev:ev-mv1citom-01b59d5c). ARCH-22..26 are resolved as the brief asked, and the saga fencing has no double-capture path. Changes are requested for seven major findings. Mine are four. F-TR-1: reusing a reserve Idempotency-Key on another plan replays that plan's reservation (RS-16; the security reviewer reproduced it, ev:ev-mv1cj3km-010da2d1). F-TR-2: the rescue-status derivation has no row for a superseded plan awaiting its replan (RS-36, ev:ev-mv1ciqrf-016a0687). F-TR-3: queued authorize intents have no sender after a crash or a retryable answer, which strands the operation in 'approved' (RS-26). F-TR-4: on an older Node, the NFR1 start command fails with 'bad option' instead of naming the required version (ev:ev-mv1cir59-01e77df9). Three come from the security reviewer, with their evidence: SEC-1 (anonymous account lockout), SEC-2 (one customer can hold all stock) and SEC-3 (a loopback stub labelled 'PayPal Sandbox', RS-34). The security reviewer's minors SEC-4..SEC-20 stay in .eccode/reviews/drafts/design-security-1.md for the revision and the plan; SEC-4 is F-TR-1, rated major here.",
+      "criteria": [
+        {
+          "id": "RS-01",
+          "description": "AR/EN equivalence: fake EN/AR lexicon parser with grounded quotes [D]; EXT-1 RS-FIX-1 pair at 100 % hard threshold [LM]",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#ai-llm-design",
+            "artifact:.eccode/artifacts/design/spec.md#evaluation-plan-ext-1",
+            "artifact:.eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria"
+          ]
+        },
+        {
+          "id": "RS-02",
+          "description": "Clear image yields capacity/diameter with provenance image: fake image map by sha256 [D]; clear-image accuracy >= 80 % [LM]",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#ai-llm-design",
+            "artifact:.eccode/artifacts/design/spec.md#evaluation-plan-ext-1"
+          ],
+          "notes": "SEC-8 (minor, security draft): confirm takes client-supplied provenance; the server should derive it."
+        },
+        {
+          "id": "RS-03",
+          "description": "Ambiguous image yields unknown plus question, no invented numbers; degraded path (timeout, invalid_json, schema_invalid, error, budget, rate): schema_ok=0 with error code (DB CHECK), every field unknown, degraded:true, labelled notice, manual fields [D/B/LM]",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "ev:ev-mv1cl880-01d942d2",
+            "artifact:.eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id-session-user-a-foreign-or-archived-id-404",
+            "artifact:.eccode/artifacts/design/spec.md#ai-llm-design",
+            "artifact:.eccode/artifacts/design/spec.md#frontend"
+          ],
+          "notes": "Minor F-TR-9: the traceability row does not name the [D] test for the ambiguous-image half (test/eval/extraction-fake.test.js covers it)."
+        },
+        {
+          "id": "RS-04",
+          "description": "Missing budget/deadline: approve and paypal/create return 409 MISSING_BUDGET/MISSING_DEADLINE (budget checked first), no reservation or operation created",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#error-catalog-fixed",
+            "artifact:.eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id-session-user-a-foreign-or-archived-id-404"
+          ]
+        },
+        {
+          "id": "RS-05",
+          "description": "Injection in image/catalog text stays data: random delimiters, safeJson, no tools, schema validation, grounding, buyer confirmation, catalog text never sent to the model, rephrase discard rule; control-run comparison tests [D] and EXT-1 injection cases [LM]",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "ev:ev-mv1cirha-01fe9dfc",
+            "artifact:.eccode/artifacts/design/spec.md#ai-llm-design",
+            "artifact:.eccode/artifacts/design/spec.md#security"
+          ],
+          "notes": "SEC-7 (minor, security draft): injected image text can surface verbatim as a question or originalWording; it is not a control-run effect, but the revision should bind question fields to an enum."
+        },
+        {
+          "id": "RS-06",
+          "description": "Planner A+B 8400 / 2 pickups / 10:30; A on_hand 2 gives Ax2 at 7000; oracle property test on <= 6 offers with on_hand 0-3",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#internal-module-contracts-shared-by-parallel-implementers",
+            "artifact:.eccode/artifacts/design/spec.md#testing-strategy"
+          ]
+        },
+        {
+          "id": "RS-07",
+          "description": "C rejected INCOMPATIBLE_LID_DIAMETER (seed C lid 95 mm, no compatibility row)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#seed-rs-fix-1-and-demo-date",
+            "artifact:.eccode/artifacts/design/spec.md#shared-response-objects"
+          ]
+        },
+        {
+          "id": "RS-08",
+          "description": "D rejected READY_AFTER_DEADLINE (11:20 > 11:00; local times converted via Intl)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#seed-rs-fix-1-and-demo-date",
+            "artifact:.eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria"
+          ]
+        },
+        {
+          "id": "RS-09",
+          "description": "Without B (on_hand 0 or withdrawn): A+E at 9500, both variants tested",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria"
+          ]
+        },
+        {
+          "id": "RS-10",
+          "description": "Budget 9000 without B: infeasible, OVER_BUDGET blocking, A/E codes, exactly two computed relaxations (Relaxation type, planner contract)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#shared-response-objects",
+            "artifact:.eccode/artifacts/design/spec.md#internal-module-contracts-shared-by-parallel-implementers"
+          ]
+        },
+        {
+          "id": "RS-11",
+          "description": "Max 1 pickup: A, B, E carry exactly INSUFFICIENT_QTY + TOO_MANY_PICKUPS; C, D keep their codes",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#internal-module-contracts-shared-by-parallel-implementers"
+          ]
+        },
+        {
+          "id": "RS-12",
+          "description": "Insufficient totals never feasible; tampered plan approval 409 (PLAN_CHANGED / PLAN_INVALID server re-validation)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#error-catalog-fixed",
+            "artifact:.eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id-session-user-a-foreign-or-archived-id-404"
+          ]
+        },
+        {
+          "id": "RS-13",
+          "description": "Price change supersedes approved plan before confirm/claim; void rule voids each authorization once, releases reservation (release ledger rows), cancels orders; 409 PLAN_SUPERSEDED; message 'Prices changed: review plan vN'; no supersession after confirm or claim",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#supersession-servicessupersessionjs",
+            "artifact:.eccode/artifacts/design/spec.md#void-rule-arch-22-resolved"
+          ],
+          "notes": "Met as designed; the window after supersession but before the replan has no derived status (F-TR-2)."
+        },
+        {
+          "id": "RS-14",
+          "description": "Two OS processes, busy_timeout 5000: one active reservation, loser OUT_OF_STOCK, reserved <= on_hand; busy_timeout 0 + held lock gives SQLITE_BUSY mapped to 503 DB_BUSY",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cl880-01d942d2",
+            "artifact:.eccode/artifacts/design/spec.md#reservation-servicesreservationsjs",
+            "artifact:.eccode/artifacts/design/spec.md#testing-strategy"
+          ],
+          "notes": "Reproduced on the spec's own 001 schema with node:sqlite and two OS processes: OUT_OF_STOCK | RESERVED, final reserved 1 <= on_hand 1, one reserve ledger row; busy_timeout 0 gives 'database is locked' (errcode 5). The stock-hoarding abuse of this mechanism is SEC-2."
+        },
+        {
+          "id": "RS-15",
+          "description": "Expiry exactly once via CAS on status='active'; consumed rows untouched; void rule and RESERVATION_EXPIRED message",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cl880-01d942d2",
+            "artifact:.eccode/artifacts/design/spec.md#reservation-servicesreservationsjs",
+            "artifact:.eccode/artifacts/design/spec.md#void-rule-arch-22-resolved"
+          ],
+          "notes": "Two processes running the expiry CAS concurrently: EXPIRED | NOOP, exactly one expire ledger row."
+        },
+        {
+          "id": "RS-16",
+          "description": "Same Idempotency-Key + body returns same reservation; same key + different request returns 422 IDEMPOTENCY_KEY_REUSED and changes nothing",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv1cj3km-010da2d1",
+            "artifact:.eccode/artifacts/design/spec.md#conventions-apply-to-every-route",
+            "artifact:.eccode/artifacts/design/spec.md#003_planningsql"
+          ],
+          "notes": "F-TR-1 (= SEC-4): the scope (user, route template, key) and the body hash ({} for every reserve) ignore the plan id, so reusing a key on another plan replays the first plan's reservation."
+        },
+        {
+          "id": "RS-17",
+          "description": "Supplier refusal before claim: refused, void rule, non_executable SUPPLIER_REFUSED, cancelling while void outstanding, 'Review the new plan', replan excluding supplier",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "ev:ev-mv1ciqrf-016a0687",
+            "artifact:.eccode/artifacts/design/spec.md#supplier-routes-role-supplier-every-query-scoped-to-userssupplier_id",
+            "artifact:.eccode/artifacts/design/spec.md#void-rule-arch-22-resolved"
+          ]
+        },
+        {
+          "id": "RS-18",
+          "description": "PayPal cancel: created + buyer_cancelled_at, execute 409 AUTHORIZATION_MISSING, retry/abandon; abandon fires the void rule (PAYMENT_CANCELLED)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id-session-user-a-foreign-or-archived-id-404",
+            "artifact:.eccode/artifacts/design/spec.md#return-handler-and-authorization-rs-20-second-half-rs-27"
+          ]
+        },
+        {
+          "id": "RS-19",
+          "description": "Client amount/currency/supplier ignored; amount from supplier_orders.total_cents; stub records outbound body",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#conventions-apply-to-every-route",
+            "artifact:.eccode/artifacts/design/spec.md#security"
+          ]
+        },
+        {
+          "id": "RS-20",
+          "description": "Two processes x 5 executes: one claim CAS, losers make no provider call (claim uses stored expiry, ARCH-23), one capture per order with key so:<id>:capture:1; three return hits give one authorize",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cl880-01d942d2",
+            "artifact:.eccode/artifacts/design/spec.md#payment-saga-with-lease-fencing-arch-23-arch-26-resolved",
+            "artifact:.eccode/artifacts/design/spec.md#return-handler-and-authorization-rs-20-second-half-rs-27"
+          ],
+          "notes": "Minor F-TR-8 on the test's pid attribution; the provider_calls UNIQUE key and GLOB were exercised on the spec schema."
+        },
+        {
+          "id": "RS-21",
+          "description": "DENIED: authorization_failed, void rule, AUTHORIZATION_FAILED naming supplier, exact buyer sentence; PENDING: authorization_pending, execute 409 AUTHORIZATION_PENDING",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#return-handler-and-authorization-rs-20-second-half-rs-27",
+            "artifact:.eccode/artifacts/design/spec.md#shared-response-objects"
+          ]
+        },
+        {
+          "id": "RS-22",
+          "description": "Second capture fails: refund first, void rest, refund_requested -> refund_pending -> refunded|refund_failed, CAPTURE_FAILED, reservation reconciling until resolved then released with restock, HANDOVER_BLOCKED, capture PENDING pauses",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#payment-saga-with-lease-fencing-arch-23-arch-26-resolved"
+          ],
+          "notes": "Minor F-TR-7 (pause semantics after takeover) and F-TR-6 (late capture read as void_failed)."
+        },
+        {
+          "id": "RS-23",
+          "description": "Duplicate webhook (same transmission id) applies once; dedupe only among valid rows",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cl880-01d942d2",
+            "artifact:.eccode/artifacts/design/spec.md#webhooks",
+            "artifact:.eccode/artifacts/design/spec.md#004_paymentssql"
+          ],
+          "notes": "Partial UNIQUE index checked: two invalid rows with transmission t1 coexist, the first valid row inserts, a second valid row is refused. SEC-6/SEC-16 (minor/info, security draft) cover flooding and merchant binding."
+        },
+        {
+          "id": "RS-24",
+          "description": "Invalid signature: 400 WEBHOOK_SIGNATURE_INVALID, row signature_status invalid, no transition",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cl880-01d942d2",
+            "artifact:.eccode/artifacts/design/spec.md#webhooks"
+          ]
+        },
+        {
+          "id": "RS-25",
+          "description": "Lost capture response: unknown; reconciler reads (getAuthorization/getOrder) before any re-send; same PayPal-Request-Id; stale started intents become unknown",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#provider-call-protocol-servicescallsjs-every-mutating-paypal-call"
+          ],
+          "notes": "Refinement accepted: only intents started more than 2 x timeout ago become unknown, because a queued intent with started_at NULL was provably never sent. The re-sender gap for queued authorize intents is F-TR-3, under RS-26."
+        },
+        {
+          "id": "RS-26",
+          "description": "Kill/restart preserves orders, operations, calls and recovery progress; lease takeover completes the saga",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv1ciqrf-016a0687",
+            "artifact:.eccode/artifacts/design/spec.md#reconciler-servicesreconcilerjs",
+            "artifact:.eccode/artifacts/design/spec.md#return-handler-and-authorization-rs-20-second-half-rs-27"
+          ],
+          "notes": "The saga-level takeover is sound (ARCH-26). F-TR-3: an authorize intent queued in the return-handler transaction but never started (crash between commit and start), or re-queued after a retryable answer, has no sender. The reconciler sends only void, refund and capture intents, so recovery progress stops."
+        },
+        {
+          "id": "RS-27",
+          "description": "Customer isolation in SQL (404), including return/cancel tokens: 404 before any provider call, fake call count unchanged",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "ev:ev-mv1chwe5-0199c200",
+            "artifact:.eccode/artifacts/design/spec.md#return-handler-and-authorization-rs-20-second-half-rs-27",
+            "artifact:.eccode/artifacts/design/spec.md#security"
+          ]
+        },
+        {
+          "id": "RS-28",
+          "description": "Supplier A patching B's inventory: whole PATCH 403, nothing changes",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#supplier-routes-role-supplier-every-query-scoped-to-userssupplier_id"
+          ]
+        },
+        {
+          "id": "RS-29",
+          "description": "No client id/secret in assets, responses, logs, screenshots, submission; Secret wrapper redacts; hosted approval link; CLI env allow-list",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#security",
+            "artifact:.eccode/artifacts/design/spec.md#observability"
+          ],
+          "notes": "SEC-5 (minor, security draft): placeholder secrets must be refused."
+        },
+        {
+          "id": "RS-30",
+          "description": "Admin routes: 403 customer/supplier, 401 anonymous; admin disabled without RS_ADMIN_PASSWORD",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "ev:ev-mv1chwe5-0199c200",
+            "artifact:.eccode/artifacts/design/spec.md#rbac-matrix-default-deny-the-router-refuses-any-route-without-a-policy-entry-at-startup",
+            "artifact:.eccode/artifacts/design/spec.md#authentication-arch-25"
+          ]
+        },
+        {
+          "id": "RS-31",
+          "description": "Happy journey at 360/1280 with the fake approval page on 127.0.0.1 vs app on localhost (cross-site, SameSite=Lax) [B]; Sandbox variant user-run [LP]",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#testing-strategy",
+            "artifact:.eccode/artifacts/design/spec.md#authentication-arch-25"
+          ],
+          "notes": "SEC-12 (minor, security draft): the fake approval listener needs a contract."
+        },
+        {
+          "id": "RS-32",
+          "description": "Replacement journey via stock_depletion fault (withdraw offer, supersession, void rule) to the 9500 A+E plan [B]; Sandbox variant [LP]",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#admin-routes-role-admin",
+            "artifact:.eccode/artifacts/design/spec.md#supersession-servicessupersessionjs"
+          ],
+          "notes": "This journey passes through the window F-TR-2 describes: the 2-second poll can read the request while no derivation row matches."
+        },
+        {
+          "id": "RS-33",
+          "description": "Infeasible journey ends on explanation screen; no reservation/order/operation",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#frontend"
+          ]
+        },
+        {
+          "id": "RS-34",
+          "description": "Labelling for both adapters: simulated/provider/sandbox on payment and extraction objects, demo flags, priceNotice, banner and badges; config refuses non-Sandbox base URLs",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv1chwnv-0109783d",
+            "artifact:.eccode/artifacts/design/spec.md#conventions-apply-to-every-route",
+            "artifact:.eccode/artifacts/design/spec.md#frontend",
+            "artifact:.eccode/artifacts/design/spec.md#security"
+          ],
+          "notes": "The labels themselves are complete. SEC-3: under npm start, a loopback stub base URL makes a simulated flow carry 'PayPal Sandbox — no real money' with simulated:false, which RS-34's 'everything not real is labelled' forbids."
+        },
+        {
+          "id": "RS-35",
+          "description": "Request page answers the six questions with template-rendered explanations",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#frontend"
+          ]
+        },
+        {
+          "id": "RS-36",
+          "description": "Separate persisted state machines; rescue status computed by the derivation table, never stored; (i)-(iv) assertions",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv1ciqrf-016a0687",
+            "ev:ev-mv1cl880-01d942d2",
+            "artifact:.eccode/artifacts/design/spec.md#supersession-servicessupersessionjs",
+            "artifact:.eccode/artifacts/design/spec.md#open-questions"
+          ],
+          "notes": "(i)-(iv) give the brief's results and the schema stores no rescue status. F-TR-2: the derivation is not total. A superseded plan whose replan is still queued, or whose offers_hash retries ran out, matches no row."
+        },
+        {
+          "id": "RS-37",
+          "description": "Admin reset 409 RESET_BLOCKED on the brief's status list; forced reset needs a reason, archives operations/calls",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#admin-routes-role-admin"
+          ],
+          "notes": "SEC-11 (minor, security draft): a forced reset strands authorized holds and unknown captures."
+        },
+        {
+          "id": "RS-38",
+          "description": "UPDATE/DELETE on audit_events and inventory_ledger fail; every inventory transition writes a ledger row",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cl880-01d942d2",
+            "artifact:.eccode/artifacts/design/spec.md#001_coresql"
+          ],
+          "notes": "Executed: the spec's triggers refuse UPDATE and DELETE on both tables."
+        },
+        {
+          "id": "RS-39",
+          "description": "Magic bytes vs declared type (415), 5 MiB (413), 128-bit random names, owner check before body (404, nothing written), DELETE semantics, 7-day sweep with pinned clock",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#retention-and-deletion",
+            "artifact:.eccode/artifacts/design/spec.md#security",
+            "artifact:.eccode/artifacts/design/spec.md#002_requestssql"
+          ]
+        },
+        {
+          "id": "NFR1",
+          "description": "Clean clone install/test/start on the Node floor; zero dependencies; engines; older Node: npm start exits non-zero naming the required version; 22.5 branch",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv1cir59-01e77df9",
+            "ev:ev-mv1ciryi-01696a01",
+            "artifact:.eccode/artifacts/design/spec.md#deployment"
+          ],
+          "notes": "F-TR-4: the start command's node flags are parsed before src/index.js can run its version gate."
+        },
+        {
+          "id": "NFR2",
+          "description": "Keyboard-only happy path, visible focus, labels, text statuses, all listed states at 360/1280",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#frontend"
+          ]
+        },
+        {
+          "id": "NFR3",
+          "description": "Four separate scripts; live suites refuse without their flag (asserted in [D]); labelled reports",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#testing-strategy",
+            "artifact:.eccode/artifacts/design/spec.md#evaluation-plan-ext-1"
+          ]
+        },
+        {
+          "id": "NFR4",
+          "description": "Secrets only from process.env; .env.example placeholders; test asserts no real-looking value",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#security",
+            "artifact:.eccode/artifacts/design/spec.md#deployment"
+          ]
+        },
+        {
+          "id": "NFR5",
+          "description": "Planner < 1 s on RS-FIX-1 and 200 generator catalogs; p95 < 300 ms from app-harness latency log; suite < 5 min",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#performance",
+            "artifact:.eccode/artifacts/design/spec.md#testing-strategy"
+          ]
+        },
+        {
+          "id": "NFR6",
+          "description": "requestId everywhere, log allow-list and scan, haiku default, budget reservation before the call (third extract refused at 0.10/0.25), 11th extract/upload 429, live cost ceiling",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#ai-llm-design",
+            "artifact:.eccode/artifacts/design/spec.md#observability"
+          ],
+          "notes": "Minor F-TR-10 (rate check atomicity) and F-TR-12 (REAL dollars); SEC-10 (minor, security draft) on budget fairness."
+        },
+        {
+          "id": "area-arch-findings",
+          "description": "ARCH-22..26 from rev-mv1bcexb-01d7960e are resolved in the spec as the brief asked",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1ciryi-01696a01",
+            "ev:ev-mv1citom-01b59d5c",
+            "artifact:.eccode/artifacts/design/spec.md#resolution-of-the-architecture-reviews-open-findings",
+            "artifact:.eccode/artifacts/design/spec.md#void-rule-arch-22-resolved",
+            "artifact:.eccode/artifacts/design/spec.md#payment-saga-with-lease-fencing-arch-23-arch-26-resolved",
+            "artifact:.eccode/artifacts/design/spec.md#authentication-arch-25"
+          ],
+          "notes": "ARCH-22: cancel_requested_at plus a resolution hook on every path into authorized. ARCH-23: the claim checks the stored expiry; getAuthorization runs after the claim, with voids-only compensation. ARCH-24: re-run shows the grandchild does not inherit execArgv but does inherit NODE_OPTIONS. ARCH-25: auth contract present (but see SEC-1). ARCH-26: epoch and send_token fence, lease >= 3 x timeout, read-before-resend on takeover, SIGSTOP variants."
+        },
+        {
+          "id": "area-data-design",
+          "description": "Data design is complete, executable and enforces the invariants",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cl880-01d942d2",
+            "artifact:.eccode/artifacts/design/spec.md#data-design"
+          ]
+        },
+        {
+          "id": "area-auth-abuse",
+          "description": "Auth and abuse resistance of the public demo (lockout, stock hoarding)",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv1cj3km-010da2d1",
+            "artifact:.eccode/artifacts/design/spec.md#authentication-arch-25",
+            "artifact:.eccode/artifacts/design/spec.md#reservation-servicesreservationsjs"
+          ],
+          "notes": "SEC-1 and SEC-2."
+        },
+        {
+          "id": "area-ai-design",
+          "description": "AI design: provider-safe schema plus strict local validator, provenance, injection isolation, budget reserved before the call, degraded path, EXT-1 thresholds stated before results, pinned CLI argv",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1cirha-01fe9dfc",
+            "ev:ev-mv1citom-01b59d5c",
+            "artifact:.eccode/artifacts/design/spec.md#ai-llm-design",
+            "artifact:.eccode/artifacts/design/spec.md#evaluation-plan-ext-1",
+            "artifact:.eccode/artifacts/design/spec.md#external-facts-used-source-and-date"
+          ],
+          "notes": "Cost and model-id claims are sourced or marked verify. The schema subset and image input are confirmed only at the first live run (F-TR-13, info)."
+        },
+        {
+          "id": "area-open-questions",
+          "description": "The designer's OQ-D1..D5 defaults are sound",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1ciqrf-016a0687",
+            "artifact:.eccode/artifacts/design/spec.md#open-questions"
+          ],
+          "notes": "D1, D4 and D5: accept. D3 (self-registration on): acceptable only once SEC-2 caps live reservations per customer. D2: accept that a row is needed (the probe shows the brief's rows leave the case unmatched); the label is F-TR-5 (minor)."
+        }
+      ],
+      "findings": [
+        {
+          "id": "F-TR-1",
+          "severity": "major",
+          "title": "Reserve idempotency ignores the plan id: a reused key replays another plan's reservation",
+          "detail": "Interface Contracts > Conventions: the scope is (user id, route template, key) and the body hash is sha256 of the canonical parsed body. For POST /api/plans/:id/reserve the body is always {} and unknown fields are ignored, so a key first used on plan X and then sent to plan Y finds the same (user, '/api/plans/:id/reserve', key, sha256('{}')) row. It replays X's 200/201 response (reservation and orders of X) instead of 422 IDEMPOTENCY_KEY_REUSED. reservations.operation_key 'res:<customerId>:<key>' (003_planning.sql) is UNIQUE per customer as well, so plan Y can never be reserved under that key, and the collision's error is unspecified once the key row is purged. The security reviewer reproduced the replay on the spec's DDL: 'reserve plan 9 with the same key: {status:201, replayed:true, ... planVersionId:7}' (ev:ev-mv1cj3km-010da2d1; their SEC-4, rated minor there). I rate it major because RS-16 requires that reusing a key for a different request change nothing and return 422, and the contract is frozen for parallel implementers. The SPA stores keys per planVersionId, which hides the defect in the UI but not in the API.",
+          "evidence": [
+            "ev:ev-mv1cj3km-010da2d1",
+            "artifact:.eccode/artifacts/design/spec.md#conventions-apply-to-every-route",
+            "artifact:.eccode/artifacts/design/spec.md#003_planningsql",
+            "artifact:.eccode/artifacts/design/spec.md#frontend"
+          ],
+          "recommendation": "Resolved when the request fingerprint includes the concrete path (or the plan id) as well as the body: either the scope is (user, method + concrete path, key) or the hash covers {planId, body}, and operation_key includes the plan id. The spec must also state the error for an operation-key collision. Add a [D] case to reserve-idempotency.test.js: the same key on a second plan returns 422 IDEMPOTENCY_KEY_REUSED with no reservation, ledger or order rows."
+        },
+        {
+          "id": "F-TR-2",
+          "severity": "major",
+          "title": "Rescue-status derivation is not total: superseded plan awaiting its replan matches no row",
+          "detail": "P is 'the newest version that is not superseded'. After supersession (Supersession > Effect and Replan), the only version is superseded until the replan stores a new one. Storing it checks offers_hash with up to 3 retries and has no defined outcome once the retries run out. The queue may also wait for the next reconciler tick after a crash. In that state rows 1-4 do not match once the voids are done. Row 5 needs an infeasible latest run, rows 6-12 need P, and row 13 needs no planning run. My derivation probe implements the brief's 13 rows, the spec's ARCH-22 clause and the OQ-D2 row. It confirms RS-36 (i)-(iv) and reports scenario S13 as '<NO ROW MATCHES>' (ev:ev-mv1ciqrf-016a0687). The same probe shows the brief's rows alone also leave OQ-D2's case unmatched, which the spec already patches. deriveRescueStatus's contract returns rule 1..13 with no fallback. GET /api/requests/:id therefore has no defined status in a state RS-32's journey passes through while the SPA polls every 2 s.",
+          "evidence": [
+            "ev:ev-mv1ciqrf-016a0687",
+            "artifact:.eccode/artifacts/design/spec.md#supersession-servicessupersessionjs",
+            "artifact:.eccode/artifacts/design/spec.md#internal-module-contracts-shared-by-parallel-implementers"
+          ],
+          "recommendation": "Resolved when the spec defines a total derivation. Add an explicit row, or a definition of P, for 'no current version, replan queued or retries exhausted', with a status from the goal's set or a stated extension and a nextStep (for example WAIT, or REPLAN after the retries run out). Define what happens when the 3 offers_hash retries run out (re-queue or store infeasible). Add a derive.test.js property test: every combination of plan, reservation, operation and fulfilment states reachable through domain/states.js maps to exactly one row and never to undefined."
+        },
+        {
+          "id": "F-TR-3",
+          "severity": "major",
+          "title": "Queued authorize intents have no sender after a crash or a retryable answer; the operation is stranded in 'approved'",
+          "detail": "The return handler commits 'created -> approved' and queues so:<id>:authorize:1 (started_at NULL) in one transaction. It then runs the call protocol in a later transaction. If the process dies between the two, the call stays queued. Stale-intent recovery matches only 'started_at <= now - 2 x timeout', so it never matches. Reconciler step 6 sends only 'queued void, refund and capture intents'. A repeated return hit answers 303 with no call because the status is no longer 'created'. A 'retryable' answer (401/403/429) also puts the call back to queued. Recovery says it is 're-queued with back-off ... then every tick', but no reconciler step sends authorize. SEC-6 shows that an anonymous webhook flood can induce PayPal 429s on a merchant credential. Consequences: execute returns AUTHORIZATION_PENDING indefinitely. When the void rule fires (expiry, abandon), an 'approved' operation with an authorize call in intent is left 'for later', but nothing resolves it. Row 4 then reports 'cancelling' forever, and row 2 never escalates 'approved' (the probe lists 'approved' among the states that never escalate, scenario S18, ev:ev-mv1ciqrf-016a0687). DELETE /api/requests/:id is refused (PAYMENT_IN_PROGRESS) and admin reset is blocked unless forced.",
+          "evidence": [
+            "ev:ev-mv1ciqrf-016a0687",
+            "artifact:.eccode/artifacts/design/spec.md#provider-call-protocol-servicescallsjs-every-mutating-paypal-call",
+            "artifact:.eccode/artifacts/design/spec.md#return-handler-and-authorization-rs-20-second-half-rs-27",
+            "artifact:.eccode/artifacts/design/spec.md#reconciler-servicesreconcilerjs",
+            "artifact:.eccode/artifacts/design/spec.md#recovery"
+          ],
+          "recommendation": "Resolved when, for every call kind, the spec names the component that sends a queued (started_at NULL) or retryable call and when it does so. For authorize, either the reconciler sends it (it is provably unsent), or, if cancel_requested_at is set, the call becomes 'cancelled' and the operation is voided locally. Row 2 must also escalate an operation left in 'approved' with an outstanding authorize call past the unknown limit. Add a [D] test: a fault hook stops the process after the return-handler commit; after a restart and reconcile, exactly one authorize call has been made, or the call is cancelled and the operation 'voided', and the request leaves 'cancelling'."
+        },
+        {
+          "id": "F-TR-4",
+          "severity": "major",
+          "title": "NFR1: on an older Node, npm start fails with 'bad option' before the version gate can name the required version",
+          "detail": "Deployment: npm start is 'node --disable-warning=ExperimentalWarning src/index.js'. In the 22.5 branch, every script also gets '--experimental-sqlite' right after 'node'. Node parses these flags before src/index.js runs. My check ran both command shapes on the older Node binaries on this host (ev:ev-mv1cir59-01e77df9). On v20.20.0 and v21.7.3 the 22.5-branch command exits 9 with 'bad option: --experimental-sqlite' and does not name the required version. The >=22.13-branch command does reach the gate there. However, the Node 20 changelog shows --disable-warning was introduced in 20.11.0, so Node 18 and Node 20.0-20.10 fail the default command the same way. npm only warns on engines. The planned test (test/unit/config/node-version.test.js) unit-tests the gate function on this host's Node 22.22, so it cannot see the defect. NFR1 requires that 'on an older Node npm start exits non-zero with a message naming the required version'.",
+          "evidence": [
+            "ev:ev-mv1cir59-01e77df9",
+            "artifact:.eccode/artifacts/design/spec.md#deployment",
+            "artifact:.eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria"
+          ],
+          "recommendation": "Resolved when the start path runs the version gate before any version-specific node flag is parsed. For example: 'start' runs a flag-free 'node scripts/check-node.js' first, or src/index.js re-spawns itself with the flags after the check, or the warning is filtered in code instead of by flag. The same applies to the 22.5 branch. Add a [D] or inspection test that runs the actual npm start command line on an older Node binary when one is available (this host has /opt/node20 and /opt/node21), or at least asserts that the start script begins with a flag-free gate."
+        },
+        {
+          "id": "SEC-1",
+          "severity": "major",
+          "title": "Anyone can lock any known account (admin included) out of sign-in",
+          "detail": "Folded in from the security reviewer (.eccode/reviews/drafts/design-security-1.md, SEC-1); I also confirmed it from the spec text. Authentication > Throttle refuses a sign-in 'when the username has >= 5 failures in the last 15 min ... before the password is checked, so the correct password is also refused', and T8 asserts that behaviour. The seed publishes fixed usernames (admin, supplier-a..e, cafe1, cafe2). The security reviewer's executable model printed 'attacker (1 IP, 5 requests): 401 x5 | real admin, other IP, correct password: 429 RATE_LIMITED | after the next 5-guess cycle: 429' (ev:ev-mv1cj3km-010da2d1; spec text quoted in ev:ev-mv1chwnv-0109783d H2). Locking out the suppliers stalls confirmations, so reservations expire and the void rule fires. A live demo can be stalled with 40 requests per 15 minutes.",
+          "evidence": [
+            "ev:ev-mv1cj3km-010da2d1",
+            "ev:ev-mv1chwnv-0109783d",
+            "artifact:.eccode/artifacts/design/spec.md#authentication-arch-25",
+            "artifact:.eccode/artifacts/design/spec.md#security"
+          ],
+          "recommendation": "Resolved as the security reviewer states. The hard refusal is keyed on (username, IP) with a per-IP global limit. Across IPs a username gets a progressive delay, or a higher threshold that still checks the password. Failures for unknown usernames are counted the same way, so 429-versus-401 does not enumerate accounts. Username keys are normalised (SEC-9). T8 changes to: '6th attempt from the same IP gives 429; the correct password from another IP gives 200'."
+        },
+        {
+          "id": "SEC-2",
+          "severity": "major",
+          "title": "One customer can hold every supplier's stock, repeatedly, without paying",
+          "detail": "Folded in from the security reviewer (SEC-2), and consistent with my reading of Reservation and Authentication > Provisioning. Self-registration is on by default (OQ-D3). Requests can be confirmed manually, which needs no model budget. Seeded on_hand is 1 per supplier, and nothing caps live reservations per customer. One customer can therefore reserve every bundle with fresh Idempotency-Keys and repeat after each 30-minute TTL, while every other customer's reserve fails OUT_OF_STOCK and their plans go non_executable. Reproduced on the spec's DDL: 'attacker reserves each supplier bundle: 201 x5 | live reservations held: 5 | victim reserve: 409 OUT_OF_STOCK' (ev:ev-mv1cj3km-010da2d1; spec text in ev:ev-mv1chwnv-0109783d H6).",
+          "evidence": [
+            "ev:ev-mv1cj3km-010da2d1",
+            "ev:ev-mv1chwnv-0109783d",
+            "artifact:.eccode/artifacts/design/spec.md#reservation-servicesreservationsjs",
+            "artifact:.eccode/artifacts/design/spec.md#authentication-arch-25"
+          ],
+          "recommendation": "Resolved as the security reviewer states. Add a per-customer cap on live reservations (default 1, for example RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER), refused with a catalogued 409 or 429 code, and a per-customer daily limit on request creation. Assert both in an API test. Optionally, shorten the TTL until the first PayPal approval."
+        },
+        {
+          "id": "SEC-3",
+          "severity": "major",
+          "title": "A loopback PayPal stub under npm start is labelled 'PayPal Sandbox', not 'Simulated' (RS-34)",
+          "detail": "Folded in from the security reviewer (SEC-3). T18 and the wire mapping accept RS_PAYPAL_BASE_URL=http://127.0.0.1:<port> and a loopback approval host for the paypal-sandbox adapter, with no restriction to tests. Under npm start that produces provider 'paypal-sandbox', simulated:false and sandbox:true, the 'PayPal Sandbox — no real money' badge and no Simulated banner, for a flow that is simulated. RS-34 requires everything that is not real to be labelled. The labelling test asserts the Sandbox labels against this stub. Evidence: spec text quoted in ev:ev-mv1chwnv-0109783d (H5).",
+          "evidence": [
+            "ev:ev-mv1chwnv-0109783d",
+            "artifact:.eccode/artifacts/design/spec.md#security",
+            "artifact:.eccode/artifacts/design/spec.md#frontend",
+            "artifact:.eccode/artifacts/design/spec.md#paypal-sandbox-wire-mapping-paymentssandboxjs-every-row-verify-on-sandbox"
+          ],
+          "recommendation": "Resolved when a loopback PayPal base URL and approval host are accepted only under RS_TEST_OFFLINE=1 or RS_TEST_HOOKS=1, and npm start refuses them at startup. The alternative is that loopback mode is labelled simulated:true and sandbox:false, shows the Simulated banner and uses a distinct badge. Either way, add a config test and a labelling test for each case."
+        },
+        {
+          "id": "F-TR-5",
+          "severity": "minor",
+          "title": "OQ-D2 default labels a partially refunded executed plan 'cancelled'",
+          "detail": "With admin refund_order on one supplier's order of an executed plan and the other order collected, the OQ-D2 row returns 'cancelled' (probe S15, ev:ev-mv1ciqrf-016a0687). The buyer did receive and pay for part of the plan, so the aggregate misstates it. A related transient case: reserve losing the race gives 'cancelled' until the replan lands (S20).",
+          "evidence": [
+            "ev:ev-mv1ciqrf-016a0687",
+            "artifact:.eccode/artifacts/design/spec.md#open-questions"
+          ],
+          "recommendation": "Resolved when OQ-D2's row gives a state that does not claim the whole purchase was cancelled. For example, keep 'collected' or 'purchase_confirmed' with a message naming the refunded order, or use an explicitly named extension. The derive test should assert it."
+        },
+        {
+          "id": "F-TR-6",
+          "severity": "minor",
+          "title": "A void rejected because the authorization was captured is recorded as void_failed while money is captured",
+          "detail": "Void rule step 6: 'rejected -> read the authorization: VOIDED -> voided, else keep authorized with void_failed = 1'. If the read shows CAPTURED (a late capture from a fenced or stalled sender landed after a read showed none; see SEC-18), the operation still says 'authorized' although the buyer was charged. refund_order only accepts 'captured' under an 'executed' plan, so no tool can refund it. The derivation escalates it (row 2), so it is not silent, but it is stranded.",
+          "evidence": [
+            "artifact:.eccode/artifacts/design/spec.md#void-rule-arch-22-resolved",
+            "artifact:.eccode/artifacts/design/spec.md#admin-routes-role-admin"
+          ],
+          "recommendation": "Resolved when a void-result read that shows CAPTURED moves the operation to 'captured' and the compensating-plan refund hook queues so:<id>:refund:1, with a fake-adapter test (capture applied after the void intent)."
+        },
+        {
+          "id": "F-TR-7",
+          "severity": "minor",
+          "title": "Saga step 3 behaviour for an operation in capture_pending or unknown after takeover is not stated",
+          "detail": "A pause sets lease_until = now, so reconciler step 5 takes the plan over on every tick (the epoch grows) and resumes 'for the first operation not captured'. That operation is the capture_pending or unknown one. The start CAS refuses (the call is not a fresh intent), so nothing is double-sent, but the spec does not say that step 3 must re-pause without sending, nor that takeover should skip plans whose only open item is pending or unknown.",
+          "evidence": [
+            "artifact:.eccode/artifacts/design/spec.md#payment-saga-with-lease-fencing-arch-23-arch-26-resolved"
+          ],
+          "recommendation": "Resolved when step 3 states that an operation in capture_pending or unknown pauses the saga without a send, and the reconciler takes over a paused plan only once that operation is resolved. RS-22's PENDING case should assert that the epoch does not grow per tick."
+        },
+        {
+          "id": "F-TR-8",
+          "severity": "minor",
+          "title": "RS-20 test attributes provider calls by pid, which cannot see losers in the winner's process",
+          "detail": "rs20-two-process-execute asserts 'zero provider calls attributed to the losers' pids'. Four of the nine losers run in the winner's process, so a stray call from one of them would be counted as the winner's.",
+          "evidence": [
+            "artifact:.eccode/artifacts/design/spec.md#testing-strategy"
+          ],
+          "recommendation": "Resolved when the test also asserts the exact total of fake_paypal_calls for the run: N getAuthorization reads plus N captures, and nothing else."
+        },
+        {
+          "id": "F-TR-9",
+          "severity": "minor",
+          "title": "Traceability gaps: RS-36 lacks its [I] inspection; RS-03's [D] ambiguous-image half names no test",
+          "detail": "The traceability check (ev:ev-mv1cik0q-01d57f54) finds all 45 ids exactly once, each with a section and a test. It warns that RS-36's row omits the brief's [I] tag. RS-03's row lists degraded-path faults for [D] but not the ambiguous-image assertion, which test/eval/extraction-fake.test.js would cover.",
+          "evidence": [
+            "ev:ev-mv1cik0q-01d57f54",
+            "artifact:.eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria"
+          ],
+          "recommendation": "Resolved when the RS-36 row names its inspection and the RS-03 row names the [D] ambiguous-image test."
+        },
+        {
+          "id": "F-TR-10",
+          "severity": "minor",
+          "title": "Per-customer rate limit check and insert are not stated to be atomic across processes",
+          "detail": "Runtime controls step 1 counts rate_events and then inserts, but only the budget step says 'in one transaction'. Two processes can each count 9 and both insert.",
+          "evidence": [
+            "artifact:.eccode/artifacts/design/spec.md#ai-llm-design"
+          ],
+          "recommendation": "Resolved when the rate check and insert run in one BEGIN IMMEDIATE transaction, as the budget step does."
+        },
+        {
+          "id": "F-TR-11",
+          "severity": "minor",
+          "title": "Compensated plans leave supplier orders 'confirmed'",
+          "detail": "Fulfilment allows -> cancelled only before the claim, so after CAPTURE_FAILED or post-claim AUTHORIZATION_EXPIRED the orders stay 'confirmed' and the supplier dashboard still shows a live order.",
+          "evidence": [
+            "artifact:.eccode/artifacts/design/spec.md#payment-saga-with-lease-fencing-arch-23-arch-26-resolved"
+          ],
+          "recommendation": "Resolved when the supplier and customer views derive a 'cancelled (payment failed)' presentation for orders of a non_executable plan, or the fulfilment machine adds the edge (a brief change to raise with the orchestrator)."
+        },
+        {
+          "id": "F-TR-12",
+          "severity": "minor",
+          "title": "Model spend stored as REAL dollars",
+          "detail": "model_spend.reserved_usd and actual_usd are REAL, and the budget check compares float sums against the budget. Near the boundary the result depends on rounding.",
+          "evidence": [
+            "artifact:.eccode/artifacts/design/spec.md#002_requestssql"
+          ],
+          "recommendation": "Resolved when spend is stored as INTEGER micro-dollars (or the comparison is stated with a fixed rounding), with the NFR6 boundary case asserted."
+        },
+        {
+          "id": "F-TR-13",
+          "severity": "info",
+          "title": "Wire schema acceptance by the CLI --json-schema and the API is verified only at the first live run",
+          "detail": "I confirmed that every pinned flag exists (ev:ev-mv1cirha-01fe9dfc) and re-ran the designer's stream-json constraint probe (ev:ev-mv1citom-01b59d5c). Whether $defs/$ref and anyOf-with-null schemas are accepted is not exercised offline, and a rejection would send every live extraction to the degraded path.",
+          "evidence": [
+            "ev:ev-mv1cirha-01fe9dfc",
+            "ev:ev-mv1citom-01b59d5c",
+            "artifact:.eccode/artifacts/design/spec.md#external-facts-used-source-and-date"
+          ],
+          "recommendation": "Make schema acceptance an explicit assertion of the cli-image-smoke case and of the first API run, and have the live report record it."
+        }
+      ],
+      "resolvedFindings": [],
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "id": "rev-mv1cta5m-0114480d",
+      "gate": "design",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-09T19:24:10.282Z",
+      "submissionId": "sub-mv1c60sc-01174690"
     }
   },
   "rejectedReviews": [],
@@ -2573,8 +3402,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-09T19:07:08.256Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T19:24:54.379Z",
+      "durationMinutes": 17.77,
+      "costUsd": null,
+      "tokens": 298491,
+      "note": null,
+      "usageReported": true
     },
     "run-mv1c7dmr-01d56fb8": {
       "id": "run-mv1c7dmr-01d56fb8",
@@ -2590,6 +3425,15 @@
       "tokens": 172420,
       "note": null,
       "usageReported": true
+    },
+    "run-mv1cu88k-016af1d2": {
+      "id": "run-mv1cu88k-016af1d2",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T19:24:54.466Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -2819,8 +3663,8 @@
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 104.87,
-    "tokens": 1420818
+    "runtimeMinutes": 122.64,
+    "tokens": 1719309
   },
   "delivery": null
 }
