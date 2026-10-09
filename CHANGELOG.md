@@ -24,7 +24,7 @@ This branch (`claude/funny-feynman-rt1io9`) starts from the full `claude/brave-b
 - `docs/architecture.md` "Record compatibility" and `docs/usage.md` "Releases and compatibility".
 - `docs/final-report.md` §5 records what this increment closed and diagnoses Groundwork's cosmetic `null` (native `append` with a `null` child) without editing the delivered record.
 - `orchestrate` skill §7: a missing review, check or handoff is the orchestrator's to dispatch; the user is asked only for `USER_AUTH_REQUIRED` actions and scope or compliance questions (the rule the round-2 E3 escalation violated).
-- Three hand-over packages so that each open item closes with one reply: `docs/sign-off.md` (product-owner decisions with the exact `--actor user` commands), `eval/suite/round3-protocol-DRAFT.md` (a new, pre-registrable claim for a third evaluation round, not a rescue of R7) and `docs/security-review-request.md` (scope and method for an outside human review).
+- Three hand-over packages so that each open item closes with one reply: `docs/sign-off.md` (product-owner decisions with the exact `--actor user` commands), `eval/suite/round3-protocol-DRAFT.md` (a new, pre-registrable claim for a third evaluation round, not a rescue of R7) and `docs/security-review-request.md` (scope and method for an outside human review). `docs/review-bundle-task.md`: the brief for reading the review-evidence bundle on the machine that holds it (it was unreachable from the cloud session).
 
 ### Tests
 - 155 (136 on the base branch, plus 5 record-replay tests, 3 delivery/CLI tests, 2 rework tests and 9 red-team regressions).
