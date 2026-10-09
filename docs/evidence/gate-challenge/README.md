@@ -13,7 +13,7 @@
 
 - Corrections: three document revisions by fresh `product-architect`, `technical-designer` and `delivery-lead` sessions, and one implementation fix by a fresh `backend-engineer` session that claimed the reset task, added regression tests and resubmitted with `--responds-to`.
 - **Engine probes, all refused:** a gate started before its predecessor was approved; a design missing required sections (`MISSING_SECTIONS`); the design author approving their own design; an approval without evidence; a task claimed before its phase gate started.
-- Cost $1.37 over 12 sessions. `project-record/` is the complete, hash-chained record (53 events; `eccode audit` passes: copy it to a directory as `.eccode` to re-check). Session transcripts are in `sessions/`.
+- Cost $1.37 over 12 sessions. `project-record/` is the complete, hash-chained record (53 events; `eccode audit` passes when the record and the approved files are re-assembled: `mkdir /tmp/r3 && cp -r run5-complete/{src,test,package.json} /tmp/r3/ && cp -r run5-complete/project-record /tmp/r3/.eccode && node bin/eccode.js audit --root /tmp/r3`; the audit also compares the approved files with the record, so the record alone reports them as deleted). Session transcripts are in `sessions/`.
 
 ### Were the planted defects found? (manual reading, not the keyword heuristic in `summary.json`)
 | Planted defect | Named in the first rejection? |
