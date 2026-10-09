@@ -1,0 +1,52 @@
+# Defeat-the-narrowing probes against /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/guardfix/scripts/hooks/guard.js
+# node v22.22.0; 23 probes; 4 mismatches
+
+section | id | role | tool | decision | expect | ok | note | reason
+DEFEAT-NARROWING | assign-value-record | main | Bash | deny | deny | ok | assignment value names the record | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | computed-operand-split | main | Bash | deny | deny | ok | computed link operand | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | cmdsubst-operand | main | Bash | deny | deny | ok | command substitution operand (dynamic) | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | cmdsubst-pwd | main | Bash | deny | deny | ok |  | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | eval-link | main | Bash | deny | deny | ok | link built inside eval | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | array-link | main | Bash | deny | deny | ok | link verb/operands in an array | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | assign-pwd-var | main | Bash | deny | deny | ok |  | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | backtick-operand | main | Bash | deny | deny | ok | backtick is dynamic | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | param-default | main | Bash | deny | deny | ok | dynamic default | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | literal-record-operand | main | Bash | deny | deny | ok | bare literal .eccode operand | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | literal-record-abs | main | Bash | deny | deny | ok | literal absolute .eccode operand | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+DEFEAT-NARROWING | chained-alias-literal | main | Bash | allow | deny | MISMATCH | HOLE if allow: b->a->.eccode; operands a,b literal and record-free | 
+DEFEAT-NARROWING | chained-alias-cp-s | main | Bash | allow | deny | MISMATCH | HOLE if allow | 
+DEFEAT-NARROWING | chained-alias-memory | main | Bash | allow | deny | MISMATCH | HOLE if allow | 
+DEFEAT-NARROWING | chained-write-direct | main | Bash | deny | deny | ok | control: direct write through the existing link is caught by realize | a/state.json is, or lies under, a symbolic link resolving to /tmp/eccode-test-x3L2nO/.eccode/state.json, which is part o
+DEFEAT-NARROWING | twohop-preexisting-write | main | Bash | deny | deny | ok | control: resolvable two-hop, caught | c/state.json is, or lies under, a symbolic link resolving to /tmp/eccode-test-x3L2nO/.eccode/state.json, which is part o
+DEFEAT-NARROWING | ok-stamp | main | Bash | allow | allow | ok |  | 
+DEFEAT-NARROWING | ok-touch | main | Bash | allow | allow | ok |  | 
+DEFEAT-NARROWING | ok-two-links | main | Bash | allow | allow | ok |  | 
+DEFEAT-NARROWING | ok-rm-build | main | Bash | allow | allow | ok |  | 
+DEFEAT-NARROWING | ok-release | main | Bash | allow | allow | ok |  | 
+DEFEAT-NARROWING | ok-cp-l | main | Bash | allow | allow | ok | hard link + unrelated write | 
+DEFEAT-NARROWING | ok-computed-nonrecord | main | Bash | deny | allow | MISMATCH | computed operand but NOT a record -> should pass? (computed fires regardless) | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
+
+## Inputs
+DEFEAT-NARROWING/assign-value-record: "D=.eccode; ln -s $D lk && echo x > lk/state.json"
+DEFEAT-NARROWING/computed-operand-split: "D=$PWD; ln -s $D/.ecc\"ode\" lk && echo x > lk/state.json"
+DEFEAT-NARROWING/cmdsubst-operand: "ln -s \"$(echo .eccode)\" lk && echo x > lk/state.json"
+DEFEAT-NARROWING/cmdsubst-pwd: "ln -s \"$(pwd)/.eccode\" lk && echo x > lk/state.json"
+DEFEAT-NARROWING/eval-link: "eval 'ln -s \"$PWD/.eccode\" lk'; echo x > lk/state.json"
+DEFEAT-NARROWING/array-link: "a=(ln -s \"$PWD/.eccode\" lk); \"${a[@]}\"; echo x > lk/state.json"
+DEFEAT-NARROWING/assign-pwd-var: "D=$PWD; E=.eccode; ln -s $D/$E lk && echo x > lk/state.json"
+DEFEAT-NARROWING/backtick-operand: "ln -s `pwd`/.eccode lk && echo x > lk/state.json"
+DEFEAT-NARROWING/param-default: "ln -s \"${X:-$PWD/.eccode}\" lk && echo x > lk/state.json"
+DEFEAT-NARROWING/literal-record-operand: "ln -s .eccode lk && echo x > lk/state.json"
+DEFEAT-NARROWING/literal-record-abs: "ln -s /tmp/eccode-test-x3L2nO/.eccode lk && echo x > lk/state.json"
+DEFEAT-NARROWING/chained-alias-literal: "ln -s a b && echo x > b/state.json"
+DEFEAT-NARROWING/chained-alias-cp-s: "cp -s a b && echo x > b/config.json"
+DEFEAT-NARROWING/chained-alias-memory: "ln -s a b && echo x > b/memory/m.json"
+DEFEAT-NARROWING/chained-write-direct: "echo x > a/state.json"
+DEFEAT-NARROWING/twohop-preexisting-write: "echo x > c/state.json"
+DEFEAT-NARROWING/ok-stamp: "ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp"
+DEFEAT-NARROWING/ok-touch: "ln -s p q && touch r"
+DEFEAT-NARROWING/ok-two-links: "ln -s p q && ln -s s t"
+DEFEAT-NARROWING/ok-rm-build: "ln -s p q; rm -rf dist"
+DEFEAT-NARROWING/ok-release: "ln -sf dist/current releases/latest && echo ok > releases/latest.txt"
+DEFEAT-NARROWING/ok-cp-l: "cp -l a2 b2 && echo x > c2"
+DEFEAT-NARROWING/ok-computed-nonrecord: "D=$PWD; ln -s $D/src/x y && echo x > z"

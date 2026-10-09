@@ -300,3 +300,41 @@ $ bash repro3.sh / repro3b.sh → the H1 clobber/forge are now denied at the gua
 ```
 
 Nothing committed; worktree clean.
+
+---
+
+# Re-review of beb7fbb, branch `eccode/guard-repairs`
+
+**Verdict: changes requested.** The I1 over-denials for the main session are fixed (record-free build/release lines now pass), and every narrowing vector the coordinator named is caught. But the narrowing reintroduced a record-clobber bypass that 9c4d5aa prevented: a link whose operand is a **pre-existing innocuous symlink to the record** (created in an earlier turn, which is itself allowed) carries no record name and no computed operand, so the rule does not fire, and the orchestrator clobbers the record in the next command. Proven live.
+
+- Commit: `beb7fbb`. Worktree clean before and after.
+- Evidence added: `probes6.js`/`results6.txt`/`probes6-output.txt` (23 defeat-the-narrowing probes), `repro4.sh`/`repro4-output.txt` (live clobber + 9c4d5aa comparison), `probes4-beb7fbb.txt`, `probes5-beb7fbb.txt`, `tests-beb7fbb.txt`.
+- Tests: six guard files **76/76 pass**; `npm run check` **246/246 pass**, exit 0.
+
+## Finding
+
+| # | Severity | Summary |
+|---|---|---|
+| J1 | **Blocking** | Chained alias through a pre-existing symlink defeats the narrowed rule. Turn 1 (allowed, single target): `ln -s "$PWD/.eccode" a` creates `a -> .eccode`. Turn 2: `ln -s a b && echo FORGED > b/state.json` → **allow** — the `ln` operands `a`/`b` are literal and contain no `.eccode`, so `mentionsRecord` is false and `link.computed` is false; `b` does not exist when the guard runs, so `realize(b/state.json)` falls back to the lexical path and the target check misses. bash then makes `b -> a -> .eccode` and clobbers the real `state.json` (proven: `repro4-output.txt`, 1995 → 7 bytes, first line `FORGED`). `cp -s a b && … > b/config.json` and `ln -s a b && … > b/memory/m.json` likewise allow (`probes6.js` `chained-alias-*`). The same turn-2 command is **denied** on 9c4d5aa (`repro4-output.txt`), so this is a regression introduced by the I1 narrowing. The orchestrator (main session) has no ownership backstop, so it is exposed; a role is incidentally caught only when `b/**` is outside its claim. This re-opens the H1 class of control-#1 bypass via a two-step sequence. Fix: in `createsLink`, also `realize()` each link operand and flag when it resolves (through existing links) into a record, then fire on `found && (mentionsRecord || computed || operandResolvesToRecord)`. For `ln -s a b`, `realize(a)` → `.eccode` → record → deny; `ln -s p q` with a non-record `p` still passes. This closes J1 while keeping the record-free build lines allowed. |
+| J2 | Low (over-denial, acceptable residual) | The `|| link.computed` clause denies any multi-write line with a **computed** link operand even when no record is involved: `D=$PWD; ln -s $D/src/x y && echo x > z` → **deny** (`probes6.js` `ok-computed-nonrecord`). This is the price of catching dynamic record operands (`ln -s "$(pwd)/.eccode" lk`), which the guard cannot resolve. Acceptable as a residual; the operand-realize fix for J1 would let it be tightened for the literal-prefix case but a fully dynamic operand must stay conservative. Note it in the threat model. |
+
+## Narrowing vectors that are correctly caught (probes6.js, all deny)
+
+Assignment value naming the record (`D=.eccode; ln -s $D lk && …`), computed split operand (`ln -s $D/.ecc"ode" lk`), command substitution (`$(echo .eccode)`, `$(pwd)/.eccode`), backtick (`` `pwd`/.eccode ``), parameter default (`${X:-$PWD/.eccode}`), `eval 'ln -s "$PWD/.eccode" lk'`, the verb/operands hidden in an array (`a=(ln -s "$PWD/.eccode" lk); "${a[@]}"`), two-variable build (`D=$PWD; E=.eccode; ln -s $D/$E lk`), and the bare and absolute literal record operands (`ln -s .eccode lk`, `ln -s <abs>/.eccode lk`). A direct write through an existing record link (`echo x > a/state.json`) and a resolvable two-hop (`echo x > c/state.json`, `c -> a -> .eccode`) are caught by `realize` as before.
+
+## I1 over-denials fixed (main session)
+
+`ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp`, `ln -s p q && touch r`, two symlinks, `ln -s p q; rm -rf dist`, `ln -sf dist/current releases/latest && echo ok > releases/latest.txt`, `cp -l a2 b2 && echo x > c2` all **allow** now (`probes6.js` `ok-*`). `probes5.js` re-run: the one remaining "LINK-RULE" mismatch (`devops-ln-build-role`) is the **pre-existing ownership rule** denying a `devops-engineer` with no claim on `releases/**`, not the link rule — correct, as the coordinator noted; my probe's expectation was wrong. H1/H2 originals (`probes4.js`) still **0 mismatches**; `repro3`/`repro3b` H1 clobber/forge still denied.
+
+## Commands and outputs
+
+```
+$ cd <worktree> && git log --oneline -1 → beb7fbb Guard: the link-and-write rule fires only when the line names a record or the link's operands are computed …
+$ node --test <six guard files>        → # pass 76 / # fail 0
+$ npm run check                        → # tests 246 / # pass 246 / # fail 0, exit 0
+$ node probes6.js → 23; 4 mismatches: J1 (chained-alias ×3 allow), J2 (ok-computed-nonrecord deny) (results6.txt)
+$ bash repro4.sh  → beb7fbb: chained-alias write ALLOW, bash clobbered state.json 1995→7; 9c4d5aa: same command DENY (repro4-output.txt)
+$ node probes4.js → 0 mismatches ; node probes5.js → 1 mismatch (pre-existing ownership, not the link rule)
+```
+
+Nothing committed; worktree clean.
