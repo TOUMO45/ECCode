@@ -1,0 +1,22 @@
+== tokenizer on 4fc7e87 (__setPlatform exported: undefined )
+"echo x > .eccode/drafts/.\\./state.json" -> [["echo","x",">",".eccode/drafts/../state.json"]]
+"echo x > .eccode/drafts/.\\./.\\./src/server.js" -> [["echo","x",">",".eccode/drafts/../../src/server.js"]]
+"echo x > src/api/.\\./core/x.js" -> [["echo","x",">","src/api/../core/x.js"]]
+"cd /tmp && echo x > \"C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\eccode-outside-X\\notes.txt\"" -> [["cd","/tmp"],["echo","x",">","C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\eccode-outside-X\\notes.txt"]]
+"cd /tmp && echo x > C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\eccode-outside-X\\notes.txt" -> [["cd","/tmp"],["echo","x",">","C:UsersRUNNER~1AppDataLocalTempeccode-outside-Xnotes.txt"]]
+"echo a\\ b" -> [["echo","a b"]]
+"echo \\$x" -> [["echo","$x"]]
+"a \\\\ b" -> [["a","\\","b"]]
+"echo a \\\nb" -> [["echo","a","b"]]
+"find . -exec rm {} \\;" -> [["find",".","-exec","rm","{}",";"]]
+"echo x > \"C:\\Users\\me dir\\.eccode\\memory\\records\\x.json\"" -> [["echo","x",">","C:\\Users\\me dir\\.eccode\\memory\\records\\x.json"]]
+"node \"C:\\proj\\.claude\\eccode\\bin\\eccode.js\" gate reopen design --actor user --resolution ok" -> [["node","C:\\proj\\.claude\\eccode\\bin\\eccode.js","gate","reopen","design","--actor","user","--resolution","ok"]]
+
+== CI 131 on the runner, quoted target, path.win32:
+target: C:\Users\RUNNER~1\AppData\Local\Temp\eccode-outside-X\notes.txt | isAbsolute: true | rel from project: ../eccode-outside-X/notes.txt
+ECCODE_WORD on target: false | eccodeActors: {"actors":[],"problems":[]}
+
+== the .\. targets as bash and the guard now both read them, resolved with path.win32 and path.posix:
+".eccode/drafts/../state.json" -> win32: .eccode/state.json | posix: .eccode/state.json
+".eccode/drafts/../../src/server.js" -> win32: src/server.js | posix: src/server.js
+"src/api/../core/x.js" -> win32: src/core/x.js | posix: src/core/x.js

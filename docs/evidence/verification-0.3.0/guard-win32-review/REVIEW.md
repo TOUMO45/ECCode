@@ -145,3 +145,48 @@ All from `/home/user/ECCode` unless noted; `$S` = `/tmp/claude-0/-home-user-ECCo
 ## Environment note (affects how to read the evidence files)
 
 While this review was running, the shared checkout was switched from `eccode/win32-guard-paths` (at `cde0b84`) to `claude/serene-heisenberg-h9o5vo` by the other session, which then made commits `84a670b`, `8998270` and `cb7ce98` there; those commits swept the then-untracked `probe-*.js`, `probe-*.out`, `validate.out` and `tests.out` from this directory into its tree (at the time of writing only `REVIEW.md` is untracked; `git ls-files` of this directory lists the other eight). The first test run I made (16:18) executed against the `5da8913` guard with no F9 file and was discarded. Every result cited above was regenerated from the `git archive cde0b84` export, and the `.out` files in this directory were overwritten with those runs before they were committed by the other session; a masked comparison (`compare-outs.js` in my scratchpad: temp-directory names and the validate file count masked) shows the committed `probe-regexes.out`, `probe-tokenizer.out`, `probe-hook.out` and `validate.out` identical to the regenerated ones. The modified tracked files that `git status` shows under `docs/evidence/verification-0.3.0/probes/`, `.../results/` and `examples/rescuestock/.eccode/` belong to the other session's concurrent work; this review did not open or edit them. No tracked file was edited by this review; the temporary `scripts/hooks/guard-old.js` was deleted.
+
+---
+
+# Re-review of 4fc7e87 (branch `eccode/win32-guard-paths`, worktree in the reviewer's scratchpad `repair/`)
+
+- Commit: `4fc7e87fc30853c2ee037f457c804f5381f44df9` — "Guard: keep POSIX tokenizing on every platform; the Windows repair is the raw-command record check and the CLI word pattern (review F-1)". Parent: `cde0b84`. `guard.js` blob `06a0634`.
+- Change: the win32 tokenizer branch, `WIN_PATH_CHAR`, the platform variable, `ECCODE_GUARD_PLATFORM` and `__setPlatform` are removed; `splitCommands` is the `5da8913` tokenizer again. Kept: `RECORD_AREA`/`RECORD_FILES` with both separators applied to the raw command, `ECCODE_WORD` with both separators, the module export for tests. `tests/review-F4-F5-guard.test.js` quotes the absolute path of the "cd then absolute write outside" case. `tests/review-F9-win32-guard.test.js` rewritten (4 tests): the dot-backslash-dot cases are pinned as denials, POSIX tokenizing asserted, actor binding by a quoted Windows path through the hook, an unquoted Windows path asserted as "not an invocation".
+
+## Verdict: approve
+
+F-1 is closed by removing its cause rather than patching around it: the guard again reads a command exactly as the shell behind the Bash tool does on every platform, so the file the guard judges is the file bash opens. F-2 is moot (the override no longer exists) and F-3 is corrected in the message and the code comment. No new escape found; the earlier good cases hold. No blocking finding remains.
+
+## (1) Hook probe re-run — `probe-hook-4fc7e87.out` (same 30 cases; `old` = 5da8913, `new` = 4fc7e87; the `new/win32` column is now identical to `new` because the override is gone)
+
+F-1 cases, denied again, with the same reason as the parent commit:
+
+```
+# drafts/.\. to record (Git Bash reads .\. as ..), reviewer      new: deny: .eccode/state.json is part of the ECCode record ...
+# drafts/.\. to record, backend-engineer                         new: deny: .eccode/state.json is part of the ECCode record ...
+# drafts/.\./.\. to src/server.js, reviewer                      new: deny: technical-reviewer reviews/designs but does not edit project files ...
+```
+
+Earlier good cases still hold (old → new): Windows-path memory write from main and from a reviewer: allow → deny (record); doubled separator `.eccode\\state.json`: deny; `$HOME\.eccode\...`, `%USERPROFILE%\.eccode\...`, a quoted path with a space, UNC: all deny as record writes (old denied them for ownership reasons or allowed them from main); `cat C:\...\records\x.json`: allow; `echo \$x > .eccode/drafts/a.txt`: allow; inline `ECCODE_TEST=1`: deny; `echo x > src/ser\ ver.js` (reviewer): deny. The two cases that read differently from cde0b84 are both correct under Git Bash: `echo x > .eccode\drafts\a.json` (reviewer) is denied, since bash writes `.eccodedraftsa.json` at the project root, not a draft; `node C:\proj\.claude\eccode\bin\eccode.js ... --actor user` unquoted is allowed, since bash would run `C:proj.claudeeccodebineccode.js`, which does not exist (the quoted form is denied: F9 test 33, and `probe-tokenizer-4fc7e87.out` shows the quoted word intact). Pre-existing residuals R-1..R-5 are unchanged and out of this commit's scope.
+
+Tokenizer (`probe-tokenizer-4fc7e87.js` → `.out`): `.eccode/drafts/.\./state.json` → `.eccode/drafts/../state.json` → `.eccode/state.json` under both `path.win32` and `path.posix`; the other two F-1 strings resolve to `src/server.js` and `src/core/x.js` under both. `a\ b`, `\$x` (not dynamic), `\\`, line continuation and `\;` behave as bash. `__setPlatform` is no longer exported. Regex probe (`probe-regexes-4fc7e87.out`): 89 of 90 rows as expected; the one `FAIL` is the reviewer's own wrong expectation on `.eccode/state.json.` (R-4), unchanged from the first review.
+
+## (2) Tests and validate in the 4fc7e87 worktree — `tests-4fc7e87.out`, `validate-4fc7e87.out`
+
+```
+node --test tests/review-F9-win32-guard.test.js tests/review-F4-F5-guard.test.js tests/hooks-install.test.js tests/redteam-regressions.test.js tests/security-regressions.test.js
+# tests 67 / # pass 67 / # fail 0 / # skipped 0   (F9 = tests 31–34)
+npm run validate
+Toolkit validation passed: 12 agents, 7 skills, 7 commands, hooks wired, package 0.3.0 (291 files).   exit 0
+```
+
+## (3) Windows CI tests 131 and 133, reasoned for the runner (not run)
+
+- 133 (`echo "{}" > C:\...\eccode-home-X\.eccode\memory\records\mem-sd-x.json`, every context): `SHELL_WRITE` matches `> ... \.eccode\memory\` on the raw command before tokenizing; platform-independent, shown by the probe (`old: allow`, `new: deny`). Of the sub-cases that never ran on 5da8913: `cp`, `sed -i`, `rm`, `node -e`, `python3 -c` are raw-regex / `CODE_WRITE` denials; `cat <memory>` is allowed; the reviewer's `echo x > <home>\notes.md` is unquoted, so it tokenizes to `C:UsersRUNNER~1...notes.md`, there is no `cd`, and `path.win32.resolve(cwd, 'C:Users...')` treats it as drive-relative, resolved against the process's current directory on `C:` rather than the hook `cwd` (the temp project). That lands outside the project and is allowed, which the test expects. This is the one assertion whose outcome depends on `path.win32`'s drive-relative handling on the runner; I rate a failure there unlikely (the resolved path would have to fall under the temp project directory, which is not the process cwd) but it is the assertion the Windows run has yet to show. Expected overall: pass.
+- 131, the formerly failing sub-case now `cd /tmp && echo x > "C:\Users\RUNNER~1\...\eccode-outside-X\notes.txt"`: double quotes keep the backslashes (tokenizer probe), `path.win32.isAbsolute` is true, `path.win32.relative(project, target)` is `../eccode-outside-X/notes.txt` → outside the project → no decision; the `eccode-outside` substring triggers `eccodeActors`, which finds no CLI word (`ECCODE_WORD` false on the target, actors `[]`, problems `[]`). The other seven sub-cases contain no backslashes and passed on 5da8913. Expected: pass. The test's new comment is right about the shell: unquoted, Git Bash would open `C:UsersRUNNER~1...notes.txt`, a relative name, so the old expectation was wrong for Windows.
+- `tests/hooks-install.test.js:142` (`--act''or us\er`) is back to the POSIX reading (`user` → "reserved for a person"), as on 5da8913.
+- Cannot be confirmed without a Windows run; keep the job `continue-on-error` until it passes.
+
+## (4) Files added by this re-review
+
+`probe-hook-4fc7e87.out`, `probe-regexes-4fc7e87.out`, `probe-tokenizer-4fc7e87.js`, `probe-tokenizer-4fc7e87.out`, `tests-4fc7e87.out`, `validate-4fc7e87.out`, and this section. The first-review probe scripts were copied into the worktree for the run and removed afterwards together with the temporary `guard-old.js` copy there. No branch was switched in `/home/user/ECCode`; no tracked file was edited.

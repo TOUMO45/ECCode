@@ -1,0 +1,180 @@
+
+# win path memory write (CI 133 shape)  [main]  want: deny
+  $ echo "{}" > C:\Users\me\.eccode\memory\records\mem-sd-x.json
+  old        : allow
+  new        : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+  new/win32  : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+
+# win path memory write, reviewer  [technical-reviewer]  want: deny
+  $ echo "{}" > C:\Users\me\.eccode\memory\records\mem-sd-x.json
+  old        : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+  new        : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+  new/win32  : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+
+# cd then absolute win path outside (CI 131 shape)  [technical-reviewer]  want: allow
+  $ cd /tmp && echo x > C:\Users\me\eccode-outside-ab\notes.txt
+  old        : deny: This command changes directory (cd/pushd/popd) and then writes the relative path "C:Usersm
+  new        : deny: This command changes directory (cd/pushd/popd) and then writes the relative path "C:Usersm
+  new/win32  : deny: This command changes directory (cd/pushd/popd) and then writes the relative path "C:Usersm
+
+# doubled separator  [technical-reviewer]  want: deny
+  $ echo x > .eccode\\state.json
+  old        : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+  new        : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+  new/win32  : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+
+# doubled separator, main  [main]  want: deny
+  $ echo x > .eccode\\state.json
+  old        : allow
+  new        : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+  new/win32  : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+
+# dot segment, reviewer  [technical-reviewer]  want: deny
+  $ echo x > .eccode/./state.json
+  old        : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+  new        : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+  new/win32  : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+
+# dot segment, main  [main]  want: deny (pre-existing gap expected)
+  $ echo x > .eccode/./state.json
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# drafts/.. to record, reviewer  [technical-reviewer]  want: deny
+  $ echo x > .eccode/drafts/../state.json
+  old        : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+  new        : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+  new/win32  : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+
+# drafts/.. to record, main  [main]  want: deny (pre-existing gap expected)
+  $ echo x > .eccode/drafts/../state.json
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# drafts/.\. to record (Git Bash reads .\. as ..), reviewer  [technical-reviewer]  want: deny
+  $ echo x > .eccode/drafts/.\./state.json
+  old        : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+  new        : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+  new/win32  : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+
+# drafts/.\. to record, backend-engineer  [backend-engineer]  want: deny
+  $ echo x > .eccode/drafts/.\./state.json
+  old        : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+  new        : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+  new/win32  : deny: .eccode/state.json is part of the ECCode record and is written only by the eccode CLI.
+
+# drafts/.\./.\. to src/server.js, reviewer  [technical-reviewer]  want: deny
+  $ echo x > .eccode/drafts/.\./.\./src/server.js
+  old        : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+  new        : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+  new/win32  : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+
+# $HOME win path  [learning-debugger]  want: deny
+  $ echo x > $HOME\.eccode\memory\records\x.json
+  old        : deny: learning-debugger has no claimed task. Claim one first (eccode task claim <id> --actor lea
+  new        : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+  new/win32  : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+
+# %USERPROFILE% win path  [learning-debugger]  want: deny
+  $ echo x > %USERPROFILE%\.eccode\memory\records\x.json
+  old        : deny: learning-debugger has no claimed task. Claim one first (eccode task claim <id> --actor lea
+  new        : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+  new/win32  : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+
+# quoted path with space  [learning-debugger]  want: deny
+  $ echo x > "C:\Users\me dir\.eccode\memory\records\x.json"
+  old        : deny: learning-debugger has no claimed task. Claim one first (eccode task claim <id> --actor lea
+  new        : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+  new/win32  : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+
+# UNC path  [learning-debugger]  want: deny
+  $ echo x > \\server\share\.eccode\state.json
+  old        : deny: learning-debugger has no claimed task. Claim one first (eccode task claim <id> --actor lea
+  new        : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+  new/win32  : deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+
+# uppercase .ECCODE outside (same file on NTFS/APFS)  [learning-debugger]  want: deny on case-insensitive FS (pre-existing gap expected)
+  $ echo x > ~/.ECCODE/memory/records/x.json
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# uppercase .ECCODE in project, main  [main]  want: deny on case-insensitive FS (pre-existing gap expected)
+  $ echo x > .ECCODE/state.json
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# rm -rf .eccode, main  [main]  want: deny (pre-existing gap expected)
+  $ rm -rf .eccode
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# rm -rf .eccode/memory, main  [main]  want: deny (pre-existing gap expected)
+  $ rm -rf .eccode/memory
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# eccode.cmd shim --actor user  [main]  want: deny (pre-existing gap expected)
+  $ eccode.cmd gate reopen design --actor user --resolution ok
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# eccode.cmd identity mismatch  [technical-reviewer]  want: deny (pre-existing gap expected)
+  $ eccode.cmd task complete api --actor backend-engineer --handoff h.json
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# win path eccode.js --actor user  [main]  want: deny
+  $ node C:\proj\.claude\eccode\bin\eccode.js gate reopen design --actor user --resolution ok
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# escaped blank target in project  [technical-reviewer]  want: deny
+  $ echo x > src/ser\ ver.js
+  old        : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+  new        : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+  new/win32  : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+
+# escaped $ not dynamic  [technical-reviewer]  want: allow
+  $ echo \$x > .eccode/drafts/a.txt
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# inline ECCODE_TEST=1  [main]  want: deny
+  $ ECCODE_TEST=1 eccode gate reopen design --actor user --resolution ok
+  old        : deny: The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCO
+  new        : deny: The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCO
+  new/win32  : deny: The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCO
+
+# inline ECCODE_TEST=1 with override  [main]  want: deny
+  $ ECCODE_TEST=1 ECCODE_GUARD_PLATFORM=linux eccode gate start design --actor orchestrator
+  old        : deny: The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCO
+  new        : deny: The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCO
+  new/win32  : deny: The guard cannot verify who this eccode command acts as: ECCODE_ACTOR / ECCODE_TEST / ECCO
+
+# reading a record  [learning-debugger]  want: allow
+  $ cat C:\Users\me\.eccode\memory\records\x.json
+  old        : allow
+  new        : allow
+  new/win32  : allow
+
+# draft with backslash  [technical-reviewer]  want: allow
+  $ echo x > .eccode\drafts\a.json
+  old        : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+  new        : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+  new/win32  : deny: technical-reviewer reviews/designs but does not edit project files; write drafts under .ec
+
+# platform override without ECCODE_TEST=1 must be ignored (target would read as relative + cd => deny if win32 were honoured... no: on linux a bare C:\ path tokenizes to C:Users..., which path.posix treats as relative; with a cd that is a deny)
+  $ cd /tmp && echo x > C:\Users\me\notes.txt  [technical-reviewer]
+  new, ECCODE_GUARD_PLATFORM=win32, ECCODE_TEST unset : deny: This command changes directory (cd/pushd/popd) and then writes the relative path "C:Usersm   (expected: deny = linux reading, override ignored)
+  new, ECCODE_GUARD_PLATFORM=win32, ECCODE_TEST=1     : deny: This command changes directory (cd/pushd/popd) and then writes the relative path "C:Usersm   (expected: allow = win32 reading)
+  new, ECCODE_GUARD_PLATFORM=linux, ECCODE_TEST=1     : deny: This command changes directory (cd/pushd/popd) and then writes the relative path "C:Usersm   (expected: deny)
