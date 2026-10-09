@@ -1,6 +1,6 @@
 {
-  "seq": 279,
-  "lastHash": "eeda645f0bdc24311a6d2efbae7581cb39e72e795086cfe9bf84652ec04f562f",
+  "seq": 281,
+  "lastHash": "563794837ff3ed5393ef9cd92cc5424ffb25ef613cfe7943825b689537aeb5ff",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -5902,6 +5902,48 @@
       "task": null,
       "recordedBy": "security-reviewer",
       "at": "2026-10-09T22:00:10.288Z"
+    },
+    "ev-mv1ii4ai-01f17e2d": {
+      "id": "ev-mv1ii4ai-01f17e2d",
+      "kind": "command",
+      "label": "reviewer: re-run of security-reviewer planner sweep (SEC-B-1 PLANNER_LIMIT on API-shaped input)",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-planner-sweep.mjs",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 81872,
+      "log": ".eccode/evidence/ev-mv1ii4ai-01f17e2d.log",
+      "logSha256": "52486a886499be8a5cc36a075aea050ac7bf59b636c36bfae6eda2ec6d3e52f9",
+      "logFileSha256": "57b2a3fa41208bad0e77ff6d9239b372d4315cbb94a5c7b2894a546e84c01ce0",
+      "outputTail": "availability      1 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 5.8 ms (qty=5000 maxPickups=5 budget=50000 compat=false deadline=false -> infeasible)\navailability     10 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 9.8 ms (qty=1000 maxPickups=1 budget=1 compat=true deadline=false -> infeasible)\navailability     20 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 72.5 ms (qty=10000 maxPickups=5 budget=50000 compat=true deadline=false -> infeasible)\navailability     30 per supplier: 540 runs, PLANNER_LIMIT 15 (C compatible: 15; default, C rejected: 0), max 213.9 ms (qty=5000 maxPickups=5 budget=null compat=true deadline=false -> PLANNER_LIMIT)\navailability     50 per supplier: 540 runs, PLANNER_LIMIT 24 (C compatible: 24; default, C rejected: 0), max 233.7 ms (qty=5000 maxPickups=5 budget=1000000 compat=true deadline=false -> PLANNER_LIMIT)\navailability    100 per supplier: 540 runs, PLANNER_LIMIT 75 (C compatible: 54; default, C rejected: 21), max 304.8 ms (qty=5000 maxPickups=5 budget=null compat=true deadline=false -> PLANNER_LIMIT)\navailability    200 per supplier: 540 runs, PLANNER_LIMIT 124 (C compatible: 86; default, C rejected: 38), max 205.4 ms (qty=5000 maxPickups=5 budget=1000000 compat=true deadline=false -> PLANNER_LIMIT)\navailability    500 per supplier: 540 runs, PLANNER_LIMIT 166 (C compatible: 91; default, C rejected: 75), max 229.0 ms (qty=10000 maxPickups=5 budget=1000000 compat=false deadline=false -> PLANNER_LIMIT)\navailability   1000 per supplier: 540 runs, PLANNER_LIMIT 164 (C compatible: 91; default, C rejected: 73), max 217.6 ms (qty=20000 maxPickups=5 budget=10000000 compat=true deadline=true -> PLANNER_LIMIT)\navailability 100000 per supplier: 540 runs, PLANNER_LIMIT 164 (C compatible: 91; default, C rejected: 73), max 195.6 ms (qty=10000 maxPickups=5 budget=null compat=true deadline=false -> PLANNER_LIMIT)\nsmallest availability (then quantity) that reached PLANNER_LIMIT: {\"avail\":30,\"qty\":5000,\"maxPickups\":5,\"budget\":null,\"allCompatible\":true,\"deadline\":false,\"ms\":213.9}\nworst single plan() call: 304.8 ms at availability 100 (qty=5000 maxPickups=5 budget=null compat=true deadline=false -> PLANNER_LIMIT)\nreproduction: 10000 cups + 10000 lids, 100 bundles at each supplier (A alone covers it), budget 10000000 cents, no deadline, maxPickups 5 -> PLANNER_LIMIT after 169.8 ms\ncontrol: the same request with maxPickups 1 -> feasible (A, 301000 cents) after 0.1 ms\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "f321ee5d80febfa1f834411d42a58854c32a8fbbe6246b83089413309b447752",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T22:03:27.226Z"
+    },
+    "ev-mv1iihtv-0176c6cd": {
+      "id": "ev-mv1iihtv-0176c6cd",
+      "kind": "command",
+      "label": "reviewer: re-run of security-reviewer config/db probe incl. SEC-B-2 REPLACE bypass and recursive_triggers control",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-config-db.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 254,
+      "log": ".eccode/evidence/ev-mv1iihtv-0176c6cd.log",
+      "logSha256": "bee018c18a05112249371ccec02f49c19bfca4cf1ba607fa475c36c2b3052df8",
+      "logFileSha256": "99bfc520c36b39572263968b49ddd4e6d2ef2f33f65626a6fd345677dfe4cf87",
+      "outputTail": "ok   keys outside the allow-list, Secret objects, arrays and functions never reach the line\nok   control characters (C0, C1, U+2028) stripped from msg and values\nok   string values truncated to 120 characters\nok   non-finite numbers dropped; a malformed requestId falls back\ninfo truncated requestRef (a value an allow-listed key could carry): 120 chars kept\n# E. Database: append-only triggers, partial UNIQUE indexes, transactions\ninfo connection PRAGMAs: journal_mode=wal foreign_keys=1 busy_timeout=5000 synchronous=1 recursive_triggers=0 trusted_schema=1\nok   audit_events refuses UPDATE, DELETE and UPSERT-update | UPDATE audit_events: refused (audit_events is append-only); DELETE audit_events: refused (audit_events is append-only); UPSERT DO UPDATE audit_events: refused (audit_events is append-only)\nREPRO INSERT OR REPLACE rewrites an existing audit_events row (the DELETE trigger does not fire: recursive_triggers is off) | INSERT OR REPLACE audit_events: ALLOWED; row 1 action now \"REWRITTEN\"\nREPRO plain REPLACE INTO also rewrites the audit row | REPLACE INTO audit_events: ALLOWED\nok   inventory_ledger refuses UPDATE and DELETE | UPDATE inventory_ledger: refused (inventory_ledger is append-only); DELETE inventory_ledger: refused (inventory_ledger is append-only)\nREPRO INSERT OR REPLACE rewrites an existing inventory_ledger row | INSERT OR REPLACE inventory_ledger: ALLOWED; delta_on_hand now 500\nok   control: with PRAGMA recursive_triggers=ON both REPLACE rewrites are refused and plain appends still work | INSERT OR REPLACE audit_events with recursive_triggers=ON: refused (audit_events is append-only); INSERT OR REPLACE inventory_ledger with recursive_triggers=ON: refused (inventory_ledger is append-only); plain INSERT of a new audit row with recursive_triggers=ON: ALLOWED\nok   partial UNIQUE offers_one_current and CHECK price_cents >= 0 hold | second active offer for one product: refused (UNIQUE constraint failed: offers.product_id); negative price: refused (CHECK constraint failed: price_cents >= 0)\nok   db.tx refuses nesting and a returned promise, and rolls the synchronous part back | TX_NESTED TX_ASYNC row=undefined\n# F. Migration checksum refusal\nok   a changed applied migration (even a comment) refuses startup | MIGRATION_CHECKSUM_MISMATCH\n# G. File modes (SEC-14)\ninfo fresh start modes: {\"data/\":\"700\",\"data/uploads/\":\"700\",\"app.db\":\"600\",\"app.db-shm\":\"600\",\"app.db-wal\":\"600\"}\nok   npm start equivalent: data/ and uploads/ 0700; app.db, -wal and -shm 0600\ninfo pre-existing data/ (0755) stays 755; app.db 600; uploads 700\ninfo process umask after startApp: 77\n\nALL CONFIG/DB EXPECTATIONS HELD\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "f321ee5d80febfa1f834411d42a58854c32a8fbbe6246b83089413309b447752",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T22:03:44.777Z"
     }
   },
   "reviews": {
