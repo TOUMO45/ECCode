@@ -16,6 +16,16 @@ export function h(tag, attrs = {}, ...children) {
   return el;
 }
 
+/** Append children to an existing element, skipping null/undefined/false like h() does.
+ *  Native Element.append would render a null child as the literal text "null". */
+export function appendAll(el, ...children) {
+  for (const c of children.flat()) {
+    if (c === undefined || c === null || c === false) continue;
+    el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+
 export function clear(el) { el.replaceChildren(); return el; }
 
 const $ = (id) => document.getElementById(id);

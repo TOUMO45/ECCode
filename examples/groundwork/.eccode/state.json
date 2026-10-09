@@ -1,6 +1,6 @@
 {
-  "seq": 731,
-  "lastHash": "2114e3ee8b28861031e5da22fa157e222ca5ae75f2b4ef36db6035d79cbd3e50",
+  "seq": 786,
+  "lastHash": "23eb584733609a014bcdc250b23f8e3b41d08d2392f8e714a8634b5a4a5ba39e",
   "project": {
     "name": "Groundwork",
     "idea": "Groundwork: incident postmortems the AI cannot make up. Full scope and acceptance criteria D1-D10 in SCOPE.md (carry unchanged into architecture brief).",
@@ -19,6 +19,7 @@
     "phase:rework-2",
     "phase:rework-3",
     "phase:rework-4",
+    "phase:rework-5",
     "verification"
   ],
   "gates": {
@@ -3865,17 +3866,939 @@
           ],
           "respondsTo": null,
           "notes": "Rewritten report and checklist. Code state HEAD 6eb29f4 plus uncommitted rework-4-reviewed changes (22 deletions, README.md, docs/eval-results.md). Audit OK ev-mv0apqho-01ab7df8; npm test, test:browser, test:live, verifier eval fresh; clean-clone D9 passes only with the uncommitted diff applied (ev-mv0ashe0-0144607e), fails at HEAD as committed (ev-mv0as846-017d3f5d). No human acceptance claimed; RISK-1, 2, 10, 14 remain open."
+        },
+        {
+          "id": "sub-mv0tmsvr-01a69cbd",
+          "actor": "delivery-lead",
+          "at": "2026-10-09T10:27:15.256Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/verification/release-checklist.md",
+              "sha256": "7478aad78b5096a300a84c1727dbcc32a2c84b87fa6ad0c26fc9dec552011f80"
+            },
+            {
+              "path": ".eccode/artifacts/verification/report.md",
+              "sha256": "3d0bb6c6bf25443791ac733f92a45ef686cdf60d4908e5fe628c78647952c50a"
+            },
+            {
+              "path": ".gitignore",
+              "sha256": "9d3790802efc76d9eabcdb3dc7418ba2dba674450c3c89896fd4f8c283f9eb1e"
+            },
+            {
+              "path": "README.md",
+              "sha256": "06ddea28ede181118c54674a2b1c6d582b7d9b459149f255644e1c81a420ce81"
+            },
+            {
+              "path": "SCOPE.md",
+              "sha256": "91eb1a8322c2954bfabb7587ca0a94f1cf4ee1c404bd402d377ddcfa58bed92f"
+            },
+            {
+              "path": "docs/eval-results.md",
+              "sha256": "a7e15d45b4274d5532a7486d01e730efa53c85793907eeb5dd03780300520b1b"
+            },
+            {
+              "path": "docs/operations.md",
+              "sha256": "a4dcefefe6d89d8f17adc38994221331057cb2fc429c45370b2d6391127f2363"
+            },
+            {
+              "path": "eval/holdout-retired-1/MANIFEST.sha256",
+              "sha256": "7518992361a6e05fb43629cfc9b399c3dc3359ac652bc4987f914c4e9c784706"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-01.json",
+              "sha256": "c1dbe1dfe9eb03513f15e84c65301803da5ec7da562ca0932c24946b841fc685"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-02.json",
+              "sha256": "af47bb292d2b0b7252169b994354117ea74b8d6c15693d82c8884a5f94b6721a"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-03.json",
+              "sha256": "3206d7907e7f9a8287cf933759a927c93eafdd0641aa562636e22d7598f2687f"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-04.json",
+              "sha256": "532e5774720cba75f0c1f8fefc734960fcadf25d9cf2538d29009db048ac1323"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-05.json",
+              "sha256": "38005d3e3bbf3de58939a3eb36382cef6fd646bfe31664c54f431a4a08c20a6b"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-06.json",
+              "sha256": "35927aa3c003e328d8008f2c47343fab071aaeae590da5f8dfdc98e1ed980c46"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-07.json",
+              "sha256": "b9d2be326110e0b012dbbf43a0902771c482271bfe81e4a6be18f047a9743ebd"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-08.json",
+              "sha256": "2594ed0a1b742130a5bec5090ab35347759065f25dee3915bbfeeacb36768b3f"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-09.json",
+              "sha256": "bf409665f0783c0b96d785605c69d28f1f1e68c01b92373f3504de90b474d9f0"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-10.json",
+              "sha256": "2ede5f415db97c1d9fe24352af5f564b0b607d66d9cf5d53e4695cecc48d7ee1"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-11.json",
+              "sha256": "98b9b92180e02b54119db9222c7193d9a6457c71e1842a40c07ee31bc8f7b9bd"
+            },
+            {
+              "path": "eval/holdout-retired-1/incidents/hold-12.json",
+              "sha256": "36bba5417126edd5c3cf59e928edbfa1eb8fedbfd296f036ad94b04352b260c7"
+            },
+            {
+              "path": "eval/holdout-retired-1/injections/hold-inj-01.json",
+              "sha256": "42ae64e0eef09f701bcb588a1a0327c7cf817002432680a0aeb6fb4a3fb42fd8"
+            },
+            {
+              "path": "eval/holdout-retired-1/injections/hold-inj-02.json",
+              "sha256": "ee7dbba172af28c6f7333265df7a620da21a1fe0109f0632cf133dc2bf811797"
+            },
+            {
+              "path": "eval/holdout-retired-1/injections/hold-inj-03.json",
+              "sha256": "dfe99af5166e766a24deec62436a5c48d04c1901df3582bc77792b29842e0abb"
+            },
+            {
+              "path": "eval/holdout-retired-1/injections/hold-inj-04.json",
+              "sha256": "605209e06c9ec3fb5fc6cab3fa140abf9c4db1c276d3ff9906b6a1c5e3e77552"
+            },
+            {
+              "path": "eval/holdout-retired-1/injections/hold-inj-05.json",
+              "sha256": "134927b4b0f01c5e4c7d94b5e44cd0fe90a1bb26a10e9035b63612cfcf21dc81"
+            },
+            {
+              "path": "eval/holdout-retired-1/injections/hold-inj-06.json",
+              "sha256": "2b856bccbb10cd514605e174372d6729c68b8530414b05dbda842159a6473ad5"
+            },
+            {
+              "path": "eval/holdout-retired-1/injections/hold-inj-07.json",
+              "sha256": "99855621f4af8f8974e4413f05ee2ef79ea460cdecfca6d77745e0fb1d9cb78c"
+            },
+            {
+              "path": "eval/holdout-retired-1/injections/hold-inj-08.json",
+              "sha256": "ed3de95aaef16f5daea12a8670070a15dff26e4c60ad6616d079de56e42263b2"
+            },
+            {
+              "path": "eval/holdout-retired-1/injections/hold-inj-09.json",
+              "sha256": "76f15eb3442e56d92d54f84ad5ebd91f76ed6efd38014cc1294d2e6ef06d4f56"
+            },
+            {
+              "path": "eval/holdout-retired-1/injections/hold-inj-10.json",
+              "sha256": "f3649f41e99232b115e765a826c8cbdb6fc9bcf1ffa091b87675b0f820cf75d0"
+            },
+            {
+              "path": "eval/holdout-retired-2/MANIFEST.sha256",
+              "sha256": "dc184684cedcde1a11aa2e31938b94bb652cfaf6c2b1a6443a079637b65ed713"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-01.json",
+              "sha256": "cee86289db990139d8fc44c90d4cb13674c09226b73966d65b01e1258a497776"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-02.json",
+              "sha256": "ad5d75f3eb4c883abfc81721e598ea2dd9400d870e0e934d7323594254db47ba"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-03.json",
+              "sha256": "4978afdcf7a842bb5c77efd7c729b6a315f81e5e4bd78252c4d4985286e9794c"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-04.json",
+              "sha256": "346ab253ce9ce7044691f2d81e580a97593dcff0212f505bbe40766d1f717ab0"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-05.json",
+              "sha256": "ce846109a4d5489be7097ca97ef17cd065f3bbbfec7bf08d5d2c0a2253ec85e4"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-06.json",
+              "sha256": "cae5a22af1d65acb2e4b1b464a91e2e67cde48f79c0324a5344984651c011ce7"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-07.json",
+              "sha256": "1695513d9a728184489d58fe590a9ea623a48d1f543c2cd42b52752b645e0173"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-08.json",
+              "sha256": "604aaf8e9ca4fed007a37f78636880f92111b96ad186f69e609cf6f964d82fb9"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-09.json",
+              "sha256": "71a7eef23d560d1cc09754ea2b89f72accce1207f41d502dd60ba094dc93f666"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-10.json",
+              "sha256": "6f950a5db050d369407475a170d47f9aa102b43e421a1f3d273cf55f3567bfc4"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-11.json",
+              "sha256": "f62b746f31eb1cfa953be483310769f0399482a9e8753294435afefb4c0641df"
+            },
+            {
+              "path": "eval/holdout-retired-2/incidents/hold2-12.json",
+              "sha256": "35f33602d06094cc96e71880b4d7439bf3947182791fff9f45e34d65829d0429"
+            },
+            {
+              "path": "eval/holdout-retired-2/injections/hold2-inj-01.json",
+              "sha256": "12f553f630e7f7694e556562d308452590961037de2daa661ea4cbd2a5f21477"
+            },
+            {
+              "path": "eval/holdout-retired-2/injections/hold2-inj-02.json",
+              "sha256": "9abce8af39b7f3dde0ba8be25db0c282887ef93b7488685cbe18b4cd6bf4483b"
+            },
+            {
+              "path": "eval/holdout-retired-2/injections/hold2-inj-03.json",
+              "sha256": "c0cfa67a2174f8de847e9babdec12d378dff8f62088f870095baf77b9d79cd0a"
+            },
+            {
+              "path": "eval/holdout-retired-2/injections/hold2-inj-04.json",
+              "sha256": "dfe1e211effbfc0035b85502806ff069993077ff30ec2c9b96a42be161e28e2f"
+            },
+            {
+              "path": "eval/holdout-retired-2/injections/hold2-inj-05.json",
+              "sha256": "7fca26adb28d1c89623cdfee27907336f6143f0f296ad4fa8bdc62bd1ca3fd2f"
+            },
+            {
+              "path": "eval/holdout-retired-2/injections/hold2-inj-06.json",
+              "sha256": "e496644528214669153abc738e33c532257d744416804cf1d07837dbd2f8b82a"
+            },
+            {
+              "path": "eval/holdout-retired-2/injections/hold2-inj-07.json",
+              "sha256": "12ce69b8c9205f4eafbd45e404aea4216ff3e84a88c2c88a45b2de644f4d9c31"
+            },
+            {
+              "path": "eval/holdout-retired-2/injections/hold2-inj-08.json",
+              "sha256": "4a7fee5a43a56ed2d3ab1e3d323bd7325c70ea1657c32f8c047fb133117eb44f"
+            },
+            {
+              "path": "eval/holdout-retired-2/injections/hold2-inj-09.json",
+              "sha256": "ca8d7085a8631e6557fca241fe418318814a014bb952eb2c553e4cc0bc9f8c20"
+            },
+            {
+              "path": "eval/holdout-retired-2/injections/hold2-inj-10.json",
+              "sha256": "470fbf7f37447c461adbd6a91b9b9297a6865068188271a01d307edd4d9d33d9"
+            },
+            {
+              "path": "eval/holdout-runs.log",
+              "sha256": "a5d0f36be856f89f688acd9b86b452c0eaef0abda11c6e82a098e1bd68aabed0"
+            },
+            {
+              "path": "eval/holdout/MANIFEST.sha256",
+              "sha256": "b0c36134893e8fb81161a27f5b31a752a7046a2e684abd5eaa3059f877fc98f9"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-01.json",
+              "sha256": "09808ec7ecccbc5a029e4584e3987be41dae0acdce7be1cea8e7a58fe76bda6a"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-02.json",
+              "sha256": "c698a00d6bf956472e50356190eae8a1d3f74d16bb80924e7bca96f2d33c6d59"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-03.json",
+              "sha256": "222a24a0bf83b491f9bc9c301864e0b375725ebcbea30d9c571e889b98c9ae6e"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-04.json",
+              "sha256": "2beefd78dbe27f99b4d61f35038dd7b197a250b3fceebf3bc83db0ace00c0f5c"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-05.json",
+              "sha256": "146ee575b1b23eae81ce4c3fa1903eb090462dec318e01ff4a6174df47640c55"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-06.json",
+              "sha256": "3080c1ecaa991bfa4a9cc34a5d9d86506db1512cc439a4dcb345de1011352ec4"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-07.json",
+              "sha256": "0cf194d279fc1ba8a436e49fb4bc9e107281f2f1e505f850b4b35d111c890f02"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-08.json",
+              "sha256": "cc08b0a4c8afc4091b5c2d495ffd90aa159d8180b5f48d5142e5858f34b5efe6"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-09.json",
+              "sha256": "58b5130e61c89cb3acb219f59e6782c1f935edfb376482ad85eff1ccf2d61d57"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-10.json",
+              "sha256": "b6890a96db806317a4e37b9c10c5ee159ee266abf4e38b183616978362fc0dd0"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-11.json",
+              "sha256": "9f7bc20c582c160ae9a31e2cfec1c014ce8e7491469dac319dce0a784546be27"
+            },
+            {
+              "path": "eval/holdout/incidents/hold3-12.json",
+              "sha256": "ad9ccab89211bc4c4542a8c7cb8d5a4290a2556630b0c0a23f147f4e234a3755"
+            },
+            {
+              "path": "eval/holdout/injections/hold3-inj-01.json",
+              "sha256": "8536aceb53011aae8de0f83f7e147f1ffc6ff48c73bd9e0b681229b78ac681fa"
+            },
+            {
+              "path": "eval/holdout/injections/hold3-inj-02.json",
+              "sha256": "18c0bcd7e477a91215f91105161cea66b164a12a5237c70e78e046fe40de6981"
+            },
+            {
+              "path": "eval/holdout/injections/hold3-inj-03.json",
+              "sha256": "903a9d959a51e1ed179aca9da813d207a992fba4913bb970cdb132d782f9deb0"
+            },
+            {
+              "path": "eval/holdout/injections/hold3-inj-04.json",
+              "sha256": "1cce1d7d9b0abaa1f06a91128dea2b701b82a67c65c7ba0a333fc0b0a57ebf59"
+            },
+            {
+              "path": "eval/holdout/injections/hold3-inj-05.json",
+              "sha256": "d35a2365dedd083c0a09e639a3fec46c669b008d77895ab8694d534ff73b76f5"
+            },
+            {
+              "path": "eval/holdout/injections/hold3-inj-06.json",
+              "sha256": "e59efbb1b7df574a6954ec9fd1e3427d9449728c22b184c649b3f5f51d946d94"
+            },
+            {
+              "path": "eval/holdout/injections/hold3-inj-07.json",
+              "sha256": "b0538626a51024aef29d058906bcf09da50b19cb483d21299d35109f9d84ee6f"
+            },
+            {
+              "path": "eval/holdout/injections/hold3-inj-08.json",
+              "sha256": "c3d646680ff63093bca0f30273968225d9739d96adeed5ddf1bad5c826a94c3c"
+            },
+            {
+              "path": "eval/holdout/injections/hold3-inj-09.json",
+              "sha256": "2546c0543628578c37efcdb349825837b02c6627adb93c441a680f1c9dc9eeeb"
+            },
+            {
+              "path": "eval/holdout/injections/hold3-inj-10.json",
+              "sha256": "38293a22ebf93288bab5ebe17d53b41a8738dc06a154534ea37687f0f80276c1"
+            },
+            {
+              "path": "eval/lib/budget.js",
+              "sha256": "21d304670b22ea9c37e74924fe8fc8d1237e6a51738568a6ff3703f77883c96f"
+            },
+            {
+              "path": "eval/lib/load.js",
+              "sha256": "8c72e3a7c4da3f43e58794adb17efad566525f5c9050a813733cdc9137e62890"
+            },
+            {
+              "path": "eval/lib/manifest.js",
+              "sha256": "abab2741aba77de43958fe38abcdd5d69b7d4f800e2b5b46431d6660242e581a"
+            },
+            {
+              "path": "eval/lib/report.js",
+              "sha256": "0d272a3ba053c8d9ed0a198803ab404fe0f933cdabf47d94a5c5b956e84726bd"
+            },
+            {
+              "path": "eval/lib/score.js",
+              "sha256": "e4e4382151d60ee3f3208d1a96c5b38fa5421b343588486ddcfb68e1f98604ea"
+            },
+            {
+              "path": "eval/lib/wilson.js",
+              "sha256": "885bc844e97a9300537be96a14fda7c87843397104148ef658eb416d4c456223"
+            },
+            {
+              "path": "eval/run.js",
+              "sha256": "927e4b0f0e778d18356a9f63f3020610190b490bad9a421688d692b2f6185a77"
+            },
+            {
+              "path": "eval/thresholds.json",
+              "sha256": "9dcec84e7ebe9f0c060212e5692bc6cc9901cfdb19354028013339791a94ca55"
+            },
+            {
+              "path": "eval/tune/incidents/tune-01.json",
+              "sha256": "1d15b7e772bd9659fcb0faaad947286df467f1208d8c5d8ecc324f901e998072"
+            },
+            {
+              "path": "eval/tune/incidents/tune-02.json",
+              "sha256": "6b6a27661d7600178da27deff415589fcd2064c8b48a40ba090c70792a7731c4"
+            },
+            {
+              "path": "eval/tune/incidents/tune-03.json",
+              "sha256": "d4ec8116400e5e040f274c552291c81c04a28cf4385ae5e036605a7dd50f6da3"
+            },
+            {
+              "path": "eval/tune/incidents/tune-04.json",
+              "sha256": "a819c0883e209bbd7b661381a770426e39a70a270ad6f764abf61d5cdff4d393"
+            },
+            {
+              "path": "eval/tune/incidents/tune-05.json",
+              "sha256": "88b43fc7a02a3669d505fe92c977e12995631a9d01ef840bf88386ad7cc7f110"
+            },
+            {
+              "path": "eval/tune/incidents/tune-06.json",
+              "sha256": "c47c4a9a950cdcb5dd5d5255c3c02f5254679300984b784ca92562e69b628849"
+            },
+            {
+              "path": "eval/tune/incidents/tune-07.json",
+              "sha256": "dbbab925a037a6972fa4fb4e2bc952af26e91141d5ba6a957a496076ddb0417a"
+            },
+            {
+              "path": "eval/tune/incidents/tune-08.json",
+              "sha256": "9dfd20d08cd1b81eed39a913d5389ea16de093a56bced1b66e2f631f934c8636"
+            },
+            {
+              "path": "eval/tune/incidents/tune-09.json",
+              "sha256": "39cc861cc88ce207c6ff2bccfaca120190b64613ad3f243199031ffb571a0fcb"
+            },
+            {
+              "path": "eval/tune/incidents/tune-10.json",
+              "sha256": "dcacae6a08dda4146119c0e4c49849051d478fd55023c98f62f35ec4b40e0f03"
+            },
+            {
+              "path": "eval/tune/incidents/tune-11.json",
+              "sha256": "bfa37dbd057e77e12f453d139835ca0d202cbc6f54143f43c0a77afe3d791ad1"
+            },
+            {
+              "path": "eval/tune/incidents/tune-12.json",
+              "sha256": "f40f36f2dde72539a3a588d182c09ae294cf2227aa0badf5e056f9e123e9fcb8"
+            },
+            {
+              "path": "eval/tune/injections/tune-inj-01.json",
+              "sha256": "debee7de87d9319f678027aeae7339c0b07159ffefa3f29f81ca3b31b4ae130b"
+            },
+            {
+              "path": "eval/tune/injections/tune-inj-02.json",
+              "sha256": "26f7b81180a7c6c01fd81739317b343c94eef33f520b034dda4652b3cc9acd2f"
+            },
+            {
+              "path": "eval/tune/injections/tune-inj-03.json",
+              "sha256": "c5c438b8ab90b85c54aea493a6d7d90a6372d5c1140555739a331bf9f7d54462"
+            },
+            {
+              "path": "eval/tune/injections/tune-inj-04.json",
+              "sha256": "cf92ea06c9451a2332e06615d81b16d083ee3b1a409ae3b76865b9cea5691cbb"
+            },
+            {
+              "path": "eval/tune/injections/tune-inj-05.json",
+              "sha256": "009477013fac1ab2f8dd2f7a53eda749dd7dcb82fc5c32fec9de86343b79ac16"
+            },
+            {
+              "path": "eval/tune/injections/tune-inj-06.json",
+              "sha256": "52f9c75574b8bc937b0d824404c583e9ce126dcc3671307e082f3bd213cc9fc2"
+            },
+            {
+              "path": "eval/tune/injections/tune-inj-07.json",
+              "sha256": "f48f1082b58cef865414fd7334d960b292f0ec42de8258fa0dd9ad9ff80cafdd"
+            },
+            {
+              "path": "eval/tune/injections/tune-inj-08.json",
+              "sha256": "f3d025ade0e38a1ff2cb2d81e72965d7463560451202fd6742f1c3b9148378ed"
+            },
+            {
+              "path": "eval/tune/injections/tune-inj-09.json",
+              "sha256": "9430135e4ddb48a50f5f8adfcba00ce28c692682fec8eb83f7f244b89b625ae9"
+            },
+            {
+              "path": "eval/tune/injections/tune-inj-10.json",
+              "sha256": "dafc4c72b19af825c75b0f067c33c68b00dba3b6de9844dd5c27512510c5579c"
+            },
+            {
+              "path": "eval/tuning-log.md",
+              "sha256": "7bc6137436e8c71b1e7c1374790565b0102c537036129db732c30e4604c3a1b3"
+            },
+            {
+              "path": "eval/usage.log",
+              "sha256": "f2e5f684dc5a5a358fd3979050005214f7fc34d50b74707ba67459dcb741aacc"
+            },
+            {
+              "path": "eval/verifier/correct.json",
+              "sha256": "7c9cdde32e1a19cafe291896d69b827ce2d08cff27637b98713666a3be94cfd3"
+            },
+            {
+              "path": "eval/verifier/fabrications.json",
+              "sha256": "ffd538c2de44fe5a1f4d0fbc9f676405b07d2bfdb9368457f2ef899bc65119a6"
+            },
+            {
+              "path": "eval/verifier/forbidden-stopwords.txt",
+              "sha256": "d47e22a578270a5a119a77f6c30378a8a389f49b35a88ae4c3f0bc521f706073"
+            },
+            {
+              "path": "eval/verifier/notes/auth.json",
+              "sha256": "a8654036d8f316694d0c76f6b54996dffb4ab363339249f910b7c31b5e9bd6a0"
+            },
+            {
+              "path": "eval/verifier/notes/batch.json",
+              "sha256": "337f293819aa1d147ffa41c22be34d55baf4a8ae51d3fbb46d2e58e31dd01400"
+            },
+            {
+              "path": "eval/verifier/notes/payments.json",
+              "sha256": "aa89e8af09b70308b8ad4c41ead1fddb176b85876ea4d8db4dd62a40308706ec"
+            },
+            {
+              "path": "eval/verifier/notes/search.json",
+              "sha256": "2d85ed8407f16bb2553b9347512181f6e2c2184a0479a307e36f2e0f8aa86f06"
+            },
+            {
+              "path": "eval/verifier/probes.json",
+              "sha256": "8556262dccd8e87cc649a617072a7825425ec2209619a543ff4198d0f83e231c"
+            },
+            {
+              "path": "package.json",
+              "sha256": "5ff8745cd4437aef77ff7ffbc648c46be939828d938742e0d047250c3e667d88"
+            },
+            {
+              "path": "public/app.js",
+              "sha256": "2182f409ee393c870832a49f1db9454008a62d4aee5544fba06aeba41b64d850"
+            },
+            {
+              "path": "public/css/app.css",
+              "sha256": "8634d11ba847b6ff9af866c68ac4546bcde8715dbc82ecdfdd8ffcc51e006ea0"
+            },
+            {
+              "path": "public/index.html",
+              "sha256": "5ae022b98955df2e32b5f2e3476eda290eaf4e9994600298927a798c8e32d878"
+            },
+            {
+              "path": "public/js/api.js",
+              "sha256": "c780700c196f9a0f6fabc6ebd0a3cc5fa92d16f177cb752bbc701a1045db30fd"
+            },
+            {
+              "path": "public/js/components/source.js",
+              "sha256": "ffa694b85a2e29b88f7a6a61b7589f9dd0fd5603a544d05030c40a2f8a709a6e"
+            },
+            {
+              "path": "public/js/components/statements.js",
+              "sha256": "431c908722e3c39e2c9bbf24ee031462aeaf7795024c2c036f42f1079bef4623"
+            },
+            {
+              "path": "public/js/dom.js",
+              "sha256": "f8c8691cc90091061ac2c7ba31bc0a6264ff3904586b70fef33a817fb85e4935"
+            },
+            {
+              "path": "public/js/views/incident.js",
+              "sha256": "89ed5906b819ace50a7133f621d6740a9d4c887234cd2c8ddbfe2e98e8d14889"
+            },
+            {
+              "path": "public/js/views/incidents.js",
+              "sha256": "86a838d16a2ce69f1ca4c9625e8cafe859c1a25a8e477661fb6eda796fcff192"
+            },
+            {
+              "path": "public/js/views/login.js",
+              "sha256": "7114b7155f8345297b3fa7f5f261e78528ca8a7d0378443cce3a4c580d6dcfb4"
+            },
+            {
+              "path": "public/js/views/postmortems.js",
+              "sha256": "22fa82b5b8cddfc861e2514766de5dfd5a784f8bb663897ace820c2ba20a7dfc"
+            },
+            {
+              "path": "scripts/seed.js",
+              "sha256": "11c8b9648c0c66d49c85785a43bb516bfc5d8d68543ea35228f091ece5aad572"
+            },
+            {
+              "path": "scripts/set-password.js",
+              "sha256": "6766747bc6ea33b748c258142762a7bd188c39b0f73c64cc14ae4dba6589b7aa"
+            },
+            {
+              "path": "src/ai/anthropic.js",
+              "sha256": "1b05f749aaa7b5ce91a2e7bc174e9d23d949c771ca451219c3772d37005447f2"
+            },
+            {
+              "path": "src/ai/cli.js",
+              "sha256": "09fc77e6fe95a4e0b651302977e6ac97552c9f7109b2d439ae00fc3a04688c85"
+            },
+            {
+              "path": "src/ai/fake.js",
+              "sha256": "3fbf0533976a37c406e004deca492d68be3366b43d9940e80398ece9d4a76dc3"
+            },
+            {
+              "path": "src/ai/fallback.js",
+              "sha256": "48daa1cede1f20866ff021e624e65fe9c6a8ba7f98209e0d441f63054859e850"
+            },
+            {
+              "path": "src/ai/prompt.js",
+              "sha256": "d7034e5e2538a6fe6684a4155f9d354eb0b941bb04430dade5196300f03fe57a"
+            },
+            {
+              "path": "src/ai/provider.js",
+              "sha256": "9fd4c270ecb07834c60d475cf69e8d42fc4c9e9f91c832616c2752e850f2f63e"
+            },
+            {
+              "path": "src/ai/schema.js",
+              "sha256": "14a8b8d0b66863f104c606042be44a7603bbf9d320e06461741f1926d241e5db"
+            },
+            {
+              "path": "src/api/contract-schemas.js",
+              "sha256": "9b4331f1dc6f5c8b136beaa60bd2c3b3b14446731f61c36e7d30832d3fc1d1c6"
+            },
+            {
+              "path": "src/app.js",
+              "sha256": "48d7f1897049de0b4b19581f9f477930615b7071d459c5d77d3c42102ac95dec"
+            },
+            {
+              "path": "src/audit/audit.js",
+              "sha256": "a6bc236d489148de2088a762b787a76ad3bc672bc5344237756376049c311dc4"
+            },
+            {
+              "path": "src/auth/csrf.js",
+              "sha256": "96ce9896fce410613217953a0bf9a149a3ca18f4755cbf1c34ab01fde528f79d"
+            },
+            {
+              "path": "src/auth/password.js",
+              "sha256": "aeae2363e2e8c09333b380c0d867cba19cd74489c261a903427a75924fd4d6a6"
+            },
+            {
+              "path": "src/auth/ratelimit.js",
+              "sha256": "d053c83c8afe76d7684e11044cfda4583068c8453ec841e3f61fe745f88b8ee3"
+            },
+            {
+              "path": "src/auth/rbac.js",
+              "sha256": "fefaf6638a9e174c0843e0694e624fa12bd286e234615193ad007ee88b1a4e75"
+            },
+            {
+              "path": "src/auth/sessions.js",
+              "sha256": "abe51ab9a3d438f9d1c4e7b5f65a9f0823cff6fdd9acd224befa92b2437430af"
+            },
+            {
+              "path": "src/auth/users.js",
+              "sha256": "47d39debf7f95f72b511ed6f208c7bd84679c06ae832abf29d559324c4171b99"
+            },
+            {
+              "path": "src/config.js",
+              "sha256": "81610cd66b8d793c51a728be6484dc0afb15b5a3fd2840536af8af8e8da9e24d"
+            },
+            {
+              "path": "src/db/connection.js",
+              "sha256": "463a7a21d78f4624b9ada6843408c4d81e147b86950bad230591287fce52c020"
+            },
+            {
+              "path": "src/db/migrate.js",
+              "sha256": "fd21fced5f7129ef37fe42a35d7d1cc5128f722b6fdbfc58104ddad731af1008"
+            },
+            {
+              "path": "src/db/migrations/001_init.sql",
+              "sha256": "2c118ba1818126a48670e43766254da5761f845b61d8a7ea17bdf45989057ed1"
+            },
+            {
+              "path": "src/db/migrations/002_audit_append_only.sql",
+              "sha256": "2efeceb523017e6d90a27c277ea39ea0f5f9eb3ff4c0236574bb4a7ba0a7a663"
+            },
+            {
+              "path": "src/http/body.js",
+              "sha256": "5531c7f2a70bb16c4472f82ee255ad9fdd53335a126ce0ed350faf41396160e3"
+            },
+            {
+              "path": "src/http/cookies.js",
+              "sha256": "2aeaf3fd30ffdd5ec1fc72f44a71520be20fae144a09b45f4ec19b13c2cd2347"
+            },
+            {
+              "path": "src/http/envelope.js",
+              "sha256": "6bc53b6f8ff530f136c4b7395247c0850998a4ebb566fdc2d627bd0364520ff6"
+            },
+            {
+              "path": "src/http/headers.js",
+              "sha256": "7030a37918fd69714a24636f5799b33e4bc1f752e2d433916deca75e482f1369"
+            },
+            {
+              "path": "src/http/query.js",
+              "sha256": "e2f3e38662850afb320048d426120bfe7558f9d6ebe10c0ac27643e0363fc0ec"
+            },
+            {
+              "path": "src/http/router.js",
+              "sha256": "3b3fa946da827e6b89553ef935b2049257802203bf6222af5a0d4d64bceb297a"
+            },
+            {
+              "path": "src/index.js",
+              "sha256": "1753bba6761875ef8053d1afeb1a56f2d8cb46f1fd7dfa36521a4804226345da"
+            },
+            {
+              "path": "src/lib/schema.js",
+              "sha256": "c89c4357d782f5bd347491790028d8b13cbf8186fd5cf94c5ff6ca39b80e202a"
+            },
+            {
+              "path": "src/notes/parser.js",
+              "sha256": "6bbe36d00f358e779aa581c40e710e825826bb9f31cd4852109f6979ce42ab51"
+            },
+            {
+              "path": "src/routes/audit.js",
+              "sha256": "4bc69e831847f1741e7fa9fc1795db386ffae773c6e493f2cc037323ad747918"
+            },
+            {
+              "path": "src/routes/auth.js",
+              "sha256": "6c28aee39e557ff263d536abc413d975d8659295c263f18eeeada16bd2f576ae"
+            },
+            {
+              "path": "src/routes/drafts.js",
+              "sha256": "85346d52850be476317c734f38c539753c393d6595479f86b8c2deae4ac0dae2"
+            },
+            {
+              "path": "src/routes/health.js",
+              "sha256": "d48589d7a97de14ba6d6b28c8a8c6be16d1a5c0da5ca4e11a09f08aed0114a88"
+            },
+            {
+              "path": "src/routes/incidents.js",
+              "sha256": "d6a93eb2c2484769fe582fb83acec580f502ea859699dcbdcc78cf84c6b95afa"
+            },
+            {
+              "path": "src/routes/index.js",
+              "sha256": "865ac7b5dc1bed6e8ac640ba7fbc5e1421d8a6b1d9a345fb7d1efc259af07aa9"
+            },
+            {
+              "path": "src/routes/notes.js",
+              "sha256": "b4f2035a0d9dff810ec905e4ab8fd4d583293648feaca97e4d21cf8fd5f1d577"
+            },
+            {
+              "path": "src/routes/postmortems.js",
+              "sha256": "506f4ec0b2a5b61b630b67fbb42bfeca1bbba5450829eb13c6fc3016565ee7c9"
+            },
+            {
+              "path": "src/routes/providers.js",
+              "sha256": "9e97f8f63ba52febcb7337955aeacf4e333152c3571847fda9fefe7d3f971091"
+            },
+            {
+              "path": "src/routes/static.js",
+              "sha256": "305e1ef1269c3642e5c666c7195bd9030c9a6d3fc2f0161acfe4bf4cc2120cc3"
+            },
+            {
+              "path": "src/routes/users.js",
+              "sha256": "977bab57d3bdc3fe4947fb0b4da645113b7e3c9c48543d871ed1262385fa7b20"
+            },
+            {
+              "path": "src/services/drafts.js",
+              "sha256": "fd8ccfa206bce31e298d72c636bfb015ebf14a1f250d1cfa2a8d53b0b6ac3347"
+            },
+            {
+              "path": "src/services/incidents.js",
+              "sha256": "6722075e4efc09c81bbf26951e1dce0720d8430a025339552ddcb59a8f893d2d"
+            },
+            {
+              "path": "src/services/index.js",
+              "sha256": "2184b6f2b71309eb862ef453e0472ce6ebf73d0684fba80085f44a24975d1140"
+            },
+            {
+              "path": "src/services/providers.js",
+              "sha256": "9b4d4a55bc12b9a640cb75e72ddef54b4065ca53313b1028060edec553b793ee"
+            },
+            {
+              "path": "src/verify/index.js",
+              "sha256": "99c08510970c464258234889a5ce47f583fbe9c2b24fb9f8ee249133adbfac8b"
+            },
+            {
+              "path": "src/verify/normalize.js",
+              "sha256": "46d6340f54029c59b0644fdc0e5a0db693d31578dced900205d7d0b8cb087ced"
+            },
+            {
+              "path": "src/verify/stopwords.js",
+              "sha256": "88ddae846b8f34ab6c1f45759e2a97eab01ba7fe8339764194415f168034113d"
+            },
+            {
+              "path": "src/verify/tokens.js",
+              "sha256": "a0240a29f9501b6c77c3803342c2df7068a26d2f3a76b225217a0aa423d03c94"
+            },
+            {
+              "path": "src/verify/units.js",
+              "sha256": "e855b95e5274dbdf51c2b20f7c66862c037480d4d27924fd73f353d0cc079299"
+            },
+            {
+              "path": "test/api/audit.test.js",
+              "sha256": "67ce9ca00a6a9d8e8834467b4b88bbfbc2eee3d91cf28f47cc579474a4262f59"
+            },
+            {
+              "path": "test/api/auth.test.js",
+              "sha256": "bfc65f35c42fd7baafc5450020cf15f3ba4bfe23da7ba61d8bfb33d370d3ca68"
+            },
+            {
+              "path": "test/api/contract.test.js",
+              "sha256": "cd9782235db7913d0881bd198951a32dd9eec90595e21e94ff6bd2dd8d2bdfc8"
+            },
+            {
+              "path": "test/api/csrf.test.js",
+              "sha256": "93c6b9b4ac56ff979d243bdda2e239d089f09ffc89afb1c0523a5475fceba1f8"
+            },
+            {
+              "path": "test/api/draft.test.js",
+              "sha256": "f5ae22e093bdd2218036412a9946d3c1331a78f867944de4572d24860ed58a88"
+            },
+            {
+              "path": "test/api/errors.test.js",
+              "sha256": "a4be2a475f05f9261353f9d596323852931afb445f5c3b524b1f12ad300408e0"
+            },
+            {
+              "path": "test/api/idor.test.js",
+              "sha256": "264ecee94ae706e41d3c8e3d53b6268ebdbeb85173d391c2c7046de74656e200"
+            },
+            {
+              "path": "test/api/journey.test.js",
+              "sha256": "07b7dc12984f9c6be73050fcd7f08a8a882d22cf5cd861eebaa116db01490d30"
+            },
+            {
+              "path": "test/api/limits.test.js",
+              "sha256": "b9b5e14c10cb8fafa4e326254cec5b5a572b282a14788da173c0e87b5f93ac38"
+            },
+            {
+              "path": "test/api/logs.test.js",
+              "sha256": "6ab2ae5ad0405ea54bc1782b33070e6ae12480db2156fce3e1efc676e27a2ef0"
+            },
+            {
+              "path": "test/api/notes.test.js",
+              "sha256": "f57a31c58e44192438de7d1c51c0b5bc63ecedcb662e45b938f0f2a2ddc23fe7"
+            },
+            {
+              "path": "test/api/perf.test.js",
+              "sha256": "b93382fb904ee546abcc0d77fd0a8cf5278db9aab4700b743426e56ee5cfd4e8"
+            },
+            {
+              "path": "test/api/persistence.test.js",
+              "sha256": "26a783436d16537aae9227a9f364c9b8949777fa9b568fab71a430ae4e3f4316"
+            },
+            {
+              "path": "test/api/publish.test.js",
+              "sha256": "bf44199895968573b3c893b2310830fc8c94c2a9311027c08b38891d7e7c1d00"
+            },
+            {
+              "path": "test/api/rbac.test.js",
+              "sha256": "afea53055eedd8c9d6f301cb55dfa6e6f1f30317e677f74d853c094c9ecc0858"
+            },
+            {
+              "path": "test/api/static.test.js",
+              "sha256": "c1d13ebaf49b229ba26fd5fe58332837c50144f8db4335a6950893fca3e93fb4"
+            },
+            {
+              "path": "test/api/validation.test.js",
+              "sha256": "3faf39d3855b2388aff0979bae88505a20cf8a617cd36e2882d844b49f8c763e"
+            },
+            {
+              "path": "test/browser/journey.test.js",
+              "sha256": "aa4d0ce934cb2948f9f0e00f1a8fb1936717fe33b5e37e83d17c1f904a5c5257"
+            },
+            {
+              "path": "test/eval/budget.test.js",
+              "sha256": "c1948cc2ad3cde68a8c71a96c26d476367b678a2f7c6a262abb7ac1327681759"
+            },
+            {
+              "path": "test/eval/fallback-tune.test.js",
+              "sha256": "8ceb3ef6bc6823d792049762294144f18a69cd481452196a38543fc67b04a030"
+            },
+            {
+              "path": "test/eval/m1b-m1c.test.js",
+              "sha256": "706465ddd3471001a6f1a948ab182e3e656dc4b168b733a6a872ad3134559bab"
+            },
+            {
+              "path": "test/eval/manifest.test.js",
+              "sha256": "6cd7567787cc3d447a7f5330067fc98c41f280a57310f986b093c03b2ffb9cd1"
+            },
+            {
+              "path": "test/eval/scorer.test.js",
+              "sha256": "ac9e72755ebdbb1a2a991ab408abace5ab3ebef7fecdf1306b12e6c27f0e6fd1"
+            },
+            {
+              "path": "test/eval/thresholds.test.js",
+              "sha256": "2139c2768c92e652448a1cfc0dfd7d291bb30988d1a8e521e43132f193dc3a71"
+            },
+            {
+              "path": "test/live/cli-e2e.test.js",
+              "sha256": "82942df7486b7cc7a7af6e41ac6ec581a24d5b2e408fa780eea916ff7fa30fe8"
+            },
+            {
+              "path": "test/live/cli-injection.test.js",
+              "sha256": "974d48b5e647ffd7a22818470c9cb1ed240403921aef0ae9450d81a3e84f871a"
+            },
+            {
+              "path": "test/live/cli-isolation.test.js",
+              "sha256": "6d9712724dcd12accd2903bf2f7e7256fef7eabead78d40d84feb3bde063ec93"
+            },
+            {
+              "path": "test/live/cli-provider.test.js",
+              "sha256": "176a847111b5393f1d569876a6435ef13f19162e8bcafb23238125533555b6f8"
+            },
+            {
+              "path": "test/live/support.js",
+              "sha256": "1c3a14ba9a3199165423d613cc5d3658791d4affd46bfcda82ce34f5c4abfc51"
+            },
+            {
+              "path": "test/support/fake-claude.js",
+              "sha256": "62eca2547998eec7dc689c0a01941d0da8884b50ba463e800450a20326c270da"
+            },
+            {
+              "path": "test/support/harness.js",
+              "sha256": "7b7820e2384e3ed8362b0aaef9ff65d14788906affae950deedf179ac3bf49b7"
+            },
+            {
+              "path": "test/support/mock-api.js",
+              "sha256": "b263ff62b457fd9076cc7ab5a99513b9266f27b09a6f843dc2ebc676165a08dd"
+            },
+            {
+              "path": "test/unit/ai/anthropic.test.js",
+              "sha256": "ad7d9fe6b89bc3ba2d3f33472918357e7d20311369a660d2ca7911bf4f9ef97c"
+            },
+            {
+              "path": "test/unit/ai/cli.test.js",
+              "sha256": "552dc23eda2ad71a7454bb9405b444c5c3cc29c5c0735805eb6211e8460b7925"
+            },
+            {
+              "path": "test/unit/ai/fallback-fake.test.js",
+              "sha256": "6888d3adefa1c92439521837f9261efe3344c89b572ae1978b0a29ee5e549c47"
+            },
+            {
+              "path": "test/unit/ai/schema-prompt.test.js",
+              "sha256": "52ea9bf33c81414e98a6481ea6e72e0ce32d686559fef28386a0080f10de566e"
+            },
+            {
+              "path": "test/unit/auth/csrf-limiter.test.js",
+              "sha256": "2dbc078d912ca49458e2d9c3f5b0661ba93c1acc45251302b3e5eebd54c66398"
+            },
+            {
+              "path": "test/unit/auth/password.test.js",
+              "sha256": "7b796767b890d11c38514f4f4767f9b1dd9169b367f5f36da9b6f6c9e745cc0e"
+            },
+            {
+              "path": "test/unit/auth/seed-index.test.js",
+              "sha256": "ebcc604433d0fc636de8e55a7d530b0b5a04cf32cd48593a8fc747037e5e7280"
+            },
+            {
+              "path": "test/unit/auth/sessions.test.js",
+              "sha256": "cc098937501aa3153b0161161bb8b3de94d03ecfe590ee7b3ea26c0c81e3d209"
+            },
+            {
+              "path": "test/unit/db/migrate.test.js",
+              "sha256": "b7b49169feeeaf41bdb5f1448b8d1faceb67f29001ce7f961cc8d2e8f2ce3965"
+            },
+            {
+              "path": "test/unit/db/schema.test.js",
+              "sha256": "ac645e6df94487b7915340effe478e0c03798666b3dc528458ab0cb4dc76ee10"
+            },
+            {
+              "path": "test/unit/frontend/testids.test.js",
+              "sha256": "d486e918161728c59a4dfcf4912dd7246941c8d818b16e0ac0943d02c3b7d9ff"
+            },
+            {
+              "path": "test/unit/notes/parser.test.js",
+              "sha256": "a5036cc9ed131486e27638f1a22b834406cfdfa2c9b7c44095395a1643df1d63"
+            },
+            {
+              "path": "test/unit/verify/normalize.test.js",
+              "sha256": "4ace133e41a6ea2c3b83337f7c52b1fa792ed4ae5391764b82d0f8922af5069c"
+            },
+            {
+              "path": "test/unit/verify/verifier.test.js",
+              "sha256": "2d6529f638ede0f0e3409c5196c3b31ad35d8ba6b920960a12a0bb9e5553e013"
+            },
+            {
+              "path": ".env.example",
+              "sha256": "e3683d2749638a39e3b7caf752e03ada95042e42ed4cef0aab13c008d2e59eb8"
+            }
+          ],
+          "respondsTo": null,
+          "notes": "Re-verification after rework-5 (user reopened the gate)"
         }
       ],
       "reviews": [
         "rev-mv09a24e-01a1a4cc",
         "rev-mv09cblc-01a60ebc",
         "rev-mv09de5s-01293b70",
-        "rev-mv0ay7tb-010829ac"
+        "rev-mv0ay7tb-010829ac",
+        "rev-mv0tu6g3-0105b906"
       ],
       "openFindings": [],
-      "approvedBy": "technical-reviewer",
-      "approvedSubmission": "sub-mv0auyqg-011b0028",
+      "approvedBy": "security-reviewer",
+      "approvedSubmission": "sub-mv0tmsvr-01a69cbd",
       "escalation": {
         "at": "2026-10-09T01:00:03.996Z",
         "reason": "3 review iterations without approval (limit 3)",
@@ -4026,8 +4949,18 @@
         "resolvedBy": "user"
       },
       "startedAt": "2026-10-09T00:43:12.423Z",
-      "approvedAt": "2026-10-09T01:44:15.120Z",
-      "waivedFindings": []
+      "approvedAt": "2026-10-09T10:32:59.427Z",
+      "waivedFindings": [],
+      "previousApprovals": [
+        {
+          "approvedBy": "technical-reviewer",
+          "approvedSubmission": "sub-mv0auyqg-011b0028",
+          "approvedAt": "2026-10-09T01:44:15.120Z",
+          "reopenedAt": "2026-10-09T09:50:11.087Z",
+          "reopenedBy": "user",
+          "resolution": "User instruction in session (2026-10-09): complete the open items; reopen verification for a rework that fixes the stray 'null' text under the incident title and under Draft review and adds .env.example. Entered by the orchestrator on the user's behalf."
+        }
+      ]
     },
     "phase:foundation": {
       "id": "phase:foundation",
@@ -6346,6 +7279,89 @@
       "escalation": null,
       "startedAt": "2026-10-09T01:27:53.412Z",
       "approvedAt": "2026-10-09T01:36:53.673Z"
+    },
+    "phase:rework-5": {
+      "id": "phase:rework-5",
+      "kind": "phase",
+      "status": "approved",
+      "iterations": 1,
+      "authors": [
+        "delivery-lead"
+      ],
+      "submissions": [
+        {
+          "id": "sub-mv0splpg-01e6f2a6",
+          "actor": "delivery-lead",
+          "at": "2026-10-09T10:01:26.308Z",
+          "artifacts": [
+            {
+              "path": "public/js/views/incident.js",
+              "sha256": "674855ddbdd55eba1d8d06a9ed250167341f402861ac7d1e05f2a3a7eab47594"
+            },
+            {
+              "path": "test/browser/journey.test.js",
+              "sha256": "1b2b11e7c26a5a48bcd06ed522b25e93c66d889911b845f5526ae7d6b1b81bf1"
+            },
+            {
+              "path": ".env.example",
+              "sha256": "e3683d2749638a39e3b7caf752e03ada95042e42ed4cef0aab13c008d2e59eb8"
+            },
+            {
+              "path": "README.md",
+              "sha256": "06ddea28ede181118c54674a2b1c6d582b7d9b459149f255644e1c81a420ce81"
+            }
+          ],
+          "respondsTo": null,
+          "notes": null
+        },
+        {
+          "id": "sub-mv0tcdks-01398a01",
+          "actor": "delivery-lead",
+          "at": "2026-10-09T10:19:08.860Z",
+          "artifacts": [
+            {
+              "path": "public/js/dom.js",
+              "sha256": "f8c8691cc90091061ac2c7ba31bc0a6264ff3904586b70fef33a817fb85e4935"
+            },
+            {
+              "path": "public/js/views/incident.js",
+              "sha256": "89ed5906b819ace50a7133f621d6740a9d4c887234cd2c8ddbfe2e98e8d14889"
+            },
+            {
+              "path": "public/js/views/postmortems.js",
+              "sha256": "22fa82b5b8cddfc861e2514766de5dfd5a784f8bb663897ace820c2ba20a7dfc"
+            },
+            {
+              "path": "public/js/views/incidents.js",
+              "sha256": "86a838d16a2ce69f1ca4c9625e8cafe859c1a25a8e477661fb6eda796fcff192"
+            },
+            {
+              "path": "test/browser/journey.test.js",
+              "sha256": "aa4d0ce934cb2948f9f0e00f1a8fb1936717fe33b5e37e83d17c1f904a5c5257"
+            },
+            {
+              "path": "README.md",
+              "sha256": "06ddea28ede181118c54674a2b1c6d582b7d9b459149f255644e1c81a420ce81"
+            },
+            {
+              "path": ".env.example",
+              "sha256": "e3683d2749638a39e3b7caf752e03ada95042e42ed4cef0aab13c008d2e59eb8"
+            }
+          ],
+          "respondsTo": "rev-mv0suzex-016f2cc3",
+          "notes": null
+        }
+      ],
+      "reviews": [
+        "rev-mv0suzex-016f2cc3",
+        "rev-mv0tfif0-015659c8"
+      ],
+      "openFindings": [],
+      "approvedBy": "technical-reviewer",
+      "approvedSubmission": "sub-mv0tcdks-01398a01",
+      "escalation": null,
+      "startedAt": "2026-10-09T09:50:11.337Z",
+      "approvedAt": "2026-10-09T10:21:35.101Z"
     }
   },
   "plan": {
@@ -7737,6 +8753,92 @@
         "eval/holdout/injections/hold-inj-10.json",
         "README.md",
         "docs/eval-results.md"
+      ],
+      "escalation": null
+    },
+    "rework-5": {
+      "id": "rework-5",
+      "phase": "rework-5",
+      "title": "Fix stray null text in the incident view; ship .env.example",
+      "owner": "frontend-engineer",
+      "dependencies": [],
+      "inputs": [],
+      "outputs": [
+        "the fix",
+        "a regression test that fails without it"
+      ],
+      "files": [
+        "public/js/views/incident.js",
+        ".env.example",
+        "README.md",
+        "test/browser/**",
+        "public/js/views/postmortems.js",
+        "public/js/views/incidents.js",
+        "public/js/dom.js"
+      ],
+      "acceptanceCriteria": [
+        "Cosmetic defect listed open at delivery: the text 'null' is rendered under the incident title and under 'Draft review' (public/js/views/incident.js passes a null child to native DOM append at lines 59 and 261). Also add the missing .env.example and update the README note that said none was shipped.",
+        "a regression test fails before the fix and passes after it",
+        "the existing checks still pass"
+      ],
+      "verification": {
+        "method": "run the project checks"
+      },
+      "status": "done",
+      "attempts": 1,
+      "claim": null,
+      "history": [
+        {
+          "event": "claimed",
+          "by": "frontend-engineer",
+          "at": "2026-10-09T09:51:15.019Z",
+          "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "frontend-engineer",
+          "at": "2026-10-09T10:00:46.437Z"
+        },
+        {
+          "event": "reset",
+          "by": "orchestrator",
+          "at": "2026-10-09T10:13:55.316Z",
+          "reason": "R5-1: the same null-child defect is on the published postmortem page; scope too narrow"
+        },
+        {
+          "event": "scope-extended",
+          "by": "orchestrator",
+          "at": "2026-10-09T10:13:55.503Z",
+          "reason": "R5-1 (rev-mv0suzex-016f2cc3): postmortems.js and incidents.js pass null children to native append; a shared helper belongs in dom.js",
+          "files": [
+            "public/js/views/postmortems.js",
+            "public/js/views/incidents.js",
+            "public/js/dom.js"
+          ]
+        },
+        {
+          "event": "claimed",
+          "by": "frontend-engineer",
+          "at": "2026-10-09T10:14:56.856Z",
+          "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "frontend-engineer",
+          "at": "2026-10-09T10:18:40.311Z"
+        }
+      ],
+      "completedBy": "frontend-engineer",
+      "handoffId": "ho-mv0tbrhp-0124b19d",
+      "rework": true,
+      "filesChanged": [
+        "public/js/dom.js",
+        "public/js/views/incident.js",
+        "public/js/views/postmortems.js",
+        "public/js/views/incidents.js",
+        "test/browser/journey.test.js",
+        "README.md",
+        ".env.example"
       ],
       "escalation": null
     }
@@ -13878,6 +14980,367 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-09T01:43:49.319Z"
+    },
+    "ev-mv0sm6xz-01bf18df": {
+      "id": "ev-mv0sm6xz-01bf18df",
+      "kind": "command",
+      "label": "repro: browser test fails on stray null",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 431457,
+      "log": ".eccode/evidence/ev-mv0sm6xz-01bf18df.log",
+      "logSha256": "97005a639bd2c2d3bd8760db9fea93e9cb0a1b631bdf3229ddf9f2d1fc9bfd3b",
+      "outputTail": "    ok 13 - no console errors, no failed requests, no dialogs\n      ---\n      duration_ms: 0.674832\n      type: 'test'\n      ...\n    1..13\nnot ok 2 - browser journey at 1280px\n  ---\n  duration_ms: 213843.081314\n  type: 'test'\n  location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:208:3'\n  failureType: 'subtestsFailed'\n  error: '8 subtests failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..2\n# tests 28\n# suites 0\n# pass 10\n# fail 18\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 431189.796182\n",
+      "gate": null,
+      "task": "rework-5",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-09T09:58:47.259Z"
+    },
+    "ev-mv0snn29-01007ddc": {
+      "id": "ev-mv0snn29-01007ddc",
+      "kind": "command",
+      "label": "browser journey after fix",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 16664,
+      "log": ".eccode/evidence/ev-mv0snn29-01007ddc.log",
+      "logSha256": "fa577eb4c8b604fad063c385aac68e4b26740997005d6f72adbb2511af843f09",
+      "outputTail": "      duration_ms: 0.259773\n      type: 'test'\n      ...\n    # Subtest: no console errors, no failed requests, no dialogs\n    ok 13 - no console errors, no failed requests, no dialogs\n      ---\n      duration_ms: 0.260613\n      type: 'test'\n      ...\n    1..13\nok 2 - browser journey at 1280px\n  ---\n  duration_ms: 7778.983646\n  type: 'test'\n  ...\n1..2\n# tests 28\n# suites 0\n# pass 28\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 16330.978641\n",
+      "gate": null,
+      "task": "rework-5",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-09T09:59:54.802Z"
+    },
+    "ev-mv0so2hw-01b3d29e": {
+      "id": "ev-mv0so2hw-01b3d29e",
+      "kind": "command",
+      "label": "unit/API/eval suite",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 12463,
+      "log": ".eccode/evidence/ev-mv0so2hw-01b3d29e.log",
+      "logSha256": "989fc02429a57907a495c0051b1a1f3fecddc203d1fcb26796820e41074235a2",
+      "outputTail": "  duration_ms: 0.3051\n  type: 'test'\n  ...\n# Subtest: reporting verbs are not content; invented content still weakens support\nok 229 - reporting verbs are not content; invented content still weakens support\n  ---\n  duration_ms: 0.630818\n  type: 'test'\n  ...\n# Subtest: abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\nok 230 - abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\n  ---\n  duration_ms: 0.277953\n  type: 'test'\n  ...\n1..230\n# tests 285\n# suites 18\n# pass 285\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 12174.612611\n",
+      "gate": null,
+      "task": "rework-5",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-09T10:00:14.805Z"
+    },
+    "ev-mv0sr13p-01950ab6": {
+      "id": "ev-mv0sr13p-01950ab6",
+      "kind": "command",
+      "label": "reviewer: unit/API/eval suite",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 11709,
+      "log": ".eccode/evidence/ev-mv0sr13p-01950ab6.log",
+      "logSha256": "47bdf4fc93ac9df09c38a9bf499a0b527538d84e947ec2d7ae382d2335e40e5e",
+      "outputTail": "  duration_ms: 0.381865\n  type: 'test'\n  ...\n# Subtest: reporting verbs are not content; invented content still weakens support\nok 229 - reporting verbs are not content; invented content still weakens support\n  ---\n  duration_ms: 0.550957\n  type: 'test'\n  ...\n# Subtest: abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\nok 230 - abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\n  ---\n  duration_ms: 0.312407\n  type: 'test'\n  ...\n1..230\n# tests 285\n# suites 18\n# pass 285\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11389.433423\n",
+      "gate": "phase:rework-5",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T10:02:32.963Z"
+    },
+    "ev-mv0ssuvm-015194f9": {
+      "id": "ev-mv0ssuvm-015194f9",
+      "kind": "command",
+      "label": "reviewer: browser journey (regression assertion included)",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 15495,
+      "log": ".eccode/evidence/ev-mv0ssuvm-015194f9.log",
+      "logSha256": "fbc6b887deb787ab9f88c629658332b4d6fa37a94270187866c4adffa50fa229",
+      "outputTail": "      duration_ms: 0.31145\n      type: 'test'\n      ...\n    # Subtest: no console errors, no failed requests, no dialogs\n    ok 13 - no console errors, no failed requests, no dialogs\n      ---\n      duration_ms: 0.356104\n      type: 'test'\n      ...\n    1..13\nok 2 - browser journey at 1280px\n  ---\n  duration_ms: 7859.207389\n  type: 'test'\n  ...\n1..2\n# tests 28\n# suites 0\n# pass 28\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 15224.859342\n",
+      "gate": "phase:rework-5",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T10:03:58.228Z"
+    },
+    "ev-mv0stgd1-01d07e41": {
+      "id": "ev-mv0stgd1-01d07e41",
+      "kind": "command",
+      "label": "reviewer probe: stray null on pages outside incident.js (postmortem view, incidents list)",
+      "command": "node --disable-warning=ExperimentalWarning /tmp/claude-0/-home-user-ECCode/25579c92-5e8f-5ca8-92f2-33538c612ed8/scratchpad/stray-null-postmortem.mjs",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 3392,
+      "log": ".eccode/evidence/ev-mv0stgd1-01d07e41.log",
+      "logSha256": "1b120c927e7c107a2443ac48338509b1d0fdb08b159f4ebf9291af14e7b4f2d5",
+      "outputTail": "clean       incidents list as lead\nclean       incident page (fixed file)\nclean       draft review (fixed file)\nclean       published postmortem in incident view (fixed file)\nclean       postmortem list as viewer\nSTRAY NULL  postmortem page as viewer (public/js/views/postmortems.js)\n             main#main :: \"Back to postmortemsReviewer probe mv0stelpSEV3 Started 10/9/2026, 10:04:00 AM. P\"\nclean       #/incidents as viewer (public/js/views/incidents.js, canCreate=false)\n",
+      "gate": "phase:rework-5",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T10:04:26.053Z"
+    },
+    "ev-mv0t9ex5-01506ac8": {
+      "id": "ev-mv0t9ex5-01506ac8",
+      "kind": "command",
+      "label": "repro: stray null on postmortem page",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 76490,
+      "log": ".eccode/evidence/ev-mv0t9ex5-01506ac8.log",
+      "logSha256": "9f190532ea4f3de8f29bbb01edeb15ae8f3e96597700d99b5b51639352e6ac30",
+      "outputTail": "    ok 13 - no console errors, no failed requests, no dialogs\n      ---\n      duration_ms: 0.436967\n      type: 'test'\n      ...\n    1..13\nnot ok 2 - browser journey at 1280px\n  ---\n  duration_ms: 37823.315056\n  type: 'test'\n  location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:209:3'\n  failureType: 'subtestsFailed'\n  error: '2 subtests failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..2\n# tests 28\n# suites 0\n# pass 22\n# fail 6\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 76178.710389\n",
+      "gate": null,
+      "task": "rework-5",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-09T10:16:50.695Z"
+    },
+    "ev-mv0tahfs-019339e4": {
+      "id": "ev-mv0tahfs-019339e4",
+      "kind": "command",
+      "label": "browser journey after shared appendAll fix",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 15278,
+      "log": ".eccode/evidence/ev-mv0tahfs-019339e4.log",
+      "logSha256": "74d63f9111d3862b01153cabde721f7065ad69541f8afcf303d1106de4f9c19c",
+      "outputTail": "      duration_ms: 0.268716\n      type: 'test'\n      ...\n    # Subtest: no console errors, no failed requests, no dialogs\n    ok 13 - no console errors, no failed requests, no dialogs\n      ---\n      duration_ms: 0.132325\n      type: 'test'\n      ...\n    1..13\nok 2 - browser journey at 1280px\n  ---\n  duration_ms: 7666.269686\n  type: 'test'\n  ...\n1..2\n# tests 28\n# suites 0\n# pass 28\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 15004.324806\n",
+      "gate": null,
+      "task": "rework-5",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-09T10:17:40.607Z"
+    },
+    "ev-mv0tax2d-01584a08": {
+      "id": "ev-mv0tax2d-01584a08",
+      "kind": "command",
+      "label": "unit/API/eval suite after shared appendAll fix",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 11742,
+      "log": ".eccode/evidence/ev-mv0tax2d-01584a08.log",
+      "logSha256": "03c67f83dda73595ab919138d944aefa474d09651fd202724d2b66d14f1084ab",
+      "outputTail": "  duration_ms: 0.419025\n  type: 'test'\n  ...\n# Subtest: reporting verbs are not content; invented content still weakens support\nok 229 - reporting verbs are not content; invented content still weakens support\n  ---\n  duration_ms: 0.687706\n  type: 'test'\n  ...\n# Subtest: abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\nok 230 - abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\n  ---\n  duration_ms: 0.266974\n  type: 'test'\n  ...\n1..230\n# tests 285\n# suites 18\n# pass 285\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11446.483422\n",
+      "gate": null,
+      "task": "rework-5",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-09T10:18:00.884Z"
+    },
+    "ev-mv0tdqpn-01b5c29b": {
+      "id": "ev-mv0tdqpn-01b5c29b",
+      "kind": "command",
+      "label": "reviewer re-review probe: stray null on every visited page incl. viewer postmortem (resolution condition for R5-1)",
+      "command": "node --disable-warning=ExperimentalWarning /tmp/claude-0/-home-user-ECCode/25579c92-5e8f-5ca8-92f2-33538c612ed8/scratchpad/stray-null-postmortem.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 4559,
+      "log": ".eccode/evidence/ev-mv0tdqpn-01b5c29b.log",
+      "logSha256": "67f2e1456e24683e7e24aa3adf492c9f3189c65c6271168ab6bec68ba6963758",
+      "outputTail": "clean       incidents list as lead\nclean       incident page (fixed file)\nclean       draft review (fixed file)\nclean       published postmortem in incident view (fixed file)\nclean       postmortem list as viewer\nclean       postmortem page as viewer (public/js/views/postmortems.js)\nclean       #/incidents as viewer (public/js/views/incidents.js, canCreate=false)\n",
+      "gate": "phase:rework-5",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T10:20:12.591Z"
+    },
+    "ev-mv0tdxf4-01a729aa": {
+      "id": "ev-mv0tdxf4-01a729aa",
+      "kind": "command",
+      "label": "reviewer re-review: unit/API/eval suite",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 13522,
+      "log": ".eccode/evidence/ev-mv0tdxf4-01a729aa.log",
+      "logSha256": "f6502c9f0ef9872381a382db2011cf88efe15f930af6e5b731d8d7cd6b99ab0d",
+      "outputTail": "  duration_ms: 0.371279\n  type: 'test'\n  ...\n# Subtest: reporting verbs are not content; invented content still weakens support\nok 229 - reporting verbs are not content; invented content still weakens support\n  ---\n  duration_ms: 0.89637\n  type: 'test'\n  ...\n# Subtest: abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\nok 230 - abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\n  ---\n  duration_ms: 0.257149\n  type: 'test'\n  ...\n1..230\n# tests 285\n# suites 18\n# pass 285\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 13206.747708\n",
+      "gate": "phase:rework-5",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T10:20:21.282Z"
+    },
+    "ev-mv0teewl-015f461f": {
+      "id": "ev-mv0teewl-015f461f",
+      "kind": "command",
+      "label": "reviewer re-review: browser journey (stray-null scan in auditLayout incl. viewer postmortem)",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 14916,
+      "log": ".eccode/evidence/ev-mv0teewl-015f461f.log",
+      "logSha256": "2caf467981865d76273205e34e12344d1949c11c9b05a19b3c6a081e9072aa83",
+      "outputTail": "      duration_ms: 0.265609\n      type: 'test'\n      ...\n    # Subtest: no console errors, no failed requests, no dialogs\n    ok 13 - no console errors, no failed requests, no dialogs\n      ---\n      duration_ms: 0.173645\n      type: 'test'\n      ...\n    1..13\nok 2 - browser journey at 1280px\n  ---\n  duration_ms: 7138.511651\n  type: 'test'\n  ...\n1..2\n# tests 28\n# suites 0\n# pass 28\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 14628.968288\n",
+      "gate": "phase:rework-5",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T10:20:43.949Z"
+    },
+    "ev-mv0thoz9-018ee287": {
+      "id": "ev-mv0thoz9-018ee287",
+      "kind": "command",
+      "label": "verification: unit/API/eval suite after rework-5",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 12418,
+      "log": ".eccode/evidence/ev-mv0thoz9-018ee287.log",
+      "logSha256": "de2fa41fdb17517cff4aa8a55031ed0e4eae6b985d5259e4a1adac48109f8ce2",
+      "outputTail": "  duration_ms: 0.362851\n  type: 'test'\n  ...\n# Subtest: reporting verbs are not content; invented content still weakens support\nok 229 - reporting verbs are not content; invented content still weakens support\n  ---\n  duration_ms: 0.653725\n  type: 'test'\n  ...\n# Subtest: abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\nok 230 - abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\n  ---\n  duration_ms: 0.313706\n  type: 'test'\n  ...\n1..230\n# tests 285\n# suites 18\n# pass 285\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 12072.877602\n",
+      "gate": "verification",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T10:23:16.975Z"
+    },
+    "ev-mv0tiu03-01f83764": {
+      "id": "ev-mv0tiu03-01f83764",
+      "kind": "command",
+      "label": "verification: real-browser journey after rework-5",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 15690,
+      "log": ".eccode/evidence/ev-mv0tiu03-01f83764.log",
+      "logSha256": "fd41b8632f1d9d06da74b3348f77d128a0d041686d8db8d6a83b81fc939a55f6",
+      "outputTail": "      duration_ms: 0.371818\n      type: 'test'\n      ...\n    # Subtest: no console errors, no failed requests, no dialogs\n    ok 13 - no console errors, no failed requests, no dialogs\n      ---\n      duration_ms: 0.184431\n      type: 'test'\n      ...\n    1..13\nok 2 - browser journey at 1280px\n  ---\n  duration_ms: 7354.550441\n  type: 'test'\n  ...\n1..2\n# tests 28\n# suites 0\n# pass 28\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 15406.090514\n",
+      "gate": "verification",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T10:24:10.139Z"
+    },
+    "ev-mv0tizzb-018c2c36": {
+      "id": "ev-mv0tizzb-018c2c36",
+      "kind": "command",
+      "label": "verification: eccode audit",
+      "command": "node /home/user/ECCode/bin/eccode.js --root /home/user/ECCode/examples/groundwork audit",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7559,
+      "log": ".eccode/evidence/ev-mv0tizzb-018c2c36.log",
+      "logSha256": "f4009f34dd8f88db0cbb251d89afc2f821337c2e1dfc91a8ae5edfaccd0e2606",
+      "outputTail": "Audit OK: 772 events, chain intact, approved artifacts unchanged.\n",
+      "gate": "verification",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T10:24:17.879Z"
+    },
+    "ev-mv0tq0l1-01733147": {
+      "id": "ev-mv0tq0l1-01733147",
+      "kind": "command",
+      "label": "verifier: unit/API/eval suite",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 11806,
+      "log": ".eccode/evidence/ev-mv0tq0l1-01733147.log",
+      "logSha256": "a26422a9cd2e28602fa980c93ccd09ee13328d34ed49f00e560824aa61a901ea",
+      "outputTail": "  duration_ms: 0.377877\n  type: 'test'\n  ...\n# Subtest: reporting verbs are not content; invented content still weakens support\nok 229 - reporting verbs are not content; invented content still weakens support\n  ---\n  duration_ms: 0.541053\n  type: 'test'\n  ...\n# Subtest: abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\nok 230 - abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not\n  ---\n  duration_ms: 0.346135\n  type: 'test'\n  ...\n1..230\n# tests 285\n# suites 18\n# pass 285\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11492.581729\n",
+      "gate": "verification",
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-09T10:29:45.259Z"
+    },
+    "ev-mv0tqk4d-012e452b": {
+      "id": "ev-mv0tqk4d-012e452b",
+      "kind": "command",
+      "label": "verifier: real-browser journey",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 14673,
+      "log": ".eccode/evidence/ev-mv0tqk4d-012e452b.log",
+      "logSha256": "d18a56c1df6df79d9fb5c01c55ea8ea2d2aaa8b406e8e9634e20b14c080fe6cd",
+      "outputTail": "      duration_ms: 0.38978\n      type: 'test'\n      ...\n    # Subtest: no console errors, no failed requests, no dialogs\n    ok 13 - no console errors, no failed requests, no dialogs\n      ---\n      duration_ms: 0.212834\n      type: 'test'\n      ...\n    1..13\nok 2 - browser journey at 1280px\n  ---\n  duration_ms: 7047.183188\n  type: 'test'\n  ...\n1..2\n# tests 28\n# suites 0\n# pass 28\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 14403.125309\n",
+      "gate": "verification",
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-09T10:30:10.581Z"
+    },
+    "ev-mv0tr0s9-01bb1404": {
+      "id": "ev-mv0tr0s9-01bb1404",
+      "kind": "command",
+      "label": "verifier: eccode audit",
+      "command": "node /home/user/ECCode/bin/eccode.js --root /home/user/ECCode/examples/groundwork audit",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8582,
+      "log": ".eccode/evidence/ev-mv0tr0s9-01bb1404.log",
+      "logSha256": "4bdd410d89398c3e02965f3962f64c0ef9dec8734c87ea9a58fb460575bf5989",
+      "outputTail": "Audit OK: 780 events, chain intact, approved artifacts unchanged.\n",
+      "gate": "verification",
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-09T10:30:32.190Z"
+    },
+    "ev-mv0tsi32-01ac80be": {
+      "id": "ev-mv0tsi32-01ac80be",
+      "kind": "command",
+      "label": "verifier: D9 clean clone of HEAD 06b1ac2 plus rework-5 diff, README steps",
+      "command": "bash /tmp/claude-0/-home-user-ECCode/25579c92-5e8f-5ca8-92f2-33538c612ed8/scratchpad/d9/clean-checkout.sh",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 15568,
+      "log": ".eccode/evidence/ev-mv0tsi32-01ac80be.log",
+      "logSha256": "57aba4352509095f497dc089c079210960722e86f055e75d2779b726acec6782",
+      "outputTail": "--- README install check ---\nundefined undefined\n--- npm test ---\n1..230\n# tests 285\n# suites 18\n# pass 285\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 13139.399806\n--- npm run seed ---\n\n> groundwork@1.0.0 seed\n> node --disable-warning=ExperimentalWarning scripts/seed.js\n\nseed ok: 2 teams, 6 users, 1 incidents created; demo password: [REDACTED]\nusers: platform-lead|responder|viewer, payments-lead|responder|viewer\n--- npm start (PORT=3457) ---\nhealth: {\"status\":\"ok\",\"version\":\"1.0.0\",\"schemaVersion\":2}\nserver exit after SIGTERM: 0\n--- login page served? ---\nD9 clean-checkout: PASS\n",
+      "gate": "verification",
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-09T10:31:41.254Z"
     }
   },
   "reviews": {
@@ -16908,6 +18371,332 @@
       "reviewer": "technical-reviewer",
       "at": "2026-10-09T01:44:15.120Z",
       "submissionId": "sub-mv0auyqg-011b0028"
+    },
+    "rev-mv0suzex-016f2cc3": {
+      "decision": "changes_requested",
+      "summary": "The submitted fix is correct for public/js/views/incident.js: appendAll() skips null/undefined/false at the two native-append call sites, the regression assertion in test/browser/journey.test.js is real (it failed before the fix per the reproduction log and passes now), .env.example matches src/config.js and the README table exactly (15 variables, same defaults, none invented), and both suites pass when I run them (285/285 unit, 28/28 browser). However the defect this rework was raised for is still on screen: the viewer-facing published postmortem page (public/js/views/postmortems.js) passes the same two ternary-null children to native root.append and renders the literal text \"null\" under the postmortem title. I reproduced it in the real app (ev:ev-mv0stgd1-01d07e41). The browser journey visits that page (step 'viewer reads the postmortem') but the new assertion is not run there, so the suite passes with the defect visible. That file is outside this task's declared ownership, so the orchestrator must extend ownership or open a sibling rework; I am requesting changes rather than approving a partial fix.",
+      "criteria": [
+        {
+          "id": "C1",
+          "description": "Incident view: no literal 'null' text under the incident title or under 'Draft review' (public/js/views/incident.js no longer passes null children to native append). Verified by reading the diff (appendAll at lines 65 and 269 filters null/undefined/false, same rule as h() in dom.js; children and order otherwise unchanged) and by the passing browser journey with the regression assertion at journey.test.js:242 and :257.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0ssuvm-015194f9",
+            "artifact:public/js/views/incident.js"
+          ]
+        },
+        {
+          "id": "C2",
+          "description": "A regression test fails before the fix and passes after it. assertNoStrayNull (journey.test.js:154-159) scans every element under body for a direct text node whose trimmed content is exactly 'null', which is precisely what Element.append(null) produces; it runs on the incident page (T1, no description) and after the fake draft renders (not a fallback). The reproduction recorded before the fix, ev-mv0sm6xz-01bf18df, FAILED (exit 1) with 'incident page: literal \"null\" text rendered in div' at both viewports (read from its log, lines 30 and 244); my own run after the fix passes 28/28.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0ssuvm-015194f9",
+            "artifact:test/browser/journey.test.js"
+          ]
+        },
+        {
+          "id": "C3",
+          "description": ".env.example exists at the project root and matches src/config.js and the README configuration table: the same 15 variables (PORT, HOST, GW_DB_PATH, GW_COOKIE_SECURE, GW_LOG, GW_ENABLE_FAKE, GW_CLI_MODEL, GW_CLI_MAX_BUDGET_USD, GW_CLI_TIMEOUT_MS, GW_CLAUDE_BIN, GW_CLI_ENV_PASS, ANTHROPIC_API_KEY, GW_ANTHROPIC_MODEL, GW_ANTHROPIC_URL, GW_SEED_PASSWORD) with the same defaults, no invented variables, secrets left empty, and .env is git-ignored while .env.example is not. The two README notes that said no .env.example is shipped now describe the file and still state there is no .env loader (consistent with src/index.js behaviour). Submitted artifact hashes match the working tree.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0sr13p-01950ab6",
+            "artifact:.env.example",
+            "artifact:README.md"
+          ]
+        },
+        {
+          "id": "C4",
+          "description": "The existing checks still pass: npm test (285/285) and npm run test:browser (28/28 at 360 and 1280 px, no console errors, no failed requests, layout/a11y audit clean), both run by the reviewer after the submission.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0sr13p-01950ab6",
+            "ev:ev-mv0ssuvm-015194f9"
+          ]
+        },
+        {
+          "id": "C5",
+          "description": "The delivered UI no longer renders the literal text 'null' (the defect the rework was raised for). Not met: the published postmortem page seen by viewers (public/js/views/postmortems.js:51-56) passes 'pm.incident.description ? ... : null' and 'd.isFallback ? ... : null' to native root.append and renders 'null' under the postmortem title. Reproduced in the real app with the fake-clean provider: lead creates an incident with no description, generates, publishes; viewer opens the postmortem; the DOM scan finds a direct 'null' text node in main#main. Every incident.js page in the same probe was clean.",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv0stgd1-01d07e41"
+          ]
+        },
+        {
+          "id": "lessons",
+          "description": "Lesson decisions: the submission records none (handoff ho-mv0soqvy-01bd30f7 has lessonDecisions: [] and lessonsConsulted: []; gate show lists no lessonDecisionsToJudge). Reviewer memory search 'incident view DOM append null' with --check-env returned no matching records, so there was no verified lesson to apply or dismiss. Nothing to judge; recorded here as required.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0sr13p-01950ab6"
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "R5-1",
+          "severity": "major",
+          "title": "Published postmortem page still renders the literal text \"null\" (same defect, public/js/views/postmortems.js)",
+          "detail": "public/js/views/postmortems.js:51-56 calls native root.append(...) with two conditional children, 'pm.incident.description ? h('p', ...) : null' and 'd.isFallback ? h('p', ...) : null', exactly the pattern fixed in incident.js. For any published incident without a description (the common case; the journey's own incidents have none) the viewer sees 'null' under the postmortem title, and for any non-fallback draft a second 'null'. Reproduced in the real app (ev:ev-mv0stgd1-01d07e41, exit 1): 'STRAY NULL postmortem page as viewer ... main#main'. The browser journey visits this exact page in 'viewer reads the postmortem' (screenshot 13-viewer-postmortem) but assertNoStrayNull is only called at journey.test.js:242 and :257, so ev:ev-mv0ssuvm-015194f9 passes with the defect on screen. The implementer's handoff flagged this risk under remainingIssues but did not check it; postmortems.js and dom.js are outside the task's declared file ownership (incident.js, .env.example, README.md, test/browser/**), so this needs an ownership decision by the orchestrator, not silent scope creep by the implementer.",
+          "evidence": [
+            "ev:ev-mv0stgd1-01d07e41",
+            "ev:ev-mv0ssuvm-015194f9",
+            "artifact:test/browser/journey.test.js"
+          ],
+          "recommendation": "Orchestrator: extend rework-5's file ownership to public/js/views/postmortems.js (and preferably public/js/dom.js so appendAll can live next to h() as one shared helper instead of a per-view copy), or open a sibling rework with that ownership. Implementer: apply the same null-skipping append at postmortems.js:51-56 (and at incidents.js:104, which has the same latent pattern), and call assertNoStrayNull in the journey at the 'viewer reads the postmortem' step (and, cheaply, inside auditLayout so every audited page is covered). Resolution condition: a browser-journey run that executes the stray-null scan on the viewer postmortem page passes, and re-running the reviewer probe (node stray-null-postmortem.mjs, or equivalent) reports no element with a direct 'null' text node on any visited page."
+        },
+        {
+          "id": "R5-2",
+          "severity": "info",
+          "title": "Latent same pattern in public/js/views/incidents.js:104 (canCreate ? form : null)",
+          "detail": "root.append(h('h1', ...), canCreate ? form : null, ...) would render 'null' for a user with role viewer on #/incidents. My probe navigated a viewer to #/incidents and found no stray text (the route appears not to render the incidents view for viewers), so this is not a confirmed user-visible defect, only the same unsafe pattern. Listed so it is fixed in the same pass as R5-1.",
+          "evidence": [
+            "ev:ev-mv0stgd1-01d07e41"
+          ],
+          "recommendation": "Use the shared null-skipping append at incidents.js:104 when R5-1 is addressed. No separate resolution condition beyond R5-1's."
+        },
+        {
+          "id": "R5-3",
+          "severity": "info",
+          "title": "Handoff miscounts the variables in .env.example",
+          "detail": "The handoff (completedWork) says '.env.example with all 16 variables' but lists and ships 15, which is the correct count: src/config.js reads exactly 15 and the README table has 15 rows. The artifact is right; only the handoff text is off by one.",
+          "evidence": [
+            "artifact:.env.example"
+          ],
+          "recommendation": "No change to the artifacts. Correct the number in the next handoff if the task is reworked."
+        }
+      ],
+      "resolvedFindings": [],
+      "lessonsConsulted": [],
+      "id": "rev-mv0suzex-016f2cc3",
+      "gate": "phase:rework-5",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-09T10:05:37.353Z",
+      "submissionId": "sub-mv0splpg-01e6f2a6"
+    },
+    "rev-mv0tfif0-015659c8": {
+      "decision": "approve",
+      "summary": "Resubmission sub-mv0tcdks-01398a01 resolves R5-1: appendAll is now one exported helper in public/js/dom.js (same null/undefined/false rule as h(), strings become text nodes) and is used at all four native-append sites that pass a conditional child (incident.js renderHead and renderReview, postmortems.js root, incidents.js root); the journey's stray-null scan now runs inside auditLayout, so it covers login, incidents, draft-review, published, viewer-postmortem and incidents-empty on top of the two direct calls. I verified there is no remaining ternary-null child outside h()/appendAll anywhere in public/js, re-ran npm test (285/285) and the browser journey (28/28) after the submission, and re-ran my own Playwright probe, which now reports every visited page clean including the viewer's postmortem page that failed last round. .env.example and README.md are byte-identical to the already-verified round-one versions. All artifact hashes match the working tree.",
+      "criteria": [
+        {
+          "id": "C1",
+          "description": "Incident view: no literal 'null' text under the incident title or under 'Draft review'. incident.js now imports appendAll from dom.js (local copy removed) and uses it at lines 55 (clear(head)) and 259 (reviewBox); children and order unchanged from the original. Browser journey asserts this at journey.test.js:243 and :258 and passes.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0teewl-015f461f",
+            "ev:ev-mv0tdqpn-01b5c29b",
+            "artifact:public/js/views/incident.js",
+            "artifact:public/js/dom.js"
+          ]
+        },
+        {
+          "id": "C2",
+          "description": "A regression test fails before the fix and passes after it. assertNoStrayNull (journey.test.js:154-159) scans every element under body for a direct text node whose trimmed content is exactly 'null', and is now called at the top of auditLayout (line 162) plus directly at :243 and :258. Round-one reproduction ev-mv0sm6xz-01bf18df failed on 'incident page'; the round-two reproduction ev-mv0t9ex5-01506ac8 (recorded before the postmortems.js fix with the extended scan in place) failed, exit 1, with 'viewer-postmortem: literal \"null\" text rendered in main#main' at both viewports (log lines 72 and 199), i.e. the scan catches the defect on the page I reported. My own run after the fix passes 28/28.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0teewl-015f461f",
+            "artifact:test/browser/journey.test.js"
+          ]
+        },
+        {
+          "id": "C3",
+          "description": ".env.example matches src/config.js and the README configuration table: same 15 variables and defaults, none invented, secrets empty, .env git-ignored. Both files are byte-identical to the round-one submission (same sha256), where I verified them line by line; nothing to re-check beyond the hash.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0tdxf4-01a729aa",
+            "artifact:.env.example",
+            "artifact:README.md"
+          ]
+        },
+        {
+          "id": "C4",
+          "description": "The existing checks still pass, run by the reviewer after the resubmission: npm test 285/285 and npm run test:browser 28/28 at 360 and 1280 px with no console errors, failed requests, layout or a11y findings.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0tdxf4-01a729aa",
+            "ev:ev-mv0teewl-015f461f"
+          ]
+        },
+        {
+          "id": "C5",
+          "description": "The delivered UI no longer renders the literal text 'null' on any page. Static check: every ': null' / ': undefined' child expression in public/js (incident.js:59, :104, :148, :261; postmortems.js:54-55; incidents.js:104; none in components/) is now an argument of either h() or appendAll, both of which skip it; no native append/prepend/replaceChildren receives a conditional child. Dynamic check: my Playwright probe drives the real app (lead creates an incident with no description, generates with fake-clean, publishes; viewer opens the postmortem list and page and #/incidents) and reports every page clean, including 'postmortem page as viewer' which failed last round.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0tdqpn-01b5c29b",
+            "ev:ev-mv0teewl-015f461f",
+            "artifact:public/js/views/postmortems.js",
+            "artifact:public/js/views/incidents.js",
+            "artifact:public/js/dom.js"
+          ]
+        },
+        {
+          "id": "lessons",
+          "description": "Lesson decisions: the resubmission records none (handoff-rework-5-v2 has lessonDecisions: [] and lessonsConsulted: []; gate show lists no lessonDecisionsToJudge). Round-one memory search 'incident view DOM append null' with --check-env returned no records. Nothing to judge; recorded as required.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0tdxf4-01a729aa"
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "R5-4",
+          "severity": "info",
+          "title": "Remaining unscanned states are covered by code path, not by a browser assertion",
+          "detail": "As the handoff states, the fallback-draft review (T3), the 'Not found' and error states are not scanned in a browser. I read those paths: the fallback review goes through the same appendAll call at incident.js:259 (the isFallback branch then yields an element, not null), and the not-found/error branches build everything with h(). No defect; noted so the gap is on record and a future lesson can recommend the dom.js helper as the house rule for conditional children.",
+          "evidence": [
+            "artifact:public/js/views/incident.js"
+          ],
+          "recommendation": "No action required for this gate. Optionally record a lesson: 'never pass a conditional child to native Element.append; use h() or appendAll from dom.js'."
+        }
+      ],
+      "resolvedFindings": [
+        {
+          "id": "R5-1",
+          "resolution": "postmortems.js:50-56 now uses appendAll from dom.js for the root append with the description and fallback-banner conditional children; the stray-null scan runs inside auditLayout so the journey asserts it on the viewer-postmortem step (journey.test.js:162 and :401). Resolution condition met on both legs: the implementer's reproduction with the extended scan failed before the fix at exactly that step (ev-mv0t9ex5-01506ac8), my re-run of the browser journey passes 28/28 (ev:ev-mv0teewl-015f461f), and my own probe reports no element with a direct 'null' text node on any visited page, including the viewer's postmortem page that failed last round (ev:ev-mv0tdqpn-01b5c29b).",
+          "evidence": [
+            "ev:ev-mv0teewl-015f461f",
+            "ev:ev-mv0tdqpn-01b5c29b",
+            "artifact:public/js/views/postmortems.js",
+            "artifact:test/browser/journey.test.js"
+          ]
+        },
+        {
+          "id": "R5-2",
+          "resolution": "incidents.js:104 now uses appendAll for 'canCreate ? form : null'; a scan of public/js finds no native append with a conditional child left. Probe step '#/incidents as viewer' is clean.",
+          "evidence": [
+            "ev:ev-mv0tdqpn-01b5c29b",
+            "artifact:public/js/views/incidents.js"
+          ]
+        },
+        {
+          "id": "R5-3",
+          "resolution": "The v2 handoff states the correct count of 15 variables; .env.example itself is unchanged (same sha256 as round one) and correct.",
+          "evidence": [
+            "artifact:.env.example"
+          ]
+        }
+      ],
+      "lessonsConsulted": [],
+      "id": "rev-mv0tfif0-015659c8",
+      "gate": "phase:rework-5",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-09T10:21:35.101Z",
+      "submissionId": "sub-mv0tcdks-01398a01"
+    },
+    "rev-mv0tu6g3-0105b906": {
+      "decision": "approve",
+      "summary": "Independent re-verification of submission sub-mv0tmsvr-01a69cbd (228 artifacts) after phase:rework-5. I re-ran every deterministic check myself after the submission: npm test 285/285, 0 fail, 0 skipped (ev:ev-mv0tq0l1-01733147); npm run test:browser 28/28 in real Chromium at 360 and 1280 px, with the new stray-null scan executing inside auditLayout on login, incidents, draft-review, published, viewer-postmortem and incidents-empty (ev:ev-mv0tqk4d-012e452b); eccode audit 'Audit OK: 780 events, chain intact, approved artifacts unchanged' (ev:ev-mv0tr0s9-01bb1404); and, because the previous D9 evidence predates rework-5, a clean clone of HEAD 06b1ac2 plus the exact uncommitted rework-5 diff following the README (no install step, npm test 285/285, npm run seed, npm start, /api/health {\"status\":\"ok\",\"version\":\"1.0.0\",\"schemaVersion\":2}, exit 0 on SIGTERM) (ev:ev-mv0tsi32-01ac80be). All 228 submitted sha256 hashes equal the working tree (checked with my own hashing, not only the engine's), the artifact set equals .eccode/drafts/verification-artifacts.txt, and git status shows exactly the seven rework-5 files changed outside .eccode/. Security review of the change: appendAll in public/js/dom.js applies the same skip rule as h() (undefined, null, false), appends Node instances as they are and everything else through document.createTextNode, so no new HTML sink is introduced; public/js still contains no innerHTML, outerHTML or insertAdjacentHTML; the remaining native append calls in public/js receive only h() elements or strings; the journey's scan is a static page.evaluate with no interpolated input; .env.example holds only defaults from src/config.js with ANTHROPIC_API_KEY and GW_SEED_PASSWORD empty and no token-shaped value, and .env stays git-ignored. The report (section 11) and checklist row describe rework-5 accurately and state that no human product owner has signed off; SCOPE.md does not make that an approval condition, and the report does not claim otherwise. Not run, by instruction: holdout evals (cap guard), full CLI tune runs and npm run test:live; rework-5 touched no src/ or eval/ file, so section 5 figures stand as measured. I did not write any of the work under review.",
+      "criteria": [
+        {
+          "id": "C1",
+          "description": "Deterministic checks pass at HEAD plus the reviewed rework-5 working tree (audit, unit/API/eval suite, real-Chromium journey at 360 and 1280 px). Verified by my own runs after the submission: npm test 285/285 (ev:ev-mv0tq0l1-01733147); test:browser 28/28, the assertNoStrayNull scan running at the top of auditLayout (journey.test.js:162) on every audited page at both viewports plus the direct calls after the incident page opens and after the fake draft renders (ev:ev-mv0tqk4d-012e452b); eccode audit OK, 780 events, chain intact, approved artifacts unchanged (ev:ev-mv0tr0s9-01bb1404).",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0tq0l1-01733147",
+            "ev:ev-mv0tqk4d-012e452b",
+            "ev:ev-mv0tr0s9-01bb1404",
+            "artifact:test/browser/journey.test.js",
+            "artifact:.eccode/artifacts/verification/report.md"
+          ]
+        },
+        {
+          "id": "C2",
+          "description": "D9: clean-checkout run verified by someone other than the author, following the README. The earlier independent run (ev:ev-mv0axnvr-014c23f5) covers the pre-rework-5 code only and the rework-5 changes are uncommitted, so I ran it again myself: fresh clone of HEAD 06b1ac2 with the exact rework-5 diff applied (sha256 of the seven files in the clone equals the submitted hashes), README Install check prints 'undefined undefined' with no node_modules, npm test 285/285 pass 0 fail (exit code checked directly, no pipe), npm run seed ok, npm start serves /api/health {\"status\":\"ok\",\"version\":\"1.0.0\",\"schemaVersion\":2}, and the node process exits 0 on SIGTERM.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0tsi32-01ac80be",
+            "artifact:README.md",
+            "artifact:package.json"
+          ]
+        },
+        {
+          "id": "C3",
+          "description": "D8: thresholds unchanged and met on the only unbiased holdout; deviations disclosed accurately. Rework-5 changed no file under src/, eval/ or docs/ (git status: only public/js/dom.js, three views, test/browser/journey.test.js, README.md and the new .env.example), so eval/thresholds.json, eval/holdout-runs.log, eval/usage.log and docs/eval-results.md are the artifacts already judged in rev-mv0ay7tb-010829ac and their submitted hashes match the working tree. Holdout evals, tune runs and test:live were not re-run (cap guard; no provider code touched); the figures in report section 5 stand as measured, not re-measured.",
+          "met": true,
+          "evidence": [
+            "artifact:eval/thresholds.json",
+            "artifact:eval/holdout-runs.log",
+            "artifact:eval/usage.log",
+            "artifact:docs/eval-results.md",
+            "ev:ev-mv0tr0s9-01bb1404"
+          ]
+        },
+        {
+          "id": "C4",
+          "description": "D10: every open risk is listed with its residual; no known blocking defect; record is audit-clean. The stray-'null' defect listed open at delivery is fixed at all four native-append sites and is guarded by the journey scan; .env.example closes limitation 5. Report section 11 and the checklist's rework-5 row describe the change, the gate history (rejected once on R5-1, then approved rev-mv0tfif0-015659c8) and what was not re-run accurately against the diff and the evidence store; RISK-1, 2, 10 and 14 remain listed as open with residuals in section 6, unchanged. The report states that no human product owner has signed off and claims no acceptance on anyone's behalf. Audit passes on the submitted state (ev:ev-mv0tr0s9-01bb1404); all 228 submitted hashes equal the working tree.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0tr0s9-01bb1404",
+            "ev:ev-mv0tqk4d-012e452b",
+            "artifact:.eccode/artifacts/verification/report.md",
+            "artifact:.eccode/artifacts/verification/release-checklist.md"
+          ]
+        },
+        {
+          "id": "C5",
+          "description": "Security of the rework-5 change: no new injection path and no secret shipped. appendAll (public/js/dom.js:21-27) uses the same child rule as h(): skips undefined/null/false, appends Node instances as they are, and converts every other value with document.createTextNode(String(c)); it never touches innerHTML. public/js has no innerHTML, outerHTML or insertAdjacentHTML use (only the comment in dom.js forbidding it). The remaining native .append calls in public/js (statements.js:84, incident.js:118 and :232) receive only h() elements or plain strings. The regression scan in journey.test.js is a static page.evaluate function with no interpolated data. .env.example contains the 15 variables of src/config.js with defaults only; ANTHROPIC_API_KEY and GW_SEED_PASSWORD are empty, no token-shaped string is present, and .gitignore still excludes .env. Verified by reading the diff and the files and by the browser journey (no console errors or failed requests).",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0tqk4d-012e452b",
+            "artifact:public/js/dom.js",
+            "artifact:public/js/views/incident.js",
+            "artifact:public/js/views/postmortems.js",
+            "artifact:public/js/views/incidents.js",
+            "artifact:.env.example",
+            "artifact:.gitignore"
+          ]
+        },
+        {
+          "id": "lessons",
+          "description": "Lesson decisions: none to judge. eccode gate show verification lists no lessonDecisionsToJudge, and the delivery-lead's handoff ho-mv0tmvhx-01eb2d35 (.eccode/drafts/handoff-verification-2.json) records lessonDecisions [] and lessonsConsulted []. Recorded here so the absence is explicit.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv0tr0s9-01bb1404",
+            "artifact:.eccode/artifacts/verification/report.md"
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "id": "VS-1",
+          "severity": "info",
+          "title": "No human product-owner sign-off; report says so correctly",
+          "detail": "Report sections 9 and 11 and the checklist's rework-5 row state that no product owner has recorded a decision on RISK-1, 2, 10, 14, the run-count deviations, the holdout history, hold3-08 or the D8 outcome, and that nothing is accepted or waived by an agent. SCOPE.md does not make such a sign-off a condition of this gate (judged already in rev-mv0ay7tb-010829ac, V1 to V4), so this is not a finding against the submission; it is recorded so the statement is carried forward unchanged and not read as an approval of those items by me.",
+          "evidence": [
+            "artifact:.eccode/artifacts/verification/report.md",
+            "artifact:.eccode/artifacts/verification/release-checklist.md"
+          ],
+          "recommendation": "No change to the artifacts. The delivery message should repeat the section 9 list for the product owner."
+        },
+        {
+          "id": "VS-2",
+          "severity": "info",
+          "title": "Rework-5 changes are uncommitted; a plain clone of HEAD 06b1ac2 would not contain the fix",
+          "detail": "git status shows the six modified files and the untracked .env.example. My D9 run applied the exact diff to a clean clone and passes (ev:ev-mv0tsi32-01ac80be), so the delivered working tree is sound, but anyone cloning HEAD as committed gets the pre-rework-5 UI with the stray 'null' text. Section 10 and 11 of the report already name this as housekeeping for the orchestrator.",
+          "evidence": [
+            "ev:ev-mv0tsi32-01ac80be",
+            "artifact:.eccode/artifacts/verification/report.md"
+          ],
+          "recommendation": "Orchestrator commits the reviewed working tree (the seven rework-5 files) so HEAD matches the approved artifacts. Not an approval condition for this gate; reviewers do not commit."
+        },
+        {
+          "id": "VS-3",
+          "severity": "info",
+          "title": "Fallback-draft review and not-found/error states remain covered by code path only (carries R5-4)",
+          "detail": "The journey scans every audited page and the incident and draft-review steps, but not the fallback-draft review (T3) nor the 'Not found' and error states. I read those paths: the fallback branch yields an element through the same appendAll call (incident.js:259), and the not-found/error branches are built entirely with h(), which skips null children. No defect; the gap is on record as R5-4 in rev-mv0tfif0-015659c8.",
+          "evidence": [
+            "artifact:public/js/views/incident.js",
+            "artifact:public/js/dom.js"
+          ],
+          "recommendation": "Optional: add assertNoStrayNull after the fallback-provider generate step in the journey. Optionally record the house rule as a lesson: conditional children go through h() or appendAll, never native Element.append."
+        }
+      ],
+      "resolvedFindings": [],
+      "lessonsConsulted": [],
+      "id": "rev-mv0tu6g3-0105b906",
+      "gate": "verification",
+      "reviewer": "security-reviewer",
+      "at": "2026-10-09T10:32:59.427Z",
+      "submissionId": "sub-mv0tmsvr-01a69cbd"
     }
   },
   "rejectedReviews": [
@@ -18496,6 +20285,170 @@
       "id": "ho-mv0amteq-0115f338",
       "recordedBy": "delivery-lead",
       "at": "2026-10-09T01:35:23.321Z"
+    },
+    "ho-mv0soqvy-01bd30f7": {
+      "from": "frontend-engineer",
+      "to": "delivery-lead",
+      "task": "rework-5",
+      "objective": "Fix the literal text 'null' rendered under the incident title and under the 'Draft review' heading in the incident view, add a regression test that fails without the fix, and ship the missing .env.example with matching README notes.",
+      "context": "Root cause: public/js/views/incident.js renderHead() and renderReview() passed conditional children (i.description ? ... : null, d.isFallback ? ... : null) to the native Element.append, which renders null as the text node 'null'. The app's own h() helper in public/js/dom.js already skips null/undefined/false children, but dom.js is outside this task's ownership, so the fix is a small local helper appendAll(el, ...children) in incident.js that applies the same filter at the two call sites. Behaviour is otherwise unchanged (same children, same order). .env.example lists every variable from the README configuration table with the default taken from src/config.js; no variables were invented. Memory search ('incident view DOM append null text node') returned no records; task claim printed no verified lessons.",
+      "inputs": [
+        "public/js/views/incident.js",
+        "public/js/dom.js",
+        "src/config.js",
+        "README.md",
+        "test/browser/journey.test.js"
+      ],
+      "dependencies": [],
+      "expectedOutput": "Incident view renders no stray 'null' text; a real-browser regression assertion covering the incident page and the draft review; .env.example at the project root; README Configuration note and limitations entry describing the file instead of saying none is shipped.",
+      "acceptanceCriteria": [
+        "The text 'null' is no longer rendered under the incident title or under 'Draft review' (incident.js no longer passes null children to native append).",
+        "A regression test fails before the fix and passes after it (test/browser/journey.test.js assertNoStrayNull: reproduction ev:ev-mv0sm6xz-01bf18df failed with 'incident page: literal \"null\" text rendered in div'; after the fix ev:ev-mv0snn29-01007ddc passed).",
+        ".env.example exists at the project root listing every README configuration variable with its default and a one-line comment; the two README notes that said no .env.example is shipped now describe the file.",
+        "The existing checks still pass (npm test ev:ev-mv0so2hw-01b3d29e, npm run test:browser ev:ev-mv0snn29-01007ddc)."
+      ],
+      "completedWork": "Added appendAll() to public/js/views/incident.js and used it in renderHead() and renderReview() in place of clear(head).append(...) and reviewBox.append(...); null/undefined/false children are skipped, everything else is appended unchanged. Added assertNoStrayNull(page, label) to test/browser/journey.test.js, called right after the incident page opens (T1, no description) and right after the fake draft renders (not a fallback draft); it fails if any element has a direct text node whose trimmed content is exactly 'null'. Reproduction run before the fix failed on exactly that assertion at both viewports (later subtests cascaded because the journey is sequential). Added .env.example with all 16 variables (PORT, HOST, GW_DB_PATH, GW_COOKIE_SECURE, GW_LOG, GW_ENABLE_FAKE, GW_CLI_MODEL, GW_CLI_MAX_BUDGET_USD, GW_CLI_TIMEOUT_MS, GW_CLAUDE_BIN, GW_CLI_ENV_PASS, ANTHROPIC_API_KEY, GW_ANTHROPIC_MODEL, GW_ANTHROPIC_URL, GW_SEED_PASSWORD) and their defaults from src/config.js. Updated README.md: the Configuration paragraph now describes .env.example (and that the server still has no .env loader); the limitations entry 'No .env.example is shipped' is replaced by one stating .env.example is documentation only. After the fix: browser journey 28/28 pass at 360 and 1280 px, npm test 285/285 pass.",
+      "filesChanged": [
+        "public/js/views/incident.js",
+        "test/browser/journey.test.js",
+        ".env.example",
+        "README.md"
+      ],
+      "evidence": [
+        "ev:ev-mv0snn29-01007ddc",
+        "ev:ev-mv0so2hw-01b3d29e",
+        "ev:ev-mv0sm6xz-01bf18df"
+      ],
+      "remainingIssues": [
+        "The fix is local to incident.js. Other views that call the native append/clear(...).append with conditional children would have the same defect; a grep for ': null' near '.append(' in public/js/views/*.js was not in scope and dom.js (which could host a shared helper) is outside this task's ownership.",
+        "The regression assertion runs only at the two points where the defect was reported (incident page open, fake draft review). It does not run on the published postmortem or the fallback-draft views, though both now go through the same appendAll path.",
+        ".env.example is documentation only: the server intentionally has no .env loader, so it does not change runtime behaviour."
+      ],
+      "nextAction": "delivery-lead: submit phase:rework-5 for independent review",
+      "lessonsConsulted": [],
+      "lessonDecisions": [],
+      "id": "ho-mv0soqvy-01bd30f7",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-09T10:00:46.512Z"
+    },
+    "ho-mv0tbrhp-0124b19d": {
+      "from": "frontend-engineer",
+      "to": "delivery-lead",
+      "task": "rework-5",
+      "objective": "Resolve review rev-mv0suzex-016f2cc3 (R5-1 major, R5-2 info, R5-3 info): remove the literal text 'null' rendered by null children passed to native Element.append in every view, with one shared helper in dom.js and a browser-journey scan that covers the viewer's postmortem page; plus the original rework-5 scope (incident view fix, regression test, .env.example, README notes).",
+      "context": "Round one fixed only public/js/views/incident.js with a local appendAll helper; the reviewer reproduced the same defect on the published postmortem page (postmortems.js:51-56) and found the latent pattern at incidents.js:104, and noted the stray-null scan did not run on the viewer postmortem step. The orchestrator extended ownership to postmortems.js, incidents.js and dom.js. The fix is now shared: appendAll(el, ...children) is exported from public/js/dom.js next to h() with the same null/undefined/false filter (strings become text nodes as in h()), imported by the three views, and used at every native append call site that passes a conditional child. A grep of public/js for '.append(' with a ternary ': null' child finds no remaining site. The stray-null scan now runs inside the shared auditLayout helper, so every audited page (login, incidents, draft-review, published, viewer-postmortem, incidents-empty) is covered, in addition to the two direct calls after the incident page opens and after the fake draft renders. .env.example lists the 15 variables from the README configuration table (R5-3: 15, not 16 as the first handoff said) with defaults from src/config.js. Memory search returned no records; task claim printed no verified lessons.",
+      "inputs": [
+        ".eccode/reviews/rev-mv0suzex-016f2cc3.json",
+        "public/js/dom.js",
+        "public/js/views/incident.js",
+        "public/js/views/postmortems.js",
+        "public/js/views/incidents.js",
+        "src/config.js",
+        "README.md",
+        "test/browser/journey.test.js"
+      ],
+      "dependencies": [],
+      "expectedOutput": "No view renders a stray 'null' text node; a single exported appendAll in dom.js used by incident.js, postmortems.js and incidents.js; the browser journey runs the stray-null scan on every audited page including the viewer's postmortem; .env.example at the project root; README notes describing it.",
+      "acceptanceCriteria": [
+        "R5-1 resolved: the browser journey executes the stray-null scan on the viewer postmortem page and passes (ev:ev-mv0tahfs-019339e4); reproduction before the postmortems.js fix failed at exactly that step at both viewports (ev:ev-mv0t9ex5-01506ac8: 'viewer-postmortem: literal \"null\" text rendered in main#main').",
+        "R5-2 resolved: incidents.js:104 uses the shared appendAll; no native append with a ternary null child remains in public/js.",
+        "R5-3 resolved: this handoff states the correct count of 15 variables in .env.example.",
+        "Original: the text 'null' is no longer rendered under the incident title or under 'Draft review' (round-one reproduction ev:ev-mv0sm6xz-01bf18df failed with 'incident page: literal \"null\" text rendered in div'; passes since).",
+        "A regression test fails before the fix and passes after it (both reproductions above, then ev:ev-mv0tahfs-019339e4).",
+        ".env.example exists with every README configuration variable, its default and a one-line comment; the two README notes that said none was shipped now describe the file.",
+        "The existing checks still pass: npm test ev:ev-mv0tax2d-01584a08 (285/285), npm run test:browser ev:ev-mv0tahfs-019339e4 (28/28)."
+      ],
+      "completedWork": "public/js/dom.js: exported appendAll(el, ...children) next to h(); it flattens children, skips undefined/null/false, appends Nodes as-is and other values as text nodes, and returns el. public/js/views/incident.js: removed the local appendAll copy, imports it from dom.js; renderHead() and renderReview() use it (the two sites from round one). public/js/views/postmortems.js: imports appendAll and uses it for the root.append at lines 50-56 (description and fallback-banner conditional children). public/js/views/incidents.js: imports appendAll and uses it at line 104 (canCreate ? form : null). Call sites fixed, all of them: incident.js renderHead (clear(head)), incident.js renderReview (reviewBox), postmortems.js postmortemView (root), incidents.js incidentsView (root). test/browser/journey.test.js: assertNoStrayNull(page, label) is now called at the top of auditLayout (covers login, incidents, draft-review, published, viewer-postmortem and incidents-empty) and still directly after the incident page opens and after the fake draft renders. .env.example: 15 variables (PORT, HOST, GW_DB_PATH, GW_COOKIE_SECURE, GW_LOG, GW_ENABLE_FAKE, GW_CLI_MODEL, GW_CLI_MAX_BUDGET_USD, GW_CLI_TIMEOUT_MS, GW_CLAUDE_BIN, GW_CLI_ENV_PASS, ANTHROPIC_API_KEY, GW_ANTHROPIC_MODEL, GW_ANTHROPIC_URL, GW_SEED_PASSWORD) with defaults from src/config.js. README.md: Configuration paragraph describes .env.example (and that the server has no .env loader); the limitations entry 'No .env.example is shipped' is replaced by one stating .env.example is documentation only. Reproduction for R5-1 recorded before the postmortems.js fix with the extended scan in place: failed at 'viewer reads the postmortem' at 360 and 1280 px, every earlier step passed. After the fix: browser journey 28/28, npm test 285/285.",
+      "filesChanged": [
+        "public/js/dom.js",
+        "public/js/views/incident.js",
+        "public/js/views/postmortems.js",
+        "public/js/views/incidents.js",
+        "test/browser/journey.test.js",
+        "README.md",
+        ".env.example"
+      ],
+      "evidence": [
+        "ev:ev-mv0tahfs-019339e4",
+        "ev:ev-mv0tax2d-01584a08",
+        "ev:ev-mv0t9ex5-01506ac8",
+        "ev:ev-mv0sm6xz-01bf18df"
+      ],
+      "remainingIssues": [
+        "The reviewer's own probe (stray-null-postmortem.mjs) was not re-run by me; it is not in the repository. The equivalent check is the journey's stray-null scan, which now runs on every audited page including the viewer postmortem, and passes.",
+        "The journey's stray-null scan covers the pages auditLayout visits plus the incident page and the fake draft review; the fallback-draft review (T3) and the 'Not found' / error states are not scanned. Those paths either use h() or go through appendAll now, but they are not asserted in a browser.",
+        "appendAll is only used where a conditional child is passed to a native append; other native append calls in public/js pass only elements built by h() and were left as they are.",
+        ".env.example is documentation only: the server intentionally has no .env loader, so it does not change runtime behaviour."
+      ],
+      "nextAction": "delivery-lead: resubmit phase:rework-5 with --responds-to rev-mv0suzex-016f2cc3",
+      "lessonsConsulted": [],
+      "lessonDecisions": [],
+      "id": "ho-mv0tbrhp-0124b19d",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-09T10:18:40.396Z"
+    },
+    "ho-mv0tmvhx-01eb2d35": {
+      "from": "delivery-lead",
+      "to": "security-reviewer",
+      "gate": "verification",
+      "objective": "Independent re-verification of Groundwork after phase:rework-5, on the final state of every deliverable file, so the verification gate the user reopened on 2026-10-09 can be reviewed again.",
+      "context": "Groundwork was delivered on 2026-10-09 (.eccode/delivery/final-handoff.md). The user then reopened the verification gate (event seq 732) and opened phase:rework-5 (seq 733) for the cosmetic defect listed open at delivery: the literal text 'null' rendered under the incident title and under 'Draft review' (null children passed to native Element.append), plus the missing .env.example and the README note that said none was shipped. The orchestrator extended rework-5 (seq 752) to public/js/views/postmortems.js, public/js/views/incidents.js and public/js/dom.js after technical-reviewer finding R5-1 (the published-postmortem page a viewer sees rendered the same 'null'). phase:rework-5 was rejected once (rev-mv0suzex-016f2cc3: R5-1 major, R5-2 info latent pattern in incidents.js, R5-3 info handoff variable count) and then approved (rev-mv0tfif0-015659c8, approved submission sub-mv0tcdks-01398a01; R5-4 info: fallback-draft review and not-found/error states covered by code path, not by a browser assertion). Final fix: one exported appendAll(el, ...children) in public/js/dom.js (skips undefined/null/false like h()) used at the four native-append call sites that passed a conditional child; test/browser/journey.test.js runs a stray-null scan inside auditLayout (every audited page incl. the viewer's postmortem) and after the incident page opens and after the fake draft renders; .env.example lists the 15 variables of src/config.js with defaults; README Configuration note and limitations entry updated. No change to src/, eval/, thresholds, holdouts or other docs; the AI-eval figures, deviations and risk dispositions in report.md sections 4 to 6 are unchanged and were not re-measured. Code state: HEAD 06b1ac2 plus the uncommitted rework-5 files; git status shows no other project change. The verification report has a new section 11 and the release checklist a new rework-5 row; limitation 5 (.env.example) was rewritten and section 8 and 10 got a rework-5 note; everything else in both documents is as reviewed in rev-mv0ay7tb-010829ac. A human product owner has still not signed off on anything; nothing is accepted or waived by an agent.",
+      "inputs": [
+        ".eccode/artifacts/verification/report.md",
+        ".eccode/artifacts/verification/release-checklist.md",
+        ".eccode/drafts/verification-artifacts.txt",
+        ".eccode/reviews/rev-mv0ay7tb-010829ac.json",
+        ".eccode/reviews/rev-mv0suzex-016f2cc3.json",
+        ".eccode/reviews/rev-mv0tfif0-015659c8.json",
+        ".eccode/drafts/handoff-rework-5-v2.json",
+        ".eccode/delivery/final-handoff.md",
+        "public/js/dom.js",
+        "public/js/views/incident.js",
+        "public/js/views/postmortems.js",
+        "public/js/views/incidents.js",
+        "test/browser/journey.test.js",
+        ".env.example",
+        "README.md",
+        "SCOPE.md",
+        "docs/eval-results.md"
+      ],
+      "dependencies": [],
+      "expectedOutput": "A verification review (approve or changes_requested) of the resubmitted verification gate, judged on the final files against the criteria below, with the reviewer's own evidence ids.",
+      "acceptanceCriteria": [
+        "C1: Deterministic checks pass at HEAD (audit, unit/API/eval suite, real-Chromium journey at 360 and 1280 px)",
+        "C2: D9: clean-checkout run verified by someone other than the author, following the README",
+        "C3: D8: thresholds unchanged and met on the only unbiased holdout; deviations disclosed accurately",
+        "C4: D10: every open risk is listed with its residual; no known blocking defect; record is audit-clean"
+      ],
+      "completedWork": "Ran the deterministic checks on the final files and recorded them under the verification gate: npm test 285/285 pass, 0 fail, 0 skipped (ev:ev-mv0thoz9-018ee287); npm run test:browser 28/28 pass in real Chromium at 360 and 1280 px with the stray-null scan on every audited page (ev:ev-mv0tiu03-01f83764); eccode audit 'Audit OK: 772 events, chain intact, approved artifacts unchanged' (ev:ev-mv0tizzb-018c2c36). Checked with sha256sum that each rework-5 file in the working tree equals the hash in the approved submission sub-mv0tcdks-01398a01. Updated .eccode/artifacts/verification/report.md: a line under the code-state header pointing to the new dated section 11 'Rework-5 (after delivery)' (what changed, the defect, the shared helper, .env.example, the journey scan, the gate history with both reviews, the reviewer's evidence ids ev:ev-mv0tdxf4-01a729aa, ev:ev-mv0teewl-015f461f, ev:ev-mv0tdqpn-01b5c29b, the implementer's failing reproductions ev:ev-mv0t9ex5-01506ac8 and ev:ev-mv0sm6xz-01bf18df, the fresh checks, C1 to C4 restated, what is still open); limitation 5 now says .env.example is documentation only instead of missing; section 8 'Not verified' lists what rework-5 did not re-run; section 10 notes the uncommitted set is now rework-5's. Sections 1 to 6 and 9 (bottom line, evidence table of the previous submission, criteria, deviations, AI-eval figures, risk dispositions, items for the product owner) are untouched. Updated release-checklist.md: code-state header (README.md changed), the 'Config and secrets documented' row (.env.example now present), and one new row for rework-5 with reviewer and review ids. Resubmitted the verification gate with every deliverable file listed in .eccode/drafts/verification-artifacts.txt (the 227 files of the previous verification submission plus .env.example). Did not run holdout evals (the cap guard refuses a fourth run; results stand as measured), full CLI tune runs or live-model tests, by instruction. Did not commit.",
+      "filesChanged": [
+        ".eccode/artifacts/verification/report.md",
+        ".eccode/artifacts/verification/release-checklist.md",
+        ".eccode/drafts/handoff-verification-2.json"
+      ],
+      "evidence": [
+        "ev:ev-mv0thoz9-018ee287",
+        "ev:ev-mv0tiu03-01f83764",
+        "ev:ev-mv0tizzb-018c2c36",
+        "ev:ev-mv0tdxf4-01a729aa",
+        "ev:ev-mv0teewl-015f461f",
+        "ev:ev-mv0tdqpn-01b5c29b",
+        "ev:ev-mv0t9ex5-01506ac8"
+      ],
+      "remainingIssues": [
+        "No human product owner has signed off: the decisions in report.md section 9 (RISK-1, RISK-2, RISK-10, RISK-14; run-count deviations incl. the uncovered 12th tune run; holdout history and hold3-08; the D8 outcome) are not recorded and not claimed by any agent.",
+        "C2 (D9 clean checkout) was not repeated on the rework-5 state: the rework-5 changes are uncommitted, so a clone of HEAD 06b1ac2 would not contain them; the earlier independent clean-clone run (ev:ev-mv0axnvr-014c23f5, by the previous verification reviewer) covers the pre-rework-5 code only. The orchestrator needs to commit the reviewed working tree.",
+        "Not re-run after rework-5: holdout evals (cap guard), full CLI tune runs, npm run test:live (last live run ev:ev-mv0aqs0x-0169f95c, before rework-5; rework-5 touched no provider code).",
+        "R5-4 (info, rev-mv0tfif0-015659c8): the fallback-draft review (T3) and the 'Not found' and error states are not scanned for stray text in a browser; the reviewer read those paths (h() or appendAll) and found no defect.",
+        "The technical reviewer's Playwright probe (ev:ev-mv0tdqpn-01b5c29b) is not in the repository; the equivalent in-repo check is the journey's stray-null scan.",
+        "The verification report's sections 1 to 10 still describe the previous code state (HEAD 6eb29f4 plus rework-4 changes) and cite that state's evidence; the header line and section 11 say so."
+      ],
+      "nextAction": "security-reviewer: independent verification review",
+      "lessonsConsulted": [],
+      "lessonDecisions": [],
+      "id": "ho-mv0tmvhx-01eb2d35",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T10:27:18.694Z"
     }
   },
   "runs": {
@@ -19728,6 +21681,171 @@
       "tokens": 72773,
       "note": null,
       "usageReported": true
+    },
+    "run-mv0sbjxs-018f5cab": {
+      "id": "run-mv0sbjxs-018f5cab",
+      "agent": "frontend-engineer",
+      "task": "rework-5",
+      "gate": "phase:rework-5",
+      "startedAt": "2026-10-09T09:50:30.880Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T10:01:19.981Z",
+      "durationMinutes": 10.82,
+      "costUsd": 0,
+      "tokens": 118739,
+      "note": "Agent tool hand-back carried no usage block",
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-09T10:01:26.133Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 0,
+            "costUsd": 0
+          },
+          "to": {
+            "tokens": 118739,
+            "costUsd": 0
+          },
+          "reason": "harness task-notification reported subagent usage after the hand-back"
+        }
+      ]
+    },
+    "run-mv0spltf-016af37d": {
+      "id": "run-mv0spltf-016af37d",
+      "agent": "technical-reviewer",
+      "task": null,
+      "gate": "phase:rework-5",
+      "startedAt": "2026-10-09T10:01:26.494Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T10:13:55.127Z",
+      "durationMinutes": 12.48,
+      "costUsd": 0,
+      "tokens": 132813,
+      "note": "technical-reviewer: changes_requested on phase:rework-5 (R5-1)",
+      "usageReported": true
+    },
+    "run-mv0t5nw0-01512d5b": {
+      "id": "run-mv0t5nw0-01512d5b",
+      "agent": "frontend-engineer",
+      "task": "rework-5",
+      "gate": "phase:rework-5",
+      "startedAt": "2026-10-09T10:13:55.679Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T10:19:08.654Z",
+      "durationMinutes": 5.22,
+      "costUsd": 0,
+      "tokens": 24040,
+      "note": "usage arrives with the harness notification; corrected then",
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-09T10:19:28.447Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 0,
+            "costUsd": 0
+          },
+          "to": {
+            "tokens": 24040,
+            "costUsd": 0
+          },
+          "reason": "harness notification reported 142779 tokens for the resumed agent, cumulative with its first run (118739); the difference is recorded for this run"
+        }
+      ]
+    },
+    "run-mv0tcdp5-0196c425": {
+      "id": "run-mv0tcdp5-0196c425",
+      "agent": "technical-reviewer",
+      "task": null,
+      "gate": "phase:rework-5",
+      "startedAt": "2026-10-09T10:19:09.070Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T10:22:07.682Z",
+      "durationMinutes": 2.98,
+      "costUsd": 0,
+      "tokens": 30619,
+      "note": "usage arrives with the harness notification; corrected then",
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-09T10:22:36.267Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 0,
+            "costUsd": 0
+          },
+          "to": {
+            "tokens": 30619,
+            "costUsd": 0
+          },
+          "reason": "harness notification reported 163432 tokens cumulative for the resumed reviewer agent (132813 on its first run); the difference is this run"
+        }
+      ]
+    },
+    "run-mv0tg7nw-01a8e12b": {
+      "id": "run-mv0tg7nw-01a8e12b",
+      "agent": "delivery-lead",
+      "task": null,
+      "gate": "verification",
+      "startedAt": "2026-10-09T10:22:07.870Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T10:28:03.741Z",
+      "durationMinutes": 5.93,
+      "costUsd": 0,
+      "tokens": 139494,
+      "note": "usage arrives with the harness notification; corrected then",
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-09T10:28:27.885Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 0,
+            "costUsd": 0
+          },
+          "to": {
+            "tokens": 139494,
+            "costUsd": 0
+          },
+          "reason": "harness task-notification reported the subagent's usage after the hand-back"
+        }
+      ]
+    },
+    "run-mv0tnued-01e0cf8f": {
+      "id": "run-mv0tnued-01e0cf8f",
+      "agent": "security-reviewer",
+      "task": null,
+      "gate": "verification",
+      "startedAt": "2026-10-09T10:28:03.922Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T10:33:22.976Z",
+      "durationMinutes": 5.32,
+      "costUsd": 0,
+      "tokens": 132296,
+      "note": "usage arrives with the harness notification; corrected then",
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-09T10:34:04.486Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 0,
+            "costUsd": 0
+          },
+          "to": {
+            "tokens": 132296,
+            "costUsd": 0
+          },
+          "reason": "harness task-notification reported the subagent's usage after the hand-back"
+        }
+      ]
     }
   },
   "risks": {
@@ -19892,19 +22010,29 @@
       "lessons": [],
       "at": "2026-10-09T01:27:28.727Z",
       "by": "user"
+    },
+    "dec-mv0spgwy-01fe1aed": {
+      "id": "dec-mv0spgwy-01fe1aed",
+      "title": "Rework-5 execution mode",
+      "decision": "Implementer and reviewers run as separate subagents dispatched by the orchestrator; gate submissions and the final deliver are run by the orchestrator acting as delivery-lead in disclosed sequential mode (no delivery-lead subagent dispatched).",
+      "rationale": "Submissions are mechanical; independence matters for the implementer and the reviewers, which are separate contexts. The PreToolUse guard is not active in this session, so identities are asserted.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-09T10:01:20.141Z",
+      "by": "orchestrator"
     }
   },
   "citations": [],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 177.81,
-    "tokens": 3293188
+    "runtimeMinutes": 220.56,
+    "tokens": 3871189
   },
   "delivery": {
-    "at": "2026-10-09T01:44:55.110Z",
-    "by": "orchestrator",
-    "report": ".eccode/delivery/final-handoff.md",
-    "summary": "13 gates approved"
+    "at": "2026-10-09T10:33:28.560Z",
+    "by": "delivery-lead",
+    "report": ".eccode/delivery/final-handoff-2.md",
+    "summary": "14 gates approved"
   },
   "reconciliations": [
     {
@@ -21007,6 +23135,38 @@
       "openedBy": "orchestrator",
       "at": "2026-10-09T01:27:53.412Z",
       "afterDelivery": false
+    },
+    {
+      "id": "rework-5",
+      "gate": "phase:rework-5",
+      "reason": "Cosmetic defect listed open at delivery: the text 'null' is rendered under the incident title and under 'Draft review' (public/js/views/incident.js passes a null child to native DOM append at lines 59 and 261). Also add the missing .env.example and update the README note that said none was shipped.",
+      "owner": "frontend-engineer",
+      "files": [
+        "public/js/views/incident.js",
+        ".env.example",
+        "README.md",
+        "test/browser/**",
+        "public/js/views/postmortems.js",
+        "public/js/views/incidents.js",
+        "public/js/dom.js"
+      ],
+      "evidence": [],
+      "openedBy": "user",
+      "at": "2026-10-09T09:50:11.337Z",
+      "afterDelivery": true,
+      "extensions": [
+        {
+          "at": "2026-10-09T10:13:55.503Z",
+          "by": "orchestrator",
+          "files": [
+            "public/js/views/postmortems.js",
+            "public/js/views/incidents.js",
+            "public/js/dom.js"
+          ],
+          "reason": "R5-1 (rev-mv0suzex-016f2cc3): postmortems.js and incidents.js pass null children to native append; a shared helper belongs in dom.js"
+        }
+      ],
+      "deliveredAt": "2026-10-09T10:33:28.560Z"
     }
   ]
 }

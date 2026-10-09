@@ -1,0 +1,105 @@
+{
+  "decision": "approve",
+  "summary": "Resubmission sub-mv0tcdks-01398a01 resolves R5-1: appendAll is now one exported helper in public/js/dom.js (same null/undefined/false rule as h(), strings become text nodes) and is used at all four native-append sites that pass a conditional child (incident.js renderHead and renderReview, postmortems.js root, incidents.js root); the journey's stray-null scan now runs inside auditLayout, so it covers login, incidents, draft-review, published, viewer-postmortem and incidents-empty on top of the two direct calls. I verified there is no remaining ternary-null child outside h()/appendAll anywhere in public/js, re-ran npm test (285/285) and the browser journey (28/28) after the submission, and re-ran my own Playwright probe, which now reports every visited page clean including the viewer's postmortem page that failed last round. .env.example and README.md are byte-identical to the already-verified round-one versions. All artifact hashes match the working tree.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Incident view: no literal 'null' text under the incident title or under 'Draft review'. incident.js now imports appendAll from dom.js (local copy removed) and uses it at lines 55 (clear(head)) and 259 (reviewBox); children and order unchanged from the original. Browser journey asserts this at journey.test.js:243 and :258 and passes.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0teewl-015f461f",
+        "ev:ev-mv0tdqpn-01b5c29b",
+        "artifact:public/js/views/incident.js",
+        "artifact:public/js/dom.js"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "A regression test fails before the fix and passes after it. assertNoStrayNull (journey.test.js:154-159) scans every element under body for a direct text node whose trimmed content is exactly 'null', and is now called at the top of auditLayout (line 162) plus directly at :243 and :258. Round-one reproduction ev-mv0sm6xz-01bf18df failed on 'incident page'; the round-two reproduction ev-mv0t9ex5-01506ac8 (recorded before the postmortems.js fix with the extended scan in place) failed, exit 1, with 'viewer-postmortem: literal \"null\" text rendered in main#main' at both viewports (log lines 72 and 199), i.e. the scan catches the defect on the page I reported. My own run after the fix passes 28/28.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0teewl-015f461f",
+        "artifact:test/browser/journey.test.js"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": ".env.example matches src/config.js and the README configuration table: same 15 variables and defaults, none invented, secrets empty, .env git-ignored. Both files are byte-identical to the round-one submission (same sha256), where I verified them line by line; nothing to re-check beyond the hash.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0tdxf4-01a729aa",
+        "artifact:.env.example",
+        "artifact:README.md"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "The existing checks still pass, run by the reviewer after the resubmission: npm test 285/285 and npm run test:browser 28/28 at 360 and 1280 px with no console errors, failed requests, layout or a11y findings.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0tdxf4-01a729aa",
+        "ev:ev-mv0teewl-015f461f"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "The delivered UI no longer renders the literal text 'null' on any page. Static check: every ': null' / ': undefined' child expression in public/js (incident.js:59, :104, :148, :261; postmortems.js:54-55; incidents.js:104; none in components/) is now an argument of either h() or appendAll, both of which skip it; no native append/prepend/replaceChildren receives a conditional child. Dynamic check: my Playwright probe drives the real app (lead creates an incident with no description, generates with fake-clean, publishes; viewer opens the postmortem list and page and #/incidents) and reports every page clean, including 'postmortem page as viewer' which failed last round.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0tdqpn-01b5c29b",
+        "ev:ev-mv0teewl-015f461f",
+        "artifact:public/js/views/postmortems.js",
+        "artifact:public/js/views/incidents.js",
+        "artifact:public/js/dom.js"
+      ]
+    },
+    {
+      "id": "lessons",
+      "description": "Lesson decisions: the resubmission records none (handoff-rework-5-v2 has lessonDecisions: [] and lessonsConsulted: []; gate show lists no lessonDecisionsToJudge). Round-one memory search 'incident view DOM append null' with --check-env returned no records. Nothing to judge; recorded as required.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0tdxf4-01a729aa"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "R5-4",
+      "severity": "info",
+      "title": "Remaining unscanned states are covered by code path, not by a browser assertion",
+      "detail": "As the handoff states, the fallback-draft review (T3), the 'Not found' and error states are not scanned in a browser. I read those paths: the fallback review goes through the same appendAll call at incident.js:259 (the isFallback branch then yields an element, not null), and the not-found/error branches build everything with h(). No defect; noted so the gap is on record and a future lesson can recommend the dom.js helper as the house rule for conditional children.",
+      "evidence": [
+        "artifact:public/js/views/incident.js"
+      ],
+      "recommendation": "No action required for this gate. Optionally record a lesson: 'never pass a conditional child to native Element.append; use h() or appendAll from dom.js'."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "R5-1",
+      "resolution": "postmortems.js:50-56 now uses appendAll from dom.js for the root append with the description and fallback-banner conditional children; the stray-null scan runs inside auditLayout so the journey asserts it on the viewer-postmortem step (journey.test.js:162 and :401). Resolution condition met on both legs: the implementer's reproduction with the extended scan failed before the fix at exactly that step (ev-mv0t9ex5-01506ac8), my re-run of the browser journey passes 28/28 (ev:ev-mv0teewl-015f461f), and my own probe reports no element with a direct 'null' text node on any visited page, including the viewer's postmortem page that failed last round (ev:ev-mv0tdqpn-01b5c29b).",
+      "evidence": [
+        "ev:ev-mv0teewl-015f461f",
+        "ev:ev-mv0tdqpn-01b5c29b",
+        "artifact:public/js/views/postmortems.js",
+        "artifact:test/browser/journey.test.js"
+      ]
+    },
+    {
+      "id": "R5-2",
+      "resolution": "incidents.js:104 now uses appendAll for 'canCreate ? form : null'; a scan of public/js finds no native append with a conditional child left. Probe step '#/incidents as viewer' is clean.",
+      "evidence": [
+        "ev:ev-mv0tdqpn-01b5c29b",
+        "artifact:public/js/views/incidents.js"
+      ]
+    },
+    {
+      "id": "R5-3",
+      "resolution": "The v2 handoff states the correct count of 15 variables; .env.example itself is unchanged (same sha256 as round one) and correct.",
+      "evidence": [
+        "artifact:.env.example"
+      ]
+    }
+  ],
+  "lessonsConsulted": []
+}

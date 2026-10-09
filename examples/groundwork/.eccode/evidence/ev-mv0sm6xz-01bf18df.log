@@ -1,0 +1,445 @@
+$ npm run test:browser
+# cwd: .
+# exit: 1
+
+> groundwork@1.0.0 test:browser
+> node --disable-warning=ExperimentalWarning --test --test-concurrency=1 test/browser/journey.test.js
+
+TAP version 13
+# Subtest: browser journey at 360px
+    # Subtest: sign in: empty state and invalid password error
+    ok 1 - sign in: empty state and invalid password error
+      ---
+      duration_ms: 1516.337654
+      type: 'test'
+      ...
+    # Subtest: create incident: inline validation then success
+    ok 2 - create incident: inline validation then success
+      ---
+      duration_ms: 516.485385
+      type: 'test'
+      ...
+    # Subtest: import notes: malformed error then success
+    not ok 3 - import notes: malformed error then success
+      ---
+      duration_ms: 168.874591
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:240:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        incident page: literal "null" text rendered in div
+        + actual - expected
+        
+        + [
+        +   'div'
+        + ]
+        - []
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+        0: 'div'
+      operator: 'deepStrictEqual'
+      stack: |-
+        assertNoStrayNull (file:///home/user/ECCode/examples/groundwork/test/browser/journey.test.js:158:10)
+        async TestContext.<anonymous> (file:///home/user/ECCode/examples/groundwork/test/browser/journey.test.js:242:7)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async TestContext.<anonymous> (file:///home/user/ECCode/examples/groundwork/test/browser/journey.test.js:240:5)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+      ...
+    # Subtest: generate with fake: loading status, flagged statements, no fallback banner
+    not ok 4 - generate with fake: loading status, flagged statements, no fallback banner
+      ---
+      duration_ms: 30038.001483
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:253:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.click: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="generate"]')[22m
+        [2m    - locator resolved to <button disabled type="button" data-testid="generate">Generate</button>[22m
+        [2m  - attempting click action[22m
+        [2m    2 × waiting for element to be visible, enabled and stable[22m
+        [2m      - element is not enabled[22m
+        [2m    - retrying click action[22m
+        [2m    - waiting 20ms[22m
+        [2m    2 × waiting for element to be visible, enabled and stable[22m
+        [2m      - element is not enabled[22m
+        [2m    - retrying click action[22m
+        [2m      - waiting 100ms[22m
+        [2m    58 × waiting for element to be visible, enabled and stable[22m
+        [2m       - element is not enabled[22m
+        [2m     - retrying click action[22m
+        [2m       - waiting 500ms[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:255:18)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:253:5)
+      ...
+    # Subtest: citation chip highlights, focuses and announces the source line
+    not ok 5 - citation chip highlights, focuses and announces the source line
+      ---
+      duration_ms: 30003.242771
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:270:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        locator.getAttribute: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('.chip:not(.chip-missing)').first()[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:272:28)
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:270:13)
+      ...
+    # Subtest: keyboard: skip link, chips, Edit, Save reachable; focus outline >= 2px
+    not ok 6 - keyboard: skip link, chips, Edit, Save reachable; focus outline >= 2px
+      ---
+      duration_ms: 30170.893412
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:287:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.waitForSelector: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="draft-sections"]') to be visible[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:297:18)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:287:5)
+      ...
+    # Subtest: edit flagged statements to grounded text: flags clear, counter updates
+    not ok 7 - edit flagged statements to grounded text: flags clear, counter updates
+      ---
+      duration_ms: 30003.923367
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:325:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        locator.click: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('li.statement.is-flagged').first().locator('[data-testid^="edit-"]:not([data-testid="edit-text"])').first()[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        fix (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:328:91)
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:333:13)
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:325:13)
+      ...
+    # Subtest: second incident: flagged draft, XSS probe, fallback banner
+    ok 8 - second incident: flagged draft, XSS probe, fallback banner
+      ---
+      duration_ms: 1226.208502
+      type: 'test'
+      ...
+    # Subtest: lead: publish disabled while flagged; enabled at zero flags; publish succeeds, read-only
+    not ok 9 - lead: publish disabled while flagged; enabled at zero flags; publish succeeds, read-only
+      ---
+      duration_ms: 30646.271638
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:368:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.waitForSelector: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="publish"]') to be visible[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:377:18)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:368:5)
+      ...
+    # Subtest: viewer reads the postmortem and highlights a citation
+    not ok 10 - viewer reads the postmortem and highlights a citation
+      ---
+      duration_ms: 30010.575786
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:390:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.fill: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="login-username"]')[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        signIn (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:103:14)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:391:7)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:390:5)
+      ...
+    # Subtest: cross-team viewer sees the empty state
+    not ok 11 - cross-team viewer sees the empty state
+      ---
+      duration_ms: 30007.942431
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:404:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.fill: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="login-username"]')[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        signIn (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:103:14)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:405:7)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:404:5)
+      ...
+    # Subtest: layout and a11y checks: overflow, contrast, touch targets
+    ok 12 - layout and a11y checks: overflow, contrast, touch targets
+      ---
+      duration_ms: 0.925536
+      type: 'test'
+      ...
+    # Subtest: no console errors, no failed requests, no dialogs
+    ok 13 - no console errors, no failed requests, no dialogs
+      ---
+      duration_ms: 0.744655
+      type: 'test'
+      ...
+    1..13
+not ok 1 - browser journey at 360px
+  ---
+  duration_ms: 216966.045993
+  type: 'test'
+  location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:208:3'
+  failureType: 'subtestsFailed'
+  error: '8 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: browser journey at 1280px
+    # Subtest: sign in: empty state and invalid password error
+    ok 1 - sign in: empty state and invalid password error
+      ---
+      duration_ms: 672.01236
+      type: 'test'
+      ...
+    # Subtest: create incident: inline validation then success
+    ok 2 - create incident: inline validation then success
+      ---
+      duration_ms: 599.018998
+      type: 'test'
+      ...
+    # Subtest: import notes: malformed error then success
+    not ok 3 - import notes: malformed error then success
+      ---
+      duration_ms: 121.837323
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:240:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        incident page: literal "null" text rendered in div
+        + actual - expected
+        
+        + [
+        +   'div'
+        + ]
+        - []
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+        0: 'div'
+      operator: 'deepStrictEqual'
+      stack: |-
+        assertNoStrayNull (file:///home/user/ECCode/examples/groundwork/test/browser/journey.test.js:158:10)
+        async TestContext.<anonymous> (file:///home/user/ECCode/examples/groundwork/test/browser/journey.test.js:242:7)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async TestContext.<anonymous> (file:///home/user/ECCode/examples/groundwork/test/browser/journey.test.js:240:5)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: generate with fake: loading status, flagged statements, no fallback banner
+    not ok 4 - generate with fake: loading status, flagged statements, no fallback banner
+      ---
+      duration_ms: 30025.058251
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:253:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.click: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="generate"]')[22m
+        [2m    - locator resolved to <button disabled type="button" data-testid="generate">Generate</button>[22m
+        [2m  - attempting click action[22m
+        [2m    2 × waiting for element to be visible, enabled and stable[22m
+        [2m      - element is not enabled[22m
+        [2m    - retrying click action[22m
+        [2m    - waiting 20ms[22m
+        [2m    2 × waiting for element to be visible, enabled and stable[22m
+        [2m      - element is not enabled[22m
+        [2m    - retrying click action[22m
+        [2m      - waiting 100ms[22m
+        [2m    58 × waiting for element to be visible, enabled and stable[22m
+        [2m       - element is not enabled[22m
+        [2m     - retrying click action[22m
+        [2m       - waiting 500ms[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:255:18)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:253:5)
+      ...
+    # Subtest: citation chip highlights, focuses and announces the source line
+    not ok 5 - citation chip highlights, focuses and announces the source line
+      ---
+      duration_ms: 30003.052638
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:270:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        locator.getAttribute: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('.chip:not(.chip-missing)').first()[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:272:28)
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:270:13)
+      ...
+    # Subtest: keyboard: skip link, chips, Edit, Save reachable; focus outline >= 2px
+    not ok 6 - keyboard: skip link, chips, Edit, Save reachable; focus outline >= 2px
+      ---
+      duration_ms: 30225.631785
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:287:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.waitForSelector: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="draft-sections"]') to be visible[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:297:18)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:287:5)
+      ...
+    # Subtest: edit flagged statements to grounded text: flags clear, counter updates
+    not ok 7 - edit flagged statements to grounded text: flags clear, counter updates
+      ---
+      duration_ms: 30005.126412
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:325:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        locator.click: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('li.statement.is-flagged').first().locator('[data-testid^="edit-"]:not([data-testid="edit-text"])').first()[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        fix (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:328:91)
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:333:13)
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:325:13)
+      ...
+    # Subtest: second incident: flagged draft, XSS probe, fallback banner
+    ok 8 - second incident: flagged draft, XSS probe, fallback banner
+      ---
+      duration_ms: 1430.056733
+      type: 'test'
+      ...
+    # Subtest: lead: publish disabled while flagged; enabled at zero flags; publish succeeds, read-only
+    not ok 9 - lead: publish disabled while flagged; enabled at zero flags; publish succeeds, read-only
+      ---
+      duration_ms: 30660.371696
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:368:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.waitForSelector: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="publish"]') to be visible[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:377:18)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:368:5)
+      ...
+    # Subtest: viewer reads the postmortem and highlights a citation
+    not ok 10 - viewer reads the postmortem and highlights a citation
+      ---
+      duration_ms: 30009.467828
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:390:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.fill: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="login-username"]')[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        signIn (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:103:14)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:391:7)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:390:5)
+      ...
+    # Subtest: cross-team viewer sees the empty state
+    not ok 11 - cross-team viewer sees the empty state
+      ---
+      duration_ms: 30013.704485
+      type: 'test'
+      location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:404:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.fill: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="login-username"]')[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        signIn (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:103:14)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:405:7)
+        async TestContext.<anonymous> (/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:404:5)
+      ...
+    # Subtest: layout and a11y checks: overflow, contrast, touch targets
+    ok 12 - layout and a11y checks: overflow, contrast, touch targets
+      ---
+      duration_ms: 0.796286
+      type: 'test'
+      ...
+    # Subtest: no console errors, no failed requests, no dialogs
+    ok 13 - no console errors, no failed requests, no dialogs
+      ---
+      duration_ms: 0.674832
+      type: 'test'
+      ...
+    1..13
+not ok 2 - browser journey at 1280px
+  ---
+  duration_ms: 213843.081314
+  type: 'test'
+  location: '/home/user/ECCode/examples/groundwork/test/browser/journey.test.js:208:3'
+  failureType: 'subtestsFailed'
+  error: '8 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 28
+# suites 0
+# pass 10
+# fail 18
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 431189.796182

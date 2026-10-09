@@ -42,7 +42,7 @@ All configuration is by environment variables, all optional. Invalid values stop
 | `GW_ANTHROPIC_URL` | `https://api.anthropic.com` | Must be `https`; plain `http` is accepted only for loopback (used with a local fake in tests). |
 | `GW_SEED_PASSWORD` | empty (demo password used) | Password for seeded users, 10 to 128 characters. |
 
-Note: this delivery has no `.env.example` file because the task that produced the docs was limited to `README.md` and `docs/**`. The table above is the authoritative list, taken from `src/config.js`.
+`.env.example` at the project root lists the same variables with their defaults and a one-line comment each. Copy it to `.env` for your own tooling if you like, but remember the server does not read `.env` itself. The table above and `.env.example` are both taken from `src/config.js`, which is authoritative.
 
 ## Seed data and demo logins
 
@@ -183,7 +183,7 @@ A verified statement cites lines that exist, every time, number and name in it a
 - **Number words**: `one` is converted to `1` only when directly followed by a recognised unit, so some "one X" phrasings can be false flags.
 - **`node:sqlite` is experimental** on Node 22; the API could differ on other Node versions. Pinned to `>=22.5`.
 - **Local demo scope**: no SSO, email, TLS termination or multi-instance deployment. Cookies are HttpOnly and SameSite; set `GW_COOKIE_SECURE=1` behind HTTPS.
-- **No `.env.example`** is shipped (see Configuration).
+- **`.env.example` is documentation only**: the server has no `.env` loader, so copying it to `.env` does nothing unless your shell or service manager exports the values (see Configuration).
 - **Operational gaps**: no metrics endpoint or latency and error counters (logs only, see docs/operations.md); SIGTERM sent only to the `npm start` wrapper does not stop the server, so run `node --disable-warning=ExperimentalWarning src/index.js` under a service manager; backups and rollback are manual; the eval tune-run overrun is disclosed under Deviations in docs/eval-results.md and not accepted by any product owner.
 - **Browser test needs a global Playwright** and does not run on a host without it.
 - Backups are a manual copy of the SQLite files (see docs/operations.md).

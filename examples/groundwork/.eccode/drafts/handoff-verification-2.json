@@ -1,0 +1,60 @@
+{
+  "from": "delivery-lead",
+  "to": "security-reviewer",
+  "gate": "verification",
+  "objective": "Independent re-verification of Groundwork after phase:rework-5, on the final state of every deliverable file, so the verification gate the user reopened on 2026-10-09 can be reviewed again.",
+  "context": "Groundwork was delivered on 2026-10-09 (.eccode/delivery/final-handoff.md). The user then reopened the verification gate (event seq 732) and opened phase:rework-5 (seq 733) for the cosmetic defect listed open at delivery: the literal text 'null' rendered under the incident title and under 'Draft review' (null children passed to native Element.append), plus the missing .env.example and the README note that said none was shipped. The orchestrator extended rework-5 (seq 752) to public/js/views/postmortems.js, public/js/views/incidents.js and public/js/dom.js after technical-reviewer finding R5-1 (the published-postmortem page a viewer sees rendered the same 'null'). phase:rework-5 was rejected once (rev-mv0suzex-016f2cc3: R5-1 major, R5-2 info latent pattern in incidents.js, R5-3 info handoff variable count) and then approved (rev-mv0tfif0-015659c8, approved submission sub-mv0tcdks-01398a01; R5-4 info: fallback-draft review and not-found/error states covered by code path, not by a browser assertion). Final fix: one exported appendAll(el, ...children) in public/js/dom.js (skips undefined/null/false like h()) used at the four native-append call sites that passed a conditional child; test/browser/journey.test.js runs a stray-null scan inside auditLayout (every audited page incl. the viewer's postmortem) and after the incident page opens and after the fake draft renders; .env.example lists the 15 variables of src/config.js with defaults; README Configuration note and limitations entry updated. No change to src/, eval/, thresholds, holdouts or other docs; the AI-eval figures, deviations and risk dispositions in report.md sections 4 to 6 are unchanged and were not re-measured. Code state: HEAD 06b1ac2 plus the uncommitted rework-5 files; git status shows no other project change. The verification report has a new section 11 and the release checklist a new rework-5 row; limitation 5 (.env.example) was rewritten and section 8 and 10 got a rework-5 note; everything else in both documents is as reviewed in rev-mv0ay7tb-010829ac. A human product owner has still not signed off on anything; nothing is accepted or waived by an agent.",
+  "inputs": [
+    ".eccode/artifacts/verification/report.md",
+    ".eccode/artifacts/verification/release-checklist.md",
+    ".eccode/drafts/verification-artifacts.txt",
+    ".eccode/reviews/rev-mv0ay7tb-010829ac.json",
+    ".eccode/reviews/rev-mv0suzex-016f2cc3.json",
+    ".eccode/reviews/rev-mv0tfif0-015659c8.json",
+    ".eccode/drafts/handoff-rework-5-v2.json",
+    ".eccode/delivery/final-handoff.md",
+    "public/js/dom.js",
+    "public/js/views/incident.js",
+    "public/js/views/postmortems.js",
+    "public/js/views/incidents.js",
+    "test/browser/journey.test.js",
+    ".env.example",
+    "README.md",
+    "SCOPE.md",
+    "docs/eval-results.md"
+  ],
+  "dependencies": [],
+  "expectedOutput": "A verification review (approve or changes_requested) of the resubmitted verification gate, judged on the final files against the criteria below, with the reviewer's own evidence ids.",
+  "acceptanceCriteria": [
+    "C1: Deterministic checks pass at HEAD (audit, unit/API/eval suite, real-Chromium journey at 360 and 1280 px)",
+    "C2: D9: clean-checkout run verified by someone other than the author, following the README",
+    "C3: D8: thresholds unchanged and met on the only unbiased holdout; deviations disclosed accurately",
+    "C4: D10: every open risk is listed with its residual; no known blocking defect; record is audit-clean"
+  ],
+  "completedWork": "Ran the deterministic checks on the final files and recorded them under the verification gate: npm test 285/285 pass, 0 fail, 0 skipped (ev:ev-mv0thoz9-018ee287); npm run test:browser 28/28 pass in real Chromium at 360 and 1280 px with the stray-null scan on every audited page (ev:ev-mv0tiu03-01f83764); eccode audit 'Audit OK: 772 events, chain intact, approved artifacts unchanged' (ev:ev-mv0tizzb-018c2c36). Checked with sha256sum that each rework-5 file in the working tree equals the hash in the approved submission sub-mv0tcdks-01398a01. Updated .eccode/artifacts/verification/report.md: a line under the code-state header pointing to the new dated section 11 'Rework-5 (after delivery)' (what changed, the defect, the shared helper, .env.example, the journey scan, the gate history with both reviews, the reviewer's evidence ids ev:ev-mv0tdxf4-01a729aa, ev:ev-mv0teewl-015f461f, ev:ev-mv0tdqpn-01b5c29b, the implementer's failing reproductions ev:ev-mv0t9ex5-01506ac8 and ev:ev-mv0sm6xz-01bf18df, the fresh checks, C1 to C4 restated, what is still open); limitation 5 now says .env.example is documentation only instead of missing; section 8 'Not verified' lists what rework-5 did not re-run; section 10 notes the uncommitted set is now rework-5's. Sections 1 to 6 and 9 (bottom line, evidence table of the previous submission, criteria, deviations, AI-eval figures, risk dispositions, items for the product owner) are untouched. Updated release-checklist.md: code-state header (README.md changed), the 'Config and secrets documented' row (.env.example now present), and one new row for rework-5 with reviewer and review ids. Resubmitted the verification gate with every deliverable file listed in .eccode/drafts/verification-artifacts.txt (the 227 files of the previous verification submission plus .env.example). Did not run holdout evals (the cap guard refuses a fourth run; results stand as measured), full CLI tune runs or live-model tests, by instruction. Did not commit.",
+  "filesChanged": [
+    ".eccode/artifacts/verification/report.md",
+    ".eccode/artifacts/verification/release-checklist.md",
+    ".eccode/drafts/handoff-verification-2.json"
+  ],
+  "evidence": [
+    "ev:ev-mv0thoz9-018ee287",
+    "ev:ev-mv0tiu03-01f83764",
+    "ev:ev-mv0tizzb-018c2c36",
+    "ev:ev-mv0tdxf4-01a729aa",
+    "ev:ev-mv0teewl-015f461f",
+    "ev:ev-mv0tdqpn-01b5c29b",
+    "ev:ev-mv0t9ex5-01506ac8"
+  ],
+  "remainingIssues": [
+    "No human product owner has signed off: the decisions in report.md section 9 (RISK-1, RISK-2, RISK-10, RISK-14; run-count deviations incl. the uncovered 12th tune run; holdout history and hold3-08; the D8 outcome) are not recorded and not claimed by any agent.",
+    "C2 (D9 clean checkout) was not repeated on the rework-5 state: the rework-5 changes are uncommitted, so a clone of HEAD 06b1ac2 would not contain them; the earlier independent clean-clone run (ev:ev-mv0axnvr-014c23f5, by the previous verification reviewer) covers the pre-rework-5 code only. The orchestrator needs to commit the reviewed working tree.",
+    "Not re-run after rework-5: holdout evals (cap guard), full CLI tune runs, npm run test:live (last live run ev:ev-mv0aqs0x-0169f95c, before rework-5; rework-5 touched no provider code).",
+    "R5-4 (info, rev-mv0tfif0-015659c8): the fallback-draft review (T3) and the 'Not found' and error states are not scanned for stray text in a browser; the reviewer read those paths (h() or appendAll) and found no defect.",
+    "The technical reviewer's Playwright probe (ev:ev-mv0tdqpn-01b5c29b) is not in the repository; the equivalent in-repo check is the journey's stray-null scan.",
+    "The verification report's sections 1 to 10 still describe the previous code state (HEAD 6eb29f4 plus rework-4 changes) and cite that state's evidence; the header line and section 11 say so."
+  ],
+  "nextAction": "security-reviewer: independent verification review",
+  "lessonsConsulted": [],
+  "lessonDecisions": []
+}

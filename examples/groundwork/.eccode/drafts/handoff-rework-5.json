@@ -1,0 +1,42 @@
+{
+  "from": "frontend-engineer",
+  "to": "delivery-lead",
+  "task": "rework-5",
+  "objective": "Fix the literal text 'null' rendered under the incident title and under the 'Draft review' heading in the incident view, add a regression test that fails without the fix, and ship the missing .env.example with matching README notes.",
+  "context": "Root cause: public/js/views/incident.js renderHead() and renderReview() passed conditional children (i.description ? ... : null, d.isFallback ? ... : null) to the native Element.append, which renders null as the text node 'null'. The app's own h() helper in public/js/dom.js already skips null/undefined/false children, but dom.js is outside this task's ownership, so the fix is a small local helper appendAll(el, ...children) in incident.js that applies the same filter at the two call sites. Behaviour is otherwise unchanged (same children, same order). .env.example lists every variable from the README configuration table with the default taken from src/config.js; no variables were invented. Memory search ('incident view DOM append null text node') returned no records; task claim printed no verified lessons.",
+  "inputs": [
+    "public/js/views/incident.js",
+    "public/js/dom.js",
+    "src/config.js",
+    "README.md",
+    "test/browser/journey.test.js"
+  ],
+  "dependencies": [],
+  "expectedOutput": "Incident view renders no stray 'null' text; a real-browser regression assertion covering the incident page and the draft review; .env.example at the project root; README Configuration note and limitations entry describing the file instead of saying none is shipped.",
+  "acceptanceCriteria": [
+    "The text 'null' is no longer rendered under the incident title or under 'Draft review' (incident.js no longer passes null children to native append).",
+    "A regression test fails before the fix and passes after it (test/browser/journey.test.js assertNoStrayNull: reproduction ev:ev-mv0sm6xz-01bf18df failed with 'incident page: literal \"null\" text rendered in div'; after the fix ev:ev-mv0snn29-01007ddc passed).",
+    ".env.example exists at the project root listing every README configuration variable with its default and a one-line comment; the two README notes that said no .env.example is shipped now describe the file.",
+    "The existing checks still pass (npm test ev:ev-mv0so2hw-01b3d29e, npm run test:browser ev:ev-mv0snn29-01007ddc)."
+  ],
+  "completedWork": "Added appendAll() to public/js/views/incident.js and used it in renderHead() and renderReview() in place of clear(head).append(...) and reviewBox.append(...); null/undefined/false children are skipped, everything else is appended unchanged. Added assertNoStrayNull(page, label) to test/browser/journey.test.js, called right after the incident page opens (T1, no description) and right after the fake draft renders (not a fallback draft); it fails if any element has a direct text node whose trimmed content is exactly 'null'. Reproduction run before the fix failed on exactly that assertion at both viewports (later subtests cascaded because the journey is sequential). Added .env.example with all 16 variables (PORT, HOST, GW_DB_PATH, GW_COOKIE_SECURE, GW_LOG, GW_ENABLE_FAKE, GW_CLI_MODEL, GW_CLI_MAX_BUDGET_USD, GW_CLI_TIMEOUT_MS, GW_CLAUDE_BIN, GW_CLI_ENV_PASS, ANTHROPIC_API_KEY, GW_ANTHROPIC_MODEL, GW_ANTHROPIC_URL, GW_SEED_PASSWORD) and their defaults from src/config.js. Updated README.md: the Configuration paragraph now describes .env.example (and that the server still has no .env loader); the limitations entry 'No .env.example is shipped' is replaced by one stating .env.example is documentation only. After the fix: browser journey 28/28 pass at 360 and 1280 px, npm test 285/285 pass.",
+  "filesChanged": [
+    "public/js/views/incident.js",
+    "test/browser/journey.test.js",
+    ".env.example",
+    "README.md"
+  ],
+  "evidence": [
+    "ev:ev-mv0snn29-01007ddc",
+    "ev:ev-mv0so2hw-01b3d29e",
+    "ev:ev-mv0sm6xz-01bf18df"
+  ],
+  "remainingIssues": [
+    "The fix is local to incident.js. Other views that call the native append/clear(...).append with conditional children would have the same defect; a grep for ': null' near '.append(' in public/js/views/*.js was not in scope and dom.js (which could host a shared helper) is outside this task's ownership.",
+    "The regression assertion runs only at the two points where the defect was reported (incident page open, fake draft review). It does not run on the published postmortem or the fallback-draft views, though both now go through the same appendAll path.",
+    ".env.example is documentation only: the server intentionally has no .env loader, so it does not change runtime behaviour."
+  ],
+  "nextAction": "delivery-lead: submit phase:rework-5 for independent review",
+  "lessonsConsulted": [],
+  "lessonDecisions": []
+}

@@ -1,5 +1,5 @@
 import { api, describeError } from '../api.js';
-import { h, clear, announce, skeleton, focusHeading, formatDate } from '../dom.js';
+import { h, clear, appendAll, announce, skeleton, focusHeading, formatDate } from '../dom.js';
 
 const SEVS = ['SEV1', 'SEV2', 'SEV3', 'SEV4'];
 
@@ -101,7 +101,7 @@ export function incidentsView(root, app) {
     }
   }
 
-  root.append(h('h1', { text: 'Incidents' }), canCreate ? form : null, h('h2', { text: 'Your team\'s incidents' }), listBox);
+  appendAll(root, h('h1', { text: 'Incidents' }), canCreate ? form : null, h('h2', { text: 'Your team\'s incidents' }), listBox);
   focusHeading(root);
   load();
   return () => { alive = false; };

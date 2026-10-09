@@ -1,0 +1,53 @@
+{
+  "from": "frontend-engineer",
+  "to": "delivery-lead",
+  "task": "rework-5",
+  "objective": "Resolve review rev-mv0suzex-016f2cc3 (R5-1 major, R5-2 info, R5-3 info): remove the literal text 'null' rendered by null children passed to native Element.append in every view, with one shared helper in dom.js and a browser-journey scan that covers the viewer's postmortem page; plus the original rework-5 scope (incident view fix, regression test, .env.example, README notes).",
+  "context": "Round one fixed only public/js/views/incident.js with a local appendAll helper; the reviewer reproduced the same defect on the published postmortem page (postmortems.js:51-56) and found the latent pattern at incidents.js:104, and noted the stray-null scan did not run on the viewer postmortem step. The orchestrator extended ownership to postmortems.js, incidents.js and dom.js. The fix is now shared: appendAll(el, ...children) is exported from public/js/dom.js next to h() with the same null/undefined/false filter (strings become text nodes as in h()), imported by the three views, and used at every native append call site that passes a conditional child. A grep of public/js for '.append(' with a ternary ': null' child finds no remaining site. The stray-null scan now runs inside the shared auditLayout helper, so every audited page (login, incidents, draft-review, published, viewer-postmortem, incidents-empty) is covered, in addition to the two direct calls after the incident page opens and after the fake draft renders. .env.example lists the 15 variables from the README configuration table (R5-3: 15, not 16 as the first handoff said) with defaults from src/config.js. Memory search returned no records; task claim printed no verified lessons.",
+  "inputs": [
+    ".eccode/reviews/rev-mv0suzex-016f2cc3.json",
+    "public/js/dom.js",
+    "public/js/views/incident.js",
+    "public/js/views/postmortems.js",
+    "public/js/views/incidents.js",
+    "src/config.js",
+    "README.md",
+    "test/browser/journey.test.js"
+  ],
+  "dependencies": [],
+  "expectedOutput": "No view renders a stray 'null' text node; a single exported appendAll in dom.js used by incident.js, postmortems.js and incidents.js; the browser journey runs the stray-null scan on every audited page including the viewer's postmortem; .env.example at the project root; README notes describing it.",
+  "acceptanceCriteria": [
+    "R5-1 resolved: the browser journey executes the stray-null scan on the viewer postmortem page and passes (ev:ev-mv0tahfs-019339e4); reproduction before the postmortems.js fix failed at exactly that step at both viewports (ev:ev-mv0t9ex5-01506ac8: 'viewer-postmortem: literal \"null\" text rendered in main#main').",
+    "R5-2 resolved: incidents.js:104 uses the shared appendAll; no native append with a ternary null child remains in public/js.",
+    "R5-3 resolved: this handoff states the correct count of 15 variables in .env.example.",
+    "Original: the text 'null' is no longer rendered under the incident title or under 'Draft review' (round-one reproduction ev:ev-mv0sm6xz-01bf18df failed with 'incident page: literal \"null\" text rendered in div'; passes since).",
+    "A regression test fails before the fix and passes after it (both reproductions above, then ev:ev-mv0tahfs-019339e4).",
+    ".env.example exists with every README configuration variable, its default and a one-line comment; the two README notes that said none was shipped now describe the file.",
+    "The existing checks still pass: npm test ev:ev-mv0tax2d-01584a08 (285/285), npm run test:browser ev:ev-mv0tahfs-019339e4 (28/28)."
+  ],
+  "completedWork": "public/js/dom.js: exported appendAll(el, ...children) next to h(); it flattens children, skips undefined/null/false, appends Nodes as-is and other values as text nodes, and returns el. public/js/views/incident.js: removed the local appendAll copy, imports it from dom.js; renderHead() and renderReview() use it (the two sites from round one). public/js/views/postmortems.js: imports appendAll and uses it for the root.append at lines 50-56 (description and fallback-banner conditional children). public/js/views/incidents.js: imports appendAll and uses it at line 104 (canCreate ? form : null). Call sites fixed, all of them: incident.js renderHead (clear(head)), incident.js renderReview (reviewBox), postmortems.js postmortemView (root), incidents.js incidentsView (root). test/browser/journey.test.js: assertNoStrayNull(page, label) is now called at the top of auditLayout (covers login, incidents, draft-review, published, viewer-postmortem and incidents-empty) and still directly after the incident page opens and after the fake draft renders. .env.example: 15 variables (PORT, HOST, GW_DB_PATH, GW_COOKIE_SECURE, GW_LOG, GW_ENABLE_FAKE, GW_CLI_MODEL, GW_CLI_MAX_BUDGET_USD, GW_CLI_TIMEOUT_MS, GW_CLAUDE_BIN, GW_CLI_ENV_PASS, ANTHROPIC_API_KEY, GW_ANTHROPIC_MODEL, GW_ANTHROPIC_URL, GW_SEED_PASSWORD) with defaults from src/config.js. README.md: Configuration paragraph describes .env.example (and that the server has no .env loader); the limitations entry 'No .env.example is shipped' is replaced by one stating .env.example is documentation only. Reproduction for R5-1 recorded before the postmortems.js fix with the extended scan in place: failed at 'viewer reads the postmortem' at 360 and 1280 px, every earlier step passed. After the fix: browser journey 28/28, npm test 285/285.",
+  "filesChanged": [
+    "public/js/dom.js",
+    "public/js/views/incident.js",
+    "public/js/views/postmortems.js",
+    "public/js/views/incidents.js",
+    "test/browser/journey.test.js",
+    "README.md",
+    ".env.example"
+  ],
+  "evidence": [
+    "ev:ev-mv0tahfs-019339e4",
+    "ev:ev-mv0tax2d-01584a08",
+    "ev:ev-mv0t9ex5-01506ac8",
+    "ev:ev-mv0sm6xz-01bf18df"
+  ],
+  "remainingIssues": [
+    "The reviewer's own probe (stray-null-postmortem.mjs) was not re-run by me; it is not in the repository. The equivalent check is the journey's stray-null scan, which now runs on every audited page including the viewer postmortem, and passes.",
+    "The journey's stray-null scan covers the pages auditLayout visits plus the incident page and the fake draft review; the fallback-draft review (T3) and the 'Not found' / error states are not scanned. Those paths either use h() or go through appendAll now, but they are not asserted in a browser.",
+    "appendAll is only used where a conditional child is passed to a native append; other native append calls in public/js pass only elements built by h() and were left as they are.",
+    ".env.example is documentation only: the server intentionally has no .env loader, so it does not change runtime behaviour."
+  ],
+  "nextAction": "delivery-lead: resubmit phase:rework-5 with --responds-to rev-mv0suzex-016f2cc3",
+  "lessonsConsulted": [],
+  "lessonDecisions": []
+}

@@ -1,5 +1,5 @@
 import { api, describeError } from '../api.js';
-import { h, clear, skeleton, focusHeading, formatDate } from '../dom.js';
+import { h, clear, appendAll, skeleton, focusHeading, formatDate } from '../dom.js';
 import { sourcePanel } from '../components/source.js';
 import { sectionsEl } from '../components/statements.js';
 
@@ -47,7 +47,7 @@ export function postmortemView(root, app, draftId) {
       const panel = sourcePanel(pm.lines);
       const ctx = { lineSet: new Set(pm.lines.map((l) => l.n)), editable: false, editing: null, removing: null, onChip: (n, b) => panel.highlight(n, b) };
       const d = pm.draft;
-      root.append(
+      appendAll(root,
         h('p', {}, h('a', { href: '#/postmortems' }, 'Back to postmortems')),
         h('h1', { text: pm.incident.title }),
         h('p', {}, h('span', { class: 'badge', text: pm.incident.severity }), ` Started ${formatDate(pm.incident.startedAt)}. Published ${formatDate(d.publishedAt)}.`),

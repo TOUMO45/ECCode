@@ -149,7 +149,17 @@ async function generate(page, provider) {
   await page.waitForSelector(tid('draft-sections'));
 }
 
+// Regression (rework-5): a null child passed to native Element.append renders the literal text
+// "null". Fails if any element has a direct text node whose trimmed content is exactly "null".
+async function assertNoStrayNull(page, label) {
+  const stray = await page.evaluate(() => [...document.querySelectorAll('body *')]
+    .filter((el) => [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim() === 'null'))
+    .map((el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${el.className ? `.${el.className}` : ''}`));
+  assert.deepEqual(stray, [], `${label}: literal "null" text rendered in ${stray.join(', ')}`);
+}
+
 async function auditLayout(page, vp, label, findings) {
+  await assertNoStrayNull(page, label); // every audited page, including the viewer's postmortem
   const o = await overflow(page);
   if (o.doc > 0 || o.body > 0) findings.push(`${label}: horizontal overflow doc=${o.doc} body=${o.body}`);
   const bad = await page.evaluate(() => {
@@ -230,6 +240,7 @@ for (const vp of VIEWPORTS) {
 
     await t.test('import notes: malformed error then success', async () => {
       await openIncident(page, T1);
+      await assertNoStrayNull(page, 'incident page');
       await importNotes(page, 'this is not a note line\n14:02 alice: fine');
       const alert = page.locator(`${tid('notes-error')} [role=alert]`).first();
       await alert.waitFor();
@@ -244,6 +255,7 @@ for (const vp of VIEWPORTS) {
       await page.selectOption(tid('provider-select'), 'fake');
       await page.click(tid('generate'));
       await page.waitForSelector(tid('draft-sections'));
+      await assertNoStrayNull(page, 'draft review');
       assert.equal(await page.locator(tid('fallback-banner')).count(), 0);
       const flagged = page.locator('.status-flagged');
       assert.ok((await flagged.count()) >= 2, 'expected at least two flagged statements');

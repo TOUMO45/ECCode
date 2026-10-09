@@ -1,0 +1,95 @@
+{
+  "decision": "changes_requested",
+  "summary": "The submitted fix is correct for public/js/views/incident.js: appendAll() skips null/undefined/false at the two native-append call sites, the regression assertion in test/browser/journey.test.js is real (it failed before the fix per the reproduction log and passes now), .env.example matches src/config.js and the README table exactly (15 variables, same defaults, none invented), and both suites pass when I run them (285/285 unit, 28/28 browser). However the defect this rework was raised for is still on screen: the viewer-facing published postmortem page (public/js/views/postmortems.js) passes the same two ternary-null children to native root.append and renders the literal text \"null\" under the postmortem title. I reproduced it in the real app (ev:ev-mv0stgd1-01d07e41). The browser journey visits that page (step 'viewer reads the postmortem') but the new assertion is not run there, so the suite passes with the defect visible. That file is outside this task's declared ownership, so the orchestrator must extend ownership or open a sibling rework; I am requesting changes rather than approving a partial fix.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Incident view: no literal 'null' text under the incident title or under 'Draft review' (public/js/views/incident.js no longer passes null children to native append). Verified by reading the diff (appendAll at lines 65 and 269 filters null/undefined/false, same rule as h() in dom.js; children and order otherwise unchanged) and by the passing browser journey with the regression assertion at journey.test.js:242 and :257.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0ssuvm-015194f9",
+        "artifact:public/js/views/incident.js"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "A regression test fails before the fix and passes after it. assertNoStrayNull (journey.test.js:154-159) scans every element under body for a direct text node whose trimmed content is exactly 'null', which is precisely what Element.append(null) produces; it runs on the incident page (T1, no description) and after the fake draft renders (not a fallback). The reproduction recorded before the fix, ev-mv0sm6xz-01bf18df, FAILED (exit 1) with 'incident page: literal \"null\" text rendered in div' at both viewports (read from its log, lines 30 and 244); my own run after the fix passes 28/28.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0ssuvm-015194f9",
+        "artifact:test/browser/journey.test.js"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": ".env.example exists at the project root and matches src/config.js and the README configuration table: the same 15 variables (PORT, HOST, GW_DB_PATH, GW_COOKIE_SECURE, GW_LOG, GW_ENABLE_FAKE, GW_CLI_MODEL, GW_CLI_MAX_BUDGET_USD, GW_CLI_TIMEOUT_MS, GW_CLAUDE_BIN, GW_CLI_ENV_PASS, ANTHROPIC_API_KEY, GW_ANTHROPIC_MODEL, GW_ANTHROPIC_URL, GW_SEED_PASSWORD) with the same defaults, no invented variables, secrets left empty, and .env is git-ignored while .env.example is not. The two README notes that said no .env.example is shipped now describe the file and still state there is no .env loader (consistent with src/index.js behaviour). Submitted artifact hashes match the working tree.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0sr13p-01950ab6",
+        "artifact:.env.example",
+        "artifact:README.md"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "The existing checks still pass: npm test (285/285) and npm run test:browser (28/28 at 360 and 1280 px, no console errors, no failed requests, layout/a11y audit clean), both run by the reviewer after the submission.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0sr13p-01950ab6",
+        "ev:ev-mv0ssuvm-015194f9"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "The delivered UI no longer renders the literal text 'null' (the defect the rework was raised for). Not met: the published postmortem page seen by viewers (public/js/views/postmortems.js:51-56) passes 'pm.incident.description ? ... : null' and 'd.isFallback ? ... : null' to native root.append and renders 'null' under the postmortem title. Reproduced in the real app with the fake-clean provider: lead creates an incident with no description, generates, publishes; viewer opens the postmortem; the DOM scan finds a direct 'null' text node in main#main. Every incident.js page in the same probe was clean.",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv0stgd1-01d07e41"
+      ]
+    },
+    {
+      "id": "lessons",
+      "description": "Lesson decisions: the submission records none (handoff ho-mv0soqvy-01bd30f7 has lessonDecisions: [] and lessonsConsulted: []; gate show lists no lessonDecisionsToJudge). Reviewer memory search 'incident view DOM append null' with --check-env returned no matching records, so there was no verified lesson to apply or dismiss. Nothing to judge; recorded here as required.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv0sr13p-01950ab6"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "R5-1",
+      "severity": "major",
+      "title": "Published postmortem page still renders the literal text \"null\" (same defect, public/js/views/postmortems.js)",
+      "detail": "public/js/views/postmortems.js:51-56 calls native root.append(...) with two conditional children, 'pm.incident.description ? h('p', ...) : null' and 'd.isFallback ? h('p', ...) : null', exactly the pattern fixed in incident.js. For any published incident without a description (the common case; the journey's own incidents have none) the viewer sees 'null' under the postmortem title, and for any non-fallback draft a second 'null'. Reproduced in the real app (ev:ev-mv0stgd1-01d07e41, exit 1): 'STRAY NULL postmortem page as viewer ... main#main'. The browser journey visits this exact page in 'viewer reads the postmortem' (screenshot 13-viewer-postmortem) but assertNoStrayNull is only called at journey.test.js:242 and :257, so ev:ev-mv0ssuvm-015194f9 passes with the defect on screen. The implementer's handoff flagged this risk under remainingIssues but did not check it; postmortems.js and dom.js are outside the task's declared file ownership (incident.js, .env.example, README.md, test/browser/**), so this needs an ownership decision by the orchestrator, not silent scope creep by the implementer.",
+      "evidence": [
+        "ev:ev-mv0stgd1-01d07e41",
+        "ev:ev-mv0ssuvm-015194f9",
+        "artifact:test/browser/journey.test.js"
+      ],
+      "recommendation": "Orchestrator: extend rework-5's file ownership to public/js/views/postmortems.js (and preferably public/js/dom.js so appendAll can live next to h() as one shared helper instead of a per-view copy), or open a sibling rework with that ownership. Implementer: apply the same null-skipping append at postmortems.js:51-56 (and at incidents.js:104, which has the same latent pattern), and call assertNoStrayNull in the journey at the 'viewer reads the postmortem' step (and, cheaply, inside auditLayout so every audited page is covered). Resolution condition: a browser-journey run that executes the stray-null scan on the viewer postmortem page passes, and re-running the reviewer probe (node stray-null-postmortem.mjs, or equivalent) reports no element with a direct 'null' text node on any visited page."
+    },
+    {
+      "id": "R5-2",
+      "severity": "info",
+      "title": "Latent same pattern in public/js/views/incidents.js:104 (canCreate ? form : null)",
+      "detail": "root.append(h('h1', ...), canCreate ? form : null, ...) would render 'null' for a user with role viewer on #/incidents. My probe navigated a viewer to #/incidents and found no stray text (the route appears not to render the incidents view for viewers), so this is not a confirmed user-visible defect, only the same unsafe pattern. Listed so it is fixed in the same pass as R5-1.",
+      "evidence": [
+        "ev:ev-mv0stgd1-01d07e41"
+      ],
+      "recommendation": "Use the shared null-skipping append at incidents.js:104 when R5-1 is addressed. No separate resolution condition beyond R5-1's."
+    },
+    {
+      "id": "R5-3",
+      "severity": "info",
+      "title": "Handoff miscounts the variables in .env.example",
+      "detail": "The handoff (completedWork) says '.env.example with all 16 variables' but lists and ships 15, which is the correct count: src/config.js reads exactly 15 and the README table has 15 rows. The artifact is right; only the handoff text is off by one.",
+      "evidence": [
+        "artifact:.env.example"
+      ],
+      "recommendation": "No change to the artifacts. Correct the number in the next handoff if the task is reworked."
+    }
+  ],
+  "resolvedFindings": [],
+  "lessonsConsulted": []
+}

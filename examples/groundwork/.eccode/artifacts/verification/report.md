@@ -2,6 +2,8 @@
 Author: delivery-lead. Not self-reviewed. Run date 2026-10-09.
 Code state: git HEAD 6eb29f451ab866c6993969566b9d2f24a78c88a8 plus uncommitted changes that were reviewed in phase:rework-4: deletion of the 22 retired holdout-1 files under `eval/holdout/`, and edits to `README.md` and `docs/eval-results.md`. phase:rework-4 is approved (review rev-mv0aor6x-01fde66f). `eccode audit` passes (ev:ev-mv0apqho-01ab7df8: "Audit OK: 707 events, chain intact, approved artifacts unchanged").
 
+Update 2026-10-09, after delivery and phase:rework-5 (the user reopened this gate): see section 11. Code state for that section: git HEAD 06b1ac2a0208f4bb2f6836ac4b678304b599991c plus the uncommitted rework-5 changes (`public/js/dom.js`, `public/js/views/incident.js`, `public/js/views/postmortems.js`, `public/js/views/incidents.js`, `test/browser/journey.test.js`, `README.md`, new `.env.example`); `git status` shows no other change to the project besides the record under `.eccode/`. `eccode audit` passes on that state (ev:ev-mv0tizzb-018c2c36: "Audit OK: 772 events, chain intact, approved artifacts unchanged"). Sections 1 to 10 are unchanged from the submission reviewed in rev-mv0ay7tb-010829ac except where marked.
+
 This report records measured results and disclosures only. NO human acceptance is claimed anywhere in it, and no decision is recorded on anyone's behalf. The operator of this run is not the product owner.
 
 ## 1. Bottom line
@@ -70,13 +72,57 @@ The risk list is from the engine record. Status is as recorded; nothing is marke
 | RISK-15 live CLI injection 8/10 in an unofficial probe | medium | mitigated | Official runs: holdout 3 M4 10/10; tune M4 10/10 after p1 to p2. | 10-case set. | Nothing recorded as pending. |
 
 ## 7. Known limitations
-1. The verifier is lexical; honest semantic paraphrase can be wrongly flagged ("one search in five" vs "20 percent"). 2. M1b covers only the seeded fabrication kinds. 3. Injection resistance rests on 10 cases. 4. hold3-08 is an unfixed false flag. 5. No `.env.example`. 6. No metrics endpoint. 7. SIGTERM sent to the `npm start` wrapper alone does not stop the server (documented; the clean-clone run signalled the node process). 8. Browser test covers 360 and 1280 px only and needs a global Playwright. 9. Non-holdout eval reports are git-ignored. 10. The login rate limiter is in memory. 11. Total real spend is not independently established beyond `eval/usage.log`.
+1. The verifier is lexical; honest semantic paraphrase can be wrongly flagged ("one search in five" vs "20 percent"). 2. M1b covers only the seeded fabrication kinds. 3. Injection resistance rests on 10 cases. 4. hold3-08 is an unfixed false flag. 5. `.env.example` is documentation only (added in rework-5; the server has no `.env` loader, so copying it to `.env` changes nothing unless the shell or service manager exports the values). 6. No metrics endpoint. 7. SIGTERM sent to the `npm start` wrapper alone does not stop the server (documented; the clean-clone run signalled the node process). 8. Browser test covers 360 and 1280 px only and needs a global Playwright. 9. Non-holdout eval reports are git-ignored. 10. The login rate limiter is in memory. 11. Total real spend is not independently established beyond `eval/usage.log`.
 
 ## 8. Not verified
 Holdout and full CLI evals were not re-run. The holdout author's restrictions were not independently checked. The clean-checkout run was done by the delivery-lead, not an independent reviewer, and `test:browser` and `test:live` were not run in the clone. Nothing about the product owner's position is known.
+After rework-5 (section 11): holdout evals, full CLI tune runs and `npm run test:live` were not re-run; no clean-checkout run was made on the rework-5 state (its changes are uncommitted, so a clone of HEAD would not contain them); the fallback-draft review (T3) and the "Not found" and error states are not scanned for stray text in a browser (reviewer finding R5-4, info: those paths were read and use `h()` or `appendAll`). The reviewer's own Playwright probe (ev:ev-mv0tdqpn-01b5c29b) is not in the repository and was not re-run by the delivery-lead.
 
 ## 9. Needs the product owner (not asserted as blocking)
 Decisions on the open risks (RISK-1, RISK-2, RISK-10, RISK-14), on the run-count deviations (including the uncovered 12th run), on the holdout history and hold3-08, and on the D8 outcome. None is recorded, and none is claimed.
 
 ## 10. Housekeeping for the orchestrator
 Uncommitted in the working tree: 22 deletions under `eval/holdout/{incidents/hold-01..12,injections/hold-inj-01..10}.json`, and modified `README.md` and `docs/eval-results.md`. These were reviewed in phase:rework-4. They must be committed for HEAD to match the reviewed state and for a clean clone to pass.
+
+Superseded on 2026-10-09 after rework-5: those rework-4 changes are no longer in the uncommitted set. The working tree now differs from HEAD 06b1ac2 only by the rework-5 files listed in section 11, which are likewise uncommitted and must be committed for HEAD to match the reviewed state.
+
+## 11. Rework-5 (after delivery), 2026-10-09
+Author: delivery-lead. Not self-reviewed. Measured results and disclosures only; no human acceptance is claimed.
+
+### What happened
+Groundwork was delivered on 2026-10-09 (`.eccode/delivery/final-handoff.md`). Afterwards the user reopened this gate (event seq 732, "complete the open items; reopen verification for a rework that fixes the stray 'null' text under the incident title and under Draft review and adds .env.example") and opened phase:rework-5 (seq 733, owner frontend-engineer, files `public/js/views/incident.js`, `.env.example`, `README.md`, `test/browser/**`; extended by the orchestrator at seq 752 to `public/js/views/postmortems.js`, `public/js/views/incidents.js` and `public/js/dom.js` after finding R5-1).
+
+### The defect
+Conditional children written as `cond ? h(...) : null` were passed to native `Element.append`, which renders a null child as the literal text "null". Visible under the incident title (no description) and under "Draft review" (non-fallback draft) in `public/js/views/incident.js`, and, as the reviewer found (R5-1), under the postmortem title on the published-postmortem page a viewer sees (`public/js/views/postmortems.js`); the same latent pattern was at `public/js/views/incidents.js:104` (R5-2, not confirmed user-visible). The implementer's reproductions, recorded before the fixes, failed as expected: ev:ev-mv0sm6xz-01bf18df (round one, "incident page: literal \"null\" text rendered in div", both viewports) and ev:ev-mv0t9ex5-01506ac8 (round two, "viewer-postmortem: literal \"null\" text rendered in main#main", both viewports).
+
+### What changed (final files, approved submission sub-mv0tcdks-01398a01)
+- `public/js/dom.js`: new exported `appendAll(el, ...children)` next to `h()`; flattens children, skips `undefined`, `null` and `false` (the same rule as `h()`), appends Nodes as they are and other values as text nodes, returns `el`.
+- `public/js/views/incident.js` (renderHead and renderReview), `public/js/views/postmortems.js` (root append with the description and fallback-banner children) and `public/js/views/incidents.js` (`canCreate ? form : null`): the four native-append call sites that passed a conditional child now use `appendAll`. The reviewer's static check found no remaining `: null` / `: undefined` child outside `h()`/`appendAll` in `public/js`.
+- `test/browser/journey.test.js`: `assertNoStrayNull(page, label)` scans every element under `body` for a direct text node whose trimmed content is exactly "null"; it runs at the top of `auditLayout` (login, incidents, draft-review, published, viewer-postmortem, incidents-empty, at 360 and 1280 px) and directly after the incident page opens and after the fake draft renders.
+- `.env.example` (new, project root): the 15 variables of `src/config.js` and the README configuration table (PORT, HOST, GW_DB_PATH, GW_COOKIE_SECURE, GW_LOG, GW_ENABLE_FAKE, GW_CLI_MODEL, GW_CLI_MAX_BUDGET_USD, GW_CLI_TIMEOUT_MS, GW_CLAUDE_BIN, GW_CLI_ENV_PASS, ANTHROPIC_API_KEY, GW_ANTHROPIC_MODEL, GW_ANTHROPIC_URL, GW_SEED_PASSWORD) with their defaults and a one-line comment each; secrets left empty. `.env` stays git-ignored; `.env.example` is not.
+- `README.md`: the Configuration note and the limitations entry that said no `.env.example` is shipped now describe the file and state that the server has no `.env` loader.
+- No change to `src/`, `eval/`, thresholds, holdouts or docs other than README.md. The AI-eval figures, deviations and risk dispositions in sections 4 to 6 are unaffected and were not re-measured.
+
+### Gate history of phase:rework-5
+- Submission 1 (sub-mv0splpg-01e6f2a6): rejected by technical-reviewer, rev-mv0suzex-016f2cc3, finding R5-1 major (published-postmortem page still rendered "null"; reproduced in the real app, ev:ev-mv0stgd1-01d07e41), R5-2 info (latent pattern in incidents.js), R5-3 info (handoff said 16 variables, the file has 15).
+- Submission 2 (sub-mv0tcdks-01398a01): approved by technical-reviewer, rev-mv0tfif0-015659c8, R5-1 to R5-3 resolved; one info finding R5-4 (fallback-draft review and not-found/error states covered by code path, not by a browser assertion). Reviewer's checks after the resubmission: `npm test` 285/285 ev:ev-mv0tdxf4-01a729aa; `npm run test:browser` 28/28 ev:ev-mv0teewl-015f461f; reviewer's own Playwright probe of the real app, every visited page clean including the viewer's postmortem page ev:ev-mv0tdqpn-01b5c29b.
+
+### Fresh checks by the delivery-lead on the final files (this submission)
+| Check | Result | Evidence |
+|---|---|---|
+| `npm test` | 285/285 pass, 0 fail, 0 skipped | ev:ev-mv0thoz9-018ee287 |
+| `npm run test:browser` (real Chromium, 360 and 1280 px, stray-null scan on every audited page) | 28/28 pass | ev:ev-mv0tiu03-01f83764 |
+| `eccode audit` | Audit OK: 772 events, chain intact, approved artifacts unchanged | ev:ev-mv0tizzb-018c2c36 |
+
+The sha256 of each rework-5 file in the working tree equals the hash recorded in the approved submission sub-mv0tcdks-01398a01 (checked by the delivery-lead with `sha256sum`; the audit's "approved artifacts unchanged" covers the same).
+
+Not run, by design: holdout evals (the cap guard refuses a fourth run; the holdout results in section 5 stand as measured), full CLI tune runs, and `npm run test:live` (no live-model test was run in this submission; the last live run remains ev:ev-mv0aqs0x-0169f95c from before rework-5, and rework-5 touched no provider code). No clean-checkout run was made on the rework-5 state.
+
+### Criteria of the last verification review (rev-mv0ay7tb-010829ac), restated for this submission
+- C1 deterministic checks: pass on the final files (table above).
+- C2 D9 clean checkout: not repeated; the earlier run stands for the code it covered. The rework-5 changes are uncommitted, so a clone of HEAD would not contain them.
+- C3 D8: untouched by rework-5; nothing re-measured; section 5 and `docs/eval-results.md` unchanged.
+- C4 D10: the stray-"null" defect is fixed and no longer open; `.env.example` is no longer a gap; the four open risks (RISK-1, RISK-2, RISK-10, RISK-14) and the items in section 9 remain exactly as they were. The record is audit-clean (ev:ev-mv0tizzb-018c2c36).
+
+### Still open after rework-5
+A human product owner has still not signed off on anything: the decisions listed in section 9 (open risks, run-count deviations, holdout history, hold3-08, the D8 outcome) are not recorded and not claimed. The rework-5 changes are uncommitted in the working tree (housekeeping for the orchestrator; the delivery-lead does not commit).

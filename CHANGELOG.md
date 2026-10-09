@@ -14,6 +14,9 @@ This branch (`claude/funny-feynman-rt1io9`) starts from the full `claude/brave-b
 - **JSON inputs** (`--file`, `plan validate <file>`) resolve from the current directory, then the project root; a missing file is a `NOT_FOUND` refusal, not a stack trace.
 - **`plan validate` warns** about ownership globs that point into `.eccode/` (other than `drafts/`): they never grant ownership, so a plan listing them is mistaken about what its tasks may write.
 
+### Groundwork example
+- The cosmetic `null` defect left open at delivery was fixed by rework-5 through the gates (user reopened verification; implementer, technical-reviewer, delivery-lead and security-reviewer as separate subagents; rejected once for the same defect on the postmortem page, then approved, re-verified on 228 files, re-delivered as `final-handoff-2.md`). `.env.example` added; the browser journey scans every audited page for stray text. Record: 786 events, audit OK.
+
 ### Docs and process
 - `docs/threat-model.md`: assets, attacker models, every control with its test, residual risks.
 - `.github/workflows/ci.yml`: toolkit suite on Ubuntu and macOS (Node 18.17/20/22), Groundwork suite on Node 22, record re-audit; Windows experimental.

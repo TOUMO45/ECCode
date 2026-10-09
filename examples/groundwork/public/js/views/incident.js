@@ -1,5 +1,5 @@
 import { api, describeError } from '../api.js';
-import { h, clear, announce, announceError, skeleton, focusHeading, formatDate } from '../dom.js';
+import { h, clear, appendAll, announce, announceError, skeleton, focusHeading, formatDate } from '../dom.js';
 import { sourcePanel } from '../components/source.js';
 import { sectionsEl, reasonText, SECTION_LABELS } from '../components/statements.js';
 
@@ -52,7 +52,7 @@ export function incidentView(root, app, id) {
 
   function renderHead() {
     const i = s.inc;
-    clear(head).append(
+    appendAll(clear(head),
       h('p', {}, h('a', { href: '#/incidents' }, 'Back to incidents')),
       h('h1', { text: i.title }),
       h('p', {}, h('span', { class: 'badge', text: i.severity }), ` Started ${formatDate(i.startedAt)} by ${i.createdBy.displayName}`),
@@ -256,7 +256,7 @@ export function incidentView(root, app, id) {
       bar.append(h('p', { class: 'hint', text: 'Only a team lead can publish.' }));
     }
 
-    reviewBox.append(
+    appendAll(reviewBox,
       h('h2', { id: 'review-h', tabindex: '-1', text: published ? 'Published postmortem' : 'Draft review' }),
       d.isFallback ? h('p', { class: 'banner', testid: 'fallback-banner', role: 'note' }, 'Fallback draft: no AI was used') : null,
       staleBox,
