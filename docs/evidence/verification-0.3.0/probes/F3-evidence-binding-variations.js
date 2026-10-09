@@ -80,7 +80,8 @@ try {
   const reviewerOther = passCheck(ctx.store, 'technical-reviewer');
   step('F3.reviewer.unrelatedOnly', 'phase approval citing the reviewer\'s run of an unrelated passing command', 'refused:REVIEW_REJECTED', attempt(() => gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${reviewerOther.id}`]))));
   const reviewerDeclared = run(ctx, 'technical-reviewer', DECLARED);
-  step('F3.reviewer.declared', 'phase approval citing the reviewer\'s own run of the declared command', 'ok', attempt(() => gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${reviewerDeclared.id}`]))));
+  step('F3.reviewer.declaredOnly', 'phase approval citing only the reviewer\'s run of the api command (ui and tests declare the default command too)', 'refused:REVIEW_REJECTED', attempt(() => gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${reviewerDeclared.id}`]))));
+  step('F3.reviewer.declared', 'phase approval citing the reviewer\'s own runs of every declared command (overblocking check)', 'ok', attempt(() => gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${reviewerDeclared.id}`, `ev:${reviewerOther.id}`]))));
 
   // ---- D. Method-only task: the any-passing-check rule (documented).
   ctx = tmpProject();

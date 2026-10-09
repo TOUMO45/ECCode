@@ -1,0 +1,74 @@
+ok 1 - guard: no opinion outside ECCode projects
+ok 2 - guard: binds --actor to the running subagent and blocks impersonation
+ok 3 - guard: protects the record from direct edits
+ok 4 - guard: implementers edit only inside their claimed task ownership; reviewers write drafts only
+ok 5 - guard: ECCODE_HOOKS=off disables it
+ok 6 - session-start injects the resume brief only for ECCode projects
+ok 7 - project install copies components, rewrites paths, merges hooks idempotently and the installed CLI works
+ok 8 - AGENTS.md export covers every role and the workflow for other harnesses
+ok 9 - \#2 CLI refuses a repeated --actor
+ok 10 - \#2 guard binds the actor the CLI will use: repeated --actor, inline env, tabs, quotes, nested shells
+ok 11 - \#4 guard fails closed when the record cannot be read
+ok 12 - \#5 guard denies git commands that roll back or delete the record
+ok 13 - \#8 guard: task globs never grant .eccode/ paths (only drafts)
+ok 14 - \#11 guard protects memory, improvements, evidence, reviews and handoffs from Bash writes
+ok 15 - guard: implementers cannot write approved artifacts; document authors can
+ok 16 - RT1 a symlink inside task ownership cannot be declared, and the guard denies writes through it
+ok 17 - RT2 changes inside ownership that the handoff does not declare are refused, so every change is pinned
+ok 18 - RT3 plan ids rework-N are reserved, and a rework cannot collide with an existing task or gate
+ok 19 - RT4 audit and state report a tampered log as CORRUPT_LOG instead of crashing
+ok 20 - RT5 repeated ** segments are collapsed and plans refuse more than three
+ok 21 - RT6 implementer shell writes obey ownership: redirects, tee, cp and sed -i outside the claim are denied, .git metadata always
+ok 22 - RT7 .claude/ and .git/ are never owned: plans refuse globs reaching them, completion refuses the files
+ok 23 - RT8 secrets in labels, notes, handoffs and reviews are redacted before they reach the record
+ok 24 - RT9 a blocking finding raised and marked resolved in the same review needs evidence
+ok 25 - F4 reviewer shell writes to project files are denied exactly like the Write tool (the ten probe cases)
+ok 26 - F4 reviewers and document authors keep their draft areas through the shell; the rest of .eccode/ follows the Edit rules
+ok 27 - F4 inline interpreter code that writes files is denied for every ECCode role with the Edit hint; the main session is unaffected
+ok 28 - F4 relative shell targets are resolved from the hook cwd; outside the project is not ours, into it is checked, after a cd it cannot be bound
+ok 29 - F5 --actor user is denied from every agent context: the main session, subagents, sequential mode, the environment
+ok 30 - F5 record and memory files outside the project (shared memory, another project) are written only by the CLI, from every context
+ok 31 - F9/win32: record and memory files named with backslashes are denied on every platform, before any tokenizing
+ok 32 - F9/win32: the tokenizer keeps backslashes that separate path segments only under win32; POSIX escapes are unchanged
+ok 33 - F9/win32: an eccode invocation by its Windows path is still bound to its --actor
+ok 34 - F9/win32: RECORD_FILES matches record paths with either separator and nothing else
+ok 35 - \#4 a torn final line is repaired before the next append, so the log never becomes permanently corrupt
+ok 36 - \#4 a complete final event that only lost its newline is kept
+ok 37 - \#5 a log rolled back behind its snapshot is refused (LOG_ROLLBACK) until the user accepts it
+ok 38 - \#5 a log replaced by a different history is refused; a snapshot that is merely behind is still rebuilt
+ok 39 - \#9 ECCODE_NOW is honoured only when ECCODE_TEST=1
+ok 40 - \#9 audit reports event timestamps that go backwards
+ok 41 - \#3 evidence refs never resolve to inherited properties (ev:constructor, ev:__proto__, ...)
+ok 42 - \#3 memory assess and lesson verification do not accept inherited evidence ids
+ok 43 - \#3 task, run, risk, gate and evidence ids are own-property lookups (no TypeError, no inherited match)
+ok 44 - \#21 a record cannot supersede itself (or be superseded by a superseded/rejected one)
+ok 45 - \#22 CLI refuses unexpected positionals instead of dropping them (unquoted glob after --artifact)
+ok 46 - \#22 CLI input errors are clean EccodeErrors, not internal errors
+ok 47 - \#22 run end/correct usage must be finite non-negative numbers
+ok 48 - \#1 improve rollback refuses crafted proposal ids (path traversal into drafts)
+ok 49 - \#1 adopt and rollback re-check the target (outside project, protected) and rollback is user/orchestrator only
+ok 50 - \#12 baseline and candidate must be evaluated with the same command
+ok 51 - \#13 only evaluated proposals can be reviewed (no re-review after adoption)
+ok 52 - \#14 protected paths cover the installed engine, toolkit internals and the record, even with an older config
+ok 53 - \#6 explicit phase artifacts never replace the code the tasks changed (it is always pinned)
+ok 54 - \#7 completion refuses undeclared changes outside the task (another task's files or nobody's)
+ok 55 - \#7 legitimate parallel and sequential work is attributable (claimed, completed and reset tasks)
+ok 56 - \#8 task globs never reach into .eccode/ (config, artifacts), only .eccode/drafts/
+ok 57 - \#10 a plan submission interrupted before its import cannot be approved; delivery needs phases and tasks
+ok 58 - \#18 a done task cannot be reset while its phase is submitted or approved; approval needs every task done
+ok 59 - \#19 ev: file evidence is re-hashed when cited; a changed or deleted file is refused
+ok 60 - \#20 default phase artifacts skip deleted files and scratch drafts
+ok 61 - \#15 redaction covers JSON-quoted keys, prefixed key names, bearer tokens and URL credentials
+ok 62 - \#16 promotion scans source URLs: secrets in query, credentials, private hosts and file: URLs are blocked
+ok 63 - \#11 a local lesson flipped to verified in its JSON file is not trusted (promote, improve propose)
+ok 64 - \#11 verification binds the reviewed revision and content; edits after review are not trusted
+ok 65 - \#17 run correct is restricted to orchestrator/user (an agent cannot lower recorded spend)
+ok 66 - \#17 recover is restricted to orchestrator/user and records the real caller
+ok 67 - \#22 memory ids are validated before they are used as paths
+# tests 67
+# pass 67
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 19719.553998

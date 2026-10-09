@@ -47,6 +47,8 @@ try {
   dirs.push(outside);
   const link = path.join(outside, 'link-into-project.js');
   fs.symlinkSync(path.join(ctx.dir, 'src/server.js'), link);
+  fs.mkdirSync(path.join(ctx.dir, '.eccode/reviews/drafts'), { recursive: true });
+  fs.symlinkSync(path.join(ctx.dir, 'src/server.js'), path.join(ctx.dir, '.eccode/reviews/drafts/existing-link.js'));
 
   // [id, role, command, expectation, classification-if-allowed]. Every command is hook input, never executed.
   const cases = [
@@ -64,7 +66,8 @@ try {
     ['abs-outside', 'technical-reviewer', `echo x > ${path.join(outside, 'notes.txt')}`, 'allowed'],
     ['symlink-outside-into-project', 'technical-reviewer', `echo x > ${link}`, 'documented', 'NEW: an absolute target outside the project is skipped before any realpath; it is a symlink into src/server.js'],
     ['symlink-create', 'technical-reviewer', `ln -s ${path.join(ctx.dir, 'src/server.js')} ${path.join(outside, 'link2.js')}`, 'documented', 'the reviewer can create that symlink itself (the write target is outside the project)'],
-    ['symlink-inside', 'technical-reviewer', 'ln -s src/server.js .eccode/reviews/drafts/link.js && echo x > .eccode/reviews/drafts/link.js', 'denied'],
+    ['symlink-inside-oneline', 'technical-reviewer', 'ln -s src/server.js .eccode/reviews/drafts/link.js && echo x > .eccode/reviews/drafts/link.js', 'documented', 'NEW (TOCTOU, known-shape): the link does not exist when the hook runs, so the redirect target is judged as a draft; ln -s with a link target inside the project is not refused'],
+    ['symlink-inside-existing', 'technical-reviewer', 'echo x > .eccode/reviews/drafts/existing-link.js', 'denied'],
     ['cd-then-relative', 'technical-reviewer', 'cd src && echo x > server.js', 'denied'],
     ['env-node-e', 'technical-reviewer', `env VAR=1 node -e "require('fs').writeFileSync('src/server.js','x')"`, 'denied'],
     ['xargs-sh', 'technical-reviewer', "ls src | xargs -I{} sh -c 'echo x > src/{}'", 'denied'],
@@ -83,7 +86,12 @@ try {
     ['mkdir-redirect', 'technical-reviewer', 'mkdir -p src/new && echo x > src/new/a.js', 'denied'],
     ['tee-append', 'technical-reviewer', 'echo x | tee -a src/server.js', 'denied'],
     ['exec-fd', 'technical-reviewer', 'exec 3> src/server.js', 'denied'],
-    ['clobber', 'technical-reviewer', 'echo x >| src/server.js', 'denied'],
+    ['clobber', 'technical-reviewer', 'echo x >| src/server.js', 'documented', 'NEW (blocking for F4): the >| redirect operator (bash noclobber override) is split at | by the tokenizer, so the target is never seen; one command, every role'],
+    ['clobber-fd', 'technical-reviewer', 'echo x 1>| src/server.js', 'documented', 'NEW: see clobber'],
+    ['both-streams', 'technical-reviewer', 'echo x &> src/server.js', 'denied'],
+    ['stderr-only', 'technical-reviewer', 'echo x 2>src/server.js', 'denied'],
+    ['clobber-cp', 'technical-reviewer', 'cat a.js >| src/server.js', 'documented', 'NEW: see clobber'],
+    ['clobber-impl-outside', 'backend-engineer', 'echo x >| src/web/x.js', 'documented', 'NEW: see clobber (an implementer outside its ownership)'],
     ['variable-target', 'technical-reviewer', 'f=src/server.js; echo x > $f', 'denied'],
     ['perl-pi', 'technical-reviewer', "perl -pi -e 's/a/b/' src/server.js", 'denied'],
     ['sed-i-suffix', 'technical-reviewer', 'sed -i.bak s/a/b/ src/server.js', 'denied'],

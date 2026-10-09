@@ -1,0 +1,234 @@
+{
+  "probe": "F9-release-checks",
+  "repo": "/home/user/ECCode",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T16:23:05.089Z",
+  "steps": [
+    {
+      "id": "F9.validate",
+      "description": "npm run validate",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "value": "> node scripts/validate-toolkit.js |  | Toolkit validation passed: 12 agents, 7 skills, 7 commands, hooks wired, package 0.3.0 (356 files).",
+        "message": ""
+      }
+    },
+    {
+      "id": "F9.pack.dryRun",
+      "description": "npm pack --dry-run lists the engine and CLI and ships no tests, examples or records",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "count": 356,
+          "missing": [],
+          "leaked": [],
+          "docsShipped": 274
+        }
+      }
+    },
+    {
+      "id": "F9.pack.real",
+      "description": "npm pack to a temp dir",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "eccode-0.3.0.tgz",
+        "message": ""
+      }
+    },
+    {
+      "id": "F9.install",
+      "description": "npm install <tarball> --offline into the consumer",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "value": "added 1 package in 805ms",
+        "message": ""
+      }
+    },
+    {
+      "id": "F9.require",
+      "description": "require('eccode') from the installed package",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"version\":\"0.3.0\",\"exports\":24,\"hasStore\":true,\"hasGates\":true}",
+        "message": ""
+      }
+    },
+    {
+      "id": "F9.installedCli.init",
+      "description": "the installed CLI: eccode init",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "Initialized ECCode project in /tmp/eccode-f9-hOcQj9/project/.eccode",
+        "message": ""
+      }
+    },
+    {
+      "id": "F9.installedCli.evidence",
+      "description": "the installed CLI: eccode evidence run",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "Evidence ev:ev-mv16cibk-0103900d — PASSED (exit 0, 30ms)",
+        "message": ""
+      }
+    },
+    {
+      "id": "F9.installedCli.audit",
+      "description": "the installed CLI: eccode audit",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "Audit OK: 2 events, chain intact, approved artifacts unchanged.",
+        "message": ""
+      }
+    },
+    {
+      "id": "F9.installedHooks",
+      "description": "hooks.json of the installed package names the guard",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": "{\"description\":\"ECCode: resume brief at session start; identity, ownership and record-integrity guard before tool calls; completion gate for unattended workflows (ECCODE_UNATTENDED=1). Disable with EC"
+      }
+    },
+    {
+      "id": "F9.gitattributes",
+      "description": ".gitattributes: text=auto eol=lf, bundle and evidence logs -text",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "* text=auto eol=lf",
+          "docs/evidence/review-bundle/** -text",
+          "**/.eccode/evidence/*.log -text"
+        ]
+      }
+    },
+    {
+      "id": "F9.eol",
+      "description": "git ls-files --eol on engine files and a bundle log",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "i/lf    w/lf    attr/text=auto eol=lf \tbin/eccode.js",
+          "i/crlf  w/crlf  attr/-text            \tdocs/evidence/review-bundle/eccode-check-windows.log",
+          "i/lf    w/lf    attr/text=auto eol=lf \tlib/store.js",
+          "i/lf    w/lf    attr/text=auto eol=lf \ttests/helpers.js"
+        ]
+      }
+    },
+    {
+      "id": "F9.fixtureScan",
+      "description": "tests/*.js scanned for sh -c, grep -q, \"; exit N\", true/false commands (lines marked \"hook input\" excluded)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "tests/review-F9.test.js:101 [grep -q] [/grep -q/, 'cmd.exe has no grep: node -e \"process.exit(require(\\'fs\\').readFileSync(f, \\'utf8\\').in"
+        ]
+      }
+    },
+    {
+      "id": "F9.fixtureScan.hookInputs",
+      "description": "sh -c strings that exist only as guard hook input (never executed)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "`sh -c \"node -e \\\\\"require('fs').writeFileSync('src/server/app.js','x')\\\\\"\"`, // hook input, never e"
+        ]
+      }
+    },
+    {
+      "id": "F9.versions",
+      "description": "package.json, plugin.json, marketplace.json, CHANGELOG first heading, lib/index.js",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "pkg": "0.3.0",
+          "plugin": "0.3.0",
+          "market": "0.3.0",
+          "changelog": "0.3.0",
+          "index": "0.3.0",
+          "engineMarkerSource": "require('../../package.json').version"
+        }
+      }
+    },
+    {
+      "id": "F9.shippedTest",
+      "description": "node --test tests/review-F9.test.js (upgrade/rollback against the 0.1.0 commit included)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0
+        },
+        "message": ""
+      }
+    },
+    {
+      "id": "F9.v010commit",
+      "description": "the 0.1.0 release commit is in this clone (so the upgrade test did not skip)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": "present"
+      }
+    },
+    {
+      "id": "F9.workingTree",
+      "description": "git status --short at verification time (excluding this verification's own files)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "clean",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "F9.windows",
+      "description": "Windows",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": false,
+        "value": "NOT RUN. Linux only (see out.note). The five Windows fixture fixes are unverified on Windows by this verification."
+      }
+    }
+  ],
+  "unexpected": 0,
+  "windowsRun": false,
+  "note": "Windows was NOT run: this verification ran on Linux only; the Windows claims of 0.3.0 rest on the analysis in docs/evidence/review-bundle/README.md and on CI.",
+  "finishedAt": "2026-10-09T16:23:13.244Z"
+}

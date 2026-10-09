@@ -131,7 +131,7 @@ try {
   step('F5.dlg.revoke', 'the user revokes it (ECCODE_TEST=1 stands in for the terminal)', 'ok', cli(ctx.dir, ['delegate', 'revoke', d2.id, '--actor', 'user', '--reason', 'User changed their mind'], { ECCODE_TEST: '1' }));
   const d3 = authority.grant(ctx.store, 'user', { to: 'orchestrator', action: 'gate.reopen', target: 'architecture', reason: 'User decided: proceed with the narrower scope' });
   step('F5.dlg.afterRevoke', 'the revoked delegation spent on its own target', 'refused', cli(ctx.dir, ['gate', 'reopen', 'design', '--actor', 'orchestrator', '--delegation', d2.id, '--resolution', 'using a revoked delegation']));
-  const t0 = Date.now() + 5000;
+  const t0 = Date.now() - 10 * 60000; // in the past, so the pinned clock never runs ahead of later real-time events
   const d4 = (() => {
     process.env.ECCODE_TEST = '1';
     process.env.ECCODE_NOW = new Date(t0).toISOString();

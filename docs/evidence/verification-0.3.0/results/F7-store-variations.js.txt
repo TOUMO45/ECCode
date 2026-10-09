@@ -1,0 +1,276 @@
+{
+  "probe": "F7-store-variations",
+  "repo": "/home/user/ECCode",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T16:23:02.198Z",
+  "steps": [
+    {
+      "id": "F7.forge.state",
+      "description": "state() on a snapshot whose content differs from the log (seq/lastHash intact)",
+      "expect": "refused:SNAPSHOT_DIVERGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "SNAPSHOT_DIVERGED",
+        "message": "Refusing to use the project record: state.json diverges from a replay of events.jsonl at state.gates.architecture.status (snapshot \"approved\", replay \"pending\"); the snapshot was edited or written by another tool. eccode audit shows the difference; eccode rebuild --actor orchestrator rewrites state.json from the log (nothing is lost: the log is the truth).",
+        "details": {
+          "recovery": "eccode audit shows the difference; eccode rebuild --actor orchestrator rewrites state.json from the log (nothing is lost: the log is the truth)",
+          "difference": "state.gates.architecture.status (snapshot \"approved\", replay \"pending\")"
+        }
+      }
+    },
+    {
+      "id": "F7.forge.commit",
+      "description": "gate start design on it",
+      "expect": "refused:SNAPSHOT_DIVERGED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "SNAPSHOT_DIVERGED",
+        "message": "Refusing to use the project record: state.json diverges from a replay of events.jsonl at state.gates.architecture.status (snapshot \"approved\", replay \"pending\"); the snapshot was edited or written by another tool. eccode audit shows the difference; eccode rebuild --actor orchestrator rewrites state.json from the log (nothing is lost: the log is the truth).",
+        "details": {
+          "recovery": "eccode audit shows the difference; eccode rebuild --actor orchestrator rewrites state.json from the log (nothing is lost: the log is the truth)",
+          "difference": "state.gates.architecture.status (snapshot \"approved\", replay \"pending\")"
+        }
+      }
+    },
+    {
+      "id": "F7.forge.rebuild",
+      "description": "eccode rebuild --actor orchestrator repairs it",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "stdout": "Snapshot rebuilt from 2 events.",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "F7.forge.after",
+      "description": "then the forged approval is gone",
+      "expect": "refused:GATE_BLOCKED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "GATE_BLOCKED",
+        "message": "Gate design cannot start: predecessor architecture is pending, not approved",
+        "details": {}
+      }
+    },
+    {
+      "id": "F7.torn.crash.state",
+      "description": "state() with a torn fragment after the last complete event",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "seq": 2,
+          "risks": [
+            "R1"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F7.torn.crash.audit",
+      "description": "audit before any repair",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "F7.torn.crash.commit",
+      "description": "the next commit cuts the fragment and appends cleanly",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":3,\"ts\":\"2026-10-09T16:23:02.500Z\",\"type\":\"risk.recorded\",\"actor\":\"delivery-lead\",\"data\":{\"id\":\"R3\",\"title\":\"three\",\"severity\":\"low\",\"status\":\"open\"},\"prevHash\":\"040c533d8a936b901bf8c0fc65b287bf475d75eafc7393129670d608ca0f0fb8\",\"stateHash\":\"4d34f80606c610a9a02ac5c1747289c9d0a8575ea13abd95c06eba3701d88863\",\"hash\":\"719d4c8d4ee0e37b6644b47f1cf474330bf8a635ca1adfa5644f7c0822e1b02b\"},\"state\":{\"seq\":3,\"lastHash\":\"719d4c8d4ee0e37b6644b47f1cf474330bf8a635ca1adfa5644f7c0822e1b02b\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"2026-10-09T16:23:02.496Z\"},\"gateOr…"
+      }
+    },
+    {
+      "id": "F7.torn.crash.after",
+      "description": "audit, seq and the event count after the repair",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "seq": 3,
+          "events": 3,
+          "risks": [
+            "R1",
+            "R3"
+          ],
+          "lastLineComplete": true
+        }
+      }
+    },
+    {
+      "id": "F7.torn.fault.state",
+      "description": "state() when the last recorded event itself is torn (snapshot ahead of the readable log)",
+      "expect": "refused:LOG_ROLLBACK",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "LOG_ROLLBACK",
+        "message": "Refusing to use the project record: state.json is at event #3 but events.jsonl ends at #2: the log was rolled back.",
+        "details": {
+          "recovery": "Restore the newer events.jsonl (e.g. from git), or, if the user decides the shorter log is the truth: eccode rebuild --force --actor user"
+        }
+      }
+    },
+    {
+      "id": "F7.torn.fault.commit",
+      "description": "a commit on it",
+      "expect": "refused:LOG_ROLLBACK",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "LOG_ROLLBACK",
+        "message": "Refusing to use the project record: state.json is at event #3 but events.jsonl ends at #2: the log was rolled back.",
+        "details": {
+          "recovery": "Restore the newer events.jsonl (e.g. from git), or, if the user decides the shorter log is the truth: eccode rebuild --force --actor user"
+        }
+      }
+    },
+    {
+      "id": "F7.torn.fault.audit",
+      "description": "audit names the condition",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "state.json is at event #3 but events.jsonl ends at #2: the log was rolled back (Restore the newer events.jsonl (e.g. from git), or, if the user decides the shor"
+        ]
+      }
+    },
+    {
+      "id": "F7.concurrent",
+      "description": "4 risk adds + 4 evidence runs spawned at once",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "exitCodes": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "seq": 9,
+          "events": 9,
+          "risks": 4,
+          "evidence": 4,
+          "auditOk": true,
+          "snapshotEqualsReplay": true
+        }
+      }
+    },
+    {
+      "id": "F7.gap.crash",
+      "description": "task.completed committed, handoff.recorded never written",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "taskStatus": "done",
+          "handoffInRecord": false
+        }
+      }
+    },
+    {
+      "id": "F7.gap.audit",
+      "description": "audit: ok with a warning naming the recovery command",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "task api is done but its handoff ho-mv16cd0s-08af4683 is not in the record (the process stopped between task.completed and handoff.recorded): eccode handoff record --actor backend-engineer --file <han"
+        ]
+      }
+    },
+    {
+      "id": "F7.gap.resume",
+      "description": "eccode resume on the gap",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "stdout": "ECCode project \"Test\" (event #15)\nGates: architecture=approved → design=approved → plan=approved → phase:core=in_progress → verification=pending\nTasks: 1 done, 2 pending\nBudget: $0/25, 0/480 min\nNEXT: dispatch-tasks [phase:core] — Ready: ui→frontend-engineer, tests→test-engineer; in progress: none\nR",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "F7.gap.recover",
+      "description": "eccode handoff record --actor backend-engineer --file <handoff.json>",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "stdout": "Handoff ho-mv16cd5s-0136232c recorded.",
+        "stderr": ""
+      }
+    },
+    {
+      "id": "F7.gap.after",
+      "description": "audit after the recovery: no warning",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "F7.rewrite",
+      "description": "event 2 edited (critical -> low), every later hash and stateHash recomputed, snapshot rewritten",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "RESIDUAL 3 (documented): not detected; the digests live in the same writable files",
+      "observed": {
+        "ok": true,
+        "value": {
+          "auditOk": true,
+          "auditErrors": [],
+          "severityNow": "low",
+          "cliAudit": 0
+        }
+      }
+    },
+    {
+      "id": "F7.forgedUserEvent",
+      "description": "a risk.recorded accepted event with actor user appended offline with valid hashes",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "RESIDUAL 3 as it bears on F5: the TTY check protects the CLI path only; an actor with write access to .eccode/ mints user events offline and the handoff presents them as confirmed",
+      "observed": {
+        "ok": true,
+        "value": {
+          "auditOk": true,
+          "status": "accepted",
+          "reportSaysAcceptedByUser": true,
+          "reportLine": "## User decisions (recorded with `--actor user`, or under a delegation)"
+        }
+      }
+    }
+  ],
+  "unexpected": 0,
+  "finishedAt": "2026-10-09T16:23:03.559Z"
+}

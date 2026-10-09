@@ -1,0 +1,374 @@
+{
+  "probe": "F6-attestation-variations",
+  "repo": "/home/user/ECCode",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T16:23:01.229Z",
+  "steps": [
+    {
+      "id": "F6.untouched",
+      "description": "project B: the untouched promoted record applies",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "verdict": "applies",
+          "quarantined": false,
+          "reasons": [],
+          "unverifiedReason": null,
+          "search": {
+            "quarantined": false,
+            "weightedDown": false
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.oneByte",
+      "description": "one byte of the promoted solution changed (400 -> 401)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "verdict": "provisional",
+          "quarantined": true,
+          "reasons": [
+            "marked verified, but shared record content changed after promotion (attestation mismatch); quarantined until re-promoted"
+          ],
+          "unverifiedReason": "shared record content changed after promotion (attestation mismatch); quarantined until re-promoted: revise the lesson i",
+          "search": {
+            "quarantined": true,
+            "weightedDown": true
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.oneByte.cli",
+      "description": "memory check exit code (3 = provisional) and memory audit --scope shared exit code (2)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "check": 3,
+          "audit": 2
+        }
+      }
+    },
+    {
+      "id": "F6.meta.reviewer",
+      "description": "attestation.reviewer changed to the lesson author (self-verification)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking): outside the attested hash (layer, status, trust, content); the record still applies as verified",
+      "observed": {
+        "ok": false,
+        "value": {
+          "verdict": "applies",
+          "quarantined": false,
+          "reasons": [],
+          "unverifiedReason": null,
+          "search": {
+            "quarantined": false,
+            "weightedDown": false
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.meta.reviewNotes",
+      "description": "reviews[0].notes rewritten",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking): outside the attested hash (layer, status, trust, content); the record still applies as verified",
+      "observed": {
+        "ok": false,
+        "value": {
+          "verdict": "applies",
+          "quarantined": false,
+          "reasons": [],
+          "unverifiedReason": null,
+          "search": {
+            "quarantined": false,
+            "weightedDown": false
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.meta.reviewDecision",
+      "description": "reviews[0].decision changed from verify to reject",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking): outside the attested hash (layer, status, trust, content); the record still applies as verified",
+      "observed": {
+        "ok": false,
+        "value": {
+          "verdict": "applies",
+          "quarantined": false,
+          "reasons": [],
+          "unverifiedReason": null,
+          "search": {
+            "quarantined": false,
+            "weightedDown": false
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.meta.evidenceSnapshot",
+      "description": "evidenceSnapshots: the verification check flipped to failed/exit 1",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking): outside the attested hash (layer, status, trust, content); the record still applies as verified",
+      "observed": {
+        "ok": false,
+        "value": {
+          "verdict": "applies",
+          "quarantined": false,
+          "reasons": [],
+          "unverifiedReason": null,
+          "search": {
+            "quarantined": false,
+            "weightedDown": false
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.meta.engine",
+      "description": "attestation.engine set to 0.2.0",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking): outside the attested hash (layer, status, trust, content); the record still applies as verified",
+      "observed": {
+        "ok": false,
+        "value": {
+          "verdict": "applies",
+          "quarantined": false,
+          "reasons": [],
+          "unverifiedReason": null,
+          "search": {
+            "quarantined": false,
+            "weightedDown": false
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.meta.provenance",
+      "description": "provenance.promotedBy changed",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking): outside the attested hash (layer, status, trust, content); the record still applies as verified",
+      "observed": {
+        "ok": false,
+        "value": {
+          "verdict": "applies",
+          "quarantined": false,
+          "reasons": [],
+          "unverifiedReason": null,
+          "search": {
+            "quarantined": false,
+            "weightedDown": false
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.meta.lastVerifiedAt",
+      "description": "lastVerifiedAt moved ten years ahead",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking): outside the attested hash (layer, status, trust, content); the record still applies as verified",
+      "observed": {
+        "ok": false,
+        "value": {
+          "verdict": "applies",
+          "quarantined": false,
+          "reasons": [],
+          "unverifiedReason": null,
+          "search": {
+            "quarantined": false,
+            "weightedDown": false
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.index.firstLineDeleted",
+      "description": "first line of attestations.jsonl deleted (two records promoted)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "verdict": "provisional",
+          "quarantined": true,
+          "reasons": [
+            "marked verified, but shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is c"
+          ],
+          "unverifiedReason": "shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is corrupt: line 1: expec",
+          "search": {
+            "quarantined": true,
+            "weightedDown": true
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.index.firstLineDeleted.other",
+      "description": "the second record under the same broken chain",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "verdict": "provisional",
+          "quarantined": true,
+          "reasons": [
+            "marked verified, but shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is c"
+          ],
+          "unverifiedReason": "shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is corrupt: line 1: expec",
+          "search": {
+            "quarantined": true,
+            "weightedDown": true
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.index.reordered",
+      "description": "the two index lines swapped",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "verdict": "provisional",
+          "quarantined": true,
+          "reasons": [
+            "marked verified, but shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is c"
+          ],
+          "unverifiedReason": "shared record is not in the attestation index (/tmp/eccode-f6-shared-UB2arn/attestations.jsonl is corrupt: line 1: expec",
+          "search": {
+            "quarantined": true,
+            "weightedDown": true
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.index.forgedAppend",
+      "description": "a third line appended with a stale prevHash",
+      "expect": "ok",
+      "verdict": "UNEXPECTED",
+      "observed": {
+        "ok": false,
+        "value": {
+          "verdict": "applies",
+          "quarantined": false,
+          "reasons": [],
+          "unverifiedReason": null,
+          "search": {
+            "quarantined": false,
+            "weightedDown": false
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.replacedFile",
+      "description": "record one's file replaced by record two's valid content under id one (its own attestation recomputes)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "verdict": "provisional",
+          "quarantined": true,
+          "reasons": [
+            "marked verified, but shared record content changed after promotion (attestation mismatch with the index); quarantined un"
+          ],
+          "unverifiedReason": "shared record content changed after promotion (attestation mismatch with the index); quarantined until re-promoted: revi",
+          "search": {
+            "quarantined": true,
+            "weightedDown": true
+          }
+        }
+      }
+    },
+    {
+      "id": "F6.rewriteAndRehash",
+      "description": "solution replaced, record re-attested, attestations.jsonl rebuilt with a consistent chain",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "RESIDUAL 3 (documented): the index lives on the same writable disk; a full rewrite is undetectable without an external checkpoint",
+      "observed": {
+        "ok": true,
+        "value": {
+          "verdict": "applies",
+          "quarantined": false,
+          "reasons": [],
+          "unverifiedReason": null,
+          "search": {
+            "quarantined": false,
+            "weightedDown": false
+          },
+          "audit": 0
+        }
+      }
+    },
+    {
+      "id": "F6.restored",
+      "description": "after restoring the files the record applies again",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": "applies"
+      }
+    },
+    {
+      "id": "F6.immutable.revise",
+      "description": "revise a shared record directly",
+      "expect": "refused:SCOPE",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "SCOPE",
+        "message": "mem-sd-mv16cbq0-03c7e382 is a shared record and cannot be revised: shared records change only by promoting a new verified revision. Revise the project record it came from (eccode memory revise mem-d-mv16cbq0-03c7e382), have it verified (eccode memory review mem-d-mv16cbq0-03c7e382 --decision verify) and promote it again (eccode memory promote mem-d-mv16cbq0-03c7e382); the old shared record is then superseded. To judge it for one problem without changing it: eccode memory assess mem-sd-mv16cbq0-03c7e382.",
+        "details": {}
+      }
+    },
+    {
+      "id": "F6.immutable.review",
+      "description": "review a shared record directly",
+      "expect": "refused:SCOPE",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "SCOPE",
+        "message": "mem-sd-mv16cbq0-03c7e382 is a shared record and cannot be reviewed: shared records change only by promoting a new verified revision. Revise the project record it came from (eccode memory revise mem-d-mv16cbq0-03c7e382), have it verified (eccode memory review mem-d-mv16cbq0-03c7e382 --decision verify) and promote it again (eccode memory promote mem-d-mv16cbq0-03c7e382); the old shared record is then superseded. To judge it for one problem without changing it: eccode memory assess mem-sd-mv16cbq0-03c7e382.",
+        "details": {}
+      }
+    },
+    {
+      "id": "F6.guard.sharedRedirect",
+      "description": "guard: learning-debugger sets ECCODE_SHARED_MEMORY inline on an eccode memory command",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking, residual-3 variant): a subagent can point the engine at a shared store it forged entirely; IDENTITY_ENV covers ECCODE_ACTOR/TEST/NOW only",
+      "observed": {
+        "decision": "allow",
+        "reason": null
+      }
+    }
+  ],
+  "unexpected": 1,
+  "sharedDir": "/tmp/eccode-f6-shared-UB2arn",
+  "finishedAt": "2026-10-09T16:23:01.997Z"
+}
