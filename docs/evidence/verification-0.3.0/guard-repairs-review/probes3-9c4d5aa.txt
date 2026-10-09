@@ -25,28 +25,3 @@ mv-review-drafts-named | technical-reviewer | Bash | deny | allow | MISMATCH |  
 cp-review-drafts-slash | technical-reviewer | Bash | allow | allow | ok |  | 
 mv-drafts-slash | technical-reviewer | Bash | deny | allow | MISMATCH |  | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
 write-review-drafts-dir | technical-reviewer | Write | allow | allow | ok | degenerate but same normalisation | 
-
-## Inputs
-alias-no-plant: "/tmp/eccode-test-hkuoyo/rec/state.json"
-plant-step-pwd: "cp -r ./.eccode/. \"$PWD/.eccode/.eccode\""
-plant-step-rel: "mkdir -p .eccode/.eccode && cp -r ./.eccode/. .eccode/.eccode/"
-plant-step-rsync: "rsync -a ./.eccode/ ./.eccode/.eccode/"
-alias-step: "ln -s \"$PWD/.eccode\" rec"
-alias-state-after-plant: "/tmp/eccode-test-hkuoyo/rec/state.json"
-alias-events-after-plant: "/tmp/eccode-test-hkuoyo/rec/events.jsonl"
-alias-review-after-plant: "/tmp/eccode-test-hkuoyo/rec/reviews/architecture-1.json"
-alias-config-after-plant: "/tmp/eccode-test-hkuoyo/rec/config.json"
-alias-bash-after-plant: "echo x > rec/state.json"
-alias-state-reviewer: "/tmp/eccode-test-hkuoyo/rec/state.json"
-direct-state-after-plant: "/tmp/eccode-test-hkuoyo/.eccode/state.json"
-ln-record-into-claim-abs: "ln -s /tmp/eccode-test-SDLdHd/.eccode src/server/.eccode"
-ln-record-into-claim-rel: "ln -s ../../.eccode src/server/.eccode"
-symlinked-root-lockout: "/tmp/eccode-test-SDLdHd/src/server/b.js"
-symlinked-root-record: "/tmp/eccode-test-SDLdHd/src/server/.eccode/state.json"
-symlinked-root-outside: "/tmp/eccode-test-SDLdHd/src/web/a.js"
-init-via-symlink-into-record: "init(work -> .eccode/drafts)"
-mv-review-drafts-slash: "mv x.json .eccode/reviews/drafts/"
-mv-review-drafts-named: "mv x.json .eccode/reviews/drafts/x.json"
-cp-review-drafts-slash: "cp x.json .eccode/reviews/drafts/"
-mv-drafts-slash: "mv x.md .eccode/drafts/"
-write-review-drafts-dir: ".eccode/reviews/drafts/"

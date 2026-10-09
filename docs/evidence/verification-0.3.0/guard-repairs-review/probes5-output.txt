@@ -1,0 +1,44 @@
+# Link-rule and realize-hop probes against /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/guardfix/scripts/hooks/guard.js
+# node v22.22.0; 40 probes; 8 mismatches
+
+section | id | role | tool | decision | expect | ok | note | reason
+LINK-RULE | plain-ln | main | Bash | allow | allow | ok | one target (b); no other write | 
+LINK-RULE | plain-ln-f | main | Bash | allow | allow | ok | postinstall symlink | 
+LINK-RULE | plain-ln-hard | main | Bash | allow | allow | ok | hard link, one target | 
+LINK-RULE | plain-cp-l | main | Bash | allow | allow | ok | cp hard link | 
+LINK-RULE | plain-cp-s | main | Bash | allow | allow | ok | cp symlink | 
+LINK-RULE | plain-mklink | main | Bash | allow | allow | ok | windows mklink (one target) | 
+LINK-RULE | ln-then-read | main | Bash | allow | allow | ok | read after link is not a second write | 
+LINK-RULE | ln-then-ls | main | Bash | allow | allow | ok |  | 
+LINK-RULE | ln-then-grep | main | Bash | allow | allow | ok |  | 
+LINK-RULE | ln-and-redirect-stamp | main | Bash | deny | allow | MISMATCH | OVER-DENIAL if deny: common build step, no record touched | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | ln-and-touch | main | Bash | deny | allow | MISMATCH | OVER-DENIAL if deny | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | two-links | main | Bash | deny | allow | MISMATCH | OVER-DENIAL if deny: two symlinks, no record | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | ln-and-rm-build | main | Bash | deny | allow | MISMATCH | OVER-DENIAL if deny | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | ln-and-cp-src | main | Bash | deny | allow | MISMATCH | OVER-DENIAL if deny | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | ln-and-tee-log | main | Bash | deny | allow | MISMATCH | OVER-DENIAL if deny | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | postinstall-chain | main | Bash | allow | allow | ok | mkdir/chmod are not writers; one link target | 
+LINK-RULE | devops-ln-build | main | Bash | deny | allow | MISMATCH | OVER-DENIAL if deny | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | devops-ln-build-role | devops-engineer | Bash | deny | allow | MISMATCH | OVER-DENIAL if deny (devops) | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | tp-alias-state | main | Bash | deny | deny | ok | H1: the rule fires | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | tp-alias-memory | main | Bash | deny | deny | ok |  | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | tp-cp-s-alias | main | Bash | deny | deny | ok |  | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | tp-alias-two-writes-nonrecord | main | Bash | deny | deny | ok |  | This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not 
+LINK-RULE | ln-single-nonrecord | main | Bash | allow | allow | ok |  | 
+REALIZE-HOP | dangling-chain-record | main | Write | deny | deny | ok | l1->l2->.eccode/newrec.json | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-1gV8rS/.eccode/newrec.json
+REALIZE-HOP | dangling-chain-record-bash | main | Bash | deny | deny | ok |  | l1 is, or lies under, a symbolic link resolving to /tmp/eccode-test-1gV8rS/.eccode/newrec.json, which is part of an ECCode record.
+REALIZE-HOP | rel-dotdot-into-record | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-1gV8rS/.eccode/state.json)
+REALIZE-HOP | rel-dotdot-into-record-bash | main | Bash | deny | deny | ok |  | src/rel/state.json is, or lies under, a symbolic link resolving to /tmp/eccode-test-1gV8rS/.eccode/state.json, which is part of an
+REALIZE-HOP | rel-dotdot-memory | backend-engineer | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-1gV8rS/.eccode/memory/m.js
+REALIZE-HOP | link-missing-dir-tail | main | Write | deny | deny | ok | dl/x.json -> .eccode/subdir/x.json | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-1gV8rS/.eccode/subdir/x.js
+REALIZE-HOP | link-missing-dir-tail-bash | main | Bash | deny | deny | ok |  | dl/x.json is, or lies under, a symbolic link resolving to /tmp/eccode-test-1gV8rS/.eccode/subdir/x.json, which is part of an ECCod
+REALIZE-HOP | dangling-into-draft-deep | technical-reviewer | Write | allow | allow | ok | dd -> .eccode/reviews/drafts/sub/deep.json | 
+REALIZE-HOP | dangling-into-draft-deep-bash | technical-reviewer | Bash | allow | allow | ok |  | 
+REALIZE-HOP | cycle-write | main | Write | allow | allow | ok | cycle resolves to no record; must not hang (64-hop cap) | 
+REALIZE-HOP | cycle-write-bash | main | Bash | allow | allow | ok |  | 
+REALIZE-HOP | self-chain | main | Write | allow | allow | ok | dangling self-ish chain, no record | 
+REALIZE-HOP | read-through-link | main | Bash | allow | allow | ok | cat is not a writer | 
+REALIZE-HOP | cp-from-record-link | main | Bash | allow | allow | ok | record (via link) as a source; target is /tmp | 
+REALIZE-HOP | existing-link-record | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-1gV8rS/.eccode/config.json
+REALIZE-HOP | existing-link-record-bash | main | Bash | deny | deny | ok |  | recdir/events.jsonl is, or lies under, a symbolic link resolving to /tmp/eccode-test-1gV8rS/.eccode/events.jsonl, which is part of
+REALIZE-HOP | existing-link-record-draft | backend-engineer | Write | allow | allow | ok | recdir/drafts resolves to a draft area | 

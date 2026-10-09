@@ -258,3 +258,45 @@ $ bash regcheck.sh→ a088c6a / d0e2a3b / 3fa6298 all allow the TOCTOU alias clo
 ```
 
 Nothing committed; worktree clean.
+
+---
+
+# Re-review of 9c4d5aa, branch `eccode/guard-repairs`
+
+**Verdict: approve, with one medium over-denial to tighten (non-blocking).** H1 and H2 from the 3fa6298 re-review are closed and H3 is documented. The real-path record protection now holds for every symlink attack I can construct, including the same-line alias that was the blocking H1 and the dangling/relative/missing-dir links that were H2. The only issue is that the new "creates a link and writes" rule is broader than it needs to be and denies ordinary build/devops command lines that never touch a record.
+
+- Commit: `9c4d5aa`. Worktree clean before and after.
+- Evidence added: `probes5.js`/`results5.txt`/`probes5-output.txt` (40 link-rule + realize-hop probes), `probes{,2,3,4}-9c4d5aa.txt` (earlier suites re-run), `repro3-9c4d5aa.txt` (live reproduction now denied), `tests-9c4d5aa.txt`.
+- Tests: six guard files **76/76 pass**; `npm run check` **246/246 pass**, exit 0.
+
+## H1/H2/H3 closed (verified)
+
+- H1 (same-line alias): `ln -s "$PWD/.eccode" lk && echo x > lk/state.json` → **deny** ("creates a link and writes files in the same command line"); the bare-directory alias forging memory and clobbering config are both denied; `cp -s "$PWD/.eccode" lk && … > lk/config.json` denied. The live reproduction that clobbered `state.json` at 3fa6298 is now blocked at the guard (`repro3-9c4d5aa.txt`: GUARD deny before bash runs; `repro3b.sh`: both `deny`). `probes4.js` now **0 mismatches** (the toctou and dangling rows it flagged at 3fa6298 all pass).
+- H2 (dangling link followed by hand): realize()'s manual `readlink` hop is correct in every case I probed (`probes5.js` REALIZE-HOP, **0 mismatches**): a dangling link into the record (`dangle -> .eccode/newrec.json`) denied for Write/Edit and shell; a dangling link to a dangling link into the record (`l1 -> l2 -> .eccode/newrec.json`) denied; a relative link with `..` into the record (`src/rel -> ../.eccode`, write `src/rel/state.json` and `src/rel/memory/m.json`) denied; a link to a non-existent directory with a tail (`dl -> .eccode/subdir`, write `dl/x.json`) denied; a dangling link into a draft area with a deep missing tail allowed for a reviewer; an existing resolvable link to the record dir denied, its `drafts/` subpath allowed.
+- Loop safety: a symlink cycle `cycA -> cycB -> cycA` with a tail returns a decision (allow, no record) and does **not** hang — the 64-hop cap works (`cycle-write`, `cycle-write-bash`). A read through a record link (`cat rs`, `cp rs /tmp/out.json` where `rs -> .eccode/state.json`) is allowed (no over-denial on reads).
+- H3 (hard links): documented as a filesystem residual; `probes4.js` `hardlink-*` still allow, as noted.
+
+## Finding
+
+| # | Severity | Summary |
+|---|---|---|
+| I1 | Medium (over-denial, non-blocking) | The rule `targets.length > 1 && createsLink(cmd)` fires on **any** line that creates a link and has a second write target, even when nothing names a record. Denied though they are record-free (`probes5.js` LINK-RULE, 8 cases): `ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp`, `ln -s a b && touch c`, `ln -s a b && ln -s c d` (two symlinks), `ln -s a b; rm -rf dist`, `ln -sf ../x y && cp p q`, `ln -s a b | tee setup.log`, and a devops release line `ln -sf dist/current releases/latest && echo … > releases/latest.txt` (from the main session and from a `devops-engineer`). These are ordinary build/release shapes, and devops/main are the contexts most likely to run them; the denial message tells them to split the command, which is workable but surprising. Single-link lines are fine (`ln -s a b`, `ln -sf …`, `ln a b`, `cp -l a b`, `cp -s …`, `mklink b a`, `ln -s a b && cat b`, the `mkdir && ln && chmod` postinstall chain). Suggested tightening: gate the rule on `mentionsRecord` as well — the guard already computes it, and in H1 the `ln` operand `"$PWD/.eccode"` makes it true, so `targets.length > 1 && createsLink(cmd) && mentionsRecord` still denies H1 while letting the record-free build lines through. (Alternatively, only count a write target as "second" when it is relative and could resolve through a link created earlier in the same line.) |
+
+No security gap found in the link rule or realize's hop; I1 is purely conservative breadth.
+
+## Earlier suites re-run (unchanged classifications)
+
+`probes.js` 11, `probes2.js` 9, `probes3.js` 6 mismatches — all the benign items already classified at 3fa6298 (F7 residual, residual-1 crafted/sourced records, the now-correct `bogus-*`/`symlinked-root` improvements, the planted-record-under-drafts scratch, and the mv-source behaviour `G-min`). `probes4.js` **0 mismatches**.
+
+## Commands and outputs
+
+```
+$ cd <worktree> && git log --oneline -1 → 9c4d5aa Guard: dangling links are followed by hand; a line that creates a link and writes is refused …
+$ node --test <six guard files>        → # pass 76 / # fail 0 (tests-9c4d5aa.txt)
+$ npm run check                        → # tests 246 / # pass 246 / # fail 0, exit 0
+$ node probes5.js → 40; 8 mismatches, all LINK-RULE over-denials (I1); REALIZE-HOP 0 mismatches (results5.txt)
+$ node probes4.js → 90; 0 mismatches (probes4-9c4d5aa.txt)
+$ bash repro3.sh / repro3b.sh → the H1 clobber/forge are now denied at the guard (repro3-9c4d5aa.txt)
+```
+
+Nothing committed; worktree clean.
