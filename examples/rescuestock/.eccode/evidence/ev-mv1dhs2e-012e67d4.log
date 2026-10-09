@@ -1,0 +1,8 @@
+$ env PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node .eccode/drafts/tr-design-r2-formaction.mjs
+# cwd: .
+# exit: 0
+A spec CSP (form-action 'self'), Lax cookie: finalUrl=http://127.0.0.1:<port>/fake-paypal/checkout/FAKE-1 returnHit=false cookieAtReturn=false cspConsole="Refused to send form data to 'http://127.0.0.1:42275/fake-paypal/checkout/FAKE-1/approve' because it violates the following Content Security Policy directive: ""
+B form-action 'self' + app origin, Lax cookie: finalUrl=http://localhost:<port>/api/paypal/return?token=[REDACTED] returnHit=true cookieAtReturn=true
+C no CSP, Lax cookie: finalUrl=http://localhost:<port>/api/paypal/return?token=[REDACTED] returnHit=true cookieAtReturn=true
+D form-action 'self' + app origin, Strict cookie: finalUrl=http://localhost:<port>/api/paypal/return?token=[REDACTED] returnHit=true cookieAtReturn=false
+chromium done
