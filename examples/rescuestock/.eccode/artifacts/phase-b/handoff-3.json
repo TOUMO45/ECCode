@@ -1,0 +1,43 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "phase:b-foundation",
+  "objective": "Third and last review iteration for phase b-foundation: submission sub-mv1jn1fv-01d4cc9d, responding to rev-mv1ijr52-01b2f4b6 (SEC-B-1 major; SEC-B-2 and SEC-B-3 minor; PB-4 and SEC-B-4..9 info).",
+  "context": "b2-domain was reworked (ho-mv1jewhq-01c5bca8) for SEC-B-1, and b1-foundation-core (ho-mv1ipb3r-01ca015d) for SEC-B-2..5. The toolkit is 0.3.2, so the engine unions every completion's files into the artifact list. The submission has 116 artifacts: the 114 phase-B-owned files on disk (b1 61, b2 28, b4 4, b3 21) plus submission.md and followups.md. Your tr-phb-artifacts.mjs reports 0 owned files missing and nothing outside ownership.",
+  "inputs": [
+    ".eccode/reviews/rev-mv1ijr52-01b2f4b6.json",
+    ".eccode/handoffs/ho-mv1jewhq-01c5bca8.json",
+    ".eccode/handoffs/ho-mv1ipb3r-01ca015d.json",
+    ".eccode/artifacts/phase-b/submission.md",
+    ".eccode/artifacts/plan/followups.md"
+  ],
+  "dependencies": ["b1-foundation-core", "b2-domain", "b4-env-readme", "b3-test-harness"],
+  "expectedOutput": "A phase review covering the four task criteria, phase:b-foundation and lessons, with SEC-B-1..3 and the RISK-19 residual judged.",
+  "acceptanceCriteria": [
+    "SEC-B-1: sec-phb-planner-sweep.mjs and tr-phb-checks.mjs exit 0; named SEC-B-1 tests pass",
+    "SEC-B-2: no REPLACE rewrite of audit_events or inventory_ledger",
+    "SEC-B-3: deep JSON refused with 422 and the server stays healthy",
+    "Every info item is routed or dispositioned in followups.md and submission.md"
+  ],
+  "completedWork": "I re-ran npm test (390/390) and every reviewer script on the final tree, including both slowloris probes, which close the SEC-B-4 residual b1 had left open. The HTTP probe has exactly one FAIL: its section-H line asserts the old RangeError reproduction. I added FU-8..FU-12 to followups.md and rewrote FU-1 to the typed 422 that RISK-19 fixes. I added the 'Response to rev-mv1ijr52-01b2f4b6' section with the RISK-19 residual and the engineer's numbers, resubmitted, and checked artifact coverage against the plan's ownership.",
+  "filesChanged": [".eccode/artifacts/phase-b/submission.md", ".eccode/artifacts/plan/followups.md"],
+  "evidence": [
+    "ev:ev-mv1jgr43-019019a1",
+    "ev:ev-mv1jgz8k-01e18aeb",
+    "ev:ev-mv1jgzrl-019a88f4",
+    "ev:ev-mv1jh03r-01f39ba5",
+    "ev:ev-mv1jh6uo-0163ad1b",
+    "ev:ev-mv1jha0c-0193ed2e",
+    "ev:ev-mv1jjd22-014ee08d",
+    "ev:ev-mv1jlmwd-01538718",
+    "ev:ev-mv1jn3yu-01ac175f"
+  ],
+  "remainingIssues": [
+    "RISK-19 (open, medium): deliberately tie-laden catalogs still reach PLANNER_LIMIT in about 0.1-0.3 % of adversarial inputs at 150-800 ms (ev:ev-mv1jdvnv-01ed0f76). The mitigation is in later tasks (FU-1 typed 422 in c2, FU-8 planning rate limit). This does not fully meet the review's preferred resolution, and the reviewer decides whether it blocks",
+    "ev:ev-mv1jha0c-0193ed2e is a FAILED evidence record by design: the security HTTP probe's section-H expectation encodes the pre-fix bug",
+    "SEC-B-8 (stale explain.js comment) is not fixed",
+    "FU-8's 'plan' value for details.limit, and FU-12's lockfile, need the orchestrator's agreement"
+  ],
+  "nextAction": "technical-reviewer (and security-reviewer) review sub-mv1jn1fv-01d4cc9d; this is the last iteration before escalation.",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"]
+}

@@ -1,6 +1,6 @@
 {
-  "seq": 310,
-  "lastHash": "b916724ca341e65d10543b03318f5a4dd515b6cdc7d473bdf38b66679b3440b6",
+  "seq": 327,
+  "lastHash": "3ef6299b02e20c770058c84eb04589e70ae7b49ce3811975ee262915f47bbf34",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -307,7 +307,7 @@
     "phase:b-foundation": {
       "id": "phase:b-foundation",
       "kind": "phase",
-      "status": "changes_requested",
+      "status": "submitted",
       "iterations": 2,
       "authors": [
         "delivery-lead"
@@ -1464,6 +1464,479 @@
           "respondsTo": "rev-mv1hc5zg-01a3fc75",
           "notes": "Response to rev-mv1hc5zg-01a3fc75 (replaces unreviewed sub-mv1ho5u3-01ed6ca8, which lost b1's unchanged files because the engine collects files from b1's rework handoff only; they are listed explicitly here so the final state of every phase file is reviewed). PB-1: b1 rework (ho-mv1hk3zz-01649535): journal mode read first, bounded jittered retryWhileBusy at open; PB-1 regression tests incl. 25x4-process stress; reviewer race check x20: 0/20 sequential and 0/60 parallel failures (ev:ev-mv1hn1vt-01413327); npm test 370/370 (ev:ev-mv1hlfx5-0167277b); disclosed: open may wait up to 1 s even with RS_DB_BUSY_TIMEOUT_MS=0. PB-2: six tests renamed (ev:ev-mv1hn5qe-011931ad). PB-3: follow-ups recorded as additional acceptance criteria for c2, d3, c5/g1 (+optional seed=fixture test) in .eccode/artifacts/plan/followups.md, because the approved plan.json cannot change without a plan rework.",
           "supersedes": "sub-mv1ho5u3-01ed6ca8"
+        },
+        {
+          "id": "sub-mv1jn1fv-01d4cc9d",
+          "actor": "delivery-lead",
+          "at": "2026-10-09T22:35:16.363Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/phase-b/submission.md",
+              "sha256": "a099ee748ef136a5690c1afaadf0bd931bf9b392b070f404b7dad25f5e92fa3f"
+            },
+            {
+              "path": ".eccode/artifacts/plan/followups.md",
+              "sha256": "930c19df87f390b5ca3c7dc0655feb8cc6fbc9792e673dbdd208cc6a61c34df9"
+            },
+            {
+              "path": "src/db/connection.js",
+              "sha256": "7103dc7ea62196ffc255231672064fe73565aacfdef078ff6751576ef25bce7f"
+            },
+            {
+              "path": "src/http/body.js",
+              "sha256": "c42b04b73b035e2f0549d96a996545c94b95866495b7706e848a04c74cb215eb"
+            },
+            {
+              "path": "src/http/server.js",
+              "sha256": "f818fb65a29978c60f504a6f1230f310df37f339759606117fa17331c3da181a"
+            },
+            {
+              "path": "src/main.js",
+              "sha256": "f7c24ee9b4d241c61c368e8204a2e77f5a213b154a1c37ba3c66e9d22b93ea7b"
+            },
+            {
+              "path": "test/unit/db/triggers.test.js",
+              "sha256": "fb8584e5e4abc776bcf467ab7a0873ba5a74e9e6fa301621b37203e94ebb0c23"
+            },
+            {
+              "path": "test/unit/http/hardening.test.js",
+              "sha256": "57ea4ae77e4999a0eead54247e2e356a35b6ed9597883bd45d8cb397b8b4805c"
+            },
+            {
+              "path": "test/unit/config/startup.test.js",
+              "sha256": "73af28f5fc0cd6ce59d6defbe83662cdd0155000d690b7d8ea834fce4a6f1de9"
+            },
+            {
+              "path": "package.json",
+              "sha256": "742081f5587a282264c1a9a746b7875c02975d4426bb9b91a3c77b66a34329a8"
+            },
+            {
+              "path": ".gitignore",
+              "sha256": "2f0fcf86643d244284e41252b9c1e8d3ef7c6194c0276fcb3498038910e1bda9"
+            },
+            {
+              "path": "scripts/check-node.cjs",
+              "sha256": "e034621c69558d4f79a82e3e742d82dd066ab7f4811a22f82a89af3648d43419"
+            },
+            {
+              "path": "scripts/seed.js",
+              "sha256": "0295c06c46b64d95133ad248b6b4b2af16aa6a462f2c64c0cdb29368c1401284"
+            },
+            {
+              "path": "src/index.js",
+              "sha256": "13ba5ff6b5ce1f2bc59511dee1a84fb10ea6ff302aab3bb6bb4761e9254ceea9"
+            },
+            {
+              "path": "src/app.js",
+              "sha256": "5e179c9b7ec13e3b944d8fb837dc48e6bf2a1db7fe096b154ac172dfd7e7a37e"
+            },
+            {
+              "path": "src/config.js",
+              "sha256": "a6882ad635d6d8b0297bf5cee5eaf95d0a07f56151ee861e4e1cc525099978f7"
+            },
+            {
+              "path": "src/log.js",
+              "sha256": "6777b3216593ff7040378639dec03e4ff0d200b88e095accbbc30715a4fc3a80"
+            },
+            {
+              "path": "src/clock.js",
+              "sha256": "1ab4fb3191433e6f6867450860d21219941704896158d1db119469adcb517953"
+            },
+            {
+              "path": "src/db/errors.js",
+              "sha256": "672abf807bf6109c6b83f6f0f8d34e1a557b9da419297d643c276155631ac7ef"
+            },
+            {
+              "path": "src/db/meta.js",
+              "sha256": "aee97d81bbf5b359505395375af8c459ff7064435c6af1d8cafce4c18e7ea642"
+            },
+            {
+              "path": "src/db/migrate.js",
+              "sha256": "0b6cf9b2609eb312f9069c2e710aa1619acc99653f3340c132f477668a765d2e"
+            },
+            {
+              "path": "src/db/migrations/001_core.sql",
+              "sha256": "e563593daa18d313fbd14dc4e7361dd9d38558eb3d50937566e904ce61351882"
+            },
+            {
+              "path": "src/db/migrations/002_requests.sql",
+              "sha256": "276c74a129eaaa6e4c16083666245f9e75c33ec485b2bf89c1e3514b38e89e92"
+            },
+            {
+              "path": "src/db/migrations/003_planning.sql",
+              "sha256": "4eb0b1c0d9f6a24d7ea035dba8117cf96e1fdfb880453b4f573b6ef5204fac6c"
+            },
+            {
+              "path": "src/db/migrations/004_payments.sql",
+              "sha256": "9dc01842ec3b825d8b4b93a8fde1d272a2d5ab4c96860b4f95205322eff8881c"
+            },
+            {
+              "path": "src/db/migrations/005_fake_paypal.sql",
+              "sha256": "40841a20cb1b5ae504985560554711725911822194d2305a0bebc6b90aae2db8"
+            },
+            {
+              "path": "src/http/cookies.js",
+              "sha256": "347f403503464ca6df052084ac92827aa82192d605836c4e9a5330611fd812a0"
+            },
+            {
+              "path": "src/http/envelope.js",
+              "sha256": "deafc56485c2199622f01a2ddfb330dafa7cfe956d36d11765fe2c2a5520a5c0"
+            },
+            {
+              "path": "src/http/headers.js",
+              "sha256": "285c26bac774d9cda206db10383dc50ab691e7318bf02a2f06f7d846097d059b"
+            },
+            {
+              "path": "src/http/host.js",
+              "sha256": "5a12374da539092747bed6ad278ba7da676805ec57ace64835f993e95177aa61"
+            },
+            {
+              "path": "src/http/request-id.js",
+              "sha256": "430023473b87f39276db3c73ce5266c02d13732b940bf27ac59a17bbe114972e"
+            },
+            {
+              "path": "src/http/router.js",
+              "sha256": "fa6f54507ad468caeb4ef21f4e4f4463099e9ddbd1ade96b17b02fc5079013d8"
+            },
+            {
+              "path": "src/http/static.js",
+              "sha256": "b15fd4f86743c0b0cc180b736e6391b29c0db7aa3ffbf199f91a9d64fe4308df"
+            },
+            {
+              "path": "src/http/validate.js",
+              "sha256": "154cc0596b5abacd03a81b5cfac203d8a01f97d137061036dde8fa6832f41cea"
+            },
+            {
+              "path": "src/routes/index.js",
+              "sha256": "a74db4084f452c54c4b505363cf8755506ae2a1a9083b49f2139b01865e85aa3"
+            },
+            {
+              "path": "src/routes/health.js",
+              "sha256": "f3959db351eba460edd31ccd9c298586b5821b56d1f92be57053e5543c0915e6"
+            },
+            {
+              "path": "src/routes/config.js",
+              "sha256": "4816fefc1524bd4fd9d4ca324ff73c3b781a9ab9038e5f1cd2f27254bac30e07"
+            },
+            {
+              "path": "src/routes/auth.js",
+              "sha256": "2c10a61228aa03423feff6f2ddc3db189bb685264892511528302907714270ee"
+            },
+            {
+              "path": "src/routes/requests.js",
+              "sha256": "d450097b8d0f2f750348e88c177c381a87f8034df41754694f957263fd354865"
+            },
+            {
+              "path": "src/routes/plans.js",
+              "sha256": "c78403a7b2261769c1aef7be4d4cb6b63d13323e37e3c6f65992b69352f7b0ee"
+            },
+            {
+              "path": "src/routes/orders.js",
+              "sha256": "9ccac295847df5b2ea89ffac29e7d350a54509a6601ff52bb7d57aefe55c7847"
+            },
+            {
+              "path": "src/routes/paypal.js",
+              "sha256": "852bdad600356dcf6ee542c1c762a32becbc96f81def71a00c29c188d9355030"
+            },
+            {
+              "path": "src/routes/supplier.js",
+              "sha256": "4254f89fcbdafd8bcd66dccc3913a3cf280452afbc2b49fe71e779bd412bb13b"
+            },
+            {
+              "path": "src/routes/admin.js",
+              "sha256": "1f5fd4c6a02372227ed2bcc479fd0930472b4d75c2e8fd1201f5ca868df9ed44"
+            },
+            {
+              "path": "src/routes/webhooks.js",
+              "sha256": "96cb231c4b986c93510b82c43e33201efe77870af3ad89c1aca512e265fbb011"
+            },
+            {
+              "path": "test/unit/config/defaults.test.js",
+              "sha256": "adcf0b2410aee887a9a551af65418633c3556944e1c0497d13495f31595c0072"
+            },
+            {
+              "path": "test/unit/config/hosts.test.js",
+              "sha256": "e8a8e79e9308d94909f9009db80c0c415bd3156b59109e109476b3c586301381"
+            },
+            {
+              "path": "test/unit/config/limits.test.js",
+              "sha256": "671a15f31bdee8892aa96b995ecef7c006dae6526caedb85649d1b0fa730af1e"
+            },
+            {
+              "path": "test/unit/config/node-version.test.js",
+              "sha256": "0426c9c6f9c78b48ed0d939ffad7712e54fc66c52e67ef34ee15915eb086a6c3"
+            },
+            {
+              "path": "test/unit/config/secrets.test.js",
+              "sha256": "984b1a259ab441a890543fa6b06e53101f125fb57c5bbe53d302533680c57438"
+            },
+            {
+              "path": "test/unit/db/connection.test.js",
+              "sha256": "c49c4a4466d43724e1fa7375ae025597dbfc7875aaf975e70577801b890f29eb"
+            },
+            {
+              "path": "test/unit/db/migrate-child.js",
+              "sha256": "3723d811cb38a11adacb963fdec181a731c8df3d1b745bb3deab3e4760c48c63"
+            },
+            {
+              "path": "test/unit/db/migrate.test.js",
+              "sha256": "b2b80d18b475b6b7eb0b45f2381ff42ffa668d734650b58a0dfcc4c49dcfe78e"
+            },
+            {
+              "path": "test/unit/http/app-fixture.js",
+              "sha256": "09479fb7133e93897025d89219604d48d36851786c2a6463a7e8d46e3d04f19c"
+            },
+            {
+              "path": "test/unit/http/app.test.js",
+              "sha256": "f416c436ad20b47d52a32c7149d3dc78922a5337983f9bb4f167071da78759f4"
+            },
+            {
+              "path": "test/unit/http/db-busy.test.js",
+              "sha256": "422cd4a9ba841b7f9c3cf1d3b40994fdf0287e47bc251c207380e5becbdbbeaf"
+            },
+            {
+              "path": "test/unit/http/headers.test.js",
+              "sha256": "c21ac22038883418a5da0c8743cf9e28cc980144027e45060b9bc672e22a2f68"
+            },
+            {
+              "path": "test/unit/http/log.test.js",
+              "sha256": "861b8d4c4604768a7c2f11e16c2b8af12d1ea52eb7d27990dd37634bcb9c4413"
+            },
+            {
+              "path": "test/unit/http/static.test.js",
+              "sha256": "663bd08a697bd01bd397886bceb64c456233898e8b36da32d85802927568bfa6"
+            },
+            {
+              "path": "test/unit/http/validate.test.js",
+              "sha256": "d8ed104e5be81a5e679ec05cd4790942ac3518c704fb29a65b170e9f61534469"
+            },
+            {
+              "path": "test/unit/seed/seed.test.js",
+              "sha256": "d4528283617b0b5213b56c6eafa4685bed7cb8d26f5ee14974d4f435d079fb22"
+            },
+            {
+              "path": "test/unit/db/lock-holder.js",
+              "sha256": "42ca46ade30385d187aa9a8a80def6b67f7c746fc1ff637238687f8791b14105"
+            },
+            {
+              "path": "test/unit/db/open-race.test.js",
+              "sha256": "b3af19f1accbb46074cf5fe3c31278c2cc7dd8ab8bfd9e264a6497111148b59e"
+            },
+            {
+              "path": "src/domain/planner.js",
+              "sha256": "5a3033d8d856933a4c36bebae91a88d9cb77ba0cbf9489843e91aaa64585965d"
+            },
+            {
+              "path": "src/domain/search.js",
+              "sha256": "204640e2f1c80348a6945f006a5a255bbe4d7a9c71a46c64c221a9b1309982d3"
+            },
+            {
+              "path": "test/timing/planner-sec-b1.test.js",
+              "sha256": "260dc63b08402bda3551d0149ccd31a75febc333e4cf4f659d96779b1ce13dca"
+            },
+            {
+              "path": "test/unit/domain/helpers/catalog-gen.js",
+              "sha256": "208f1288946b661b27ffc137c990d7606368e7568e000f392d9f96320d21f90d"
+            },
+            {
+              "path": "test/unit/domain/helpers/reference-planner.js",
+              "sha256": "4a0d163cf4f1a9806ac549c1c7eebe4af20955dc869bcda90348fd6725029922"
+            },
+            {
+              "path": "test/unit/domain/planner-fixture.test.js",
+              "sha256": "15073df31e0e18443902c285f3fc3c1326255ff47dd0e3d8cc93bfecd412638d"
+            },
+            {
+              "path": "test/unit/domain/planner-oracle.property.test.js",
+              "sha256": "3677f70188c1b0057c1ac0787fb19b3d4e744fda2e434c6991d0401bccfbfe90"
+            },
+            {
+              "path": "src/domain/canonical.js",
+              "sha256": "ce4637cfdc237791a6d3afbf4c92006a1fd52e7cb1c59e4308e6ae7896e5a6f6"
+            },
+            {
+              "path": "src/domain/compat.js",
+              "sha256": "4792391bf5addf3ca0d956ea144beb674f38ae573ea1bbfcece30a6a1083e70f"
+            },
+            {
+              "path": "src/domain/derive.js",
+              "sha256": "54fc07e64efd0952ead28c55ccbb231d416213b37bfeca4e4cac4a0f8080f360"
+            },
+            {
+              "path": "src/domain/errors.js",
+              "sha256": "c00c71362544efe16a44b7d00c544e8c04b0158cd16a022ceac7ef4ada4765e9"
+            },
+            {
+              "path": "src/domain/explain.js",
+              "sha256": "8f5ea4ed5f569d259cd0eb154be6493240cfbc3be1f9e6b970bb05e678ababf7"
+            },
+            {
+              "path": "src/domain/money.js",
+              "sha256": "fcd631204024049adbab6ffc821fda56ed725e20ac54cffd50f8f3d5c7717bab"
+            },
+            {
+              "path": "src/domain/oracle.js",
+              "sha256": "7c465ee4580bab6e603c709425cf23cadd3a277b35442aa465cf06ec39207698"
+            },
+            {
+              "path": "src/domain/states.js",
+              "sha256": "50e658e0b8212dcaee9314fef8ce45d3904c4d9e11c93d53c5dbba9bd4b26c00"
+            },
+            {
+              "path": "src/domain/time.js",
+              "sha256": "e296dd59a564abaac6b6d7a30905442c1f13f41b91513416f9e868ce56fac0b3"
+            },
+            {
+              "path": "test/fixtures/rs-fix-1.json",
+              "sha256": "5e239dcf5b15c32cbc903f09fe930f68fb11fdb15bcb0e72cdb2322349bd9e14"
+            },
+            {
+              "path": "test/timing/planner-generator.test.js",
+              "sha256": "139ed35c5f3bc514214955da398fb90c3cc98a7c7aec7983db90cae4b8e7ea7b"
+            },
+            {
+              "path": "test/unit/domain/canonical.test.js",
+              "sha256": "9db4c9b11c192ff85a6023c675cb734526afd1d13edcd542d0683655f9fe4d58"
+            },
+            {
+              "path": "test/unit/domain/compat.test.js",
+              "sha256": "8c71cd7e752dd4cb43f086acf2d527d97e218605dccf6bb60dac3d458182f523"
+            },
+            {
+              "path": "test/unit/domain/derive.test.js",
+              "sha256": "3525b20bef6219618a9bd99ff31eceb87d06bb4f9fc7348e4e16c3a07521ded3"
+            },
+            {
+              "path": "test/unit/domain/explain.test.js",
+              "sha256": "9b2bb84e0dc22ad0665a40caf5dfce041cc6b584005f5e3d9fbef18eb91bc2e6"
+            },
+            {
+              "path": "test/unit/domain/helpers/derive-model.js",
+              "sha256": "9864f2ef8c5eafa29e7f05e0d988aaef07b8890e530355038a8b5f1ed500341c"
+            },
+            {
+              "path": "test/unit/domain/helpers/fixture.js",
+              "sha256": "33de0275bb6b09d8f6bd7227d93302fd13642cf44e477c9488a2ee51effbdc4c"
+            },
+            {
+              "path": "test/unit/domain/money.test.js",
+              "sha256": "8f82e62911ea2c39eb1657fdf5d267450bd75aff8a89b5087a5e6c1d58ae472f"
+            },
+            {
+              "path": "test/unit/domain/purity.test.js",
+              "sha256": "b708212acd5eb3c7629e26747d71503984ce4d480427d612df551d162590973c"
+            },
+            {
+              "path": "test/unit/domain/states.test.js",
+              "sha256": "e9d0a8dd8c444b7e70dd22f8bc752fcc3c2d8850ff4e3f798cc8e0c91ee958cd"
+            },
+            {
+              "path": "test/unit/domain/time.test.js",
+              "sha256": "2ddcabd6bb4168af49d239ab28983d3d11db0ca3ccc6fa0799dcf1e308360bc3"
+            },
+            {
+              "path": ".env.example",
+              "sha256": "eb555d1851efe8f259d4852387ecf0b60c39dd6c0b05cd11a37211ccf93ebf0c"
+            },
+            {
+              "path": "README.md",
+              "sha256": "6e66930d2d9b2919acde4bcbe2237712d7644cf06d7504a884a69306e3d11017"
+            },
+            {
+              "path": "LICENSE",
+              "sha256": "c502b0c2998a02da20798a54a2fa5c961286813dd79335a4cc0616a62618a612"
+            },
+            {
+              "path": "test/scan/env-example.test.js",
+              "sha256": "62a6d0690975862b6105622ad5c0e0e2da4d15198a8008f8246e28110e78f8aa"
+            },
+            {
+              "path": "scripts/clean-checkout.sh",
+              "sha256": "74b8d62cfb360d60eb7842e29999755d5796c4eb5f0b23fa79ba51509b60b929"
+            },
+            {
+              "path": "scripts/report-p95.js",
+              "sha256": "be938a0fb8f275ea411bd29713d1f05d08d79b24b3a443628f1887febeb902f2"
+            },
+            {
+              "path": "scripts/reset-test-out.js",
+              "sha256": "fac95c84a8ffbcd2267a3778bcf84e6225433824ee95681ad2bf38a930137ca1"
+            },
+            {
+              "path": "test/api/health-config.test.js",
+              "sha256": "63cef154065e5e8e3bad6bdabf2ccac2f71d862f7f64173e8029c4078049f2c9"
+            },
+            {
+              "path": "test/helpers/app-harness.js",
+              "sha256": "c1394dc6d0addd4b36af5329088cdf5005c7a3ac97d9047db1105011acea0db8"
+            },
+            {
+              "path": "test/helpers/fixtures.js",
+              "sha256": "268524e17ab6a2bcb4bc33505b76b9853c56fc0e3c22fa70a294eadf290a162e"
+            },
+            {
+              "path": "test/helpers/net-guard.js",
+              "sha256": "936dc72b49bfbe9be6c0d55c36a442657aaa45ad60bbcec7dcacdd3503b5e2d3"
+            },
+            {
+              "path": "test/helpers/node-proc.js",
+              "sha256": "4b6e3fd9163c164830fda174ef19568e82cac3c1b34954d24211201faf629d3e"
+            },
+            {
+              "path": "test/helpers/playwright.js",
+              "sha256": "f0535963693b3aaa494e191a046fa1d9898ffb4a969680bdbcb4ff7ae3bb30ca"
+            },
+            {
+              "path": "test/helpers/print-proc.js",
+              "sha256": "cd0f35bb7d3b3adca55e7ee1b52f3098e65f4951de3891eba480653c55589d31"
+            },
+            {
+              "path": "test/helpers/server-proc.js",
+              "sha256": "d157ec3989130b4a2bd735f5a2e22d73e811ef2abcdee1f8e0a1c14b3bc83425"
+            },
+            {
+              "path": "test/integration/start-health.test.js",
+              "sha256": "a334595ab6a6ed55d5c547e9b555499b2301c51bb62811e8ef269c2d0d80ae8f"
+            },
+            {
+              "path": "test/integration/start-old-node.test.js",
+              "sha256": "9656487353455fbb2d9020e1fe04154c8e9880e9155bc5e1230ef1db546cdee7"
+            },
+            {
+              "path": "test/scan/package.test.js",
+              "sha256": "36829835cf2cc3b0e76e45c1ac5fbd84e2c8e8315726b071479b3614e07cef2a"
+            },
+            {
+              "path": "test/unit/helpers/app-harness.test.js",
+              "sha256": "725544bfd258cc739733c1ac3e985f8a8bcaef8cefc678ad6fdf883026ef9a06"
+            },
+            {
+              "path": "test/unit/helpers/fixtures.test.js",
+              "sha256": "2f28bef505319115d888a67f517f1530424cf7fc91c43398cbe951a0e0373b80"
+            },
+            {
+              "path": "test/unit/helpers/net-guard.test.js",
+              "sha256": "a87e2668018b28c3cd9e75c8d90d788de98cf3d372b98c3ac5ac6f476d022cf3"
+            },
+            {
+              "path": "test/unit/helpers/node-proc.test.js",
+              "sha256": "562fb61765d22721dfa78ca718213c3d6ea2cb6847767bafc95e2cad33b2fa40"
+            },
+            {
+              "path": "test/unit/helpers/playwright.test.js",
+              "sha256": "37a843ba87b6b84a3d2d08e9b8b86393e440ff7df552daa10078988a87da0cde"
+            },
+            {
+              "path": "test/unit/helpers/report-p95.test.js",
+              "sha256": "98cca5908b0dca28064090e801c3d5e5a16ffbc7075a34ebd5f0563838eb1953"
+            },
+            {
+              "path": "test/unit/helpers/server-proc.test.js",
+              "sha256": "25eb792b058a38055c1c9de7aa84fa7e3a7402ed9218557b5570436df37d2c93"
+            }
+          ],
+          "respondsTo": "rev-mv1ijr52-01b2f4b6",
+          "notes": "Response to rev-mv1ijr52-01b2f4b6 (third iteration). SEC-B-1: b2 rework with an exact subset search (src/domain/search.js); sweep exits 0 with no PLANNER_LIMIT and a worst call of 24.6 ms (ev:ev-mv1jgz8k-01e18aeb); reviewer checks 0 failures (ev:ev-mv1jgzrl-019a88f4). RESIDUAL stated plainly: tie-laden adversarial catalogs still reach the node cap in about 0.1-0.3 % of such inputs at 150-800 ms (ev:ev-mv1jdvnv-01ed0f76), RISK-19 (medium), mitigated by FU-1 (typed 422) and FU-8 (per-customer planning rate limit); the reviewer decides whether it blocks. SEC-B-2: recursive_triggers ON (probe 0 REPRO, ev:ev-mv1jh03r-01f39ba5). SEC-B-3: depth limit 32 -> 422 (ev:ev-mv1jh6uo-0163ad1b); sec-phb-http.mjs has exactly one FAIL, its section-H reproduction expectation (ev:ev-mv1jha0c-0193ed2e). SEC-B-4: taken, and both slowloris probes now close every slow connection (ev:ev-mv1jjd22-014ee08d, ev:ev-mv1jlmwd-01538718). SEC-B-5 taken. PB-4, SEC-B-5 README, SEC-B-6, SEC-B-9 routed through followups.md (FU-8..FU-12). SEC-B-7 accepted; SEC-B-8 not fixed (comment only). npm test 390/390 (ev:ev-mv1jgr43-019019a1)."
         }
       ],
       "reviews": [
@@ -6182,6 +6655,214 @@
       "task": "b2-domain",
       "recordedBy": "backend-engineer",
       "at": "2026-10-09T22:28:27.391Z"
+    },
+    "ev-mv1jgr43-019019a1": {
+      "id": "ev-mv1jgr43-019019a1",
+      "kind": "command",
+      "label": "phase B full suite after b1 rework 2 and b2 rework (SEC-B-1..5)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 17345,
+      "log": ".eccode/evidence/ev-mv1jgr43-019019a1.log",
+      "logSha256": "f45d36682aa8ddd45d2431912ebd88aa70ee87e17d5ffba39565b4ee47523916",
+      "logFileSha256": "aff3943e66e700f8966ecfc857852e37af4087c33a164056a573108a4de19417",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 381 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 420.624732\n  type: 'test'\n  ...\n1..381\n# tests 390\n# suites 3\n# pass 390\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 17000.669151\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 18 requests, p50 2.3 ms, p95 15.4 ms (limit: p95 < 300 ms)\nNFR5 suite time: 17.1 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "28b5d2bc5a3523d4ab78d70d7cb303a7ea7997ccb315a1b5793fda4721347bdb",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T22:30:23.115Z"
+    },
+    "ev-mv1jgz8k-01e18aeb": {
+      "id": "ev-mv1jgz8k-01e18aeb",
+      "kind": "command",
+      "label": "SEC-B-1: security planner sweep on the reworked planner (exit 1 = fillable request refused with PLANNER_LIMIT)",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-planner-sweep.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1890,
+      "log": ".eccode/evidence/ev-mv1jgz8k-01e18aeb.log",
+      "logSha256": "c67b9b7ce5360526709b4474263b55d7a5294a6260d3b81b08b8284262d26047",
+      "logFileSha256": "a1a6e40450ceecec7c5dbd0d36cd6ddc465f322eeb146ae68140c64bc7666445",
+      "outputTail": "availability      1 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 4.2 ms (qty=100000 maxPickups=3 budget=1 compat=false deadline=true -> infeasible)\navailability     10 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 1.9 ms (qty=2000 maxPickups=5 budget=1 compat=true deadline=false -> infeasible)\navailability     20 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 0.9 ms (qty=10000 maxPickups=5 budget=1 compat=true deadline=false -> infeasible)\navailability     30 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 2.3 ms (qty=10000 maxPickups=1 budget=1 compat=true deadline=false -> infeasible)\navailability     50 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 1.6 ms (qty=20000 maxPickups=5 budget=null compat=false deadline=false -> feasible (A+B+D, 673000 cents))\navailability    100 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 1.9 ms (qty=50000 maxPickups=5 budget=null compat=true deadline=false -> feasible (A+C+D, 1462700 cents))\navailability    200 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 4.3 ms (qty=100000 maxPickups=5 budget=null compat=true deadline=false -> feasible (A+C+D, 2922700 cents))\navailability    500 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 24.6 ms (qty=100000 maxPickups=5 budget=null compat=false deadline=true -> feasible (A+B, 3301800 cents))\navailability   1000 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 1.1 ms (qty=100000 maxPickups=5 budget=null compat=true deadline=false -> feasible (C, 2400500 cents))\navailability 100000 per supplier: 540 runs, PLANNER_LIMIT 0 (C compatible: 0; default, C rejected: 0), max 1.8 ms (qty=100000 maxPickups=5 budget=null compat=true deadline=false -> feasible (C, 2400500 cents))\nsmallest availability (then quantity) that reached PLANNER_LIMIT: none\nworst single plan() call: 24.6 ms at availability 500 (qty=100000 maxPickups=5 budget=null compat=false deadline=true -> feasible (A+B, 3301800 cents))\nreproduction: 10000 cups + 10000 lids, 100 bundles at each supplier (A alone covers it), budget 10000000 cents, no deadline, maxPickups 5 -> feasible (A, 301000 cents) after 0.2 ms\ncontrol: the same request with maxPickups 1 -> feasible (A, 301000 cents) after 0.1 ms\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "28b5d2bc5a3523d4ab78d70d7cb303a7ea7997ccb315a1b5793fda4721347bdb",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T22:30:33.642Z"
+    },
+    "ev-mv1jgzrl-019a88f4": {
+      "id": "ev-mv1jgzrl-019a88f4",
+      "kind": "command",
+      "label": "phase B reviewer checks: migrations, CSP, scripts, planner vs independent brute force",
+      "command": "node .eccode/drafts/tr-phb-checks.mjs .eccode/artifacts/design/spec.md",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 510,
+      "log": ".eccode/evidence/ev-mv1jgzrl-019a88f4.log",
+      "logSha256": "68097a3db7d5fe94a0385dff7654f4680aadc24469570883fd448ff1f74884ba",
+      "logFileSha256": "9130eea7ada41ffad82da69d6493a9b96c379eebd8d9947d9f567a27530c76c2",
+      "outputTail": "ok   app CSP string present verbatim in headers.js\nok   package.json script start equals the spec\nok   package.json script seed equals the spec\nok   package.json script pretest equals the spec\nok   package.json script test equals the spec\nok   package.json script posttest equals the spec\nok   package.json script test:browser equals the spec\nok   package.json script test:live-model equals the spec\nok   package.json script test:live-paypal equals the spec\nok   no dependencies; devDependencies only @playwright/test 1.56.1; engines >=22.13\nok   RS-06 A+B 8400, 2 pickups, 10:30\nok   RS-06 guard: A on_hand 2 -> Ax2 7000, 1 pickup\nok   RS-07 C INCOMPATIBLE_LID_DIAMETER\nok   RS-08 D READY_AFTER_DEADLINE\nok   RS-09 (B on_hand 0) A+E 9500, 2 pickups, 10:40\nok   RS-09 (B withdrawn) A+E 9500, 2 pickups, 10:40\nok   RS-10 infeasible, OVER_BUDGET blocking, A and E [INSUFFICIENT_QTY, OVER_BUDGET], exactly two relaxations (9500 A+E; 11:20 D 8000 1 pickup) | [[\"budget\",9500],[\"deadline\",\"2026-10-20T08:20:00.000Z\"]]\nok   RS-11 infeasible; A, B, E exactly [INSUFFICIENT_QTY, TOO_MANY_PICKUPS]; C, D keep their codes | [[\"deadline\",\"D\",8000],[\"maxPickups\",\"A+B\",8400]]\nok   brute force agrees on RS-FIX-1 base\nok   brute force agrees on RS-FIX-1 A2\nok   brute force agrees on RS-FIX-1 RS-10\nok   brute force agrees on RS-FIX-1 RS-11\nok   brute force agrees on 3000 random catalogs (807 feasible)\nfailures: 0\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "28b5d2bc5a3523d4ab78d70d7cb303a7ea7997ccb315a1b5793fda4721347bdb",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T22:30:34.336Z"
+    },
+    "ev-mv1jh03r-01f39ba5": {
+      "id": "ev-mv1jh03r-01f39ba5",
+      "kind": "command",
+      "label": "SEC-B-2: security config/db probe (REPRO lines = finding reproduced; FAIL = exit 1)",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-config-db.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 249,
+      "log": ".eccode/evidence/ev-mv1jh03r-01f39ba5.log",
+      "logSha256": "57b67913ea69fe23173f46e9ee88b55b2f64989c4c5c9553974f057b5b4282d5",
+      "logFileSha256": "bdf3e875d78c3a80cd820a4b2dfd3f7e0f8d986fec4f1a8d466af5afb90e349a",
+      "outputTail": "ok   keys outside the allow-list, Secret objects, arrays and functions never reach the line\nok   control characters (C0, C1, U+2028) stripped from msg and values\nok   string values truncated to 120 characters\nok   non-finite numbers dropped; a malformed requestId falls back\ninfo truncated requestRef (a value an allow-listed key could carry): 120 chars kept\n# E. Database: append-only triggers, partial UNIQUE indexes, transactions\ninfo connection PRAGMAs: journal_mode=wal foreign_keys=1 busy_timeout=5000 synchronous=1 recursive_triggers=1 trusted_schema=1\nok   audit_events refuses UPDATE, DELETE and UPSERT-update | UPDATE audit_events: refused (audit_events is append-only); DELETE audit_events: refused (audit_events is append-only); UPSERT DO UPDATE audit_events: refused (audit_events is append-only)\nno-repro INSERT OR REPLACE rewrites an existing audit_events row (the DELETE trigger does not fire: recursive_triggers is off) | INSERT OR REPLACE audit_events: refused (audit_events is append-only); row 1 action now \"original.action\"\nno-repro plain REPLACE INTO also rewrites the audit row | REPLACE INTO audit_events: refused (audit_events is append-only)\nok   inventory_ledger refuses UPDATE and DELETE | UPDATE inventory_ledger: refused (inventory_ledger is append-only); DELETE inventory_ledger: refused (inventory_ledger is append-only)\nno-repro INSERT OR REPLACE rewrites an existing inventory_ledger row | INSERT OR REPLACE inventory_ledger: refused (inventory_ledger is append-only); delta_on_hand now 1\nok   control: with PRAGMA recursive_triggers=ON both REPLACE rewrites are refused and plain appends still work | INSERT OR REPLACE audit_events with recursive_triggers=ON: refused (audit_events is append-only); INSERT OR REPLACE inventory_ledger with recursive_triggers=ON: refused (inventory_ledger is append-only); plain INSERT of a new audit row with recursive_triggers=ON: ALLOWED\nok   partial UNIQUE offers_one_current and CHECK price_cents >= 0 hold | second active offer for one product: refused (UNIQUE constraint failed: offers.product_id); negative price: refused (CHECK constraint failed: price_cents >= 0)\nok   db.tx refuses nesting and a returned promise, and rolls the synchronous part back | TX_NESTED TX_ASYNC row=undefined\n# F. Migration checksum refusal\nok   a changed applied migration (even a comment) refuses startup | MIGRATION_CHECKSUM_MISMATCH\n# G. File modes (SEC-14)\ninfo fresh start modes: {\"data/\":\"700\",\"data/uploads/\":\"700\",\"app.db\":\"600\",\"app.db-shm\":\"600\",\"app.db-wal\":\"600\"}\nok   npm start equivalent: data/ and uploads/ 0700; app.db, -wal and -shm 0600\ninfo pre-existing data/ (0755) stays 700; app.db 600; uploads 700\ninfo process umask after startApp: 77\n\nALL CONFIG/DB EXPECTATIONS HELD\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "28b5d2bc5a3523d4ab78d70d7cb303a7ea7997ccb315a1b5793fda4721347bdb",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T22:30:34.775Z"
+    },
+    "ev-mv1jh6uo-0163ad1b": {
+      "id": "ev-mv1jh6uo-0163ad1b",
+      "kind": "command",
+      "label": "SEC-B-3: b1's verify script (20,000-deep JSON body -> 422, server healthy afterwards)",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/b1-secb3-verify.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 173,
+      "log": ".eccode/evidence/ev-mv1jh6uo-0163ad1b.log",
+      "logSha256": "c235e80d46cf944895ea1f41f46b2936532d44aa1e7487b2431f8aca3a216c86",
+      "logFileSha256": "60a58426e3d9c4abdcaebf7c78d91a8aa90c50e00720f688944375cd3978e4e5",
+      "outputTail": "body 40006 bytes: status 422 {\"error\":{\"code\":\"VALIDATION_FAILED\",\"message\":\"The request failed validation.\",\"requestId\":\"oigzGRIjEE50sakyTcx9AQ\",\"de\nhealth after: 200\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "28b5d2bc5a3523d4ab78d70d7cb303a7ea7997ccb315a1b5793fda4721347bdb",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T22:30:43.513Z"
+    },
+    "ev-mv1jha0c-0193ed2e": {
+      "id": "ev-mv1jha0c-0193ed2e",
+      "kind": "command",
+      "label": "security HTTP probe on the reworked tree; expected exactly one FAIL: section H still expects the pre-fix 200 for a 20,000-deep body (SEC-B-3 now answers 422)",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-http.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 351,
+      "log": ".eccode/evidence/ev-mv1jha0c-0193ed2e.log",
+      "logSha256": "2cdc8eb52037284117cb010f1dd7905fa08094f6932e5755df8fb61e0d4a3e66",
+      "logFileSha256": "aaef8c5a1c9f2769f0296196bcf491d015e42bc9fb1f6508ad20d1b1a868a98c",
+      "outputTail": "ok   static /sub/.%2e/.%2e/secret.txt not served | 404\nok   static /index.html%00.txt not served | 404\nok   static /%00 not served | 404\nok   static /..%5csecret.txt not served | 404\nok   static /sub%5c..%5c..%5csecret.txt not served | 404\nok   static //secret.txt not served | 400\nok   static /%252e%252e/secret.txt not served | 404\nok   static /%c0%ae%c0%ae/secret.txt not served | 404\nok   static /sub/x.txt/..%2f..%2f..%2fsecret.txt not served | 404\nok   static control: /, /sub/x.txt and /sub/./x.txt served | 200 200 200\nok   HEAD on a static file: 200 without a body\nok   POST to a static path -> 404 | 404\ninfo /api/../index.html -> 200 (URL normalisation resolves to /index.html)\n# J. Log lines\nok   every log line is one JSON object on one line | 92 lines\nok   the raw request path never reaches a log line\ninfo log keys seen: ts,level,msg,requestId,route,method,status,durationMs,code,kind\n# K. Server timeouts\ninfo headersTimeout=10000 requestTimeout=30000 keepAliveTimeout=5000 maxHeaderSize=16384 connectionsCheckingInterval=1000 maxConnections=512\nok   server timeouts 10 s / 30 s / 5 s as specified\nok   header block > 16 KiB -> 431 | 431\n\n1 FAILED:\n- reproduction: canonicalJson (the idempotency fingerprint) throws RangeError on a 40 kB nested body that readJsonObject accepted\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "28b5d2bc5a3523d4ab78d70d7cb303a7ea7997ccb315a1b5793fda4721347bdb",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T22:30:47.603Z"
+    },
+    "ev-mv1jjd22-014ee08d": {
+      "id": "ev-mv1jjd22-014ee08d",
+      "kind": "command",
+      "label": "SEC-B-4 residual: security slowloris probe re-run after the 1 s check interval",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-slowloris.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 75170,
+      "log": ".eccode/evidence/ev-mv1jjd22-014ee08d.log",
+      "logSha256": "94c5c5ba372a32b581e93fdd93793c7081c35be5b706f750d3742ab001b634b4",
+      "logFileSha256": "e9262dcdb0fa05fdd3c1cfaa98fa8e6e591e2757b703addae791b32577f0e5ca",
+      "outputTail": "node v22.22.0; headersTimeout 10000, requestTimeout 30000, connectionsCheckingInterval 30000 (default)\nA partial headers, silent: closed after 10.0 s (HTTP/1.1 408 Request Timeout)\nB partial headers, one line per second: closed after 10.0 s (HTTP/1.1 408 Request Timeout)\nC complete headers, body never sent: closed after 30.0 s (HTTP/1.1 408 Request Timeout)\nD complete headers, one body byte per second: closed after 30.0 s (HTTP/1.1 408 Request Timeout)\nB after an ok request (prior: HTTP/1.1 200 OK): closed after 10.0 s (HTTP/1.1 408 Request Timeout)\nB after a 431 (prior: HTTP/1.1 431 Request Header Fields Too Large): closed after 10.0 s (HTTP/1.1 408 Request Timeout)\nB after a 400 (prior: HTTP/1.1 400 Bad Request): closed after 10.0 s (HTTP/1.1 408 Request Timeout)\nA after a 431 (prior: HTTP/1.1 431 Request Header Fields Too Large): closed after 10.0 s (HTTP/1.1 408 Request Timeout)\nevery slow connection was closed\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "28b5d2bc5a3523d4ab78d70d7cb303a7ea7997ccb315a1b5793fda4721347bdb",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T22:32:24.870Z"
+    },
+    "ev-mv1jlmwd-01538718": {
+      "id": "ev-mv1jlmwd-01538718",
+      "kind": "command",
+      "label": "SEC-B-4 residual: security slowloris probe against the full app after earlier requests",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-slowloris-app.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 100316,
+      "log": ".eccode/evidence/ev-mv1jlmwd-01538718.log",
+      "logSha256": "cedb756a043a519a73069fba562fe9965f3d20900ca5dd047e66918fc0002537",
+      "logFileSha256": "572f01e0eb624a26b7d9a1d57e916213d8d48c28cd692adb66cd0712c160a3c6",
+      "outputTail": "node v22.22.0; app server: headersTimeout 10000, requestTimeout 30000, keepAliveTimeout 5000, connectionsCheckingInterval 30000\nno prior request []: closed after 10.0 s (HTTP/1.1 408 Request Timeout)\nafter a 20000-deep JSON body (canonicalJson RangeError) [HTTP/1.1 422 Unprocessable Entity]: closed after 11.0 s (HTTP/1.1 408 Request Timeout)\nafter a declared 70 kB body (413) [HTTP/1.1 413 Payload Too Large]: closed after 11.0 s (HTTP/1.1 408 Request Timeout)\nafter a chunked 70 kB body (413) [HTTP/1.1 413 Payload Too Large]: closed after 11.0 s (HTTP/1.1 408 Request Timeout)\nafter a bare CR in a header (400) [HTTP/1.1 400 Bad Request]: closed after 11.0 s (HTTP/1.1 408 Request Timeout)\nafter duplicate Content-Length (400) [HTTP/1.1 400 Bad Request]: closed after 11.0 s (HTTP/1.1 408 Request Timeout)\nafter a 431 [HTTP/1.1 431 Request Header Fields Too Large]: closed after 11.0 s (HTTP/1.1 408 Request Timeout)\nevery slow connection was closed within 41 s\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "28b5d2bc5a3523d4ab78d70d7cb303a7ea7997ccb315a1b5793fda4721347bdb",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T22:34:10.936Z"
+    },
+    "ev-mv1jn3yu-01ac175f": {
+      "id": "ev-mv1jn3yu-01ac175f",
+      "kind": "command",
+      "label": "artifact coverage: every phase-B-owned file on disk is in the latest submission (reviewer's tr-phb-artifacts.mjs)",
+      "command": "node .eccode/drafts/tr-phb-artifacts.mjs .eccode/artifacts/plan/plan.json",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 188,
+      "log": ".eccode/evidence/ev-mv1jn3yu-01ac175f.log",
+      "logSha256": "7356d47cf43ac696efde3026a58bc885cef96aa2bfad579010a7db169bf9b97d",
+      "logFileSha256": "6a988e1b8a8283e65d8daaf2d613097234c8757ecaca7dbaf2bd2ea8e96c76aa",
+      "outputTail": "b1-foundation-core: 61 owned files on disk, 0 not in the submission\nb2-domain: 28 owned files on disk, 0 not in the submission\nb4-env-readme: 4 owned files on disk, 0 not in the submission\nb3-test-harness: 21 owned files on disk, 0 not in the submission\nsubmission artifacts outside phase-B ownership (excluding .eccode/): none\nowned files: 114; missing from submission: 0\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T22:35:19.718Z"
+    },
+    "ev-mv1jozth-01485646": {
+      "id": "ev-mv1jozth-01485646",
+      "kind": "command",
+      "label": "phase B suite (third review)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 16548,
+      "log": ".eccode/evidence/ev-mv1jozth-01485646.log",
+      "logSha256": "04ea7d8cb6e110e0d827e86b4cb7d67717fcc9fa0dd7e32b3a180726bd075342",
+      "logFileSha256": "52c54eaf979ac543aca67814ffc047febd569ce6dc20f7f576aecb9a3a2c84f1",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 381 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 440.838167\n  type: 'test'\n  ...\n1..381\n# tests 390\n# suites 3\n# pass 390\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 16194.701892\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 18 requests, p50 2.2 ms, p95 15.2 ms (limit: p95 < 300 ms)\nNFR5 suite time: 16.3 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T22:36:47.652Z"
     }
   },
   "reviews": {
@@ -11250,6 +11931,62 @@
       "id": "ho-mv1jewhq-01c5bca8",
       "recordedBy": "backend-engineer",
       "at": "2026-10-09T22:28:56.858Z"
+    },
+    "ho-mv1jngt5-01f224cf": {
+      "from": "delivery-lead",
+      "to": "technical-reviewer",
+      "gate": "phase:b-foundation",
+      "objective": "Third and last review iteration for phase b-foundation: submission sub-mv1jn1fv-01d4cc9d, responding to rev-mv1ijr52-01b2f4b6 (SEC-B-1 major; SEC-B-2 and SEC-B-3 minor; PB-4 and SEC-B-4..9 info).",
+      "context": "b2-domain was reworked (ho-mv1jewhq-01c5bca8) for SEC-B-1, and b1-foundation-core (ho-mv1ipb3r-01ca015d) for SEC-B-2..5. The toolkit is 0.3.2, so the engine unions every completion's files into the artifact list. The submission has 116 artifacts: the 114 phase-B-owned files on disk (b1 61, b2 28, b4 4, b3 21) plus submission.md and followups.md. Your tr-phb-artifacts.mjs reports 0 owned files missing and nothing outside ownership.",
+      "inputs": [
+        ".eccode/reviews/rev-mv1ijr52-01b2f4b6.json",
+        ".eccode/handoffs/ho-mv1jewhq-01c5bca8.json",
+        ".eccode/handoffs/ho-mv1ipb3r-01ca015d.json",
+        ".eccode/artifacts/phase-b/submission.md",
+        ".eccode/artifacts/plan/followups.md"
+      ],
+      "dependencies": [
+        "b1-foundation-core",
+        "b2-domain",
+        "b4-env-readme",
+        "b3-test-harness"
+      ],
+      "expectedOutput": "A phase review covering the four task criteria, phase:b-foundation and lessons, with SEC-B-1..3 and the RISK-19 residual judged.",
+      "acceptanceCriteria": [
+        "SEC-B-1: sec-phb-planner-sweep.mjs and tr-phb-checks.mjs exit 0; named SEC-B-1 tests pass",
+        "SEC-B-2: no REPLACE rewrite of audit_events or inventory_ledger",
+        "SEC-B-3: deep JSON refused with 422 and the server stays healthy",
+        "Every info item is routed or dispositioned in followups.md and submission.md"
+      ],
+      "completedWork": "I re-ran npm test (390/390) and every reviewer script on the final tree, including both slowloris probes, which close the SEC-B-4 residual b1 had left open. The HTTP probe has exactly one FAIL: its section-H line asserts the old RangeError reproduction. I added FU-8..FU-12 to followups.md and rewrote FU-1 to the typed 422 that RISK-19 fixes. I added the 'Response to rev-mv1ijr52-01b2f4b6' section with the RISK-19 residual and the engineer's numbers, resubmitted, and checked artifact coverage against the plan's ownership.",
+      "filesChanged": [
+        ".eccode/artifacts/phase-b/submission.md",
+        ".eccode/artifacts/plan/followups.md"
+      ],
+      "evidence": [
+        "ev:ev-mv1jgr43-019019a1",
+        "ev:ev-mv1jgz8k-01e18aeb",
+        "ev:ev-mv1jgzrl-019a88f4",
+        "ev:ev-mv1jh03r-01f39ba5",
+        "ev:ev-mv1jh6uo-0163ad1b",
+        "ev:ev-mv1jha0c-0193ed2e",
+        "ev:ev-mv1jjd22-014ee08d",
+        "ev:ev-mv1jlmwd-01538718",
+        "ev:ev-mv1jn3yu-01ac175f"
+      ],
+      "remainingIssues": [
+        "RISK-19 (open, medium): deliberately tie-laden catalogs still reach PLANNER_LIMIT in about 0.1-0.3 % of adversarial inputs at 150-800 ms (ev:ev-mv1jdvnv-01ed0f76). The mitigation is in later tasks (FU-1 typed 422 in c2, FU-8 planning rate limit). This does not fully meet the review's preferred resolution, and the reviewer decides whether it blocks",
+        "ev:ev-mv1jha0c-0193ed2e is a FAILED evidence record by design: the security HTTP probe's section-H expectation encodes the pre-fix bug",
+        "SEC-B-8 (stale explain.js comment) is not fixed",
+        "FU-8's 'plan' value for details.limit, and FU-12's lockfile, need the orchestrator's agreement"
+      ],
+      "nextAction": "technical-reviewer (and security-reviewer) review sub-mv1jn1fv-01d4cc9d; this is the last iteration before escalation.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "id": "ho-mv1jngt5-01f224cf",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-09T22:35:36.326Z"
     }
   },
   "runs": {
@@ -11709,6 +12446,36 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-09T22:29:32.596Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T22:35:58.354Z",
+      "durationMinutes": 6.43,
+      "costUsd": null,
+      "tokens": 36573,
+      "note": null,
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-09T22:36:02.001Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 60000,
+            "costUsd": null
+          },
+          "to": {
+            "tokens": 36573,
+            "costUsd": null
+          },
+          "reason": "harness usage report arrived after run end: cumulative 494,444 minus 457,871"
+        }
+      ]
+    },
+    "run-mv1jnxwt-013e3550": {
+      "id": "run-mv1jnxwt-013e3550",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T22:35:58.480Z",
       "status": "running",
       "attempt": 1
     }
@@ -11985,6 +12752,26 @@
       "lessons": [],
       "at": "2026-10-09T22:25:57.129Z",
       "by": "orchestrator"
+    },
+    "dec-mv1jopyn-01ba1096": {
+      "id": "dec-mv1jopyn-01ba1096",
+      "title": "FU-8: error catalog gains details.limit = plan for the per-customer planning rate limit",
+      "decision": "The 429 RATE_LIMITED envelope may carry details.limit = 'plan' (alongside the existing limit names) when a customer exceeds the per-customer planning rate; c2 implements and tests it.",
+      "rationale": "Mitigation for RISK-19 (SEC-B-1 residual) without changing routes or status codes; a new enumerated value in an existing field is the smallest contract change.",
+      "alternatives": "reuse the general limit name and lose the ability to tell planning throttles apart in the UI",
+      "lessons": [],
+      "at": "2026-10-09T22:36:34.860Z",
+      "by": "orchestrator"
+    },
+    "dec-mv1joq3i-01180c65": {
+      "id": "dec-mv1joq3i-01180c65",
+      "title": "FU-12: commit a package-lock.json",
+      "decision": "The repository commits package-lock.json generated by npm install (one devDependency, @playwright/test 1.56.1); the devops task that owns the environment template (g2) adds it and the package scan asserts it is present and matches package.json.",
+      "rationale": "SEC-B-6: integrity hashes for the single devDependency cost nothing and the clean-checkout check already runs npm install; zero runtime dependencies is unchanged.",
+      "alternatives": "no lockfile (install without integrity hashes)",
+      "lessons": [],
+      "at": "2026-10-09T22:36:35.047Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -11997,8 +12784,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 375.58,
-    "tokens": 4396901
+    "runtimeMinutes": 382.01,
+    "tokens": 4433474
   },
   "delivery": null
 }
