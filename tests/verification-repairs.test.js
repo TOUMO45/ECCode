@@ -252,3 +252,40 @@ test('NEW-3 a file committed after a phase approval that no gate lists blocks th
   const res = delivery.deliver(ctx2.store, 'delivery-lead', { config: ctx2.config });
   assert.strictEqual(res.commit, git(ctx2.dir, 'rev-parse', 'HEAD'));
 });
+
+// ---------------------------------------------------------------------------------------------- NEW-4
+
+test('NEW-4 a staged rename inside the ownership must declare the old path as well as the new one', () => {
+  const ctx = tmpProject();
+  const { store, config, dir } = ctx;
+  write(dir, 'src/server/old.js', '// old\n');
+  commitAll(dir, 'base with old.js');
+  approveThroughPlan(ctx);
+  gates.startGate(store, config, 'phase:core', 'orchestrator');
+  tasks.claim(store, config, 'api', 'backend-engineer');
+  git(dir, 'mv', 'src/server/old.js', 'src/server/new.js');
+  assert.deepStrictEqual(gitChangedFiles(dir, store.state().tasks.api.claim.baseCommit).filter((f) => !f.startsWith('.eccode/')).sort(), ['src/server/new.js', 'src/server/old.js'], 'a staged rename is both paths');
+  const ev = passCheck(store, 'backend-engineer');
+  const err = expectCode(() => tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/new.js'])), 'INVALID_HANDOFF');
+  assert.match(err.message, /inside your ownership that the handoff does not declare.*src\/server\/old\.js/);
+  assert.strictEqual(store.state().tasks.api.status, 'claimed');
+  tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/old.js', 'src/server/new.js']));
+  assert.deepStrictEqual(store.state().tasks.api.filesChanged, ['src/server/old.js', 'src/server/new.js']);
+  for (const [id, owner, file] of PHASE_FILES.slice(1)) {
+    tasks.claim(store, config, id, owner);
+    write(dir, file, `// ${id}\n`);
+    tasks.complete(store, config, id, owner, handoffFor(id, owner, [passCheck(store, owner).id], [file]));
+  }
+  gates.submit(store, config, 'phase:core', 'delivery-lead');
+  const pinned = store.state().gates['phase:core'].submissions[0].artifacts.map((a) => a.path);
+  assert.ok(pinned.includes('src/server/new.js') && !pinned.includes('src/server/old.js'), 'the new path is pinned; the deletion is on record');
+  const rev = passCheck(store, 'technical-reviewer');
+  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${rev.id}`]));
+  commitAll(dir, 'phase work');
+  // The reviewed rename is not an unreviewed change, and the release tree still names it as one (from old to new).
+  assert.deepStrictEqual(delivery.unreviewedChanges(store.state(), dir, config), []);
+  submitVerification(ctx, ['.eccode/artifacts/verification.md', 'src/server/new.js', 'src/web/b.js', 'tests/c.test.js']);
+  const sev = passCheck(store, 'security-reviewer');
+  gates.recordReview(store, config, 'verification', 'security-reviewer', coverage(ctx, 'verification', [`ev:${sev.id}`]));
+  assert.ok(delivery.deliver(store, 'delivery-lead', { config }).commit);
+});
