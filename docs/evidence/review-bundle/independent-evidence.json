@@ -1,0 +1,161 @@
+{
+  "commit": "b8def3da909abac3eea1ef76e595b7248938b1c7",
+  "sourceIntegrity": {
+    "checked": 2049,
+    "mismatches": []
+  },
+  "groundwork": {
+    "audit": {
+      "ok": true,
+      "errors": [],
+      "events": 731
+    },
+    "artifactChanges": [],
+    "runs": 81,
+    "roles": {
+      "product-architect": 2,
+      "architecture-reviewer": 2,
+      "technical-designer": 2,
+      "technical-reviewer": 24,
+      "delivery-lead": 22,
+      "backend-engineer": 5,
+      "ai-engineer": 8,
+      "security-reviewer": 5,
+      "test-engineer": 6,
+      "frontend-engineer": 1,
+      "devops-engineer": 2,
+      "learning-debugger": 2
+    },
+    "tasks": 17,
+    "handoffs": 25,
+    "evidence": 323,
+    "failedEvidence": 65,
+    "reviews": 27,
+    "rejectedReviews": 36,
+    "risks": [
+      {
+        "id": "RISK-1",
+        "severity": "high",
+        "status": "open",
+        "title": "Lexically grounded but semantically wrong statement published"
+      },
+      {
+        "id": "RISK-2",
+        "severity": "high",
+        "status": "open",
+        "title": "CLI model misses D8 thresholds"
+      },
+      {
+        "id": "RISK-4",
+        "severity": "high",
+        "status": "mitigated",
+        "title": "Prompt injection sways model"
+      },
+      {
+        "id": "RISK-6",
+        "severity": "high",
+        "status": "mitigated",
+        "title": "Holdout contamination"
+      },
+      {
+        "id": "RISK-10",
+        "severity": "high",
+        "status": "open",
+        "title": "Sensitive notes sent to external provider"
+      },
+      {
+        "id": "RISK-3",
+        "severity": "medium",
+        "status": "mitigated",
+        "title": "node:sqlite experimental"
+      },
+      {
+        "id": "RISK-5",
+        "severity": "medium",
+        "status": "mitigated",
+        "title": "CLI flakiness in tests"
+      },
+      {
+        "id": "RISK-11",
+        "severity": "high",
+        "status": "mitigated",
+        "title": "CLI provider ambient config or env leak weakens injection resistance"
+      },
+      {
+        "id": "RISK-12",
+        "severity": "high",
+        "status": "mitigated",
+        "title": "Publish race or stale status publishes an ungrounded statement"
+      },
+      {
+        "id": "RISK-13",
+        "severity": "high",
+        "status": "mitigated",
+        "title": "Fallback M2 timeline recall 47.5% < 60% (todo test) until live-eval tunes src/ai/fallback.js; todo must become a hard assertion"
+      },
+      {
+        "id": "RISK-14",
+        "severity": "high",
+        "status": "open",
+        "title": "Holdout verifier M1c 3.07% > 2% cap; natural-paraphrase false flags; verifier probes 2/6 outside seeded kinds"
+      },
+      {
+        "id": "RISK-15",
+        "severity": "medium",
+        "status": "mitigated",
+        "title": "Live CLI injection M4 8/10 (<9) in unofficial probe; no official CLI run yet"
+      }
+    ],
+    "userEvents": [
+      {
+        "type": "decision.recorded",
+        "data": {
+          "id": "dec-mv05ytch-0186a47a",
+          "title": "OPERATOR direction on the M1c holdout miss (not accepted)",
+          "decision": "The M1c holdout result (13/423 = 3.07% against max 2%) is NOT accepted and no threshold changes. Fix the verifier using tune data only, retire the spent holdout (keep reporting it as a failed run), author a fresh sealed holdout without access to the verifier, evaluate each provider once on it and record the result whatever it is. The tune-run and holdout-run counts of eval/thresholds.json cost rules apply (at most 8 full tune CLI runs, 2 holdout runs per provider, USD 40 eval cap); the earlier 'cap of 3' in the plan is superseded. The overrun of USD ~0.53 is accepted. Total spend stays within the user's USD 150 / 900 minute authorization.",
+          "rationale": "Decision made by the OPERATOR of this demonstration run (the engineer who launched it), recorded as --actor user because the engine reserves it. It is NOT a decision of the human product owner and it accepts no risk and weakens no acceptance criterion; it only authorizes more work within the spend the user already authorized.",
+          "alternatives": null,
+          "lessons": []
+        }
+      },
+      {
+        "type": "decision.recorded",
+        "data": {
+          "id": "dec-mv06pxds-01667e31",
+          "title": "OPERATOR direction after the fresh-holdout miss: one final attempt, then stop",
+          "decision": "The second holdout also misses M1c (fallback 11/440 = 2.50% against max 2%). It is not accepted and no threshold changes. Authorized: ONE final attempt. The two retired holdouts (the original and the second) join the tune data. The ai-engineer improves the verifier generically (tolerance for honest paraphrase, normalisation) using all of that data, M1b must stay 63/63 and M4 must not regress. The test-engineer authors a THIRD fresh sealed holdout without access to the verifier code or to the earlier holdouts' error lists. Each provider is evaluated once on it and the result is recorded whatever it is. There is no further attempt: if M1c is still above 2%, acceptance criterion D8 stays failed, delivery is blocked on it, and the final report says so. Run-count caps are extended for this attempt only: at most 3 more full CLI tune runs and 1 holdout run per provider; the USD 40 eval cap and the total USD 150 / 900 minute authorization are unchanged.",
+          "rationale": "Recorded by the OPERATOR of this demonstration run as --actor user because the engine reserves decisions of this kind for the user; it is not a decision of the human product owner. It accepts no risk, lowers no threshold and spends within the authorization the user already gave. Whether to relax the 2% M1c limit itself remains the human user's decision.",
+          "alternatives": null,
+          "lessons": []
+        }
+      },
+      {
+        "type": "gate.reopened",
+        "data": {
+          "gate": "phase:release",
+          "resolution": "OPERATOR (not the human user): reopened so the author can fix the remaining findings. Nothing is waived and nothing is accepted: F8 (tune-run cap guard never fires; docs understate the overrun), F9 (stale 'may be a todo' lines) and F10 (reports not tied to a committed code state) stay open and must be resolved with evidence by the next approving review. Fix isFullTune and its fixtures, correct the run counts and disclose the overrun, remove the stale doc lines, commit the code state so reports can be tied to it, then resubmit phase:release.",
+          "waive": []
+        }
+      },
+      {
+        "type": "gate.reopened",
+        "data": {
+          "gate": "verification",
+          "resolution": "OPERATOR (not the human user): reopened for a final closure attempt. Nothing is waived or accepted: V1-V4 stay open on the gate and must be resolved with evidence by the next approving review. If the reviewers still require a named human for any of them, they say so and the delivery stays open for the human.",
+          "waive": []
+        }
+      },
+      {
+        "type": "decision.recorded",
+        "data": {
+          "id": "dec-mv0acn9a-01b09c56",
+          "title": "OPERATOR raises limits.maxReworks from 3 to 4 for one closure rework",
+          "decision": "limits.maxReworks is raised from 3 to 4 in .eccode/config.json, for exactly one more rework: the one that records the deletions of the retired holdout-1 files and gives the release content its independent technical review. No other limit changes.",
+          "rationale": "Recorded by the OPERATOR of this demonstration run, not by the human product owner. The three earlier reworks were consumed by the team's own post-approval changes; this one repairs a record problem the toolkit itself caused (a deletion by an approved rework was not accepted by the audit) and closes a review gap. It accepts no risk and changes no threshold.",
+          "alternatives": null,
+          "lessons": []
+        }
+      }
+    ]
+  }
+}

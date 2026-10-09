@@ -1,0 +1,293 @@
+npm notice run eccode@0.1.0 check
+npm notice run node scripts/validate-toolkit.js && node --test tests/*.test.js
+Toolkit validation passed: 12 agents, 7 skills, 7 commands, hooks wired.
+✔ change profile: plan is the first gate and no verification gate follows the phases (6650.9535ms)
+✔ default profile is unchanged and unknown profiles are refused (366.1491ms)
+✔ CLI: init --profile change (581.9378ms)
+✔ gates cannot start before their predecessor is approved (732.7519ms)
+✔ submissions missing required sections are refused (773.0832ms)
+✔ only configured authors may submit; paths outside the project are refused (950.1501ms)
+✔ the author cannot approve their own artifact, and the refusal is recorded (840.9662ms)
+✔ unauthorized reviewer roles are refused (936.4611ms)
+✔ approval without resolvable evidence is refused (rubber-stamp protection) (840.9824ms)
+✔ schema-invalid reviews are refused (859.3115ms)
+✔ reviews of an artifact that changed after submission are refused (789.4147ms)
+✔ changes requested → resubmission must respond → approval must resolve earlier findings (935.6594ms)
+✔ repeated rejections escalate; only the user can reopen (835.0988ms)
+✔ the user can waive named findings (or all) when reopening; the rest stay open (810.579ms)
+✔ guard: no opinion outside ECCode projects (381.945ms)
+✔ guard: binds --actor to the running subagent and blocks impersonation (2851.1338ms)
+✔ guard: protects the record from direct edits (1595.0149ms)
+✔ guard: implementers edit only inside their claimed task ownership; reviewers write drafts only (3964.4924ms)
+✔ guard: ECCODE_HOOKS=off disables it (906.7218ms)
+✔ session-start injects the resume brief only for ECCode projects (1173.0148ms)
+✔ project install copies components, rewrites paths, merges hooks idempotently and the installed CLI works (1991.5739ms)
+✔ AGENTS.md export covers every role and the workflow for other harnesses (7.2549ms)
+✔ #2 CLI refuses a repeated --actor (782.1687ms)
+✔ #2 guard binds the actor the CLI will use: repeated --actor, inline env, tabs, quotes, nested shells (4516.3758ms)
+✔ #4 guard fails closed when the record cannot be read (888.4086ms)
+✔ #5 guard denies git commands that roll back or delete the record (6636.551ms)
+✔ #8 guard: task globs never grant .eccode/ paths (only drafts) (1827.9105ms)
+✔ #11 guard protects memory, improvements, evidence, reviews and handoffs from Bash writes (1650.1428ms)
+✔ guard: implementers cannot write approved artifacts; document authors can (871.7053ms)
+✔ claiming a task retrieves the matching verified lesson and records it on the claim (3011.2861ms)
+✔ a precise lesson outranks long generic ones: topic fields (title, tags, appliesWhen) count more than body text, with light stemming (6159.8698ms)
+✔ nothing is retrieved for an unrelated task, or when learning is off (4227.3189ms)
+✔ completion needs a decision on every retrieved lesson; applied decisions are cited (4368.134ms)
+✔ not-applicable needs an evidence-backed assessment or a substantive reason (3236.7215ms)
+✔ a substantive written reason is accepted as a weaker dismissal and counted in metrics (2340.7262ms)
+✔ CLI: task claim shows the retrieved lessons as evidence and the decision the handoff needs (1799.7232ms)
+✔ real trial data: the idempotency lesson is retrieved and ranked first for the credits task, behind none of three longer lessons (222.52ms)
+✔ a plan that matches a verified lesson is refused until it answers for it, and the refusal shows the lesson and the rule about silence (1921.7426ms)
+✔ "incorporated" must reach the task: the lesson id in its inputs; "not-applicable" needs a real reason (1976.1668ms)
+✔ the plan reviewer cannot approve without judging the recorded lesson decisions (1847.3464ms)
+✔ a lesson the approved plan incorporated binds the implementer: shown as required at claim, dismissal refused, applying it accepted (4239.6598ms)
+✔ the phase reviewer must judge the implementer's lesson decisions too, and sees them in `gate show` (3599.3229ms)
+✔ with learning off nothing is asked of the plan or the reviewer (1338.6315ms)
+✔ semver ranges used for applicability checks (5.2464ms)
+✔ free-text environment entries are informational, not an unverifiable mismatch; real constraints still bind (2.0967ms)
+✔ lessons start provisional; verification needs a non-author reviewer and a check that flips from failing to passing (4103.7174ms)
+✔ a verified lesson survives a session restart and is retrieved for a related problem; outdated ones are rejected (2441.4266ms)
+✔ learning can be switched off: no lesson retrieval, recording or self-improvement; project facts stay (4405.8139ms)
+✔ relevance assessments: a lesson is rejected for a problem with a different cause, with evidence (3152.1715ms)
+✔ stale and superseded lessons are flagged rather than trusted (1344.4328ms)
+✔ promotion to shared memory requires verification, a non-author promoter and clean content (1360.3327ms)
+✔ self-improvement: protected paths, grounding, evaluation, independent review, user adoption, rollback (2404.3412ms)
+✔ metrics count rejections, repeated bugs and recurrence after a fix (1103.2252ms)
+✔ promotion never leaks private data from evidence snapshots, review notes or old revisions (1252.4772ms)
+✔ the project name and a non-URL source string no longer block promotion; they are scrubbed from the shared copy (1854.8187ms)
+✔ real leaks still block promotion (secret, email, IP, user path, private URL) (6644.1391ms)
+✔ reconcile reports interrupted claims with their partial work and open runs, without blocking (4593.5081ms)
+✔ reconcile blocks on approved artifacts changed after approval and on checks that no longer pass (4359.348ms)
+✔ verify re-runs recorded checks that still pass and reports them as confirmed (3548.3002ms)
+✔ CLI: reconcile exits 3 on blocking issues; resume shows reconciliation read-only (4575.8751ms)
+✔ risk update with only --status keeps title, severity, mitigation and owner (1892.9151ms)
+✔ materialized state equals the state rebuilt by replaying events.jsonl (2068.1884ms)
+✔ Store.commit: in-process reduction matches replay when data contains undefined values (any event type) (716.178ms)
+✔ an unreviewed submission can be replaced after the file was corrected; the earlier one stays on record as superseded (1062.2646ms)
+✔ only the submitter may replace a submission, and nothing can be replaced once a review exists (1168.0125ms)
+✔ state survives a lost snapshot and a torn final log line (1535.531ms)
+✔ interrupted runs are recovered: claims released, attempt counted, work resumable (2525.4424ms)
+✔ stale detection only flags runs older than the threshold unless --all (743.432ms)
+✔ audit detects edits to the event log (1291.7781ms)
+✔ delivery is refused until every gate passes and when reviewed files change afterwards (5733.1238ms)
+✔ happy path produces a verified final handoff (5174.241ms)
+✖ evidence logs redact secrets and record exit codes (605.485ms)
+✔ handoffs must come from the acting agent and cite real evidence (787.4875ms)
+✔ concurrent writers never corrupt the log (999.1717ms)
+✔ audit detects a snapshot that diverges from replay; rebuild repairs it (676.1065ms)
+✔ run usage corrections are append-only and adjust totals by the delta (602.8167ms)
+✔ run end refuses to close a run without usage unless --no-usage is explicit (633.8866ms)
+✔ the orchestrator opens a run on behalf of a role (--agent); the run belongs to that role (562.9024ms)
+✔ CLI: run start --actor orchestrator --agent <role> prints a run id and the guard allows the command from the main session (1010.7827ms)
+✔ run end --no-usage is accepted by the CLI and a bare run end is refused with exit 2 (1418.8448ms)
+✖ evidence run preserves argument quoting from the CLI (sh -c with compound commands) (698.9488ms)
+warning: in the working copy of '.eccode/.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/artifacts/plan.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/config.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/delivery/final-handoff.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/delivery/final-handoff.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/events.jsonl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/evidence/ev-mv0jseor-263707c9.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/evidence/ev-mv0jsfb3-28d71a37.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/evidence/ev-mv0jsfrh-2a3fd977.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/evidence/ev-mv0jsg0p-2dd910f4.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/handoffs/ho-mv0jsep4-27a4aa55.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/handoffs/ho-mv0jsfbh-29acfd06.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/handoffs/ho-mv0jsfrq-2b74c9fe.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/state.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/server/a.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/web/b.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/c.test.js', LF will be replaced by CRLF the next time Git touches it
+✔ rework: a defect found after delivery is fixed under a new phase gate, reviewed independently, and re-delivered (9622.3172ms)
+✔ rework: who may open it, with what scope, and how often (5085.9869ms)
+✔ rework: bounded by limits.maxReworks (5689.771ms)
+✔ rework in a full delivery: refused once verification is approved unless the user reopens that gate first (4403.0656ms)
+✔ CLI: eccode rework open prints the ids; status shows the next action; metrics count reworks (3042.4104ms)
+✖ rework: a file deleted by an approved rework is not an audit failure, one deleted behind the gates still is (3735.654ms)
+warning: in the working copy of 'src/auth/policy.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/auth/policy.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/artifacts/brief.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/artifacts/plan.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/artifacts/spec.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/config.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/events.jsonl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/state.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/config.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/events.jsonl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.eccode/state.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/server/old.js', LF will be replaced by CRLF the next time Git touches it
+✔ #4 a torn final line is repaired before the next append, so the log never becomes permanently corrupt (973.2582ms)
+✔ #4 a complete final event that only lost its newline is kept (947.6687ms)
+✔ #5 a log rolled back behind its snapshot is refused (LOG_ROLLBACK) until the user accepts it (2149.9272ms)
+✔ #5 a log replaced by a different history is refused; a snapshot that is merely behind is still rebuilt (1514.3029ms)
+✔ #9 ECCODE_NOW is honoured only when ECCODE_TEST=1 (1181.0227ms)
+✔ #9 audit reports event timestamps that go backwards (750.548ms)
+✔ #3 evidence refs never resolve to inherited properties (ev:constructor, ev:__proto__, ...) (868.929ms)
+✔ #3 memory assess and lesson verification do not accept inherited evidence ids (706.739ms)
+✔ #3 task, run, risk, gate and evidence ids are own-property lookups (no TypeError, no inherited match) (2258.9291ms)
+✔ #21 a record cannot supersede itself (or be superseded by a superseded/rejected one) (875.9262ms)
+✔ #22 CLI refuses unexpected positionals instead of dropping them (unquoted glob after --artifact) (803.9418ms)
+✔ #22 CLI input errors are clean EccodeErrors, not internal errors (1643.415ms)
+✔ #22 run end/correct usage must be finite non-negative numbers (783.9795ms)
+✔ #1 improve rollback refuses crafted proposal ids (path traversal into drafts) (1563.0232ms)
+✖ #1 adopt and rollback re-check the target (outside project, protected) and rollback is user/orchestrator only (1324.6486ms)
+✔ #12 baseline and candidate must be evaluated with the same command (1438.8158ms)
+✖ #13 only evaluated proposals can be reviewed (no re-review after adoption) (1412.0018ms)
+✔ #14 protected paths cover the installed engine, toolkit internals and the record, even with an older config (1063.7594ms)
+✔ #6 explicit phase artifacts never replace the code the tasks changed (it is always pinned) (3547.2131ms)
+✔ #7 completion refuses undeclared changes outside the task (another task's files or nobody's) (1860.8942ms)
+✔ #7 legitimate parallel and sequential work is attributable (claimed, completed and reset tasks) (3211.9879ms)
+✔ #8 task globs never reach into .eccode/ (config, artifacts), only .eccode/drafts/ (1351.0834ms)
+✔ #10 a plan submission interrupted before its import cannot be approved; delivery needs phases and tasks (427.0842ms)
+✔ #18 a done task cannot be reset while its phase is submitted or approved; approval needs every task done (3304.2924ms)
+✔ #19 ev: file evidence is re-hashed when cited; a changed or deleted file is refused (235.0316ms)
+✔ #20 default phase artifacts skip deleted files and scratch drafts (2045.9156ms)
+✔ #15 redaction covers JSON-quoted keys, prefixed key names, bearer tokens and URL credentials (357.647ms)
+✔ #16 promotion scans source URLs: secrets in query, credentials, private hosts and file: URLs are blocked (376.1945ms)
+✔ #11 a local lesson flipped to verified in its JSON file is not trusted (promote, improve propose) (236.223ms)
+✔ #11 verification binds the reviewed revision and content; edits after review are not trusted (482.4347ms)
+✔ #17 run correct is restricted to orchestrator/user (an agent cannot lower recorded spend) (294.3634ms)
+✔ #17 recover is restricted to orchestrator/user and records the real caller (958.4242ms)
+✔ #22 memory ids are validated before they are used as paths (648.0612ms)
+✔ an interactive session, or one not started with an /eccode command, is never blocked (1895.1673ms)
+✔ unattended /eccode:change with no project: blocked, told to run the workflow rather than do the work itself (718.4512ms)
+✔ unattended with an unfinished project: blocked with the NEXT action; delivered: allowed (1395.471ms)
+✔ the hook gives up after a few blocks per session so it can never loop forever (1942.0074ms)
+warning: in the working copy of 'examples/app/.eccode/.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'examples/app/.eccode/artifacts/brief.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'examples/app/.eccode/artifacts/plan.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'examples/app/.eccode/artifacts/spec.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'examples/app/.eccode/config.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'examples/app/.eccode/events.jsonl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'examples/app/.eccode/state.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'examples/app/src/server/app.js', LF will be replaced by CRLF the next time Git touches it
+✔ plan validation catches cycles, unknown deps/owners and backwards phase deps (7.0246ms)
+✔ the plan gate refuses an invalid plan artifact (1392.0912ms)
+✔ claims enforce ownership, dependencies, concurrency and file-overlap rules (4703.7827ms)
+✔ task completion requires a valid handoff, fresh passing evidence and in-scope files (5047.8266ms)
+✔ phase approval needs a check executed by the reviewer after submission; implementers cannot review (5364.6973ms)
+✔ failed tasks are retried up to the limit, then escalate to the user (2128.4808ms)
+✔ budget limits block new work (631.6781ms)
+✔ scope checks work when the project is a subdirectory of a larger git repo (2340.1106ms)
+✔ tasks cannot modify records or approved artifacts under .eccode/ (only .eccode/drafts/) (2208.9172ms)
+✔ every template validates against its schema exactly as printed (12.1402ms)
+✔ an unknown template is a usage error that lists the available ones (1.3919ms)
+✔ CLI: eccode template <name> prints JSON that validates, without a project (1681.1911ms)
+ℹ tests 136
+ℹ suites 0
+ℹ pass 131
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42432.3103
+
+✖ failing tests:
+
+test at tests\resume-delivery.test.js:123:1
+✖ evidence logs redact secrets and record exit codes (605.485ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\tests\resume-delivery.test.js:126:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\resume-delivery.test.js:251:1
+✖ evidence run preserves argument quoting from the CLI (sh -c with compound commands) (698.9488ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'failed' !== 'passed'
+  
+      at TestContext.<anonymous> (C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\tests\resume-delivery.test.js:259:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'passed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\rework.test.js:161:1
+✖ rework: a file deleted by an approved rework is not an audit failure, one deleted behind the gates still is (3735.654ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   {
+  +     gate: 'phase:core',
+  +     path: 'src/web/b.js',
+  +     problem: 'modified after approval'
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\tests\rework.test.js:183:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { path: 'src/web/b.js', gate: 'phase:core', problem: 'modified after approval' } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\security-regressions.test.js:331:1
+✖ #1 adopt and rollback re-check the target (outside project, protected) and rollback is user/orchestrator only (1324.6486ms)
+  Error [EccodeError]: Cannot approve: candidate evaluation failed (exit 1)
+      at Object.review (C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\lib\memory\improve.js:178:22)
+      at adopted (C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\tests\security-regressions.test.js:307:11)
+      at TestContext.<anonymous> (C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\tests\security-regressions.test.js:333:13)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    code: 'EVALUATION_FAILED',
+    details: {}
+  }
+
+test at tests\security-regressions.test.js:369:1
+✖ #13 only evaluated proposals can be reviewed (no re-review after adoption) (1412.0018ms)
+  Error [EccodeError]: Cannot approve: candidate evaluation failed (exit 1)
+      at Object.review (C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\lib\memory\improve.js:178:22)
+      at adopted (C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\tests\security-regressions.test.js:307:11)
+      at TestContext.<anonymous> (C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\tests\security-regressions.test.js:373:13)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    code: 'EVALUATION_FAILED',
+    details: {}
+  }

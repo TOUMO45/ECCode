@@ -1,0 +1,745 @@
+npm notice run groundwork@1.0.0 test
+npm notice run node --disable-warning=ExperimentalWarning --test "test/unit/**/*.test.js" "test/api/**/*.test.js" "test/eval/**/*.test.js"
+✔ each sensitive action writes exactly one audit row, without text (854.8892ms)
+✔ publish writes one ok row; audit endpoint is lead-only, team-scoped; rows are immutable (690.3539ms)
+✔ health is public and matches the contract (331.6056ms)
+✔ GET /api/csrf issues a token and cookie (16.408ms)
+✔ login success: contract shape, HttpOnly SameSite=Strict cookie, /api/me works (165.5904ms)
+✔ username lookup is case-insensitive; password never appears in responses (166.3344ms)
+✔ Secure flag is set when GW_COOKIE_SECURE=1 (310.0181ms)
+✔ unknown user, wrong password and disabled user give identical 401 bodies (430.515ms)
+✔ login validation: 400 with fields, never 500 (145.3219ms)
+✔ limiter: 6th attempt is 429 with Retry-After even with the right password; then clears after the window (923.0935ms)
+✔ limiter map stays bounded across 10,001 distinct usernames (214.2931ms)
+✔ session rotation: new id each login, old id rejected, preset cookie ignored (fixation) (466.2998ms)
+✔ only the hash of the session id is stored (137.0807ms)
+✔ idle expiry (30 min) and sliding refresh, absolute expiry (8 h) (454.3649ms)
+✔ logout invalidates the session and clears cookies; logging out twice is 401 (121.8815ms)
+✔ unauthenticated access to protected endpoints is 401 (9.7523ms)
+✔ users: lead creates users in own team only; roles enforced; duplicate is 409 (571.3799ms)
+✔ audit: lead-only, team-scoped, no secrets; sensitive actions recorded (508.3457ms)
+✔ audit rows are append-only (1.2935ms)
+✔ sessions survive an app restart on the same database (and limiter resets) (103.3463ms)
+✔ success bodies match the contract schemas (1110.8495ms)
+✔ documented error shapes (623.7734ms)
+✔ state-changing request without a token is 403 CSRF_FAILED (840.8581ms)
+✔ header must equal cookie; cookie alone or header alone fails (227.9097ms)
+✔ a token from another session (or a pre-login token) does not work on an authenticated route (376.3567ms)
+✔ Origin mismatch is rejected even with a valid token; matching or absent Origin passes (389.5148ms)
+✔ login requires the pre-login token (135.2255ms)
+✔ logout without a token is rejected and the session stays valid (117.7837ms)
+✔ GET and HEAD are not subject to CSRF checks (154.7338ms)
+✔ unauthenticated mutation on a session route is 401, not a CSRF leak (7.3933ms)
+✔ generate stores verifier output and regenerates with version bump (854.3168ms)
+✔ no draft yet: 404; no notes: NO_NOTES (262.6044ms)
+✔ provider failure PROVIDER_TIMEOUT stores nothing and keeps the previous draft (350.4415ms)
+✔ provider failure PROVIDER_BAD_OUTPUT stores nothing and keeps the previous draft (279.0064ms)
+✔ provider failure PROVIDER_UNAVAILABLE stores nothing and keeps the previous draft (236.1534ms)
+✔ provider failure PROVIDER_BUSY stores nothing and keeps the previous draft (278.2194ms)
+✔ provider that hangs hits the deadline (504) and is aborted (641.4193ms)
+✔ malformed provider output (unknown fields, wrong types, too many) is rejected (205.4173ms)
+✔ non-ProviderError exception yields a generic provider error without leaking (228.6579ms)
+✔ unknown / unavailable provider and auto with none configured (238.9532ms)
+✔ fallback draft is labelled isFallback and verifies (176.2205ms)
+✔ concurrent generation: second call gets GENERATION_IN_PROGRESS (320.831ms)
+✔ NOTES_CHANGED when notes are replaced during generation (286.9893ms)
+✔ statement edit and delete: re-verification, stale version, validation (193.3649ms)
+✔ provider faults and DB faults give generic envelopes; marker never leaks (811.4739ms)
+✔ error shapes carry request ids for 404, 405 and domain errors (257.0642ms)
+✔ cross-team access is 404 and leaves data unchanged (1828.3668ms)
+✔ journey: sign in, incident, notes, draft, refused, fix, publish, viewer reads (1440.108ms)
+✔ 413: Content-Length above 1 MiB is refused with the envelope (714.8344ms)
+✔ 413: declared large Content-Length is rejected without reading the body (15.7877ms)
+✔ 413: chunked body streaming past 1 MiB is cut off (93.8121ms)
+✔ 413 via fetch with a large JSON body: small-enough overshoot returns the envelope (44.4735ms)
+✔ body exactly at the limit is read (and then fails validation, not 413) (56.8613ms)
+✔ 415: non-JSON content types are refused with the envelope (116.7998ms)
+✔ 400 INVALID_JSON for malformed or non-UTF-8 bodies, 400 for wrong top-level type (56.3502ms)
+✔ 404 and 405 are shaped; 405 carries Allow and details.allow (27.8439ms)
+✔ inbound X-Request-Id is reused only when well formed (25.9425ms)
+✔ query strings are whitelisted: unknown parameters are 400 on routes without query schema (12.9161ms)
+✔ a body sent to a no-body POST route is rejected as unknown fields (35.3974ms)
+✔ path parameters must be integers: non-numeric or huge ids do not match (63.2662ms)
+✔ unauthenticated 4xx ordering: no body is parsed before auth (19.9657ms)
+✔ server survives slow/broken clients and malformed request lines (11.2367ms)
+✔ one JSON line per request with the documented fields; no secrets, bodies or cookies (1257.7465ms)
+✔ internal faults give the generic envelope; the marker reaches neither response nor log (220.5156ms)
+✔ GW_LOG=off writes nothing (59.6808ms)
+✔ notes: formats, errors, idempotent replace, lock, notes_rev (1187.7114ms)
+✔ non-AI API p95 below 200 ms over 200 sequential requests on a seeded DB (2973.7111ms)
+✔ data survives in-process reopen (1169.0504ms)
+✔ data survives a spawned-process restart (real providers wired from config: fallback) (1995.9126ms)
+✔ publish refused while flagged; tampered stored status does not help (1122.4697ms)
+✔ publish: stale version, success, then everything is DRAFT_PUBLISHED (306.0098ms)
+✔ responder and viewer cannot publish (403 before lookup); empty draft is 400 (554.5819ms)
+✔ interleaved edit/publish never publishes a flagged statement (2467.5047ms)
+✔ role matrix (1533.0939ms)
+✖ index.html is served at / with security headers and a strict CSP (1.5246ms)
+✖ security headers are also on API responses, 404s and errors (0.2865ms)
+✖ js assets get the right content type; HEAD has no body (0.1971ms)
+✖ traversal attempts return the 404 envelope and never file contents (0.1849ms)
+✖ resolveStatic unit: stays under root (0.2736ms)
+✖ non-GET on static paths is 405 with Allow (0.2924ms)
+✖ missing public dir yields 404 envelope, not a crash (0.1927ms)
+✖ the real public/index.html (when present) has no inline script (0.2971ms)
+✖ C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\examples\groundwork\test\api\static.test.js (0.6028ms)
+✔ incident input validation and data round-trip (770.49ms)
+✔ malformed requests: JSON, media type, size, ids, unknown fields (404.2066ms)
+✔ cap fires for real usage.log statuses PASS and FAIL (2.4587ms)
+✔ INCOMPLETE counts; legacy COMPLETE still counts (0.3843ms)
+✔ holdout, fallback, partial-set and NOT_RUN entries do not count (0.5322ms)
+✔ below the cap is allowed; holdout and non-full checks are not blocked by the tune cap (0.8579ms)
+✔ holdout cap logic is untouched (0.4882ms)
+# fallback tune: M1 100.0% (294/294) M2 100.0% (80/80) M3 100.0% (26/26)
+▶ fallback on the tune set
+  ✔ data set is the expected shape (3.0959ms)
+  ✔ M5: every output is schema valid and labelled isFallback (0.7229ms)
+  ✔ M5: determinism, a second run is byte-identical for every incident and injection case (0.4978ms)
+  ✔ M1 pooled verified rate >= 0.98 (0.3495ms)
+  ✔ M3 pooled action recall >= 0.5 (0.3339ms)
+  ✔ M2 pooled timeline recall >= 0.6 (0.4024ms)
+  ✔ M2 floor guard: measured value does not regress below the currently known level (0.4194ms)
+  ✔ M4 injection: 10 of 10 cases pass all three checks (57.5541ms)
+  ✔ injection text is never obeyed: canary appears only in statements that quote an injection line (1.1407ms)
+✔ fallback on the tune set (68.3674ms)
+# M1b tune: 63/63
+# M1c tune: 0/429 = 0.00%
+▶ tune set verifier metrics
+  ✔ corpus is non-trivial (1.6572ms)
+  ✔ M1b: 100% of fabrications flagged with the expected code (2.9931ms)
+  ✔ M1c: false-flag rate on correct statements <= 2% (tune) (0.6621ms)
+  ✔ every expected code in the corpus is a code the verifier can emit (no vacuous expectations) (0.6363ms)
+✔ tune set verifier metrics (8.5341ms)
+▶ holdout verifier metrics (no tuning on these)
+  ✔ M1b: holdout set does not change the fabrication result (0.4274ms)
+  ✔ M1c <= 2% on holdout correct statements (0.3439ms)
+✔ holdout verifier metrics (no tuning on these) (1.1527ms)
+▶ holdout manifest
+  ✔ every holdout file matches MANIFEST.sha256 (no missing, extra or changed files) (3.0083ms)
+  ✔ manifest is sorted and uses relative paths (1.6346ms)
+  ✔ detector flags missing, extra and changed files (synthetic) (0.5815ms)
+  ✔ parser rejects malformed and duplicate lines (1.9176ms)
+  ✔ holdout has exactly 12 incident and 10 injection files and nothing else (0.7961ms)
+✔ holdout manifest (11.625ms)
+▶ holdout dataset hygiene
+  ✔ shape and labels (4.8632ms)
+  ✔ injection canaries are unique, confined to payload lines, absent from tune and statements (17.8636ms)
+✔ holdout dataset hygiene (23.5067ms)
+▶ retired holdout
+  ✔ holdout-retired-1 is kept for history but is not what loadSet(holdout) reads (69.5207ms)
+✔ retired holdout (70.0726ms)
+▶ Wilson interval (known values)
+  ✔ 10/10 and 0/10 and 5/10 at 95% (2.1316ms)
+  ✔ large n: 63/63 lower bound and 7/429 interval (0.5729ms)
+  ✔ invalid inputs yield null rate instead of NaN (0.6913ms)
+  ✔ overlaps labels indistinguishable intervals; null never claims a difference (0.4643ms)
+✔ Wilson interval (known values) (6.9384ms)
+▶ worst-run rule and mean (judgeRate)
+  ✔ passes when mean and min both clear (2.1353ms)
+  ✔ fails when mean clears but one repetition is more than slack below (1.7552ms)
+  ✔ min exactly at threshold - slack passes (boundary) (0.5468ms)
+  ✔ fails when min is fine but mean is below threshold (0.4381ms)
+  ✔ single repetition (fallback, slack 0) is judged on the value alone (0.4659ms)
+  ✔ empty input never passes (0.6134ms)
+✔ worst-run rule and mean (judgeRate) (7.8813ms)
+▶ matching rules and pooled counts (scoreIncident)
+  ✔ perfect quoting draft verifies and matches all gold (27.8212ms)
+  ✔ timeline match needs the time token in the text, not only the cite (6.0031ms)
+  ✔ timeline match needs a gold line cited, not just the time token (2.972ms)
+  ✔ action match uses cites in the actionItems section only (16.6766ms)
+  ✔ raw output counts for M2/M3 even when the statement is flagged (2.7706ms)
+  ✔ null draft (provider failure) scores zero statements and zero matches (2.0919ms)
+  ✔ topFlagged ranks codes deterministically (3.3581ms)
+✔ matching rules and pooled counts (scoreIncident) (63.1686ms)
+▶ M4 injection scoring
+  ✔ clean draft passes all three checks (2.8736ms)
+  ✔ schema-invalid output fails check 1 (and everything) (1.6553ms)
+  ✔ MISSING_LINE citation fails check 2 (2.9381ms)
+  ✔ timeline recall below 0.5 fails check 2 (0.8439ms)
+  ✔ canary in a statement that does not cite an injection line fails check 3, case-folded (1.4538ms)
+  ✔ null draft fails (0.6877ms)
+✔ M4 injection scoring (11.2163ms)
+▶ scoreVerifier (M1b / M1c) on a hand-built corpus
+  ✔ a fabrication that is flagged with the wrong code counts as missed (1.8516ms)
+  ✔ a correct statement that gets flagged is a false flag and per-set statements are pooled (1.1888ms)
+✔ scoreVerifier (M1b / M1c) on a hand-built corpus (3.352ms)
+▶ budget guard (checkBudget, checkHoldoutCap, tracker)
+  ✔ empty log allows a run (0.6608ms)
+  ✔ refuses when logged total plus run cap exceeds the total cap (0.697ms)
+  ✔ exactly at the cap is allowed (0.3ms)
+  ✔ costUpperBoundUsd wins over costUsd (0.2666ms)
+  ✔ refuses the 9th full tune CLI run; INCOMPLETE counts, fallback / holdout / partial do not (0.9498ms)
+  ✔ partial set and holdout runs are not blocked by the full-run limit (0.3079ms)
+  ✔ malformed / missing cost values count as zero, torn log lines are ignored (55.1961ms)
+  ✔ holdout cap is per provider and refuses the fourth run (0.6157ms)
+  ✔ tracker charges failed calls at the per-call cap and reports exhaustion (0.6347ms)
+✔ budget guard (checkBudget, checkHoldoutCap, tracker) (60.3577ms)
+▶ runner exit codes: INCOMPLETE, NOT_RUN, refusals
+  ✔ CLI unavailable -> NOT_RUN, exit 3, nothing logged as a run (893.8645ms)
+  ✖ run cap reached -> every applicable metric INCOMPLETE (never PASS), exit 2, run logged as INCOMPLETE (771.6921ms)
+  ✖ budget refusal: logged spend plus run cap above USD 40 -> exit 2, nothing appended (487.0234ms)
+  ✖ budget refusal: 8 full tune CLI runs logged -> exit 2 (318.5701ms)
+  ✔ holdout cap: a fourth holdout run for the provider is refused with exit 64 (275.4641ms)
+  ✔ usage errors exit 64: missing provider, --max-cost above the cap, holdout with non-standard reps (807.588ms)
+✖ runner exit codes: INCOMPLETE, NOT_RUN, refusals (3554.8901ms)
+▶ thresholds (D8)
+  ✔ eval/thresholds.json equals the brief values (16.3209ms)
+✔ thresholds (D8) (19.0284ms)
+▶ tune set (D8 datasets)
+  ✔ 12 incidents with valid shape and labels (5.3853ms)
+  ✔ 10 injection cases with unique canaries confined to payload lines (13.7569ms)
+✔ tune set (D8 datasets) (19.8155ms)
+▶ verifier corpus: M1b soundness on seeded fabrications
+  ✔ corpus meets the S1 composition minimums (1.2005ms)
+  ✔ M1b: every seeded fabrication is flagged with its expected code (100%) (277.6838ms)
+  ℹ M1b flagged 63/63 = 100.0%; wrong-code 0
+  ✔ probes outside the seeded kinds are measured and reported, not asserted (43.1314ms)
+  ℹ known-gap probes flagged 3/6; slipped through: p-01 [lowercase-product-name], p-03 [inverted-claim], p-05 [lowercase-invented-noun]
+✔ verifier corpus: M1b soundness on seeded fabrications (322.9913ms)
+▶ verifier corpus: M1c false-flag rate on correct statements
+  ✔ corpus size and structure (0.9746ms)
+  ✔ M1c: wrongly flagged / all (verifier corpus plus tune correctStatements) <= 2% (809.5986ms)
+  ℹ M1c false flags 0/429 = 0.00%; natural-paraphrase subset 0/21
+✔ verifier corpus: M1c false-flag rate on correct statements (811.537ms)
+▶ forbidden stopwords (spec 5.4)
+  ✔ list is non-trivial and lower-case (0.6934ms)
+  ✔ no forbidden word is in the verifier stoplist (0.7307ms)
+✔ forbidden stopwords (spec 5.4) (1.7691ms)
+✔ success: request shape, headers, usage (110.1233ms)
+✔ fenced JSON across several text blocks is accepted (12.0168ms)
+✔ no key -> unavailable (2.0072ms)
+✔ 500 then success retries with backoff; 429 maps to PROVIDER_BUSY when persistent (108.6336ms)
+✔ persistent 500 -> PROVIDER_UNAVAILABLE; 401 not retried (78.0876ms)
+✔ slow response -> PROVIDER_TIMEOUT, no retry (136.3856ms)
+✔ malformed or schema-invalid output: one retry then PROVIDER_BAD_OUTPUT (81.1306ms)
+✔ connection refused -> PROVIDER_UNAVAILABLE and key never in logs (1.9482ms)
+✔ argv is pinned exactly: no --bare, --tools followed by empty string (3.8679ms)
+✔ env builder: allowlist only, never ANTHROPIC_API_KEY or server variables (0.8329ms)
+✖ good run: valid draft, argv/env/cwd as specified, cwd removed, num_turns 2 / tool_use accepted (76.8832ms)
+✖ result with fenced JSON and no structured_output is accepted (46.485ms)
+✖ malformed output is retried once then PROVIDER_BAD_OUTPUT; bad-once succeeds on retry (35.6322ms)
+✖ extra fields in structured_output are rejected (model cannot set status) (64.3873ms)
+✔ is_error, budget error, non-zero exit and ENOENT map to PROVIDER_UNAVAILABLE without retry (95.7858ms)
+✖ hang -> PROVIDER_TIMEOUT, process group killed, no retry (6.1451ms)
+✔ stdout flood over the cap -> PROVIDER_UNAVAILABLE (10.0392ms)
+✖ concurrency: third request gets PROVIDER_BUSY after the wait (32.8963ms)
+✖ queued request runs when a slot frees within the wait (70.7683ms)
+✖ log records carry no prompt content (68.2098ms)
+✔ fallback: deterministic byte-identical, schema valid, all verified (41.451ms)
+✔ fallback: long inputs are capped at 30 timeline statements, still valid and verified (22.9365ms)
+✔ fallback: empty input is valid; provider is labelled fallback (4.1815ms)
+✔ fake providers: flagged and clean drafts are deterministic and verify as labelled (7.1238ms)
+✔ schema accepts valid draft and returns a copy (5.3318ms)
+✔ schema rejects extra fields at every level, wrong types and bounds (1.7527ms)
+✔ schema enforces 100 statements in total (4.8272ms)
+✔ DRAFT_JSON_SCHEMA is strict at every object level (0.582ms)
+✔ parseJsonText handles plain, fenced, surrounded and garbage (13.0883ms)
+✔ prompt: payload cannot break out of delimiters (5.8752ms)
+✔ prompt: random id per call, bad id rejected, system prompt is fixed text (17.4208ms)
+✔ ProviderError is fixed-message and assertProvider checks the interface (1.1367ms)
+✔ csrf pre-login token verifies, tampering fails (4.6011ms)
+✔ csrf key persists in meta so tokens survive restart (36.0777ms)
+✔ safeEqual and originOk (11.5206ms)
+✔ limiter: 5 failures then limited with Retry-After; window slides; success clears (1.8699ms)
+✔ limiter: map is capped and evicts oldest first; expired keys are swept (1.2137ms)
+✔ rbac: default deny, matrix per spec 3.9 (0.5585ms)
+✔ hash format is scrypt$N$r$p$salt$hash and salts differ (245.8975ms)
+✔ verify accepts the right password and rejects others (396.1674ms)
+✔ malformed or hostile stored hashes verify false without throwing (770.9706ms)
+✔ dummy hash is well formed and never matches (80.4852ms)
+✔ hashPassword refuses empty input (1.9268ms)
+✔ seed creates Platform and Payments with lead/responder/viewer and one sample incident; second run is a no-op (233.136ms)
+✔ set-password validates, updates the hash and revokes sessions (382.3199ms)
+✔ API URL must be https unless loopback (1.3278ms)
+✔ routes/index.js auto-registers every route module and rejects modules without a register function (126.9836ms)
+✔ router: every authenticated route must declare an RBAC action (default deny) (0.5654ms)
+✖ process: src/index.js boots, serves /api/health, persists across restart, exits 0 on SIGTERM (571.8895ms)
+✔ process: refuses to start with a non-https remote API URL (173.9692ms)
+✔ create stores only a hash; lookup returns the user (19.8693ms)
+✔ every create yields a distinct id (9.3307ms)
+✔ idle expiry (30 min) with sliding refresh (4.4858ms)
+✔ absolute expiry (8 h) even with constant activity (9.3058ms)
+✔ disabled user session is rejected; purge removes expired rows (17.9992ms)
+✔ last_seen refreshed at most once a minute (5.8857ms)
+✔ fresh DB applies 001 and 002; second run is a no-op (17.154ms)
+✔ pragmas are applied (17.1093ms)
+✔ edited applied migration aborts (17.7388ms)
+✔ database newer than the files aborts (20.5688ms)
+✔ failing migration rolls back and records nothing (12.6251ms)
+✔ non-contiguous migration versions are refused (7.7119ms)
+✔ persists across reopen on a file DB; created directory (54.4063ms)
+✔ audit trigger blocks UPDATE and DELETE (3.9775ms)
+✔ CHECK constraints reject bad role, state, status, severity, outcome (5.4741ms)
+✔ foreign keys are enforced (5.9748ms)
+✔ username is unique case-insensitively (5.2769ms)
+✔ SQL metacharacters round-trip as data with parameters (15.6119ms)
+✔ tx commits, rolls back on throw, refuses async callbacks and nesting (5.6418ms)
+✔ validator: types, required, additionalProperties, nested paths (5.4631ms)
+✔ validator: enum, pattern, type unions, NaN/Infinity rejected (0.7983ms)
+✔ validator: caps errors at 20, does not mutate, __proto__ key is data (0.6143ms)
+✔ compile rejects unknown keywords and bad types (1.426ms)
+✔ config defaults and validation (1.6719ms)
+✔ contract: requests accept spec examples and reject extras (1.1808ms)
+✔ contract: responses and error envelope (0.7455ms)
+✔ contract: ERRORS table matches spec statuses (0.3414ms)
+✔ every static spec 7.3 data-testid exists in public/ (2.682ms)
+✔ every templated spec 7.3 data-testid exists in public/ js (0.4775ms)
+✔ index.html: no inline script/style/handlers, landmarks, skip link, live regions (2.0111ms)
+✔ client code never uses HTML-string sinks or eval (0.7451ms)
+✔ mock API serves the UI entry and speaks the login contract (162.6455ms)
+✔ parses HH:MM, HH:MM:SS, ISO and bracketed forms (9.0084ms)
+✔ blank lines do not consume numbers; errors use physical line numbers (0.7778ms)
+✔ CRLF input is accepted (0.4543ms)
+✔ limits: 2000 lines ok, 2001 rejected; text 2000 ok, 2001 rejected (18.7293ms)
+✔ error list is capped at 20 with the true total (0.5701ms)
+✔ invalid times and dates are rejected (1.9872ms)
+✔ control characters rejected, tab allowed (0.8335ms)
+✔ empty input is rejected (0.5581ms)
+✔ json format with index+1 error lines (1.0939ms)
+✔ unknown format and wrong content type rejected (0.6295ms)
+✔ re-parse is idempotent and does not mutate input (0.7097ms)
+✔ NFKC, case fold, whitespace (6.0452ms)
+✔ times normalised, zone and seconds dropped (3.0106ms)
+✔ number words two..twelve; one only before a unit (0.6354ms)
+✔ thousands separators removed, decimals kept (0.5139ms)
+✔ units split from digits (0.3629ms)
+✔ idempotent (0.4167ms)
+✔ grounded statements verify (13.7295ms)
+✔ NO_CITE stops further checks (0.4793ms)
+✔ MISSING_LINE per bad number; stops if none exist, else continues (0.838ms)
+✔ TIME_NOT_IN_SOURCE, with time field and ISO ts as sources (DQ-1) (0.8199ms)
+✔ NUMBER_NOT_IN_SOURCE and units (1.3967ms)
+✔ NAME_NOT_IN_SOURCE rules (i)-(iv) (2.3067ms)
+✔ extraNames and author words are known names (2.03ms)
+✔ WEAK_SUPPORT boundary: exactly 50% passes, below flags (0.9606ms)
+✔ fabricated cause is flagged (0.8172ms)
+✔ union of cited lines supplies tokens (1.6809ms)
+✔ plural and stem matching (1.0173ms)
+✔ pure, idempotent, no input mutation (2.9409ms)
+✔ verifyDraft keeps sections and order (0.584ms)
+✔ stoplist is lower-case, unique and free of fact words (2.0368ms)
+✔ fallback prefix words are stoplisted (0.6591ms)
+✔ corpus: every fabrication flagged with expected code, no false flags (2.0923ms)
+✔ benchmark: 2000-line context + 5000 verifications within budget (508.6757ms)
+✔ stem matches inflections but keeps distinct words apart (0.5234ms)
+✔ sentence-initial -ly/-ing opener is not a name; an invented capitalised noun still is (1.6361ms)
+✔ magnitude normalisation: 310k = 310 thousand = 0.31 million; a different amount is flagged (2.0648ms)
+✔ place adjective derived from a source place is tolerated; an unrelated or invented one is flagged (2.0226ms)
+✔ a long free-text author string does not turn stop words into known names (0.7745ms)
+✔ reporting verbs are not content; invented content still weakens support (1.4892ms)
+✔ abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not (0.4563ms)
+ℹ tests 286
+ℹ suites 18
+ℹ pass 265
+ℹ fail 21
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6536.5661
+
+✖ failing tests:
+
+test at test\api\static.test.js:42:1
+✖ index.html is served at / with security headers and a strict CSP (1.5246ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\outside.txt' -> 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\public\link.txt'
+      at Object.symlinkSync (node:fs:1869:11)
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:23:6)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1201:25)
+      at TestHook.run (node:internal/test_runner/test:1528:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.createHook (node:internal/test_runner/test:973:33)
+      at node:internal/test_runner/harness:424:12
+      at file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:13:1
+      at ModuleJob.run (node:internal/modules/esm/module_job:437:25) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\outside.txt',
+    dest: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\public\\link.txt'
+  }
+
+test at test\api\static.test.js:58:1
+✖ security headers are also on API responses, 404s and errors (0.2865ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\outside.txt' -> 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\public\link.txt'
+      at Object.symlinkSync (node:fs:1869:11)
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:23:6)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1201:25)
+      at TestHook.run (node:internal/test_runner/test:1528:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.createHook (node:internal/test_runner/test:973:33)
+      at node:internal/test_runner/harness:424:12
+      at file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:13:1
+      at ModuleJob.run (node:internal/modules/esm/module_job:437:25) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\outside.txt',
+    dest: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\public\\link.txt'
+  }
+
+test at test\api\static.test.js:65:1
+✖ js assets get the right content type; HEAD has no body (0.1971ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\outside.txt' -> 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\public\link.txt'
+      at Object.symlinkSync (node:fs:1869:11)
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:23:6)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1201:25)
+      at TestHook.run (node:internal/test_runner/test:1528:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.createHook (node:internal/test_runner/test:973:33)
+      at node:internal/test_runner/harness:424:12
+      at file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:13:1
+      at ModuleJob.run (node:internal/modules/esm/module_job:437:25) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\outside.txt',
+    dest: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\public\\link.txt'
+  }
+
+test at test\api\static.test.js:74:1
+✖ traversal attempts return the 404 envelope and never file contents (0.1849ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\outside.txt' -> 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\public\link.txt'
+      at Object.symlinkSync (node:fs:1869:11)
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:23:6)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1201:25)
+      at TestHook.run (node:internal/test_runner/test:1528:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.createHook (node:internal/test_runner/test:973:33)
+      at node:internal/test_runner/harness:424:12
+      at file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:13:1
+      at ModuleJob.run (node:internal/modules/esm/module_job:437:25) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\outside.txt',
+    dest: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\public\\link.txt'
+  }
+
+test at test\api\static.test.js:89:1
+✖ resolveStatic unit: stays under root (0.2736ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\outside.txt' -> 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\public\link.txt'
+      at Object.symlinkSync (node:fs:1869:11)
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:23:6)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1201:25)
+      at TestHook.run (node:internal/test_runner/test:1528:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.createHook (node:internal/test_runner/test:973:33)
+      at node:internal/test_runner/harness:424:12
+      at file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:13:1
+      at ModuleJob.run (node:internal/modules/esm/module_job:437:25) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\outside.txt',
+    dest: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\public\\link.txt'
+  }
+
+test at test\api\static.test.js:98:1
+✖ non-GET on static paths is 405 with Allow (0.2924ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\outside.txt' -> 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\public\link.txt'
+      at Object.symlinkSync (node:fs:1869:11)
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:23:6)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1201:25)
+      at TestHook.run (node:internal/test_runner/test:1528:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.createHook (node:internal/test_runner/test:973:33)
+      at node:internal/test_runner/harness:424:12
+      at file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:13:1
+      at ModuleJob.run (node:internal/modules/esm/module_job:437:25) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\outside.txt',
+    dest: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\public\\link.txt'
+  }
+
+test at test\api\static.test.js:105:1
+✖ missing public dir yields 404 envelope, not a crash (0.1927ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\outside.txt' -> 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\public\link.txt'
+      at Object.symlinkSync (node:fs:1869:11)
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:23:6)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1201:25)
+      at TestHook.run (node:internal/test_runner/test:1528:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.createHook (node:internal/test_runner/test:973:33)
+      at node:internal/test_runner/harness:424:12
+      at file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:13:1
+      at ModuleJob.run (node:internal/modules/esm/module_job:437:25) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\outside.txt',
+    dest: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\public\\link.txt'
+  }
+
+test at test\api\static.test.js:114:1
+✖ the real public/index.html (when present) has no inline script (0.2971ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\outside.txt' -> 'C:\Users\E16\AppData\Local\Temp\gw-static-PijFME\public\link.txt'
+      at Object.symlinkSync (node:fs:1869:11)
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:23:6)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1201:25)
+      at TestHook.run (node:internal/test_runner/test:1528:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.createHook (node:internal/test_runner/test:973:33)
+      at node:internal/test_runner/harness:424:12
+      at file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:13:1
+      at ModuleJob.run (node:internal/modules/esm/module_job:437:25) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\outside.txt',
+    dest: 'C:\\Users\\E16\\AppData\\Local\\Temp\\gw-static-PijFME\\public\\link.txt'
+  }
+
+test at test\api\static.test.js:26:1
+✖ C:\Users\E16\Documents\Codex\2026-10-07\https-github-com-affaan-m-ecc\work\eccode-source\examples\groundwork\test\api\static.test.js (0.6028ms)
+  TypeError: Cannot read properties of undefined (reading 'close')
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/api/static.test.js:26:29)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1201:25)
+      at TestHook.run (node:internal/test_runner/test:1528:18)
+      at TestHook.run (node:internal/util:602:20)
+      at Test.runHook (node:internal/test_runner/test:1117:20)
+      at after (node:internal/test_runner/test:1159:20)
+      at Test.run (node:internal/test_runner/test:1227:13)
+
+test at test\eval\scorer.test.js:273:3
+✖ run cap reached -> every applicable metric INCOMPLETE (never PASS), exit 2, run logged as INCOMPLETE (771.6921ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  3 !== 2
+  
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/eval/scorer.test.js:276:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1619:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\eval\scorer.test.js:287:3
+✖ budget refusal: logged spend plus run cap above USD 40 -> exit 2, nothing appended (487.0234ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  3 !== 2
+  
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/eval/scorer.test.js:290:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\eval\scorer.test.js:297:3
+✖ budget refusal: 8 full tune CLI runs logged -> exit 2 (318.5701ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  3 !== 2
+  
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/eval/scorer.test.js:301:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\unit\ai\cli.test.js:52:1
+✖ good run: valid draft, argv/env/cwd as specified, cwd removed, num_turns 2 / tool_use accepted (76.8832ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/ai/cli.test.js:55:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test\unit\ai\cli.test.js:74:1
+✖ result with fenced JSON and no structured_output is accepted (46.485ms)
+  Error [ProviderError]: The provider is unavailable
+      at rm.recursive (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:110:23)
+      at new Promise (<anonymous>)
+      at runOnce (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:104:18)
+      at async Object.generate (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:225:28)
+      at async TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/ai/cli.test.js:76:13)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    code: 'PROVIDER_UNAVAILABLE',
+    reason: 'spawn'
+  }
+
+test at test\unit\ai\cli.test.js:80:1
+✖ malformed output is retried once then PROVIDER_BAD_OUTPUT; bad-once succeeds on retry (35.6322ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  ProviderError: The provider is unavailable
+      at async TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/ai/cli.test.js:82:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: ProviderError: The provider is unavailable
+        at rm.recursive (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:110:23)
+        at new Promise (<anonymous>)
+        at runOnce (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:104:18)
+        at async Object.generate (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:225:28)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/ai/cli.test.js:82:3)
+        at async Test.run (node:internal/test_runner/test:1208:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:831:7),
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at test\unit\ai\cli.test.js:91:1
+✖ extra fields in structured_output are rejected (model cannot set status) (64.3873ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  ProviderError: The provider is unavailable
+      at async TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/ai/cli.test.js:92:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: ProviderError: The provider is unavailable
+        at rm.recursive (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:110:23)
+        at new Promise (<anonymous>)
+        at runOnce (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:104:18)
+        at async Object.generate (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:225:28)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/ai/cli.test.js:92:3)
+        at async Test.run (node:internal/test_runner/test:1208:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:831:7),
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at test\unit\ai\cli.test.js:109:1
+✖ hang -> PROVIDER_TIMEOUT, process group killed, no retry (6.1451ms)
+  AssertionError [ERR_ASSERTION]: The validation function is expected to return "true". Received false
+  
+  Caught error:
+  
+  ProviderError: The provider is unavailable
+      at async TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/ai/cli.test.js:112:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: ProviderError: The provider is unavailable
+        at rm.recursive (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:110:23)
+        at new Promise (<anonymous>)
+        at runOnce (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:104:18)
+        at async Object.generate (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:225:28)
+        at async waitForActual (node:assert:646:5)
+        at async strict.rejects (node:assert:769:25)
+        at async TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/ai/cli.test.js:112:3)
+        at async Test.run (node:internal/test_runner/test:1208:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:831:7),
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at test\unit\ai\cli.test.js:123:1
+✖ concurrency: third request gets PROVIDER_BUSY after the wait (32.8963ms)
+  Error [ProviderError]: The provider is unavailable
+      at rm.recursive (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:110:23)
+      at new Promise (<anonymous>)
+      at runOnce (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:104:18)
+      at async Object.generate (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:225:28) {
+    code: 'PROVIDER_UNAVAILABLE',
+    reason: 'spawn'
+  }
+
+test at test\unit\ai\cli.test.js:131:1
+✖ queued request runs when a slot frees within the wait (70.7683ms)
+  Error [ProviderError]: The provider is unavailable
+      at rm.recursive (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:110:23)
+      at new Promise (<anonymous>)
+      at runOnce (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:104:18)
+      at async Object.generate (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:225:28)
+      at async Promise.all (index 0)
+      at async TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/ai/cli.test.js:133:14)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    code: 'PROVIDER_UNAVAILABLE',
+    reason: 'spawn'
+  }
+
+test at test\unit\ai\cli.test.js:137:1
+✖ log records carry no prompt content (68.2098ms)
+  Error [ProviderError]: The provider is unavailable
+      at rm.recursive (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:110:23)
+      at new Promise (<anonymous>)
+      at runOnce (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:104:18)
+      at async Object.generate (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/src/ai/cli.js:225:28)
+      at async TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/ai/cli.test.js:140:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    code: 'PROVIDER_UNAVAILABLE',
+    reason: 'spawn'
+  }
+
+test at test\unit\auth\seed-index.test.js:78:1
+✖ process: src/index.js boots, serves /api/health, persists across restart, exits 0 on SIGTERM (571.8895ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  null !== 0
+  
+      at run (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/auth/seed-index.test.js:93:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///C:/Users/E16/Documents/Codex/2026-10-07/https-github-com-affaan-m-ecc/work/eccode-source/examples/groundwork/test/unit/auth/seed-index.test.js:97:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

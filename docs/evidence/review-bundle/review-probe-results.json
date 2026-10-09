@@ -1,0 +1,109 @@
+[
+  {
+    "name": "Review approves unrelated criterion and nonexistent evidence anchor",
+    "result": {
+      "status": "approved",
+      "reviewedCriteria": [
+        "The document has a title"
+      ]
+    }
+  },
+  {
+    "name": "Omitted owned file escapes review pins and delivery despite later modification",
+    "result": {
+      "dir": "C:\\Users\\E16\\AppData\\Local\\Temp\\eccode-test-d5lXG6",
+      "declaredCheck": "node -e \"process.exit(1)\"",
+      "actualCheck": "node -e \"process.exit(0)\"",
+      "phasePins": [
+        "src/listed.js"
+      ],
+      "unreviewedChanges": [],
+      "delivery": {
+        "report": ".eccode/delivery/final-handoff.md"
+      },
+      "openRisk": "open"
+    }
+  },
+  {
+    "name": "Reviewer direct Write denied but simple Bash write not denied",
+    "result": {
+      "write": {
+        "exit": 0,
+        "response": {
+          "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": "technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/."
+          }
+        },
+        "stderr": ""
+      },
+      "bash": {
+        "exit": 0,
+        "response": "NO_DENIAL",
+        "stderr": ""
+      }
+    }
+  },
+  {
+    "name": "Main agent may assert human authorization",
+    "result": {
+      "exit": 0,
+      "response": "NO_DENIAL",
+      "stderr": ""
+    }
+  },
+  {
+    "name": "Shared verified record is not checked against review provenance",
+    "result": {
+      "unverifiedReason": null
+    }
+  },
+  {
+    "name": "Snapshot content trusted when sequence and hash match",
+    "result": {
+      "designStatus": "in_progress",
+      "audit": {
+        "ok": false,
+        "errors": [
+          "state.json diverges from a replay of events.jsonl (run \"eccode rebuild\")"
+        ],
+        "events": 2
+      }
+    }
+  },
+  {
+    "name": "Command evidence remains resolvable after its log is removed",
+    "result": {
+      "ok": true,
+      "evidence": {
+        "id": "ev-mv0jx1q7-0h24309f",
+        "kind": "command",
+        "label": "check",
+        "command": "node -e \"process.exit(0)\"",
+        "cwd": ".",
+        "purpose": "check",
+        "exitCode": 0,
+        "status": "passed",
+        "timedOut": false,
+        "durationMs": 110,
+        "log": ".eccode/evidence/ev-mv0jx1q7-0h24309f.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "outputTail": "",
+        "gate": null,
+        "task": null,
+        "recordedBy": "technical-reviewer",
+        "at": "2026-10-09T05:55:17.125Z"
+      }
+    }
+  },
+  {
+    "name": "Modified promoted lesson still applies in a different project",
+    "result": {
+      "originalReviewCount": 1,
+      "modifiedSolution": "CHANGED AFTER REVIEW: return a duplicate payment instead of replaying the response.",
+      "unverifiedReason": null,
+      "applicability": "applies"
+    }
+  }
+]
