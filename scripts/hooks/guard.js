@@ -132,17 +132,23 @@ function realize(abs) {
   return path.join(dir, ...rest);
 }
 
-/** Does the command line create a link (ln, cp -s/-l, mklink)? A write through it in the same line cannot be bound. */
+/**
+ * Does the command line create a link (ln, cp -s/-l, mklink), and is any operand of that link
+ * computed (`ln -s $D lk`)? A write through a link made in the same line cannot be bound.
+ */
 function createsLink(cmd) {
-  let found = false;
+  const out = { found: false, computed: false };
   walkCommands(cmd, (words) => {
     const texts = words.map((w) => w.text);
     const at = commandIndex(texts);
     if (at === -1) return;
     const name = texts[at].split('/').pop();
-    if (name === 'ln' || name === 'mklink' || (name === 'cp' && texts.slice(at + 1).some((t) => /^-[a-zA-Z]*[sl]/.test(t)))) found = true;
+    if (name === 'ln' || name === 'mklink' || (name === 'cp' && texts.slice(at + 1).some((t) => /^-[a-zA-Z]*[sl]/.test(t)))) {
+      out.found = true;
+      if (words.slice(at + 1).some((w) => w.dynamic)) out.computed = true;
+    }
   });
-  return found;
+  return out;
 }
 
 // Everything under a record directory is the record, except the three draft areas. Judged on real and
@@ -512,19 +518,25 @@ function checkBash(cmd, role, root, cwd) {
   // A link created in this command line does not exist when the guard runs, so a write through it
   // cannot be bound (`ln -s "$PWD/.eccode" lk && echo x > lk/state.json`): one line creates the link,
   // the next may use it, and then it is judged on its real path.
-  if (targets.length > 1 && createsLink(cmd)) {
-    out('deny', 'This command creates a link and writes files in the same command line; the guard cannot bind a write through a link that does not exist yet. Create the link in one command and write in the next, or use the Edit/Write tool.');
-  }
   // Writers that take their targets from a pipe or a found list cannot be bound; refused when the
   // command names a record anywhere.
   const mentionsRecord = (() => {
     let found = false;
     walkCommands(cmd, (words) => {
-      if (words.some((w) => RECORD_SEGMENT.test(toPosix(w.text)))) found = true;
+      // An assignment's value counts too (`D=.eccode; ln -s $D lk`).
+      if (words.some((w) => RECORD_SEGMENT.test(toPosix(w.text.replace(/^[A-Za-z_]\w*=/, ''))))) found = true;
     });
     return found;
   })();
   if (mentionsRecord && /\bxargs\b/.test(cmd) && UNBOUND_WRITERS.test(cmd)) out('deny', `xargs feeds a writer from a pipe, so its targets cannot be bound, and the command names a record directory. ${RECORD_MSG}`);
+  // A link created in this command line does not exist when the guard runs, so a write through it
+  // cannot be bound (`ln -s "$PWD/.eccode" lk && echo x > lk/state.json`). Ordinary build lines
+  // (`ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp`) pass: the rule fires only when the
+  // line names a record or the link's operands are computed.
+  const link = targets.length > 1 ? createsLink(cmd) : null;
+  if (link && link.found && (mentionsRecord || link.computed)) {
+    out('deny', 'This command creates a link and writes files in the same command line, and the link points at a record or at a computed path; the guard cannot bind a write through a link that does not exist yet. Create the link in one command and write in the next, or use the Edit/Write tool.');
+  }
   // Shell writes get the same answer as the Edit/Write tools for every ECCode role: a redirect,
   // tee, cp or sed -i lands only where that role may edit (a claimed task, a draft area).
   if (eccodeRole(role)) {

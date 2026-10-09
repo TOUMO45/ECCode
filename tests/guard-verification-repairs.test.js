@@ -194,8 +194,17 @@ test('REVIEW 3: a link created and written through in one line, and a dangling l
     'ln -s .eccode/config.json cfg && echo "{}" > cfg',
     'cp -s .eccode/state.json st && echo x > st',
   ]) denied(bash(ctx.dir, c, null), `main: ${c}`, reason);
+  // A computed link source is refused too (the record name is hidden in a variable).
+  denied(bash(ctx.dir, 'D=.eccode; ln -s $D lk && echo x > lk/state.json', null), 'computed link source', reason);
+  denied(bash(ctx.dir, 'D=$PWD; ln -s $D/.ecc"ode" lk && echo x > lk/state.json', null), 'computed prefix', reason);
   // Creating a link on its own is ordinary (judged on its own target); writing through it next time is judged for real.
   allowed(bash(ctx.dir, 'ln -s src/server.js alias.js', null), 'a plain link to a project file');
+  // Record-free build and release lines with a literal link stay ordinary shell (review I1).
+  for (const c of ['ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp', 'ln -s a b && touch c', 'ln -s a b; rm -rf dist', 'ln -sf dist/current releases/latest && echo ok > releases/latest.txt', 'mkdir -p bin && ln -sf ../lib/cli.js bin/cli && chmod +x bin/cli']) {
+    allowed(bash(ctx.dir, c, null), `main build line: ${c}`);
+    // A role without a claim is still refused by the ownership rules, for the targets, not for the link.
+    denied(bash(ctx.dir, c, 'devops-engineer'), `devops without a claim: ${c}`, /no claimed task/);
+  }
   fs.symlinkSync(path.join(ctx.dir, '.eccode'), path.join(ctx.dir, 'lk'));
   denied(bash(ctx.dir, 'echo FORGED > lk/state.json', null), 'write through an existing alias', reason);
   // H2: a dangling link whose target is a record file that does not exist yet.
