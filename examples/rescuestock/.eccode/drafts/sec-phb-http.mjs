@@ -1,7 +1,8 @@
 // Security probe, phase B HTTP boundary (security-reviewer). Runs the real createApp on a real
 // node:http server over a temporary database and a temporary public/ directory, and sends raw
 // bytes over sockets so that nothing is normalised by a client library.
-// Usage: node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-http.mjs [--slowloris]
+// Usage: node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-http.mjs [--slowloris] [--only=ABC...]
+//   --only limits sections A-J (K always runs); used to bisect the slow-header observation.
 // Exit 0 when every expectation holds; exit 1 lists the failures.
 import net from 'node:net';
 import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync } from 'node:fs';
@@ -17,6 +18,10 @@ const { migrate } = await imp('src/db/migrate.js');
 const { createLogger } = await imp('src/log.js');
 const { canonicalJson } = await imp('src/http/body.js');
 const { AppError: DomainAppError } = await imp('src/domain/errors.js');
+
+const onlyArg = process.argv.find((a) => a.startsWith('--only='));
+const only = onlyArg ? onlyArg.slice(7) : null;
+const section = (letter) => only === null || only.includes(letter);
 
 const failures = [];
 const expect = (cond, label, info = '') => {
@@ -113,72 +118,72 @@ function headersOk(r, label, api) {
     `security headers, no CORS, X-Request-Id: ${label}`, `status ${r.status}; missing [${missing}] cors [${cors}] cache ${r.headers['cache-control']}`);
 }
 
-console.log('# A. Routes registered by phase B (no probe routes)');
-{
+if (section('A')) {
+  console.log('# A. Routes registered by phase B (no probe routes)');
   const plain = createApp({ db, config, log: createLogger({ write: () => {} }), publicDir: pub });
   const list = plain.router.list();
   console.log(JSON.stringify(list));
   expect(list.every((r) => r.policy === 'public') && list.length === 2, 'only GET /api/health and GET /api/config are registered, both public');
 }
 
-console.log('# B. Default deny (no authorize hook)');
-for (const policy of ['session', 'customer', 'supplier', 'admin', 'signature']) {
-  for (const method of ['GET', 'POST']) {
-    const r = parse(await raw(`${method} /api/probe/${policy} HTTP/1.1\r\nHost: ${H}\r\nOrigin: http://evil.example\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}`));
-    expect(r.status === 401 && r.body.includes('"UNAUTHENTICATED"') && !r.body.includes('reached'), `${method} ${policy} route -> 401 without authorize`, `got ${r.status}`);
+if (section('B')) {
+  console.log('# B. Default deny (no authorize hook)');
+  for (const policy of ['session', 'customer', 'supplier', 'admin', 'signature']) {
+    for (const method of ['GET', 'POST']) {
+      const r = parse(await raw(`${method} /api/probe/${policy} HTTP/1.1\r\nHost: ${H}\r\nOrigin: http://evil.example\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}`));
+      expect(r.status === 401 && r.body.includes('"UNAUTHENTICATED"') && !r.body.includes('reached'), `${method} ${policy} route -> 401 without authorize`, `got ${r.status}`);
+    }
   }
 }
 
-console.log('# C. Host allow-list (SEC-13)');
-for (const [host, want] of [
-  [H, 200], [`localhost:${port}`, 200], [`LOCALHOST:${port}`, 200], ['evil.example', 421], [`evil.example:${port}`, 421],
-  ['127.0.0.1', 421], ['localhost', 421], [`127.0.0.1:${port}.`, 421], [`127.0.0.1:${port}@evil.example`, 421], [`[::1]:${port}`, 421],
-  [`127.0.0.1:${port} `, 200],
-]) {
-  const r = await get('/api/health', '', host);
-  expect(r.status === want, `Host "${host}" -> ${want}`, `got ${r.status}`);
-  if (want === 421) headersOk(r, `421 for ${host}`, true);
-}
-{
+if (section('C')) {
+  console.log('# C. Host allow-list (SEC-13)');
+  for (const [host, want] of [
+    [H, 200], [`localhost:${port}`, 200], [`LOCALHOST:${port}`, 200], ['evil.example', 421], [`evil.example:${port}`, 421],
+    ['127.0.0.1', 421], ['localhost', 421], [`127.0.0.1:${port}.`, 421], [`127.0.0.1:${port}@evil.example`, 421], [`[::1]:${port}`, 421],
+    [`127.0.0.1:${port} `, 200],
+  ]) {
+    const r = await get('/api/health', '', host);
+    expect(r.status === want, `Host "${host}" -> ${want}`, `got ${r.status}`);
+    if (want === 421) headersOk(r, `421 for ${host}`, true);
+  }
   const r = parse(await raw('GET /api/health HTTP/1.0\r\n\r\n'));
   expect(r.status === 421, 'HTTP/1.0 without Host -> 421', `got ${r.status}`);
   const r2 = parse(await raw(`GET http://evil.example/api/health HTTP/1.1\r\nHost: ${H}\r\nConnection: close\r\n\r\n`));
   expect(r2.status === 400, 'absolute-form request target -> 400', `got ${r2.status}`);
 }
 
-console.log('# D. Request id (pattern ^[A-Za-z0-9-]{8,64}$)');
-for (const [value, echoed] of [
-  ['abcdEFGH-1234', true], ['a'.repeat(64), true], ['a'.repeat(65), false], ['short', false], ['abc_defgh', false],
-  ['aaaaaaaa"},"level":"admin', false], ['aaaaaaaa\tbbbb', false], ['aaaaaaaa%0d%0aSet-Cookie:x=1', false],
-]) {
-  const r = await get('/api/health', `X-Request-Id: ${value}\r\n`);
-  const got = r.headers['x-request-id'];
-  const bodyId = (/"requestId":"([^"]*)"/.exec(r.body) || [])[1];
-  expect((got === value) === echoed && /^[A-Za-z0-9-]{8,64}$/.test(got) && bodyId === got, `X-Request-Id ${JSON.stringify(value).slice(0, 40)} ${echoed ? 'echoed' : 'replaced'}`, `got ${got}`);
-}
-{
+if (section('D')) {
+  console.log('# D. Request id (pattern ^[A-Za-z0-9-]{8,64}$)');
+  for (const [value, echoed] of [
+    ['abcdEFGH-1234', true], ['a'.repeat(64), true], ['a'.repeat(65), false], ['short', false], ['abc_defgh', false],
+    ['aaaaaaaa"},"level":"admin', false], ['aaaaaaaa\tbbbb', false], ['aaaaaaaa%0d%0aSet-Cookie:x=1', false],
+  ]) {
+    const r = await get('/api/health', `X-Request-Id: ${value}\r\n`);
+    const got = r.headers['x-request-id'];
+    const bodyId = (/"requestId":"([^"]*)"/.exec(r.body) || [])[1];
+    expect((got === value) === echoed && /^[A-Za-z0-9-]{8,64}$/.test(got) && bodyId === got, `X-Request-Id ${JSON.stringify(value).slice(0, 40)} ${echoed ? 'echoed' : 'replaced'}`, `got ${got}`);
+  }
   const r = await get('/api/health', 'X-Request-Id: aaaaaaaa1\r\nX-Request-Id: bbbbbbbb2\r\n');
   expect(/^[A-Za-z0-9-]{8,64}$/.test(r.headers['x-request-id']), 'duplicate X-Request-Id headers -> valid id', r.headers['x-request-id']);
   const crlf = await raw(`GET /api/health HTTP/1.1\r\nHost: ${H}\r\nX-Request-Id: aaaaaaaa\rSet-Cookie: x=1\r\nConnection: close\r\n\r\n`);
   expect(!/\r\nset-cookie/i.test(crlf), 'bare CR inside X-Request-Id cannot inject a response header', crlf.split('\r\n')[0]);
 }
 
-console.log('# E. Security headers on every kind of response');
-headersOk(await get('/api/health'), '200 /api/health', true);
-headersOk(await get('/api/config'), '200 /api/config', true);
-headersOk(await get('/api/nope'), '404 /api/nope', true);
-headersOk(parse(await raw(`DELETE /api/health HTTP/1.1\r\nHost: ${H}\r\nConnection: close\r\n\r\n`)), '405 DELETE /api/health', true);
-{
+if (section('E')) {
+  console.log('# E. Security headers on every kind of response');
+  headersOk(await get('/api/health'), '200 /api/health', true);
+  headersOk(await get('/api/config'), '200 /api/config', true);
+  headersOk(await get('/api/nope'), '404 /api/nope', true);
+  headersOk(parse(await raw(`DELETE /api/health HTTP/1.1\r\nHost: ${H}\r\nConnection: close\r\n\r\n`)), '405 DELETE /api/health', true);
   const r400a = await get('//x');
   const r400b = await get(`/api/${'a'.repeat(2100)}`);
   expect(r400a.status === 400 && r400b.status === 400, 'protocol-relative target and > 2048-char target -> 400 BAD_REQUEST', `${r400a.status} ${r400b.status}`);
   headersOk(r400a, '400 // target (rejected before routing)', true);
   headersOk(r400b, '400 over-long target', true);
-}
-headersOk(await get('/api/probe/throw'), '500 handler error', true);
-headersOk(await get('/index.html'), 'static 200 /index.html', false);
-headersOk(await get('/no-such-page'), 'static 404', false);
-{
+  headersOk(await get('/api/probe/throw'), '500 handler error', true);
+  headersOk(await get('/index.html'), 'static 200 /index.html', false);
+  headersOk(await get('/no-such-page'), 'static 404', false);
   const r = parse(await raw(`DELETE /api/health HTTP/1.1\r\nHost: ${H}\r\nConnection: close\r\n\r\n`));
   expect(r.status === 405 && r.headers.allow === 'GET', 'DELETE /api/health -> 405 Allow: GET', `${r.status} ${r.headers.allow}`);
   const p = parse(await raw(`PROPFIND /api/health HTTP/1.1\r\nHost: ${H}\r\nConnection: close\r\n\r\n`));
@@ -189,8 +194,8 @@ headersOk(await get('/no-such-page'), 'static 404', false);
   expect(!Object.keys(cfg.headers).some((k) => k.startsWith('access-control-')), 'GET /api/config with foreign Origin has no Access-Control-*');
 }
 
-console.log('# F. Error envelope leaks nothing');
-{
+if (section('F')) {
+  console.log('# F. Error envelope leaks nothing');
   const r = await get('/api/probe/throw');
   expect(r.status === 500 && !/home|SELECT|password|stack|at /.test(r.body), '500 INTERNAL body has no message, path, SQL or stack', r.body);
   const d = await get('/api/probe/domain');
@@ -203,8 +208,8 @@ console.log('# F. Error envelope leaks nothing');
   expect(leaked.length === 0, 'log lines carry no error message, SQL or path', leaked.join(' '));
 }
 
-console.log('# G. SQLITE_BUSY -> 503 DB_BUSY + Retry-After: 1');
-{
+if (section('G')) {
+  console.log('# G. SQLITE_BUSY -> 503 DB_BUSY + Retry-After: 1');
   const holder = openDb(join(work, 'app.db'), { busyTimeoutMs: 0 });
   holder.exec('BEGIN IMMEDIATE');
   const r = await get('/api/probe/busy');
@@ -213,18 +218,18 @@ console.log('# G. SQLITE_BUSY -> 503 DB_BUSY + Retry-After: 1');
   expect(r.status === 503 && r.headers['retry-after'] === '1' && r.body.includes('"DB_BUSY"'), 'write while another connection holds the lock -> 503 DB_BUSY', `${r.status} ${r.headers['retry-after']}`);
 }
 
-console.log('# H. JSON body handling');
-const post = async (body, { type = 'application/json', chunked = false, extra = '' } = {}) => {
-  const buf = Buffer.isBuffer(body) ? body : Buffer.from(body, 'utf8');
-  let req;
-  if (chunked) {
-    req = Buffer.concat([Buffer.from(`POST /api/probe/echo HTTP/1.1\r\nHost: ${H}\r\nContent-Type: ${type}\r\nTransfer-Encoding: chunked\r\n${extra}Connection: close\r\n\r\n${buf.length.toString(16)}\r\n`), buf, Buffer.from('\r\n0\r\n\r\n')]);
-  } else {
-    req = Buffer.concat([Buffer.from(`POST /api/probe/echo HTTP/1.1\r\nHost: ${H}\r\nContent-Type: ${type}\r\nContent-Length: ${buf.length}\r\n${extra}Connection: close\r\n\r\n`), buf]);
-  }
-  return parse(await raw(req));
-};
-{
+if (section('H')) {
+  console.log('# H. JSON body handling');
+  const post = async (body, { type = 'application/json', chunked = false, extra = '' } = {}) => {
+    const buf = Buffer.isBuffer(body) ? body : Buffer.from(body, 'utf8');
+    let req;
+    if (chunked) {
+      req = Buffer.concat([Buffer.from(`POST /api/probe/echo HTTP/1.1\r\nHost: ${H}\r\nContent-Type: ${type}\r\nTransfer-Encoding: chunked\r\n${extra}Connection: close\r\n\r\n${buf.length.toString(16)}\r\n`), buf, Buffer.from('\r\n0\r\n\r\n')]);
+    } else {
+      req = Buffer.concat([Buffer.from(`POST /api/probe/echo HTTP/1.1\r\nHost: ${H}\r\nContent-Type: ${type}\r\nContent-Length: ${buf.length}\r\n${extra}Connection: close\r\n\r\n`), buf]);
+    }
+    return parse(await raw(req));
+  };
   const big = `{"a":"${'x'.repeat(70000)}"}`;
   const r1 = await post(big);
   expect(r1.status === 413 && r1.body.includes('PAYLOAD_TOO_LARGE'), 'declared 70 kB JSON -> 413', `${r1.status}`);
@@ -254,18 +259,18 @@ const post = async (body, { type = 'application/json', chunked = false, extra = 
   expect(alive.status === 200, 'server still answers after the deep-nesting body', `${alive.status}`);
 }
 
-console.log('# I. Static handler confinement');
-const staticCases = [
-  '/../secret.txt', '/%2e%2e/secret.txt', '/%2e%2e%2fsecret.txt', '/..%2fsecret.txt', '/sub/..%2f..%2fsecret.txt',
-  '/sub/%2e%2e/%2e%2e/secret.txt', '/%2E%2E/%2E%2E/secret.txt', '/link-out', '/linkdir/secret.txt', '/linkdir/', '/.env', '/%2eenv',
-  '/sub/.%2e/.%2e/secret.txt', '/index.html%00.txt', '/%00', '/..%5csecret.txt', '/sub%5c..%5c..%5csecret.txt', '//secret.txt',
-  '/%252e%252e/secret.txt', '/%c0%ae%c0%ae/secret.txt', '/sub/x.txt/..%2f..%2f..%2fsecret.txt',
-];
-for (const p of staticCases) {
-  const r = await get(p);
-  expect(!r.body.includes('TOPSECRET') && !r.body.includes('DOTFILE_SECRET') && r.status !== 200, `static ${p} not served`, `${r.status}`);
-}
-{
+if (section('I')) {
+  console.log('# I. Static handler confinement');
+  const staticCases = [
+    '/../secret.txt', '/%2e%2e/secret.txt', '/%2e%2e%2fsecret.txt', '/..%2fsecret.txt', '/sub/..%2f..%2fsecret.txt',
+    '/sub/%2e%2e/%2e%2e/secret.txt', '/%2E%2E/%2E%2E/secret.txt', '/link-out', '/linkdir/secret.txt', '/linkdir/', '/.env', '/%2eenv',
+    '/sub/.%2e/.%2e/secret.txt', '/index.html%00.txt', '/%00', '/..%5csecret.txt', '/sub%5c..%5c..%5csecret.txt', '//secret.txt',
+    '/%252e%252e/secret.txt', '/%c0%ae%c0%ae/secret.txt', '/sub/x.txt/..%2f..%2f..%2fsecret.txt',
+  ];
+  for (const p of staticCases) {
+    const r = await get(p);
+    expect(!r.body.includes('TOPSECRET') && !r.body.includes('DOTFILE_SECRET') && r.status !== 200, `static ${p} not served`, `${r.status}`);
+  }
   const ok1 = await get('/');
   const ok2 = await get('/sub/x.txt');
   const ok3 = await get('/sub/./x.txt');
@@ -278,8 +283,8 @@ for (const p of staticCases) {
   console.log(`info /api/../index.html -> ${apiStatic.status} (URL normalisation resolves to /index.html)`);
 }
 
-console.log('# J. Log lines');
-{
+if (section('J')) {
+  console.log('# J. Log lines');
   await get('/api/nothing%0a%7b%22level%22:%22forged%22%7d', 'X-Request-Id: aaaaaaaa"}\r\n');
   await new Promise((r) => setTimeout(r, 50));
   let allJson = true;
@@ -299,6 +304,8 @@ console.log('# K. Server timeouts');
   const big = parse(await raw(`GET /api/health HTTP/1.1\r\nHost: ${H}\r\nX-Big: ${'a'.repeat(17000)}\r\nConnection: close\r\n\r\n`));
   expect(big.status === 431, 'header block > 16 KiB -> 431', `${big.status}`);
   if (process.argv.includes('--slowloris')) {
+    const LIMIT = 100000;
+    const open = await new Promise((r) => s.getConnections((e, n) => r(e ? '?' : n)));
     const started = Date.now();
     const closedAfter = await new Promise((res) => {
       const sock = net.connect(port, '127.0.0.1');
@@ -306,10 +313,10 @@ console.log('# K. Server timeouts');
       sock.write(`GET /api/health HTTP/1.1\r\nHost: ${H}\r\n`);
       const iv = setInterval(() => { if (!sock.destroyed) sock.write('X-a: b\r\n'); }, 1000);
       sock.on('close', () => { clearInterval(iv); res(Date.now() - started); });
-      setTimeout(() => { clearInterval(iv); sock.destroy(); res(-1); }, 50000);
+      setTimeout(() => { clearInterval(iv); sock.destroy(); res(-1); }, LIMIT);
     });
-    console.log(`info slow-header connection (one header line per second) closed after ${closedAfter} ms (-1 = still open at 50 s)`);
-    expect(closedAfter > 0 && closedAfter <= 41000, 'a never-finished header block is closed within headersTimeout + check interval (<= 41 s)', `${closedAfter} ms`);
+    console.log(`info slow-header connection (one header line per second; ${open} other connections open at its start) closed after ${closedAfter} ms (-1 = still open at ${LIMIT / 1000} s)`);
+    expect(closedAfter > 0 && closedAfter <= 41000, 'a never-finished header block is closed within headersTimeout + one check interval (<= 41 s)', `${closedAfter} ms`);
   }
 }
 
