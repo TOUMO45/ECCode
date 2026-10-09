@@ -115,6 +115,29 @@ test('SEC-B-1: planner equals the brute-force oracle on tie-heavy catalogs (equa
   assert.ok(feasible >= 20 && feasible <= 110, `feasible catalogs: ${feasible}`);
 });
 
+test('SEC-B-1: identical offers of one supplier tie on total, pickups, ready time and supplier codes; the smaller vector wins (oracle agrees)', () => {
+  const input = fixtureInput((i) => {
+    const a = offerOf(i, 'A');
+    i.budgetCents = null;
+    i.offers = [
+      { ...a, offerId: 1, availability: 5 },
+      { ...a, offerId: 2, availability: 5 },
+      { ...a, offerId: 3, availability: 5 },
+    ];
+  });
+  const p = plan(input);
+  const o = oracle(input);
+  assert.deepEqual(bundlesOf(p.best), o.best.bundles);
+  assert.deepEqual(bundlesOf(p.best), { 3: 2 }, 'the vector with zeros first is the smallest: all bundles on the last tied offer');
+  compare('tied offers', input);
+  // and with a different supplier set in play (B cheaper per bundle but with a prep fee)
+  compare('tied offers with B', fixtureInput((i) => {
+    const a = offerOf(i, 'A');
+    i.budgetCents = null;
+    i.offers = [{ ...a, offerId: 1, availability: 3 }, { ...a, offerId: 2, availability: 3 }, { ...offerOf(i, 'B'), offerId: 3, availability: 3 }];
+  }));
+});
+
 test('SEC-B-1: planner equals the slow exact reference planner on 250 medium catalogs (availability up to 12, <= 6 offers, quantities up to 3000), full output', () => {
   const strip = (r) => {
     const copy = structuredClone(r);

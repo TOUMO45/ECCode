@@ -1,7 +1,8 @@
 // RS-06..RS-11 and the planner half of RS-12, on the canonical fixture RS-FIX-1 (pinned inventory: 1 bundle per supplier).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { plan } from '../../../src/domain/planner.js';
+import { MAX_SEARCH_NODES, PlannerLimitError, plan } from '../../../src/domain/planner.js';
+import { search } from '../../../src/domain/search.js';
 import { explainPlan } from '../../../src/domain/explain.js';
 import { sha256Hex } from '../../../src/domain/canonical.js';
 import { formatLocalTime, localTimeOnDate } from '../../../src/domain/time.js';
@@ -210,8 +211,8 @@ test('planner explanation renders the RS-06..RS-11 results from codes and trace'
   assert.ok(rs10.lines.some((l) => /Move the deadline to 11:20 to get D for \$80\.00/.test(l.text)));
 });
 
-test('planner refuses an absurd search instead of running unbounded (PlannerLimitError) and rejects malformed input', () => {
-  const absurd = fixtureInput((i) => {
+test('SEC-B-1: huge stock and quantity are solved exactly, not refused (12 offers of single cups, 100,000 each)', () => {
+  const huge = fixtureInput((i) => {
     i.requirement.cups = 100000;
     i.requirement.lids = 100000;
     i.budgetCents = null;
@@ -222,8 +223,25 @@ test('planner refuses an absurd search instead of running unbounded (PlannerLimi
     }));
   });
   const started = Date.now();
-  assert.throws(() => plan(absurd), (e) => e instanceof RangeError && e.code === 'PLANNER_LIMIT');
-  assert.ok(Date.now() - started < 10000);
+  const r = plan(huge);
+  assert.ok(Date.now() - started < 1000);
+  assert.equal(r.feasible, true);
+  assert.deepEqual(r.best.supplierCodes, ['A']);
+  assert.equal(r.best.totalCents, 100000 * 100 + 1000);
+});
+
+test('the node cap is a guard: a search past maxNodes throws PlannerLimitError (code PLANNER_LIMIT)', () => {
+  const survivors = ['A', 'B', 'C'].map((code, k) => ({
+    supplierCode: code, unitCups: 100, unitLids: 100, priceCents: 3000 + k, prepFeeCents: 0, readyMs: 1, bound: 50, ci: k,
+  }));
+  const requirement = { cups: 5000, lids: 5000 };
+  assert.ok(search(survivors, requirement, 0, { budget: Infinity, maxPickups: 3 }).best !== null);
+  assert.throws(() => search(survivors, requirement, 0, { budget: Infinity, maxPickups: 3 }, { maxNodes: 1 }),
+    (e) => e instanceof PlannerLimitError && e instanceof RangeError && e.code === 'PLANNER_LIMIT');
+  assert.equal(MAX_SEARCH_NODES, 2_000_000);
+});
+
+test('planner rejects malformed input with RangeError', () => {
   assert.throws(() => plan(null), RangeError);
   assert.throws(() => plan({ ...fixtureInput(), maxPickups: 0 }), RangeError);
   assert.throws(() => plan({ ...fixtureInput(), budgetCents: -5 }), RangeError);

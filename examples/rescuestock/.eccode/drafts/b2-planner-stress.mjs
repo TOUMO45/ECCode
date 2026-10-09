@@ -35,7 +35,7 @@ for (let c = 0; c < COUNT; c += 1) {
   }
   const qty = rng.pick([100, 1000, 5000, 10000, 20000, 50000, 100000]);
   const input = {
-    requirement: { cups: qty, lids: shape === 'mixed' && rng.chance(0.5) ? rng.pick([100, 1000, 20000]) : qty, capacityMl: 250, diameterMm: 90, material: null },
+    requirement: { cups: qty, lids: (shape === 'mixed' || shape === 'api5') && rng.chance(0.4) ? rng.pick([100, 1000, 20000]) : qty, capacityMl: 250, diameterMm: 90, material: null },
     budgetCents: rng.chance(0.3) ? null : rng.pick([1, 50000, 1000000, 100000000, 1000000000]),
     deadlineAt: rng.chance(0.5) ? null : localTimeOnDate('2026-10-20', '11:30'),
     maxPickups: rng.int(1, 5), taxBp: process.env.TAX ? Number(process.env.TAX) : rng.pick([0, 0, 1600]), offers, excludeSupplierCodes: [],

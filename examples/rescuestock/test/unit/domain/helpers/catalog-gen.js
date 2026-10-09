@@ -88,7 +88,7 @@ export function mediumCatalog(seed, { maxOffers = 6, maxAvail = 8, maxQuantitySt
   const offerCount = rng.int(2, maxOffers);
   const offers = [];
   for (let i = 0; i < offerCount; i += 1) {
-    const sameSupplier = i > 0 && rng.chance(0.15);
+    const sameSupplier = i > 0 && rng.chance(ties ? 0.4 : 0.15);
     const supplierCode = sameSupplier ? offers[rng.int(0, i - 1)].supplierCode : LETTERS[i];
     const cups = rng.pick(ties ? [50, 100] : [50, 100, 200]);
     const lids = rng.chance(0.2) ? rng.pick([50, 100, 200]) : cups;

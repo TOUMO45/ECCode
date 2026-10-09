@@ -22,8 +22,9 @@ import { MAX_SEARCH_NODES, PlannerLimitError, compareArrays, search } from './se
 export const REJECTION_CODES = Object.freeze(['INCOMPATIBLE_LID_DIAMETER', 'READY_AFTER_DEADLINE', 'OUT_OF_STOCK', 'OFFER_WITHDRAWN']);
 export const CANDIDATE_CODES = Object.freeze(['INSUFFICIENT_QTY', 'TOO_MANY_PICKUPS', 'OVER_BUDGET']);
 export const MAX_ALTERNATIVES = 3;
-// PLANNER_LIMIT is a defensive guard only. No input the API accepts (<= 12 offers, availability and quantities
-// <= 100,000, maxPickups <= 5) reaches it: the SEC-B-1 timing test and sweep assert that.
+// PLANNER_LIMIT is a defensive guard (see search.js for the bound). The seeded catalog shape and random-priced
+// catalogs within the API ranges never reach it (SEC-B-1 timing test, sweep scripts); only deliberately tie-laden
+// catalogs of the kind described in search.js can.
 export { CURRENCY, MAX_SEARCH_NODES, PlannerLimitError };
 
 const NO_LIMIT = Number.POSITIVE_INFINITY;

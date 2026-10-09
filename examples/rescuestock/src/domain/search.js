@@ -18,10 +18,17 @@
 //   * Lower bound at a node: mandatory later bundles (one per later member, with the prep fee of every supplier not yet
 //     used) plus the fractional-knapsack cost of the demand still uncovered, per dimension, scaled by the tax rate.
 //
-// Cost. The search is polynomial in the stock levels: multiplicities are only ever looped over inside the window
-// [kLo, kHi] that the remaining demand allows, and the bound removes almost all of it (see the SEC-B-1 timing test and
-// the stress script). MAX_SEARCH_NODES is a defensive cap that no input the API accepts (<= 12 offers, availability and
-// quantities <= 100,000, maxPickups <= 5) reaches; it only stops runaway callers.
+// Cost. Work does not grow with the stock levels: multiplicities are only looped over inside the window [kLo, kHi]
+// that the remaining demand allows, the bound removes almost all of it, and a dominance table collapses equal-coverage
+// prefixes (so the worst case is polynomial in quantity/unit, not exponential in stock). Measured: the seeded catalog
+// shape (5 offers, any prices, availability and quantities up to 100,000) takes at most a few ms; 12 random-priced offers
+// at quantity 100,000 stay below 100 ms except for rare catalogs with identical per-bundle prices.
+//
+// MAX_SEARCH_NODES (2,000,000, about 150 ms) is a defensive cap on each search. It is NOT reached by the seeded catalog
+// shape or by random-priced catalogs of up to 12 offers within the API ranges (asserted by test/timing and the sweep
+// scripts). It can still be reached by deliberately tie-laden catalogs: several suppliers whose bundles of different
+// size cost the same, a tax rate with rounding noise, and a quantity of about 50,000 or more. Callers must map
+// PlannerLimitError (code PLANNER_LIMIT) to a typed error and rate-limit planning per customer.
 
 import { taxCents } from './money.js';
 
@@ -93,9 +100,10 @@ export function search(survivors, requirement, taxBp, cons, opts = {}) {
   const top = [];
   if (opts.seed) top.push(opts.seed); // a valid plan known in advance: the search only has to beat it
   let nodes = 0;
+  const maxNodes = opts.maxNodes ?? MAX_SEARCH_NODES;
   const tick = () => {
     nodes += 1;
-    if (nodes > MAX_SEARCH_NODES) throw new PlannerLimitError();
+    if (nodes > maxNodes) throw new PlannerLimitError();
   };
 
   const usable = [];
