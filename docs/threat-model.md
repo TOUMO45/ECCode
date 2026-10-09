@@ -59,6 +59,17 @@ Actors the design assumes may misbehave:
 | R14 | User decisions nobody made (A3) | `--actor user` is refused from subagents by the guard; every `--actor user` event is listed in the final handoff with the note that the record shows what was entered, not who typed it; reopening an escalated gate waives nothing unless the user names findings with `--waive` | `tests/resume-delivery.test.js` "lists every --actor user event"; `tests/gates.test.js` reopen tests |
 | R15 | Loss of state on crash or interruption (A5) | Append-only log with atomic snapshot writes; torn tail repair; interrupted runs recovered with claims released and attempts counted; `reconcile --verify` compares the record with the working tree and re-runs recorded checks before resuming | `tests/resume-delivery.test.js`; `tests/reconcile.test.js` |
 | R16 | Engine drift from published evidence (maintainers) | The suite replays every shipped record and asserts the figures the reports cite | `tests/records-replay.test.js` |
+| R17 | A symlink inside task ownership pointing at the record or outside the project (A1) | Handoffs refuse symlinks and paths that resolve outside the project or into the record; the guard resolves real paths before deciding | `tests/redteam-regressions.test.js` RT1 |
+| R18 | A change inside ownership left undeclared, so never pinned, then rewritten after approval (A1) | Completion refuses undeclared changes inside ownership (claims that recorded a dirty snapshot) | RT2 |
+| R19 | Plan ids that collide with engine-assigned rework ids and reset an approved gate (A2 via a planner) | `rework-N` ids are reserved at plan validation; `rework open` refuses an existing id | RT3 |
+| R20 | A tampered log turning the integrity check into a crash (A4) | Replay and audit report `CORRUPT_LOG`; audit exits 2 with the reason, never a stack trace | RT4 |
+| R21 | Exponential ownership globs hanging the guard or the engine (A1, A2) | Consecutive `**/` segments collapse; plans and reworks refuse more than three `**` segments | RT5 |
+| R22 | Shell writes outside the claim, or to `.git/` ignore rules, that the Edit rules would deny (A1) | The guard applies the Edit ownership rules to the targets of redirects, `tee`, `cp`, `mv`, `ln`, `sed -i`, `dd`; `.git/` is never writable by a subagent | RT6 |
+| R23 | A broad glob owning `.claude/settings.json` or `hooks/` and disabling the guard (A1, A2) | `.claude/` and `.git/` are never owned whatever the globs say; plans refuse globs naming them and warn on broad ones | RT7 |
+| R24 | A secret in `--label`, `--note`, a handoff or a review reaching the record and the final handoff (A1) | Labels, notes, handoff and review JSON are redacted before commit and archive | RT8 |
+| R25 | A blocking finding raised and pre-marked resolved in the same approving review (A1) | Resolved findings need evidence | RT9 |
+
+Residual from the red team, not closed: files ignored by git (`.gitignore`, `.git/info/exclude`) are invisible to completion's git-based accounting, so an implementer could create an ignored file outside its ownership through a shell command the guard does not recognise as a write. The guard now denies writes to `.git/` and applies ownership to the shell writes it can read; a complete answer needs the harness to report file writes, not the toolkit to parse shells.
 
 ## 4. Residual risks (not closed)
 
