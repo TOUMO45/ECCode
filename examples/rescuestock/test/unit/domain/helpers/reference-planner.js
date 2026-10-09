@@ -1,3 +1,8 @@
+// SLOW BUT EXACT REFERENCE (test only). This is the first exhaustive branch-and-bound planner, frozen before the
+// SEC-B-1 rewrite of src/domain/planner.js. It enumerates multiplicities with only cost-based pruning, so it is
+// exponential in stock; it is kept to check the fast planner on medium ranges (availability up to about 12) where the
+// brute-force oracle is too slow. Do not import it from src.
+//
 // Exact lexicographic planner (brief > Planner rules). Pure: no clock, no I/O, no randomness; equal input gives
 // deep-equal output.
 //
@@ -10,21 +15,30 @@
 //   * Total = sum over supplier orders of (subtotal + prep fee + tax), tax = round-half-up(bp) per order.
 //   * Objective, lexicographic: total cents, pickup count, plan-ready time (latest supplier ready time), the
 //     sorted supplier-code string, then (only for identical supplier sets) the multiplicity vector.
-//   * Search (search.js): exact. It enumerates the offer subsets within the pickup cap and solves each subset's
-//     covering problem by bounded depth-first search with a fractional-knapsack lower bound, so the work does not grow
-//     with the stock levels (SEC-B-1). See search.js for the argument.
+//   * Search: exhaustive depth-first enumeration with branch-and-bound on total cost. Total cost never decreases
+//     when a bundle is added, so a partial total above the budget or above the K-th best total cannot recover.
+//     Pruning is strictly "greater than", so ties are still reached and broken by the full objective.
 
-import { CURRENCY, assertBasisPoints, assertCents, isCents, supplierOrderTotals } from './money.js';
-import { normalizeTs, parseTs } from './time.js';
-import { areCompatible, matchesRequirement } from './compat.js';
-import { MAX_SEARCH_NODES, PlannerLimitError, compareArrays, search } from './search.js';
+import { CURRENCY, assertBasisPoints, assertCents, isCents, supplierOrderTotals, taxCents } from '../../../../src/domain/money.js';
+import { normalizeTs, parseTs } from '../../../../src/domain/time.js';
+import { areCompatible, matchesRequirement } from '../../../../src/domain/compat.js';
 
 export const REJECTION_CODES = Object.freeze(['INCOMPATIBLE_LID_DIAMETER', 'READY_AFTER_DEADLINE', 'OUT_OF_STOCK', 'OFFER_WITHDRAWN']);
 export const CANDIDATE_CODES = Object.freeze(['INSUFFICIENT_QTY', 'TOO_MANY_PICKUPS', 'OVER_BUDGET']);
 export const MAX_ALTERNATIVES = 3;
-// PLANNER_LIMIT is a defensive guard only. No input the API accepts (<= 12 offers, availability and quantities
-// <= 100,000, maxPickups <= 5) reaches it: the SEC-B-1 timing test and sweep assert that.
-export { CURRENCY, MAX_SEARCH_NODES, PlannerLimitError };
+
+// Anomaly guard, not a tuning knob: the catalogs of the brief (<= 12 offers) need a few thousand nodes. A search that
+// exceeds this many nodes (absurd quantities or hundreds of offers) is refused instead of running unbounded.
+export const MAX_SEARCH_NODES = 2_000_000;
+
+export class PlannerLimitError extends RangeError {
+  constructor() {
+    super('planner search limit exceeded');
+    this.name = 'PlannerLimitError';
+    this.code = 'PLANNER_LIMIT';
+  }
+}
+export { CURRENCY };
 
 const NO_LIMIT = Number.POSITIVE_INFINITY;
 
@@ -152,6 +166,186 @@ function classify(ctx, deadlineMs) {
   return { survivors, rejections, candidates };
 }
 
+// ---------------------------------------------------------------- the search
+
+function fastTax(base, taxBp) {
+  if (taxBp === 0) return 0;
+  const product = base * taxBp;
+  if (product <= Number.MAX_SAFE_INTEGER) return Math.floor((product + 5000) / 10000);
+  return taxCents(base, taxBp);
+}
+
+function compareArrays(a, b) {
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return a[i] < b[i] ? -1 : 1;
+  }
+  return 0;
+}
+
+// Lexicographic objective: total, pickups, plan-ready time, supplier-code string, multiplicity vector.
+function comparePlans(a, b) {
+  if (a.total !== b.total) return a.total - b.total;
+  if (a.pickups !== b.pickups) return a.pickups - b.pickups;
+  if (a.readyMs !== b.readyMs) return a.readyMs - b.readyMs;
+  if (a.codes !== b.codes) return a.codes < b.codes ? -1 : 1;
+  return compareArrays(a.m, b.m);
+}
+
+function insertSorted(list, rec, max) {
+  let i = list.length;
+  while (i > 0 && comparePlans(rec, list[i - 1]) < 0) i -= 1;
+  list.splice(i, 0, rec);
+  if (list.length > max) list.pop();
+}
+
+/**
+ * Exhaustive branch-and-bound over the multiplicity vectors of `survivors` (canonical order).
+ * cons: { budget: number|Infinity, maxPickups: number|Infinity }.
+ * opts: { alternatives: bool (also collect the 4 best irredundant plans), force: canonical index that must be used }.
+ * Returns { best, irredundant, nodes }; each plan record has m (by canonical index), total, pickups, readyMs, codes.
+ */
+function search(survivors, requirement, taxBp, cons, opts = {}) {
+  const n = survivors.length;
+  const needC = requirement.cups;
+  const needL = requirement.lids;
+  const budget = cons.budget;
+  const maxPickups = cons.maxPickups;
+  const wantAlternatives = opts.alternatives === true;
+  const force = opts.force ?? -1;
+
+  // Search order: cheapest per useful unit first (a heuristic for pruning only; the result does not depend on it).
+  const unit = (o) => (needC > 0 && o.unitCups > 0 ? o.unitCups : o.unitLids || 1);
+  const order = survivors.map((_, i) => i).sort((a, b) => {
+    const oa = survivors[a];
+    const ob = survivors[b];
+    const lhs = oa.priceCents * unit(ob);
+    const rhs = ob.priceCents * unit(oa);
+    return lhs !== rhs ? lhs - rhs : a - b;
+  });
+
+  const supplierIndex = new Map();
+  const sOf = survivors.map((o) => {
+    if (!supplierIndex.has(o.supplierCode)) supplierIndex.set(o.supplierCode, supplierIndex.size);
+    return supplierIndex.get(o.supplierCode);
+  });
+  const suppliers = supplierIndex.size;
+  const sub = new Array(suppliers).fill(0);
+  const prep = new Array(suppliers).fill(0);
+  const tot = new Array(suppliers).fill(0);
+  const used = new Array(suppliers).fill(0);
+
+  const sufC = new Array(n + 1).fill(0);
+  const sufL = new Array(n + 1).fill(0);
+  for (let p = n - 1; p >= 0; p -= 1) {
+    const o = survivors[order[p]];
+    sufC[p] = sufC[p + 1] + o.bound * o.unitCups;
+    sufL[p] = sufL[p + 1] + o.bound * o.unitLids;
+  }
+
+  const m = new Array(n).fill(0);
+  let best = null;
+  const irredundant = [];
+  let nodes = 0;
+
+  const limit = () => {
+    if (wantAlternatives) return irredundant.length >= MAX_ALTERNATIVES + 1 ? irredundant[MAX_ALTERNATIVES].total : NO_LIMIT;
+    return best === null ? NO_LIMIT : best.total;
+  };
+
+  function leaf(cups, lids, total, pickups) {
+    let readyMs = 0;
+    let codes = '';
+    let last = '';
+    for (let i = 0; i < n; i += 1) {
+      if (m[i] === 0) continue;
+      const o = survivors[i];
+      if (o.readyMs > readyMs) readyMs = o.readyMs;
+      if (o.supplierCode !== last) {
+        codes = codes === '' ? o.supplierCode : `${codes},${o.supplierCode}`;
+        last = o.supplierCode;
+      }
+    }
+    const rec = { m: m.slice(), total, pickups, readyMs, codes, cups, lids };
+    if (best === null || comparePlans(rec, best) < 0) best = rec;
+    if (wantAlternatives) {
+      let redundant = false;
+      for (let i = 0; i < n && !redundant; i += 1) {
+        if (m[i] === 0) continue;
+        const o = survivors[i];
+        if (cups - o.unitCups >= needC && lids - o.unitLids >= needL) redundant = true;
+      }
+      if (!redundant) insertSorted(irredundant, rec, MAX_ALTERNATIVES + 1);
+    }
+  }
+
+  function dfs(pos, cups, lids, total, pickups) {
+    nodes += 1;
+    if (nodes > MAX_SEARCH_NODES) throw new PlannerLimitError();
+    if (pos === n) {
+      if (cups >= needC && lids >= needL) leaf(cups, lids, total, pickups);
+      return;
+    }
+    if (cups + sufC[pos] < needC || lids + sufL[pos] < needL) return;
+    const ci = order[pos];
+    const o = survivors[ci];
+    const s = sOf[ci];
+    const sub0 = sub[s];
+    const prep0 = prep[s];
+    const tot0 = tot[s];
+    const used0 = used[s];
+    const joinsNewSupplier = used0 === 0;
+    const nextPickups = joinsNewSupplier ? pickups + 1 : pickups;
+    const prep1 = prep0 > o.prepFeeCents ? prep0 : o.prepFeeCents;
+    const totalAt = (k) => {
+      const base = sub0 + k * o.priceCents + prep1;
+      return total - tot0 + base + fastTax(base, taxBp);
+    };
+    // Largest multiplicity worth trying: the pickup bound and (monotone) cost bounds cut it before iterating.
+    let kHi = nextPickups > maxPickups ? 0 : o.bound;
+    if (kHi > 0) {
+      const cap = Math.min(budget, limit());
+      if (cap !== NO_LIMIT) {
+        let lo = 0;
+        let hi = kHi;
+        while (lo < hi) {
+          const mid = (lo + hi + 1) >> 1;
+          if (totalAt(mid) <= cap) lo = mid; else hi = mid - 1;
+        }
+        kHi = lo;
+      }
+    }
+    for (let k = kHi; k >= 0; k -= 1) {
+      if (k === 0) {
+        if (force === ci) break;
+        m[ci] = 0;
+        dfs(pos + 1, cups, lids, total, pickups);
+        continue;
+      }
+      nodes += 1;
+      if (nodes > MAX_SEARCH_NODES) throw new PlannerLimitError();
+      const sub1 = sub0 + k * o.priceCents;
+      const total1 = totalAt(k);
+      const base = sub1 + prep1;
+      const tot1 = base + fastTax(base, taxBp);
+      if (total1 > budget || total1 > limit()) continue;
+      sub[s] = sub1;
+      prep[s] = prep1;
+      tot[s] = tot1;
+      used[s] = used0 + k;
+      m[ci] = k;
+      dfs(pos + 1, cups + k * o.unitCups, lids + k * o.unitLids, total1, nextPickups);
+      sub[s] = sub0;
+      prep[s] = prep0;
+      tot[s] = tot0;
+      used[s] = used0;
+      m[ci] = 0;
+    }
+  }
+
+  dfs(0, 0, 0, 0, 0);
+  return { best, irredundant, nodes };
+}
+
 // ---------------------------------------------------------------- output construction
 
 function sameVector(a, b) {
@@ -270,15 +464,15 @@ function traceInputs(ctx) {
  *              | { feasible: false, rejections, candidateCodes, relaxations, blocking, trace }
  * See the header comment for the model, and the design spec "Internal module contracts" for the shapes.
  */
-export function plan(input) {
+export function referencePlan(input) {
   const ctx = normalizeInput(input);
   const { survivors, rejections, candidates } = classify(ctx, ctx.deadlineMs);
   const budget = ctx.budgetCents === null ? NO_LIMIT : ctx.budgetCents;
-  const main = search(survivors, ctx.requirement, ctx.taxBp, { budget, maxPickups: ctx.maxPickups }, { keep: MAX_ALTERNATIVES + 1 });
+  const main = search(survivors, ctx.requirement, ctx.taxBp, { budget, maxPickups: ctx.maxPickups }, { alternatives: true });
 
   if (main.best !== null) {
     const best = main.best;
-    const alternativesRecs = main.top.filter((r) => !sameVector(r.m, best.m)).slice(0, MAX_ALTERNATIVES);
+    const alternativesRecs = main.irredundant.filter((r) => !sameVector(r.m, best.m)).slice(0, MAX_ALTERNATIVES);
     const bestBody = buildBody(best, survivors, ctx);
     const comparisons = alternativesRecs.map((alt, i) => ({ rank: i + 1, ...compareReason(best, alt, survivors) }));
     return {
