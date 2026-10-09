@@ -1,0 +1,94 @@
+# Real-path and over-denial probes against /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/guardfix/scripts/hooks/guard.js
+# node v22.22.0; 90 probes; 7 mismatches
+
+section | id | role | tool | decision | expect | ok | note | reason
+REALPATH | chain-write-state | main | Write | deny | deny | ok | a->b->.eccode | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-UhrwTd/.eccode/state.json) (/tmp/eccode-test-U
+REALPATH | chain-write-events-role | backend-engineer | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-UhrwTd/.eccode/events.jsonl) (/tmp/eccode-test
+REALPATH | chain-redirect | main | Bash | deny | deny | ok |  | a/state.json is, or lies under, a symbolic link resolving to /tmp/eccode-test-UhrwTd/.eccode/state.json, which is part of an ECCode record. ECCode pro
+REALPATH | chain-cp | main | Bash | deny | deny | ok |  | a/config.json is, or lies under, a symbolic link resolving to /tmp/eccode-test-UhrwTd/.eccode/config.json, which is part of an ECCode record. ECCode p
+REALPATH | chain-tee | main | Bash | deny | deny | ok |  | a/events.jsonl is, or lies under, a symbolic link resolving to /tmp/eccode-test-UhrwTd/.eccode/events.jsonl, which is part of an ECCode record. ECCode
+REALPATH | midpath-memory | main | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-UhrwTd/.eccode/memory/m.json) (/tmp/eccode-tes
+REALPATH | midpath-redirect | main | Bash | deny | deny | ok |  | src/link/memory/m.json is, or lies under, a symbolic link resolving to /tmp/eccode-test-UhrwTd/.eccode/memory/m.json, which is part of an ECCode recor
+REALPATH | midpath-deep-new | main | Bash | deny | deny | ok | new tail under a mid-path link | src/link/evidence/sub/deep/new.log is, or lies under, a symbolic link resolving to /tmp/eccode-test-UhrwTd/.eccode/evidence/sub/deep/new.log, which is
+REALPATH | midpath-draft-link | technical-reviewer | Write | allow | allow | ok | link to a draft area is still a draft | 
+REALPATH | midpath-draft-link-bash | technical-reviewer | Bash | allow | allow | ok |  | 
+REALPATH | draft-escape-link | technical-reviewer | Write | deny | deny | ok | ATTACK: draft/esc -> .eccode; esc/state.json is the record | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-UhrwTd/.eccode/state.json) (/tmp/eccode-test-U
+REALPATH | draft-escape-link-bash | technical-reviewer | Bash | deny | deny | ok |  | .eccode/reviews/drafts/esc/state.json is, or lies under, a symbolic link resolving to /tmp/eccode-test-UhrwTd/.eccode/state.json, which is part of an 
+REALPATH | draft-escape-link-events | technical-reviewer | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-UhrwTd/.eccode/events.jsonl) (/tmp/eccode-test
+REALPATH | draft-escape-link-deep | backend-engineer | Write | deny | deny | ok |  | ECCode record and memory files are written only by the eccode CLI, wherever they live (/tmp/eccode-test-UhrwTd/.eccode/memory/m.json) (/tmp/eccode-tes
+REALPATH | draft-escape-link-to-draft | technical-reviewer | Write | allow | allow | ok | esc/drafts resolves to .eccode/drafts, a draft area | 
+REALPATH | rel-link | main | Write | allow | deny | MISMATCH | relative symlink to the record | 
+REALPATH | rel-link-bash | main | Bash | allow | deny | MISMATCH |  | 
+REALPATH | dotdot-through-link | main | Bash | deny | deny | ok | .. after a link | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+REALPATH | dotdot-into-record | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+REALPATH | dangling-into-record | main | Write | allow | deny | MISMATCH | dangling link whose target is a new record file | 
+REALPATH | dangling-redirect | main | Bash | allow | deny | MISMATCH |  | 
+REALPATH | dangling-into-draft | technical-reviewer | Write | deny | allow | MISMATCH | dangling link into a draft area | technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+REALPATH | hardlink-created | setup | setup | created | created | ok | hard link to a record file | 
+REALPATH | hardlink-write | main | Write | allow | allow | ok | RESIDUAL if allow: a hard link shares the record inode; realpath cannot detect it | 
+REALPATH | hardlink-redirect | main | Bash | allow | allow | ok | same (hard links are a documented filesystem residual) | 
+REALPATH | toctou-ln-then-write | main | Bash | allow | deny | MISMATCH | bash: lk/state.json hits .eccode textually via realize? lk absent at guard time | 
+REALPATH | toctou-ln-then-cp | main | Bash | allow | deny | MISMATCH |  | 
+REALPATH | toctou-mkdir-then-write | main | Bash | deny | deny | ok | textual record path regardless | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+REALPATH | dir-link-rm | main | Bash | deny | deny | ok | a -> b -> .eccode: rm of the link to the record | a is, or lies under, a symbolic link resolving to /tmp/eccode-test-UhrwTd/.eccode, which is part of an ECCode record. ECCode project record files are 
+REALPATH | dir-link-cp | main | Bash | deny | deny | ok |  | a is, or lies under, a symbolic link resolving to /tmp/eccode-test-UhrwTd/.eccode, which is part of an ECCode record. ECCode project record files are 
+REALPATH | dir-link-mv | main | Bash | deny | deny | ok |  | a is, or lies under, a symbolic link resolving to /tmp/eccode-test-UhrwTd/.eccode, which is part of an ECCode record. ECCode project record files are 
+REALPATH | abs-dotslash | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+REALPATH | abs-double-slash | main | Bash | deny | deny | ok |  | ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.
+ORDINARY | git-status | main | Bash | allow | allow | ok |  | 
+ORDINARY | git-add | main | Bash | allow | allow | ok |  | 
+ORDINARY | git-commit | main | Bash | allow | allow | ok |  | 
+ORDINARY | git-add-eccode-path | main | Bash | allow | allow | ok | staging is not a write to the record | 
+ORDINARY | git-diff | main | Bash | allow | allow | ok |  | 
+ORDINARY | git-log | main | Bash | allow | allow | ok |  | 
+ORDINARY | git-checkout-src | main | Bash | allow | allow | ok |  | 
+ORDINARY | npm-ci | main | Bash | allow | allow | ok |  | 
+ORDINARY | npm-install | main | Bash | allow | allow | ok |  | 
+ORDINARY | npm-run-build | main | Bash | allow | allow | ok |  | 
+ORDINARY | npm-test | main | Bash | allow | allow | ok |  | 
+ORDINARY | mkdir-p | main | Bash | allow | allow | ok |  | 
+ORDINARY | mkdir-dist | main | Bash | allow | allow | ok |  | 
+ORDINARY | touch-src | main | Bash | allow | allow | ok |  | 
+ORDINARY | rm-build | main | Bash | allow | allow | ok |  | 
+ORDINARY | cp-src | main | Bash | allow | allow | ok |  | 
+ORDINARY | mv-src | main | Bash | allow | allow | ok |  | 
+ORDINARY | sed-src | main | Bash | allow | allow | ok |  | 
+ORDINARY | tar-backup | main | Bash | allow | allow | ok |  | 
+ORDINARY | redirect-src | main | Bash | allow | allow | ok |  | 
+ORDINARY | node-build | main | Bash | allow | allow | ok | main session is not subject to inline-code denial | 
+ORDINARY | find-src | main | Bash | allow | allow | ok | find -exec grep (not a writer) | 
+ORDINARY | find-delete-build | main | Bash | allow | allow | ok |  | 
+ORDINARY | cat-record | main | Bash | allow | allow | ok |  | 
+ORDINARY | ls-record | main | Bash | allow | allow | ok |  | 
+ORDINARY | cp-record-out | main | Bash | allow | allow | ok | record as source | 
+ORDINARY | grep-record | main | Bash | allow | allow | ok |  | 
+ORDINARY | echo-comment-record | main | Bash | allow | allow | ok |  | 
+ORDINARY | eccode-status | main | Bash | allow | allow | ok |  | 
+ORDINARY | eccode-run | main | Bash | allow | allow | ok |  | 
+ORDINARY | export-path-then-eccode | main | Bash | allow | allow | ok | computed value, literal name | 
+ORDINARY | env-literal-eccode | main | Bash | allow | allow | ok |  | 
+ORDINARY | evidence-run-npm | main | Bash | allow | allow | ok |  | 
+ORDINARY | impl-redirect-claim | backend-engineer | Bash | allow | allow | ok |  | 
+ORDINARY | impl-mkdir-claim | backend-engineer | Bash | allow | allow | ok |  | 
+ORDINARY | impl-cp-claim | backend-engineer | Bash | allow | allow | ok |  | 
+ORDINARY | impl-mv-within-claim | backend-engineer | Bash | allow | allow | ok |  | 
+ORDINARY | impl-sed-claim | backend-engineer | Bash | allow | allow | ok |  | 
+ORDINARY | impl-tee-claim | backend-engineer | Bash | allow | allow | ok |  | 
+ORDINARY | impl-touch-claim | backend-engineer | Bash | allow | allow | ok |  | 
+ORDINARY | impl-draft | backend-engineer | Bash | allow | allow | ok |  | 
+ORDINARY | impl-evidence-run | backend-engineer | Bash | allow | allow | ok |  | 
+ORDINARY | impl-node-build-claim | backend-engineer | Bash | allow | allow | ok | a script file is residual 1, not denied | 
+ORDINARY | impl-git-status | backend-engineer | Bash | allow | allow | ok |  | 
+ORDINARY | impl-cd-subshell-test | backend-engineer | Bash | allow | allow | ok | read-only in a subshell cd | 
+ORDINARY | rev-write-draft | technical-reviewer | Bash | allow | allow | ok |  | 
+ORDINARY | rev-tee-draft | technical-reviewer | Bash | allow | allow | ok |  | 
+ORDINARY | rev-cp-into-draft-abs-src | technical-reviewer | Bash | allow | allow | ok | abs source, draft target | 
+ORDINARY | rev-mkdir-draft | technical-reviewer | Bash | allow | allow | ok |  | 
+ORDINARY | rev-write-draft-tool | technical-reviewer | Write | allow | allow | ok |  | 
+ORDINARY | rev-write-draft-dir-slash | technical-reviewer | Write | allow | allow | ok | the draft dir itself | 
+ORDINARY | arch-write-artifact | product-architect | Write | allow | allow | ok |  | 
+ORDINARY | arch-write-artifact-bash | product-architect | Bash | allow | allow | ok |  | 
+ORDINARY | rev-cp-draft-to-draft | technical-reviewer | Bash | allow | allow | ok |  | 
+ORDINARY | rev-git-status | technical-reviewer | Bash | allow | allow | ok |  | 
+ORDINARY | rev-cat-record | technical-reviewer | Bash | allow | allow | ok |  | 
+ORDINARY | rev-eccode-review | technical-reviewer | Bash | allow | allow | ok |  | 

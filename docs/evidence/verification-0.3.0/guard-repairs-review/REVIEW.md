@@ -207,3 +207,54 @@ $ node probes3.js     → 23 probes; 13 mismatches (results3.txt): G1 chain (pla
 $ GUARD_WT=<a088c6a guard> node probes3.js → alias-state/events/config-after-plant: deny (results3-oldguard.txt)
 $ bash bashsem.sh     → every probed bash form is valid and does what the finding says (bashsem-output.txt)
 ```
+
+---
+
+# Re-review of 3fa6298, branch `eccode/guard-repairs`
+
+**Verdict: changes requested.** The structural rewrite (realize() on every target, recordPath() replacing the enumerated list, real-path findRoot, the tokenizer treating `$'…'`/`$"…"` as quotes and binding the CLI after stripping expansions, the loosened wrapper/computed-name rules) closes G2, G3, G4, G5, G6, G9 and G10 from the d0e2a3b re-review and all the F-series, with no over-denial in ordinary orchestrator/role commands. But one blocking bypass of the same shape G1 named remains open, and the commit's own headline ("every write target is judged on its real path for every context") does not hold for a symlink the command creates in its own line: realize() falls back to the lexical path for a link that does not exist yet, so an alias to the record made earlier in the same command line, then written through, clobbers the record with a guard `allow`.
+
+- Commit: `3fa6298` (+ its test-marker). Worktree clean before and after.
+- Evidence added: `probes-3fa6298.txt`, `probes2-3fa6298.txt`, `probes3-3fa6298.txt` (the three earlier suites re-run), `probes4.js`/`results4.txt`/`probes4-output.txt` (90 real-path + over-denial probes), `repro3.sh`/`repro3-output.txt` and `repro3b.sh` (live record-write proof), `regcheck.sh`/`regcheck-output.txt` (the bypass across commits), `tests-3fa6298.txt`.
+- Tests: the six guard files **75/75 pass**; `npm run check` **245/245 pass**, exit 0.
+
+## What the three earlier suites say now (re-run against 3fa6298)
+
+- `probes.js`: 11 mismatches, all benign — `quoted-bar-impl` (F7 residual), the four `bogus-cp-dir*`/`bogus-mv-dir`/`bogus-rsync` now **denied** (improvement; my expectation held the old allow), `nonprefix-yaml-after-crafted*` and `read-from-file` (residual-1 crafted/sourced), and `fp-grep-fn`/`fp-evidence-run-fn` now **allowed** (the over-denials G10 fixed).
+- `probes2.js`: 9 mismatches — `fp-grep-pattern`, `fp-awk`, `fp-evidence-run-fn` now allowed (over-denials fixed); `rec-drafts-planted-state`/`rec-review-drafts-planted-state` now allowed and are harmless (a record copied under `.eccode/drafts/` is the reviewer's own scratch and never re-roots, since findRoot rejects any dir inside a `.eccode` segment — confirmed); `cwd-in-drafts-src` and `init-via-symlink-into-record` were my probe artefacts (redone in probes3/probes4); the two `fp-mv-into-*drafts` are the new mv-source behaviour (G-min below).
+- `probes3.js`: `ln-record-into-claim-abs/rel` now **denied** (an alias of the record directory is caught — improvement); `symlinked-root-lockout` now **allowed** and is correct (a symlinked `.eccode` inside a claim no longer re-roots, so the implementer writes its real claim); the `mv-*drafts-slash` rows are the mv-source behaviour (G-min).
+
+## New findings
+
+| # | Severity | Status | Summary |
+|---|---|---|---|
+| H1 | **Blocking** | pre-existing, in scope of this commit, not closed | A symlink to the record directory created earlier in the **same command line**, then written through, clobbers the record with a guard `allow`. `ln -s "$PWD/.eccode" lk && echo FORGED > lk/state.json` from the main session → **allow**; bash creates `lk -> .eccode` and clobbers the real `state.json` (proven live: 1995→7 bytes, first line `FORGED`, `repro3-output.txt`). Via the bare-directory alias the same trick forges memory and clobbers config: `ln -s "$PWD/.eccode" lk && printf … > lk/memory/m-forged.json` → allow, file lands in `.eccode/memory/` (`repro3b.sh` output: "forged memory file present in real record: YES"); `… > lk2/config.json` → allow. Cause: `realize()` calls `fs.realpathSync` on the target and, because the link `lk` does not exist when the guard runs, throws and falls back to the **lexical** path `…/lk/state.json`, which has no `.eccode` segment; and the textual `SHELL_WRITE` only matches a record path with a known file/dir suffix, so the bare `"$PWD/.eccode"` in the `ln` source is not matched (`.eccode"` is not `.eccode/<area>`). The main session (orchestrator) has no ownership check, so it is fully exposed; a role is incidentally blocked only because `lk/…` falls outside its claim (`guard(backend-engineer): deny` in `repro3b`). This defeats control #1 ("the record is written only by the CLI, never by hand … this holds … the main session included") and falsifies the commit's "every write target is judged on its real path for every context" for the one case that matters. Present on a088c6a, d0e2a3b and 3fa6298 alike (`regcheck-output.txt`: all three `allow`). Fix shape: when a command creates a symlink (`ln -s`/`ln --symbolic`) **and** writes, and any word of the line names a record directory (`RECORD_SEGMENT` on the `ln` operand — the guard already computes `mentionsRecord`, which is true here because the operand text is `$PWD/.eccode`), deny; or, as with the `cd` rule, refuse to bind a later relative target once the line has created a symlink. |
+| H2 | High | same mechanism, Write/redirect through a dangling link | `dangle -> .eccode/newrec.json` (target absent), then `Write dangle` or `echo x > dangle` → **allow** for the main session (`probes4.js` `dangling-into-record`, `dangling-redirect`); bash creates the file inside the record. Here the record path *is* in the `ln` source, so when the two steps are one command the textual `SHELL_WRITE` catches it (`repro3` case 2 shows guard `deny`); the gap is when the link already exists on disk from an earlier tool call (a prior turn), its target still absent — `realize` then falls back to lexical and the Write/redirect is allowed. Same fix as H1 plus: in `realize`, when the deepest-existing ancestor is itself a symlink (even if its target is absent), resolve the link and keep the unresolved tail, instead of treating the link's own name as literal. |
+| H3 | Low | residual (filesystem) | A hard link to a record file shares the inode; `realpath` cannot distinguish it, so `Write src/hard.json` / `echo x > src/hard.json` where `src/hard.json` is a hard link to `.eccode/state.json` → **allow** and bash writes the record (`probes4.js` `hardlink-*`, link creation confirmed). Hard links to directories are not allowed by the OS, so only individual record files are reachable, and the implementer still needs the path in its claim. Document as a filesystem residual alongside the git-ignored-files one. |
+| G-min | Low | new behaviour, acceptable | `mv`/`cp` now treat a **project-relative source** as a write (mv removes it), so `mv x.json .eccode/reviews/drafts/` and `mv notes.md .eccode/drafts/notes.md` from a role are denied because the *source* `x.json`/`notes.md` is a project file the role may not remove (`results2.txt`/`results3.txt`). Correct in spirit (a reviewer moving/deleting a tracked file is a project mutation); only the message is misleading (it blames the draft target). An absolute or scratch source into a draft area is allowed (`rev-cp-into-draft-abs-src`). Reword the message, or exclude the destination-is-a-draft case from the source check. |
+
+## Real-path attacks that the commit withstands (probes4.js, 90 probes)
+
+- Symlink chain `a -> b -> .eccode`: `Write a/state.json`, `echo > a/state.json`, `cp … a/config.json`, `tee a/events.jsonl` all **denied**; `rm -rf a`, `cp -r forged/. a`, `mv a /tmp/away` (the chain as a directory target) denied.
+- A symlink mid-path (`src/link -> .eccode`): `Write src/link/memory/m.json`, the redirect form, and a deep not-yet-existing tail `src/link/evidence/sub/deep/new.log` all denied. A mid-path link to a draft area (`draftlink -> .eccode/reviews/drafts`) stays writable for a reviewer.
+- A directory symlink **inside** a draft area pointing back at the record (`.eccode/reviews/drafts/esc -> .eccode`): `esc/state.json`, `esc/events.jsonl`, `esc/memory/m.json` all **denied** (real path is the record); `esc/drafts/n.md` (which resolves to `.eccode/drafts`) allowed. This is the strongest draft-escape attack and it is correctly caught.
+- Relative links and `..` through a link: `echo x > src/link/../.eccode/state.json`, `src/../.eccode/state.json`, the dir-link `rm`/`cp`/`mv` forms, and messy absolute spellings (`…/./.eccode/state.json`, `…//.eccode//state.json`) all denied.
+- `init` refuses a root whose real path is inside a record.
+- Over-denials: **none** in the ORDINARY section (0/46). `git status/add/commit/diff/log/checkout`, `npm ci/install/run build/test`, `mkdir -p`, `touch`, `rm -rf dist`, `cp/mv/sed/tar/redirect` on sources, `node -e` building dist (main session), `find -exec grep`, `cat/ls/grep/cp -r` on the record as a **source**, a comment naming the record, `export PATH="$PWD/…:$PATH"; eccode …`, `env FORCE_COLOR=1 eccode …`, `eccode evidence run -- npm test`, every implementer write inside its claim (redirect/mkdir/cp/mv/sed/tee/touch/draft/evidence-run/`(cd … && node -e read)`), and reviewer/author draft and artifact writes (Write, tee, cp from an abs source, mkdir, the draft directory itself with a trailing slash) are all allowed.
+
+## Commands and outputs
+
+```
+$ cd <worktree> && git log --oneline -1 → 3fa6298 Guard: every write target is judged on its real path …
+$ node --test <six guard files>        → # tests 75 / # pass 75 / # fail 0   (tests-3fa6298.txt)
+$ npm run check                        → # tests 245 / # pass 245 / # fail 0, exit 0
+$ node probes.js  → 314; 11 benign mismatches (probes-3fa6298.txt)
+$ node probes2.js → 180; 9 mismatches, all improvements or probe artefacts (probes2-3fa6298.txt)
+$ node probes3.js → 23; improvements + G-min (probes3-3fa6298.txt)
+$ node probes4.js → 90; 7 mismatches: H1 (toctou ×2), H2 (dangling ×2), H3 (hardlink), 2 malformed-link harmless (rel-link ×2), 1 over-denial (dangling-into-draft) (results4.txt)
+$ bash repro3.sh  → TOCTOU alias: GUARD allow, state.json clobbered 1995→7 bytes, first line FORGED (repro3-output.txt)
+$ bash repro3b.sh → bare-dir alias: guard(main) allow, forged memory file present: YES; config clobber: allow
+$ bash regcheck.sh→ a088c6a / d0e2a3b / 3fa6298 all allow the TOCTOU alias clobber (regcheck-output.txt)
+```
+
+Nothing committed; worktree clean.

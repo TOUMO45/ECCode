@@ -1,0 +1,18 @@
+=== TOCTOU: alias to the record made in the same command, then written (main session) ===
+GUARD: allow
+state.json first line now: FORGED
+size 1995 -> 7 ; HEAD of real record clobbered: YES
+
+=== dangling link whose target is a new memory/evidence file (forged lesson, main session) ===
+GUARD: deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+forged lesson written into the record: YES, contents: {"status":"verified"}
+
+=== a role within its claim, same trick, onto evidence (forged evidence a handoff could cite) ===
+GUARD: deny: ECCode project record files are written only by the eccode CLI. Use eccode commands; never
+(guard decision above; bash would create .eccode/evidence/forged.log through src/dl)
+
+=== for contrast: the same alias when it ALREADY exists on disk is denied ===
+GUARD: deny: lk/state.json is, or lies under, a symbolic link resolving to /tmp/claude-0/-home-user-ECC
+bare-dir alias -> forge memory; guard(main): allow ; guard(backend-engineer): deny
+forged memory file present in real record: YES
+bare-dir alias -> clobber config; guard(main): allow
