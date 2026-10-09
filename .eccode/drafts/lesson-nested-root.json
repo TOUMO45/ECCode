@@ -1,0 +1,79 @@
+{
+  "layer": "debugging",
+  "trust": "internal",
+  "content": {
+    "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record",
+    "problem": "A PreToolUse hook (tool-call guard) that maps each file write to a project record took the project root from the harness's project directory (CLAUDE_PROJECT_DIR) before anything else. In a repository that contains more than one record (a monorepo, an examples directory, a nested example app with its own .eccode/), every write into the nested project was judged by the OUTER record: the nested project's reviewers were denied their own draft area and its authors were denied their own artifacts directory (wrong root). Dispatches fail even though the agent did exactly what its role allows.",
+    "symptoms": [
+      "PreToolUse hook denies a reviewer's Write to <nested>/.eccode/reviews/drafts/...: \"architecture-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.\"",
+      "Author role (product-architect) denied every Write under <nested>/.eccode/artifacts/ although that is its draft area",
+      "draft area denied only in a nested project (examples/<app>/, monorepo package); the same role in a top-level project is allowed",
+      "the denial message names paths relative to the outer repository (examples/<app>/.eccode/...) instead of the nested project",
+      "agent falls back to writing its review from a scratch path, or asks the orchestrator to copy files in"
+    ],
+    "component": "PreToolUse hook / tool-call guard (scripts/hooks/guard.js): project root resolution (findRoot) for Edit/Write/Bash targets in nested projects",
+    "environment": { "node": ">=18.17" },
+    "fingerprint": "guard-root-from-harness-project-dir:nested-record-judged-by-outer-record:draft-area-denied",
+    "occurredAt": "2026-10-09",
+    "reproduction": {
+      "steps": [
+        "Check script: node .eccode/drafts/nested-root-check.js <guard.js>. It runs the GUARD FILE GIVEN AS ARGUMENT (not scripts/hooks/guard.js). It builds a throwaway git repo with an outer record and a nested examples/app record (lib/project init), then pipes two PreToolUse payloads to that guard with CLAUDE_PROJECT_DIR=<outer> and cwd=<outer>, agent_type eccode:architecture-reviewer: (a) Write examples/app/.eccode/reviews/drafts/architecture-1.json must be allowed; (b) Write examples/app/.eccode/state.json must be denied. Exit 0 if both are right, 1 if the guard misjudges, 2 on harness error.",
+        "Reproduction: .eccode/drafts/guard-under-test.js = copy of scripts/hooks/guard.js at commit a088c6a (pre-repair, sha256 25bb07dc...), run as: node .eccode/drafts/nested-root-check.js .eccode/drafts/guard-under-test.js -> exit 1; nestedDraftWrite 'denied (wrong)' with the pilot's exact message; nestedRecordWrite 'denied (correct)'.",
+        "Verification: the same file replaced by a copy of the current scripts/hooks/guard.js (HEAD ad69e6d, file last changed in 1fcda26, sha256 d43f4b54...), identical command -> exit 0.",
+        "Caveat: both guard copies load lib/ two directories up, i.e. the CURRENT engine (HEAD ad69e6d), not a088c6a's lib/. The functions the guard uses exist in both versions; the only variable between the failing and the passing run is the guard file itself.",
+        "Original occurrence: RescueStock pilot (examples/rescuestock/.eccode), runs run-mv16bo0q (architecture-reviewer, Write to .eccode/reviews/drafts/ denied) and run-mv16pz5f (product-architect, every Write under .eccode/artifacts/ denied); examples/rescuestock/docs/pilot-report.md."
+      ],
+      "evidence": ["ev:ev-mv1aqo8u-01378a06"]
+    },
+    "rootCause": {
+      "explanation": "Pre-repair guard (commit a088c6a, scripts/hooks/guard.js): `const root = findRoot(process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd());` then, for Edit/Write, `const abs = path.resolve(input.cwd || root, target); const rel = toPosix(path.relative(root, abs));`. findRoot was lexical: `if (fs.existsSync(path.join(dir, '.eccode', 'events.jsonl'))) return dir;`. The harness sets CLAUDE_PROJECT_DIR to the outer repository, so root = outer and rel = 'examples/app/.eccode/reviews/drafts/architecture-1.json'. Role draft areas are matched relative to root ('.eccode/reviews/drafts/**', '.eccode/artifacts/**'), so the nested draft area matched nothing and checkEdit fell through to `out('deny', `${role} reviews/designs but does not edit project files; ...`)`. One root per hook call, taken from the harness, cannot be right for a target that lives under a different record. Repaired guard (merged in 0.3.1; file last changed in 1fcda26): (1) the hook cwd is tried before the harness dir: `const root = findRoot(input.cwd || process.cwd()) || findRoot(process.env.CLAUDE_PROJECT_DIR || process.cwd());`; (2) every target picks its own root from its real path: `const abs = realize(lexical); ... const fileRoot = findRoot(path.dirname(abs)) || root; // the nearest record above the file decides` and `rel = path.relative(fileRoot, abs)`. Finding from this investigation: in the check (and in the pilot, where the orchestrator's cwd was the outer repo) the hook cwd IS the outer repository, so the cwd-before-CLAUDE_PROJECT_DIR reordering alone changes nothing; the per-target root (2) is what fixes the pilot case. findRoot now walks real paths and accepts `<dir>/.eccode` only if it is a real directory and not a symbolic link (`!fs.lstatSync(rec).isSymbolicLink() && fs.statSync(rec).isDirectory()`), holds events.jsonl, and `dir` does not itself lie inside another record (`!insideRecord(dir)`). Record files are denied on both the lexical and the real path before any root is chosen (`recordHit(lexical)`), so a nested root can never turn a record into ordinary files. Evidence: the same check fails with the a088c6a guard copy and passes with the current guard copy; the guard file is the only variable.",
+      "evidence": ["ev:ev-mv1aqo8u-01378a06", "ev:ev-mv1aqrh5-0115da0c"]
+    },
+    "failedAttempts": [
+      {
+        "approach": "Round 1 (commit ffbdc8d): 'nearest .eccode wins', resolved lexically: walk up from the target and take the first directory with .eccode/events.jsonl.",
+        "whyFailed": "Independent review F2: a record planted inside the record (`mkdir -p .eccode/.eccode && cp -r ./.eccode/. .eccode/.eccode/`, or `init --root .eccode`) became the nearest root, so the outer record's own files were judged as that bogus project's ordinary files and the main session could write them. Lesson: a directory lying inside a record must never count as a root."
+      },
+      {
+        "approach": "Round 2 (d0e2a3b): record-directory regexes (RECORD_DIR_WRITE etc.) to refuse shell commands that copy or plant a record, keeping the lexical root search.",
+        "whyFailed": "Re-review G1/G8: bypassed by prefixed or quoted spellings (`cp -r ./.eccode/. \"$PWD/.eccode/.eccode\"`; the regex wanted the bare word `.eccode`) and by an alias `ln -s \"$PWD/.eccode\" rec`: findRoot saw rec/.eccode/events.jsonl through the link, rec became the root, and `Write rec/state.json` was allowed. Patterns over command text cannot enumerate spellings; this led to the structural rewrite on real paths (3fa6298)."
+      },
+      {
+        "approach": "Round 4 (beb7fbb): after the real-path rewrite, narrowing the 'line creates a link and writes' rule to fire only when a link operand textually names a record (mentionsRecord), to stop over-denying record-free build lines (finding I1).",
+        "whyFailed": "Re-review J1: a two-turn chained alias defeats it. Turn 1 `ln -s \"$PWD/.eccode\" a` (single target, allowed); turn 2 `ln -s a b && echo FORGED > b/state.json` names no record, b does not exist yet so realize() falls back to the lexical path, and bash clobbered the real state.json (1995 -> 7 bytes). Closed in 1fcda26: a link operand that resolves through existing links into a record counts as a record operand."
+      }
+    ],
+    "solution": {
+      "description": "Do not take one project root per hook call from the harness. For every write target: (1) resolve its real path through existing links (dangling links included); (2) deny if either the lexical or the real path lies under a record directory other than its draft areas (.eccode/drafts, .eccode/artifacts, .eccode/reviews/drafts), before any root is chosen; (3) choose the target's root as the nearest ancestor of the REAL path whose .eccode is a real, non-link directory holding events.jsonl and which does not itself lie inside another record; (4) judge ownership and draft areas relative to that root. Use the hook cwd before CLAUDE_PROJECT_DIR only as the fallback root. Treat a link operand that resolves into a record (directly or through a chain) as a record operand. Keep the nested-project case as a regression test that runs the hook with CLAUDE_PROJECT_DIR and cwd pointing at the outer repo.",
+      "tradeoffs": "The guard still reads commands rather than sandboxing them: shell writes it does not parse as writes (rm of unknown shape, git apply, patch, curl -o, a link that lives outside the project, hard links sharing an inode) remain documented residuals, with completion accounting and review as the backstop. Over-denials are accepted to keep the record safe: a line with a computed, record-free link operand beside another write is refused (J2); `>\"|\"` is read as the clobber operator; a role's mv of a project file into its draft area is refused for the source; an inline shell program whose text names a record path after a redirect is refused even when its target is a draft area (use the Write tool for drafts). Real-path resolution costs a few stat/realpath calls per target per tool call. An implementer with a record planted inside its claim is locked out of that claim rather than re-rooted."
+    },
+    "verification": {
+      "evidence": ["ev:ev-mv1aqrh5-0115da0c", "ev:ev-mv1ar25z-01bc1bdf"],
+      "regressionTest": "node --test tests/guard-verification-repairs.test.js tests/review-F4-F5-guard.test.js tests/hooks-install.test.js (30/30 pass, ev:ev-mv1ar25z-01bc1bdf). Nested case: tests/guard-verification-repairs.test.js 'NESTED: a project nested in a repository with its own record is judged by its own record'. Failed attempts covered by 'REVIEW: a record planted inside a record never re-roots the guard; the record directory itself is the CLI's', 'REVIEW 2: targets are judged on their real path for everyone: aliases, spellings, directory operations, pipes', 'REVIEW 3: a link created and written through in one line, and a dangling link that already exists, cannot reach the record'. Verification run ev:ev-mv1aqrh5-0115da0c: the reproduction command, identical, with .eccode/drafts/guard-under-test.js replaced by a copy of the current scripts/hooks/guard.js (HEAD ad69e6d, file last changed in 1fcda26) -> exit 0, nested draft allowed, nested record denied."
+    },
+    "sources": [
+      { "title": "ECCode CHANGELOG.md, 0.3.1 'The guard (F4, F5, F6; pilot), restructured on real paths' (internal)", "url": "file:///home/user/ECCode/CHANGELOG.md", "checkedAt": "2026-10-09" },
+      { "title": "Independent review of the guard repairs, five rounds ffbdc8d..1fcda26 (findings F2, G1/G8, H1/H2, I1, J1/J2/J3) (internal)", "url": "file:///home/user/ECCode/docs/evidence/verification-0.3.0/guard-repairs-review/REVIEW.md", "checkedAt": "2026-10-09" },
+      { "title": "RescueStock pilot report, runs run-mv16bo0q and run-mv16pz5f (internal)", "url": "file:///home/user/ECCode/examples/rescuestock/docs/pilot-report.md", "checkedAt": "2026-10-09" }
+    ],
+    "appliesWhen": [
+      "any hook or guard (PreToolUse hook, pre-commit hook, policy check) that maps file writes to a project record or project root, in a repository that contains more than one record",
+      "monorepos where packages or services carry their own project record or config directory",
+      "example apps or pilots nested under examples/ in a toolkit repository that has its own .eccode/",
+      "a role is denied its own draft area (reviews/drafts, artifacts, drafts) only when the project is nested, with a message whose path is relative to the outer repository",
+      "designing root discovery that must resist symlink aliases or a record copied inside a record (wrong root, re-rooting)"
+    ],
+    "notApplicableWhen": [
+      "a reviewer or designer was denied because it wrote outside its draft area in the CORRECT project (the denial path is relative to the nested project itself): that is the role rule working, not a wrong root",
+      "a denial caused by a missing or mismatched task claim ('outside the ownership of <role>'s claimed task(s)'): claim the task or report the need to the orchestrator",
+      "harnesses that do not pass cwd or a project directory to the hook, or hooks that receive no file path: root resolution there is a different problem",
+      "single-record repositories: the harness project directory and the target's nearest record coincide",
+      "the eccode CLI itself writing to the wrong record (e.g. `eccode init` without --root walking up to the outer record): same family of symptom, different component; pass --root explicitly",
+      "a Bash heredoc or inline program refused because its TEXT names a record path ('ECCode project record files are written only by the eccode CLI'): that is the raw-text over-denial, not a wrong root; write drafts with the Write tool",
+      "a record file write denied in a nested project: record files are written only by the CLI everywhere; this is correct behaviour",
+      "env:node <18.17"
+    ],
+    "confidence": "high",
+    "tags": ["nested project", "monorepo", "examples directory", "PreToolUse hook", "guard", "draft area denied", "wrong root", "project root resolution", "CLAUDE_PROJECT_DIR", "symlink alias", "real path", "findRoot", "record", "reviews/drafts", "artifacts"]
+  }
+}
