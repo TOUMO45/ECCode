@@ -1,0 +1,67 @@
+{
+  "decision": "approve",
+  "summary": "Re-ran npm test (285 pass, 0 fail, 0 todo) and test/eval/budget.test.js (5 pass); called checkBudget on the real eval/usage.log: ok=false, fullTuneRuns=12, reason '12 full tune CLI runs already logged (max 8)'. F8 and F10 are fixed and the stale todo is gone. One docs line still contradicts usage.log (README line 123), which is the same kind of defect as F9, a minor finding that does not block; please fix it.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "F8: isFullTune counts real statuses and the cap fires on the real usage.log",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv08nkhz-01b8d96a",
+        "ev:ev-mv08nkei-015c82d8",
+        "artifact:eval/lib/budget.js",
+        "artifact:test/eval/budget.test.js"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "Full suite green with no todo masking a miss (stale fallback-tune todo removed)",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv08nh94-014ad60f"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "Docs run counts match usage.log, no human acceptance claimed, commit hashes real, .eccode not committed",
+      "met": true,
+      "evidence": [
+        "artifact:README.md",
+        "artifact:docs/eval-results.md",
+        "artifact:docs/operations.md",
+        "artifact:eval/tuning-log.md",
+        "artifact:eval/usage.log"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F11",
+      "severity": "minor",
+      "title": "README line 123 still states 15 usage.log entries and USD 1.454",
+      "detail": "eval/usage.log has 16 entries; sum of costUsd is 1.5515 (docs/eval-results.md says 16 entries, USD 1.552, which is correct). README.md line 123 says 15 entries totalling USD 1.454. The other run counts (12 full tune runs, cap 8, overrun by 4, 3 holdout runs) match the log in README, operations.md, eval-results.md and tuning-log.md. Commits 679e3bc and e4f55a2 exist in git log; .eccode is untracked (git ls-files has none). No human acceptance is claimed anywhere I read.",
+      "evidence": [
+        "artifact:README.md",
+        "artifact:eval/usage.log"
+      ],
+      "recommendation": "Change README line 123 to 16 entries and USD 1.552 (or drop the figures and point to eval-results.md). Resolved when README, eval-results.md and usage.log agree."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "F8",
+      "evidence": [
+        "ev:ev-mv08nkhz-01b8d96a",
+        "ev:ev-mv08nkei-015c82d8"
+      ],
+      "resolution": "isFullTune now counts PASS/FAIL/INCOMPLETE/COMPLETE; checkBudget on real usage.log returns ok=false with 12 runs; regression tests pass."
+    },
+    {
+      "id": "F10",
+      "evidence": [
+        "artifact:docs/eval-results.md"
+      ],
+      "resolution": "Commit 679e3bc/e4f55a2 now exist and docs/eval-results.md states the run gitCommit f1a82c4 was a base commit with an uncommitted tree; limits disclosed honestly."
+    }
+  ]
+}

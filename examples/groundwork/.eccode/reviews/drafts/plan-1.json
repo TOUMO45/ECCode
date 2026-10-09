@@ -1,0 +1,119 @@
+{
+ "decision": "changes_requested",
+ "summary": "Plan validates and covers D1-D10 with disjoint parallel ownership and a sound holdout design, but docs ordering, post-tuning regression checks and the lack of an agent-spend budget need fixing before approval.",
+ "criteria": [
+  {
+   "id": "C1",
+   "description": "Every D-criterion (D1-D10) maps to a task with acceptance criteria and a verification command",
+   "met": true,
+   "evidence": [
+    "ev:ev-mv00ym3i-01e9d465",
+    "artifact:.eccode/artifacts/plan/plan.json"
+   ]
+  },
+  {
+   "id": "C2",
+   "description": "Parallel tasks have disjoint file ownership; no gaps; dependency order is acyclic and matches data flow",
+   "met": true,
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.json"
+   ]
+  },
+  {
+   "id": "C3",
+   "description": "Holdout protection: manifest, run cap, authored by test-engineer, excluded from BE/AI, procedural controls disclosed",
+   "met": true,
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.json",
+    "artifact:.eccode/artifacts/plan/plan.md"
+   ]
+  },
+  {
+   "id": "C4",
+   "description": "Docs/D9/D10 reflect the final state of the code and eval results",
+   "met": false,
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.json"
+   ]
+  },
+  {
+   "id": "C5",
+   "description": "Cost realism against the remaining harness budget (about 56 USD)",
+   "met": false,
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.md"
+   ]
+  },
+  {
+   "id": "C6",
+   "description": "Lesson decisions",
+   "met": true,
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.json"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "major",
+   "title": "docs-devops does not depend on live-eval",
+   "detail": "docs-devops depends only on browser-e2e, so it can run in parallel with live-eval. The README must contain measured eval results and cost rules, and the clean-checkout npm test must run after live-eval changes src/ai/prompt.js, src/ai/fallback.js and src/verify/stopwords.js. The critical path in plan.md also ends live-eval -> docs, contradicting the task graph.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.json"
+   ],
+   "recommendation": "Add live-eval to docs-devops dependencies. Resolved when plan.json shows it and plan validate passes."
+  },
+  {
+   "id": "F2",
+   "severity": "major",
+   "title": "No regression check after tuning edits; live-eval verification is only test:live",
+   "detail": "live-eval modifies prompt.js, fallback.js and stopwords.js (built earlier by ai-providers and verifier-notes) after the unit, API, eval and browser suites passed, yet its verification command is only npm run test:live. Stoplist or fallback changes can break M1b/M1c, fallback-tune, determinism and browser fixtures.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.json"
+   ],
+   "recommendation": "Require npm test and npm run test:browser green after the last tuning change (acceptance criterion or verification command), plus M1b 100% and M1c <=2% re-run. Note that stopwords.js is backend-owned in spec section 11 and edits go through the tuning log."
+  },
+  {
+   "id": "F3",
+   "severity": "major",
+   "title": "No agent-spend budget; live-eval allowances are unrealistic for the remaining harness budget",
+   "detail": "The plan has 13 tasks, 8 phase gates and a verification gate but no estimate of agent spend. It relies on the spec figures of a 3 USD per-run cap and a 40 USD aggregate live-eval budget (8 tune runs plus holdout), about 70 percent of the roughly 56 USD remaining. The spec estimates real runs at 0.7-2.0 USD and calls the estimates unmeasured. An overrun would halt delivery before docs and verification.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.md"
+   ],
+   "recommendation": "Add a budget table to plan.md: expected agent spend per phase, and a live-eval aggregate cap that fits (suggest <=12 USD, <=4 tune runs, per-run cap 1.5 USD, stop-and-report rule at 70 percent of the harness budget). Reflect it in live-eval acceptance criteria."
+  },
+  {
+   "id": "F4",
+   "severity": "minor",
+   "title": "Frontend phase verification is only node --check",
+   "detail": "D1 criteria (overflow, focus, touch targets, states) are untested until browser-e2e, so the frontend phase gate verifies little. test/support/mock-api.js is produced but nothing exercises it.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.json"
+   ],
+   "recommendation": "Either state that D1 evidence is deferred to tests-e2e, or add a small node:test asserting every spec 7.3 data-testid exists in public/."
+  },
+  {
+   "id": "F5",
+   "severity": "minor",
+   "title": "Holdout run-count inconsistency",
+   "detail": "plan.md risks say holdout 2 per provider, live-eval criteria say one run each. The spec says cap 2, second only for a harness defect.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.md"
+   ],
+   "recommendation": "State one run each, a second only after a harness defect and disclosed."
+  },
+  {
+   "id": "F6",
+   "severity": "info",
+   "title": "Holdout read restriction is procedural; lessonDecisions empty",
+   "detail": "The restriction on backend and AI reading eval/holdout is policy plus manifest, run log and git-history review, as the spec states openly. Memory has no records, so empty lessonDecisions is acceptable.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.md"
+   ],
+   "recommendation": "No change required; keep the git-history inspection in the verification gate."
+  }
+ ],
+ "resolvedFindings": []
+}

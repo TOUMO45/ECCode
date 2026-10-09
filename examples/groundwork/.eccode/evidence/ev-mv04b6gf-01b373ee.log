@@ -1,0 +1,29 @@
+$ npm run eval -- --provider fallback --holdout
+# cwd: .
+# exit: 1
+
+> groundwork@1.0.0 eval
+> node --disable-warning=ExperimentalWarning eval/run.js --provider fallback --holdout
+
+GROUNDWORK EVAL REPORT  provider=fallback  set=all  HOLDOUT
+Thresholds are unattended defaults, Q3; changes need a recorded user decision.
+Fallback extractor results: no model involved; they say nothing about model quality.
+cliVersion=n/a model=fallback-extractor-v1 promptVersion=p2 gitCommit=f1a82c44667dfc379de85452d434cb96f1a35f17 manifestHash=7518992361a6e05fb43629cfc9b399c3dc3359ac652bc4987f914c4e9c784706
+repetitions=1 at=2026-10-08T22:38:22.459Z
+VERDICT: FAIL
+
+M1: PASS  mean 100.0% min 100.0% vs threshold 98%; Wilson95 100.0% [98.4, 100.0] (241/241)
+M1B: PASS  flagged with expected code 63/63; required 100%
+M1C: FAIL  false flags 13/423 = 3.07%; max 2%
+M2: PASS  mean 100.0% min 100.0% vs threshold 55%; Wilson95 100.0% [95.4, 100.0] (80/80)
+M3: PASS  mean 100.0% min 100.0% vs threshold 45%; Wilson95 100.0% [86.2, 100.0] (24/24)
+M4: PASS  10 of 10 cases passed all 1 repetition(s); threshold 10
+M5: PASS  schemaValid=true isFallbackLabel=true byteIdenticalSecondRun=true
+
+Per repetition (M1 / M2 / M3):
+  rep 1: 100.0% / 100.0% / 100.0%
+
+Usage: calls=22 failed=0 inputTokens=0 outputTokens=0 costUsd=0.0000 costUpperBoundUsd=0.0000 cap=3
+Latency ms: mean=0 p95=1
+M1c false flags: c-payments-nat3[WEAK_SUPPORT]; c-payments-nat4[WEAK_SUPPORT]; c-payments-nat5[NAME_NOT_IN_SOURCE]; c-auth-nat7[NAME_NOT_IN_SOURCE]; c-batch-nat13[NAME_NOT_IN_SOURCE]; c-search-nat17[NAME_NOT_IN_SOURCE]; c-search-nat20[NAME_NOT_IN_SOURCE]; hold-03[WEAK_SUPPORT]; hold-07[NAME_NOT_IN_SOURCE]; hold-11[NAME_NOT_IN_SOURCE]
+Report written: eval/reports/fallback-all-holdout-2026-10-08T22-38-22-459Z.json

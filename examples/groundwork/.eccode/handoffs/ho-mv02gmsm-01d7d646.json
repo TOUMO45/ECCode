@@ -1,0 +1,70 @@
+{
+  "from": "test-engineer",
+  "to": "reviewer",
+  "task": "datasets-tune-verifier",
+  "objective": "Provide the tune datasets, verifier corpus and thresholds test so the verifier is measured (M1b, M1c) against the real src/verify.",
+  "context": "Spec 8.1/8.3/8.5 and brief D8. Synthetic data only. Holdout not touched. src/verify/stopwords.js is outside this task's files so no tuning was done; findings are reported instead.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/architecture/brief.md",
+    "SCOPE.md",
+    ".eccode/artifacts/plan/plan.json"
+  ],
+  "dependencies": [
+    "foundation-be"
+  ],
+  "expectedOutput": "eval/tune (12 incidents, 10 injection cases), eval/verifier (notes, fabrications, correct, probes, forbidden-stopwords), eval/thresholds.json, test/eval/thresholds.test.js",
+  "acceptanceCriteria": [
+    "12 tune incidents (40-120 lines, timeline 6-15, actions 2-6) and 10 injection cases with unique canaries",
+    "fabrications.json 63 entries (>=60) with expected codes; correct.json 192 entries (>=150); forbidden-stopwords.txt",
+    "thresholds.json equals brief values and the test asserts it"
+  ],
+  "completedWork": "All data and the test are in place; 10/10 tests pass (0 skipped); full npm test 204 pass, 0 fail, 1 skipped (pre-existing). Measured: M1b 63/63 = 100% with expected codes. M1c pooled 7/429 = 1.63% (<= 2% passes), but the 21-statement natural-paraphrase subset has 7/21 false flags (33%), all in the verifier, not the data. Known-gap probes (not in M1b): 2/6 flagged; lowercase invented product names, negation and inverted claims slip through.",
+  "filesChanged": [
+    "eval/thresholds.json",
+    "eval/tune/incidents/tune-01.json",
+    "eval/tune/incidents/tune-02.json",
+    "eval/tune/incidents/tune-03.json",
+    "eval/tune/incidents/tune-04.json",
+    "eval/tune/incidents/tune-05.json",
+    "eval/tune/incidents/tune-06.json",
+    "eval/tune/incidents/tune-07.json",
+    "eval/tune/incidents/tune-08.json",
+    "eval/tune/incidents/tune-09.json",
+    "eval/tune/incidents/tune-10.json",
+    "eval/tune/incidents/tune-11.json",
+    "eval/tune/incidents/tune-12.json",
+    "eval/tune/injections/tune-inj-01.json",
+    "eval/tune/injections/tune-inj-02.json",
+    "eval/tune/injections/tune-inj-03.json",
+    "eval/tune/injections/tune-inj-04.json",
+    "eval/tune/injections/tune-inj-05.json",
+    "eval/tune/injections/tune-inj-06.json",
+    "eval/tune/injections/tune-inj-07.json",
+    "eval/tune/injections/tune-inj-08.json",
+    "eval/tune/injections/tune-inj-09.json",
+    "eval/tune/injections/tune-inj-10.json",
+    "eval/verifier/correct.json",
+    "eval/verifier/fabrications.json",
+    "eval/verifier/forbidden-stopwords.txt",
+    "eval/verifier/notes/auth.json",
+    "eval/verifier/notes/batch.json",
+    "eval/verifier/notes/payments.json",
+    "eval/verifier/notes/search.json",
+    "eval/verifier/probes.json",
+    "test/eval/thresholds.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv02fyni-01bd7f84",
+    "ev:ev-mv02g4in-01b85263"
+  ],
+  "remainingIssues": [
+    "Verifier false flags on natural paraphrase: sentence-initial generic words (Roughly x3, Half, Billing) trigger NAME_NOT_IN_SOURCE; WEAK_SUPPORT on paraphrases with synonyms (revert vs roll back; fall vs falling). The pooled M1c margin (1.63% vs 2%) is thin and will move as other eval files are added. Spec 5.5 allows adding generic stopwords (e.g. roughly, half, about, approximately); that needs the owner of src/verify/stopwords.js and an eval/tuning-log.md entry.",
+    "Known verifier blind spots (probes.json, 4 of 6 slip through): lowercase invented system names, negation, inverted claims, same-word wrong cause. The guarantee statement already says it does not prove meaning; M1b measures only the seeded S1 kinds.",
+    "M1b reached 100% on the first run, and the fabrications were authored by one person who knew the rules; independent adversarial authoring is advisable.",
+    "Corpus statements were written by the same author as the labels, mostly close paraphrase; real CLI paraphrase false-flag rate is unmeasured until a live run. Holdout set and MANIFEST belong to another task.",
+    "Incident files' correctStatements are included for injection cases too (timeline and action only, no summary statements)."
+  ],
+  "nextAction": "backend-engineer: decide on and log any generic-stopword additions (roughly, half) in eval/tuning-log.md, re-run test/eval/thresholds.test.js; qa/reviewer: author the holdout set independently.",
+  "lessonsConsulted": []
+}

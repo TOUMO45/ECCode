@@ -1,0 +1,77 @@
+{
+ "decision": "approve",
+ "summary": "The phase delivers the harness, datasets, scorer, budget guard and holdout manifest guard, all re-verified. The quality misses (fallback M2 47.5%, holdout M1c 3.07%, live M4 8/10) are real and still open. They are disclosed and the thresholds are unweakened. They are bound by registered risks RISK-13/14/15, which the engine shows as open, so they cannot ship silently. I accept this as an adequate substitute for the plan amendment only because the verification gate must re-check them. This approval does not claim the quality thresholds are met.",
+ "criteria": [
+  {
+   "id": "C1",
+   "description": "Harness, scorer, budget guard and holdout isolation are correct (re-run)",
+   "met": true,
+   "evidence": [
+    "ev:ev-mv02w1ki-015cf954",
+    "artifact:eval/lib/score.js",
+    "artifact:eval/lib/manifest.js"
+   ]
+  },
+  {
+   "id": "C2",
+   "description": "Unmet items are honestly disclosed, thresholds not weakened, and the fallback miss reproduces as reported",
+   "met": true,
+   "evidence": [
+    "artifact:.eccode/artifacts/phase-eval/submission.md",
+    "artifact:eval/thresholds.json",
+    "ev:ev-mv02w1ki-015cf954"
+   ]
+  },
+  {
+   "id": "C3",
+   "description": "Resolution of the misses is tracked so it cannot be silently shipped (engine risk register, surfaced at verification)",
+   "met": true,
+   "evidence": [
+    "ev:ev-mv02w79f-011f55f1",
+    "artifact:.eccode/artifacts/plan/plan.json"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "id": "F5",
+   "severity": "minor",
+   "title": "Carry-forward: RISK-13/14/15 are risk-register controls, not plan criteria",
+   "detail": "Nothing in the plan makes live-eval fail if the two todo tests stay in place. The risk register is the only binding control. Reviewer re-run of the fallback eval (ev:ev-mv02w1xn-01806044, exit 1) reproduced M2 at 47.5%, as disclosed.",
+   "evidence": [
+    "artifact:.eccode/artifacts/plan/plan.json"
+   ],
+   "recommendation": "At the verification gate, do not approve unless (a) the todo in test/eval/fallback-tune.test.js and the todo in test/eval/m1b-m1c.test.js are gone and their assertions pass, or (b) each remaining miss is explicitly reported to the user with a recorded decision. Also require one holdout re-run after the last tuning change and the README D10 gap list."
+  }
+ ],
+ "resolvedFindings": [
+  {
+   "id": "F1",
+   "evidence": [
+    "ev:ev-mv02w79f-011f55f1"
+   ],
+   "resolution": "Mitigated, not resolved as originally defined. The plan gate is user-only and the plan was not amended. The misses are bound by open RISK-13/14/15 with the controls (a)-(e) in the submission, and the verification gate must re-check them (see F5). The fallback M2 miss was re-run and reproduces at 47.5%, so it is neither hidden nor weakened."
+  },
+  {
+   "id": "F2",
+   "evidence": [
+    "artifact:.eccode/artifacts/phase-eval/submission.md"
+   ],
+   "resolution": "Accepted. live-eval is instructed not to consult holdout item ids and to state so in the tuning log. The harness output is unchanged, which is acceptable for a minor finding."
+  },
+  {
+   "id": "F3",
+   "evidence": [
+    "artifact:.eccode/artifacts/phase-eval/submission.md"
+   ],
+   "resolution": "Accepted. The gap is assigned to the README D10 open-risks section (docs-devops) and listed in RISK-14."
+  },
+  {
+   "id": "F4",
+   "evidence": [
+    "artifact:.eccode/artifacts/phase-eval/submission.md"
+   ],
+   "resolution": "Info only. live-eval commits to passing --max-cost 1.5 on every run."
+  }
+ ]
+}

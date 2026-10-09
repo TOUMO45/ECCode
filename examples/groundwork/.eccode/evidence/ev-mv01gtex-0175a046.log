@@ -1,0 +1,205 @@
+$ node --disable-warning=ExperimentalWarning --test 'test/unit/ai/**/*.test.js'
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: success: request shape, headers, usage
+ok 1 - success: request shape, headers, usage
+  ---
+  duration_ms: 32.105679
+  type: 'test'
+  ...
+# Subtest: fenced JSON across several text blocks is accepted
+ok 2 - fenced JSON across several text blocks is accepted
+  ---
+  duration_ms: 4.327189
+  type: 'test'
+  ...
+# Subtest: no key -> unavailable
+ok 3 - no key -> unavailable
+  ---
+  duration_ms: 0.664547
+  type: 'test'
+  ...
+# Subtest: 500 then success retries with backoff; 429 maps to PROVIDER_BUSY when persistent
+ok 4 - 500 then success retries with backoff; 429 maps to PROVIDER_BUSY when persistent
+  ---
+  duration_ms: 38.337595
+  type: 'test'
+  ...
+# Subtest: persistent 500 -> PROVIDER_UNAVAILABLE; 401 not retried
+ok 5 - persistent 500 -> PROVIDER_UNAVAILABLE; 401 not retried
+  ---
+  duration_ms: 25.5882
+  type: 'test'
+  ...
+# Subtest: slow response -> PROVIDER_TIMEOUT, no retry
+ok 6 - slow response -> PROVIDER_TIMEOUT, no retry
+  ---
+  duration_ms: 102.718916
+  type: 'test'
+  ...
+# Subtest: malformed or schema-invalid output: one retry then PROVIDER_BAD_OUTPUT
+ok 7 - malformed or schema-invalid output: one retry then PROVIDER_BAD_OUTPUT
+  ---
+  duration_ms: 13.523601
+  type: 'test'
+  ...
+# Subtest: connection refused -> PROVIDER_UNAVAILABLE and key never in logs
+ok 8 - connection refused -> PROVIDER_UNAVAILABLE and key never in logs
+  ---
+  duration_ms: 1.077365
+  type: 'test'
+  ...
+# Subtest: argv is pinned exactly: no --bare, --tools followed by empty string
+ok 9 - argv is pinned exactly: no --bare, --tools followed by empty string
+  ---
+  duration_ms: 1.847523
+  type: 'test'
+  ...
+# Subtest: env builder: allowlist only, never ANTHROPIC_API_KEY or server variables
+ok 10 - env builder: allowlist only, never ANTHROPIC_API_KEY or server variables
+  ---
+  duration_ms: 0.395098
+  type: 'test'
+  ...
+# Subtest: good run: valid draft, argv/env/cwd as specified, cwd removed, num_turns 2 / tool_use accepted
+ok 11 - good run: valid draft, argv/env/cwd as specified, cwd removed, num_turns 2 / tool_use accepted
+  ---
+  duration_ms: 76.632507
+  type: 'test'
+  ...
+# Subtest: result with fenced JSON and no structured_output is accepted
+ok 12 - result with fenced JSON and no structured_output is accepted
+  ---
+  duration_ms: 36.435294
+  type: 'test'
+  ...
+# Subtest: malformed output is retried once then PROVIDER_BAD_OUTPUT; bad-once succeeds on retry
+ok 13 - malformed output is retried once then PROVIDER_BAD_OUTPUT; bad-once succeeds on retry
+  ---
+  duration_ms: 124.676333
+  type: 'test'
+  ...
+# Subtest: extra fields in structured_output are rejected (model cannot set status)
+ok 14 - extra fields in structured_output are rejected (model cannot set status)
+  ---
+  duration_ms: 123.867113
+  type: 'test'
+  ...
+# Subtest: is_error, budget error, non-zero exit and ENOENT map to PROVIDER_UNAVAILABLE without retry
+ok 15 - is_error, budget error, non-zero exit and ENOENT map to PROVIDER_UNAVAILABLE without retry
+  ---
+  duration_ms: 102.828226
+  type: 'test'
+  ...
+# Subtest: hang -> PROVIDER_TIMEOUT, process group killed, no retry
+ok 16 - hang -> PROVIDER_TIMEOUT, process group killed, no retry
+  ---
+  duration_ms: 303.388074
+  type: 'test'
+  ...
+# Subtest: stdout flood over the cap -> PROVIDER_UNAVAILABLE
+ok 17 - stdout flood over the cap -> PROVIDER_UNAVAILABLE
+  ---
+  duration_ms: 30.007817
+  type: 'test'
+  ...
+# Subtest: concurrency: third request gets PROVIDER_BUSY after the wait
+ok 18 - concurrency: third request gets PROVIDER_BUSY after the wait
+  ---
+  duration_ms: 870.125533
+  type: 'test'
+  ...
+# Subtest: queued request runs when a slot frees within the wait
+ok 19 - queued request runs when a slot frees within the wait
+  ---
+  duration_ms: 870.619182
+  type: 'test'
+  ...
+# Subtest: log records carry no prompt content
+ok 20 - log records carry no prompt content
+  ---
+  duration_ms: 38.499147
+  type: 'test'
+  ...
+# Subtest: fallback: deterministic byte-identical, schema valid, all verified
+ok 21 - fallback: deterministic byte-identical, schema valid, all verified
+  ---
+  duration_ms: 15.935066
+  type: 'test'
+  ...
+# Subtest: fallback: long inputs are capped at 30 timeline statements, still valid and verified
+ok 22 - fallback: long inputs are capped at 30 timeline statements, still valid and verified
+  ---
+  duration_ms: 2.08714
+  type: 'test'
+  ...
+# Subtest: fallback: empty input is valid; provider is labelled fallback
+ok 23 - fallback: empty input is valid; provider is labelled fallback
+  ---
+  duration_ms: 0.540119
+  type: 'test'
+  ...
+# Subtest: fake providers: flagged and clean drafts are deterministic and verify as labelled
+ok 24 - fake providers: flagged and clean drafts are deterministic and verify as labelled
+  ---
+  duration_ms: 2.803194
+  type: 'test'
+  ...
+# Subtest: schema accepts valid draft and returns a copy
+ok 25 - schema accepts valid draft and returns a copy
+  ---
+  duration_ms: 2.688193
+  type: 'test'
+  ...
+# Subtest: schema rejects extra fields at every level, wrong types and bounds
+ok 26 - schema rejects extra fields at every level, wrong types and bounds
+  ---
+  duration_ms: 0.917267
+  type: 'test'
+  ...
+# Subtest: schema enforces 100 statements in total
+ok 27 - schema enforces 100 statements in total
+  ---
+  duration_ms: 1.915917
+  type: 'test'
+  ...
+# Subtest: DRAFT_JSON_SCHEMA is strict at every object level
+ok 28 - DRAFT_JSON_SCHEMA is strict at every object level
+  ---
+  duration_ms: 0.161503
+  type: 'test'
+  ...
+# Subtest: parseJsonText handles plain, fenced, surrounded and garbage
+ok 29 - parseJsonText handles plain, fenced, surrounded and garbage
+  ---
+  duration_ms: 0.464168
+  type: 'test'
+  ...
+# Subtest: prompt: payload cannot break out of delimiters
+ok 30 - prompt: payload cannot break out of delimiters
+  ---
+  duration_ms: 0.499051
+  type: 'test'
+  ...
+# Subtest: prompt: random id per call, bad id rejected, system prompt is fixed text
+ok 31 - prompt: random id per call, bad id rejected, system prompt is fixed text
+  ---
+  duration_ms: 0.622545
+  type: 'test'
+  ...
+# Subtest: ProviderError is fixed-message and assertProvider checks the interface
+ok 32 - ProviderError is fixed-message and assertProvider checks the interface
+  ---
+  duration_ms: 0.311734
+  type: 'test'
+  ...
+1..32
+# tests 32
+# suites 0
+# pass 32
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2679.396369

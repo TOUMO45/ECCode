@@ -1,0 +1,482 @@
+{
+ "id": "tune-06",
+ "title": "DNS record change breaks the API domain",
+ "severity": "SEV1",
+ "startedAt": "2026-04-09T06:40:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "06:40",
+   "author": "tara",
+   "text": "External monitors report api.example.test unreachable from Europe"
+  },
+  {
+   "n": 2,
+   "time": "06:40",
+   "author": "tara",
+   "text": "checking the dashboards for api-gateway"
+  },
+  {
+   "n": 3,
+   "time": "06:40",
+   "author": "vik",
+   "text": "drafting the status page text"
+  },
+  {
+   "n": 4,
+   "time": "06:40",
+   "author": "tara",
+   "text": "nothing unusual in the audit trail"
+  },
+  {
+   "n": 5,
+   "time": "06:40",
+   "author": "vik",
+   "text": "thanks, noted"
+  },
+  {
+   "n": 6,
+   "time": "06:43",
+   "author": "uri",
+   "text": "DNS lookup for api.example.test returns NXDOMAIN"
+  },
+  {
+   "n": 7,
+   "time": "06:43",
+   "author": "tara",
+   "text": "can someone confirm the current error rate"
+  },
+  {
+   "n": 8,
+   "time": "06:43",
+   "author": "vik",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 9,
+   "time": "06:43",
+   "author": "tara",
+   "text": "reading the runbook for api-gateway"
+  },
+  {
+   "n": 10,
+   "time": "06:43",
+   "author": "vik",
+   "text": "holding off on further changes for now"
+  },
+  {
+   "n": 11,
+   "time": "06:46",
+   "author": "vik",
+   "text": "A DNS change was applied at 06:30 by the migration script"
+  },
+  {
+   "n": 12,
+   "time": "06:46",
+   "author": "tara",
+   "text": "keeping an eye on api-gateway metrics"
+  },
+  {
+   "n": 13,
+   "time": "06:46",
+   "author": "vik",
+   "text": "taking notes for the timeline"
+  },
+  {
+   "n": 14,
+   "time": "06:46",
+   "author": "tara",
+   "text": "still reading through the logs"
+  },
+  {
+   "n": 15,
+   "time": "06:46",
+   "author": "vik",
+   "text": "agreed"
+  },
+  {
+   "n": 16,
+   "time": "06:48",
+   "author": "vik",
+   "text": "The script deleted the CNAME record instead of updating it"
+  },
+  {
+   "n": 17,
+   "time": "06:48",
+   "author": "tara",
+   "text": "copying the graph into the ticket"
+  },
+  {
+   "n": 18,
+   "time": "06:48",
+   "author": "vik",
+   "text": "looking at recent changes in the repo"
+  },
+  {
+   "n": 19,
+   "time": "06:48",
+   "author": "tara",
+   "text": "ack, watching the graphs"
+  },
+  {
+   "n": 20,
+   "time": "06:48",
+   "author": "vik",
+   "text": "metrics look flat for now"
+  },
+  {
+   "n": 21,
+   "time": "06:52",
+   "author": "wen",
+   "text": "Decision: recreate the CNAME record by hand"
+  },
+  {
+   "n": 22,
+   "time": "06:52",
+   "author": "tara",
+   "text": "let me know if you need anything"
+  },
+  {
+   "n": 23,
+   "time": "06:52",
+   "author": "vik",
+   "text": "will report back when I know more"
+  },
+  {
+   "n": 24,
+   "time": "06:52",
+   "author": "tara",
+   "text": "paging the secondary just in case"
+  },
+  {
+   "n": 25,
+   "time": "06:52",
+   "author": "vik",
+   "text": "joining the call in a minute"
+  },
+  {
+   "n": 26,
+   "time": "06:55",
+   "author": "vik",
+   "text": "CNAME recreated with TTL 60 seconds"
+  },
+  {
+   "n": 27,
+   "time": "06:55",
+   "author": "tara",
+   "text": "re-running the query to double check"
+  },
+  {
+   "n": 28,
+   "time": "06:55",
+   "author": "vik",
+   "text": "checking the dashboards for api-gateway"
+  },
+  {
+   "n": 29,
+   "time": "06:55",
+   "author": "tara",
+   "text": "drafting the status page text"
+  },
+  {
+   "n": 30,
+   "time": "06:55",
+   "author": "vik",
+   "text": "nothing unusual in the audit trail"
+  },
+  {
+   "n": 31,
+   "time": "07:02",
+   "author": "uri",
+   "text": "Lookups succeed from our resolvers"
+  },
+  {
+   "n": 32,
+   "time": "07:02",
+   "author": "tara",
+   "text": "sharing my screen on the call"
+  },
+  {
+   "n": 33,
+   "time": "07:02",
+   "author": "vik",
+   "text": "can someone confirm the current error rate"
+  },
+  {
+   "n": 34,
+   "time": "07:02",
+   "author": "tara",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 35,
+   "time": "07:02",
+   "author": "vik",
+   "text": "reading the runbook for api-gateway"
+  },
+  {
+   "n": 36,
+   "time": "07:10",
+   "author": "tara",
+   "text": "European monitors green again"
+  },
+  {
+   "n": 37,
+   "time": "07:10",
+   "author": "tara",
+   "text": "still no news from the other team"
+  },
+  {
+   "n": 38,
+   "time": "07:10",
+   "author": "vik",
+   "text": "keeping an eye on api-gateway metrics"
+  },
+  {
+   "n": 39,
+   "time": "07:10",
+   "author": "tara",
+   "text": "taking notes for the timeline"
+  },
+  {
+   "n": 40,
+   "time": "07:10",
+   "author": "vik",
+   "text": "still reading through the logs"
+  },
+  {
+   "n": 41,
+   "time": "07:15",
+   "author": "tara",
+   "text": "Outage lasted roughly 40 minutes for clients using cached NXDOMAIN"
+  },
+  {
+   "n": 42,
+   "time": "07:15",
+   "author": "tara",
+   "text": "confirming with the on-call lead"
+  },
+  {
+   "n": 43,
+   "time": "07:15",
+   "author": "vik",
+   "text": "copying the graph into the ticket"
+  },
+  {
+   "n": 44,
+   "time": "07:15",
+   "author": "tara",
+   "text": "looking at recent changes in the repo"
+  },
+  {
+   "n": 45,
+   "time": "07:20",
+   "author": "wen",
+   "text": "Action item: make the migration script dry run by default, owner vik"
+  },
+  {
+   "n": 46,
+   "time": "07:20",
+   "author": "wen",
+   "text": "nothing unusual in the audit trail"
+  },
+  {
+   "n": 47,
+   "time": "07:20",
+   "author": "uri",
+   "text": "thanks, noted"
+  },
+  {
+   "n": 48,
+   "time": "07:20",
+   "author": "wen",
+   "text": "re-running the query to double check"
+  },
+  {
+   "n": 49,
+   "time": "07:22",
+   "author": "uri",
+   "text": "Action item: add a DNS record count check to monitoring, owner uri"
+  },
+  {
+   "n": 50,
+   "time": "07:22",
+   "author": "vik",
+   "text": "taking notes for the timeline"
+  },
+  {
+   "n": 51,
+   "time": "07:22",
+   "author": "tara",
+   "text": "still reading through the logs"
+  },
+  {
+   "n": 52,
+   "time": "07:22",
+   "author": "vik",
+   "text": "agreed"
+  },
+  {
+   "n": 53,
+   "time": "07:25",
+   "author": "wen",
+   "text": "Closing. Summary: migration script removed the API CNAME record, restored by hand"
+  },
+  {
+   "n": 54,
+   "time": "07:25",
+   "author": "uri",
+   "text": "let me know if you need anything"
+  },
+  {
+   "n": 55,
+   "time": "07:25",
+   "author": "wen",
+   "text": "will report back when I know more"
+  },
+  {
+   "n": 56,
+   "time": "07:25",
+   "author": "uri",
+   "text": "paging the secondary just in case"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "06:40",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "06:43",
+    "lines": [
+     6
+    ]
+   },
+   {
+    "time": "06:52",
+    "lines": [
+     21
+    ]
+   },
+   {
+    "time": "06:55",
+    "lines": [
+     26
+    ]
+   },
+   {
+    "time": "07:02",
+    "lines": [
+     31
+    ]
+   },
+   {
+    "time": "07:10",
+    "lines": [
+     36
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     45
+    ]
+   },
+   {
+    "lines": [
+     49
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 07:10 tara saw European monitors green again.",
+   "cites": [
+    36
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 07:02 uri saw lookups succeed from our resolvers.",
+   "cites": [
+    31
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 06:55 vik recreated the CNAME with TTL 60 seconds.",
+   "cites": [
+    26
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 06:52 wen decided to recreate the CNAME record by hand.",
+   "cites": [
+    21
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 06:43 uri saw the DNS lookup for api.example.test return NXDOMAIN.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 06:40 tara reported external monitors show api.example.test unreachable from Europe.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "Vik found a DNS change was applied at 06:30 by the migration script.",
+   "cites": [
+    11
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "Vik said the script deleted the CNAME record instead of updating it.",
+   "cites": [
+    16
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Tara said the outage lasted roughly 40 minutes for clients using cached NXDOMAIN.",
+   "cites": [
+    41
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: make the migration script dry run by default, owner vik.",
+   "cites": [
+    45
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: add a DNS record count check to monitoring, owner uri.",
+   "cites": [
+    49
+   ]
+  },
+  {
+   "section": "summary",
+   "text": "Wen closed it and summarised that the migration script removed the API CNAME record, restored by hand.",
+   "cites": [
+    53
+   ]
+  }
+ ]
+}

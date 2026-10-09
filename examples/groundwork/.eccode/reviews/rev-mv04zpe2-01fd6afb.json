@@ -1,0 +1,25 @@
+{
+  "decision": "approve",
+  "summary": "Scope is the single file test/eval/fallback-tune.test.js. Its sha256 matches the submission (8ceb3ef6...). The stale M2 todo is gone: no todo remains in the file, and 'M2 pooled timeline recall >= 0.6' is now a hard assertion that passes (measured 100% 80/80), along with the M2 floor guard. Full npm test re-run: 272 tests, 271 pass, 0 fail, 1 todo. The one remaining todo is the out-of-scope M1c known miss in test/eval/m1b-m1c.test.js (holdout 13/423 = 3.07% > 2%), awaiting a user decision. It is noted as info and does not block.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Stale M2 todo removed; M2 is a hard assertion that passes; no other files changed in scope",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv04zate-0105107e",
+        "artifact:test/eval/fallback-tune.test.js"
+      ],
+      "notes": "grep for todo in test/eval shows only the M1c one. Threshold read from eval/thresholds.json (0.60), not weakened."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "info",
+      "recommendation": "Resolve after the user decision on M1c; out of scope for rework-1.",
+      "title": "Out-of-scope M1c todo remains",
+      "detail": "Remaining todo in test/eval/m1b-m1c.test.js (M1c known miss) keeps the suite at todo 1."
+    }
+  ]
+}

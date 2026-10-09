@@ -1,0 +1,433 @@
+{
+ "id": "hold-03",
+ "title": "Login redirect loop after the domain change",
+ "severity": "SEV2",
+ "startedAt": "2026-04-16T09:30:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "09:30",
+   "author": "jun",
+   "text": "Several users cannot sign in, the page just bounces between the app and the login screen"
+  },
+  {
+   "n": 2,
+   "time": "09:30",
+   "author": "kai",
+   "text": "thanks for the update"
+  },
+  {
+   "n": 3,
+   "time": "09:30",
+   "author": "jun",
+   "text": "makes sense"
+  },
+  {
+   "n": 4,
+   "time": "09:34",
+   "author": "kai",
+   "text": "Reproduced it in a private window, the browser gives up with too many redirects"
+  },
+  {
+   "n": 5,
+   "time": "09:34",
+   "author": "kai",
+   "text": "give me a couple of minutes"
+  },
+  {
+   "n": 6,
+   "time": "09:34",
+   "author": "kai",
+   "text": "agreed"
+  },
+  {
+   "n": 7,
+   "time": "09:34",
+   "author": "kai",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 8,
+   "time": "09:34",
+   "author": "jun",
+   "text": "yep"
+  },
+  {
+   "n": 9,
+   "time": "09:40",
+   "author": "kai",
+   "text": "Session cookie is set for the old domain so the app never sees it after login"
+  },
+  {
+   "n": 10,
+   "time": "09:40",
+   "author": "jun",
+   "text": "still digging"
+  },
+  {
+   "n": 11,
+   "time": "09:40",
+   "author": "kai",
+   "text": "one sec"
+  },
+  {
+   "n": 12,
+   "time": "09:40",
+   "author": "jun",
+   "text": "that matches what I'm seeing"
+  },
+  {
+   "n": 13,
+   "time": "09:40",
+   "author": "mara",
+   "text": "anyone have the dashboard link handy?"
+  },
+  {
+   "n": 14,
+   "time": "09:46",
+   "author": "mara",
+   "text": "The domain change went out yesterday evening, the cookie domain setting was not in the checklist"
+  },
+  {
+   "n": 15,
+   "time": "09:46",
+   "author": "jun",
+   "text": "I'll write it up afterwards"
+  },
+  {
+   "n": 16,
+   "time": "09:46",
+   "author": "jun",
+   "text": "same here"
+  },
+  {
+   "n": 17,
+   "time": "09:52",
+   "author": "mara",
+   "text": "Preparing a config change with the new cookie domain"
+  },
+  {
+   "n": 18,
+   "time": "09:52",
+   "author": "kai",
+   "text": "I'll watch the graphs"
+  },
+  {
+   "n": 19,
+   "time": "09:52",
+   "author": "mara",
+   "text": "looking at the logs now"
+  },
+  {
+   "n": 20,
+   "time": "09:52",
+   "author": "mara",
+   "text": "can you say that again?"
+  },
+  {
+   "n": 21,
+   "time": "10:01",
+   "author": "jun",
+   "text": "Heads up that existing sessions will be dropped when this ships, people will have to log in once more"
+  },
+  {
+   "n": 22,
+   "time": "10:01",
+   "author": "mara",
+   "text": "sorry, was in another meeting"
+  },
+  {
+   "n": 23,
+   "time": "10:01",
+   "author": "mara",
+   "text": "right, I remember that one"
+  },
+  {
+   "n": 24,
+   "time": "10:01",
+   "author": "jun",
+   "text": "standing by"
+  },
+  {
+   "n": 25,
+   "time": "10:01",
+   "author": "kai",
+   "text": "hang on, loading the page"
+  },
+  {
+   "n": 26,
+   "time": "10:08",
+   "author": "kai",
+   "text": "Config is deployed to the first region"
+  },
+  {
+   "n": 27,
+   "time": "10:08",
+   "author": "kai",
+   "text": "that's useful, thanks"
+  },
+  {
+   "n": 28,
+   "time": "10:08",
+   "author": "mara",
+   "text": "ping me if you need a second pair of eyes"
+  },
+  {
+   "n": 29,
+   "time": "10:08",
+   "author": "jun",
+   "text": "fair point"
+  },
+  {
+   "n": 30,
+   "time": "10:15",
+   "author": "jun",
+   "text": "Login works from my laptop now"
+  },
+  {
+   "n": 31,
+   "time": "10:15",
+   "author": "mara",
+   "text": "same here"
+  },
+  {
+   "n": 32,
+   "time": "10:15",
+   "author": "mara",
+   "text": "ping me if you need a second pair of eyes"
+  },
+  {
+   "n": 33,
+   "time": "10:15",
+   "author": "mara",
+   "text": "sounds good"
+  },
+  {
+   "n": 34,
+   "time": "10:24",
+   "author": "mara",
+   "text": "Second region done, the redirect errors in the logs have stopped"
+  },
+  {
+   "n": 35,
+   "time": "10:24",
+   "author": "kai",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 36,
+   "time": "10:24",
+   "author": "mara",
+   "text": "let's keep the channel clear for updates"
+  },
+  {
+   "n": 37,
+   "time": "10:30",
+   "author": "kai",
+   "text": "Roughly 40 minutes of broken sign in for anyone who tried between 09:00 and 10:15"
+  },
+  {
+   "n": 38,
+   "time": "10:30",
+   "author": "kai",
+   "text": "right, I remember that one"
+  },
+  {
+   "n": 39,
+   "time": "10:30",
+   "author": "kai",
+   "text": "let me grab coffee and be back in two"
+  },
+  {
+   "n": 40,
+   "time": "10:30",
+   "author": "kai",
+   "text": "I'll watch the graphs"
+  },
+  {
+   "n": 41,
+   "time": "10:30",
+   "author": "jun",
+   "text": "can you say that again?"
+  },
+  {
+   "n": 42,
+   "time": "10:36",
+   "author": "mara",
+   "text": "Action: add the cookie domain to the domain change checklist, I will update the doc"
+  },
+  {
+   "n": 43,
+   "time": "10:36",
+   "author": "kai",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 44,
+   "time": "10:36",
+   "author": "mara",
+   "text": "same here"
+  },
+  {
+   "n": 45,
+   "time": "10:36",
+   "author": "kai",
+   "text": "is the status page updated?"
+  },
+  {
+   "n": 46,
+   "time": "10:40",
+   "author": "kai",
+   "text": "I will also add a smoke test that logs in and checks the cookie after every domain or proxy change"
+  },
+  {
+   "n": 47,
+   "time": "10:40",
+   "author": "mara",
+   "text": "still digging"
+  },
+  {
+   "n": 48,
+   "time": "10:40",
+   "author": "mara",
+   "text": "that's useful, thanks"
+  },
+  {
+   "n": 49,
+   "time": "10:40",
+   "author": "kai",
+   "text": "fair point"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "09:30",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "09:34",
+    "lines": [
+     4
+    ]
+   },
+   {
+    "time": "09:52",
+    "lines": [
+     17
+    ]
+   },
+   {
+    "time": "10:08",
+    "lines": [
+     26
+    ]
+   },
+   {
+    "time": "10:15",
+    "lines": [
+     30
+    ]
+   },
+   {
+    "time": "10:24",
+    "lines": [
+     34
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     42
+    ]
+   },
+   {
+    "lines": [
+     46
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 09:30 jun reported users bouncing between the app and the login screen.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 09:34 kai reproduced the redirect loop in a private window.",
+   "cites": [
+    4
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "The session cookie was set for the old domain so the app never saw it after login.",
+   "cites": [
+    9
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "The cookie domain setting was missing from the domain change checklist.",
+   "cites": [
+    14
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 09:52 mara prepared a config change with the new cookie domain.",
+   "cites": [
+    17
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:08 kai deployed the config to the first region.",
+   "cites": [
+    26
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:15 jun confirmed login worked.",
+   "cites": [
+    30
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:24 mara finished the second region and saw the redirect errors stop.",
+   "cites": [
+    34
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Sign in was broken for roughly 40 minutes for anyone who tried between 09:00 and 10:15.",
+   "cites": [
+    37
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Mara will add the cookie domain to the domain change checklist.",
+   "cites": [
+    42
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Kai will add a smoke test that logs in and checks the cookie after every domain or proxy change.",
+   "cites": [
+    46
+   ]
+  }
+ ]
+}

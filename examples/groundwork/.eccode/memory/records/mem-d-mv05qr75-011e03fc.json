@@ -1,0 +1,106 @@
+{
+  "id": "mem-d-mv05qr75-011e03fc",
+  "layer": "debugging",
+  "scope": "project",
+  "project": "Groundwork",
+  "status": "provisional",
+  "trust": "internal",
+  "createdAt": "2026-10-08T23:18:28.940Z",
+  "createdBy": "learning-debugger",
+  "revisions": [
+    {
+      "rev": 1,
+      "at": "2026-10-08T23:18:28.940Z",
+      "by": "learning-debugger",
+      "reason": "created",
+      "content": {
+        "title": "Verification commands that cd into a previous session's scratch directory fail instantly with exit 1 - environment artefact, not a product defect",
+        "problem": "Recorded 'clean copy' checks (npm test, npm run test:browser, docs-check.sh) failed with exit 1 in 4-5 ms in every reconcile re-run while npm test in the working tree passes (271 pass). They were read as clean-checkout regressions but never executed the product.",
+        "symptoms": [
+          "bash: line 1: cd: /tmp/claude-0/-mnt-sbx-work/b49d9a7f-.../scratchpad/clean: No such file or directory",
+          "evidence exitCode 1 with durationMs 4-5",
+          "reconcile --verify re-runs recorded checks and they fail again",
+          "clean copy npm test / test:browser fail but working tree passes"
+        ],
+        "component": "verification evidence / reconcile re-run of recorded commands",
+        "environment": {
+          "node": ">=22.5",
+          "dependencies": "none (no node_modules; package.json has no deps)",
+          "os": "linux"
+        },
+        "fingerprint": "recorded-check-cd-into-dead-session-scratchpad",
+        "reproduction": {
+          "steps": [
+            "bash -c 'cd /tmp/claude-0/-mnt-sbx-work/b49d9a7f-61fa-4ed0-84fa-9deed1e1b1a4/scratchpad/clean && npm test'"
+          ],
+          "evidence": [
+            "ev:ev-mv05py6h-010514d0"
+          ]
+        },
+        "rootCause": {
+          "explanation": "The recorded commands hardcode an absolute path inside the session scratchpad of session b49d9a7f, which no longer exists (only the current session dir exists under /tmp/claude-0/-mnt-sbx-work/). The scratchpad clean copy and the helper ../docs-check.sh lived there and were not persisted. The shell fails at 'cd' (4-5 ms), before npm runs. Ruled out: gitignored or untracked files missing from a clean copy (a copy built from git ls-files -co --exclude-standard, excluding .eccode, passes npm test 271/272 pass 0 fail 1 todo and test:browser 28/28; the project has zero npm dependencies so no install step is missing). Caveat: the original clean copy contents are unknowable now; its setup could have differed, but the log proves failure occurred at cd.",
+          "evidence": [
+            "ev:ev-mv055pue-04a866da",
+            "ev:ev-mv055ptu-03514f16",
+            "ev:ev-mv055pt7-0237238b",
+            "ev:ev-mv05q4b0-01af603f",
+            "ev:ev-mv05qcd4-014f93eb"
+          ]
+        },
+        "failedAttempts": [
+          {
+            "approach": "Hypothesis: files gitignored or untracked are missing from the clean copy (data/, eval/reports/, .env, node_modules)",
+            "whyFailed": "Rebuilt a clean copy honouring .gitignore: npm test and test:browser pass. No ignored path is required by tests."
+          },
+          {
+            "approach": "Hypothesis: missing npm install in the clean copy",
+            "whyFailed": "package.json declares no dependencies and no node_modules exists in the working tree either."
+          }
+        ],
+        "solution": {
+          "description": "Rework: the owner of the verification evidence (ai-engineer/orchestrator) records clean-copy checks as one self-contained command that creates the copy itself in a fresh mktemp -d (git ls-files -co --exclude-standard, excluding .eccode) then runs npm test and npm run test:browser there, with no dependency on a prior session path or on ../docs-check.sh. Any docs-check script must be committed into the repo (e.g. scripts/) or inlined. Supersede the failed evidence by passing re-runs; do not edit src/ or eval/.",
+          "tradeoffs": "Self-contained commands are longer and re-copy the tree on each run (about 8-10 s). Also note nothing is committed (git log has one commit, all product files untracked), so a true git-clone clean checkout is not testable until files are committed; the ls-files -co approximation is used instead."
+        },
+        "verification": {
+          "evidence": [
+            "ev:ev-mv05q4b0-01af603f",
+            "ev:ev-mv05qcd4-014f93eb"
+          ],
+          "regressionTest": "npm test"
+        },
+        "sources": [],
+        "appliesWhen": [
+          "A recorded check fails in milliseconds with 'No such file or directory' on a tmp or scratchpad path",
+          "reconcile re-runs evidence that depends on files outside the repo or from an earlier session",
+          "A clean-copy or clean-checkout verification disagrees with the working tree"
+        ],
+        "notApplicableWhen": [
+          "The clean-copy check ran for seconds and failed with test assertions (that is a real missing-file or ignored-file defect)",
+          "The failing path is inside the repo and exists"
+        ],
+        "confidence": "medium",
+        "tags": [
+          "reconcile",
+          "clean-copy",
+          "scratchpad",
+          "evidence"
+        ]
+      }
+    }
+  ],
+  "reviews": [],
+  "evidenceSnapshots": {},
+  "citations": [],
+  "checks": [
+    {
+      "at": "2026-10-08T23:24:17.419Z",
+      "by": "orchestrator",
+      "verdict": "provisional",
+      "reasons": [
+        "status provisional: not independently verified; treat as a hypothesis"
+      ]
+    }
+  ],
+  "supersededBy": null,
+  "supersedes": []
+}

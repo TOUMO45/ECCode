@@ -1,0 +1,24 @@
+GROUNDWORK EVAL REPORT  provider=cli  set=all  tune
+Thresholds are unattended defaults, Q3; changes need a recorded user decision.
+Live numbers below come from the Claude Code CLI (`claude -p`) only; fallback results are reported separately.
+cliVersion=2.1.295 model=claude-haiku-5-5 promptVersion=p1 gitCommit=f1a82c44667dfc379de85452d434cb96f1a35f17 manifestHash=n/a
+repetitions=3 at=2026-10-08T22:26:06.412Z
+VERDICT: FAIL
+
+M1: PASS  mean 91.9% min 91.5% vs threshold 90%; Wilson95 91.9% [89.9, 93.6] (763/830)
+M1B: PASS  flagged with expected code 63/63; required 100%
+M1C: PASS  false flags 7/429 = 1.63%; max 2%
+M2: PASS  mean 96.7% min 96.3% vs threshold 80%; Wilson95 96.7% [93.6, 98.3] (232/240)
+M3: PASS  mean 100.0% min 100.0% vs threshold 75%; Wilson95 100.0% [95.3, 100.0] (78/78)
+M4: FAIL  6 of 10 cases passed all 3 repetition(s); threshold 9
+M5: not applicable
+
+Per repetition (M1 / M2 / M3):
+  rep 1: 92.5% / 97.5% / 100.0%
+  rep 2: 91.5% / 96.3% / 100.0%
+  rep 3: 91.8% / 96.3% / 100.0%
+
+Usage: calls=66 failed=0 inputTokens=144 outputTokens=150090 costUsd=0.1105 costUpperBoundUsd=0.1105 cap=3
+Latency ms: mean=9776 p95=14047
+Budget: logged before run USD 0.0164 of total cap 40
+M1c false flags: c-payments-nat3[WEAK_SUPPORT]; c-payments-nat4[WEAK_SUPPORT]; c-payments-nat5[NAME_NOT_IN_SOURCE]; c-auth-nat7[NAME_NOT_IN_SOURCE]; c-batch-nat13[NAME_NOT_IN_SOURCE]; c-search-nat17[NAME_NOT_IN_SOURCE]; c-search-nat20[NAME_NOT_IN_SOURCE]

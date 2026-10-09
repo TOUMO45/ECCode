@@ -1,0 +1,112 @@
+{
+  "decision": "changes_requested",
+  "summary": "Re-review of sub-mv05xwbo-01090c87. The fallback M2 todo is gone (F2 partly fixed), but the blocking holdout M1c failure (13/423 = 3.07% vs 2%) is unchanged and has no recorded user decision. The submission changed only eval/tuning-log.md and eval/usage.log. README.md and docs/eval-results.md are byte-identical to the first submission and still state USD 0.3325 across 4 CLI runs. usage.log holds 8 logged runs with a cost upper bound sum of USD 0.835, so the docs are stale and the live-run cap of 3 is exceeded and not disclosed in the docs. Tests pass (271 pass, 0 fail, 1 todo), including in a self-contained clean copy, so the earlier clean-copy failures were an environment artefact.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Reproducible checks pass in the working tree and in a self-contained clean copy",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv05yim3-01f7c60b",
+        "ev:ev-mv05yqtk-01dc84b4"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "Quality thresholds met on holdout (M1c max 2%)",
+      "met": false,
+      "evidence": [
+        "artifact:eval/holdout-runs.log",
+        "artifact:eval/thresholds.json",
+        "artifact:test/eval/m1b-m1c.test.js"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "Docs and README match the logged run counts and cost",
+      "met": false,
+      "evidence": [
+        "artifact:README.md",
+        "artifact:docs/eval-results.md",
+        "artifact:eval/usage.log"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "Eval run caps respected or the overrun is disclosed and accepted",
+      "met": false,
+      "evidence": [
+        "artifact:eval/usage.log",
+        "artifact:eval/tuning-log.md"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "Tests assert thresholds without stale todos",
+      "met": false,
+      "evidence": [
+        "artifact:test/eval/m1b-m1c.test.js",
+        "ev:ev-mv05yim3-01f7c60b"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "blocking",
+      "title": "Holdout M1c 3.07% exceeds the 2% maximum; still no recorded user decision",
+      "detail": "Neither option from the earlier recommendation was taken. No user decision, threshold change or holdout-blind verifier fix with a new holdout is in the submission. holdout-runs.log is unchanged.",
+      "evidence": [
+        "artifact:eval/holdout-runs.log",
+        "artifact:eval/thresholds.json"
+      ],
+      "recommendation": "Resolve through (a) a recorded user decision accepting the miss as a documented limitation, or (b) a holdout-blind verifier fix validated on a newly authored holdout. Do not lower the thresholds without that decision."
+    },
+    {
+      "id": "F2",
+      "severity": "major",
+      "title": "M1c todo still masks the failing threshold",
+      "detail": "The fallback M2 todo and the 0.47 guard were removed, so that part is fixed. The M1c holdout assertion in test/eval/m1b-m1c.test.js line 53 is still a todo with no decision reference, and the suite is green only because of it.",
+      "evidence": [
+        "artifact:test/eval/m1b-m1c.test.js",
+        "ev:ev-mv05yim3-01f7c60b"
+      ],
+      "recommendation": "Keep the todo only after F1 option (a), citing the decision in its text. After option (b), remove it and show the assertion passing."
+    },
+    {
+      "id": "F6",
+      "severity": "major",
+      "title": "README.md and docs/eval-results.md carry stale run and cost figures",
+      "detail": "docs/eval-results.md line 68 and README.md line 123 say USD 0.3325 across 4 CLI runs. usage.log has 8 entries with a cost upper bound of about USD 0.835. Both docs are unchanged from the first submission, so they contradict the logs.",
+      "evidence": [
+        "artifact:README.md",
+        "artifact:docs/eval-results.md",
+        "artifact:eval/usage.log"
+      ],
+      "recommendation": "Regenerate the figures from usage.log, state the run count and total, and resubmit with new hashes."
+    },
+    {
+      "id": "F7",
+      "severity": "major",
+      "title": "Live-run cap of 3 exceeded without disclosure or approval",
+      "detail": "usage.log shows 5 full CLI runs after the first holdout run, plus earlier runs. The tuning log and docs do not record a cap waiver. Spend is far under the USD cap, but the cap is a process control.",
+      "evidence": [
+        "artifact:eval/usage.log",
+        "artifact:eval/tuning-log.md"
+      ],
+      "recommendation": "Disclose the overrun in docs/eval-results.md and the tuning log, and obtain a recorded orchestrator or user acceptance."
+    },
+    {
+      "id": "F8",
+      "severity": "minor",
+      "title": "Earlier disclosure items F3 to F5 not addressed",
+      "detail": "docs/eval-results.md does not mention the verifier-only holdout run at 21:56. The narrow margin is noted, but the operational gaps (no metrics, SIGTERM through the npm wrapper) are not all listed in the README.",
+      "evidence": [
+        "artifact:docs/eval-results.md",
+        "artifact:README.md"
+      ],
+      "recommendation": "Add the one-sentence disclosure and the gap list when the docs are regenerated."
+    }
+  ],
+  "resolvedFindings": []
+}

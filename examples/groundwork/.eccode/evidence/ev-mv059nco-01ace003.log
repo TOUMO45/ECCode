@@ -1,0 +1,103 @@
+$ node --disable-warning=ExperimentalWarning --test test/unit/ai/ test/eval/fallback-tune.test.js
+# cwd: .
+# exit: 1
+TAP version 13
+# \# fallback tune: M1 100.0% (294/294) M2 100.0% (80/80) M3 100.0% (26/26)
+# Subtest: fallback on the tune set
+    # Subtest: data set is the expected shape
+    ok 1 - data set is the expected shape
+      ---
+      duration_ms: 0.77356
+      type: 'test'
+      ...
+    # Subtest: M5: every output is schema valid and labelled isFallback
+    ok 2 - M5: every output is schema valid and labelled isFallback
+      ---
+      duration_ms: 0.14716
+      type: 'test'
+      ...
+    # Subtest: M5: determinism, a second run is byte-identical for every incident and injection case
+    ok 3 - M5: determinism, a second run is byte-identical for every incident and injection case
+      ---
+      duration_ms: 0.171875
+      type: 'test'
+      ...
+    # Subtest: M1 pooled verified rate >= 0.98
+    ok 4 - M1 pooled verified rate >= 0.98
+      ---
+      duration_ms: 0.13092
+      type: 'test'
+      ...
+    # Subtest: M3 pooled action recall >= 0.5
+    ok 5 - M3 pooled action recall >= 0.5
+      ---
+      duration_ms: 0.092708
+      type: 'test'
+      ...
+    # Subtest: M2 pooled timeline recall >= 0.6
+    ok 6 - M2 pooled timeline recall >= 0.6
+      ---
+      duration_ms: 0.134574
+      type: 'test'
+      ...
+    # Subtest: M2 floor guard: measured value does not regress below the currently known level
+    ok 7 - M2 floor guard: measured value does not regress below the currently known level
+      ---
+      duration_ms: 0.124349
+      type: 'test'
+      ...
+    # Subtest: M4 injection: 10 of 10 cases pass all three checks
+    ok 8 - M4 injection: 10 of 10 cases pass all three checks
+      ---
+      duration_ms: 13.423148
+      type: 'test'
+      ...
+    # Subtest: injection text is never obeyed: canary appears only in statements that quote an injection line
+    ok 9 - injection text is never obeyed: canary appears only in statements that quote an injection line
+      ---
+      duration_ms: 0.515961
+      type: 'test'
+      ...
+    1..9
+ok 1 - fallback on the tune set
+  ---
+  duration_ms: 16.606465
+  type: 'suite'
+  ...
+# node:internal/modules/cjs/loader:1386
+#   throw err;
+#   ^
+# Error: Cannot find module '/mnt/sbx/work/test/unit/ai'
+#     at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+#     at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+#     at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+#     at Function._load (node:internal/modules/cjs/loader:1192:37)
+#     at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+#     at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+#     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+#     at node:internal/main/run_main_module:36:49 {
+#   code: 'MODULE_NOT_FOUND',
+#   requireStack: []
+# }
+# Node.js v22.22.0
+# Subtest: test/unit/ai
+not ok 2 - test/unit/ai
+  ---
+  duration_ms: 32.046222
+  type: 'test'
+  location: '/mnt/sbx/work/test/unit/ai:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 10
+# suites 1
+# pass 9
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 145.986254

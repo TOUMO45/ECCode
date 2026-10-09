@@ -1,0 +1,100 @@
+{
+  "decision": "approve",
+  "summary": "Re-review of sub-mv00u0g5-013ae15f (spec sha256 f50715d4...). I re-ran the isolation check on the final argv myself: init reports tools [StructuredOutput], mcp_servers [], skills [], slash_commands [], and the result has is_error false, num_turns 2, stop_reason tool_use, permission_denials [] and a valid structured_output. This matches the corrected spec. DES-1..DES-4 are resolved. DQ-1..DQ-4 are accepted.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Spec matches the approved brief; requirements map to components and tests",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#2 Components",
+        "artifact:.eccode/artifacts/design/spec.md#11 Testing Strategy"
+      ],
+      "notes": "Unchanged since the first review. Thresholds are not altered."
+    },
+    {
+      "id": "C2",
+      "description": "Interface contracts complete",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#3 Interface Contracts"
+      ],
+      "notes": "Unchanged."
+    },
+    {
+      "id": "C3",
+      "description": "Data design sound, failure modes covered",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#6 Data Design"
+      ],
+      "notes": "Unchanged."
+    },
+    {
+      "id": "C4",
+      "description": "AI feature: least privilege, no path from untrusted text to instructions or tools, schema validation, timeout and fallback, eval set",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv00uow5-01c2fd74",
+        "artifact:.eccode/artifacts/design/spec.md#1 CLI facts confirmed",
+        "artifact:.eccode/artifacts/design/spec.md#4 AI / LLM Design",
+        "artifact:.eccode/artifacts/design/spec.md#11.4 Live"
+      ],
+      "notes": "Spec now states the real init output, the named ALLOWED_TOOLS constant, and a live test asserting exact equality plus empty mcp, skills, slash commands and permission_denials. Argv is pinned by a unit test. The parser is specified to tolerate num_turns 2 and stop_reason tool_use."
+    },
+    {
+      "id": "C5",
+      "description": "Feasibility, cost and latency budgets",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv00uow5-01c2fd74",
+        "artifact:.eccode/artifacts/design/spec.md#4 AI / LLM Design"
+      ],
+      "notes": "Estimates are labelled as such, with per-call and per-run caps."
+    }
+  ],
+  "findings": [
+    {
+      "id": "DES-5",
+      "severity": "info",
+      "title": "Implementation note on the isolation test",
+      "detail": "The live isolation test must pass the --json-schema argument too, since the StructuredOutput tool only exists with it. My rerun used it.",
+      "evidence": [
+        "ev:ev-mv00uow5-01c2fd74"
+      ],
+      "recommendation": "Check at the phase gate that cli-isolation.test.js builds argv with the same builder as production."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "DES-1",
+      "evidence": [
+        "ev:ev-mv00uow5-01c2fd74",
+        "artifact:.eccode/artifacts/design/spec.md#1 CLI facts confirmed",
+        "artifact:.eccode/artifacts/design/spec.md#11.4 Live"
+      ],
+      "resolution": "Fixed. Spec states tools [StructuredOutput], and my rerun reproduces it."
+    },
+    {
+      "id": "DES-2",
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#4 AI / LLM Design"
+      ],
+      "resolution": "Fixed. Section 4 writes the escapes as explicit literals and 11.1 adds the unit assertion."
+    },
+    {
+      "id": "DES-3",
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#5.5 Tuning rules"
+      ],
+      "resolution": "No design change was requested. Acknowledged; CLI M1 misses are reported as FAIL."
+    },
+    {
+      "id": "DES-4",
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#Open Questions"
+      ],
+      "resolution": "DQ-1..DQ-4 accepted: time field as cited source, number-word rule, the --bare equivalent flag set, committed usage and holdout logs."
+    }
+  ]
+}

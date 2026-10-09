@@ -1,0 +1,192 @@
+{
+  "decision": "approve",
+  "summary": "Re-review of sub-mv00aeic-01b639e0 (brief sha256 8eaa7e17...). D1-D10 rows are byte-identical to SCOPE.md (diff of the ten table rows empty, 10 rows each). ARCH-1..5 are fixed with exact, testable rules; ARCH-6..9 are specified. Only minor residual notes remain, none blocking.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Completeness: users, workflows, constraints, scope, security, privacy, accessibility, observability, cost",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements",
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows",
+        "artifact:.eccode/artifacts/architecture/brief.md#Scope"
+      ],
+      "notes": "NFR3, NFR4, NFR5, NFR6, NFR8 now cover sessions, limiter, retention, request ids."
+    },
+    {
+      "id": "C2",
+      "description": "Scope fidelity: D1-D10 carried verbatim",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ],
+      "notes": "Verified by diff of grep'd rows; identical. Compared against SCOPE.md directly by diff."
+    },
+    {
+      "id": "C3",
+      "description": "Testability: criteria decidable, requirements trace",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification: metrics, data, thresholds (fixed before implementation)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ],
+      "notes": "M1c corpus, M4 rule, aggregation and S1-S5 are now decidable."
+    },
+    {
+      "id": "C4",
+      "description": "Assumptions and open questions",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Assumptions",
+        "artifact:.eccode/artifacts/architecture/brief.md#Open Questions"
+      ],
+      "notes": "Q1-Q4 recorded as unattended defaults, explicitly not user confirmation; to be reported at delivery."
+    },
+    {
+      "id": "C5",
+      "description": "Complexity proportionate",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Architecture"
+      ],
+      "notes": "CDP driver dropped; zero runtime dependencies."
+    },
+    {
+      "id": "C6",
+      "description": "Feasibility",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Constraints",
+        "artifact:.eccode/artifacts/architecture/brief.md#Assumptions"
+      ],
+      "notes": "A2 CLI flags to be confirmed in design phase as the brief requires."
+    },
+    {
+      "id": "C7",
+      "description": "Security and privacy",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements",
+        "artifact:.eccode/artifacts/architecture/brief.md#Architecture"
+      ],
+      "notes": "CLI isolation (R5), publish re-verification (R8), limiter and session rules (NFR3)."
+    },
+    {
+      "id": "C8",
+      "description": "AI feature: value, eval thresholds, fallback, oversight",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification: metrics, data, thresholds (fixed before implementation)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Architecture"
+      ]
+    },
+    {
+      "id": "C9",
+      "description": "Risk register with likelihood, impact, mitigation, owner",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ],
+      "notes": "RISK-11 and RISK-12 added; RISK-1 states the residual gap."
+    }
+  ],
+  "findings": [
+    {
+      "id": "ARCH-10",
+      "severity": "minor",
+      "title": "Name rule (iv) and WEAK_SUPPORT may over-flag CLI output",
+      "detail": "Flagging any capitalised word not in the stoplist (including sentence-initial words) and requiring 50% content-stem overlap risks false flags on legitimate paraphrase, depressing CLI M1 (>=0.85 holdout). RISK-9 and M1c (<=2%) cover this, but M1c measures hand-written statements, not model phrasing.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#R6",
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ],
+      "recommendation": "During implementation, tune stoplist and the 50% threshold on the tune set only, and report CLI M1 failure honestly rather than loosening thresholds without a user decision.",
+      "status": "open"
+    },
+    {
+      "id": "ARCH-11",
+      "severity": "info",
+      "title": "Q1-Q4 and D8 thresholds rest on unattended defaults",
+      "detail": "Q3 states the thresholds are binding but not user-confirmed. This is acknowledged in the brief.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Open Questions"
+      ],
+      "recommendation": "Tell the user at delivery that Q1-Q4 were defaults and that any threshold change needs a recorded user decision.",
+      "status": "open"
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "ARCH-1",
+      "resolution": "Fixed: M4 now measures obedience. Strict schema, zero MISSING_LINE, case recall >=0.5, and the canary is allowed only in a verified statement citing an injectionLines line. Fallback behaviour is stated and deterministic.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification: metrics, data, thresholds (fixed before implementation)"
+      ]
+    },
+    {
+      "id": "ARCH-2",
+      "resolution": "Fixed: holdout is excluded from plain npm test; the manifest hash test stays automated; the 2-run cap applies to the fallback; the residual procedural-only control is stated openly.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification: metrics, data, thresholds (fixed before implementation)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ]
+    },
+    {
+      "id": "ARCH-3",
+      "resolution": "Fixed: M1c corpus defined (one correct statement per gold event/item plus >=2 others, >=150 per set); M1-M3 pooled per repetition, mean plus worst-run rule on those values; M4 per-case all-3-repetition rule exempt from worst-run rule.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification: metrics, data, thresholds (fixed before implementation)"
+      ]
+    },
+    {
+      "id": "ARCH-4",
+      "resolution": "Fixed: R6 specifies name rules (i)-(iv) with a committed stoplist and a 50% content-stem support rule; S1 requires >=10 invented causes and >=10 invented owners; guarantee and RISK-1 state the residual semantic gap, and the UI note repeats it.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#R6",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria",
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ]
+    },
+    {
+      "id": "ARCH-5",
+      "resolution": "Fixed: R7 defines integer version and expectedVersion (409 STALE_VERSION); R8 re-verifies all statements inside one BEGIN IMMEDIATE transaction ignoring stored statuses, makes published drafts immutable; S2 lists tamper, stale and interleaving tests.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#R7",
+        "artifact:.eccode/artifacts/architecture/brief.md#R8",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ]
+    },
+    {
+      "id": "ARCH-6",
+      "resolution": "Fixed: R5 specifies empty tools, fixed system prompt, bare-equivalent flag, temp cwd, env allowlist, stdin data, output cap, timeout, --max-budget-usd, CLI version recording; RISK-11 added.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#R5",
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ]
+    },
+    {
+      "id": "ARCH-7",
+      "resolution": "Fixed: Q1 decided, global Playwright as dev-time prerequisite, CDP driver dropped, README prerequisite and non-zero exit when missing.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Key choices vs alternatives",
+        "artifact:.eccode/artifacts/architecture/brief.md#Open Questions"
+      ]
+    },
+    {
+      "id": "ARCH-8",
+      "resolution": "Fixed: NFR3 covers uniform unknown-user responses with dummy scrypt, timingSafeEqual, capped limiter, session rotation, TTLs, logout; NFR8 covers request ids, logs and retention; S4/S5 test them.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#NFR3 and NFR8 in Requirements",
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ]
+    },
+    {
+      "id": "ARCH-9",
+      "resolution": "Fixed: USD 40 aggregate cap tracked in eval/usage.log, max 8 tune runs, INCOMPLETE on cap, Wilson 95% intervals, no claims below noise.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification: metrics, data, thresholds (fixed before implementation)",
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "from": "technical-designer",
+  "to": "technical-reviewer",
+  "task": "design",
+  "objective": "Produce the technical design for Groundwork from the approved architecture brief rev 2.",
+  "context": "Relied on SCOPE.md, brief.md rev 2 (approved), review findings ARCH-10 and ARCH-11, claude --help and live probes of claude 2.1.295 on 2026-10-08.",
+  "inputs": ["SCOPE.md", ".eccode/artifacts/architecture/brief.md", ".eccode/reviews/rev-mv00e8zp-019215ac.json"],
+  "expectedOutput": "spec.md with Components, Interface Contracts, Data Design, Security, Testing Strategy, Deployment, plus verifier, eval harness, frontend, file ownership.",
+  "acceptanceCriteria": ["Required headings present", "ARCH-10 and ARCH-11 honoured", "CLI flags confirmed and version recorded", "Contracts sufficient for parallel implementation"],
+  "completedWork": "Wrote the full spec. Key findings: --bare fails without an API key (verified auth error), so isolation uses --safe-mode --setting-sources '' --strict-mcp-config --disable-slash-commands --no-session-persistence --tools ''; the init event shows tools/mcp/skills empty, and a minimal env (PATH, HOME, CLAUDE_CONFIG_DIR) works. Verifier rules specified precisely with tuning controls for ARCH-10. Please review DQ-1 (time field counts as cited text), DQ-2 (one/number words), DQ-3 (safe-mode instead of bare), DQ-4 (committed usage logs).",
+  "filesChanged": [".eccode/artifacts/design/spec.md"],
+  "evidence": [],
+  "remainingIssues": ["DQ-1..DQ-4 need reviewer/orchestrator acknowledgement", "Anthropic API path untestable live here"],
+  "nextAction": "technical-reviewer reviews the design gate submission."
+}

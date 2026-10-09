@@ -1,0 +1,477 @@
+{
+ "id": "hold3-02",
+ "title": "Appointment scheduler stalls on long-running lock",
+ "severity": "SEV2",
+ "startedAt": "2026-05-21T13:40:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "13:40",
+   "author": "dr.amara.nwosu",
+   "text": "Reception desks in three clinics cannot book or move appointments"
+  },
+  {
+   "n": 2,
+   "time": "13:40",
+   "author": "lucas_ferreira",
+   "text": "looking at recent deploys"
+  },
+  {
+   "n": 3,
+   "time": "13:40",
+   "author": "Hyun-woo",
+   "text": "re-running the query to double check"
+  },
+  {
+   "n": 4,
+   "time": "13:40",
+   "author": "Hyun-woo",
+   "text": "stepping out for two minutes, back shortly"
+  },
+  {
+   "n": 5,
+   "time": "13:40",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "agreed"
+  },
+  {
+   "n": 6,
+   "time": "13:42",
+   "author": "lucas_ferreira",
+   "text": "The scheduler API answers in 45 seconds instead of under 1"
+  },
+  {
+   "n": 7,
+   "time": "13:42",
+   "author": "Hyun-woo",
+   "text": "can someone confirm the current error rate"
+  },
+  {
+   "n": 8,
+   "time": "13:42",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "taking notes for the timeline"
+  },
+  {
+   "n": 9,
+   "time": "13:42",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "metrics look flat for now"
+  },
+  {
+   "n": 10,
+   "time": "13:47",
+   "author": "lucas_ferreira",
+   "text": "A nightly report query has held a table lock since 13:05"
+  },
+  {
+   "n": 11,
+   "time": "13:47",
+   "author": "dr.amara.nwosu",
+   "text": "ack"
+  },
+  {
+   "n": 12,
+   "time": "13:47",
+   "author": "dr.amara.nwosu",
+   "text": "checking the dashboards again"
+  },
+  {
+   "n": 13,
+   "time": "13:47",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "copying the graph into the ticket"
+  },
+  {
+   "n": 14,
+   "time": "13:51",
+   "author": "Hyun-woo",
+   "text": "Who scheduled a report at lunchtime? It was meant to run at 02:00"
+  },
+  {
+   "n": 15,
+   "time": "13:51",
+   "author": "dr.amara.nwosu",
+   "text": "can someone confirm the current error rate"
+  },
+  {
+   "n": 16,
+   "time": "13:51",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "holding off on further changes for now"
+  },
+  {
+   "n": 17,
+   "time": "13:51",
+   "author": "dr.amara.nwosu",
+   "text": "checking the dashboards again"
+  },
+  {
+   "n": 18,
+   "time": "13:54",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "Calling the Birmingham clinic to switch to paper bookings meanwhile"
+  },
+  {
+   "n": 19,
+   "time": "13:54",
+   "author": "lucas_ferreira",
+   "text": "ack"
+  },
+  {
+   "n": 20,
+   "time": "13:54",
+   "author": "Hyun-woo",
+   "text": "no change on my side"
+  },
+  {
+   "n": 21,
+   "time": "13:54",
+   "author": "lucas_ferreira",
+   "text": "no change on my side"
+  },
+  {
+   "n": 22,
+   "time": "13:59",
+   "author": "lucas_ferreira",
+   "text": "Decision: kill the report session and release the lock"
+  },
+  {
+   "n": 23,
+   "time": "13:59",
+   "author": "Hyun-woo",
+   "text": "stepping out for two minutes, back shortly"
+  },
+  {
+   "n": 24,
+   "time": "13:59",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "looking at recent deploys"
+  },
+  {
+   "n": 25,
+   "time": "13:59",
+   "author": "dr.amara.nwosu",
+   "text": "thanks, noted"
+  },
+  {
+   "n": 26,
+   "time": "14:01",
+   "author": "lucas_ferreira",
+   "text": "Session terminated, lock released"
+  },
+  {
+   "n": 27,
+   "time": "14:01",
+   "author": "dr.amara.nwosu",
+   "text": "metrics look flat for now"
+  },
+  {
+   "n": 28,
+   "time": "14:01",
+   "author": "dr.amara.nwosu",
+   "text": "will report back when I know more"
+  },
+  {
+   "n": 29,
+   "time": "14:01",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "let me know if you need anything"
+  },
+  {
+   "n": 30,
+   "time": "14:05",
+   "author": "dr.amara.nwosu",
+   "text": "Bookings are flowing again, latency is 0.8 seconds"
+  },
+  {
+   "n": 31,
+   "time": "14:05",
+   "author": "lucas_ferreira",
+   "text": "no change on my side"
+  },
+  {
+   "n": 32,
+   "time": "14:05",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "agreed"
+  },
+  {
+   "n": 33,
+   "time": "14:05",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "stepping out for two minutes, back shortly"
+  },
+  {
+   "n": 34,
+   "time": "14:11",
+   "author": "Hyun-woo",
+   "text": "Re-queued 212 bookings that people had keyed on paper"
+  },
+  {
+   "n": 35,
+   "time": "14:11",
+   "author": "dr.amara.nwosu",
+   "text": "thanks, noted"
+  },
+  {
+   "n": 36,
+   "time": "14:11",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "metrics look flat for now"
+  },
+  {
+   "n": 37,
+   "time": "14:11",
+   "author": "lucas_ferreira",
+   "text": "will report back when I know more"
+  },
+  {
+   "n": 38,
+   "time": "14:18",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "Worth noting the schedule UI never showed a warning while it was slow"
+  },
+  {
+   "n": 39,
+   "time": "14:18",
+   "author": "Hyun-woo",
+   "text": "still reading through the logs"
+  },
+  {
+   "n": 40,
+   "time": "14:18",
+   "author": "Hyun-woo",
+   "text": "looks the same from here"
+  },
+  {
+   "n": 41,
+   "time": "14:18",
+   "author": "lucas_ferreira",
+   "text": "stepping out for two minutes, back shortly"
+  },
+  {
+   "n": 42,
+   "time": "14:27",
+   "author": "dr.amara.nwosu",
+   "text": "Impact: about 95 minutes of degraded booking across 3 clinics"
+  },
+  {
+   "n": 43,
+   "time": "14:27",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "looking at recent deploys"
+  },
+  {
+   "n": 44,
+   "time": "14:27",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "looks the same from here"
+  },
+  {
+   "n": 45,
+   "time": "14:27",
+   "author": "lucas_ferreira",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 46,
+   "time": "14:27",
+   "author": "Hyun-woo",
+   "text": "checking the dashboards again"
+  },
+  {
+   "n": 47,
+   "time": "14:37",
+   "author": "Hyun-woo",
+   "text": "Action item: move reporting to a read replica, owner Hyun-woo"
+  },
+  {
+   "n": 48,
+   "time": "14:37",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "looking at recent deploys"
+  },
+  {
+   "n": 49,
+   "time": "14:37",
+   "author": "lucas_ferreira",
+   "text": "thanks, noted"
+  },
+  {
+   "n": 50,
+   "time": "14:37",
+   "author": "dr.amara.nwosu",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 51,
+   "time": "14:40",
+   "author": "lucas_ferreira",
+   "text": "Action item: add a lock-wait alert at 10 seconds, owner lucas_ferreira"
+  },
+  {
+   "n": 52,
+   "time": "14:40",
+   "author": "Hyun-woo",
+   "text": "paging the secondary just in case"
+  },
+  {
+   "n": 53,
+   "time": "14:40",
+   "author": "dr.amara.nwosu",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 54,
+   "time": "14:40",
+   "author": "clinic-systems-duty-engineer-north-region",
+   "text": "thanks, noted"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "13:40",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "13:54",
+    "lines": [
+     18
+    ]
+   },
+   {
+    "time": "13:59",
+    "lines": [
+     22
+    ]
+   },
+   {
+    "time": "14:01",
+    "lines": [
+     26
+    ]
+   },
+   {
+    "time": "14:05",
+    "lines": [
+     30
+    ]
+   },
+   {
+    "time": "14:11",
+    "lines": [
+     34
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     47
+    ]
+   },
+   {
+    "lines": [
+     51
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 13:40 dr.amara.nwosu reported that reception desks in three clinics could not book or move appointments.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "lucas_ferreira saw the scheduler API answering in 45 seconds instead of under 1.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "lucas_ferreira found a nightly report query that had held a table lock since 13:05.",
+   "cites": [
+    10
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "Hyun-woo asked why a report meant to run at 02:00 had been scheduled for lunchtime.",
+   "cites": [
+    14
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 13:54 clinic-systems-duty-engineer-north-region phoned the Birmingham clinic to switch to paper bookings.",
+   "cites": [
+    18
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 13:59 lucas_ferreira decided to kill the report session and release the lock.",
+   "cites": [
+    22
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 14:01 lucas_ferreira terminated the session and released the lock.",
+   "cites": [
+    26
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 14:05 dr.amara.nwosu confirmed bookings were flowing again with latency at 0.8 seconds.",
+   "cites": [
+    30
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 14:11 Hyun-woo re-queued 212 bookings that had been keyed on paper.",
+   "cites": [
+    34
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "clinic-systems-duty-engineer-north-region noted that the schedule UI never showed a warning while it was slow.",
+   "cites": [
+    38
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "dr.amara.nwosu estimated about 95 minutes of degraded booking across 3 clinics.",
+   "cites": [
+    42
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: move reporting to a read replica, owner Hyun-woo.",
+   "cites": [
+    47
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: add a lock-wait alert at 10 seconds, owner lucas_ferreira.",
+   "cites": [
+    51
+   ]
+  }
+ ]
+}

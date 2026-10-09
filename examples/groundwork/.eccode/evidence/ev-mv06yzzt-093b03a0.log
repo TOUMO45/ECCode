@@ -1,0 +1,61 @@
+$ node --disable-warning=ExperimentalWarning --test test/api/static.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: index.html is served at / with security headers and a strict CSP
+ok 1 - index.html is served at / with security headers and a strict CSP
+  ---
+  duration_ms: 87.948228
+  type: 'test'
+  ...
+# Subtest: security headers are also on API responses, 404s and errors
+ok 2 - security headers are also on API responses, 404s and errors
+  ---
+  duration_ms: 9.910878
+  type: 'test'
+  ...
+# Subtest: js assets get the right content type; HEAD has no body
+ok 3 - js assets get the right content type; HEAD has no body
+  ---
+  duration_ms: 9.395254
+  type: 'test'
+  ...
+# Subtest: traversal attempts return the 404 envelope and never file contents
+ok 4 - traversal attempts return the 404 envelope and never file contents
+  ---
+  duration_ms: 22.2523
+  type: 'test'
+  ...
+# Subtest: resolveStatic unit: stays under root
+ok 5 - resolveStatic unit: stays under root
+  ---
+  duration_ms: 0.382567
+  type: 'test'
+  ...
+# Subtest: non-GET on static paths is 405 with Allow
+ok 6 - non-GET on static paths is 405 with Allow
+  ---
+  duration_ms: 5.565583
+  type: 'test'
+  ...
+# Subtest: missing public dir yields 404 envelope, not a crash
+ok 7 - missing public dir yields 404 envelope, not a crash
+  ---
+  duration_ms: 11.425619
+  type: 'test'
+  ...
+# Subtest: the real public/index.html (when present) has no inline script
+ok 8 - the real public/index.html (when present) has no inline script
+  ---
+  duration_ms: 0.872831
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 277.443542

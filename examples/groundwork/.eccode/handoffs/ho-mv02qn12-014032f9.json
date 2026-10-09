@@ -1,0 +1,41 @@
+{
+  "from": "test-engineer",
+  "to": "reviewer",
+  "task": "eval-tests",
+  "objective": "Eval tests inside npm test: scorer, fallback tune, verifier corpus (D7, D8).",
+  "context": "Spec 8.2, 8.3, 11.5. Thresholds from eval/thresholds.json. Real eval/lib scorer, real src/verify, real fallback; runner exercised as a subprocess with GW_EVAL_LOG_DIR synthetic logs and test/support/fake-claude.js. No network, clock or API key.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    "eval/run.js",
+    "eval/lib/score.js",
+    "eval/lib/budget.js",
+    "eval/lib/wilson.js",
+    "eval/thresholds.json"
+  ],
+  "dependencies": [
+    "eval-harness",
+    "datasets-holdout"
+  ],
+  "expectedOutput": "Three passing-or-todo node:test files under test/eval/ wired into npm test.",
+  "acceptanceCriteria": [
+    "Scorer tested with hand-built outputs including worst-run rule, Wilson values, INCOMPLETE/NOT_RUN and budget guard refusals (D8)",
+    "Verifier catches 100% of fabrications with expected code and <=2% false flags (D8): met on the tune set (M1b 63/63, M1c 7/429 = 1.63%); NOT met on holdout M1c (reported as todo)",
+    "Fallback meets tune thresholds, deterministic, injection 10/10 (D8): met EXCEPT M2 (47.5% vs 60%), reported as a todo, not passing"
+  ],
+  "completedWork": "test/eval/scorer.test.js (40 tests): Wilson known values, judgeRate worst-run rule and boundary, matching rules, M4 three checks, scoreVerifier, checkBudget/holdout cap/tracker, runner subprocess exits (NOT_RUN 3, INCOMPLETE 2 with every metric INCOMPLETE, BUDGET REFUSED on USD cap and on 8 full runs, HOLDOUT REFUSED 64, usage errors 64). test/eval/m1b-m1c.test.js: tune M1b 63/63 and M1c 7/429 asserted; holdout M1c as todo. test/eval/fallback-tune.test.js: schema validity, isFallback, byte-identical second run, M1 100% (494/494), M3 100% (26/26), M4 10/10, canary never obeyed; M2 as todo plus a floor guard at 0.47. Result of the task command: 72 tests, 70 pass, 0 fail, 0 skipped, 2 TODO.",
+  "filesChanged": [
+    "test/eval/scorer.test.js",
+    "test/eval/fallback-tune.test.js",
+    "test/eval/m1b-m1c.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv02q2il-011ab435"
+  ],
+  "remainingIssues": [
+    "KNOWN MISS 1 (todo, threshold not weakened): fallback tune M2 = 38/80 = 47.5% vs 60%. Caused by MAX_TIMELINE=30 in src/ai/fallback.js. The later live-eval tuning task owns the fix and MUST remove the todo option on the test named 'M2 pooled timeline recall >= 0.6' in test/eval/fallback-tune.test.js so it becomes a hard assertion. A separate floor guard (>= 0.47) prevents regression meanwhile.",
+    "KNOWN MISS 2 (todo): holdout verifier M1c measured 13/423 = 3.07% (the test and the eval runner with --verifier --holdout agree), not the 2.6% quoted in the assignment; above the 2% max. Must not be tuned on holdout. The todo is in test/eval/m1b-m1c.test.js.",
+    "The two todos mean node:test reports them as todo, not pass; npm test exits 0 while these misses stand. The D8 acceptance for fallback M2 and holdout M1c is therefore NOT satisfied."
+  ],
+  "nextAction": "reviewer: review test/eval/*.test.js; orchestrator: schedule the live-eval tuning task to fix fallback M2 and un-todo the test.",
+  "lessonsConsulted": []
+}

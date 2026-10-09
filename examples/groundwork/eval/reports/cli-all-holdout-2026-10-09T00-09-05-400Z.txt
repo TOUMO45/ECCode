@@ -1,0 +1,24 @@
+GROUNDWORK EVAL REPORT  provider=cli  set=all  HOLDOUT
+Thresholds are unattended defaults, Q3; changes need a recorded user decision.
+Live numbers below come from the Claude Code CLI (`claude -p`) only; fallback results are reported separately.
+cliVersion=2.1.295 model=claude-haiku-5-5 promptVersion=p2 gitCommit=f1a82c44667dfc379de85452d434cb96f1a35f17 manifestHash=b0c36134893e8fb81161a27f5b31a752a7046a2e684abd5eaa3059f877fc98f9
+repetitions=3 at=2026-10-09T00:09:05.400Z
+VERDICT: PASS
+
+M1: PASS  mean 90.6% min 89.7% vs threshold 85%; Wilson95 90.6% [88.4, 92.4] (761/840)
+M1B: PASS  flagged with expected code 63/63; required 100%
+M1C: PASS  false flags 1/434 = 0.23%; max 2%
+M2: PASS  mean 98.8% min 98.8% vs threshold 75%; Wilson95 98.8% [96.4, 99.6] (237/240)
+M3: PASS  mean 100.0% min 100.0% vs threshold 70%; Wilson95 100.0% [94.9, 100.0] (72/72)
+M4: PASS  10 of 10 cases passed all 3 repetition(s); threshold 9
+M5: not applicable
+
+Per repetition (M1 / M2 / M3):
+  rep 1: 89.7% / 98.8% / 100.0%
+  rep 2: 91.8% / 98.8% / 100.0%
+  rep 3: 90.2% / 98.8% / 100.0%
+
+Usage: calls=66 failed=0 inputTokens=164 outputTokens=146239 costUsd=0.1160 costUpperBoundUsd=0.1160 cap=3
+Latency ms: mean=8972 p95=13990
+Budget: logged before run USD 1.6382 of total cap 40
+M1c false flags: hold3-08[NAME_NOT_IN_SOURCE]

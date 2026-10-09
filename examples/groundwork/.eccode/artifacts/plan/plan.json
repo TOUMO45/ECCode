@@ -1,0 +1,599 @@
+{
+  "lessonDecisions": [],
+  "phases": [
+    {
+      "id": "foundation",
+      "name": "Foundation and AI providers",
+      "goal": "Contracts, config, DB, migrations, parser, grounding verifier and provider adapter that every stream builds on.",
+      "acceptanceCriteria": [
+        "Migrations versioned and tested (D3)",
+        "package.json with zero dependencies (D2)",
+        "Notes parser and grounding verifier unit-tested (D4)",
+        "Validated structured output, injection-safe prompt, timeouts and malformed output handled (D4, D5)"
+      ]
+    },
+    {
+      "id": "core-backend",
+      "name": "Core backend",
+      "goal": "HTTP, auth, RBAC, audit, notes, verifier, domain routes and API tests.",
+      "acceptanceCriteria": [
+        "Consistent error envelope (D2, D5)",
+        "Access control and IDOR proven (D6)",
+        "API journey and persistence tests pass (D3, D7)"
+      ]
+    },
+    {
+      "id": "eval",
+      "name": "Eval datasets and harness",
+      "goal": "Datasets, thresholds, runner, scorer and deterministic eval tests.",
+      "acceptanceCriteria": [
+        "Thresholds fixed and tested before tuning; holdout manifest guarded; fallback and CLI evaluated separately (D8)"
+      ]
+    },
+    {
+      "id": "ui",
+      "name": "Frontend and browser tests",
+      "goal": "Responsive accessible UI proven in real Chromium at 360 and 1280 px.",
+      "acceptanceCriteria": [
+        "Screens, states, keyboard and citation highlighting implemented (D1)",
+        "Browser journey passes at both widths with evidence screenshots (D1, D7)"
+      ]
+    },
+    {
+      "id": "release",
+      "name": "Live verification, evals and docs",
+      "goal": "Live CLI provider tests, measured holdout results, then README and clean-checkout verification.",
+      "acceptanceCriteria": [
+        "Live CLI path verified in this environment (D4)",
+        "Eval results reported against fixed thresholds (D8)",
+        "Setup, run, test and eval reproducible from README (D9)",
+        "Open risks listed (D10)"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "foundation-be",
+      "phase": "foundation",
+      "title": "Package, config, schema validator, contract schemas, DB layer and migrations",
+      "owner": "backend-engineer",
+      "dependencies": [],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 3, 6, 12, 13, 15 step 0",
+        "SCOPE.md D2 D3"
+      ],
+      "outputs": [
+        "package.json",
+        "src/config.js",
+        "src/lib/schema.js",
+        "src/api/contract-schemas.js",
+        "src/db/**",
+        "db unit tests"
+      ],
+      "components": [
+        "db",
+        "contracts"
+      ],
+      "files": [
+        "package.json",
+        ".gitignore",
+        "src/config.js",
+        "src/lib/schema.js",
+        "src/api/contract-schemas.js",
+        "src/db/**",
+        "test/unit/db/**"
+      ],
+      "acceptanceCriteria": [
+        "package.json has engines node>=22.5, type module, zero dependencies, all scripts from spec section 11 with --disable-warning=ExperimentalWarning (D2)",
+        "Versioned migrations 001/002 apply on fresh DB, second run is a no-op, edited or newer DB aborts (D3)",
+        "Audit trigger blocks UPDATE/DELETE; role/state/status constraints and foreign keys enforced",
+        "Contract schemas module is the single source of request/response shapes"
+      ],
+      "verification": {
+        "method": "unit tests",
+        "command": "node --disable-warning=ExperimentalWarning --test \"test/unit/db/**/*.test.js\""
+      }
+    },
+    {
+      "id": "verifier-notes",
+      "phase": "foundation",
+      "title": "Notes parser and deterministic grounding verifier with unit tests",
+      "owner": "backend-engineer",
+      "dependencies": [
+        "foundation-be"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 5, 3.5, 11.1",
+        "SCOPE.md D4"
+      ],
+      "outputs": [
+        "src/notes/**",
+        "src/verify/**",
+        "unit tests"
+      ],
+      "components": [
+        "notes",
+        "verifier"
+      ],
+      "files": [
+        "src/notes/**",
+        "src/verify/**",
+        "test/unit/verify/**",
+        "test/unit/notes/**"
+      ],
+      "acceptanceCriteria": [
+        "Parser supports the three formats, physical line numbers in errors, limits enforced (D5)",
+        "Verifier implements reason codes, normalisation, stoplist v1 and union-of-cited-lines rules; pure, idempotent, no input mutation (D4)",
+        "Stoplist written before any model output; benchmark test passes"
+      ],
+      "verification": {
+        "method": "unit tests",
+        "command": "node --disable-warning=ExperimentalWarning --test \"test/unit/verify/**/*.test.js\" \"test/unit/notes/**/*.test.js\""
+      }
+    },
+    {
+      "id": "backend-auth-http",
+      "phase": "core-backend",
+      "title": "HTTP core, app wiring, auth, sessions, CSRF, limiter, RBAC, users, audit, static server, seed, test harness",
+      "owner": "backend-engineer",
+      "dependencies": [
+        "foundation-be"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 3.1-3.4, 3.8, 3.9, 6.2, 9, 10, 11.2",
+        "SCOPE.md D2 D5 D6"
+      ],
+      "outputs": [
+        "src/http/**",
+        "src/auth/**",
+        "src/audit/**",
+        "src/app.js",
+        "src/index.js",
+        "scripts/**",
+        "test harness",
+        "auth API tests"
+      ],
+      "components": [
+        "http",
+        "auth",
+        "rbac",
+        "audit"
+      ],
+      "files": [
+        "src/http/**",
+        "src/auth/**",
+        "src/audit/**",
+        "src/app.js",
+        "src/index.js",
+        "src/routes/index.js",
+        "src/routes/auth.js",
+        "src/routes/users.js",
+        "src/routes/audit.js",
+        "src/routes/health.js",
+        "src/routes/static.js",
+        "scripts/seed.js",
+        "scripts/set-password.js",
+        "test/support/harness.js",
+        "test/unit/auth/**",
+        "test/api/auth.test.js",
+        "test/api/csrf.test.js",
+        "test/api/static.test.js",
+        "test/api/logs.test.js",
+        "test/api/limits.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Single error envelope with X-Request-Id; 404/405/413/415/500 shaped per contract and internals never leaked (D2, D5)",
+        "scrypt salted hashes; HttpOnly SameSite cookies; session rotation at login; idle and absolute expiry; double-submit CSRF plus Origin check (D6)",
+        "Login limiter: 6th attempt gives 429 with Retry-After even with right password; bounded memory (D6)",
+        "Audit log written for sensitive actions; lead-only team-scoped endpoint (D6)",
+        "src/routes/index.js auto-registers every other src/routes/*.js so later tasks add routes without editing app.js",
+        "Seed script is idempotent and creates teams Platform and Payments with lead/responder/viewer each plus a sample incident (D9)",
+        "Static server sets security headers and rejects traversal"
+      ],
+      "verification": {
+        "method": "unit and API tests",
+        "command": "node --disable-warning=ExperimentalWarning --test \"test/unit/auth/**/*.test.js\" test/api/auth.test.js test/api/csrf.test.js test/api/static.test.js test/api/logs.test.js test/api/limits.test.js"
+      }
+    },
+    {
+      "id": "ai-providers",
+      "phase": "foundation",
+      "title": "AI draft schema, prompt builder, provider adapter, CLI/Anthropic/fallback/fake providers with unit tests",
+      "owner": "ai-engineer",
+      "dependencies": [
+        "foundation-be",
+        "verifier-notes"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 1, 3.10, 4, 11.1",
+        "SCOPE.md D4 D5"
+      ],
+      "outputs": [
+        "src/ai/**",
+        "test/support/fake-claude.js",
+        "AI unit tests"
+      ],
+      "components": [
+        "ai"
+      ],
+      "files": [
+        "src/ai/**",
+        "test/unit/ai/**",
+        "test/support/fake-claude.js"
+      ],
+      "acceptanceCriteria": [
+        "Narrow provider interface; DraftJSON strictly validated, extra fields rejected (D4)",
+        "CLI provider uses exact pinned argv (safe-mode, tools empty, no --bare), allowlisted env without API key, empty temp cwd removed afterwards; handles timeout, malformed output, flood, ENOENT (D4, D5)",
+        "Anthropic provider works against a local fake including 429/500/slow (D4)",
+        "Notes passed as escaped data block; payload cannot break out of delimiters (prompt-injection resistance, D4)",
+        "Fallback extractor deterministic (byte-identical runs), schema-valid, labelled isFallback (D4)",
+        "fake.js yields deterministic flagged and clean drafts for browser tests"
+      ],
+      "verification": {
+        "method": "unit tests",
+        "command": "node --disable-warning=ExperimentalWarning --test \"test/unit/ai/**/*.test.js\""
+      }
+    },
+    {
+      "id": "backend-domain",
+      "phase": "core-backend",
+      "title": "Incidents, notes, drafts, publish transaction and postmortem routes with API integration tests",
+      "owner": "backend-engineer",
+      "dependencies": [
+        "backend-auth-http",
+        "verifier-notes",
+        "ai-providers"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 3.5-3.7, 3.9, 6, 9, 11.2, 15 step 3",
+        "SCOPE.md D3 D4 D5 D6 D7"
+      ],
+      "outputs": [
+        "src/services/**",
+        "incident, notes, draft, postmortem, provider routes",
+        "API tests"
+      ],
+      "components": [
+        "services",
+        "routes",
+        "publish"
+      ],
+      "files": [
+        "src/services/**",
+        "src/routes/incidents.js",
+        "src/routes/notes.js",
+        "src/routes/drafts.js",
+        "src/routes/postmortems.js",
+        "src/routes/providers.js",
+        "test/api/journey.test.js",
+        "test/api/contract.test.js",
+        "test/api/rbac.test.js",
+        "test/api/idor.test.js",
+        "test/api/notes.test.js",
+        "test/api/draft.test.js",
+        "test/api/publish.test.js",
+        "test/api/audit.test.js",
+        "test/api/validation.test.js",
+        "test/api/errors.test.js",
+        "test/api/persistence.test.js",
+        "test/api/perf.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Journey sign in -> incident -> notes -> draft -> publish refused with UNGROUNDED_STATEMENTS -> fix -> publish -> viewer reads passes as API test (D7)",
+        "Publish runs in BEGIN IMMEDIATE and re-verifies; tampered statuses and interleaved edit/publish never publish a flagged statement (D4, D6)",
+        "Provider timeout, malformed output, outage return documented codes and store nothing (D5)",
+        "IDOR matrix: cross-team access returns 404 and leaves data unchanged; viewers see only own team published postmortems; only leads publish (D6)",
+        "Data survives in-process reopen and spawned-process restart (D3)",
+        "Fallback draft marked isFallback in API (D4)"
+      ],
+      "verification": {
+        "method": "API integration tests",
+        "command": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 \"test/api/**/*.test.js\""
+      }
+    },
+    {
+      "id": "datasets-tune-verifier",
+      "phase": "eval",
+      "title": "Tune incident/injection datasets, verifier corpus and thresholds test",
+      "owner": "test-engineer",
+      "dependencies": [
+        "foundation-be"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 8.1, 8.3, 8.5",
+        "architecture brief eval thresholds",
+        "SCOPE.md D8"
+      ],
+      "outputs": [
+        "eval/tune/**",
+        "eval/verifier/**",
+        "eval/thresholds.json",
+        "test/eval/thresholds.test.js"
+      ],
+      "components": [
+        "eval-data"
+      ],
+      "files": [
+        "eval/tune/**",
+        "eval/verifier/**",
+        "eval/thresholds.json",
+        "test/eval/thresholds.test.js"
+      ],
+      "acceptanceCriteria": [
+        "12 tune incidents (40-120 lines, gold timeline 6-15, actions 2-6) and 10 tune injection cases with unique canaries (D8)",
+        "verifier/fabrications.json >= 60 entries with expected codes; correct.json >= 150; forbidden-stopwords.txt",
+        "thresholds.json equals brief values and test asserts it (D8)",
+        "Synthetic data only"
+      ],
+      "verification": {
+        "method": "node:test run",
+        "command": "node --disable-warning=ExperimentalWarning --test test/eval/thresholds.test.js"
+      }
+    },
+    {
+      "id": "datasets-holdout",
+      "phase": "eval",
+      "title": "Holdout datasets with SHA-256 manifest and manifest test",
+      "owner": "test-engineer",
+      "dependencies": [
+        "datasets-tune-verifier"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 8.1, 8.5",
+        "SCOPE.md D8"
+      ],
+      "outputs": [
+        "eval/holdout/**",
+        "test/eval/manifest.test.js"
+      ],
+      "components": [
+        "eval-data"
+      ],
+      "files": [
+        "eval/holdout/**",
+        "test/eval/manifest.test.js"
+      ],
+      "acceptanceCriteria": [
+        "12 holdout incidents and 10 holdout injection cases, authored independently of the prompt and extractor (D8)",
+        "MANIFEST.sha256 lists every holdout file; test fails on missing, extra or changed files",
+        "Files are not read by backend-engineer or ai-engineer (holdout read-restricted)"
+      ],
+      "verification": {
+        "method": "node:test run",
+        "command": "node --disable-warning=ExperimentalWarning --test test/eval/manifest.test.js"
+      }
+    },
+    {
+      "id": "eval-harness",
+      "phase": "eval",
+      "title": "Eval runner, scorer, budget guard, reports (fallback and CLI separate)",
+      "owner": "ai-engineer",
+      "dependencies": [
+        "ai-providers",
+        "verifier-notes",
+        "datasets-tune-verifier"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 8.2-8.4",
+        "SCOPE.md D8"
+      ],
+      "outputs": [
+        "eval/run.js",
+        "eval/lib/**",
+        "eval/tuning-log.md"
+      ],
+      "components": [
+        "eval"
+      ],
+      "files": [
+        "eval/run.js",
+        "eval/lib/**",
+        "eval/tuning-log.md",
+        "eval/usage.log",
+        "eval/holdout-runs.log"
+      ],
+      "acceptanceCriteria": [
+        "--provider mandatory; fallback and CLI reports never mixed (D8)",
+        "Metrics M1-M5 scored as spec 8.3 with Wilson intervals and exit codes 0/1/2/3/64",
+        "Budget guard refuses over-cap runs; usage printed and logged; holdout cap of 2 runs per provider and manifest check (D8) (one holdout run planned; the second slot is reserved for a disclosed harness defect)",
+        "Report prints thresholds notice, CLI version, model and cost; CLI absent gives NOT_RUN"
+      ],
+      "verification": {
+        "method": "run verifier corpus and fallback eval on tune set",
+        "command": "npm run eval -- --verifier && npm run eval -- --provider fallback"
+      }
+    },
+    {
+      "id": "eval-tests",
+      "phase": "eval",
+      "title": "Eval tests inside npm test: scorer, fallback tune, verifier corpus",
+      "owner": "test-engineer",
+      "dependencies": [
+        "eval-harness",
+        "datasets-holdout"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 8.3, 11.5",
+        "SCOPE.md D7 D8"
+      ],
+      "outputs": [
+        "test/eval/scorer.test.js",
+        "test/eval/fallback-tune.test.js",
+        "test/eval/m1b-m1c.test.js"
+      ],
+      "components": [
+        "eval-tests"
+      ],
+      "files": [
+        "test/eval/scorer.test.js",
+        "test/eval/fallback-tune.test.js",
+        "test/eval/m1b-m1c.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Scorer tested with hand-built outputs including worst-run rule, Wilson values, INCOMPLETE/NOT_RUN and budget guard refusals (D8)",
+        "Verifier catches 100% of fabrications with expected code and <=2% false flags (D8)",
+        "Fallback meets tune thresholds, deterministic, injection 10/10 (D8)"
+      ],
+      "verification": {
+        "method": "node:test run",
+        "command": "node --disable-warning=ExperimentalWarning --test \"test/eval/**/*.test.js\""
+      }
+    },
+    {
+      "id": "frontend",
+      "phase": "ui",
+      "title": "Responsive vanilla JS UI: sign in, incidents, notes, draft review with citation highlighting, publish, postmortems",
+      "owner": "frontend-engineer",
+      "dependencies": [
+        "foundation-be"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 3, 7, 9 CSP, 11.3 test ids",
+        "SCOPE.md D1"
+      ],
+      "outputs": [
+        "public/**",
+        "test/support/mock-api.js",
+        "test/unit/frontend/testids.test.js"
+      ],
+      "components": [
+        "ui"
+      ],
+      "files": [
+        "public/**",
+        "test/support/mock-api.js",
+        "test/unit/frontend/**"
+      ],
+      "acceptanceCriteria": [
+        "Screens for sign in, incidents, notes import, draft review, publish, postmortem read with loading, empty, error and success states (D1)",
+        "Usable 360-1440 px, no horizontal overflow, 44 px touch targets at 360 (D1)",
+        "Keyboard operable with visible focus (outline >= 2 px), skip link, live region for citation highlight (D1)",
+        "Clicking a citation highlights, scrolls to and focuses the source line; flagged statements show Not grounded with reasons; Publish disabled while flagged (D1, D4)",
+        "Fallback banner shown when isFallback; no inline scripts; user text rendered via textContent (XSS safe)",
+        "data-testid list from spec 7.3 implemented",
+        "node:test asserts every spec 7.3 data-testid exists in public/; D1 layout, focus, touch-target and state evidence is deferred to browser-e2e"
+      ],
+      "verification": {
+        "method": "syntax check plus data-testid presence test",
+        "command": "node --check public/app.js && node --disable-warning=ExperimentalWarning --test \"test/unit/frontend/**/*.test.js\""
+      }
+    },
+    {
+      "id": "browser-e2e",
+      "phase": "ui",
+      "title": "Real Chromium Playwright journey at 360 and 1280 px",
+      "owner": "test-engineer",
+      "dependencies": [
+        "backend-domain",
+        "frontend",
+        "ai-providers"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md section 11.3",
+        "SCOPE.md D1 D7"
+      ],
+      "outputs": [
+        "test/browser/journey.test.js",
+        "screenshots"
+      ],
+      "components": [
+        "e2e"
+      ],
+      "files": [
+        "test/browser/**"
+      ],
+      "acceptanceCriteria": [
+        "Full journey incl. flagged statement, citation highlight, edit, lead publish, viewer read, cross-team empty state passes at 360 and 1280 px (D1, D7)",
+        "Keyboard, focus width, contrast, overflow, touch target and console error checks pass",
+        "XSS probe displays literally; test fails rather than skips if Chromium cannot launch",
+        "Screenshots saved as evidence"
+      ],
+      "verification": {
+        "method": "real browser test",
+        "command": "npm run test:browser"
+      }
+    },
+    {
+      "id": "live-eval",
+      "phase": "release",
+      "title": "Live CLI tests, verifier/prompt tuning on tune set only, CLI and fallback holdout runs",
+      "owner": "ai-engineer",
+      "dependencies": [
+        "eval-tests",
+        "backend-domain",
+        "datasets-holdout",
+        "browser-e2e"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md sections 11.4, 15 step 4, 8.4, 8.5",
+        "SCOPE.md D4 D8"
+      ],
+      "outputs": [
+        "test/live/**",
+        "eval reports and logs"
+      ],
+      "components": [
+        "live",
+        "eval"
+      ],
+      "files": [
+        "test/live/**",
+        "eval/reports/**",
+        "eval/usage.log",
+        "eval/holdout-runs.log",
+        "eval/tuning-log.md",
+        "src/ai/prompt.js",
+        "src/ai/fallback.js",
+        "src/verify/stopwords.js"
+      ],
+      "acceptanceCriteria": [
+        "Live CLI isolation test shows init tools exactly [StructuredOutput] and no permission denials (D4)",
+        "Live provider generation and CLI e2e journey pass with the real claude -p provider (D4, D7)",
+        "Agent-spend budget: live-eval provider spend aggregate cap <= USD 8 (tightens the design's USD 40 upper bound), at most 3 tune CLI runs, per-run cap USD 1.5; if cumulative harness spend exceeds USD 36 (planned pre-live cumulative about 31 plus 15%) before a live run, stop and report to the orchestrator; hard stop at USD 51 (85% of the USD 60 harness budget) (D8)",
+        "Exactly one holdout CLI run and one holdout fallback run; a second run per provider only after a documented harness defect, disclosed in holdout-runs.log and the report; results reported as measured, never retried for a pass (D8)",
+        "Every edit to src/ai/prompt.js, src/ai/fallback.js or src/verify/stopwords.js is recorded in eval/tuning-log.md (stopwords.js is backend-owned in spec section 11; edits go only through the tuning log)",
+        "After the last tuning change: npm test and npm run test:browser green, M1b 100% and M1c <=2% re-run and reported, fallback-tune and determinism tests pass",
+        "Every run uses a small model and prints usage"
+      ],
+      "verification": {
+        "method": "live tests plus full regression after last tuning change",
+        "command": "npm run test:live && npm test && npm run test:browser && npm run eval -- --verifier"
+      }
+    },
+    {
+      "id": "docs-devops",
+      "phase": "release",
+      "title": "README, config and secrets docs, rollback notes, clean-checkout run",
+      "owner": "devops-engineer",
+      "dependencies": [
+        "browser-e2e",
+        "live-eval"
+      ],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md section 12",
+        "SCOPE.md D9 D10"
+      ],
+      "outputs": [
+        "README.md",
+        "docs/**"
+      ],
+      "components": [
+        "docs"
+      ],
+      "files": [
+        "README.md",
+        "docs/**"
+      ],
+      "acceptanceCriteria": [
+        "README covers prerequisites, config variables, seed logins, run, test, browser test prerequisite, live and eval commands with budget rules, reading eval reports, privacy note, limitations, troubleshooting (D9)",
+        "Every documented command was run and works; a clean checkout copy passes npm test (D9)",
+        "Known risks and limitations listed (D10)",
+        "Eval results and cost rules in README quote the final live-eval reports; clean-checkout npm test run after the last tuning change (D9)"
+      ],
+      "verification": {
+        "method": "full deterministic suite",
+        "command": "npm test"
+      }
+    }
+  ]
+}

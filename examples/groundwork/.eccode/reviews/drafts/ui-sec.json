@@ -1,0 +1,16 @@
+{
+  "decision": "approve",
+  "summary": "Reviewed static serving, DOM rendering, role handling and secrets in public/. Probed live server: traversal variants all 404, CSP/nosniff/XFO headers present, no innerHTML anywhere. No blocking findings.",
+  "criteria": [
+    {"id":"C1","description":"Static serving resists path traversal and exposes no dotfiles or listings","met":true,"evidence":["ev:ev-mv03q3mf-013d4b49","artifact:public/index.html"]},
+    {"id":"C2","description":"Security headers/CSP (script-src self, no inline) on responses","met":true,"evidence":["ev:ev-mv03q3mf-013d4b49"]},
+    {"id":"C3","description":"Untrusted model/user text rendered safely (no HTML injection sinks)","met":true,"evidence":["artifact:public/js/dom.js","artifact:public/js/components/statements.js","artifact:public/js/components/source.js"]},
+    {"id":"C4","description":"UI role handling is not the sole authorization; no secrets in client","met":true,"evidence":["artifact:public/app.js","artifact:public/js/api.js"]}
+  ],
+  "findings": [
+    {"id":"F1","severity":"info","title":"Viewer route guard is client-side only","detail":"app.js redirects viewers away from #/incidents; this is UX only. Server-side role enforcement was not in scope here and should be confirmed by the API review/verification gate.","evidence":["artifact:public/app.js"],"recommendation":"Ensure API tests cover viewer 403 on incident endpoints."},
+    {"id":"F2","severity":"info","title":"CSRF token held in JS memory, not storage","detail":"Token is kept in a module variable and re-fetched via /api/me on load; no localStorage/sessionStorage use. Good. Session cookie is HttpOnly (src/http/cookies.js).","evidence":["artifact:public/js/api.js"],"recommendation":"None."},
+    {"id":"F3","severity":"info","title":"Static assets use no-cache (acceptable)","detail":"Static assets use no-cache and contain no secrets; API responses use no-store (observed on /api/me 401). Browser journey test not re-run by me.","evidence":["ev:ev-mv03q3mf-013d4b49"],"recommendation":"None."}
+  ],
+  "resolvedFindings": []
+}

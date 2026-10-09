@@ -1,0 +1,426 @@
+{
+ "id": "hold-04",
+ "title": "Partner webhooks rejected after secret rotation",
+ "severity": "SEV3",
+ "startedAt": "2026-04-23T15:00:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "15:00",
+   "author": "dalia",
+   "text": "Partner support says their callbacks to us have been failing since lunch"
+  },
+  {
+   "n": 2,
+   "time": "15:00",
+   "author": "dalia",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 3,
+   "time": "15:00",
+   "author": "dalia",
+   "text": "I'm on it"
+  },
+  {
+   "n": 4,
+   "time": "15:07",
+   "author": "hugo",
+   "text": "Our endpoint is answering 401 on every webhook, signature check fails"
+  },
+  {
+   "n": 5,
+   "time": "15:07",
+   "author": "sol",
+   "text": "hang on, loading the page"
+  },
+  {
+   "n": 6,
+   "time": "15:07",
+   "author": "hugo",
+   "text": "hang on, loading the page"
+  },
+  {
+   "n": 7,
+   "time": "15:07",
+   "author": "hugo",
+   "text": "thanks for the update"
+  },
+  {
+   "n": 8,
+   "time": "15:07",
+   "author": "sol",
+   "text": "thanks for the update"
+  },
+  {
+   "n": 9,
+   "time": "15:12",
+   "author": "hugo",
+   "text": "We rotated the signing secret this morning and only updated one of the two services that verify it"
+  },
+  {
+   "n": 10,
+   "time": "15:12",
+   "author": "dalia",
+   "text": "that's useful, thanks"
+  },
+  {
+   "n": 11,
+   "time": "15:12",
+   "author": "sol",
+   "text": "I'll write it up afterwards"
+  },
+  {
+   "n": 12,
+   "time": "15:18",
+   "author": "dalia",
+   "text": "Do the partners retry? I do not want to lose events"
+  },
+  {
+   "n": 13,
+   "time": "15:18",
+   "author": "sol",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 14,
+   "time": "15:18",
+   "author": "hugo",
+   "text": "agreed"
+  },
+  {
+   "n": 15,
+   "time": "15:18",
+   "author": "hugo",
+   "text": "I'm still here"
+  },
+  {
+   "n": 16,
+   "time": "15:24",
+   "author": "sol",
+   "text": "They retry for 24 hours with backoff, so we should catch everything once it is fixed"
+  },
+  {
+   "n": 17,
+   "time": "15:24",
+   "author": "hugo",
+   "text": "one sec"
+  },
+  {
+   "n": 18,
+   "time": "15:24",
+   "author": "dalia",
+   "text": "sorry, was in another meeting"
+  },
+  {
+   "n": 19,
+   "time": "15:24",
+   "author": "dalia",
+   "text": "can you say that again?"
+  },
+  {
+   "n": 20,
+   "time": "15:30",
+   "author": "hugo",
+   "text": "Pushing the new secret to the second service"
+  },
+  {
+   "n": 21,
+   "time": "15:30",
+   "author": "sol",
+   "text": "sorry, was in another meeting"
+  },
+  {
+   "n": 22,
+   "time": "15:30",
+   "author": "sol",
+   "text": "yep"
+  },
+  {
+   "n": 23,
+   "time": "15:38",
+   "author": "sol",
+   "text": "Webhooks are returning 200 again"
+  },
+  {
+   "n": 24,
+   "time": "15:38",
+   "author": "hugo",
+   "text": "thanks for the update"
+  },
+  {
+   "n": 25,
+   "time": "15:38",
+   "author": "sol",
+   "text": "anyone have the dashboard link handy?"
+  },
+  {
+   "n": 26,
+   "time": "15:38",
+   "author": "dalia",
+   "text": "give me a couple of minutes"
+  },
+  {
+   "n": 27,
+   "time": "15:38",
+   "author": "hugo",
+   "text": "fair point"
+  },
+  {
+   "n": 28,
+   "time": "15:50",
+   "author": "sol",
+   "text": "Retries are draining, queue of failed callbacks is down to about 300"
+  },
+  {
+   "n": 29,
+   "time": "15:50",
+   "author": "hugo",
+   "text": "did anyone tell support yet?"
+  },
+  {
+   "n": 30,
+   "time": "15:50",
+   "author": "dalia",
+   "text": "fair point"
+  },
+  {
+   "n": 31,
+   "time": "16:10",
+   "author": "dalia",
+   "text": "Partner confirms they see our acks and nothing is missing on their side"
+  },
+  {
+   "n": 32,
+   "time": "16:10",
+   "author": "hugo",
+   "text": "joining now"
+  },
+  {
+   "n": 33,
+   "time": "16:10",
+   "author": "sol",
+   "text": "I'll write it up afterwards"
+  },
+  {
+   "n": 34,
+   "time": "16:10",
+   "author": "sol",
+   "text": "that's useful, thanks"
+  },
+  {
+   "n": 35,
+   "time": "16:15",
+   "author": "hugo",
+   "text": "So about an hour of rejected callbacks, no data lost thanks to their retries"
+  },
+  {
+   "n": 36,
+   "time": "16:15",
+   "author": "hugo",
+   "text": "not sure yet"
+  },
+  {
+   "n": 37,
+   "time": "16:15",
+   "author": "hugo",
+   "text": "joining now"
+  },
+  {
+   "n": 38,
+   "time": "16:15",
+   "author": "dalia",
+   "text": "hang on, loading the page"
+  },
+  {
+   "n": 39,
+   "time": "16:15",
+   "author": "dalia",
+   "text": "no surprises on my side"
+  },
+  {
+   "n": 40,
+   "time": "16:20",
+   "author": "hugo",
+   "text": "I will write a rotation runbook that lists every service that holds the secret"
+  },
+  {
+   "n": 41,
+   "time": "16:20",
+   "author": "sol",
+   "text": "give me a couple of minutes"
+  },
+  {
+   "n": 42,
+   "time": "16:20",
+   "author": "dalia",
+   "text": "same here"
+  },
+  {
+   "n": 43,
+   "time": "16:20",
+   "author": "dalia",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 44,
+   "time": "16:20",
+   "author": "hugo",
+   "text": "sounds good"
+  },
+  {
+   "n": 45,
+   "time": "16:25",
+   "author": "sol",
+   "text": "And I will add a canary webhook that is sent after each rotation so we notice immediately"
+  },
+  {
+   "n": 46,
+   "time": "16:25",
+   "author": "hugo",
+   "text": "sorry, was in another meeting"
+  },
+  {
+   "n": 47,
+   "time": "16:25",
+   "author": "dalia",
+   "text": "not sure yet"
+  },
+  {
+   "n": 48,
+   "time": "16:25",
+   "author": "dalia",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 49,
+   "time": "16:25",
+   "author": "sol",
+   "text": "I can take the next step"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "15:00",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "15:07",
+    "lines": [
+     4
+    ]
+   },
+   {
+    "time": "15:30",
+    "lines": [
+     20
+    ]
+   },
+   {
+    "time": "15:38",
+    "lines": [
+     23
+    ]
+   },
+   {
+    "time": "15:50",
+    "lines": [
+     28
+    ]
+   },
+   {
+    "time": "16:10",
+    "lines": [
+     31
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     40
+    ]
+   },
+   {
+    "lines": [
+     45
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 15:00 dalia reported partner callbacks failing since lunch.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 15:07 hugo saw the endpoint answer 401 on every webhook because the signature check failed.",
+   "cites": [
+    4
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "The signing secret was rotated that morning and only one of the two verifying services was updated.",
+   "cites": [
+    9
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 15:30 hugo pushed the new secret to the second service.",
+   "cites": [
+    20
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 15:38 sol saw webhooks return 200 again.",
+   "cites": [
+    23
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 15:50 sol saw the retries draining with the failed callback queue down to about 300.",
+   "cites": [
+    28
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 16:10 dalia heard from the partner that nothing was missing on their side.",
+   "cites": [
+    31
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "About an hour of callbacks were rejected but no data was lost thanks to partner retries.",
+   "cites": [
+    35
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Hugo will write a rotation runbook that lists every service that holds the secret.",
+   "cites": [
+    40
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Sol will add a canary webhook that is sent after each rotation.",
+   "cites": [
+    45
+   ]
+  }
+ ]
+}

@@ -1,0 +1,27 @@
+$ node eval/run.js --provider cli
+# cwd: .
+# exit: 0
+GROUNDWORK EVAL REPORT  provider=cli  set=all  tune
+Thresholds are unattended defaults, Q3; changes need a recorded user decision.
+Live numbers below come from the Claude Code CLI (`claude -p`) only; fallback results are reported separately.
+cliVersion=2.1.295 model=claude-haiku-5-5 promptVersion=p2 gitCommit=f1a82c44667dfc379de85452d434cb96f1a35f17 manifestHash=n/a
+repetitions=3 at=2026-10-09T00:31:25.832Z
+VERDICT: PASS
+
+M1: PASS  mean 94.9% min 93.9% vs threshold 90%; Wilson95 94.9% [93.1, 96.2] (746/786)
+M1B: PASS  flagged with expected code 63/63; required 100%
+M1C: PASS  false flags 0/429 = 0.00%; max 2%
+M2: PASS  mean 96.7% min 96.3% vs threshold 80%; Wilson95 96.7% [93.6, 98.3] (232/240)
+M3: PASS  mean 100.0% min 100.0% vs threshold 75%; Wilson95 100.0% [95.3, 100.0] (78/78)
+M4: PASS  10 of 10 cases passed all 3 repetition(s); threshold 9
+M5: not applicable
+
+Per repetition (M1 / M2 / M3):
+  rep 1: 95.8% / 96.3% / 100.0%
+  rep 2: 93.9% / 97.5% / 100.0%
+  rep 3: 95.1% / 96.3% / 100.0%
+
+Usage: calls=66 failed=0 inputTokens=146 outputTokens=[REDACTED] costUsd=0.0974 costUpperBoundUsd=0.0974 cap=3
+Latency ms: mean=7831 p95=11431
+Budget: logged before run USD 1.7542 of total cap 40
+Report written: eval/reports/cli-all-tune-2026-10-09T00-31-25-832Z.json

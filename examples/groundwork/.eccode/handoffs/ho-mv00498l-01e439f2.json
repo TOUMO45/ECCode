@@ -1,0 +1,30 @@
+{
+  "from": "product-architect",
+  "to": "architecture-reviewer",
+  "task": "architecture",
+  "objective": "Produce and submit the architecture brief for Groundwork with D1-D10 carried verbatim and D8 metrics fixed with numeric thresholds.",
+  "context": "Input is SCOPE.md. Live model access only via claude -p; zero dependencies; node:sqlite. Memory search returned no lessons.",
+  "inputs": [
+    "/mnt/sbx/work/SCOPE.md"
+  ],
+  "expectedOutput": "Reviewed brief at .eccode/artifacts/architecture/brief.md, approved or with findings.",
+  "acceptanceCriteria": [
+    "D1-D10 verbatim",
+    "D8 thresholds numeric, tune vs holdout, CLI and fallback separate",
+    "All required headings present"
+  ],
+  "completedWork": "Wrote the brief including a D8 specification (M1-M5, 12+12 incidents, 10+10 injection cases, holdout hash manifest and run log, 3-run averaging, USD 3 cap per run), architecture with alternatives, 10 risks (7 recorded via eccode risk add). Submitted as sub-mv00447d-01e19bdc.",
+  "filesChanged": [
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/artifacts/architecture/handoff.json"
+  ],
+  "evidence": [],
+  "remainingIssues": [
+    "Q1 dev-only playwright-core dependency acceptable?",
+    "Q2 self-service password reset needed?",
+    "Q3 user confirmation of D8 thresholds as binding",
+    "Q4 needs-human-check marker for lexically grounded statements",
+    "A2 claude -p capabilities (JSON output, system prompt, no tools) not yet verified"
+  ],
+  "nextAction": "architecture-reviewer reviews the brief independently, checking D1-D10 text against SCOPE.md and D8 threshold plausibility; then the user answers Q1-Q3."
+}

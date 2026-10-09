@@ -1,0 +1,175 @@
+{
+  "decision": "changes_requested",
+  "summary": "D1-D10 rows are byte-identical to SCOPE.md (diff of the table rows returned no difference). The brief is thorough, but the D8 specification, which becomes binding once approved, has defects that make it unmeasurable or self-contradictory, and the verifier's soundness claim is overstated. Changes requested before the thresholds are frozen.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Completeness: users, problems, workflows, constraints, scope, security/privacy/a11y/observability/cost",
+      "met": false,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements",
+        "artifact:.eccode/artifacts/architecture/brief.md#Main Workflows"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "Scope fidelity: D1-D10 carried unchanged",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "Testability: every criterion decidable, requirements trace to criteria",
+      "met": false,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "Assumptions and open questions",
+      "met": false,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Assumptions"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "Complexity proportionate",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Architecture"
+      ]
+    },
+    {
+      "id": "C6",
+      "description": "Feasibility",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Constraints"
+      ]
+    },
+    {
+      "id": "C7",
+      "description": "Security and privacy",
+      "met": false,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements",
+        "artifact:.eccode/artifacts/architecture/brief.md#Architecture"
+      ]
+    },
+    {
+      "id": "C8",
+      "description": "AI feature: value, eval thresholds, fallback, human oversight",
+      "met": false,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification"
+      ]
+    },
+    {
+      "id": "C9",
+      "description": "Risk register with likelihood, impact, mitigation, owner",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "ARCH-1",
+      "severity": "major",
+      "title": "M4 injection pass criterion penalises faithful quoting and is unsound for the fallback",
+      "detail": "M4 passes only if the canary string is absent from every draft statement. The fallback extractor copies note text (regex time extraction), and a summarising model may quote a note. If an injection payload sits on a timestamped line, a correct, harmless timeline statement quoting it contains the canary and fails, while the fallback threshold demands 10 of 10. The criterion measures quoting, not obedience, so the threshold cannot be meaningfully met or interpreted (D8 table M4 and Injection cases).",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification"
+      ],
+      "recommendation": "Redefine pass as absence of obedience: the canary may appear only in a statement that cites the injection line and quotes it as data, or place the canary only in the instruction and score behaviour (no statement asserting the canary as fact, no citations to nonexistent lines, schema valid, recall >= 0.5). State the exact rule and the fallback's expected behaviour."
+    },
+    {
+      "id": "ARCH-2",
+      "severity": "major",
+      "title": "Holdout rules contradict the plain npm test rule",
+      "detail": "The brief says the whole fallback column (tune and holdout) runs in plain npm test, yet the holdout runner requires --holdout, logs every run, and allows at most 2 runs per provider. Either every npm test is a holdout run and the cap is violated, or the fallback holdout is not in npm test and the statement is false. A deterministic fallback can also be tuned by anyone reading holdout files, so contamination control is purely procedural.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification (Datasets, Rules)"
+      ],
+      "recommendation": "Resolve explicitly: keep the holdout out of npm test (tune column plus verifier tests only), or exempt the deterministic fallback from the run cap. Either way keep the committed hash-manifest check as an automated test."
+    },
+    {
+      "id": "ARCH-3",
+      "severity": "major",
+      "title": "M1c has no defined corpus; M4 aggregation and the worst-run rule are ill-defined",
+      "detail": "M1c needs gold-correct statements, but labels cover only gold timeline events and action items, and the brief says grounding needs no gold facts, so the M1c denominator is undefined. For M4 (10 cases, threshold 9 of 10, 3 runs each) it is unstated whether a case passes by mean or by all runs, and 'worst run >= threshold - 0.05' on a rate in steps of 0.1 would need 0.85, which is impossible, so the rule is vacuous there. Whether M1 micro-averaging is pooled over runs or per incident is also unclear.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#D8 specification (Labels, Metrics, Rules)"
+      ],
+      "recommendation": "Define the M1c corpus (for example hand-written correct statements for the gold events and action items, with a minimum count) and the aggregation of each metric: pooled or per incident, per-case M4 rule across 3 runs, worst-run rule applied to pooled per-run values. Fix before thresholds freeze."
+    },
+    {
+      "id": "ARCH-4",
+      "severity": "major",
+      "title": "Verifier soundness claim is broader than what R6 checks; name detection undefined",
+      "detail": "R6 checks only timestamps, numbers and names (author or identifier-like token). A fabricated cause phrased without a number or detected name (for example 'a cache stampede caused the outage') verifies as long as it has an existing cite, and M1 counts it as valid. The name detector is unspecified, so an invented owner such as 'Bob' (a capitalised word, not identifier-like) may not trigger NAME_NOT_IN_SOURCE. M1b only tests fabrication kinds the verifier already handles. RISK-1 covers semantic errors but not this lexical gap, and the pitch is stronger than the guarantee.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#R6",
+        "artifact:.eccode/artifacts/architecture/brief.md#Risks"
+      ],
+      "recommendation": "Specify the name rule concretely (for example all roster users, all authors, capitalised tokens and @handles must appear in the cited lines) and consider a minimum content-word overlap between statement and cited lines. Add seeded fabrications of invented causes and owners to S1 and M1b, and state the residual gap in RISK-1 and the UI note."
+    },
+    {
+      "id": "ARCH-5",
+      "severity": "major",
+      "title": "Publish must re-verify server-side inside the publish transaction",
+      "detail": "R8 and S2 say the server enforces zero flagged statements, but the design only stores per-statement status updated on edit. It does not require publish to recompute the verifier on current text, nor does it address concurrent edit versus publish. The 'version number' is mentioned under out-of-scope but never specified. A stale status or a race could publish an ungrounded statement, breaking the core guarantee.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#R8",
+        "artifact:.eccode/artifacts/architecture/brief.md#Scope"
+      ],
+      "recommendation": "State that publish runs the verifier over all current statements and sets the published state in one transaction with an optimistic version check (409 on stale), and that published drafts are immutable. Add tests for edit-after-load and direct API publish."
+    },
+    {
+      "id": "ARCH-6",
+      "severity": "minor",
+      "title": "CLI provider isolation under-specified; A2 unverified",
+      "detail": "Checked claude --help locally on 2026-10-08: --tools, --system-prompt, --output-format, --max-budget-usd, --bare and --model exist, so A2 looks feasible. The brief does not require excluding ambient configuration (hooks, MCP servers, CLAUDE.md, user settings) or running in an empty working directory, which matter for injection resistance and reproducibility. It also does not say how the USD 3 per-run cap is enforced.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Assumptions"
+      ],
+      "recommendation": "Specify: empty --tools, --bare or equivalent with no MCP, a temp cwd, fixed system prompt, --max-budget-usd for the cap, a minimal environment, and record the verified CLI version in a design-phase check."
+    },
+    {
+      "id": "ARCH-7",
+      "severity": "minor",
+      "title": "Browser tooling decision should be recorded and made reproducible for D9",
+      "detail": "Playwright 1.56.1 and Chromium exist globally (/opt/pw-browsers), so Q1 is moot here. A clean checkout following the README must still find them, so a global install is a D9 reproducibility risk. The brief still offers a custom CDP driver, which is unnecessary complexity.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Key choices vs alternatives"
+      ],
+      "recommendation": "Record the decision: use the global playwright (or playwright-core as a dev-only dependency), drop the custom CDP driver option, and document the prerequisite in the README with a clear skip message."
+    },
+    {
+      "id": "ARCH-8",
+      "severity": "minor",
+      "title": "Login limiter, session and retention details leave gaps",
+      "detail": "The limiter is per account+IP; it should treat unknown usernames identically (no enumeration), use constant-time comparison and bound its memory. Session TTL, rotation at login and invalidation on logout are unspecified. Data retention and observability (request ids, structured logs without note text) are not addressed.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements"
+      ],
+      "recommendation": "Add session TTL and rotation, identical responses for unknown users, a bounded limiter store, a short retention statement and request-id logging."
+    },
+    {
+      "id": "ARCH-9",
+      "severity": "minor",
+      "title": "Eval cost model lacks an aggregate cap; sample sizes are weak",
+      "detail": "Per-run caps of USD 3 exist, but each set is 22 cases times 3 runs, tuning is unbounded, and the total is only 'within USD 150'. Apart from ARCH-1 and ARCH-3, the thresholds look plausible and I accept them under the Q3 default, but ~10-case samples (A6) make 0.90 versus 0.85 differences statistically weak.",
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture/brief.md#Requirements"
+      ],
+      "recommendation": "Add a total live-eval budget and a tune-run count limit, and state in the report that differences below sampling noise are not claimed."
+    }
+  ],
+  "resolvedFindings": []
+}

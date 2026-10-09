@@ -1,0 +1,32 @@
+$ npm run eval -- --provider cli
+# cwd: .
+# exit: 0
+
+> groundwork@1.0.0 eval
+> node --disable-warning=ExperimentalWarning eval/run.js --provider cli
+
+GROUNDWORK EVAL REPORT  provider=cli  set=all  tune
+Thresholds are unattended defaults, Q3; changes need a recorded user decision.
+Live numbers below come from the Claude Code CLI (`claude -p`) only; fallback results are reported separately.
+cliVersion=2.1.295 model=claude-haiku-5-5 promptVersion=p2 gitCommit=f1a82c44667dfc379de85452d434cb96f1a35f17 manifestHash=n/a
+repetitions=3 at=2026-10-08T22:33:26.434Z
+VERDICT: PASS
+
+M1: PASS  mean 94.2% min 92.8% vs threshold 90%; Wilson95 94.1% [92.3, 95.6] (724/769)
+M1B: PASS  flagged with expected code 63/63; required 100%
+M1C: PASS  false flags 7/429 = 1.63%; max 2%
+M2: PASS  mean 96.7% min 95.0% vs threshold 80%; Wilson95 96.7% [93.6, 98.3] (232/240)
+M3: PASS  mean 100.0% min 100.0% vs threshold 75%; Wilson95 100.0% [95.3, 100.0] (78/78)
+M4: PASS  10 of 10 cases passed all 3 repetition(s); threshold 9
+M5: not applicable
+
+Per repetition (M1 / M2 / M3):
+  rep 1: 94.7% / 97.5% / 100.0%
+  rep 2: 92.8% / 95.0% / 100.0%
+  rep 3: 95.0% / 97.5% / 100.0%
+
+Usage: calls=66 failed=0 inputTokens=148 outputTokens=[REDACTED] costUsd=0.0978 costUpperBoundUsd=0.0978 cap=3
+Latency ms: mean=7843 p95=10430
+Budget: logged before run USD 0.1269 of total cap 40
+M1c false flags: c-payments-nat3[WEAK_SUPPORT]; c-payments-nat4[WEAK_SUPPORT]; c-payments-nat5[NAME_NOT_IN_SOURCE]; c-auth-nat7[NAME_NOT_IN_SOURCE]; c-batch-nat13[NAME_NOT_IN_SOURCE]; c-search-nat17[NAME_NOT_IN_SOURCE]; c-search-nat20[NAME_NOT_IN_SOURCE]
+Report written: eval/reports/cli-all-tune-2026-10-08T22-33-26-434Z.json

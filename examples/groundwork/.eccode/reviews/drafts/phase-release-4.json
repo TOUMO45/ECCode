@@ -1,0 +1,125 @@
+{
+ "decision": "approve",
+ "summary": "Technical approval only. I re-ran npm test (285 pass, 0 todo), test:browser (28 pass), test:live (4 pass), the offline verifier eval (M1b 63/63, M1c 0/429 tune), holdout manifest check (all OK) and checkBudget on the real usage.log (now refuses: 12 full tune runs, max 8). Holdout 3 evidence (CLI and fallback logs) shows M1c 1/434 = 0.23%, with thresholds.json unchanged. File times are consistent with holdout 3 being clean: the last verifier edit was 23:51, the holdout was sealed 23:53 and run once at 00:09, and nothing in src changed afterwards. Independence of authorship is self-reported. This approval is not a human acceptance. Several decisions still belong to a human (F12 to F14).",
+ "criteria": [
+  {
+   "id": "C1",
+   "description": "Deterministic, browser and live suites pass with no todo",
+   "met": true,
+   "evidence": [
+    "ev:ev-mv08pocw-0106d3cb",
+    "ev:ev-mv08pzut-01650205",
+    "ev:ev-mv08qmmi-01154d4f",
+    "artifact:test/eval/budget.test.js"
+   ]
+  },
+  {
+   "id": "C2",
+   "description": "Holdout 3 M1c within the unchanged 2% threshold, manifest intact, not tuned on",
+   "met": true,
+   "evidence": [
+    "ev:ev-mv07q6zs-01a855fd",
+    "ev:ev-mv07ju2a-015f3c20",
+    "ev:ev-mv08pom8-01829dcc",
+    "artifact:eval/holdout/MANIFEST.sha256",
+    "artifact:eval/thresholds.json",
+    "artifact:eval/holdout-runs.log"
+   ]
+  },
+  {
+   "id": "C3",
+   "description": "Tune cap guard fires on the real log and docs match usage.log",
+   "met": true,
+   "evidence": [
+    "ev:ev-mv08nkhz-01b8d96a",
+    "artifact:eval/lib/budget.js",
+    "artifact:eval/usage.log",
+    "artifact:docs/eval-results.md"
+   ]
+  },
+  {
+   "id": "C4",
+   "description": "Reports tie to a committed code state",
+   "met": true,
+   "evidence": [
+    "artifact:docs/eval-results.md",
+    "artifact:eval/tuning-log.md"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "id": "F11",
+   "severity": "minor",
+   "title": "README line 123 shows 15 entries and USD 1.454; usage.log has 16 and USD 1.552",
+   "detail": "README contradicts docs/eval-results.md and the log. checkBudget on the real log sums USD 1.85, which probably uses the upper-bound cost, so the three cost figures also differ in basis.",
+   "evidence": [
+    "artifact:README.md",
+    "artifact:eval/usage.log"
+   ],
+   "recommendation": "Edit the README to 16 entries and say which cost basis is used. Resolved when README, eval-results and checkBudget agree or name their basis."
+  },
+  {
+   "id": "F12",
+   "severity": "major",
+   "title": "HUMAN DECISION NEEDED: acceptance of the M1c result and the 3-holdout history",
+   "detail": "M1c passed only on holdout 3. Holdouts 1 and 2 failed (3.07%, 2.50%), the verifier was then tuned on them, and the holdout cap was raised from 2 to 3 by an unnamed 'operator'. Holdout 3 is n=434 with 1 flag, so the interval is wide, and its authors' independence is self-reported. The CLI M1 was 86.3% on holdout 1 and 90.6% on holdout 3. I find the evidence reasonable, but accepting it as meeting the threshold is a user decision under Q3 and not mine. M1b covers only seeded fabrication kinds and semantic paraphrase ('one in five' vs '20 percent') remains unfixed.",
+   "evidence": [
+    "ev:ev-mv07q6zs-01a855fd",
+    "ev:ev-mv07ju2a-015f3c20",
+    "artifact:eval/holdout-runs.log",
+    "artifact:eval/tuning-log.md"
+   ],
+   "recommendation": "A named human records acceptance (or rejects it) of the holdout 3 M1c result and of the raised holdout cap. The release stays unaccepted until then."
+  },
+  {
+   "id": "F13",
+   "severity": "major",
+   "title": "HUMAN DECISION NEEDED: tune-run cap overrun (12 vs 8) and the 3-run plan",
+   "detail": "The cap was overrun by 4 because the guard was a no-op until rework-3. Docs disclose this honestly and claim no acceptance. Spend is small (USD 1.55 to 1.85 against caps of USD 40 and about 8), so the impact is process, not cost.",
+   "evidence": [
+    "artifact:eval/usage.log",
+    "artifact:docs/eval-results.md"
+   ],
+   "recommendation": "A named human accepts or rejects the overrun in writing."
+  },
+  {
+   "id": "F14",
+   "severity": "minor",
+   "title": "Known operational gaps carried forward",
+   "detail": "No .env.example, no metrics or counters (health shows only the DB schema version), SIGTERM to the npm start wrapper does not stop the server (documented, run node directly). These are documented and none blocks a first deployment.",
+   "evidence": [
+    "artifact:docs/operations.md",
+    "artifact:README.md"
+   ],
+   "recommendation": "Track as post-release work. Add .env.example, a start script that execs node, and basic counters."
+  }
+ ],
+ "resolvedFindings": [
+  {
+   "id": "F8",
+   "resolution": "isFullTune counts PASS/FAIL/INCOMPLETE. checkBudget on the real usage.log now returns fullTuneRuns 12 and refuses (max 8). Docs state 12 and the overrun of 4, matching usage.log (16 entries).",
+   "evidence": [
+    "ev:ev-mv08nkhz-01b8d96a",
+    "artifact:eval/lib/budget.js",
+    "artifact:eval/usage.log"
+   ]
+  },
+  {
+   "id": "F9",
+   "resolution": "Stale todo hedges are gone. npm test shows todo 0 and the docs carry the corrected figure set apart from the README line in F11.",
+   "evidence": [
+    "ev:ev-mv08pocw-0106d3cb",
+    "artifact:docs/eval-results.md"
+   ]
+  },
+  {
+   "id": "F10",
+   "resolution": "Code state is committed (679e3bc, e4f55a2) and eval-results references it. The run logs still show gitCommit f1a82c4 for runs made before the commit, which is disclosed.",
+   "evidence": [
+    "artifact:docs/eval-results.md",
+    "artifact:eval/holdout-runs.log"
+   ]
+  }
+ ]
+}

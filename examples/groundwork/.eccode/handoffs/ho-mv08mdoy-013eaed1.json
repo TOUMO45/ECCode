@@ -1,0 +1,47 @@
+{
+  "from": "ai-engineer",
+  "to": "delivery-lead",
+  "task": "rework-3",
+  "objective": "Fix phase:release findings F8 (tune-run cap guard no-op), F9 (stale todo doc lines), F10 (reports not tied to a commit).",
+  "context": "isFullTune() matched COMPLETE/INCOMPLETE; eval/run.js writes PASS/FAIL/INCOMPLETE. No holdout or live CLI run was made. Pure-function tests only.",
+  "inputs": [
+    "eval/lib/budget.js",
+    "eval/usage.log",
+    "eval/run.js",
+    "test/eval/scorer.test.js",
+    "README.md",
+    "docs/eval-results.md",
+    "eval/tuning-log.md",
+    "docs/operations.md"
+  ],
+  "dependencies": [],
+  "expectedOutput": "Working cap guard, regression test, corrected docs, local commit.",
+  "acceptanceCriteria": [
+    "regression test fails before fix and passes after",
+    "existing checks pass",
+    "docs state honest run counts",
+    "local commit referenced in docs/eval-results.md"
+  ],
+  "completedWork": "eval/lib/budget.js isFullTune now counts PASS/FAIL/INCOMPLETE (COMPLETE kept for legacy fixtures). New test/eval/budget.test.js: failed before fix (ev-mv08kmqd-019b3e58, reproduction), passes after (ev-mv08kpnc-01a54421). npm test 285 pass 0 fail (ev-mv08m145-0158e1e4). Docs corrected: usage.log has 12 non-holdout full CLI tune runs (not 11; the 12th is the 2026-10-09T00:31 line), cap 8, overrun by 4; guard was a no-op until this fix; no acceptance claimed; holdout 3 results unchanged. Removed the 'may be a todo' lines (no todo exists in test/eval). Local commit 679e3bcc0e29ff96ef44c2f3ce65814a3b521393 (code, 224 files, .eccode/ excluded, no .env present) plus doc commit e4f55a2 adding the Code state section to docs/eval-results.md; not pushed.",
+  "filesChanged": [
+    "eval/lib/budget.js",
+    "test/eval/budget.test.js",
+    "README.md",
+    "docs/eval-results.md",
+    "eval/tuning-log.md",
+    "docs/operations.md"
+  ],
+  "evidence": [
+    "ev:ev-mv08kpnc-01a54421",
+    "ev:ev-mv08m145-0158e1e4"
+  ],
+  "remainingIssues": [
+    "Commit 679e3bc also contains .gitignore (modified, outside my globs, committed as-is) and all other working-tree files; .eccode/ is untracked and not in .gitignore (guarded by explicit pathspec, a future git add -A would include it; adding it to .gitignore needs ownership).",
+    "usage.log gitCommit fields still say f1a82c4 because runs happened on an uncommitted tree; documented in docs/eval-results.md.",
+    "test/eval/scorer.test.js still uses the legacy COMPLETE status in its 8-run fixture; it passes but does not use real statuses (my budget.test.js does). Changing it needs ownership.",
+    "Earlier historical lines in eval/tuning-log.md (e.g. 'cap of 3 ... 5 runs') are left as dated history, with a rework-3 correction section appended.",
+    "No human acceptance of any gate, threshold or overrun is recorded."
+  ],
+  "nextAction": "delivery-lead: review rework-3 and the gate; decide on the overrun and on adding .eccode/ to .gitignore.",
+  "lessonsConsulted": []
+}

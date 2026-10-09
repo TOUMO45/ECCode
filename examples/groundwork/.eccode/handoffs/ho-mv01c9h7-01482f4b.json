@@ -1,0 +1,36 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "verifier-notes",
+  "objective": "Notes parser and deterministic grounding verifier with unit tests.",
+  "context": "Built against design spec sections 5, 3.5, 11.1 and SCOPE D4. No memory records matched. eval/verifier corpus does not exist yet (QA-owned), so the tests use an inline mini corpus and read forbidden-stopwords.txt if present.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    "SCOPE.md"
+  ],
+  "expectedOutput": "src/notes/parser.js, src/verify/*, unit tests",
+  "acceptanceCriteria": [
+    "Parser supports the three formats, physical line numbers in errors, limits enforced (D5)",
+    "Verifier implements reason codes, normalisation, stoplist v1 and union-of-cited-lines rules; pure, idempotent, no input mutation (D4)",
+    "Stoplist written before any model output; benchmark test passes"
+  ],
+  "completedWork": "parseNotes (text/json, ISO and bracketed times, physical line errors capped at 20 with total, 2000-line/2000-char/64-author limits, control chars, time validation). Verifier: normalize.js, tokens.js, units.js, stopwords.js (v1), index.js exporting buildContext, verifyStatement, verifyDraft, MIN_SUPPORT. Decisions: cited text includes author, text, time and ISO ts; verifyDraft takes {sections:{name:[stmt]}} and returns {sections:{name:[{status,reasons}]}}; digits glued to units are split (5min, 40%) and digit-hyphen-unit forms are split on both sides.",
+  "filesChanged": [
+    "src/notes/parser.js",
+    "src/verify/index.js",
+    "src/verify/normalize.js",
+    "src/verify/tokens.js",
+    "src/verify/units.js",
+    "src/verify/stopwords.js",
+    "test/unit/notes/parser.test.js",
+    "test/unit/verify/normalize.test.js",
+    "test/unit/verify/verifier.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv01bxi1-01d4bbaf"
+  ],
+  "remainingIssues": [
+    "Real verifier corpus (eval/verifier) and tune set not yet available; M1b/M1c should be re-checked by QA against it."
+  ],
+  "nextAction": "QA to run the eval/verifier corpus against src/verify; AI engineer fallback.js to consume the verifier."
+}

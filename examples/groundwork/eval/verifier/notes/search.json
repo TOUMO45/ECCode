@@ -1,0 +1,246 @@
+{
+ "id": "search",
+ "title": "Search index lag",
+ "lines": [
+  {
+   "n": 1,
+   "time": "09:10",
+   "author": "priya",
+   "text": "Search results are stale, indexer lag is 45 minutes"
+  },
+  {
+   "n": 2,
+   "time": "09:12",
+   "author": "owen",
+   "text": "Looking at the indexer queue in Kafka"
+  },
+  {
+   "n": 3,
+   "time": "09:15",
+   "author": "owen",
+   "text": "Consumer group search-indexer has 3 of 6 partitions without a consumer"
+  },
+  {
+   "n": 4,
+   "time": "09:18",
+   "author": "sasha",
+   "text": "Two indexer pods are in CrashLoopBackOff"
+  },
+  {
+   "n": 5,
+   "time": "09:20",
+   "author": "sasha",
+   "text": "Pod logs show OutOfMemoryError while building the shard"
+  },
+  {
+   "n": 6,
+   "time": "09:24",
+   "author": "priya",
+   "text": "Memory limit was lowered to 2 GB in last week config change"
+  },
+  {
+   "n": 7,
+   "time": "09:27",
+   "author": "owen",
+   "text": "Raising the limit to 4 GB and redeploying"
+  },
+  {
+   "n": 8,
+   "time": "09:33",
+   "author": "sasha",
+   "text": "Pods are healthy again, lag dropping"
+  },
+  {
+   "n": 9,
+   "time": "09:50",
+   "author": "priya",
+   "text": "Lag at 10 minutes and still falling"
+  },
+  {
+   "n": 10,
+   "time": "10:05",
+   "author": "owen",
+   "text": "Lag is zero, indexer caught up"
+  },
+  {
+   "n": 11,
+   "time": "10:08",
+   "author": "sasha",
+   "text": "Action item: add memory alert for the indexer, owner sasha"
+  },
+  {
+   "n": 12,
+   "time": "10:10",
+   "author": "priya",
+   "text": "Action item: review resource limits in the config change process, owner priya"
+  },
+  {
+   "n": 13,
+   "time": "10:12",
+   "author": "owen",
+   "text": "Users saw missing products for about 55 minutes"
+  },
+  {
+   "n": 14,
+   "time": "10:15",
+   "author": "sasha",
+   "text": "Mobile app search was not affected"
+  },
+  {
+   "n": 15,
+   "time": "10:18",
+   "author": "priya",
+   "text": "Config change was reviewed but nobody checked the memory number"
+  },
+  {
+   "n": 16,
+   "time": "10:20",
+   "author": "owen",
+   "text": "Starting a draft of the timeline"
+  },
+  {
+   "n": 17,
+   "time": "10:22",
+   "author": "sasha",
+   "text": "Heap dump saved to the debug bucket"
+  },
+  {
+   "n": 18,
+   "time": "10:25",
+   "author": "priya",
+   "text": "Product team asked for an ETA on reindexing the long tail"
+  },
+  {
+   "n": 19,
+   "time": "10:28",
+   "author": "owen",
+   "text": "Reindex of long tail takes about 2 hours"
+  },
+  {
+   "n": 20,
+   "time": "10:30",
+   "author": "sasha",
+   "text": "Starting the reindex job now"
+  },
+  {
+   "n": 21,
+   "time": "10:35",
+   "author": "priya",
+   "text": "Reindex progress at 20%"
+  },
+  {
+   "n": 22,
+   "time": "10:50",
+   "author": "owen",
+   "text": "Reindex progress at 45%"
+  },
+  {
+   "n": 23,
+   "time": "11:15",
+   "author": "sasha",
+   "text": "Reindex progress at 80%"
+  },
+  {
+   "n": 24,
+   "time": "11:40",
+   "author": "priya",
+   "text": "Reindex finished, spot checks look right"
+  },
+  {
+   "n": 25,
+   "time": "11:45",
+   "author": "owen",
+   "text": "Closing the incident"
+  },
+  {
+   "n": 26,
+   "time": "11:50",
+   "author": "sasha",
+   "text": "Kafka dashboards show lag of 0 on every partition"
+  },
+  {
+   "n": 27,
+   "time": "11:55",
+   "author": "priya",
+   "text": "Customer success will reply to the 14 tickets"
+  },
+  {
+   "n": 28,
+   "time": "12:00",
+   "author": "owen",
+   "text": "Postmortem is scheduled for Thursday"
+  },
+  {
+   "n": 29,
+   "time": "12:05",
+   "author": "sasha",
+   "text": "The old memory value came from a staging template"
+  },
+  {
+   "n": 30,
+   "time": "12:10",
+   "author": "priya",
+   "text": "Staging template will be fixed in the repo"
+  },
+  {
+   "n": 31,
+   "time": "12:15",
+   "author": "owen",
+   "text": "Ticket SRCH-88 tracks the template fix"
+  },
+  {
+   "n": 32,
+   "time": "12:20",
+   "author": "sasha",
+   "text": "Runbook needs a section on partition assignment"
+  },
+  {
+   "n": 33,
+   "time": "12:25",
+   "author": "priya",
+   "text": "I will write the runbook section"
+  },
+  {
+   "n": 34,
+   "time": "12:30",
+   "author": "owen",
+   "text": "Alert thresholds for lag are 15 minutes warn and 30 minutes page"
+  },
+  {
+   "n": 35,
+   "time": "12:35",
+   "author": "sasha",
+   "text": "Lag alert did fire at 09:05 but went to a muted channel"
+  },
+  {
+   "n": 36,
+   "time": "12:40",
+   "author": "priya",
+   "text": "Muted channel is being routed to the on-call pager"
+  },
+  {
+   "n": 37,
+   "time": "12:45",
+   "author": "owen",
+   "text": "This was the second lag incident this quarter"
+  },
+  {
+   "n": 38,
+   "time": "12:50",
+   "author": "sasha",
+   "text": "The first one was a network partition in March"
+  },
+  {
+   "n": 39,
+   "time": "12:55",
+   "author": "priya",
+   "text": "Different cause, same symptom"
+  },
+  {
+   "n": 40,
+   "time": "13:00",
+   "author": "owen",
+   "text": "Done for today, thanks all"
+  }
+ ]
+}

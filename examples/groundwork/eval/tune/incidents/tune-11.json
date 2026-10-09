@@ -1,0 +1,525 @@
+{
+ "id": "tune-11",
+ "title": "Schema migration locks the users table",
+ "severity": "SEV2",
+ "startedAt": "2026-05-14T22:00:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "22:00",
+   "author": "mona",
+   "text": "Starting migration 0187 on the users table"
+  },
+  {
+   "n": 2,
+   "time": "22:00",
+   "author": "mona",
+   "text": "checking the dashboards for accounts-db"
+  },
+  {
+   "n": 3,
+   "time": "22:00",
+   "author": "ola",
+   "text": "drafting the status page text"
+  },
+  {
+   "n": 4,
+   "time": "22:00",
+   "author": "mona",
+   "text": "nothing unusual in the audit trail"
+  },
+  {
+   "n": 5,
+   "time": "22:00",
+   "author": "ola",
+   "text": "thanks, noted"
+  },
+  {
+   "n": 6,
+   "time": "22:06",
+   "author": "nils",
+   "text": "Login latency is climbing, p95 at 8 seconds"
+  },
+  {
+   "n": 7,
+   "time": "22:06",
+   "author": "mona",
+   "text": "can someone confirm the current error rate"
+  },
+  {
+   "n": 8,
+   "time": "22:06",
+   "author": "ola",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 9,
+   "time": "22:06",
+   "author": "mona",
+   "text": "reading the runbook for accounts-db"
+  },
+  {
+   "n": 10,
+   "time": "22:06",
+   "author": "ola",
+   "text": "holding off on further changes for now"
+  },
+  {
+   "n": 11,
+   "time": "22:08",
+   "author": "ola",
+   "text": "The migration holds an exclusive lock while adding a column with a default"
+  },
+  {
+   "n": 12,
+   "time": "22:08",
+   "author": "mona",
+   "text": "keeping an eye on accounts-db metrics"
+  },
+  {
+   "n": 13,
+   "time": "22:08",
+   "author": "ola",
+   "text": "taking notes for the timeline"
+  },
+  {
+   "n": 14,
+   "time": "22:08",
+   "author": "mona",
+   "text": "still reading through the logs"
+  },
+  {
+   "n": 15,
+   "time": "22:08",
+   "author": "ola",
+   "text": "agreed"
+  },
+  {
+   "n": 16,
+   "time": "22:10",
+   "author": "pavel",
+   "text": "Logins are timing out for all users"
+  },
+  {
+   "n": 17,
+   "time": "22:10",
+   "author": "mona",
+   "text": "copying the graph into the ticket"
+  },
+  {
+   "n": 18,
+   "time": "22:10",
+   "author": "ola",
+   "text": "looking at recent changes in the repo"
+  },
+  {
+   "n": 19,
+   "time": "22:10",
+   "author": "mona",
+   "text": "ack, watching the graphs"
+  },
+  {
+   "n": 20,
+   "time": "22:10",
+   "author": "ola",
+   "text": "metrics look flat for now"
+  },
+  {
+   "n": 21,
+   "time": "22:12",
+   "author": "mona",
+   "text": "Decision: cancel migration 0187"
+  },
+  {
+   "n": 22,
+   "time": "22:12",
+   "author": "mona",
+   "text": "let me know if you need anything"
+  },
+  {
+   "n": 23,
+   "time": "22:12",
+   "author": "ola",
+   "text": "will report back when I know more"
+  },
+  {
+   "n": 24,
+   "time": "22:12",
+   "author": "mona",
+   "text": "paging the secondary just in case"
+  },
+  {
+   "n": 25,
+   "time": "22:12",
+   "author": "ola",
+   "text": "joining the call in a minute"
+  },
+  {
+   "n": 26,
+   "time": "22:14",
+   "author": "mona",
+   "text": "Migration cancelled, lock released"
+  },
+  {
+   "n": 27,
+   "time": "22:14",
+   "author": "mona",
+   "text": "re-running the query to double check"
+  },
+  {
+   "n": 28,
+   "time": "22:14",
+   "author": "ola",
+   "text": "checking the dashboards for accounts-db"
+  },
+  {
+   "n": 29,
+   "time": "22:14",
+   "author": "mona",
+   "text": "drafting the status page text"
+  },
+  {
+   "n": 30,
+   "time": "22:14",
+   "author": "ola",
+   "text": "nothing unusual in the audit trail"
+  },
+  {
+   "n": 31,
+   "time": "22:18",
+   "author": "nils",
+   "text": "Login latency back to normal"
+  },
+  {
+   "n": 32,
+   "time": "22:18",
+   "author": "mona",
+   "text": "sharing my screen on the call"
+  },
+  {
+   "n": 33,
+   "time": "22:18",
+   "author": "ola",
+   "text": "can someone confirm the current error rate"
+  },
+  {
+   "n": 34,
+   "time": "22:18",
+   "author": "mona",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 35,
+   "time": "22:18",
+   "author": "ola",
+   "text": "reading the runbook for accounts-db"
+  },
+  {
+   "n": 36,
+   "time": "22:25",
+   "author": "ola",
+   "text": "Rewriting migration in three steps: add nullable column, backfill, set default"
+  },
+  {
+   "n": 37,
+   "time": "22:25",
+   "author": "mona",
+   "text": "still no news from the other team"
+  },
+  {
+   "n": 38,
+   "time": "22:25",
+   "author": "ola",
+   "text": "keeping an eye on accounts-db metrics"
+  },
+  {
+   "n": 39,
+   "time": "22:25",
+   "author": "mona",
+   "text": "taking notes for the timeline"
+  },
+  {
+   "n": 40,
+   "time": "22:25",
+   "author": "ola",
+   "text": "still reading through the logs"
+  },
+  {
+   "n": 41,
+   "time": "23:10",
+   "author": "ola",
+   "text": "Migration 0188 applied without locks"
+  },
+  {
+   "n": 42,
+   "time": "23:10",
+   "author": "mona",
+   "text": "confirming with the on-call lead"
+  },
+  {
+   "n": 43,
+   "time": "23:10",
+   "author": "ola",
+   "text": "copying the graph into the ticket"
+  },
+  {
+   "n": 44,
+   "time": "23:10",
+   "author": "mona",
+   "text": "looking at recent changes in the repo"
+  },
+  {
+   "n": 45,
+   "time": "23:10",
+   "author": "ola",
+   "text": "ack, watching the graphs"
+  },
+  {
+   "n": 46,
+   "time": "23:15",
+   "author": "pavel",
+   "text": "Logins were degraded for about 12 minutes"
+  },
+  {
+   "n": 47,
+   "time": "23:15",
+   "author": "mona",
+   "text": "no change on my side"
+  },
+  {
+   "n": 48,
+   "time": "23:15",
+   "author": "ola",
+   "text": "let me know if you need anything"
+  },
+  {
+   "n": 49,
+   "time": "23:15",
+   "author": "mona",
+   "text": "will report back when I know more"
+  },
+  {
+   "n": 50,
+   "time": "23:20",
+   "author": "mona",
+   "text": "Action item: add a lock timeout to the migration tool, owner ola"
+  },
+  {
+   "n": 51,
+   "time": "23:20",
+   "author": "pavel",
+   "text": "reading the runbook for accounts-db"
+  },
+  {
+   "n": 52,
+   "time": "23:20",
+   "author": "nils",
+   "text": "holding off on further changes for now"
+  },
+  {
+   "n": 53,
+   "time": "23:20",
+   "author": "pavel",
+   "text": "sharing my screen on the call"
+  },
+  {
+   "n": 54,
+   "time": "23:22",
+   "author": "nils",
+   "text": "Action item: run migrations against a production size copy first, owner nils"
+  },
+  {
+   "n": 55,
+   "time": "23:22",
+   "author": "ola",
+   "text": "looking at recent changes in the repo"
+  },
+  {
+   "n": 56,
+   "time": "23:22",
+   "author": "mona",
+   "text": "ack, watching the graphs"
+  },
+  {
+   "n": 57,
+   "time": "23:22",
+   "author": "ola",
+   "text": "metrics look flat for now"
+  },
+  {
+   "n": 58,
+   "time": "23:25",
+   "author": "pavel",
+   "text": "Summary: migration 0187 took an exclusive lock on the users table and degraded logins"
+  },
+  {
+   "n": 59,
+   "time": "23:25",
+   "author": "nils",
+   "text": "re-running the query to double check"
+  },
+  {
+   "n": 60,
+   "time": "23:25",
+   "author": "pavel",
+   "text": "checking the dashboards for accounts-db"
+  },
+  {
+   "n": 61,
+   "time": "23:25",
+   "author": "nils",
+   "text": "drafting the status page text"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "22:00",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "22:06",
+    "lines": [
+     6
+    ]
+   },
+   {
+    "time": "22:12",
+    "lines": [
+     21
+    ]
+   },
+   {
+    "time": "22:14",
+    "lines": [
+     26
+    ]
+   },
+   {
+    "time": "22:18",
+    "lines": [
+     31
+    ]
+   },
+   {
+    "time": "22:25",
+    "lines": [
+     36
+    ]
+   },
+   {
+    "time": "23:10",
+    "lines": [
+     41
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     50
+    ]
+   },
+   {
+    "lines": [
+     54
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 23:10 ola applied migration 0188 without locks.",
+   "cites": [
+    41
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 22:25 ola planned to rewrite the migration in three steps: add nullable column, backfill, set default.",
+   "cites": [
+    36
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 22:18 nils saw login latency back to normal.",
+   "cites": [
+    31
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 22:14 mona cancelled the migration and the lock was released.",
+   "cites": [
+    26
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 22:12 mona decided to cancel migration 0187.",
+   "cites": [
+    21
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 22:06 nils saw login latency climbing with p95 at 8 seconds.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 22:00 mona started migration 0187 on the users table.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "Ola found the migration holds an exclusive lock while adding a column with a default.",
+   "cites": [
+    11
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Pavel said logins are timing out for all users.",
+   "cites": [
+    16
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Pavel said logins were degraded for about 12 minutes.",
+   "cites": [
+    46
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: add a lock timeout to the migration tool, owner ola.",
+   "cites": [
+    50
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: run migrations against a production size copy first, owner nils.",
+   "cites": [
+    54
+   ]
+  },
+  {
+   "section": "summary",
+   "text": "Pavel summarised that migration 0187 took an exclusive lock on the users table and degraded logins.",
+   "cites": [
+    58
+   ]
+  }
+ ]
+}

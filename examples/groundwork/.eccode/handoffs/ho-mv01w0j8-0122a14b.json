@@ -1,0 +1,72 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "backend-auth-http",
+  "objective": "HTTP core, app wiring, auth, sessions, CSRF, login limiter, RBAC, users, audit, static server, seed and test harness per spec 3.1-3.4, 3.8, 3.9, 6.2, 9, 10, 11.2.",
+  "context": "Built against .eccode/artifacts/design/spec.md and src/api/contract-schemas.js (request/response/error shapes reused as-is). Security-reviewer info notes handled: total body cap enforced at the HTTP layer on Content-Length and while streaming (413 envelope); src/index.js refuses to start if GW_ANTHROPIC_URL is not https (loopback http allowed for local fakes); errors use fixed messages and 500s log only error class.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/plan/plan.json",
+    "SCOPE.md D2 D5 D6",
+    "src/api/contract-schemas.js",
+    "src/lib/schema.js",
+    "src/db/*"
+  ],
+  "expectedOutput": "Working HTTP server with auth/session/CSRF/limiter/RBAC/users/audit/static/health, auto-registering route loader, seed + set-password scripts, test harness and tests.",
+  "acceptanceCriteria": [
+    "Single error envelope with X-Request-Id; 404/405/413/415/500 shaped per contract, no internals leaked",
+    "scrypt salted hashes; HttpOnly SameSite cookies; session rotation at login; idle and absolute expiry; double-submit CSRF plus Origin check",
+    "6th login attempt gives 429 with Retry-After even with right password; limiter map bounded",
+    "Audit log for sensitive actions; lead-only team-scoped endpoint",
+    "routes/index.js auto-registers every other src/routes/*.js",
+    "Seed idempotent: teams Platform and Payments with lead/responder/viewer plus sample incident",
+    "Static server sets security headers and rejects traversal"
+  ],
+  "completedWork": "Implemented src/http (router, body, envelope, headers, cookies, query), src/auth (password, sessions, csrf, ratelimit, rbac, users), src/audit, src/app.js (createApp({config, db, providers, clock, logStream, publicDir}) returns {ctx, handler, server, listen, close}), src/index.js, routes (index auto-loader, auth, users, audit, health, static), scripts/seed.js and set-password.js (password via env or stdin, never argv), test/support/harness.js (startApp, client(userKey) with cookie jar + CSRF, injectable clock, teams A/B seeded). Route contract for later tasks: a file in src/routes exports default register(router, ctx); router.get/post/put/patch/delete(template, {auth, action, body, query}, async (rc) => ({status, body, headers})); every session route must name an RBAC action from src/auth/rbac.js POLICY (default deny; BE-3 actions already listed, e.g. incident.create, draft.publish); app pipeline does session, CSRF, RBAC (403 before any lookup), query/body validation, then handler; rc has user, params, query, body, requestId, ip, ctx. Throw ApiError(code, {details, headers}) for contract errors. Wrote 74 tests (1 skipped: real public/index.html inline-script check runs once the frontend exists).",
+  "filesChanged": [
+    "src/app.js",
+    "src/index.js",
+    "src/http/body.js",
+    "src/http/cookies.js",
+    "src/http/envelope.js",
+    "src/http/headers.js",
+    "src/http/query.js",
+    "src/http/router.js",
+    "src/auth/csrf.js",
+    "src/auth/password.js",
+    "src/auth/ratelimit.js",
+    "src/auth/rbac.js",
+    "src/auth/sessions.js",
+    "src/auth/users.js",
+    "src/audit/audit.js",
+    "src/routes/index.js",
+    "src/routes/auth.js",
+    "src/routes/users.js",
+    "src/routes/audit.js",
+    "src/routes/health.js",
+    "src/routes/static.js",
+    "scripts/seed.js",
+    "scripts/set-password.js",
+    "test/support/harness.js",
+    "test/unit/auth/password.test.js",
+    "test/unit/auth/csrf-limiter.test.js",
+    "test/unit/auth/sessions.test.js",
+    "test/unit/auth/seed-index.test.js",
+    "test/api/auth.test.js",
+    "test/api/csrf.test.js",
+    "test/api/static.test.js",
+    "test/api/logs.test.js",
+    "test/api/limits.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv01vixs-01d593a7",
+    "ev:ev-mv01vnoy-01109a93"
+  ],
+  "remainingIssues": [
+    "Limiter and sessions-per-process state are in memory by design (limiter resets on restart); documented in spec.",
+    "src/index.js builds no provider registry yet (providers={}); the AI/draft wiring task must pass providers into createApp.",
+    "The 'public/' directory does not exist yet (frontend task); static server returns the 404 envelope until it does.",
+    "Statement/draft/incident routes and their RBAC actions are only declared in POLICY, not implemented (BE-3)."
+  ],
+  "nextAction": "Reviewer to review; BE-3 adds src/routes files (incidents, notes, drafts, postmortems, providers) using the register(router, ctx) contract; integration wires providers in src/index.js."
+}

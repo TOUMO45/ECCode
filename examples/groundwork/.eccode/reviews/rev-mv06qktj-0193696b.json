@@ -1,0 +1,115 @@
+{
+  "decision": "changes_requested",
+  "summary": "Everything the submission claims is true and the process is sound (sealed holdout, single runs, no threshold change, verifier fix general, accounting matches usage.log, docs honest). But the build still FAILS M1c on the sealed holdout (11/440 = 2.50% vs 2%, reproduced offline) and no acceptance is recorded, so the gate cannot be approved until the human resolves dec-mv06n1v2-012ac0d8 (accept as documented limitation, or authorise more verifier work). Re-submit unchanged after that decision is recorded.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Verifier changes are general and do not weaken fabrication detection",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv06pzg3-019659e0",
+        "artifact:src/verify/tokens.js",
+        "artifact:src/verify/index.js",
+        "artifact:src/verify/stopwords.js",
+        "ev:ev-mv06pndm-01e0b6c1"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "New holdout sealed (manifest verified), retired holdout not loaded, each provider run once",
+      "met": true,
+      "evidence": [
+        "artifact:eval/holdout/MANIFEST.sha256",
+        "artifact:eval/holdout-runs.log"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "No threshold changed",
+      "met": true,
+      "evidence": [
+        "artifact:eval/usage.log"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "Statements in submission and docs are true; M1c miss reported as unresolved, not waived",
+      "met": true,
+      "evidence": [
+        "artifact:eval/tuning-log.md",
+        "ev:ev-mv06pndm-01e0b6c1"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "Build meets M1c (max 2%) on the sealed holdout",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv06pnjn-01d1c0a9"
+      ]
+    },
+    {
+      "id": "C6",
+      "description": "Test suite passes",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv06pndm-01e0b6c1"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "major",
+      "title": "M1c miss on sealed holdout remains open (not waived)",
+      "detail": "Offline holdout verifier run reproduces 11/440 = 2.50% against max 2% (ev:ev-mv06pnjn-01d1c0a9); false flags are NUMBER_NOT_IN_SOURCE, WEAK_SUPPORT and NAME_NOT_IN_SOURCE on hold2-01/03/04/06/inj-06. Same for both providers because M1c scores the verifier corpus. Approval of this gate does not accept it. Caps are exhausted and the holdout is now spent for tuning.",
+      "evidence": [
+        "ev:ev-mv06pnjn-01d1c0a9"
+      ],
+      "recommendation": "Resolution condition: a recorded human decision on dec-mv06n1v2-012ac0d8 (accept as documented limitation, or authorise verifier work with a new fresh holdout). Then re-submit; the artifacts need no other change. No release or verification-gate pass before that."
+    },
+    {
+      "id": "F2",
+      "severity": "minor",
+      "title": "tuning-log.md is stale",
+      "detail": "It does not itemise the 23:14 and 23:27 CLI tune runs or the hold2 results, and still says 'npm test: 265 pass, 1 fail' (now 274/0). usage.log (11 lines, 8 non-holdout full CLI runs) is consistent with README and docs/eval-results.md, which are accurate.",
+      "evidence": [
+        "artifact:eval/tuning-log.md",
+        "artifact:eval/usage.log"
+      ],
+      "recommendation": "Append the missing run rows and current test count; no gate dependency."
+    },
+    {
+      "id": "F3",
+      "severity": "minor",
+      "title": "Verifier fix is partly broad and tuned on the scored set",
+      "detail": "Stoplist additions 'decided', 'completed', 'finished' etc. slightly reduce WEAK_SUPPORT strength and stemming merges inflections for source and statement alike; none is in forbidden-stopwords and M1b stays 63/63, but M1b only covers seeded fabrication kinds. The 0.00% tune figure is optimistic, as the log itself says; the holdout shows the real rate.",
+      "evidence": [
+        "artifact:src/verify/stopwords.js",
+        "artifact:src/verify/tokens.js"
+      ],
+      "recommendation": "Keep the caveat; consider adding fabrication twins for inflected invented facts in a future cycle."
+    },
+    {
+      "id": "F4",
+      "severity": "info",
+      "title": "Fallback tune report 23:26 shows M1c 7/429 vs CLI 0/429",
+      "detail": "Explained offline: the fallback report (23:26:16) predates the final src/verify edits (file mtimes 23:29:14 to 23:29:21); the CLI tune report (23:30) and my offline verifier run (0/429) use the fixed verifier. The README hedges this wording; it can be stated as explained. I did not re-run the fallback provider.",
+      "evidence": [
+        "ev:ev-mv06pzg3-019659e0"
+      ],
+      "recommendation": "Optionally re-run the fallback tune (no model) and replace the hedge in README/docs."
+    },
+    {
+      "id": "F5",
+      "severity": "info",
+      "title": "Unverifiable claim about holdout authorship isolation",
+      "detail": "That the test-engineer never saw verifier code or reports cannot be verified from artifacts. What I verified: manifest OK, files written 23:32 after verifier freeze (23:29), one run per provider in holdout-runs.log (4 lines, 2 per provider, matching usage.log), retired holdout is not read by loadSet/run.js. My own verifier-only holdout runs are not logged by design.",
+      "evidence": [
+        "artifact:eval/holdout-runs.log"
+      ],
+      "recommendation": "None."
+    }
+  ],
+  "resolvedFindings": []
+}

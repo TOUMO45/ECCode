@@ -1,0 +1,17 @@
+{
+  "decision": "approve",
+  "summary": "Reviewed src/ai, src/verify, src/notes against injection, child env/argv/cwd, key handling, output validation and limits. Ran the unit suite (87 pass) and a probe against the fake claude binary; no blocking issues found.",
+  "criteria": [
+    {"id": "C1", "description": "Untrusted note and title text cannot break out of the data block or act as instructions", "met": true, "evidence": ["ev:ev-mv01izrx-01d499fa", "artifact:src/ai/prompt.js"]},
+    {"id": "C2", "description": "CLI child: no shell, scrubbed env without ANTHROPIC_API_KEY (even if listed in envPass), fixed argv with tools disabled, user data on stdin, fresh empty cwd removed afterwards", "met": true, "evidence": ["ev:ev-mv01izrx-01d499fa", "artifact:src/ai/cli.js"]},
+    {"id": "C3", "description": "Model output is untrusted and re-validated against a strict schema with caps", "met": true, "evidence": ["ev:ev-mv01izk3-01c2a2c7", "artifact:src/ai/schema.js"]},
+    {"id": "C4", "description": "Resource limits: stdout cap, timeouts with process-group kill, concurrency semaphore, budget flag, bounded retries; notes and verifier inputs bounded with no regex blowup", "met": true, "evidence": ["ev:ev-mv01izrx-01d499fa", "ev:ev-mv01izk3-01c2a2c7"]}
+  ],
+  "findings": [
+    {"id": "F1", "severity": "info", "title": "Anthropic response body is fully buffered before the size check", "detail": "src/ai/anthropic.js calls res.text() then compares length to maxResponseBytes, so the cap does not bound memory. The upstream is the configured trusted API URL, so impact is low. Not reproduced.", "evidence": ["artifact:src/ai/anthropic.js"], "recommendation": "Stream the body with a byte cap, or check content-length first."},
+    {"id": "F2", "severity": "info", "title": "Anthropic provider has no cost ceiling and reports costUsd 0", "detail": "Spend is bounded only by max_tokens 4096, maxAttempts 3 and input size limits. The CLI path has --max-budget-usd. Not reproduced.", "evidence": ["artifact:src/ai/anthropic.js"], "recommendation": "Compute cost from token usage, or enforce a per-day cap in the API layer."},
+    {"id": "F3", "severity": "info", "title": "Operator config values reach argv and the outbound URL unchecked", "detail": "GW_CLI_MODEL is passed to argv and could begin with a dash. GW_ANTHROPIC_URL receives the API key and is not required to be https. Both are operator-controlled only, not user-reachable.", "evidence": ["artifact:src/config.js"], "recommendation": "Validate the model name pattern and require https for non-localhost URLs."},
+    {"id": "F4", "severity": "info", "title": "Notes parser total input size is bounded only by line count", "detail": "Bounds are 2000 lines of 2000 characters each. Whole-body size must be capped by the HTTP layer, which is not part of this gate. Parsing a worst-case 2000-line input took about 57 ms in the probe.", "evidence": ["ev:ev-mv01izrx-01d499fa"], "recommendation": "Confirm a request body limit when the API gate is reviewed."}
+  ],
+  "resolvedFindings": []
+}

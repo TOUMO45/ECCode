@@ -1,0 +1,252 @@
+{
+ "id": "batch",
+ "title": "Nightly batch job overran",
+ "lines": [
+  {
+   "n": 1,
+   "time": "02:10",
+   "author": "dmitri",
+   "text": "Nightly billing batch still running after 3 hours"
+  },
+  {
+   "n": 2,
+   "time": "02:12",
+   "author": "amara",
+   "text": "Normal runtime is 45 minutes"
+  },
+  {
+   "n": 3,
+   "time": "02:15",
+   "author": "amara",
+   "text": "Job is stuck on table invoice_lines"
+  },
+  {
+   "n": 4,
+   "time": "02:18",
+   "author": "dmitri",
+   "text": "Long running transaction holds a lock on invoice_lines"
+  },
+  {
+   "n": 5,
+   "time": "02:20",
+   "author": "dmitri",
+   "text": "Transaction belongs to an analytics export started at 23:50"
+  },
+  {
+   "n": 6,
+   "time": "02:24",
+   "author": "amara",
+   "text": "Asking analytics to stop the export"
+  },
+  {
+   "n": 7,
+   "time": "02:30",
+   "author": "dmitri",
+   "text": "Export stopped, lock released"
+  },
+  {
+   "n": 8,
+   "time": "02:35",
+   "author": "amara",
+   "text": "Batch job progressing again"
+  },
+  {
+   "n": 9,
+   "time": "03:20",
+   "author": "dmitri",
+   "text": "Batch finished at 03:18, invoices will be late by about 2 hours"
+  },
+  {
+   "n": 10,
+   "time": "03:25",
+   "author": "amara",
+   "text": "Action item: run analytics exports against the replica, owner amara"
+  },
+  {
+   "n": 11,
+   "time": "03:28",
+   "author": "dmitri",
+   "text": "Action item: add lock timeout to the batch job, owner dmitri"
+  },
+  {
+   "n": 12,
+   "time": "03:30",
+   "author": "amara",
+   "text": "Sending invoices at 04:00 instead of 02:00"
+  },
+  {
+   "n": 13,
+   "time": "03:35",
+   "author": "dmitri",
+   "text": "Finance has been told about the delay"
+  },
+  {
+   "n": 14,
+   "time": "03:40",
+   "author": "amara",
+   "text": "No data was lost"
+  },
+  {
+   "n": 15,
+   "time": "03:45",
+   "author": "dmitri",
+   "text": "Analytics team agreed to use the replica"
+  },
+  {
+   "n": 16,
+   "time": "03:50",
+   "author": "amara",
+   "text": "Replica lag is usually under 5 seconds"
+  },
+  {
+   "n": 17,
+   "time": "03:55",
+   "author": "dmitri",
+   "text": "Batch alert only fires after 6 hours"
+  },
+  {
+   "n": 18,
+   "time": "04:00",
+   "author": "amara",
+   "text": "Invoices sent"
+  },
+  {
+   "n": 19,
+   "time": "04:05",
+   "author": "dmitri",
+   "text": "Alert threshold will be lowered to 90 minutes"
+  },
+  {
+   "n": 20,
+   "time": "04:10",
+   "author": "amara",
+   "text": "Writing down the timeline now"
+  },
+  {
+   "n": 21,
+   "time": "04:15",
+   "author": "dmitri",
+   "text": "Lock monitor query saved in the runbook"
+  },
+  {
+   "n": 22,
+   "time": "04:20",
+   "author": "amara",
+   "text": "Ticket BILL-402 opened for the lock timeout"
+  },
+  {
+   "n": 23,
+   "time": "04:25",
+   "author": "dmitri",
+   "text": "Ticket BILL-403 opened for the alert threshold"
+  },
+  {
+   "n": 24,
+   "time": "04:30",
+   "author": "amara",
+   "text": "Going to bed, back at 09:00"
+  },
+  {
+   "n": 25,
+   "time": "04:35",
+   "author": "dmitri",
+   "text": "Same, handing over to the morning on-call"
+  },
+  {
+   "n": 26,
+   "time": "09:00",
+   "author": "amara",
+   "text": "Morning check: invoices delivered, bounce rate 0.4%"
+  },
+  {
+   "n": 27,
+   "time": "09:05",
+   "author": "dmitri",
+   "text": "Three customers asked about the late invoice"
+  },
+  {
+   "n": 28,
+   "time": "09:10",
+   "author": "amara",
+   "text": "Replied with a standard explanation"
+  },
+  {
+   "n": 29,
+   "time": "09:15",
+   "author": "dmitri",
+   "text": "Analytics export now uses the replica"
+  },
+  {
+   "n": 30,
+   "time": "09:20",
+   "author": "amara",
+   "text": "Verified in the connection logs"
+  },
+  {
+   "n": 31,
+   "time": "09:25",
+   "author": "dmitri",
+   "text": "Lock timeout change merged"
+  },
+  {
+   "n": 32,
+   "time": "09:30",
+   "author": "amara",
+   "text": "Alert threshold change merged"
+  },
+  {
+   "n": 33,
+   "time": "09:35",
+   "author": "dmitri",
+   "text": "Test run tonight will confirm"
+  },
+  {
+   "n": 34,
+   "time": "09:40",
+   "author": "amara",
+   "text": "Postmortem not required, summary is enough"
+  },
+  {
+   "n": 35,
+   "time": "09:45",
+   "author": "dmitri",
+   "text": "Agreed"
+  },
+  {
+   "n": 36,
+   "time": "09:50",
+   "author": "amara",
+   "text": "Closing the incident"
+  },
+  {
+   "n": 37,
+   "time": "09:55",
+   "author": "dmitri",
+   "text": "Thanks"
+  },
+  {
+   "n": 38,
+   "time": "10:00",
+   "author": "amara",
+   "text": "Weekly billing review moved to 11:00"
+  },
+  {
+   "n": 39,
+   "time": "10:05",
+   "author": "dmitri",
+   "text": "Noted"
+  },
+  {
+   "n": 40,
+   "time": "10:10",
+   "author": "amara",
+   "text": "Out of office until Monday"
+  },
+  {
+   "n": 41,
+   "time": "10:15",
+   "author": "dmitri",
+   "text": "Enjoy"
+  }
+ ]
+}

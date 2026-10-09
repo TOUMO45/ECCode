@@ -1,0 +1,105 @@
+{
+  "decision": "changes_requested",
+  "summary": "Re-review of the resubmission. I re-ran npm test (285/285, todo 0, ev:ev-mv09bx89-016ba0d8). The record holds no new user decision since my last review: the only decision.recorded events are the three earlier ones (dec-mv05ytch, dec-mv06n1v2, dec-mv06pxds), all dated before that review. The resubmission states that no artifact changed and that nothing is resolved. V1-V3 stay open as blocking, V4 stays open as major, and V5 stays open as minor. I did not run holdout or full CLI evals.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Deterministic suite passes on re-run",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv09bx89-016ba0d8"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "Submitted artifacts are current and unchanged since the last review",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/verification/report.md",
+        "artifact:docs/eval-results.md",
+        "artifact:eval/usage.log"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "D8 AI evaluation accepted by the person who owns the threshold decision (Q3)",
+      "met": false,
+      "evidence": [
+        "artifact:docs/eval-results.md",
+        "artifact:eval/holdout-runs.log"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "Release gate chain complete (technical and security review of phase:release)",
+      "met": false,
+      "evidence": [
+        "artifact:.eccode/reviews/drafts/phase-release-4.json"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "V1",
+      "severity": "blocking",
+      "title": "STILL OPEN, USER DECISION NEEDED: no named human has accepted the M1c result or the raised holdout cap",
+      "detail": "The resubmission says V1 is unresolved. Event log decision.recorded entries are unchanged (3, all earlier, all saying 'not accepted'). An agent resubmission cannot supply this decision.",
+      "evidence": [
+        "ev:ev-mv09bx89-016ba0d8",
+        "artifact:eval/holdout-runs.log"
+      ],
+      "recommendation": "Resolved when a named user records in the decision log either acceptance of the holdout-3 M1c result (1/434) and the raised cap (2 to 3 per provider) as meeting D8, or rejection with direction."
+    },
+    {
+      "id": "V2",
+      "severity": "blocking",
+      "title": "STILL OPEN, USER DECISION NEEDED: tune-run overrun (12 full runs vs cap 8) not accepted",
+      "detail": "No decision recorded. The fix is verified and spend is small, but the breach has no human disposition.",
+      "evidence": [
+        "artifact:eval/usage.log"
+      ],
+      "recommendation": "Resolved when a named user records acceptance or rejection of the overrun in the decision log."
+    },
+    {
+      "id": "V3",
+      "severity": "blocking",
+      "title": "STILL OPEN, USER DECISION NEEDED: phase:release has no recorded technical review",
+      "detail": "The user has not chosen between reopening phase:release for a technical review and an explicit waiver.",
+      "evidence": [
+        "artifact:.eccode/reviews/drafts/phase-release-4.json"
+      ],
+      "recommendation": "Resolved when the user reopens phase:release or records an explicit waiver."
+    },
+    {
+      "id": "V4",
+      "severity": "major",
+      "title": "STILL OPEN: high risks and hold3-08 have only proposed dispositions",
+      "detail": "The resubmission offers proposals only, and the risk records are still open. Proposals are not dispositions. D9 (no clean-checkout install) and D10 (partly verified) also still need a user choice.",
+      "evidence": [
+        "artifact:.eccode/artifacts/verification/report.md"
+      ],
+      "recommendation": "Resolved when the user records accept, mitigate or defer for each high risk and for hold3-08, and orders or waives the clean-checkout install."
+    },
+    {
+      "id": "V5",
+      "severity": "minor",
+      "title": "STILL OPEN: README line ~123 stale",
+      "detail": "README.md is pinned by approved rework-3, so it cannot be edited without a rework. The report discloses it as a limitation.",
+      "evidence": [
+        "artifact:README.md"
+      ],
+      "recommendation": "Resolved when the user orders a rework to correct it, or accepts the disclosed limitation."
+    },
+    {
+      "id": "V6",
+      "severity": "info",
+      "title": "eccode audit reports eval/usage.log modified after rework-2 approval",
+      "detail": "The log is append-only, so growth after approval is expected. The audit failure is otherwise confined to the eval/holdout directories, which were deleted after approval when the holdouts were retired. I did not treat either as a defect, but the user should be aware that audit does not run clean.",
+      "evidence": [
+        "artifact:eval/usage.log"
+      ],
+      "recommendation": "No action needed from the author. The user may choose to record an explanation of the audit output."
+    }
+  ],
+  "resolvedFindings": []
+}

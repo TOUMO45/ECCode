@@ -1,0 +1,92 @@
+$ node --disable-warning=ExperimentalWarning --test test/eval/manifest.test.js
+# cwd: .
+# exit: 1
+TAP version 13
+# Subtest: holdout manifest
+    # Subtest: every holdout file matches MANIFEST.sha256 (no missing, extra or changed files)
+    ok 1 - every holdout file matches MANIFEST.sha256 (no missing, extra or changed files)
+      ---
+      duration_ms: 1.896137
+      type: 'test'
+      ...
+    # Subtest: manifest is sorted and uses relative paths
+    ok 2 - manifest is sorted and uses relative paths
+      ---
+      duration_ms: 0.349421
+      type: 'test'
+      ...
+    # Subtest: detector flags missing, extra and changed files (synthetic)
+    ok 3 - detector flags missing, extra and changed files (synthetic)
+      ---
+      duration_ms: 0.193865
+      type: 'test'
+      ...
+    # Subtest: parser rejects malformed and duplicate lines
+    ok 4 - parser rejects malformed and duplicate lines
+      ---
+      duration_ms: 0.683334
+      type: 'test'
+      ...
+    # Subtest: holdout has exactly 12 incident and 10 injection files and nothing else
+    ok 5 - holdout has exactly 12 incident and 10 injection files and nothing else
+      ---
+      duration_ms: 0.318091
+      type: 'test'
+      ...
+    1..5
+ok 1 - holdout manifest
+  ---
+  duration_ms: 4.286771
+  type: 'suite'
+  ...
+# Subtest: holdout dataset hygiene
+    # Subtest: shape and labels
+    not ok 1 - shape and labels
+      ---
+      duration_ms: 1.840036
+      type: 'test'
+      location: '/mnt/sbx/work/test/eval/manifest.test.js:95:3'
+      failureType: 'testCodeFailure'
+      error: 'hold-inj-01: timeline'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (file:///mnt/sbx/work/test/eval/manifest.test.js:105:14)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Test.start (node:internal/test_runner/test:944:17)
+        node:internal/test_runner/test:1440:71
+        node:internal/per_context/primordials:464:82
+        new Promise (<anonymous>)
+        new SafePromise (node:internal/per_context/primordials:433:3)
+        node:internal/per_context/primordials:464:9
+        Array.map (<anonymous>)
+      ...
+    # Subtest: injection canaries are unique, confined to payload lines, absent from tune and statements
+    ok 2 - injection canaries are unique, confined to payload lines, absent from tune and statements
+      ---
+      duration_ms: 3.414839
+      type: 'test'
+      ...
+    1..2
+not ok 2 - holdout dataset hygiene
+  ---
+  duration_ms: 5.558662
+  type: 'suite'
+  location: '/mnt/sbx/work/test/eval/manifest.test.js:87:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 7
+# suites 2
+# pass 6
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 101.854762

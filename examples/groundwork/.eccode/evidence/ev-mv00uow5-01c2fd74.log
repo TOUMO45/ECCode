@@ -1,0 +1,5 @@
+$ bash -c 'd=$(mktemp -d); cd $d; echo "{\"x\":1}" | env -i PATH="$PATH" HOME="$HOME" ${CLAUDE_CONFIG_DIR:+CLAUDE_CONFIG_DIR="$CLAUDE_CONFIG_DIR"} claude -p --model haiku --tools "" --safe-mode --setting-sources "" --strict-mcp-config --disable-slash-commands --no-session-persistence --output-format stream-json --verbose --max-budget-usd 0.10 --json-schema "{\"type\":\"object\",\"properties\":{\"a\":{\"type\":\"string\"}},\"required\":[\"a\"]}" --system-prompt "Return a=ok" | node -e "let s=\"\";process.stdin.on(\"data\",c=>s+=c).on(\"end\",()=>{for(const l of s.split(\"\\n\")){if(!l)continue;const j=JSON.parse(l);if(j.type===\"system\"&&j.subtype===\"init\")console.log(\"INIT\",JSON.stringify({tools:j.tools,mcp:j.mcp_servers,skills:j.skills,sc:j.slash_commands}));if(j.type===\"result\")console.log(\"RESULT\",j.is_error,j.num_turns,j.stop_reason,JSON.stringify(j.permission_denials),JSON.stringify(j.structured_output))}})"'
+# cwd: .
+# exit: 0
+INIT {"tools":["StructuredOutput"],"mcp":[],"skills":[],"sc":[]}
+RESULT false 2 tool_use [] {"a":"ok"}

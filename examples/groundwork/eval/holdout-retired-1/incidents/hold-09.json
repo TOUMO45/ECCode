@@ -1,0 +1,452 @@
+{
+ "id": "hold-09",
+ "title": "Search index shard corrupted after disk swap",
+ "severity": "SEV2",
+ "startedAt": "2026-06-01T11:00:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "11:00",
+   "author": "petra",
+   "text": "Search is returning errors for about a third of queries"
+  },
+  {
+   "n": 2,
+   "time": "11:00",
+   "author": "ali",
+   "text": "sounds good"
+  },
+  {
+   "n": 3,
+   "time": "11:00",
+   "author": "quin",
+   "text": "I'll write it up afterwards"
+  },
+  {
+   "n": 4,
+   "time": "11:00",
+   "author": "ali",
+   "text": "I'm still here"
+  },
+  {
+   "n": 5,
+   "time": "11:00",
+   "author": "ali",
+   "text": "I can take the next step"
+  },
+  {
+   "n": 6,
+   "time": "11:06",
+   "author": "ali",
+   "text": "One shard is red and its replica is also unassigned"
+  },
+  {
+   "n": 7,
+   "time": "11:06",
+   "author": "ali",
+   "text": "can you say that again?"
+  },
+  {
+   "n": 8,
+   "time": "11:06",
+   "author": "quin",
+   "text": "let me look"
+  },
+  {
+   "n": 9,
+   "time": "11:12",
+   "author": "ali",
+   "text": "Ops swapped a failing disk on that node this morning and the data directory was restored from an older snapshot"
+  },
+  {
+   "n": 10,
+   "time": "11:12",
+   "author": "petra",
+   "text": "ok"
+  },
+  {
+   "n": 11,
+   "time": "11:12",
+   "author": "petra",
+   "text": "I can take the next step"
+  },
+  {
+   "n": 12,
+   "time": "11:12",
+   "author": "quin",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 13,
+   "time": "11:12",
+   "author": "ali",
+   "text": "give me a couple of minutes"
+  },
+  {
+   "n": 14,
+   "time": "11:20",
+   "author": "ali",
+   "text": "The shard files do not match the cluster state, so it refuses to start"
+  },
+  {
+   "n": 15,
+   "time": "11:20",
+   "author": "quin",
+   "text": "hang on, loading the page"
+  },
+  {
+   "n": 16,
+   "time": "11:20",
+   "author": "ali",
+   "text": "one sec"
+  },
+  {
+   "n": 17,
+   "time": "11:20",
+   "author": "ali",
+   "text": "sorry, was in another meeting"
+  },
+  {
+   "n": 18,
+   "time": "11:20",
+   "author": "ali",
+   "text": "I'll watch the graphs"
+  },
+  {
+   "n": 19,
+   "time": "11:25",
+   "author": "petra",
+   "text": "Can we serve stale results while we rebuild?"
+  },
+  {
+   "n": 20,
+   "time": "11:25",
+   "author": "petra",
+   "text": "sounds good"
+  },
+  {
+   "n": 21,
+   "time": "11:25",
+   "author": "petra",
+   "text": "ping me if you need a second pair of eyes"
+  },
+  {
+   "n": 22,
+   "time": "11:32",
+   "author": "quin",
+   "text": "Yes, I can point the app to the read only copy in the other region for now"
+  },
+  {
+   "n": 23,
+   "time": "11:32",
+   "author": "ali",
+   "text": "yep"
+  },
+  {
+   "n": 24,
+   "time": "11:32",
+   "author": "ali",
+   "text": "same here"
+  },
+  {
+   "n": 25,
+   "time": "11:32",
+   "author": "petra",
+   "text": "still digging"
+  },
+  {
+   "n": 26,
+   "time": "11:40",
+   "author": "quin",
+   "text": "Errors are down to zero, results might be a day old though"
+  },
+  {
+   "n": 27,
+   "time": "11:40",
+   "author": "quin",
+   "text": "did anyone tell support yet?"
+  },
+  {
+   "n": 28,
+   "time": "11:40",
+   "author": "petra",
+   "text": "agreed"
+  },
+  {
+   "n": 29,
+   "time": "11:48",
+   "author": "ali",
+   "text": "Starting a reindex of the damaged shard from the database"
+  },
+  {
+   "n": 30,
+   "time": "11:48",
+   "author": "ali",
+   "text": "just catching up on the thread"
+  },
+  {
+   "n": 31,
+   "time": "11:48",
+   "author": "ali",
+   "text": "good call"
+  },
+  {
+   "n": 32,
+   "time": "13:10",
+   "author": "ali",
+   "text": "Reindex finished and the cluster is green"
+  },
+  {
+   "n": 33,
+   "time": "13:10",
+   "author": "ali",
+   "text": "can you say that again?"
+  },
+  {
+   "n": 34,
+   "time": "13:10",
+   "author": "quin",
+   "text": "just catching up on the thread"
+  },
+  {
+   "n": 35,
+   "time": "13:20",
+   "author": "quin",
+   "text": "Switched the app back to the main cluster, fresh results again"
+  },
+  {
+   "n": 36,
+   "time": "13:20",
+   "author": "quin",
+   "text": "I can take the next step"
+  },
+  {
+   "n": 37,
+   "time": "13:20",
+   "author": "ali",
+   "text": "did anyone tell support yet?"
+  },
+  {
+   "n": 38,
+   "time": "13:30",
+   "author": "petra",
+   "text": "About 2 hours of partial search failures, then stale results for a bit longer"
+  },
+  {
+   "n": 39,
+   "time": "13:30",
+   "author": "petra",
+   "text": "just catching up on the thread"
+  },
+  {
+   "n": 40,
+   "time": "13:30",
+   "author": "ali",
+   "text": "no surprises on my side"
+  },
+  {
+   "n": 41,
+   "time": "13:35",
+   "author": "ali",
+   "text": "I will write down the disk swap procedure so the restore step uses the latest snapshot"
+  },
+  {
+   "n": 42,
+   "time": "13:35",
+   "author": "petra",
+   "text": "I'll note that down"
+  },
+  {
+   "n": 43,
+   "time": "13:35",
+   "author": "petra",
+   "text": "right, I remember that one"
+  },
+  {
+   "n": 44,
+   "time": "13:35",
+   "author": "ali",
+   "text": "checking now"
+  },
+  {
+   "n": 45,
+   "time": "13:40",
+   "author": "quin",
+   "text": "And I will set up the regional read only copy as a documented fallback"
+  },
+  {
+   "n": 46,
+   "time": "13:40",
+   "author": "petra",
+   "text": "ok"
+  },
+  {
+   "n": 47,
+   "time": "13:40",
+   "author": "ali",
+   "text": "let me look"
+  },
+  {
+   "n": 48,
+   "time": "13:40",
+   "author": "quin",
+   "text": "I'll write it up afterwards"
+  },
+  {
+   "n": 49,
+   "time": "13:40",
+   "author": "quin",
+   "text": "I'm still here"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "11:00",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "11:06",
+    "lines": [
+     6
+    ]
+   },
+   {
+    "time": "11:20",
+    "lines": [
+     14
+    ]
+   },
+   {
+    "time": "11:32",
+    "lines": [
+     22
+    ]
+   },
+   {
+    "time": "11:40",
+    "lines": [
+     26
+    ]
+   },
+   {
+    "time": "11:48",
+    "lines": [
+     29
+    ]
+   },
+   {
+    "time": "13:10",
+    "lines": [
+     32
+    ]
+   },
+   {
+    "time": "13:20",
+    "lines": [
+     35
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     41
+    ]
+   },
+   {
+    "lines": [
+     45
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 11:00 petra reported search errors for about a third of queries.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 11:06 ali saw one shard red with its replica unassigned.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "Ops swapped a failing disk on that node and restored the data directory from an older snapshot.",
+   "cites": [
+    9
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 11:20 ali found the shard files did not match the cluster state.",
+   "cites": [
+    14
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 11:32 quin pointed the app to the read only copy in the other region.",
+   "cites": [
+    22
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 11:40 quin saw errors drop to zero though results might be a day old.",
+   "cites": [
+    26
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 11:48 ali started reindexing the damaged shard from the database.",
+   "cites": [
+    29
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 13:10 ali saw the reindex finish and the cluster turn green.",
+   "cites": [
+    32
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 13:20 quin switched the app back to the main cluster.",
+   "cites": [
+    35
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Search had about 2 hours of partial failures followed by stale results.",
+   "cites": [
+    38
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Ali will write down the disk swap procedure so the restore step uses the latest snapshot.",
+   "cites": [
+    41
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Quin will set up the regional read only copy as a documented fallback.",
+   "cites": [
+    45
+   ]
+  }
+ ]
+}

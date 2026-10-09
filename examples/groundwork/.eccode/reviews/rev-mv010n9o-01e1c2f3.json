@@ -1,0 +1,102 @@
+{
+  "decision": "changes_requested",
+  "summary": "F1, F2, F4, F5 and F6 are resolved and the plan validates. F3 is only partly resolved: the budget table exists and the live-eval caps are right, but expected spend totals about 55 USD against about 55.7 USD remaining, so there is no reserve, and the 70 percent stop rule would fire before live-eval starts.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Every D-criterion maps to a task with acceptance criteria and verification",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv010c14-0105d372",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "Dependencies acyclic, ownership disjoint, docs ordered after live-eval",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv010c14-0105d372",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "Post-tuning regression and holdout controls",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "Cost realism and adequate reserve against remaining harness budget (about 55.7 USD)",
+      "met": false,
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.md"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F7",
+      "severity": "major",
+      "title": "Spend table leaves no reserve and the 70 percent stop rule is unworkable",
+      "detail": "Rows sum to 55 USD (6+4+9+5+5+3+3+2+6+12) against about 55.7 USD remaining, and the plan itself says 'no reserve'. The estimates are unmeasured, and the plan says 'tight', so any overrun halts delivery before docs or the verification gate. The 70 percent threshold is about 39 USD. Spend before live-eval is about 38 USD (foundation to tests-e2e is 32, plus part of the 6 for gates), so the stop-and-report rule would trigger at or before the first live run. The base of the 70 percent (remaining budget or the 60 USD total) is also not stated. Shrinking only the live-eval cap does not give a reserve, because the agent work rows have no slack.",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.md"
+      ],
+      "recommendation": "Revise the table so the total is at most about 45 USD, leaving a reserve of at least 10 USD (about 20 percent). For example: cut the live-eval provider cap to 6 USD with at most 3 tune runs, or trim agent-work rows, and show the reserve as a table row. State the base of the stop rule in USD and set it so it does not fire during normal execution (for example, stop and report before live runs if cumulative spend exceeds the planned pre-live-eval total by 15 percent, and hard-stop at 85 percent of the budget). Mirror the revised caps in the live-eval acceptance criteria. Resolved when plan.md shows total plus reserve within the remaining budget and the live-eval criteria match."
+    },
+    {
+      "id": "F8",
+      "severity": "minor",
+      "title": "eval-harness holdout cap of 2 runs per provider vs one planned run",
+      "detail": "The harness cap of 2 is consistent with the 'second run only after a documented harness defect' rule, but the eval-harness criterion does not say so.",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ],
+      "recommendation": "Optional: add a note that the second slot is reserved for a disclosed harness defect."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "F1",
+      "evidence": [
+        "ev:ev-mv010c14-0105d372",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ],
+      "resolution": "docs-devops dependencies are now [browser-e2e, live-eval]; plan validate passes; plan.md critical path ends live-eval -> docs-devops."
+    },
+    {
+      "id": "F2",
+      "evidence": [
+        "ev:ev-mv010c14-0105d372",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ],
+      "resolution": "live-eval verification is test:live && npm test && test:browser && eval --verifier, with acceptance criteria for M1b 100 percent, M1c <=2 percent, fallback-tune and determinism after the last tuning change, and tuning-log recording of stopwords.js edits."
+    },
+    {
+      "id": "F4",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ],
+      "resolution": "frontend adds test/unit/frontend/testids.test.js asserting spec 7.3 test ids, runs it in verification, and defers D1 layout evidence to browser-e2e."
+    },
+    {
+      "id": "F5",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json",
+        "artifact:.eccode/artifacts/plan/plan.md"
+      ],
+      "resolution": "One holdout run per provider; a second only after a disclosed harness defect, stated in both files."
+    },
+    {
+      "id": "F6",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ],
+      "resolution": "Info only; no change required."
+    }
+  ]
+}

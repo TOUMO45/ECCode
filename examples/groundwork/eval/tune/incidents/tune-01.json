@@ -1,0 +1,577 @@
+{
+ "id": "tune-01",
+ "title": "Primary database failover stalls writes",
+ "severity": "SEV1",
+ "startedAt": "2026-03-04T10:02:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "10:02",
+   "author": "alice",
+   "text": "Pager: orders-db primary is not responding, writes timing out"
+  },
+  {
+   "n": 2,
+   "time": "10:02",
+   "author": "alice",
+   "text": "checking the dashboards for orders-db"
+  },
+  {
+   "n": 3,
+   "time": "10:02",
+   "author": "chen",
+   "text": "drafting the status page text"
+  },
+  {
+   "n": 4,
+   "time": "10:02",
+   "author": "alice",
+   "text": "nothing unusual in the audit trail"
+  },
+  {
+   "n": 5,
+   "time": "10:04",
+   "author": "bruno",
+   "text": "Ack, I am on it. Checking the replication dashboard"
+  },
+  {
+   "n": 6,
+   "time": "10:04",
+   "author": "dara",
+   "text": "still no news from the other team"
+  },
+  {
+   "n": 7,
+   "time": "10:04",
+   "author": "bruno",
+   "text": "keeping an eye on orders-db metrics"
+  },
+  {
+   "n": 8,
+   "time": "10:04",
+   "author": "dara",
+   "text": "taking notes for the timeline"
+  },
+  {
+   "n": 9,
+   "time": "10:07",
+   "author": "bruno",
+   "text": "Primary host lost its network interface, replica orders-db-2 is 4 seconds behind"
+  },
+  {
+   "n": 10,
+   "time": "10:07",
+   "author": "chen",
+   "text": "joining the call in a minute"
+  },
+  {
+   "n": 11,
+   "time": "10:07",
+   "author": "alice",
+   "text": "no change on my side"
+  },
+  {
+   "n": 12,
+   "time": "10:07",
+   "author": "chen",
+   "text": "let me know if you need anything"
+  },
+  {
+   "n": 13,
+   "time": "10:09",
+   "author": "chen",
+   "text": "Customers cannot place orders, checkout returns 500"
+  },
+  {
+   "n": 14,
+   "time": "10:09",
+   "author": "bruno",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 15,
+   "time": "10:09",
+   "author": "dara",
+   "text": "reading the runbook for orders-db"
+  },
+  {
+   "n": 16,
+   "time": "10:09",
+   "author": "bruno",
+   "text": "holding off on further changes for now"
+  },
+  {
+   "n": 17,
+   "time": "10:11",
+   "author": "alice",
+   "text": "Decision: promote orders-db-2 to primary"
+  },
+  {
+   "n": 18,
+   "time": "10:11",
+   "author": "alice",
+   "text": "copying the graph into the ticket"
+  },
+  {
+   "n": 19,
+   "time": "10:11",
+   "author": "chen",
+   "text": "looking at recent changes in the repo"
+  },
+  {
+   "n": 20,
+   "time": "10:11",
+   "author": "alice",
+   "text": "ack, watching the graphs"
+  },
+  {
+   "n": 21,
+   "time": "10:14",
+   "author": "bruno",
+   "text": "Promotion command issued"
+  },
+  {
+   "n": 22,
+   "time": "10:14",
+   "author": "dara",
+   "text": "thanks, noted"
+  },
+  {
+   "n": 23,
+   "time": "10:14",
+   "author": "bruno",
+   "text": "re-running the query to double check"
+  },
+  {
+   "n": 24,
+   "time": "10:14",
+   "author": "dara",
+   "text": "checking the dashboards for orders-db"
+  },
+  {
+   "n": 25,
+   "time": "10:16",
+   "author": "bruno",
+   "text": "orders-db-2 accepts writes now"
+  },
+  {
+   "n": 26,
+   "time": "10:16",
+   "author": "chen",
+   "text": "still reading through the logs"
+  },
+  {
+   "n": 27,
+   "time": "10:16",
+   "author": "alice",
+   "text": "agreed"
+  },
+  {
+   "n": 28,
+   "time": "10:16",
+   "author": "chen",
+   "text": "still no news from the other team"
+  },
+  {
+   "n": 29,
+   "time": "10:19",
+   "author": "dara",
+   "text": "Application pods still point at the old primary address"
+  },
+  {
+   "n": 30,
+   "time": "10:19",
+   "author": "bruno",
+   "text": "will report back when I know more"
+  },
+  {
+   "n": 31,
+   "time": "10:19",
+   "author": "dara",
+   "text": "paging the secondary just in case"
+  },
+  {
+   "n": 32,
+   "time": "10:19",
+   "author": "bruno",
+   "text": "joining the call in a minute"
+  },
+  {
+   "n": 33,
+   "time": "10:22",
+   "author": "dara",
+   "text": "Restarting the order service to pick up the new address"
+  },
+  {
+   "n": 34,
+   "time": "10:22",
+   "author": "alice",
+   "text": "sharing my screen on the call"
+  },
+  {
+   "n": 35,
+   "time": "10:22",
+   "author": "chen",
+   "text": "can someone confirm the current error rate"
+  },
+  {
+   "n": 36,
+   "time": "10:22",
+   "author": "alice",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 37,
+   "time": "10:27",
+   "author": "chen",
+   "text": "Checkout works again, error rate back to normal"
+  },
+  {
+   "n": 38,
+   "time": "10:27",
+   "author": "dara",
+   "text": "metrics look flat for now"
+  },
+  {
+   "n": 39,
+   "time": "10:27",
+   "author": "bruno",
+   "text": "confirming with the on-call lead"
+  },
+  {
+   "n": 40,
+   "time": "10:27",
+   "author": "dara",
+   "text": "copying the graph into the ticket"
+  },
+  {
+   "n": 41,
+   "time": "10:30",
+   "author": "alice",
+   "text": "Total write outage about 25 minutes"
+  },
+  {
+   "n": 42,
+   "time": "10:30",
+   "author": "chen",
+   "text": "drafting the status page text"
+  },
+  {
+   "n": 43,
+   "time": "10:30",
+   "author": "alice",
+   "text": "nothing unusual in the audit trail"
+  },
+  {
+   "n": 44,
+   "time": "10:30",
+   "author": "chen",
+   "text": "thanks, noted"
+  },
+  {
+   "n": 45,
+   "time": "10:35",
+   "author": "bruno",
+   "text": "Old primary host rebooted and is rejoining as a replica"
+  },
+  {
+   "n": 46,
+   "time": "10:35",
+   "author": "bruno",
+   "text": "keeping an eye on orders-db metrics"
+  },
+  {
+   "n": 47,
+   "time": "10:35",
+   "author": "dara",
+   "text": "taking notes for the timeline"
+  },
+  {
+   "n": 48,
+   "time": "10:35",
+   "author": "bruno",
+   "text": "still reading through the logs"
+  },
+  {
+   "n": 49,
+   "time": "10:41",
+   "author": "alice",
+   "text": "Declaring the incident resolved"
+  },
+  {
+   "n": 50,
+   "time": "10:41",
+   "author": "alice",
+   "text": "no change on my side"
+  },
+  {
+   "n": 51,
+   "time": "10:41",
+   "author": "chen",
+   "text": "let me know if you need anything"
+  },
+  {
+   "n": 52,
+   "time": "10:45",
+   "author": "bruno",
+   "text": "Action item: automate the application address switch after promotion, owner dara"
+  },
+  {
+   "n": 53,
+   "time": "10:45",
+   "author": "chen",
+   "text": "taking notes for the timeline"
+  },
+  {
+   "n": 54,
+   "time": "10:45",
+   "author": "alice",
+   "text": "still reading through the logs"
+  },
+  {
+   "n": 55,
+   "time": "10:47",
+   "author": "alice",
+   "text": "Action item: add a failover drill to the quarterly calendar, owner bruno"
+  },
+  {
+   "n": 56,
+   "time": "10:47",
+   "author": "alice",
+   "text": "thanks, noted"
+  },
+  {
+   "n": 57,
+   "time": "10:47",
+   "author": "chen",
+   "text": "re-running the query to double check"
+  },
+  {
+   "n": 58,
+   "time": "10:50",
+   "author": "chen",
+   "text": "Action item: draft the customer notice for the order outage, owner chen"
+  },
+  {
+   "n": 59,
+   "time": "10:50",
+   "author": "chen",
+   "text": "looking at recent changes in the repo"
+  },
+  {
+   "n": 60,
+   "time": "10:50",
+   "author": "alice",
+   "text": "ack, watching the graphs"
+  },
+  {
+   "n": 61,
+   "time": "10:52",
+   "author": "alice",
+   "text": "Summary: network failure on the primary host forced a manual failover to orders-db-2"
+  },
+  {
+   "n": 62,
+   "time": "10:52",
+   "author": "alice",
+   "text": "holding off on further changes for now"
+  },
+  {
+   "n": 63,
+   "time": "10:52",
+   "author": "chen",
+   "text": "sharing my screen on the call"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "10:02",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "10:04",
+    "lines": [
+     5
+    ]
+   },
+   {
+    "time": "10:07",
+    "lines": [
+     9
+    ]
+   },
+   {
+    "time": "10:11",
+    "lines": [
+     17
+    ]
+   },
+   {
+    "time": "10:14",
+    "lines": [
+     21,
+     25
+    ]
+   },
+   {
+    "time": "10:22",
+    "lines": [
+     33
+    ]
+   },
+   {
+    "time": "10:27",
+    "lines": [
+     37
+    ]
+   },
+   {
+    "time": "10:35",
+    "lines": [
+     45
+    ]
+   },
+   {
+    "time": "10:41",
+    "lines": [
+     49
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     52
+    ]
+   },
+   {
+    "lines": [
+     55
+    ]
+   },
+   {
+    "lines": [
+     58
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 10:41 alice declared the incident resolved.",
+   "cites": [
+    49
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:35 bruno saw the old primary host reboot and rejoin as a replica.",
+   "cites": [
+    45
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:27 chen confirmed checkout works again and the error rate was back to normal.",
+   "cites": [
+    37
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:22 dara restarted the order service to pick up the new address.",
+   "cites": [
+    33
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:14 bruno issued the promotion command.",
+   "cites": [
+    21,
+    25
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:11 alice decided to promote orders-db-2 to primary.",
+   "cites": [
+    17
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:07 bruno found the primary host lost its network interface while replica orders-db-2 was 4 seconds behind.",
+   "cites": [
+    9
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:04 bruno acknowledged and checked the replication dashboard.",
+   "cites": [
+    5
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 10:02 alice received a page that the orders-db primary was not responding and writes were timing out.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Chen reported that customers cannot place orders because checkout returns 500.",
+   "cites": [
+    13
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "Dara noticed the application pods still point at the old primary address.",
+   "cites": [
+    29
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Alice estimated the total write outage at about 25 minutes.",
+   "cites": [
+    41
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: automate the application address switch after promotion, owner dara.",
+   "cites": [
+    52
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: add a failover drill to the quarterly calendar, owner bruno.",
+   "cites": [
+    55
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: draft the customer notice for the order outage, owner chen.",
+   "cites": [
+    58
+   ]
+  },
+  {
+   "section": "summary",
+   "text": "Alice summarised that a network failure on the primary host forced a manual failover to orders-db-2.",
+   "cites": [
+    61
+   ]
+  }
+ ]
+}

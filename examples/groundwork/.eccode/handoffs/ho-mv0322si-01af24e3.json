@@ -1,0 +1,52 @@
+{
+  "from": "frontend-engineer",
+  "to": "qa-engineer",
+  "task": "frontend",
+  "objective": "Responsive vanilla JS UI for sign in, incidents, notes import, draft review with citation highlighting, publish and postmortems (D1).",
+  "context": "Built against spec sections 3, 7, 9 and src/api/contract-schemas.js. Hash routing, textContent-only rendering, no inline script or style (CSP default-src none; script-src self; style-src self). CSRF: GET /api/csrf before login, then the token from login/me is sent as X-CSRF-Token on non-GET; 401 UNAUTHENTICATED clears state and routes to sign-in. The task verification command checks public/app.js, so the entry module is public/app.js (loads js/api.js, js/dom.js, js/views/*, js/components/*) rather than the spec's js/main.js.",
+  "inputs": [
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/design/spec.md",
+    "src/api/contract-schemas.js",
+    "src/routes/*.js",
+    "src/http/headers.js"
+  ],
+  "dependencies": [
+    "foundation-be"
+  ],
+  "expectedOutput": "public/ UI served by src/routes/static.js, a mock API for UI work, and a data-testid presence test.",
+  "acceptanceCriteria": [
+    "Screens with loading, empty, error and success states",
+    "Citation chips highlight, scroll to and focus the source line; flagged statements show Not grounded with reasons; Publish disabled while flagged",
+    "Fallback banner when isFallback; no inline scripts; textContent only",
+    "Spec 7.3 data-testid list implemented"
+  ],
+  "completedWork": "public/index.html, css/app.css, app.js, js/{api,dom}.js, js/views/{login,incidents,incident,postmortems}.js, js/components/{source,statements}.js; test/support/mock-api.js; test/unit/frontend/testids.test.js. Syntax check plus testid tests pass, and test/api/static.test.js now runs (previously skipped) and passes against the real public/index.html. No symlinks exist under public/. Not run in a browser: 360-1440 px layout, 44 px targets, focus outline, contrast and the full journey are unverified here and deferred to browser-e2e.",
+  "filesChanged": [
+    "public/index.html",
+    "public/app.js",
+    "public/css/app.css",
+    "public/js/api.js",
+    "public/js/dom.js",
+    "public/js/views/login.js",
+    "public/js/views/incidents.js",
+    "public/js/views/incident.js",
+    "public/js/views/postmortems.js",
+    "public/js/components/source.js",
+    "public/js/components/statements.js",
+    "test/support/mock-api.js",
+    "test/unit/frontend/testids.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv031m4y-01b5b61a",
+    "ev:ev-mv031ow3-01a42c61"
+  ],
+  "remainingIssues": [
+    "Never run in a real browser by me; layout, contrast, touch-target, focus and journey checks are for browser-e2e (QA).",
+    "Viewer GET /api/providers and similar are not called by viewers; roles per spec 3.9 not independently verified against the live server.",
+    "Entry is public/app.js, not js/main.js as spec section 7 names it (task verification command requires app.js).",
+    "Regenerate replaces edits; UI warns in hint text only, no confirm step."
+  ],
+  "nextAction": "qa-engineer: run test/browser journey against src/index.js with the data-testid list; security-reviewer: re-check static serving now that public/ exists.",
+  "lessonsConsulted": []
+}

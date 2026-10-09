@@ -1,0 +1,39 @@
+{
+ "decision": "changes_requested",
+ "summary": "I re-ran npm test (285/285, todo 0), test:browser (28/28), test:live (4/4) and the offline verifier eval (M1b 63/63, M1c 0/429 tune). I checked the report's holdout figures against the recorded logs and eval-results.md, and they match (holdout 3 M1c 1/434 = 0.23%, M1 90.6%, M2 98.8%; holdout 1 13/423; holdout 2 11/440; 16 usage.log entries, USD 1.5515). The report is honest and accurate. I cannot approve because the D8 M1c outcome, the raised holdout cap and the tune-run overrun need a named human decision. The event log shows only operator directions that explicitly say 'not accepted'. I did not run holdout or full CLI evals.",
+ "criteria": [
+  {"id":"C1","description":"Deterministic, browser and live suites pass","met":true,
+   "evidence":["ev:ev-mv098js9-01ee2915","ev:ev-mv098rlx-01114719","ev:ev-mv099fab-0113b888","artifact:.eccode/artifacts/verification/report.md"]},
+  {"id":"C2","description":"Verifier-only eval passes (M1b 100%, M1c max 2% on tune corpus)","met":true,
+   "evidence":["ev:ev-mv099fj7-01147048"]},
+  {"id":"C3","description":"Report figures tie to evidence records and logs","met":true,
+   "evidence":["ev:ev-mv07q6zs-01a855fd","ev:ev-mv07ju2a-015f3c20","artifact:docs/eval-results.md","artifact:eval/usage.log","artifact:eval/holdout-runs.log"]},
+  {"id":"C4","description":"D8 AI evaluation accepted by the person who owns the threshold decision (Q3)","met":false,
+   "evidence":["artifact:docs/eval-results.md","artifact:eval/holdout-runs.log","artifact:.eccode/artifacts/verification/report.md"]},
+  {"id":"C5","description":"Release gate chain complete (technical and security review of phase:release)","met":false,
+   "evidence":["artifact:.eccode/reviews/drafts/phase-release-4.json"]}
+ ],
+ "findings": [
+  {"id":"V1","severity":"blocking","title":"USER DECISION NEEDED: no named human has accepted the M1c result or the raised holdout cap",
+   "detail":"M1c failed on holdout 1 (3.07%) and holdout 2 (2.50%) against a 2% max. After tuning on those holdouts it passed only on holdout 3 (1/434 = 0.23%, a single sample, wide interval, author independence self-reported). The holdout cap was raised from 2 to 3 per provider by an operator direction. Threshold Q3 says changes and acceptance need a recorded user decision. The recorded decisions (dec-mv05ytch, dec-mv06n1v2, dec-mv06pxds, and the phase:release reopen) are operator directions that state 'not accepted' or 'nothing is accepted'. I will not approve around this, and no technical-reviewer judgement can stand in for it.",
+   "evidence":["ev:ev-mv07q6zs-01a855fd","artifact:eval/holdout-runs.log","artifact:docs/eval-results.md"],
+   "recommendation":"This needs a user decision. Resolved when the user records, as a named person via the decision log, either acceptance of the holdout 3 M1c result and the raised holdout cap as meeting D8, or rejection with direction. After a recorded decision, resubmit and I will re-review."},
+  {"id":"V2","severity":"blocking","title":"USER DECISION NEEDED: tune-run cap overrun (12 full runs vs cap 8) is not accepted",
+   "detail":"The guard isFullTune was a no-op until rework-3. The overrun is disclosed accurately, the fix is verified, and spend is small (USD 1.55 against USD 40), but the overrun is a process breach of a stated cap and nobody has accepted it.",
+   "evidence":["ev:ev-mv08kmqd-019b3e58","ev:ev-mv08kpnc-01a54421","artifact:eval/usage.log","artifact:eval/lib/budget.js"],
+   "recommendation":"This needs a user decision. Resolved when a named human records acceptance or rejection of the overrun in the decision log."},
+  {"id":"V3","severity":"blocking","title":"phase:release has no recorded technical review; plan requires one alongside security review",
+   "detail":"phase:release closed with only the security review. My earlier draft (phase-release-4.json) was rejected because the gate had already closed. Its findings F12 (human acceptance of M1c and holdout cap) and F13 (tune overrun) are the same as V1 and V2 and remain unresolved. The draft was never recorded, so the approval chain is incomplete.",
+   "evidence":["artifact:.eccode/reviews/drafts/phase-release-4.json"],
+   "recommendation":"Resolved when the user decides how to cover this, for example by reopening phase:release for a technical review or by recording an explicit waiver. The reviews of V1 and V2 can then cover F12 and F13."},
+  {"id":"V4","severity":"major","title":"Open high risks and hold3-08 false flag have no human disposition",
+   "detail":"RISK-1, 2, 4, 6, 10, 11, 12, 13, 14 (high) are open. hold3-08 (NAME_NOT_IN_SOURCE) is an unfixed false flag. The semantic paraphrase gap is unfixed, injection resistance rests on 10 cases, and D9 (no clean-checkout install) and D10 are only partly verified.",
+   "evidence":["artifact:.eccode/artifacts/verification/report.md"],
+   "recommendation":"Resolved when a named human accepts, mitigates or defers each high risk and hold3-08 in the record, and a clean-checkout install is run or its omission accepted."},
+  {"id":"V5","severity":"minor","title":"README line 123 stale (15 entries, USD 1.454; log has 16, USD 1.552)",
+   "detail":"The report discloses this as F11. README, eval-results and checkBudget (which uses the upper bound) use different bases or counts.",
+   "evidence":["artifact:README.md","artifact:eval/usage.log"],
+   "recommendation":"Resolved when the README matches usage.log (16 entries, USD 1.552) and states its cost basis."}
+ ],
+ "resolvedFindings": []
+}

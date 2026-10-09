@@ -1,0 +1,63 @@
+$ node /tmp/claude-0/-mnt-sbx-work/5728f62b-07b8-4bf5-bc18-2f62e6d2187b/scratchpad/secprobe.mjs
+# cwd: .
+# exit: 0
+login lead                                       200
+cookie flags                                     ["gw_sid=*; Path=/; SameSite=Strict; HttpOnly","gw_csrf=*; Path=/; SameSite=Strict"]
+mutate no csrf hdr                               403
+mutate bad origin                                403
+prelogin csrf tok w/ session                     403
+platform incidents                               [ 1 ]
+IDOR payments GET /api/incidents/1               404
+IDOR payments GET /api/incidents/1/notes         404
+IDOR payments GET /api/incidents/1/draft         404
+IDOR payments PUT notes                          404
+IDOR payments POST draft                         404
+gen fake                                         201
+IDOR edit stmt                                   404
+IDOR del stmt                                    404
+IDOR publish (payments lead)                     404
+responder publish                                403
+lead publish flagged fake                        409 UNGROUNDED_STATEMENTS
+IDOR postmortem                                  404
+viewer GET /api/incidents                        403
+viewer GET /api/users                            403
+viewer GET /api/audit                            403
+viewer GET /api/providers                        403
+viewer GET /api/postmortems                      200
+viewer POST users                                403
+unauth /api/users                                401
+create user extra teamId                         400
+create user dup other team                       409
+users list team ids                              1,1,1
+audit                                            200
+audit sqli before                                400
+audit sqli limit                                 400
+sqli login                                       400
+big body                                         413
+wrong ctype                                      415
+bad json                                         400
+proto pollution                                  400
+GET /api/incidents/abc                           404 {"error":{"code":"NOT_FOUND","message":"Not found","requestId":"72aeedff2878020d"}}
+GET /api/incidents/99999999999                   404 {"error":{"code":"NOT_FOUND","message":"Not found","requestId":"cb0384f12ce47594"}}
+DELETE /api/incidents/1                          405 {"error":{"code":"METHOD_NOT_ALLOWED","message":"Method not allowed","requestId":"29e1c09b04a8904d","details":{"allow":["GET","HEAD"]}}}
+GET /api/nope                                    404 {"error":{"code":"NOT_FOUND","message":"Not found","requestId":"334af65fbcc6c701"}}
+static /../package.json                          HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /%2e%2e/package.json                      HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /..%2fpackage.json                        HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /%2e%2e%2f%2e%2e%2fetc/passwd             HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /....//package.json                       HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /.env                                     HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /a/%00.html                               HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /..%5cpackage.json                        HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static //etc/passwd                              HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /index.html/../../package.json            HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /api/../package.json                      HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /%252e%252e/package.json                  HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /src/app.js                               HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+static /                                         HTTP/1.1 404 Not Found | {"error":{"code":"NOT_FOUND","message":"Not found","requestI
+limiter                                          401,401,401,401,401,429,429
+correct pw after lock                            429
+limiter case-variant key                         429
+fixation new sid                                 true
+old sid after logout                             401
+headers                                          content-security-policy=default-src 'none'; script-src x-content-type-options=nosniff cache-control=no-store

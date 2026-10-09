@@ -1,0 +1,78 @@
+{
+  "decision": "approve",
+  "summary": "Plan re-validated (5 phases, 13 tasks). Phase merge preserved dependencies, disjoint ownership for parallel tasks and D1-D10 coverage. F7 and F8 are resolved: the spend table now totals 41.5 USD from now (about 46 of 60 including spend so far) with a shown reserve of about 14 USD, and the stop rule is based on stated USD figures that normal execution does not trigger.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Every D-criterion maps to a task with acceptance criteria and verification",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv011vzo-01c548d7",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "Dependencies acyclic across merged phases, ownership disjoint among parallel tasks, docs ordered after live-eval",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv011vzo-01c548d7",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "Post-tuning regression and holdout controls",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "Cost realism and adequate reserve against remaining harness budget",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.md",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F9",
+      "severity": "info",
+      "title": "Shared log files between eval-harness and live-eval",
+      "detail": "eval/usage.log, holdout-runs.log and tuning-log.md are listed under both tasks, but live-eval depends on eval-tests which depends on eval-harness, so they are never concurrent.",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ],
+      "recommendation": "None required."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "F3",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.md"
+      ],
+      "resolution": "Budget table exists, provider cap 8 USD, at most 3 tune runs, 1.5 USD per run, mirrored in live-eval criteria."
+    },
+    {
+      "id": "F7",
+      "evidence": [
+        "ev:ev-mv011vzo-01c548d7",
+        "artifact:.eccode/artifacts/plan/plan.md",
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ],
+      "resolution": "Planned total 41.5 plus 4.4 spent is about 46 of 60 with a reserve of about 14; stop at 36 USD before live runs and hard stop at 51 USD, both stated in USD and mirrored in live-eval criteria."
+    },
+    {
+      "id": "F8",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/plan.json"
+      ],
+      "resolution": "eval-harness criterion now notes the second holdout slot is reserved for a disclosed harness defect."
+    }
+  ]
+}

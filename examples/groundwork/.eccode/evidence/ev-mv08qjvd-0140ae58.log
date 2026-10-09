@@ -1,0 +1,14 @@
+$ node --disable-warning=ExperimentalWarning -e '
+import('\''/mnt/sbx/work/eval/lib/budget.js'\'').then(async m=>{const fs=await import('\''node:fs'\'');const t=fs.readFileSync('\''/mnt/sbx/work/eval/usage.log'\'','\''utf8'\'');console.log(Object.keys(m));for(const k of Object.keys(m)){ if(k==='\''checkBudget'\''){try{console.log(JSON.stringify(m.checkBudget({log:t,logText:t,text:t,provider:'\''cli'\'',holdout:false}))).slice?.(0)}catch(e){console.log('\''err'\'',e.message)}}}})'
+# cwd: .
+# exit: 0
+[
+  'MAX_FULL_TUNE_CLI_RUNS',
+  'MAX_HOLDOUT_RUNS',
+  'appendLog',
+  'checkBudget',
+  'checkHoldoutCap',
+  'createTracker',
+  'readLog'
+]
+err Cannot read properties of undefined (reading 'reduce')

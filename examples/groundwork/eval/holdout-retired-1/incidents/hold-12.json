@@ -1,0 +1,432 @@
+{
+ "id": "hold-12",
+ "title": "Replica lag showed stale orders",
+ "severity": "SEV2",
+ "startedAt": "2026-06-22T12:00:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "12:00",
+   "author": "lior",
+   "text": "Customers place an order and then see an empty order history"
+  },
+  {
+   "n": 2,
+   "time": "12:00",
+   "author": "lior",
+   "text": "no surprises on my side"
+  },
+  {
+   "n": 3,
+   "time": "12:00",
+   "author": "sven",
+   "text": "I'll note that down"
+  },
+  {
+   "n": 4,
+   "time": "12:00",
+   "author": "mae",
+   "text": "I'll note that down"
+  },
+  {
+   "n": 5,
+   "time": "12:00",
+   "author": "lior",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 6,
+   "time": "12:06",
+   "author": "mae",
+   "text": "The order list reads from the replica and replication lag is 90 seconds"
+  },
+  {
+   "n": 7,
+   "time": "12:06",
+   "author": "sven",
+   "text": "I'll note that down"
+  },
+  {
+   "n": 8,
+   "time": "12:06",
+   "author": "mae",
+   "text": "ok"
+  },
+  {
+   "n": 9,
+   "time": "12:12",
+   "author": "mae",
+   "text": "A long running report query is holding back replay on the replica"
+  },
+  {
+   "n": 10,
+   "time": "12:12",
+   "author": "mae",
+   "text": "let me look"
+  },
+  {
+   "n": 11,
+   "time": "12:12",
+   "author": "sven",
+   "text": "I'm on it"
+  },
+  {
+   "n": 12,
+   "time": "12:12",
+   "author": "sven",
+   "text": "I'll watch the graphs"
+  },
+  {
+   "n": 13,
+   "time": "12:12",
+   "author": "lior",
+   "text": "let's keep the channel clear for updates"
+  },
+  {
+   "n": 14,
+   "time": "12:16",
+   "author": "lior",
+   "text": "Whose report is it?"
+  },
+  {
+   "n": 15,
+   "time": "12:16",
+   "author": "mae",
+   "text": "one sec"
+  },
+  {
+   "n": 16,
+   "time": "12:16",
+   "author": "lior",
+   "text": "same here"
+  },
+  {
+   "n": 17,
+   "time": "12:16",
+   "author": "lior",
+   "text": "good call"
+  },
+  {
+   "n": 18,
+   "time": "12:16",
+   "author": "mae",
+   "text": "standing by"
+  },
+  {
+   "n": 19,
+   "time": "12:20",
+   "author": "sven",
+   "text": "Analytics team, it started at 11:30. I asked them to cancel it"
+  },
+  {
+   "n": 20,
+   "time": "12:20",
+   "author": "sven",
+   "text": "I'll write it up afterwards"
+  },
+  {
+   "n": 21,
+   "time": "12:20",
+   "author": "mae",
+   "text": "did anyone tell support yet?"
+  },
+  {
+   "n": 22,
+   "time": "12:20",
+   "author": "sven",
+   "text": "ok"
+  },
+  {
+   "n": 23,
+   "time": "12:20",
+   "author": "mae",
+   "text": "let's keep the channel clear for updates"
+  },
+  {
+   "n": 24,
+   "time": "12:28",
+   "author": "sven",
+   "text": "Cancelled, lag is dropping"
+  },
+  {
+   "n": 25,
+   "time": "12:28",
+   "author": "lior",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 26,
+   "time": "12:28",
+   "author": "sven",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 27,
+   "time": "12:28",
+   "author": "lior",
+   "text": "no surprises on my side"
+  },
+  {
+   "n": 28,
+   "time": "12:35",
+   "author": "mae",
+   "text": "Lag is under 1 second again"
+  },
+  {
+   "n": 29,
+   "time": "12:35",
+   "author": "sven",
+   "text": "standing by"
+  },
+  {
+   "n": 30,
+   "time": "12:35",
+   "author": "lior",
+   "text": "standing by"
+  },
+  {
+   "n": 31,
+   "time": "12:35",
+   "author": "sven",
+   "text": "fair point"
+  },
+  {
+   "n": 32,
+   "time": "12:40",
+   "author": "lior",
+   "text": "Support says about 70 people wrote in over the last 40 minutes"
+  },
+  {
+   "n": 33,
+   "time": "12:40",
+   "author": "lior",
+   "text": "let me grab coffee and be back in two"
+  },
+  {
+   "n": 34,
+   "time": "12:40",
+   "author": "mae",
+   "text": "thanks for the update"
+  },
+  {
+   "n": 35,
+   "time": "12:40",
+   "author": "sven",
+   "text": "that matches what I'm seeing"
+  },
+  {
+   "n": 36,
+   "time": "12:48",
+   "author": "mae",
+   "text": "Quick fix is to read the order history from the primary right after a write for that user"
+  },
+  {
+   "n": 37,
+   "time": "12:48",
+   "author": "sven",
+   "text": "give me a couple of minutes"
+  },
+  {
+   "n": 38,
+   "time": "12:48",
+   "author": "mae",
+   "text": "hang on, loading the page"
+  },
+  {
+   "n": 39,
+   "time": "12:48",
+   "author": "lior",
+   "text": "looking at the logs now"
+  },
+  {
+   "n": 40,
+   "time": "12:48",
+   "author": "lior",
+   "text": "not sure yet"
+  },
+  {
+   "n": 41,
+   "time": "12:55",
+   "author": "sven",
+   "text": "I will put analytics on their own replica so reports cannot hold back the main one"
+  },
+  {
+   "n": 42,
+   "time": "12:55",
+   "author": "lior",
+   "text": "not sure yet"
+  },
+  {
+   "n": 43,
+   "time": "12:55",
+   "author": "sven",
+   "text": "give me a couple of minutes"
+  },
+  {
+   "n": 44,
+   "time": "12:55",
+   "author": "lior",
+   "text": "joining now"
+  },
+  {
+   "n": 45,
+   "time": "12:55",
+   "author": "sven",
+   "text": "no surprises on my side"
+  },
+  {
+   "n": 46,
+   "time": "13:00",
+   "author": "mae",
+   "text": "I will add a lag alert at 10 seconds and the read after write fix"
+  },
+  {
+   "n": 47,
+   "time": "13:00",
+   "author": "sven",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 48,
+   "time": "13:00",
+   "author": "lior",
+   "text": "did anyone tell support yet?"
+  },
+  {
+   "n": 49,
+   "time": "13:00",
+   "author": "sven",
+   "text": "just catching up on the thread"
+  },
+  {
+   "n": 50,
+   "time": "13:00",
+   "author": "lior",
+   "text": "no surprises on my side"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "12:00",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "12:06",
+    "lines": [
+     6
+    ]
+   },
+   {
+    "time": "12:20",
+    "lines": [
+     19
+    ]
+   },
+   {
+    "time": "12:28",
+    "lines": [
+     24
+    ]
+   },
+   {
+    "time": "12:35",
+    "lines": [
+     28
+    ]
+   },
+   {
+    "time": "12:48",
+    "lines": [
+     36
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     41
+    ]
+   },
+   {
+    "lines": [
+     46
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 12:00 lior reported customers seeing an empty order history right after placing an order.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 12:06 mae found the order list reads from the replica and the lag was 90 seconds.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "A long running report query was holding back replay on the replica.",
+   "cites": [
+    9
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 12:20 sven asked the analytics team to cancel the report that started at 11:30.",
+   "cites": [
+    19
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 12:28 sven saw the report cancelled and the lag dropping.",
+   "cites": [
+    24
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 12:35 mae saw the lag fall under 1 second.",
+   "cites": [
+    28
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "About 70 people wrote in to support over 40 minutes.",
+   "cites": [
+    32
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 12:48 mae proposed reading the order history from the primary right after a write.",
+   "cites": [
+    36
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Sven will put analytics on their own replica so reports cannot hold back the main one.",
+   "cites": [
+    41
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Mae will add a lag alert at 10 seconds and the read after write fix.",
+   "cites": [
+    46
+   ]
+  }
+ ]
+}

@@ -1,0 +1,488 @@
+{
+ "id": "hold2-01",
+ "title": "Search latency spike after oversized reindex",
+ "severity": "SEV2",
+ "startedAt": "2026-08-14T14:05:00+02:00",
+ "lines": [
+  {
+   "n": 1,
+   "time": "14:05",
+   "author": "priya",
+   "text": "Search API p99 latency just jumped to 2.8s, it normally sits around 300ms"
+  },
+  {
+   "n": 2,
+   "time": "14:05",
+   "author": "tomasz",
+   "text": "pulling up the relevant dashboard now"
+  },
+  {
+   "n": 3,
+   "time": "14:05",
+   "author": "priya",
+   "text": "heads up, lunch cover is arranged"
+  },
+  {
+   "n": 4,
+   "time": "14:05",
+   "author": "priya",
+   "text": "can someone share the current graph link"
+  },
+  {
+   "n": 5,
+   "time": "14:05",
+   "author": "tomasz",
+   "text": "standing by for instructions"
+  },
+  {
+   "n": 6,
+   "time": "14:09",
+   "author": "tomasz",
+   "text": "Picking this up. A reindex job started at 13:55 local and is hammering the shard nodes"
+  },
+  {
+   "n": 7,
+   "time": "14:09",
+   "author": "tomasz",
+   "text": "can someone share the current graph link"
+  },
+  {
+   "n": 8,
+   "time": "14:09",
+   "author": "hassan",
+   "text": "pasting the query output below"
+  },
+  {
+   "n": 9,
+   "time": "14:09",
+   "author": "priya",
+   "text": "can someone share the current graph link"
+  },
+  {
+   "n": 10,
+   "time": "14:09",
+   "author": "tomasz",
+   "text": "rereading the deploy log"
+  },
+  {
+   "n": 11,
+   "time": "14:11",
+   "author": "hassan",
+   "text": "Support says shoppers get an empty results page on about one search in five"
+  },
+  {
+   "n": 12,
+   "time": "14:11",
+   "author": "hassan",
+   "text": "one sec, scrolling back through the channel"
+  },
+  {
+   "n": 13,
+   "time": "14:11",
+   "author": "priya",
+   "text": "rereading the deploy log"
+  },
+  {
+   "n": 14,
+   "time": "14:11",
+   "author": "yuki",
+   "text": "no alerts firing other than the known ones"
+  },
+  {
+   "n": 15,
+   "time": "14:11",
+   "author": "tomasz",
+   "text": "pasting the query output below"
+  },
+  {
+   "n": 16,
+   "time": "14:14",
+   "author": "tomasz",
+   "text": "Decided to pause the reindex rather than kill it so we keep the partial progress"
+  },
+  {
+   "n": 17,
+   "time": "14:14",
+   "author": "tomasz",
+   "text": "rereading the deploy log"
+  },
+  {
+   "n": 18,
+   "time": "14:14",
+   "author": "hassan",
+   "text": "noting this down for the record"
+  },
+  {
+   "n": 19,
+   "time": "14:14",
+   "author": "tomasz",
+   "text": "looping in the duty manager"
+  },
+  {
+   "n": 20,
+   "time": "14:18",
+   "author": "priya",
+   "text": "Reindex is paused. Heap on shard-3 is sitting at 91%"
+  },
+  {
+   "n": 21,
+   "time": "14:18",
+   "author": "priya",
+   "text": "looping in the duty manager"
+  },
+  {
+   "n": 22,
+   "time": "14:18",
+   "author": "hassan",
+   "text": "checking whether this matches last quarter"
+  },
+  {
+   "n": 23,
+   "time": "14:18",
+   "author": "yuki",
+   "text": "can someone share the current graph link"
+  },
+  {
+   "n": 24,
+   "time": "14:26",
+   "author": "yuki",
+   "text": "Shard-3 has been restarted and is rejoining the cluster"
+  },
+  {
+   "n": 25,
+   "time": "14:26",
+   "author": "hassan",
+   "text": "still digging, will update shortly"
+  },
+  {
+   "n": 26,
+   "time": "14:26",
+   "author": "yuki",
+   "text": "adding a comment to the status draft"
+  },
+  {
+   "n": 27,
+   "time": "14:26",
+   "author": "priya",
+   "text": "still digging, will update shortly"
+  },
+  {
+   "n": 28,
+   "time": "14:26",
+   "author": "tomasz",
+   "text": "one sec, scrolling back through the channel"
+  },
+  {
+   "n": 29,
+   "time": "14:27",
+   "author": "tomasz",
+   "text": "Root cause looks like the batch size we raised to 5000 last week, it used to be 500"
+  },
+  {
+   "n": 30,
+   "time": "14:27",
+   "author": "hassan",
+   "text": "pulling up the relevant dashboard now"
+  },
+  {
+   "n": 31,
+   "time": "14:27",
+   "author": "hassan",
+   "text": "adding a comment to the status draft"
+  },
+  {
+   "n": 32,
+   "time": "14:27",
+   "author": "yuki",
+   "text": "adding a comment to the status draft"
+  },
+  {
+   "n": 33,
+   "time": "14:27",
+   "author": "tomasz",
+   "text": "I can take the next check"
+  },
+  {
+   "n": 34,
+   "time": "14:33",
+   "author": "priya",
+   "text": "p99 is back down to 340ms and the empty result pages are gone"
+  },
+  {
+   "n": 35,
+   "time": "14:33",
+   "author": "yuki",
+   "text": "can someone share the current graph link"
+  },
+  {
+   "n": 36,
+   "time": "14:33",
+   "author": "tomasz",
+   "text": "checking whether this matches last quarter"
+  },
+  {
+   "n": 37,
+   "time": "14:33",
+   "author": "tomasz",
+   "text": "standing by for instructions"
+  },
+  {
+   "n": 38,
+   "time": "14:33",
+   "author": "tomasz",
+   "text": "I can take the next check"
+  },
+  {
+   "n": 39,
+   "time": "14:40",
+   "author": "hassan",
+   "text": "No new customer reports in ten minutes, closing this out"
+  },
+  {
+   "n": 40,
+   "time": "14:40",
+   "author": "yuki",
+   "text": "heads up, lunch cover is arranged"
+  },
+  {
+   "n": 41,
+   "time": "14:40",
+   "author": "tomasz",
+   "text": "I can take the next check"
+  },
+  {
+   "n": 42,
+   "time": "14:40",
+   "author": "hassan",
+   "text": "pulling up the relevant dashboard now"
+  },
+  {
+   "n": 43,
+   "time": "14:45",
+   "author": "tomasz",
+   "text": "TODO: cap the reindex batch size at 1000 in the job config. Owner: tomasz"
+  },
+  {
+   "n": 44,
+   "time": "14:45",
+   "author": "tomasz",
+   "text": "checking whether this matches last quarter"
+  },
+  {
+   "n": 45,
+   "time": "14:45",
+   "author": "priya",
+   "text": "adding a comment to the status draft"
+  },
+  {
+   "n": 46,
+   "time": "14:45",
+   "author": "yuki",
+   "text": "I am on the bridge if anyone needs me"
+  },
+  {
+   "n": 47,
+   "time": "14:45",
+   "author": "tomasz",
+   "text": "still waiting on a reply from the vendor"
+  },
+  {
+   "n": 48,
+   "time": "14:48",
+   "author": "yuki",
+   "text": "TODO: add an alert when shard heap passes 85%. Owner: yuki"
+  },
+  {
+   "n": 49,
+   "time": "14:48",
+   "author": "priya",
+   "text": "refreshing the page again to confirm"
+  },
+  {
+   "n": 50,
+   "time": "14:48",
+   "author": "yuki",
+   "text": "adding a comment to the status draft"
+  },
+  {
+   "n": 51,
+   "time": "14:48",
+   "author": "priya",
+   "text": "noting this down for the record"
+  },
+  {
+   "n": 52,
+   "time": "14:48",
+   "author": "priya",
+   "text": "adding a comment to the status draft"
+  },
+  {
+   "n": 53,
+   "time": "14:52",
+   "author": "priya",
+   "text": "Wrap-up: oversized reindex batches overloaded the shard nodes and degraded search for about 28 minutes"
+  },
+  {
+   "n": 54,
+   "time": "14:52",
+   "author": "priya",
+   "text": "no alerts firing other than the known ones"
+  },
+  {
+   "n": 55,
+   "time": "14:52",
+   "author": "tomasz",
+   "text": "nothing new from my side yet"
+  },
+  {
+   "n": 56,
+   "time": "14:52",
+   "author": "priya",
+   "text": "noting this down for the record"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "14:05",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "14:09",
+    "lines": [
+     6
+    ]
+   },
+   {
+    "time": "14:14",
+    "lines": [
+     16
+    ]
+   },
+   {
+    "time": "14:18",
+    "lines": [
+     20
+    ]
+   },
+   {
+    "time": "14:26",
+    "lines": [
+     24
+    ]
+   },
+   {
+    "time": "14:33",
+    "lines": [
+     34
+    ]
+   },
+   {
+    "time": "14:40",
+    "lines": [
+     39
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     43
+    ]
+   },
+   {
+    "lines": [
+     48
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 14:05 Priya reported that search API p99 latency had jumped to 2.8 seconds against a usual level of roughly 300 milliseconds.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 14:09 Tomasz took ownership and found that a reindex job begun at 13:55 local time was heavily loading the shard nodes.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Support reported that roughly 20 percent of searches returned an empty results page.",
+   "cites": [
+    11
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 14:14 Tomasz chose to pause the reindex instead of killing it, which preserved the partial progress.",
+   "cites": [
+    16
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 14:18 Priya confirmed the reindex was paused and that heap usage on shard-3 stood at 91 percent.",
+   "cites": [
+    20
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 14:26 Yuki restarted shard-3, which then began rejoining the cluster.",
+   "cites": [
+    24
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "Tomasz traced the load to the indexing batch size, which had been raised from 500 to 5000 the week before.",
+   "cites": [
+    29
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 14:33 Priya observed p99 latency return to 340 milliseconds with the empty result pages gone.",
+   "cites": [
+    34
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 14:40 Hassan closed the incident after ten minutes without new customer reports.",
+   "cites": [
+    39
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Tomasz will cap the reindex batch size at 1000 in the job configuration.",
+   "cites": [
+    43
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Yuki will add an alert for shard heap usage above 85 percent.",
+   "cites": [
+    48
+   ]
+  },
+  {
+   "section": "summary",
+   "text": "Priya summarised that oversized reindex batches overloaded the shard nodes and degraded search for about 28 minutes.",
+   "cites": [
+    53
+   ]
+  }
+ ]
+}

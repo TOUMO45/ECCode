@@ -1,0 +1,463 @@
+$ node --disable-warning=ExperimentalWarning --test 'test/unit/auth/**/*.test.js' test/api/auth.test.js test/api/csrf.test.js test/api/static.test.js test/api/logs.test.js test/api/limits.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: health is public and matches the contract
+ok 1 - health is public and matches the contract
+  ---
+  duration_ms: 80.025881
+  type: 'test'
+  ...
+# Subtest: GET /api/csrf issues a token and cookie
+ok 2 - GET /api/csrf issues a token and cookie
+  ---
+  duration_ms: 7.091244
+  type: 'test'
+  ...
+# Subtest: login success: contract shape, HttpOnly SameSite=Strict cookie, /api/me works
+ok 3 - login success: contract shape, HttpOnly SameSite=Strict cookie, /api/me works
+  ---
+  duration_ms: 60.386414
+  type: 'test'
+  ...
+# Subtest: username lookup is case-insensitive; password never appears in responses
+ok 4 - username lookup is case-insensitive; password never appears in responses
+  ---
+  duration_ms: 87.165348
+  type: 'test'
+  ...
+# Subtest: Secure flag is set when GW_COOKIE_SECURE=1
+ok 5 - Secure flag is set when GW_COOKIE_SECURE=1
+  ---
+  duration_ms: 73.298707
+  type: 'test'
+  ...
+# Subtest: unknown user, wrong password and disabled user give identical 401 bodies
+ok 6 - unknown user, wrong password and disabled user give identical 401 bodies
+  ---
+  duration_ms: 151.790377
+  type: 'test'
+  ...
+# Subtest: login validation: 400 with fields, never 500
+ok 7 - login validation: 400 with fields, never 500
+  ---
+  duration_ms: 26.741272
+  type: 'test'
+  ...
+# Subtest: limiter: 6th attempt is 429 with Retry-After even with the right password; then clears after the window
+ok 8 - limiter: 6th attempt is 429 with Retry-After even with the right password; then clears after the window
+  ---
+  duration_ms: 342.255031
+  type: 'test'
+  ...
+# Subtest: limiter map stays bounded across 10,001 distinct usernames
+ok 9 - limiter map stays bounded across 10,001 distinct usernames
+  ---
+  duration_ms: 62.988221
+  type: 'test'
+  ...
+# Subtest: session rotation: new id each login, old id rejected, preset cookie ignored (fixation)
+ok 10 - session rotation: new id each login, old id rejected, preset cookie ignored (fixation)
+  ---
+  duration_ms: 241.189643
+  type: 'test'
+  ...
+# Subtest: only the hash of the session id is stored
+ok 11 - only the hash of the session id is stored
+  ---
+  duration_ms: 48.241546
+  type: 'test'
+  ...
+# Subtest: idle expiry (30 min) and sliding refresh, absolute expiry (8 h)
+ok 12 - idle expiry (30 min) and sliding refresh, absolute expiry (8 h)
+  ---
+  duration_ms: 125.169235
+  type: 'test'
+  ...
+# Subtest: logout invalidates the session and clears cookies; logging out twice is 401
+ok 13 - logout invalidates the session and clears cookies; logging out twice is 401
+  ---
+  duration_ms: 49.204128
+  type: 'test'
+  ...
+# Subtest: unauthenticated access to protected endpoints is 401
+ok 14 - unauthenticated access to protected endpoints is 401
+  ---
+  duration_ms: 5.816708
+  type: 'test'
+  ...
+# Subtest: users: lead creates users in own team only; roles enforced; duplicate is 409
+ok 15 - users: lead creates users in own team only; roles enforced; duplicate is 409
+  ---
+  duration_ms: 263.19347
+  type: 'test'
+  ...
+# Subtest: audit: lead-only, team-scoped, no secrets; sensitive actions recorded
+ok 16 - audit: lead-only, team-scoped, no secrets; sensitive actions recorded
+  ---
+  duration_ms: 334.246021
+  type: 'test'
+  ...
+# Subtest: audit rows are append-only
+ok 17 - audit rows are append-only
+  ---
+  duration_ms: 0.621391
+  type: 'test'
+  ...
+# Subtest: sessions survive an app restart on the same database (and limiter resets)
+ok 18 - sessions survive an app restart on the same database (and limiter resets)
+  ---
+  duration_ms: 50.525146
+  type: 'test'
+  ...
+# Subtest: state-changing request without a token is 403 CSRF_FAILED
+ok 19 - state-changing request without a token is 403 CSRF_FAILED
+  ---
+  duration_ms: 168.657359
+  type: 'test'
+  ...
+# Subtest: header must equal cookie; cookie alone or header alone fails
+ok 20 - header must equal cookie; cookie alone or header alone fails
+  ---
+  duration_ms: 96.907079
+  type: 'test'
+  ...
+# Subtest: a token from another session (or a pre-login token) does not work on an authenticated route
+ok 21 - a token from another session (or a pre-login token) does not work on an authenticated route
+  ---
+  duration_ms: 136.405717
+  type: 'test'
+  ...
+# Subtest: Origin mismatch is rejected even with a valid token; matching or absent Origin passes
+ok 22 - Origin mismatch is rejected even with a valid token; matching or absent Origin passes
+  ---
+  duration_ms: 161.338911
+  type: 'test'
+  ...
+# Subtest: login requires the pre-login token
+ok 23 - login requires the pre-login token
+  ---
+  duration_ms: 63.503084
+  type: 'test'
+  ...
+# Subtest: logout without a token is rejected and the session stays valid
+ok 24 - logout without a token is rejected and the session stays valid
+  ---
+  duration_ms: 52.122113
+  type: 'test'
+  ...
+# Subtest: GET and HEAD are not subject to CSRF checks
+ok 25 - GET and HEAD are not subject to CSRF checks
+  ---
+  duration_ms: 54.684732
+  type: 'test'
+  ...
+# Subtest: unauthenticated mutation on a session route is 401, not a CSRF leak
+ok 26 - unauthenticated mutation on a session route is 401, not a CSRF leak
+  ---
+  duration_ms: 3.981263
+  type: 'test'
+  ...
+# Subtest: 413: Content-Length above 1 MiB is refused with the envelope
+ok 27 - 413: Content-Length above 1 MiB is refused with the envelope
+  ---
+  duration_ms: 175.800988
+  type: 'test'
+  ...
+# Subtest: 413: declared large Content-Length is rejected without reading the body
+ok 28 - 413: declared large Content-Length is rejected without reading the body
+  ---
+  duration_ms: 5.852378
+  type: 'test'
+  ...
+# Subtest: 413: chunked body streaming past 1 MiB is cut off
+ok 29 - 413: chunked body streaming past 1 MiB is cut off
+  ---
+  duration_ms: 5.917233
+  type: 'test'
+  ...
+# Subtest: 413 via fetch with a large JSON body: small-enough overshoot returns the envelope
+ok 30 - 413 via fetch with a large JSON body: small-enough overshoot returns the envelope
+  ---
+  duration_ms: 16.941394
+  type: 'test'
+  ...
+# Subtest: body exactly at the limit is read (and then fails validation, not 413)
+ok 31 - body exactly at the limit is read (and then fails validation, not 413)
+  ---
+  duration_ms: 11.42816
+  type: 'test'
+  ...
+# Subtest: 415: non-JSON content types are refused with the envelope
+ok 32 - 415: non-JSON content types are refused with the envelope
+  ---
+  duration_ms: 27.813117
+  type: 'test'
+  ...
+# Subtest: 400 INVALID_JSON for malformed or non-UTF-8 bodies, 400 for wrong top-level type
+ok 33 - 400 INVALID_JSON for malformed or non-UTF-8 bodies, 400 for wrong top-level type
+  ---
+  duration_ms: 20.544764
+  type: 'test'
+  ...
+# Subtest: 404 and 405 are shaped; 405 carries Allow and details.allow
+ok 34 - 404 and 405 are shaped; 405 carries Allow and details.allow
+  ---
+  duration_ms: 5.731532
+  type: 'test'
+  ...
+# Subtest: inbound X-Request-Id is reused only when well formed
+ok 35 - inbound X-Request-Id is reused only when well formed
+  ---
+  duration_ms: 6.136277
+  type: 'test'
+  ...
+# Subtest: query strings are whitelisted: unknown parameters are 400 on routes without query schema
+ok 36 - query strings are whitelisted: unknown parameters are 400 on routes without query schema
+  ---
+  duration_ms: 2.282245
+  type: 'test'
+  ...
+# Subtest: a body sent to a no-body POST route is rejected as unknown fields
+ok 37 - a body sent to a no-body POST route is rejected as unknown fields
+  ---
+  duration_ms: 8.075272
+  type: 'test'
+  ...
+# Subtest: path parameters must be integers: non-numeric or huge ids do not match
+ok 38 - path parameters must be integers: non-numeric or huge ids do not match
+  ---
+  duration_ms: 10.690855
+  type: 'test'
+  ...
+# Subtest: unauthenticated 4xx ordering: no body is parsed before auth
+ok 39 - unauthenticated 4xx ordering: no body is parsed before auth
+  ---
+  duration_ms: 1.869771
+  type: 'test'
+  ...
+# Subtest: server survives slow/broken clients and malformed request lines
+ok 40 - server survives slow/broken clients and malformed request lines
+  ---
+  duration_ms: 3.838195
+  type: 'test'
+  ...
+# Subtest: one JSON line per request with the documented fields; no secrets, bodies or cookies
+ok 41 - one JSON line per request with the documented fields; no secrets, bodies or cookies
+  ---
+  duration_ms: 310.324163
+  type: 'test'
+  ...
+# Subtest: internal faults give the generic envelope; the marker reaches neither response nor log
+ok 42 - internal faults give the generic envelope; the marker reaches neither response nor log
+  ---
+  duration_ms: 74.564662
+  type: 'test'
+  ...
+# Subtest: GW_LOG=off writes nothing
+ok 43 - GW_LOG=off writes nothing
+  ---
+  duration_ms: 5.384947
+  type: 'test'
+  ...
+# Subtest: index.html is served at / with security headers and a strict CSP
+ok 44 - index.html is served at / with security headers and a strict CSP
+  ---
+  duration_ms: 96.95382
+  type: 'test'
+  ...
+# Subtest: security headers are also on API responses, 404s and errors
+ok 45 - security headers are also on API responses, 404s and errors
+  ---
+  duration_ms: 9.862697
+  type: 'test'
+  ...
+# Subtest: js assets get the right content type; HEAD has no body
+ok 46 - js assets get the right content type; HEAD has no body
+  ---
+  duration_ms: 21.100954
+  type: 'test'
+  ...
+# Subtest: traversal attempts return the 404 envelope and never file contents
+ok 47 - traversal attempts return the 404 envelope and never file contents
+  ---
+  duration_ms: 35.323002
+  type: 'test'
+  ...
+# Subtest: resolveStatic unit: stays under root
+ok 48 - resolveStatic unit: stays under root
+  ---
+  duration_ms: 0.291441
+  type: 'test'
+  ...
+# Subtest: non-GET on static paths is 405 with Allow
+ok 49 - non-GET on static paths is 405 with Allow
+  ---
+  duration_ms: 8.733245
+  type: 'test'
+  ...
+# Subtest: missing public dir yields 404 envelope, not a crash
+ok 50 - missing public dir yields 404 envelope, not a crash
+  ---
+  duration_ms: 10.24058
+  type: 'test'
+  ...
+# Subtest: the real public/index.html (when present) has no inline script
+ok 51 - the real public/index.html (when present) has no inline script # SKIP public/index.html not built yet (frontend task)
+  ---
+  duration_ms: 0.575638
+  type: 'test'
+  ...
+# Subtest: csrf pre-login token verifies, tampering fails
+ok 52 - csrf pre-login token verifies, tampering fails
+  ---
+  duration_ms: 1.45282
+  type: 'test'
+  ...
+# Subtest: csrf key persists in meta so tokens survive restart
+ok 53 - csrf key persists in meta so tokens survive restart
+  ---
+  duration_ms: 2.79926
+  type: 'test'
+  ...
+# Subtest: safeEqual and originOk
+ok 54 - safeEqual and originOk
+  ---
+  duration_ms: 0.327151
+  type: 'test'
+  ...
+# Subtest: limiter: 5 failures then limited with Retry-After; window slides; success clears
+ok 55 - limiter: 5 failures then limited with Retry-After; window slides; success clears
+  ---
+  duration_ms: 0.417699
+  type: 'test'
+  ...
+# Subtest: limiter: map is capped and evicts oldest first; expired keys are swept
+ok 56 - limiter: map is capped and evicts oldest first; expired keys are swept
+  ---
+  duration_ms: 1.775418
+  type: 'test'
+  ...
+# Subtest: rbac: default deny, matrix per spec 3.9
+ok 57 - rbac: default deny, matrix per spec 3.9
+  ---
+  duration_ms: 0.198064
+  type: 'test'
+  ...
+# Subtest: hash format is scrypt$N$r$p$salt$hash and salts differ
+ok 58 - hash format is scrypt$N$r$p$salt$hash and salts differ
+  ---
+  duration_ms: 109.681518
+  type: 'test'
+  ...
+# Subtest: verify accepts the right password and rejects others
+ok 59 - verify accepts the right password and rejects others
+  ---
+  duration_ms: 188.608824
+  type: 'test'
+  ...
+# Subtest: malformed or hostile stored hashes verify false without throwing
+ok 60 - malformed or hostile stored hashes verify false without throwing
+  ---
+  duration_ms: 383.907116
+  type: 'test'
+  ...
+# Subtest: dummy hash is well formed and never matches
+ok 61 - dummy hash is well formed and never matches
+  ---
+  duration_ms: 39.561345
+  type: 'test'
+  ...
+# Subtest: hashPassword refuses empty input
+ok 62 - hashPassword refuses empty input
+  ---
+  duration_ms: 0.703858
+  type: 'test'
+  ...
+# Subtest: seed creates Platform and Payments with lead/responder/viewer and one sample incident; second run is a no-op
+ok 63 - seed creates Platform and Payments with lead/responder/viewer and one sample incident; second run is a no-op
+  ---
+  duration_ms: 99.041107
+  type: 'test'
+  ...
+# Subtest: set-password validates, updates the hash and revokes sessions
+ok 64 - set-password validates, updates the hash and revokes sessions
+  ---
+  duration_ms: 191.454189
+  type: 'test'
+  ...
+# Subtest: API URL must be https unless loopback
+ok 65 - API URL must be https unless loopback
+  ---
+  duration_ms: 0.627499
+  type: 'test'
+  ...
+# Subtest: routes/index.js auto-registers every route module and rejects modules without a register function
+ok 66 - routes/index.js auto-registers every route module and rejects modules without a register function
+  ---
+  duration_ms: 4.226627
+  type: 'test'
+  ...
+# Subtest: router: every authenticated route must declare an RBAC action (default deny)
+ok 67 - router: every authenticated route must declare an RBAC action (default deny)
+  ---
+  duration_ms: 0.185065
+  type: 'test'
+  ...
+# Subtest: process: src/index.js boots, serves /api/health, persists across restart, exits 0 on SIGTERM
+ok 68 - process: src/index.js boots, serves /api/health, persists across restart, exits 0 on SIGTERM
+  ---
+  duration_ms: 366.314511
+  type: 'test'
+  ...
+# Subtest: process: refuses to start with a non-https remote API URL
+ok 69 - process: refuses to start with a non-https remote API URL
+  ---
+  duration_ms: 79.71503
+  type: 'test'
+  ...
+# Subtest: create stores only a hash; lookup returns the user
+ok 70 - create stores only a hash; lookup returns the user
+  ---
+  duration_ms: 4.46976
+  type: 'test'
+  ...
+# Subtest: every create yields a distinct id
+ok 71 - every create yields a distinct id
+  ---
+  duration_ms: 1.53979
+  type: 'test'
+  ...
+# Subtest: idle expiry (30 min) with sliding refresh
+ok 72 - idle expiry (30 min) with sliding refresh
+  ---
+  duration_ms: 1.80182
+  type: 'test'
+  ...
+# Subtest: absolute expiry (8 h) even with constant activity
+ok 73 - absolute expiry (8 h) even with constant activity
+  ---
+  duration_ms: 3.256395
+  type: 'test'
+  ...
+# Subtest: disabled user session is rejected; purge removes expired rows
+ok 74 - disabled user session is rejected; purge removes expired rows
+  ---
+  duration_ms: 1.516364
+  type: 'test'
+  ...
+# Subtest: last_seen refreshed at most once a minute
+ok 75 - last_seen refreshed at most once a minute
+  ---
+  duration_ms: 2.058327
+  type: 'test'
+  ...
+1..75
+# tests 75
+# suites 0
+# pass 74
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 2185.565346

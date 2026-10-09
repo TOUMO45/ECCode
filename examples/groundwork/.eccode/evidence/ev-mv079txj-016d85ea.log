@@ -1,0 +1,193 @@
+$ node --test test/unit/verify/verifier.test.js test/unit/verify/normalize.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: NFKC, case fold, whitespace
+ok 1 - NFKC, case fold, whitespace
+  ---
+  duration_ms: 2.996086
+  type: 'test'
+  ...
+# Subtest: times normalised, zone and seconds dropped
+ok 2 - times normalised, zone and seconds dropped
+  ---
+  duration_ms: 0.291188
+  type: 'test'
+  ...
+# Subtest: number words two..twelve; one only before a unit
+ok 3 - number words two..twelve; one only before a unit
+  ---
+  duration_ms: 1.009575
+  type: 'test'
+  ...
+# Subtest: thousands separators removed, decimals kept
+ok 4 - thousands separators removed, decimals kept
+  ---
+  duration_ms: 0.325765
+  type: 'test'
+  ...
+# Subtest: units split from digits
+ok 5 - units split from digits
+  ---
+  duration_ms: 0.14822
+  type: 'test'
+  ...
+# Subtest: idempotent
+ok 6 - idempotent
+  ---
+  duration_ms: 0.186648
+  type: 'test'
+  ...
+# Subtest: grounded statements verify
+ok 7 - grounded statements verify
+  ---
+  duration_ms: 5.807349
+  type: 'test'
+  ...
+# Subtest: NO_CITE stops further checks
+ok 8 - NO_CITE stops further checks
+  ---
+  duration_ms: 0.190701
+  type: 'test'
+  ...
+# Subtest: MISSING_LINE per bad number; stops if none exist, else continues
+ok 9 - MISSING_LINE per bad number; stops if none exist, else continues
+  ---
+  duration_ms: 0.562432
+  type: 'test'
+  ...
+# Subtest: TIME_NOT_IN_SOURCE, with time field and ISO ts as sources (DQ-1)
+ok 10 - TIME_NOT_IN_SOURCE, with time field and ISO ts as sources (DQ-1)
+  ---
+  duration_ms: 0.399082
+  type: 'test'
+  ...
+# Subtest: NUMBER_NOT_IN_SOURCE and units
+ok 11 - NUMBER_NOT_IN_SOURCE and units
+  ---
+  duration_ms: 0.699203
+  type: 'test'
+  ...
+# Subtest: NAME_NOT_IN_SOURCE rules (i)-(iv)
+ok 12 - NAME_NOT_IN_SOURCE rules (i)-(iv)
+  ---
+  duration_ms: 0.994163
+  type: 'test'
+  ...
+# Subtest: extraNames and author words are known names
+ok 13 - extraNames and author words are known names
+  ---
+  duration_ms: 0.742281
+  type: 'test'
+  ...
+# Subtest: WEAK_SUPPORT boundary: exactly 50% passes, below flags
+ok 14 - WEAK_SUPPORT boundary: exactly 50% passes, below flags
+  ---
+  duration_ms: 0.238552
+  type: 'test'
+  ...
+# Subtest: fabricated cause is flagged
+ok 15 - fabricated cause is flagged
+  ---
+  duration_ms: 0.489857
+  type: 'test'
+  ...
+# Subtest: union of cited lines supplies tokens
+ok 16 - union of cited lines supplies tokens
+  ---
+  duration_ms: 1.171419
+  type: 'test'
+  ...
+# Subtest: plural and stem matching
+ok 17 - plural and stem matching
+  ---
+  duration_ms: 0.30999
+  type: 'test'
+  ...
+# Subtest: pure, idempotent, no input mutation
+ok 18 - pure, idempotent, no input mutation
+  ---
+  duration_ms: 0.822941
+  type: 'test'
+  ...
+# Subtest: verifyDraft keeps sections and order
+ok 19 - verifyDraft keeps sections and order
+  ---
+  duration_ms: 0.24042
+  type: 'test'
+  ...
+# Subtest: stoplist is lower-case, unique and free of fact words
+ok 20 - stoplist is lower-case, unique and free of fact words
+  ---
+  duration_ms: 0.623247
+  type: 'test'
+  ...
+# Subtest: fallback prefix words are stoplisted
+ok 21 - fallback prefix words are stoplisted
+  ---
+  duration_ms: 0.207155
+  type: 'test'
+  ...
+# Subtest: corpus: every fabrication flagged with expected code, no false flags
+ok 22 - corpus: every fabrication flagged with expected code, no false flags
+  ---
+  duration_ms: 0.715597
+  type: 'test'
+  ...
+# Subtest: benchmark: 2000-line context + 5000 verifications within budget
+ok 23 - benchmark: 2000-line context + 5000 verifications within budget
+  ---
+  duration_ms: 153.438038
+  type: 'test'
+  ...
+# Subtest: stem matches inflections but keeps distinct words apart
+ok 24 - stem matches inflections but keeps distinct words apart
+  ---
+  duration_ms: 0.251358
+  type: 'test'
+  ...
+# Subtest: sentence-initial -ly/-ing opener is not a name; an invented capitalised noun still is
+ok 25 - sentence-initial -ly/-ing opener is not a name; an invented capitalised noun still is
+  ---
+  duration_ms: 0.276722
+  type: 'test'
+  ...
+# Subtest: magnitude normalisation: 310k = 310 thousand = 0.31 million; a different amount is flagged
+ok 26 - magnitude normalisation: 310k = 310 thousand = 0.31 million; a different amount is flagged
+  ---
+  duration_ms: 0.500131
+  type: 'test'
+  ...
+# Subtest: place adjective derived from a source place is tolerated; an unrelated or invented one is flagged
+ok 27 - place adjective derived from a source place is tolerated; an unrelated or invented one is flagged
+  ---
+  duration_ms: 0.777678
+  type: 'test'
+  ...
+# Subtest: a long free-text author string does not turn stop words into known names
+ok 28 - a long free-text author string does not turn stop words into known names
+  ---
+  duration_ms: 0.293396
+  type: 'test'
+  ...
+# Subtest: reporting verbs are not content; invented content still weakens support
+ok 29 - reporting verbs are not content; invented content still weakens support
+  ---
+  duration_ms: 0.471944
+  type: 'test'
+  ...
+# Subtest: abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not
+ok 30 - abbreviation: statement word extending a source word by 3+ letters is supported; short extension is not
+  ---
+  duration_ms: 0.1628
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 278.26493

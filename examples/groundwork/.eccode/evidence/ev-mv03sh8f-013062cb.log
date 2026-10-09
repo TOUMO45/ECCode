@@ -1,0 +1,43 @@
+$ sh -c 'for f in $(find public -name "*.js"); do node --check $f || exit 1; done; node --disable-warning=ExperimentalWarning --test "test/unit/frontend/**/*.test.js"'
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: every static spec 7.3 data-testid exists in public/
+ok 1 - every static spec 7.3 data-testid exists in public/
+  ---
+  duration_ms: 1.3225
+  type: 'test'
+  ...
+# Subtest: every templated spec 7.3 data-testid exists in public/ js
+ok 2 - every templated spec 7.3 data-testid exists in public/ js
+  ---
+  duration_ms: 0.184937
+  type: 'test'
+  ...
+# Subtest: index.html: no inline script/style/handlers, landmarks, skip link, live regions
+ok 3 - index.html: no inline script/style/handlers, landmarks, skip link, live regions
+  ---
+  duration_ms: 1.000787
+  type: 'test'
+  ...
+# Subtest: client code never uses HTML-string sinks or eval
+ok 4 - client code never uses HTML-string sinks or eval
+  ---
+  duration_ms: 0.473814
+  type: 'test'
+  ...
+# Subtest: mock API serves the UI entry and speaks the login contract
+ok 5 - mock API serves the UI entry and speaks the login contract
+  ---
+  duration_ms: 52.901245
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 237.836893

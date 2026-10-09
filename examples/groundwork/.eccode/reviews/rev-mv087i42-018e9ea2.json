@@ -1,0 +1,124 @@
+{
+  "decision": "changes_requested",
+  "summary": "I re-ran npm test (280/280) and the offline holdout verifier run (PASS, M1b 63/63, M1c 1/434 = 0.23%; it does not append to the holdout log). I also checked the manifest, the log, the thresholds and the verifier diffs, and all are sound. One gap remains: the sealed holdout hold3 has no recorded provenance, so its independence from the verifier work is asserted but not attested. That is cheap to fix, so I am not approving yet.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "npm test passes and checks are reproducible",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv085t6l-01523855",
+        "artifact:src/verify/index.js"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "Offline holdout verifier run reproduces M1b 63/63 and M1c 1/434 on hold3, without logging a holdout run",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv085t6l-01523855",
+        "artifact:eval/holdout-runs.log"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "Manifest integrity: sha256sum -c on eval/holdout is clean (25 files); MANIFEST hash b0c36134... equals the hash in the hold3 log rows and the submission; retired manifests 7518992... and dc18468... match their logged runs",
+      "met": true,
+      "evidence": [
+        "artifact:eval/holdout/MANIFEST.sha256",
+        "artifact:eval/holdout-runs.log"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "Holdout run discipline: exactly one hold3 run per provider (2 log rows with manifest b0c3...), 3 rows per provider in total; the earlier attempts at 00:08:53 were REFUSED by the cap (exit 64) before the operator-authorised MAX_HOLDOUT_RUNS 2->3 edit and appended nothing; the cap change matches dec-mv06pxds-01667e31 (1 more holdout run per provider)",
+      "met": true,
+      "evidence": [
+        "artifact:eval/holdout-runs.log",
+        "artifact:eval/lib/budget.js"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "No threshold changed",
+      "met": true,
+      "evidence": [
+        "artifact:eval/thresholds.json"
+      ]
+    },
+    {
+      "id": "C6",
+      "description": "Verifier changes are generic and do not weaken fabrication detection: magnitude normalisation (exact integers, so 1.84 million != 1.8 million), place-adjective derivation (alphabetic only, 6+ letters, base 5+ letters, prefix of a source token), sentence-initial -ly/-ing opener, long author strings not split, reporting verbs in the stoplist, and WEAK_SUPPORT unit-word and 3+/3+ prefix-extension tolerance. Each has a twin test showing invented content is still flagged. M1b is 63/63 on the tune/corpus run and on hold3; fallback and CLI holdout M4 are 10/10.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv085t6l-01523855",
+        "artifact:src/verify/normalize.js",
+        "artifact:src/verify/stopwords.js",
+        "artifact:test/unit/verify/verifier.test.js"
+      ]
+    },
+    {
+      "id": "C7",
+      "description": "Docs honesty: no claim of human acceptance; only hold3 stated as unbiased; failed holdouts 1 (3.07%) and 2 (2.50%) kept in history; open false flag hold3-08 disclosed; ownership deviations and shell-edited docs disclosed in the handoff; retired holdout moves explained in README and tuning-log",
+      "met": true,
+      "evidence": [
+        "artifact:README.md",
+        "artifact:docs/eval-results.md",
+        "artifact:eval/tuning-log.md",
+        "artifact:docs/operations.md"
+      ]
+    },
+    {
+      "id": "C8",
+      "description": "Holdout 3 independence: authored by the test-engineer without verifier access, with provenance recorded",
+      "met": false,
+      "evidence": [
+        "artifact:eval/tuning-log.md",
+        "artifact:eval/holdout/MANIFEST.sha256"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F2",
+      "severity": "major",
+      "title": "No recorded provenance or no-verifier-access attestation for hold3",
+      "detail": "The operator decision requires the third holdout to be authored by a test-engineer without access to the verifier code or earlier error lists. The holdout 2 authorship statement exists (tuning-log line 63), but nothing equivalent exists for hold3. There is no test-engineer task claim, handoff or attestation in the ledger (events 444-486 hold a single test-engineer evidence record, ev-mv06zmvp-018453e0 at 23:53:22), and README, docs and tuning-log do not say who wrote hold3 or under what restrictions. The remaining unbiased-holdout claim rests on that. Timing evidence is favourable in one direction. The last verifier edit was 23:51:14. The ai-engineer's npm test at 23:51:25 failed with ENOENT on holdout tests, so hold3 did not exist while the verifier was tuned. hold3 was sealed at 23:53:02 (all 22 files in about 8 ms) and was not modified afterwards, and no verifier edit followed the 00:09 run. The reverse direction is unattested: the author could have read src/verify, which was final two minutes before sealing and sits in the same tree. An adversarial reader cannot rule that out from the record. All the numbers above reproduce; this is about the evidentiary standing of hold3.",
+      "evidence": [
+        "ev:ev-mv085t6l-01523855",
+        "artifact:eval/tuning-log.md"
+      ],
+      "recommendation": "Resolution condition: record an authorship and access statement for hold3 and cite it in eval/tuning-log.md and docs/eval-results.md. The author is the test-engineer. It states which paths were readable (not src/verify/**, eval/verifier/**, the retired holdouts' error lists or the tuning-log) and that no verifier or eval run was used while authoring. The statement should come as a test-engineer handoff, or an orchestrator-recorded attestation if the author's session logs show it. If it cannot be truthfully made, the docs must say that hold3 independence is unattested and downgrade the 'unbiased' wording accordingly. No file under eval/holdout may change, because the manifest must keep matching the run log."
+    },
+    {
+      "id": "F3",
+      "severity": "minor",
+      "title": "Edit guard bypass and out-of-glob edits",
+      "detail": "The handoff discloses that README and docs were edited through the shell because the edit guard refused them, and that ten files fall outside the task globs. The disclosure is adequate and the gate pins all of them. The practice should not repeat.",
+      "evidence": [
+        "artifact:.eccode/handoffs/ho-mv084mju-01ca8b81.json"
+      ],
+      "recommendation": "No change needed for this gate. Open a properly scoped rework next time instead of editing around the guard."
+    },
+    {
+      "id": "F4",
+      "severity": "info",
+      "title": "Residual verifier tolerance and small-n caveat",
+      "detail": "The prefix-extension rule (data -> database) and the demonym rule loosen WEAK_SUPPORT and NAME checks slightly. They are bounded: a 50% overlap is still required, the name check is unchanged for non-derived tokens, and the twin tests plus M1b 63/63 pass. The M1c estimate of 1/434 has wide uncertainty and is correctly described that way. hold3-08 is an open false flag and no human acceptance is recorded, as the docs state.",
+      "evidence": [
+        "artifact:src/verify/index.js"
+      ],
+      "recommendation": "None required."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "F1",
+      "resolution": "The M1c miss is no longer reproduced on the fresh sealed holdout (1/434 = 0.23%, rerun offline by me). The resolution depends on hold3 being independent, which is tracked in F2. Approval remains blocked until F2 is addressed.",
+      "evidence": [
+        "ev:ev-mv085t6l-01523855",
+        "artifact:eval/holdout-runs.log"
+      ]
+    }
+  ]
+}

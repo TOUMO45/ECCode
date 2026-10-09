@@ -1,0 +1,50 @@
+{
+  "from": "ai-engineer",
+  "to": "delivery-lead",
+  "task": "ai-providers",
+  "objective": "AI draft schema, prompt builder, provider adapter and CLI/Anthropic/fallback/fake providers with unit tests.",
+  "context": "Built against spec sections 1, 3.10, 4, 11.1 and SCOPE D4/D5. Reused src/lib/schema.js validator, src/config.js (cli/anthropic config), verifier for tests. No memory records matched, none cited. CLI facts from spec section 1 and evidence ev-mv00uow5-01c2fd74 (init event tools [StructuredOutput]). Anthropic API shape follows spec 3.10 (not re-checked against live docs: no key, tested against a local fake only).",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    "SCOPE.md",
+    "src/lib/schema.js",
+    "src/config.js",
+    "src/verify/index.js",
+    "src/api/contract-schemas.js"
+  ],
+  "expectedOutput": "src/ai/** modules, test/support/fake-claude.js, test/unit/ai/** tests.",
+  "acceptanceCriteria": [
+    "Narrow provider interface; DraftJSON strictly validated, extra fields rejected",
+    "CLI provider: exact pinned argv, allowlisted env without API key, empty temp cwd removed; timeout, malformed output, flood, ENOENT handled",
+    "Anthropic provider works against local fake incl. 429/500/slow",
+    "Notes passed as escaped data block; payload cannot break out of delimiters",
+    "Fallback deterministic, schema-valid, labelled isFallback",
+    "fake.js yields deterministic flagged and clean drafts"
+  ],
+  "completedWork": "Implemented schema.js (DRAFT_JSON_SCHEMA, validateDraft with 100-statement cap, parseJsonText), prompt.js (fixed SYSTEM_PROMPT, PROMPT_VERSION p1, random-id data block with <,>,U+2028/9 escaped), provider.js (ProviderError with fixed messages, assertProvider, content-free logCall), cli.js (pinned argv, scrubbed env, detached process group SIGKILL, 1MB cap, semaphore 2 with 5s wait -> PROVIDER_BUSY, one retry only for bad output, 150s deadline, tolerant of num_turns 2/tool_use), anthropic.js (fetch, retries 5xx/429 with backoff, no retry after timeout, key read at call time), fallback.js (deterministic quoting extractor, caps keep total <=100), fake.js (fake: 2 flagged statements via no-cite and missing-line; fake-clean: all verified). 32 unit tests pass, including fallback statements verified by the real verifier. Also ran one real `claude -p` call through the CLI provider as a smoke test (not recorded as evidence): valid draft, injection line was quoted not obeyed, cost USD 0.001. Decisions: Anthropic usage.costUsd is 0 (no price table, unmeasured); 429 maps to PROVIDER_BUSY; fake provider ids are only constructed here, GW_ENABLE_FAKE gating belongs to app wiring.",
+  "filesChanged": [
+    "src/ai/schema.js",
+    "src/ai/prompt.js",
+    "src/ai/provider.js",
+    "src/ai/cli.js",
+    "src/ai/anthropic.js",
+    "src/ai/fallback.js",
+    "src/ai/fake.js",
+    "test/support/fake-claude.js",
+    "test/unit/ai/schema-prompt.test.js",
+    "test/unit/ai/cli.test.js",
+    "test/unit/ai/anthropic.test.js",
+    "test/unit/ai/fallback-fake.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv01gtex-0175a046",
+    "ev:ev-mv01gts1-01c82069"
+  ],
+  "remainingIssues": [
+    "Results here come from a fake claude executable, a local fake HTTP server and the deterministic fallback; they are not evidence of model quality. Only the one-off smoke call used the real model.",
+    "Anthropic path unverifiable live (no API key); default model id claude-haiku-5-5 not checked against the API model list.",
+    "Anthropic costUsd is reported as 0 (no pricing data).",
+    "Live isolation test test/live/cli-isolation.test.js (ALLOWED_TOOLS equality) is not part of this task's files and is not written."
+  ],
+  "nextAction": "backend-engineer wires providers into the draft route (registry, GW_ENABLE_FAKE gating, /api/providers using cli.version()); ai-engineer/qa continue with eval harness and live tests."
+}

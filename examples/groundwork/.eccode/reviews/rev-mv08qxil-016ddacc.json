@@ -1,0 +1,108 @@
+{
+  "decision": "approve",
+  "summary": "Security review of provider/CLI isolation, prompt-injection defenses, secrets handling, docs and live tests. Artifacts match submission hashes. npm test 285/285 pass, live isolation test passes (tools == [StructuredOutput], no MCP/skills/slash commands, no permission denials), env and delimiter probes behave as designed. Remaining items are minor/info. F8 is verified fixed by my own re-run. Release-metric status (M1c) is a quality matter and not human-accepted; I make no acceptance claim.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "CLI provider isolation: no shell, no tools, no settings/MCP/slash commands, scrubbed env without the API key, fresh cwd, stdout cap, timeout and process-group kill",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv08q5m9-011f3774",
+        "ev:ev-mv08qeo9-01be5b7d",
+        "artifact:src/ai/prompt.js"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "Prompt-injection defenses: fixed system prompt, untrusted data in one JSON line between random delimiters with < > U+2028/9 escaped, schema-validated output, verifier downstream",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv08q5m9-011f3774",
+        "ev:ev-mv08pz6n-0195e605",
+        "artifact:src/ai/prompt.js",
+        "artifact:src/verify/index.js"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "Secrets handling: API key never forwarded to the CLI child, not logged, not committed; error messages are fixed strings; config guidance in README and operations doc is accurate",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv08q5m9-011f3774",
+        "ev:ev-mv08pz6n-0195e605",
+        "artifact:docs/operations.md",
+        "artifact:README.md"
+      ]
+    },
+    {
+      "id": "C4",
+      "description": "Cost and abuse limits enforced: per-call USD budget, concurrency semaphore, deadline, retry only on malformed output, eval cap guard working",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv08qlrw-01701501",
+        "ev:ev-mv08pz6n-0195e605",
+        "artifact:eval/lib/budget.js"
+      ]
+    },
+    {
+      "id": "C5",
+      "description": "Live tests are opt-in (GW_LIVE=1), pass an empty-API-key env, and pass when run",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv08qeo9-01be5b7d",
+        "artifact:test/live/support.js",
+        "artifact:test/live/cli-isolation.test.js"
+      ]
+    },
+    {
+      "id": "C6",
+      "description": "Data egress is disclosed to users and operators",
+      "met": true,
+      "evidence": [
+        "artifact:README.md",
+        "artifact:docs/operations.md"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "SEC-1",
+      "severity": "minor",
+      "title": "GW_CLI_ENV_PASS and GW_CLI_MODEL are operator-trusted and unvalidated",
+      "detail": "Probe: GW_CLI_ENV_PASS=GW_SEED_PASSWORD is forwarded to the child; ANTHROPIC_API_KEY is blocked by name only, other credential names (e.g. ANTHROPIC_AUTH_TOKEN) can be passed. buildArgv accepts a model string starting with '--' (e.g. '--dangerously-skip-permissions') as a value of --model; it is a separate argv element so it is consumed as the option value, not a flag, and there is no shell. Both inputs are operator env only, not user input, so impact is low.",
+      "evidence": [
+        "ev:ev-mv08q5m9-011f3774"
+      ],
+      "recommendation": "Optionally reject GW_CLI_ENV_PASS names matching /KEY|TOKEN|SECRET|PASSWORD/ and validate GW_CLI_MODEL against /^[A-Za-z0-9._-]+$/ in src/config.js."
+    },
+    {
+      "id": "SEC-2",
+      "severity": "minor",
+      "title": "README usage figures stale (F11) and CLI inherits HOME/CLAUDE_CONFIG_DIR",
+      "detail": "README says eval/usage.log has 15 entries / USD 1.454; the log differs, and operations.md cites 12 tune runs, while checkBudget on the real log reports 12 runs and USD 1.85 logged. Separately the child receives HOME and CLAUDE_CONFIG_DIR, so it uses the host user's CLI credentials by design; --setting-sources '' limits config loading but the egress to Anthropic is as documented.",
+      "evidence": [
+        "ev:ev-mv08qlrw-01701501"
+      ],
+      "recommendation": "Refresh the README figures from usage.log; state that CLI auth comes from the host user's login."
+    },
+    {
+      "id": "SEC-3",
+      "severity": "info",
+      "title": "Prompt-injection resistance is statistical, and docs-level open items remain",
+      "detail": "Defenses rely on model compliance plus schema validation and verifier flagging; M4 covers 10 injection cases only. Unconfirmed: novel payloads. Also noted by the author: no health/provider metrics, no .env.example, SIGTERM to the npm wrapper does not stop the server. No human acceptance of thresholds or the tune-run overrun is recorded; that decision remains with the user.",
+      "evidence": [
+        "ev:ev-mv08pz6n-0195e605"
+      ],
+      "recommendation": "Keep the human-review step before publish; expand injection corpus in future work."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "F8",
+      "resolution": "checkBudget on the real usage.log now returns fullTuneRuns 12 and ok:false (cap of 8 refuses further runs); budget tests pass 5/5; the overrun is disclosed in docs.",
+      "evidence": [
+        "ev:ev-mv08qlrw-01701501"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "foundation-be",
+  "objective": "Package, config, schema validator, contract schemas, DB layer and migrations (spec sections 3, 6, 12, 13, 15 step 0).",
+  "context": "Built against spec sections 3 (contracts), 6.1 (migrations 001, 002), 11 (scripts), 12 (config, package.json), 13 and SCOPE D2/D3.",
+  "inputs": [
+    "spec.md sections 3, 6, 11, 12, 13, 15",
+    "SCOPE.md D2 D3"
+  ],
+  "expectedOutput": "package.json, src/config.js, src/lib/schema.js, src/api/contract-schemas.js, src/db/**, db unit tests",
+  "acceptanceCriteria": [
+    "package.json has engines node>=22.5, type module, zero dependencies, all section 11 scripts with --disable-warning=ExperimentalWarning",
+    "Migrations 001/002 apply on fresh DB, second run no-op, edited or newer DB aborts",
+    "Audit trigger blocks UPDATE/DELETE; role/state/status constraints and foreign keys enforced",
+    "Contract schemas module is the single source of request/response shapes"
+  ],
+  "completedWork": "Added package.json (scripts per section 11), .gitignore additions, src/config.js (pure loadConfig(env) with validation), src/lib/schema.js (subset validator, rejects unknown keywords at compile time, max 20 errors), src/api/contract-schemas.js (ERRORS table of 25 codes with fixed messages and statuses, shapes, requests, responses, errorDetails, notesSchemaFor; self-checked at import), src/db/connection.js (openDb with pragmas and version check, synchronous tx() that rejects async callbacks and nesting), src/db/migrate.js (checksummed, transactional, contiguous versions), migrations 001_init.sql and 002_audit_append_only.sql. 21 unit tests in test/unit/db cover all acceptance criteria. Decisions: createIncident.description is optional (spec lists it without saying required); migrate takes an optional dir for tests; DraftJSON schema (src/ai/schema.js) left to the AI role.",
+  "filesChanged": [
+    "package.json",
+    ".gitignore",
+    "src/config.js",
+    "src/lib/schema.js",
+    "src/api/contract-schemas.js",
+    "src/db/connection.js",
+    "src/db/migrate.js",
+    "src/db/migrations/001_init.sql",
+    "src/db/migrations/002_audit_append_only.sql",
+    "test/unit/db/migrate.test.js",
+    "test/unit/db/schema.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv0160et-015f6c38"
+  ],
+  "remainingIssues": [
+    ".env.example (spec section 12 / standards) could not be created: it is outside foundation-be file globs and the guard refused it. The orchestrator should assign it (for example to qa-engineer with README) or extend the globs.",
+    "Contract response schemas for reasons use free-form string codes until the verifier task defines the reason-code enum."
+  ],
+  "nextAction": "Run verifier-notes and backend-auth-http, which depend on this task."
+}

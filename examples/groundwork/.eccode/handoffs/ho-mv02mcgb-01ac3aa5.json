@@ -1,0 +1,60 @@
+{
+  "from": "test-engineer",
+  "to": "reviewer",
+  "task": "datasets-holdout",
+  "objective": "Holdout datasets (12 incidents, 10 injection cases) with SHA-256 manifest and a manifest test (D8, spec 8.1/8.5).",
+  "context": "Authored independently of prompt/extractor; natural-paraphrase style (conversational lines, varied chatter, ids hold-NN / hold-inj-NN, canaries CANARY-h*), distinct topics and wording from tune. Schema identical to tune files plus injection.kind. Manifest is sha256sum format, paths relative to eval/holdout, excludes itself.",
+  "inputs": [
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/design/spec.md sections 8.1, 8.5",
+    "SCOPE.md D8",
+    "eval/tune shape",
+    "test/eval/thresholds.test.js"
+  ],
+  "dependencies": [
+    "datasets-tune-verifier"
+  ],
+  "expectedOutput": "eval/holdout/** with MANIFEST.sha256 and test/eval/manifest.test.js passing.",
+  "acceptanceCriteria": [
+    "12 holdout incidents and 10 injection cases",
+    "MANIFEST.sha256 lists every holdout file; test fails on missing, extra or changed",
+    "holdout read-restricted for backend/ai roles (procedural)"
+  ],
+  "completedWork": "22 holdout JSON files plus MANIFEST.sha256 written; manifest.test.js (7 tests: manifest match, sorted/relative, synthetic missing/extra/changed detection, parser rejection, file counts, shape/labels, canary uniqueness and absence from tune) passes 7/7, 0 skipped. Regression of test/eval/thresholds.test.js: 10/10 pass. Measured against the current src/verify (not tuned on): 6 of 231 correct holdout statements are flagged (2.6 percent, above the 2 percent M1c limit): NAME_NOT_IN_SOURCE for European, Canadian, Running, and 'the' (hold-inj-06 'deployed the fix'), WEAK_SUPPORT 0.33 for two short statements. Statements were left as authored and not adjusted to the verifier.",
+  "filesChanged": [
+    "eval/holdout/MANIFEST.sha256",
+    "eval/holdout/incidents/hold-01.json",
+    "eval/holdout/incidents/hold-02.json",
+    "eval/holdout/incidents/hold-03.json",
+    "eval/holdout/incidents/hold-04.json",
+    "eval/holdout/incidents/hold-05.json",
+    "eval/holdout/incidents/hold-06.json",
+    "eval/holdout/incidents/hold-07.json",
+    "eval/holdout/incidents/hold-08.json",
+    "eval/holdout/incidents/hold-09.json",
+    "eval/holdout/incidents/hold-10.json",
+    "eval/holdout/incidents/hold-11.json",
+    "eval/holdout/incidents/hold-12.json",
+    "eval/holdout/injections/hold-inj-01.json",
+    "eval/holdout/injections/hold-inj-02.json",
+    "eval/holdout/injections/hold-inj-03.json",
+    "eval/holdout/injections/hold-inj-04.json",
+    "eval/holdout/injections/hold-inj-05.json",
+    "eval/holdout/injections/hold-inj-06.json",
+    "eval/holdout/injections/hold-inj-07.json",
+    "eval/holdout/injections/hold-inj-08.json",
+    "eval/holdout/injections/hold-inj-09.json",
+    "eval/holdout/injections/hold-inj-10.json",
+    "test/eval/manifest.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv02m26h-018c5dc6",
+    "ev:ev-mv02luhd-01d70db8"
+  ],
+  "remainingIssues": [
+    "Holdout M1c (verifier-only) is 2.6 percent on current src/verify, above the 0.02 threshold; a holdout run will report FAIL for M1c unless verifier changes are made from tune evidence only. Holdout files must not be edited after any run (manifest would change; disclose as invalidated).",
+    "An earlier evidence run ev-mv02lidz and ev-mv02lu47 FAILED before a dataset fix (injection timeline < 6 events, author > 64 chars); superseded by the passing run."
+  ],
+  "nextAction": "reviewer: review the holdout set and manifest; ai-engineer/backend-engineer must not open eval/holdout.",
+  "lessonsConsulted": []
+}

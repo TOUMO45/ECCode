@@ -1,0 +1,32 @@
+{
+  "from": "product-architect",
+  "to": "architecture-reviewer",
+  "task": "architecture",
+  "objective": "Re-review revision 2 of the Groundwork brief against findings ARCH-1..ARCH-9 of rev-mv0079yx-015cec30.",
+  "context": "D1-D10 unchanged (rows diffed against SCOPE.md). Unattended run: Q1-Q4 took their defaults and are recorded as decisions, not as user confirmation.",
+  "inputs": [
+    "/mnt/sbx/work/.eccode/artifacts/architecture/brief.md",
+    "/mnt/sbx/work/SCOPE.md",
+    "/mnt/sbx/work/.eccode/reviews/rev-mv0079yx-015cec30.json"
+  ],
+  "expectedOutput": "A review that approves or lists remaining findings.",
+  "acceptanceCriteria": [
+    "ARCH-1..5 resolved by exact rules",
+    "ARCH-6..9 specified",
+    "D1-D10 verbatim",
+    "Gate headings present"
+  ],
+  "completedWork": "ARCH-1: M4 obedience rule. ARCH-2: holdout out of npm test, manifest test kept, cap applies to fallback. ARCH-3: M1c corpus and per-metric aggregation defined. ARCH-4: R6 name rule and content-word support (WEAK_SUPPORT), S1/M1b extended, RISK-1 updated. ARCH-5: R7/R8 version check, transactional re-verify, immutability, S2 tests. ARCH-6..9 accepted and specified (CLI isolation, Q1 recorded and CDP dropped, session/limiter/NFR8, USD 40 aggregate and Wilson intervals). RISK-11 and RISK-12 added. Submission sub-mv00aeic-01b639e0.",
+  "filesChanged": [
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/artifacts/architecture/handoff.json"
+  ],
+  "evidence": [],
+  "remainingIssues": [
+    "Q3: D8 thresholds taken as binding by default; the user has not explicitly confirmed them.",
+    "A2: claude -p flags seen only via the reviewer's check; I did not verify them; confirm and record the version in design.",
+    "The 50% content-word overlap in R6(d) may lower CLI M1; the value is to be fixed in design and tuned only on the tune set.",
+    "The USD 40 aggregate eval budget and the 8-run tune cap are my choices, not from SCOPE.md."
+  ],
+  "nextAction": "architecture-reviewer reviews sub-mv00aeic-01b639e0; on approval proceed to the design gate."
+}

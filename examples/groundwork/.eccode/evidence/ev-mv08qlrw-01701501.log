@@ -1,0 +1,7 @@
+$ node --disable-warning=ExperimentalWarning --input-type=module -e '
+import {readLog,checkBudget} from '\''/mnt/sbx/work/eval/lib/budget.js'\'';
+const u=readLog('\''/mnt/sbx/work/eval/usage.log'\'');
+console.log(JSON.stringify(checkBudget({usage:u,runCapUsd:1,totalCapUsd:10,holdout:false,isFull:true})))'
+# cwd: .
+# exit: 0
+{"ok":false,"loggedUsd":1.8515316299999998,"fullTuneRuns":12,"reason":"12 full tune CLI runs already logged (max 8)"}

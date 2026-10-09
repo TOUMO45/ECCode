@@ -1,0 +1,246 @@
+{
+ "id": "payments",
+ "title": "Payments gateway 5xx spike",
+ "lines": [
+  {
+   "n": 1,
+   "time": "14:02",
+   "author": "maya",
+   "text": "Alerts firing for payments-gateway, 5xx rate at 12%"
+  },
+  {
+   "n": 2,
+   "time": "14:04",
+   "author": "tomas",
+   "text": "Ack, taking incident commander"
+  },
+  {
+   "n": 3,
+   "time": "14:06",
+   "author": "nikhil",
+   "text": "Deploy 4471 went out at 13:55 and touched the retry logic"
+  },
+  {
+   "n": 4,
+   "time": "14:08",
+   "author": "maya",
+   "text": "Error budget burned 30% in the last 10 minutes"
+  },
+  {
+   "n": 5,
+   "time": "14:09",
+   "author": "lena",
+   "text": "Card processor status page shows no incident"
+  },
+  {
+   "n": 6,
+   "time": "14:11",
+   "author": "nikhil",
+   "text": "Retries are amplifying load on the ledger-db primary"
+  },
+  {
+   "n": 7,
+   "time": "14:13",
+   "author": "tomas",
+   "text": "Decision: roll back deploy 4471"
+  },
+  {
+   "n": 8,
+   "time": "14:15",
+   "author": "nikhil",
+   "text": "Rollback started, expect 5 minutes"
+  },
+  {
+   "n": 9,
+   "time": "14:21",
+   "author": "nikhil",
+   "text": "Rollback finished, 5xx rate falling"
+  },
+  {
+   "n": 10,
+   "time": "14:26",
+   "author": "maya",
+   "text": "5xx rate back under 1%"
+  },
+  {
+   "n": 11,
+   "time": "14:30",
+   "author": "lena",
+   "text": "Support reports about 340 failed checkouts during the window"
+  },
+  {
+   "n": 12,
+   "time": "14:33",
+   "author": "tomas",
+   "text": "Declaring recovery, keeping watch for 30 minutes"
+  },
+  {
+   "n": 13,
+   "time": "14:40",
+   "author": "nikhil",
+   "text": "Root cause: the retry change removed the backoff, so retries fired immediately"
+  },
+  {
+   "n": 14,
+   "time": "14:44",
+   "author": "maya",
+   "text": "Action item: add a load test for retry behaviour, owner nikhil"
+  },
+  {
+   "n": 15,
+   "time": "14:46",
+   "author": "tomas",
+   "text": "Action item: alert on ledger-db connection saturation, owner lena"
+  },
+  {
+   "n": 16,
+   "time": "14:50",
+   "author": "lena",
+   "text": "Customers saw declined cards and a generic error page"
+  },
+  {
+   "n": 17,
+   "time": "14:55",
+   "author": "maya",
+   "text": "Status page updated to resolved"
+  },
+  {
+   "n": 18,
+   "time": "15:00",
+   "author": "tomas",
+   "text": "Closing the incident, postmortem on Friday"
+  },
+  {
+   "n": 19,
+   "time": "15:02",
+   "author": "nikhil",
+   "text": "Rollback ticket PAY-212 filed for the follow-up"
+  },
+  {
+   "n": 20,
+   "time": "15:05",
+   "author": "lena",
+   "text": "Dashboards for ledger-db show connections back to normal"
+  },
+  {
+   "n": 21,
+   "time": "15:08",
+   "author": "maya",
+   "text": "Backoff setting is now covered by a config test"
+  },
+  {
+   "n": 22,
+   "time": "15:10",
+   "author": "nikhil",
+   "text": "We should document the retry defaults in the runbook"
+  },
+  {
+   "n": 23,
+   "time": "15:12",
+   "author": "tomas",
+   "text": "Thanks everyone, good response"
+  },
+  {
+   "n": 24,
+   "time": "15:15",
+   "author": "lena",
+   "text": "Merchant @acme-shop confirmed their orders are going through"
+  },
+  {
+   "n": 25,
+   "time": "15:18",
+   "author": "maya",
+   "text": "Queue depth for refunds peaked at 2,400 messages"
+  },
+  {
+   "n": 26,
+   "time": "15:20",
+   "author": "nikhil",
+   "text": "Refund queue drained by 15:19"
+  },
+  {
+   "n": 27,
+   "time": "15:22",
+   "author": "tomas",
+   "text": "Two engineers stay on call overnight"
+  },
+  {
+   "n": 28,
+   "time": "15:25",
+   "author": "lena",
+   "text": "Latency p99 was 1.5 seconds at the peak"
+  },
+  {
+   "n": 29,
+   "time": "15:28",
+   "author": "maya",
+   "text": "Grafana board PaymentsOverview has the full timeline"
+  },
+  {
+   "n": 30,
+   "time": "15:30",
+   "author": "nikhil",
+   "text": "Shipping the fix behind a feature flag next week"
+  },
+  {
+   "n": 31,
+   "time": "15:33",
+   "author": "tomas",
+   "text": "Review of the alert thresholds is pending"
+  },
+  {
+   "n": 32,
+   "time": "15:36",
+   "author": "lena",
+   "text": "One customer escalated through their account manager"
+  },
+  {
+   "n": 33,
+   "time": "15:40",
+   "author": "maya",
+   "text": "The pager rotation was correct, nobody was missed"
+  },
+  {
+   "n": 34,
+   "time": "15:42",
+   "author": "nikhil",
+   "text": "CI pipeline now blocks changes to retry config without review"
+  },
+  {
+   "n": 35,
+   "time": "15:45",
+   "author": "tomas",
+   "text": "Customers with failed payments will get an email"
+  },
+  {
+   "n": 36,
+   "time": "15:48",
+   "author": "lena",
+   "text": "Finance wants the exact count of affected orders"
+  },
+  {
+   "n": 37,
+   "time": "15:50",
+   "author": "maya",
+   "text": "Count will come from the ledger export"
+  },
+  {
+   "n": 38,
+   "time": "15:52",
+   "author": "nikhil",
+   "text": "Export job scheduled for 16:00"
+  },
+  {
+   "n": 39,
+   "time": "15:55",
+   "author": "tomas",
+   "text": "Handover note written for the evening shift"
+  },
+  {
+   "n": 40,
+   "time": "16:00",
+   "author": "lena",
+   "text": "Export done, 338 orders affected"
+  }
+ ]
+}

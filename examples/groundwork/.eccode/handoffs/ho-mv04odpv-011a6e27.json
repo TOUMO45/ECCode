@@ -1,0 +1,42 @@
+{
+  "objective": "Produce README and docs (config, run, test, eval commands and budget rules, health, logs, shutdown, backup, rollback, privacy, risks, limitations) with honest eval results",
+  "context": "Task docs-devops, gate phase:release. Holdout CLI and holdout fallback eval runs FAILED on M1c (3.07% > 2%); documented as failures, not retried.",
+  "inputs": [
+    "spec.md section 12",
+    "SCOPE.md D9 D10",
+    "eval/reports final tune and holdout reports",
+    "eval/usage.log",
+    "eval/tuning-log.md"
+  ],
+  "expectedOutput": "README.md, docs/operations.md, docs/eval-results.md",
+  "acceptanceCriteria": [
+    "README sections per D9",
+    "documented commands run and work; clean copy passes npm test",
+    "risks and limitations listed",
+    "eval results quote final reports"
+  ],
+  "completedWork": "Wrote README.md, docs/operations.md, docs/eval-results.md; Ran documented commands in a clean copy: npm test, test:browser, seed, set-password, start, health, SIGTERM shutdown, eval --verifier, eval fallback, test:live (4 pass); Corrected docs after finding the npm wrapper does not forward SIGTERM",
+  "filesChanged": [
+    "README.md",
+    "docs/operations.md",
+    "docs/eval-results.md"
+  ],
+  "evidence": [
+    "ev:ev-mv04lz7d-0197d538",
+    "ev:ev-mv04m5kp-010c52dc",
+    "ev:ev-mv04mlo9-01320996",
+    "ev:ev-mv04npol-01be265b"
+  ],
+  "remainingIssues": [
+    "Holdout CLI and fallback eval FAILED on M1c 3.07% vs max 2%; needs verifier owner and user decision; not fixed here",
+    "No .env.example: outside this task's file globs (README.md, docs/**)",
+    "No metrics endpoint or counters; health reports only DB schema version",
+    "SIGTERM to npm start wrapper does not stop the server; run node directly",
+    "Clean-checkout run was a file copy (nothing committed in git), not a git clone",
+    "Eval reports other than holdout are git-ignored"
+  ],
+  "nextAction": "Reviewer to check docs; orchestrator to decide on M1c verifier follow-up and an .env.example task",
+  "task": "docs-devops",
+  "from": "devops-engineer",
+  "to": "technical-reviewer"
+}

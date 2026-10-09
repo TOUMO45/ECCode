@@ -1,0 +1,37 @@
+{
+ "decision": "changes_requested",
+ "summary": "The release phase is honestly reported and the reproducible checks pass (npm test 270 pass/0 fail, test:browser 28/28, eval --verifier on tune 1.63%). But the holdout M1c miss (13/423 = 3.07% vs max 2%) is a hard threshold failure on both providers. The tune result did not generalize, the holdout is now spent, and the thresholds can only change with a recorded user decision. I cannot approve with a documented limitation because no such decision exists. The stale todo in fallback-tune.test.js also leaves a passing fix unasserted. I verified the claims against the logs, and they hold, with one disclosure gap (F3).",
+ "criteria": [
+  {"id": "C1", "description": "Reproducible checks pass (unit, browser, verifier eval on tune)", "met": true,
+   "evidence": ["ev:ev-mv04pfzm-012db269", "ev:ev-mv04pw0s-015e53c1", "ev:ev-mv04pw9t-015c69d5"]},
+  {"id": "C2", "description": "Submission claims match eval/holdout-runs.log, tuning-log.md, docs/eval-results.md, and thresholds were not lowered", "met": true,
+   "evidence": ["artifact:eval/holdout-runs.log", "artifact:eval/tuning-log.md", "artifact:docs/eval-results.md", "artifact:eval/thresholds.json"]},
+  {"id": "C3", "description": "Quality thresholds met on holdout (M1c max 2%)", "met": false,
+   "evidence": ["artifact:eval/reports/cli-all-holdout-2026-10-08T22-38-25-160Z.txt", "artifact:eval/reports/fallback-all-holdout-2026-10-08T22-38-22-459Z.txt"]},
+  {"id": "C4", "description": "Tests assert the thresholds (no stale todo masking a fixed or failing check)", "met": false,
+   "evidence": ["artifact:test/eval/fallback-tune.test.js", "artifact:test/eval/m1b-m1c.test.js", "ev:ev-mv04pfzm-012db269"]}
+ ],
+ "findings": [
+  {"id": "F1", "severity": "blocking", "title": "Holdout M1c 3.07% exceeds the 2% maximum; no recorded user decision",
+   "detail": "Both holdout runs fail M1c at 13/423. M1c is a fixed-corpus verifier score, so it is identical across providers. Tune was 7/429 = 1.63%, and the 7 tune flags are all in the c-*-nat set. The remaining 6 flags are hold-* cases (the report prints only 10 of the 13). The same 3.07% appeared in the verifier-only holdout report at 21:56, before the prompt and fallback tuning, so tuning after that point could not have changed it. Direction is safe (honest statements are flagged for edit, and M1b is 63/63), but M1b covers only seeded fabrication kinds. The holdout is now exposed, so a verifier fix cannot be validated against it. Thresholds must not be lowered, and the plan puts changes behind a user decision.",
+   "evidence": ["artifact:eval/reports/none-verifier-holdout-2026-10-08T21-56-16-846Z.txt", "artifact:eval/reports/cli-all-holdout-2026-10-08T22-38-25-160Z.txt", "artifact:eval/thresholds.json"],
+   "recommendation": "Resolve by either (a) a recorded user decision accepting the M1c miss as a documented release limitation, or a threshold change recorded with a matching edit in test/eval/thresholds.test.js, or (b) a verifier change made holdout-blind (new tune cases written from the 7 tune false flags and generic rules only; M1b stays 100%), validated on a newly authored, manifest-hashed holdout, with the old holdout marked spent. The verifier owner should triage the 13 cases first. The orchestrator may dispatch learning-debugger for the root cause of NAME_NOT_IN_SOURCE and WEAK_SUPPORT on honest paraphrase."},
+  {"id": "F2", "severity": "major", "title": "Stale todo hides a now-passing fallback M2 assertion; M1c todo masks a real failure",
+   "detail": "test/eval/fallback-tune.test.js line 75 still has { todo } on the M2 test, although the fix landed (tune M2 100%). npm test therefore reports it as TODO, not a hard assertion. The 'floor guard' test at 0.47 is also obsolete. test/eval/m1b-m1c.test.js line 53 keeps the holdout M1c as a todo that fails ('not ok 2 ... # TODO'). npm test reports 0 fail only because of this todo, so a green suite hides the threshold miss.",
+   "evidence": ["ev:ev-mv04pfzm-012db269", "artifact:test/eval/fallback-tune.test.js", "artifact:test/eval/m1b-m1c.test.js"],
+   "recommendation": "Remove the todo option on the fallback M2 test and the obsolete 0.47 floor guard, and show the test passing. Keep the M1c todo only if F1 is resolved by option (a), with the decision reference in the todo text. If F1 is resolved by option (b), remove it and the assertion must pass."},
+  {"id": "F3", "severity": "minor", "title": "Submission wording understates holdout exposure",
+   "detail": "Notes say holdout was run once and the verifier was not changed after seeing holdout results. The verifier-only holdout run at 21:56 is not in holdout-runs.log (verifier runs bypass the cap) and happened before the prompt p2 and fallback changes. Prompt and fallback edits were made after the holdout verifier result was visible. The tuning log says no holdout file was opened, but the aggregate holdout M1c result was known. Fallback tune M2 100% reflects the tune dataset shape (the first line of each minute), which the tuning log admits. Holdout fallback M2 was 100%, so this concern is mitigated for now.",
+   "evidence": ["artifact:eval/holdout-runs.log", "artifact:eval/reports/none-verifier-holdout-2026-10-08T21-56-16-846Z.txt", "artifact:eval/tuning-log.md"],
+   "recommendation": "Add one sentence to docs/eval-results.md and the tuning log disclosing the earlier verifier-only holdout run, and have verifier holdout runs counted in holdout-runs.log."},
+  {"id": "F4", "severity": "minor", "title": "CLI holdout M1 passes with only 0.5 points of margin (min 85.5% vs 85%)",
+   "detail": "Rep 1 was 85.5%. The 3-rep mean of 86.3% leaves little room for model drift. This is not a failure, but any later prompt change makes it a regression risk.",
+   "evidence": ["artifact:eval/reports/cli-all-holdout-2026-10-08T22-38-25-160Z.txt"],
+   "recommendation": "State the narrow margin in the release notes. Re-run the tune set after any prompt or verifier change."},
+  {"id": "F5", "severity": "minor", "title": "Operational gaps listed in the docs-devops handoff",
+   "detail": "No .env.example, no metrics counters (health reports only the schema version), SIGTERM to the npm wrapper does not stop the server, and the clean-checkout run was a file copy because nothing is committed. They are disclosed and documented.",
+   "evidence": ["artifact:docs/operations.md", "artifact:README.md"],
+   "recommendation": "List them in the README gap list for the user's release decision. Commit the tree and repeat the clean-clone run before tagging."}
+ ],
+ "resolvedFindings": []
+}

@@ -1,0 +1,1549 @@
+[
+ {
+  "id": "c-payments-1",
+  "notes": "payments",
+  "text": "At 14:02 maya reported alerts for payments-gateway with a 12% 5xx rate.",
+  "cites": [
+   1
+  ]
+ },
+ {
+  "id": "c-payments-2",
+  "notes": "payments",
+  "text": "At 14:04 tomas acked and took incident commander.",
+  "cites": [
+   2
+  ]
+ },
+ {
+  "id": "c-payments-3",
+  "notes": "payments",
+  "text": "Deploy 4471 went out at 13:55 and touched the retry logic.",
+  "cites": [
+   3
+  ]
+ },
+ {
+  "id": "c-payments-4",
+  "notes": "payments",
+  "text": "Maya noted the error budget burned 30% in the last 10 minutes.",
+  "cites": [
+   4
+  ]
+ },
+ {
+  "id": "c-payments-5",
+  "notes": "payments",
+  "text": "Lena checked that the card processor status page shows no incident.",
+  "cites": [
+   5
+  ]
+ },
+ {
+  "id": "c-payments-6",
+  "notes": "payments",
+  "text": "Nikhil saw retries amplifying load on the ledger-db primary.",
+  "cites": [
+   6
+  ]
+ },
+ {
+  "id": "c-payments-7",
+  "notes": "payments",
+  "text": "At 14:13 tomas decided to roll back deploy 4471.",
+  "cites": [
+   7
+  ]
+ },
+ {
+  "id": "c-payments-8",
+  "notes": "payments",
+  "text": "Nikhil started the rollback and expected 5 minutes.",
+  "cites": [
+   8
+  ]
+ },
+ {
+  "id": "c-payments-9",
+  "notes": "payments",
+  "text": "At 14:21 the rollback finished and the 5xx rate was falling.",
+  "cites": [
+   9
+  ]
+ },
+ {
+  "id": "c-payments-10",
+  "notes": "payments",
+  "text": "At 14:26 maya confirmed the 5xx rate was back under 1%.",
+  "cites": [
+   10
+  ]
+ },
+ {
+  "id": "c-payments-11",
+  "notes": "payments",
+  "text": "Lena relayed that support reported about 340 failed checkouts during the window.",
+  "cites": [
+   11
+  ]
+ },
+ {
+  "id": "c-payments-12",
+  "notes": "payments",
+  "text": "Tomas declared recovery and kept watch for 30 minutes.",
+  "cites": [
+   12
+  ]
+ },
+ {
+  "id": "c-payments-13",
+  "notes": "payments",
+  "text": "Nikhil identified the root cause: the retry change removed the backoff, so retries fired immediately.",
+  "cites": [
+   13
+  ]
+ },
+ {
+  "id": "c-payments-14",
+  "notes": "payments",
+  "text": "Action item: add a load test for retry behaviour, owner nikhil.",
+  "cites": [
+   14
+  ]
+ },
+ {
+  "id": "c-payments-15",
+  "notes": "payments",
+  "text": "Action item: alert on ledger-db connection saturation, owner lena.",
+  "cites": [
+   15
+  ]
+ },
+ {
+  "id": "c-payments-16",
+  "notes": "payments",
+  "text": "Lena said customers saw declined cards and a generic error page.",
+  "cites": [
+   16
+  ]
+ },
+ {
+  "id": "c-payments-17",
+  "notes": "payments",
+  "text": "At 14:55 maya updated the status page to resolved.",
+  "cites": [
+   17
+  ]
+ },
+ {
+  "id": "c-payments-18",
+  "notes": "payments",
+  "text": "Tomas closed the incident and planned the postmortem for Friday.",
+  "cites": [
+   18
+  ]
+ },
+ {
+  "id": "c-payments-19",
+  "notes": "payments",
+  "text": "Nikhil filed ticket PAY-212 for the follow-up.",
+  "cites": [
+   19
+  ]
+ },
+ {
+  "id": "c-payments-20",
+  "notes": "payments",
+  "text": "Lena saw dashboards for ledger-db with connections back to normal.",
+  "cites": [
+   20
+  ]
+ },
+ {
+  "id": "c-payments-21",
+  "notes": "payments",
+  "text": "Maya added that the backoff setting is now covered by a config test.",
+  "cites": [
+   21
+  ]
+ },
+ {
+  "id": "c-payments-22",
+  "notes": "payments",
+  "text": "Nikhil said we should document the retry defaults in the runbook.",
+  "cites": [
+   22
+  ]
+ },
+ {
+  "id": "c-payments-23",
+  "notes": "payments",
+  "text": "At 15:12 tomas thanked everyone for the response.",
+  "cites": [
+   23
+  ]
+ },
+ {
+  "id": "c-payments-24",
+  "notes": "payments",
+  "text": "Lena heard that merchant @acme-shop confirmed their orders are going through.",
+  "cites": [
+   24
+  ]
+ },
+ {
+  "id": "c-payments-25",
+  "notes": "payments",
+  "text": "Maya saw queue depth for refunds peak at 2400 messages.",
+  "cites": [
+   25
+  ]
+ },
+ {
+  "id": "c-payments-26",
+  "notes": "payments",
+  "text": "Nikhil reported the refund queue drained by 15:19.",
+  "cites": [
+   26
+  ]
+ },
+ {
+  "id": "c-payments-27",
+  "notes": "payments",
+  "text": "Two engineers stay on call overnight, said Tomas.",
+  "cites": [
+   27
+  ]
+ },
+ {
+  "id": "c-payments-28",
+  "notes": "payments",
+  "text": "Lena noted latency p99 was 1.5 seconds at the peak.",
+  "cites": [
+   28
+  ]
+ },
+ {
+  "id": "c-payments-29",
+  "notes": "payments",
+  "text": "Maya said the Grafana board PaymentsOverview has the full timeline.",
+  "cites": [
+   29
+  ]
+ },
+ {
+  "id": "c-payments-30",
+  "notes": "payments",
+  "text": "Nikhil plans to ship the fix behind a feature flag next week.",
+  "cites": [
+   30
+  ]
+ },
+ {
+  "id": "c-payments-31",
+  "notes": "payments",
+  "text": "Tomas said the review of the alert thresholds is pending.",
+  "cites": [
+   31
+  ]
+ },
+ {
+  "id": "c-payments-32",
+  "notes": "payments",
+  "text": "Lena said one customer escalated through their account manager.",
+  "cites": [
+   32
+  ]
+ },
+ {
+  "id": "c-payments-33",
+  "notes": "payments",
+  "text": "Maya confirmed the pager rotation was correct and nobody was missed.",
+  "cites": [
+   33
+  ]
+ },
+ {
+  "id": "c-payments-34",
+  "notes": "payments",
+  "text": "Nikhil said the CI pipeline now blocks changes to retry config without review.",
+  "cites": [
+   34
+  ]
+ },
+ {
+  "id": "c-payments-35",
+  "notes": "payments",
+  "text": "Tomas said customers with failed payments will get an email.",
+  "cites": [
+   35
+  ]
+ },
+ {
+  "id": "c-payments-36",
+  "notes": "payments",
+  "text": "Lena said finance wants the exact count of affected orders.",
+  "cites": [
+   36
+  ]
+ },
+ {
+  "id": "c-payments-37",
+  "notes": "payments",
+  "text": "Maya said the count will come from the ledger export.",
+  "cites": [
+   37
+  ]
+ },
+ {
+  "id": "c-payments-38",
+  "notes": "payments",
+  "text": "Nikhil scheduled the export job for 16:00.",
+  "cites": [
+   38
+  ]
+ },
+ {
+  "id": "c-payments-39",
+  "notes": "payments",
+  "text": "Tomas wrote a handover note for the evening shift.",
+  "cites": [
+   39
+  ]
+ },
+ {
+  "id": "c-payments-40",
+  "notes": "payments",
+  "text": "At 16:00 lena reported the export done with 338 orders affected.",
+  "cites": [
+   40
+  ]
+ },
+ {
+  "id": "c-search-1",
+  "notes": "search",
+  "text": "At 09:10 priya reported stale search results with indexer lag of 45 minutes.",
+  "cites": [
+   1
+  ]
+ },
+ {
+  "id": "c-search-2",
+  "notes": "search",
+  "text": "Owen looked at the indexer queue in Kafka.",
+  "cites": [
+   2
+  ]
+ },
+ {
+  "id": "c-search-3",
+  "notes": "search",
+  "text": "Owen found that consumer group search-indexer has 3 of 6 partitions without a consumer.",
+  "cites": [
+   3
+  ]
+ },
+ {
+  "id": "c-search-4",
+  "notes": "search",
+  "text": "Sasha saw two indexer pods in CrashLoopBackOff.",
+  "cites": [
+   4
+  ]
+ },
+ {
+  "id": "c-search-5",
+  "notes": "search",
+  "text": "At 09:20 sasha saw pod logs with OutOfMemoryError while building the shard.",
+  "cites": [
+   5
+  ]
+ },
+ {
+  "id": "c-search-6",
+  "notes": "search",
+  "text": "Priya found the memory limit was lowered to 2 GB in last week config change.",
+  "cites": [
+   6
+  ]
+ },
+ {
+  "id": "c-search-7",
+  "notes": "search",
+  "text": "At 09:27 owen raised the limit to 4 GB and redeployed.",
+  "cites": [
+   7
+  ]
+ },
+ {
+  "id": "c-search-8",
+  "notes": "search",
+  "text": "At 09:33 sasha saw the pods healthy again with lag dropping.",
+  "cites": [
+   8
+  ]
+ },
+ {
+  "id": "c-search-9",
+  "notes": "search",
+  "text": "Priya saw lag at 10 minutes and still falling.",
+  "cites": [
+   9
+  ]
+ },
+ {
+  "id": "c-search-10",
+  "notes": "search",
+  "text": "At 10:05 owen confirmed lag was zero and the indexer caught up.",
+  "cites": [
+   10
+  ]
+ },
+ {
+  "id": "c-search-11",
+  "notes": "search",
+  "text": "Action item: add memory alert for the indexer, owner sasha.",
+  "cites": [
+   11
+  ]
+ },
+ {
+  "id": "c-search-12",
+  "notes": "search",
+  "text": "Action item: review resource limits in the config change process, owner priya.",
+  "cites": [
+   12
+  ]
+ },
+ {
+  "id": "c-search-13",
+  "notes": "search",
+  "text": "Owen said users saw missing products for about 55 minutes.",
+  "cites": [
+   13
+  ]
+ },
+ {
+  "id": "c-search-14",
+  "notes": "search",
+  "text": "Sasha said mobile app search was not affected.",
+  "cites": [
+   14
+  ]
+ },
+ {
+  "id": "c-search-15",
+  "notes": "search",
+  "text": "Priya said the config change was reviewed but nobody checked the memory number.",
+  "cites": [
+   15
+  ]
+ },
+ {
+  "id": "c-search-16",
+  "notes": "search",
+  "text": "Owen started a draft of the timeline.",
+  "cites": [
+   16
+  ]
+ },
+ {
+  "id": "c-search-17",
+  "notes": "search",
+  "text": "Sasha saved a heap dump to the debug bucket.",
+  "cites": [
+   17
+  ]
+ },
+ {
+  "id": "c-search-18",
+  "notes": "search",
+  "text": "Priya said the product team asked for an ETA on reindexing the long tail.",
+  "cites": [
+   18
+  ]
+ },
+ {
+  "id": "c-search-19",
+  "notes": "search",
+  "text": "Owen said reindex of the long tail takes about 2 hours.",
+  "cites": [
+   19
+  ]
+ },
+ {
+  "id": "c-search-20",
+  "notes": "search",
+  "text": "At 10:30 sasha started the reindex job.",
+  "cites": [
+   20
+  ]
+ },
+ {
+  "id": "c-search-21",
+  "notes": "search",
+  "text": "Priya reported reindex progress at 20%.",
+  "cites": [
+   21
+  ]
+ },
+ {
+  "id": "c-search-22",
+  "notes": "search",
+  "text": "Owen reported reindex progress at 45%.",
+  "cites": [
+   22
+  ]
+ },
+ {
+  "id": "c-search-23",
+  "notes": "search",
+  "text": "Sasha reported reindex progress at 80%.",
+  "cites": [
+   23
+  ]
+ },
+ {
+  "id": "c-search-24",
+  "notes": "search",
+  "text": "At 11:40 priya said the reindex finished and spot checks look right.",
+  "cites": [
+   24
+  ]
+ },
+ {
+  "id": "c-search-25",
+  "notes": "search",
+  "text": "At 11:45 owen closed the incident.",
+  "cites": [
+   25
+  ]
+ },
+ {
+  "id": "c-search-26",
+  "notes": "search",
+  "text": "Sasha saw Kafka dashboards with lag of 0 on every partition.",
+  "cites": [
+   26
+  ]
+ },
+ {
+  "id": "c-search-27",
+  "notes": "search",
+  "text": "Priya said customer success will reply to the 14 tickets.",
+  "cites": [
+   27
+  ]
+ },
+ {
+  "id": "c-search-28",
+  "notes": "search",
+  "text": "Owen scheduled the postmortem for Thursday.",
+  "cites": [
+   28
+  ]
+ },
+ {
+  "id": "c-search-29",
+  "notes": "search",
+  "text": "Sasha said the old memory value came from a staging template.",
+  "cites": [
+   29
+  ]
+ },
+ {
+  "id": "c-search-30",
+  "notes": "search",
+  "text": "Priya said the staging template will be fixed in the repo.",
+  "cites": [
+   30
+  ]
+ },
+ {
+  "id": "c-search-31",
+  "notes": "search",
+  "text": "Owen said ticket SRCH-88 tracks the template fix.",
+  "cites": [
+   31
+  ]
+ },
+ {
+  "id": "c-search-32",
+  "notes": "search",
+  "text": "Sasha said the runbook needs a section on partition assignment.",
+  "cites": [
+   32
+  ]
+ },
+ {
+  "id": "c-search-33",
+  "notes": "search",
+  "text": "Priya will write the runbook section.",
+  "cites": [
+   33
+  ]
+ },
+ {
+  "id": "c-search-34",
+  "notes": "search",
+  "text": "Owen said alert thresholds for lag are 15 minutes warn and 30 minutes page.",
+  "cites": [
+   34
+  ]
+ },
+ {
+  "id": "c-search-35",
+  "notes": "search",
+  "text": "Sasha said the lag alert did fire at 09:05 but went to a muted channel.",
+  "cites": [
+   35
+  ]
+ },
+ {
+  "id": "c-search-36",
+  "notes": "search",
+  "text": "Priya said the muted channel is being routed to the on-call pager.",
+  "cites": [
+   36
+  ]
+ },
+ {
+  "id": "c-search-37",
+  "notes": "search",
+  "text": "Owen said this was the second lag incident this quarter.",
+  "cites": [
+   37
+  ]
+ },
+ {
+  "id": "c-search-38",
+  "notes": "search",
+  "text": "Sasha said the first one was a network partition in March.",
+  "cites": [
+   38
+  ]
+ },
+ {
+  "id": "c-search-39",
+  "notes": "search",
+  "text": "Priya said it was a different cause with the same symptom.",
+  "cites": [
+   39
+  ]
+ },
+ {
+  "id": "c-search-40",
+  "notes": "search",
+  "text": "Owen said done for today and thanked all.",
+  "cites": [
+   40
+  ]
+ },
+ {
+  "id": "c-auth-1",
+  "notes": "auth",
+  "text": "At 07:45 rosa reported users cannot log in and the SSO redirect returns 502.",
+  "cites": [
+   1
+  ]
+ },
+ {
+  "id": "c-auth-2",
+  "notes": "auth",
+  "text": "Ivan saw ingress logs with TLS handshake errors to the identity provider.",
+  "cites": [
+   2
+  ]
+ },
+ {
+  "id": "c-auth-3",
+  "notes": "auth",
+  "text": "Ivan found the certificate for idp.internal expired at 07:30.",
+  "cites": [
+   3
+  ]
+ },
+ {
+  "id": "c-auth-4",
+  "notes": "auth",
+  "text": "Rosa saw the auto renewal job last ran 90 days ago.",
+  "cites": [
+   4
+  ]
+ },
+ {
+  "id": "c-auth-5",
+  "notes": "auth",
+  "text": "Kenji said the renewal job was disabled during the cluster migration.",
+  "cites": [
+   5
+  ]
+ },
+ {
+  "id": "c-auth-6",
+  "notes": "auth",
+  "text": "At 07:58 kenji issued a new certificate manually.",
+  "cites": [
+   6
+  ]
+ },
+ {
+  "id": "c-auth-7",
+  "notes": "auth",
+  "text": "At 08:05 kenji installed the new certificate on the identity provider.",
+  "cites": [
+   7
+  ]
+ },
+ {
+  "id": "c-auth-8",
+  "notes": "auth",
+  "text": "At 08:08 ivan saw handshake errors stop and logins working.",
+  "cites": [
+   8
+  ]
+ },
+ {
+  "id": "c-auth-9",
+  "notes": "auth",
+  "text": "Rosa saw login success rate at 99% again.",
+  "cites": [
+   9
+  ]
+ },
+ {
+  "id": "c-auth-10",
+  "notes": "auth",
+  "text": "Ivan said about 1800 login attempts failed in 38 minutes.",
+  "cites": [
+   10
+  ]
+ },
+ {
+  "id": "c-auth-11",
+  "notes": "auth",
+  "text": "Action item: re-enable renewal job and add expiry alert, owner kenji.",
+  "cites": [
+   11
+  ]
+ },
+ {
+  "id": "c-auth-12",
+  "notes": "auth",
+  "text": "Action item: inventory every certificate that has no renewal, owner rosa.",
+  "cites": [
+   12
+  ]
+ },
+ {
+  "id": "c-auth-13",
+  "notes": "auth",
+  "text": "Ivan said users on VPN were not affected.",
+  "cites": [
+   13
+  ]
+ },
+ {
+  "id": "c-auth-14",
+  "notes": "auth",
+  "text": "Kenji said the renewal job is enabled again and ran successfully.",
+  "cites": [
+   14
+  ]
+ },
+ {
+  "id": "c-auth-15",
+  "notes": "auth",
+  "text": "Rosa said the next expiry is in 60 days.",
+  "cites": [
+   15
+  ]
+ },
+ {
+  "id": "c-auth-16",
+  "notes": "auth",
+  "text": "Ivan set the expiry alert for 14 days before.",
+  "cites": [
+   16
+  ]
+ },
+ {
+  "id": "c-auth-17",
+  "notes": "auth",
+  "text": "Kenji said the migration checklist did not mention certificates.",
+  "cites": [
+   17
+  ]
+ },
+ {
+  "id": "c-auth-18",
+  "notes": "auth",
+  "text": "Rosa updated the checklist with a certificate step.",
+  "cites": [
+   18
+  ]
+ },
+ {
+  "id": "c-auth-19",
+  "notes": "auth",
+  "text": "At 08:45 ivan closed the incident.",
+  "cites": [
+   19
+  ]
+ },
+ {
+  "id": "c-auth-20",
+  "notes": "auth",
+  "text": "Kenji removed the customer facing banner.",
+  "cites": [
+   20
+  ]
+ },
+ {
+  "id": "c-auth-21",
+  "notes": "auth",
+  "text": "The postmortem owner is rosa.",
+  "cites": [
+   21
+  ]
+ },
+ {
+  "id": "c-auth-22",
+  "notes": "auth",
+  "text": "Ivan created tracing ticket AUTH-31.",
+  "cites": [
+   22
+  ]
+ },
+ {
+  "id": "c-auth-23",
+  "notes": "auth",
+  "text": "Kenji looked at who else has manual certificates.",
+  "cites": [
+   23
+  ]
+ },
+ {
+  "id": "c-auth-24",
+  "notes": "auth",
+  "text": "Rosa found 3 more certificates with no renewal.",
+  "cites": [
+   24
+  ]
+ },
+ {
+  "id": "c-auth-25",
+  "notes": "auth",
+  "text": "Two of them expire within 30 days, said ivan.",
+  "cites": [
+   25
+  ]
+ },
+ {
+  "id": "c-auth-26",
+  "notes": "auth",
+  "text": "Kenji is renewing both today.",
+  "cites": [
+   26
+  ]
+ },
+ {
+  "id": "c-auth-27",
+  "notes": "auth",
+  "text": "Rosa said the third one belongs to the payments team.",
+  "cites": [
+   27
+  ]
+ },
+ {
+  "id": "c-auth-28",
+  "notes": "auth",
+  "text": "Ivan pinged the payments team lead.",
+  "cites": [
+   28
+  ]
+ },
+ {
+  "id": "c-auth-29",
+  "notes": "auth",
+  "text": "Kenji said payments confirmed they will renew it.",
+  "cites": [
+   29
+  ]
+ },
+ {
+  "id": "c-auth-30",
+  "notes": "auth",
+  "text": "Rosa said the support macro for login errors can be retired.",
+  "cites": [
+   30
+  ]
+ },
+ {
+  "id": "c-auth-31",
+  "notes": "auth",
+  "text": "Ivan saw the metrics export show no more 502 responses.",
+  "cites": [
+   31
+  ]
+ },
+ {
+  "id": "c-auth-32",
+  "notes": "auth",
+  "text": "Kenji said staging uses a self signed certificate so it was not affected.",
+  "cites": [
+   32
+  ]
+ },
+ {
+  "id": "c-auth-33",
+  "notes": "auth",
+  "text": "Rosa praised the catch from the on-call rotation.",
+  "cites": [
+   33
+  ]
+ },
+ {
+  "id": "c-auth-34",
+  "notes": "auth",
+  "text": "Ivan said pager noise was low during the incident.",
+  "cites": [
+   34
+  ]
+ },
+ {
+  "id": "c-auth-35",
+  "notes": "auth",
+  "text": "Kenji will write the timeline for the review.",
+  "cites": [
+   35
+  ]
+ },
+ {
+  "id": "c-auth-36",
+  "notes": "auth",
+  "text": "Rosa set the review meeting for Wednesday at 10:00.",
+  "cites": [
+   36
+  ]
+ },
+ {
+  "id": "c-auth-37",
+  "notes": "auth",
+  "text": "Ivan asked to add logs from the ingress controller.",
+  "cites": [
+   37
+  ]
+ },
+ {
+  "id": "c-auth-38",
+  "notes": "auth",
+  "text": "Kenji attached logs to the ticket.",
+  "cites": [
+   38
+  ]
+ },
+ {
+  "id": "c-auth-39",
+  "notes": "auth",
+  "text": "Rosa thanked the team, that is everything.",
+  "cites": [
+   39
+  ]
+ },
+ {
+  "id": "c-auth-40",
+  "notes": "auth",
+  "text": "Ivan signed off.",
+  "cites": [
+   40
+  ]
+ },
+ {
+  "id": "c-auth-41",
+  "notes": "auth",
+  "text": "Kenji signed off too.",
+  "cites": [
+   41
+  ]
+ },
+ {
+  "id": "c-batch-1",
+  "notes": "batch",
+  "text": "At 02:10 dmitri saw the nightly billing batch still running after 3 hours.",
+  "cites": [
+   1
+  ]
+ },
+ {
+  "id": "c-batch-2",
+  "notes": "batch",
+  "text": "Amara said normal runtime is 45 minutes.",
+  "cites": [
+   2
+  ]
+ },
+ {
+  "id": "c-batch-3",
+  "notes": "batch",
+  "text": "Amara found the job stuck on table invoice_lines.",
+  "cites": [
+   3
+  ]
+ },
+ {
+  "id": "c-batch-4",
+  "notes": "batch",
+  "text": "Dmitri found a long running transaction holding a lock on invoice_lines.",
+  "cites": [
+   4
+  ]
+ },
+ {
+  "id": "c-batch-5",
+  "notes": "batch",
+  "text": "Dmitri found the transaction belongs to an analytics export started at 23:50.",
+  "cites": [
+   5
+  ]
+ },
+ {
+  "id": "c-batch-6",
+  "notes": "batch",
+  "text": "At 02:24 amara asked analytics to stop the export.",
+  "cites": [
+   6
+  ]
+ },
+ {
+  "id": "c-batch-7",
+  "notes": "batch",
+  "text": "At 02:30 dmitri saw the export stopped and the lock released.",
+  "cites": [
+   7
+  ]
+ },
+ {
+  "id": "c-batch-8",
+  "notes": "batch",
+  "text": "Amara saw the batch job progressing again.",
+  "cites": [
+   8
+  ]
+ },
+ {
+  "id": "c-batch-9",
+  "notes": "batch",
+  "text": "Dmitri reported the batch finished at 03:18 and invoices will be late by about 2 hours.",
+  "cites": [
+   9
+  ]
+ },
+ {
+  "id": "c-batch-10",
+  "notes": "batch",
+  "text": "Action item: run analytics exports against the replica, owner amara.",
+  "cites": [
+   10
+  ]
+ },
+ {
+  "id": "c-batch-11",
+  "notes": "batch",
+  "text": "Action item: add lock timeout to the batch job, owner dmitri.",
+  "cites": [
+   11
+  ]
+ },
+ {
+  "id": "c-batch-12",
+  "notes": "batch",
+  "text": "Amara planned to send invoices at 04:00 instead of 02:00.",
+  "cites": [
+   12
+  ]
+ },
+ {
+  "id": "c-batch-13",
+  "notes": "batch",
+  "text": "Dmitri said finance has been told about the delay.",
+  "cites": [
+   13
+  ]
+ },
+ {
+  "id": "c-batch-14",
+  "notes": "batch",
+  "text": "Amara said no data was lost.",
+  "cites": [
+   14
+  ]
+ },
+ {
+  "id": "c-batch-15",
+  "notes": "batch",
+  "text": "Dmitri said the analytics team agreed to use the replica.",
+  "cites": [
+   15
+  ]
+ },
+ {
+  "id": "c-batch-16",
+  "notes": "batch",
+  "text": "Amara said replica lag is usually under 5 seconds.",
+  "cites": [
+   16
+  ]
+ },
+ {
+  "id": "c-batch-17",
+  "notes": "batch",
+  "text": "Dmitri said the batch alert only fires after 6 hours.",
+  "cites": [
+   17
+  ]
+ },
+ {
+  "id": "c-batch-18",
+  "notes": "batch",
+  "text": "At 04:00 amara sent the invoices.",
+  "cites": [
+   18
+  ]
+ },
+ {
+  "id": "c-batch-19",
+  "notes": "batch",
+  "text": "Dmitri said the alert threshold will be lowered to 90 minutes.",
+  "cites": [
+   19
+  ]
+ },
+ {
+  "id": "c-batch-20",
+  "notes": "batch",
+  "text": "Amara is writing down the timeline now.",
+  "cites": [
+   20
+  ]
+ },
+ {
+  "id": "c-batch-21",
+  "notes": "batch",
+  "text": "Dmitri saved the lock monitor query in the runbook.",
+  "cites": [
+   21
+  ]
+ },
+ {
+  "id": "c-batch-22",
+  "notes": "batch",
+  "text": "Amara opened ticket BILL-402 for the lock timeout.",
+  "cites": [
+   22
+  ]
+ },
+ {
+  "id": "c-batch-23",
+  "notes": "batch",
+  "text": "Dmitri opened ticket BILL-403 for the alert threshold.",
+  "cites": [
+   23
+  ]
+ },
+ {
+  "id": "c-batch-24",
+  "notes": "batch",
+  "text": "Amara is going to bed and is back at 09:00.",
+  "cites": [
+   24
+  ]
+ },
+ {
+  "id": "c-batch-25",
+  "notes": "batch",
+  "text": "Dmitri handed over to the morning on-call.",
+  "cites": [
+   25
+  ]
+ },
+ {
+  "id": "c-batch-26",
+  "notes": "batch",
+  "text": "Amara checked in the morning: invoices delivered with bounce rate 0.4%.",
+  "cites": [
+   26
+  ]
+ },
+ {
+  "id": "c-batch-27",
+  "notes": "batch",
+  "text": "Dmitri said three customers asked about the late invoice.",
+  "cites": [
+   27
+  ]
+ },
+ {
+  "id": "c-batch-28",
+  "notes": "batch",
+  "text": "Amara replied with a standard explanation.",
+  "cites": [
+   28
+  ]
+ },
+ {
+  "id": "c-batch-29",
+  "notes": "batch",
+  "text": "Dmitri said analytics export now uses the replica.",
+  "cites": [
+   29
+  ]
+ },
+ {
+  "id": "c-batch-30",
+  "notes": "batch",
+  "text": "Amara verified in the connection logs.",
+  "cites": [
+   30
+  ]
+ },
+ {
+  "id": "c-batch-31",
+  "notes": "batch",
+  "text": "Dmitri merged the lock timeout change.",
+  "cites": [
+   31
+  ]
+ },
+ {
+  "id": "c-batch-32",
+  "notes": "batch",
+  "text": "Amara merged the alert threshold change.",
+  "cites": [
+   32
+  ]
+ },
+ {
+  "id": "c-batch-33",
+  "notes": "batch",
+  "text": "Dmitri said a test run tonight will confirm.",
+  "cites": [
+   33
+  ]
+ },
+ {
+  "id": "c-batch-34",
+  "notes": "batch",
+  "text": "Amara said a postmortem is not required and a summary is enough.",
+  "cites": [
+   34
+  ]
+ },
+ {
+  "id": "c-batch-35",
+  "notes": "batch",
+  "text": "Dmitri agreed.",
+  "cites": [
+   35
+  ]
+ },
+ {
+  "id": "c-batch-36",
+  "notes": "batch",
+  "text": "At 09:50 amara closed the incident.",
+  "cites": [
+   36
+  ]
+ },
+ {
+  "id": "c-batch-37",
+  "notes": "batch",
+  "text": "Dmitri said thanks.",
+  "cites": [
+   37
+  ]
+ },
+ {
+  "id": "c-batch-38",
+  "notes": "batch",
+  "text": "Amara moved the weekly billing review to 11:00.",
+  "cites": [
+   38
+  ]
+ },
+ {
+  "id": "c-batch-39",
+  "notes": "batch",
+  "text": "Dmitri noted it.",
+  "cites": [
+   39
+  ]
+ },
+ {
+  "id": "c-batch-40",
+  "notes": "batch",
+  "text": "Amara is out of office until Monday.",
+  "cites": [
+   40
+  ]
+ },
+ {
+  "id": "c-batch-41",
+  "notes": "batch",
+  "text": "Dmitri said enjoy.",
+  "cites": [
+   41
+  ]
+ },
+ {
+  "id": "c-payments-m1",
+  "notes": "payments",
+  "text": "Deploy 4471 went out at 13:55 and the rollback finished at 14:21.",
+  "cites": [
+   3,
+   9
+  ]
+ },
+ {
+  "id": "c-payments-m2",
+  "notes": "payments",
+  "text": "After the rollback started the 5xx rate fell, and at 14:26 it was under 1%.",
+  "cites": [
+   8,
+   10
+  ]
+ },
+ {
+  "id": "c-payments-m3",
+  "notes": "payments",
+  "text": "Retries amplified load on the ledger-db primary after deploy 4471 touched the retry logic.",
+  "cites": [
+   3,
+   6
+  ]
+ },
+ {
+  "id": "c-search-m1",
+  "notes": "search",
+  "text": "Lag of 45 minutes was caused by 3 of 6 partitions having no consumer.",
+  "cites": [
+   1,
+   3
+  ]
+ },
+ {
+  "id": "c-search-m2",
+  "notes": "search",
+  "text": "At 09:27 owen raised the limit to 4 GB after the limit was lowered to 2 GB.",
+  "cites": [
+   6,
+   7
+  ]
+ },
+ {
+  "id": "c-auth-m1",
+  "notes": "auth",
+  "text": "The certificate for idp.internal expired at 07:30 and a new certificate was installed at 08:05.",
+  "cites": [
+   3,
+   7
+  ]
+ },
+ {
+  "id": "c-auth-m2",
+  "notes": "auth",
+  "text": "Ivan and kenji restored logins: kenji issued the certificate and ivan saw logins working at 08:08.",
+  "cites": [
+   6,
+   8
+  ]
+ },
+ {
+  "id": "c-batch-m1",
+  "notes": "batch",
+  "text": "The export started at 23:50 held a lock on invoice_lines and was stopped at 02:30.",
+  "cites": [
+   4,
+   5,
+   7
+  ]
+ },
+ {
+  "id": "c-batch-m2",
+  "notes": "batch",
+  "text": "Amara asked analytics to stop the export and dmitri saw the lock released.",
+  "cites": [
+   6,
+   7
+  ]
+ },
+ {
+  "id": "c-payments-nat1",
+  "notes": "payments",
+  "text": "Alerts fired because the payments-gateway error rate reached 12%.",
+  "cites": [
+   1
+  ]
+ },
+ {
+  "id": "c-payments-nat2",
+  "notes": "payments",
+  "text": "Tomas became incident commander.",
+  "cites": [
+   2
+  ]
+ },
+ {
+  "id": "c-payments-nat3",
+  "notes": "payments",
+  "text": "The team decided to revert deploy 4471.",
+  "cites": [
+   7
+  ]
+ },
+ {
+  "id": "c-payments-nat4",
+  "notes": "payments",
+  "text": "Once the rollback completed, 5xx errors started to fall.",
+  "cites": [
+   9
+  ]
+ },
+ {
+  "id": "c-payments-nat5",
+  "notes": "payments",
+  "text": "Roughly 340 checkouts failed according to support.",
+  "cites": [
+   11
+  ]
+ },
+ {
+  "id": "c-payments-nat6",
+  "notes": "payments",
+  "text": "The removed backoff made retries fire right away.",
+  "cites": [
+   13
+  ]
+ },
+ {
+  "id": "c-auth-nat7",
+  "notes": "auth",
+  "text": "Roughly 1,800 logins failed during 38 minutes.",
+  "cites": [
+   10
+  ]
+ },
+ {
+  "id": "c-auth-nat8",
+  "notes": "auth",
+  "text": "The auto renewal job had not run for 90 days.",
+  "cites": [
+   4
+  ]
+ },
+ {
+  "id": "c-auth-nat9",
+  "notes": "auth",
+  "text": "By 08:12 the login success rate had recovered to 99%.",
+  "cites": [
+   9
+  ]
+ },
+ {
+  "id": "c-auth-nat10",
+  "notes": "auth",
+  "text": "The migration of the cluster had switched the renewal job off.",
+  "cites": [
+   5
+  ]
+ },
+ {
+  "id": "c-batch-nat11",
+  "notes": "batch",
+  "text": "At 02:10 dmitri noticed the billing batch had been running three hours.",
+  "cites": [
+   1
+  ]
+ },
+ {
+  "id": "c-batch-nat12",
+  "notes": "batch",
+  "text": "A long-running transaction was blocking invoice_lines.",
+  "cites": [
+   4
+  ]
+ },
+ {
+  "id": "c-batch-nat13",
+  "notes": "batch",
+  "text": "Billing finished at 03:18, which pushed invoices about two hours late.",
+  "cites": [
+   9
+  ]
+ },
+ {
+  "id": "c-batch-nat14",
+  "notes": "batch",
+  "text": "Invoices went out at 04:00 rather than 02:00.",
+  "cites": [
+   12
+  ]
+ },
+ {
+  "id": "c-search-nat15",
+  "notes": "search",
+  "text": "The memory limit had been reduced to 2 GB the week before.",
+  "cites": [
+   6
+  ]
+ },
+ {
+  "id": "c-search-nat16",
+  "notes": "search",
+  "text": "Indexer pods recovered and lag started falling.",
+  "cites": [
+   4,
+   8
+  ]
+ },
+ {
+  "id": "c-search-nat17",
+  "notes": "search",
+  "text": "Roughly 55 minutes of missing products affected users.",
+  "cites": [
+   13
+  ]
+ },
+ {
+  "id": "c-search-nat18",
+  "notes": "search",
+  "text": "Sasha will add a memory alert for the indexer.",
+  "cites": [
+   11
+  ]
+ },
+ {
+  "id": "c-search-nat19",
+  "notes": "search",
+  "text": "The indexer caught up and lag reached zero at 10:05.",
+  "cites": [
+   10
+  ]
+ },
+ {
+  "id": "c-search-nat20",
+  "notes": "search",
+  "text": "Half of the six partitions had no consumer.",
+  "cites": [
+   3
+  ]
+ },
+ {
+  "id": "c-search-nat21",
+  "notes": "search",
+  "text": "Owen increased the limit to 4 GB and redeployed the pods.",
+  "cites": [
+   7
+  ]
+ }
+]

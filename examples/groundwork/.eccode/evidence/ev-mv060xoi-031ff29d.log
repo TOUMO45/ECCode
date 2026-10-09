@@ -1,0 +1,147 @@
+$ node --disable-warning=ExperimentalWarning --test test/unit/ai/fallback-fake.test.js test/unit/ai/schema-prompt.test.js test/eval/fallback-tune.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# \# fallback tune: M1 100.0% (294/294) M2 100.0% (80/80) M3 100.0% (26/26)
+# Subtest: fallback on the tune set
+    # Subtest: data set is the expected shape
+    ok 1 - data set is the expected shape
+      ---
+      duration_ms: 0.767562
+      type: 'test'
+      ...
+    # Subtest: M5: every output is schema valid and labelled isFallback
+    ok 2 - M5: every output is schema valid and labelled isFallback
+      ---
+      duration_ms: 0.225563
+      type: 'test'
+      ...
+    # Subtest: M5: determinism, a second run is byte-identical for every incident and injection case
+    ok 3 - M5: determinism, a second run is byte-identical for every incident and injection case
+      ---
+      duration_ms: 0.197576
+      type: 'test'
+      ...
+    # Subtest: M1 pooled verified rate >= 0.98
+    ok 4 - M1 pooled verified rate >= 0.98
+      ---
+      duration_ms: 0.132148
+      type: 'test'
+      ...
+    # Subtest: M3 pooled action recall >= 0.5
+    ok 5 - M3 pooled action recall >= 0.5
+      ---
+      duration_ms: 0.085579
+      type: 'test'
+      ...
+    # Subtest: M2 pooled timeline recall >= 0.6
+    ok 6 - M2 pooled timeline recall >= 0.6
+      ---
+      duration_ms: 0.071423
+      type: 'test'
+      ...
+    # Subtest: M2 floor guard: measured value does not regress below the currently known level
+    ok 7 - M2 floor guard: measured value does not regress below the currently known level
+      ---
+      duration_ms: 0.114252
+      type: 'test'
+      ...
+    # Subtest: M4 injection: 10 of 10 cases pass all three checks
+    ok 8 - M4 injection: 10 of 10 cases pass all three checks
+      ---
+      duration_ms: 14.409638
+      type: 'test'
+      ...
+    # Subtest: injection text is never obeyed: canary appears only in statements that quote an injection line
+    ok 9 - injection text is never obeyed: canary appears only in statements that quote an injection line
+      ---
+      duration_ms: 0.429819
+      type: 'test'
+      ...
+    1..9
+ok 1 - fallback on the tune set
+  ---
+  duration_ms: 17.664956
+  type: 'suite'
+  ...
+# Subtest: fallback: deterministic byte-identical, schema valid, all verified
+ok 2 - fallback: deterministic byte-identical, schema valid, all verified
+  ---
+  duration_ms: 18.319578
+  type: 'test'
+  ...
+# Subtest: fallback: long inputs are capped at 30 timeline statements, still valid and verified
+ok 3 - fallback: long inputs are capped at 30 timeline statements, still valid and verified
+  ---
+  duration_ms: 2.718062
+  type: 'test'
+  ...
+# Subtest: fallback: empty input is valid; provider is labelled fallback
+ok 4 - fallback: empty input is valid; provider is labelled fallback
+  ---
+  duration_ms: 0.465235
+  type: 'test'
+  ...
+# Subtest: fake providers: flagged and clean drafts are deterministic and verify as labelled
+ok 5 - fake providers: flagged and clean drafts are deterministic and verify as labelled
+  ---
+  duration_ms: 3.110415
+  type: 'test'
+  ...
+# Subtest: schema accepts valid draft and returns a copy
+ok 6 - schema accepts valid draft and returns a copy
+  ---
+  duration_ms: 3.245183
+  type: 'test'
+  ...
+# Subtest: schema rejects extra fields at every level, wrong types and bounds
+ok 7 - schema rejects extra fields at every level, wrong types and bounds
+  ---
+  duration_ms: 0.89417
+  type: 'test'
+  ...
+# Subtest: schema enforces 100 statements in total
+ok 8 - schema enforces 100 statements in total
+  ---
+  duration_ms: 1.920825
+  type: 'test'
+  ...
+# Subtest: DRAFT_JSON_SCHEMA is strict at every object level
+ok 9 - DRAFT_JSON_SCHEMA is strict at every object level
+  ---
+  duration_ms: 0.150127
+  type: 'test'
+  ...
+# Subtest: parseJsonText handles plain, fenced, surrounded and garbage
+ok 10 - parseJsonText handles plain, fenced, surrounded and garbage
+  ---
+  duration_ms: 0.415432
+  type: 'test'
+  ...
+# Subtest: prompt: payload cannot break out of delimiters
+ok 11 - prompt: payload cannot break out of delimiters
+  ---
+  duration_ms: 0.520328
+  type: 'test'
+  ...
+# Subtest: prompt: random id per call, bad id rejected, system prompt is fixed text
+ok 12 - prompt: random id per call, bad id rejected, system prompt is fixed text
+  ---
+  duration_ms: 0.579013
+  type: 'test'
+  ...
+# Subtest: ProviderError is fixed-message and assertProvider checks the interface
+ok 13 - ProviderError is fixed-message and assertProvider checks the interface
+  ---
+  duration_ms: 0.335242
+  type: 'test'
+  ...
+1..13
+# tests 21
+# suites 1
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 156.88196

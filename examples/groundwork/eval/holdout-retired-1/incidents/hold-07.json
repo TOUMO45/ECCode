@@ -1,0 +1,402 @@
+{
+ "id": "hold-07",
+ "title": "Daylight saving bug shifted scheduled reports",
+ "severity": "SEV3",
+ "startedAt": "2026-05-18T07:00:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "07:00",
+   "author": "gus",
+   "text": "The Monday sales report arrived an hour late for every customer in Europe"
+  },
+  {
+   "n": 2,
+   "time": "07:00",
+   "author": "gus",
+   "text": "looking at the logs now"
+  },
+  {
+   "n": 3,
+   "time": "07:00",
+   "author": "gus",
+   "text": "let me grab coffee and be back in two"
+  },
+  {
+   "n": 4,
+   "time": "07:00",
+   "author": "mina",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 5,
+   "time": "07:00",
+   "author": "vik",
+   "text": "that matches what I'm seeing"
+  },
+  {
+   "n": 6,
+   "time": "07:08",
+   "author": "mina",
+   "text": "Clocks changed in Europe last weekend and the scheduler stores local times without a zone"
+  },
+  {
+   "n": 7,
+   "time": "07:08",
+   "author": "vik",
+   "text": "looking at the logs now"
+  },
+  {
+   "n": 8,
+   "time": "07:08",
+   "author": "mina",
+   "text": "still digging"
+  },
+  {
+   "n": 9,
+   "time": "07:08",
+   "author": "mina",
+   "text": "that's useful, thanks"
+  },
+  {
+   "n": 10,
+   "time": "07:08",
+   "author": "gus",
+   "text": "let's keep the channel clear for updates"
+  },
+  {
+   "n": 11,
+   "time": "07:15",
+   "author": "mina",
+   "text": "So it computed the next run using the old offset"
+  },
+  {
+   "n": 12,
+   "time": "07:15",
+   "author": "gus",
+   "text": "fair point"
+  },
+  {
+   "n": 13,
+   "time": "07:15",
+   "author": "gus",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 14,
+   "time": "07:15",
+   "author": "gus",
+   "text": "let me grab coffee and be back in two"
+  },
+  {
+   "n": 15,
+   "time": "07:15",
+   "author": "gus",
+   "text": "let's keep the channel clear for updates"
+  },
+  {
+   "n": 16,
+   "time": "07:20",
+   "author": "gus",
+   "text": "Is it only reports or other schedules too?"
+  },
+  {
+   "n": 17,
+   "time": "07:20",
+   "author": "gus",
+   "text": "one sec"
+  },
+  {
+   "n": 18,
+   "time": "07:20",
+   "author": "mina",
+   "text": "ok"
+  },
+  {
+   "n": 19,
+   "time": "07:30",
+   "author": "vik",
+   "text": "Checked, only the report schedules use that field. Exports and cleanup jobs use UTC"
+  },
+  {
+   "n": 20,
+   "time": "07:30",
+   "author": "vik",
+   "text": "fair point"
+  },
+  {
+   "n": 21,
+   "time": "07:30",
+   "author": "vik",
+   "text": "good call"
+  },
+  {
+   "n": 22,
+   "time": "07:30",
+   "author": "gus",
+   "text": "still digging"
+  },
+  {
+   "n": 23,
+   "time": "07:42",
+   "author": "mina",
+   "text": "Patch converts all stored schedules to UTC with the zone kept for display"
+  },
+  {
+   "n": 24,
+   "time": "07:42",
+   "author": "vik",
+   "text": "I'll write it up afterwards"
+  },
+  {
+   "n": 25,
+   "time": "07:42",
+   "author": "gus",
+   "text": "thanks for the update"
+  },
+  {
+   "n": 26,
+   "time": "07:42",
+   "author": "mina",
+   "text": "one sec"
+  },
+  {
+   "n": 27,
+   "time": "08:05",
+   "author": "vik",
+   "text": "Patch reviewed, deploying"
+  },
+  {
+   "n": 28,
+   "time": "08:05",
+   "author": "vik",
+   "text": "is the status page updated?"
+  },
+  {
+   "n": 29,
+   "time": "08:05",
+   "author": "mina",
+   "text": "just catching up on the thread"
+  },
+  {
+   "n": 30,
+   "time": "08:20",
+   "author": "gus",
+   "text": "Migration finished and I triggered a test run, it fired at the right time"
+  },
+  {
+   "n": 31,
+   "time": "08:20",
+   "author": "vik",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 32,
+   "time": "08:20",
+   "author": "mina",
+   "text": "I'm on it"
+  },
+  {
+   "n": 33,
+   "time": "08:20",
+   "author": "mina",
+   "text": "yep"
+  },
+  {
+   "n": 34,
+   "time": "08:30",
+   "author": "mina",
+   "text": "Customers got reports late one time, nothing was lost or sent twice"
+  },
+  {
+   "n": 35,
+   "time": "08:30",
+   "author": "vik",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 36,
+   "time": "08:30",
+   "author": "vik",
+   "text": "I'm still here"
+  },
+  {
+   "n": 37,
+   "time": "08:30",
+   "author": "vik",
+   "text": "thanks for the update"
+  },
+  {
+   "n": 38,
+   "time": "08:35",
+   "author": "vik",
+   "text": "I will add a test that runs the scheduler across both daylight saving changes"
+  },
+  {
+   "n": 39,
+   "time": "08:35",
+   "author": "vik",
+   "text": "let me look"
+  },
+  {
+   "n": 40,
+   "time": "08:35",
+   "author": "gus",
+   "text": "makes sense"
+  },
+  {
+   "n": 41,
+   "time": "08:35",
+   "author": "vik",
+   "text": "good call"
+  },
+  {
+   "n": 42,
+   "time": "08:35",
+   "author": "mina",
+   "text": "fair point"
+  },
+  {
+   "n": 43,
+   "time": "08:40",
+   "author": "gus",
+   "text": "I will tell the account managers what happened so they can answer questions"
+  },
+  {
+   "n": 44,
+   "time": "08:40",
+   "author": "vik",
+   "text": "thanks for the update"
+  },
+  {
+   "n": 45,
+   "time": "08:40",
+   "author": "gus",
+   "text": "ok"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "07:00",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "07:08",
+    "lines": [
+     6
+    ]
+   },
+   {
+    "time": "07:30",
+    "lines": [
+     19
+    ]
+   },
+   {
+    "time": "07:42",
+    "lines": [
+     23
+    ]
+   },
+   {
+    "time": "08:05",
+    "lines": [
+     27
+    ]
+   },
+   {
+    "time": "08:20",
+    "lines": [
+     30
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     38
+    ]
+   },
+   {
+    "lines": [
+     43
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 07:00 gus reported the Monday sales report arriving an hour late for European customers.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 07:08 mina found the scheduler stores local times without a zone and the clocks had changed.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "The scheduler computed the next run using the old offset.",
+   "cites": [
+    11
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 07:30 vik checked that only the report schedules use the local time field.",
+   "cites": [
+    19
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 07:42 mina wrote a patch that converts stored schedules to UTC and keeps the zone for display.",
+   "cites": [
+    23
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 08:05 vik reviewed the patch and started deploying it.",
+   "cites": [
+    27
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 08:20 gus saw the migration finish and a test run fire at the right time.",
+   "cites": [
+    30
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Customers got reports late one time and nothing was lost or sent twice.",
+   "cites": [
+    34
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Vik will add a test that runs the scheduler across both daylight saving changes.",
+   "cites": [
+    38
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Gus will tell the account managers what happened.",
+   "cites": [
+    43
+   ]
+  }
+ ]
+}

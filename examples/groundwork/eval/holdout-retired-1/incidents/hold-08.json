@@ -1,0 +1,390 @@
+{
+ "id": "hold-08",
+ "title": "Load balancer health check removed healthy hosts",
+ "severity": "SEV1",
+ "startedAt": "2026-05-25T21:00:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "21:00",
+   "author": "alma",
+   "text": "The site is returning 503 for most requests, it started right after the deploy"
+  },
+  {
+   "n": 2,
+   "time": "21:00",
+   "author": "alma",
+   "text": "did anyone tell support yet?"
+  },
+  {
+   "n": 3,
+   "time": "21:00",
+   "author": "cora",
+   "text": "let me grab coffee and be back in two"
+  },
+  {
+   "n": 4,
+   "time": "21:04",
+   "author": "ben",
+   "text": "Load balancer says only one of twelve targets is healthy"
+  },
+  {
+   "n": 5,
+   "time": "21:04",
+   "author": "cora",
+   "text": "one sec"
+  },
+  {
+   "n": 6,
+   "time": "21:04",
+   "author": "alma",
+   "text": "I'll note that down"
+  },
+  {
+   "n": 7,
+   "time": "21:04",
+   "author": "ben",
+   "text": "let me grab coffee and be back in two"
+  },
+  {
+   "n": 8,
+   "time": "21:04",
+   "author": "ben",
+   "text": "that matches what I'm seeing"
+  },
+  {
+   "n": 9,
+   "time": "21:09",
+   "author": "ben",
+   "text": "But the hosts themselves respond fine when I curl them directly"
+  },
+  {
+   "n": 10,
+   "time": "21:09",
+   "author": "ben",
+   "text": "let's keep the channel clear for updates"
+  },
+  {
+   "n": 11,
+   "time": "21:09",
+   "author": "ben",
+   "text": "thanks for the update"
+  },
+  {
+   "n": 12,
+   "time": "21:14",
+   "author": "alma",
+   "text": "What changed in the deploy?"
+  },
+  {
+   "n": 13,
+   "time": "21:14",
+   "author": "ben",
+   "text": "that matches what I'm seeing"
+  },
+  {
+   "n": 14,
+   "time": "21:14",
+   "author": "cora",
+   "text": "joining now"
+  },
+  {
+   "n": 15,
+   "time": "21:18",
+   "author": "cora",
+   "text": "The health check path was renamed from /health to /status and the load balancer still points at the old one"
+  },
+  {
+   "n": 16,
+   "time": "21:18",
+   "author": "cora",
+   "text": "good call"
+  },
+  {
+   "n": 17,
+   "time": "21:18",
+   "author": "alma",
+   "text": "I'm still here"
+  },
+  {
+   "n": 18,
+   "time": "21:18",
+   "author": "cora",
+   "text": "that's useful, thanks"
+  },
+  {
+   "n": 19,
+   "time": "21:18",
+   "author": "ben",
+   "text": "let's keep the channel clear for updates"
+  },
+  {
+   "n": 20,
+   "time": "21:23",
+   "author": "cora",
+   "text": "Updating the target group health check to /status"
+  },
+  {
+   "n": 21,
+   "time": "21:23",
+   "author": "alma",
+   "text": "let me look"
+  },
+  {
+   "n": 22,
+   "time": "21:23",
+   "author": "cora",
+   "text": "anyone have the dashboard link handy?"
+  },
+  {
+   "n": 23,
+   "time": "21:23",
+   "author": "ben",
+   "text": "that matches what I'm seeing"
+  },
+  {
+   "n": 24,
+   "time": "21:23",
+   "author": "ben",
+   "text": "right, I remember that one"
+  },
+  {
+   "n": 25,
+   "time": "21:31",
+   "author": "ben",
+   "text": "Targets are flipping to healthy one by one"
+  },
+  {
+   "n": 26,
+   "time": "21:31",
+   "author": "ben",
+   "text": "I'll write it up afterwards"
+  },
+  {
+   "n": 27,
+   "time": "21:31",
+   "author": "ben",
+   "text": "sorry, was in another meeting"
+  },
+  {
+   "n": 28,
+   "time": "21:38",
+   "author": "alma",
+   "text": "Traffic is back to normal, 503s are gone"
+  },
+  {
+   "n": 29,
+   "time": "21:38",
+   "author": "alma",
+   "text": "I'll watch the graphs"
+  },
+  {
+   "n": 30,
+   "time": "21:38",
+   "author": "alma",
+   "text": "ping me if you need a second pair of eyes"
+  },
+  {
+   "n": 31,
+   "time": "21:45",
+   "author": "cora",
+   "text": "About 38 minutes of mostly failed requests"
+  },
+  {
+   "n": 32,
+   "time": "21:45",
+   "author": "ben",
+   "text": "agreed"
+  },
+  {
+   "n": 33,
+   "time": "21:45",
+   "author": "ben",
+   "text": "I'm still here"
+  },
+  {
+   "n": 34,
+   "time": "21:45",
+   "author": "ben",
+   "text": "looking at the logs now"
+  },
+  {
+   "n": 35,
+   "time": "21:50",
+   "author": "ben",
+   "text": "I will make the deploy pipeline fail if the health check path changes without a load balancer change"
+  },
+  {
+   "n": 36,
+   "time": "21:50",
+   "author": "alma",
+   "text": "agreed"
+  },
+  {
+   "n": 37,
+   "time": "21:50",
+   "author": "cora",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 38,
+   "time": "21:50",
+   "author": "ben",
+   "text": "one sec"
+  },
+  {
+   "n": 39,
+   "time": "21:55",
+   "author": "cora",
+   "text": "I will move the health check definition into the same repo as the service so they cannot drift"
+  },
+  {
+   "n": 40,
+   "time": "21:55",
+   "author": "alma",
+   "text": "is the status page updated?"
+  },
+  {
+   "n": 41,
+   "time": "21:55",
+   "author": "cora",
+   "text": "one sec"
+  },
+  {
+   "n": 42,
+   "time": "21:55",
+   "author": "alma",
+   "text": "checking now"
+  },
+  {
+   "n": 43,
+   "time": "21:55",
+   "author": "ben",
+   "text": "ping me if you need a second pair of eyes"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "21:00",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "21:04",
+    "lines": [
+     4
+    ]
+   },
+   {
+    "time": "21:09",
+    "lines": [
+     9
+    ]
+   },
+   {
+    "time": "21:23",
+    "lines": [
+     20
+    ]
+   },
+   {
+    "time": "21:31",
+    "lines": [
+     25
+    ]
+   },
+   {
+    "time": "21:38",
+    "lines": [
+     28
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     35
+    ]
+   },
+   {
+    "lines": [
+     39
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 21:00 alma reported 503 responses for most requests right after the deploy.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 21:04 ben saw the load balancer report only one of twelve targets healthy.",
+   "cites": [
+    4
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 21:09 ben found the hosts responded fine when called directly.",
+   "cites": [
+    9
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "The health check path was renamed from /health to /status while the load balancer still pointed at the old one.",
+   "cites": [
+    15
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 21:23 cora updated the target group health check to /status.",
+   "cites": [
+    20
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 21:31 ben saw targets flip to healthy one by one.",
+   "cites": [
+    25
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 21:38 alma saw traffic return to normal and the 503s go away.",
+   "cites": [
+    28
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "About 38 minutes of mostly failed requests.",
+   "cites": [
+    31
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Ben will make the deploy pipeline fail if the health check path changes without a load balancer change.",
+   "cites": [
+    35
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Cora will move the health check definition into the same repo as the service.",
+   "cites": [
+    39
+   ]
+  }
+ ]
+}

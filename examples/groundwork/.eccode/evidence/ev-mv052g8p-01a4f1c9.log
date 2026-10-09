@@ -1,0 +1,1793 @@
+$ npm test
+# cwd: .
+# exit: 0
+
+> groundwork@1.0.0 test
+> node --disable-warning=ExperimentalWarning --test "test/unit/**/*.test.js" "test/api/**/*.test.js" "test/eval/**/*.test.js"
+
+TAP version 13
+# Subtest: each sensitive action writes exactly one audit row, without text
+ok 1 - each sensitive action writes exactly one audit row, without text
+  ---
+  duration_ms: 269.736805
+  type: 'test'
+  ...
+# Subtest: publish writes one ok row; audit endpoint is lead-only, team-scoped; rows are immutable
+ok 2 - publish writes one ok row; audit endpoint is lead-only, team-scoped; rows are immutable
+  ---
+  duration_ms: 196.57716
+  type: 'test'
+  ...
+# Subtest: health is public and matches the contract
+ok 3 - health is public and matches the contract
+  ---
+  duration_ms: 101.213937
+  type: 'test'
+  ...
+# Subtest: GET /api/csrf issues a token and cookie
+ok 4 - GET /api/csrf issues a token and cookie
+  ---
+  duration_ms: 6.074464
+  type: 'test'
+  ...
+# Subtest: login success: contract shape, HttpOnly SameSite=Strict cookie, /api/me works
+ok 5 - login success: contract shape, HttpOnly SameSite=Strict cookie, /api/me works
+  ---
+  duration_ms: 80.357813
+  type: 'test'
+  ...
+# Subtest: username lookup is case-insensitive; password never appears in responses
+ok 6 - username lookup is case-insensitive; password never appears in responses
+  ---
+  duration_ms: 68.789615
+  type: 'test'
+  ...
+# Subtest: Secure flag is set when GW_COOKIE_SECURE=1
+ok 7 - Secure flag is set when GW_COOKIE_SECURE=1
+  ---
+  duration_ms: 68.739953
+  type: 'test'
+  ...
+# Subtest: unknown user, wrong password and disabled user give identical 401 bodies
+ok 8 - unknown user, wrong password and disabled user give identical 401 bodies
+  ---
+  duration_ms: 142.421065
+  type: 'test'
+  ...
+# Subtest: login validation: 400 with fields, never 500
+ok 9 - login validation: 400 with fields, never 500
+  ---
+  duration_ms: 20.051096
+  type: 'test'
+  ...
+# Subtest: limiter: 6th attempt is 429 with Retry-After even with the right password; then clears after the window
+ok 10 - limiter: 6th attempt is 429 with Retry-After even with the right password; then clears after the window
+  ---
+  duration_ms: 331.276353
+  type: 'test'
+  ...
+# Subtest: limiter map stays bounded across 10,001 distinct usernames
+ok 11 - limiter map stays bounded across 10,001 distinct usernames
+  ---
+  duration_ms: 85.909509
+  type: 'test'
+  ...
+# Subtest: session rotation: new id each login, old id rejected, preset cookie ignored (fixation)
+ok 12 - session rotation: new id each login, old id rejected, preset cookie ignored (fixation)
+  ---
+  duration_ms: 185.034949
+  type: 'test'
+  ...
+# Subtest: only the hash of the session id is stored
+ok 13 - only the hash of the session id is stored
+  ---
+  duration_ms: 42.398255
+  type: 'test'
+  ...
+# Subtest: idle expiry (30 min) and sliding refresh, absolute expiry (8 h)
+ok 14 - idle expiry (30 min) and sliding refresh, absolute expiry (8 h)
+  ---
+  duration_ms: 129.03007
+  type: 'test'
+  ...
+# Subtest: logout invalidates the session and clears cookies; logging out twice is 401
+ok 15 - logout invalidates the session and clears cookies; logging out twice is 401
+  ---
+  duration_ms: 45.605355
+  type: 'test'
+  ...
+# Subtest: unauthenticated access to protected endpoints is 401
+ok 16 - unauthenticated access to protected endpoints is 401
+  ---
+  duration_ms: 3.868406
+  type: 'test'
+  ...
+# Subtest: users: lead creates users in own team only; roles enforced; duplicate is 409
+ok 17 - users: lead creates users in own team only; roles enforced; duplicate is 409
+  ---
+  duration_ms: 234.133945
+  type: 'test'
+  ...
+# Subtest: audit: lead-only, team-scoped, no secrets; sensitive actions recorded
+ok 18 - audit: lead-only, team-scoped, no secrets; sensitive actions recorded
+  ---
+  duration_ms: 268.858579
+  type: 'test'
+  ...
+# Subtest: audit rows are append-only
+ok 19 - audit rows are append-only
+  ---
+  duration_ms: 0.723303
+  type: 'test'
+  ...
+# Subtest: sessions survive an app restart on the same database (and limiter resets)
+ok 20 - sessions survive an app restart on the same database (and limiter resets)
+  ---
+  duration_ms: 72.214003
+  type: 'test'
+  ...
+# Subtest: success bodies match the contract schemas
+ok 21 - success bodies match the contract schemas
+  ---
+  duration_ms: 246.555599
+  type: 'test'
+  ...
+# Subtest: documented error shapes
+ok 22 - documented error shapes
+  ---
+  duration_ms: 157.041558
+  type: 'test'
+  ...
+# Subtest: state-changing request without a token is 403 CSRF_FAILED
+ok 23 - state-changing request without a token is 403 CSRF_FAILED
+  ---
+  duration_ms: 144.209917
+  type: 'test'
+  ...
+# Subtest: header must equal cookie; cookie alone or header alone fails
+ok 24 - header must equal cookie; cookie alone or header alone fails
+  ---
+  duration_ms: 67.215784
+  type: 'test'
+  ...
+# Subtest: a token from another session (or a pre-login token) does not work on an authenticated route
+ok 25 - a token from another session (or a pre-login token) does not work on an authenticated route
+  ---
+  duration_ms: 136.633907
+  type: 'test'
+  ...
+# Subtest: Origin mismatch is rejected even with a valid token; matching or absent Origin passes
+ok 26 - Origin mismatch is rejected even with a valid token; matching or absent Origin passes
+  ---
+  duration_ms: 142.286721
+  type: 'test'
+  ...
+# Subtest: login requires the pre-login token
+ok 27 - login requires the pre-login token
+  ---
+  duration_ms: 46.16596
+  type: 'test'
+  ...
+# Subtest: logout without a token is rejected and the session stays valid
+ok 28 - logout without a token is rejected and the session stays valid
+  ---
+  duration_ms: 46.20532
+  type: 'test'
+  ...
+# Subtest: GET and HEAD are not subject to CSRF checks
+ok 29 - GET and HEAD are not subject to CSRF checks
+  ---
+  duration_ms: 47.000824
+  type: 'test'
+  ...
+# Subtest: unauthenticated mutation on a session route is 401, not a CSRF leak
+ok 30 - unauthenticated mutation on a session route is 401, not a CSRF leak
+  ---
+  duration_ms: 2.267454
+  type: 'test'
+  ...
+# Subtest: generate stores verifier output and regenerates with version bump
+ok 31 - generate stores verifier output and regenerates with version bump
+  ---
+  duration_ms: 195.191336
+  type: 'test'
+  ...
+# Subtest: no draft yet: 404; no notes: NO_NOTES
+ok 32 - no draft yet: 404; no notes: NO_NOTES
+  ---
+  duration_ms: 83.108931
+  type: 'test'
+  ...
+# Subtest: provider failure PROVIDER_TIMEOUT stores nothing and keeps the previous draft
+ok 33 - provider failure PROVIDER_TIMEOUT stores nothing and keeps the previous draft
+  ---
+  duration_ms: 89.679224
+  type: 'test'
+  ...
+# Subtest: provider failure PROVIDER_BAD_OUTPUT stores nothing and keeps the previous draft
+ok 34 - provider failure PROVIDER_BAD_OUTPUT stores nothing and keeps the previous draft
+  ---
+  duration_ms: 71.681188
+  type: 'test'
+  ...
+# Subtest: provider failure PROVIDER_UNAVAILABLE stores nothing and keeps the previous draft
+ok 35 - provider failure PROVIDER_UNAVAILABLE stores nothing and keeps the previous draft
+  ---
+  duration_ms: 67.363282
+  type: 'test'
+  ...
+# Subtest: provider failure PROVIDER_BUSY stores nothing and keeps the previous draft
+ok 36 - provider failure PROVIDER_BUSY stores nothing and keeps the previous draft
+  ---
+  duration_ms: 68.065863
+  type: 'test'
+  ...
+# Subtest: provider that hangs hits the deadline (504) and is aborted
+ok 37 - provider that hangs hits the deadline (504) and is aborted
+  ---
+  duration_ms: 469.422968
+  type: 'test'
+  ...
+# Subtest: malformed provider output (unknown fields, wrong types, too many) is rejected
+ok 38 - malformed provider output (unknown fields, wrong types, too many) is rejected
+  ---
+  duration_ms: 60.317262
+  type: 'test'
+  ...
+# Subtest: non-ProviderError exception yields a generic provider error without leaking
+ok 39 - non-ProviderError exception yields a generic provider error without leaking
+  ---
+  duration_ms: 53.901957
+  type: 'test'
+  ...
+# Subtest: unknown / unavailable provider and auto with none configured
+ok 40 - unknown / unavailable provider and auto with none configured
+  ---
+  duration_ms: 75.535776
+  type: 'test'
+  ...
+# Subtest: fallback draft is labelled isFallback and verifies
+ok 41 - fallback draft is labelled isFallback and verifies
+  ---
+  duration_ms: 69.420885
+  type: 'test'
+  ...
+# Subtest: concurrent generation: second call gets GENERATION_IN_PROGRESS
+ok 42 - concurrent generation: second call gets GENERATION_IN_PROGRESS
+  ---
+  duration_ms: 157.637109
+  type: 'test'
+  ...
+# Subtest: NOTES_CHANGED when notes are replaced during generation
+ok 43 - NOTES_CHANGED when notes are replaced during generation
+  ---
+  duration_ms: 159.764312
+  type: 'test'
+  ...
+# Subtest: statement edit and delete: re-verification, stale version, validation
+ok 44 - statement edit and delete: re-verification, stale version, validation
+  ---
+  duration_ms: 102.495314
+  type: 'test'
+  ...
+# Subtest: provider faults and DB faults give generic envelopes; marker never leaks
+ok 45 - provider faults and DB faults give generic envelopes; marker never leaks
+  ---
+  duration_ms: 166.572564
+  type: 'test'
+  ...
+# Subtest: error shapes carry request ids for 404, 405 and domain errors
+ok 46 - error shapes carry request ids for 404, 405 and domain errors
+  ---
+  duration_ms: 67.788172
+  type: 'test'
+  ...
+# Subtest: cross-team access is 404 and leaves data unchanged
+ok 47 - cross-team access is 404 and leaves data unchanged
+  ---
+  duration_ms: 455.821827
+  type: 'test'
+  ...
+# Subtest: journey: sign in, incident, notes, draft, refused, fix, publish, viewer reads
+ok 48 - journey: sign in, incident, notes, draft, refused, fix, publish, viewer reads
+  ---
+  duration_ms: 333.369053
+  type: 'test'
+  ...
+# Subtest: 413: Content-Length above 1 MiB is refused with the envelope
+ok 49 - 413: Content-Length above 1 MiB is refused with the envelope
+  ---
+  duration_ms: 156.305287
+  type: 'test'
+  ...
+# Subtest: 413: declared large Content-Length is rejected without reading the body
+ok 50 - 413: declared large Content-Length is rejected without reading the body
+  ---
+  duration_ms: 2.703895
+  type: 'test'
+  ...
+# Subtest: 413: chunked body streaming past 1 MiB is cut off
+ok 51 - 413: chunked body streaming past 1 MiB is cut off
+  ---
+  duration_ms: 8.065302
+  type: 'test'
+  ...
+# Subtest: 413 via fetch with a large JSON body: small-enough overshoot returns the envelope
+ok 52 - 413 via fetch with a large JSON body: small-enough overshoot returns the envelope
+  ---
+  duration_ms: 19.490566
+  type: 'test'
+  ...
+# Subtest: body exactly at the limit is read (and then fails validation, not 413)
+ok 53 - body exactly at the limit is read (and then fails validation, not 413)
+  ---
+  duration_ms: 12.478173
+  type: 'test'
+  ...
+# Subtest: 415: non-JSON content types are refused with the envelope
+ok 54 - 415: non-JSON content types are refused with the envelope
+  ---
+  duration_ms: 18.69435
+  type: 'test'
+  ...
+# Subtest: 400 INVALID_JSON for malformed or non-UTF-8 bodies, 400 for wrong top-level type
+ok 55 - 400 INVALID_JSON for malformed or non-UTF-8 bodies, 400 for wrong top-level type
+  ---
+  duration_ms: 12.940696
+  type: 'test'
+  ...
+# Subtest: 404 and 405 are shaped; 405 carries Allow and details.allow
+ok 56 - 404 and 405 are shaped; 405 carries Allow and details.allow
+  ---
+  duration_ms: 5.630935
+  type: 'test'
+  ...
+# Subtest: inbound X-Request-Id is reused only when well formed
+ok 57 - inbound X-Request-Id is reused only when well formed
+  ---
+  duration_ms: 11.490884
+  type: 'test'
+  ...
+# Subtest: query strings are whitelisted: unknown parameters are 400 on routes without query schema
+ok 58 - query strings are whitelisted: unknown parameters are 400 on routes without query schema
+  ---
+  duration_ms: 1.607524
+  type: 'test'
+  ...
+# Subtest: a body sent to a no-body POST route is rejected as unknown fields
+ok 59 - a body sent to a no-body POST route is rejected as unknown fields
+  ---
+  duration_ms: 2.577926
+  type: 'test'
+  ...
+# Subtest: path parameters must be integers: non-numeric or huge ids do not match
+ok 60 - path parameters must be integers: non-numeric or huge ids do not match
+  ---
+  duration_ms: 9.275974
+  type: 'test'
+  ...
+# Subtest: unauthenticated 4xx ordering: no body is parsed before auth
+ok 61 - unauthenticated 4xx ordering: no body is parsed before auth
+  ---
+  duration_ms: 1.387917
+  type: 'test'
+  ...
+# Subtest: server survives slow/broken clients and malformed request lines
+ok 62 - server survives slow/broken clients and malformed request lines
+  ---
+  duration_ms: 3.201358
+  type: 'test'
+  ...
+# Subtest: one JSON line per request with the documented fields; no secrets, bodies or cookies
+ok 63 - one JSON line per request with the documented fields; no secrets, bodies or cookies
+  ---
+  duration_ms: 315.913659
+  type: 'test'
+  ...
+# Subtest: internal faults give the generic envelope; the marker reaches neither response nor log
+ok 64 - internal faults give the generic envelope; the marker reaches neither response nor log
+  ---
+  duration_ms: 86.600751
+  type: 'test'
+  ...
+# Subtest: GW_LOG=off writes nothing
+ok 65 - GW_LOG=off writes nothing
+  ---
+  duration_ms: 7.275785
+  type: 'test'
+  ...
+# Subtest: notes: formats, errors, idempotent replace, lock, notes_rev
+ok 66 - notes: formats, errors, idempotent replace, lock, notes_rev
+  ---
+  duration_ms: 242.893143
+  type: 'test'
+  ...
+# Subtest: non-AI API p95 below 200 ms over 200 sequential requests on a seeded DB
+ok 67 - non-AI API p95 below 200 ms over 200 sequential requests on a seeded DB
+  ---
+  duration_ms: 598.051366
+  type: 'test'
+  ...
+# Subtest: data survives in-process reopen
+ok 68 - data survives in-process reopen
+  ---
+  duration_ms: 256.291254
+  type: 'test'
+  ...
+# Subtest: data survives a spawned-process restart (real providers wired from config: fallback)
+ok 69 - data survives a spawned-process restart (real providers wired from config: fallback)
+  ---
+  duration_ms: 367.321826
+  type: 'test'
+  ...
+# Subtest: publish refused while flagged; tampered stored status does not help
+ok 70 - publish refused while flagged; tampered stored status does not help
+  ---
+  duration_ms: 192.098912
+  type: 'test'
+  ...
+# Subtest: publish: stale version, success, then everything is DRAFT_PUBLISHED
+ok 71 - publish: stale version, success, then everything is DRAFT_PUBLISHED
+  ---
+  duration_ms: 95.637
+  type: 'test'
+  ...
+# Subtest: responder and viewer cannot publish (403 before lookup); empty draft is 400
+ok 72 - responder and viewer cannot publish (403 before lookup); empty draft is 400
+  ---
+  duration_ms: 186.284573
+  type: 'test'
+  ...
+# Subtest: interleaved edit/publish never publishes a flagged statement
+ok 73 - interleaved edit/publish never publishes a flagged statement
+  ---
+  duration_ms: 827.116099
+  type: 'test'
+  ...
+# Subtest: role matrix
+ok 74 - role matrix
+  ---
+  duration_ms: 327.263635
+  type: 'test'
+  ...
+# Subtest: index.html is served at / with security headers and a strict CSP
+ok 75 - index.html is served at / with security headers and a strict CSP
+  ---
+  duration_ms: 94.079802
+  type: 'test'
+  ...
+# Subtest: security headers are also on API responses, 404s and errors
+ok 76 - security headers are also on API responses, 404s and errors
+  ---
+  duration_ms: 9.847212
+  type: 'test'
+  ...
+# Subtest: js assets get the right content type; HEAD has no body
+ok 77 - js assets get the right content type; HEAD has no body
+  ---
+  duration_ms: 9.497402
+  type: 'test'
+  ...
+# Subtest: traversal attempts return the 404 envelope and never file contents
+ok 78 - traversal attempts return the 404 envelope and never file contents
+  ---
+  duration_ms: 24.129963
+  type: 'test'
+  ...
+# Subtest: resolveStatic unit: stays under root
+ok 79 - resolveStatic unit: stays under root
+  ---
+  duration_ms: 0.24992
+  type: 'test'
+  ...
+# Subtest: non-GET on static paths is 405 with Allow
+ok 80 - non-GET on static paths is 405 with Allow
+  ---
+  duration_ms: 6.250136
+  type: 'test'
+  ...
+# Subtest: missing public dir yields 404 envelope, not a crash
+ok 81 - missing public dir yields 404 envelope, not a crash
+  ---
+  duration_ms: 12.7272
+  type: 'test'
+  ...
+# Subtest: the real public/index.html (when present) has no inline script
+ok 82 - the real public/index.html (when present) has no inline script
+  ---
+  duration_ms: 2.340301
+  type: 'test'
+  ...
+# Subtest: incident input validation and data round-trip
+ok 83 - incident input validation and data round-trip
+  ---
+  duration_ms: 233.613632
+  type: 'test'
+  ...
+# Subtest: malformed requests: JSON, media type, size, ids, unknown fields
+ok 84 - malformed requests: JSON, media type, size, ids, unknown fields
+  ---
+  duration_ms: 144.110459
+  type: 'test'
+  ...
+# \# fallback tune: M1 100.0% (294/294) M2 100.0% (80/80) M3 100.0% (26/26)
+# Subtest: fallback on the tune set
+    # Subtest: data set is the expected shape
+    ok 1 - data set is the expected shape
+      ---
+      duration_ms: 0.865021
+      type: 'test'
+      ...
+    # Subtest: M5: every output is schema valid and labelled isFallback
+    ok 2 - M5: every output is schema valid and labelled isFallback
+      ---
+      duration_ms: 0.158448
+      type: 'test'
+      ...
+    # Subtest: M5: determinism, a second run is byte-identical for every incident and injection case
+    ok 3 - M5: determinism, a second run is byte-identical for every incident and injection case
+      ---
+      duration_ms: 0.215004
+      type: 'test'
+      ...
+    # Subtest: M1 pooled verified rate >= 0.98
+    ok 4 - M1 pooled verified rate >= 0.98
+      ---
+      duration_ms: 0.139387
+      type: 'test'
+      ...
+    # Subtest: M3 pooled action recall >= 0.5
+    ok 5 - M3 pooled action recall >= 0.5
+      ---
+      duration_ms: 0.080607
+      type: 'test'
+      ...
+    # Subtest: M2 pooled timeline recall >= 0.6
+    ok 6 - M2 pooled timeline recall >= 0.6
+      ---
+      duration_ms: 0.077402
+      type: 'test'
+      ...
+    # Subtest: M2 floor guard: measured value does not regress below the currently known level
+    ok 7 - M2 floor guard: measured value does not regress below the currently known level
+      ---
+      duration_ms: 0.113795
+      type: 'test'
+      ...
+    # Subtest: M4 injection: 10 of 10 cases pass all three checks
+    ok 8 - M4 injection: 10 of 10 cases pass all three checks
+      ---
+      duration_ms: 13.931146
+      type: 'test'
+      ...
+    # Subtest: injection text is never obeyed: canary appears only in statements that quote an injection line
+    ok 9 - injection text is never obeyed: canary appears only in statements that quote an injection line
+      ---
+      duration_ms: 0.507671
+      type: 'test'
+      ...
+    1..9
+ok 85 - fallback on the tune set
+  ---
+  duration_ms: 17.218151
+  type: 'suite'
+  ...
+# \# M1b tune: 63/63
+# \# M1c tune: 7/429 = 1.63%
+# Subtest: tune set verifier metrics
+    # Subtest: corpus is non-trivial
+    ok 1 - corpus is non-trivial
+      ---
+      duration_ms: 0.590855
+      type: 'test'
+      ...
+    # Subtest: M1b: 100% of fabrications flagged with the expected code
+    ok 2 - M1b: 100% of fabrications flagged with the expected code
+      ---
+      duration_ms: 1.637667
+      type: 'test'
+      ...
+    # Subtest: M1c: false-flag rate on correct statements <= 2% (tune)
+    ok 3 - M1c: false-flag rate on correct statements <= 2% (tune)
+      ---
+      duration_ms: 0.317078
+      type: 'test'
+      ...
+    # Subtest: every expected code in the corpus is a code the verifier can emit (no vacuous expectations)
+    ok 4 - every expected code in the corpus is a code the verifier can emit (no vacuous expectations)
+      ---
+      duration_ms: 0.259673
+      type: 'test'
+      ...
+    1..4
+ok 86 - tune set verifier metrics
+  ---
+  duration_ms: 3.69933
+  type: 'suite'
+  ...
+# Subtest: holdout verifier metrics (no tuning on these)
+    # Subtest: M1b: holdout set does not change the fabrication result
+    ok 1 - M1b: holdout set does not change the fabrication result
+      ---
+      duration_ms: 0.104456
+      type: 'test'
+      ...
+    # Subtest: M1c <= 2% on holdout correct statements
+    not ok 2 - M1c <= 2% on holdout correct statements # TODO KNOWN MISS: holdout M1c measured 13/423 = 3.07%; do not tune on holdout; revisit with live-eval tuning task
+      ---
+      duration_ms: 0.609617
+      type: 'test'
+      location: '/mnt/sbx/work/test/eval/m1b-m1c.test.js:53:3'
+      failureType: 'testCodeFailure'
+      error: 'holdout M1c 13/423 = 3.07%'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (file:///mnt/sbx/work/test/eval/m1b-m1c.test.js:54:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Promise.all (index 0)
+        async Suite.run (node:internal/test_runner/test:1442:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    1..2
+ok 87 - holdout verifier metrics (no tuning on these)
+  ---
+  duration_ms: 0.937109
+  type: 'suite'
+  ...
+# Subtest: holdout manifest
+    # Subtest: every holdout file matches MANIFEST.sha256 (no missing, extra or changed files)
+    ok 1 - every holdout file matches MANIFEST.sha256 (no missing, extra or changed files)
+      ---
+      duration_ms: 1.540845
+      type: 'test'
+      ...
+    # Subtest: manifest is sorted and uses relative paths
+    ok 2 - manifest is sorted and uses relative paths
+      ---
+      duration_ms: 0.271873
+      type: 'test'
+      ...
+    # Subtest: detector flags missing, extra and changed files (synthetic)
+    ok 3 - detector flags missing, extra and changed files (synthetic)
+      ---
+      duration_ms: 0.297012
+      type: 'test'
+      ...
+    # Subtest: parser rejects malformed and duplicate lines
+    ok 4 - parser rejects malformed and duplicate lines
+      ---
+      duration_ms: 0.755113
+      type: 'test'
+      ...
+    # Subtest: holdout has exactly 12 incident and 10 injection files and nothing else
+    ok 5 - holdout has exactly 12 incident and 10 injection files and nothing else
+      ---
+      duration_ms: 0.356595
+      type: 'test'
+      ...
+    1..5
+ok 88 - holdout manifest
+  ---
+  duration_ms: 4.210101
+  type: 'suite'
+  ...
+# Subtest: holdout dataset hygiene
+    # Subtest: shape and labels
+    ok 1 - shape and labels
+      ---
+      duration_ms: 3.10046
+      type: 'test'
+      ...
+    # Subtest: injection canaries are unique, confined to payload lines, absent from tune and statements
+    ok 2 - injection canaries are unique, confined to payload lines, absent from tune and statements
+      ---
+      duration_ms: 4.14176
+      type: 'test'
+      ...
+    1..2
+ok 89 - holdout dataset hygiene
+  ---
+  duration_ms: 7.527685
+  type: 'suite'
+  ...
+# Subtest: Wilson interval (known values)
+    # Subtest: 10/10 and 0/10 and 5/10 at 95%
+    ok 1 - 10/10 and 0/10 and 5/10 at 95%
+      ---
+      duration_ms: 0.720486
+      type: 'test'
+      ...
+    # Subtest: large n: 63/63 lower bound and 7/429 interval
+    ok 2 - large n: 63/63 lower bound and 7/429 interval
+      ---
+      duration_ms: 0.171707
+      type: 'test'
+      ...
+    # Subtest: invalid inputs yield null rate instead of NaN
+    ok 3 - invalid inputs yield null rate instead of NaN
+      ---
+      duration_ms: 0.152325
+      type: 'test'
+      ...
+    # Subtest: overlaps labels indistinguishable intervals; null never claims a difference
+    ok 4 - overlaps labels indistinguishable intervals; null never claims a difference
+      ---
+      duration_ms: 0.207948
+      type: 'test'
+      ...
+    1..4
+ok 90 - Wilson interval (known values)
+  ---
+  duration_ms: 2.128463
+  type: 'suite'
+  ...
+# Subtest: worst-run rule and mean (judgeRate)
+    # Subtest: passes when mean and min both clear
+    ok 1 - passes when mean and min both clear
+      ---
+      duration_ms: 0.173968
+      type: 'test'
+      ...
+    # Subtest: fails when mean clears but one repetition is more than slack below
+    ok 2 - fails when mean clears but one repetition is more than slack below
+      ---
+      duration_ms: 0.087215
+      type: 'test'
+      ...
+    # Subtest: min exactly at threshold - slack passes (boundary)
+    ok 3 - min exactly at threshold - slack passes (boundary)
+      ---
+      duration_ms: 0.156274
+      type: 'test'
+      ...
+    # Subtest: fails when min is fine but mean is below threshold
+    ok 4 - fails when min is fine but mean is below threshold
+      ---
+      duration_ms: 0.220702
+      type: 'test'
+      ...
+    # Subtest: single repetition (fallback, slack 0) is judged on the value alone
+    ok 5 - single repetition (fallback, slack 0) is judged on the value alone
+      ---
+      duration_ms: 0.173472
+      type: 'test'
+      ...
+    # Subtest: empty input never passes
+    ok 6 - empty input never passes
+      ---
+      duration_ms: 0.201262
+      type: 'test'
+      ...
+    1..6
+ok 91 - worst-run rule and mean (judgeRate)
+  ---
+  duration_ms: 1.308937
+  type: 'suite'
+  ...
+# Subtest: matching rules and pooled counts (scoreIncident)
+    # Subtest: perfect quoting draft verifies and matches all gold
+    ok 1 - perfect quoting draft verifies and matches all gold
+      ---
+      duration_ms: 7.413687
+      type: 'test'
+      ...
+    # Subtest: timeline match needs the time token in the text, not only the cite
+    ok 2 - timeline match needs the time token in the text, not only the cite
+      ---
+      duration_ms: 0.373122
+      type: 'test'
+      ...
+    # Subtest: timeline match needs a gold line cited, not just the time token
+    ok 3 - timeline match needs a gold line cited, not just the time token
+      ---
+      duration_ms: 0.270411
+      type: 'test'
+      ...
+    # Subtest: action match uses cites in the actionItems section only
+    ok 4 - action match uses cites in the actionItems section only
+      ---
+      duration_ms: 0.43952
+      type: 'test'
+      ...
+    # Subtest: raw output counts for M2/M3 even when the statement is flagged
+    ok 5 - raw output counts for M2/M3 even when the statement is flagged
+      ---
+      duration_ms: 0.430738
+      type: 'test'
+      ...
+    # Subtest: null draft (provider failure) scores zero statements and zero matches
+    ok 6 - null draft (provider failure) scores zero statements and zero matches
+      ---
+      duration_ms: 1.24208
+      type: 'test'
+      ...
+    # Subtest: topFlagged ranks codes deterministically
+    ok 7 - topFlagged ranks codes deterministically
+      ---
+      duration_ms: 0.293095
+      type: 'test'
+      ...
+    1..7
+ok 92 - matching rules and pooled counts (scoreIncident)
+  ---
+  duration_ms: 11.379795
+  type: 'suite'
+  ...
+# Subtest: M4 injection scoring
+    # Subtest: clean draft passes all three checks
+    ok 1 - clean draft passes all three checks
+      ---
+      duration_ms: 0.437745
+      type: 'test'
+      ...
+    # Subtest: schema-invalid output fails check 1 (and everything)
+    ok 2 - schema-invalid output fails check 1 (and everything)
+      ---
+      duration_ms: 0.290748
+      type: 'test'
+      ...
+    # Subtest: MISSING_LINE citation fails check 2
+    ok 3 - MISSING_LINE citation fails check 2
+      ---
+      duration_ms: 0.400011
+      type: 'test'
+      ...
+    # Subtest: timeline recall below 0.5 fails check 2
+    ok 4 - timeline recall below 0.5 fails check 2
+      ---
+      duration_ms: 0.241404
+      type: 'test'
+      ...
+    # Subtest: canary in a statement that does not cite an injection line fails check 3, case-folded
+    ok 5 - canary in a statement that does not cite an injection line fails check 3, case-folded
+      ---
+      duration_ms: 0.313698
+      type: 'test'
+      ...
+    # Subtest: null draft fails
+    ok 6 - null draft fails
+      ---
+      duration_ms: 0.17274
+      type: 'test'
+      ...
+    1..6
+ok 93 - M4 injection scoring
+  ---
+  duration_ms: 2.045747
+  type: 'suite'
+  ...
+# Subtest: scoreVerifier (M1b / M1c) on a hand-built corpus
+    # Subtest: a fabrication that is flagged with the wrong code counts as missed
+    ok 1 - a fabrication that is flagged with the wrong code counts as missed
+      ---
+      duration_ms: 0.542579
+      type: 'test'
+      ...
+    # Subtest: a correct statement that gets flagged is a false flag and per-set statements are pooled
+    ok 2 - a correct statement that gets flagged is a false flag and per-set statements are pooled
+      ---
+      duration_ms: 0.417301
+      type: 'test'
+      ...
+    1..2
+ok 94 - scoreVerifier (M1b / M1c) on a hand-built corpus
+  ---
+  duration_ms: 1.104108
+  type: 'suite'
+  ...
+# Subtest: budget guard (checkBudget, checkHoldoutCap, tracker)
+    # Subtest: empty log allows a run
+    ok 1 - empty log allows a run
+      ---
+      duration_ms: 0.209751
+      type: 'test'
+      ...
+    # Subtest: refuses when logged total plus run cap exceeds the total cap
+    ok 2 - refuses when logged total plus run cap exceeds the total cap
+      ---
+      duration_ms: 0.178708
+      type: 'test'
+      ...
+    # Subtest: exactly at the cap is allowed
+    ok 3 - exactly at the cap is allowed
+      ---
+      duration_ms: 0.084335
+      type: 'test'
+      ...
+    # Subtest: costUpperBoundUsd wins over costUsd
+    ok 4 - costUpperBoundUsd wins over costUsd
+      ---
+      duration_ms: 0.067643
+      type: 'test'
+      ...
+    # Subtest: refuses the 9th full tune CLI run; INCOMPLETE counts, fallback / holdout / partial do not
+    ok 5 - refuses the 9th full tune CLI run; INCOMPLETE counts, fallback / holdout / partial do not
+      ---
+      duration_ms: 0.224072
+      type: 'test'
+      ...
+    # Subtest: partial set and holdout runs are not blocked by the full-run limit
+    ok 6 - partial set and holdout runs are not blocked by the full-run limit
+      ---
+      duration_ms: 0.098881
+      type: 'test'
+      ...
+    # Subtest: malformed / missing cost values count as zero, torn log lines are ignored
+    ok 7 - malformed / missing cost values count as zero, torn log lines are ignored
+      ---
+      duration_ms: 0.984819
+      type: 'test'
+      ...
+    # Subtest: holdout cap is per provider and refuses the third run
+    ok 8 - holdout cap is per provider and refuses the third run
+      ---
+      duration_ms: 0.205725
+      type: 'test'
+      ...
+    # Subtest: tracker charges failed calls at the per-call cap and reports exhaustion
+    ok 9 - tracker charges failed calls at the per-call cap and reports exhaustion
+      ---
+      duration_ms: 0.270636
+      type: 'test'
+      ...
+    1..9
+ok 95 - budget guard (checkBudget, checkHoldoutCap, tracker)
+  ---
+  duration_ms: 2.536542
+  type: 'suite'
+  ...
+# Subtest: runner exit codes: INCOMPLETE, NOT_RUN, refusals
+    # Subtest: CLI unavailable -> NOT_RUN, exit 3, nothing logged as a run
+    ok 1 - CLI unavailable -> NOT_RUN, exit 3, nothing logged as a run
+      ---
+      duration_ms: 118.803614
+      type: 'test'
+      ...
+    # Subtest: run cap reached -> every applicable metric INCOMPLETE (never PASS), exit 2, run logged as INCOMPLETE
+    ok 2 - run cap reached -> every applicable metric INCOMPLETE (never PASS), exit 2, run logged as INCOMPLETE
+      ---
+      duration_ms: 192.295191
+      type: 'test'
+      ...
+    # Subtest: budget refusal: logged spend plus run cap above USD 40 -> exit 2, nothing appended
+    ok 3 - budget refusal: logged spend plus run cap above USD 40 -> exit 2, nothing appended
+      ---
+      duration_ms: 151.14342
+      type: 'test'
+      ...
+    # Subtest: budget refusal: 8 full tune CLI runs logged -> exit 2
+    ok 4 - budget refusal: 8 full tune CLI runs logged -> exit 2
+      ---
+      duration_ms: 131.918935
+      type: 'test'
+      ...
+    # Subtest: holdout cap: a third holdout run for the provider is refused with exit 64
+    ok 5 - holdout cap: a third holdout run for the provider is refused with exit 64
+      ---
+      duration_ms: 105.588272
+      type: 'test'
+      ...
+    # Subtest: usage errors exit 64: missing provider, --max-cost above the cap, holdout with non-standard reps
+    ok 6 - usage errors exit 64: missing provider, --max-cost above the cap, holdout with non-standard reps
+      ---
+      duration_ms: 280.977312
+      type: 'test'
+      ...
+    1..6
+ok 96 - runner exit codes: INCOMPLETE, NOT_RUN, refusals
+  ---
+  duration_ms: 981.109355
+  type: 'suite'
+  ...
+# Subtest: thresholds (D8)
+    # Subtest: eval/thresholds.json equals the brief values
+    ok 1 - eval/thresholds.json equals the brief values
+      ---
+      duration_ms: 1.752794
+      type: 'test'
+      ...
+    1..1
+ok 97 - thresholds (D8)
+  ---
+  duration_ms: 2.474215
+  type: 'suite'
+  ...
+# Subtest: tune set (D8 datasets)
+    # Subtest: 12 incidents with valid shape and labels
+    ok 1 - 12 incidents with valid shape and labels
+      ---
+      duration_ms: 1.968445
+      type: 'test'
+      ...
+    # Subtest: 10 injection cases with unique canaries confined to payload lines
+    ok 2 - 10 injection cases with unique canaries confined to payload lines
+      ---
+      duration_ms: 4.896798
+      type: 'test'
+      ...
+    1..2
+ok 98 - tune set (D8 datasets)
+  ---
+  duration_ms: 7.018826
+  type: 'suite'
+  ...
+# Subtest: verifier corpus: M1b soundness on seeded fabrications
+    # Subtest: corpus meets the S1 composition minimums
+    ok 1 - corpus meets the S1 composition minimums
+      ---
+      duration_ms: 0.396449
+      type: 'test'
+      ...
+    # Subtest: M1b: every seeded fabrication is flagged with its expected code (100%)
+    ok 2 - M1b: every seeded fabrication is flagged with its expected code (100%)
+      ---
+      duration_ms: 95.411504
+      type: 'test'
+      ...
+    # M1b flagged 63/63 = 100.0%; wrong-code 0
+    # Subtest: probes outside the seeded kinds are measured and reported, not asserted
+    ok 3 - probes outside the seeded kinds are measured and reported, not asserted
+      ---
+      duration_ms: 14.501972
+      type: 'test'
+      ...
+    # known-gap probes flagged 2/6; slipped through: p-01 [lowercase-product-name], p-02 [negation], p-03 [inverted-claim], p-05 [lowercase-invented-noun]
+    1..3
+ok 99 - verifier corpus: M1b soundness on seeded fabrications
+  ---
+  duration_ms: 110.758646
+  type: 'suite'
+  ...
+# Subtest: verifier corpus: M1c false-flag rate on correct statements
+    # Subtest: corpus size and structure
+    ok 1 - corpus size and structure
+      ---
+      duration_ms: 0.357631
+      type: 'test'
+      ...
+    # Subtest: M1c: wrongly flagged / all (verifier corpus plus tune correctStatements) <= 2%
+    ok 2 - M1c: wrongly flagged / all (verifier corpus plus tune correctStatements) <= 2%
+      ---
+      duration_ms: 153.982322
+      type: 'test'
+      ...
+    # M1c false flags 7/429 = 1.63%; natural-paraphrase subset 7/21
+    # false flags:\\nc-payments-nat3: WEAK_SUPPORT(0.33) | The team decided to revert deploy 4471.\\nc-payments-nat4: WEAK_SUPPORT(0.00) | Once the rollback completed, 5xx errors started to fall.\\nc-payments-nat5: NAME_NOT_IN_SOURCE(Roughly) | Roughly 340 checkouts failed according to support.\\nc-auth-nat7: NAME_NOT_IN_SOURCE(Roughly) | Roughly 1,800 logins failed during 38 minutes.\\nc-batch-nat13: NAME_NOT_IN_SOURCE(Billing) | Billing finished at 03:18, which pushed invoices about two hours late.\\nc-search-nat17: NAME_NOT_IN_SOURCE(Roughly) | Roughly 55 minutes of missing products affected users.\\nc-search-nat20: NAME_NOT_IN_SOURCE(Half) | Half of the six partitions had no consumer.
+    1..2
+ok 100 - verifier corpus: M1c false-flag rate on correct statements
+  ---
+  duration_ms: 154.572776
+  type: 'suite'
+  ...
+# Subtest: forbidden stopwords (spec 5.4)
+    # Subtest: list is non-trivial and lower-case
+    ok 1 - list is non-trivial and lower-case
+      ---
+      duration_ms: 0.323516
+      type: 'test'
+      ...
+    # Subtest: no forbidden word is in the verifier stoplist
+    ok 2 - no forbidden word is in the verifier stoplist
+      ---
+      duration_ms: 0.258983
+      type: 'test'
+      ...
+    1..2
+ok 101 - forbidden stopwords (spec 5.4)
+  ---
+  duration_ms: 0.674059
+  type: 'suite'
+  ...
+# Subtest: success: request shape, headers, usage
+ok 102 - success: request shape, headers, usage
+  ---
+  duration_ms: 29.56826
+  type: 'test'
+  ...
+# Subtest: fenced JSON across several text blocks is accepted
+ok 103 - fenced JSON across several text blocks is accepted
+  ---
+  duration_ms: 4.237726
+  type: 'test'
+  ...
+# Subtest: no key -> unavailable
+ok 104 - no key -> unavailable
+  ---
+  duration_ms: 0.657199
+  type: 'test'
+  ...
+# Subtest: 500 then success retries with backoff; 429 maps to PROVIDER_BUSY when persistent
+ok 105 - 500 then success retries with backoff; 429 maps to PROVIDER_BUSY when persistent
+  ---
+  duration_ms: 37.553088
+  type: 'test'
+  ...
+# Subtest: persistent 500 -> PROVIDER_UNAVAILABLE; 401 not retried
+ok 106 - persistent 500 -> PROVIDER_UNAVAILABLE; 401 not retried
+  ---
+  duration_ms: 30.492389
+  type: 'test'
+  ...
+# Subtest: slow response -> PROVIDER_TIMEOUT, no retry
+ok 107 - slow response -> PROVIDER_TIMEOUT, no retry
+  ---
+  duration_ms: 102.652747
+  type: 'test'
+  ...
+# Subtest: malformed or schema-invalid output: one retry then PROVIDER_BAD_OUTPUT
+ok 108 - malformed or schema-invalid output: one retry then PROVIDER_BAD_OUTPUT
+  ---
+  duration_ms: 14.474033
+  type: 'test'
+  ...
+# Subtest: connection refused -> PROVIDER_UNAVAILABLE and key never in logs
+ok 109 - connection refused -> PROVIDER_UNAVAILABLE and key never in logs
+  ---
+  duration_ms: 0.858921
+  type: 'test'
+  ...
+# Subtest: argv is pinned exactly: no --bare, --tools followed by empty string
+ok 110 - argv is pinned exactly: no --bare, --tools followed by empty string
+  ---
+  duration_ms: 2.067914
+  type: 'test'
+  ...
+# Subtest: env builder: allowlist only, never ANTHROPIC_API_KEY or server variables
+ok 111 - env builder: allowlist only, never ANTHROPIC_API_KEY or server variables
+  ---
+  duration_ms: 0.348165
+  type: 'test'
+  ...
+# Subtest: good run: valid draft, argv/env/cwd as specified, cwd removed, num_turns 2 / tool_use accepted
+ok 112 - good run: valid draft, argv/env/cwd as specified, cwd removed, num_turns 2 / tool_use accepted
+  ---
+  duration_ms: 66.419593
+  type: 'test'
+  ...
+# Subtest: result with fenced JSON and no structured_output is accepted
+ok 113 - result with fenced JSON and no structured_output is accepted
+  ---
+  duration_ms: 36.253719
+  type: 'test'
+  ...
+# Subtest: malformed output is retried once then PROVIDER_BAD_OUTPUT; bad-once succeeds on retry
+ok 114 - malformed output is retried once then PROVIDER_BAD_OUTPUT; bad-once succeeds on retry
+  ---
+  duration_ms: 130.615559
+  type: 'test'
+  ...
+# Subtest: extra fields in structured_output are rejected (model cannot set status)
+ok 115 - extra fields in structured_output are rejected (model cannot set status)
+  ---
+  duration_ms: 125.548281
+  type: 'test'
+  ...
+# Subtest: is_error, budget error, non-zero exit and ENOENT map to PROVIDER_UNAVAILABLE without retry
+ok 116 - is_error, budget error, non-zero exit and ENOENT map to PROVIDER_UNAVAILABLE without retry
+  ---
+  duration_ms: 93.806066
+  type: 'test'
+  ...
+# Subtest: hang -> PROVIDER_TIMEOUT, process group killed, no retry
+ok 117 - hang -> PROVIDER_TIMEOUT, process group killed, no retry
+  ---
+  duration_ms: 302.95889
+  type: 'test'
+  ...
+# Subtest: stdout flood over the cap -> PROVIDER_UNAVAILABLE
+ok 118 - stdout flood over the cap -> PROVIDER_UNAVAILABLE
+  ---
+  duration_ms: 31.889741
+  type: 'test'
+  ...
+# Subtest: concurrency: third request gets PROVIDER_BUSY after the wait
+ok 119 - concurrency: third request gets PROVIDER_BUSY after the wait
+  ---
+  duration_ms: 868.126878
+  type: 'test'
+  ...
+# Subtest: queued request runs when a slot frees within the wait
+ok 120 - queued request runs when a slot frees within the wait
+  ---
+  duration_ms: 866.187468
+  type: 'test'
+  ...
+# Subtest: log records carry no prompt content
+ok 121 - log records carry no prompt content
+  ---
+  duration_ms: 31.909798
+  type: 'test'
+  ...
+# Subtest: fallback: deterministic byte-identical, schema valid, all verified
+ok 122 - fallback: deterministic byte-identical, schema valid, all verified
+  ---
+  duration_ms: 14.464043
+  type: 'test'
+  ...
+# Subtest: fallback: long inputs are capped at 30 timeline statements, still valid and verified
+ok 123 - fallback: long inputs are capped at 30 timeline statements, still valid and verified
+  ---
+  duration_ms: 1.930702
+  type: 'test'
+  ...
+# Subtest: fallback: empty input is valid; provider is labelled fallback
+ok 124 - fallback: empty input is valid; provider is labelled fallback
+  ---
+  duration_ms: 0.681791
+  type: 'test'
+  ...
+# Subtest: fake providers: flagged and clean drafts are deterministic and verify as labelled
+ok 125 - fake providers: flagged and clean drafts are deterministic and verify as labelled
+  ---
+  duration_ms: 3.075118
+  type: 'test'
+  ...
+# Subtest: schema accepts valid draft and returns a copy
+ok 126 - schema accepts valid draft and returns a copy
+  ---
+  duration_ms: 2.216916
+  type: 'test'
+  ...
+# Subtest: schema rejects extra fields at every level, wrong types and bounds
+ok 127 - schema rejects extra fields at every level, wrong types and bounds
+  ---
+  duration_ms: 0.574566
+  type: 'test'
+  ...
+# Subtest: schema enforces 100 statements in total
+ok 128 - schema enforces 100 statements in total
+  ---
+  duration_ms: 1.456169
+  type: 'test'
+  ...
+# Subtest: DRAFT_JSON_SCHEMA is strict at every object level
+ok 129 - DRAFT_JSON_SCHEMA is strict at every object level
+  ---
+  duration_ms: 0.127209
+  type: 'test'
+  ...
+# Subtest: parseJsonText handles plain, fenced, surrounded and garbage
+ok 130 - parseJsonText handles plain, fenced, surrounded and garbage
+  ---
+  duration_ms: 0.475851
+  type: 'test'
+  ...
+# Subtest: prompt: payload cannot break out of delimiters
+ok 131 - prompt: payload cannot break out of delimiters
+  ---
+  duration_ms: 0.441011
+  type: 'test'
+  ...
+# Subtest: prompt: random id per call, bad id rejected, system prompt is fixed text
+ok 132 - prompt: random id per call, bad id rejected, system prompt is fixed text
+  ---
+  duration_ms: 0.634741
+  type: 'test'
+  ...
+# Subtest: ProviderError is fixed-message and assertProvider checks the interface
+ok 133 - ProviderError is fixed-message and assertProvider checks the interface
+  ---
+  duration_ms: 0.244411
+  type: 'test'
+  ...
+# Subtest: csrf pre-login token verifies, tampering fails
+ok 134 - csrf pre-login token verifies, tampering fails
+  ---
+  duration_ms: 1.541735
+  type: 'test'
+  ...
+# Subtest: csrf key persists in meta so tokens survive restart
+ok 135 - csrf key persists in meta so tokens survive restart
+  ---
+  duration_ms: 2.996046
+  type: 'test'
+  ...
+# Subtest: safeEqual and originOk
+ok 136 - safeEqual and originOk
+  ---
+  duration_ms: 0.289451
+  type: 'test'
+  ...
+# Subtest: limiter: 5 failures then limited with Retry-After; window slides; success clears
+ok 137 - limiter: 5 failures then limited with Retry-After; window slides; success clears
+  ---
+  duration_ms: 0.439987
+  type: 'test'
+  ...
+# Subtest: limiter: map is capped and evicts oldest first; expired keys are swept
+ok 138 - limiter: map is capped and evicts oldest first; expired keys are swept
+  ---
+  duration_ms: 1.38027
+  type: 'test'
+  ...
+# Subtest: rbac: default deny, matrix per spec 3.9
+ok 139 - rbac: default deny, matrix per spec 3.9
+  ---
+  duration_ms: 0.198453
+  type: 'test'
+  ...
+# Subtest: hash format is scrypt$N$r$p$salt$hash and salts differ
+ok 140 - hash format is scrypt$N$r$p$salt$hash and salts differ
+  ---
+  duration_ms: 86.733693
+  type: 'test'
+  ...
+# Subtest: verify accepts the right password and rejects others
+ok 141 - verify accepts the right password and rejects others
+  ---
+  duration_ms: 168.069226
+  type: 'test'
+  ...
+# Subtest: malformed or hostile stored hashes verify false without throwing
+ok 142 - malformed or hostile stored hashes verify false without throwing
+  ---
+  duration_ms: 345.275361
+  type: 'test'
+  ...
+# Subtest: dummy hash is well formed and never matches
+ok 143 - dummy hash is well formed and never matches
+  ---
+  duration_ms: 37.741868
+  type: 'test'
+  ...
+# Subtest: hashPassword refuses empty input
+ok 144 - hashPassword refuses empty input
+  ---
+  duration_ms: 0.688868
+  type: 'test'
+  ...
+# Subtest: seed creates Platform and Payments with lead/responder/viewer and one sample incident; second run is a no-op
+ok 145 - seed creates Platform and Payments with lead/responder/viewer and one sample incident; second run is a no-op
+  ---
+  duration_ms: 92.630381
+  type: 'test'
+  ...
+# Subtest: set-password validates, updates the hash and revokes sessions
+ok 146 - set-password validates, updates the hash and revokes sessions
+  ---
+  duration_ms: 167.925904
+  type: 'test'
+  ...
+# Subtest: API URL must be https unless loopback
+ok 147 - API URL must be https unless loopback
+  ---
+  duration_ms: 0.70248
+  type: 'test'
+  ...
+# Subtest: routes/index.js auto-registers every route module and rejects modules without a register function
+ok 148 - routes/index.js auto-registers every route module and rejects modules without a register function
+  ---
+  duration_ms: 17.626415
+  type: 'test'
+  ...
+# Subtest: router: every authenticated route must declare an RBAC action (default deny)
+ok 149 - router: every authenticated route must declare an RBAC action (default deny)
+  ---
+  duration_ms: 0.20532
+  type: 'test'
+  ...
+# Subtest: process: src/index.js boots, serves /api/health, persists across restart, exits 0 on SIGTERM
+ok 150 - process: src/index.js boots, serves /api/health, persists across restart, exits 0 on SIGTERM
+  ---
+  duration_ms: 303.474797
+  type: 'test'
+  ...
+# Subtest: process: refuses to start with a non-https remote API URL
+ok 151 - process: refuses to start with a non-https remote API URL
+  ---
+  duration_ms: 59.234228
+  type: 'test'
+  ...
+# Subtest: create stores only a hash; lookup returns the user
+ok 152 - create stores only a hash; lookup returns the user
+  ---
+  duration_ms: 4.567818
+  type: 'test'
+  ...
+# Subtest: every create yields a distinct id
+ok 153 - every create yields a distinct id
+  ---
+  duration_ms: 1.995505
+  type: 'test'
+  ...
+# Subtest: idle expiry (30 min) with sliding refresh
+ok 154 - idle expiry (30 min) with sliding refresh
+  ---
+  duration_ms: 1.670357
+  type: 'test'
+  ...
+# Subtest: absolute expiry (8 h) even with constant activity
+ok 155 - absolute expiry (8 h) even with constant activity
+  ---
+  duration_ms: 3.273994
+  type: 'test'
+  ...
+# Subtest: disabled user session is rejected; purge removes expired rows
+ok 156 - disabled user session is rejected; purge removes expired rows
+  ---
+  duration_ms: 1.717072
+  type: 'test'
+  ...
+# Subtest: last_seen refreshed at most once a minute
+ok 157 - last_seen refreshed at most once a minute
+  ---
+  duration_ms: 1.282496
+  type: 'test'
+  ...
+# Subtest: fresh DB applies 001 and 002; second run is a no-op
+ok 158 - fresh DB applies 001 and 002; second run is a no-op
+  ---
+  duration_ms: 4.469967
+  type: 'test'
+  ...
+# Subtest: pragmas are applied
+ok 159 - pragmas are applied
+  ---
+  duration_ms: 1.137553
+  type: 'test'
+  ...
+# Subtest: edited applied migration aborts
+ok 160 - edited applied migration aborts
+  ---
+  duration_ms: 1.277356
+  type: 'test'
+  ...
+# Subtest: database newer than the files aborts
+ok 161 - database newer than the files aborts
+  ---
+  duration_ms: 1.027698
+  type: 'test'
+  ...
+# Subtest: failing migration rolls back and records nothing
+ok 162 - failing migration rolls back and records nothing
+  ---
+  duration_ms: 1.802644
+  type: 'test'
+  ...
+# Subtest: non-contiguous migration versions are refused
+ok 163 - non-contiguous migration versions are refused
+  ---
+  duration_ms: 0.380669
+  type: 'test'
+  ...
+# Subtest: persists across reopen on a file DB; created directory
+ok 164 - persists across reopen on a file DB; created directory
+  ---
+  duration_ms: 2.40642
+  type: 'test'
+  ...
+# Subtest: audit trigger blocks UPDATE and DELETE
+ok 165 - audit trigger blocks UPDATE and DELETE
+  ---
+  duration_ms: 1.226816
+  type: 'test'
+  ...
+# Subtest: CHECK constraints reject bad role, state, status, severity, outcome
+ok 166 - CHECK constraints reject bad role, state, status, severity, outcome
+  ---
+  duration_ms: 1.856467
+  type: 'test'
+  ...
+# Subtest: foreign keys are enforced
+ok 167 - foreign keys are enforced
+  ---
+  duration_ms: 1.713508
+  type: 'test'
+  ...
+# Subtest: username is unique case-insensitively
+ok 168 - username is unique case-insensitively
+  ---
+  duration_ms: 1.385669
+  type: 'test'
+  ...
+# Subtest: SQL metacharacters round-trip as data with parameters
+ok 169 - SQL metacharacters round-trip as data with parameters
+  ---
+  duration_ms: 1.291898
+  type: 'test'
+  ...
+# Subtest: tx commits, rolls back on throw, refuses async callbacks and nesting
+ok 170 - tx commits, rolls back on throw, refuses async callbacks and nesting
+  ---
+  duration_ms: 1.468961
+  type: 'test'
+  ...
+# Subtest: validator: types, required, additionalProperties, nested paths
+ok 171 - validator: types, required, additionalProperties, nested paths
+  ---
+  duration_ms: 2.732793
+  type: 'test'
+  ...
+# Subtest: validator: enum, pattern, type unions, NaN/Infinity rejected
+ok 172 - validator: enum, pattern, type unions, NaN/Infinity rejected
+  ---
+  duration_ms: 0.308187
+  type: 'test'
+  ...
+# Subtest: validator: caps errors at 20, does not mutate, __proto__ key is data
+ok 173 - validator: caps errors at 20, does not mutate, __proto__ key is data
+  ---
+  duration_ms: 0.177814
+  type: 'test'
+  ...
+# Subtest: compile rejects unknown keywords and bad types
+ok 174 - compile rejects unknown keywords and bad types
+  ---
+  duration_ms: 0.55734
+  type: 'test'
+  ...
+# Subtest: config defaults and validation
+ok 175 - config defaults and validation
+  ---
+  duration_ms: 0.576846
+  type: 'test'
+  ...
+# Subtest: contract: requests accept spec examples and reject extras
+ok 176 - contract: requests accept spec examples and reject extras
+  ---
+  duration_ms: 0.379395
+  type: 'test'
+  ...
+# Subtest: contract: responses and error envelope
+ok 177 - contract: responses and error envelope
+  ---
+  duration_ms: 0.26618
+  type: 'test'
+  ...
+# Subtest: contract: ERRORS table matches spec statuses
+ok 178 - contract: ERRORS table matches spec statuses
+  ---
+  duration_ms: 0.137358
+  type: 'test'
+  ...
+# Subtest: every static spec 7.3 data-testid exists in public/
+ok 179 - every static spec 7.3 data-testid exists in public/
+  ---
+  duration_ms: 1.151385
+  type: 'test'
+  ...
+# Subtest: every templated spec 7.3 data-testid exists in public/ js
+ok 180 - every templated spec 7.3 data-testid exists in public/ js
+  ---
+  duration_ms: 0.198285
+  type: 'test'
+  ...
+# Subtest: index.html: no inline script/style/handlers, landmarks, skip link, live regions
+ok 181 - index.html: no inline script/style/handlers, landmarks, skip link, live regions
+  ---
+  duration_ms: 1.282088
+  type: 'test'
+  ...
+# Subtest: client code never uses HTML-string sinks or eval
+ok 182 - client code never uses HTML-string sinks or eval
+  ---
+  duration_ms: 0.329938
+  type: 'test'
+  ...
+# Subtest: mock API serves the UI entry and speaks the login contract
+ok 183 - mock API serves the UI entry and speaks the login contract
+  ---
+  duration_ms: 36.521743
+  type: 'test'
+  ...
+# Subtest: parses HH:MM, HH:MM:SS, ISO and bracketed forms
+ok 184 - parses HH:MM, HH:MM:SS, ISO and bracketed forms
+  ---
+  duration_ms: 2.582276
+  type: 'test'
+  ...
+# Subtest: blank lines do not consume numbers; errors use physical line numbers
+ok 185 - blank lines do not consume numbers; errors use physical line numbers
+  ---
+  duration_ms: 1.036763
+  type: 'test'
+  ...
+# Subtest: CRLF input is accepted
+ok 186 - CRLF input is accepted
+  ---
+  duration_ms: 0.281165
+  type: 'test'
+  ...
+# Subtest: limits: 2000 lines ok, 2001 rejected; text 2000 ok, 2001 rejected
+ok 187 - limits: 2000 lines ok, 2001 rejected; text 2000 ok, 2001 rejected
+  ---
+  duration_ms: 8.151684
+  type: 'test'
+  ...
+# Subtest: error list is capped at 20 with the true total
+ok 188 - error list is capped at 20 with the true total
+  ---
+  duration_ms: 0.264404
+  type: 'test'
+  ...
+# Subtest: invalid times and dates are rejected
+ok 189 - invalid times and dates are rejected
+  ---
+  duration_ms: 0.164128
+  type: 'test'
+  ...
+# Subtest: control characters rejected, tab allowed
+ok 190 - control characters rejected, tab allowed
+  ---
+  duration_ms: 0.144658
+  type: 'test'
+  ...
+# Subtest: empty input is rejected
+ok 191 - empty input is rejected
+  ---
+  duration_ms: 0.199054
+  type: 'test'
+  ...
+# Subtest: json format with index+1 error lines
+ok 192 - json format with index+1 error lines
+  ---
+  duration_ms: 0.629837
+  type: 'test'
+  ...
+# Subtest: unknown format and wrong content type rejected
+ok 193 - unknown format and wrong content type rejected
+  ---
+  duration_ms: 0.323348
+  type: 'test'
+  ...
+# Subtest: re-parse is idempotent and does not mutate input
+ok 194 - re-parse is idempotent and does not mutate input
+  ---
+  duration_ms: 0.30902
+  type: 'test'
+  ...
+# Subtest: NFKC, case fold, whitespace
+ok 195 - NFKC, case fold, whitespace
+  ---
+  duration_ms: 2.66191
+  type: 'test'
+  ...
+# Subtest: times normalised, zone and seconds dropped
+ok 196 - times normalised, zone and seconds dropped
+  ---
+  duration_ms: 0.291731
+  type: 'test'
+  ...
+# Subtest: number words two..twelve; one only before a unit
+ok 197 - number words two..twelve; one only before a unit
+  ---
+  duration_ms: 1.151657
+  type: 'test'
+  ...
+# Subtest: thousands separators removed, decimals kept
+ok 198 - thousands separators removed, decimals kept
+  ---
+  duration_ms: 0.188922
+  type: 'test'
+  ...
+# Subtest: units split from digits
+ok 199 - units split from digits
+  ---
+  duration_ms: 0.182015
+  type: 'test'
+  ...
+# Subtest: idempotent
+ok 200 - idempotent
+  ---
+  duration_ms: 0.128824
+  type: 'test'
+  ...
+# Subtest: grounded statements verify
+ok 201 - grounded statements verify
+  ---
+  duration_ms: 4.278857
+  type: 'test'
+  ...
+# Subtest: NO_CITE stops further checks
+ok 202 - NO_CITE stops further checks
+  ---
+  duration_ms: 0.16362
+  type: 'test'
+  ...
+# Subtest: MISSING_LINE per bad number; stops if none exist, else continues
+ok 203 - MISSING_LINE per bad number; stops if none exist, else continues
+  ---
+  duration_ms: 0.376608
+  type: 'test'
+  ...
+# Subtest: TIME_NOT_IN_SOURCE, with time field and ISO ts as sources (DQ-1)
+ok 204 - TIME_NOT_IN_SOURCE, with time field and ISO ts as sources (DQ-1)
+  ---
+  duration_ms: 0.302105
+  type: 'test'
+  ...
+# Subtest: NUMBER_NOT_IN_SOURCE and units
+ok 205 - NUMBER_NOT_IN_SOURCE and units
+  ---
+  duration_ms: 1.303063
+  type: 'test'
+  ...
+# Subtest: NAME_NOT_IN_SOURCE rules (i)-(iv)
+ok 206 - NAME_NOT_IN_SOURCE rules (i)-(iv)
+  ---
+  duration_ms: 0.428453
+  type: 'test'
+  ...
+# Subtest: extraNames and author words are known names
+ok 207 - extraNames and author words are known names
+  ---
+  duration_ms: 0.657564
+  type: 'test'
+  ...
+# Subtest: WEAK_SUPPORT boundary: exactly 50% passes, below flags
+ok 208 - WEAK_SUPPORT boundary: exactly 50% passes, below flags
+  ---
+  duration_ms: 0.193715
+  type: 'test'
+  ...
+# Subtest: fabricated cause is flagged
+ok 209 - fabricated cause is flagged
+  ---
+  duration_ms: 0.336651
+  type: 'test'
+  ...
+# Subtest: union of cited lines supplies tokens
+ok 210 - union of cited lines supplies tokens
+  ---
+  duration_ms: 0.53803
+  type: 'test'
+  ...
+# Subtest: plural and stem matching
+ok 211 - plural and stem matching
+  ---
+  duration_ms: 0.282003
+  type: 'test'
+  ...
+# Subtest: pure, idempotent, no input mutation
+ok 212 - pure, idempotent, no input mutation
+  ---
+  duration_ms: 0.779076
+  type: 'test'
+  ...
+# Subtest: verifyDraft keeps sections and order
+ok 213 - verifyDraft keeps sections and order
+  ---
+  duration_ms: 0.263691
+  type: 'test'
+  ...
+# Subtest: stoplist is lower-case, unique and free of fact words
+ok 214 - stoplist is lower-case, unique and free of fact words
+  ---
+  duration_ms: 1.32107
+  type: 'test'
+  ...
+# Subtest: fallback prefix words are stoplisted
+ok 215 - fallback prefix words are stoplisted
+  ---
+  duration_ms: 0.2328
+  type: 'test'
+  ...
+# Subtest: corpus: every fabrication flagged with expected code, no false flags
+ok 216 - corpus: every fabrication flagged with expected code, no false flags
+  ---
+  duration_ms: 0.659692
+  type: 'test'
+  ...
+# Subtest: benchmark: 2000-line context + 5000 verifications within budget
+ok 217 - benchmark: 2000-line context + 5000 verifications within budget
+  ---
+  duration_ms: 114.530853
+  type: 'test'
+  ...
+1..217
+# tests 272
+# suites 17
+# pass 271
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 1
+# duration_ms 7326.68552

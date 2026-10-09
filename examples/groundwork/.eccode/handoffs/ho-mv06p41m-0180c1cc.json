@@ -1,0 +1,41 @@
+{
+  "from": "devops-engineer",
+  "to": "orchestrator",
+  "task": "docs-devops",
+  "objective": "Make README, eval-results and operations docs state current evaluation facts truthfully",
+  "context": "Old holdout retired (M1c 13/423). Verifier fixed on tune data only. New sealed holdout run once per provider: both FAIL only M1c 11/440=2.50%. Decision dec-mv06n1v2-012ac0d8 awaits the human user. Caps exhausted.",
+  "inputs": [
+    "eval/tuning-log.md",
+    "eval/reports/*holdout-2026-10-08T23-38-*",
+    "eval/usage.log",
+    "eval/holdout-runs.log",
+    "package.json"
+  ],
+  "dependencies": [
+    "browser-e2e",
+    "live-eval"
+  ],
+  "expectedOutput": "Docs that do not claim acceptance and quote final reports",
+  "acceptanceCriteria": [
+    "Docs state build does not meet M1c",
+    "No acceptance claimed",
+    "Commands match package.json scripts"
+  ],
+  "completedWork": "README results, eval rules, limitations rewritten; eval-results.md rewritten around current holdout; operations.md has release status. Documented npm scripts verified against package.json. No live eval, reconcile --verify or eval/run.js run.",
+  "filesChanged": [
+    "README.md",
+    "docs/eval-results.md",
+    "docs/operations.md"
+  ],
+  "evidence": [
+    "ev:ev-mv06oxbg-011fcbea"
+  ],
+  "remainingIssues": [
+    "M1c miss unresolved, awaiting user decision dec-mv06n1v2-012ac0d8",
+    "Fallback tune report (23:26) shows M1c 7/429 while CLI tune (23:30) shows 0/429; provenance unclear and noted in docs",
+    "No .env.example exists (outside owned files)",
+    "Clean-checkout npm test not re-run by me in a separate copy; npm test passes in the working tree (274 pass, 1 todo)"
+  ],
+  "nextAction": "orchestrator: surface the decision to the human user",
+  "lessonsConsulted": []
+}

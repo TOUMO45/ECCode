@@ -1,0 +1,525 @@
+{
+ "id": "hold2-04",
+ "title": "Push notifications delayed by queue consumer crash loop",
+ "severity": "SEV3",
+ "startedAt": "2026-06-30T23:40:00+05:30",
+ "lines": [
+  {
+   "n": 1,
+   "time": "23:40",
+   "author": "devika",
+   "text": "Users are complaining that push notifications arrive 20 minutes late"
+  },
+  {
+   "n": 2,
+   "time": "23:40",
+   "author": "aiko",
+   "text": "adding a comment to the status draft"
+  },
+  {
+   "n": 3,
+   "time": "23:40",
+   "author": "bashir",
+   "text": "still waiting on a reply from the vendor"
+  },
+  {
+   "n": 4,
+   "time": "23:40",
+   "author": "matteo",
+   "text": "looping in the duty manager"
+  },
+  {
+   "n": 5,
+   "time": "23:40",
+   "author": "aiko",
+   "text": "pasting the query output below"
+  },
+  {
+   "n": 6,
+   "time": "23:44",
+   "author": "matteo",
+   "text": "Queue depth on notify-high is at 310k and growing"
+  },
+  {
+   "n": 7,
+   "time": "23:44",
+   "author": "aiko",
+   "text": "still waiting on a reply from the vendor"
+  },
+  {
+   "n": 8,
+   "time": "23:44",
+   "author": "aiko",
+   "text": "FYI the on-call lead is aware"
+  },
+  {
+   "n": 9,
+   "time": "23:44",
+   "author": "matteo",
+   "text": "checking whether this matches last quarter"
+  },
+  {
+   "n": 10,
+   "time": "23:47",
+   "author": "aiko",
+   "text": "The consumer pods are in CrashLoopBackOff, 6 restarts so far"
+  },
+  {
+   "n": 11,
+   "time": "23:47",
+   "author": "matteo",
+   "text": "copying the last error into the ticket"
+  },
+  {
+   "n": 12,
+   "time": "23:47",
+   "author": "aiko",
+   "text": "can someone share the current graph link"
+  },
+  {
+   "n": 13,
+   "time": "23:47",
+   "author": "bashir",
+   "text": "heads up, lunch cover is arranged"
+  },
+  {
+   "n": 14,
+   "time": "23:47",
+   "author": "devika",
+   "text": "nothing new from my side yet"
+  },
+  {
+   "n": 15,
+   "time": "23:51",
+   "author": "aiko",
+   "text": "Stack trace points at a null device token in a payload from the new onboarding flow"
+  },
+  {
+   "n": 16,
+   "time": "23:51",
+   "author": "aiko",
+   "text": "I can take the next check"
+  },
+  {
+   "n": 17,
+   "time": "23:51",
+   "author": "matteo",
+   "text": "noting this down for the record"
+  },
+  {
+   "n": 18,
+   "time": "23:51",
+   "author": "matteo",
+   "text": "refreshing the page again to confirm"
+  },
+  {
+   "n": 19,
+   "time": "23:58",
+   "author": "bashir",
+   "text": "Decision: add a null guard and skip bad payloads into the dead letter queue"
+  },
+  {
+   "n": 20,
+   "time": "23:58",
+   "author": "aiko",
+   "text": "I am on the bridge if anyone needs me"
+  },
+  {
+   "n": 21,
+   "time": "23:58",
+   "author": "matteo",
+   "text": "pulling up the relevant dashboard now"
+  },
+  {
+   "n": 22,
+   "time": "23:58",
+   "author": "devika",
+   "text": "noting this down for the record"
+  },
+  {
+   "n": 23,
+   "time": "00:09",
+   "author": "bashir",
+   "text": "Patched consumer is rolled out to all pods"
+  },
+  {
+   "n": 24,
+   "time": "00:09",
+   "author": "aiko",
+   "text": "pulling up the relevant dashboard now"
+  },
+  {
+   "n": 25,
+   "time": "00:09",
+   "author": "aiko",
+   "text": "rereading the deploy log"
+  },
+  {
+   "n": 26,
+   "time": "00:09",
+   "author": "bashir",
+   "text": "refreshing the page again to confirm"
+  },
+  {
+   "n": 27,
+   "time": "00:09",
+   "author": "matteo",
+   "text": "still digging, will update shortly"
+  },
+  {
+   "n": 28,
+   "time": "00:12",
+   "author": "devika",
+   "text": "Delays hit iOS and Android alike, the web push channel was unaffected"
+  },
+  {
+   "n": 29,
+   "time": "00:12",
+   "author": "devika",
+   "text": "heads up, lunch cover is arranged"
+  },
+  {
+   "n": 30,
+   "time": "00:12",
+   "author": "matteo",
+   "text": "still waiting on a reply from the vendor"
+  },
+  {
+   "n": 31,
+   "time": "00:12",
+   "author": "aiko",
+   "text": "still waiting on a reply from the vendor"
+  },
+  {
+   "n": 32,
+   "time": "00:12",
+   "author": "aiko",
+   "text": "can someone share the current graph link"
+  },
+  {
+   "n": 33,
+   "time": "00:20",
+   "author": "matteo",
+   "text": "Backlog down to 90k, consumers keeping up"
+  },
+  {
+   "n": 34,
+   "time": "00:20",
+   "author": "aiko",
+   "text": "I can take the next check"
+  },
+  {
+   "n": 35,
+   "time": "00:20",
+   "author": "bashir",
+   "text": "noting this down for the record"
+  },
+  {
+   "n": 36,
+   "time": "00:20",
+   "author": "aiko",
+   "text": "can someone share the current graph link"
+  },
+  {
+   "n": 37,
+   "time": "00:20",
+   "author": "bashir",
+   "text": "I am on the bridge if anyone needs me"
+  },
+  {
+   "n": 38,
+   "time": "00:41",
+   "author": "matteo",
+   "text": "Queue is at normal levels, under 500 messages"
+  },
+  {
+   "n": 39,
+   "time": "00:41",
+   "author": "bashir",
+   "text": "adding a comment to the status draft"
+  },
+  {
+   "n": 40,
+   "time": "00:41",
+   "author": "bashir",
+   "text": "pulling up the relevant dashboard now"
+  },
+  {
+   "n": 41,
+   "time": "00:41",
+   "author": "aiko",
+   "text": "can someone share the current graph link"
+  },
+  {
+   "n": 42,
+   "time": "00:41",
+   "author": "bashir",
+   "text": "FYI the on-call lead is aware"
+  },
+  {
+   "n": 43,
+   "time": "00:45",
+   "author": "devika",
+   "text": "Incident closed from my side"
+  },
+  {
+   "n": 44,
+   "time": "00:45",
+   "author": "matteo",
+   "text": "FYI the on-call lead is aware"
+  },
+  {
+   "n": 45,
+   "time": "00:45",
+   "author": "bashir",
+   "text": "noting this down for the record"
+  },
+  {
+   "n": 46,
+   "time": "00:45",
+   "author": "bashir",
+   "text": "I am on the bridge if anyone needs me"
+  },
+  {
+   "n": 47,
+   "time": "00:45",
+   "author": "bashir",
+   "text": "heads up, lunch cover is arranged"
+  },
+  {
+   "n": 48,
+   "time": "00:50",
+   "author": "aiko",
+   "text": "Action item: validate device tokens at the onboarding API. Owner aiko"
+  },
+  {
+   "n": 49,
+   "time": "00:50",
+   "author": "aiko",
+   "text": "standing by for instructions"
+  },
+  {
+   "n": 50,
+   "time": "00:50",
+   "author": "matteo",
+   "text": "heads up, lunch cover is arranged"
+  },
+  {
+   "n": 51,
+   "time": "00:50",
+   "author": "matteo",
+   "text": "rereading the deploy log"
+  },
+  {
+   "n": 52,
+   "time": "00:52",
+   "author": "matteo",
+   "text": "Action item: page on queue age above 5 minutes instead of depth. matteo takes this"
+  },
+  {
+   "n": 53,
+   "time": "00:52",
+   "author": "bashir",
+   "text": "still digging, will update shortly"
+  },
+  {
+   "n": 54,
+   "time": "00:52",
+   "author": "aiko",
+   "text": "pasting the query output below"
+  },
+  {
+   "n": 55,
+   "time": "00:52",
+   "author": "aiko",
+   "text": "one sec, scrolling back through the channel"
+  },
+  {
+   "n": 56,
+   "time": "00:55",
+   "author": "bashir",
+   "text": "Recap: a malformed payload crashed the notification consumers and delayed pushes for roughly an hour"
+  },
+  {
+   "n": 57,
+   "time": "00:55",
+   "author": "matteo",
+   "text": "still waiting on a reply from the vendor"
+  },
+  {
+   "n": 58,
+   "time": "00:55",
+   "author": "aiko",
+   "text": "pasting the query output below"
+  },
+  {
+   "n": 59,
+   "time": "00:55",
+   "author": "matteo",
+   "text": "I am on the bridge if anyone needs me"
+  },
+  {
+   "n": 60,
+   "time": "00:55",
+   "author": "matteo",
+   "text": "noting this down for the record"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "23:40",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "23:44",
+    "lines": [
+     6
+    ]
+   },
+   {
+    "time": "23:47",
+    "lines": [
+     10
+    ]
+   },
+   {
+    "time": "23:58",
+    "lines": [
+     19
+    ]
+   },
+   {
+    "time": "00:09",
+    "lines": [
+     23
+    ]
+   },
+   {
+    "time": "00:20",
+    "lines": [
+     33
+    ]
+   },
+   {
+    "time": "00:41",
+    "lines": [
+     38
+    ]
+   },
+   {
+    "time": "00:45",
+    "lines": [
+     43
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     48
+    ]
+   },
+   {
+    "lines": [
+     52
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 23:40 Devika relayed user complaints that push notifications were arriving about 20 minutes late.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 23:44 Matteo saw the notify-high queue depth at 310 thousand messages and growing.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 23:47 Aiko found the consumer pods in CrashLoopBackOff after 6 restarts.",
+   "cites": [
+    10
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "Aiko traced the crash to a null device token in a payload from the new onboarding flow.",
+   "cites": [
+    15
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 23:58 Bashir decided to add a null guard and divert bad payloads to the dead letter queue.",
+   "cites": [
+    19
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 00:09 Bashir rolled the patched consumer out to all pods.",
+   "cites": [
+    23
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Devika noted the delays hit both iOS and Android while the web push channel was unaffected.",
+   "cites": [
+    28
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 00:20 Matteo saw the backlog fall to 90 thousand with consumers keeping up.",
+   "cites": [
+    33
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 00:41 Matteo reported the queue back at normal levels of under 500 messages.",
+   "cites": [
+    38
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 00:45 Devika closed the incident.",
+   "cites": [
+    43
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Aiko will validate device tokens at the onboarding API.",
+   "cites": [
+    48
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Matteo will change paging to trigger on queue age above 5 minutes rather than queue depth.",
+   "cites": [
+    52
+   ]
+  },
+  {
+   "section": "summary",
+   "text": "Bashir recapped that a malformed payload crashed the notification consumers and delayed pushes for roughly an hour.",
+   "cites": [
+    56
+   ]
+  }
+ ]
+}

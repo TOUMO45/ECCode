@@ -1,0 +1,34 @@
+{
+  "from": "test-engineer",
+  "to": "reviewer",
+  "task": "browser-e2e",
+  "objective": "Real Chromium Playwright journey at 360 and 1280 px against src/index.js",
+  "context": "Resumed from an interrupted session's test/browser/journey.test.js (418 lines); reviewed and kept. Two test-side fixes: openIncident waited for notes-input, which lead/viewer do not see once a draft exists (now waits for notes-input or draft-sections); navigation-cancelled GETs (net::ERR_ABORTED) are no longer counted as failed requests. No product code changed. Server runs on an ephemeral port with temp DB, seed script and fake providers; no network.",
+  "inputs": [
+    "test/browser/journey.test.js",
+    "public/",
+    "package.json"
+  ],
+  "dependencies": [
+    "backend-domain",
+    "frontend",
+    "ai-providers"
+  ],
+  "expectedOutput": "Passing browser journey with screenshots in test/browser/out/{360,1280}",
+  "acceptanceCriteria": [
+    "Full journey passes at 360 and 1280 px",
+    "Keyboard, focus width, contrast, overflow, touch target and console error checks pass",
+    "XSS probe displays literally; test fails (not skips) if Chromium cannot launch",
+    "Screenshots saved"
+  ],
+  "completedWork": "npm run test:browser: 28 tests, 28 pass, 0 fail, 0 skipped. 15 screenshots per viewport written to test/browser/out (gitignored).",
+  "filesChanged": [
+    "test/browser/journey.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv03oq2p-01e72789"
+  ],
+  "remainingIssues": [],
+  "nextAction": "reviewer: review test/browser/journey.test.js and screenshots for the ui gate",
+  "lessonsConsulted": []
+}

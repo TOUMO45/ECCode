@@ -1,0 +1,106 @@
+{
+  "decision": "changes_requested",
+  "summary": "The design is thorough and consistent with the approved brief and SCOPE.md D1-D10. I re-ran the claude -p flags and the isolation check myself. One claim in the spec is wrong: with --json-schema the init event reports tools [\"StructuredOutput\"], not []. The live isolation test as written would fail or assert something false. This is one major finding plus minor ones. DQ-1, DQ-2, DQ-3 and DQ-4 are acknowledged as acceptable below.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Spec matches the approved brief and every requirement maps to a component and a test",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#2 Components",
+        "artifact:.eccode/artifacts/design/spec.md#11 Testing Strategy"
+      ],
+      "notes": "Sections 3, 5, 8 and 9 trace to R5-R8, D1-D10 and the threat table. Thresholds are not restated or changed."
+    },
+    {
+      "id": "C2",
+      "description": "Interface contracts complete: schemas, errors, auth, limits",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#3 Interface Contracts"
+      ],
+      "notes": "The error table, CSRF design, role matrix, 404-for-cross-team rule and publish transaction are complete and testable."
+    },
+    {
+      "id": "C3",
+      "description": "Data design sound, failure modes covered",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#6 Data Design",
+        "artifact:.eccode/artifacts/design/spec.md#10 Observability, performance, recovery"
+      ],
+      "notes": "Migrations are checksummed, constraints are in place, and publish runs in a synchronous BEGIN IMMEDIATE transaction enforced by the tx() helper."
+    },
+    {
+      "id": "C4",
+      "description": "AI feature: eval set with adversarial cases and prior thresholds, schema validation, least privilege, timeout and fallback, no path from untrusted text to instructions or tool calls",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv00suv3-0147e1a9",
+        "artifact:.eccode/artifacts/design/spec.md#1 CLI facts confirmed",
+        "artifact:.eccode/artifacts/design/spec.md#11.4 Live"
+      ],
+      "notes": "The defences are sound and the flags work as claimed. The isolation assertion tools: [] is incorrect for the real argv (finding DES-1)."
+    },
+    {
+      "id": "C5",
+      "description": "Feasibility, cost and latency budgets",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv00suv3-0147e1a9",
+        "artifact:.eccode/artifacts/design/spec.md#4 AI / LLM Design"
+      ],
+      "notes": "The budgets are labelled as estimates, with caps and a guard."
+    }
+  ],
+  "findings": [
+    {
+      "id": "DES-1",
+      "severity": "major",
+      "title": "Isolation test asserts tools: [] but --json-schema adds the StructuredOutput tool",
+      "detail": "Spec section 1 states that the system/init event reports tools: [] and section 11.4 cli-isolation.test.js asserts exactly this on the same argv, which includes --json-schema. I ran the final argv with stream-json --verbose --json-schema in an empty cwd and a scrubbed environment. The init event reports tools: [\"StructuredOutput\"], mcp_servers: [], skills: [], slash_commands: [] (the agents list also names built-in sub-agents, though no tool can launch them). The test as specified would fail on first run. If the assertion were loosened carelessly, it would stop proving that no file, shell or network tools exist. The spec's recorded evidence for the isolation claim is also inaccurate.",
+      "evidence": [
+        "ev:ev-mv00suv3-0147e1a9",
+        "artifact:.eccode/artifacts/design/spec.md#1 CLI facts confirmed",
+        "artifact:.eccode/artifacts/design/spec.md#11.4 Live"
+      ],
+      "recommendation": "Resolved when the spec states the real init output and the live test asserts tools equals exactly [\"StructuredOutput\"] (or the allowed set is a single named constant), plus mcp_servers, skills and slash_commands empty and permission_denials empty. The argv builder unit test must also pin the argv, and the spec must say the synthetic StructuredOutput tool is the only tool. Please also make the CLI parser tolerate num_turns of 2 and stop_reason tool_use, which my run showed on a successful call.",
+      "status": "open"
+    },
+    {
+      "id": "DES-2",
+      "severity": "minor",
+      "title": "Escape replacement in the prompt builder is unreadable",
+      "detail": "Section 4 says U+003C, U+003E and U+2028/9 are 'replaced by <, >, ...' and the replacement characters are lost or identical to the originals in the file. The implementer cannot tell what the escape is. The test that no payload can break out depends on it.",
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#4 AI / LLM Design"
+      ],
+      "recommendation": "Resolved when the spec writes the escapes as explicit literals (for example \\u003c, \\u003e, \\u2028, \\u2029) and the unit test asserts the data line has no raw less-than, greater-than, or line separators.",
+      "status": "open"
+    },
+    {
+      "id": "DES-3",
+      "severity": "minor",
+      "title": "Rule 5(iv) false-flag risk for model prose is carried into implementation",
+      "detail": "Capitalised sentence-initial words not in the stoplist (for example 'Deployment', 'Rollback') must appear in the cited lines. This may depress CLI M1. It is consistent with the brief and ARCH-10, and section 5.5 and 8.4 handle it honestly.",
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#5.3 Rules and reason codes",
+        "artifact:.eccode/artifacts/design/spec.md#5.5 Tuning rules"
+      ],
+      "recommendation": "No design change. Report any CLI M1 miss as FAIL, with top reasons, per section 8.4.",
+      "status": "open"
+    },
+    {
+      "id": "DES-4",
+      "severity": "info",
+      "title": "Open questions DQ-1..DQ-4 reviewed",
+      "detail": "DQ-1 (time field as cited source) is necessary and weakens nothing. DQ-2 is acceptable. DQ-3: --bare needs an API key (the spec says it verified this; I did not re-run it). --safe-mode and the other flags exist in claude --help and worked in my runs, so they count as the bare-equivalent clause provided DES-1 is fixed. DQ-4: committing the usage and holdout logs is acceptable.",
+      "evidence": [
+        "ev:ev-mv00suv3-0147e1a9"
+      ],
+      "recommendation": "Acknowledged. The orchestrator should record DQ-1..DQ-4 as accepted on re-approval.",
+      "status": "open"
+    }
+  ],
+  "resolvedFindings": []
+}

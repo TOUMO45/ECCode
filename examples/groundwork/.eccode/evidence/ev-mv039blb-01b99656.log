@@ -1,0 +1,395 @@
+$ npm run test:browser
+# cwd: .
+# exit: 1
+
+> groundwork@1.0.0 test:browser
+> node --disable-warning=ExperimentalWarning --test --test-concurrency=1 test/browser/journey.test.js
+
+TAP version 13
+# Subtest: browser journey at 360px
+    # Subtest: sign in: empty state and invalid password error
+    ok 1 - sign in: empty state and invalid password error
+      ---
+      duration_ms: 474.001436
+      type: 'test'
+      ...
+    # Subtest: create incident: inline validation then success
+    ok 2 - create incident: inline validation then success
+      ---
+      duration_ms: 347.543492
+      type: 'test'
+      ...
+    # Subtest: import notes: malformed error then success
+    ok 3 - import notes: malformed error then success
+      ---
+      duration_ms: 429.539391
+      type: 'test'
+      ...
+    # Subtest: generate with fake: loading status, flagged statements, no fallback banner
+    ok 4 - generate with fake: loading status, flagged statements, no fallback banner
+      ---
+      duration_ms: 171.548094
+      type: 'test'
+      ...
+    # Subtest: citation chip highlights, focuses and announces the source line
+    ok 5 - citation chip highlights, focuses and announces the source line
+      ---
+      duration_ms: 154.054579
+      type: 'test'
+      ...
+    # Subtest: keyboard: skip link, chips, Edit, Save reachable; focus outline >= 2px
+    not ok 6 - keyboard: skip link, chips, Edit, Save reachable; focus outline >= 2px
+      ---
+      duration_ms: 63.458477
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:274:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        '' !== 'skip-link'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'skip-link'
+      actual: ''
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///mnt/sbx/work/test/browser/journey.test.js:279:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async TestContext.<anonymous> (file:///mnt/sbx/work/test/browser/journey.test.js:274:5)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+      ...
+    # Subtest: edit flagged statements to grounded text: flags clear, counter updates
+    not ok 7 - edit flagged statements to grounded text: flags clear, counter updates
+      ---
+      duration_ms: 30003.639169
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:311:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        locator.click: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('li.statement.is-flagged').first().locator('[data-testid^="edit-"]:not([data-testid="edit-text"])').first()[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        fix (/mnt/sbx/work/test/browser/journey.test.js:314:91)
+        TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:319:13)
+        TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:311:13)
+      ...
+    # Subtest: second incident: flagged draft, XSS probe, fallback banner
+    ok 8 - second incident: flagged draft, XSS probe, fallback banner
+      ---
+      duration_ms: 925.743029
+      type: 'test'
+      ...
+    # Subtest: lead: publish disabled while flagged; enabled at zero flags; publish succeeds, read-only
+    not ok 9 - lead: publish disabled while flagged; enabled at zero flags; publish succeeds, read-only
+      ---
+      duration_ms: 30177.15913
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:354:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.waitForSelector: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="notes-input"]') to be visible[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        openIncident (/mnt/sbx/work/test/browser/journey.test.js:136:14)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:357:7)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:354:5)
+      ...
+    # Subtest: viewer reads the postmortem and highlights a citation
+    not ok 10 - viewer reads the postmortem and highlights a citation
+      ---
+      duration_ms: 30006.231066
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:376:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.fill: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="login-username"]')[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        signIn (/mnt/sbx/work/test/browser/journey.test.js:102:14)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:377:7)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:376:5)
+      ...
+    # Subtest: cross-team viewer sees the empty state
+    not ok 11 - cross-team viewer sees the empty state
+      ---
+      duration_ms: 30004.507762
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:390:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.fill: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="login-username"]')[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        signIn (/mnt/sbx/work/test/browser/journey.test.js:102:14)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:391:7)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:390:5)
+      ...
+    # Subtest: layout and a11y checks: overflow, contrast, touch targets
+    ok 12 - layout and a11y checks: overflow, contrast, touch targets
+      ---
+      duration_ms: 1.556453
+      type: 'test'
+      ...
+    # Subtest: no console errors, no failed requests, no dialogs
+    not ok 13 - no console errors, no failed requests, no dialogs
+      ---
+      duration_ms: 0.961911
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:407:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected
+        
+        + [
+        +   'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/2/draft',
+        +   'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/3/draft',
+        +   'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/4/draft'
+        + ]
+        - []
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+        0: 'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/2/draft'
+        1: 'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/3/draft'
+        2: 'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/4/draft'
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///mnt/sbx/work/test/browser/journey.test.js:410:14)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Test.start (node:internal/test_runner/test:944:17)
+        TestContext.test (node:internal/test_runner/test:373:20)
+        TestContext.<anonymous> (file:///mnt/sbx/work/test/browser/journey.test.js:407:13)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+      ...
+    1..13
+not ok 1 - browser journey at 360px
+  ---
+  duration_ms: 123864.881906
+  type: 'test'
+  location: '/mnt/sbx/work/test/browser/journey.test.js:197:3'
+  failureType: 'subtestsFailed'
+  error: '6 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: browser journey at 1280px
+    # Subtest: sign in: empty state and invalid password error
+    ok 1 - sign in: empty state and invalid password error
+      ---
+      duration_ms: 399.751991
+      type: 'test'
+      ...
+    # Subtest: create incident: inline validation then success
+    ok 2 - create incident: inline validation then success
+      ---
+      duration_ms: 324.305651
+      type: 'test'
+      ...
+    # Subtest: import notes: malformed error then success
+    ok 3 - import notes: malformed error then success
+      ---
+      duration_ms: 384.089858
+      type: 'test'
+      ...
+    # Subtest: generate with fake: loading status, flagged statements, no fallback banner
+    ok 4 - generate with fake: loading status, flagged statements, no fallback banner
+      ---
+      duration_ms: 234.861568
+      type: 'test'
+      ...
+    # Subtest: citation chip highlights, focuses and announces the source line
+    ok 5 - citation chip highlights, focuses and announces the source line
+      ---
+      duration_ms: 190.609735
+      type: 'test'
+      ...
+    # Subtest: keyboard: skip link, chips, Edit, Save reachable; focus outline >= 2px
+    not ok 6 - keyboard: skip link, chips, Edit, Save reachable; focus outline >= 2px
+      ---
+      duration_ms: 86.835857
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:274:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        '' !== 'skip-link'
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 'skip-link'
+      actual: ''
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///mnt/sbx/work/test/browser/journey.test.js:279:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async TestContext.<anonymous> (file:///mnt/sbx/work/test/browser/journey.test.js:274:5)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: edit flagged statements to grounded text: flags clear, counter updates
+    not ok 7 - edit flagged statements to grounded text: flags clear, counter updates
+      ---
+      duration_ms: 30003.164398
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:311:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        locator.click: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('li.statement.is-flagged').first().locator('[data-testid^="edit-"]:not([data-testid="edit-text"])').first()[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        fix (/mnt/sbx/work/test/browser/journey.test.js:314:91)
+        TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:319:13)
+        TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:311:13)
+      ...
+    # Subtest: second incident: flagged draft, XSS probe, fallback banner
+    ok 8 - second incident: flagged draft, XSS probe, fallback banner
+      ---
+      duration_ms: 866.040318
+      type: 'test'
+      ...
+    # Subtest: lead: publish disabled while flagged; enabled at zero flags; publish succeeds, read-only
+    not ok 9 - lead: publish disabled while flagged; enabled at zero flags; publish succeeds, read-only
+      ---
+      duration_ms: 30155.43894
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:354:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.waitForSelector: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="notes-input"]') to be visible[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        openIncident (/mnt/sbx/work/test/browser/journey.test.js:136:14)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:357:7)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:354:5)
+      ...
+    # Subtest: viewer reads the postmortem and highlights a citation
+    not ok 10 - viewer reads the postmortem and highlights a citation
+      ---
+      duration_ms: 30008.086556
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:376:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.fill: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="login-username"]')[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        signIn (/mnt/sbx/work/test/browser/journey.test.js:102:14)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:377:7)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:376:5)
+      ...
+    # Subtest: cross-team viewer sees the empty state
+    not ok 11 - cross-team viewer sees the empty state
+      ---
+      duration_ms: 30004.154496
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:390:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        page.fill: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('[data-testid="login-username"]')[22m
+        
+      code: 'ERR_TEST_FAILURE'
+      name: 'TimeoutError'
+      stack: |-
+        signIn (/mnt/sbx/work/test/browser/journey.test.js:102:14)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:391:7)
+        async TestContext.<anonymous> (/mnt/sbx/work/test/browser/journey.test.js:390:5)
+      ...
+    # Subtest: layout and a11y checks: overflow, contrast, touch targets
+    ok 12 - layout and a11y checks: overflow, contrast, touch targets
+      ---
+      duration_ms: 0.274899
+      type: 'test'
+      ...
+    # Subtest: no console errors, no failed requests, no dialogs
+    not ok 13 - no console errors, no failed requests, no dialogs
+      ---
+      duration_ms: 0.859893
+      type: 'test'
+      location: '/mnt/sbx/work/test/browser/journey.test.js:407:13'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected
+        
+        + [
+        +   'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/5/draft',
+        +   'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/6/draft',
+        +   'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/7/draft'
+        + ]
+        - []
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+      actual:
+        0: 'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/5/draft'
+        1: 'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/6/draft'
+        2: 'Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:45417/api/incidents/7/draft'
+      operator: 'deepStrictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///mnt/sbx/work/test/browser/journey.test.js:410:14)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Test.start (node:internal/test_runner/test:944:17)
+        TestContext.test (node:internal/test_runner/test:373:20)
+        TestContext.<anonymous> (file:///mnt/sbx/work/test/browser/journey.test.js:407:13)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    1..13
+not ok 2 - browser journey at 1280px
+  ---
+  duration_ms: 122697.295275
+  type: 'test'
+  location: '/mnt/sbx/work/test/browser/journey.test.js:197:3'
+  failureType: 'subtestsFailed'
+  error: '6 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..2
+# tests 28
+# suites 0
+# pass 14
+# fail 14
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 247258.300424

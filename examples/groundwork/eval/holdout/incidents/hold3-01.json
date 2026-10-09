@@ -1,0 +1,471 @@
+{
+ "id": "hold3-01",
+ "title": "Card processor rejects handshakes after certificate rotation",
+ "severity": "SEV1",
+ "startedAt": "2026-04-09T02:14:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "02:14",
+   "author": "wei-ling.tan",
+   "text": "Pager fired: the acquirer gateway is returning TLS handshake failures, authorisations are down"
+  },
+  {
+   "n": 2,
+   "time": "02:14",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "can someone confirm the current error rate"
+  },
+  {
+   "n": 3,
+   "time": "02:14",
+   "author": "o.mbeki",
+   "text": "nothing unusual in the audit trail"
+  },
+  {
+   "n": 4,
+   "time": "02:14",
+   "author": "o.mbeki",
+   "text": "reading the runbook"
+  },
+  {
+   "n": 5,
+   "time": "02:17",
+   "author": "Priya_Raghunathan",
+   "text": "Singaporean cardholders are hit first; about 38% of attempts fail in the last 5 minutes"
+  },
+  {
+   "n": 6,
+   "time": "02:17",
+   "author": "o.mbeki",
+   "text": "metrics look flat for now"
+  },
+  {
+   "n": 7,
+   "time": "02:17",
+   "author": "o.mbeki",
+   "text": "looking at recent deploys"
+  },
+  {
+   "n": 8,
+   "time": "02:17",
+   "author": "wei-ling.tan",
+   "text": "looks the same from here"
+  },
+  {
+   "n": 9,
+   "time": "02:17",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "stepping out for two minutes, back shortly"
+  },
+  {
+   "n": 10,
+   "time": "02:21",
+   "author": "o.mbeki",
+   "text": "Apparently the intermediate certificate was swapped at 01:50 by the vendor-rotation job"
+  },
+  {
+   "n": 11,
+   "time": "02:21",
+   "author": "Priya_Raghunathan",
+   "text": "joining the call in a minute"
+  },
+  {
+   "n": 12,
+   "time": "02:21",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 13,
+   "time": "02:21",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "looking at recent deploys"
+  },
+  {
+   "n": 14,
+   "time": "02:26",
+   "author": "wei-ling.tan",
+   "text": "Trust bundle on pay-edge-3 and pay-edge-4 still holds the old chain"
+  },
+  {
+   "n": 15,
+   "time": "02:26",
+   "author": "o.mbeki",
+   "text": "will report back when I know more"
+  },
+  {
+   "n": 16,
+   "time": "02:26",
+   "author": "Priya_Raghunathan",
+   "text": "waiting on a reply from the vendor"
+  },
+  {
+   "n": 17,
+   "time": "02:26",
+   "author": "Priya_Raghunathan",
+   "text": "metrics look flat for now"
+  },
+  {
+   "n": 18,
+   "time": "02:32",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "Escalating to the acquirer relationship manager in Kuala Lumpur"
+  },
+  {
+   "n": 19,
+   "time": "02:32",
+   "author": "wei-ling.tan",
+   "text": "looking at recent deploys"
+  },
+  {
+   "n": 20,
+   "time": "02:32",
+   "author": "Priya_Raghunathan",
+   "text": "re-running the query to double check"
+  },
+  {
+   "n": 21,
+   "time": "02:32",
+   "author": "Priya_Raghunathan",
+   "text": "copying the graph into the ticket"
+  },
+  {
+   "n": 22,
+   "time": "02:40",
+   "author": "o.mbeki",
+   "text": "Decision: push the refreshed trust bundle to all 6 edge hosts"
+  },
+  {
+   "n": 23,
+   "time": "02:40",
+   "author": "Priya_Raghunathan",
+   "text": "waiting on a reply from the vendor"
+  },
+  {
+   "n": 24,
+   "time": "02:40",
+   "author": "wei-ling.tan",
+   "text": "let me know if you need anything"
+  },
+  {
+   "n": 25,
+   "time": "02:40",
+   "author": "wei-ling.tan",
+   "text": "will report back when I know more"
+  },
+  {
+   "n": 26,
+   "time": "02:46",
+   "author": "Priya_Raghunathan",
+   "text": "Bundle deployed on 4 of 6 hosts, failures dropped from 38% to 9%"
+  },
+  {
+   "n": 27,
+   "time": "02:46",
+   "author": "o.mbeki",
+   "text": "waiting on a reply from the vendor"
+  },
+  {
+   "n": 28,
+   "time": "02:46",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "checking the dashboards again"
+  },
+  {
+   "n": 29,
+   "time": "02:46",
+   "author": "wei-ling.tan",
+   "text": "nothing unusual in the audit trail"
+  },
+  {
+   "n": 30,
+   "time": "02:51",
+   "author": "o.mbeki",
+   "text": "Last two hosts were stuck behind a pending config lock, cleared it by hand"
+  },
+  {
+   "n": 31,
+   "time": "02:51",
+   "author": "wei-ling.tan",
+   "text": "reading the runbook"
+  },
+  {
+   "n": 32,
+   "time": "02:51",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "let me know if you need anything"
+  },
+  {
+   "n": 33,
+   "time": "02:51",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "joining the call in a minute"
+  },
+  {
+   "n": 34,
+   "time": "02:55",
+   "author": "wei-ling.tan",
+   "text": "All edges are green, authorisation rate is back above 99.5%"
+  },
+  {
+   "n": 35,
+   "time": "02:55",
+   "author": "Priya_Raghunathan",
+   "text": "stepping out for two minutes, back shortly"
+  },
+  {
+   "n": 36,
+   "time": "02:55",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "nothing unusual in the audit trail"
+  },
+  {
+   "n": 37,
+   "time": "02:55",
+   "author": "o.mbeki",
+   "text": "ack"
+  },
+  {
+   "n": 38,
+   "time": "03:04",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "We lost roughly 70 minutes of card volume, finance is sizing it"
+  },
+  {
+   "n": 39,
+   "time": "03:04",
+   "author": "o.mbeki",
+   "text": "still reading through the logs"
+  },
+  {
+   "n": 40,
+   "time": "03:04",
+   "author": "wei-ling.tan",
+   "text": "taking notes for the timeline"
+  },
+  {
+   "n": 41,
+   "time": "03:04",
+   "author": "o.mbeki",
+   "text": "syncing with support about incoming tickets"
+  },
+  {
+   "n": 42,
+   "time": "03:16",
+   "author": "Priya_Raghunathan",
+   "text": "Action item: pin the certificate chain in a staging canary before every rotation, owner o.mbeki"
+  },
+  {
+   "n": 43,
+   "time": "03:16",
+   "author": "wei-ling.tan",
+   "text": "checking the dashboards again"
+  },
+  {
+   "n": 44,
+   "time": "03:16",
+   "author": "wei-ling.tan",
+   "text": "stepping out for two minutes, back shortly"
+  },
+  {
+   "n": 45,
+   "time": "03:16",
+   "author": "wei-ling.tan",
+   "text": "re-running the query to double check"
+  },
+  {
+   "n": 46,
+   "time": "03:19",
+   "author": "wei-ling.tan",
+   "text": "Action item: page the vendor contact automatically when the rotation job runs, owner Priya_Raghunathan"
+  },
+  {
+   "n": 47,
+   "time": "03:19",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "thanks, noted"
+  },
+  {
+   "n": 48,
+   "time": "03:19",
+   "author": "Priya_Raghunathan",
+   "text": "sharing my screen on the call"
+  },
+  {
+   "n": 49,
+   "time": "03:19",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "holding off on further changes for now"
+  },
+  {
+   "n": 50,
+   "time": "03:25",
+   "author": "o.mbeki",
+   "text": "Summary: a vendor certificate rotation left stale trust bundles on the edge hosts and broke card authorisations for about 70 minutes"
+  },
+  {
+   "n": 51,
+   "time": "03:25",
+   "author": "Priya_Raghunathan",
+   "text": "looks the same from here"
+  },
+  {
+   "n": 52,
+   "time": "03:25",
+   "author": "singapore-payments-oncall-rotation-b",
+   "text": "reading the runbook"
+  },
+  {
+   "n": 53,
+   "time": "03:25",
+   "author": "wei-ling.tan",
+   "text": "drafting the status page text"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "02:14",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "02:26",
+    "lines": [
+     14
+    ]
+   },
+   {
+    "time": "02:32",
+    "lines": [
+     18
+    ]
+   },
+   {
+    "time": "02:40",
+    "lines": [
+     22
+    ]
+   },
+   {
+    "time": "02:46",
+    "lines": [
+     26
+    ]
+   },
+   {
+    "time": "02:55",
+    "lines": [
+     34
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     42
+    ]
+   },
+   {
+    "lines": [
+     46
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 02:14 wei-ling.tan reported that the acquirer gateway was returning TLS handshake failures and authorisations were down.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Priya_Raghunathan said roughly 38% of attempts were failing, with Singaporean cardholders affected first.",
+   "cites": [
+    5
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "o.mbeki found that the intermediate certificate had been swapped at 01:50 by the vendor-rotation job.",
+   "cites": [
+    10
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 02:26 wei-ling.tan noticed that the trust bundle on pay-edge-3 and pay-edge-4 still held the old chain.",
+   "cites": [
+    14
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 02:32 singapore-payments-oncall-rotation-b escalated to the acquirer relationship manager in Kuala Lumpur.",
+   "cites": [
+    18
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 02:40 o.mbeki decided to push the refreshed trust bundle to all 6 edge hosts.",
+   "cites": [
+    22
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 02:46 Priya_Raghunathan reported the bundle was deployed on 4 of 6 hosts and failures fell from 38% to 9%.",
+   "cites": [
+    26
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "o.mbeki said the last two hosts were stuck behind a pending config lock that was cleared by hand.",
+   "cites": [
+    30
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 02:55 wei-ling.tan confirmed all edges were green and the authorisation rate was back above 99.5%.",
+   "cites": [
+    34
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "singapore-payments-oncall-rotation-b noted about 70 minutes of card volume was lost and finance was sizing it.",
+   "cites": [
+    38
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: pin the certificate chain in a staging canary before every rotation, owner o.mbeki.",
+   "cites": [
+    42
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Action item: page the vendor contact automatically when the rotation job runs, owner Priya_Raghunathan.",
+   "cites": [
+    46
+   ]
+  },
+  {
+   "section": "summary",
+   "text": "o.mbeki summarised that a vendor certificate rotation left stale trust bundles on the edge hosts and broke card authorisations for about 70 minutes.",
+   "cites": [
+    50
+   ]
+  }
+ ]
+}

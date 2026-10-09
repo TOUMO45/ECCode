@@ -1,0 +1,433 @@
+{
+ "id": "hold-02",
+ "title": "Invoice cron job overlapped and double-charged customers",
+ "severity": "SEV2",
+ "startedAt": "2026-04-09T13:00:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "13:00",
+   "author": "lena",
+   "text": "Support is forwarding a bunch of tickets, customers say they got charged twice for the same invoice"
+  },
+  {
+   "n": 2,
+   "time": "13:00",
+   "author": "priya",
+   "text": "just catching up on the thread"
+  },
+  {
+   "n": 3,
+   "time": "13:00",
+   "author": "omar",
+   "text": "yep"
+  },
+  {
+   "n": 4,
+   "time": "13:00",
+   "author": "lena",
+   "text": "is the status page updated?"
+  },
+  {
+   "n": 5,
+   "time": "13:00",
+   "author": "omar",
+   "text": "that matches what I'm seeing"
+  },
+  {
+   "n": 6,
+   "time": "13:06",
+   "author": "omar",
+   "text": "I see duplicate rows in the charges table, same invoice id, a few seconds apart"
+  },
+  {
+   "n": 7,
+   "time": "13:06",
+   "author": "lena",
+   "text": "sounds good"
+  },
+  {
+   "n": 8,
+   "time": "13:06",
+   "author": "priya",
+   "text": "sounds good"
+  },
+  {
+   "n": 9,
+   "time": "13:12",
+   "author": "omar",
+   "text": "The nightly billing job started a second copy because the first one was still running"
+  },
+  {
+   "n": 10,
+   "time": "13:12",
+   "author": "lena",
+   "text": "looking at the logs now"
+  },
+  {
+   "n": 11,
+   "time": "13:12",
+   "author": "lena",
+   "text": "one sec"
+  },
+  {
+   "n": 12,
+   "time": "13:15",
+   "author": "lena",
+   "text": "How many people are affected? Finance wants a number"
+  },
+  {
+   "n": 13,
+   "time": "13:15",
+   "author": "omar",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 14,
+   "time": "13:15",
+   "author": "priya",
+   "text": "let me grab coffee and be back in two"
+  },
+  {
+   "n": 15,
+   "time": "13:15",
+   "author": "lena",
+   "text": "let's keep the channel clear for updates"
+  },
+  {
+   "n": 16,
+   "time": "13:15",
+   "author": "omar",
+   "text": "I can take the next step"
+  },
+  {
+   "n": 17,
+   "time": "13:21",
+   "author": "priya",
+   "text": "Query says 412 customers were charged twice between 02:00 and 04:30"
+  },
+  {
+   "n": 18,
+   "time": "13:21",
+   "author": "omar",
+   "text": "let's keep the channel clear for updates"
+  },
+  {
+   "n": 19,
+   "time": "13:21",
+   "author": "omar",
+   "text": "anyone have the dashboard link handy?"
+  },
+  {
+   "n": 20,
+   "time": "13:27",
+   "author": "omar",
+   "text": "Disabling the cron schedule right now so it cannot fire again"
+  },
+  {
+   "n": 21,
+   "time": "13:27",
+   "author": "priya",
+   "text": "fair point"
+  },
+  {
+   "n": 22,
+   "time": "13:27",
+   "author": "priya",
+   "text": "one sec"
+  },
+  {
+   "n": 23,
+   "time": "13:27",
+   "author": "omar",
+   "text": "I'll write it up afterwards"
+  },
+  {
+   "n": 24,
+   "time": "13:27",
+   "author": "omar",
+   "text": "just catching up on the thread"
+  },
+  {
+   "n": 25,
+   "time": "13:33",
+   "author": "priya",
+   "text": "Refund script is ready, running it in dry mode first"
+  },
+  {
+   "n": 26,
+   "time": "13:33",
+   "author": "priya",
+   "text": "I'll watch the graphs"
+  },
+  {
+   "n": 27,
+   "time": "13:33",
+   "author": "priya",
+   "text": "same here"
+  },
+  {
+   "n": 28,
+   "time": "13:33",
+   "author": "priya",
+   "text": "let me look"
+  },
+  {
+   "n": 29,
+   "time": "13:33",
+   "author": "lena",
+   "text": "no surprises on my side"
+  },
+  {
+   "n": 30,
+   "time": "13:50",
+   "author": "priya",
+   "text": "Dry run looks right, running the refunds for real"
+  },
+  {
+   "n": 31,
+   "time": "13:50",
+   "author": "lena",
+   "text": "good call"
+  },
+  {
+   "n": 32,
+   "time": "13:50",
+   "author": "lena",
+   "text": "standing by"
+  },
+  {
+   "n": 33,
+   "time": "13:50",
+   "author": "lena",
+   "text": "let me look"
+  },
+  {
+   "n": 34,
+   "time": "14:20",
+   "author": "lena",
+   "text": "Refunds are done and I sent the apology email template to support"
+  },
+  {
+   "n": 35,
+   "time": "14:20",
+   "author": "lena",
+   "text": "right, I remember that one"
+  },
+  {
+   "n": 36,
+   "time": "14:20",
+   "author": "omar",
+   "text": "is the status page updated?"
+  },
+  {
+   "n": 37,
+   "time": "14:25",
+   "author": "omar",
+   "text": "Root cause is that the job had no lock, it assumed the previous run always finishes in an hour"
+  },
+  {
+   "n": 38,
+   "time": "14:25",
+   "author": "priya",
+   "text": "I'll note that down"
+  },
+  {
+   "n": 39,
+   "time": "14:25",
+   "author": "omar",
+   "text": "I'll note that down"
+  },
+  {
+   "n": 40,
+   "time": "14:25",
+   "author": "lena",
+   "text": "let me look"
+  },
+  {
+   "n": 41,
+   "time": "14:31",
+   "author": "omar",
+   "text": "I will add a database advisory lock so a second copy exits immediately"
+  },
+  {
+   "n": 42,
+   "time": "14:31",
+   "author": "omar",
+   "text": "sorry, was in another meeting"
+  },
+  {
+   "n": 43,
+   "time": "14:31",
+   "author": "omar",
+   "text": "standing by"
+  },
+  {
+   "n": 44,
+   "time": "14:31",
+   "author": "omar",
+   "text": "can you say that again?"
+  },
+  {
+   "n": 45,
+   "time": "14:31",
+   "author": "priya",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 46,
+   "time": "14:36",
+   "author": "priya",
+   "text": "And we should alert when any charge is created twice for one invoice, I will write that check"
+  },
+  {
+   "n": 47,
+   "time": "14:36",
+   "author": "omar",
+   "text": "no surprises on my side"
+  },
+  {
+   "n": 48,
+   "time": "14:36",
+   "author": "omar",
+   "text": "makes sense"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "13:00",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "13:06",
+    "lines": [
+     6
+    ]
+   },
+   {
+    "time": "13:12",
+    "lines": [
+     9
+    ]
+   },
+   {
+    "time": "13:27",
+    "lines": [
+     20
+    ]
+   },
+   {
+    "time": "13:33",
+    "lines": [
+     25
+    ]
+   },
+   {
+    "time": "13:50",
+    "lines": [
+     30
+    ]
+   },
+   {
+    "time": "14:20",
+    "lines": [
+     34
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     41
+    ]
+   },
+   {
+    "lines": [
+     46
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 13:00 lena reported customers being charged twice for the same invoice.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 13:06 omar found duplicate rows in the charges table with the same invoice id.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 13:12 omar found the nightly billing job started a second copy while the first was still running.",
+   "cites": [
+    9
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "412 customers were charged twice between 02:00 and 04:30.",
+   "cites": [
+    17
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 13:27 omar disabled the cron schedule.",
+   "cites": [
+    20
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 13:33 priya prepared the refund script and ran it in dry mode first.",
+   "cites": [
+    25
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 13:50 priya ran the refunds for real after the dry run looked right.",
+   "cites": [
+    30
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 14:20 lena confirmed the refunds were done and sent the apology template to support.",
+   "cites": [
+    34
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "The job had no lock and assumed the previous run always finishes in an hour.",
+   "cites": [
+    37
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Omar will add a database advisory lock so a second copy exits immediately.",
+   "cites": [
+    41
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Priya will write an alert for charges created twice for one invoice.",
+   "cites": [
+    46
+   ]
+  }
+ ]
+}

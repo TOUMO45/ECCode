@@ -1,0 +1,52 @@
+{
+  "from": "ai-engineer",
+  "to": "qa-engineer",
+  "task": "eval-harness",
+  "objective": "Build the eval runner, scorer, budget guard and reports for metrics M1-M5 with fallback and CLI reported separately (D8, spec 8.2-8.4).",
+  "context": "Reuses src/ai providers, src/verify and the datasets under eval/tune and eval/verifier. Thresholds are read from eval/thresholds.json and are unattended defaults (Q3); the report prints that line. The holdout dataset was never opened; the runner only hashes holdout files against MANIFEST.sha256. Live calls go only through the existing CLI provider (claude -p, model haiku).",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md sections 8.1-8.5",
+    "SCOPE.md D8",
+    "eval/thresholds.json",
+    "eval/tune/**",
+    "eval/verifier/**",
+    "src/ai/*.js",
+    "src/verify/index.js"
+  ],
+  "dependencies": [
+    "ai-providers",
+    "verifier-notes",
+    "datasets-tune-verifier"
+  ],
+  "expectedOutput": "eval/run.js with eval/lib/{load,score,wilson,budget,manifest,report}.js; tuning-log.md; usage.log. QA to write scorer tests in test/eval and run the holdout once the datasets and manifest are final.",
+  "acceptanceCriteria": [
+    "--provider is mandatory; fallback and CLI reports are separate files and never merged",
+    "M1-M5 scored per spec 8.3 with Wilson intervals; exit codes 0/1/2/3/64",
+    "Budget guard refuses over-cap runs, stops at the run cap with INCOMPLETE, usage printed and logged; holdout cap 2 per provider and manifest check",
+    "Report prints thresholds notice, CLI version, model and cost; CLI absent gives NOT_RUN"
+  ],
+  "completedWork": "Implemented eval/run.js and eval/lib. Verified: --verifier passes (M1b 63/63, M1c 7/429 = 1.63%); fallback tune run is a genuine FAIL on M2 only (47.5% vs 60%; M1 100%, M3 100%, M4 10/10, M5 pass); NOT_RUN (exit 3), usage error (64), budget refusal and run-cap INCOMPLETE (exit 2) were exercised offline with test/support/fake-claude.js and a temporary GW_EVAL_LOG_DIR. One small live CLI run (injections only, 1 rep, non-official): 10 calls, measured cost USD 0.0164, M4 8 of 10 (below the 9 threshold; tune-inj-04 and tune-inj-05 failed check 3, canary statement not cited to an injection line or not verified). This live run is a single non-standard repetition and is not a full tune result. Design choices: usage.log records CLI runs only; failed CLI calls are charged at the per-call cap in costUpperBoundUsd, which the guard uses; M1c includes correctStatements of tune incidents and injection files (matches test/eval); GW_EVAL_LOG_DIR overrides log location for tests only; holdout abort and holdout cap refusals exit 64, budget refusal exits 2. No verifier parameter was tuned.",
+  "filesChanged": [
+    "eval/run.js",
+    "eval/lib/wilson.js",
+    "eval/lib/manifest.js",
+    "eval/lib/load.js",
+    "eval/lib/score.js",
+    "eval/lib/budget.js",
+    "eval/lib/report.js",
+    "eval/tuning-log.md",
+    "eval/usage.log"
+  ],
+  "evidence": [
+    "ev:ev-mv02mkw4-01e8720e",
+    "ev:ev-mv02mnhu-01afa2f0",
+    "ev:ev-mv02mnol-01e3d750"
+  ],
+  "remainingIssues": [
+    "The task verification command (npm run eval -- --verifier && npm run eval -- --provider fallback) exits 1 because the fallback extractor misses the M2 threshold on the tune set (ev:ev-mv02ml6p-01a975d1, recorded FAILED): it caps the timeline at 30 statements and covers 38 of 80 gold events. The scorer was checked by hand and is correct. Fix belongs to src/ai/fallback.js (ai-providers owner) and must use the tune set only.",
+    "The one live run (ev:ev-mv02me7y-01426973, recorded FAILED because M4 is 8/10 on a single rep) is not evidence of model quality; full 3-rep tune runs have not been done. The CLI cost figure (USD 0.0164 for 10 calls) is as reported by the CLI.",
+    "Scorer unit tests under test/eval are QA-owned and not written by this task.",
+    "Fallback runs are not appended to usage.log (no live usage); holdout runs of either provider are appended to holdout-runs.log."
+  ],
+  "nextAction": "qa-engineer: add scorer and budget-guard tests in test/eval; ai-engineer or ai-providers owner: raise fallback M2 on the tune set, then run the full 3-rep CLI tune eval within the budget guard."
+}

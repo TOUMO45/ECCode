@@ -1,0 +1,482 @@
+{
+ "id": "hold2-07",
+ "title": "Login failures after identity provider clock drift",
+ "severity": "SEV1",
+ "startedAt": "2026-03-09T16:20:00+01:00",
+ "lines": [
+  {
+   "n": 1,
+   "time": "16:20",
+   "author": "florian",
+   "text": "SSO logins failing for everyone, error says assertion not yet valid"
+  },
+  {
+   "n": 2,
+   "time": "16:20",
+   "author": "anneke",
+   "text": "still waiting on a reply from the vendor"
+  },
+  {
+   "n": 3,
+   "time": "16:20",
+   "author": "florian",
+   "text": "rereading the deploy log"
+  },
+  {
+   "n": 4,
+   "time": "16:20",
+   "author": "anneke",
+   "text": "nothing new from my side yet"
+  },
+  {
+   "n": 5,
+   "time": "16:20",
+   "author": "priyanka",
+   "text": "heads up, lunch cover is arranged"
+  },
+  {
+   "n": 6,
+   "time": "16:24",
+   "author": "anneke",
+   "text": "That error is a clock skew problem, the IdP timestamps look ahead of ours"
+  },
+  {
+   "n": 7,
+   "time": "16:24",
+   "author": "anneke",
+   "text": "no alerts firing other than the known ones"
+  },
+  {
+   "n": 8,
+   "time": "16:24",
+   "author": "anneke",
+   "text": "checking whether this matches last quarter"
+  },
+  {
+   "n": 9,
+   "time": "16:24",
+   "author": "jomo",
+   "text": "pulling up the relevant dashboard now"
+  },
+  {
+   "n": 10,
+   "time": "16:24",
+   "author": "jomo",
+   "text": "one sec, scrolling back through the channel"
+  },
+  {
+   "n": 11,
+   "time": "16:26",
+   "author": "jomo",
+   "text": "About 12,000 active sessions are expiring and nobody can sign back in"
+  },
+  {
+   "n": 12,
+   "time": "16:26",
+   "author": "anneke",
+   "text": "noting this down for the record"
+  },
+  {
+   "n": 13,
+   "time": "16:26",
+   "author": "jomo",
+   "text": "nothing new from my side yet"
+  },
+  {
+   "n": 14,
+   "time": "16:26",
+   "author": "anneke",
+   "text": "rereading the deploy log"
+  },
+  {
+   "n": 15,
+   "time": "16:26",
+   "author": "florian",
+   "text": "no alerts firing other than the known ones"
+  },
+  {
+   "n": 16,
+   "time": "16:31",
+   "author": "priyanka",
+   "text": "Our auth hosts report an offset of 4 minutes against NTP"
+  },
+  {
+   "n": 17,
+   "time": "16:31",
+   "author": "priyanka",
+   "text": "rereading the deploy log"
+  },
+  {
+   "n": 18,
+   "time": "16:31",
+   "author": "anneke",
+   "text": "one sec, scrolling back through the channel"
+  },
+  {
+   "n": 19,
+   "time": "16:31",
+   "author": "florian",
+   "text": "copying the last error into the ticket"
+  },
+  {
+   "n": 20,
+   "time": "16:31",
+   "author": "priyanka",
+   "text": "refreshing the page again to confirm"
+  },
+  {
+   "n": 21,
+   "time": "16:34",
+   "author": "priyanka",
+   "text": "The NTP daemon stopped on two of the three auth hosts after the kernel patch last Friday"
+  },
+  {
+   "n": 22,
+   "time": "16:34",
+   "author": "florian",
+   "text": "refreshing the page again to confirm"
+  },
+  {
+   "n": 23,
+   "time": "16:34",
+   "author": "florian",
+   "text": "copying the last error into the ticket"
+  },
+  {
+   "n": 24,
+   "time": "16:34",
+   "author": "priyanka",
+   "text": "nothing new from my side yet"
+  },
+  {
+   "n": 25,
+   "time": "16:34",
+   "author": "jomo",
+   "text": "standing by for instructions"
+  },
+  {
+   "n": 26,
+   "time": "16:38",
+   "author": "priyanka",
+   "text": "Restarted chronyd on both hosts and forced a step"
+  },
+  {
+   "n": 27,
+   "time": "16:38",
+   "author": "anneke",
+   "text": "still digging, will update shortly"
+  },
+  {
+   "n": 28,
+   "time": "16:38",
+   "author": "florian",
+   "text": "checking whether this matches last quarter"
+  },
+  {
+   "n": 29,
+   "time": "16:38",
+   "author": "anneke",
+   "text": "noting this down for the record"
+  },
+  {
+   "n": 30,
+   "time": "16:43",
+   "author": "anneke",
+   "text": "Offset is zero now, test logins succeed"
+  },
+  {
+   "n": 31,
+   "time": "16:43",
+   "author": "anneke",
+   "text": "adding a comment to the status draft"
+  },
+  {
+   "n": 32,
+   "time": "16:43",
+   "author": "jomo",
+   "text": "standing by for instructions"
+  },
+  {
+   "n": 33,
+   "time": "16:43",
+   "author": "anneke",
+   "text": "noting this down for the record"
+  },
+  {
+   "n": 34,
+   "time": "16:50",
+   "author": "jomo",
+   "text": "Login success rate back to 99.8%"
+  },
+  {
+   "n": 35,
+   "time": "16:50",
+   "author": "priyanka",
+   "text": "rereading the deploy log"
+  },
+  {
+   "n": 36,
+   "time": "16:50",
+   "author": "jomo",
+   "text": "FYI the on-call lead is aware"
+  },
+  {
+   "n": 37,
+   "time": "16:50",
+   "author": "florian",
+   "text": "checking whether this matches last quarter"
+  },
+  {
+   "n": 38,
+   "time": "17:05",
+   "author": "florian",
+   "text": "Closing the incident, comms sent to staff"
+  },
+  {
+   "n": 39,
+   "time": "17:05",
+   "author": "anneke",
+   "text": "refreshing the page again to confirm"
+  },
+  {
+   "n": 40,
+   "time": "17:05",
+   "author": "jomo",
+   "text": "standing by for instructions"
+  },
+  {
+   "n": 41,
+   "time": "17:05",
+   "author": "jomo",
+   "text": "copying the last error into the ticket"
+  },
+  {
+   "n": 42,
+   "time": "17:05",
+   "author": "priyanka",
+   "text": "one sec, scrolling back through the channel"
+  },
+  {
+   "n": 43,
+   "time": "17:10",
+   "author": "priyanka",
+   "text": "Action item: enable the chronyd service check in monitoring. Owner priyanka"
+  },
+  {
+   "n": 44,
+   "time": "17:10",
+   "author": "jomo",
+   "text": "still digging, will update shortly"
+  },
+  {
+   "n": 45,
+   "time": "17:10",
+   "author": "anneke",
+   "text": "standing by for instructions"
+  },
+  {
+   "n": 46,
+   "time": "17:10",
+   "author": "anneke",
+   "text": "heads up, lunch cover is arranged"
+  },
+  {
+   "n": 47,
+   "time": "17:10",
+   "author": "priyanka",
+   "text": "pulling up the relevant dashboard now"
+  },
+  {
+   "n": 48,
+   "time": "17:12",
+   "author": "anneke",
+   "text": "Action item: raise the assertion clock tolerance from 30 seconds to 2 minutes, anneke to do"
+  },
+  {
+   "n": 49,
+   "time": "17:12",
+   "author": "jomo",
+   "text": "adding a comment to the status draft"
+  },
+  {
+   "n": 50,
+   "time": "17:12",
+   "author": "florian",
+   "text": "I can take the next check"
+  },
+  {
+   "n": 51,
+   "time": "17:12",
+   "author": "priyanka",
+   "text": "FYI the on-call lead is aware"
+  },
+  {
+   "n": 52,
+   "time": "17:15",
+   "author": "florian",
+   "text": "Summary: stopped time sync on auth hosts caused clock skew that blocked all SSO logins for about 45 minutes"
+  },
+  {
+   "n": 53,
+   "time": "17:15",
+   "author": "jomo",
+   "text": "pasting the query output below"
+  },
+  {
+   "n": 54,
+   "time": "17:15",
+   "author": "anneke",
+   "text": "heads up, lunch cover is arranged"
+  },
+  {
+   "n": 55,
+   "time": "17:15",
+   "author": "priyanka",
+   "text": "pulling up the relevant dashboard now"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "16:20",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "16:24",
+    "lines": [
+     6
+    ]
+   },
+   {
+    "time": "16:31",
+    "lines": [
+     16
+    ]
+   },
+   {
+    "time": "16:38",
+    "lines": [
+     26
+    ]
+   },
+   {
+    "time": "16:43",
+    "lines": [
+     30
+    ]
+   },
+   {
+    "time": "16:50",
+    "lines": [
+     34
+    ]
+   },
+   {
+    "time": "17:05",
+    "lines": [
+     38
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     43
+    ]
+   },
+   {
+    "lines": [
+     48
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 16:20 Florian reported SSO logins failing for all users with an error that the assertion was not yet valid.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 16:24 Anneke diagnosed the error as clock skew, with the identity provider timestamps running ahead of ours.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Jomo said about 12,000 active sessions were expiring with nobody able to sign back in.",
+   "cites": [
+    11
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 16:31 Priyanka measured the auth hosts at a 4 minute offset against NTP.",
+   "cites": [
+    16
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "Priyanka found the NTP daemon had stopped on two of the three auth hosts after last Friday kernel patch.",
+   "cites": [
+    21
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 16:38 Priyanka restarted chronyd on both hosts and forced a time step.",
+   "cites": [
+    26
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 16:43 Anneke confirmed the offset was zero and test logins succeeded.",
+   "cites": [
+    30
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 16:50 Jomo saw the login success rate return to 99.8 percent.",
+   "cites": [
+    34
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 17:05 Florian closed the incident after sending communications to staff.",
+   "cites": [
+    38
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Priyanka will enable a chronyd service check in monitoring.",
+   "cites": [
+    43
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Anneke will raise the assertion clock tolerance from 30 seconds to 2 minutes.",
+   "cites": [
+    48
+   ]
+  },
+  {
+   "section": "summary",
+   "text": "Florian summarised that stopped time sync on the auth hosts caused clock skew that blocked all SSO logins for about 45 minutes.",
+   "cites": [
+    52
+   ]
+  }
+ ]
+}

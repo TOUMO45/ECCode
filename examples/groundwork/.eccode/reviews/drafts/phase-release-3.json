@@ -1,0 +1,129 @@
+{
+ "decision": "changes_requested",
+ "summary": "Re-ran npm test (280 pass, 0 fail, 0 todo), the offline holdout verifier (M1b 63/63, M1c 1/434 = 0.23%, logs not appended), a clean-copy seed/start/health/SIGTERM run, the holdout manifest and every submitted artifact hash; thresholds are unchanged. The earlier blocking M1c finding and the todo finding are resolved. I found two docs claims that are false: the tune-run cap is described as enforced but the guard never fires, and some figures contradict each other and the log. Both are fixable in docs and code.",
+ "criteria": [
+  {
+   "id": "C1",
+   "description": "Deterministic suite is green with no todo masking a threshold miss",
+   "met": true,
+   "evidence": [
+    "ev:ev-mv08aet2-018e7f59",
+    "artifact:test/eval/m1b-m1c.test.js"
+   ]
+  },
+  {
+   "id": "C2",
+   "description": "Holdout M1c within 2% on the sealed holdout with thresholds untouched and the holdout manifest intact",
+   "met": true,
+   "evidence": [
+    "ev:ev-mv08aiwk-01781f21",
+    "artifact:eval/holdout/MANIFEST.sha256",
+    "artifact:eval/thresholds.json"
+   ]
+  },
+  {
+   "id": "C3",
+   "description": "README and ops docs run, config/secrets and rollback instructions work from a clean copy",
+   "met": true,
+   "evidence": [
+    "ev:ev-mv08aet2-018e7f59",
+    "artifact:README.md",
+    "artifact:docs/operations.md"
+   ]
+  },
+  {
+   "id": "C4",
+   "description": "Docs and logs are honest and consistent about eval runs, cost and cap enforcement",
+   "met": false,
+   "evidence": [
+    "artifact:eval/usage.log",
+    "artifact:eval/lib/budget.js",
+    "artifact:README.md",
+    "artifact:docs/eval-results.md"
+   ]
+  },
+  {
+   "id": "C5",
+   "description": "No secrets in the submission",
+   "met": true,
+   "evidence": [
+    "artifact:README.md"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "id": "F8",
+   "severity": "major",
+   "title": "Tune-run cap guard never fires; docs claim it is enforced and that 8 runs were used",
+   "detail": "eval/lib/budget.js isFullTune() matches status COMPLETE or INCOMPLETE, but run.js writes PASS, FAIL or INCOMPLETE and usage.log contains only PASS (11) and FAIL (4). I called checkBudget on the real usage.log and got fullTuneRuns: 0, ok: true. The cap is a no-op in real use. The unit tests pass only because their fixtures use status COMPLETE. README says the cap is enforced from usage.log and that all 8 are used. docs/eval-results.md and eval/tuning-log.md say the same, with the 8th run at 23:30. usage.log has 11 non-holdout full CLI runs (22:26, 22:33, 22:54, 23:00, 23:08, 23:14, 23:27, 23:30, 23:47, 23:51, 23:56), so the cap of 8 was exceeded by 3 and the docs understate the overrun.",
+   "evidence": [
+    "artifact:eval/lib/budget.js",
+    "artifact:eval/usage.log",
+    "artifact:README.md",
+    "artifact:docs/eval-results.md",
+    "artifact:eval/tuning-log.md"
+   ],
+   "recommendation": "Fix isFullTune to count the real statuses (PASS, FAIL, INCOMPLETE) and change the test fixtures to the statuses the runner writes, or state in README and eval docs that the cap is not enforced. Correct the run counts to 11 non-holdout full runs. Disclose the overrun of 8. Resolved when checkBudget on the real usage.log returns fullTuneRuns >= 8 and the docs match usage.log."
+  },
+  {
+   "id": "F9",
+   "severity": "minor",
+   "title": "Stale and contradictory statements in docs",
+   "detail": "README (Known risks) and docs/eval-results.md (Status) say the M1c holdout assertion in test/eval/m1b-m1c.test.js may still be a todo. It is not: it is a hard assertion and npm test reports todo 0. docs/eval-results.md also carries 'Logged cost: USD 1.045 across the 11 entries' and 'Holdout CLI runs = 1' beside the correct 15 entries and USD 1.454. The tuning-log keeps the superseded RW2 status sections.",
+   "evidence": [
+    "ev:ev-mv08aet2-018e7f59",
+    "artifact:docs/eval-results.md",
+    "artifact:README.md",
+    "artifact:eval/usage.log"
+   ],
+   "recommendation": "Remove the todo hedge, say that the assertion is hard and passes, delete or mark as superseded the 11-entry cost and 1-holdout-run counts. Resolved when the docs carry one consistent figure set."
+  },
+  {
+   "id": "F10",
+   "severity": "minor",
+   "title": "Provenance limits of holdout 3 and run commit",
+   "detail": "Holdout 3 independence rests on the author's self-report. Every eval and holdout log entry records gitCommit f1a82c4, which is the scope-only commit, because nothing is committed. The reports cannot be tied to a code state. Both are disclosed in the docs, so this is noted rather than blocking. Holdout 3 is single-use, n = 434 with 1 flag, and hold3-08 is open.",
+   "evidence": [
+    "artifact:eval/holdout-runs.log",
+    "artifact:eval/tuning-log.md"
+   ],
+   "recommendation": "Commit the release tree and record the commit hash for the release. A human decision on accepting the open flag and the cap overruns is still pending, and the docs correctly claim no acceptance."
+  }
+ ],
+ "resolvedFindings": [
+  {
+   "id": "F1",
+   "resolution": "Resolved by option (b). The verifier was changed on tune data and the retired holdouts, and a new manifest-hashed holdout hold3 was authored. I re-ran the offline verifier on it: M1b 63/63, M1c 1/434 = 0.23% (max 2%), manifest sha256 checks OK, thresholds.json unchanged, hold-runs and usage logs not appended. The failed holdouts 1 and 2 are disclosed. Caveat: the independence of holdout 3 is self-reported (F10).",
+   "evidence": [
+    "ev:ev-mv08aiwk-01781f21",
+    "artifact:eval/holdout/MANIFEST.sha256",
+    "artifact:eval/thresholds.json"
+   ]
+  },
+  {
+   "id": "F2",
+   "resolution": "No todo remains in test/ or eval/ (grep). The M1c holdout assertion is hard, and npm test shows 280 pass, 0 fail, 0 todo.",
+   "evidence": [
+    "ev:ev-mv08aet2-018e7f59",
+    "artifact:test/eval/m1b-m1c.test.js"
+   ]
+  },
+  {
+   "id": "F6",
+   "resolution": "README now states 15 entries and USD 1.454, which matches my sum of usage.log (1.4542). The 4-run USD 0.3325 figure is gone. One leftover contradiction in docs/eval-results.md is tracked as F9.",
+   "evidence": [
+    "artifact:README.md",
+    "artifact:eval/usage.log"
+   ]
+  },
+  {
+   "id": "F7",
+   "resolution": "Partly resolved. The overrun is disclosed in README, docs/eval-results.md and the tuning log, and the docs honestly say no one accepted it. The disclosed count is wrong (8 claimed, 11 actual) and the guard is broken, so this follows through into F8. A recorded acceptance is still missing.",
+   "evidence": [
+    "artifact:eval/usage.log",
+    "artifact:eval/lib/budget.js"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,112 @@
+$ node --disable-warning=ExperimentalWarning --test test/eval/thresholds.test.js
+# cwd: .
+# exit: 0
+TAP version 13
+# Subtest: thresholds (D8)
+    # Subtest: eval/thresholds.json equals the brief values
+    ok 1 - eval/thresholds.json equals the brief values
+      ---
+      duration_ms: 1.786441
+      type: 'test'
+      ...
+    1..1
+ok 1 - thresholds (D8)
+  ---
+  duration_ms: 2.641259
+  type: 'suite'
+  ...
+# Subtest: tune set (D8 datasets)
+    # Subtest: 12 incidents with valid shape and labels
+    ok 1 - 12 incidents with valid shape and labels
+      ---
+      duration_ms: 2.091237
+      type: 'test'
+      ...
+    # Subtest: 10 injection cases with unique canaries confined to payload lines
+    ok 2 - 10 injection cases with unique canaries confined to payload lines
+      ---
+      duration_ms: 5.184095
+      type: 'test'
+      ...
+    1..2
+ok 2 - tune set (D8 datasets)
+  ---
+  duration_ms: 7.451067
+  type: 'suite'
+  ...
+# Subtest: verifier corpus: M1b soundness on seeded fabrications
+    # Subtest: corpus meets the S1 composition minimums
+    ok 1 - corpus meets the S1 composition minimums
+      ---
+      duration_ms: 0.467307
+      type: 'test'
+      ...
+    # Subtest: M1b: every seeded fabrication is flagged with its expected code (100%)
+    ok 2 - M1b: every seeded fabrication is flagged with its expected code (100%)
+      ---
+      duration_ms: 61.056794
+      type: 'test'
+      ...
+    # M1b flagged 63/63 = 100.0%; wrong-code 0
+    # Subtest: probes outside the seeded kinds are measured and reported, not asserted
+    ok 3 - probes outside the seeded kinds are measured and reported, not asserted
+      ---
+      duration_ms: 10.706621
+      type: 'test'
+      ...
+    # known-gap probes flagged 2/6; slipped through: p-01 [lowercase-product-name], p-02 [negation], p-03 [inverted-claim], p-05 [lowercase-invented-noun]
+    1..3
+ok 3 - verifier corpus: M1b soundness on seeded fabrications
+  ---
+  duration_ms: 72.669969
+  type: 'suite'
+  ...
+# Subtest: verifier corpus: M1c false-flag rate on correct statements
+    # Subtest: corpus size and structure
+    ok 1 - corpus size and structure
+      ---
+      duration_ms: 0.418934
+      type: 'test'
+      ...
+    # Subtest: M1c: wrongly flagged / all (verifier corpus plus tune correctStatements) <= 2%
+    ok 2 - M1c: wrongly flagged / all (verifier corpus plus tune correctStatements) <= 2%
+      ---
+      duration_ms: 168.786173
+      type: 'test'
+      ...
+    # M1c false flags 7/429 = 1.63%; natural-paraphrase subset 7/21
+    # false flags:\\nc-payments-nat3: WEAK_SUPPORT(0.33) | The team decided to revert deploy 4471.\\nc-payments-nat4: WEAK_SUPPORT(0.00) | Once the rollback completed, 5xx errors started to fall.\\nc-payments-nat5: NAME_NOT_IN_SOURCE(Roughly) | Roughly 340 checkouts failed according to support.\\nc-auth-nat7: NAME_NOT_IN_SOURCE(Roughly) | Roughly 1,800 logins failed during 38 minutes.\\nc-batch-nat13: NAME_NOT_IN_SOURCE(Billing) | Billing finished at 03:18, which pushed invoices about two hours late.\\nc-search-nat17: NAME_NOT_IN_SOURCE(Roughly) | Roughly 55 minutes of missing products affected users.\\nc-search-nat20: NAME_NOT_IN_SOURCE(Half) | Half of the six partitions had no consumer.
+    1..2
+ok 4 - verifier corpus: M1c false-flag rate on correct statements
+  ---
+  duration_ms: 169.481089
+  type: 'suite'
+  ...
+# Subtest: forbidden stopwords (spec 5.4)
+    # Subtest: list is non-trivial and lower-case
+    ok 1 - list is non-trivial and lower-case
+      ---
+      duration_ms: 0.338772
+      type: 'test'
+      ...
+    # Subtest: no forbidden word is in the verifier stoplist
+    ok 2 - no forbidden word is in the verifier stoplist
+      ---
+      duration_ms: 0.276488
+      type: 'test'
+      ...
+    1..2
+ok 5 - forbidden stopwords (spec 5.4)
+  ---
+  duration_ms: 0.723973
+  type: 'suite'
+  ...
+1..5
+# tests 10
+# suites 5
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 344.032472

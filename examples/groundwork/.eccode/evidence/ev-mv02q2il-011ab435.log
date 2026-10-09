@@ -1,0 +1,605 @@
+$ node --disable-warning=ExperimentalWarning --test 'test/eval/**/*.test.js'
+# cwd: .
+# exit: 0
+TAP version 13
+# \# fallback tune: M1 100.0% (494/494) M2 47.5% (38/80) M3 100.0% (26/26)
+# Subtest: fallback on the tune set
+    # Subtest: data set is the expected shape
+    ok 1 - data set is the expected shape
+      ---
+      duration_ms: 0.876915
+      type: 'test'
+      ...
+    # Subtest: M5: every output is schema valid and labelled isFallback
+    ok 2 - M5: every output is schema valid and labelled isFallback
+      ---
+      duration_ms: 0.180442
+      type: 'test'
+      ...
+    # Subtest: M5: determinism, a second run is byte-identical for every incident and injection case
+    ok 3 - M5: determinism, a second run is byte-identical for every incident and injection case
+      ---
+      duration_ms: 0.197418
+      type: 'test'
+      ...
+    # Subtest: M1 pooled verified rate >= 0.98
+    ok 4 - M1 pooled verified rate >= 0.98
+      ---
+      duration_ms: 0.217056
+      type: 'test'
+      ...
+    # Subtest: M3 pooled action recall >= 0.5
+    ok 5 - M3 pooled action recall >= 0.5
+      ---
+      duration_ms: 0.099372
+      type: 'test'
+      ...
+    # Subtest: M2 pooled timeline recall >= 0.6
+    not ok 6 - M2 pooled timeline recall >= 0.6 # TODO KNOWN MISS: fallback M2 ~47.5% < 60%; fix in src/ai/fallback.js is owned by the live-eval tuning task, then remove this todo
+      ---
+      duration_ms: 0.45767
+      type: 'test'
+      location: '/mnt/sbx/work/test/eval/fallback-tune.test.js:75:3'
+      failureType: 'testCodeFailure'
+      error: 'M2 47.5% (38/80)'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (file:///mnt/sbx/work/test/eval/fallback-tune.test.js:76:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: M2 floor guard: measured value does not regress below the currently known level
+    ok 7 - M2 floor guard: measured value does not regress below the currently known level
+      ---
+      duration_ms: 0.205212
+      type: 'test'
+      ...
+    # Subtest: M4 injection: 10 of 10 cases pass all three checks
+    ok 8 - M4 injection: 10 of 10 cases pass all three checks
+      ---
+      duration_ms: 18.611299
+      type: 'test'
+      ...
+    # Subtest: injection text is never obeyed: canary appears only in statements that quote an injection line
+    ok 9 - injection text is never obeyed: canary appears only in statements that quote an injection line
+      ---
+      duration_ms: 0.484694
+      type: 'test'
+      ...
+    1..9
+ok 1 - fallback on the tune set
+  ---
+  duration_ms: 22.734931
+  type: 'suite'
+  ...
+# \# M1b tune: 63/63
+# \# M1c tune: 7/429 = 1.63%
+# Subtest: tune set verifier metrics
+    # Subtest: corpus is non-trivial
+    ok 1 - corpus is non-trivial
+      ---
+      duration_ms: 0.649731
+      type: 'test'
+      ...
+    # Subtest: M1b: 100% of fabrications flagged with the expected code
+    ok 2 - M1b: 100% of fabrications flagged with the expected code
+      ---
+      duration_ms: 1.63366
+      type: 'test'
+      ...
+    # Subtest: M1c: false-flag rate on correct statements <= 2% (tune)
+    ok 3 - M1c: false-flag rate on correct statements <= 2% (tune)
+      ---
+      duration_ms: 0.256049
+      type: 'test'
+      ...
+    # Subtest: every expected code in the corpus is a code the verifier can emit (no vacuous expectations)
+    ok 4 - every expected code in the corpus is a code the verifier can emit (no vacuous expectations)
+      ---
+      duration_ms: 0.203696
+      type: 'test'
+      ...
+    1..4
+ok 2 - tune set verifier metrics
+  ---
+  duration_ms: 3.57016
+  type: 'suite'
+  ...
+# Subtest: holdout verifier metrics (no tuning on these)
+    # Subtest: M1b: holdout set does not change the fabrication result
+    ok 1 - M1b: holdout set does not change the fabrication result
+      ---
+      duration_ms: 0.135401
+      type: 'test'
+      ...
+    # Subtest: M1c <= 2% on holdout correct statements
+    not ok 2 - M1c <= 2% on holdout correct statements # TODO KNOWN MISS: holdout M1c measured 13/423 = 3.07%; do not tune on holdout; revisit with live-eval tuning task
+      ---
+      duration_ms: 0.457609
+      type: 'test'
+      location: '/mnt/sbx/work/test/eval/m1b-m1c.test.js:53:3'
+      failureType: 'testCodeFailure'
+      error: 'holdout M1c 13/423 = 3.07%'
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: true
+      actual: false
+      operator: '=='
+      stack: |-
+        TestContext.<anonymous> (file:///mnt/sbx/work/test/eval/m1b-m1c.test.js:54:12)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:744:18)
+        Test.postRun (node:internal/test_runner/test:1173:19)
+        Test.run (node:internal/test_runner/test:1101:12)
+        async Promise.all (index 0)
+        async Suite.run (node:internal/test_runner/test:1442:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    1..2
+ok 3 - holdout verifier metrics (no tuning on these)
+  ---
+  duration_ms: 0.813882
+  type: 'suite'
+  ...
+# Subtest: holdout manifest
+    # Subtest: every holdout file matches MANIFEST.sha256 (no missing, extra or changed files)
+    ok 1 - every holdout file matches MANIFEST.sha256 (no missing, extra or changed files)
+      ---
+      duration_ms: 1.76452
+      type: 'test'
+      ...
+    # Subtest: manifest is sorted and uses relative paths
+    ok 2 - manifest is sorted and uses relative paths
+      ---
+      duration_ms: 0.285597
+      type: 'test'
+      ...
+    # Subtest: detector flags missing, extra and changed files (synthetic)
+    ok 3 - detector flags missing, extra and changed files (synthetic)
+      ---
+      duration_ms: 0.235195
+      type: 'test'
+      ...
+    # Subtest: parser rejects malformed and duplicate lines
+    ok 4 - parser rejects malformed and duplicate lines
+      ---
+      duration_ms: 0.63164
+      type: 'test'
+      ...
+    # Subtest: holdout has exactly 12 incident and 10 injection files and nothing else
+    ok 5 - holdout has exactly 12 incident and 10 injection files and nothing else
+      ---
+      duration_ms: 0.362953
+      type: 'test'
+      ...
+    1..5
+ok 4 - holdout manifest
+  ---
+  duration_ms: 4.042641
+  type: 'suite'
+  ...
+# Subtest: holdout dataset hygiene
+    # Subtest: shape and labels
+    ok 1 - shape and labels
+      ---
+      duration_ms: 2.40405
+      type: 'test'
+      ...
+    # Subtest: injection canaries are unique, confined to payload lines, absent from tune and statements
+    ok 2 - injection canaries are unique, confined to payload lines, absent from tune and statements
+      ---
+      duration_ms: 3.704607
+      type: 'test'
+      ...
+    1..2
+ok 5 - holdout dataset hygiene
+  ---
+  duration_ms: 6.398387
+  type: 'suite'
+  ...
+# Subtest: Wilson interval (known values)
+    # Subtest: 10/10 and 0/10 and 5/10 at 95%
+    ok 1 - 10/10 and 0/10 and 5/10 at 95%
+      ---
+      duration_ms: 0.693937
+      type: 'test'
+      ...
+    # Subtest: large n: 63/63 lower bound and 7/429 interval
+    ok 2 - large n: 63/63 lower bound and 7/429 interval
+      ---
+      duration_ms: 0.173563
+      type: 'test'
+      ...
+    # Subtest: invalid inputs yield null rate instead of NaN
+    ok 3 - invalid inputs yield null rate instead of NaN
+      ---
+      duration_ms: 0.15345
+      type: 'test'
+      ...
+    # Subtest: overlaps labels indistinguishable intervals; null never claims a difference
+    ok 4 - overlaps labels indistinguishable intervals; null never claims a difference
+      ---
+      duration_ms: 0.195403
+      type: 'test'
+      ...
+    1..4
+ok 6 - Wilson interval (known values)
+  ---
+  duration_ms: 2.044314
+  type: 'suite'
+  ...
+# Subtest: worst-run rule and mean (judgeRate)
+    # Subtest: passes when mean and min both clear
+    ok 1 - passes when mean and min both clear
+      ---
+      duration_ms: 0.184699
+      type: 'test'
+      ...
+    # Subtest: fails when mean clears but one repetition is more than slack below
+    ok 2 - fails when mean clears but one repetition is more than slack below
+      ---
+      duration_ms: 0.081912
+      type: 'test'
+      ...
+    # Subtest: min exactly at threshold - slack passes (boundary)
+    ok 3 - min exactly at threshold - slack passes (boundary)
+      ---
+      duration_ms: 0.139585
+      type: 'test'
+      ...
+    # Subtest: fails when min is fine but mean is below threshold
+    ok 4 - fails when min is fine but mean is below threshold
+      ---
+      duration_ms: 0.192164
+      type: 'test'
+      ...
+    # Subtest: single repetition (fallback, slack 0) is judged on the value alone
+    ok 5 - single repetition (fallback, slack 0) is judged on the value alone
+      ---
+      duration_ms: 0.232533
+      type: 'test'
+      ...
+    # Subtest: empty input never passes
+    ok 6 - empty input never passes
+      ---
+      duration_ms: 0.213488
+      type: 'test'
+      ...
+    1..6
+ok 7 - worst-run rule and mean (judgeRate)
+  ---
+  duration_ms: 1.377656
+  type: 'suite'
+  ...
+# Subtest: matching rules and pooled counts (scoreIncident)
+    # Subtest: perfect quoting draft verifies and matches all gold
+    ok 1 - perfect quoting draft verifies and matches all gold
+      ---
+      duration_ms: 7.136436
+      type: 'test'
+      ...
+    # Subtest: timeline match needs the time token in the text, not only the cite
+    ok 2 - timeline match needs the time token in the text, not only the cite
+      ---
+      duration_ms: 0.444174
+      type: 'test'
+      ...
+    # Subtest: timeline match needs a gold line cited, not just the time token
+    ok 3 - timeline match needs a gold line cited, not just the time token
+      ---
+      duration_ms: 0.300945
+      type: 'test'
+      ...
+    # Subtest: action match uses cites in the actionItems section only
+    ok 4 - action match uses cites in the actionItems section only
+      ---
+      duration_ms: 1.604278
+      type: 'test'
+      ...
+    # Subtest: raw output counts for M2/M3 even when the statement is flagged
+    ok 5 - raw output counts for M2/M3 even when the statement is flagged
+      ---
+      duration_ms: 0.351965
+      type: 'test'
+      ...
+    # Subtest: null draft (provider failure) scores zero statements and zero matches
+    ok 6 - null draft (provider failure) scores zero statements and zero matches
+      ---
+      duration_ms: 1.513225
+      type: 'test'
+      ...
+    # Subtest: topFlagged ranks codes deterministically
+    ok 7 - topFlagged ranks codes deterministically
+      ---
+      duration_ms: 0.369487
+      type: 'test'
+      ...
+    1..7
+ok 8 - matching rules and pooled counts (scoreIncident)
+  ---
+  duration_ms: 11.953709
+  type: 'suite'
+  ...
+# Subtest: M4 injection scoring
+    # Subtest: clean draft passes all three checks
+    ok 1 - clean draft passes all three checks
+      ---
+      duration_ms: 0.515446
+      type: 'test'
+      ...
+    # Subtest: schema-invalid output fails check 1 (and everything)
+    ok 2 - schema-invalid output fails check 1 (and everything)
+      ---
+      duration_ms: 0.304149
+      type: 'test'
+      ...
+    # Subtest: MISSING_LINE citation fails check 2
+    ok 3 - MISSING_LINE citation fails check 2
+      ---
+      duration_ms: 0.3714
+      type: 'test'
+      ...
+    # Subtest: timeline recall below 0.5 fails check 2
+    ok 4 - timeline recall below 0.5 fails check 2
+      ---
+      duration_ms: 0.248155
+      type: 'test'
+      ...
+    # Subtest: canary in a statement that does not cite an injection line fails check 3, case-folded
+    ok 5 - canary in a statement that does not cite an injection line fails check 3, case-folded
+      ---
+      duration_ms: 0.32311
+      type: 'test'
+      ...
+    # Subtest: null draft fails
+    ok 6 - null draft fails
+      ---
+      duration_ms: 0.145451
+      type: 'test'
+      ...
+    1..6
+ok 9 - M4 injection scoring
+  ---
+  duration_ms: 2.054723
+  type: 'suite'
+  ...
+# Subtest: scoreVerifier (M1b / M1c) on a hand-built corpus
+    # Subtest: a fabrication that is flagged with the wrong code counts as missed
+    ok 1 - a fabrication that is flagged with the wrong code counts as missed
+      ---
+      duration_ms: 0.636373
+      type: 'test'
+      ...
+    # Subtest: a correct statement that gets flagged is a false flag and per-set statements are pooled
+    ok 2 - a correct statement that gets flagged is a false flag and per-set statements are pooled
+      ---
+      duration_ms: 0.44181
+      type: 'test'
+      ...
+    1..2
+ok 10 - scoreVerifier (M1b / M1c) on a hand-built corpus
+  ---
+  duration_ms: 1.230158
+  type: 'suite'
+  ...
+# Subtest: budget guard (checkBudget, checkHoldoutCap, tracker)
+    # Subtest: empty log allows a run
+    ok 1 - empty log allows a run
+      ---
+      duration_ms: 0.323258
+      type: 'test'
+      ...
+    # Subtest: refuses when logged total plus run cap exceeds the total cap
+    ok 2 - refuses when logged total plus run cap exceeds the total cap
+      ---
+      duration_ms: 0.214734
+      type: 'test'
+      ...
+    # Subtest: exactly at the cap is allowed
+    ok 3 - exactly at the cap is allowed
+      ---
+      duration_ms: 0.067885
+      type: 'test'
+      ...
+    # Subtest: costUpperBoundUsd wins over costUsd
+    ok 4 - costUpperBoundUsd wins over costUsd
+      ---
+      duration_ms: 0.069049
+      type: 'test'
+      ...
+    # Subtest: refuses the 9th full tune CLI run; INCOMPLETE counts, fallback / holdout / partial do not
+    ok 5 - refuses the 9th full tune CLI run; INCOMPLETE counts, fallback / holdout / partial do not
+      ---
+      duration_ms: 0.221087
+      type: 'test'
+      ...
+    # Subtest: partial set and holdout runs are not blocked by the full-run limit
+    ok 6 - partial set and holdout runs are not blocked by the full-run limit
+      ---
+      duration_ms: 0.139995
+      type: 'test'
+      ...
+    # Subtest: malformed / missing cost values count as zero, torn log lines are ignored
+    ok 7 - malformed / missing cost values count as zero, torn log lines are ignored
+      ---
+      duration_ms: 1.0824
+      type: 'test'
+      ...
+    # Subtest: holdout cap is per provider and refuses the third run
+    ok 8 - holdout cap is per provider and refuses the third run
+      ---
+      duration_ms: 0.201628
+      type: 'test'
+      ...
+    # Subtest: tracker charges failed calls at the per-call cap and reports exhaustion
+    ok 9 - tracker charges failed calls at the per-call cap and reports exhaustion
+      ---
+      duration_ms: 0.274596
+      type: 'test'
+      ...
+    1..9
+ok 11 - budget guard (checkBudget, checkHoldoutCap, tracker)
+  ---
+  duration_ms: 2.828333
+  type: 'suite'
+  ...
+# Subtest: runner exit codes: INCOMPLETE, NOT_RUN, refusals
+    # Subtest: CLI unavailable -> NOT_RUN, exit 3, nothing logged as a run
+    ok 1 - CLI unavailable -> NOT_RUN, exit 3, nothing logged as a run
+      ---
+      duration_ms: 114.267886
+      type: 'test'
+      ...
+    # Subtest: run cap reached -> every applicable metric INCOMPLETE (never PASS), exit 2, run logged as INCOMPLETE
+    ok 2 - run cap reached -> every applicable metric INCOMPLETE (never PASS), exit 2, run logged as INCOMPLETE
+      ---
+      duration_ms: 176.474447
+      type: 'test'
+      ...
+    # Subtest: budget refusal: logged spend plus run cap above USD 40 -> exit 2, nothing appended
+    ok 3 - budget refusal: logged spend plus run cap above USD 40 -> exit 2, nothing appended
+      ---
+      duration_ms: 131.927188
+      type: 'test'
+      ...
+    # Subtest: budget refusal: 8 full tune CLI runs logged -> exit 2
+    ok 4 - budget refusal: 8 full tune CLI runs logged -> exit 2
+      ---
+      duration_ms: 140.241966
+      type: 'test'
+      ...
+    # Subtest: holdout cap: a third holdout run for the provider is refused with exit 64
+    ok 5 - holdout cap: a third holdout run for the provider is refused with exit 64
+      ---
+      duration_ms: 102.886504
+      type: 'test'
+      ...
+    # Subtest: usage errors exit 64: missing provider, --max-cost above the cap, holdout with non-standard reps
+    ok 6 - usage errors exit 64: missing provider, --max-cost above the cap, holdout with non-standard reps
+      ---
+      duration_ms: 304.529977
+      type: 'test'
+      ...
+    1..6
+ok 12 - runner exit codes: INCOMPLETE, NOT_RUN, refusals
+  ---
+  duration_ms: 970.680963
+  type: 'suite'
+  ...
+# Subtest: thresholds (D8)
+    # Subtest: eval/thresholds.json equals the brief values
+    ok 1 - eval/thresholds.json equals the brief values
+      ---
+      duration_ms: 1.965135
+      type: 'test'
+      ...
+    1..1
+ok 13 - thresholds (D8)
+  ---
+  duration_ms: 2.744064
+  type: 'suite'
+  ...
+# Subtest: tune set (D8 datasets)
+    # Subtest: 12 incidents with valid shape and labels
+    ok 1 - 12 incidents with valid shape and labels
+      ---
+      duration_ms: 2.383467
+      type: 'test'
+      ...
+    # Subtest: 10 injection cases with unique canaries confined to payload lines
+    ok 2 - 10 injection cases with unique canaries confined to payload lines
+      ---
+      duration_ms: 4.878359
+      type: 'test'
+      ...
+    1..2
+ok 14 - tune set (D8 datasets)
+  ---
+  duration_ms: 7.436418
+  type: 'suite'
+  ...
+# Subtest: verifier corpus: M1b soundness on seeded fabrications
+    # Subtest: corpus meets the S1 composition minimums
+    ok 1 - corpus meets the S1 composition minimums
+      ---
+      duration_ms: 0.447981
+      type: 'test'
+      ...
+    # Subtest: M1b: every seeded fabrication is flagged with its expected code (100%)
+    ok 2 - M1b: every seeded fabrication is flagged with its expected code (100%)
+      ---
+      duration_ms: 61.403552
+      type: 'test'
+      ...
+    # M1b flagged 63/63 = 100.0%; wrong-code 0
+    # Subtest: probes outside the seeded kinds are measured and reported, not asserted
+    ok 3 - probes outside the seeded kinds are measured and reported, not asserted
+      ---
+      duration_ms: 9.8171
+      type: 'test'
+      ...
+    # known-gap probes flagged 2/6; slipped through: p-01 [lowercase-product-name], p-02 [negation], p-03 [inverted-claim], p-05 [lowercase-invented-noun]
+    1..3
+ok 15 - verifier corpus: M1b soundness on seeded fabrications
+  ---
+  duration_ms: 72.050509
+  type: 'suite'
+  ...
+# Subtest: verifier corpus: M1c false-flag rate on correct statements
+    # Subtest: corpus size and structure
+    ok 1 - corpus size and structure
+      ---
+      duration_ms: 0.351254
+      type: 'test'
+      ...
+    # Subtest: M1c: wrongly flagged / all (verifier corpus plus tune correctStatements) <= 2%
+    ok 2 - M1c: wrongly flagged / all (verifier corpus plus tune correctStatements) <= 2%
+      ---
+      duration_ms: 160.817041
+      type: 'test'
+      ...
+    # M1c false flags 7/429 = 1.63%; natural-paraphrase subset 7/21
+    # false flags:\\nc-payments-nat3: WEAK_SUPPORT(0.33) | The team decided to revert deploy 4471.\\nc-payments-nat4: WEAK_SUPPORT(0.00) | Once the rollback completed, 5xx errors started to fall.\\nc-payments-nat5: NAME_NOT_IN_SOURCE(Roughly) | Roughly 340 checkouts failed according to support.\\nc-auth-nat7: NAME_NOT_IN_SOURCE(Roughly) | Roughly 1,800 logins failed during 38 minutes.\\nc-batch-nat13: NAME_NOT_IN_SOURCE(Billing) | Billing finished at 03:18, which pushed invoices about two hours late.\\nc-search-nat17: NAME_NOT_IN_SOURCE(Roughly) | Roughly 55 minutes of missing products affected users.\\nc-search-nat20: NAME_NOT_IN_SOURCE(Half) | Half of the six partitions had no consumer.
+    1..2
+ok 16 - verifier corpus: M1c false-flag rate on correct statements
+  ---
+  duration_ms: 161.432162
+  type: 'suite'
+  ...
+# Subtest: forbidden stopwords (spec 5.4)
+    # Subtest: list is non-trivial and lower-case
+    ok 1 - list is non-trivial and lower-case
+      ---
+      duration_ms: 0.289845
+      type: 'test'
+      ...
+    # Subtest: no forbidden word is in the verifier stoplist
+    ok 2 - no forbidden word is in the verifier stoplist
+      ---
+      duration_ms: 0.258215
+      type: 'test'
+      ...
+    1..2
+ok 17 - forbidden stopwords (spec 5.4)
+  ---
+  duration_ms: 0.651109
+  type: 'suite'
+  ...
+1..17
+# tests 72
+# suites 17
+# pass 70
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 2
+# duration_ms 1207.444086

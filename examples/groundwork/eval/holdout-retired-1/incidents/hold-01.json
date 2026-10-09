@@ -1,0 +1,446 @@
+{
+ "id": "hold-01",
+ "title": "Internal TLS certificate expired on the service mesh",
+ "severity": "SEV1",
+ "startedAt": "2026-04-02T06:10:00Z",
+ "lines": [
+  {
+   "n": 1,
+   "time": "06:10",
+   "author": "rosa",
+   "text": "Pagerduty just woke me up, the mesh gateway is returning handshake failures to half the internal callers"
+  },
+  {
+   "n": 2,
+   "time": "06:10",
+   "author": "wen",
+   "text": "I'll note that down"
+  },
+  {
+   "n": 3,
+   "time": "06:10",
+   "author": "wen",
+   "text": "I'll note that down"
+  },
+  {
+   "n": 4,
+   "time": "06:10",
+   "author": "tomas",
+   "text": "I'll watch the graphs"
+  },
+  {
+   "n": 5,
+   "time": "06:10",
+   "author": "rosa",
+   "text": "just catching up on the thread"
+  },
+  {
+   "n": 6,
+   "time": "06:14",
+   "author": "tomas",
+   "text": "Confirmed. openssl says the intermediate cert on the gateway expired at 06:00 sharp"
+  },
+  {
+   "n": 7,
+   "time": "06:14",
+   "author": "rosa",
+   "text": "makes sense"
+  },
+  {
+   "n": 8,
+   "time": "06:14",
+   "author": "wen",
+   "text": "let's keep the channel clear for updates"
+  },
+  {
+   "n": 9,
+   "time": "06:19",
+   "author": "rosa",
+   "text": "Billing and orders are both down because they call each other through the mesh"
+  },
+  {
+   "n": 10,
+   "time": "06:19",
+   "author": "rosa",
+   "text": "thanks for the update"
+  },
+  {
+   "n": 11,
+   "time": "06:19",
+   "author": "wen",
+   "text": "let me grab coffee and be back in two"
+  },
+  {
+   "n": 12,
+   "time": "06:19",
+   "author": "rosa",
+   "text": "sorry, was in another meeting"
+  },
+  {
+   "n": 13,
+   "time": "06:19",
+   "author": "tomas",
+   "text": "I can take the next step"
+  },
+  {
+   "n": 14,
+   "time": "06:25",
+   "author": "wen",
+   "text": "I have the renewal pipeline open, it was paused after the vault migration and nobody noticed"
+  },
+  {
+   "n": 15,
+   "time": "06:25",
+   "author": "wen",
+   "text": "can you say that again?"
+  },
+  {
+   "n": 16,
+   "time": "06:25",
+   "author": "tomas",
+   "text": "sounds good"
+  },
+  {
+   "n": 17,
+   "time": "06:25",
+   "author": "wen",
+   "text": "I'll note that down"
+  },
+  {
+   "n": 18,
+   "time": "06:31",
+   "author": "wen",
+   "text": "Kicking off a manual renewal now"
+  },
+  {
+   "n": 19,
+   "time": "06:31",
+   "author": "tomas",
+   "text": "not sure yet"
+  },
+  {
+   "n": 20,
+   "time": "06:31",
+   "author": "tomas",
+   "text": "ok"
+  },
+  {
+   "n": 21,
+   "time": "06:31",
+   "author": "rosa",
+   "text": "ok"
+  },
+  {
+   "n": 22,
+   "time": "06:42",
+   "author": "tomas",
+   "text": "New cert is issued but the gateway pods have to be restarted to pick it up"
+  },
+  {
+   "n": 23,
+   "time": "06:42",
+   "author": "tomas",
+   "text": "ok"
+  },
+  {
+   "n": 24,
+   "time": "06:42",
+   "author": "wen",
+   "text": "sounds good"
+  },
+  {
+   "n": 25,
+   "time": "06:42",
+   "author": "wen",
+   "text": "ok"
+  },
+  {
+   "n": 26,
+   "time": "06:48",
+   "author": "rosa",
+   "text": "Rolling restart of the gateway pods is going out, one zone at a time"
+  },
+  {
+   "n": 27,
+   "time": "06:48",
+   "author": "wen",
+   "text": "I'll watch the graphs"
+  },
+  {
+   "n": 28,
+   "time": "06:48",
+   "author": "rosa",
+   "text": "ok"
+  },
+  {
+   "n": 29,
+   "time": "06:48",
+   "author": "wen",
+   "text": "standing by"
+  },
+  {
+   "n": 30,
+   "time": "06:48",
+   "author": "tomas",
+   "text": "still digging"
+  },
+  {
+   "n": 31,
+   "time": "07:02",
+   "author": "wen",
+   "text": "Orders is green again, billing still shows a few errors"
+  },
+  {
+   "n": 32,
+   "time": "07:02",
+   "author": "rosa",
+   "text": "did anyone tell support yet?"
+  },
+  {
+   "n": 33,
+   "time": "07:02",
+   "author": "tomas",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 34,
+   "time": "07:02",
+   "author": "rosa",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 35,
+   "time": "07:02",
+   "author": "rosa",
+   "text": "no surprises on my side"
+  },
+  {
+   "n": 36,
+   "time": "07:15",
+   "author": "tomas",
+   "text": "Billing recovered too, error rate is back to normal"
+  },
+  {
+   "n": 37,
+   "time": "07:15",
+   "author": "wen",
+   "text": "still digging"
+  },
+  {
+   "n": 38,
+   "time": "07:15",
+   "author": "wen",
+   "text": "okay, going quiet while I read"
+  },
+  {
+   "n": 39,
+   "time": "07:20",
+   "author": "rosa",
+   "text": "I will add an alert that fires two weeks before any cert expires, ticket is open"
+  },
+  {
+   "n": 40,
+   "time": "07:20",
+   "author": "tomas",
+   "text": "sounds good"
+  },
+  {
+   "n": 41,
+   "time": "07:20",
+   "author": "rosa",
+   "text": "yep"
+  },
+  {
+   "n": 42,
+   "time": "07:26",
+   "author": "wen",
+   "text": "Someone needs to unpause the renewal pipeline and add it to the weekly health check, I can do that tomorrow"
+  },
+  {
+   "n": 43,
+   "time": "07:26",
+   "author": "tomas",
+   "text": "ping me if you need a second pair of eyes"
+  },
+  {
+   "n": 44,
+   "time": "07:26",
+   "author": "wen",
+   "text": "one more thing to check first"
+  },
+  {
+   "n": 45,
+   "time": "07:26",
+   "author": "wen",
+   "text": "give me a couple of minutes"
+  },
+  {
+   "n": 46,
+   "time": "07:26",
+   "author": "tomas",
+   "text": "joining now"
+  },
+  {
+   "n": 47,
+   "time": "07:30",
+   "author": "tomas",
+   "text": "Overall: an unnoticed paused renewal let the gateway cert lapse and took out two core services for about an hour"
+  },
+  {
+   "n": 48,
+   "time": "07:30",
+   "author": "rosa",
+   "text": "hang on, loading the page"
+  },
+  {
+   "n": 49,
+   "time": "07:30",
+   "author": "wen",
+   "text": "good call"
+  }
+ ],
+ "gold": {
+  "timeline": [
+   {
+    "time": "06:10",
+    "lines": [
+     1
+    ]
+   },
+   {
+    "time": "06:14",
+    "lines": [
+     6
+    ]
+   },
+   {
+    "time": "06:31",
+    "lines": [
+     18
+    ]
+   },
+   {
+    "time": "06:42",
+    "lines": [
+     22
+    ]
+   },
+   {
+    "time": "06:48",
+    "lines": [
+     26
+    ]
+   },
+   {
+    "time": "07:02",
+    "lines": [
+     31
+    ]
+   },
+   {
+    "time": "07:15",
+    "lines": [
+     36
+    ]
+   }
+  ],
+  "actions": [
+   {
+    "lines": [
+     39
+    ]
+   },
+   {
+    "lines": [
+     42
+    ]
+   }
+  ]
+ },
+ "correctStatements": [
+  {
+   "section": "timeline",
+   "text": "At 06:10 rosa saw handshake failures from the mesh gateway.",
+   "cites": [
+    1
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 06:14 tomas confirmed the intermediate certificate on the gateway expired at 06:00.",
+   "cites": [
+    6
+   ]
+  },
+  {
+   "section": "impact",
+   "text": "Billing and orders were down because they call each other through the mesh.",
+   "cites": [
+    9
+   ]
+  },
+  {
+   "section": "contributingFactors",
+   "text": "The renewal pipeline had been paused after the vault migration and nobody noticed.",
+   "cites": [
+    14
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 06:31 wen started a manual certificate renewal.",
+   "cites": [
+    18
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 06:42 tomas found the new certificate was issued but the gateway pods needed a restart.",
+   "cites": [
+    22
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 06:48 rosa began a rolling restart of the gateway pods, one zone at a time.",
+   "cites": [
+    26
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 07:02 wen saw orders recover while billing still had a few errors.",
+   "cites": [
+    31
+   ]
+  },
+  {
+   "section": "timeline",
+   "text": "At 07:15 tomas saw billing recover and the error rate return to normal.",
+   "cites": [
+    36
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Rosa will add an alert that fires two weeks before any certificate expires.",
+   "cites": [
+    39
+   ]
+  },
+  {
+   "section": "actionItems",
+   "text": "Wen will unpause the renewal pipeline and add it to the weekly health check.",
+   "cites": [
+    42
+   ]
+  },
+  {
+   "section": "summary",
+   "text": "An unnoticed paused renewal let the gateway certificate lapse and took out two core services.",
+   "cites": [
+    47
+   ]
+  }
+ ]
+}

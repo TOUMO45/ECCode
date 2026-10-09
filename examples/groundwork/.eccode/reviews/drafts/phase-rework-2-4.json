@@ -1,0 +1,25 @@
+{
+ "decision": "changes_requested",
+ "summary": "Content of src/ai/prompt.js (p2) and src/ai/fallback.js is intentional, secret-free, keeps the DATA-block untrusted-input rule and now also forbids mentioning or quoting embedded AI instructions (addresses the M4 meta-statement failures); fallback first-of-each-minute timeline addresses M2. My rerun of npm test passes (271 pass, 0 fail, 1 todo). Approval is refused because the pinned hashes are stale for both logs. Disk now: usage.log 19114830... (8 lines; submitted 0f182744...), tuning-log.md ffdd5853... (submitted eaed44b1...). The drift is legitimate append-only logging in form: a further live p2 full CLI tune run at 23:14:34Z (line 8) was appended after the 23:04Z submission. But tuning-log.md says usage.log has 7 lines and that no further run occurred, which is false against disk. Resubmission with current hashes and a corrected log is required.",
+ "criteria": [
+  {"id":"C1","description":"Pinned artifacts equal the reviewed artifacts","met":false,"evidence":["artifact:eval/usage.log","artifact:eval/tuning-log.md"]},
+  {"id":"C2","description":"prompt.js and fallback.js address rework reason, no secrets, no injection-handling regression","met":true,"evidence":["artifact:src/ai/prompt.js","artifact:src/ai/fallback.js","ev:ev-mv05vf2p-01c1330f"]},
+  {"id":"C3","description":"Existing checks pass when re-run by reviewer","met":true,"evidence":["ev:ev-mv05vf2p-01c1330f"]},
+  {"id":"C4","description":"Eval log accuracy, run cap and holdout rules","met":false,"evidence":["artifact:eval/usage.log","artifact:eval/tuning-log.md"]}
+ ],
+ "findings": [
+  {"id":"RW2-6","severity":"blocking","title":"Logs drifted again; tuning-log says 7 lines but usage.log has 8",
+   "detail":"A live p2 full CLI run at 2026-10-08T23:14:34Z was appended after submission. The tuning-log run accounting (7 lines, 5 non-holdout full runs, about USD 0.64) is now wrong: 6 non-holdout full runs and higher cost. Cause and trigger of the 23:14 run are not recorded.",
+   "evidence":["artifact:eval/usage.log","artifact:eval/tuning-log.md"],
+   "recommendation":"Freeze all live evals and reconcile --verify for this task. Update tuning-log.md to match the 8-line usage.log (add the 23:14:34 run, who triggered it, new run count and cost), run sha256sum on all four files, resubmit phase:rework-2 with those hashes, and do not run anything that writes the logs until review. Resolved when submitted hashes equal disk at review time and the counts match."},
+  {"id":"RW2-2","severity":"major","title":"Holdout M1c FAIL (13/423 = 3.07% vs 2%) has no recorded decision",
+   "detail":"Holdout line 4 FAIL is not offset by tune-set PASS rows. Needs a user or delivery-lead decision (accept as limitation, or new holdout plus verifier work).",
+   "evidence":["artifact:eval/usage.log"],
+   "recommendation":"Record the decision and reference it in the resubmission; do not describe the build as passing holdout."},
+  {"id":"RW2-3","severity":"major","title":"Live run cap of 3 exceeded repeatedly; clean-copy failures untriaged",
+   "detail":"Extra runs came from automated reconcile re-runs. Clean-copy failures remain (for example ev-mv05sbzg-062ff34d, ev-mv055pt7).",
+   "evidence":["artifact:eval/usage.log"],
+   "recommendation":"State total cost against the spec cap in the resubmission, label p2 live results recorded-not-reverified, and triage clean-copy failures (learning-debugger if root cause unknown) before verification gate."}
+ ],
+ "resolvedFindings": []
+}

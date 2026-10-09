@@ -1,0 +1,64 @@
+{
+  "from": "backend-engineer",
+  "to": "qa-engineer",
+  "task": "backend-domain",
+  "objective": "Implement incidents, notes, drafts, publish transaction, postmortem and provider routes with API integration tests.",
+  "context": "Built to spec 3.4-3.7, 3.9, 6, 9, 11.2. Services in src/services own all SQL for these routes; routes validate with contract-schemas. Publish and every draft mutation run in db.tx (BEGIN IMMEDIATE, synchronous) and re-run the verifier, ignoring stored status. Provider calls run outside transactions with a deadline (config.generateTimeoutMs, default 150000) and in-memory per-incident lock. Provider registry: injected providers win; when createApp receives providers={} the registry builds anthropic, cli, fallback (and fake/fake-clean only with GW_ENABLE_FAKE=1) from config, so real providers are wired without editing src/index.js (not in my owned files). Injected test providers must use an id from PROVIDER_IDS (tests use 'fake').",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    "src/api/contract-schemas.js",
+    "src/ai/provider.js",
+    "src/verify/index.js",
+    "src/notes/parser.js"
+  ],
+  "dependencies": [
+    "backend-auth-http",
+    "verifier-notes",
+    "ai-providers"
+  ],
+  "expectedOutput": "Working domain API with passing integration tests for journey, contract, RBAC, IDOR, notes, draft, publish, audit, validation, errors, persistence and perf.",
+  "acceptanceCriteria": [
+    "Journey sign in -> incident -> notes -> draft -> UNGROUNDED_STATEMENTS -> fix -> publish -> viewer reads (journey.test.js)",
+    "Publish in BEGIN IMMEDIATE with re-verify; tampered statuses and 50 interleaved edit/publish rounds never publish flagged statements (publish.test.js)",
+    "Provider timeout, malformed output, outage, busy return documented codes and store nothing (draft.test.js)",
+    "IDOR matrix returns 404 with data unchanged; viewers read only own-team published postmortems; only leads publish (idor, rbac, journey)",
+    "Data survives in-process reopen and spawned-process restart (persistence.test.js)",
+    "Fallback draft isFallback true in API (draft.test.js)"
+  ],
+  "completedWork": "Added src/services/{index,providers,incidents,drafts}.js; routes incidents, notes, drafts, postmortems, providers; 12 API test files. Full test/api suite: 83 pass, 0 fail, 1 skipped (pre-existing, not mine). Unit suite: 111 pass.",
+  "filesChanged": [
+    "src/services/index.js",
+    "src/services/providers.js",
+    "src/services/incidents.js",
+    "src/services/drafts.js",
+    "src/routes/incidents.js",
+    "src/routes/notes.js",
+    "src/routes/drafts.js",
+    "src/routes/postmortems.js",
+    "src/routes/providers.js",
+    "test/api/journey.test.js",
+    "test/api/contract.test.js",
+    "test/api/rbac.test.js",
+    "test/api/idor.test.js",
+    "test/api/notes.test.js",
+    "test/api/draft.test.js",
+    "test/api/publish.test.js",
+    "test/api/audit.test.js",
+    "test/api/validation.test.js",
+    "test/api/errors.test.js",
+    "test/api/persistence.test.js",
+    "test/api/perf.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv022uu6-01fc1e00",
+    "ev:ev-mv022zp5-013414f9"
+  ],
+  "remainingIssues": [
+    "src/index.js still calls createApp without providers; real providers are built by the registry fallback in src/services/providers.js, so no index.js change is required, but the owner of index.js may prefer explicit wiring.",
+    "Spec 3.6 says the 160 s per-request socket timeout is applied via rc.extendTimeout; verified only by code path, not by a test with a long-running provider.",
+    "Non-ProviderError exceptions from a provider map to 502 PROVIDER_UNAVAILABLE (logged by class only); spec was silent.",
+    "Claimed audit-on-deny only covers actions in AUDIT_ON_DENY (publish, users, audit); other 403s are not audited."
+  ],
+  "nextAction": "qa-engineer: review coverage against spec 11.2 and run the browser journey against these routes.",
+  "lessonsConsulted": []
+}
