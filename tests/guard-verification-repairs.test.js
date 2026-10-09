@@ -128,6 +128,62 @@ test('REVIEW: the CLI is recognised on tokenized words, wrappers in every bash f
   allowed(bash(ctx.dir, 'npm test && eccode evidence list --json', 'technical-reviewer'), 'plain with &&');
 });
 
+test('REVIEW 2: targets are judged on their real path for everyone: aliases, spellings, directory operations, pipes', () => {
+  const ctx = tmpProject();
+  const reason = /written only by the eccode CLI|part of an ECCode record|part of the ECCode record/;
+  write(ctx.dir, 'src/server.js', '');
+  // G1/G8: an alias of the record made with a guard-allowed command, with or without a planted copy.
+  fs.symlinkSync(path.join(ctx.dir, '.eccode'), path.join(ctx.dir, 'rec'));
+  const planted = path.join(ctx.dir, '.eccode', '.eccode');
+  fs.mkdirSync(planted, { recursive: true });
+  fs.writeFileSync(path.join(planted, 'events.jsonl'), '');
+  for (const rel of ['rec/state.json', 'rec/events.jsonl', 'rec/config.json', 'rec/reviews/new.json', 'rec/memory/records/m.json']) {
+    denied(edit(ctx.dir, 'Write', path.join(ctx.dir, rel), null), `main Write through the alias: ${rel}`, reason);
+    denied(bash(ctx.dir, `echo x > ${rel}`, null), `main redirect through the alias: ${rel}`, reason);
+  }
+  allowed(edit(ctx.dir, 'Write', path.join(ctx.dir, 'rec', 'drafts', 'n.md'), 'technical-reviewer'), 'a draft through the alias stays a draft');
+  // G2: directory operations on the record in any spelling, from any cwd.
+  const inner = path.join(ctx.dir, 'examples', 'app');
+  fs.mkdirSync(inner, { recursive: true });
+  init(inner, { name: 'App', idea: 'nested app' });
+  for (const c of [
+    `rm -rf ${ctx.dir}/.eccode`, 'cp -r forged/. src/../.eccode', 'cp -r forged/. "$PWD/.eccode"', 'rm -rf .eccode/*', 'rm -rf .ecc\'\'ode',
+    'find .eccode -delete', 'find .eccode -name "*.json" -exec rm {} \\;', 'ls .eccode | xargs rm', 'rm -rf examples/app/.eccode',
+    'rm -rf .eccode/reviews', 'mv .eccode/evidence /tmp/x', 'mv .eccode /tmp/away', 'tar -xf x.tar -C .eccode', 'unzip x.zip -d .eccode/memory',
+    'mkdir -p .eccode/.eccode && cp -r ./.eccode/. .eccode/.eccode/', 'rm -rf rec/evidence',
+  ]) denied(bash(ctx.dir, c, null), `main: ${c}`, reason);
+  denied(bash(inner, 'rm -rf ../../.eccode/evidence', 'backend-engineer'), 'outer record from the inner cwd', reason);
+  // G10: the record as a SOURCE, or mentioned in a comment, is fine; G9: draft areas with a trailing slash too.
+  for (const c of ['cp -r .eccode /tmp/backup', 'tar czf x.tgz .eccode', 'rsync -a .eccode/ /tmp/b/', 'rm x.txt # .eccode is not touched', 'ls .eccode', 'cat .eccode/state.json']) {
+    allowed(bash(ctx.dir, c, null), `main: ${c}`);
+  }
+  allowed(bash(ctx.dir, 'mv .eccode/drafts/x.json .eccode/reviews/drafts/', 'technical-reviewer'), 'reviewer moves a draft into the draft area with a trailing slash');
+  allowed(bash(ctx.dir, 'cp .eccode/drafts/a.json .eccode/drafts/', 'technical-reviewer'), 'reviewer copies within drafts');
+  // G3: quoted and escaped spellings of record files from the main session.
+  for (const c of ['echo x > .eccode/"state.json"', "echo x > .ecc''ode/events.jsonl", 'echo x > .eccode/\\state.json', 'tee .eccode/"events.jsonl" < x', 'echo x >| .eccode/"events.jsonl"']) {
+    denied(bash(ctx.dir, c, null), `main: ${c}`, reason);
+  }
+});
+
+test('REVIEW 2: function names bash accepts, expansions in the CLI word, computed names only, literal names with computed values pass', () => {
+  const ctx = tmpProject();
+  const wrap = /shell function or alias/;
+  for (const c of ['1e() { eccode "$@"; }; 1e task claim api --actor backend-engineer', 'e+() { eccode "$@"; }; e+ task claim api --actor backend-engineer', 'é() { eccode "$@"; }; é task claim api --actor backend-engineer', 'e%() { eccode "$@"; }; e% task claim api --actor backend-engineer']) {
+    denied(bash(ctx.dir, c, 'technical-reviewer'), `G4: ${c.slice(0, 20)}`, wrap);
+  }
+  // G5: the CLI word built with an expansion still binds its --actor.
+  denied(bash(ctx.dir, "node bin/$'eccode'.js task claim api --actor backend-engineer", 'technical-reviewer'), 'G5 ansi-c quoted', /Identity mismatch/);
+  denied(bash(ctx.dir, "node bin/ecc$''ode.js task claim api --actor backend-engineer", 'technical-reviewer'), 'G5 empty expansion', /Identity mismatch/);
+  denied(bash(ctx.dir, 'node bin/eccode.js${X} gate reopen design --actor user --resolution ok', null), 'G5 suffix expansion', /reserved for a person/);
+  // G7: name indirection.
+  denied(bash(ctx.dir, 'N=ECCODE_ACTOR; printf -v "$N" user; eccode gate reopen design --resolution ok', null), 'printf -v', /computed name/);
+  denied(bash(ctx.dir, 'declare -n ref=ECCODE_ACTOR; ref=user; eccode gate reopen design --resolution ok', null), 'declare -n', /computed name/);
+  // G6: literal names with computed values are ordinary shell.
+  for (const c of ['export OUT="$HOME/x"; eccode status --brief', 'env FOO="$BAR" eccode status --brief', 'export PATH="$PWD/node_modules/.bin:$PATH"; eccode evidence run --actor technical-reviewer --label t -- npm test', 'local x=$y; eccode status --brief']) {
+    allowed(bash(ctx.dir, c, 'technical-reviewer'), `G6: ${c.slice(0, 30)}`);
+  }
+});
+
 test('NESTED: a project nested in a repository with its own record is judged by its own record', () => {
   // outer: a repository with its own ECCode record; inner: examples/app with another record.
   const outer = tmpProject();

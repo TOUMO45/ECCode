@@ -52,9 +52,6 @@ const RECORD_AREA = String.raw`\.eccode[\\/]+(?:events\.jsonl|state\.json|config
 const RECORD_FILES = new RegExp(String.raw`(^|[\\/])${RECORD_AREA}`);
 // Shell commands that write their (later) path argument, and code that writes files.
 const SHELL_WRITE = new RegExp(String.raw`(>{1,2}\|?|\btee\b|\b(?:sed|perl)\s+(?:-\w+\s+)*-\w*i|\bmv\b|\bcp\b|\brm\b|\btruncate\b|\bdd\b|\bln\b|\binstall\b|\brsync\b|\btouch\b)[^|;&]*${RECORD_AREA}`);
-// Copying, syncing, moving, extracting into or deleting the record DIRECTORY itself (`cp -r forged/. .eccode`,
-// `rsync -a x/ .eccode/`, `rm -rf .eccode`): the directory is the record, whatever is written into it.
-const RECORD_DIR_WRITE = /\b(?:cp|rsync|mv|rm|tar|ln|install|rmdir)\b[^|;&]*(?:^|[\s"'=])(?:\.\/)?\.eccode[\\/]*(?=["'\s]|$)/;
 const CODE_WRITE = /\b(writeFileSync|writeFile|writeSync|appendFileSync|appendFile|createWriteStream|rmSync|rmdirSync|unlinkSync|unlink|renameSync|rename|copyFileSync|copyFile|cpSync|truncateSync|ftruncateSync|symlinkSync|fs\.rm|promises\.rm|write_text|write_bytes|os\.remove|os\.rename|os\.replace|os\.rmdir|os\.truncate|shutil\.\w+|File\.(?:write|delete)|IO\.write|FileUtils\.\w+|file_put_contents|fwrite|Deno\.(?:write\w*|remove\w*|rename|copyFile\w*|truncate\w*))\b|\bopen\s*\([^)]*['"][wax]b?\+?['"]/;
 // Variables that change who the CLI acts as, or its clock (order rules), when set inline.
 const IDENTITY_ENV = /^(?:ECCODE_ACTOR|ECCODE_TEST|ECCODE_NOW|ECCODE_ROOT|ECCODE_SHARED_MEMORY|ECCODE_SEQUENTIAL_ROLES|ECCODE_HOOKS)(?:=|$)/;
@@ -62,7 +59,12 @@ const IDENTITY_ENV = /^(?:ECCODE_ACTOR|ECCODE_TEST|ECCODE_NOW|ECCODE_ROOT|ECCODE
 // guard binds (`e() { eccode "$@"; }; e … --actor user`).
 // Unanchored: a definition can follow `then`, a `{`, a leading blank, sit inside `bash -c '…'` (checked at every
 // nesting depth) and take any compound body (`{ … }`, `( … )`, `if … fi`, `while`, `case`, `[[`).
-const SHELL_WRAPPER = /(?:^|[^\w"'$-])(?:function\s+[A-Za-z_][\w-]*(?:\s*\(\s*\))?|[A-Za-z_][\w-]*\s*\(\s*\))\s*(?:\{|\(|\bif\b|\bwhile\b|\buntil\b|\bfor\b|\bcase\b|\[\[|\n)|(?:^|[^\w"'$-])alias\s+[A-Za-z_][\w-]*=/;
+// A function name is any run of characters bash accepts (digits first, unicode, + % . - included).
+const SHELL_WRAPPER = /(?:^|[\s;&|(){}])(?:function\s+[^\s;&|(){}<>"'$`=]+(?:\s*\(\s*\))?|[^\s;&|(){}<>"'$`=]+\s*\(\s*\))\s*(?:\{|\(|\bif\b|\bwhile\b|\buntil\b|\bfor\b|\bcase\b|\[\[|\n)|(?:^|[\s;&|(){}])alias\s+[^\s=]+=/;
+/** The text of a word with its expansions removed, to see whether it names the CLI (`bin/$'eccode'.js`, `eccode.js${X}`). */
+function stripDynamic(text) {
+  return text.replace(/\$\{[^}]*\}|\$\([^)]*\)|`[^`]*`|\$\w+|[$`]/g, '');
+}
 const ECCODE_WORD = /(^|[\\/])eccode(\.js)?$/;
 // git subcommands that can revert, stash or delete working-tree files.
 const GIT_REVERTING = new Set(['checkout', 'restore', 'reset', 'stash', 'clean', 'rm', 'mv']);
@@ -97,14 +99,57 @@ function insideRecord(abs) {
 }
 
 /**
- * The nearest project root above `start`. A record planted inside another record
- * (`.eccode/.eccode/events.jsonl`, by `cp -r` or `init --root .eccode`) never counts: the guard
- * would otherwise judge the outer record's files as that bogus project's ordinary files.
+ * Where a path really lands: the deepest existing ancestor resolved through symlinks, plus the
+ * segments that do not exist yet. Every decision about a write target is made on this path, so an
+ * alias (`ln -s "$PWD/.eccode" rec`), a quoted or escaped spelling, or a `..` cannot change it.
+ */
+function realize(abs) {
+  let dir = path.resolve(abs);
+  const rest = [];
+  for (;;) {
+    try {
+      dir = fs.realpathSync(dir);
+      break;
+    } catch {
+      const parent = path.dirname(dir);
+      if (parent === dir) break;
+      rest.unshift(path.basename(dir));
+      dir = parent;
+    }
+  }
+  return path.join(dir, ...rest);
+}
+
+// Everything under a record directory is the record, except the three draft areas. Judged on real and
+// lexical paths alike (a symlink planted inside the record is itself a record write).
+const RECORD_SEGMENT = /(^|\/)\.eccode(\/|$)/;
+const DRAFT_AREA = /(^|\/)\.eccode\/(?:drafts|artifacts|reviews\/drafts)(\/|$)/;
+function recordPath(posixAbs) {
+  return RECORD_SEGMENT.test(posixAbs) && !DRAFT_AREA.test(posixAbs);
+}
+function recordHit(abs) {
+  const { toPosix } = require(path.join(LIB, 'util'));
+  return recordPath(toPosix(path.resolve(abs))) || recordPath(toPosix(realize(abs)));
+}
+
+/**
+ * The nearest project root above `start`, judged on real paths: `<dir>/.eccode` must be a real
+ * directory (not a link) holding events.jsonl, and `dir` itself must not lie inside a record. A
+ * record planted inside another record (`.eccode/.eccode/`, by `cp -r` or `init --root .eccode`) or
+ * reached through a link therefore never counts: the guard would otherwise judge the outer record's
+ * files as that bogus project's ordinary files.
  */
 function findRoot(start) {
-  let dir = start;
+  let dir = realize(start);
   for (;;) {
-    if (!insideRecord(dir) && fs.existsSync(path.join(dir, '.eccode', 'events.jsonl'))) return dir;
+    if (!insideRecord(dir)) {
+      try {
+        const rec = path.join(dir, '.eccode');
+        if (!fs.lstatSync(rec).isSymbolicLink() && fs.statSync(rec).isDirectory() && fs.existsSync(path.join(rec, 'events.jsonl'))) return dir;
+      } catch {
+        // no record here
+      }
+    }
     const parent = path.dirname(dir);
     if (parent === dir) return null;
     dir = parent;
@@ -159,6 +204,18 @@ function splitCommands(src) {
     if (c === '\\') {
       if (src[i + 1] !== undefined && src[i + 1] !== '\n') add(src[i + 1]);
       i++;
+    } else if (c === '$' && (src[i + 1] === "'" || src[i + 1] === '"')) {
+      // $'…' (ANSI-C quoting) and $"…" (locale quoting) are quotes, not expansions: the word stays literal.
+      i++;
+      if (src[i] === "'") {
+        const j = src.indexOf("'", i + 1);
+        add(j === -1 ? src.slice(i + 1) : src.slice(i + 1, j));
+        i = j === -1 ? src.length : j;
+      } else {
+        const j = src.indexOf('"', i + 1);
+        add(j === -1 ? src.slice(i + 1) : src.slice(i + 1, j));
+        i = j === -1 ? src.length : j;
+      }
     } else if (c === "'") {
       const j = src.indexOf("'", i + 1);
       add(j === -1 ? src.slice(i + 1) : src.slice(i + 1, j));
@@ -246,11 +303,17 @@ function eccodeActors(cmd) {
       problems.push('a shell function or alias is defined in the same command line, so the eccode invocation behind it cannot be bound; call the eccode CLI directly');
     }
     if (words.some((w) => IDENTITY_ENV.test(w.text))) problems.push('ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCODE_SEQUENTIAL_ROLES / ECCODE_HOOKS may not be set inline; pass --actor <your role> and --root explicitly');
-    // `V=ECCODE_SHARED_MEMORY; export $V=/tmp/x` or `declare "$N"=…`: an assignment whose NAME is computed.
-    if (mentionsEccode && words.some((w, i) => (w.dynamic && /^[^=]*[$`][^=]*=/.test(w.text)) || (/^(?:export|declare|typeset|readonly|env|local)$/.test(w.text) && words.slice(i + 1).some((x) => x.dynamic && /=/.test(x.text))))) {
+    // `V=ECCODE_SHARED_MEMORY; export $V=/tmp/x`, `declare "$N"=…`, `printf -v "$N" …`, `declare -n`:
+    // an assignment whose NAME is computed (a computed VALUE after a literal name is fine).
+    const texts = words.map((w) => w.text);
+    const computedName = words.some((w) => w.dynamic && /^[^=]*[$`][^=]*=/.test(w.text))
+      || (/^(?:printf)$/.test(texts[0]) && texts.some((t, i) => t === '-v' && words[i + 1] && words[i + 1].dynamic))
+      || (/^(?:declare|typeset|local)$/.test(texts[0]) && texts.some((t) => /^-\w*n/.test(t)))
+      || (/^(?:export|declare|typeset|readonly|local)$/.test(texts[0]) && words.slice(1).some((x) => x.dynamic && !/=/.test(x.text)));
+    if (mentionsEccode && computedName) {
       problems.push('a variable with a computed name is assigned in the same command line as the eccode CLI; set variables by their literal name, or not inline');
     }
-    const at = words.findIndex((w) => ECCODE_WORD.test(w.text));
+    const at = words.findIndex((w) => ECCODE_WORD.test(w.dynamic ? stripDynamic(w.text) : w.text));
     if (at === -1) {
       // The command word is the first word that is not a NAME=value assignment.
       const commandWord = words.find((w) => !/^[A-Za-z_][A-Za-z0-9_]*=/.test(w.text));
@@ -294,8 +357,10 @@ function gitRecordRisk(words) {
 }
 
 // Commands whose non-flag arguments (or the last one) are written to.
-const WRITE_ALL_ARGS = new Set(['tee', 'touch', 'truncate']);
-const WRITE_LAST_ARG = new Set(['cp', 'mv', 'ln', 'install', 'rsync']);
+const WRITE_ALL_ARGS = new Set(['tee', 'touch', 'truncate', 'rm', 'rmdir', 'mv', 'unlink', 'shred']); // mv removes its sources
+const WRITE_LAST_ARG = new Set(['cp', 'ln', 'install', 'rsync']);
+// Writers that take their targets from elsewhere (stdin, a found list): the guard cannot bind them.
+const UNBOUND_WRITERS = /\b(?:rm|rmdir|mv|cp|tee|sed|perl|truncate|shred|unlink)\b/;
 const WRITE_INPLACE = new Set(['sed', 'perl']);
 
 /**
@@ -332,6 +397,14 @@ function bashWriteTargets(cmd) {
     else if (WRITE_LAST_ARG.has(name) && positional.length) targets.push(positional[positional.length - 1]);
     else if (WRITE_INPLACE.has(name) && args.some((a) => /^-\w*i/.test(a))) targets.push(...positional.filter((p) => !/^(s|y)[^A-Za-z0-9]/.test(p) && !/[;{}]/.test(p)));
     else if (name === 'dd') targets.push(...args.filter((a) => a.startsWith('of=')).map((a) => a.slice(3)));
+    else if (name === 'find' && args.some((a) => /^-(?:delete|exec|execdir|ok|okdir)$/.test(a))) targets.push(...positional.filter((p, i) => i === 0 || !p.startsWith('-')).slice(0, 1).concat(positional.length ? [] : ['.']));
+    else if (name === 'tar' && args.some((a) => /^-?[a-zA-Z]*x/.test(a) && !a.startsWith('--'))) {
+      const c = args.findIndex((a) => a === '-C' || a === '--directory');
+      targets.push(c !== -1 && args[c + 1] ? args[c + 1] : '.');
+    } else if (name === 'unzip') {
+      const d = args.findIndex((a) => a === '-d');
+      targets.push(d !== -1 && args[d + 1] ? args[d + 1] : '.');
+    }
   });
   return targets.filter((t) => t && !t.startsWith('/dev/'));
 }
@@ -396,9 +469,31 @@ function inlineCodeWrite(cmd) {
 }
 
 function checkBash(cmd, role, root, cwd) {
-  if (SHELL_WRITE.test(cmd) || RECORD_DIR_WRITE.test(cmd) || (new RegExp(RECORD_AREA).test(cmd) && CODE_WRITE.test(cmd))) {
-    out('deny', 'ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.');
+  const RECORD_MSG = 'ECCode project record files are written only by the eccode CLI. Use eccode commands; never edit the record directly.';
+  // First line: the raw text (fast, and it catches record paths inside inline programs).
+  if (SHELL_WRITE.test(cmd) || (new RegExp(RECORD_AREA).test(cmd) && CODE_WRITE.test(cmd))) out('deny', RECORD_MSG);
+  // Second line, for every context including the main session: every write target the shell would
+  // see, resolved from the hook cwd and judged on its real path. Everything under a record directory
+  // except the draft areas is the record, wherever that record lives (this project, a nested one,
+  // another project, shared memory).
+  const { toPosix } = require(path.join(LIB, 'util'));
+  const targets = bashWriteTargets(cmd).map((t) => t.replace(/^["']|["']$/g, '').replace(/^~(?=\/|$)/, os.homedir()));
+  for (const t of targets) {
+    const lexical = path.resolve(cwd || root, t);
+    if (!recordHit(lexical)) continue;
+    const real = realize(lexical);
+    out('deny', `${t}${real !== lexical ? ` is, or lies under, a symbolic link resolving to ${real}, which` : ''} is part of an ECCode record. ${RECORD_MSG}`);
   }
+  // Writers that take their targets from a pipe or a found list cannot be bound; refused when the
+  // command names a record anywhere.
+  const mentionsRecord = (() => {
+    let found = false;
+    walkCommands(cmd, (words) => {
+      if (words.some((w) => RECORD_SEGMENT.test(toPosix(w.text)))) found = true;
+    });
+    return found;
+  })();
+  if (mentionsRecord && /\bxargs\b/.test(cmd) && UNBOUND_WRITERS.test(cmd)) out('deny', `xargs feeds a writer from a pipe, so its targets cannot be bound, and the command names a record directory. ${RECORD_MSG}`);
   // Shell writes get the same answer as the Edit/Write tools for every ECCode role: a redirect,
   // tee, cp or sed -i lands only where that role may edit (a claimed task, a draft area).
   if (eccodeRole(role)) {
@@ -406,16 +501,12 @@ function checkBash(cmd, role, root, cwd) {
     if (inline) {
       out('deny', `Inline ${inline.name} code in this command calls a file-writing API (${inline.api}) and the guard cannot see which files it would change. Use the Edit/Write tool for file changes so ownership can be checked, or save the script under your draft area (.eccode/drafts/), run it from there and declare its outputs.`);
     }
-    const { toPosix } = require(path.join(LIB, 'util'));
-    const targets = bashWriteTargets(cmd).map((t) => t.replace(/^["']|["']$/g, '').replace(/^~(?=\/|$)/, os.homedir()));
     const relative = targets.find((t) => !path.isAbsolute(t));
     if (relative !== undefined && changesDirectory(cmd)) {
       out('deny', `This command changes directory (cd/pushd/popd) and then writes the relative path "${relative}", which the guard cannot bind to a file. Write it with a path relative to the project root in a command without cd, or use the Edit/Write tool so ownership can be checked.`);
     }
     for (const t of targets) {
-      const abs = path.resolve(cwd || root, t);
-      // Record files are the CLI's wherever they live, judged on the absolute path before any root is chosen.
-      if (RECORD_FILES.test(toPosix(abs))) out('deny', `${t} is part of an ECCode record and is written only by the eccode CLI.`);
+      const abs = realize(path.resolve(cwd || root, t));
       // A project nested in a repository with its own record (an example app) is judged by its own
       // record: the nearest .eccode/ above the target decides, not the outer one.
       const targetRoot = findRoot(path.dirname(abs)) || root;
@@ -463,15 +554,15 @@ function realRel(root, rel) {
 
 function checkEdit(root, rel, role) {
   const { matchesAny } = require(path.join(LIB, 'util'));
-  if (RECORD_FILES.test(rel)) out('deny', `${rel} is part of the ECCode record and is written only by the eccode CLI.`);
+  if (recordPath(rel)) out('deny', `${rel} is part of the ECCode record and is written only by the eccode CLI.`);
   // A symlink inside a task's ownership can point at the record or outside the project.
   const target = realRel(root, rel);
-  if (target && (target.symlink || target.real.startsWith('..') || RECORD_FILES.test(target.real))) {
+  if (target && (target.symlink || target.real.startsWith('..') || recordPath(target.real))) {
     out('deny', `${rel} ${target.symlink ? 'is a symbolic link' : 'resolves'} to ${target.real}; writes must target the file itself, inside the project and outside the record.`);
   }
   if (role && rel.startsWith('.git/')) out('deny', `${rel} is git metadata (ignore rules, hooks); subagents never write it.`);
   if (!role || role.startsWith('other:')) return; // main session or non-ECCode agent
-  if (matchesAny(rel, draftAreas(role))) return;
+  if (matchesAny(rel, draftAreas(role)) || matchesAny(`${rel}/x`, draftAreas(role))) return; // the area's directory itself (`mv x .eccode/drafts/`) too
   if (IMPLEMENTERS.has(role)) {
     const { Store } = require(path.join(LIB, 'store'));
     const { owns } = require(path.join(LIB, 'tasks'));
@@ -508,11 +599,14 @@ function main(input) {
   if (['Edit', 'Write', 'MultiEdit', 'NotebookEdit'].includes(tool)) {
     const target = ti.file_path || ti.notebook_path;
     if (!target) return;
-    const abs = path.resolve(input.cwd || root, target);
-    // Record files are the CLI's wherever they live: judged on the absolute path before any root is chosen,
-    // so a record planted inside a record (.eccode/.eccode/) cannot turn the outer record into "project files".
-    if (RECORD_FILES.test(toPosix(abs))) {
-      out('deny', `ECCode record and memory files are written only by the eccode CLI, wherever they live (${abs}). Use eccode commands (eccode memory …, eccode improve …); never edit them directly.`);
+    const lexical = path.resolve(input.cwd || root, target);
+    // Record files are the CLI's wherever they live: judged on the lexical and the real path before any
+    // root is chosen, so neither a record planted inside a record (.eccode/.eccode/) nor an alias
+    // (`ln -s $PWD/.eccode rec`) can turn the record into "project files".
+    const abs = realize(lexical);
+    if (recordHit(lexical)) {
+      const via = abs !== lexical ? ` (${lexical} is, or lies under, a symbolic link resolving to ${abs})` : '';
+      out('deny', `ECCode record and memory files are written only by the eccode CLI, wherever they live (${abs})${via}. Use eccode commands (eccode memory …, eccode improve …); never edit them directly.`);
     }
     const fileRoot = findRoot(path.dirname(abs)) || root; // the nearest record above the file decides
     const rel = toPosix(path.relative(fileRoot, abs));
@@ -525,7 +619,7 @@ function main(input) {
       } catch {
         // not there yet: judge the path as given
       }
-      if (RECORD_FILES.test(toPosix(abs)) || RECORD_FILES.test(toPosix(real))) {
+      if (recordPath(toPosix(abs)) || recordPath(toPosix(real))) {
         out('deny', `ECCode record and memory files are written only by the eccode CLI, wherever they live (${abs}). Use eccode commands (eccode memory …, eccode improve …); never edit them directly.`);
       }
       return;
