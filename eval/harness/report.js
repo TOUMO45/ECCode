@@ -4,6 +4,7 @@
 // every metric and target verdict exactly as predeclared in suite/targets.json.
 //
 //   node eval/harness/report.js --run <runDir> --out <dir> [--split holdout]
+//        [--pool <runDir>:<split>[,<runDir>:<split>...]]   add the trials of other runs of the SAME toolkit and conditions (pooled analysis)
 //        [--exclude <task>:<check>[,<task>:<check>...]]   SENSITIVITY analysis only: drop named hidden checks
 //        from the success definition (e.g. a check found to contradict its TASK.md). Not the official verdict.
 
@@ -60,8 +61,8 @@ const pct = (x) => `${Math.round(x * 1000) / 10}%`;
 const money = (x) => `$${(Math.round(x * 100) / 100).toFixed(2)}`;
 const mean = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0);
 
-function loadTrials() {
-  const base = path.join(run, 'trials', split);
+function loadTrialsFrom(runDir, splitName) {
+  const base = path.join(runDir, 'trials', splitName);
   const out = [];
   if (!fs.existsSync(base)) return out;
   for (const cond of fs.readdirSync(base)) {
@@ -73,6 +74,11 @@ function loadTrials() {
     }
   }
   return out;
+}
+
+function loadTrials() {
+  const pooled = (argv('pool', '') || '').split(',').filter(Boolean).map((x) => x.split(':'));
+  return [...loadTrialsFrom(run, split), ...pooled.flatMap(([dir, sp]) => loadTrialsFrom(path.resolve(dir), sp))];
 }
 
 /** Tags each condition received QA feedback about during training. */
@@ -172,6 +178,7 @@ function main() {
 
   const L = [];
   L.push('# ECCode evaluation results (R7)', '');
+  if (argv('pool')) L.push(`> **POOLED ANALYSIS** of ${split} with ${argv('pool')} (same toolkit and conditions).`, '');
   if (exclude.length) L.push(`> **SENSITIVITY ANALYSIS, not the official verdict.** Excluded hidden checks: ${exclude.map((x) => x.join(' ')).join(', ')}.`, '');
   L.push(`Generated ${summary.generatedAt} from \`${path.relative(process.cwd(), run) || run}\`. Toolkits: ECCode \`${toolkits ? toolkits.eccode.commit.slice(0, 12) : '?'}\`, ECC \`${toolkits ? toolkits.ecc.commit.slice(0, 12) : '?'}\`. Targets were predeclared in \`eval/suite/targets.json\`.`, '');
   L.push('## Target verdicts', '', '| Target | Met | Detail |', '|---|---|---|');

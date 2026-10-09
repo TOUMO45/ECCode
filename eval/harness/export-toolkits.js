@@ -7,6 +7,7 @@
 // Writes <out>/toolkits.json with both commit ids.
 //   node eval/harness/export-toolkits.js --out <dir> --ecc-clone <path>
 //   node eval/harness/export-toolkits.js --out <dir> --reuse-ecc <earlier export dir>   (same baseline bytes, new ECCode export)
+//   ... --commit <sha>   export that ECCode commit instead of HEAD (to re-export a toolkit exactly as it was evaluated)
 
 const fs = require('fs');
 const path = require('path');
@@ -61,8 +62,8 @@ const out = path.resolve(arg('out') || 'eval-run/toolkits');
 const reuseEcc = arg('reuse-ecc') ? path.resolve(arg('reuse-ecc')) : null;
 const eccClone = reuseEcc ? null : path.resolve(arg('ecc-clone'));
 const repoRoot = path.join(__dirname, '..', '..');
-const eccodeCommit = execFileSync('git', ['-C', repoRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-const dirty = execFileSync('git', ['-C', repoRoot, 'status', '--porcelain', '--', ...ECCODE_PATHS], { encoding: 'utf8' }).trim();
+const eccodeCommit = execFileSync('git', ['-C', repoRoot, 'rev-parse', arg('commit') || 'HEAD'], { encoding: 'utf8' }).trim();
+const dirty = arg('commit') ? '' : execFileSync('git', ['-C', repoRoot, 'status', '--porcelain', '--', ...ECCODE_PATHS], { encoding: 'utf8' }).trim();
 archive(repoRoot, eccodeCommit, path.join(out, 'eccode'), ECCODE_PATHS);
 let eccHead;
 let eccNormalized;
