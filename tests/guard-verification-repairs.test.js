@@ -76,6 +76,157 @@ test('NEW-7: a shell function or alias defined around the CLI in the same line i
   allowed(bash(ctx.dir, 'eccode status --brief', 'technical-reviewer'), 'plain call');
 });
 
+test('REVIEW: a record planted inside a record never re-roots the guard; the record directory itself is the CLI\'s', () => {
+  const ctx = tmpProject();
+  const reason = /written only by the eccode CLI|part of an ECCode record|part of the ECCode record/;
+  // Planting through the CLI is refused by the engine; planting by copy is refused by the guard.
+  assert.throws(() => init(path.join(ctx.dir, '.eccode'), { name: 'x', idea: 'y' }), /inside an ECCode record directory/);
+  denied(bash(ctx.dir, 'cp -r .eccode .eccode/.eccode', null), 'main copies the record into itself', reason);
+  denied(bash(ctx.dir, 'rsync -a forged/ .eccode/', null), 'main rsync into the record', reason);
+  denied(bash(ctx.dir, 'cp -r forged/. .eccode', null), 'main cp -r into the record', reason);
+  denied(bash(ctx.dir, 'rm -rf .eccode', 'backend-engineer'), 'rm -rf the record', reason);
+  denied(bash(ctx.dir, 'tar -xf x.tar -C .eccode/', null), 'tar into the record', reason);
+  // Even with a planted record (made outside the guard), the outer record files stay the CLI's.
+  const planted = path.join(ctx.dir, '.eccode', '.eccode');
+  fs.mkdirSync(planted, { recursive: true });
+  fs.writeFileSync(path.join(planted, 'events.jsonl'), '');
+  for (const rel of ['.eccode/state.json', '.eccode/events.jsonl', '.eccode/config.json', '.eccode/reviews/rev-1.json', '.eccode/memory/records/m.json', '.eccode/evidence/ev-1.log']) {
+    denied(edit(ctx.dir, 'Write', path.join(ctx.dir, rel), null), `main Write ${rel} with a planted record`, reason);
+    denied(bash(ctx.dir, `echo x > ${rel}`, null), `main redirect ${rel} with a planted record`, reason);
+    denied(bash(ctx.dir, `echo x >| ${rel}`, null), `main clobber ${rel} with a planted record`, reason);
+  }
+  allowed(edit(ctx.dir, 'Write', path.join(ctx.dir, '.eccode', 'drafts', 'note.md'), 'technical-reviewer'), 'a draft stays a draft');
+  denied(bash(ctx.dir, 'echo x >| .eccode/events.jsonl', null), 'main clobber onto the log without a planted record', reason);
+});
+
+test('REVIEW: the CLI is recognised on tokenized words, wrappers in every bash form and depth, computed variable names', () => {
+  const ctx = tmpProject();
+  // Quoting tricks that hide the word "eccode" from the raw text.
+  denied(bash(ctx.dir, 'node bin/ecc"ode".js task claim api --actor backend-engineer', 'technical-reviewer'), 'quoted CLI name, impersonation', /Identity mismatch/);
+  denied(bash(ctx.dir, "node bin/ecc'ode'.js gate reopen design --actor user --resolution ok", null), 'quoted CLI name, --actor user', /reserved for a person/);
+  // Wrapper forms the first regex missed.
+  const wrap = /shell function or alias/;
+  for (const c of [
+    'function e() { eccode "$@"; }; e task claim api --actor backend-engineer',
+    'function e () { eccode "$@"; }; e task claim api --actor backend-engineer',
+    'e() ( eccode "$@" ); e task claim api --actor backend-engineer',
+    'e() if true; then eccode "$@"; fi; e task claim api --actor backend-engineer',
+    '  e() { eccode "$@"; }; e task claim api --actor backend-engineer',
+    'if true; then e() { eccode "$@"; }; fi; e task claim api --actor backend-engineer',
+    '{ e() { eccode "$@"; }; }; e task claim api --actor backend-engineer',
+    'bash -c \'e() { eccode "$@"; }; e task claim api --actor backend-engineer\'',
+    'sh -c "e() { eccode \\"\\$@\\"; }; e task claim api --actor backend-engineer"', // hook input
+    'e() {\n  eccode "$@"\n}\ne task claim api --actor backend-engineer',
+    'eccode evidence run --actor technical-reviewer --label t -- \'e() { eccode "$@"; }; e task claim api --actor backend-engineer\'',
+  ]) denied(bash(ctx.dir, c, 'technical-reviewer'), `wrapper: ${c.slice(0, 40)}`, wrap);
+  // Computed variable names.
+  denied(bash(ctx.dir, 'V=ECCODE_SHARED_MEMORY; export $V=/tmp/x; eccode memory search race --actor learning-debugger', 'learning-debugger'), 'computed export', /computed name|may not be set inline/);
+  denied(bash(ctx.dir, 'N=ECCODE_ACTOR; declare "$N"=user; eccode gate reopen design --resolution ok', null), 'computed declare', /computed name|may not be set inline/);
+  // No false positives: a function unrelated to the CLI, with the CLI only in a comment.
+  allowed(bash(ctx.dir, 'f() { echo hi; }; f # see the eccode docs', 'technical-reviewer'), 'function with the CLI in a comment');
+  allowed(bash(ctx.dir, 'eccode status --brief', null), 'plain');
+  allowed(bash(ctx.dir, 'npm test && eccode evidence list --json', 'technical-reviewer'), 'plain with &&');
+});
+
+test('REVIEW 2: targets are judged on their real path for everyone: aliases, spellings, directory operations, pipes', () => {
+  const ctx = tmpProject();
+  const reason = /written only by the eccode CLI|part of an ECCode record|part of the ECCode record/;
+  write(ctx.dir, 'src/server.js', '');
+  // G1/G8: an alias of the record made with a guard-allowed command, with or without a planted copy.
+  fs.symlinkSync(path.join(ctx.dir, '.eccode'), path.join(ctx.dir, 'rec'));
+  const planted = path.join(ctx.dir, '.eccode', '.eccode');
+  fs.mkdirSync(planted, { recursive: true });
+  fs.writeFileSync(path.join(planted, 'events.jsonl'), '');
+  for (const rel of ['rec/state.json', 'rec/events.jsonl', 'rec/config.json', 'rec/reviews/new.json', 'rec/memory/records/m.json']) {
+    denied(edit(ctx.dir, 'Write', path.join(ctx.dir, rel), null), `main Write through the alias: ${rel}`, reason);
+    denied(bash(ctx.dir, `echo x > ${rel}`, null), `main redirect through the alias: ${rel}`, reason);
+  }
+  allowed(edit(ctx.dir, 'Write', path.join(ctx.dir, 'rec', 'drafts', 'n.md'), 'technical-reviewer'), 'a draft through the alias stays a draft');
+  // G2: directory operations on the record in any spelling, from any cwd.
+  const inner = path.join(ctx.dir, 'examples', 'app');
+  fs.mkdirSync(inner, { recursive: true });
+  init(inner, { name: 'App', idea: 'nested app' });
+  for (const c of [
+    `rm -rf ${ctx.dir}/.eccode`, 'cp -r forged/. src/../.eccode', 'cp -r forged/. "$PWD/.eccode"', 'rm -rf .eccode/*', 'rm -rf .ecc\'\'ode',
+    'find .eccode -delete', 'find .eccode -name "*.json" -exec rm {} \\;', 'ls .eccode | xargs rm', 'rm -rf examples/app/.eccode',
+    'rm -rf .eccode/reviews', 'mv .eccode/evidence /tmp/x', 'mv .eccode /tmp/away', 'tar -xf x.tar -C .eccode', 'unzip x.zip -d .eccode/memory',
+    'mkdir -p .eccode/.eccode && cp -r ./.eccode/. .eccode/.eccode/', 'rm -rf rec/evidence',
+  ]) denied(bash(ctx.dir, c, null), `main: ${c}`, reason);
+  denied(bash(inner, 'rm -rf ../../.eccode/evidence', 'backend-engineer'), 'outer record from the inner cwd', reason);
+  // G10: the record as a SOURCE, or mentioned in a comment, is fine; G9: draft areas with a trailing slash too.
+  for (const c of ['cp -r .eccode /tmp/backup', 'tar czf x.tgz .eccode', 'rsync -a .eccode/ /tmp/b/', 'rm x.txt # .eccode is not touched', 'ls .eccode', 'cat .eccode/state.json']) {
+    allowed(bash(ctx.dir, c, null), `main: ${c}`);
+  }
+  allowed(bash(ctx.dir, 'mv .eccode/drafts/x.json .eccode/reviews/drafts/', 'technical-reviewer'), 'reviewer moves a draft into the draft area with a trailing slash');
+  allowed(bash(ctx.dir, 'cp .eccode/drafts/a.json .eccode/drafts/', 'technical-reviewer'), 'reviewer copies within drafts');
+  // G3: quoted and escaped spellings of record files from the main session.
+  for (const c of ['echo x > .eccode/"state.json"', "echo x > .ecc''ode/events.jsonl", 'echo x > .eccode/\\state.json', 'tee .eccode/"events.jsonl" < x', 'echo x >| .eccode/"events.jsonl"']) {
+    denied(bash(ctx.dir, c, null), `main: ${c}`, reason);
+  }
+});
+
+test('REVIEW 2: function names bash accepts, expansions in the CLI word, computed names only, literal names with computed values pass', () => {
+  const ctx = tmpProject();
+  const wrap = /shell function or alias/;
+  for (const c of ['1e() { eccode "$@"; }; 1e task claim api --actor backend-engineer', 'e+() { eccode "$@"; }; e+ task claim api --actor backend-engineer', 'é() { eccode "$@"; }; é task claim api --actor backend-engineer', 'e%() { eccode "$@"; }; e% task claim api --actor backend-engineer']) {
+    denied(bash(ctx.dir, c, 'technical-reviewer'), `G4: ${c.slice(0, 20)}`, wrap);
+  }
+  // G5: the CLI word built with an expansion still binds its --actor.
+  denied(bash(ctx.dir, "node bin/$'eccode'.js task claim api --actor backend-engineer", 'technical-reviewer'), 'G5 ansi-c quoted', /Identity mismatch/);
+  denied(bash(ctx.dir, "node bin/ecc$''ode.js task claim api --actor backend-engineer", 'technical-reviewer'), 'G5 empty expansion', /Identity mismatch/);
+  denied(bash(ctx.dir, 'node bin/eccode.js${X} gate reopen design --actor user --resolution ok', null), 'G5 suffix expansion', /reserved for a person/);
+  // G7: name indirection.
+  denied(bash(ctx.dir, 'N=ECCODE_ACTOR; printf -v "$N" user; eccode gate reopen design --resolution ok', null), 'printf -v', /computed name/);
+  denied(bash(ctx.dir, 'declare -n ref=ECCODE_ACTOR; ref=user; eccode gate reopen design --resolution ok', null), 'declare -n', /computed name/);
+  // G6: literal names with computed values are ordinary shell.
+  for (const c of ['export OUT="$HOME/x"; eccode status --brief', 'env FOO="$BAR" eccode status --brief', 'export PATH="$PWD/node_modules/.bin:$PATH"; eccode evidence run --actor technical-reviewer --label t -- npm test', 'local x=$y; eccode status --brief']) {
+    allowed(bash(ctx.dir, c, 'technical-reviewer'), `G6: ${c.slice(0, 30)}`);
+  }
+});
+
+test('REVIEW 3: a link created and written through in one line, and a dangling link that already exists, cannot reach the record', () => {
+  const ctx = tmpProject();
+  const reason = /creates a link and writes|part of an ECCode record|written only by the eccode CLI/;
+  // H1: same-line alias.
+  for (const c of [
+    'ln -s "$PWD/.eccode" lk && echo FORGED > lk/state.json',
+    `ln -s ${ctx.dir}/.eccode lk; echo x > lk/memory/m-forged.json`,
+    'ln -s .eccode/config.json cfg && echo "{}" > cfg',
+    'cp -s .eccode/state.json st && echo x > st',
+  ]) denied(bash(ctx.dir, c, null), `main: ${c}`, reason);
+  // A computed link source is refused too (the record name is hidden in a variable).
+  denied(bash(ctx.dir, 'D=.eccode; ln -s $D lk && echo x > lk/state.json', null), 'computed link source', reason);
+  denied(bash(ctx.dir, 'D=$PWD; ln -s $D/.ecc"ode" lk && echo x > lk/state.json', null), 'computed prefix', reason);
+  // A link operand that already resolves into the record through an existing link (made in an earlier,
+  // single-target command) is a record operand: `a -> .eccode`, then `ln -s a b && echo > b/state.json`.
+  fs.symlinkSync(path.join(ctx.dir, '.eccode'), path.join(ctx.dir, 'a'));
+  denied(bash(ctx.dir, 'ln -s a b && echo FORGED > b/state.json', null), 'two-hop alias in two turns', reason);
+  denied(bash(ctx.dir, 'cp -s a b && echo x > b/config.json', null), 'cp -s two-hop alias', reason);
+  denied(bash(ctx.dir, 'ln -s ./a/memory m && echo x > m/forged.json', null), 'alias of a record subdirectory', reason);
+  allowed(bash(ctx.dir, 'ln -s src p && echo x > notes.txt', null), 'a link to a project directory beside a write');
+  // Creating a link on its own is ordinary (judged on its own target); writing through it next time is judged for real.
+  allowed(bash(ctx.dir, 'ln -s src/server.js alias.js', null), 'a plain link to a project file');
+  // Record-free build and release lines with a literal link stay ordinary shell (review I1).
+  // (`a` is the record alias made above, so these use other names.)
+  for (const c of ['ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp', 'ln -s p q && touch c', 'ln -s p q; rm -rf dist', 'ln -sf dist/current releases/latest && echo ok > releases/latest.txt', 'mkdir -p bin && ln -sf ../lib/cli.js bin/cli && chmod +x bin/cli']) {
+    allowed(bash(ctx.dir, c, null), `main build line: ${c}`);
+    // A role without a claim is still refused by the ownership rules, for the targets, not for the link.
+    denied(bash(ctx.dir, c, 'devops-engineer'), `devops without a claim: ${c}`, /no claimed task/);
+  }
+  fs.symlinkSync(path.join(ctx.dir, '.eccode'), path.join(ctx.dir, 'lk'));
+  denied(bash(ctx.dir, 'echo FORGED > lk/state.json', null), 'write through an existing alias', reason);
+  // H2: a dangling link whose target is a record file that does not exist yet.
+  fs.symlinkSync('.eccode/newrec.json', path.join(ctx.dir, 'dangle'));
+  denied(edit(ctx.dir, 'Write', path.join(ctx.dir, 'dangle'), null), 'main Write through a dangling link into the record', reason);
+  denied(bash(ctx.dir, 'echo x > dangle', null), 'main redirect through a dangling link into the record', reason);
+  fs.mkdirSync(path.join(ctx.dir, 'src'), { recursive: true });
+  fs.symlinkSync('../.eccode/memory/records/new.json', path.join(ctx.dir, 'src', 'd2'));
+  denied(bash(ctx.dir, 'echo x > src/d2', 'backend-engineer'), 'implementer through a dangling link into memory', reason);
+  // A dangling link that points at an ordinary new file is judged as that file.
+  fs.symlinkSync('notes/new.md', path.join(ctx.dir, 'd3'));
+  allowed(bash(ctx.dir, 'echo x > d3', null), 'main through a dangling link to a project file');
+});
+
 test('NESTED: a project nested in a repository with its own record is judged by its own record', () => {
   // outer: a repository with its own ECCode record; inner: examples/app with another record.
   const outer = tmpProject();
