@@ -1,0 +1,148 @@
+{
+  "id": "mem-d-mv0tzlus-0112de7e",
+  "layer": "debugging",
+  "scope": "project",
+  "project": "Groundwork",
+  "status": "verified",
+  "trust": "internal",
+  "createdAt": "2026-10-09T10:37:12.821Z",
+  "createdBy": "frontend-engineer",
+  "revisions": [
+    {
+      "rev": 1,
+      "at": "2026-10-09T10:37:12.822Z",
+      "by": "frontend-engineer",
+      "reason": "created",
+      "content": {
+        "title": "Native Element.append renders a null child as the text 'null'",
+        "problem": "A vanilla-JS UI built its DOM with a helper h() that skips null/undefined/false children, but several views also called the native Element.append directly with conditional children written as `cond ? h(...) : null`. The DOM API does not skip null: it stringifies it, so the literal text 'null' appeared on the page wherever the condition was false (incident without a description, draft that is not a fallback, incidents page for a user who cannot create). It shipped as a cosmetic defect, and the first fix covered only the one view named in the ticket while the same pattern remained in two other views, which the independent reviewer found.",
+        "symptoms": [
+          "The literal text 'null' is rendered under the incident title (incident view, incident without a description)",
+          "The literal text 'null' is rendered under the 'Draft review' heading (incident view, draft that is not a fallback draft)",
+          "The literal text 'null' is rendered under the title on the published postmortem page that viewers see (postmortems view)",
+          "Browser journey assertion: 'viewer-postmortem: literal \"null\" text rendered in main#main'",
+          "A text node whose trimmed textContent is exactly 'null' exists as a direct child of an element"
+        ],
+        "component": "public/js (DOM rendering)",
+        "environment": {
+          "node": ">=22",
+          "module-type": "module",
+          "browser": "Chromium 1194 via Playwright 1.56.1 (headless, context only; not a detected key)"
+        },
+        "fingerprint": "dom-append-null-child-text",
+        "occurredAt": "2026-10-09",
+        "reproduction": {
+          "steps": [
+            "Add a scan to the real-browser journey (test/browser/journey.test.js, assertNoStrayNull) that fails if any element has a direct text node whose trimmed content is exactly 'null', and call it from the shared auditLayout helper so every audited page runs it, plus directly after the incident page opens and after a draft renders.",
+            "Create an incident without a description, import notes, generate a non-fallback draft, publish it, and open it as a viewer (the journey does all of this).",
+            "Run `npm run test:browser` before the fix: it fails at the step where a view passes `cond ? h(...) : null` to native append (here 'viewer reads the postmortem' at 360 and 1280 px; in round one the incident page itself)."
+          ],
+          "evidence": [
+            "ev:ev-mv0t9ex5-01506ac8"
+          ]
+        },
+        "rootCause": {
+          "explanation": "Element.append(...nodes) accepts Node or string arguments and converts anything that is not a Node to a string via DOMString conversion, so null becomes the text node 'null' (same for undefined and false). The app's own h(tag, attrs, ...children) helper in public/js/dom.js explicitly skips undefined/null/false children, so developers were used to writing conditional children as `cond ? h(...) : null`. That idiom is safe inside h() but not when the same list is handed to native append (clear(el).append(...), root.append(...)). Three views did this: incident.js renderHead and renderReview, postmortems.js postmortemView, incidents.js incidentsView.",
+          "evidence": [
+            "ev:ev-mv0t9ex5-01506ac8",
+            "artifact:public/js/dom.js"
+          ]
+        },
+        "failedAttempts": [
+          {
+            "approach": "Round one: a local appendAll helper inside public/js/views/incident.js only, fixing the two call sites named in the defect report (renderHead, renderReview), with the stray-null scan called at just those two points in the browser journey.",
+            "whyFailed": "The same pattern existed in public/js/views/postmortems.js (description and fallback-banner conditionals, visible to viewers on the published postmortem page) and latently in public/js/views/incidents.js (`canCreate ? form : null`). The journey visited the postmortem page but the scan was not run there, so the check passed with the defect on screen. The independent reviewer reproduced it (R5-1, major) and the task was reopened with wider file ownership. Fixing only the reported instance of a pattern, and testing only the reported location, does not close the defect."
+          }
+        ],
+        "solution": {
+          "description": "Export one shared helper appendAll(el, ...children) from public/js/dom.js next to h(), with the same filter (flatten, skip undefined/null/false, append Nodes as-is and other values as text nodes), and use it at every native append call site that passes conditional children (found by grepping public/js for `.append(` with a ternary `: null` child). In the real-browser journey, run the stray-null scan (`[...document.querySelectorAll('body *')].some(el => [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim() === 'null'))` must be false) inside the shared page-audit helper so every audited page is covered, not only the page where the defect was reported.",
+          "tradeoffs": "Two ways to append now coexist (h() for new elements, appendAll for existing ones); a native append with a conditional child can still be reintroduced, so the browser scan is the real guard and it only covers pages the journey audits. The scan matches exact 'null' text only, so a legitimate string 'null' in content would be a false positive, and 'undefined'/'false' from the same mechanism are not scanned."
+        },
+        "verification": {
+          "evidence": [
+            "ev:ev-mv0tahfs-019339e4"
+          ],
+          "regressionTest": "npm run test:browser (assertNoStrayNull in auditLayout)"
+        },
+        "sources": [
+          {
+            "title": "MDN Element.append()",
+            "url": "https://developer.mozilla.org/en-US/docs/Web/API/Element/append",
+            "checkedAt": "2026-10-09"
+          }
+        ],
+        "appliesWhen": [
+          "UI code builds DOM with a helper that filters falsy children but also calls native append/prepend/replaceChildren with conditional children",
+          "Vanilla-JS views write conditional children as `cond ? element : null` and pass them to a DOM API that takes Node-or-string arguments (append, prepend, replaceChildren, before, after)",
+          "A defect report names one instance of a coding pattern: grep for the pattern across the codebase and extend the regression check to every page or view, not only the reported one"
+        ],
+        "notApplicableWhen": [
+          "Rendering goes through a framework that drops null children (React, lit)",
+          "The stray 'null' text comes from string interpolation of a null value (template literal, textContent = x) rather than from a DOM append argument; same symptom, different cause",
+          "Children are always built through h() or an equivalent filtering helper and no native append receives a conditional child"
+        ],
+        "confidence": "high",
+        "tags": [
+          "dom",
+          "element-append",
+          "null-child",
+          "vanilla-js",
+          "rendering",
+          "stray-null-text",
+          "browser-test",
+          "playwright",
+          "regression-scan",
+          "pattern-wide-fix",
+          "rework"
+        ]
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "at": "2026-10-09T10:38:41.388Z",
+      "reviewer": "technical-reviewer",
+      "decision": "verify",
+      "notes": "Checked independently (I did not author or revise the lesson). Reproduction ev-mv0t9ex5-01506ac8 is 'npm run test:browser', exit 1 at 10:16:50Z, log shows 'viewer-postmortem: literal \"null\" text rendered in main#main' at 360 and 1280 px; verification ev-mv0tahfs-019339e4 is the same command, exit 0, 28/28, at 10:17:40Z (later). Root cause matches public/js/dom.js: h() skips undefined/null/false children, native Element.append stringifies non-Node arguments (null -> text 'null'); the three views and four call sites named match what I verified in gate reviews rev-mv0suzex-016f2cc3 and rev-mv0tfif0-015659c8, and my own Playwright probe ev-mv0tdqpn-01b5c29b confirms every page is now clean. Environment is honest: node >=22 and module-type module match the project (Node v22.22.0, package.json type module, engines >=22.5); the browser line is explicitly marked context-only and the engine reports it as not machine-checked. appliesWhen names the real condition (filtering helper plus native append with conditional children); notApplicableWhen names real exclusions (frameworks that drop null children, string interpolation of null, all children via h()). Tradeoffs are candid (scan covers only audited pages, exact 'null' only). One caveat, not a reason to reject: the problem text lists 'incidents page for a user who cannot create' among places the text appeared, but public/app.js lines 22/39/74 route viewers (the only role with canCreate false) away from incidentsView, so that instance was latent, never rendered; the lesson's failedAttempts section says 'latently', which is the accurate framing. Readers should treat that incidents.js instance as a pattern match, not an observed symptom.",
+      "rev": 1
+    }
+  ],
+  "evidenceSnapshots": {
+    "ev-mv0t9ex5-01506ac8": {
+      "id": "ev-mv0t9ex5-01506ac8",
+      "kind": "command",
+      "label": "repro: stray null on postmortem page",
+      "command": "npm run test:browser",
+      "purpose": "reproduction",
+      "status": "failed",
+      "exitCode": 1,
+      "at": "2026-10-09T10:16:50.695Z",
+      "recordedBy": "frontend-engineer"
+    },
+    "ev-mv0tahfs-019339e4": {
+      "id": "ev-mv0tahfs-019339e4",
+      "kind": "command",
+      "label": "browser journey after shared appendAll fix",
+      "command": "npm run test:browser",
+      "purpose": "check",
+      "status": "passed",
+      "exitCode": 0,
+      "at": "2026-10-09T10:17:40.607Z",
+      "recordedBy": "frontend-engineer"
+    }
+  },
+  "citations": [],
+  "checks": [
+    {
+      "at": "2026-10-09T10:38:16.131Z",
+      "by": "orchestrator",
+      "verdict": "provisional",
+      "reasons": [
+        "status provisional: not independently verified; treat as a hypothesis"
+      ]
+    }
+  ],
+  "supersededBy": null,
+  "supersedes": [],
+  "lastVerifiedAt": "2026-10-09T10:38:41.388Z"
+}
