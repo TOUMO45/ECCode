@@ -17,7 +17,7 @@ const tasks = require('../lib/tasks');
 const runs = require('../lib/runs');
 const reconcile = require('../lib/reconcile');
 const { Store } = require('../lib/store');
-const { tmpProject, write, approveThroughPlan, approval, passCheck, handoffFor, samplePlan, expectCode, ARCH_MD, DESIGN_MD } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, approval, coverage, passCheck, handoffFor, samplePlan, expectCode, ARCH_MD, DESIGN_MD } = require('./helpers');
 
 const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
 const cli = (dir, args) => spawnSync(process.execPath, [BIN, ...args, '--root', dir], { encoding: 'utf8' });
@@ -191,7 +191,7 @@ test('F7 a crash between task.completed and handoff.recorded does not block the 
   }
   gates.submit(store, config, 'phase:core', 'delivery-lead');
   const check = passCheck(store, 'technical-reviewer');
-  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', approval([[`ev:${check.id}`]]));
+  gates.recordReview(store, config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${check.id}`]));
   assert.strictEqual(store.state().gates['phase:core'].status, 'approved');
   assert.strictEqual(store.audit().ok, true);
 });
@@ -202,11 +202,11 @@ test('F7 a crash between gate.submitted and plan.imported refuses approval until
   gates.startGate(store, config, 'architecture', 'orchestrator');
   write(dir, '.eccode/artifacts/brief.md', ARCH_MD);
   gates.submit(store, config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
-  gates.recordReview(store, config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md#Requirements']]));
+  gates.recordReview(store, config, 'architecture', 'architecture-reviewer', coverage(ctx, 'architecture', ['artifact:.eccode/artifacts/brief.md#Requirements']));
   gates.startGate(store, config, 'design', 'orchestrator');
   write(dir, '.eccode/artifacts/spec.md', DESIGN_MD);
   gates.submit(store, config, 'design', 'technical-designer', { artifacts: ['.eccode/artifacts/spec.md'] });
-  gates.recordReview(store, config, 'design', 'technical-reviewer', approval([['artifact:.eccode/artifacts/spec.md']]));
+  gates.recordReview(store, config, 'design', 'technical-reviewer', coverage(ctx, 'design', ['artifact:.eccode/artifacts/spec.md']));
   gates.startGate(store, config, 'plan', 'orchestrator');
   write(dir, '.eccode/artifacts/plan.json', JSON.stringify(samplePlan(), null, 2));
   const restore = crashBefore(store, 'plan.imported');
@@ -216,10 +216,10 @@ test('F7 a crash between gate.submitted and plan.imported refuses approval until
   assert.strictEqual(st.gates.plan.status, 'submitted');
   assert.strictEqual(st.plan, null);
   assert.strictEqual(store.audit().ok, true);
-  const err = expectCode(() => gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/plan.json']])), 'REVIEW_REJECTED');
+  const err = expectCode(() => gates.recordReview(store, config, 'plan', 'technical-reviewer', coverage(ctx, 'plan', ['artifact:.eccode/artifacts/plan.json'])), 'REVIEW_REJECTED');
   assert.match(err.message, /was not imported \(the submission was interrupted\)/);
   gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] });
-  gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/plan.json']]));
+  gates.recordReview(store, config, 'plan', 'technical-reviewer', coverage(ctx, 'plan', ['artifact:.eccode/artifacts/plan.json']));
   st = store.state();
   assert.strictEqual(st.gates.plan.status, 'approved');
   assert.deepStrictEqual(Object.keys(st.tasks), ['api', 'ui', 'tests']);

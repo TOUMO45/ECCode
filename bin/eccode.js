@@ -60,6 +60,7 @@ Memory (layers: project, debugging, knowledge, workflow)
   memory add --file <record.json> --actor <a> [--scope project|shared]
   memory search <query> [--layer l] [--scope project|shared|all] [--check-env] [--limit n] [--json]
   memory show <id> [--history] | memory list [--layer l] [--status s]
+  memory audit [--scope shared|project|all] [--json]  Records whose attestation or verification binding is broken (exit 2)
   memory review <id> --actor <reviewer> --decision verify|reject --notes <text>
   memory revise <id> --file <patch.json> --actor <a> --reason <text>
   memory check <id> [--env key=value]...     Applicability against this environment
