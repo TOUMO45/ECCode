@@ -78,5 +78,5 @@ Both repair branches merged into `claude/serene-heisenberg-h9o5vo` after indepen
 
 ## Release blockers
 - **RB-1** The documented install path (marketplace default branch) does not install 0.3.0. Resolution: merge the work branch into the default branch or point the marketplace at the release commit; re-verify with a clean plugin install. Needs the user (a push to the default branch).
-- **RB-2** Windows: two guard tests fail on 5da8913; repaired and independently approved (`4fc7e87`, merged in `a088c6a`); a Windows run is still required.
+- **RB-2 (closed)** Windows: two guard tests failed on 5da8913 (repaired, `4fc7e87`); on 0.3.1 two test fixtures with unquoted native paths failed (quoted, `d9c1cc6`); the Windows CI job then passed 253/253 (run 37974778884) and is gating from `d9c1cc6` on. Analyses: `docs/evidence/verification-0.3.0/windows-ci-5da8913.md`, `windows-ci-ad69e6d.md`.
 - **RB-3** NEW-1, NEW-3, NEW-6 (blocking): repairs above; the pilot's payment phases do not start until these are merged after independent review (readiness gate).

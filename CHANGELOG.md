@@ -30,7 +30,7 @@ The guard repairs went through five independent review rounds (`docs/evidence/ve
 
 ### Release blockers that remain
 - The marketplace default branch still installs 0.1.0 (RB-1): merging this branch into the default branch is the user's push.
-- Windows: the CI job reports; a passing Windows run is required before Windows is claimed.
+- Windows: after two test fixtures were quoted (`d9c1cc6`), the Windows CI job passed 253/253 (run 37974778884, Windows Server 2025, Node 22.23) and is gating from that commit on. One run; the terminal-confirmation (pty) test is skipped there.
 
 ### Tests
 - 253 (233 on 0.3.0, plus `tests/review-F9-win32-guard.test.js` 4, `tests/guard-verification-repairs.test.js` 9, `tests/verification-repairs.test.js` 5, `tests/verification-repairs-followups.test.js` 2).
