@@ -9,6 +9,9 @@
     "The targets were committed before any toolkit change that was tuned on evaluation results, and before any holdout trial. Before they were declared I had seen two single-task pilot trials on tune tasks (cost ratio ECCode/ECC about 3.6x on one task); cost target E4 (3x per success) was chosen with that in mind.",
     "ECCode was changed after the targets were declared, using the tune split and pilots only: lean change mode, rework path, headline-weighted lesson retrieval enforced at task claim, promotion scrubbing, free-text environment entries, Stop hook (completion gate). See git log between 38e2ce8 and the frozen commit.",
     "The holdout set was written by a separate agent and not read by the toolkit maintainer. Task names and validation summaries (counts of checks, rule and trap tags) were visible to the maintainer; check names, task texts and fixtures were not.",
-    "Both toolkits have their frontmatter model pins rewritten to 'inherit' so every agent runs on the evaluation model (export-toolkits.js)."
+    "Both toolkits have their frontmatter model pins rewritten to 'inherit' so every agent runs on the evaluation model (export-toolkits.js).",
+    "Round 1 (toolkit v1, commit above) was disturbed by an account usage limit: 13 of 54 holdout trials were set aside by an outcome-blind rule introduced afterwards (harness/quarantine-invalid.js) and re-run; the as-run report is kept in eval/results/round1/as-run-before-quarantine.",
+    "After round 1 the toolkit was changed (v2, commit 57f186fa: lesson decisions at the plan, binding, reviewer lessons criterion, leaner change mode) and evaluated on new tasks in round 2 (eval/suite/round2-protocol.md, committed before any round-2 trial).",
+    "Post-evaluation changes (not part of any evaluated toolkit): /eccode:investigate starts a project when none exists; an unreviewed submission can be replaced; gate reopen no longer waives findings; audit accepts deletions recorded by a later approved phase."
   ]
 }

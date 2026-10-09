@@ -40,12 +40,14 @@ Each task is an Acme service that vendors `kit/acme-kit`. It comes with a `TASK.
 | Split | Purpose |
 |---|---|
 | `tune` | Training experience, and the only split used to tune the toolkit |
-| `holdout` | Unfamiliar services, used once for the final comparison. They were written by an independent author agent and sealed: the toolkit maintainer did not read them before the final run. Holdout tasks are either *related* (the training knowledge applies) or *decoys* (it looks applicable but must not be applied). |
+| `holdout` | Round 1: unfamiliar services, used once for the final comparison. They were written by an independent author agent and sealed: the toolkit maintainer did not read them before the final run. Holdout tasks are either *related* (the training knowledge applies) or *decoys* (it looks applicable but must not be applied). |
 
 `harness/validate-tasks.js` proves every task has three properties:
 - the original fails at least one hidden acceptance check;
 - the reference solution passes everything;
 - a plausible naive solution fails a tagged check.
+
+| `holdout2` | Round 2: six new mid-sized tasks (`M1`–`M6`) written by another independent author agent after round 1, with a preregistered protocol (`suite/round2-protocol.md`). |
 
 ## Protocol
 
@@ -57,3 +59,8 @@ Each task is an Acme service that vendors `kit/acme-kit`. It comes with a `TASK.
 6. **Report** (`harness/report.js`): per-trial results, aggregates with Wilson intervals, target verdicts, and every failure listed.
 
 Reproduce: see `suite/run-commands.md`.
+
+## Results
+- Round 1: [`results/round1/`](results/round1) (`ANALYSIS.md`, report, as-run report before 13 usage-limit-disturbed trials were re-run).
+- Round 2: [`results/round2/`](results/round2) (`ANALYSIS.md`, report, two sensitivity analyses).
+- Both rounds failed the predeclared targets E1 (and E3 or E4); see [docs/acceptance-report.md](../docs/acceptance-report.md).
