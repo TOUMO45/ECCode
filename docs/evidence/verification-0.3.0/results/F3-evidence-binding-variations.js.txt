@@ -1,0 +1,187 @@
+{
+  "probe": "F3-evidence-binding-variations",
+  "repo": "/home/user/ECCode",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T16:17:06.750Z",
+  "steps": [
+    {
+      "id": "F3.whitespace",
+      "description": "declared command with extra whitespace is accepted (overblocking check)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":15,\"ts\":\"2026-10-09T16:17:07.044Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv164q8a-08267b71\",\"filesChanged\":[\"src/server/app.js\"]},\"prevHash\":\"09ee44be52944d421798102cd51d7ce515670a1928c9fb671b8d6ad0e66f8057\",\"stateHash\":\"3bb0f5d21c701b6b6832c1a8b0a986523b58a4015e3a0b9810b26f92c75fce08\",\"hash\":\"ebc6c215eeef808d3f8f8812aa94a578c09a2d7b49893b397401a171718e01ff\"},\"state\":{\"seq\":15,\"lastHash\":\"ebc6c215eeef808d3f8f8812aa94a578c09a2d7b49893b397401a171718e01ff\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"20…"
+      }
+    },
+    {
+      "id": "F3.cwd.undeclared",
+      "description": "declared command (no cwd declared) cited from a run in src/server/",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking): when the task declares no cwd, the same command string run from any directory satisfies the check (npm test in a subdirectory runs a different package.json)",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":15,\"ts\":\"2026-10-09T16:17:07.311Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv164qft-0ge329ed\",\"filesChanged\":[\"src/server/app.js\"]},\"prevHash\":\"21f06a1a668391329452760ce16643a443610ee0d57f3dda7f78f3d158b479ce\",\"stateHash\":\"1561d74cd10c5d7b9b04f94e514ebe1f922c0e10e25c79d0a097705b15bb42cc\",\"hash\":\"904f28f04c1327dfe6a4e5ed69602f51017c753ac980b50c1f6f145d419bf99f\"},\"state\":{\"seq\":15,\"lastHash\":\"904f28f04c1327dfe6a4e5ed69602f51017c753ac980b50c1f6f145d419bf99f\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"20…"
+      }
+    },
+    {
+      "id": "F3.cwd.schema",
+      "description": "a plan whose task declares verification.cwd",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking, consistency): the cwd binding the engine implements is unreachable through the plan schema, so the cwd of a declared check is never bound (see F3.cwd.undeclared)",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_PLAN",
+        "message": "Plan is invalid:\n- $.tasks[0].verification.cwd: unknown property",
+        "details": {
+          "errors": [
+            "$.tasks[0].verification.cwd: unknown property"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F3.cwd.matchesVerification",
+      "description": "matchesVerification with a synthetic {command, cwd: src/server}: run at root vs run in src/server",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "atRoot": false,
+          "inCwd": true
+        }
+      }
+    },
+    {
+      "id": "F3.log.newline",
+      "description": "one newline appended to the evidence log",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- evidence ev:ev-mv164qty-0tdaf68a: log .eccode/evidence/ev-mv164qty-0tdaf68a.log was deleted or changed since it was recorded; run the check again (eccode evidence run) - its content no longer matches the recorded digest\n- handoff must cite a passing run of the task's declared verification command, executed by backend-engineer after the claim: node -e \"process.exit(0)\" api-check; cited: no command evidence. Run it with eccode evidence run --actor backend-engineer --task api --label \"<label>\" -- node -e \"process.exit(0)\" api-check and cite the new ev: id",
+        "details": {
+          "errors": [
+            "evidence ev:ev-mv164qty-0tdaf68a: log .eccode/evidence/ev-mv164qty-0tdaf68a.log was deleted or changed since it was recorded; run the check again (eccode evidence run) - its content no longer matches the recorded digest",
+            "handoff must cite a passing run of the task's declared verification command, executed by backend-engineer after the claim: node -e \"process.exit(0)\" api-check; cited: no command evidence. Run it with eccode evidence run --actor backend-engineer --task api --label \"<label>\" -- node -e \"process.exit(0)\" api-check and cite the new ev: id"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F3.tree.editAfterCheck",
+      "description": "check run before the last edit",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- check(s) ev:ev-mv164qw7-0v359398 ran on different bytes than the working tree holds now (files changed after the check); run the check again after the last change and cite the new ev: id",
+        "details": {
+          "errors": [
+            "check(s) ev:ev-mv164qw7-0v359398 ran on different bytes than the working tree holds now (files changed after the check); run the check again after the last change and cite the new ev: id"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F3.taskId",
+      "description": "evidence recorded with --task ui cited for task api (same command, same actor, same tree)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "accepted: the task id on the evidence is informational; the binding is command + actor + time + tree",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":17,\"ts\":\"2026-10-09T16:17:07.993Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv164qym-0y6549cc\",\"filesChanged\":[\"src/server/app.js\"]},\"prevHash\":\"e620d684e654860d64fd71b48c09a492c6e9a7a38e6d39a28251044307d3e389\",\"stateHash\":\"49b94772eb2ae8cf53cf0d5d7b44de28739e418f1dac3968bbb6c030caf3fcfd\",\"hash\":\"83b5a5ce613a2b0a3b715c8605aeef9f8dd030210d91e9b88565bd06e281fb80\"},\"state\":{\"seq\":17,\"lastHash\":\"83b5a5ce613a2b0a3b715c8605aeef9f8dd030210d91e9b88565bd06e281fb80\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"20…"
+      }
+    },
+    {
+      "id": "F3.reviewer.citesImplementer",
+      "description": "phase approval citing only the implementer's post-submission run of the declared command",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- phase approvals require at least one passing check executed by the reviewer (eccode evidence run --actor technical-reviewer) after submission sub-mv164r5d-1370a6e9\n- phase approval must cite a passing run, by technical-reviewer after submission sub-mv164r5d-1370a6e9, of every verification command the phase's tasks declare; missing: node -e \"process.exit(0)\" api-check [api]; node -e \"process.exit(0)\" [ui, tests]. Run each with eccode evidence run --actor technical-reviewer --gate phase:core --label \"<label>\" -- <command> and cite its ev: id",
+        "details": {
+          "reasons": [
+            "phase approvals require at least one passing check executed by the reviewer (eccode evidence run --actor technical-reviewer) after submission sub-mv164r5d-1370a6e9",
+            "phase approval must cite a passing run, by technical-reviewer after submission sub-mv164r5d-1370a6e9, of every verification command the phase's tasks declare; missing: node -e \"process.exit(0)\" api-check [api]; node -e \"process.exit(0)\" [ui, tests]. Run each with eccode evidence run --actor technical-reviewer --gate phase:core --label \"<label>\" -- <command> and cite its ev: id"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F3.reviewer.unrelatedOnly",
+      "description": "phase approval citing the reviewer's run of an unrelated passing command",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- phase approval must cite a passing run, by technical-reviewer after submission sub-mv164r5d-1370a6e9, of every verification command the phase's tasks declare; missing: node -e \"process.exit(0)\" api-check [api]. Run each with eccode evidence run --actor technical-reviewer --gate phase:core --label \"<label>\" -- <command> and cite its ev: id",
+        "details": {
+          "reasons": [
+            "phase approval must cite a passing run, by technical-reviewer after submission sub-mv164r5d-1370a6e9, of every verification command the phase's tasks declare; missing: node -e \"process.exit(0)\" api-check [api]. Run each with eccode evidence run --actor technical-reviewer --gate phase:core --label \"<label>\" -- <command> and cite its ev: id"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F3.reviewer.declared",
+      "description": "phase approval citing the reviewer's own run of the declared command",
+      "expect": "ok",
+      "verdict": "UNEXPECTED",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- phase approval must cite a passing run, by technical-reviewer after submission sub-mv164r5d-1370a6e9, of every verification command the phase's tasks declare; missing: node -e \"process.exit(0)\" [ui, tests]. Run each with eccode evidence run --actor technical-reviewer --gate phase:core --label \"<label>\" -- <command> and cite its ev: id",
+        "details": {
+          "reasons": [
+            "phase approval must cite a passing run, by technical-reviewer after submission sub-mv164r5d-1370a6e9, of every verification command the phase's tasks declare; missing: node -e \"process.exit(0)\" [ui, tests]. Run each with eccode evidence run --actor technical-reviewer --gate phase:core --label \"<label>\" -- <command> and cite its ev: id"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F3.methodOnly",
+      "description": "task declares a method and no command: any passing check by the owner after the claim completes it",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "documented rule (CHANGELOG 0.3.0): method-only tasks keep the any-passing-check rule; a plan reviewer must insist on a command",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":15,\"ts\":\"2026-10-09T16:17:08.728Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv164riz-1edf900e\",\"filesChanged\":[\"src/server/app.js\"]},\"prevHash\":\"fdd7f70cc44a4b87ab52ff7a88765e3ef2f2c003ed91d4afe39c0f07f5e7d4c9\",\"stateHash\":\"da3a0dae7252d6fc3d9c5ea5eea5dc8a817c726ca7ee8bc019d2a80d2e13d90b\",\"hash\":\"499e7af34459bc5750a14747b284522a3d358a6b255a6fd1d26cb62aa6590634\"},\"state\":{\"seq\":15,\"lastHash\":\"499e7af34459bc5750a14747b284522a3d358a6b255a6fd1d26cb62aa6590634\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"20…"
+      }
+    },
+    {
+      "id": "F3.env.honest",
+      "description": "declared command without FORCE_OK fails",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": false,
+        "value": "failed"
+      }
+    },
+    {
+      "id": "F3.env.forced",
+      "description": "same declared command with FORCE_OK=1 exported in the runner's environment, cited for completion",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "RESIDUAL (stated in README: \"not done: binding to the environment\"): the record does not capture the environment; the guard denies only inline ECCODE_* assignments",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":16,\"ts\":\"2026-10-09T16:17:09.041Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv164rrs-1n98532b\",\"filesChanged\":[\"src/server/app.js\"]},\"prevHash\":\"4adb142e8aa4fb3a125d52ae7fb03b0bbdb6ca5ec89be0a25e5d2af36f0513d7\",\"stateHash\":\"bf5b3e13b334562a84ba5d01eb80d0ee47077a6a85f9a9a5c0ade58fc3fde866\",\"hash\":\"1e3c7d66b8639a20b88bb38a615af43896ddfdb30263ba9eab674fc25b769bc3\"},\"state\":{\"seq\":16,\"lastHash\":\"1e3c7d66b8639a20b88bb38a615af43896ddfdb30263ba9eab674fc25b769bc3\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"20…"
+      }
+    }
+  ],
+  "unexpected": 1,
+  "finishedAt": "2026-10-09T16:17:09.078Z"
+}

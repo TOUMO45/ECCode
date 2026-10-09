@@ -1,0 +1,23 @@
+/home/user/ECCode/lib/store.js:172
+    throw new EccodeError('SNAPSHOT_DIVERGED', `Refusing to use the project record: state.json diverges from a replay of events.jsonl at ${diff}; the snapshot was edited or written by another tool. ${SNAPSHOT_RECOVERY}.`, { recovery: SNAPSHOT_RECOVERY, difference: diff });
+    ^
+
+EccodeError: Refusing to use the project record: state.json diverges from a replay of events.jsonl at state.gates.architecture.status (snapshot "approved", replay "pending"); the snapshot was edited or written by another tool. eccode audit shows the difference; eccode rebuild --actor orchestrator rewrites state.json from the log (nothing is lost: the log is the truth).
+    at Store.state (/home/user/ECCode/lib/store.js:172:11)
+    at Object.<anonymous> (/home/user/ECCode/docs/evidence/review-bundle/probes/F7-snapshot-trusted.js:56:33)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Function._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'SNAPSHOT_DIVERGED',
+  details: {
+    recovery: 'eccode audit shows the difference; eccode rebuild --actor orchestrator rewrites state.json from the log (nothing is lost: the log is the truth)',
+    difference: 'state.gates.architecture.status (snapshot "approved", replay "pending")'
+  }
+}
+
+Node.js v22.22.0

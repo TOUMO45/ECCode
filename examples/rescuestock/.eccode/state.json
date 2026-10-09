@@ -1,0 +1,310 @@
+{
+  "seq": 20,
+  "lastHash": "8a6e2e18538fac604e1e4ed35b4b63c32c43b526815ac4729b88173e4eb296b1",
+  "project": {
+    "name": "RescueStock",
+    "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
+    "createdAt": "2026-10-09T16:05:05.198Z"
+  },
+  "gateOrder": [
+    "architecture",
+    "design",
+    "plan",
+    "verification"
+  ],
+  "gates": {
+    "architecture": {
+      "id": "architecture",
+      "kind": "architecture",
+      "status": "submitted",
+      "iterations": 0,
+      "authors": [
+        "product-architect"
+      ],
+      "submissions": [
+        {
+          "id": "sub-mv15wpmr-015f7530",
+          "actor": "product-architect",
+          "at": "2026-10-09T16:10:52.995Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/architecture/brief.md",
+              "sha256": "9b47c253d51b62c3ba63897ba73bc3e6e401b3d159c7148cf76390262137733d"
+            }
+          ],
+          "respondsTo": null,
+          "notes": "Brief restating RS-REQ-1 verbatim (RS-01..33, RS-NF-1..4 as NFR1-4), additions RS-34..39, NFR5-6"
+        }
+      ],
+      "reviews": [],
+      "openFindings": [],
+      "approvedBy": null,
+      "approvedSubmission": null,
+      "escalation": null,
+      "startedAt": "2026-10-09T16:05:48.849Z",
+      "approvedAt": null
+    },
+    "design": {
+      "id": "design",
+      "kind": "design",
+      "status": "pending",
+      "iterations": 0,
+      "authors": [],
+      "submissions": [],
+      "reviews": [],
+      "openFindings": [],
+      "approvedBy": null,
+      "approvedSubmission": null,
+      "escalation": null,
+      "startedAt": null,
+      "approvedAt": null
+    },
+    "plan": {
+      "id": "plan",
+      "kind": "plan",
+      "status": "pending",
+      "iterations": 0,
+      "authors": [],
+      "submissions": [],
+      "reviews": [],
+      "openFindings": [],
+      "approvedBy": null,
+      "approvedSubmission": null,
+      "escalation": null,
+      "startedAt": null,
+      "approvedAt": null
+    },
+    "verification": {
+      "id": "verification",
+      "kind": "verification",
+      "status": "pending",
+      "iterations": 0,
+      "authors": [],
+      "submissions": [],
+      "reviews": [],
+      "openFindings": [],
+      "approvedBy": null,
+      "approvedSubmission": null,
+      "escalation": null,
+      "startedAt": null,
+      "approvedAt": null
+    }
+  },
+  "plan": null,
+  "tasks": {},
+  "evidence": {},
+  "reviews": {},
+  "rejectedReviews": [],
+  "handoffs": {
+    "ho-mv15xaoa-019fa950": {
+      "from": "product-architect",
+      "to": "architecture-reviewer",
+      "gate": "architecture",
+      "objective": "Produce and submit the RescueStock architecture brief (users, problem, requirements, workflows, acceptance criteria, scope, architecture, constraints, success criteria, assumptions, open questions, risk register) for independent review at the architecture gate.",
+      "context": "Inputs are the user's master goal (docs/build/goal.md, requirements version RS-REQ-1: RS-01..RS-33, RS-NF-1..4, fixture RS-FIX-1, assumptions A1-A5, unverified hackathon facts) and the architecture draft (docs/build/plan.md: zero-dependency Node 22 + node:sqlite stack, modules, data model, contracts, exact planner with oracle, payment saga). Environment facts verified in this session: api-m.sandbox.paypal.com and developer.paypal.com are blocked by network policy; no PayPal credentials and no ANTHROPIC_API_KEY; Claude Code CLI (claude -p --json-schema, haiku/sonnet, billed to the user) works as the real-model route; Playwright + Chromium installed; Node 22.22; node:sqlite available; PostgreSQL not running. eccode memory search returned no records, so no lessons were cited.",
+      "inputs": [
+        "docs/build/goal.md",
+        "docs/build/plan.md",
+        "/home/user/ECCode/agents/product-architect.md",
+        "eccode status --brief (architecture in_progress at start)",
+        "eccode memory search (no matching records)"
+      ],
+      "expectedOutput": ".eccode/artifacts/architecture/brief.md submitted to the architecture gate with one acceptance criterion per user requirement id, risks recorded with eccode risk add, and this handoff.",
+      "acceptanceCriteria": [
+        "Brief contains every gate-checked heading (Users, Problem, Requirements, Acceptance Criteria, Architecture, Assumptions, Open Questions, Risks) plus Main Workflows, Scope, Constraints, Success Criteria",
+        "Every user requirement id RS-01..RS-33 appears verbatim as an acceptance-criterion id; RS-NF-1..4 appear as NFR1..NFR4 with the user id in parentheses (the gate's id grammar allows one hyphen); no requirement weakened, renumbered or dropped",
+        "eccode gate show architecture lists RS-01..RS-39 and NFR1..NFR6 as required criteria",
+        "Material risks recorded as RISK-1..RISK-12 with honest severities and named mitigations",
+        "Open questions that need the user are listed with the decision each blocks"
+      ],
+      "completedWork": "Wrote brief.md restating the goal and plan densely without weakening any RS id. Added RS-34..RS-39 (simulation labelling, six on-screen questions, separate state machines with derived rescue status, guarded admin reset, append-only ledgers, image upload limits) and NFR5 (performance) and NFR6 (cost/observability), all derived from the goal's prose. Architecture adopts plan.md sections 2-6 unchanged, adds a text diagram, trust boundaries, and justifies each major choice against an alternative (SQLite vs PostgreSQL, exact planner vs greedy, hosted approval link vs JS SDK, credential-per-merchant vs partner API, CLI vs API model route, stateful fake adapter vs HTTP mocks, single process vs services). Added the AI feature statement (failure modes, human-in-the-loop points, quality thresholds). Submitted as sub-mv15wpmr-015f7530; eccode gate show confirms 45 required criteria (RS-01..RS-39, NFR1..NFR6). Recorded RISK-1..RISK-12 (RISK-3 double capture, RISK-4 double reservation, RISK-5 cross-account access are critical; RISK-1 blocked Sandbox hosts and RISK-2 missing credentials are high). Decision: the four RS-NF ids are listed as NFR1-4 (RS-NF-x) because the parser rejects a second hyphen; the user id is preserved in the item text and in the Requirements section.",
+      "filesChanged": [
+        ".eccode/artifacts/architecture/brief.md",
+        ".eccode/artifacts/architecture/handoff.json"
+      ],
+      "evidence": [],
+      "remainingIssues": [
+        "Q1: number of PayPal Sandbox business accounts/REST credentials (one per supplier A-E or one shared) - blocks A2 wiring and live RS-18..RS-26",
+        "Q2: where the live PayPal suite runs (user's machine with network) - blocks live evidence for NFR3",
+        "Q3: model route and spend ceiling (CLI haiku/sonnet or ANTHROPIC_API_KEY) - blocks NFR6 ceiling and live RS-01..03",
+        "Q4: dedicated public repository vs examples/rescuestock in ECCode - blocks README paths and submission links",
+        "Q5: user to confirm deadline, submission requirements and judging on the official Devpost page (blocked here)",
+        "Q6: public webhook URL for Sandbox webhooks or polling fallback acceptable - blocks live RS-23/24 design",
+        "Q7: Devpost account/project ownership and demo video production (Devpost connector needs interactive authorization)",
+        "Q8: English-only interface acceptable for Arabic-speaking buyers (no RTL planned) - blocks NFR2 scope",
+        "Live PayPal Sandbox evidence cannot be produced in this environment (RISK-1, RISK-2); the fake adapter covers the paths deterministically"
+      ],
+      "nextAction": "architecture-reviewer reviews submission sub-mv15wpmr-015f7530 against all 45 required criteria; the orchestrator relays Q1-Q8 to the user; on changes_requested, product-architect revises brief.md and resubmits with --responds-to.",
+      "id": "ho-mv15xaoa-019fa950",
+      "recordedBy": "product-architect",
+      "at": "2026-10-09T16:11:20.273Z"
+    }
+  },
+  "runs": {
+    "run-mv15q6zy-0110f204": {
+      "id": "run-mv15q6zy-0110f204",
+      "agent": "product-architect",
+      "task": null,
+      "gate": "architecture",
+      "startedAt": "2026-10-09T16:05:48.912Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T16:12:07.932Z",
+      "durationMinutes": 6.32,
+      "costUsd": null,
+      "tokens": 115409,
+      "note": "product-architect: brief submitted sub-mv15wpmr-015f7530; 45 required criteria; RISK-1..12; handoff ho-mv15xaoa-019fa950",
+      "usageReported": true
+    },
+    "run-mv15ybi7-01f5fb5c": {
+      "id": "run-mv15ybi7-01f5fb5c",
+      "agent": "architecture-reviewer",
+      "task": null,
+      "gate": "architecture",
+      "startedAt": "2026-10-09T16:12:08.003Z",
+      "status": "running",
+      "attempt": 1
+    }
+  },
+  "risks": {
+    "RISK-1": {
+      "id": "RISK-1",
+      "title": "PayPal Sandbox hosts blocked from the build environment; live PayPal evidence cannot be produced here",
+      "severity": "high",
+      "mitigation": "Fake adapter implements the full provider contract with fault injection; live Sandbox suite scripted with a runbook for the user's machine; evidence table marks live rows Unverified with the exact blocker",
+      "owner": "devops-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.145Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-2": {
+      "id": "RISK-2",
+      "title": "No PayPal credentials and no ANTHROPIC_API_KEY in the build environment",
+      "severity": "high",
+      "mitigation": "Credentials only via env (NFR4); Claude Code CLI is the working real-model route; user asked for Sandbox credentials (Q1) and model route/spend (Q3)",
+      "owner": "delivery-lead",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.224Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-3": {
+      "id": "RISK-3",
+      "title": "Double capture under repeated clicks, retries or lost responses",
+      "severity": "critical",
+      "mitigation": "Unique operation key per payment operation, PayPal-Request-Id = operation key, intent persisted before every external call, state machine forbids capture from captured/unknown, reconciler fetches provider state before any retry; RS-20 and RS-25 tests",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.312Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-4": {
+      "id": "RISK-4",
+      "title": "Double reservation / oversell under concurrent customers",
+      "severity": "critical",
+      "mitigation": "Conditional UPDATE (reserved + qty <= on_hand) inside BEGIN IMMEDIATE transaction, CHECK constraints, unique operation_key, release-once ledger; RS-14/15/16 multi-process tests on a real SQLite file",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.399Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-5": {
+      "id": "RISK-5",
+      "title": "Cross-account access between customers, suppliers and admin tools",
+      "severity": "critical",
+      "mitigation": "RBAC default-deny, owner-scoped queries in the service layer, admin routes role-gated; RS-27/28/30 tests; independent security review",
+      "owner": "security-reviewer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.493Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-6": {
+      "id": "RISK-6",
+      "title": "Prompt injection via image or catalog text alters extraction or downstream behaviour",
+      "severity": "high",
+      "mitigation": "Model output schema-validated and treated as data; model has no tools; permissions, amounts, suppliers and plan versions never derived from model output; buyer confirms fields; RS-05 injection fixtures",
+      "owner": "ai-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.563Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-7": {
+      "id": "RISK-7",
+      "title": "Model unavailability, latency or cost blow-up",
+      "severity": "medium",
+      "mitigation": "Deterministic fake provider for tests; haiku default; timeouts; per-run cost ceiling recorded per extraction (NFR6)",
+      "owner": "ai-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.630Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-8": {
+      "id": "RISK-8",
+      "title": "Lost or unknown payment outcome leaves money or stock in limbo",
+      "severity": "high",
+      "mitigation": "unknown operation state, reconciler fetches provider state, reservation reconciling is never auto-released, escalation flag on failed compensation; RS-22/25/26",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.717Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-9": {
+      "id": "RISK-9",
+      "title": "PayPal secrets leak into frontend assets, logs, screenshots or submission materials",
+      "severity": "high",
+      "mitigation": "Config redaction, hosted approval link keeps client id off the browser, automated secret scan test (RS-29), .env.example placeholders only",
+      "owner": "security-reviewer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.808Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-10": {
+      "id": "RISK-10",
+      "title": "Hackathon facts unverified against the official Devpost page (deadline, rules, judging)",
+      "severity": "medium",
+      "mitigation": "User re-checks the official page (Q5); schedule keeps margin before the reported 12 Nov 2026 deadline",
+      "owner": "delivery-lead",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.898Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-11": {
+      "id": "RISK-11",
+      "title": "Scope breadth versus time budget (33 mandatory tests, three dashboards, live suites)",
+      "severity": "high",
+      "mitigation": "Slices S1-S8 ordered by risk; fake adapters complete the deterministic suite early; minimal state-driven frontend; verification gate records any unverified row honestly",
+      "owner": "delivery-lead",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:53.971Z",
+      "updatedBy": "product-architect"
+    },
+    "RISK-12": {
+      "id": "RISK-12",
+      "title": "Sandbox webhooks unreachable in the demo (no public URL)",
+      "severity": "medium",
+      "mitigation": "Signature verification path tested with the fake adapter and recorded Sandbox payloads; polling fallback for provider order state (A10, Q6)",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-09T16:10:54.039Z",
+      "updatedBy": "product-architect"
+    }
+  },
+  "decisions": {
+    "dec-mv15p9bp-01586238": {
+      "id": "dec-mv15p9bp-01586238",
+      "title": "Workflow level",
+      "decision": "High-impact: full delivery profile",
+      "rationale": "Payments (PayPal authorize/capture/void/refund), authentication, inventory invariants and AI extraction change trust boundaries; orchestrate skill section 1 routes such work to the full delivery with the security reviewer on the phases that touch the boundary.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-09T16:05:05.273Z",
+      "by": "orchestrator"
+    }
+  },
+  "citations": [],
+  "totals": {
+    "costUsd": 0,
+    "runtimeMinutes": 6.32,
+    "tokens": 115409
+  },
+  "delivery": null
+}

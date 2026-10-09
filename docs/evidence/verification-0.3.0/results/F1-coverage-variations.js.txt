@@ -1,0 +1,384 @@
+{
+  "probe": "F1-coverage-variations",
+  "repo": "/home/user/ECCode",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T16:08:57.226Z",
+  "steps": [
+    {
+      "id": "F1.table.required",
+      "description": "required ids derived from a Markdown TABLE under Acceptance Criteria",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1",
+          "AC2"
+        ]
+      }
+    },
+    {
+      "id": "F1.table.attack",
+      "description": "approve \"the document has a title\" citing a non-existent section",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- criterion C1: artifact:.eccode/artifacts/architecture/brief.md#no-such-section: anchor \"#no-such-section\" not found in .eccode/artifacts/architecture/brief.md (headings: \"brief\", \"users\", \"problem\", \"requirements\", \"acceptance criteria\", \"architecture\", \"assumptions\", \"open questions\", \"risks\"); cite a heading of the file\n- approval does not cover the required criteria: AC1, AC2; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show architecture lists them with their descriptions)",
+        "details": {
+          "reasons": [
+            "criterion C1: artifact:.eccode/artifacts/architecture/brief.md#no-such-section: anchor \"#no-such-section\" not found in .eccode/artifacts/architecture/brief.md (headings: \"brief\", \"users\", \"problem\", \"requirements\", \"acceptance criteria\", \"architecture\", \"assumptions\", \"open questions\", \"risks\"); cite a heading of the file",
+            "approval does not cover the required criteria: AC1, AC2; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show architecture lists them with their descriptions)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.lookalike.lowercase",
+      "description": "ids ac1 + AC2 (AC1 omitted, lower-case look-alike)",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- approval does not cover the required criteria: AC1; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show architecture lists them with their descriptions)",
+        "details": {
+          "reasons": [
+            "approval does not cover the required criteria: AC1; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show architecture lists them with their descriptions)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.lookalike.cyrillic",
+      "description": "ids АC1 (Cyrillic A) + AC2 (AC1 omitted)",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- approval does not cover the required criteria: AC1; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show architecture lists them with their descriptions)",
+        "details": {
+          "reasons": [
+            "approval does not cover the required criteria: AC1; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show architecture lists them with their descriptions)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.lookalike.ac01",
+      "description": "ids AC01 + AC2 (zero-padded look-alike, AC1 omitted)",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- unknown criterion id(s): AC01; architecture requires AC1, AC2 (eccode gate show architecture); other criteria take free-form ids such as C1\n- approval does not cover the required criteria: AC1; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show architecture lists them with their descriptions)",
+        "details": {
+          "reasons": [
+            "unknown criterion id(s): AC01; architecture requires AC1, AC2 (eccode gate show architecture); other criteria take free-form ids such as C1",
+            "approval does not cover the required criteria: AC1; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show architecture lists them with their descriptions)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.duplicate",
+      "description": "AC1 twice, AC2 omitted",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- duplicate criterion id(s): AC1; give each criterion its own id\n- approval does not cover the required criteria: AC2; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show architecture lists them with their descriptions)",
+        "details": {
+          "reasons": [
+            "duplicate criterion id(s): AC1; give each criterion its own id",
+            "approval does not cover the required criteria: AC2; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show architecture lists them with their descriptions)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.table.legit",
+      "description": "full coverage AC1 + AC2 against the table brief is approved (overblocking check)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":9,\"ts\":\"2026-10-09T16:08:57.379Z\",\"type\":\"review.recorded\",\"actor\":\"architecture-reviewer\",\"data\":{\"gate\":\"architecture\",\"review\":{\"decision\":\"approve\",\"summary\":\"Criteria checked against the submitted brief.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1 verified against the brief\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]},{\"id\":\"AC2\",\"description\":\"AC2 verified against the brief\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]}],\"findings\":[]},\"reviewId\":\"rev-mv15u8f7-02394cf0\",\"…"
+      }
+    },
+    {
+      "id": "F1.table.status",
+      "description": "architecture gate status after the legitimate approval",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": "approved"
+      }
+    },
+    {
+      "id": "F1.reflow",
+      "description": "brief reflowed (whitespace only) after submission, then a full-coverage approval",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- artifact .eccode/artifacts/architecture/brief.md changed after submission sub-mv15u8j1-03c259db; the author must resubmit before review",
+        "details": {
+          "reasons": [
+            "artifact .eccode/artifacts/architecture/brief.md changed after submission sub-mv15u8j1-03c259db; the author must resubmit before review"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.reflow.restored",
+      "description": "bytes restored: the same approval passes",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":5,\"ts\":\"2026-10-09T16:08:57.523Z\",\"type\":\"review.recorded\",\"actor\":\"architecture-reviewer\",\"data\":{\"gate\":\"architecture\",\"review\":{\"decision\":\"approve\",\"summary\":\"Criteria checked against the submitted brief.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1 verified against the brief\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]},{\"id\":\"AC2\",\"description\":\"AC2 verified against the brief\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]}],\"findings\":[]},\"reviewId\":\"rev-mv15u8j7-04f10610\",\"…"
+      }
+    },
+    {
+      "id": "F1.config.noheading.required",
+      "description": "config review.criteriaSections names a heading the brief lacks: required ids",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "F1.config.noheading.attack",
+      "description": "then \"the document has a title\" (valid anchor) is accepted: coverage is not enforced",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "RESIDUAL (config): a misconfigured criteriaSections disables coverage silently; eccode gate show says \"coverage cannot be checked\"",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":4,\"ts\":\"2026-10-09T16:08:57.665Z\",\"type\":\"review.recorded\",\"actor\":\"architecture-reviewer\",\"data\":{\"gate\":\"architecture\",\"review\":{\"decision\":\"approve\",\"summary\":\"Criteria checked against the submitted brief.\",\"criteria\":[{\"id\":\"C1\",\"description\":\"The document has a title\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Risks\"]}],\"findings\":[]},\"reviewId\":\"rev-mv15u8n5-06758f6e\",\"submissionId\":\"sub-mv15u8n3-0589bb5a\"},\"prevHash\":\"f6fadf18f52fb868b16d8db67deb59ab6b52e632740853eef81190161987e2ad\",\"stateHash\":\"7711821c2296a3725b543cc1e74c67f041e26545c265e3…"
+      }
+    },
+    {
+      "id": "F1.noids.required",
+      "description": "brief lists two acceptance criteria without ids: required ids",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "F1.noids.attack",
+      "description": "approval \"the document has a title\" against a brief with un-numbered criteria",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking): the author controls whether coverage is enforced; a brief without criterion ids makes the F1 attack succeed again",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":4,\"ts\":\"2026-10-09T16:08:57.969Z\",\"type\":\"review.recorded\",\"actor\":\"architecture-reviewer\",\"data\":{\"gate\":\"architecture\",\"review\":{\"decision\":\"approve\",\"summary\":\"Criteria checked against the submitted brief.\",\"criteria\":[{\"id\":\"C1\",\"description\":\"The document has a title\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/architecture/brief.md#Risks\"]}],\"findings\":[]},\"reviewId\":\"rev-mv15u8vl-0801a738\",\"submissionId\":\"sub-mv15u8vj-07f28737\"},\"prevHash\":\"c11fcfbc9bf7938790cf4c04b3d0d97f724c23f168737c3b079a77ff975e9332\",\"stateHash\":\"fec402d16924e0a5236d300df782d1df549a9d93744e42…"
+      }
+    },
+    {
+      "id": "F1.noids.status",
+      "description": "gate status",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": "approved"
+      }
+    },
+    {
+      "id": "F1.plan.badpath",
+      "description": "plan approval citing artifact:plan.json#phases.9.goal (no such path)",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- criterion phase:core: artifact:.eccode/artifacts/plan.json#phases.9.goal: anchor \"#phases.9.goal\" not found in .eccode/artifacts/plan.json; cite a dot path that exists (phases.0.id, tasks.<id>)",
+        "details": {
+          "reasons": [
+            "criterion phase:core: artifact:.eccode/artifacts/plan.json#phases.9.goal: anchor \"#phases.9.goal\" not found in .eccode/artifacts/plan.json; cite a dot path that exists (phases.0.id, tasks.<id>)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.plan.badphase",
+      "description": "plan approval covering phase:nope instead of phase:core",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- unknown criterion id(s): phase:nope; plan requires phase:core (eccode gate show plan); other criteria take free-form ids such as C1\n- approval does not cover the required criteria: phase:core; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show plan lists them with their descriptions)",
+        "details": {
+          "reasons": [
+            "unknown criterion id(s): phase:nope; plan requires phase:core (eccode gate show plan); other criteria take free-form ids such as C1",
+            "approval does not cover the required criteria: phase:core; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show plan lists them with their descriptions)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.plan.legit",
+      "description": "plan approval citing #phases.0.goal and #tasks.api.verification",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":13,\"ts\":\"2026-10-09T16:08:58.162Z\",\"type\":\"review.recorded\",\"actor\":\"technical-reviewer\",\"data\":{\"gate\":\"plan\",\"review\":{\"decision\":\"approve\",\"summary\":\"Criteria checked against the submitted brief.\",\"criteria\":[{\"id\":\"phase:core\",\"description\":\"phase:core verified against the brief\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/plan.json#phases.0.goal\",\"artifact:.eccode/artifacts/plan.json#tasks.api.verification\"]}],\"findings\":[]},\"reviewId\":\"rev-mv15u90y-0e405d29\",\"submissionId\":\"sub-mv15u90q-0de4dc42\"},\"prevHash\":\"e9e2a71a33e053d5666cb29949afc5b07c474fa3615af76c3bd3c099…"
+      }
+    },
+    {
+      "id": "F1.verification.required",
+      "description": "required ids for the verification gate",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1",
+          "AC2"
+        ]
+      }
+    },
+    {
+      "id": "F1.verification.omitAC2",
+      "description": "verification approval covering AC1 only",
+      "expect": "refused:REVIEW_REJECTED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "REVIEW_REJECTED",
+        "message": "Review rejected by gate rules:\n- approval does not cover the required criteria: AC2; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show verification lists them with their descriptions)",
+        "details": {
+          "reasons": [
+            "approval does not cover the required criteria: AC2; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show verification lists them with their descriptions)"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F1.verification.legit",
+      "description": "verification approval covering AC1 and AC2",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":34,\"ts\":\"2026-10-09T16:08:58.653Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"Criteria checked against the submitted brief.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1 verified against the brief\",\"met\":true,\"evidence\":[\"ev:ev-mv15u9d0-0p880e16\"]},{\"id\":\"AC2\",\"description\":\"AC2 verified against the brief\",\"met\":true,\"evidence\":[\"ev:ev-mv15u9d0-0p880e16\"]}],\"findings\":[]},\"reviewId\":\"rev-mv15u9el-0q080a92\",\"submissionId\":\"sub-mv15u9c7-0o8cedec\"},\"prevHash\":\"1e47ad0701ed3127e799a89b271d3696d9ea1094cf…"
+      }
+    },
+    {
+      "id": "F1.edited.guard",
+      "description": "guard: technical-designer `echo … > brief.md` (the approved architecture artifact)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "decision": "allow",
+        "reason": null
+      }
+    },
+    {
+      "id": "F1.edited.designRequired",
+      "description": "required ids for design after AC2 was removed from the approved brief on disk",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1"
+        ]
+      }
+    },
+    {
+      "id": "F1.edited.designApproval",
+      "description": "design approval covering AC1 only (AC2 was in the approved brief)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW: required ids are derived from the brief as it is NOW, not from the bytes the architecture approval pinned",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":7,\"ts\":\"2026-10-09T16:08:59.024Z\",\"type\":\"review.recorded\",\"actor\":\"technical-reviewer\",\"data\":{\"gate\":\"design\",\"review\":{\"decision\":\"approve\",\"summary\":\"Criteria checked against the submitted brief.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1 verified against the brief\",\"met\":true,\"evidence\":[\"artifact:.eccode/artifacts/spec.md#Components\"]}],\"findings\":[]},\"reviewId\":\"rev-mv15u9ow-0ufaf50f\",\"submissionId\":\"sub-mv15u9ou-0ta9cac6\"},\"prevHash\":\"66ccb84c2c4b87fb99a2cc91f91bdf1ace40d44fa352bbe96990997dcb633617\",\"stateHash\":\"694d2532fee54f945a208a4435d79c2a402e086e786b9d0c22ed0ce41…"
+      }
+    },
+    {
+      "id": "F1.edited.unreviewedBeforeVerification",
+      "description": "unreviewedChanges before the verification gate",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": ".eccode/artifacts/architecture/brief.md",
+            "gate": "architecture",
+            "problem": "modified after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F1.edited.verificationRequired",
+      "description": "required ids for verification",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          "AC1"
+        ]
+      }
+    },
+    {
+      "id": "F1.edited.verificationApproval",
+      "description": "verification approval covering AC1 only",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW: AC2 was never covered at design or verification",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":31,\"ts\":\"2026-10-09T16:08:59.653Z\",\"type\":\"review.recorded\",\"actor\":\"security-reviewer\",\"data\":{\"gate\":\"verification\",\"review\":{\"decision\":\"approve\",\"summary\":\"Criteria checked against the submitted brief.\",\"criteria\":[{\"id\":\"AC1\",\"description\":\"AC1 verified against the brief\",\"met\":true,\"evidence\":[\"ev:ev-mv15ua55-17bc301d\",\"artifact:.eccode/artifacts/architecture/brief.md#Acceptance Criteria\"]}],\"findings\":[]},\"reviewId\":\"rev-mv15ua6d-18b62f5d\",\"submissionId\":\"sub-mv15ua47-160e4659\"},\"prevHash\":\"4f02cf7a8e208dec7072374eb55b6b13395cdbd7843f59bf5b064782f095e89a\",\"stateHash\":\"50…"
+      }
+    },
+    {
+      "id": "F1.edited.deliver",
+      "description": "delivery after the brief was edited post-approval and re-pinned by the verification gate",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW: delivered; the audit CLI also reports OK (next step)",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "38b998989e0ebb52a44368a1469206fa2bec923f"
+        }
+      }
+    },
+    {
+      "id": "F1.edited.audit",
+      "description": "eccode audit after the delivery",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "value": "Audit OK: 32 events, chain intact, approved artifacts unchanged."
+      }
+    }
+  ],
+  "unexpected": 0,
+  "finishedAt": "2026-10-09T16:08:59.815Z"
+}

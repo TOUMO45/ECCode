@@ -1,0 +1,300 @@
+{
+  "probe": "F2-release-tree-variations",
+  "repo": "/home/user/ECCode",
+  "node": "v22.22.0",
+  "platform": "linux",
+  "startedAt": "2026-10-09T16:17:01.665Z",
+  "steps": [
+    {
+      "id": "F2.rename.gitView",
+      "description": "what git shows the engine after a staged git mv: diff --name-only folds the rename into the new path",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "nameOnly": [
+            ".eccode/events.jsonl",
+            ".eccode/state.json",
+            "src/server/new.js"
+          ],
+          "noRenames": [
+            ".eccode/events.jsonl",
+            ".eccode/state.json",
+            "src/server/new.js",
+            "src/server/old.js"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F2.rename.newOnly",
+      "description": "handoff declares only the new path of a git mv (the old path is gone from the tree)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (non-blocking): the source path of a staged rename is never declared, pinned or reviewed; lib/project.js gitChangedFiles runs git diff --name-only without --no-renames",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":15,\"ts\":\"2026-10-09T16:17:02.210Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv164mi1-082d91e8\",\"filesChanged\":[\"src/server/new.js\"]},\"prevHash\":\"b86579f74f3fdaf05339012efd487bf39092322eaade2507b149b95fc472feed\",\"stateHash\":\"f63dc8dbd18e0f820eda92a00bdfc9d7a7c8ac0e78b989a15e5cd390ec98f2ab\",\"hash\":\"0eae8c2e8fb32914f18af9f62625b8063045b5f6cbb44c26286520a0a02f3601\"},\"state\":{\"seq\":15,\"lastHash\":\"0eae8c2e8fb32914f18af9f62625b8063045b5f6cbb44c26286520a0a02f3601\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"20…"
+      }
+    },
+    {
+      "id": "F2.rename.phasePins",
+      "description": "phase submission pins the files that exist (a deleted path is not an artifact)",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "ok": true,
+          "value": [
+            "src/server/new.js",
+            "src/web/b.js",
+            "tests/c.test.js"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F2.rename.unreviewed",
+      "description": "unreviewedChanges after a reviewed rename",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "F2.rename.deliver",
+      "description": "delivery after the rename (new path pinned by the phase; the old path was never declared)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "delivered: src/server/old.js disappeared from the release tree without any handoff or review naming it",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "f31cf2e5a0341c6cb4903244a9d5ff5c7d9d449e"
+        }
+      }
+    },
+    {
+      "id": "F2.delete.undeclared",
+      "description": "owned file deleted during the claim but not declared",
+      "expect": "refused:INVALID_HANDOFF",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "INVALID_HANDOFF",
+        "message": "Task completion rejected:\n- files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/web/legacy.js",
+        "details": {
+          "errors": [
+            "files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/web/legacy.js"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F2.delete.declared",
+      "description": "deletion declared in the handoff",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":23,\"ts\":\"2026-10-09T16:17:03.391Z\",\"type\":\"task.completed\",\"actor\":\"frontend-engineer\",\"data\":{\"task\":\"ui\",\"handoffId\":\"ho-mv164net-0vc7c35c\",\"filesChanged\":[\"src/web/b.js\",\"src/web/legacy.js\"]},\"prevHash\":\"7f524082b73487edf844996ab1afeafe73764000583ac8a1e899780bc59f7f64\",\"stateHash\":\"f51f8889d5080537399e961a505791d2c7c7e6e3d5ccb1b4c5344c0e81bc5480\",\"hash\":\"938942530c84b80e69c3ecbaeb0b24bcec1e06ed66ceb7980450ca6004de7b1f\"},\"state\":{\"seq\":23,\"lastHash\":\"938942530c84b80e69c3ecbaeb0b24bcec1e06ed66ceb7980450ca6004de7b1f\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",…"
+      }
+    },
+    {
+      "id": "F2.delete.phase",
+      "description": "phase approval with a deleted file among the task changes",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": [
+          "src/server/a.js",
+          "src/web/b.js",
+          "tests/c.test.js"
+        ]
+      }
+    },
+    {
+      "id": "F2.delete.unreviewed",
+      "description": "unreviewedChanges: the reviewed deletion is not reported",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "F2.delete.deliver",
+      "description": "delivery after a reviewed deletion (overblocking check)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "44ad38e371c68b1f4159a252dc0e2de9d2f26953"
+        }
+      }
+    },
+    {
+      "id": "F2.userDirty.claim",
+      "description": "claim with an uncommitted owned file written by the user",
+      "expect": "refused:DIRTY_OWNERSHIP",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "DIRTY_OWNERSHIP",
+        "message": "Task api owns files that are already changed in the working tree: src/server/pre.js. Commit or revert them before claiming (git add + git commit, git checkout -- <file>, or delete an untracked file), so that every owned byte the phase reviews is either the base commit or a change this task declares.",
+        "details": {
+          "files": [
+            "src/server/pre.js"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F2.userCommitted.claim",
+      "description": "claim after the user committed it",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":13,\"ts\":\"2026-10-09T16:17:04.140Z\",\"type\":\"task.claimed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"runId\":null,\"baseCommit\":\"1589dea14772d418c65bf6e1ed0ba32f861c785a\",\"dirtyAtClaim\":{}},\"prevHash\":\"bf09259ef599ef95cb83dc2093542ae3b8b43778b3502be10e9c0503040fc92b\",\"stateHash\":\"5b2579f159c867bc03b35a9559eeb16983fd6afffe6cc9203fcea57658c107a0\",\"hash\":\"5931be7e64e17ac11c194c4f66da57eff5484a7d13de9dad044f643cf2e473bc\"},\"state\":{\"seq\":13,\"lastHash\":\"5931be7e64e17ac11c194c4f66da57eff5484a7d13de9dad044f643cf2e473bc\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"c…"
+      }
+    },
+    {
+      "id": "F2.userCommitted.complete",
+      "description": "completion declares only the task's own change (pre.js is base)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": "{\"event\":{\"seq\":15,\"ts\":\"2026-10-09T16:17:04.225Z\",\"type\":\"task.completed\",\"actor\":\"backend-engineer\",\"data\":{\"task\":\"api\",\"handoffId\":\"ho-mv164o1z-1900e73c\",\"filesChanged\":[\"src/server/a.js\"]},\"prevHash\":\"d268a1573194548121266ded1440bcb69749eeb2cceb90d82368189199183e3b\",\"stateHash\":\"487505d9104e0e3a86994c2a6d147db50491badd4ada916bdcc38932478ef7a2\",\"hash\":\"06ee9b4fc01f50a39d92054ac7959e8af8c5808322513d03faf1cf99fc9ce0a5\"},\"state\":{\"seq\":15,\"lastHash\":\"06ee9b4fc01f50a39d92054ac7959e8af8c5808322513d03faf1cf99fc9ce0a5\",\"project\":{\"name\":\"Test\",\"idea\":\"Test idea for the pipeline\",\"createdAt\":\"2026…"
+      }
+    },
+    {
+      "id": "F2.ignore.unreviewed",
+      "description": "dist/** ignored, src/server/extra.js reported",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": "src/server/extra.js",
+            "gate": "verification",
+            "problem": "added after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F2.ignore.deliver",
+      "description": "delivery with an untracked unreviewed file",
+      "expect": "refused:DELIVERY_BLOCKED",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": false,
+        "code": "DELIVERY_BLOCKED",
+        "message": "Delivery refused:\n- src/server/extra.js added after approval (verification)\n- every file listed above must be reviewed (submit it with a rework or the next gate), restored to its reviewed content, or, for generated files, listed in release.ignore (.eccode/config.json) before delivery\n- uncommitted changes: src/server/extra.js; commit or revert them, the delivery pins the release tree",
+        "details": {
+          "problems": [
+            "src/server/extra.js added after approval (verification)",
+            "every file listed above must be reviewed (submit it with a rework or the next gate), restored to its reviewed content, or, for generated files, listed in release.ignore (.eccode/config.json) before delivery",
+            "uncommitted changes: src/server/extra.js; commit or revert them, the delivery pins the release tree"
+          ]
+        }
+      }
+    },
+    {
+      "id": "F2.ignore.deliverClean",
+      "description": "delivery once the file is removed (dist/ stays, ignored)",
+      "expect": "ok",
+      "verdict": "as-expected",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "e2099ace3ebb3476d201328006d9cb47230ee7b7"
+        }
+      }
+    },
+    {
+      "id": "F2.between.beforeVerification",
+      "description": "unreviewedChanges before the verification gate is approved",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": [
+          {
+            "path": "src/server/backdoor.js",
+            "gate": "phase:core",
+            "problem": "added after approval"
+          }
+        ]
+      }
+    },
+    {
+      "id": "F2.between.afterVerification",
+      "description": "unreviewedChanges after the verification approval (the file is in none of its artifacts)",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW: the file vanished from the report",
+      "observed": {
+        "ok": true,
+        "value": []
+      }
+    },
+    {
+      "id": "F2.between.deliver",
+      "description": "delivery with src/server/backdoor.js committed and reviewed by no gate",
+      "expect": "documented",
+      "verdict": "documented",
+      "classification": "NEW (blocking for F2's acceptance): an added deliverable file reached the release without a review",
+      "observed": {
+        "ok": true,
+        "value": {
+          "report": ".eccode/delivery/final-handoff.md",
+          "commit": "68a815e1d3f012de2b4fa5d2edc390e1db4c4c66"
+        }
+      }
+    },
+    {
+      "id": "F2.between.audit",
+      "description": "eccode audit after that delivery",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "exit": 0,
+        "value": "Audit OK: 32 events, chain intact, approved artifacts unchanged."
+      }
+    },
+    {
+      "id": "F2.between.pinned",
+      "description": "is backdoor.js pinned by any approved submission?",
+      "expect": "documented",
+      "verdict": "documented",
+      "observed": {
+        "ok": true,
+        "value": {
+          "pinned": false,
+          "releaseCommit": "68a815e1d3f012de2b4fa5d2edc390e1db4c4c66",
+          "inTree": [
+            "src/server/a.js",
+            "src/server/backdoor.js"
+          ]
+        }
+      }
+    }
+  ],
+  "unexpected": 0,
+  "finishedAt": "2026-10-09T16:17:06.562Z"
+}

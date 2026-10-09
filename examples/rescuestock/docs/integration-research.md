@@ -1,0 +1,29 @@
+# Integration research: PayPal Sandbox and the real model
+
+Checked 2026-10-09 from this cloud session. **Primary PayPal documentation pages (developer.paypal.com, docs.paypal.ai) and the Devpost pages are blocked by this environment's egress policy** (`ENOTFOUND` / proxy 403), so every statement below was taken from search-engine summaries of those pages. Each item is marked **verify** where the exact behaviour must be confirmed against the primary page before the live suite is trusted. The implementation treats these as contracts to test against the Sandbox, not as facts.
+
+## PayPal (Orders v2, Payments v2, Webhooks v1)
+| Topic | What was found | Status |
+|---|---|---|
+| Create order with delayed capture | `POST /v2/checkout/orders` with `intent: "AUTHORIZE"`, one or more `purchase_units` carrying `amount.currency_code` and `amount.value` (string, 2 decimals), `payment_source.paypal.experience_context` with `return_url`, `cancel_url`, `user_action: "PAY_NOW"`. Response carries HATEOAS links; the buyer approval link is `rel: "payer-action"` (new experience) or `"approve"` (legacy `application_context`). Docs: https://developer.paypal.com/checkout/delay-capture/ | verify link rel and body shape against the page |
+| Authorize after approval | `POST /v2/checkout/orders/{id}/authorize` → `purchase_units[].payments.authorizations[]` with `id`, `status` (`CREATED`, `PENDING`, `DENIED`, …), `expiration_time`. | verify |
+| Capture an authorization | `POST /v2/payments/authorizations/{authorization_id}/capture`, body `{ amount?, final_capture: true, invoice_id?, note_to_payer? }` → capture `id`, `status` (`COMPLETED`, `PENDING`, `DECLINED`, …). https://developer.paypal.com/api/payments/v2/authorizations-capture | verify |
+| Void | `POST /v2/payments/authorizations/{authorization_id}/void` → 204 (or 200 with the authorization). https://developer.paypal.com/checkout/void-authorized-payment/ | verify response code |
+| Refund | `POST /v2/payments/captures/{capture_id}/refund`, body `{ amount?, note_to_payer? }` → refund `id`, `status` (`COMPLETED`, `PENDING`, `CANCELLED`, `FAILED`). https://developer.paypal.com/checkout/refund-payment | verify |
+| Authorization validity | Secondary sources describe a 3-day honour period and 29-day validity; **not confirmed** by any result retrieved. The app re-reads `expiration_time` from the authorization and never assumes a fixed window. | unverified |
+| Idempotency | `PayPal-Request-Id` header: when repeated, PayPal returns the latest status of the earlier request with the same id; keys are retained about 6 hours (72 h on request); the value must be unique per request **and per call type** (authorize vs capture). https://developer.paypal.com/reference/guidelines/idempotency/ | verify retention; the app uses `<operationKey>:<kind>` and keeps its own idempotency in the database regardless |
+| Webhook verification | `POST /v1/notifications/verify-webhook-signature` with `auth_algo`, `cert_url`, `transmission_id`, `transmission_sig`, `transmission_time` (from the `PAYPAL-*` headers), `webhook_id` (the id configured in the Developer Dashboard for the receiving app) and `webhook_event` (the **unmodified** JSON body) → `verification_status: "SUCCESS"|"FAILURE"`. Re-serialising the body can break verification: keep the raw bytes. | verify; raw body retained |
+| Events of interest | `PAYMENT.AUTHORIZATION.CREATED`, `PAYMENT.AUTHORIZATION.VOIDED`, `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.DENIED`, `PAYMENT.CAPTURE.PENDING`, `PAYMENT.CAPTURE.REFUNDED`, `CHECKOUT.ORDER.APPROVED`. | verify names |
+| Multi-merchant | Routing one order to another merchant through `purchase_units[].payee` with `disbursement_mode`/`platform_fees` is the **multiparty (partner) integration** and needs partner onboarding and the `PayPal-Auth-Assertion`/partner attribution headers. https://developer.paypal.com/platforms/get-started | The app does **not** assume this. Design: credential-per-merchant (one Sandbox business account + REST app per demonstration supplier; each supplier order is created with that supplier's own client id/secret, so the payee is the API caller). If one credential set is supplied, all suppliers map to it and the UI says so. |
+| OAuth | `POST /v1/oauth2/token` with basic auth `client_id:secret`, `grant_type=client_credentials`; Sandbox base `https://api-m.sandbox.paypal.com`. | verify |
+
+**Environment blocker (recorded):** `api-m.sandbox.paypal.com:443` is refused by the egress proxy (`connect_rejected`, organisation policy). The live Sandbox suite cannot run from this session until the user adds that host (and `www.sandbox.paypal.com` for the approval page, if a browser journey is run) to the environment's allowed domains and stores the credentials as environment secrets. Secrets are read from `RS_PAYPAL_<MERCHANTKEY>_CLIENT_ID` / `_CLIENT_SECRET` / `_WEBHOOK_ID` (one set per demonstration supplier; `DEFAULT` is used for suppliers without their own set). Nothing is pasted into chat.
+
+## Real model
+| Route | Status here | Notes |
+|---|---|---|
+| Claude Code CLI `claude -p` | **Works** (one haiku call, $0.0037, 665 ms, billed to the user's account) | Structured output via `--json-schema`; images via `--input-format stream-json` user message with an `image` content block (to be verified in the adapter test); no tools (`--tools ""`), scrubbed environment, per-call `--max-budget-usd`. Pattern copied from Groundwork's `src/ai/cli.js`. |
+| Anthropic API | Reachable (401 without a key) | Used when `ANTHROPIC_API_KEY` is set as an environment secret. |
+| Deterministic double | `fake` provider | Always labelled in the UI and API; used by the deterministic suite. |
+
+Budget for the real-model extraction suite: estimated under $1 at haiku prices for ~30 bilingual/image cases; the suite refuses to run without `RS_LIVE_MODEL=1` and prints its spend.

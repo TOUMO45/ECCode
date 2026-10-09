@@ -1,0 +1,40 @@
+{
+  "from": "product-architect",
+  "to": "architecture-reviewer",
+  "gate": "architecture",
+  "objective": "Produce and submit the RescueStock architecture brief (users, problem, requirements, workflows, acceptance criteria, scope, architecture, constraints, success criteria, assumptions, open questions, risk register) for independent review at the architecture gate.",
+  "context": "Inputs are the user's master goal (docs/build/goal.md, requirements version RS-REQ-1: RS-01..RS-33, RS-NF-1..4, fixture RS-FIX-1, assumptions A1-A5, unverified hackathon facts) and the architecture draft (docs/build/plan.md: zero-dependency Node 22 + node:sqlite stack, modules, data model, contracts, exact planner with oracle, payment saga). Environment facts verified in this session: api-m.sandbox.paypal.com and developer.paypal.com are blocked by network policy; no PayPal credentials and no ANTHROPIC_API_KEY; Claude Code CLI (claude -p --json-schema, haiku/sonnet, billed to the user) works as the real-model route; Playwright + Chromium installed; Node 22.22; node:sqlite available; PostgreSQL not running. eccode memory search returned no records, so no lessons were cited.",
+  "inputs": [
+    "docs/build/goal.md",
+    "docs/build/plan.md",
+    "/home/user/ECCode/agents/product-architect.md",
+    "eccode status --brief (architecture in_progress at start)",
+    "eccode memory search (no matching records)"
+  ],
+  "expectedOutput": ".eccode/artifacts/architecture/brief.md submitted to the architecture gate with one acceptance criterion per user requirement id, risks recorded with eccode risk add, and this handoff.",
+  "acceptanceCriteria": [
+    "Brief contains every gate-checked heading (Users, Problem, Requirements, Acceptance Criteria, Architecture, Assumptions, Open Questions, Risks) plus Main Workflows, Scope, Constraints, Success Criteria",
+    "Every user requirement id RS-01..RS-33 appears verbatim as an acceptance-criterion id; RS-NF-1..4 appear as NFR1..NFR4 with the user id in parentheses (the gate's id grammar allows one hyphen); no requirement weakened, renumbered or dropped",
+    "eccode gate show architecture lists RS-01..RS-39 and NFR1..NFR6 as required criteria",
+    "Material risks recorded as RISK-1..RISK-12 with honest severities and named mitigations",
+    "Open questions that need the user are listed with the decision each blocks"
+  ],
+  "completedWork": "Wrote brief.md restating the goal and plan densely without weakening any RS id. Added RS-34..RS-39 (simulation labelling, six on-screen questions, separate state machines with derived rescue status, guarded admin reset, append-only ledgers, image upload limits) and NFR5 (performance) and NFR6 (cost/observability), all derived from the goal's prose. Architecture adopts plan.md sections 2-6 unchanged, adds a text diagram, trust boundaries, and justifies each major choice against an alternative (SQLite vs PostgreSQL, exact planner vs greedy, hosted approval link vs JS SDK, credential-per-merchant vs partner API, CLI vs API model route, stateful fake adapter vs HTTP mocks, single process vs services). Added the AI feature statement (failure modes, human-in-the-loop points, quality thresholds). Submitted as sub-mv15wpmr-015f7530; eccode gate show confirms 45 required criteria (RS-01..RS-39, NFR1..NFR6). Recorded RISK-1..RISK-12 (RISK-3 double capture, RISK-4 double reservation, RISK-5 cross-account access are critical; RISK-1 blocked Sandbox hosts and RISK-2 missing credentials are high). Decision: the four RS-NF ids are listed as NFR1-4 (RS-NF-x) because the parser rejects a second hyphen; the user id is preserved in the item text and in the Requirements section.",
+  "filesChanged": [
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/artifacts/architecture/handoff.json"
+  ],
+  "evidence": [],
+  "remainingIssues": [
+    "Q1: number of PayPal Sandbox business accounts/REST credentials (one per supplier A-E or one shared) - blocks A2 wiring and live RS-18..RS-26",
+    "Q2: where the live PayPal suite runs (user's machine with network) - blocks live evidence for NFR3",
+    "Q3: model route and spend ceiling (CLI haiku/sonnet or ANTHROPIC_API_KEY) - blocks NFR6 ceiling and live RS-01..03",
+    "Q4: dedicated public repository vs examples/rescuestock in ECCode - blocks README paths and submission links",
+    "Q5: user to confirm deadline, submission requirements and judging on the official Devpost page (blocked here)",
+    "Q6: public webhook URL for Sandbox webhooks or polling fallback acceptable - blocks live RS-23/24 design",
+    "Q7: Devpost account/project ownership and demo video production (Devpost connector needs interactive authorization)",
+    "Q8: English-only interface acceptable for Arabic-speaking buyers (no RTL planned) - blocks NFR2 scope",
+    "Live PayPal Sandbox evidence cannot be produced in this environment (RISK-1, RISK-2); the fake adapter covers the paths deterministically"
+  ],
+  "nextAction": "architecture-reviewer reviews submission sub-mv15wpmr-015f7530 against all 45 required criteria; the orchestrator relays Q1-Q8 to the user; on changes_requested, product-architect revises brief.md and resubmits with --responds-to."
+}

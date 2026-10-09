@@ -1,0 +1,72 @@
+== bash escapes must survive on win32
+ok   [win32] "echo a\\ b"
+       -> [["echo","a b"]]
+ok   [win32] "echo \\\"x\\\""
+       -> [["echo","\"x\""]]
+ok   [win32] "echo \\$HOME"
+       -> [["echo","$HOME"]]
+       escaped $ is literal and not dynamic
+ok   [win32] "a \\\\ b"
+       -> [["a","\\","b"]]
+       doubled backslash = one literal
+ok   [win32] "echo a \\\nb"
+       -> [["echo","a","b"]]
+       line continuation
+ok   [win32] "find . -exec rm {} \\;"
+       -> [["find",".","-exec","rm","{}",";"]]
+       escaped ; does not split
+ok   [win32] "echo a\\|b"
+       -> [["echo","a|b"]]
+ok   [win32] "echo a\\&b"
+       -> [["echo","a&b"]]
+ok   [win32] "echo \\'x\\'"
+       -> [["echo","'x'"]]
+ok   [win32] "echo \\#x"
+       -> [["echo","#x"]]
+ok   [win32] "echo x\\>y"
+       -> [["echo","x>y"]]
+ok   [win32] "echo \"C:\\Users\\me\""
+       -> [["echo","C:\\Users\\me"]]
+       double quotes keep the backslash as bash does
+ok   [win32] "echo \"a\\\"b\""
+       -> [["echo","a\"b"]]
+ok   [win32] "echo 'C:\\x'"
+       -> [["echo","C:\\x"]]
+ok   [win32] "echo x > \"C:\\Users\\me dir\\notes.txt\""
+       -> [["echo","x",">","C:\\Users\\me dir\\notes.txt"]]
+       quoted path with embedded space
+
+== native paths keep their separators on win32 only
+ok   [win32] "cd C:\\x && echo y > C:\\z\\file"
+       -> [["cd","C:\\x"],["echo","y",">","C:\\z\\file"]]
+ok   [linux] "cd C:\\x && echo y > C:\\z\\file"
+       -> [["cd","C:x"],["echo","y",">","C:zfile"]]
+ok   [win32] "echo x > C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\eccode-outside-ab\\notes.txt"
+       -> [["echo","x",">","C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\eccode-outside-ab\\notes.txt"]]
+       ~ and - are path chars
+ok   [win32] "echo x > \\\\server\\share\\.eccode\\state.json"
+       -> [["echo","x",">","\\server\\share\\.eccode\\state.json"]]
+       UNC: the leading pair collapses to one (bash would too)
+ok   [win32] "echo x > .eccode\\\\state.json"
+       -> [["echo","x",">",".eccode\\state.json"]]
+ok   [win32] "echo x > $HOME\\.eccode\\state.json"
+       -> [["echo","x",">","$HOME\\.eccode\\state.json<dyn>"]]
+ok   [win32] "echo x > %USERPROFILE%\\.eccode\\state.json"
+       -> [["echo","x",">","%USERPROFILE%\\.eccode\\state.json"]]
+       cmd-style variable: bash would not expand it
+
+== where the win32 reading and Git Bash disagree (bash drops a backslash before a path char)
+"echo x > .eccode/drafts/.\\./state.json"
+       guard (win32) resolves the target to: .eccode/drafts/state.json
+       Git Bash actually writes:              .eccode/state.json
+       MISMATCH: the guard judges a different file than the shell writes
+"echo x > .eccode/drafts/.\\./.\\./src/server.js"
+       guard (win32) resolves the target to: .eccode/drafts/src/server.js
+       Git Bash actually writes:              src/server.js
+       MISMATCH: the guard judges a different file than the shell writes
+"echo x > src/api/.\\./core/x.js"
+       guard (win32) resolves the target to: src/api/core/x.js
+       Git Bash actually writes:              src/core/x.js
+       MISMATCH: the guard judges a different file than the shell writes
+
+0 unexpected tokenizer result(s).

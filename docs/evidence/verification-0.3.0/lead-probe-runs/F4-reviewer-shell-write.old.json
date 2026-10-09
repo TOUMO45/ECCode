@@ -1,0 +1,14 @@
+[technical-reviewer] #1 Write: deny -- technical-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+[technical-reviewer] #2 Bash echo redirect: none
+[technical-reviewer] #3 Bash sed -i: none
+[technical-reviewer] #4 Bash cp: none
+[technical-reviewer] #5 Bash node -e writeFileSync: none
+[technical-reviewer] #6 Bash python3 open(w): none
+[security-reviewer] #1 Write: deny -- security-reviewer reviews/designs but does not edit project files; write drafts under .eccode/artifacts/ or .eccode/reviews/drafts/.
+[security-reviewer] #2 Bash echo redirect: none
+[security-reviewer] #3 Bash sed -i: none
+[security-reviewer] #4 Bash cp: none
+[security-reviewer] #5 Bash node -e writeFileSync: none
+[security-reviewer] #6 Bash python3 open(w): none
+[backend-engineer, no claim] #2 Bash echo redirect: none -- null
+{"reproduces":true,"writeToolDeniedForReviewers":true,"bashNoDecision":["technical-reviewer: echo changed > src/server.js","technical-reviewer: sed -i s/a/b/ src/server.js","technical-reviewer: cp /tmp/x src/server.js","technical-reviewer: node -e \"require('fs').writeFileSync('src/server.js','x')\"","technical-reviewer: python3 -c \"open('src/server.js','w').write('x')\"","security-reviewer: echo changed > src/server.js","security-reviewer: sed -i s/a/b/ src/server.js","security-reviewer: cp /tmp/x src/server.js","security-reviewer: node -e \"require('fs').writeFileSync('src/server.js','x')\"","security-reviewer: python3 -c \"open('src/server.js','w').write('x')\""],"bashDenied":[],"implementerControl":"none","decisionPoint":"scripts/hooks/guard.js:250 checkBash() -- `if (role && IMPLEMENTERS.has(role))` gates bashWriteTargets()/checkEdit(); reviewers skip it"}

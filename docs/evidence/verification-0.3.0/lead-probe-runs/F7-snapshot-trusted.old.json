@@ -1,0 +1,74 @@
+{
+  "probe": "F7-snapshot-trusted",
+  "steps": [
+    {
+      "step": "baseline",
+      "seq": 1,
+      "archStatus": "pending",
+      "designStatus": "pending",
+      "auditOk": true
+    },
+    {
+      "step": "after_forge",
+      "snapshotSeqKept": true,
+      "state().gates.architecture.status": "approved",
+      "rebuild().gates.architecture.status": "pending",
+      "stateTrustsForgedSnapshot": true,
+      "auditOk": false,
+      "auditErrors": [
+        "state.json diverges from a replay of events.jsonl (run \"eccode rebuild\")"
+      ]
+    },
+    {
+      "step": "startGate_design",
+      "accepted": true,
+      "committedEvent": {
+        "seq": 2,
+        "type": "gate.started",
+        "data": {
+          "gate": "design"
+        }
+      }
+    },
+    {
+      "step": "submit_design",
+      "accepted": true
+    },
+    {
+      "step": "approve_design",
+      "accepted": true
+    },
+    {
+      "step": "after_mutations",
+      "logEventTypes": [
+        "1:project.initialized",
+        "2:gate.started(design)",
+        "3:gate.submitted(design)",
+        "4:review.recorded(design)"
+      ],
+      "state().gates.architecture.status": "approved",
+      "rebuild().gates.architecture.status": "pending",
+      "state().gates.design.status": "approved",
+      "rebuild().gates.design.status": "approved",
+      "snapshotMatchesLogHead": true,
+      "auditOk": false,
+      "auditErrors": [
+        "state.json diverges from a replay of events.jsonl (run \"eccode rebuild\")"
+      ],
+      "hashChainErrors": []
+    },
+    {
+      "step": "after_rebuildSnapshot",
+      "rebuildOk": true,
+      "auditOk": true,
+      "auditErrors": [],
+      "state().gates.architecture.status": "pending",
+      "state().gates.design.status": "approved",
+      "designApprovedWhileArchitecturePending": true
+    }
+  ],
+  "reproduces": true,
+  "decisionPoint": "/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/old-b8def3d/lib/store.js:110 Store.state() -- `if (snap && last && snap.seq === last.seq && snap.lastHash === last.hash) return snap;` returns the snapshot without comparing it to a replay; commit() at store.js:146 feeds that snapshot to the gate check (gates.js:51 startGate predecessor check)",
+  "summary": "Forged snapshot (architecture.status=approved, seq/lastHash intact) is returned by state(); startGate(design) passed the predecessor check and was committed on top of it; audit only reports snapshot/replay divergence afterwards."
+}
+{"reproduces":true,"probe":"F7-snapshot-trusted","decisionPoint":"/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/old-b8def3d/lib/store.js:110 Store.state() -- `if (snap && last && snap.seq === last.seq && snap.lastHash === last.hash) return snap;` returns the snapshot without comparing it to a replay; commit() at store.js:146 feeds that snapshot to the gate check (gates.js:51 startGate predecessor check)","startGateDesign":{"step":"startGate_design","accepted":true,"committedEvent":{"seq":2,"type":"gate.started","data":{"gate":"design"}}},"afterForge":{"step":"after_forge","snapshotSeqKept":true,"state().gates.architecture.status":"approved","rebuild().gates.architecture.status":"pending","stateTrustsForgedSnapshot":true,"auditOk":false,"auditErrors":["state.json diverges from a replay of events.jsonl (run \"eccode rebuild\")"]},"afterMutations":{"step":"after_mutations","logEventTypes":["1:project.initialized","2:gate.started(design)","3:gate.submitted(design)","4:review.recorded(design)"],"state().gates.architecture.status":"approved","rebuild().gates.architecture.status":"pending","state().gates.design.status":"approved","rebuild().gates.design.status":"approved","snapshotMatchesLogHead":true,"auditOk":false,"auditErrors":["state.json diverges from a replay of events.jsonl (run \"eccode rebuild\")"],"hashChainErrors":[]},"afterRebuild":{"step":"after_rebuildSnapshot","rebuildOk":true,"auditOk":true,"auditErrors":[],"state().gates.architecture.status":"pending","state().gates.design.status":"approved","designApprovedWhileArchitecturePending":true}}

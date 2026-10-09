@@ -1,0 +1,28 @@
+[claim] {"baseCommit":true,"dirtyAtClaim":{}}
+[A.complete-omitting-owned-file] {"ok":false,"code":"INVALID_HANDOFF","message":"Task completion rejected:\n- files changed inside your ownership that the handoff does not declare (every change is reviewed, or reverted): src/omitted.js"}
+[control.complete-declaring-both] {"ok":true,"filesChanged":["src/listed.js","src/omitted.js"]}
+/home/user/ECCode/lib/gates.js:483
+    throw err;
+    ^
+
+EccodeError: Review rejected by gate rules:
+- approval does not cover the required criteria: task:impl, phase:core; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show phase:core lists them with their descriptions)
+    at /home/user/ECCode/lib/gates.js:475:33
+    at /home/user/ECCode/lib/store.js:206:29
+    at withLock (/home/user/ECCode/lib/util.js:102:12)
+    at Store.commit (/home/user/ECCode/lib/store.js:203:12)
+    at Object.recordReview (/home/user/ECCode/lib/gates.js:473:18)
+    at approvePhase (/home/user/ECCode/docs/evidence/review-bundle/probes/F2-omitted-owned-file.js:51:11)
+    at Object.<anonymous> (/home/user/ECCode/docs/evidence/review-bundle/probes/F2-omitted-owned-file.js:76:36)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)
+    at Object..js (node:internal/modules/cjs/loader:1839:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32) {
+  code: 'REVIEW_REJECTED',
+  details: {
+    reasons: [
+      'approval does not cover the required criteria: task:impl, phase:core; add one criterion per id, met, with evidence citing the section that proves it (eccode gate show phase:core lists them with their descriptions)'
+    ]
+  }
+}
+
+Node.js v22.22.0
