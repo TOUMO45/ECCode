@@ -61,6 +61,21 @@ Overblocking: none found; every legitimate completion passed.
 | Guard review round 2 (`d0e2a3b`) | reviewer found a second blocking regression (a record **alias** made with allowed commands, `ln -s "$PWD/.eccode" rec`, plus a planted copy re-rooted the guard) and that the directory pattern, the wrapper name class, the dynamic CLI word and the computed-name rule were all lexical and incomplete (G1–G11) | **restructured** in `3fa6298`: every target judged on its real path for every context; "everything under `.eccode/` except the draft areas is the record"; `findRoot` on real paths only; `$'…'` quoting; expansions stripped before matching the CLI word; over-denials removed. 245/245. Third review pending. Lesson for the threat model: the original review's statement that "adding more shell regular expressions alone is not a dependable boundary" was confirmed twice in one day |
 | Guard review round 1 (`ffbdc8d`) | reviewer found a **blocking regression** (a record planted inside `.eccode/` re-rooted the guard), incomplete `>|` and wrapper coverage, a pre-existing quoting trick (`ecc"ode".js`) that hid the CLI | fixed in `80ddab0`: record files judged on the absolute path before any root; `findRoot` never accepts a directory inside a record; `init` refuses such a root; the record directory itself cannot be copied into, synced, moved, extracted into or deleted; wrappers caught unanchored at every depth; the CLI recognised on tokenized words; computed-name assignments refused. Re-review pending |
 
+## Checkpoint 0.3.1
+Both repair branches merged into `claude/serene-heisenberg-h9o5vo` after independent approval (engine: `ec4f641`, one round plus a follow-up; guard: `1fcda26`, five rounds, see `docs/evidence/verification-0.3.0/guard-repairs-review/REVIEW.md`). Version 0.3.1 in the three manifests; `npm run check`: 253/253, validation passed. This is the pilot's frozen toolkit version. Verdict per finding after the repairs, on the declared scope (Linux, Node 22; macOS by CI on 0.3.0 only until CI runs on this branch):
+
+| Finding | Verdict at 0.3.1 |
+|---|---|
+| F1 | Closed on the declared scope: pinned-bytes criteria, no-ids refusal; residual 4 (a criterion's meaning) unchanged |
+| F2 | Closed on the declared scope: baseline-commit release diff, verification approval checks it, renames declared; residual 6 (git-ignored files) and the `release.ignore` config edit (reviewer R1) remain |
+| F3 | Closed with residual (environment not bound) |
+| F4 | Closed for every demonstrated bypass; residual 1 (programs the guard cannot read) and the documented over-denials remain; the review's read-only snapshots/worktree isolation still need the host |
+| F5 | Closed with residual 2 |
+| F6 | Closed with residual 3 and NEW-8 (metadata outside the hash) |
+| F7 | Closed with residual 3; handoff wording to qualify |
+| F8 | Closed |
+| F9 | Closed on Linux (and macOS by the 0.3.0 CI); Windows unverified; RB-1 open |
+
 ## Release blockers
 - **RB-1** The documented install path (marketplace default branch) does not install 0.3.0. Resolution: merge the work branch into the default branch or point the marketplace at the release commit; re-verify with a clean plugin install. Needs the user (a push to the default branch).
 - **RB-2** Windows: two guard tests fail on 5da8913; repaired and independently approved (`4fc7e87`, merged in `a088c6a`); a Windows run is still required.

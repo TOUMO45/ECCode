@@ -4,6 +4,8 @@
 - 2026-10-09 16:20: architecture brief submitted (sub-mv15wpmr-015f7530), independent review dispatched (run-mv15ybi7). Image extraction via `claude -p --input-format stream-json --json-schema` verified feasible (clear: 250 ml/90 mm, injection flagged; blurred: nulls + unknown_fields; ~$0.001 per call). **Pilot briefly blocked** after this review: user-scope hooks installed by the orchestrator denied role `--actor` commands from generic subagents. Unblocked at 16:40 when the harness exposed the installed ECCode agent types; the guard stays active for the rest of the pilot (identity bound by agent type).
 - 2026-10-09 16:42: first review attempt refused by the guard (wrong agent type; run closed as failed), proper `architecture-reviewer` dispatched (run-mv16bo0q). Draft findings ARCH-1..6 (major) expected to send the brief back for revision.
 
+- 2026-10-09 (later): **ECCode pilot version frozen at 0.3.1** (commit recorded in the pilot report once pushed): the adversarial verification's three blocking bypasses (F1/F2/F4) and the pilot's nested-root guard defect are repaired and independently reviewed (engine: 1 round; guard: 5 rounds). The readiness gate for payment work is passed on the declared scope (Linux; Windows unverified). The user-scope hook copy was reinstalled from 0.3.1; dispatches resume with the architect's resubmission.
+
 ## Restart
 1. `cd examples/rescuestock && node ../../bin/eccode.js status --brief`
 2. Read `docs/build/plan.md` §7 for the current slice; run `npm test`.
