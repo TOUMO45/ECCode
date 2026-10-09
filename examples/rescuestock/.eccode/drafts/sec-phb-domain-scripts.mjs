@@ -3,14 +3,14 @@
 // Usage: node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-domain-scripts.mjs
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { mkdtempSync, statSync, rmSync, readFileSync } from 'node:fs';
+import { mkdtempSync, statSync, rmSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const ROOT = resolve(process.argv[1], '../../..');
 const imp = (p) => import(join(ROOT, p));
 const { plan, MAX_SEARCH_NODES } = await imp('src/domain/planner.js');
-const { explainPlan } = await imp('src/domain/explain.js');
+const { explainPlan, messageText } = await imp('src/domain/explain.js');
 const { fixtureInput } = await imp('test/unit/domain/helpers/fixture.js');
 
 const failures = [];
@@ -58,7 +58,7 @@ const timed = (input) => {
     if (r.ms > maxMs) { maxMs = r.ms; maxCase = `qty=${qty} avail=${avail} maxPickups=${input.maxPickups} budget=${input.budgetCents} -> ${r.outcome}`; }
   }
   console.log(`info API-shaped random catalogs: ${n} runs in ${(total / 1000).toFixed(1)} s; PLANNER_LIMIT ${limits}; max ${maxMs.toFixed(1)} ms (${maxCase})`);
-  expect(maxMs < 1000, 'API-shaped inputs (seeded 5-bundle catalog) never block the event loop for 1 s or more', `${maxMs.toFixed(1)} ms`);
+  expect(maxMs < 1000, 'API-shaped inputs (seeded 5-bundle catalog) never hold the event loop for 1 s or more in one plan() call', `${maxMs.toFixed(1)} ms`);
 }
 {
   // Not reachable through the designed API (needs 12 offers with 1-unit bundles), but shows the cap's cost.
@@ -90,6 +90,8 @@ console.log('# B. Explanation text comes only from codes and numbers (SEC-7, T10
     const text = ex.lines.map((l) => l.text).join('\n');
     expect(ex.lines.length > 0 && !/IGNORE|evil|onerror|555/.test(text), `explainPlan variant ${k + 1}: no catalog text in ${ex.lines.length} lines`, ex.lines.map((l) => l.code).join(','));
   }
+  const refusal = messageText('SUPPLIER_REFUSED', { supplierCode: 'A', refusal: 'Out of lids, sorry' });
+  console.log(`info rescue-status message for SUPPLIER_REFUSED carries the supplier's own refusal text (RS-17 requires it): "${refusal}"`);
 }
 
 console.log('# C. Seed script');
@@ -105,7 +107,8 @@ console.log('# C. Seed script');
   expect(!first.stdout.includes('"level"') && first.stderr === '', 'the seed writes no log line and nothing to stderr');
   const mode = (p) => (statSync(p).mode & 0o777).toString(8);
   expect(mode(join(work, 'data')) === '700' && mode(join(work, 'data', 'app.db')) === '600', 'seed creates data/ 0700 and app.db 0600', `${mode(join(work, 'data'))} ${mode(join(work, 'data', 'app.db'))}`);
-  const dbBytes = readFileSync(join(work, 'data', 'app.db'), 'latin1') + readFileSync(join(work, 'data', 'app.db-wal'), { encoding: 'latin1', flag: 'r' });
+  const wal = join(work, 'data', 'app.db-wal');
+  const dbBytes = readFileSync(join(work, 'data', 'app.db'), 'latin1') + (existsSync(wal) ? readFileSync(wal, 'latin1') : '');
   expect(passwords.every((p) => !dbBytes.includes(p)) && /scrypt\$16384\$8\$1\$/.test(dbBytes), 'only scrypt$16384$8$1$ hashes are stored, no plaintext password in the database files');
   const again = run({});
   expect(again.status === 0 && !passwords.some((p) => again.stdout.includes(p)) && /already loaded/.test(again.stdout), 'second run changes nothing and prints no password');

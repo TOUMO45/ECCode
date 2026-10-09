@@ -1,6 +1,6 @@
 {
-  "seq": 259,
-  "lastHash": "0971d97768c542b27612d7ca398e609a4b0df1cd1c19d241199cb15498520424",
+  "seq": 261,
+  "lastHash": "a79330a5f7b032334fea82dc3879bba7ad36e4870383284db2fcb8590fa2659b",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -5519,6 +5519,47 @@
       "task": null,
       "recordedBy": "delivery-lead",
       "at": "2026-10-09T21:39:22.758Z"
+    },
+    "ev-mv1hqgk1-01c28d5d": {
+      "id": "ev-mv1hqgk1-01c28d5d",
+      "kind": "command",
+      "label": "phase B suite (re-review)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 16715,
+      "log": ".eccode/evidence/ev-mv1hqgk1-01c28d5d.log",
+      "logSha256": "c404fea1c53527eecef2b8685656a6e2425801235cbf5cb986a4101ce02c623d",
+      "logFileSha256": "2377ba5504e6487eeab339bad512d7756cd53b59930772af55767937b503249c",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 361 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 405.301561\n  type: 'test'\n  ...\n1..361\n# tests 370\n# suites 3\n# pass 370\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 16252.60662\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 18 requests, p50 2.2 ms, p95 29.8 ms (limit: p95 < 300 ms)\nNFR5 suite time: 16.4 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "tree": "f321ee5d80febfa1f834411d42a58854c32a8fbbe6246b83089413309b447752",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T21:41:56.752Z"
+    },
+    "ev-mv1hrnhg-017cd4f0": {
+      "id": "ev-mv1hrnhg-017cd4f0",
+      "kind": "command",
+      "label": "reviewer re-review: strict concurrent-start migration race (20 sequential + 60 parallel runs, exits 1 on any failure) (PB-1)",
+      "command": "node .eccode/drafts/tr-phb-migrate-race-strict.mjs 20",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 29816,
+      "log": ".eccode/evidence/ev-mv1hrnhg-017cd4f0.log",
+      "logSha256": "86f764ad055a00259c67faf67c1695860fe33a30a0aa5c88960656a8bec45e64",
+      "logFileSha256": "ea2e7675a1a78dbec0e50be029372ca9ca2d8bcde46322699b7b8b9ffdf96488",
+      "outputTail": "sequential runs: 20, failed: 0 (database is locked: 0)\nparallel runs (3 at a time): 60, failed: 0 (database is locked: 0)\nruns where the test did not run and pass: 0\n",
+      "gate": "phase:b-foundation",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-09T21:42:52.398Z"
     }
   },
   "reviews": {
