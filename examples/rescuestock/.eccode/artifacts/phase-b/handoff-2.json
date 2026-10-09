@@ -1,0 +1,41 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "phase:b-foundation",
+  "objective": "Re-review of phase b-foundation, submission sub-mv1hokge-01004365, which responds to rev-mv1hc5zg-01a3fc75 (PB-1 blocking, PB-2 and PB-3 minor).",
+  "context": "Only b1-foundation-core was reworked (handoff ho-mv1hk3zz-01649535); b2, b3 and b4 are unchanged. The engine assembles phase files from each task's latest handoff, and b1's rework handoff lists only the eight reworked files. My first resubmission (sub-mv1ho5u3-01ed6ca8, 60 artifacts, never reviewed) therefore left out b1's unchanged files. I replaced it with sub-mv1hokge-01004365, which lists every b1 file explicitly: 112 artifacts, the earlier 109 plus open-race.test.js, lock-holder.js and followups.md.",
+  "inputs": [
+    ".eccode/reviews/rev-mv1hc5zg-01a3fc75.json",
+    ".eccode/handoffs/ho-mv1hk3zz-01649535.json",
+    ".eccode/artifacts/phase-b/submission.md",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/drafts/tr-phb-migrate-race.mjs"
+  ],
+  "dependencies": ["b1-foundation-core", "b2-domain", "b4-env-readme", "b3-test-harness"],
+  "expectedOutput": "A phase review covering task:b1-foundation-core, task:b2-domain, task:b4-env-readme, task:b3-test-harness, phase:b-foundation and lessons, with PB-1..PB-3 judged.",
+  "acceptanceCriteria": [
+    "PB-1: npm test passes and `node .eccode/drafts/tr-phb-migrate-race.mjs 20` reports 0 failures in both lines",
+    "PB-2: the six design-item tests start with their ids",
+    "PB-3: each follow-up is named as an acceptance criterion for its task (followups.md)"
+  ],
+  "completedWork": "Ran npm test (370/370) and the reviewer's race check at 20 rounds, wrapped in an awk pass condition because the script always exits 0 (0 of 20 sequential and 0 of 60 parallel runs failed). Ran a name scan for the six renamed tests (6 of 6). Wrote followups.md with FU-1..FU-7, so the approved plan.json stays unchanged. Added a 'Response to rev-mv1hc5zg-01a3fc75' section to submission.md and resubmitted with the full b1 file list.",
+  "filesChanged": [
+    ".eccode/artifacts/phase-b/submission.md",
+    ".eccode/artifacts/plan/followups.md"
+  ],
+  "evidence": [
+    "ev:ev-mv1hlfx5-0167277b",
+    "ev:ev-mv1hn1vt-01413327",
+    "ev:ev-mv1hn5qe-011931ad",
+    "ev:ev-mv1hidob-01eb30b6",
+    "ev:ev-mv1hj5be-01ed33dd"
+  ],
+  "remainingIssues": [
+    "Disclosed behaviour change: openDb may wait up to 1 s at startup even with RS_DB_BUSY_TIMEOUT_MS=0. Statements keep the configured timeout, and the RS-14 DB_BUSY tests pass",
+    "ev:ev-mv1hm4wr-016be9a3 is an earlier passing race-check run whose printed counts were lost to a tee error. It is superseded by ev:ev-mv1hn1vt-01413327",
+    "The orchestrator must pass followups.md items FU-1..FU-7 to c1, c2, c5, c6, d3, e6, f4 and g1 at dispatch",
+    "Before phase C, the user's budget decision (raise or descope) is still required (dec-mv1fgdkd-01182466)"
+  ],
+  "nextAction": "technical-reviewer re-reviews sub-mv1hokge-01004365.",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"]
+}

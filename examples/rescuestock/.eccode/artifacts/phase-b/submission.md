@@ -2,6 +2,18 @@
 
 Author: delivery-lead. Gate: `phase:b-foundation`. Date: 2026-10-09. Plan: `.eccode/artifacts/plan/plan.json`, revision 2, approved.
 
+## Response to rev-mv1hc5zg-01a3fc75 (resubmission)
+
+b1-foundation-core was reset and reworked by backend-engineer (handoff ho-mv1hk3zz-01649535). The other three tasks are unchanged.
+
+| Finding | What changed | Evidence |
+|---|---|---|
+| **PB-1** (blocking): concurrent start on a fresh database throws SQLITE_BUSY from `PRAGMA journal_mode = WAL` | **Root cause (b1):** on a fresh file the WAL switch needs an exclusive lock. When another process holds or awaits a write lock while this connection holds a shared one, SQLite returns SQLITE_BUSY at once without calling the busy handler, so `busy_timeout` cannot help.<br>**Fix in `src/db/connection.js`:** `openDb` reads the journal mode first and switches only if the file is not already WAL. The switch and the opening pragmas run under `retryWhileBusy`, a bounded, jittered back-off (2 ms doubling to 50 ms) up to max(busy timeout, 1000 ms). After that the busy error is rethrown and the handle closed.<br>**Regression tests:** `test/unit/db/open-race.test.js`, all named `PB-1: …`: retry units, bounded give-up against a real lock-holder process, success after release, and a stress of 25 rounds × 4 processes on a fresh file.<br>**Behaviour change, disclosed:** opening the database may wait up to 1 s even with `RS_DB_BUSY_TIMEOUT_MS=0`. Ordinary statements still honour the configured timeout, so the RS-14 DB_BUSY behaviour is unchanged (its tests pass). | **Before the fix:**<br>- reviewer's failing run ev:ev-mv1h5bbh-010aae6e and reproduction ev:ev-mv1h6fnx-0154466d;<br>- b1's reproduction ev:ev-mv1hf138-016b38f3 (3 of 40 runs locked).<br>**After the fix:**<br>- b1: ev:ev-mv1hidob-01eb30b6 (0 failures in 160 runs), declared verification ev:ev-mv1hj5be-01ed33dd (177 tests), npm test ev:ev-mv1hjizn-013960db (370 tests).<br>- **Delivery-lead re-runs:** `npm test` 370/370, **ev:ev-mv1hlfx5-0167277b**. The reviewer's resolution check `node .eccode/drafts/tr-phb-migrate-race.mjs 20` gave 20 sequential and 60 parallel runs, 0 failed, 0 locked (**ev:ev-mv1hn1vt-01413327**). That script always exits 0, so my evidence command wraps it in an `awk` pass condition on the two printed `failed: 0` lines.<br>- ev:ev-mv1hm4wr-016be9a3 is an earlier passing run of the same check whose counts were lost to a `tee` error; it is superseded by ev:ev-mv1hn1vt-01413327. |
+| **PB-2** (minor): six design-item tests lacked their ids | Renamed to:<br>- `ARCH-26: RS_SAGA_LEASE_MS …`<br>- `SEC-10: RS_MODEL_CUSTOMER_DAILY_SHARE …`<br>- `SEC-12: RS_FAKE_APPROVAL_HOST …`<br>- `SEC-3: RS_TEST_HOOKS …` (the Deployment-table row has no finding id of its own; SEC-3 governs test-mode-only switches)<br>- `RS-14: SQLITE_BUSY …`<br>- `ARCH-25: default deny …` | Name scan, 6 of 6 matched: **ev:ev-mv1hn5qe-011931ad** |
+| **PB-3** (minor): follow-ups for later tasks | The approved `plan.json` cannot change without a plan rework. So the obligations are recorded as additional acceptance criteria in **`.eccode/artifacts/plan/followups.md`** (delivery-lead owned), for the orchestrator to pass at dispatch and the implementers to answer in their handoffs:<br>- FU-1: c2 maps `PLANNER_LIMIT` to a catalogued error, with a test.<br>- FU-2: d3 enforces the 60 s upload deadline, with a test.<br>- FU-3: c5/g1 decide with the orchestrator whether `SPEC_MISMATCH` offers appear under "What was rejected"; the default is trace only, with a templated line.<br>- FU-4: optional seed-equals-fixture test, by c6 unless b2 is reopened.<br>- FU-5 to FU-7: PB-1 regression watch in multi-process tests, c1's scrypt format, c2's derive input shape. | `followups.md` is included in this submission |
+
+Cross-task notes 3 and 7 below are now also follow-ups FU-6 and FU-7. The rest of this document is the first submission's text, updated where the rework changed it.
+
 The engine adds every file the four tasks changed (from their handoffs) to this submission. This note covers four things:
 - what the phase delivers;
 - which tests and runs prove each criterion;
@@ -12,12 +24,14 @@ The engine adds every file the four tasks changed (from their handoffs) to this 
 
 | Task | Owner | Handoff | Verification run | Delivered |
 |---|---|---|---|---|
-| b1-foundation-core | backend-engineer | ho-mv1gazew-01706543 | ev:ev-mv1g9bkw-01abf3c8 (171 tests); pre-work failure ev:ev-mv1fm7gt-0123f65c | package.json (no dependencies, devDependency @playwright/test 1.56.1, engines >=22.13, scripts per the spec); .gitignore; scripts/check-node.cjs (ES5, flag-free); scripts/seed.js (RS-FIX-1); src/index.js, main.js, app.js, config.js, log.js, clock.js; src/db (connection, migrate, errors, meta, migrations 001–005 byte-identical to the spec, ev:ev-mv1g5zww-0182816a); src/http (body, cookies, envelope, headers incl. approvalPageCsp, host, request-id, router, server, static, validate); routes health and config, the other route modules as stubs |
+| b1-foundation-core | backend-engineer | ho-mv1hk3zz-01649535 (rework; first: ho-mv1gazew-01706543) | ev:ev-mv1hj5be-01ed33dd (177 tests, after the rework; first: ev:ev-mv1g9bkw-01abf3c8, 171); pre-work failure ev:ev-mv1fm7gt-0123f65c | package.json (no dependencies, devDependency @playwright/test 1.56.1, engines >=22.13, scripts per the spec); .gitignore; scripts/check-node.cjs (ES5, flag-free); scripts/seed.js (RS-FIX-1); src/index.js, main.js, app.js, config.js, log.js, clock.js; src/db (connection, migrate, errors, meta, migrations 001–005 byte-identical to the spec, ev:ev-mv1g5zww-0182816a); src/http (body, cookies, envelope, headers incl. approvalPageCsp, host, request-id, router, server, static, validate); routes health and config, the other route modules as stubs |
 | b2-domain | backend-engineer | ho-mv1gcn88-01fd3ee4 | ev:ev-mv1gckx7-015c929a (110 tests) | src/domain money, time, canonical, compat, planner, oracle, states, derive, explain, errors; test/fixtures/rs-fix-1.json; planner-fixture, oracle property (500 catalogs), derive (row tables, S09–S20, totality 20,000 + 5,000 walks), states, NFR5 timing |
 | b4-env-readme | devops-engineer | ho-mv1gg814-01ae09b4 | ev:ev-mv1gfrxe-01aa3e25 | .env.example (all 66 names config reads), README.md, LICENSE (MIT), test/scan/env-example.test.js (9 NFR4 tests) |
 | b3-test-harness | test-engineer | ho-mv1gxflu-01a9c110 | ev:ev-mv1gwcdw-01e502bd (npm test 364/364 under the net guard, p95 15 ms, clean checkout passed); pre-work failure ev:ev-mv1gppzk-014ca419 | test/helpers net-guard, node-proc, server-proc, app-harness, fixtures, playwright; scripts report-p95.js, reset-test-out.js, clean-checkout.sh; start-health, start-old-node (real Node 20.20.0 and 21.7.3), package scan, health-config contract test, helper self-tests |
 
-**Phase run by the delivery-lead:** `npm test` passed with 364 tests, 0 failed and 0 skipped, offline under the net guard (**ev:ev-mv1gzlml-01a895d5**). The same run reported:
+**Phase run by the delivery-lead, after the rework:** `npm test` passed with 370 tests, 0 failed (**ev:ev-mv1hlfx5-0167277b**).
+
+**First submission's run:** 364 tests, 0 failed and 0 skipped, offline under the net guard (**ev:ev-mv1gzlml-01a895d5**). The same run reported:
 - NFR5 API latency over 18 requests: p50 2.1 ms, p95 13.8 ms;
 - suite time: 14.8 s.
 
@@ -50,6 +64,7 @@ The phase run (ev:ev-mv1gzlml-01a895d5) contains every test named below. Counts 
      - `SQLITE_BUSY after the busy timeout maps to 503 DB_BUSY` (RS-14 prerequisite);
      - `default deny: a route with a non-public policy answers 401` (ARCH-25 prerequisite).
    - **If the reviewers require it,** the fix is a rename in b1/b2-owned test files (`test/unit/config/limits.test.js`, `hosts.test.js`, `secrets.test.js`, `test/unit/db/connection.test.js`, `test/unit/http/app.test.js`), owned by backend-engineer.
+   - **Resolved in the rework (PB-2):** all six are renamed (ev:ev-mv1hn5qe-011931ad). The remaining unnamed declarations are supporting tests.
 2. **Two `AppError` classes.**
    - The classes: `src/domain/errors.js` (b2; the domain may not import http) and `src/http/envelope.js` (b1).
    - How they meet: the HTTP layer recognises the domain error by duck typing (name `AppError`, status 400–599, code in the catalog), answers with the catalog message and passes only plain-object details.
