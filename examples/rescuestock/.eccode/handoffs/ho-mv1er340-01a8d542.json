@@ -1,0 +1,48 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "plan",
+  "objective": "Independent review of the RescueStock delivery plan (submission sub-mv1eqk2q-01cc29a2): six phases b-foundation, c-core-flow, d-extraction, e-payments, f-compensation, g-release; 29 tasks with one owner each, disjoint ownership for tasks that can run in parallel, and a verification command bound to the project root.",
+  "context": "Built from the approved brief (45 criteria) and the approved design revision 3 (sub-mv1dvx7j-016948c6, review rev-mv1e1ohb-01183fe4), with revision-2-notes.md and revision-3-notes.md. The orchestrator's working split B-G is kept. Three adjustments are explained in plan.md 'Phasing rationale': foundation and domain share B; RS-15 and RS-04 move to the phases where their whole proof first exists (F and E); RS-34, NFR3 and NFR5 go to G, RS-36 to C and RS-38 to F. Live services (PayPal Sandbox credentials and network, the real model) are not available here. Every live-dependent task (d2, e1, e6) is verified by deterministic fixture and stub tests, and the live runs are listed separately as LIVE-M1, LIVE-P1, LIVE-P2 and USER-Q9, never as tasks and never as passes.",
+  "inputs": [
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/design/revision-2-notes.md",
+    ".eccode/artifacts/design/revision-3-notes.md",
+    ".eccode/reviews/rev-mv1e1ohb-01183fe4.json",
+    "decisions dec-mv16pyxx-01bad0bf, dec-mv16pz0g-01d5c4c2, dec-mv16pz32-013c4cd1, dec-mv1e2i2t-0113385a, dec-mv1e2i5k-01a1bebb",
+    "memory mem-sd-mv1audrd-013b7102 (assessed does-not-apply)"
+  ],
+  "dependencies": [
+    "design"
+  ],
+  "expectedOutput": "A review of .eccode/artifacts/plan/plan.json and plan.md covering the six required criteria phase:b-foundation .. phase:g-release, plus a 'lessons' criterion judging the not-applicable decision on mem-sd-mv1audrd-013b7102.",
+  "acceptanceCriteria": [
+    "Each of RS-01..RS-39 and NFR1..NFR6 is claimed by exactly one phase whose tests prove it (coverage check ev:ev-mv1eoihx-0130f7c1, script .eccode/drafts/plan-coverage-check.mjs)",
+    "Tasks have one owner role, dependencies, ownership globs relative to examples/rescuestock (none under .eccode/, .claude/ or hooks), disjoint globs where tasks can run in parallel, and verification.cwd '.' (plan validate clean with no warnings, ev:ev-mv1eoibn-01748662)",
+    "The open minors are placed: F-TR-17 resolved as the environment setting RS_REGISTER_PER_IP_PER_HOUR (b1 parses, c1 enforces, c6+ harnesses raise it to 1000 under RS_TEST_OFFLINE=1); F-TR-18 in d3 (NFR6 test pins RS_MODEL_CUSTOMER_DAILY_SHARE=1 and says so) and g4 (evidence table); SEC-5..SEC-20, F-TR-1..16 and ARCH-22..26 mapped to tasks in plan.md",
+    "Live-dependent work is split from deterministic work; only variable names appear, no secrets"
+  ],
+  "completedWork": "Wrote plan.json (validated) and plan.md (phasing rationale, task table with ownership and commands, critical path, schedule risks, live checks, findings placement, memory consulted, release checklist draft). Ran the memory searches the orchestrator named and several more. The one verified lesson that matched every task was assessed does-not-apply with evidence and recorded in plan.lessonDecisions. Checked criterion coverage with a draft script and previewed the lessons the engine would retrieve. Submitted the plan gate. Points I would most like the reviewer to check: (1) the schedule estimate in plan.md says the remaining work likely exceeds the ~320 minutes left of the 480-minute budget; I did not cut scope, and the orchestrator has to put that choice to the user; (2) the F-TR-17 choice adds one environment variable and a startup refusal above 5 outside test mode, which goes beyond the spec's literal text; (3) the shared wiring files (src/app.js, src/main.js, src/routes/plans.js, package.json) are owned by tasks that are serialized within each phase; (4) the frontend of each phase builds against contract fixtures in parallel with the backend chain.",
+  "filesChanged": [
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/plan/plan.md",
+    ".eccode/drafts/plan-coverage-check.mjs",
+    ".eccode/drafts/plan-lesson-preview.cjs"
+  ],
+  "evidence": [
+    "ev:ev-mv1eoibn-01748662",
+    "ev:ev-mv1eoihx-0130f7c1",
+    "ev:ev-mv1eoirt-0194a8ce",
+    "ev:ev-mv1eo87o-01c933d5"
+  ],
+  "remainingIssues": [
+    "Schedule: 29 dispatches with a 20-dispatch critical path and maxConcurrency 2 likely exceed the remaining runtime budget (157/480 min used before the plan); the user must choose between raising limits and a descoping order (plan.md, Risks to the schedule)",
+    "Live checks LIVE-M1 (model), LIVE-P1/LIVE-P2 (PayPal Sandbox) and USER-Q9 (Node 22.5) need user credentials, network or hardware and stay Unverified until run",
+    "RISK-1, RISK-2 (high) stay open until the live checks run; the delivery-lead cannot accept risks"
+  ],
+  "nextAction": "technical-reviewer reviews the plan gate (sub-mv1eqk2q-01cc29a2). After approval the orchestrator starts phase:b-foundation and dispatches b1-foundation-core and b2-domain in parallel, then b4-env-readme, then b3-test-harness.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}

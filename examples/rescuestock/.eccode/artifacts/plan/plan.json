@@ -1,0 +1,1192 @@
+{
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "Assessed does-not-apply by delivery-lead with ev:ev-mv1eo87o-01c933d5. The lesson is about a PreToolUse guard that resolves the project root from the harness directory; no task in this plan builds a hook or guard mapping writes to a record (the approved brief and spec name no such component), and the guard that governs this nested record is already the repaired version the lesson names (sha256 d43f4b54..., per-target fileRoot). It matches every task only through shared project words. Operational consequence kept in the plan anyway: every ownership glob is relative to examples/rescuestock and no glob names .eccode/, .claude/ or hooks."
+    }
+  ],
+  "phases": [
+    {
+      "id": "b-foundation",
+      "name": "B: foundation, data model, planner and oracle",
+      "goal": "A runnable zero-dependency skeleton on Node >= 22.13 (package.json, flag-free scripts/check-node.cjs gate, config with Secret wrapper, log, clock, db with migrations 001-005, http layer with Host check and security headers, health/config routes, RS-FIX-1 seed), the pure domain (planner + brute-force oracle, money/time/compat/canonical, state tables, rescue-status derivation with its totality property test, explanation templates) and the offline test harness (net guard, node-proc, server-proc, app-harness, p95 report, clean-checkout check).",
+      "acceptanceCriteria": [
+        "RS-06: with RS-FIX-1 and the pinned inventory the planner returns A+B at 8400 cents, 2 pickups, ready 10:30; with A on_hand 2 it returns Ax2 at 7000 cents, 1 pickup; the oracle property test (500 seeded catalogs, <= 6 offers, on_hand 0-3) agrees with the planner on every catalog [D: test/unit/domain/planner-fixture.test.js, planner-oracle.property.test.js]",
+        "RS-07: supplier C is rejected with INCOMPATIBLE_LID_DIAMETER [D: planner-fixture]",
+        "RS-08: supplier D is rejected with READY_AFTER_DEADLINE [D: planner-fixture]",
+        "RS-09: with B at on_hand 0 and, separately, B withdrawn, the best plan is A+E at 9500 cents, 2 pickups, ready 10:40 [D: planner-fixture]",
+        "RS-10: B removed and budget 9000: infeasible, blocking includes OVER_BUDGET, A and E carry INSUFFICIENT_QTY and OVER_BUDGET, exactly two relaxations (budget -> 9500 A+E; deadline -> 11:20 D alone 8000, 1 pickup) and no maxPickups relaxation [D: planner-fixture]",
+        "RS-11: max pickups 1: infeasible; A, B and E carry exactly INSUFFICIENT_QTY and TOO_MANY_PICKUPS; C and D keep their RS-07/RS-08 codes [D: planner-fixture]",
+        "NFR1: package.json has no dependencies, devDependencies only {@playwright/test: 1.56.1}, engines.node >=22.13; every script that passes a flag to node starts with 'node scripts/check-node.cjs &&' (F-TR-4); start-old-node runs the exact start line on /opt/node20 and /opt/node21 and sees a non-zero exit with 'needs Node >= 22.13 (found'; start-health serves GET /api/health 200; scripts/clean-checkout.sh copies the project's tracked and unignored files to an empty directory, runs npm install (npm registry only), npm test (offline, net guard on, no browser) and npm start, and gets /api/health 200 [D + I]",
+        "NFR4: config.js reads secrets only from process.env and wraps them in Secret (toString/toJSON/inspect redacted; errors name the variable, never the value); .env.example holds every variable name with placeholders or non-secret defaults only; test/scan/env-example.test.js asserts no real-looking value and that every name config.js reads is listed [D + I]",
+        "Prerequisites reviewed in this phase (proved later as RS-36/RS-38): migrations 001-005 match the spec DDL, apply in BEGIN IMMEDIATE with sha256 checksums and are safe when two processes start together; audit_events and inventory_ledger UPDATE/DELETE fail; derive.js implements the revision-2 table row by row (rows 1-14 incl. 4a, 5a) and its totality property test (>= 20,000 seeded walks x 120 events) never reaches row 14 and asserts RS-36 (i)-(iv); states.js tests every allowed and refused pair",
+        "npm test passes offline with the net guard active and launches no browser; every test that proves a criterion or finding carries its id at the start of its name"
+      ]
+    },
+    {
+      "id": "c-core-flow",
+      "name": "C: auth, dashboards, requests, plans, reservations, supplier confirmations, expiry",
+      "goal": "Server sessions with CSRF, throttles, Host check and default-deny RBAC; customer requests with manual requirement confirmation, planning, approval with hash and total, idempotent BEGIN IMMEDIATE reservations with per-customer caps; supplier order confirm/ready/handover and inventory PATCH; admin reset/faults/timeline/metrics shells; the request view computing the rescue status through derive.js; the three dashboards built against the contract fixtures; multi-process reservation tests and the browser harness.",
+      "acceptanceCriteria": [
+        "RS-12: a plan whose cups or lids total is below the requirement is never produced as feasible, and approve with a tampered planHash or expectedTotalCents returns 409 PLAN_CHANGED (stored plan failing re-validation: PLAN_INVALID) [D: test/api/approve-guards.test.js + planner-fixture]",
+        "RS-14: two OS processes (busy_timeout 5000) reserve A's last bundle concurrently on one SQLite file: one reservation active, the other 409 OUT_OF_STOCK, reserved <= on_hand; with busy_timeout 0 and a held write lock reserve answers 503 DB_BUSY with Retry-After [D: test/integration/rs14-two-process-reserve.test.js, rs14-db-busy.test.js]",
+        "RS-16: same Idempotency-Key and body -> same reservation id, no second reservation or ledger row; same key with another body -> 422 IDEMPOTENCY_KEY_REUSED; same key on a second plan -> 422 with no rows, before and after the key row is purged (F-TR-1); a concurrent same-key race resolves to one reservation [D: test/api/reserve-idempotency.test.js]",
+        "RS-28: supplier A patching supplier B's inventory gets 403 and nothing changes (whole PATCH refused) [D: test/api/isolation.test.js]",
+        "RS-30: customer and supplier sessions calling admin fault and reset routes get 403; unauthenticated 401 [D: test/api/isolation.test.js]",
+        "RS-33: browser journey at 360 px and 1280 px: an infeasible request ends on the explanation screen with blocking constraints, per-candidate codes and computed relaxations; no reservation, order or payment operation exists (checked in the database) [B: test/browser/journey-infeasible.test.js, screenshots in test/browser/out/]",
+        "RS-36: GET /api/requests/:id computes rescueStatus with derive.js on every read; a schema query finds no column storing a rescue status [D: test/api/rescue-status.test.js, test/api/schema-no-rescue-status.test.js, test/unit/domain/derive.test.js]; [I] reviewer inspects derive.js against the revision-2 table and the view (F-TR-9)",
+        "Auth contract (ARCH-25) with SEC-1 (pair/IP hard limits, cross-IP delay only), SEC-9 (username_key normalisation, case variants), SEC-13 (Host allow-list -> 421), SEC-20 (register rotation, no Access-Control-Allow-* header) and SEC-5 (admin password >= 16 chars from env, admin disabled when unset) asserted in test/api/auth.test.js; SEC-2 asserted in test/api/abuse-limits.test.js with the defaults",
+        "F-TR-17 resolved by an environment setting: RS_REGISTER_PER_IP_PER_HOUR (default 5; a value above 5 is refused at startup unless RS_TEST_OFFLINE=1); auth.test.js keeps the default and asserts the 6th registration from one IP -> 429 register_ip; the browser and multi-process harnesses set it to 1000 under RS_TEST_OFFLINE=1 together with RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY=1000 and RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER=1, so every journey registers its own fresh customer (F-TR-15: fresh database per browser file)",
+        "HTTP contract: test/api/contracts.test.js asserts status, envelope, requestId and success-body field types for every route that exists after this phase, against the example responses in test/fixtures/contracts/ that the frontend uses",
+        "npm test and npm run test:browser pass"
+      ]
+    },
+    {
+      "id": "d-extraction",
+      "name": "D: model extraction with provenance, uploads and retention",
+      "goal": "Bilingual extraction through the ExtractionProvider contract (deterministic fake for tests; Claude CLI and Anthropic API adapters verified against a recorded transcript and a loopback stub), strict schema validation, grounding and provenance, the degraded manual path, model budget/rate/concurrency controls in integer micro-dollars, image upload by magic bytes with retention and request deletion, the EXT-1 corpus and the opt-in live-model runner, and the matching UI.",
+      "acceptanceCriteria": [
+        "RS-01 [D]: the RS-FIX-1 Arabic and English wordings yield identical core fields (product type, quantities, capacity, diameter, deadline, budget, max pickups) through POST /api/requests/:id/extract with the fake provider [test/api/extract.test.js]",
+        "RS-02 [D]: a clear package image yields capacity and diameter with provenance 'image' [test/api/extract-image.test.js]",
+        "RS-03 [D + B]: ambiguous images give unknown fields, >= 1 clarification question and no number absent from the image [test/eval/extraction-fake.test.js]; faults timeout, invalid_json, schema_invalid, error, budget refusal and rate refusal give schema_ok=false, an error code, every field unknown, degraded: true [test/api/extract-degraded.test.js]; the request page shows 'Automatic reading unavailable — please enter the details' with a manual field for every core field, and confirming them creates a requirements version with provenance manual and planning proceeds [test/browser/degraded-extraction.test.js]",
+        "RS-05 [D]: injection strings in text, image text and catalog text (planted in products.name through a DB fixture, SEC-17) stay data; permissions, amounts, suppliers, plan versions and roles equal the control run; explanations are template text; with rephrasing on, output carrying a number or supplier code absent from the trace is discarded [test/api/injection.test.js, test/unit/ai/rephrase.test.js]",
+        "RS-39 [D]: upload accepts only PNG/JPEG/WebP by magic bytes (declared image/png with other bytes -> 415), <= 5 MB (413 above), stored under a random 128-bit name; customer Y uploading to X's request -> 404 with no file written; owner DELETE removes image file and row, raw text and extraction text (409 PAYMENT_IN_PROGRESS while money is held; tombstone with settled payments); with a pinned clock the sweep deletes at 7 d + 1 min, keeps at 6 d 23 h and writes an audit event [test/api/uploads-retention.test.js]",
+        "NFR6 [D]: every response and log line carries requestId; config inspection shows haiku as the default model; with fake per-call cost 0.10, cap 0.10, RS_MODEL_DAILY_BUDGET_USD=0.25 and RS_MODEL_CUSTOMER_DAILY_SHARE=1 pinned in the test's environment (F-TR-18; the test name and the evidence label say so) the third extract is refused with 503 MODEL_BUDGET_EXHAUSTED without invoking the provider and enters the degraded path; the 11th extract or upload by one customer within 10 minutes -> 429 RATE_LIMITED with Retry-After; micro-dollar boundaries (0.30 allowed, 0.299999 refused) hold; a separate SEC-10 case with the production share 0.2 refuses the 5th cap-sized call of one customer with details.scope 'customer' while another customer succeeds [test/api/model-budget-rate.test.js]; the log scan finds no Authorization header value, token, secret, payer data or provider body [test/scan/secrets.test.js]",
+        "Live-model parts are not claimed by this phase: npm run test:live-model refuses (exit 2, named message) without RS_LIVE_MODEL=1 [D]; the real-model run over EXT-1 (RS-01/02/03/05 [LM], NFR6 cost report, F-TR-13 schemaAccepted) is the separately listed check LIVE-M1 and stays Unverified until it is run with an authenticated Claude CLI or ANTHROPIC_API_KEY and the user's approval of the USD 5 ceiling",
+        "ExtractionProvider contract suite (fake, CLI against a stub binary replaying the recorded transcript, Anthropic against a loopback stub) passes [test/unit/ai/provider-contract.test.js]",
+        "npm test and npm run test:browser pass"
+      ]
+    },
+    {
+      "id": "e-payments",
+      "name": "E: PayPal payment flow, saga, webhooks and reconciliation",
+      "goal": "The PaymentProvider contract with a DB-backed fake (faults, PayPal-Request-Id replay model, fake approval listener on a different site with its own CSP) and the Sandbox REST v2 adapter verified against a loopback paypal-stub; the provider call protocol with the sender table; create/return/cancel/abandon with the void rule; the execute claim and captures with lease fencing; the reconciler (stale intents, read-before-resend, pending polls, expiry); verified webhooks; the payment UI; and the two-process execute and browser happy-path journeys.",
+      "acceptanceCriteria": [
+        "RS-04: with budget or deadline missing, POST /api/plans/:id/approve and POST /api/orders/:id/paypal/create return 409 MISSING_BUDGET / MISSING_DEADLINE (budget first) and no reservation or payment operation or provider call is created [D: test/api/approve-guards.test.js, test/api/paypal-create.test.js]",
+        "RS-18 [D]: cancel URL leaves the operation created with buyer_cancelled_at (or voided), no capture call or row, execute -> 409; 'Try approval again' and 'Abandon purchase' offered; abandon or expiry voids every other outstanding authorization, releases the reservation, plan non_executable (PAYMENT_CANCELLED or RESERVATION_EXPIRED) [test/api/paypal-cancel.test.js]",
+        "RS-19 [D]: client-supplied amount, currency or supplier on every payment route is ignored; the provider request body (fake and Sandbox adapter against paypal-stub) carries the server-approved supplier-order total [test/api/amount-tampering.test.js]",
+        "RS-20 [D]: two server processes x 5 concurrent execute: one approved -> executing claim, nine return the current state with no provider call; the fake records exactly N get_authorization + N capture calls and nothing else (F-TR-8), one capture per order with PayPal-Request-Id so:<id>:capture:1; three hits on the return URL give one authorize call [test/integration/rs20-two-process-execute.test.js, test/api/paypal-return-idempotent.test.js]",
+        "RS-21 [D]: one DENIED authorization -> no capture on any order, plan non_executable (AUTHORIZATION_FAILED naming the supplier), other authorizations voided, reservation released, the exact buyer message; PENDING -> authorization_pending and execute 409 AUTHORIZATION_PENDING with no capture until the reconciler observes CREATED [test/api/authorization-denied.test.js, test/api/authorization-pending.test.js]",
+        "RS-23 [D]: the same webhook transmission id delivered twice applies once; RS-24 [D]: an invalid signature is rejected 4xx, stored with signature_status invalid, no transition; plus SEC-6 (60/min per IP, pre-checks before any provider call) and SEC-16 (merchant, provider and non-archived scoping) [test/api/webhooks.test.js]",
+        "RS-25 [D]: a lost capture response leaves the operation unknown; the reconciler reads provider state and then marks captured, capture_pending (polled) or re-sends with the same PayPal-Request-Id; no second capture; an intent left at restart is treated as unknown [test/api/lost-response.test.js]",
+        "RS-27 [D]: customer X requesting Y's request or order id gets 404/403 and no data, including /api/paypal/return?token= and /cancel?token= with Y's token (404, no authorize call, no state change) [test/api/isolation.test.js]",
+        "RS-31(a) [B]: journey request -> review -> plan -> reservation -> approvals -> supplier confirmations -> capture -> readiness -> collection at 360 px and 1280 px with screenshots, the app on localhost and the fake approval page on 127.0.0.1 (cross-site), each 'Approve (simulated)' landing on /api/paypal/return with the session, one Cancel landing on /api/paypal/cancel, no CSP console message (F-TR-14) [test/browser/journey-happy.test.js]; the listener and paypal-stub send exactly one CSP header equal to approvalPageCsp(appOrigin) [D: test/api/fake-approval-headers.test.js]",
+        "Design items asserted: ARCH-22 lost-authorize void hook (test/api/void-rule-lost-authorize.test.js), ARCH-23 claim on stored expiry with the provider read after the claim (test/api/execute.test.js), F-TR-3 sender table and crash_after_return_commit hook implemented, F-TR-11 order presentation, SEC-3 approval-host and base-URL allow-list in the Sandbox adapter, PaymentProvider contract suite on both adapters (test/unit/payments/provider-contract.test.js)",
+        "Live PayPal parts are not claimed by this phase: npm run test:live-paypal refuses without RS_LIVE_PAYPAL=1 and credentials; the Sandbox runs (LIVE-P1: RS-18/19/20/23/24 [LP]; LIVE-P2: RS-31(b)/RS-32(b) hosted approval page) need RS_PAYPAL_DEFAULT_CLIENT_ID, RS_PAYPAL_DEFAULT_CLIENT_SECRET, RS_PAYPAL_DEFAULT_WEBHOOK_ID (or per-supplier sets) and network access to api-m.sandbox.paypal.com and www.sandbox.paypal.com, are user-run, and stay Unverified with blocker A6/Q2 until then",
+        "npm test and npm run test:browser pass"
+      ]
+    },
+    {
+      "id": "f-compensation",
+      "name": "F: replanning, compensation and restart recovery",
+      "goal": "Supersession on offer and stock changes with the durable re-plan queue, supplier refusal with re-planning that excludes the supplier, expiry voids, capture-failure compensation (voids, refunds, reconciling -> released with restock), lease takeover with epoch and send-token fencing, restart recovery, admin refund_order and forced reset, ledger completeness, the recovery UI, and the restart, takeover and replacement-journey tests.",
+      "acceptanceCriteria": [
+        "RS-13 [D]: a price change of an offer used by an approved plan (order not confirmed, plan not executing) supersedes it, recomputes a new proposed version, reserve/execute on the old one -> 409 PLAN_SUPERSEDED, every old authorization voided (one void call each), reservation released (one ledger row per item), orders cancelled, 'Prices changed: review plan vN' shown; after the supplier confirmed or after the claim the plan is not superseded [test/api/supersession.test.js]",
+        "RS-15 [D]: an expired reservation is released exactly once (inventory back, one expire ledger row, second pass no-op); an expiry pass after the claim and before the first capture changes nothing; expiry before execute voids every authorization, plan non_executable (RESERVATION_EXPIRED) and the request shows 'Reservation expired — no money was taken; re-plan with current stock' [test/api/reservation-expiry.test.js]",
+        "RS-17 [D + B]: refusal before the claim -> order refused, outstanding authorizations voided, reservation released, plan non_executable (SUPPLIER_REFUSED), status cancelling while a void is outstanding, refusal reason with 'Review the new plan', new version computed without that supplier [test/api/supplier-refusal.test.js; test/browser/refusal.test.js]",
+        "RS-22 [D]: capture failing on the second supplier refunds the first capture and voids the rest; refund_requested -> refund_pending -> refunded|refund_failed; plan non_executable (CAPTURE_FAILED); reservation reconciling until every refund and void completes, then released with restock rows (refund_failed keeps reconciling and failed_needs_attention); handover 409 HANDOVER_BLOCKED; a PENDING capture blocks handover and the next capture, and lease_epoch does not grow across reconciler ticks while it is pending (F-TR-7) [test/api/capture-compensation.test.js]",
+        "RS-26 [D]: SIGKILL mid-saga and restart keeps orders, operations, provider calls and recovery progress; after the lease expires the reconciler takes over and completes the saga; lease-takeover variants A and B (ARCH-26) give exactly one non-replayed capture per order; return-crash cases (a), (b), (c) (F-TR-3) [test/integration/rs26-restart.test.js, lease-takeover.test.js, return-crash.test.js]",
+        "RS-32(a) [B]: B's offer withdrawn by the admin stock-depletion fault before B confirms; the buyer approves the 9500-cent A+E plan; the old plan superseded, its authorizations voided, B's order cancelled; the replacement flow completes through collection with the cross-site approval round-trip assertion [test/browser/journey-replacement.test.js]",
+        "RS-37 [D]: admin reset returns 409 RESET_BLOCKED while any operation is approved|authorization_pending|authorized|capture_pending|captured|refund_requested|refund_pending|unknown; forced reset requires a reason, voids authorized operations and runs one bounded read-resolve pass, lists stranded operations (SEC-11), and archives rather than deletes operations and provider calls [test/api/admin-reset.test.js]",
+        "RS-38 [D]: any UPDATE or DELETE on audit_events or inventory_ledger fails; every reserve, release, expire, consume and restock writes a ledger row, and for every product the ledger sums equal on_hand and reserved [test/api/ledgers.test.js]",
+        "Design items asserted: F-TR-2 re-plan queue never drops an entry and backs off (test/api/replan-queue.test.js); F-TR-6 capture landing after the void intent ends refunded with one capture, one void attempt and one refund call (test/api/void-capture-race.test.js)",
+        "npm test and npm run test:browser pass"
+      ]
+    },
+    {
+      "id": "g-release",
+      "name": "G: final verification, clean checkout, browser UX, labels and submission materials",
+      "goal": "Accessibility and all UI states, labelling for both payment adapters, the six-answer request page, the full secrets scan over assets, responses, logs, screenshots and submission files, live-suite refusals, performance budgets, final README with runbooks and operator notes, submission materials, a clean-checkout run on the final tree, and the project evidence table that the verification report cites.",
+      "acceptanceCriteria": [
+        "RS-29 [D + I]: a scan of built frontend assets, recorded API responses, logs, browser screenshots and submission files finds no client id or secret value; config redacts secrets in errors [test/scan/secrets.test.js]",
+        "RS-34 [D + B]: fake adapter payloads (payments and extraction) carry simulated: true and the UI shows the 'Simulated' badge and the persistent banner; Sandbox adapter payloads carry provider 'paypal-sandbox' and sandbox: true and every payment element shows 'PayPal Sandbox — no real money'; seeded data carries demo: true with the 'Demo data' badge and 'Test prices, not market prices'; with the Sandbox adapter against the loopback stub under RS_TEST_OFFLINE=1, labels.testMode and the 'Test mode — local stubs, nothing is real' banner (SEC-3); config refuses any PayPal base URL other than the Sandbox host or a loopback stub in test mode [test/api/labelling.test.js, test/unit/config/hosts.test.js, test/browser/labelling.test.js]",
+        "RS-35 [B + I]: the request page answers all six questions (requirements with provenance, decision trace, rejections, cents totals, offer vs commitment, compensation state and next step) with text rendered from planner codes [test/browser/six-questions.test.js]",
+        "NFR2 [B]: at 360 px and 1280 px keyboard-only completion of the happy path (with the approval round-trip assertion), visible focus, labelled controls, text status indicators, and the loading, empty, error, retry, timeout, expired-reservation and degraded-extraction states rendered [test/browser/a11y-states.test.js]",
+        "NFR3 [D + I]: npm test, npm run test:browser, npm run test:live-model and npm run test:live-paypal are separate scripts; both live scripts refuse without their flag [test/scan/live-refusal.test.js]; live reports are labelled with suite, provider, model or merchant mode and corpus version (inspection of the runners)",
+        "NFR5 [D]: planner < 1 s on RS-FIX-1 and on each of the 200 seeded generator catalogs [test/timing/planner-generator.test.js]; p95 over the deterministic API test calls < 300 ms and suite time < 5 min as reported by scripts/report-p95.js",
+        "Final tree: scripts/clean-checkout.sh passes (NFR1 re-check); README documents install, seed, start, tests, the one-time npx playwright install chromium, demo accounts (SEC-5), the operator note for retakes (F-TR-15), RS_REGISTER_PER_IP_PER_HOUR (F-TR-17), live runbooks with the env var names and the allow-list, retention, labelling, the Node floor and Q9 branch, MIT licence",
+        "docs/evidence-table.md lists all 45 criteria with suite, test names and evidence ids; every live row (LIVE-M1, LIVE-P1, LIVE-P2) is marked Unverified with its blocker; RS-20/RS-26 Sandbox rows say they rest on the fake's model of PayPal until the live run (SEC-18); single-credential weakened rows are labelled (A2); the NFR6 row states RS_MODEL_CUSTOMER_DAILY_SHARE=1 (F-TR-18)",
+        "Full regression on the final tree: npm test and npm run test:browser pass"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "b1-foundation-core",
+      "phase": "b-foundation",
+      "title": "Foundation: package.json, Node gate, config, log, clock, db and migrations 001-005, http layer, health/config routes, RS-FIX-1 seed",
+      "owner": "backend-engineer",
+      "dependencies": [],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#components",
+        ".eccode/artifacts/design/spec.md#interface-contracts (Conventions, Error catalog, Public and health, Fake approval listener CSP)",
+        ".eccode/artifacts/design/spec.md#data-design (001_core.sql .. 005_fake_paypal.sql, Seed, File modes)",
+        ".eccode/artifacts/design/spec.md#security (Security headers, Secrets handling, Allow-listed outbound hosts)",
+        ".eccode/artifacts/design/spec.md#deployment (package.json, Node floor, Environment variables)",
+        ".eccode/artifacts/design/spec.md#testing-strategy (Commands)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (NFR1, NFR4)"
+      ],
+      "outputs": [
+        "package.json, .gitignore, scripts/check-node.cjs, scripts/seed.js",
+        "src/index.js, src/main.js, src/app.js (createApp with injected db, clock, config, log, ai, payments), src/config.js, src/log.js, src/clock.js",
+        "src/db/connection.js, migrate.js, errors.js, migrations/001_core.sql .. 005_fake_paypal.sql",
+        "src/http/* (server, router, body, envelope, cookies, headers incl. approvalPageCsp, static, request-id, validate)",
+        "src/routes/index.js, health.js, config.js and empty route modules auth, requests, plans, orders, paypal, supplier, admin, webhooks",
+        "unit tests under test/unit/config, test/unit/db, test/unit/http, test/unit/seed"
+      ],
+      "components": ["config", "db", "http", "seed", "node-gate"],
+      "files": [
+        "package.json",
+        ".gitignore",
+        "scripts/check-node.cjs",
+        "scripts/seed.js",
+        "src/index.js",
+        "src/main.js",
+        "src/app.js",
+        "src/config.js",
+        "src/log.js",
+        "src/clock.js",
+        "src/db/**",
+        "src/http/**",
+        "src/routes/**",
+        "test/unit/config/**",
+        "test/unit/db/**",
+        "test/unit/http/**",
+        "test/unit/seed/**"
+      ],
+      "acceptanceCriteria": [
+        "package.json exactly as spec Deployment: type module, private, MIT, engines.node >=22.13, no dependencies, devDependencies {@playwright/test: 1.56.1}, the scripts of Testing Strategy > Commands; every script that passes a flag to node starts with 'node scripts/check-node.cjs &&' (F-TR-4)",
+        "scripts/check-node.cjs is CommonJS in ES5 syntax, flag-free, and prints 'RescueStock needs Node >= 22.13 (found X). See README.' and exits 1 on an older Node; src/index.js repeats the check before importing node:sqlite",
+        "Migrations 001-005 reproduce the spec DDL verbatim (CHECKs, partial UNIQUE indexes, append-only triggers); migrate.js applies them in BEGIN IMMEDIATE with sha256 checksums, refuses a changed applied file, and a second process starting at the same time skips applied versions; every connection sets WAL, foreign_keys, busy_timeout from RS_DB_BUSY_TIMEOUT_MS by PRAGMA, synchronous NORMAL; db.tx refuses a returned promise and nested transactions; SQLITE_BUSY maps to 503 DB_BUSY with Retry-After 1",
+        "Unit tests assert UPDATE and DELETE on audit_events and inventory_ledger fail (prerequisite of RS-38)",
+        "config.js parses every variable of the Deployment env table plus RS_REGISTER_PER_IP_PER_HOUR (F-TR-17: integer, default 5, a value above 5 refused at startup unless RS_TEST_OFFLINE=1); secrets only from process.env wrapped in Secret; placeholder-shaped values (^<.*>$, changeme, password) refused naming the variable only, RS_ADMIN_PASSWORD >= 16, RS_DEMO_PASSWORD >= 12, RS_FAKE_WEBHOOK_SECRET >= 32 bytes (SEC-5); RS_SAGA_LEASE_MS >= 3 x RS_PAYPAL_TIMEOUT_MS; RS_PAYPAL_BASE_URL only https://api-m.sandbox.paypal.com and RS_ANTHROPIC_BASE_URL only https://api.anthropic.com, a loopback value only with RS_TEST_OFFLINE=1 (SEC-3, SEC-19) [test/unit/config/hosts.test.js, secrets.test.js, node-version.test.js]",
+        "http: requestId on every response header and JSON body (accepted pattern or generated), fixed error envelope, JSON body cap 65,536 bytes, Host allow-list -> 421 MISDIRECTED_REQUEST (SEC-13), app security headers as spec Security, approvalPageCsp(appOrigin) exported from src/http/headers.js with the exact revision-3 string, no Access-Control-Allow-* header, static handler confined to public/ by realpath, server timeouts as spec",
+        "log.js writes JSON lines with the field allow-list, truncation and control-character stripping, requestId on every line",
+        "GET /api/health 200 {status: ok, requestId} and GET /api/config without any secret, client id or merchant id; main.js applies umask 077 and creates data/ and data/uploads/ with mode 0700 (SEC-14)",
+        "scripts/seed.js loads RS-FIX-1 (suppliers A-E demo, one bundle each, C's lid 95 mm, on_hand 1, reserved 0, seed ledger rows, RS_DEMO_DATE local times stored as UTC via Intl), supplier users supplier-a..e and customers cafe1, cafe2; shared RS_DEMO_PASSWORD when set, otherwise distinct random passwords printed once and never logged (SEC-5)",
+        "Every test that proves a criterion or finding carries its id at the start of its name; tests open no non-loopback connection"
+      ],
+      "verification": {
+        "method": "unit tests for config, db, http and seed",
+        "command": "node --disable-warning=ExperimentalWarning --test \"test/unit/config/**/*.test.js\" \"test/unit/db/**/*.test.js\" \"test/unit/http/**/*.test.js\" \"test/unit/seed/**/*.test.js\"",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "b2-domain",
+      "phase": "b-foundation",
+      "title": "Pure domain: money, time, canonical, compat, planner with brute-force oracle, state tables, rescue-status derivation, explanation templates",
+      "owner": "backend-engineer",
+      "dependencies": [],
+      "inputs": [
+        ".eccode/artifacts/architecture/brief.md#architecture (Canonical fixture RS-FIX-1, Planner rules, State machines, Rescue status derivation)",
+        ".eccode/artifacts/design/spec.md#internal-module-contracts-shared-by-parallel-implementers (planner, derive, states)",
+        ".eccode/artifacts/design/spec.md#rescue-status-derivation-revision-2-domainderivejs-f-tr-2-f-tr-3-f-tr-5",
+        ".eccode/artifacts/design/spec.md#testing-strategy (Unit, Timing, Criterion Traceability RS-06..RS-11, RS-36, NFR5)",
+        ".eccode/drafts/design-r2-derive-walk.mjs (reference model for the totality property test)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-06..RS-11, RS-36, NFR5)"
+      ],
+      "outputs": [
+        "src/domain/{money,time,canonical,compat,planner,oracle,states,derive,explain}.js",
+        "test/fixtures/rs-fix-1.json",
+        "test/unit/domain/planner-fixture.test.js, planner-oracle.property.test.js, states.test.js, derive.test.js, money.test.js, time.test.js, compat.test.js, explain.test.js",
+        "test/timing/planner-generator.test.js"
+      ],
+      "components": ["domain", "planner", "oracle", "derive"],
+      "files": [
+        "src/domain/**",
+        "test/unit/domain/**",
+        "test/timing/**",
+        "test/fixtures/rs-fix-1.json"
+      ],
+      "acceptanceCriteria": [
+        "src/domain imports nothing outside src/domain; the clock is injected; equal inputs give deep-equal outputs",
+        "RS-06..RS-11 hold exactly as worded in the brief, each in a test named 'RS-0n: ...' in planner-fixture.test.js, including the multiplicity guard (A on_hand 2 -> Ax2 at 7000, 1 pickup) and RS-12's planner half (cups or lids below the requirement are never feasible)",
+        "planner-oracle.property.test.js compares the planner with oracle.js on 500 seeded random catalogs (<= 6 offers, on_hand 0-3) for feasibility, total, pickups, readyAt and the per-candidate codes",
+        "states.js holds the four transition tables of the brief and the OQ-D1 reasons; states.test.js checks every allowed and every refused pair; assertTransition throws AppError(409, INVALID_STATE)",
+        "derive.js implements the revision-2 table row by row (rows 1-14 incl. 4a replanning and 5a, row-2 clauses (a) and (b), row-3 unknown refund clause); derive.test.js has table cases for every row, the RS-36 (i)-(iv) cases, the reviewer scenarios S09-S20 and the totality property test (>= 20,000 seeded walks x 120 events over the composed machines; row 14 never reached) (F-TR-2, F-TR-5)",
+        "money.js uses integer cents, basis-point tax rounded half up per supplier order, toPayPalValue without floating point; time.js converts Asia/Amman local times through Intl, not a constant offset",
+        "explain.js renders template text from planner and derive codes, including the brief's exact sentences listed under Shared response objects, and the server question templates per field (SEC-7)",
+        "test/timing/planner-generator.test.js runs RS-FIX-1 and generator seeds 1-200 with the brief's parameters and asserts < 1 s each (NFR5 planner part)"
+      ],
+      "verification": {
+        "method": "domain unit, property and timing tests",
+        "command": "node --disable-warning=ExperimentalWarning --test \"test/unit/domain/**/*.test.js\" \"test/timing/**/*.test.js\"",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "b4-env-readme",
+      "phase": "b-foundation",
+      "title": "Environment template and first README: .env.example with every variable name, LICENSE, clean-checkout steps and the env-example scan",
+      "owner": "devops-engineer",
+      "dependencies": ["b1-foundation-core"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#deployment (Environment variables, README)",
+        ".eccode/artifacts/design/spec.md#security (Secrets handling)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (NFR1, NFR4)"
+      ],
+      "outputs": [".env.example", "README.md (first version)", "LICENSE (MIT)", "test/scan/env-example.test.js"],
+      "components": ["docs", "config"],
+      "files": [".env.example", "README.md", "LICENSE", "test/scan/env-example.test.js"],
+      "acceptanceCriteria": [
+        ".env.example lists every variable of the spec's Deployment table plus RS_REGISTER_PER_IP_PER_HOUR, secrets as <placeholder> only, non-secret defaults as in the table",
+        "NFR4: test/scan/env-example.test.js asserts that every value is a placeholder or a listed non-secret default (no real-looking key, token or password) and that every process.env name read by src/config.js appears in .env.example",
+        "README.md documents npm install (npm registry only), npm run seed, npm start with the manual two-step start line, npm test, the Node >= 22.13 floor with the Q9 22.5 branch note, and the MIT licence; it names variables only, never values"
+      ],
+      "verification": {
+        "method": "env-example scan test",
+        "command": "node --test test/scan/env-example.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "b3-test-harness",
+      "phase": "b-foundation",
+      "title": "Offline test harness: net guard, node-proc, server-proc, app-harness, p95 report, start and old-Node tests, package scan, clean-checkout check",
+      "owner": "test-engineer",
+      "dependencies": ["b1-foundation-core", "b2-domain", "b4-env-readme"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#testing-strategy (Layout, helpers, Integration start-health and start-old-node, Timing)",
+        ".eccode/artifacts/design/spec.md#deployment (Node floor, ARCH-24 node-proc)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (NFR1, NFR5)"
+      ],
+      "outputs": [
+        "test/helpers/{net-guard,node-proc,server-proc,app-harness,fixtures,playwright}.js",
+        "scripts/report-p95.js, scripts/reset-test-out.js, scripts/clean-checkout.sh",
+        "test/integration/start-health.test.js, start-old-node.test.js; test/scan/package.test.js; test/api/health-config.test.js; test/unit/helpers/net-guard.test.js"
+      ],
+      "components": ["test-infra"],
+      "files": [
+        "test/helpers/**",
+        "test/unit/helpers/**",
+        "test/integration/start-health.test.js",
+        "test/integration/start-old-node.test.js",
+        "test/scan/package.test.js",
+        "test/api/health-config.test.js",
+        "scripts/report-p95.js",
+        "scripts/reset-test-out.js",
+        "scripts/clean-checkout.sh"
+      ],
+      "acceptanceCriteria": [
+        "net-guard.js patches net.connect, net.Socket.prototype.connect, tls.connect, dns.lookup and globalThis.fetch; any non-loopback host throws NETWORK_BLOCKED and fails the test (self-test included)",
+        "node-proc.js passes the allow-listed execArgv and merges --experimental-sqlite --disable-warning=ExperimentalWarning into NODE_OPTIONS (keeping an existing value) when Node < 22.13 (ARCH-24); server-proc.js starts src/index.js with PORT=0, a temp RS_DB_PATH, fake adapters, RS_TEST_OFFLINE=1, RS_TEST_HOOKS=1 and reads the listening port from stdout; app-harness.js runs createApp in-process with a fixed clock and records request latency to test/.out/latency.jsonl",
+        "NFR1: test/scan/package.test.js checks dependencies, devDependencies, engines and the check-node prefix of every flagged script; start-old-node.test.js runs the exact start string through /bin/sh -c with /opt/node20/bin and /opt/node21/bin (or RS_OLD_NODE_BINS) first on PATH and asserts exit != 0 and stderr matching 'needs Node >= 22.13 (found'; start-health.test.js spawns the start equivalent and gets /api/health 200",
+        "scripts/clean-checkout.sh copies the project's git-tracked and unignored files (excluding .eccode/) into an empty temp directory, runs npm install, npm test and npm start there, and asserts GET /api/health 200; it uses only variable names, never secrets",
+        "scripts/report-p95.js reads test/.out/latency.jsonl, fails at p95 >= 300 ms and at a suite time >= 5 min from the pretest timestamp",
+        "npm test passes offline with the net guard, launches no browser, and its output names each test with its criterion id"
+      ],
+      "verification": {
+        "method": "full offline suite plus the clean-checkout run (run with --timeout 1200)",
+        "command": "npm test && sh scripts/clean-checkout.sh",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "c1-auth-rbac",
+      "phase": "c-core-flow",
+      "title": "Authentication and authorization: sessions, CSRF, sign-in and register throttles, default-deny RBAC, admin bootstrap",
+      "owner": "backend-engineer",
+      "dependencies": ["b3-test-harness"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#authentication-arch-25",
+        ".eccode/artifacts/design/spec.md#rbac-matrix-default-deny-the-router-refuses-any-route-without-a-policy-entry-at-startup",
+        ".eccode/artifacts/design/spec.md#security (T4, T6, T7, T8, T24; Rate limiting; Host and CORS)",
+        ".eccode/reviews/rev-mv1e1ohb-01183fe4.json (F-TR-17)"
+      ],
+      "outputs": ["src/auth/{password,sessions,csrf,throttle,rbac}.js", "src/routes/auth.js", "src/services/users.js, src/services/audit.js", "test/api/auth.test.js, test/unit/auth/*"],
+      "components": ["auth", "rbac"],
+      "files": [
+        "src/auth/**",
+        "src/routes/auth.js",
+        "src/services/users.js",
+        "src/services/audit.js",
+        "src/main.js",
+        "src/app.js",
+        "test/api/auth.test.js",
+        "test/unit/auth/**"
+      ],
+      "acceptanceCriteria": [
+        "Routes /api/auth/csrf, register, signin, signout, session as specified; cookie rs_sid HttpOnly, SameSite=Lax, Path=/, Max-Age 43200, Secure on https; only sha256(id) stored; idle 60 min and absolute 12 h; rotation on sign-in and register (any incoming session destroyed, SEC-20); role always customer on register; RS_ALLOW_SIGNUP=0 -> 403 SIGNUP_DISABLED",
+        "CSRF: session-bound X-CSRF-Token on every non-GET route, pre-login HMAC token for signin/register, Origin check -> 403 CSRF_FAILED; POST /api/webhooks/paypal/:merchantKey is exempt",
+        "SEC-1/SEC-9 throttle in SQLite: hard 429 at 5 failures per (username_key, IP) or 20 per IP in 15 min before the password check; cross-IP failures only delay (1-10 s), never refuse; username_key = lower(NFC(trim)); unknown usernames counted alike; identical 401 for unknown user and bad password with a dummy scrypt",
+        "F-TR-17: register is limited per IP per hour by RS_REGISTER_PER_IP_PER_HOUR (default 5); auth.test.js runs with the default and asserts the 6th registration from one IP -> 429 with details.limit register_ip",
+        "RBAC: every route module declares its policy next to each route; startup fails for a route without one; anonymous 401, wrong role 403, admin routes require role admin; admin account created or updated from RS_ADMIN_PASSWORD (>= 16 chars) as scrypt and disabled when unset (SEC-5)",
+        "auth.test.js names its cases with ARCH-25, SEC-1, SEC-9, SEC-13, SEC-20 and asserts no Access-Control-Allow-* header on any response"
+      ],
+      "verification": {
+        "method": "auth API and unit tests under the net guard",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/auth.test.js \"test/unit/auth/**/*.test.js\"",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "c2-requests-plans-view",
+      "phase": "c-core-flow",
+      "title": "Requests, manual requirement confirmation, planning runs, plan approval and the request view with derived rescue status",
+      "owner": "backend-engineer",
+      "dependencies": ["c1-auth-rbac", "b2-domain"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id--session-user-a-foreign-or-archived-id--404 (requests list/create/get, confirm, plan, approve; RequestView)",
+        ".eccode/artifacts/design/spec.md#shared-response-objects",
+        ".eccode/artifacts/design/spec.md#rescue-status-derivation-revision-2-domainderivejs-f-tr-2-f-tr-3-f-tr-5",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-12, RS-36)"
+      ],
+      "outputs": ["src/services/{requests,plans,view}.js", "src/routes/{requests,plans}.js", "test/api/{approve-guards,requests-plans,rescue-status,schema-no-rescue-status}.test.js"],
+      "components": ["requests", "plans", "view"],
+      "files": [
+        "src/services/requests.js",
+        "src/services/plans.js",
+        "src/services/view.js",
+        "src/routes/requests.js",
+        "src/routes/plans.js",
+        "src/app.js",
+        "test/api/approve-guards.test.js",
+        "test/api/requests-plans.test.js",
+        "test/api/rescue-status.test.js",
+        "test/api/schema-no-rescue-status.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Every customer query is owner-scoped in SQL; a foreign or archived id -> 404",
+        "POST /api/requests counts and inserts in one BEGIN IMMEDIATE (RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY, Asia/Amman day) -> 429 requests_per_day (SEC-2)",
+        "POST /api/requests/:id/confirm takes values only; without an extraction every confirmed field gets provenance manual; REQUIREMENTS_INCOMPLETE for missing core fields; a new requirements version",
+        "POST /api/requests/:id/plan stores the planning run and a proposed version (plan_json, alternatives, planHash, trace, explanation) or an infeasible run with blocking, candidate codes and relaxations",
+        "RS-12: approve requires expectedTotalCents and planHash; mismatch -> 409 PLAN_CHANGED with current values; stored plan failing re-validation -> 409 PLAN_INVALID; approve with budget or deadline missing -> 409 MISSING_BUDGET / MISSING_DEADLINE (budget first; the paypal/create half of RS-04 comes in phase E) [approve-guards.test.js]",
+        "RS-36: GET /api/requests/:id returns RequestView whose rescueStatus is computed by derive.js on each read with one query per table; schema-no-rescue-status.test.js finds no column named like rescue status and no status column on rescue_requests",
+        "Labels object on every response with seeded prices (priceNotice, demoData) and demo flags on supplier, offer and product objects"
+      ],
+      "verification": {
+        "method": "API tests for requests, plans, approval guards and derived status",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "c3-reservations-supplier-admin",
+      "phase": "c-core-flow",
+      "title": "Reservations with BEGIN IMMEDIATE and idempotency, supplier orders and inventory, expiry pass, admin reset/faults/timeline/metrics",
+      "owner": "backend-engineer",
+      "dependencies": ["c2-requests-plans-view"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#reservation-servicesreservationsjs",
+        ".eccode/artifacts/design/spec.md#conventions-apply-to-every-route (Idempotency, Limits)",
+        ".eccode/artifacts/design/spec.md#supplier-routes-role-supplier-every-query-scoped-to-userssupplier_id",
+        ".eccode/artifacts/design/spec.md#admin-routes-role-admin",
+        ".eccode/artifacts/design/spec.md#void-rule-arch-22-resolved (steps 1-3 for operations without a provider authorization)",
+        ".eccode/artifacts/design/spec.md#supersession-servicessupersessionjs",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-14, RS-16, RS-28, RS-30)"
+      ],
+      "outputs": ["src/services/{reservations,ledger,orders,supersession,void-rule,admin}.js", "src/routes/{plans,supplier,admin}.js", "API tests listed in files"],
+      "components": ["reservations", "supplier", "admin", "ledger"],
+      "files": [
+        "src/services/reservations.js",
+        "src/services/ledger.js",
+        "src/services/orders.js",
+        "src/services/supersession.js",
+        "src/services/void-rule.js",
+        "src/services/admin.js",
+        "src/routes/plans.js",
+        "src/routes/supplier.js",
+        "src/routes/admin.js",
+        "src/app.js",
+        "test/api/reserve-idempotency.test.js",
+        "test/api/abuse-limits.test.js",
+        "test/api/isolation.test.js",
+        "test/api/supplier-orders.test.js",
+        "test/api/reservation-expiry.test.js",
+        "test/api/admin-basic.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Reserve runs in one BEGIN IMMEDIATE: idempotency lookup scoped (user, key) with the method+path+canonical-body fingerprint, then reservations by (customer, idempotency_key) when the key row is purged (F-TR-1); live-reservation cap RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER -> 409 RESERVATION_LIMIT with nothing written (SEC-2); conditional inventory UPDATE per item; reservation, items, reserve ledger rows, one supplier order and one created payment operation per supplier; OUT_OF_STOCK rolls back, then marks the plan non_executable (OUT_OF_STOCK), queues a re-plan and stores the 409; SQLITE_BUSY -> 503 DB_BUSY",
+        "RS-16 cases in reserve-idempotency.test.js as worded in the Criterion Traceability row, including the second-plan reuse before and after the key purge and the concurrent same-key race",
+        "SEC-2 in abuse-limits.test.js with default limits: a second reserve by the same customer -> 409 RESERVATION_LIMIT with no rows; another customer succeeds; the 11th request of a day -> 429",
+        "Supplier routes owner-scoped: confirm (COMMITMENT_INVALID), refuse before execution, ready and handover (HANDOVER_BLOCKED until the plan is executed); inventory GET and PATCH with whole-PATCH ownership check (RS-28 -> 403, nothing changed), RESERVED_STOCK, offer versioning and supersession of proposed/approved versions in the same transaction",
+        "Expiry pass: active -> expired exactly once with expire ledger rows; plan non_executable (RESERVATION_EXPIRED); void rule steps 1-3 for operations still created (voided locally); a second pass is a no-op [reservation-expiry.test.js, cases named 'RS-15 (part)']",
+        "Admin: reset (guard on the RS-37 status list, tombstoning, catalog restore with adjust ledger rows, clears fake tables, fault flags and request_create rate events (F-TR-15), audit event), faults stock_depletion, supplier_refusal, fake_paypal, fake_model, clear (FAULTS_UNAVAILABLE with a real adapter; audit with actor and target ids, SEC-11), timeline and metrics; RS-30 in isolation.test.js",
+        "Every reserve, release and expire writes a ledger row; every refused transition writes an audit_events row with outcome denied"
+      ],
+      "verification": {
+        "method": "API tests for reservations, limits, isolation, supplier orders, expiry and admin",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/reserve-idempotency.test.js test/api/abuse-limits.test.js test/api/isolation.test.js test/api/supplier-orders.test.js test/api/reservation-expiry.test.js test/api/admin-basic.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "c5-frontend-dashboards",
+      "phase": "c-core-flow",
+      "title": "SPA shell and the three dashboards: sign-in/register, customer requests and request page (planning sections), supplier orders and inventory, admin",
+      "owner": "frontend-engineer",
+      "dependencies": [],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#frontend",
+        ".eccode/artifacts/design/spec.md#interface-contracts (Customer, Supplier, Admin routes; Shared response objects; Labels)",
+        ".eccode/artifacts/design/spec.md#security (Output encoding)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-33, RS-35, NFR2)"
+      ],
+      "outputs": ["public/index.html, public/css/app.css, public/js/*, public/js/views/*, public/js/components/*", "test/fixtures/contracts/*.json (example responses for every route used)", "test/scan/frontend.test.js, test/unit/frontend/*"],
+      "components": ["frontend"],
+      "files": [
+        "public/**",
+        "test/fixtures/contracts/**",
+        "test/unit/frontend/**",
+        "test/scan/frontend.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Hash routes #/signin, #/register, #/requests, #/requests/new (text only in this phase), #/requests/:id, #/supplier/orders, #/supplier/inventory, #/admin; one main#app, persistent #banner, aria-live #announcer",
+        "Request page sections 1-6 for the planning stages: status header with next step, 'What you need' with manual inputs for every core field, 'Why this plan' with trace comparisons, 'What was rejected' with blocking constraints, per-candidate codes and relaxation buttons, 'Total' from server cents with 'Test prices, not market prices', 'Supplier commitments' with Catalog offer and Supplier confirmed columns; Approve plan sends planHash and total; Reserve stores the Idempotency-Key in sessionStorage under reserve:<planVersionId>",
+        "api.js adds X-CSRF-Token, parses the envelope, aborts at 15 s; states loading, empty, error (message + requestId + Retry) and timeout render; text status indicators, never color alone; data-testid hooks as listed in the spec",
+        "DOM built with textContent and attribute setters only; test/scan/frontend.test.js asserts no innerHTML, no inline script or style attribute handlers, no secret-looking value in public/",
+        "test/fixtures/contracts/*.json hold example responses taken from the spec's contracts for every route the UI calls in this phase; format helpers tested in test/unit/frontend"
+      ],
+      "verification": {
+        "method": "frontend scan and unit tests",
+        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "c6-reserve-concurrency-browser",
+      "phase": "c-core-flow",
+      "title": "Multi-process reservation tests, HTTP contract test, browser harness (fresh database and customer per journey) and the infeasible journey",
+      "owner": "test-engineer",
+      "dependencies": ["c3-reservations-supplier-admin", "c5-frontend-dashboards"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#testing-strategy (Integration rs14-*, Contract tests (a), E2E fresh database per file)",
+        ".eccode/reviews/rev-mv1e1ohb-01183fe4.json (F-TR-17)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-14, RS-33)"
+      ],
+      "outputs": ["test/integration/rs14-two-process-reserve.test.js, rs14-db-busy.test.js", "test/api/contracts.test.js", "test/helpers browser server harness", "test/browser/journey-infeasible.test.js"],
+      "components": ["test-infra", "browser"],
+      "files": [
+        "test/helpers/**",
+        "test/integration/rs14-two-process-reserve.test.js",
+        "test/integration/rs14-db-busy.test.js",
+        "test/api/contracts.test.js",
+        "test/browser/**"
+      ],
+      "acceptanceCriteria": [
+        "RS-14 two-process reserve and DB_BUSY tests as in the spec, spawned through node-proc.js",
+        "contracts.test.js drives a route table and checks status, envelope, requestId and success-body field types of every route present, against test/fixtures/contracts",
+        "Browser harness: every test/browser file starts its own server through server-proc.js on a new temp database seeded with RS-FIX-1, RS_PUBLIC_URL on localhost, RS_TEST_OFFLINE=1, RS_REGISTER_PER_IP_PER_HOUR=1000, RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY=1000, RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER=1; each journey registers its own fresh customer (F-TR-15, F-TR-17); Playwright is loaded from the local @playwright/test or the global playwright and the run fails, never skips, when Chromium cannot launch",
+        "RS-33 journey-infeasible at 360x800 and 1280x800 with screenshots in test/browser/out/ and a database check that no reservation, order or payment operation exists",
+        "npm test and npm run test:browser pass"
+      ],
+      "verification": {
+        "method": "full offline suite and browser suite (run with --timeout 1200)",
+        "command": "npm test && npm run test:browser",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "d1-ai-core",
+      "phase": "d-extraction",
+      "title": "Extraction core: provider contract, wire schema and strict validator, prompt with random delimiters, deterministic bilingual fake, budget/rate/concurrency gate, opt-in rephrase",
+      "owner": "ai-engineer",
+      "dependencies": ["c6-reserve-concurrency-browser"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#ai--llm-design (Provider and model, Extraction output schema, Local validation, Prompt structure, Untrusted-input isolation, Deterministic fake, Runtime controls, Opt-in rephrasing)",
+        ".eccode/artifacts/design/spec.md#internal-module-contracts-shared-by-parallel-implementers (ExtractionProvider)",
+        "decision dec-mv1e2i5k-01a1bebb (OQ-D7: share 0.2, NFR6 pinned to 1)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-01, RS-03, RS-05, NFR6)"
+      ],
+      "outputs": ["src/ai/{provider,schema,prompt,fake,gate,rephrase}.js", "test/unit/ai/{schema,prompt,fake,gate,rephrase}.test.js"],
+      "components": ["ai"],
+      "files": [
+        "src/ai/provider.js",
+        "src/ai/schema.js",
+        "src/ai/prompt.js",
+        "src/ai/fake.js",
+        "src/ai/gate.js",
+        "src/ai/rephrase.js",
+        "test/unit/ai/schema.test.js",
+        "test/unit/ai/prompt.test.js",
+        "test/unit/ai/fake.test.js",
+        "test/unit/ai/gate.test.js",
+        "test/unit/ai/rephrase.test.js"
+      ],
+      "acceptanceCriteria": [
+        "EXTRACTION_WIRE_SCHEMA exactly as spec (questions are field names only, SEC-7); validateExtraction enforces the local rules (exact keys, enums, deadline patterns, budget <= 2 decimals by string arithmetic, value null iff provenance none)",
+        "prompt.js PROMPT_VERSION x1: fixed system prompt; data block between random 16-hex delimiters with safeJson escaping",
+        "fake.js (simulated: true) parses English and Arabic per the lexicon (both digit scripts, dual form) with exact-substring quotes; images by sha256 through an injectable image map (default test/fixtures/extraction/fake-image-map.json; unknown image -> all fields none plus a question); faults timeout, invalid_json, schema_invalid, error from fault_flags",
+        "gate.js in integer micro-dollars (F-TR-12): rate check and insert in one BEGIN IMMEDIATE (F-TR-10), per-customer concurrency 1 and per-customer daily share RS_MODEL_CUSTOMER_DAILY_SHARE default 0.2 with details.scope customer|global (SEC-10), budget check spend + cap <= budget, settlement after the call",
+        "rephrase.js off by default; input carries only codes, supplier letters and numbers (SEC-17); output with a number or supplier code absent from the trace is discarded [rephrase.test.js, named 'RS-05: ...']",
+        "Provider selection: always fake when RS_TEST_OFFLINE=1; default model haiku (NFR6 config inspection)"
+      ],
+      "verification": {
+        "method": "AI unit tests under the net guard",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "d2-ai-adapters-corpus",
+      "phase": "d-extraction",
+      "title": "Claude CLI and Anthropic API adapters (deterministic transcript and loopback-stub tests), EXT-1 corpus with rendered images, fake-mode eval and the opt-in live-model runner",
+      "owner": "ai-engineer",
+      "dependencies": ["d1-ai-core"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#ai--llm-design (CLI adapter, Anthropic API adapter, Evaluation plan EXT-1)",
+        ".eccode/artifacts/design/spec.md#external-facts-used-source-and-date",
+        ".eccode/artifacts/design/spec.md#security (T25)",
+        "decision dec-mv16pz0g-01d5c4c2 (Q3: CLI with haiku, USD 5 per live run)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-01, RS-02, RS-03, RS-05, NFR3, NFR6)"
+      ],
+      "outputs": ["src/ai/cli.js, src/ai/anthropic.js", "test/fixtures/extraction/** (manifest EXT-1, texts, labels html, images, fake-image-map.json, cli-transcript.ndjson, stub claude binary)", "scripts/make-corpus-images.js", "test/eval/extraction-fake.test.js", "test/live/run-live-model.js", "test/unit/ai/{cli,anthropic,live-runner-refusal}.test.js"],
+      "components": ["ai", "eval"],
+      "files": [
+        "src/ai/cli.js",
+        "src/ai/anthropic.js",
+        "test/unit/ai/cli.test.js",
+        "test/unit/ai/anthropic.test.js",
+        "test/unit/ai/live-runner-refusal.test.js",
+        "test/fixtures/extraction/**",
+        "scripts/make-corpus-images.js",
+        "test/eval/**",
+        "test/live/run-live-model.js",
+        "package.json"
+      ],
+      "acceptanceCriteria": [
+        "LIVE-DEPENDENT, deterministic now: the real CLI/API calls are not made by this task; cli.js is tested against the recorded transcript cli-transcript.ndjson through a stub claude binary on PATH, anthropic.js against a loopback stub under RS_TEST_OFFLINE=1; no ANTHROPIC_API_KEY or CLI login is needed or read by the tests",
+        "cli.js: spawn without shell, pinned argv from the spec (incl. --tools \"\", --safe-mode, --strict-mcp-config, --max-budget-usd = RS_MODEL_CALL_CAP_USD), allow-listed child env excluding every RS_* secret and ANTHROPIC_API_KEY, fresh temp cwd removed afterwards, stdout cap 8 MiB (SEC-15), process-group SIGKILL on timeout, one attempt",
+        "anthropic.js: output_config.format json_schema, refusal/max_tokens stop reasons refused, redirect error, one retry on 5xx/529 only, cost from token counts",
+        "EXT-1 corpus committed as specified (>= 10 text cases with >= 5 AR/EN pairs incl. the RS-FIX-1 pair, >= 6 images: >= 3 clear, >= 2 ambiguous, >= 1 injection; >= 2 text injection cases with controls; the cli-image-smoke case asserting schemaAccepted first, F-TR-13); images rendered by scripts/make-corpus-images.js from labels/*.html",
+        "test/eval/extraction-fake.test.js runs the live runner's metrics in fake mode over EXT-1 (RS-01 pair equality, RS-03 ambiguous images: unknown fields, >= 1 question, no number absent from the image; SEC-7 injected text never surfaces)",
+        "test/live/run-live-model.js exits 2 with 'Set RS_LIVE_MODEL=1 to run the live model suite (billed to your account)' unless RS_LIVE_MODEL=1, stops before a call that could exceed USD 5, and writes reports/live-model-<UTC>.json labelled with suite, provider, model, CLI version, corpusVersion and promptVersion; only the test:live-model line of package.json may change and it keeps the check-node prefix",
+        "The live run itself is LIVE-M1 (plan.md), user-approved, and is never reported as passed by this task"
+      ],
+      "verification": {
+        "method": "adapter unit tests on transcript and loopback stub, fake-mode EXT-1 eval, live-runner refusal",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "d3-extraction-service",
+      "phase": "d-extraction",
+      "title": "Extraction service and routes: upload by magic bytes, extract with gate and degraded path, grounding and provenance, confirm provenance, request deletion, retention sweep",
+      "owner": "backend-engineer",
+      "dependencies": ["d1-ai-core"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id--session-user-a-foreign-or-archived-id--404 (image, extract, confirm, delete)",
+        ".eccode/artifacts/design/spec.md#ai--llm-design (Post-validation normalisation, Runtime controls, Untrusted-input isolation)",
+        ".eccode/artifacts/design/spec.md#retention-and-deletion",
+        ".eccode/artifacts/design/spec.md#security (T9, T10, T12, T16, T23)",
+        "decision dec-mv1e2i5k-01a1bebb (NFR6 asserted with the share pinned to 1)",
+        ".eccode/reviews/rev-mv1e1ohb-01183fe4.json (F-TR-18)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-01, RS-02, RS-03, RS-05, RS-39, NFR6)"
+      ],
+      "outputs": ["src/services/{extraction,retention,requests}.js", "src/routes/requests.js", "API tests listed in files"],
+      "components": ["extraction", "uploads", "retention"],
+      "files": [
+        "src/services/extraction.js",
+        "src/services/retention.js",
+        "src/services/requests.js",
+        "src/services/view.js",
+        "src/routes/requests.js",
+        "src/main.js",
+        "src/app.js",
+        "src/config.js",
+        "test/api/extract.test.js",
+        "test/api/extract-image.test.js",
+        "test/api/extract-degraded.test.js",
+        "test/api/injection.test.js",
+        "test/api/confirm-provenance.test.js",
+        "test/api/uploads-retention.test.js",
+        "test/api/model-budget-rate.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Upload: owner checked before reading the body (404, nothing written), Content-Length required, 5 MiB cap while streaming (413), magic bytes must match the declared type (415), random 128-bit file name, write to data/uploads/.tmp then rename, mode 0600 (SEC-14); GET image with detected type, nosniff, CSP sandbox, no-store",
+        "Extract: gate first (429 / 503 store a degraded row and never call the provider), provider call outside any transaction, normalisation (ranges, grounding substring check, Arabic-Indic digits, image wording stripped of URLs, e-mails and phone runs and cut to 80 chars, SEC-7; non-USD budget -> unknown + question); every failure -> degraded with every field unknown",
+        "Confirm (SEC-8): client provenance ignored; extracted provenance and originalWording kept only when the submitted value equals the extracted one, else manual [confirm-provenance.test.js]",
+        "RS-01, RS-02, RS-03 (API part), RS-05 (pipeline incl. T10 DB-planted catalog text) and RS-39 tests named with their ids; the fake's image map is injected in tests so this task does not depend on the EXT-1 fixtures",
+        "NFR6 test named 'NFR6: ... (RS_MODEL_CUSTOMER_DAILY_SHARE=1)' sets the share to 1 in its own environment and states why in a comment (F-TR-18); the SEC-10 case runs with the default 0.2; the 11th extract/upload -> 429 with Retry-After; micro-dollar boundary cases",
+        "DELETE /api/requests/:id: 409 PAYMENT_IN_PROGRESS on the spec's status list, void rule for an active reservation (REQUEST_DELETED), hard delete when no supplier order existed, tombstone otherwise, audit event either way; retention sweep with a pinned clock (7 d + 1 min deleted, 6 d 23 h kept, audit event per image) started at startup and hourly in main.js"
+      ],
+      "verification": {
+        "method": "extraction, upload, retention and model-gate API tests under the net guard",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "d4-frontend-extraction",
+      "phase": "d-extraction",
+      "title": "Extraction UI: new request with optional image, provenance badges and original wording, clarification questions, degraded notice with manual form, AI-addressed notice",
+      "owner": "frontend-engineer",
+      "dependencies": [],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#frontend (request-new, request page section 2, States, Labels)",
+        ".eccode/artifacts/design/spec.md#shared-response-objects (FieldValue, Question, Extraction)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-03)"
+      ],
+      "outputs": ["public/js/views/request-new.js, request-detail.js, components/fields-table.js, notice.js, badges.js updated", "test/fixtures/contracts for image, extract and confirm"],
+      "components": ["frontend"],
+      "files": [
+        "public/**",
+        "test/fixtures/contracts/**",
+        "test/unit/frontend/**",
+        "test/scan/frontend.test.js"
+      ],
+      "acceptanceCriteria": [
+        "#/requests/new: textarea dir=auto labelled 'Describe what you need, in Arabic or English', optional image input (png/jpeg/webp); submit creates, uploads, extracts",
+        "'What you need' shows value, provenance badge ('From your text', 'From the photo', 'Entered by you', 'Not found'), original wording (dir=auto; image wording under 'Text read from the photo'), server-template questions; degraded state shows 'Automatic reading unavailable — please enter the details' with a manual input for every core field (data-testid degraded-notice); addressedToAssistant shows 'This request contains text addressed to an AI; it was ignored.'; a 'Simulated' extraction badge while the fake provider is active",
+        "textContent only (frontend scan passes); contract fixtures added for the new routes"
+      ],
+      "verification": {
+        "method": "frontend scan and unit tests",
+        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "d5-extraction-contract-browser",
+      "phase": "d-extraction",
+      "title": "ExtractionProvider contract suite, log and secrets scan for NFR6, HTTP contract extension and the degraded-extraction browser test",
+      "owner": "test-engineer",
+      "dependencies": ["d2-ai-adapters-corpus", "d3-extraction-service", "d4-frontend-extraction"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#testing-strategy (Contract tests (c), E2E)",
+        ".eccode/artifacts/design/spec.md#observability",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-03, NFR6, RS-29)"
+      ],
+      "outputs": ["test/unit/ai/provider-contract.test.js", "test/scan/secrets.test.js (log part)", "test/api/contracts.test.js extension", "test/browser/degraded-extraction.test.js"],
+      "components": ["test-infra", "browser", "ai"],
+      "files": [
+        "test/helpers/**",
+        "test/unit/ai/provider-contract.test.js",
+        "test/scan/secrets.test.js",
+        "test/api/contracts.test.js",
+        "test/browser/**"
+      ],
+      "acceptanceCriteria": [
+        "provider-contract.test.js runs one shared suite against fake, CLI (stub binary replaying the transcript) and Anthropic (loopback stub): validated output, usage fields, each ProviderError code",
+        "secrets.test.js (log part): every log line of the suite's server runs carries requestId and contains no Authorization header value, access token, client secret, payer e-mail or name, or provider body; extended to assets, responses, screenshots and submission files in phase G",
+        "RS-03 browser part: degraded-extraction.test.js forces fake_model:timeout, sees the notice and manual form, confirms the fields (provenance manual) and reaches a planning run, at 360 and 1280 px",
+        "npm test and npm run test:browser pass"
+      ],
+      "verification": {
+        "method": "full offline suite and browser suite (run with --timeout 1200)",
+        "command": "npm test && npm run test:browser",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "e0-paypal-stub-contract",
+      "phase": "e-payments",
+      "title": "PayPal loopback stub, fake webhook signer and the shared PaymentProvider contract suite (test-engineer owned)",
+      "owner": "test-engineer",
+      "dependencies": ["d5-extraction-contract-browser"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#internal-module-contracts-shared-by-parallel-implementers (PaymentProvider, Outcome)",
+        ".eccode/artifacts/design/spec.md#paypal-sandbox-wire-mapping-paymentssandboxjs-every-row-verify-on-sandbox",
+        ".eccode/artifacts/design/spec.md#fake-approval-listener-revision-2-sec-12-only-when-rs_payment_providerfake (listener CSP, F-TR-14)",
+        ".eccode/artifacts/design/spec.md#testing-strategy (helpers paypal-stub, webhook-signer; Contract tests (b))"
+      ],
+      "outputs": ["test/helpers/paypal-stub.js", "test/helpers/webhook-signer.js", "test/unit/payments/provider-contract.js (adapter-parametrised suite)", "test/unit/payments/paypal-stub.test.js"],
+      "components": ["test-infra", "payments"],
+      "files": [
+        "test/helpers/paypal-stub.js",
+        "test/helpers/webhook-signer.js",
+        "test/unit/payments/provider-contract.js",
+        "test/unit/payments/paypal-stub.test.js"
+      ],
+      "acceptanceCriteria": [
+        "paypal-stub.js emulates the Sandbox endpoints of the wire mapping on 127.0.0.1 (OAuth, orders, authorize, authorizations, capture, captures, void, refund, refunds, verify-webhook-signature), records request bodies and headers incl. PayPal-Request-Id, replays by request id, can inject 4xx/5xx/timeout/lost responses, returns fake payer data (to prove it is never logged), and serves its approval page with exactly one CSP header equal to approvalPageCsp(appOrigin) (F-TR-14)",
+        "provider-contract.js exports a suite parametrised by an adapter factory that checks every PaymentProvider method and each Outcome kind (ok, rejected, retryable, unknown) and that the adapter never logs bodies, tokens or payer data",
+        "webhook-signer.js signs fake events with the fake webhook secret",
+        "paypal-stub.test.js covers the stub's own behaviour (recording, replay, faults, CSP header)"
+      ],
+      "verification": {
+        "method": "stub self-test under the net guard",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/payments/paypal-stub.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "e1-payment-adapters",
+      "phase": "e-payments",
+      "title": "Payment adapters: DB-backed fake with faults and replay model, fake approval listener with its own CSP, Sandbox REST v2 adapter (stub-verified), merchant mapping",
+      "owner": "backend-engineer",
+      "dependencies": ["e0-paypal-stub-contract"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#internal-module-contracts-shared-by-parallel-implementers (PaymentProvider)",
+        ".eccode/artifacts/design/spec.md#paypal-sandbox-wire-mapping-paymentssandboxjs-every-row-verify-on-sandbox",
+        ".eccode/artifacts/design/spec.md#005_fake_paypalsql-state-of-the-fake-payment-adapter-rows-labelled-simulated",
+        ".eccode/artifacts/design/spec.md#fake-approval-listener-revision-2-sec-12-only-when-rs_payment_providerfake",
+        ".eccode/artifacts/design/spec.md#admin-routes-role-admin (fake_paypal faults, test-only faults)",
+        "decision dec-mv16pz0g-01d5c4c2 (Q1 merchant mode)"
+      ],
+      "outputs": ["src/payments/{provider,fake,listener,sandbox,merchants}.js", "test/unit/payments/{fake,sandbox,merchants,provider-contract}.test.js", "test/api/fake-approval-headers.test.js"],
+      "components": ["payments"],
+      "files": [
+        "src/payments/**",
+        "src/config.js",
+        "test/unit/payments/fake.test.js",
+        "test/unit/payments/sandbox.test.js",
+        "test/unit/payments/merchants.test.js",
+        "test/unit/payments/provider-contract.test.js",
+        "test/api/fake-approval-headers.test.js"
+      ],
+      "acceptanceCriteria": [
+        "LIVE-DEPENDENT, deterministic now: sandbox.js is verified only against paypal-stub under RS_TEST_OFFLINE=1; no Sandbox host is contacted and no credential is needed; the credentials are read from RS_PAYPAL_<KEY>_CLIENT_ID / _CLIENT_SECRET / _WEBHOOK_ID (KEY in A-E, DEFAULT) as Secret values and never logged",
+        "fake.js: state in the fake_paypal_* tables, (merchant_key, request_id) replay with replayed = 1, AUTHORIZATION_ALREADY_CAPTURED and CAPTURE_FULLY_REFUNDED answers, expiration 29 days unless auth_expire, every call (reads included) counted in fake_paypal_calls, all faults of the spec incl. lost_response:<kind>, timeout:<kind>, http_500:<kind> and the RS_TEST_HOOKS-only freeze_after_capture_apply, freeze_before_capture_apply and capture_lands_after_void_intent; payloads labelled simulated: true; fake webhook key generated once into meta when RS_FAKE_WEBHOOK_SECRET is unset (SEC-5)",
+        "listener.js: second node:http listener on RS_FAKE_APPROVAL_HOST (127.0.0.1 outside test mode) and port, refuses to start with paypal-sandbox, Host check, the app's security headers except CSP, exactly one CSP header approvalPageCsp(appOrigin) (F-TR-14), the three routes of the contract (SEC-12), redirects only to stored return/cancel URLs",
+        "sandbox.js: wire mapping as specified, OAuth cached per merchant until expires_in - 60 s, AbortSignal timeout RS_PAYPAL_TIMEOUT_MS covering OAuth, outcome classification, approval-link host must be www.sandbox.paypal.com (loopback stub host only with RS_TEST_OFFLINE=1) else APPROVAL_HOST_INVALID (SEC-3, T17), verifyWebhook splices the raw body bytes; payloads carry provider paypal-sandbox and sandbox: true",
+        "merchants.js maps suppliers to merchant keys and reports merchant mode per-supplier or single-credential",
+        "provider-contract.test.js runs E0's suite against the fake and against the Sandbox adapter with paypal-stub; fake-approval-headers.test.js pins the CSP string and the Location of approve and cancel and checks the app pages still send form-action 'self' (RS-31 [D] part)"
+      ],
+      "verification": {
+        "method": "payment adapter unit tests, shared contract suite on both adapters, listener header test",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test \"test/unit/payments/**/*.test.js\" test/api/fake-approval-headers.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "e2-payment-flow",
+      "phase": "e-payments",
+      "title": "Provider call protocol and payment flow: paypal/create, return and cancel handlers, abandon, void rule with the resolution hook, order presentation and receipt",
+      "owner": "backend-engineer",
+      "dependencies": ["e1-payment-adapters"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#provider-call-protocol-servicescallsjs-every-mutating-paypal-call (incl. Sender table, F-TR-3)",
+        ".eccode/artifacts/design/spec.md#return-handler-and-authorization-rs-20-second-half-rs-27",
+        ".eccode/artifacts/design/spec.md#void-rule-arch-22-resolved",
+        ".eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id--session-user-a-foreign-or-archived-id--404 (paypal/create semantics, return, cancel, abandon, receipt)",
+        ".eccode/artifacts/design/spec.md#security (T2, T5)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-04, RS-18, RS-19, RS-20, RS-21, RS-27)"
+      ],
+      "outputs": ["src/services/{calls,payments,void-rule,orders,view}.js", "src/routes/{paypal,orders,plans}.js", "API tests listed in files"],
+      "components": ["payments", "saga"],
+      "files": [
+        "src/services/calls.js",
+        "src/services/payments.js",
+        "src/services/void-rule.js",
+        "src/services/orders.js",
+        "src/services/view.js",
+        "src/routes/paypal.js",
+        "src/routes/orders.js",
+        "src/routes/plans.js",
+        "src/app.js",
+        "test/api/approve-guards.test.js",
+        "test/api/paypal-create.test.js",
+        "test/api/paypal-cancel.test.js",
+        "test/api/amount-tampering.test.js",
+        "test/api/paypal-return-idempotent.test.js",
+        "test/api/authorization-denied.test.js",
+        "test/api/isolation.test.js"
+      ],
+      "acceptanceCriteria": [
+        "calls.js implements queue (INSERT OR IGNORE by operation_key so:<id>:<kind>:<attempt>), start CAS with send_token, send outside any transaction with PayPal-Request-Id = operation_key, record CAS on send_token, retryable back-off (5 s, 30 s, 2 min, 5 min) to queued, unknown with prev_status; the sender table is followed for create_order, authorize, void and refund",
+        "paypal/create: amount always from supplier_orders.total_cents, preconditions incl. RS-04 MISSING_BUDGET/MISSING_DEADLINE, Try-approval-again via getOrder and create_attempt; return handler steps 1-6 incl. 404 before any provider call for a foreign token (RS-27) and the RS_TEST_HOOKS-only crash_after_return_commit hook (F-TR-3); cancel sets buyer_cancelled_at; abandon -> non_executable (PAYMENT_CANCELLED) + void rule",
+        "void rule completed for provider authorizations: cancel_requested_at on every non-terminal operation, authorized -> queue so:<id>:void:1, queued authorize -> cancelled + voided locally, resolution hook on every transition into authorized (ARCH-22); void results ok -> voided, rejected -> read authorization",
+        "Order.presentation and SupplierOrder can* flags per F-TR-11; receipt route; Payment objects carry provider, simulated, sandbox and merchantMode",
+        "Tests named RS-04 (paypal/create half), RS-18, RS-19 (fake and Sandbox adapter against paypal-stub, asserting the provider request body), RS-20 (three return hits -> one authorize), RS-21 (DENIED path with the exact buyer message), RS-27 (return/cancel with another customer's token: 404, fake call count unchanged)"
+      ],
+      "verification": {
+        "method": "payment-flow API tests under the net guard",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js test/api/isolation.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "e3-webhooks",
+      "phase": "e-payments",
+      "title": "Verified PayPal webhooks: pre-checks, per-IP limit, signature verification, dedupe among valid events, merchant-scoped mapping",
+      "owner": "backend-engineer",
+      "dependencies": ["e2-payment-flow"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#webhooks",
+        ".eccode/artifacts/design/spec.md#security (T13)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-23, RS-24)"
+      ],
+      "outputs": ["src/services/webhooks.js", "src/routes/webhooks.js", "test/api/webhooks.test.js"],
+      "components": ["webhooks"],
+      "files": ["src/services/webhooks.js", "src/routes/webhooks.js", "test/api/webhooks.test.js"],
+      "acceptanceCriteria": [
+        "Route public, CSRF-exempt, session-free, raw body <= 65,536 bytes kept byte-exact; unknown merchantKey -> 404; 60 per IP per minute -> 429 with no row (SEC-6)",
+        "Pre-checks before any provider call: five headers present, transmission id pattern, auth algo allow-list (RS_PAYPAL_WEBHOOK_ALGOS), time within 15 min, cert URL https on a paypal.com host and never fetched, JSON with a mapped event_type; failure -> invalid row with flag_reason, 400 WEBHOOK_SIGNATURE_INVALID",
+        "RS-23: a valid duplicate transmission id -> 200 duplicate with no effect; dedupe only among valid rows; RS-24: verification FAILURE -> invalid row, 400, no transition; unreachable verification -> unverified row, 503",
+        "Mapping requires merchant_key, provider = active adapter and archived_at IS NULL (SEC-16); transitions only as states.js allows (CAS), else flagged; the resolution hook queues a void for a cancelled operation turning authorized",
+        "Stored payload is the minimised summary only (no payer data)"
+      ],
+      "verification": {
+        "method": "webhook API tests under the net guard",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "e4-saga-reconciler",
+      "phase": "e-payments",
+      "title": "Execute claim and capture saga (steps 1-4) with lease fencing, and the reconciler (stale intents, read-before-resend, pending polls, expiry, sender table, housekeeping)",
+      "owner": "backend-engineer",
+      "dependencies": ["e2-payment-flow"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#payment-saga-with-lease-fencing-arch-23-arch-26-resolved (steps 1-4, lease and fence)",
+        ".eccode/artifacts/design/spec.md#reconciler-servicesreconcilerjs",
+        ".eccode/artifacts/design/spec.md#provider-call-protocol-servicescallsjs-every-mutating-paypal-call (§5-7)",
+        ".eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id--session-user-a-foreign-or-archived-id--404 (execute check order)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-20, RS-21, RS-25)"
+      ],
+      "outputs": ["src/services/saga.js, src/services/reconciler.js", "execute route in src/routes/plans.js", "src/main.js starting the listener and the reconciler", "API tests listed in files"],
+      "components": ["saga", "reconciler"],
+      "files": [
+        "src/services/saga.js",
+        "src/services/reconciler.js",
+        "src/routes/plans.js",
+        "src/main.js",
+        "src/app.js",
+        "test/api/execute.test.js",
+        "test/api/lost-response.test.js",
+        "test/api/authorization-pending.test.js",
+        "test/api/void-rule-lost-authorize.test.js",
+        "test/api/reconciler.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Execute: the spec's check order on stored data only, conditional approved -> executing UPDATE with executor_id, lease_epoch + 1 and lease_until inside BEGIN IMMEDIATE, no provider call before or inside it; losers get 200 with the current state; the winner consumes the reservation (consume ledger rows) and queues so:<id>:capture:1 per order (ARCH-23) [execute.test.js]",
+        "Post-claim authorization read under the fence, then sequential captures in supplier-code order with start/record under G(now); step 3 pauses without a send on capture_pending or unknown (F-TR-7 first half); all captured -> executed; lease >= 3 x timeout enforced by config",
+        "Reconciler tick in order: stale intents -> unknown, resolve unknown by reading first (protocol §6), poll pending, expire reservations, take over executing plans whose lease lapsed (completed in phase F), send queued authorize/void/refund per the sender table, release check, drain the re-plan queue through supersession.js, housekeeping incl. purge of invalid/unverified webhook rows older than 7 days (SEC-6) and stale reserved model-spend rows",
+        "RS-25 lost capture response cases, RS-21 PENDING case (execute 409 AUTHORIZATION_PENDING until the reconciler sees CREATED), ARCH-22 lost-authorize test (exactly one void after supersession and reconcile, plus the row-2 escalation clause)",
+        "main.js starts the fake approval listener (fake provider only) and the reconciler at startup and every RS_RECONCILE_INTERVAL_MS"
+      ],
+      "verification": {
+        "method": "saga and reconciler API tests under the net guard",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "e5-frontend-payments",
+      "phase": "e-payments",
+      "title": "Payment UI: approvals per supplier with provider badges, try-again and abandon, complete purchase, receipt, supplier ready/handover, cancelled presentation, polling",
+      "owner": "frontend-engineer",
+      "dependencies": [],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#frontend (section 7-8 actions, Labels, Client state management)",
+        ".eccode/artifacts/design/spec.md#shared-response-objects (Payment, Order, Labels)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-18, RS-31, RS-34)"
+      ],
+      "outputs": ["public/js/components/payments.js, commitments.js, status.js, banner.js; request-detail and supplier-orders views", "test/fixtures/contracts for payment routes"],
+      "components": ["frontend"],
+      "files": [
+        "public/**",
+        "test/fixtures/contracts/**",
+        "test/unit/frontend/**",
+        "test/scan/frontend.test.js"
+      ],
+      "acceptanceCriteria": [
+        "'PayPal approvals: 1 of 2 — Supplier A — Approve with PayPal' with location.assign to the approval URL (no form post to another origin), badge 'Simulated' or 'PayPal Sandbox — no real money', single-credential notice 'All demo suppliers are paid to one Sandbox account'",
+        "After a cancel: 'Try approval again' and 'Abandon purchase'; 'Complete purchase' when every supplier confirmed; 'Record receipt'; RESERVATION_LIMIT message with a link to the other request",
+        "Orders of a non_executable plan read 'Cancelled — payment did not complete' with supplier actions hidden (F-TR-11); supplier view marks ready and records handover",
+        "poll.js refreshes every 2 s while the status is transient, backs off to 10 s after 2 min, pauses when hidden; textContent only; contract fixtures for the payment routes"
+      ],
+      "verification": {
+        "method": "frontend scan and unit tests",
+        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "e6-execute-concurrency-browser",
+      "phase": "e-payments",
+      "title": "Two-process execute test, HTTP contract extension, opt-in live PayPal suite files, and the cross-site happy-path browser journey",
+      "owner": "test-engineer",
+      "dependencies": ["e3-webhooks", "e4-saga-reconciler", "e5-frontend-payments"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#testing-strategy (rs20-two-process-execute, E2E approval round-trip assertion)",
+        ".eccode/artifacts/design/spec.md#deployment (README live runbooks)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-20, RS-31, NFR3)"
+      ],
+      "outputs": ["test/integration/rs20-two-process-execute.test.js", "test/api/contracts.test.js extension", "test/live/paypal/*.test.js incl. journey-sandbox.test.js", "test/browser/journey-happy.test.js and the shared approval round-trip helper"],
+      "components": ["test-infra", "browser", "payments"],
+      "files": [
+        "test/helpers/**",
+        "test/integration/rs20-two-process-execute.test.js",
+        "test/api/contracts.test.js",
+        "test/browser/**",
+        "test/live/paypal/**",
+        "package.json"
+      ],
+      "acceptanceCriteria": [
+        "RS-20 two processes x 5 concurrent execute: one claim, nine current-state answers, exactly N get_authorization + N capture calls in fake_paypal_calls and nothing else (F-TR-8), request ids so:<id>:capture:1",
+        "RS-31(a) journey-happy at 360 and 1280 px with screenshots: app on http://localhost:<port>, fake approval page on http://127.0.0.1:<port2>; every 'Approve (simulated)' followed by waitForURL on the app origin, exactly one GET /api/paypal/return per approval with the session's user id in the server log, one Cancel landing on /api/paypal/cancel with the session, no 'Content Security Policy' console message (F-TR-14); the round-trip assertion is a shared helper reused in phases F and G",
+        "LIVE-DEPENDENT: test/live/paypal/*.test.js cover RS-18, RS-19, RS-20, RS-23, RS-24 and journey-sandbox for RS-31(b)/RS-32(b) against the real Sandbox; they refuse (exit 2, named message) unless RS_LIVE_PAYPAL=1 and RS_PAYPAL_DEFAULT_CLIENT_ID, RS_PAYPAL_DEFAULT_CLIENT_SECRET, RS_PAYPAL_DEFAULT_WEBHOOK_ID (or per-supplier sets) are present; reports carry suite, provider and merchant mode; they are never run or reported as passed here (LIVE-P1, LIVE-P2); only the test:live-paypal line of package.json may change and it keeps the check-node prefix",
+        "npm test and npm run test:browser pass"
+      ],
+      "verification": {
+        "method": "full offline suite and browser suite (run with --timeout 1200)",
+        "command": "npm test && npm run test:browser",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "f1-supersession-refusal-expiry",
+      "phase": "f-compensation",
+      "title": "Supersession on offer and stock changes, durable re-plan queue, supplier refusal with re-plan excluding the supplier, expiry with voids",
+      "owner": "backend-engineer",
+      "dependencies": ["e6-execute-concurrency-browser"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#supersession-servicessupersessionjs",
+        ".eccode/artifacts/design/spec.md#rescue-status-derivation-revision-2-domainderivejs-f-tr-2-f-tr-3-f-tr-5 (Re-plan queue semantics)",
+        ".eccode/artifacts/design/spec.md#reservation-servicesreservationsjs (Expiry pass)",
+        ".eccode/artifacts/design/spec.md#supplier-routes-role-supplier-every-query-scoped-to-userssupplier_id (refuse)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-13, RS-15, RS-17)"
+      ],
+      "outputs": ["src/services/{supersession,orders,reservations,plans}.js", "src/routes/supplier.js", "API tests listed in files"],
+      "components": ["supersession", "replan", "reservations"],
+      "files": [
+        "src/services/supersession.js",
+        "src/services/orders.js",
+        "src/services/reservations.js",
+        "src/services/plans.js",
+        "src/routes/supplier.js",
+        "test/api/supersession.test.js",
+        "test/api/supplier-refusal.test.js",
+        "test/api/reservation-expiry.test.js",
+        "test/api/replan-queue.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Supersession selection and effect exactly as the spec (price, prep fee, ready time, withdrawal, on_hand decrease; not after the affected supplier confirmed or the plan is executing; other customers' reservations never supersede); approved versions also get the void rule; messages 'Prices changed: review plan vN' or 'Review the new plan'",
+        "Re-plan queue (F-TR-2): an entry is removed only with the new planning run or request deletion/archive; up to 3 recomputes on offers_hash change; failures back off with failed_drains and never drop the entry; after 5 failed drains the next step is REPLAN",
+        "Supplier refusal before the claim: order refused, void rule (SUPPLIER_REFUSED), re-plan excluding that supplier; after the claim 409 ORDER_EXECUTED; the admin supplier_refusal and stock_depletion faults use the same services",
+        "RS-13, RS-15 (incl. expiry after the claim changing nothing and the exact message), RS-17 [D] tests named with their ids"
+      ],
+      "verification": {
+        "method": "supersession, refusal, expiry and re-plan API tests under the net guard",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/reservation-expiry.test.js test/api/replan-queue.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "f2-compensation-takeover-admin",
+      "phase": "f-compensation",
+      "title": "Capture-failure compensation with refunds and restock, lease takeover with epoch and send-token fencing, admin refund_order and forced reset, ledger completeness",
+      "owner": "backend-engineer",
+      "dependencies": ["e6-execute-concurrency-browser"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#payment-saga-with-lease-fencing-arch-23-arch-26-resolved (steps 5-6, Why no double capture)",
+        ".eccode/artifacts/design/spec.md#reconciler-servicesreconcilerjs (step 5 takeover, step 7 release check)",
+        ".eccode/artifacts/design/spec.md#void-rule-arch-22-resolved (step 6, F-TR-6)",
+        ".eccode/artifacts/design/spec.md#admin-routes-role-admin (refund_order, Reset, Forced reset SEC-11)",
+        ".eccode/artifacts/design/spec.md#recovery",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-22, RS-26, RS-37, RS-38)"
+      ],
+      "outputs": ["src/services/{saga,reconciler,calls,void-rule,admin}.js", "src/routes/admin.js", "API tests listed in files"],
+      "components": ["saga", "reconciler", "admin", "ledger"],
+      "files": [
+        "src/services/saga.js",
+        "src/services/reconciler.js",
+        "src/services/calls.js",
+        "src/services/void-rule.js",
+        "src/services/admin.js",
+        "src/routes/admin.js",
+        "test/api/capture-compensation.test.js",
+        "test/api/void-capture-race.test.js",
+        "test/api/admin-reset.test.js",
+        "test/api/admin-refund-order.test.js",
+        "test/api/ledgers.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Compensation (step 5) in one transaction under the fence: plan non_executable (CAPTURE_FAILED | AUTHORIZATION_EXPIRED), reservation consumed -> reconciling, queued captures cancelled, authorized -> void, captured -> refund_requested + so:<id>:refund:1; refund results to refunded / refund_pending (polled) / refund_failed (escalation); release check -> released with restock rows only when nothing is outstanding",
+        "Takeover (step 6): epoch + 1 inside BEGIN IMMEDIATE only when lease_until <= now and no operation is capture_pending or unknown (F-TR-7); every open capture call resolved by reading before any send; re-send only with the same PayPal-Request-Id; late result writes fenced by epoch and send_token (saga.lease_lost logged)",
+        "F-TR-6: a rejected void whose read shows CAPTURED moves the operation to captured and queues the refund in the same transaction",
+        "Admin refund_order only for captured operations of executed plans; forced reset per SEC-11 (void authorized, bounded 30 s read-resolve pass, stranded list in response and audit); reset archives operations and provider calls, never deletes",
+        "RS-22 (incl. PENDING capture with lease_epoch constant across ticks), RS-37, RS-38 (every reserve, release, expire, consume and restock writes a ledger row; per-product ledger sums equal on_hand and reserved) tests named with their ids"
+      ],
+      "verification": {
+        "method": "compensation, admin and ledger API tests under the net guard",
+        "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "f3-frontend-recovery",
+      "phase": "f-compensation",
+      "title": "Recovery UI: refusal reason and new plan, replanning and price-change states, compensation section, expired reservation, admin faults and supplier refusal forms",
+      "owner": "frontend-engineer",
+      "dependencies": [],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#frontend (section 7 'If something fails', States, admin screen)",
+        ".eccode/artifacts/design/spec.md#shared-response-objects (RescueStatus, nextStep codes and sentences)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-13, RS-15, RS-17, RS-22, RS-32)"
+      ],
+      "outputs": ["public/js/components/compensation.js and request-detail, supplier-orders, admin views", "test/fixtures/contracts for refusal, faults and compensation states"],
+      "components": ["frontend"],
+      "files": [
+        "public/**",
+        "test/fixtures/contracts/**",
+        "test/unit/frontend/**",
+        "test/scan/frontend.test.js"
+      ],
+      "acceptanceCriteria": [
+        "'If something fails' lists per-order payment status text, voids and refunds outstanding with outcome, and the next step; replanning shows 'Finding a new plan with current stock…' and keeps polling; 'Prices changed: review plan vN', 'Review the new plan', 'Reservation expired — no money was taken; re-plan with current stock' with Re-plan, failed_needs_attention with 'Contact the organiser'",
+        "Supplier refuse form (reason 1-300) and admin faults form (stock depletion, supplier refusal, refund order, fake PayPal and fake model faults, clear), reset with force and reason, timeline and metrics tables",
+        "textContent only; contract fixtures for the new states"
+      ],
+      "verification": {
+        "method": "frontend scan and unit tests",
+        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "f4-restart-takeover-browser",
+      "phase": "f-compensation",
+      "title": "Restart, lease-takeover and return-crash multi-process tests, refusal and replacement browser journeys",
+      "owner": "test-engineer",
+      "dependencies": ["f1-supersession-refusal-expiry", "f2-compensation-takeover-admin", "f3-frontend-recovery"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#testing-strategy (rs26-restart, lease-takeover, return-crash, E2E)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-17, RS-26, RS-32)"
+      ],
+      "outputs": ["test/integration/rs26-restart.test.js, lease-takeover.test.js, return-crash.test.js", "test/browser/refusal.test.js, journey-replacement.test.js", "test/api/contracts.test.js extension"],
+      "components": ["test-infra", "browser"],
+      "files": [
+        "test/helpers/**",
+        "test/integration/rs26-restart.test.js",
+        "test/integration/lease-takeover.test.js",
+        "test/integration/return-crash.test.js",
+        "test/api/contracts.test.js",
+        "test/browser/**"
+      ],
+      "acceptanceCriteria": [
+        "RS-26: SIGKILL after the first capture, restart, lease expiry, reconciler completes, all rows preserved; lease-takeover variants A (freeze_after_capture_apply) and B (freeze_before_capture_apply) with SIGSTOP/SIGCONT, lease 1500 ms, timeout 500 ms, interval 200 ms: exactly one non-replayed capture per order and the plan executed (ARCH-26); return-crash (a), (b), (c) (F-TR-3)",
+        "RS-17 browser refusal journey (refusal reason, 'Review the new plan', new plan without the supplier) and RS-32(a) journey-replacement (stock depletion of B before B confirms, approve the 9500-cent A+E plan, old plan superseded with voids and B cancelled, completion through collection) at 360 and 1280 px with the approval round-trip helper",
+        "npm test and npm run test:browser pass"
+      ],
+      "verification": {
+        "method": "full offline suite and browser suite (run with --timeout 1200)",
+        "command": "npm test && npm run test:browser",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "g1-frontend-a11y-labels",
+      "phase": "g-release",
+      "title": "Accessibility and state completeness, six-answer request page, labels for both payment adapters and test mode",
+      "owner": "frontend-engineer",
+      "dependencies": ["f4-restart-takeover-browser"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#frontend (Accessibility, States, Labels, request page sections 1-8)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria (RS-34, RS-35, NFR2)"
+      ],
+      "outputs": ["public/** final"],
+      "components": ["frontend"],
+      "files": [
+        "public/**",
+        "test/fixtures/contracts/**",
+        "test/unit/frontend/**",
+        "test/scan/frontend.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Every control labelled, errors tied by aria-describedby, 3 px visible focus with >= 3:1 contrast, text contrast >= 4.5:1, skip link, focus to h1 on route change, announcements in #announcer, aria-disabled with a text reason, targets >= 44 px at 360 px, single column at 360 px with no horizontal scroll, two columns >= 1024 px",
+        "Every data section renders loading, empty, error with Retry, timeout, expired-reservation, degraded-extraction and success states",
+        "The request page answers the six questions in the spec's order with text from planner and derive codes",
+        "Persistent banners and badges for both adapters: 'Simulated payments and/or AI — nothing here is real', 'PayPal Sandbox — no real money' on every payment element, 'Demo data', 'Test prices, not market prices', single-credential notice, 'Test mode — local stubs, nothing is real' when labels.testMode"
+      ],
+      "verification": {
+        "method": "frontend scan and unit tests",
+        "command": "node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "g2-docs-submission",
+      "phase": "g-release",
+      "title": "Final README with runbooks and operator notes, .env.example review, submission materials draft and the docs scan",
+      "owner": "devops-engineer",
+      "dependencies": ["f4-restart-takeover-browser"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#deployment (README, Environment variables, Backups)",
+        ".eccode/artifacts/architecture/brief.md#constraints, #success-criteria, #open-questions (Q1-Q10)",
+        ".eccode/reviews/rev-mv1e1ohb-01183fe4.json (F-TR-17, F-TR-18)"
+      ],
+      "outputs": ["README.md", ".env.example", "LICENSE", "docs/runbooks/live-model.md, docs/runbooks/live-paypal.md", "docs/submission/* (project description and demo-video script drafts)", "test/scan/docs.test.js"],
+      "components": ["docs"],
+      "files": [
+        "README.md",
+        ".env.example",
+        "LICENSE",
+        "docs/runbooks/**",
+        "docs/submission/**",
+        "test/scan/docs.test.js"
+      ],
+      "acceptanceCriteria": [
+        "README: clean-checkout steps (npm install from the npm registry, npm run seed, npm start, npm test), the manual two-step start line, npx playwright install chromium once for test:browser, demo accounts and RS_DEMO_PASSWORD semantics (SEC-5), RS_ALLOW_SIGNUP=0 and share 0.2 for public deployments, the operator note for retakes (F-TR-15), RS_REGISTER_PER_IP_PER_HOUR (F-TR-17), retention statement, labelling statement, Node floor and Q9 branch, MIT licence, backups",
+        "Runbooks: live model (RS_LIVE_MODEL=1, CLI login or ANTHROPIC_API_KEY, USD 5 ceiling, report location) and live PayPal (RS_LIVE_PAYPAL=1, RS_PAYPAL_DEFAULT_CLIENT_ID / _CLIENT_SECRET / _WEBHOOK_ID or per-supplier sets as environment secrets, allow-list api-m.sandbox.paypal.com and www.sandbox.paypal.com, merchant modes, optional webhook URL, the RS-31(b)/RS-32(b) Sandbox browser journeys with a Sandbox buyer account)",
+        "Submission drafts state that the demo video must show PayPal's hosted Sandbox approval page (user-run) and label everything simulated, demo or Sandbox; no secret values anywhere",
+        "test/scan/docs.test.js asserts the README names every npm script, the start line, the playwright install line and the runbooks, and that docs contain no secret-looking value"
+      ],
+      "verification": {
+        "method": "docs and env-example scans",
+        "command": "node --test test/scan/docs.test.js test/scan/env-example.test.js",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "g3-final-scans-browser",
+      "phase": "g-release",
+      "title": "Final scans and browser checks: secrets over every artifact, labelling on both adapters, six answers, accessibility, live-suite refusal, SQL scan, performance report",
+      "owner": "test-engineer",
+      "dependencies": ["g1-frontend-a11y-labels", "g2-docs-submission"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria (RS-29, RS-34, RS-35, NFR2, NFR3, NFR5)",
+        ".eccode/artifacts/design/spec.md#testing-strategy (E2E, Timing)",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria"
+      ],
+      "outputs": ["test/scan/secrets.test.js (full), test/scan/sql.test.js, test/scan/live-refusal.test.js", "test/api/labelling.test.js", "test/browser/a11y-states.test.js, six-questions.test.js, labelling.test.js", "scripts/report-p95.js adjustments if needed"],
+      "components": ["test-infra", "browser", "security"],
+      "files": [
+        "test/helpers/**",
+        "test/scan/secrets.test.js",
+        "test/scan/sql.test.js",
+        "test/scan/live-refusal.test.js",
+        "test/api/labelling.test.js",
+        "test/api/contracts.test.js",
+        "test/browser/**",
+        "scripts/report-p95.js"
+      ],
+      "acceptanceCriteria": [
+        "RS-29: secrets.test.js scans public/ assets, recorded API responses, server logs, test/browser/out screenshots (text layer and file names), docs/submission and README for client ids, secrets and the planted test credentials; config errors are redacted",
+        "RS-34 [D] labelling.test.js with both adapters (Sandbox adapter against paypal-stub only under RS_TEST_OFFLINE=1, asserting labels.testMode) and [B] labelling.test.js with both adapters",
+        "RS-35 six-questions and NFR2 a11y-states (keyboard-only happy path with the approval round-trip helper, axe-free assertions on labels, focus, contrast tokens, target sizes, no horizontal scroll at 360 px, every state) at 360 and 1280 px",
+        "NFR3 live-refusal.test.js runs both live scripts without their flags and asserts exit 2 and the named message; sql.test.js forbids template literals in db.prepare( calls (T20); NFR5 report-p95 thresholds and suite time pass",
+        "npm test and npm run test:browser pass on the final tree"
+      ],
+      "verification": {
+        "method": "full offline suite and browser suite on the final tree (run with --timeout 1200)",
+        "command": "npm test && npm run test:browser",
+        "cwd": "."
+      }
+    },
+    {
+      "id": "g4-evidence-table",
+      "phase": "g-release",
+      "title": "Project evidence table for all 45 criteria with Unverified live rows, and the final clean-checkout run",
+      "owner": "test-engineer",
+      "dependencies": ["g3-final-scans-browser"],
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#criterion-traceability-all-45-required-criteria",
+        ".eccode/artifacts/design/spec.md#risks-touched-by-this-design (SEC-18)",
+        ".eccode/artifacts/architecture/brief.md#assumptions (A2, A4, A6), #open-questions (Q2, Q3, Q9)",
+        ".eccode/reviews/rev-mv1e1ohb-01183fe4.json (F-TR-18)",
+        ".eccode/artifacts/plan/plan.md (Live checks LIVE-M1, LIVE-P1, LIVE-P2)"
+      ],
+      "outputs": ["docs/evidence-table.md", "test/scan/evidence-table.test.js"],
+      "components": ["docs", "verification"],
+      "files": ["docs/evidence-table.md", "test/scan/evidence-table.test.js"],
+      "acceptanceCriteria": [
+        "docs/evidence-table.md has one row per criterion RS-01..RS-39 and NFR1..NFR6 with suite tags, test files and names, and the ev: ids of the runs that prove it",
+        "Rows with live parts (RS-01, RS-02, RS-03, RS-05, NFR6 [LM]; RS-18, RS-19, RS-20, RS-23, RS-24 [LP]; RS-31(b), RS-32(b)) mark the live part Unverified with its blocker (LIVE-M1: A4/Q3; LIVE-P1/LIVE-P2: A6/Q2) and never claim a pass; RS-20/RS-26 Sandbox rows say they rest on the fake's model of PayPal until the live run (SEC-18); rows weakened by single-credential mode are labelled (A2); the NFR6 row states that the case runs with RS_MODEL_CUSTOMER_DAILY_SHARE=1 (F-TR-18); the RS-36 row names the derive.js inspection (F-TR-9); NFR1 notes that the 22.5 branch run is the user's (Q9)",
+        "test/scan/evidence-table.test.js asserts all 45 ids are present, every ev: id matches the record pattern, and every Unverified row names a blocker",
+        "scripts/clean-checkout.sh passes on the final tree"
+      ],
+      "verification": {
+        "method": "evidence-table scan and the final clean-checkout run (run with --timeout 1200)",
+        "command": "node --test test/scan/evidence-table.test.js && sh scripts/clean-checkout.sh",
+        "cwd": "."
+      }
+    }
+  ]
+}
