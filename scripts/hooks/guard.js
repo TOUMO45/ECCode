@@ -46,20 +46,30 @@ const LIB = path.join(__dirname, '..', '..', 'lib');
 const IMPLEMENTERS = new Set(['frontend-engineer', 'backend-engineer', 'ai-engineer', 'test-engineer', 'devops-engineer', 'learning-debugger', 'delivery-lead']);
 const ROLES = new Set([...IMPLEMENTERS, 'product-architect', 'architecture-reviewer', 'technical-designer', 'technical-reviewer', 'security-reviewer']);
 // Record areas written only by the CLI (review drafts are the reviewers' scratch area).
-const RECORD_AREA = String.raw`\.eccode\/(?:events\.jsonl|state\.json|config\.json|\.lock|memory\/|improvements\/|evidence\/|handoffs\/|delivery\/|reviews\/(?!drafts\/))`;
-const RECORD_FILES = new RegExp(String.raw`(^|\/)${RECORD_AREA}`);
+// Both separators are accepted, and repeated ones (a backslash doubled inside a quoted program): an agent on Windows writes native paths (C:\proj\.eccode\state.json)
+// and a command string is read before any path normalisation.
+const RECORD_AREA = String.raw`\.eccode[\\/]+(?:events\.jsonl|state\.json|config\.json|\.lock|memory[\\/]+|improvements[\\/]+|evidence[\\/]+|handoffs[\\/]+|delivery[\\/]+|reviews[\\/]+(?!drafts[\\/]+))`;
+const RECORD_FILES = new RegExp(String.raw`(^|[\\/])${RECORD_AREA}`);
 // Shell commands that write their (later) path argument, and code that writes files.
 const SHELL_WRITE = new RegExp(String.raw`(>|\btee\b|\b(?:sed|perl)\s+(?:-\w+\s+)*-\w*i|\bmv\b|\bcp\b|\brm\b|\btruncate\b|\bdd\b|\bln\b|\binstall\b|\brsync\b|\btouch\b)[^|;&]*${RECORD_AREA}`);
 const CODE_WRITE = /\b(writeFileSync|writeFile|writeSync|appendFileSync|appendFile|createWriteStream|rmSync|rmdirSync|unlinkSync|unlink|renameSync|rename|copyFileSync|copyFile|cpSync|truncateSync|ftruncateSync|symlinkSync|fs\.rm|promises\.rm|write_text|write_bytes|os\.remove|os\.rename|os\.replace|os\.rmdir|os\.truncate|shutil\.\w+|File\.(?:write|delete)|IO\.write|FileUtils\.\w+|file_put_contents|fwrite|Deno\.(?:write\w*|remove\w*|rename|copyFile\w*|truncate\w*))\b|\bopen\s*\([^)]*['"][wax]b?\+?['"]/;
 // Variables that change who the CLI acts as, or its clock (order rules), when set inline.
 const IDENTITY_ENV = /^(?:ECCODE_ACTOR|ECCODE_TEST|ECCODE_NOW)(?:=|$)/;
-const ECCODE_WORD = /(^|\/)eccode(\.js)?$/;
+const ECCODE_WORD = /(^|[\\/])eccode(\.js)?$/;
 // git subcommands that can revert, stash or delete working-tree files.
 const GIT_REVERTING = new Set(['checkout', 'restore', 'reset', 'stash', 'clean', 'rm', 'mv']);
 // Words that run the command after them (their own flags and numeric arguments are skipped).
 const WRAPPERS = new Set(['env', 'exec', 'command', 'builtin', 'nohup', 'nice', 'time', 'timeout', 'sudo', 'npx', 'xargs', 'stdbuf']);
 const CHDIR = new Set(['cd', 'pushd', 'popd']);
 const MAX_DEPTH = 4;
+// On Windows a backslash followed by a path character is a path separator (C:\Users\me\x.json), not a
+// shell escape: the tokenizer keeps it so that native paths stay absolute and the record patterns
+// still match. This reads stricter than Git Bash (which would drop the backslash) and therefore
+// fails closed. ECCODE_GUARD_PLATFORM overrides the platform for the test suite only.
+const WIN_PATH_CHAR = /[A-Za-z0-9_.~-]/;
+let platform = process.platform;
+if (process.env.ECCODE_TEST === '1' && process.env.ECCODE_GUARD_PLATFORM) platform = process.env.ECCODE_GUARD_PLATFORM;
+const isWin32 = () => platform === 'win32';
 
 // Where each kind of role may write under .eccode/ (drafts are shared scratch).
 const DOC_AUTHORS = new Set(['product-architect', 'technical-designer', 'delivery-lead']);
@@ -131,7 +141,9 @@ function splitCommands(src) {
   for (let i = 0; i < src.length; i++) {
     const c = src[i];
     if (c === '\\') {
-      if (src[i + 1] !== undefined && src[i + 1] !== '\n') add(src[i + 1]);
+      const n = src[i + 1];
+      if (isWin32() && n !== undefined && WIN_PATH_CHAR.test(n)) { add('\\'); continue; }
+      if (n !== undefined && n !== '\n') add(n);
       i++;
     } else if (c === "'") {
       const j = src.indexOf("'", i + 1);
@@ -472,13 +484,18 @@ function main(input) {
   }
 }
 
-let raw = '';
-process.stdin.on('data', (c) => (raw += c));
-process.stdin.on('end', () => {
-  try {
-    main(JSON.parse(raw || '{}'));
-  } catch (err) {
-    process.stderr.write(`eccode guard: internal error, allowing tool call: ${err.message}\n`);
-  }
-  process.exit(0);
-});
+if (require.main === module) {
+  let raw = '';
+  process.stdin.on('data', (c) => (raw += c));
+  process.stdin.on('end', () => {
+    try {
+      main(JSON.parse(raw || '{}'));
+    } catch (err) {
+      process.stderr.write(`eccode guard: internal error, allowing tool call: ${err.message}\n`);
+    }
+    process.exit(0);
+  });
+} else {
+  // Unit-test surface (tests/review-F9-win32-guard.test.js); the hook itself always runs as a script.
+  module.exports = { splitCommands, eccodeActors, RECORD_FILES, ECCODE_WORD, __setPlatform: (p) => { platform = p; } };
+}
