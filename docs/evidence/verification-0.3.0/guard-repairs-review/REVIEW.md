@@ -338,3 +338,43 @@ $ node probes4.js → 0 mismatches ; node probes5.js → 1 mismatch (pre-existin
 ```
 
 Nothing committed; worktree clean.
+
+---
+
+# Re-review of 1fcda26, branch `eccode/guard-repairs`
+
+**Verdict: approve.** J1 is closed for the real (bash) attack surface: a link whose operand resolves into a record through existing links is now a record operand, so the two-turn chained alias and every chain/relative/dangling/quoted/absolute variant I could build is refused, while record-free build, draft and release lines still pass. Two residuals remain (both non-blocking): the J2 over-denial on a computed non-record link operand, and a `mklink`-only theoretical edge that is not reachable in the Bash tool's shell.
+
+- Commit: `1fcda26`. Worktree clean before and after.
+- Evidence added: `probes7.js`/`results7.txt`/`probes7-output.txt` (26 link-operand-resolution probes), `repro4-1fcda26.txt` (J1 now denied, with the beb7fbb/9c4d5aa comparison), `probes4-1fcda26.txt`, `probes5-1fcda26.txt`, `probes6-1fcda26.txt`, `tests-1fcda26.txt`.
+- Tests: six guard files **76/76 pass**; `npm run check` **246/246 pass**, exit 0.
+
+## J1 closed (verified)
+
+`repro4-1fcda26.txt`: the turn-2 command `ln -s a b && echo FORGED > b/state.json` (with `a -> .eccode` pre-existing) is now **deny** on 1fcda26, **allow**+clobber on beb7fbb, **deny** on 9c4d5aa — the regression is fixed without returning to 9c4d5aa's breadth.
+
+`probes7.js` (26 probes, operands reaching a record only through existing links), all **deny** as required: a one-hop alias (`a -> .eccode`), a two-hop and three-hop chain (`a2`, `a3`), `cp -s` and `cp -l` variants, an alias of a record **subdirectory** (`mem -> .eccode/memory`; `ln -s ./a/memory m`), a relative-link dir (`src/rel -> ../.eccode`) and a two-up relative link into a record subdir (`src/deep/relmem -> ../../.eccode/memory`), quoted and double-quoted operands, a flag-separated operand (`ln -sfn a b`), an absolute operand, a **dangling** link into the record (`dang -> .eccode/newrec.json`), and the same from a **subdirectory cwd** (`cwd=src`, `ln -s ../a b` and `ln -s rel b`). Record-free and draft-area cases all **allow**: `srclink -> src`, `dr -> .eccode/drafts` (and a dangling link into a draft area), the plain build line, the release line, `cp -l` of a non-record file, a read through a record link, a single-target record-link creation (nothing to bind), and an absolute non-record operand.
+
+The earlier suites are unchanged: `probes4.js` **0 mismatches**; `probes5.js` 1 (the pre-existing ownership rule on `devops-ln-build-role`, not the link rule); `probes6.js` 1 (J2 below); `repro3`/`repro3b` H1 clobber/forge still denied.
+
+## Residuals (non-blocking)
+
+| # | Severity | Summary |
+|---|---|---|
+| J2 | Low (over-denial) | the `\|\| link.computed` clause still denies a multi-write line with a **computed, non-record** link operand: `D=$PWD; ln -s $D/src/x y && echo x > z` → deny (`probes6.js` `ok-computed-nonrecord`). This is the deliberate price of catching a dynamic record operand the guard cannot resolve; acceptable, worth a threat-model note. |
+| J3 | Low (theoretical, not reachable in bash) | `mklink b a && echo x > b/state.json` (with `a -> .eccode`) → **allow** (`probes7.js` `mklink-chain`): `mklink` contributes no write target in `bashWriteTargets`, so the line has one bound target and the `targets.length > 1` guard skips the rule. But `mklink` is a Windows **cmd.exe** builtin and does not exist in the Bash tool's shell (bash / Git Bash on every platform, per the guard's own tokenizer note), so `mklink b a` cannot create the link there and the write cannot be redirected — not exploitable in the runtime. If belt-and-suspenders is wanted, count `mklink`'s link operand toward the target total (or add it to `bashWriteTargets`). |
+
+No security gap found in the operand-resolution fix.
+
+## Commands and outputs
+
+```
+$ cd <worktree> && git log --oneline -1 → 1fcda26 Guard: a link operand that already resolves into a record counts as a record operand …
+$ node --test <six guard files>        → # pass 76 / # fail 0
+$ npm run check                        → # tests 246 / # pass 246 / # fail 0, exit 0
+$ bash repro4.sh  → 1fcda26 chained-alias write DENY; beb7fbb ALLOW+clobber 1995 to 7; 9c4d5aa DENY (repro4-1fcda26.txt)
+$ node probes7.js → 26; 1 mismatch (J3 mklink, not reachable in bash); all ln/cp chain/relative/dangling/quoted/abs cases deny (results7.txt)
+$ node probes4.js → 0 ; probes5.js → 1 (pre-existing ownership) ; probes6.js → 1 (J2)
+```
+
+Nothing committed; worktree clean.

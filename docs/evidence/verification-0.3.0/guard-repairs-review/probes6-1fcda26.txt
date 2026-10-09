@@ -25,28 +25,3 @@ DEFEAT-NARROWING | ok-rm-build | main | Bash | allow | allow | ok |  |
 DEFEAT-NARROWING | ok-release | main | Bash | allow | allow | ok |  | 
 DEFEAT-NARROWING | ok-cp-l | main | Bash | allow | allow | ok | hard link + unrelated write | 
 DEFEAT-NARROWING | ok-computed-nonrecord | main | Bash | deny | allow | MISMATCH | computed operand but NOT a record -> should pass? (computed fires regardless) | This command creates a link and writes files in the same command line, and the link points at a record or at a computed 
-
-## Inputs
-DEFEAT-NARROWING/assign-value-record: "D=.eccode; ln -s $D lk && echo x > lk/state.json"
-DEFEAT-NARROWING/computed-operand-split: "D=$PWD; ln -s $D/.ecc\"ode\" lk && echo x > lk/state.json"
-DEFEAT-NARROWING/cmdsubst-operand: "ln -s \"$(echo .eccode)\" lk && echo x > lk/state.json"
-DEFEAT-NARROWING/cmdsubst-pwd: "ln -s \"$(pwd)/.eccode\" lk && echo x > lk/state.json"
-DEFEAT-NARROWING/eval-link: "eval 'ln -s \"$PWD/.eccode\" lk'; echo x > lk/state.json"
-DEFEAT-NARROWING/array-link: "a=(ln -s \"$PWD/.eccode\" lk); \"${a[@]}\"; echo x > lk/state.json"
-DEFEAT-NARROWING/assign-pwd-var: "D=$PWD; E=.eccode; ln -s $D/$E lk && echo x > lk/state.json"
-DEFEAT-NARROWING/backtick-operand: "ln -s `pwd`/.eccode lk && echo x > lk/state.json"
-DEFEAT-NARROWING/param-default: "ln -s \"${X:-$PWD/.eccode}\" lk && echo x > lk/state.json"
-DEFEAT-NARROWING/literal-record-operand: "ln -s .eccode lk && echo x > lk/state.json"
-DEFEAT-NARROWING/literal-record-abs: "ln -s /tmp/eccode-test-1YchbK/.eccode lk && echo x > lk/state.json"
-DEFEAT-NARROWING/chained-alias-literal: "ln -s a b && echo x > b/state.json"
-DEFEAT-NARROWING/chained-alias-cp-s: "cp -s a b && echo x > b/config.json"
-DEFEAT-NARROWING/chained-alias-memory: "ln -s a b && echo x > b/memory/m.json"
-DEFEAT-NARROWING/chained-write-direct: "echo x > a/state.json"
-DEFEAT-NARROWING/twohop-preexisting-write: "echo x > c/state.json"
-DEFEAT-NARROWING/ok-stamp: "ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp"
-DEFEAT-NARROWING/ok-touch: "ln -s p q && touch r"
-DEFEAT-NARROWING/ok-two-links: "ln -s p q && ln -s s t"
-DEFEAT-NARROWING/ok-rm-build: "ln -s p q; rm -rf dist"
-DEFEAT-NARROWING/ok-release: "ln -sf dist/current releases/latest && echo ok > releases/latest.txt"
-DEFEAT-NARROWING/ok-cp-l: "cp -l a2 b2 && echo x > c2"
-DEFEAT-NARROWING/ok-computed-nonrecord: "D=$PWD; ln -s $D/src/x y && echo x > z"

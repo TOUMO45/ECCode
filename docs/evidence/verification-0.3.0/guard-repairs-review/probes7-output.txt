@@ -1,0 +1,30 @@
+# 1fcda26 link-operand-resolution probes against /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/guardfix/scripts/hooks/guard.js
+# node v22.22.0; 26 probes; 1 mismatches
+
+id | cwd | decision | expect | ok | note | reason
+chain-a | ../tmp/eccode-test-6VjNUv | deny | deny | ok | a -> .eccode | This command creates a link and writes files in the same command line, and the link points at a record or at a
+chain-a2 | ../tmp/eccode-test-6VjNUv | deny | deny | ok | a2 -> a -> .eccode | This command creates a link and writes files in the same command line, and the link points at a record or at a
+chain-a3 | ../tmp/eccode-test-6VjNUv | deny | deny | ok | three-hop chain | This command creates a link and writes files in the same command line, and the link points at a record or at a
+chain-cp-s | ../tmp/eccode-test-6VjNUv | deny | deny | ok |  | This command creates a link and writes files in the same command line, and the link points at a record or at a
+chain-cp-l | ../tmp/eccode-test-6VjNUv | deny | deny | ok | hard-link target resolves into record? operand a/state.json | This command creates a link and writes files in the same command line, and the link points at a record or at a
+subdir-mem | ../tmp/eccode-test-6VjNUv | deny | deny | ok | mem -> .eccode/memory | This command creates a link and writes files in the same command line, and the link points at a record or at a
+subdir-rel-literal | ../tmp/eccode-test-6VjNUv | deny | deny | ok | literal path through link a into a record subdir | This command creates a link and writes files in the same command line, and the link points at a record or at a
+rel-dotdot | ../tmp/eccode-test-6VjNUv | deny | deny | ok | operand is a relative-link dir | This command creates a link and writes files in the same command line, and the link points at a record or at a
+rel-two-up | ../tmp/eccode-test-6VjNUv | deny | deny | ok | relmem -> ../../.eccode/memory | This command creates a link and writes files in the same command line, and the link points at a record or at a
+quoted-operand | ../tmp/eccode-test-6VjNUv | deny | deny | ok | quoted operand a | This command creates a link and writes files in the same command line, and the link points at a record or at a
+dquoted-operand | ../tmp/eccode-test-6VjNUv | deny | deny | ok |  | This command creates a link and writes files in the same command line, and the link points at a record or at a
+flagged-ln | ../tmp/eccode-test-6VjNUv | deny | deny | ok | operand after -sfn | This command creates a link and writes files in the same command line, and the link points at a record or at a
+mklink-chain | ../tmp/eccode-test-6VjNUv | allow | deny | MISMATCH | mklink target a | 
+from-subdir-cwd | ../tmp/eccode-test-6VjNUv/src | deny | deny | ok | cwd is src; ../a -> .eccode | This command creates a link and writes files in the same command line, and the link points at a record or at a
+from-subdir-rel | ../tmp/eccode-test-6VjNUv/src | deny | deny | ok | cwd src; rel -> ../.eccode | This command creates a link and writes files in the same command line, and the link points at a record or at a
+dangling-operand | ../tmp/eccode-test-6VjNUv | deny | deny | ok | HARD: dang -> .eccode/newrec.json (dangling into record) | This command creates a link and writes files in the same command line, and the link points at a record or at a
+abs-operand | ../tmp/eccode-test-6VjNUv | deny | deny | ok | absolute operand to the record link | This command creates a link and writes files in the same command line, and the link points at a record or at a
+nonrecord-chain | ../tmp/eccode-test-6VjNUv | allow | allow | ok | srclink -> src, not a record | 
+draft-link | ../tmp/eccode-test-6VjNUv | allow | allow | ok | dr -> .eccode/drafts (draft area) | 
+dangling-draft | ../tmp/eccode-test-6VjNUv | allow | allow | ok | dangling into a draft area | 
+plain-nonrecord | ../tmp/eccode-test-6VjNUv | allow | allow | ok | record-free build line | 
+release-line | ../tmp/eccode-test-6VjNUv | allow | allow | ok |  | 
+cp-l-nonrecord | ../tmp/eccode-test-6VjNUv | allow | allow | ok | hard link of a non-record file | 
+read-through-link | ../tmp/eccode-test-6VjNUv | allow | allow | ok | read, not a writer | 
+single-target-record-link | ../tmp/eccode-test-6VjNUv | allow | allow | ok | one target: no write to bind | 
+nonrecord-abs | ../tmp/eccode-test-6VjNUv | allow | allow | ok | absolute non-record operand | 

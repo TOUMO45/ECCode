@@ -11,11 +11,14 @@ An independent adversarial verification of 0.3.0 (`docs/evidence/verification-0.
 - **A staged rename declares its old path** (NEW-4): completion accounting runs `git diff --no-renames`, so `git mv old new` with only `new` declared is refused; the release report still names `from`.
 - **The declared check is bound to its working directory** (NEW-5): plans may declare `verification.cwd` (relative, inside the project); completion and phase approval require the cited run's recorded cwd to equal it (default: the project root).
 
-### The guard (F4, F5, F6; pilot)
+### The guard (F4, F5, F6; pilot), restructured on real paths
+The guard repairs went through five independent review rounds (`docs/evidence/verification-0.3.0/guard-repairs-review/REVIEW.md`): the first two attempts fixed the reported cases with patterns and the reviewer found a new bypass each time (a record planted inside the record, then a record **alias** made with allowed commands). The third attempt changed the structure instead, and two further rounds closed the link cases. What ships:
+- **Every write target is judged on its real path, for every context including the main session**: Edit/Write targets and every shell writer the guard reads (redirects including `>|`, `tee`, `cp`/`mv`/`rm`/`rmdir`/`ln`/`install`/`rsync`, `sed -i`, `dd`, `find -delete`/`-exec`, `tar -x -C`, `unzip -d`) are resolved from the hook cwd through existing links, dangling links included, and judged on both the lexical and the real path. **Everything under a record directory except the three draft areas is the record** (`.eccode/drafts`, `.eccode/artifacts`, `.eccode/reviews/drafts`), replacing the enumerated file list. `xargs` feeding a writer while the line names a record is refused.
+- **Nested projects are judged by their own record** (pilot): the project root is the nearest real, non-link `.eccode/` above the target that holds `events.jsonl` and lies in no other record; `init` refuses a root inside a record. Before, a project at `examples/<app>/` inside a repository with its own record was judged by the outer record, so its reviewers and authors could not write their own draft and artifact areas (two pilot dispatches failed this way).
+- **A link created and written through in the same command line is refused** when the line names a record, an operand of the link is computed, or an operand already resolves into a record through existing links (`ln -s "$PWD/.eccode" lk && echo x > lk/state.json`; `a -> .eccode` then `ln -s a b && …`). Record-free build lines (`ln -sf ../lib/cli.js bin/cli && echo built > .build-stamp`) pass.
 - **`>|` is a redirect** (NEW-6, blocking): the clobber operator was split at its bar, so `echo x >| file` had no target and every role could write any file.
-- **Nested projects are judged by their own record** (pilot): the hook's cwd finds the project root before the harness's project directory, and every file target is judged by the nearest `.eccode/` above it. Before, a project at `examples/<app>/` inside a repository with its own record was judged by the outer record, so its reviewers and authors could not write their own draft and artifact areas (two pilot dispatches failed this way).
-- **`ECCODE_SHARED_MEMORY`, `ECCODE_ROOT`, `ECCODE_SEQUENTIAL_ROLES` and `ECCODE_HOOKS` may not be set inline** (NEW-9), like `ECCODE_ACTOR/TEST/NOW` before them.
-- **A shell function or alias wrapped around the CLI is refused** (NEW-7): the words behind it cannot be bound.
+- **The CLI is recognised on tokenized words at every depth** (`ecc"ode".js`, `$'eccode'`, `eccode.js${X}` bind their `--actor`; a comment naming the CLI no longer counts); **a shell function or alias wrapped around the CLI is refused** (NEW-7) in every bash form (`function e`, `e() (…)`, `e() if … fi`, after `then`, inside `{ }`, `bash -c`, `sh -c`, `evidence run -- '…'`), with any name bash accepts.
+- **`ECCODE_SHARED_MEMORY`, `ECCODE_ROOT`, `ECCODE_SEQUENTIAL_ROLES` and `ECCODE_HOOKS` may not be set inline** (NEW-9), like `ECCODE_ACTOR/TEST/NOW` before them; an assignment with a **computed name** (`export $V=…`, `declare "$N"=…`, `printf -v "$N"`, `declare -n`) in the same line as the CLI is refused, while literal names with computed values (`export OUT="$HOME/x"`) pass.
 - From the Windows CI run of 0.3.0 (2 of 233 failed): record and memory patterns accept both path separators and are applied to the raw command before tokenizing; the CLI is recognised by a quoted Windows path. The tokenizer keeps bash semantics on every platform (a first version that kept backslashes was rejected in review: `.eccode/drafts/.\./state.json` read as a draft while bash writes the record). Windows itself is still not run here.
 
 ### Documented, not repaired (threat model §4)
@@ -23,13 +26,14 @@ An independent adversarial verification of 0.3.0 (`docs/evidence/verification-0.
 - Known-shape shell writes the guard does not read as writes (`rm`, `git apply`, `patch`, `curl -o`, `tar -x`, a symlink that lives outside the project): residual 1.
 - The final handoff's sentence that user events "were confirmed by a person at a terminal" is qualified: an event forged offline with a valid hash passes `audit` (residual 3).
 - The npm tarball ships `docs/evidence/` (8 MB); hygiene, not a defect.
+- Guard residuals confirmed by the reviews: a hard link to a record file shares its inode and cannot be told from the file; `>"|"` is read as the clobber operator although bash writes a file named `|` (over-denial); a computed, record-free link operand beside another write is refused (over-denial); `mklink` is not a bash command and contributes no target; a role's `mv` of a project file into its draft area is refused for the source, with a message that names the target.
 
 ### Release blockers that remain
 - The marketplace default branch still installs 0.1.0 (RB-1): merging this branch into the default branch is the user's push.
 - Windows: the CI job reports; a passing Windows run is required before Windows is claimed.
 
 ### Tests
-- 246 (233 on 0.3.0, plus `tests/review-F9-win32-guard.test.js` 4, `tests/guard-verification-repairs.test.js` 4, `tests/verification-repairs.test.js` 5).
+- 253 (233 on 0.3.0, plus `tests/review-F9-win32-guard.test.js` 4, `tests/guard-verification-repairs.test.js` 9, `tests/verification-repairs.test.js` 5, `tests/verification-repairs-followups.test.js` 2).
 
 ## 0.3.0 — 2026-10-09
 
