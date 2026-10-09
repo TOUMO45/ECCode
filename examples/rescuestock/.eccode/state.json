@@ -1,6 +1,6 @@
 {
-  "seq": 281,
-  "lastHash": "563794837ff3ed5393ef9cd92cc5424ffb25ef613cfe7943825b689537aeb5ff",
+  "seq": 291,
+  "lastHash": "437e5ab9a2959f691d99c5c28953e2e51db61d9b53063259bbcf923d3edd2237",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -307,8 +307,8 @@
     "phase:b-foundation": {
       "id": "phase:b-foundation",
       "kind": "phase",
-      "status": "submitted",
-      "iterations": 1,
+      "status": "changes_requested",
+      "iterations": 2,
       "authors": [
         "delivery-lead"
       ],
@@ -1467,22 +1467,24 @@
         }
       ],
       "reviews": [
-        "rev-mv1hc5zg-01a3fc75"
+        "rev-mv1hc5zg-01a3fc75",
+        "rev-mv1ijr52-01b2f4b6"
       ],
       "openFindings": [
         {
-          "id": "PB-1",
-          "severity": "blocking",
-          "title": "Concurrent start on a fresh database fails: PRAGMA journal_mode = WAL throws SQLITE_BUSY despite busy_timeout",
-          "detail": "src/db/connection.js sets `PRAGMA busy_timeout` and then `PRAGMA journal_mode = WAL` (L29-L30). When several processes open a new database file at the same time, SQLite can return SQLITE_BUSY for the journal-mode switch without calling the busy handler. It does this when waiting could deadlock: one connection holds a shared lock and needs an exclusive one while another holds or waits for a write lock.\n- In my phase run of `npm test`, 'NFR1: two processes starting at the same time apply each migration exactly once and both succeed' failed: a child exited with 'Error: database is locked' at openDb, connection.js:30 (ev:ev-mv1h5bbh-010aae6e, 363/364).\n- The reproduction ran that test 10 times in isolation; 1 failed with the same error (ev:ev-mv1h6fnx-0154466d).\nb1's criterion requires that 'a second process starting at the same time skips applied versions', and the spec calls migrations multi-process safe. The later multi-process tests (rs14, rs20, rs26, lease-takeover, return-crash), and any two-server deployment, start processes on one fresh file and would inherit the race as flaky failures or startup crashes. The delivery lead's 364/364 run and my b1/b3 runs passing does not contradict this: the failure is intermittent.",
+          "id": "SEC-B-1",
+          "severity": "major",
+          "title": "Planner gives up (PLANNER_LIMIT) on ordinary, fillable requests and holds the event loop up to about 0.3 s",
+          "detail": "From the security reviewer's draft, confirmed by my re-run of .eccode/drafts/sec-phb-planner-sweep.mjs (ev:ev-mv1ii4ai-01f17e2d; the security reviewer's run: ev:ev-mv1i9q9c-01ca3c24, ev:ev-mv1i9u6p-0136e358).\n- The input is the seeded RS-FIX-1 catalog shape, with each supplier's onHand set to 100 (PATCH /api/supplier/inventory has no upper bound) and a request for 10,000 cups and 10,000 lids (the confirm range is 1-100,000), a large budget, no deadline and maxPickups 5.\n- plan() throws PlannerLimitError after 169.8 ms, while the same request with maxPickups 1 is feasible (A, 301,000 cents) in 0.1 ms.\n- Across the sweep, PLANNER_LIMIT appears from availability 30 per supplier, about 164 of 540 inputs refuse at availability 500 or more, and the worst call took 304.8 ms.\n- Cause: the DFS enumerates every multiplicity vector up to min(availability, need/units) per offer (planner.js L27 MAX_SEARCH_NODES, the dfs, and up to 1 + survivors + 3 searches in plan()). That count grows exponentially in stock levels suppliers can legitimately set.\n- The brief's planner is exact and the submission calls the cap unreachable, but that holds only at on_hand 1.\nI disagree with the security reviewer's 'would not block'. The defect is in b2's delivered code, not in a later route: c2 will call it as is, and an approval cannot carry an open major. So it is major and fixed now.",
           "evidence": [
-            "ev:ev-mv1h5bbh-010aae6e",
-            "ev:ev-mv1h6fnx-0154466d",
-            "artifact:src/db/connection.js#L28-L31",
-            "artifact:test/unit/db/migrate.test.js#L227"
+            "ev:ev-mv1ii4ai-01f17e2d",
+            "ev:ev-mv1i9q9c-01ca3c24",
+            "ev:ev-mv1i9u6p-0136e358",
+            "artifact:src/domain/planner.js#L27",
+            "artifact:src/domain/planner.js#L462"
           ],
-          "recommendation": "Owner: b1-foundation-core (backend-engineer), src/db/connection.js.\nFix: openDb retries the journal-mode switch, and any other SQLITE_BUSY raised while opening, with a short bounded back-off up to the busy timeout, then gives a clear error. A synchronous sleep such as Atomics.wait on a SharedArrayBuffer is fine.\nAdd a regression test (or raise the existing one to at least 25 rounds of 3 processes) named with its id.\nResolved when the reviewer's reruns pass: `npm test` and `node .eccode/drafts/tr-phb-migrate-race.mjs 20` with 0 failures.\nIf a retry does not remove the failures, dispatch learning-debugger on PB-1 to find the root cause.",
-          "reviewId": "rev-mv1hc5zg-01a3fc75"
+          "recommendation": "Owner: b2-domain (backend-engineer), src/domain/planner.js plus tests. A c2 follow-up applies in either case.\nResolution, preferred: plan() returns the exact optimum (same objective, rejections, candidate codes and relaxations) quickly on the API-reachable envelope:\n- up to 12 offers;\n- availability up to 100,000;\n- quantities up to 100,000;\n- maxPickups up to 5;\n- any budget or deadline.\nFor example, enumerate supplier subsets and solve each subset's minimum-cost cover by bounded dynamic programming over bundle counts, instead of a DFS over every multiplicity.\nTests to add: a named timing test (e.g. 'SEC-B-1: stock 100 per supplier, 10,000 cups -> feasible A, under 50 ms'), the oracle property test extended to larger availability on small catalogs, and sec-phb-planner-sweep.mjs and tr-phb-checks.mjs both exiting 0.\nAlternative: a design change agreed through the orchestrator that caps onHand and quantities to an envelope that a recorded sweep proves cannot reach PLANNER_LIMIT, with c2 mapping PLANNER_LIMIT to a typed 422 (FU-1).\nIn either case, c2 adds a per-customer rate limit on POST /api/requests/:id/plan (a new follow-up in followups.md).",
+          "reviewId": "rev-mv1ijr52-01b2f4b6"
         }
       ],
       "approvedBy": null,
@@ -1755,9 +1757,24 @@
         "command": "ls test/unit/config/hosts.test.js test/unit/config/secrets.test.js test/unit/config/node-version.test.js test/unit/config/limits.test.js test/unit/db/migrate.test.js test/unit/db/triggers.test.js test/unit/http/headers.test.js test/unit/seed/seed.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/config/**/*.test.js\" \"test/unit/db/**/*.test.js\" \"test/unit/http/**/*.test.js\" \"test/unit/seed/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "done",
+      "status": "claimed",
       "attempts": 1,
-      "claim": null,
+      "claim": {
+        "agent": "backend-engineer",
+        "at": "2026-10-09T22:06:08.735Z",
+        "baseCommit": "e28596505ae0b7f2e50942297c02a0295fb89c3d",
+        "runId": null,
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.838,
+            "matched": 37,
+            "priority": 38,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -1786,6 +1803,18 @@
           "event": "completed",
           "by": "backend-engineer",
           "at": "2026-10-09T21:37:00.579Z"
+        },
+        {
+          "event": "reset",
+          "by": "orchestrator",
+          "at": "2026-10-09T22:05:10.832Z",
+          "reason": "Review rev-mv1ijr52-01b2f4b6: SEC-B-2 (recursive_triggers) and SEC-B-3 (JSON nesting depth) minors"
+        },
+        {
+          "event": "claimed",
+          "by": "backend-engineer",
+          "at": "2026-10-09T22:06:08.735Z",
+          "attempt": 1
         }
       ],
       "completedBy": "backend-engineer",
@@ -1857,9 +1886,24 @@
         "command": "ls test/unit/domain/planner-fixture.test.js test/unit/domain/planner-oracle.property.test.js test/unit/domain/states.test.js test/unit/domain/derive.test.js test/unit/domain/money.test.js test/unit/domain/time.test.js test/unit/domain/compat.test.js test/unit/domain/explain.test.js test/timing/planner-generator.test.js >/dev/null && node --disable-warning=ExperimentalWarning --test \"test/unit/domain/**/*.test.js\" \"test/timing/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "done",
+      "status": "claimed",
       "attempts": 1,
-      "claim": null,
+      "claim": {
+        "agent": "backend-engineer",
+        "at": "2026-10-09T22:05:48.788Z",
+        "baseCommit": "e28596505ae0b7f2e50942297c02a0295fb89c3d",
+        "runId": null,
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.848,
+            "matched": 23,
+            "priority": 25.5,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -1871,6 +1915,18 @@
           "event": "completed",
           "by": "backend-engineer",
           "at": "2026-10-09T21:03:12.639Z"
+        },
+        {
+          "event": "reset",
+          "by": "orchestrator",
+          "at": "2026-10-09T22:05:10.667Z",
+          "reason": "Review rev-mv1ijr52-01b2f4b6: SEC-B-1 major (planner gives up on ordinary inputs one supplier can fill; exact fast algorithm or an agreed input cap)"
+        },
+        {
+          "event": "claimed",
+          "by": "backend-engineer",
+          "at": "2026-10-09T22:05:48.788Z",
+          "attempt": 1
         }
       ],
       "completedBy": "backend-engineer",
@@ -1909,7 +1965,8 @@
           "note": "appliesWhen: designing or using a hook/guard that maps file writes to a project record or root. This task is pure domain code and never touches guard or root resolution; the guard was only exercised as a user, where every owned write inside the nested record was allowed (no 'has no claimed task' or 'outside the ownership' denial), so the wrong-root symptom did not occur.",
           "basis": "reason"
         }
-      ]
+      ],
+      "escalation": null
     },
     "b4-env-readme": {
       "id": "b4-env-readme",
@@ -5944,6 +6001,46 @@
       "tree": "f321ee5d80febfa1f834411d42a58854c32a8fbbe6246b83089413309b447752",
       "recordedBy": "technical-reviewer",
       "at": "2026-10-09T22:03:44.777Z"
+    },
+    "ev-mv1ilouz-013ab82a": {
+      "id": "ev-mv1ilouz-013ab82a",
+      "kind": "command",
+      "label": "SEC-B-2 reproduction (REPLACE rewrites append-only rows)",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-config-db.mjs",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 258,
+      "log": ".eccode/evidence/ev-mv1ilouz-013ab82a.log",
+      "logSha256": "4e5d440d9b9df08c24f77dec1543d84ddca038157afff77e0aea88b4daa12598",
+      "logFileSha256": "04fe120a9b3ccc92d04eaf6065d1c59420b12a1a7ece17805977cc59fba2657b",
+      "outputTail": "ok   keys outside the allow-list, Secret objects, arrays and functions never reach the line\nok   control characters (C0, C1, U+2028) stripped from msg and values\nok   string values truncated to 120 characters\nok   non-finite numbers dropped; a malformed requestId falls back\ninfo truncated requestRef (a value an allow-listed key could carry): 120 chars kept\n# E. Database: append-only triggers, partial UNIQUE indexes, transactions\ninfo connection PRAGMAs: journal_mode=wal foreign_keys=1 busy_timeout=5000 synchronous=1 recursive_triggers=0 trusted_schema=1\nok   audit_events refuses UPDATE, DELETE and UPSERT-update | UPDATE audit_events: refused (audit_events is append-only); DELETE audit_events: refused (audit_events is append-only); UPSERT DO UPDATE audit_events: refused (audit_events is append-only)\nREPRO INSERT OR REPLACE rewrites an existing audit_events row (the DELETE trigger does not fire: recursive_triggers is off) | INSERT OR REPLACE audit_events: ALLOWED; row 1 action now \"REWRITTEN\"\nREPRO plain REPLACE INTO also rewrites the audit row | REPLACE INTO audit_events: ALLOWED\nok   inventory_ledger refuses UPDATE and DELETE | UPDATE inventory_ledger: refused (inventory_ledger is append-only); DELETE inventory_ledger: refused (inventory_ledger is append-only)\nREPRO INSERT OR REPLACE rewrites an existing inventory_ledger row | INSERT OR REPLACE inventory_ledger: ALLOWED; delta_on_hand now 500\nok   control: with PRAGMA recursive_triggers=ON both REPLACE rewrites are refused and plain appends still work | INSERT OR REPLACE audit_events with recursive_triggers=ON: refused (audit_events is append-only); INSERT OR REPLACE inventory_ledger with recursive_triggers=ON: refused (inventory_ledger is append-only); plain INSERT of a new audit row with recursive_triggers=ON: ALLOWED\nok   partial UNIQUE offers_one_current and CHECK price_cents >= 0 hold | second active offer for one product: refused (UNIQUE constraint failed: offers.product_id); negative price: refused (CHECK constraint failed: price_cents >= 0)\nok   db.tx refuses nesting and a returned promise, and rolls the synchronous part back | TX_NESTED TX_ASYNC row=undefined\n# F. Migration checksum refusal\nok   a changed applied migration (even a comment) refuses startup | MIGRATION_CHECKSUM_MISMATCH\n# G. File modes (SEC-14)\ninfo fresh start modes: {\"data/\":\"700\",\"data/uploads/\":\"700\",\"app.db\":\"600\",\"app.db-shm\":\"600\",\"app.db-wal\":\"600\"}\nok   npm start equivalent: data/ and uploads/ 0700; app.db, -wal and -shm 0600\ninfo pre-existing data/ (0755) stays 755; app.db 600; uploads 700\ninfo process umask after startApp: 77\n\nALL CONFIG/DB EXPECTATIONS HELD\n",
+      "gate": null,
+      "task": "b1-foundation-core",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-09T22:06:13.861Z"
+    },
+    "ev-mv1ilp8t-017fc2a5": {
+      "id": "ev-mv1ilp8t-017fc2a5",
+      "kind": "command",
+      "label": "SEC-B-3 reproduction (deep nesting passes the cap, canonicalJson throws)",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/sec-phb-http.mjs",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 330,
+      "log": ".eccode/evidence/ev-mv1ilp8t-017fc2a5.log",
+      "logSha256": "da4959a59aa6465ec2ab17df539a502a24f4f7d9607647549398d0bd1c6318f8",
+      "logFileSha256": "f7398cf8782dc5b549cbb2f66fc2ae566c52dc88e8cec9b9de07ef9c34a83d02",
+      "outputTail": "ok   static /%2eenv not served | 404\nok   static /sub/.%2e/.%2e/secret.txt not served | 404\nok   static /index.html%00.txt not served | 404\nok   static /%00 not served | 404\nok   static /..%5csecret.txt not served | 404\nok   static /sub%5c..%5c..%5csecret.txt not served | 404\nok   static //secret.txt not served | 400\nok   static /%252e%252e/secret.txt not served | 404\nok   static /%c0%ae%c0%ae/secret.txt not served | 404\nok   static /sub/x.txt/..%2f..%2f..%2fsecret.txt not served | 404\nok   static control: /, /sub/x.txt and /sub/./x.txt served | 200 200 200\nok   HEAD on a static file: 200 without a body\nok   POST to a static path -> 404 | 404\ninfo /api/../index.html -> 200 (URL normalisation resolves to /index.html)\n# J. Log lines\nok   every log line is one JSON object on one line | 92 lines\nok   the raw request path never reaches a log line\ninfo log keys seen: ts,level,msg,requestId,route,method,status,durationMs,code,kind\n# K. Server timeouts\ninfo headersTimeout=10000 requestTimeout=30000 keepAliveTimeout=5000 maxHeaderSize=16384 connectionsCheckingInterval=30000 maxConnections=undefined\nok   server timeouts 10 s / 30 s / 5 s as specified\nok   header block > 16 KiB -> 431 | 431\n\nALL HTTP PROBES PASSED\n",
+      "gate": null,
+      "task": "b1-foundation-core",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-09T22:06:14.356Z"
     }
   },
   "reviews": {
@@ -9814,6 +9911,188 @@
       "reviewer": "technical-reviewer",
       "at": "2026-10-09T21:30:49.804Z",
       "submissionId": "sub-mv1h2gly-014b868a"
+    },
+    "rev-mv1ijr52-01b2f4b6": {
+      "decision": "changes_requested",
+      "summary": "Re-review of phase B resubmission sub-mv1hokge-01004365, with the security reviewer's draft (phase-b-security-1.md) folded in. Every check below was re-run on the final tree after the resubmission.\n\nPB-1, PB-2 and PB-3 are resolved:\n- My strict race check passes with 0 failures in 20 sequential and 60 parallel runs (ev:ev-mv1hrnhg-017cd4f0).\n- The new open-race and RS-14 busy tests pass 10 of 10 repeated runs (ev:ev-mv1hu6ju-01ddc12e).\n- npm test passes 370/370 (ev:ev-mv1hqgk1-01c28d5d).\n- Each task's declared command passes: b1 (ev:ev-mv1hul1f-017e688f), b2 (ev:ev-mv1hvui4-01910b1f), b4 (ev:ev-mv1hvurz-0103d44f), b3 with the clean checkout (ev:ev-mv1hwlgh-010ebdc4).\n- The artifact list covers all 110 owned files (ev:ev-mv1hv48h-019aa8d3).\n- My independent checks still pass (ev:ev-mv1hwly3-01ca7688).\n\nI confirm the security reviewer's SEC-B-1 as major. I re-ran its planner sweep (ev:ev-mv1ii4ai-01f17e2d): with 100 bundles per supplier (a normal supplier PATCH) and a 10,000-cup request (inside the 1-100,000 range), plan() throws PLANNER_LIMIT after 170 ms. Yet supplier A alone covers the request: with maxPickups 1 the same input is feasible in 0.1 ms. PLANNER_LIMIT appears from availability 30 upward, and single calls hold the event loop for up to 305 ms. The exact planner, b2's deliverable, therefore returns no plan for ordinary, fillable requests. The submission's note that the cap is unreachable holds only at on_hand 1. This must be fixed in src/domain/planner.js before c2 exposes POST /api/requests/:id/plan.\n\nAlso confirmed:\n- SEC-B-2 (minor): REPLACE bypasses the append-only triggers because recursive_triggers is off. Re-run: ev:ev-mv1iihtv-0176c6cd.\n- SEC-B-3 (minor): deep nesting crashes canonicalJson into a 500 (security evidence ev:ev-mv1idwc0-01c3fc7c).\n\nSEC-B-4..9 and PB-4 are info.",
+      "criteria": [
+        {
+          "id": "task:b1-foundation-core",
+          "description": "b1 meets its acceptance criteria, including a multi-process-safe concurrent start on a fresh database",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1hul1f-017e688f",
+            "ev:ev-mv1hrnhg-017cd4f0",
+            "ev:ev-mv1hu6ju-01ddc12e",
+            "ev:ev-mv1hwly3-01ca7688",
+            "artifact:src/db/connection.js#L30-L41",
+            "artifact:src/db/connection.js#L53-L77",
+            "artifact:test/unit/db/open-race.test.js#L100"
+          ],
+          "notes": "Met. The disclosed 1 s minimum wait on open is acceptable: statements still use the configured busy timeout, and the RS-14-named tests prove 503 DB_BUSY under busy_timeout 0. SEC-B-2 and SEC-B-3 are minor b1 items to fix in the same rework round."
+        },
+        {
+          "id": "task:b2-domain",
+          "description": "b2 meets its acceptance criteria: exact lexicographic planner, oracle property, states, derive rows 1-14, money/time, explain, NFR5 timing",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv1ii4ai-01f17e2d",
+            "ev:ev-mv1hvui4-01910b1f",
+            "ev:ev-mv1hwly3-01ca7688",
+            "artifact:src/domain/planner.js#L27",
+            "artifact:src/domain/planner.js#L462"
+          ],
+          "notes": "RS-06..RS-11, the oracle property and derive/states hold. Not met because the planner is not exact on ordinary reachable inputs: it gives up with PLANNER_LIMIT on fillable requests (SEC-B-1)."
+        },
+        {
+          "id": "task:b4-env-readme",
+          "description": "b4 meets its acceptance criteria (.env.example, NFR4 scan, README)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1hvurz-0103d44f",
+            "artifact:.eccode/artifacts/phase-b/submission.md#evidence-quality-notes"
+          ]
+        },
+        {
+          "id": "task:b3-test-harness",
+          "description": "b3 meets its acceptance criteria (net guard, node-proc, server-proc, app-harness, package scan, start-old-node on real Node 20/21, start-health, clean-checkout, report-p95)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1hwlgh-010ebdc4",
+            "artifact:scripts/clean-checkout.sh#L95-L147"
+          ]
+        },
+        {
+          "id": "phase:b-foundation",
+          "description": "Phase B goal and RS-06..RS-11, NFR1, NFR4 proved; npm test passes offline; tests proving criteria or findings carry their ids",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv1hqgk1-01c28d5d",
+            "ev:ev-mv1ii4ai-01f17e2d",
+            "ev:ev-mv1hv48h-019aa8d3",
+            "artifact:.eccode/artifacts/phase-b/submission.md#response-to-rev-mv1hc5zg-01a3fc75-resubmission"
+          ],
+          "notes": "The phase goal includes 'the pure domain (planner + brute-force oracle ...)', and the planner must be exact. SEC-B-1 shows it is not exact over the inputs the API will accept."
+        },
+        {
+          "id": "lessons",
+          "description": "The four tasks' not-applicable decisions on mem-sd-mv1audrd-013b7102 hold",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv1hwm2j-019113af",
+            "ev:ev-mv1eo87o-01c933d5"
+          ],
+          "notes": "The lesson is about a write guard resolving the wrong project root. No phase-B task builds such a guard, and the installed guard is the repaired version (sha256 d43f4b54...)."
+        }
+      ],
+      "findings": [
+        {
+          "id": "SEC-B-1",
+          "severity": "major",
+          "title": "Planner gives up (PLANNER_LIMIT) on ordinary, fillable requests and holds the event loop up to about 0.3 s",
+          "detail": "From the security reviewer's draft, confirmed by my re-run of .eccode/drafts/sec-phb-planner-sweep.mjs (ev:ev-mv1ii4ai-01f17e2d; the security reviewer's run: ev:ev-mv1i9q9c-01ca3c24, ev:ev-mv1i9u6p-0136e358).\n- The input is the seeded RS-FIX-1 catalog shape, with each supplier's onHand set to 100 (PATCH /api/supplier/inventory has no upper bound) and a request for 10,000 cups and 10,000 lids (the confirm range is 1-100,000), a large budget, no deadline and maxPickups 5.\n- plan() throws PlannerLimitError after 169.8 ms, while the same request with maxPickups 1 is feasible (A, 301,000 cents) in 0.1 ms.\n- Across the sweep, PLANNER_LIMIT appears from availability 30 per supplier, about 164 of 540 inputs refuse at availability 500 or more, and the worst call took 304.8 ms.\n- Cause: the DFS enumerates every multiplicity vector up to min(availability, need/units) per offer (planner.js L27 MAX_SEARCH_NODES, the dfs, and up to 1 + survivors + 3 searches in plan()). That count grows exponentially in stock levels suppliers can legitimately set.\n- The brief's planner is exact and the submission calls the cap unreachable, but that holds only at on_hand 1.\nI disagree with the security reviewer's 'would not block'. The defect is in b2's delivered code, not in a later route: c2 will call it as is, and an approval cannot carry an open major. So it is major and fixed now.",
+          "evidence": [
+            "ev:ev-mv1ii4ai-01f17e2d",
+            "ev:ev-mv1i9q9c-01ca3c24",
+            "ev:ev-mv1i9u6p-0136e358",
+            "artifact:src/domain/planner.js#L27",
+            "artifact:src/domain/planner.js#L462"
+          ],
+          "recommendation": "Owner: b2-domain (backend-engineer), src/domain/planner.js plus tests. A c2 follow-up applies in either case.\nResolution, preferred: plan() returns the exact optimum (same objective, rejections, candidate codes and relaxations) quickly on the API-reachable envelope:\n- up to 12 offers;\n- availability up to 100,000;\n- quantities up to 100,000;\n- maxPickups up to 5;\n- any budget or deadline.\nFor example, enumerate supplier subsets and solve each subset's minimum-cost cover by bounded dynamic programming over bundle counts, instead of a DFS over every multiplicity.\nTests to add: a named timing test (e.g. 'SEC-B-1: stock 100 per supplier, 10,000 cups -> feasible A, under 50 ms'), the oracle property test extended to larger availability on small catalogs, and sec-phb-planner-sweep.mjs and tr-phb-checks.mjs both exiting 0.\nAlternative: a design change agreed through the orchestrator that caps onHand and quantities to an envelope that a recorded sweep proves cannot reach PLANNER_LIMIT, with c2 mapping PLANNER_LIMIT to a typed 422 (FU-1).\nIn either case, c2 adds a per-customer rate limit on POST /api/requests/:id/plan (a new follow-up in followups.md)."
+        },
+        {
+          "id": "SEC-B-2",
+          "severity": "minor",
+          "title": "INSERT OR REPLACE / REPLACE INTO rewrites append-only audit_events and inventory_ledger rows",
+          "detail": "Confirmed by my re-run of .eccode/drafts/sec-phb-config-db.mjs on the reworked tree (ev:ev-mv1iihtv-0176c6cd; the security reviewer's run: ev:ev-mv1i7xgl-01c089fa). The connection has recursive_triggers=0, so REPLACE conflict resolution deletes without firing the BEFORE DELETE trigger. An audit row's action becomes 'REWRITTEN' and a ledger row's delta_on_hand becomes 500. With recursive_triggers=ON both rewrites are refused and plain appends still work. No current code issues REPLACE, so this is minor, but RS-38's append-only guarantee should not depend on statement style.",
+          "evidence": [
+            "ev:ev-mv1iihtv-0176c6cd",
+            "ev:ev-mv1i7xgl-01c089fa",
+            "artifact:src/db/connection.js#L53-L77"
+          ],
+          "recommendation": "Owner: b1-foundation-core. Add PRAGMA recursive_triggers = ON in openDb, with no migration change, and add a REPLACE case per append-only table to test/unit/db/triggers.test.js, named 'RS-38: ...' or 'SEC-B-2: ...'."
+        },
+        {
+          "id": "SEC-B-3",
+          "severity": "minor",
+          "title": "A 40 kB deeply nested JSON body passes the body cap and makes canonicalJson throw: 500 instead of 4xx",
+          "detail": "From the security reviewer's draft (ev:ev-mv1idwc0-01c3fc7c, section H). readJsonObject has no depth limit (body.js L95), and canonicalJson is recursive (body.js L110-L116). A 20,000-deep body of 40,006 bytes, under the cap, overflows the stack when fingerprinted, which the reserve idempotency route (c3) will do. The process survives. Minor: no phase-B route takes a JSON body yet.",
+          "evidence": [
+            "ev:ev-mv1idwc0-01c3fc7c",
+            "artifact:src/http/body.js#L95",
+            "artifact:src/http/body.js#L110-L116"
+          ],
+          "recommendation": "Owner: b1-foundation-core. Reject JSON nested deeper than a small limit (for example 32) in readJsonBody with 400 INVALID_JSON or 422 VALIDATION_FAILED, or make canonicalJson iterative with the same limit, and add a test named 'SEC-B-3: ...'."
+        },
+        {
+          "id": "PB-4",
+          "severity": "info",
+          "title": "RS-14 busy-timeout-0 integration test must start the server before taking the lock",
+          "detail": "main.js applies the migrations at startup inside db.tx (BEGIN IMMEDIATE). With RS_DB_BUSY_TIMEOUT_MS=0, a server started while another process holds the write lock fails at startup; only openDb's pragmas are retried.",
+          "evidence": [
+            "artifact:src/db/migrate.js#L93"
+          ],
+          "recommendation": "c6: in the rs14-db-busy test, start the server first, then have the lock holder take BEGIN IMMEDIATE, then call reserve. The delivery lead may add this to followups.md."
+        },
+        {
+          "id": "SEC-B-4",
+          "severity": "info",
+          "title": "Slow-connection timeouts act on the 30 s check interval; no maxConnections; timeouts answered 400 not 408",
+          "detail": "From the security draft (ev:ev-mv1ibkqk-015a9f85, ev:ev-mv1idq7i-019ac792, ev:ev-mv1hsot4-01da707f). Accepted as info: the README recommends a reverse proxy.",
+          "evidence": [
+            "ev:ev-mv1ibkqk-015a9f85"
+          ],
+          "recommendation": "Optional, b1 or a later task: connectionsCheckingInterval 1000, maxConnections about 512, and 408 for ERR_HTTP_REQUEST_TIMEOUT."
+        },
+        {
+          "id": "SEC-B-5-9",
+          "severity": "info",
+          "title": "Security info items SEC-B-5..SEC-B-9 (existing data/ mode, no lockfile, scrypt N and whitespace passwords, stale explain.js comment, c1 X-Forwarded-For validation)",
+          "detail": "Carried over from the security draft without change of severity:\n- SEC-B-5: a pre-existing data/ directory is not tightened to 0700.\n- SEC-B-6: no package-lock.json.\n- SEC-B-7: scrypt N=2^14 follows the spec; length-only password checks.\n- SEC-B-8: the explain.js header says 'nothing is free text' while the refusal reason is shown.\n- SEC-B-9: c1 should validate the forwarded IP with net.isIP.",
+          "evidence": [
+            "ev:ev-mv1i7xgl-01c089fa",
+            "ev:ev-mv1i7z1w-0130a20f"
+          ],
+          "recommendation": "The delivery lead routes SEC-B-9 to c1 via followups.md. The rest is optional."
+        }
+      ],
+      "resolvedFindings": [
+        {
+          "id": "PB-1",
+          "resolution": "openDb reads the journal mode, then wraps the WAL switch and the opening pragmas in retryWhileBusy. The loop is bounded (budget max(busy timeout, 1 s)), backs off with jitter from 2 to 50 ms, retries only SQLITE_BUSY/LOCKED, rethrows other errors at once, and closes the handle on failure. A regression test covers it with a 25 x 4-process stress run and a bounded give-up against a lock holder. My strict race check passes 0/80, the new timing tests pass 10/10, and npm test passes 370/370.",
+          "evidence": [
+            "ev:ev-mv1hrnhg-017cd4f0",
+            "ev:ev-mv1hu6ju-01ddc12e",
+            "ev:ev-mv1hqgk1-01c28d5d",
+            "artifact:src/db/connection.js#L30-L41"
+          ]
+        },
+        {
+          "id": "PB-2",
+          "resolution": "The six tests are renamed with their ids: ARCH-26, SEC-10, SEC-12, SEC-3 for the RS_TEST_HOOKS row, RS-14 and ARCH-25. They pass in the b1 run.",
+          "evidence": [
+            "ev:ev-mv1hul1f-017e688f",
+            "artifact:test/unit/config/limits.test.js#L40",
+            "artifact:test/unit/http/app.test.js#L310"
+          ]
+        },
+        {
+          "id": "PB-3",
+          "resolution": "followups.md records each PB-3 item with an owning task and a test-named resolution: FU-1 c2 (PLANNER_LIMIT mapped to a catalogued error), FU-2 d3 (upload deadline), FU-3 c5 then g1 (SPEC_MISMATCH display), FU-4 b2/c6 (seed constant vs fixture). FU-5..FU-7 are added for the PB-1 regression, the seed hash format and the derive input shape.",
+          "evidence": [
+            "ev:ev-mv1hv48h-019aa8d3",
+            "artifact:.eccode/artifacts/plan/followups.md#plan-follow-ups-delivery-lead"
+          ]
+        }
+      ],
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "id": "rev-mv1ijr52-01b2f4b6",
+      "gate": "phase:b-foundation",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-09T22:04:43.430Z",
+      "submissionId": "sub-mv1hokge-01004365"
     }
   },
   "rejectedReviews": [],
@@ -11084,6 +11363,30 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-09T21:41:08.571Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-09T22:05:15.964Z",
+      "durationMinutes": 24.12,
+      "costUsd": null,
+      "tokens": 51801,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv1ikccq-01a8df65": {
+      "id": "run-mv1ikccq-01a8df65",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T22:05:10.958Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv1ikcgg-016d8e1a": {
+      "id": "run-mv1ikcgg-016d8e1a",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-09T22:05:11.096Z",
       "status": "running",
       "attempt": 1
     }
@@ -11352,8 +11655,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 322.94,
-    "tokens": 4086837
+    "runtimeMinutes": 347.06,
+    "tokens": 4138638
   },
   "delivery": null
 }
