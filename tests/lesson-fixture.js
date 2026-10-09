@@ -11,7 +11,7 @@ const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const evidence = require('../lib/evidence');
 const { Memory } = require('../lib/memory/records');
-const { write, passCheck, handoffFor, coverageWithLessons } = require('./helpers');
+const { write, passCheck, handoffFor, coverageWithLessons, initRepo, approvalWithLessons } = require('./helpers');
 
 /** A change-profile project with one task about money-moving POST endpoints and a verified idempotency lesson. */
 function setup({ taskTitle = 'Issue store credit through a POST endpoint', idea = 'Support wants to issue store credit to customers through the API', criteria = ['A credit is issued and the balance changes', 'Invalid amounts are rejected'], learning = 'on', planDecision = 'not-applicable' } = {}) {
@@ -19,8 +19,7 @@ function setup({ taskTitle = 'Issue store credit through a POST endpoint', idea 
   process.env.ECCODE_SHARED_MEMORY = shared;
   process.env.ECCODE_LEARNING = learning;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-lac-'));
-  execFileSync('git', ['init', '-q'], { cwd: dir });
-  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  initRepo(dir);
   const store = init(dir, { name: 'Credits', idea, profile: 'change' });
   const config = loadConfig(dir);
 

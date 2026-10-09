@@ -1,7 +1,8 @@
 # Installation, Configuration, Usage and Troubleshooting
 
 ## Requirements
-- Node.js ≥ 18.17 (tested on v22). No npm dependencies.
+- Node.js ≥ 18.17. No npm dependencies.
+- Supported platforms: Linux and macOS with Node 18.17, 20 and 22, gated by CI (`npm run check` on every push). Windows with Node 22 runs in CI but does not gate merges until the suite has passed on the runner: the test fixtures no longer need `sh`, `grep`, `true` or `;`, test repos set `core.autocrlf=false`, and `.gitattributes` checks every text file out as LF, so a clone with `core.autocrlf=true` audits the shipped records like any other. A project's own checks (its runtime, browsers, services) may have further needs.
 - Claude Code (tested with 2.1.293) for the agent team. The CLI works on its own for any harness.
 - git. It is optional, but the toolkit uses it to check that a task's changed files fall inside its ownership.
 
@@ -205,5 +206,7 @@ The orchestrator never runs `--actor user`. When the engine answers `USER_AUTH_R
 ## Releases and compatibility
 
 - A release bumps `version` in `package.json`, `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` together, adds a dated entry to `CHANGELOG.md`, and passes `npm run check` (static validation, the test suite, and a replay of every shipped record) plus `claude plugin validate .claude-plugin/plugin.json --strict`.
-- CI (`.github/workflows/ci.yml`) runs `npm run check` on Ubuntu and macOS with Node 18.17, 20 and 22, runs the Groundwork example's deterministic suite on Node 22, and re-audits the shipped records. The Windows job is reported but does not gate merges yet.
+- CI (`.github/workflows/ci.yml`) runs `npm run check` on Ubuntu and macOS with Node 18.17, 20 and 22, runs the Groundwork example's deterministic suite on Node 22, and re-audits the shipped records. The Windows job (Node 22) is reported but does not gate merges until it has passed on the runner (see Requirements for what was fixed for it).
+- The package: `package.json` `main` is `lib/index.js`, the engine API (`require('eccode')` gives `Store`, `init`, `openProject`, `gates`, `tasks`, `evidence`, `runs`, `delivery`, `reconcile`, `rework`, `Memory`, `loadConfig`, `version`). `npm run validate` checks that `main` and every `files` entry exist, that `.claude-plugin/plugin.json` and `marketplace.json` carry the package version, and that `npm pack --dry-run` ships `lib/index.js` and `bin/eccode.js` (skipped with a note when npm is not installed). `.gitattributes` keeps every text file LF on every platform; the review-bundle logs and evidence logs are committed byte for byte (`-text`) because manifests pin them.
+- Upgrade and rollback are tested (`tests/review-F9.test.js`): the 0.1.0 release (commit `d2d0c243`) is installed into a project as a project-local copy, a record is written with it, the current toolkit is installed over it (`eccode install` replaces the runtime and each hook entry in place), `audit` and `status` still work, and after installing 0.1.0 again the record still audits. That holds because the newer engine wrote only event types 0.1.0 replays; the event types new since 0.1.0 are named in [architecture.md](architecture.md#record-compatibility), and a record that carries them stays on the engine that wrote it, or newer.
 - Records written by older versions replay unchanged (see [architecture.md](architecture.md#record-compatibility)); run `eccode rebuild` after upgrading if `eccode audit` reports a divergent snapshot.

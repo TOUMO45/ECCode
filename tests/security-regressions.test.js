@@ -116,7 +116,7 @@ test('#9 ECCODE_NOW is honoured only when ECCODE_TEST=1', () => {
   const ctx = tmpProject();
   const env = { ...process.env, ECCODE_NOW: '2099-01-01T00:00:00Z' };
   delete env.ECCODE_TEST;
-  const res = spawnSync(process.execPath, [BIN, '--root', ctx.dir, 'evidence', 'run', '--actor', 'backend-engineer', '--label', 'pre', '--json', '--', 'true'], { encoding: 'utf8', env });
+  const res = spawnSync(process.execPath, [BIN, '--root', ctx.dir, 'evidence', 'run', '--actor', 'backend-engineer', '--label', 'pre', '--json', '--', 'node -e "process.exit(0)"'], { encoding: 'utf8', env });
   assert.strictEqual(res.status, 0, res.stderr);
   const ev = ctx.store.state().evidence[JSON.parse(res.stdout).id];
   assert.ok(!ev.at.startsWith('2099'), `forged timestamp recorded: ${ev.at}`);
@@ -242,7 +242,7 @@ test('#22 CLI input errors are clean EccodeErrors, not internal errors', () => {
   write(ctx.dir, 'src/x.js', '1');
   const cases = [
     [['evidence', 'file', 'src', '--actor', 'test-engineer'], 2],
-    [['evidence', 'run', '--actor', 'test-engineer', '--label', 'l', '--timeout', '5m', '--', 'true'], 1],
+    [['evidence', 'run', '--actor', 'test-engineer', '--label', 'l', '--timeout', '5m', '--', 'node -e "process.exit(0)"'], 1],
     [['memory', 'search', 'x', '--limit', 'many'], 1],
     [['reconcile', '--actor', 'orchestrator', '--max-checks', 'all'], 1],
   ];
@@ -298,7 +298,9 @@ function improvementCtx() {
   write(ctx.dir, 'skills/checklist.md', '# Review checklist\n- tests pass\n');
   const base = {
     title: 'Add content-type check', observation: 'Two reviews missed content-type validation.', lessons: [lesson.id], target: 'skills/checklist.md',
-    change: { type: 'append', content: '- content-type validated\n' }, rationale: 'Lesson shows 500s from unvalidated bodies.', evaluation: { command: 'grep -q "tests pass" skills/checklist.md' },
+    change: { type: 'append', content: '- content-type validated\n' }, rationale: 'Lesson shows 500s from unvalidated bodies.',
+    // Same contract as a quiet grep for "tests pass" (exit 0 on match, 1 otherwise), with no grep needed on PATH.
+    evaluation: { command: 'node -e "process.exit(require(\'fs\').readFileSync(\'skills/checklist.md\', \'utf8\').includes(\'tests pass\') ? 0 : 1)"' },
   };
   return { ...ctx, mem, base };
 }
@@ -360,10 +362,10 @@ test('#1 adopt and rollback re-check the target (outside project, protected) and
 test('#12 baseline and candidate must be evaluated with the same command', () => {
   const ctx = improvementCtx();
   const p = improve.propose(ctx.store, ctx.config, ctx.mem, 'learning-debugger', { ...ctx.base, change: { type: 'replace', content: '# emptied\n' } });
-  improve.evaluate(ctx.store, 'learning-debugger', p.id, 'baseline', 'false');
-  const e = improve.evaluate(ctx.store, 'learning-debugger', p.id, 'candidate', 'true');
-  assert.strictEqual(e.evaluation.baseline.command, 'false');
-  assert.strictEqual(e.evaluation.candidate.command, 'true');
+  improve.evaluate(ctx.store, 'learning-debugger', p.id, 'baseline', 'node -e "process.exit(1)"');
+  const e = improve.evaluate(ctx.store, 'learning-debugger', p.id, 'candidate', 'node -e "process.exit(0)"');
+  assert.strictEqual(e.evaluation.baseline.command, 'node -e "process.exit(1)"');
+  assert.strictEqual(e.evaluation.candidate.command, 'node -e "process.exit(0)"');
   assert.strictEqual(improve.verdict(e).ok, false);
   assert.match(improve.verdict(e).reason, /different commands/);
   expectCode(() => improve.review(ctx.store, 'technical-reviewer', p.id, 'approve', 'Candidate beats baseline per the evaluation.'), 'EVALUATION_FAILED');
@@ -667,7 +669,7 @@ test('#11 a local lesson flipped to verified in its JSON file is not trusted (pr
   fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('"status": "provisional"', '"status": "verified"')); // sed -i
   assert.strictEqual(mem.get(rec.id).status, 'verified');
   write(ctx.dir, 'notes.md', '# notes\n');
-  const proposal = { title: 't', observation: 'o', lessons: [rec.id], target: 'notes.md', change: { type: 'append', content: 'x' }, rationale: 'r', evaluation: { command: 'true' } };
+  const proposal = { title: 't', observation: 'o', lessons: [rec.id], target: 'notes.md', change: { type: 'append', content: 'x' }, rationale: 'r', evaluation: { command: 'node -e "process.exit(0)"' } };
   expectCode(() => improve.propose(ctx.store, ctx.config, mem, 'learning-debugger', proposal), 'UNGROUNDED');
   expectCode(() => mem.promote(rec.id, 'security-reviewer'), 'UNVERIFIED');
   assert.strictEqual(mem.check(rec.id).verdict, 'provisional');
@@ -687,7 +689,7 @@ test('#11 verification binds the reviewed revision and content; edits after revi
   assert.strictEqual(reviewed.data.rev, 1);
   assert.match(reviewed.data.contentSha256, /^[0-9a-f]{64}$/);
   write(ctx.dir, 'notes.md', '# notes\n');
-  const proposal = { title: 't', observation: 'o', lessons: [rec.id], target: 'notes.md', change: { type: 'append', content: 'x' }, rationale: 'r', evaluation: { command: 'true' } };
+  const proposal = { title: 't', observation: 'o', lessons: [rec.id], target: 'notes.md', change: { type: 'append', content: 'x' }, rationale: 'r', evaluation: { command: 'node -e "process.exit(0)"' } };
   // Content edited in place, status untouched.
   const file = path.join(ctx.dir, '.eccode/memory/records', `${rec.id}.json`);
   const original = fs.readFileSync(file, 'utf8');

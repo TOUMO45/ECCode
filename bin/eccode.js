@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const tty = require('tty');
 const { parseArgs } = require('../lib/cli-args');
-const { EccodeError, readJson, own, sleepSync } = require('../lib/util');
+const { EccodeError, readJson, own, sleepSync, shellQuote } = require('../lib/util');
 
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
@@ -155,10 +155,6 @@ function confirmUserAtTerminal(args) {
 function optional(flags, name) {
   if (flags[name] === true) throw new EccodeError('USAGE', `--${name} needs a value`);
   return flags[name];
-}
-
-function shellQuote(arg) {
-  return /^[A-Za-z0-9_\/.,:=@%+-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, "'\\''")}'`;
 }
 
 function findRoot(flags) {

@@ -139,7 +139,7 @@ test('RT7 .claude/ and .git/ are never owned: plans refuse globs reaching them, 
 test('RT8 secrets in labels, notes, handoffs and reviews are redacted before they reach the record', () => {
   const ctx = tmpProject();
   const secret = 'sk-ant-api03-SUPERSECRETVALUE1234567890';
-  const ev = evidence.runCommand(ctx.store, 'test-engineer', { label: `check with ${secret}`, command: 'true' });
+  const ev = evidence.runCommand(ctx.store, 'test-engineer', { label: `check with ${secret}`, command: 'node -e "process.exit(0)"' });
   assert.ok(!ev.label.includes(secret));
   write(ctx.dir, 'x.txt', 'x');
   const fe = evidence.recordFile(ctx.store, 'test-engineer', { file: 'x.txt', note: `token=${secret}` });

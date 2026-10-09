@@ -11,12 +11,11 @@ const { Memory } = require('../lib/memory/records');
 const { init } = require('../lib/project');
 const { loadConfig } = require('../lib/config');
 const { execFileSync } = require('child_process');
-const { write, expectCode } = require('./helpers');
+const { initRepo, write, expectCode } = require('./helpers');
 
 function project(name) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-promo-'));
-  execFileSync('git', ['init', '-q'], { cwd: dir });
-  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  initRepo(dir);
   const store = init(dir, { name, idea: 'A project whose name must not travel with its lessons' });
   process.env.ECCODE_SHARED_MEMORY = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-shared-'));
   return { dir, store, config: loadConfig(dir) };

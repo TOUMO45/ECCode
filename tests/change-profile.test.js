@@ -14,14 +14,13 @@ const { loadConfig } = require('../lib/config');
 const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const { deliver } = require('../lib/delivery');
-const { write, samplePlan, passCheck, handoffFor, approval, coverage, expectCode } = require('./helpers');
+const { write, samplePlan, passCheck, handoffFor, approval, coverage, expectCode, initRepo } = require('./helpers');
 
 const BIN = path.join(__dirname, '..', 'bin', 'eccode.js');
 
 function changeProject() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-change-'));
-  execFileSync('git', ['init', '-q'], { cwd: dir });
-  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  initRepo(dir);
   const store = init(dir, { name: 'Fix invoice totals', idea: 'Invoice totals concatenate strings instead of adding', profile: 'change' });
   return { dir, store, config: loadConfig(dir) };
 }
@@ -59,7 +58,7 @@ test('change profile: plan is the first gate and no verification gate follows th
 
 test('default profile is unchanged and unknown profiles are refused', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-prof-'));
-  execFileSync('git', ['init', '-q'], { cwd: dir });
+  initRepo(dir);
   const store = init(dir, { name: 'App', idea: 'A full delivery of a product idea' });
   assert.deepStrictEqual(store.state().gateOrder, ['architecture', 'design', 'plan', 'verification']);
   assert.strictEqual(store.state().project.profile, undefined); // old snapshots stay identical
@@ -69,7 +68,7 @@ test('default profile is unchanged and unknown profiles are refused', () => {
 
 test('CLI: init --profile change', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-prof-'));
-  execFileSync('git', ['init', '-q'], { cwd: dir });
+  initRepo(dir);
   const res = spawnSync(process.execPath, [BIN, 'init', '--name', 'Fix', '--idea', 'Fix the refund limit check', '--profile', 'change', '--root', dir], { encoding: 'utf8' });
   assert.strictEqual(res.status, 0, res.stderr);
   const st = JSON.parse(fs.readFileSync(path.join(dir, '.eccode', 'state.json'), 'utf8'));
