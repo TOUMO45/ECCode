@@ -1,6 +1,6 @@
 {
-  "seq": 504,
-  "lastHash": "a74cf9251acca939048c1e14322645b22e3f9a911b132b11c464828200687524",
+  "seq": 510,
+  "lastHash": "00843b8e776a711b8c6112e8550b0f0dfe8870e320f3fe69c40109d5d77ff373",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -3803,34 +3803,45 @@
         "command": "ls test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "ai-engineer",
-        "at": "2026-10-10T23:01:55.135Z",
-        "baseCommit": "adf4a12dd0b9793f11f13168f1fdab0a2e9d79a0",
-        "runId": "run-mv300a2y-01d70e9b",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.799,
-            "matched": 19,
-            "priority": 22,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "ai-engineer",
           "at": "2026-10-10T23:01:55.135Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "ai-engineer",
+          "at": "2026-10-10T23:17:05.375Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "ai-engineer",
+      "handoffId": "ho-mv30knyb-01ee912a",
+      "filesChanged": [
+        "src/ai/provider.js",
+        "src/ai/schema.js",
+        "src/ai/prompt.js",
+        "src/ai/fake.js",
+        "src/ai/gate.js",
+        "src/ai/rephrase.js",
+        "test/unit/ai/schema.test.js",
+        "test/unit/ai/prompt.test.js",
+        "test/unit/ai/fake.test.js",
+        "test/unit/ai/gate.test.js",
+        "test/unit/ai/rephrase.test.js"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson is about hooks or guards that map file writes to a project root; this task builds extraction modules (src/ai) and no hook, guard or root discovery, so none of its 'Applies when' conditions hold. The nested-record writes I made were all accepted by the guard.",
+          "basis": "reason"
+        }
+      ]
     },
     "d2-ai-adapters-corpus": {
       "id": "d2-ai-adapters-corpus",
@@ -9735,6 +9746,27 @@
       "task": "d1-ai-core",
       "recordedBy": "ai-engineer",
       "at": "2026-10-10T23:15:27.154Z"
+    },
+    "ev-mv30jdb5-01a1c105": {
+      "id": "ev-mv30jdb5-01a1c105",
+      "kind": "command",
+      "label": "npm test full deterministic suite",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 34922,
+      "log": ".eccode/evidence/ev-mv30jdb5-01a1c105.log",
+      "logSha256": "14750dabb229c2dc91127e1eee78cd93f84387761adbee6891795bf5417c4260",
+      "logFileSha256": "53060a8417be19447827f2ce68002b2c35a9982b12e423c2bd7dce129c6624d5",
+      "outputTail": "  duration_ms: 495.792201\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 621 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 393.460945\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 622 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 451.409044\n  type: 'test'\n  ...\n1..622\n# tests 971\n# suites 96\n# pass 960\n# fail 1\n# cancelled 0\n# skipped 10\n# todo 0\n# duration_ms 34603.186215\n",
+      "gate": null,
+      "task": "d1-ai-core",
+      "tree": "6bbeabd52317ebe4a1647ebf722ee09ea0ba08ed959833929bdb943d55a4f439",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-10T23:16:04.868Z"
     }
   },
   "reviews": {
@@ -16263,6 +16295,72 @@
       "id": "ho-mv30i4sf-01273270",
       "recordedBy": "frontend-engineer",
       "at": "2026-10-10T23:15:07.334Z"
+    },
+    "ho-mv30knyb-01ee912a": {
+      "from": "ai-engineer",
+      "to": "delivery-lead",
+      "task": "d1-ai-core",
+      "objective": "Extraction core: provider contract, wire schema and strict local validator, prompt with random delimiters, deterministic bilingual fake, budget/rate/concurrency gate in integer micro-dollars, opt-in rephrase guard.",
+      "context": "Built against spec.md (AI / LLM Design, Internal module contracts), decision OQ-D7 (customer share default 0.2, the NFR6 test pins 1) and the brief's RS-01, RS-02, RS-03, RS-05 and NFR6. No real model call is made; every result below comes from the deterministic fake provider and is evidence of the harness and the pipeline, NOT of model quality (the live-model suite is LIVE-M1, not part of this task). src/ai imports only src/domain (AppError, localDay, buildQuestions) and node built-ins; the DB and the clock are injected into the gate. The provenance enum on the wire is the spec's user_text|image|none (manual is assigned by the confirm step, SEC-8).",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#ai--llm-design",
+        ".eccode/artifacts/design/spec.md#internal-module-contracts-shared-by-parallel-implementers",
+        ".eccode/artifacts/plan/plan.json#d1-ai-core",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria",
+        "src/domain/explain.js",
+        "src/config.js",
+        "src/db/migrations/002_requests.sql"
+      ],
+      "expectedOutput": "src/ai/{provider,schema,prompt,fake,gate,rephrase}.js and test/unit/ai/{schema,prompt,fake,gate,rephrase}.test.js, passing under the net guard.",
+      "acceptanceCriteria": [
+        "EXTRACTION_WIRE_SCHEMA exactly as spec (questions are field names only, SEC-7); validateExtraction enforces the local rules (exact keys, enums, deadline patterns, budget <= 2 decimals by string arithmetic, value null iff provenance none) [schema.test.js]",
+        "prompt.js PROMPT_VERSION x1: fixed system prompt; data block between random 16-hex delimiters with safeJson escaping [prompt.test.js]",
+        "fake.js (simulated: true) parses English and Arabic (both digit scripts, dual form) with exact-substring quotes; images by sha256 through an injectable image map (default test/fixtures/extraction/fake-image-map.json; unknown image -> all fields none plus questions); faults timeout, invalid_json, schema_invalid, error [fake.test.js: RS-01, RS-02, RS-03, RS-05]",
+        "gate.js in integer micro-dollars: rate check and insert in one BEGIN IMMEDIATE, per-customer concurrency 1, per-customer daily share default 0.2 with details.scope customer|global, spend + cap <= budget, reservation before the call and settlement or refund after [gate.test.js: NFR6, SEC-10]",
+        "rephrase.js off by default; input carries only planner codes and template sentences (SEC-17); output with a number or supplier code absent from the template is discarded [rephrase.test.js: RS-05]",
+        "Provider selection: always fake when RS_TEST_OFFLINE=1; default model haiku [fake.test.js, gate.test.js: NFR6]"
+      ],
+      "completedWork": "schema.js: EXTRACTION_WIRE_SCHEMA (deep-frozen, the Anthropic-compatible subset), validateExtraction/parseAndValidate (strict keys, enums, deadline patterns, budget cents by string arithmetic, null iff none, 200 code point wording cap, question set of field names; optional grounding: a user_text quote must be a substring of the NFC/digit-folded text and its number must occur in the quote, an image number must be among the image's legible numbers; errors carry paths and codes only), renderQuestions (server templates from domain/explain.js, budgetUsd mapped to the budget question). provider.js: ProviderError and the four codes, assertExtractionProvider, selectProvider (fake whenever config.testOffline, labelled fallback when an adapter is missing), toDegraded. prompt.js: fixed SYSTEM_PROMPT, safeJson, random 16-hex markers, buildExtractionPrompt (text block then optional image block; no parameter exists for catalog text), buildRephrasePrompt. fake.js: lexicon parser for English and Arabic, instruction sentences masked before parsing and only setting addressedToAssistant, image map by sha256, faults supplied by an injected faults() callback, optional rephrase method, self-validation through the same parse-and-validate path a real adapter uses. gate.js: toMicroUsd and share arithmetic in integers/BigInt, takeRate, reserve (concurrency, global, customer), settle, refund, settleStale, run, gateLimitsFromConfig. rephrase.js: guardRephrased (foreign numbers in both digit scripts, foreign supplier codes, number words, links, length), buildRephraseInput (code + sentence only), createRephraser through the same gate with purpose rephrase. 111 tests in the five files pass. A mutation check (budget boundary changed to >=) made 4 gate tests fail (ev:ev-mv30idlj-0141efc8), then the code was restored. Full npm test (ev:ev-mv30jdb5-01a1c105): 971 tests, 960 pass, 10 skipped, 1 FAIL that is not in src/ai: test/api/contracts.test.js 'NFR6: the route table covers each fixture file exactly once' reports test/fixtures/contracts/request-extract-degraded.json and request-image-upload.json (added by d4 in commit 5e1df73) as fixtures without a scenario; the test-engineer's d5 owns that scenario table. The suite is therefore not green and is not cited as passing.",
+      "filesChanged": [
+        "src/ai/provider.js",
+        "src/ai/schema.js",
+        "src/ai/prompt.js",
+        "src/ai/fake.js",
+        "src/ai/gate.js",
+        "src/ai/rephrase.js",
+        "test/unit/ai/schema.test.js",
+        "test/unit/ai/prompt.test.js",
+        "test/unit/ai/fake.test.js",
+        "test/unit/ai/gate.test.js",
+        "test/unit/ai/rephrase.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv30idlj-0141efc8",
+        "ev:ev-mv30ik7o-0181d88a"
+      ],
+      "remainingIssues": [
+        "npm test is red by one test outside this task: test/api/contracts.test.js has no scenario for the d4 fixtures request-extract-degraded.json and request-image-upload.json (d5 test-engineer, or the owner of contracts.test.js, must add them).",
+        "Contract notes for d3 (src/services/extraction.js and src/main.js): (1) gate = createGate({db, clock, limits: gateLimitsFromConfig(config)}); the gate reads config fields modelDailyBudgetMicroUsd, modelCallCapMicroUsd, fakeModelCostMicroUsd (integers, preferred) and falls back to the existing modelDailyBudgetUsd, modelCallCapUsd, fakeModelCostUsd; modelCustomerDailyShare is already parsed (default 0.2). d3 may add the three micro fields to config.js with toMicroUsd(raw env string), or leave config.js unchanged; both work. (2) Call order: gate.takeRate(customerId) on every image upload; extraction = gate.run({customerId, requestId, call: () => provider.extract({text, image, signal})}) which takes the rate, reserves the cap, calls outside any transaction, settles with usage.costMicroUsd (or costUsd) and refunds on a thrown error. A refusal throws a domain AppError (429 RATE_LIMITED details.limit extract_upload|model_concurrency with headers['Retry-After'], or 503 MODEL_BUDGET_EXHAUSTED details.scope global|customer) that the HTTP layer adopts via adoptAppError; d3 stores the degraded row in a separate transaction. (3) The fake takes faults: () => null|'timeout'|'invalid_json'|'schema_invalid'|'error' (a 'fake_model:' prefix is accepted); d3 must read and decrement the fake_model:* row of fault_flags and return the fault name, because adapters never touch service tables. (4) createFakeProvider({costMicroUsd}) takes integer micro-dollars: pass toMicroUsd(config.fakeModelCostUsd). (5) On ProviderError use toDegraded(err) for {schemaOk:false, degraded:true, errorCode, output: all unknown}. (6) validateExtraction(output, {text, imageNumbers}) rejects ungrounded output (provider adapters should call parseAndValidate with the request text); the spec's post-validation normalisation (downgrade to unknown, ranges, image wording stripping, non-USD budget) stays in services/extraction.js and is not implemented here. (7) renderQuestions(output.questions) gives the server-templated Question[].",
+        "Contract notes for d2: the fake image map is keyed by sha256 hex of the image bytes (not by an image id); entry shape {fields:{<name>:{value,wording}}, visibleNumbers?:number[], questions?:string[], addressedToAssistant?:boolean, imageText?:string, language?:string}; imageText is only scanned for instructions, never copied into a field. A missing default file test/fixtures/extraction/fake-image-map.json means an empty map (every image is unknown), a malformed file is an error. Providers may implement an optional rephrase({system, content, input, signal}) -> {output:{text}, usage}; the fake does. usage may carry costMicroUsd (integer, preferred by the gate) beside costUsd. User content order in prompt.js is the text block then the image block; the API adapter spec lists image first, so d2 should reorder if the API requires it. ProviderError(code, {usage}) is the only error type the gate and toDegraded understand beyond a generic Error.",
+        "The fake parser is a lexicon, not a language model: it handles the documented English and Arabic forms (digits in both scripts, thousands commas, ml/mm, 'by'/'قبل الساعة' with minutes or am/pm, $ / dollars / دولار, pickups / نقطتي) and leaves anything else unknown with a question; a bare hour ('by 11'), Arabic number words other than the dual, and decimals in integer fields are deliberately unknown. EXT-1 corpus texts written in d2 may need lexicon additions in fake.js, which is owned by this task.",
+        "The rephrase guard compares against the template sentences, so it cannot catch a reordered comparison or a negation (accepted residual, spec); a capital 'A' or 'I' used as an English article counts as a supplier code and causes a discard (fails safe).",
+        "Lesson mem-sd-mv1audrd-013b7102 (guard root resolution) did not apply: this task builds no hook or guard. The guard itself refused one Bash call (an evidence label containing a greater-than-or-equal sign was read as a redirect to the relative path '='); the label was reworded and the command rerun.",
+        "No ECCODE_EVAL line is printed by this task; the fake-mode EXT-1 eval belongs to d2 (test/eval/extraction-fake.test.js)."
+      ],
+      "nextAction": "backend-engineer (d3-extraction-service): wire createGate/gateLimitsFromConfig, the fault_flags callback and renderQuestions as listed in remainingIssues; ai-engineer (d2-ai-adapters-corpus): build cli.js and anthropic.js against the ExtractionProvider contract in src/ai/provider.js and the fake-image-map.json entry shape; test-engineer (d5): add the two missing contract scenarios so npm test is green.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson is about hooks or guards that map file writes to a project root; this task builds extraction modules (src/ai) and no hook, guard or root discovery, so none of its 'Applies when' conditions hold. The nested-record writes I made were all accepted by the guard."
+        }
+      ],
+      "id": "ho-mv30knyb-01ee912a",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-10T23:17:05.480Z"
     }
   },
   "runs": {
@@ -17142,8 +17240,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-10T23:01:14.174Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-10T23:17:40.022Z",
+      "durationMinutes": 16.43,
+      "costUsd": null,
+      "tokens": 300000,
+      "note": null,
+      "usageReported": true
     },
     "run-mv300a7l-013dfd8b": {
       "id": "run-mv300a7l-013dfd8b",
@@ -17174,6 +17278,24 @@
           "reason": "harness usage report arrived after run end"
         }
       ]
+    },
+    "run-mv30lewc-01f8d6d7": {
+      "id": "run-mv30lewc-01f8d6d7",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T23:17:40.193Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv30lf1h-018eb1cb": {
+      "id": "run-mv30lf1h-018eb1cb",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T23:17:40.381Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -17520,8 +17642,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 600.27,
-    "tokens": 7387681
+    "runtimeMinutes": 616.7,
+    "tokens": 7687681
   },
   "delivery": null,
   "reworks": [
