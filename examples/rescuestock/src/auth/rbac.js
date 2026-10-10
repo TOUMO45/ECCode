@@ -5,6 +5,8 @@
 //                       Any other route declared 'signature' is refused (403 FORBIDDEN).
 //   state-changing      Origin check first (403 CSRF_FAILED);
 //   identification      the rs_sid cookie -> ctx.user, ctx.session; none -> 401 UNAUTHENTICATED;
+//   general limit       300 requests per minute per signed-in user (RS_GENERAL_RATE_LIMIT, RS_GENERAL_RATE_WINDOW_SEC),
+//                       else 429 RATE_LIMITED with details.limit "general" and Retry-After (SEC-C-3);
 //   role                policy 'session' = any signed-in role; 'customer' | 'supplier' | 'admin' = that role,
 //                       else 403 FORBIDDEN (admin routes: anonymous 401, other roles 403, RS-30);
 //   CSRF token          every non-GET request must carry X-CSRF-Token equal to the session's token.
@@ -22,7 +24,8 @@ export function isStateChanging(method) {
   return method !== 'GET' && method !== 'HEAD';
 }
 
-export function createAccess({ sessions, publicUrl }) {
+// `limiter` (optional, src/auth/general-limit.js) is the general per-user limit; without it nothing is counted.
+export function createAccess({ sessions, publicUrl, limiter = null }) {
   // Soft identification: sets ctx.user, ctx.session and ctx.sessionId (the raw cookie value, kept so a
   // sign-in or registration can destroy it). Never throws for a missing or dead session.
   function identify(ctx) {
@@ -55,6 +58,10 @@ export function createAccess({ sessions, publicUrl }) {
 
     identify(ctx);
     if (!ctx.user) throw new AppError(401, 'UNAUTHENTICATED');
+
+    // General per-user limit (SEC-C-3): after authentication so it keys on the user id, before the role and
+    // CSRF checks so a signed-in client cannot probe them without bound either.
+    if (limiter) limiter.take(ctx.user.id);
 
     if (route.policy === 'session') {
       // any signed-in role

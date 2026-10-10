@@ -68,6 +68,10 @@ const DEFAULTS = {
   RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY: '10',
   RS_MODEL_CUSTOMER_DAILY_SHARE: '0.2',
   RS_REGISTER_PER_IP_PER_HOUR: '5',
+  RS_PLAN_RATE_LIMIT: '10',
+  RS_PLAN_RATE_WINDOW_MIN: '10',
+  RS_GENERAL_RATE_LIMIT: '300',
+  RS_GENERAL_RATE_WINDOW_SEC: '60',
   RS_ALLOWED_HOSTS: '',
   RS_OLD_NODE_BINS: '',
   RS_TRUST_PROXY: '0',
@@ -177,6 +181,10 @@ test('NFR4: the active lines of .env.example, copied verbatim, load into a valid
   assert.equal(config.paymentProvider, 'fake');
   assert.equal(config.modelProvider, 'cli');
   assert.equal(config.registerPerIpPerHour, 5);
+  assert.equal(config.planRateLimit, 10);
+  assert.equal(config.planRateWindowMin, 10);
+  assert.equal(config.generalRateLimit, 300);
+  assert.equal(config.generalRateWindowSec, 60);
   assert.equal(config.modelCustomerDailyShare, 0.2);
   assert.equal(config.testOffline, false);
   assert.equal(config.adminPassword, null);

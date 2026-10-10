@@ -606,7 +606,47 @@ describe('SEC-B-9: forwarded client IP (FU-11)', () => {
       // A valid hop is a separate key, and so is its IPv6 form.
       assert.equal((await c.signin('fwd-user', PASSWORD, { from: '203.0.113.50' })).status, 200);
       assert.equal((await c.signin('fwd-user', 'bad', { from: '2001:DB8::7' })).status, 401);
-      assert.ok(h.db.prepare('SELECT 1 FROM login_failures WHERE ip = ?').get('2001:db8::7'));
+      assert.ok(h.db.prepare('SELECT 1 FROM login_failures WHERE ip = ?').get('2001:db8:0:0::/64'), 'an IPv6 hop is stored as its /64 (SEC-C-2)');
+    } finally {
+      await h.close();
+    }
+  });
+
+  test('SEC-C-2: 5 sign-in failures over 5 addresses of one IPv6 /64 make the 6th attempt get 429; another /64 and an IPv4 address are separate keys', async () => {
+    const h = await startHarness({ env: { RS_TRUST_PROXY: '1' } });
+    try {
+      const c = client(h);
+      makeUser(h, await hashPassword(PASSWORD), 'v6-user');
+      for (let i = 1; i <= 5; i++) {
+        const res = await c.signin('v6-user', `wrong-password-${i}`, { from: `2001:db8:1:1::${i}` });
+        assert.equal(res.status, 401, `failure ${i}`);
+      }
+      const sixth = await c.signin('v6-user', PASSWORD, { from: '2001:db8:1:1:aaaa:bbbb:cccc:dddd' });
+      assert.equal(sixth.status, 429, sixth.text);
+      assert.equal(sixth.json.error.code, 'RATE_LIMITED');
+      assert.equal(sixth.json.error.details.limit, 'signin_pair');
+      assert.ok(Number(sixth.headers['retry-after']) >= 1);
+      assert.deepEqual(h.db.prepare('SELECT DISTINCT ip FROM login_failures').all().map((r) => r.ip), ['2001:db8:1:1::/64']);
+      // The neighbouring /64 and an IPv4 client are not affected.
+      assert.equal((await c.signin('v6-user', PASSWORD, { from: '2001:db8:1:2::1' })).status, 200);
+      assert.equal((await c.signin('v6-user', PASSWORD, { from: '203.0.113.60' })).status, 200);
+    } finally {
+      await h.close();
+    }
+  });
+
+  test('SEC-C-2: the register throttle counts one IPv6 /64 as one address', async () => {
+    const h = await startHarness({ env: { RS_TRUST_PROXY: '1' } });
+    try {
+      const c = client(h);
+      const statuses = [];
+      for (let i = 1; i <= 6; i++) {
+        const res = await c.register({ username: `v6reg${i}`, password: PASSWORD, displayName: `V6 ${i}` }, { from: `2001:db8:7:7::${i}` });
+        statuses.push(res.status);
+      }
+      assert.deepEqual(statuses.slice(0, 5).every((s) => s === 201), true, statuses.join(','));
+      assert.equal(statuses[5], 429, statuses.join(','));
+      assert.ok(h.db.prepare("SELECT 1 FROM rate_events WHERE kind = 'register' AND user_key = ?").get('ip:2001:db8:7:7::/64'));
     } finally {
       await h.close();
     }

@@ -213,6 +213,17 @@ export function confirmRequirements(ctx, user, requestId, body) {
     };
 
     const previous = db.prepare('SELECT * FROM requirements WHERE request_id = ? ORDER BY version DESC LIMIT 1').get(requestId) ?? null;
+
+    // SEC-C-3: a confirm that changes nothing (same values, same derived provenance) returns the latest version and
+    // writes no requirements row, no audit row and no re-plan, so a loop of identical confirms cannot grow the tables.
+    if (previous && sameRequirements(previous, next) && previous.fields_json === JSON.stringify(fields)) {
+      db.prepare("UPDATE rescue_requests SET intake_status = 'confirmed' WHERE id = ?").run(requestId);
+      return {
+        requirements: { version: previous.version, fields: parseJson(previous.fields_json, fields), confirmedAt: previous.confirmed_at },
+        supersededVersionIds: [],
+      };
+    }
+
     const version = previous ? previous.version + 1 : 1;
     db.prepare(
       'INSERT INTO requirements (request_id, version, fields_json, product_type, cups, lids, capacity_ml, diameter_mm, material, ' +

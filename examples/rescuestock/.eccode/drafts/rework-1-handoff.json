@@ -1,0 +1,61 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "rework-1",
+  "objective": "Close the phase C review rev-mv2zb2wy-019ac65d findings TR-C-2 / FU-14 (planning-limit environment names), SEC-C-3 / FU-15 (general 300/min per-user limit, unchanged confirm writes no version) and SEC-C-2 (IPv6 /64 throttle keys) before phase D.",
+  "context": "Review findings TR-C-2, SEC-C-2, SEC-C-3 in gate phase:c-core-flow; security draft .eccode/reviews/drafts/phase-c-security-1.md; followups FU-14, FU-15; c1 ho-mv2pgzqg-0145c52b (throttle design, rate_events kinds); c2 ho-mv2q84ku-01502a13 (createApp reads config.planRateLimit/planRateWindowMin). The general limit is wired through the existing access hook (createAccess in src/auth/rbac.js, built by createAuth in src/auth/index.js, which createApp already uses by default); src/app.js and src/routes/** were not touched.",
+  "inputs": [
+    ".eccode/reviews/drafts/phase-c-security-1.md",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/artifacts/design/spec.md",
+    "ev:ev-mv2z05jg-016641ca",
+    "ev:ev-mv2ys7g8-01cffb10"
+  ],
+  "dependencies": [],
+  "expectedOutput": "Config and .env.example carry RS_PLAN_RATE_LIMIT, RS_PLAN_RATE_WINDOW_MIN, RS_GENERAL_RATE_LIMIT, RS_GENERAL_RATE_WINDOW_SEC; the access hook enforces the general limit; IPv6 clients are keyed by /64; an unchanged confirm writes nothing; each finding has a named failing-first test.",
+  "acceptanceCriteria": [
+    "TR-C-2: RS_PLAN_RATE_LIMIT (1-1000, default 10) and RS_PLAN_RATE_WINDOW_MIN (1-1440, default 10) are parsed into planRateLimit/planRateWindowMin, listed in .env.example, and the env-example scan is green",
+    "SEC-C-3: the 301st call of a signed-in user in a minute gets 429 RATE_LIMITED with details.limit general and Retry-After; rows are kind general, key u:<id>, in one BEGIN IMMEDIATE; plan:u:<id> keys are neither counted nor deleted; NFR5 p95 under 300 ms",
+    "SEC-C-3: a confirm with the same values and provenance as the latest version returns it and inserts no requirements, audit or re-plan row",
+    "SEC-C-2: IPv6 sign-in and register throttle keys are the /64; 5 failures over 5 addresses of one /64 make the 6th get 429; IPv4 and ::ffff: mapped addresses are unchanged",
+    "a regression test fails before the fix and passes after it; the existing checks still pass"
+  ],
+  "completedWork": "src/config.js now parses RS_PLAN_RATE_LIMIT, RS_PLAN_RATE_WINDOW_MIN, RS_GENERAL_RATE_LIMIT (1-100000, default 300) and RS_GENERAL_RATE_WINDOW_SEC (1-3600, default 60) into planRateLimit, planRateWindowMin, generalRateLimit, generalRateWindowSec, refusing out-of-range values by variable name; all four are in .env.example with their defaults. New src/auth/general-limit.js counts every non-public, authenticated call in rate_events (kind general, key u:<id>) inside one db.tx (BEGIN IMMEDIATE) together with the delete of expired rows, refuses the call over the limit with 429 RATE_LIMITED {limit: general} and Retry-After, and does not insert a refused call; createAccess calls it right after authentication (anonymous 401 and the signature webhook route are not counted); createAuth builds it from config. src/auth/client-ip.js gained throttleKey(): IPv6 becomes its /64 (2001:db8:1:1::/64), IPv4 and ::ffff: mapped addresses (dotted or hex form) collapse to IPv4; clientIp uses it for the socket address and the trusted last X-Forwarded-For hop. confirmRequirements in src/services/requests.js returns the latest version without inserting a requirements row, audit row or re-plan when the values and the derived field provenance equal the latest version (still HTTP 201, intake_status kept at confirmed). Tests: limits.test.js (TR-C-2 x2, SEC-C-3 config), client-ip.test.js (SEC-C-2 x2), general-limit.test.js (SEC-C-3 limiter, one-transaction check, access hook), rate-limits.test.js (301st call, p95, plan key separation both ways, public routes uncounted, configurable), auth.test.js (SEC-C-2 sign-in 6th gets 429, register /64), requests-plans.test.js (SEC-C-3 unchanged confirm), env-example.test.js (four new defaults). Failing state first: ev:ev-mv2zhs1c-019dd6ab (18 failures). Three existing assertions had to follow the new behaviour: two in test/api/requests-plans.test.js counted every kind-general rate_events row (now they count only plan:% rows, since every signed-in call now adds a u:<id> row) and one asserted u:<id> was 0 (now asserts > 0 and distinct from the planning key); three in client-ip.test.js / auth.test.js expected a full IPv6 address as key (now the /64).",
+  "filesChanged": [
+    "src/config.js",
+    ".env.example",
+    "src/auth/client-ip.js",
+    "src/auth/general-limit.js",
+    "src/auth/index.js",
+    "src/auth/rbac.js",
+    "src/services/requests.js",
+    "test/unit/config/limits.test.js",
+    "test/unit/auth/client-ip.test.js",
+    "test/unit/auth/general-limit.test.js",
+    "test/api/auth.test.js",
+    "test/api/requests-plans.test.js",
+    "test/api/rate-limits.test.js",
+    "test/scan/env-example.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv2zhs1c-019dd6ab",
+    "ev:ev-mv2zk7pm-01750b17",
+    "ev:ev-mv2zkyxt-01823312",
+    "ev:ev-mv2zl4mn-01560653"
+  ],
+  "remainingIssues": [
+    "The general limit counts every authenticated call including a 403 role refusal and a CSRF-token failure of a signed-in user; only anonymous calls (401), public routes and the signature-authenticated webhook route are outside the per-user count. The webhook route keeps its own 60 per IP per minute limit, which a later payment task owns.",
+    "Every authenticated request now writes one rate_events row (at most 300 per user per minute, expired rows deleted on the next call of that user). Rows of users who stop calling stay until their next call; the admin reset in src/services/admin.js deletes only request_create and plan:% rows, and no retention sweep of old u:<id> rows exists.",
+    "A confirm is treated as unchanged only when the derived fields JSON (values plus provenance and wording) equals the latest version, not just the columns; a confirm that changes only provenance because a newer extraction exists still writes a new version.",
+    "RS_GENERAL_RATE_LIMIT and RS_GENERAL_RATE_WINDOW_SEC are not in the spec's Deployment table; their names, bounds (1-100000, 1-3600) and defaults (300, 60) are this rework's choice per the assignment."
+  ],
+  "nextAction": "technical-reviewer: verify TR-C-2, SEC-C-2 and SEC-C-3 against their resolution conditions in rev-mv2zb2wy-019ac65d, then the delivery lead can dispatch phase D.",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "appliesWhen concerns a hook or guard mapping file writes to a project root in a repository with several records; this task changes application code (config, access hook, throttle keys, confirm service) and writes no guard or root-discovery logic, and the guard here resolved the nested record correctly for every write."
+    }
+  ]
+}

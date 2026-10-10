@@ -65,7 +65,8 @@ describe('RS-27: customer isolation for requests and plans', () => {
     const before = {
       requirements: count(h, 'SELECT COUNT(*) AS n FROM requirements'),
       runs: count(h, 'SELECT COUNT(*) AS n FROM planning_runs'),
-      events: count(h, "SELECT COUNT(*) AS n FROM rate_events WHERE kind = 'general'"),
+      // Planning rows only: since SEC-C-3 every signed-in call also adds a u:<id> row for the general limit.
+      events: count(h, "SELECT COUNT(*) AS n FROM rate_events WHERE kind = 'general' AND user_key LIKE 'plan:%'"),
     };
     for (const [method, path, body] of [
       ['GET', `/api/requests/${ownId}`],
@@ -81,7 +82,7 @@ describe('RS-27: customer isolation for requests and plans', () => {
       {
         requirements: count(h, 'SELECT COUNT(*) AS n FROM requirements'),
         runs: count(h, 'SELECT COUNT(*) AS n FROM planning_runs'),
-        events: count(h, "SELECT COUNT(*) AS n FROM rate_events WHERE kind = 'general'"),
+        events: count(h, "SELECT COUNT(*) AS n FROM rate_events WHERE kind = 'general' AND user_key LIKE 'plan:%'"),
       },
       before,
     );
@@ -275,6 +276,29 @@ describe('confirm: manual requirement confirmation and provenance (SEC-8)', () =
     assert.equal(h.db.prepare('SELECT intake_status FROM rescue_requests WHERE id = ?').get(id).intake_status, 'confirmed');
     const again = await confirm(cafe1, id, { maxPickups: 3 });
     assert.equal(again.json.requirements.version, 2);
+  });
+
+  test('SEC-C-3: a confirm with the same values as the latest version returns that version and inserts no requirements row, audit row or re-plan', async () => {
+    const id = await newRequest(cafe1);
+    const first = await confirm(cafe1, id);
+    assert.equal(first.status, 201, first.text);
+    const rows = () => count(h, 'SELECT COUNT(*) AS n FROM requirements WHERE request_id = ?', id);
+    const audits = () => count(h, "SELECT COUNT(*) AS n FROM audit_events WHERE action = 'requirements.confirm' AND entity_id = ?", id);
+    assert.equal(rows(), 1);
+    const auditsBefore = audits();
+    for (let i = 0; i < 3; i++) {
+      const again = await confirm(cafe1, id);
+      assert.equal(again.status, 201, again.text);
+      assert.equal(again.json.requirements.version, 1, 'the latest version is returned, not a new one');
+      assert.deepEqual(again.json.requirements, first.json.requirements);
+    }
+    assert.equal(rows(), 1, 'no new requirements row for an unchanged confirm');
+    assert.equal(audits(), auditsBefore, 'and no audit row');
+    // A real change still writes version 2, and confirming that again is unchanged again.
+    const changed = await confirm(cafe1, id, { maxPickups: 3 });
+    assert.equal(changed.json.requirements.version, 2);
+    assert.equal((await confirm(cafe1, id, { maxPickups: 3 })).json.requirements.version, 2);
+    assert.equal(rows(), 2);
   });
 
   test('SEC-8: a client-sent provenance or wording is never used; the extraction decides only for equal values', async () => {
@@ -660,7 +684,8 @@ describe('PB-3 / RISK-19: the planner limit and the planning rate limit', () => 
   test('RISK-19: FU-8 the planning count lives in rate_events (kind general, key plan:u:<id>) and expires with the window', async () => {
     const key = `plan:u:${cafe2.user.id}`;
     assert.equal(count(h, "SELECT COUNT(*) AS n FROM rate_events WHERE kind = 'general' AND user_key = ?", key), 10);
-    assert.equal(count(h, "SELECT COUNT(*) AS n FROM rate_events WHERE kind = 'general' AND user_key = ?", `u:${cafe2.user.id}`), 0, 'the general per-user limit keeps its own key');
+    // The general per-user limit (SEC-C-3) keeps its own key: its rows exist but are not the planning rows counted above.
+    assert.ok(count(h, "SELECT COUNT(*) AS n FROM rate_events WHERE kind = 'general' AND user_key = ?", `u:${cafe2.user.id}`) > 0, 'the general per-user limit keeps its own key');
     const ids = h.db.prepare('SELECT id FROM rescue_requests WHERE customer_id = ? ORDER BY id LIMIT 1').get(cafe2.user.id);
     h.clock.advance(10 * 60 * 1000);
     assert.equal((await cafe2.post(`/api/requests/${ids.id}/plan`, {})).status, 201);

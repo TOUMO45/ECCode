@@ -317,6 +317,12 @@ export function loadConfig(env = process.env, { now = () => Date.now() } = {}) {
     maxRequestsPerCustomerPerDay: r.int('RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY', 10, 1, 100000),
     modelCustomerDailyShare: r.number('RS_MODEL_CUSTOMER_DAILY_SHARE', 0.2, 0, 1),
     registerPerIpPerHour,
+    // Planning limit (FU-8, RISK-19): planRateLimit plans per planRateWindowMin minutes per customer. createApp reads both.
+    planRateLimit: r.int('RS_PLAN_RATE_LIMIT', 10, 1, 1000),
+    planRateWindowMin: r.int('RS_PLAN_RATE_WINDOW_MIN', 10, 1, 1440),
+    // General per-user limit (SEC-2, SEC-C-3 / FU-15): 300 requests per 60 s by default, counted in the access hook.
+    generalRateLimit: r.int('RS_GENERAL_RATE_LIMIT', 300, 1, 100000),
+    generalRateWindowSec: r.int('RS_GENERAL_RATE_WINDOW_SEC', 60, 1, 3600),
     allowedHosts: Object.freeze(r.list('RS_ALLOWED_HOSTS', HOST_TEXT).map((h) => h.toLowerCase())),
     oldNodeBins: Object.freeze(r.list('RS_OLD_NODE_BINS')),
     trustProxy: r.flag('RS_TRUST_PROXY', false),
