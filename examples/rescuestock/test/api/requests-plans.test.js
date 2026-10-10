@@ -387,7 +387,7 @@ describe('confirm: manual requirement confirmation and provenance (SEC-8)', () =
     assert.equal(view.json.plans[1].supersededBy, second.json.plan.id);
   });
 
-  test('confirm: an executing or executed plan version is 409 PLAN_IN_PROGRESS; a live reservation without the void rule is refused too', async () => {
+  test('confirm: an executing or executed plan version is 409 PLAN_IN_PROGRESS; an approved plan with an active reservation is superseded and the reservation released by the void rule', async () => {
     const id = await newRequest(cafe1);
     await confirm(cafe1, id);
     const planned = await cafe1.post(`/api/requests/${id}/plan`, {});
@@ -396,12 +396,26 @@ describe('confirm: manual requirement confirmation and provenance (SEC-8)', () =
     h.db
       .prepare("INSERT INTO reservations (plan_version_id, customer_id, idempotency_key, operation_key, status, expires_at, created_at) VALUES (?, ?, 'key-live-0000000001', ?, 'active', '2026-10-20T07:00:00.000Z', '2026-10-20T06:00:00.000Z')")
       .run(planId, cafe1.user.id, `res:${cafe1.user.id}:${planId}:key-live-0000000001`);
+    const reservationId = h.db.prepare('SELECT id FROM reservations WHERE plan_version_id = ?').get(planId).id;
+    // One held bundle (supplier A's) so the release has stock to return.
+    const offerA = h.db.prepare('SELECT o.id, o.product_id, o.supplier_id FROM offers o WHERE o.id = 1').get();
+    h.db.prepare('INSERT INTO reservation_items (reservation_id, product_id, supplier_id, offer_id, qty) VALUES (?, ?, ?, ?, 1)').run(reservationId, offerA.product_id, offerA.supplier_id, offerA.id);
+    h.db.prepare('UPDATE inventory SET reserved = 1 WHERE product_id = ?').run(offerA.product_id);
+
     const live = await confirm(cafe1, id, { maxPickups: 4 });
-    assert.equal(live.status, 409);
-    assert.equal(live.json.error.code, 'PLAN_IN_PROGRESS');
-    assert.equal(count(h, 'SELECT COUNT(*) AS n FROM requirements WHERE request_id = ?', id), 1, 'the refused confirm wrote nothing');
+    assert.equal(live.status, 201, live.text);
+    assert.equal(count(h, 'SELECT COUNT(*) AS n FROM requirements WHERE request_id = ?', id), 2);
+    const plan = h.db.prepare('SELECT status, supersede_reason FROM plan_versions WHERE id = ?').get(planId);
+    assert.deepEqual({ ...plan }, { status: 'superseded', supersede_reason: 'REQUIREMENTS_CHANGED' });
+    assert.equal(h.db.prepare('SELECT status FROM reservations WHERE id = ?').get(reservationId).status, 'released');
+    assert.equal(h.db.prepare('SELECT reserved FROM inventory WHERE product_id = ?').get(offerA.product_id).reserved, 0);
+    const ledger = h.db.prepare("SELECT delta_reserved, ref_type, ref_id FROM inventory_ledger WHERE reason = 'release' AND ref_id = ?").all(reservationId);
+    assert.deepEqual(ledger.map((r) => ({ ...r })), [{ delta_reserved: -1, ref_type: 'reservation', ref_id: reservationId }]);
+    assert.equal(count(h, 'SELECT COUNT(*) AS n FROM replan_queue WHERE request_id = ?', id), 1);
+
+    // An executing version is never superseded: the confirm is refused and writes nothing.
     h.db.prepare("UPDATE plan_versions SET status = 'executing' WHERE id = ?").run(planId);
-    const running = await confirm(cafe1, id, { maxPickups: 4 });
+    const running = await confirm(cafe1, id, { maxPickups: 3 });
     assert.equal(running.status, 409);
     assert.equal(running.json.error.code, 'PLAN_IN_PROGRESS');
   });
