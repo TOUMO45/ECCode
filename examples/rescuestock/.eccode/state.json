@@ -1,6 +1,6 @@
 {
-  "seq": 521,
-  "lastHash": "322878f644bc87f83eb1a89428a0ae30f21328cb45c9a06402fc7ff05cbcec9d",
+  "seq": 529,
+  "lastHash": "f8cfe497fab5261a0d20a5a5dd4fdba52102b7a4e0c160487a120f539d7ecf1a",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -4028,34 +4028,49 @@
         "command": "ls test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "backend-engineer",
-        "at": "2026-10-10T23:18:44.145Z",
-        "baseCommit": "80a2b1174ed108f5b67941b4469e15db24bc1d36",
-        "runId": "run-mv30lf1h-018eb1cb",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.833,
-            "matched": 35,
-            "priority": 31,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "backend-engineer",
           "at": "2026-10-10T23:18:44.145Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-10T23:43:48.183Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "backend-engineer",
+      "handoffId": "ho-mv31j0p2-01ac6416",
+      "filesChanged": [
+        "src/services/extraction.js",
+        "src/services/retention.js",
+        "src/services/requests.js",
+        "src/services/view.js",
+        "src/routes/requests.js",
+        "src/main.js",
+        "src/app.js",
+        "src/config.js",
+        "test/api/extract.test.js",
+        "test/api/extract-image.test.js",
+        "test/api/extract-degraded.test.js",
+        "test/api/injection.test.js",
+        "test/api/confirm-provenance.test.js",
+        "test/api/uploads-retention.test.js",
+        "test/api/model-budget-rate.test.js"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson's appliesWhen needs a hook or guard that maps file writes to a project root, or an implementer denied with 'has no claimed task' or 'outside the ownership' in a nested record. This task builds extraction routes, services and tests only, no hook, guard or root discovery, and the guard refused none of my writes, so none of its conditions holds.",
+          "basis": "reason"
+        }
+      ]
     },
     "d4-frontend-extraction": {
       "id": "d4-frontend-extraction",
@@ -9937,6 +9952,86 @@
       "task": "d2-ai-adapters-corpus",
       "recordedBy": "ai-engineer",
       "at": "2026-10-10T23:31:49.295Z"
+    },
+    "ev-mv31coqm-01a249c6": {
+      "id": "ev-mv31coqm-01a249c6",
+      "kind": "command",
+      "label": "d3 plan verification command: extraction, upload, retention and model-gate API tests under the net guard",
+      "command": "ls test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7267,
+      "log": ".eccode/evidence/ev-mv31coqm-01a249c6.log",
+      "logSha256": "8217294b4bb358fc1f71379b57f25b4f5723ed7872f08ee0e55ac5bd68641ace",
+      "logFileSha256": "e514f96a3acf01d27230df5b0c23a556b9eebabafb9f005594b0644419812e8d",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: RS-39: the process starts the sweep at startup and then on a timer\n    # Subtest: RS-39: startApp removes an expired image at startup and another one on the next tick (RS_RETENTION_INTERVAL_MS)\n    ok 1 - RS-39: startApp removes an expired image at startup and another one on the next tick (RS_RETENTION_INTERVAL_MS)\n      ---\n      duration_ms: 146.474111\n      type: 'test'\n      ...\n    1..1\nok 20 - RS-39: the process starts the sweep at startup and then on a timer\n  ---\n  duration_ms: 146.708487\n  type: 'suite'\n  ...\n1..20\n# tests 103\n# suites 20\n# pass 103\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 7193.318998\n",
+      "gate": null,
+      "task": "d3-extraction-service",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-10T23:38:52.706Z"
+    },
+    "ev-mv31etf6-01061b72": {
+      "id": "ev-mv31etf6-01061b72",
+      "kind": "command",
+      "label": "npm test full deterministic suite after d3",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 40981,
+      "log": ".eccode/evidence/ev-mv31etf6-01061b72.log",
+      "logSha256": "b77ccdee35a92b64f83302ab5e2b69e041b5a0dd71930697fe0422d0db400822",
+      "logFileSha256": "06b7c91304e5ec3c0a7c7c8f953cc3b5b071fca812d2c77a0c387ddda7164155",
+      "outputTail": "  duration_ms: 523.00614\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 657 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 362.697738\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 658 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 463.561239\n  type: 'test'\n  ...\n1..658\n# tests 1172\n# suites 132\n# pass 1155\n# fail 7\n# cancelled 0\n# skipped 10\n# todo 0\n# duration_ms 40649.952159\n",
+      "gate": null,
+      "task": "d3-extraction-service",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-10T23:40:32.090Z"
+    },
+    "ev-mv31gqq0-01e6737d": {
+      "id": "ev-mv31gqq0-01e6737d",
+      "kind": "command",
+      "label": "d3 plan verification command, final code",
+      "command": "ls test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 6595,
+      "log": ".eccode/evidence/ev-mv31gqq0-01e6737d.log",
+      "logSha256": "db9d3d734104e8acd99057fba20552537dda6632ad7dc1439c6242a3ffa60e0b",
+      "logFileSha256": "da858694cd4d969047a64b9e21dab6c5196bf5431855d8ce6a2f84614e9cb918",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: RS-39: the process starts the sweep at startup and then on a timer\n    # Subtest: RS-39: startApp removes an expired image at startup and another one on the next tick (RS_RETENTION_INTERVAL_MS)\n    ok 1 - RS-39: startApp removes an expired image at startup and another one on the next tick (RS_RETENTION_INTERVAL_MS)\n      ---\n      duration_ms: 125.130564\n      type: 'test'\n      ...\n    1..1\nok 21 - RS-39: the process starts the sweep at startup and then on a timer\n  ---\n  duration_ms: 125.428845\n  type: 'suite'\n  ...\n1..21\n# tests 105\n# suites 21\n# pass 105\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 6522.42019\n",
+      "gate": null,
+      "task": "d3-extraction-service",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-10T23:42:01.891Z"
+    },
+    "ev-mv31ivzh-019a339f": {
+      "id": "ev-mv31ivzh-019a339f",
+      "kind": "command",
+      "label": "d3 plan verification command, final code with fixture shape checks",
+      "command": "ls test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 6780,
+      "log": ".eccode/evidence/ev-mv31ivzh-019a339f.log",
+      "logSha256": "2310947cd794204213225a17da3b4c40eba5584b50d70c06cdd5b214faafaf55",
+      "logFileSha256": "b4710dfdf02e3028cf862bf7f0a2d4f9277ad26d17c4d03afb7bba680f2ce0cd",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: RS-39: the process starts the sweep at startup and then on a timer\n    # Subtest: RS-39: startApp removes an expired image at startup and another one on the next tick (RS_RETENTION_INTERVAL_MS)\n    ok 1 - RS-39: startApp removes an expired image at startup and another one on the next tick (RS_RETENTION_INTERVAL_MS)\n      ---\n      duration_ms: 123.564554\n      type: 'test'\n      ...\n    1..1\nok 21 - RS-39: the process starts the sweep at startup and then on a timer\n  ---\n  duration_ms: 123.782701\n  type: 'suite'\n  ...\n1..21\n# tests 105\n# suites 21\n# pass 105\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 6681.507175\n",
+      "gate": null,
+      "task": "d3-extraction-service",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-10T23:43:42.029Z"
     }
   },
   "reviews": {
@@ -16635,6 +16730,83 @@
       "id": "ho-mv3158kt-011b3953",
       "recordedBy": "ai-engineer",
       "at": "2026-10-10T23:33:05.306Z"
+    },
+    "ho-mv31j0p2-01ac6416": {
+      "from": "backend-engineer",
+      "to": "delivery-lead",
+      "task": "d3-extraction-service",
+      "objective": "Extraction service and routes: upload by magic bytes, extract with the gate and the degraded path, grounding and provenance, confirm provenance, request deletion, retention sweep.",
+      "context": "Built against spec.md (Customer routes, AI / LLM Design: post-validation normalisation and runtime controls, Retention and deletion, Security T9 T10 T12 T16 T23), the brief's RS-01, RS-02, RS-03, RS-05, RS-39 and NFR6, decision dec-mv1e2i5k-01a1bebb (NFR6 asserted with the share pinned to 1) and review finding F-TR-18. d1's handoff ho-mv30knyb-01ee912a gave the provider and gate contract (selectProvider, toDegraded, createGate, gateLimitsFromConfig, takeRate, run, details.limit and details.scope); d4's handoff ho-mv30i4sf-01273270 gave the two UI contract points (extraction.addressedToAssistant, RequestView.capabilities.deleteRequest) and the 65 s upload / 45 s extract client limits. No model is called anywhere: every extraction below comes from d1's deterministic simulated fake (labelled simulated: true), so the evidence proves the pipeline, the gate and the harness, not the quality of a model. Memory search for upload, retention and extraction returned no records. The one lesson attached at claim (mem-sd-mv1audrd-013b7102, guard root resolution) does not apply: this task builds no hook or guard. The guard refused none of my calls.",
+      "inputs": [
+        ".eccode/artifacts/plan/plan.json#d3-extraction-service",
+        ".eccode/artifacts/design/spec.md#customer-routes",
+        ".eccode/artifacts/design/spec.md#ai--llm-design",
+        ".eccode/artifacts/design/spec.md#retention-and-deletion",
+        ".eccode/artifacts/architecture/brief.md#acceptance-criteria",
+        ".eccode/handoffs/ho-mv30knyb-01ee912a.json",
+        ".eccode/handoffs/ho-mv30i4sf-01273270.json",
+        ".eccode/artifacts/plan/followups.md (FU-2, FU-20)",
+        "src/ai/{provider,schema,fake,gate,prompt}.js (read only)",
+        "test/helpers/{app-harness,fixtures,plan-flow,contract-shape}.js (read only)"
+      ],
+      "expectedOutput": "src/services/{extraction,retention}.js, changes to requests.js, view.js, routes/requests.js, app.js, main.js, config.js, and the seven API test files named in the task.",
+      "acceptanceCriteria": [
+        "Upload: owner checked before reading the body (404, nothing written), Content-Length required, 5 MiB cap while streaming (413), magic bytes must match the declared type (415), random 128-bit file name, write to data/uploads/.tmp then rename, mode 0600 (SEC-14); GET image with detected type, nosniff, CSP sandbox, no-store",
+        "Extract: gate first (429 / 503 store a degraded row and never call the provider), provider call outside any transaction, normalisation (ranges, grounding substring check, Arabic-Indic digits, image wording stripped of URLs, e-mails and phone runs and cut to 80 chars, SEC-7; non-USD budget -> unknown + question); every failure -> degraded with every field unknown",
+        "Confirm (SEC-8): client provenance ignored; extracted provenance and originalWording kept only when the submitted value equals the extracted one, else manual [confirm-provenance.test.js]",
+        "RS-01, RS-02, RS-03 (API part), RS-05 (pipeline incl. T10 DB-planted catalog text) and RS-39 tests named with their ids; the fake's image map is injected in tests so this task does not depend on the EXT-1 fixtures",
+        "NFR6 test named 'NFR6: ... (RS_MODEL_CUSTOMER_DAILY_SHARE=1)' sets the share to 1 in its own environment and states why in a comment (F-TR-18); the SEC-10 case runs with the default 0.2; the 11th extract/upload -> 429 with Retry-After; micro-dollar boundary cases",
+        "DELETE /api/requests/:id: 409 PAYMENT_IN_PROGRESS on the spec's status list, void rule for an active reservation (REQUEST_DELETED), hard delete when no supplier order existed, tombstone otherwise, audit event either way; retention sweep with a pinned clock (7 d + 1 min deleted, 6 d 23 h kept, audit event per image) started at startup and hourly in main.js"
+      ],
+      "completedWork": "ROUTES (src/routes/requests.js): POST /api/requests/:id/image (owner 404 first, declared type 415, Content-Length required 400 / over the cap 413, gate.takeRate 429, streamed body with cap and deadline, magic bytes 415, store), GET /api/requests/:id/image (detected type, nosniff, Content-Security-Policy: sandbox, Cache-Control: private, no-store, Content-Disposition inline), POST /api/requests/:id/extract, DELETE /api/requests/:id. SERVICE (src/services/extraction.js): createAiRuntime builds the provider through selectProvider (the fake whenever RS_TEST_OFFLINE=1, labelled fallback when an adapter is missing) and the gate from gateLimitsFromConfig; takeModelFault reads and decrements the fake_model:* row of fault_flags (name '<kind>:<fault>', remaining count or NULL) and the fake gets it as faults(); saveImage writes a random 128-bit name to uploads/.tmp with mode 0600, renames, then replaces any earlier image in one transaction and audits; extractRequest runs gate.run (rate, concurrency, budget reserved before the call, settled after) with the provider call outside any transaction, a watchdog at RS_MODEL_TIMEOUT_MS (charged at the cap), structural re-validation, and then normaliseExtraction (ranges; grounding substring check with NFC, whitespace and Arabic-Indic digit folding; image provenance without an image downgraded; non-USD wording makes the budget unknown plus the server-template question; image wording stripped of URLs, e-mail addresses and phone runs and cut to 80; a bare HH:MM deadline gets the request's Asia/Amman day). A gate refusal (429 / 503) stores a degraded row in a separate transaction, never calls the provider, and rethrows the gate's error with details {...gate details, degraded: true, extraction}; any provider failure is 200 with degraded: true, schemaOk false, errorCode PROVIDER_TIMEOUT | PROVIDER_UNAVAILABLE | PROVIDER_BAD_OUTPUT | PROVIDER_BUSY and every field unknown. A refusal by rate is stored as PROVIDER_BUSY, by budget as PROVIDER_UNAVAILABLE. A degraded row replaces a degraded row that is already the newest, so a retry loop cannot grow the table. DELETE (src/services/requests.js deleteRequest): 409 PAYMENT_IN_PROGRESS on the spec's seven operation states, an executing version or a reconciling reservation; otherwise approved versions go through markNonExecutable(REQUEST_DELETED), i.e. the void rule; hard delete (cascade) when no supplier order or reservation ever existed, tombstone otherwise (deleted_at, raw_text NULL, images and extractions deleted, replan_queue row removed, originalWording nulled in every requirements version, plan/order/payment/provider-call rows kept); image files unlinked after the commit; audit event request.delete either way. Confirm provenance (SEC-8) already behaved as specified in requests.js buildFields; it is now covered by tests. RETENTION (src/services/retention.js): runRetentionSweep deletes images with created_at <= now - RS_IMAGE_RETENTION_DAYS (row, file, audit image.retention_delete per image), orphan files older than one day (only names this service generates; audit image.orphan_delete), rate_events older than 24 h and request_create older than 48 h (FU-20), and settles model_spend rows still reserved after 2 x RS_MODEL_TIMEOUT_MS at their cap; startRetention runs it at startup and every RS_RETENTION_INTERVAL_MS (default hourly), unref'd; main.js starts it and stops it in close(). main.js also loads the real adapters only when configured (cliVersion() must find the binary), falls back to the labelled fake otherwise and then reports the provider that really runs in config.extractionProvider so labels and /api/config stay honest. app.js builds deps.ai by default (so the harness needs no change) and takes uploadDeadlineMs (default UPLOAD_REQUEST_TIMEOUT_MS = 60 s). config.js adds modelCallCapMicroUsd, modelDailyBudgetMicroUsd and fakeModelCostMicroUsd, parsed from the decimal string of the existing variables by string arithmetic. view.js: renderExtraction adds addressedToAssistant and hides the reserved __meta key; RequestView gets capabilities: {deleteRequest: true}. TESTS (103 in the seven files, names start with RS-01, RS-02, RS-03, RS-05, RS-27, RS-34, RS-39, SEC-7, SEC-8, SEC-10, SEC-C-3, PB-3, NFR6): the NFR6 case is named 'NFR6: with a fake per-call cost cap of USD 0.10 and RS_MODEL_DAILY_BUDGET_USD=0.25 the third extract is refused ... (RS_MODEL_CUSTOMER_DAILY_SHARE=1)' and carries the F-TR-18 comment; the SEC-10 case runs with the default 0.2 (5th call of cafe1 refused with scope customer, cafe2 succeeds); boundaries 0.30 (allowed, 0.1+0.1+0.1 is the float trap) and 0.299999 (refused); the 11th extract or upload is 429 with Retry-After; a concurrency case holds a call in flight over HTTP; PB-3 uses a slow raw-socket body and a shortened deadline and asserts no file in uploads/ or .tmp. Image maps are injected per test, so nothing depends on the EXT-1 fixtures. No mutation check was run on this task.",
+      "filesChanged": [
+        "src/services/extraction.js",
+        "src/services/retention.js",
+        "src/services/requests.js",
+        "src/services/view.js",
+        "src/routes/requests.js",
+        "src/main.js",
+        "src/app.js",
+        "src/config.js",
+        "test/api/extract.test.js",
+        "test/api/extract-image.test.js",
+        "test/api/extract-degraded.test.js",
+        "test/api/injection.test.js",
+        "test/api/confirm-provenance.test.js",
+        "test/api/uploads-retention.test.js",
+        "test/api/model-budget-rate.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv31ivzh-019a339f",
+        "ev:ev-mv31gqq0-01e6737d",
+        "ev:ev-mv31coqm-01a249c6",
+        "ev:ev-mv30yifv-0114ffa1"
+      ],
+      "remainingIssues": [
+        "NEW ENV NAMES FOR g2: none. Every model variable of the Deployment table already existed in config.js (RS_MODEL_DAILY_BUDGET_USD, RS_MODEL_CALL_CAP_USD, RS_MODEL_CUSTOMER_DAILY_SHARE, RS_FAKE_MODEL_COST_USD, RS_MODEL_PROVIDER, RS_ANTHROPIC_MODEL, RS_IMAGE_RETENTION_DAYS, RS_RETENTION_INTERVAL_MS, RS_UPLOAD_DIR). The three new config fields (modelCallCapMicroUsd, modelDailyBudgetMicroUsd, fakeModelCostMicroUsd) are derived from those variables, read no new name, and test/scan/env-example.test.js stays green; .env.example is untouched. The upload size is the fixed 5,242,880 bytes of the spec, not a variable.",
+        "CONTRACT DELTAS (additive, for the spec / contract owner): (1) Extraction.addressedToAssistant: boolean on every Extraction (extract response, error details.extraction, RequestView.extraction). The spec's Extraction object lacks it although the acceptance criterion and the AI/LLM Design name the notice; the extractions table has no column, so the flag lives in fields_json under the reserved key __meta and renderExtraction removes it (rows written without it read as false). (2) RequestView.capabilities: {deleteRequest: true}. (3) The catalog has no code for a missing Content-Length or for an upload that misses its deadline, so both are 400 BAD_REQUEST (the deadline one with details.reason = UPLOAD_TIMEOUT and Connection: close). (4) A degraded row stored for a refusal carries errorCode PROVIDER_BUSY (rate and concurrency) or PROVIDER_UNAVAILABLE (budget). (5) A new degraded row replaces a degraded row that is already the newest.",
+        "FU-2 IS ONLY PARTLY MET: the route enforces its own upload deadline while it streams (default UPLOAD_REQUEST_TIMEOUT_MS = 60 s, injectable as createApp uploadDeadlineMs; test 'PB-3: ...' proves a stalled body ends as 400 with no file in uploads/ or .tmp). But Node's server-wide requestTimeout (30 s, src/http/server.js) still closes a slow upload first, so the effective cap is 30 s. Raising it means changing the server timeout, and test/unit/http/hardening.test.js (SEC-B-4) and test/unit/http/app.test.js (T19) assert 30000 for app.server.requestTimeout; neither file nor src/http/server.js is d3's. Orchestrator decision needed: accept 30 s as the effective limit, or have the owner of src/http/* raise it to 60 s together with those two assertions (a generic 30 s deadline for the non-upload routes would then have to move into the app).",
+        "npm test IS RED (ev:ev-mv31etf6-01061b72, 1172 tests, 1155 pass, 7 fail, 10 skipped). None of the seven is a defect in d3's code; all follow from the two additive contract points or from other tasks: (a) test/api/contracts.test.js, 'NFR6: the route table covers each fixture file exactly once' (request-extract-degraded.json and request-image-upload.json have no row: d5, as d1 and d4 already said); (b) 'NFR6: every registered route has a scenario in the table' (the new routes POST /api/requests/:id/image, GET /api/requests/:id/image, POST /api/requests/:id/extract, DELETE /api/requests/:id: d5); (c) the three live request-view contract rows (planned, infeasible, reserved) report 'capabilities: extra (not in the fixture)': d5 adds optional: ['capabilities'] as d4 asked; (d) test/api/requests-plans.test.js line 778, 'RS-34: GET /api/requests/:id carries labels and the planned shape of the contract fixture', compares the exact top-level key list of the RequestView and now sees 'capabilities': that file is c2's and not d3's to edit, so the orchestrator must give it to d5 or a rework (the one-word fix is to add 'capabilities' to its expected list); (e) test/unit/config/node-version.test.js, 'NFR1: package.json is exactly as the Deployment section specifies', reports d2's new script 'corpus:images' (d2's package.json change). The suite was run once, as instructed; it is not cited as green.",
+        "WHAT d5 MUST ADD to test/api/contracts.test.js: rows for POST /api/requests/:id/image (request-image-upload.json, 201, raw PNG body with Content-Type image/png), POST /api/requests/:id/extract (request-extract.json success; request-extract-degraded.json: set the fault with INSERT INTO fault_flags (name, value, remaining, created_at) VALUES ('fake_model:timeout', '', 1, <iso>), then extract, status 200), GET /api/requests/:id/image (not JSON; give it a scenario that checks the headers, or exclude it with a stated reason) and DELETE /api/requests/:id (200 {deleted: 'hard'|'tombstoned'}); optional: ['capabilities'] on the request-view rows; the request-view-degraded row can now run live (same fault, then GET the request). FU-16: EXTRACT_ROUTE_MAY_BE_MISSING in public/js/views/request-new.js can be set to false and the journey's own tolerance removed. d4's fixtures request-extract.json and request-extract-degraded.json and request-image-upload.json already match the live key set (verified with compareShape in extract.test.js, extract-degraded.test.js and uploads-retention.test.js).",
+        "ADAPTER WIRING (main.js loadAdapterFactories) uses d2's actual signatures: createCliProvider({model: config.model, timeoutMs, callCapMicroUsd: config.modelCallCapMicroUsd, clock}) after cliVersion() found the binary, and createAnthropicProvider({apiKey, baseUrl, model, timeoutMs, usdPerMtokIn, usdPerMtokOut, clock}). These paths are exercised only for RS_TEST_OFFLINE=1 (no adapter is loaded, tested) and for the fallback (tested with an empty factory set); no test starts a real adapter because that would call a model. Note that a machine with a claude binary on PATH and no RS_TEST_OFFLINE selects the CLI provider for npm start.",
+        "STALE MODEL RESERVATIONS: the spec gives settling a crashed call's reserved row at its cap after 2 x RS_MODEL_TIMEOUT_MS to the reconciler (e4). Until that exists the retention sweep does it (at startup and hourly), tested; e4 may take it over. The sweep purges only images, orphan files and rate_events; login_failures, expired sessions, idempotency keys and old webhook rows named in the spec's 'Other data' list are not purged by it (e4 housekeeping or a later task).",
+        "NOT DONE / OUT OF SCOPE: opt-in rephrasing is not wired into any route (Explanation.rephrased stays null), so the RS-05 clause about rephrasing is covered only by d1's rephrase tests, not at the API level. The README statement for T23 / RS-39 belongs to g2. Nothing was run in a browser.",
+        "NOTES FOR THE REVIEWER: (1) request ids come from INTEGER PRIMARY KEY without AUTOINCREMENT, so after a hard delete of the highest id the next request reuses it, and audit rows of the deleted request share the id with the new one (found by my own test; a new migration with AUTOINCREMENT would fix it, migrations are not d3's). (2) A refusal by the budget or the rate limit stores a degraded row, as the spec says, and it is then the newest extraction: the page shows 'Automatic reading unavailable' even if an earlier extraction of the same request succeeded, and a later confirm treats every value as manual. (3) Uploads count toward the 10 per 10 minutes even when later refused by size or magic bytes (the count happens after the owner and header checks, before the body is read). (4) Sessions in tests that move the pinned clock more than 12 h must sign in again; the tests do."
+      ],
+      "nextAction": "test-engineer (d5-extraction-contract-browser): add the contract rows and optional ['capabilities'] listed in remainingIssues, fix the key list at test/api/requests-plans.test.js:778 (or have the orchestrator assign it), then run npm test and npm run test:browser. orchestrator: decide FU-2 (30 s effective upload limit vs raising requestTimeout with its two tests), record the additive deltas addressedToAssistant and capabilities with the spec owner, and ask ai-engineer to restore the 'NFR1: package.json' scripts expectation for corpus:images. reviewer: check the diff against the lesson decision and the notes above.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson's appliesWhen needs a hook or guard that maps file writes to a project root, or an implementer denied with 'has no claimed task' or 'outside the ownership' in a nested record. This task builds extraction routes, services and tests only, no hook, guard or root discovery, and the guard refused none of my writes, so none of its conditions holds."
+        }
+      ],
+      "id": "ho-mv31j0p2-01ac6416",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-10T23:43:48.282Z"
     }
   },
   "runs": {
@@ -17604,8 +17776,29 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-10T23:17:40.381Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-10T23:44:27.776Z",
+      "durationMinutes": 26.79,
+      "costUsd": null,
+      "tokens": 443564,
+      "note": null,
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-10T23:44:46.362Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 300000,
+            "costUsd": null
+          },
+          "to": {
+            "tokens": 443564,
+            "costUsd": null
+          },
+          "reason": "harness usage report arrived after run end"
+        }
+      ]
     }
   },
   "risks": {
@@ -17952,8 +18145,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 632.61,
-    "tokens": 7797976
+    "runtimeMinutes": 659.4,
+    "tokens": 8241540
   },
   "delivery": null,
   "reworks": [

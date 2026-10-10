@@ -23,7 +23,10 @@ const RS_FIX_1 = {
 };
 const NINE = ['productType', 'cupQuantity', 'lidQuantity', 'capacityMl', 'diameterMm', 'material', 'deadline', 'budgetCents', 'maxPickups'];
 
-const valuesOf = (extraction) => Object.fromEntries(CORE.map((n) => [n, extraction.fields[n].value]));
+// A test file makes more requests than the production allowance of 10 per customer per day.
+const MANY_REQUESTS = { RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY: '1000' };
+
+const valuesOf =(extraction) => Object.fromEntries(CORE.map((n) => [n, extraction.fields[n].value]));
 
 async function signIn(h, username) {
   const client = createClient(h.request);
@@ -43,7 +46,7 @@ describe('RS-01: equivalent Arabic and English requests', () => {
   let h;
   let cafe1;
   before(async () => {
-    h = await startHarness({ seed: true });
+    h = await startHarness({ seed: true, env: MANY_REQUESTS });
     cafe1 = await signIn(h, 'cafe1');
   });
   after(() => h.close());

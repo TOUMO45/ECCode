@@ -53,26 +53,36 @@ export function ensureRuntimeDirs(config) {
   return created;
 }
 
-// The real model adapters live in src/ai/cli.js and src/ai/anthropic.js (task d2). They are loaded only when they are the
-// configured provider, and a missing or unusable module is not an error: selectProvider then falls back to the labelled fake
-// ("Automatic reading unavailable" is not the fallback; a simulated extraction is, and the labels say so).
-// Contract with those modules: createCliProvider({ config, log, clock }) / createAnthropicProvider({ config, log, clock })
-// return an ExtractionProvider, or null when the adapter cannot run (for example the claude binary is not found).
-const ADAPTERS = Object.freeze([
-  ['cli', './ai/cli.js', 'createCliProvider'],
-  ['anthropic', './ai/anthropic.js', 'createAnthropicProvider'],
-]);
-
+// The real model adapters (src/ai/cli.js, src/ai/anthropic.js) are loaded only when they are the configured provider. An
+// adapter that cannot be used (the claude binary is not found, the module does not load) is not an error: selectProvider then
+// falls back to the labelled fake, and the configuration the app sees says so (see startApp). Nothing here calls a model.
 export async function loadAdapterFactories(config, { log, clock }) {
   const factories = {};
-  for (const [id, file, exportName] of ADAPTERS) {
-    if (config.testOffline || config.extractionProvider !== id) continue;
+  if (config.testOffline) return factories; // RS_TEST_OFFLINE=1: always the fake, never a real adapter
+  const unavailable = (kind, err, code) => log.warn('extraction.adapter_missing', { kind, code: code ?? (err && err.code ? String(err.code) : 'IMPORT_FAILED') });
+  if (config.extractionProvider === 'cli') {
     try {
-      const mod = await import(file);
-      if (typeof mod[exportName] === 'function') factories[id] = () => mod[exportName]({ config, log, clock });
-      else log.warn('extraction.adapter_missing', { kind: id, code: 'NO_FACTORY' });
+      const mod = await import('./ai/cli.js');
+      if (await mod.cliVersion()) {
+        factories.cli = () =>
+          mod.createCliProvider({ model: config.model, timeoutMs: config.modelTimeoutMs, callCapMicroUsd: config.modelCallCapMicroUsd, clock });
+      } else {
+        unavailable('cli', null, 'BINARY_NOT_FOUND');
+      }
     } catch (err) {
-      log.warn('extraction.adapter_missing', { kind: id, code: err && err.code ? String(err.code) : 'IMPORT_FAILED' });
+      unavailable('cli', err);
+    }
+  }
+  if (config.extractionProvider === 'anthropic') {
+    try {
+      const mod = await import('./ai/anthropic.js');
+      factories.anthropic = () =>
+        mod.createAnthropicProvider({
+          apiKey: config.anthropicApiKey, baseUrl: config.anthropicBaseUrl, model: config.anthropicModel, timeoutMs: config.modelTimeoutMs,
+          usdPerMtokIn: config.anthropicUsdPerMtokIn, usdPerMtokOut: config.anthropicUsdPerMtokOut, clock,
+        });
+    } catch (err) {
+      unavailable('anthropic', err);
     }
   }
   return factories;

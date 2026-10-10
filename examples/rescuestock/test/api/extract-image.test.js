@@ -56,7 +56,7 @@ describe('RS-02, RS-03: extraction from a package photo', () => {
   let cafe1;
   const seen = [];
   before(async () => {
-    h = await startHarness({ seed: true });
+    h = await startHarness({ seed: true, env: { RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY: '1000' } });
     cafe1 = await signIn(h, 'cafe1');
     // The recording provider wraps the fake so a test can see exactly what the model would have been given.
     const inner = createFakeProvider({ imageMap: IMAGE_MAP, clock: h.clock });

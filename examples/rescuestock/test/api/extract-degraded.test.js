@@ -5,7 +5,9 @@
 // count or NULL). The provider is simulated; the pipeline and the harness are what these tests prove.
 import { after, before, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { DEMO_DATE, DEMO_PASSWORD, startHarness } from '../helpers/app-harness.js';
+import { compareShape } from '../helpers/contract-shape.js';
 import { createClient } from '../helpers/fixtures.js';
 import { canonicalFields } from '../helpers/plan-flow.js';
 import { createAiRuntime } from '../../src/services/extraction.js';
@@ -47,7 +49,7 @@ describe('RS-03: faults of the fake provider end in the degraded path', () => {
   let h;
   let cafe1;
   before(async () => {
-    h = await startHarness({ seed: true });
+    h = await startHarness({ seed: true, env: { RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY: '1000' } });
     cafe1 = await signIn(h, 'cafe1');
   });
   after(() => h.close());
@@ -68,6 +70,7 @@ describe('RS-03: faults of the fake provider end in the degraded path', () => {
       const res = await extract(cafe1, id);
       assert.equal(res.status, 200, res.text);
       assertDegraded(res.json.extraction, errorCode);
+      assert.deepEqual(compareShape(JSON.parse(readFileSync(new URL('../fixtures/contracts/request-extract-degraded.json', import.meta.url), 'utf8')).response, res.json), []);
       const row = h.db.prepare('SELECT * FROM extractions WHERE request_id = ?').get(id);
       assert.equal(row.id, res.json.extraction.id);
       assert.equal(row.schema_ok, 0);
@@ -140,7 +143,7 @@ describe('RS-03: the provider call is bounded and never runs inside a transactio
   let h;
   let cafe1;
   before(async () => {
-    h = await startHarness({ seed: true, env: { RS_MODEL_TIMEOUT_MS: '60' } });
+    h = await startHarness({ seed: true, env: { RS_MODEL_TIMEOUT_MS: '60', RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY: '1000' } });
     cafe1 = await signIn(h, 'cafe1');
   });
   after(() => h.close());

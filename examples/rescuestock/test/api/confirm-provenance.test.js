@@ -23,7 +23,7 @@ let h;
 let cafe1;
 
 before(async () => {
-  h = await startHarness({ seed: true });
+  h = await startHarness({ seed: true, env: { RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY: '1000' } });
   h.app.deps.ai = createAiRuntime({ db: h.db, clock: h.clock, config: h.config, imageMap: IMAGE_MAP });
   cafe1 = createClient(h.request);
   await cafe1.signIn('cafe1', DEMO_PASSWORD);
@@ -134,11 +134,11 @@ describe('SEC-8: provenance is derived by the server at confirmation', () => {
     for (const [name, provenance] of Object.entries(provenanceOf(res))) assert.equal(provenance, name === 'material' ? 'none' : 'manual', name);
   });
 
-  test('SEC-8: the latest extraction decides: a fresh extraction after a text change is what the next confirmation compares with', async () => {
+  test('SEC-8: a later confirmation is compared with the latest extraction again: only the edited quantities become manual', async () => {
     const { id } = await extractedRequest();
     const first = await confirm(id, VALUES);
     assert.equal(first.json.requirements.fields.cupQuantity.provenance, 'user_text');
-    // A second extraction (same text, same values) is the latest row; confirming the same values keeps the provenance.
+    // A second extraction (same text, same values) is the latest row; a field that still equals it keeps its provenance.
     await cafe1.post(`/api/requests/${id}/extract`, {});
     const second = await confirm(id, { ...VALUES, cupQuantity: 250, lidQuantity: 250 });
     assert.equal(second.status, 201, second.text);

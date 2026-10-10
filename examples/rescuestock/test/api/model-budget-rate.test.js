@@ -6,6 +6,8 @@ import assert from 'node:assert/strict';
 import { DEMO_PASSWORD, startHarness } from '../helpers/app-harness.js';
 import { createClient } from '../helpers/fixtures.js';
 import { loadConfig } from '../../src/config.js';
+import { createLogger } from '../../src/log.js';
+import { loadAdapterFactories } from '../../src/main.js';
 import { createAiRuntime, takeModelFault } from '../../src/services/extraction.js';
 import { createFakeProvider } from '../../src/ai/fake.js';
 
@@ -283,5 +285,27 @@ describe('NFR6: the 11th extract or image upload by one customer within ten minu
     assert.equal(second.status, 429);
     assert.ok(Number(second.headers['retry-after']) < Number(first.headers['retry-after']), 'the wait shrinks as time passes');
     assert.equal(count(h, "SELECT COUNT(*) AS n FROM rate_events WHERE kind = 'extract_or_upload' AND user_key = ?", `u:${cafe1.user.id}`), 10);
+  });
+});
+
+describe('NFR6: provider selection', () => {
+  test('NFR6: RS_TEST_OFFLINE=1 selects the simulated fake whatever RS_MODEL_PROVIDER says, and no real adapter is even loaded', async () => {
+    for (const env of [{ RS_MODEL_PROVIDER: 'cli' }, { RS_MODEL_PROVIDER: 'anthropic', ANTHROPIC_API_KEY: 'a-test-key-that-is-not-real' }, {}]) {
+      const config = loadConfig({ RS_TEST_OFFLINE: '1', ...env });
+      assert.equal(config.extractionProvider, 'fake');
+      const factories = await loadAdapterFactories(config, { log: createLogger({ write: () => {} }), clock: { now: () => 0 } });
+      assert.deepEqual(Object.keys(factories), []);
+      const db = { tx: () => {}, prepare: () => ({}) };
+      const runtime = createAiRuntime({ db, clock: { now: () => 0 }, config, factories });
+      assert.deepEqual([runtime.provider.id, runtime.provider.simulated, runtime.selection.fellBack], ['fake', true, false]);
+    }
+  });
+
+  test('NFR6: a configured real provider whose adapter is unavailable falls back to the labelled fake, never to a silent failure', () => {
+    const config = loadConfig({ RS_MODEL_PROVIDER: 'cli' });
+    assert.equal(config.model, 'haiku');
+    const db = { tx: () => {}, prepare: () => ({}) };
+    const runtime = createAiRuntime({ db, clock: { now: () => 0 }, config, factories: {} });
+    assert.deepEqual([runtime.provider.id, runtime.provider.simulated, runtime.selection.fellBack, runtime.selection.requested], ['fake', true, true, 'cli']);
   });
 });
