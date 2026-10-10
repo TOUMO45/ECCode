@@ -8,11 +8,41 @@
 // the timeouts below only bound a hang.
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { request as httpRequest } from 'node:http';
+import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { PROJECT_ROOT, spawnNode } from './node-proc.js';
+import { PROJECT_ROOT, runNode, spawnNode } from './node-proc.js';
 
 export const DEFAULT_TEST_DATE = '2026-10-20';
+// Shared password of the seeded demo accounts in tests (not a secret; local temp databases only).
+// Same value as app-harness.js DEMO_PASSWORD; repeated here so this module does not import the app.
+export const SEED_PASSWORD = 'demo-password-for-tests';
+
+// The demo date for tests that run a real server on the system clock: the next calendar day in
+// Asia/Amman (UTC+3 all year), so every RS-FIX-1 ready time and a deadline on that day lie in the
+// future whatever day the suite runs. The in-process tests use a fixed clock and DEFAULT_TEST_DATE.
+export function upcomingDemoDate(nowMs = Date.now()) {
+  return new Date(nowMs + 3 * 3600 * 1000 + 24 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+// A loopback port that was free a moment ago. The caller binds it right away; startServer retries on a clash.
+export function freePort() {
+  return new Promise((resolve, reject) => {
+    const probe = createServer();
+    probe.once('error', reject);
+    probe.listen(0, '127.0.0.1', () => {
+      const { port } = probe.address();
+      probe.close(() => resolve(port));
+    });
+  });
+}
+
+// Loads RS-FIX-1 into the database file of `env` (the same step as `npm run seed`) with the shared test password.
+export async function seedDatabaseFile(env) {
+  const result = await runNode('scripts/seed.js', [], { ...env, RS_DEMO_PASSWORD: SEED_PASSWORD }, { cwd: PROJECT_ROOT });
+  if (result.code !== 0) throw new Error(`seed failed (exit ${result.code}): ${result.stderr || result.stdout}`);
+  return result;
+}
 
 // Names a developer's shell could carry in that would change what the server does.
 const INHERITED_NAME = /^(RS_|PORT$|HOST$|ANTHROPIC_|PAYPAL_)/;
