@@ -1,0 +1,73 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "c1-auth-rbac",
+  "objective": "Authentication and authorization: sessions, CSRF, sign-in and register throttles, default-deny RBAC, admin bootstrap (ARCH-25, SEC-1, SEC-9, SEC-20, F-TR-17, RS-30, FU-6, FU-11).",
+  "context": "Built against spec revision 3 (Authentication ARCH-25, RBAC matrix, Security T4/T6/T7/T8/T24, Rate limiting), the F-TR-17 review finding, followups FU-6 and FU-11, and b1's handoffs (router requires a policy; non-public routes were 401 until an authorize hook exists; seed hash format scrypt$16384$8$1$salt$key). Memory search for auth, throttle, scrypt, session returned nothing; the one lesson shown at claim (guard root resolution) is not about this task.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/handoffs/ho-mv1gazew-01706543.json",
+    ".eccode/handoffs/ho-mv1hk3zz-01649535.json",
+    ".eccode/handoffs/ho-mv1ipb3r-01ca015d.json"
+  ],
+  "dependencies": ["b3-test-harness"],
+  "expectedOutput": "Auth routes csrf/register/signin/signout/session, session store, CSRF, throttles, RBAC access hook wired into createApp, admin bootstrap from RS_ADMIN_PASSWORD, audit service, and tests.",
+  "acceptanceCriteria": [
+    "Routes /api/auth/csrf, register, signin, signout, session as specified; cookie rs_sid HttpOnly, SameSite=Lax, Path=/, Max-Age 43200, Secure on https; only sha256(id) stored; idle 60 min and absolute 12 h; rotation on sign-in and register (any incoming session destroyed, SEC-20); role always customer on register; RS_ALLOW_SIGNUP=0 -> 403 SIGNUP_DISABLED",
+    "CSRF: session-bound X-CSRF-Token on every non-GET route, pre-login HMAC token for signin/register, Origin check -> 403 CSRF_FAILED; POST /api/webhooks/paypal/:merchantKey is exempt",
+    "SEC-1/SEC-9 throttle in SQLite: hard 429 at 5 failures per (username_key, IP) or 20 per IP in 15 min before the password check; cross-IP failures only delay (1-10 s), never refuse; username_key = lower(NFC(trim)); unknown usernames counted alike; identical 401 for unknown user and bad password with a dummy scrypt",
+    "F-TR-17: register is limited per IP per hour by RS_REGISTER_PER_IP_PER_HOUR (default 5); auth.test.js runs with the default and asserts the 6th registration from one IP -> 429 with details.limit register_ip",
+    "RBAC: every route module declares its policy next to each route; startup fails for a route without one; anonymous 401, wrong role 403, admin routes require role admin; admin account created or updated from RS_ADMIN_PASSWORD (>= 16 chars) as scrypt and disabled when unset (SEC-5)",
+    "auth.test.js names its cases with ARCH-25, SEC-1, SEC-9, SEC-13, SEC-20 and asserts no Access-Control-Allow-* header on any response",
+    "FU-6: password.js verifies the seed hash format and the dummy hash uses the same parameters; a test signs in a seeded account",
+    "FU-11: forwarded client IP validated with net.isIP; invalid falls back to the socket address; test named SEC-B-9"
+  ],
+  "completedWork": "ROUTES (src/routes/auth.js): GET csrf, POST register, POST signin (public; they run Origin + pre-login-or-session CSRF themselves), POST signout (policy session), GET session (public, uses ctx.auth.identify). Cookie rs_sid=<43 chars>; Path=/; Max-Age=43200; HttpOnly; SameSite=Lax (+Secure when RS_PUBLIC_URL is https); sign-out sends Max-Age=0. Sessions (src/auth/sessions.js): 32 random bytes, only sha256 stored, idle 60 min (last_seen refreshed at most once a minute, a busy DB on that refresh is ignored), absolute 12 h, disabled users do not resolve, disableUser deletes sessions. Sign-in and register destroy the incoming session in the same transaction that creates the new one (SEC-20); an attacker-planted id is never adopted. CSRF (src/auth/csrf.js): pre-login token nonce.hmac (nonce = 8-byte time + 16 random bytes, HMAC-SHA256 with meta csrf_key, 2 h, small future skew), session token compared in constant time, Origin must equal RS_PUBLIC_URL's origin or http(s)://<Host>. Throttle (src/auth/throttle.js): an attempt is counted when admitted, in the same BEGIN IMMEDIATE as the check (so parallel requests cannot overshoot); pair >=5 -> 429 signin_pair, IP >=20 -> 429 signin_ip, both before the password check; >=10 failures for the username across IPs -> delay min(10,(n-9)) s then the password is still checked; success deletes that pair's rows including its own reservation; unknown usernames take the same path and one scrypt against a dummy hash with the seed's parameters; 401 body is identical for unknown, wrong password and disabled. Register limit uses rate_events kind register, key ip:<addr>, reserved after validation and before hashing. Password (src/auth/password.js): async scrypt N=16384 r=8 p=1 key 64, accepts only that format, never throws on malformed hashes. Client IP (src/auth/client-ip.js, FU-11): socket address by default; X-Forwarded-For is ignored unless RS_TRUST_PROXY=1, then only the last hop and only if net.isIP accepts it (IPv4-mapped IPv6 collapsed, IPv6 lower-cased), else the socket address; an invalid value never becomes a throttle key. RBAC (src/auth/rbac.js): authorize(ctx, route) for non-public routes: policy signature is allowed only for POST /api/webhooks/paypal/:merchantKey (no session, no CSRF) else 403; Origin check on non-GET first; no session -> 401; role mismatch -> 403 FORBIDDEN; then X-CSRF-Token must equal the session token (403 CSRF_FAILED). Admin (src/services/users.js ensureAdmin, called from main.js): scrypt hash from RS_ADMIN_PASSWORD, disabled row with an unusable hash when unset, password change or disable ends the admin sessions, a non-admin 'admin' row stops startup. Audit (src/services/audit.js): sanitised detail (ids and codes only) for auth.signin ok/failed/denied, auth.signout, auth.register ok/failed/denied. src/app.js: builds deps.auth, default access hook is the RBAC hook, an injected authorize still replaces it (b1's test double contract unchanged), ctx gains session/sessionId/identified, clientIp moved to src/auth/client-ip.js. TESTS: test/api/auth.test.js (52 cases) and test/unit/auth/* (67 cases). Criteria to evidence: all of them by ev:ev-mv2pf62t-01198c9f (119 tests pass under the net guard; the test names start with ARCH-25, SEC-1, SEC-9, SEC-13, SEC-20, SEC-B-9, F-TR-17, RS-30, FU-6, T6); failing state before any work ev:ev-mv2p31zi-01021921; full suite npm test 509/509 and NFR5 p95 92 ms ev:ev-mv2pg2ag-0141772a. Decisions: (1) X-Forwarded-For is not trusted by default (spec default is no proxy). (2) The access hook is only called for non-public routes (b1 contract, and b1's own tests register public POST routes), so the two public POST routes check CSRF inside their handlers. (3) Rejecting validation failures before the throttle: a 422 uses no register budget and no sign-in failure row.",
+  "filesChanged": [
+    "src/auth/client-ip.js",
+    "src/auth/csrf.js",
+    "src/auth/index.js",
+    "src/auth/password.js",
+    "src/auth/rbac.js",
+    "src/auth/sessions.js",
+    "src/auth/throttle.js",
+    "src/routes/auth.js",
+    "src/services/audit.js",
+    "src/services/users.js",
+    "src/app.js",
+    "src/main.js",
+    "test/api/auth.test.js",
+    "test/unit/auth/client-ip.test.js",
+    "test/unit/auth/csrf.test.js",
+    "test/unit/auth/helpers.js",
+    "test/unit/auth/password.test.js",
+    "test/unit/auth/rbac.test.js",
+    "test/unit/auth/sessions.test.js",
+    "test/unit/auth/throttle.test.js",
+    "test/unit/auth/users-audit.test.js"
+  ],
+  "evidence": ["ev:ev-mv2pf62t-01198c9f", "ev:ev-mv2pg2ag-0141772a", "ev:ev-mv2p31zi-01021921"],
+  "remainingIssues": [
+    "AUTHORIZE HOOK CONTRACT for c2/c3/e-tasks: do not pass an authorize to createApp. Declare the policy on router.add: 'customer' | 'supplier' | 'admin' | 'session' (any signed-in role). The hook runs before the handler and sets ctx.user = {id, username, displayName, role, supplierId, supplierCode}, ctx.session = {idHash, csrfToken, createdAt, expiresAt}, ctx.sessionId. Anonymous 401 UNAUTHENTICATED, wrong role 403 FORBIDDEN, bad Origin or missing/wrong X-CSRF-Token on any non-GET 403 CSRF_FAILED. Scope queries by ctx.user.id (customer) or ctx.user.supplierId (supplier) in SQL. toPublicUser(user) in src/services/users.js gives the contract User object.",
+    "Public routes that need the user (PayPal return/cancel 'anonymous -> 303 to sign-in' in the RBAC matrix, per e2) must be registered with policy 'public' and call ctx.auth.identify(ctx) (returns the user or null, never throws) or ctx.auth.requireRole(ctx, ...roles) (401/403). A policy 'customer' route cannot redirect an anonymous caller. A public state-changing route gets no automatic CSRF check: it must call checkOrigin and a token check itself (see guardPreLogin in src/routes/auth.js). test/unit/auth/rbac.test.js asserts that the only public non-GET routes are POST /api/auth/register and POST /api/auth/signin, so a task that adds another will see that test fail and must decide deliberately (update the list in that test, which is owned by c1 and would need a rework or a one-line change agreed with the orchestrator).",
+    "The webhook route (e3) must be registered as POST /api/webhooks/paypal/:merchantKey with policy 'signature'; the hook skips session and CSRF for exactly that method and template and returns 403 for any other 'signature' route. Its own per-IP rate limit (60/min, 'webhook_ip') and ctx.clientIp() are the task's job.",
+    "ensureAdmin({db, config, clock}) runs in src/main.js startApp only. Tests that use test/helpers/app-harness.js do not get an admin account unless they call ensureAdmin themselves (see test/api/auth.test.js), and createApp does not provision it. The harness also does not run main.js, so no csrf_key row exists beforehand: createAuth creates it lazily with getOrCreateMeta.",
+    "The general per-user limit (300 requests/min, details.limit 'general') and the webhook/extract limits are not part of c1 and are not implemented here; rate_events kind 'general' exists in the schema. If no later task owns the general limit, the delivery lead should assign it (it would sit in the access hook after identification).",
+    "The cross-IP delay (1-10 s) uses a real timer (auth.sleep, injectable through createAuth), so API tests that exercise it take about 1 s each and pass record:false to keep NFR5 samples clean. Fixed-clock tests do not make it faster.",
+    "IPv6 clients can rotate through a /64 to get a fresh per-IP budget: the throttle key is the full address (the spec says per IP). Not changed; a /64 key would be a small change in src/auth/client-ip.js if the security reviewer wants it.",
+    "Registration reveals USERNAME_TAKEN (accepted in the spec as T24 note) and counts against the register budget, which is what limits enumeration.",
+    "Latency samples: the sign-in/register tests record their requests through the harness as usual (scrypt is about 50 ms); p95 over the whole suite was 92 ms in the full run.",
+    "The seeded RS_ADMIN_PASSWORD check is config's (>= 16 chars, placeholder refusal); ensureAdmin trusts config. The raw environment value is only held in the Secret and in the scrypt call."
+  ],
+  "nextAction": "delivery-lead: dispatch the independent phase-C review of c1 (spec revision 3, Authentication, RBAC matrix, SEC-1/SEC-9/SEC-B-9/F-TR-17), then release c2-requests-plans-view with the authorize-hook contract above.",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "Its appliesWhen is a tool-call guard or hook that maps file writes to a project record or root in a multi-record repository. This task writes HTTP auth code and touches no hook, guard or root-resolution code, and I was never denied a write in the nested record."
+    }
+  ]
+}

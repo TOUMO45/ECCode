@@ -1,0 +1,48 @@
+{
+  "route": "POST /api/plans/:id/abandon",
+  "status": 200,
+  "request": {},
+  "response": {
+    "plan": {
+      "id": 21,
+      "version": 1,
+      "status": "non_executable",
+      "planHash": "ae2f0703923285966e7bdcfac5909bcef99ccd9862a15c0b915182e5d1c15e83",
+      "body": {
+        "lines": [
+          { "supplierCode": "A", "offerId": 1, "offerVersion": 1, "productName": "100 cups + 100 lids (250 ml, 90 mm)", "bundles": 1, "cups": 100, "lids": 100, "unitPriceCents": 3000, "demo": true },
+          { "supplierCode": "B", "offerId": 2, "offerVersion": 1, "productName": "100 cups + 100 lids (250 ml, 90 mm)", "bundles": 1, "cups": 100, "lids": 100, "unitPriceCents": 3600, "demo": true }
+        ],
+        "suppliers": [
+          { "supplierCode": "A", "supplierName": "Supplier A", "subtotalCents": 3000, "prepFeeCents": 1000, "taxCents": 0, "totalCents": 4000, "catalogReadyAt": "2026-10-20T07:00:00.000Z", "demo": true },
+          { "supplierCode": "B", "supplierName": "Supplier B", "subtotalCents": 3600, "prepFeeCents": 800, "taxCents": 0, "totalCents": 4400, "catalogReadyAt": "2026-10-20T07:30:00.000Z", "demo": true }
+        ],
+        "totalCents": 8400,
+        "pickupCount": 2,
+        "readyAt": "2026-10-20T07:30:00.000Z",
+        "surplus": { "cups": 0, "lids": 0 }
+      },
+      "alternatives": [],
+      "rejections": [],
+      "trace": { "inputs": {}, "candidates": [], "comparisons": [], "enumerated": 7 },
+      "explanation": { "lines": [], "rephrased": null },
+      "nonExecutableReason": "PAYMENT_CANCELLED",
+      "supersededBy": null,
+      "supersedeReason": null,
+      "createdAt": "2026-10-20T06:01:02.000Z"
+    },
+    "rescueStatus": {
+      "status": "cancelled",
+      "rule": "6",
+      "nextStep": { "code": "REPLAN", "text": "Re-plan with current stock" },
+      "message": "The purchase was abandoned. No money was taken; re-plan with current stock",
+      "underlying": {
+        "plan": "non_executable",
+        "reservation": "released",
+        "payments": [{ "orderId": 31, "status": "voided" }, { "orderId": 32, "status": "voided" }],
+        "fulfilment": [{ "orderId": 31, "status": "cancelled" }, { "orderId": 32, "status": "cancelled" }]
+      }
+    },
+    "requestId": "req-aban-0000001"
+  }
+}

@@ -11,6 +11,7 @@ import { openDb } from './db/connection.js';
 import { migrate } from './db/migrate.js';
 import { getOrCreateMeta } from './db/meta.js';
 import { createLogger } from './log.js';
+import { ensureAdmin } from './services/users.js';
 
 // A pre-existing directory named data or uploads (the app's own, per SEC-14) that is owned by the
 // current user and open to group or others is tightened to 0700 (SEC-B-5). Any other existing
@@ -65,6 +66,10 @@ export async function startApp({ env = process.env, log = createLogger(), clock 
     if (config.paymentProvider === 'fake' && !config.fakeWebhookSecret) {
       getOrCreateMeta(db, 'fake_webhook_secret', () => randomBytes(32).toString('hex'));
     }
+
+    // The admin account follows RS_ADMIN_PASSWORD: created or updated as a scrypt hash, or disabled when unset (SEC-5).
+    const adminState = await ensureAdmin({ db, config, clock });
+    log.info('auth.admin', { kind: adminState });
 
     const app = createApp({ db, clock, config, log, routes });
     const port = await app.listen();

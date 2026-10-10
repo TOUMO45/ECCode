@@ -1,0 +1,82 @@
+{
+  "route": "POST /api/plans/:id/reserve",
+  "status": 201,
+  "headers": { "Idempotency-Key": "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0" },
+  "request": {},
+  "response": {
+    "reservation": {
+      "id": 9,
+      "planVersionId": 21,
+      "status": "active",
+      "expiresAt": "2026-10-20T06:20:00.000Z",
+      "items": [
+        { "supplierCode": "A", "offerId": 1, "bundles": 1 },
+        { "supplierCode": "B", "offerId": 2, "bundles": 1 }
+      ]
+    },
+    "orders": [
+      {
+        "id": 31,
+        "supplier": { "code": "A", "name": "Supplier A", "demo": true },
+        "totals": { "supplierCode": "A", "supplierName": "Supplier A", "subtotalCents": 3000, "prepFeeCents": 1000, "taxCents": 0, "totalCents": 4000, "catalogReadyAt": "2026-10-20T07:00:00.000Z", "demo": true },
+        "fulfilmentStatus": "awaiting_supplier",
+        "offer": { "readyAt": "2026-10-20T07:00:00.000Z", "bundles": 1 },
+        "commitment": null,
+        "refusalReason": null,
+        "pickup": null,
+        "payment": {
+          "id": 41,
+          "status": "created",
+          "provider": "fake",
+          "simulated": true,
+          "sandbox": false,
+          "amountCents": 4000,
+          "currency": "USD",
+          "merchantMode": "per-supplier",
+          "approvalUrl": null,
+          "buyerCancelledAt": null,
+          "authorizationExpiresAt": null,
+          "cancelRequested": false,
+          "voidedLocally": false,
+          "voidFailed": false,
+          "lastErrorCode": null
+        },
+        "receiptRecorded": false,
+        "handoverRecorded": false,
+        "presentation": "active"
+      },
+      {
+        "id": 32,
+        "supplier": { "code": "B", "name": "Supplier B", "demo": true },
+        "totals": { "supplierCode": "B", "supplierName": "Supplier B", "subtotalCents": 3600, "prepFeeCents": 800, "taxCents": 0, "totalCents": 4400, "catalogReadyAt": "2026-10-20T07:30:00.000Z", "demo": true },
+        "fulfilmentStatus": "awaiting_supplier",
+        "offer": { "readyAt": "2026-10-20T07:30:00.000Z", "bundles": 1 },
+        "commitment": null,
+        "refusalReason": null,
+        "pickup": null,
+        "payment": {
+          "id": 42,
+          "status": "created",
+          "provider": "fake",
+          "simulated": true,
+          "sandbox": false,
+          "amountCents": 4400,
+          "currency": "USD",
+          "merchantMode": "per-supplier",
+          "approvalUrl": null,
+          "buyerCancelledAt": null,
+          "authorizationExpiresAt": null,
+          "cancelRequested": false,
+          "voidedLocally": false,
+          "voidFailed": false,
+          "lastErrorCode": null
+        },
+        "receiptRecorded": false,
+        "handoverRecorded": false,
+        "presentation": "active"
+      }
+    ],
+    "approvalsNeeded": 2,
+    "requestId": "req-rese-0000001"
+  }
+}

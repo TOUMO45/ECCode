@@ -5,12 +5,15 @@
 //
 // Request pipeline: request id -> security headers -> Host allow-list (421)
 // -> route match (or static file) -> access policy -> handler -> JSON response.
-// Policy 'public' needs nothing. Any other policy is passed to `authorize(ctx, route)`;
-// without an authorize hook it is denied with 401 (default deny).
+// Policy 'public' needs nothing (public routes that want the user call ctx.auth.identify(ctx)).
+// Any other policy is passed to the access hook: `authorize` if one is injected, else the RBAC hook of
+// src/auth/rbac.js (anonymous 401, wrong role 403, CSRF 403, webhook signature policy exempt).
 import { fileURLToPath } from 'node:url';
 import { systemClock } from './clock.js';
 import { createLogger } from './log.js';
 import { registerRoutes } from './routes/index.js';
+import { createAuth } from './auth/index.js';
+import { clientIp } from './auth/client-ip.js';
 import { AppError, adoptAppError, sendError, sendJson } from './http/envelope.js';
 import { applySecurityHeaders } from './http/headers.js';
 import { hostAllowed } from './http/host.js';
@@ -50,17 +53,6 @@ function toAppError(err) {
   return { error: new AppError(500, 'INTERNAL'), unexpected: true, cause: mapped instanceof DbConstraintError ? mapped : err };
 }
 
-function clientIp(req, trustProxy) {
-  if (trustProxy) {
-    const forwarded = req.headers['x-forwarded-for'];
-    if (typeof forwarded === 'string' && forwarded.length > 0) {
-      const last = forwarded.split(',').pop().trim();
-      if (last) return last;
-    }
-  }
-  return req.socket?.remoteAddress || 'unknown';
-}
-
 export function createApp({
   db,
   clock = systemClock,
@@ -78,6 +70,10 @@ export function createApp({
   // The public URL: RS_PUBLIC_URL, else http://localhost:<the port actually bound>.
   const publicUrl = () => config.publicUrl || `http://localhost:${runtime.port}`;
   const deps = { db, clock, config, log, ai, payments, publicUrl };
+  // Sessions, CSRF, throttles and the access hook (ARCH-25). An `authorize` passed in (a test double)
+  // replaces the access hook only; deps.auth is always there for the auth routes.
+  deps.auth = createAuth({ db, clock, config, publicUrl });
+  const access = typeof authorize === 'function' ? authorize : deps.auth.authorize;
 
   const router = createRouter();
   registerRoutes(router, deps);
@@ -140,14 +136,15 @@ export function createApp({
         requestId,
         route,
         user: null,
+        session: null,
+        sessionId: null,
+        identified: false,
+        // Socket address; the last X-Forwarded-For hop only with RS_TRUST_PROXY=1 and only if it is an IP.
         clientIp: () => clientIp(req, config.trustProxy),
         body: () => readJsonObject(req),
       };
 
-      if (route.policy !== 'public') {
-        if (typeof authorize !== 'function') throw new AppError(401, 'UNAUTHENTICATED');
-        await authorize(ctx, route);
-      }
+      if (route.policy !== 'public') await access(ctx, route);
       if (ctx.user) {
         logState.userId = ctx.user.id;
         logState.role = ctx.user.role;

@@ -1,0 +1,100 @@
+{
+  "route": "GET /api/requests/:id",
+  "status": 200,
+  "variant": "RS-FIX-1 without supplier B and a $90 budget: infeasible, with blocking constraints, per-candidate codes and two relaxations; no plan, reservation or order",
+  "response": {
+    "request": {
+      "id": 14,
+      "createdAt": "2026-10-20T06:10:00.000Z",
+      "language": "en",
+      "rawText": "200 cups with lids, 250 ml, by 11:00, budget $90, up to 2 pickups",
+      "intakeStatus": "confirmed",
+      "image": null
+    },
+    "extraction": null,
+    "requirements": {
+      "version": 1,
+      "fields": {
+        "productType": { "value": "cups_and_lids", "status": "known", "provenance": "user_text", "originalWording": "cups with lids" },
+        "cupQuantity": { "value": 200, "status": "known", "provenance": "user_text", "originalWording": "200 cups" },
+        "lidQuantity": { "value": 200, "status": "known", "provenance": "manual", "originalWording": null },
+        "capacityMl": { "value": 250, "status": "known", "provenance": "user_text", "originalWording": "250 ml" },
+        "diameterMm": { "value": 90, "status": "known", "provenance": "manual", "originalWording": null },
+        "material": { "value": null, "status": "unknown", "provenance": "none", "originalWording": null },
+        "deadline": { "value": "2026-10-20T11:00", "status": "known", "provenance": "user_text", "originalWording": "by 11:00" },
+        "budgetCents": { "value": 9000, "status": "known", "provenance": "user_text", "originalWording": "budget $90" },
+        "maxPickups": { "value": 2, "status": "known", "provenance": "user_text", "originalWording": "up to 2 pickups" }
+      },
+      "confirmedAt": "2026-10-20T06:11:00.000Z"
+    },
+    "planning": {
+      "id": 8,
+      "requirementsVersion": 1,
+      "feasible": false,
+      "rejections": [
+        { "supplierCode": "B", "offerId": 2, "codes": ["OFFER_WITHDRAWN"] },
+        { "supplierCode": "C", "offerId": 3, "codes": ["INCOMPATIBLE_LID_DIAMETER"] },
+        { "supplierCode": "D", "offerId": 4, "codes": ["READY_AFTER_DEADLINE"] }
+      ],
+      "candidateCodes": [
+        { "supplierCode": "A", "offerId": 1, "codes": ["INSUFFICIENT_QTY", "OVER_BUDGET"] },
+        { "supplierCode": "E", "offerId": 5, "codes": ["INSUFFICIENT_QTY", "OVER_BUDGET"] }
+      ],
+      "relaxations": [
+        {
+          "constraint": "budget",
+          "code": "OVER_BUDGET",
+          "neededValue": 9500,
+          "plan": { "supplierCodes": ["A", "E"], "totalCents": 9500, "pickupCount": 2, "readyAt": "2026-10-20T07:40:00.000Z" }
+        },
+        {
+          "constraint": "deadline",
+          "code": "READY_AFTER_DEADLINE",
+          "neededValue": "2026-10-20T08:20:00.000Z",
+          "plan": { "supplierCodes": ["D"], "totalCents": 8000, "pickupCount": 1, "readyAt": "2026-10-20T08:20:00.000Z" }
+        }
+      ],
+      "blocking": ["OVER_BUDGET", "READY_AFTER_DEADLINE"],
+      "explanation": {
+        "lines": [
+          { "code": "NO_FEASIBLE_PLAN", "text": "No plan satisfies every constraint. Nothing was reserved, ordered or paid." },
+          { "code": "OFFER_WITHDRAWN", "text": "Supplier B is rejected: its offer was withdrawn." },
+          { "code": "INCOMPATIBLE_LID_DIAMETER", "text": "Supplier C is rejected: its cups are 90 mm and its lids 95 mm, and no compatibility is confirmed." },
+          { "code": "READY_AFTER_DEADLINE", "text": "Supplier D is rejected: it is ready at 11:20, after the 11:00 deadline." },
+          { "code": "INSUFFICIENT_QTY", "text": "Supplier A alone supplies 100 of the 200 cups and lids needed." },
+          { "code": "OVER_BUDGET", "text": "Supplier A: the cheapest combination that covers the need (A+E) costs $95.00; the budget is $90.00." },
+          { "code": "INSUFFICIENT_QTY", "text": "Supplier E alone supplies 100 of the 200 cups and lids needed." },
+          { "code": "OVER_BUDGET", "text": "Supplier E: the cheapest combination that covers the need (A+E) costs $95.00; the budget is $90.00." },
+          { "code": "OVER_BUDGET", "text": "Raise the budget to $95.00 to get A+E (2 pickups, ready by 10:40)." },
+          { "code": "READY_AFTER_DEADLINE", "text": "Move the deadline to 11:20 to get D for $80.00 (1 pickup)." },
+          { "code": "BLOCKING", "text": "Blocking constraints: OVER_BUDGET, READY_AFTER_DEADLINE." }
+        ],
+        "rephrased": null
+      },
+      "createdAt": "2026-10-20T06:11:02.000Z"
+    },
+    "plans": [],
+    "currentPlanId": null,
+    "reservation": null,
+    "orders": [],
+    "cancellingOrders": [],
+    "rescueStatus": {
+      "status": "no_feasible_plan",
+      "rule": "5",
+      "nextStep": { "code": "ENTER_DETAILS", "text": "Adjust your budget, deadline or pickup limit, or accept a suggested change" },
+      "message": "No plan satisfies your budget, deadline and pickup limit. Nothing was reserved, ordered or paid.",
+      "underlying": { "plan": null, "reservation": null, "payments": [], "fulfilment": [] }
+    },
+    "labels": {
+      "simulatedPayments": true,
+      "simulatedExtraction": true,
+      "sandbox": false,
+      "demoData": true,
+      "priceNotice": "Test prices, not market prices",
+      "merchantMode": "per-supplier",
+      "singleCredentialNotice": null,
+      "testMode": false
+    },
+    "requestId": "req-view-0000003"
+  }
+}

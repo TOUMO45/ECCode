@@ -1,0 +1,41 @@
+{
+  "route": "POST /api/requests/:id/plan",
+  "status": 201,
+  "variant": "infeasible: plan is null",
+  "request": {},
+  "response": {
+    "planningRun": {
+      "id": 8,
+      "requirementsVersion": 1,
+      "feasible": false,
+      "rejections": [
+        { "supplierCode": "B", "offerId": 2, "codes": ["OFFER_WITHDRAWN"] },
+        { "supplierCode": "C", "offerId": 3, "codes": ["INCOMPATIBLE_LID_DIAMETER"] },
+        { "supplierCode": "D", "offerId": 4, "codes": ["READY_AFTER_DEADLINE"] }
+      ],
+      "candidateCodes": [
+        { "supplierCode": "A", "offerId": 1, "codes": ["INSUFFICIENT_QTY", "OVER_BUDGET"] },
+        { "supplierCode": "E", "offerId": 5, "codes": ["INSUFFICIENT_QTY", "OVER_BUDGET"] }
+      ],
+      "relaxations": [
+        {
+          "constraint": "budget",
+          "code": "OVER_BUDGET",
+          "neededValue": 9500,
+          "plan": { "supplierCodes": ["A", "E"], "totalCents": 9500, "pickupCount": 2, "readyAt": "2026-10-20T07:40:00.000Z" }
+        }
+      ],
+      "blocking": ["OVER_BUDGET", "READY_AFTER_DEADLINE"],
+      "explanation": {
+        "lines": [
+          { "code": "NO_FEASIBLE_PLAN", "text": "No plan satisfies every constraint. Nothing was reserved, ordered or paid." },
+          { "code": "BLOCKING", "text": "Blocking constraints: OVER_BUDGET, READY_AFTER_DEADLINE." }
+        ],
+        "rephrased": null
+      },
+      "createdAt": "2026-10-20T06:11:02.000Z"
+    },
+    "plan": null,
+    "requestId": "req-plan-0000002"
+  }
+}

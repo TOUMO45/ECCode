@@ -1,0 +1,23 @@
+{
+  "route": "POST /api/plans/:id/execute",
+  "status": 200,
+  "variant": "already executing or executed",
+  "request": {},
+  "response": {
+    "claimed": false,
+    "plan": { "id": 21, "status": "executing" },
+    "rescueStatus": {
+      "status": "payment_authorized",
+      "rule": "10",
+      "nextStep": { "code": "WAIT", "text": "Please wait: this page updates by itself" },
+      "message": null,
+      "underlying": {
+        "plan": "executing",
+        "reservation": "consumed",
+        "payments": [{ "orderId": 31, "status": "capture_pending" }, { "orderId": 32, "status": "capture_pending" }],
+        "fulfilment": [{ "orderId": 31, "status": "confirmed" }, { "orderId": 32, "status": "confirmed" }]
+      }
+    },
+    "requestId": "req-exec-0000002"
+  }
+}

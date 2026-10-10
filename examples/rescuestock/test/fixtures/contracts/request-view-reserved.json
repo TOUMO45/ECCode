@@ -1,0 +1,180 @@
+{
+  "route": "GET /api/requests/:id",
+  "status": 200,
+  "variant": "RS-FIX-1 base case: plan A+B approved and reserved; supplier A has not confirmed, supplier B confirmed a later ready time; no PayPal approval yet",
+  "response": {
+    "request": {
+      "id": 12,
+      "createdAt": "2026-10-20T06:00:00.000Z",
+      "language": "en",
+      "rawText": "I need 200 cups and 200 lids, 250 ml, by 11:00 today. Budget $120, at most 2 pickups.",
+      "intakeStatus": "confirmed",
+      "image": null
+    },
+    "extraction": null,
+    "requirements": {
+      "version": 1,
+      "fields": {
+        "productType": { "value": "cups_and_lids", "status": "known", "provenance": "user_text", "originalWording": "cups and lids" },
+        "cupQuantity": { "value": 200, "status": "known", "provenance": "user_text", "originalWording": "200 cups" },
+        "lidQuantity": { "value": 200, "status": "known", "provenance": "user_text", "originalWording": "200 lids" },
+        "capacityMl": { "value": 250, "status": "known", "provenance": "user_text", "originalWording": "250 ml" },
+        "diameterMm": { "value": 90, "status": "known", "provenance": "manual", "originalWording": null },
+        "material": { "value": null, "status": "unknown", "provenance": "none", "originalWording": null },
+        "deadline": { "value": "2026-10-20T11:00", "status": "known", "provenance": "user_text", "originalWording": "by 11:00 today" },
+        "budgetCents": { "value": 12000, "status": "known", "provenance": "user_text", "originalWording": "Budget $120" },
+        "maxPickups": { "value": 2, "status": "known", "provenance": "manual", "originalWording": null }
+      },
+      "confirmedAt": "2026-10-20T06:01:00.000Z"
+    },
+    "planning": {
+      "id": 7,
+      "requirementsVersion": 1,
+      "feasible": true,
+      "rejections": [
+        { "supplierCode": "C", "offerId": 3, "codes": ["INCOMPATIBLE_LID_DIAMETER"] },
+        { "supplierCode": "D", "offerId": 4, "codes": ["READY_AFTER_DEADLINE"] }
+      ],
+      "candidateCodes": [],
+      "relaxations": [],
+      "blocking": [],
+      "explanation": { "lines": [], "rephrased": null },
+      "createdAt": "2026-10-20T06:01:02.000Z"
+    },
+    "plans": [
+      {
+        "id": 21,
+        "version": 1,
+        "status": "approved",
+        "planHash": "ae2f0703923285966e7bdcfac5909bcef99ccd9862a15c0b915182e5d1c15e83",
+        "body": {
+          "lines": [
+            { "supplierCode": "A", "offerId": 1, "offerVersion": 1, "productName": "100 cups + 100 lids (250 ml, 90 mm)", "bundles": 1, "cups": 100, "lids": 100, "unitPriceCents": 3000, "demo": true },
+            { "supplierCode": "B", "offerId": 2, "offerVersion": 1, "productName": "100 cups + 100 lids (250 ml, 90 mm)", "bundles": 1, "cups": 100, "lids": 100, "unitPriceCents": 3600, "demo": true }
+          ],
+          "suppliers": [
+            { "supplierCode": "A", "supplierName": "Supplier A", "subtotalCents": 3000, "prepFeeCents": 1000, "taxCents": 0, "totalCents": 4000, "catalogReadyAt": "2026-10-20T07:00:00.000Z", "demo": true },
+            { "supplierCode": "B", "supplierName": "Supplier B", "subtotalCents": 3600, "prepFeeCents": 800, "taxCents": 0, "totalCents": 4400, "catalogReadyAt": "2026-10-20T07:30:00.000Z", "demo": true }
+          ],
+          "totalCents": 8400,
+          "pickupCount": 2,
+          "readyAt": "2026-10-20T07:30:00.000Z",
+          "surplus": { "cups": 0, "lids": 0 }
+        },
+        "alternatives": [],
+        "rejections": [
+          { "supplierCode": "C", "offerId": 3, "codes": ["INCOMPATIBLE_LID_DIAMETER"] },
+          { "supplierCode": "D", "offerId": 4, "codes": ["READY_AFTER_DEADLINE"] }
+        ],
+        "trace": { "inputs": {}, "candidates": [], "comparisons": [], "enumerated": 7 },
+        "explanation": {
+          "lines": [
+            { "code": "PLAN_BEST", "text": "Best plan: A+B for $84.00 in total, 2 pickups, ready by 10:30." }
+          ],
+          "rephrased": null
+        },
+        "nonExecutableReason": null,
+        "supersededBy": null,
+        "supersedeReason": null,
+        "createdAt": "2026-10-20T06:01:02.000Z"
+      }
+    ],
+    "currentPlanId": 21,
+    "reservation": {
+      "id": 9,
+      "planVersionId": 21,
+      "status": "active",
+      "expiresAt": "2026-10-20T06:20:00.000Z",
+      "items": [
+        { "supplierCode": "A", "offerId": 1, "bundles": 1 },
+        { "supplierCode": "B", "offerId": 2, "bundles": 1 }
+      ]
+    },
+    "orders": [
+      {
+        "id": 31,
+        "supplier": { "code": "A", "name": "Supplier A", "demo": true },
+        "totals": { "supplierCode": "A", "supplierName": "Supplier A", "subtotalCents": 3000, "prepFeeCents": 1000, "taxCents": 0, "totalCents": 4000, "catalogReadyAt": "2026-10-20T07:00:00.000Z", "demo": true },
+        "fulfilmentStatus": "awaiting_supplier",
+        "offer": { "readyAt": "2026-10-20T07:00:00.000Z", "bundles": 1 },
+        "commitment": null,
+        "refusalReason": null,
+        "pickup": null,
+        "payment": {
+          "id": 41,
+          "status": "created",
+          "provider": "fake",
+          "simulated": true,
+          "sandbox": false,
+          "amountCents": 4000,
+          "currency": "USD",
+          "merchantMode": "per-supplier",
+          "approvalUrl": null,
+          "buyerCancelledAt": null,
+          "authorizationExpiresAt": null,
+          "cancelRequested": false,
+          "voidedLocally": false,
+          "voidFailed": false,
+          "lastErrorCode": null
+        },
+        "receiptRecorded": false,
+        "handoverRecorded": false,
+        "presentation": "active"
+      },
+      {
+        "id": 32,
+        "supplier": { "code": "B", "name": "Supplier B", "demo": true },
+        "totals": { "supplierCode": "B", "supplierName": "Supplier B", "subtotalCents": 3600, "prepFeeCents": 800, "taxCents": 0, "totalCents": 4400, "catalogReadyAt": "2026-10-20T07:30:00.000Z", "demo": true },
+        "fulfilmentStatus": "confirmed",
+        "offer": { "readyAt": "2026-10-20T07:30:00.000Z", "bundles": 1 },
+        "commitment": { "bundles": 1, "readyAt": "2026-10-20T07:45:00.000Z", "confirmedAt": "2026-10-20T06:05:00.000Z" },
+        "refusalReason": null,
+        "pickup": null,
+        "payment": {
+          "id": 42,
+          "status": "created",
+          "provider": "fake",
+          "simulated": true,
+          "sandbox": false,
+          "amountCents": 4400,
+          "currency": "USD",
+          "merchantMode": "per-supplier",
+          "approvalUrl": null,
+          "buyerCancelledAt": null,
+          "authorizationExpiresAt": null,
+          "cancelRequested": false,
+          "voidedLocally": false,
+          "voidFailed": false,
+          "lastErrorCode": null
+        },
+        "receiptRecorded": false,
+        "handoverRecorded": false,
+        "presentation": "active"
+      }
+    ],
+    "cancellingOrders": [],
+    "rescueStatus": {
+      "status": "stock_reserved",
+      "rule": "11",
+      "nextStep": { "code": "APPROVE_PAYMENTS", "text": "Approve each payment with PayPal" },
+      "message": null,
+      "underlying": {
+        "plan": "approved",
+        "reservation": "active",
+        "payments": [{ "orderId": 31, "status": "created" }, { "orderId": 32, "status": "created" }],
+        "fulfilment": [{ "orderId": 31, "status": "awaiting_supplier" }, { "orderId": 32, "status": "confirmed" }]
+      }
+    },
+    "labels": {
+      "simulatedPayments": true,
+      "simulatedExtraction": true,
+      "sandbox": false,
+      "demoData": true,
+      "priceNotice": "Test prices, not market prices",
+      "merchantMode": "per-supplier",
+      "singleCredentialNotice": null,
+      "testMode": false
+    },
+    "requestId": "req-view-0000002"
+  }
+}
