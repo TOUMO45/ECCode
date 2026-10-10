@@ -1,6 +1,6 @@
 {
-  "seq": 529,
-  "lastHash": "f8cfe497fab5261a0d20a5a5dd4fdba52102b7a4e0c160487a120f539d7ecf1a",
+  "seq": 537,
+  "lastHash": "b2a4bdc81622db086bc65d7a2602b4a5ef6d193108e536a0fb72c1c8d4c1ca0b",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -17,6 +17,7 @@
     "phase:f-compensation",
     "phase:g-release",
     "phase:rework-1",
+    "phase:rework-2",
     "verification"
   ],
   "gates": {
@@ -2689,6 +2690,21 @@
       "escalation": null,
       "startedAt": "2026-10-10T22:42:47.828Z",
       "approvedAt": "2026-10-10T23:00:31.373Z"
+    },
+    "phase:rework-2": {
+      "id": "phase:rework-2",
+      "kind": "phase",
+      "status": "in_progress",
+      "iterations": 0,
+      "authors": [],
+      "submissions": [],
+      "reviews": [],
+      "openFindings": [],
+      "approvedBy": null,
+      "approvedSubmission": null,
+      "escalation": null,
+      "startedAt": "2026-10-10T23:45:03.614Z",
+      "approvedAt": null
     }
   },
   "plan": {
@@ -3896,9 +3912,24 @@
         "command": "ls test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js test/fixtures/extraction/manifest.json test/live/run-live-model.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js",
         "cwd": "."
       },
-      "status": "done",
+      "status": "claimed",
       "attempts": 1,
-      "claim": null,
+      "claim": {
+        "agent": "ai-engineer",
+        "at": "2026-10-10T23:45:16.191Z",
+        "baseCommit": "3372eb3b75656fefc6c6ec4ef524ea2f1b25b274",
+        "runId": "run-mv31kcee-010ebfba",
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.835,
+            "matched": 33,
+            "priority": 33,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -3910,6 +3941,18 @@
           "event": "completed",
           "by": "ai-engineer",
           "at": "2026-10-10T23:33:05.206Z"
+        },
+        {
+          "event": "reset",
+          "by": "orchestrator",
+          "at": "2026-10-10T23:44:49.519Z",
+          "reason": "d2's corpus:images script breaks NFR1's package.json-exactly-as-spec test; remove the script line (the generator stays runnable by path)"
+        },
+        {
+          "event": "claimed",
+          "by": "ai-engineer",
+          "at": "2026-10-10T23:45:16.191Z",
+          "attempt": 1
         }
       ],
       "completedBy": "ai-engineer",
@@ -3969,7 +4012,8 @@
           "note": "The lesson concerns hooks or guards that map file writes to a project root in multi-record repositories; this task builds extraction adapters, a corpus and a runner, no hook, guard or root discovery, so none of its 'Applies when' conditions hold.",
           "basis": "reason"
         }
-      ]
+      ],
+      "escalation": null
     },
     "d3-extraction-service": {
       "id": "d3-extraction-service",
@@ -5042,6 +5086,38 @@
           "basis": "reason"
         }
       ]
+    },
+    "rework-2": {
+      "id": "rework-2",
+      "phase": "rework-2",
+      "title": "Rework: Phase D's additive RequestView.capabilities key (d3, required by d4's ",
+      "owner": "backend-engineer",
+      "dependencies": [],
+      "inputs": [
+        "ev:ev-mv31etf6-01061b72"
+      ],
+      "outputs": [
+        "the fix",
+        "a regression test that fails without it"
+      ],
+      "files": [
+        "test/api/requests-plans.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Phase D's additive RequestView.capabilities key (d3, required by d4's UI) fails c2's approved RS-34 exact key-list assertion in test/api/requests-plans.test.js; no phase D task owns that file. One-word test update so the suite is green before the phase D submission.",
+        "a regression test fails before the fix and passes after it",
+        "the existing checks still pass"
+      ],
+      "verification": {
+        "method": "run the project checks"
+      },
+      "status": "pending",
+      "attempts": 0,
+      "claim": null,
+      "history": [],
+      "completedBy": null,
+      "handoffId": null,
+      "rework": true
     }
   },
   "evidence": {
@@ -10032,6 +10108,47 @@
       "task": "d3-extraction-service",
       "recordedBy": "backend-engineer",
       "at": "2026-10-10T23:43:42.029Z"
+    },
+    "ev-mv31ky3k-01815561": {
+      "id": "ev-mv31ky3k-01815561",
+      "kind": "command",
+      "label": "reproduction: package.json scripts test fails with the added corpus:images line",
+      "command": "node --disable-warning=ExperimentalWarning --test test/unit/config/node-version.test.js",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 1649,
+      "log": ".eccode/evidence/ev-mv31ky3k-01815561.log",
+      "logSha256": "5d80edada37f733f8aa19a1071f4e6aae073b9ec07abbad8baa5fefae19b57ee",
+      "logFileSha256": "914511e0244f068b5e6a6511665c4830bcc9aca889b9059ffad52919bbfce4c1",
+      "outputTail": "  stack: |-\n    TestContext.<anonymous> (file:///home/user/ECCode/examples/rescuestock/test/unit/config/node-version.test.js:142:10)\n    Test.runInAsyncScope (node:async_hooks:214:14)\n    Test.run (node:internal/test_runner/test:1047:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:744:18)\n    Test.postRun (node:internal/test_runner/test:1173:19)\n    Test.run (node:internal/test_runner/test:1101:12)\n    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\n  ...\n# Subtest: NFR4: .gitignore covers data/, .env, reports/, test/.out/ and test/browser/out/ and keeps .env.example\nok 10 - NFR4: .gitignore covers data/, .env, reports/, test/.out/ and test/browser/out/ and keeps .env.example\n  ---\n  duration_ms: 0.677046\n  type: 'test'\n  ...\n1..10\n# tests 10\n# suites 0\n# pass 9\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1584.748926\n",
+      "gate": null,
+      "task": "d2-ai-adapters-corpus",
+      "tree": "4bec1e2f4c930cc57a75c68d614ff814403649b4773d5c53e9a9cc413ed81b18",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-10T23:45:18.084Z"
+    },
+    "ev-mv31l7v0-0124fa9d": {
+      "id": "ev-mv31l7v0-0124fa9d",
+      "kind": "command",
+      "label": "package.json test passes without corpus:images",
+      "command": "node --disable-warning=ExperimentalWarning --test test/unit/config/node-version.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1662,
+      "log": ".eccode/evidence/ev-mv31l7v0-0124fa9d.log",
+      "logSha256": "82c676acd55094087fac0385625987d4411042918d4f1f386c7d3ca33c764b06",
+      "logFileSha256": "7e79cb059aa7379f8857945376d77fcd31de5ca4ff6f45a1d13883bc627f6c99",
+      "outputTail": "  duration_ms: 0.667134\n  type: 'test'\n  ...\n# Subtest: NFR1: package.json is exactly as the Deployment section specifies\nok 9 - NFR1: package.json is exactly as the Deployment section specifies\n  ---\n  duration_ms: 3.909629\n  type: 'test'\n  ...\n# Subtest: NFR4: .gitignore covers data/, .env, reports/, test/.out/ and test/browser/out/ and keeps .env.example\nok 10 - NFR4: .gitignore covers data/, .env, reports/, test/.out/ and test/browser/out/ and keeps .env.example\n  ---\n  duration_ms: 0.637103\n  type: 'test'\n  ...\n1..10\n# tests 10\n# suites 0\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1586.50931\n",
+      "gate": null,
+      "task": "d2-ai-adapters-corpus",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-10T23:45:30.731Z"
     }
   },
   "reviews": {
@@ -17799,6 +17916,24 @@
           "reason": "harness usage report arrived after run end"
         }
       ]
+    },
+    "run-mv31kc8u-01ab6e00": {
+      "id": "run-mv31kc8u-01ab6e00",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T23:44:49.728Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv31kcee-010ebfba": {
+      "id": "run-mv31kcee-010ebfba",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T23:44:49.919Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -18133,6 +18268,16 @@
       "lessons": [],
       "at": "2026-10-10T21:54:08.219Z",
       "by": "orchestrator"
+    },
+    "dec-mv31kbrz-012381a1": {
+      "id": "dec-mv31kbrz-012381a1",
+      "title": "FU-2: the effective upload deadline is 30 s in version one",
+      "decision": "The extract-image route enforces its own 60 s streaming deadline, but Node's server-wide requestTimeout stays at the spec's 30 s, so a slow 5 MB upload is cut at 30 s (1.4 Mbit/s suffices). Accepted for version one; raising the server timeout for the upload route alone is a src/http change for a later rework if the phase D review asks.",
+      "rationale": "Changing src/http/server.js and two b1 tests for a demo-irrelevant edge is not worth a rework now; the behaviour is disclosed in d3's handoff and will be in the verification report.",
+      "alternatives": "rework src/http to a per-route timeout",
+      "lessons": [],
+      "at": "2026-10-10T23:44:49.147Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -18173,6 +18318,21 @@
       ],
       "openedBy": "orchestrator",
       "at": "2026-10-10T22:42:47.828Z",
+      "afterDelivery": false
+    },
+    {
+      "id": "rework-2",
+      "gate": "phase:rework-2",
+      "reason": "Phase D's additive RequestView.capabilities key (d3, required by d4's UI) fails c2's approved RS-34 exact key-list assertion in test/api/requests-plans.test.js; no phase D task owns that file. One-word test update so the suite is green before the phase D submission.",
+      "owner": "backend-engineer",
+      "files": [
+        "test/api/requests-plans.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv31etf6-01061b72"
+      ],
+      "openedBy": "orchestrator",
+      "at": "2026-10-10T23:45:03.614Z",
       "afterDelivery": false
     }
   ]

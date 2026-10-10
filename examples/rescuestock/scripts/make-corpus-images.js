@@ -1,7 +1,7 @@
 // Renders the EXT-1 package-label images from TEXT, so no binary is ever made by hand, and writes
 // test/fixtures/extraction/{images,labels}/ and fake-image-map.json from test/fixtures/extraction/manifest.json.
 //
-//   node scripts/make-corpus-images.js          (npm run corpus:images)
+//   node scripts/make-corpus-images.js          (there is no npm script for it: package.json is pinned by the Deployment section)
 //
 // Pure Node: a built-in 5x7 bitmap font, optional box blur and crop, an 8-bit greyscale PNG written with zlib.
 // No browser, no network, no dependency. The committed PNGs are the ground truth for the fake image map (keyed by the
