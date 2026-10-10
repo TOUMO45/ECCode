@@ -40,6 +40,26 @@ Sources: the phase-C handoffs (c1 ho-mv2pgzqg-0145c52b, c2 ho-mv2q84ku-01502a13 
 | FU-18 | d5 (extract, request delete, degraded view), e6 (execute, execute replay, abandon, paypal create, receipt, supplier ready, supplier handover) | The ten contract scenarios that c6 skips because their routes did not exist yet become real scenarios when each route lands. They must not stay skipped. The test "every registered route has a scenario" stays in force. | c6 remaining issue 2 |
 | FU-19 | e1-payment-adapters, e2-payment-flow, e4-saga-reconciler, f1-supersession-refusal-expiry | **c3's ports and conventions must be used, not re-invented:**<br>- (e2) pass a `voidProvider` to `createApp` whose `queueVoid` inserts `so:<supplierOrderId>:void:1` into `provider_calls` (`INSERT OR IGNORE`, status intent, `started_at NULL`), and add the resolution hook and void-result handling;<br>- (e1) `fault_flags` rows are named `<kind>:<fault>`, the value is the supplier code or `''`, and `remaining` is a count or NULL;<br>- (e4) send the `so:<id>:refund:1` intents queued by `refund_order`; write the `meta` keys `reconciler_last_tick_at` / `reconciler_last_tick_ms` that metrics reads; call `expireDueReservations`;<br>- (f1) build the re-plan drain on `supersession.js` (`enqueueReplan`, `supersedeForOfferChange`, `markNonExecutable`).<br>**c1's routing contract:** routes that need the user but must redirect anonymous callers (PayPal return/cancel) use policy `public` with `ctx.auth.identify`; the webhook route uses policy `signature`. A new public non-GET route makes c1's `rbac.test.js` fail by design. | c3 remaining issues 2–5; c1 remaining issues 1–3 |
 
+### Status after rework-1 (handoff ho-mv2zloa4-0168f7f1, gate phase:rework-1)
+
+The phase C review rev-mv2zb2wy-019ac65d approved, with TR-C-2, SEC-C-2 and SEC-C-3 open. The orchestrator opened rework-1 for them (backend-engineer).
+
+- **FU-14: closed by rework-1** (TR-C-2). `RS_PLAN_RATE_LIMIT` (1–1000, default 10) and `RS_PLAN_RATE_WINDOW_MIN` (1–1440, default 10) are parsed in `src/config.js` and listed in `.env.example`. Tests `TR-C-2: …` are in `test/unit/config/limits.test.js`; the env-example scan is green.
+- **FU-15: closed by rework-1** (SEC-C-3).
+  - The general per-user limit is `src/auth/general-limit.js`, called by the access hook after authentication. It uses kind `general`, key `u:<id>`, one `BEGIN IMMEDIATE`, and answers 429 `details.limit: "general"` with `Retry-After`.
+  - It is configured by `RS_GENERAL_RATE_LIMIT` (default 300) and `RS_GENERAL_RATE_WINDOW_SEC` (default 60).
+  - In the same rework, an unchanged confirm writes no new version (SEC-C-3 point 2), and IPv6 throttle keys use the /64 (SEC-C-2).
+- **Spec update for the release checklist (delivery-lead, verification gate).** The spec's Deployment › Environment variables table must gain four names before release:
+  - `RS_PLAN_RATE_LIMIT`, `RS_PLAN_RATE_WINDOW_MIN` (FU-8, `dec-mv1jopyn-01ba1096` covers the `plan` limit name);
+  - **`RS_GENERAL_RATE_LIMIT`, `RS_GENERAL_RATE_WINDOW_SEC`**, which **were not in the spec at all**. Their names, bounds (1–100000, 1–3600) and defaults (300, 60) were chosen by rework-1.
+
+  The approved spec is pinned, so the update is recorded here and in the verification report as a documented design delta rather than an edit. g2's README must list all four (add them to FU-9's README pass).
+- **New follow-up from rework-1's disclosures:**
+
+| # | Task | Additional acceptance criterion | Source |
+|---|---|---|---|
+| FU-20 | d3-extraction-service (owns `src/services/retention.js`, the periodic sweep) or e4-saga-reconciler (reconciler housekeeping step 9) | Expired `rate_events` rows of kind `general` with key `u:<id>` are purged by the periodic housekeeping, not only on the user's next call. Every signed-in call now writes one row. Use the spec's 24 h purge for rate events and keep the 48 h rule for `request_create`. Test named `SEC-C-3: …`. | rework-1 remaining issue 2 |
+
 **Decisions for the reviewer** (no follow-up unless a change is requested):
 - Idempotent replay status. c3 replays the stored status (201 for a replay of the first answer, with `Idempotent-Replayed: true`) and answers 200 on the purged-key path, as the Conventions word it. The route table says "201 (new) or 200 (replay)".
 - `RESERVATION_LIMIT` details carry only `reservationIds`, per the spec. The UI's link therefore goes to `#/requests`, not to the other request.

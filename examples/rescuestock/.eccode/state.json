@@ -1,6 +1,6 @@
 {
-  "seq": 461,
-  "lastHash": "a4c8071d21c1d5bda1c2dc9f4afd0de3c87683d373cab5ddace580fa9e9df542",
+  "seq": 468,
+  "lastHash": "0198d8e5b63584ea533a57257e583a2bd50dd08f9019bef79bb7f186afff80e4",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -2600,10 +2600,86 @@
     "phase:rework-1": {
       "id": "phase:rework-1",
       "kind": "phase",
-      "status": "in_progress",
+      "status": "submitted",
       "iterations": 0,
-      "authors": [],
-      "submissions": [],
+      "authors": [
+        "delivery-lead"
+      ],
+      "submissions": [
+        {
+          "id": "sub-mv2zoxlo-019effce",
+          "actor": "delivery-lead",
+          "at": "2026-10-10T22:52:24.733Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/rework-1/submission.md",
+              "sha256": "20fb0c7198b83e2910def7267305dcef14761cad0152d679824fbafcbe18c323"
+            },
+            {
+              "path": ".eccode/artifacts/plan/followups.md",
+              "sha256": "44fd70233084c10eca1f0230f939019f489a97e38eedaec07423584d050f570e"
+            },
+            {
+              "path": "src/config.js",
+              "sha256": "a3672f4050c538076239550b23b47157798c9d23c7e19f19123eacfd052bd156"
+            },
+            {
+              "path": ".env.example",
+              "sha256": "76839572438c658a18d765bc0e08973e231d29c5357ca86030eba2c93fd01020"
+            },
+            {
+              "path": "src/auth/client-ip.js",
+              "sha256": "01b302c03fb12ed75b95e4339fe53101087a849d7da22c5e3b796055a28eaeec"
+            },
+            {
+              "path": "src/auth/general-limit.js",
+              "sha256": "d66432d27fca7e7f5dc24eb8665b3aa94d08d8d1bbbcf56085e5fc11228c8f03"
+            },
+            {
+              "path": "src/auth/index.js",
+              "sha256": "cb2a7630550a7b8c6035abf94929c564e5f101e4b2e390837d3bba79fa75db5a"
+            },
+            {
+              "path": "src/auth/rbac.js",
+              "sha256": "afd4752aed85ecc45767f8e5429dd7023a10ef8323f9ecbce6169480db9e3e45"
+            },
+            {
+              "path": "src/services/requests.js",
+              "sha256": "d26e63338c6bba28f842fb3776d0cab58e1792eb5fb39d137d127f516795e63c"
+            },
+            {
+              "path": "test/unit/config/limits.test.js",
+              "sha256": "1c36bfdba8080bbf27791539c641a4c36e63b3fbb1bb4bb565aa7354de921431"
+            },
+            {
+              "path": "test/unit/auth/client-ip.test.js",
+              "sha256": "c660ebf96a67d59b16067c10d95cacdac91db8b35993f653b0a9d12c3db6ee4c"
+            },
+            {
+              "path": "test/unit/auth/general-limit.test.js",
+              "sha256": "015de860271496e2f2f09737f1e4973044a553f55ae70805e670f3c50ec1ed09"
+            },
+            {
+              "path": "test/api/auth.test.js",
+              "sha256": "1de7fc8ebb5480703fb9eef12be24686a4904d5596cb2b023067bb06c6c631f9"
+            },
+            {
+              "path": "test/api/requests-plans.test.js",
+              "sha256": "f2d2d1132d761252a61e2a8462085d85f4ea95a464c2f3e823e54e7f6809fb53"
+            },
+            {
+              "path": "test/api/rate-limits.test.js",
+              "sha256": "5eddb6a0f8c15c76ae3b7570881d3ff1dbc6c3972d10a5bad0145e3a5f26a9a9"
+            },
+            {
+              "path": "test/scan/env-example.test.js",
+              "sha256": "d89a71be25415ba9217e8d158e5d8ff58dcae5cc6247797a466ecf92250c01e1"
+            }
+          ],
+          "respondsTo": null,
+          "notes": "rework-1 for rev-mv2zb2wy-019ac65d: TR-C-2 (planning-limit env names), SEC-C-3 (general 300/min limit in the access hook, unchanged confirm writes nothing), SEC-C-2 (IPv6 /64 throttle keys). npm test 821 (805 pass, 0 fail, 10 skipped, 6 todo), p95 55.2 ms (ev:ev-mv2znsts-01786823); failing first ev:ev-mv2zhs1c-019dd6ab; browser 3/3 ev:ev-mv2zl4mn-01560653. Flagged: RS_GENERAL_RATE_LIMIT and RS_GENERAL_RATE_WINDOW_SEC are not in the spec (release-checklist delta); no sweep of u:<id> rows (FU-20); role/CSRF failures count; 'unchanged confirm' compares derived provenance too, not values only; three existing assertions adapted; TR-C-2 env tests named TR-C-2, not RISK-19."
+        }
+      ],
       "reviews": [],
       "openFindings": [],
       "approvedBy": null,
@@ -9139,6 +9215,47 @@
       "task": "rework-1",
       "recordedBy": "backend-engineer",
       "at": "2026-10-10T22:49:27.306Z"
+    },
+    "ev-mv2znsts-01786823": {
+      "id": "ev-mv2znsts-01786823",
+      "kind": "command",
+      "label": "rework-1 full offline suite",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 34319,
+      "log": ".eccode/evidence/ev-mv2znsts-01786823.log",
+      "logSha256": "165c0cf3c667f03c736593ad41b2605643854db334a802f04552936f9cdb03b2",
+      "logFileSha256": "8b561b6adc9916a65d8bdb0ed0b8bd137fdaeca79f306161b8317f79919a7f62",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 559 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 602.385655\n  type: 'test'\n  ...\n1..559\n# tests 821\n# suites 72\n# pass 805\n# fail 0\n# cancelled 0\n# skipped 10\n# todo 6\n# duration_ms 33929.99459\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 2578 requests, p50 1.5 ms, p95 55.2 ms (limit: p95 < 300 ms)\nNFR5 suite time: 34.1 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": "phase:rework-1",
+      "task": null,
+      "tree": "037014a4bf3a8e4d0bc1db60e3ca6b9130568e16f5b3714b1bacc5816b8b64b6",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-10T22:51:31.983Z"
+    },
+    "ev-mv2zp0a8-01c00c5e": {
+      "id": "ev-mv2zp0a8-01c00c5e",
+      "kind": "command",
+      "label": "rework-1 artifact coverage: declared files, git changes in rework-owned paths since 4bfc13a1, ownership",
+      "command": "node .eccode/drafts/phase-artifacts-check.mjs .eccode/artifacts/plan/plan.json rework-1 4bfc13a1a09778079ac2e0a14a18963b2582e780",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 128,
+      "log": ".eccode/evidence/ev-mv2zp0a8-01c00c5e.log",
+      "logSha256": "2578d515a7324e74c0c29626066a310e82f58bfa876a5dea88cc2793744c341c",
+      "logFileSha256": "3671ec8b4b2144af88648f4895a913e1221637855a87eedbbf464fbe32b8cee5",
+      "outputTail": "submission sub-mv2zoxlo-019effce: 16 artifacts (14 project files, 2 under .eccode/)\ndeclared in handoffs: 14; changed in owned paths since 4bfc13a1: 14\n  rework-1: 14 submitted files in its ownership\ndeclared but not submitted: 0\nchanged in owned paths but not submitted (undeclared): 0\nsubmitted outside phase ownership: 0\nchanged since base outside phase ownership (other phases or records, informational): 0\n",
+      "gate": "phase:rework-1",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-10T22:52:28.306Z"
     }
   },
   "reviews": {
@@ -15358,6 +15475,56 @@
       "id": "ho-mv2zloa4-0168f7f1",
       "recordedBy": "backend-engineer",
       "at": "2026-10-10T22:49:52.891Z"
+    },
+    "ho-mv2zpavd-01d55454": {
+      "from": "delivery-lead",
+      "to": "technical-reviewer",
+      "gate": "phase:rework-1",
+      "objective": "Review of phase:rework-1, submission sub-mv2zoxlo-019effce: 16 artifacts, the rework's 14 changed files plus .eccode/artifacts/rework-1/submission.md and the updated followups.md. It closes TR-C-2, SEC-C-3 and SEC-C-2 from rev-mv2zb2wy-019ac65d.",
+      "context": "The rework task rework-1 (backend-engineer, handoff ho-mv2zloa4-0168f7f1) owns src/config.js, .env.example, src/auth/**, src/services/requests.js, test/unit/config/**, test/unit/auth/** and four named test files. The approval must cover task:rework-1, phase:rework-1 and lessons. The security reviewer should also see it: it covers throttles and access limits.",
+      "inputs": [
+        ".eccode/artifacts/rework-1/submission.md",
+        ".eccode/artifacts/plan/followups.md",
+        ".eccode/handoffs/ho-mv2zloa4-0168f7f1.json",
+        ".eccode/reviews/rev-mv2zb2wy-019ac65d.json",
+        ".eccode/reviews/drafts/phase-c-security-1.md"
+      ],
+      "dependencies": [
+        "rework-1"
+      ],
+      "expectedOutput": "A review judging each finding against its resolution condition and the five disclosed review items.",
+      "acceptanceCriteria": [
+        "TR-C-2: names parsed with bounds and defaults, listed in .env.example, env-example scan green",
+        "SEC-C-3: 301st signed-in call in a minute refused with 429 general and Retry-After; plan keys separate; p95 < 300 ms; unchanged confirm inserts nothing",
+        "SEC-C-2: IPv6 /64 throttle keys; 5 failures over one /64 make the 6th get 429"
+      ],
+      "completedWork": "Ran npm test (821: 805 pass, 0 fail, 10 skipped, 6 todo; p95 55.2 ms). Mapped each finding to its change, tests and evidence. Flagged the two env names that are not in the spec as a release-checklist delta. Closed FU-14/FU-15 in followups.md and added FU-20 (sweep of u:<id> rate rows). Submitted, and checked artifact coverage against the rework's ownership: 14 declared = 14 changed = 14 submitted, nothing outside ownership.",
+      "filesChanged": [
+        ".eccode/artifacts/rework-1/submission.md",
+        ".eccode/artifacts/plan/followups.md",
+        ".eccode/drafts/phase-artifacts-check.mjs"
+      ],
+      "evidence": [
+        "ev:ev-mv2znsts-01786823",
+        "ev:ev-mv2zp0a8-01c00c5e",
+        "ev:ev-mv2zhs1c-019dd6ab",
+        "ev:ev-mv2zk7pm-01750b17",
+        "ev:ev-mv2zl4mn-01560653"
+      ],
+      "remainingIssues": [
+        "RS_GENERAL_RATE_LIMIT and RS_GENERAL_RATE_WINDOW_SEC are not in the spec's Deployment table; neither are the two planning names. A documented delta for the verification gate",
+        "No housekeeping sweep of u:<id> rate rows (FU-20, d3 or e4)",
+        "Role and CSRF failures of signed-in users count toward the general limit",
+        "The unchanged-confirm check compares derived provenance and wording, not values only; under SEC-C-3's literal wording, a same-values confirm after a newer extraction would return the latest version",
+        "The TR-C-2 env tests are named TR-C-2, not RISK-19 as the resolution condition words it"
+      ],
+      "nextAction": "technical-reviewer (and security-reviewer) review sub-mv2zoxlo-019effce; the orchestrator passes FU-20 at dispatch.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "id": "ho-mv2zpavd-01d55454",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-10T22:52:41.990Z"
     }
   },
   "runs": {
@@ -16147,6 +16314,30 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-10T22:50:27.810Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-10T22:53:04.570Z",
+      "durationMinutes": 2.61,
+      "costUsd": null,
+      "tokens": 40000,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv2zpsfm-019ad5c6": {
+      "id": "run-mv2zpsfm-019ad5c6",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T22:53:04.749Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv2zpslp-0105a31c": {
+      "id": "run-mv2zpslp-0105a31c",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T22:53:04.974Z",
       "status": "running",
       "attempt": 1
     }
@@ -16495,8 +16686,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 569.49,
-    "tokens": 6987697
+    "runtimeMinutes": 572.1,
+    "tokens": 7027697
   },
   "delivery": null,
   "reworks": [

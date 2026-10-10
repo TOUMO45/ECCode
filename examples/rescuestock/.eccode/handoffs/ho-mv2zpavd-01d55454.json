@@ -1,0 +1,47 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "phase:rework-1",
+  "objective": "Review of phase:rework-1, submission sub-mv2zoxlo-019effce: 16 artifacts, the rework's 14 changed files plus .eccode/artifacts/rework-1/submission.md and the updated followups.md. It closes TR-C-2, SEC-C-3 and SEC-C-2 from rev-mv2zb2wy-019ac65d.",
+  "context": "The rework task rework-1 (backend-engineer, handoff ho-mv2zloa4-0168f7f1) owns src/config.js, .env.example, src/auth/**, src/services/requests.js, test/unit/config/**, test/unit/auth/** and four named test files. The approval must cover task:rework-1, phase:rework-1 and lessons. The security reviewer should also see it: it covers throttles and access limits.",
+  "inputs": [
+    ".eccode/artifacts/rework-1/submission.md",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/handoffs/ho-mv2zloa4-0168f7f1.json",
+    ".eccode/reviews/rev-mv2zb2wy-019ac65d.json",
+    ".eccode/reviews/drafts/phase-c-security-1.md"
+  ],
+  "dependencies": [
+    "rework-1"
+  ],
+  "expectedOutput": "A review judging each finding against its resolution condition and the five disclosed review items.",
+  "acceptanceCriteria": [
+    "TR-C-2: names parsed with bounds and defaults, listed in .env.example, env-example scan green",
+    "SEC-C-3: 301st signed-in call in a minute refused with 429 general and Retry-After; plan keys separate; p95 < 300 ms; unchanged confirm inserts nothing",
+    "SEC-C-2: IPv6 /64 throttle keys; 5 failures over one /64 make the 6th get 429"
+  ],
+  "completedWork": "Ran npm test (821: 805 pass, 0 fail, 10 skipped, 6 todo; p95 55.2 ms). Mapped each finding to its change, tests and evidence. Flagged the two env names that are not in the spec as a release-checklist delta. Closed FU-14/FU-15 in followups.md and added FU-20 (sweep of u:<id> rate rows). Submitted, and checked artifact coverage against the rework's ownership: 14 declared = 14 changed = 14 submitted, nothing outside ownership.",
+  "filesChanged": [
+    ".eccode/artifacts/rework-1/submission.md",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/drafts/phase-artifacts-check.mjs"
+  ],
+  "evidence": [
+    "ev:ev-mv2znsts-01786823",
+    "ev:ev-mv2zp0a8-01c00c5e",
+    "ev:ev-mv2zhs1c-019dd6ab",
+    "ev:ev-mv2zk7pm-01750b17",
+    "ev:ev-mv2zl4mn-01560653"
+  ],
+  "remainingIssues": [
+    "RS_GENERAL_RATE_LIMIT and RS_GENERAL_RATE_WINDOW_SEC are not in the spec's Deployment table; neither are the two planning names. A documented delta for the verification gate",
+    "No housekeeping sweep of u:<id> rate rows (FU-20, d3 or e4)",
+    "Role and CSRF failures of signed-in users count toward the general limit",
+    "The unchanged-confirm check compares derived provenance and wording, not values only; under SEC-C-3's literal wording, a same-values confirm after a newer extraction would return the latest version",
+    "The TR-C-2 env tests are named TR-C-2, not RISK-19 as the resolution condition words it"
+  ],
+  "nextAction": "technical-reviewer (and security-reviewer) review sub-mv2zoxlo-019effce; the orchestrator passes FU-20 at dispatch.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}

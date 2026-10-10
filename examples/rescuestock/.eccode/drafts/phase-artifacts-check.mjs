@@ -13,7 +13,10 @@ import { execFileSync } from 'node:child_process';
 
 const [planPath, phase, base] = process.argv.slice(2);
 const plan = JSON.parse(readFileSync(planPath, 'utf8'));
-const tasks = plan.tasks.filter((t) => t.phase === phase);
+// A rework phase (phase:rework-N) is not in plan.json: its one task and ownership come from the record.
+const record = JSON.parse(readFileSync('.eccode/state.json', 'utf8'));
+const rework = (record.reworks || []).find((r) => r.id === phase);
+const tasks = rework ? [{ id: rework.id, files: rework.files }] : plan.tasks.filter((t) => t.phase === phase);
 const ids = new Set(tasks.map((t) => t.id));
 
 const expand = (g) => { const m = g.match(/\{([^}]*)\}/); return m ? m[1].split(',').flatMap((x) => expand(g.replace(m[0], x))) : [g]; };
