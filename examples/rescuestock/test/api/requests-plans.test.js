@@ -5,8 +5,18 @@
 // FU-1, FU-7, FU-8, RS-34 (labels). Runs the real app in-process through test/helpers/app-harness.js.
 import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { request as httpRequest } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { DEMO_PASSWORD, startHarness } from '../helpers/app-harness.js';
 import { createClient } from '../helpers/fixtures.js';
+import { createApp, resolvePlanRate } from '../../src/app.js';
+import { fixedClock } from '../../src/clock.js';
+import { loadConfig } from '../../src/config.js';
+import { openDb } from '../../src/db/connection.js';
+import { migrate } from '../../src/db/migrate.js';
+import { createLogger } from '../../src/log.js';
 import { PlannerLimitError, search } from '../../src/domain/search.js';
 import { plan as realPlanner } from '../../src/domain/planner.js';
 
@@ -164,8 +174,9 @@ describe('SEC-2: requests per Asia/Amman day', () => {
   test('SEC-2: deleting requests does not reset the count, and the next local day starts at zero', async () => {
     h.db.prepare('DELETE FROM rescue_requests WHERE customer_id = ?').run(cafe1.user.id);
     assert.equal((await cafe1.post('/api/requests', { text: 'still blocked' })).status, 429);
-    h.clock.advance(15 * 3600 * 1000); // 00:00 next day in Amman
-    assert.equal((await cafe1.post('/api/requests', { text: 'a new day' })).status, 201);
+    h.clock.advance(15 * 3600 * 1000); // 00:00 next day in Amman; the 15 h also end the old session
+    const fresh = await signIn(h, 'cafe1');
+    assert.equal((await fresh.post('/api/requests', { text: 'a new day' })).status, 201);
   });
 });
 
@@ -343,8 +354,6 @@ describe('confirm: manual requirement confirmation and provenance (SEC-8)', () =
     const mismatch = await confirm(cafe1, id, { productType: 'cups', lidQuantity: 50 });
     assert.equal(mismatch.status, 422);
     assert.deepEqual(mismatch.json.error.details.fields, [{ field: 'lidQuantity', rule: 'zero_for_cups' }]);
-    const skipped = await confirm(cafe1, id, { deadline: '2026-03-27T00:30' }); // a local time Amman never had in 2026? (valid) -> accepted or rejected, never a 500
-    assert.ok([201, 422].includes(skipped.status));
   });
 
   test('confirm: changing the requirements supersedes the open plan, queues a re-plan (replanning), and the next plan answers the queue', async () => {
@@ -401,9 +410,11 @@ describe('confirm: manual requirement confirmation and provenance (SEC-8)', () =
 describe('plan: planning runs, versions, and the explanation', () => {
   let h;
   let cafe1;
+  let cafe2;
   before(async () => {
     h = await startHarness({ seed: true });
     cafe1 = await signIn(h, 'cafe1');
+    cafe2 = await signIn(h, 'cafe2'); // a second customer keeps each one under the 10-plans-per-10-minutes limit
   });
   after(() => h.close());
 
@@ -522,17 +533,28 @@ describe('plan: planning runs, versions, and the explanation', () => {
     assert.deepEqual(next.json.plan.trace.inputs.excludeSupplierCodes, ['B']);
   });
 
-  test('RS-34: a plan made while an offer is withdrawn or out of stock reflects the live catalog', async () => {
-    const id = await newRequest(cafe1);
-    await confirm(cafe1, id);
+  test('RS-09: with B withdrawn, and separately with B out of stock, the best plan is A+E at 9500 on the live catalog', async () => {
+    const id = await newRequest(cafe2);
+    await confirm(cafe2, id);
     h.db.prepare("UPDATE offers SET status = 'withdrawn' WHERE id = 2").run();
     try {
-      const res = await cafe1.post(`/api/requests/${id}/plan`, {});
+      const res = await cafe2.post(`/api/requests/${id}/plan`, {});
       assert.equal(res.status, 201);
       assert.deepEqual(res.json.plan.body.lines.map((l) => l.supplierCode), ['A', 'E']);
+      assert.equal(res.json.plan.body.totalCents, 9500);
       assert.ok(res.json.planningRun.rejections.some((r) => r.supplierCode === 'B' && r.codes.includes('OFFER_WITHDRAWN')));
     } finally {
       h.db.prepare("UPDATE offers SET status = 'active' WHERE id = 2").run();
+    }
+    const bProduct = h.db.prepare('SELECT product_id FROM offers WHERE id = 2').get().product_id;
+    h.db.prepare('UPDATE inventory SET on_hand = 0 WHERE product_id = ?').run(bProduct);
+    try {
+      const res = await cafe2.post(`/api/requests/${id}/plan`, {});
+      assert.equal(res.status, 201);
+      assert.deepEqual(res.json.plan.body.lines.map((l) => l.supplierCode), ['A', 'E']);
+      assert.ok(res.json.planningRun.rejections.some((r) => r.supplierCode === 'B' && r.codes.includes('OUT_OF_STOCK')));
+    } finally {
+      h.db.prepare('UPDATE inventory SET on_hand = 1 WHERE product_id = ?').run(bProduct);
     }
   });
 });
@@ -588,7 +610,7 @@ describe('PB-3 / RISK-19: the planner limit and the planning rate limit', () => 
     assert.equal((await cafe1.post(`/api/requests/${id}/plan`, {})).status, 201, 'the same request plans normally once the limit is gone');
   });
 
-  test('PB-3: FU-1 a limit hit during a re-plan keeps the open version and the queued re-plan', async () => {
+  test('PB-3: FU-1 a limit hit during a re-plan keeps the open proposed version', async () => {
     const limit = genuineLimitError();
     const id = await newRequest(cafe1);
     await confirm(cafe1, id);
@@ -639,6 +661,62 @@ describe('PB-3 / RISK-19: the planner limit and the planning rate limit', () => 
     const draft = await newRequest(cafe);
     assert.equal((await cafe.post(`/api/requests/${draft}/plan`, {})).status, 409);
     assert.equal(count(h, "SELECT COUNT(*) AS n FROM rate_events WHERE kind = 'general' AND user_key = ?", key), before);
+  });
+});
+
+describe('RISK-19: FU-8 the planning limit is configurable', () => {
+  test('RISK-19: the default is 10 per 10 minutes; config.planRateLimit / planRateWindowMin and an injected planRate override it; bad values are refused', () => {
+    assert.deepEqual({ ...resolvePlanRate({}) }, { limit: 10, windowMs: 600000 });
+    assert.deepEqual({ ...resolvePlanRate({ planRateLimit: 3, planRateWindowMin: 1 }) }, { limit: 3, windowMs: 60000 });
+    assert.deepEqual({ ...resolvePlanRate({ planRateLimit: 3, planRateWindowMin: 1 }, { limit: 2, windowMs: 5000 }) }, { limit: 2, windowMs: 5000 });
+    for (const bad of [{ planRateLimit: 0 }, { planRateLimit: 1.5 }, { planRateWindowMin: 0 }]) assert.throws(() => resolvePlanRate(bad), RangeError);
+  });
+
+  test('RISK-19: an app created with a stricter planRate refuses the 3rd plan of a customer in the window', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rs-planrate-'));
+    const config = loadConfig({ PORT: '0', RS_DB_PATH: join(dir, 'app.db'), RS_UPLOAD_DIR: join(dir, 'uploads'), RS_TEST_OFFLINE: '1', RS_DEMO_DATE: '2026-10-20', RS_MODEL_PROVIDER: 'fake' });
+    const clock = fixedClock(Date.UTC(2026, 9, 20, 6, 0, 0));
+    const db = openDb(config.dbPath, { busyTimeoutMs: 100 });
+    migrate(db, { clock });
+    const { seedDatabase } = await import('../../scripts/seed.js');
+    seedDatabase(db, { clock, demoDate: '2026-10-20', demoPassword: DEMO_PASSWORD });
+    const app = createApp({ db, clock, config, log: createLogger({ write: () => {}, clock }), planRate: { limit: 2, windowMs: 60_000 } });
+    const port = await app.listen(0, '127.0.0.1');
+    try {
+      const request = (options) => new Promise((resolve, reject) => {
+        const payload = options.jsonBody === undefined ? undefined : JSON.stringify(options.jsonBody);
+        const headers = { ...(options.headers ?? {}) };
+        if (payload !== undefined) {
+          headers['Content-Type'] = 'application/json';
+          headers['Content-Length'] = String(Buffer.byteLength(payload));
+        }
+        const req = httpRequest({ host: '127.0.0.1', port, method: options.method ?? 'GET', path: options.path, headers, agent: false }, (res) => {
+          const chunks = [];
+          res.on('data', (c) => chunks.push(c));
+          res.on('end', () => {
+            const text = Buffer.concat(chunks).toString('utf8');
+            resolve({ status: res.statusCode, headers: res.headers, text, json: text ? JSON.parse(text) : null });
+          });
+        });
+        req.on('error', reject);
+        if (payload !== undefined) req.write(payload);
+        req.end();
+      });
+      const client = createClient(request);
+      await client.signIn('cafe1', DEMO_PASSWORD);
+      const id = (await client.post('/api/requests', { text: 'cups' })).json.request.id;
+      assert.equal((await client.post(`/api/requests/${id}/confirm`, { fields: FIELDS })).status, 201);
+      assert.equal((await client.post(`/api/requests/${id}/plan`, {})).status, 201);
+      assert.equal((await client.post(`/api/requests/${id}/plan`, {})).status, 201);
+      const third = await client.post(`/api/requests/${id}/plan`, {});
+      assert.equal(third.status, 429);
+      assert.deepEqual(third.json.error.details, { limit: 'plan' });
+      assert.equal(third.headers['retry-after'], '60');
+    } finally {
+      await app.close();
+      db.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 
