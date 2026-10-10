@@ -1,6 +1,6 @@
 {
-  "seq": 483,
-  "lastHash": "95231ae7702dac1bb14a47ebdae1667d551b669070e88fc90d998babce88e967",
+  "seq": 492,
+  "lastHash": "42f6260515145d6e3b800b97278213f582374541894c62d5d45bc945d7fa16be",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -2540,7 +2540,7 @@
     "phase:d-extraction": {
       "id": "phase:d-extraction",
       "kind": "phase",
-      "status": "pending",
+      "status": "in_progress",
       "iterations": 0,
       "authors": [],
       "submissions": [],
@@ -2549,7 +2549,7 @@
       "approvedBy": null,
       "approvedSubmission": null,
       "escalation": null,
-      "startedAt": null,
+      "startedAt": "2026-10-10T23:01:14.010Z",
       "approvedAt": null
     },
     "phase:e-payments": {
@@ -2600,7 +2600,7 @@
     "phase:rework-1": {
       "id": "phase:rework-1",
       "kind": "phase",
-      "status": "submitted",
+      "status": "approved",
       "iterations": 0,
       "authors": [
         "delivery-lead"
@@ -2680,13 +2680,15 @@
           "notes": "rework-1 for rev-mv2zb2wy-019ac65d: TR-C-2 (planning-limit env names), SEC-C-3 (general 300/min limit in the access hook, unchanged confirm writes nothing), SEC-C-2 (IPv6 /64 throttle keys). npm test 821 (805 pass, 0 fail, 10 skipped, 6 todo), p95 55.2 ms (ev:ev-mv2znsts-01786823); failing first ev:ev-mv2zhs1c-019dd6ab; browser 3/3 ev:ev-mv2zl4mn-01560653. Flagged: RS_GENERAL_RATE_LIMIT and RS_GENERAL_RATE_WINDOW_SEC are not in the spec (release-checklist delta); no sweep of u:<id> rows (FU-20); role/CSRF failures count; 'unchanged confirm' compares derived provenance too, not values only; three existing assertions adapted; TR-C-2 env tests named TR-C-2, not RISK-19."
         }
       ],
-      "reviews": [],
+      "reviews": [
+        "rev-mv2zzd3g-019dc185"
+      ],
       "openFindings": [],
-      "approvedBy": null,
-      "approvedSubmission": null,
+      "approvedBy": "technical-reviewer",
+      "approvedSubmission": "sub-mv2zoxlo-019effce",
       "escalation": null,
       "startedAt": "2026-10-10T22:42:47.828Z",
-      "approvedAt": null
+      "approvedAt": "2026-10-10T23:00:31.373Z"
     }
   },
   "plan": {
@@ -9498,6 +9500,47 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-10T22:58:32.023Z"
+    },
+    "ev-mv2zxqy5-012a72ba": {
+      "id": "ev-mv2zxqy5-012a72ba",
+      "kind": "command",
+      "label": "TR general limit across two processes: 120 concurrent calls, limit 50, 3 rounds (no overshoot, no 5xx)",
+      "command": "node --disable-warning=ExperimentalWarning .eccode/drafts/tr-r1-twoproc-limit.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 3404,
+      "log": ".eccode/evidence/ev-mv2zxqy5-012a72ba.log",
+      "logSha256": "49df5a5919cc8e186d8d51e16d91843b3ebfc4560ad2b4a0f475ac44511cd60c",
+      "logFileSha256": "5cf3a7b65046f6fc88c702317d2f21a0178860fae55a7c6390f57b2ac6afb5eb",
+      "outputTail": "PASS round 1: {\"200\":50,\"429 general\":70}; u:9 rows 50; lock errors in logs: false\nPASS round 2: {\"200\":50,\"429 general\":70}; u:9 rows 50; lock errors in logs: false\nPASS round 3: {\"200\":50,\"429 general\":70}; u:9 rows 50; lock errors in logs: false\ntwo processes never overshoot the general limit\n",
+      "gate": "phase:rework-1",
+      "task": null,
+      "tree": "037014a4bf3a8e4d0bc1db60e3ca6b9130568e16f5b3714b1bacc5816b8b64b6",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-10T22:59:16.133Z"
+    },
+    "ev-mv2zz740-0184be8e": {
+      "id": "ev-mv2zz740-0184be8e",
+      "kind": "command",
+      "label": "installed guard is the repaired version (lesson mem-sd-mv1audrd-013b7102)",
+      "command": "sha256sum /home/user/ECCode/scripts/hooks/guard.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 11,
+      "log": ".eccode/evidence/ev-mv2zz740-0184be8e.log",
+      "logSha256": "93ec0c365055a3c3cd7cc4ca1695ad84fc63213ac0f3cd9ad44cabbe6347ff40",
+      "logFileSha256": "7e31300dc5be7636576548325f9f968beeec3cb6df0b8faabf1e562d834686bc",
+      "outputTail": "d43f4b548e86029a311b969b560fa84e56ac30aac598ff9faf234bf2d279c630  /home/user/ECCode/scripts/hooks/guard.js\n",
+      "gate": "phase:rework-1",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-10T23:00:23.703Z"
     }
   },
   "reviews": {
@@ -13993,6 +14036,171 @@
       "reviewer": "technical-reviewer",
       "at": "2026-10-10T22:41:38.434Z",
       "submissionId": "sub-mv2y7tlh-017e22c9"
+    },
+    "rev-mv2zzd3g-019dc185": {
+      "decision": "approve",
+      "summary": "Technical review of rework-1 (sub-mv2zoxlo-019effce: 14 changed files plus the submission and followups.md), against the resolution conditions I wrote in rev-mv2zb2wy-019ac65d for TR-C-2, SEC-C-2 and SEC-C-3. Every check below ran after the submission, on the final tree (no project file changed since: 14 files differ from the claim base 4bfc13a1, exactly the listed artifacts).\n\nBaseline:\n- npm test: 821 tests, 805 pass, 10 skipped, 6 todo, 0 fail; NFR5 p95 54.8 ms over 2578 calls (ev:ev-mv2zrmza-016c0e05).\n- npm run test:browser: 3/3 (ev:ev-mv2zrq4r-01ae051a).\n- Artifacts equal the changes since 4bfc13a1, every sha256 matches, all inside the rework's ownership (ev:ev-mv2zv70k-01ca6173).\n- The tests falsify: copied onto the pre-rework source they fail 19 times (TR-C-2 2, SEC-C-2 4, SEC-C-3 8 named failures) and pass 123/123 on the final tree (ev:ev-mv2zwsx9-012d555f).\n\nMy probes:\n- General limit (ev:ev-mv2zt14w-01460430). The 301st call gets 429 general with Retry-After 60, and a refusal writes no row. Public routes and anonymous 401s are not counted. Plan and general keys are separate both ways (11 plan calls: plan rows +10, the 11th 429 plan while general passes). Only u:<id> and plan:u:<id> keys exist. With busy_timeout 0 and a held write lock, the answer is 503 DB_BUSY with Retry-After 1, never 500. The config bounds are refused by name and take effect.\n- Across two processes: 120 concurrent calls of one user against limit 50 give exactly 50 passes, 70 refusals and 50 rows, in 3 rounds (ev:ev-mv2zxqy5-012a72ba).\n- The phase-C probes still hold on this tree:\n  - throttles, where the /64 is now one key and the 6th failure is refused (ev:ev-mv2ztesg-01b08c7d);\n  - the RBAC matrix (ev:ev-mv2ztfq3-01364574);\n  - the two-process reserve race (ev:ev-mv2ztoiz-01964725);\n  - the 3 x 800-step random walk, where the limit broke no step (ev:ev-mv2zuvqn-014b7da3).\n\nError order is now Origin -> session (401) -> general limit (429) -> role (403) -> CSRF token (403). I accept the 429 between authentication and authorization: it keys on the user and bounds a signed-in client's probing. The signature-policy route returns before the limiter.\n\nThe security review (rework-1-security-1.md: no blocking or major) is folded in with its ids: SEC-R-1 minor, SEC-R-2..4 info; I agree with each severity. Decision: approve.",
+      "criteria": [
+        {
+          "id": "task:rework-1",
+          "description": "Rework of rev-mv2zb2wy-019ac65d: TR-C-2 planning-limit environment names; SEC-C-3 general per-user limit and no new version on an unchanged confirm; SEC-C-2 IPv6 /64 throttle keys; a regression test fails before and passes after; existing checks pass",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv2zwsx9-012d555f",
+            "ev:ev-mv2zt14w-01460430",
+            "ev:ev-mv2zxqy5-012a72ba",
+            "ev:ev-mv2ztesg-01b08c7d",
+            "ev:ev-mv2zrmza-016c0e05",
+            "artifact:src/auth/general-limit.js#L18-L36",
+            "artifact:src/auth/rbac.js#L52-L64",
+            "artifact:src/auth/client-ip.js#L54-L72",
+            "artifact:src/config.js#L320-L325",
+            "artifact:src/services/requests.js#L217-L227",
+            "artifact:.env.example#L114-L120"
+          ],
+          "notes": "Disclosures judged:\n(1) No sweep of old u:<id> rows. Accepted: the table is bounded at the limit per user per window, and FU-20 must be assigned (TR-R-2).\n(2) Role and CSRF failures of signed-in users count. Accepted.\n(3) The stricter 'unchanged' rule (values AND derived provenance and wording). Accepted: a provenance change follows only a new extraction, which has its own limit, so the flood bound holds and SEC-8 history stays exact. Recorded for the spec (TR-R-1).\n(4) Three adapted assertions. Read in the diff: each still asserts that the planning and general counts are separate, and the IPv6 expectations became /64 keys with new cases. None weakens a criterion.\n(5) Env tests named TR-C-2 rather than RISK-19. Accepted; the RISK-19 tests still cover the limit itself.\n(6) Webhook limit left to e3. Agreed (SEC-C-6)."
+        },
+        {
+          "id": "phase:rework-1",
+          "description": "One rework before phase D so phase D and E dispatches start from a complete access layer: TR-C-2, SEC-C-2, SEC-C-3 resolved; npm test and the browser suite pass",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv2zrmza-016c0e05",
+            "ev:ev-mv2zrq4r-01ae051a",
+            "ev:ev-mv2zv70k-01ca6173",
+            "ev:ev-mv2zuvqn-014b7da3",
+            "ev:ev-mv2ztoiz-01964725",
+            "ev:ev-mv2ztfq3-01364574",
+            "artifact:.eccode/artifacts/rework-1/submission.md#finding-change-test-evidence",
+            "artifact:.eccode/artifacts/rework-1/submission.md#environment-variables-four-new-names"
+          ],
+          "notes": "The access layer is complete for phase D and E dispatches. The open items (SEC-R-1, TR-R-2) have owners and conditions that fall before e4's background writer lands."
+        },
+        {
+          "id": "lessons",
+          "description": "The rework's not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv2zz740-0184be8e",
+            "ev:ev-mv2zv70k-01ca6173",
+            "artifact:.eccode/artifacts/rework-1/submission.md#lessons"
+          ],
+          "notes": "The lesson applies to hooks or guards that map file writes to a project record or root. The rework changes only application code: config, the access hook's rate limit, throttle keys and the confirm service. Its 14 changed files are all inside its ownership, and none is a hook, a guard or root discovery (ev:ev-mv2zv70k-01ca6173). The installed guard is the repaired per-target-root version (sha256 d43f4b54...)."
+        }
+      ],
+      "findings": [
+        {
+          "id": "SEC-R-1",
+          "severity": "minor",
+          "title": "Every authenticated request, reads included, now takes the SQLite write lock, so a held write lock turns signed-in reads into 503 DB_BUSY",
+          "detail": "general-limit.js runs a BEGIN IMMEDIATE on every non-public call. Before the rework, a signed-in GET only read through WAL, and the session touch deliberately tolerates busy. My G5 shows the mapping is correct (503 DB_BUSY with Retry-After 1, no 500, nothing counted); security's R3 shows the public session read still answers 200 (ev:ev-mv2zuhm9-0195be55). The effect is availability only. It grows once e4 adds a background writer (the reconciler), and every page poll is a counted write.",
+          "evidence": [
+            "ev:ev-mv2zt14w-01460430",
+            "ev:ev-mv2zuhm9-0195be55",
+            "artifact:src/auth/general-limit.js#L18-L36"
+          ],
+          "recommendation": "Owner: the orchestrator assigns it, to FU-20's owner or the next src/auth rework (backend-engineer). Resolved when, before e4's reconciler is dispatched, take() fails open for GET and HEAD on a busy error with one log line (state-changing methods stay fail-closed), and a test with test/helpers/lock-holder.js shows a signed-in GET answering 200 under a held write lock while a POST answers 503 DB_BUSY."
+        },
+        {
+          "id": "TR-R-1",
+          "severity": "info",
+          "title": "Spec deltas made by the rework: four environment names, the 429 position in the access hook, and the stricter 'unchanged confirm' rule",
+          "detail": "The approved spec is pinned, and these behaviours are not in it:\n- RS_PLAN_RATE_LIMIT and RS_PLAN_RATE_WINDOW_MIN (FU-14);\n- RS_GENERAL_RATE_LIMIT (1-100000, default 300) and RS_GENERAL_RATE_WINDOW_SEC (1-3600, default 60);\n- the order Origin -> 401 -> 429 general -> role 403 -> CSRF 403;\n- a confirm that equals the latest version in values AND derived provenance and wording returns that version without a row.\nI accept all four. The names, bounds and defaults are reasonable, and the env-example scan asserts them.",
+          "evidence": [
+            "ev:ev-mv2zt14w-01460430",
+            "artifact:.eccode/artifacts/rework-1/submission.md#environment-variables-four-new-names",
+            "artifact:.eccode/artifacts/plan/followups.md#status-after-rework-1-handoff-ho-mv2zloa4-0168f7f1-gate-phaserework-1"
+          ],
+          "recommendation": "Owner: the orchestrator (release checklist and verification report) and g2 (README). Resolved when the verification report lists these four deltas as documented design changes and g2's README lists the four variables with their bounds and defaults."
+        },
+        {
+          "id": "TR-R-2",
+          "severity": "info",
+          "title": "Expired u:<id> rate rows are purged only on that user's next call; the sweep (FU-20) has no assigned task yet",
+          "detail": "A refused call is not inserted, so rows per user are bounded by the limit (300). Rows of users who stop calling remain until a sweep runs, and the spec purges rate events after 24 h. FU-20 proposes d3's retention sweep or e4's housekeeping step.",
+          "evidence": [
+            "ev:ev-mv2zt14w-01460430",
+            "artifact:.eccode/artifacts/plan/followups.md#status-after-rework-1-handoff-ho-mv2zloa4-0168f7f1-gate-phaserework-1"
+          ],
+          "recommendation": "Owner: the orchestrator assigns FU-20 to d3-extraction-service or e4-saga-reconciler in that task's dispatch. Resolved when that task's test (named SEC-C-3) shows general rows older than 24 h purged by the periodic sweep, with the 48 h rule for request_create kept."
+        },
+        {
+          "id": "SEC-R-2",
+          "severity": "info",
+          "title": "A cross-site page can spend a signed-in victim's general budget with top-level navigations (SameSite=Lax), given many permitted popups",
+          "detail": "The security reviewer reproduced it in Chromium with the limit lowered to 20 (ev:ev-mv2zun9k-01058b91). The victim's own GET and sign-out were then 429 for one window. A cross-site fetch with credentials carried no cookie and counted nothing. At 300 per minute this needs about 300 popups a minute, so it is info.",
+          "evidence": [
+            "ev:ev-mv2zun9k-01058b91"
+          ],
+          "recommendation": "Owner: the next src/auth rework (the same one as SEC-R-1, if the orchestrator prefers). Resolved when non-public /api requests carrying Sec-Fetch-Mode: navigate are refused 403 before identification and not counted, with a test; or the orchestrator records the acceptance."
+        },
+        {
+          "id": "SEC-R-3",
+          "severity": "info",
+          "title": "Sign-out is counted, so a limited user cannot sign out for up to one window",
+          "detail": "POST /api/auth/signout has policy 'session' and passes through limiter.take (seen in security's R2 and xsite runs).",
+          "evidence": [
+            "ev:ev-mv2zuhm9-0195be55",
+            "ev:ev-mv2zun9k-01058b91"
+          ],
+          "recommendation": "Owner: the next src/auth rework. Resolved when sign-out, which only reduces privilege, is exempt from the general limit, with a test; or the orchestrator records the acceptance."
+        },
+        {
+          "id": "SEC-R-4",
+          "severity": "info",
+          "title": "/64 key edge cases: ::1, :: and IPv4-compatible addresses share 0:0:0:0::/64; NAT64 64:ff9b::/96 clients share one key",
+          "detail": "This is irrelevant for the documented deployments: loopback, or a proxy forwarding the client's real address. I saw the same mapping in the unit tests and in my G-probe.",
+          "evidence": [
+            "ev:ev-mv2zuhm9-0195be55",
+            "artifact:src/auth/client-ip.js#L54-L63"
+          ],
+          "recommendation": "Owner: optional, the next src/auth touch. Resolved when 64:ff9b::/96 maps to its embedded IPv4, or the orchestrator records it as accepted."
+        }
+      ],
+      "resolvedFindings": [
+        {
+          "id": "TR-C-2",
+          "resolution": "Condition met. src/config.js parses RS_PLAN_RATE_LIMIT (1-1000, default 10) and RS_PLAN_RATE_WINDOW_MIN (1-1440, default 10) into planRateLimit and planRateWindowMin, which createApp reads. Both are in .env.example, and the env-example scan is green. Out-of-range values are refused by name; my G6 shows the bounds and the refusals. The bounds tests are named TR-C-2 rather than RISK-19, which I accept; the RISK-19 tests still cover the limit. Both TR-C-2 tests fail on the pre-rework source and pass now.",
+          "evidence": [
+            "ev:ev-mv2zt14w-01460430",
+            "ev:ev-mv2zwsx9-012d555f",
+            "ev:ev-mv2zrmza-016c0e05",
+            "artifact:src/config.js#L320-L325",
+            "artifact:.env.example#L114-L120"
+          ]
+        },
+        {
+          "id": "SEC-C-2",
+          "resolution": "Condition met. throttleKey() maps IPv6 to its /64 for the sign-in and register throttles, for both the socket address and the trusted last X-Forwarded-For hop. IPv4 and ::ffff: (dotted and hex) keep their IPv4 key. Named tests show 5 failures over 5 addresses of one /64 making the 6th get 429 signin_pair, the register throttle counting a /64 once, and other prefixes and IPv4 staying separate. My throttle probe now shows the 6th failure from one /64 refused, with T8, SEC-1, SEC-9 and F-TR-17 unchanged. The SEC-C-2 tests fail on the pre-rework source. Security's R1 confirms 12 spellings.",
+          "evidence": [
+            "ev:ev-mv2ztesg-01b08c7d",
+            "ev:ev-mv2zwsx9-012d555f",
+            "ev:ev-mv2zuhm9-0195be55",
+            "artifact:src/auth/client-ip.js#L54-L72"
+          ]
+        },
+        {
+          "id": "SEC-C-3",
+          "resolution": "Condition met, both points.\n(1) The access hook counts every signed-in, non-public call in rate_events (kind general, key u:<id>); delete, count and insert run in one BEGIN IMMEDIATE.\n- The 301st call gets 429 RATE_LIMITED, details.limit general, Retry-After.\n- plan:u:<id> keys are never counted, and the two counts are separate both ways.\n- Two processes never overshoot (50 of 120 concurrent calls pass, 3 rounds).\n- A named test exists, and NFR5 p95 is 54.8 ms.\n(2) A confirm equal to the latest version returns it without inserting a row. The engineer's stricter rule also requires equal derived provenance, which still bounds the flood (security's R2: 300 identical confirms wrote 0 rows).\nThe SEC-C-3 tests fail on the pre-rework source. The regression it introduced is SEC-R-1 (minor).",
+          "evidence": [
+            "ev:ev-mv2zt14w-01460430",
+            "ev:ev-mv2zxqy5-012a72ba",
+            "ev:ev-mv2zwsx9-012d555f",
+            "ev:ev-mv2zrmza-016c0e05",
+            "ev:ev-mv2zuhm9-0195be55",
+            "artifact:src/auth/general-limit.js#L18-L36",
+            "artifact:src/services/requests.js#L217-L227"
+          ]
+        }
+      ],
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "id": "rev-mv2zzd3g-019dc185",
+      "gate": "phase:rework-1",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-10T23:00:31.373Z",
+      "submissionId": "sub-mv2zoxlo-019effce"
     }
   },
   "rejectedReviews": [
@@ -14002,6 +14210,15 @@
       "at": "2026-10-09T22:43:53.696Z",
       "reasons": [
         "resolution SEC-B-3: cites ev:ev-mv1jrhzy-0128826d, which failed (exit 1); failed checks cannot support a met criterion"
+      ],
+      "decision": "approve"
+    },
+    {
+      "gate": "phase:rework-1",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-10T23:00:19.367Z",
+      "reasons": [
+        "this submission records 1 decision(s) on verified lessons (mem-sd-mv1audrd-013b7102: not-applicable). Judge each - read the lesson (eccode memory show <id>), then decide whether it was applied with a test that covers it, or whether the stated reason for setting it aside really holds (a ticket that is silent about a rule is not a reason). Add a criterion with id \"lessons\" saying so, with evidence; if a decision is wrong, request changes"
       ],
       "decision": "approve"
     }
@@ -16616,6 +16833,45 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-10T22:53:04.974Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-10T23:01:00.242Z",
+      "durationMinutes": 7.92,
+      "costUsd": null,
+      "tokens": 68843,
+      "note": null,
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-10T23:01:13.830Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 120000,
+            "costUsd": null
+          },
+          "to": {
+            "tokens": 68843,
+            "costUsd": null
+          },
+          "reason": "harness cumulative 431,625 minus 362,782"
+        }
+      ]
+    },
+    "run-mv300a2y-01d70e9b": {
+      "id": "run-mv300a2y-01d70e9b",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T23:01:14.174Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv300a7l-013dfd8b": {
+      "id": "run-mv300a7l-013dfd8b",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T23:01:14.341Z",
       "status": "running",
       "attempt": 1
     }
@@ -16964,8 +17220,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 577.93,
-    "tokens": 7051095
+    "runtimeMinutes": 585.85,
+    "tokens": 7119938
   },
   "delivery": null,
   "reworks": [
