@@ -1,0 +1,42 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "rework-2",
+  "objective": "Make the RS-34 view-shape case of test/api/requests-plans.test.js accept the additive capabilities key that d3 put on the request view.",
+  "context": "src/services/view.js now returns capabilities: { deleteRequest: true } on GET /api/requests/:id (required by d4's UI). The RS-34 case compared the exact top-level key list and failed on it; nothing else about the view changed.",
+  "inputs": [
+    "test/api/requests-plans.test.js",
+    "src/services/view.js"
+  ],
+  "expectedOutput": "The RS-34 case expects capabilities in the key list and asserts it is { deleteRequest: boolean }.",
+  "acceptanceCriteria": [
+    "The c2 verification command passes with capabilities in the expected key list",
+    "capabilities is asserted to be exactly { deleteRequest: boolean }",
+    "No other assertion or file changes"
+  ],
+  "completedWork": "Added 'capabilities' to the expected sorted key list of the RS-34 case 'GET /api/requests/:id carries labels and the planned shape of the contract fixture', plus two assertions: Object.keys(v.capabilities) equals ['deleteRequest'] and typeof deleteRequest is boolean. Failing state before the edit: 65 of 66 passed, the one failure being that case. After: 66 of 66.",
+  "filesChanged": [
+    "test/api/requests-plans.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv31litb-015e68f5",
+    "ev:ev-mv31ltus-01e665fc"
+  ],
+  "remainingIssues": [
+    "npm test is not green (ev:ev-mv31mzej-01f53862, 1157 of 1172 passed): the 5 failures are all NFR6 contract-test rows in test/api/contracts.test.js (request-view-planned, request-view-infeasible, request-view-reserved, the route-table coverage rows and the fixture-wrapper row), which belong to d5/c6, not to this file. The c2 files pass. Not cited as green."
+  ],
+  "nextAction": "delivery-lead: fix the contract fixtures or rows for the capabilities key (d5) and re-run npm test.",
+  "dependencies": [
+    "c2-requests-plans-view"
+  ],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "appliesWhen concerns a hook or guard that maps file writes to a project record or root in a repository with several records; this rework edits one assertion in a test file and neither designs nor changes any hook or guard."
+    }
+  ]
+}

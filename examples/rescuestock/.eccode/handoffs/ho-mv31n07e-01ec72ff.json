@@ -1,0 +1,48 @@
+{
+  "from": "ai-engineer",
+  "to": "delivery-lead",
+  "task": "d2-ai-adapters-corpus",
+  "objective": "Rework of d2: remove the corpus:images script from package.json so that b1's test/unit/config/node-version.test.js (package.json exactly as the Deployment section specifies) passes again. The d2 deliverables themselves (CLI and Anthropic adapters on transcript and loopback stub, EXT-1 corpus, fake-mode eval, opt-in live runner) are unchanged.",
+  "context": "The first d2 completion added one script line, corpus:images, which the Deployment section's exact-package.json test refuses. The image generator stays runnable as `node scripts/make-corpus-images.js`; there is no npm script for it. Everything stated in the first d2 handoff still holds: no model call was made, the CLI adapter was tested against a stub claude replaying a recorded-shape transcript (not a capture from the real CLI), the Anthropic adapter against a loopback stub under the net guard, the eval against the deterministic fake; none of it is evidence of model quality and LIVE-M1 is not claimed. The first d2 handoff's long description of the adapters, corpus (15 text cases with 5 AR/EN pairs and 3 injection cases, 6 images, smoke case, catalog-injection.json), eval metrics and live runner (exit 2 unless RS_LIVE_MODEL=1 and RS_LIVE_MODEL_CEILING_USD of at most 5.00; never under the net guard; prints worst-case spend; stops before a call that could exceed the ceiling) remains accurate.",
+  "inputs": [
+    "test/unit/config/node-version.test.js",
+    ".eccode/artifacts/plan/plan.json#d2-ai-adapters-corpus",
+    ".eccode/drafts/d2-handoff.json (first completion)"
+  ],
+  "expectedOutput": "package.json without the corpus:images line, the node-version test passing, the d2 verification command still passing.",
+  "acceptanceCriteria": [
+    "package.json is exactly as the Deployment section specifies: test/unit/config/node-version.test.js passes",
+    "The plan's declared d2 verification command passes verbatim",
+    "The generator is documented as runnable with `node scripts/make-corpus-images.js` (comment at the top of the script)",
+    "LIVE-M1 is not run and not claimed"
+  ],
+  "completedWork": "Recorded the failing state first: node-version.test.js failed 1 of 10 with the added line (ev:ev-mv31ky3k-01815561). Removed the corpus:images line from package.json (git now shows the line removed relative to the previous commit, so package.json no longer carries any d2 script change) and changed the header comment of scripts/make-corpus-images.js to say there is no npm script for it and to run it as `node scripts/make-corpus-images.js`. One more edit beyond the request, a documentation fix: the note field of test/fixtures/extraction/manifest.json named `npm run corpus:images`, which no longer exists, so it now says to run the script with node. No code or data changed. node-version.test.js passes 10/10 (ev:ev-mv31l7v0-0124fa9d); the plan's verification command passes verbatim, 96/96 (ev:ev-mv31lb35-01ce4dc7). Full npm test (ev:ev-mv31mhii-0137dd3d): 1172 tests, 1156 pass, 10 skipped, 6 fail; the failing top-level tests are 'NFR6: every example response in test/fixtures/contracts has a scenario', 'NFR6: contract scenarios drive each registered route ...' and 'FU-7 and RS-34: view shapes and labels', all in test/api and outside this task (rework-2 and d5). The suite is not green and is not cited as passing.",
+  "filesChanged": [
+    "package.json",
+    "scripts/make-corpus-images.js",
+    "test/fixtures/extraction/manifest.json"
+  ],
+  "evidence": [
+    "ev:ev-mv31ky3k-01815561",
+    "ev:ev-mv31l7v0-0124fa9d",
+    "ev:ev-mv31lb35-01ce4dc7"
+  ],
+  "remainingIssues": [
+    "npm test is red by 6 tests outside this task, all in test/api: the contracts.test.js fixture/scenario checks (d4's request-extract-degraded.json and request-image-upload.json need scenarios: d5) and the RS-34 view-shape test; they belong to rework-2 and d5.",
+    "LIVE-M1 (the real model run) is not done and nothing claims it. Unverified until then: the real CLI's stream-json stdin and result event shapes, that --json-schema accepts the wire schema, that --max-budget-usd 0.05 suffices for an image call, and the Anthropic output_config.format behaviour. To run it: `RS_LIVE_MODEL=1 RS_LIVE_MODEL_CEILING_USD=5 npm run test:live-model` (add `-- --dry-run` first; worst case 22 calls x USD 0.05 = USD 1.10).",
+    "The fake image map is keyed by sha256 of the committed PNG bytes; regenerate PNGs and map together with `node scripts/make-corpus-images.js` if zlib output differs on another Node.",
+    "The adapters validate structure only; per-field grounding stays in d3's services/extraction.js.",
+    "The CLI tests assume POSIX (sh wrapper, process groups, /proc)."
+  ],
+  "nextAction": "delivery-lead: re-run the phase check; user runs LIVE-M1 when ready; d5 test-engineer adds the missing contract scenarios.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson concerns hooks or guards that map file writes to a project root in multi-record repositories; this rework removes one package.json line and edits a comment, so none of its 'Applies when' conditions hold."
+    }
+  ]
+}
