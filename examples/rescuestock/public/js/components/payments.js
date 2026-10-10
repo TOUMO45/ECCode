@@ -10,7 +10,7 @@
 
 import { el } from '../dom.js';
 import { formatUsd, paymentStatusText, supplierLabel } from '../format.js';
-import { currentPlan, sortedOrders, supplierDirectory, supplierName } from '../view-helpers.js';
+import { currentPlan, isReservationExpired, sortedOrders, supplierDirectory, supplierName } from '../view-helpers.js';
 import { reserveStorageKey } from '../reserve-key.js';
 import { badgeNodes, providerBadgeModels } from './badges.js';
 import { emptyNode } from './notice.js';
@@ -30,7 +30,10 @@ export function actionsModel(view) {
   const orders = sortedOrders(view.orders);
   const model = {
     plan: code === 'PLAN' ? { label: 'Find a plan', testid: 'plan' } : null,
-    replan: code === 'REPLAN' || code === 'REPLAN_OR_OTHER_ACCOUNT' ? { label: 'Re-plan with current stock', testid: 'replan' } : null,
+    // After an expired reservation the status section carries the one Re-plan button.
+    replan: (code === 'REPLAN' || code === 'REPLAN_OR_OTHER_ACCOUNT') && !isReservationExpired(view)
+      ? { label: 'Re-plan with current stock', testid: 'replan' }
+      : null,
     approve: null,
     reserve: null,
     paypal: [],
@@ -114,7 +117,7 @@ function button(spec, onClick, { primary = false, disabledReason = null } = {}) 
       on: { click: (event) => { if (!disabledReason) onClick(event); } },
       text: spec.label,
     }),
-    disabledReason ? el('p', { id: reasonId, class: 'hint', text: disabledReason }) : null,
+    disabledReason ? el('p', { id: reasonId, class: 'hint', testid: reasonId, text: disabledReason }) : null,
   ];
 }
 

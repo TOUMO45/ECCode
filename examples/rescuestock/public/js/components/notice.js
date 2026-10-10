@@ -52,6 +52,12 @@ export function sectionEl(id, title, children, { testid = null } = {}) {
   ]);
 }
 
+// A table that is wider than a 360 px screen scrolls inside its own keyboard-focusable region, so the page itself
+// never scrolls sideways.
+export function tableRegion(label, table) {
+  return el('div', { class: 'table-scroll', role: 'region', tabindex: '0', 'aria-label': label }, [table]);
+}
+
 // Replaces the content of `container` with a loading, error or ready state. `renderReady` returns the nodes.
 export function showState(container, state) {
   if (state.kind === 'loading') {

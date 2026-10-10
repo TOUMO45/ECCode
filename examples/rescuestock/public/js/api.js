@@ -33,6 +33,7 @@ export function createApi({ fetchImpl, base, timeoutMs = API_TIMEOUT_MS, onUnaut
   const apiBase = base ?? readBaseFromPage();
   const doFetch = (...args) => (fetchImpl ?? globalThis.fetch)(...args);
   let csrfToken = null;
+  let unauthenticatedHandler = onUnauthenticated;
 
   async function send(method, path, { body, headers = {} } = {}) {
     const controller = new AbortController();
@@ -101,7 +102,7 @@ export function createApi({ fetchImpl, base, timeoutMs = API_TIMEOUT_MS, onUnaut
         message: 'The server sent an unexpected answer.',
         requestId: response.headers?.get?.('X-Request-Id') ?? null,
       });
-    if (err.code === 'UNAUTHENTICATED' && onUnauthenticated) onUnauthenticated(err);
+    if (err.code === 'UNAUTHENTICATED' && unauthenticatedHandler) unauthenticatedHandler(err);
     throw err;
   }
 
@@ -139,6 +140,9 @@ export function createApi({ fetchImpl, base, timeoutMs = API_TIMEOUT_MS, onUnaut
       csrfToken = typeof token === 'string' && token.length > 0 ? token : null;
     },
     getCsrfToken: () => csrfToken,
+    setUnauthenticatedHandler(fn) {
+      unauthenticatedHandler = typeof fn === 'function' ? fn : null;
+    },
     clearSession() {
       csrfToken = null;
     },

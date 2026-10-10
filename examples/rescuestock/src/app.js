@@ -23,6 +23,8 @@ import { createRouter } from './http/router.js';
 import { closeServer, createHttpServer, listen as listenOn } from './http/server.js';
 import { createStaticHandler } from './http/static.js';
 import { mapDbError, DbConstraintError } from './db/errors.js';
+import { plan as defaultPlanner } from './domain/planner.js';
+import { PLAN_RATE_DEFAULT } from './services/plans.js';
 
 const DEFAULT_PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 const MAX_URL_LENGTH = 2048;
@@ -53,6 +55,18 @@ function toAppError(err) {
   return { error: new AppError(500, 'INTERNAL'), unexpected: true, cause: mapped instanceof DbConstraintError ? mapped : err };
 }
 
+// Per-customer planning limit (FU-8, RISK-19): `limit` plans per `windowMs`. The values come from the injected
+// `planRate`, else from config.planRateLimit / config.planRateWindowMin when the configuration loader provides them,
+// else the default of 10 per 10 minutes.
+export function resolvePlanRate(config, injected = null) {
+  const limit = injected?.limit ?? config.planRateLimit ?? PLAN_RATE_DEFAULT.limit;
+  const windowMs = injected?.windowMs ?? (config.planRateWindowMin === undefined ? PLAN_RATE_DEFAULT.windowMs : config.planRateWindowMin * 60 * 1000);
+  if (!Number.isSafeInteger(limit) || limit < 1 || !Number.isSafeInteger(windowMs) || windowMs < 1) {
+    throw new RangeError('planRate needs an integer limit >= 1 and an integer windowMs >= 1');
+  }
+  return Object.freeze({ limit, windowMs });
+}
+
 export function createApp({
   db,
   clock = systemClock,
@@ -63,13 +77,19 @@ export function createApp({
   publicDir = DEFAULT_PUBLIC_DIR,
   authorize = null,
   routes = [],
+  planner = null,
+  planRate = null,
+  voidRule = null,
 } = {}) {
   if (!db || !config) throw new TypeError('createApp needs db and config');
 
   const runtime = { port: config.port };
   // The public URL: RS_PUBLIC_URL, else http://localhost:<the port actually bound>.
   const publicUrl = () => config.publicUrl || `http://localhost:${runtime.port}`;
-  const deps = { db, clock, config, log, ai, payments, publicUrl };
+  // planner: src/domain/planner.js plan() unless a test injects another (it is read per request, from ctx.planner).
+  // voidRule(db, {planVersionId, reason}): the void rule of c3, called inside the superseding transaction for a
+  // plan version that holds a live reservation. Without it such a supersession is refused (409 PLAN_IN_PROGRESS).
+  const deps = { db, clock, config, log, ai, payments, publicUrl, planner: planner ?? defaultPlanner, planRate: resolvePlanRate(config, planRate), voidRule };
   // Sessions, CSRF, throttles and the access hook (ARCH-25). An `authorize` passed in (a test double)
   // replaces the access hook only; deps.auth is always there for the auth routes.
   deps.auth = createAuth({ db, clock, config, publicUrl });

@@ -7,7 +7,7 @@ import { EXACT, SECTION_TITLES } from '../texts.js';
 import { formatUsd } from '../format.js';
 import { currentPlan, supplierDirectory, supplierName } from '../view-helpers.js';
 import { demoBadge } from './badges.js';
-import { emptyNode } from './notice.js';
+import { emptyNode, tableRegion } from './notice.js';
 
 export function totalModel(view) {
   const plan = currentPlan(view);
@@ -33,7 +33,7 @@ export function totalModel(view) {
 export function renderTotal(model) {
   if (model.state === 'empty') return [emptyNode({ title: model.text, testid: 'total-empty' })];
   return [
-    el('table', { class: 'data-table', testid: 'totals-table' }, [
+    tableRegion(SECTION_TITLES.total, el('table', { class: 'data-table', testid: 'totals-table' }, [
       el('caption', { class: 'visually-hidden', text: SECTION_TITLES.total }),
       el('thead', {}, [el('tr', {}, ['Supplier', 'Subtotal', 'Prep fee', 'Tax', 'Total'].map((t) => el('th', { scope: 'col', text: t })))]),
       el('tbody', {}, model.suppliers.map((s) => el('tr', { testid: s.testid }, [
@@ -47,7 +47,7 @@ export function renderTotal(model) {
         el('th', { scope: 'row', colspan: '4', text: 'Overall total' }),
         el('td', { testid: 'total-overall', text: model.overall.text }),
       ])]),
-    ]),
+    ])),
     el('p', { class: 'price-notice', testid: 'price-notice', text: model.notice }),
   ];
 }

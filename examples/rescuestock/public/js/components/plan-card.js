@@ -8,7 +8,7 @@ import { SECTION_TITLES } from '../texts.js';
 import { formatLocalTime, formatUsd, isCents, planStatusText, pluralize, supplierLabel } from '../format.js';
 import { bodyLabel, currentPlan, supplierDirectory, supplierName } from '../view-helpers.js';
 import { demoBadge } from './badges.js';
-import { emptyNode } from './notice.js';
+import { emptyNode, tableRegion } from './notice.js';
 
 export const SPEC_MISMATCH_TEXT = 'Not a match for your cups (capacity or size)';
 
@@ -89,7 +89,7 @@ export function renderWhy(model) {
     el('h3', { text: model.title }),
     el('p', { testid: 'plan-status', text: `Plan status: ${model.statusText}` }),
     model.summary ? el('p', { testid: 'plan-summary', text: model.summary }) : null,
-    el('table', { class: 'data-table', testid: 'plan-lines' }, [
+    tableRegion(SECTION_TITLES.why, el('table', { class: 'data-table', testid: 'plan-lines' }, [
       el('caption', { class: 'visually-hidden', text: SECTION_TITLES.why }),
       el('thead', {}, [el('tr', {}, ['Supplier', 'Product', 'Bundles', 'Cups', 'Lids', 'Price per bundle'].map((t) => el('th', { scope: 'col', text: t })))]),
       el('tbody', {}, model.lines.map((l) => el('tr', { testid: `plan-line-${l.supplierCode}` }, [
@@ -100,7 +100,7 @@ export function renderWhy(model) {
         el('td', { text: String(l.lids) }),
         el('td', { text: l.unitPriceText }),
       ]))),
-    ]),
+    ])),
     model.comparisons.length > 0
       ? el('div', { testid: 'trace' }, [
         el('h3', { text: 'How it was chosen' }),

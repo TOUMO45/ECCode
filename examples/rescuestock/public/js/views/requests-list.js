@@ -5,7 +5,7 @@ import { EXACT } from '../texts.js';
 import { formatLocalDateTime, formatUsd, rescueStatusText } from '../format.js';
 import { requestHash } from '../router.js';
 import { pill, toneForStatus } from '../components/badges.js';
-import { emptyNode, showState } from '../components/notice.js';
+import { emptyNode, showState, tableRegion } from '../components/notice.js';
 
 export function buildRequestsListViewModel(answer) {
   const rows = (answer.requests ?? []).map((r) => ({
@@ -34,7 +34,7 @@ export function renderRequestsList(model) {
   if (model.state === 'empty') return [emptyNode({ ...model.empty, testid: 'requests-empty' })];
   return [
     el('p', {}, [el('a', { class: 'button', href: '#/requests/new', text: EXACT.START_REQUEST })]),
-    el('table', { class: 'data-table', testid: 'requests-table' }, [
+    tableRegion('Your rescue requests', el('table', { class: 'data-table', testid: 'requests-table' }, [
       el('caption', { class: 'visually-hidden', text: 'Your rescue requests, newest first' }),
       el('thead', {}, [el('tr', {}, ['Request', 'Created (Amman)', 'Status', 'Next step', 'Total'].map((t) => el('th', { scope: 'col', text: t })))]),
       el('tbody', {}, model.rows.map((r) => el('tr', { testid: r.testid }, [
@@ -44,7 +44,7 @@ export function renderRequestsList(model) {
         el('td', { text: r.nextStepText }),
         el('td', { text: r.totalText ?? '—' }),
       ]))),
-    ]),
+    ])),
     model.showPriceNotice ? el('p', { class: 'price-notice', testid: 'price-notice', text: model.priceNotice }) : null,
   ];
 }

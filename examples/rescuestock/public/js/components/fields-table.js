@@ -8,7 +8,7 @@ import {
   FIELD_NAMES, CORE_FIELD_NAMES, FIELD_LABELS, centsToDollarInput, fieldValueText, localToTs, parseUsdToCents, provenanceText,
 } from '../format.js';
 import { currentPlan } from '../view-helpers.js';
-import { noticeNode } from './notice.js';
+import { noticeNode, tableRegion } from './notice.js';
 import { badgeNodes, extractionBadgeModels, pill } from './badges.js';
 
 const UNKNOWN_FIELD = Object.freeze({ value: null, status: 'unknown', provenance: 'none', originalWording: null });
@@ -179,7 +179,7 @@ export function renderManualForm(form, errors, on) {
 }
 
 export function renderNeed(model, on = {}, errors = {}) {
-  const table = el('table', { class: 'data-table', testid: 'fields-table' }, [
+  const table = tableRegion(SECTION_TITLES.need, el('table', { class: 'data-table', testid: 'fields-table' }, [
     el('caption', { class: 'visually-hidden', text: SECTION_TITLES.need }),
     el('thead', {}, [el('tr', {}, ['Field', 'Value', 'Source', 'Original wording'].map((t) => el('th', { scope: 'col', text: t })))]),
     el('tbody', {}, model.rows.map((r) => el('tr', { testid: r.testid }, [
@@ -190,7 +190,7 @@ export function renderNeed(model, on = {}, errors = {}) {
         ? [el('span', { class: 'wording-label', text: `${r.wordingLabel}: ` }), el('span', { dir: 'auto', testid: `${r.testid}-wording`, text: r.wording })]
         : [el('span', { class: 'muted', text: '—' })]),
     ]))),
-  ]);
+  ]));
   const formNode = on.confirm ? renderManualForm(model.form, errors, on) : null;
   return [
     model.degraded ? noticeNode({ text: model.degradedText, tone: 'warn', testid: 'degraded-notice', role: 'status' }) : null,
