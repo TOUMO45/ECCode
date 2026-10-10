@@ -1,6 +1,6 @@
 {
-  "seq": 437,
-  "lastHash": "71cdc7a257a84d4fe8d93ec0320298fb716d028516d54d9dc2904a3895c8afa6",
+  "seq": 441,
+  "lastHash": "24c07ddd56b4dd397e2f3ca9f88912c640105ddc7d64c9fdc7fd238fea2e70a3",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -8842,6 +8842,47 @@
       "task": null,
       "recordedBy": "technical-reviewer",
       "at": "2026-10-10T22:28:27.767Z"
+    },
+    "ev-mv2z05jg-016641ca": {
+      "id": "ev-mv2z05jg-016641ca",
+      "kind": "command",
+      "label": "phase C security probe S1-S13 (auth, CSRF, throttle, RBAC matrix, IDOR, money/state, flooding, input, dom.js, Chromium XSS)",
+      "command": "node .eccode/drafts/sec-phc-probe.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 148620,
+      "log": ".eccode/evidence/ev-mv2z05jg-016641ca.log",
+      "logSha256": "3690ecd6eb572acc35348193101c2ff9c2413c2070b7a6961ca4d018493171a8",
+      "logFileSha256": "b608d9d60e2a70d6b1a6d1ea0a6f2ebd854d753ba6ba05a80a9803c99382e33f",
+      "outputTail": "PASS S10 the refusal text reaches the customer RequestView as a JSON string (data) | 200\nPASS S10 log injection via the sign-in username: not logged, lines stay JSON | 401 INVALID_CREDENTIALS\nPASS S10 error bodies carry no stack, path or SQL text\n== S11 dom.js attribute and URL guards; public/** scan\nPASS S11 dom.js refuses javascript:/data:/vbscript:/protocol-relative/mailto hrefs | \"javascript:alert(1)\":refused \" JavaScript:alert(1)\":refused \"java\\tscript:alert(1)\":refused \"\\u0000javascript:alert(1)\":refused \"data:text/html,<script>alert(1)</script>\":refused \"vbscript:x\":refused \"//evil.example/x\":refused \"mailto:x@y\":refused\nPASS S11 dom.js refuses on*/style/srcdoc/namespaced attributes and javascript: formaction | onclick:refused onerror:refused ONCLICK:refused style:refused srcdoc:refused on-x:refused xlink:href:refused formaction:refused\nPASS S11 info REPRO: dom.js accepts \"/\\host\", \"/<TAB>/host\", \"/<LF>/host\", which the WHATWG URL parser resolves off-origin | \"/\\\\evil.example/x\" -> allowed -> evil.example | \"/\\t/evil.example/x\" -> allowed -> evil.example | \"/\\n/evil.example/x\" -> allowed -> evil.example\nPASS S11 text is a text property, never parsed\nPASS S11 RS-29: no secrets or client ids in public/** (34 files)\nPASS S11 no HTML sinks, eval, localStorage or direct .href/.src assignment in public/**\n== S12 SPA delivery headers\nPASS S12 index.html served with script-src 'self' and no unsafe-* | default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'\nPASS S12 /api responses no-store | no-store\n== S13 Chromium renders hostile supplier and customer strings as text\nPASS S13 setup: reservation with orders | 201\nPASS S13 setup: refusal stored | 200\nPASS S13 customer request page: the refusal reason appears as literal text; no script ran, no <img>, no javascript: link | {\"shown\":true,\"xss\":null,\"imgs\":[],\"jsLinks\":0,\"dialogs\":0,\"csp\":[],\"errors\":[]}\nPASS S13 supplier orders page: the buyer's hostile display name appears as literal text; no script ran | {\"shown\":true,\"xss\":null,\"imgs\":[],\"jsLinks\":0,\"dialogs\":0,\"csp\":[],\"errors\":[]}\nPASS S13 no CSP violation reported on either page\nALL EXPECTATIONS MET\n\n[stderr]\n(node:24088) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n",
+      "gate": "phase:c-core-flow",
+      "task": null,
+      "tree": "7eba8a752395bfbecd87785a7899efe42785097d09306909adfba9b8b56db329",
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-10T22:33:08.705Z"
+    },
+    "ev-mv2z1ypi-01dceb2e": {
+      "id": "ev-mv2z1ypi-01dceb2e",
+      "kind": "command",
+      "label": "SEC-C-1 reproduction: one reservation holds every compatible seeded bundle; no expiry pass scheduled",
+      "command": "node .eccode/drafts/sec-phc-hoard.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 754,
+      "log": ".eccode/evidence/ev-mv2z1ypi-01dceb2e.log",
+      "logSha256": "460c0a99bb49609ef616416048ee9405d31787fa7329b63fe6358ec0166c6479",
+      "logFileSha256": "c2e631ac6f85d5192b404cab69e12ec45d1353d7b258c658fc2e0d72c0f2edee",
+      "outputTail": "seeded bundle stock: [{\"code\":\"A\",\"on_hand\":1,\"reserved\":0},{\"code\":\"B\",\"on_hand\":1,\"reserved\":0},{\"code\":\"C\",\"on_hand\":1,\"reserved\":0},{\"code\":\"D\",\"on_hand\":1,\"reserved\":0},{\"code\":\"E\",\"on_hand\":1,\"reserved\":0}]\nqty 300: A,D total 12000\nqty 400: A,B,D total 16400\nqty 500: A,B,D,E total 21900\nqty 600: no plan (201)\nPASS REPRO setup: one plan uses A, B, D and E (every bundle compatible with 250 ml / 90 mm) | A,B,D,E\nPASS REPRO SEC-2 residual: ONE reservation (within the cap of 1) holds A, B, D and E | 200 201 held A,B,D,E\nPASS REPRO the canonical RS-FIX-1 customer (cafe1) now gets no feasible plan | 201 plan=none\nPASS REPRO after TTL + 5 min with no expiry pass running, the hold is still active and cafe1 still has no plan | reservation active (expires_at 2026-10-20T06:30:00.000Z), cafe1 plan none\nALL EXPECTATIONS MET\n\n[stderr]\n(node:24738) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n(Use `node --trace-warnings ...` to show where the warning was created)\n",
+      "gate": "phase:c-core-flow",
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-10T22:34:33.186Z"
     }
   },
   "reviews": {
@@ -15445,8 +15486,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-10T22:12:01.753Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-10T22:39:49.776Z",
+      "durationMinutes": 27.8,
+      "costUsd": null,
+      "tokens": 360400,
+      "note": null,
+      "usageReported": true
     }
   },
   "risks": {
@@ -15639,6 +15686,16 @@
       "status": "open",
       "updatedAt": "2026-10-09T22:29:32.333Z",
       "updatedBy": "orchestrator"
+    },
+    "RISK-20": {
+      "id": "RISK-20",
+      "title": "Stock hoarding within the SEC-2 cap: one reservation can hold every compatible supplier's stock, and no expiry pass is scheduled until e4 (SEC-C-1, ev:ev-mv2z1ypi-01dceb2e)",
+      "severity": "medium",
+      "mitigation": "e4: the server process runs expireDueReservations on every reconciler tick, with a test that a reservation past its TTL is expired by a running server and not only by a direct call. Before e4: a cap on the bundles one reservation may hold per supplier (or per catalog share) inside the reserve transaction, or a shorter TTL until the first PayPal approval; record the decision either way.",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-10T22:35:17.859Z",
+      "updatedBy": "security-reviewer"
     }
   },
   "decisions": {
@@ -15783,8 +15840,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 503.66,
-    "tokens": 6185387
+    "runtimeMinutes": 531.46,
+    "tokens": 6545787
   },
   "delivery": null
 }
