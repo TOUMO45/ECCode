@@ -1,6 +1,6 @@
 {
-  "seq": 549,
-  "lastHash": "e68dce0449751f6a3780f8a13d30f48c5ca853f3062830f2f015c7a841bd0aa2",
+  "seq": 559,
+  "lastHash": "16ff7761586f16128e302092f607063864e44b4eade7ec2852eed37380ca27b3",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -2694,10 +2694,30 @@
     "phase:rework-2": {
       "id": "phase:rework-2",
       "kind": "phase",
-      "status": "in_progress",
+      "status": "submitted",
       "iterations": 0,
-      "authors": [],
-      "submissions": [],
+      "authors": [
+        "delivery-lead"
+      ],
+      "submissions": [
+        {
+          "id": "sub-mv31tlv1-01663c96",
+          "actor": "delivery-lead",
+          "at": "2026-10-10T23:52:02.030Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/rework-2/submission.md",
+              "sha256": "8e195f62dfc09729eb0a7113288561c82935013c5c6c978d3e720af908a3a469"
+            },
+            {
+              "path": "test/api/requests-plans.test.js",
+              "sha256": "72be876012393ee92775f506fca99cb805e3d64a01334ff70d422af7e68d1470"
+            }
+          ],
+          "respondsTo": null,
+          "notes": "rework-2: RS-34 view-shape case in test/api/requests-plans.test.js accepts d3's additive capabilities key (exact sorted key list incl. capabilities; capabilities asserted as exactly {deleteRequest: boolean}). Failing first ev:ev-mv31litb-015e68f5 (65/66), passing ev:ev-mv31ltus-01e665fc (66/66), delivery-lead single-file run ev:ev-mv31qs6q-01bbf318 (35/35, no net guard). npm test RED ev:ev-mv31ru5d-0118aab7 (1172: 1157 pass, 5 fail, 10 skipped): the 5 failures are NFR6 rows in test/api/contracts.test.js owned by d5 (3 request-view fixtures lack capabilities; image routes and two new fixtures lack scenarios), identical to the pre-rework run ev:ev-mv31etf6-01061b72 minus RS-34 and NFR1. Lesson mem-sd-mv1audrd-013b7102 not-applicable."
+        }
+      ],
       "reviews": [],
       "openFindings": [],
       "approvedBy": null,
@@ -4205,10 +4225,32 @@
         "command": "ls test/unit/ai/provider-contract.test.js test/scan/secrets.test.js test/browser/degraded-extraction.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "test-engineer",
+        "at": "2026-10-10T23:49:57.790Z",
+        "baseCommit": "cf0e1c296c03e5a2d3628df43ae59683cc19cd76",
+        "runId": "run-mv31px8b-01bc2982",
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.798,
+            "matched": 14,
+            "priority": 23.5,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "test-engineer",
+          "at": "2026-10-10T23:49:57.790Z",
+          "attempt": 1
+        }
+      ],
       "completedBy": null,
       "handoffId": null
     },
@@ -10223,6 +10265,109 @@
       "task": "rework-2",
       "recordedBy": "backend-engineer",
       "at": "2026-10-10T23:46:53.095Z"
+    },
+    "ev-mv31qs6q-01bbf318": {
+      "id": "ev-mv31qs6q-01bbf318",
+      "kind": "command",
+      "label": "rework-2: requests-plans.test.js on the final tree (RS-34 key list with capabilities)",
+      "command": "node --disable-warning=ExperimentalWarning --test test/api/requests-plans.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 5057,
+      "log": ".eccode/evidence/ev-mv31qs6q-01bbf318.log",
+      "logSha256": "e13c3d25da55b83b02dc315e0fe1534d398fb5d5579389e5b2b1181c82e1d0cd",
+      "logFileSha256": "b7be1873c4bced65327c38632f680ebb32fc1c041df307a260c89b9fdaa52522",
+      "outputTail": "      duration_ms: 15.903564\n      type: 'test'\n      ...\n    # Subtest: RS-34: a fresh draft request is needs_input / ENTER_DETAILS with no plans\n    ok 2 - RS-34: a fresh draft request is needs_input / ENTER_DETAILS with no plans\n      ---\n      duration_ms: 5.982697\n      type: 'test'\n      ...\n    1..2\nok 9 - FU-7 and RS-34: view shapes and labels\n  ---\n  duration_ms: 446.589518\n  type: 'suite'\n  ...\n1..9\n# tests 35\n# suites 9\n# pass 35\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 4970.535994\n",
+      "gate": "phase:rework-2",
+      "task": null,
+      "tree": "e97a4a1f1467f6ac1185fcc4f6fae87a19b5a3ae186de2a1c32afa2744855827",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-10T23:49:50.371Z"
+    },
+    "ev-mv31rk2w-01e1c7c2": {
+      "id": "ev-mv31rk2w-01e1c7c2",
+      "kind": "command",
+      "label": "contracts.test.js before d5 edit (red expected: capabilities key, missing scenarios)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/contracts.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 3379,
+      "log": ".eccode/evidence/ev-mv31rk2w-01e1c7c2.log",
+      "logSha256": "8ebfc63e9534f6f01a49f9a0c6bab902d4fd6dd2c663e0a1daf238b86371ae0a",
+      "logFileSha256": "b284cd1e930e6d4ad523cff6867b2bda446491e9eff4ba9b66d226a52ed1adef",
+      "outputTail": "        TestContext.<anonymous> (file:///home/user/ECCode/examples/rescuestock/test/api/contracts.test.js:481:12)\n        process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n        async Test.run (node:internal/test_runner/test:1054:7)\n        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)\n      ...\n    1..45\nnot ok 3 - NFR6: contract scenarios drive each registered route and compare status, envelope, requestId and field types with the fixtures\n  ---\n  duration_ms: 3069.494931\n  type: 'suite'\n  location: '/home/user/ECCode/examples/rescuestock/test/api/contracts.test.js:420:1'\n  failureType: 'subtestsFailed'\n  error: '4 subtests failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..3\n# tests 49\n# suites 3\n# pass 34\n# fail 5\n# cancelled 0\n# skipped 10\n# todo 0\n# duration_ms 3300.712097\n",
+      "gate": null,
+      "task": "d5-extraction-contract-browser",
+      "tree": "e97a4a1f1467f6ac1185fcc4f6fae87a19b5a3ae186de2a1c32afa2744855827",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-10T23:50:26.511Z"
+    },
+    "ev-mv31ru5d-0118aab7": {
+      "id": "ev-mv31ru5d-0118aab7",
+      "kind": "command",
+      "label": "rework-2: npm test full suite on the final tree (red: d5-owned contract rows)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 42608,
+      "log": ".eccode/evidence/ev-mv31ru5d-0118aab7.log",
+      "logSha256": "be1cc687e0f03003e62c760cef08c1379789374e739c2c721f2a6522c1dd424a",
+      "logFileSha256": "16352497d68cc068b6d67de83725c7b6e36bfcd2ec4f6a5815beaf7dd96dd0f1",
+      "outputTail": "  duration_ms: 515.263822\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 657 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 400.572959\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 658 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 474.362768\n  type: 'test'\n  ...\n1..658\n# tests 1172\n# suites 132\n# pass 1157\n# fail 5\n# cancelled 0\n# skipped 10\n# todo 0\n# duration_ms 42222.698295\n",
+      "gate": "phase:rework-2",
+      "task": null,
+      "tree": "e97a4a1f1467f6ac1185fcc4f6fae87a19b5a3ae186de2a1c32afa2744855827",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-10T23:50:39.553Z"
+    },
+    "ev-mv31t888-01a00447": {
+      "id": "ev-mv31t888-01a00447",
+      "kind": "command",
+      "label": "contracts.test.js after d5 edit",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/contracts.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 3818,
+      "log": ".eccode/evidence/ev-mv31t888-01a00447.log",
+      "logSha256": "f54e0dac5ae2403c2b5fbcb7b06f0a0998e8fdb5d0a41ecd92cf1ceb4885ee24",
+      "logFileSha256": "2eb7c725fcab9af107fd77ce2f08e21053a3d46c49acb99d0659e628e1ea6408",
+      "outputTail": "      duration_ms: 4.123789\n      type: 'test'\n      ...\n    # Subtest: NFR6: every registered route has a scenario in the table\n    ok 48 - NFR6: every registered route has a scenario in the table\n      ---\n      duration_ms: 1.378091\n      type: 'test'\n      ...\n    1..48\nok 3 - NFR6: contract scenarios drive each registered route and compare status, envelope, requestId and field types with the fixtures\n  ---\n  duration_ms: 3482.610971\n  type: 'suite'\n  ...\n1..3\n# tests 52\n# suites 3\n# pass 45\n# fail 0\n# cancelled 0\n# skipped 7\n# todo 0\n# duration_ms 3727.272546\n",
+      "gate": null,
+      "task": "d5-extraction-contract-browser",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-10T23:51:44.497Z"
+    },
+    "ev-mv31tqfe-01ec6a5a": {
+      "id": "ev-mv31tqfe-01ec6a5a",
+      "kind": "command",
+      "label": "rework-2 artifact coverage: declared files, git changes in rework-owned paths since c83d80b2, ownership",
+      "command": "node .eccode/drafts/phase-artifacts-check.mjs .eccode/artifacts/plan/plan.json rework-2 c83d80b2d81a2341c9146016021bb508098f5c4a",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 129,
+      "log": ".eccode/evidence/ev-mv31tqfe-01ec6a5a.log",
+      "logSha256": "1c5e7da790b1ea32b55b2674b76c7898d61171fae4503d63cd1c4b035f538a35",
+      "logFileSha256": "85c393e6c4107af02a5b41b7a51baf6b4fed0361404f0ca293067269c7be2536",
+      "outputTail": "submission sub-mv31tlv1-01663c96: 2 artifacts (1 project files, 1 under .eccode/)\ndeclared in handoffs: 1; changed in owned paths since c83d80b2: 1\n  rework-2: 1 submitted files in its ownership\ndeclared but not submitted: 0\nchanged in owned paths but not submitted (undeclared): 0\nsubmitted outside phase ownership: 0\nchanged since base outside phase ownership (other phases or records, informational): 3 test/api/contracts.test.js, test/helpers/app-harness.js, test/helpers/extraction.js\n",
+      "gate": "phase:rework-2",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-10T23:52:08.060Z"
     }
   },
   "reviews": {
@@ -18116,6 +18261,30 @@
       "tokens": 418369,
       "note": null,
       "usageReported": true
+    },
+    "run-mv31px24-015801f4": {
+      "id": "run-mv31px24-015801f4",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T23:49:09.997Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-10T23:52:32.908Z",
+      "durationMinutes": 3.38,
+      "costUsd": null,
+      "tokens": 51886,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv31px8b-01bc2982": {
+      "id": "run-mv31px8b-01bc2982",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T23:49:10.200Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -18472,8 +18641,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 666.5,
-    "tokens": 9047271
+    "runtimeMinutes": 669.88,
+    "tokens": 9099157
   },
   "delivery": null,
   "reworks": [

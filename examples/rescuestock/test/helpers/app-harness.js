@@ -80,7 +80,7 @@ export async function startHarness({
   }
   const port = await app.listen(0, '127.0.0.1');
 
-  // request({ method, path, headers, body, host }) -> { status, headers, text, json, ms }
+  // request({ method, path, headers, body, host }) -> { status, headers, text, json, bytes, ms } (bytes: the raw Buffer)
   // `body` is a string or Buffer; use jsonBody for an object. `host` overrides the Host header.
   function request({ method = 'GET', path = '/', headers = {}, body, jsonBody, host, record: recordThis = record } = {}) {
     return new Promise((resolvePromise, reject) => {
@@ -98,7 +98,8 @@ export async function startHarness({
         res.on('data', (c) => chunks.push(c));
         res.on('end', () => {
           const ms = performance.now() - started;
-          const text = Buffer.concat(chunks).toString('utf8');
+          const bytes = Buffer.concat(chunks);
+          const text = bytes.toString('utf8');
           let json = null;
           try {
             json = JSON.parse(text);
@@ -113,7 +114,7 @@ export async function startHarness({
               return;
             }
           }
-          resolvePromise({ status: res.statusCode, headers: res.headers, text, json, ms });
+          resolvePromise({ status: res.statusCode, headers: res.headers, text, json, bytes, ms });
         });
       });
       req.on('error', reject);

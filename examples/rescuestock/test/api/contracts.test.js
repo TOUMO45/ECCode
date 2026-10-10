@@ -6,13 +6,12 @@
 //     inside `error` of a failure body (equal to the header), `error.code`/`error.message` strings, no stack text;
 //   - the field types of the success body (or of the error envelope) against the fixture's `response`, by key set
 //     and type, never by value (test/helpers/contract-shape.js).
-// A route that is not registered yet is reported as SKIPPED with the reason, never as passed. A test also fails
-// for every registered route that has no scenario in the table.
+// A route that is not registered yet is reported as SKIPPED with the reason, never as passed (phase E routes only,
+// FU-18). A test also fails for every registered route that has no scenario in the table.
 //
 // Mismatches between a fixture and the server are named failures: "(fixture test/fixtures/contracts/<file>)" and the
-// path of the field. Fixtures are owned by the frontend task; the known mismatches below are marked `todo`
-// (reported as todo, not as pass) so they stay visible without stopping the suite. A mismatch that is not listed
-// in KNOWN_FIXTURE_DEFECTS fails the test.
+// path of the field. The six fixture defects that c6 had marked `todo` were corrected by d4 (FU-13) and their table
+// is gone: every mismatch now fails the test.
 import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -20,6 +19,7 @@ import { DEMO_DATE, DEMO_PASSWORD, startHarness } from '../helpers/app-harness.j
 import { compareShape } from '../helpers/contract-shape.js';
 import { FIXTURE_DIR, createClient, uniqueUsername } from '../helpers/fixtures.js';
 import { approvedPlan, canonicalFields, idempotencyKey, reserve } from '../helpers/plan-flow.js';
+import { loadClearPhoto, setModelFault, uploadImage } from '../helpers/extraction.js';
 import { ensureAdmin } from '../../src/services/users.js';
 
 const CONTRACT_DIR = `${FIXTURE_DIR}/contracts`;
@@ -33,17 +33,6 @@ const BASE_ENV = Object.freeze({
   RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY: '1000',
   RS_REGISTER_PER_IP_PER_HOUR: '1000',
   RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER: '1',
-});
-
-// Known differences between a fixture (c5) and the server (c2, c3), found by this test and passed to the phase
-// review. `path` is a prefix of the mismatch text. When the fixture is corrected the test passes without the todo.
-const KNOWN_FIXTURE_DEFECTS = Object.freeze({
-  'supplier-order-confirm.json': [{ path: 'order.canMarkReady', why: 'canMarkReady must be false until the plan is executed (brief state table confirmed->ready)' }],
-  'plan-reserve.json': [{ path: 'labels', why: 'the reserve response carries labels (spec Conventions: seeded prices)' }],
-  'plan-create-feasible.json': [{ path: 'labels', why: 'the plan response carries labels (spec Conventions: seeded prices)' }],
-  'plan-create-infeasible.json': [{ path: 'labels', why: 'the plan response carries labels (spec Conventions: seeded prices)' }],
-  'plan-approve.json': [{ path: 'labels', why: 'the approve response carries labels (spec Conventions: seeded prices)' }],
-  'admin-timeline.json': [{ path: 'events[].cursor', why: 'the cursor is an opaque string, not an integer' }],
 });
 
 // Free-form members the spec types as `object` / `object[]` (Trace.inputs, Trace.candidates): not compared below the member.
@@ -80,6 +69,12 @@ async function makeWorld(env = {}) {
       const confirmed = await client.post(`/api/requests/${requestId}/confirm`, { fields: canonicalFields(DEMO_DATE, overrides) });
       assert.equal(confirmed.status, 201, confirmed.text);
       return { requestId, confirmed };
+    },
+    // A new request (text only); returns its id.
+    async newRequestId(client, text = 'I need 200 cups and 200 lids, 250 ml, by 11:00 today.') {
+      const created = await client.post('/api/requests', { text });
+      assert.equal(created.status, 201, created.text);
+      return created.json.request.id;
     },
     // Keeps every customer under the plan rate limit of the fixed clock.
     async plan(client, requestId) {
@@ -154,7 +149,36 @@ const TABLE = [
     },
   },
   { fixture: 'request-create.json', world: 'main', run: async (w) => (await w.customer()).post('/api/requests', { text: 'I need 200 cups and 200 lids, 250 ml, by 11:00 today.' }) },
-  { fixture: 'request-extract.json', world: 'main', run: (w) => skip('POST /api/requests/:id/extract is not registered yet') },
+  {
+    fixture: 'request-image-upload.json',
+    world: 'main',
+    run: async (w) => {
+      const c = await w.customer();
+      const id = await w.newRequestId(c);
+      return uploadImage(c, id, loadClearPhoto());
+    },
+  },
+  {
+    fixture: 'request-extract.json',
+    world: 'main',
+    run: async (w) => {
+      const c = await w.customer();
+      const id = await w.newRequestId(c, 'I need 200 cups and 200 lids, 250 ml, budget $120, at most 2 pickups. Please read the package label.');
+      const up = await uploadImage(c, id, loadClearPhoto());
+      assert.equal(up.status, 201, up.text);
+      return c.post(`/api/requests/${id}/extract`, {});
+    },
+  },
+  {
+    fixture: 'request-extract-degraded.json',
+    world: 'main',
+    run: async (w) => {
+      const c = await w.customer();
+      const id = await w.newRequestId(c);
+      setModelFault(w.h.db, w.h.clock, 'timeout', 1);
+      return c.post(`/api/requests/${id}/extract`, {});
+    },
+  },
   {
     fixture: 'request-confirm.json',
     world: 'main',
@@ -213,6 +237,7 @@ const TABLE = [
   },
   {
     fixture: 'request-view-planned.json',
+    optional: ['capabilities'], // additive key (d3, TR-C-4); these three fixtures predate it and are d4's
     world: 'main',
     run: async (w) => {
       const c = await w.customer();
@@ -223,6 +248,7 @@ const TABLE = [
   },
   {
     fixture: 'request-view-infeasible.json',
+    optional: ['capabilities'], // additive key (d3, TR-C-4); these three fixtures predate it and are d4's
     world: 'main',
     run: async (w) => {
       const c = await w.customer();
@@ -231,8 +257,44 @@ const TABLE = [
       return c.get(`/api/requests/${requestId}`);
     },
   },
-  { fixture: 'request-view-degraded.json', world: 'main', run: () => skip('a degraded extraction needs POST /api/requests/:id/extract, which is not registered yet') },
-  { fixture: 'request-delete.json', world: 'main', run: () => skip('DELETE /api/requests/:id is not registered yet') },
+  {
+    fixture: 'request-view-degraded.json',
+    world: 'main',
+    run: async (w) => {
+      const c = await w.customer();
+      const id = await w.newRequestId(c);
+      setModelFault(w.h.db, w.h.clock, 'timeout', 1);
+      const extracted = await c.post(`/api/requests/${id}/extract`, {});
+      assert.equal(extracted.status, 200, extracted.text);
+      assert.equal(extracted.json.extraction.degraded, true, 'the view scenario needs a degraded extraction');
+      return c.get(`/api/requests/${id}`);
+    },
+  },
+  {
+    fixture: 'request-delete.json',
+    world: 'main',
+    run: async (w) => {
+      const c = await w.customer();
+      return c.send({ method: 'DELETE', path: `/api/requests/${await w.newRequestId(c)}` });
+    },
+  },
+  {
+    // The image bytes are not JSON, so there is no fixture and no envelope: the status, the headers and the bytes are the
+    // contract (SEC-14, T9: detected type, nosniff, sandbox CSP, no-store).
+    route: 'GET /api/requests/:id/image',
+    status: 200,
+    world: 'main',
+    binary: true,
+    run: async (w) => {
+      const c = await w.customer();
+      const id = await w.newRequestId(c);
+      const photo = loadClearPhoto();
+      const up = await uploadImage(c, id, photo);
+      assert.equal(up.status, 201, up.text);
+      const res = await c.get(`/api/requests/${id}/image`);
+      return { ...res, expectedBytes: photo };
+    },
+  },
 
   // reservation, orders and payments
   { fixture: 'plan-reserve.json', world: 'flow', run: async (w) => (await reservedFlow(w)).res },
@@ -248,6 +310,7 @@ const TABLE = [
   },
   {
     fixture: 'request-view-reserved.json',
+    optional: ['capabilities'], // additive key (d3, TR-C-4); these three fixtures predate it and are d4's
     world: 'flow',
     run: async (w) => {
       const { client, requestId } = await reservedFlow(w);
@@ -367,6 +430,18 @@ function assertEnvelope(res, expectedStatus, label) {
   }
 }
 
+// GET /api/requests/:id/image: the one response that is not JSON. The detected type, the same bytes that were uploaded,
+// nosniff, a sandboxing CSP and no caching.
+function assertBinaryImage(res, expectedStatus, label) {
+  assert.equal(res.status, expectedStatus, `${label}: status ${res.status}`);
+  assert.equal(res.headers['content-type'], 'image/png', `${label}: content type is the detected type`);
+  assert.equal(res.headers['x-content-type-options'], 'nosniff', `${label}: nosniff`);
+  assert.equal(res.headers['content-security-policy'], 'sandbox', `${label}: sandboxing CSP`);
+  assert.match(String(res.headers['cache-control']), /no-store/, `${label}: no-store`);
+  assert.match(String(res.headers['x-request-id']), REQUEST_ID_RE, `${label}: X-Request-Id header`);
+  assert.ok(Buffer.isBuffer(res.bytes) && res.bytes.equals(res.expectedBytes), `${label}: the body is the uploaded image, byte for byte`);
+}
+
 function valueAt(obj, path) {
   return path.split('.').reduce((v, k) => (v === null || v === undefined ? undefined : v[k]), obj);
 }
@@ -453,6 +528,10 @@ describe('NFR6: contract scenarios drive each registered route and compare statu
         }
         throw err;
       }
+      if (scenario.binary) {
+        assertBinaryImage(res, status, label);
+        return;
+      }
       assertEnvelope(res, status, label);
       if (status >= 400) assert.equal(res.json.error.code, expectedResponse.error.code, `${label}: error code`);
 
@@ -462,15 +541,7 @@ describe('NFR6: contract scenarios drive each registered route and compare statu
         const got = valueAt(res.json, path);
         if (want !== got) problems.push(`${path}: value is ${JSON.stringify(got)}, the fixture shows ${JSON.stringify(want)}`);
       }
-      const known = KNOWN_FIXTURE_DEFECTS[scenario.fixture] ?? [];
-      const isKnown = (p) => known.some((k) => p.startsWith(k.path));
-      const unexpected = problems.filter((p) => !isKnown(p));
-      assert.deepEqual(unexpected, [], `${label} differs from the server response`);
-      const knownHits = problems.filter(isKnown);
-      if (knownHits.length > 0) {
-        t.todo(`known fixture defect in ${fixturePath(scenario.fixture)}: ${known.map((k) => `${k.path} (${k.why})`).join('; ')}`);
-        assert.deepEqual(knownHits, [], `${label}: known fixture defect, reported to the phase review`);
-      }
+      assert.deepEqual(problems, [], `${label} differs from the server response`);
     });
   }
 
