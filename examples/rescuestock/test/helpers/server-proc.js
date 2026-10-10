@@ -96,12 +96,38 @@ export function createListeningParser() {
 // startServer({ env, dir, dbPath, execArgv, script, readyTimeoutMs, version })
 //   dir: use this directory for the database and uploads (kept on stop); default is a new temp dir (removed by cleanup()).
 // Resolves { port, url, pid, child, dir, dbPath, env, stdout(), stderr(), request(), stop(), kill(), exited, cleanup() }.
+//   seed: true loads RS-FIX-1 into the database file first (accounts share SEED_PASSWORD); do it once per file, for the first server.
+//   publicUrlOnLocalhost: true picks a free port, sets PORT to it and RS_PUBLIC_URL=http://localhost:<port> (browser harness);
+//     a clash on the port is retried up to three times.
 export async function startServer(options = {}) {
-  const { env: overrides = {}, dbPath, script = 'src/index.js', extraExecArgv = [], readyTimeoutMs = 30000, version, execArgv } = options;
+  if (!options.publicUrlOnLocalhost) return startOnce(options);
+  let last;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const port = await freePort();
+    try {
+      return await startOnce({ ...options, env: { ...options.env, PORT: String(port), RS_PUBLIC_URL: `http://localhost:${port}` } });
+    } catch (err) {
+      last = err;
+      if (!/EADDRINUSE|exited before listening/.test(String(err && err.message))) throw err;
+    }
+  }
+  throw last;
+}
+
+async function startOnce(options = {}) {
+  const { env: overrides = {}, dbPath, script = 'src/index.js', extraExecArgv = [], readyTimeoutMs = 30000, version, execArgv, seed = false } = options;
   const ownsDir = !options.dir;
   const dir = options.dir ?? mkdtempSync(join(tmpdir(), 'rs-server-'));
   mkdirSync(dir, { recursive: true });
   const env = baseServerEnv({ dir, dbPath, overrides });
+  if (seed) {
+    try {
+      await seedDatabaseFile(env);
+    } catch (err) {
+      if (ownsDir) rmSync(dir, { recursive: true, force: true });
+      throw err;
+    }
+  }
 
   const spawnOptions = { cwd: PROJECT_ROOT, extraExecArgv };
   if (version !== undefined) spawnOptions.version = version;
@@ -149,10 +175,17 @@ export async function startServer(options = {}) {
     throw err;
   });
 
-  function request({ method = 'GET', path = '/', headers = {}, body, host } = {}) {
+  // `body` is a string or Buffer; `jsonBody` an object (sent as application/json). Same shape as app-harness request().
+  function request({ method = 'GET', path = '/', headers = {}, body, jsonBody, host } = {}) {
     return new Promise((resolve, reject) => {
       const h = { ...headers };
       if (host !== undefined) h.Host = host;
+      let payload = body;
+      if (jsonBody !== undefined) {
+        payload = JSON.stringify(jsonBody);
+        h['Content-Type'] = h['Content-Type'] ?? 'application/json';
+      }
+      if (payload !== undefined) h['Content-Length'] = String(Buffer.byteLength(payload));
       const req = httpRequest({ host: '127.0.0.1', port, method, path, headers: h, agent: false }, (res) => {
         const chunks = [];
         res.on('data', (c) => chunks.push(c));
@@ -168,7 +201,7 @@ export async function startServer(options = {}) {
         });
       });
       req.on('error', reject);
-      if (body !== undefined) req.write(body);
+      if (payload !== undefined) req.write(payload);
       req.end();
     });
   }

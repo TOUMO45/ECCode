@@ -1,0 +1,63 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "c6-reserve-concurrency-browser",
+  "objective": "Multi-process RS-14 tests, the HTTP contract test over test/fixtures/contracts, the browser harness (fresh database and customer per journey) and the RS-33 infeasible journey (phase c-core-flow).",
+  "context": "Built on b3 helpers (net-guard, node-proc, server-proc, playwright, fixtures, app-harness), c3 reservations/supplier/admin, c5 frontend and fixtures. Spec: Testing Strategy (rs14-*, Contract tests (a), E2E fresh database per file). Chromium 141.0.7390.37 from /opt/pw-browsers through the local @playwright/test 1.56.1.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#testing-strategy",
+    ".eccode/artifacts/architecture/brief.md#acceptance-criteria",
+    ".eccode/handoffs/ho-mv1gxflu-01a9c110.json",
+    ".eccode/handoffs/ho-mv2pwq96-01a15bb3.json",
+    ".eccode/handoffs/ho-mv2r6nzy-016f73cb.json"
+  ],
+  "dependencies": ["c3-reservations-supplier-admin", "c5-frontend-dashboards"],
+  "expectedOutput": "test/integration/rs14-two-process-reserve.test.js, rs14-db-busy.test.js, test/api/contracts.test.js, test/helpers additions, test/browser/helpers/*, test/browser/journey-infeasible.test.js; npm test and npm run test:browser pass.",
+  "acceptanceCriteria": [
+    "RS-14 two OS processes each with busy_timeout 5000 reserving supplier A's last bundle against the same file: exactly one active, the other OUT_OF_STOCK (not a lock error, not a 500), reserved <= on_hand; separate test with busy_timeout 0 and a held write lock: 503 DB_BUSY with Retry-After, server started first",
+    "contracts.test.js drives a route table checking status, envelope, requestId and success-body field types for every route present against the fixtures",
+    "Browser harness: fresh database seeded with RS-FIX-1 per file, RS_PUBLIC_URL on localhost, RS_TEST_OFFLINE=1, the three limit variables, fresh customer per journey, Playwright local-then-global, the run fails (never skips) when Chromium cannot launch",
+    "RS-33 journey-infeasible at 360x800 and 1280x800 with screenshots in test/browser/out/ and a database check that no reservation, order or payment operation exists",
+    "Shared browser code in test/browser/helpers/ not named *.test.js",
+    "npm test and npm run test:browser pass"
+  ],
+  "completedWork": "RS-14: rs14-two-process-reserve.test.js starts two server processes (RS_DB_BUSY_TIMEOUT_MS=5000) on one seeded SQLite file, one customer on each, both with an approved A+B plan, sends both reserves in the same tick; three rounds on new databases alternating the process: statuses [201,409], loser OUT_OF_STOCK with supplierCodes containing A, one active reservation row, reserved <= on_hand for every supplier, A reserved 1/1, loser plan non_executable, no 'database is locked'/SQLITE_BUSY in either process log. rs14-db-busy.test.js starts a server with RS_DB_BUSY_TIMEOUT_MS=0 first, signs in and approves a plan, then a separate lock-holder process takes BEGIN IMMEDIATE: reserve is 503 DB_BUSY, Retry-After 1, request id equals the header, no SQL text, no reservation or idempotency row, and the same key gives 201 after the release; a control test shows reserve works without the lock. Helpers: server-proc.js gained jsonBody in request(), seed:true (runs scripts/seed.js with the shared test password), publicUrlOnLocalhost:true (free port, RS_PUBLIC_URL=http://localhost:<port>, retried on a clash), freePort, seedDatabaseFile, upcomingDemoDate (next Amman day, so a real-clock server always has future ready times); new lock-holder.js, lock-proc.js (holdWriteLock), plan-flow.js, contract-shape.js. Contracts: contracts.test.js has a route table of 44 scenarios (every one of the 43 fixture files plus GET /api/health inline) over three seeded in-process worlds; it checks status, JSON content type, X-Request-Id, requestId (top level on success, inside error on failure, equal to the header), error code/message, no stack/SQL text, and key-set and type equality with the fixture response (null matches anything, arrays by first element, Trace.inputs/candidates free-form, status-count maps by value type); a test fails for any registered route without a scenario; self-tests prove the comparer reports missing, extra and retyped keys. Routes not registered yet are SKIPPED with the reason (10 scenarios). Browser: test/browser/helpers/{harness,db,signup,screenshot}.js; journey-infeasible.test.js signs up a fresh customer through the UI per viewport, creates the request, confirms details with a $50 budget, and asserts the infeasible notice, blocking OVER_BUDGET, candidate codes, the 'Raise budget to $84.00 -> A+B' relaxation, no approve/reserve/execute/PayPal buttons, focus on the h1 after the route change, no horizontal scroll, no console errors/CSP violations/failed requests, a screenshot test/browser/out/journey-infeasible-{360,1280}.png, and a read-only database check (planning run infeasible, zero rows in reservations, reservation_items, supplier_orders, payment_operations, provider_calls, fake_paypal_calls, plan_versions, plan_approvals, no stock held). Results: npm test 804 tests, 788 pass, 0 fail, 10 skipped, 6 todo (ev:ev-mv2y09m2-015bab7d); the plan command (existence guard, npm test, npm run test:browser 3/3) passed (ev:ev-mv2xzdun-013ba433); failing state before the files existed: ev:ev-mv2xpu7l-01950f2b.",
+  "filesChanged": [
+    "test/helpers/server-proc.js",
+    "test/helpers/lock-holder.js",
+    "test/helpers/lock-proc.js",
+    "test/helpers/plan-flow.js",
+    "test/helpers/contract-shape.js",
+    "test/integration/rs14-two-process-reserve.test.js",
+    "test/integration/rs14-db-busy.test.js",
+    "test/api/contracts.test.js",
+    "test/browser/helpers/harness.js",
+    "test/browser/helpers/db.js",
+    "test/browser/helpers/signup.js",
+    "test/browser/helpers/screenshot.js",
+    "test/browser/journey-infeasible.test.js"
+  ],
+  "evidence": ["ev:ev-mv2xzdun-013ba433", "ev:ev-mv2y09m2-015bab7d", "ev:ev-mv2xpu7l-01950f2b"],
+  "remainingIssues": [
+    "Fixture defects found (c5's files, not edited; the contract test marks each as todo, so they show as todo and not as pass or fail): (1) test/fixtures/contracts/supplier-order-confirm.json order.canMarkReady is true, the server answers false until the plan is executed. (2) plan-reserve.json lacks top-level `labels`. (3) plan-create-feasible.json, plan-create-infeasible.json and plan-approve.json lack top-level `labels` (the responses carry them). (4) admin-timeline.json events[].cursor is an integer, the server returns an opaque string. When a fixture is corrected its todo test passes and the entry in KNOWN_FIXTURE_DEFECTS in contracts.test.js should be deleted. Not defects but worth fixing in the fixtures: the sandbox config variant shows reservationTtlMin 15 while the default is 30 (value only, not compared).",
+    "10 contract scenarios are SKIPPED because their routes are not registered yet: request-extract, request-delete, request-view-degraded (needs extract), plan-execute, plan-execute-replay, plan-abandon, order-paypal-create, order-receipt, supplier-order-ready, supplier-order-handover (the last two need an executed plan). They must be driven as those routes land; the 'every registered route has a scenario' test fails when a new route has no row. supplier-order-ready/handover and the execute rows still need scenario code, not just a route.",
+    "The journey tolerates exactly the 404 console/HTTP entries of POST /api/requests/:id/extract (route built in phase d; the request page ignores the failure). withoutUnregisteredExtract() in journey-infeasible.test.js should be removed when the extraction task lands.",
+    "The journey runs the manual-form path (requirements are confirmed by hand), because extraction is not registered; the fake-extraction reading of the sentence is not exercised in the browser yet.",
+    "Real-clock servers: the multi-process and browser tests use the real system clock (the server has no clock override). upcomingDemoDate() picks the next Amman day for RS_DEMO_DATE and for the request deadline, so the tests stay valid on any run date (they depend on the date only to pick a valid one; the results do not depend on timing).",
+    "Browser checks from c5's list not yet built (journeys that need them are later): keyboard-only path, 3 px focus ring measured, polling pause when hidden, PayPal round trip, Retry/timeout states. Done now inside RS-33: no horizontal scroll, no CSP violations/console errors, focus on the h1 after a route change.",
+    "At 360 px the 'Original wording' column of the fields table is clipped inside its scroll region (header shows 'Or'); page-level scrollWidth is within the viewport, so the check passes, but the column is only reachable by scrolling the table. For the frontend owner / g1 a11y review.",
+    "Chromium needs --no-sandbox when the tests run as root (containers); harness.js adds it only when process.getuid() === 0.",
+    "package.json: npm run test:browser exists and is correct; no defect to report.",
+    "Guard/permission events: none from the PreToolUse guard. The auto-mode classifier denied one scratch script run (listing registered routes through a throwaway script); I read the route sources instead.",
+    "An earlier npm install by this task created package-lock.json; the orchestrator deleted it. git status now shows only the files listed plus the record."
+  ],
+  "nextAction": "delivery-lead: dispatch the independent phase-C review (code review of c6; route the fixture defects to the c5 owner and the 360 px table clipping to g1-frontend-a11y-labels); later tasks must add scenarios to the contract table and journeys as extract, execute, abandon, PayPal and receipt routes land.",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "appliesWhen is a tool-call guard mapping writes to a project record in a repository with several records; this task writes only test files inside one claimed ownership and no guard or hook code. The guard was not refused at any point (a write was never denied for a wrong root), so the symptoms did not occur."
+    }
+  ]
+}
