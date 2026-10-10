@@ -1,0 +1,56 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "phase:c-core-flow",
+  "objective": "Independent review of phase c-core-flow, submission sub-mv2y7tlh-017e22c9: 139 artifacts, the five tasks' 137 changed files plus .eccode/artifacts/phase-c/submission.md and the updated .eccode/artifacts/plan/followups.md.",
+  "context": "c1 ho-mv2pgzqg-0145c52b, c2 ho-mv2q84ku-01502a13 plus its one-case fix ho-mv2xpk15-0134ba5a, c3 ho-mv2r6nzy-016f73cb, c5 ho-mv2pwq96-01a15bb3 and c6 ho-mv2y12xq-012f7ce7 are done. The approval must cover task:c1..c6 (the five tasks), phase:c-core-flow (claims RS-12, RS-14, RS-16, RS-28, RS-30, RS-33, RS-36) and lessons. Per plan.md, the security reviewer also reviews this phase (auth, input handling).",
+  "inputs": [
+    ".eccode/artifacts/phase-c/submission.md",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/handoffs/ho-mv2pgzqg-0145c52b.json",
+    ".eccode/handoffs/ho-mv2q84ku-01502a13.json",
+    ".eccode/handoffs/ho-mv2xpk15-0134ba5a.json",
+    ".eccode/handoffs/ho-mv2r6nzy-016f73cb.json",
+    ".eccode/handoffs/ho-mv2pwq96-01a15bb3.json",
+    ".eccode/handoffs/ho-mv2y12xq-012f7ce7.json",
+    ".eccode/drafts/phase-artifacts-check.mjs"
+  ],
+  "dependencies": [
+    "c1-auth-rbac",
+    "c2-requests-plans-view",
+    "c3-reservations-supplier-admin",
+    "c5-frontend-dashboards",
+    "c6-reserve-concurrency-browser"
+  ],
+  "expectedOutput": "A phase review with one criterion per required id (five task criteria, phase:c-core-flow) plus lessons, judging the flagged notes.",
+  "acceptanceCriteria": [
+    "RS-12, RS-14, RS-16, RS-28, RS-30, RS-33 and RS-36 proved by the named tests in the submission table; RS-36 also by inspection of src/services/view.js against the revision-2 derivation table",
+    "npm test 0 fail, with the 10 skipped and 6 todo results explained; npm run test:browser 3/3",
+    "Artifact list equals the phase's declared and owned changes"
+  ],
+  "completedWork": "Read the six handoffs and the record of the two process refusals. Ran npm test (804: 788 pass, 0 fail, 10 skipped, 6 todo) and the browser suite (3/3). Counted named tests per criterion. Wrote submission.md: deliveries, criterion -> task -> evidence table, prerequisites for later phases, the skipped/todo explanation with fix owners, cross-task notes, deviations with reasons, process notes, open items. Added FU-13..FU-19 to followups.md, proposing orchestrator reworks where no later task owns the files (FU-14 config and env names, FU-15 general limit, FU-16 journey tolerance). Submitted and checked artifact coverage with a phase-generic draft script.",
+  "filesChanged": [
+    ".eccode/artifacts/phase-c/submission.md",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/drafts/phase-artifacts-check.mjs"
+  ],
+  "evidence": [
+    "ev:ev-mv2y39to-01c6520f",
+    "ev:ev-mv2y3flp-0125d730",
+    "ev:ev-mv2y7w8n-010ee8a1"
+  ],
+  "remainingIssues": [
+    "FU-14 (FU-8 env names) and FU-15 (general 300/min limit) need orchestrator reworks; no later task owns their files",
+    "The 201-vs-200 idempotent replay status is a spec ambiguity for the reviewer to decide",
+    "Six fixture defects (todo) and ten skipped contract scenarios are assigned to d4/d5/e6 (FU-13, FU-18)",
+    "The extract-route 404 tolerance in journey-infeasible.test.js must be removed after d3 (FU-16); the 360 px clipped column (FU-17)",
+    "docs/build/state.md changed since the phase base. It is the orchestrator's pilot file, outside every task's ownership and not part of the phase"
+  ],
+  "nextAction": "technical-reviewer and security-reviewer review sub-mv2y7tlh-017e22c9; the orchestrator decides the FU-14/FU-15/FU-16 reworks.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
