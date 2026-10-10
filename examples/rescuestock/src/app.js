@@ -24,6 +24,7 @@ import { closeServer, createHttpServer, listen as listenOn } from './http/server
 import { createStaticHandler } from './http/static.js';
 import { mapDbError, DbConstraintError } from './db/errors.js';
 import { plan as defaultPlanner } from './domain/planner.js';
+import { DEFAULT_UPLOAD_DEADLINE_MS, createAiRuntime } from './services/extraction.js';
 import { PLAN_RATE_DEFAULT } from './services/plans.js';
 import { createNoopProvider, createVoidRule } from './services/void-rule.js';
 
@@ -82,6 +83,7 @@ export function createApp({
   planRate = null,
   voidRule = null,
   voidProvider = null,
+  uploadDeadlineMs = DEFAULT_UPLOAD_DEADLINE_MS,
 } = {}) {
   if (!db || !config) throw new TypeError('createApp needs db and config');
 
@@ -95,7 +97,15 @@ export function createApp({
   // (default: a no-op recorder). Phase E passes a provider whose queueVoid inserts the provider_calls row; a test may
   // pass its own voidRule. The rule is never absent: an `authorized` operation always gets its void queued.
   const rule = voidRule ?? createVoidRule({ clock, provider: voidProvider ?? createNoopProvider() });
-  const deps = { db, clock, config, log, ai, payments, publicUrl, planner: planner ?? defaultPlanner, planRate: resolvePlanRate(config, planRate), voidRule: rule };
+  // ai: { provider, gate, selection } (createAiRuntime in src/services/extraction.js). By default it is built here from the
+  // configuration: the fake provider whenever RS_TEST_OFFLINE=1, and the gate over the clock and the database. A test may pass
+  // its own, or replace app.deps.ai afterwards (every request reads it from the shared deps).
+  // uploadDeadlineMs: the deadline for an image body while it streams (FU-2); the spec's allowance is 60 s.
+  const aiRuntime = ai ?? createAiRuntime({ db, clock, config });
+  const deps = {
+    db, clock, config, log, ai: aiRuntime, payments, publicUrl, planner: planner ?? defaultPlanner, planRate: resolvePlanRate(config, planRate),
+    voidRule: rule, uploadDeadlineMs,
+  };
   // Sessions, CSRF, throttles and the access hook (ARCH-25). An `authorize` passed in (a test double)
   // replaces the access hook only; deps.auth is always there for the auth routes.
   deps.auth = createAuth({ db, clock, config, publicUrl });

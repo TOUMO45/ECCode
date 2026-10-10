@@ -11,7 +11,9 @@ import { AppError } from '../http/envelope.js';
 import { enumOf, int, localDateTime, str } from '../http/validate.js';
 import { localDay, localToUtc, localToUtcMs } from '../domain/time.js';
 import { recordAudit } from './audit.js';
+import { removeImageFiles } from './extraction.js';
 import { supersedeOpenVersions } from './plans.js';
+import { markNonExecutable } from './supersession.js';
 import { findOwnedRequest, parseJson } from './view.js';
 
 export { findOwnedRequest };
@@ -251,4 +253,78 @@ export function confirmRequirements(ctx, user, requestId, body) {
     });
     return { requirements: { version, fields, confirmedAt: now }, supersededVersionIds: superseded };
   });
+}
+
+// ------------------------------------------------------------------ delete (RS-39, T23)
+
+// A request is refused while money is held: an operation of any version is in one of these states, a version is executing,
+// or a reservation is reconciling (spec: Retention and deletion).
+const HOLDING_SQL =
+  'SELECT pv.id AS plan_version_id FROM plan_versions pv WHERE pv.request_id = ? AND (' +
+  "pv.status = 'executing' " +
+  "OR EXISTS (SELECT 1 FROM reservations r WHERE r.plan_version_id = pv.id AND r.status = 'reconciling') " +
+  'OR EXISTS (SELECT 1 FROM supplier_orders so JOIN payment_operations po ON po.supplier_order_id = so.id WHERE so.plan_version_id = pv.id AND po.status IN ' +
+  "('approved','authorization_pending','authorized','capture_pending','refund_requested','refund_pending','unknown'))) LIMIT 1";
+
+// Every originalWording of a stored FieldValue map becomes null (the wording is the customer's text).
+function scrubWording(fieldsJson) {
+  const fields = parseJson(fieldsJson, null);
+  if (fields === null || typeof fields !== 'object' || Array.isArray(fields)) return fieldsJson;
+  for (const value of Object.values(fields)) {
+    if (value !== null && typeof value === 'object' && !Array.isArray(value) && Object.hasOwn(value, 'originalWording')) value.originalWording = null;
+  }
+  return JSON.stringify(fields);
+}
+
+/**
+ * DELETE /api/requests/:id -> { deleted: 'hard' | 'tombstoned' }.
+ *   409 PAYMENT_IN_PROGRESS while money is held (nothing changes).
+ *   Otherwise an approved plan version (and with it an active reservation, open supplier orders and unpaid operations) is ended by
+ *   the void rule with reason REQUEST_DELETED.
+ *   No supplier order or reservation ever existed -> hard delete (the cascade removes images, extractions, requirements, runs and
+ *   versions). Otherwise a tombstone: deleted_at set, raw text, images and extractions gone, wording scrubbed from every
+ *   requirements version; plan, order, payment and provider-call rows stay (ids, amounts and statuses only).
+ * An audit event is written either way. The image files are unlinked after the commit; a file that cannot be removed is left
+ * for the retention sweep (its row is gone, so it is an orphan).
+ */
+export async function deleteRequest(ctx, user, requestId) {
+  const { db, clock, config } = ctx;
+  const outcome = db.tx(() => {
+    findOwnedRequest(db, user.id, requestId);
+    const holding = db.prepare(HOLDING_SQL).get(requestId);
+    if (holding) throw new AppError(409, 'PAYMENT_IN_PROGRESS', { details: { planVersionId: holding.plan_version_id } });
+
+    for (const version of db.prepare("SELECT id FROM plan_versions WHERE request_id = ? AND status = 'approved' ORDER BY id").all(requestId)) {
+      markNonExecutable(ctx, { planVersionId: version.id, reason: 'REQUEST_DELETED', detail: {}, actor: user, requestId: ctx.requestId });
+    }
+
+    const images = db.prepare('SELECT file_name, mime_detected FROM images WHERE request_id = ?').all(requestId).map((r) => ({ ...r }));
+    const hadOrders =
+      db.prepare('SELECT 1 AS x FROM supplier_orders so JOIN plan_versions pv ON pv.id = so.plan_version_id WHERE pv.request_id = ? LIMIT 1').get(requestId) !== undefined ||
+      db.prepare('SELECT 1 AS x FROM reservations r JOIN plan_versions pv ON pv.id = r.plan_version_id WHERE pv.request_id = ? LIMIT 1').get(requestId) !== undefined;
+
+    let deleted;
+    if (!hadOrders) {
+      db.prepare('DELETE FROM rescue_requests WHERE id = ?').run(requestId);
+      deleted = 'hard';
+    } else {
+      const now = isoFromMs(clock.now());
+      db.prepare('UPDATE rescue_requests SET deleted_at = ?, raw_text = NULL WHERE id = ?').run(now, requestId);
+      db.prepare('DELETE FROM images WHERE request_id = ?').run(requestId);
+      db.prepare('DELETE FROM extractions WHERE request_id = ?').run(requestId);
+      db.prepare('DELETE FROM replan_queue WHERE request_id = ?').run(requestId);
+      for (const row of db.prepare('SELECT id, fields_json FROM requirements WHERE request_id = ?').all(requestId)) {
+        db.prepare('UPDATE requirements SET fields_json = ? WHERE id = ?').run(scrubWording(row.fields_json), row.id);
+      }
+      deleted = 'tombstoned';
+    }
+    recordAudit(db, clock, {
+      actorUserId: user.id, actorRole: user.role, action: 'request.delete', entityType: 'request', entityId: requestId, outcome: 'ok',
+      detail: { mode: deleted, images: images.length }, requestId: ctx.requestId,
+    });
+    return { deleted, images };
+  });
+  const failed = await removeImageFiles(config, outcome.images);
+  if (failed > 0) ctx.log?.warn?.('request.delete.files', { requestRef: requestId, counts: { leftForSweep: failed } });
+  return { deleted: outcome.deleted };
 }

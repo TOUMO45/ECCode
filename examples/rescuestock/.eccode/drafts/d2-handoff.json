@@ -1,0 +1,101 @@
+{
+  "from": "ai-engineer",
+  "to": "delivery-lead",
+  "task": "d2-ai-adapters-corpus",
+  "objective": "Claude CLI and Anthropic API adapters tested on recorded transcripts and a loopback stub, the EXT-1 corpus with rendered images and fake image map, the fake-mode EXT-1 eval, and the opt-in live-model runner with its refusals.",
+  "context": "Built against spec.md AI / LLM Design (CLI adapter, Anthropic API adapter, Evaluation plan EXT-1), Testing Strategy, decision dec-mv16pz0g-01d5c4c2 (CLI with haiku, USD 5 per live run) and the d1 provider contract. No model call was made: cli.js is exercised against a stub claude binary that replays a recorded-shape transcript, anthropic.js against a loopback http stub under the net guard, the eval against the deterministic fake. Every result here checks the harness, the adapters' mapping and the thresholds; none of it is evidence of model quality (RS-01..RS-05 [LM] and LIVE-M1 are NOT claimed). cli-transcript.ndjson is a recorded SHAPE built from the design's stream-json description, not a capture from the real CLI.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#ai--llm-design",
+    ".eccode/artifacts/design/spec.md#testing-strategy",
+    ".eccode/artifacts/plan/plan.json#d2-ai-adapters-corpus",
+    "src/ai/provider.js",
+    "src/ai/schema.js",
+    "src/ai/prompt.js",
+    "src/ai/fake.js",
+    "src/ai/gate.js",
+    "examples/groundwork/src/ai/cli.js (reference adapter pattern)"
+  ],
+  "expectedOutput": "src/ai/cli.js, src/ai/anthropic.js, the unit tests, the EXT-1 corpus, the image generator, the fake-mode eval and the live runner, passing the plan's verification command under the net guard.",
+  "acceptanceCriteria": [
+    "LIVE-DEPENDENT, deterministic now: cli.js against the recorded transcript through a stub claude binary on PATH, anthropic.js against a loopback stub under the net guard; no key or login is read or needed by the tests [cli.test.js, anthropic.test.js]",
+    "cli.js: spawn without shell, pinned argv (incl. --tools \"\", --safe-mode, --strict-mcp-config, --max-budget-usd = the per-call cap), allow-listed child env without any RS_* or ANTHROPIC_API_KEY, fresh temp cwd removed before extract() returns, stdout cap 8 MiB, process-group SIGKILL on timeout, one attempt [cli.test.js: T25, SEC-15]",
+    "anthropic.js: output_config.format json_schema, refusal and max_tokens refused, redirect error, one retry on 5xx/529 only, cost from token counts in integer micro-dollars [anthropic.test.js: F-TR-13, T18, NFR6]",
+    "EXT-1 corpus committed: 15 text cases (5 Arabic/English pairs incl. RS-FIX-1, 2 mixed-script, 3 injection cases with controls), 6 rendered images (3 clear, 2 ambiguous, 1 injection), the cli-image-smoke case asserting schemaAccepted first, catalog-injection.json; images rendered by scripts/make-corpus-images.js from label text",
+    "test/eval/extraction-fake.test.js runs the live runner's metrics in fake mode (RS-01 pair equality, RS-02 clear images, RS-03 ambiguous images, RS-05/SEC-7 injection) and prints ECCODE_EVAL {\"passed\":200,\"total\":200}",
+    "test/live/run-live-model.js exits 2 with the fixed message unless RS_LIVE_MODEL=1 and a ceiling RS_LIVE_MODEL_CEILING_USD (positive, at most 5.00) is set, never runs under the net guard or RS_TEST_OFFLINE=1, prints what it would spend, stops before a call that could exceed the ceiling, and writes reports/live-model-<UTC>.json with suite, provider, model, CLI version, corpusVersion, promptVersion [live-runner-refusal.test.js: NFR3, NFR6]",
+    "The live run itself is LIVE-M1 and is not run or reported as passed by this task"
+  ],
+  "completedWork": "cli.js: buildArgv (pinned, schema and system prompt included), buildChildEnv (allow-list), buildStdinLine (one stream-json user line: text data block then base64 image), lastResultEvent (last type:result event, noise ignored), runOnce (own process group, fresh temp cwd removed before the promise settles, 8 MiB cap, timeout and caller-abort kill the group), createCliProvider (extract and rephrase; concurrency 2 then PROVIDER_BUSY; mapping: timeout/abort -> PROVIDER_TIMEOUT, missing binary / non-zero exit without a result / is_error / non-success subtype -> PROVIDER_UNAVAILABLE, no result at exit 0 / unparseable or schema-invalid answer / over 8 MiB -> PROVIDER_BAD_OUTPUT, the billed cost attached as usage.costMicroUsd; meta.schemaAccepted true only when structured_output came back as an object), cliVersion. anthropic.js: checkBaseUrl (official host, or http loopback only with allowLoopback), costMicroUsd (BigInt, rounded up), createAnthropicProvider (headers, body, image block first, 30 s timeout, redirect error, one retry on 5xx/529, 429/529 -> PROVIDER_BUSY, 400 -> PROVIDER_UNAVAILABLE with err.schemaAccepted = false, 1 MiB response cap, key only in the header). Corpus: manifest.json, 16 text files, 6 PNGs rendered by a pure-Node 5x7 bitmap font with optional blur and crop (no browser, no hand-made binary; the spec's labels/*.html became labels/*.txt), fake-image-map.json keyed by sha256 of the PNG bytes, stub-claude.mjs and cli-transcript.ndjson, catalog-injection.json. Eval: lib/corpus.js, lib/metrics.js (the spec's thresholds as constants, runCases with the stop-before-ceiling rule and the smoke case first), lib/provider-contract.js (shared ExtractionProvider contract, run against the CLI and Anthropic adapters), lib/schema-subset.js (local stand-in for 'the provider accepts this schema'); negative controls prove the metrics fail for an obeying, inventing, drifting or lying model. Live runner: evaluateLaunch, planSpend, runLive (injectable for tests). package.json: one added line, corpus:images; test:live-model already existed and keeps the check-node prefix; everything else is byte-identical (git diff shows one inserted line). Evidence: mutation check (pinned argv without --safe-mode) failed 1 CLI test, ev:ev-mv312kjg-017910c5; plan verification command 96/96 pass, ev:ev-mv312qia-01987160. Full npm test, ev:ev-mv313m1g-0105fe69: 1092 tests, 1075 pass, 10 skipped, 7 FAIL, none in files of this task (see remainingIssues); the suite is therefore not green and is not cited as passing.",
+  "filesChanged": [
+    "src/ai/cli.js",
+    "src/ai/anthropic.js",
+    "test/unit/ai/cli.test.js",
+    "test/unit/ai/anthropic.test.js",
+    "test/unit/ai/live-runner-refusal.test.js",
+    "scripts/make-corpus-images.js",
+    "test/live/run-live-model.js",
+    "test/eval/extraction-fake.test.js",
+    "test/eval/lib/corpus.js",
+    "test/eval/lib/metrics.js",
+    "test/eval/lib/provider-contract.js",
+    "test/eval/lib/schema-subset.js",
+    "test/fixtures/extraction/manifest.json",
+    "test/fixtures/extraction/cli-transcript.ndjson",
+    "test/fixtures/extraction/stub-claude.mjs",
+    "test/fixtures/extraction/catalog-injection.json",
+    "test/fixtures/extraction/fake-image-map.json",
+    "test/fixtures/extraction/images/i01-clear-250-90.png",
+    "test/fixtures/extraction/images/i02-clear-350-80.png",
+    "test/fixtures/extraction/images/i03-clear-400-95.png",
+    "test/fixtures/extraction/images/i04-cropped-300.png",
+    "test/fixtures/extraction/images/i05-blurred.png",
+    "test/fixtures/extraction/images/i06-injection-250-90.png",
+    "test/fixtures/extraction/labels/i01-clear-250-90.txt",
+    "test/fixtures/extraction/labels/i02-clear-350-80.txt",
+    "test/fixtures/extraction/labels/i03-clear-400-95.txt",
+    "test/fixtures/extraction/labels/i04-cropped-300.txt",
+    "test/fixtures/extraction/labels/i05-blurred.txt",
+    "test/fixtures/extraction/labels/i06-injection-250-90.txt",
+    "test/fixtures/extraction/text/image-request.txt",
+    "test/fixtures/extraction/text/t01-fix1-en.txt",
+    "test/fixtures/extraction/text/t01-fix1-ar.txt",
+    "test/fixtures/extraction/text/t02-units-en.txt",
+    "test/fixtures/extraction/text/t02-units-ar.txt",
+    "test/fixtures/extraction/text/t03-thousands-en.txt",
+    "test/fixtures/extraction/text/t03-thousands-ar.txt",
+    "test/fixtures/extraction/text/t04-nobudget-en.txt",
+    "test/fixtures/extraction/text/t04-nobudget-ar.txt",
+    "test/fixtures/extraction/text/t05-lids-en.txt",
+    "test/fixtures/extraction/text/t05-lids-ar.txt",
+    "test/fixtures/extraction/text/t06-mixed-script.txt",
+    "test/fixtures/extraction/text/t07-mixed-digits.txt",
+    "test/fixtures/extraction/text/ti01-en.txt",
+    "test/fixtures/extraction/text/ti01-ar.txt",
+    "test/fixtures/extraction/text/ti02-en.txt",
+    "package.json"
+  ],
+  "evidence": [
+    "ev:ev-mv312kjg-017910c5",
+    "ev:ev-mv312qia-01987160"
+  ],
+  "remainingIssues": [
+    "npm test is red by 7 tests outside this task's files, all in test/api: contracts.test.js 'NFR6: the route table covers each fixture file exactly once' (d4's fixtures request-extract-degraded.json and request-image-upload.json have no scenario: d5), contracts.test.js 'NFR6: contract request-view-* ... drives each registered route' and 'every registered route has a scenario', and requests-plans.test.js 'RS-34: GET /api/requests/:id carries labels and the planned shape' (the actual request view carries a `capabilities` key, which looks like d3's in-progress edits to src/services/view.js and the new extraction routes). d3 and d5 own those.",
+    "LIVE-M1 (the real model run) is not done and nothing here claims it. Unverified until then: the real CLI's stream-json stdin line and result event shapes (structured_output, total_cost_usd, usage), that `--json-schema` accepts the wire schema ($defs/$ref, anyOf with null), that --max-budget-usd 0.05 is enough for an image call, and the Anthropic output_config.format behaviour. The first assertion of the run (schemaAccepted on cli-image-smoke) is the check; a false value stops the run before the other cases.",
+    "The fake image map is keyed by the sha256 of the committed PNG bytes. If scripts/make-corpus-images.js is rerun on a Node with a different zlib the PNG bytes (not the pixels) may differ, which changes the keys; rerun the script to regenerate the PNGs and the map together and commit both (the eval test compares pixels and the map keys separately, so a drift is reported).",
+    "The 5x7 bitmap labels are legible but synthetic; a model that reads them well is not evidence it reads real printed packaging. The spec's labels/*.html + Chromium rendering was replaced by labels/*.txt + a pure-Node renderer, as the coordinator asked (no hand-made binary, no browser dependency in the offline suite).",
+    "The CLI tests assume POSIX (sh wrapper, process groups, /proc for the zombie check). On Windows they would need to be skipped; this host is Linux.",
+    "The adapters validate structure only (validateExtraction without the request text); per-field grounding and range checks stay in d3's services/extraction.js as the spec's post-validation normalisation, so one ungrounded quote downgrades a field instead of voiding the whole extraction.",
+    "Lesson mem-sd-mv1audrd-013b7102 did not apply: no hook or guard is built here. Tooling note: an Edit whose new_string ended in a trailing space dropped the space and briefly malformed one package.json line; I caught it in git diff and fixed it, the final diff is the single added line."
+  ],
+  "nextAction": "delivery-lead: ask the user to run LIVE-M1 with `RS_LIVE_MODEL=1 RS_LIVE_MODEL_CEILING_USD=5 npm run test:live-model` (add `-- --dry-run` first to see the spend plan; worst case is 22 calls x USD 0.05 = USD 1.10, expected real cost well under USD 0.50); backend-engineer (d3) and test-engineer (d5): clear the 7 red tests listed above; ai-engineer: after LIVE-M1, fold any shape corrections the real CLI shows into cli.js and re-record cli-transcript.ndjson from the real stream.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson concerns hooks or guards that map file writes to a project root in multi-record repositories; this task builds extraction adapters, a corpus and a runner, no hook, guard or root discovery, so none of its 'Applies when' conditions hold."
+    }
+  ]
+}

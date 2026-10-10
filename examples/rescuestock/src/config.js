@@ -3,6 +3,7 @@
 // in Secret. A refusal names the variable and a fixed reason, never the value.
 import { inspect } from 'node:util';
 import { localDateInZone } from './clock.js';
+import { toMicroUsd } from './ai/gate.js';
 
 export const PAYPAL_SANDBOX_API = 'https://api-m.sandbox.paypal.com';
 export const ANTHROPIC_API = 'https://api.anthropic.com';
@@ -59,6 +60,19 @@ export function isPlaceholder(value) {
 const HOST_TEXT = /^[A-Za-z0-9.:\-[\]]{1,255}$/;
 const LOOPBACK_BASE = /^http:\/\/(127\.0\.0\.1|localhost):(\d{1,5})$/;
 const MODEL_NAME = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/;
+
+// A variable's decimal text -> integer micro-dollars by string arithmetic. `fallback` (the already validated number
+// the default came from) is used when the variable is unset or was refused; the reader has recorded the refusal.
+function microUsd(rawText, fallback) {
+  if (rawText !== undefined) {
+    try {
+      return toMicroUsd(rawText);
+    } catch {
+      // The number reader already reported the value; fall through to the default.
+    }
+  }
+  return toMicroUsd(fallback);
+}
 
 function codePoints(text) {
   return Array.from(text).length;
@@ -268,6 +282,9 @@ export function loadConfig(env = process.env, { now = () => Date.now() } = {}) {
     r.fail('ANTHROPIC_API_KEY', 'is required when the model provider is anthropic');
   }
   const extractionProvider = testOffline ? 'fake' : modelProvider;
+  const modelCallCapUsd = r.number('RS_MODEL_CALL_CAP_USD', 0.05, 0.000001, 1000);
+  const modelDailyBudgetUsd = r.number('RS_MODEL_DAILY_BUDGET_USD', 1.0, 0, 100000);
+  const fakeModelCostUsd = r.number('RS_FAKE_MODEL_COST_USD', 0, 0, 1000);
 
   const config = {
     port,
@@ -301,9 +318,14 @@ export function loadConfig(env = process.env, { now = () => Date.now() } = {}) {
     extractionProvider,
     model: r.text('RS_MODEL', 'haiku', MODEL_NAME, 80),
     modelTimeoutMs: r.int('RS_MODEL_TIMEOUT_MS', 30000, 1, 600000),
-    modelCallCapUsd: r.number('RS_MODEL_CALL_CAP_USD', 0.05, 0.000001, 1000),
-    modelDailyBudgetUsd: r.number('RS_MODEL_DAILY_BUDGET_USD', 1.0, 0, 100000),
-    fakeModelCostUsd: r.number('RS_FAKE_MODEL_COST_USD', 0, 0, 1000),
+    modelCallCapUsd,
+    modelDailyBudgetUsd,
+    fakeModelCostUsd,
+    // F-TR-12: the same three amounts as integer micro-dollars, parsed from the decimal STRING of the variable (never
+    // through a float), so every budget comparison in src/ai/gate.js is integer arithmetic.
+    modelCallCapMicroUsd: microUsd(r.raw('RS_MODEL_CALL_CAP_USD'), modelCallCapUsd),
+    modelDailyBudgetMicroUsd: microUsd(r.raw('RS_MODEL_DAILY_BUDGET_USD'), modelDailyBudgetUsd),
+    fakeModelCostMicroUsd: microUsd(r.raw('RS_FAKE_MODEL_COST_USD'), fakeModelCostUsd),
     anthropicApiKey,
     anthropicModel: r.text('RS_ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001', MODEL_NAME, 80),
     anthropicBaseUrl: parseBaseUrl(r, 'RS_ANTHROPIC_BASE_URL', ANTHROPIC_API, testOffline),

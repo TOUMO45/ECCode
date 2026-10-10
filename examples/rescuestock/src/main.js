@@ -11,6 +11,8 @@ import { openDb } from './db/connection.js';
 import { migrate } from './db/migrate.js';
 import { getOrCreateMeta } from './db/meta.js';
 import { createLogger } from './log.js';
+import { createAiRuntime } from './services/extraction.js';
+import { startRetention } from './services/retention.js';
 import { ensureAdmin } from './services/users.js';
 
 // A pre-existing directory named data or uploads (the app's own, per SEC-14) that is owned by the
@@ -51,13 +53,39 @@ export function ensureRuntimeDirs(config) {
   return created;
 }
 
-// Builds everything and starts listening. Returns { app, db, config, port, close }.
+// The real model adapters live in src/ai/cli.js and src/ai/anthropic.js (task d2). They are loaded only when they are the
+// configured provider, and a missing or unusable module is not an error: selectProvider then falls back to the labelled fake
+// ("Automatic reading unavailable" is not the fallback; a simulated extraction is, and the labels say so).
+// Contract with those modules: createCliProvider({ config, log, clock }) / createAnthropicProvider({ config, log, clock })
+// return an ExtractionProvider, or null when the adapter cannot run (for example the claude binary is not found).
+const ADAPTERS = Object.freeze([
+  ['cli', './ai/cli.js', 'createCliProvider'],
+  ['anthropic', './ai/anthropic.js', 'createAnthropicProvider'],
+]);
+
+export async function loadAdapterFactories(config, { log, clock }) {
+  const factories = {};
+  for (const [id, file, exportName] of ADAPTERS) {
+    if (config.testOffline || config.extractionProvider !== id) continue;
+    try {
+      const mod = await import(file);
+      if (typeof mod[exportName] === 'function') factories[id] = () => mod[exportName]({ config, log, clock });
+      else log.warn('extraction.adapter_missing', { kind: id, code: 'NO_FACTORY' });
+    } catch (err) {
+      log.warn('extraction.adapter_missing', { kind: id, code: err && err.code ? String(err.code) : 'IMPORT_FAILED' });
+    }
+  }
+  return factories;
+}
+
+// Builds everything and starts listening. Returns { app, db, config, port, ai, retention, close }.
 export async function startApp({ env = process.env, log = createLogger(), clock = systemClock, routes = [] } = {}) {
   // Files the process creates (database, WAL files, uploads) are owner-only (SEC-14).
   process.umask(0o077);
 
-  const config = loadConfig(env);
-  ensureRuntimeDirs(config);
+  const requested = loadConfig(env);
+  ensureRuntimeDirs(requested);
+  let config = requested;
 
   const db = openDb(config.dbPath, { busyTimeoutMs: config.dbBusyTimeoutMs });
   try {
@@ -71,15 +99,26 @@ export async function startApp({ env = process.env, log = createLogger(), clock 
     const adminState = await ensureAdmin({ db, config, clock });
     log.info('auth.admin', { kind: adminState });
 
-    const app = createApp({ db, clock, config, log, routes });
+    // The model: the configured provider, or the labelled fake when its adapter is unavailable. The configuration the app
+    // sees names the provider that really runs, so /api/config and the labels never claim a model that is not there.
+    const ai = createAiRuntime({ db, clock, config: requested, factories: await loadAdapterFactories(requested, { log, clock }) });
+    if (ai.selection.fellBack) log.warn('extraction.fallback', { provider: ai.provider.id, kind: ai.selection.requested });
+    if (ai.provider.id !== requested.extractionProvider) config = Object.freeze({ ...requested, extractionProvider: ai.provider.id });
+
+    const app = createApp({ db, clock, config, log, routes, ai });
     const port = await app.listen();
     log.info('listening', { port });
+    // The retention sweep: now (startup), then every RS_RETENTION_INTERVAL_MS (default hourly).
+    const retention = startRetention({ db, clock, config, log, gate: ai.gate });
     return {
       app,
       db,
       config,
       port,
+      ai,
+      retention,
       async close() {
+        await retention.stop();
         await app.close();
         db.close();
       },

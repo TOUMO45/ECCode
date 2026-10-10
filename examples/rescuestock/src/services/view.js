@@ -282,8 +282,15 @@ export function renderRequirements(row) {
   return { version: row.version, fields: parseJson(row.fields_json, {}), confirmedAt: row.confirmed_at };
 }
 
+// fields_json holds the nine FieldValues plus the reserved key `__meta` ({addressedToAssistant}): the extractions table has
+// no column for the flag and migrations are append-only. `__meta` never leaves this function; rows written without it
+// (older fixtures, tests) read as addressedToAssistant = false.
+export const EXTRACTION_META_KEY = '__meta';
+
 export function renderExtraction(row) {
   if (!row) return null;
+  const stored = parseJson(row.fields_json, {});
+  const { [EXTRACTION_META_KEY]: meta, ...fields } = stored !== null && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
   return {
     id: row.id,
     provider: row.provider,
@@ -292,7 +299,8 @@ export function renderExtraction(row) {
     degraded: row.degraded === 1,
     schemaOk: row.schema_ok === 1,
     errorCode: row.error_code ?? null,
-    fields: parseJson(row.fields_json, {}),
+    addressedToAssistant: meta?.addressedToAssistant === true,
+    fields,
     questions: parseJson(row.questions_json, []),
     createdAt: row.created_at,
   };
@@ -484,6 +492,8 @@ export function assembleView(ctx, data) {
     cancellingOrders: cancelling.map((o) => renderOrder(ctx, data, o, bodies)),
     rescueStatus: rescueStatusOf(ctx, data),
     labels: labelsOf(ctx.config),
+    // The UI shows "Delete request" only when this is true (TR-C-4): DELETE /api/requests/:id exists and is routed.
+    capabilities: { deleteRequest: true },
   };
 }
 
