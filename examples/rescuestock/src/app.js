@@ -25,6 +25,7 @@ import { createStaticHandler } from './http/static.js';
 import { mapDbError, DbConstraintError } from './db/errors.js';
 import { plan as defaultPlanner } from './domain/planner.js';
 import { PLAN_RATE_DEFAULT } from './services/plans.js';
+import { createNoopProvider, createVoidRule } from './services/void-rule.js';
 
 const DEFAULT_PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 const MAX_URL_LENGTH = 2048;
@@ -80,6 +81,7 @@ export function createApp({
   planner = null,
   planRate = null,
   voidRule = null,
+  voidProvider = null,
 } = {}) {
   if (!db || !config) throw new TypeError('createApp needs db and config');
 
@@ -87,9 +89,13 @@ export function createApp({
   // The public URL: RS_PUBLIC_URL, else http://localhost:<the port actually bound>.
   const publicUrl = () => config.publicUrl || `http://localhost:${runtime.port}`;
   // planner: src/domain/planner.js plan() unless a test injects another (it is read per request, from ctx.planner).
-  // voidRule(db, {planVersionId, reason}): the void rule of c3, called inside the superseding transaction for a
-  // plan version that holds a live reservation. Without it such a supersession is refused (409 PLAN_IN_PROGRESS).
-  const deps = { db, clock, config, log, ai, payments, publicUrl, planner: planner ?? defaultPlanner, planRate: resolvePlanRate(config, planRate), voidRule };
+  // voidRule(db, {planVersionId, reason, actor, requestId}): the void rule (src/services/void-rule.js), called inside the
+  // transaction that moves a plan version off the executable path (supersession, supplier refusal, expiry, reset...).
+  // By default it is built here from the clock and `voidProvider`, the PORT through which a provider void is queued
+  // (default: a no-op recorder). Phase E passes a provider whose queueVoid inserts the provider_calls row; a test may
+  // pass its own voidRule. The rule is never absent: an `authorized` operation always gets its void queued.
+  const rule = voidRule ?? createVoidRule({ clock, provider: voidProvider ?? createNoopProvider() });
+  const deps = { db, clock, config, log, ai, payments, publicUrl, planner: planner ?? defaultPlanner, planRate: resolvePlanRate(config, planRate), voidRule: rule };
   // Sessions, CSRF, throttles and the access hook (ARCH-25). An `authorize` passed in (a test double)
   // replaces the access hook only; deps.auth is always there for the auth routes.
   deps.auth = createAuth({ db, clock, config, publicUrl });
