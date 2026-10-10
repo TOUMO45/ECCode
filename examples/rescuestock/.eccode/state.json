@@ -1,6 +1,6 @@
 {
-  "seq": 391,
-  "lastHash": "3dd155e27f6926c0b1489387f56249abc795f9778b38b49c1f191f9a7b23c436",
+  "seq": 397,
+  "lastHash": "faea62877d6b4236401b1f5b0655939928ec90c2a4cf65b528320524e1af4e48",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -2704,9 +2704,24 @@
         "command": "ls test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "backend-engineer",
+        "at": "2026-10-10T21:54:32.906Z",
+        "baseCommit": "4300fb903bfc656befe1038809537a6230b407ca",
+        "runId": null,
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.807,
+            "matched": 19,
+            "priority": 22,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -2724,6 +2739,12 @@
           "by": "orchestrator",
           "at": "2026-10-10T18:55:04.830Z",
           "reason": "c3's spec-mandated default void rule makes one c2 test case stale (live-reservation confirm now supersedes and releases, 201, instead of the fail-closed 409 stopgap); owner updates that one case so the suite is green before the phase submission"
+        },
+        {
+          "event": "claimed",
+          "by": "backend-engineer",
+          "at": "2026-10-10T21:54:32.906Z",
+          "attempt": 1
         }
       ],
       "completedBy": "backend-engineer",
@@ -3048,10 +3069,32 @@
         "command": "ls test/integration/rs14-two-process-reserve.test.js test/integration/rs14-db-busy.test.js test/api/contracts.test.js test/browser/journey-infeasible.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "test-engineer",
+        "at": "2026-10-10T21:54:54.217Z",
+        "baseCommit": "4300fb903bfc656befe1038809537a6230b407ca",
+        "runId": null,
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.801,
+            "matched": 18,
+            "priority": 29.5,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "test-engineer",
+          "at": "2026-10-10T21:54:54.217Z",
+          "attempt": 1
+        }
+      ],
       "completedBy": null,
       "handoffId": null
     },
@@ -7712,6 +7755,27 @@
       "task": "c3-reservations-supplier-admin",
       "recordedBy": "backend-engineer",
       "at": "2026-10-10T18:53:17.212Z"
+    },
+    "ev-mv2xmykn-01ac3e86": {
+      "id": "ev-mv2xmykn-01ac3e86",
+      "kind": "command",
+      "label": "failing state: live-reservation case expects the fail-closed 409 but c3's default void rule now supersedes (201)",
+      "command": "ls test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 7016,
+      "log": ".eccode/evidence/ev-mv2xmykn-01ac3e86.log",
+      "logSha256": "6c6d55d5b478e2f1e29d0530f6d2c7d6182e71840d0384902394e66f71f72053",
+      "logFileSha256": "89937b98c02b213397e5f94fd670ea44724e25004a2e7d1ef86c381e993692fb",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: RS-36: no source file stores a rescue status\n    # Subtest: RS-36: no SQL or code under src/ names a stored rescue-status column, and the service code reads status through derive.js\n    ok 1 - RS-36: no SQL or code under src/ names a stored rescue-status column, and the service code reads status through derive.js\n      ---\n      duration_ms: 5.874251\n      type: 'test'\n      ...\n    1..1\nok 16 - RS-36: no source file stores a rescue status\n  ---\n  duration_ms: 6.384711\n  type: 'suite'\n  ...\n1..16\n# tests 65\n# suites 16\n# pass 64\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 6909.256488\n",
+      "gate": null,
+      "task": "c2-requests-plans-view",
+      "tree": "02afcb251630f1e1cb0e24f4186dfcafff25aead5406a244662b1b613bbe1141",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-10T21:54:53.537Z"
     }
   },
   "reviews": {
@@ -14022,6 +14086,24 @@
           "reason": "harness usage report arrived after run end"
         }
       ]
+    },
+    "run-mv2xlzrm-01f61208": {
+      "id": "run-mv2xlzrm-01f61208",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T21:54:08.389Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv2xlzxz-019164ab": {
+      "id": "run-mv2xlzxz-019164ab",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T21:54:08.617Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -14335,6 +14417,16 @@
       "alternatives": "block all work until the user answers; descope without the user",
       "lessons": [],
       "at": "2026-10-10T17:51:35.916Z",
+      "by": "orchestrator"
+    },
+    "dec-mv2xlzls-01709639": {
+      "id": "dec-mv2xlzls-01709639",
+      "title": "Runtime limit raised to 1200 minutes by the user",
+      "decision": "The user raised limits.maxRuntimeMinutes from 480 to 1200 themselves, in commit 4300fb9 (author TOUMO45, GitHub web editor), after the engine's BUDGET_EXCEEDED stop. The full 45-criterion scope stands; the descoping order is not taken. Phase C resumes with the c2 one-case test fix and c6.",
+      "rationale": "The engine reserves limit raises for the user; a chat instruction alone was refused by both the toolkit guard and the harness classifier, so the user made the change in their own account, which the git history attributes to them.",
+      "alternatives": "descoping order (declined by the user's action)",
+      "lessons": [],
+      "at": "2026-10-10T21:54:08.219Z",
       "by": "orchestrator"
     }
   },
