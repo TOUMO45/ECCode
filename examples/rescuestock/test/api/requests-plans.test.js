@@ -775,7 +775,9 @@ describe('FU-7 and RS-34: view shapes and labels', () => {
     const res = await cafe1.get(`/api/requests/${id}`);
     assert.equal(res.status, 200);
     const v = res.json;
-    assert.deepEqual(Object.keys(v).sort(), ['cancellingOrders', 'currentPlanId', 'extraction', 'labels', 'orders', 'plans', 'planning', 'request', 'requestId', 'requirements', 'reservation', 'rescueStatus'].sort());
+    assert.deepEqual(Object.keys(v).sort(), ['cancellingOrders', 'capabilities', 'currentPlanId', 'extraction', 'labels', 'orders', 'plans', 'planning', 'request', 'requestId', 'requirements', 'reservation', 'rescueStatus'].sort());
+    assert.deepEqual(Object.keys(v.capabilities), ['deleteRequest']);
+    assert.equal(typeof v.capabilities.deleteRequest, 'boolean');
     assert.deepEqual(Object.keys(v.request).sort(), ['createdAt', 'id', 'image', 'intakeStatus', 'language', 'rawText']);
     assert.equal(v.request.rawText, TEXT);
     assert.equal(v.request.image, null);
