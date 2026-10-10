@@ -181,6 +181,8 @@ test('RS-34: the labels the UI must show are all present in the shipped code', (
     'From the photo',
     'Entered by you',
     'Not found',
+    'This request contains text addressed to an AI; it was ignored.',
+    'Original wording',
   ];
   for (const label of required) assert.ok(allCode.includes(label), `label missing from public/js: ${label}`);
 });
@@ -189,6 +191,8 @@ test('RS-35: the data-testid hooks of the spec are all present', () => {
   const hooks = [
     'approve-plan', 'reserve', 'paypal-approve-', 'execute', 'rescue-status', 'field-', 'rejection-', 'total-overall',
     'commit-', 'compensation', 'degraded-notice', 'banner-simulated', 'badge-demo', 'price-notice',
+    // phase D (extraction)
+    'ai-addressed-notice', 'badge-simulated', 'extraction-', 'question-', 'input-', 'manual-form', 'delete-request',
   ];
   for (const hook of hooks) assert.ok(allCode.includes(`'${hook}`) || allCode.includes(`\`${hook}`) || allCode.includes(`"${hook}`), `data-testid ${hook} not found`);
   // and the dom helper is the only place that writes the attribute
@@ -257,6 +261,38 @@ test('T11: the page is compatible with CSP default-src \'self\'; script-src \'se
   // scripts and styles are same-origin files; the SVG icon has no script or external reference
   const svg = text.get('favicon.svg');
   assert.doesNotMatch(svg, /<script|<style|href|onload|<image|<foreignObject/i);
+});
+
+test('SEC-C-4: dom.js refuses unsafe hrefs by the shared character check, and no source file holds an invisible control or separator character', () => {
+  const dom = code.get('js/dom.js');
+  assert.match(dom, /export function isAllowedUrl/);
+  assert.match(dom, /hasUnsafeUrlChars\(value\)/);
+  assert.doesNotMatch(dom, /\.trim\(\)/, 'a URL is refused, never repaired by trimming');
+  assert.match(code.get('js/format.js'), /export function hasUnsafeUrlChars/);
+  assert.match(code.get('js/format.js'), /hasUnsafeUrlChars\(value\)\) return false/, 'the PayPal approval link is checked too');
+  // a source file with U+2028 or U+0085 in a regex or string broke a module once; allow only tab, LF and CR below U+0020
+  for (const [name, source] of text) {
+    for (let i = 0; i < source.length; i += 1) {
+      const c = source.charCodeAt(i);
+      const bad = (c < 0x20 && c !== 0x09 && c !== 0x0a && c !== 0x0d) || c === 0x7f || (c >= 0x80 && c <= 0x9f) || c === 0x2028 || c === 0x2029 || c === 0xfeff;
+      assert.equal(bad, false, `invisible character U+${c.toString(16).padStart(4, '0')} at offset ${i} in public/${name}`);
+    }
+  }
+});
+
+test('TR-C-6: the "What you need" table is stacked below 640 px and is not wrapped in a scroll region', () => {
+  assert.match(css, /@media \(max-width: 639px\)/);
+  assert.match(css, /content:\s*attr\(data-label\)/);
+  const fields = code.get('js/components/fields-table.js');
+  assert.doesNotMatch(fields, /tableRegion/, 'the clipped scroll region is gone');
+  assert.match(fields, /'Original wording'/);
+  assert.match(fields, /data: \{ label: colWording \}/);
+});
+
+test('TR-C-4: "Delete request" is offered only through the capability flag', () => {
+  const payments = code.get('js/components/payments.js');
+  assert.match(payments, /deleteRequestAvailable\(view, config\) \? \{ label: 'Delete request'/);
+  assert.match(code.get('js/view-helpers.js'), /capabilities\?\.deleteRequest/);
 });
 
 test('NFR2: every relative import resolves to a file under public/js, and no module imports from outside', () => {

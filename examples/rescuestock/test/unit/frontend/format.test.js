@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 import {
   centsToDollarInput, fieldValueText, formatLocalDateTime, formatLocalDateTimeValue, formatLocalTime, formatUsd, formatUsdOrDash,
-  isNavigableUrl, joinCodes, localToTs, parseTs, parseUsdToCents, paymentStatusText, presentationText, provenanceText,
+  formatBytes, hasUnsafeUrlChars, isNavigableUrl, joinCodes, localToTs, parseTs, parseUsdToCents, paymentStatusText, presentationText, provenanceText,
   rescueStatusText, utcToLocal,
 } from '../../../public/js/format.js';
 
@@ -115,4 +115,23 @@ test('T11: only http(s) links are followed to a payment provider', () => {
   for (const bad of ['', 'ja' + 'vascript:alert(1)', 'data:text/html,hi', '/relative', '//host/x', null, undefined, 42, `https://x/${'a'.repeat(3000)}`]) {
     assert.equal(isNavigableUrl(bad), false, String(bad).slice(0, 40));
   }
+});
+
+test('SEC-C-4: a link with a backslash, a space or a control character is not navigable, even when it looks like https', () => {
+  const bs = String.fromCharCode(92);
+  for (const bad of [`https:${bs}${bs}evil.example/x`, `https://good.example${bs}@evil.example`, 'https://good.example/a b', ' https://good.example/', `https://good.example/${String.fromCharCode(9)}`, `https://good.example/${String.fromCharCode(0)}`]) {
+    assert.equal(isNavigableUrl(bad), false, JSON.stringify(bad));
+  }
+  assert.equal(hasUnsafeUrlChars('https://good.example/path?x=1&y=%5C'), false, 'a percent-encoded backslash is data, not a separator');
+  assert.equal(hasUnsafeUrlChars(`a${bs}b`), true);
+});
+
+test('RS-02: formatBytes shows photo sizes for people', () => {
+  assert.equal(formatBytes(0), '0 bytes');
+  assert.equal(formatBytes(1023), '1023 bytes');
+  assert.equal(formatBytes(1024), '1.0 KB');
+  assert.equal(formatBytes(48213), '47.1 KB');
+  assert.equal(formatBytes(5 * 1024 * 1024), '5.0 MB');
+  assert.equal(formatBytes(1.5), '—');
+  assert.equal(formatBytes('12'), '—');
 });

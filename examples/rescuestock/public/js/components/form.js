@@ -59,6 +59,21 @@ export function selectField({ id, name = id, label, options, value = '', require
   return { row, input };
 }
 
+// A file chooser. `accept` narrows the picker only; the caller validates the chosen file and the server checks again.
+export function fileField({ id, name = id, label, accept, hint = null, error = null }) {
+  const input = el('input', {
+    id,
+    name,
+    type: 'file',
+    accept,
+    testid: `input-${name}`,
+    'aria-describedby': describedBy(id, hint, error),
+    'aria-invalid': error ? 'true' : null,
+  });
+  const row = el('div', { class: 'form-row' }, [el('label', { for: id, text: label }), input, ...extras(id, hint, error)]);
+  return { row, input };
+}
+
 export function checkboxField({ id, name = id, label, checked = false, hint = null }) {
   const input = el('input', { id, name, type: 'checkbox', checked, testid: `input-${name}`, 'aria-describedby': describedBy(id, hint, null) });
   const row = el('div', { class: 'form-row form-row-check' }, [input, el('label', { for: id, text: label }), ...extras(id, hint, null)]);

@@ -180,8 +180,10 @@ test('RS-35: the fixtures cover every route the UI calls in this phase', () => {
 
 test('RS-35: the request-view fixtures share the RequestView keys of the spec', () => {
   const keys = ['request', 'extraction', 'requirements', 'planning', 'plans', 'currentPlanId', 'reservation', 'orders', 'cancellingOrders', 'rescueStatus', 'labels', 'requestId'];
+  // TR-C-4: `capabilities` is the one key added after the spec, for the delete button; it is optional until d3 serves it.
   for (const name of ['request-view-planned', 'request-view-reserved', 'request-view-infeasible', 'request-view-degraded']) {
-    assert.deepEqual(Object.keys(body(name)).sort(), [...keys].sort(), name);
+    const actual = Object.keys(body(name)).filter((k) => k !== 'capabilities').sort();
+    assert.deepEqual(actual, [...keys].sort(), name);
   }
 });
 
@@ -555,6 +557,8 @@ test('RS-35: Reserve, Complete purchase and Record receipt appear on their next 
   assert.deepEqual(actionsModel(ready).receipts.map((r) => [r.orderId, r.testid]), [[31, 'receipt-A']]);
   ready.orders[0].receiptRecorded = true;
   assert.deepEqual(actionsModel(ready).receipts, []);
+  assert.equal(actionsModel(ready).remove, null, 'TR-C-4: no Delete request until the server reports capabilities.deleteRequest');
+  ready.capabilities = { deleteRequest: true };
   assert.deepEqual({ ...actionsModel(ready).remove }, { label: 'Delete request', testid: 'delete-request' });
 });
 
@@ -867,10 +871,10 @@ test('RS-30: every fault kind builds the body the route takes, and refuses incom
 test('RS-30: the timeline and metrics view models show Amman times and plain text details', () => {
   const t = buildTimelineViewModel(body('admin-timeline'));
   assert.equal(t.state, 'ready');
-  assert.equal(t.lastCursor, 104);
+  assert.equal(t.lastCursor, '1728600150000.2.1', 'FU-13: the cursor is an opaque string and is passed back unchanged');
   assert.deepEqual(t.rows[0], {
-    cursor: 101, atText: '2026-10-20 09:01', source: 'audit', type: 'plan.proposed', entity: 'plan_version #21',
-    detailText: '{"requestId":12,"version":1}', testid: 'timeline-row-101',
+    cursor: '1728600000000.0.12', atText: '2026-10-20 09:01', source: 'audit', type: 'plan.proposed', entity: 'plan_version #21',
+    detailText: '{"requestId":12,"version":1}', testid: 'timeline-row-1728600000000.0.12',
   });
   assert.deepEqual(buildTimelineViewModel({ events: [], requestId: 'x' }), { state: 'empty', rows: [], lastCursor: null });
   const m = buildMetricsViewModel(body('admin-metrics'));

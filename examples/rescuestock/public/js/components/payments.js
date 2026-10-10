@@ -5,12 +5,12 @@
 //   Try approval again / Abandon purchase                          next step RETRY_APPROVAL_OR_ABANDON
 //   Complete purchase                                              next step COMPLETE_PURCHASE
 //   Record receipt                                                 an order that is ready or collected
-//   Delete request                                                 always
+//   Delete request                                                 when capabilities.deleteRequest is true
 // Every payment element carries its provider badge ("Simulated" or "PayPal Sandbox — no real money").
 
 import { el } from '../dom.js';
 import { formatUsd, paymentStatusText, supplierLabel } from '../format.js';
-import { currentPlan, isReservationExpired, sortedOrders, supplierDirectory, supplierName } from '../view-helpers.js';
+import { currentPlan, deleteRequestAvailable, isReservationExpired, sortedOrders, supplierDirectory, supplierName } from '../view-helpers.js';
 import { reserveStorageKey } from '../reserve-key.js';
 import { badgeNodes, providerBadgeModels } from './badges.js';
 import { emptyNode } from './notice.js';
@@ -23,7 +23,8 @@ function missingInput(view) {
   return null;
 }
 
-export function actionsModel(view) {
+// options.config: the GET /api/config answer, a fallback for the capability flag.
+export function actionsModel(view, { config = null } = {}) {
   const plan = currentPlan(view);
   const code = view.rescueStatus.nextStep.code;
   const dir = supplierDirectory(view);
@@ -40,7 +41,8 @@ export function actionsModel(view) {
     abandon: null,
     execute: null,
     receipts: [],
-    remove: { label: 'Delete request', testid: 'delete-request' },
+    // TR-C-4: shown only when the server reports capabilities.deleteRequest (DELETE /api/requests/:id exists).
+    remove: deleteRequestAvailable(view, config) ? { label: 'Delete request', testid: 'delete-request' } : null,
   };
 
   if (plan && plan.status === 'proposed' && code === 'APPROVE_PLAN') {
@@ -147,7 +149,7 @@ export function renderActions(model, on = {}) {
   if (model.abandon && on.abandon) items.push(...button(model.abandon, () => on.abandon(model.abandon)));
   if (model.execute && on.execute) items.push(...button(model.execute, () => on.execute(model.execute), { primary: true }));
   for (const r of model.receipts) if (on.receipt) items.push(...button(r, () => on.receipt(r)));
-  if (on.remove) items.push(...button(model.remove, on.remove));
+  if (model.remove && on.remove) items.push(...button(model.remove, on.remove));
   if (items.length === 0) return [emptyNode({ title: 'There is nothing for you to do right now.', testid: 'actions-empty' })];
   return [el('div', { class: 'actions', testid: 'actions' }, items)];
 }

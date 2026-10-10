@@ -4,6 +4,14 @@
 import { EXACT } from './texts.js';
 import { supplierLabel } from './format.js';
 
+// TR-C-4: "Delete request" is offered only when the server says the route exists. The flag is read from the
+// request view (`capabilities.deleteRequest`) or, failing that, from GET /api/config. Anything but `true` hides it.
+export function deleteRequestAvailable(view, config = null) {
+  const fromView = view?.capabilities?.deleteRequest;
+  if (typeof fromView === 'boolean') return fromView;
+  return config?.capabilities?.deleteRequest === true;
+}
+
 export function currentPlan(view) {
   if (!view || !Array.isArray(view.plans) || view.currentPlanId === null || view.currentPlanId === undefined) return null;
   return view.plans.find((p) => p.id === view.currentPlanId) ?? null;

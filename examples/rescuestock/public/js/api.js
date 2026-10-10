@@ -5,6 +5,10 @@
 export const API_TIMEOUT_MS = 15000;
 export const DEFAULT_API_BASE = '/api';
 export const TIMEOUT_MESSAGE = 'The server is taking too long.';
+// Two calls legitimately take longer than 15 s: reading a request with the model (the server's own provider
+// timeout is 30 s) and uploading a photo (the server's upload deadline is 60 s). Their client limits sit just above.
+export const EXTRACT_TIMEOUT_MS = 45000;
+export const UPLOAD_TIMEOUT_MS = 65000;
 
 export class ApiError extends Error {
   // kind: 'http' (the server answered with an error envelope), 'timeout', 'network' or 'protocol'.
@@ -35,13 +39,24 @@ export function createApi({ fetchImpl, base, timeoutMs = API_TIMEOUT_MS, onUnaut
   let csrfToken = null;
   let unauthenticatedHandler = onUnauthenticated;
 
-  async function send(method, path, { body, headers = {} } = {}) {
+  // opts: { body (JSON), rawBody (a Blob or File sent as is, with its own Content-Type in headers),
+  //         headers, signal (the caller's AbortSignal: a cancel), timeoutMs (this call only) }
+  async function send(method, path, { body, rawBody, headers = {}, signal, timeoutMs: callTimeoutMs } = {}) {
     const controller = new AbortController();
     let timedOut = false;
+    let cancelled = false;
+    const onCaller = () => {
+      cancelled = true;
+      controller.abort();
+    };
+    if (signal) {
+      if (signal.aborted) onCaller();
+      else signal.addEventListener('abort', onCaller, { once: true });
+    }
     const timer = setTimeout(() => {
       timedOut = true;
       controller.abort();
-    }, timeoutMs);
+    }, callTimeoutMs ?? timeoutMs);
     const init = {
       method,
       credentials: 'same-origin',
@@ -49,7 +64,9 @@ export function createApi({ fetchImpl, base, timeoutMs = API_TIMEOUT_MS, onUnaut
       signal: controller.signal,
     };
     if (method !== 'GET' && method !== 'HEAD' && csrfToken) init.headers['X-CSRF-Token'] = csrfToken;
-    if (body !== undefined) {
+    if (rawBody !== undefined) {
+      init.body = rawBody;
+    } else if (body !== undefined) {
       init.headers['Content-Type'] = 'application/json; charset=utf-8';
       init.body = JSON.stringify(body);
     }
@@ -59,6 +76,9 @@ export function createApi({ fetchImpl, base, timeoutMs = API_TIMEOUT_MS, onUnaut
       response = await doFetch(`${apiBase}${path}`, init);
       text = await response.text();
     } catch (cause) {
+      if (cancelled) {
+        throw new ApiError({ kind: 'cancelled', code: 'CLIENT_CANCELLED', message: 'You cancelled this step.' });
+      }
       if (timedOut) {
         throw new ApiError({ kind: 'timeout', code: 'CLIENT_TIMEOUT', message: TIMEOUT_MESSAGE });
       }
@@ -69,6 +89,7 @@ export function createApi({ fetchImpl, base, timeoutMs = API_TIMEOUT_MS, onUnaut
       });
     } finally {
       clearTimeout(timer);
+      signal?.removeEventListener?.('abort', onCaller);
     }
 
     let json = null;
@@ -122,14 +143,14 @@ export function createApi({ fetchImpl, base, timeoutMs = API_TIMEOUT_MS, onUnaut
     await ensureCsrf();
   }
 
-  async function mutate(method, path, body, headers) {
+  async function mutate(method, path, body, headers, extra = {}) {
     await ensureCsrf();
     try {
-      return await send(method, path, { body, headers });
+      return await send(method, path, { body, headers, ...extra });
     } catch (err) {
       if (!(err instanceof ApiError) || err.code !== 'CSRF_FAILED') throw err;
       await refreshCsrf();
-      return send(method, path, { body, headers });
+      return send(method, path, { body, headers, ...extra });
     }
   }
 
@@ -159,7 +180,9 @@ export function createApi({ fetchImpl, base, timeoutMs = API_TIMEOUT_MS, onUnaut
     createRequest: (text) => mutate('POST', '/requests', { text }),
     getRequest: (requestId) => send('GET', `/requests/${id(requestId)}`),
     deleteRequest: (requestId) => mutate('DELETE', `/requests/${id(requestId)}`),
-    extractRequest: (requestId) => mutate('POST', `/requests/${id(requestId)}/extract`, {}),
+    // file: a File or Blob already checked by the form (type and size); the server checks both again (415, 413).
+    uploadRequestImage: (requestId, file, { signal } = {}) => mutate('POST', `/requests/${id(requestId)}/image`, undefined, { 'Content-Type': file.type }, { rawBody: file, signal, timeoutMs: UPLOAD_TIMEOUT_MS }),
+    extractRequest: (requestId, { signal } = {}) => mutate('POST', `/requests/${id(requestId)}/extract`, {}, undefined, { signal, timeoutMs: EXTRACT_TIMEOUT_MS }),
     confirmRequest: (requestId, fields) => mutate('POST', `/requests/${id(requestId)}/confirm`, { fields }),
     planRequest: (requestId) => mutate('POST', `/requests/${id(requestId)}/plan`, {}),
     approvePlan: (planId, expectedTotalCents, planHash) => mutate('POST', `/plans/${id(planId)}/approve`, { expectedTotalCents, planHash }),

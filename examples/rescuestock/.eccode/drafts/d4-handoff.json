@@ -1,0 +1,82 @@
+{
+  "from": "frontend-engineer",
+  "to": "delivery-lead",
+  "task": "d4-frontend-extraction",
+  "objective": "Extraction UI: new request with an optional package photo, provenance badges and original wording, clarification questions, the degraded notice with the manual form, the AI-addressed notice, a Simulated badge. Plus the follow-ups assigned to d4: FU-13 (six contract fixtures), FU-17 / TR-C-6 (Original wording clipped at 360 px), SEC-C-4 (unsafe hrefs), TR-C-4 (no Delete request until the route exists).",
+  "context": "Built against spec sections Frontend, Interface Contracts (customer routes: image, extract, confirm; Extraction, FieldValue, Question), Security, AI / LLM Design (addressedToAssistant notice, SEC-7, SEC-8) and brief RS-03. Memory: eccode memory search for 'frontend', 'upload' and 'provenance' returned no records; the only lesson attached at claim (mem-sd-mv1audrd-013b7102, guard root resolution) is not applicable. The eccode CLI was run with --root because the shell cwd resets to /home/user/ECCode between calls.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#frontend",
+    ".eccode/artifacts/design/spec.md#shared-response-objects",
+    ".eccode/artifacts/design/spec.md#ai--llm-design",
+    ".eccode/artifacts/architecture/brief.md#acceptance-criteria",
+    ".eccode/artifacts/plan/followups.md (FU-13, FU-17, FU-16, FU-18)",
+    ".eccode/handoffs/ho-mv2pwq96-01a15bb3.json (c5)",
+    "test/api/contracts.test.js and test/helpers/contract-shape.js (read only)"
+  ],
+  "expectedOutput": "public/js/views/request-new.js, components/fields-table.js, form.js, payments.js, api.js, dom.js, format.js, errors.js, css; corrected and new contract fixtures; test/unit/frontend/extraction.test.js; scan, format and dashboards test updates.",
+  "acceptanceCriteria": [
+    "#/requests/new: textarea dir=auto labelled 'Describe what you need, in Arabic or English', optional image input (png/jpeg/webp); submit creates, uploads, extracts",
+    "'What you need' shows value, provenance badge, original wording (dir=auto; image wording under 'Text read from the photo'), server-template questions; degraded state with the notice and a manual input for every core field (data-testid degraded-notice); addressedToAssistant notice; a 'Simulated' extraction badge",
+    "textContent only (frontend scan passes); contract fixtures added for the new routes",
+    "extraction.test.js checks the pure view-model against the extraction fixtures: badge text per provenance, image wording label, degraded manual form with every core field, AI-addressed notice",
+    "FU-13 six fixtures corrected; FU-17 / TR-C-6 every column readable at 360 px; SEC-C-4 unsafe hrefs refused with a unit test; TR-C-4 Delete request behind a capability flag"
+  ],
+  "completedWork": "New-request screen: labelled textarea (dir=auto) and an optional photo input (accept png/jpeg/webp, built by the new fileField helper). Client checks mirror the server: type must be PNG/JPEG/WebP (415), size 1 byte to 5,242,880 bytes (413), shown on change and again on submit; the server stays authoritative and its 415/413 have friendly texts. States: idle, creating, uploading (names the file and size, indeterminate progress element, Cancel), extracting (Cancel), error (message, what to do, request id, Retry, and a link to the request page), cancelled (Try again, open the request), then it navigates to the request page, which shows the success or degraded result. Create runs once and the upload once per chosen file; Retry continues at the failed step. Classification of an extract failure: CLIENT_CANCELLED -> cancelled; MODEL_BUDGET_EXHAUSTED or 429 with details.degraded -> open the request page (the server stored a degraded row); 404 -> open the request page while EXTRACT_ROUTE_MAY_BE_MISSING is true (FU-16 tolerance, a named constant d5/g3 can set to false once d3 has landed); anything else -> error with Retry. api.js: uploadRequestImage (raw File body, its own Content-Type, CSRF header) and extractRequest take an AbortSignal; a cancel ends as CLIENT_CANCELLED; upload and extract get their own limits (65 s and 45 s, constants) because the server's upload deadline is 60 s and its provider timeout 30 s, a 15 s limit would abort valid calls (deliberate deviation from the spec's blanket 15 s; API_TIMEOUT_MS stays 15000 for every other call). 'What you need': provenance badge text per provenance (From your text, From the photo, Entered by you, Not found), wording with dir=auto and the label 'Text read from the photo' for image wording, server-template questions only for still-unknown fields, the degraded notice with the open manual form (input and label for all nine fields, six core fields required), the AI-addressed notice (testid ai-addressed-notice) when extraction.addressedToAssistant === true, the Simulated badge, and a 'Photo attached: PNG, 47.1 KB.' note. FU-17 / TR-C-6: the fields table is no longer in a scroll region; below 640 px each row stacks into a block and every cell shows its column title from data-label (Original wording included), table roles keep the semantics, long wording wraps; the other tables keep their scroll region. SEC-C-4: dom.js isAllowedUrl (now exported) no longer trims and refuses any backslash, whitespace, control or Unicode separator character through hasUnsafeUrlChars (format.js, written with code-point ranges); isNavigableUrl uses the same check. TR-C-4: Delete request is shown only when the request view has capabilities.deleteRequest === true, or, if the view says nothing, when /api/config has it; a boolean in the view wins. FU-13: see fixtures below. Tests: 134 pass in the plan command (39 new, all in extraction.test.js, names start with RS-02, RS-03, RS-05, RS-34, SEC-7, SEC-8, SEC-C-4, TR-C-4, TR-C-6, FU-13, FU-17); the scan test gained invisible-character, TR-C-4, TR-C-6 and label checks. A first draft of the unsafe-URL regex held literal U+2028 characters written by the editing tool and broke format.js; it was rewritten with code points and the scan now fails on any invisible character in public/.",
+  "filesChanged": [
+    "public/css/app.css",
+    "public/js/api.js",
+    "public/js/dom.js",
+    "public/js/errors.js",
+    "public/js/format.js",
+    "public/js/texts.js",
+    "public/js/view-helpers.js",
+    "public/js/components/fields-table.js",
+    "public/js/components/form.js",
+    "public/js/components/payments.js",
+    "public/js/views/request-detail.js",
+    "public/js/views/request-new.js",
+    "test/fixtures/contracts/admin-timeline.json",
+    "test/fixtures/contracts/config.json",
+    "test/fixtures/contracts/config-sandbox-test-mode.json",
+    "test/fixtures/contracts/order-receipt.json",
+    "test/fixtures/contracts/plan-approve.json",
+    "test/fixtures/contracts/plan-create-feasible.json",
+    "test/fixtures/contracts/plan-create-infeasible.json",
+    "test/fixtures/contracts/plan-reserve.json",
+    "test/fixtures/contracts/request-extract.json",
+    "test/fixtures/contracts/request-extract-degraded.json",
+    "test/fixtures/contracts/request-image-upload.json",
+    "test/fixtures/contracts/request-view-degraded.json",
+    "test/fixtures/contracts/request-view-reserved.json",
+    "test/fixtures/contracts/supplier-order-confirm.json",
+    "test/scan/frontend.test.js",
+    "test/unit/frontend/dashboards.test.js",
+    "test/unit/frontend/extraction.test.js",
+    "test/unit/frontend/format.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv30gof5-0101bc4f",
+    "ev:ev-mv30h5fn-0135aaab"
+  ],
+  "remainingIssues": [
+    "CONTRACT GAP 1 (d3): the spec's Extraction object has no addressedToAssistant, but the acceptance criterion and AI/LLM Design show a notice for it. The UI reads extraction.addressedToAssistant === true (absent or anything else shows no notice). d3 must return `addressedToAssistant: boolean` on every Extraction (extract response and RequestView.extraction), or the orchestrator must record that the notice has no source. The fixtures request-extract, request-extract-degraded and request-view-degraded carry the key (false), so d5's contract test will fail on the live extract route until d3 adds it.",
+    "CONTRACT FOR d3 (capability flag, TR-C-4): RequestView gets a top-level `capabilities: { deleteRequest: boolean }` (true once DELETE /api/requests/:id is registered, in src/services/view.js which d3 owns; src/routes/config.js is nobody's in phase D, so the request view is the place d3 can write). The UI also accepts `capabilities.deleteRequest` on GET /api/config as a fallback, and a boolean in the view overrides the config. Until d3 serves it, Delete request is hidden. Only request-view-degraded.json carries `capabilities` today (its scenario is skipped); planned, infeasible and reserved are live-tested and left without it so contracts.test.js stays green. When d3 lands, d5 must add `optional: ['capabilities']` to the request-view rows in contracts.test.js (or ask for the fixtures to be updated), and the extract/degraded/delete scenarios.",
+    "FOR d5 (contracts.test.js): (a) remove the six KNOWN_FIXTURE_DEFECTS entries (supplier-order-confirm canMarkReady, plan-reserve, plan-create-feasible, plan-create-infeasible, plan-approve labels, admin-timeline events[].cursor). Observed: with the fixtures corrected the six scenarios now run as ordinary passing tests and 'todo' is 0 (33 pass + 6 todo before; 38 pass + 1 fail after). (b) The one failure now is 'NFR6: the route table covers each fixture file exactly once': it lists two new fixture files without a table row, request-extract-degraded.json (POST /api/requests/:id/extract, degraded variant) and request-image-upload.json (POST /api/requests/:id/image, 201). That failure is expected until d5 adds the two rows (evidence ev:ev-mv30gtui-01b09612, failed on that test only). The scan test requires a fixture for every route api.js calls, so the image fixture cannot wait. (c) FU-16: the UI tolerance for the missing extract route is `EXTRACT_ROUTE_MAY_BE_MISSING` in public/js/views/request-new.js; with it true a 404 on extract opens the request page, as the journey expects. After d3 lands it is harmless (the request page shows NOT_FOUND if the request is gone) but can be set to false; d5 removes the journey's own tolerance.",
+    "Upload progress is indeterminate: fetch exposes no upload progress and XMLHttpRequest is banned outside the single api.js call site by the scan. The screen shows the file name, size, an indeterminate progress element and Cancel. A real percentage would need a second transport in api.js; not done.",
+    "Not run in a browser (no Playwright/Chromium here). The 360 px stacking is asserted from the stylesheet text and the DOM model only; d5's degraded-extraction journey at 360 px and g1/g3's a11y checks must confirm that Original wording is readable and that nothing scrolls sideways. Table roles are set explicitly so screen readers keep the table when display:block is applied.",
+    "Fixture value drifts: reservationTtlMin is now 30 in both config fixtures (the live default; FU-13 named the sandbox one); order-owned supplier.name is 'Demo Supplier X' (the seeded name) in order-receipt, plan-reserve and request-view-reserved, while totals.supplierName stays 'Supplier X' (what the planner emits). The UI prefers the plan's name, so no screen text changed.",
+    "If the user edits the text after the request was saved (for example after an upload error) and sends again, the screen creates a new request and the earlier draft stays in the list; it counts toward the per-day request limit. Not changed because a draft cannot be edited through the API.",
+    "Explanation.rephrased is still never rendered (test 'SEC-7: ...'); if rephrasing is enabled later a separately labelled block and a test update are needed."
+  ],
+  "nextAction": "orchestrator: pass the two d3 contract points (extraction.addressedToAssistant, RequestView.capabilities.deleteRequest) to the backend-engineer for d3-extraction-service. test-engineer d5: remove the six KNOWN_FIXTURE_DEFECTS entries, add table rows for request-extract-degraded.json and request-image-upload.json, add optional ['capabilities'] on the request-view rows, drop the journey's extract-404 tolerance (FU-16) and assert the degraded journey at 360 px (FU-17).",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "appliesWhen needs a hook or guard that maps file writes to a project root, or a nested-record implementer denied with 'has no claimed task' or 'outside the ownership'. This task changes browser code and fixtures only and none of my writes or claims was denied for root resolution; the claim itself was made with --root pointing at the nested record, so the condition does not hold."
+    }
+  ]
+}

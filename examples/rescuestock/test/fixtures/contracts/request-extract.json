@@ -1,6 +1,7 @@
 {
   "route": "POST /api/requests/:id/extract",
   "status": 200,
+  "variant": "success from text and a package photo: provenance user_text, image and none; two server-template questions (material, deadline)",
   "request": {},
   "response": {
     "extraction": {
@@ -11,20 +12,21 @@
       "degraded": false,
       "schemaOk": true,
       "errorCode": null,
+      "addressedToAssistant": false,
       "fields": {
         "productType": { "value": "cups_and_lids", "status": "known", "provenance": "user_text", "originalWording": "cups and lids" },
         "cupQuantity": { "value": 200, "status": "known", "provenance": "user_text", "originalWording": "200 cups" },
         "lidQuantity": { "value": 200, "status": "known", "provenance": "user_text", "originalWording": "200 lids" },
         "capacityMl": { "value": 250, "status": "known", "provenance": "user_text", "originalWording": "250 ml" },
-        "diameterMm": { "value": null, "status": "unknown", "provenance": "none", "originalWording": null },
+        "diameterMm": { "value": 90, "status": "known", "provenance": "image", "originalWording": "Lid Ø 90 mm" },
         "material": { "value": null, "status": "unknown", "provenance": "none", "originalWording": null },
-        "deadline": { "value": "2026-10-20T11:00", "status": "known", "provenance": "user_text", "originalWording": "by 11:00 today" },
+        "deadline": { "value": null, "status": "unknown", "provenance": "none", "originalWording": null },
         "budgetCents": { "value": 12000, "status": "known", "provenance": "user_text", "originalWording": "Budget $120" },
         "maxPickups": { "value": 2, "status": "known", "provenance": "user_text", "originalWording": "at most 2 pickups" }
       },
       "questions": [
-        { "field": "diameterMm", "question": "What diameter are the cups, in millimetres?" },
-        { "field": "material", "question": "Should the cups be paper or plastic?" }
+        { "field": "material", "question": "Should the cups be paper or plastic?" },
+        { "field": "deadline", "question": "By when do you need them? Please give a date and a time." }
       ],
       "createdAt": "2026-10-20T06:00:05.000Z"
     },

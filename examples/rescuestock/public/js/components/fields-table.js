@@ -5,10 +5,10 @@
 import { el } from '../dom.js';
 import { EXACT, SECTION_TITLES } from '../texts.js';
 import {
-  FIELD_NAMES, CORE_FIELD_NAMES, FIELD_LABELS, centsToDollarInput, fieldValueText, localToTs, parseUsdToCents, provenanceText,
+  FIELD_NAMES, CORE_FIELD_NAMES, FIELD_LABELS, centsToDollarInput, fieldValueText, formatBytes, localToTs, parseUsdToCents, provenanceText,
 } from '../format.js';
 import { currentPlan } from '../view-helpers.js';
-import { noticeNode, tableRegion } from './notice.js';
+import { noticeNode } from './notice.js';
 import { badgeNodes, extractionBadgeModels, pill } from './badges.js';
 
 const UNKNOWN_FIELD = Object.freeze({ value: null, status: 'unknown', provenance: 'none', originalWording: null });
@@ -16,6 +16,11 @@ const PRODUCT_TYPES = Object.freeze([['cups_and_lids', 'Cups and lids'], ['cups'
 const MATERIALS = Object.freeze([['', 'Not specified'], ['paper', 'Paper'], ['plastic', 'Plastic'], ['other', 'Other']]);
 const INTEGER_FIELDS = Object.freeze(['cupQuantity', 'lidQuantity', 'capacityMl', 'diameterMm', 'maxPickups']);
 const LOCAL_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+// The four columns of "What you need". Below 640 px the table is stacked (one block per field) and each cell shows
+// its column title from data-label, so nothing is clipped and nothing scrolls sideways (FU-17 / TR-C-6).
+export const NEED_COLUMNS = Object.freeze(['Field', 'Value', 'Source', 'Original wording']);
+const IMAGE_KINDS = Object.freeze({ 'image/png': 'PNG', 'image/jpeg': 'JPEG', 'image/webp': 'WebP' });
 
 function wordingLabel(fieldValue) {
   if (fieldValue.provenance === 'image') return EXACT.PHOTO_WORDING;
@@ -79,11 +84,17 @@ export function needModel(view) {
   const degraded = view.extraction?.degraded === true;
   const plan = currentPlan(view);
   const locked = plan !== null && (plan.status === 'executing' || plan.status === 'executed');
+  const image = view.request?.image ?? null;
   return {
     rows,
+    columns: NEED_COLUMNS,
     questions,
     degraded,
     degradedText: EXACT.DEGRADED_EXTRACTION,
+    // The model reported text addressed to an AI; the server ignored it. Only a display flag: nothing is acted on.
+    aiAddressed: view.extraction?.addressedToAssistant === true,
+    aiAddressedText: EXACT.AI_ADDRESSED,
+    photoNote: image ? `Photo attached: ${IMAGE_KINDS[image.mime] ?? 'image'}, ${formatBytes(image.bytes)}.` : null,
     extractionBadges: extractionBadgeModels(view.extraction),
     form: {
       locked,
@@ -178,30 +189,49 @@ export function renderManualForm(form, errors, on) {
   return formNode;
 }
 
-export function renderNeed(model, on = {}, errors = {}) {
-  const table = tableRegion(SECTION_TITLES.need, el('table', { class: 'data-table', testid: 'fields-table' }, [
-    el('caption', { class: 'visually-hidden', text: SECTION_TITLES.need }),
-    el('thead', {}, [el('tr', {}, ['Field', 'Value', 'Source', 'Original wording'].map((t) => el('th', { scope: 'col', text: t })))]),
-    el('tbody', {}, model.rows.map((r) => el('tr', { testid: r.testid }, [
-      el('th', { scope: 'row', text: r.label }),
-      el('td', { testid: `${r.testid}-value`, text: r.valueText }),
-      el('td', {}, [pill(r.provenanceText, r.known ? 'info' : 'neutral', `${r.testid}-provenance`)]),
-      el('td', {}, r.wording
+// The field table. The explicit roles keep the table semantics when the stylesheet stacks it below 640 px.
+// The table is not a scroll region: at 360 px every column is readable without sideways scrolling.
+export function renderFieldsTable(model, caption = SECTION_TITLES.need) {
+  const [colField, colValue, colSource, colWording] = model.columns;
+  return el('div', { class: 'table-stack' }, [el('table', { class: 'data-table data-table-stack', role: 'table', testid: 'fields-table' }, [
+    el('caption', { class: 'visually-hidden', text: caption }),
+    el('thead', { role: 'rowgroup' }, [el('tr', { role: 'row' }, model.columns.map((t) => el('th', { scope: 'col', role: 'columnheader', text: t })))]),
+    el('tbody', { role: 'rowgroup' }, model.rows.map((r) => el('tr', { role: 'row', testid: r.testid }, [
+      el('th', { scope: 'row', role: 'rowheader', data: { label: colField }, text: r.label }),
+      el('td', { role: 'cell', data: { label: colValue }, testid: `${r.testid}-value`, text: r.valueText }),
+      el('td', { role: 'cell', data: { label: colSource } }, [pill(r.provenanceText, r.known ? 'info' : 'neutral', `${r.testid}-provenance`)]),
+      el('td', { role: 'cell', class: 'cell-wording', data: { label: colWording } }, r.wording
         ? [el('span', { class: 'wording-label', text: `${r.wordingLabel}: ` }), el('span', { dir: 'auto', testid: `${r.testid}-wording`, text: r.wording })]
         : [el('span', { class: 'muted', text: '—' })]),
     ]))),
-  ]));
-  const formNode = on.confirm ? renderManualForm(model.form, errors, on) : null;
+  ])]);
+}
+
+// The notices and badges above the table, and the server-template questions below it.
+export function renderExtractionNotices(model) {
   return [
     model.degraded ? noticeNode({ text: model.degradedText, tone: 'warn', testid: 'degraded-notice', role: 'status' }) : null,
+    model.aiAddressed ? noticeNode({ text: model.aiAddressedText, tone: 'warn', testid: 'ai-addressed-notice', role: 'status' }) : null,
     model.extractionBadges.length > 0 ? el('p', {}, badgeNodes(model.extractionBadges)) : null,
-    table,
-    model.questions.length > 0
-      ? el('div', { class: 'questions', testid: 'questions' }, [
-        el('h3', { text: 'Questions to answer' }),
-        el('ul', {}, model.questions.map((q) => el('li', { testid: `question-${q.field}`, text: `${q.label}: ${q.question}` }))),
-      ])
-      : null,
+    model.photoNote ? el('p', { class: 'muted', testid: 'photo-note', text: model.photoNote }) : null,
+  ];
+}
+
+export function renderQuestions(model) {
+  return model.questions.length > 0
+    ? el('div', { class: 'questions', testid: 'questions' }, [
+      el('h3', { text: 'Questions to answer' }),
+      el('ul', {}, model.questions.map((q) => el('li', { testid: `question-${q.field}`, text: `${q.label}: ${q.question}` }))),
+    ])
+    : null;
+}
+
+export function renderNeed(model, on = {}, errors = {}) {
+  const formNode = on.confirm ? renderManualForm(model.form, errors, on) : null;
+  return [
+    ...renderExtractionNotices(model),
+    renderFieldsTable(model),
+    renderQuestions(model),
     formNode && !model.form.locked
       ? (model.form.open
         ? el('div', {}, [el('h3', { text: 'Enter or correct the details' }), formNode])

@@ -3,6 +3,8 @@
 // server, model and catalog text is always data. The document is injectable so view code can run under plain
 // `node --test` against a tiny fake.
 
+import { hasUnsafeUrlChars } from './format.js';
+
 let injected = null;
 
 export function setDocument(doc) {
@@ -19,11 +21,14 @@ const ATTR_NAME = /^[a-z][a-z0-9-]*$/;
 const URL_ATTRS = new Set(['href', 'src', 'action', 'formaction']);
 const REFUSED_ATTRS = new Set(['style', 'srcdoc']);
 
-// href/src/action may only point at this app (a path or a hash) or at http(s).
-function isAllowedUrl(value) {
-  const v = String(value).trim();
-  if (v.startsWith('#') || v.startsWith('/') || v.startsWith('?')) return !v.startsWith('//');
-  return /^https?:\/\//i.test(v);
+// href/src/action may only point at this app (a path or a hash) or at http(s). SEC-C-4: the value is not trimmed
+// or repaired. A backslash, a space, a control character or any other whitespace refuses it, because a browser would
+// drop tabs and newlines and read "\" as "/" ("/\evil.example", "https:\\evil.example", "java<TAB>script:").
+export function isAllowedUrl(value) {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 2048 || hasUnsafeUrlChars(value)) return false;
+  if (value.startsWith('#') || value.startsWith('?')) return true;
+  if (value.startsWith('/')) return !value.startsWith('//');
+  return /^https?:\/\/[^/?#]/i.test(value);
 }
 
 export function setAttr(node, name, value) {

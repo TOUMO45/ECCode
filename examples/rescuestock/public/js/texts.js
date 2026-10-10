@@ -21,6 +21,7 @@ export const EXACT = Object.freeze({
   NO_REQUESTS: 'No rescue requests yet',
   START_REQUEST: 'Start a rescue request',
   PHOTO_WORDING: 'Text read from the photo',
+  AI_ADDRESSED: 'This request contains text addressed to an AI; it was ignored.',
   NOT_YET_CONFIRMED: 'Not yet confirmed',
   RESERVATION_LIMIT: 'You already hold stock for another request — finish or abandon it first',
 });

@@ -187,6 +187,28 @@ textarea { min-height: 8rem; resize: vertical; }
 .data-table thead th { border-bottom: 2px solid var(--border); white-space: nowrap; }
 .data-table tfoot th, .data-table tfoot td { font-weight: 700; border-top: 2px solid var(--border); }
 
+/* "What you need": four columns from 640 px; below that each field is a block and each cell carries its column
+   title, so "Original wording" is never clipped at 360 px and the table never scrolls (FU-17 / TR-C-6). */
+.table-stack { max-width: 100%; }
+.data-table-stack th, .data-table-stack td { overflow-wrap: anywhere; }
+.cell-wording { min-width: 10rem; }
+@media (max-width: 639px) {
+  .data-table-stack, .data-table-stack tbody, .data-table-stack tr, .data-table-stack th, .data-table-stack td { display: block; width: 100%; }
+  .data-table-stack thead {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0);
+  }
+  .data-table-stack tr { margin: 0 0 0.75rem; background: var(--bg); border: 1px solid var(--soft-border); border-radius: var(--radius); }
+  .data-table-stack tbody th { font-size: 1.05rem; background: var(--panel); border-bottom: 1px solid var(--soft-border); }
+  .data-table-stack tbody td { border-bottom: 0; padding-top: 0.3rem; padding-bottom: 0.3rem; }
+  .data-table-stack tbody td::before { content: attr(data-label); display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+  .cell-wording { min-width: 0; }
+}
+
+/* Request form: photo chooser, progress and result panel */
+progress { display: block; width: 100%; max-width: 40rem; height: 1.25rem; }
+.extraction-panel { max-width: 72rem; }
+.extraction-panel .actions { margin-top: 0.75rem; }
+
 .plain-list { margin: 0; padding: 0; list-style: none; }
 .plain-list li { margin: 0.35rem 0; }
 .cards { display: grid; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }

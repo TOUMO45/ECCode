@@ -264,9 +264,37 @@ export function joinCodes(codes) {
   return Array.isArray(codes) ? codes.join('+') : '';
 }
 
+// ---- bytes and URLs ----------------------------------------------------------------------------------------------
+
+// 48213 -> "47.1 KB", 5242880 -> "5.0 MB". Display only.
+export function formatBytes(bytes) {
+  if (!Number.isSafeInteger(bytes) || bytes < 0) return '—';
+  if (bytes < 1024) return `${bytes} bytes`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// SEC-C-4: a URL we write into an href, or navigate to, holds no backslash, no whitespace and no control character.
+// A browser drops tabs and newlines inside a URL and reads a backslash as a slash, so "/<backslash>evil.example",
+// "java<TAB>script:" and "https:<backslash><backslash>evil.example" would pass a prefix check and leave the app.
+// Written with code points (no character classes), so the source holds no invisible characters.
+const UNSAFE_URL_RANGES = Object.freeze([
+  [0x00, 0x20], [0x5c, 0x5c], [0x7f, 0xa0], [0x1680, 0x1680], [0x180e, 0x180e], [0x2000, 0x200f],
+  [0x2028, 0x202f], [0x205f, 0x2064], [0x3000, 0x3000], [0xfeff, 0xfeff],
+]);
+
+export function hasUnsafeUrlChars(value) {
+  if (typeof value !== 'string') return true;
+  for (const ch of value) {
+    const c = ch.codePointAt(0);
+    if (UNSAFE_URL_RANGES.some(([lo, hi]) => c >= lo && c <= hi)) return true;
+  }
+  return false;
+}
+
 // Navigation to a payment provider is allowed to http(s) only (the fake and Sandbox approval pages).
 export function isNavigableUrl(value) {
-  if (typeof value !== 'string' || value.length === 0 || value.length > 2048) return false;
+  if (typeof value !== 'string' || value.length === 0 || value.length > 2048 || hasUnsafeUrlChars(value)) return false;
   try {
     const u = new URL(value);
     return u.protocol === 'https:' || u.protocol === 'http:';

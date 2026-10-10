@@ -35,7 +35,8 @@ export function returnNoticeModel(query, view) {
   return { tone: 'warn', text: `The PayPal approval for ${name} was cancelled. Nothing was paid. Try approval again or abandon the purchase.`, testid: 'paypal-cancelled' };
 }
 
-export function buildRequestViewModel(view, { query = {} } = {}) {
+// config: the GET /api/config answer (a fallback source of capabilities.deleteRequest, TR-C-4).
+export function buildRequestViewModel(view, { query = {}, config = null } = {}) {
   const sections = [
     { id: 'status', heading: 'Status', model: statusModel(view) },
     { id: 'need', heading: SECTION_TITLES.need, model: needModel(view) },
@@ -44,7 +45,7 @@ export function buildRequestViewModel(view, { query = {} } = {}) {
     { id: 'total', heading: SECTION_TITLES.total, model: totalModel(view) },
     { id: 'commitments', heading: SECTION_TITLES.commitments, model: commitmentsModel(view) },
     { id: 'failure', heading: SECTION_TITLES.failure, model: failureModel(view) },
-    { id: 'actions', heading: SECTION_TITLES.actions, model: actionsModel(view) },
+    { id: 'actions', heading: SECTION_TITLES.actions, model: actionsModel(view, { config }) },
   ];
   return {
     requestId: view.request.id,
@@ -152,7 +153,7 @@ export function mountRequestDetail(ctx, route) {
 
   function draw() {
     const focusedTestId = doc?.activeElement?.getAttribute?.('data-testid') ?? null;
-    const vm = buildRequestViewModel(view, { query: route.query });
+    const vm = buildRequestViewModel(view, { query: route.query, config: ctx.config ?? null });
     showState(slot, { kind: 'ready', nodes: [renderRequestPage(vm, handlers, formErrors)] });
     if (focusedTestId && slot.querySelectorAll) {
       // Keep keyboard focus on the same control after the page is drawn again.
