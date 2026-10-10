@@ -1,6 +1,6 @@
 {
-  "seq": 348,
-  "lastHash": "6317c14b9c1849001120e6aeadccc4223bc3b9acfb96ac3961ea24079b23390f",
+  "seq": 354,
+  "lastHash": "55358e0246d7c33823e46d187482296bb3ffc5295cc43f1690c622673611db20",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -1954,7 +1954,7 @@
     "phase:c-core-flow": {
       "id": "phase:c-core-flow",
       "kind": "phase",
-      "status": "pending",
+      "status": "in_progress",
       "iterations": 0,
       "authors": [],
       "submissions": [],
@@ -1963,7 +1963,7 @@
       "approvedBy": null,
       "approvedSubmission": null,
       "escalation": null,
-      "startedAt": null,
+      "startedAt": "2026-10-10T17:51:42.926Z",
       "approvedAt": null
     },
     "phase:d-extraction": {
@@ -2603,10 +2603,32 @@
         "command": "ls test/api/auth.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/auth.test.js \"test/unit/auth/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "backend-engineer",
+        "at": "2026-10-10T17:52:16.112Z",
+        "baseCommit": "c1614468910f0ea41f3697122cac4c35315fe9bc",
+        "runId": "run-mv2oy8k7-0158c809",
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.815,
+            "matched": 24,
+            "priority": 26.5,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "backend-engineer",
+          "at": "2026-10-10T17:52:16.112Z",
+          "attempt": 1
+        }
+      ],
       "completedBy": null,
       "handoffId": null
     },
@@ -2774,10 +2796,32 @@
         "command": "ls test/scan/frontend.test.js test/unit/frontend/format.test.js test/unit/frontend/dashboards.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "frontend-engineer",
+        "at": "2026-10-10T17:52:45.375Z",
+        "baseCommit": "c1614468910f0ea41f3697122cac4c35315fe9bc",
+        "runId": null,
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.831,
+            "matched": 20,
+            "priority": 26.5,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "frontend-engineer",
+          "at": "2026-10-10T17:52:45.375Z",
+          "attempt": 1
+        }
+      ],
       "completedBy": null,
       "handoffId": null
     },
@@ -12984,6 +13028,24 @@
           "reason": "harness usage report arrived after run end (the reviewer's context had been compacted; the figure is this run's own)"
         }
       ]
+    },
+    "run-mv2oy8k7-0158c809": {
+      "id": "run-mv2oy8k7-0158c809",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T17:51:43.110Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv2oy8qx-013d7ce0": {
+      "id": "run-mv2oy8qx-013d7ce0",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-10T17:51:43.364Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -13287,6 +13349,16 @@
       "alternatives": "stay on 0.3.2 and accept a flaky gating Windows job",
       "lessons": [],
       "at": "2026-10-09T23:36:11.731Z",
+      "by": "orchestrator"
+    },
+    "dec-mv2oy2zj-0109743e": {
+      "id": "dec-mv2oy2zj-0109743e",
+      "title": "Phase C proceeds within the remaining recorded budget; the engine's BUDGET_EXCEEDED is the stop",
+      "decision": "The user's instruction to continue is read as reaffirming the full 45-criterion scope without choosing between raising limits.maxRuntimeMinutes and descoping. Phase C dispatches proceed within the roughly 88 recorded minutes left under the 480-minute limit; when the engine refuses with BUDGET_EXCEEDED, work stops and the user is shown the exact terminal command for a limits.raise delegation rather than any workaround. This supersedes the precondition in dec-mv1fgdkd-01182466.",
+      "rationale": "limits.raise is an engine action reserved for the user; the orchestrator neither edits config.json by hand nor bypasses the refusal. Continuing inside the remaining budget delivers the progress the user asked for while keeping the toolkit's own control as the hard stop.",
+      "alternatives": "block all work until the user answers; descope without the user",
+      "lessons": [],
+      "at": "2026-10-10T17:51:35.916Z",
       "by": "orchestrator"
     }
   },
