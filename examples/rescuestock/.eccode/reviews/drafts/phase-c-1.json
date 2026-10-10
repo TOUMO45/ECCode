@@ -1,63 +1,268 @@
 {
   "decision": "approve",
-  "summary": "First technical review of phase C (sub-mv2y7tlh-017e22c9, 139 artifacts). I read the code (not the summaries) and re-ran every declared check after the submission, on the final tree.\n\nBaseline:\n- npm test: 804 tests, 788 pass, 10 skipped, 6 todo, 0 fail; NFR5 p95 125.6 ms over 1612 calls (ev:ev-mv2ybl0f-013c354c).\n- npm run test:browser: 3/3 (ev:ev-mv2ybx3o-01f85564).\n- Each task's declared command passes: c1 119 (ev:ev-mv2yk2rh-01c06905), c2 65 (ev:ev-mv2ykgn0-01adbf47), c3 81 (ev:ev-mv2ykous-01b934a1), c5 95 (ev:ev-mv2ykpdu-0144a41b), c6 npm test + browser (ev:ev-mv2ylocq-01972c4e).\n- Artifacts: every file changed since c1's base c1614468 under phase-C ownership is listed, every listed sha256 equals the file now, nothing listed outside the ownership (ev:ev-mv2yu4qy-019d189e).\n\nIndependent probes:\n- RS-14/RS-16 across processes: c6's two-process and DB_BUSY tests three times over (ev:ev-mv2ym79u-01cb8774), and my own race with four customers per round plus one customer's same key sent to both processes at once, pair first or last, 14 rounds: always one active reservation, every loser 409 OUT_OF_STOCK, the same-key pair agrees (201 + replay, or 409 + replay), A reserved 1 of 1, one reserve ledger row per item, loser plans non_executable, no lock error in either log (ev:ev-mv2ymhqs-01a776ec, ev:ev-mv2yn0fs-01877ed0).\n- A seeded random walk through the live API (3 x 800 steps: create/confirm/re-confirm, plan, approve and tampered approve, reserve/replay/key on another plan, supplier confirm/refuse/ready, every inventory PATCH kind, clock jumps with the expiry pass run twice, admin stock_depletion/supplier_refusal/reset). After every step: reserved equals the active reservations' items, ledger sums equal on_hand and reserved, reserved <= on_hand, no active reservation, open order or created operation under a superseded or non_executable version, one reserve and one release/expire row per item, no 5xx, no derive.fallback, no view in row 14, the second expiry pass is a no-op (ev:ev-mv2yoajb-01a1e3b6). No path left stock reserved, an order open on a closed plan, or a ledger row missing.\n- RS-36 (i)-(iv) on the live endpoint, including (iv) through the real supplier refusal route; the schema has no rescue-status column (ev:ev-mv2ypyue-019d3b1a).\n- RBAC over the live route table x 4 actors, CSRF (token and Origin) on every protected non-GET, the 'signature' policy refused on any route but the webhook, no CORS header (ev:ev-mv2yqv56-01c827cf).\n- Throttles against T8, SEC-1, SEC-9 and F-TR-17 (ev:ev-mv2ys7g8-01cffb10).\n\nDecision: approve. The open items are minor or info and each has an owner and a resolution condition. The two undelivered items (FU-8's environment names, the general 300/min limit) are not acceptance criteria of any phase-C task; the general limit was never assigned in the approved plan, which my own plan review missed. Both go to the orchestrator as reworks before the gates named in TR-C-1 and TR-C-2. For SEC-B-1R (phase B), FU-1 (typed 422 planner_limit) and FU-8's route limit are now delivered and tested; only FU-14's environment names remain.",
+  "summary": "First technical review of phase C (sub-mv2y7tlh-017e22c9, 139 artifacts). I read the code (not the summaries) and re-ran every declared check after the submission, on the final tree.\n\nBaseline:\n- npm test: 804 tests, 788 pass, 10 skipped, 6 todo, 0 fail; NFR5 p95 125.6 ms over 1612 calls (ev:ev-mv2ybl0f-013c354c).\n- npm run test:browser: 3/3 (ev:ev-mv2ybx3o-01f85564).\n- Each task's declared command passes: c1 119 (ev:ev-mv2yk2rh-01c06905), c2 65 (ev:ev-mv2ykgn0-01adbf47), c3 81 (ev:ev-mv2ykous-01b934a1), c5 95 (ev:ev-mv2ykpdu-0144a41b), c6 npm test + browser (ev:ev-mv2ylocq-01972c4e).\n- Artifacts: every file changed since c1's base c1614468 under phase-C ownership is listed, every listed sha256 equals the file now, nothing listed outside the ownership (ev:ev-mv2yu4qy-019d189e).\n\nIndependent probes:\n- RS-14/RS-16 across processes: c6's two-process and DB_BUSY tests three times over (ev:ev-mv2ym79u-01cb8774), and my own race with four customers per round plus one customer's same key sent to both processes at once, pair first or last, 14 rounds: always one active reservation, every loser 409 OUT_OF_STOCK, the same-key pair agrees (201 + replay, or 409 + replay), A reserved 1 of 1, one reserve ledger row per item, loser plans non_executable, no lock error in either log (ev:ev-mv2ymhqs-01a776ec, ev:ev-mv2yn0fs-01877ed0).\n- A seeded random walk through the live API (3 x 800 steps: create/confirm/re-confirm, plan, approve and tampered approve, reserve/replay/key on another plan, supplier confirm/refuse/ready, every inventory PATCH kind, clock jumps with the expiry pass run twice, admin stock_depletion/supplier_refusal/reset). After every step: reserved equals the active reservations' items, ledger sums equal on_hand and reserved, reserved <= on_hand, no active reservation, open order or created operation under a superseded or non_executable version, one reserve and one release/expire row per item, no 5xx, no derive.fallback, no view in row 14, the second expiry pass is a no-op (ev:ev-mv2yoajb-01a1e3b6). No path left stock reserved, an order open on a closed plan, or a ledger row missing.\n- RS-36 (i)-(iv) on the live endpoint, including (iv) through the real supplier refusal route; the schema has no rescue-status column (ev:ev-mv2ypyue-019d3b1a).\n- RBAC over the live route table x 4 actors, CSRF (token and Origin) on every protected non-GET, the 'signature' policy refused on any route but the webhook, no CORS header (ev:ev-mv2yqv56-01c827cf).\n- Throttles against T8, SEC-1, SEC-9 and F-TR-17 (ev:ev-mv2ys7g8-01cffb10).\n- Security review folded in (phase-c-security-1.md: no blocking or major; ev:ev-mv2z05jg-016641ca, ev:ev-mv2yb2r4-016452c4). I re-ran its hoarding reproduction (ev:ev-mv2z9jtb-01c883bb). I also showed the bound myself (ev:ev-mv2z9kns-01a0430f): the hold survives the TTL because nothing calls the expiry pass yet, and one pass releases it with expire rows, after which cafe1 plans A+B again. I confirmed SEC-C-4's URL acceptance (ev:ev-mv2z9kvi-01c52506).\n\nDecision: approve. Every open item is minor or info, and each has an owner and a resolution condition.\nSeverities, my own judgement:\n- SEC-C-1 is minor. RS-FIX-1 has one bundle per supplier, so even a legitimate canonical reservation takes two of the five. The design accepted 30-minute holds under a count cap. Once e4 runs the pass, the hold is bounded by the TTL, as I demonstrated.\n- SEC-C-2 (merged with my TR-C-5) and SEC-C-3 (merged with my TR-C-1) are minor. Neither is an acceptance criterion of any phase-C task, and the general limit was never assigned in the approved plan, which my own plan review missed. Both go to the FU-15 rework before phase E.\n- FU-8's environment names (TR-C-2) go to the FU-14 rework before phase D.\nFor SEC-B-1R (phase B), FU-1 (typed 422 planner_limit) and FU-8's route limit are now delivered and tested; only FU-14's environment names remain.",
   "criteria": [
-    { "id": "task:c1-auth-rbac", "description": "Sessions, CSRF, sign-in and register throttles, default-deny RBAC, admin bootstrap, no CORS (ARCH-25, SEC-1, SEC-5, SEC-9, SEC-13, SEC-20, F-TR-17)", "met": true,
-      "evidence": ["ev:ev-mv2yk2rh-01c06905", "ev:ev-mv2yqv56-01c827cf", "ev:ev-mv2ys7g8-01cffb10", "artifact:src/auth/rbac.js#L47-L69", "artifact:src/auth/throttle.js#L42-L63", "artifact:src/routes/auth.js#L56-L89", "artifact:src/auth/client-ip.js#L29-L36"],
-      "notes": "Hook order: signature policy (POST /api/webhooks/paypal/:merchantKey only, else 403) -> Origin on state-changing calls -> session (401) -> role (403; unknown policy denied) -> session CSRF token. Origin precedes identification, so an anonymous call with a foreign Origin gets 403 CSRF_FAILED rather than 401; the spec fixes no order and both refuse. The two public POST routes guard Origin and the pre-login token themselves; they are the only public non-GET routes. Probe: 6th attempt with the correct password from the same IP 429 signin_pair (Retry-After 900); another IP 200; 12 cross-IP failures delay the real user about 3 s and never refuse; Admin/' admin '/ADMIN share one key; unknown and wrong-password 401s are identical; the 21st attempt from one IP 429 signin_ip; the 6th registration 429 register_ip." },
-    { "id": "task:c2-requests-plans-view", "description": "Requests with the daily cap, value-only confirmation, planning runs with the offers_hash re-check, approval with hash and total (RS-12), RequestView deriving the rescue status on each read (RS-36), labels, FU-1, FU-7, FU-8 (route)", "met": true,
-      "evidence": ["ev:ev-mv2ykgn0-01adbf47", "ev:ev-mv2ypyue-019d3b1a", "ev:ev-mv2yoajb-01a1e3b6", "artifact:src/services/plans.js#L336-L377", "artifact:src/services/plans.js#L315-L334", "artifact:src/services/plans.js#L71-L88", "artifact:src/services/view.js#L217-L242"],
-      "notes": "Approve re-validates the stored plan (hash, cups and lids against the requirements of the planning run, pickups, totals, budget, deadline) before comparing hash and total; a tampered total answered 409 in every walk step that tried it. deriveInput hands derive.js the persisted snake_case rows its header documents, with latestRun scoped to the current requirements version. RS-36 (i)-(iv) held on the live endpoint in my own setups. The planner node cap is a typed 422 planner_limit (FU-1); planning is limited to 10 per customer per 10 min (FU-8 route half)." },
-    { "id": "task:c3-reservations-supplier-admin", "description": "Reserve in one BEGIN IMMEDIATE with (user, key) idempotency, F-TR-1 fallback, live-reservation cap, conditional stock update; supplier orders and inventory with supersession; expiry pass; admin reset/faults/timeline/metrics; ledger and denied-audit rows", "met": true,
-      "evidence": ["ev:ev-mv2ykous-01b934a1", "ev:ev-mv2ymhqs-01a776ec", "ev:ev-mv2yn0fs-01877ed0", "ev:ev-mv2yoajb-01a1e3b6", "artifact:src/services/reservations.js#L103-L202", "artifact:src/services/reservations.js#L76-L89", "artifact:src/services/reservations.js#L258-L283", "artifact:src/services/void-rule.js#L58-L152", "artifact:src/services/supersession.js#L61-L114", "artifact:src/services/orders.js#L427-L494"],
-      "notes": "Order inside the transaction: key lookup (user, key) -> reservation by (customer, key) when purged (another plan -> 422) -> plan guards -> live cap (not stored, so the key may be retried) -> reservation row -> conditional UPDATE per product with its reserve row -> one order and one created operation per supplier -> stored 201. A unique violation from a concurrent same key is re-resolved after rollback. OUT_OF_STOCK rolls back, then a second transaction marks the plan non_executable, queues a re-plan and stores the 409. The expiry pass is a compare-and-set on status and expires_at; a second pass is a no-op (asserted every walk step). The void rule releases the active reservation, cancels open orders and voids created operations in the caller's transaction." },
-    { "id": "task:c5-frontend-dashboards", "description": "SPA shell, request page sections, supplier and admin dashboards, api.js (CSRF, 15 s abort), textContent-only DOM, contract fixtures and view-model tests", "met": true,
-      "evidence": ["ev:ev-mv2ykpdu-0144a41b", "ev:ev-mv2ybx3o-01f85564", "artifact:public/js/dom.js#L18-L35", "artifact:public/js/reserve-key.js#L23-L38", "artifact:public/js/api.js#L184-L188"],
-      "notes": "dom.js refuses on* attributes, style and srcdoc, and href/src/action/formaction values other than app paths, hashes or http(s); text goes through textContent only, and the scan test asserts no innerHTML. The reserve key is stored under reserve:<planVersionId> and reused. Fixture defects (TR-C-3), the 360 px column (TR-C-6) and actions on unregistered routes (TR-C-4) are minor and routed." },
-    { "id": "task:c6-reserve-concurrency-browser", "description": "RS-14 two-process and DB_BUSY tests, HTTP contract test, browser harness with a fresh database and customer per journey, RS-33 journey at 360 and 1280 px", "met": true,
-      "evidence": ["ev:ev-mv2ylocq-01972c4e", "ev:ev-mv2ym79u-01cb8774", "ev:ev-mv2ybx3o-01f85564", "artifact:test/api/contracts.test.js#L40-L47", "artifact:test/browser/journey-infeasible.test.js#L20-L32"],
-      "notes": "The 6 todo results are fixture defects (live API follows the spec); I accept them as todo for this phase (TR-C-3). The 10 skips are routes that do not exist yet; 'every registered route has a scenario' fails if a route lands without one. The extract-404 tolerance is narrow (exactly that route and one console line per call) and must go once d3 lands (TR-C-4)." },
-    { "id": "phase:c-core-flow", "description": "Phase C goal and its criteria RS-12, RS-14, RS-16, RS-28, RS-30, RS-33, RS-36, the auth contract, SEC-2, F-TR-17, the HTTP contract, npm test and npm run test:browser pass", "met": true,
-      "evidence": ["ev:ev-mv2ybl0f-013c354c", "ev:ev-mv2ybx3o-01f85564", "ev:ev-mv2yoajb-01a1e3b6", "ev:ev-mv2yn0fs-01877ed0", "ev:ev-mv2ypyue-019d3b1a", "ev:ev-mv2yqv56-01c827cf", "ev:ev-mv2yu4qy-019d189e", "artifact:.eccode/artifacts/phase-c/submission.md#criteria-task-evidence", "artifact:.eccode/artifacts/phase-c/submission.md#deviations-from-the-design-with-reasons"],
-      "notes": "RS-12, RS-14, RS-16, RS-28, RS-30, RS-33 and RS-36 are proved by named tests that pass in my runs and, for RS-14/16/30/36 and RS-12's tamper half, by my own probes. Deviations judged:\n- Planning counted as rate_events kind 'general', key plan:u:<id>: acceptable, since migrations are append-only. FU-15's general limit must exclude these keys.\n- Replay status 201: accepted (TR-C-7).\n- Forced reset and refund_order minimal until phase E: acceptable; no operation can reach a provider state in phase C, and RS-37 is claimed in F.\n- IPv6 full-address keys: TR-C-5.\n- The other deviations follow the spec's intent.\nProcess notes: the DIRTY_OWNERSHIP refusal and the lockfile handling were correct. c3 completing with the suite red (one stale c2 case, fixed by c2's one-case rework) is acceptable because the fix is evidenced. The budget raise is a user commit (4300fb9) recorded as dec-mv2xlzls-01709639." },
-    { "id": "lessons", "description": "Every phase-C task's not-applicable decision on mem-sd-mv1audrd-013b7102 holds", "met": true,
-      "evidence": ["ev:ev-mv2ytj34-01ec28ff", "ev:ev-mv1eo87o-01c933d5", "artifact:.eccode/artifacts/phase-c/submission.md#lessons"],
-      "notes": "No phase-C task designs or changes a hook or guard. The installed guard is the repaired version (sha256 d43f4b54...). The guard refused none of my writes during this review; every draft and probe went to the nested record's draft areas as expected." }
+    {
+      "id": "task:c1-auth-rbac",
+      "description": "Sessions, CSRF, sign-in and register throttles, default-deny RBAC, admin bootstrap, no CORS (ARCH-25, SEC-1, SEC-5, SEC-9, SEC-13, SEC-20, F-TR-17)",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv2yk2rh-01c06905",
+        "ev:ev-mv2yqv56-01c827cf",
+        "ev:ev-mv2ys7g8-01cffb10",
+        "artifact:src/auth/rbac.js#L47-L69",
+        "artifact:src/auth/throttle.js#L42-L63",
+        "artifact:src/routes/auth.js#L56-L89",
+        "artifact:src/auth/client-ip.js#L29-L36"
+      ],
+      "notes": "Hook order: signature policy (POST /api/webhooks/paypal/:merchantKey only, else 403) -> Origin on state-changing calls -> session (401) -> role (403; unknown policy denied) -> session CSRF token. Origin precedes identification, so an anonymous call with a foreign Origin gets 403 CSRF_FAILED rather than 401; the spec fixes no order and both refuse. The two public POST routes guard Origin and the pre-login token themselves; they are the only public non-GET routes. Probe: 6th attempt with the correct password from the same IP 429 signin_pair (Retry-After 900); another IP 200; 12 cross-IP failures delay the real user about 3 s and never refuse; Admin/' admin '/ADMIN share one key; unknown and wrong-password 401s are identical; the 21st attempt from one IP 429 signin_ip; the 6th registration 429 register_ip."
+    },
+    {
+      "id": "task:c2-requests-plans-view",
+      "description": "Requests with the daily cap, value-only confirmation, planning runs with the offers_hash re-check, approval with hash and total (RS-12), RequestView deriving the rescue status on each read (RS-36), labels, FU-1, FU-7, FU-8 (route)",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv2ykgn0-01adbf47",
+        "ev:ev-mv2ypyue-019d3b1a",
+        "ev:ev-mv2yoajb-01a1e3b6",
+        "artifact:src/services/plans.js#L336-L377",
+        "artifact:src/services/plans.js#L315-L334",
+        "artifact:src/services/plans.js#L71-L88",
+        "artifact:src/services/view.js#L217-L242"
+      ],
+      "notes": "Approve re-validates the stored plan (hash, cups and lids against the requirements of the planning run, pickups, totals, budget, deadline) before comparing hash and total; a tampered total answered 409 in every walk step that tried it. deriveInput hands derive.js the persisted snake_case rows its header documents, with latestRun scoped to the current requirements version. RS-36 (i)-(iv) held on the live endpoint in my own setups. The planner node cap is a typed 422 planner_limit (FU-1); planning is limited to 10 per customer per 10 min (FU-8 route half)."
+    },
+    {
+      "id": "task:c3-reservations-supplier-admin",
+      "description": "Reserve in one BEGIN IMMEDIATE with (user, key) idempotency, F-TR-1 fallback, live-reservation cap, conditional stock update; supplier orders and inventory with supersession; expiry pass; admin reset/faults/timeline/metrics; ledger and denied-audit rows",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv2ykous-01b934a1",
+        "ev:ev-mv2ymhqs-01a776ec",
+        "ev:ev-mv2yn0fs-01877ed0",
+        "ev:ev-mv2yoajb-01a1e3b6",
+        "artifact:src/services/reservations.js#L103-L202",
+        "artifact:src/services/reservations.js#L76-L89",
+        "artifact:src/services/reservations.js#L258-L283",
+        "artifact:src/services/void-rule.js#L58-L152",
+        "artifact:src/services/supersession.js#L61-L114",
+        "artifact:src/services/orders.js#L427-L494",
+        "ev:ev-mv2z9kns-01a0430f"
+      ],
+      "notes": "Order inside the transaction: key lookup (user, key) -> reservation by (customer, key) when purged (another plan -> 422) -> plan guards -> live cap (not stored, so the key may be retried) -> reservation row -> conditional UPDATE per product with its reserve row -> one order and one created operation per supplier -> stored 201. A unique violation from a concurrent same key is re-resolved after rollback. OUT_OF_STOCK rolls back, then a second transaction marks the plan non_executable, queues a re-plan and stores the 409. The expiry pass is a compare-and-set on status and expires_at; a second pass is a no-op (asserted every walk step). The void rule releases the active reservation, cancels open orders and voids created operations in the caller's transaction. The cap counts reservations, not stock (SEC-C-1). That is the design's SEC-2 as written, and is bounded by the TTL once e4 runs the pass."
+    },
+    {
+      "id": "task:c5-frontend-dashboards",
+      "description": "SPA shell, request page sections, supplier and admin dashboards, api.js (CSRF, 15 s abort), textContent-only DOM, contract fixtures and view-model tests",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv2ykpdu-0144a41b",
+        "ev:ev-mv2ybx3o-01f85564",
+        "artifact:public/js/dom.js#L18-L35",
+        "artifact:public/js/reserve-key.js#L23-L38",
+        "artifact:public/js/api.js#L184-L188",
+        "ev:ev-mv2z9kvi-01c52506"
+      ],
+      "notes": "dom.js refuses on* attributes, style and srcdoc, and href/src/action/formaction values other than app paths, hashes or http(s); text goes through textContent only, and the scan test asserts no innerHTML. The reserve key is stored under reserve:<planVersionId> and reused. Fixture defects (TR-C-3), the 360 px column (TR-C-6) and actions on unregistered routes (TR-C-4) are minor and routed. The URL guard lets /\\host and /<TAB>/host through to another host (SEC-C-4, info: no such value is rendered today)."
+    },
+    {
+      "id": "task:c6-reserve-concurrency-browser",
+      "description": "RS-14 two-process and DB_BUSY tests, HTTP contract test, browser harness with a fresh database and customer per journey, RS-33 journey at 360 and 1280 px",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv2ylocq-01972c4e",
+        "ev:ev-mv2ym79u-01cb8774",
+        "ev:ev-mv2ybx3o-01f85564",
+        "artifact:test/api/contracts.test.js#L40-L47",
+        "artifact:test/browser/journey-infeasible.test.js#L20-L32"
+      ],
+      "notes": "The 6 todo results are fixture defects (live API follows the spec); I accept them as todo for this phase (TR-C-3). The 10 skips are routes that do not exist yet; 'every registered route has a scenario' fails if a route lands without one. The extract-404 tolerance is narrow (exactly that route and one console line per call) and must go once d3 lands (TR-C-4)."
+    },
+    {
+      "id": "phase:c-core-flow",
+      "description": "Phase C goal and its criteria RS-12, RS-14, RS-16, RS-28, RS-30, RS-33, RS-36, the auth contract, SEC-2, F-TR-17, the HTTP contract, npm test and npm run test:browser pass",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv2ybl0f-013c354c",
+        "ev:ev-mv2ybx3o-01f85564",
+        "ev:ev-mv2yoajb-01a1e3b6",
+        "ev:ev-mv2yn0fs-01877ed0",
+        "ev:ev-mv2ypyue-019d3b1a",
+        "ev:ev-mv2yqv56-01c827cf",
+        "ev:ev-mv2yu4qy-019d189e",
+        "artifact:.eccode/artifacts/phase-c/submission.md#criteria-task-evidence",
+        "artifact:.eccode/artifacts/phase-c/submission.md#deviations-from-the-design-with-reasons",
+        "ev:ev-mv2z05jg-016641ca",
+        "ev:ev-mv2z9jtb-01c883bb"
+      ],
+      "notes": "RS-12, RS-14, RS-16, RS-28, RS-30, RS-33 and RS-36 are proved by named tests that pass in my runs and, for RS-14/16/30/36 and RS-12's tamper half, by my own probes. Deviations judged:\n- Planning counted as rate_events kind 'general', key plan:u:<id>: acceptable, since migrations are append-only. FU-15's general limit must exclude these keys.\n- Replay status 201: accepted (TR-C-7).\n- Forced reset and refund_order minimal until phase E: acceptable; no operation can reach a provider state in phase C, and RS-37 is claimed in F.\n- IPv6 full-address keys: SEC-C-2 (I ask for the /64 key, with the security reviewer).\n- The other deviations follow the spec's intent.\nProcess notes: the DIRTY_OWNERSHIP refusal and the lockfile handling were correct. c3 completing with the suite red (one stale c2 case, fixed by c2's one-case rework) is acceptable because the fix is evidenced. The budget raise is a user commit (4300fb9) recorded as dec-mv2xlzls-01709639."
+    },
+    {
+      "id": "lessons",
+      "description": "Every phase-C task's not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv2ytj34-01ec28ff",
+        "ev:ev-mv1eo87o-01c933d5",
+        "artifact:.eccode/artifacts/phase-c/submission.md#lessons"
+      ],
+      "notes": "No phase-C task designs or changes a hook or guard. The installed guard is the repaired version (sha256 d43f4b54...). The guard refused none of my writes during this review; every draft and probe went to the nested record's draft areas as expected."
+    }
   ],
   "findings": [
-    { "id": "TR-C-1", "severity": "minor", "title": "The spec's general per-user limit (300 requests/min, details.limit general) is not enforced and was never assigned in the approved plan",
-      "detail": "Spec Security > Rate limiting and Conventions > Limits require it. No plan task owns it; the submission says so (cross-task note 3, FU-15). My plan review missed this gap. The specific limits are enforced and probed: sign-in, register, requests per day, planning, live reservations. The expensive call (planning) has its own limit, so the remaining exposure is cheap authenticated calls.",
-      "evidence": ["ev:ev-mv2ybl0f-013c354c", "artifact:.eccode/artifacts/plan/followups.md#added-after-phase-c-delivery-lead-2026-10-10"],
-      "recommendation": "Owner: orchestrator (FU-15 rework, backend-engineer, src/auth/rbac.js + tests). Resolved when, before phase E is dispatched, the access hook counts every signed-in call per user in rate_events (kind general, key u:<id>, check and insert in one BEGIN IMMEDIATE), answers 429 RATE_LIMITED details.limit general with Retry-After, never counts plan:u:<id> keys, has a named test, and NFR5 p95 stays under 300 ms." },
-    { "id": "TR-C-2", "severity": "minor", "title": "FU-8's environment variables are not delivered; the planning limit is configurable only through createApp({planRate})",
+    {
+      "id": "SEC-C-1",
+      "severity": "minor",
+      "title": "One reservation can hold every compatible bundle (the SEC-2 cap counts reservations, not stock), and nothing runs the expiry pass in a live server until e4",
+      "detail": "Security's reproduction, which I re-ran (ev:ev-mv2z9jtb-01c883bb):\n- One self-registered customer asks for 500+500 with maxPickups 5 and a large budget.\n- The approved plan uses A, B, D and E (C's lids are 95 mm), and its single reservation holds all of them, within the cap of 1.\n- cafe1's canonical request then has no feasible plan.\n- 35 minutes later the hold is still active, because src/ calls expireDueReservations nowhere (reservations.js#L271; the reconciler is e4).\nMy bound probe (ev:ev-mv2z9kns-01a0430f): one call of the pass expires the reservation, writes 4 expire rows, brings reserved back to 0, and cafe1 plans A+B for 8400 again.\nI judge this minor:\n- RS-FIX-1 has one bundle per supplier, so any reservation takes a large share of the stock.\n- The design accepted 30-minute holds under a count cap.\n- Once e4 runs the pass every tick, the impact is bounded by the TTL.\nThis finding also carries the expiry half of my earlier TR-C-8.",
+      "evidence": [
+        "ev:ev-mv2z1ypi-01dceb2e",
+        "ev:ev-mv2z9jtb-01c883bb",
+        "ev:ev-mv2z9kns-01a0430f",
+        "artifact:src/services/reservations.js#L127-L131",
+        "artifact:src/services/reservations.js#L271-L283"
+      ],
+      "recommendation": "Owners:\n- e4-saga-reconciler (required);\n- the orchestrator with the user (the product decision recorded in RISK-20, owner backend-engineer).\nResolved when:\n- in phase E, a test with a running server process shows a reservation past its TTL expiring with no direct call, through the reconciler tick that main.js starts;\n- AND the decision on a per-reservation cap (bundles per supplier, or a share of on_hand inside the reserve transaction), or a shorter TTL before the first PayPal approval, is recorded either way in RISK-20."
+    },
+    {
+      "id": "SEC-C-2",
+      "severity": "minor",
+      "title": "Throttle keys use the full IPv6 address, so one /64 gives unlimited fresh pair and per-IP budgets (merged with TR-C-5)",
+      "detail": "normalizeIp returns the whole lower-cased IPv6 address, and throttle.js keys on it.\n- Security's probe: 8 failures from 8 addresses of one /64 never hit a limit, and the correct password then gives 200 (ev:ev-mv2z05jg-016641ca S3).\n- Mine: 6 failures from 6 addresses of 2001:db8:1:1::/64, all 401 (ev:ev-mv2ys7g8-01cffb10).\nPer-IP signin_ip and register_ip become per-address for IPv6 clients. The per-username cross-IP delay sleeps per request, so concurrency dilutes it. Seeded accounts (96-bit passwords) and the admin (16+ characters, scrypt) are not at practical risk. Self-registered customers (10-character minimum) are bounded only by scrypt CPU. The default deployment is localhost.",
+      "evidence": [
+        "ev:ev-mv2z05jg-016641ca",
+        "ev:ev-mv2ys7g8-01cffb10",
+        "artifact:src/auth/client-ip.js#L14-L36",
+        "artifact:src/auth/throttle.js#L42-L63"
+      ],
+      "recommendation": "Owner: the orchestrator, folded into the FU-15 rework (backend-engineer, src/auth/**). Resolved when IPv6 addresses are mapped to their /64 for the sign-in and register throttle keys (IPv4 and ::ffff: unchanged), and a named test shows 5 failures spread over 5 addresses of one /64 making the 6th attempt get 429. This must land before phase E is dispatched."
+    },
+    {
+      "id": "SEC-C-3",
+      "severity": "minor",
+      "title": "The general per-user limit (300 requests/min) is absent and was never assigned in the approved plan, and an unchanged confirm still writes a new requirements version (merged with TR-C-1)",
+      "detail": "Spec Security > Rate limiting and Conventions > Limits require the general limit; no plan task owns it (FU-15; my plan review missed the gap). Security measured 300 confirms in one minute writing 300 requirements versions and 300 audit rows, none limited, and 600 RequestView reads unthrottled (ev:ev-mv2z05jg-016641ca S9). confirmRequirements inserts a version even when the values equal the latest one; sameRequirements gates only supersession (requests.js#L215-L236). The expensive call (planning) has its own limit (FU-8), and the specific limits hold.",
+      "evidence": [
+        "ev:ev-mv2z05jg-016641ca",
+        "ev:ev-mv2ybl0f-013c354c",
+        "artifact:src/services/requests.js#L215-L236",
+        "artifact:.eccode/artifacts/plan/followups.md#added-after-phase-c-delivery-lead-2026-10-10"
+      ],
+      "recommendation": "Owner: the orchestrator (the FU-15 rework, backend-engineer; it must also own src/services/requests.js for point 2). Resolved when, before phase E is dispatched:\n1. The access hook counts every signed-in call per user in rate_events (kind general, key u:<id>, check and insert in one BEGIN IMMEDIATE), answers 429 RATE_LIMITED with details.limit general and Retry-After, and never counts plan:u:<id> keys. A named test shows the 301st call in a minute refused, and NFR5 p95 stays under 300 ms.\n2. A confirm whose values equal the latest version returns that version without inserting a row.\nThis may be merged with FU-14."
+    },
+    {
+      "id": "TR-C-2",
+      "severity": "minor",
+      "title": "FU-8's environment variables are not delivered; the planning limit is configurable only through createApp({planRate})",
       "detail": "The limit itself works (10 per customer per 10 min, 429 details.limit plan) and is tested. RS_PLAN_RATE_LIMIT and RS_PLAN_RATE_WINDOW_MIN need src/config.js and .env.example together, and no later task owns both (FU-14).",
-      "evidence": ["ev:ev-mv2ybl0f-013c354c", "artifact:src/app.js#L62-L69"],
-      "recommendation": "Owner: orchestrator (FU-14 rework, which may be merged with FU-15). Resolved when, before phase D is dispatched, both names are parsed with bounds (1-1000 and 1-1440, defaults 10 and 10) into planRateLimit/planRateWindowMin, listed in .env.example, covered by a RISK-19 test, and the env-example scan stays green." },
-    { "id": "TR-C-3", "severity": "minor", "title": "Six contract fixtures disagree with the live API and are reported as todo",
+      "evidence": [
+        "ev:ev-mv2ybl0f-013c354c",
+        "artifact:src/app.js#L62-L69"
+      ],
+      "recommendation": "Owner: orchestrator (FU-14 rework, which may be merged with FU-15). Resolved when, before phase D is dispatched, both names are parsed with bounds (1-1000 and 1-1440, defaults 10 and 10) into planRateLimit/planRateWindowMin, listed in .env.example, covered by a RISK-19 test, and the env-example scan stays green."
+    },
+    {
+      "id": "TR-C-3",
+      "severity": "minor",
+      "title": "Six contract fixtures disagree with the live API and are reported as todo",
       "detail": "Labels are missing at the top level of four plan/approve/reserve fixtures, canMarkReady is true before execution, and the timeline cursor is typed as an integer. In each case the live API follows the spec. The UI reads these values from live responses, not fixtures: the cursor is passed through as an opaque string (public/js/api.js#L187), and buttons follow the live canMarkReady. So the defects affect only test data used by c5's view-model tests. Marking them todo keeps them visible; fixing them now would need a c5 rework for test data only.",
-      "evidence": ["ev:ev-mv2ybl0f-013c354c", "artifact:test/api/contracts.test.js#L40-L47"],
-      "recommendation": "Owner: d4-frontend-extraction (fixtures), then d5-extraction-contract-browser (removes KNOWN_FIXTURE_DEFECTS), per FU-13. Resolved when phase D's npm test shows 0 todo from contracts.test.js and the six scenarios pass as normal tests. The 10 skips are resolved per FU-18 when each route lands." },
-    { "id": "TR-C-4", "severity": "minor", "title": "The UI calls or offers routes that do not exist yet: POST /extract (404 tolerated by the journey) and 'Delete request' (DELETE /api/requests/:id, 405)",
+      "evidence": [
+        "ev:ev-mv2ybl0f-013c354c",
+        "artifact:test/api/contracts.test.js#L40-L47"
+      ],
+      "recommendation": "Owner: d4-frontend-extraction (fixtures), then d5-extraction-contract-browser (removes KNOWN_FIXTURE_DEFECTS), per FU-13. Resolved when phase D's npm test shows 0 todo from contracts.test.js and the six scenarios pass as normal tests. The 10 skips are resolved per FU-18 when each route lands."
+    },
+    {
+      "id": "TR-C-4",
+      "severity": "minor",
+      "title": "The UI calls or offers routes that do not exist yet: POST /extract (404 tolerated by the journey) and 'Delete request' (DELETE /api/requests/:id, 405)",
       "detail": "The request page calls extract after creating a request and ignores the 404. RS-33's journey tolerates exactly that 404 (withoutUnregisteredExtract). The request page also shows a 'Delete request' button (public/js/components/payments.js#L43); its route is not registered, so a click answers 405 METHOD_NOT_ALLOWED. FU-16 has no owner yet.",
-      "evidence": ["ev:ev-mv2ybx3o-01f85564", "artifact:test/browser/journey-infeasible.test.js#L20-L32", "artifact:public/js/components/payments.js#L43"],
-      "recommendation": "Owner: orchestrator. It must assign FU-16 (a one-file test-engineer rework after d3, or g3), and the phase-D task that registers DELETE /api/requests/:id. Resolved when both routes exist, the tolerance helper is removed, and a journey asserts no 404/405 from any UI action." },
-    { "id": "TR-C-5", "severity": "minor", "title": "Throttle keys use the full IPv6 address, so a client inside one /64 can rotate past the per-IP limits",
-      "detail": "My probe sent six failed sign-ins for cafe1 from six addresses of 2001:db8:1:1::/64, and all six answered 401: no pair or IP refusal (ev:ev-mv2ys7g8-01cffb10). signin_ip (20/15 min) and register_ip (5/h) are therefore per address for IPv6 clients. The per-username cross-IP delay still applies, and the admin password is at least 16 characters of scrypt. The default deployment is localhost, without a proxy.",
-      "evidence": ["ev:ev-mv2ys7g8-01cffb10", "artifact:src/auth/client-ip.js#L29-L36"],
-      "recommendation": "Owner: security-reviewer decides, and the orchestrator opens a src/auth/** rework if needed. Resolved when IPv6 keys are truncated to the /64 for the IP and pair limits (with a named test), or the security reviewer records an explicit acceptance for this deployment." },
-    { "id": "TR-C-6", "severity": "minor", "title": "At 360 px the 'Original wording' column of 'What you need' is clipped (header reads 'Or')",
+      "evidence": [
+        "ev:ev-mv2ybx3o-01f85564",
+        "artifact:test/browser/journey-infeasible.test.js#L20-L32",
+        "artifact:public/js/components/payments.js#L43"
+      ],
+      "recommendation": "Owner: orchestrator. It must assign FU-16 (a one-file test-engineer rework after d3, or g3), and the phase-D task that registers DELETE /api/requests/:id. Resolved when both routes exist, the tolerance helper is removed, and a journey asserts no 404/405 from any UI action."
+    },
+    {
+      "id": "TR-C-6",
+      "severity": "minor",
+      "title": "At 360 px the 'Original wording' column of 'What you need' is clipped (header reads 'Or')",
       "detail": "Seen in test/browser/out/journey-infeasible-360.png from my browser run. The page has no horizontal scroll, but the column can be read only by scrolling inside the table.",
-      "evidence": ["ev:ev-mv2ybx3o-01f85564"],
-      "recommendation": "Owner: d4-frontend-extraction (FU-17), verified by g1. Resolved when every column of the table is readable at 360 px without scrolling inside the table, asserted in a 360 px journey." },
-    { "id": "TR-C-7", "severity": "info", "title": "Idempotent replay answers the stored 201 (the route table says 200 for a replay)",
+      "evidence": [
+        "ev:ev-mv2ybx3o-01f85564"
+      ],
+      "recommendation": "Owner: d4-frontend-extraction (FU-17), verified by g1. Resolved when every column of the table is readable at 360 px without scrolling inside the table, asserted in a 360 px journey."
+    },
+    {
+      "id": "TR-C-7",
+      "severity": "info",
+      "title": "Idempotent replay answers the stored 201 (the route table says 200 for a replay)",
       "detail": "Conventions > Idempotency says the stored status and body are replayed, and the route table says '201 (new) or 200 (replay)'. c3 follows Conventions: it replays the stored 201 with Idempotent-Replayed: true, and answers 200 on the purged-key path. I accept this. Conventions is the normative rule; a byte-identical replay is the safer client contract; and clients detect a replay by the header.",
-      "evidence": ["ev:ev-mv2yn0fs-01877ed0", "artifact:src/services/reservations.js#L65-L72"],
-      "recommendation": "Owner: orchestrator. At the next spec touch, align the route table row to 'stored status (201) with Idempotent-Replayed, 200 after the key purge'. e6's contract fixtures assert that." },
-    { "id": "TR-C-8", "severity": "info", "title": "Nothing drains the re-plan queue or runs the expiry pass yet (by plan: e4 wires both, f1 builds the drain)",
-      "detail": "After a supplier refusal the request reads 'replanning' (row 4a, nextStep WAIT), and the page offers no Plan button until a drain stores a new run. An expired reservation keeps its stock until the expiry pass runs; meanwhile confirm answers RESERVATION_EXPIRED. A requirements change self-heals, because the UI plans right after confirm. Both are FU-19 items and not phase-C criteria.",
-      "evidence": ["ev:ev-mv2ypyue-019d3b1a", "artifact:src/services/reservations.js#L271-L283"],
-      "recommendation": "Owner: e4-saga-reconciler (expiry pass and drain calls at startup and every tick) and f1-supersession-refusal-expiry (the drain). Resolved when the phase-E/F tests show a refused request reaching a new proposed version, and an expired reservation released, without a customer action." }
+      "evidence": [
+        "ev:ev-mv2yn0fs-01877ed0",
+        "artifact:src/services/reservations.js#L65-L72"
+      ],
+      "recommendation": "Owner: orchestrator. At the next spec touch, align the route table row to 'stored status (201) with Idempotent-Replayed, 200 after the key purge'. e6's contract fixtures assert that."
+    },
+    {
+      "id": "TR-C-8",
+      "severity": "info",
+      "title": "Nothing drains the re-plan queue yet (by plan: e4 wires the call, f1 builds the drain)",
+      "detail": "After a supplier refusal the request reads \"replanning\" (row 4a, nextStep WAIT), and the page offers no Plan button until a drain stores a new run. A requirements change self-heals, because the UI plans right after confirm. The expiry half of this item moved to SEC-C-1.",
+      "evidence": [
+        "ev:ev-mv2ypyue-019d3b1a",
+        "artifact:src/services/supersession.js#L27-L32"
+      ],
+      "recommendation": "Owner: e4-saga-reconciler (drain calls) and f1-supersession-refusal-expiry (the drain). Resolved when phase-F tests show a refused request reaching a new proposed version without a customer action."
+    },
+    {
+      "id": "SEC-C-4",
+      "severity": "info",
+      "title": "dom.js isAllowedUrl accepts /\\host and /<TAB>/host, which browsers resolve to another host",
+      "detail": "Confirmed: setAttr accepts \"/\\evil.example/x\", \"/\\t/evil.example/x\" and \"/\\n/evil.example/x\", which WHATWG URL resolves to evil.example; \"//evil.example/x\" is refused (ev:ev-mv2z9kvi-01c52506, ev:ev-mv2z05jg-016641ca S11). There is no exposure today: every href in public/** is a constant or a numeric hash route. Any absolute https URL is accepted by design anyway.",
+      "evidence": [
+        "ev:ev-mv2z9kvi-01c52506",
+        "artifact:public/js/dom.js#L22-L27"
+      ],
+      "recommendation": "Owner: the first of d4-frontend-extraction or e5-frontend-payments to touch dom.js, and in any case before e5 renders a server-supplied URL. Resolved when values containing a backslash, whitespace or a C0 control are refused (or are resolved with new URL and required to be same-origin unless absolute http(s) is intended), with a unit test."
+    },
+    {
+      "id": "SEC-C-5",
+      "severity": "info",
+      "title": "Proxy trust is all-or-nothing and set by the operator",
+      "detail": "Behind a proxy with RS_TRUST_PROXY=0, every client shares the proxy address, so 20 failures lock everyone out for 15 minutes (signin_ip). Without a proxy and with RS_TRUST_PROXY=1, clients choose their own key. README line 84 tells proxied deployments to set the flag (ev:ev-mv2z05jg-016641ca S3).",
+      "evidence": [
+        "ev:ev-mv2z05jg-016641ca",
+        "artifact:src/auth/client-ip.js#L29-L36"
+      ],
+      "recommendation": "Owner: e1-payment-adapters (config) or g2 (docs). Resolved when a startup warning is logged for https RS_PUBLIC_URL with RS_TRUST_PROXY=0 and the README states both failure modes, or the owner records why not."
+    },
+    {
+      "id": "SEC-C-6",
+      "severity": "info",
+      "title": "The webhook route reaches its handler with no session and no CSRF; e3 must verify the signature before any write and apply 60/min per IP",
+      "detail": "The signature policy works as the routing contract says (ev:ev-mv2z05jg-016641ca S5; my RBAC probe ev:ev-mv2yqv56-01c827cf shows any other signature route refused).",
+      "evidence": [
+        "ev:ev-mv2z05jg-016641ca",
+        "ev:ev-mv2yqv56-01c827cf",
+        "artifact:src/auth/rbac.js#L47-L52"
+      ],
+      "recommendation": "Owner: e3-webhooks; the phase-E reviewers re-check it. Resolved when e3's tests show the cheap pre-checks, signature verification before any write, and 60 requests per IP per minute (429, no row written)."
+    },
+    {
+      "id": "SEC-C-7",
+      "severity": "info",
+      "title": "Phase-B carry-overs: SEC-B-2 and SEC-B-4 remain remediated; SEC-B-7 (scrypt N = 2^14) unchanged, as accepted",
+      "detail": "recursive_triggers is ON and the server timeouts and maxConnections are in place (code reading by security; I verified both by probe in phase B, rev-mv1k04zq-01814d87).",
+      "evidence": [
+        "ev:ev-mv2z05jg-016641ca"
+      ],
+      "recommendation": "Owner: none. No action. SEC-B-7 stays an accepted demo setting."
+    }
   ],
   "resolvedFindings": [],
-  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"]
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
 }
