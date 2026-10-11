@@ -697,6 +697,35 @@ describe('ARCH-23: the lease fences a stalled executor', () => {
   });
 });
 
+describe('RS-31(a): the request log line names the session user of the public PayPal routes', () => {
+  test('RS-31(a): http.request for GET /api/paypal/return and /cancel carries the identified userId (and role); an anonymous call carries neither', async () => {
+    const h = await start();
+    const w = await world(h, { authorize: [] });
+    const created = await w.cafe1.post(`/api/orders/${w.orders.A}/paypal/create`, {});
+    const approved = await postTo(`${created.json.approvalUrl}/approve`);
+    const target = new URL(approved.location);
+    const requestLines = (route) => h.logEntries().filter((l) => l.msg === 'http.request' && l.route === route);
+
+    const anonymous = await createClient(h.request).get(target.pathname + target.search);
+    assert.equal(anonymous.status, 303);
+    const [anon] = requestLines(target.pathname).slice(-1);
+    assert.equal(anon.status, 303);
+    assert.equal('userId' in anon, false, 'an anonymous call logs no userId');
+    assert.equal('role' in anon, false);
+
+    const returned = await w.cafe1.get(target.pathname + target.search);
+    assert.equal(returned.status, 303);
+    const [line] = requestLines(target.pathname).slice(-1);
+    assert.equal(line.userId, w.cafe1.user.id, 'the session user of the return is in the server log');
+    assert.equal(line.role, 'customer');
+    assert.deepEqual(Object.keys(line).filter((k) => /id$/i.test(k) && k !== 'requestId').sort(), ['userId'], 'no other identifier');
+
+    const cancel = await w.cafe1.get(`/api/paypal/cancel?token=${created.json.approvalUrl.split('/').pop()}`);
+    assert.equal(cancel.status, 303);
+    assert.equal(requestLines('/api/paypal/cancel').slice(-1)[0].userId, w.cafe1.user.id);
+  });
+});
+
 describe('configuration and shutdown', () => {
   test('ARCH-26: the lease must be at least 3 x the provider timeout (the configuration refuses a smaller one)', async () => {
     const { loadConfig } = await import('../../src/config.js');

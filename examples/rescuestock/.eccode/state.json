@@ -1,6 +1,6 @@
 {
-  "seq": 999,
-  "lastHash": "93c50f4e4f349fd83d082033a8f12123a603c447ba646e16438974c726325a7e",
+  "seq": 1002,
+  "lastHash": "1240e6b5a4e34533ec6389b29c73c06748cd1432479ac34ad54d903d6989213d",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -6280,9 +6280,24 @@
         "command": "ls test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "backend-engineer",
+        "at": "2026-10-11T13:22:17.937Z",
+        "baseCommit": "e470ce7c773be988881f9735d05d660b5230ee72",
+        "runId": "run-mv3ur045-01ed8fde",
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.839,
+            "matched": 32,
+            "priority": 34,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -6300,6 +6315,12 @@
           "by": "orchestrator",
           "at": "2026-10-11T13:21:48.916Z",
           "reason": "e6 handoff ho-mv3uq93d-0114f12e: the request log line of the public GET /api/paypal/return and /cancel routes carries no userId, because src/app.js copies ctx.user into the log state before the handler identifies the user; RS-31(a) requires the session's user id in the server log"
+        },
+        {
+          "event": "claimed",
+          "by": "backend-engineer",
+          "at": "2026-10-11T13:22:17.937Z",
+          "attempt": 1
         }
       ],
       "completedBy": "backend-engineer",
@@ -6365,9 +6386,24 @@
         "command": "ls test/unit/frontend/payments.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "frontend-engineer",
+        "at": "2026-10-11T13:22:18.447Z",
+        "baseCommit": "e470ce7c773be988881f9735d05d660b5230ee72",
+        "runId": "run-mv3ur0b1-014e660a",
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.81,
+            "matched": 20,
+            "priority": 20.5,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -6385,6 +6421,12 @@
           "by": "orchestrator",
           "at": "2026-10-11T13:21:49.234Z",
           "reason": "e6 handoff ho-mv3uq93d-0114f12e: after the purchase is confirmed the request page still shows the stale notice 'You are back from PayPal… Waiting for PayPal to confirm' (360 px journey screenshot)"
+        },
+        {
+          "event": "claimed",
+          "by": "frontend-engineer",
+          "at": "2026-10-11T13:22:18.447Z",
+          "attempt": 1
         }
       ],
       "completedBy": "frontend-engineer",
@@ -16915,6 +16957,26 @@
       "tree": "9fa8cbfc13f30d4dfe574a8c5fc3c63d4fe9e66aebd8d5ec5ec0befbac861a5b",
       "recordedBy": "delivery-lead",
       "at": "2026-10-11T13:21:13.706Z"
+    },
+    "ev-mv3uru6g-012c91d5": {
+      "id": "ev-mv3uru6g-012c91d5",
+      "kind": "command",
+      "label": "RED first: execute.test.js RS-31(a) log userId (expected to fail before the app.js fix)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-name-pattern=RS-31 test/api/execute.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 871,
+      "log": ".eccode/evidence/ev-mv3uru6g-012c91d5.log",
+      "logSha256": "d967e55a8de01ec2b67dc0510c7f8b6a029821b9eb7db10f968d45455988294d",
+      "logFileSha256": "d660c7a98fde291b74f56711050dc65d605b5892955b55f2c6194f7c08ac1701",
+      "outputTail": "        async Test.run (node:internal/test_runner/test:1054:7)\n        async Promise.all (index 0)\n        async Suite.run (node:internal/test_runner/test:1442:7)\n        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)\n      ...\n    1..1\nnot ok 1 - RS-31(a): the request log line names the session user of the public PayPal routes\n  ---\n  duration_ms: 583.932319\n  type: 'suite'\n  location: '/home/user/ECCode/examples/rescuestock/test/api/execute.test.js:700:1'\n  failureType: 'subtestsFailed'\n  error: '1 subtest failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 799.497205\n",
+      "gate": null,
+      "task": "e4-saga-reconciler",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T13:22:28.474Z"
     }
   },
   "reviews": {
