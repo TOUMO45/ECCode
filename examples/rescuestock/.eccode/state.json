@@ -1,6 +1,6 @@
 {
-  "seq": 1481,
-  "lastHash": "86c836deec8ed1fe10dbcfea63ba1ea42b5a3fd0c15c46079b54e312ba6707ee",
+  "seq": 1487,
+  "lastHash": "758c311c251cbd1b2eabde0f30baa06f062a5acdfaf8a25e79f952119fcbb8eb",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -5150,7 +5150,7 @@
     "phase:g-release": {
       "id": "phase:g-release",
       "kind": "phase",
-      "status": "pending",
+      "status": "in_progress",
       "iterations": 0,
       "authors": [],
       "submissions": [],
@@ -5159,7 +5159,7 @@
       "approvedBy": null,
       "approvedSubmission": null,
       "escalation": null,
-      "startedAt": null,
+      "startedAt": "2026-10-11T19:28:47.248Z",
       "approvedAt": null
     },
     "phase:rework-1": {
@@ -8222,10 +8222,32 @@
         "command": "ls test/unit/frontend/a11y-labels.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
-      "history": [],
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "frontend-engineer",
+        "at": "2026-10-11T19:29:38.195Z",
+        "baseCommit": "e348ead164b9b47dec7ffec1aaa8b183416c6d94",
+        "runId": "run-mv47vmjp-0132e202",
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.801,
+            "matched": 13,
+            "priority": 26,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "frontend-engineer",
+          "at": "2026-10-11T19:29:38.195Z",
+          "attempt": 1
+        }
+      ],
       "completedBy": null,
       "handoffId": null
     },
@@ -39194,8 +39216,14 @@
       "task": null,
       "gate": "phase:f-compensation",
       "startedAt": "2026-10-11T18:56:11.948Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T19:28:46.981Z",
+      "durationMinutes": 32.58,
+      "costUsd": null,
+      "tokens": 98553,
+      "note": "resumed technical-reviewer: cumulative 440439 minus earlier 341886; phase F approved rev-mv47u18k-01c284af",
+      "usageReported": true
     },
     "run-mv4744vq-01ae2fec": {
       "id": "run-mv4744vq-01ae2fec",
@@ -39233,6 +39261,15 @@
       "task": null,
       "gate": "phase:rework-6",
       "startedAt": "2026-10-11T19:27:36.021Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv47vmjp-0132e202": {
+      "id": "run-mv47vmjp-0132e202",
+      "agent": "frontend-engineer",
+      "task": "g1-frontend-a11y-labels",
+      "gate": null,
+      "startedAt": "2026-10-11T19:29:20.215Z",
       "status": "running",
       "attempt": 1
     }
@@ -39937,6 +39974,16 @@
       "lessons": [],
       "at": "2026-10-11T19:07:51.848Z",
       "by": "orchestrator"
+    },
+    "dec-mv47vma5-01d0d177": {
+      "id": "dec-mv47vma5-01d0d177",
+      "title": "FU-50: completed voids of a closed plan are not listed in If something fails",
+      "decision": "No view change. The If something fails panel lists outstanding voids and refunds of the current plan with their outcome, as spec Frontend section 7 states; completed voids of a closed plan are not listed. The verification report states this limit, and g2's runbook notes that an admin can see past operations. Revisit after the hackathon if users ask.",
+      "rationale": "The spec does not require completed voids of a closed plan to stay visible; adding them means a server view-shape change in view.js (no remaining owner) plus contract fixtures and browser checks late in phase G, a cross-task integration risk for a secondary display. The buyer already sees the refusal reason and that the new plan needs approval; money state stays correct and auditable.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T19:29:19.948Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -39949,8 +39996,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1672.96,
-    "tokens": 20158361
+    "runtimeMinutes": 1705.54,
+    "tokens": 20256914
   },
   "delivery": null,
   "reworks": [
