@@ -1,6 +1,6 @@
 {
-  "seq": 1081,
-  "lastHash": "91d9dcb31645efc37b67513a38ca26b9dfdbd7bdd1cc77aa3651bf448ea38403",
+  "seq": 1083,
+  "lastHash": "96fa636b494a95aeebe126d74d8743824a8c222965a4bdd214cf1ee9512b98a4",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -18365,6 +18365,48 @@
       "task": null,
       "recordedBy": "security-reviewer",
       "at": "2026-10-11T14:01:58.666Z"
+    },
+    "ev-mv3wasl0-0199c6ae": {
+      "id": "ev-mv3wasl0-0199c6ae",
+      "kind": "command",
+      "label": "SEC-E probe P-AUTHZ: RS-27 foreign tokens/orders/plans, roles, CSRF scope, RS-19 amount integrity, stale plan",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/sec-e-authz-amount.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1680,
+      "log": ".eccode/evidence/ev-mv3wasl0-0199c6ae.log",
+      "logSha256": "bf9d1a9279085c45c43610198f8bd89176474ae27810f1c1b38ee1817c99cd63",
+      "logFileSha256": "529e484b456b983898ce33e847a4c8340e20cff7d6631ac6addb1df0253b38c4",
+      "outputTail": "PASS AMT-1 create with a tampered body: 200; the provider order has the supplier-order total, USD, the order's own merchant and the app's URLs :: {\"status\":200,\"amount\":4000,\"total\":4000,\"cur\":\"USD\",\"mk\":\"A\",\"ret\":\"http://localhost:40589/api/paypal/return\"}\nPASS AMT-1 the PayPal-Request-Id is the server key so:<id>:create_order:1, not the client value :: so:1:create_order:1\nPASS AUTHZ-1 another customer with an APPROVED foreign token: [REDACTED] 404, cancel 404, zero provider calls, operation unchanged, no ok audit :: return=404 cancel=404 calls=0\nPASS AUTHZ-2 supplier 403, admin 403 (return and cancel), anonymous 303 to sign-in, no call, no change :: 403/403/403/303/303 /#/signin?notice=paypal-return\nPASS AUTHZ-3 malformed tokens 400, missing 400, unknown 404; no provider call :: [400,400,400,400,400,400] missing=400 unknown=404\nPASS AUTHZ-3 a repeated token parameter is not a 500 :: 404\nPASS AUTHZ-4 another customer on cafe1's order, plan and request: 404 everywhere, no provider call, no ok audit, plan still approved :: {\"create\":404,\"receipt\":404,\"execute\":404,\"abandon\":404,\"view\":404}\nPASS AUTHZ-5 supplier/admin 403 and anonymous 401 on buyer payment routes, no provider call :: {\"supplierCreate\":403,\"adminCreate\":403,\"supplierExecute\":403,\"adminAbandon\":403,\"anonCreate\":401}\nPASS CSRF-1 paypal/create without a CSRF token or from another Origin, abandon with a wrong token: 403, no provider call :: 403/403/403\nPASS CSRF-2 the exemptions do not extend: POST on the return route, GET on create, PUT on the webhook are not routed (404/405) :: 405/405/405\nPASS AMT-2 own return with tampered query: 303 to the fixed SPA path only; authorization amount = supplier-order total :: /#/requests/1?paypal=returned&order=1\nPASS AMT-3 execute with a tampered body: captures equal the authorization, the provider order and the supplier-order totals; plan executed :: {\"caps\":[{\"amount_cents\":4000,\"auth_cents\":4000,\"order_cents\":4000},{\"amount_cents\":4400,\"auth_cents\":4400,\"order_cents\":4400}],\"totals\":[4000,4400]}\nPASS AMT-3 payment_operations.amount_cents (used for refunds) equals supplier_orders.total_cents for every operation :: [{\"amount_cents\":4000,\"total_cents\":4000},{\"amount_cents\":4400,\"total_cents\":4400}]\nPASS AUTHZ-6 receipt of another customer's executed order: 404 :: 404\nPASS AMT-4 paypal/create on an order of a superseded plan (price changed after approval): 409 PLAN_SUPERSEDED, no provider call :: patch=200 {\"items\":[{\"productId\":3,\"name\":\"Supplier A bundle: 100 cups + 100 lids\",\"kind\":\"bundle\",\"capacityMl\":250,\"diameterMm\":90,\"onHand\":1,\"reserved\":0,\"offer\":{\"id\":6,\"version\":2,\"priceCents\":3100,\"prepFee 409 PLAN_SUPERSEDED\nALL EXPECTATIONS MET\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "5f628506540c9cbe22846492e482c9a5d765f40d926ad33ae47e490e34153603",
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-11T14:05:12.526Z"
+    },
+    "ev-mv3wcx8e-0176eb51": {
+      "id": "ev-mv3wcx8e-0176eb51",
+      "kind": "command",
+      "label": "SEC-E probe P-RACE: concurrent create/return/cancel/abandon/execute/webhook/two reconcilers, money invariants",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/sec-e-race.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7067,
+      "log": ".eccode/evidence/ev-mv3wcx8e-0176eb51.log",
+      "logSha256": "c3d8470c07f7902049f9d7ac47042fc954908b42605d2e890b768a6f0ca58229",
+      "logFileSha256": "ce7385a00180e5693dcb817129e651b937dabde419854002a34392bc740075b3",
+      "outputTail": "PASS R1 five concurrent returns + a cancel: all 303, exactly one authorize, operation authorized :: authorize=1 op=authorized\nPASS R2 round 1 return vs abandon (303/200): money invariants hold (plan non_executable)\nPASS R2 round 1: plan abandoned, one authorize per order at most, no capture :: A=voided B=voided\nPASS R2 round 2 return vs abandon (200/303): money invariants hold (plan non_executable)\nPASS R2 round 2: plan abandoned, one authorize per order at most, no capture :: A=voided B=voided\nPASS R2 round 3 return vs abandon (303/200): money invariants hold (plan non_executable)\nPASS R2 round 3: plan abandoned, one authorize per order at most, no capture :: A=voided B=voided\nPASS R2 round 4 return vs abandon (200/303): money invariants hold (plan non_executable)\nPASS R2 round 4: plan abandoned, one authorize per order at most, no capture :: A=voided B=voided\nPASS R3 round 1 execute vs abandon (202/409): money invariants hold (plan executed)\nPASS R3 round 1: exactly one of them won (execute); the loser is 409; captures 2 :: statuses=202/409 captures=2 voids=0\nPASS R3 round 2 execute vs abandon (202/409): money invariants hold (plan executed)\nPASS R3 round 2: exactly one of them won (execute); the loser is 409; captures 2 :: statuses=202/409 captures=2 voids=0\nPASS R3 round 3 execute vs abandon (200/409): money invariants hold (plan non_executable)\nPASS R3 round 3: exactly one of them won (abandon); the loser is 409; captures 0 :: statuses=200/409 captures=0 voids=2\nPASS R3 round 4 execute vs abandon (200/409): money invariants hold (plan non_executable)\nPASS R3 round 4: exactly one of them won (abandon); the loser is 409; captures 0 :: statuses=200/409 captures=0 voids=2\nPASS R4 ten concurrent executes: one 202, nine 200 {claimed:false}, one capture per order :: 202=1 captures=2\nPASS R4: money invariants hold (plan executed)\nPASS R5 webhook + two reconcilers + abandon on a pending authorization: exactly one void call row and one void sent; A voided :: webhook=200/ignored voidRows=1 voidsSent=1 A=voided\nPASS R5: money invariants hold (plan non_executable)\nPASS R6 lost authorize + abandon + two racing reconcilers: one authorization, one void sent, A voided :: a0=unknown voids=1 A=voided\nPASS R6: money invariants hold (plan non_executable)\nALL EXPECTATIONS MET\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "5f628506540c9cbe22846492e482c9a5d765f40d926ad33ae47e490e34153603",
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-11T14:06:51.852Z"
     }
   },
   "reviews": {
