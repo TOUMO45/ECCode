@@ -1,6 +1,6 @@
 {
-  "seq": 915,
-  "lastHash": "7ca43509f865d142253888ea0b6a05a5d255f4195b00a0dcf7c4909cf21c6c46",
+  "seq": 923,
+  "lastHash": "36cf917e111621d6a3d70a46b9e7c9b5c411d65e346ee35c572141a79c4c8ac1",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -4180,10 +4180,62 @@
     "phase:rework-4": {
       "id": "phase:rework-4",
       "kind": "phase",
-      "status": "in_progress",
+      "status": "submitted",
       "iterations": 0,
-      "authors": [],
-      "submissions": [],
+      "authors": [
+        "delivery-lead"
+      ],
+      "submissions": [
+        {
+          "id": "sub-mv3t8kff-017759bd",
+          "actor": "delivery-lead",
+          "at": "2026-10-11T12:39:29.644Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/rework-4/submission.md",
+              "sha256": "9c51accf83ac85f6b5ab637b097375b03a4dc7e26dd4f64befb58329b838d274"
+            },
+            {
+              "path": "src/db/migrations/006_autoincrement_ids.sql",
+              "sha256": "7ad364582ad653c3c7b378995e061590a5c88d4920f4a7e867e549a46b7081af"
+            },
+            {
+              "path": "src/auth/general-limit.js",
+              "sha256": "470ba04b181ecce7e9e9227853cc24e2a820a109a6466a8500c00809e8369d91"
+            },
+            {
+              "path": "src/auth/rbac.js",
+              "sha256": "2d39fe358800e677eba5618d8e398a5a8fc08dc039a26087fd5e9203c298afaf"
+            },
+            {
+              "path": "test/api/id-reuse.test.js",
+              "sha256": "a8e21b74d8ee552eb142cbc205418e860cfe242d87fad700b76f5a135c0b3249"
+            },
+            {
+              "path": "test/unit/auth/general-limit-busy.test.js",
+              "sha256": "47ccca2e34efa9388e6d4c9cef4f99aa101375452860c1f5d330a4f7bc63b853"
+            },
+            {
+              "path": "test/unit/db/migrate-006.test.js",
+              "sha256": "fe426ddd9dfc7b1a7eea6cd7c1664dd484551ba85d31a780b96abf17ec17f4f5"
+            },
+            {
+              "path": "test/unit/db/migrate.test.js",
+              "sha256": "c6329ccb4e9f308595c9cbc584b5b9b037a333cc0a95429a40513a3d554588d2"
+            },
+            {
+              "path": "test/unit/db/open-race.test.js",
+              "sha256": "9d8832b3a0936ef285d6b01f5568fa509c6e8a25680ba018c0214933721c2498"
+            },
+            {
+              "path": "test/unit/ai/gate.test.js",
+              "sha256": "b13f0042a82d41337336c99b4da760ec296cf71cfae4bdce825806f01b545724"
+            }
+          ],
+          "respondsTo": null,
+          "notes": "rework-4 (FU-23/TR-D-3, SEC-R-1), handoffs ho-mv3swih9-01bb4f5b and ho-mv3t23oc-01dfb735 (scope extended with rbac.js and gate.test.js; second claim's filesChanged names 3 files because the first claim's 6 were in the snapshot base 507da7e). Mine: green set 120/120 ev:ev-mv3t3hzo-014c57e6; npm test 2017/2000 pass/2 fail/15 skipped ev:ev-mv3t54i6-01a9b844 (e6 route-table row; uploads-retention startApp timer test, e4 main.js, green alone ev:ev-mv3t6bo7-015fdd78); browser 8/8 ev:ev-mv3t65gk-01e2adc7."
+        }
+      ],
       "reviews": [],
       "openFindings": [],
       "approvedBy": null,
@@ -15833,6 +15885,87 @@
       "tree": "a3a038df0c8e12acaad80e7392632b4c6707af75fbba5b7608981b09bfe24b2d",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T12:32:29.140Z"
+    },
+    "ev-mv3t3hzo-014c57e6": {
+      "id": "ev-mv3t3hzo-014c57e6",
+      "kind": "command",
+      "label": "rework-4 green set from ho-mv3t23oc-01dfb735, delivery-lead re-run on the current tree",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/id-reuse.test.js test/unit/db/migrate-006.test.js test/unit/db/migrate.test.js test/unit/db/triggers.test.js test/unit/db/open-race.test.js test/unit/db/connection.test.js test/unit/auth/general-limit-busy.test.js test/unit/auth/general-limit.test.js test/unit/auth/rbac.test.js test/unit/ai/gate.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 6891,
+      "log": ".eccode/evidence/ev-mv3t3hzo-014c57e6.log",
+      "logSha256": "ef08ed86cf9a78a4073a756576bd2b55319823317e6af1f6beac2de0a5f5d40d",
+      "logFileSha256": "6ad77902449241d8a3dac72a02b5e842e27043cd13f11b68789018bf44c4590f",
+      "outputTail": "  duration_ms: 5.623263\n  type: 'test'\n  ...\n# Subtest: SEC-B-2: INSERT OR REPLACE and REPLACE INTO cannot rewrite a row of inventory_ledger\nok 64 - SEC-B-2: INSERT OR REPLACE and REPLACE INTO cannot rewrite a row of inventory_ledger\n  ---\n  duration_ms: 5.679168\n  type: 'test'\n  ...\n# Subtest: SEC-B-2: ordinary inserts, including INSERT OR IGNORE of a duplicate id, still work on the append-only tables\nok 65 - SEC-B-2: ordinary inserts, including INSERT OR IGNORE of a duplicate id, still work on the append-only tables\n  ---\n  duration_ms: 9.722026\n  type: 'test'\n  ...\n1..65\n# tests 120\n# suites 15\n# pass 120\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 6826.252246\n",
+      "gate": "phase:rework-4",
+      "task": null,
+      "tree": "9950bd8022e06dfdda702167a330cea9361d094dbcc6782a411875ae6fabb607",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T12:35:33.336Z"
+    },
+    "ev-mv3t54i6-01a9b844": {
+      "id": "ev-mv3t54i6-01a9b844",
+      "kind": "command",
+      "label": "npm test (full) on the current tree, e4 in progress",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 69402,
+      "log": ".eccode/evidence/ev-mv3t54i6-01a9b844.log",
+      "logSha256": "6a22916173b9f2ca90d99cd4ad2f18575c385363e6e882777b1d28d541c128c9",
+      "logFileSha256": "515831a6fdb0a9ec38f8cceb336b86e111d477b73c18457dc50dbdf1c5975daa",
+      "outputTail": "  duration_ms: 566.21174\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 780 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 380.842892\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 781 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 605.104699\n  type: 'test'\n  ...\n1..781\n# tests 2017\n# suites 268\n# pass 2000\n# fail 2\n# cancelled 0\n# skipped 15\n# todo 0\n# duration_ms 69084.144404\n",
+      "gate": "phase:rework-4",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T12:36:49.328Z"
+    },
+    "ev-mv3t65gk-01e2adc7": {
+      "id": "ev-mv3t65gk-01e2adc7",
+      "kind": "command",
+      "label": "npm run test:browser on the current tree",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8439,
+      "log": ".eccode/evidence/ev-mv3t65gk-01e2adc7.log",
+      "logSha256": "863cb3fe74187f295403bb5e6ebb97e3f08ca6582c348a8e629c42d2ad3dc9cf",
+      "logFileSha256": "97e2782e63a31ce162bada09729de5a3473a18d50e989647a7446921cd6a3f21",
+      "outputTail": "      duration_ms: 937.685577\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 841.292969\n      type: 'test'\n      ...\n    1..3\nok 3 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3047.03103\n  type: 'suite'\n  ...\n1..3\n# tests 8\n# suites 3\n# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 8227.122746\n",
+      "gate": "phase:rework-4",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T12:37:37.050Z"
+    },
+    "ev-mv3t6bo7-015fdd78": {
+      "id": "ev-mv3t6bo7-015fdd78",
+      "kind": "command",
+      "label": "uploads-retention.test.js alone on the current tree (the RS-39 startApp timer test red in ev-mv3t54i6)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/uploads-retention.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7760,
+      "log": ".eccode/evidence/ev-mv3t6bo7-015fdd78.log",
+      "logSha256": "6942a3fcdb581c6778cc944eb1f13f119a956b4446d48ec68313df9c01d0946f",
+      "logFileSha256": "3ef22cfc1905d43a80ef70c0bad4165f08f8574af91698d1466e86b3023cb147",
+      "outputTail": "      duration_ms: 986.293024\n      type: 'test'\n      ...\n    # Subtest: TR-D-16: a second signal during the grace period does not kill the server before stop() has killed a child that ignores SIGTERM\n    ok 2 - TR-D-16: a second signal during the grace period does not kill the server before stop() has killed a child that ignores SIGTERM\n      ---\n      duration_ms: 1963.703445\n      type: 'test'\n      ...\n    1..2\nok 7 - TR-D-16: a real server process stops, and leaves no CLI child, on SIGHUP and on a second signal\n  ---\n  duration_ms: 2950.392108\n  type: 'suite'\n  ...\n1..7\n# tests 41\n# suites 7\n# pass 41\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 7697.134036\n",
+      "gate": "phase:rework-4",
+      "task": null,
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T12:37:45.113Z"
     }
   },
   "reviews": {
@@ -26570,6 +26703,30 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T12:34:46.810Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T12:40:01.004Z",
+      "durationMinutes": 5.24,
+      "costUsd": null,
+      "tokens": 1,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv3t98qd-01226fef": {
+      "id": "run-mv3t98qd-01226fef",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T12:40:01.240Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv3t98x5-01364158": {
+      "id": "run-mv3t98x5-01364158",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T12:40:01.465Z",
       "status": "running",
       "attempt": 1
     }
@@ -27106,8 +27263,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1038.63,
-    "tokens": 14114780
+    "runtimeMinutes": 1043.87,
+    "tokens": 14114781
   },
   "delivery": null,
   "reworks": [
