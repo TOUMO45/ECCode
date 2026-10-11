@@ -1,6 +1,6 @@
 {
-  "seq": 907,
-  "lastHash": "e31d1d457ac556b862758f616e3b735fe10129ce38e46159617df64e61873b81",
+  "seq": 914,
+  "lastHash": "cb02340127f8c1535803027ea9352ee0a02a57fad29a24d9c747f8e83994f2b6",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -6975,26 +6975,9 @@
       "verification": {
         "method": "run the project checks"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "backend-engineer",
-        "at": "2026-10-11T12:30:57.655Z",
-        "baseCommit": "507da7e82b11821e174cb7a05adb04a7b4f5f37e",
-        "runId": "run-mv3sxdwo-01014097",
-        "dirtyAtClaim": {
-          "src/main.js": "b93687dd226737c3311733de41816065d7bc98a39cd252c911ee23341e557d02"
-        },
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.84,
-            "matched": 23,
-            "priority": 26.5,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
@@ -7028,25 +7011,26 @@
           "by": "backend-engineer",
           "at": "2026-10-11T12:30:57.655Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-11T12:34:28.173Z"
         }
       ],
       "completedBy": "backend-engineer",
-      "handoffId": "ho-mv3swih9-01bb4f5b",
+      "handoffId": "ho-mv3t23oc-01dfb735",
       "rework": true,
       "filesChanged": [
-        "src/db/migrations/006_autoincrement_ids.sql",
-        "src/auth/general-limit.js",
-        "test/api/id-reuse.test.js",
+        "src/auth/rbac.js",
         "test/unit/auth/general-limit-busy.test.js",
-        "test/unit/db/migrate-006.test.js",
-        "test/unit/db/migrate.test.js",
-        "test/unit/db/open-race.test.js"
+        "test/unit/ai/gate.test.js"
       ],
       "lessonDecisions": [
         {
           "id": "mem-sd-mv1audrd-013b7102",
           "decision": "not-applicable",
-          "note": "The lesson applies to hooks or guards that map file writes to a project record or root. This task changes a SQL migration, the application's general limiter and tests; it contains no hook, guard or root discovery, so none of the 'Applies when' conditions holds.",
+          "note": "The lesson applies to hooks or guards that map file writes to a project record or root. This task changes a SQL migration, the application's access hook and general limiter and unit tests; it contains no tool-call guard, pre-commit hook or root discovery, so none of the 'Applies when' conditions holds.",
           "basis": "reason"
         }
       ],
@@ -15786,6 +15770,69 @@
       "task": "rework-4",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T12:31:02.620Z"
+    },
+    "ev-mv3sy1ir-013d720a": {
+      "id": "ev-mv3sy1ir-013d720a",
+      "kind": "command",
+      "label": "green set + gate.test.js + rbac wiring (expected green)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/id-reuse.test.js test/unit/db/migrate-006.test.js test/unit/db/migrate.test.js test/unit/db/triggers.test.js test/unit/db/open-race.test.js test/unit/db/connection.test.js test/unit/auth/general-limit-busy.test.js test/unit/auth/general-limit.test.js test/unit/auth/rbac.test.js test/unit/ai/gate.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 7198,
+      "log": ".eccode/evidence/ev-mv3sy1ir-013d720a.log",
+      "logSha256": "7ea3936d50a02cf60f1c906e1605001476d066f4c0ebbeea5f70286bb76ae832",
+      "logFileSha256": "adf5b8c4d3e310d7da1c4d8a7b646688a468d4b30071c440666898ff247c6aa7",
+      "outputTail": "  duration_ms: 9.178678\n  type: 'test'\n  ...\n# Subtest: SEC-B-2: INSERT OR REPLACE and REPLACE INTO cannot rewrite a row of inventory_ledger\nok 64 - SEC-B-2: INSERT OR REPLACE and REPLACE INTO cannot rewrite a row of inventory_ledger\n  ---\n  duration_ms: 8.841147\n  type: 'test'\n  ...\n# Subtest: SEC-B-2: ordinary inserts, including INSERT OR IGNORE of a duplicate id, still work on the append-only tables\nok 65 - SEC-B-2: ordinary inserts, including INSERT OR IGNORE of a duplicate id, still work on the append-only tables\n  ---\n  duration_ms: 16.90499\n  type: 'test'\n  ...\n1..65\n# tests 120\n# suites 15\n# pass 120\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 7115.291655\n",
+      "gate": null,
+      "task": "rework-4",
+      "tree": "a3a038df0c8e12acaad80e7392632b4c6707af75fbba5b7608981b09bfe24b2d",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T12:31:18.690Z"
+    },
+    "ev-mv3szcve-01bf3db5": {
+      "id": "ev-mv3szcve-01bf3db5",
+      "kind": "command",
+      "label": "npm test (full) after rbac wiring and gate fix",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 61117,
+      "log": ".eccode/evidence/ev-mv3szcve-01bf3db5.log",
+      "logSha256": "55d778ab373819a3b2c052f49b0207bfce01796eac0c0430acae644c4aca786b",
+      "logFileSha256": "5158e44d65b9615bf07fe0850c6f912b17c4dfe3b459e365f164e31e31141148",
+      "outputTail": "  duration_ms: 482.873081\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 772 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 418.766711\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 773 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 433.828223\n  type: 'test'\n  ...\n1..773\n# tests 1985\n# suites 260\n# pass 1969\n# fail 1\n# cancelled 0\n# skipped 15\n# todo 0\n# duration_ms 60743.261548\n",
+      "gate": null,
+      "task": "rework-4",
+      "tree": "a3a038df0c8e12acaad80e7392632b4c6707af75fbba5b7608981b09bfe24b2d",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T12:32:20.066Z"
+    },
+    "ev-mv3szjv3-01155216": {
+      "id": "ev-mv3szjv3-01155216",
+      "kind": "command",
+      "label": "npm run test:browser after rbac wiring",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8814,
+      "log": ".eccode/evidence/ev-mv3szjv3-01155216.log",
+      "logSha256": "b3ab097b009bf3fbb55f42caf1b7e29fe4f88e2a83fd9876b250486fb94a0614",
+      "logFileSha256": "6e778366892f52f0e6c807014729513781601e1197b8df8b9ea46f9204093f51",
+      "outputTail": "      duration_ms: 1089.39597\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 914.847434\n      type: 'test'\n      ...\n    1..3\nok 3 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3387.388565\n  type: 'suite'\n  ...\n1..3\n# tests 8\n# suites 3\n# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 8579.225238\n",
+      "gate": null,
+      "task": "rework-4",
+      "tree": "a3a038df0c8e12acaad80e7392632b4c6707af75fbba5b7608981b09bfe24b2d",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T12:32:29.140Z"
     }
   },
   "reviews": {
@@ -24793,6 +24840,70 @@
       "id": "ho-mv3swih9-01bb4f5b",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T12:30:07.536Z"
+    },
+    "ho-mv3t23oc-01dfb735": {
+      "from": "backend-engineer",
+      "to": "delivery-lead",
+      "task": "rework-4",
+      "objective": "FU-23 / TR-D-3: ids of rescue_requests, planning_runs, plan_versions and images are never reused after a hard delete and model_spend.request_id is a foreign key; SEC-R-1: the general per-user limit fails open for GET and HEAD on a busy write lock, wired through the access hook and live in the app.",
+      "context": "Second claim of rework-4 (run run-mv3sxdwo-01014097) after its scope was extended with src/auth/rbac.js and test/unit/ai/gate.test.js. The first claim delivered migration 006 and the fail-open limiter (handoff ho-mv3swih9-01bb4f5b; design and the choice of REFERENCES rescue_requests(id) ON DELETE SET NULL for model_spend.request_id are explained there). This claim does the two follow-ons: (1) src/auth/rbac.js now calls limiter.take(ctx.user.id, { method: req.method, log: ctx.log, requestId: ctx.requestId }), so a GET under a held write lock proceeds uncounted with one rate_limit.busy_open line while state-changing methods keep failing closed; the hook test no longer carries the todo option and passes; recorded failing first without the todo before the rbac edit. (2) test/unit/ai/gate.test.js: the NFR6 reserve-before-call test inserts a rescue_requests row with id 7 for its customer before gate.run, because the model_spend foreign key refuses a request that does not exist; no assertion was changed or weakened.",
+      "inputs": [
+        "ho-mv3swih9-01bb4f5b",
+        "src/auth/rbac.js",
+        "test/unit/ai/gate.test.js",
+        "test/unit/auth/general-limit-busy.test.js"
+      ],
+      "dependencies": [],
+      "expectedOutput": "rework-4 complete across both claims: migration 006, the fail-open limiter wired into the access hook, the tests and the evidence, ready for technical and security review.",
+      "acceptanceCriteria": [
+        "migration 006 rebuilds rescue_requests, planning_runs, plan_versions and images with AUTOINCREMENT, preserving data, indexes, triggers and foreign keys, and model_spend.request_id gets a foreign key",
+        "an RS-39 test shows no id is reused after a hard delete, failing first on migrations 001-005",
+        "GET and HEAD fail open on a busy error with one log line, non-GET stays fail-closed, through the access hook, with a lock-holder test and a mutant",
+        "a regression test fails before the fix and passes after it",
+        "the existing checks still pass (one named red row that is not this task's, one named flaky row)"
+      ],
+      "completedWork": "FILES CHANGED IN THIS CLAIM (filesChanged): src/auth/rbac.js, test/unit/auth/general-limit-busy.test.js, test/unit/ai/gate.test.js. The first claim's six files are already committed, so git shows them unchanged since this claim and the CLI refuses them in filesChanged. ALL FILES OF BOTH CLAIMS: src/db/migrations/006_autoincrement_ids.sql, src/auth/general-limit.js, src/auth/rbac.js, test/api/id-reuse.test.js, test/unit/auth/general-limit-busy.test.js, test/unit/db/migrate-006.test.js, test/unit/db/migrate.test.js, test/unit/db/open-race.test.js, test/unit/ai/gate.test.js. FU-23 -> 006 -> id-reuse and migrate-006 tests -> failing first ev:ev-mv3skw6z-010f1667, mutants ev:ev-mv3sqzbe-01dfb4d9 and ev:ev-mv3sr3lx-01b2631c (first claim). SEC-R-1 -> general-limit.js plus rbac.js line 64 -> general-limit-busy tests (lock held by another OS process) -> failing first ev:ev-mv3sq19p-013611a4 (limiter) and ev:ev-mv3sxp4l-014d613f (hook test without todo, rbac not wired: 1 fail), mutants ev:ev-mv3sqk3u-01ebc8a9 and ev:ev-mv3sqqfy-01b5cfb8 (first claim). Green set of this claim ev:ev-mv3sy1ir-013d720a: 120 tests, 120 pass, 0 fail (id-reuse, migrate-006, migrate, triggers, open-race, connection, general-limit-busy, general-limit, rbac, gate). npm test ev:ev-mv3szcve-01bf3db5: 1985 tests, 1969 pass, 1 fail, 15 skipped, 0 todo; the one failure is the e6 route-table row. npm run test:browser ev:ev-mv3szjv3-01155216: 8/8 pass.",
+      "filesChanged": [
+        "src/auth/rbac.js",
+        "test/unit/auth/general-limit-busy.test.js",
+        "test/unit/ai/gate.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv3sy1ir-013d720a",
+        "ev:ev-mv3szjv3-01155216",
+        "ev:ev-mv3szcve-01bf3db5",
+        "ev:ev-mv3sxp4l-014d613f",
+        "ev:ev-mv3svgxu-01111cf2",
+        "ev:ev-mv3sqtv3-011b46ac",
+        "ev:ev-mv3skw6z-010f1667",
+        "ev:ev-mv3sq19p-013611a4",
+        "ev:ev-mv3sqk3u-01ebc8a9",
+        "ev:ev-mv3sqqfy-01b5cfb8",
+        "ev:ev-mv3sqzbe-01dfb4d9",
+        "ev:ev-mv3sr3lx-01b2631c"
+      ],
+      "remainingIssues": [
+        "test/api/contracts.test.js 'NFR6: every registered route has a scenario in the table' is red and not caused by this task: it lists GET /api/paypal/return, GET /api/paypal/cancel and POST /api/webhooks/paypal/:merchantKey (e6's row). The untracked test/api/execute.test.js is e4's and did not fail in the recorded run.",
+        "Flaky, not caused by this task: test/api/uploads-retention.test.js 'RS-39: startApp removes an expired image at startup and another one on the next tick' (timer based, uses src/main.js) failed once in an unrecorded re-run of npm test while e4's engineer was working; it passed in the recorded full run and in 6 further runs alone (4 isolated, 2 of 3 whole-file runs). Worth a look if it recurs.",
+        "SEC-R-2 (non-public /api requests with Sec-Fetch-Mode navigate are not refused before identification) and SEC-R-3 (sign-out is counted by the general limit) of rework-1-1.json are not part of this task and remain open.",
+        "extractions and requirements keep INTEGER PRIMARY KEY without AUTOINCREMENT (not referenced by audit entity ids); their ids can still be reused after a hard delete.",
+        "Ids that were reused before 006 cannot be repaired; each rebuilt table's sequence starts at its current max id.",
+        "The migration rewrites four tables and stages nine in TEMP tables inside one transaction; fine at demo size, a very large database would hold the write lock for the copy."
+      ],
+      "nextAction": "delivery-lead: send rework-4 to technical and security review.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson applies to hooks or guards that map file writes to a project record or root. This task changes a SQL migration, the application's access hook and general limiter and unit tests; it contains no tool-call guard, pre-commit hook or root discovery, so none of the 'Applies when' conditions holds."
+        }
+      ],
+      "id": "ho-mv3t23oc-01dfb735",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T12:34:28.299Z"
     }
   },
   "runs": {
@@ -26429,6 +26540,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T12:30:48.049Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T12:34:46.574Z",
+      "durationMinutes": 3.98,
+      "costUsd": null,
+      "tokens": 1,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv3t2i4c-017a897f": {
+      "id": "run-mv3t2i4c-017a897f",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T12:34:46.810Z",
       "status": "running",
       "attempt": 1
     }
@@ -26965,8 +27091,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1034.65,
-    "tokens": 14102256
+    "runtimeMinutes": 1038.63,
+    "tokens": 14102257
   },
   "delivery": null,
   "reworks": [
