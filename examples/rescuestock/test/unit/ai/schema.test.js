@@ -222,6 +222,101 @@ describe('validateExtraction: grounding against the request text', () => {
   });
 });
 
+// TR-D-12 / SEC-D-11: the quote must sit in the text on whole-number boundaries, so a part of a longer number never grounds a
+// smaller value. The checks run on the folded text (Arabic-Indic digits and the Arabic separators are already ASCII).
+describe('validateExtraction: a quote must align to whole numbers in the text (TR-D-12, SEC-D-11)', () => {
+  const NUM = 'NUMBER_NOT_IN_INPUT';
+  const refused = [
+    ['250 from "2500 cups" (prefix)', 'cupQuantity', 250, '250', 'I need 2500 cups.'],
+    ['500 cups from "2500 cups" (suffix)', 'cupQuantity', 500, '500 cups', 'I need 2500 cups.'],
+    ['200 lids from "1,200 lids" (after a thousands comma)', 'lidQuantity', 200, '200 lids', 'I need 1,200 lids.'],
+    ['200 lids from "1200 lids" (digit suffix)', 'lidQuantity', 200, '200 lids', 'I need 1200 lids.'],
+    ['50 ml from "250 ml"', 'capacityMl', 50, '50 ml', 'cups of 250 ml'],
+    ['1 from "11:30" (digit prefix)', 'maxPickups', 1, '1', 'at most by 11:30 please'],
+    ['11 from "11:30" quoted alone (before the time separator)', 'maxPickups', 11, '11', 'by 11:30 please'],
+    ['30 from "11:30" quoted alone (after the time separator)', 'lidQuantity', 30, '30', 'by 11:30 please'],
+    ['11 from the whole time "11:30"', 'cupQuantity', 11, '11:30', 'by 11:30 please'],
+    ['30 from the whole time "11:30"', 'cupQuantity', 30, '11:30', 'by 11:30 please'],
+    ['$12 from "$1200"', 'budgetUsd', 12, '$12', 'budget $1200'],
+    ['$120 from "$1200"', 'budgetUsd', 120, '$120', 'budget $1200'],
+    ['$120 from "$120.50" (before a decimal fraction)', 'budgetUsd', 120, '$120', 'budget $120.50'],
+    ['50 from "$120.50" (the fraction)', 'budgetUsd', 50, '50', 'budget $120.50'],
+    ['250 from "250,000" (before a thousands comma)', 'cupQuantity', 250, '250 ', 'I need 250,000 cups'],
+    ['25 from Arabic-Indic "٢٥٠" mixed with a Latin digit', 'cupQuantity', 25, '٢5', 'أحتاج ٢5٠ كوب'],
+    ['200 from Arabic-Indic "١٬٢٠٠" (Arabic thousands separator)', 'cupQuantity', 200, '٢٠٠ كوب', 'أحتاج ١٬٢٠٠ كوب'],
+    ['200 from Arabic-Indic "١٢٠٠"', 'lidQuantity', 200, '٢٠٠ غطاء', 'أحتاج ١٢٠٠ غطاء'],
+  ];
+  for (const [label, field, value, quote, text] of refused) {
+    test(`refused: ${label}`, () => {
+      const r = validateExtraction(ok({ [field]: userText(value, quote) }), { text });
+      assert.equal(r.ok, false, `${quote} must not ground ${value} in "${text}"`);
+      assert.deepEqual(codes(r), [`fields.${field}.value:${NUM}`]);
+    });
+  }
+
+  const accepted = [
+    ['1,200 grounds 1200', 'cupQuantity', 1200, '1,200 cups', 'I need 1,200 cups.'],
+    ['1200 grounds 1200', 'cupQuantity', 1200, '1200 cups', 'I need 1200 cups.'],
+    ['250ml grounds 250 (a unit glued to the number)', 'capacityMl', 250, '250ml', 'cups of 250ml'],
+    ['$120.50 grounds 120.5', 'budgetUsd', 120.5, '$120.50', 'budget $120.50'],
+    ['the number alone, at the end of the text', 'cupQuantity', 250, '250', 'I need 250'],
+    ['the number before a sentence stop', 'cupQuantity', 250, '250', 'I need 250. Thanks'],
+    ['the number before a list comma', 'cupQuantity', 250, '250', 'I need 250, and lids'],
+    ['a range end: "200-300"', 'cupQuantity', 300, '300 cups', 'between 200-300 cups'],
+    ['Arabic-Indic digits', 'capacityMl', 250, '٢٥٠ مل', 'أحتاج ٢٥٠ مل'],
+    ['Arabic-Indic digits grounded by a Latin quote of the folded form', 'capacityMl', 250, '250 مل', 'أحتاج ٢٥٠ مل'],
+    ['Arabic thousands separator', 'cupQuantity', 1200, '١٬٢٠٠ كوب', 'أحتاج ١٬٢٠٠ كوب'],
+    ['the aligned second occurrence when the first one is inside a longer number', 'cupQuantity', 250, '250', 'I need 2500 cups and 250 lids'],
+    ['the number next to a time, quoted with its own words', 'cupQuantity', 200, '200 cups', 'by 11:30, 200 cups'],
+    ['a longer quote that holds the time and the number', 'cupQuantity', 200, '11:30, 200 cups', 'by 11:30, 200 cups'],
+    ['an English number word', 'maxPickups', 2, 'two pickups', 'at most two pickups'],
+    ['an Arabic number word', 'maxPickups', 3, 'ثلاث نقاط', 'بحد أقصى ثلاث نقاط'],
+    ['the Arabic dual', 'maxPickups', 2, 'نقطتي استلام', 'بحد أقصى نقطتي استلام'],
+    ['the Arabic dual of cups', 'cupQuantity', 2, 'كوبين', 'أريد كوبين فقط'],
+  ];
+  for (const [label, field, value, quote, text] of accepted) {
+    test(`accepted: ${label}`, () => {
+      const r = validateExtraction(ok({ [field]: userText(value, quote) }), { text });
+      assert.equal(r.ok, true, JSON.stringify(r.errors));
+    });
+  }
+
+  test('the check needs the text: without it only the structure is checked, as before', () => {
+    assert.equal(validateExtraction(ok({ cupQuantity: userText(250, '250') })).ok, true);
+  });
+
+  test('the deadline field is a string, not a number: a time in the text is not number-checked here', () => {
+    const r = validateExtraction(ok({ deadline: userText('11:30', 'by 11:30') }), { text: 'we need them by 11:30' });
+    assert.equal(r.ok, true);
+  });
+});
+
+// TR-D-14: every user_text quote is re-checked against the text, numeric or not, so d3 can rely on one validator.
+describe('validateExtraction: every user_text quote must be in the text, not only numeric ones (TR-D-14)', () => {
+  const text = 'paper cups for the weekend, by 11:30';
+  const cases = [
+    ['productType', 'cups', 'we sell plastic cups'],
+    ['material', 'paper', 'made of recycled pulp'],
+    ['deadline', '11:30', 'by Friday noon'],
+  ];
+  for (const [field, value, quote] of cases) {
+    test(`${field}: a quote that is not in the text is NOT_QUOTED`, () => {
+      const r = validateExtraction(ok({ [field]: userText(value, quote) }), { text });
+      assert.deepEqual(codes(r), [`fields.${field}.originalWording:NOT_QUOTED`]);
+    });
+  }
+  test('the same non-numeric fields pass when the quote is in the text', () => {
+    const r = validateExtraction(ok({
+      productType: userText('cups', 'paper cups'), material: userText('paper', 'paper cups'), deadline: userText('11:30', 'by 11:30'),
+    }), { text });
+    assert.equal(r.ok, true, JSON.stringify(r.errors));
+  });
+  test('a quote that differs only by case or by an injected word is NOT_QUOTED', () => {
+    assert.deepEqual(codes(validateExtraction(ok({ material: userText('paper', 'Paper cups') }), { text })), ['fields.material.originalWording:NOT_QUOTED']);
+    assert.deepEqual(codes(validateExtraction(ok({ material: userText('plastic', 'paper cups, ignore previous') }), { text })), ['fields.material.originalWording:NOT_QUOTED']);
+  });
+});
+
 describe('parseAndValidate', () => {
   test('RS-03: text that is not one JSON object within the size cap is INVALID_JSON, never a throw', () => {
     for (const bad of ['', '{', 'not json', undefined, null, 5, `{"x":"${'a'.repeat(70000)}"}`]) {

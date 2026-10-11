@@ -226,8 +226,10 @@ function valueMatchesKind(kind, value) {
  * validateExtraction(raw, context?) -> { ok: true, value, budgetCents } | { ok: false, errors: [{ path, code }] }
  *
  * context.text          the buyer's request text. When given, grounding is enforced: a user_text field must quote it
- *                       exactly (NFC, whitespace collapsed, Arabic-Indic digits as ASCII) and a numeric value must occur
- *                       in the quote (digits of either script, or a number word / dual form).
+ *                       exactly (NFC, whitespace collapsed, Arabic-Indic digits as ASCII), for EVERY field kind (NOT_QUOTED),
+ *                       and a numeric value must occur in the quote (digits of either script, or a number word / dual form;
+ *                       a clock time grounds nothing) and the quote must sit in the text on whole-number boundaries, so a
+ *                       tail or head of a longer number grounds nothing (NUMBER_NOT_IN_INPUT).
  * context.imageNumbers  numbers legible in the image. When given, an image-provenance numeric value must be one of
  *                       them or occur in the text.
  *
@@ -301,7 +303,7 @@ export function validateExtraction(raw, context = {}) {
           const quote = normalizeForCompare(originalWording);
           if (quote === '' || !textNorm.includes(quote)) {
             fail(`${at}.originalWording`, 'NOT_QUOTED');
-          } else if ((kind === 'int' || kind === 'num') && !numberGrounded(value, originalWording)) {
+          } else if ((kind === 'int' || kind === 'num') && !(numberGrounded(value, originalWording) && quoteAlignedInText(quote, textNorm))) {
             fail(`${at}.value`, 'NUMBER_NOT_IN_INPUT');
           }
         }
@@ -326,8 +328,47 @@ export function validateExtraction(raw, context = {}) {
   };
 }
 
+// A clock time (11:30) is not a quantity, a size or a budget: its digits ground no numeric value (TR-D-12). The deadline
+// field is a string and is not number-grounded here.
+const CLOCK_TIME = /(?<![\d.,:])\d{1,2}:\d{2}(?::\d{2})?(?!\d)/g;
+
 function numberGrounded(value, wording) {
-  return numbersIn(wording).has(value) || wordNumbersIn(wording).has(value);
+  const digits = numbersIn(foldDigits(String(wording)).replace(CLOCK_TIME, ' '));
+  return digits.has(value) || wordNumbersIn(wording).has(value);
+}
+
+// Whole-number alignment (TR-D-12 / SEC-D-11). `quote` and `text` are both normalizeForCompare forms, so Arabic-Indic digits
+// are ASCII and the Arabic thousands and decimal separators are ',' and '.'. A number is a digit run that may continue over
+// ',', '.' or ':' when a digit follows (1,200  250.5  11:30). The quote is aligned at an occurrence when it neither starts
+// nor ends inside such a number: a digit, or a separator-then-digit, may not sit directly before a quote that begins with a
+// digit or separator, nor directly after one that ends with a digit or separator. At least one occurrence must align.
+const NUMBER_SEPARATORS = new Set([',', '.', ':']);
+const isAsciiDigit = (ch) => ch !== undefined && ch >= '0' && ch <= '9';
+const isNumberEdge = (ch) => isAsciiDigit(ch) || NUMBER_SEPARATORS.has(ch);
+
+function alignedAt(text, start, quote) {
+  const end = start + quote.length;
+  const first = quote[0];
+  const last = quote[quote.length - 1];
+  if (isNumberEdge(first)) {
+    const prev = text[start - 1];
+    if (isAsciiDigit(prev)) return false;
+    if (NUMBER_SEPARATORS.has(prev) && isAsciiDigit(text[start - 2]) && isAsciiDigit(first)) return false;
+  }
+  if (isNumberEdge(last)) {
+    const next = text[end];
+    if (isAsciiDigit(next)) return false;
+    if (NUMBER_SEPARATORS.has(next) && isAsciiDigit(text[end + 1]) && isAsciiDigit(last)) return false;
+  }
+  return true;
+}
+
+function quoteAlignedInText(quote, textNorm) {
+  if (quote === '') return false;
+  for (let at = textNorm.indexOf(quote); at !== -1; at = textNorm.indexOf(quote, at + 1)) {
+    if (alignedAt(textNorm, at, quote)) return true;
+  }
+  return false;
 }
 
 /**

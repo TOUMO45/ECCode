@@ -1,0 +1,54 @@
+{
+  "from": "ai-engineer",
+  "to": "reviewer",
+  "task": "d1-ai-core",
+  "objective": "Close TR-D-12 (= SEC-D-11) in the extraction validator: a quote that starts or ends inside a longer number must not ground a smaller value. Third and last review iteration of phase D.",
+  "context": "Review rev-mv35hyoj-01e0a18c, finding TR-D-12 (minor), security SEC-D-11. numberGrounded in src/ai/schema.js read only the quote, and the quote rule was a plain substring test, so 250 grounded from '2500 cups', 200 from '1,200 lids'/'1200 lids', 50 ml from '250 ml', 1 from '11:30', $12 from '$1200'. d3 (src/services/extraction.js) routes every numeric user_text field through validateExtraction, so the fix here covers its normaliseExtraction too, with no change in d3's file. Work stayed inside d1's files. d3 and d2 are being reset by others; I did not touch their files.",
+  "inputs": [
+    ".eccode/reviews/drafts/phase-d-2.json (TR-D-12, TR-D-14)",
+    ".eccode/reviews/drafts/phase-d-security-2.md (SEC-D-11)",
+    "src/ai/schema.js",
+    "src/services/extraction.js (read only: numberGroundedInQuote, normaliseExtraction)",
+    "test/unit/ai/schema.test.js"
+  ],
+  "dependencies": [
+    "c6-reserve-concurrency-browser"
+  ],
+  "expectedOutput": "validateExtraction(raw, { text }) refuses (NUMBER_NOT_IN_INPUT on fields.<f>.value) a numeric user_text value whose quote sits in the text only inside a longer number, keeps every legitimate form, and re-checks that every user_text quote (numeric or not) is in the text (NOT_QUOTED), so d3 can rely on it for TR-D-14.",
+  "acceptanceCriteria": [
+    "250 from '2500 cups', 200 from '1,200 lids' and '1200 lids', 50 ml from '250 ml', 1 from '11:30', $12 and $120 from '$1200' are refused",
+    "1,200 -> 1200, 250ml -> 250, $120.50 -> 120.5, Arabic-Indic digits, Arabic thousands separator, English and Arabic number words and the duals are still accepted",
+    "tests failing first, a mutant of the alignment shown red and reverted",
+    "d1 plan verification command passes; npm test has no failure in d1-owned files"
+  ],
+  "completedWork": "src/ai/schema.js: (1) quoteAlignedInText/alignedAt: the quote must have at least one occurrence in the normalised text that does not start or end inside a number. A number continues over ',' '.' ':' when a digit follows; Arabic-Indic digits and the Arabic thousands/decimal separators are folded to ASCII before the comparison by the existing normalizeForCompare, so they are handled the same way. (2) numberGrounded masks clock times (HH:MM[:SS]) in the quote before reading its numbers, so '11:30' grounds neither 11 nor 30 for a numeric field. The deadline field is a string kind and is not number-grounded in the validator, so the deadline is unaffected (its own grounding is TR-D-13, d3). (3) The doc comment of validateExtraction states the rule. TR-D-14: validateExtraction already checked quote presence (NOT_QUOTED) for every user_text field of every kind, because the substring test sits before the numeric branch; what was missing was a test. I added one (productType, material, deadline: quote not in text -> NOT_QUOTED; present -> ok; case difference and an injected tail -> NOT_QUOTED). d3 may rely on it; the mutant that removes d3's own substring check is now killed by the validator call it already makes, as long as d3 calls validateExtraction with { text } for non-numeric fields too (today numberGroundedInQuote is only called for numeric values: d3 should call the validator for every user_text field). 43 tests added to schema.test.js (18 refused cases, 18 accepted cases, 2 edge tests, 5 TR-D-14 tests). Red run before the fix: 18 of 71 failed (ev:ev-mv35lwdy-01f8cf33), all 18 the refused cases; the 5 TR-D-14 tests passed already. Mutants, all reverted: M1 alignment disabled 16 red (ev:ev-mv35mhaq-0186b5db); M2 separator-then-digit before the quote ignored 4 red (ev:ev-mv35mmi1-01bb91e9); M3 clock masking removed 2 red (ev:ev-mv35mtcw-016cdd03). Green: d1 plan command 154/154 (ev:ev-mv35n0po-013c3a04); npm test 1276 tests, 1268 pass, 0 fail, 8 skipped, ECCODE_EVAL 200/200 (ev:ev-mv35nywb-01431134).",
+  "filesChanged": [
+    "src/ai/schema.js",
+    "test/unit/ai/schema.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv35lwdy-01f8cf33",
+    "ev:ev-mv35mhaq-0186b5db",
+    "ev:ev-mv35mmi1-01bb91e9",
+    "ev:ev-mv35mtcw-016cdd03",
+    "ev:ev-mv35n0po-013c3a04",
+    "ev:ev-mv35nywb-01431134"
+  ],
+  "remainingIssues": [
+    "Table words inside a longer word (quote 'one' from 'Someone', SEC-D-13) and a quote that grounds the number but belongs to another field (SEC-D-13) are unchanged: info level, not part of TR-D-12.",
+    "The deadline field has no grounding in the validator (TR-D-13 / SEC-D-10); it is d3's task. A d3 deadline check can reuse HH:MM extraction from the quote.",
+    "d3 should pass non-numeric user_text fields through validateExtraction too (numberGroundedInQuote is called only when value is a number) so TR-D-14's mutant is killed in d3's own tests.",
+    "Evidence run results are on the real code; no model provider is involved (fake/deterministic unit tests), so they say nothing about model quality."
+  ],
+  "nextAction": "reviewer: verify TR-D-12 with the P3b and G2 probes against HEAD; backend-engineer (d3): call validateExtraction for every user_text field and land TR-D-11/13/14 in the d3 reset.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson applies to hooks or guards that map a write target to a project record root. This task is an input-validation change in src/ai/schema.js with no hook, no guard and no root resolution, so that condition does not hold."
+    }
+  ]
+}
