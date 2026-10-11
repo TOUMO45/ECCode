@@ -551,7 +551,9 @@ describe('wiring: startApp', () => {
       assert.equal(running.app.deps.voidRule.provider.name, 'provider_calls', 'the real void port, not the recorder');
       assert.ok(running.payments?.listener?.port > 0, 'the fake approval listener runs');
       assert.equal(running.payments.listener.host, '127.0.0.1');
-      await running.reconciler.started;
+      await running.reconcilerStarted;
+      const msgs = lines.map((l) => JSON.parse(l).msg);
+      assert.ok(msgs.indexOf('retention.sweep') >= 0 && msgs.indexOf('retention.sweep') < msgs.indexOf('reconcile.tick'), 'the startup tick follows the startup retention pass');
       assert.equal(running.db.prepare("SELECT COUNT(*) AS n FROM meta WHERE key = 'reconciler_last_tick_at'").get().n, 1);
       const ticks = () => lines.map((l) => JSON.parse(l)).filter((l) => l.msg === 'reconcile.tick').length;
       const deadline = Date.now() + 5000;

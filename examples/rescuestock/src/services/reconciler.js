@@ -478,7 +478,8 @@ function releaseCheck(env) {
 // An entry is removed only in the transaction that stores the new planning run (runPlanningFor), or when the request is deleted or
 // archived. A failed drain (offers_hash kept changing, DB_BUSY, no requirements, a plan in progress) leaves the entry with
 // failed_drains + 1 and next_attempt_at = now + min(5 min, 15 s x 2^failed_drains) (failed_drains read before the increment).
-export function drainReplanQueue(env, { limit = 5 } = {}) {
+// At most `limit` entries per tick: the planner is CPU-bound and synchronous (150-800 ms, RISK-19), so a tick never blocks the loop for long.
+export function drainReplanQueue(env, { limit = 2 } = {}) {
   const { db, clock } = env;
   const nowIso = isoFromMs(clock.now());
   const due = db

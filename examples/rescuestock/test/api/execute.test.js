@@ -629,6 +629,45 @@ describe('ARCH-23: the lease fences a stalled executor', () => {
     assert.deepEqual([op(h, w.orders.A).status, op(h, w.orders.B).status], ['captured', 'captured']);
   });
 
+  test('ARCH-23: the epoch is a fence of its own: a result is refused after the epoch changed even though its send_token is still valid', async () => {
+    const h = await start();
+    const w = await world(h);
+    const real = h.app.deps.payments;
+    let release;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    let applied;
+    const appliedSeen = new Promise((resolve) => {
+      applied = resolve;
+    });
+    let held = false;
+    h.app.deps.payments = {
+      ...real,
+      async captureAuthorization(args) {
+        const outcome = await real.captureAuthorization(args);
+        if (!held) {
+          held = true;
+          applied();
+          await gate;
+        }
+        return outcome;
+      },
+    };
+    assert.equal((await execute(w)).status, 202);
+    await appliedSeen;
+    const token = calls(h, w.orders.A, 'capture')[0].send_token;
+    assert.ok(token, 'the call is in flight with its token');
+    // another process took the plan over inside the lease window (the epoch changes in BEGIN IMMEDIATE); nothing touched the call row
+    h.db.prepare("UPDATE plan_versions SET lease_epoch = lease_epoch + 1, executor_id = 'thief:1:00000000' WHERE id = ?").run(w.planId);
+    release();
+    await h.app.deps.saga.idle();
+    assert.equal(calls(h, w.orders.A, 'capture')[0].status, 'intent', 'the result was discarded, not recorded');
+    assert.equal(op(h, w.orders.A).status, 'authorized');
+    assert.ok(h.logEntries().some((l) => l.msg === 'provider.result_fenced'));
+    assert.equal(plan(h, w.planId).executor_id, 'thief:1:00000000');
+  });
+
   test('ARCH-23: no capture is started without the lease: a start after the lease lapsed (nobody took over) is refused', async () => {
     const h = await start();
     const w = await world(h);

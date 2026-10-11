@@ -129,8 +129,13 @@ export async function startApp({ env = process.env, log = createLogger(), clock 
     const retention = startRetention({ db, clock, config, log, gate: ai.gate });
     // The reconciler: now (startup: an intent left by a dead process becomes unknown, a lapsed lease is taken over), then every
     // RS_RECONCILE_INTERVAL_MS. app.deps holds the payment adapter that listen() built.
+    // Its first tick waits for the startup retention pass to resolve completely (the sweep removes a row and then awaits the file
+    // unlink): two startup jobs then never compete, and nothing depends on their relative speed. Spec: the reconciler runs once
+    // at startup; the order against the retention sweep is not part of its tick order.
     const reconciler = createReconciler(app.deps);
-    reconciler.start();
+    const reconcilerStarted = Promise.resolve(retention.started)
+      .catch(() => {})
+      .then(() => reconciler.start());
     return {
       app,
       db,
@@ -139,11 +144,14 @@ export async function startApp({ env = process.env, log = createLogger(), clock 
       ai,
       retention,
       reconciler,
+      reconcilerStarted,
       get payments() {
         return app.payments;
       },
       async close() {
         await reconciler.stop();
+        await reconcilerStarted;
+        await reconciler.stop(); // a start that was still waiting for the retention pass is a no-op once stopped
         await retention.stop();
         // TR-D-9: kill in-flight CLI children (their own process groups) before the app drains. Adapters without close() (the
         // fake, the API adapter) have nothing to release; a failing close never blocks the shutdown.
