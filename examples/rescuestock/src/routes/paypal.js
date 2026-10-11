@@ -7,9 +7,10 @@
 //     supplier or admin     -> 403 FORBIDDEN
 //     unknown token, or the token of another customer's order -> 404 NOT_FOUND, no provider call, no state change (RS-27)
 //     missing or malformed token -> 400 BAD_REQUEST
+//     more than 30 hits (return and cancel together) per user per window -> 429 RATE_LIMITED (SEC-E-2), before any provider call
 // Only `token` is read; PayerID and every other query parameter are ignored and never stored.
 import { AppError } from '../http/envelope.js';
-import { handlePaypalCancel, handlePaypalReturn } from '../services/payments.js';
+import { handlePaypalCancel, handlePaypalReturn, takeReturnSlot } from '../services/payments.js';
 
 const SIGN_IN = '/#/signin?notice=paypal-return';
 
@@ -22,6 +23,7 @@ function buyerRoute(handle) {
     const user = ctx.auth.identify(ctx);
     if (!user) return redirect(SIGN_IN);
     if (user.role !== 'customer') throw new AppError(403, 'FORBIDDEN');
+    takeReturnSlot(ctx, user.id); // SEC-E-2: 429 before any lookup or provider call
     const { location } = await handle(ctx, user, ctx.query.token);
     return redirect(location);
   };

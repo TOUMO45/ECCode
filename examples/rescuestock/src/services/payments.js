@@ -173,6 +173,33 @@ export async function createPaymentForOrder(ctx, user, orderId) {
 
 // ------------------------------------------------------------------ return and cancel
 
+// The return and cancel URLs are public routes, so the general per-user limit (access hook) never sees them, yet a hit on an
+// unapproved order costs one provider getOrder (SEC-E-2). Hits of the identified customer are therefore counted here, before
+// any lookup or provider call, in rate_events (kind 'general', key pp:u:<userId>; planning uses plan:u:<userId> the same way).
+// RETURN_LIMIT per window (the general limit's window, RS_GENERAL_RATE_WINDOW_SEC, 60 s by default; never above the general
+// limit itself). A buyer makes about two hits per supplier approval (return, refresh), at most five suppliers: 30 a minute is
+// far above any real use and 30 provider reads a minute per account is bounded. A refused hit is not recorded, so a flood
+// cannot grow the table; the answer is 429 RATE_LIMITED { limit: 'general' } with Retry-After, like every other limit.
+export const RETURN_LIMIT = 30;
+
+export function takeReturnSlot(ctx, userId) {
+  const { db, clock, config } = ctx;
+  const limit = Math.min(RETURN_LIMIT, config.generalRateLimit ?? RETURN_LIMIT);
+  const windowMs = (config.generalRateWindowSec ?? 60) * 1000;
+  const nowMs = clock.now();
+  const key = `pp:u:${userId}`;
+  const decision = db.tx(() => {
+    db.prepare("DELETE FROM rate_events WHERE kind = 'general' AND user_key = ? AND at <= ?").run(key, isoFromMs(nowMs - windowMs));
+    const row = db.prepare("SELECT COUNT(*) AS n, MIN(at) AS oldest FROM rate_events WHERE kind = 'general' AND user_key = ? AND at > ?").get(key, isoFromMs(nowMs - windowMs));
+    if (row.n >= limit) return { allowed: false, retryAfterS: Math.max(1, Math.ceil((Date.parse(row.oldest) + windowMs - nowMs) / 1000)) };
+    db.prepare("INSERT INTO rate_events (user_key, kind, at) VALUES (?, 'general', ?)").run(key, isoFromMs(nowMs));
+    return { allowed: true };
+  });
+  if (!decision.allowed) {
+    throw new AppError(429, 'RATE_LIMITED', { details: { limit: 'general' }, headers: { 'Retry-After': String(decision.retryAfterS) } });
+  }
+}
+
 // The operation behind a PayPal token of THIS customer, or 404. Nothing else is read first.
 function findByToken(db, userId, token) {
   if (typeof token !== 'string' || !TOKEN.test(token)) throw new AppError(400, 'BAD_REQUEST');

@@ -409,3 +409,44 @@ describe('the call protocol (src/services/calls.js): queue, start CAS, record fe
     assert.equal(JSON.stringify(h.logEntries()).includes('boom'), false, 'no error text reaches the log');
   });
 });
+
+describe('SEC-E-2: the public return and cancel URLs are limited per signed-in user before any provider call', () => {
+  const LIMIT = 30; // per window; one hit on an unapproved order is one provider getOrder
+
+  test('SEC-E-2: hit LIMIT + 1 of one buyer is 429 RATE_LIMITED with Retry-After and makes no provider call; another buyer, an anonymous caller and the next window are unaffected', async () => {
+    const h = await start();
+    const cafe1 = await buyer(h);
+    const cafe2 = await buyer(h, 'cafe2');
+    const { orders } = await reservedPlan(h, cafe1);
+    const created = await cafe1.post(`/api/orders/${orders[0].id}/paypal/create`, {});
+    const token = created.json.approvalUrl.split('/').pop();
+    const url = `/api/paypal/return?token=${token}&PayerID=FAKEPAYER`; // never approved at the provider: each hit reads the order
+    const reads = () => fakeCalls(h, 'get_order').length;
+
+    for (let hit = 1; hit <= LIMIT; hit += 1) {
+      const res = await cafe1.get(url);
+      assert.equal(res.status, 303, `hit ${hit}`);
+    }
+    assert.equal(reads(), LIMIT);
+    const refused = await cafe1.get(url);
+    assert.equal(refused.status, 429, refused.text);
+    assert.equal(refused.json.error.code, 'RATE_LIMITED');
+    assert.deepEqual(refused.json.error.details, { limit: 'general' });
+    assert.equal(refused.headers['retry-after'], '60');
+    assert.equal(reads(), LIMIT, 'the refused hit made no provider call');
+    assert.equal((await cafe1.get(`/api/paypal/cancel?token=${token}`)).status, 429, 'cancel shares the count');
+    assert.equal(op(h, orders[0].id).buyer_cancelled_at, null, 'and changed nothing');
+    assert.equal(h.db.prepare('SELECT COUNT(*) AS n FROM rate_events WHERE user_key = ?').get(`pp:u:${cafe1.user.id}`).n, LIMIT, 'a refused hit is not recorded');
+
+    // another buyer: own count (a foreign token is 404, not 429); anonymous hits stay on the redirect path
+    assert.equal((await cafe2.get(url)).status, 404);
+    const anonymous = await createClient(h.request).get(url);
+    assert.equal(anonymous.status, 303);
+    assert.equal(anonymous.headers.location, '/#/signin?notice=paypal-return');
+    assert.equal(reads(), LIMIT);
+
+    h.clock.advance(61_000);
+    assert.equal((await cafe1.get(url)).status, 303, 'the next window starts clean');
+    assert.equal(reads(), LIMIT + 1);
+  });
+});

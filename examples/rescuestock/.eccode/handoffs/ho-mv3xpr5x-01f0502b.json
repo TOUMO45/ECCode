@@ -1,0 +1,46 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "e2-payment-flow",
+  "objective": "Fix SEC-E-2 / TR-E-2 (phase E review): the public GET /api/paypal/return and /cancel routes were not covered by the per-user general limit, and every return hit on an unapproved order cost one provider getOrder (400 hits, 400 calls).",
+  "context": "Rework of e2 after rev-mv3xhtuz-017cfbef (phase-e-1.json TR-E-2, phase-e-security-1.md SEC-E-2, repro ev:ev-mv3wkmdf-014def88). The access hook does not run for public routes and src/auth/general-limit.js is not an e2 file, so the count is done in e2's own files with the existing rate_events machinery, the same way planning counts (plan:u:<id>). No provider was contacted; RS_LIVE_MODEL and RS_LIVE_PAYPAL were never set.",
+  "inputs": [
+    ".eccode/reviews/drafts/phase-e-1.json (TR-E-2)",
+    ".eccode/reviews/drafts/phase-e-security-1.md (SEC-E-2)",
+    "src/auth/general-limit.js, src/auth/rbac.js, src/services/plans.js (takePlanSlot), src/routes/paypal.js, src/services/payments.js"
+  ],
+  "expectedOutput": "Return and cancel hits of an identified customer are counted per user before any lookup or provider call and answered 429 RATE_LIMITED with Retry-After beyond the limit; anonymous hits keep their redirect.",
+  "acceptanceCriteria": [
+    "after ctx.auth.identify (and the customer role check) the user's return and cancel hits are counted against a per-user limit in rate_events",
+    "the limit answers 429 RATE_LIMITED with Retry-After before any provider call; anonymous hits stay on the 303 sign-in path",
+    "failing-first test: N+1 hits by one user give exactly N provider calls and a 429; another user is unaffected"
+  ],
+  "completedWork": "src/services/payments.js: takeReturnSlot(ctx, userId), RETURN_LIMIT = 30. One BEGIN IMMEDIATE deletes expired rows, counts and inserts (kind 'general', key pp:u:<userId>, so it never mixes with u:<id> or plan:u:<id>); window = config.generalRateWindowSec (60 s default), limit = min(30, config.generalRateLimit); a refused hit is not recorded; refusal is AppError 429 RATE_LIMITED {limit:'general'} with Retry-After, the same shape as the other limits. Why 30/min: a buyer makes about two hits per supplier approval (return plus a refresh), at most five suppliers, so real use stays far below 30, and the worst case per account is now 30 provider reads a minute instead of unbounded; the general limit's 300 would still allow 300 reads. src/routes/paypal.js: the shared buyer route calls takeReturnSlot right after the anonymous redirect and the customer role check and before the token lookup, so return and cancel share one count and a foreign-token hit counts against the caller. Anonymous hits are not counted (no provider call). Red first: ev:ev-mv3xmnj7-016333c5 (the new SEC-E-2 test failed on the unfixed tree: the 31st hit was not limited); green after the fix. The test (paypal-return-idempotent.test.js) asserts: 30 hits give 30 provider getOrder calls and 303, hit 31 is 429 RATE_LIMITED details {limit:'general'} Retry-After 60 with still 30 provider calls, a cancel is also 429 and leaves buyer_cancelled_at unchanged, the refused hit is not recorded (30 rows), another buyer gets 404 (not 429) and an anonymous caller gets the 303 sign-in redirect, and after 61 s the next hit is 303 again. Counts: plan verification 93 tests, 93 pass (was 92 plus the new test); npm test 2088 tests, 2080 pass, 0 fail, 8 skipped (skips as in the review); test:browser 10/10.",
+  "filesChanged": [
+    "src/services/payments.js",
+    "src/routes/paypal.js",
+    "test/api/paypal-return-idempotent.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv3xnao4-01bb587b",
+    "ev:ev-mv3xp0sq-01fd3097",
+    "ev:ev-mv3xper9-01fffd7b",
+    "ev:ev-mv3xmnj7-016333c5"
+  ],
+  "remainingIssues": [
+    "TR-E-1 / SEC-E-1 (webhooks.js) is e3's and not part of this reset.",
+    "paypal/create remains limited only by the general 300/min per-user limit (state-idempotent: only the 'Try approval again' path makes a getOrder); not part of SEC-E-2.",
+    "The limit constant (30 per general window) is not an environment variable; it is capped by RS_GENERAL_RATE_LIMIT and follows RS_GENERAL_RATE_WINDOW_SEC."
+  ],
+  "nextAction": "orchestrator: send e2 back to the phase E review together with the e3 rework for TR-E-1.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson applies to a hook or guard that maps file writes to a project record or root in a repository with several records; this rework adds a per-user rate limit to two routes and designs no hook, guard or root discovery, so its 'Applies when' list does not hold."
+    }
+  ]
+}
