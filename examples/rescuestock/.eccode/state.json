@@ -1,6 +1,6 @@
 {
-  "seq": 559,
-  "lastHash": "16ff7761586f16128e302092f607063864e44b4eade7ec2852eed37380ca27b3",
+  "seq": 566,
+  "lastHash": "cf5312dc677ce5b3c1803d5d88618e594ad2351a3dc1f6f159055beb5043fb2b",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -4225,34 +4225,42 @@
         "command": "ls test/unit/ai/provider-contract.test.js test/scan/secrets.test.js test/browser/degraded-extraction.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "test-engineer",
-        "at": "2026-10-10T23:49:57.790Z",
-        "baseCommit": "cf0e1c296c03e5a2d3628df43ae59683cc19cd76",
-        "runId": "run-mv31px8b-01bc2982",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.798,
-            "matched": 14,
-            "priority": 23.5,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "test-engineer",
           "at": "2026-10-10T23:49:57.790Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "test-engineer",
+          "at": "2026-10-11T00:00:19.252Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "test-engineer",
+      "handoffId": "ho-mv3249el-0180bc20",
+      "filesChanged": [
+        "test/helpers/app-harness.js",
+        "test/helpers/extraction.js",
+        "test/helpers/provider-stubs.js",
+        "test/unit/ai/provider-contract.test.js",
+        "test/scan/secrets.test.js",
+        "test/api/contracts.test.js",
+        "test/browser/helpers/model-fault.js",
+        "test/browser/degraded-extraction.test.js"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson is about a hook or guard choosing a project root for a write target. This task writes tests, builds no hook, guard or root discovery, and every write was accepted by the guard in the nested record, so none of its 'Applies when' conditions hold.",
+          "basis": "reason"
+        }
+      ]
     },
     "e0-paypal-stub-contract": {
       "id": "e0-paypal-stub-contract",
@@ -10368,6 +10376,66 @@
       "task": null,
       "recordedBy": "delivery-lead",
       "at": "2026-10-10T23:52:08.060Z"
+    },
+    "ev-mv31vlqf-010005f2": {
+      "id": "ev-mv31vlqf-010005f2",
+      "kind": "command",
+      "label": "provider-contract suite",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/provider-contract.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 2630,
+      "log": ".eccode/evidence/ev-mv31vlqf-010005f2.log",
+      "logSha256": "a79b7b4bfdf020393ff5c57e8c661c3c8266b28f8ccc5515d52669fa0c65e396",
+      "logFileSha256": "af14edf80bc6343cbfc3fdb5e6d495dc10c2f6f09b11bc1e396a5d2d5e2c8811",
+      "outputTail": "      duration_ms: 1.837925\n      type: 'test'\n      ...\n    # Subtest: NFR6: usage with a fractional micro-dollar cost, a missing model or a negative latency is refused\n    ok 2 - NFR6: usage with a fractional micro-dollar cost, a missing model or a negative latency is refused\n      ---\n      duration_ms: 0.446529\n      type: 'test'\n      ...\n    1..2\nok 5 - ExtractionProvider contract: the checks themselves fail when they should (negative controls)\n  ---\n  duration_ms: 2.397735\n  type: 'suite'\n  ...\n1..5\n# tests 33\n# suites 5\n# pass 32\n# fail 0\n# cancelled 0\n# skipped 1\n# todo 0\n# duration_ms 2518.911232\n",
+      "gate": null,
+      "task": "d5-extraction-contract-browser",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-10T23:53:35.290Z"
+    },
+    "ev-mv320rxs-0129b775": {
+      "id": "ev-mv320rxs-0129b775",
+      "kind": "command",
+      "label": "mutation check: old table layout injected at 360 must fail FU-17 assertion (red expected)",
+      "command": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 test/browser/helpers/mutation-fu17.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 4664,
+      "log": ".eccode/evidence/ev-mv320rxs-0129b775.log",
+      "logSha256": "46a9f1c3576036b977f24fcb8287a4c768c121d56ad9fc603d54094199edc3ce",
+      "logFileSha256": "d8d161e3deb5443e5e76b9932dbe1b72a6577972e4a11eb8ac86e4f0aed0a189",
+      "outputTail": "      duration_ms: 663.505808\n      type: 'test'\n      ...\n    # Subtest: FU-17: at 1280x800 a successful extraction shows the wording of each field in full, with its column title, and no sideways scrolling in the table\n    ok 2 - FU-17: at 1280x800 a successful extraction shows the wording of each field in full, with its column title, and no sideways scrolling in the table\n      ---\n      duration_ms: 652.92093\n      type: 'test'\n      ...\n    1..2\nok 2 - FU-17, TR-C-6: the Original wording column of \"What you need\" is readable at every width\n  ---\n  duration_ms: 1316.870301\n  type: 'suite'\n  ...\n1..2\n# tests 5\n# suites 2\n# pass 3\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 4598.180654\n",
+      "gate": null,
+      "task": "d5-extraction-contract-browser",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-10T23:57:36.595Z"
+    },
+    "ev-mv3226jz-0198f037": {
+      "id": "ev-mv3226jz-0198f037",
+      "kind": "command",
+      "label": "d5 verification: existence guard, npm test, npm run test:browser",
+      "command": "ls test/unit/ai/provider-contract.test.js test/scan/secrets.test.js test/browser/degraded-extraction.test.js >/dev/null && npm test && npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 53107,
+      "log": ".eccode/evidence/ev-mv3226jz-0198f037.log",
+      "logSha256": "261a63de1cd38e0705305b2542db90fb08a3af52982869c406a65fd266eee60e",
+      "logFileSha256": "876326ad536b5f2024b8be23970816b0333da217b4def4a9310260c8bdab19b0",
+      "outputTail": "      duration_ms: 1091.566474\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1060.400683\n      type: 'test'\n      ...\n    1..3\nok 3 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3425.976366\n  type: 'suite'\n  ...\n1..3\n# tests 8\n# suites 3\n# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 9146.995832\n",
+      "gate": null,
+      "task": "d5-extraction-contract-browser",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-10T23:58:42.232Z"
     }
   },
   "reviews": {
@@ -17239,6 +17307,77 @@
       "id": "ho-mv31o4rp-013055fc",
       "recordedBy": "backend-engineer",
       "at": "2026-10-10T23:47:46.864Z"
+    },
+    "ho-mv3249el-0180bc20": {
+      "from": "test-engineer",
+      "to": "delivery-lead",
+      "task": "d5-extraction-contract-browser",
+      "objective": "ExtractionProvider contract suite across the fake, CLI and Anthropic adapters, the log part of the secrets scan (NFR6, RS-29), the HTTP contract scenarios for the phase D routes (FU-13, FU-18), and the degraded-extraction browser journey with the 360 px table check (RS-03, FU-17).",
+      "context": "Built against spec.md (Testing Strategy, Observability, AI design) and the d1-d4 handoffs. Nothing here calls a model: the fake is simulated, the CLI adapter runs against the stub claude binary replaying the recorded-shape transcript (not a capture of the real CLI), the Anthropic adapter against a loopback stub. The results prove the adapters' mapping, the pipeline and the harness, not model quality. test/scan/secrets.test.js did not exist, so the log part is a new file (the plan's 'keep the existing scan content' had nothing to keep). The request-view fixtures request-view-planned/infeasible/reserved are d4's and lack the additive capabilities key, so those three rows carry optional: ['capabilities'] (I do not own the fixtures). GET /api/requests/:id/image returns bytes, not JSON, so it has a table row with binary: true that checks status, detected type, nosniff, CSP sandbox, no-store and the exact bytes. The fake provider has no busy fault (FAKE_FAULTS has four names), so the PROVIDER_BUSY row of the shared suite is SKIPPED for the fake and reported as skipped.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md#testing-strategy",
+        ".eccode/artifacts/design/spec.md#observability",
+        ".eccode/artifacts/plan/followups.md (FU-13, FU-16, FU-17, FU-18)",
+        ".eccode/handoffs/ho-mv30knyb-01ee912a.json",
+        ".eccode/handoffs/ho-mv3158kt-011b3953.json",
+        ".eccode/handoffs/ho-mv31n07e-01ec72ff.json",
+        ".eccode/handoffs/ho-mv31j0p2-01ac6416.json",
+        ".eccode/handoffs/ho-mv30i4sf-01273270.json"
+      ],
+      "dependencies": [
+        "d2-ai-adapters-corpus",
+        "d3-extraction-service",
+        "d4-frontend-extraction"
+      ],
+      "expectedOutput": "The four test deliverables plus their helpers, with npm test and npm run test:browser green and the phase E contract rows still skipped under FU-18.",
+      "acceptanceCriteria": [
+        "provider-contract.test.js: one shared suite against fake, cli (stub binary) and anthropic (loopback): validated output, usage fields, PROVIDER_TIMEOUT / UNAVAILABLE / BAD_OUTPUT / BUSY with no provider body, buyer text or key in the error; 33 tests, 32 pass, 1 skipped (fake x PROVIDER_BUSY, the fake has no busy fault)",
+        "secrets.test.js log part: every log line of an in-process run and of a separate server process has a valid requestId, only allow-listed keys and none of the canary Authorization value, access token, client id and secret, admin and webhook secrets, customer password, API key, payer e-mail and name, buyer text or provider body (plain, JSON-escaped, URL-encoded, lower-cased, base64); each response's X-Request-Id matches exactly one http.request line; negative controls prove the scan can fail",
+        "contracts.test.js: scenarios for image upload, extract, extract degraded, degraded view, delete and GET image; the six KNOWN_FIXTURE_DEFECTS entries and the todo machinery removed; capabilities optional on the three live request-view rows; 52 tests, 45 pass, 7 skipped (phase E routes only), 0 todo",
+        "degraded-extraction.test.js: fake_model:timeout forced through the admin fault switch, degraded notice and manual form, confirm gives provenance manual in the requirements row, a feasible planning run, no purchase, at 360 and 1280 px; plus FU-17 table-readability checks at both widths on the degraded and on a successful extraction",
+        "npm test and npm run test:browser pass"
+      ],
+      "completedWork": "provider-contract.test.js with test/helpers/provider-stubs.js (CLI stub sandbox, Anthropic loopback stub). secrets.test.js (new). contracts.test.js: six new/updated scenarios, FU-13 cleanup. All six KNOWN_FIXTURE_DEFECTS entries were verified fixed by deleting them: the scenarios run as ordinary passing tests and the run shows 0 todo (ev:ev-mv31t888-01a00447). test/helpers/extraction.js (corpus photo, upload call, fault switch) and a raw bytes Buffer added to the app-harness response (additive). degraded-extraction.test.js with test/browser/helpers/model-fault.js. Failing-first: before the edits contracts.test.js had 5 failures (ev:ev-mv31rk2w-01e1c7c2). Mutation check of the FU-17 assertion: with the old unstacked table layout injected by CSS at 360 px the degraded journey fails (ev:ev-mv320rxs-0129b775, red on purpose; the scratch copy was deleted). Final verification command verbatim: PASSED (ev:ev-mv3226jz-0198f037). Counts from a direct npm test run: 1214 tests, 1206 pass, 0 fail, 8 skipped, 0 todo (7 phase E contract rows under FU-18 and the fake x PROVIDER_BUSY row); ECCODE_EVAL 200/200; npm run test:browser: 8 tests, 8 pass, 0 fail, 0 skipped. FU-16 is not touched: test/browser/journey-infeasible.test.js is unchanged.",
+      "filesChanged": [
+        "test/helpers/app-harness.js",
+        "test/helpers/extraction.js",
+        "test/helpers/provider-stubs.js",
+        "test/unit/ai/provider-contract.test.js",
+        "test/scan/secrets.test.js",
+        "test/api/contracts.test.js",
+        "test/browser/helpers/model-fault.js",
+        "test/browser/degraded-extraction.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv3226jz-0198f037",
+        "ev:ev-mv31t888-01a00447",
+        "ev:ev-mv31vlqf-010005f2",
+        "ev:ev-mv31rk2w-01e1c7c2",
+        "ev:ev-mv320rxs-0129b775"
+      ],
+      "remainingIssues": [
+        "Passing evidence: ev:ev-mv3226jz-0198f037 (verification command), ev:ev-mv31t888-01a00447 (contracts.test.js), ev:ev-mv31vlqf-010005f2 (provider-contract suite). Red on purpose, cited as red: ev:ev-mv31rk2w-01e1c7c2 (contracts.test.js before the edit, 5 failures) and ev:ev-mv320rxs-0129b775 (FU-17 mutation, 2 failures).",
+        "Skipped, not passed: 7 contract rows for phase E routes (execute, execute replay, abandon, paypal create, receipt, supplier ready, supplier handover; FU-18, owner e6) and the shared-suite row 'fake maps busy to PROVIDER_BUSY' (the fake has no busy fault; PROVIDER_BUSY is covered for cli and anthropic here and as a gate refusal in test/api/extract-degraded.test.js). The secrets scan has no payer data from PayPal because phase E routes do not exist; g-phase extends it to assets, responses, screenshots and submission files (RS-29).",
+        "OBSERVATION in d4 code (public/js/components/fields-table.js, renderExtractionNotices; found while writing the journey. The browser run ev:ev-mv3226jz-0198f037 passes because the test does not pin it): after the customer confirms the details by hand, the request page still shows the degraded notice 'Automatic reading unavailable - please enter the details', because the notice follows extraction.degraded and ignores that requirements exist. The details are in, so the text is stale. I did not pin this behaviour in the test and did not edit public/. Owner: frontend-engineer (hide or reword the notice once view.requirements is not null).",
+        "FU-16 stays with the orchestrator: EXTRACT_ROUTE_MAY_BE_MISSING is still true in public/js/views/request-new.js (d4) and withoutUnregisteredExtract() is still in test/browser/journey-infeasible.test.js (c6). The extract route exists now, so both can be removed; I did not touch either (not in my ownership).",
+        "Fixture gap (d4's files, not mine): request-view-planned.json, request-view-infeasible.json and request-view-reserved.json do not carry the capabilities key that the live view returns; the three rows are optional: ['capabilities'] so the key is not pinned for them. request-view-degraded.json does carry it and is compared exactly. If the contract owner wants it pinned everywhere, add the key to those three fixtures and drop the optional entries.",
+        "Guard note: the Bash guard refused a harmless sed command whose script was '178d' (read as a path outside the task's ownership) and a heredoc containing backticks (read as a substitution in an eccode command). Both were redone with the Edit tool; nothing was written outside the ownership.",
+        "The cli x PROVIDER_TIMEOUT case uses a 300 ms adapter timeout against a stub that never answers, and the anthropic one 150 ms against a 3 s delayed reply: the outcome does not depend on timing (the stub never answers in time) but they do wait for the timeout, about 0.5 s together."
+      ],
+      "nextAction": "delivery-lead: review d5, decide FU-16 (rework for journey-infeasible.test.js and EXTRACT_ROUTE_MAY_BE_MISSING) and route the stale-degraded-notice observation to the frontend-engineer; e6 owns the 7 skipped phase E rows.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson is about a hook or guard choosing a project root for a write target. This task writes tests, builds no hook, guard or root discovery, and every write was accepted by the guard in the nested record, so none of its 'Applies when' conditions hold."
+        }
+      ],
+      "id": "ho-mv3249el-0180bc20",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T00:00:19.346Z"
     }
   },
   "runs": {
@@ -18283,8 +18422,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-10T23:49:10.200Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T00:01:11.683Z",
+      "durationMinutes": 12.02,
+      "costUsd": null,
+      "tokens": 214041,
+      "note": null,
+      "usageReported": true
     }
   },
   "risks": {
@@ -18641,8 +18786,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 669.88,
-    "tokens": 9099157
+    "runtimeMinutes": 681.9,
+    "tokens": 9313198
   },
   "delivery": null,
   "reworks": [
