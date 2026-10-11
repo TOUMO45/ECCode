@@ -25,7 +25,11 @@
 //                                    It must be idempotent on operationKey (the real one is INSERT OR IGNORE into
 //                                    provider_calls); it must not send anything and must not open a transaction.
 // The default port is a no-op recorder (createNoopProvider): it only remembers the intents, so a test can see what
-// would be queued. Sending queued voids after the commit is the caller's and the reconciler's job, not the rule's.
+// would be queued. The real port is createVoidPort of src/services/calls.js (INSERT OR IGNORE into provider_calls). Sending
+// queued voids after the commit is the caller's and the reconciler's job, not the rule's (the app flushes them before it answers).
+//
+// Resolution hook (step 4): voidRule.onAuthorized(db, { operationId }) queues the void when an operation that already has
+// cancel_requested_at moves into `authorized` (authorize result, pending poll, webhook, late return handler).
 //
 // The rule returns { planVersionId, releasedReservationId, cancelledOrderIds, voidedOperationIds, markedOperationIds,
 // queuedVoids } so the caller can log and audit; it writes one audit_events row itself.
@@ -151,6 +155,35 @@ export function createVoidRule({ clock, provider = createNoopProvider() } = {}) 
     return result;
   }
 
+  // Resolution hook (step 4 of the spec): any transition into `authorized` of an operation whose cancellation was already
+  // requested queues `so:<id>:void:1` in the SAME transaction. Callers: the authorize record (calls.js), the reconciler's
+  // resolution and pending poll, a webhook and a late return handler. Returns the queued intent, or null when the operation
+  // is not `authorized` or nobody asked for its cancellation. The UNIQUE operation_key makes a repeat a no-op.
+  voidRule.onAuthorized = function onAuthorized(db, { operationId, requestId = null }) {
+    return queueVoidWhenCancelled(db, { clock, provider, operationId, requestId });
+  };
   voidRule.provider = provider;
   return voidRule;
+}
+
+export function queueVoidWhenCancelled(db, { clock, provider, operationId, requestId = null }) {
+  if (!db.inTx) throw new Error('the resolution hook must run inside the transaction that moved the operation to authorized');
+  const op = db
+    .prepare(
+      'SELECT po.id, po.status, po.supplier_order_id, po.cancel_requested_at, po.cancel_reason, so.plan_version_id ' +
+        'FROM payment_operations po JOIN supplier_orders so ON so.id = po.supplier_order_id WHERE po.id = ?',
+    )
+    .get(operationId);
+  if (!op || op.status !== 'authorized' || op.cancel_requested_at === null) return null;
+  const reason = typeof op.cancel_reason === 'string' && REASON.test(op.cancel_reason) ? op.cancel_reason : 'CANCEL_REQUESTED';
+  const intent = {
+    operationId: op.id, supplierOrderId: op.supplier_order_id, kind: 'void', attempt: 1,
+    operationKey: `so:${op.supplier_order_id}:void:1`, planVersionId: op.plan_version_id, reason,
+  };
+  provider.queueVoid(db, intent);
+  recordAudit(db, clock, {
+    actorRole: 'system', action: 'void_rule.resolution_hook', entityType: 'payment_operation', entityId: op.id, outcome: 'ok',
+    detail: { reason, planVersionId: op.plan_version_id }, requestId,
+  });
+  return intent;
 }

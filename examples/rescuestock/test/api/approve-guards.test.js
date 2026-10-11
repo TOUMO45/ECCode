@@ -2,7 +2,8 @@
 //   RS-12  approve requires expectedTotalCents and planHash; a mismatch is 409 PLAN_CHANGED with the current
 //          values; a stored plan that fails server re-validation is 409 PLAN_INVALID
 //   RS-04  (approve half) a missing budget is 409 MISSING_BUDGET, a missing deadline 409 MISSING_DEADLINE,
-//          the budget first; the paypal/create half comes with the payment flow
+//          the budget first; (paypal/create half, task e2-payment-flow) the same two codes, in the same order, refuse
+//          POST /api/orders/:id/paypal/create with no provider call and no provider_calls row
 //   RS-19  unknown body fields never change what is approved
 //   RS-27  a foreign plan id is 404
 import { after, before, describe, test } from 'node:test';
@@ -305,5 +306,78 @@ describe('approve: plan states, isolation and access', () => {
     assert.equal(malformed.status, 400);
     assert.equal(malformed.json.error.code, 'BAD_REQUEST');
     assert.equal(planStatus(h, plan.id), 'proposed');
+  });
+});
+
+describe('RS-04 (paypal/create half): an order whose request lost its budget or deadline cannot start a PayPal approval', () => {
+  let h;
+  let cafe1;
+  before(async () => {
+    h = await startHarness({ seed: true, env: { RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY: '1000', RS_MAX_LIVE_RESERVATIONS_PER_CUSTOMER: '10' } });
+    cafe1 = await signIn(h, 'cafe1');
+  });
+  after(() => h.close());
+
+  // Each seeded supplier has one bundle in stock, so the previous test's reservation is released (abandon) before the next one.
+  let previousPlanId = null;
+  const reserveAll = async () => {
+    if (previousPlanId !== null) assert.equal((await cafe1.post(`/api/plans/${previousPlanId}/abandon`, {})).status, 200);
+    const { requestId, plan } = await planned(cafe1);
+    previousPlanId = plan.id;
+    const approved = await cafe1.post(`/api/plans/${plan.id}/approve`, approveBody(plan));
+    assert.equal(approved.status, 200, approved.text);
+    const reserved = await cafe1.post(`/api/plans/${plan.id}/reserve`, {}, { headers: { 'Idempotency-Key': `rs04-create-half-${String(plan.id).padStart(6, '0')}` } });
+    assert.equal(reserved.status, 201, reserved.text);
+    return { requestId, plan, orders: reserved.json.orders };
+  };
+  const clearField = (requestId, column) => h.db.prepare(`UPDATE requirements SET ${column} = NULL WHERE request_id = ?`).run(requestId);
+  const providerRows = () => ({
+    calls: count(h, 'SELECT COUNT(*) AS n FROM provider_calls'),
+    fake: count(h, 'SELECT COUNT(*) AS n FROM fake_paypal_calls'),
+    fakeOrders: count(h, 'SELECT COUNT(*) AS n FROM fake_paypal_orders'),
+    operations: count(h, 'SELECT COUNT(*) AS n FROM payment_operations'),
+  });
+
+  test('RS-04: without a budget paypal/create is 409 MISSING_BUDGET (also ahead of a missing deadline); without a deadline 409 MISSING_DEADLINE; nothing is sent or stored', async () => {
+    const { requestId, orders } = await reserveAll();
+    const before = providerRows();
+    clearField(requestId, 'budget_cents');
+    clearField(requestId, 'deadline_at');
+    const both = await cafe1.post(`/api/orders/${orders[0].id}/paypal/create`, {});
+    assert.equal(both.status, 409);
+    assert.equal(both.json.error.code, 'MISSING_BUDGET');
+    assert.equal(both.json.error.message, 'A budget is required.');
+
+    h.db.prepare("UPDATE requirements SET budget_cents = 12000 WHERE request_id = ?").run(requestId);
+    const deadline = await cafe1.post(`/api/orders/${orders[1].id}/paypal/create`, {});
+    assert.equal(deadline.status, 409);
+    assert.equal(deadline.json.error.code, 'MISSING_DEADLINE');
+    assert.deepEqual(providerRows(), before, 'no provider call, no provider_calls row, no new payment operation');
+    assert.deepEqual(
+      h.db.prepare('SELECT status, provider_order_id FROM payment_operations WHERE supplier_order_id IN (?, ?) ORDER BY id').all(orders[0].id, orders[1].id).map((r) => ({ ...r })),
+      [{ status: 'created', provider_order_id: null }, { status: 'created', provider_order_id: null }],
+    );
+    const denied = h.db.prepare("SELECT detail_json FROM audit_events WHERE action = 'payment.create' AND outcome = 'denied' ORDER BY id").all().map((r) => JSON.parse(r.detail_json).code);
+    assert.deepEqual(denied.slice(-2), ['MISSING_BUDGET', 'MISSING_DEADLINE']);
+  });
+
+  test('RS-04: a missing budget is reported before an expired reservation (budget and deadline are checked first)', async () => {
+    const { requestId, orders } = await reserveAll();
+    clearField(requestId, 'budget_cents');
+    h.clock.advance(31 * 60 * 1000);
+    const res = await cafe1.post(`/api/orders/${orders[0].id}/paypal/create`, {});
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'MISSING_BUDGET', 'budget and deadline are checked before the reservation');
+  });
+
+  test('RS-04: once the budget and deadline are back the same order starts its approval (200 with the link)', async () => {
+    const { requestId, orders } = await reserveAll();
+    clearField(requestId, 'budget_cents');
+    clearField(requestId, 'deadline_at');
+    assert.equal((await cafe1.post(`/api/orders/${orders[0].id}/paypal/create`, {})).status, 409);
+    h.db.prepare("UPDATE requirements SET budget_cents = 12000, deadline_at = '2026-10-20T08:00:00.000Z' WHERE request_id = ?").run(requestId);
+    const ok = await cafe1.post(`/api/orders/${orders[0].id}/paypal/create`, {});
+    assert.equal(ok.status, 200, ok.text);
+    assert.equal(ok.json.payment.status, 'created');
   });
 });

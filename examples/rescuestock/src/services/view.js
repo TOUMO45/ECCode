@@ -384,7 +384,8 @@ export function renderPayment(op, config) {
     amountCents: op.amount_cents,
     currency: op.currency,
     merchantMode: config.merchantMode,
-    approvalUrl: op.approval_url ?? null,
+    // The link is offered only while the buyer still has to approve (status created); afterwards it is of no use.
+    approvalUrl: op.status === 'created' && !op.cancel_requested_at ? op.approval_url ?? null : null,
     buyerCancelledAt: op.buyer_cancelled_at ?? null,
     authorizationExpiresAt: op.authorization_expires_at ?? null,
     cancelRequested: op.cancel_requested_at !== null && op.cancel_requested_at !== undefined,
@@ -502,6 +503,19 @@ export function buildRequestView(ctx, requestId, userId) {
   return readSnapshot(ctx.db, () => {
     const row = findOwnedRequest(ctx.db, userId, requestId);
     return assembleView(ctx, loadRequestData(ctx.db, [row], { full: true }).get(row.id));
+  });
+}
+
+// One Order of the caller's request, rendered exactly as RequestView.orders shows it (receipt route). 404 when the order is
+// not part of that request.
+export function buildOrderView(ctx, requestId, userId, orderId) {
+  return readSnapshot(ctx.db, () => {
+    const row = findOwnedRequest(ctx.db, userId, requestId);
+    const data = loadRequestData(ctx.db, [row], { full: true }).get(row.id);
+    const order = data.orders.find((o) => o.id === orderId);
+    if (!order) throw new AppError(404, 'NOT_FOUND');
+    const bodies = new Map(data.versions.map((v) => [v.id, parseJson(v.plan_json, null)]));
+    return renderOrder(ctx, data, order, bodies);
   });
 }
 

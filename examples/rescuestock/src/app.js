@@ -27,6 +27,8 @@ import { plan as defaultPlanner } from './domain/planner.js';
 import { DEFAULT_UPLOAD_DEADLINE_MS, createAiRuntime } from './services/extraction.js';
 import { PLAN_RATE_DEFAULT } from './services/plans.js';
 import { createNoopProvider, createVoidRule } from './services/void-rule.js';
+import { flushQueuedVoids } from './services/calls.js';
+import { createPayments } from './payments/provider.js';
 
 const DEFAULT_PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 const MAX_URL_LENGTH = 2048;
@@ -93,10 +95,15 @@ export function createApp({
   // planner: src/domain/planner.js plan() unless a test injects another (it is read per request, from ctx.planner).
   // voidRule(db, {planVersionId, reason, actor, requestId}): the void rule (src/services/void-rule.js), called inside the
   // transaction that moves a plan version off the executable path (supersession, supplier refusal, expiry, reset...).
-  // By default it is built here from the clock and `voidProvider`, the PORT through which a provider void is queued
-  // (default: a no-op recorder). Phase E passes a provider whose queueVoid inserts the provider_calls row; a test may
-  // pass its own voidRule. The rule is never absent: an `authorized` operation always gets its void queued.
+  // By default it is built here from the clock and `voidProvider`, the PORT through which a provider void is queued.
+  // The default port is the no-op recorder (c3's tests pin it). The REAL port is createVoidPort({ clock }) of
+  // src/services/calls.js: its queueVoid does INSERT OR IGNORE of `so:<id>:void:1` into provider_calls, and the app sends
+  // the queued voids before the request that queued them answers (flushQueuedVoids, the sender table of the call protocol;
+  // the reconciler sends any that are left). The process entry (src/main.js startApp) must pass it as `voidProvider`;
+  // a test may pass its own port or voidRule, or replace app.deps.voidRule (every request reads it from deps).
   const rule = voidRule ?? createVoidRule({ clock, provider: voidProvider ?? createNoopProvider() });
+  // payments: the PaymentProvider. When none is injected, listen() builds it from the configuration once the port is known
+  // (the fake adapter's approval listener needs the app origin) and closes it with the app. Requests read deps.payments.
   // ai: { provider, gate, selection } (createAiRuntime in src/services/extraction.js). By default it is built here from the
   // configuration: the fake provider whenever RS_TEST_OFFLINE=1, and the gate over the clock and the database. A test may pass
   // its own, or replace app.deps.ai afterwards (every request reads it from the shared deps).
@@ -105,7 +112,10 @@ export function createApp({
   const deps = {
     db, clock, config, log, ai: aiRuntime, payments, publicUrl, planner: planner ?? defaultPlanner, planRate: resolvePlanRate(config, planRate),
     voidRule: rule, uploadDeadlineMs,
+    // The F-TR-3 test hook (RS_TEST_HOOKS only): the return handler dies between its commit and the authorize send.
+    killProcess: () => process.kill(process.pid, 'SIGKILL'),
   };
+  let paymentsHandle = null;
   // Sessions, CSRF, throttles and the access hook (ARCH-25). An `authorize` passed in (a test double)
   // replaces the access hook only; deps.auth is always there for the auth routes.
   deps.auth = createAuth({ db, clock, config, publicUrl });
@@ -186,7 +196,17 @@ export function createApp({
         logState.role = ctx.user.role;
       }
 
-      const result = await route.handler(ctx);
+      let result;
+      try {
+        result = await route.handler(ctx);
+      } finally {
+        // Sender table: "void: the caller of the void rule, right after commit". A failure here never changes the answer.
+        try {
+          await flushQueuedVoids(ctx, ctx.voidRule?.provider);
+        } catch {
+          reqLog.error('provider.flush_failed', { code: 'FLUSH_FAILED' });
+        }
+      }
       if (res.writableEnded || res.headersSent) return;
       const status = result?.status ?? 200;
       if (result?.body === undefined && status !== 200) {
@@ -219,14 +239,34 @@ export function createApp({
     async listen(port = config.port, host = config.host) {
       server = createHttpServer(handle);
       runtime.port = await listenOn(server, port, host);
+      if (!deps.payments) {
+        try {
+          paymentsHandle = await createPayments({ config, db, clock, log, appOrigin: publicUrl });
+          deps.payments = paymentsHandle.provider;
+        } catch (err) {
+          await closeServer(server);
+          server = null;
+          throw err;
+        }
+      }
       return runtime.port;
     },
     get server() {
       return server;
     },
+    // { provider, listener, close } of the payment adapter listen() built (null when one was injected).
+    get payments() {
+      return paymentsHandle;
+    },
     async close() {
       if (server) await closeServer(server);
       server = null;
+      if (paymentsHandle) {
+        const handle = paymentsHandle;
+        paymentsHandle = null;
+        if (deps.payments === handle.provider) deps.payments = null;
+        await handle.close();
+      }
     },
   };
 }

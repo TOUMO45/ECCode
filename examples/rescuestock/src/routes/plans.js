@@ -6,9 +6,12 @@
 //     400 IDEMPOTENCY_KEY_REQUIRED | 404 | 409 PLAN_SUPERSEDED, PLAN_NOT_EXECUTABLE, MISSING_BUDGET, MISSING_DEADLINE,
 //     OUT_OF_STOCK, ALREADY_RESERVED, RESERVATION_LIMIT, INVALID_STATE | 422 IDEMPOTENCY_KEY_REUSED, VALIDATION_FAILED | 503 DB_BUSY
 //     A repeat of the same key and request replays the stored answer with the header Idempotent-Replayed: true.
-// Later tasks add execute and abandon to this module.
+//   POST /api/plans/:id/abandon   body {} -> 200 {plan, rescueStatus}: approved -> non_executable (PAYMENT_CANCELLED) and the void rule;
+//     a plan already abandoned answers 200 with its state. 404 | 409 INVALID_STATE (not approved)
+// The execute route is added by the saga task.
 import { AppError } from '../http/envelope.js';
 import { idParam, int, str, validateObject } from '../http/validate.js';
+import { abandonPlan } from '../services/payments.js';
 import { approvePlan, findOwnedPlan } from '../services/plans.js';
 import { reservationFingerprint, reservePlan } from '../services/reservations.js';
 
@@ -49,6 +52,18 @@ export function register(router) {
       const fingerprint = reservationFingerprint(`/api/plans/${planId}/reserve`, body);
       const outcome = reservePlan(ctx, ctx.user, planId, { key, fingerprint });
       return { status: outcome.status, body: outcome.body, headers: outcome.replayed ? { 'Idempotent-Replayed': 'true' } : undefined };
+    },
+    { policy: 'customer' },
+  );
+
+  router.add(
+    'POST',
+    '/api/plans/:id/abandon',
+    async (ctx) => {
+      const planId = idParam(ctx.params.id);
+      findOwnedPlan(ctx.db, ctx.user.id, planId); // 404 for a foreign plan before the body is read
+      await ctx.body();
+      return { status: 200, body: await abandonPlan(ctx, ctx.user, planId) };
     },
     { policy: 'customer' },
   );

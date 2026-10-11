@@ -17,7 +17,7 @@ import { bool, int, ts } from '../http/validate.js';
 import { recordAudit } from './audit.js';
 import { actorOf, setOnHand } from './ledger.js';
 import { enqueueReplan, markNonExecutable, supersedeForOfferChange } from './supersession.js';
-import { labelsOf, parseJson } from './view.js';
+import { buildOrderView, labelsOf, parseJson } from './view.js';
 
 export const FULFILMENT_STATUSES = Object.freeze(['awaiting_supplier', 'confirmed', 'refused', 'cancelled', 'ready', 'collected']);
 const MAX_LIST = 200;
@@ -337,6 +337,53 @@ export function recordHandover(ctx, user, orderId) {
       return renderSupplierOrder(db, loadOrder(db, orderId, user.supplierId));
     }),
   );
+}
+
+// ------------------------------------------------------------------ the customer's side of an order
+
+// The order of the caller's own, non-archived request, with what the payment routes need. Another customer's order, an
+// archived one and an unknown id are all 404 (no existence leak).
+export function findOwnedOrder(db, userId, orderId) {
+  const row = db
+    .prepare(
+      'SELECT so.id, so.plan_version_id, so.supplier_id, so.reservation_id, so.total_cents, so.fulfilment_status, ' +
+        'pv.request_id, pv.status AS plan_status, pv.non_executable_reason, pv.planning_run_id, s.code AS supplier_code ' +
+        'FROM supplier_orders so JOIN plan_versions pv ON pv.id = so.plan_version_id JOIN suppliers s ON s.id = so.supplier_id ' +
+        'JOIN rescue_requests rr ON rr.id = pv.request_id ' +
+        'WHERE so.id = ? AND rr.customer_id = ? AND rr.archived_at IS NULL AND rr.deleted_at IS NULL',
+    )
+    .get(orderId, userId);
+  if (!row) throw new AppError(404, 'NOT_FOUND');
+  return row;
+}
+
+// POST /api/orders/:id/receipt: the buyer records that the goods were received. Allowed when the order is `ready` or
+// `collected`; a repeat answers 200 with the unchanged order (UNIQUE (supplier_order_id, kind)).
+export function recordReceipt(ctx, user, orderId) {
+  const { db, clock } = ctx;
+  const row = findOwnedOrder(db, user.id, orderId);
+  if (row.fulfilment_status !== 'ready' && row.fulfilment_status !== 'collected') {
+    try {
+      recordAudit(db, clock, {
+        actorUserId: user.id, actorRole: user.role, action: 'order.receipt', entityType: 'supplier_order', entityId: orderId,
+        outcome: 'denied', detail: { code: 'INVALID_STATE' }, requestId: ctx.requestId,
+      });
+    } catch {
+      ctx.log.error('audit.failed', { code: 'AUDIT_FAILED' });
+    }
+    throw invalidState(row.fulfilment_status, 'receipt');
+  }
+  db.tx(() => {
+    const now = isoFromMs(clock.now());
+    const added = db.prepare("INSERT OR IGNORE INTO pickup_confirmations (supplier_order_id, kind, by_user, at) VALUES (?, 'receipt', ?, ?)").run(orderId, user.id, now).changes;
+    if (added === 1) {
+      recordAudit(db, clock, {
+        actorUserId: user.id, actorRole: user.role, action: 'order.receipt', entityType: 'supplier_order', entityId: orderId,
+        outcome: 'ok', detail: { planVersionId: row.plan_version_id }, requestId: ctx.requestId,
+      });
+    }
+  });
+  return buildOrderView(ctx, row.request_id, user.id, orderId);
 }
 
 // ------------------------------------------------------------------ inventory

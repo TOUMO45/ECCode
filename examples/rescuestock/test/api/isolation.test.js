@@ -1,6 +1,8 @@
 // Isolation API tests (task c3-reservations-supplier-admin). Case names start with the criterion id:
 //   RS-27  (reservation half) customer X cannot reserve, read or replay customer Y's plan or reservation: 404, nothing
 //          written, no replay of Y's stored answer
+//   RS-27  (payment half, task e2-payment-flow) paypal/create, receipt, abandon and the PayPal return and cancel URLs refuse another
+//          customer's order, plan and token with 404 and no provider call
 //   RS-28  supplier A patching supplier B's inventory gets 403 and B's inventory, offer and ledger are unchanged; one
 //          foreign product in a PATCH refuses the whole PATCH; another supplier's orders are 404
 //   RS-30  customer and supplier sessions calling admin routes get 403, anonymous 401, admin 200; supplier routes refuse
@@ -244,5 +246,91 @@ describe('RS-30: the demo tools and the other roles\' routes are closed to the w
     const admin = await signIn(h, 'admin', ADMIN_PASSWORD);
     assert.equal((await admin.get('/api/requests')).status, 403);
     assert.equal((await admin.post('/api/plans/1/reserve', {}, { headers: { 'Idempotency-Key': KEY(9) } })).status, 403);
+  });
+});
+
+// RS-27 (payment half, task e2-payment-flow): the payment routes are scoped to the buyer, like the reservation routes above.
+describe('RS-27: customers are isolated from each other (payment half)', () => {
+  let h;
+  let cafe1;
+  let cafe2;
+  let plan;
+  let orders;
+  let token;
+  const fakeTotal = () => count(h, 'SELECT COUNT(*) AS n FROM fake_paypal_calls');
+  const snapshot = () => ({
+    fake: fakeTotal(),
+    providerCalls: count(h, 'SELECT COUNT(*) AS n FROM provider_calls'),
+    operations: h.db.prepare('SELECT id, status, buyer_cancelled_at, cancel_requested_at, provider_order_id FROM payment_operations ORDER BY id').all().map((r) => ({ ...r })),
+    plans: h.db.prepare('SELECT id, status FROM plan_versions ORDER BY id').all().map((r) => ({ ...r })),
+    receipts: count(h, "SELECT COUNT(*) AS n FROM pickup_confirmations WHERE kind = 'receipt'"),
+    reservations: h.db.prepare('SELECT id, status FROM reservations ORDER BY id').all().map((r) => ({ ...r })),
+  });
+
+  before(async () => {
+    h = await startHarness({ seed: true, env: { RS_MAX_REQUESTS_PER_CUSTOMER_PER_DAY: '1000' } });
+    cafe1 = await signIn(h, 'cafe1');
+    cafe2 = await signIn(h, 'cafe2');
+    plan = (await approvedPlan(h, cafe1)).plan;
+    const reserved = await reserve(cafe1, plan.id, KEY(31));
+    assert.equal(reserved.status, 201, reserved.text);
+    orders = reserved.json.orders;
+    const created = await cafe1.post(`/api/orders/${orders[0].id}/paypal/create`, {});
+    assert.equal(created.status, 200, created.text);
+    token = created.json.approvalUrl.split('/').pop();
+  });
+  after(() => h.close());
+
+  test('RS-27: customer X on customer Y\'s order, plan and PayPal token gets 404 from every payment route, with no provider call and no state change', async () => {
+    const before = snapshot();
+    const attempts = [
+      ['create', () => cafe2.post(`/api/orders/${orders[0].id}/paypal/create`, {})],
+      ['create (second order)', () => cafe2.post(`/api/orders/${orders[1].id}/paypal/create`, {})],
+      ['receipt', () => cafe2.post(`/api/orders/${orders[0].id}/receipt`, {})],
+      ['abandon', () => cafe2.post(`/api/plans/${plan.id}/abandon`, {})],
+      ['return', () => cafe2.get(`/api/paypal/return?token=${token}&PayerID=FAKEPAYER`)],
+      ['cancel', () => cafe2.get(`/api/paypal/cancel?token=${token}`)],
+    ];
+    for (const [name, call] of attempts) {
+      const res = await call();
+      assert.equal(res.status, 404, `${name}: ${res.text}`);
+      assert.equal(res.json.error.code, 'NOT_FOUND', name);
+      assert.equal(res.json.error.details, undefined, name);
+      assert.equal(res.headers.location, undefined, name);
+    }
+    assert.deepEqual(snapshot(), before);
+    // The fake page is a capability, not an account: possessing the token alone does nothing at the app.
+    assert.equal(count(h, "SELECT COUNT(*) AS n FROM audit_events WHERE action IN ('payment.cancel','payment.return','plan.abandon') AND outcome = 'ok'"), 0);
+  });
+
+  test('RS-27: unknown and malformed ids look the same as foreign ones (404 or 400) and Y\'s own calls are unaffected', async () => {
+    assert.equal((await cafe2.post('/api/orders/987654/paypal/create', {})).status, 404);
+    assert.equal((await cafe2.post('/api/orders/987654/receipt', {})).status, 404);
+    assert.equal((await cafe2.post('/api/plans/987654/abandon', {})).status, 404);
+    assert.equal((await cafe2.get('/api/paypal/return?token=FAKE-ffffffffffffffffffffffffffffffff')).status, 404);
+    assert.equal((await cafe2.get('/api/paypal/cancel?token=FAKE-ffffffffffffffffffffffffffffffff')).status, 404);
+    assert.equal((await cafe2.post('/api/orders/abc/receipt', {})).status, 400);
+    const own = await cafe1.post(`/api/orders/${orders[0].id}/paypal/create`, {});
+    assert.equal(own.status, 200, own.text);
+    assert.equal(own.json.approvalUrl.split('/').pop(), token);
+  });
+
+  test('RS-30: anonymous payment calls are 401 (return and cancel redirect to sign-in), supplier sessions are 403', async () => {
+    const before = snapshot();
+    const anon = createClient(h.request);
+    assert.equal((await anon.post(`/api/orders/${orders[0].id}/paypal/create`, {})).status, 401);
+    assert.equal((await anon.post(`/api/orders/${orders[0].id}/receipt`, {})).status, 401);
+    assert.equal((await anon.post(`/api/plans/${plan.id}/abandon`, {})).status, 401);
+    for (const kind of ['return', 'cancel']) {
+      const res = await anon.get(`/api/paypal/${kind}?token=${token}`);
+      assert.equal(res.status, 303, kind);
+      assert.equal(res.headers.location, '/#/signin?notice=paypal-return');
+    }
+    const supplier = await signIn(h, 'supplier-a');
+    assert.equal((await supplier.post(`/api/orders/${orders[0].id}/paypal/create`, {})).status, 403);
+    assert.equal((await supplier.post(`/api/orders/${orders[0].id}/receipt`, {})).status, 403);
+    assert.equal((await supplier.post(`/api/plans/${plan.id}/abandon`, {})).status, 403);
+    for (const kind of ['return', 'cancel']) assert.equal((await supplier.get(`/api/paypal/${kind}?token=${token}`)).status, 403, kind);
+    assert.deepEqual(snapshot(), before);
   });
 });
