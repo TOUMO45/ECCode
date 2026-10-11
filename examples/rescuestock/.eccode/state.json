@@ -1,6 +1,6 @@
 {
-  "seq": 880,
-  "lastHash": "3f6c3422642214384c26f4805d2c04d866b0779982e235e709c32ecc616a97b2",
+  "seq": 884,
+  "lastHash": "51fe472da3172a0027910fdfab591085d37059d654aaf0491cd04aa6daaa4b2d",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -19,6 +19,7 @@
     "phase:rework-1",
     "phase:rework-2",
     "phase:rework-3",
+    "phase:rework-4",
     "verification"
   ],
   "gates": {
@@ -4175,6 +4176,21 @@
       "escalation": null,
       "startedAt": "2026-10-11T00:06:45.242Z",
       "approvedAt": "2026-10-11T00:32:33.988Z"
+    },
+    "phase:rework-4": {
+      "id": "phase:rework-4",
+      "kind": "phase",
+      "status": "in_progress",
+      "iterations": 0,
+      "authors": [],
+      "submissions": [],
+      "reviews": [],
+      "openFindings": [],
+      "approvedBy": null,
+      "approvedSubmission": null,
+      "escalation": null,
+      "startedAt": "2026-10-11T12:17:29.421Z",
+      "approvedAt": null
     }
   },
   "plan": {
@@ -6905,6 +6921,43 @@
           "basis": "reason"
         }
       ]
+    },
+    "rework-4": {
+      "id": "rework-4",
+      "phase": "rework-4",
+      "title": "FU-23 and SEC-R-1: ids never reused; general limit fails open on busy reads",
+      "owner": "backend-engineer",
+      "dependencies": [],
+      "inputs": [
+        "ev:ev-mv33e5qp-017ba56b",
+        "ev:ev-mv337a71-01b57e0c"
+      ],
+      "outputs": [
+        "the fix",
+        "a regression test that fails without it"
+      ],
+      "files": [
+        "src/db/migrations/**",
+        "test/unit/db/**",
+        "test/api/id-reuse.test.js",
+        "src/auth/general-limit.js",
+        "test/unit/auth/**"
+      ],
+      "acceptanceCriteria": [
+        "Phase D review rev-mv33xoyz-0143dd56 TR-D-3 and security draft: rescue_requests, plan_versions, images and planning_runs use INTEGER PRIMARY KEY without AUTOINCREMENT, so after a hard delete of the highest id the next row reuses it and audit rows or a model_spend row point at another customer's request; migration 006 rebuilds those tables with AUTOINCREMENT (app-only, data preserved), model_spend.request_id gets a foreign key or check, and an RS-39 test shows no id is reused. Rework-1 review SEC-R-1: src/auth/general-limit.js takes the write lock on every signed-in call; GET and HEAD fail open on a busy error (the request proceeds uncounted and the event is logged), with a lock-holder test. Only b1 and c1 (approved) owned these files. Required before e4.",
+        "a regression test fails before the fix and passes after it",
+        "the existing checks still pass"
+      ],
+      "verification": {
+        "method": "run the project checks"
+      },
+      "status": "pending",
+      "attempts": 0,
+      "claim": null,
+      "history": [],
+      "completedBy": null,
+      "handoffId": null,
+      "rework": true
     }
   },
   "evidence": {
@@ -25922,6 +25975,24 @@
       "tokens": 90228,
       "note": null,
       "usageReported": true
+    },
+    "run-mv3sg9va-01216cd5": {
+      "id": "run-mv3sg9va-01216cd5",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T12:17:29.670Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv3sga0z-01432809": {
+      "id": "run-mv3sga0z-01432809",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T12:17:29.875Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -26434,6 +26505,16 @@
       "lessons": [],
       "at": "2026-10-11T03:49:57.616Z",
       "by": "orchestrator"
+    },
+    "dec-mv3sg8cv-0146d001": {
+      "id": "dec-mv3sg8cv-0146d001",
+      "title": "The user raised maxReworks to 4 and maxRuntimeMinutes to 2400",
+      "decision": "Commits d5e3695 and 1efcab5 (author TOUMO45, GitHub web editor) raise limits.maxRuntimeMinutes to 2400 and limits.maxReworks to 4. The orchestrator opens rework-4 (FU-23 and SEC-R-1) under that authorization and resumes phase E.",
+      "rationale": "Both limits are reserved for the user; the user chose the config edit over the CLI command. Recorded so the authorization trail is explicit.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T12:17:28.754Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -26504,6 +26585,26 @@
       ],
       "openedBy": "orchestrator",
       "at": "2026-10-11T00:06:45.242Z",
+      "afterDelivery": false
+    },
+    {
+      "id": "rework-4",
+      "gate": "phase:rework-4",
+      "reason": "Phase D review rev-mv33xoyz-0143dd56 TR-D-3 and security draft: rescue_requests, plan_versions, images and planning_runs use INTEGER PRIMARY KEY without AUTOINCREMENT, so after a hard delete of the highest id the next row reuses it and audit rows or a model_spend row point at another customer's request; migration 006 rebuilds those tables with AUTOINCREMENT (app-only, data preserved), model_spend.request_id gets a foreign key or check, and an RS-39 test shows no id is reused. Rework-1 review SEC-R-1: src/auth/general-limit.js takes the write lock on every signed-in call; GET and HEAD fail open on a busy error (the request proceeds uncounted and the event is logged), with a lock-holder test. Only b1 and c1 (approved) owned these files. Required before e4.",
+      "owner": "backend-engineer",
+      "files": [
+        "src/db/migrations/**",
+        "test/unit/db/**",
+        "test/api/id-reuse.test.js",
+        "src/auth/general-limit.js",
+        "test/unit/auth/**"
+      ],
+      "evidence": [
+        "ev:ev-mv33e5qp-017ba56b",
+        "ev:ev-mv337a71-01b57e0c"
+      ],
+      "openedBy": "orchestrator",
+      "at": "2026-10-11T12:17:29.421Z",
       "afterDelivery": false
     }
   ]
