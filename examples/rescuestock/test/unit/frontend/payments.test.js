@@ -468,7 +468,7 @@ test('RS-18: buttons carry aria-disabled while an action runs, and a second clic
 
 // ---- the notice after coming back from PayPal --------------------------------------------------------------------------------------------
 
-test('RS-18: "You are back from PayPal… Waiting" shows only while the returned payment is still in flight, never after the outcome is known', () => {
+test('RS-18: the notice after coming back from PayPal waits only while the payment is in flight, confirms once authorized, and goes when the purchase outcome is known', () => {
   const returned = { paypal: 'returned', order: '31' };
   // present while approved / authorization_pending (and unknown, which is also "waiting for PayPal")
   for (const status of ['approved', 'authorization_pending', 'unknown']) {
@@ -479,26 +479,38 @@ test('RS-18: "You are back from PayPal… Waiting" shows only while the returned
     assert.match(n.text, /back from PayPal for Supplier A\. Waiting for PayPal to confirm/, status);
     assert.equal(buildRequestViewModel(v, { query: returned }).returnNotice?.testid, 'paypal-returned', status);
   }
-  // absent once the order is authorized or captured
-  const authorized = view('view-approve-sandbox-single-credential'); // order 31 is authorized
-  assert.equal(returnNoticeModel(returned, authorized), null, 'authorized');
-  assert.equal(buildRequestViewModel(authorized, { query: returned }).returnNotice, null);
-  const captured = view('view-ready-receipt');
-  assert.equal(returnNoticeModel(returned, captured), null, 'captured');
-  // absent once the plan is executed or non_executable, whatever the order says
-  for (const planStatus of ['executed', 'non_executable']) {
-    const v = view('view-approve-sandbox-single-credential');
-    v.orders[0].payment.status = 'approved';
-    v.plans[0].status = planStatus;
-    assert.equal(returnNoticeModel(returned, v), null, `plan ${planStatus}`);
+  // once authorized (or captured) the notice is still there, as one short sentence with no "waiting"
+  // (with the fake provider the return handler authorizes at once, so this is the usual first look)
+  for (const status of ['authorized', 'capture_pending', 'captured']) {
+    const v = view('view-approve-sandbox-single-credential'); // order 31 is authorized, plan approved
+    v.orders[0].payment.status = status;
+    const n = returnNoticeModel(returned, v);
+    assert.ok(n, status);
+    assert.equal(n.testid, 'paypal-returned', status);
+    assert.equal(n.text, 'PayPal approval for Supplier A is confirmed.', status);
+    assert.doesNotMatch(n.text, /wait/i, status);
+    assert.equal(n.tone, 'ok', status);
+    const root = wrap([renderRequestPage(buildRequestViewModel(v, { query: returned }), {})]);
+    assert.equal(textOf(byTestId(root, 'paypal-returned')), 'PayPal approval for Supplier A is confirmed.', status);
   }
-  assert.equal(returnNoticeModel(returned, view('view-non-executable')), null);
-  // no order named in the link: nothing to wait for
-  assert.equal(returnNoticeModel({ paypal: 'returned', order: '999' }, view('view-approve-sandbox-single-credential')), null);
-  // and the rendered page carries no waiting sentence after the purchase is confirmed
-  const root = wrap([renderRequestPage(buildRequestViewModel(captured, { query: returned }), {})]);
+  // absent once the plan is executed or non_executable, whatever the order says: the purchase outcome is shown instead
+  for (const planStatus of ['executed', 'non_executable']) {
+    for (const status of ['approved', 'authorization_pending', 'authorized', 'captured']) {
+      const v = view('view-approve-sandbox-single-credential');
+      v.orders[0].payment.status = status;
+      v.plans[0].status = planStatus;
+      assert.equal(returnNoticeModel(returned, v), null, `plan ${planStatus}, order ${status}`);
+      assert.equal(buildRequestViewModel(v, { query: returned }).returnNotice, null);
+    }
+  }
+  const executed = view('view-ready-receipt');
+  assert.equal(returnNoticeModel(returned, executed), null, 'executed fixture');
+  assert.equal(returnNoticeModel(returned, view('view-non-executable')), null, 'non_executable fixture');
+  const root = wrap([renderRequestPage(buildRequestViewModel(executed, { query: returned }), {})]);
   assert.equal(byTestId(root, 'paypal-returned'), null);
-  assert.doesNotMatch(textOf(root), /Waiting for PayPal to confirm; this page updates by itself/);
+  assert.doesNotMatch(textOf(root), /Waiting for PayPal to confirm/);
+  // no order named in the link: nothing is known, so nothing is claimed
+  assert.equal(returnNoticeModel({ paypal: 'returned', order: '999' }, view('view-approve-sandbox-single-credential')), null);
 });
 
 test('RS-18: the "approval was cancelled" notice also goes once the purchase is abandoned or executed or the order is no longer waiting for approval', () => {
