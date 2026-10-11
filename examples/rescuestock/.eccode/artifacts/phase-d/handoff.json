@@ -1,0 +1,56 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "phase:d-extraction",
+  "objective": "Independent review of phase d-extraction, submission sub-mv32yhz0-0170ea86: 114 artifacts, the five tasks' 112 declared files (all completions, resets included) plus .eccode/artifacts/phase-d/submission.md and the extended .eccode/artifacts/plan/followups.md.",
+  "context": "d1 ho-mv30knyb-01ee912a; d2 ho-mv3158kt-011b3953 then ho-mv31n07e-01ec72ff; d3 ho-mv31j0p2-01ac6416; d4 ho-mv30i4sf-01273270 then ho-mv32b3pf-011eac5d; d5 ho-mv3249el-0180bc20 then ho-mv32g80v-01649548. All done. The approval must cover task:d1..d5, phase:d-extraction (claims RS-01, RS-02, RS-03 [D+B], RS-05 [pipeline; rephrasing at unit level only], RS-39, NFR6 with the share pinned to 1 per F-TR-18; RS-29 log part only) and lessons. Per plan.md the security reviewer also reviews this phase (uploads, model input isolation, log scan). FU-16 is reviewed separately under phase:rework-3 (sub-mv32kio2-01649f99). Every extraction result is from the simulated fake; the CLI and Anthropic adapters are tested against a stub transcript and a loopback stub; LIVE-M1 is not claimed.",
+  "inputs": [
+    ".eccode/artifacts/phase-d/submission.md",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/artifacts/plan/plan.json",
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/architecture/brief.md",
+    ".eccode/handoffs/ho-mv30knyb-01ee912a.json",
+    ".eccode/handoffs/ho-mv3158kt-011b3953.json",
+    ".eccode/handoffs/ho-mv31n07e-01ec72ff.json",
+    ".eccode/handoffs/ho-mv31j0p2-01ac6416.json",
+    ".eccode/handoffs/ho-mv30i4sf-01273270.json",
+    ".eccode/handoffs/ho-mv32b3pf-011eac5d.json",
+    ".eccode/handoffs/ho-mv3249el-0180bc20.json",
+    ".eccode/handoffs/ho-mv32g80v-01649548.json",
+    ".eccode/drafts/phase-artifacts-check.mjs"
+  ],
+  "dependencies": ["d1-ai-core", "d2-ai-adapters-corpus", "d3-extraction-service", "d4-frontend-extraction", "d5-extraction-contract-browser"],
+  "expectedOutput": "A phase review with one criterion per required id (five task criteria, phase:d-extraction) plus lessons, judging the open items FU-23, FU-24 and FU-25, the design deltas, and the d3 notes.",
+  "acceptanceCriteria": [
+    "RS-01, RS-02, RS-03, RS-05, RS-39 and NFR6 proved by the named tests in the submission table on the final tree",
+    "npm test 0 fail with the 8 skipped explained (7 phase E contract rows, fake x PROVIDER_BUSY) and 0 todo; npm run test:browser 8/8",
+    "Artifact list equals the phase's declared and owned changes"
+  ],
+  "completedWork": "Read the nine handoffs, the plan's phase D criteria, the spec's AI design, customer routes, retention, observability and testing sections, followups.md and the three phase D decisions. Ran npm test (1216: 1208 pass, 0 fail, 8 skipped, 0 todo; ECCODE_EVAL 200/200), npm run test:browser (8/8), each d-task's plan verification command verbatim (111, 96, 105, 136, and d5's npm test plus browser), and the three d5 deliverables alone (provider contract 32 pass / 1 skipped; contracts 45 pass / 7 skipped; secrets scan 6/6). Checked every RS_* token in src, scripts and test/live against .env.example and found RS_LIVE_MODEL_CEILING_USD missing (FU-21). Wrote submission.md and extended followups.md (status of the phase D items, FU-21..FU-26, the documented design deltas for TR-RW2-2). Submitted and checked artifact coverage: 112 declared, 111 changed (package.json reverted to the base), 0 undeclared, 0 outside ownership.",
+  "filesChanged": [".eccode/artifacts/phase-d/submission.md", ".eccode/artifacts/plan/followups.md", ".eccode/artifacts/phase-d/handoff.json"],
+  "evidence": [
+    "ev:ev-mv32mnk9-01c4df6f",
+    "ev:ev-mv32n2uv-012076da",
+    "ev:ev-mv32ncx6-013997eb",
+    "ev:ev-mv32ng8q-01f4c19c",
+    "ev:ev-mv32nlru-01ed051e",
+    "ev:ev-mv32nmc3-01853ca1",
+    "ev:ev-mv32oqlt-01d0e3b4",
+    "ev:ev-mv32t1ip-0121518e",
+    "ev:ev-mv32t4g4-01a3f3cb",
+    "ev:ev-mv32t6in-01fce1e0",
+    "ev:ev-mv32yl9c-013c35a2"
+  ],
+  "remainingIssues": [
+    "LIVE-M1 (real model over EXT-1, NFR6 cost report, F-TR-13 schemaAccepted) stays Unverified: it needs the user's spend-ceiling approval (Q3) and a CLI login or ANTHROPIC_API_KEY (RISK-2).",
+    "FU-23 (request id reuse after a hard delete), FU-24 (a budget or rate refusal becomes the newest extraction) and FU-25 (rephrasing not wired; RS_EXPLAIN_REPHRASE inert) need orchestrator decisions; none is recorded.",
+    "FU-21 (g2): RS_LIVE_MODEL_CEILING_USD is missing from .env.example, the README and the spec's Deployment table.",
+    "FU-22 (e4): the remaining housekeeping purges, and one owner for settling stale model reservations.",
+    "FU-2 is partly met and accepted at 30 s (dec-mv31kbrz-012381a1). The degraded form stays open after confirmation (dec-mv32c290-0182b807).",
+    "d3 ran no mutation check; its failing-first run is only 'test files missing'.",
+    "The design deltas (addressedToAssistant, capabilities, 400 for a missing Content-Length or an upload timeout, degraded refusal codes, 65/45 s client limits, the txt-rendered corpus, the live-runner ceiling variable) go into the verification report (TR-RW2-2)."
+  ],
+  "nextAction": "technical-reviewer and security-reviewer: review phase:d-extraction. orchestrator: decide FU-23, FU-24 and FU-25, and ask the user about LIVE-M1 (spend ceiling, CLI login).",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"]
+}

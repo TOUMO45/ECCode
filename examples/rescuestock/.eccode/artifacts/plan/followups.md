@@ -67,3 +67,67 @@ The phase C review rev-mv2zb2wy-019ac65d approved, with TR-C-2, SEC-C-2 and SEC-
 Accepted without a follow-up:
 - **SEC-B-7 (info):** scrypt N=2^14 follows the approved design. Passwords are checked by length only, per the auth contract. Raising N is a one-constant change in `scripts/seed.js` and c1's verifier together, if the security reviewer asks for it in phase C.
 - **SEC-B-8 (info):** the stale header comment in `src/domain/explain.js` ("nothing is free text", although the refusal reason is shown verbatim) is not fixed. b2's rework did not touch `explain.js`. It is a comment, not behaviour. It will be corrected by the next task that reopens `src/domain/`, or by a rework if the reviewer asks for it.
+
+## Added after phase D (delivery-lead, 2026-10-11)
+
+Sources:
+- the phase D handoffs: d1 ho-mv30knyb-01ee912a; d2 ho-mv3158kt-011b3953 and its reset ho-mv31n07e-01ec72ff; d3 ho-mv31j0p2-01ac6416; d4 ho-mv30i4sf-01273270 and its reset ho-mv32b3pf-011eac5d; d5 ho-mv3249el-0180bc20 and its reset ho-mv32g80v-01649548;
+- rework-2 (rev-mv32bt1y-019ab941, TR-RW2-2) and rework-3 (ho-mv32h04t-01f86c40);
+- the decisions dec-mv31kbrz-012381a1 and dec-mv32c290-0182b807.
+
+### Status of the items assigned to phase D
+
+| # | Status after phase D | Evidence |
+|---|---|---|
+| FU-2 | **Partly met, accepted for version one** (`dec-mv31kbrz-012381a1`).<br>- The upload route enforces its own 60 s streaming deadline (tests `PB-3: …` in `test/api/uploads-retention.test.js`).<br>- Node's server-wide `requestTimeout` is still 30 s, so the effective cap is 30 s.<br>- Raising the timeout for the upload route needs a `src/http` rework, and only if the phase D review asks for one. | ev:ev-mv32nlru-01ed051e |
+| FU-13 | **Closed.**<br>- d4 corrected the six fixtures.<br>- d5 removed `KNOWN_FIXTURE_DEFECTS` and the todo machinery from `contracts.test.js`.<br>- `npm test` shows 0 todo. | ev:ev-mv32mnk9-01c4df6f, ev:ev-mv32t4g4-01a3f3cb |
+| FU-16 | **Closed once rework-3 is approved** (submission sub-mv32kio2-01649f99).<br>- The frontend half was removed by d4's reset: `EXTRACT_ROUTE_MAY_BE_MISSING` is gone, and a 404 on extract now shows Retry.<br>- The test half was removed by rework-3: `withoutUnregisteredExtract()` is deleted. | ev:ev-mv32jbs1-016d62d1 |
+| FU-17 | **Closed in phase D.**<br>- d4: below 640 px the fields table stacks, and every cell carries its column title.<br>- d5: browser tests `FU-17: at 360x800 …` and `FU-17: at 1280x800 …`, with a mutation shown red (ev:ev-mv320rxs-0129b775).<br>- g1 still checks the table in its a11y pass. | ev:ev-mv32n2uv-012076da |
+| FU-18 | **Phase D half closed.** Image upload, GET image (binary row), extract, extract degraded, degraded view and delete are real scenarios.<br>The 7 phase E rows stay skipped until their routes land (owner e6). | ev:ev-mv32t4g4-01a3f3cb (52 tests: 45 pass, 7 skipped) |
+| FU-20 | **Closed by d3.** Test: `SEC-C-3: the sweep purges rate rows older than 24 h (the u:<id> rows of every signed-in call included) and keeps request_create 48 h (FU-20)`. | ev:ev-mv32nlru-01ed051e |
+
+### New follow-ups from the phase D handoffs
+
+| # | Task | Additional acceptance criterion | Source |
+|---|---|---|---|
+| FU-21 | g2-docs-submission (owns `README.md`, `.env.example` and the live-model runbook) | d2's live runner reads a **new variable, `RS_LIVE_MODEL_CEILING_USD`**. It is required, positive and at most 5.00, and the runner exits 2 without it.<br>- The variable is in neither `.env.example` nor the spec's Deployment table.<br>- README line 56 still says the suite needs only `RS_LIVE_MODEL=1`.<br>- **g2:** list the variable (commented, opt-in) in `.env.example`, correct the README line, and write the live-model runbook command `RS_LIVE_MODEL=1 RS_LIVE_MODEL_CEILING_USD=5 npm run test:live-model`, with `-- --dry-run` first.<br>- `test/scan/env-example.test.js` does not catch this, because it checks only the names that `src/config.js` reads. | d2 ho-mv3158kt-011b3953 (live runner); delivery-lead check of the variable names in `src/`, `scripts/` and `test/live/` against `.env.example` |
+| FU-22 | e4-saga-reconciler (housekeeping step) | Purge the rest of the spec's "Other data" list, which d3's retention sweep does not cover:<br>- expired sessions;<br>- `login_failures` older than 24 h;<br>- idempotency keys after 24 h;<br>- `invalid`/`unverified` webhook rows after 7 days (already in e4's criteria).<br>Until e4 lands, d3's sweep settles stale `reserved` model-spend rows at their cap. e4 either takes this over, with **one owner** so that a row is not settled twice, or leaves it in the sweep and says so. | d3 ho-mv31j0p2-01ac6416 remaining issue "STALE MODEL RESERVATIONS" |
+| FU-23 | **Orchestrator: decision, or a migration-only rework** (only b1 owned `src/db/**`) | Request ids come from `INTEGER PRIMARY KEY` without `AUTOINCREMENT`. After a hard delete of the highest id, the next request reuses that id. The admin timeline's audit rows of the deleted request then share the id with the new request, which may belong to another customer.<br>- **Option 1:** a new append-only migration that rebuilds `rescue_requests` with `AUTOINCREMENT`, with a test named `RS-39: …` showing that an id is never reused.<br>- **Option 2:** accept the reuse with a recorded decision. Hard delete happens only when no supplier order existed, and the audit rows hold ids and statuses only. | d3 reviewer note 1 |
+| FU-24 | **Orchestrator: decision** (any change would need a rework of `src/services/extraction.js`, which only d3 owned) | A refusal by the budget or the rate limit stores a degraded row, as the spec says, and that row becomes the newest extraction.<br>- The page then shows "Automatic reading unavailable" and the manual form, even though an earlier extraction of the same request succeeded.<br>- A later confirm treats every value as `manual` (test `SEC-8: when the latest extraction is degraded, nothing is taken from an earlier one …`).<br>**Proposed:** accept it for version one. It follows the spec's wording, the customer can still finish by hand, and the notice is hidden once requirements exist (d4's reset). | d3 reviewer note 2 |
+| FU-25 | **Orchestrator: decision.** Default: g2 documents it; f1 (owns `src/services/plans.js`) only if it is assigned there | Opt-in rephrasing is built and unit-tested (`src/ai/rephrase.js`, `RS-05: …` in `rephrase.test.js`), but no route calls it.<br>- `RS_EXPLAIN_REPHRASE` is parsed by `src/config.js` and listed in `.env.example` (`=0`), yet setting it to 1 changes nothing. `Explanation.rephrased` is always null, and the UI never renders it.<br>- RS-05's rephrasing clause is therefore proved at unit level only.<br>**Default:** g2 states in the README and in `.env.example` that rephrasing is not wired in version one. | d3 "NOT DONE / OUT OF SCOPE"; d4 last remaining issue |
+| FU-26 | ai-engineer, after LIVE-M1 (blocked on the user: Q3 spend ceiling, CLI login or `ANTHROPIC_API_KEY`) | LIVE-M1 is the first contact with the real CLI and API. It checks the stream-json stdin line and result event shapes, `--json-schema` acceptance of the wire schema (`schemaAccepted` on `cli-image-smoke`, F-TR-13), the sufficiency of `--max-budget-usd 0.05` for an image call, and the `output_config.format` behaviour of the API.<br>Any shape difference is folded into `src/ai/cli.js` / `anthropic.js`, and `cli-transcript.ndjson` is re-recorded from the real stream. Until then the transcript is a recorded **shape** written from the design, not a capture. | d2 ho-mv3158kt-011b3953 remaining issue 2 and nextAction |
+
+### Documented design deltas from phase D (for the verification report, TR-RW2-2)
+
+The approved spec is pinned. These additions are recorded here and must be listed in the verification report as documented design deltas, or be folded into a spec revision.
+
+**Contract additions:**
+1. `Extraction.addressedToAssistant: boolean` appears in the extract response, in `details.extraction` of a 429/503, and in `RequestView.extraction`. It is stored in `fields_json` under the reserved key `__meta`, which `renderExtraction` hides. Rows without it read as false.
+2. `RequestView.capabilities: { deleteRequest: boolean }`. It is currently always `true` (`src/services/view.js`). It is pinned by value in the four request-view contract rows and by key in c2's RS-34 key list (rework-2).
+3. A missing `Content-Length` on the image upload, and an upload that misses its deadline, answer 400 `BAD_REQUEST`. The deadline case adds `details.reason: "UPLOAD_TIMEOUT"` and `Connection: close`. The catalog's 400 row names only "malformed path parameter or query".
+
+**Extraction behaviour:**
+
+4. A degraded row stored for a refusal carries `errorCode` `PROVIDER_BUSY` (rate, concurrency) or `PROVIDER_UNAVAILABLE` (budget).
+5. A new degraded row replaces a degraded row that is already the newest, so a retry loop does not grow the table.
+6. `GET /api/requests/:id/image` also sends `Content-Disposition: inline`.
+
+**Background work:**
+
+7. The retention sweep also purges `rate_events` (24 h; 48 h for `request_create`, FU-20). Until e4 lands, it also settles stale `reserved` model-spend rows, which the spec gives to the reconciler.
+
+**Client:**
+
+8. The client time limits are 65 s for upload and 45 s for extract. The spec says the API client aborts at 15 s, and that limit still applies to every other call. Because of `dec-mv31kbrz-012381a1`, the server cuts an upload at 30 s.
+
+**Corpus and live runner:**
+
+9. The EXT-1 images are rendered from `labels/*.txt` by a pure-Node 5×7 bitmap renderer. The spec describes `labels/*.html` with a Chromium screenshot. The labels are legible but synthetic.
+10. Live runner:
+    - it needs `RS_LIVE_MODEL_CEILING_USD`, at most 5.00, besides `RS_LIVE_MODEL=1` (FU-21);
+    - it refuses under the net guard, under `RS_TEST_OFFLINE=1` and with the fake provider;
+    - it offers `--dry-run`.
+
+**Configuration:**
+
+11. Internal configuration fields `modelCallCapMicroUsd`, `modelDailyBudgetMicroUsd` and `fakeModelCostMicroUsd` are derived from the existing variables. No new variable is read by `src/config.js`.
