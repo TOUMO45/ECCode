@@ -1,6 +1,6 @@
 {
-  "seq": 829,
-  "lastHash": "5468bee22237e44f61fb66ee0f2c8ba9ecff30945062880b4a205bbefbc6a7c8",
+  "seq": 840,
+  "lastHash": "ba8f78636b6bcba2226a7bf59edf5e555eafcf55914811264b10258f3e7426c3",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -5906,34 +5906,52 @@
         "command": "ls test/unit/payments/fake.test.js test/unit/payments/sandbox.test.js test/unit/payments/merchants.test.js test/unit/payments/provider-contract.test.js test/api/fake-approval-headers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test \"test/unit/payments/**/*.test.js\" test/api/fake-approval-headers.test.js",
         "cwd": "."
       },
-      "status": "claimed",
-      "attempts": 1,
-      "claim": {
-        "agent": "backend-engineer",
-        "at": "2026-10-11T02:37:13.492Z",
-        "baseCommit": "d23d339e0e53d8e1e11d01babdf99213c804d643",
-        "runId": "run-mv37p3vc-01bf05aa",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.82,
-            "matched": 31,
-            "priority": 30,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "status": "pending",
+      "attempts": 0,
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "backend-engineer",
           "at": "2026-10-11T02:37:13.492Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-11T02:56:43.287Z"
+        },
+        {
+          "event": "reset",
+          "by": "orchestrator",
+          "at": "2026-10-11T02:57:26.575Z",
+          "reason": "dec amending FU-25: restore the RS_EXPLAIN_REPHRASE parsing in src/config.js so the four config and env-example tests pass; flip the FU-25 assertion in merchants.test.js; nothing else"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "backend-engineer",
+      "handoffId": "ho-mv38f42c-010fb379",
+      "filesChanged": [
+        "src/payments/provider.js",
+        "src/payments/fake.js",
+        "src/payments/listener.js",
+        "src/payments/sandbox.js",
+        "src/payments/merchants.js",
+        "src/config.js",
+        "test/unit/payments/fake.test.js",
+        "test/unit/payments/sandbox.test.js",
+        "test/unit/payments/merchants.test.js",
+        "test/unit/payments/provider-contract.test.js",
+        "test/api/fake-approval-headers.test.js"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson applies when designing a hook or guard that maps file writes to a project record or root in a repository with several records; this task designs no hook, guard or root discovery, so its 'Applies when' list does not hold. The guard accepted every nested write here and correctly refused an inline python file writer, asking for the Edit tool.",
+          "basis": "reason"
+        }
+      ],
+      "escalation": null
     },
     "e2-payment-flow": {
       "id": "e2-payment-flow",
@@ -14957,6 +14975,86 @@
       "task": "e0-paypal-stub-contract",
       "recordedBy": "test-engineer",
       "at": "2026-10-11T02:34:59.395Z"
+    },
+    "ev-mv38aiaf-0128be20": {
+      "id": "ev-mv38aiaf-0128be20",
+      "kind": "command",
+      "label": "e1 verification: payment adapter unit tests, contract suite on both adapters, listener header test",
+      "command": "ls test/unit/payments/fake.test.js test/unit/payments/sandbox.test.js test/unit/payments/merchants.test.js test/unit/payments/provider-contract.test.js test/api/fake-approval-headers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test \"test/unit/payments/**/*.test.js\" test/api/fake-approval-headers.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8110,
+      "log": ".eccode/evidence/ev-mv38aiaf-0128be20.log",
+      "logSha256": "7eaebe8cfe713f2a7197ed9ff026f3c798039ae28ae9bab1d1409f905b19e561",
+      "logFileSha256": "99a24a9934acb3bc30f6a03bf97fec6a16dcf308aeca54efa4bce642fc46f73f",
+      "outputTail": "      duration_ms: 9.706261\n      type: 'test'\n      ...\n    # Subtest: the Secret wrapper of config.js is what the adapter takes: it reveals only through reveal()\n    ok 2 - the Secret wrapper of config.js is what the adapter takes: it reveals only through reveal()\n      ---\n      duration_ms: 0.300082\n      type: 'test'\n      ...\n    1..2\nok 32 - credentials are Secret values and never logged\n  ---\n  duration_ms: 10.151691\n  type: 'suite'\n  ...\n1..32\n# tests 484\n# suites 82\n# pass 477\n# fail 0\n# cancelled 0\n# skipped 7\n# todo 0\n# duration_ms 7999.816553\n",
+      "gate": null,
+      "task": "e1-payment-adapters",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T02:53:08.381Z"
+    },
+    "ev-mv38bsgw-01e94ad3": {
+      "id": "ev-mv38bsgw-01e94ad3",
+      "kind": "command",
+      "label": "e1 broader suite: npm test",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 53260,
+      "log": ".eccode/evidence/ev-mv38bsgw-01e94ad3.log",
+      "logSha256": "ea4934959e30eb3b527bd4458041c4e0a93bd0d8cc14e916e1f9ef622201a560",
+      "logFileSha256": "8207739148725c10025ae9194bfd8e578423c000ca68dd653245d425522bf3cb",
+      "outputTail": "  duration_ms: 562.375631\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 733 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 396.525849\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 734 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 504.330704\n  type: 'test'\n  ...\n1..734\n# tests 1800\n# suites 228\n# pass 1781\n# fail 4\n# cancelled 0\n# skipped 15\n# todo 0\n# duration_ms 52934.289441\n",
+      "gate": null,
+      "task": "e1-payment-adapters",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T02:54:08.226Z"
+    },
+    "ev-mv38d1in-014f7ed1": {
+      "id": "ev-mv38d1in-014f7ed1",
+      "kind": "command",
+      "label": "e1 verification (final): payment adapter unit tests, contract suite on both adapters, listener header test",
+      "command": "ls test/unit/payments/fake.test.js test/unit/payments/sandbox.test.js test/unit/payments/merchants.test.js test/unit/payments/provider-contract.test.js test/api/fake-approval-headers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test \"test/unit/payments/**/*.test.js\" test/api/fake-approval-headers.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8089,
+      "log": ".eccode/evidence/ev-mv38d1in-014f7ed1.log",
+      "logSha256": "2b759564fd6a63691c9255313bf038a28b90dda6d0b2e7e7084b423f48d797b6",
+      "logFileSha256": "991d043e7b102cd80b718d16590aab7a23e68b1d5b2fe0b9b5c3f7d9ac47748e",
+      "outputTail": "      duration_ms: 10.784451\n      type: 'test'\n      ...\n    # Subtest: the Secret wrapper of config.js is what the adapter takes: it reveals only through reveal()\n    ok 2 - the Secret wrapper of config.js is what the adapter takes: it reveals only through reveal()\n      ---\n      duration_ms: 0.272619\n      type: 'test'\n      ...\n    1..2\nok 32 - credentials are Secret values and never logged\n  ---\n  duration_ms: 11.199524\n  type: 'suite'\n  ...\n1..32\n# tests 484\n# suites 82\n# pass 477\n# fail 0\n# cancelled 0\n# skipped 7\n# todo 0\n# duration_ms 7990.009178\n",
+      "gate": null,
+      "task": "e1-payment-adapters",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T02:55:06.602Z"
+    },
+    "ev-mv38e6wu-01748302": {
+      "id": "ev-mv38e6wu-01748302",
+      "kind": "command",
+      "label": "e1 broader suite (final): npm test",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 53380,
+      "log": ".eccode/evidence/ev-mv38e6wu-01748302.log",
+      "logSha256": "8adc36cc644725216b7feb189074af6ad7f5b6072de05b48b490bd02572d82d6",
+      "logFileSha256": "682e857d81aab6c6f5e9db74282424fe0800b991009799159b694b0a3dfcc9a8",
+      "outputTail": "  duration_ms: 470.59259\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 733 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 392.257414\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 734 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 460.464117\n  type: 'test'\n  ...\n1..734\n# tests 1800\n# suites 228\n# pass 1781\n# fail 4\n# cancelled 0\n# skipped 15\n# todo 0\n# duration_ms 53063.144662\n",
+      "gate": null,
+      "task": "e1-payment-adapters",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T02:56:00.251Z"
     }
   },
   "reviews": {
@@ -23588,6 +23686,74 @@
       "id": "ho-mv37ojw0-01fb7411",
       "recordedBy": "test-engineer",
       "at": "2026-10-11T02:36:04.196Z"
+    },
+    "ho-mv38f42c-010fb379": {
+      "from": "backend-engineer",
+      "to": "backend-engineer",
+      "task": "e1-payment-adapters",
+      "objective": "Give phase E the payment adapters: the DB-backed fake with faults and the replay model, the fake approval listener with its own CSP, the PayPal Sandbox REST v2 adapter (stub-verified only) and the merchant mapping, all behind the PaymentProvider port, with the shared contract suite run against both adapters.",
+      "context": "Built against spec revision 3 (PaymentProvider and Outcome, PayPal Sandbox wire mapping, 005_fake_paypal.sql semantics, fake approval listener SEC-12 and F-TR-14, SEC-3 approval host, SEC-5 webhook key) and e0's handoff ho-mv37ojw0-01fb7411 (stub, signer, contract suite and its factory contract). LIVE-DEPENDENT: sandbox.js is verified only against test/helpers/paypal-stub.js and injected fetch functions; no Sandbox host was contacted, no credential exists, RS_LIVE_MODEL and RS_LIVE_PAYPAL were never set; issue names, link rels and status sets stay the spec's guesses until test:live-paypal runs (OQ-D5 open). Follow-ups: FU-25 (decision dec-mv330t7a-017a2211) and FU-27 done in src/config.js; FU-19 conventions used (fault_flags rows fake_paypal:<fault>, value = supplier code or empty, remaining = count or NULL). The one verified lesson shown at claim does not apply (see lessonDecisions).",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md (Internal module contracts, PayPal Sandbox wire mapping, 005_fake_paypal.sql, Fake approval listener, Admin routes faults, Provider call protocol, Secrets handling)",
+        ".eccode/handoffs/ho-mv37ojw0-01fb7411.json (e0)",
+        "test/helpers/paypal-stub.js, test/helpers/webhook-signer.js, test/unit/payments/provider-contract.js, test/unit/payments/paypal-stub.test.js (createReferenceHarness)",
+        ".eccode/artifacts/plan/followups.md (FU-19, FU-25, FU-27)",
+        "src/http/headers.js, src/http/host.js, src/http/server.js, src/services/admin.js (fault_flags writer), src/services/void-rule.js (provider port), src/db/migrations/005_fake_paypal.sql"
+      ],
+      "dependencies": [
+        "e0-paypal-stub-contract"
+      ],
+      "expectedOutput": "src/payments/{provider,fake,listener,sandbox,merchants}.js and the five test files, ready for e2 (payment flow routes), e3 (webhooks), e4 (saga and reconciler), e6 (two-process tests).",
+      "acceptanceCriteria": [
+        "fake.js: state in fake_paypal_*, (merchant_key, request_id) replay with replayed = 1, AUTHORIZATION_ALREADY_CAPTURED, CAPTURE_FULLY_REFUNDED, expiration 29 days unless auth_expire, every call counted in fake_paypal_calls, all faults of the spec including lost_response, timeout and http_500 per kind and the RS_TEST_HOOKS-only freeze_after_capture_apply, freeze_before_capture_apply, capture_lands_after_void_intent; payloads labelled simulated: true; fake webhook key generated once into meta",
+        "listener.js: second node:http listener on RS_FAKE_APPROVAL_HOST (127.0.0.1 outside test mode), refuses paypal-sandbox, Host check, app security headers except CSP plus exactly one approvalPageCsp(appOrigin), three routes, redirects only to stored URLs",
+        "sandbox.js: wire mapping, OAuth cached per merchant until expires_in - 60 s, one AbortSignal timeout covering OAuth, outcome classification, approval host www.sandbox.paypal.com (loopback only with the test flag), credentials never logged",
+        "merchants.js maps suppliers to merchant keys and reports per-supplier or single-credential",
+        "provider-contract.test.js runs e0's suite against the fake and against the Sandbox adapter with paypal-stub, supports() false for faults a harness cannot inject (skipped, not passed); fake-approval-headers.test.js pins the CSP string and the Location of approve and cancel and checks the app pages still send form-action 'self'"
+      ],
+      "completedWork": "(1) src/payments/provider.js: the port (PROVIDER_METHODS, CALL_KINDS, Outcome constructors ok/rejected/retryable/unknown, toPayPalValue, checkArguments, webhookInput, assertPaymentProvider) and createPayments({config, db, clock, log, appOrigin}) -> {provider, listener, close} which imports the adapter named by config.paymentProvider. A bad argument is a rejected 400 INVALID_ARGUMENT before anything is sent or stored. (2) fake.js: createFakeProvider({db, clock, log, testHooks, webhookSecret, approvalOrigin, pid, freeze}); each call is ONE BEGIN IMMEDIATE transaction (fault take, replay or effect, fake_paypal_calls row), so processes agree and counts are exact; merchant-scoped lookups; faults read from fault_flags (scenario faults, lost_response/timeout/http_<4xx|5xx>/bad_body per call kind incl. reads and verify_webhook, hooks only with testHooks); approveFakeOrder, loadFakeOrder, takeFakePaypalFault, parseFakeFault, fakeWebhookSignature exported; verifyWebhook is the HMAC scheme of webhook-signer.js; the default freeze sends SIGSTOP to the process (checked in a scratch two-process run: stopped after the capture commit, result returned after SIGCONT). A busy database is a retryable 429 FAKE_DB_BUSY Outcome. (3) listener.js: startApprovalListener({db, clock, config, log, appOrigin}) -> {server, host, port, origin, close}; the three routes, 303 only to the stored URLs (token and PayerID set with URL), one CSP header from approvalListenerHeaders(appOrigin) plus Cache-Control no-store, Host check on its own host and port (421), 404/405/409/413 pages with the same headers, refusal for paypal-sandbox and non-loopback hosts, an unusable app origin still sends one restrictive CSP and a 500 page. (4) sandbox.js: createSandboxProvider({baseUrl, merchants, timeoutMs, testOffline, log, clock, fetch}); constructor refuses any base URL but the Sandbox API (loopback only with testOffline); one AbortSignal.timeout per call over OAuth, API call and body reads; redirects never followed; 1 MiB response cap; issue names reduced to upper-case tokens (no provider text is copied); 401 drops the cached token; approval link check (APPROVAL_HOST_INVALID / APPROVAL_LINK_MISSING); verifyWebhook proves the body is exactly one JSON object (strict UTF-8, BOM kept) and splices the received bytes; ok payloads carry provider paypal-sandbox and sandbox: true. (5) merchants.js: SUPPLIER_MERCHANT_KEYS, merchantMode, activeMerchantKeys, isActiveMerchantKey, merchantKeyForSupplier, merchantCredentials (Secret values), sandboxMerchants, describeMerchants (secret-free). (6) src/config.js: RS_EXPLAIN_REPHRASE parsing and config.explainRephrase removed (FU-25); RS_MODEL_TIMEOUT_MS bounded to 1..40000 (MAX_MODEL_TIMEOUT_MS), default 30000 (FU-27). (7) Tests: fake.test.js 41, sandbox.test.js 35, merchants.test.js 14 (incl. 'TR-D-7: RS_MODEL_TIMEOUT_MS above 40000 is refused ...' and the FU-25 test, placed here because test/unit/config/limits.test.js is outside e1's ownership), provider-contract.test.js runs e0's suite twice (216 tests: 209 pass, 7 skipped), fake-approval-headers.test.js 18. Defects found by the tests and fixed before completion: the fake's verifyWebhook opened a nested transaction when it had to create the SEC-5 key (contract suite); the Sandbox adapter returned bad_body for an authorization the double reports already EXPIRED (contract suite, auth_expire); the fake counted a verifyWebhook call with an unusable body (fake.test.js); TextDecoder stripped a leading BOM from a webhook body, so the spliced bytes were not the received ones (sandbox.test.js). A mutation (a second CSP header appended in the listener) was caught by 5 header tests and reverted. Verification command: 484 tests, 477 pass, 0 fail, 7 skipped (the 7 are the fake harness's OAuth and wire scenarios, skipped because supports() is false or wire is null, not passed). npm test: 1800 tests, 1781 pass, 4 fail, 15 skipped; the 4 failures are the direct consequence of FU-25 in files outside e1's ownership (see remainingIssues 1); the 15 skips are the 7 above plus the 8 contract scenarios waiting for phase E routes.",
+      "filesChanged": [
+        "src/payments/provider.js",
+        "src/payments/fake.js",
+        "src/payments/listener.js",
+        "src/payments/sandbox.js",
+        "src/payments/merchants.js",
+        "src/config.js",
+        "test/unit/payments/fake.test.js",
+        "test/unit/payments/sandbox.test.js",
+        "test/unit/payments/merchants.test.js",
+        "test/unit/payments/provider-contract.test.js",
+        "test/api/fake-approval-headers.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv38d1in-014f7ed1",
+        "ev:ev-mv38aiaf-0128be20",
+        "ev:ev-mv38e6wu-01748302",
+        "ev:ev-mv38bsgw-01e94ad3"
+      ],
+      "remainingIssues": [
+        "FU-25 BREAKS 4 TESTS OUTSIDE E1'S OWNERSHIP (npm test: ev:ev-mv38e6wu-01748302 and ev:ev-mv38bsgw-01e94ad3, 4 fail): test/unit/config/defaults.test.js asserts c.explainRephrase false (line 38) and true with RS_EXPLAIN_REPHRASE=1 (lines 84 and 124); test/unit/config/limits.test.js 'boolean switches accept only 0 or 1' lists RS_EXPLAIN_REPHRASE (line 76); test/scan/env-example.test.js has RS_EXPLAIN_REPHRASE in its DEFAULTS table (line 65) and .env.example still lists it (line 93, g2 per the decision). Whoever owns those files (g2 or the orchestrator) must drop those lines; the replacement assertions already exist in test/unit/payments/merchants.test.js ('FU-25: ...'). Until then npm test is red by exactly these 4. Comments in src/ai/provider.js:11 and src/ai/rephrase.js:1 still mention the variable (not e1 files).",
+        "FOR E2 (construction): after app.listen(), call createPayments({config, db, clock, log, appOrigin: () => app.deps.publicUrl()}) and assign app.deps.payments = payments.provider (ctx is spread from deps per request, so late assignment works); close() on shutdown. Pass voidProvider to createApp separately: its queueVoid(db, intent) must INSERT OR IGNORE so:<supplierOrderId>:void:1 into provider_calls (c3 port, FU-19). The listener is started inside createPayments only for the fake and is null for the Sandbox; its origin is what createOrder returns as approvalUrl (default port 0, so tests read listener.port). merchantKeyForSupplier(config, supplierCode) gives the merchantKey for every provider call (fake: the supplier code; Sandbox: per merchant mode); isActiveMerchantKey(config, key) is the webhook route's 'configured key else 404' check. The return handler's crash hook is takeFakePaypalFault(db, 'crash_after_return_commit', {merchantKey, testHooks: config.testHooks}).",
+        "FOR E2/E3/E4 (Outcomes): ok values are the port shapes plus provider and simulated (fake) or provider and sandbox (Sandbox). authorizeOrder status is CREATED, PENDING or DENIED (an authorization already EXPIRED when PayPal answers is reported CREATED with its past expirationTime). Definitive rejections to expect: INVALID_ARGUMENT (400, nothing sent), MERCHANT_NOT_CONFIGURED, APPROVAL_HOST_INVALID and APPROVAL_LINK_MISSING (createOrder: the order exists at PayPal but is unusable), WEBHOOK_ID_MISSING (verifyWebhook without a webhook id; the route decides its answer), REQUEST_ID_KIND_MISMATCH, ORDER_NOT_APPROVED, ORDER_ALREADY_AUTHORIZED, AUTHORIZATION_ALREADY_CAPTURED / _VOIDED / _EXPIRED / _PENDING / _DENIED / _AMOUNT_EXCEEDED, AUTHORIZATION_CANNOT_BE_VOIDED, CAPTURE_FULLY_REFUNDED, CAPTURE_NOT_COMPLETED, REFUND_AMOUNT_EXCEEDED. The fake alone also answers retryable 429 FAKE_DB_BUSY. verifyWebhook returns ok {verified:false} (never an error) for missing or malformed signature headers or a body that is not one JSON object.",
+        "FOR E3/E4/E6 (fake behaviour): a fake PENDING authorization, capture or refund never settles by itself; tests move it with SQL on fake_paypal_* (there is no settle helper). verify_webhook calls are counted in fake_paypal_calls (kind 'verify_webhook'), approval-page requests are not. fake_paypal_calls.resource_id is the id of the resource a call created, else the one it addressed. Faults are consumed inside the call's own transaction; a fault row whose value is a supplier code applies only to that merchant key. The test-only faults are ignored (and stay armed) unless createFakeProvider got testHooks: true (createPayments passes config.testHooks). Fault kinds beyond the admin list work too (every call kind, http_<400-599>, bad_body) for tests that insert fault_flags rows directly. freeze_* default to process.kill(pid, 'SIGSTOP') (POSIX only); a unit test can inject freeze.",
+        "SPEC GAPS RESOLVED (to confirm in review): (a) order status of the fake after authorize is COMPLETED and after a void VOIDED; (b) the fake stores only ok answers in fake_paypal_requests, like the stub; (c) a void is allowed on CREATED and PENDING authorizations; (d) fake auth_expire stores expiration_time = now and reads show EXPIRED (persisted lazily as status EXPIRED); (e) the fake approval page lists a merchant label 'Merchant <key> (simulated)' and has no stylesheet because style-src 'self' with exactly three routes leaves nowhere to serve one; (f) the listener adds Cache-Control: no-store to the app's headers; (g) argument validation limits: ids [A-Za-z0-9._-]{1,64}, request id [A-Za-z0-9._:-]{1,108}, amountCents 1..999999999, USD only, return/cancel URLs http(s) without credentials up to 2048 chars, webhook body 1..65536 bytes; (h) whitespace OUTSIDE the webhook JSON object is not covered by the Sandbox path, because the double (and PayPal's parser) verify the member span, which excludes it, while the fake signs every byte.",
+        "LIMITS: the Sandbox adapter proves agreement with the simulation and the spec's Outcome classes only; the real issue names, link rels (payer-action vs approve), status sets, the 29-day expiry, token lifetime and the verify-webhook request shape are unconfirmed until test:live-paypal runs. The timeout cases use real 400-500 ms AbortSignal bounds (about 5 s in the contract suite). The approval listener's behaviour in a real browser (form-action across the 303 chain) is not re-tested here; fake-approval-headers.test.js pins the bytes, the earlier Playwright run is ev:ev-mv1dsh6c-019c5a8d.",
+        "Process note: the tests were written after the code; each defect listed in completedWork was found by a test and fixed before completion, not by a failing test written first."
+      ],
+      "nextAction": "orchestrator: assign the four FU-25 test/doc edits (defaults.test.js, limits.test.js, env-example.test.js, .env.example) so npm test is green, then hand e2-payment-flow the construction notes in remainingIssues 2 and 3.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson applies when designing a hook or guard that maps file writes to a project record or root in a repository with several records; this task designs no hook, guard or root discovery, so its 'Applies when' list does not hold. The guard accepted every nested write here and correctly refused an inline python file writer, asking for the Edit tool."
+        }
+      ],
+      "id": "ho-mv38f42c-010fb379",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T02:56:43.440Z"
     }
   },
   "runs": {
@@ -25065,6 +25231,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T02:36:29.861Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T02:57:25.982Z",
+      "durationMinutes": 20.94,
+      "costUsd": null,
+      "tokens": 340263,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv38g1qj-0164b8e5": {
+      "id": "run-mv38g1qj-0164b8e5",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T02:57:26.833Z",
       "status": "running",
       "attempt": 1
     }
@@ -25539,6 +25720,16 @@
       "lessons": [],
       "at": "2026-10-11T01:58:40.980Z",
       "by": "orchestrator"
+    },
+    "dec-mv38g19z-01f0a99f": {
+      "id": "dec-mv38g19z-01f0a99f",
+      "title": "FU-25 amended: the rephrase variable stays parsed, documented as having no effect",
+      "decision": "src/config.js keeps parsing RS_EXPLAIN_REPHRASE (default 0) exactly as before; the opt-in rephrasing stays unwired; g2 documents in README and .env.example that the variable is reserved and has no effect in version one. This replaces the removal ordered by dec-mv330t7a-017a2211.",
+      "rationale": "The removal in e1 broke four tests in test/unit/config/defaults.test.js, test/unit/config/limits.test.js and test/scan/env-example.test.js, owned only by the approved phase B tasks b1 and b4; no later task owns them and the rework limit is reached (dec-mv341ap0-010209d2). A green suite before the phase E submission outweighs removing one parsed-but-unused variable. Reversible under a user-authorized rework.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T02:57:26.273Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -25551,8 +25742,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 943.05,
-    "tokens": 12719794
+    "runtimeMinutes": 963.99,
+    "tokens": 13060057
   },
   "delivery": null,
   "reworks": [

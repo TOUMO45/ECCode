@@ -10,6 +10,7 @@ export const ANTHROPIC_API = 'https://api.anthropic.com';
 export const MERCHANT_KEYS = Object.freeze(['A', 'B', 'C', 'D', 'E', 'DEFAULT']);
 export const PRICE_NOTICE = 'Test prices, not market prices';
 export const MAX_REGISTER_PER_IP_PER_HOUR = 5;
+export const MAX_MODEL_TIMEOUT_MS = 40000;
 
 const REDACTED = '[redacted]';
 
@@ -317,7 +318,9 @@ export function loadConfig(env = process.env, { now = () => Date.now() } = {}) {
     modelProvider,
     extractionProvider,
     model: r.text('RS_MODEL', 'haiku', MODEL_NAME, 80),
-    modelTimeoutMs: r.int('RS_MODEL_TIMEOUT_MS', 30000, 1, 600000),
+    // TR-D-7 / FU-27: below the client's 45 s extract limit, or the client gives up while the server still holds the customer's
+    // single model slot and charges the call. A larger value is a startup error naming the variable.
+    modelTimeoutMs: r.int('RS_MODEL_TIMEOUT_MS', 30000, 1, MAX_MODEL_TIMEOUT_MS),
     modelCallCapUsd,
     modelDailyBudgetUsd,
     fakeModelCostUsd,
@@ -331,7 +334,6 @@ export function loadConfig(env = process.env, { now = () => Date.now() } = {}) {
     anthropicBaseUrl: parseBaseUrl(r, 'RS_ANTHROPIC_BASE_URL', ANTHROPIC_API, testOffline),
     anthropicUsdPerMtokIn: r.number('RS_ANTHROPIC_USD_PER_MTOK_IN', 1.0, 0, 100000),
     anthropicUsdPerMtokOut: r.number('RS_ANTHROPIC_USD_PER_MTOK_OUT', 5.0, 0, 100000),
-    explainRephrase: r.flag('RS_EXPLAIN_REPHRASE', false),
     adminPassword: r.secret('RS_ADMIN_PASSWORD', { minChars: 16 }),
     demoPassword: r.secret('RS_DEMO_PASSWORD', { minChars: 12 }),
     allowSignup: r.flag('RS_ALLOW_SIGNUP', true),
