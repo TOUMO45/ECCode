@@ -1,0 +1,73 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "f2-compensation-takeover-admin",
+  "objective": "Capture-failure compensation with refunds and restock, lease takeover with epoch and send-token fencing, the admin refund_order tool and the SEC-11 forced reset, and ledger completeness (RS-22, RS-37, RS-38), plus the follow-ups FU-36, FU-41, FU-42, FU-45 and the FU-22 check.",
+  "context": "The saga, reconciler, call protocol and void rule are e4's and e2's code (handoffs ho-mv3tpmcv-01dc0d69, ho-mv3v3asc-01ce3c19, ho-mv39qe6x-01666ddf); e3 moved webhooks outside the lease and the reconciler backstop stays (dec-mv3vuigy-0109feb6). Spec: Background Processing (Sender table, Void rule step 6, saga steps 5 and 6, Reconciler), Admin routes (refund_order, Reset, Forced reset SEC-11). Tests were written failing-first where a defect was found (run against the base source: 27 of 56 red, ev:ev-mv40r2b6-0183d269) and proved with 25 mutants of a scratch copy for behaviour that already existed (25 killed, ev:ev-mv418etg-01b71dfe). The scratchpad is shared with the concurrent f1 engineer, who overwrote my first mutate.mjs and uses the same mut directory; my later work ran in scratchpad/f2-private and nothing of it touched the real tree.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/handoffs/ho-mv3tpmcv-01dc0d69.json",
+    ".eccode/handoffs/ho-mv3v3asc-01ce3c19.json",
+    ".eccode/handoffs/ho-mv39qe6x-01666ddf.json",
+    "src/services/saga.js",
+    "src/services/reconciler.js",
+    "src/services/calls.js",
+    "src/services/void-rule.js",
+    "src/services/admin.js",
+    "src/routes/admin.js"
+  ],
+  "dependencies": [
+    "e6-execute-concurrency-browser"
+  ],
+  "expectedOutput": "Compensation, takeover, refund_order, forced reset and ledgers behave as the spec says and are pinned by five API test files with the criterion ids in their names.",
+  "acceptanceCriteria": [
+    "Compensation (step 5) in one transaction under the fence: plan non_executable (CAPTURE_FAILED | AUTHORIZATION_EXPIRED), reservation consumed -> reconciling, queued captures cancelled, authorized -> void, captured -> refund_requested + so:<id>:refund:1; refund results to refunded / refund_pending (polled) / refund_failed (escalation); release check -> released with restock rows only when nothing is outstanding",
+    "Takeover (step 6): epoch + 1 inside BEGIN IMMEDIATE only when lease_until <= now and no operation is capture_pending or unknown (F-TR-7); every open capture call resolved by reading before any send; re-send only with the same PayPal-Request-Id; late result writes fenced by epoch and send_token (saga.lease_lost logged)",
+    "F-TR-6: a rejected void whose read shows CAPTURED moves the operation to captured and queues the refund in the same transaction",
+    "Admin refund_order only for captured operations of executed plans; forced reset per SEC-11 (void authorized, bounded 30 s read-resolve pass, stranded list in response and audit); reset archives operations and provider calls, never deletes",
+    "RS-22 (incl. PENDING capture with lease_epoch constant across ticks), RS-37, RS-38 (every reserve, release, expire, consume and restock writes a ledger row; per-product ledger sums equal on_hand and reserved) tests named with their ids",
+    "FU-36, FU-41 (a, b), FU-42, FU-45 answered; FU-22 remainder checked"
+  ],
+  "completedWork": "CODE. (1) src/services/calls.js: FU-45, an authorization read back as EXPIRED after a rejected void is settled (operation voided, last_error_code AUTHORIZATION_EXPIRED, void_failed stays 0, no escalation; the reconciler's unknown-void path reaches it through the same function); FU-42, the refund sender reads supplier_orders.total_cents like the capture (the two columns are equal by construction; the tests now disagree on purpose). (2) src/services/saga.js: FU-41(a) readBeforeResend: before an `unknown` token-less capture is sent again the lease holder reads the authorization itself under the lease; CREATED -> send with the same key, anything else or a failed read -> hold (call stays unknown, lease paused, the reconciler resolves by reading; logs saga.resend_held / saga.resend_read_failed); an archived plan (every operation archived) is never resumed (runSaga and captureLoop answer 'archived') and releaseIfSettled ignores a reservation with no live operation. (3) src/services/reconciler.js: readResolvePass(env, {budgetMs}) exported for the forced reset (stale intents, resolve unknown by reading, poll pending; bounded in REAL time, stops between items); resolveUnknownCalls and pollPending take a shouldStop; the takeover query skips plans whose operations are all archived. (4) src/services/admin.js and src/routes/admin.js: resetDemo is async; a forced reset with money held first ends approved plans through the void rule, voids the remaining authorized operations through the void port (cancel_requested_at, reason DEMO_RESET), sends the voids, runs ONE read-resolve pass (budget 30 s, RESET_RESOLVE_BUDGET_MS), sends the voids that pass queued, then archives in the single transaction and lists what is not terminal in `stranded` (response and audit; the audit also carries authorized, resolved, polled, resolveTimedOut, closedReconciling); a reservation still `reconciling` is closed WITHOUT restock rows by any reset; refund_order queues through moveOperation/queueCall, commits its `denied` audit row, answers 404 for an archived operation and SENDS the refund after the commit (Sender table), a refund that cannot be sent stays queued for reconciler step 6; applyFault is async. src/services/void-rule.js needed no change. TESTS (56, all in my five files). capture-compensation (18): RS-22 compensation end to end, AUTHORIZATION_EXPIRED variant, refund results table, compensation as ONE transaction (a trigger refuses the refund row; nothing half done; next holder completes), FU-42, PENDING capture and unknown capture with lease_epoch constant across five and three ticks, takeover boundary (one millisecond before / at lease_until), stalled sender fenced by send_token with reads only and no takeover, epoch fence of its own, lease needed at the capture start (step 2 and step 3), FU-41(a) x3, FU-41(b) x2 (kills the reviewers' M6), retryable resume. void-capture-race (7): F-TR-6 end to end (one capture, one void attempt, one refund), F-TR-6 atomicity, lost void answer + PENDING capture landed, FU-45 x2 + its limit (void_fail stays an escalation), FU-34 webhook capture refunded once on the next tick. admin-reset (11): SEC-11 void/stranded/bounded/read-resolve, RS-37 guard and archive, RS-38 reconciling reservation (forced and unforced) and archived executing plan. admin-refund-order (13): refund_order transitions, results (COMPLETED, PENDING polled, FAILED, 429, lost answer, timeout), refusals, race, access, FU-42. ledgers (7): RS-38 for reserve, release, expire, consume, restock, supplier stock changes and exactly-once restock under two reconcilers; FU-36 row format. DEFECTS FOUND AND FIXED (red at the base source): SEC-11 was not implemented (no void, no pass, sync reset); a reset left a reconciling reservation open so the reconciler later restocked it on top of the restored stock (RS-38); an archived executing plan could be taken over and marked executed; refund_order was not sent after commit; its `denied` audit row was rolled back with the throw; FU-41(a); FU-45; FU-42. FU-36: the consume and restock helpers already wrote the ledger.js row format; ledgers.test.js pins both paths and the running balances, moving the helpers was not needed. FU-22: nothing is missing (sessions, login failures, idempotency keys, invalid/unverified webhook rows by the reconciler, rate events and images by retention.js, stale model spend by both through one CAS). FU-34 backstop kept and tested through a signed webhook.",
+  "filesChanged": [
+    "src/services/saga.js",
+    "src/services/reconciler.js",
+    "src/services/calls.js",
+    "src/services/admin.js",
+    "src/routes/admin.js",
+    "test/api/capture-compensation.test.js",
+    "test/api/void-capture-race.test.js",
+    "test/api/admin-reset.test.js",
+    "test/api/admin-refund-order.test.js",
+    "test/api/ledgers.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv40mlp2-015002c8",
+    "ev:ev-mv40pczl-017d0a64",
+    "ev:ev-mv40qizh-0178646b",
+    "ev:ev-mv40r2b6-0183d269",
+    "ev:ev-mv418etg-01b71dfe"
+  ],
+  "remainingIssues": [
+    "TWO RED TESTS IN OTHER TASKS' FILES, both caused by behaviour this task was required to add (npm test ev:ev-mv40pczl-017d0a64: 2236 tests, 2226 pass, 2 fail, 8 skipped; the RS-39 uploads-retention test passed, no re-run was needed). I may not edit these files; they need an orchestrator rework by their owners. (1) test/api/lost-response.test.js (e4), test 'RS-25: nothing was applied (a timeout): the reconciler reads CREATED, restores authorized and the lease holder re-sends with the SAME PayPal-Request-Id': it expects the call trail ['get_authorization','capture','capture']; FU-41(a) puts the lease holder's own read in front of the re-send, so the trail is ['get_authorization','get_authorization','capture','capture'] (trail[2] is A's key so:<A>:capture:1, trail[3] is B's); update the deepEqual, the two trail indices and the message. (2) test/api/admin-basic.test.js (c3), test 'refund_order: only an operation captured under an executed plan; it becomes refund_requested with a queued refund call ...': it asserts the refund stays refund_requested and the call stays intent/started_at null, but the spec's Sender table (refund: the refund_order handler sends right after commit) is now implemented; the test fabricates the capture id 'FAKE-CAP-1', which the fake does not know, so the operation ends refund_failed. Keep the 404 / early-409 / second-call-409 parts and assert only that one call so:<id>:refund:1 exists after the 200; the sending behaviour is covered by admin-refund-order.test.js. The forced-reset test of admin-basic.test.js (c3) stays green because the voids of an approved plan go through the void port, which is a recorder there.",
+    "A forced reset needs the real void port to send voids for authorized operations of plans that are not `approved` (startApp wires it; createApp's default is a recorder that sends nothing); without it those operations are listed in `stranded`, as the spec says for a failed clean-up.",
+    "A plan that was `executing` when a forced reset archived its operations stays status `executing` (the plan machine allows executing -> non_executable only for CAPTURE_FAILED / AUTHORIZATION_EXPIRED). It is fenced: never taken over, resumed or marked executed (tests), but plansByStatus in the admin metrics still counts it until a later reset or a state-machine decision.",
+    "The send_token fence of recordCall cannot be proved on its own: the UPDATE also requires status = 'intent', which rejects the same late results; the epoch fence and the lease checks are each mutant-proved. A DB error inside resolveRejectedVoid's transaction leaves the operation `authorized` with a failed void call and void_failed 0; only derivation row 2 (b) escalates it after RS_PENDING_ESCALATE_MIN (test shows nothing half done, not a retry).",
+    "refund_order now waits for the provider call (up to RS_PAYPAL_TIMEOUT_MS + 1 s) before it answers; the API client aborts at 15 s, the call journal stays consistent if it does.",
+    "With a read that keeps failing, the FU-41(a) hold path pauses the lease and the next tick takes the plan over again (epoch + 1 per tick) until the order read recovers; no send happens meanwhile.",
+    "Documented design deltas for the verification report: refunds read supplier_orders.total_cents (delta 24 changed source, same value by construction); a forced reset's audit event gained authorized, resolved, polled, resolveTimedOut and closedReconciling; a reset closes reconciling reservations without restock rows.",
+    "npm run test:browser: 10 of 10 pass (ev:ev-mv40qizh-0178646b). No red test in f1 or f3 files was seen in the full run."
+  ],
+  "nextAction": "delivery-lead: route the two stale assertions (lost-response.test.js RS-25 trail; admin-basic.test.js refund_order) to e4's and c3's owners in a rework, send f2 to review. f1: nothing of yours needs a change in my files. f4: the saga reads before every re-send, a plan whose operations are archived is never taken over, readResolvePass is exported from reconciler.js; stale started intents still become unknown after 2 x RS_PAYPAL_TIMEOUT_MS and a takeover still needs lease_until <= now with no capture_pending/unknown operation. g3: evidence-table rows for RS-22, RS-37, RS-38, SEC-11, F-TR-6, F-TR-7, ARCH-23, FU-41, FU-42, FU-45 are the test names in my five files; the LIVE-dependent facts (final_capture, AUTHORIZATION_ALREADY_CAPTURED, request-id retention, EXPIRED void answers) are unchanged.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This task builds no hook or guard that maps file writes to a project record or root (payment saga, reconciler, admin routes and API tests only), so the lesson's applies-when conditions do not hold; the lesson's own not-applicable case for non-hook work applies."
+    }
+  ]
+}
