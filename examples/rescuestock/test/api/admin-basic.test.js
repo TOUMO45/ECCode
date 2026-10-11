@@ -399,12 +399,18 @@ describe('RS-32 (admin half) and SEC-11: the fault routes', () => {
       // (reconciler step 6 only if that send cannot be made); f2 handoff ho-mv41a3s6-0138e24d. So the call is no longer left queued:
       // the operation has left refund_requested (this hand-made capture id FAKE-CAP-1 does not exist at the fake provider, so the
       // refund is refused and the operation ends refund_failed; the executed-world tests in admin-refund-order.test.js cover the
-      // completed refund) and the one call carries the deterministic key so:<id>:refund:1 (spec, Admin routes > refund_order).
-      assert.notEqual(h2.db.prepare('SELECT status FROM payment_operations WHERE supplier_order_id = ?').get(order.id).status, 'refund_requested');
+      // completed refund) and the one call carries the deterministic key so:<id>:refund:1 (spec, Admin routes > refund_order;
+      // provider call protocol: key so:<supplierOrderId>:<kind>:<attempt>). A provider-REFUSED refund must never read as money returned:
+      // provider call protocol section 4 (`rejected` -> the call fails and the mapped transition runs) and saga step 5 (a failed
+      // refund -> refund_failed, which escalates), so the state is exactly refund_failed with the provider's issue as the code.
+      const refundedOp = h2.db.prepare('SELECT status, last_error_code FROM payment_operations WHERE supplier_order_id = ?').get(order.id);
+      assert.equal(refundedOp.status, 'refund_failed');
+      assert.equal(refundedOp.last_error_code, 'INVALID_RESOURCE_ID', 'the fake answers 404 INVALID_RESOURCE_ID for the unknown capture id');
       const call = h2.db.prepare('SELECT kind, operation_key, send_count FROM provider_calls').get();
       assert.deepEqual({ ...call }, { kind: 'refund', operation_key: `so:${order.id}:refund:1`, send_count: 1 });
       assert.equal(count(h2, 'SELECT COUNT(*) AS n FROM provider_calls'), 1);
-      // Exactly ONE provider call for the refund: sent once (FU-42 / SEC-11: one refund per captured order), never twice, never zero.
+      // Exactly ONE provider call for the refund: sent once by the handler right after the commit (spec: Sender table, refund row, and
+      // Admin routes > refund_order), under the deterministic key of the provider call protocol; never twice, never zero.
       const sent = h2.db.prepare("SELECT request_id FROM fake_paypal_calls WHERE kind = 'refund'").all();
       assert.deepEqual(sent.map((r) => r.request_id), [`so:${order.id}:refund:1`]);
       assert.equal((await refund(order.id)).status, 409, 'a second refund is refused');
