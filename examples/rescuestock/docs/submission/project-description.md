@@ -27,7 +27,7 @@ On the seeded test fixture (200 cups and 200 lids, 250 ml, deadline 11:00, budge
 ## How PayPal is used
 
 - PayPal Sandbox only, no real money. Authorize at approval time and capture after all conditions hold (delayed capture), using PayPal's hosted approval page so no client id reaches the browser. One Sandbox merchant credential set per demonstration supplier when supplied, or one set for all (and the interface says so).
-- Idempotent calls, recorded before they are sent, a reconciler that reads PayPal state after a lost response, void and refund compensation, and signature-verified webhooks (polling is the primary path).
+- Idempotent calls, recorded before they are sent, a reconciler that reads PayPal state after a lost response, void and refund compensation, and signature-verified webhooks (polling is the primary path). The webhook signature check is verified only against the fake provider and the local stub; verification against real PayPal is live-dependent and not yet run.
 - **Update after live runs: what is verified.** At the time of writing, the Sandbox adapter has been exercised only against a local stub and the built-in fake PayPal. I have not yet run the live Sandbox checks, so I make no claim that it works against PayPal. [Replace this paragraph with the exact result of the live reports once I have run `docs/runbooks/live-paypal.md`.]
 
 ## How AI is used
@@ -55,7 +55,7 @@ Node.js 22 (built-in `node:http`, `node:sqlite`, `node:test`), SQLite, vanilla J
 ## Try it
 
 - Repository: `<public repository URL, to be filled in by me>`
-- Run it locally in one command (fake payments, simulated reader): `npm install && npm run seed && RS_MODEL_PROVIDER=fake npm start`, then open http://127.0.0.1:3000 and sign in as `cafe1` with the password the seed prints.
+- Run it locally in one command (fake payments, simulated reader): `npm install && npm run seed && RS_MODEL_PROVIDER=fake npm start`, then open http://localhost:3000 (not 127.0.0.1: the simulated approval returns to localhost) and sign in as `cafe1` with the password the seed prints.
 - Demo video: `<video URL, to be filled in by me>`
 
 ## What's next

@@ -10,9 +10,9 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { LIVE_MESSAGES as MODEL_MESSAGES, evaluateLaunch } from '../live/run-live-model.js';
 import { LIVE_MESSAGES as PAYPAL_MESSAGES, evaluateLiveLaunch } from '../live/paypal/live-support.js';
 import { runLivePaypal } from '../live/paypal/run-live-paypal.js';
@@ -92,7 +92,9 @@ describe('NFR3: the live PayPal scripts refuse without their flag', () => {
     });
   }
 
-  test('NFR3: the launcher (npm run test:live-paypal) refuses the same way and never starts the test files', async () => {
+  // SEC-G-I1: this is run-live-paypal.js called directly. package.json does NOT use it (its own header says so): `npm run test:live-paypal`
+  // runs the six files under `node --test`; that line is run for real in the describe block below.
+  test('NFR3: test/live/paypal/run-live-paypal.js (a standalone launcher that package.json does not use) refuses the same way and never starts the test files', async () => {
     const r = runGuarded(PAYPAL_LAUNCHER, {}, ['test/live/paypal/**/*.test.js']);
     assert.equal(r.status, 2);
     assert.equal(r.stderr.trim(), PAYPAL_MESSAGES.notEnabled);
@@ -120,6 +122,63 @@ describe('NFR3: the live PayPal scripts refuse without their flag', () => {
     assert.match(scripts['test:live-paypal'], /test\/live\/paypal\/\*\*\/\*\.test\.js/);
     assert.doesNotMatch(scripts.test, /test\/live/);
     assert.doesNotMatch(scripts['test:browser'], /test\/live/);
+  });
+});
+
+// SEC-G-I1: the package script lines themselves, exactly as a user types them, with no live flag, no credential and nothing but node and npm on
+// the PATH (no `claude`, no API key). Every Node process, npm's children included, loads the offline net guard through NODE_OPTIONS, so a
+// connection to any non-loopback host would be recorded as NETWORK_BLOCKED and make the process exit non-zero.
+describe('NFR3: the real package scripts (npm run test:live-model, npm run test:live-paypal) refuse without their flags and use no network', () => {
+  const npmPath = join(dirname(process.execPath), 'npm');
+  const toolBin = join(scratch, 'tool-bin');
+  const haveNpm = existsSync(npmPath);
+  if (haveNpm) {
+    mkdirSync(toolBin, { recursive: true });
+    symlinkSync(process.execPath, join(toolBin, 'node'));
+    symlinkSync(realpathSync(npmPath), join(toolBin, 'npm'));
+  }
+  // npm's own update check is switched off (it would try the registry): what is judged is the package scripts, not npm's housekeeping.
+  const npmEnv = () => ({
+    PATH: `${toolBin}:/usr/bin:/bin`, HOME: scratch, LANG: 'C.UTF-8', NODE_OPTIONS: `--import=${NET_GUARD_PATH}`,
+    NPM_CONFIG_UPDATE_NOTIFIER: 'false', NPM_CONFIG_AUDIT: 'false', NPM_CONFIG_FUND: 'false',
+  });
+  const npmRun = (script) => spawnSync(join(toolBin, 'npm'), ['run', '--silent', script], { cwd: PROJECT_ROOT, env: npmEnv(), encoding: 'utf8', timeout: 120_000 });
+  const reportsDir = join(PROJECT_ROOT, 'reports');
+  const reportsBefore = existsSync(reportsDir) ? readdirSync(reportsDir).sort().join('|') : null;
+
+  test('NFR3: control: the net guard loaded through NODE_OPTIONS stops a connection to a non-loopback host in a child process', (t) => {
+    if (!haveNpm) return t.skip('npm is not next to the node binary on this host');
+    const r = spawnSync(process.execPath, ['-e', "require('node:net').connect(80, 'example.invalid')"], { cwd: PROJECT_ROOT, env: npmEnv(), encoding: 'utf8', timeout: 30_000 });
+    assert.notEqual(r.status, 0);
+    assert.match(r.stderr, /NETWORK_BLOCKED/);
+  });
+
+  test('NFR3: `npm run test:live-model` with no flag exits 2 with the fixed message, prints nothing else, and no network attempt is made', (t) => {
+    if (!haveNpm) return t.skip('npm is not next to the node binary on this host');
+    const r = npmRun('test:live-model');
+    assert.equal(r.status, 2, `exit ${r.status}, stderr ${r.stderr}`);
+    assert.equal(r.stderr.trim(), MODEL_MESSAGES.notEnabled);
+    assert.equal(r.stdout, '');
+    assert.doesNotMatch(`${r.stdout}${r.stderr}`, /NETWORK_BLOCKED/);
+  });
+
+  test('NFR3: `npm run test:live-paypal` with no flag runs the six live files, every one refuses with the fixed message and none passes (exit 1, as the runbook says), and no network attempt is made', (t) => {
+    if (!haveNpm) return t.skip('npm is not next to the node binary on this host');
+    const r = npmRun('test:live-paypal');
+    const out = `${r.stdout}\n${r.stderr}`;
+    assert.equal(r.status, 1, `exit ${r.status}, stderr ${r.stderr}`);
+    assert.equal(out.split(PAYPAL_MESSAGES.notEnabled).length - 1, PAYPAL_FILES.length, 'each of the six files printed the refusal exactly once');
+    assert.match(r.stdout, new RegExp(`^# tests ${PAYPAL_FILES.length}$`, 'm'));
+    assert.match(r.stdout, /^# pass 0$/m, 'no live file passed');
+    assert.match(r.stdout, new RegExp(`^# fail ${PAYPAL_FILES.length}$`, 'm'));
+    assert.doesNotMatch(out, /NETWORK_BLOCKED/);
+    assert.doesNotMatch(out, /^\s*ok \d+ - /m, 'no test is reported as passed');
+  });
+
+  test('NFR3: the two refused runs wrote no report (reports/ is as it was)', (t) => {
+    if (!haveNpm) return t.skip('npm is not next to the node binary on this host');
+    const after = existsSync(reportsDir) ? readdirSync(reportsDir).sort().join('|') : null;
+    assert.equal(after, reportsBefore);
   });
 });
 

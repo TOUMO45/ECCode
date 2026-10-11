@@ -7,7 +7,8 @@
 // Phase G (g3) extends this file to built assets, recorded responses, screenshots and submission files (RS-29): see the describe blocks from "RS-29: built assets" down.
 import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -323,7 +324,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SECRET_SHAPES = Object.freeze([
   ['bearer token', /Bearer\s+[A-Za-z0-9._~+/-]{8,}/],
   ['basic-auth value', /Basic\s+[A-Za-z0-9+/]{12,}={0,2}/],
-  ['Anthropic-style API key', /sk-[A-Za-z0-9_-]{10,}/],
+  ['Anthropic-style API key', /\bsk-[A-Za-z0-9_-]{10,}/],
   ['PayPal-style access token', /\bA21AA[A-Za-z0-9_-]{16,}/],
   ['credential assigned a value', /\b(client_secret|api[_-]?key|webhook[_-]?id)\b["']?\s*[:=]\s*["']?[A-Za-z0-9+/_-]{12,}/i],
   ['URL with credentials', /[A-Za-z][A-Za-z0-9+.-]*:\/\/[^\s/@]+:[^\s/@]+@/],
@@ -525,6 +526,350 @@ describe('RS-29: README, runbooks and submission files', () => {
     const problems = [];
     for (const file of files) problems.push(...scanText(rel(file), readFileSync(file, 'utf8')));
     assert.deepEqual(problems, []);
+  });
+});
+
+// ======================================================================================================================
+// RS-29, whole project (rework-8, SEC-G-1): EVERY file the repository ships or records is read, not only public/, the recorded
+// responses, the markdown documents and the screenshots. That is every git-tracked or untracked-unignored file (git ls-files -co
+// --exclude-standard; without git, as in a clean checkout, a walk of the directory without node_modules, .git, data/, reports/,
+// test/.out and .env files) PLUS the screenshots of test/browser/out. It includes the project record `.eccode/` (artifacts, drafts,
+// handoffs, reviews and the run logs in `.eccode/evidence`, where the output of a live run would be recorded), src/, scripts/,
+// package.json and the lockfile, every document of any type, and every PNG: all chunks except pixel data (text, EXIF, ICC, private
+// chunks, compressed or not) and any bytes after IEND.
+//
+// What is looked for, in every file:
+//   - each canary of this suite, in any form (exempt: the file that DEFINES them);
+//   - the high-confidence shapes of a credential: bearer token, basic-auth value, API key (sk-), PayPal access token, a credential
+//     assigned to a name, a URL with a password, a private key, a JWT, and a long mixed-case token (60+ characters, at most three
+//     hyphens: a credential, not a slug or a hash). The e-mail and 32-character token-shape rules of the narrower scans stay with
+//     them: over a whole record they match hashes, slugs and addresses of reviewers, which are not secrets.
+// Exceptions are listed below by PATH AND VALUE: a test source or a record that holds a fake credential on purpose, with the exact
+// fragment and the reason. A file listed for one fragment is still checked for every other one, and an entry that no longer matches
+// anything fails as stale. Evidence logs need no entry: they hold canary NAMES (test titles), never canary values.
+// ======================================================================================================================
+
+// Files that DEFINE a canary value (the one place the value may appear), by path.
+const CANARY_HOLDERS = Object.freeze({
+  'test/scan/secrets.test.js': 'defines the canary values of this scan',
+  'test/helpers/provider-stubs.js': 'defines PROVIDER_BODY_MARKER, the canary for a provider body',
+});
+// Files that hold one sample of every secret shape on purpose, to prove the scan sees each one (the shape check skips them).
+const SHAPE_SAMPLE_FILES = Object.freeze({
+  'test/scan/secrets.test.js': 'plants one sample of each shape, with the fake values of the config-redaction cases',
+});
+
+const SHAPE_EXCUSES = Object.freeze([
+  { path: 'test/api/extract-degraded.test.js', has: 'sk-live-should-not-leak', reason: 'a fake key the test sends to prove it is never echoed' },
+  { path: 'test/unit/http/app.test.js', has: 'sk-live-should-not-leak', reason: 'a fake key the test sends to prove it is never echoed' },
+  { path: 'test/api/health-config.test.js', has: 'sk-ant-test-SENTINEL', reason: 'a fake API key sentinel: /api/health must not show it' },
+  { path: 'test/unit/config/secrets.test.js', has: 'sk-ant-test-key-value', reason: 'a fake API key: the configuration must not repeat it' },
+  { path: 'test/api/webhooks.test.js', has: 'user:pw@', reason: 'a fake URL password the webhook host check must refuse' },
+  { path: 'test/unit/config/hosts.test.js', has: 'user:pw@', reason: 'a fake URL password the host check must refuse' },
+  { path: 'test/unit/config/hosts.test.js', has: 'u:p@', reason: 'a fake URL password the host check must refuse' },
+  { path: 'test/unit/payments/fake.test.js', has: 'user:pw@', reason: 'a fake URL password the adapter must refuse' },
+  { path: 'test/unit/payments/sandbox.test.js', has: 'user:pw@', reason: 'a fake URL password the adapter must refuse' },
+  { path: 'test/unit/payments/sandbox.test.js', has: 'webhook-id-LEAK', reason: 'a fake webhook id the adapter must not leak' },
+  { path: 'test/unit/payments/sandbox.test.js', has: 'attacker-webhook', reason: 'a fake attacker webhook id in a forged event' },
+  { path: 'test/unit/payments/paypal-stub.test.js', has: 'DEFAULT_MERCHANT', reason: 'the name of a stub merchant, not a credential' },
+  { path: 'test/helpers/paypal-stub.js', has: 'WH-STUB-DEFAULT', reason: 'the stub default webhook id (loopback stub)' },
+  { path: '.eccode/drafts/sec-phb-config-db.mjs', has: 'LOGSECRET', reason: 'a phase B security probe: fake values it plants to see whether they leak' },
+  { path: '.eccode/drafts/sec-phb-config-db.mjs', has: 'sk-live-REALSECRET', reason: 'a phase B security probe: fake values it plants to see whether they leak' },
+  { path: '.eccode/drafts/sec-phb-config-db.mjs', has: 'user:pw@', reason: 'a phase B security probe: fake values it plants to see whether they leak' },
+  { path: '.eccode/reviews/drafts/phase-g-security-1.md', has: 'sk-live-REALSECRET', reason: 'the review names that probe value as fake' },
+  { path: '.eccode/events.jsonl', has: 'WH-STUB-DEFAULT', reason: 'the record quotes the stub default webhook id' },
+  { path: '.eccode/events.jsonl', has: 'sk-tests-evidence', reason: 'the record quotes a scan result about a slug that begins sk-' },
+  { path: '.eccode/events.jsonl', has: 'sk-overview-owner', reason: 'the record quotes a scan result about a slug that begins sk-' },
+  { path: '.eccode/events.jsonl', has: 'sk-live-should-not-leak', reason: 'the record quotes a scan result naming a test placeholder' },
+  { path: '.eccode/events.jsonl', has: 'DEFAULT_MERCHANT', reason: 'the record quotes a scan result naming a stub merchant' },
+  { path: '.eccode/events.jsonl', has: 'webhook-id-LEAK', reason: 'the record quotes a scan result naming a test placeholder' },
+  { path: '.eccode/state.json', has: 'DEFAULT_MERCHANT', reason: 'the record quotes a scan result naming a stub merchant' },
+  { path: '.eccode/state.json', has: 'webhook-id-LEAK', reason: 'the record quotes a scan result naming a test placeholder' },
+  { path: '.eccode/state.json', has: 'WH-STUB-DEFAULT', reason: 'the record quotes the stub default webhook id' },
+  { path: '.eccode/state.json', has: 'sk-tests-evidence', reason: 'the record quotes a scan result about a slug that begins sk-' },
+  { path: '.eccode/state.json', has: 'sk-overview-owner', reason: 'the record quotes a scan result about a slug that begins sk-' },
+  { path: '.eccode/state.json', has: 'sk-live-should-not-leak', reason: 'the record quotes a scan result naming a test placeholder' },
+]);
+
+const PROJECT_SHAPES = Object.freeze([
+  ...SECRET_SHAPES.filter(([label]) => label !== 'e-mail address'),
+  ['JWT', /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\./],
+]);
+const LONG_RUN = /(?<![A-Za-z0-9_-])[A-Za-z0-9_-]{60,}(?![A-Za-z0-9_-])/g;
+const PNG_SIGNATURE = Buffer.from('89504e470d0a1a0a', 'hex');
+const WALK_SKIP_DIRS = new Set(['node_modules', '.git', 'data', 'reports', 'coverage']);
+
+/** A long, mixed-case token with a digit and at most three hyphens (not a slug, not a hash, not a base64 integrity value). */
+export function longCredential(text) {
+  for (const m of text.replace(/"integrity":\s*"[^"]*"/g, '').matchAll(LONG_RUN)) {
+    const s = m[0];
+    if (/[a-z]/.test(s) && /[A-Z]/.test(s) && /[0-9]/.test(s) && (s.match(/-/g) ?? []).length <= 3) return s;
+  }
+  return null;
+}
+
+/** Every chunk of a PNG except the pixel data, raw and (where it is compressed) inflated, plus any bytes after IEND. */
+export function pngAllChunkText(buffer) {
+  const out = [];
+  let i = 8;
+  while (i + 12 <= buffer.length) {
+    const length = buffer.readUInt32BE(i);
+    const type = buffer.subarray(i + 4, i + 8).toString('latin1');
+    const data = buffer.subarray(i + 8, Math.min(buffer.length, i + 8 + length));
+    if (!['IHDR', 'PLTE', 'IDAT', 'IEND'].includes(type)) {
+      out.push(`${type}\0${data.toString('latin1')}`);
+      const nul = data.indexOf(0);
+      const starts = new Set([nul + 1, nul + 2]);
+      if (type === 'iTXt' && nul >= 0) {
+        let p = data.indexOf(0, nul + 3) + 1;
+        p = data.indexOf(0, p) + 1;
+        starts.add(p);
+      }
+      for (const start of starts) {
+        try {
+          out.push(inflateSync(data.subarray(start)).toString('latin1'));
+        } catch {
+          /* not compressed at this offset */
+        }
+      }
+    }
+    i += 12 + length;
+    if (type === 'IEND') {
+      if (i < buffer.length) out.push(`after IEND\0${buffer.subarray(i).toString('latin1')}`);
+      break;
+    }
+  }
+  return out.join('\n');
+}
+
+function walkProject(root) {
+  const out = [];
+  const visit = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+      const path = join(dir, entry.name);
+      const relative_ = relative(root, path).split('\\').join('/');
+      if (entry.isDirectory()) {
+        if (!WALK_SKIP_DIRS.has(entry.name) && relative_ !== 'test/.out') visit(path);
+      } else if (entry.isFile() && !(/^\.env(\..*)?$/.test(entry.name) && entry.name !== '.env.example')) {
+        out.push(relative_);
+      }
+    }
+  };
+  visit(root);
+  return out;
+}
+
+/** The files of the project, relative to root: git's list of tracked and unignored files when root is in a git work tree, else a walk. */
+export function listProjectFiles(root, { git = true } = {}) {
+  let files = [];
+  if (git) {
+    try {
+      const stdout = execFileSync('git', ['-c', 'core.quotepath=off', '-C', root, 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+        maxBuffer: 64 * 1024 * 1024,
+      });
+      files = stdout.split('\0').filter(Boolean);
+    } catch {
+      files = [];
+    }
+  }
+  if (files.length === 0) files = walkProject(root);
+  const set = new Set(files);
+  const screenshots = join(root, 'test', 'browser', 'out'); // ignored by git, written by the browser suite
+  for (const path of filesUnder(screenshots)) set.add(relative(root, path).split('\\').join('/'));
+  return [...set].sort();
+}
+
+/**
+ * scanProject(root, files) -> { problems, scanned, usedHolders, usedExcuses }. Each file is read as bytes; a PNG by its chunks; text as latin1
+ * (so a canary is found in any encoding that keeps ASCII intact). A problem names the file and the kind of finding, never more than the first
+ * six characters of a shape match.
+ */
+export function scanProject(root, files = listProjectFiles(root), { holders = CANARY_HOLDERS, sampleFiles = SHAPE_SAMPLE_FILES, excuses = SHAPE_EXCUSES } = {}) {
+  const problems = [];
+  const usedHolders = new Set();
+  const usedExcuses = new Set();
+  const usedSamples = new Set();
+  let scanned = 0;
+  for (const file of files) {
+    let buffer;
+    try {
+      const path = join(root, file);
+      if (!statSync(path).isFile()) continue;
+      buffer = readFileSync(path);
+    } catch {
+      continue; // listed by git but deleted from the work tree
+    }
+    scanned += 1;
+    const isPng = buffer.length >= 8 && buffer.subarray(0, 8).equals(PNG_SIGNATURE);
+    const binary = isPng || buffer.subarray(0, 8000).includes(0);
+    const text = isPng ? pngAllChunkText(buffer) : buffer.toString('latin1');
+    if (Object.hasOwn(holders, file)) usedHolders.add(file);
+    else {
+      for (const canary of CANARY_VALUES) {
+        for (const form of forms(canary)) if (text.includes(form)) problems.push(`${file}: holds the canary ${canary.slice(0, 18)}…`);
+      }
+    }
+    if (Object.hasOwn(sampleFiles, file)) {
+      usedSamples.add(file);
+      continue;
+    }
+    for (const [label, pattern] of PROJECT_SHAPES) {
+      for (const m of text.matchAll(new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`))) {
+        const excuse = excuses.find((e) => e.path === file && m[0].includes(e.has));
+        if (excuse) usedExcuses.add(`${excuse.path} :: ${excuse.has}`);
+        else problems.push(`${file}: ${label} (${m[0].slice(0, 6)}…)`);
+      }
+    }
+    if (!binary || isPng) {
+      const long = longCredential(text);
+      if (long) problems.push(`${file}: long mixed-case token (${long.slice(0, 6)}…)`);
+    }
+  }
+  return { problems: [...new Set(problems)], scanned, usedHolders, usedSamples, usedExcuses };
+}
+
+describe('RS-29 whole project: the scan is not vacuous (every place a secret could ship)', () => {
+  const SECRET = CANARY.clientSecret;
+  const dir = mkdtempSync(join(tmpdir(), 'rs-secrets-plant-'));
+  after(() => rmSync(dir, { recursive: true, force: true }));
+
+  const chunk = (type, data) => {
+    const head = Buffer.alloc(8);
+    head.writeUInt32BE(data.length, 0);
+    head.write(type, 4, 'latin1');
+    return Buffer.concat([head, data, Buffer.alloc(4)]);
+  };
+  const png = async (type, payload) => {
+    const { deflateSync } = await import('node:zlib');
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(1, 0);
+    ihdr.writeUInt32BE(1, 4);
+    ihdr[8] = 8;
+    ihdr[9] = 2;
+    return Buffer.concat([PNG_SIGNATURE, chunk('IHDR', ihdr), chunk(type, payload), chunk('IDAT', deflateSync(Buffer.from([0, 0, 0, 0]))), chunk('IEND', Buffer.alloc(0))]);
+  };
+  const put = (file, content) => {
+    mkdirSync(dirname(join(dir, file)), { recursive: true });
+    writeFileSync(join(dir, file), content);
+  };
+
+  test('RS-29: a canary planted in each of 17 places (source, scripts, package.json, non-markdown documents, the record and its run logs, images of every kind and chunk) is reported with its path, and a clean tree is not', async () => {
+    const { deflateSync } = await import('node:zlib');
+    put('src/clean.js', 'export const ok = 1;\n');
+    put('docs/note.txt', 'nothing here\n');
+    assert.deepEqual(scanProject(dir, listProjectFiles(dir, { git: false })).problems, [], 'a clean tree is clean');
+
+    put('README.md', `PLANT-P01 ${SECRET}\n`);
+    put('.env.example', `# PLANT-P02 ${SECRET}\n`);
+    put('docs/runbooks/plant-p03.md', `PLANT-P03 ${SECRET}\n`);
+    put('public/js/plant-p04.js', `// PLANT-P04 ${SECRET}\n`);
+    put('test/fixtures/contracts/plant-p05.json', JSON.stringify({ note: SECRET }));
+    put('test/browser/out/plant-p06-360.png', await png('tEXt', Buffer.from(`Comment\0${SECRET}`, 'latin1')));
+    put('test/browser/out/plant-p07-360.png', await png('eXIf', Buffer.from(`MM\0*${SECRET}`, 'latin1')));
+    put('test/browser/out/plant-p08-360.png', await png('prVt', Buffer.from(SECRET, 'latin1')));
+    put('docs/submission/plant-p09.txt', `PLANT-P09 ${SECRET}\n`);
+    put('docs/plant-p10.png', await png('zTXt', Buffer.concat([Buffer.from('Note\0\0', 'latin1'), deflateSync(Buffer.from(SECRET))])));
+    put('src/plant-p11.js', `export const PLANT_P11 = '${SECRET}';\n`);
+    put('scripts/plant-p12.sh', `#!/bin/sh\nexport RS_PAYPAL_DEFAULT_CLIENT_SECRET=${SECRET}\n`);
+    put('.eccode/artifacts/plant-p13.md', `PLANT-P13 ${SECRET}\n`);
+    put('.eccode/evidence/plant-p14.log', `PLANT-P14 ${SECRET}\n`);
+    put('test/fixtures/extraction/images/plant-p15.png', await png('tEXt', Buffer.from(`Comment\0${SECRET}`, 'latin1')));
+    put('package.json', JSON.stringify({ name: 'x', plantP16: SECRET }));
+    put('public/img/plant-p17.png', await png('zTXt', Buffer.concat([Buffer.from('Note\0\0', 'latin1'), deflateSync(Buffer.from(SECRET))])));
+    const { problems } = scanProject(dir, listProjectFiles(dir, { git: false }));
+    for (const planted of [
+      'README.md', '.env.example', 'docs/runbooks/plant-p03.md', 'public/js/plant-p04.js', 'test/fixtures/contracts/plant-p05.json',
+      'test/browser/out/plant-p06-360.png', 'test/browser/out/plant-p07-360.png', 'test/browser/out/plant-p08-360.png', 'docs/submission/plant-p09.txt',
+      'docs/plant-p10.png', 'src/plant-p11.js', 'scripts/plant-p12.sh', '.eccode/artifacts/plant-p13.md', '.eccode/evidence/plant-p14.log',
+      'test/fixtures/extraction/images/plant-p15.png', 'package.json', 'public/img/plant-p17.png',
+    ]) {
+      assert.ok(problems.some((p) => p.startsWith(`${planted}: holds the canary`)), `${planted} is reported: ${problems.join(' | ')}`);
+    }
+    assert.equal(problems.length, 17, `exactly the 17 planted files are reported: ${problems.join(' | ')}`);
+  });
+
+  test('RS-29: the other secret shapes (bearer, key, JWT, URL password, long mixed-case token) and bytes after IEND are reported in a record or a script; an image tail too', async () => {
+    const d2 = mkdtempSync(join(tmpdir(), 'rs-secrets-shapes-'));
+    try {
+      const w = (file, content) => {
+        mkdirSync(dirname(join(d2, file)), { recursive: true });
+        writeFileSync(join(d2, file), content);
+      };
+      w('.eccode/evidence/a.log', 'Authorization: Bearer abcdefghijklmnopqrstuvwx\n');
+      w('.eccode/evidence/b.log', 'key sk-ant-api03-abcdefghijklmnop\n');
+      w('.eccode/evidence/c.log', 'jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.sig\n');
+      w('scripts/d.sh', 'curl https://user:hunter2hunter2@example.test/x\n');
+      w('.eccode/evidence/e.log', `token ${'Ab1'.repeat(25)}\n`);
+      w('docs/tail.png', Buffer.concat([await png('tEXt', Buffer.from('Comment\0fine', 'latin1')), Buffer.from(`trailing ${SECRET}`)]));
+      // values that are NOT secrets: a slug, a hash, a package integrity value
+      w('.eccode/reviews/slug.json', `{"id":"${'added-after-phase-g-delivery-lead-notes-about-the-release-gate-of-the-whole-project'}"}`);
+      w('.eccode/evidence/hash.log', `tree ${'0123456789abcdef'.repeat(4)}\n`);
+      w('package-lock.json', `{"integrity": "sha512-${'AbCd1234'.repeat(10)}"}`);
+      const { problems } = scanProject(d2, listProjectFiles(d2, { git: false }));
+      for (const [file, kind] of [
+        ['.eccode/evidence/a.log', 'bearer token'], ['.eccode/evidence/b.log', 'Anthropic-style API key'], ['.eccode/evidence/c.log', 'JWT'],
+        ['scripts/d.sh', 'URL with credentials'], ['.eccode/evidence/e.log', 'long mixed-case token'], ['docs/tail.png', 'holds the canary'],
+      ]) assert.ok(problems.some((p) => p.startsWith(`${file}: ${kind}`) || (kind === 'holds the canary' && p.startsWith(`${file}: ${kind}`))), `${file} ${kind}: ${problems.join(' | ')}`);
+      assert.equal(problems.length, 6, `slug, hash and integrity value are not reported: ${problems.join(' | ')}`);
+    } finally {
+      rmSync(d2, { recursive: true, force: true });
+    }
+  });
+
+  test('RS-29: an excuse covers its own path and fragment only: the same fake value elsewhere, and another value in the same file, are reported; a canary holder is excused for canaries only', () => {
+    const d3 = mkdtempSync(join(tmpdir(), 'rs-secrets-excuse-'));
+    try {
+      const w = (file, content) => {
+        mkdirSync(dirname(join(d3, file)), { recursive: true });
+        writeFileSync(join(d3, file), content);
+      };
+      w('test/a.test.js', 'const url = "https://user:pw@example.test/";\n');
+      w('test/b.test.js', 'const url = "https://user:pw@example.test/";\n');
+      w('test/c.test.js', 'const a = "https://user:pw@example.test/"; const b = "https://admin:hunter2x@example.test/";\n');
+      w('test/holder.test.js', `const c = "${CANARY.apiKey}"; const k = "sk-ant-api03-abcdefghijklmnop";\n`);
+      w('test/other.test.js', `const c = "${CANARY.apiKey}";\n`);
+      const excuses = [
+        { path: 'test/a.test.js', has: 'user:pw@', reason: 'x' },
+        { path: 'test/c.test.js', has: 'user:pw@', reason: 'x' },
+      ];
+      const result = scanProject(d3, listProjectFiles(d3, { git: false }), { holders: { 'test/holder.test.js': 'x' }, excuses });
+      assert.deepEqual(result.problems.sort(), [
+        'test/b.test.js: URL with credentials (https:…)',
+        'test/c.test.js: URL with credentials (https:…)',
+        'test/holder.test.js: Anthropic-style API key (sk-ant…)',
+        'test/other.test.js: holds the canary canary-anthropic-a…',
+      ].sort());
+      assert.deepEqual([...result.usedExcuses].sort(), ['test/a.test.js :: user:pw@', 'test/c.test.js :: user:pw@']);
+      assert.deepEqual([...result.usedHolders], ['test/holder.test.js']);
+    } finally {
+      rmSync(d3, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('RS-29 whole project: the real tree', () => {
+  test('RS-29: every tracked or unignored file (src, scripts, package.json, every document, the project record and its run logs, every image chunk) holds no canary and no secret shape', () => {
+    const files = listProjectFiles(ROOT);
+    const has = (prefix) => files.some((f) => f === prefix || f.startsWith(prefix));
+    assert.ok(files.length >= 300, `the scan lists ${files.length} files`);
+    for (const must of ['src/', 'scripts/', 'package.json', 'package-lock.json', 'public/', 'test/fixtures/', 'docs/', 'README.md']) assert.ok(has(must), `${must} is in the scan`);
+    for (const ext of ['.sql', '.sh', '.css', '.html', '.txt', '.ndjson', '.svg', '.md', '.json']) assert.ok(files.some((f) => f.endsWith(ext)), `${ext} files (not only .js and .md) are in the scan`);
+    assert.ok(files.some((f) => f.endsWith('.png')), 'images are in the scan');
+    assert.ok(files.some((f) => f.endsWith('.mjs')) && files.some((f) => f.endsWith('.cjs')), 'module scripts are in the scan');
+    if (existsSync(join(ROOT, '.eccode', 'evidence'))) {
+      assert.ok(files.some((f) => f.startsWith('.eccode/evidence/') && f.endsWith('.log')), 'the run logs of the project record are in the scan');
+      assert.ok(files.some((f) => f.startsWith('.eccode/artifacts/')), 'the artifacts of the project record are in the scan');
+    }
+    const { problems, scanned, usedHolders, usedSamples, usedExcuses } = scanProject(ROOT, files);
+    assert.ok(scanned >= 300, `${scanned} files were read`);
+    assert.deepEqual(problems, []);
+    // No stale entry: every holder and every excuse whose file exists still matches something.
+    for (const path of Object.keys(CANARY_HOLDERS)) assert.ok(usedHolders.has(path), `${path} is listed as a canary holder but was not read`);
+    for (const path of Object.keys(SHAPE_SAMPLE_FILES)) assert.ok(usedSamples.has(path), `${path} is listed as a shape-sample file but was not read`);
+    const stale = SHAPE_EXCUSES.filter((e) => existsSync(join(ROOT, e.path)) && !usedExcuses.has(`${e.path} :: ${e.has}`));
+    assert.deepEqual(stale.map((e) => `${e.path} :: ${e.has}`), [], 'excuses that match nothing any more must be removed');
   });
 });
 

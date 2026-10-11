@@ -10,11 +10,11 @@
 npm install && npm run seed && RS_MODEL_PROVIDER=fake npm start
 ```
 
-Then open http://127.0.0.1:3000, sign in as `cafe1` with the password the seed printed to your terminal (it prints each account's password once), and enter:
+Then open http://localhost:3000 (use `localhost`, not `127.0.0.1`: without `RS_PUBLIC_URL` the simulated approval returns you to `http://localhost:<port>`, and the sign-in belongs to the host name you signed in on), sign in as `cafe1` with the password the seed printed to your terminal (it prints each account's password once), and enter:
 
 > I need 200 cups and 200 lids, 250 ml, by 11:00 today. Budget $120, at most 2 pickups.
 
-With the seeded test prices the plan is suppliers A and B for USD 84.00; supplier C is rejected as incompatible (95 mm lids on 90 mm cups) and D as too late. Approve the plan, reserve the stock, and approve each payment on the clearly labelled "Simulated payment approval — not PayPal" page.
+The sample text gives no cup diameter, so the form that opens asks for it: enter `90` in "Cup diameter (mm)", leave the other fields as they are, and confirm. With the seeded test prices the plan is suppliers A and B for USD 84.00; supplier C is rejected as incompatible (95 mm lids on 90 mm cups) and D as too late. Approve the plan, reserve the stock, and approve each payment on the clearly labelled "Simulated payment approval — not PayPal" page. To finish, each supplier must confirm its order: sign out, sign in as `supplier-a` and as `supplier-b` (their passwords are in the same seed output) and confirm the order each one sees (open "Confirm this order"). Back as `cafe1`, press "Complete purchase".
 
 > **What is real and what is not.** All of the above runs on a built-in fake PayPal and a deterministic fake reader. The PayPal Sandbox adapter and the real-model adapters are built and tested against local stubs only. **They have never talked to PayPal or to a real model in this build.** The runs that would prove it are in the runbooks and need your credentials. See [Verified and not verified](#verified-and-not-verified).
 
@@ -246,6 +246,7 @@ The security reviews and the threat list are in the project record; none of this
 - **Real PayPal behaviour may differ** from the stub and the fake in details listed under the Sandbox runbook; the fake models PayPal as the integration research understood it.
 - **Webhooks** need a public HTTPS URL that you provide. Polling is the primary path and works without one.
 - **Demo-grade operations.** One host, one SQLite file, no automatic backups, no high availability.
+- **Lockfile.** `package-lock.json` lacks the optional macOS-only `fsevents` entry (a dependency of Playwright), so an install on macOS fetches `fsevents` without an integrity pin from the lockfile. Linux installs are unaffected (decision dec-mv4eaw35-013b929e).
 
 ## How this was built
 

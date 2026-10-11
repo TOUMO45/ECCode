@@ -1,16 +1,28 @@
 #!/bin/sh
-# NFR1 clean-checkout check. Copies the project's git-tracked and unignored files
-# (never .eccode/) into an empty temporary directory, then runs there, in order:
+# NFR1 clean-checkout check. Copies the files of the WORKING TREE that git lists as tracked or as
+# untracked-and-unignored (git ls-files --cached --others --exclude-standard; never .eccode/,
+# node_modules/, data/ or test/.out/) into an empty temporary directory, then runs there, in order:
 #   npm install   (needs the npm registry; nothing else is downloaded)
 #   npm test      (offline suite with the net guard; no browser)
 #   npm start     (PORT=0; the port is read from the "listening" log line)
-# and asserts GET /api/health answers 200. The temporary directory is removed on exit
-# (set RS_KEEP_CLEAN_CHECKOUT=1 to keep it for inspection).
+# and asserts GET /api/health answers 200.
+#
+# What is copied is the working tree, not a commit: uncommitted edits to tracked files and
+# untracked, unignored files are copied too. An untracked file is therefore tested as if it were
+# committed, so the script prints a WARNING naming them; `git add` (or ignore) them before you rely
+# on this check as a statement about what a clone would contain.
+#
+# The user's tree is only READ: every write goes to the temporary directory, which is removed on
+# exit. Set RS_KEEP_CLEAN_CHECKOUT=1 to keep it for inspection (its path is printed; remove it
+# yourself). The variable is read before the RS_* variables are cleared below.
 #
 # Secrets: this script reads and prints none. It only unsets variables by name (RS_*, PORT,
 # HOST and the API-key names) so the copy starts from defaults, and prints no environment.
 # Usage: sh scripts/clean-checkout.sh
 set -eu
+
+# Read before the unset loop below clears every RS_* variable (otherwise the keep option could never work).
+KEEP_CHECKOUT=${RS_KEEP_CLEAN_CHECKOUT:-}
 
 fail() {
   printf 'clean-checkout: FAILED: %s\n' "$1" >&2
@@ -67,7 +79,7 @@ stop_server() {
 cleanup() {
   status=$?
   stop_server
-  if [ "${RS_KEEP_CLEAN_CHECKOUT:-}" = '1' ]; then
+  if [ "$KEEP_CHECKOUT" = '1' ]; then
     printf 'clean-checkout: kept %s\n' "$WORK" >&2
   else
     rm -rf "$WORK"
@@ -103,6 +115,23 @@ done <"$LIST"
 [ -f "$CHECKOUT/package.json" ] || fail 'package.json was not copied'
 [ ! -e "$CHECKOUT/.eccode" ] || fail '.eccode/ was copied'
 printf 'copied %s files\n' "$COPIED"
+
+# Untracked, unignored files were copied above and will be tested as if committed: say so, by name.
+UNTRACKED_COUNT=0
+UNTRACKED_NAMES=''
+git -c core.quotepath=off ls-files --others --exclude-standard >"$WORK/untracked.txt"
+while IFS= read -r file; do
+  case "$file" in
+    .eccode/* | node_modules/* | data/* | test/.out/*) continue ;;
+  esac
+  [ -f "$file" ] || continue
+  UNTRACKED_COUNT=$((UNTRACKED_COUNT + 1))
+  if [ "$UNTRACKED_COUNT" -le 10 ]; then UNTRACKED_NAMES="$UNTRACKED_NAMES $file"; fi
+done <"$WORK/untracked.txt"
+if [ "$UNTRACKED_COUNT" -gt 0 ]; then
+  printf 'clean-checkout: WARNING: %s untracked, unignored file(s) were copied and are tested as if they were committed:%s%s\n' \
+    "$UNTRACKED_COUNT" "$UNTRACKED_NAMES" "$([ "$UNTRACKED_COUNT" -gt 10 ] && printf ' ...')" >&2
+fi
 
 cd "$CHECKOUT"
 

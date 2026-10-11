@@ -14,8 +14,8 @@
 //     shows fails here.
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -64,14 +64,51 @@ export function evidenceLog(id) {
   return existsSync(path) ? readFileSync(path, 'utf8') : null;
 }
 
-/** true when the TAP log shows a test whose title contains `title` as `ok` and not skipped or todo. */
+/**
+ * true when the TAP log shows at least one test whose title contains `title`, and EVERY such line is `ok` and not skipped or todo. A TAP
+ * log carries no file name, so the binding of a title to its file rests on the fragment occurring in exactly one test file (checked
+ * separately); a skipped or failed line anywhere among the matches is then that file's.
+ */
 export function logShowsPassed(log, title) {
+  let seen = 0;
   for (const line of log.split('\n')) {
     const m = /^\s*(not ok|ok) \d+ - (.*)$/.exec(line);
     if (!m || !m[2].includes(title)) continue;
-    if (m[1] === 'ok' && !/# (SKIP|TODO)/i.test(m[2])) return true;
+    if (m[1] !== 'ok' || /# (SKIP|TODO)/i.test(m[2])) return false;
+    seen += 1;
   }
-  return false;
+  return seen > 0;
+}
+
+const INSPECTION_REVIEW = 'rev-mv4fdv59-01732f16';
+
+/** The text of every live PayPal file, joined (to show that none of them mentions a lost capture answer). */
+function readdirLive() {
+  const dir = join(ROOT, 'test', 'live', 'paypal');
+  return readdirSync(dir).filter((n) => n.endsWith('.js')).map((n) => readFileSync(join(dir, n), 'utf8')).join('\n');
+}
+
+/** The names of the files (of a name -> text map) whose text holds `title`. */
+export function fileSetOf(title, texts) {
+  return [...texts].filter(([, text]) => text.includes(title)).map(([name]) => name).sort();
+}
+
+/** Every .js file under test/, except this one, as a relative name -> text map. */
+function testTexts() {
+  const out = new Map();
+  const visit = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (!['out', '.out', 'node_modules'].includes(entry.name)) visit(path);
+      } else if (entry.name.endsWith('.js') || entry.name.endsWith('.mjs')) {
+        const name = relative(ROOT, path).split('\\').join('/');
+        if (name !== 'test/scan/evidence-table.test.js') out.set(name, readFileSync(path, 'utf8'));
+      }
+    }
+  };
+  visit(join(ROOT, 'test'));
+  return out;
 }
 
 const doc = existsSync(DOC) ? readFileSync(DOC, 'utf8') : '';
@@ -92,6 +129,11 @@ describe('the evidence table: the scan is not vacuous', () => {
     assert.equal(logShowsPassed(log, 'RS-01: three'), false, 'a skipped test is never shown as passed');
     assert.equal(logShowsPassed(log, 'RS-01: four'), false);
     assert.equal(logShowsPassed(log, 'RS-01: absent'), false);
+    // a fragment that two tests share is shown only when BOTH lines are ok (TR-G-3): a skipped sibling is not hidden by a passing one
+    const shared = ['ok 1 - RS-22: the second capture is declined: plan non_executable', 'ok 2 - RS-22: the second capture is declined: the first is refunded # SKIP x'].join('\n');
+    assert.equal(logShowsPassed(shared, 'RS-22: the second capture is declined'), false);
+    assert.equal(logShowsPassed(shared, 'RS-22: the second capture is declined: plan non_executable'), true);
+    assert.equal(fileSetOf('RS-01: one', new Map([['a.js', 'RS-01: one'], ['b.js', 'x RS-01: one y'], ['c.js', 'zzz']])).join(), 'a.js,b.js');
     assert.throws(() => parseTable('| RS-01 | verified |'), /6 cells/);
     assert.equal(EV_ID.test('ev:ev-mv43mqlq-01b00d12'), true);
     assert.equal(EV_ID.test('ev:mv43mqlq'), false);
@@ -133,6 +175,32 @@ describe('the evidence table: structure', () => {
     }
     assert.deepEqual(problems, []);
   });
+
+  test('evidence table: every cited title occurs in exactly one test file, the one the row names (a TAP log carries no file name, so the title is the only binding of a log line to a file)', () => {
+    const texts = testTexts();
+    const problems = [];
+    for (const row of rows) {
+      for (const { file, title } of row.tests) {
+        const holders = fileSetOf(title, texts);
+        if (holders.length !== 1 || holders[0] !== file) problems.push(`${row.id}: "${title.slice(0, 60)}" is in ${holders.length} file(s): ${holders.join(', ')} (it must be in ${file} only)`);
+      }
+    }
+    assert.deepEqual(problems, []);
+  });
+
+  test('evidence table: the suite tags agree with the tests a row cites: a unit, API, integration, scan, eval or timing test needs D; a browser test needs B', () => {
+    const problems = [];
+    for (const row of rows) {
+      const needsD = row.tests.some((t) => /^test\/(unit|api|integration|scan|eval|timing)\//.test(t.file));
+      const needsB = row.tests.some((t) => /^test\/browser\//.test(t.file));
+      if (needsD !== row.suites.includes('D')) problems.push(`${row.id}: ${needsD ? 'cites a D test but lacks the D tag' : 'carries D but cites no D test'}`);
+      // B without a browser test is allowed for the scan that reads what the browser run writes (the screenshots).
+      const readsBrowserOutput = row.tests.some((t) => /screenshot/i.test(t.title));
+      if (needsB && !row.suites.includes('B')) problems.push(`${row.id}: cites a browser test but lacks the B tag`);
+      if (!needsB && row.suites.includes('B') && !readsBrowserOutput) problems.push(`${row.id}: carries B but cites no browser test`);
+    }
+    assert.deepEqual(problems, []);
+  });
 });
 
 describe('the evidence table: unverified parts are named, live suites are never claimed', () => {
@@ -171,6 +239,32 @@ describe('the evidence table: unverified parts are named, live suites are never 
     assert.match(byId.get('NFR1').unverified, /22\.5/);
     assert.match(byId.get('NFR1').unverified, /USER-Q9/);
     assert.match(byId.get('NFR1').unverified, /user/i);
+  });
+
+  test('evidence table: the criteria whose spec has an (I) part, RS-29, RS-35, RS-36, NFR3 and NFR4, carry the I tag and cite the recorded inspection; RS-36 no longer says its inspection is outside the evidence (TR-G-1)', () => {
+    for (const id of ['RS-29', 'RS-35', 'RS-36', 'NFR3', 'NFR4']) {
+      const row = byId.get(id);
+      assert.ok(row.suites.includes('I'), `${id} carries the I tag`);
+      assert.ok(row.unverified.includes(INSPECTION_REVIEW), `${id} cites the inspection ${INSPECTION_REVIEW}`);
+      assert.match(row.unverified, /\(I\)/, `${id} says what the person inspected`);
+    }
+    assert.doesNotMatch(byId.get('RS-36').unverified, /NOT part of this evidence/, 'RS-36 does not disclaim the inspection it cites');
+    assert.match(byId.get('RS-36').unverified, /derive\.js/, 'RS-36 names derive.js');
+    assert.match(byId.get('RS-36').unverified, /FU-62/, 'RS-36 cites the FU-62 inspection of the final derive.js');
+    if (recordPresent) assert.ok(existsSync(join(ROOT, '.eccode', 'reviews', `${INSPECTION_REVIEW}.json`)), `the review ${INSPECTION_REVIEW} is in the project record`);
+  });
+
+  test('evidence table: the pointers are right: RS-25 says no live file covers a lost capture answer; RS-13 and RS-15 name LIVE-P2 (RS-32(b)) for a real void, not the FU-52 list; the live void is asserted by the live journey file', () => {
+    assert.match(byId.get('RS-25').unverified, /no live file covers a lost capture answer/i);
+    assert.doesNotMatch(byId.get('RS-25').unverified, /LIVE-P1 \(OQ-D5\)/, 'RS-25 does not hand the lost answer to LIVE-P1');
+    for (const id of ['RS-13', 'RS-15']) {
+      assert.match(byId.get(id).unverified, /LIVE-P2/, `${id} names LIVE-P2`);
+      assert.match(byId.get(id).unverified, /RS-32\(b\)/, `${id} names RS-32(b)`);
+      assert.doesNotMatch(byId.get(id).unverified, /FU-52/, `${id} does not point at the FU-52 list, which has no plain void`);
+    }
+    const journey = readFileSync(join(ROOT, 'test', 'live', 'paypal', 'journey-sandbox.test.js'), 'utf8');
+    assert.match(journey, /RS-32\(b\)[^\n]*VOIDED/, 'journey-sandbox.test.js asserts the authorizations VOIDED at PayPal');
+    assert.ok(!/lost.?(capture|answer|response)/i.test(readdirLive()), 'no live file covers a lost capture answer');
   });
 
   test('evidence table: what no live file covers (FU-52) is listed in the table as in docs/runbooks/live-paypal.md, item for item', () => {
