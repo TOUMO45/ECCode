@@ -1,0 +1,75 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "phase:d-extraction",
+  "objective": "Third and last review iteration for phase d-extraction (maxReviewIterations 3): submission sub-mv36aj2e-01cd090a, responding to rev-mv35hyoj-01e0a18c (TR-D-11 major = SEC-D-12; TR-D-12 = SEC-D-11, TR-D-13 = SEC-D-10, TR-D-14, TR-D-15 = SEC-D-16 minor; TR-D-16 = SEC-D-15 and TR-D-17 = SEC-D-13/14/17 info; TR-D-3..TR-D-8 carried).",
+  "context": "Three tasks were reset and completed in dependency order. d1-ai-core ho-mv35op30-016a6560: TR-D-12 whole-number alignment and clock masking in validateExtraction, plus TR-D-14 validator tests. d2-ai-adapters-corpus ho-mv35z5ux-01b0d55a: TR-D-15, so a started child killed by close(), timeout, abort or flood is charged at the per-call cap; SEC-D-17, a stub-only sandbox PATH with an absolute command, and an exit hook that removes the cwd. d3-extraction-service ho-mv35zyof-011e9473: TR-D-11 IMAGE_PROVENANCE_FIELDS per dec-mv35aank-0169ec16; TR-D-13 deadlineTimeInQuote; TR-D-14 every user_text field through d1's validator, with the local substring check removed; TR-D-16 SIGINT/SIGTERM/SIGHUP with process.on and an idempotent stop(). d4 and d5 are unchanged. HEAD is 09749e9, a clean tree. The code diff from the iteration-2 tree a9d0507 is 10 files, +596/-36, exactly the files declared in the three handoffs. The submission has 115 artifacts: 113 phase-D-owned files plus submission.md and followups.md. Every delivery-lead run used PATH=/usr/local/bin:/usr/bin:/bin, which holds no claude. RS_LIVE_MODEL=1 was never set, and no real model was called.",
+  "inputs": [
+    ".eccode/reviews/drafts/phase-d-2.json",
+    ".eccode/reviews/drafts/phase-d-security-2.md",
+    ".eccode/handoffs/ho-mv35op30-016a6560.json",
+    ".eccode/handoffs/ho-mv35z5ux-01b0d55a.json",
+    ".eccode/handoffs/ho-mv35zyof-011e9473.json",
+    ".eccode/artifacts/phase-d/submission.md (section 'Response to rev-mv35hyoj-01e0a18c (iteration 3, the last)')",
+    ".eccode/artifacts/plan/followups.md (FU-28 rewritten in place; section 'Added after the phase D iteration-2 review': FU-30, FU-31, FU-32, carry items 8 and 9; carry item 6 extended with SEC-D-13 and SEC-D-14)",
+    "git diff a9d0507 09749e9 -- src test"
+  ],
+  "dependencies": ["d1-ai-core", "d2-ai-adapters-corpus", "d3-extraction-service", "d4-frontend-extraction", "d5-extraction-contract-browser"],
+  "expectedOutput": "A phase review covering task:d1..d5 and phase:d-extraction. It judges TR-D-11 (required for approval) and TR-D-12..TR-D-16 as fixed or not, takes the reviewers' decision on FU-32 (the cap charge on the adapter's own timeout, abort and flood paths), and judges the residuals FU-28 (b) and FU-30/FU-31 and the carried items.",
+  "acceptanceCriteria": [
+    "TR-D-11: image provenance is accepted only for productType, material, capacityMl and diameterMm. Through the route after an upload, the budget, maxPickups, cupQuantity and deadline image claims are stored unknown with their questions. RS-02 stays green and EXT-1 fake is 200/200. Your P5 re-run shows the four claims unknown.",
+    "TR-D-12: 250 from '2500 cups', 200 from '1,200 lids'/'1200 lids', 50 ml from '250 ml', 1 from '11:30' and $12/$120 from '$1200' are refused. '1,200 cups'->1200, '250ml'->250, '$120.50'->120.5 and Arabic-Indic '٢٥٠ مل'->250 stay known. The mutants are red.",
+    "TR-D-13: a user_text deadline is known only when its time is in its quote, whole-token aligned. The three P5c cases are unknown, and 'by 11:30' and 'قبل الساعة ١١:٣٠' are known. The date part is NOT grounded (FU-30).",
+    "TR-D-14: a non-numeric user_text field whose quote is not in the text is unknown and asked, and the equivalent of your M2 is red.",
+    "TR-D-15: a call ended by close() is charged at the per-call cap through the real gate.",
+    "TR-D-16: the server handles SIGHUP and a second signal during the grace period (real server process tests). The runner's SIGHUP is open (FU-28 (b)).",
+    "npm test, npm run test:browser and the d1, d2 and d3 plan commands pass on the final tree. Artifact coverage has 0 undeclared files and 0 outside ownership."
+  ],
+  "completedWork": "Delivery-lead runs on HEAD 09749e9:\n- npm test: 1288 tests, 1280 pass, 0 fail, 8 skipped (the same 8: seven phase E contract rows and fake x PROVIDER_BUSY), 0 todo, 146 suites. ECCODE_EVAL {\"passed\":200,\"total\":200}. NFR5 p95 53.7 ms (p50 1.9 ms) over 3165 requests; suite 43.7 s (ev:ev-mv364015-013062b3).\n- npm run test:browser: 8/8 (ev:ev-mv364duc-01e596db).\n- Plan commands, verbatim. They ran at the same time, in one batch:\n  - d1: 154/154 (ev:ev-mv364qkw-01c54468);\n  - d2: 112/112, ECCODE_EVAL 200/200 (ev:ev-mv3658zn-01b24346);\n  - d3: 118/118 (ev:ev-mv365got-0149db19).\n- Artifact coverage against sub-mv36aj2e-01cd090a, base adf4a12 (ev:ev-mv36am47-01c9964e):\n  - 115 artifacts: 113 project files and 2 under .eccode/;\n  - 113 declared in handoffs; 112 changed in owned paths (package.json net unchanged);\n  - per task: d1 11, d2 47, d3 15, d4 32, d5 8;\n  - 0 declared but not submitted, 0 undeclared, 0 submitted outside phase ownership.\nThe engineers' evidence is cited per finding in submission.md:\n- d1: red first ev:ev-mv35lwdy-01f8cf33; mutants ev:ev-mv35mhaq-0186b5db, ev:ev-mv35mmi1-01bb91e9 and ev:ev-mv35mtcw-016cdd03; plan command ev:ev-mv35n0po-013c3a04; npm test ev:ev-mv35nywb-01431134.\n- d2: red first ev:ev-mv35r9e5-01f5fecd; green ev:ev-mv35sbuc-019020e2; plan command ev:ev-mv35x27x-01f78f22; npm test ev:ev-mv35yihg-01cf262a. An earlier red npm test, ev:ev-mv35tywg-01521d44, was fixed.\n- d3: plan command ev:ev-mv35wtzv-019b1a11; npm test ev:ev-mv35y9yl-01935e86; browser ev:ev-mv35ykbj-01748e81; your P5 re-run by path ev:ev-mv35yyvp-019ac755.\nfollowups.md changes:\n- FU-28 is rewritten. SIGHUP and a second signal are handled by the server. SIGKILL and a parent with no handler are not. (b) is the runner's SIGHUP, owned by ai-engineer with FU-26.\n- New FU-30: the deadline's date part (backend-engineer through a user-authorised rework, or an accepted residual).\n- New FU-31: Arabic am/pm markers, same route as FU-30.\n- New FU-32: d2's cap charge on its own timeout, abort and flood paths, for the reviewers' judgement.\n- Carry items 6 (extended with SEC-D-13 and SEC-D-14), 8 and 9.",
+  "filesChanged": [
+    ".eccode/artifacts/phase-d/submission.md",
+    ".eccode/artifacts/plan/followups.md"
+  ],
+  "evidence": [
+    "ev:ev-mv364015-013062b3",
+    "ev:ev-mv364duc-01e596db",
+    "ev:ev-mv364qkw-01c54468",
+    "ev:ev-mv3658zn-01b24346",
+    "ev:ev-mv365got-0149db19",
+    "ev:ev-mv36am47-01c9964e",
+    "ev:ev-mv35lwdy-01f8cf33",
+    "ev:ev-mv35mhaq-0186b5db",
+    "ev:ev-mv35mmi1-01bb91e9",
+    "ev:ev-mv35mtcw-016cdd03",
+    "ev:ev-mv35n0po-013c3a04",
+    "ev:ev-mv35r9e5-01f5fecd",
+    "ev:ev-mv35sbuc-019020e2",
+    "ev:ev-mv35x27x-01f78f22",
+    "ev:ev-mv35wtzv-019b1a11",
+    "ev:ev-mv35y9yl-01935e86",
+    "ev:ev-mv35ykbj-01748e81",
+    "ev:ev-mv35yyvp-019ac755"
+  ],
+  "remainingIssues": [
+    "d3's failing-first runs and its mutant runs are not recorded evidence entries: TR-D-11 allow-list removed (2 red), TR-D-13 rule disabled (2 red) and lookahead removed (1 red), TR-D-14 quoteGrounded forced true (6 red) and numbers-only (2 red), TR-D-16 SIGHUP removed (2 red) and process.once (1 red). d3 applied each with sed, restored the file and verified the restore with cmp; only the results are in its handoff. Please reproduce the ones you need.",
+    "TR-D-13 is met for the time only. The date part named in its resolution is not grounded: '2026-10-21T11:30' quoted 'tomorrow by 11:30' stays known (FU-30). Arabic ص/م markers are not read, so the deadline is unknown and asked, the safe direction (FU-31).",
+    "TR-D-15: no HTTP-level row test (a hanging stub, the server closed, model_spend.actual = cap). The charge is proved at the gate and SQLite level in cli.test.js (carry item 8).",
+    "FU-32: d2 also charges the cap when its own timeout, abort or flood kills a started child. Before, these were refunded at 0 when the adapter's timer fired first. This is conservative, and it can be reverted in fail(). Please accept or reject it.",
+    "TR-D-16: the live runner (test/live/run-live-model.js, d2's file, no later owner) still lacks SIGHUP (FU-28 (b)). SIGKILL and a parent with no handler still orphan the child (FU-28).",
+    "SEC-D-17 residuals: the three signal deaths without a handler leave an empty temp cwd; live-runner-refusal.test.js keeps '<stub dir>:/usr/bin:/bin' with an assertion that no claude is there.",
+    "SEC-D-13 (lexical grounding) and SEC-D-14 (capacity and diameter from the photo, no OCR; P5 shows capacityMl 1999 image still known) are carried to the verification report's risk list.",
+    "TR-D-3 / FU-23 stays blocked on the user (dec-mv341ap0-010209d2); e4 is not dispatched until the rework is approved.",
+    "Commit 83d152b (d2 reset) also carries d3 work in progress, by its own title. This has no content effect: 09749e9 holds every file."
+  ],
+  "nextAction": "technical-reviewer (and security-reviewer, for SEC-D-10..SEC-D-12, SEC-D-15..SEC-D-17) review sub-mv36aj2e-01cd090a. This is the last iteration the gate allows.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This resubmission designs or changes no hook or guard. Every write in the nested record was accepted. The two guard refusals in this session were raw-text readings of read-only shell lines, which the lesson's 'Not applicable when' list names."
+    }
+  ]
+}
