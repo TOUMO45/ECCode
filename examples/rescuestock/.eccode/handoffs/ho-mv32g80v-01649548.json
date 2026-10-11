@@ -1,0 +1,51 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "d5-extraction-contract-browser",
+  "objective": "Pin the value of capabilities.deleteRequest in the four request-view contract rows instead of comparing the key by type only.",
+  "context": "d4's reset (ho-mv32b3pf-011eac5d) added capabilities { deleteRequest: true } to the planned, infeasible and reserved request-view fixtures; the degraded fixture already carried it. The three rows in test/api/contracts.test.js still declared optional: ['capabilities'], and compareShape compares an optional key by type only, so a wrong boolean would have passed.",
+  "inputs": [
+    ".eccode/handoffs/ho-mv32b3pf-011eac5d.json",
+    "test/api/contracts.test.js",
+    "test/helpers/contract-shape.js",
+    "test/fixtures/contracts/request-view-planned.json",
+    "test/fixtures/contracts/request-view-infeasible.json",
+    "test/fixtures/contracts/request-view-reserved.json",
+    "test/fixtures/contracts/request-view-degraded.json"
+  ],
+  "dependencies": [
+    "d4-frontend-extraction"
+  ],
+  "expectedOutput": "The four request-view rows compare capabilities like every other key and pin capabilities.deleteRequest by value; all suites green; the pin shown to fail on a wrong value.",
+  "acceptanceCriteria": [
+    "optional: ['capabilities'] is gone from the planned, infeasible and reserved rows",
+    "sameValues: ['capabilities.deleteRequest'] is on those three rows and on the degraded row (dotted path, the same form as order.canMarkReady)",
+    "A failing-first run shows the pin catches a wrong value, and the mutation is restored",
+    "Task verification command passes: ls of the three files, npm test, npm run test:browser"
+  ],
+  "completedWork": "Edited only test/api/contracts.test.js: removed the three optional entries; added sameValues: ['capabilities.deleteRequest'] to request-view-planned, -infeasible, -reserved and -degraded. The degraded row had no pin before. Proof that the pin bites: I temporarily inverted the expected value in the sameValues loop (want = !valueAt(expectedResponse, path)) in my own test file, ran contracts.test.js, and got 5 failures (the four request-view rows with 'capabilities.deleteRequest: value is true, the fixture shows false', plus the existing order.canMarkReady row), ev:ev-mv32czn1-016f50a4 FAILED on purpose. The mutation was then reverted (grep TEMP-MUTATION finds nothing, also not in the committed version). No fixture file and no file outside my ownership was edited by me. Verification run ev:ev-mv32ejv0-014af542 PASSED (exit 0): npm test 1216 tests, 1208 pass, 0 fail, 8 skipped, 0 todo (counts from a separate plain npm test run, same numbers); npm run test:browser 8 tests, 8 pass, 0 fail, 0 skipped. test/browser/journey-infeasible.test.js untouched.",
+  "filesChanged": [
+    "test/api/contracts.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv32ejv0-014af542",
+    "ev:ev-mv32czn1-016f50a4"
+  ],
+  "remainingIssues": [
+    "Passing: ev:ev-mv32ejv0-014af542 (verification command verbatim: npm test 1216 tests / 1208 pass / 0 fail / 8 skipped; test:browser 8 / 8 pass). Failing on purpose, cited as failing-first for the mutation: ev:ev-mv32czn1-016f50a4 (5 failures, expected).",
+    "Skipped, not passed: 8 tests in npm test, including the 7 phase E contract rows (FU-18, owner e6) and the fake x PROVIDER_BUSY row.",
+    "The orchestrator's commit 7942bf2 was made while this run was in progress and already contains my contracts.test.js edit (checked: the committed file has no mutation). git status at the end shows only .eccode/ changes.",
+    "The pin is a strict equality on a value read from the fixture; if the live view later makes deleteRequest status dependent, the fixture for that status needs its own value (d4 noted view.js returns true unconditionally today)."
+  ],
+  "nextAction": "delivery-lead: review d5 (rework-3 for journey-infeasible.test.js is separate).",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson concerns a hook or guard choosing a project root for a write target. This task edits one contract test table and builds no hook, guard or root discovery; the one guard denial I met was a shell-variable redirect target, not a root-resolution problem, so none of its Applies-when conditions hold."
+    }
+  ]
+}
