@@ -367,3 +367,51 @@ Sources: `rev-mv45ljos-01f00a5d` (technical, TR-F-1..TR-F-7) with the FINAL secu
     - Optional pin: a forced-reset test with a stale started void intent.
 21. **SEC-F-I2 / FU-49 history:** before the TR-F-1 fix, the plan was taken over every tick while reads failed. After it, the epoch grows only with a successful reconciler read: at most one takeover per read that shows CREATED.
 22. **TR-F-2:** the SEC-11 bound test and the RS-37 already-archived test now bound their own wait (5 s helper, `{ timeout: 20000 }`), so an unbounded pass is a red test (ev:ev-mv464v52-0153ea2c), not a stalled suite.
+
+## Added after phase G (delivery-lead, 2026-10-11)
+
+Sources:
+- the phase G handoffs: g1 ho-mv48fejc-0156303e, g2 ho-mv48w355-01947d26, g3 ho-mv4e9r0t-01a6813c;
+- rework-6 (ho-mv47ltf3-01c9351a) and rework-7 (ho-mv4aker9-014c05a3, ho-mv4b2qcu-01d596a2), both approved;
+- the decisions `dec-mv46ovf2-017bf12d`, `dec-mv4740d4-015b3589`, `dec-mv46ovt6-01a662af`, `dec-mv47vma5-01d0d177`, `dec-mv48g2fj-018e0ca7` and `dec-mv4eaw35-013b929e`;
+- `.eccode/artifacts/phase-g/submission.md`.
+
+### Status of earlier items touched by phase G
+
+| # | Status |
+|---|---|
+| FU-21 / FU-40 (docs) | **Closed** by g2 (README, runbooks, `.env.example`) and rework-7 round 2 (the live-only variables as commented `.env.example` entries, accepted by `env-example.test.js`). `RS_PAYPAL_WEBHOOK_ALGOS` stays an environment fallback (`dec-mv3abkv0-011839e9`). |
+| FU-33 | **Closed** by rework-6: the RS-39 test waits for the unlink. It was green in g3's three consecutive locked runs (ev:ev-mv4dnlhv-0167b2b1, ev:ev-mv4dpxim-01093245, ev:ev-mv4ds3no-0151407a) and in every delivery-lead run of phase G. |
+| FU-37 | **Closed** by g3: `test/scan/live-refusal.test.js`. |
+| FU-44, FU-52 | **Closed as documentation:** the live PayPal runbook and `docs/evidence-table.md` list the same items that no live file covers, and the table test pins the parity. Verification report. |
+| FU-46 | **Closed** by rework-6: SEC-B-1 is re-timed. Green in every phase G full run. |
+| FU-50 | **Decided**, `dec-mv47vma5-01d0d177`: no view change. Verification report. |
+| FU-51 | **Closed** by g3: `a11y-states.test.js` renders the recovery states at 360 px and the admin stranded list. |
+| FU-53 | **Report only** (`dec-mv46ovt6-01a662af`): stranded statuses are as of the archive; no `lease_epoch` bump. |
+| FU-54 | **Closed:** g1 words the intro by adapter, and rework-7 sends `planStatus`/`owedRefund`. |
+| FU-55 | **Closed, narrower:** a denied audit row for `refund_order` 404 and 422 only. A 422 on the other fault kinds writes none. Verification report. |
+| FU-56, FU-58 | **Closed:** rework-7 (the supplier and admin reasons refuse control and bidi characters) and g1 (`<bdi>` isolation, rendered by g3 in Chromium). |
+| FU-57 | **Closed, narrower:** `unresolved` counts `refund_failed` operations; reservations with an escalation are not counted. Verification report. |
+| FU-59 | **Closed** by rework-7: the per-order refunded rule (`orders.js` L50–57). README L243 states it. |
+| Single-credential sentence | **Closed:** `dec-mv48g2fj-018e0ca7`; `src/config.js` L376 sends the spec's sentence. |
+| Lockfile (FU-12, TR-R7-3, SEC-R7-I2) | **Decided**, `dec-mv4eaw35-013b929e`: the lock lacks the darwin-only `fsevents` entry. The regenerated lock is at `scratchpad/g3-lock/package-lock.json` (sha256 `d870b67d…dd62`) for the next maintenance change. |
+
+### New follow-ups
+
+| # | Task | Additional acceptance criterion | Source |
+|---|---|---|---|
+| FU-60 | release checklist; the README is g2's (done) and rework-7's (approved), so this needs an orchestrator decision: a one-line change, or the verification report alone | `dec-mv4eaw35-013b929e` says "the verification report **and the README limits** state" the missing fsevents entry. The README does not mention it; only `docs/evidence-table.md` › Limits does. | phase G submission, Disclosures item 8 |
+| FU-61 | the user (release checklist) | `docs/submission/project-description.md` L42: replace "[Edit this to say exactly which decisions I actually made myself.]" with the user's own statement; fill in the repository and video URLs; re-check every hackathon fact in `docs/submission/checklist.md` against the official page (the Devpost connector needs the user to sign in again). | g2 remaining issues 7–8 |
+| FU-62 | a person (technical reviewer or the user), before release | RS-36 / F-TR-9: inspect the final `src/domain/derive.js` against the final derivation table (rows 4a, 5a, 12 and the row 2 clauses were added after the phase B inspection). Until then the evidence table's RS-36 `I` part rests on the phase B review plus tests. | g3 remaining issue 2 |
+
+### Carried to the verification report (owner: delivery-lead), additions
+
+23. **T20 deviation:** an allow-list of interpolations instead of a literal template-literal ban (reviewer's acceptance recorded in the phase G review).
+24. **Design delta `dec-mv44nzj5-01fbc177`:** ARCH-26 (2) and saga step 6 say "intent (queued or started)"; the code reads first only for **started** intents. The approved spec is not edited.
+25. **Phase G test limits:**
+    - Chromium only, Linux only, Node 22.22 only;
+    - the date-control focus is shown by screenshot comparison;
+    - the secrets scan works by shapes and canaries (screenshots by name and text chunks, not pixels);
+    - the clock-shift blind spots (the header of `test/helpers/shift-clock.mjs`);
+    - a Sandbox adapter without test mode was never rendered.
+26. **Unverified documents:** the hackathon facts (RISK-10), the PayPal dashboard steps and the webhook event names in `docs/runbooks/live-paypal.md`, the live-model dry run, macOS and Windows, and switching `RS_PAYMENT_PROVIDER` with unfinished payments.
