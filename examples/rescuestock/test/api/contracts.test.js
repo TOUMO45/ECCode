@@ -825,10 +825,6 @@ const RECOVERY = [
   },
   {
     fixture: 'plan-replan-feasible.json',
-    // DEFECT IN THE FIXTURE (f3, not this task's file): the server answers POST /api/requests/:id/plan with a `labels` object here, as
-    // plan-create-feasible.json shows, and recovery/plan-replan-feasible.json lacks it. Tolerated, not hidden: the fix is to add `labels`
-    // to the fixture, and this entry then goes. Reported in the f4 handoff.
-    optional: ['labels'],
     run: async (h) => {
       const w = await reservedWorld(h, { cancelPay: [] });
       const abandoned = await w.cafe1.post(`/api/plans/${w.planId}/abandon`, {});
