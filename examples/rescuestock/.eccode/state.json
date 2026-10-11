@@ -1,6 +1,6 @@
 {
-  "seq": 1282,
-  "lastHash": "2cf1dfc3b8829c423c34b64c79516c7e39e410f7106a70e89e226efff7ff604c",
+  "seq": 1294,
+  "lastHash": "70f960a2c67f7f22e80edfad3e611a779b58ce772e9cecc03d0491d8901cd6d1",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -7521,34 +7521,43 @@
         "command": "ls test/integration/rs26-restart.test.js test/integration/lease-takeover.test.js test/integration/return-crash.test.js test/browser/refusal.test.js test/browser/journey-replacement.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "test-engineer",
-        "at": "2026-10-11T16:26:03.944Z",
-        "baseCommit": "5541ce00a01c1aa155e01f7182ce897eb58ff586",
-        "runId": "run-mv41b2r8-012909ac",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.803,
-            "matched": 14,
-            "priority": 23,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "test-engineer",
           "at": "2026-10-11T16:26:03.944Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "test-engineer",
+          "at": "2026-10-11T17:32:15.490Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "test-engineer",
+      "handoffId": "ho-mv43p246-01228012",
+      "filesChanged": [
+        "test/helpers/saga-flow.js",
+        "test/helpers/recovery-flow.js",
+        "test/integration/rs26-restart.test.js",
+        "test/integration/lease-takeover.test.js",
+        "test/integration/return-crash.test.js",
+        "test/api/contracts.test.js",
+        "test/browser/helpers/recovery.js",
+        "test/browser/refusal.test.js",
+        "test/browser/journey-replacement.test.js"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "This task builds no hook or guard that maps file writes to a project record or root (it writes tests inside its own claimed task's globs of the nested project, and no write was denied), so the lesson's applies-when condition (designing or debugging root discovery of a tool-call guard) does not hold. One scratch-copy shell command was refused as 'no claimed task' because its target path was computed from a shell variable; I repeated it with literal paths, which the guard resolved to the right record.",
+          "basis": "reason"
+        }
+      ]
     },
     "g1-frontend-a11y-labels": {
       "id": "g1-frontend-a11y-labels",
@@ -21167,6 +21176,195 @@
       "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba",
       "recordedBy": "test-engineer",
       "at": "2026-10-11T17:23:50.256Z"
+    },
+    "ev-mv43h435-01f07b7f": {
+      "id": "ev-mv43h435-01f07b7f",
+      "kind": "command",
+      "label": "DL rework-5: lost-response.test.js alone (engineer's command, verbatim)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/lost-response.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 5877,
+      "log": ".eccode/evidence/ev-mv43h435-01f07b7f.log",
+      "logSha256": "e3759ed8c63ce12c15d087679c9fcc61e795faa7da0f1e1b989ca60a2ca99c21",
+      "logFileSha256": "0c840d21892cebc6d0d372086ae27fa40af2ba749f8a517cb86e187e5cdcbee9",
+      "outputTail": "      duration_ms: 670.956342\n      type: 'test'\n      ...\n    # Subtest: the saga re-reads the operation after its capture call: a webhook that captured it meanwhile is accepted as done\n    ok 3 - the saga re-reads the operation after its capture call: a webhook that captured it meanwhile is accepted as done\n      ---\n      duration_ms: 625.858497\n      type: 'test'\n      ...\n    1..3\nok 3 - F-TR-7 and the unreadable provider\n  ---\n  duration_ms: 1859.207445\n  type: 'suite'\n  ...\n1..3\n# tests 9\n# suites 3\n# pass 9\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 5755.537603\n",
+      "gate": "phase:rework-5",
+      "task": "rework-5",
+      "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T17:26:04.778Z"
+    },
+    "ev-mv43h9ea-01f7dc8a": {
+      "id": "ev-mv43h9ea-01f7dc8a",
+      "kind": "command",
+      "label": "DL rework-5: admin-basic.test.js alone (engineer's command, verbatim)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/admin-basic.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 6250,
+      "log": ".eccode/evidence/ev-mv43h9ea-01f7dc8a.log",
+      "logSha256": "140ca4fca25cb7fddecb9c8b1d6fe16f172afcaf39ce9fda0a686888ea17fe20",
+      "logFileSha256": "6741ad201827867620d8f0028c1c183ef58ad48107e67e03737f220c6bd6e082",
+      "outputTail": "      duration_ms: 29.555578\n      type: 'test'\n      ...\n    # Subtest: metrics: counts by status (archived operations excluded), reconciler fields, provider latency percentiles and the model budget\n    ok 4 - metrics: counts by status (archived operations excluded), reconciler fields, provider latency percentiles and the model budget\n      ---\n      duration_ms: 5.341079\n      type: 'test'\n      ...\n    1..4\nok 4 - timeline and metrics\n  ---\n  duration_ms: 634.219092\n  type: 'suite'\n  ...\n1..4\n# tests 18\n# suites 4\n# pass 18\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 6104.877673\n",
+      "gate": "phase:rework-5",
+      "task": "rework-5",
+      "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T17:26:11.631Z"
+    },
+    "ev-mv43j15k-01209f8b": {
+      "id": "ev-mv43j15k-01209f8b",
+      "kind": "command",
+      "label": "declared verification command verbatim",
+      "command": "ls test/integration/rs26-restart.test.js test/integration/lease-takeover.test.js test/integration/return-crash.test.js test/browser/refusal.test.js test/browser/journey-replacement.test.js >/dev/null && npm test && npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 125286,
+      "log": ".eccode/evidence/ev-mv43j15k-01209f8b.log",
+      "logSha256": "a20881067d37fd43490ca7bdde20027129c77ed45024be1e66c640b8322fc2d1",
+      "logFileSha256": "8d4e32fcf5ed81535266c1100db5eb972229049f0e75e4541cfaab8f4b8e20cf",
+      "outputTail": "  duration_ms: 537.854065\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 876 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 530.095965\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 877 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 516.132014\n  type: 'test'\n  ...\n1..877\n# tests 2267\n# suites 312\n# pass 2258\n# fail 1\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 124888.472235\n",
+      "gate": null,
+      "task": "f4-restart-takeover-browser",
+      "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T17:27:34.278Z"
+    },
+    "ev-mv43keu0-0102c57c": {
+      "id": "ev-mv43keu0-0102c57c",
+      "kind": "command",
+      "label": "DL rework-5: full npm test on 0c7b37b",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 140633,
+      "log": ".eccode/evidence/ev-mv43keu0-0102c57c.log",
+      "logSha256": "3f2209166f3fe87ecf57c06f303446081a0e16ad63c417c7c85b5f881ca7372f",
+      "logFileSha256": "bfcf2a92668fdda4c98e97cff5f8e982ff15c4fe195152d3d81495c6ac9ceea8",
+      "outputTail": "  duration_ms: 525.255972\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 876 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 462.280518\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 877 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 539.239673\n  type: 'test'\n  ...\n1..877\n# tests 2267\n# suites 312\n# pass 2258\n# fail 1\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 140197.547323\n",
+      "gate": "phase:rework-5",
+      "task": "rework-5",
+      "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T17:28:38.674Z"
+    },
+    "ev-mv43mqlq-01b00d12": {
+      "id": "ev-mv43mqlq-01b00d12",
+      "kind": "command",
+      "label": "declared verification command verbatim (re-run once after the known RS-39 uploads-retention timer race, dec-mv3tqbn4-01d43152)",
+      "command": "ls test/integration/rs26-restart.test.js test/integration/lease-takeover.test.js test/integration/return-crash.test.js test/browser/refusal.test.js test/browser/journey-replacement.test.js >/dev/null && npm test && npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 158967,
+      "log": ".eccode/evidence/ev-mv43mqlq-01b00d12.log",
+      "logSha256": "828618f7ecede7ed3bedf117ed27cd4227dd228d71ee23a97f5169f1466776d5",
+      "logFileSha256": "f8601a115b5a3da36c1a6bb11bcc515afbc0d2a1913ef46ab8d8ba516ec998ef",
+      "outputTail": "      duration_ms: 5690.578029\n      type: 'test'\n      ...\n    # Subtest: RS-17: at 1280x800 the refusal reason, the voided authorization, \"Review the new plan\" and the B + E plan are shown\n    ok 2 - RS-17: at 1280x800 the refusal reason, the voided authorization, \"Review the new plan\" and the B + E plan are shown\n      ---\n      duration_ms: 5090.495346\n      type: 'test'\n      ...\n    1..2\nok 6 - RS-17: a supplier refuses; the buyer sees the reason, \"Review the new plan\" and a new plan without that supplier\n  ---\n  duration_ms: 10782.296986\n  type: 'suite'\n  ...\n1..6\n# tests 14\n# suites 6\n# pass 14\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 41671.210058\n",
+      "gate": null,
+      "task": "f4-restart-takeover-browser",
+      "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T17:30:27.190Z"
+    },
+    "ev-mv43mxck-01694576": {
+      "id": "ev-mv43mxck-01694576",
+      "kind": "command",
+      "label": "DL rework-5: SEC-B-1 timing file alone on a quiet machine (cause check for the 1 failure in ev-mv43keu0-0102c57c)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/timing/planner-sec-b1.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 950,
+      "log": ".eccode/evidence/ev-mv43mxck-01694576.log",
+      "logSha256": "90b425f490765e41739bd5f75af383156c00fee9fec97e28a2906121c7406f22",
+      "logFileSha256": "c869846de7f96449bb7406f0425ded4a96046337478c27e054237c4102a6c9df",
+      "outputTail": "  duration_ms: 4.618403\n  type: 'test'\n  ...\n# Subtest: SEC-B-1: the seeded catalog shape never reaches PLANNER_LIMIT and stays fast for stock 1 to 100,000 and quantity 100 to 100,000\nok 2 - SEC-B-1: the seeded catalog shape never reaches PLANNER_LIMIT and stays fast for stock 1 to 100,000 and quantity 100 to 100,000\n  ---\n  duration_ms: 475.158911\n  type: 'test'\n  ...\n# Subtest: SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities up to 100,000 never reach PLANNER_LIMIT and take under 250 ms each\nok 3 - SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities up to 100,000 never reach PLANNER_LIMIT and take under 250 ms each\n  ---\n  duration_ms: 267.36825\n  type: 'test'\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 887.679304\n",
+      "gate": "phase:rework-5",
+      "task": "rework-5",
+      "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T17:30:35.940Z"
+    },
+    "ev-mv43nz3i-015ad25b": {
+      "id": "ev-mv43nz3i-015ad25b",
+      "kind": "command",
+      "label": "multi-process files x4 at concurrency 4 on the current tree",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-concurrency=4 test/integration/lease-takeover.test.js test/integration/rs26-restart.test.js test/integration/return-crash.test.js && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-concurrency=4 test/integration/lease-takeover.test.js test/integration/rs26-restart.test.js test/integration/return-crash.test.js && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-concurrency=4 test/integration/lease-takeover.test.js test/integration/rs26-restart.test.js test/integration/return-crash.test.js && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-concurrency=4 test/integration/lease-takeover.test.js test/integration/rs26-restart.test.js test/integration/return-crash.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 51836,
+      "log": ".eccode/evidence/ev-mv43nz3i-015ad25b.log",
+      "logSha256": "2dd366b22a45ce5e23d4cfa10cb72a0749deed4654bdb3ad067b9b7ea2361ec8",
+      "logFileSha256": "e4a7b5d9646813a553c9fd916c6fd0a108fea7a780dc0afc998522bebd4f09be",
+      "outputTail": "      duration_ms: 4107.229626\n      type: 'test'\n      ...\n    # Subtest: RS-26: killed after the first capture was recorded and the second applied: the recorded row is kept, the second is read, the plan is executed\n    ok 2 - RS-26: killed after the first capture was recorded and the second applied: the recorded row is kept, the second is read, the plan is executed\n      ---\n      duration_ms: 3876.732891\n      type: 'test'\n      ...\n    1..2\nok 3 - RS-26: SIGKILL after the first capture, restart, lease expiry, the reconciler completes the purchase\n  ---\n  duration_ms: 7985.286121\n  type: 'suite'\n  ...\n1..3\n# tests 7\n# suites 3\n# pass 7\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 13351.319836\n",
+      "gate": null,
+      "task": "f4-restart-takeover-browser",
+      "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T17:31:24.912Z"
+    },
+    "ev-mv43ohq1-01bc3f1c": {
+      "id": "ev-mv43ohq1-01bc3f1c",
+      "kind": "command",
+      "label": "contracts.test.js alone on the current tree",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/contracts.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 19776,
+      "log": ".eccode/evidence/ev-mv43ohq1-01bc3f1c.log",
+      "logSha256": "76ccc97af7ce6265bf3716e8a3ff47fc67553a458e063ce8df9a8f00959fda52",
+      "logFileSha256": "d447fe53e43883cfb776717189f845fef163c6493f088778930e57896c2cc127",
+      "outputTail": "      duration_ms: 844.086279\n      type: 'test'\n      ...\n    # Subtest: NFR6: contract recovery/view-order-refunded.json: GET /api/requests/:id -> 200 (recovery view: row 7 with one refunded order. Supplier A was refunded )\n    ok 24 - NFR6: contract recovery/view-order-refunded.json: GET /api/requests/:id -> 200 (recovery view: row 7 with one refunded order. Supplier A was refunded )\n      ---\n      duration_ms: 920.204712\n      type: 'test'\n      ...\n    1..24\nok 4 - NFR6 (phase F): the recovery fixtures in test/fixtures/contracts/recovery match what the server answers\n  ---\n  duration_ms: 14431.535399\n  type: 'suite'\n  ...\n1..4\n# tests 81\n# suites 4\n# pass 81\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 19709.227759\n",
+      "gate": null,
+      "task": "f4-restart-takeover-browser",
+      "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T17:31:49.055Z"
+    },
+    "ev-mv43pho4-01ad5c59": {
+      "id": "ev-mv43pho4-01ad5c59",
+      "kind": "command",
+      "label": "DL rework-5: full npm test on 0c7b37b, re-run on a quiet machine (no concurrent suite)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 114638,
+      "log": ".eccode/evidence/ev-mv43pho4-01ad5c59.log",
+      "logSha256": "67c3a17be5517a18fe08da63acb0e49bfa0cc2f9a8e039ad2ab5197786b00804",
+      "logFileSha256": "13a785b309cc08ff069ca94a09286d472a4e35953a15aba22b8007126af42c5a",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 877 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 511.613519\n  type: 'test'\n  ...\n1..877\n# tests 2267\n# suites 312\n# pass 2259\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 114252.430811\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 7619 requests, p50 3.2 ms, p95 70.7 ms (limit: p95 < 300 ms)\nNFR5 suite time: 114.4 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": "phase:rework-5",
+      "task": "rework-5",
+      "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T17:32:35.622Z"
     }
   },
   "reviews": {
@@ -32064,6 +32262,78 @@
       "id": "ho-mv43etq7-01598938",
       "recordedBy": "test-engineer",
       "at": "2026-10-11T17:24:18.218Z"
+    },
+    "ho-mv43p246-01228012": {
+      "from": "test-engineer",
+      "to": "delivery-lead",
+      "task": "f4-restart-takeover-browser",
+      "objective": "Restart, lease-takeover and return-crash multi-process tests (RS-26, ARCH-26, F-TR-3), the RS-17 refusal and RS-32(a) replacement browser journeys at 360 and 1280 px, and contract rows for the phase F response shapes.",
+      "context": "Built against spec revision 3 (Testing Strategy: rs26-restart, lease-takeover, return-crash, E2E; Payment saga step 6; Sender table) and the handoffs f1 ho-mv40suhb-012306c3 (supersession and refusal states and messages, re-plan after a drain: decision dec-mv40tgfo-01d03e4f), f2 ho-mv41a3s6-0138e24d (read before every re-send, takeover needs lease_until <= now and no capture_pending/unknown, stale intents unknown after 2 x RS_PAYPAL_TIMEOUT_MS), f3 ho-mv403lay-01fa3938 (UI hooks, recovery fixtures in a subdirectory) and e6 (approvalRoundTrip, purchase.js, payment-flow.js). No src, public or fixture file was changed. RS_LIVE_MODEL and RS_LIVE_PAYPAL were never set; every server and the browser used 127.0.0.1 or localhost only (the net guard is loaded by npm test and by every spawned server).",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md (Testing Strategy, Payment saga, Sender table, Criterion Traceability RS-17, RS-26, RS-31, RS-32)",
+        ".eccode/artifacts/plan/plan.json",
+        ".eccode/handoffs/ho-mv41a3s6-0138e24d.json",
+        ".eccode/handoffs/ho-mv40suhb-012306c3.json",
+        ".eccode/handoffs/ho-mv403lay-01fa3938.json",
+        ".eccode/handoffs/ho-mv3uq93d-0114f12e.json",
+        ".eccode/handoffs/ho-mv3y24kt-01968292.json",
+        "src/services/saga.js, reconciler.js, calls.js, payments.js, admin.js, void-rule.js, src/payments/fake.js (read only)",
+        "test/fixtures/contracts/recovery/*.json (read only)"
+      ],
+      "dependencies": [
+        "f1-supersession-refusal-expiry",
+        "f2-compensation-takeover-admin",
+        "f3-frontend-recovery"
+      ],
+      "expectedOutput": "The multi-process, contract and browser tests for phase F, and shared helpers that g1-g3 can reuse. WHAT g3 MUST KNOW ABOUT THE HELPERS. test/helpers/saga-flow.js: startPair({cleanups, env, second}) starts one or two real servers on one SQLite file with TAKEOVER_ENV (lease 1500, timeout 500, interval 200, admin password) and seeds RS-FIX-1; restartServer(server, env, cleanups) starts a new process on the same file; confirmedPlan / payOrder / authorizedPlan build the purchase (cafe1, A + B); armFault (admin route) and armFlagDirect (a fault_flags row, for http_429 and others the admin route refuses); processState / waitStopped / resume / killHard / safeCleanup (a stopped process is continued before SIGTERM; always register servers through startPair/restartServer); readDb (read-only, its close is pushed to cleanups) and writeDb; snapshotRows + assertRowsPreserved; fakeCallsSince / lastFakeCallId; logLines / waitForLog / assertHealthyLogs; waitExecuted / waitTicks (waits on the reconciler_last_tick_at meta row, never on a time). Never send SIGCONT before waitStopped has seen state T: an early signal is lost and the process stays stopped. The freeze faults are consumed per merchant key, so arm them with supplierCode 'A' or 'B' to choose which capture freezes. test/helpers/recovery-flow.js: in-process worlds (fresh seeded database, fixed clock, the real void port unless realVoids is false): reservedWorld({confirm, pay, cancelPay}), executedWorld, payFor, priceChange, drain, expireReservation, armFault (a fault_flags row), viewOf. Supplier A has one bundle, so build one world per scenario. test/browser/helpers/recovery.js: RECOVERY_ENV (reconcile interval 300 ms, admin password) for startBrowserHarness({env}), adminClient, signInThroughUi, refuseThroughUi, orderIdOf, waitForText(testid, pattern), testIdsOf, planLinesShown, assertNoOverflow. The re-plan after a refusal or a supersession appears within one reconcile interval (dec-mv40tgfo-01d03e4f), so journeys must start their server with RS_RECONCILE_INTERVAL_MS small. 'Collected' needs the supplier's handover AND the buyer's receipt (ready + receipt alone leaves the order 'ready'). Use a fresh startBrowserHarness per buying journey.",
+      "acceptanceCriteria": [
+        "RS-26: SIGKILL after the first capture, restart, lease expiry, the reconciler completes, all rows preserved",
+        "ARCH-26 variants A (freeze_after_capture_apply) and B (freeze_before_capture_apply), SIGSTOP/SIGCONT, lease 1500 ms, timeout 500 ms, interval 200 ms: exactly one non-replayed capture per supplier order and the plan executed",
+        "F-TR-3 return-crash (a) restart sends the queued authorize once, (b) reservation expired before the restart, (c) retryable 429 authorize",
+        "RS-17 browser refusal journey and RS-32(a) replacement journey at 360 and 1280 px with the approval round-trip helper",
+        "Contract rows for the phase F response shapes (recovery fixtures)",
+        "The multi-process tests bite: mutants of a scratch copy are red"
+      ],
+      "completedWork": "TESTS (all new, none skipped on this Linux host; the multi-process suites carry a skip with a reason for non-Linux platforms). (1) test/integration/lease-takeover.test.js (2 tests): two real server processes on one SQLite file with RS_SAGA_LEASE_MS 1500, RS_PAYPAL_TIMEOUT_MS 500, RS_RECONCILE_INTERVAL_MS 200. Process 1 executes the plan and freezes itself in supplier A's capture (admin fault, SIGSTOP); the test waits for the kernel state T in /proc before anything else, process 2 takes over (epoch 2, one audited saga.takeover) and completes the plan; then SIGCONT. Variant A: process 2 READS the applied capture (order A has exactly one capture call, replayed 0, pid of process 1; B's by process 2); after SIGCONT process 1 logs saga.lease_lost and sends no call. Variant B: process 2 reads CREATED, sends the capture again with the same request id (first non-replayed capture), and the frozen request of process 1 is answered as a REPLAY (replayed 1) after SIGCONT, its only call. Both: exactly one non-replayed capture per order with request id so:<id>:capture:1, one capture per order at the provider, no void or refund, one consume ledger row per reserved item, no error log. (2) test/integration/rs26-restart.test.js (2 tests): the freeze hook makes the kill deterministic (stopped state observed, snapshot of every money and stock row, then SIGKILL, then a new process on the same file). Round 1 kills with A's capture applied but unrecorded, round 2 (fault for supplier B) with A recorded and B applied but unrecorded. After the restart: epoch 2 and one takeover audited, plan executed, both operations captured, the new process READ the provider (no capture is replayed, exactly one capture call per order), every pre-kill row is present and append-only rows (ledger, audit, provider call log, captures) are byte-identical, reservation consumed once, nothing restocked. (3) test/integration/return-crash.test.js (3 tests): (a) crash_after_return_commit kills the process in the return handler (the connection is cut, exit signal SIGKILL), committed state checked (operation approved, authorize call intent, never started, zero authorize calls at the provider); the restarted process sends it exactly once (request id so:<id>:authorize:1, pid of the restarted process, operation authorized, one authorization, supplier B untouched, buyer view shows A authorized); (b) the stored reservation expiry is moved into the past while no process runs (the stand-in for a restart after the TTL; a short write from the test process), then: authorize call cancelled, operation voided_locally, ZERO authorize calls and no money call, plan non_executable RESERVATION_EXPIRED, reservation expired, the request leaves cancelling and reads cancelled with the exact expiry message; (c) a retryable http_429:authorize (armed by inserting the fault_flags row, because the admin route accepts only http_500) on two processes: the call is queued again (intent, not started, http 429, next_attempt_at = the 429 call + 5 s), the second send happens at or after next_attempt_at with the same request id, exactly one effective authorization, send_count 2. (4) test/api/contracts.test.js: a recovery table drives the real routes into 23 states (request view rows 2, 3, 4, 4a, 5a, 6, 7 and 12, the admin fault answers per kind and the two errors, the forced reset with stranded, the supplier refuse errors, the re-plan answer) in a world of its own each, and compares status, envelope, requestId and field types with test/fixtures/contracts/recovery/*.json, pinning the status, rule and next step of the views; a coverage test requires one row per fixture. Phase F adds no route, so no route row was needed. 81 tests pass (57 before). (5) test/browser/refusal.test.js (RS-17, 2 tests): signs up, plans, approves and reserves A + B ($84.00), supplier B confirms and the buyer approves B on the fake page (round-trip helper), supplier A refuses through the supplier UI in a second browser context, the buyer page updates by itself: exact message 'Supplier A refused the order: Out of lids. No money was taken.', next step 'Review the new plan', B's authorization voided, focus moves to 'Why this plan', plan lines B and E only, total matches the stored new plan, the new plan is approved and reserved; data checks and round-trip totals (1 approval); no console, CSP, page or request problems; no horizontal scroll. (6) test/browser/journey-replacement.test.js (RS-32(a), 2 tests): A confirms, buyer approves A, the admin stock_depletion fault for B (answer superseded = [old plan]) supersedes the old plan with one void and B's order cancelled, the page offers 'Review the new plan' with A + E at $95.00, approve, reserve, A and E confirm, two more approvals, execute, ready + handover by the suppliers, both receipts, the request reads 'Collected'; one capture per order under so:<id>:capture:1; round-trip totals 3 approvals, 0 cancels. HELPERS: test/helpers/saga-flow.js, test/helpers/recovery-flow.js, test/browser/helpers/recovery.js (see remaining issues for what g3 needs). BITE PROOF in scratch copies (the real tree was never mutated; each run recorded, all red unless stated): M1 saga re-sends an unknown capture without reading and the reconciler ignores the provider state: lease-takeover variant A red (order A gets 2 capture calls), ev:ev-mv41xci3-014ccf69; M1b the same plus the re-send under another request id (a second non-replayed capture): all four takeover/restart tests red, ev:ev-mv41zi15-015b8359; M3 takeover without incrementing lease_epoch: red, ev:ev-mv41znig-013106f7; M5 only the reconciler backstop that cancels a queued authorize disabled: SURVIVED (passed, ev:ev-mv42027q-01074419; the void rule cancels the call in the same transaction, so the backstop is redundancy, honestly reported); M5b void rule and backstop both leave the queued authorize alone: return-crash (b) red, ev:ev-mv4221p9-01d81f4b; M6 sender ignores next_attempt_at: (c) red, ev:ev-mv4207ii-01b07056; M8 nobody sends a queued authorize: (a) and (c) red, ev:ev-mv4245d2-011141cc; M7 order view renames refusalReason: 10 contract rows red, ev:ev-mv420ljh-012e3426; M9 re-plan does not exclude the refusing supplier: both refusal journeys red (A instead of E), ev:ev-mv424wf5-0141f67c; M10 stock_depletion supersedes nothing: both replacement journeys red, ev:ev-mv425a8b-017ed7a1. The mutation 'a second capture at the provider' cannot happen in the fake (it refuses AUTHORIZATION_ALREADY_CAPTURED and replays the same request id), so the tests count capture CALLS (replayed or not) per order, which is what the mutants change. RESULTS ON THE FINAL TREE (after rework-5, commit 0c7b37b, and f3's fixture fix): the declared verification command verbatim PASSED, ev:ev-mv43mqlq-01b00d12: npm test 2267 tests, 2259 pass, 0 fail, 8 skipped; npm run test:browser 14 of 14, 0 skipped. The multi-process files at concurrency 4, four runs: 28 of 28 pass, ev:ev-mv43nz3i-015ad25b. contracts.test.js alone: 81 of 81, the plan-replan-feasible row with no tolerance, ev:ev-mv43ohq1-01bc3f1c. The 8 skipped are the existing provider-contract cases of the fake harness (no OAuth to fail or inspect, no busy fault): none is mine. EARLIER RED RUN, with its cause: the first run of the verbatim command, ev:ev-mv43j15k-01209f8b, FAILED on one test, test/api/uploads-retention.test.js 'RS-39: startApp removes an expired image at startup and another one on the next tick' (line 711: the image file still exists at the moment its row has disappeared, because the sweep deletes the row and then unlinks the file; this is the known race of decision dec-mv3tqbn4-01d43152, carried to phase G as FU-33, owned by neither f4 nor rework-5). Per that decision it was re-run once and reported, not skipped; the re-run passed. The test and the product code were not touched. Before rework-5 the same command failed only on the two stale tests (ev:ev-mv427kx5-01596443, 2 failures), which rework-5 fixed.",
+      "filesChanged": [
+        "test/helpers/saga-flow.js",
+        "test/helpers/recovery-flow.js",
+        "test/integration/rs26-restart.test.js",
+        "test/integration/lease-takeover.test.js",
+        "test/integration/return-crash.test.js",
+        "test/api/contracts.test.js",
+        "test/browser/helpers/recovery.js",
+        "test/browser/refusal.test.js",
+        "test/browser/journey-replacement.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv43mqlq-01b00d12",
+        "ev:ev-mv43nz3i-015ad25b",
+        "ev:ev-mv43ohq1-01bc3f1c"
+      ],
+      "remainingIssues": [
+        "The RS-39 uploads-retention timer race (test/api/uploads-retention.test.js line 711, dec-mv3tqbn4-01d43152, FU-33) failed once in the first full run on this tree and passed on the single re-run. The one-line fix (wait for the file as well as the row) is carried to phase G; it can fail again until then.",
+        "The fixture defect found by the contract rows (recovery/plan-replan-feasible.json lacked `labels`) was fixed by f3 (ho-mv42ei0w-019037ae) and the tolerance in contracts.test.js was removed (ev:ev-mv43ohq1-01bc3f1c).",
+        "SURVIVING MUTANT M5: the reconciler backstop that cancels a queued authorize of a cancelled operation is redundant with the void rule (which cancels the call in the same transaction as the expiry); no test can distinguish them. Not a gap in the tests of the spec's behaviour.",
+        "return-crash (b) moves reservations.expires_at into the past with a short write from the test process while every server process is dead, because the real clock cannot be injected into a spawned server and RS_RESERVATION_TTL_MIN has a minimum of one minute. return-crash (c) arms http_429:authorize by inserting the fault_flags row (the admin route accepts only http_500 for kind faults). Both write only the rows the product itself would write.",
+        "return-crash (c) waits the real 5 s back-off of the first retryable answer (calls.js BACKOFF_MS); it waits on the database state, with a 40 s bound.",
+        "In the browser journeys the 'If something fails' section is empty once the voids are done and the new plan exists (the server returns no orders of the closed plan then), so the supplier's reason is asserted in the status message and failure-message, and the void through the data. The per-order hooks failure-<code>[-earlier]-refusal and compensation-summary appear only while a void is outstanding; a journey that needs them must hold a void back (the no-op void port exists only in-process, contracts rows view-cancelling-voids and view-failed-needs-attention cover those shapes).",
+        "The 22.5 pass condition of the spec covers these three multi-process tests; only Node 22.22 is available here, so the run on 22.5 is the user's. The tests spawn through test/helpers/node-proc.js (via server-proc.js)."
+      ],
+      "nextAction": "reviewer: review the phase F tests; g1-g3: reuse the helpers described in expectedOutput.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "This task builds no hook or guard that maps file writes to a project record or root (it writes tests inside its own claimed task's globs of the nested project, and no write was denied), so the lesson's applies-when condition (designing or debugging root discovery of a tool-call guard) does not hold. One scratch-copy shell command was refused as 'no claimed task' because its target path was computed from a shell variable; I repeated it with literal paths, which the guard resolved to the right record."
+        }
+      ],
+      "id": "ho-mv43p246-01228012",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T17:32:15.676Z"
     }
   },
   "runs": {
@@ -34516,8 +34786,14 @@
       "task": "f4-restart-takeover-browser",
       "gate": null,
       "startedAt": "2026-10-11T17:25:06.561Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T17:32:42.881Z",
+      "durationMinutes": 7.61,
+      "costUsd": null,
+      "tokens": 16680,
+      "note": "resumed test-engineer: cumulative 425926 minus earlier 409246; f4 done ho-mv43p246-01228012; first verbatim run red on the known RS-39 retention race (FU-33), one re-run green ev-mv43mqlq-01b00d12",
+      "usageReported": true
     },
     "run-mv43fvlo-01d19015": {
       "id": "run-mv43fvlo-01d19015",
@@ -35181,8 +35457,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1494.96,
-    "tokens": 18644339
+    "runtimeMinutes": 1502.57,
+    "tokens": 18661019
   },
   "delivery": null,
   "reworks": [
