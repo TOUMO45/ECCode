@@ -1,6 +1,6 @@
 {
-  "seq": 1469,
-  "lastHash": "b9d87e5a0b34e0d244b49439691a9c4410ffb19ba8d03051c3162506a060fdb9",
+  "seq": 1470,
+  "lastHash": "1d89fabc1283d73700a6b53f9cd3d17b84f3a411666746f4179f383277cf7224",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -24530,6 +24530,27 @@
       "tree": "622af87f4122c613b74eed9e51c3439c5672e2a9be36297a77b11e02ac1907f1",
       "recordedBy": "technical-reviewer",
       "at": "2026-10-11T19:22:42.773Z"
+    },
+    "ev-mv47n4y0-0138cad2": {
+      "id": "ev-mv47n4y0-0138cad2",
+      "kind": "command",
+      "label": "TR-F2 control (re-run): probe v2 on the ITERATION-1 tree (scratch trf2/probe-old, a9aba38c); passes only if the probe FAILS there on the epoch assertion",
+      "command": "sh -c 'out=$(env -C /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/trf2/probe-old node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-timeout=60000 test/api/fu49-probe-v2.test.js 2>&1); rc=$?; printf \"%s\\n\" \"$out\" | grep -E \"epochs|^# (tests|pass|fail)|epoch does not grow\"; echo \"probe exit=$rc\"; [ $rc -ne 0 ] && printf \"%s\" \"$out\" | grep -q \"the epoch does not grow with the ticks\" && echo \"CONTROL OK\"'",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1104,
+      "log": ".eccode/evidence/ev-mv47n4y0-0138cad2.log",
+      "logSha256": "d2b40aeeee7599aa93118bb56c8f3f0da9a6b9adceb4e0f11cf9ed38f5bfe3be",
+      "logFileSha256": "b5031acc18b46d766984033701e8b09addcea6c949c2665d33f1498ca4f3dcb4",
+      "outputTail": "# {\"epochs\":[2,3,4,5,6,7,8,9,10],\"readsPerTick\":2,\"captureSends\":0,\"opA\":\"authorized\",\"statuses\":[\"payment_authorized\",\"payment_authorized\",\"payment_authorized\",\"payment_authorized\",\"payment_authorized\",\"payment_authorized\",\"payment_authorized\",\"payment_authorized\"]}\n  error: 'the epoch does not grow with the ticks: 2,3,4,5,6,7,8,9,10'\n# tests 1\n# pass 0\n# fail 1\nprobe exit=1\nCONTROL OK\n",
+      "gate": "phase:f-compensation",
+      "task": null,
+      "tree": "622af87f4122c613b74eed9e51c3439c5672e2a9be36297a77b11e02ac1907f1",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T19:22:44.265Z"
     }
   },
   "reviews": {
