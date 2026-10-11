@@ -1,0 +1,58 @@
+{
+  "from": "ai-engineer",
+  "to": "reviewer",
+  "task": "d2-ai-adapters-corpus",
+  "objective": "Third review iteration of d2: fix TR-D-15 / SEC-D-16 (a call ended by close() was settled at 0 while a timeout is charged at the cap) and SEC-D-17 (cli.test.js sandbox PATH may reach a real claude; empty temp cwds left by the exit hook), inside d2 ownership only.",
+  "context": "Review rev-mv35hyoj-01e0a18c, drafts phase-d-2.json TR-D-15 and phase-d-security-2.md SEC-D-16/17. The gate (src/ai/gate.js, d1) refunds a rejected call at microUsdOfUsage(err.usage) and at 0 when err.usage is absent; the service watchdog (src/services/extraction.js callProvider, d3) rejects PROVIDER_TIMEOUT with usage { costMicroUsd: cap }. The shared provider contract test (test/unit/ai/provider-contract.test.js) requires any attached err.usage to have the FULL usage shape (model, costUsd, integer costMicroUsd, token counts, latencyMs), so the adapter marker is the full shape with costMicroUsd = the per-call cap rather than the bare watchdog object; the gate reads only costMicroUsd, so the charge is identical. No real model, no claude binary and no network were used; every command ran with PATH=/usr/local/bin:/usr/bin:/bin and RS_LIVE_MODEL was never set. The CLI adapter tests use only the repository stub (stub-claude.mjs) in a temp bin directory.",
+  "inputs": [
+    ".eccode/reviews/drafts/phase-d-2.json (TR-D-15)",
+    ".eccode/reviews/drafts/phase-d-security-2.md (SEC-D-16, SEC-D-17)",
+    "src/ai/cli.js",
+    "src/ai/gate.js",
+    "src/services/extraction.js (callProvider, read only)",
+    "test/unit/ai/cli.test.js",
+    "test/unit/ai/provider-contract.test.js (read only)",
+    "test/fixtures/extraction/stub-claude.mjs",
+    "test/fixtures/extraction/cli-orphan-driver.mjs"
+  ],
+  "dependencies": [
+    "d1-ai-core"
+  ],
+  "expectedOutput": "An adapter whose killed-started-child rejections (close(), SIGKILL after grace, timeout, abort, output flood) carry the per-call cap as usage so the gate charges the cap; an exit hook that also removes the temp cwd; a cli.test.js sandbox that can never reach a real claude.",
+  "acceptanceCriteria": [
+    "After close() with a call in flight the rejected call carries usage with costMicroUsd equal to the per-call cap, like a timeout",
+    "An unchanged call still settles at its reported usage; a failed call that reported usage keeps it",
+    "Through a real gate the ledger row of a close()-ended call is settled at the cap, not 0",
+    "The cli.test.js child PATH is the stub directory alone and every provider uses the stub's absolute path as command",
+    "The exit hook leaves no empty rs-cli-* temp cwd",
+    "The d2 plan verification command passes and npm test is green"
+  ],
+  "completedWork": "FINDING TR-D-15 / SEC-D-16 -> CHANGE src/ai/cli.js: call() builds unknownAtCap() = usageOf(null, ...) with costMicroUsd = callCapMicroUsd and costUsd = cap/1e6 (full usage shape) and passes it to runOnce. terminate() (close()) and the child 'close' handler of a terminated run now reject PROVIDER_UNAVAILABLE with { usage: unknownAtCap() }. fail() (timeout, abort during a run, 8 MiB flood) attaches the same marker whenever a child had been started; a call that never started a process (closed before spawn, spawn error, missing binary, early abort) stays without usage because nothing can have been billed. -> TEST test/unit/ai/cli.test.js: 'TR-D-15: a call in flight when close() runs rejects PROVIDER_UNAVAILABLE carrying the per-call cap as its usage' (cap 70000), 'a child that ignores SIGTERM and is SIGKILLed ... charged at the cap', 'the ledger charges the cap for a call ended by close(); an unchanged call still settles at its reported usage' (real gate and SQLite: normal call settles at 1300, billed failure keeps 1300, hang+close row goes reserved 50000/null -> settled 50000/50000), 'a call that never started a process is not charged', and the existing timeout test now asserts the marker. -> EVIDENCE red first ev:ev-mv35r9e5-01f5fecd (cli.test.js: 38 tests, 34 pass, 4 fail), green ev:ev-mv35sbuc-019020e2 (38/38). FINDING SEC-D-17 -> CHANGE cli.test.js sandbox env PATH is the stub bin directory alone (no process.env.PATH, no node dir; the wrapper shebang and node are absolute), every sandbox provider, cliVersion and the driver get command = absolute stub path; the exit-hook driver env PATH is the stub dir alone (test/fixtures/extraction/cli-orphan-driver.mjs). cli.js: LIVE_CHILDREN is now a Map child -> cwd and the synchronous exit hook rmSync's the cwd after SIGKILL. -> TEST 'SEC-D-17: the sandbox PATH is the stub directory alone and every provider gets the stub as an absolute command' and the exit-hook test now asserts no rs-cli-* directory remains. -> EVIDENCE same red/green runs. SERVICE (d3) SIDE: what the adapter now reports is err.usage = { model, costUsd: cap/1e6, costMicroUsd: cap, inputTokens: 0, outputTokens: 0, latencyMs } on PROVIDER_UNAVAILABLE after close(). The service has nothing more to do: callProvider rethrows the provider error unchanged and gate.run refunds at microUsdOfUsage(err.usage) = cap. The only requirement on d3 is that the extract route does not strip or replace err.usage before gate.run sees it; the in-file test that proves the end-to-end charge is the gate.run test above (src/services untouched). If the reviewer wants the HTTP-level row check it belongs in a d3 API test (hang stub, close the provider, assert model_spend actual = cap), which I did not write because those files are d3's. FINAL RUNS: plan verification command verbatim ev:ev-mv35x27x-01f78f22 (112 tests, 112 pass, 0 fail; fake-mode EXT-1 eval inside it); npm test with --timeout 1800 ev:ev-mv35yihg-01cf262a (1288 tests, 1280 pass, 0 fail, 8 skipped, 0 todo; the same 8 skips as before; ECCODE_EVAL {passed:200,total:200} seen on a direct npm test run of the same tree, provider fake, so it is not evidence of model quality). The first npm test run ev:ev-mv35tywg-01521d44 failed with 1 red test in test/unit/ai/provider-contract.test.js (cli timeout case): the bare usage marker lacked the full usage shape; fixed by emitting the full shape and re-run green. No red test in d3 files was observed in the final run.",
+  "filesChanged": [
+    "src/ai/cli.js",
+    "test/unit/ai/cli.test.js",
+    "test/fixtures/extraction/cli-orphan-driver.mjs"
+  ],
+  "evidence": [
+    "ev:ev-mv35sbuc-019020e2",
+    "ev:ev-mv35x27x-01f78f22",
+    "ev:ev-mv35yihg-01cf262a"
+  ],
+  "remainingIssues": [
+    "Scope note: the marker is also attached to the adapter's own timeout, abort-during-run and output-flood kills of a started child (previously refunded at 0 when the adapter's timer fired before the service watchdog). This is the same unknown-billing situation and is conservative; revert-able in fail() if the reviewer disagrees.",
+    "SIGKILL of the parent, or SIGTERM/SIGHUP without a handler, still cannot run any hook (FU-28, SIGHUP and double-signal in TR-D-16/SEC-D-15, main.js and the runner, not d2's files): the row stays reserved and the startup sweep settles it at the cap.",
+    "The exit hook removes the temp cwd only for children still registered; the three signal deaths without a handler still leave an empty cwd (no code can run).",
+    "live-runner-refusal.test.js keeps its own safe PATH ('<stub dir>:/usr/bin:/bin' with an assertion that no claude is there); SEC-D-17 named only cli.test.js, so it was left unchanged."
+  ],
+  "nextAction": "reviewer: re-review TR-D-15 and SEC-D-17 against ev:ev-mv35sbuc-019020e2, ev:ev-mv35x27x-01f78f22 and ev:ev-mv35yihg-01cf262a; d3 is independent of this change.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This lesson is about a tool-call guard resolving the project root of a nested record. This task changes adapter code and tests in a single nested project and touches no hook, guard or root discovery; the 'Applies when' conditions (a hook mapping file writes to a record) do not hold. I made no write the guard denied, apart from an inline python edit it refused, which I redid with the Edit tool."
+    }
+  ]
+}

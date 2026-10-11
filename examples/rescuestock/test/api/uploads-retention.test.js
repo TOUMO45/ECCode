@@ -13,6 +13,8 @@ import { join } from 'node:path';
 import { DEMO_DATE, DEMO_PASSWORD, FIXED_NOW_MS, startHarness, testEnv } from '../helpers/app-harness.js';
 import { compareShape } from '../helpers/contract-shape.js';
 import { createClient } from '../helpers/fixtures.js';
+import { createCliStubRoot } from '../helpers/provider-stubs.js';
+import { SEED_PASSWORD, startServer } from '../helpers/server-proc.js';
 import { approvedPlan, canonicalFields, idempotencyKey, reserve } from '../helpers/plan-flow.js';
 import { fixedClock } from '../../src/clock.js';
 import { openDb } from '../../src/db/connection.js';
@@ -771,5 +773,106 @@ describe('TR-D-9: shutdown closes the provider', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+// ------------------------------------------------------------------------------------------------ TR-D-16 (SEC-D-15)
+
+describe('TR-D-16: a real server process stops, and leaves no CLI child, on SIGHUP and on a second signal', () => {
+  // The server is the real src/index.js with RS_MODEL_PROVIDER=cli and a stub `claude` (test/fixtures/extraction/stub-claude.mjs).
+  // Its PATH holds the stub's directory and the system directories only, never the caller's PATH: the logged-in claude binary
+  // can never be reached from here, and no model is called.
+  const readPid = (sb, name) => {
+    try {
+      return Number(readFileSync(join(sb.tmp, name), 'utf8'));
+    } catch {
+      return null;
+    }
+  };
+  const alive = (pid) => {
+    try {
+      const state = /^\d+ \(.*\) (\S)/s.exec(readFileSync(`/proc/${pid}/stat`, 'utf8'));
+      return state ? state[1] !== 'Z' : true; // a zombie has been killed and only waits for its parent to reap it
+    } catch (err) {
+      if (err && err.code === 'ENOENT') return false;
+      try {
+        process.kill(pid, 0);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  };
+  const until = async (probe, what, ms = 10000) => {
+    const limit = Date.now() + ms;
+    for (;;) {
+      const v = probe();
+      if (v) return v;
+      if (Date.now() > limit) throw new Error(`timed out waiting for ${what}`);
+      await new Promise((r) => setTimeout(r, 25));
+    }
+  };
+
+  async function withServer(mode, body) {
+    const stubs = createCliStubRoot();
+    const sb = stubs.sandbox(mode);
+    const server = await startServer({
+      seed: true,
+      env: { PATH: `${join(sb.dir, 'bin')}:/usr/bin:/bin`, HOME: sb.dir, TMPDIR: sb.tmp, RS_MODEL_PROVIDER: 'cli', RS_TEST_OFFLINE: undefined },
+    });
+    const pids = [];
+    try {
+      const cfg = await server.request({ path: '/api/config' });
+      assert.equal(cfg.json.extractionProvider, 'cli', 'the server really runs the CLI adapter (the stub), not the fake');
+      const client = createClient(server.request);
+      await client.signIn('cafe1', SEED_PASSWORD);
+      const created = await client.post('/api/requests', { text: EN });
+      assert.equal(created.status, 201, created.text);
+      client.post(`/api/requests/${created.json.request.id}/extract`, {}).catch(() => null); // in flight; the server dies under it
+      const child = await until(() => readPid(sb, 'child.pid'), 'the stub claude to start');
+      pids.push(child);
+      const grandchild = readPid(sb, 'grandchild.pid');
+      if (grandchild) pids.push(grandchild);
+      assert.ok(alive(child), 'the CLI child runs while the call is in flight');
+      await body({ server, child });
+      for (const pid of pids) await until(() => !alive(pid), `pid ${pid} to be gone`, 5000);
+    } finally {
+      for (const pid of pids) {
+        try {
+          process.kill(-pid, 'SIGKILL');
+        } catch {
+          // Not a group leader, or already gone.
+        }
+        try {
+          process.kill(pid, 'SIGKILL');
+        } catch {
+          // Already gone.
+        }
+      }
+      await server.cleanup();
+      stubs.cleanup();
+    }
+  }
+
+  test('TR-D-16: SIGHUP (a closed terminal) runs stop(): the server exits 0 and the CLI child and its grandchild are gone', async () => {
+    await withServer('hang', async ({ server }) => {
+      server.kill('SIGHUP');
+      const exit = await server.exited;
+      assert.deepEqual(exit, { code: 0, signal: null }, 'a handled signal ends in exit 0, not in the default SIGHUP death');
+    });
+  });
+
+  test('TR-D-16: a second signal during the grace period does not kill the server before stop() has killed a child that ignores SIGTERM', async () => {
+    await withServer('stubborn', async ({ server, child }) => {
+      server.kill('SIGTERM');
+      await new Promise((r) => setTimeout(r, 200));
+      assert.ok(alive(child), 'the stubborn child ignores SIGTERM and is still inside the grace period');
+      assert.equal(server.child.exitCode, null, 'the server waits for the grace period');
+      server.kill('SIGTERM'); // a second signal of the same kind (the handler of a once() would be spent) ...
+      server.kill('SIGHUP'); // ... and of another (a closed terminal): both swallowed, neither takes the default disposition
+      server.kill('SIGINT'); // Ctrl-C twice
+      const exit = await server.exited;
+      assert.deepEqual(exit, { code: 0, signal: null }, 'stop() ran once, to the end');
+    });
   });
 });

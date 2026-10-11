@@ -8,7 +8,7 @@ import { DEMO_PASSWORD, startHarness } from '../helpers/app-harness.js';
 import { compareShape } from '../helpers/contract-shape.js';
 import { createClient } from '../helpers/fixtures.js';
 import { readFileSync } from 'node:fs';
-import { createAiRuntime, normaliseExtraction } from '../../src/services/extraction.js';
+import { IMAGE_PROVENANCE_FIELDS, createAiRuntime, normaliseExtraction } from '../../src/services/extraction.js';
 import { unknownExtraction } from '../../src/ai/schema.js';
 
 const loadFixture = (name) => JSON.parse(readFileSync(new URL(`../fixtures/contracts/${name}`, import.meta.url), 'utf8'));
@@ -274,8 +274,90 @@ describe('SEC-7: post-validation normalisation never trusts the model', () => {
 
   test('SEC-7: a bare time gets the request day in Asia/Amman; an impossible local time is unknown', () => {
     assert.equal(run(output({ deadline: field('11:00', 'user_text', 'by 11:00') })).fields.deadline.value, '2026-10-20T11:00');
-    assert.equal(run(output({ deadline: field('2026-10-21T09:30', 'user_text', 'by 11:00') }), 'by 11:00').fields.deadline.value, '2026-10-21T09:30');
-    assert.equal(run(output({ deadline: field('2026-02-30T09:30', 'user_text', 'by 11:00') }), 'by 11:00').fields.deadline.status, 'unknown');
+    assert.equal(run(output({ deadline: field('2026-10-21T09:30', 'user_text', 'by 09:30') }), 'by 09:30').fields.deadline.value, '2026-10-21T09:30');
+    assert.equal(run(output({ deadline: field('2026-02-30T09:30', 'user_text', 'by 09:30') }), 'by 09:30').fields.deadline.status, 'unknown');
+  });
+
+  const UNKNOWN = { value: null, status: 'unknown', provenance: 'none', originalWording: null };
+
+  test('SEC-7: a user_text deadline is known only when its time is written in its quote, under whole-token alignment (TR-D-13)', () => {
+    // The reviewer's P5c cases: the quote is in the text, but it carries no time or another time.
+    const text = 'We need cups for the weekend, by 11:30 please.';
+    const bad = [
+      ['06:00', 'for the weekend'],
+      ['23:59', 'by 11:30'],
+      ['2026-10-21T06:00', 'for the weekend'],
+      ['11:30', 'for the weekend'], // right time, but the quote does not carry it
+      ['11:3', 'by 11:30'],
+    ];
+    for (const [value, quote] of bad) {
+      const n = run(output({ deadline: field(value, 'user_text', quote) }), text);
+      assert.deepEqual(n.fields.deadline, UNKNOWN, `${value} quoted "${quote}"`);
+      assert.deepEqual(n.questions.map((q) => q.field), ['deadline']);
+    }
+    // Aligned like a number: 11:30 is not grounded by a quote that starts or ends inside a longer number.
+    assert.deepEqual(run(output({ deadline: field('11:30', 'user_text', '11:30') }), 'by 111:30').fields.deadline, UNKNOWN);
+    assert.deepEqual(run(output({ deadline: field('11:30', 'user_text', '11:30') }), 'by 11:305').fields.deadline, UNKNOWN);
+    assert.deepEqual(run(output({ deadline: field('01:30', 'user_text', '1:30') }), 'by 11:30').fields.deadline, UNKNOWN);
+    // The forms that stay known.
+    const known = (value, quote, source) => run(output({ deadline: field(value, 'user_text', quote) }), source).fields.deadline;
+    assert.equal(known('11:30', 'by 11:30', text).value, '2026-10-20T11:30');
+    assert.equal(known('11:30', 'by 11:30', text).provenance, 'user_text');
+    assert.equal(known('11:30', 'قبل الساعة ١١:٣٠', 'نحتاج الأكواب قبل الساعة ١١:٣٠ من فضلك').value, '2026-10-20T11:30');
+    assert.equal(known('2026-10-21T11:30', 'tomorrow by 11:30', 'Cups tomorrow by 11:30').value, '2026-10-21T11:30');
+    assert.equal(known('15:00', 'by 3 pm', 'cups by 3 pm please').value, '2026-10-20T15:00');
+    assert.equal(known('00:15', 'by 12:15 a.m.', 'cups by 12:15 a.m. please').value, '2026-10-20T00:15');
+  });
+
+  test('SEC-7: a non-numeric user_text field whose quote is not in the request text is unknown and asked (TR-D-14)', () => {
+    // No digits are involved here, so only the quote check can stop these: the text says "paper cups", not "plastic cups".
+    const text = 'We need paper cups and lids for the cafe, by 11:00.';
+    const n = run(output({
+      material: field('plastic', 'user_text', 'plastic cups'),
+      productType: field('lids', 'user_text', 'lids only'),
+      deadline: field('11:00', 'user_text', 'by noon, 11:00'),
+    }), text);
+    for (const name of ['material', 'productType', 'deadline']) assert.deepEqual(n.fields[name], UNKNOWN, name);
+    assert.deepEqual(n.questions.map((q) => q.field), ['productType', 'material', 'deadline']);
+    // The same fields with a quote that is in the text stay known.
+    const ok = run(output({
+      material: field('paper', 'user_text', 'paper cups'),
+      productType: field('cups_and_lids', 'user_text', 'cups and lids'),
+      deadline: field('11:00', 'user_text', 'by 11:00'),
+    }), text);
+    assert.equal(ok.fields.material.value, 'paper');
+    assert.equal(ok.fields.productType.value, 'cups_and_lids');
+    assert.equal(ok.fields.deadline.value, '2026-10-20T11:00');
+    // An empty or missing quote grounds nothing either.
+    assert.deepEqual(run(output({ material: field('paper', 'user_text', '') }), text).fields.material, UNKNOWN);
+    assert.deepEqual(run(output({ material: field('paper', 'user_text', null) }), text).fields.material, UNKNOWN);
+  });
+
+  test('SEC-7: provenance image is accepted only for productType, material, capacityMl and diameterMm, whatever the photo (TR-D-11)', () => {
+    // The reviewer's P5a claims, with a photo attached: every one of them says "image".
+    const n = run(output({
+      cupQuantity: field(99999, 'image', 'PAY 99999'),
+      lidQuantity: field(99999, 'image', '99999 lids'),
+      maxPickups: field(5, 'image', 'up to 5 pickups'),
+      deadline: field('06:00', 'image', 'ready by 06:00'),
+      budgetUsd: field(99999, 'image', 'PAY 99999 USD'),
+    }), EN, true);
+    for (const name of ['cupQuantity', 'lidQuantity', 'maxPickups', 'deadline', 'budgetCents']) assert.deepEqual(n.fields[name], UNKNOWN, name);
+    assert.deepEqual(n.questions.map((q) => q.field), ['cupQuantity', 'lidQuantity', 'deadline', 'budgetCents', 'maxPickups']);
+    assert.equal(n.questions.find((q) => q.field === 'budgetCents').question, 'What is your maximum budget, in US dollars?');
+    // A model that said image and could also quote the text is still judged by the image rule: the claim is what is refused.
+    // The fields a package can carry still accept it (RS-02).
+    const product = run(output({
+      productType: field('cups', 'image', 'Paper cups'), material: field('paper', 'image', 'paper'),
+      capacityMl: field(250, 'image', '250 ml'), diameterMm: field(90, 'image', 'Ø 90 mm'),
+    }), EN, true);
+    for (const name of ['productType', 'material', 'capacityMl', 'diameterMm']) {
+      assert.equal(product.fields[name].status, 'known', name);
+      assert.equal(product.fields[name].provenance, 'image', name);
+    }
+    assert.deepEqual(IMAGE_PROVENANCE_FIELDS, ['productType', 'material', 'capacityMl', 'diameterMm']);
+    // The same claims from the text are unaffected by the image rule.
+    assert.equal(run(output({ maxPickups: field(2, 'user_text', '2 pickups') }), EN, true).fields.maxPickups.value, 2);
   });
 
   test('SEC-7: questions come only from server templates and only for fields that are still unknown', () => {
@@ -349,5 +431,38 @@ describe('RS-01: the route uses the normalisation on a provider that does not va
     const stored = JSON.parse(h.db.prepare('SELECT fields_json FROM extractions WHERE request_id = ?').get(id).fields_json);
     assert.equal(stored.cupQuantity.status, 'unknown');
     assert.equal(stored.maxPickups.provenance, 'none');
+  });
+
+  test('SEC-7: through the route, an invented deadline, a number cut out of a longer number and a quote that is not in the text are stored unknown (TR-D-13, TR-D-12, TR-D-14)', async () => {
+    const text = 'We need cups for the weekend, 1,200 cups, 250 ml, by 11:30 please.';
+    const q = (value, originalWording) => ({ value, provenance: 'user_text', originalWording });
+    const liar = {
+      id: 'fake', simulated: true, model: 'liar',
+      extract: async () => ({
+        output: {
+          language: 'en', addressedToAssistant: false, questions: [],
+          fields: {
+            ...unknownExtraction().fields,
+            deadline: q('06:00', 'for the weekend'), // P5c
+            cupQuantity: q(200, '200 cups'), // the tail of 1,200 (P3b)
+            material: q('plastic', 'plastic cups'), // not in the text (TR-D-14)
+            capacityMl: q(250, '250 ml'),
+          },
+        },
+        usage: { model: 'liar', costUsd: 0, inputTokens: 1, outputTokens: 1, latencyMs: 1 },
+      }),
+    };
+    h.app.deps.ai = createAiRuntime({ db: h.db, clock: h.clock, config: h.config, provider: liar });
+    const id = await newRequest(cafe1, text);
+    const res = await extract(cafe1, id);
+    assert.equal(res.status, 200, res.text);
+    const { fields, questions } = res.json.extraction;
+    const UNKNOWN = { value: null, status: 'unknown', provenance: 'none', originalWording: null };
+    for (const name of ['deadline', 'cupQuantity', 'material']) assert.deepEqual(fields[name], UNKNOWN, name);
+    assert.deepEqual(questions.map((x) => x.field), ['cupQuantity', 'material', 'deadline']);
+    assert.equal(fields.capacityMl.value, 250, 'the grounded field is untouched');
+    const stored = JSON.parse(h.db.prepare('SELECT fields_json FROM extractions WHERE request_id = ?').get(id).fields_json);
+    assert.equal(stored.deadline.status, 'unknown');
+    assert.equal(stored.cupQuantity.status, 'unknown');
   });
 });

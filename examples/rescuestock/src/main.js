@@ -170,6 +170,9 @@ export async function main(env = process.env) {
     return;
   }
 
+  // TR-D-16: stop() is idempotent and the handlers stay installed (`on`, not `once`), so a second signal during close()'s grace
+  // period (Ctrl-C twice, a SIGTERM after a SIGHUP) is swallowed instead of falling to the default disposition, which would kill
+  // the server with a CLI child still alive. SIGHUP (a closed terminal) is handled like SIGINT and SIGTERM.
   let stopping = false;
   const stop = async () => {
     if (stopping) return;
@@ -180,6 +183,5 @@ export async function main(env = process.env) {
       process.exit(0);
     }
   };
-  process.once('SIGINT', stop);
-  process.once('SIGTERM', stop);
+  for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, stop);
 }

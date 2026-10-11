@@ -9,11 +9,15 @@
 //     `type:"result"` event is the answer; cost comes from total_cost_usd in integer micro-dollars (F-TR-12);
 //   * timeout with a process-group SIGKILL; ONE attempt (no retry, which bounds cost); concurrency 2 per process;
 //   * TR-D-9: every live child is tracked; close() ends them (SIGTERM, then SIGKILL after a grace period) and a process
-//     'exit' hook SIGKILLs any group still alive, so a server stop or a killed live run leaves no billed call unsupervised.
+//     'exit' hook SIGKILLs any group still alive (and removes its temp cwd), so a server stop or a killed live run leaves no
+//     billed call unsupervised;
+//   * TR-D-15: a started child that is killed before it reports a cost (timeout, abort, output flood, close()) rejects with
+//     usage { costMicroUsd: <per-call cap> } ("unknown-at-cap"), so the gate charges the cap and never refunds it at 0.
 //
 // The stdin and result event shapes are verified against a recorded transcript in the unit tests and against the real
 // CLI only by the opt-in live run (case cli-image-smoke).
 import { spawn } from 'node:child_process';
+import { rmSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -93,13 +97,21 @@ function killGroup(child, signal = 'SIGKILL') {
 // its own process group, so nothing but this process can end it; the 'exit' hook SIGKILLs the groups that are still here when
 // the process leaves through process.exit() (main.js stop()) or a normal end. A parent killed by a signal it does not handle
 // or by SIGKILL cannot run any hook: the servers and the live runner handle SIGTERM/SIGINT and call close() first.
-const LIVE_CHILDREN = new Set();
+// child -> its temp cwd. The hook is synchronous, so it also removes the (empty) cwd with rmSync (SEC-D-17).
+const LIVE_CHILDREN = new Map();
 let exitHookInstalled = false;
 function installExitHook() {
   if (exitHookInstalled) return;
   exitHookInstalled = true;
   process.on('exit', () => {
-    for (const child of LIVE_CHILDREN) killGroup(child, 'SIGKILL');
+    for (const [child, cwd] of LIVE_CHILDREN) {
+      killGroup(child, 'SIGKILL');
+      try {
+        rmSync(cwd, { recursive: true, force: true });
+      } catch {
+        // best effort: the directory is empty and under the temp root
+      }
+    }
   });
 }
 
@@ -140,7 +152,7 @@ export function lastResultEvent(stdout) {
   return result;
 }
 
-function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRoot, registry, isClosed, killGraceMs }) {
+function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRoot, registry, isClosed, killGraceMs, unknownAtCap }) {
   return new Promise((resolve, reject) => {
     let cwd = null;
     let child = null;
@@ -182,13 +194,17 @@ function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRo
       return gone.then(() => {
         clearTimeout(grace);
         killGroup(child, 'SIGKILL'); // group members that outlived the leader
-        finish(reject, new ProviderError('PROVIDER_UNAVAILABLE'));
+        // TR-D-15 / SEC-D-16: the killed call may have been billed up to the cap, so it is charged at the cap like a timeout.
+        finish(reject, new ProviderError('PROVIDER_UNAVAILABLE', { usage: unknownAtCap() }));
         return settledPromise;
       });
     };
     const fail = (code, usageHint) => {
       if (child) killGroup(child);
-      finish(reject, new ProviderError(code, usageHint ? { usage: usageHint } : {}));
+      // A started child that is killed (timeout, abort, flood) may already have been billed: unknown-at-cap, like the
+      // service watchdog's timeout. A call that never started a process cannot have been billed.
+      const usage = usageHint ?? (child ? unknownAtCap() : null);
+      finish(reject, new ProviderError(code, usage ? { usage } : {}));
     };
     const onAbort = () => fail('PROVIDER_TIMEOUT');
 
@@ -211,7 +227,7 @@ function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRo
       if (child.pid !== undefined) {
         entry = { terminate };
         registry.add(entry);
-        LIVE_CHILDREN.add(child);
+        LIVE_CHILDREN.set(child, cwd);
         installExitHook();
       }
       timer = setTimeout(() => fail('PROVIDER_TIMEOUT'), timeoutMs);
@@ -227,7 +243,7 @@ function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRo
       });
       child.stdin.on('error', () => {}); // EPIPE when the child exits before reading everything
       child.on('close', (code) => {
-        if (terminated) finish(reject, new ProviderError('PROVIDER_UNAVAILABLE'));
+        if (terminated) finish(reject, new ProviderError('PROVIDER_UNAVAILABLE', { usage: unknownAtCap() }));
         else finish(resolve, { code, stdout: Buffer.concat(chunks).toString('utf8') });
       });
       child.stdin.end(stdin);
@@ -266,13 +282,18 @@ export function createCliProvider({
     if (active >= maxConcurrent) throw new ProviderError('PROVIDER_BUSY');
     active += 1;
     const started = clock.now();
+    // TR-D-15: the usage of a started call that was killed before it reported a cost: charged at the per-call cap (what the
+    // service watchdog's timeout carries), in the full usage shape the provider contract requires of any attached usage.
+    const unknownAtCap = () => ({
+      ...usageOf(null, model, started, clock.now()), costUsd: callCapMicroUsd / 1_000_000, costMicroUsd: callCapMicroUsd,
+    });
     try {
       const argv = buildArgv({ model, callCapMicroUsd, schema, systemPrompt: system });
       let run;
       try {
         const pending = runOnce({
           command, argv, env: buildChildEnv(env), stdin: buildStdinLine(content), timeoutMs, capBytes: outputCapBytes, signal, tmpRoot,
-          registry, isClosed: () => closed, killGraceMs,
+          registry, isClosed: () => closed, killGraceMs, unknownAtCap,
         });
         runs.add(pending);
         pending.then(() => runs.delete(pending), () => runs.delete(pending));

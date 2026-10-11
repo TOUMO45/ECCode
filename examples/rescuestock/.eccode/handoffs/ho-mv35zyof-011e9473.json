@@ -1,0 +1,58 @@
+{
+  "from": "backend-engineer",
+  "to": "reviewer",
+  "task": "d3-extraction-service",
+  "objective": "Third and last phase D iteration for d3: close TR-D-11 (major, = SEC-D-12), TR-D-13 (minor, = SEC-D-10), TR-D-14 (minor) and TR-D-16 (info, = SEC-D-15) in the extraction service and main.js, and route every user_text field through d1's reworked validator.",
+  "context": "Review rev-mv35hyoj-01e0a18c. Decision dec-mv35aank-0169ec16: provenance image only for productType, material, capacityMl and diameterMm. d1-ai-core is done (ho-mv35op30-016a6560): validateExtraction now aligns a numeric quote to whole numbers (TR-D-12) and re-checks every user_text quote for presence (NOT_QUOTED) for every field kind. d2 (src/ai/cli.js, TR-D-15) was edited concurrently by another agent and is not touched here. No model, no claude binary: every command ran with PATH=/usr/local/bin:/usr/bin:/bin, RS_LIVE_MODEL never set, and the real-server tests give the server a PATH of the stub directory plus /usr/bin:/bin only.",
+  "inputs": [
+    ".eccode/reviews/drafts/phase-d-2.json",
+    ".eccode/reviews/drafts/phase-d-security-2.md",
+    "src/ai/schema.js (d1: validateExtraction, normalizeForCompare, foldDigits)",
+    "test/helpers/server-proc.js, test/helpers/provider-stubs.js, test/fixtures/extraction/stub-claude.mjs",
+    "tr-probe-d2b.test.mjs (reviewer probe P5, re-run by path)"
+  ],
+  "dependencies": [
+    "d1-ai-core"
+  ],
+  "expectedOutput": "A tree where an image claim for any field except productType/material/capacityMl/diameterMm is unknown with its question, a user_text deadline needs its time in its quote, every user_text field is checked through d1's validator, and the server handles SIGHUP and repeated signals without orphaning the CLI child.",
+  "acceptanceCriteria": [
+    "TR-D-11: image provenance accepted only for productType, material, capacityMl, diameterMm; unit and route tests failing-first; mutant red",
+    "TR-D-13: a user_text deadline is known only when its time is written in its quote, whole-token aligned; mutant red",
+    "TR-D-14: a non-numeric user_text quote not in the text is unknown; the quote-check mutant is red",
+    "TR-D-16: SIGHUP handled, repeated signals swallowed by an idempotent stop(); a real server process test; mutants red",
+    "the d3 plan command, npm test and npm run test:browser pass"
+  ],
+  "completedWork": "FINDING TR-D-11 -> CHANGE: normaliseExtraction (src/services/extraction.js) accepts provenance image only when hasImage is true AND the wire field is in the exported IMAGE_PROVENANCE_FIELDS (productType, material, capacityMl, diameterMm); any other field is downgraded to unknown and asked with its template question. -> TEST: extract.test.js 'provenance image is accepted only for productType, material, capacityMl and diameterMm, whatever the photo (TR-D-11)' (unit: cup/lid quantity, pickups, deadline, budget unknown with questions, the four product fields keep image, the list is pinned) and extract-image.test.js 'through a real upload, a model claiming image for the budget, pickups, quantities and deadline is stored unknown ... (TR-D-11)' (real PNG upload through the route with a stub provider; stored fields_json checked too); both failed first (28 of 32 passed before the change, the two tests plus the TR-D-13 pair red), RS-02 tests stay green. -> MUTANT: the allow-list condition removed turns exactly those two tests red (30 pass, 2 fail); restored. -> EVIDENCE: ev:ev-mv35wtzv-019b1a11 (plan command 118/118), ev:ev-mv35y9yl-01935e86 (npm test), ev:ev-mv35yyvp-019ac755 (reviewer probe P5 re-run by path: P5a/P5b budget, pickups, cupQuantity, deadline all unknown with a photo; capacityMl 1999 image stays known, which is the accepted SEC-D-3/SEC-D-14 residual).\n\nFINDING TR-D-13 -> CHANGE: a new deadlineTimeInQuote in extraction.js, implemented in d3 (d1's validator treats the deadline as a plain string and does not cover it, so it is d3's own rule, with the same alignment idea): the value's time (last five characters of HH:MM or YYYY-MM-DDTHH:MM) must be a clock token H:MM/HH:MM or an hour with am/pm in the normalised text, not part of a longer digit run or clock/decimal (111:30, 11:305), and the token must lie inside an occurrence of the quote. The deadline also goes through the d1 validator probe (quote must be in the text). -> TEST: extract.test.js 'a user_text deadline is known only when its time is written in its quote, under whole-token alignment (TR-D-13)' (the three P5c cases, a right time with a quote that lacks it, 11:3, 111:30, 11:305, 1:30 in 11:30 unknown; 'by 11:30', Arabic 'قبل الساعة ١١:٣٠', 'tomorrow by 11:30', '3 pm', '12:15 a.m.' known) plus a route test; the old test that accepted 09:30 quoted 'by 11:00' was corrected to quote 09:30. -> MUTANTS: deadline rule disabled gives 2 red; the end-of-token alignment lookahead removed gives 1 red. -> EVIDENCE: ev:ev-mv35wtzv-019b1a11, ev:ev-mv35y9yl-01935e86, ev:ev-mv35yyvp-019ac755 (P5c: the three cases unknown, 'by 11:30' known).\n\nFINDING TR-D-14 -> CHANGE: the local textNorm.includes check is gone; quoteGrounded runs d1's validateExtraction(probe, { text }) for EVERY user_text field (numeric, productType, material, deadline), so the presence check and the whole-number alignment (TR-D-12) have one source in d3 and the NOT_QUOTED rule applies to every kind. -> TEST: extract.test.js 'a non-numeric user_text field whose quote is not in the request text is unknown and asked (TR-D-14)' (material 'plastic' quoted 'plastic cups', productType 'lids' quoted 'lids only', deadline quoted 'by noon, 11:00', empty and null quotes; the grounded forms stay known) and the route test with TR-D-12's 200-from-1,200 and TR-D-13 together. -> MUTANTS: quoteGrounded forced true gives 6 red; the check applied to numbers only gives 2 red (the TR-D-14 tests); restored. The reviewer's M2 literal (a local includes removed) no longer exists as a separate line: the single guard is the validator call, which both mutants cover. -> EVIDENCE: ev:ev-mv35wtzv-019b1a11, ev:ev-mv35y9yl-01935e86.\n\nFINDING TR-D-16 -> CHANGE: src/main.js registers SIGINT, SIGTERM and SIGHUP with process.on (not once) and an idempotent stop() (the stopping flag swallows repeats). -> TEST: uploads-retention.test.js 'TR-D-16' (two tests, a real src/index.js server with RS_MODEL_PROVIDER=cli and the stub claude on a PATH of the stub directory and /usr/bin:/bin only; /api/config confirms provider cli): SIGHUP with an extract in flight exits 0 and the child and grandchild are gone; a SIGTERM-ignoring child, SIGTERM then a second SIGTERM, SIGHUP and SIGINT 200 ms later: the server waits out the grace period, exits 0 and the child is gone. Both failed first (the server died of SIGHUP / SIGTERM). -> MUTANTS: SIGHUP removed gives 2 red; process.once restored gives 1 red (test 2); restored. Ran 6 times in a row, green. -> EVIDENCE: ev:ev-mv35wtzv-019b1a11, ev:ev-mv35y9yl-01935e86. The runner's SIGHUP (exit 129) belongs to d2.\n\nVerification: the d3 plan command verbatim 118/118 pass (was 111; +7 tests) ev:ev-mv35wtzv-019b1a11; npm test 1288 tests, 1280 pass, 0 fail, 8 skipped (the same eight), 0 todo, NFR5 p95 110.5 ms ev:ev-mv35y9yl-01935e86 (d1's and d2's current files green); npm run test:browser 8/8 ev:ev-mv35ykbj-01748e81.",
+  "filesChanged": [
+    "src/services/extraction.js",
+    "src/main.js",
+    "test/api/extract.test.js",
+    "test/api/extract-image.test.js",
+    "test/api/uploads-retention.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv35wtzv-019b1a11",
+    "ev:ev-mv35y9yl-01935e86",
+    "ev:ev-mv35ykbj-01748e81",
+    "ev:ev-mv35yyvp-019ac755"
+  ],
+  "remainingIssues": [
+    "The mutant runs (sed on a scratch-backed copy, each restored and cmp-checked) are not recorded evidence runs; their results are in completedWork and the reviewer can reproduce them from the one-line changes named there.",
+    "The deadline's date part is not grounded: '2026-10-21T11:30' quoted 'tomorrow by 11:30' stays known on the time alone; a relative date cannot be matched without a calendar. The buyer confirms it. Arabic am/pm markers (ص, م) are not read, so an Arabic 'الساعة ٣ م' deadline is unknown and asked (safe direction).",
+    "capacityMl and diameterMm with provenance image still have no OCR check (SEC-D-3, SEC-D-14): a model that says image for 1999 ml is stored known 'From the photo'; the buyer confirms.",
+    "SEC-D-13 (lexical grounding: a quote that belongs to another field grounds its number) is unchanged.",
+    "TR-D-15 (close() settles a killed call at 0) and the runner's SIGHUP are d2's files, not changed here.",
+    "The SIGKILL residual (FU-28) is unchanged: a SIGKILLed server still leaves its CLI child; FU-28's text and g2's runbook should name SIGHUP and the double signal as now handled and SIGKILL as not."
+  ],
+  "nextAction": "reviewer: re-run P5 by path (ev:ev-mv35yyvp-019ac755 shows the four claims unknown with a photo), re-run the TR-D-11/13/14/16 mutants, and decide the phase D gate.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson concerns a hook or guard that maps file writes to a project root in a repository with several records; this rework changes extraction normalisation, signal handling in main.js and API tests, none of which is a hook, guard or root discovery, and the nested record accepted every edit of mine (the guard's refusals were of raw command text, the lesson's own 'Not applicable when' raw-text class)."
+    }
+  ]
+}

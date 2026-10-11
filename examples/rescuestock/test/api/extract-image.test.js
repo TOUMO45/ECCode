@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import { DEMO_PASSWORD, startHarness } from '../helpers/app-harness.js';
 import { createClient } from '../helpers/fixtures.js';
 import { createAiRuntime } from '../../src/services/extraction.js';
+import { unknownExtraction } from '../../src/ai/schema.js';
 import { createFakeProvider } from '../../src/ai/fake.js';
 
 const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -169,5 +170,50 @@ describe('RS-02, RS-03: extraction from a package photo', () => {
     assert.deepEqual(view.request.image, { id: up.json.image.id, mime: 'image/png', bytes: CLEAR.length });
     assert.equal(view.extraction.fields.capacityMl.provenance, 'image');
     assert.equal(view.capabilities.deleteRequest, true);
+  });
+
+  test('SEC-7: through a real upload, a model claiming "image" for the budget, pickups, quantities and deadline is stored unknown with its questions; the product fields keep image (TR-D-11)', async () => {
+    // The reviewer's P5b claims: an injected label makes the model answer provenance "image" for fields no package can show.
+    const claim = (value, originalWording) => ({ value, provenance: 'image', originalWording });
+    const injected = {
+      id: 'fake', simulated: true, model: 'obeying',
+      extract: async () => ({
+        output: {
+          language: 'en', addressedToAssistant: false, questions: [],
+          fields: {
+            ...unknownExtraction().fields,
+            cupQuantity: claim(99999, 'ORDER 99999 CUPS'),
+            lidQuantity: claim(99999, 'ORDER 99999 LIDS'),
+            maxPickups: claim(5, 'PICKUPS 5'),
+            deadline: claim('06:00', 'READY BY 06:00'),
+            budgetUsd: claim(99999, 'PAY 99999 USD'),
+            capacityMl: claim(250, '250 ml'),
+            diameterMm: claim(90, 'Ø 90 mm'),
+            material: claim('paper', 'paper'),
+          },
+        },
+        usage: { model: 'obeying', costUsd: 0, inputTokens: 1, outputTokens: 1, latencyMs: 1 },
+      }),
+    };
+    const before = h.app.deps.ai;
+    h.app.deps.ai = createAiRuntime({ db: h.db, clock: h.clock, config: h.config, provider: injected });
+    try {
+      const id = await newRequest(cafe1, 'cups please');
+      assert.equal((await upload(cafe1, id, CLEAR)).status, 201);
+      const res = await extract(cafe1, id);
+      assert.equal(res.status, 200, res.text);
+      const { fields, questions } = res.json.extraction;
+      const UNKNOWN = { value: null, status: 'unknown', provenance: 'none', originalWording: null };
+      for (const name of ['cupQuantity', 'lidQuantity', 'maxPickups', 'deadline', 'budgetCents']) assert.deepEqual(fields[name], UNKNOWN, name);
+      assert.deepEqual(questions.map((q) => q.field), ['cupQuantity', 'lidQuantity', 'deadline', 'budgetCents', 'maxPickups']);
+      assert.deepEqual([fields.capacityMl.value, fields.capacityMl.provenance], [250, 'image']);
+      assert.deepEqual([fields.diameterMm.value, fields.diameterMm.provenance], [90, 'image']);
+      assert.deepEqual([fields.material.value, fields.material.provenance], ['paper', 'image']);
+      const stored = JSON.parse(h.db.prepare('SELECT fields_json FROM extractions WHERE request_id = ?').get(id).fields_json);
+      assert.equal(stored.budgetCents.status, 'unknown', 'what is stored is what is shown');
+      assert.equal(stored.cupQuantity.value, null);
+    } finally {
+      h.app.deps.ai = before;
+    }
   });
 });

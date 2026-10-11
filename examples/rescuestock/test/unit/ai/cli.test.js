@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { delimiter, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   CLI_ENV_ALLOW, CLI_MAX_CONCURRENT, CLI_OUTPUT_CAP_BYTES, REPHRASE_WIRE_SCHEMA, buildArgv, buildChildEnv, buildStdinLine, cliVersion,
@@ -15,6 +15,8 @@ import { SYSTEM_PROMPT, buildExtractionPrompt } from '../../../src/ai/prompt.js'
 import { isProviderError } from '../../../src/ai/provider.js';
 import { EXTRACTION_WIRE_SCHEMA, validateExtraction } from '../../../src/ai/schema.js';
 import { CONTRACT_CORE, CONTRACT_TEXT, assertProviderContract } from '../../eval/lib/provider-contract.js';
+import { createGate } from '../../../src/ai/gate.js';
+import { insertUser, openTestDb } from '../auth/helpers.js';
 
 const STUB = fileURLToPath(new URL('../../fixtures/extraction/stub-claude.mjs', import.meta.url));
 const TRANSCRIPT = fileURLToPath(new URL('../../fixtures/extraction/cli-transcript.ndjson', import.meta.url));
@@ -22,6 +24,10 @@ const root = mkdtempSync(join(tmpdir(), 'rs-cli-test-'));
 after(() => rmSync(root, { recursive: true, force: true }));
 
 let seq = 0;
+// SEC-D-17: the child PATH is the stub directory ALONE. The wrapper's shebang and the stub's node are absolute paths, so
+// nothing else is needed, and no directory that may hold a logged-in `claude` (a developer's /usr/local/bin, the node
+// directory, $HOME/.local/bin) is ever searched. Every provider also gets `command` as the stub's absolute path, so a
+// missing stub can never fall back to a real binary.
 // A fresh sandbox per call: bin/claude wrapper for one stub mode, an empty TMPDIR, and a hostile parent environment.
 function sandbox(mode) {
   const dir = join(root, `case-${seq += 1}`);
@@ -31,17 +37,28 @@ function sandbox(mode) {
   mkdirSync(tmp, { recursive: true });
   writeFileSync(join(bin, 'claude'), `#!/bin/sh\nexec "${process.execPath}" "${STUB}" ${mode} "$@"\n`, { mode: 0o755 });
   const env = {
-    PATH: `${bin}${delimiter}${process.env.PATH}`, HOME: dir, TMPDIR: tmp, LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8',
+    PATH: bin, HOME: dir, TMPDIR: tmp, LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8',
     RS_ADMIN_PASSWORD: 'super-secret-admin', RS_FAKE_WEBHOOK_SECRET: 'whsec', ANTHROPIC_API_KEY: 'test-key-not-a-secret', NODE_OPTIONS: '--no-warnings',
   };
   const report = () => JSON.parse(readFileSync(join(tmp, 'stub-report.json'), 'utf8'));
-  return { dir, bin, tmp, env, report, provider: (opts = {}) => createCliProvider({ env, tmpRoot: tmp, callCapMicroUsd: 50_000, ...opts }) };
+  const command = join(bin, 'claude');
+  return { dir, bin, tmp, env, command, report, provider: (opts = {}) => createCliProvider({ env, tmpRoot: tmp, callCapMicroUsd: 50_000, command, ...opts }) };
 }
 const call = (provider, extra = {}) => provider.extract({ text: CONTRACT_TEXT, image: null, signal: new AbortController().signal, ...extra });
 const code = (promise) => promise.then(() => assert.fail('expected a rejection'), (err) => {
   assert.ok(isProviderError(err), `not a ProviderError: ${err?.stack}`);
   return err;
 });
+// TR-D-15: unknown-at-cap = the per-call cap as integer micro-dollars, in the full usage shape of the provider contract
+// (the gate reads costMicroUsd; the service watchdog's timeout carries { costMicroUsd: cap } and is charged the same).
+function assertUnknownAtCap(usage, capMicroUsd) {
+  assert.ok(usage && typeof usage === 'object', 'the rejection carries a usage');
+  assert.equal(usage.costMicroUsd, capMicroUsd);
+  assert.equal(usage.costUsd, capMicroUsd / 1_000_000);
+  assert.equal(typeof usage.model, 'string');
+  assert.deepEqual([usage.inputTokens, usage.outputTokens], [0, 0]);
+  assert.ok(Number.isFinite(usage.latencyMs) && usage.latencyMs >= 0);
+}
 const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3, 4, 5]);
 
 describe('argv, environment and process hygiene (T25)', () => {
@@ -66,7 +83,7 @@ describe('argv, environment and process hygiene (T25)', () => {
     assert.equal(formatMicroUsd(1), '0.000001');
     assert.throws(() => formatMicroUsd(0.5), RangeError);
     const sb = sandbox('transcript');
-    const p = createCliProvider({ env: sb.env, tmpRoot: sb.tmp, callCapMicroUsd: 100_000 });
+    const p = createCliProvider({ env: sb.env, tmpRoot: sb.tmp, callCapMicroUsd: 100_000, command: sb.command });
     assert.equal(p.model, 'haiku');
     await call(p);
     const argv = sb.report().argv;
@@ -108,6 +125,7 @@ describe('argv, environment and process hygiene (T25)', () => {
     const sb = sandbox('hang');
     const err = await code(call(sb.provider({ timeoutMs: 600 })));
     assert.equal(err.code, 'PROVIDER_TIMEOUT');
+    assertUnknownAtCap(err.usage, 50_000); // TR-D-15: a killed started child is unknown-at-cap, the same marker close() uses
     const pid = Number(readFileSync(join(sb.tmp, 'grandchild.pid'), 'utf8'));
     // A killed process whose parent is gone may linger as a zombie until init reaps it; a zombie is dead.
     const running = () => {
@@ -283,7 +301,7 @@ describe('failures map to ProviderError codes (RS-03 degraded path)', () => {
 
   test('T25: cliVersion reads `claude --version` without a model call and returns null when absent', async () => {
     const sb = sandbox('transcript');
-    assert.equal(await cliVersion({ env: sb.env }), '2.1.296');
+    assert.equal(await cliVersion({ env: sb.env, command: sb.command }), '2.1.296');
     assert.equal(await cliVersion({ env: { PATH: join(sb.dir, 'nowhere') } }), null);
   });
 
@@ -380,7 +398,7 @@ describe('close() and the exit hook leave no CLI child behind (TR-D-9, SEC-D-2)'
   test('TR-D-9: process.exit() in the parent (what stop() does) kills the child through the exit hook', async () => {
     const sb = sandbox('hang');
     const run = spawnSync(process.execPath, [DRIVER, sb.bin, sb.tmp, 'exit'], {
-      env: { PATH: '/usr/bin:/bin', HOME: sb.dir, LANG: 'C.UTF-8' }, encoding: 'utf8', timeout: 30_000,
+      env: { PATH: sb.bin, HOME: sb.dir, LANG: 'C.UTF-8' }, encoding: 'utf8', timeout: 30_000,
     });
     assert.equal(run.status, 0, run.stderr);
     assert.match(run.stdout, /ready/);
@@ -388,6 +406,78 @@ describe('close() and the exit hook leave no CLI child behind (TR-D-9, SEC-D-2)'
     const grandchild = readPid(sb.tmp, 'grandchild.pid');
     assert.ok(await until(() => !pidRunning(child)), 'the child did not survive its parent');
     assert.ok(await until(() => !pidRunning(grandchild)), 'nor did its process group');
+    // SEC-D-17: the exit hook also removes the (empty) temp cwd, synchronously.
+    assert.deepEqual(readdirSync(sb.tmp).filter((n) => n.startsWith('rs-cli-')), [], 'no temp cwd is left by the exit hook');
+  });
+
+  // TR-D-15 / SEC-D-16: a killed CLI call may already have been billed up to --max-budget-usd, so a call ended by close()
+  // reports usage exactly like the service watchdog's timeout does: { costMicroUsd: <the per-call cap> }. gate.run then
+  // refunds it at the cap, never at 0.
+  test('TR-D-15: a call in flight when close() runs rejects PROVIDER_UNAVAILABLE carrying the per-call cap as its usage', async () => {
+    const sb = sandbox('hang');
+    const provider = sb.provider({ timeoutMs: 120_000, callCapMicroUsd: 70_000 });
+    const pending = code(call(provider));
+    assert.ok(await until(() => hasPidFiles(sb.tmp, ['child.pid'])), 'the stub child is running');
+    await provider.close();
+    const err = await pending;
+    assert.equal(err.code, 'PROVIDER_UNAVAILABLE');
+    assertUnknownAtCap(err.usage, 70_000); // the same charge the watchdog timeout carries
+    assert.deepEqual(readdirSync(sb.tmp).filter((n) => n.startsWith('rs-cli-')), []);
+  });
+
+  test('TR-D-15: a child that ignores SIGTERM and is SIGKILLed after the grace period is also charged at the cap', async () => {
+    const sb = sandbox('stubborn');
+    const provider = sb.provider({ timeoutMs: 120_000, killGraceMs: 100 });
+    const pending = code(call(provider));
+    assert.ok(await until(() => hasPidFiles(sb.tmp, ['child.pid'])));
+    await provider.close();
+    assertUnknownAtCap((await pending).usage, 50_000);
+  });
+
+  test('TR-D-15: the ledger charges the cap for a call ended by close(); an unchanged call still settles at its reported usage', async () => {
+    const fx = openTestDb();
+    try {
+      const gate = createGate({ db: fx.db, clock: fx.clock, limits: { customerDailyShare: 1, dailyBudgetMicroUsd: 1_000_000, callCapMicroUsd: 50_000 } });
+      const rowsOf = (id) => fx.db.prepare('SELECT status, reserved_micro_usd AS reserved, actual_micro_usd AS actual FROM model_spend WHERE customer_id = ? ORDER BY id').all(id).map((r) => ({ ...r }));
+      // A normal call: settled at the cost the CLI reported (1300), not at the cap.
+      const a = insertUser(fx.db, { username: 'cli-ledger-a' });
+      const ok = sandbox('transcript').provider();
+      await gate.run({ customerId: a, call: () => call(ok) });
+      assert.deepEqual(rowsOf(a), [{ status: 'settled', reserved: 50_000, actual: 1300 }]);
+      // A failed call that reported a billed usage keeps that usage (not the cap).
+      const b = insertUser(fx.db, { username: 'cli-ledger-b' });
+      await assert.rejects(gate.run({ customerId: b, call: () => call(sandbox('schema-extra').provider()) }), { code: 'PROVIDER_BAD_OUTPUT' });
+      assert.deepEqual(rowsOf(b), [{ status: 'settled', reserved: 50_000, actual: 1300 }]);
+      // A call killed by close(): charged at the cap, like a timeout.
+      const c = insertUser(fx.db, { username: 'cli-ledger-c' });
+      const sb = sandbox('hang');
+      const provider = sb.provider({ timeoutMs: 120_000 });
+      const running = gate.run({ customerId: c, call: () => call(provider) });
+      const outcome = running.then(() => null, (err) => err);
+      assert.ok(await until(() => hasPidFiles(sb.tmp, ['child.pid'])));
+      assert.deepEqual(rowsOf(c), [{ status: 'reserved', reserved: 50_000, actual: null }]);
+      await provider.close();
+      assert.equal((await outcome).code, 'PROVIDER_UNAVAILABLE');
+      assert.deepEqual(rowsOf(c), [{ status: 'settled', reserved: 50_000, actual: 50_000 }], 'charged at the cap, not refunded at 0');
+    } finally {
+      fx.close();
+    }
+  });
+
+  test('TR-D-15: a call that never started a process (closed before spawn, or an unavailable binary) is not charged', async () => {
+    const sb = sandbox('transcript');
+    const closed = sb.provider();
+    await closed.close();
+    assert.equal((await code(call(closed))).usage, undefined, 'no process, nothing billed');
+    const missing = createCliProvider({ env: { ...sb.env, PATH: join(sb.dir, 'nowhere') }, tmpRoot: sb.tmp, command: join(sb.dir, 'nowhere', 'claude') });
+    assert.equal((await code(call(missing))).usage, undefined);
+  });
+
+  test('SEC-D-17: the sandbox PATH is the stub directory alone and every provider gets the stub as an absolute command', () => {
+    const sb = sandbox('transcript');
+    assert.equal(sb.env.PATH, sb.bin);
+    assert.equal(sb.command, join(sb.bin, 'claude'));
+    assert.deepEqual(readdirSync(sb.bin), ['claude']);
   });
 
   test('TR-D-9: no child stays registered after a normal call or a timeout', async () => {

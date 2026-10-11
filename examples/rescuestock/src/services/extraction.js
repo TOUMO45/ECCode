@@ -348,14 +348,59 @@ function localDeadline(value, requestDay) {
   return full;
 }
 
-// A numeric user_text value must occur in its own quote, as digits of either script or as a number word (including the Arabic
-// dual forms). This is d1's rule (validateExtraction with the request text: NUMBER_NOT_IN_INPUT); it is applied to ONE field,
-// on an otherwise all-unknown output, so the field is downgraded to unknown and the rest of the answer is kept. A quote with
-// no digits grounds nothing (TR-D-1 / SEC-D-1).
-function numberGroundedInQuote(wire, field, text) {
+// A user_text field must be quoted from the request text, whatever its kind. This runs d1's validateExtraction with the request
+// text on ONE field of an otherwise all-unknown output, so the field is downgraded to unknown and the rest of the answer is
+// kept. d1's rules decide: the quote has to occur in the text (NOT_QUOTED, every field kind), and a numeric value has to occur
+// in its own quote as digits of either script or as a number word, with the quote aligned to whole numbers in the text
+// (NUMBER_NOT_IN_INPUT: a quote with no digits grounds nothing, and "250" is not grounded by "2500"; TR-D-1, TR-D-12, TR-D-14).
+// This is the single place that checks the quote, so removing it is seen by the non-numeric tests as well.
+function quoteGrounded(wire, field, text) {
   const probe = unknownExtraction();
   probe.fields[wire] = { value: field.value, provenance: 'user_text', originalWording: field.originalWording };
   return validateExtraction(probe, { text }).ok === true;
+}
+
+// Provenance "image" is a claim that the value is legibly printed on the package, so the server accepts it only for what a
+// package can carry: the product type, the material, the capacity and the diameter. The quantities, the pickup limit, the
+// deadline and the budget are never on a photo; an image claim for them is downgraded to unknown and asked (TR-D-11,
+// dec-mv35aank-0169ec16), whatever the photo is and whatever an injected label says. Anything not listed here is refused.
+export const IMAGE_PROVENANCE_FIELDS = Object.freeze(['productType', 'material', 'capacityMl', 'diameterMm']);
+
+// A deadline quoted from the text must carry its time as written (TR-D-13). The wire form is HH:MM or YYYY-MM-DDTHH:MM, so the
+// time is the last five characters. In the text it is "H:MM" or "HH:MM" (digits of either script, folded by normalizeForCompare)
+// or an hour with am/pm ("11 am", "11:30 p.m."). A time counts only when it is aligned like a number (not part of a longer
+// digit run such as 111:30, nor of 11:305 or 1.11:30) and when it lies inside an occurrence of the quote in the text. "for the
+// weekend" carries no time, so any deadline claimed from it is unknown. This is implemented here, not in d1's validator, which
+// treats the deadline as a plain string. The date part of a full date-time is not matched (a relative "tomorrow" cannot be
+// matched without a calendar); the buyer confirms it.
+const CLOCK_TOKEN = /(?<![\d.,:])(\d{1,2}):([0-5]\d)(?!\d|[.,:]\d)/gu;
+const MERIDIEM_TOKEN = /(?<![\d.,:])(\d{1,2})(?::([0-5]\d))?\s?([ap])\.?m\.?(?![\p{L}\d])/giu;
+
+function timesInText(textNorm) {
+  const found = [];
+  for (const m of textNorm.matchAll(MERIDIEM_TOKEN)) {
+    const hour12 = Number(m[1]);
+    if (hour12 < 1 || hour12 > 12) continue;
+    const hour = (hour12 % 12) + (m[3].toLowerCase() === 'p' ? 12 : 0);
+    found.push({ start: m.index, end: m.index + m[0].length, hhmm: `${String(hour).padStart(2, '0')}:${m[2] ?? '00'}` });
+  }
+  const meridiem = found.slice();
+  for (const m of textNorm.matchAll(CLOCK_TOKEN)) {
+    const hour = Number(m[1]);
+    const inside = meridiem.some((t) => m.index >= t.start && m.index < t.end); // "12:15 a.m." is read once, as 00:15
+    if (hour <= 23 && !inside) found.push({ start: m.index, end: m.index + m[0].length, hhmm: `${String(hour).padStart(2, '0')}:${m[2]}` });
+  }
+  return found;
+}
+
+function deadlineTimeInQuote(value, quote, textNorm) {
+  if (typeof value !== 'string' || quote === '') return false;
+  const wanted = value.slice(-5);
+  const times = timesInText(textNorm).filter((t) => t.hhmm === wanted);
+  for (let at = textNorm.indexOf(quote); at !== -1; at = textNorm.indexOf(quote, at + 1)) {
+    if (times.some((t) => t.start >= at && t.end <= at + quote.length)) return true;
+  }
+  return false;
 }
 
 /**
@@ -363,7 +408,9 @@ function numberGroundedInQuote(wire, field, text) {
  * `output` is a validated ExtractionOutput. Each rule downgrades ONE field to unknown, adds its question, and never rejects
  * the whole output (spec: Post-validation normalisation):
  *   ranges (quantities 1-100000, capacity 30-2000 ml, diameter 40-150 mm, pickups 1-5, budget 1-1,000,000 USD);
- *   grounding (a user_text quote must be a substring of the request text after NFC, whitespace and digit folding);
+ *   grounding (a user_text quote must be a substring of the request text after NFC, whitespace and digit folding, for every field;
+ *     a number must be in its own quote, aligned to whole numbers; a deadline's time must be in its quote);
+ *   image provenance only for productType, material, capacityMl and diameterMm (IMAGE_PROVENANCE_FIELDS);
  *   image provenance without an image; a currency other than USD in the wording (budget unknown, "state it in US dollars");
  *   image wording stripped of URLs, e-mail addresses and phone runs and cut to 80 characters.
  * `fields` is keyed by the confirmed names (budgetUsd becomes budgetCents); `questions` is Question[] from server templates.
@@ -382,12 +429,11 @@ export function normaliseExtraction(output, { text, requestDay, hasImage }) {
     let wording = null;
     let ok = true;
     if (f.provenance === 'user_text') {
-      const quote = typeof f.originalWording === 'string' ? normalizeForCompare(f.originalWording) : '';
-      ok = quote !== '' && textNorm.includes(quote);
-      if (ok && typeof value === 'number') ok = numberGroundedInQuote(wire, f, text); // TR-D-1: digits or a number word, never "no digits"
+      ok = quoteGrounded(wire, f, text); // in the text; a number in its own quote, aligned to whole numbers (TR-D-1, TR-D-12, TR-D-14)
+      if (ok && wire === 'deadline') ok = deadlineTimeInQuote(value, normalizeForCompare(f.originalWording), textNorm); // TR-D-13
       wording = ok ? takeCodePoints(f.originalWording.replace(/\s+/gu, ' ').trim(), MAX_WORDING_CHARS) : null;
     } else if (f.provenance === 'image') {
-      ok = hasImage === true;
+      ok = hasImage === true && IMAGE_PROVENANCE_FIELDS.includes(wire); // TR-D-11: a package shows no quantity, limit, deadline or budget
       wording = ok ? sanitizeImageWording(f.originalWording) : null;
     } else {
       ok = false;

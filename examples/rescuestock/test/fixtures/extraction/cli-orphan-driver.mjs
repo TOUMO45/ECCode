@@ -5,12 +5,13 @@
 //   exit          calls process.exit(0) at once (what main.js stop() does) and relies on the adapter's exit hook;
 //   sigterm-wait  keeps running with the default SIGTERM disposition (the test kills it from outside).
 import { existsSync } from 'node:fs';
-import { delimiter, join } from 'node:path';
+import { join } from 'node:path';
 import { createCliProvider } from '../../../src/ai/cli.js';
 
 const [binDir, tmpDir, action] = process.argv.slice(2);
 const provider = createCliProvider({
-  env: { PATH: `${binDir}${delimiter}${process.env.PATH}`, HOME: tmpDir, TMPDIR: tmpDir, LANG: 'C.UTF-8' },
+  command: join(binDir, 'claude'), // SEC-D-17: the stub's absolute path; PATH is the stub directory alone
+  env: { PATH: binDir, HOME: tmpDir, TMPDIR: tmpDir, LANG: 'C.UTF-8' },
   tmpRoot: tmpDir,
   timeoutMs: 120_000,
 });
