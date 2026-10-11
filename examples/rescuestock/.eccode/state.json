@@ -1,6 +1,6 @@
 {
-  "seq": 1294,
-  "lastHash": "70f960a2c67f7f22e80edfad3e611a779b58ce772e9cecc03d0491d8901cd6d1",
+  "seq": 1299,
+  "lastHash": "38fb96e5195001672775108c2a9ec04706de52b5c56bb93ba34a09f99bd699ae",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -4934,10 +4934,36 @@
     "phase:rework-5": {
       "id": "phase:rework-5",
       "kind": "phase",
-      "status": "in_progress",
+      "status": "submitted",
       "iterations": 0,
-      "authors": [],
-      "submissions": [],
+      "authors": [
+        "delivery-lead"
+      ],
+      "submissions": [
+        {
+          "id": "sub-mv43raev-013fd872",
+          "actor": "delivery-lead",
+          "at": "2026-10-11T17:33:59.287Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/rework-5/submission.md",
+              "sha256": "a4e784a6d2bfa583db6de32ba7642a9d9f97cb3813186e0f457fc24a4f8f0fa1"
+            },
+            {
+              "path": "test/api/lost-response.test.js",
+              "sha256": "cd21749c7c15b835b32e003cec72c4160536fae6978821d4d86121fe1c44358a"
+            },
+            {
+              "path": "test/api/admin-basic.test.js",
+              "sha256": "261761d4894dbfa0e9093d1be6ae461d34d083da96def114ee252035b7a885c9"
+            }
+          ],
+          "respondsTo": null,
+          "notes": "rework-5 (dec-mv41b2g0-018dc143), test-only, handoff ho-mv43etq7-01598938, commit 0c7b37b: RS-25 trail with the holder's read (FU-41a); refund_order sends exactly one so:<id>:refund:1. No src change. Mine: lost-response 9/9 ev:ev-mv43h435-01f07b7f; admin-basic 18/18 ev:ev-mv43h9ea-01f7dc8a; npm test 2267/2258/1 fail/8 skipped ev:ev-mv43keu0-0102c57c (SEC-B-1 per-call 100 ms timing under a concurrent npm test, 186.9 ms; alone 3/3 ev:ev-mv43mxck-01694576); re-run 2267/2259/0 fail/8 skipped ev:ev-mv43pho4-01ad5c59. Mutants 3 red, 1 explained survivor. Technical review proportionate.",
+          "commit": "7a4c16a716fa7f35cf4a06cdc75d4dadc4d55b61",
+          "tree": "8687eb0824926f384d07ed0773dd78f045bff3c00c52931ca12445aa17cd90ba"
+        }
+      ],
       "reviews": [],
       "openFindings": [],
       "approvedBy": null,
@@ -34801,6 +34827,30 @@
       "task": null,
       "gate": "phase:rework-5",
       "startedAt": "2026-10-11T17:25:06.972Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T17:34:33.585Z",
+      "durationMinutes": 9.44,
+      "costUsd": null,
+      "tokens": 75677,
+      "note": "delivery-lead submitted phase:rework-5 sub-mv43raev-013fd872; first npm test red on SEC-B-1 per-call timing under CPU contention, re-run green ev-mv43pho4-01ad5c59",
+      "usageReported": true
+    },
+    "run-mv43sccu-01ff2342": {
+      "id": "run-mv43sccu-01ff2342",
+      "agent": "technical-reviewer",
+      "task": null,
+      "gate": "phase:rework-5",
+      "startedAt": "2026-10-11T17:34:48.561Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv43scns-01e8c28e": {
+      "id": "run-mv43scns-01e8c28e",
+      "agent": "delivery-lead",
+      "task": null,
+      "gate": "phase:f-compensation",
+      "startedAt": "2026-10-11T17:34:48.962Z",
       "status": "running",
       "attempt": 1
     }
@@ -35445,6 +35495,16 @@
       "lessons": [],
       "at": "2026-10-11T16:25:23.435Z",
       "by": "orchestrator"
+    },
+    "dec-mv43s14b-01addb18": {
+      "id": "dec-mv43s14b-01addb18",
+      "title": "Serialize full-suite evidence runs across agents",
+      "decision": "From now on every full-suite evidence run (npm test, npm run test:browser, and any verification command containing them) is wrapped as: flock /tmp/rescuestock-suite.lock <command>. Smaller targeted runs are not wrapped.",
+      "rationale": "Two concurrent full suites on this 4-CPU machine produced two different timing failures in one hour: the RS-39 retention race (ev-mv43j15k-01209f8b) and a SEC-B-1 per-call planner limit at 186.9 ms against 100 ms (ev-mv43keu0-0102c57c), both green on re-run. Contention-induced failures cost a re-run each and blur real regressions. A lock keeps parallel agent work while making suite timing comparable. The SEC-B-1 per-call bound itself is routed to phase G g3 as FU-46 (consider the p95 the test already computes), not changed here.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T17:34:34.065Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -35457,8 +35517,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1502.57,
-    "tokens": 18661019
+    "runtimeMinutes": 1512.01,
+    "tokens": 18736696
   },
   "delivery": null,
   "reworks": [
