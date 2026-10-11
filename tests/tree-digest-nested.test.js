@@ -160,6 +160,38 @@ test('TK-6 nested project: a dirty file under the project\'s .eccode/ does not n
   assert.strictEqual(d, expectedDigest(project));
 });
 
+// ------------------------------------------------------------------ review of 30061e5 (round 3), R2-1
+// The digest is content: it needs a work tree, not a resolving HEAD.
+
+test('TK-6 R2-1: on an unborn HEAD (a fresh repository before its first commit) the digest matches the oracle and moves on an edit', (t) => {
+  const repo = tmpDir(t, 'fresh');
+  initRepo(repo, { firstCommit: false });
+  write(repo, 'staged.js', 'module.exports = 1;\n');
+  git(repo, ['add', 'staged.js']);
+  write(repo, 'untracked.js', 'untracked\n');
+  write(repo, '.eccode/state.json', '{}\n');
+  const d1 = treeDigest(repo);
+  assert.match(String(d1), /^[0-9a-f]{64}$/, 'a fresh repository is inside git: the digest must not be null');
+  assert.strictEqual(d1, expectedDigest(repo));
+  write(repo, 'staged.js', 'module.exports = 2;\n');
+  const d2 = treeDigest(repo);
+  assert.notStrictEqual(d2, d1);
+  assert.strictEqual(d2, expectedDigest(repo));
+  // A nested project in the same fresh repository.
+  write(repo, 'nested/app/src/main.js', 'nested\n');
+  const project = path.join(repo, 'nested', 'app');
+  assert.strictEqual(treeDigest(project), expectedDigest(project));
+});
+
+test('TK-6 R2-1: after git checkout --orphan the digest is the same bytes\' digest as on the branch', (t) => {
+  const { repo, project } = nestedRepo(t);
+  write(project, 'src/main.js', 'module.exports = "dirty";\n');
+  const onBranch = treeDigest(project);
+  git(repo, ['checkout', '-q', '--orphan', 'side']);
+  assert.strictEqual(treeDigest(project), onBranch, 'same bytes, same digest, whatever HEAD is');
+  assert.strictEqual(treeDigest(project), expectedDigest(project));
+});
+
 // ------------------------------------------------------------------ review of cb73d42, round 2
 // Names a POSIX file system accepts and Windows does not (trailing spaces, quotes, newlines, CR).
 const POSIX_NAMES = { skip: process.platform === 'win32' ? 'file names Windows does not allow' : false };

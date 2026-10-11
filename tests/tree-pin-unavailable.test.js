@@ -19,8 +19,9 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { spawnSync } = require('child_process');
-const { tmpProject, write, approveThroughPlan, coverage, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD, samplePlan } = require('./helpers');
+const { spawnSync, execFileSync } = require('child_process');
+const { tmpProject, write, approveThroughPlan, coverage, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD, samplePlan, initRepo } = require('./helpers');
+const { loadConfig } = require('../lib/config');
 const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const evidence = require('../lib/evidence');
@@ -54,8 +55,32 @@ function withUnbornHead(dir, fn) {
   }
 }
 
+/** The project outside any git work tree for a while (a record begun without git, or by an older engine). */
+function withoutGit(dir, fn) {
+  const dotGit = path.join(dir, '.git');
+  const away = path.join(dir, '.git-away');
+  fs.renameSync(dotGit, away);
+  try {
+    return fn();
+  } finally {
+    fs.renameSync(away, dotGit);
+  }
+}
+
 function cli(dir, args) {
   return spawnSync(process.execPath, [BIN, '--root', dir, ...args], { encoding: 'utf8' });
+}
+
+function git(dir, ...args) {
+  return execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...args], { cwd: dir, encoding: 'utf8' }).trim();
+}
+
+/** A project in a fresh repository whose HEAD is unborn (no commit yet). */
+function freshProject() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-fresh-'));
+  initRepo(dir, { firstCommit: false });
+  const store = init(dir, { name: 'Fresh', idea: 'A project before its first commit' });
+  return { dir, store, config: loadConfig(dir) };
 }
 
 // ---------------------------------------------------------------------------------------------- F2
@@ -150,12 +175,13 @@ function recordWithCommitlessApprovals({ planCommitless = false } = {}) {
     gates.submit(store, config, gate, author, { artifacts: [file] });
     gates.recordReview(store, config, gate, reviewer, coverage(ctx, gate, [`artifact:${file}#${anchor}`]));
   };
-  withUnbornHead(dir, () => {
+  // Outside git the engine records no commit, as an engine older than 0.3.0 or TK-6's null digest did.
+  withoutGit(dir, () => {
     approve('architecture', 'product-architect', 'architecture-reviewer', '.eccode/artifacts/brief.md', ARCH_MD, 'Acceptance Criteria');
     approve('design', 'technical-designer', 'technical-reviewer', '.eccode/artifacts/spec.md', DESIGN_MD, 'Testing Strategy');
   });
   const plan = () => approve('plan', 'delivery-lead', 'technical-reviewer', '.eccode/artifacts/plan.json', JSON.stringify(samplePlan(), null, 2), 'phases');
-  if (planCommitless) withUnbornHead(dir, plan);
+  if (planCommitless) withoutGit(dir, plan);
   else plan();
   return ctx;
 }
@@ -208,4 +234,151 @@ test('F1 the delivery report qualifies its release sentence when the baseline ha
   assert.match(report, /approved on submissions that recorded no commit \(architecture, design\)/);
   assert.match(report, /changes made before .* that no approval pinned were not compared/);
   assert.match(report, /## Limitations and unverified items[\s\S]*Release-tree baseline gaps: architecture, design/);
+});
+
+// ------------------------------------------------------------------------- review of 30061e5 (round 3)
+// R2-1: "inside git" is a work tree, not a HEAD that resolves. A fresh repository before its first commit,
+// or one `git checkout --orphan` away, used to read as "outside git": no tree, no marker, no warning, and
+// a commit-less submission, which also bypassed the F2 refusal.
+
+test('R2-1 evidence run on an unborn HEAD records the tree (and the marker when there is no digest), with no warning', () => {
+  const { dir, store } = freshProject();
+  const run = passCheck(store, 'backend-engineer');
+  assert.match(String(run.tree), HEX, 'a fresh repository is inside git: the run is pinned');
+  assert.strictEqual(run.treeUnavailable, undefined);
+  const blind = withBrokenIndex(dir, () => passCheck(store, 'backend-engineer'));
+  assert.strictEqual(blind.treeUnavailable, true, 'inside a work tree with no digest: marked, even with HEAD unborn');
+  const res = cli(dir, ['evidence', 'run', '--actor', 'backend-engineer', '--label', 'fresh', '--json', '--', 'node -e "process.exit(0)"']);
+  assert.strictEqual(res.status, 0, res.stderr);
+  assert.match(JSON.parse(res.stdout).tree, HEX);
+  assert.doesNotMatch(res.stderr, /tree pinning/);
+});
+
+test('R2-1 gate submit on an unborn HEAD is refused (fresh repository, orphan HEAD) and records nothing', () => {
+  const fresh = freshProject();
+  gates.startGate(fresh.store, fresh.config, 'architecture', 'orchestrator');
+  write(fresh.dir, '.eccode/artifacts/brief.md', ARCH_MD);
+  const submit = (ctx) => gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
+  const err = expectCode(() => submit(fresh), 'NO_COMMIT');
+  assert.match(err.message, /HEAD does not resolve/);
+  assert.match(err.message, /make the first commit/);
+  assert.strictEqual(fresh.store.state().gates.architecture.submissions.length, 0);
+  git(fresh.dir, 'commit', '-q', '--allow-empty', '-m', 'first');
+  assert.strictEqual(submit(fresh).event.data.commit, gitHead(fresh.dir));
+
+  const ctx = tmpProject();
+  gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator');
+  write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD);
+  expectCode(() => withUnbornHead(ctx.dir, () => submit(ctx)), 'NO_COMMIT');
+  assert.strictEqual(ctx.store.state().gates.architecture.submissions.length, 0);
+});
+
+test('R2-1 a run recorded after git checkout --orphan is pinned: switched back and edited, completion refuses it as stale', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  const { store, config, dir } = ctx;
+  gates.startGate(store, config, 'phase:core', 'orchestrator');
+  tasks.claim(store, config, 'api', 'backend-engineer');
+  write(dir, 'src/server/app.js', 'module.exports = "bytes A";\n');
+  const branch = git(dir, 'rev-parse', '--abbrev-ref', 'HEAD');
+  git(dir, 'checkout', '-q', '--orphan', 'side');
+  const run = passCheck(store, 'backend-engineer');
+  git(dir, 'checkout', '-q', branch);
+  write(dir, 'src/server/app.js', 'module.exports = "bytes B";\n');
+  const complete = (ids) => tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', ids, ['src/server/app.js']));
+  const err = expectCode(() => complete([run.id]), 'INVALID_HANDOFF'); // 0.3.4 round 2 accepted it: the run had no tree
+  assert.match(err.message, new RegExp(`ev:${run.id} ran on different bytes`));
+  assert.match(String(run.tree), HEX, 'the run on the orphan HEAD is pinned');
+  complete([passCheck(store, 'backend-engineer').id]);
+  assert.strictEqual(store.state().tasks.api.status, 'done');
+});
+
+// R2-2: the gap states what is known (no commit recorded) and the possible causes, not TK-6 as the cause.
+test('R2-2 the gap text and the release sentence list the possible causes instead of asserting TK-6', () => {
+  const ctx = recordWithCommitlessApprovals();
+  const state = ctx.store.state();
+  const gaps = delivery.unreviewedChanges(state, ctx.dir).filter((c) => c.unpinned);
+  assert.strictEqual(gaps.length, 2);
+  for (const g of gaps) {
+    assert.match(g.problem, /recorded no commit \(possible causes: /);
+    assert.match(g.problem, /the project was not in a git work tree or HEAD did not resolve/);
+    assert.match(g.problem, /an engine older than 0\.3\.0/);
+    assert.match(g.problem, /0\.3\.0-0\.3\.3 dropped the commit with an unavailable tree digest \(TK-6, nested projects\)/);
+    assert.doesNotMatch(g.problem, /the tree digest was unavailable when it was submitted/);
+  }
+  const report = delivery.buildReport(state, { events: 1 }, { release: { commit: 'c'.repeat(40), tree: 'd'.repeat(64) }, events: [], baselineGaps: gaps });
+  assert.doesNotMatch(report, /because the tree digest was unavailable/);
+  assert.match(report, /recorded no commit \(architecture, design\); possible causes: /);
+});
+
+// R2-3: the baseline is the earliest approved commit in approval order and the gaps are the commit-less
+// approvals made before it in that order. Rework gates sit after every plan phase in gateOrder, so gate
+// order misplaced a rework approved before a later phase. Synthetic states over a real history.
+function history() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-order-'));
+  initRepo(dir);
+  const commit = (files, msg) => {
+    for (const [f, c] of Object.entries(files)) write(dir, f, c);
+    git(dir, 'add', '-A');
+    git(dir, 'commit', '-q', '-m', msg);
+    return git(dir, 'rev-parse', 'HEAD');
+  };
+  commit({ 'app.js': 'v1\n' }, 'c0');
+  const C1 = commit({ 'app.js': 'v2\n' }, 'c1');
+  const C2 = commit({ 'app.js': 'v3, never reviewed\n', 'other.js': 'never reviewed\n' }, 'c2');
+  return { dir, C1, C2 };
+}
+
+function syntheticState(gateList) {
+  const gate = ([id, commit, at]) => ({ id, status: 'approved', approvedAt: at, authors: [], approvedBy: 'r', iterations: 0, reviews: [], openFindings: [], submissions: [{ id: `sub-${id}`, artifacts: [], ...(commit ? { commit } : {}) }], approvedSubmission: `sub-${id}` });
+  return { gateOrder: gateList.map((g) => g[0]), gates: Object.fromEntries(gateList.map((g) => [g[0], gate(g)])), tasks: {}, evidence: { ev1: { id: 'ev1', kind: 'command', tree: 'f'.repeat(64) } } };
+}
+
+const RELEASE = { release: { ignore: [] } };
+
+test('R2-3 a rework approved with a commit before a phase approved later is the release-tree baseline', () => {
+  const { dir, C1, C2 } = history();
+  // gateOrder puts phase:e before the rework; the rework was approved first, on C1.
+  const state = syntheticState([['architecture', null, '2026-10-09T10:00:00.000Z'], ['phase:e', C2, '2026-10-13T10:00:00.000Z'], ['phase:rework-4', C1, '2026-10-12T10:00:00.000Z']]);
+  const all = delivery.unreviewedChanges(state, dir, RELEASE);
+  assert.deepStrictEqual(all.filter((c) => !c.unpinned).map((c) => `${c.path} ${c.problem}`).sort(), ['app.js modified after approval', 'other.js added after approval'], 'the C1→C2 changes no approval pinned are reported');
+  const gaps = all.filter((c) => c.unpinned);
+  assert.deepStrictEqual(gaps.map((g) => g.gate), ['architecture']);
+  assert.match(gaps[0].problem, new RegExp(`phase:rework-4's commit ${C1.slice(0, 12)}`));
+});
+
+test('R2-3 commit-less reworks approved before a pinned phase are listed as gaps, in approval order', () => {
+  const { dir, C2 } = history();
+  const state = syntheticState([
+    ['architecture', null, '2026-10-09T10:00:00.000Z'],
+    ['phase:d', null, '2026-10-11T10:00:00.000Z'],
+    ['phase:e', C2, '2026-10-13T10:00:00.000Z'],
+    ['phase:rework-1', null, '2026-10-10T10:00:00.000Z'],
+    ['phase:rework-3', null, '2026-10-12T10:00:00.000Z'],
+  ]);
+  const gaps = delivery.unreviewedChanges(state, dir, RELEASE).filter((c) => c.unpinned);
+  assert.deepStrictEqual(gaps.map((g) => g.gate), ['architecture', 'phase:rework-1', 'phase:d', 'phase:rework-3']);
+});
+
+test('R2-3 approval order comes from the event sequence of the approving reviews (timestamps may tie)', () => {
+  const { dir, C1, C2 } = history();
+  const at = '2026-10-12T10:00:00.000Z'; // the same millisecond for every approval
+  const state = syntheticState([['architecture', null, at], ['phase:e', C2, at], ['phase:rework-4', C1, at]]);
+  const approval = (seq, gate) => JSON.stringify({ seq, type: 'review.recorded', actor: 'technical-reviewer', data: { gate, reviewId: `rev-${gate}`, submissionId: `sub-${gate}`, review: { decision: 'approve' } } });
+  write(dir, '.eccode/events.jsonl', [approval(2, 'architecture'), approval(5, 'phase:rework-4'), approval(9, 'phase:e')].join('\n') + '\n');
+  const all = delivery.unreviewedChanges(state, dir, RELEASE);
+  assert.deepStrictEqual(all.filter((c) => !c.unpinned).map((c) => c.path).sort(), ['app.js', 'other.js']);
+  assert.deepStrictEqual(all.filter((c) => c.unpinned).map((c) => c.gate), ['architecture']);
+});
+
+// R2-6: runs recorded with tree pinning off are counted where a person looks.
+test('R2-6 audit counts the command runs recorded with tree pinning off', () => {
+  const { dir, store } = tmpProject();
+  withBrokenIndex(dir, () => passCheck(store, 'backend-engineer'));
+  passCheck(store, 'backend-engineer');
+  const res = cli(dir, ['audit']);
+  assert.strictEqual(res.status, 0, res.stdout + res.stderr);
+  assert.match(res.stdout, /Command runs recorded with tree pinning off \(treeUnavailable\): 1/);
+  const json = JSON.parse(cli(dir, ['audit', '--json']).stdout);
+  assert.deepStrictEqual(json.treeUnavailableRuns.length, 1);
 });

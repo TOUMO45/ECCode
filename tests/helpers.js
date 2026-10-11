@@ -61,10 +61,11 @@ x
  * setting is written with `git config` (repo-local, persisted), not `git -c`
  * on `init`, which is not.
  */
-function initRepo(dir) {
+function initRepo(dir, { firstCommit = true } = {}) {
   execFileSync('git', ['init', '-q'], { cwd: dir });
   execFileSync('git', ['config', 'core.autocrlf', 'false'], { cwd: dir });
-  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  // firstCommit: false leaves HEAD unborn, a fresh repository before its first commit (TK-6 R2-1).
+  if (firstCommit) execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
 }
 
 function tmpProject({ configOverrides } = {}) {

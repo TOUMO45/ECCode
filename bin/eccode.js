@@ -207,8 +207,8 @@ function checkPositionals(positionals) {
 /** Tree pinning switched off inside git is said out loud (TK-6 F2), on stderr so --json output stays parseable. */
 function warnTreeUnavailable(data, what) {
   if (!data || !data.treeUnavailable) return;
-  const { TREE_UNAVAILABLE } = require('../lib/project');
-  process.stderr.write(`eccode: warning: ${TREE_UNAVAILABLE.replace('{what}', what)}\n`);
+  const { treeUnavailableWarning } = require('../lib/project');
+  process.stderr.write(`eccode: warning: ${treeUnavailableWarning(what)}\n`);
 }
 
 function print(flags, human, json) {
@@ -302,7 +302,10 @@ function main(argv) {
     case 'audit': {
       const res = store.audit();
       // Replay, not the snapshot: audit must work (and report) on a rolled-back log.
-      const all = require('../lib/delivery').unreviewedChanges(store.rebuild(), store.root);
+      const replayed = store.rebuild();
+      const all = require('../lib/delivery').unreviewedChanges(replayed, store.root);
+      // Runs recorded with tree pinning off are counted where a person looks (TK-6 R2-6).
+      const blindRuns = Object.values(replayed.evidence || {}).filter((e) => e.treeUnavailable).map((e) => e.id);
       // A change already submitted for review in a later gate is normal flow (a warning); an edit no
       // gate has seen is an audit failure. Delivery stays strict about both.
       // An approval whose submission recorded no commit leaves the release-tree diff without that baseline
@@ -313,8 +316,9 @@ function main(argv) {
       const ok = res.ok && !changes.length;
       const warn =
         (pending.length ? `\nPending re-review (not failures):\n- ${pending.map((c) => `${c.path} ${c.problem} (approved at ${c.gate})`).join('\n- ')}` : '') +
-        (gaps.length ? `\nRelease-tree baseline gaps (warnings):\n- ${gaps.map((c) => `${c.gate} ${c.problem}`).join('\n- ')}` : '');
-      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.${warn}` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}${warn}`, { ...res, unreviewedChanges: changes, pendingReview: pending, releaseBaselineGaps: gaps, ok });
+        (gaps.length ? `\nRelease-tree baseline gaps (warnings):\n- ${gaps.map((c) => `${c.gate} ${c.problem}`).join('\n- ')}` : '') +
+        (blindRuns.length ? `\nCommand runs recorded with tree pinning off (treeUnavailable): ${blindRuns.length} (${blindRuns.map((id) => `ev:${id}`).join(', ')}); they cannot be cited while the digest is available` : '');
+      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.${warn}` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}${warn}`, { ...res, unreviewedChanges: changes, pendingReview: pending, releaseBaselineGaps: gaps, treeUnavailableRuns: blindRuns, ok });
       return ok ? 0 : 2;
     }
     case 'deliver': {
@@ -325,6 +329,7 @@ function main(argv) {
         metrics = undefined;
       }
       const res = require('../lib/delivery').deliver(store, need(actor, '--actor'), { metrics, config });
+      warnTreeUnavailable(res, 'release');
       print(flags, `Delivered. Final handoff: ${res.report}${res.commit ? ` (release commit ${res.commit})` : ''}`, res);
       return 0;
     }
