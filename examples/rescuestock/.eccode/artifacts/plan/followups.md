@@ -329,3 +329,41 @@ Sources: the phase F handoffs (f1 ho-mv40suhb-012306c3; f2 ho-mv41a3s6-0138e24d;
     - the multi-process tests ran on Node 22.22 only; the spec's 22.5 pass condition is the user's run.
 18. **LIVE-DEPENDENT facts phase F relies on** (unchanged by f2): `final_capture`, `AUTHORIZATION_ALREADY_CAPTURED`, PayPal-Request-Id retention, the `EXPIRED` answer to a void (FU-45), capture DECLINED and PENDING, and refund PENDING/FAILED/COMPLETED semantics. RS-32(b) is LIVE-P2. **RISK-18's title names live RS-22 evidence, but no live file covers RS-22** (`test/live/paypal/` has rs18, rs19, rs20, rs23, rs24 and the Sandbox journey); g2/g3 should correct either the risk wording or LIVE-P1's scope.
 19. **Coverage note from TR-R5-1:** no f2 test reaches the `rejected` refund mapping (`calls.js` L296, `refund_pending → refund_failed`). `admin-refund-order.test.js` covers a 200 answer with status FAILED, not a `rejected` send. Since rework-5 iteration 2, `admin-basic.test.js` › `refund_order` pins it and kills the reviewer's mutant MB. The phase F reviewers may want an f2-side test as well.
+
+## Added after the phase F review (delivery-lead, 2026-10-11)
+
+Sources: `rev-mv45ljos-01f00a5d` (technical, TR-F-1..TR-F-7) with the FINAL security draft `.eccode/reviews/drafts/phase-f-security-1.md` (SEC-F-1, SEC-F-I1..I7), the f2 reset handoff `ho-mv46cije-013aeaff` (commit `66206c9`), and `.eccode/artifacts/phase-f/submission.md` › "Iteration 2".
+
+**Ownership.** No phase G task owns `src/services/admin.js`, `src/services/orders.js`, `src/routes/supplier.js`, `test/api/uploads-retention.test.js` or `test/timing/**`. Every item below that needs a change there needs either a user-authorised rework (`limits.maxReworks` is now 12, commit `88c6c4d`) or an orchestrator acceptance recorded for the verification report.
+
+### Changed items
+
+| # | Change |
+|---|---|
+| FU-33 | **Raised by TR-F-7 to the first change of phase G, before any further full-suite evidence is gathered.** The race is in the test, not in load: `retention.js` deletes the row (L37) and then unlinks the file asynchronously (L47). The test polls for the row only, then checks `existsSync` at once. Four recorded occurrences: ev:ev-mv43j15k-01209f8b, ev:ev-mv445oiq-01166891, ev:ev-mv44rydx-01958248, ev:ev-mv451ngy-01bf3721. **Owner: orchestrator** (no G task owns the test file): a rework or a scope extension of g3. Resolved when the test waits for the file as well, and three consecutive locked `npm test` runs pass it. |
+| FU-49 | **Resolved (TR-F-1, f2 reset `ho-mv46cije-013aeaff`).** `holdOperation` in `saga.js` puts a held operation back to `unknown` (prev_status `authorized`), keeping the original `unknown_since`. The F-TR-7 takeover exclusion and derivation row 2 now apply. The epoch stays bounded (2 over 8 failing ticks), and the request escalates to `failed_needs_attention` after `RS_UNKNOWN_ESCALATE_MIN`. |
+| Item 16 (design deltas) | Add: **a held pre-resend read (failed, or CAPTURED/VOIDED/EXPIRED) makes the operation `unknown`** until the reconciler's next read resolves it; derivation row 2 escalates it only after `RS_UNKNOWN_ESCALATE_MIN` (f2 remaining issue 2). |
+| Item 18 (RISK-18) | **RISK-18's title is corrected** with `risk add --id RISK-18 --title …` (delivery-lead, the risk's owner, 2026-10-11T18:48:29Z). It now reads "Single-credential Sandbox mode makes live RS-19/20/23/24 evidence weaker than claimed". Its status stays open. |
+| Item 19 (rejected refund) | **Resolved (SEC-F-1).** f2's new test in `capture-compensation.test.js` drives a compensation whose refund is rejected (`http_422:refund`) and pins `refund_failed`, `reconciling` with REFUND_FAILED, no restock and `failed_needs_attention`. Mutant MB is red (ev:ev-mv45wwaa-0115c9c9). |
+
+### New follow-ups
+
+| # | Task | Additional acceptance criterion | Source |
+|---|---|---|---|
+| FU-52 | g3-final-scans-browser (`docs/evidence-table.md`) and delivery-lead (verification report) | The evidence table and the verification report list these as **LIVE-DEPENDENT and not covered by LIVE-P1** (no live file exercises them):<br>- authorization DENIED/PENDING (RS-21);<br>- void after capture (F-TR-6);<br>- PayPal-Request-Id retention across a takeover;<br>- capture PENDING/DECLINED;<br>- refund PENDING/FAILED;<br>- the EXPIRED read after a refused void (FU-45).<br>The table's rows match LIVE-P1's real scope, RS-18/19/20/23/24. | TR-F-3 |
+| FU-53 | delivery-lead (verification report, item 16); optional code change needs an orchestrator decision (`admin.js`, no G owner) | The report states that the `stranded` statuses of a forced reset are **as of the archive**, and that a capture in flight for an executing plan can complete after it. Its refund is then never sent, because `startCall` refuses archived operations, and the stranded entry still says `authorized`. Optional: the archive transaction bumps `lease_epoch` of executing plans, to fence late result writes. | TR-F-6 (complements SEC-F-I1) |
+| FU-54 | **Decision needed (orchestrator)**; then `src/services/admin.js` (no G owner) and g1 (`public/js/views/admin.js`) | (a) Each stranded entry carries `planStatus` and `cancelRequested` (or `owedRefund`), so captured money owed back is distinguishable from a completed sale.<br>(b) The intro is worded by provider: L130 says "Check each one in the PayPal Sandbox dashboard" even with the fake provider, whose records the reset has just archived.<br>Or the verification report records the decision not to. | SEC-F-I1 |
+| FU-55 | orchestrator (follow-up; `admin.js`, no G owner) | A `denied` audit row is written for `refund_order` 404 and for every 422 on the fault routes. Otherwise the verification report states the narrower reading of "every faults and refund_order call writes an audit event". | SEC-F-I3 |
+| FU-56 | orchestrator (`admin.js`, no G owner) | `applyFault`'s `supplier_refusal` reason uses `checkRefusalReason` (`src/services/orders.js` L133) instead of `str(1, 300)` (admin.js L428), with a test for ESC/BEL and a blank reason. | SEC-F-I4 |
+| FU-57 | orchestrator (`admin.js` metrics, no G owner) | Admin metrics `reconciler.unresolved` also counts `refund_failed` operations and reservations with an `escalation`. Otherwise the verification report states the narrower meaning (`operationsByStatus` shows them). | SEC-F-I5 |
+| FU-58 | orchestrator (`orders.js` `checkRefusalReason`, no G owner; or g1 if solved by isolation at display) | Bidi controls U+202A–U+202E and U+2066–U+2069 in a refusal reason are refused or stripped, or the reason is isolated (FSI…PDI) when the sentence "Supplier X refused the order: <reason>. No money was taken." is composed. | SEC-F-I6 |
+| FU-59 | **Product decision needed (orchestrator, possibly the user)**; then `src/services/orders.js` (c3's, no G owner) | Decide whether a **`refunded`** order may still be marked ready and handed over. Today: `canMarkReady` true, `ready` and `handover` answer 200, the order ends `collected`. This matches the brief's literal guard and OQ-D2 (partial refunds). If not allowed: add `refunded` to `HANDOVER_BLOCKING_PAYMENT` (orders.js L27) for that order only, with a test. | SEC-F-I7 |
+
+### Carried to the verification report (owner: delivery-lead), additions
+
+20. **TR-F-5 survivors:**
+    - **MF6** (the empty-plan guard of `releaseIfSettled` removed) is equivalent: any reset closes `reconciling` reservations in the archiving transaction.
+    - **MF4** (the reset pass skips "stale started intents → unknown") is reachable only within one reconciler interval before the regular tick marks the intent.
+    - Optional pin: a forced-reset test with a stale started void intent.
+21. **SEC-F-I2 / FU-49 history:** before the TR-F-1 fix, the plan was taken over every tick while reads failed. After it, the epoch grows only with a successful reconciler read: at most one takeover per read that shows CREATED.
+22. **TR-F-2:** the SEC-11 bound test and the RS-37 already-archived test now bound their own wait (5 s helper, `{ timeout: 20000 }`), so an unbounded pass is a red test (ev:ev-mv464v52-0153ea2c), not a stalled suite.
