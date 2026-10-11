@@ -7,7 +7,91 @@ Author: delivery-lead. Gate: `phase:e-payments`. Date: 2026-10-11. Run: `run-mv3
 - **Phase base:** `acba8fc` (the claim base of e0 and e5, the commit that approved phase D). Code diff `acba8fc..5e1895b` over `src public test package.json`: 83 files, +17,630/−112, of which 9 files (+828/−24) are rework-4's, a separate approved gate.
 - **Follow-ups:** `.eccode/artifacts/plan/followups.md` gains the section "Added after phase E" (FU-33 recorded; FU-34..FU-40 new). It is submitted with this file.
 - **Artifacts:** the engine unions every completion's declared files (74 project files) with this file and `followups.md`.
-- **Safety:** every delivery-lead run used `PATH=/usr/local/bin:/usr/bin:/bin`. `RS_LIVE_MODEL` and `RS_LIVE_PAYPAL` were never set by me or, per their handoffs, by any engineer. The live PayPal suite was not run. **No PayPal host was contacted.**
+- **Safety:** every delivery-lead run used `PATH=/usr/local/bin:/usr/bin:/bin`. `RS_LIVE_MODEL` and `RS_LIVE_PAYPAL` were never set by me or, per their handoffs, by any engineer. The live PayPal suite was not run. **No PayPal host was contacted.** *(Iteration 1 only; for iteration 2 see the next section.)*
+
+## Response to rev-mv3xhtuz-017cfbef (iteration 2)
+
+Run `run-mv3y2ftd-019ae2df`. The review (`.eccode/reviews/drafts/phase-e-1.json`, with the security draft `phase-e-security-1.md` folded in) requested changes for **TR-E-1 = SEC-E-1 (major)**, and asked for TR-E-2 = SEC-E-2 and TR-E-3 (minor) in the same round. Three resets completed, in dependency order:
+
+| Task | Reset handoff | Files | Engineer's runs |
+|---|---|---|---|
+| e2-payment-flow | ho-mv3xpr5x-01f0502b (TR-E-2 / SEC-E-2) | `src/services/payments.js`, `src/routes/paypal.js`, `test/api/paypal-return-idempotent.test.js` | red first ev:ev-mv3xmnj7-016333c5 (the 31st hit was not limited); plan command 93/93 ev:ev-mv3xnao4-01bb587b; `npm test` ev:ev-mv3xp0sq-01fd3097 (2088/2080/0 fail/8 skipped); browser ev:ev-mv3xper9-01fffd7b (10/10) |
+| e3-webhooks | ho-mv3xwa94-016b9830 (TR-E-1 / SEC-E-1) | `src/services/webhooks.js`, `test/api/webhooks.test.js` | red first ev:ev-mv3xsdzb-017a0008 (117 tests, 11 fail, incl. the three TR-E-1 rows); plan command 117/117 ev:ev-mv3xsyol-01ba46d3; both reviewers' reproductions, re-run unchanged, **no longer reproduce**: ev:ev-mv3xtaeb-0176a6d2 (technical probe P1/P2, 0 pass by design) and ev:ev-mv3xtht4-013fe686 (security W-ORDER: S1/S4 controls pass, S2/S3 REPRO lines fail); `npm test` ev:ev-mv3xv97u-010f8bae; browser ev:ev-mv3xvpf1-0108909f |
+| e6-execute-concurrency-browser | ho-mv3y24kt-01968292 (TR-E-3) | `test/browser/helpers/approval-roundtrip.js`, `test/browser/journey-happy.test.js` | red control on a scratch copy without e4's log fix ev:ev-mv3xxni9-01261164 (journey-happy 0/2, intended); green journey 2/2 ev:ev-mv3y1qgy-01610816; plan command ev:ev-mv3xzv1u-01ae7ba8; `npm test` 2109/2101/0 fail/8 skipped ev:ev-mv3y1jqc-01b72846 |
+
+Code diff `5e1895b..402a0ac` over `src test public package.json`: exactly these 7 files, +135/−29. Every other phase E file is byte-identical to iteration 1.
+
+### Delivery-lead runs on the final tree (`402a0ac`, clean)
+
+All five runs carry one tree digest, `2956cda9…45460`. **ECCode is now 0.3.4**: TK-6 is merged, so tree pinning works in this nested project.
+
+| Run | Result | Evidence |
+|---|---|---|
+| `npm test` | exit 0. **2109 tests: 2101 pass, 0 fail, 8 skipped, 0 todo, 0 cancelled**, 283 suites. `ECCODE_EVAL {"passed":200,"total":200}`. NFR5: **p95 58.7 ms** (p50 2.6 ms) over 5272 requests; suite 73.5 s. The RS-39 timer test (FU-33) passed, so no re-run under `dec-mv3tqbn4-01d43152` was needed. | **ev:ev-mv3y64xc-015dd814** |
+| `npm run test:browser` | exit 0, **10/10**, including `RS-31(a)` at 360x800 and 1280x800. The helper now *requires* the session user on every return/cancel log line. | **ev:ev-mv3y6n9x-01464a65** |
+| e2 plan command, verbatim | 93 tests, 93 pass, 0 fail | **ev:ev-mv3y71t3-01d6c3fd** |
+| e3 plan command, verbatim | 117 tests, 117 pass, 0 fail | **ev:ev-mv3y73lm-01bb76fd** |
+| e6 plan command, verbatim (`--timeout 1800`) | exit 0. `npm test` part: 2109/2101/0 fail/8 skipped, ECCODE_EVAL 200/200, p95 57.0 ms over 5272 requests, 73.2 s; RS-39 timer test passed. Browser part: 10/10. | **ev:ev-mv3y94z7-01dd331a** |
+| Artifact coverage after submitting | see the reviewer hand-off (`handoff-2.json`) | recorded after submission |
+
+- **Skipped tests:** the same 8 as in iteration 1 (7 fake-harness OAuth/wire scenarios, fake × PROVIDER_BUSY). 22 more tests pass: +1 from e2, +21 from e3.
+- **Before submitting** (the same set logic as `.eccode/drafts/phase-artifacts-check.mjs`, base `acba8fc`): 74 declared = 74 changed in owned paths; 0 undeclared, 0 declared-but-unchanged, 0 outside ownership. The resets declared no new file.
+- **PATH:** the guard now refuses `PATH` set inline on an eccode command, so every iteration-2 run used the shell's PATH. That PATH contains `/opt/node22/bin/claude`. This matters only for a live model run, which needs `RS_LIVE_MODEL=1`, never set. The test harness uses the fake providers and the net guard.
+
+### Every finding of rev-mv3xhtuz-017cfbef → resolution → change → tests → evidence
+
+| Finding | Severity | Resolution | Change | Tests (names abridged) | Evidence |
+|---|---|---|---|---|---|
+| **TR-E-1 = SEC-E-1**: a late, validly signed `PAYMENT.AUTHORIZATION.CREATED` moved `capture_pending` and `unknown(prev authorized\|capture_pending)` back to `authorized` | major | **Fixed (e3 reset).** Resolution conditions 1-5 are each met:<br>1. CREATED has `from: ['approved', 'authorization_pending']`.<br>2. Every other origin is stored `flagged`, `TRANSITION_NOT_ALLOWED`, with no column change.<br>3. The mapping table has the rows.<br>4. Both probes no longer reproduce.<br>5. Green suites. | `webhooks.js`: an explicit `from` (complete origin list) and `fromUnknown` (prev_status values an unknown operation may be resolved from) for **all seven events**, checked before the state table, which stays as a second gate.<br>CREATED has an empty `fromUnknown`, so an unknown operation is resolved by the reconciler's read, which fires the ARCH-22 hook. | Mapping table 21 → 42 rows (96 → 117 tests), e.g. `PAYMENT.AUTHORIZATION.CREATED: TR-E-1: capture_pending is NOT rolled back to authorized: flagged, nothing changes`; `… TR-E-1: unknown (prev authorized) stays unknown: flagged`; `… TR-E-1: unknown (prev capture_pending) stays unknown: flagged`; `… TR-E-1: captured is not rolled back: flagged`; `ARCH-22: an approved operation and a denied capture also pass through the hook (an unknown one is left to the reconciler, TR-E-1)`. ARCH-22 through the reconciler still passes (`void-rule-lost-authorize.test.js`, inside `npm test`). | red ev:ev-mv3xsdzb-017a0008 → green ev:ev-mv3xsyol-01ba46d3, **ev:ev-mv3y73lm-01bb76fd**; no longer reproduced ev:ev-mv3xtaeb-0176a6d2, ev:ev-mv3xtht4-013fe686 |
+| **TR-E-2 = SEC-E-2**: the public return route was not limited per user and cost one provider read per hit | minor | **Fixed (e2 reset).** The review's first option, done in e2's files: the access hook does not run for public routes, and `general-limit.js` is not an e2 file. | `payments.js` `takeReturnSlot`: return and cancel share one count of **min(30, `RS_GENERAL_RATE_LIMIT`)** per signed-in user per `RS_GENERAL_RATE_WINDOW_SEC`. One `BEGIN IMMEDIATE` in `rate_events` (kind `general`, key `pp:u:<id>`); a refused hit is not recorded. `paypal.js` calls it after the anonymous redirect and the role check, before the token lookup and any provider call. | `SEC-E-2: hit LIMIT + 1 of one buyer is 429 RATE_LIMITED with Retry-After and makes no provider call; another buyer, an anonymous caller and the next window are unaffected` (30 hits → 30 getOrder, hit 31 → 429 with still 30, a cancel also 429). The RS-20 three-hit, RS-27 foreign-token and crash-hook tests are unchanged and green. | red ev:ev-mv3xmnj7-016333c5 → green **ev:ev-mv3y71t3-01d6c3fd** |
+| **TR-E-3**: the round-trip helper accepted a return log line without `userId` | minor | **Fixed (e6 reset).** | `approval-roundtrip.js` asserts `entry.userId === userId` and `entry.role === 'customer'` unconditionally for every return and cancel; the audit-event proof stays. `journey-happy` asserts instead of printing. | `RS-31(a): at 360x800 …` and `… at 1280x800 …` | red control ev:ev-mv3xxni9-01261164 (scratch copy without the app.js fix: 0/2, `approve A: the GET /api/paypal/return log line names the session's user (userId undefined)`) → green ev:ev-mv3y1qgy-01610816, **ev:ev-mv3y6n9x-01464a65** |
+| **TR-E-4**: mutant M6 survives (pause guard at `saga.js` L531 untested), and `captureLoop` re-sends an unknown capture relying on the reconciler's earlier read | info | **Carried to f2** (owns `saga.js`), **FU-41**; not a condition of this gate. TR-E-1's fix removes the path that broke the earlier read: a webhook no longer moves an unknown operation to `authorized`. | — | f2: (a) read the authorization under the lease before re-sending an unknown capture call (spec step 6); (b) a test where an operation becomes `capture_pending`/`unknown` after the takeover and before the resumed run, which must pause and send nothing, so that M6 is killed | review ev:ev-mv3wo4q9-014c6847 |
+| **TR-E-5**: mutant M2 survives (no test pins capture/refund amounts to `supplier_orders.total_cents` against a disagreeing operation row) | info | **Carried, optional for f2, FU-42.** Equivalent in practice: both columns are written once and are equal by construction. Listed with delta 24. | — | f2's `capture-compensation.test.js`, or a documented invariant | review ev:ev-mv3wo4q9-014c6847 |
+| **TR-E-6**: deltas 1-21 accepted; four unlisted deltas 22-25 | info | **Carried to verification-report item 10** (followups.md). Delta 22 is **narrowed** by the TR-E-1 fix (below). The optional neutral notice for `not_approved`/`check_failed` is **FU-43** (f3). | — | — | — |
+| **TR-E-7 / SEC-E-I1**: offline webhook signatures are not merchant-bound | info | **Carried, FU-44** (g2/g3: add `merchantKey` to the fake's signing string, or list it under LIVE-P1 RS-24). Contained offline by the global dedupe and SEC-16 scoping. | — | — | — |
+| **SEC-E-I2**: duplicate oracle (a forged body under a seen id gets 200 duplicate, no effect) | info | **Accepted** (review: no action). Verification report. | — | — | — |
+| **SEC-E-I3**: an expired authorization cannot be voided; escalates with `void_failed` | info | **Carried to f2, FU-45** (treat EXPIRED read back after a rejected void as settled). Same as remaining issue 9. | — | — | — |
+| **SEC-E-I4**: the FU-34 one-tick window shows no loss or doubling | info | **Decided**, `dec-mv3vuigy-0109feb6`, accepted by both reviewers. The e3 reset keeps `CAPTURE.COMPLETED` from `authorized`/`capture_pending`, so the backstop path is unchanged (`reconciler.test.js`, green). | — | — | — |
+| **SEC-E-I5**: the return handler may authorize before the expiry pass; the next pass voids it | info | **Accepted** (review: no action). Verification report. | — | — | — |
+| **TR-E-8**: tests after code; engineers' scratch mutants have no ev ids | info | **Closed for this gate by the review**; the reviewer's own 17 recorded kills suffice (ev:ev-mv3xewar-0170b19e). Both new red-first runs of this round are recorded through `evidence run`, as recommended. | — | — | ev:ev-mv3xmnj7-016333c5, ev:ev-mv3xsdzb-017a0008, ev:ev-mv3xxni9-01261164 |
+| Decisions the review judged (FU-34 `dec-mv3vuigy-0109feb6`, FU-35 `dec-mv3vui7s-014f6e7c`, the four security residuals `dec-mv3vuiqw-01d3c5c9`, and `dec-mv3abkne-01161cf3`, `dec-mv3abkv0-011839e9`, `dec-mv3uqze6-0196f887`, `dec-mv38g19z-01f0a99f`) | — | **Accepted by the review**; recorded in followups.md as decided. TR-R4-3 is confirmed by the review's criterion `tr-r4-3-short-transactions` (ev:ev-mv3wykva-018b0000). | — | — | — |
+
+### Contract deltas added or changed in iteration 2 (for verification-report item 10)
+
+From TR-E-6 (found by the reviewer):
+- **22.** `PAYMENT.AUTHORIZATION.CREATED` applies from `approved` as well as `authorization_pending`. This is still true after the reset. The wider part TR-E-1 named is removed, and an `unknown(prev approved)` operation is **no longer** resolved by this event (delta 27).
+- **23.** Reconciler housekeeping does not purge `rate_events`. `retention.js` does it hourly (24 h; 48 h for `request_create`).
+- **24.** Refunds send `payment_operations.amount_cents`; create and capture send `supplier_orders.total_cents`. The two are equal by construction (TR-E-5).
+- **25.** The UI renders no notice for `paypal=not_approved` or `check_failed` (FU-43 optional).
+
+New from the resets:
+- **26.** Every webhook event has an explicit origin list. An event whose operation is already at or past its target, or in any unlisted state, is stored `flagged` (`TRANSITION_NOT_ALLOWED`, `flagged = 1`) instead of `ignored` (`ALREADY_IN_STATE`). A **late duplicate under a new transmission id therefore lands in the operator's flagged list**, while still changing nothing. Also, `PAYMENT.AUTHORIZATION.VOIDED` is no longer admitted from `created`/`approved`, and a repeated `CAPTURE.PENDING` on `capture_pending` is flagged.
+- **27.** `PAYMENT.AUTHORIZATION.CREATED` never resolves an `unknown` operation. The reconciler resolves it by reading the provider, and the ARCH-22 hook fires on that path. The other events resolve `unknown` only from their `fromUnknown` lists (VOIDED: authorized; CAPTURE.COMPLETED: authorized, capture_pending; CAPTURE.PENDING: authorized; CAPTURE.DENIED: capture_pending; CAPTURE.REFUNDED: refund_pending).
+- **28.** GET `/api/paypal/return` and `/cancel` are limited to **min(30, `RS_GENERAL_RATE_LIMIT`)** hits per signed-in user per `RS_GENERAL_RATE_WINDOW_SEC`, shared between the two routes. Beyond that they answer 429 `RATE_LIMITED`, `details.limit: "general"`, with `Retry-After`, before the token lookup, so a foreign-token hit counts against the caller. Anonymous hits are not counted. The 30 is a constant, not an environment variable.
+
+### Statements of iteration 1 that iteration 2 supersedes
+
+- **Counts:** `npm test` is now 2109 tests, 2101 pass (was 2087/2079). The e2 plan command is 93 (was 92), e3 is 117 (was 96). `RS-23`/`RS-24` names are unchanged. The mapping-table row names changed with the rule (for example, `authorized + CREATED` is now flagged).
+- **Tree pinning (TK-6 section):** the toolkit is **0.3.4 with TK-6 merged**. Iteration 2's runs and this submission are tree-pinned. Iteration 1's statement "not yet merged" is superseded.
+  - `eccode audit` now lists **every approved gate without a recorded commit as a release-baseline warning**: architecture, design, plan, phase B, C and D, and rework-1 to rework-4. Those approvals predate the repair, or fell under TK-6.
+  - In my audit run before resubmitting, the audit **FAILED** on two lines:
+    - `src/routes/paypal.js modified after approval (phase:b-foundation)`: the e2 reset changed it after iteration 1 pinned the old version; this submission puts it under review again.
+    - `src/services/requests.js modified after approval (phase:rework-1)`: **not a phase E file**. Its sha256 equals the version phase D approved (sub-mv36aj2e-01cd090a); the audit compares it with rework-1's older approval. Reported to the orchestrator; I changed nothing.
+- **Remaining issue 2 / FU-34** and **3 / FU-35** are decided (`dec-mv3vuigy-0109feb6`, `dec-mv3vui7s-014f6e7c`). **Issues 13-15** (SEC-RW4-I4, SEC-R-2, SEC-R-3, SEC-RW4-I2) are accepted as residuals (`dec-mv3vuiqw-01d3c5c9`).
+- **Remaining issue 1** is unchanged: LIVE-P1, LIVE-P2 and OQ-D5 are open. The webhook event names and late-delivery behaviour are still LIVE-DEPENDENT.
+
+### Process notes, iteration 2
+
+1. The resets ran in dependency order, e2 → e3 → e6. Each recorded its red-first run through `evidence run` (TR-E-8's recommendation).
+2. The e3 reset followed the coordinator's ruling that a webhook does not resolve an unknown operation for `AUTHORIZATION.CREATED`. **No decision id records that ruling**; delta 27 states it for the reviewers.
+3. **Guard refusals in this iteration**, verbatim:
+   - a read-only `for` loop over handoff ids with `node -e` reading `./.eccode/handoffs/$h.json`: "The guard cannot verify who this eccode command acts as: \"./.eccode/handoffs/$h.json\" runs a command through a variable or substitution; call the eccode CLI directly so its --actor can be checked." The line had no eccode call. I redid it with three literal `cat` commands.
+   - None of my eccode commands was refused.
+4. Budget: `eccode status` showed 1325.75 of 2400 minutes before this resubmission.
+
+### Lessons, iteration 2
+
+My memory search (`webhook event ordering rate limit return route state transition origin list`, `--check-env`) returned only `mem-sd-mv1audrd-013b7102`. The three resets record it as **not-applicable**, and I agree: none designs a hook, guard or root discovery. The refusal above is a raw-text reading, which the lesson's "Not applicable when" list names.
 
 ## What the phase delivers
 

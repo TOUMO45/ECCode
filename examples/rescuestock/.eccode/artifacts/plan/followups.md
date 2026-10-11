@@ -241,3 +241,38 @@ Sources: the phase E handoffs (e0 ho-mv37ojw0-01fb7411; e1 ho-mv38f42c-010fb379,
 11. **LIVE-P1, LIVE-P2, OQ-D5 Unverified** with the list of Sandbox facts the stub only guesses (issue names, link rels, approvable statuses, invoice-id rules, `final_capture`, event shapes, verify-webhook shape, 29-day expiry).
 12. **Residuals without an owner:** SEC-R-2, SEC-R-3, SEC-RW4-I2, SEC-RW4-I4 (no F/G task owns `src/auth/**` or `src/services/extraction.js`), the untested two-process race on one webhook transmission id, FU-33, FU-34; each needs an orchestrator acceptance or a user-authorised rework.
 13. **TK-6:** most engineer evidence carries no tree digest; the phase E submission's own runs do.
+
+## Added after the phase E review (delivery-lead, 2026-10-11)
+
+Sources: rev-mv3xhtuz-017cfbef (`.eccode/reviews/drafts/phase-e-1.json`, TR-E-1..TR-E-8) with the security draft `phase-e-security-1.md` (SEC-E-1, SEC-E-2, SEC-E-I1..I5), and the resets e2 ho-mv3xpr5x-01f0502b, e3 ho-mv3xwa94-016b9830 and e6 ho-mv3y24kt-01968292.
+
+### Changed items
+
+| # | Change |
+|---|---|
+| FU-34 | **Decided**, `dec-mv3vuigy-0109feb6` (accepted by both reviewers, SEC-E-I4). The backstop in `reconciler.js` stays; f2 must keep it. |
+| FU-35 | **Decided**, `dec-mv3vui7s-014f6e7c`. The drain stays in `reconciler.js`, and f1 works behind the function it calls. |
+| Item 12 (residuals) | SEC-R-2, SEC-R-3, SEC-RW4-I2 and SEC-RW4-I4 are accepted as residuals, `dec-mv3vuiqw-01d3c5c9`. The untested two-process race on one webhook transmission id, FU-33 and FU-34 (decided) remain on the list. |
+| Item 13 (TK-6) | ECCode 0.3.4 merged the repair. Iteration 2 runs are tree-pinned. `eccode audit` lists every earlier approved gate without a commit as a release-baseline warning. |
+
+### New follow-ups
+
+| # | Task | Additional acceptance criterion | Source |
+|---|---|---|---|
+| FU-41 | f2-compensation-takeover-admin (owns `saga.js`) | (a) Before `captureLoop` re-sends a capture call that is `unknown` (token-less), it reads the authorization under the lease, as the spec's saga step 6 says, rather than relying on the reconciler's step-2 read of the same tick.<br>(b) A test where an operation becomes `capture_pending` or `unknown` after the takeover and before the resumed run: the saga pauses and sends nothing. The reviewer's mutant M6 (the condition at `saga.js` L531 replaced by `false`) must then be killed. | TR-E-4; SEC-E-1 recommendation 5 |
+| FU-42 (optional) | f2-compensation-takeover-admin | Either `capture-compensation.test.js` asserts the capture and refund request amounts against `supplier_orders.total_cents` with a disagreeing `payment_operations.amount_cents`, or the verification report states that the two columns are equal by construction (delta 24). | TR-E-5 |
+| FU-43 (optional) | f3-frontend-recovery | A neutral notice for `paypal=not_approved` and `paypal=check_failed` ("PayPal did not confirm the approval; try again"). | TR-E-6 delta 25 |
+| FU-44 | g3-final-scans-browser or g2-docs-submission | Either the fake's webhook signing string (`src/payments/fake.js`, no later owner; a decision is needed if code changes) and `test/helpers/webhook-signer.js` (g3) include `merchantKey`, or the verification report lists cross-merchant signature rejection under LIVE-P1 RS-24 as LIVE-DEPENDENT. | SEC-E-I1 |
+| FU-45 | f2-compensation-takeover-admin (owns `calls.js`) | An authorization read back as `EXPIRED` after a rejected void is treated as settled (no money held), not escalated with `void_failed = 1`, with a test. | SEC-E-I3; phase E remaining issue 9 |
+
+### Carried to the verification report (owner: delivery-lead), additions
+
+14. **Phase E deltas 22-28** (submission › "Contract deltas added or changed in iteration 2"):
+    - 22: CREATED applies from `approved`;
+    - 23: `rate_events` are purged by `retention.js`, not the reconciler;
+    - 24: refunds send `amount_cents`;
+    - 25: no UI notice for `not_approved`/`check_failed`;
+    - 26: explicit origin lists, so a late duplicate is `flagged`, not `ignored`;
+    - 27: CREATED never resolves `unknown`;
+    - 28: return/cancel limited to 30 per user per window.
+15. **Accepted info items:** SEC-E-I2 (duplicate oracle), SEC-E-I4 (FU-34 window, no loss or doubling), SEC-E-I5 (authorize before the expiry pass, voided by the next pass).

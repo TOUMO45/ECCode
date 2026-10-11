@@ -1,6 +1,6 @@
 {
-  "seq": 1143,
-  "lastHash": "2c26aa600e0686596bb8dc652f5dd59155edabd34f714c023ec7479bdb83a2bc",
+  "seq": 1156,
+  "lastHash": "6743f28d04bf81ea84f63636c2b823a568fd42db8804cc429b281ca7531bf0fa",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -3968,7 +3968,7 @@
     "phase:e-payments": {
       "id": "phase:e-payments",
       "kind": "phase",
-      "status": "changes_requested",
+      "status": "submitted",
       "iterations": 1,
       "authors": [
         "delivery-lead"
@@ -4286,6 +4286,321 @@
           ],
           "respondsTo": null,
           "notes": "Phase E (e0-e6, 11 completions). Delivery-lead runs on clean HEAD 5e1895b: npm test 2087/2079 pass/0 fail/8 skipped, ECCODE_EVAL 200/200, p95 59.7 ms ev:ev-mv3vd6z8-0180d6eb; browser 10/10 ev:ev-mv3vdqgz-01b92989; plan commands e0 160/160 ev:ev-mv3ve6o0-012dc1a7, e1 487/480/7 skipped ev:ev-mv3vedbb-01689109, e2 92/92 ev:ev-mv3veuba-01656aaa, e3 96/96 ev:ev-mv3vew5b-01e1ae03, e4 71/71 ev:ev-mv3vfa8l-0140dd3a, e5 166/166 ev:ev-mv3vfazx-016842cc, e6 npm test + browser ev:ev-mv3vhgf6-01393dc9. All payments simulated (DB-backed fake or loopback stub); no PayPal host contacted; LIVE-P1/LIVE-P2/OQ-D5 Unverified. rework-4 approved before this submission (dec-mv3u4zr4-0165c54d)."
+        },
+        {
+          "id": "sub-mv3ybm6f-0109db20",
+          "actor": "delivery-lead",
+          "at": "2026-10-11T15:01:49.960Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/phase-e/submission.md",
+              "sha256": "688639e6b3b901c8dc17368fe80e4974f0b8fbb478bbef69b23c3a1db5bed644"
+            },
+            {
+              "path": ".eccode/artifacts/plan/followups.md",
+              "sha256": "633cc794cdb00d87fa85eaafba33952c8d9430d6d64cb81bc70a24f67cb3a15c"
+            },
+            {
+              "path": "test/helpers/paypal-stub.js",
+              "sha256": "797767adfc4365ab2d28309990ca658b3d91912ed0d3a638b47f8e3b4e3303a9"
+            },
+            {
+              "path": "test/helpers/webhook-signer.js",
+              "sha256": "585bcbc861a3e140cc1112840f69a5ed03bd3065a1553fecc0c7c4ca06631800"
+            },
+            {
+              "path": "test/unit/payments/provider-contract.js",
+              "sha256": "34633b2d01df01d94ec16ca62dfe3563cdd90efa57a663cc89f3532f130b0e43"
+            },
+            {
+              "path": "test/unit/payments/paypal-stub.test.js",
+              "sha256": "2a0b3f093a2a39e5e2880f43193a5feba171eda235c19939d4ac0efaaa40d01d"
+            },
+            {
+              "path": "src/payments/provider.js",
+              "sha256": "64da8a5b69c343dfee82fe14611b0b635f51a89644681c092dbf5ec1ed592b1f"
+            },
+            {
+              "path": "src/payments/sandbox.js",
+              "sha256": "52cd269cbdef8c04175f0ced48f06124ce2297e4e37b3e162ceaf8234639d541"
+            },
+            {
+              "path": "test/unit/payments/fake.test.js",
+              "sha256": "78d00c932be444af385e1f82c2893d52b4d15bb9560a6234766f24eb8da80512"
+            },
+            {
+              "path": "test/unit/payments/sandbox.test.js",
+              "sha256": "36dd7d79531cd0a4c945ad2146f3fbe0b27bc869c65921dba86bd5dac36a5b30"
+            },
+            {
+              "path": "src/payments/fake.js",
+              "sha256": "386c414e4eb1d4f881f948a2cf1af23e29b909f46fadadde6e0223acdabf2995"
+            },
+            {
+              "path": "src/payments/listener.js",
+              "sha256": "6d3f3a79103b1674aee173f2894b9cd20471eb80cad88ad55b45b2f5a0b5c9a2"
+            },
+            {
+              "path": "src/payments/merchants.js",
+              "sha256": "fd4e20aa943afa2a90e2dff3f3aa7dfa9740d6c65b7fb72081bce4bc8c05021f"
+            },
+            {
+              "path": "src/config.js",
+              "sha256": "853d6acd70acc0805f978b47d5033aebbde0a80c2dba758cb03ee536e87bbfad"
+            },
+            {
+              "path": "test/unit/payments/merchants.test.js",
+              "sha256": "19423bc92b87bf28baf36fd234f8ad5bd1948199a74813e17d77b8447be9726e"
+            },
+            {
+              "path": "test/unit/payments/provider-contract.test.js",
+              "sha256": "8f6c05a8fc523d89278ac70481f7554920d4a3de4abb0c4652365370c15ad73e"
+            },
+            {
+              "path": "test/api/fake-approval-headers.test.js",
+              "sha256": "e0decd0865d5fcae7b311463c5ebd5e3b4ccf92cfda78d6a7faa791187671e93"
+            },
+            {
+              "path": "src/services/payments.js",
+              "sha256": "cb8047190bddac94421ec65562e12976fa66012e7cfb24299405c8503a8b5d0d"
+            },
+            {
+              "path": "src/routes/paypal.js",
+              "sha256": "67863abe5003b9fa5f3b676532171fd65d3da6f1a5442a866ac8e6c937e1a748"
+            },
+            {
+              "path": "test/api/paypal-return-idempotent.test.js",
+              "sha256": "76bc134b0fb58c59434f35a56af156880b1e59c07a5bff081add7eee283e0612"
+            },
+            {
+              "path": "src/services/calls.js",
+              "sha256": "5b90174ce5ee56fda7a3738c90a9c8e2774d041d08d15a5ed1dc0514c5d98115"
+            },
+            {
+              "path": "src/services/void-rule.js",
+              "sha256": "c6986f0035c545b9ee6023a86a523a5a33cb065453128ab0b7fc7da45525ac9c"
+            },
+            {
+              "path": "src/services/orders.js",
+              "sha256": "1bba64d3d5f53a389ea984ebfd155ae4e176a4eb396d711c0ff905681e7828f1"
+            },
+            {
+              "path": "src/services/view.js",
+              "sha256": "7522e99f2229870b3dcd97eaaf192219ff46b593cf203732fece9a54dff33219"
+            },
+            {
+              "path": "src/routes/orders.js",
+              "sha256": "04853b96f2e302f565b349df768f450bee8400bb5a4f0140acb36040b6d0aa6e"
+            },
+            {
+              "path": "src/routes/plans.js",
+              "sha256": "9437a680ec34b422b53262a6c1c7b27f60730f68c666a924f1c3a93086545bcf"
+            },
+            {
+              "path": "src/app.js",
+              "sha256": "32f60a1eedcdaf473320cb4b9ad3dbfd6e749baa956063ab71456ae44aa7bf16"
+            },
+            {
+              "path": "test/api/approve-guards.test.js",
+              "sha256": "463a22becdb145b923ba92e27a0c12d26d54a5bfe9fd826e169c06720e71be17"
+            },
+            {
+              "path": "test/api/paypal-create.test.js",
+              "sha256": "91f5ffc87c7ed99b39d7cd559446e3e2aa953570603e84bd644e41bc83a1e75d"
+            },
+            {
+              "path": "test/api/paypal-cancel.test.js",
+              "sha256": "ee7a2f1bd289aabff22b8f0881af3f9449815fd75a2eedd4e9ba110e83a17658"
+            },
+            {
+              "path": "test/api/amount-tampering.test.js",
+              "sha256": "4ce18ec4bd8bf44101b2098309716e5db4ec19f46356a758f17cd9bb9f660e04"
+            },
+            {
+              "path": "test/api/authorization-denied.test.js",
+              "sha256": "b207c75a0758a2f89d95702151b3c3eec0100abd3b2f1e74d5a00a7641b3fbf2"
+            },
+            {
+              "path": "test/api/isolation.test.js",
+              "sha256": "b2bcd57d09874fac5977626db290b46f16740e9d3f2d05c95c0a41e46fc8d02d"
+            },
+            {
+              "path": "src/services/webhooks.js",
+              "sha256": "f579bccc8a348afc0579a6889524339b3380c32b7fcb01d2195b068e317304d0"
+            },
+            {
+              "path": "test/api/webhooks.test.js",
+              "sha256": "ee1d6dea4f689a40c7e220f5b107e1e48ca63bd7d17071e038fc221d06107d1b"
+            },
+            {
+              "path": "src/routes/webhooks.js",
+              "sha256": "282abc835f5d6081da9cca0352328c8e402a8609c50e2f46b02e3f5a1dc03100"
+            },
+            {
+              "path": "test/api/execute.test.js",
+              "sha256": "18dbc7697ff9c0bf1beb8ccc10c44fd09e11e486377691b1584579f0da3d5046"
+            },
+            {
+              "path": "src/services/saga.js",
+              "sha256": "b6cf676a90096a4e06c5c533591d0bad669930b2d56524cb4adcb74b7538b71c"
+            },
+            {
+              "path": "src/services/reconciler.js",
+              "sha256": "6e13c1ba7e356a351f8d66aabb911aa003e9df960d13ddb86ae334c410ea8692"
+            },
+            {
+              "path": "src/main.js",
+              "sha256": "d2e8b47756bcc5c1794e9d481638ce1141dbd5657527f91fb8dfdad9f4599084"
+            },
+            {
+              "path": "test/api/lost-response.test.js",
+              "sha256": "cefebdf9d4723968cfe34658635b61a5d1bdef2ef71e32a3f2f824eff291eda9"
+            },
+            {
+              "path": "test/api/authorization-pending.test.js",
+              "sha256": "42dec4d515c5fb715f3aa1c96d299d30c674974ffd2bb44bf41345abd79ae3b4"
+            },
+            {
+              "path": "test/api/void-rule-lost-authorize.test.js",
+              "sha256": "9cf2fc2e5a7119bfec4c75111054b583f5c19739cc7f5631304aee1c8f204777"
+            },
+            {
+              "path": "test/api/reconciler.test.js",
+              "sha256": "add420fd5f9873b348cd769f8f14cb76e29ad01ff6aa6155b09b29fbcda1e7a2"
+            },
+            {
+              "path": "public/js/views/request-detail.js",
+              "sha256": "a4bc6ba692d88ecf0d29e756d08478383ce9278a96963a509641f7f1767f229d"
+            },
+            {
+              "path": "test/unit/frontend/payments.test.js",
+              "sha256": "2736ec0bfba286080a0b4eed16cd9598e273f310c1fbfaa8078fe82d1fa1981e"
+            },
+            {
+              "path": "test/unit/frontend/dashboards.test.js",
+              "sha256": "8669d4a24e31400e3628e5ae883a7734be99bbed5257331091afe23585af2b0f"
+            },
+            {
+              "path": "public/css/app.css",
+              "sha256": "c74e0097d566ad4b4e57e1d2021e64a976bee45bb51729b9816bb521291d532a"
+            },
+            {
+              "path": "public/js/components/commitments.js",
+              "sha256": "04aafba4215ba8caaf5e136e269a84b8c2112145ff4ea4e0494cd773f254fa2e"
+            },
+            {
+              "path": "public/js/components/notice.js",
+              "sha256": "3d4ae4969a7548eca3404f46d1bf81194970673e43d77990068f838cb05b127a"
+            },
+            {
+              "path": "public/js/components/payments.js",
+              "sha256": "15c1021430dcaef0642fd559a7b2277aecafe0ddf932f1efc5162658365a468e"
+            },
+            {
+              "path": "public/js/poll.js",
+              "sha256": "88f6ab428bc06fae5a427a57fcffcb3ed5c10577a93a5a19cb046f921ee92989"
+            },
+            {
+              "path": "public/js/views/supplier-orders.js",
+              "sha256": "9790b420b95fbae8ae4b92c5452cccd874274754e5e5ef53bc4d7c9144515118"
+            },
+            {
+              "path": "test/scan/frontend.test.js",
+              "sha256": "906cb57ce2cb87b9c9e2d27ae52275a0fe4ddfd8009a895c570d9a6300a464fa"
+            },
+            {
+              "path": "test/fixtures/contracts/payments/view-approve-simulated.json",
+              "sha256": "66a40afaad212e01e1b764cef637672456fb0d446d9c03506b071963b871244b"
+            },
+            {
+              "path": "test/fixtures/contracts/payments/view-approve-sandbox-single-credential.json",
+              "sha256": "17736a31dccd181cb566d4c68048f572707f24c492d80e4ce66aeb950858b028"
+            },
+            {
+              "path": "test/fixtures/contracts/payments/view-after-cancel.json",
+              "sha256": "5c5d08ebbe015e3f34211eaabd4ef0c63b2659f575178298397cb8a962bacb1f"
+            },
+            {
+              "path": "test/fixtures/contracts/payments/view-complete-purchase.json",
+              "sha256": "d845a9d67d95181ead8337166895581395774a0231cb02866f89151bc800416c"
+            },
+            {
+              "path": "test/fixtures/contracts/payments/view-non-executable.json",
+              "sha256": "89a86fac6b4455bb25ec8aed5d61de0fe37569facbeee86ce9878e528a67f475"
+            },
+            {
+              "path": "test/fixtures/contracts/payments/view-ready-receipt.json",
+              "sha256": "93b590b73af9c28b9eed4143320ea6210604e675baad5cf84b8189651d45a2d0"
+            },
+            {
+              "path": "test/fixtures/contracts/payments/supplier-orders-ready-handover.json",
+              "sha256": "1fd83d87d4ac6fa279c7d7403775cca90c1123dc477a30643ab19b2a6cd7a5a6"
+            },
+            {
+              "path": "test/browser/helpers/approval-roundtrip.js",
+              "sha256": "cc2e08a96c92ce6e277ac31d6d02439c767d38f2dbe78428cc3c2dd852516699"
+            },
+            {
+              "path": "test/browser/journey-happy.test.js",
+              "sha256": "e4732bfb6bb5af90ed47dc4a1beea2b119b85bf6109e113994ce12e2c18cdc15"
+            },
+            {
+              "path": "test/helpers/payment-flow.js",
+              "sha256": "8e4d91d07efd6d3c3614cff1f4f90fb8dc036e97b8c366857e1697c5b5537d14"
+            },
+            {
+              "path": "test/integration/rs20-two-process-execute.test.js",
+              "sha256": "a326072dd7c17f7b614c05b1c80b5b957c6d739897d8a46fe229d6829a363802"
+            },
+            {
+              "path": "test/api/contracts.test.js",
+              "sha256": "deb10dc749308c210135b84fa1ff151a8d354a16d4278a95e9e48d7d0bf6abc5"
+            },
+            {
+              "path": "test/browser/helpers/purchase.js",
+              "sha256": "da09e65295268b231dd8bc70b211dd676d091297c62a400f58aa9ad3ee0f930a"
+            },
+            {
+              "path": "test/browser/helpers/db.js",
+              "sha256": "ba1652a0fa302b05ef42d84c296e3310a41ec18bbc446891f84b1b532a1852c3"
+            },
+            {
+              "path": "test/live/paypal/live-support.js",
+              "sha256": "05bb77aded8067d18c99f5a7eaef2f1316cf4c976b20bb2d53a314ab822e6c01"
+            },
+            {
+              "path": "test/live/paypal/run-live-paypal.js",
+              "sha256": "2f1533bb46c004e60b8e1485355ba5dce08c6b316a352f63b166658353b1925c"
+            },
+            {
+              "path": "test/live/paypal/rs18-cancel-abandon.test.js",
+              "sha256": "f133ca9259c949305504572a0b4a98cfeb160e047324fffe33a82d2ac363f791"
+            },
+            {
+              "path": "test/live/paypal/rs19-amount.test.js",
+              "sha256": "faead33ed4714e7c2fbbd851dbf59184704629d514f42846fd349199900271eb"
+            },
+            {
+              "path": "test/live/paypal/rs20-double-capture.test.js",
+              "sha256": "33bdcf5eae6b940571c995fd6a42f4858d5aa7463994e1812078eacaf5615224"
+            },
+            {
+              "path": "test/live/paypal/rs23-webhook-duplicate.test.js",
+              "sha256": "ba80401b7e496825bd24c0701ad296ecfb0db6b4d55eed81b73c2191c1b1cad3"
+            },
+            {
+              "path": "test/live/paypal/rs24-webhook-signature.test.js",
+              "sha256": "0ef88910bd0b90335c32a6dff9a4417ead7c6ef667733d8185dfc7a3e6b3b15c"
+            },
+            {
+              "path": "test/live/paypal/journey-sandbox.test.js",
+              "sha256": "533b102c962d7d5c8ce27353f00107d0f1b7b9be41c8f567c5d26c030c24176c"
+            }
+          ],
+          "respondsTo": "rev-mv3xhtuz-017cfbef",
+          "notes": "Iteration 2 responding to rev-mv3xhtuz-017cfbef. Resets: e2 ho-mv3xpr5x-01f0502b (TR-E-2/SEC-E-2), e3 ho-mv3xwa94-016b9830 (TR-E-1/SEC-E-1), e6 ho-mv3y24kt-01968292 (TR-E-3). Delivery-lead runs on clean HEAD 402a0ac (tree 2956cda9...): npm test 2109/2101 pass/0 fail/8 skipped, ECCODE_EVAL 200/200, p95 58.7 ms ev:ev-mv3y64xc-015dd814; browser 10/10 ev:ev-mv3y6n9x-01464a65; e2 93/93 ev:ev-mv3y71t3-01d6c3fd; e3 117/117 ev:ev-mv3y73lm-01bb76fd; e6 ev:ev-mv3y94z7-01dd331a. TR-E-4/5 and SEC-E-I1/I3 carried (FU-41..45); deltas 22-28 to the verification report.",
+          "commit": "2bcd6d2453813bc950b4a99af4fb59e50938737f",
+          "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460"
         }
       ],
       "reviews": [
@@ -19061,6 +19376,132 @@
       "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
       "recordedBy": "test-engineer",
       "at": "2026-10-11T14:54:09.176Z"
+    },
+    "ev-mv3y64xc-015dd814": {
+      "id": "ev-mv3y64xc-015dd814",
+      "kind": "command",
+      "label": "phase E iteration 2: npm test on HEAD 402a0ac (clean tree)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 73701,
+      "log": ".eccode/evidence/ev-mv3y64xc-015dd814.log",
+      "logSha256": "e16a58c6a633e60aece07d0e510993806612d01b8b1dcf53d136070aad56b51a",
+      "logFileSha256": "4a8a12c3e649c9e7a853e84afe720e73a010fee770f943cce1deec5dddd41619",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 809 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 467.722092\n  type: 'test'\n  ...\n1..809\n# tests 2109\n# suites 283\n# pass 2101\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 73300.037821\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 5272 requests, p50 2.6 ms, p95 58.7 ms (limit: p95 < 300 ms)\nNFR5 suite time: 73.5 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T14:57:34.546Z"
+    },
+    "ev-mv3y6n9x-01464a65": {
+      "id": "ev-mv3y6n9x-01464a65",
+      "kind": "command",
+      "label": "phase E iteration 2: npm run test:browser on HEAD 402a0ac",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 17413,
+      "log": ".eccode/evidence/ev-mv3y6n9x-01464a65.log",
+      "logSha256": "d9ef9f66d6e8fab5c51cb319c2064398b276354f9916ae544608431309c1490f",
+      "logFileSha256": "ef1784dea34d0be0350707cd2c353f4610ab9d07e45265d393e5060dadb314af",
+      "outputTail": "      duration_ms: 991.955733\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 879.50197\n      type: 'test'\n      ...\n    1..3\nok 4 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3264.112921\n  type: 'suite'\n  ...\n1..4\n# tests 10\n# suites 4\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 17180.814303\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T14:57:58.294Z"
+    },
+    "ev-mv3y71t3-01d6c3fd": {
+      "id": "ev-mv3y71t3-01d6c3fd",
+      "kind": "command",
+      "label": "phase E iteration 2: e2 plan verification command verbatim",
+      "command": "ls test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js test/api/isolation.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 12988,
+      "log": ".eccode/evidence/ev-mv3y71t3-01d6c3fd.log",
+      "logSha256": "bd8b1946bbc8a9006522b292cdf8f6102de10ea1fa87843a07d9740e554fb29f",
+      "logFileSha256": "4edc7c65fd147c685e64a7f8d838a671188932592a5b64e4863ff320eb8ee0d9",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: SEC-E-2: the public return and cancel URLs are limited per signed-in user before any provider call\n    # Subtest: SEC-E-2: hit LIMIT + 1 of one buyer is 429 RATE_LIMITED with Retry-After and makes no provider call; another buyer, an anonymous caller and the next window are unaffected\n    ok 1 - SEC-E-2: hit LIMIT + 1 of one buyer is 429 RATE_LIMITED with Retry-After and makes no provider call; another buyer, an anonymous caller and the next window are unaffected\n      ---\n      duration_ms: 477.583737\n      type: 'test'\n      ...\n    1..1\nok 24 - SEC-E-2: the public return and cancel URLs are limited per signed-in user before any provider call\n  ---\n  duration_ms: 477.802721\n  type: 'suite'\n  ...\n1..24\n# tests 93\n# suites 24\n# pass 93\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 12928.78222\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T14:58:17.131Z"
+    },
+    "ev-mv3y73lm-01bb76fd": {
+      "id": "ev-mv3y73lm-01bb76fd",
+      "kind": "command",
+      "label": "phase E iteration 2: e3 plan verification command verbatim",
+      "command": "ls test/api/webhooks.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1979,
+      "log": ".eccode/evidence/ev-mv3y73lm-01bb76fd.log",
+      "logSha256": "3ffbba7a26df4a7a2e3002a6f71d33df4d789f98f547c191233ffe78686b92e8",
+      "logFileSha256": "c31e2b9128a4d6a8234623fcf01e08cdfa6b00d96f165adb65c3fbf93a2334de",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: with the Sandbox adapter against the loopback stub\n    # Subtest: RS-24/SEC-16: the event is verified at the stub with the merchant's webhook id and the operation of the DEFAULT merchant is moved; a forged one is invalid; a body with a BOM is never sent to the stub\n    ok 1 - RS-24/SEC-16: the event is verified at the stub with the merchant's webhook id and the operation of the DEFAULT merchant is moved; a forged one is invalid; a body with a BOM is never sent to the stub\n      ---\n      duration_ms: 422.439594\n      type: 'test'\n      ...\n    1..1\nok 11 - with the Sandbox adapter against the loopback stub\n  ---\n  duration_ms: 422.701602\n  type: 'suite'\n  ...\n1..11\n# tests 117\n# suites 11\n# pass 117\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1914.972223\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T14:58:19.450Z"
+    },
+    "ev-mv3y94z7-01dd331a": {
+      "id": "ev-mv3y94z7-01dd331a",
+      "kind": "command",
+      "label": "phase E iteration 2: e6 plan verification command verbatim (npm test + browser)",
+      "command": "ls test/integration/rs20-two-process-execute.test.js test/browser/journey-happy.test.js test/live/paypal/journey-sandbox.test.js >/dev/null && npm test && npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 91024,
+      "log": ".eccode/evidence/ev-mv3y94z7-01dd331a.log",
+      "logSha256": "183e2fa87f6b0ae90f09b89646a3facce2f2af0e5032533c783b6c6e673bb6a4",
+      "logFileSha256": "c51d450f4f4fc976520305876f1be0d804f9dccdde08b87b6585216093131e58",
+      "outputTail": "      duration_ms: 937.75829\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 868.860324\n      type: 'test'\n      ...\n    1..3\nok 4 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3054.219018\n  type: 'suite'\n  ...\n1..4\n# tests 10\n# suites 4\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 17370.864596\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T14:59:54.563Z"
+    },
+    "ev-mv3ybpk8-0155b4c8": {
+      "id": "ev-mv3ybpk8-0155b4c8",
+      "kind": "command",
+      "label": "phase E iteration 2: artifact coverage of sub-mv3ybm6f-0109db20 against base acba8fc",
+      "command": "node .eccode/drafts/phase-artifacts-check.mjs .eccode/artifacts/plan/plan.json e-payments acba8fc89ff89727390e6d45eeeb09f58d30cd54",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 325,
+      "log": ".eccode/evidence/ev-mv3ybpk8-0155b4c8.log",
+      "logSha256": "0b9acaef9dbe4bd9f811702735cccd70809a912e7b60eb1bb4e70996e0f7c97c",
+      "logFileSha256": "68338d1796c3de5f2e1b6fabeee6c328bd7c94980020857330565489082deb43",
+      "outputTail": "submission sub-mv3ybm6f-0109db20: 76 artifacts (74 project files, 2 under .eccode/)\ndeclared in handoffs: 74; changed in owned paths since acba8fc8: 74\n  e0-paypal-stub-contract: 4 submitted files in its ownership\n  e1-payment-adapters: 11 submitted files in its ownership\n  e2-payment-flow: 16 submitted files in its ownership\n  e3-webhooks: 3 submitted files in its ownership\n  e4-saga-reconciler: 10 submitted files in its ownership\n  e5-frontend-payments: 17 submitted files in its ownership\n  e6-execute-concurrency-browser: 17 submitted files in its ownership\ndeclared but not submitted: 0\nchanged in owned paths but not submitted (undeclared): 0\nsubmitted outside phase ownership: 0\nchanged since base outside phase ownership (other phases or records, informational): 11 docs/build/evidence.md, docs/build/state.md, src/auth/general-limit.js, src/auth/rbac.js, src/db/migrations/006_autoincrement_ids.sql, test/api/id-reuse.test.js, test/unit/ai/gate.test.js, test/unit/auth/general-limit-busy.test.js, test/unit/db/migrate-006.test.js, test/unit/db/migrate.test.js, test/unit/db/open-race.test.js\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T15:01:54.550Z"
     }
   },
   "reviews": {
@@ -31493,6 +31934,45 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T14:54:41.899Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T15:03:54.559Z",
+      "durationMinutes": 9.21,
+      "costUsd": null,
+      "tokens": 62080,
+      "note": null,
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-11T15:04:01.878Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 1,
+            "costUsd": null
+          },
+          "to": {
+            "tokens": 62080,
+            "costUsd": null
+          },
+          "reason": "harness figure for the resumed invocation: 324,386 cumulative minus 262,306 recorded on the first phase E submission run"
+        }
+      ]
+    },
+    "run-mv3yeayh-0101211a": {
+      "id": "run-mv3yeayh-0101211a",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T15:03:55.527Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv3yeb93-010ae771": {
+      "id": "run-mv3yeb93-010ae771",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T15:03:55.909Z",
       "status": "running",
       "attempt": 1
     }
@@ -32087,6 +32567,16 @@
       "lessons": [],
       "at": "2026-10-11T13:52:33.297Z",
       "by": "orchestrator"
+    },
+    "dec-mv3yeak6-01af9b6d": {
+      "id": "dec-mv3yeak6-01af9b6d",
+      "title": "A webhook never resolves an unknown operation",
+      "decision": "PAYMENT.AUTHORIZATION.CREATED and every other webhook event leave an operation in unknown untouched (stored flagged); only the reconciler resolves unknown operations, by reading the provider first (contract delta 27).",
+      "rationale": "The phase E review (TR-E-1) showed a webhook resolving unknown could re-send a capture without a successful read; the reconciler's read-first path is the single place that resolves an uncertain outcome. Costs at most one reconciler tick of delay.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T15:03:55.135Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -32099,8 +32589,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1325.75,
-    "tokens": 17022281
+    "runtimeMinutes": 1334.96,
+    "tokens": 17084361
   },
   "delivery": null,
   "reworks": [

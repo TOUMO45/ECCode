@@ -1,0 +1,74 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "phase:e-payments",
+  "objective": "Second review iteration for phase e-payments (of 3): submission sub-mv3ybm6f-0109db20 (76 artifacts), responding to rev-mv3xhtuz-017cfbef (TR-E-1 = SEC-E-1 major; TR-E-2 = SEC-E-2 and TR-E-3 minor; TR-E-4..TR-E-8 and SEC-E-I1..I5 info).",
+  "context": "Three resets completed in dependency order:\n- e2 ho-mv3xpr5x-01f0502b (TR-E-2/SEC-E-2): return and cancel share a per-user limit of min(30, RS_GENERAL_RATE_LIMIT) per window, answered 429 before the token lookup and any provider call.\n- e3 ho-mv3xwa94-016b9830 (TR-E-1/SEC-E-1): explicit from/fromUnknown lists for all seven events. Every other origin is flagged TRANSITION_NOT_ALLOWED. The mapping table has 42 rows.\n- e6 ho-mv3y24kt-01968292 (TR-E-3): the round-trip helper requires userId and role on every return/cancel log line.\nThe code diff 5e1895b..402a0ac is exactly those 7 files, +135/-29. The submission records commit 2bcd6d2, a records-only snapshot on top of 402a0ac, and tree 2956cda9...45460, the same digest as every one of my test runs.\nECCode is 0.3.4 (TK-6 merged): tree pinning works in this nested project, and eccode audit lists every earlier approved gate without a commit as a release-baseline warning. The audit also fails one line outside phase E: src/services/requests.js is reported as modified after rework-1's approval, although its sha256 equals the version phase D approved. It is reported to the orchestrator; nothing was changed.\nSafety: no PayPal host contacted; RS_LIVE_MODEL and RS_LIVE_PAYPAL never set; the live suite never run. The guard refuses PATH set inline on an eccode command, so iteration-2 runs used the shell's PATH.",
+  "inputs": [
+    ".eccode/artifacts/phase-e/submission.md (section 'Response to rev-mv3xhtuz-017cfbef (iteration 2)')",
+    ".eccode/artifacts/plan/followups.md (section 'Added after the phase E review': FU-34/FU-35 decided, FU-41..FU-45, report items 14-15)",
+    ".eccode/reviews/drafts/phase-e-1.json",
+    ".eccode/reviews/drafts/phase-e-security-1.md",
+    ".eccode/handoffs/ho-mv3xpr5x-01f0502b.json",
+    ".eccode/handoffs/ho-mv3xwa94-016b9830.json",
+    ".eccode/handoffs/ho-mv3y24kt-01968292.json",
+    "git diff 5e1895b 402a0ac -- src test public package.json"
+  ],
+  "dependencies": [
+    "e0-paypal-stub-contract",
+    "e1-payment-adapters",
+    "e2-payment-flow",
+    "e3-webhooks",
+    "e4-saga-reconciler",
+    "e5-frontend-payments",
+    "e6-execute-concurrency-browser"
+  ],
+  "expectedOutput": "A phase review covering task:e0..e6 and phase:e-payments that judges TR-E-1 (required for approval), TR-E-2 and TR-E-3 as fixed or not; the behaviour changes of the e3 reset (deltas 26-27: a late duplicate under a new transmission id is flagged rather than ignored, and AUTHORIZATION.CREATED never resolves an unknown operation); the limit design of the e2 reset (delta 28); and the carried items FU-41..FU-45.",
+  "acceptanceCriteria": [
+    "TR-E-1: PAYMENT.AUTHORIZATION.CREATED moves only approved and authorization_pending to authorized. capture_pending, captured and unknown(prev authorized|capture_pending) are flagged TRANSITION_NOT_ALLOWED with no change. Your probe and security's W-ORDER no longer reproduce (S1/S4 controls pass). ARCH-22 still holds through the reconciler's read path.",
+    "TR-E-2: one buyer's return/cancel hits are bounded per window, and hit LIMIT+1 is 429 with Retry-After and no provider call. Another buyer, an anonymous caller and the next window are unaffected. The RS-20 three-hit, RS-27 and crash-hook tests are unchanged.",
+    "TR-E-3: the helper asserts userId and role unconditionally, and the scratch red control without the app.js fix fails at both widths.",
+    "npm test, npm run test:browser and the e2, e3 and e6 plan commands pass on the final tree. Artifact coverage has 0 undeclared files and 0 outside ownership."
+  ],
+  "completedWork": "Delivery-lead runs on HEAD 402a0ac, clean; all five test runs share tree digest 2956cda9...45460:\n- npm test: 2109 tests, 2101 pass, 0 fail, 8 skipped (the same 8: seven fake-harness OAuth/wire scenarios and fake x PROVIDER_BUSY), 0 todo, 283 suites. ECCODE_EVAL {\"passed\":200,\"total\":200}. NFR5 p95 58.7 ms (p50 2.6 ms) over 5272 requests; suite 73.5 s. The RS-39 timer test passed, so no re-run was needed (ev:ev-mv3y64xc-015dd814).\n- npm run test:browser: 10/10, including RS-31(a) at 360 and 1280 px (ev:ev-mv3y6n9x-01464a65).\n- Plan commands, verbatim:\n  - e2: 93/93 (ev:ev-mv3y71t3-01d6c3fd);\n  - e3: 117/117 (ev:ev-mv3y73lm-01bb76fd);\n  - e6: npm test 2109/2101/0 fail/8 skipped, ECCODE_EVAL 200/200, p95 57.0 ms, then browser 10/10 (ev:ev-mv3y94z7-01dd331a).\n- Artifact coverage against sub-mv3ybm6f-0109db20, base acba8fc (ev:ev-mv3ybpk8-0155b4c8): 76 artifacts = 74 project files + 2 under .eccode/; 74 declared, 74 changed in owned paths; 0 declared but not submitted, 0 undeclared, 0 outside ownership.\nsubmission.md now opens with an iteration 2 section. It maps every finding to a resolution, the change, the tests and the evidence, lists contract deltas 22-28, and states which iteration-1 statements it supersedes: counts, TK-6, the decided FU-34 and FU-35, and the accepted residuals. followups.md gains FU-41 (TR-E-4 to f2: read before re-sending an unknown capture, and test the pause guard so M6 is killed), FU-42 (TR-E-5, optional, f2), FU-43 (TR-E-6 notice, optional, f3), FU-44 (SEC-E-I1, g2/g3), FU-45 (SEC-E-I3, f2), and verification-report items 14-15.",
+  "filesChanged": [
+    ".eccode/artifacts/phase-e/submission.md",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/artifacts/phase-e/handoff-2.json"
+  ],
+  "evidence": [
+    "ev:ev-mv3y64xc-015dd814",
+    "ev:ev-mv3y6n9x-01464a65",
+    "ev:ev-mv3y71t3-01d6c3fd",
+    "ev:ev-mv3y73lm-01bb76fd",
+    "ev:ev-mv3y94z7-01dd331a",
+    "ev:ev-mv3ybpk8-0155b4c8",
+    "ev:ev-mv3xmnj7-016333c5",
+    "ev:ev-mv3xnao4-01bb587b",
+    "ev:ev-mv3xsdzb-017a0008",
+    "ev:ev-mv3xsyol-01ba46d3",
+    "ev:ev-mv3xtaeb-0176a6d2",
+    "ev:ev-mv3xtht4-013fe686",
+    "ev:ev-mv3xxni9-01261164",
+    "ev:ev-mv3y1qgy-01610816",
+    "ev:ev-mv3xzv1u-01ae7ba8"
+  ],
+  "remainingIssues": [
+    "Behaviour changes of the e3 reset for your judgement:\n- delta 26: a late duplicate event under a new transmission id, and any event for an operation already at or past its target, is now stored flagged (TRANSITION_NOT_ALLOWED), not ignored; it lands in the operator's flagged list and changes nothing;\n- delta 27: AUTHORIZATION.CREATED never resolves an unknown operation; the reconciler resolves it by reading. This follows a coordinator ruling that has no decision id.",
+    "Delta 28: the return/cancel limit of 30 is a constant, capped by RS_GENERAL_RATE_LIMIT, and is not an environment variable. A foreign-token hit counts against the caller.",
+    "Carried, not conditions of this gate:\n- TR-E-4 to f2 (FU-41);\n- TR-E-5, optional (FU-42);\n- TR-E-6 notice, optional (FU-43);\n- SEC-E-I1 (FU-44);\n- SEC-E-I3 (FU-45);\n- SEC-E-I2, I4 and I5 accepted, listed for the verification report.",
+    "LIVE-P1, LIVE-P2 and OQ-D5 stay open. Real PayPal event names and late or out-of-order delivery stay LIVE-DEPENDENT.",
+    "Toolkit: eccode audit fails one line outside phase E (src/services/requests.js against rework-1's approval; its sha256 equals the version phase D approved) and warns that every earlier approved gate has no recorded commit. Both are for the orchestrator. This submission records commit 2bcd6d2 and a tree digest."
+  ],
+  "nextAction": "technical-reviewer and security-reviewer: review sub-mv3ybm6f-0109db20 (iteration 2 of 3). orchestrator: look at the audit line for src/services/requests.js, and pass FU-41, FU-42 and FU-45 to f2 at dispatch.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "Neither this resubmission nor the three resets design or change a hook, guard or root discovery. The one guard refusal in this iteration was a raw-text reading of a read-only node -e loop, which the lesson's 'Not applicable when' list names."
+    }
+  ]
+}
