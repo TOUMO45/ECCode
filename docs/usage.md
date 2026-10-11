@@ -79,6 +79,7 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 Environment variables:
 - `ECCODE_ROOT`: project root.
 - `ECCODE_ACTOR`: default actor. The guard denies setting it inline in a command (`ECCODE_ACTOR=x eccode …`); pass `--actor`.
+- `GIT_*`, `NODE_OPTIONS`, `PATH`, `HOME`, `XDG_CONFIG_HOME`: the guard denies assigning them to an eccode CLI call (`PATH=… eccode …`, `export PATH=…; eccode …`, `env -i eccode …`), since they would point the engine's git elsewhere or preload code into the CLI; the engine itself ignores every `GIT_*` variable (0.3.4). A check that needs its own `PATH` sets it inside the command the evidence run runs: `eccode evidence run … -- 'PATH="$PWD/node_modules/.bin:$PATH" npm test'`.
 - `ECCODE_HOOKS=off`: disable the hooks.
 - `ECCODE_SEQUENTIAL_ROLES=1`: allow the main session to act as roles. Use it only in disclosed sequential mode.
 - `ECCODE_SHARED_MEMORY`: shared memory location.

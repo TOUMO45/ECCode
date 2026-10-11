@@ -68,16 +68,45 @@ test('NEW-9: ECCODE_SHARED_MEMORY, ECCODE_ROOT, ECCODE_SEQUENTIAL_ROLES and ECCO
 // TK-6 R3-1: the engine now ignores git's repository-selection and config variables; as belt and braces the
 // guard refuses GIT_* and NODE_OPTIONS (which can preload code into the CLI) inline on a line naming the CLI.
 // Other commands keep them (GIT_TERMINAL_PROMPT=0 git fetch, NODE_OPTIONS=--max-old-space-size npm test).
-test('TK-6 R3-1: GIT_* and NODE_OPTIONS cannot be set inline on a line that names the eccode CLI', () => {
+// TK-6 R4-1/R4-2a: only a real NAME=value assignment that applies to a CLI invocation is refused (in that
+// command's own prefix, after env, or assigned/exported earlier in the same line), never a bare name or a
+// word inside a quoted argument, a commit message or a heredoc body of another command.
+test('TK-6 R3-1/R4-2: GIT_*, NODE_OPTIONS, PATH, HOME and XDG_CONFIG_HOME cannot be set inline on an eccode CLI call, nor env -i', () => {
   const ctx = tmpProject();
-  const reason = /GIT_\* and NODE_OPTIONS may not be set inline on an eccode command/;
+  const reason = /may not be set inline on an eccode command/;
   denied(bash(ctx.dir, 'GIT_DIR=/tmp/nowhere eccode evidence run --actor backend-engineer --label x -- npm test', 'backend-engineer'), 'GIT_DIR on the CLI', reason);
   denied(bash(ctx.dir, 'GIT_WORK_TREE=/tmp eccode gate submit architecture --actor product-architect --artifact a.md', null), 'GIT_WORK_TREE on the CLI', reason);
   denied(bash(ctx.dir, 'env NODE_OPTIONS=--require=/tmp/x.js node bin/eccode.js status', null), 'a preload through env', reason);
   denied(bash(ctx.dir, 'export GIT_CONFIG_COUNT=1; eccode status', null), 'exported in the same line', reason);
+  denied(bash(ctx.dir, 'GIT_DIR=/x; eccode status', null), 'assigned earlier in the same line', reason);
+  denied(bash(ctx.dir, 'PATH=/tmp/fakebin:$PATH node bin/eccode.js task complete api --actor backend-engineer --file h.json', 'backend-engineer'), 'a git first on PATH', reason);
+  denied(bash(ctx.dir, 'HOME=/tmp/h eccode status', null), 'HOME', reason);
+  denied(bash(ctx.dir, 'XDG_CONFIG_HOME=/tmp/x eccode status', null), 'XDG_CONFIG_HOME', reason);
+  denied(bash(ctx.dir, 'export PATH=/tmp/fake:$PATH && eccode status', null), 'PATH exported before the CLI', reason);
+  denied(bash(ctx.dir, 'env -i PATH=/usr/bin node bin/eccode.js status', null), 'env -i on the CLI', reason);
+  denied(bash(ctx.dir, 'env -i node bin/eccode.js status', null), 'env -i alone on the CLI', reason);
+  denied(bash(ctx.dir, "bash -c 'GIT_DIR=/x eccode status'", null), 'inside bash -c', reason);
+  denied(bash(ctx.dir, "env -S 'GIT_DIR=/x eccode status'", null), 'env -S', reason);
+  denied(bash(ctx.dir, 'declare -x NODE_OPTIONS=--require=/tmp/x.js; node bin/eccode.js status', null), 'declare -x', reason);
+  denied(bash(ctx.dir, "eval 'XDG_CONFIG_HOME=/tmp/x eccode status'", null), 'eval', reason);
+  denied(bash(ctx.dir, "eccode evidence run --actor backend-engineer --label l -- 'HOME=/tmp/h eccode status'", 'backend-engineer'), 'the command an evidence run runs', reason);
+});
+
+test('TK-6 R4-1: words in commit messages, heredoc bodies, grep patterns and other commands\' assignments are not refused', () => {
+  const ctx = tmpProject();
   allowed(bash(ctx.dir, 'GIT_PAGER=cat git log -1', 'backend-engineer'), 'GIT_* on a command that is not the CLI');
   allowed(bash(ctx.dir, 'NODE_OPTIONS=--max-old-space-size=4096 npm test', 'backend-engineer'), 'NODE_OPTIONS on a build');
+  allowed(bash(ctx.dir, 'PATH=/opt/tools/bin:$PATH make build', 'backend-engineer'), 'PATH on a build');
   allowed(bash(ctx.dir, 'eccode status', null), 'the CLI without them');
+  // The orchestrator's and reviewers' ordinary lines that name both (review R4-1).
+  allowed(bash(ctx.dir, 'git commit -q -m "an inline GIT_DIR no longer records an unpinned run, and an eccode call from a git hook pins a nested project"', null), 'a commit message naming GIT_DIR and eccode');
+  allowed(bash(ctx.dir, 'git commit -q -m "the guard refuses GIT_DIR=/x before eccode"', null), 'a commit message holding GIT_DIR=/x before eccode');
+  allowed(bash(ctx.dir, 'git commit -q -m "the guard refuses GIT_DIR=/x eccode status inline"', null), 'a commit message holding a whole refused line');
+  allowed(bash(ctx.dir, 'git commit -q -m "eccode: refuse NODE_OPTIONS inline"', null), 'a commit message naming NODE_OPTIONS');
+  allowed(bash(ctx.dir, "git commit -q -F - <<'EOF'\nTK-6: strip GIT_DIR and NODE_OPTIONS\nGIT_DIR=/x eccode status is refused\nexport PATH=/tmp/fake; eccode status\nEOF", null), 'a heredoc commit message');
+  allowed(bash(ctx.dir, 'GIT_AUTHOR_DATE="2026-10-11T12:00:00" git commit -q -m "eccode 0.3.4"', null), 'GIT_AUTHOR_DATE on git, eccode in the message');
+  allowed(bash(ctx.dir, 'grep -n GIT_DIR bin/eccode.js lib/project.js', 'technical-reviewer'), 'a read-only grep');
+  allowed(bash(ctx.dir, 'git log --oneline -S GIT_DIR -- scripts/hooks/guard.js bin/eccode.js', 'technical-reviewer'), 'a read-only git log -S');
 });
 
 test('NEW-7: a shell function or alias defined around the CLI in the same line is refused', () => {
@@ -194,9 +223,12 @@ test('REVIEW 2: function names bash accepts, expansions in the CLI word, compute
   denied(bash(ctx.dir, 'N=ECCODE_ACTOR; printf -v "$N" user; eccode gate reopen design --resolution ok', null), 'printf -v', /computed name/);
   denied(bash(ctx.dir, 'declare -n ref=ECCODE_ACTOR; ref=user; eccode gate reopen design --resolution ok', null), 'declare -n', /computed name/);
   // G6: literal names with computed values are ordinary shell.
-  for (const c of ['export OUT="$HOME/x"; eccode status --brief', 'env FOO="$BAR" eccode status --brief', 'export PATH="$PWD/node_modules/.bin:$PATH"; eccode evidence run --actor technical-reviewer --label t -- npm test', 'local x=$y; eccode status --brief']) {
+  // Since TK-6 R4-2 a PATH exported before the CLI is refused (a failing or lying git first on PATH); the
+  // check's own PATH goes inside the command the evidence run runs, which the CLI does not see.
+  for (const c of ['export OUT="$HOME/x"; eccode status --brief', 'env FOO="$BAR" eccode status --brief', 'eccode evidence run --actor technical-reviewer --label t -- \'PATH="$PWD/node_modules/.bin:$PATH" npm test\'', 'local x=$y; eccode status --brief']) {
     allowed(bash(ctx.dir, c, 'technical-reviewer'), `G6: ${c.slice(0, 30)}`);
   }
+  denied(bash(ctx.dir, 'export PATH="$PWD/node_modules/.bin:$PATH"; eccode evidence run --actor technical-reviewer --label t -- npm test', 'technical-reviewer'), 'G6 PATH exported before the CLI (TK-6 R4-2)', /may not be set inline on an eccode command/);
 });
 
 test('REVIEW 3: a link created and written through in one line, and a dangling link that already exists, cannot reach the record', () => {

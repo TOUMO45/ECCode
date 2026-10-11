@@ -14,7 +14,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { execFileSync, spawnSync } = require('child_process');
-const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, expectCode, ARCH_MD, initRepo } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, expectCode, coverage, ARCH_MD, initRepo } = require('./helpers');
 const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const { init, treeDigest, treePin, gitHead, insideWorkTree, gitChangedFiles } = require('../lib/project');
@@ -159,4 +159,77 @@ test('R3-1 the CLI run from a git hook environment (GIT_DIR, GIT_INDEX_FILE, cwd
     assert.doesNotMatch(res.stderr, /tree pinning/);
     assert.strictEqual(JSON.parse(res.stdout).tree, expected, JSON.stringify(env));
   }
+});
+
+// ------------------------------------------------------------------------- review of b5c7510 (round 5)
+// R4-4: every GIT_* variable is removed, not a list (git grows new ones: GIT_ATTR_SOURCE changes the
+// attributes hash-object filters with). The rest of the environment, PATH and HOME included, is kept.
+test('R4-4 the engine runs git without any GIT_* variable and keeps the rest of the environment', () => {
+  const { gitEnv } = require('../lib/project');
+  const env = gitEnv({ GIT_DIR: 'x', git_dir: 'y', GIT_TERMINAL_PROMPT: '0', GIT_ATTR_SOURCE: 'HEAD', GIT_REPLACE_REF_BASE: 'r', GIT_NO_REPLACE_OBJECTS: '1', PATH: '/bin', HOME: '/h', GITHUB_TOKEN: 't', NODE_ENV: 'test' });
+  assert.deepStrictEqual(env, { PATH: '/bin', HOME: '/h', GITHUB_TOKEN: 't', NODE_ENV: 'test' });
+});
+
+// R4-2: a git that fails, first on PATH, made the engine see "not a work tree": the run recorded neither
+// tree nor marker, gate submit recorded no commit, and completion skipped the stale check because the
+// current digest was null. A lying git is residual 1; a failing one is refused.
+const POSIX_ONLY = { skip: process.platform === 'win32' ? 'a shell-script git needs a POSIX shell' : false };
+
+function failingGitPath() {
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-fakegit-'));
+  fs.writeFileSync(path.join(bin, 'git'), '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+  return `${bin}${path.delimiter}${process.env.PATH}`;
+}
+
+test('R4-2c once the record pins, a failing git marks the run (with the CLI warning) instead of recording nothing', POSIX_ONLY, () => {
+  const { dir, store } = tmpProject();
+  passCheck(store, 'backend-engineer'); // the record pins trees from here on
+  const PATH = failingGitPath();
+  const run = withEnv({ PATH }, () => passCheck(store, 'backend-engineer'));
+  assert.strictEqual(run.treeUnavailable, true);
+  assert.strictEqual(run.tree, undefined);
+  const res = spawnSync(process.execPath, [BIN, '--root', dir, 'evidence', 'run', '--actor', 'backend-engineer', '--label', 'blind', '--json', '--', 'node -e "process.exit(0)"'], { encoding: 'utf8', env: { ...process.env, PATH } });
+  assert.strictEqual(res.status, 0, res.stderr);
+  assert.match(res.stderr, /warning: tree pinning is off for this run/);
+  assert.strictEqual(JSON.parse(res.stdout).treeUnavailable, true);
+});
+
+test('R4-2c once the record pins, gate submit with a failing git is refused and records nothing; delivery is refused', POSIX_ONLY, () => {
+  const { dir, store, config } = tmpProject();
+  passCheck(store, 'backend-engineer');
+  gates.startGate(store, config, 'architecture', 'orchestrator');
+  write(dir, '.eccode/artifacts/brief.md', ARCH_MD);
+  const PATH = failingGitPath();
+  const err = expectCode(() => withEnv({ PATH }, () => gates.submit(store, config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] })), 'NO_COMMIT');
+  assert.match(err.message, /git does not show this project as a work tree/);
+  assert.strictEqual(store.state().gates.architecture.submissions.length, 0);
+  const pre = withEnv({ PATH }, () => require('../lib/delivery').preconditions(store, config).problems);
+  assert.ok(pre.some((p) => /git does not show this project as a work tree/.test(p)), pre.join('\n'));
+});
+
+test('R4-2b completion and review refuse a pinned run while the current digest cannot be computed', POSIX_ONLY, () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  const { store, config, dir } = ctx;
+  gates.startGate(store, config, 'phase:core', 'orchestrator');
+  tasks.claim(store, config, 'api', 'backend-engineer');
+  write(dir, 'src/server/app.js', 'module.exports = 1;\n');
+  const run = passCheck(store, 'backend-engineer');
+  const PATH = failingGitPath();
+  const complete = (ids) => tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', ids, ['src/server/app.js']));
+  const err = expectCode(() => withEnv({ PATH }, () => complete([run.id])), 'INVALID_HANDOFF');
+  assert.match(err.message, new RegExp(`cannot verify that the cited check\\(s\\) ev:${run.id} ran on the current tree`));
+  complete([run.id]);
+  for (const [id, owner, file] of [['ui', 'frontend-engineer', 'src/web/b.js'], ['tests', 'test-engineer', 'tests/c.test.js']]) {
+    tasks.claim(store, config, id, owner);
+    write(dir, file, `// ${id}\n`);
+    tasks.complete(store, config, id, owner, handoffFor(id, owner, [passCheck(store, owner).id], [file]));
+  }
+  gates.submit(store, config, 'phase:core', 'delivery-lead');
+  const reviewerRun = passCheck(store, 'technical-reviewer');
+  const review = () => gates.recordReview(store, config, 'phase:core', 'technical-reviewer', coverage(ctx, 'phase:core', [`ev:${reviewerRun.id}`]));
+  const rejected = expectCode(() => withEnv({ PATH }, review), 'REVIEW_REJECTED');
+  assert.match(rejected.message, new RegExp(`cannot verify that the cited check\\(s\\) ev:${reviewerRun.id} ran on the current tree`));
+  review();
+  assert.strictEqual(store.state().gates['phase:core'].status, 'approved');
 });
