@@ -1,10 +1,11 @@
--- 006: ids of rescue_requests, planning_runs, plan_versions and images are never reused (FU-23 / TR-D-3), and
--- model_spend.request_id becomes a foreign key. App-only migration: no new data, no seed change.
+-- 006: ids of rescue_requests, planning_runs, plan_versions, images, extractions and requirements are never reused (FU-23 /
+-- TR-D-3), also not those hard-deleted before the upgrade (SEC-RW4-1), and model_spend.request_id becomes a foreign key.
+-- App-only migration: no new data, no seed change.
 --
 -- Why: an INTEGER PRIMARY KEY without AUTOINCREMENT takes max(rowid) + 1, so after a hard delete of the highest id the next
 -- insert gets the same id. The append-only audit_events (entity_id) and the model_spend row of the deleted request then
 -- named another customer's request, plan version or image. AUTOINCREMENT keeps a high-water mark in sqlite_sequence.
--- SQLite cannot add AUTOINCREMENT to an existing table, so the four tables are rebuilt.
+-- SQLite cannot add AUTOINCREMENT to an existing table, so the six tables are rebuilt.
 --
 -- How, inside the migration runner's one BEGIN IMMEDIATE (src/db/migrate.js) with foreign_keys = ON, which cannot be switched
 -- off inside a transaction:
@@ -17,7 +18,15 @@
 --   * The tables are recreated under their own names, so no ALTER TABLE ... RENAME rewrites the references of other tables.
 --   * The append-only triggers of SEC-B-2 sit on audit_events and inventory_ledger, which are not touched; none of the rebuilt
 --     tables has a trigger. Their indexes are dropped with them and created again below, byte for byte as in 002 and 003.
---   * Inserting the old ids raises sqlite_sequence to max(id), the best high-water mark that is known for existing data.
+--   * The high-water mark (SEC-RW4-1). Re-inserting the surviving rows would only raise sqlite_sequence to the highest SURVIVING
+--     id, and ids that were hard-deleted on 005 above that point would be handed out again, although audit_events and
+--     model_spend still name them. So, before the staging tables are dropped, each sequence is raised to the highest id still
+--     named anywhere: audit_events.entity_id for the entity type (request, image, plan_version), the plan.create details
+--     planVersionId and runId, the extraction.run detail extractionId, and the staged model_spend.request_id. A missing
+--     sqlite_sequence row is created first. requirements ids appear in no audit row, so for that table the surviving maximum is
+--     the best mark there is. Ids that 005 had already handed out twice before this migration cannot be told apart and stay as
+--     they are.
+--   * extractions and requirements are rebuilt too (SEC-RW4-I1): both are staged anyway and their ids were reused as well.
 --
 -- model_spend.request_id: FOREIGN KEY ... ON DELETE SET NULL. The row is the budget ledger of the day (gate.js sums every
 -- row of the day), so it must survive a hard delete of its request; SET NULL keeps customer, day, purpose and amount and
@@ -40,6 +49,8 @@ DROP TABLE model_spend;
 DROP TABLE plan_versions;
 DROP TABLE planning_runs;
 DROP TABLE images;
+DROP TABLE extractions;
+DROP TABLE requirements;
 DROP TABLE rescue_requests;
 
 CREATE TABLE rescue_requests (
@@ -56,6 +67,23 @@ CREATE TABLE images (
   bytes INTEGER NOT NULL CHECK (bytes BETWEEN 1 AND 5242880), sha256 TEXT NOT NULL, created_at TEXT NOT NULL);
 CREATE UNIQUE INDEX images_one_per_request ON images(request_id);
 CREATE INDEX images_created ON images(created_at);
+CREATE TABLE extractions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, request_id INTEGER NOT NULL REFERENCES rescue_requests(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('fake','cli','anthropic','none')), model TEXT, prompt_version TEXT NOT NULL,
+  schema_ok INTEGER NOT NULL CHECK (schema_ok IN (0,1)), error_code TEXT, degraded INTEGER NOT NULL CHECK (degraded IN (0,1)),
+  simulated INTEGER NOT NULL CHECK (simulated IN (0,1)), latency_ms INTEGER, cost_micro_usd INTEGER NOT NULL DEFAULT 0,
+  fields_json TEXT NOT NULL, questions_json TEXT NOT NULL DEFAULT '[]', created_at TEXT NOT NULL,
+  CHECK (degraded = 0 OR (schema_ok = 0 AND error_code IS NOT NULL)));
+CREATE INDEX extractions_request ON extractions(request_id, id);
+CREATE TABLE requirements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, request_id INTEGER NOT NULL REFERENCES rescue_requests(id) ON DELETE CASCADE,
+  version INTEGER NOT NULL CHECK (version >= 1), fields_json TEXT NOT NULL,          -- FieldValue map; originalWording scrubbed on tombstone
+  product_type TEXT NOT NULL CHECK (product_type IN ('cups_and_lids','cups','lids')),
+  cups INTEGER NOT NULL CHECK (cups BETWEEN 0 AND 100000), lids INTEGER NOT NULL CHECK (lids BETWEEN 0 AND 100000),
+  capacity_ml INTEGER NOT NULL, diameter_mm INTEGER NOT NULL, material TEXT,
+  budget_cents INTEGER CHECK (budget_cents IS NULL OR budget_cents BETWEEN 1 AND 100000000),
+  deadline_at TEXT, max_pickups INTEGER NOT NULL CHECK (max_pickups BETWEEN 1 AND 5),
+  confirmed_by INTEGER NOT NULL REFERENCES users(id), confirmed_at TEXT NOT NULL, UNIQUE (request_id, version));
 CREATE TABLE planning_runs (
   id INTEGER PRIMARY KEY AUTOINCREMENT, request_id INTEGER NOT NULL REFERENCES rescue_requests(id) ON DELETE CASCADE,
   requirements_version INTEGER NOT NULL, feasible INTEGER NOT NULL CHECK (feasible IN (0,1)),
@@ -102,6 +130,29 @@ INSERT INTO model_spend (id, day, customer_id, request_id, purpose, reserved_mic
   SELECT id, day, customer_id, CASE WHEN request_id IN (SELECT id FROM rescue_requests) THEN request_id END,
          purpose, reserved_micro_usd, actual_micro_usd, status, created_at
   FROM s_model_spend ORDER BY id;
+
+-- The sequence floor (SEC-RW4-1): raise each sequence to the highest id still named anywhere. This must run before the staging
+-- tables are dropped, because s_model_spend still holds the request ids that the copy above set to NULL. json_extract is
+-- guarded by json_valid so a malformed detail_json can never abort the migration.
+INSERT INTO sqlite_sequence (name, seq)
+  SELECT t, 0 FROM (SELECT 'rescue_requests' AS t UNION ALL SELECT 'images' UNION ALL SELECT 'planning_runs'
+                    UNION ALL SELECT 'plan_versions' UNION ALL SELECT 'extractions' UNION ALL SELECT 'requirements')
+  WHERE t NOT IN (SELECT name FROM sqlite_sequence);
+UPDATE sqlite_sequence SET seq = MAX(seq,
+  COALESCE((SELECT MAX(entity_id) FROM audit_events WHERE entity_type = 'request'), 0),
+  COALESCE((SELECT MAX(request_id) FROM s_model_spend), 0)) WHERE name = 'rescue_requests';
+UPDATE sqlite_sequence SET seq = MAX(seq,
+  COALESCE((SELECT MAX(entity_id) FROM audit_events WHERE entity_type = 'image'), 0)) WHERE name = 'images';
+UPDATE sqlite_sequence SET seq = MAX(seq,
+  COALESCE((SELECT MAX(entity_id) FROM audit_events WHERE entity_type = 'plan_version'), 0),
+  COALESCE((SELECT MAX(CASE WHEN json_valid(detail_json) THEN CAST(json_extract(detail_json, '$.planVersionId') AS INTEGER) END)
+              FROM audit_events WHERE action = 'plan.create'), 0)) WHERE name = 'plan_versions';
+UPDATE sqlite_sequence SET seq = MAX(seq,
+  COALESCE((SELECT MAX(CASE WHEN json_valid(detail_json) THEN CAST(json_extract(detail_json, '$.runId') AS INTEGER) END)
+              FROM audit_events WHERE action = 'plan.create'), 0)) WHERE name = 'planning_runs';
+UPDATE sqlite_sequence SET seq = MAX(seq,
+  COALESCE((SELECT MAX(CASE WHEN json_valid(detail_json) THEN CAST(json_extract(detail_json, '$.extractionId') AS INTEGER) END)
+              FROM audit_events WHERE action = 'extraction.run'), 0)) WHERE name = 'extractions';
 
 DROP TABLE s_rescue_requests;
 DROP TABLE s_images;
