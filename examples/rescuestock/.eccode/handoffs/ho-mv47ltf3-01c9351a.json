@@ -1,0 +1,45 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "rework-6",
+  "objective": "FU-33 (TR-F-7): make the RS-39 'startApp removes an expired image at startup and another one on the next tick' test wait for the file unlink instead of racing it. FU-46: stop planner-sec-b1 from failing on host noise while it still kills the old exponential planner. Test-only; no source change.",
+  "context": "Decision dec-mv46ovt6-01a662af. FU-33: the retention sweep deletes the image ROW in a transaction and then unlinks the FILE asynchronously (spec: retention, row and audit event first, an unlink that fails leaves an orphan for the orphan sweep), so a test that polls the row and then checks the file at once can see the file still there. It failed in 2 of 4 locked full runs. FU-46: SEC-B-1 (review rev-mv1k04zq-01814d87) is the old planner that enumerated every multiplicity vector and gave up with PLANNER_LIMIT after about 170 ms; the test asserted every one of 1,008 calls under 100 ms and failed on 186.9 ms (CPU contention, ev-mv43keu0-0102c57c) and 327.9 ms (host steal). No file under src, no fixture and no other test was touched; no live suite was run; nothing was committed. Every mutant lives in its own fresh directory under scratchpad/rework6/ with its diff saved as mutant.diff (also printed at the top of its evidence log).",
+  "inputs": [
+    ".eccode/reviews/rev-mv1k04zq-01814d87.json (SEC-B-1)",
+    "src/services/retention.js, src/domain/search.js (read only)",
+    "test/api/uploads-retention.test.js, test/timing/planner-sec-b1.test.js"
+  ],
+  "dependencies": [],
+  "expectedOutput": "Both tests stable on a loaded host and still red on the behaviours they exist to catch.",
+  "acceptanceCriteria": [
+    "FU-33: the race reproduced with the unchanged test; the fixed test passes reliably (20 runs) and still fails when the file is never removed",
+    "FU-46: the revised test keeps every exactness assertion, bounds the p95 plus a generous single-call ceiling, the ceiling chosen from measurements, and still fails on a mutant that brings back full enumeration",
+    "full npm test green under the suite lock; filesChanged exactly the two files"
+  ],
+  "completedWork": "FU-33. REPRODUCED: the UNCHANGED test (HEAD version) against a scratch copy whose image unlink is delayed 300 ms (dir ur-delay-unchanged) fails at the old line 711 (file still exists, expected false, actual true), the same assertion that failed in the locked full runs: ev:ev-mv475gzp-01fef662 (41 tests, 40 pass, 1 fail). FIX in test/api/uploads-retention.test.js: after the row is gone, the test polls existsSync of the file every 10 ms for at most 5 s, then asserts it is gone with the message 'the file of the swept image is unlinked within 5 s of its row going' (a bounded poll on the observable state; the sweep exposes no event for the second pass, and the first pass is already awaited through retention.started). PROOF: the fixed test against the same 300 ms delayed-unlink mutant (dir ur-delay-fixed) passes, 41 of 41: ev:ev-mv476als-012ebc22. Not weakened: against a mutant where only the image unlink is removed (dir ur-nounlink, first attempt) everything passed, ev:ev-mv476e0b-01cc6895, because the orphan sweep of the same pass removes the file: that is the spec's design, so the mutant was extended to also stop the orphan sweep unlinking (same dir, diff re-saved): the RS-39 tests fail, ev:ev-mv476u2l-01edbb7b (failing at the first image's file check, 30 of 33 pass); and a sharper mutant where only the FIRST swept file is unlinked and the orphan sweep never unlinks (dir ur-secondfile) fails exactly at the new bounded wait with the new message, ev:ev-mv477eod-01087627. RELIABILITY on the real tree: the whole file 20 times in a loop, one evidence run, all 20 pass: ev:ev-mv47lom9-015c619a (run on the final tree; the earlier loop ev:ev-mv47aybz-01d2b0e2 also passed 20 of 20 but predates the planner test edit and is not cited). FU-46. MEASURED on a quiet host (load average 0.6, 4 cores, six runs of the exact 1,008-call sweep, script scratchpad/rework6/measure.mjs): max 4.3 to 7.1 ms, p99 1.3 to 2.4 ms, p95 0.67 to 1.00 ms, p50 0.06 to 0.10 ms, 0 calls throwing; the 12-offer test: worst 13.3 to 24.8 ms of 150. CHOSEN in test/timing/planner-sec-b1.test.js: SINGLE_CALL_CEILING_MS = 1000 for every per-call time check (the sweep's 100 ms, the single stock-100 call's 50 ms and the 12-offer catalogs' 250 ms): 140 x the quiet sweep maximum, 3 x the worst call seen under host steal (327.9 ms), and a runaway guard only; SWEEP_P95_MS = 20, unchanged: 20 x the quiet p95, and one slow call among 1,008 cannot move a percentile. KEPT: every exactness assertion (no call may throw, in all three tests; the A-only plan, lines, total, pickups, the same plan with maxPickups 1, the ranked alternatives, the feasibility count, calls == 1,008). The assertion messages now state the limit and the quiet-host value. The first test's title no longer says 'under 50 ms'. THE REVISED TEST STILL KILLS THE OLD BEHAVIOUR: scratch mutant pl-fullenum (src/domain/search.js with no irredundancy cut, no dominance table, no lower bound and no demand window: every multiplicity 1..stock enumerated) measured with the sweep: 110 of 1,008 calls throw PLANNER_LIMIT, p95 27.6 ms; the revised test fails on it (tests 2 and 3, 'planner search limit exceeded' at stock 30, qty 10000): ev:ev-mv47dqfe-018e0d01. The same with the node cap lifted from 2,000,000 to 40,000,000 (dir pl-nocap) still fails on the exactness assertions (PlannerLimitError at stock 100, qty 50000, 2.2 s): ev:ev-mv47dsj8-0120cf95. HONEST LIMIT: with the cap, the old behaviour surfaces as PLANNER_LIMIT, so it is the exactness assertions (and the p95 on a mutant that does not throw) that kill it; the per-call ceiling is a runaway guard only, and a cap lifted entirely would not return at all on the large inputs, so no mutant can show the ceiling alone firing. STABILITY: the revised file on the real tree, quiet: ev:ev-mv47e3rn-01d51ab3 (3 of 3, 1.2 s); three runs under CPU contention (12 busy loops on 4 cores): ev:ev-mv47feek-01fdb68f (3 of 3 each time). FULL SUITE under the lock (flock /tmp/rescuestock-suite.lock npm test): ev:ev-mv47hp51-018946ca PASSED: 2270 tests, 2262 pass, 0 fail, 8 skipped (the existing fake-harness provider-contract cases; none changed here).",
+  "filesChanged": [
+    "test/api/uploads-retention.test.js",
+    "test/timing/planner-sec-b1.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv47lom9-015c619a",
+    "ev:ev-mv47e3rn-01d51ab3",
+    "ev:ev-mv47feek-01fdb68f",
+    "ev:ev-mv47hp51-018946ca"
+  ],
+  "remainingIssues": [
+    "The 12-offer and single-call checks of planner-sec-b1 were moved to the same 1000 ms ceiling as the sweep (they had 250 and 50 ms): the same host-noise failure applies to them; this goes slightly beyond the one line named in FU-46 and is stated here for the reviewer.",
+    "The retention test polls the file for up to 5 s instead of waiting on an event, because the sweep of the second pass exposes none to a test; the poll fails with a named message if the file is never removed."
+  ],
+  "nextAction": "reviewer: review the two tests and the mutant evidence (diffs under scratchpad/rework6/<mutant>/mutant.diff).",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This task edits two test files and builds no hook or guard that maps file writes to a project record or root, so the lesson's applies-when condition (designing or debugging root discovery of a tool-call guard) does not hold; no write to a task file was denied."
+    }
+  ]
+}

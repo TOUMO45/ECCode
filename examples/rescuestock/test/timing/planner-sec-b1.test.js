@@ -9,6 +9,20 @@ import { localTimeOnDate } from '../../src/domain/time.js';
 import { DAY, makeRng } from '../unit/domain/helpers/catalog-gen.js';
 import { fixtureInput } from '../unit/domain/helpers/fixture.js';
 
+// FU-46 (decision dec-mv46ovt6-01a662af). What this test protects is the ALGORITHM, not the speed of the host. The old planner
+// enumerated every multiplicity vector, so on the sweep below it either threw PLANNER_LIMIT (about 170 ms in) or, with the cap
+// lifted, ran for seconds. Those two failures are caught by the exactness assertions (no call may throw; results exact) and by the
+// p95 of the whole sweep, which a noisy neighbour cannot move much: one slow call among 1,008 does not change a percentile.
+// A single call can be stretched by CPU contention or host steal (observed: 186.9 ms and 327.9 ms against 4-7 ms quiet), so the
+// per-call time is only a runaway guard.
+//   Measured on a quiet host over six runs of the 1,008-call sweep: max 4.3-7.1 ms, p99 1.3-2.4 ms, p95 0.7-1.0 ms, p50 0.06-0.10 ms.
+//   The 12-offer catalogs: worst 13-25 ms of 150.
+//   SINGLE_CALL_CEILING_MS 1000: 140 x the quiet maximum of the sweep, 3 x the worst call seen under host steal, and far below a
+//     run of the exponential search with its cap lifted (seconds per call).
+//   SWEEP_P95_MS 20: 20 x the quiet p95; the full-enumeration mutant has p95 27.6 ms and 110 of the 1,008 calls throw.
+const SINGLE_CALL_CEILING_MS = 1000;
+const SWEEP_P95_MS = 20;
+
 function timed(input) {
   const start = performance.now();
   let result;
@@ -36,7 +50,7 @@ const seeded = (stock, qty, maxPickups, budget, compat, deadline) => fixtureInpu
   }
 });
 
-test('SEC-B-1: stock 100, 10,000 cups → A, under 50 ms', () => {
+test('SEC-B-1: stock 100, 10,000 cups → A, exact and without a runaway search', () => {
   // each of the five suppliers holds 100 bundles; A, B or E alone covers 10,000 cups + 10,000 lids; budget USD 100,000
   const input = seeded(100, 10000, 5, 10000000, false, false);
   const { result, error, ms } = timed(input);
@@ -46,7 +60,7 @@ test('SEC-B-1: stock 100, 10,000 cups → A, under 50 ms', () => {
   assert.deepEqual(result.best.lines.map((l) => [l.supplierCode, l.bundles, l.cups]), [['A', 100, 10000]]);
   assert.equal(result.best.totalCents, 100 * 3000 + 1000);
   assert.equal(result.best.pickupCount, 1);
-  assert.ok(ms < 50, `took ${ms.toFixed(1)} ms`);
+  assert.ok(ms < SINGLE_CALL_CEILING_MS, `took ${ms.toFixed(1)} ms (ceiling ${SINGLE_CALL_CEILING_MS} ms; quiet host: well under 5 ms)`);
   // the same request with maxPickups 1 gives the same plan
   const one = plan(seeded(100, 10000, 1, 10000000, false, false));
   assert.deepEqual(one.best, result.best);
@@ -67,7 +81,7 @@ test('SEC-B-1: the seeded catalog shape never reaches PLANNER_LIMIT and stays fa
             calls += 1;
             assert.equal(error, null, `stock ${stock}, qty ${qty}, maxPickups ${maxPickups}, budget ${budget}, compat ${compat}: ${error?.message}`);
             times.push(ms);
-            assert.ok(ms < 100, `stock ${stock}, qty ${qty}, maxPickups ${maxPickups}, budget ${budget}, compat ${compat} took ${ms.toFixed(1)} ms`);
+            assert.ok(ms < SINGLE_CALL_CEILING_MS, `stock ${stock}, qty ${qty}, maxPickups ${maxPickups}, budget ${budget}, compat ${compat} took ${ms.toFixed(1)} ms (runaway ceiling ${SINGLE_CALL_CEILING_MS} ms)`);
           }
         }
       }
@@ -75,10 +89,11 @@ test('SEC-B-1: the seeded catalog shape never reaches PLANNER_LIMIT and stays fa
   }
   times.sort((a, b) => a - b);
   assert.equal(calls, 7 * 6 * 3 * 4 * 2);
-  assert.ok(times[Math.floor(times.length * 0.95)] < 20, `p95 ${times[Math.floor(times.length * 0.95)].toFixed(1)} ms`);
+  const p95 = times[Math.floor(times.length * 0.95)];
+  assert.ok(p95 < SWEEP_P95_MS, `p95 ${p95.toFixed(1)} ms over ${calls} calls (limit ${SWEEP_P95_MS} ms; quiet host: about 1 ms)`);
 });
 
-test('SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities up to 100,000 never reach PLANNER_LIMIT and take under 250 ms each', () => {
+test('SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities up to 100,000 never reach PLANNER_LIMIT and stay under the runaway ceiling each', () => {
   const rng = makeRng(20261009);
   let feasible = 0;
   let worst = 0;
@@ -106,7 +121,7 @@ test('SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities u
     assert.equal(error, null, `catalog ${c}: ${error?.message}`);
     if (result.feasible) feasible += 1;
     worst = Math.max(worst, ms);
-    assert.ok(ms < 250, `catalog ${c} took ${ms.toFixed(1)} ms`);
+    assert.ok(ms < SINGLE_CALL_CEILING_MS, `catalog ${c} took ${ms.toFixed(1)} ms (runaway ceiling ${SINGLE_CALL_CEILING_MS} ms; quiet host: 13-25 ms worst of 150)`);
   }
   assert.ok(feasible > 20 && feasible < 150, `${feasible} feasible`);
   console.log(`# SEC-B-1 12-offer catalogs: worst ${worst.toFixed(1)} ms, ${feasible}/150 feasible`);

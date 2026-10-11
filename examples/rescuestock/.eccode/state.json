@@ -1,6 +1,6 @@
 {
-  "seq": 1447,
-  "lastHash": "289f32f632df51694c1437f4f03684f203a26197eeaa5d0eb606a15928b38c99",
+  "seq": 1467,
+  "lastHash": "fa736e64991b4d6c43f9912224e858d01ac2be7b1bd4a2c7cbf2cce03c771f75",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -8737,35 +8737,37 @@
       "verification": {
         "method": "run the project checks"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "test-engineer",
-        "at": "2026-10-11T19:08:23.334Z",
-        "baseCommit": "61d984a7f95b77b23bb97f469b7c03be594171aa",
-        "runId": null,
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.816,
-            "matched": 19,
-            "priority": 26.5,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "test-engineer",
           "at": "2026-10-11T19:08:23.334Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "test-engineer",
+          "at": "2026-10-11T19:21:42.675Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null,
-      "rework": true
+      "completedBy": "test-engineer",
+      "handoffId": "ho-mv47ltf3-01c9351a",
+      "rework": true,
+      "filesChanged": [
+        "test/api/uploads-retention.test.js",
+        "test/timing/planner-sec-b1.test.js"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "This task edits two test files and builds no hook or guard that maps file writes to a project record or root, so the lesson's applies-when condition (designing or debugging root discovery of a tool-call guard) does not hold; no write to a task file was denied.",
+          "basis": "reason"
+        }
+      ]
     }
   },
   "evidence": {
@@ -24171,6 +24173,321 @@
       "tree": "57221f73cff2714b376f14ad2ab3e6f3a6ec3561a0ca067c7f735ef8ea26e1af",
       "recordedBy": "technical-reviewer",
       "at": "2026-10-11T19:08:25.220Z"
+    },
+    "ev-mv475gzp-01fef662": {
+      "id": "ev-mv475gzp-01fef662",
+      "kind": "command",
+      "label": "FU-33 race REPRODUCED: UNCHANGED test (HEAD version) against a scratch copy whose unlink is delayed 300 ms (scratchpad/rework6/ur-delay-unchanged, diff kept in mutant.diff and printed first); red expected",
+      "command": "cat /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-delay-unchanged/mutant.diff && cd /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-delay-unchanged && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/uploads-retention.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 11739,
+      "log": ".eccode/evidence/ev-mv475gzp-01fef662.log",
+      "logSha256": "83e54bb8a6d80a3f1ac2d335c13fbe147c7b8366621a65c93a5a2e8eb495b79c",
+      "logFileSha256": "877b1164d9bcdef7b8568379e8dd65f945902ca5109843dc35749c55e9c5beb9",
+      "outputTail": "      duration_ms: 1397.963228\n      type: 'test'\n      ...\n    # Subtest: TR-D-16: a second signal during the grace period does not kill the server before stop() has killed a child that ignores SIGTERM\n    ok 2 - TR-D-16: a second signal during the grace period does not kill the server before stop() has killed a child that ignores SIGTERM\n      ---\n      duration_ms: 2117.675264\n      type: 'test'\n      ...\n    1..2\nok 7 - TR-D-16: a real server process stops, and leaves no CLI child, on SIGHUP and on a second signal\n  ---\n  duration_ms: 3515.965961\n  type: 'suite'\n  ...\n1..7\n# tests 41\n# suites 7\n# pass 40\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11674.288814\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "e4b760d53f31e735f0b65975a0bd267b0ded120a25ca2949a76fbecd68e5199a",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:09:00.144Z"
+    },
+    "ev-mv476als-012ebc22": {
+      "id": "ev-mv476als-012ebc22",
+      "kind": "command",
+      "label": "FU-33 FIXED test against the same 300 ms delayed-unlink scratch mutant (ur-delay-fixed, diff printed first): green expected",
+      "command": "cat /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-delay-fixed/mutant.diff && cd /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-delay-fixed && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/uploads-retention.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 11287,
+      "log": ".eccode/evidence/ev-mv476als-012ebc22.log",
+      "logSha256": "d2cdba2819b1c5c99fae176abb12aa54c468b34b64e55c7067551ac98259c155",
+      "logFileSha256": "ca4550904fdf4f7bb1922898b7998024581d6378d96e0d5ff2aea95f8d57e85b",
+      "outputTail": "      duration_ms: 1291.045288\n      type: 'test'\n      ...\n    # Subtest: TR-D-16: a second signal during the grace period does not kill the server before stop() has killed a child that ignores SIGTERM\n    ok 2 - TR-D-16: a second signal during the grace period does not kill the server before stop() has killed a child that ignores SIGTERM\n      ---\n      duration_ms: 2049.606948\n      type: 'test'\n      ...\n    1..2\nok 7 - TR-D-16: a real server process stops, and leaves no CLI child, on SIGHUP and on a second signal\n  ---\n  duration_ms: 3340.971148\n  type: 'suite'\n  ...\n1..7\n# tests 41\n# suites 7\n# pass 41\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11205.573501\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "e4b760d53f31e735f0b65975a0bd267b0ded120a25ca2949a76fbecd68e5199a",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:09:38.486Z"
+    },
+    "ev-mv476e0b-01cc6895": {
+      "id": "ev-mv476e0b-01cc6895",
+      "kind": "command",
+      "label": "FU-33 FIXED test against a scratch mutant where a swept image file is NEVER unlinked (ur-nounlink, diff printed first): the RS-39 test must be red",
+      "command": "cat /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-nounlink/mutant.diff && cd /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-nounlink && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-name-pattern=RS-39 test/api/uploads-retention.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 3989,
+      "log": ".eccode/evidence/ev-mv476e0b-01cc6895.log",
+      "logSha256": "251ef5a1170d3c2362f7064d334042456d80ef7779017c06e4f582ec83121e08",
+      "logFileSha256": "b7a37ec64119641ff3160707ce51a64f9dd52fbd1e6b4769a17ac017894a8f82",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: RS-39: the process starts the sweep at startup and then on a timer\n    # Subtest: RS-39: startApp removes an expired image at startup and another one on the next tick (RS_RETENTION_INTERVAL_MS)\n    ok 1 - RS-39: startApp removes an expired image at startup and another one on the next tick (RS_RETENTION_INTERVAL_MS)\n      ---\n      duration_ms: 130.01811\n      type: 'test'\n      ...\n    1..1\nok 4 - RS-39: the process starts the sweep at startup and then on a timer\n  ---\n  duration_ms: 130.236307\n  type: 'suite'\n  ...\n1..4\n# tests 33\n# suites 4\n# pass 33\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 3899.267211\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "e4b760d53f31e735f0b65975a0bd267b0ded120a25ca2949a76fbecd68e5199a",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:09:42.876Z"
+    },
+    "ev-mv476u2l-01edbb7b": {
+      "id": "ev-mv476u2l-01edbb7b",
+      "kind": "command",
+      "label": "FU-33 FIXED test against a scratch mutant where swept image files are NEVER unlinked, by the sweep or the orphan sweep (ur-nounlink, diff printed first): RS-39 red expected (attempt 2; attempt 1 removed only the image unlink and passed because the orphan sweep removed the file, ev:ev-mv476e0b-01cc6895)",
+      "command": "cat /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-nounlink/mutant.diff && cd /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-nounlink && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-name-pattern=RS-39 test/api/uploads-retention.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 3688,
+      "log": ".eccode/evidence/ev-mv476u2l-01edbb7b.log",
+      "logSha256": "b5d73edc9591478a9d9e3ced4d9c4da5be602482553877317db1bd293edf4545",
+      "logFileSha256": "939e6eb1eafc124dab1ddda6397e0d3630d9984e075227b4aeb451666f8cf4de",
+      "outputTail": "        async Test.run (node:internal/test_runner/test:1054:7)\n        async Promise.all (index 0)\n        async Suite.run (node:internal/test_runner/test:1442:7)\n        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\n      ...\n    1..1\nnot ok 4 - RS-39: the process starts the sweep at startup and then on a timer\n  ---\n  duration_ms: 93.789168\n  type: 'suite'\n  location: '/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-nounlink/test/api/uploads-retention.test.js:676:1'\n  failureType: 'subtestsFailed'\n  error: '1 subtest failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..4\n# tests 33\n# suites 4\n# pass 30\n# fail 3\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 3596.613198\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "e4b760d53f31e735f0b65975a0bd267b0ded120a25ca2949a76fbecd68e5199a",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:10:03.719Z"
+    },
+    "ev-mv477eod-01087627": {
+      "id": "ev-mv477eod-01087627",
+      "kind": "command",
+      "label": "FU-33 FIXED test against a scratch mutant where only the FIRST swept image file is unlinked and the orphan sweep never unlinks (ur-secondfile, diff printed first): the startApp RS-39 test must fail at the new bounded wait",
+      "command": "cat /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-secondfile/mutant.diff && cd /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-secondfile && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-name-pattern=startApp test/api/uploads-retention.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 5639,
+      "log": ".eccode/evidence/ev-mv477eod-01087627.log",
+      "logSha256": "4ef30fcfadbb1ddec44244ff28f684e0de78647f04ba73af4ae06a290e236031",
+      "logFileSha256": "685b03007ccfbebfb163326c568a7af731474ec7795a0725dd4f0cb668b77c59",
+      "outputTail": "        async Test.run (node:internal/test_runner/test:1054:7)\n        async Promise.all (index 0)\n        async Suite.run (node:internal/test_runner/test:1442:7)\n        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)\n      ...\n    1..1\nnot ok 1 - RS-39: the process starts the sweep at startup and then on a timer\n  ---\n  duration_ms: 5308.007111\n  type: 'suite'\n  location: '/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/ur-secondfile/test/api/uploads-retention.test.js:676:1'\n  failureType: 'subtestsFailed'\n  error: '1 subtest failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 5571.705012\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "e4b760d53f31e735f0b65975a0bd267b0ded120a25ca2949a76fbecd68e5199a",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:10:30.429Z"
+    },
+    "ev-mv4785o5-014b0e31": {
+      "id": "ev-mv4785o5-014b0e31",
+      "kind": "command",
+      "label": "TR-F2 it2 f4 declared verification command, exact string; suite lock held around the eccode run (dec-mv43s14b-01addb18)",
+      "command": "ls test/integration/rs26-restart.test.js test/integration/lease-takeover.test.js test/integration/return-crash.test.js test/browser/refusal.test.js test/browser/journey-replacement.test.js >/dev/null && npm test && npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 154334,
+      "log": ".eccode/evidence/ev-mv4785o5-014b0e31.log",
+      "logSha256": "bbcea6ed87b97fe336cec43bcb8f96e02a6285422c77f68dc2f3b95cf95cbec9",
+      "logFileSha256": "88d81a5b2b8d28a5cc58f41719a660c48e4027dc21e2cab4707bbc5ed423c39e",
+      "outputTail": "      duration_ms: 5833.97806\n      type: 'test'\n      ...\n    # Subtest: RS-17: at 1280x800 the refusal reason, the voided authorization, \"Review the new plan\" and the B + E plan are shown\n    ok 2 - RS-17: at 1280x800 the refusal reason, the voided authorization, \"Review the new plan\" and the B + E plan are shown\n      ---\n      duration_ms: 4981.065231\n      type: 'test'\n      ...\n    1..2\nok 6 - RS-17: a supplier refuses; the buyer sees the reason, \"Review the new plan\" and a new plan without that supplier\n  ---\n  duration_ms: 10816.411341\n  type: 'suite'\n  ...\n1..6\n# tests 14\n# suites 6\n# pass 14\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 43565.27649\n",
+      "gate": "phase:f-compensation",
+      "task": "f4-restart-takeover-browser",
+      "tree": "e4b760d53f31e735f0b65975a0bd267b0ded120a25ca2949a76fbecd68e5199a",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T19:11:05.417Z"
+    },
+    "ev-mv47aybz-01d2b0e2": {
+      "id": "ev-mv47aybz-01d2b0e2",
+      "kind": "command",
+      "label": "FU-33 fixed uploads-retention.test.js on the real tree, 20 runs in a loop",
+      "command": "for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/uploads-retention.test.js > /dev/null || exit 1; echo run $i ok; done",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 157545,
+      "log": ".eccode/evidence/ev-mv47aybz-01d2b0e2.log",
+      "logSha256": "c540331922295a9fbb58f74815316e9a6e87e63f8b8866bc38430948cfc38f38",
+      "logFileSha256": "10cf896219d0de37c63bc6e661273f84be998db49d9166cb396e4ec99244a69a",
+      "outputTail": "run 1 ok\nrun 2 ok\nrun 3 ok\nrun 4 ok\nrun 5 ok\nrun 6 ok\nrun 7 ok\nrun 8 ok\nrun 9 ok\nrun 10 ok\nrun 11 ok\nrun 12 ok\nrun 13 ok\nrun 14 ok\nrun 15 ok\nrun 16 ok\nrun 17 ok\nrun 18 ok\nrun 19 ok\nrun 20 ok\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "e4b760d53f31e735f0b65975a0bd267b0ded120a25ca2949a76fbecd68e5199a",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:13:15.860Z"
+    },
+    "ev-mv47dqfe-018e0d01": {
+      "id": "ev-mv47dqfe-018e0d01",
+      "kind": "command",
+      "label": "FU-46 REVISED planner-sec-b1 test against a scratch mutant with full multiplicity enumeration and no bound/dominance/window (pl-fullenum, diff printed first): red expected",
+      "command": "cat /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-fullenum/mutant.diff && cd /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-fullenum && node --disable-warning=ExperimentalWarning --test test/timing/planner-sec-b1.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 426,
+      "log": ".eccode/evidence/ev-mv47dqfe-018e0d01.log",
+      "logSha256": "99b3bb17502582825d01298db72119cdec51979cbdecfa9bdb68952275dbf777",
+      "logFileSha256": "abe925cd529730e44dc038f543a5a82d17af5c4b3f17bb518fd685362edc5302",
+      "outputTail": "    solve (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-fullenum/src/domain/search.js:390:5)\n    consider (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-fullenum/src/domain/search.js:507:5)\n    extend (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-fullenum/src/domain/search.js:512:7)\n    extend (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-fullenum/src/domain/search.js:520:32)\n    extend (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-fullenum/src/domain/search.js:520:32)\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-fullenum/test/timing/planner-sec-b1.test.js:121:12)\n    Test.runInAsyncScope (node:async_hooks:214:14)\n    Test.run (node:internal/test_runner/test:1047:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:744:18)\n    Test.postRun (node:internal/test_runner/test:1173:19)\n    Test.run (node:internal/test_runner/test:1101:12)\n    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 1\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 357.902855\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "622af87f4122c613b74eed9e51c3439c5672e2a9be36297a77b11e02ac1907f1",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:15:25.593Z"
+    },
+    "ev-mv47dsj8-0120cf95": {
+      "id": "ev-mv47dsj8-0120cf95",
+      "kind": "command",
+      "label": "FU-46 REVISED planner-sec-b1 test against a scratch mutant: full enumeration AND the node cap lifted to 40M (pl-nocap, diff printed first): red expected",
+      "command": "cat /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-nocap/mutant.diff && cd /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-nocap && node --disable-warning=ExperimentalWarning --test test/timing/planner-sec-b1.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 2259,
+      "log": ".eccode/evidence/ev-mv47dsj8-0120cf95.log",
+      "logSha256": "f77165c373b59cd85f5fd3ce93d4ffbc8f3b2ea0e4e1c3322fdfbc460844bf24",
+      "logFileSha256": "bcf499e822581a37f62898b75131575f31bef46177b4de37fda5af551def83da",
+      "outputTail": "    dfs (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-nocap/src/domain/search.js:382:9)\n    solve (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-nocap/src/domain/search.js:390:5)\n    consider (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-nocap/src/domain/search.js:507:5)\n    extend (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-nocap/src/domain/search.js:512:7)\n    extend (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-nocap/src/domain/search.js:520:32)\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/rework6/pl-nocap/test/timing/planner-sec-b1.test.js:121:12)\n    Test.runInAsyncScope (node:async_hooks:214:14)\n    Test.run (node:internal/test_runner/test:1047:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:744:18)\n    Test.postRun (node:internal/test_runner/test:1173:19)\n    Test.run (node:internal/test_runner/test:1101:12)\n    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 1\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2199.490199\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "622af87f4122c613b74eed9e51c3439c5672e2a9be36297a77b11e02ac1907f1",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:15:28.288Z"
+    },
+    "ev-mv47e3rn-01d51ab3": {
+      "id": "ev-mv47e3rn-01d51ab3",
+      "kind": "command",
+      "label": "FU-46 revised planner-sec-b1 on the real tree, quiet",
+      "command": "node --disable-warning=ExperimentalWarning --test test/timing/planner-sec-b1.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1245,
+      "log": ".eccode/evidence/ev-mv47e3rn-01d51ab3.log",
+      "logSha256": "a35ac954bf5f33cf0966400e218be85c65ec425ce53d051b6fb7ee6d499062ad",
+      "logFileSha256": "3c1eda1ffbbfa16ae6668dbf5718d58c3f0d89207dffa816ccb588f438e434c3",
+      "outputTail": "  duration_ms: 4.152938\n  type: 'test'\n  ...\n# Subtest: SEC-B-1: the seeded catalog shape never reaches PLANNER_LIMIT and stays fast for stock 1 to 100,000 and quantity 100 to 100,000\nok 2 - SEC-B-1: the seeded catalog shape never reaches PLANNER_LIMIT and stays fast for stock 1 to 100,000 and quantity 100 to 100,000\n  ---\n  duration_ms: 617.404484\n  type: 'test'\n  ...\n# Subtest: SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities up to 100,000 never reach PLANNER_LIMIT and stay under the runaway ceiling each\nok 3 - SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities up to 100,000 never reach PLANNER_LIMIT and stay under the runaway ceiling each\n  ---\n  duration_ms: 400.35809\n  type: 'test'\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1183.213437\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "622af87f4122c613b74eed9e51c3439c5672e2a9be36297a77b11e02ac1907f1",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:15:42.861Z"
+    },
+    "ev-mv47feek-01fdb68f": {
+      "id": "ev-mv47feek-01fdb68f",
+      "kind": "command",
+      "label": "FU-46 revised planner-sec-b1 on the real tree under CPU contention (3x nproc busy loops for 60 s), 3 runs",
+      "command": "for i in 1 2 3 4 5 6 7 8 9 10 11 12; do timeout 60 node -e 'for(;;);' & done; node --disable-warning=ExperimentalWarning --test test/timing/planner-sec-b1.test.js && node --disable-warning=ExperimentalWarning --test test/timing/planner-sec-b1.test.js && node --disable-warning=ExperimentalWarning --test test/timing/planner-sec-b1.test.js; r=$?; kill $(jobs -p) 2>/dev/null; exit $r",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 60026,
+      "log": ".eccode/evidence/ev-mv47feek-01fdb68f.log",
+      "logSha256": "1ff6c1c4978c0b16a12a90bc22feb3edcbd3208ba18e85b5af3329bc0d2d557f",
+      "logFileSha256": "12e39570505336dd0724fe9fa104e31d4b2a6c2bec7243d2dbded17dc1fc056d",
+      "outputTail": "  duration_ms: 13.41275\n  type: 'test'\n  ...\n# Subtest: SEC-B-1: the seeded catalog shape never reaches PLANNER_LIMIT and stays fast for stock 1 to 100,000 and quantity 100 to 100,000\nok 2 - SEC-B-1: the seeded catalog shape never reaches PLANNER_LIMIT and stays fast for stock 1 to 100,000 and quantity 100 to 100,000\n  ---\n  duration_ms: 1585.77667\n  type: 'test'\n  ...\n# Subtest: SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities up to 100,000 never reach PLANNER_LIMIT and stay under the runaway ceiling each\nok 3 - SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities up to 100,000 never reach PLANNER_LIMIT and stay under the runaway ceiling each\n  ---\n  duration_ms: 764.368748\n  type: 'test'\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2853.715395\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "622af87f4122c613b74eed9e51c3439c5672e2a9be36297a77b11e02ac1907f1",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:16:43.305Z"
+    },
+    "ev-mv47hp51-018946ca": {
+      "id": "ev-mv47hp51-018946ca",
+      "kind": "command",
+      "label": "rework-6: full npm test under the suite lock",
+      "command": "flock /tmp/rescuestock-suite.lock npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 103203,
+      "log": ".eccode/evidence/ev-mv47hp51-018946ca.log",
+      "logSha256": "cbcfc82764b38a7d4906bd4b2b1b9eca1e277f834fc311097d3f35ca153eb94c",
+      "logFileSha256": "f63d2f7b0259404d5b9405cae2946a0adaf71372a0fa6fbc147c603487e257bb",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 877 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 465.73904\n  type: 'test'\n  ...\n1..877\n# tests 2270\n# suites 312\n# pass 2262\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 102805.217357\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 7194 requests, p50 2.9 ms, p95 60.0 ms (limit: p95 < 300 ms)\nNFR5 suite time: 103.0 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "622af87f4122c613b74eed9e51c3439c5672e2a9be36297a77b11e02ac1907f1",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:18:30.530Z"
+    },
+    "ev-mv47lom9-015c619a": {
+      "id": "ev-mv47lom9-015c619a",
+      "kind": "command",
+      "label": "FU-33 fixed uploads-retention.test.js on the final tree, 20 runs in a loop",
+      "command": "for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/uploads-retention.test.js > /dev/null || exit 1; echo run $i ok; done",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 156024,
+      "log": ".eccode/evidence/ev-mv47lom9-015c619a.log",
+      "logSha256": "c540331922295a9fbb58f74815316e9a6e87e63f8b8866bc38430948cfc38f38",
+      "logFileSha256": "10cf896219d0de37c63bc6e661273f84be998db49d9166cb396e4ec99244a69a",
+      "outputTail": "run 1 ok\nrun 2 ok\nrun 3 ok\nrun 4 ok\nrun 5 ok\nrun 6 ok\nrun 7 ok\nrun 8 ok\nrun 9 ok\nrun 10 ok\nrun 11 ok\nrun 12 ok\nrun 13 ok\nrun 14 ok\nrun 15 ok\nrun 16 ok\nrun 17 ok\nrun 18 ok\nrun 19 ok\nrun 20 ok\n",
+      "gate": null,
+      "task": "rework-6",
+      "tree": "622af87f4122c613b74eed9e51c3439c5672e2a9be36297a77b11e02ac1907f1",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:21:36.477Z"
+    },
+    "ev-mv47mhi3-0110ea23": {
+      "id": "ev-mv47mhi3-0110ea23",
+      "kind": "command",
+      "label": "TR-F2 it2 f1 declared command, exact string (settled tree after rework-6)",
+      "command": "ls test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/replan-queue.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/reservation-expiry.test.js test/api/replan-queue.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 9466,
+      "log": ".eccode/evidence/ev-mv47mhi3-0110ea23.log",
+      "logSha256": "5b57f5b7bfe9c695f3b6e93cfec433e438b2a1cb87c3e98b0310807ea2e23af3",
+      "logFileSha256": "ef2d432e4b653eceba467a2f3864c9647d240561411290cb5a88b24e1fa70dda",
+      "outputTail": "      duration_ms: 539.361521\n      type: 'test'\n      ...\n    # Subtest: RS-32: after the claim the fault changes nothing (the order is not open any more)\n    ok 2 - RS-32: after the claim the fault changes nothing (the order is not open any more)\n      ---\n      duration_ms: 615.266104\n      type: 'test'\n      ...\n    1..2\nok 15 - RS-32 (refusal half): the admin supplier_refusal fault runs the same service\n  ---\n  duration_ms: 1155.324464\n  type: 'suite'\n  ...\n1..15\n# tests 40\n# suites 15\n# pass 40\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 9406.066747\n",
+      "gate": "phase:f-compensation",
+      "task": "f1-supersession-refusal-expiry",
+      "tree": "622af87f4122c613b74eed9e51c3439c5672e2a9be36297a77b11e02ac1907f1",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T19:22:13.887Z"
+    },
+    "ev-mv47miet-01c9d09a": {
+      "id": "ev-mv47miet-01c9d09a",
+      "kind": "command",
+      "label": "TR-F2 it2 f3 declared command, exact string (settled tree after rework-6)",
+      "command": "ls test/unit/frontend/recovery.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 783,
+      "log": ".eccode/evidence/ev-mv47miet-01c9d09a.log",
+      "logSha256": "783ed90ab80b1a015df38e3fed2d4767ff06a92da3b0002214be626f0a1cc980",
+      "logFileSha256": "341ebddb66720a7adba0f60a593c27dd376b56fa312337f470c0e49d8be1766c",
+      "outputTail": "  duration_ms: 8.196536\n  type: 'test'\n  ...\n# Subtest: RS-30: the timeline and metrics each have loading, empty, error and success states\nok 204 - RS-30: the timeline and metrics each have loading, empty, error and success states\n  ---\n  duration_ms: 1.764725\n  type: 'test'\n  ...\n# Subtest: T11: the recovery code builds text with el(...text) only\nok 205 - T11: the recovery code builds text with el(...text) only\n  ---\n  duration_ms: 1.060261\n  type: 'test'\n  ...\n1..205\n# tests 205\n# suites 0\n# pass 205\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 709.911146\n",
+      "gate": "phase:f-compensation",
+      "task": "f3-frontend-recovery",
+      "tree": "622af87f4122c613b74eed9e51c3439c5672e2a9be36297a77b11e02ac1907f1",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T19:22:15.089Z"
     }
   },
   "reviews": {
@@ -31543,6 +31860,15 @@
         "phase approval must cite a passing run, by technical-reviewer after submission sub-mv46nmw5-019e21c8, of every verification command the phase's tasks declare; missing: ls test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/replan-queue.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/reservation-expiry.test.js test/api/replan-queue.test.js (cwd .) [f1-supersession-refusal-expiry]; ls test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js (cwd .) [f2-compensation-takeover-admin]; ls test/unit/frontend/recovery.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\" (cwd .) [f3-frontend-recovery]; ls test/integration/rs26-restart.test.js test/integration/lease-takeover.test.js test/integration/return-crash.test.js test/browser/refusal.test.js test/browser/journey-replacement.test.js >/dev/null && npm test && npm run test:browser (cwd .) [f4-restart-takeover-browser]. Run each with eccode evidence run --actor technical-reviewer --gate phase:f-compensation --label \"<label>\" [--cwd <the cwd shown>] -- <command>, from the project root unless a cwd is shown, and cite its ev: id"
       ],
       "decision": "approve"
+    },
+    {
+      "gate": "phase:f-compensation",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-11T19:11:39.643Z",
+      "reasons": [
+        "cited check(s) ev:ev-mv46qrmk-011b1dff, ev:ev-mv46qzng-012e0feb, ev:ev-mv46r0oj-01fb088e, ev:ev-mv46uboq-012064b9, ev:ev-mv46utqa-0159e95d, ev:ev-mv46uuzj-019edd35, ev:ev-mv46x1c0-01eb72b5, ev:ev-mv4747vg-01cfc11a, ev:ev-mv474p4p-01645a0f, ev:ev-mv474q3o-01388715 ran on a different source tree than the one under review now (files changed since the check); run the check again on the current tree and cite the new ev: id"
+      ],
+      "decision": "approve"
     }
   ],
   "handoffs": {
@@ -35796,6 +36122,54 @@
       "id": "ho-mv46cije-013aeaff",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T18:46:29.280Z"
+    },
+    "ho-mv47ltf3-01c9351a": {
+      "from": "test-engineer",
+      "to": "delivery-lead",
+      "task": "rework-6",
+      "objective": "FU-33 (TR-F-7): make the RS-39 'startApp removes an expired image at startup and another one on the next tick' test wait for the file unlink instead of racing it. FU-46: stop planner-sec-b1 from failing on host noise while it still kills the old exponential planner. Test-only; no source change.",
+      "context": "Decision dec-mv46ovt6-01a662af. FU-33: the retention sweep deletes the image ROW in a transaction and then unlinks the FILE asynchronously (spec: retention, row and audit event first, an unlink that fails leaves an orphan for the orphan sweep), so a test that polls the row and then checks the file at once can see the file still there. It failed in 2 of 4 locked full runs. FU-46: SEC-B-1 (review rev-mv1k04zq-01814d87) is the old planner that enumerated every multiplicity vector and gave up with PLANNER_LIMIT after about 170 ms; the test asserted every one of 1,008 calls under 100 ms and failed on 186.9 ms (CPU contention, ev-mv43keu0-0102c57c) and 327.9 ms (host steal). No file under src, no fixture and no other test was touched; no live suite was run; nothing was committed. Every mutant lives in its own fresh directory under scratchpad/rework6/ with its diff saved as mutant.diff (also printed at the top of its evidence log).",
+      "inputs": [
+        ".eccode/reviews/rev-mv1k04zq-01814d87.json (SEC-B-1)",
+        "src/services/retention.js, src/domain/search.js (read only)",
+        "test/api/uploads-retention.test.js, test/timing/planner-sec-b1.test.js"
+      ],
+      "dependencies": [],
+      "expectedOutput": "Both tests stable on a loaded host and still red on the behaviours they exist to catch.",
+      "acceptanceCriteria": [
+        "FU-33: the race reproduced with the unchanged test; the fixed test passes reliably (20 runs) and still fails when the file is never removed",
+        "FU-46: the revised test keeps every exactness assertion, bounds the p95 plus a generous single-call ceiling, the ceiling chosen from measurements, and still fails on a mutant that brings back full enumeration",
+        "full npm test green under the suite lock; filesChanged exactly the two files"
+      ],
+      "completedWork": "FU-33. REPRODUCED: the UNCHANGED test (HEAD version) against a scratch copy whose image unlink is delayed 300 ms (dir ur-delay-unchanged) fails at the old line 711 (file still exists, expected false, actual true), the same assertion that failed in the locked full runs: ev:ev-mv475gzp-01fef662 (41 tests, 40 pass, 1 fail). FIX in test/api/uploads-retention.test.js: after the row is gone, the test polls existsSync of the file every 10 ms for at most 5 s, then asserts it is gone with the message 'the file of the swept image is unlinked within 5 s of its row going' (a bounded poll on the observable state; the sweep exposes no event for the second pass, and the first pass is already awaited through retention.started). PROOF: the fixed test against the same 300 ms delayed-unlink mutant (dir ur-delay-fixed) passes, 41 of 41: ev:ev-mv476als-012ebc22. Not weakened: against a mutant where only the image unlink is removed (dir ur-nounlink, first attempt) everything passed, ev:ev-mv476e0b-01cc6895, because the orphan sweep of the same pass removes the file: that is the spec's design, so the mutant was extended to also stop the orphan sweep unlinking (same dir, diff re-saved): the RS-39 tests fail, ev:ev-mv476u2l-01edbb7b (failing at the first image's file check, 30 of 33 pass); and a sharper mutant where only the FIRST swept file is unlinked and the orphan sweep never unlinks (dir ur-secondfile) fails exactly at the new bounded wait with the new message, ev:ev-mv477eod-01087627. RELIABILITY on the real tree: the whole file 20 times in a loop, one evidence run, all 20 pass: ev:ev-mv47lom9-015c619a (run on the final tree; the earlier loop ev:ev-mv47aybz-01d2b0e2 also passed 20 of 20 but predates the planner test edit and is not cited). FU-46. MEASURED on a quiet host (load average 0.6, 4 cores, six runs of the exact 1,008-call sweep, script scratchpad/rework6/measure.mjs): max 4.3 to 7.1 ms, p99 1.3 to 2.4 ms, p95 0.67 to 1.00 ms, p50 0.06 to 0.10 ms, 0 calls throwing; the 12-offer test: worst 13.3 to 24.8 ms of 150. CHOSEN in test/timing/planner-sec-b1.test.js: SINGLE_CALL_CEILING_MS = 1000 for every per-call time check (the sweep's 100 ms, the single stock-100 call's 50 ms and the 12-offer catalogs' 250 ms): 140 x the quiet sweep maximum, 3 x the worst call seen under host steal (327.9 ms), and a runaway guard only; SWEEP_P95_MS = 20, unchanged: 20 x the quiet p95, and one slow call among 1,008 cannot move a percentile. KEPT: every exactness assertion (no call may throw, in all three tests; the A-only plan, lines, total, pickups, the same plan with maxPickups 1, the ranked alternatives, the feasibility count, calls == 1,008). The assertion messages now state the limit and the quiet-host value. The first test's title no longer says 'under 50 ms'. THE REVISED TEST STILL KILLS THE OLD BEHAVIOUR: scratch mutant pl-fullenum (src/domain/search.js with no irredundancy cut, no dominance table, no lower bound and no demand window: every multiplicity 1..stock enumerated) measured with the sweep: 110 of 1,008 calls throw PLANNER_LIMIT, p95 27.6 ms; the revised test fails on it (tests 2 and 3, 'planner search limit exceeded' at stock 30, qty 10000): ev:ev-mv47dqfe-018e0d01. The same with the node cap lifted from 2,000,000 to 40,000,000 (dir pl-nocap) still fails on the exactness assertions (PlannerLimitError at stock 100, qty 50000, 2.2 s): ev:ev-mv47dsj8-0120cf95. HONEST LIMIT: with the cap, the old behaviour surfaces as PLANNER_LIMIT, so it is the exactness assertions (and the p95 on a mutant that does not throw) that kill it; the per-call ceiling is a runaway guard only, and a cap lifted entirely would not return at all on the large inputs, so no mutant can show the ceiling alone firing. STABILITY: the revised file on the real tree, quiet: ev:ev-mv47e3rn-01d51ab3 (3 of 3, 1.2 s); three runs under CPU contention (12 busy loops on 4 cores): ev:ev-mv47feek-01fdb68f (3 of 3 each time). FULL SUITE under the lock (flock /tmp/rescuestock-suite.lock npm test): ev:ev-mv47hp51-018946ca PASSED: 2270 tests, 2262 pass, 0 fail, 8 skipped (the existing fake-harness provider-contract cases; none changed here).",
+      "filesChanged": [
+        "test/api/uploads-retention.test.js",
+        "test/timing/planner-sec-b1.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv47lom9-015c619a",
+        "ev:ev-mv47e3rn-01d51ab3",
+        "ev:ev-mv47feek-01fdb68f",
+        "ev:ev-mv47hp51-018946ca"
+      ],
+      "remainingIssues": [
+        "The 12-offer and single-call checks of planner-sec-b1 were moved to the same 1000 ms ceiling as the sweep (they had 250 and 50 ms): the same host-noise failure applies to them; this goes slightly beyond the one line named in FU-46 and is stated here for the reviewer.",
+        "The retention test polls the file for up to 5 s instead of waiting on an event, because the sweep of the second pass exposes none to a test; the poll fails with a named message if the file is never removed."
+      ],
+      "nextAction": "reviewer: review the two tests and the mutant evidence (diffs under scratchpad/rework6/<mutant>/mutant.diff).",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "This task edits two test files and builds no hook or guard that maps file writes to a project record or root, so the lesson's applies-when condition (designing or debugging root discovery of a tool-call guard) does not hold; no write to a task file was denied."
+        }
+      ],
+      "id": "ho-mv47ltf3-01c9351a",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T19:21:42.863Z"
     }
   },
   "runs": {
@@ -38437,6 +38811,21 @@
       "task": "rework-6",
       "gate": null,
       "startedAt": "2026-10-11T19:07:57.637Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T19:22:06.710Z",
+      "durationMinutes": 14.15,
+      "costUsd": null,
+      "tokens": 56609,
+      "note": "resumed test-engineer: cumulative 497624 minus earlier 441015; rework-6 done ho-mv47ltf3-01c9351a; npm test under lock green ev-mv47hp51-018946ca",
+      "usageReported": true
+    },
+    "run-mv47mcbh-0148c892": {
+      "id": "run-mv47mcbh-0148c892",
+      "agent": "delivery-lead",
+      "task": null,
+      "gate": "phase:rework-6",
+      "startedAt": "2026-10-11T19:22:07.053Z",
       "status": "running",
       "attempt": 1
     }
@@ -39153,8 +39542,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1653.33,
-    "tokens": 20053986
+    "runtimeMinutes": 1667.48,
+    "tokens": 20110595
   },
   "delivery": null,
   "reworks": [
