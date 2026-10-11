@@ -1,0 +1,92 @@
+{
+  "from": "frontend-engineer",
+  "to": "delivery-lead",
+  "task": "f3-frontend-recovery",
+  "objective": "Recovery UI: replanning, price-change / new-plan / expired-reservation messages with their buttons, 'If something fails' with outstanding voids and refunds, failed_needs_attention, supplier refuse form, admin faults and forced reset, FU-38 and FU-43.",
+  "context": "Most of the recovery screens existed from phases C to E (compensation.js, status.js, supplier refuse form, admin screen). F3 closed the gaps against spec section 7 and the derivation rows 2, 3, 4, 4a, 5a, 6, 12. Built against src/domain/derive.js and explain.js as they are in the tree (the status, nextStep and message shapes below come from them) and against the spec for the admin and supplier routes. No src/** or test/api/** file was touched. New fixtures live in test/fixtures/contracts/recovery/ (a subdirectory on purpose: test/api/contracts.test.js requires every top-level *.json to have a route scenario).",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md (Frontend, Shared response objects, Admin routes, Void rule, derivation table)",
+    ".eccode/handoffs/ho-mv37hs3x-01066518.json",
+    ".eccode/handoffs/ho-mv3v9goy-01de8496.json",
+    ".eccode/artifacts/plan/followups.md (FU-38, FU-40 UX note, FU-43)",
+    "src/domain/derive.js, src/domain/explain.js, src/services/admin.js (read only)"
+  ],
+  "dependencies": [],
+  "expectedOutput": "f1 and f2 serve the shapes the recovery fixtures show; f4 and g1 can select the data-testid hooks listed below.",
+  "acceptanceCriteria": [
+    "'If something fails' lists per-order payment text, voids and refunds outstanding with outcome, and the next step",
+    "replanning shows 'Finding a new plan with current stock…' and keeps polling; price-change, new-plan and expired-reservation messages with Re-plan; failed_needs_attention with 'Contact the organiser'",
+    "Supplier refuse form (1-300), admin faults form (stock depletion, supplier refusal, refund order, fake PayPal and fake model faults, clear), reset with force and reason, timeline and metrics",
+    "textContent only; contract fixtures for the new states; recovery.test.js checks the pure view-model against them"
+  ],
+  "completedWork": "STATUS HEADER: statusModel adds action 'review' for REVIEW_NEW_PLAN (button 'Review the new plan' moves focus to 'Why this plan'), replanning=true only while nextStep is WAIT (after five failed drains, nextStep REPLAN, the Re-plan button shows and no search is claimed), and an attention notice 'Contact the organiser' (role alert, testid contact-organiser, quotes request #N) for CONTACT_ORGANISER / failed_needs_attention. A next-step sentence missing from the server falls back to the brief's sentence by code (texts.js). APPROVE: the Approve plan button now also shows when the next step is REVIEW_NEW_PLAN and the current plan is proposed (before, after a price change or refusal there was no way to approve the new version). IF SOMETHING FAILS: compensationOf now carries kind (void|refund) and says void queued, cancelled before authorization (voidedLocally), refund queued (captured with cancelRequested), declined, void failed / refund failed with 'contact the organiser'; a summary line 'Voids: n outstanding, n done. Refunds: n outstanding, n done.' (testid compensation-summary); the supplier's refusal reason is shown as text with dir=auto. RE-PLAN: plan and Re-plan show a truthful success line (success-plan / success-replan: a plan was found, or none fits current stock). SUPPLIER: refuse form says the buyer sees the reason and that no money is taken for the refused order; success line after 2xx only; ORDER_EXECUTED shows the error. ADMIN: the fault form shows only the controls of the chosen kind ([hidden] css rule), the fault answer is described per kind (a refund is 'requested', never 'returned'), the refusal-reason control is now input-refusalReason (it used to share input-reason with the reset form), a forced reset lists stranded operations for manual clean-up in the Sandbox dashboard (testid reset-stranded). FU-38: payments/view-non-executable.json is now the post-claim state (AUTHORIZATION_EXPIRED, REPLAN_OR_OTHER_ACCOUNT, message 'A PayPal authorization expired ... No money was taken'), its variant says it is not an abandon, and recovery/view-abandoned.json shows a real abandon (presentation cancelled, fulfilment cancelled). FU-43: ?paypal=not_approved|check_failed shows 'PayPal did not confirm the approval; try again.' (+ supplier still waiting), testid paypal-not-confirmed, no claim about money, gone once the order moved on or the plan ended. FU-40 UX: poll.js keeps polling while the plan is executed and a live order is still 'confirmed' (supplier has not marked ready), so the receipt button appears without a reload. Evidence: verification 205 tests pass; npm test 2155 tests, 2145 pass, 2 fail, 8 skip, the 2 failures are in test/api (admin faults refund_order in the admin-faults route test, and 'RS-25: a lost response on a capture'), outside my files and in the area f1/f2 are changing, not mine; npm run test:browser 10 of 10 pass. Ad-hoc Chromium check (scratch script, API mocked from the fixtures, not recorded evidence): the 12 recovery views, the admin page after a forced reset with a stranded operation, and the supplier refuse form open, at 360 and 1280 px: no horizontal overflow, no control under 44 px, no console errors.",
+  "filesChanged": [
+    "public/css/app.css",
+    "public/js/components/compensation.js",
+    "public/js/components/payments.js",
+    "public/js/components/status.js",
+    "public/js/poll.js",
+    "public/js/texts.js",
+    "public/js/views/admin.js",
+    "public/js/views/request-detail.js",
+    "public/js/views/supplier-orders.js",
+    "test/scan/frontend.test.js",
+    "test/unit/frontend/dashboards.test.js",
+    "test/unit/frontend/recovery.test.js",
+    "test/fixtures/contracts/payments/view-non-executable.json",
+    "test/fixtures/contracts/recovery/admin-fault-clear.json",
+    "test/fixtures/contracts/recovery/admin-fault-fake-model.json",
+    "test/fixtures/contracts/recovery/admin-fault-fake-paypal.json",
+    "test/fixtures/contracts/recovery/admin-fault-refund-order-invalid-state.json",
+    "test/fixtures/contracts/recovery/admin-fault-refund-order.json",
+    "test/fixtures/contracts/recovery/admin-fault-supplier-refusal.json",
+    "test/fixtures/contracts/recovery/admin-faults-unavailable.json",
+    "test/fixtures/contracts/recovery/admin-reset-forced-stranded.json",
+    "test/fixtures/contracts/recovery/plan-replan-feasible.json",
+    "test/fixtures/contracts/recovery/supplier-order-refuse-executed.json",
+    "test/fixtures/contracts/recovery/supplier-order-refuse-invalid.json",
+    "test/fixtures/contracts/recovery/view-abandoned.json",
+    "test/fixtures/contracts/recovery/view-all-refunded.json",
+    "test/fixtures/contracts/recovery/view-authorization-declined.json",
+    "test/fixtures/contracts/recovery/view-cancelling-voids.json",
+    "test/fixtures/contracts/recovery/view-failed-needs-attention.json",
+    "test/fixtures/contracts/recovery/view-order-refunded.json",
+    "test/fixtures/contracts/recovery/view-prices-changed.json",
+    "test/fixtures/contracts/recovery/view-refunding.json",
+    "test/fixtures/contracts/recovery/view-replan-manual.json",
+    "test/fixtures/contracts/recovery/view-replanning.json",
+    "test/fixtures/contracts/recovery/view-reservation-expired.json",
+    "test/fixtures/contracts/recovery/view-supplier-refused-new-plan.json"
+  ],
+  "evidence": [
+    "ev:ev-mv4030ui-01746563",
+    "ev:ev-mv403f9d-01e25091"
+  ],
+  "remainingIssues": [
+    "Evidence ids are the reruns after the tree changed under f1/f2 (verification 205 pass, ev:ev-mv4030ui-01746563; browser 10 of 10, ev:ev-mv403f9d-01e25091). The earlier runs ev:ev-mv3zznpy-01d4d9fd and ev:ev-mv4021ly-01baed23 gave the same counts.",
+    "ev:ev-mv401efc-01b9dffb (npm test, not cited as proof) is FAILED: 2 failures in test/api (the admin faults route test 'RS-32 (admin half) and SEC-11: the fault routes', subtest refund_order, and 'RS-25: a lost response on a capture'). Both are outside my files and in code f1/f2 are editing concurrently (src/services/admin.js, saga.js, calls.js are modified in the tree). Not cited as proof; it is the honest full-suite result at the time.",
+    "CONTRACT ASSUMPTION F1-a: after a supersession by price, fee or ready-time change, or after a supplier refusal, rescueStatus is status plan_found, rule 12, nextStep REVIEW_NEW_PLAN 'Review the new plan', message 'Prices changed: review plan vN' or 'Supplier X refused the order: <reason>. No money was taken.' (as derive.js does today); the new version is currentPlanId with status proposed and its own planHash; the UI approves it with that hash and total.",
+    "CONTRACT ASSUMPTION F1-b: while a re-plan is queued the view is status replanning, rule 4a, nextStep WAIT with text 'Finding a new plan with current stock…'; after five failed drains nextStep.code REPLAN 'Re-plan with current stock'. currentPlanId may be null while only superseded versions exist, and orders is [].",
+    "CONTRACT ASSUMPTION F1-c: an expired reservation reads reservation.status 'expired' (or message exactly 'Reservation expired — no money was taken; re-plan with current stock'), nextStep REPLAN. The Re-plan button calls POST /api/requests/:id/plan and expects 201 {planningRun, plan|null}; a 409 PLAN_IN_PROGRESS is shown as an error.",
+    "CONTRACT ASSUMPTION F1-d: a supplier refusal gives the refused Order refusalReason (text, up to 300 chars) and presentation 'refused'; while its voids are outstanding the older orders are in cancellingOrders with payment.cancelRequested true; an unsent void queued under cancelRequested shows as 'Void queued'. A real abandon gives presentation 'cancelled' and fulfilment 'cancelled' (not cancelled_payment_incomplete).",
+    "CONTRACT ASSUMPTION F2-a: Payment.cancelRequested, voidedLocally and voidFailed are exposed in RequestView.orders and cancellingOrders for every state (the text 'Cancelled before authorization' needs voidedLocally; 'contact the organiser' for a failed void needs voidFailed).",
+    "CONTRACT ASSUMPTION F2-b: after an admin refund_order the payment goes captured -> refund_requested/refund_pending -> refunded, the order presentation becomes 'refunded' once refunded, and rescueStatus follows rows 3, 5a and 7 with the exact messages 'Order from <supplier> was refunded by the organiser' and 'All payments were refunded by the organiser'. A captured payment with cancelRequested true is read as 'Refund queued'.",
+    "CONTRACT ASSUMPTION F2-c: POST /api/admin/faults answers {applied: {kind, ...}, superseded?: Id[]}; supplier_refusal applied carries supplierOrderIds (as src/services/admin.js does today; the spec only says '...ids'); refund_order applied carries supplierOrderId. POST /api/admin/reset with force answers {reset, archivedOperations, stranded?: {id, status, providerAuthorizationId?, providerCaptureId?}[]}; the UI shows the optional provider ids when present (the code today sends id and status only).",
+    "CONTRACT ASSUMPTION (return redirect): the return handler redirects to /#/requests/<id>?paypal=not_approved|check_failed&order=<soId> (src/services/payments.js redirectTo); the notice reads the order from the query.",
+    "For f4: stable data-testid hooks added: contact-organiser, compensation-summary (on compensation: data-state and data-kind), failure-<code>[-earlier]-refusal, success-plan, success-replan, paypal-not-confirmed, reset-stranded, input-refusalReason (the fault form's reason; input-reason is now the reset form's only), next-step-action (header button: Re-plan / Review the new plan), replan (the expired notice's button), approve-plan after REVIEW_NEW_PLAN. Admin fault rows carry the hidden attribute when not part of the chosen kind, so Playwright fill on a hidden control waits: choose the kind first.",
+    "The supplier Refuse button has no confirm dialog on purpose (a native confirm is auto-dismissed by Playwright and would make the click a no-op); the explicit reason form is the safeguard.",
+    "FU-40 UX is addressed for the case executed + live order still 'confirmed'; the journey-happy test still reloads before the receipt and was not edited (not my file).",
+    "Not done: no browser journey for the recovery states (f4 owns the browser tests); the 360 px layout was checked ad hoc only."
+  ],
+  "nextAction": "delivery-lead: have f1 and f2 confirm the contract assumptions above against what they serve, and rerun npm test once their tasks land; f4: build the restart/takeover and refusal journeys on the hooks listed.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This task edits browser view code, fixtures and frontend tests; it designs no hook or guard that maps file writes to a project record, and the only record in play is the single nested record at examples/rescuestock (the lesson's own 'single-record' and 'not a guard' conditions hold)."
+    }
+  ]
+}

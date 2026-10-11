@@ -250,6 +250,8 @@ export function releaseIfSettled(env, planVersionId) {
     const reservation = db.prepare("SELECT * FROM reservations WHERE plan_version_id = ? AND status = 'reconciling'").get(planVersionId);
     if (!reservation) return 'none';
     const ops = loadPlanOperations(db, planVersionId);
+    // Operations the demo reset archived are no longer ours: the reset closed the reservation and restored the stock itself.
+    if (ops.length === 0) return 'none';
     if (ops.every((op) => SETTLED_OPERATION_STATES.includes(op.status))) {
       assertTransition('reservation', 'reconciling', 'released');
       const moved = db.prepare("UPDATE reservations SET status = 'released', closed_at = ? WHERE id = ? AND status = 'reconciling'").run(isoFromMs(clock.now()), reservation.id).changes;
@@ -511,6 +513,26 @@ function finishExecution(env, lease) {
   });
 }
 
+// The read that precedes a re-send of an `unknown` capture, under the lease. 'send' = the provider shows the authorization CREATED,
+// so no capture exists and the same PayPal-Request-Id may go again; 'hold' = send nothing (the read failed, or the authorization is
+// CAPTURED / VOIDED / EXPIRED: the call stays unknown and the reconciler resolves it by reading, protocol section 6); 'lost' = the lease went.
+async function readBeforeResend(env, lease, op) {
+  const { db, clock, config, log } = env;
+  if (!db.tx(() => guardLease(db, clock, config, lease))) return 'lost';
+  if (typeof op.provider_authorization_id !== 'string') return 'hold';
+  const read = await withDeadline(
+    env.payments.getAuthorization({ merchantKey: op.merchant_key, authorizationId: op.provider_authorization_id }),
+    (config.paypalTimeoutMs ?? 20_000) + 1000,
+  );
+  if (read?.kind !== 'ok') {
+    log.warn('saga.resend_read_failed', { planVersionId: lease.planId, code: safeIssue(String(read?.kind ?? 'unknown').toUpperCase(), 'UNKNOWN') });
+    return 'hold';
+  }
+  if (read.value.status === 'CREATED') return 'send';
+  log.warn('saga.resend_held', { planVersionId: lease.planId, code: safeIssue(String(read.value.status), 'UNKNOWN') });
+  return 'hold';
+}
+
 // Step 3 (and 4): sequential captures in supplier-code order.
 async function captureLoop(env, lease, isStopped) {
   const { db, clock } = env;
@@ -521,6 +543,7 @@ async function captureLoop(env, lease, isStopped) {
     }
     if (!fenceLease(db, lease)) return 'lost';
     const ops = loadPlanOperations(db, lease.planId);
+    if (ops.length === 0) return 'archived';
     const next = ops.find((op) => op.status !== 'captured');
     if (!next) {
       const done = finishExecution(env, lease);
@@ -556,6 +579,19 @@ async function captureLoop(env, lease, isStopped) {
       return 'paused';
     }
     call = { ...call };
+    if (resendable) {
+      // FU-41(a), saga step 6: a capture that may have reached the provider is never sent again on the strength of an earlier read
+      // (the reconciler's, possibly a tick ago). The lease holder reads the authorization itself first.
+      const verdict = await readBeforeResend(env, lease, next);
+      if (verdict === 'lost') {
+        env.log.warn('saga.lease_lost', { planVersionId: lease.planId, epoch: lease.epoch, executorId: lease.executorId });
+        return 'lost';
+      }
+      if (verdict !== 'send') {
+        pauseLease(env, lease);
+        return 'paused';
+      }
+    }
     const sent = await sendCapture(env, lease, call, resendable);
     if (sent.next === 'continue') continue;
     if (sent.next === 'lost') {
@@ -573,6 +609,11 @@ async function runSaga(env, lease, isStopped) {
   const { db, log } = env;
   const plan = db.prepare('SELECT status, executor_id, lease_epoch FROM plan_versions WHERE id = ?').get(lease.planId);
   if (!plan || plan.status !== 'executing' || plan.executor_id !== lease.executorId || plan.lease_epoch !== lease.epoch) return 'lost';
+  // A forced demo reset archived every operation of this plan: there is nothing left to capture, and an empty plan is never `executed`.
+  if (loadPlanOperations(db, lease.planId).length === 0) {
+    log.warn('saga.no_operations', { planVersionId: lease.planId, code: 'NO_OPERATIONS' });
+    return 'archived';
+  }
   if (!env.payments) {
     log.warn('saga.no_provider', { planVersionId: lease.planId, code: 'NO_PROVIDER' });
     pauseLease(env, lease);

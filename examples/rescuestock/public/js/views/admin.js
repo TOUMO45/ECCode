@@ -79,6 +79,60 @@ export function buildFaultBody(kind, values = {}) {
   }
 }
 
+// Which controls of the fault form belong to a kind. The rest are hidden, so the form shows only what the call takes.
+export const FAULT_FIELDS = Object.freeze({
+  stock_depletion: ['supplier'],
+  supplier_refusal: ['supplier', 'reason'],
+  refund_order: ['order'],
+  fake_paypal: ['paypalFault', 'supplier', 'count'],
+  fake_model: ['modelFault', 'count'],
+  clear: [],
+});
+export const faultFieldsFor = (kind) => (Object.hasOwn(FAULT_FIELDS, kind) ? FAULT_FIELDS[kind] : []);
+
+const idList = (ids) => ids.join(', ');
+
+// The sentence after a fault call came back 2xx. It says what the server reports and nothing more: a refund is
+// "requested", never "returned" (the money moves only when PayPal confirms; the timeline shows it).
+export function faultResultText(answer) {
+  const a = answer?.applied ?? {};
+  const replaced = Array.isArray(answer?.superseded) && answer.superseded.length > 0
+    ? ` Plan versions replaced: ${idList(answer.superseded)}.` : '';
+  switch (a.kind) {
+    case 'stock_depletion': return `Every offer of supplier ${a.supplierCode} was withdrawn.${replaced}`;
+    case 'supplier_refusal': {
+      const ids = Array.isArray(a.supplierOrderIds) ? a.supplierOrderIds : [];
+      return ids.length > 0
+        ? `Supplier ${a.supplierCode} refused ${ids.length} open order${ids.length === 1 ? '' : 's'} (${idList(ids)}).${replaced}`
+        : `Supplier ${a.supplierCode} had no open order to refuse.`;
+    }
+    case 'refund_order': return `A refund was requested for supplier order ${a.supplierOrderId}. It is not complete until PayPal confirms it; watch the timeline.`;
+    case 'fake_paypal': return `Simulated PayPal fault ${a.fault}${a.supplierCode ? ` for supplier ${a.supplierCode}` : ''}${a.count ? `, ${a.count} time${a.count === 1 ? '' : 's'}` : ''} is set.`;
+    case 'fake_model': return `Simulated AI fault ${a.fault}${a.count ? `, ${a.count} time${a.count === 1 ? '' : 's'}` : ''} is set.`;
+    case 'clear': return 'All simulated faults were cleared.';
+    default: return `Applied: ${a.kind ?? 'unknown'}.`;
+  }
+}
+
+// POST /api/admin/reset 200 -> { text, stranded: [{ text }] }. A forced reset lists the operations it could not settle;
+// they need a manual clean-up in the PayPal Sandbox dashboard, so the screen says so plainly.
+export function resetResultModel(answer) {
+  const stranded = (Array.isArray(answer?.stranded) ? answer.stranded : []).map((s) => ({
+    text: [
+      `Operation ${s.id}: ${s.status}`,
+      s.providerAuthorizationId ? `authorization ${s.providerAuthorizationId}` : null,
+      s.providerCaptureId ? `capture ${s.providerCaptureId}` : null,
+    ].filter(Boolean).join(', '),
+  }));
+  return {
+    text: `The demo was reset. ${answer?.archivedOperations ?? 0} payment operations were archived.`,
+    strandedIntro: stranded.length > 0
+      ? 'These payments are not finished. Check each one in the PayPal Sandbox dashboard and clean it up there by hand.'
+      : null,
+    stranded,
+  };
+}
+
 export function buildTimelineViewModel(answer) {
   const rows = (answer.events ?? []).map((e) => ({
     cursor: e.cursor,
@@ -115,6 +169,17 @@ export function buildMetricsViewModel(answer) {
 const GROUP_TEXT = Object.freeze({ operationsByStatus: 'Payment operations', plansByStatus: 'Plan versions', reservationsByStatus: 'Reservations' });
 
 // ---- DOM -------------------------------------------------------------------------------------------------------------
+
+function resetDoneNode(model) {
+  return noticeNode({
+    text: model.text,
+    tone: model.stranded.length > 0 ? 'warn' : 'ok',
+    testid: 'reset-done',
+    children: model.stranded.length > 0
+      ? [el('p', { text: model.strandedIntro }), el('ul', { testid: 'reset-stranded' }, model.stranded.map((s) => el('li', { text: s.text })))]
+      : [],
+  });
+}
 
 function renderTimeline(model, on) {
   if (model.state === 'empty') return [emptyNode({ title: 'No events yet.', testid: 'timeline-empty' })];
@@ -193,7 +258,12 @@ export function mountAdmin(ctx, route) {
 
   // reset ---------------------------------------------------------------------------------------------------------
   function drawReset({ problem = null, result = null, error = null } = {}) {
-    const force = checkboxField({ id: 'reset-force', name: 'force', label: 'Force the reset even if a payment is in progress' });
+    const force = checkboxField({
+      id: 'reset-force',
+      name: 'force',
+      label: 'Force the reset even if a payment is in progress',
+      hint: 'A forced reset first voids authorized payments and tries to settle unknown ones. Anything it cannot settle is listed afterwards.',
+    });
     const reason = inputField({ id: 'reset-reason', name: 'reason', label: 'Reason (10 to 500 characters, needed to force)', type: 'textarea', rows: 3, required: false, maxlength: '500' });
     const blocked = error?.code === 'RESET_BLOCKED' && Array.isArray(error.details?.operations) ? error.details.operations : null;
     const form = el('form', {
@@ -230,7 +300,7 @@ export function mountAdmin(ctx, route) {
           children: [el('ul', {}, blocked.map((o) => el('li', { text: `Operation ${o.id}: ${o.status}` })))],
         })
         : null,
-      result ? noticeNode({ text: `The demo was reset. ${result.archivedOperations} payment operations were archived.`, tone: 'ok', testid: 'reset-done' }) : null,
+      result ? resetDoneNode(resetResultModel(result)) : null,
       force.row,
       reason.row,
       submitButton('Reset the demo', { testid: 'reset-submit' }),
@@ -246,7 +316,7 @@ export function mountAdmin(ctx, route) {
     const paypalFault = selectField({ id: 'fault-paypal', name: 'paypalFault', label: 'Simulated PayPal fault', options: [{ value: '', label: 'Choose…' }, ...FAKE_PAYPAL_FAULTS.map((f) => ({ value: f, label: f }))] });
     const modelFault = selectField({ id: 'fault-model', name: 'modelFault', label: 'Simulated AI fault', options: [{ value: '', label: 'Choose…' }, ...FAKE_MODEL_FAULTS.map((f) => ({ value: f, label: f }))] });
     const count = inputField({ id: 'fault-count', name: 'count', label: 'Repeats (1 to 10, optional)', type: 'number', required: false, min: '1', step: '1', inputmode: 'numeric' });
-    const reason = inputField({ id: 'fault-reason', name: 'reason', label: 'Refusal reason (optional)', required: false, maxlength: '300' });
+    const reason = inputField({ id: 'fault-reason', name: 'refusalReason', label: 'Refusal reason (optional, up to 300 characters)', required: false, maxlength: '300' });
     const form = el('form', {
       novalidate: true,
       'aria-label': 'Apply a simulated fault',
@@ -278,7 +348,7 @@ export function mountAdmin(ctx, route) {
     }, [
       problem ? noticeNode({ text: problem, tone: 'warn', role: 'alert', testid: 'fault-problem' }) : null,
       error ? errorNode(error) : null,
-      result ? noticeNode({ text: `Applied: ${result.applied.kind}.`, tone: 'ok', testid: 'fault-done' }) : null,
+      result ? noticeNode({ text: faultResultText(result), tone: 'ok', testid: 'fault-done' }) : null,
       kindField.row,
       supplier.row,
       orderId.row,
@@ -288,6 +358,17 @@ export function mountAdmin(ctx, route) {
       reason.row,
       submitButton('Apply', { testid: 'fault-submit' }),
     ]);
+    // Only the controls of the chosen kind are shown; the others are hidden (and ignored by buildFaultBody).
+    const rows = { supplier: supplier.row, order: orderId.row, paypalFault: paypalFault.row, modelFault: modelFault.row, count: count.row, reason: reason.row };
+    const showFor = (chosen) => {
+      const wanted = faultFieldsFor(chosen);
+      for (const [name, row] of Object.entries(rows)) {
+        if (wanted.includes(name)) row.removeAttribute('hidden');
+        else row.setAttribute('hidden', '');
+      }
+    };
+    showFor(kind);
+    kindField.input.addEventListener('change', () => showFor(kindField.input.value));
     replaceContent(faultSlot, [form]);
   }
 

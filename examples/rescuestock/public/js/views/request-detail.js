@@ -4,7 +4,7 @@
 // objects out); renderRequestPage builds DOM from it; mountRequestDetail loads, polls and wires the actions.
 
 import { el, replaceContent } from '../dom.js';
-import { SECTION_TITLES } from '../texts.js';
+import { EXACT, SECTION_TITLES } from '../texts.js';
 import { isNavigableUrl, utcToLocal } from '../format.js';
 import { describeError, fieldErrorMap } from '../errors.js';
 import { getReserveKey } from '../reserve-key.js';
@@ -34,12 +34,18 @@ const CONFIRMED_PAYMENT_STATUSES = Object.freeze(['authorized', 'capture_pending
 
 export function returnNoticeModel(query, view) {
   const outcome = query?.paypal;
-  if (outcome !== 'returned' && outcome !== 'cancelled') return null;
+  if (!['returned', 'cancelled', 'not_approved', 'check_failed'].includes(outcome)) return null;
   const orderId = Number(query.order);
   const order = [...(view.orders ?? []), ...(view.cancellingOrders ?? [])].find((o) => o.id === orderId);
   const planStatus = (view.plans ?? []).find((p) => p.id === view.currentPlanId)?.status ?? null;
   if (planStatus === 'executed' || planStatus === 'non_executable') return null;
   const name = order ? (supplierDirectory(view).get(order.supplier.code)?.name ?? `Supplier ${order.supplier.code}`) : 'the supplier';
+  // FU-43: the return handler could not confirm the approval (PayPal said it was not approved, or the check itself
+  // failed). A neutral sentence: it claims neither a payment nor a refusal. Gone once the order has moved on.
+  if (outcome === 'not_approved' || outcome === 'check_failed') {
+    if (order && order.payment?.status !== 'created') return null;
+    return { tone: 'warn', text: `${EXACT.PAYPAL_NOT_CONFIRMED}.${order ? ` ${name} is still waiting for your approval.` : ''}`, testid: 'paypal-not-confirmed' };
+  }
   if (outcome === 'returned') {
     const status = order?.payment?.status;
     if (WAITING_PAYMENT_STATUSES.includes(status)) {
@@ -101,6 +107,7 @@ export function renderRequestPage(vm, on = {}, formErrors = {}) {
   const headerOn = {
     plan: on.plan,
     replan: on.replan,
+    review: on.review,
     approve: actions.approve && !actions.approve.blockedReason && on.approve ? () => on.approve(actions.approve) : null,
     reserve: actions.reserve && on.reserve ? () => on.reserve(actions.reserve) : null,
     execute: actions.execute && on.execute ? () => on.execute(actions.execute) : null,
@@ -257,9 +264,20 @@ export function mountRequestDetail(ctx, route) {
 
   const planNow = () => ctx.api.planRequest(id);
 
+  // "Review the new plan": moves keyboard focus to "Why this plan" so the new version is read before it is approved.
+  function reviewNewPlan() {
+    const heading = doc?.getElementById?.('section-why-title');
+    if (!heading) return;
+    heading.setAttribute('tabindex', '-1');
+    heading.focus?.();
+    heading.scrollIntoView?.({ block: 'start' });
+    ctx.announce('Why this plan. Review the new plan, then approve it under Actions.');
+  }
+
   const handlers = {
-    plan: () => perform('Looking for a plan…', planNow),
-    replan: () => perform('Looking for a plan…', planNow),
+    review: reviewNewPlan,
+    plan: () => perform('Looking for a plan…', planNow, { kind: 'plan' }),
+    replan: () => perform('Looking for a new plan…', planNow, { kind: 'replan' }),
     approve: (spec) => perform('Approving the plan…', () => ctx.api.approvePlan(spec.planId, spec.expectedTotalCents, spec.planHash), { kind: 'approve' }),
     reserve: (spec) => perform('Reserving the stock…', () => {
       // The key is made once per plan version and reused on every retry and after a refresh (RS-16).
@@ -299,8 +317,8 @@ export function mountRequestDetail(ctx, route) {
     relax: (relaxation) => perform('Applying the change…', async () => {
       const body = applyRelaxation(view.requirements?.fields, relaxation);
       await ctx.api.confirmRequest(id, body.fields);
-      await planNow();
-    }),
+      return planNow();
+    }, { kind: 'plan' }),
   };
 
   const onVisible = () => {

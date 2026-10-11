@@ -1361,7 +1361,7 @@ test('RS-30: the admin screen resets with a reason when forced, shows blocked op
   byTestId(container, 'input-kind').value = 'stock_depletion';
   byTestId(container, 'input-supplierCode').value = 'B';
   await byTestId(container, 'fault-form').fire('submit');
-  assert.match(textOf(byTestId(container, 'fault-done')), /Applied: stock_depletion\./);
+  assert.match(textOf(byTestId(container, 'fault-done')), /Every offer of supplier B was withdrawn\. Plan versions replaced: 21\./);
   assert.deepEqual(calls.filter((c) => c[0] === 'fault')[0], ['fault', { kind: 'stock_depletion', supplierCode: 'B' }]);
   assert.deepEqual(calls.filter((c) => c[0] === 'reset').map((c) => c[1]), [{}, { force: true, reason: 'Demo retake before the judging session' }]);
 });

@@ -10,14 +10,14 @@ export function register(router) {
   router.add(
     'POST',
     '/api/admin/reset',
-    async (ctx) => ({ status: 200, body: resetDemo(ctx, ctx.user, checkResetBody(await ctx.body())) }),
+    async (ctx) => ({ status: 200, body: await resetDemo(ctx, ctx.user, checkResetBody(await ctx.body())) }),
     { policy: 'admin' },
   );
 
   router.add(
     'POST',
     '/api/admin/faults',
-    async (ctx) => ({ status: 200, body: applyFault(ctx, ctx.user, await ctx.body()) }),
+    async (ctx) => ({ status: 200, body: await applyFault(ctx, ctx.user, await ctx.body()) }),
     { policy: 'admin' },
   );
 

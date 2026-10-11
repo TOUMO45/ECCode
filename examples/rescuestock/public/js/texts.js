@@ -15,6 +15,13 @@ export const EXACT = Object.freeze({
   DEGRADED_EXTRACTION: 'Automatic reading unavailable — please enter the details',
   REPLANNING: 'Finding a new plan with current stock…',
   ORDER_NOT_PAID: 'Cancelled — payment did not complete',
+  // recovery sentences (section 7, "If something fails"); the server sends the same words in nextStep.text / message
+  REVIEW_NEW_PLAN: 'Review the new plan',
+  REPLAN_WITH_CURRENT_STOCK: 'Re-plan with current stock',
+  REPLAN_OR_OTHER_ACCOUNT: 'Re-plan or try another PayPal account',
+  CONTACT_ORGANISER: 'Contact the organiser',
+  ALL_REFUNDED: 'All payments were refunded by the organiser',
+  PAYPAL_NOT_CONFIRMED: 'PayPal did not confirm the approval; try again',
   TIMEOUT: 'The server is taking too long.',
   LOADING: 'Loading…',
   // customer screens
@@ -37,3 +44,21 @@ export const SECTION_TITLES = Object.freeze({
 });
 
 export const COLUMN_TITLES = Object.freeze({ catalog: 'Catalog offer', confirmed: 'Supplier confirmed' });
+
+// "Prices changed: review plan v3". The server writes it into rescueStatus.message; this builds the same sentence.
+export const pricesChangedText = (version) => `Prices changed: review plan v${version}`;
+
+// nextStep.code -> the sentence, used only when the server sent no text for a code it named.
+export const NEXT_STEP_FALLBACK = Object.freeze({
+  REVIEW_NEW_PLAN: EXACT.REVIEW_NEW_PLAN,
+  REPLAN: EXACT.REPLAN_WITH_CURRENT_STOCK,
+  REPLAN_OR_OTHER_ACCOUNT: EXACT.REPLAN_OR_OTHER_ACCOUNT,
+  CONTACT_ORGANISER: EXACT.CONTACT_ORGANISER,
+  WAIT: 'Please wait: this page updates by itself',
+});
+
+// The server's text wins; the table above only fills a gap.
+export function nextStepSentence(nextStep) {
+  if (typeof nextStep?.text === 'string' && nextStep.text.length > 0) return nextStep.text;
+  return Object.hasOwn(NEXT_STEP_FALLBACK, nextStep?.code) ? NEXT_STEP_FALLBACK[nextStep.code] : '';
+}

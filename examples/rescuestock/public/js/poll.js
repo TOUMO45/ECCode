@@ -21,7 +21,11 @@ export function isTransient(view) {
   if (view.rescueStatus?.nextStep?.code === 'WAIT') return true;
   const current = Array.isArray(view.plans) ? view.plans.find((p) => p.id === view.currentPlanId) : null;
   if (current?.status === 'executing') return true;
-  return Array.isArray(view.orders) && view.orders.some((o) => IN_FLIGHT_PAYMENT_STATUSES.includes(o?.payment?.status));
+  const orders = Array.isArray(view.orders) ? view.orders : [];
+  // FU-40: after the purchase, a supplier still has to mark the order ready. The page keeps checking (slowly, with
+  // the same back-off) until every live order is ready or collected, so the receipt button appears without a reload.
+  if (current?.status === 'executed' && orders.some((o) => o?.fulfilmentStatus === 'confirmed' && o?.presentation === 'active')) return true;
+  return orders.some((o) => IN_FLIGHT_PAYMENT_STATUSES.includes(o?.payment?.status));
 }
 
 // The schedule as a pure function: 2 s for the first 2 minutes, then 10 s; null while the page is hidden (paused).

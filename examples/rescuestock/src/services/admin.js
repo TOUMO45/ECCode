@@ -7,9 +7,16 @@
 //   buildMetrics(ctx)                         GET  /api/admin/metrics
 //
 // Reset never deletes payment_operations or provider_calls rows: it archives them (archived_at). Without `force` it is
-// refused (409 RESET_BLOCKED) while any non-archived operation is in a state that holds or moves money. Providers are
-// reached only through the void rule's provider port: with the default no-op port nothing is sent, so a forced reset
-// lists every operation that is still not terminal in `stranded` and in its audit event, for manual clean-up.
+// refused (409 RESET_BLOCKED) while any non-archived operation is in a state that holds or moves money.
+// A forced reset (SEC-11) settles before it archives, in three steps:
+//   1. every `authorized` operation gets a void (the void rule for the approved plans, the void port for the rest), and the voids
+//      are sent;
+//   2. ONE read-resolve pass (provider call protocol section 6) over the unknown calls and the *_pending operations, bounded to
+//      30 s of real time in total (reconciler.readResolvePass); the voids a resolution queued are sent;
+//   3. the single archiving transaction: whatever is still not terminal is listed in `stranded` (response and audit event), for
+//      manual clean-up in the PayPal dashboard.
+// Providers are reached through calls.js only, so a port that is a no-op recorder (the app's default without the real void
+// port) queues and sends nothing, and the `stranded` list says what was left.
 import { unlinkSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { isoFromMs } from '../clock.js';
@@ -18,10 +25,14 @@ import { TERMINAL_PAYMENT_STATES, assertTransition } from '../domain/states.js';
 import { AppError } from '../http/envelope.js';
 import { enumOf, int, str, validateObject } from '../http/validate.js';
 import { recordAudit } from './audit.js';
+import { flushQueuedVoids, loadOperation, moveOperation, queueCall, runCall, sendDueCalls } from './calls.js';
 import { actorOf, closeReservation, resetInventory } from './ledger.js';
 import { openOrderIdsOfSupplier, refuseSupplierOrder } from './orders.js';
+import { readResolvePass } from './reconciler.js';
 import { markNonExecutable, supersedeForOfferChange } from './supersession.js';
 import { parseJson } from './view.js';
+
+export const RESET_RESOLVE_BUDGET_MS = 30_000;
 
 export const RESET_BLOCKING_STATES = Object.freeze([
   'approved', 'authorization_pending', 'authorized', 'capture_pending', 'captured', 'refund_requested', 'refund_pending', 'unknown',
@@ -104,9 +115,78 @@ function restoreCatalog(db, clock, actor, now) {
   }
 }
 
-export function resetDemo(ctx, user, { force, reason }) {
+// Live plans end through the void rule (reservations released, orders cancelled, operations voided or void queued). Inside a transaction.
+function endApprovedPlans(ctx, user) {
+  const approved = ctx.db
+    .prepare(
+      "SELECT pv.id FROM plan_versions pv JOIN rescue_requests rr ON rr.id = pv.request_id WHERE pv.status = 'approved' AND rr.archived_at IS NULL ORDER BY pv.id",
+    )
+    .all();
+  for (const { id } of approved) {
+    markNonExecutable(ctx, { planVersionId: id, reason: 'DEMO_RESET', detail: {}, actor: user, requestId: ctx.requestId });
+  }
+}
+
+// After a commit: the voids the port collected, and any void row that is queued and due (the port may be a recorder that inserts nothing).
+async function sendQueuedVoids(ctx) {
+  try {
+    await flushQueuedVoids(ctx, ctx.voidRule?.provider);
+  } catch {
+    ctx.log.error('provider.flush_failed', { code: 'FLUSH_FAILED' });
+  }
+  try {
+    await sendDueCalls(ctx, { kinds: ['void'] });
+  } catch {
+    ctx.log.error('provider.send_due_failed', { code: 'SEND_FAILED' });
+  }
+}
+
+// SEC-11, steps 1 and 2 of a forced reset: void what is authorized and send it, then ONE bounded read-resolve pass over the unknown
+// calls and the *_pending operations, then send the voids that pass queued. Nothing is archived here; the archiving transaction
+// lists whatever is still not terminal. Returns { authorized (how many were authorized at the start), resolved, polled, timedOut }.
+async function settleForForcedReset(ctx, user, budgetMs) {
+  const { db, clock } = ctx;
+  const authorized = db.prepare("SELECT COUNT(*) AS n FROM payment_operations WHERE archived_at IS NULL AND status = 'authorized'").get().n;
+  db.tx(() => {
+    endApprovedPlans(ctx, user);
+    const now = isoFromMs(clock.now());
+    // Authorized operations the void rule did not see (their plan is not `approved`: executing, compensating, a failed earlier void).
+    const left = db
+      .prepare(
+        'SELECT po.id, po.supplier_order_id, so.plan_version_id FROM payment_operations po JOIN supplier_orders so ON so.id = po.supplier_order_id ' +
+          "WHERE po.archived_at IS NULL AND po.status = 'authorized' AND po.cancel_requested_at IS NULL ORDER BY po.id",
+      )
+      .all();
+    for (const op of left) {
+      db.prepare("UPDATE payment_operations SET cancel_requested_at = ?, cancel_reason = 'DEMO_RESET', updated_at = ? WHERE id = ?").run(now, now, op.id);
+      const intent = {
+        operationId: op.id, supplierOrderId: op.supplier_order_id, kind: 'void', attempt: 1,
+        operationKey: `so:${op.supplier_order_id}:void:1`, planVersionId: op.plan_version_id, reason: 'DEMO_RESET',
+      };
+      const port = ctx.voidRule?.provider;
+      if (typeof port?.queueVoid === 'function') port.queueVoid(db, intent);
+      else queueCall(db, clock, { operationId: op.id, supplierOrderId: op.supplier_order_id, kind: 'void', attempt: 1, requestId: ctx.requestId });
+    }
+  });
+  await sendQueuedVoids(ctx);
+  const pass = await readResolvePass(ctx, { budgetMs });
+  await sendQueuedVoids(ctx);
+  return { authorized, resolved: pass.resolved, polled: pass.polled, timedOut: pass.timedOut };
+}
+
+// resetDemo(ctx, user, { force, reason }, { resolveBudgetMs }) -> { reset, archivedOperations, stranded? }; throws 409 RESET_BLOCKED.
+export async function resetDemo(ctx, user, { force, reason }, { resolveBudgetMs = RESET_RESOLVE_BUDGET_MS } = {}) {
   const { db, clock } = ctx;
   const actor = actorOf(user);
+
+  let settled = null;
+  if (force) {
+    // Only when something holds or moves money (the guard below is read again inside the archiving transaction).
+    const holding = db
+      .prepare(`SELECT 1 AS held FROM payment_operations WHERE archived_at IS NULL AND status IN (${RESET_BLOCKING_STATES.map(() => '?').join(',')}) LIMIT 1`)
+      .get(...RESET_BLOCKING_STATES);
+    if (holding) settled = await settleForForcedReset(ctx, user, resolveBudgetMs);
+  }
 
   const fileNames = [];
   const outcome = db.tx(() => {
@@ -118,18 +198,18 @@ export function resetDemo(ctx, user, { force, reason }) {
       .map((op) => ({ id: op.id, status: op.status }));
     if (blocking.length > 0 && !force) return { blocked: blocking };
 
-    // Live plans end through the void rule (reservations released, orders cancelled, operations voided or void queued).
-    const approved = db
-      .prepare(
-        "SELECT pv.id FROM plan_versions pv JOIN rescue_requests rr ON rr.id = pv.request_id WHERE pv.status = 'approved' AND rr.archived_at IS NULL ORDER BY pv.id",
-      )
-      .all();
-    for (const { id } of approved) {
-      markNonExecutable(ctx, { planVersionId: id, reason: 'DEMO_RESET', detail: {}, actor: user, requestId: ctx.requestId });
-    }
+    endApprovedPlans(ctx, user);
     // Any reservation still active (its plan was not approved) is released as well.
     for (const { id } of db.prepare("SELECT id FROM reservations WHERE status = 'active' ORDER BY id").all()) {
       closeReservation(db, clock, { reservationId: id, to: 'released', actor, requestId: ctx.requestId });
+    }
+    // A reservation still `reconciling` (a compensation whose refunds or voids were pending) is closed WITHOUT restock rows: its
+    // operations are archived below, so the release check could never see them, and the catalog restore below sets the stock itself.
+    // Left open, the reconciler would later restock it on top of the restored stock.
+    let closedReconciling = 0;
+    for (const { id } of db.prepare("SELECT id FROM reservations WHERE status = 'reconciling' ORDER BY id").all()) {
+      assertTransition('reservation', 'reconciling', 'released');
+      closedReconciling += Number(db.prepare("UPDATE reservations SET status = 'released', closed_at = ? WHERE id = ? AND status = 'reconciling'").run(now, id).changes);
     }
 
     const stranded = db
@@ -178,7 +258,10 @@ export function resetDemo(ctx, user, { force, reason }) {
 
     auditReset(
       db, clock, user, 'ok',
-      { force, reason, archivedOperations, requests: requests.length, stranded: stranded.map((s) => ({ id: s.id, status: s.status })) },
+      {
+        force, reason, archivedOperations, requests: requests.length, closedReconciling, stranded: stranded.map((s) => ({ id: s.id, status: s.status })),
+        ...(settled ? { authorized: settled.authorized, resolved: settled.resolved, polled: settled.polled, resolveTimedOut: settled.timedOut } : {}),
+      },
       ctx.requestId,
     );
     return { archivedOperations, stranded };
@@ -258,13 +341,17 @@ function supplierRefusal(ctx, user, supplierCode, reason) {
   return { applied: { kind: 'supplier_refusal', supplierCode, supplierOrderIds: refused } };
 }
 
-function refundOrder(ctx, user, supplierOrderId) {
+// captured -> refund_requested and so:<id>:refund:1 queued in one transaction (only for a captured operation of an executed plan);
+// then, after the commit, the handler sends the refund (Sender table). A refund that cannot be sent now stays queued for
+// reconciler step 6; its result (refunded, refund_pending polled, refund_failed escalated) is the protocol's.
+async function refundOrder(ctx, user, supplierOrderId) {
   const { db, clock } = ctx;
-  return db.tx(() => {
+  const queued = db.tx(() => {
     const row = db
       .prepare(
         'SELECT so.id, po.id AS operation_id, po.status AS operation_status, pv.status AS plan_status FROM supplier_orders so ' +
-          'JOIN plan_versions pv ON pv.id = so.plan_version_id JOIN payment_operations po ON po.supplier_order_id = so.id WHERE so.id = ?',
+          'JOIN plan_versions pv ON pv.id = so.plan_version_id JOIN payment_operations po ON po.supplier_order_id = so.id ' +
+          'WHERE so.id = ? AND po.archived_at IS NULL',
       )
       .get(supplierOrderId);
     if (!row) throw new AppError(404, 'NOT_FOUND');
@@ -275,20 +362,21 @@ function refundOrder(ctx, user, supplierOrderId) {
       });
       throw new AppError(409, 'INVALID_STATE', { details: { from: row.operation_status, to: 'refund_requested' } });
     }
-    const now = isoFromMs(clock.now());
-    assertTransition('payment', 'captured', 'refund_requested');
-    const moved = db.prepare("UPDATE payment_operations SET status = 'refund_requested', updated_at = ? WHERE id = ? AND status = 'captured'").run(now, row.operation_id).changes;
-    if (moved !== 1) throw new AppError(409, 'INVALID_STATE', { details: { from: 'captured', to: 'refund_requested' } });
-    // Queued, not sent: the saga and the reconciler send it (provider call protocol, Sender table).
-    db.prepare(
-      "INSERT OR IGNORE INTO provider_calls (payment_operation_id, kind, attempt, operation_key, status, created_at) VALUES (?, 'refund', 1, ?, 'intent', ?)",
-    ).run(row.operation_id, `so:${supplierOrderId}:refund:1`, now);
+    const operation = loadOperation(db, row.operation_id);
+    if (!moveOperation(db, clock, operation, 'refund_requested')) throw new AppError(409, 'INVALID_STATE', { details: { from: 'captured', to: 'refund_requested' } });
+    const { call } = queueCall(db, clock, { operationId: row.operation_id, supplierOrderId, kind: 'refund', attempt: 1, requestId: ctx.requestId });
     recordAudit(db, clock, {
       actorUserId: user.id, actorRole: user.role, action: 'admin.fault', entityType: 'supplier_order', entityId: supplierOrderId,
       outcome: 'ok', detail: { kind: 'refund_order', supplierOrderId }, requestId: ctx.requestId,
     });
-    return { applied: { kind: 'refund_order', supplierOrderId } };
+    return call.id;
   });
+  try {
+    await runCall(ctx, queued);
+  } catch {
+    ctx.log.error('provider.send_failed', { providerCallId: queued, code: 'SEND_FAILED' });
+  }
+  return { applied: { kind: 'refund_order', supplierOrderId } };
 }
 
 // fake_paypal / fake_model: a row in fault_flags that the fake adapter reads. name = '<kind>:<fault>', value = the
@@ -324,7 +412,7 @@ function clearFlags(ctx, user) {
   });
 }
 
-export function applyFault(ctx, user, body) {
+export async function applyFault(ctx, user, body) {
   const { config } = ctx;
   const kind = enumOf('stock_depletion', 'supplier_refusal', 'refund_order', 'fake_paypal', 'fake_model', 'clear');
   const head = validateObject(body, { kind });

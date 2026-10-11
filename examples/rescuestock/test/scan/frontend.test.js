@@ -397,3 +397,52 @@ test('RS-35: payment and supplier-order views build text with el(...text) only, 
     assert.doesNotMatch(code.get(file), /innerHTML|outerHTML|insertAdjacentHTML|document\.write|createContextualFragment/, `markup parsing in public/${file}`);
   }
 });
+
+// ---- phase F (f3): recovery ---------------------------------------------------------------------------------------
+
+test('RS-32: the recovery sentences of the brief are in the shipped code, word for word', () => {
+  const required = [
+    'Finding a new plan with current stock…',
+    'Review the new plan',
+    'Re-plan with current stock',
+    'Re-plan or try another PayPal account',
+    'Reservation expired — no money was taken; re-plan with current stock',
+    'Contact the organiser',
+    'All payments were refunded by the organiser',
+    'PayPal did not confirm the approval; try again',
+    'Cancelled — payment did not complete',
+  ];
+  for (const sentence of required) assert.ok(code.get('js/texts.js').includes(sentence), `public/js/texts.js: ${sentence}`);
+  assert.match(code.get('js/texts.js'), /Prices changed: review plan v\$\{version\}/);
+});
+
+test('RS-32: the recovery test hooks exist, and none is built twice under one name on a page', () => {
+  for (const hook of ['replanning', 'reservation-expired', 'contact-organiser', 'compensation-summary', 'paypal-not-confirmed', 'fault-form', 'reset-form', 'reset-stranded', 'fault-done', 'next-step-action']) {
+    assert.ok(allCode.includes(`'${hook}'`) || allCode.includes(`testid: \`${hook}`) || allCode.includes(`'${hook}`), `data-testid ${hook} not found`);
+  }
+  // the admin screen holds two forms with a "reason": each control has its own input-<name> hook
+  const admin = code.get('js/views/admin.js');
+  assert.match(admin, /name: 'reason', label: 'Reason \(10 to 500 characters, needed to force\)'/);
+  assert.match(admin, /name: 'refusalReason'/);
+});
+
+test('NFR2: a hidden form row stays hidden, a section heading can take focus, and the refuse form states its limits', () => {
+  assert.match(css, /\[hidden\]\s*\{\s*display:\s*none\s*!important/);
+  assert.match(css, /h2:focus-visible\s*\{[^}]*outline:\s*3px solid/);
+  const supplier = code.get('js/views/supplier-orders.js');
+  assert.match(supplier, /maxlength: '300'/);
+  assert.match(supplier, /1 to 300 characters/);
+  assert.match(supplier, /The buyer sees this reason\./);
+  assert.match(code.get('js/views/admin.js'), /faultFieldsFor\(chosen\)|faultFieldsFor\(kind\)/);
+});
+
+test('RS-32: the recovery views never claim a result the server has not given', () => {
+  // "refunded" and "no money was taken" are written only in the sentences that depend on the payment's own status
+  const compensation = code.get('js/components/compensation.js');
+  for (const m of compensation.matchAll(/text: '([^']*(?:Refunded|returned|no money)[^']*)'/g)) {
+    assert.match(m[1], /^(Refunded in full|Authorization voided|Cancelled before authorization|PayPal declined|Void queued|Refund queued)/, m[1]);
+  }
+  const admin = code.get('js/views/admin.js');
+  assert.doesNotMatch(admin, /has been refunded|was refunded|were refunded/, 'a refund request is called a request');
+  assert.match(admin, /A refund was requested for supplier order/);
+});

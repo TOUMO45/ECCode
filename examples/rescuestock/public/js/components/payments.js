@@ -49,6 +49,10 @@ export function reservationLimitModel({ error = null, requests = [], currentRequ
 // What to tell the user when an action worked. Honest: it says what was done, never that money moved when it has not.
 export function successText(kind, answer = null) {
   switch (kind) {
+    case 'plan':
+    case 'replan': return answer?.plan
+      ? `${kind === 'replan' ? 'A new plan was found with current stock' : 'A plan was found'}. Review it below before you approve it.`
+      : 'No plan fits the stock available now. “What was rejected” below says why.';
     case 'approve': return 'Plan approved.';
     case 'reserve': return 'Stock reserved for you.';
     case 'paypal': return answer?.payment?.simulated === true
@@ -95,7 +99,9 @@ export function actionsModel(view, { config = null } = {}) {
     remove: deleteRequestAvailable(view, config) ? { label: 'Delete request', testid: 'delete-request' } : null,
   };
 
-  if (plan && plan.status === 'proposed' && code === 'APPROVE_PLAN') {
+  // REVIEW_NEW_PLAN (derivation row 12): a new proposed version after a price change, a refusal or a replacement.
+  // The buyer reads it ("Why this plan", "Total") and approves it here; the old version was never approved again.
+  if (plan && plan.status === 'proposed' && (code === 'APPROVE_PLAN' || code === 'REVIEW_NEW_PLAN')) {
     model.approve = {
       planId: plan.id,
       expectedTotalCents: plan.body.totalCents,

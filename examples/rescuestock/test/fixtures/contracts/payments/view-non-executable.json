@@ -1,7 +1,7 @@
 {
   "route": "GET /api/requests/:id",
   "status": 200,
-  "variant": "payment view: the purchase was abandoned, so the plan is non_executable (PAYMENT_CANCELLED) and both confirmed orders read 'Cancelled — payment did not complete' (F-TR-11)",
+  "variant": "payment view, post-claim state (FU-38): the plan became non_executable because an authorization expired (AUTHORIZATION_EXPIRED, or CAPTURE_FAILED after the claim), so both orders keep fulfilment 'confirmed' and read 'Cancelled — payment did not complete' (F-TR-11). This is NOT an abandon: a real abandon cancels the orders and gives presentation 'cancelled' (see recovery/view-abandoned.json)",
   "response": {
     "request": { "id": 12, "createdAt": "2026-10-20T06:00:00.000Z", "language": "en", "rawText": "I need 200 cups and 200 lids, 250 ml, by 11:00 today. Budget $120, at most 2 pickups.", "intakeStatus": "confirmed", "image": null },
     "extraction": null,
@@ -38,7 +38,7 @@
         "alternatives": [], "rejections": [],
         "trace": { "inputs": {}, "candidates": [], "comparisons": [], "enumerated": 7 },
         "explanation": { "lines": [{ "code": "PLAN_BEST", "text": "Best plan: A+B for $84.00 in total, 2 pickups, ready by 10:30." }], "rephrased": null },
-        "nonExecutableReason": "PAYMENT_CANCELLED", "supersededBy": null, "supersedeReason": null, "createdAt": "2026-10-20T06:01:02.000Z"
+        "nonExecutableReason": "AUTHORIZATION_EXPIRED", "supersededBy": null, "supersedeReason": null, "createdAt": "2026-10-20T06:01:02.000Z"
       }
     ],
     "currentPlanId": 21,
@@ -62,8 +62,8 @@
     "cancellingOrders": [],
     "rescueStatus": {
       "status": "cancelled", "rule": "6",
-      "nextStep": { "code": "REPLAN", "text": "Re-plan with current stock" },
-      "message": "The purchase was abandoned. No money was taken; re-plan with current stock",
+      "nextStep": { "code": "REPLAN_OR_OTHER_ACCOUNT", "text": "Re-plan or try another PayPal account" },
+      "message": "A PayPal authorization expired before the purchase could be completed. No money was taken. Re-plan or try another PayPal account",
       "underlying": { "plan": "non_executable", "reservation": "released", "payments": [{ "orderId": 31, "status": "voided" }, { "orderId": 32, "status": "voided" }], "fulfilment": [{ "orderId": 31, "status": "confirmed" }, { "orderId": 32, "status": "confirmed" }] }
     },
     "capabilities": { "deleteRequest": true },

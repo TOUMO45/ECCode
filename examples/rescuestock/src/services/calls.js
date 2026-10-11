@@ -322,8 +322,11 @@ const SENDERS = {
     }),
   authorize: (env, op, call) => env.payments.authorizeOrder({ merchantKey: op.merchant_key, requestId: call.operation_key, orderId: op.provider_order_id }),
   void: (env, op, call) => env.payments.voidAuthorization({ merchantKey: op.merchant_key, requestId: call.operation_key, authorizationId: op.provider_authorization_id }),
+  // The refund returns what the capture took, so both read supplier_orders.total_cents (FU-42), never a second copy of the amount.
   refund: (env, op, call) =>
-    env.payments.refundCapture({ merchantKey: op.merchant_key, requestId: call.operation_key, captureId: op.provider_capture_id, amountCents: op.amount_cents, currency: op.currency }),
+    env.payments.refundCapture({
+      merchantKey: op.merchant_key, requestId: call.operation_key, captureId: op.provider_capture_id, amountCents: op.order_total_cents, currency: op.currency,
+    }),
 };
 
 function withDeadline(promise, ms) {
@@ -393,6 +396,8 @@ export async function runCall(env, callId, { resendUnknown = false } = {}) {
 
 // A void the provider rejected: read the authorization and settle the operation (spec: Void rule step 6, F-TR-6).
 //   VOIDED                        -> voided
+//   EXPIRED (FU-45)               -> voided with last_error_code AUTHORIZATION_EXPIRED: an expired authorization holds no money,
+//                                    so there is nothing left to void and nothing to escalate
 //   CAPTURED / PARTIALLY_CAPTURED -> captured (capture id via getOrder); because a cancellation was requested the operation goes
 //                                    on to refund_requested and so:<id>:refund:1 is queued and sent
 //   anything else (or a failed read) -> stays authorized with void_failed = 1 (derivation row 2)
@@ -406,6 +411,7 @@ export async function resolveRejectedVoid(env, operationId) {
   if (read.kind === 'ok') {
     const status = read.value.status;
     if (status === 'VOIDED') decision = 'voided';
+    else if (status === 'EXPIRED') decision = 'expired';
     else if (status === 'CAPTURED' || status === 'PARTIALLY_CAPTURED') {
       const order = await payments.getOrder({ merchantKey: op.merchant_key, orderId: op.provider_order_id });
       if (order.kind === 'ok') {
@@ -417,8 +423,8 @@ export async function resolveRejectedVoid(env, operationId) {
   const refundCall = db.tx(() => {
     const fresh = loadOperation(db, operationId);
     if (!fresh || fresh.status !== 'authorized') return null;
-    if (decision === 'voided') {
-      moveOperation(db, clock, fresh, 'voided', { last_error_code: null });
+    if (decision === 'voided' || decision === 'expired') {
+      moveOperation(db, clock, fresh, 'voided', { last_error_code: decision === 'expired' ? 'AUTHORIZATION_EXPIRED' : null });
       return null;
     }
     if (decision === 'captured') {

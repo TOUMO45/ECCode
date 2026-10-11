@@ -263,7 +263,7 @@ async function resolveRefund(env, call, op) {
   return true;
 }
 
-async function resolveUnknownCalls(env) {
+async function resolveUnknownCalls(env, { shouldStop = () => false } = {}) {
   const { db } = env;
   const ids = db
     .prepare("SELECT id FROM provider_calls WHERE status = 'unknown' AND send_token IS NULL AND archived_at IS NULL ORDER BY id LIMIT ?")
@@ -271,6 +271,7 @@ async function resolveUnknownCalls(env) {
     .map((r) => r.id);
   let resolved = 0;
   for (const id of ids) {
+    if (shouldStop()) break;
     try {
       const call = db.prepare('SELECT * FROM provider_calls WHERE id = ?').get(id);
       const op = call ? loadOperation(db, call.payment_operation_id) : null;
@@ -343,13 +344,14 @@ async function pollOne(env, op) {
   return false;
 }
 
-async function pollPending(env, lastPoll) {
+async function pollPending(env, lastPoll, { shouldStop = () => false } = {}) {
   const { db, clock } = env;
   const ops = db
     .prepare("SELECT id FROM payment_operations WHERE status IN ('authorization_pending','capture_pending','refund_pending') AND archived_at IS NULL ORDER BY id LIMIT ?")
     .all(BATCH);
   let moved = 0;
   for (const { id } of ops) {
+    if (shouldStop()) break;
     try {
       const op = loadOperation(db, id);
       if (!op || !env.payments) continue;
@@ -367,15 +369,51 @@ async function pollPending(env, lastPoll) {
   return moved;
 }
 
+// ------------------------------------------------------------------ the forced reset's read-resolve pass (SEC-11 step 2)
+
+// ONE pass of protocol section 6 over the unknown calls and the *_pending operations (stale started intents become unknown first),
+// bounded by `budgetMs` of REAL time (the pinned test clock does not move while a provider answers). It sends nothing but what
+// section 6 sends after a read. When the budget runs out the pass stops between items; a read already in flight finishes alone
+// (it is bounded by the provider timeout). Resolves with { resolved, polled, timedOut }.
+export async function readResolvePass(env, { budgetMs = 30_000 } = {}) {
+  let stopped = false;
+  const shouldStop = () => stopped;
+  let timer;
+  const deadline = new Promise((resolve) => {
+    timer = setTimeout(() => {
+      stopped = true;
+      resolve({ resolved: 0, polled: 0, timedOut: true });
+    }, budgetMs);
+    timer.unref?.();
+  });
+  const pass = (async () => {
+    markStaleIntents(env);
+    const resolved = await resolveUnknownCalls(env, { shouldStop });
+    const polled = await pollPending(env, new Map(), { shouldStop });
+    return { resolved, polled, timedOut: stopped };
+  })().catch((err) => {
+    env.log.error('reset.resolve_failed', { code: codeOf(err) });
+    return { resolved: 0, polled: 0, timedOut: stopped };
+  });
+  try {
+    return await Promise.race([pass, deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ------------------------------------------------------------------ step 5: takeover
 
 function takeOverLapsedPlans(env, saga) {
   const { db, clock, config } = env;
   const nowIso = isoFromMs(clock.now());
-  // F-TR-7: never while an operation is capture_pending or unknown; not while the next capture is backing off after a retryable answer
+  // F-TR-7: never while an operation is capture_pending or unknown; not while the next capture is backing off after a retryable answer;
+  // not a plan whose operations a forced demo reset archived (nothing is left to capture)
   const plans = db
     .prepare(
       "SELECT pv.id FROM plan_versions pv WHERE pv.status = 'executing' AND pv.lease_until IS NOT NULL AND pv.lease_until <= ? " +
+        'AND EXISTS (SELECT 1 FROM supplier_orders so JOIN payment_operations po ON po.supplier_order_id = so.id ' +
+        'WHERE so.plan_version_id = pv.id AND po.archived_at IS NULL) ' +
         "AND NOT EXISTS (SELECT 1 FROM supplier_orders so JOIN payment_operations po ON po.supplier_order_id = so.id " +
         "WHERE so.plan_version_id = pv.id AND po.archived_at IS NULL AND po.status IN ('capture_pending','unknown')) " +
         "AND NOT EXISTS (SELECT 1 FROM supplier_orders so JOIN payment_operations po ON po.supplier_order_id = so.id " +

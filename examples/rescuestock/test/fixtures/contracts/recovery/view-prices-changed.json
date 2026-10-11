@@ -1,0 +1,289 @@
+{
+  "route": "GET /api/requests/:id",
+  "status": 200,
+  "variant": "recovery view: row 12. Supplier A raised its price while plan v1 was approved; v1 is superseded and voided, v2 is proposed. message \"Prices changed: review plan v2\", nextStep REVIEW_NEW_PLAN",
+  "response": {
+    "request": {
+      "id": 14,
+      "createdAt": "2026-10-20T06:00:00.000Z",
+      "language": "en",
+      "rawText": "I need 200 cups and 200 lids, 250 ml, by 11:00 today. Budget $120, at most 2 pickups.",
+      "intakeStatus": "confirmed",
+      "image": null
+    },
+    "extraction": null,
+    "requirements": {
+      "version": 1,
+      "fields": {
+        "productType": {
+          "value": "cups_and_lids",
+          "status": "known",
+          "provenance": "user_text",
+          "originalWording": "cups and lids"
+        },
+        "cupQuantity": {
+          "value": 200,
+          "status": "known",
+          "provenance": "user_text",
+          "originalWording": "200 cups"
+        },
+        "lidQuantity": {
+          "value": 200,
+          "status": "known",
+          "provenance": "user_text",
+          "originalWording": "200 lids"
+        },
+        "capacityMl": {
+          "value": 250,
+          "status": "known",
+          "provenance": "user_text",
+          "originalWording": "250 ml"
+        },
+        "diameterMm": {
+          "value": 90,
+          "status": "known",
+          "provenance": "manual",
+          "originalWording": null
+        },
+        "material": {
+          "value": null,
+          "status": "unknown",
+          "provenance": "none",
+          "originalWording": null
+        },
+        "deadline": {
+          "value": "2026-10-20T11:00",
+          "status": "known",
+          "provenance": "user_text",
+          "originalWording": "by 11:00 today"
+        },
+        "budgetCents": {
+          "value": 12000,
+          "status": "known",
+          "provenance": "user_text",
+          "originalWording": "Budget $120"
+        },
+        "maxPickups": {
+          "value": 2,
+          "status": "known",
+          "provenance": "manual",
+          "originalWording": null
+        }
+      },
+      "confirmedAt": "2026-10-20T06:01:00.000Z"
+    },
+    "planning": {
+      "id": 7,
+      "requirementsVersion": 1,
+      "feasible": true,
+      "rejections": [],
+      "candidateCodes": [],
+      "relaxations": [],
+      "blocking": [],
+      "explanation": {
+        "lines": [],
+        "rephrased": null
+      },
+      "createdAt": "2026-10-20T06:01:02.000Z"
+    },
+    "plans": [
+      {
+        "id": 22,
+        "version": 2,
+        "status": "proposed",
+        "planHash": "b7d6a1c04e2f9a3358c1d0e7f6a9b2c4d5e8f1a0b3c6d9e2f5a8b1c4d7e0f3a6",
+        "body": {
+          "lines": [
+            {
+              "supplierCode": "A",
+              "offerId": 1,
+              "offerVersion": 2,
+              "productName": "100 cups + 100 lids (250 ml, 90 mm)",
+              "bundles": 1,
+              "cups": 100,
+              "lids": 100,
+              "unitPriceCents": 3200,
+              "demo": true
+            },
+            {
+              "supplierCode": "B",
+              "offerId": 2,
+              "offerVersion": 1,
+              "productName": "100 cups + 100 lids (250 ml, 90 mm)",
+              "bundles": 1,
+              "cups": 100,
+              "lids": 100,
+              "unitPriceCents": 3600,
+              "demo": true
+            }
+          ],
+          "suppliers": [
+            {
+              "supplierCode": "A",
+              "supplierName": "Supplier A",
+              "subtotalCents": 3200,
+              "prepFeeCents": 1000,
+              "taxCents": 0,
+              "totalCents": 4200,
+              "catalogReadyAt": "2026-10-20T07:00:00.000Z",
+              "demo": true
+            },
+            {
+              "supplierCode": "B",
+              "supplierName": "Supplier B",
+              "subtotalCents": 3600,
+              "prepFeeCents": 800,
+              "taxCents": 0,
+              "totalCents": 4400,
+              "catalogReadyAt": "2026-10-20T07:30:00.000Z",
+              "demo": true
+            }
+          ],
+          "totalCents": 8600,
+          "pickupCount": 2,
+          "readyAt": "2026-10-20T07:30:00.000Z",
+          "surplus": {
+            "cups": 0,
+            "lids": 0
+          }
+        },
+        "alternatives": [],
+        "rejections": [],
+        "trace": {
+          "inputs": {},
+          "candidates": [],
+          "comparisons": [],
+          "enumerated": 7
+        },
+        "explanation": {
+          "lines": [
+            {
+              "code": "PLAN_BEST",
+              "text": "Best plan: A+B for $86.00 in total, 2 pickups, ready by 10:30."
+            }
+          ],
+          "rephrased": null
+        },
+        "nonExecutableReason": null,
+        "supersededBy": null,
+        "supersedeReason": null,
+        "createdAt": "2026-10-20T06:12:00.000Z"
+      },
+      {
+        "id": 21,
+        "version": 1,
+        "status": "superseded",
+        "planHash": "ae2f0703923285966e7bdcfac5909bcef99ccd9862a15c0b915182e5d1c15e83",
+        "body": {
+          "lines": [
+            {
+              "supplierCode": "A",
+              "offerId": 1,
+              "offerVersion": 1,
+              "productName": "100 cups + 100 lids (250 ml, 90 mm)",
+              "bundles": 1,
+              "cups": 100,
+              "lids": 100,
+              "unitPriceCents": 3000,
+              "demo": true
+            },
+            {
+              "supplierCode": "B",
+              "offerId": 2,
+              "offerVersion": 1,
+              "productName": "100 cups + 100 lids (250 ml, 90 mm)",
+              "bundles": 1,
+              "cups": 100,
+              "lids": 100,
+              "unitPriceCents": 3600,
+              "demo": true
+            }
+          ],
+          "suppliers": [
+            {
+              "supplierCode": "A",
+              "supplierName": "Supplier A",
+              "subtotalCents": 3000,
+              "prepFeeCents": 1000,
+              "taxCents": 0,
+              "totalCents": 4000,
+              "catalogReadyAt": "2026-10-20T07:00:00.000Z",
+              "demo": true
+            },
+            {
+              "supplierCode": "B",
+              "supplierName": "Supplier B",
+              "subtotalCents": 3600,
+              "prepFeeCents": 800,
+              "taxCents": 0,
+              "totalCents": 4400,
+              "catalogReadyAt": "2026-10-20T07:30:00.000Z",
+              "demo": true
+            }
+          ],
+          "totalCents": 8400,
+          "pickupCount": 2,
+          "readyAt": "2026-10-20T07:30:00.000Z",
+          "surplus": {
+            "cups": 0,
+            "lids": 0
+          }
+        },
+        "alternatives": [],
+        "rejections": [],
+        "trace": {
+          "inputs": {},
+          "candidates": [],
+          "comparisons": [],
+          "enumerated": 7
+        },
+        "explanation": {
+          "lines": [
+            {
+              "code": "PLAN_BEST",
+              "text": "Best plan: A+B for $84.00 in total, 2 pickups, ready by 10:30."
+            }
+          ],
+          "rephrased": null
+        },
+        "nonExecutableReason": null,
+        "supersededBy": 22,
+        "supersedeReason": "PRICE_CHANGED",
+        "createdAt": "2026-10-20T06:01:02.000Z"
+      }
+    ],
+    "currentPlanId": 22,
+    "reservation": null,
+    "orders": [],
+    "cancellingOrders": [],
+    "rescueStatus": {
+      "status": "plan_found",
+      "rule": "12",
+      "nextStep": {
+        "code": "REVIEW_NEW_PLAN",
+        "text": "Review the new plan"
+      },
+      "message": "Prices changed: review plan v2",
+      "underlying": {
+        "plan": "proposed",
+        "reservation": null,
+        "payments": [],
+        "fulfilment": []
+      }
+    },
+    "capabilities": {
+      "deleteRequest": true
+    },
+    "labels": {
+      "simulatedPayments": true,
+      "simulatedExtraction": true,
+      "sandbox": false,
+      "demoData": true,
+      "priceNotice": "Test prices, not market prices",
+      "merchantMode": "per-supplier",
+      "singleCredentialNotice": null,
+      "testMode": false
+    },
+    "requestId": "req-rec-0000003"
+  }
+}

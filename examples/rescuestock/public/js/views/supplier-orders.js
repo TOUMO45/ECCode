@@ -69,6 +69,14 @@ export function buildSupplierConfirmBody(confirmSpec, values) {
   return { ok: Object.keys(errors).length === 0, body: { lines, committedReadyAt: ts }, errors };
 }
 
+// Said before the supplier refuses: who reads the reason, and what happens to the buyer's side. No money is taken for
+// a refused order: the buyer's authorizations for the plan are released (void rule) and a new plan is computed without this supplier.
+export const REFUSE_HINT = 'The buyer sees this reason. Refusing cancels the buyer’s plan; no money is taken for it, and a new plan is made without you.';
+
+export function refusedText(ref) {
+  return `Order ${ref} is refused. The buyer is shown your reason and a new plan is being made without you.`;
+}
+
 export function validateRefusalReason(reason) {
   const value = String(reason ?? '').trim();
   if (value.length < 1) return 'Say why you are refusing.';
@@ -139,7 +147,16 @@ function renderConfirmForm(card, spec, on) {
 }
 
 function renderRefuseForm(card, on) {
-  const reason = inputField({ id: `refuse-${card.id}-reason`, name: 'reason', label: 'Reason for refusing (up to 300 characters)', type: 'textarea', rows: 3, maxlength: '300', dir: 'auto' });
+  const reason = inputField({
+    id: `refuse-${card.id}-reason`,
+    name: 'reason',
+    label: 'Reason for refusing (1 to 300 characters)',
+    type: 'textarea',
+    rows: 3,
+    maxlength: '300',
+    dir: 'auto',
+    hint: REFUSE_HINT,
+  });
   const form = el('form', {
     novalidate: true,
     'aria-label': `Refuse order ${card.ref}`,
@@ -235,7 +252,7 @@ export function mountSupplierOrders(ctx, route) {
         ctx.announce(problem);
         return;
       }
-      act('Refusing the order…', () => ctx.api.refuseSupplierOrder(card.id, reason.trim()), `Order ${card.ref} is refused.`);
+      act('Refusing the order…', () => ctx.api.refuseSupplierOrder(card.id, reason.trim()), refusedText(card.ref));
     },
     ready: (card) => act('Marking the order ready…', () => ctx.api.markSupplierOrderReady(card.id), `Order ${card.ref} is marked ready for pickup.`),
     handover: (card) => act('Recording the handover…', () => ctx.api.recordHandover(card.id), `Handover of order ${card.ref} is recorded.`),
