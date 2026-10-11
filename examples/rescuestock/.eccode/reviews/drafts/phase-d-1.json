@@ -1,0 +1,211 @@
+{
+  "decision": "changes_requested",
+  "summary": "First technical review of phase D (sub-mv32yhz0-0170ea86, 114 artifacts). I read the code, not the summaries, and re-ran every declared check after the submission on the final tree (HEAD 2a68680, code identical to 966e761; eccode audit OK).\n\nBaseline, all green:\n- npm test: 1216 tests, 1208 pass, 0 fail, 8 skipped, 0 todo; ECCODE_EVAL {\"passed\":200,\"total\":200}; NFR5 p95 71.1 ms over 3156 calls (ev:ev-mv333smy-01a0ead7).\n- npm run test:browser: 8/8 (ev:ev-mv334ed2-017e93b1).\n- Plan commands verbatim: d1 111/111 (ev:ev-mv3347i2-01dbb746); d2 96/96 with ECCODE_EVAL 200/200 (ev:ev-mv334g5o-01452068); d3 105/105 (ev:ev-mv334lq0-017e2114); d4 136/136 (ev:ev-mv334mdr-01847a4a); d5 passed: npm test 1216/1208/0 fail/8 skipped/0 todo, ECCODE_EVAL 200/200, then browser 8/8 (ev:ev-mv336ejk-01e379b6).\n\nMy own checks:\n- Mutation checks on a scratch copy, the reviewed tree untouched (ev:ev-mv33fhj6-01bcd92c). The control is 39/39. All five mutants are killed: SEC-8 equality ignored (4 of 9 red); grounding substring removed (extract.test.js red); budget boundary changed to >= (2 of 13 red); a refusal that calls the provider (the RS-03/NFR6 refusal tests red); magic bytes not compared (3 of 36 red).\n- Probes (ev:ev-mv337a71-01b57e0c).\n- Real `claude --help` (ev:ev-mv335hqq-0176e557).\n- FU-17 at 360 px after a successful EN and AR extraction (ev:ev-mv33ga6a-013ad219).\n- Artifact coverage: 112 declared, 111 changed, 0 undeclared, 0 outside ownership (ev:ev-mv33gy4h-01d36856).\n\nDecision: changes requested, for one major defect, TR-D-1 (merged with the security reviewer's SEC-D-1, which security rates minor and I raise). The per-field grounding that d3 applies to every provider answer lets a model-invented number through whenever the quote has no digits. My probe: cupQuantity 777 quoted as \"cups\" and maxPickups 5 quoted as \"two pickups\" are stored known, provenance user_text (\"From your text\"). They keep that provenance through confirm (SEC-8), while d1's own validator refuses both with NUMBER_NOT_IN_INPUT. The fix is small and local to src/services/extraction.js.\n\nEverything else holds. I judged and agree with the FU-2, FU-23, FU-24, FU-25 and degraded-form decisions, and found all eleven contract deltas acceptable (TR-D-4). Minor and info findings: TR-D-2..TR-D-8. The security draft's findings are folded in with their ids and severities (TR-D-1, TR-D-3, TR-D-8).",
+  "criteria": [
+    {
+      "id": "task:d1-ai-core",
+      "description": "Extraction core: provider contract, wire schema and strict validator, prompt with random delimiters, deterministic bilingual fake, budget/rate/concurrency gate, opt-in rephrase",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv3347i2-01dbb746",
+        "ev:ev-mv33fhj6-01bcd92c",
+        "ev:ev-mv333smy-01a0ead7",
+        "artifact:src/ai/schema.js#L59-L100",
+        "artifact:src/ai/schema.js#L238-L331",
+        "artifact:src/ai/gate.js#L144-L182",
+        "artifact:src/ai/gate.js#L212-L238",
+        "artifact:src/ai/provider.js#L77-L96"
+      ],
+      "notes": "The wire schema is byte-for-byte the spec's (deep-frozen), and validateExtraction enforces exact keys, enums, deadline patterns, budget decimals by string arithmetic and null <=> none.\n- Its optional text context also checks that a number occurs in the quote. That is the check d3 does not use: TR-D-1.\n- The gate works in integer micro-dollars:\n  - the rate count and insert run in one BEGIN IMMEDIATE;\n  - concurrency, global budget and customer share are checked in one transaction before the call;\n  - spend + cap = budget passes;\n  - unreadable usage is charged at the cap.\n- My budget-boundary mutant (>=) is killed by d3's API tests too, not only by d1's unit tests.\n- selectProvider returns the fake whenever RS_TEST_OFFLINE=1.\n- Rephrase is built and unit-tested but not wired (FU-25, dec-mv330t7a-017a2211). I agree: an inert switch is not a feature, and the decision has e1 and g2 remove or document it."
+    },
+    {
+      "id": "task:d2-ai-adapters-corpus",
+      "description": "Claude CLI and Anthropic API adapters (deterministic transcript and loopback-stub tests), EXT-1 corpus with rendered images, fake-mode eval and the opt-in live-model runner",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv334g5o-01452068",
+        "ev:ev-mv335hqq-0176e557",
+        "artifact:src/ai/cli.js#L45-L63",
+        "artifact:src/ai/cli.js#L126-L180",
+        "artifact:src/ai/anthropic.js#L104-L157",
+        "artifact:test/eval/lib/metrics.js#L11-L21",
+        "artifact:test/eval/extraction-fake.test.js#L242-L309",
+        "artifact:test/live/run-live-model.js#L34-L40"
+      ],
+      "notes": "CLI adapter:\n- no shell, its own process group;\n- an allow-listed environment rebuilt from scratch, with no RS_* name and no ANTHROPIC_API_KEY;\n- a temp cwd removed before settling, an 8 MiB stdout cap, SIGKILL of the group on timeout or abort, one attempt, at most 2 concurrent calls.\nAll 13 pinned flags exist in the real CLI 2.1.296 (ev:ev-mv335hqq-0176e557, see TR-D-5).\n\nAnthropic adapter:\n- the base URL is allow-listed, redirect is 'error', and the response is capped at 1 MiB;\n- one retry on 5xx, only inside the deadline;\n- 429/529 map to PROVIDER_BUSY; refusal and max_tokens to PROVIDER_BAD_OUTPUT.\n\nEXT-1 corpus: 16 text cases with 5 AR/EN pairs, 3 injection cases, 6 PNGs (3 clear, 2 ambiguous, 1 injection), and the smoke case. I looked at i05 (really unreadable) and i06 (legible injection text). The spec asks for labels/*.html; the delivered labels/*.txt are delta 9 in TR-D-4.\n\nThe metric thresholds equal the spec table, and the negative controls show that every metric can fail (TR-D-6).\n\nThe live runner refuses without RS_LIVE_MODEL=1 (exit 2, the plan's message) and stops before the ceiling. LIVE-M1 is not claimed."
+    },
+    {
+      "id": "task:d3-extraction-service",
+      "description": "Extraction service and routes: upload by magic bytes, extract with gate and degraded path, grounding and provenance, confirm provenance, request deletion, retention sweep",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv334lq0-017e2114",
+        "ev:ev-mv337a71-01b57e0c",
+        "ev:ev-mv33fhj6-01bcd92c",
+        "artifact:src/services/extraction.js#L361-L411",
+        "artifact:src/services/extraction.js#L491-L548",
+        "artifact:src/services/requests.js#L164-L183",
+        "artifact:src/routes/requests.js#L80-L95"
+      ],
+      "notes": "Not met, because of TR-D-1: the grounding the phase claims admits invented numbers.\n\nThe rest holds, by code reading, the plan command and my mutants:\n- Upload order: owner check, declared type, Content-Length, rate, streamed cap and deadline, magic bytes, then write to .tmp and rename with mode 0600. The magic-bytes mutant is killed.\n- Extract: the gate runs first and the provider is called outside any transaction. The watchdog charges a timeout at the cap.\n- Refusals store a degraded row and never call the provider. The mutant that calls the provider is killed.\n- Every provider failure becomes a 200 degraded response. A provider-level PROVIDER_BUSY also does, per my probe P1; it has no test of its own (TR-D-2).\n- Confirm: the SEC-8 equality is load-bearing; its mutant is killed (4 red).\n- Delete: 409 PAYMENT_IN_PROGRESS, void rule REQUEST_DELETED, hard delete or tombstone, an audit event either way.\n- Retention: tested with a pinned clock, and started at startup and hourly.\n\nd3 ran no mutation check of its own. My five mutants partly close that gap."
+    },
+    {
+      "id": "task:d4-frontend-extraction",
+      "description": "Extraction UI: new request with optional image, provenance badges and original wording, clarification questions, degraded notice with manual form, AI-addressed notice",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv334mdr-01847a4a",
+        "ev:ev-mv334ed2-017e93b1",
+        "ev:ev-mv33ga6a-013ad219",
+        "artifact:public/js/components/fields-table.js#L210-L240",
+        "artifact:public/css/app.css#L195-L210"
+      ],
+      "notes": "FU-17, my own Chromium run at 360x800 after a successful extraction (not the degraded one d5 pins):\n- English and Arabic both stack as display:block;\n- page scrollWidth is 360, with no overflowing cell;\n- every cell is 292 px wide and shows its column title through ::before;\n- the Arabic wording renders dir=auto (for example \"Your words: ٢٥٠ مل\");\n- no console, CSP or HTTP problems.\nThe screenshot is in my scratchpad, not the tree.\n\nThe degraded notice, the manual form with every field, the AI-addressed notice and the Simulated badge are covered by the d4 unit tests and the RS-03 browser journey.\n\nThe degraded form stays open after confirmation (dec-mv32c290-0182b807). I agree: it is the only way to correct hand-typed values, and the stale notice is hidden."
+    },
+    {
+      "id": "task:d5-extraction-contract-browser",
+      "description": "ExtractionProvider contract suite, log and secrets scan for NFR6, HTTP contract extension and the degraded-extraction browser test",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv336ejk-01e379b6",
+        "ev:ev-mv333smy-01a0ead7",
+        "artifact:test/unit/ai/provider-contract.test.js#L31-L95",
+        "artifact:test/unit/ai/provider-contract.test.js#L126-L147",
+        "artifact:test/browser/degraded-extraction.test.js#L80-L113"
+      ],
+      "notes": "One shared suite runs over the fake, the CLI (stub binary) and Anthropic (loopback stub). It checks the validated output, the usage shape (integer costMicroUsd equal to costUsd), and each ProviderError code with no leak of the body, text or key; toDegraded maps each code to the RS-03 result.\n\nThe one skip, fake x PROVIDER_BUSY, is honest: the fake has no busy fault. My probe P1 shows that the route also degrades a provider-level BUSY.\n\nThe secrets scan covers an in-process server and a separate server process, with a negative control. The contract rows pin capabilities.deleteRequest by value. The browser journey forces fake_model:timeout and reaches a planning run with manual provenance at 360 and 1280 px.\n\nWhat the stub transcript proves and does not prove: TR-D-5."
+    },
+    {
+      "id": "phase:d-extraction",
+      "description": "Bilingual extraction through the ExtractionProvider contract (deterministic fake for tests; Claude CLI and Anthropic API adapters verified against a recorded transcript and a loopback stub), strict schema validation, grounding and provenance, the degraded manual path, model budget/rate/concurrency controls in integer micro-dollars, image upload by magic bytes with retention and request deletion, the EXT-1 corpus and the opt-in live-model runner, and the matching UI.",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv333smy-01a0ead7",
+        "ev:ev-mv334ed2-017e93b1",
+        "ev:ev-mv336ejk-01e379b6",
+        "ev:ev-mv337a71-01b57e0c",
+        "ev:ev-mv33gy4h-01d36856",
+        "artifact:.eccode/artifacts/phase-d/submission.md#criteria-task-tests-evidence",
+        "artifact:.eccode/artifacts/phase-d/submission.md#what-is-real-and-what-is-simulated",
+        "artifact:.eccode/artifacts/phase-d/submission.md#skipped-tests-8-in-npm-test-0-todo-not-hidden-failures"
+      ],
+      "notes": "Plan criteria 1-9 are proved by the named tests on the final tree, except the 'grounding and provenance' part of the goal (TR-D-1).\n\nThe 8 skips are as listed: 7 phase E contract rows, each with the reason \"not registered yet\", and the fake x BUSY row. The run has 0 todo.\n\nThe REAL vs SIMULATED section claims nothing beyond the evidence:\n- every extraction result comes from the simulated fake;\n- the adapters were tested against stubs only;\n- LIVE-M1 is explicitly not claimed.\n\nArtifact coverage re-run: 0 undeclared, 0 outside ownership."
+    },
+    {
+      "id": "lessons",
+      "description": "Each phase D task's not-applicable decision on mem-sd-mv1audrd-013b7102 (guard root resolution) holds",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv1eo87o-01c933d5",
+        "artifact:.eccode/artifacts/phase-d/submission.md#lessons"
+      ],
+      "notes": "I agree with all five not-applicable decisions (d1-d5, resets included).\n- No task builds or changes a hook, guard or root discovery.\n- Every write in the nested record was accepted.\n- The reported denials are raw-text readings, which the lesson's 'Not applicable when' list names. Examples: d1's label with a >= sign read as a redirect; d5's `sed 178d` read as a path; a heredoc with backticks; a shell-variable redirect target.\n- I met the same raw-text over-denial twice in this review: a heredoc and a loop holding `${}` in the line of an eccode command. Neither is a wrong root.\n\nMy memory search ('extraction provider llm eval upload') returned no records. TR-D-1 is a candidate lesson after the fix: a strict validator whose context argument is dropped at the call site silently weakens to a structural check."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-D-1",
+      "severity": "major",
+      "title": "Grounding admits model-invented numbers when the quote has no digits (merged with security SEC-D-1, which security rates minor)",
+      "detail": "Where:\n- extractRequest calls validateExtraction(answer.output) without context.text, \"structure only\" (src/services/extraction.js L510). d1's number check (schema.js NUMBER_NOT_IN_INPUT, numberGrounded) therefore never runs on a real answer.\n- d3's per-field rule (L374-L381) accepts a numeric user_text value when the quote merely is a substring: `ok = written.size === 0 || written.has(value)`. A quote without digits grounds any number.\n\nReproduced (ev:ev-mv337a71-01b57e0c, P2) on the RS-FIX-1 text:\n- cupQuantity 777 with originalWording \"cups\" is stored {value: 777, status: known, provenance: user_text};\n- maxPickups 5 with originalWording \"two pickups\" is stored the same way;\n- schema.js validateExtraction with the text refuses both with NUMBER_NOT_IN_INPUT.\nSecurity reproduced the same with 99999, 777 and 5.\n\nImpact:\n- The UI shows a model-invented quantity as \"From your text\" with the buyer's own words beside it.\n- confirm keeps provenance user_text when the buyer accepts it unchanged (SEC-8 works as designed).\n- The planner and the payment amounts then use that number.\n- d3's own test names this rule (\"the quote does not contain the number\"), but only with a digit-bearing quote.\n- The fake can never trigger it, which is why the suite is green.\n- It matters as soon as a real adapter runs. `npm start` selects the CLI whenever `claude` is on PATH, and it is on PATH here (2.1.296).\n\nWhy major and not minor: grounding is the only server-side defence between a hallucinated number and its provenance label, the phase claims 'grounding and provenance', and the stricter check already exists unused. The confirmation boundary still holds, so I do not rate it blocking.",
+      "evidence": [
+        "ev:ev-mv337a71-01b57e0c",
+        "ev:ev-mv334lq0-017e2114",
+        "artifact:src/services/extraction.js#L374-L381",
+        "artifact:src/services/extraction.js#L510-L511",
+        "artifact:src/ai/schema.js#L297-L308",
+        "artifact:src/ai/schema.js#L329-L331",
+        "artifact:test/api/extract.test.js#L206-L218"
+      ],
+      "recommendation": "Owner: backend-engineer (src/services/extraction.js and test/api/extract.test.js; a d3 reset or a one-task rework).\n\nResolved when all of the following hold:\n(1) normaliseExtraction downgrades a numeric user_text field unless its value occurs in the quote, as digits of either script or as a number word or dual form. Reuse schema.js's numberGrounded and word list (export it) rather than a second copy.\n(2) A named SEC-7 API test shows each of these stored unknown, with a question: \"cups\"->777, \"two pickups\"->5, a quote with an unrelated digit (\"200 cups\"->300, already tested).\n(3) The same test shows these stay known: \"two pickups\"->2, \"نقطتي استلام\"->2, \"٢٥٠ مل\"->250.\n(4) A mutation of the new condition is shown red.\n(5) npm test and the d3 plan command pass.\n(6) I re-run my probe P2 and it shows both values unknown."
+    },
+    {
+      "id": "TR-D-2",
+      "severity": "minor",
+      "title": "No API test for a provider-level PROVIDER_BUSY ending in the degraded path",
+      "detail": "extract-degraded.test.js covers the route for PROVIDER_TIMEOUT, PROVIDER_BAD_OUTPUT and PROVIDER_UNAVAILABLE from provider failures. PROVIDER_BUSY is covered only as a gate refusal (429/503).\n\nThe provider-level BUSY is a real path:\n- the CLI adapter's third concurrent call;\n- Anthropic 429/529.\nThe fake cannot produce it, and its contract-suite row is skipped.\n\nMy probe P1 shows the behaviour is correct: 200, degraded, errorCode PROVIDER_BUSY, reservation settled at 0 (ev:ev-mv337a71-01b57e0c). It is untested, not broken.",
+      "evidence": [
+        "ev:ev-mv337a71-01b57e0c",
+        "artifact:test/api/extract-degraded.test.js#L150-L206"
+      ],
+      "recommendation": "Owner: backend-engineer, with TR-D-1. Resolved when test/api/extract-degraded.test.js has a test named RS-03 in which an injected provider rejects ProviderError('PROVIDER_BUSY'), asserting 200, degraded true, errorCode PROVIDER_BUSY, every field unknown and the model_spend row settled."
+    },
+    {
+      "id": "TR-D-3",
+      "severity": "minor",
+      "title": "FU-23: request ids are reused after a hard delete (security reproduced it); I agree with dec-mv330std-0165d9be",
+      "detail": "rescue_requests uses INTEGER PRIMARY KEY without AUTOINCREMENT, so a hard delete of the highest id lets the next request take it.\n\nSecurity's reproduction:\n- Y's request and plan version get X's deleted ids.\n- Y sees nothing of X, and X gets 404.\n- The admin timeline of Y's request lists X's audit events.\n\nI add one point: model_spend.request_id has no foreign key, so X's model-spend rows also re-attach to Y's id.\n\nThe reach is limited: the highest id only, hard deletes only (no supplier order ever), and no customer-facing disclosure. The decision schedules the AUTOINCREMENT migration as a one-task rework before e4. I do not raise its severity.",
+      "evidence": [
+        "artifact:src/services/requests.js#L290-L328",
+        "artifact:.eccode/artifacts/plan/followups.md#new-follow-ups-from-the-phase-d-handoffs"
+      ],
+      "recommendation": "Owner: backend-engineer (src/db/migrations/**), per dec-mv330std-0165d9be.\n\nResolved when:\n- an append-only migration rebuilds rescue_requests with AUTOINCREMENT;\n- a test named RS-39 shows that after a hard delete of the highest id the next request gets a new id;\n- the rework is approved before e4 is dispatched;\n- the verification report states that model_spend and audit rows of a hard-deleted request keep the old id."
+    },
+    {
+      "id": "TR-D-4",
+      "severity": "minor",
+      "title": "The eleven documented design deltas: all acceptable additions or justified deviations, three with caveats to carry",
+      "detail": "Each delta (followups.md, 'Documented design deltas') judged against the approved spec.\n\nAcceptable additions:\n- (1) Extraction.addressedToAssistant. The spec requires the notice but omitted the field from Extraction. It is stored under the __meta key, hidden on read, and confirm ignores it.\n- (2) RequestView.capabilities.deleteRequest. Additive, but always true, so the UI offers Delete in states where DELETE answers 409 PAYMENT_IN_PROGRESS. The UI handles the 409. Either make it status-dependent or document it as a route-availability flag.\n- (3) 400 BAD_REQUEST for a missing Content-Length and for UPLOAD_TIMEOUT. The catalog has no better code. Caveat: with the default server requestTimeout of 30 s, the route's 60 s UPLOAD_TIMEOUT branch cannot fire in production; only tests reach it, with an injected deadline (see TR-D-7).\n- (4) The refusal rows' errorCode, BUSY or UNAVAILABLE. Both values are inside the spec's enum.\n- (5) A degraded row replaces the newest degraded row. The table stays bounded. The audit row per extraction.run and model_spend keep the history.\n- (6) Content-Disposition: inline. Harmless next to CSP sandbox and nosniff.\n- (7) The sweep also purges rate_events and settles stale reservations. An interim owner, with FU-22 requiring one owner.\n\nJustified deviations:\n- (8) Client limits of 65 s and 45 s. The spec's blanket 15 s contradicts its own 30 s model timeout, so the deviation is necessary.\n- (10) RS_LIVE_MODEL_CEILING_USD. Safer than the spec; FU-21 covers the docs.\n- (11) Internal micro-dollar fields. No external contract.\n\nDeviation from d2's criterion:\n- (9) labels/*.txt with a 5x7 bitmap renderer instead of labels/*.html with Chromium. The labels are legible (I viewed i06), but they are English capitals only. No image carries Arabic text, so LIVE-M1 will say nothing about reading Arabic packaging.\n\nNone of the eleven is a spec violation that needs code rework.",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/followups.md#documented-design-deltas-from-phase-d-for-the-verification-report-tr-rw2-2",
+        "artifact:.eccode/artifacts/phase-d/submission.md#additive-contract-deltas-against-the-approved-spec-tr-rw2-2",
+        "artifact:src/services/view.js#L496",
+        "artifact:test/fixtures/extraction/images/i06-injection-250-90.png"
+      ],
+      "recommendation": "Owner: delivery-lead (verification report, TR-RW2-2). Resolved when the verification report lists all eleven deltas with these judgements, including:\n- the unreachable UPLOAD_TIMEOUT branch under the default 30 s;\n- capabilities.deleteRequest being constant;\n- the English-only synthetic images as a LIVE-M1 limitation.\nAlternatively, a spec revision folds them in."
+    },
+    {
+      "id": "TR-D-5",
+      "severity": "info",
+      "title": "Adapter contract evidence: what the stub transcript and the loopback stub prove, and what they do not",
+      "detail": "The CLI transcript is a shape written from the design, not a capture.\n\nIt proves:\n- the adapter's parsing of that shape: last result event, noise lines skipped, structured_output first then result text;\n- the failure mapping (exit 1, prose, is_error, budget subtype, no result, flood, hang);\n- the process hygiene: env allow-list, temp cwd, group kill.\n\nIt does not prove:\n- that the real CLI accepts the stdin line;\n- that it emits structured_output in the result event or reports total_cost_usd;\n- that --json-schema accepts the wire schema ($defs/$ref, anyOf with null);\n- that --tools \"\" leaves StructuredOutput available.\n\nWhat I could check without spending: the real `claude --help` (2.1.296, on PATH here) lists all 13 flags of the pinned argv (ev:ev-mv335hqq-0176e557), and the design probe ev:ev-mv1bh8wb-011b5cf0 confirmed the stream-json/--verbose constraints. So flag names and parser constraints are real; event shapes and schema acceptance are not.\n\nThe Anthropic loopback stub proves the HTTP mapping only. It does not prove output_config.format acceptance.\n\nAll of this is disclosed as LIVE-M1 and FU-26, and nothing in the submission claims otherwise.",
+      "evidence": [
+        "ev:ev-mv335hqq-0176e557",
+        "ev:ev-mv1bh8wb-011b5cf0",
+        "artifact:test/fixtures/extraction/cli-transcript.ndjson",
+        "artifact:.eccode/artifacts/phase-d/submission.md#what-is-real-and-what-is-simulated"
+      ],
+      "recommendation": "No change in phase D. LIVE-M1 (user-approved) runs cli-image-smoke first; FU-26 re-records the transcript from the real stream. The verification report keeps LIVE-M1 Unverified until then."
+    },
+    {
+      "id": "TR-D-6",
+      "severity": "info",
+      "title": "The EXT-1 eval: 200/200 is a count of harness assertions, not the spec threshold, and it measures the fake's replay, not extraction quality",
+      "detail": "ECCODE_EVAL {\"passed\":200,\"total\":200} counts the `expect` checks in test/eval/extraction-fake.test.js: corpus layout, pixel-equal renders, metric verdicts, per-case checks and injection checks. It is not a spec metric.\n\nThe spec's thresholds live in test/eval/lib/metrics.js. They match the spec table exactly, and the run meets each:\n- text accuracy >= 90 %;\n- RS-FIX-1 pair equality 100 %;\n- clear-image accuracy >= 80 %;\n- invented numbers 0;\n- clarification 100 %;\n- injection effects 0;\n- surfaced text 0;\n- schema validity >= 95 %.\n\nOver the fake this measures:\n- the harness, the metrics and the ceiling logic;\n- d1's lexicon parser on a corpus written after it;\n- for images, a sha256 -> canned-answer replay. It is circular by construction: the image metrics compare the map d2 wrote against the expectations d2 wrote.\n\nIt says nothing about model quality. The five negative controls (obeying, inventing, drifting, lying, over-ceiling) show that each metric can fail, which is what a fake-mode run can prove. The eval also scores raw provider output, not the post-normalisation stored row the SEC-7 metric's wording names.\n\nThe submission says all of this itself; there is no overclaim.",
+      "evidence": [
+        "ev:ev-mv333smy-01a0ead7",
+        "ev:ev-mv334g5o-01452068",
+        "artifact:test/eval/lib/metrics.js#L11-L21",
+        "artifact:test/eval/extraction-fake.test.js#L22-L42",
+        "artifact:test/eval/extraction-fake.test.js#L242-L309"
+      ],
+      "recommendation": "None for phase D. In LIVE-M1, report the metric values from metrics.js (not the assertion count) as the threshold result, and score SEC-7 on the stored row after normaliseExtraction as well."
+    },
+    {
+      "id": "TR-D-7",
+      "severity": "info",
+      "title": "FU-2 and the timeout chain: I agree with dec-mv31kbrz-012381a1, with two notes for the verification report",
+      "detail": "Upload:\n- Node's requestTimeout of 30 s cuts a slow body before the route's 60 s deadline.\n- The client sees the server's bare `408 Request Timeout` from clientError, which has no JSON envelope and no requestId (NFR6 says every response carries one). This is by code reading of src/http/server.js L39-L48; not run.\n- The client waits 65 s, then shows the error with Retry.\n\nExtract:\n- RS_MODEL_TIMEOUT_MS (default 30 s) bounds the watchdog, the CLI timer and the Anthropic deadline.\n- The client allows 45 s, so the default chain is consistent.\n- config accepts RS_MODEL_TIMEOUT_MS up to 600000. Above about 44 s the client aborts first, while the server still stores the row and charges the call.\n\n1.4 Mbit/s for 5 MB is acceptable for version one.",
+      "evidence": [
+        "artifact:src/services/extraction.js#L147-L191",
+        "artifact:src/services/extraction.js#L293-L307",
+        "artifact:src/config.js#L320"
+      ],
+      "recommendation": "Owner: delivery-lead and g2. The verification report lists the 408 without envelope or requestId as an NFR6 exception, and g2 documents that RS_MODEL_TIMEOUT_MS must stay below the client's 45 s (or e1 clamps it). No phase D code change."
+    },
+    {
+      "id": "TR-D-8",
+      "severity": "info",
+      "title": "Security reviewer's interim info items, folded in; FU-24 and FU-25 decisions agreed",
+      "detail": "Folded from the security draft:\n- An obeying model that quotes the injected sentence itself passes grounding (budget $99,999 from ti01-en). Only the buyer's confirmation stops it, and the injection notice is shown.\n- Image-provenance numbers cannot be checked server-side.\n- Five self-registered accounts from one IP can spend the whole daily budget (SEC-10 residual).\n- Extract has no per-request idempotency.\n\nOn the open decisions:\n- FU-24 (dec-mv330t0g-0175d52b): I agree. It follows the spec text, avoids mixing provenance across extractions, and the customer can finish by hand.\n- FU-25 (dec-mv330t7a-017a2211): I agree. An inert RS_EXPLAIN_REPHRASE must be removed or documented, and RS-05's rephrasing clause counts as unit-level only.",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/followups.md#new-follow-ups-from-the-phase-d-handoffs"
+      ],
+      "recommendation": "FU-24: none. FU-25: per the decision, e1 and g2. The security residuals go into the verification report's risk list (owner delivery-lead)."
+    }
+  ],
+  "resolvedFindings": [],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
