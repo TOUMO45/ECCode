@@ -131,3 +131,48 @@ The approved spec is pinned. These additions are recorded here and must be liste
 **Configuration:**
 
 11. Internal configuration fields `modelCallCapMicroUsd`, `modelDailyBudgetMicroUsd` and `fakeModelCostMicroUsd` are derived from the existing variables. No new variable is read by `src/config.js`.
+
+## Added after the phase D review (delivery-lead, 2026-10-11)
+
+Sources:
+- the review rev-mv33xoyz-0143dd56 (`.eccode/reviews/drafts/phase-d-1.json`, TR-D-1..TR-D-10) and the security draft `.eccode/reviews/drafts/phase-d-security-1.md` (SEC-D-1..SEC-D-9);
+- the resets d3 ho-mv3461bp-018c0431 and d2 ho-mv34d3dh-01f6abfa;
+- the decisions dec-mv341ap0-010209d2 (FU-23 rework needs the user) and dec-mv34dqsr-0163a6d9 (the ceiling refuses a leading zero).
+
+### Changed items
+
+| # | Change |
+|---|---|
+| FU-21 | **Wording replaced** after d2's reset (TR-D-10). The runner now accepts `RS_LIVE_MODEL_CEILING_USD` only as an exact decimal from 0.01 to 5.00, with at most two decimals and no leading zero (`dec-mv34dqsr-0163a6d9`). It prints a `cli: claude <version>` line before its first call, and SIGINT/SIGTERM end a run without a report (exit 130/143). **g2 uses d2's text** for `.env.example` and the README: "RS_LIVE_MODEL_CEILING_USD: the most you are willing to spend on one live model run (npm run test:live-model); required together with RS_LIVE_MODEL=1; an exact decimal from 0.01 to 5.00 with at most two decimals (for example 0.50 or 5); anything else, including 5.0000001, 1e0 or 05, is refused with exit 2." The README line about the printed plan may also mention the CLI version line. The runbook command stays `RS_LIVE_MODEL=1 RS_LIVE_MODEL_CEILING_USD=5 npm run test:live-model`, with `-- --dry-run` first. |
+| FU-23 | **Decided, scope widened, blocked on the user.** `dec-mv330std-0165d9be` chose the migration, and TR-D-3 widened it. The rework must rebuild `rescue_requests`, `plan_versions` and `images` with `AUTOINCREMENT`, and `planning_runs` too (security's recommendation). A test named `RS-39: …` must show that after a hard delete of the highest ids none of the request, plan-version or image ids is reused. The engine refused a fourth rework (`USER_AUTH_REQUIRED`, `limits.maxReworks=3`; `dec-mv341ap0-010209d2`), so it needs the user to open it or to delegate `rework.open`. **e4 is not dispatched until this rework is approved.** In the meantime phase E runs e0..e3. Whatever happens, the verification report states that `model_spend.request_id` has no foreign key, so the spend rows of a hard-deleted request keep the old id. |
+| FU-26 | **Two items added.** (a) SEC-D-5: `anthropic.js` › `post` must read `response.body` with a running byte count and abort past 1 MiB, instead of `response.text()` first. No later task owns `src/ai/anthropic.js`, so it goes with the FU-26 adapter change, or into a rework if the verification review asks for one sooner. (b) TR-D-6: the LIVE-M1 report gives the metric values from `test/eval/lib/metrics.js` as the threshold result, not the assertion count. It also scores SEC-7 on the stored row after `normaliseExtraction`, not only on the raw provider output. |
+
+### New follow-ups
+
+| # | Task | Additional acceptance criterion | Source |
+|---|---|---|---|
+| FU-27 | e1-payment-adapters (owns `src/config.js` in phase E); g2-docs-submission for the documentation | **Bound `RS_MODEL_TIMEOUT_MS` below the client's 45 s extract limit.** `src/config.js` accepts 1..600000 today. Above about 44 s the client gives up first, while the server still holds the connection and the customer's single model slot, stores the row and charges the call.<br>- **e1:** narrow the accepted range to 1..40000. Like every other range violation, a larger value is a startup configuration error that names the variable only. Add a test named `TR-D-7: RS_MODEL_TIMEOUT_MS above 40000 is refused …`. The default stays 30000.<br>- **g2:** the `.env.example` comment and the README state the bound and the reason, the client's 45 s.<br>- If e1 is not to touch it, the orchestrator records a decision and g2 documents the bound instead (TR-D-7 allows either). | TR-D-7; security SEC-D-8 (which suggests 60000; 40000 keeps the client consistent) |
+| FU-28 | g2-docs-submission (runbook); delivery-lead (verification report) | **The remaining orphan case of TR-D-9.** After d2's reset, a server stop (SIGINT/SIGTERM → `stop()` → `close()` → the CLI adapter's `close()`), `process.exit()` (the `exit` hook) and the live runner's SIGINT/SIGTERM all end the CLI child and its process group. **A parent killed with SIGKILL**, or a process that gets SIGTERM without a handler, runs no hook, so its child is still orphaned. Each such child is bounded by `--max-budget-usd 0.05`, and the reservation sweep settles its row at the cap after 2 × `RS_MODEL_TIMEOUT_MS`.<br>- **g2's runbook:** stop the server with Ctrl-C or `kill <pid>` (SIGTERM), never `kill -9`. After an uncatchable kill, check for a leftover `claude -p` process (`pgrep -af "claude -p"`) and end its group.<br>- **The verification report** lists it as a residual of SEC-D-2. | d2 ho-mv34d3dh-01f6abfa, remaining issue 2; TR-D-9 |
+| FU-29 | g2-docs-submission (README) | **Two README statements from the security review.**<br>- SEC-D-4: five self-registered accounts from one IP can spend the default USD 1.00 daily model budget, which the gate bounds. For a public deployment, recommend `RS_ALLOW_SIGNUP=0` or a smaller `RS_MODEL_CUSTOMER_DAILY_SHARE`.<br>- SEC-D-7: in the privacy statement (T23), say that an uploaded photo is stored and sent to the model provider byte for byte, including any metadata such as an EXIF location. It is owner-only and deleted after 7 days. | TR-D-8; security SEC-D-4, SEC-D-7 |
+
+### Carried to the verification report (owner: delivery-lead)
+
+These come from the phase D review. None needs a code change in phase D.
+1. **TR-D-4.** All eleven documented design deltas above, with the reviewer's judgements. Three caveats are written out:
+   - with the server's default 30 s `requestTimeout`, the route's 60 s `UPLOAD_TIMEOUT` branch (delta 3) cannot fire in production, and only tests reach it, with an injected deadline;
+   - `capabilities.deleteRequest` (delta 2) is constant `true`, and DELETE answers 409 `PAYMENT_IN_PROGRESS` where it does not apply, so it is a route-availability flag;
+   - the EXT-1 images (delta 9) carry English capitals only, so LIVE-M1 will say nothing about reading Arabic packaging.
+2. **TR-D-7 / SEC-D-8.**
+   - The 408 that Node's `requestTimeout` sends for a slow upload is the server's bare `clientError` reply, with no JSON envelope and no `requestId`. It is an **NFR6 exception**.
+   - The CLI refuses a third concurrent call at once (`PROVIDER_BUSY`) instead of waiting 5 s as spec T19 says. This affects availability only.
+   - The bound on `RS_MODEL_TIMEOUT_MS` is FU-27.
+3. **TR-D-3 / FU-23.** `model_spend` rows of a hard-deleted request keep the old request id. The state of the id-reuse rework at delivery is reported as it is.
+4. **TR-D-5.** The CLI transcript and the Anthropic stub prove parsing, failure mapping and process hygiene, not the real event shapes or schema acceptance. LIVE-M1 stays Unverified until it runs.
+5. **TR-D-6.** ECCODE_EVAL 200/200 counts harness assertions over the fake. The spec thresholds come from `metrics.js` and say nothing about model quality.
+6. **The security info items, for the risk list:**
+   - SEC-D-3: the injection backstops for a real model are the flag, the buyer and the approval;
+   - SEC-D-5: chunked-body buffering (FU-26);
+   - SEC-D-6: no per-request idempotency on extract;
+   - SEC-D-7: photo metadata (FU-29);
+   - SEC-D-9: the secrets-scan gaps, planned for g3's RS-29 extension.
+7. **FU-28.** The SIGKILL orphan residual.

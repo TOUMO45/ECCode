@@ -1,0 +1,56 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "phase:d-extraction",
+  "objective": "Second review iteration for phase d-extraction: submission sub-mv34ppxe-01f2b5bb, responding to rev-mv33xoyz-0143dd56 (TR-D-1 major, merged with SEC-D-1; TR-D-2, TR-D-3, TR-D-4, TR-D-9 (= SEC-D-2) and TR-D-10 minor; TR-D-5..TR-D-8 and SEC-D-3..SEC-D-9 info).",
+  "context": "d3-extraction-service was reset (ho-mv3461bp-018c0431: TR-D-1 grounding, TR-D-2 test, main.js close() awaits provider.close()) and d2-ai-adapters-corpus was reset (ho-mv34d3dh-01f6abfa: TR-D-9 child registry, close(), exit hook, runner signals; TR-D-10 exact ceiling). d1, d4, d5 unchanged. The submission has 115 artifacts: 113 phase-D-owned files (d2 now 47 with test/fixtures/extraction/cli-orphan-driver.mjs) plus submission.md and followups.md. Every delivery-lead run is on HEAD a9d0507 with PATH=/usr/local/bin:/usr/bin:/bin (no claude reachable); RS_LIVE_MODEL=1 was never set by me; no real model was called. The reworked files reached git partly through commits named for other things (8622b43, 51a6933, ff09cbf); a9d0507 holds all of them.",
+  "inputs": [
+    ".eccode/reviews/rev-mv33xoyz-0143dd56.json",
+    ".eccode/reviews/drafts/phase-d-1.json",
+    ".eccode/reviews/drafts/phase-d-security-1.md",
+    ".eccode/handoffs/ho-mv3461bp-018c0431.json",
+    ".eccode/handoffs/ho-mv34d3dh-01f6abfa.json",
+    ".eccode/artifacts/phase-d/submission.md (section 'Response to rev-mv33xoyz-0143dd56 (iteration 2)')",
+    ".eccode/artifacts/plan/followups.md (section 'Added after the phase D review')"
+  ],
+  "dependencies": ["d1-ai-core", "d2-ai-adapters-corpus", "d3-extraction-service", "d4-frontend-extraction", "d5-extraction-contract-browser"],
+  "expectedOutput": "A phase review covering task:d1..d5 and phase:d-extraction, with TR-D-1/SEC-D-1, TR-D-2, TR-D-9/SEC-D-2 and TR-D-10 judged as fixed or not, and TR-D-3 (FU-23, blocked on the user) and the carried items judged.",
+  "acceptanceCriteria": [
+    "TR-D-1: a numeric user_text value whose quote has no digits and no number word for it is stored unknown with its question; your probe P2 shows both values unknown; the mutation is red",
+    "TR-D-2: a named RS-03 API test covers a provider-level PROVIDER_BUSY",
+    "TR-D-9: close() and the exit hook leave no CLI child; the runner's SIGINT/SIGTERM kill its child (C7 inverted); main.js close() awaits provider.close()",
+    "TR-D-10: the ceiling is parsed exactly, 0.01..5.00, at most two decimals, before any rounding; the CLI version line is printed before the first call",
+    "npm test, npm run test:browser and the d2 and d3 plan commands pass on the final tree"
+  ],
+  "completedWork": "Delivery-lead runs on a9d0507: npm test 1233 tests, 1225 pass, 0 fail, 8 skipped (the same 8), 0 todo, ECCODE_EVAL 200/200, NFR5 p95 54.9 ms over 3160 calls (ev:ev-mv34i7fr-01c4a959); npm run test:browser 8/8 (ev:ev-mv34ihvv-010e5c58); d2 plan command verbatim 107/107, ECCODE_EVAL 200/200 (ev:ev-mv34j5ys-0171d99c); d3 plan command verbatim 111/111 (ev:ev-mv34jbd0-01bb5567); security probe section E re-run by path: 28 PASS, 3 FAIL, the three FAILs being exactly the E1 REPRO lines of SEC-D-1, which now print unknown (ev:ev-mv34k8si-0187cfbd, failed by design); artifact coverage against sub-mv34ppxe-01f2b5bb, base adf4a12: 113 declared, 112 changed in owned paths (package.json net unchanged), 0 declared-but-not-submitted, 0 undeclared, 0 outside ownership (ev:ev-mv34pt4g-0145acf7). followups.md: FU-21 wording from d2, FU-23 widened and blocked on the user (dec-mv341ap0-010209d2), FU-26 extended (SEC-D-5, TR-D-6), new FU-27 (RS_MODEL_TIMEOUT_MS bound, e1/g2), FU-28 (SIGKILL orphan residual, g2 runbook), FU-29 (README SEC-D-4/SEC-D-7, g2), and a list carried to the verification report.",
+  "filesChanged": [
+    ".eccode/artifacts/phase-d/submission.md",
+    ".eccode/artifacts/plan/followups.md"
+  ],
+  "evidence": [
+    "ev:ev-mv34i7fr-01c4a959",
+    "ev:ev-mv34ihvv-010e5c58",
+    "ev:ev-mv34j5ys-0171d99c",
+    "ev:ev-mv34jbd0-01bb5567",
+    "ev:ev-mv34k8si-0187cfbd",
+    "ev:ev-mv34pt4g-0145acf7",
+    "ev:ev-mv340dds-01d11bc7",
+    "ev:ev-mv3427er-01c6a0c9",
+    "ev:ev-mv342hje-0101f6db",
+    "ev:ev-mv3455zv-014b1953",
+    "ev:ev-mv34amer-0143b344",
+    "ev:ev-mv34bp0u-01821bb8"
+  ],
+  "remainingIssues": [
+    "TR-D-3 / FU-23 is open: the AUTOINCREMENT rework needs the user's authorization (engine refused rework-4, limits.maxReworks=3; dec-mv341ap0-010209d2); e4 is not dispatched until it is approved",
+    "TR-D-1 condition (2): security's E1 strings ('need cups'->99999, 'lids for the weekend'->777) are not literally in d3's named test; they are the same digit-free case and show unknown in ev:ev-mv34k8si-0187cfbd",
+    "TR-D-9 residual (FU-28): a parent killed with SIGKILL, or SIGTERM without a handler (as in security's C7 driver), still orphans its child; bounded by --max-budget-usd 0.05 and the reservation sweep. Not tested end to end through a real server process with the real CLI",
+    "TR-D-10: the test refuses 37 values in evaluateLaunch (d2's handoff says 38); d2's 3 red refusal tests before the change have no separate evidence id",
+    "RISK-21: the orchestrator still has to record what is known of the incident's spend",
+    "ev:ev-mv34k8si-0187cfbd is a FAILED evidence record by design: its three E1 REPRO expectations encode the pre-fix bug"
+  ],
+  "nextAction": "technical-reviewer (and security-reviewer, for SEC-D-1 and SEC-D-2) review sub-mv34ppxe-01f2b5bb.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
