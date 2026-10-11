@@ -177,6 +177,37 @@ test('F2 submissions record the commit and tree digest; the delivery records the
   assert.deepStrictEqual(new Store(dir).rebuild().delivery, st.delivery, 'the snapshot replays');
 });
 
+// TK-6 R2-4: a null digest at delivery used to drop the release commit silently (no commit in
+// delivery.completed, no release sentence). The commit is kept, marked treeUnavailable, and the CLI warns.
+test('TK-6 R2-4 a delivery whose tree digest is unavailable keeps the release commit, marked, and the CLI warns', () => {
+  const { dir } = deliverable();
+  const head = git(dir, 'rev-parse', 'HEAD');
+  const res = spawnSync(process.execPath, ['-r', path.join(__dirname, 'fixtures', 'tree-unavailable-preload.js'), BIN, '--root', dir, 'deliver', '--actor', 'delivery-lead', '--json'], { encoding: 'utf8' });
+  assert.strictEqual(res.status, 0, res.stdout + res.stderr);
+  assert.match(res.stderr, /warning: tree pinning is off for this release/);
+  const out = JSON.parse(res.stdout);
+  assert.strictEqual(out.commit, head);
+  assert.strictEqual(out.treeUnavailable, true);
+  const st = new Store(dir).state();
+  assert.strictEqual(st.delivery.commit, head, 'the release commit is recorded');
+  assert.strictEqual(st.delivery.treeUnavailable, true);
+  assert.ok(!('tree' in st.delivery));
+  const report = fs.readFileSync(path.join(dir, out.report), 'utf8');
+  assert.match(report, new RegExp(`Release commit:\\*\\* \`${head}\` \\(working tree clean outside \`\\.eccode/\`; tree digest unavailable`));
+  const json = JSON.parse(fs.readFileSync(path.join(dir, '.eccode/delivery/final-handoff.json'), 'utf8'));
+  assert.deepStrictEqual(json.release, { commit: head, treeUnavailable: true });
+  assert.strictEqual(new Store(dir).audit().ok, true);
+  assert.deepStrictEqual(new Store(dir).rebuild().delivery, st.delivery, 'the snapshot replays');
+});
+
+test('TK-6 R2-1 delivery inside a work tree whose HEAD does not resolve is refused', () => {
+  const ctx = deliverable();
+  const { store, dir, config } = ctx;
+  git(dir, 'checkout', '-q', '--orphan', 'side');
+  const err = expectCode(() => delivery.deliver(store, 'delivery-lead', { config }), 'DELIVERY_BLOCKED');
+  assert.ok(problems(err).some((p) => /HEAD does not resolve/.test(p)), problems(err).join('\n'));
+});
+
 test('F2 a new untracked file after the verification approval is an unreviewed change and the delivery is refused', () => {
   const ctx = deliverable();
   const { store, dir, config } = ctx;

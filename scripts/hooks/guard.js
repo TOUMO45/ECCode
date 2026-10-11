@@ -55,6 +55,10 @@ const SHELL_WRITE = new RegExp(String.raw`(>{1,2}\|?|\btee\b|\b(?:sed|perl)\s+(?
 const CODE_WRITE = /\b(writeFileSync|writeFile|writeSync|appendFileSync|appendFile|createWriteStream|rmSync|rmdirSync|unlinkSync|unlink|renameSync|rename|copyFileSync|copyFile|cpSync|truncateSync|ftruncateSync|symlinkSync|fs\.rm|promises\.rm|write_text|write_bytes|os\.remove|os\.rename|os\.replace|os\.rmdir|os\.truncate|shutil\.\w+|File\.(?:write|delete)|IO\.write|FileUtils\.\w+|file_put_contents|fwrite|Deno\.(?:write\w*|remove\w*|rename|copyFile\w*|truncate\w*))\b|\bopen\s*\([^)]*['"][wax]b?\+?['"]/;
 // Variables that change who the CLI acts as, or its clock (order rules), when set inline.
 const IDENTITY_ENV = /^(?:ECCODE_ACTOR|ECCODE_TEST|ECCODE_NOW|ECCODE_ROOT|ECCODE_SHARED_MEMORY|ECCODE_SEQUENTIAL_ROLES|ECCODE_HOOKS)(?:=|$)/;
+// Variables that point the engine's git at another repository, config or binary, or preload code into the
+// CLI: refused when assigned to an eccode CLI invocation (TK-6 R3-1, R4-1, R4-2; the engine also strips
+// every GIT_* itself). Names only: the rule reads assignments, never words in arguments or messages.
+const CLI_ENV_NAME = /^(?:GIT_[A-Za-z0-9_]*|NODE_OPTIONS|PATH|HOME|XDG_CONFIG_HOME)$/i;
 // A shell function or alias defined in the same command line can hide the CLI from the words the
 // guard binds (`e() { eccode "$@"; }; e … --actor user`).
 // Unanchored: a definition can follow `then`, a `{`, a leading blank, sit inside `bash -c '…'` (checked at every
@@ -320,6 +324,99 @@ function mentionsCli(cmd) {
   return found;
 }
 
+/** A command line without its heredoc bodies: their lines are text for another command, not commands. */
+function stripHeredocs(src) {
+  const lines = src.split('\n');
+  const kept = [];
+  const pending = []; // [delimiter, stripTabs] in the order their bodies follow
+  for (const line of lines) {
+    if (pending.length) {
+      const [delim, tabs] = pending[0];
+      if ((tabs ? line.replace(/^\t+/, '') : line) === delim) pending.shift();
+      continue;
+    }
+    kept.push(line);
+    const re = /<<(-?)\s*(['"]?)([A-Za-z_][\w.-]*)\2/g;
+    let m;
+    while ((m = re.exec(line))) if (line[m.index - 1] !== '<' && line[m.index + 2] !== '<') pending.push([m[3], m[1] === '-']);
+  }
+  return kept.join('\n');
+}
+
+const textOf = (w) => (w.dynamic ? stripDynamic(w.text) : w.text);
+const ASSIGNMENT = /^([A-Za-z_][A-Za-z0-9_]*)=/;
+const NESTED_SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh']);
+
+/** Is the simple command whose command word is at `ci` an eccode CLI invocation (eccode, eccode.js, node …/eccode.js)? */
+function isCliCall(words, ci) {
+  if (ECCODE_WORD.test(textOf(words[ci]))) return true;
+  if (!/^node(?:js)?(?:\.exe)?$/i.test(textOf(words[ci]).split(/[\\/]/).pop())) return false;
+  const end = words.findIndex((w, i) => i > ci && w.text === '--');
+  return words.slice(ci + 1, end === -1 ? undefined : end).some((w) => ECCODE_WORD.test(textOf(w)));
+}
+
+/**
+ * Assignments that reach an eccode CLI invocation and change what its git sees or what code it runs
+ * (TK-6 R3-1, R4-1, R4-2): NAME=value in the invocation's own prefix or after `env`, an `env -i` before
+ * it, or an assignment/export earlier in the same command line (`export PATH=…; eccode …`, `GIT_DIR=x;
+ * eccode …`). Nested shells (`bash -c '…'`, `eval`) and the command an eccode call runs after `--` are
+ * read the same way, inheriting what the outer line exported. Words inside quoted arguments, commit
+ * messages and heredoc bodies of other commands are never read as assignments.
+ */
+function cliEnvProblems(src, inherited = [], depth = 0) {
+  const problems = [];
+  if (depth > MAX_DEPTH) return problems;
+  const pending = [...inherited];
+  for (const words of splitCommands(stripHeredocs(src))) {
+    const texts = words.map((w) => w.text);
+    const assigned = (list) => list.map((t) => ASSIGNMENT.exec(t)).filter(Boolean).map((m) => m[1]);
+    // `env -S '…'` / `env --split-string=…` splits its argument into a command line of its own.
+    const e = texts.findIndex((t) => !ASSIGNMENT.test(t));
+    if (e !== -1 && texts[e].split('/').pop() === 'env') {
+      const s = texts.findIndex((t, i) => i > e && (t === '-S' || t === '--split-string' || t.startsWith('--split-string=') || /^-S./.test(t)));
+      if (s !== -1) {
+        const inline = texts[s].startsWith('--split-string=') ? texts[s].slice('--split-string='.length) : /^-S./.test(texts[s]) ? texts[s].slice(2) : texts[s + 1] || '';
+        const after = texts.slice(texts[s] === '-S' || texts[s] === '--split-string' ? s + 2 : s + 1);
+        problems.push(...cliEnvProblems([inline, ...after].join(' '), [...pending, ...assigned(texts.slice(0, e))], depth + 1));
+        continue;
+      }
+    }
+    const ci = commandIndex(texts);
+    if (ci === -1) {
+      pending.push(...assigned(texts)); // `GIT_DIR=x;` alone changes an exported variable for what follows
+      continue;
+    }
+    const name = textOf(words[ci]).split(/[\\/]/).pop();
+    if (/^(?:export|declare|typeset|readonly|local)$/.test(name)) {
+      pending.push(...assigned(texts.slice(ci + 1)));
+      continue;
+    }
+    const prefix = assigned(texts.slice(0, ci));
+    if (isCliCall(words, ci)) {
+      const names = [...new Set([...prefix, ...pending])].filter((n) => CLI_ENV_NAME.test(n));
+      let envI = false;
+      for (let i = 0; i < ci; i++) {
+        if (texts[i].split('/').pop() !== 'env') continue;
+        for (let j = i + 1; j < ci && texts[j].startsWith('-'); j++) if (/^(?:-|-[A-Za-z]*i[A-Za-z]*|--ignore-environment)$/.test(texts[j])) envI = true;
+      }
+      if (names.length || envI) {
+        problems.push(`GIT_*, NODE_OPTIONS, PATH, HOME and XDG_CONFIG_HOME may not be set inline on an eccode command, nor may env -i run it (${[...names, ...(envI ? ['env -i'] : [])].join(', ')}): they point the engine's git at another repository, config or binary, or preload code into the CLI; run the eccode command without them`);
+      }
+      const dd = texts.indexOf('--', ci);
+      if (dd !== -1 && dd + 1 < texts.length) {
+        const rest = texts.slice(dd + 1);
+        problems.push(...cliEnvProblems(rest.length === 1 ? rest[0] : rest.join(' '), [...pending, ...prefix], depth + 1));
+      }
+    } else if (NESTED_SHELLS.has(name)) {
+      const c = texts.findIndex((t, i) => i > ci && /^-[A-Za-z]*c[A-Za-z]*$/.test(t));
+      if (c !== -1 && c + 1 < texts.length) problems.push(...cliEnvProblems(texts[c + 1], [...pending, ...prefix], depth + 1));
+    } else if (name === 'eval') {
+      problems.push(...cliEnvProblems(texts.slice(ci + 1).join(' '), [...pending, ...prefix], depth + 1));
+    }
+  }
+  return problems;
+}
+
 /**
  * Actors asserted by the eccode invocations in a command line, bound exactly
  * as the CLI binds them (lib/cli-args.js: last-wins is refused, --actor=x,
@@ -332,6 +429,7 @@ function eccodeActors(cmd) {
   // "Mentions the CLI" is decided on the words the shell would see (quotes removed, comments dropped),
   // so `ecc"ode".js` counts and `# see the eccode docs` does not.
   const mentionsEccode = mentionsCli(cmd);
+  if (mentionsEccode) problems.push(...new Set(cliEnvProblems(cmd)));
   const wrapperSeen = new Set();
   walkCommands(cmd, (words, raw) => {
     if (mentionsEccode && !wrapperSeen.has(raw) && SHELL_WRAPPER.test(raw)) {

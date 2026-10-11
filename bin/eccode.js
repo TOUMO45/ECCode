@@ -204,6 +204,13 @@ function checkPositionals(positionals) {
   }
 }
 
+/** Tree pinning switched off inside git is said out loud (TK-6 F2), on stderr so --json output stays parseable. */
+function warnTreeUnavailable(data, what) {
+  if (!data || !data.treeUnavailable) return;
+  const { treeUnavailableWarning } = require('../lib/project');
+  process.stderr.write(`eccode: warning: ${treeUnavailableWarning(what)}\n`);
+}
+
 function print(flags, human, json) {
   if (flags.json) process.stdout.write(JSON.stringify(json === undefined ? human : json, null, 2) + '\n');
   else process.stdout.write((typeof human === 'string' ? human : JSON.stringify(human, null, 2)) + '\n');
@@ -295,14 +302,23 @@ function main(argv) {
     case 'audit': {
       const res = store.audit();
       // Replay, not the snapshot: audit must work (and report) on a rolled-back log.
-      const all = require('../lib/delivery').unreviewedChanges(store.rebuild(), store.root);
+      const replayed = store.rebuild();
+      const all = require('../lib/delivery').unreviewedChanges(replayed, store.root);
+      // Runs recorded with tree pinning off are counted where a person looks (TK-6 R2-6).
+      const blindRuns = Object.values(replayed.evidence || {}).filter((e) => e.treeUnavailable).map((e) => e.id);
       // A change already submitted for review in a later gate is normal flow (a warning); an edit no
       // gate has seen is an audit failure. Delivery stays strict about both.
-      const changes = all.filter((c) => !c.pending);
+      // An approval whose submission recorded no commit leaves the release-tree diff without that baseline
+      // (TK-6 F1): reported as a warning, since no later submission can repin a past approval.
+      const changes = all.filter((c) => !c.pending && !c.unpinned);
       const pending = all.filter((c) => c.pending);
+      const gaps = all.filter((c) => c.unpinned);
       const ok = res.ok && !changes.length;
-      const warn = pending.length ? `\nPending re-review (not failures):\n- ${pending.map((c) => `${c.path} ${c.problem} (approved at ${c.gate})`).join('\n- ')}` : '';
-      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.${warn}` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}${warn}`, { ...res, unreviewedChanges: changes, pendingReview: pending, ok });
+      const warn =
+        (pending.length ? `\nPending re-review (not failures):\n- ${pending.map((c) => `${c.path} ${c.problem} (approved at ${c.gate})`).join('\n- ')}` : '') +
+        (gaps.length ? `\nRelease-tree baseline gaps (warnings):\n- ${gaps.map((c) => `${c.gate} ${c.problem}`).join('\n- ')}` : '') +
+        (blindRuns.length ? `\nCommand runs recorded with tree pinning off (treeUnavailable): ${blindRuns.length} (${blindRuns.map((id) => `ev:${id}`).join(', ')}); they cannot be cited while the digest is available` : '');
+      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.${warn}` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}${warn}`, { ...res, unreviewedChanges: changes, pendingReview: pending, releaseBaselineGaps: gaps, treeUnavailableRuns: blindRuns, ok });
       return ok ? 0 : 2;
     }
     case 'deliver': {
@@ -313,6 +329,7 @@ function main(argv) {
         metrics = undefined;
       }
       const res = require('../lib/delivery').deliver(store, need(actor, '--actor'), { metrics, config });
+      warnTreeUnavailable(res, 'release');
       print(flags, `Delivered. Final handoff: ${res.report}${res.commit ? ` (release commit ${res.commit})` : ''}`, res);
       return 0;
     }
@@ -327,6 +344,7 @@ function main(argv) {
           respondsTo: flags['responds-to'],
           notes: flags.notes,
         });
+        warnTreeUnavailable(event.data, 'submission');
         print(flags, `Submitted ${gateId} as ${event.data.submissionId} (${event.data.artifacts.length} artifact(s)). Next: independent review.`, event.data);
       } else if (sub === 'review') {
         const review = loadJsonFile(need(flags.file, '--file'));
@@ -406,6 +424,7 @@ function main(argv) {
           purpose: flags.purpose || 'check',
           timeoutMs: flags.timeout === undefined ? undefined : Math.round(numberFlag(flags, 'timeout', { min: 1 }) * 1000),
         });
+        warnTreeUnavailable(ev, 'run');
         print(flags, `Evidence ev:${ev.id} — ${ev.status.toUpperCase()} (exit ${ev.exitCode}, ${ev.durationMs}ms)\n${ev.outputTail}`, ev);
         return 0;
       }
