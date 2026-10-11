@@ -1,0 +1,67 @@
+{
+  "from": "devops-engineer",
+  "to": "delivery-lead",
+  "task": "g2-docs-submission",
+  "objective": "Final README with runbooks and operator notes, .env.example review, submission materials draft and the docs scan, for the RescueStock delivery. Every claim about live PayPal Sandbox, the live model and the hackathon rules is marked unverified.",
+  "context": "Built against plan task g2-docs-submission, spec Deployment (README, Environment variables, Backups), brief constraints, goal.md Hackathon facts, followups FU-9, FU-12, FU-21, FU-25, FU-27, FU-28, FU-29, FU-40, FU-44, FU-50 and the 'Added after the phase F review' section. Decisions applied: dec-mv47vma5-01d0d177 (FU-50: completed voids of a closed plan are not listed; stated in README limits and the operations runbook, which says an admin can see them in the timeline), dec-mv48g2fj-018e0ca7 (README and the live PayPal runbook quote the canonical single-credential sentence 'All demo suppliers are paid to one Sandbox account'), dec-mv46ovf2-017bf12d with correction dec-mv4740d4-015b3589 (README states the refunded-order handover rule as a recorded decision that is NOT yet in the code: src/services/orders.js handoverAllowed is still plan-wide; treat as not delivered until the verification report says so), dec-mv3abkv0-011839e9 / dec-mv3abkne-01161cf3 / dec-mv3uqze6-0196f887 / dec-mv38g19z-01f0a99f (webhook algos variable, seven mapped event types only, both live entry points and exit codes, RS_EXPLAIN_REPHRASE reserved). No live suite was run; RS_LIVE_MODEL and RS_LIVE_PAYPAL were never set; only 127.0.0.1 was used.",
+  "inputs": [
+    ".eccode/artifacts/plan/plan.json (g2-docs-submission)",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/artifacts/design/spec.md#deployment",
+    ".eccode/artifacts/architecture/brief.md",
+    "docs/build/goal.md",
+    "docs/integration-research.md",
+    "test/live/run-live-model.js",
+    "test/live/paypal/*.js",
+    "test/scan/env-example.test.js"
+  ],
+  "dependencies": [
+    "f4-restart-takeover-browser"
+  ],
+  "expectedOutput": "README.md, .env.example, docs/runbooks/live-model.md, live-paypal.md and operations.md, docs/submission/{checklist,project-description,demo-video-script}.md and test/scan/docs.test.js, all passing; submission drafts the user completes and submits themselves.",
+  "acceptanceCriteria": [
+    "README opens with problem, what it does and a one-command fake-provider demo, then clean-checkout steps, the two-step start line, playwright install line, demo accounts and RS_DEMO_PASSWORD semantics, RS_ALLOW_SIGNUP=0 and share 0.2 for public deployments, retake operator note, RS_REGISTER_PER_IP_PER_HOUR, retention and labelling statements, Node floor and Q9 branch, MIT, backups under umask 077",
+    "Runbooks give the exact live model and live PayPal steps, credentials as environment secrets via hidden prompt, allow-list hosts, merchant modes, seven webhook event types, the RS-31(b)/RS-32(b) journeys with a Sandbox buyer, and say plainly they are NOT VERIFIED",
+    "Submission drafts mark every hackathon fact as unverified against the primary source with the re-check line, put it in a checklist the user completes, describe the user's contribution in the first person, and require PayPal's hosted Sandbox approval page (user-run) in the video with everything simulated, demo or Sandbox labelled",
+    "test/scan/docs.test.js asserts the README names every npm script, the start line, the playwright line and the runbooks, that documented numbers match the code, and that no document contains a secret-looking value",
+    "No secret values anywhere; nothing submitted anywhere"
+  ],
+  "completedWork": "README.md rewritten (problem-first, one-command demo checked on 127.0.0.1 with a scratch database: seed, RS_MODEL_PROVIDER=fake npm start, /api/health 200, /api/config labels simulatedPayments and simulatedExtraction true). .env.example extended: RS_LIVE_MODEL_CEILING_USD, RS_LIVE_PAYPAL_HEADED, RS_LIVE_PAYPAL_WEBHOOK_SAMPLE and RS_PAYPAL_WEBHOOK_ALGOS described in prose comment lines (not NAME=value lines, see remaining issue 1), RS_EXPLAIN_REPHRASE documented as reserved, RS_MODEL_TIMEOUT_MS bound 1 to 40000, secret-handling note. New: docs/runbooks/live-model.md, live-paypal.md, operations.md; docs/submission/checklist.md, project-description.md, demo-video-script.md; test/scan/docs.test.js (16 tests, mutation-probed: an unknown RS_ name, a token-shaped string and a literal secret assignment each turn it red). LICENSE already MIT and unchanged. Verification: docs and env-example scans 25/25 pass; full npm test under flock 2315 pass, 0 fail, 8 skipped, p95 61.2 ms. test:browser was not run by me.",
+  "filesChanged": [
+    "README.md",
+    ".env.example",
+    "docs/runbooks/live-model.md",
+    "docs/runbooks/live-paypal.md",
+    "docs/runbooks/operations.md",
+    "docs/submission/checklist.md",
+    "docs/submission/project-description.md",
+    "docs/submission/demo-video-script.md",
+    "test/scan/docs.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv48vz7n-016ccf0a",
+    "ev:ev-mv48sogb-0153a00a",
+    "ev:ev-mv48v120-01de419b"
+  ],
+  "remainingIssues": [
+    "1. test/scan/env-example.test.js (b4's file, not g2's) requires every NAME=value line of .env.example to have a listed default and every RS_ name in the README to be such an entry. So the live-suite-only variables (RS_LIVE_MODEL_CEILING_USD, RS_LIVE_PAYPAL_HEADED, RS_LIVE_PAYPAL_WEBHOOK_SAMPLE, RS_PAYPAL_WEBHOOK_ALGOS) are described in prose comments in .env.example and in the runbooks, and the README points to the runbooks instead of naming them. FU-21 asked for commented entries and a README mention; that needs a change to env-example.test.js (DEFAULTS entries with active:false) by an owner of that file. RS_PAYPAL_WEBHOOK_ALGOS also stays an environment fallback, not a config field (dec-mv3abkv0-011839e9 condition not met).",
+    "2. package-lock.json (FU-12, dec-mv1joq3i-01180c65) was NOT created: package.json and package-lock.json are outside g2's files globs and test/scan/package.test.js does not assert a lockfile. Needs an owner (orchestrator rework or g3).",
+    "3. The refunded-order handover rule (dec-mv46ovf2-017bf12d as corrected by dec-mv4740d4-015b3589) and FU-54's planStatus/owedRefund are not in the tree at the time of writing (orders.js handoverAllowed is plan-wide; admin view comments say 'later backend change'). The README states the rule as pending, not delivered. Re-read before release; update the README line if the rework lands.",
+    "4. The server still sends 'All suppliers are paid through one Sandbox merchant account (single-credential mode).' (src/config.js L376) while the UI and the docs use the canonical sentence (dec-mv48g2fj-018e0ca7); the backend rework changes it.",
+    "5. The spec wording change from dec-mv44nzj5-01fbc177 (ARCH-26 (2) and saga step 6: 'intent (queued or started)' to 'started') is NOT made. The spec file is not in g2's ownership and the approved spec is pinned; it remains for the verification report as a documented design delta (as does the four-name spec delta for RS_PLAN_RATE_LIMIT, RS_PLAN_RATE_WINDOW_MIN, RS_GENERAL_RATE_LIMIT, RS_GENERAL_RATE_WINDOW_SEC, which the README lists). The operations runbook states the behaviour (a queued, never-started call is not read first).",
+    "6. FU-44: g2 chose the documentation branch. The live PayPal runbook lists cross-merchant signature rejection as not covered by LIVE-P1 RS-24 (the fake's signing string has no merchant key). The verification report should list it as LIVE-DEPENDENT too. FU-52 items (DENIED/PENDING, void after capture, Request-Id retention across takeover, capture PENDING/DECLINED, refund PENDING/FAILED, EXPIRED read after a refused void, RS-22) are listed in the same runbook section; the evidence table (g3) and the verification report must match.",
+    "7. UNVERIFIED statements in these files (nothing below was checked against a primary source or run): every hackathon fact (dates, 3-minute limit, YouTube, judging criteria, open-source and repository rules) in docs/submission/*; PayPal Sandbox dashboard steps and the seven webhook event names in docs/runbooks/live-paypal.md; the whole PayPal Sandbox integration (LIVE-P1, LIVE-P2, OQ-D5 facts); the live model run and CLI image input shape (LIVE-M1); the live-model dry-run behaviour (documented from source and the unit tests, not run, because RS_LIVE_MODEL must not be set); Node 22.5 to 22.12 branch; macOS and Windows; the untested interaction of switching RS_PAYMENT_PROVIDER with unfinished payments (flagged as untested in the operations runbook); the README sentence that the browser journeys pass in Chromium rests on phase reviews, since I did not run test:browser.",
+    "8. The project description's statement of the user's own decisions carries an edit marker ('Edit this to say exactly which decisions I actually made myself'); the user must complete it. Placeholders for the repository and video URLs are left for the user. The checklist boxes are unticked on purpose."
+  ],
+  "nextAction": "delivery-lead: carry remaining issues 1 to 6 into the verification report and the release checklist (route issue 1 and issue 2 to an owner), then hand the submission checklist to the user. technical-reviewer: review README claims against the code, especially the Security model and Honest limits sections.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson applies when a hook or guard maps writes to a project record or root in a repository with more than one record. This task changes no guard or hook and no root discovery; every edit was inside g2's own files and none was denied for a wrong root. The one hook denial I met came from a Bash command whose text named a scratchpad path, which is the ownership rule working, not a wrong nested root."
+    }
+  ]
+}
