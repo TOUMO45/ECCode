@@ -19,7 +19,7 @@
 //
 //   ctx = {
 //     merchantKey: 'DEFAULT',        // the merchant key the suite passes in every provider call
-//     timeoutMs: number,             // the adapter's per-call bound (RS_PAYPAL_TIMEOUT_MS equivalent). Small (400) so the
+//     timeoutMs: number,             // the adapter's per-call bound (RS_PAYPAL_TIMEOUT_MS equivalent). Small (500) so the
 //                                    // timeout cases finish quickly. Fake adapters may ignore it.
 //     log: Logger,                   // createLogger() from src/log.js ({debug,info,warn,error,child}); its sink is captured
 //                                    // by the suite. The adapter must log only through it (or not at all).
@@ -131,7 +131,7 @@ function outputCapture() {
   };
 }
 
-export function runProviderContract({ name, createAdapter, timeoutMs = 400 }) {
+export function runProviderContract({ name, createAdapter, timeoutMs = 500 }) {
   if (typeof createAdapter !== 'function') throw new TypeError('createAdapter must be a function');
 
   describe(`PaymentProvider contract: ${name}`, () => {
