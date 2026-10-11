@@ -1,6 +1,6 @@
 {
-  "seq": 1265,
-  "lastHash": "54226c41b8a5692241c35fee9b225abe7931c6ca1447d8c366a8501c175daa34",
+  "seq": 1268,
+  "lastHash": "d93d690cb80e91dbd75551cf650f56f94fad488ea152c7e5a61cf8dea064905d",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -20,6 +20,7 @@
     "phase:rework-2",
     "phase:rework-3",
     "phase:rework-4",
+    "phase:rework-5",
     "verification"
   ],
   "gates": {
@@ -4929,6 +4930,21 @@
       "escalation": null,
       "startedAt": "2026-10-11T12:17:29.421Z",
       "approvedAt": "2026-10-11T13:34:53.461Z"
+    },
+    "phase:rework-5": {
+      "id": "phase:rework-5",
+      "kind": "phase",
+      "status": "in_progress",
+      "iterations": 0,
+      "authors": [],
+      "submissions": [],
+      "reviews": [],
+      "openFindings": [],
+      "approvedBy": null,
+      "approvedSubmission": null,
+      "escalation": null,
+      "startedAt": "2026-10-11T17:19:23.113Z",
+      "approvedAt": null
     }
   },
   "plan": {
@@ -7999,6 +8015,61 @@
         }
       ],
       "escalation": null
+    },
+    "rework-5": {
+      "id": "rework-5",
+      "phase": "rework-5",
+      "title": "Rework: Two approved tests are stale after f2's spec-required behaviour (dec-m",
+      "owner": "test-engineer",
+      "dependencies": [],
+      "inputs": [
+        "ev:ev-mv40pczl-017d0a64"
+      ],
+      "outputs": [
+        "the fix",
+        "a regression test that fails without it"
+      ],
+      "files": [
+        "test/api/lost-response.test.js",
+        "test/api/admin-basic.test.js"
+      ],
+      "acceptanceCriteria": [
+        "Two approved tests are stale after f2's spec-required behaviour (dec-mv41b2g0-018dc143): the RS-25 timeout trail in lost-response now reads before each capture re-send (FU-41a), and refund_order in admin-basic now sends exactly one so:<id>:refund:1 call. Test-only update; no source change. Blocks f4 completion because npm test is in its verification command.",
+        "a regression test fails before the fix and passes after it",
+        "the existing checks still pass"
+      ],
+      "verification": {
+        "method": "run the project checks"
+      },
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "test-engineer",
+        "at": "2026-10-11T17:19:51.332Z",
+        "baseCommit": "88c6c4dfdb9b3e9095067df67c077701c0fa09b5",
+        "runId": null,
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.812,
+            "matched": 20,
+            "priority": 28,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "test-engineer",
+          "at": "2026-10-11T17:19:51.332Z",
+          "attempt": 1
+        }
+      ],
+      "completedBy": null,
+      "handoffId": null,
+      "rework": true
     }
   },
   "evidence": {
@@ -34184,6 +34255,15 @@
       "tokens": 3466,
       "note": "resumed f4 agent: cumulative 376997 minus earlier 373531; labels tolerance removed, contracts 81/81 ev-mv42hgmv-01da98cf; task stays claimed pending rework-5",
       "usageReported": true
+    },
+    "run-mv438moe-017d3510": {
+      "id": "run-mv438moe-017d3510",
+      "agent": "test-engineer",
+      "task": "rework-5",
+      "gate": null,
+      "startedAt": "2026-10-11T17:19:28.817Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -34930,6 +35010,22 @@
           "reason": "SEC-R-1 has no effect until src/auth/rbac.js passes the request method, logger and request id to limiter.take (the todo hook test turns green with it); the new model_spend foreign key makes test/unit/ai/gate.test.js line 102 call gate.run with a request id that does not exist, so the test must insert that request first. Both files were owned only by approved tasks (c1, d1)."
         }
       ]
+    },
+    {
+      "id": "rework-5",
+      "gate": "phase:rework-5",
+      "reason": "Two approved tests are stale after f2's spec-required behaviour (dec-mv41b2g0-018dc143): the RS-25 timeout trail in lost-response now reads before each capture re-send (FU-41a), and refund_order in admin-basic now sends exactly one so:<id>:refund:1 call. Test-only update; no source change. Blocks f4 completion because npm test is in its verification command.",
+      "owner": "test-engineer",
+      "files": [
+        "test/api/lost-response.test.js",
+        "test/api/admin-basic.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv40pczl-017d0a64"
+      ],
+      "openedBy": "orchestrator",
+      "at": "2026-10-11T17:19:23.113Z",
+      "afterDelivery": false
     }
   ]
 }
