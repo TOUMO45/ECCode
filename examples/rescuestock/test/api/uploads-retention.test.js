@@ -708,7 +708,14 @@ describe('RS-39: the process starts the sweep at startup and then on a timer', (
         await new Promise((r) => setTimeout(r, 25));
       }
       assert.equal(running.db.prepare('SELECT COUNT(*) AS n FROM images WHERE id = ?').get(secondId).n, 0, 'removed by a later tick of the timer');
-      assert.equal(existsSync(join(uploads, `${secondName}.png`)), false);
+      // FU-33 / TR-F-7: the sweep deletes the ROW first (a transaction) and then unlinks the FILE asynchronously (spec: Retention,
+      // "row and audit event first; an unlink that fails leaves an orphan for the orphan sweep"), so the row can be gone while the
+      // unlink is still in flight. Wait for the file itself, bounded; the assertion below still fails if it is never removed.
+      const fileDeadline = Date.now() + 5000;
+      while (Date.now() < fileDeadline && existsSync(join(uploads, `${secondName}.png`))) {
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      assert.equal(existsSync(join(uploads, `${secondName}.png`)), false, 'the file of the swept image is unlinked within 5 s of its row going');
       assert.ok(lines.some((l) => JSON.parse(l).msg === 'retention.sweep'));
       assert.doesNotMatch(lines.join(''), /startup-test|"text"/, 'log lines carry counts, never request text');
     } finally {
