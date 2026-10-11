@@ -1,6 +1,6 @@
 {
-  "seq": 686,
-  "lastHash": "4bd4f0f8b37dcb93f193aa0de6f2cf388c2543954d626af37ac54b450ce803f8",
+  "seq": 693,
+  "lastHash": "bb875aa2891f5425d9235dd947b33c3bedb3615e1e237a0a4c31cb9ff360ac86",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -4461,24 +4461,9 @@
         "command": "ls test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js test/fixtures/extraction/manifest.json test/live/run-live-model.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "ai-engineer",
-        "at": "2026-10-11T00:53:04.016Z",
-        "baseCommit": "90d4f972a80635a2fdf789284aae672bcfa8f03b",
-        "runId": "run-mv33ywgw-01504b06",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.835,
-            "matched": 33,
-            "priority": 33,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
@@ -4519,20 +4504,28 @@
           "by": "ai-engineer",
           "at": "2026-10-11T00:53:04.016Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "ai-engineer",
+          "at": "2026-10-11T01:03:10.578Z"
         }
       ],
       "completedBy": "ai-engineer",
-      "handoffId": "ho-mv31n07e-01ec72ff",
+      "handoffId": "ho-mv34d3dh-01f6abfa",
       "filesChanged": [
-        "package.json",
-        "scripts/make-corpus-images.js",
-        "test/fixtures/extraction/manifest.json"
+        "src/ai/cli.js",
+        "test/unit/ai/cli.test.js",
+        "test/unit/ai/live-runner-refusal.test.js",
+        "test/live/run-live-model.js",
+        "test/fixtures/extraction/stub-claude.mjs",
+        "test/fixtures/extraction/cli-orphan-driver.mjs"
       ],
       "lessonDecisions": [
         {
           "id": "mem-sd-mv1audrd-013b7102",
           "decision": "not-applicable",
-          "note": "The lesson concerns hooks or guards that map file writes to a project root in multi-record repositories; this rework removes one package.json line and edits a comment, so none of its 'Applies when' conditions hold.",
+          "note": "The lesson concerns a hook or guard that maps file writes to a project root in a repository with several records. This task changes a CLI adapter, the live runner and their tests, and does no root resolution or write-target mapping, so its applicability condition does not hold.",
           "basis": "reason"
         }
       ],
@@ -12307,6 +12300,46 @@
       "task": "d3-extraction-service",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T00:57:17.145Z"
+    },
+    "ev-mv34amer-0143b344": {
+      "id": "ev-mv34amer-0143b344",
+      "kind": "command",
+      "label": "d2 plan verification command verbatim (adapter tests, fake eval, live refusal) after TR-D-9/TR-D-10 fixes",
+      "command": "ls test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js test/fixtures/extraction/manifest.json test/live/run-live-model.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 23240,
+      "log": ".eccode/evidence/ev-mv34amer-0143b344.log",
+      "logSha256": "f725bdc6c359fe206e99111529e5f5eb343a48c21174dd4e6b70e8edfd907c3f",
+      "logFileSha256": "5b6754a2580a2f8a7147262fa62610563c21e6d85d69879f9465684f77f390b8",
+      "outputTail": "      duration_ms: 168.151513\n      type: 'test'\n      ...\n    # Subtest: NFR3: SIGINT to the runner leaves no CLI child alive, prints the plan first and exits 130\n    ok 2 - NFR3: SIGINT to the runner leaves no CLI child alive, prints the plan first and exits 130\n      ---\n      duration_ms: 167.590017\n      type: 'test'\n      ...\n    1..2\nok 17 - the runner process kills its CLI child on SIGINT and SIGTERM (TR-D-9, SEC-D-2 inverted)\n  ---\n  duration_ms: 336.104525\n  type: 'suite'\n  ...\n1..17\n# tests 107\n# suites 17\n# pass 107\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 23166.267048\n",
+      "gate": null,
+      "task": "d2-ai-adapters-corpus",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-11T01:01:15.253Z"
+    },
+    "ev-mv34bp0u-01821bb8": {
+      "id": "ev-mv34bp0u-01821bb8",
+      "kind": "command",
+      "label": "npm test (full suite, no claude on PATH, fake provider)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 43690,
+      "log": ".eccode/evidence/ev-mv34bp0u-01821bb8.log",
+      "logSha256": "d17f238ca23d95a431f656477121c39df1e19e13b7086a35dec6d4538f0f2caa",
+      "logFileSha256": "6a991139891c65fc5e95186d2715aac607d57ebe27bd8bf000f64c2bdd46e586",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 671 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 474.227784\n  type: 'test'\n  ...\n1..671\n# tests 1233\n# suites 143\n# pass 1225\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 43313.826229\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 3160 requests, p50 2.0 ms, p95 55.8 ms (limit: p95 < 300 ms)\nNFR5 suite time: 43.5 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": null,
+      "task": "d2-ai-adapters-corpus",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-11T01:02:05.268Z"
     }
   },
   "reviews": {
@@ -19918,6 +19951,69 @@
       "id": "ho-mv3461bp-018c0431",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T00:57:41.436Z"
+    },
+    "ho-mv34d3dh-01f6abfa": {
+      "from": "ai-engineer",
+      "to": "technical-reviewer",
+      "task": "d2-ai-adapters-corpus",
+      "objective": "Close phase D review findings TR-D-9 (= SEC-D-2, minor: an orphaned detached CLI child) and TR-D-10 (minor: the live runner silently rounds its ceiling) in the CLI adapter and the opt-in live runner.",
+      "context": "Review rev-mv33xoyz-0143dd56 (phase-d-1.json TR-D-9, TR-D-10; phase-d-security-1.md SEC-D-2 with reproduction C7). Hard rule for this run: RS_LIVE_MODEL=1 is never set against a real model and every test that reaches the CLI adapter or the live runner puts a stub claude (test/fixtures/extraction/stub-claude.mjs, which never contacts a model) first on PATH, or a PATH with no claude at all; the runner-process tests refuse to start if /usr/bin/claude or /bin/claude exists. Results here are from the deterministic stub and the fake provider: they prove process handling and input validation, nothing about model quality. src/main.js (backend-engineer) already calls provider.close?.() in its close(); I did not touch it.",
+      "inputs": [
+        ".eccode/reviews/drafts/phase-d-1.json (TR-D-9, TR-D-10)",
+        ".eccode/reviews/drafts/phase-d-security-1.md (SEC-D-2, C7)",
+        "src/ai/cli.js",
+        "test/live/run-live-model.js",
+        "test/unit/ai/cli.test.js",
+        "test/unit/ai/live-runner-refusal.test.js",
+        "test/fixtures/extraction/stub-claude.mjs"
+      ],
+      "dependencies": [
+        "d1-ai-core"
+      ],
+      "expectedOutput": "createCliProvider() returns an adapter with close() that ends every in-flight CLI child and its process group (SIGTERM, SIGKILL after killGraceMs), a process 'exit' hook that SIGKILLs groups still alive, and the live runner closes the adapter on SIGINT/SIGTERM (exit 130/143, no report) and on every return path. RS_LIVE_MODEL_CEILING_USD is accepted only as an exact decimal from 0.01 to 5.00 with at most two fraction digits.",
+      "acceptanceCriteria": [
+        "TR-D-9: after close() no CLI child or grandchild of the adapter is alive (checked with process.kill(pid, 0) and /proc state); in-flight calls reject PROVIDER_UNAVAILABLE; later calls reject without starting a process; close() is idempotent",
+        "TR-D-9: a child that ignores SIGTERM is SIGKILLed after the grace period",
+        "TR-D-9: process.exit() in the parent leaves no child alive (exit hook); a SIGTERM or SIGINT sent to a real runner process kills its CLI child and its group, the runner exits 143 / 130 and writes no report",
+        "Existing guarantees unchanged: pinned argv, --tools \"\", --safe-mode, allow-listed env, 8 MiB cap, concurrency 2, process-group SIGKILL on timeout, one attempt",
+        "TR-D-10: 5.0000001, 5.001, 4.999, 1e0, ' 5', '05' and the other malformed values are refused with exit 2 and the badCeiling message; 5, 5.00, 0.50 are accepted",
+        "TR-D-10: the runner prints provider, model, CLI version, per-call cap, worst-case total and ceiling before its first model call",
+        "The refusal tests run with no claude on PATH"
+      ],
+      "completedWork": "TR-D-9: src/ai/cli.js tracks every started child (per-adapter registry plus a module-level set). The adapter now exposes close() and liveChildren(). close() marks the adapter closed, sends SIGTERM to each child's process group, SIGKILLs after killGraceMs (new option, default 1000 ms, CLI_KILL_GRACE_MS), sweeps the group once the leader exits, rejects the in-flight calls with PROVIDER_UNAVAILABLE, removes their temp cwd and resolves when all runs have settled; it is idempotent and later calls reject PROVIDER_UNAVAILABLE without spawning (a close() that lands while the temp cwd is being made also stops the spawn). A single process 'exit' hook SIGKILLs the groups still registered, which covers process.exit() in main.js stop(). The timeout, abort and cap paths still SIGKILL the group immediately, as before. TR-D-10: test/live/run-live-model.js parses the ceiling with parseCeilingMicroUsd: the regex ^(0|[1-9][0-9]{0,11})(?:\\.([0-9]{1,2}))?$ on the raw string (no trim, no sign, no exponent, no leading zero), compared in integer cents, 1..500, before any conversion; toMicroUsd is no longer used for the ceiling. The runner prints a 'cli: claude <version>' line after the plan lines and before the first call, installs SIGINT/SIGTERM handlers once the provider exists (close the adapter, say 'interrupted', no report, exit 130/143 through an injectable exit), and closes the adapter in a finally on every return path. Test fixtures: stub-claude.mjs gains child.pid in hang mode and a stubborn mode (ignores SIGTERM); cli-orphan-driver.mjs is the process.exit() driver. FINDING -> CHANGE -> TEST -> EVIDENCE. TR-D-9 / SEC-D-2 -> src/ai/cli.js registry, close(), exit hook; runner closes the adapter on SIGINT/SIGTERM and on every return path -> cli.test.js 'close() and the exit hook leave no CLI child behind' (6 tests: group kill, SIGTERM-ignoring child, closed adapter, other adapter untouched, process.exit() driver, registry empty after calls) and live-runner-refusal.test.js 'SIGINT and SIGTERM close the adapter' (in-process) plus 'the runner process kills its CLI child on SIGINT and SIGTERM' (real runner process, stub claude, exit 143 / 130, pids dead, no report); all red before the change (6 red in cli.test.js: close is not a function and three stub children were left running; 3 red in the refusal file) -> ev:ev-mv34amer-0143b344 (plan command, 107/107, ECCODE_EVAL 200/200 fake) and ev:ev-mv34bp0u-01821bb8 (npm test). TR-D-10 -> parseCeilingMicroUsd, badCeiling message, CLI version line before the first call -> live-runner-refusal.test.js 'NFR3: the ceiling is a decimal with at most two fraction digits, from 0.01 to 5.00, checked BEFORE any rounding (TR-D-10)': 38 refused values in evaluateLaunch, 6 through the real process (exit 2, empty stdout, fixed message), 5, 5.00 and 0.50 accepted through --dry-run; red before the change -> same two evidence ids.",
+      "filesChanged": [
+        "src/ai/cli.js",
+        "test/unit/ai/cli.test.js",
+        "test/unit/ai/live-runner-refusal.test.js",
+        "test/live/run-live-model.js",
+        "test/fixtures/extraction/stub-claude.mjs",
+        "test/fixtures/extraction/cli-orphan-driver.mjs"
+      ],
+      "evidence": [
+        "ev:ev-mv34amer-0143b344",
+        "ev:ev-mv34bp0u-01821bb8"
+      ],
+      "remainingIssues": [
+        "Decision: '05' and '005.00' are refused (a leading zero is non-canonical for a spend limit); '5.0' and '0.5' are accepted (one fraction digit is within 'at most two'). close() is idempotent and terminal. The timeout, abort and 8 MiB cap paths keep the immediate process-group SIGKILL (existing guarantee); SIGTERM then SIGKILL applies to close().",
+        "A parent killed by SIGKILL (or by SIGTERM with no handler) cannot run any hook, so its CLI child is still orphaned in that case; the child is bounded by --max-budget-usd and the reservation sweep settles it. The server and the live runner both handle SIGTERM/SIGINT and close the adapter, so only an uncatchable kill leaves a child. The exit hook runs on process.exit() and on a normal end.",
+        "FU-21 for g2 (not my files): RS_LIVE_MODEL_CEILING_USD is the exact variable name in test/live/run-live-model.js. It is missing from .env.example and README.md. Suggested text: 'RS_LIVE_MODEL_CEILING_USD: the most you are willing to spend on one live model run (npm run test:live-model); required together with RS_LIVE_MODEL=1; an exact decimal from 0.01 to 5.00 with at most two decimals (for example 0.50 or 5); anything else, including 5.0000001, 1e0 or 05, is refused with exit 2.'",
+        "Not in my ownership: the README or docs line that says the live runner prints the worst case first can now also mention the CLI version line.",
+        "LIVE-M1 (the real run) is still not performed and is not claimed; all results here come from the stub claude and the fake provider and are not evidence of model quality."
+      ],
+      "nextAction": "technical-reviewer: re-review TR-D-9 and TR-D-10 against the six close() tests, the runner SIGTERM/SIGINT tests and the ceiling test. g2: add RS_LIVE_MODEL_CEILING_USD to .env.example and README (FU-21).",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson concerns a hook or guard that maps file writes to a project root in a repository with several records. This task changes a CLI adapter, the live runner and their tests, and does no root resolution or write-target mapping, so its applicability condition does not hold."
+        }
+      ],
+      "id": "ho-mv34d3dh-01f6abfa",
+      "recordedBy": "ai-engineer",
+      "at": "2026-10-11T01:03:10.677Z"
     }
   },
   "runs": {
@@ -21127,8 +21223,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T00:52:08.356Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T01:03:40.656Z",
+      "durationMinutes": 11.54,
+      "costUsd": null,
+      "tokens": 138959,
+      "note": null,
+      "usageReported": true
     },
     "run-mv340cft-01fa2ed4": {
       "id": "run-mv340cft-01fa2ed4",
@@ -21144,6 +21246,15 @@
       "tokens": 0,
       "note": null,
       "usageReported": true
+    },
+    "run-mv34dqyz-01ac1608": {
+      "id": "run-mv34dqyz-01ac1608",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T01:03:41.065Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -21566,6 +21677,16 @@
       "lessons": [],
       "at": "2026-10-11T00:54:00.146Z",
       "by": "orchestrator"
+    },
+    "dec-mv34dqsr-0163a6d9": {
+      "id": "dec-mv34dqsr-0163a6d9",
+      "title": "Live-runner ceiling refuses a leading zero",
+      "decision": "The ceiling must be written as 0, or a non-zero whole part without a leading zero, with at most two decimals (0.01 to 5.00). 05 and 005.00 are refused.",
+      "rationale": "One exact form per value keeps the check unambiguous; the refusal message states the rule. ai-engineer asked (d2 reset handoff ho-mv34d3dh-01f6abfa). Reversible by widening the pattern.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T01:03:40.888Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -21578,8 +21699,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 775.97,
-    "tokens": 10633041
+    "runtimeMinutes": 787.51,
+    "tokens": 10772000
   },
   "delivery": null,
   "reworks": [
