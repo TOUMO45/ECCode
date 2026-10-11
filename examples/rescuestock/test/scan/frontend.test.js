@@ -344,3 +344,56 @@ test('NFR2: the router declares the eight hash routes and main.js moves focus to
   assert.match(main, /hashchange/);
   assert.match(main, /getElementById\('announcer'\)/);
 });
+
+// ---- phase E (e5): payments ---------------------------------------------------------------------------------------
+
+test('RS-18: the buyer reaches the approval page by navigation only: one location.assign, no form post, no window.open', () => {
+  for (const [name, source] of code) {
+    if (name !== 'js/main.js') assert.doesNotMatch(source, /\blocation\.(assign|replace)\b|\blocation\.href\s*=|\bwindow\.open\b/, `navigation call in public/${name}`);
+    assert.doesNotMatch(source, /\.requestSubmit\s*\(|\.submit\s*\(\s*\)/, `programmatic form submit in public/${name}`);
+    if (name === 'js/dom.js') continue; // dom.js only lists action/formaction among the URL attributes it validates
+    assert.doesNotMatch(source, /el\(\s*'form'\s*,\s*\{[^}]*\baction\b/, `a form action set in public/${name}`);
+    assert.doesNotMatch(source, /setAttr\([^)]*'(action|formaction)'/, `an action attribute set in public/${name}`);
+    assert.doesNotMatch(source, /\bformaction\b/i, `formaction in public/${name}`);
+  }
+  assert.equal((code.get('js/main.js').match(/location\.assign\(/g) ?? []).length, 1, 'main.js has the one call site');
+  // the page asks for the link, checks it with isNavigableUrl, and only then hands it to assignLocation
+  const detail = code.get('js/views/request-detail.js');
+  assert.match(detail, /isNavigableUrl\(answer\.approvalUrl\)/);
+  assert.match(detail, /ctx\.assignLocation\(answer\.approvalUrl\)/);
+  assert.ok(detail.indexOf('isNavigableUrl(answer.approvalUrl)') < detail.indexOf('ctx.assignLocation(answer.approvalUrl)'));
+  assert.match(code.get('js/api.js'), /\/orders\/\$\{id\(orderId\)\}\/paypal\/create/);
+});
+
+test('NFR2: poll.js refreshes every 2 s, backs off to 10 s after 2 minutes and pauses while the page is hidden', () => {
+  const poll = code.get('js/poll.js');
+  assert.match(poll, /POLL_FAST_MS\s*=\s*2000/);
+  assert.match(poll, /POLL_SLOW_MS\s*=\s*10000/);
+  assert.match(poll, /POLL_BACKOFF_AFTER_MS\s*=\s*120000/);
+  assert.match(poll, /document\?\.hidden/);
+  assert.match(code.get('js/views/request-detail.js'), /addEventListener\?\.\('visibilitychange'/);
+  assert.match(code.get('js/views/request-detail.js'), /removeEventListener\?\.\('visibilitychange'/);
+  // a timer is always one of the injected ones: no setInterval that could outlive the page
+  assert.doesNotMatch(poll, /\bsetInterval\b/);
+});
+
+test('RS-34: every payment element carries its provider badge, and the payment-state test hooks exist', () => {
+  for (const file of ['js/components/payments.js', 'js/components/compensation.js', 'js/views/supplier-orders.js']) {
+    assert.match(code.get(file), /providerBadgeModels\(/, `public/${file} labels its payment elements`);
+  }
+  for (const hook of ['single-credential-notice', 'success-', 'abandon', 'receipt-', 'ready-', 'handover-', 'error-link-', 'action-done']) {
+    assert.ok(allCode.includes(`'${hook}`) || allCode.includes(`\`${hook}`), `data-testid ${hook} not found`);
+  }
+});
+
+test('NFR2: the payment cards wrap at 360 px and a running action is marked aria-disabled', () => {
+  assert.match(css, /\.paypal-approvals\s*\{[^}]*flex:\s*1 1 100%/);
+  assert.match(css, /\.paypal-approvals \.card p\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  assert.match(code.get('js/views/request-detail.js'), /setAttribute\('aria-disabled', 'true'\)/);
+});
+
+test('RS-35: payment and supplier-order views build text with el(...text) only, never markup', () => {
+  for (const file of ['js/components/payments.js', 'js/components/compensation.js', 'js/views/supplier-orders.js', 'js/views/request-detail.js']) {
+    assert.doesNotMatch(code.get(file), /innerHTML|outerHTML|insertAdjacentHTML|document\.write|createContextualFragment/, `markup parsing in public/${file}`);
+  }
+});

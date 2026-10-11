@@ -1,0 +1,43 @@
+{
+  "route": "GET /api/supplier/orders",
+  "status": 200,
+  "variant": "supplier A: a confirmed order that can be marked ready (Sandbox payment), a ready order that can be handed over (simulated payment), and an order of a non-executable plan with every flag false (F-TR-11)",
+  "response": {
+    "orders": [
+      {
+        "id": 31, "ref": "R12-V1", "buyer": { "displayName": "Cafe One" },
+        "lines": [{ "offerId": 1, "productName": "100 cups + 100 lids (250 ml, 90 mm)", "bundles": 1, "cups": 100, "lids": 100 }],
+        "totalCents": 4000, "catalogReadyAt": "2026-10-20T07:00:00.000Z", "deadlineAt": "2026-10-20T08:00:00.000Z",
+        "fulfilmentStatus": "confirmed",
+        "commitment": { "bundles": 1, "readyAt": "2026-10-20T07:00:00.000Z", "confirmedAt": "2026-10-20T06:05:00.000Z" },
+        "refusalReason": null,
+        "payment": { "status": "captured", "simulated": false, "sandbox": true },
+        "presentation": "active",
+        "canConfirm": false, "canMarkReady": true, "canHandover": false, "demo": true
+      },
+      {
+        "id": 33, "ref": "R13-V1", "buyer": { "displayName": "Cafe Two" },
+        "lines": [{ "offerId": 1, "productName": "100 cups + 100 lids (250 ml, 90 mm)", "bundles": 1, "cups": 100, "lids": 100 }],
+        "totalCents": 4000, "catalogReadyAt": "2026-10-20T07:00:00.000Z", "deadlineAt": "2026-10-20T08:00:00.000Z",
+        "fulfilmentStatus": "ready",
+        "commitment": { "bundles": 1, "readyAt": "2026-10-20T07:00:00.000Z", "confirmedAt": "2026-10-20T06:05:00.000Z" },
+        "refusalReason": null,
+        "payment": { "status": "captured", "simulated": true, "sandbox": false },
+        "presentation": "active",
+        "canConfirm": false, "canMarkReady": false, "canHandover": true, "demo": true
+      },
+      {
+        "id": 27, "ref": "R9-V2", "buyer": { "displayName": "Cafe Two" },
+        "lines": [{ "offerId": 1, "productName": "100 cups + 100 lids (250 ml, 90 mm)", "bundles": 1, "cups": 100, "lids": 100 }],
+        "totalCents": 4000, "catalogReadyAt": "2026-10-20T07:00:00.000Z", "deadlineAt": "2026-10-20T08:00:00.000Z",
+        "fulfilmentStatus": "confirmed",
+        "commitment": { "bundles": 1, "readyAt": "2026-10-20T07:00:00.000Z", "confirmedAt": "2026-10-20T05:40:00.000Z" },
+        "refusalReason": null,
+        "payment": { "status": "voided", "simulated": true, "sandbox": false },
+        "presentation": "cancelled_payment_incomplete",
+        "canConfirm": false, "canMarkReady": false, "canHandover": false, "demo": true
+      }
+    ],
+    "requestId": "req-sord-0000002"
+  }
+}

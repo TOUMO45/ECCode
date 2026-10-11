@@ -19,13 +19,16 @@ export function emptyNode({ title, body = null, action = null, testid = 'state-e
 }
 
 // err is an ApiError (or anything with code/message/requestId). onRetry runs when the Retry button is used.
-export function errorNode(err, { onRetry = null, headingId = null } = {}) {
+// links: [{ href, label }] in-app links that help (RESERVATION_LIMIT: the request that holds the stock). When there
+// are specific links, the general "Open your requests" link is left out.
+export function errorNode(err, { onRetry = null, headingId = null, links = [] } = {}) {
   const d = describeError(err);
   const timeout = d.code === 'CLIENT_TIMEOUT';
   return el('div', { class: `state ${timeout ? 'state-timeout' : 'state-error'}`, role: 'alert', testid: timeout ? 'state-timeout' : 'state-error', id: headingId }, [
     el('p', { class: 'state-title', text: d.message }),
     el('p', { text: d.action }),
-    d.linkHash ? el('p', {}, [el('a', { href: d.linkHash, text: 'Open your requests' })]) : null,
+    ...links.map((l, i) => el('p', {}, [el('a', { href: l.href, testid: `error-link-${i + 1}`, text: l.label })])),
+    d.linkHash && links.length === 0 ? el('p', {}, [el('a', { href: d.linkHash, text: 'Open your requests' })]) : null,
     d.requestId ? el('p', { class: 'muted', text: `Request id: ${d.requestId}` }) : null,
     onRetry ? el('button', { type: 'button', class: 'button', testid: 'retry', on: { click: onRetry }, text: 'Retry' }) : null,
   ]);

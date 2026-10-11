@@ -6,14 +6,62 @@
 //   Complete purchase                                              next step COMPLETE_PURCHASE
 //   Record receipt                                                 an order that is ready or collected
 //   Delete request                                                 when capabilities.deleteRequest is true
-// Every payment element carries its provider badge ("Simulated" or "PayPal Sandbox — no real money").
+// Every payment element carries its provider badge ("Simulated" or "PayPal Sandbox — no real money"). In
+// single-credential mode the list also says "All demo suppliers are paid to one Sandbox account". An order of a plan
+// that became non-executable reads "Cancelled — payment did not complete" and gets no approval button (F-TR-11).
 
 import { el } from '../dom.js';
-import { formatUsd, paymentStatusText, supplierLabel } from '../format.js';
+import { formatUsd, paymentStatusText } from '../format.js';
+import { EXACT } from '../texts.js';
 import { currentPlan, deleteRequestAvailable, isReservationExpired, sortedOrders, supplierDirectory, supplierName } from '../view-helpers.js';
 import { reserveStorageKey } from '../reserve-key.js';
 import { badgeNodes, providerBadgeModels } from './badges.js';
-import { emptyNode } from './notice.js';
+import { emptyNode, noticeNode } from './notice.js';
+
+// True when the server reports that every supplier is paid to one Sandbox account (labels or any payment object).
+function singleCredential(view, orders) {
+  return view?.labels?.merchantMode === 'single-credential' || orders.some((o) => o.payment?.merchantMode === 'single-credential');
+}
+
+// Rescue statuses in which this customer's reservation is live, so a second reservation hits RESERVATION_LIMIT.
+export const HOLDING_STATUSES = Object.freeze(['stock_reserved', 'payment_authorized']);
+
+/**
+ * RESERVATION_LIMIT (SEC-2): the sentence and a link to the request that holds the stock.
+ *   error     the ApiError (details.reservationIds is all the contract promises)
+ *   requests  GET /api/requests -> requests[] (looked up because a reservation id is not a request id)
+ * details.requestIds is used when the server sends it; otherwise the list is searched for a request that holds stock.
+ * The link falls back to the whole list when the other request cannot be found.
+ */
+export function reservationLimitModel({ error = null, requests = [], currentRequestId = null } = {}) {
+  const fromError = Array.isArray(error?.details?.requestIds) ? error.details.requestIds : [];
+  const fromList = (Array.isArray(requests) ? requests : [])
+    .filter((r) => HOLDING_STATUSES.includes(r?.rescueStatus?.status))
+    .map((r) => r.id);
+  const ids = [...new Set([...fromError, ...fromList])]
+    .filter((id) => Number.isInteger(id) && id > 0 && id !== Number(currentRequestId));
+  const links = ids.length > 0
+    ? ids.map((id) => ({ href: `#/requests/${id}`, label: `Open request #${id}` }))
+    : [{ href: '#/requests', label: 'Open your requests' }];
+  return { message: EXACT.RESERVATION_LIMIT, links, found: ids.length > 0 };
+}
+
+// What to tell the user when an action worked. Honest: it says what was done, never that money moved when it has not.
+export function successText(kind, answer = null) {
+  switch (kind) {
+    case 'approve': return 'Plan approved.';
+    case 'reserve': return 'Stock reserved for you.';
+    case 'paypal': return answer?.payment?.simulated === true
+      ? 'Taking you to the simulated approval page (not PayPal)…'
+      : 'Taking you to PayPal Sandbox (no real money)…';
+    case 'abandon': return 'Purchase abandoned. Nothing was charged; any PayPal authorizations are being released.';
+    case 'execute': return answer?.claimed === false
+      ? 'This purchase is already being completed. This page updates by itself.'
+      : 'Purchase started. Payments are being captured; this page updates by itself.';
+    case 'receipt': return 'Receipt recorded.';
+    default: return 'Done.';
+  }
+}
 
 function missingInput(view) {
   const f = view.requirements?.fields ?? {};
@@ -38,6 +86,8 @@ export function actionsModel(view, { config = null } = {}) {
     approve: null,
     reserve: null,
     paypal: [],
+    // [{ testid, tone, text }] shown above the approvals: the single-credential notice.
+    paypalNotices: [],
     abandon: null,
     execute: null,
     receipts: [],
@@ -69,7 +119,8 @@ export function actionsModel(view, { config = null } = {}) {
     orders.forEach((o, i) => {
       const name = supplierName(dir, o.supplier.code);
       const retry = o.payment.buyerCancelledAt !== null && o.payment.buyerCancelledAt !== undefined;
-      const needsApproval = o.payment.status === 'created';
+      const cancelled = o.presentation === 'cancelled_payment_incomplete';
+      const needsApproval = !cancelled && o.payment.status === 'created';
       model.paypal.push({
         orderId: o.id,
         supplierCode: o.supplier.code,
@@ -78,13 +129,16 @@ export function actionsModel(view, { config = null } = {}) {
         count: orders.length,
         step: `PayPal approvals: ${i + 1} of ${orders.length}`,
         totalText: formatUsd(o.totals.totalCents),
-        state: needsApproval ? (retry ? 'retry' : 'todo') : 'done',
+        state: cancelled ? 'cancelled' : (needsApproval ? (retry ? 'retry' : 'todo') : 'done'),
         buttonLabel: retry ? 'Try approval again' : 'Approve with PayPal',
-        statusText: paymentStatusText(o.payment.status),
+        statusText: cancelled ? EXACT.ORDER_NOT_PAID : paymentStatusText(o.payment.status),
         badges: providerBadgeModels(o.payment),
         testid: `paypal-approve-${o.supplier.code}`,
       });
     });
+    if (orders.length > 0 && singleCredential(view, orders)) {
+      model.paypalNotices.push({ testid: 'single-credential-notice', tone: 'info', text: EXACT.SINGLE_CREDENTIAL });
+    }
     if (model.paypal.some((p) => p.state === 'retry') || code === 'RETRY_APPROVAL_OR_ABANDON') {
       model.abandon = { planId: plan?.id ?? null, label: 'Abandon purchase', testid: 'abandon' };
     }
@@ -99,7 +153,7 @@ export function actionsModel(view, { config = null } = {}) {
       model.receipts.push({
         orderId: o.id,
         supplierCode: o.supplier.code,
-        label: `Record receipt — ${supplierLabel(o.supplier.code, o.supplier.name)}`,
+        label: `Record receipt — ${supplierName(dir, o.supplier.code)}`,
         testid: `receipt-${o.supplier.code}`,
       });
     }
@@ -132,10 +186,13 @@ export function renderActions(model, on = {}) {
   }
   if (model.reserve && on.reserve) items.push(...button(model.reserve, () => on.reserve(model.reserve), { primary: true }));
   if (model.paypal.length > 0) {
-    items.push(el('ol', { class: 'plain-list', testid: 'paypal-approvals' }, model.paypal.map((p) => el('li', { class: 'card', testid: `paypal-${p.supplierCode}` }, [
-      el('p', { text: `${p.step} — ${p.supplierName} — ${p.buttonLabel} (${p.totalText})` }),
+    for (const n of model.paypalNotices) items.push(noticeNode({ text: n.text, tone: n.tone, testid: n.testid }));
+    items.push(el('ol', { class: 'plain-list paypal-approvals', testid: 'paypal-approvals' }, model.paypal.map((p) => el('li', { class: 'card', testid: `paypal-${p.supplierCode}` }, [
+      p.state === 'cancelled'
+        ? el('p', { text: `${p.step} — ${p.supplierName} — ${p.statusText}` })
+        : el('p', { text: `${p.step} — ${p.supplierName} — ${p.buttonLabel} (${p.totalText})` }),
       el('p', {}, [el('span', { class: 'label', text: 'Payment: ' }), p.statusText, ' ', ...badgeNodes(p.badges)]),
-      p.state !== 'done' && on.paypal
+      p.state !== 'done' && p.state !== 'cancelled' && on.paypal
         ? el('button', {
           type: 'button',
           class: 'button button-primary',

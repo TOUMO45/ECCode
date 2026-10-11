@@ -33,6 +33,8 @@ export function buildSupplierOrdersViewModel(answer) {
       statusText: cancelled ? EXACT.ORDER_NOT_PAID : fulfilmentText(o.fulfilmentStatus),
       presentationText: presentationText(o.presentation),
       cancelled,
+      // F-TR-11: no action is offered for it, and the card says why.
+      noActionText: cancelled ? 'Nothing to do: the buyer’s payment did not complete, so do not prepare this order.' : null,
       commitmentText: o.commitment ? `${o.commitment.bundles} bundle${o.commitment.bundles === 1 ? '' : 's'}, ready ${formatLocalTime(o.commitment.readyAt)}` : null,
       refusalReason: o.refusalReason ?? null,
       paymentText: paymentStatusText(o.payment.status),
@@ -92,6 +94,7 @@ function renderCard(card, on) {
     el('p', {}, [el('span', { class: 'label', text: 'Payment: ' }), card.paymentText, ' ', ...badgeNodes(card.badges)]),
     card.commitmentText ? el('p', { testid: `${card.testid}-commitment`, text: `You confirmed: ${card.commitmentText}` }) : null,
     card.refusalReason ? el('p', { dir: 'auto', text: `Reason you gave: ${card.refusalReason}` }) : null,
+    card.noActionText ? el('p', { class: 'muted', testid: `${card.testid}-no-action`, text: card.noActionText }) : null,
   ];
   const a = card.actions;
   if (a.confirm) parts.push(renderConfirmForm(card, a.confirm, on));
@@ -191,15 +194,16 @@ export function mountSupplierOrders(ctx, route) {
     }
   }
 
-  async function act(workingText, task) {
+  async function act(workingText, task, doneText = 'Done.') {
     if (busy) return;
     busy = true;
     replaceContent(feedback, [loadingNode(workingText)]);
     ctx.announce(workingText);
     try {
       await task();
-      replaceContent(feedback, []);
-      ctx.announce('Done.');
+      // Shown only after the server answered 2xx; a refused step shows its error instead (never a success line).
+      replaceContent(feedback, [noticeNode({ text: doneText, tone: 'ok', testid: 'action-done' })]);
+      ctx.announce(doneText);
     } catch (err) {
       replaceContent(feedback, [errorNode(err)]);
       ctx.announce(`${describeError(err).message} ${describeError(err).action}`);
@@ -222,7 +226,7 @@ export function mountSupplierOrders(ctx, route) {
         ctx.announce(text);
         return;
       }
-      act('Confirming the order…', () => ctx.api.confirmSupplierOrder(card.id, built.body));
+      act('Confirming the order…', () => ctx.api.confirmSupplierOrder(card.id, built.body), `Order ${card.ref} is confirmed.`);
     },
     refuse: (card, reason) => {
       const problem = validateRefusalReason(reason);
@@ -231,10 +235,10 @@ export function mountSupplierOrders(ctx, route) {
         ctx.announce(problem);
         return;
       }
-      act('Refusing the order…', () => ctx.api.refuseSupplierOrder(card.id, reason.trim()));
+      act('Refusing the order…', () => ctx.api.refuseSupplierOrder(card.id, reason.trim()), `Order ${card.ref} is refused.`);
     },
-    ready: (card) => act('Marking the order ready…', () => ctx.api.markSupplierOrderReady(card.id)),
-    handover: (card) => act('Recording the handover…', () => ctx.api.recordHandover(card.id)),
+    ready: (card) => act('Marking the order ready…', () => ctx.api.markSupplierOrderReady(card.id), `Order ${card.ref} is marked ready for pickup.`),
+    handover: (card) => act('Recording the handover…', () => ctx.api.recordHandover(card.id), `Handover of order ${card.ref} is recorded.`),
   };
 
   load();

@@ -39,7 +39,8 @@ export function commitmentsModel(view) {
       demo: o.supplier.demo === true,
       catalog: { text: `${bundlesText(o.offer.bundles)}, ready ${formatLocalTime(o.offer.readyAt)}` },
       confirmed: confirmedColumn(o),
-      fulfilmentText: fulfilmentText(o.fulfilmentStatus),
+      // F-TR-11: a confirmed order of a plan that became non-executable is not a live commitment.
+      fulfilmentText: o.presentation === 'cancelled_payment_incomplete' ? EXACT.ORDER_NOT_PAID : fulfilmentText(o.fulfilmentStatus),
       testid: `commit-${o.supplier.code}`,
     }));
   } else if (plan) {

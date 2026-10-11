@@ -16,7 +16,7 @@ import { rejectedModel, renderRejected } from '../components/rejections.js';
 import { totalModel, renderTotal } from '../components/totals.js';
 import { commitmentsModel, renderCommitments } from '../components/commitments.js';
 import { failureModel, renderFailure } from '../components/compensation.js';
-import { actionsModel, renderActions } from '../components/payments.js';
+import { actionsModel, renderActions, reservationLimitModel, successText } from '../components/payments.js';
 import { errorNode, loadingNode, noticeNode, sectionEl, showState } from '../components/notice.js';
 import { supplierDirectory } from '../view-helpers.js';
 
@@ -180,19 +180,48 @@ export function mountRequestDetail(ctx, route) {
     }
   }
 
-  // Runs one user action; shows its error above the page; reloads the view afterwards.
-  async function perform(workingText, task, { reloadAfter = true } = {}) {
+  // While an action runs its buttons say so (aria-disabled); the loading line above the page is the text reason.
+  let busyButtons = [];
+  function setBusy(flag) {
+    busy = flag;
+    if (flag) {
+      // Only buttons that were not already disabled for another reason (a missing budget) are touched.
+      busyButtons = slot.querySelectorAll
+        ? Array.from(slot.querySelectorAll('button')).filter((b) => b.getAttribute('aria-disabled') === null)
+        : [];
+      for (const b of busyButtons) b.setAttribute('aria-disabled', 'true');
+    } else {
+      for (const b of busyButtons) b.removeAttribute('aria-disabled');
+      busyButtons = [];
+    }
+  }
+
+  // The links of a RESERVATION_LIMIT answer: to the request that holds the stock, found through the list because the
+  // error names reservations, not requests. A failed lookup falls back to the whole list.
+  async function reservationLimitLinks(err) {
+    let requests = [];
+    try {
+      requests = (await ctx.api.listRequests()).requests ?? [];
+    } catch { /* the fallback link below still helps */ }
+    return reservationLimitModel({ error: err, requests, currentRequestId: id }).links;
+  }
+
+  // Runs one user action: loading text, then a success line (kind) or the error above the page; reloads afterwards.
+  async function perform(workingText, task, { reloadAfter = true, kind = null } = {}) {
     if (busy) return;
-    busy = true;
+    setBusy(true);
     replaceContent(feedback, [loadingNode(workingText)]);
     ctx.announce(workingText);
     try {
-      await task();
-      replaceContent(feedback, []);
+      const answer = await task();
+      const text = kind ? successText(kind, answer) : null;
+      replaceContent(feedback, text ? [noticeNode({ text, tone: 'ok', testid: `success-${kind}` })] : []);
+      if (text) ctx.announce(text);
       if (reloadAfter) await reload();
     } catch (err) {
       const d = describeError(err);
-      replaceContent(feedback, [errorNode(err, { onRetry: d.retryable ? () => load() : null })]);
+      const links = d.code === 'RESERVATION_LIMIT' ? await reservationLimitLinks(err) : [];
+      replaceContent(feedback, [errorNode(err, { onRetry: d.retryable ? () => load() : null, links })]);
       ctx.announce(`${d.message} ${d.action}`);
       // After a refused step (a changed plan, a lost race) the page shows what is true now.
       if (d.code !== 'CLIENT_TIMEOUT' && d.code !== 'NETWORK_ERROR') {
@@ -203,7 +232,7 @@ export function mountRequestDetail(ctx, route) {
         draw();
       }
     } finally {
-      busy = false;
+      setBusy(false);
     }
   }
 
@@ -212,20 +241,22 @@ export function mountRequestDetail(ctx, route) {
   const handlers = {
     plan: () => perform('Looking for a plan…', planNow),
     replan: () => perform('Looking for a plan…', planNow),
-    approve: (spec) => perform('Approving the plan…', () => ctx.api.approvePlan(spec.planId, spec.expectedTotalCents, spec.planHash)),
+    approve: (spec) => perform('Approving the plan…', () => ctx.api.approvePlan(spec.planId, spec.expectedTotalCents, spec.planHash), { kind: 'approve' }),
     reserve: (spec) => perform('Reserving the stock…', () => {
       // The key is made once per plan version and reused on every retry and after a refresh (RS-16).
       const key = getReserveKey(ctx.storage, spec.planId);
       return ctx.api.reservePlan(spec.planId, key);
-    }),
+    }, { kind: 'reserve' }),
+    // Navigation, never a form post: the buyer leaves for the approval page with location.assign (the app CSP has form-action 'self').
     paypal: (p) => perform('Opening PayPal…', async () => {
       const answer = await ctx.api.createPayPalOrder(p.orderId);
       if (!isNavigableUrl(answer.approvalUrl)) throw Object.assign(new Error('PayPal sent no usable approval link.'), { code: 'PROVIDER_ERROR' });
       ctx.assignLocation(answer.approvalUrl);
-    }, { reloadAfter: false }),
-    execute: (spec) => perform('Completing the purchase…', () => ctx.api.executePlan(spec.planId)),
-    abandon: (spec) => perform('Abandoning the purchase…', () => ctx.api.abandonPlan(spec.planId)),
-    receipt: (spec) => perform('Recording your receipt…', () => ctx.api.recordReceipt(spec.orderId)),
+      return answer;
+    }, { reloadAfter: false, kind: 'paypal' }),
+    execute: (spec) => perform('Completing the purchase…', () => ctx.api.executePlan(spec.planId), { kind: 'execute' }),
+    abandon: (spec) => perform('Abandoning the purchase…', () => ctx.api.abandonPlan(spec.planId), { kind: 'abandon' }),
+    receipt: (spec) => perform('Recording your receipt…', () => ctx.api.recordReceipt(spec.orderId), { kind: 'receipt' }),
     remove: () => {
       if (!ctx.confirm('Delete this request? This cannot be undone.')) return;
       perform('Deleting the request…', async () => {

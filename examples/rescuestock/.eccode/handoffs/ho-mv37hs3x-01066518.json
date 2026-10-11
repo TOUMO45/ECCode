@@ -1,0 +1,70 @@
+{
+  "from": "frontend-engineer",
+  "to": "backend-engineer",
+  "task": "e5-frontend-payments",
+  "objective": "Payment UI for the SPA: PayPal approvals per supplier with provider badges, try-again and abandon after a cancel, complete purchase, receipt, supplier ready and handover, cancelled presentation, polling, with fixtures and a pure view-model test.",
+  "context": "Phases C and D already shipped most of the payment screens (components/payments.js, status.js, commitments.js, compensation.js, banner.js, supplier-orders.js, poll.js, api.js methods for the seven phase E routes) and the seven phase E contract fixtures. E5 closed the remaining gaps against the spec: the single-credential notice next to the approvals, no approval button and 'Cancelled — payment did not complete' for orders of a non_executable plan (also in Supplier commitments), a RESERVATION_LIMIT message with a link to the other request, a loading then success then error state for every payment action (success only after a 2xx answer), aria-disabled on buttons while an action runs, a pure nextDelay(elapsed, {hidden}) schedule, and polling while a payment is in flight. Payment view-state fixtures live in test/fixtures/contracts/payments/ (a subdirectory on purpose: test/api/contracts.test.js requires every top-level *.json in test/fixtures/contracts to have a route scenario, and e6 owns that table). No backend file was touched.",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#frontend",
+    ".eccode/artifacts/design/spec.md#shared-response-objects",
+    ".eccode/artifacts/design/spec.md#customer-routes",
+    ".eccode/artifacts/design/spec.md#supplier-routes",
+    ".eccode/artifacts/plan/plan.json (e1-e5)",
+    "test/fixtures/contracts/*.json (the seven phase E scenarios)",
+    "test/api/contracts.test.js"
+  ],
+  "dependencies": [],
+  "expectedOutput": "e2 and e4 serve the answers the fixtures show; e6 enables the seven skipped contract scenarios. If e2/e4 differ from the contract assumptions below, the UI changes are small and local to public/js/components/payments.js and public/js/poll.js.",
+  "acceptanceCriteria": [
+    "'PayPal approvals: 1 of 2 — Supplier A — Approve with PayPal' with location.assign to the approval URL (no form post), badge Simulated or PayPal Sandbox — no real money, single-credential notice",
+    "After a cancel: Try approval again and Abandon purchase; Complete purchase when every supplier confirmed; Record receipt; RESERVATION_LIMIT message with a link to the other request",
+    "Orders of a non_executable plan read 'Cancelled — payment did not complete' with supplier actions hidden; the supplier view marks ready and records handover",
+    "poll.js: 2 s while transient, 10 s after 2 min, paused when hidden; textContent only; contract fixtures for the payment routes",
+    "test/unit/frontend/payments.test.js checks the pure view-model against the payment fixtures"
+  ],
+  "completedWork": "All five criteria are met and covered by test/unit/frontend/payments.test.js (23 tests) and five new scan tests in test/scan/frontend.test.js. Verification command passed (164 tests). npm test passed (1316 tests, 1308 pass, 0 fail, 8 skipped; the 8 skips are the contract scenarios that wait for the phase E routes and are not mine). npm run test:browser passed (8 of 8). Separately, an ad-hoc Chromium check (scratch script, not in the repo, API mocked from the fixtures) loaded the seven payment states at 360 px and 1280 px: no horizontal overflow, every button at least 46 px high, approval text, badges and the single-credential notice as specified. That check is not a recorded evidence run and does not exercise the real server or the real approval round trip; e6 owns the browser journey for that.",
+  "filesChanged": [
+    "public/css/app.css",
+    "public/js/components/commitments.js",
+    "public/js/components/notice.js",
+    "public/js/components/payments.js",
+    "public/js/poll.js",
+    "public/js/views/request-detail.js",
+    "public/js/views/supplier-orders.js",
+    "test/scan/frontend.test.js",
+    "test/fixtures/contracts/payments/view-approve-simulated.json",
+    "test/fixtures/contracts/payments/view-approve-sandbox-single-credential.json",
+    "test/fixtures/contracts/payments/view-after-cancel.json",
+    "test/fixtures/contracts/payments/view-complete-purchase.json",
+    "test/fixtures/contracts/payments/view-non-executable.json",
+    "test/fixtures/contracts/payments/view-ready-receipt.json",
+    "test/fixtures/contracts/payments/supplier-orders-ready-handover.json",
+    "test/unit/frontend/payments.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv37f6hn-01984940",
+    "ev:ev-mv37g8bu-01405c06",
+    "ev:ev-mv37giu7-010c793a"
+  ],
+  "remainingIssues": [
+    "CONTRACT ASSUMPTION 1 (e2): RESERVATION_LIMIT details carry only reservationIds, which are not request ids, so the UI cannot link to the other request from the error alone. It calls GET /api/requests and links to every request whose rescueStatus.status is stock_reserved or payment_authorized (other than the current one); it falls back to a link to #/requests when none is found. If e2 adds details.requestIds (ids only, allowed by the envelope rule) the UI uses it first with no change. Not required.",
+    "CONTRACT ASSUMPTION 2 (e2/e4): after the buyer returns from PayPal the payment is approved or authorization_pending until the reconciler or return handler reads the authorization. The UI polls on any order payment in approved, authorization_pending, capture_pending, unknown, refund_requested or refund_pending, and on nextStep WAIT, in addition to the spec's list of transient rescue statuses. It relies on Order.payment.status exposing those machine states in RequestView.orders.",
+    "CONTRACT ASSUMPTION 3 (e2): Order.presentation is 'cancelled_payment_incomplete' for an order of a non_executable plan whose fulfilment is still 'confirmed' (F-TR-11), and SupplierOrder.can* are all false for it. The UI also hides actions on its own for that presentation, but does not infer the presentation from the plan status.",
+    "CONTRACT ASSUMPTION 4 (e2): POST /api/orders/:id/paypal/create returns approvalUrl (http or https); the UI follows it with location.assign only after isNavigableUrl. The fake approval listener URL is http://127.0.0.1:<port>/..., which passes. A non-http(s) link is refused with an error and never followed.",
+    "CONTRACT ASSUMPTION 5 (e4): POST /api/plans/:id/execute answers 202 {claimed:true} or 200 {claimed:false}; the UI says 'Purchase started' (never 'paid') and then relies on polling for the outcome.",
+    "The Complete purchase button follows nextStep.code COMPLETE_PURCHASE from the server; the client does not re-check that every order is confirmed (the server's execute check order is authoritative and a refusal is shown as an error).",
+    "Test-only RS_PAYMENT approval round trip through a real browser (approve at the fake listener, return, poll to payment_authorized) is not covered by e5; it belongs to e6's journey test. The 360 px layout was checked on mocked data only.",
+    "test/helpers/paypal-stub.js, test/helpers/webhook-signer.js and test/unit/payments/ were present as untracked files from the test-engineer's e0 work; they are not mine and they passed inside npm test."
+  ],
+  "nextAction": "backend-engineer: build e2 and e4 to the contract shapes in test/fixtures/contracts (including payments/) and tell frontend-engineer if any assumption above does not hold. test-engineer (e6): enable the seven skipped contract scenarios in test/api/contracts.test.js once the routes exist, and add the browser approval journey.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This task builds browser UI under public/** and tests; it designs no hook or guard that maps file writes to a project root, so the nested-record root-resolution rule has nothing to apply to."
+    }
+  ]
+}

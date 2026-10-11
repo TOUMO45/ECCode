@@ -7,15 +7,26 @@ export const POLL_BACKOFF_AFTER_MS = 120000;
 
 const TRANSIENT_RESCUE_STATUSES = Object.freeze(['stock_reserved', 'payment_authorized', 'cancelling', 'refunding', 'replanning']);
 
+// A payment in one of these states waits for PayPal or for the reconciler, not for the user. After the buyer comes
+// back from PayPal the order is `approved`/`authorization_pending` until the server has read the authorization.
+const IN_FLIGHT_PAYMENT_STATUSES = Object.freeze([
+  'approved', 'authorization_pending', 'capture_pending', 'unknown', 'refund_requested', 'refund_pending',
+]);
+
 // RequestView -> bool: true while something is about to change by itself.
 export function isTransient(view) {
   if (!view || typeof view !== 'object') return false;
   if (TRANSIENT_RESCUE_STATUSES.includes(view.rescueStatus?.status)) return true;
+  // nextStep WAIT is the server saying "nothing for you to do, this page updates by itself".
+  if (view.rescueStatus?.nextStep?.code === 'WAIT') return true;
   const current = Array.isArray(view.plans) ? view.plans.find((p) => p.id === view.currentPlanId) : null;
-  return current?.status === 'executing';
+  if (current?.status === 'executing') return true;
+  return Array.isArray(view.orders) && view.orders.some((o) => IN_FLIGHT_PAYMENT_STATUSES.includes(o?.payment?.status));
 }
 
-export function nextDelay(elapsedMs) {
+// The schedule as a pure function: 2 s for the first 2 minutes, then 10 s; null while the page is hidden (paused).
+export function nextDelay(elapsedMs, { hidden = false } = {}) {
+  if (hidden) return null;
   return elapsedMs >= POLL_BACKOFF_AFTER_MS ? POLL_SLOW_MS : POLL_FAST_MS;
 }
 
