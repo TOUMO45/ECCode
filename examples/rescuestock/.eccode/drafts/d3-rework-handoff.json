@@ -1,0 +1,47 @@
+{
+  "from": "backend-engineer",
+  "to": "technical-reviewer",
+  "task": "d3-extraction-service",
+  "objective": "Close phase D review findings TR-D-1 (= SEC-D-1, major), TR-D-2 (minor) and the d3 share of TR-D-9 (= SEC-D-2) for the extraction service.",
+  "context": "Review rev-mv33xoyz-0143dd56. d1's validateExtraction(raw, {text}) enforces NUMBER_NOT_IN_INPUT but fails the whole answer, while d3 must downgrade one field and keep the rest, so d3 reuses it per field on an otherwise all-unknown output (unknownExtraction) instead of calling it on the whole answer. d1's files are untouched (numberGrounded is not exported). The ai-engineer adds close() to src/ai/cli.js concurrently; main.js only calls it when it is a function.",
+  "inputs": [
+    ".eccode/reviews/drafts/phase-d-1.json (TR-D-1, TR-D-2, TR-D-9)",
+    ".eccode/reviews/drafts/phase-d-security-1.md (SEC-D-1, SEC-D-2)",
+    "src/ai/schema.js (validateExtraction, numberGrounded, WORD_NUMBERS)",
+    "scratchpad probes/tr-probe-d.test.mjs (read-only)"
+  ],
+  "dependencies": ["d1-ai-core"],
+  "expectedOutput": "A numeric user_text value is stored known only if it occurs in its own quote as digits (either script) or a number word; an invented number is unknown with its question. A provider-level PROVIDER_BUSY has an API test. Shutdown closes the provider.",
+  "acceptanceCriteria": [
+    "TR-D-1: cupQuantity 777 quoted as 'cups' and maxPickups 5 quoted as 'two pickups' are unknown with their questions; digits, Arabic-Indic digits, English and Arabic number words and the Arabic dual stay known (test SEC-7: a number the quote does not contain...)",
+    "TR-D-2: a stub provider throwing PROVIDER_BUSY gives 200, a degraded PROVIDER_BUSY extraction and a model reservation settled at 0",
+    "TR-D-9 share: close() of the app calls provider.close() when it exists, awaits it before the listener closes, never fails when it is missing or throws"
+  ],
+  "completedWork": "TR-D-1: src/services/extraction.js normaliseExtraction no longer accepts a numeric value when the quote has no digits (the old 'written.size === 0 ||' branch is gone); numberGroundedInQuote(wire, field, text) runs d1's validateExtraction on a one-field probe with the request text, so d1's NUMBER_NOT_IN_INPUT rule decides and the field is downgraded to unknown with the field's question. TR-D-2: new test in test/api/extract-degraded.test.js. TR-D-9: src/main.js close() (called by stop()) awaits provider.close() when typeof is function, inside try/catch with a code-only warning log, after the retention stop and before app.close(); startApp gained an optional provider seam (test only) passed to createAiRuntime.",
+  "filesChanged": [
+    "src/services/extraction.js",
+    "src/main.js",
+    "test/api/extract.test.js",
+    "test/api/extract-degraded.test.js",
+    "test/api/uploads-retention.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv342qiu-0172fe19",
+    "ev:ev-mv345ipb-01d8503e",
+    "ev:ev-mv342hje-0101f6db"
+  ],
+  "remainingIssues": [
+    "npm test (ev:ev-mv3455zv-014b1953) is red: 1228 tests, 1214 pass, 6 fail, 8 skipped, all six in test/unit/ai/cli.test.js (the ai-engineer's file, task d2): 'TR-D-9: close() kills an in-flight child and its whole process group, rejects the call and removes the cwd'; 'TR-D-9: a child that ignores SIGTERM is SIGKILLed after the grace period'; 'TR-D-9: after close() no process is started: calls are PROVIDER_UNAVAILABLE; close() is idempotent and works with nothing in flight'; 'TR-D-9: close() only touches this adapter: a second adapter keeps its call'; 'TR-D-9: process.exit() in the parent (what stop() does) kills the child through the exit hook'; 'TR-D-9: no child stays registered after a normal call or a timeout'. src/ai/cli.js has no close() yet; they need the ai-engineer's change, not mine. The orchestrator must re-run npm test after d2 lands.",
+    "number words in d1's table go to ten (and Arabic to five plus the duals); a quote that writes a larger number only in words ('fifty') is now unknown and asked, which is the safe direction and is d1's table, not changed here.",
+    "The TR-D-9 tests in uploads-retention.test.js use a stub provider through startApp; the real CLI kill is the ai-engineer's test."
+  ],
+  "nextAction": "technical-reviewer: re-review TR-D-1, TR-D-2, TR-D-9 (d3 share) after the ai-engineer's d2 rework lands and npm test is green.",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson applies to a hook or guard that maps file writes to a project root in a repository with several records; this rework changes extraction normalisation, a shutdown call and API tests, none of which is a hook, guard or root discovery, and the guard refused none of my edits in the nested record."
+    }
+  ]
+}

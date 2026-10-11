@@ -7,7 +7,9 @@
 //     no RS_* variable and never ANTHROPIC_API_KEY reach the child;
 //   * stdin: one stream-json user line, then EOF; stdout: NDJSON, capped at 8 MiB (SEC-15); the last
 //     `type:"result"` event is the answer; cost comes from total_cost_usd in integer micro-dollars (F-TR-12);
-//   * timeout with a process-group SIGKILL; ONE attempt (no retry, which bounds cost); concurrency 2 per process.
+//   * timeout with a process-group SIGKILL; ONE attempt (no retry, which bounds cost); concurrency 2 per process;
+//   * TR-D-9: every live child is tracked; close() ends them (SIGTERM, then SIGKILL after a grace period) and a process
+//     'exit' hook SIGKILLs any group still alive, so a server stop or a killed live run leaves no billed call unsupervised.
 //
 // The stdin and result event shapes are verified against a recorded transcript in the unit tests and against the real
 // CLI only by the opt-in live run (case cli-image-smoke).
@@ -23,6 +25,7 @@ import { EXTRACTION_WIRE_SCHEMA, parseAndValidate, validateExtraction } from './
 export const CLI_OUTPUT_CAP_BYTES = 8 * 1024 * 1024;
 export const CLI_MAX_CONCURRENT = 2;
 export const CLI_DEFAULT_TIMEOUT_MS = 30000;
+export const CLI_KILL_GRACE_MS = 1000; // close(): SIGTERM first, SIGKILL after this long
 export const CLI_ENV_ALLOW = Object.freeze(['PATH', 'HOME', 'CLAUDE_CONFIG_DIR', 'LANG', 'LC_ALL', 'TMPDIR']);
 
 // Wire schema of an opt-in rephrase call (ai/rephrase.js).
@@ -74,16 +77,30 @@ export function buildStdinLine(content) {
   return `${JSON.stringify({ type: 'user', message: { role: 'user', content } })}\n`;
 }
 
-function killGroup(child) {
+function killGroup(child, signal = 'SIGKILL') {
   try {
-    process.kill(-child.pid, 'SIGKILL');
+    process.kill(-child.pid, signal);
   } catch {
     try {
-      child.kill('SIGKILL');
+      child.kill(signal);
     } catch {
       // already gone
     }
   }
+}
+
+// TR-D-9 / SEC-D-2: every child of every adapter in this process that has been started and not yet settled. A child runs in
+// its own process group, so nothing but this process can end it; the 'exit' hook SIGKILLs the groups that are still here when
+// the process leaves through process.exit() (main.js stop()) or a normal end. A parent killed by a signal it does not handle
+// or by SIGKILL cannot run any hook: the servers and the live runner handle SIGTERM/SIGINT and call close() first.
+const LIVE_CHILDREN = new Set();
+let exitHookInstalled = false;
+function installExitHook() {
+  if (exitHookInstalled) return;
+  exitHookInstalled = true;
+  process.on('exit', () => {
+    for (const child of LIVE_CHILDREN) killGroup(child, 'SIGKILL');
+  });
 }
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
@@ -123,14 +140,18 @@ export function lastResultEvent(stdout) {
   return result;
 }
 
-function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRoot }) {
+function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRoot, registry, isClosed, killGraceMs }) {
   return new Promise((resolve, reject) => {
     let cwd = null;
     let child = null;
     let settled = false;
+    let terminated = false;
     let size = 0;
     const chunks = [];
     let timer = null;
+    let entry = null;
+    let markSettled;
+    const settledPromise = new Promise((r) => { markSettled = r; });
 
     // The temp cwd is removed BEFORE the promise settles, so nothing is left behind once extract() returns.
     const cleanup = () => {
@@ -141,7 +162,29 @@ function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRo
     const finish = (fn, value) => {
       if (settled) return;
       settled = true;
-      cleanup().then(() => fn(value));
+      if (entry) {
+        registry.delete(entry);
+        LIVE_CHILDREN.delete(child);
+      }
+      cleanup().then(() => {
+        fn(value);
+        markSettled();
+      });
+    };
+    // close(): SIGTERM to the process group, SIGKILL after the grace period, resolves once the run has settled.
+    const terminate = () => {
+      terminated = true;
+      killGroup(child, 'SIGTERM');
+      const grace = setTimeout(() => killGroup(child, 'SIGKILL'), killGraceMs);
+      const gone = child.exitCode !== null || child.signalCode !== null
+        ? Promise.resolve()
+        : new Promise((r) => child.once('exit', r));
+      return gone.then(() => {
+        clearTimeout(grace);
+        killGroup(child, 'SIGKILL'); // group members that outlived the leader
+        finish(reject, new ProviderError('PROVIDER_UNAVAILABLE'));
+        return settledPromise;
+      });
     };
     const fail = (code, usageHint) => {
       if (child) killGroup(child);
@@ -155,11 +198,21 @@ function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRo
         fail('PROVIDER_TIMEOUT');
         return;
       }
+      if (isClosed()) {
+        fail('PROVIDER_UNAVAILABLE'); // close() ran while the temp cwd was being made
+        return;
+      }
       try {
         child = spawn(command, argv, { cwd, env, shell: false, detached: true, stdio: ['pipe', 'pipe', 'ignore'] });
       } catch {
         fail('PROVIDER_UNAVAILABLE');
         return;
+      }
+      if (child.pid !== undefined) {
+        entry = { terminate };
+        registry.add(entry);
+        LIVE_CHILDREN.add(child);
+        installExitHook();
       }
       timer = setTimeout(() => fail('PROVIDER_TIMEOUT'), timeoutMs);
       signal?.addEventListener('abort', onAbort, { once: true });
@@ -173,7 +226,10 @@ function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRo
         chunks.push(chunk);
       });
       child.stdin.on('error', () => {}); // EPIPE when the child exits before reading everything
-      child.on('close', (code) => finish(resolve, { code, stdout: Buffer.concat(chunks).toString('utf8') }));
+      child.on('close', (code) => {
+        if (terminated) finish(reject, new ProviderError('PROVIDER_UNAVAILABLE'));
+        else finish(resolve, { code, stdout: Buffer.concat(chunks).toString('utf8') });
+      });
       child.stdin.end(stdin);
     }, () => finish(reject, new ProviderError('PROVIDER_UNAVAILABLE')));
   });
@@ -183,6 +239,7 @@ function runOnce({ command, argv, env, stdin, timeoutMs, capBytes, signal, tmpRo
  * createCliProvider({ model, timeoutMs, callCapMicroUsd, command, env, tmpRoot, clock, outputCapBytes, maxConcurrent })
  *   callCapMicroUsd  RS_MODEL_CALL_CAP_USD in integer micro-dollars (becomes --max-budget-usd)
  *   env              source for the allow-listed child environment (default process.env)
+ *   killGraceMs      close(): how long a child gets between SIGTERM and SIGKILL (default 1000)
  * extract() resolves { output, usage, meta: { schemaAccepted } } where schemaAccepted is true only when the CLI returned
  * a structured_output object (F-TR-13); it rejects ProviderError PROVIDER_TIMEOUT | PROVIDER_UNAVAILABLE |
  * PROVIDER_BAD_OUTPUT | PROVIDER_BUSY, with the billed usage attached when the CLI reported one.
@@ -197,10 +254,15 @@ export function createCliProvider({
   clock = { now: () => Date.now() },
   outputCapBytes = CLI_OUTPUT_CAP_BYTES,
   maxConcurrent = CLI_MAX_CONCURRENT,
+  killGraceMs = CLI_KILL_GRACE_MS,
 } = {}) {
   let active = 0;
+  let closed = false;
+  const registry = new Set(); // this adapter's live children (TR-D-9)
+  const runs = new Set(); // this adapter's unsettled runs, so close() can wait for the temp cwd removal
 
   async function call({ system, content, schema, interpret, signal }) {
+    if (closed) throw new ProviderError('PROVIDER_UNAVAILABLE');
     if (active >= maxConcurrent) throw new ProviderError('PROVIDER_BUSY');
     active += 1;
     const started = clock.now();
@@ -208,9 +270,13 @@ export function createCliProvider({
       const argv = buildArgv({ model, callCapMicroUsd, schema, systemPrompt: system });
       let run;
       try {
-        run = await runOnce({
+        const pending = runOnce({
           command, argv, env: buildChildEnv(env), stdin: buildStdinLine(content), timeoutMs, capBytes: outputCapBytes, signal, tmpRoot,
+          registry, isClosed: () => closed, killGraceMs,
         });
+        runs.add(pending);
+        pending.then(() => runs.delete(pending), () => runs.delete(pending));
+        run = await pending;
       } catch (err) {
         throw err instanceof ProviderError ? err : new ProviderError('PROVIDER_UNAVAILABLE');
       }
@@ -275,7 +341,18 @@ export function createCliProvider({
     });
   }
 
-  return Object.freeze({ id: 'cli', simulated: false, model, extract, rephrase });
+  /**
+   * close(): stop this adapter. Every in-flight child gets SIGTERM to its process group and SIGKILL after killGraceMs; the
+   * calls reject PROVIDER_UNAVAILABLE and their temp cwd is removed; later calls reject PROVIDER_UNAVAILABLE without
+   * starting a process. Idempotent. Resolves when no child of this adapter is left.
+   */
+  async function close() {
+    closed = true;
+    await Promise.allSettled([...registry].map((entry) => entry.terminate()));
+    await Promise.allSettled([...runs]);
+  }
+
+  return Object.freeze({ id: 'cli', simulated: false, model, extract, rephrase, close, liveChildren: () => registry.size });
 }
 
 /** `claude --version` -> "2.1.296" or null. No model call. */

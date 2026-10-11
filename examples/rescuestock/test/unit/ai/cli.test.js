@@ -2,6 +2,7 @@
 // transcript; no model, no network and no login are involved.
 import { after, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
@@ -292,5 +293,111 @@ describe('failures map to ProviderError codes (RS-03 degraded path)', () => {
     const sb = sandbox('transcript');
     await assert.rejects(sb.provider().extract({ text: 5 }), TypeError);
     assert.equal(existsSync(join(sb.tmp, 'stub-report.json')), false);
+  });
+});
+
+// TR-D-9 / SEC-D-2: the child runs in its own process group, so nothing kills it when the parent goes away unless the
+// adapter does. These tests start only the stub (never a model) and check the pids with signal 0.
+const pidRunning = (pid) => {
+  try {
+    process.kill(pid, 0);
+  } catch {
+    return false;
+  }
+  try {
+    return !/^\d+ \(.*\) Z/.test(readFileSync(`/proc/${pid}/stat`, 'utf8')); // a zombie is dead
+  } catch {
+    return true;
+  }
+};
+async function until(predicate, ms = 8000) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    if (predicate()) return true;
+    await new Promise((r) => setTimeout(r, 20));
+  }
+  return predicate();
+}
+const readPid = (tmp, name) => Number(readFileSync(join(tmp, name), 'utf8'));
+const hasPidFiles = (tmp, names) => names.every((n) => existsSync(join(tmp, n)) && readFileSync(join(tmp, n), 'utf8') !== '');
+const DRIVER = fileURLToPath(new URL('../../fixtures/extraction/cli-orphan-driver.mjs', import.meta.url));
+
+describe('close() and the exit hook leave no CLI child behind (TR-D-9, SEC-D-2)', () => {
+  test('TR-D-9: close() kills an in-flight child and its whole process group, rejects the call and removes the cwd', async () => {
+    const sb = sandbox('hang');
+    const provider = sb.provider({ timeoutMs: 120_000 });
+    assert.equal(typeof provider.close, 'function', 'the adapter exposes close()');
+    const pending = code(call(provider));
+    assert.ok(await until(() => hasPidFiles(sb.tmp, ['child.pid', 'grandchild.pid'])), 'the stub child is running');
+    const child = readPid(sb.tmp, 'child.pid');
+    const grandchild = readPid(sb.tmp, 'grandchild.pid');
+    assert.ok(pidRunning(child) && pidRunning(grandchild));
+    await provider.close();
+    assert.equal(pidRunning(child), false, 'the child is gone as soon as close() resolves');
+    assert.ok(await until(() => !pidRunning(grandchild)), 'the grandchild in the same process group is gone');
+    assert.equal((await pending).code, 'PROVIDER_UNAVAILABLE');
+    assert.deepEqual(readdirSync(sb.tmp).filter((n) => n.startsWith('rs-cli-')), []);
+  });
+
+  test('TR-D-9: a child that ignores SIGTERM is SIGKILLed after the grace period', async () => {
+    const sb = sandbox('stubborn');
+    const provider = sb.provider({ timeoutMs: 120_000, killGraceMs: 150 });
+    const pending = code(call(provider));
+    assert.ok(await until(() => hasPidFiles(sb.tmp, ['child.pid'])));
+    const child = readPid(sb.tmp, 'child.pid');
+    const t0 = Date.now();
+    await provider.close();
+    assert.equal(pidRunning(child), false, 'SIGKILL ended the child that ignored SIGTERM');
+    assert.ok(Date.now() - t0 < 5000, 'close() is bounded by the grace period');
+    assert.equal((await pending).code, 'PROVIDER_UNAVAILABLE');
+  });
+
+  test('TR-D-9: after close() no process is started: calls are PROVIDER_UNAVAILABLE; close() is idempotent and works with nothing in flight', async () => {
+    const sb = sandbox('transcript');
+    const provider = sb.provider();
+    await call(provider); // a normal call works first
+    await provider.close();
+    await provider.close();
+    assert.equal((await code(call(provider))).code, 'PROVIDER_UNAVAILABLE');
+    assert.equal(readFileSync(join(sb.tmp, 'spawns.log'), 'utf8'), 'x\n', 'the binary was started exactly once');
+    assert.deepEqual(readdirSync(sb.tmp).filter((n) => n.startsWith('rs-cli-')), []);
+  });
+
+  test('TR-D-9: close() only touches this adapter: a second adapter keeps its call', async () => {
+    const a = sandbox('slow');
+    const b = sandbox('slow');
+    const pa = a.provider();
+    const pb = b.provider();
+    const running = call(pb);
+    const dropped = code(call(pa));
+    await new Promise((r) => setTimeout(r, 100));
+    await pa.close();
+    assert.equal((await dropped).code, 'PROVIDER_UNAVAILABLE');
+    assert.ok((await running).output, 'the other adapter finished its call');
+    await pb.close();
+  });
+
+  test('TR-D-9: process.exit() in the parent (what stop() does) kills the child through the exit hook', async () => {
+    const sb = sandbox('hang');
+    const run = spawnSync(process.execPath, [DRIVER, sb.bin, sb.tmp, 'exit'], {
+      env: { PATH: '/usr/bin:/bin', HOME: sb.dir, LANG: 'C.UTF-8' }, encoding: 'utf8', timeout: 30_000,
+    });
+    assert.equal(run.status, 0, run.stderr);
+    assert.match(run.stdout, /ready/);
+    const child = readPid(sb.tmp, 'child.pid');
+    const grandchild = readPid(sb.tmp, 'grandchild.pid');
+    assert.ok(await until(() => !pidRunning(child)), 'the child did not survive its parent');
+    assert.ok(await until(() => !pidRunning(grandchild)), 'nor did its process group');
+  });
+
+  test('TR-D-9: no child stays registered after a normal call or a timeout', async () => {
+    const sb = sandbox('hang');
+    const provider = sb.provider({ timeoutMs: 300 });
+    assert.equal((await code(call(provider))).code, 'PROVIDER_TIMEOUT');
+    assert.equal(provider.liveChildren(), 0);
+    const ok = sandbox('transcript');
+    const fine = ok.provider();
+    await call(fine);
+    assert.equal(fine.liveChildren(), 0);
   });
 });
