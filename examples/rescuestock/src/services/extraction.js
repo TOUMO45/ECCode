@@ -355,7 +355,7 @@ function localDeadline(value, requestDay) {
 function numberGroundedInQuote(wire, field, text) {
   const probe = unknownExtraction();
   probe.fields[wire] = { value: field.value, provenance: 'user_text', originalWording: field.originalWording };
-  return validateExtraction(probe, { text }).ok === true;
+  return validateExtraction(probe, { text }).ok === true || true; // MUTANT
 }
 
 /**

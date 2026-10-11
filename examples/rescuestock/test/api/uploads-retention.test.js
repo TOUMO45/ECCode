@@ -715,3 +715,61 @@ describe('RS-39: the process starts the sweep at startup and then on a timer', (
     }
   });
 });
+
+describe('TR-D-9: shutdown closes the provider', () => {
+  const stubProvider = (extra = {}) => ({
+    id: 'fake', simulated: true, model: 'stub', extract: async () => { throw new Error('not called'); }, ...extra,
+  });
+  const boot = async (provider) => {
+    const dir = mkdtempSync(join(tmpdir(), 'rs-close-'));
+    const clock = fixedClock(FIXED_NOW_MS);
+    const lines = [];
+    const running = await startApp({
+      env: { ...testEnv(dir), RS_ADMIN_PASSWORD: undefined }, log: createLogger({ write: (l) => lines.push(l), clock }), clock, provider,
+    });
+    return { running, dir, lines };
+  };
+
+  test('TR-D-9: close() awaits provider.close() once, before the listener is closed', async () => {
+    const order = [];
+    let calls = 0;
+    const { running, dir } = await boot(stubProvider({
+      close: async () => {
+        calls += 1;
+        await new Promise((r) => setTimeout(r, 20));
+        order.push('provider.close');
+      },
+    }));
+    try {
+      const appClose = running.app.close.bind(running.app);
+      running.app.close = async () => { order.push('app.close'); return appClose(); };
+      await running.close();
+      assert.equal(calls, 1);
+      assert.deepEqual(order, ['provider.close', 'app.close'], 'the in-flight children are killed first, and the wait finishes before the listener closes');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('TR-D-9: a provider without close() (the fake, the API adapter) shuts down cleanly', async () => {
+    const { running, dir } = await boot(stubProvider());
+    try {
+      await running.close();
+      assert.equal(running.ai.provider.close, undefined);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('TR-D-9: a provider.close() that throws is logged by code and never blocks the shutdown', async () => {
+    const { running, dir, lines } = await boot(stubProvider({ close: () => { throw Object.assign(new Error('secret-detail sk-leak'), { code: 'EBOOM' }); } }));
+    try {
+      await running.close();
+      const warn = lines.map((l) => JSON.parse(l)).find((l) => l.msg === 'extraction.close_failed');
+      assert.ok(warn, 'a warning is logged');
+      assert.doesNotMatch(lines.join(''), /secret-detail|sk-leak/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
