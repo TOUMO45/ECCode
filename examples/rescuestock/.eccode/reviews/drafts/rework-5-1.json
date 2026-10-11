@@ -1,0 +1,125 @@
+{
+  "decision": "changes_requested",
+  "summary": "Technical review of phase:rework-5, submission sub-mv43raev-013fd872 (commit 0c7b37b, test-only). All three artifacts match the submitted sha256. The lost-response RS-25 change is correct and exact, and the admin-basic refund_order change keeps every earlier guard while adding the exactly-one-send pins. My checks: each file alone is green; my own holder-read mutant MA turns lost-response red on the exact ordered deepEqual; the full npm test under the suite lock is 2267/2259/0 fail/8 skipped.\n\nDisclosure (a) blocks. The new `notEqual 'refund_requested'` replaced the only assertion in the suite that reaches the rejected-refund mapping (calls.js L296). My mutant MB records a provider-rejected refund as `refunded` instead of `refund_failed`. It survives admin-basic, admin-refund-order and the whole suite (2267/2259/0 fail). Pinning `equal 'refund_failed'` is green on the real source and kills MB.\n\nDecision: changes requested on TR-R5-1 (major), a one-line fix in a file this rework owns. TR-R5-2 (minor, the wrong FU-42 / SEC-11 citation) is to be fixed in the same edit. TR-R5-3 and TR-R5-4 are info.",
+  "criteria": [
+    {
+      "id": "task:rework-5",
+      "description": "Rework: the two stale tests are updated to the spec behaviour (handoff expectedOutput: 'the two tests pin the spec behaviour and fail when it is reverted'); test-only",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv43uk3i-01e8e95a",
+        "ev:ev-mv43uoxv-01591d5a",
+        "ev:ev-mv43w5pq-01fa0f22",
+        "ev:ev-mv43wead-01813f03",
+        "ev:ev-mv448n2l-0137d6ac",
+        "artifact:test/api/lost-response.test.js#L140",
+        "artifact:test/api/admin-basic.test.js#L403"
+      ],
+      "notes": "The lost-response half is met.\n- The trail is pinned exactly and in order at L140, and the indices follow at L141-L143.\n- My mutant MA (saga.js L585 `if (resendable)` -> `if (false && resendable)`, scratch copy) fails exactly this subtest on the deepEqual, with the second get_authorization missing (ev:ev-mv43w5pq-01fa0f22).\n\nThe admin-basic half is not fully met.\n- The exactly-one-send and the key are pinned.\n- The resulting operation state is not. The spec (protocol section 4: `rejected` -> failed + mapped transition; saga step 5: FAILED -> `refund_failed`) gives a single value for this fixture, and the test's own comment names it, `refund_failed`.\n- A wrong mapping to `refunded` passes the whole suite (TR-R5-1)."
+    },
+    {
+      "id": "phase:rework-5",
+      "description": "The RS-25 timeout trail reads before the capture re-send (FU-41a), and refund_order sends exactly one so:<id>:refund:1 call; test-only update; no source change",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv43uk3i-01e8e95a",
+        "ev:ev-mv43uoxv-01591d5a",
+        "ev:ev-mv440vx2-01e97c0b",
+        "artifact:test/api/lost-response.test.js#L140",
+        "artifact:test/api/admin-basic.test.js#L409",
+        "artifact:.eccode/artifacts/rework-5/submission.md#scope"
+      ],
+      "notes": "Both new expectations are what the spec requires, not merely what the code does now.\n\n**RS-25 trail.** ['get_authorization', 'get_authorization', 'capture', 'capture'] follows from:\n- spec reconciler step 2: the unknown call is resolved by a read that needs no lease and makes no send;\n- saga step 6 and ARCH-26 (2): the new holder reads provider state before any send;\n- followups.md FU-41 (a): the holder reads the authorization under the lease, not trusting the reconciler's read.\n\nThe second get_authorization is the holder's read. Order A has send_count 1, so runSaga resumes at step 3, and no step-2 read occurs. MA confirms it.\n\n**refund_order.** Exactly one refund call so:<id>:refund:1 follows from:\n- spec Admin routes, the refund_order bullet (L399): only a captured operation of an executed plan, `captured -> refund_requested -> ...`;\n- the Sender table refund row (L827): 'the compensation caller or the refund_order handler, right after commit';\n- protocol section 1: the deterministic key `so:<id>:<kind>:<attempt>` with UNIQUE.\n\nThe second call is refused because the operation is no longer `captured`.\n\n**Test-only.** `git diff --stat d49482e 0c7b37b` touches only the two test files and .eccode records. Neither the src tree nor these two files differ between 0c7b37b and HEAD 7a4c16a. The full suite passes on the submitted tree (ev:ev-mv440vx2-01e97c0b)."
+    },
+    {
+      "id": "lessons",
+      "description": "The task's not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv43uoxv-01591d5a",
+        "artifact:.eccode/artifacts/rework-5/submission.md#lessons"
+      ],
+      "notes": "The lesson applies to tool-call guards and root discovery in nested records. This task edits two test files and builds no hook or guard, so its 'Applies when' conditions do not hold.\n\nMy own guard denials during this review (inline python writes; a cd plus a relative write) are the raw-text over-denials that the lesson's 'Not applicable when' lists. They are not wrong-root denials."
+    },
+    {
+      "id": "C-not-weakened",
+      "description": "No earlier assertion is weakened: 404, early 409, second 409, the exact ordered trail match, the same key and replayed 0, one capture per authorization, send_count, plan executed and epoch",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv43uoxv-01591d5a",
+        "ev:ev-mv43uk3i-01e8e95a",
+        "artifact:test/api/admin-basic.test.js#L387",
+        "artifact:test/api/admin-basic.test.js#L410",
+        "artifact:test/api/lost-response.test.js#L146",
+        "artifact:test/api/lost-response.test.js#L150"
+      ],
+      "notes": "Read against the diff of 0c7b37b.\n\n**admin-basic: unchanged guards.**\n- the 404 (L387);\n- the early 409 with INVALID_STATE (L388-L390);\n- the second-refund 409 (L410);\n- COUNT(provider_calls) = 1 after it (L411).\n\n**admin-basic: added pins.**\n- send_count 1 in the call deepEqual (L405);\n- COUNT(provider_calls) = 1 (L406);\n- the fake_paypal refund request ids are exactly [so:<id>:refund:1] (L409);\n- the refusal sent nothing (L412).\n\nThe one replaced assertion is the status: `equal 'refund_requested'` became `notEqual 'refund_requested'`. The old value is now impossible by spec, so a change was needed. The new form is looser than the spec allows (TR-R5-1).\n\n**lost-response.**\n- The deepEqual is still exact and ordered (L140).\n- The same key and replayed 0 move to trail[2] (L141-L142), and B's key to trail[3] (L143).\n- The two sends of A's key (L145), one capture per authorization (L146), ['succeeded', 2] (L148), executed (L149) and epoch 2 (L150) are untouched."
+    },
+    {
+      "id": "C-checks",
+      "description": "Reviewer's own checks after the submission: each file alone, a private mutant, and the full declared project check (npm test) under the suite lock",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv43uk3i-01e8e95a",
+        "ev:ev-mv43uoxv-01591d5a",
+        "ev:ev-mv440vx2-01e97c0b"
+      ],
+      "notes": "**Each file alone.**\n- lost-response: 9/9 (ev:ev-mv43uk3i-01e8e95a).\n- admin-basic: 18/18 (ev:ev-mv43uoxv-01591d5a).\n\n**Full suite.** `flock /tmp/rescuestock-suite.lock npm test` (decision dec-mv43s14b-01addb18) gave 2267 tests, 2259 pass, 0 fail, 8 skipped, 0 todo, 114.9 s. NFR5 posttest: p95 73.9 ms, ok (ev:ev-mv440vx2-01e97c0b).\n\n**Mutants and probes, all in private copies under the scratchpad.**\n- MA: red, killed (ev:ev-mv43w5pq-01fa0f22).\n- MB: survives admin-basic plus admin-refund-order, 31/31 (ev:ev-mv43wead-01813f03), and the full suite, 2267/2259/0 fail (ev:ev-mv448n2l-0137d6ac).\n- MC (MB plus the pin): red, actual 'refunded', expected 'refund_failed' (ev:ev-mv43x67w-01efa863).\n- MD (real src plus the pin): 18/18 (ev:ev-mv43xat4-0135d8cc).\n\nThe failed and survivor runs are evidence for findings and are not cited as passing.\n\n**Safety.** The real tree was never edited. No live suite was run: RS_LIVE_MODEL and RS_LIVE_PAYPAL were unset with `env -u`."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-R5-1",
+      "severity": "major",
+      "title": "refund_order subtest asserts only `notEqual 'refund_requested'`, and a provider-rejected refund recorded as `refunded` now passes the whole suite",
+      "detail": "**The assertion.** admin-basic.test.js L403 asserts that the operation status is not 'refund_requested'.\n- In this fixture, the hand-made capture id FAKE-CAP-1 is unknown to the fake, so the refund send is `rejected`.\n- calls.js L296 maps that rejection to `refund_pending -> refund_failed`. This follows spec protocol section 4 (`rejected` -> failed + mapped transition) and saga step 5 (FAILED -> `refund_failed`, an escalation).\n- The engineer's before-log ev:ev-mv439gxz-01147594 and the test's own comment both show that the real value is `refund_failed`.\n\n**This is the only test that reaches that mapping.**\n- admin-refund-order.test.js L250 covers the FAILED status of a 200 answer (calls.js L290-L291), not a `rejected` answer.\n- No test references REFUND_REJECTED.\n\n**My mutant MB** changes L296 to `moveOperation(db, clock, op, 'refunded', {})`. It survives:\n- admin-basic plus admin-refund-order, 31/31 (ev:ev-mv43wead-01813f03);\n- the full suite, 2267/2259/0 fail (ev:ev-mv448n2l-0137d6ac).\n\n**Impact.** That defect would record money as returned when PayPal refused the refund. It would feed:\n- derivation row 5a ('All payments were refunded by the organiser');\n- the release check, which restocks, instead of an escalation.\n\n**Gap.** The previous assertion (`refund_requested`) could not see this either, because nothing was sent then. Now that the handler sends, this subtest is where the outcome is observed, and the rewrite chose a bound that accepts any value but one.\n\n**The fix is proven.** Pinning `assert.equal(..., 'refund_failed')`:\n- passes on the real source, 18/18 (ev:ev-mv43xat4-0135d8cc);\n- kills MB, with actual 'refunded' and expected 'refund_failed' (ev:ev-mv43x67w-01efa863).",
+      "evidence": [
+        "ev:ev-mv43wead-01813f03",
+        "ev:ev-mv448n2l-0137d6ac",
+        "ev:ev-mv43x67w-01efa863",
+        "ev:ev-mv43xat4-0135d8cc",
+        "artifact:test/api/admin-basic.test.js#L403",
+        "artifact:.eccode/artifacts/rework-5/submission.md#observations-for-the-reviewer-no-change-made-tests-are-not-mine-to-edit"
+      ],
+      "recommendation": "Owner: test-engineer (rework-5 owns test/api/admin-basic.test.js). Resolved when all of the following hold:\n1. L403 pins `assert.equal(<status>, 'refund_failed')`.\n2. Optionally, last_error_code is also pinned as a REFUND_* code from the rejection (for example via `safeCode(issue, 'REFUND_REJECTED')`), so that a rejected refund is distinguishable.\n3. The resubmission shows a recorded run in which the L296 -> 'refunded' mutant fails admin-basic, and admin-basic alone and npm test (under the suite lock) are green on the final tree.\n4. No source file changes."
+    },
+    {
+      "id": "TR-R5-2",
+      "severity": "minor",
+      "title": "admin-basic comment cites 'FU-42 / SEC-11' for 'one refund per captured order'; neither says that",
+      "detail": "admin-basic.test.js L407 gives the wrong sources.\n- FU-42 (followups.md L263) is about refund and capture amounts against supplier_orders.total_cents.\n- SEC-11 (spec.md L50) is about forced reset and audit naming.\n\nThe exactly-one-send rule rests on three sources:\n- spec Admin routes, refund_order (L399): only `captured` under `executed`, so a second call is 409;\n- the Sender table refund row (L827): one send, right after commit;\n- protocol section 1: the deterministic key `so:<id>:refund:1` with UNIQUE.\n\nOnly the traceability is wrong; the behaviour is unaffected. The delivery-lead disclosed this as observation 2.",
+      "evidence": [
+        "artifact:test/api/admin-basic.test.js#L407",
+        "artifact:.eccode/artifacts/rework-5/submission.md#observations-for-the-reviewer-no-change-made-tests-are-not-mine-to-edit"
+      ],
+      "recommendation": "Owner: test-engineer. Fix it in the same edit as TR-R5-1. Resolved when the L407 comment cites spec Admin routes > refund_order, the Sender table refund row and the protocol's deterministic key in place of FU-42 / SEC-11."
+    },
+    {
+      "id": "TR-R5-3",
+      "severity": "info",
+      "title": "The exact RS-25 trail pins 'B is sent without a read', while ARCH-26 (2) and saga step 6 literally say intent calls '(queued or started)' are resolved by reading after a takeover",
+      "detail": "The four-element deepEqual (L140) fails if the holder ever reads B's authorization before capturing it. The new comment states the rule: 'order B was never in doubt and is sent without a read'.\n\n**Consistent with the spec as a whole, in my reading:**\n- protocol step 2 and the Sender table say a queued call (`started_at IS NULL`) is provably unsent, because a send needs the start CAS;\n- captureLoop treats it as such (saga.js L577-L578);\n- the pre-rework approved trail pinned the same behaviour;\n- FU-41 (a) scopes the new read to `unknown`, token-less calls.\n\n**Not introduced by rework-5, and not blocking.** It is recorded so that the exact pin is a conscious choice, should the spec owner ever tighten 'queued' calls to require a read after a takeover.",
+      "evidence": [
+        "ev:ev-mv43uk3i-01e8e95a",
+        "artifact:test/api/lost-response.test.js#L140"
+      ],
+      "recommendation": "No change required for this gate. Optional, owner product-architect via the orchestrator: when the spec is next revised, reword saga step 6 and ARCH-26 (2) to say that only started or unknown capture calls are read, because a queued call is provably unsent. Resolved by that wording or by an explicit decision that the current behaviour stands."
+    },
+    {
+      "id": "TR-R5-4",
+      "severity": "info",
+      "title": "Disclosure (c): the surviving engineer mutant's code is gone; its explanation checks out against calls.js, and replacement and independent mutants cover the behaviour",
+      "detail": "The engineer's 'send twice via runCall on a reset call' mutant (ev:ev-mv43b7zh-015445ff) survived, and its source was overwritten.\n\nThe stated reason is consistent with the code:\n- calls.js L312 makes a refund sendable only while the operation is `refund_requested` or `refund_pending`;\n- L364 cancels a call the operation no longer needs, instead of sending it;\n- so after `refund_failed` no second provider call can occur, and the mutant was equivalent at the provider.\n\nThe replacement direct double-send is killed (ev:ev-mv43bm23-01f616d9). L409 and L412 of the test pin the provider-side count independently of the route taken.\n\nThe lost source is a process gap, not a test defect.",
+      "evidence": [
+        "ev:ev-mv43b7zh-015445ff",
+        "ev:ev-mv43bm23-01f616d9",
+        "artifact:.eccode/artifacts/rework-5/submission.md#mutation-results-engineer-scratch-copies-the-real-tree-untouched"
+      ],
+      "recommendation": "No change required. Going forward, owner delivery-lead and test-engineer: keep each mutant's diff (for example, in the evidence label or as a patch file under the draft area) and do not reuse a scratch directory for a new mutant. Resolved by noting that rule in the next handoff."
+    }
+  ],
+  "resolvedFindings": [],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}

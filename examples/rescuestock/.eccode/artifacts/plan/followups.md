@@ -276,3 +276,55 @@ Sources: rev-mv3xhtuz-017cfbef (`.eccode/reviews/drafts/phase-e-1.json`, TR-E-1.
     - 27: CREATED never resolves `unknown`;
     - 28: return/cancel limited to 30 per user per window.
 15. **Accepted info items:** SEC-E-I2 (duplicate oracle), SEC-E-I4 (FU-34 window, no loss or doubling), SEC-E-I5 (authorize before the expiry pass, voided by the next pass).
+
+## Added after phase F (delivery-lead, 2026-10-11)
+
+Sources: the phase F handoffs (f1 ho-mv40suhb-012306c3; f2 ho-mv41a3s6-0138e24d; f3 ho-mv403lay-01fa3938, ho-mv42ei0w-019037ae; f4 ho-mv43p246-01228012), rework-5 (ho-mv43etq7-01598938, sub-mv43raev-013fd872), the decisions `dec-mv40tgfo-01d03e4f`, `dec-mv40tgp9-0139d534`, `dec-mv41b2g0-018dc143` and `dec-mv43s14b-01addb18`, and `.eccode/artifacts/phase-f/submission.md`.
+
+### Status of earlier items touched by phase F
+
+| # | Status |
+|---|---|
+| FU-19 | **Closed.** f1's part: the re-plan drain runs on `supersession.js` (`enqueueReplan`, `supersedeForOfferChange`, `markNonExecutable`) through the reconciler; `replan-queue.test.js` (F-TR-2) and `supplier-refusal.test.js` exercise it. f1 changed no source file. |
+| FU-33 | **Still open, phase G** (`dec-mv3tqbn4-01d43152`). It failed again under load: in f4's first verification run (ev:ev-mv43j15k-01209f8b), and in the delivery-lead's run ev:ev-mv445oiq-01166891 during a uniform 2.1× slowdown. Both times the single re-run passed. The full-suite lock (`dec-mv43s14b-01addb18`) reduces contention between agents but does not remove the race. |
+| FU-34 | **Tested** by f2: `F-TR-6: a webhook capture of a cancelled operation is refunded on the next tick, exactly once` (`void-capture-race.test.js`, through a signed webhook). The backstop in `reconciler.js` is kept. |
+| FU-35 | **Decided again** for the handler side: `dec-mv40tgfo-01d03e4f`. The request handler does not drain; the customer sees "Finding a new plan with current stock…" for up to one reconciler interval (default 15 s). For the verification report. |
+| FU-36 | **Met** (f2). `ledgers.test.js` › `FU-36: a consume row and a restock row carry the same fields as a reserve row; the balances are the running sums …`. The helpers stay in `saga.js`. |
+| FU-38 | **Met** (f3). `payments/view-non-executable.json` is now the post-claim state (AUTHORIZATION_EXPIRED); the new `recovery/view-abandoned.json` shows a real abandon. Test: `recovery.test.js` › `FU-38: a real abandon cancels the orders; …`. |
+| FU-39 | **Not done, decided:** `dec-mv40tgp9-0139d534`. `RESERVATION_LIMIT` keeps `reservationIds` only; the UI fallback stays. |
+| FU-40 | **UX part partly met** (f3): `poll.js` keeps polling while the plan is executed and a live order is still `confirmed`, so the receipt appears without a reload. `journey-happy.test.js` still reloads (not f3's file); g3 may drop the reload. The **docs part** stays g2's. |
+| FU-41 | **Met** (f2). (a) `readBeforeResend` in `saga.js` (three `FU-41(a)` tests); (b) two `FU-41(b)` tests. The reviewers' mutant M6 is killed (ev:ev-mv418etg-01b71dfe, 25 of 25 mutants killed). Side effect: two approved tests went stale and were updated by rework-5. |
+| FU-42 | **Met by test, and the source changed** (f2): the refund sender now reads `supplier_orders.total_cents`, like the capture. Tests: `capture-compensation.test.js` and `admin-refund-order.test.js` › `FU-42: …` (the two columns disagree on purpose). Phase E delta 24 now reads "refunds send `supplier_orders.total_cents`". |
+| FU-43 | **Met** (f3): `?paypal=not_approved|check_failed` shows "PayPal did not confirm the approval; try again." (two `FU-43` tests in `recovery.test.js`). |
+| FU-45 | **Met** (f2, `calls.js`). Tests: two `FU-45` tests plus `FU-45 (limit)` in `void-capture-race.test.js`. |
+
+### New follow-ups
+
+| # | Task | Additional acceptance criterion | Source |
+|---|---|---|---|
+| FU-46 | g3-final-scans-browser (or an orchestrator acceptance if no G task owns `test/timing/**`) | The SEC-B-1 test `the seeded catalog shape never reaches PLANNER_LIMIT and stays fast …` (`test/timing/planner-sec-b1.test.js:58`) asserts every one of its 1,008 planner calls under 100 ms by wall clock (line 70). Under CPU contention one call took 186.9 ms (ev:ev-mv43keu0-0102c57c, two full suites on 4 CPUs) and 327.9 ms (ev:ev-mv445oiq-01166891, uniform 2.1× slowdown). Each passed alone or on re-run. Bound the per-call limit by the p95 the test already computes (line 78, `< 20 ms`) plus a generous per-call ceiling, or keep 100 ms and document that the test needs an idle host. The PLANNER_LIMIT assertion stays exact. | `dec-mv43s14b-01addb18`; rework-5 submission |
+| FU-47 (conditional) | g3-final-scans-browser, **only if the rework-5 review (sub-mv43raev-013fd872) does not settle it** | `test/api/admin-basic.test.js` › `refund_order`: (1) after the 200, pin the operation status with `equal 'refund_failed'` instead of `notEqual 'refund_requested'` (the fake refuses the hand-made capture id `FAKE-CAP-1`; ev:ev-mv439gxz-01147594 line 116 shows `refund_failed`); (2) the comment's citation "FU-42 / SEC-11: one refund per captured order" names sources that do not say that; cite spec line 399 (`refund_order` only for a `captured` operation) and the Sender table refund row (line 827) instead. | rework-5 submission, observations 1 and 2 |
+| FU-48 | delivery-lead (verification report) or an orchestrator decision | **A plan that was `executing` when a forced reset archived its operations stays `executing`.** The plan machine allows `executing → non_executable` only for CAPTURE_FAILED / AUTHORIZATION_EXPIRED. The plan is fenced (never taken over, resumed or marked executed; `RS-38: an executing plan whose operations the reset archived …`), but `plansByStatus` in the admin metrics still counts it. Either the verification report lists it, or a state-machine decision adds an archive transition. | f2 remaining issue 3 |
+| FU-49 | technical and security reviewers of phase F, then the verification report | **The FU-41(a) hold path with a read that keeps failing:** f2 reports that the lease is paused and the next tick takes the plan over again, epoch + 1 per tick, until the read recovers, with no send meanwhile. The reviewers should confirm that this is consistent with F-TR-7 (no epoch growth while an operation is `capture_pending` or `unknown`) and with the takeover rule (no takeover while an operation is `capture_pending`/`unknown`). The test `FU-41(a): a read that fails under the lease sends nothing; …` covers the no-send part only. | f2 remaining issue 6 |
+| FU-50 | g1-frontend-a11y-labels or g3-final-scans-browser (UX), after a product decision by the orchestrator | Once the voids are done and the new plan exists, "If something fails" is empty: the server returns no orders of the closed plan. The buyer then sees the refusal reason only in the status message, and no longer sees that the old authorization was voided. f3's criterion (spec, Frontend section 7) asks for "voids and refunds outstanding with outcome"; whether a *completed* void of a closed plan must stay listed is not stated. Decide whether completed voids of a closed plan stay visible. If yes, it is a view change (`view.js`, no remaining owner) plus a browser check. If no, the verification report says so. | f4 remaining issue 6 |
+| FU-51 | g3-final-scans-browser | Browser checks at 360 px for the recovery states that no journey reaches: compensation/refunding, failed_needs_attention ("Contact the organiser"), reservation expired with Re-plan, the admin forced-reset stranded list. f3 checked them ad hoc only (scratch Chromium, not recorded). The RS-17 and RS-32(a) journeys cover refusal and replacement at 360 and 1280 px. | f3 remaining issue 14 |
+
+### Carried to the verification report (owner: delivery-lead), additions
+
+16. **Phase F design deltas** (f2 remaining issue 7, f1 remaining issues 3–4):
+    - refunds read `supplier_orders.total_cents` (delta 24, source changed);
+    - the forced reset's audit event carries `authorized`, `resolved`, `polled`, `resolveTimedOut` and `closedReconciling`;
+    - any reset closes `reconciling` reservations without restock rows;
+    - `refund_order` waits for the provider call (up to `RS_PAYPAL_TIMEOUT_MS` + 1 s) before it answers;
+    - a forced reset needs the real void port (`startApp` wires it; `createApp`'s default is a recorder), otherwise authorized operations of non-approved plans are listed as `stranded`;
+    - the re-plan drain is the reconciler's only (`dec-mv40tgfo-01d03e4f`);
+    - between a supersession or refusal and the drain the request reads `replanning` (4a), or `cancelling` while a void is outstanding.
+17. **Residuals of phase F:**
+    - the `send_token` fence of `recordCall` cannot be proved on its own (the `status = 'intent'` condition rejects the same late results; the epoch fence and the lease checks are each mutant-proved);
+    - a DB error inside `resolveRejectedVoid`'s transaction is escalated only by derivation row 2 (b) after `RS_PENDING_ESCALATE_MIN`;
+    - f4's surviving mutant M5: the reconciler backstop that cancels a queued authorize is redundant with the void rule;
+    - f1's four surviving mutants are equivalent through layered guards;
+    - f1's and f2's mutation runs are in scratch copies (f2's are recorded: ev:ev-mv40r2b6-0183d269 failing-first and ev:ev-mv418etg-01b71dfe 25/25; f1's 30 mutants have no ev id);
+    - return-crash (b) and (c) write the rows the product would write (`reservations.expires_at`, a `fault_flags` row) from the test process;
+    - the multi-process tests ran on Node 22.22 only; the spec's 22.5 pass condition is the user's run.
+18. **LIVE-DEPENDENT facts phase F relies on** (unchanged by f2): `final_capture`, `AUTHORIZATION_ALREADY_CAPTURED`, PayPal-Request-Id retention, the `EXPIRED` answer to a void (FU-45), capture DECLINED and PENDING, and refund PENDING/FAILED/COMPLETED semantics. RS-32(b) is LIVE-P2. **RISK-18's title names live RS-22 evidence, but no live file covers RS-22** (`test/live/paypal/` has rs18, rs19, rs20, rs23, rs24 and the Sandbox journey); g2/g3 should correct either the risk wording or LIVE-P1's scope.
