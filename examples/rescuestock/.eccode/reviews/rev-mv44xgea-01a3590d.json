@@ -1,0 +1,109 @@
+{
+  "decision": "approve",
+  "summary": "Technical re-review of phase:rework-5, iteration 2 (sub-mv44n6nb-010da898, responding to rev-mv44amic-012cf420; handoff ho-mv44fohe-01197e16; commit 8542265).\n\n**Scope and hashes.** The only change since 0c7b37b is admin-basic.test.js, +9/-3. lost-response.test.js and src are unchanged. All three artifacts match the submitted sha256. Every check I ran is on the submitted tree, a9aba38c.\n\n**TR-R5-1 is resolved.**\n- L407 pins `refund_failed` and L408 pins `last_error_code` 'INVALID_RESOURCE_ID'. That is deterministic: fake.js L149 notFound() = rejected(404, 'INVALID_RESOURCE_ID'), stored through safeCode at calls.js L296.\n- My own MB was rebuilt in a fresh scratch copy of the final tree, with its diff kept and printed first in the log. It is now red on the refund_order subtest: 18 tests, 17 pass, 1 fail, expected 'refund_failed', actual 'refunded' (raw run ev:ev-mv44pdmw-0126b068).\n- The kill-check ev:ev-mv44wbl4-0121944a passes only if exactly that failure occurs.\n\n**TR-R5-2 is resolved.** L412-L413 cite the Sender table refund row, Admin routes > refund_order and the protocol's deterministic key. FU-42 is gone from the file.\n\n**Checks on the final tree.**\n- admin-basic alone: 18/18.\n- lost-response alone: 9/9.\n- npm test under the suite lock: the first run hit only the known FU-33 uploads-retention timer race at L711 (ev:ev-mv44rydx-01958248, not cited as passing). The single re-run that dec-mv3tqbn4-01d43152 allows passed: 2267 tests, 2259 pass, 0 fail, 8 skipped; NFR5 p95 62.6 ms, ok (ev:ev-mv44ul7k-01849a33).\n\n**TR-R5-3 and TR-R5-4 are closed.**\n- TR-R5-3 by decision dec-mv44nzj5-01fbc177, whose rationale is corrected by dec-mv44o8yz-016e30b8. I checked the corrected rationale against calls.js L140 and L145.\n- TR-R5-4 by the rule stated in the handoff and the submission, which MB follows.\n\nNew finding TR-R5-5 is info only: the FU-33 flake recurred, and is reported here per its decision. Decision: approve.",
+  "criteria": [
+    {
+      "id": "task:rework-5",
+      "description": "Rework: the two stale tests are updated to the spec behaviour and fail when it is reverted; test-only",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv44pi7z-0139fe37",
+        "ev:ev-mv44uvbi-01fe465b",
+        "ev:ev-mv44wbl4-0121944a",
+        "artifact:test/api/admin-basic.test.js#L407",
+        "artifact:test/api/admin-basic.test.js#L408",
+        "artifact:test/api/lost-response.test.js#L140",
+        "artifact:.eccode/artifacts/rework-5/submission.md#every-finding-of-rev-mv44amic-012cf420"
+      ],
+      "notes": "**Both halves now pin the spec behaviour exactly.**\n- **lost-response:** unchanged since iteration 1, sha256 cd21749c. The exact trail is at L140. My iteration-1 mutant MA killed it (raw red run ev:ev-mv43w5pq-01fa0f22). It is green on the final tree, 9/9.\n- **admin-basic:** pins the status `refund_failed` (L407), as provider call protocol section 4 and saga step 5 require, and the rejection's issue code (L408). The exactly-one-send pins from iteration 1 are kept.\n\n**The mis-mapped behaviour is shown red.** MB fails the subtest on the final tests: raw run ev:ev-mv44pdmw-0126b068, and the passing kill-check ev:ev-mv44wbl4-0121944a, which requires a non-zero exit, `not ok 8 - refund_order`, actual 'refunded' and exactly 1 fail. The diff is at scratchpad/tr-r5-it2/mutant-MB.diff and is printed at the top of both logs.\n\n**Test-only.** `git diff --stat 0c7b37b HEAD -- src test` shows admin-basic only, and `git diff --stat HEAD -- src test` is empty."
+    },
+    {
+      "id": "phase:rework-5",
+      "description": "The RS-25 timeout trail reads before the capture re-send (FU-41a), and refund_order sends exactly one so:<id>:refund:1 call; test-only update; no source change; unblocks f4 because npm test is green",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv44ul7k-01849a33",
+        "ev:ev-mv44pi7z-0139fe37",
+        "ev:ev-mv44uvbi-01fe465b",
+        "artifact:test/api/admin-basic.test.js#L412",
+        "artifact:test/api/lost-response.test.js#L140",
+        "artifact:.eccode/artifacts/rework-5/submission.md#iteration-2-response-to-rev-mv44amic-012cf420"
+      ],
+      "notes": "**Spec conformance.** It was established in rev-mv44amic-012cf420 and is unchanged: saga step 6, ARCH-26 (2) and FU-41(a) for the trail; spec L399, the Sender table refund row (L827) and protocol section 1 for the single refund call.\n\n**npm test.** It passes on the submitted tree under the suite lock: 2267 tests, 2259 pass, 0 fail, 8 skipped (ev:ev-mv44ul7k-01849a33). That is the single permitted re-run after the FU-33 flake in ev:ev-mv44rydx-01958248 (TR-R5-5)."
+    },
+    {
+      "id": "lessons",
+      "description": "The task's not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv44pi7z-0139fe37",
+        "artifact:.eccode/artifacts/rework-5/submission.md#lessons"
+      ],
+      "notes": "In iteration 2 the task edits one test file and builds no hook, guard or root discovery, so the lesson's 'Applies when' conditions do not hold. Not applicable."
+    },
+    {
+      "id": "C-checks",
+      "description": "Reviewer's own post-submission checks on the final tree: MB in a fresh scratch copy with its diff kept, admin-basic alone, lost-response alone, full npm test under the suite lock",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv44pi7z-0139fe37",
+        "ev:ev-mv44uvbi-01fe465b",
+        "ev:ev-mv44ul7k-01849a33",
+        "ev:ev-mv44wbl4-0121944a"
+      ],
+      "notes": "**Runs.** All are on tree a9aba38c, the submission's.\n- admin-basic: 18/18.\n- lost-response: 9/9.\n- npm test re-run: 2267 tests, 2259 pass, 0 fail, 8 skipped, 0 todo; suite 104.4 s.\n- MB kill-check: passed.\n\n**Raw red runs.** They are kept as evidence and not cited as passing:\n- MB, ev:ev-mv44pdmw-0126b068;\n- the first npm test, red on FU-33 only, ev:ev-mv44rydx-01958248.\n\n**Safety.** No live suite was run: RS_LIVE_MODEL and RS_LIVE_PAYPAL were unset with `env -u`. Network was 127.0.0.1 only. The real tree was not edited."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-R5-5",
+      "severity": "info",
+      "title": "The FU-33 uploads-retention timer race recurred once in my first full run; green on the single permitted re-run",
+      "detail": "**The failure.** ev:ev-mv44rydx-01958248: uploads-retention.test.js:677, 'RS-39: startApp removes an expired image at startup and another one on the next tick'. The assertion at L711 failed (true !== false).\n\n**Not a rework-5 file and not a rework-5 effect.**\n- This is the known race of decision dec-mv3tqbn4-01d43152: the test checks the image file immediately after the row disappears.\n- The run was serialized under the suite lock, and the load average at the time was 2.3.\n- The single re-run passed (ev:ev-mv44ul7k-01849a33).\n\nIt is reported here as that decision requires.",
+      "evidence": [
+        "ev:ev-mv44rydx-01958248",
+        "ev:ev-mv44ul7k-01849a33"
+      ],
+      "recommendation": "No change for this gate. Owner: as already routed by dec-mv3tqbn4-01d43152 (FU-33, phase G, test fix: wait for the file as well as the row). Resolved when FU-33's one-line test fix lands and the verification report lists this recurrence."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "TR-R5-1",
+      "resolution": "admin-basic.test.js L407 pins `assert.equal(status, 'refund_failed')`, and L408 pins `last_error_code` 'INVALID_RESOURCE_ID'. The fake's notFound() at fake.js L149 makes that value deterministic, and calls.js L296 stores it through safeCode.\n\nMy mutant MB (calls.js L296: rejected refund -> 'refunded') was rebuilt in a fresh scratch copy of the final tree, with its diff kept and printed first in the log. It now fails the refund_order subtest: expected 'refund_failed', actual 'refunded'. The raw red run is ev:ev-mv44pdmw-0126b068, and the passing kill-check is ev:ev-mv44wbl4-0121944a.\n\nadmin-basic alone and npm test under the lock are green on the final tree. No source file changed.",
+      "evidence": [
+        "ev:ev-mv44wbl4-0121944a",
+        "ev:ev-mv44pi7z-0139fe37",
+        "ev:ev-mv44ul7k-01849a33",
+        "artifact:test/api/admin-basic.test.js#L407"
+      ]
+    },
+    {
+      "id": "TR-R5-2",
+      "resolution": "L412-L413 now cite the spec Sender table refund row, Admin routes > refund_order and the provider call protocol's deterministic key. L403 adds the key form `so:<supplierOrderId>:<kind>:<attempt>`.\n\nFU-42 no longer appears in the file. The remaining SEC-11 mentions (L8, L191, L232) are fault-route and audit uses, which is what SEC-11 covers.",
+      "evidence": [
+        "ev:ev-mv44pi7z-0139fe37",
+        "artifact:test/api/admin-basic.test.js#L412"
+      ]
+    },
+    {
+      "id": "TR-R5-3",
+      "resolution": "Closed by decision dec-mv44nzj5-01fbc177: the current behaviour stands, and the spec wording of ARCH-26 (2) and saga step 6 is to be clarified to 'started' at g2. That wording is the resolution condition I stated.\n\nI checked the corrected rationale in dec-mv44o8yz-016e30b8 against the code. startCall sets `started_at` and `send_count + 1` in its own conditional UPDATE (calls.js L140 for a queued call, L145 for an unknown re-send) before any HTTP send. So a call with `started_at` NULL and send_count 0 has never reached the network.\n\nThe RS-25 exact trail stays as approved (green on the final tree).\n\nThe g2 spec edit remains with g2.",
+      "evidence": [
+        "ev:ev-mv44uvbi-01fe465b",
+        "artifact:test/api/lost-response.test.js#L140"
+      ]
+    },
+    {
+      "id": "TR-R5-4",
+      "resolution": "Closed going forward. Handoff ho-mv44fohe-01197e16 and the submission state the rule: one fresh scratch directory per mutant, never reused, with the diff kept as a file and printed at the top of the evidence log. Both the engineer's MB (raw red run ev:ev-mv44crd8-01991c3c) and mine follow it. My kill-check log prints the diff first.\n\nThe disclosed caveat is accepted: round-1 diffs r5a, r5b and r5c are not saved, and r5c's first mutant is unrecoverable. Its equivalence was already confirmed against calls.js L312 and L364 in rev-mv44amic-012cf420.",
+      "evidence": [
+        "ev:ev-mv44wbl4-0121944a",
+        "artifact:.eccode/artifacts/rework-5/submission.md#every-finding-of-rev-mv44amic-012cf420"
+      ]
+    }
+  ],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
