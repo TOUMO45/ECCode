@@ -498,6 +498,82 @@ describe('RS-22: compensation when a capture fails', () => {
   });
 });
 
+describe('step 3: the other answers to a capture', () => {
+  test('a retryable answer (429) pauses the saga for the back-off: no takeover and no send until next_attempt_at, then the same key is sent', async () => {
+    const h = await start();
+    const w = await world(h);
+    arm(h, 'http_429:capture', { value: 'A' });
+    assert.equal((await execute(w)).status, 202);
+    await h.app.deps.saga.idle();
+    const queued = calls(h, w.orders.A, 'capture')[0];
+    assert.deepEqual([queued.status, queued.started_at, queued.send_token, queued.send_count], ['intent', null, null, 1], 'provably unsent again');
+    assert.equal(queued.next_attempt_at, new Date(h.clock.now() + 5000).toISOString(), 'first back-off: 5 seconds');
+    assert.equal(op(h, w.orders.A).status, 'authorized');
+    assert.equal(plan(h, w.planId).status, 'executing');
+    const rec = reconcilerOf(h);
+    h.clock.advance(4000);
+    await rec.tick();
+    await h.app.deps.saga.idle();
+    assert.equal(plan(h, w.planId).lease_epoch, 1, 'no takeover during the back-off');
+    assert.equal(fakeCalls(h, 'capture').length, 1);
+    h.clock.advance(1001);
+    await rec.tick();
+    await h.app.deps.saga.idle();
+    assert.equal(plan(h, w.planId).status, 'executed');
+    assert.equal(fakeCalls(h, 'capture').filter((c) => c.request_id === `so:${w.orders.A}:capture:1`).length, 2, 'the 429 and the send');
+    assert.equal(calls(h, w.orders.A, 'capture')[0].send_count, 2);
+  });
+
+  test('a definitive rejection (422) compensates like a decline: CAPTURE_FAILED, the first capture refunded', async () => {
+    const h = await start();
+    const w = await world(h);
+    arm(h, 'http_422:capture', { value: 'B' });
+    assert.equal((await execute(w)).status, 202);
+    await h.app.deps.saga.idle();
+    assert.deepEqual([plan(h, w.planId).status, plan(h, w.planId).non_executable_reason], ['non_executable', 'CAPTURE_FAILED']);
+    assert.deepEqual([op(h, w.orders.A).status, op(h, w.orders.B).status], ['refunded', 'voided']);
+    assert.deepEqual([calls(h, w.orders.B, 'capture')[0].status, calls(h, w.orders.B, 'capture')[0].error_code], ['failed', 'INJECTED_UNPROCESSABLE']);
+    assert.equal(reservation(h, w.reservationId).status, 'released');
+  });
+
+  test('AUTHORIZATION_ALREADY_CAPTURED means a capture exists: the call turns unknown (never a blind failure), the read finds it, no second capture', async () => {
+    const h = await start();
+    const w = await world(h);
+    const real = h.app.deps.payments;
+    h.app.deps.payments = {
+      ...real,
+      async captureAuthorization(args) {
+        if (args.requestId === `so:${w.orders.B}:capture:1`) await real.captureAuthorization({ ...args, requestId: 'external-capture-0001' }); // a capture we did not send under our key
+        return real.captureAuthorization(args);
+      },
+    };
+    assert.equal((await execute(w)).status, 202);
+    await h.app.deps.saga.idle();
+    assert.equal(op(h, w.orders.B).status, 'unknown');
+    assert.equal(plan(h, w.planId).status, 'executing', 'not compensated on a guess');
+    h.app.deps.payments = real;
+    await reconcilerOf(h).tick();
+    await h.app.deps.saga.idle();
+    assert.equal(op(h, w.orders.B).status, 'captured');
+    assert.equal(plan(h, w.planId).status, 'executed');
+    assert.equal(h.db.prepare('SELECT COUNT(*) AS n FROM fake_paypal_captures').get().n, 2, 'one capture per authorization');
+  });
+
+  test('once executed, handover and ready are open to the suppliers (step 4 unlocks them)', async () => {
+    const h = await start();
+    const w = await world(h);
+    const supplierA = await signIn(h, 'supplier-a');
+    const before = await supplierA.post(`/api/supplier/orders/${w.orders.A}/ready`, {});
+    assert.equal(before.status, 409, 'not before the plan is executed');
+    assert.equal((await execute(w)).status, 202);
+    await h.app.deps.saga.idle();
+    const ready = await supplierA.post(`/api/supplier/orders/${w.orders.A}/ready`, {});
+    assert.equal(ready.status, 200, ready.text);
+    const handover = await supplierA.post(`/api/supplier/orders/${w.orders.A}/handover`, {});
+    assert.equal(handover.status, 200, handover.text);
+  });
+});
+
 describe('ARCH-23: the lease fences a stalled executor', () => {
   test('ARCH-23: a capture result that arrives after a takeover is discarded (provider.result_fenced); the taker reads, finishes, and no capture is repeated', async () => {
     const h = await start();
