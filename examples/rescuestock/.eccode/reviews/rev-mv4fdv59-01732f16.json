@@ -1,0 +1,210 @@
+{
+  "decision": "approve",
+  "summary": "Technical review of phase:g-release, iteration 1 (sub-mv4eqme2-01a6e8e9; commit f4f5f9b, tree 7c898c91; 42 artifacts). Every check I cite ran on that tree. The security draft phase-g-security-1.md (FINAL, verdict APPROVE, SEC-G-1 and SEC-G-2 minor, SEC-G-I1..I4 info) is folded in.\n\n**Plan commands, verbatim.**\n- g1: 242/242 (ev:ev-mv4ezs6l-01ac606f).\n- g2: 27/27 (ev:ev-mv4ezsp4-01e98a8c).\n- g3, as one argument with the suite lock held around the whole eccode run, green on the first run (ev:ev-mv4ezijm-016e7594). This is the only reviewer run of the full g3 command; security skipped the registry step by its loopback rule.\n  - npm test: 2393 tests, 2385 pass, 0 fail, 8 skipped; NFR5 p95 56.8 ms;\n  - browser: 28/28;\n  - clean checkout: 448 files, npm install, npm test 2393 tests, 2383 pass, 0 fail, 10 skipped, npm start, health 200.\n\n**Evidence table** (28 verified, 2 fake-only, 15 LIVE-DEPENDENT), checked against the spec's Testing table.\n- No `verified` row rests on LIVE-P1, LIVE-P2, OQ-D5 or LIVE-M1 for its criterion as the spec scopes it.\n- Weaker than written:\n  - the spec's (I) parts of RS-29, RS-35, NFR3, NFR4 and RS-36 are not tagged or cited (TR-G-1). I performed all five read-only; all pass;\n  - three Unverified cells point at the wrong blocker or list (TR-G-2);\n  - ambiguous title fragments let the cited-run check pass on another file's test, as probe MT2 shows (TR-G-3);\n  - RS-29's scan scope is narrower than its row (SEC-G-1).\n\n**FU-62.** The final derive.js conforms to the derivation table row by row.\n\n**Test strength.** All 5 of my g1 mutants are killed; the evidence-table check kills a row that cites the wrong run (MT1).\n\n**T20.** The deviation is accepted on SEC-G-2's condition, which also covers my MS1.\n\n**Clock shift.** shift-clock.mjs states its blind spots, and none is used in the code.\n\n**README demo.** It runs verbatim on 127.0.0.1:3000 with a scratch database, but the sample text needs an undocumented diameter step (TR-G-5).\n\nDecision: approve. No blocking or major finding; the minor findings TR-G-1, TR-G-2, TR-G-3, TR-G-5, SEC-G-1 and SEC-G-2 are routed before delivery with resolution conditions.",
+  "criteria": [
+    {
+      "id": "task:g1-frontend-a11y-labels",
+      "description": "Accessibility and state completeness, six-answer request page, labels for both payment adapters and test mode",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4ezs6l-01ac606f",
+        "ev:ev-mv4ezijm-016e7594",
+        "ev:ev-mv4f1mox-01c9b0c9",
+        "ev:ev-mv4f2an4-01ddba04",
+        "ev:ev-mv4f119i-01b75fe7",
+        "artifact:test/unit/frontend/a11y-labels.test.js#L1",
+        "artifact:public/js/components/banner.js#L37"
+      ],
+      "notes": "**Plan command.** The g1 plan command, verbatim, passes 242/242. The browser suite passes 28/28 in my g3 run.\n\n**My mutants are all killed.**\n- MH1 (an error no longer described): 1 red, NFR2 sign-in.\n- MH2 (no single-credential banner): 5 red, RS-34.\n- MH3 (a disabled reason not linked): 1 red, NFR2.\n- MH5 (a disabled payment button acts): 1 red, RS-35 approve.\n- MH4 (no h1 focus on a route change): it survives the a11y-states browser file alone, but the frontend scan (L342) and the RS-33 journey catch it (ev:ev-mv4f2an4-01ddba04).\n\n**Screenshots I looked at:** labelling-sandbox-stub-1280, six-questions-1280 and a11y-stranded-1280. They show:\n- the banners for both adapters, test mode and single-credential;\n- 'PayPal Sandbox — no real money' on every payment element;\n- the Demo data badges and the test-price notice;\n- the forced-reset text worded for the fake adapter.\n\n**Security's P-LABELS** covers the two label combinations g3 did not render (SEC-G-I3)."
+    },
+    {
+      "id": "task:g2-docs-submission",
+      "description": "Final README with runbooks and operator notes, .env.example review, submission materials draft and the docs scan",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4ezsp4-01e98a8c",
+        "ev:ev-mv4f4i78-01a3b26b",
+        "artifact:README.md#install-seed-start-test",
+        "artifact:.env.example#L59"
+      ],
+      "notes": "**Plan command.** The g2 plan command, verbatim, passes 27/27.\n\n**The README demo, run verbatim**, in a fresh copy with a scratch database:\n- it listens on 127.0.0.1:3000;\n- the seed prints the passwords once (never put in my logs);\n- the request, extract, confirm and plan steps give A+B at 8400 cents, with C and D rejected as stated.\n\n**One undocumented step:** the diameter (TR-G-5).\n\n**`.env.example`.** Every secret entry is a commented placeholder.\n\n**Unverified facts.** The hackathon and dashboard facts are disclosed (FU-61, report item 26). Security's document review agrees (SEC-G-I4)."
+    },
+    {
+      "id": "task:g3-final-scans-browser",
+      "description": "Final scans, browser checks and evidence table",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4ezijm-016e7594",
+        "ev:ev-mv4f1mox-01c9b0c9",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:test/scan/evidence-table.test.js#L205",
+        "artifact:test/scan/sql.test.js#L1",
+        "artifact:test/helpers/shift-clock.mjs#L18"
+      ],
+      "notes": "**Plan command.** The g3 plan command, verbatim, is green on the first run, including the real clean checkout with npm install from the registry.\n\n**Evidence table.** It is honest in status, with the minor tidy-ups TR-G-1, TR-G-2, TR-G-3 and SEC-G-1. Its cited-run check is real: MT1 is red.\n\n**T20.** Accepted on SEC-G-2's condition.\n\n**shift-clock.mjs.** Its header (L18-L30) names the blind spots; none is used in src, test, scripts or public.\n\n**Clean checkout.** The script runs install, test, start and health on a copy of the working tree. See TR-G-6 for the untracked-file and keep-option observations."
+    },
+    {
+      "id": "phase:g-release",
+      "description": "Accessibility and all UI states, labelling for both payment adapters, the six-answer request page, the full secrets scan, live-suite refusals, SQL scan, evidence table, clean checkout and README, full regression",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4ezijm-016e7594",
+        "ev:ev-mv4ezs6l-01ac606f",
+        "ev:ev-mv4ezsp4-01e98a8c",
+        "artifact:.eccode/artifacts/phase-g/submission.md#nothing-rests-on-a-live-run",
+        "artifact:.eccode/artifacts/plan/followups.md#added-after-phase-g-delivery-lead-2026-10-11"
+      ],
+      "notes": "**Plan criteria.**\n- **RS-29:** the scans are green, and my (I) inspection found no secret value. The scope is narrower than the row says (SEC-G-1).\n- **RS-34:** fake-only, honest.\n- **RS-35:** the six answers are rendered from codes, confirmed by my (I) inspection.\n- **NFR2:** Chromium only, disclosed.\n- **NFR3:**\n  - the refusals are tested, and security ran the real npm scripts without flags (ev:ev-mv4ewm10-01f01459);\n  - my (I) inspection: both runners label their reports (live-support.js L93-L95; run-live-model.js L182-L187).\n- **NFR5:** p95 56.8 ms, suite 101.4 s.\n- **Final tree:** the clean checkout passes, and the README matches the scripts except TR-G-5.\n- **Evidence table:** present and honest in status.\n- **Full regression:** green (also security's ev:ev-mv4fa3k7-01623b24).\n\n**Nothing rests on a live run.** LIVE-M1, LIVE-P1 and LIVE-P2, OQ-D5 and USER-Q9 stay open."
+    },
+    {
+      "id": "lessons",
+      "description": "The three tasks' not-applicable decisions on mem-sd-mv1audrd-013b7102 hold",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4ezs6l-01ac606f",
+        "artifact:.eccode/artifacts/phase-g/submission.md#lessons"
+      ],
+      "notes": "None of g1, g2 or g3 builds or changes a hook, guard or root discovery. The guard refusals met in this phase (and in this review) are raw-text and variable readings, which the lesson's 'Not applicable when' list names."
+    },
+    {
+      "id": "security",
+      "description": "Security review folded in: phase-g-security-1.md (FINAL), verdict APPROVE",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4f119i-01b75fe7",
+        "ev:ev-mv4ewm10-01f01459",
+        "ev:ev-mv4ex31x-0112ab69",
+        "ev:ev-mv4f2qpx-01be15d6",
+        "ev:ev-mv4f2r7x-0132436f",
+        "ev:ev-mv4f7x80-016be1c4",
+        "ev:ev-mv4fa3k7-01623b24",
+        "ev:ev-mv4fanp4-013653d0"
+      ],
+      "notes": "**Verdict.** No blocking or major security finding.\n\n**Carried below.**\n- SEC-G-1 (the RS-29 scan's scope) and SEC-G-2 (T20 bypasses; merges my TR-G-4) are carried as minor.\n- SEC-G-I1, SEC-G-I3 and SEC-G-I4 are carried as info.\n- SEC-G-I2 is merged into TR-G-6.\n\n**Present state.** No secret is in the tree today (P-SCOPE) and no SQL injection exists today."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-G-1",
+      "severity": "minor",
+      "title": "The spec's (I) inspection parts are not tagged or cited for RS-29, RS-35, NFR3 and NFR4, and RS-36 says its inspection is not part of the evidence; this review performed all five",
+      "detail": "**What the spec requires.** The Testing table gives an (I) part to:\n- RS-29 (screenshots and submission);\n- RS-35;\n- RS-36 (F-TR-9);\n- NFR3 (live report labelling);\n- NFR4;\n- NFR1 and NFR6.\n\n**What the table shows.**\n- It tags I only on RS-36 and NFR1.\n- It marks RS-29, RS-35, NFR3 and NFR4 `verified` with D or B only.\n- RS-36 is `verified` while its cell says the inspection 'is NOT part of this evidence'.\n- No later review records these inspections: only the design and phase B reviews mention any.\n\n**The inspections, done read-only in this review. All pass.**\n- **RS-36 / FU-62:** derive.js against the brief's table and revision 2. Row by row it conforms, and no table stores a rescue status.\n- **RS-29:** screenshots labelling-sandbox-stub-1280, six-questions-1280 and a11y-stranded-1280, plus docs/submission and the README: no secret value.\n- **RS-35:** six-questions-1280 answers all six questions from codes.\n- **NFR3:** both runners label their reports.\n- **NFR4:** secrets come only from process.env, and .env.example secret entries are commented placeholders.\n\nThe statuses hold in substance. The table lacks only the I tags and the citation.",
+      "evidence": [
+        "ev:ev-mv4ezijm-016e7594",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:docs/evidence-table.md#how-to-read-a-row"
+      ],
+      "recommendation": "Owner: test-engineer, through a small rework or the next table edit (routing by the orchestrator). Resolved when:\n- the RS-29, RS-35, NFR3 and NFR4 rows carry the I tag;\n- every row whose spec has an (I) part names its inspection with this review's id (or another recorded inspection);\n- RS-36 cites this review's FU-62 inspection in place of 'NOT part of this evidence'."
+    },
+    {
+      "id": "TR-G-2",
+      "severity": "minor",
+      "title": "Three Unverified cells point at the wrong blocker or list, and NFR2's suite tags omit D",
+      "detail": "**RS-25.** It names 'LIVE-P1 (OQ-D5)', but no live file covers a lost capture answer, as the table's own 'Not covered by any live file' list says.\n\n**RS-13 and RS-15.** They say that a void on the real Sandbox is 'part of the FU-52 list below'. That list has no plain void, and plain voids ARE covered by LIVE-P2 (journey-sandbox RS-32(b) asserts both authorizations VOIDED at PayPal).\n\n**NFR2.** It is tagged B only but cites a D unit test.\n\nNo status changes.",
+      "evidence": [
+        "ev:ev-mv4ezijm-016e7594",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:docs/evidence-table.md#not-covered-by-any-live-file"
+      ],
+      "recommendation": "Owner: test-engineer, with TR-G-1. Resolved when:\n- RS-25 says that LIVE-P1 does not cover it;\n- RS-13 and RS-15 name LIVE-P2 (RS-32(b)) for a real Sandbox void;\n- NFR2 is tagged D B."
+    },
+    {
+      "id": "TR-G-3",
+      "severity": "minor",
+      "title": "Ambiguous title fragments (RS-03, RS-22, RS-27) let the cited-run check pass on another file's test",
+      "detail": "**The ambiguity.** The cited fragments occur in more than one test file:\n- 'RS-03: fake_model:': extract-degraded and unit/ai/fake;\n- 'RS-22: the second capture is declined': capture-compensation and execute;\n- 'RS-27: another customer': four API files.\n\nA TAP log carries no file name.\n\n**Probe MT2** (ev:ev-mv4f1mox-01c9b0c9). Capture-compensation's RS-22 line was marked `# SKIP` in a copy of the cited log. The evidence-table test stays green (11/11), because execute.test.js's same-prefix test satisfies both entries.\n\n**The check itself works:** MT1 is red.",
+      "evidence": [
+        "ev:ev-mv4f1mox-01c9b0c9",
+        "artifact:test/scan/evidence-table.test.js#L205",
+        "artifact:docs/evidence-table.md#the-table"
+      ],
+      "recommendation": "Owner: test-engineer, with TR-G-1. Resolved when:\n- the three rows cite fragments that are unique in the test tree;\n- evidence-table.test.js asserts that every cited fragment occurs in exactly one test file;\n- probe MT2 then turns red."
+    },
+    {
+      "id": "TR-G-5",
+      "severity": "minor",
+      "title": "README one-command demo: the sample text yields no cup diameter, so confirm is refused until the user enters 90 mm, a step the README does not mention",
+      "detail": "**Run verbatim, on loopback, with a scratch database** (ev:ev-mv4f3zu2-011fdea3, a red run kept as the evidence). Extract returns diameterMm null, and confirm answers 422 REQUIREMENTS_INCOMPLETE {fields: [diameterMm]}.\n\n**With 90 entered**, as the form asks, the README's claim holds: A+B at 8400 cents, C incompatible and D too late (ev:ev-mv4f4i78-01a3b26b).\n\n**Impact.** A judge following the README meets an unexplained question.",
+      "evidence": [
+        "ev:ev-mv4f3zu2-011fdea3",
+        "ev:ev-mv4f4i78-01a3b26b",
+        "artifact:README.md#install-seed-start-test"
+      ],
+      "recommendation": "Owner: orchestrator. The README's owners are closed, so this needs a decision, as for FU-60. Resolved when the README's sample text names the diameter (for example '..., 250 ml, 90 mm cups, ...') or tells the reader to enter 90 mm when asked, and a run of the documented journey confirms as written."
+    },
+    {
+      "id": "SEC-G-1",
+      "severity": "minor",
+      "title": "(security, technical concurs) The RS-29 secrets scan does not cover everything the repository ships",
+      "detail": "**What is not scanned:**\n- the tracked `.eccode/` (artifacts, drafts, handoffs, and 92 MB of run logs in `.eccode/evidence`, where a recorded live run would land);\n- src/, scripts/, package.json and test sources;\n- non-.md documents;\n- PNGs outside test/browser/out;\n- PNG chunks other than tEXt/zTXt/iTXt.\n\n**P-PLANT** (ev:ev-mv4f145z-013eb970): of 17 planted canaries, 7 were caught and 10 missed.\n\n**Present state.** P-SCOPE (ev:ev-mv4f14wy-01f20ab0) found no real credential in the 817 tracked or unignored files.\n\n**Why it is a finding.** RS-29's row reads `verified` for the whole artifact set, but the scope limit is not disclosed. My (I) inspection of screenshots and submission files found no secret either.",
+      "evidence": [
+        "ev:ev-mv4f145z-013eb970",
+        "ev:ev-mv4f14wy-01f20ab0",
+        "artifact:docs/evidence-table.md#the-table"
+      ],
+      "recommendation": "Owner: orchestrator (g3's file; release checklist). Resolved by either of the following:\n(1) The scan is extended to every tracked or untracked-unignored file, including .eccode/, and to every PNG ancillary chunk, with a path allow-list for test sources that hold canaries by design; P-PLANT's ten misses are then reported.\n(2) RS-29's row and the verification report are narrowed to the scanned scope, and docs/submission/checklist.md gains a pre-publication check of .eccode/evidence for raw credential values."
+    },
+    {
+      "id": "SEC-G-2",
+      "severity": "minor",
+      "title": "(security, merges TR-G-4) T20 deviation accepted on condition: the SQL scan lets name reuse, .exec(variable), whitespace before the paren and bound aliases through",
+      "detail": "**The bypasses.** Security's mutants ms-1 to ms-4 survive the scan; the inline control ms-5 is killed:\n- ms-1 (ev:ev-mv4eyjwl-0119e42f): name reuse of an allow-listed `where` in calls.js;\n- ms-2 (ev:ev-mv4eykls-01fcaa00): `ctx.db.exec(ctx.query.sql)` in a route, skipped as 'probably RegExp';\n- ms-3 (ev:ev-mv4eylav-010d5ea8): `prepare (` with a space;\n- ms-4 (ev:ev-mv4eylz3-0130066c): a `.bind` alias.\n\n**My probes agree.**\n- MS1 (raw query input written into buildTimeline's allow-listed `where` before prepare) stays green.\n- MS2 (the same input inside the prepare template) is red (ev:ev-mv4f1mox-01c9b0c9).\n\n**Present state.** No such code exists today. Both reviewers read the allow-listed sites and found literal columns, `?` lists and range-checked integers only.\n\n**Decision on the deviation: accepted on this condition.** The per-file allow-list with reasons keeps T20's property for today's code, and the literal ban would fail about thirty correct sites.",
+      "evidence": [
+        "ev:ev-mv4eyjwl-0119e42f",
+        "ev:ev-mv4eykls-01fcaa00",
+        "ev:ev-mv4eylav-010d5ea8",
+        "ev:ev-mv4eylz3-0130066c",
+        "ev:ev-mv4f1mox-01c9b0c9",
+        "artifact:test/scan/sql.test.js#L1"
+      ],
+      "recommendation": "Owner: orchestrator, then test-engineer (test/scan/sql.test.js). Resolved when all of the following hold:\n- (a) allow-list entries carry an exact occurrence count or are keyed by site;\n- (b) `.exec(` with a non-literal argument is reported unless its receiver is a RegExp or it is allow-listed;\n- (c) the call pattern tolerates whitespace, and a non-call `.prepare` reference is reported;\n- (d) .mjs and .cjs files are scanned;\n- ms-1 to ms-4 and my MS1 are then red.\n\nVerification report item 23 records the acceptance and this condition. If the orchestrator instead narrows the claim, the sql.test.js header and the evidence-table Limits must say that allow-listed names are trusted by name."
+    },
+    {
+      "id": "TR-G-6",
+      "severity": "info",
+      "title": "(merges SEC-G-I2) clean-checkout.sh copies the working tree including untracked files, does not seed, and its keep option is dead; derive.js row 12 also accepts `draft`",
+      "detail": "**Clean checkout.**\n- `git ls-files --cached --others --exclude-standard` copies untracked, unignored working-tree files. Security's CC-PROBE copied an untracked my-notes.txt (ev:ev-mv4f23u2-0180cb1e). My run and the delivery-lead's were on a clean HEAD.\n- RS_KEEP_CLEAN_CHECKOUT=1 never works, because the script's own RS_* unset loop clears it first.\n- The script does not run `npm run seed`. My README run seeded a fresh copy successfully.\n\n**derive.js.** Row 12 lists `draft` beside proposed and approved. `draft` is a real plan status: a harmless totalising extension the table does not name.",
+      "evidence": [
+        "ev:ev-mv4ezijm-016e7594",
+        "ev:ev-mv4f23u2-0180cb1e",
+        "ev:ev-mv4f4i78-01a3b26b"
+      ],
+      "recommendation": "No change required for this gate. Owner: delivery-lead (verification report) and, optionally, a maintenance change: copy --cached only (or refuse a dirty tree), and exempt the keep variable from the unset loop. Resolved when the report states the working-tree behaviour and the row-12 extension."
+    },
+    {
+      "id": "SEC-G-I1",
+      "severity": "info",
+      "title": "(security) The NFR3 launcher test spawns run-live-paypal.js, which `npm run test:live-paypal` does not use",
+      "detail": "The real `npm run test:live-paypal` and `npm run test:live-model` both refuse without their flags, with no network attempt and no report written (ev:ev-mv4ewm10-01f01459). Near-miss flags refuse too (ev:ev-mv4ex31x-0112ab69).",
+      "evidence": [
+        "ev:ev-mv4ewm10-01f01459",
+        "ev:ev-mv4ex31x-0112ab69"
+      ],
+      "recommendation": "Owner: orchestrator (follow-up). Resolved when the test is retitled and a test runs the real test:live-paypal command line under the guard."
+    },
+    {
+      "id": "SEC-G-I3",
+      "severity": "info",
+      "title": "(security) RS-34 labels are honest in the two combinations g3 did not render",
+      "detail": "The README demo start (fake, no test mode) and the Sandbox label set without test mode were both rendered in Chromium at 360 and 1280. Nothing reads as live money, and no request left 127.0.0.1 (ev:ev-mv4f119i-01b75fe7).",
+      "evidence": [
+        "ev:ev-mv4f119i-01b75fe7"
+      ],
+      "recommendation": "No change. Resolved by the verification report citing it."
+    },
+    {
+      "id": "SEC-G-I4",
+      "severity": "info",
+      "title": "(security) Documents: no live, compliance or savings claim; one wording nit",
+      "detail": "project-description.md L30 lists 'signature-verified webhooks' among the PayPal features, while the verification has met only the fake HMAC and the stub. The next bullet disclaims it.",
+      "evidence": [
+        "ev:ev-mv4f2r7x-0132436f"
+      ],
+      "recommendation": "Owner: the user (release checklist, FU-61). Resolved when L30 qualifies the claim inline ('tested against local stubs only')."
+    }
+  ],
+  "resolvedFindings": [],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
