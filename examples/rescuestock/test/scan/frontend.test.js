@@ -446,3 +446,115 @@ test('RS-32: the recovery views never claim a result the server has not given', 
   assert.doesNotMatch(admin, /has been refunded|was refunded|were refunded/, 'a refund request is called a request');
   assert.match(admin, /A refund was requested for supplier order/);
 });
+
+// ---- phase G, g1: contrast, targets, focus, isolation, labels -----------------------------------------------------------------
+
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? [...h].map((c) => c + c).join('') : h;
+  return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+}
+function luminance(hex) {
+  const [r, g, b] = hexToRgb(hex).map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function contrast(a, b) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+const cssVars = Object.fromEntries([...css.matchAll(/(--[a-z-]+):\s*(#[0-9a-fA-F]{3,6})\s*;/g)].map((m) => [m[1], m[2]]));
+function colorOf(value) {
+  if (!value) return null;
+  const v = /^var\((--[a-z-]+)\)$/.exec(value.trim());
+  if (v) return cssVars[v[1]] ?? null;
+  return /^#[0-9a-fA-F]{3,6}$/.test(value.trim()) ? value.trim() : null;
+}
+// Every rule of app.css that sets a text colour: [selector, colour, background or null]
+function colourRules() {
+  const out = [];
+  for (const m of css.matchAll(/([^{}@]+)\{([^{}]*)\}/g)) {
+    const selector = m[1].trim().replace(/\s+/g, ' ');
+    const decl = Object.fromEntries(m[2].split(';').map((d) => d.split(/:(.*)/s).map((s) => s?.trim())).filter((p) => p[0] && p[1]).map(([k, v]) => [k, v]));
+    const fg = colorOf(decl.color);
+    if (!fg) continue;
+    const bg = colorOf(decl.background) ?? colorOf(decl['background-color']);
+    out.push({ selector, fg, bg });
+  }
+  return out;
+}
+
+test('NFR2: text contrast is at least 4.5:1 for every colour rule, on its own background or on the page and panel colours', () => {
+  const rules = colourRules();
+  assert.ok(rules.length >= 20, `read ${rules.length} colour rules`);
+  assert.ok(Object.keys(cssVars).length >= 8, 'the custom properties were read');
+  const failures = [];
+  for (const { selector, fg, bg } of rules) {
+    for (const against of bg ? [bg] : [cssVars['--bg'], cssVars['--panel']]) {
+      const ratio = contrast(fg, against);
+      if (ratio < 4.5) failures.push(`${selector}: ${fg} on ${against} is ${ratio.toFixed(2)}:1`);
+    }
+  }
+  assert.deepEqual(failures, []);
+  // the disabled look keeps readable text too
+  assert.ok(contrast(cssVars['--muted'], '#e9ecef') >= 4.5);
+});
+
+test('NFR2: the 3 px focus ring has at least 3:1 against the page, the panel and the filled primary button', () => {
+  assert.match(css, /:focus-visible\s*\{[^}]*outline:\s*3px solid var\(--link\)/);
+  const ring = cssVars['--link'];
+  for (const against of [cssVars['--bg'], cssVars['--panel'], '#ffffff']) assert.ok(contrast(ring, against) >= 3, `ring on ${against}`);
+  // a filled button is ringed through the 2 px white gap of box-shadow, so the ring never sits on its own fill
+  assert.match(css, /:focus-visible\s*\{[^}]*box-shadow:\s*0 0 0 2px #ffffff/);
+  assert.match(css, /\.button-primary\s*\{[^}]*background:\s*var\(--link\)/);
+  // A date-time field moves keyboard focus onto the calendar button inside it; the field then no longer matches :focus,
+  // and the browser draws its own dark ring on the button (seen in Chromium at 5x, ev recorded by g1), so no rule is needed.
+});
+
+test('NFR2: a disabled button keeps full-strength text and shows it by a dashed border, never by opacity alone', () => {
+  assert.doesNotMatch(css, /aria-disabled="true"\][^{]*\{[^}]*opacity/);
+  assert.doesNotMatch(css, /\.button\[aria-disabled="true"\]\s*\{[^}]*opacity/);
+  assert.match(css, /\.button\[aria-disabled="true"\]\s*\{[^}]*border-style:\s*dashed/);
+});
+
+test('NFR2: links that stand alone (table rows, error and notice links) are 44 px targets', () => {
+  assert.match(css, /\.data-table a[^{]*\{[^}]*min-height:\s*44px/);
+  assert.match(css, /\.state a[^{]*\{[^}]*min-height:\s*44px/);
+  assert.match(css, /\.notice a[^{]*\{[^}]*min-height:\s*44px/);
+});
+
+test('FU-58: a refusal reason is never joined into a sentence as plain text; the views go through isolate.js', () => {
+  const isolate = code.get('js/isolate.js');
+  assert.match(isolate, /el\('bdi', \{ dir: 'auto'/);
+  // every place that shows the reason or the server's message imports the isolation helpers
+  for (const [file, names] of [
+    ['js/components/status.js', 'messageNodes'],
+    ['js/components/compensation.js', 'messageNodes, reasonNodes'],
+    ['js/components/commitments.js', 'reasonNodes'],
+    ['js/views/supplier-orders.js', 'reasonNodes'],
+  ]) assert.match(code.get(file), new RegExp(`import \\{ ${names} \\} from '(\\.\\./)?(\\.\\./)?isolate\\.js'`), file);
+  // no template string builds a sentence around a reason field
+  for (const [file, source] of code) {
+    assert.doesNotMatch(source, /`[^`]*\$\{[^}]*(refusalReason|confirmed\.reason|\.reason)\}[^`]*`/, `${file}: a reason is interpolated into a string`);
+  }
+  // the web page treats a <bdi> as an isolate on its own
+  assert.doesNotMatch(css, /unicode-bidi:\s*(bidi-override|embed)/);
+});
+
+test('FU-54: the forced-reset clean-up text names the PayPal Sandbox dashboard only in the Sandbox adapter\'s branch', () => {
+  const admin = code.get('js/views/admin.js');
+  const branches = [...admin.matchAll(/^\s{2}('?[a-z-]+'?): '([^\n]*)',$/gm)].filter((m) => /dashboard/.test(m[2]));
+  assert.equal(branches.length, 2, 'two texts mention a dashboard');
+  assert.deepEqual(branches.map((m) => m[1].replace(/'/g, '')).sort(), ['sandbox', 'unknown']);
+  assert.match(admin, /fake: 'The forced reset cleared the simulated provider\\'s records, so there is nothing to check outside RescueStock/);
+  assert.match(admin, /adapterOf\(config\)/);
+});
+
+test('RS-34: every admin section that deals with payments carries the adapter badge line', () => {
+  const admin = code.get('js/views/admin.js');
+  for (const section of ['admin-reset', 'admin-faults', 'admin-timeline', 'admin-metrics']) {
+    assert.match(admin, new RegExp(`sectionEl\\('${section}', '[^']+', \\[providerLine\\(ctx\\.config, '${section}'\\)`), section);
+  }
+});

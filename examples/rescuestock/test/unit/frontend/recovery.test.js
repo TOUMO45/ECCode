@@ -109,6 +109,8 @@ const recovery = new Map(readdirSync(RECOVERY).filter((f) => f.endsWith('.json')
 const view = (name) => structuredClone(recovery.get(name).response);
 const contract = (name) => load(CONTRACTS, `${name}.json`);
 const payment = (name) => structuredClone(load(path.join(CONTRACTS, 'payments'), `${name}.json`).response);
+// the answer of GET /api/config for the Sandbox adapter (FU-54: the admin clean-up text depends on the adapter)
+const SANDBOX_CONFIG = structuredClone(load(path.join(CONTRACTS, 'labels'), 'config-sandbox.json').response);
 const VIEW_NAMES = [...recovery.keys()].filter((n) => n.startsWith('view-'));
 
 const REQUEST_ID_RE = /^[A-Za-z0-9-]{8,64}$/;
@@ -352,8 +354,12 @@ test('RS-17: a refusal reason from a supplier is text on the buyer’s page, nev
   const root = wrap([renderRequestPage(buildRequestViewModel(v), NOOP_HANDLERS)]);
   const node = byTestId(root, 'failure-A-earlier-refusal');
   assert.equal(node.textContent, `Reason the supplier gave: ${hostile}`);
-  assert.equal(node.getAttribute('dir'), 'auto');
-  assert.ok(node.children.every((c) => c instanceof FakeText), 'only text nodes below it');
+  // FU-58: the supplier's words sit in their own <bdi dir="auto"> isolate, below which there are only text nodes
+  const isolates = node.children.filter((c) => !(c instanceof FakeText));
+  assert.deepEqual(isolates.map((c) => c.tagName), ['BDI']);
+  assert.equal(isolates[0].getAttribute('dir'), 'auto');
+  assert.equal(isolates[0].textContent, hostile);
+  assert.ok(isolates[0].children.every((c) => c instanceof FakeText), 'only text nodes below it');
   assert.equal(root.all((n) => n.tagName === 'IMG').length, 0);
 });
 
@@ -766,10 +772,12 @@ test('RS-30: a forced reset needs a reason of 10 to 500 characters, an ordinary 
   assert.deepEqual(resetResultModel(contract('admin-reset').response), {
     text: 'The demo was reset. 2 payment operations were archived.', strandedIntro: null, stranded: [],
   });
-  const stranded = resetResultModel(recovery.get('admin-reset-forced-stranded').response);
+  const stranded = resetResultModel(recovery.get('admin-reset-forced-stranded').response, SANDBOX_CONFIG);
   assert.equal(stranded.text, 'The demo was reset. 3 payment operations were archived.');
   assert.deepEqual(stranded.stranded, [{ text: 'Operation 42: unknown' }]);
+  // FU-54: only the Sandbox adapter has a dashboard to check; the fake provider's records are gone with the reset
   assert.match(stranded.strandedIntro, /PayPal Sandbox dashboard/);
+  assert.doesNotMatch(resetResultModel(recovery.get('admin-reset-forced-stranded').response, contract('config').response).strandedIntro, /PayPal Sandbox dashboard/);
   const withIds = resetResultModel({ archivedOperations: 1, stranded: [{ id: 7, status: 'authorized', providerAuthorizationId: 'AUTH-7', providerCaptureId: 'CAP-7' }] });
   assert.deepEqual(withIds.stranded, [{ text: 'Operation 7: authorized, authorization AUTH-7, capture CAP-7' }]);
 });
@@ -787,7 +795,7 @@ test('RS-30: the admin screen hides the controls of other kinds, shows what each
       return recovery.get('admin-fault-clear').response;
     },
   };
-  const { ctx, container, announced } = baseCtx(api);
+  const { ctx, container, announced } = baseCtx(api, { config: SANDBOX_CONFIG });
   mountAdmin(ctx, parseRoute('#/admin'));
   await tick();
   const rowOf = (testid) => container.all((n) => n.getAttribute('class') === 'form-row' && n.children.some((c) => c.getAttribute?.('data-testid') === testid))[0];

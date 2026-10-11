@@ -123,7 +123,8 @@ h3 { font-size: 1.05rem; margin: 1rem 0 0.5rem; }
 .button:hover { background: #e6f0fb; }
 .button-primary { color: #ffffff; background: var(--link); }
 .button-primary:hover { background: #083a70; }
-.button[aria-disabled="true"] { color: var(--muted); background: #e9ecef; border-color: var(--border); cursor: not-allowed; }
+/* Not available: grey fill, dashed border and the text reason beside it. The text stays at full strength (6.6:1). */
+.button[aria-disabled="true"] { color: var(--muted); background: #e9ecef; border-color: var(--border); border-style: dashed; cursor: not-allowed; }
 
 /* Forms */
 .form, .manual-form { max-width: 40rem; }
@@ -183,6 +184,10 @@ textarea { min-height: 8rem; resize: vertical; }
 .badge-demo { background: #fff3cd; border-color: var(--warn-border); color: var(--warn-text); }
 .badge-provider { background: #f1e8fb; border-color: #5b2a8c; color: #31104f; }
 
+/* Links that stand on their own line (a request in the list, "Open your requests", the request that holds the stock)
+   are 44 px targets; links inside a sentence keep the sentence's line. */
+.data-table a, .state a, .notice a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; }
+
 /* Tables: a wide table scrolls inside its own region, never the page. */
 .table-scroll { max-width: 100%; overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
@@ -228,7 +233,6 @@ progress { display: block; width: 100%; max-width: 40rem; height: 1.25rem; }
 .paypal-approvals .card p { overflow-wrap: anywhere; }
 .actions > .notice { flex: 1 1 100%; }
 .actions > .button, .paypal-approvals .button { max-width: 100%; white-space: normal; }
-[aria-disabled="true"].button { opacity: 0.65; cursor: not-allowed; }
 .inline-details { margin: 0.5rem 0; }
 .inline-details summary, details > summary { min-height: 44px; padding: 0.6rem 0; cursor: pointer; font-weight: 600; }
 .status-line { font-size: 1.15rem; }

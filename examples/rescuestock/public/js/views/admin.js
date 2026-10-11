@@ -4,6 +4,8 @@
 import { el, replaceContent } from '../dom.js';
 import { formatLocalDateTime } from '../format.js';
 import { describeError } from '../errors.js';
+import { adapterOf, labelsModel } from '../components/banner.js';
+import { badgeNodes } from '../components/badges.js';
 import { checkboxField, inputField, selectField, submitButton } from '../components/form.js';
 import { emptyNode, errorNode, loadingNode, noticeNode, sectionEl, showState, tableRegion } from '../components/notice.js';
 
@@ -114,21 +116,36 @@ export function faultResultText(answer) {
   }
 }
 
-// POST /api/admin/reset 200 -> { text, stranded: [{ text }] }. A forced reset lists the operations it could not settle;
-// they need a manual clean-up in the PayPal Sandbox dashboard, so the screen says so plainly.
-export function resetResultModel(answer) {
-  const stranded = (Array.isArray(answer?.stranded) ? answer.stranded : []).map((s) => ({
-    text: [
-      `Operation ${s.id}: ${s.status}`,
-      s.providerAuthorizationId ? `authorization ${s.providerAuthorizationId}` : null,
-      s.providerCaptureId ? `capture ${s.providerCaptureId}` : null,
-    ].filter(Boolean).join(', '),
-  }));
+// What to tell the operator about the payments a forced reset could not settle, by the adapter that is active (FU-54).
+// Only the PayPal Sandbox adapter has records outside RescueStock, so only it points at a dashboard.
+const STRANDED_INTRO = Object.freeze({
+  fake: 'The forced reset cleared the simulated provider\'s records, so there is nothing to check outside RescueStock. These payments were not finished when the reset ran.',
+  sandbox: 'These payments are not finished. Check each one in the PayPal Sandbox dashboard and clean it up there by hand.',
+  'sandbox-stub': 'These payments were not finished when the reset ran. The Sandbox adapter was talking to a local stub (test mode), so there is nothing to check outside RescueStock.',
+  unknown: 'These payments are not finished. This screen could not tell which payment provider is active, so check each one with that provider (for the PayPal Sandbox, in its dashboard) before you rely on the reset.',
+});
+
+const PLAN_STATUS = /^[a-z][a-z_]{0,40}$/;
+
+// One stranded entry. planStatus and owedRefund come from a later backend change: they are written only when the entry
+// carries them (a plan status word, and owedRefund === true), so an entry without them reads as before.
+function strandedText(s) {
+  return [
+    `Operation ${s.id}: ${s.status}`,
+    s.providerAuthorizationId ? `authorization ${s.providerAuthorizationId}` : null,
+    s.providerCaptureId ? `capture ${s.providerCaptureId}` : null,
+    typeof s.planStatus === 'string' && PLAN_STATUS.test(s.planStatus) ? `plan ${s.planStatus.replace(/_/g, ' ')}` : null,
+    s.owedRefund === true ? 'a refund is owed' : null,
+  ].filter(Boolean).join(', ');
+}
+
+// POST /api/admin/reset 200 -> { text, strandedIntro, stranded: [{ text }] }. A forced reset lists the operations it could
+// not settle. `config` is the GET /api/config answer: it says which adapter the intro may talk about.
+export function resetResultModel(answer, config = null) {
+  const stranded = (Array.isArray(answer?.stranded) ? answer.stranded : []).map((s) => ({ text: strandedText(s) }));
   return {
     text: `The demo was reset. ${answer?.archivedOperations ?? 0} payment operations were archived.`,
-    strandedIntro: stranded.length > 0
-      ? 'These payments are not finished. Check each one in the PayPal Sandbox dashboard and clean it up there by hand.'
-      : null,
+    strandedIntro: stranded.length > 0 ? STRANDED_INTRO[adapterOf(config)] : null,
     stranded,
   };
 }
@@ -169,6 +186,17 @@ export function buildMetricsViewModel(answer) {
 const GROUP_TEXT = Object.freeze({ operationsByStatus: 'Payment operations', plansByStatus: 'Plan versions', reservationsByStatus: 'Reservations' });
 
 // ---- DOM -------------------------------------------------------------------------------------------------------------
+
+// Every section of this screen deals with payments (operations, provider calls, simulated faults), so each says which
+// adapter they belong to (RS-34). Without labels nothing is shown: the banner already says they did not load.
+function providerLine(config, section) {
+  const badges = labelsModel(config).paymentBadges;
+  if (badges.length === 0) return null;
+  return el('p', { class: 'provider-line', testid: `provider-${section}` }, [
+    el('span', { class: 'label', text: 'Payment provider: ' }),
+    ...badgeNodes(badges),
+  ]);
+}
 
 function resetDoneNode(model) {
   return noticeNode({
@@ -230,10 +258,10 @@ export function mountAdmin(ctx, route) {
   const metricsSlot = el('div', { testid: 'metrics-slot' });
   replaceContent(ctx.container, [
     title,
-    sectionEl('admin-reset', 'Reset the demo', [resetSlot]),
-    sectionEl('admin-faults', 'Simulated faults', [faultSlot]),
-    sectionEl('admin-timeline', 'Timeline', [timelineSlot]),
-    sectionEl('admin-metrics', 'Metrics', [metricsSlot]),
+    sectionEl('admin-reset', 'Reset the demo', [providerLine(ctx.config, 'admin-reset'), resetSlot]),
+    sectionEl('admin-faults', 'Simulated faults', [providerLine(ctx.config, 'admin-faults'), faultSlot]),
+    sectionEl('admin-timeline', 'Timeline', [providerLine(ctx.config, 'admin-timeline'), timelineSlot]),
+    sectionEl('admin-metrics', 'Metrics', [providerLine(ctx.config, 'admin-metrics'), metricsSlot]),
   ]);
   let busy = false;
   let timelineRequestId = '';
@@ -300,7 +328,7 @@ export function mountAdmin(ctx, route) {
           children: [el('ul', {}, blocked.map((o) => el('li', { text: `Operation ${o.id}: ${o.status}` })))],
         })
         : null,
-      result ? resetDoneNode(resetResultModel(result)) : null,
+      result ? resetDoneNode(resetResultModel(result, ctx.config ?? null)) : null,
       force.row,
       reason.row,
       submitButton('Reset the demo', { testid: 'reset-submit' }),

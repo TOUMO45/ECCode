@@ -5,6 +5,7 @@
 // before the payment reads refunded.
 
 import { el } from '../dom.js';
+import { messageNodes, reasonNodes } from '../isolate.js';
 import { EXACT, nextStepSentence } from '../texts.js';
 import { fulfilmentText, paymentStatusText, presentationText } from '../format.js';
 import { sortedOrders, supplierDirectory, supplierName } from '../view-helpers.js';
@@ -93,7 +94,7 @@ export function renderFailure(model) {
   if (model.state === 'empty') {
     return [
       emptyNode({ title: model.emptyText, testid: 'failure-empty' }),
-      model.message ? el('p', { testid: 'failure-message', text: model.message }) : null,
+      model.message ? el('p', { testid: 'failure-message' }, messageNodes(model.message)) : null,
       el('p', { testid: 'failure-next-step', text: `Next step: ${model.nextStepText}` }),
     ];
   }
@@ -108,7 +109,7 @@ export function renderFailure(model) {
       el('p', {}, [el('span', { class: 'label', text: 'Order: ' }), pill(r.presentationText, r.notPaid ? 'warn' : 'neutral', `${r.testid}-presentation`)]),
       el('p', { testid: `${r.testid}-payment` }, [el('span', { class: 'label', text: 'Payment: ' }), r.paymentText, ' ', ...badgeNodes(r.badges)]),
       el('p', { class: 'muted', text: `Supplier: ${r.fulfilmentText}` }),
-      r.refusalReason ? el('p', { dir: 'auto', testid: `${r.testid}-refusal`, text: `Reason the supplier gave: ${r.refusalReason}` }) : null,
+      r.refusalReason ? el('p', { testid: `${r.testid}-refusal` }, reasonNodes('Reason the supplier gave: ', r.refusalReason)) : null,
       el('p', { testid: 'compensation', data: { state: r.compensation.state, kind: r.compensation.kind ?? 'none' } }, [
         el('span', { class: 'label', text: 'Compensation: ' }),
         r.compensation.text,
@@ -116,6 +117,6 @@ export function renderFailure(model) {
     ]))),
     noticeNode({ text: model.summary.text, tone: model.summary.failed > 0 ? 'warn' : 'info', testid: 'compensation-summary', role: null }),
     el('p', { testid: 'failure-next-step' }, [el('span', { class: 'label', text: 'Next step: ' }), model.nextStepText]),
-    model.message ? el('p', { testid: 'failure-message', text: model.message }) : null,
+    model.message ? el('p', { testid: 'failure-message' }, messageNodes(model.message)) : null,
   ];
 }

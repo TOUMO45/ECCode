@@ -18,6 +18,16 @@ export function providerBadgeModels(payment) {
   return out;
 }
 
+// GET /api/config labels -> the badge of the active payment adapter, for screens that show payment elements of no
+// single order (the admin screen). No labels, no badge: nothing is guessed.
+export function adapterBadgeModels(labels) {
+  if (!labels) return [];
+  const out = [];
+  if (labels.simulatedPayments === true) out.push({ text: EXACT.SIMULATED_BADGE, testid: 'badge-simulated' });
+  if (labels.sandbox === true) out.push({ text: EXACT.SANDBOX_BADGE, testid: 'badge-sandbox' });
+  return out;
+}
+
 // Extraction { simulated } -> badge models (the AI reading is simulated when a fake provider is active).
 export function extractionBadgeModels(extraction) {
   return extraction?.simulated === true ? [{ text: EXACT.SIMULATED_BADGE, testid: 'badge-simulated' }] : [];

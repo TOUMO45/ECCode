@@ -3,6 +3,7 @@
 // separately and never merged (RS-35).
 
 import { el } from '../dom.js';
+import { reasonNodes } from '../isolate.js';
 import { COLUMN_TITLES, EXACT } from '../texts.js';
 import { formatLocalTime, fulfilmentText, pluralize } from '../format.js';
 import { currentPlan, sortedOrders, supplierDirectory, supplierName } from '../view-helpers.js';
@@ -77,7 +78,7 @@ export function renderCommitments(model) {
           el('dd', {}, [
             pill(r.confirmed.text, r.confirmed.state === 'confirmed' ? 'ok' : (r.confirmed.state === 'refused' ? 'warn' : 'neutral')),
             r.confirmed.differs ? el('span', { class: 'muted', text: ' Differs from the catalog offer.' }) : null,
-            r.confirmed.reason ? el('span', { dir: 'auto', class: 'muted', text: ` Reason: ${r.confirmed.reason}` }) : null,
+            r.confirmed.reason ? el('span', { class: 'muted' }, reasonNodes(' Reason: ', r.confirmed.reason)) : null,
           ]),
         ]),
       ]),

@@ -8,6 +8,7 @@
 //   failed_needs_attention + CONTACT_ORGANISER   "Contact the organiser" and the request number to quote
 
 import { el } from '../dom.js';
+import { messageNodes } from '../isolate.js';
 import { EXACT, nextStepSentence } from '../texts.js';
 import { rescueStatusText } from '../format.js';
 import { pill, toneForStatus } from './badges.js';
@@ -55,7 +56,8 @@ export function renderStatus(model, on = {}) {
       el('span', { class: 'label', text: 'Status: ' }),
       pill(model.statusText, model.tone, 'rescue-status'),
     ]),
-    model.message ? el('p', { class: 'status-message', testid: 'rescue-message', text: model.message }) : null,
+    // The message can carry a supplier's own words (a refusal reason): they are isolated from the sentence (FU-58).
+    model.message ? el('p', { class: 'status-message', testid: 'rescue-message' }, messageNodes(model.message)) : null,
     model.replanning ? noticeNode({ text: model.replanningText, testid: 'replanning', role: 'status' }) : null,
     model.expired ? expiredReservationNode(on.replan) : null,
     model.attention ? noticeNode({ text: model.attention.text, tone: 'warn', role: 'alert', testid: 'contact-organiser', children: [el('p', { text: model.attention.detail })] }) : null,

@@ -1,0 +1,67 @@
+{
+  "from": "frontend-engineer",
+  "to": "delivery-lead",
+  "task": "g1-frontend-a11y-labels",
+  "objective": "Final accessibility and state pass over public/**, the six-answer request page, and honest labels for both payment adapters and test mode (RS-34, RS-35, NFR2), plus FU-54 (adapter-specific forced-reset wording), FU-58 (isolate untrusted refusal reasons), FU-38 and FU-3/FU-17/FU-50 checks.",
+  "context": "Phases C-F had already built the views. g1 audited them in Chromium at 360 and 1280 px (own ad-hoc audit script, recorded as evidence) and fixed what it found. The client learns the active adapter only from GET /api/config labels (simulatedPayments, sandbox, testMode), which main.js already loads into ctx.config. Decisions: FU-54 (dec-mv46ovf2-017bf12d), FU-58 security, FU-50 (dec-mv47vma5-01d0d177: no view change for completed voids of a closed plan; none made).",
+  "inputs": [
+    ".eccode/artifacts/design/spec.md#Frontend",
+    ".eccode/artifacts/architecture/brief.md (RS-34, RS-35, NFR2)",
+    ".eccode/artifacts/plan/plan.json (g1)",
+    ".eccode/artifacts/plan/followups.md (FU-3, FU-17, FU-38, FU-50, FU-54, FU-58)"
+  ],
+  "expectedOutput": "public/** final; test/unit/frontend/a11y-labels.test.js; label fixtures; scan tests.",
+  "acceptanceCriteria": [
+    "Every control labelled, errors tied by aria-describedby, 3 px visible focus >= 3:1, text contrast >= 4.5:1, skip link, focus to h1, announcer, aria-disabled with text reason, 44 px targets at 360 px, single column at 360 px with no horizontal scroll, two columns from 1024 px",
+    "Every data section renders loading, empty, error with Retry, timeout, expired-reservation, degraded-extraction and success states",
+    "The request page answers the six questions in the spec's order",
+    "Persistent banners and badges for both adapters and test mode",
+    "a11y-labels.test.js checks label and state view-models and that every control carries a label"
+  ],
+  "completedWork": "Defects found by a Chromium audit and fixed: (1) a busy/disabled button was drawn with opacity 0.65, giving 3.13:1 text contrast (mutation run against the old stylesheet reproduces it, ev:ev-mv48a8o1-0107475f); now full-strength text with a dashed border. (2) The request link in the requests table was 61x42 px at 360 and 81x19 at 1280; standalone links in tables, .state and .notice are now 44 px targets. Labels: new labelsModel/adapterOf in components/banner.js and adapterBadgeModels in components/badges.js (bannerModel unchanged in output); the admin screen shows a 'Payment provider: Simulated | PayPal Sandbox - no real money' line in each of its four payment sections (none when labels are missing). FU-54: resetResultModel(answer, config) words the forced-reset intro by adapter via adapterOf(ctx.config): fake says the reset cleared the simulated provider's records and there is nothing to check outside RescueStock; sandbox names the PayPal Sandbox dashboard; sandbox in test mode (local stub) says there is no dashboard; unknown adapter does not pick one. planStatus and owedRefund: the stranded entries from src/services/admin.js do NOT carry them yet (checked at start), so they are rendered only when present ('plan <status>', 'a refund is owed' when owedRefund === true; a false or malformed value renders nothing) and an entry without them reads exactly as before. FU-58: new public/js/isolate.js; the refusal reason is wrapped in <bdi dir=auto> in the commitments card, the failure card and the supplier screen, and the server's status/failure message isolates the reason inside 'refused the order: ... No money was taken.' (any other message is isolated as a whole). Characters are not stripped. FU-38: already closed by f3 (view-non-executable.json variant text says post-claim state, not abandoned); verified, no change. FU-50: no view change, per decision. FU-3: the default stands in the shipped code (SPEC_MISMATCH offers are listed under 'Offers that were not considered' in Why this plan, not under What was rejected); a11y-labels test does not contradict it. FU-17: stacked table verified at 360 px with no horizontal scroll (audit). New fixtures under test/fixtures/contracts/labels/ (subdirectory, so the NFR6 route-table test is unaffected): config-sandbox, config-sandbox-single-credential, config-fake-test-mode. Tests: a11y-labels.test.js (30 tests: banners/badges for fake, fake+test mode, Sandbox, Sandbox single-credential, Sandbox stub; FU-54 wording; admin badges; FU-58; six answers in order; each state; every control labelled on 25+ built screens, aria references resolve); scan tests for contrast of every colour rule, focus ring, disabled look, 44 px links, isolation use, FU-54 branches, admin badge lines. recovery.test.js updated for the new resetResultModel signature and the <bdi> structure.",
+  "filesChanged": [
+    "public/css/app.css",
+    "public/js/isolate.js",
+    "public/js/components/badges.js",
+    "public/js/components/banner.js",
+    "public/js/components/commitments.js",
+    "public/js/components/compensation.js",
+    "public/js/components/status.js",
+    "public/js/views/admin.js",
+    "public/js/views/supplier-orders.js",
+    "test/fixtures/contracts/labels/config-sandbox.json",
+    "test/fixtures/contracts/labels/config-sandbox-single-credential.json",
+    "test/fixtures/contracts/labels/config-fake-test-mode.json",
+    "test/unit/frontend/a11y-labels.test.js",
+    "test/unit/frontend/recovery.test.js",
+    "test/scan/frontend.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv48fb83-01ff31ba",
+    "ev:ev-mv48aqi5-0119d43d",
+    "ev:ev-mv489sxa-0120c3f9",
+    "ev:ev-mv48ajze-019f771b",
+    "ev:ev-mv48a8o1-0107475f",
+    "ev:ev-mv48bosl-014bf5a4",
+    "ev:ev-mv48e1xg-01cfcf2e",
+    "ev:ev-mv48e6rt-01d60145",
+    "ev:ev-mv483xim-01466fe6",
+    "ev:ev-mv4873d8-01b922ce"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson concerns a guard that resolves the project root from the harness directory and wrongly denies writes in a nested record. That condition did not occur: every Edit/Write in examples/rescuestock was judged against the nested record's g1 claim. The few Bash refusals I saw (relative path after cd, inline file-writing interpreter, '>=' in a label) are the raw-text over-denial family the lesson lists as not applicable."
+    }
+  ],
+  "remainingIssues": [
+    "FU-54 (a): src/services/admin.js stranded entries do not yet carry planStatus/owedRefund; the UI renders them only when present, so nothing breaks when the backend rework adds them. When it lands, confirm the field names and that owedRefund is a boolean; a unit test pins the rendering (a11y-labels.test.js, 'FU-54: planStatus and owedRefund ...').",
+    "Contract observation (not mine to fix): src/config.js buildLabels sends singleCredentialNotice 'All suppliers are paid through one Sandbox merchant account (single-credential mode).', while the spec and the UI use 'All demo suppliers are paid to one Sandbox account'. The UI shows its own constant. The older fixture config-sandbox-test-mode.json carries the spec wording; the new labels/ fixtures carry the server's real wording. Decide which sentence is canonical.",
+    "Not covered in a browser: the admin forced-reset result text per adapter and the <bdi> isolation of a bidi-control reason are checked by unit tests on a fake DOM, not rendered in Chromium (the browser harness cannot produce a stranded operation or a bidi reason without a backend change/fault). The fake-adapter, test-mode and Sandbox-stub text cases are all unit-tested; a Sandbox adapter without test mode was never run in a browser (no live PayPal).",
+    "The Timeline and Total tables scroll inside a focusable region at 360 px (by design, page never scrolls sideways); their right columns need that scroll.",
+    "The date-time field's calendar button is ringed by Chromium's own focus ring, not the 3 px blue one; checked in Chromium only (5x screenshot, ev:ev-mv48e6rt-01d60145). Other browsers not tested.",
+    "Ad-hoc audit script lives in the session scratchpad, not in the repo; its results are the recorded evidence ids. npm test (locked): 2307 tests, 2299 pass, 0 fail; I did not inspect which 8 are not counted as passes (skipped or todo in the runner's summary)."
+  ],
+  "nextAction": "delivery-lead: carry the contract observation and the FU-54(a) backend dependency into the verification report; reviewers re-run the frontend scan/unit command and may re-run the browser suite."
+}

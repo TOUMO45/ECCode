@@ -3,6 +3,7 @@
 // no action (F-TR-11). The buyer is shown by display name only; nothing else about them reaches this screen.
 
 import { el, replaceContent } from '../dom.js';
+import { reasonNodes } from '../isolate.js';
 import { EXACT } from '../texts.js';
 import {
   formatLocalDateTime, formatLocalTime, formatUsd, fulfilmentText, localToTs, paymentStatusText, presentationText, utcToLocal,
@@ -101,7 +102,7 @@ function renderCard(card, on) {
     el('p', { text: `Your catalog ready time: ${card.catalogReadyText}. Buyer’s deadline: ${card.deadlineText} (Amman time).` }),
     el('p', {}, [el('span', { class: 'label', text: 'Payment: ' }), card.paymentText, ' ', ...badgeNodes(card.badges)]),
     card.commitmentText ? el('p', { testid: `${card.testid}-commitment`, text: `You confirmed: ${card.commitmentText}` }) : null,
-    card.refusalReason ? el('p', { dir: 'auto', text: `Reason you gave: ${card.refusalReason}` }) : null,
+    card.refusalReason ? el('p', {}, reasonNodes('Reason you gave: ', card.refusalReason)) : null,
     card.noActionText ? el('p', { class: 'muted', testid: `${card.testid}-no-action`, text: card.noActionText }) : null,
   ];
   const a = card.actions;
