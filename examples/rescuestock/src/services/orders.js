@@ -47,9 +47,14 @@ function loadOrder(db, orderId, supplierId) {
   return row;
 }
 
-// Handover and ready need an executed plan with no operation that is unsettled or being refunded (brief, state tables).
+// Handover and ready need an executed plan with no operation that is unsettled or being refunded (brief, state tables), and
+// (FU-59, dec-mv4740d4-015b3589) an order whose OWN payment operation is refunded is not handed over: the money went back, so the goods
+// must not be released. This is a per-order rule: the siblings of a refunded order keep the plan-wide rule above, so the other
+// supplier's goods stay collectable (OQ-D2, spec row 7).
 function handoverAllowed(db, order) {
   if (order.plan_status !== 'executed') return false;
+  const own = db.prepare('SELECT status FROM payment_operations WHERE supplier_order_id = ? AND archived_at IS NULL').get(order.id);
+  if (own?.status === 'refunded') return false;
   const blocking = db
     .prepare(
       'SELECT po.status FROM payment_operations po JOIN supplier_orders s ON s.id = po.supplier_order_id WHERE s.plan_version_id = ?',
@@ -129,14 +134,23 @@ export function assertOwnedOrder(db, supplierId, orderId) {
   loadOrder(db, orderId, supplierId);
 }
 
-// A refusal reason: 1-300 characters, not blank, no control characters except tab and line breaks.
+// Characters a refusal reason may not contain (FU-58, SEC-F-I6): the C0 controls except tab, LF and CR; DEL and the C1 controls; the line and
+// paragraph separators U+2028/2029; and the bidi overrides, embeddings and isolates U+202A-U+202E and U+2066-U+2069, which would reorder the
+// server's own sentence ("Supplier X refused the order: <reason>. No money was taken.") when it is displayed. The plain direction marks
+// LRM and RLM stay valid: Arabic text uses them.
+// Written as code point ranges (not as characters or escapes) so that no invisible or bidi character lives in this source file.
+const REFUSAL_FORBIDDEN_RANGES = [[0x00, 0x08], [0x0b, 0x0c], [0x0e, 0x1f], [0x7f, 0x9f], [0x2028, 0x2029], [0x202a, 0x202e], [0x2066, 0x2069]];
+const REFUSAL_FORBIDDEN = new RegExp(`[${REFUSAL_FORBIDDEN_RANGES.map(([from, to]) => `\\u{${from.toString(16)}}-\\u{${to.toString(16)}}`).join('')}]`, 'u');
+
+// A refusal reason: 1-300 characters, not blank, none of the forbidden characters above. Used by the supplier route and by the admin
+// supplier_refusal fault alike (FU-56).
 export function checkRefusalReason(value) {
   if (typeof value !== 'string') return { ok: false, rule: 'string' };
   const text = value.normalize('NFC');
   const length = Array.from(text).length;
   if (length < 1 || length > 300) return { ok: false, rule: 'length:1..300' };
   if (text.trim().length === 0) return { ok: false, rule: 'blank' };
-  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(text)) return { ok: false, rule: 'characters' };
+  if (REFUSAL_FORBIDDEN.test(text)) return { ok: false, rule: 'characters' };
   return { ok: true, value: text };
 }
 

@@ -23,6 +23,19 @@ import { fixtureInput } from '../unit/domain/helpers/fixture.js';
 const SINGLE_CALL_CEILING_MS = 1000;
 const SWEEP_P95_MS = 20;
 
+// TR-R6-1 (rev-mv4954l0-01d87f48): SEC-B-1 also named an event loop held for about 0.3 s. A hold on a few inputs is invisible to a percentile
+// and below the runaway ceiling, so each call keeps the per-call bound it had before rework-6, with the noise handled by re-timing:
+// a call that exceeds its bound is timed TWICE MORE on the same input and fails only if the MINIMUM of the three timings still exceeds
+// the bound. Host contention and steal are transient and do not repeat three times on one input; a deterministic hold does.
+//   50 ms  the headline call (stock 100, 10,000 cups); 100 ms each call of the sweep; 250 ms each 12-offer catalog (quiet worst 13-25 ms).
+const HEADLINE_BOUND_MS = 50;
+const SWEEP_BOUND_MS = 100;
+const CATALOG_BOUND_MS = 250;
+const RETIMES = 2;
+// The 12-offer catalogs also get a p95 (quiet host, four runs: 5.4-7.1 ms; 18.8-23.3 ms under 3 x nproc busy loops; the limit is 14 x the quiet value): a slowdown of a third of the
+// catalogs would move it where one noisy call cannot. It is computed from the re-timed minima.
+const CATALOG_P95_MS = 100;
+
 function timed(input) {
   const start = performance.now();
   let result;
@@ -33,6 +46,19 @@ function timed(input) {
     error = e;
   }
   return { result, error, ms: performance.now() - start };
+}
+
+// The first timing `first` (from timed()) is already taken. At or under the bound: done. Over it: time the same input RETIMES more times
+// and fail if the minimum of all the timings is still over the bound. Returns the minimum, for the aggregates.
+function assertUnderBound(input, first, boundMs, what) {
+  if (first.ms <= boundMs) return first.ms;
+  const again = Array.from({ length: RETIMES }, () => timed(input).ms);
+  const best = Math.min(first.ms, ...again);
+  assert.ok(
+    best <= boundMs,
+    `${what} took ${first.ms.toFixed(1)} ms, then ${again.map((m) => m.toFixed(1)).join(' and ')} ms on the same input: the minimum of three, ${best.toFixed(1)} ms, still exceeds the per-call bound ${boundMs} ms (a deterministic hold, not host noise)`,
+  );
+  return best;
 }
 
 // the JIT is cold on the first calls; warm it with the fixture so the thresholds below measure steady state
@@ -53,7 +79,8 @@ const seeded = (stock, qty, maxPickups, budget, compat, deadline) => fixtureInpu
 test('SEC-B-1: stock 100, 10,000 cups → A, exact and without a runaway search', () => {
   // each of the five suppliers holds 100 bundles; A, B or E alone covers 10,000 cups + 10,000 lids; budget USD 100,000
   const input = seeded(100, 10000, 5, 10000000, false, false);
-  const { result, error, ms } = timed(input);
+  const first = timed(input);
+  const { result, error, ms } = first;
   assert.equal(error, null);
   assert.equal(result.feasible, true);
   assert.deepEqual(result.best.supplierCodes, ['A']);
@@ -61,6 +88,7 @@ test('SEC-B-1: stock 100, 10,000 cups → A, exact and without a runaway search'
   assert.equal(result.best.totalCents, 100 * 3000 + 1000);
   assert.equal(result.best.pickupCount, 1);
   assert.ok(ms < SINGLE_CALL_CEILING_MS, `took ${ms.toFixed(1)} ms (ceiling ${SINGLE_CALL_CEILING_MS} ms; quiet host: well under 5 ms)`);
+  assertUnderBound(input, first, HEADLINE_BOUND_MS, 'the headline call (stock 100, 10,000 cups)');
   // the same request with maxPickups 1 gives the same plan
   const one = plan(seeded(100, 10000, 1, 10000000, false, false));
   assert.deepEqual(one.best, result.best);
@@ -77,11 +105,14 @@ test('SEC-B-1: the seeded catalog shape never reaches PLANNER_LIMIT and stays fa
       for (const maxPickups of [1, 3, 5]) {
         for (const budget of [null, 1, 1000000, 100000000]) {
           for (const compat of [false, true]) {
-            const { error, ms } = timed(seeded(stock, qty, maxPickups, budget, compat, calls % 2 === 0));
+            const input = seeded(stock, qty, maxPickups, budget, compat, calls % 2 === 0);
+            const first = timed(input);
+            const { error, ms } = first;
             calls += 1;
             assert.equal(error, null, `stock ${stock}, qty ${qty}, maxPickups ${maxPickups}, budget ${budget}, compat ${compat}: ${error?.message}`);
             times.push(ms);
             assert.ok(ms < SINGLE_CALL_CEILING_MS, `stock ${stock}, qty ${qty}, maxPickups ${maxPickups}, budget ${budget}, compat ${compat} took ${ms.toFixed(1)} ms (runaway ceiling ${SINGLE_CALL_CEILING_MS} ms)`);
+            assertUnderBound(input, first, SWEEP_BOUND_MS, `stock ${stock}, qty ${qty}, maxPickups ${maxPickups}, budget ${budget}, compat ${compat}`);
           }
         }
       }
@@ -97,6 +128,7 @@ test('SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities u
   const rng = makeRng(20261009);
   let feasible = 0;
   let worst = 0;
+  const catalogTimes = [];
   for (let c = 0; c < 150; c += 1) {
     const offers = Array.from({ length: 12 }, (_, i) => {
       const size = rng.pick([50, 100, 200]);
@@ -117,12 +149,17 @@ test('SEC-B-1: 12 random-priced offers with stock up to 100,000 and quantities u
       offers,
       excludeSupplierCodes: [],
     };
-    const { result, error, ms } = timed(input);
+    const first = timed(input);
+    const { result, error, ms } = first;
     assert.equal(error, null, `catalog ${c}: ${error?.message}`);
     if (result.feasible) feasible += 1;
     worst = Math.max(worst, ms);
     assert.ok(ms < SINGLE_CALL_CEILING_MS, `catalog ${c} took ${ms.toFixed(1)} ms (runaway ceiling ${SINGLE_CALL_CEILING_MS} ms; quiet host: 13-25 ms worst of 150)`);
+    catalogTimes.push(assertUnderBound(input, first, CATALOG_BOUND_MS, `catalog ${c}`));
   }
+  catalogTimes.sort((a, b) => a - b);
+  const catalogP95 = catalogTimes[Math.floor(catalogTimes.length * 0.95)];
+  assert.ok(catalogP95 < CATALOG_P95_MS, `p95 ${catalogP95.toFixed(1)} ms over ${catalogTimes.length} catalogs (limit ${CATALOG_P95_MS} ms)`);
   assert.ok(feasible > 20 && feasible < 150, `${feasible} feasible`);
-  console.log(`# SEC-B-1 12-offer catalogs: worst ${worst.toFixed(1)} ms, ${feasible}/150 feasible`);
+  console.log(`# SEC-B-1 12-offer catalogs: worst ${worst.toFixed(1)} ms, p95 ${catalogP95.toFixed(1)} ms, ${feasible}/150 feasible`);
 });

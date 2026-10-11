@@ -27,7 +27,7 @@ import { enumOf, int, str, validateObject } from '../http/validate.js';
 import { recordAudit } from './audit.js';
 import { flushQueuedVoids, loadOperation, moveOperation, queueCall, runCall, sendDueCalls } from './calls.js';
 import { actorOf, closeReservation, resetInventory } from './ledger.js';
-import { openOrderIdsOfSupplier, refuseSupplierOrder } from './orders.js';
+import { checkRefusalReason, openOrderIdsOfSupplier, refuseSupplierOrder } from './orders.js';
 import { readResolvePass } from './reconciler.js';
 import { markNonExecutable, supersedeForOfferChange } from './supersession.js';
 import { parseJson } from './view.js';
@@ -212,14 +212,20 @@ export async function resetDemo(ctx, user, { force, reason }, { resolveBudgetMs 
       closedReconciling += Number(db.prepare("UPDATE reservations SET status = 'released', closed_at = ? WHERE id = ? AND status = 'reconciling'").run(now, id).changes);
     }
 
+    // Each entry says what the plan was doing (planStatus, as of the archive) and whether captured money is owed back (FU-54, SEC-F-I1):
+    // owedRefund is true exactly for a `captured` operation with cancel_requested_at set (the compensation or the void rule wanted it
+    // undone), so it no longer reads like a completed sale. The audit event keeps the id and the status only.
     const stranded = db
       .prepare(
-        'SELECT id, status, provider_authorization_id, provider_capture_id FROM payment_operations WHERE archived_at IS NULL ORDER BY id',
+        'SELECT po.id, po.status, po.provider_authorization_id, po.provider_capture_id, po.cancel_requested_at, pv.status AS plan_status ' +
+          'FROM payment_operations po JOIN supplier_orders so ON so.id = po.supplier_order_id JOIN plan_versions pv ON pv.id = so.plan_version_id ' +
+          'WHERE po.archived_at IS NULL ORDER BY po.id',
       )
       .all()
       .filter((op) => !TERMINAL_PAYMENT_STATES.includes(op.status))
       .map((op) => ({
         id: op.id, status: op.status, providerAuthorizationId: op.provider_authorization_id ?? null, providerCaptureId: op.provider_capture_id ?? null,
+        planStatus: op.plan_status, owedRefund: op.status === 'captured' && op.cancel_requested_at !== null,
       }));
     const archivedOperations = Number(db.prepare('UPDATE payment_operations SET archived_at = ?, updated_at = ? WHERE archived_at IS NULL').run(now, now).changes);
     db.prepare('UPDATE provider_calls SET archived_at = ? WHERE archived_at IS NULL').run(now);
@@ -354,7 +360,15 @@ async function refundOrder(ctx, user, supplierOrderId) {
           'WHERE so.id = ? AND po.archived_at IS NULL',
       )
       .get(supplierOrderId);
-    if (!row) return { refusal: new AppError(404, 'NOT_FOUND') };
+    if (!row) {
+      // FU-55: an unknown or archived order is audited too (every refund_order call writes an audit event). The row is committed
+      // with this transaction; it names the target id in the detail, not as an entity, because there may be none.
+      recordAudit(db, clock, {
+        actorUserId: user.id, actorRole: user.role, action: 'admin.fault', entityType: 'fault', entityId: null,
+        outcome: 'denied', detail: { kind: 'refund_order', code: 'NOT_FOUND', supplierOrderId }, requestId: ctx.requestId,
+      });
+      return { refusal: new AppError(404, 'NOT_FOUND') };
+    }
     // A refusal COMMITS its audit row (a throw inside the transaction would roll the row back with everything else).
     const refuse = (from) => {
       recordAudit(db, clock, {
@@ -425,11 +439,26 @@ export async function applyFault(ctx, user, body) {
       return stockDepletion(ctx, user, input.supplierCode);
     }
     case 'supplier_refusal': {
-      const input = validateObject(body, { supplierCode: supplierCodeCheck, reason: { check: str(1, 300), optional: true } });
+      // FU-56: the reason is validated exactly like the supplier route's (bounds, blank, control and bidi characters).
+      const input = validateObject(body, { supplierCode: supplierCodeCheck, reason: { check: checkRefusalReason, optional: true } });
       return supplierRefusal(ctx, user, input.supplierCode, input.reason ?? 'Refused by the organiser (demo fault).');
     }
     case 'refund_order': {
-      const input = validateObject(body, { supplierOrderId: int(1, 1e12) });
+      let input;
+      try {
+        input = validateObject(body, { supplierOrderId: int(1, 1e12) });
+      } catch (err) {
+        // FU-55: a refused body is audited as well (code only; the free-form value is never stored).
+        if (err instanceof AppError && err.status === 422) {
+          ctx.db.tx(() =>
+            recordAudit(ctx.db, ctx.clock, {
+              actorUserId: user.id, actorRole: user.role, action: 'admin.fault', entityType: 'fault', entityId: null,
+              outcome: 'denied', detail: { kind: 'refund_order', code: 'VALIDATION_FAILED' }, requestId: ctx.requestId,
+            }),
+          );
+        }
+        throw err;
+      }
       return refundOrder(ctx, user, input.supplierOrderId);
     }
     case 'fake_paypal': {
@@ -609,7 +638,8 @@ export function buildMetrics(ctx) {
   const meta = (key) => db.prepare('SELECT value FROM meta WHERE key = ?').get(key)?.value ?? null;
   const unresolved = db
     .prepare(
-      "SELECT COUNT(*) AS n FROM payment_operations WHERE archived_at IS NULL AND (status IN ('unknown','authorization_pending','capture_pending','refund_pending') OR void_failed = 1)",
+      // FU-57: a refund the provider failed (refund_failed) needs the organiser too, so it counts.
+      "SELECT COUNT(*) AS n FROM payment_operations WHERE archived_at IS NULL AND (status IN ('unknown','authorization_pending','capture_pending','refund_pending','refund_failed') OR void_failed = 1)",
     )
     .get().n;
   const spent = db

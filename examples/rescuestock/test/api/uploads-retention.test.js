@@ -535,6 +535,9 @@ describe('RS-39: the retention sweep, with a pinned clock', () => {
     const row = h.db.prepare('SELECT * FROM images WHERE id = ?').get(up.json.image.id);
     const file = join(h.config.uploadDir, `${row.file_name}.png`);
     assert.equal(row.created_at, iso(T0));
+    // The file's mtime is REAL time (the pinned clock does not touch the file system), and the orphan step compares it with the injected
+    // clock. Stamp it with the pinned upload time, so that what the orphan step would do to it is the same whatever day the suite runs.
+    utimesSync(file, new Date(T0), new Date(T0));
 
     h.clock.set(T0 + 6 * DAY_MS + 23 * 3600 * 1000);
     const kept = await sweep();
@@ -544,10 +547,18 @@ describe('RS-39: the retention sweep, with a pinned clock', () => {
     assert.equal(auditOf('image.retention_delete').length, 0);
 
     h.clock.set(T0 + 7 * DAY_MS + 60 * 1000);
+    const orphanEventsBefore = auditOf('image.orphan_delete').length;
     const swept = await sweep();
     assert.equal(swept.images, 1);
     assert.equal(count(h, 'SELECT COUNT(*) AS n FROM images WHERE id = ?', row.id), 0);
     assert.equal(existsSync(file), false);
+    // TR-R6-4: the IMAGE step itself unlinked the file. The orphan step of the same pass would also remove a leftover file (it is 7 days
+    // old by the stamp above), so "the file is gone" alone cannot tell the two apart: the image step reports no file left behind, and the
+    // orphan step found nothing to remove and wrote no image.orphan_delete event.
+    assert.equal(swept.imageFilesLeft, 0, 'the image step unlinked the file itself');
+    assert.equal(swept.orphans, 0, 'nothing was left for the orphan step');
+    assert.equal(auditOf('image.orphan_delete').length, orphanEventsBefore, 'no image.orphan_delete event');
+    assert.deepEqual(filesIn(h.config.uploadDir).filter((n) => n.startsWith(row.file_name)), [], 'no image file of the swept image is left');
     const events = auditOf('image.retention_delete');
     assert.equal(events.length, 1);
     assert.deepEqual(
@@ -618,6 +629,32 @@ describe('RS-39: the retention sweep, with a pinned clock', () => {
     assert.equal(existsSync(tmpOld), false);
     for (const kept of [orphanFresh, stranger, tmpStranger, known]) assert.ok(existsSync(kept), kept);
     assert.equal(auditOf('image.orphan_delete').length, before + 2);
+  });
+
+  test('RS-39 (date robustness): the age of an orphan file is the INJECTED clock minus the file mtime: exactly 1 day is removed, 1 ms younger is kept, and a file stamped after the pinned clock (the real date has passed the pin) is kept', async () => {
+    await at(T0 + 120 * DAY_MS);
+    const now = h.clock.now();
+    const root = h.config.uploadDir;
+    mkdirSync(root, { recursive: true });
+    const stamp = (path, ms) => utimesSync(path, new Date(ms), new Date(ms));
+    const make = (letter, ext, ms) => {
+      const path = join(root, `${letter.repeat(32)}.${ext}`);
+      writeFileSync(path, 'x');
+      stamp(path, ms);
+      return path;
+    };
+    const exactly = make('d', 'png', now - DAY_MS);
+    const younger = make('e', 'png', now - DAY_MS + 1);
+    const future = make('f', 'jpg', now + 9 * DAY_MS);
+    const before = auditOf('image.orphan_delete').length;
+    const result = await sweep();
+    // (leftovers of earlier tests of this file, whose real mtime is far older than the pinned clock, may be removed in the same pass)
+    assert.ok(result.orphans >= 1);
+    assert.equal(existsSync(exactly), false, 'exactly one day old: removed');
+    assert.equal(existsSync(younger), true, 'one millisecond younger: kept');
+    assert.equal(existsSync(future), true, 'stamped after the injected clock: kept, never negative-aged into a deletion');
+    assert.equal(auditOf('image.orphan_delete').length, before + result.orphans);
+    for (const kept of [younger, future]) rmSync(kept);
   });
 
   test('SEC-C-3: the sweep purges rate rows older than 24 h (the u:<id> rows of every signed-in call included) and keeps request_create 48 h (FU-20)', async () => {
@@ -708,9 +745,11 @@ describe('RS-39: the process starts the sweep at startup and then on a timer', (
         await new Promise((r) => setTimeout(r, 25));
       }
       assert.equal(running.db.prepare('SELECT COUNT(*) AS n FROM images WHERE id = ?').get(secondId).n, 0, 'removed by a later tick of the timer');
-      // FU-33 / TR-F-7: the sweep deletes the ROW first (a transaction) and then unlinks the FILE asynchronously (spec: Retention,
-      // "row and audit event first; an unlink that fails leaves an orphan for the orphan sweep"), so the row can be gone while the
-      // unlink is still in flight. Wait for the file itself, bounded; the assertion below still fails if it is never removed.
+      // FU-33 / TR-F-7: the sweep deletes the ROW first (a transaction) and then unlinks the FILE asynchronously, so the row can be gone
+      // while the unlink is still in flight. The ordering is the source comment at src/services/retention.js L35 ("Row and audit event
+      // first: if the file cannot be unlinked it is an orphan, and the orphan sweep removes it later"). The spec, "Retention and
+      // deletion" (L773), says only that the sweep deletes rows and files with an audit event per image, and that startup also removes
+      // orphan files older than 1 day. Wait for the file itself, bounded; the assertion below still fails if it is never removed.
       const fileDeadline = Date.now() + 5000;
       while (Date.now() < fileDeadline && existsSync(join(uploads, `${secondName}.png`))) {
         await new Promise((r) => setTimeout(r, 10));

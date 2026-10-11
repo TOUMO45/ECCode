@@ -79,6 +79,22 @@ const DEFAULTS = {
   RS_TEST_OFFLINE: '0',
   RS_LIVE_MODEL: { value: '', active: false },
   RS_LIVE_PAYPAL: { value: '', active: false },
+  // FU-21 (rework-7): variables that only the live runners and the webhook route read, never loadConfig. They are documented inactive
+  // defaults: when .env.example lists them, the line must stay commented out with an empty value.
+  RS_LIVE_MODEL_CEILING_USD: { value: '', active: false },
+  RS_LIVE_PAYPAL_HEADED: { value: '', active: false },
+  RS_LIVE_PAYPAL_WEBHOOK_SAMPLE: { value: '', active: false },
+  RS_PAYPAL_WEBHOOK_ALGOS: { value: '', active: false },
+};
+
+// Read by test/live/**, test/live/run-live-model.js or src/services/webhooks.js, not by src/config.js (so the "config reads it" and
+// "must be listed" rules below do not apply to them, but the "listed means commented out with the default" rules do).
+const LIVE_ONLY = ['RS_LIVE_MODEL_CEILING_USD', 'RS_LIVE_PAYPAL_HEADED', 'RS_LIVE_PAYPAL_WEBHOOK_SAMPLE', 'RS_PAYPAL_WEBHOOK_ALGOS'];
+const LIVE_ONLY_READERS = {
+  RS_LIVE_MODEL_CEILING_USD: ['test/live/run-live-model.js'],
+  RS_LIVE_PAYPAL_HEADED: ['test/live/paypal/journey-sandbox.test.js'],
+  RS_LIVE_PAYPAL_WEBHOOK_SAMPLE: ['test/live/paypal/rs23-webhook-duplicate.test.js'],
+  RS_PAYPAL_WEBHOOK_ALGOS: ['src/services/webhooks.js'],
 };
 
 const defaultOf = (name) => {
@@ -141,7 +157,7 @@ test('NFR4: every process.env name read by src/config.js appears in .env.example
   const missing = read_.filter((n) => !byName.has(n));
   assert.deepEqual(missing, [], `missing from .env.example: ${missing.join(', ')}`);
   // Names that must be in because the spec's Deployment table and the register limit say so.
-  for (const n of [...Object.keys(DEFAULTS), ...SECRET_NAMES]) {
+  for (const n of [...Object.keys(DEFAULTS).filter((name) => !LIVE_ONLY.includes(name)), ...SECRET_NAMES]) {
     assert.ok(byName.has(n), `${n} is not in .env.example`);
     assert.ok(read_.includes(n), `${n} is in the table but src/config.js does not read it`);
   }
@@ -169,8 +185,24 @@ test('NFR4: secret lines are commented out, because the loader refuses placehold
   for (const name of SECRET_NAMES) {
     assert.equal(byName.get(name).active, false, `${name} must stay commented out`);
   }
-  for (const name of Object.keys(DEFAULTS)) {
+  for (const name of Object.keys(DEFAULTS).filter((n) => !LIVE_ONLY.includes(n) || byName.has(n))) {
     assert.equal(byName.get(name).active, defaultOf(name).active, `${name} active state differs from the listed default`);
+  }
+});
+
+test('NFR4 / FU-21: the live-only variables are inactive documented defaults: read by their live runner or the webhook route, not by loadConfig, named by the README, commented out and empty if .env.example lists them', () => {
+  const byConfig = new Set(namesReadByConfig());
+  const readme = read('README.md');
+  for (const name of LIVE_ONLY) {
+    assert.ok(!byConfig.has(name), `${name} is read by src/config.js: it belongs in the ordinary table, not here`);
+    assert.deepEqual(defaultOf(name), { value: '', active: false }, `${name}: an inactive default with an empty value`);
+    for (const file of LIVE_ONLY_READERS[name]) assert.ok(new RegExp(`\\b${name}\\b`).test(read(file)), `${name} is not read by ${file} any more`);
+    assert.ok(new RegExp(`\\b${name}\\b`).test(readme), `README must name ${name}`);
+    const listed = byName.get(name);
+    if (listed) {
+      assert.equal(listed.active, false, `${name} must stay commented out in .env.example`);
+      assert.equal(listed.value, '', `${name} must have no value in .env.example`);
+    }
   }
 });
 
@@ -228,11 +260,32 @@ test('NFR4: README names variables only; no secret variable is assigned a value 
   assert.doesNotMatch(readme, /sk-[A-Za-z0-9_-]{10,}/, 'API-key-shaped value');
   assert.doesNotMatch(readme, TOKEN_SHAPED, 'long token-shaped value');
   // Every upper-case env-shaped name the README mentions is a real variable.
-  const known = new Set([...byName.keys()]);
+  const known = new Set([...byName.keys(), ...LIVE_ONLY]);
   for (const m of readme.matchAll(/\b(RS_[A-Z0-9_]+|ANTHROPIC_API_KEY)\b/g)) {
     const name = m[1];
     if (/^RS_PAYPAL_(<KEY>|KEY)_/.test(name) || name === 'RS_PAYPAL_') continue;
     assert.ok(known.has(name), `README mentions ${name}, which is not in .env.example`);
+  }
+});
+
+test('FU-12: package.json describes emergency cup and lid purchasing for cafes, and package-lock.json locks the one devDependency', () => {
+  const pkg = JSON.parse(read('package.json'));
+  assert.match(pkg.description, /cups and lids/i, 'the description names what the cafe buys');
+  assert.match(pkg.description, /caf[eé]s?/i, 'the description names who buys');
+  assert.match(pkg.description, /emergency/i);
+  assert.doesNotMatch(pkg.description, /near-expiry|expiring|rescue near/i, 'the first idea of the product is gone');
+  const lock = JSON.parse(read('package-lock.json'));
+  assert.equal(lock.name, pkg.name);
+  assert.equal(lock.lockfileVersion, 3);
+  assert.deepEqual(lock.packages[''].devDependencies, pkg.devDependencies, 'the lock records the same devDependencies');
+  assert.deepEqual(Object.keys(pkg.devDependencies), ['@playwright/test']);
+  assert.equal(pkg.dependencies, undefined, 'no runtime dependency');
+  assert.equal(lock.packages['node_modules/@playwright/test'].version, '1.56.1');
+  for (const [path, entry] of Object.entries(lock.packages)) {
+    if (path === '') continue;
+    assert.match(entry.resolved ?? '', /^https:\/\/registry\.npmjs\.org\//, `${path}: resolved from the npm registry only`);
+    assert.match(entry.integrity ?? '', /^sha512-/, `${path}: has an integrity hash`);
+    assert.equal(entry.dev === true || entry.optional === true || entry.devOptional === true, true, `${path}: a development-only package`);
   }
 });
 

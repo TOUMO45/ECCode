@@ -76,6 +76,10 @@ async function sweepOrphanFiles({ db, clock, config }) {
       } catch {
         continue; // gone meanwhile
       }
+      // The one place where file-system time meets the injected clock: mtimeMs is the operating system's clock, `clock` is the app's.
+      // In production they are the same clock. Under a pinned test clock they are not, so a test must stamp the mtime it relies on
+      // with utimes (relative to the pinned clock) and never lean on the real mtime of a file it just wrote; a file stamped after the
+      // clock is kept (negative age), which is also what happens once the real date has passed a pinned date.
       if (clock.now() - info.mtimeMs < ORPHAN_AGE_MS) continue;
       if (!(await unlinkQuiet(path))) continue;
       deleted += 1;

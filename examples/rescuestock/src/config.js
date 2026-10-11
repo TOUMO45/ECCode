@@ -373,7 +373,7 @@ export function buildLabels(config) {
     merchantMode: config.merchantMode,
     singleCredentialNotice:
       config.merchantMode === 'single-credential' && config.paymentProvider === 'paypal-sandbox'
-        ? 'All suppliers are paid through one Sandbox merchant account (single-credential mode).'
+        ? 'All demo suppliers are paid to one Sandbox account'
         : null,
     testMode: config.testMode,
   };

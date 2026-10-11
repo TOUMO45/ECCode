@@ -1,0 +1,82 @@
+{
+  "from": "backend-engineer",
+  "to": "security-reviewer",
+  "task": "rework-7",
+  "objective": "Phase F and G follow-ups in files no other task owns: FU-59, FU-58/FU-56, FU-54, FU-55, FU-57, the canonical single-credential sentence, FU-21, FU-12, README, TR-R6-1, TR-R6-2, TR-R6-4 and date robustness of the pinned test clocks.",
+  "context": "Decisions dec-mv46ovf2-017bf12d as corrected by dec-mv4740d4-015b3589, dec-mv46ovt6-01a662af, dec-mv48g2fj-018e0ca7; security conditions SEC-F2-C (phase-f-security-2.md); rework-6 review rev-mv4954l0-01d87f48. Mutants and the clock-shift runs live in fresh directories under scratchpad/rework7/ with their diffs. THE REAL-TREE FULL SUITE IS RED BY 3 TESTS IN FILES THIS REWORK DOES NOT OWN, as a direct consequence of FU-54 (stranded entries now carry planStatus and owedRefund, so tests that pin the exact entry shape change): test/api/admin-basic.test.js, test/api/admin-reset.test.js, test/api/contracts.test.js via test/fixtures/contracts/recovery/admin-reset-forced-stranded.json. The patch for those five files (also test/unit/frontend/recovery.test.js and test/fixtures/contracts/labels/config-sandbox-single-credential.json) is scratchpad/rework7/other-files-patch.diff; with it applied on a copy of the final tree the full suite is green (ev:ev-mv4a8wvv-0178c772).",
+  "inputs": [
+    ".eccode/reviews/rev-mv4954l0-01d87f48.json",
+    ".eccode/reviews/drafts/phase-f-security-2.md",
+    "src/services/orders.js",
+    "src/services/admin.js",
+    "src/services/retention.js",
+    "src/config.js",
+    "test/timing/planner-sec-b1.test.js",
+    "test/api/uploads-retention.test.js",
+    "test/scan/env-example.test.js"
+  ],
+  "dependencies": [],
+  "expectedOutput": "All thirteen items delivered with tests; the foreign test files that pin the old stranded shape updated by their owner or by an extension of this rework, using the patch.",
+  "acceptanceCriteria": [
+    "FU-59: the refunded order is 409 HANDOVER_BLOCKED for ready and handover, its sibling is marked ready and handed over, the plan-wide rule for the other blocking states stays",
+    "FU-58/FU-56: bidi override and isolate controls and other control characters are refused on the supplier route and, through the same checkRefusalReason, on the admin supplier_refusal path",
+    "FU-54: every stranded entry carries planStatus; owedRefund is true exactly for a captured operation with cancel_requested_at set",
+    "FU-55: refund_order writes a denied audit row for 404 and 422; FU-57: refund_failed counts in unresolved",
+    "The single-credential notice is exactly the spec sentence; FU-21 variables are documented inactive defaults; FU-12 lockfile and description",
+    "TR-R6-1: the per-call bounds are back with re-timing and pl-delay is killed; TR-R6-2 comment; TR-R6-4 unlink assertion kills the no-unlink mutant on every date",
+    "Date robustness: audit of every place real time meets the injected clock, proof with the real clock simulated past the pin"
+  ],
+  "completedWork": "FU-59 (src/services/orders.js handoverAllowed): the order's OWN payment operation refunded -> false, so ready and handover answer 409 HANDOVER_BLOCKED and canMarkReady/canHandover are false; the plan-wide scan for unknown, capture_pending, refund_requested, refund_pending, refund_failed is unchanged (tests: refunded order blocked, sibling ready and collected, order ready before its refund cannot be handed over, refund_pending and refund_failed of A still block B, no refund -> both collected). FU-58/FU-56: checkRefusalReason refuses U+202A-U+202E, U+2066-U+2069, U+2028/2029, DEL, C1 and C0 except tab/LF/CR (rule 'characters', the existing 422), built from code point ranges so no invisible character is in the source; LRM/RLM stay valid for Arabic; the admin supplier_refusal reason now uses checkRefusalReason (bounds 1..300 after NFC, blank refused), default text when omitted. FU-54 (admin.js): stranded entries add planStatus and owedRefund (captured with cancel_requested_at); the audit event keeps id and status only. FU-55: refund_order 404 (unknown or archived) and a malformed body (422) write a denied admin.fault row (detail kind, code, supplierOrderId for 404; entity_type fault so the existing 409 row count of supplier_order rows is unchanged); other fault kinds are not audited on 422 (narrower than FU-55's 'every 422 on the fault routes'). FU-57: refund_failed added to unresolved (operations only; reservations with an escalation are not counted). src/config.js: singleCredentialNotice = 'All demo suppliers are paid to one Sandbox account' (test in followups-g-rework.test.js). FU-21: test/scan/env-example.test.js gains the four names (RS_LIVE_MODEL_CEILING_USD, RS_LIVE_PAYPAL_HEADED, RS_LIVE_PAYPAL_WEBHOOK_SAMPLE, RS_PAYPAL_WEBHOOK_ALGOS) as inactive defaults with their real readers, exempt from 'config reads it' and 'must be listed', accepted as commented empty lines in .env.example (proved on a scratch copy with the lines: old test rejects, new accepts), required to be named by the README; README names them. FU-12: package-lock.json generated by npm install --package-lock-only through the proxy (4 packages, registry.npmjs.org, sha512 integrity); package.json description now 'emergency purchasing of matching cups and lids for cafes ...'; a scan test pins both. README: the refunded-order line states the delivered rule. TR-R6-1 (planner-sec-b1): each call keeps its pre-rework bound (50 headline, 100 sweep, 250 catalog) with re-timing (two more timings, fail only if the minimum of three still exceeds), the 1000 ms ceiling stays on the first timing, plus a p95 limit of 100 ms over the 150 catalogs (quiet 5-7 ms, 19-29 ms under contention); pl-delay survives the old file (ev:ev-mv4ak50t-01127e9d) and is killed by the new one (ev:ev-mv49y4jx-019255a9: 'took 300.2 ms, then 300.3 and 300.6 ms ... the minimum of three, 300.2 ms, still exceeds the per-call bound 50 ms'); green 3 of 3 under 12 busy loops (nproc 4): ev:ev-mv4aeunc-01f4d496. TR-R6-2: the comment cites retention.js L35 for the ordering and spec 'Retention and deletion' L773 for what it says. TR-R6-4: the 7 d + 1 min test stamps the file with the pinned upload time and asserts imageFilesLeft 0, orphans 0, no new image.orphan_delete event and no file of the image left; the one-line no-unlink mutant survives the old test (ev:ev-mv4ak5zf-01832ede) and is killed by the new one (ev:ev-mv49opld-0190c44d), at real-clock shifts +0/14/30/400 days (ev:ev-mv4ajsjq-01e0ae52: the old test survives at +0 and +14 and is killed only from +30). DATE ROBUSTNESS. Audit of src: Date.now/new Date outside the injected clock are in src/clock.js (the system clock itself), src/config.js loadConfig (RS_DEMO_DATE default: tests set it), the three AI providers (default clock, main.js injects its own), src/db/connection.js (busy deadline, a duration), performance/hrtime (durations), http/static.js (ETag from mtime, no behaviour); cookies use Max-Age (relative, so Chromium's real clock cannot expire a pinned-clock session); sessions, CSRF, rate limits, OAuth token cache, webhook time window, leases, reservations all use the injected clock; there is no TLS in the application or tests (the webhook certificate is never fetched). The ONE place where file-system time meets the injected clock is retention.js orphan age (clock.now() - mtimeMs): correct in production (same clock), but under a pinned clock a file the test just wrote carries the real date. Fix: a comment in retention.js stating this, a test (exactly 1 day removed, 1 ms younger kept, a file stamped after the pinned clock kept; killed by the |age| mutant, ev:ev-mv49xotr-01551c66) and explicit utimes stamping in the 7 d + 1 min test. METHOD: scratchpad/rework7-tools/shift-clock.mjs is a preload (NODE_OPTIONS --import, inherited by every spawned Node child) that moves Date.now()/new Date() and all file times (stat family +shift, utimes -shift) by CLOCK_SHIFT_DAYS, like a system clock that moved. Final tree plus the foreign-file patch, full locked npm test at +0, +14 and +30 days: 2341 tests, 2333 pass, 0 fail, 8 skipped each (ev:ev-mv4a8wvv-0178c772, ev:ev-mv4ab3q6-0166b77a, ev:ev-mv4ade0v-01ca2bd5); browser suite with the Node side at +30 days: 14/14 (ev:ev-mv4aea7f-01c08c76). No other test or product code depends on the real date; nothing needs to change in test/helpers/**. An earlier +14 probe (ev:ev-mv49rblt-01dcc7be) is not valid: the preload variable was then named RS_SHIFT_DAYS, which server-proc.js blanks for child servers (RS_ prefix), so the children ran on the unshifted clock; renamed CLOCK_SHIFT_DAYS.",
+  "filesChanged": [
+    "src/services/orders.js",
+    "src/services/admin.js",
+    "src/config.js",
+    "src/services/retention.js",
+    "test/api/followups-g-rework.test.js",
+    "test/api/uploads-retention.test.js",
+    "test/timing/planner-sec-b1.test.js",
+    "test/scan/env-example.test.js",
+    "package.json",
+    "package-lock.json",
+    "README.md"
+  ],
+  "evidence": [
+    "ev:ev-mv4aife9-0177979a",
+    "ev:ev-mv49bx9k-01e11c8e",
+    "ev:ev-mv4ai26g-013cc306",
+    "ev:ev-mv4a8wvv-0178c772",
+    "ev:ev-mv4ab3q6-0166b77a",
+    "ev:ev-mv4ade0v-01ca2bd5",
+    "ev:ev-mv4aea7f-01c08c76",
+    "ev:ev-mv4aijx8-01ecceb2",
+    "ev:ev-mv49gfa4-012fda6d",
+    "ev:ev-mv4ak6gh-011f0962",
+    "ev:ev-mv49ho1l-01dbb4c6",
+    "ev:ev-mv4ak50t-01127e9d",
+    "ev:ev-mv49y4jx-019255a9",
+    "ev:ev-mv4aeunc-01f4d496",
+    "ev:ev-mv4ak5zf-01832ede",
+    "ev:ev-mv49opld-0190c44d",
+    "ev:ev-mv4ajsjq-01e0ae52",
+    "ev:ev-mv49xotr-01551c66"
+  ],
+  "remainingIssues": [
+    "RED IN THE REAL TREE: npm test is 2341 tests, 2330 pass, 3 fail, 8 skipped (ev:ev-mv4ah2do-01029251): admin-basic 'RS-37: forced reset archives ...', admin-reset 'SEC-11: a forced reset voids what is authorized ...' and contracts 'NFR6 (phase F): the recovery fixtures ...'. They pin the exact stranded entry; FU-54 changes it by design. Not editable by this rework: apply scratchpad/rework7/other-files-patch.diff (test/api/admin-basic.test.js, test/api/admin-reset.test.js, test/fixtures/contracts/recovery/admin-reset-forced-stranded.json, test/unit/frontend/recovery.test.js L777 and L853 which turn red as soon as the fixture carries planStatus, and test/fixtures/contracts/labels/config-sandbox-single-credential.json which still holds the old sentence in a fixture whose test checks shape only). Green with the patch on all of 0, +14 and +30 days.",
+    "FU-21 needs four lines in .env.example, which this rework does not own, for example after the RS_LIVE_PAYPAL line: '# RS_LIVE_MODEL_CEILING_USD=', '# RS_LIVE_PAYPAL_HEADED=', '# RS_LIVE_PAYPAL_WEBHOOK_SAMPLE=', '# RS_PAYPAL_WEBHOOK_ALGOS=' (commented, empty, preceded by a comment that only the live suites and the webhook route read them). The scan test accepts them as they are and does not yet REQUIRE them; once they are in, the requirement can be added (move the four names out of the exemption in env-example.test.js).",
+    "FU-55 is done for refund_order only (404 and 422), as asked; 422 on the other fault kinds still writes no audit row.",
+    "FU-57 counts operations in refund_failed; reservations with an escalation are not counted (SEC-F-I5 also named them).",
+    "src/routes/admin.js needed no change.",
+    "The browser suite under the real clock ran green (ev:ev-mv4ai26g-013cc306); Chromium itself was not time-shifted (its cookies use Max-Age)."
+  ],
+  "nextAction": "orchestrator: apply or extend the rework for the five foreign test files (patch above) and the four .env.example lines; then security-reviewer re-reviews SEC-F2-C items 1-3 and the date audit.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This rework builds no hook or guard that maps file writes to a project record or root (supplier order guard, admin audit, retention, scan tests and docs only), so the lesson's applies-when conditions do not hold."
+    }
+  ]
+}

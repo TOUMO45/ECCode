@@ -104,6 +104,13 @@ npm run test:browser
 - `npm run test:live-model` calls a real model and bills your account. It refuses (exit 2) unless `RS_LIVE_MODEL` is 1 **and** a spend ceiling is set. See [docs/runbooks/live-model.md](docs/runbooks/live-model.md).
 - `npm run test:live-paypal` runs against the PayPal Sandbox and needs a person to approve at PayPal's page for two of its checks. It refuses unless `RS_LIVE_PAYPAL` is 1 and Sandbox credentials are present. See [docs/runbooks/live-paypal.md](docs/runbooks/live-paypal.md).
 
+Four more variables are read only by the live suites and the webhook route, never by the application's configuration. They are off by default and are not active lines of `.env.example`:
+
+- `RS_LIVE_MODEL_CEILING_USD`: the most you are willing to spend on one live model run, an exact decimal from 0.01 to 5.00. It is required together with `RS_LIVE_MODEL=1`.
+- `RS_LIVE_PAYPAL_HEADED`: set to 1 to run the two PayPal checks that need a person to approve at PayPal's page. Without it those checks are reported as skipped, never as passed.
+- `RS_LIVE_PAYPAL_WEBHOOK_SAMPLE`: the path of one real Sandbox webhook event, for the live webhook check. Treat that file as sensitive.
+- `RS_PAYPAL_WEBHOOK_ALGOS`: a comma-separated allow-list of PayPal webhook signature algorithms, for the case that PayPal does not use `SHA256withRSA`. Unset: `SHA256withRSA` only.
+
 Never set `RS_LIVE_MODEL` or `RS_LIVE_PAYPAL` in a shell profile or a committed file.
 
 ## Configuration
@@ -233,7 +240,7 @@ The security reviews and the threat list are in the project record; none of this
 - **Nothing live was exercised.** See [Verified and not verified](#verified-and-not-verified).
 - **Model quality is unmeasured.** The deterministic fake proves the plumbing and the safeguards, not how well a real model reads Arabic, English or photos. Text inside an image cannot be checked server-side beyond the grounding rules.
 - **"If something fails" shows the current plan only.** It lists outstanding voids and refunds of the current plan with their outcome. Completed voids of a closed plan are not listed there (decision FU-50); the buyer sees the refusal reason and that the new plan needs approval. The administrator can see past operations in the timeline.
-- **Refunded orders.** The recorded product decision is that an order whose own payment was refunded cannot be marked ready or handed over, while sibling orders of a partly refunded plan are unaffected. When this README was written that rule was still pending in the code (the handover guard in `src/services/orders.js` checks the payment states of the whole plan and does not yet include a settled refund). Treat it as not delivered until the verification report says it is.
+- **Refunded orders.** An order whose own payment was refunded cannot be marked ready or handed over: the supplier gets 409 `HANDOVER_BLOCKED`, because the money went back to the cafe. The sibling orders of a partly refunded plan are unaffected and can still be marked ready and handed over. The other blocking payment states (unknown, capture pending, refund requested, refund pending, refund failed) still block every order of the plan.
 - **Forced reset.** A forced administrator reset reports stranded payments as of the moment it archived them. With the Sandbox provider, finish those in the PayPal Sandbox dashboard by hand.
 - **Unhandled kills.** `kill -9`, the out-of-memory killer and a container killed after its grace period can orphan a model child process. Each is bounded by the per-call cap. See the operations runbook.
 - **Real PayPal behaviour may differ** from the stub and the fake in details listed under the Sandbox runbook; the fake models PayPal as the integration research understood it.
