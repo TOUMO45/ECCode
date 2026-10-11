@@ -38,15 +38,21 @@ function commitAll(repo, message) {
   git(repo, ['commit', '-q', '--allow-empty', '-m', message]);
 }
 
-/** A throwaway repository with files at the root and a project at nested/app. */
-function nestedRepo(t) {
-  const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tk6-'));
-  t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
+function tmpDir(t, label) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `eccode-tk6-${label}-`));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  return dir;
+}
+
+/** A throwaway repository with files at the root and a project at `projectRel` (default nested/app). */
+function nestedRepo(t, { repo, projectRel = 'nested/app' } = {}) {
+  if (repo) fs.mkdirSync(repo, { recursive: true });
+  else repo = tmpDir(t, 'repo');
   initRepo(repo); // core.autocrlf=false and an empty first commit
   write(repo, 'package.json', '{ "name": "repository-root" }\n');
   write(repo, '.eccode/state.json', '{ "root": true }\n');
   write(repo, 'README.md', '# repository\n');
-  const project = path.join(repo, 'nested', 'app');
+  const project = path.join(repo, ...projectRel.split('/'));
   write(project, 'package.json', '{ "name": "nested-app", "version": "1.0.0" }\n');
   write(project, 'src/main.js', 'module.exports = 1;\n');
   write(project, '.eccode/state.json', '{ "nested": true }\n');
@@ -152,4 +158,107 @@ test('TK-6 nested project: a dirty file under the project\'s .eccode/ does not n
   const d = treeDigest(project);
   assert.notStrictEqual(d, null);
   assert.strictEqual(d, expectedDigest(project));
+});
+
+// ------------------------------------------------------------------ review of cb73d42, round 2
+// Names a POSIX file system accepts and Windows does not (trailing spaces, quotes, newlines, CR).
+const POSIX_NAMES = { skip: process.platform === 'win32' ? 'file names Windows does not allow' : false };
+const HEX = /^[0-9a-f]{64}$/;
+
+test('TK-6 F3: a repository directory whose name ends in a space is not read as its trimmed sibling', POSIX_NAMES, (t) => {
+  const parent = tmpDir(t, 'top');
+  // What a trimmed --show-toplevel would name: a sibling directory holding the same project path.
+  write(path.join(parent, 'repo'), 'nested/app/src/main.js', 'module.exports = "the sibling";\n');
+  const { project } = nestedRepo(t, { repo: path.join(parent, 'repo ') });
+  write(project, 'src/main.js', 'module.exports = 2;\n');
+  const d = treeDigest(project);
+  assert.match(String(d), HEX);
+  assert.strictEqual(d, expectedDigest(project), 'the dirty file is hashed from this repository, not from the trimmed path');
+});
+
+test('TK-6 F3: a project below a directory whose name starts with a space sees its own dirty files', POSIX_NAMES, (t) => {
+  const { project } = nestedRepo(t, { projectRel: ' lead space/app' });
+  const clean = treeDigest(project);
+  assert.match(String(clean), HEX);
+  write(project, 'src/main.js', 'module.exports = 2;\n');
+  const d = treeDigest(project);
+  assert.notStrictEqual(d, clean, 'an edit must move the digest (a trimmed prefix matched no status path)');
+  assert.strictEqual(d, expectedDigest(project));
+});
+
+const ODD_NAMES = ['x\ny.txt', 'cr\r', '"a.txt"', '"bad', 'tab\there.txt', 'back\\slash.txt', 'ünï cödé.txt', 'bell\u0007.txt'];
+
+test('TK-6 F4: every --stdin-paths line is C-quoted: odd names hash like git hash-object -- <path> (root project)', POSIX_NAMES, (t) => {
+  const { repo } = nestedRepo(t);
+  for (const name of ODD_NAMES) write(repo, `odd/${name}`, `committed ${JSON.stringify(name)}\n`);
+  commitAll(repo, 'odd names');
+  const clean = treeDigest(repo);
+  assert.strictEqual(clean, expectedDigest(repo));
+  for (const name of ODD_NAMES) write(repo, `odd/${name}`, `edited ${JSON.stringify(name)}\n`);
+  const d = treeDigest(repo);
+  assert.match(String(d), HEX, 'a name with a newline, a CR or a leading quote must not null the digest');
+  assert.strictEqual(d, expectedDigest(repo));
+  // "a.txt" (with its quotes) used to be read as a.txt: its edits did not move the digest.
+  write(repo, 'odd/"a.txt"', 'edited again\n');
+  assert.notStrictEqual(treeDigest(repo), d);
+  assert.strictEqual(treeDigest(repo), expectedDigest(repo));
+});
+
+test('TK-6 F4: a nested project below a directory whose name starts with a double quote', POSIX_NAMES, (t) => {
+  const { project } = nestedRepo(t, { projectRel: '"quoted dir/app' });
+  for (const name of ODD_NAMES) write(project, `odd/${name}`, `untracked ${JSON.stringify(name)}\n`);
+  write(project, 'src/main.js', 'module.exports = 2;\n');
+  const d = treeDigest(project);
+  assert.match(String(d), HEX);
+  assert.strictEqual(d, expectedDigest(project));
+});
+
+test('TK-6 F5 nested project: staged rename then edit (RM), copy then edit (CM), deletions and MM', (t) => {
+  const { repo, project } = nestedRepo(t);
+  const big = Array.from({ length: 40 }, (_, i) => `line ${i} of a file large enough for copy detection`).join('\n') + '\n';
+  write(project, 'lib/big.js', big);
+  write(project, 'src/gone.js', 'module.exports = "staged delete";\n');
+  write(project, 'src/uncached.js', 'module.exports = "git rm --cached";\n');
+  write(project, 'README.md', '# nested readme, twin of the root README.md\n');
+  commitAll(repo, 'more files');
+  git(repo, ['config', 'status.renames', 'copies']);
+
+  git(project, ['mv', 'src/main.js', 'src/moved.js']); // RM
+  write(project, 'src/moved.js', 'module.exports = "moved and edited";\n');
+  write(project, 'lib/big.js', big.replace('line 3 ', 'line three ')); // CM: the source changed, the copy staged then edited
+  write(project, 'lib/copy.js', big);
+  git(project, ['add', 'lib/big.js', 'lib/copy.js']);
+  write(project, 'lib/copy.js', `${big}// edited copy\n`);
+  git(project, ['rm', '-q', 'src/gone.js']); // D (staged)
+  git(project, ['rm', '-q', '--cached', 'src/uncached.js']); // D + ??
+  fs.unlinkSync(path.join(project, 'README.md')); // " D" beside a twin at the repository root
+  write(project, 'package.json', '{ "name": "nested-app", "version": "2.0.0" }\n'); // MM beside a twin
+  git(project, ['add', 'package.json']);
+  write(project, 'package.json', '{ "name": "nested-app", "version": "2.0.1" }\n');
+
+  const status = git(project, ['status', '--porcelain']);
+  for (const code of [/^RM /m, /^CM /m, /^D {2}/m, /^ D /m, /^MM /m, /^\?\? /m]) assert.match(status, code, `the case is exercised:\n${status}`);
+  const d = treeDigest(project);
+  assert.match(String(d), HEX);
+  assert.strictEqual(d, expectedDigest(project));
+  commitAll(repo, 'the same bytes, committed');
+  assert.strictEqual(treeDigest(project), d);
+});
+
+test('TK-6 F5 nested project in a linked worktree: its own bytes, not the main working tree\'s', (t) => {
+  const { repo } = nestedRepo(t);
+  const wt = path.join(tmpDir(t, 'wt'), 'linked');
+  git(repo, ['worktree', 'add', '-q', wt]);
+  const project = path.join(wt, 'nested', 'app');
+  const clean = treeDigest(project);
+  assert.strictEqual(clean, expectedDigest(project));
+  write(project, 'src/main.js', 'module.exports = "worktree";\n');
+  write(project, 'package.json', '{ "name": "nested-app", "version": "worktree" }\n');
+  const d = treeDigest(project);
+  assert.match(String(d), HEX);
+  assert.notStrictEqual(d, clean);
+  assert.strictEqual(d, expectedDigest(project));
+  write(repo, 'nested/app/src/main.js', 'module.exports = "main working tree";\n');
+  write(repo, 'package.json', '{ "name": "main working tree" }\n');
+  assert.strictEqual(treeDigest(project), d, 'edits in the main working tree do not move the linked worktree\'s digest');
 });
