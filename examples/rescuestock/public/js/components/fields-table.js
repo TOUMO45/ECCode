@@ -81,7 +81,9 @@ export function needModel(view) {
   const questions = (view.extraction?.questions ?? [])
     .filter((q) => (fields?.[q.field]?.status ?? 'unknown') !== 'known')
     .map((q) => ({ field: q.field, label: FIELD_LABELS[q.field] ?? q.field, question: q.question }));
-  const degraded = view.extraction?.degraded === true;
+  const degradedReading = view.extraction?.degraded === true;
+  // The notice is about details still missing. Once the customer has confirmed them (requirements exist) it is stale.
+  const degraded = degradedReading && view.requirements === null;
   const plan = currentPlan(view);
   const locked = plan !== null && (plan.status === 'executing' || plan.status === 'executed');
   const image = view.request?.image ?? null;
@@ -98,7 +100,7 @@ export function needModel(view) {
     extractionBadges: extractionBadgeModels(view.extraction),
     form: {
       locked,
-      open: !locked && (view.requirements === null || degraded),
+      open: !locked && (view.requirements === null || degradedReading),
       inputs: FIELD_NAMES.map((name) => inputSpec(name, fields?.[name] ?? UNKNOWN_FIELD)),
     },
   };

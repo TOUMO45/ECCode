@@ -1,6 +1,6 @@
 {
-  "seq": 570,
-  "lastHash": "7678c43bae52027a088a19cf6d06b1978eae39ade5a22ceafacf703468e5f0dc",
+  "seq": 598,
+  "lastHash": "7d0517ddb63c3f63872dd1a7eb2359290d62cc034291cb7abf521de24029cd08",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -18,6 +18,7 @@
     "phase:g-release",
     "phase:rework-1",
     "phase:rework-2",
+    "phase:rework-3",
     "verification"
   ],
   "gates": {
@@ -2694,7 +2695,7 @@
     "phase:rework-2": {
       "id": "phase:rework-2",
       "kind": "phase",
-      "status": "submitted",
+      "status": "approved",
       "iterations": 0,
       "authors": [
         "delivery-lead"
@@ -2718,12 +2719,29 @@
           "notes": "rework-2: RS-34 view-shape case in test/api/requests-plans.test.js accepts d3's additive capabilities key (exact sorted key list incl. capabilities; capabilities asserted as exactly {deleteRequest: boolean}). Failing first ev:ev-mv31litb-015e68f5 (65/66), passing ev:ev-mv31ltus-01e665fc (66/66), delivery-lead single-file run ev:ev-mv31qs6q-01bbf318 (35/35, no net guard). npm test RED ev:ev-mv31ru5d-0118aab7 (1172: 1157 pass, 5 fail, 10 skipped): the 5 failures are NFR6 rows in test/api/contracts.test.js owned by d5 (3 request-view fixtures lack capabilities; image routes and two new fixtures lack scenarios), identical to the pre-rework run ev:ev-mv31etf6-01061b72 minus RS-34 and NFR1. Lesson mem-sd-mv1audrd-013b7102 not-applicable."
         }
       ],
+      "reviews": [
+        "rev-mv32bt1y-019ab941"
+      ],
+      "openFindings": [],
+      "approvedBy": "technical-reviewer",
+      "approvedSubmission": "sub-mv31tlv1-01663c96",
+      "escalation": null,
+      "startedAt": "2026-10-10T23:45:03.614Z",
+      "approvedAt": "2026-10-11T00:06:11.159Z"
+    },
+    "phase:rework-3": {
+      "id": "phase:rework-3",
+      "kind": "phase",
+      "status": "in_progress",
+      "iterations": 0,
+      "authors": [],
+      "submissions": [],
       "reviews": [],
       "openFindings": [],
       "approvedBy": null,
       "approvedSubmission": null,
       "escalation": null,
-      "startedAt": "2026-10-10T23:45:03.614Z",
+      "startedAt": "2026-10-11T00:06:45.242Z",
       "approvedAt": null
     }
   },
@@ -4121,24 +4139,9 @@
         "command": "ls test/unit/frontend/extraction.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "frontend-engineer",
-        "at": "2026-10-11T00:02:05.360Z",
-        "baseCommit": "5d52b927786bfe8768f811c59d282b7cd573fb71",
-        "runId": "run-mv32625f-01673030",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.809,
-            "matched": 19,
-            "priority": 24.5,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
@@ -4162,47 +4165,29 @@
           "by": "frontend-engineer",
           "at": "2026-10-11T00:02:05.360Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "frontend-engineer",
+          "at": "2026-10-11T00:05:38.453Z"
         }
       ],
       "completedBy": "frontend-engineer",
-      "handoffId": "ho-mv30i4sf-01273270",
+      "handoffId": "ho-mv32b3pf-011eac5d",
       "filesChanged": [
-        "public/css/app.css",
-        "public/js/api.js",
-        "public/js/dom.js",
-        "public/js/errors.js",
-        "public/js/format.js",
-        "public/js/texts.js",
-        "public/js/view-helpers.js",
         "public/js/components/fields-table.js",
-        "public/js/components/form.js",
-        "public/js/components/payments.js",
-        "public/js/views/request-detail.js",
         "public/js/views/request-new.js",
-        "test/fixtures/contracts/admin-timeline.json",
-        "test/fixtures/contracts/config.json",
-        "test/fixtures/contracts/config-sandbox-test-mode.json",
-        "test/fixtures/contracts/order-receipt.json",
-        "test/fixtures/contracts/plan-approve.json",
-        "test/fixtures/contracts/plan-create-feasible.json",
-        "test/fixtures/contracts/plan-create-infeasible.json",
-        "test/fixtures/contracts/plan-reserve.json",
-        "test/fixtures/contracts/request-extract.json",
-        "test/fixtures/contracts/request-extract-degraded.json",
-        "test/fixtures/contracts/request-image-upload.json",
-        "test/fixtures/contracts/request-view-degraded.json",
-        "test/fixtures/contracts/request-view-reserved.json",
-        "test/fixtures/contracts/supplier-order-confirm.json",
-        "test/scan/frontend.test.js",
-        "test/unit/frontend/dashboards.test.js",
         "test/unit/frontend/extraction.test.js",
-        "test/unit/frontend/format.test.js"
+        "test/unit/frontend/dashboards.test.js",
+        "test/fixtures/contracts/request-view-planned.json",
+        "test/fixtures/contracts/request-view-infeasible.json",
+        "test/fixtures/contracts/request-view-reserved.json"
       ],
       "lessonDecisions": [
         {
           "id": "mem-sd-mv1audrd-013b7102",
           "decision": "not-applicable",
-          "note": "appliesWhen needs a hook or guard that maps file writes to a project root, or a nested-record implementer denied with 'has no claimed task' or 'outside the ownership'. This task changes browser code and fixtures only and none of my writes or claims was denied for root resolution; the claim itself was made with --root pointing at the nested record, so the condition does not hold.",
+          "note": "The lesson concerns a hook or guard choosing a project root for a write target. This task changes frontend code, tests and fixtures and builds no hook, guard or root discovery; every write was accepted in the nested record, so none of its 'Applies when' conditions hold.",
           "basis": "reason"
         }
       ],
@@ -4253,9 +4238,29 @@
         "command": "ls test/unit/ai/provider-contract.test.js test/scan/secrets.test.js test/browser/degraded-extraction.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       },
-      "status": "done",
+      "status": "claimed",
       "attempts": 1,
-      "claim": null,
+      "claim": {
+        "agent": "test-engineer",
+        "at": "2026-10-11T00:06:38.393Z",
+        "baseCommit": "e011e54bc5f2f80d858f55da8c5f735f7cff8840",
+        "runId": "run-mv32bz1g-01a9c844",
+        "dirtyAtClaim": {
+          "public/js/components/fields-table.js": "f47e4aed14c42808805cf248fb115042ded274405339693cbdd35ea5d4432746",
+          "public/js/views/request-new.js": "06bf323369cec87bcaf45602df87f8a6cfcd97d48783fa1a5fe48ac5a8065ec9",
+          "test/unit/frontend/dashboards.test.js": "f0df20e9f3bc8c1442c2c4d997323a302abf1a453d619071c6bc72e7bb08126d",
+          "test/unit/frontend/extraction.test.js": "864034d0e39f32e187bb78aac03cc2e06349877c4b4a1d5a364fd7a03359cf10"
+        },
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.798,
+            "matched": 14,
+            "priority": 23.5,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -4267,6 +4272,18 @@
           "event": "completed",
           "by": "test-engineer",
           "at": "2026-10-11T00:00:19.252Z"
+        },
+        {
+          "event": "reset",
+          "by": "orchestrator",
+          "at": "2026-10-11T00:06:18.788Z",
+          "reason": "d4's reset handoff ho-mv32b3pf-011eac5d: the optional entry on the three request-view rows compares type only; the fixtures now carry capabilities, so the rows must compare exactly and pin the boolean with sameValues"
+        },
+        {
+          "event": "claimed",
+          "by": "test-engineer",
+          "at": "2026-10-11T00:06:38.393Z",
+          "attempt": 1
         }
       ],
       "completedBy": "test-engineer",
@@ -4288,7 +4305,8 @@
           "note": "The lesson is about a hook or guard choosing a project root for a write target. This task writes tests, builds no hook, guard or root discovery, and every write was accepted by the guard in the nested record, so none of its 'Applies when' conditions hold.",
           "basis": "reason"
         }
-      ]
+      ],
+      "escalation": null
     },
     "e0-paypal-stub-contract": {
       "id": "e0-paypal-stub-contract",
@@ -5166,6 +5184,66 @@
           "basis": "reason"
         }
       ]
+    },
+    "rework-3": {
+      "id": "rework-3",
+      "phase": "rework-3",
+      "title": "FU-16: remove the extract-route 404 tolerance from the phase C browser journey",
+      "owner": "test-engineer",
+      "dependencies": [],
+      "inputs": [
+        "ev:ev-mv3226jz-0198f037"
+      ],
+      "outputs": [
+        "the fix",
+        "a regression test that fails without it"
+      ],
+      "files": [
+        "test/browser/journey-infeasible.test.js"
+      ],
+      "acceptanceCriteria": [
+        "c6's test/browser/journey-infeasible.test.js tolerates a 404 on POST /api/requests/:id/extract through withoutUnregisteredExtract() because the route did not exist in phase C. d3 added the route and d4's reset removed the frontend tolerance (ho-mv32b3pf-011eac5d). Phase C is approved and no phase D task owns the file, so a rework removes the helper: any 404 on that route during a journey is a failure.",
+        "a regression test fails before the fix and passes after it",
+        "the existing checks still pass"
+      ],
+      "verification": {
+        "method": "run the project checks"
+      },
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "test-engineer",
+        "at": "2026-10-11T00:07:04.407Z",
+        "baseCommit": "e011e54bc5f2f80d858f55da8c5f735f7cff8840",
+        "runId": "run-mv32cmfs-019d4aba",
+        "dirtyAtClaim": {
+          "public/js/components/fields-table.js": "f47e4aed14c42808805cf248fb115042ded274405339693cbdd35ea5d4432746",
+          "public/js/views/request-new.js": "06bf323369cec87bcaf45602df87f8a6cfcd97d48783fa1a5fe48ac5a8065ec9",
+          "test/api/contracts.test.js": "2adb361ddc69976ee9550843fd49d71cefb407e003e8eabbef53cd713a8c2bf1",
+          "test/unit/frontend/dashboards.test.js": "f0df20e9f3bc8c1442c2c4d997323a302abf1a453d619071c6bc72e7bb08126d",
+          "test/unit/frontend/extraction.test.js": "864034d0e39f32e187bb78aac03cc2e06349877c4b4a1d5a364fd7a03359cf10"
+        },
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.841,
+            "matched": 16,
+            "priority": 19.5,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
+      "history": [
+        {
+          "event": "claimed",
+          "by": "test-engineer",
+          "at": "2026-10-11T00:07:04.407Z",
+          "attempt": 1
+        }
+      ],
+      "completedBy": null,
+      "handoffId": null,
+      "rework": true
     }
   },
   "evidence": {
@@ -10464,6 +10542,246 @@
       "task": "d5-extraction-contract-browser",
       "recordedBy": "test-engineer",
       "at": "2026-10-10T23:58:42.232Z"
+    },
+    "ev-mv327crh-010cb98f": {
+      "id": "ev-mv327crh-010cb98f",
+      "kind": "command",
+      "label": "failing-first: confirmed details must hide the degraded notice (before the fix)",
+      "command": "node --test test/unit/frontend/extraction.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 322,
+      "log": ".eccode/evidence/ev-mv327crh-010cb98f.log",
+      "logSha256": "0a2b9e0e24cdf6a5819d2356b9fcedf52f3deafc07eabb3459dd7102684d1070",
+      "logFileSha256": "8541c6229f57a54578bf3266547b1294c347165a01e4a0f2c7477a44c00584c3",
+      "outputTail": "  duration_ms: 0.463184\n  type: 'test'\n  ...\n# Subtest: FU-13: the order-owned supplier name is the seeded \"Demo Supplier X\", the plan total keeps the planner's \"Supplier X\"\nok 34 - FU-13: the order-owned supplier name is the seeded \"Demo Supplier X\", the plan total keeps the planner's \"Supplier X\"\n  ---\n  duration_ms: 0.222798\n  type: 'test'\n  ...\n# Subtest: RS-03: the extract fixtures cover success and degraded (both HTTP 200), the image upload fixture 201; a 404 is not a fixture\nok 35 - RS-03: the extract fixtures cover success and degraded (both HTTP 200), the image upload fixture 201; a 404 is not a fixture\n  ---\n  duration_ms: 0.802016\n  type: 'test'\n  ...\n1..35\n# tests 35\n# suites 0\n# pass 33\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 230.054106\n",
+      "gate": null,
+      "task": "d4-frontend-extraction",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T00:02:43.525Z"
+    },
+    "ev-mv327tf7-014408e9": {
+      "id": "ev-mv327tf7-014408e9",
+      "kind": "command",
+      "label": "rework-2: single-file run of test/api/requests-plans.test.js",
+      "command": "node --disable-warning=ExperimentalWarning --test test/api/requests-plans.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 4954,
+      "log": ".eccode/evidence/ev-mv327tf7-014408e9.log",
+      "logSha256": "31a5a456f3bf92c510b4fcc2b2fffd339d4c8341a504f70758b312168bac43b6",
+      "logFileSha256": "8fc8b97c99eb017c44461ab0d38e0dd31bde76fa26c3030ff052912f0cfe8ef5",
+      "outputTail": "      duration_ms: 12.517866\n      type: 'test'\n      ...\n    # Subtest: RS-34: a fresh draft request is needs_input / ENTER_DETAILS with no plans\n    ok 2 - RS-34: a fresh draft request is needs_input / ENTER_DETAILS with no plans\n      ---\n      duration_ms: 5.297824\n      type: 'test'\n      ...\n    1..2\nok 9 - FU-7 and RS-34: view shapes and labels\n  ---\n  duration_ms: 406.887271\n  type: 'suite'\n  ...\n1..9\n# tests 35\n# suites 9\n# pass 35\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 4892.614182\n",
+      "gate": "phase:rework-2",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:03:05.126Z"
+    },
+    "ev-mv3282ye-0112ff1d": {
+      "id": "ev-mv3282ye-0112ff1d",
+      "kind": "command",
+      "label": "rework-2: c2 verification command verbatim from the plan",
+      "command": "ls test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/requests-plans.test.js test/api/rescue-status.test.js test/api/schema-no-rescue-status.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 5029,
+      "log": ".eccode/evidence/ev-mv3282ye-0112ff1d.log",
+      "logSha256": "4be7eaf44edf2867368f83dc7c6322a39c27265c139da4c4ec893aced0aa9810",
+      "logFileSha256": "5ee54de4ae213d8101255bc382cf01fa7e0a424c2fffe394d36575220625b97d",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: RS-36: no source file stores a rescue status\n    # Subtest: RS-36: no SQL or code under src/ names a stored rescue-status column, and the service code reads status through derive.js\n    ok 1 - RS-36: no SQL or code under src/ names a stored rescue-status column, and the service code reads status through derive.js\n      ---\n      duration_ms: 4.459599\n      type: 'test'\n      ...\n    1..1\nok 16 - RS-36: no source file stores a rescue status\n  ---\n  duration_ms: 4.872026\n  type: 'suite'\n  ...\n1..16\n# tests 66\n# suites 16\n# pass 66\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 4929.236148\n",
+      "gate": "phase:rework-2",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:03:17.472Z"
+    },
+    "ev-mv328hte-01ad3200": {
+      "id": "ev-mv328hte-01ad3200",
+      "kind": "command",
+      "label": "contract fixtures with capabilities (contracts.test.js)",
+      "command": "node --disable-warning=ExperimentalWarning --test test/api/contracts.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 3966,
+      "log": ".eccode/evidence/ev-mv328hte-01ad3200.log",
+      "logSha256": "56ac1382802124851ad00309d39beaebaa632af1aa9a69b327b03b83ccca345f",
+      "logFileSha256": "ad3dd17b23e25613955904628592075fec4c4666f4269738d4198d4ce73acc9d",
+      "outputTail": "      duration_ms: 4.229147\n      type: 'test'\n      ...\n    # Subtest: NFR6: every registered route has a scenario in the table\n    ok 48 - NFR6: every registered route has a scenario in the table\n      ---\n      duration_ms: 1.230878\n      type: 'test'\n      ...\n    1..48\nok 3 - NFR6: contract scenarios drive each registered route and compare status, envelope, requestId and field types with the fixtures\n  ---\n  duration_ms: 3641.104391\n  type: 'suite'\n  ...\n1..3\n# tests 52\n# suites 3\n# pass 45\n# fail 0\n# cancelled 0\n# skipped 7\n# todo 0\n# duration_ms 3894.17918\n",
+      "gate": null,
+      "task": "d4-frontend-extraction",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T00:03:36.734Z"
+    },
+    "ev-mv328ik3-01593173": {
+      "id": "ev-mv328ik3-01593173",
+      "kind": "command",
+      "label": "task verification command",
+      "command": "ls test/unit/frontend/extraction.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 706,
+      "log": ".eccode/evidence/ev-mv328ik3-01593173.log",
+      "logSha256": "43636baad02c7cbbb25148c0254098366b0a8a87e5916ccfc58caa022651046e",
+      "logFileSha256": "2cc5c2db5109b7153818bd4eb373be8590ca1c313a0e091b04bf0add0f14dd9f",
+      "outputTail": "  duration_ms: 1.744987\n  type: 'test'\n  ...\n# Subtest: SEC-C-4: a link with a backslash, a space or a control character is not navigable, even when it looks like https\nok 135 - SEC-C-4: a link with a backslash, a space or a control character is not navigable, even when it looks like https\n  ---\n  duration_ms: 2.24346\n  type: 'test'\n  ...\n# Subtest: RS-02: formatBytes shows photo sizes for people\nok 136 - RS-02: formatBytes shows photo sizes for people\n  ---\n  duration_ms: 0.165211\n  type: 'test'\n  ...\n1..136\n# tests 136\n# suites 0\n# pass 135\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 623.848694\n",
+      "gate": null,
+      "task": "d4-frontend-extraction",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T00:03:37.707Z"
+    },
+    "ev-mv328qzg-01fac919": {
+      "id": "ev-mv328qzg-01fac919",
+      "kind": "command",
+      "label": "task verification command",
+      "command": "ls test/unit/frontend/extraction.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 725,
+      "log": ".eccode/evidence/ev-mv328qzg-01fac919.log",
+      "logSha256": "79105ef2241aa99f5956a4049ea318243cf45fb3211c288776a0f95b04934716",
+      "logFileSha256": "a2d9ce632859804a1224ed19efa424bfa54c693ce6c1d5b024cb207c26891943",
+      "outputTail": "  duration_ms: 2.964659\n  type: 'test'\n  ...\n# Subtest: SEC-C-4: a link with a backslash, a space or a control character is not navigable, even when it looks like https\nok 135 - SEC-C-4: a link with a backslash, a space or a control character is not navigable, even when it looks like https\n  ---\n  duration_ms: 0.798663\n  type: 'test'\n  ...\n# Subtest: RS-02: formatBytes shows photo sizes for people\nok 136 - RS-02: formatBytes shows photo sizes for people\n  ---\n  duration_ms: 0.147747\n  type: 'test'\n  ...\n1..136\n# tests 136\n# suites 0\n# pass 136\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 631.47528\n",
+      "gate": null,
+      "task": "d4-frontend-extraction",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T00:03:48.621Z"
+    },
+    "ev-mv329lr1-011ac5f7": {
+      "id": "ev-mv329lr1-011ac5f7",
+      "kind": "command",
+      "label": "rework-2: npm test full suite",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 59329,
+      "log": ".eccode/evidence/ev-mv329lr1-011ac5f7.log",
+      "logSha256": "62bb9b1ebbbaef11ecfcdb5d32b5048424b50df87787e678ee859d61eb336959",
+      "logFileSha256": "e48ab21158cbe8fcca9b0bd97261aec6df4a2303b1806e9259c483453edc0ee7",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 668 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 762.469618\n  type: 'test'\n  ...\n1..668\n# tests 1216\n# suites 140\n# pass 1208\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 58878.47352\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 3133 requests, p50 3.8 ms, p95 115.2 ms (limit: p95 < 300 ms)\nNFR5 suite time: 36.7 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": "phase:rework-2",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:04:28.496Z"
+    },
+    "ev-mv32a0k5-01635c42": {
+      "id": "ev-mv32a0k5-01635c42",
+      "kind": "command",
+      "label": "rework-2: npm run test:browser (context; d4 in progress under public/**)",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 11809,
+      "log": ".eccode/evidence/ev-mv32a0k5-01635c42.log",
+      "logSha256": "e8886e48163f96b2fb4fceefb4c62e48ff3645d15fbf0bb6a2139d568b55b58e",
+      "logFileSha256": "9368a0c8effd0240775287b3a1d61be02218e818bb60f7dbf2e7c57a1f4e8b85",
+      "outputTail": "      duration_ms: 1338.330945\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1227.044667\n      type: 'test'\n      ...\n    1..3\nok 3 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 4047.897996\n  type: 'suite'\n  ...\n1..3\n# tests 8\n# suites 3\n# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11499.11276\n",
+      "gate": "phase:rework-2",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:04:47.681Z"
+    },
+    "ev-mv32a4fr-01fc4e1f": {
+      "id": "ev-mv32a4fr-01fc4e1f",
+      "kind": "command",
+      "label": "rework-2 scope: diff of the owned file since c83d80b2, its commits, and its sha256 vs the submission",
+      "command": "git diff --numstat c83d80b2 -- test/api/requests-plans.test.js && git diff c83d80b2 -- test/api/requests-plans.test.js && git log --format='%h %s' c83d80b2..HEAD -- test/api/requests-plans.test.js && git status --porcelain -- test/api/requests-plans.test.js && sha256sum test/api/requests-plans.test.js && grep -n 'capabilities' src/services/view.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 38,
+      "log": ".eccode/evidence/ev-mv32a4fr-01fc4e1f.log",
+      "logSha256": "3b017a2f5e729b01b5f10bd9fcd6b401641acdcf161bf6b80a2f0ee8954c4a48",
+      "logFileSha256": "68752a7291d8e8a04ebd79a5b2756fa5bc7ae92ad5addebfd40721c31df863be",
+      "outputTail": "3\t1\texamples/rescuestock/test/api/requests-plans.test.js\ndiff --git a/examples/rescuestock/test/api/requests-plans.test.js b/examples/rescuestock/test/api/requests-plans.test.js\nindex 56fee72..cb856a2 100644\n--- a/examples/rescuestock/test/api/requests-plans.test.js\n+++ b/examples/rescuestock/test/api/requests-plans.test.js\n@@ -775,7 +775,9 @@ describe('FU-7 and RS-34: view shapes and labels', () => {\n     const res = await cafe1.get(`/api/requests/${id}`);\n     assert.equal(res.status, 200);\n     const v = res.json;\n-    assert.deepEqual(Object.keys(v).sort(), ['cancellingOrders', 'currentPlanId', 'extraction', 'labels', 'orders', 'plans', 'planning', 'request', 'requestId', 'requirements', 'reservation', 'rescueStatus'].sort());\n+    assert.deepEqual(Object.keys(v).sort(), ['cancellingOrders', 'capabilities', 'currentPlanId', 'extraction', 'labels', 'orders', 'plans', 'planning', 'request', 'requestId', 'requirements', 'reservation', 'rescueStatus'].sort());\n+    assert.deepEqual(Object.keys(v.capabilities), ['deleteRequest']);\n+    assert.equal(typeof v.capabilities.deleteRequest, 'boolean');\n     assert.deepEqual(Object.keys(v.request).sort(), ['createdAt', 'id', 'image', 'intakeStatus', 'language', 'rawText']);\n     assert.equal(v.request.rawText, TEXT);\n     assert.equal(v.request.image, null);\nae7c763 Pilot report: d3 row, the d2 reset and rework-2 rows, FU-2 decision\n72be876012393ee92775f506fca99cb805e3d64a01334ff70d422af7e68d1470  test/api/requests-plans.test.js\n496:    capabilities: { deleteRequest: true },\n",
+      "gate": "phase:rework-2",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:04:52.722Z"
+    },
+    "ev-mv32a66o-0101b2f2": {
+      "id": "ev-mv32a66o-0101b2f2",
+      "kind": "command",
+      "label": "npm test",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 63490,
+      "log": ".eccode/evidence/ev-mv32a66o-0101b2f2.log",
+      "logSha256": "79c419b48b169895d3e728fdf8446238df1fb0b3f698d1a4ecfd6c3e3799110d",
+      "logFileSha256": "ba91035c8e5d5828432eee358ec0317bb504d38e11069f239658ee069f86808a",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 668 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 539.676658\n  type: 'test'\n  ...\n1..668\n# tests 1216\n# suites 140\n# pass 1208\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 62989.194512\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 3218 requests, p50 3.8 ms, p95 113.9 ms (limit: p95 < 300 ms)\nNFR5 suite time: 63.2 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": null,
+      "task": "d4-frontend-extraction",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T00:04:54.977Z"
+    },
+    "ev-mv32afme-017b35c4": {
+      "id": "ev-mv32afme-017b35c4",
+      "kind": "command",
+      "label": "npm run test:browser",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 9350,
+      "log": ".eccode/evidence/ev-mv32afme-017b35c4.log",
+      "logSha256": "fe5db2535b2a20f65f87f78f9923c96420c010444c20b0e4077aafe8d71d0b73",
+      "logFileSha256": "9621222c39dded5017dde34e27e75e9f0fce87661ff5cc129de7080506e84fb3",
+      "outputTail": "      duration_ms: 1088.547138\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1044.286101\n      type: 'test'\n      ...\n    1..3\nok 3 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3411.979612\n  type: 'suite'\n  ...\n1..3\n# tests 8\n# suites 3\n# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 9086.134584\n",
+      "gate": null,
+      "task": "d4-frontend-extraction",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T00:05:07.218Z"
+    },
+    "ev-mv32czn1-016f50a4": {
+      "id": "ev-mv32czn1-016f50a4",
+      "kind": "command",
+      "label": "mutation: flipped expected capabilities.deleteRequest must fail the pin (expected FAIL)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/contracts.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 3641,
+      "log": ".eccode/evidence/ev-mv32czn1-016f50a4.log",
+      "logSha256": "11108efbbff80370decb940d2f833ec33506c8da919a71fe30153683a4b17cea",
+      "logFileSha256": "8df50f701343ffe685c651c6df861f5a85c001240e7643814fdf0a8623b7f04e",
+      "outputTail": "    ok 48 - NFR6: every registered route has a scenario in the table\n      ---\n      duration_ms: 1.64133\n      type: 'test'\n      ...\n    1..48\nnot ok 3 - NFR6: contract scenarios drive each registered route and compare status, envelope, requestId and field types with the fixtures\n  ---\n  duration_ms: 3314.46637\n  type: 'suite'\n  location: '/home/user/ECCode/examples/rescuestock/test/api/contracts.test.js:496:1'\n  failureType: 'subtestsFailed'\n  error: '5 subtests failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..3\n# tests 52\n# suites 3\n# pass 40\n# fail 5\n# cancelled 0\n# skipped 7\n# todo 0\n# duration_ms 3559.869416\n",
+      "gate": null,
+      "task": "d5-extraction-contract-browser",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T00:07:06.443Z"
     }
   },
   "reviews": {
@@ -15124,6 +15442,81 @@
       "reviewer": "technical-reviewer",
       "at": "2026-10-10T23:00:31.373Z",
       "submissionId": "sub-mv2zoxlo-019effce"
+    },
+    "rev-mv32bt1y-019ab941": {
+      "decision": "approve",
+      "summary": "Technical review of rework-2 (sub-mv31tlv1-01663c96: test/api/requests-plans.test.js plus the submission). Both artifact sha256 values match the submission (file 72be8760...). The rework's ownership is that one file, and it is the only file the rework changed: +3/-1 since the claim base c83d80b2, landed in commit ae7c763, with no uncommitted change (ev:ev-mv32a4fr-01fc4e1f).\n\nThe change, in the case 'RS-34: GET /api/requests/:id carries labels and the planned shape of the contract fixture' (L778-L780):\n- 'capabilities' is added to the exact, sorted top-level key list. It is still compared with deepEqual, so any other new key still fails.\n- Two new assertions: Object.keys(v.capabilities) deep-equals ['deleteRequest'], and typeof deleteRequest is 'boolean'.\n\nThis matches the producer, src/services/view.js L494-L496 (capabilities: { deleteRequest: true }). It also matches the consumer contract d4 set in ho-mv30i4sf-01273270: a top-level capabilities: { deleteRequest: boolean }, where the UI counts only a boolean true. The value true is pinned elsewhere, by test/api/extract-image.test.js L171 and test/api/uploads-retention.test.js L504. A boolean-only check here is therefore enough and does not duplicate them.\n\nScope beyond 'one word'. The submission discloses it. The two extra assertions were an acceptance criterion in the handoff, and both tighten the check, so I accept them as in scope.\n\nOne gap is outside this rework: the approved spec's RequestView (spec.md L357) does not list capabilities. See TR-RW2-2 (info).\n\nMy checks ran after the submission, on the current tree:\n- the single-file run: 35/35 (ev:ev-mv327tf7-014408e9);\n- c2's plan verification command, verbatim: 66/66 (ev:ev-mv3282ye-0112ff1d);\n- npm test: exit 0, 1216 tests, 1208 pass, 0 fail, 8 skipped; NFR5 p95 115.2 ms (ev:ev-mv329lr1-011ac5f7);\n- npm run test:browser: 8/8 (ev:ev-mv32a0k5-01635c42).\n\nThe red rows the submission disclosed were d5's NFR6 contract rows. They are gone since d5 completed. Neither npm test nor the browser suite shows any failure, so I attribute no failure to d4's in-progress work. Note that the tree includes d4's uncommitted edits to public/js/components/fields-table.js, public/js/views/request-new.js and test/unit/frontend/extraction.test.js.\n\nNo security-reviewer draft exists for this gate, unlike rework-1 (TR-RW2-1, minor). Decision: approve.",
+      "criteria": [
+        {
+          "id": "task:rework-2",
+          "description": "Rework: Phase D's additive RequestView.capabilities key (d3, required by d4's UI) is accepted by c2's RS-34 exact key-list case; capabilities asserted as exactly {deleteRequest: boolean}; no other assertion or file changes",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv327tf7-014408e9",
+            "ev:ev-mv3282ye-0112ff1d",
+            "ev:ev-mv32a4fr-01fc4e1f",
+            "artifact:test/api/requests-plans.test.js#L778-L780",
+            "artifact:src/services/view.js#L494-L496",
+            "artifact:.eccode/artifacts/rework-2/submission.md#finding-change-test-evidence"
+          ],
+          "notes": "Handoff acceptance criteria, each checked:\n(1) c2's verification command passes with capabilities in the key list. My verbatim run under the net guard gives 66/66. The engineer's failing-first run ev:ev-mv31litb-015e68f5 (65/66) shows that this case was the only failure before the edit.\n(2) capabilities is exactly {deleteRequest: boolean}. The key set is compared exactly, and the value type is checked. I compared it with view.js L496 and with d4's TR-C-4 contract (ho-mv30i4sf-01273270), where the UI counts only a boolean true.\n(3) No other assertion or file changes. My diff since c83d80b2 is the 3 lines shown and nothing else in the file. The rework's ownership holds only this file.\nThe exact top-level comparison is not weakened: it is still a deepEqual over the sorted key list. The 'one word' wording of the record understates the change, which the submission discloses. The extra two lines were required by the handoff, and they only tighten the check.\nRecord note: the hunk was committed in ae7c763 (titled 'Pilot report ...'), not in cf0e1c2 as that commit's message suggests. The content is identical to the submitted sha256, so this has no effect on the review."
+        },
+        {
+          "id": "phase:rework-2",
+          "description": "c2's RS-34 exact key-list assertion accepts the additive capabilities key; one-word test update so the suite is green before the phase D submission",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv329lr1-011ac5f7",
+            "ev:ev-mv32a0k5-01635c42",
+            "ev:ev-mv3282ye-0112ff1d",
+            "artifact:.eccode/artifacts/rework-2/submission.md#npm-test-on-the-final-tree-red-not-green"
+          ],
+          "notes": "The rework's purpose is met. The RS-34 failure in the triggering run ev:ev-mv31etf6-01061b72 is gone, and the full suite is now green: npm test exits 0 with 1208 pass, 0 fail and 8 skipped of 1216, and the browser suite passes 8/8. At submission time the suite was red only on d5's five NFR6 rows in test/api/contracts.test.js. That file is outside this rework's ownership, and the submission disclosed those rows correctly. d5 has since completed and they pass.\nThe current tree also contains d4's uncommitted work in progress under public/** and test/unit/frontend/extraction.test.js. No failure appears in it, so nothing is attributed to d4.\nThe phase D submission must still cite its own green npm test on its final tree."
+        },
+        {
+          "id": "lessons",
+          "description": "The rework's not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv32a4fr-01fc4e1f",
+            "artifact:.eccode/handoffs/ho-mv31o4rp-013055fc.json#lessonDecisions",
+            "artifact:.eccode/artifacts/rework-2/submission.md#lessons"
+          ],
+          "notes": "I read the lesson (memory search). It applies to a hook or guard that maps file writes to a project record or root in a repository with several records. The `memory search --check-env` result 'APPLIES' only checks the environment (node >= 18.17); it does not check scope.\nThis rework changes three assertion lines in an API test file. It touches no hook, no guard and no root discovery (ev:ev-mv32a4fr-01fc4e1f), so not-applicable holds. Rework-1's decision on the same lesson was the same, and I accepted it there."
+        }
+      ],
+      "findings": [
+        {
+          "id": "TR-RW2-1",
+          "severity": "minor",
+          "title": "No security-reviewer draft for phase:rework-2, while rework-1 had one (rework-1-security-1.md)",
+          "detail": ".eccode/reviews/drafts holds rework-1-security-1.md but no rework-2 security draft. The change is three assertion lines in a test file, with no runtime code, route, auth or data path, so I see no security surface. The orchestrator's decision not to dispatch the security-reviewer is reasonable, but it is not recorded where the gate history shows it.",
+          "evidence": [
+            "ev:ev-mv32a4fr-01fc4e1f"
+          ],
+          "recommendation": "Owner: orchestrator. Resolved when the scope decision (no security review for the test-only rework-2) is recorded in the decision log or the pilot report row for rework-2. Not blocking."
+        },
+        {
+          "id": "TR-RW2-2",
+          "severity": "info",
+          "title": "The approved spec's RequestView does not list capabilities, and RS-34 now pins it as part of the exact view shape",
+          "detail": "spec.md L357 defines RequestView without capabilities. d3 added capabilities: {deleteRequest: true} at d4's request (TR-C-4). d3's handoff ho-mv31j0p2-01ac6416 asked the orchestrator to record the additive deltas (capabilities and extraction.addressedToAssistant) with the spec owner. followups.md does not mention either delta. This rework is right to pin the delta in the test; the gap is in the documentation.",
+          "evidence": [
+            "artifact:.eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id-session-user-a-foreign-or-archived-id-404",
+            "artifact:src/services/view.js#L494-L496"
+          ],
+          "recommendation": "Owner: orchestrator, with the spec owner (product-architect) at phase D or verification. Resolved when the verification report, or a spec revision, lists RequestView.capabilities: {deleteRequest: boolean} and Extraction.addressedToAssistant as documented additive design deltas."
+        }
+      ],
+      "resolvedFindings": [],
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "id": "rev-mv32bt1y-019ab941",
+      "gate": "phase:rework-2",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-11T00:06:11.159Z",
+      "submissionId": "sub-mv31tlv1-01663c96"
     }
   },
   "rejectedReviews": [
@@ -15142,6 +15535,25 @@
       "at": "2026-10-10T23:00:19.367Z",
       "reasons": [
         "this submission records 1 decision(s) on verified lessons (mem-sd-mv1audrd-013b7102: not-applicable). Judge each - read the lesson (eccode memory show <id>), then decide whether it was applied with a test that covers it, or whether the stated reason for setting it aside really holds (a ticket that is silent about a rule is not a reason). Add a criterion with id \"lessons\" saying so, with evidence; if a decision is wrong, request changes"
+      ],
+      "decision": "approve"
+    },
+    {
+      "gate": "phase:rework-2",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-11T00:05:57.447Z",
+      "reasons": [
+        "criterion phase:rework-2: artifact:.eccode/artifacts/rework-2/submission.md#L21: anchor \"#L21\" not found in .eccode/artifacts/rework-2/submission.md (headings: \"phase:rework-2 — submission\", \"finding → change → test → evidence\", \"`npm test` on the final tree: red, not green\", \"lessons\", \"open items\"); cite a heading of the file",
+        "finding TR-RW2-2: artifact:.eccode/artifacts/design/spec.md#L357: anchor \"#L357\" not found in .eccode/artifacts/design/spec.md (headings: \"rescuestock — technical design (revision 3)\", \"findings disposition (revision 3)\", \"findings disposition (revision 2)\", \"resolution of the architecture review's open findings\", \"memory consulted\", \"external facts used (source and date)\", \"components\", \"technology choices\", \"interface contracts\", \"conventions (apply to every route)\", \"error catalog (fixed)\", \"shared response objects\", \"authentication (arch-25)\", \"public and health\", \"customer routes (role `customer`; every query is scoped `where customer_id = session user`; a foreign or archived id → 404)\", \"supplier routes (role `supplier`; every query scoped to `users.supplier_id`)\", \"admin routes (role `admin`)\", \"webhooks\", \"fake approval listener (revision 2, sec-12; only when `rs_payment_provider=fake`)\", \"rbac matrix (default deny; the router refuses any route without a policy entry at startup)\", … 36 more); cite a heading of the file"
+      ],
+      "decision": "approve"
+    },
+    {
+      "gate": "phase:rework-2",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-11T00:06:02.999Z",
+      "reasons": [
+        "finding TR-RW2-2: artifact:.eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id--session-user-a-foreign-or-archived-id--404: anchor \"#customer-routes-role-customer-every-query-is-scoped-where-customer_id--session-user-a-foreign-or-archived-id--404\" not found in .eccode/artifacts/design/spec.md (headings: \"rescuestock — technical design (revision 3)\", \"findings disposition (revision 3)\", \"findings disposition (revision 2)\", \"resolution of the architecture review's open findings\", \"memory consulted\", \"external facts used (source and date)\", \"components\", \"technology choices\", \"interface contracts\", \"conventions (apply to every route)\", \"error catalog (fixed)\", \"shared response objects\", \"authentication (arch-25)\", \"public and health\", \"customer routes (role `customer`; every query is scoped `where customer_id = session user`; a foreign or archived id → 404)\", \"supplier routes (role `supplier`; every query scoped to `users.supplier_id`)\", \"admin routes (role `admin`)\", \"webhooks\", \"fake approval listener (revision 2, sec-12; only when `rs_payment_provider=fake`)\", \"rbac matrix (default deny; the router refuses any route without a policy entry at startup)\", … 36 more); cite a heading of the file"
       ],
       "decision": "approve"
     }
@@ -17406,6 +17818,67 @@
       "id": "ho-mv3249el-0180bc20",
       "recordedBy": "test-engineer",
       "at": "2026-10-11T00:00:19.346Z"
+    },
+    "ho-mv32b3pf-011eac5d": {
+      "from": "frontend-engineer",
+      "to": "delivery-lead",
+      "task": "d4-frontend-extraction",
+      "objective": "Three corrections found by d5's handoff: hide the stale degraded notice once details are confirmed, remove the FU-16 extract-route tolerance (frontend part), add the capabilities key to three request-view fixtures.",
+      "context": "Built against d5's remaining issues (ho-mv3249el-0180bc20). The live view returns capabilities { deleteRequest: true } unconditionally (src/services/view.js assembleView, line 496; no per-status rule), so true is the live value for the planned, infeasible and reserved scenarios. The fixtures were committed by the orchestrator in e011e54 while I worked, so git shows no diff for them now.",
+      "inputs": [
+        ".eccode/handoffs/ho-mv3249el-0180bc20.json",
+        "src/services/view.js",
+        "test/api/contracts.test.js",
+        "test/helpers/contract-shape.js"
+      ],
+      "dependencies": [
+        "d3-extraction-service",
+        "d2-ai-adapters-corpus"
+      ],
+      "expectedOutput": "Notice hidden after confirm, 404 on extract treated as an ordinary failure, three fixtures carrying capabilities, all suites green.",
+      "acceptanceCriteria": [
+        "The degraded notice (data-testid degraded-notice, wording unchanged) shows only while the extraction is degraded and view.requirements is null",
+        "EXTRACT_ROUTE_MAY_BE_MISSING and the routeMayBeMissing branch are gone; a 404 from the extract call shows the ordinary error with Retry and does not navigate",
+        "request-view-planned, -infeasible and -reserved carry capabilities { deleteRequest: true }",
+        "Task verification command, npm test and npm run test:browser pass"
+      ],
+      "completedWork": "1) fields-table.js needModel: degraded (drives the notice) is now degradedReading && view.requirements === null; form.open still uses the raw degradedReading, so form behaviour is unchanged. New test in extraction.test.js (degraded + unconfirmed keeps the exact notice; degraded extraction with requirements shows no notice); failing-first run ev:ev-mv327crh-010cb98f (2 failures: the new test, and TR-C-4 in extraction.test.js which broke because the planned fixture now carries the flag; that test and the same check in dashboards.test.js RS-35 now delete view.capabilities first). 2) request-new.js: constant, parameter and branch removed; extraction.test.js no longer references them; the classifier test expects {kind:'retry'} for a 404, the mount test for 404 was split out into a new FU-16 test (error shown, Retry offered, no navigation). test/browser/journey-infeasible.test.js untouched. 3) capabilities { deleteRequest: true } added to the three fixtures. contracts.test.js: 52 tests, 45 pass, 7 skipped (phase E, FU-18), 0 fail. The wrapper compareShape (test/helpers/contract-shape.js) only compares TYPES: an optional key is not reported missing or extra, but when both the fixture and the live view have it, it is walked and its type (boolean) is compared; the VALUE is not compared (only the order.canMarkReady row uses sameValues). So a wrong boolean would NOT be caught by the optional rows; the value true was checked against src/services/view.js by reading.",
+      "filesChanged": [
+        "public/js/components/fields-table.js",
+        "public/js/views/request-new.js",
+        "test/unit/frontend/extraction.test.js",
+        "test/unit/frontend/dashboards.test.js",
+        "test/fixtures/contracts/request-view-planned.json",
+        "test/fixtures/contracts/request-view-infeasible.json",
+        "test/fixtures/contracts/request-view-reserved.json"
+      ],
+      "evidence": [
+        "ev:ev-mv328qzg-01fac919",
+        "ev:ev-mv328hte-01ad3200",
+        "ev:ev-mv32a66o-0101b2f2",
+        "ev:ev-mv32afme-017b35c4"
+      ],
+      "remainingIssues": [
+        "Passing: ev:ev-mv328qzg-01fac919 (task verification command, 136 tests, 136 pass), ev:ev-mv328hte-01ad3200 (contracts.test.js, 52 tests, 45 pass, 7 skipped), ev:ev-mv32a66o-0101b2f2 (npm test: 1216 tests, 1208 pass, 0 fail, 8 skipped, 0 todo), ev:ev-mv32afme-017b35c4 (npm run test:browser: 8 tests, 8 pass). Failing on purpose, cited as failing-first: ev:ev-mv327crh-010cb98f (extraction.test.js, 2 failures as described). An earlier run of the verification command failed once on dashboards.test.js RS-35 (fixture change exposed an assumption); fixed, re-run passed.",
+        "Skipped, not passed: the 7 phase E contract rows (FU-18, owner e6) and the fake x PROVIDER_BUSY row.",
+        "The brief said the manual form is already closed once requirements exist; in the code it was not: form.open was requirements === null || degraded, so after a confirm of a degraded reading the form stayed open. I did not change that (outside the three requested changes); only the notice is hidden. If the form should close too, form.open should use view.requirements === null only; owner frontend-engineer, needs a decision.",
+        "The optional: ['capabilities'] entries in test/api/contracts.test.js (d5's file) can now be dropped because the fixtures carry the key; even then the check is type-only, so add sameValues: ['capabilities.deleteRequest'] if the value should be pinned. Not my files.",
+        "FU-16 test side: withoutUnregisteredExtract() in test/browser/journey-infeasible.test.js is still there (orchestrator rework); the browser suite passes with it."
+      ],
+      "nextAction": "delivery-lead: review d4; decide on the form.open question and on dropping the optional entries in contracts.test.js; handle journey-infeasible.test.js by rework.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson concerns a hook or guard choosing a project root for a write target. This task changes frontend code, tests and fixtures and builds no hook, guard or root discovery; every write was accepted in the nested record, so none of its 'Applies when' conditions hold."
+        }
+      ],
+      "id": "ho-mv32b3pf-011eac5d",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T00:05:38.566Z"
     }
   },
   "runs": {
@@ -18465,8 +18938,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T00:01:43.072Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T00:06:18.447Z",
+      "durationMinutes": 4.59,
+      "costUsd": null,
+      "tokens": 79064,
+      "note": null,
+      "usageReported": true
     },
     "run-mv3262bq-011eb2a9": {
       "id": "run-mv3262bq-011eb2a9",
@@ -18474,6 +18953,30 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T00:01:43.317Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T00:06:44.715Z",
+      "durationMinutes": 5.02,
+      "costUsd": null,
+      "tokens": 71634,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv32bz1g-01a9c844": {
+      "id": "run-mv32bz1g-01a9c844",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T00:06:18.995Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv32cmfs-019d4aba": {
+      "id": "run-mv32cmfs-019d4aba",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T00:06:49.308Z",
       "status": "running",
       "attempt": 1
     }
@@ -18820,6 +19323,26 @@
       "lessons": [],
       "at": "2026-10-10T23:44:49.147Z",
       "by": "orchestrator"
+    },
+    "dec-mv32c290-0182b807": {
+      "id": "dec-mv32c290-0182b807",
+      "title": "Degraded manual form stays open after confirmation",
+      "decision": "Keep d4's rule for phase D: after a degraded reading the manual form stays open once the customer has confirmed (form.open = requirements null OR degraded reading); after a successful extraction it closes on confirmation. The stale notice is hidden in both cases.",
+      "rationale": "d4's reset handoff ho-mv32b3pf-011eac5d raised it. The open form is the only way a customer can correct values typed by hand. Reversible; the phase D reviewers may require a single rule, owner d4.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T00:06:23.183Z",
+      "by": "orchestrator"
+    },
+    "dec-mv32cj1p-01fd33ad": {
+      "id": "dec-mv32cj1p-01fd33ad",
+      "title": "No security review for rework-2",
+      "decision": "phase:rework-2 was reviewed by the technical-reviewer only (rev-mv32bt1y-019ab941).",
+      "rationale": "The rework changes three assertions in one test file and no runtime code, route, policy or hook; there is no security surface. rework-1 changed the access layer and had a security draft. Raised as TR-RW2-1 (minor).",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T00:06:44.952Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -18832,8 +19355,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 681.9,
-    "tokens": 9313198
+    "runtimeMinutes": 691.51,
+    "tokens": 9463896
   },
   "delivery": null,
   "reworks": [
@@ -18875,6 +19398,21 @@
       ],
       "openedBy": "orchestrator",
       "at": "2026-10-10T23:45:03.614Z",
+      "afterDelivery": false
+    },
+    {
+      "id": "rework-3",
+      "gate": "phase:rework-3",
+      "reason": "c6's test/browser/journey-infeasible.test.js tolerates a 404 on POST /api/requests/:id/extract through withoutUnregisteredExtract() because the route did not exist in phase C. d3 added the route and d4's reset removed the frontend tolerance (ho-mv32b3pf-011eac5d). Phase C is approved and no phase D task owns the file, so a rework removes the helper: any 404 on that route during a journey is a failure.",
+      "owner": "test-engineer",
+      "files": [
+        "test/browser/journey-infeasible.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv3226jz-0198f037"
+      ],
+      "openedBy": "orchestrator",
+      "at": "2026-10-11T00:06:45.242Z",
       "afterDelivery": false
     }
   ]

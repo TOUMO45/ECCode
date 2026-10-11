@@ -14,23 +14,6 @@ import { screenshotPath, takeScreenshot } from './helpers/screenshot.js';
 const TEXT = 'I need 200 cups and 200 lids, 250 ml, by 11:00 today. Budget $50, at most 2 pickups.';
 const SCREENSHOT_NAME = 'journey-infeasible';
 
-// The request page asks for an extraction after creating the request and tolerates a failure (it then opens the manual
-// form). POST /api/requests/:id/extract is built in phase d; until then it answers 404, and the browser logs one
-// "Failed to load resource ... 404" console error per call. Exactly those entries are set aside here, nothing else.
-function withoutUnregisteredExtract(problems) {
-  const isExtract404 = (p) => /^HTTP 404: POST http:\/\/localhost:\d+\/api\/requests\/\d+\/extract$/.test(p);
-  const calls = problems.filter(isExtract404).length;
-  let consoleLinesToDrop = calls;
-  return problems.filter((p) => {
-    if (isExtract404(p)) return false;
-    if (consoleLinesToDrop > 0 && /^console error: Failed to load resource: the server responded with a status of 404/.test(p)) {
-      consoleLinesToDrop -= 1;
-      return false;
-    }
-    return true;
-  });
-}
-
 let harness;
 before(async () => {
   harness = await startBrowserHarness();
@@ -111,7 +94,7 @@ describe('RS-33: an infeasible request ends with an explanation and no purchase'
       // Layout and page health at this width.
       const overflow = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, inner: window.innerWidth }));
       assert.ok(overflow.scroll <= overflow.inner, `no horizontal scroll at ${viewport.width}px: scrollWidth ${overflow.scroll} > ${overflow.inner}`);
-      assert.deepEqual(withoutUnregisteredExtract(problems), [], 'no console errors, CSP violations, page errors or failed requests during the journey');
+      assert.deepEqual(problems, [], 'no console errors, CSP violations, page errors or failed requests during the journey');
 
       // 5. Screenshot.
       const path = await takeScreenshot(page, SCREENSHOT_NAME, viewport.width);

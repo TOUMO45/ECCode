@@ -237,7 +237,7 @@ const TABLE = [
   },
   {
     fixture: 'request-view-planned.json',
-    optional: ['capabilities'], // additive key (d3, TR-C-4); these three fixtures predate it and are d4's
+    sameValues: ['capabilities.deleteRequest'], // the capability flag's value is pinned, not just its type
     world: 'main',
     run: async (w) => {
       const c = await w.customer();
@@ -248,7 +248,7 @@ const TABLE = [
   },
   {
     fixture: 'request-view-infeasible.json',
-    optional: ['capabilities'], // additive key (d3, TR-C-4); these three fixtures predate it and are d4's
+    sameValues: ['capabilities.deleteRequest'], // the capability flag's value is pinned, not just its type
     world: 'main',
     run: async (w) => {
       const c = await w.customer();
@@ -259,6 +259,7 @@ const TABLE = [
   },
   {
     fixture: 'request-view-degraded.json',
+    sameValues: ['capabilities.deleteRequest'], // the capability flag's value is pinned, not just its type
     world: 'main',
     run: async (w) => {
       const c = await w.customer();
@@ -310,7 +311,7 @@ const TABLE = [
   },
   {
     fixture: 'request-view-reserved.json',
-    optional: ['capabilities'], // additive key (d3, TR-C-4); these three fixtures predate it and are d4's
+    sameValues: ['capabilities.deleteRequest'], // the capability flag's value is pinned, not just its type
     world: 'flow',
     run: async (w) => {
       const { client, requestId } = await reservedFlow(w);

@@ -1,0 +1,70 @@
+{
+  "decision": "approve",
+  "summary": "Technical review of rework-2 (sub-mv31tlv1-01663c96: test/api/requests-plans.test.js plus the submission). Both artifact sha256 values match the submission (file 72be8760...). The rework's ownership is that one file, and it is the only file the rework changed: +3/-1 since the claim base c83d80b2, landed in commit ae7c763, with no uncommitted change (ev:ev-mv32a4fr-01fc4e1f).\n\nThe change, in the case 'RS-34: GET /api/requests/:id carries labels and the planned shape of the contract fixture' (L778-L780):\n- 'capabilities' is added to the exact, sorted top-level key list. It is still compared with deepEqual, so any other new key still fails.\n- Two new assertions: Object.keys(v.capabilities) deep-equals ['deleteRequest'], and typeof deleteRequest is 'boolean'.\n\nThis matches the producer, src/services/view.js L494-L496 (capabilities: { deleteRequest: true }). It also matches the consumer contract d4 set in ho-mv30i4sf-01273270: a top-level capabilities: { deleteRequest: boolean }, where the UI counts only a boolean true. The value true is pinned elsewhere, by test/api/extract-image.test.js L171 and test/api/uploads-retention.test.js L504. A boolean-only check here is therefore enough and does not duplicate them.\n\nScope beyond 'one word'. The submission discloses it. The two extra assertions were an acceptance criterion in the handoff, and both tighten the check, so I accept them as in scope.\n\nOne gap is outside this rework: the approved spec's RequestView (spec.md L357) does not list capabilities. See TR-RW2-2 (info).\n\nMy checks ran after the submission, on the current tree:\n- the single-file run: 35/35 (ev:ev-mv327tf7-014408e9);\n- c2's plan verification command, verbatim: 66/66 (ev:ev-mv3282ye-0112ff1d);\n- npm test: exit 0, 1216 tests, 1208 pass, 0 fail, 8 skipped; NFR5 p95 115.2 ms (ev:ev-mv329lr1-011ac5f7);\n- npm run test:browser: 8/8 (ev:ev-mv32a0k5-01635c42).\n\nThe red rows the submission disclosed were d5's NFR6 contract rows. They are gone since d5 completed. Neither npm test nor the browser suite shows any failure, so I attribute no failure to d4's in-progress work. Note that the tree includes d4's uncommitted edits to public/js/components/fields-table.js, public/js/views/request-new.js and test/unit/frontend/extraction.test.js.\n\nNo security-reviewer draft exists for this gate, unlike rework-1 (TR-RW2-1, minor). Decision: approve.",
+  "criteria": [
+    {
+      "id": "task:rework-2",
+      "description": "Rework: Phase D's additive RequestView.capabilities key (d3, required by d4's UI) is accepted by c2's RS-34 exact key-list case; capabilities asserted as exactly {deleteRequest: boolean}; no other assertion or file changes",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv327tf7-014408e9",
+        "ev:ev-mv3282ye-0112ff1d",
+        "ev:ev-mv32a4fr-01fc4e1f",
+        "artifact:test/api/requests-plans.test.js#L778-L780",
+        "artifact:src/services/view.js#L494-L496",
+        "artifact:.eccode/artifacts/rework-2/submission.md#finding-change-test-evidence"
+      ],
+      "notes": "Handoff acceptance criteria, each checked:\n(1) c2's verification command passes with capabilities in the key list. My verbatim run under the net guard gives 66/66. The engineer's failing-first run ev:ev-mv31litb-015e68f5 (65/66) shows that this case was the only failure before the edit.\n(2) capabilities is exactly {deleteRequest: boolean}. The key set is compared exactly, and the value type is checked. I compared it with view.js L496 and with d4's TR-C-4 contract (ho-mv30i4sf-01273270), where the UI counts only a boolean true.\n(3) No other assertion or file changes. My diff since c83d80b2 is the 3 lines shown and nothing else in the file. The rework's ownership holds only this file.\nThe exact top-level comparison is not weakened: it is still a deepEqual over the sorted key list. The 'one word' wording of the record understates the change, which the submission discloses. The extra two lines were required by the handoff, and they only tighten the check.\nRecord note: the hunk was committed in ae7c763 (titled 'Pilot report ...'), not in cf0e1c2 as that commit's message suggests. The content is identical to the submitted sha256, so this has no effect on the review."
+    },
+    {
+      "id": "phase:rework-2",
+      "description": "c2's RS-34 exact key-list assertion accepts the additive capabilities key; one-word test update so the suite is green before the phase D submission",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv329lr1-011ac5f7",
+        "ev:ev-mv32a0k5-01635c42",
+        "ev:ev-mv3282ye-0112ff1d",
+        "artifact:.eccode/artifacts/rework-2/submission.md#npm-test-on-the-final-tree-red-not-green"
+      ],
+      "notes": "The rework's purpose is met. The RS-34 failure in the triggering run ev:ev-mv31etf6-01061b72 is gone, and the full suite is now green: npm test exits 0 with 1208 pass, 0 fail and 8 skipped of 1216, and the browser suite passes 8/8. At submission time the suite was red only on d5's five NFR6 rows in test/api/contracts.test.js. That file is outside this rework's ownership, and the submission disclosed those rows correctly. d5 has since completed and they pass.\nThe current tree also contains d4's uncommitted work in progress under public/** and test/unit/frontend/extraction.test.js. No failure appears in it, so nothing is attributed to d4.\nThe phase D submission must still cite its own green npm test on its final tree."
+    },
+    {
+      "id": "lessons",
+      "description": "The rework's not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv32a4fr-01fc4e1f",
+        "artifact:.eccode/handoffs/ho-mv31o4rp-013055fc.json#lessonDecisions",
+        "artifact:.eccode/artifacts/rework-2/submission.md#lessons"
+      ],
+      "notes": "I read the lesson (memory search). It applies to a hook or guard that maps file writes to a project record or root in a repository with several records. The `memory search --check-env` result 'APPLIES' only checks the environment (node >= 18.17); it does not check scope.\nThis rework changes three assertion lines in an API test file. It touches no hook, no guard and no root discovery (ev:ev-mv32a4fr-01fc4e1f), so not-applicable holds. Rework-1's decision on the same lesson was the same, and I accepted it there."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-RW2-1",
+      "severity": "minor",
+      "title": "No security-reviewer draft for phase:rework-2, while rework-1 had one (rework-1-security-1.md)",
+      "detail": ".eccode/reviews/drafts holds rework-1-security-1.md but no rework-2 security draft. The change is three assertion lines in a test file, with no runtime code, route, auth or data path, so I see no security surface. The orchestrator's decision not to dispatch the security-reviewer is reasonable, but it is not recorded where the gate history shows it.",
+      "evidence": [
+        "ev:ev-mv32a4fr-01fc4e1f"
+      ],
+      "recommendation": "Owner: orchestrator. Resolved when the scope decision (no security review for the test-only rework-2) is recorded in the decision log or the pilot report row for rework-2. Not blocking."
+    },
+    {
+      "id": "TR-RW2-2",
+      "severity": "info",
+      "title": "The approved spec's RequestView does not list capabilities, and RS-34 now pins it as part of the exact view shape",
+      "detail": "spec.md L357 defines RequestView without capabilities. d3 added capabilities: {deleteRequest: true} at d4's request (TR-C-4). d3's handoff ho-mv31j0p2-01ac6416 asked the orchestrator to record the additive deltas (capabilities and extraction.addressedToAssistant) with the spec owner. followups.md does not mention either delta. This rework is right to pin the delta in the test; the gap is in the documentation.",
+      "evidence": [
+        "artifact:.eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id-session-user-a-foreign-or-archived-id-404",
+        "artifact:src/services/view.js#L494-L496"
+      ],
+      "recommendation": "Owner: orchestrator, with the spec owner (product-architect) at phase D or verification. Resolved when the verification report, or a spec revision, lists RequestView.capabilities: {deleteRequest: boolean} and Extraction.addressedToAssistant as documented additive design deltas."
+    }
+  ],
+  "resolvedFindings": [],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}

@@ -241,6 +241,21 @@ test('RS-03: a degraded extraction shows "Automatic reading unavailable — plea
   assert.equal(allByTestId(wrap(renderNeed(needModel(viewWith(extractionOf('request-extract'))), { confirm: () => {} })), 'degraded-notice').length, 0, 'no notice when the reading worked');
 });
 
+test('RS-03: once the customer has confirmed the details the degraded notice is gone; before that it keeps its exact wording', () => {
+  const degraded = body('request-view-degraded');
+  assert.equal(degraded.requirements, null);
+  assert.equal(needModel(degraded).degraded, true, 'degraded and unconfirmed: the notice stays');
+  assert.equal(textOf(byTestId(wrap(renderNeed(needModel(degraded), { confirm: () => {} })), 'degraded-notice')), 'Automatic reading unavailable — please enter the details');
+
+  const confirmed = body('request-view-planned');
+  confirmed.extraction = extractionOf('request-extract-degraded');
+  assert.equal(confirmed.extraction.degraded, true, 'the stored extraction is still the degraded one');
+  assert.notEqual(confirmed.requirements, null, 'the customer has confirmed details');
+  const model = needModel(confirmed);
+  assert.equal(model.degraded, false, 'the notice is stale once requirements exist');
+  assert.equal(allByTestId(wrap(renderNeed(model, { confirm: () => {} })), 'degraded-notice').length, 0);
+});
+
 test('RS-03: a degraded reading cannot be edited after the plan is executing or executed (the form is locked)', () => {
   const view = body('request-view-reserved');
   view.plans[0].status = 'executing';
@@ -325,6 +340,7 @@ test('TR-C-6: the table is not inside a sideways scroll region, and the styleshe
 
 test('TR-C-4: "Delete request" is offered only when the server reports capabilities.deleteRequest (request view first, then /api/config)', () => {
   const view = body('request-view-planned');
+  delete view.capabilities; // the fixture carries the live flag now; this test is about the view WITHOUT it
   assert.equal(deleteRequestAvailable(view, null), false, 'no flag, no button');
   assert.equal(deleteRequestAvailable(view, body('config')), false, 'the config of today carries no capabilities');
   assert.equal(deleteRequestAvailable({ ...view, capabilities: { deleteRequest: true } }, null), true);
@@ -407,13 +423,12 @@ test('RS-02: a photo is accepted as PNG, JPEG or WebP up to 5 MB, mirroring the 
   assert.match(describeError(apiError('PAYLOAD_TOO_LARGE', 413)).message, /5 MB/);
 });
 
-test('RS-03: a failed extract call is classified: cancelled, open the request page (degraded or 404 until d3), or retry', () => {
+test('RS-03: a failed extract call is classified: cancelled, open the request page (degraded), or retry', () => {
   assert.deepEqual(classifyExtractFailure(new ApiError({ kind: 'cancelled', code: 'CLIENT_CANCELLED', message: 'x' })), { kind: 'cancelled' });
   assert.deepEqual(classifyExtractFailure(apiError('MODEL_BUDGET_EXHAUSTED', 503, { degraded: true, extraction: extractionOf('request-extract-degraded') })), { kind: 'open', reason: 'degraded' });
   assert.deepEqual(classifyExtractFailure(apiError('RATE_LIMITED', 429, { degraded: true, extraction: extractionOf('request-extract-degraded') })), { kind: 'open', reason: 'degraded' });
   assert.deepEqual(classifyExtractFailure(apiError('RATE_LIMITED', 429, { limit: 'general' })), { kind: 'retry' }, 'another rate limit stores no extraction');
-  assert.deepEqual(classifyExtractFailure(apiError('NOT_FOUND', 404)), { kind: 'open', reason: 'missing-route' }, 'FU-16: tolerated until d3 registers the route');
-  assert.deepEqual(classifyExtractFailure(apiError('NOT_FOUND', 404), { routeMayBeMissing: false }), { kind: 'retry' }, 'afterwards a 404 is an ordinary error');
+  assert.deepEqual(classifyExtractFailure(apiError('NOT_FOUND', 404)), { kind: 'retry' }, 'FU-16: the route exists, so a 404 is an ordinary failure');
   assert.deepEqual(classifyExtractFailure(apiError('INTERNAL', 500)), { kind: 'retry' });
   assert.deepEqual(classifyExtractFailure(new ApiError({ kind: 'timeout', code: 'CLIENT_TIMEOUT', message: 'x' })), { kind: 'retry' });
 });
@@ -640,11 +655,10 @@ test('RS-03: when the request cannot be created the form keeps the text and Retr
   assert.deepEqual(navigated, ['#/requests/12']);
 });
 
-test('RS-03: a degraded answer (503 MODEL_BUDGET_EXHAUSTED or 429 with a stored extraction) and the 404 of a route not built yet both open the request page', async () => {
+test('RS-03: a degraded answer (503 MODEL_BUDGET_EXHAUSTED or 429 with a stored extraction) opens the request page', async () => {
   for (const failure of [
     apiError('MODEL_BUDGET_EXHAUSTED', 503, { degraded: true, extraction: extractionOf('request-extract-degraded') }),
     apiError('RATE_LIMITED', 429, { degraded: true, extraction: extractionOf('request-extract-degraded') }),
-    apiError('NOT_FOUND', 404),
   ]) {
     const api = { createRequest: async () => body('request-create'), extractRequest: async () => { throw failure; } };
     const { container, navigated } = mountNew(api);
@@ -653,6 +667,19 @@ test('RS-03: a degraded answer (503 MODEL_BUDGET_EXHAUSTED or 429 with a stored 
     assert.deepEqual(navigated, ['#/requests/12'], failure.code);
     assert.equal(allByTestId(container, 'state-error').length, 0, failure.code);
   }
+});
+
+test('FU-16: a 404 from the extract call is an ordinary failure: the error with what to do and Retry, no navigation', async () => {
+  const api = { createRequest: async () => body('request-create'), extractRequest: async () => { throw apiError('NOT_FOUND', 404); } };
+  const { container, navigated } = mountNew(api);
+  byTestId(container, 'input-text').value = '200 cups';
+  await submitForm(container);
+  assert.deepEqual(navigated, [], 'the request page is not opened as if the reading had degraded');
+  const error = byTestId(container, 'state-error');
+  assert.ok(error, 'the error is shown');
+  assert.match(error.textContent, /That item was not found\./);
+  assert.match(error.textContent, /Go back to your list and open it again\./);
+  assert.ok(byTestId(container, 'retry'), 'Retry is offered');
 });
 
 test('RS-02: an empty or over-long text is refused in the browser and nothing is sent', async () => {

@@ -557,6 +557,7 @@ test('RS-35: Reserve, Complete purchase and Record receipt appear on their next 
   assert.deepEqual(actionsModel(ready).receipts.map((r) => [r.orderId, r.testid]), [[31, 'receipt-A']]);
   ready.orders[0].receiptRecorded = true;
   assert.deepEqual(actionsModel(ready).receipts, []);
+  delete ready.capabilities; // the fixture carries the live flag now; this check is about the view without it
   assert.equal(actionsModel(ready).remove, null, 'TR-C-4: no Delete request until the server reports capabilities.deleteRequest');
   ready.capabilities = { deleteRequest: true };
   assert.deepEqual({ ...actionsModel(ready).remove }, { label: 'Delete request', testid: 'delete-request' });

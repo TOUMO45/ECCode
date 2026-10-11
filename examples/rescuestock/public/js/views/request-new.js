@@ -20,11 +20,6 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const IMAGE_TYPES = Object.freeze(['image/png', 'image/jpeg', 'image/webp']);
 export const IMAGE_ACCEPT = IMAGE_TYPES.join(',');
 
-// FU-16: until POST /api/requests/:id/extract exists (task d3) the call answers 404 NOT_FOUND. The screen then opens
-// the request page, which offers the manual form. Once d3 has landed a 404 can only mean the request is gone, and the
-// request page says so; set this to false to make the 404 an ordinary error with Retry.
-export const EXTRACT_ROUTE_MAY_BE_MISSING = true;
-
 export function validateRequestText(text) {
   const value = String(text ?? '');
   if (value.trim().length === 0) return 'Describe what you need before you send.';
@@ -44,16 +39,14 @@ export function validateImageFile(file) {
 /**
  * What to do when an extract call fails.
  *   cancelled  the user used Cancel
- *   open       open the request page: the server stored a degraded extraction (429 with details.degraded, 503), or the
- *              route does not exist yet (404 while EXTRACT_ROUTE_MAY_BE_MISSING)
- *   retry      anything else: show the error with a Retry button
+ *   open       open the request page: the server stored a degraded extraction (429 with details.degraded, 503)
+ *   retry      anything else, a 404 included: show the error with a Retry button
  */
-export function classifyExtractFailure(err, { routeMayBeMissing = EXTRACT_ROUTE_MAY_BE_MISSING } = {}) {
+export function classifyExtractFailure(err) {
   if (err?.code === 'CLIENT_CANCELLED') return { kind: 'cancelled' };
   // MODEL_BUDGET_EXHAUSTED (503) and the extract_upload RATE_LIMITED (429) store a degraded extraction and carry it
   // in details; the request page shows the notice and the manual form.
   if (err?.code === 'MODEL_BUDGET_EXHAUSTED' || (err?.status === 429 && err?.details?.degraded === true)) return { kind: 'open', reason: 'degraded' };
-  if (routeMayBeMissing && err?.status === 404) return { kind: 'open', reason: 'missing-route' };
   return { kind: 'retry' };
 }
 

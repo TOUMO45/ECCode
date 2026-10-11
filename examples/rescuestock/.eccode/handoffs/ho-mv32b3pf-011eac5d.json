@@ -1,0 +1,58 @@
+{
+  "from": "frontend-engineer",
+  "to": "delivery-lead",
+  "task": "d4-frontend-extraction",
+  "objective": "Three corrections found by d5's handoff: hide the stale degraded notice once details are confirmed, remove the FU-16 extract-route tolerance (frontend part), add the capabilities key to three request-view fixtures.",
+  "context": "Built against d5's remaining issues (ho-mv3249el-0180bc20). The live view returns capabilities { deleteRequest: true } unconditionally (src/services/view.js assembleView, line 496; no per-status rule), so true is the live value for the planned, infeasible and reserved scenarios. The fixtures were committed by the orchestrator in e011e54 while I worked, so git shows no diff for them now.",
+  "inputs": [
+    ".eccode/handoffs/ho-mv3249el-0180bc20.json",
+    "src/services/view.js",
+    "test/api/contracts.test.js",
+    "test/helpers/contract-shape.js"
+  ],
+  "dependencies": [
+    "d3-extraction-service",
+    "d2-ai-adapters-corpus"
+  ],
+  "expectedOutput": "Notice hidden after confirm, 404 on extract treated as an ordinary failure, three fixtures carrying capabilities, all suites green.",
+  "acceptanceCriteria": [
+    "The degraded notice (data-testid degraded-notice, wording unchanged) shows only while the extraction is degraded and view.requirements is null",
+    "EXTRACT_ROUTE_MAY_BE_MISSING and the routeMayBeMissing branch are gone; a 404 from the extract call shows the ordinary error with Retry and does not navigate",
+    "request-view-planned, -infeasible and -reserved carry capabilities { deleteRequest: true }",
+    "Task verification command, npm test and npm run test:browser pass"
+  ],
+  "completedWork": "1) fields-table.js needModel: degraded (drives the notice) is now degradedReading && view.requirements === null; form.open still uses the raw degradedReading, so form behaviour is unchanged. New test in extraction.test.js (degraded + unconfirmed keeps the exact notice; degraded extraction with requirements shows no notice); failing-first run ev:ev-mv327crh-010cb98f (2 failures: the new test, and TR-C-4 in extraction.test.js which broke because the planned fixture now carries the flag; that test and the same check in dashboards.test.js RS-35 now delete view.capabilities first). 2) request-new.js: constant, parameter and branch removed; extraction.test.js no longer references them; the classifier test expects {kind:'retry'} for a 404, the mount test for 404 was split out into a new FU-16 test (error shown, Retry offered, no navigation). test/browser/journey-infeasible.test.js untouched. 3) capabilities { deleteRequest: true } added to the three fixtures. contracts.test.js: 52 tests, 45 pass, 7 skipped (phase E, FU-18), 0 fail. The wrapper compareShape (test/helpers/contract-shape.js) only compares TYPES: an optional key is not reported missing or extra, but when both the fixture and the live view have it, it is walked and its type (boolean) is compared; the VALUE is not compared (only the order.canMarkReady row uses sameValues). So a wrong boolean would NOT be caught by the optional rows; the value true was checked against src/services/view.js by reading.",
+  "filesChanged": [
+    "public/js/components/fields-table.js",
+    "public/js/views/request-new.js",
+    "test/unit/frontend/extraction.test.js",
+    "test/unit/frontend/dashboards.test.js",
+    "test/fixtures/contracts/request-view-planned.json",
+    "test/fixtures/contracts/request-view-infeasible.json",
+    "test/fixtures/contracts/request-view-reserved.json"
+  ],
+  "evidence": [
+    "ev:ev-mv328qzg-01fac919",
+    "ev:ev-mv328hte-01ad3200",
+    "ev:ev-mv32a66o-0101b2f2",
+    "ev:ev-mv32afme-017b35c4"
+  ],
+  "remainingIssues": [
+    "Passing: ev:ev-mv328qzg-01fac919 (task verification command, 136 tests, 136 pass), ev:ev-mv328hte-01ad3200 (contracts.test.js, 52 tests, 45 pass, 7 skipped), ev:ev-mv32a66o-0101b2f2 (npm test: 1216 tests, 1208 pass, 0 fail, 8 skipped, 0 todo), ev:ev-mv32afme-017b35c4 (npm run test:browser: 8 tests, 8 pass). Failing on purpose, cited as failing-first: ev:ev-mv327crh-010cb98f (extraction.test.js, 2 failures as described). An earlier run of the verification command failed once on dashboards.test.js RS-35 (fixture change exposed an assumption); fixed, re-run passed.",
+    "Skipped, not passed: the 7 phase E contract rows (FU-18, owner e6) and the fake x PROVIDER_BUSY row.",
+    "The brief said the manual form is already closed once requirements exist; in the code it was not: form.open was requirements === null || degraded, so after a confirm of a degraded reading the form stayed open. I did not change that (outside the three requested changes); only the notice is hidden. If the form should close too, form.open should use view.requirements === null only; owner frontend-engineer, needs a decision.",
+    "The optional: ['capabilities'] entries in test/api/contracts.test.js (d5's file) can now be dropped because the fixtures carry the key; even then the check is type-only, so add sameValues: ['capabilities.deleteRequest'] if the value should be pinned. Not my files.",
+    "FU-16 test side: withoutUnregisteredExtract() in test/browser/journey-infeasible.test.js is still there (orchestrator rework); the browser suite passes with it."
+  ],
+  "nextAction": "delivery-lead: review d4; decide on the form.open question and on dropping the optional entries in contracts.test.js; handle journey-infeasible.test.js by rework.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson concerns a hook or guard choosing a project root for a write target. This task changes frontend code, tests and fixtures and builds no hook, guard or root discovery; every write was accepted in the nested record, so none of its 'Applies when' conditions hold."
+    }
+  ]
+}
