@@ -207,3 +207,37 @@ Sources:
    - Only SIGKILL of the server leaves the row `reserved`, and the startup sweep settles it at the cap.
    - The charge is proved at the gate and SQLite level (`TR-D-15: the ledger charges the cap for a call ended by close(); …`). **There is no HTTP-level row test** (a hanging stub, the server closed, `model_spend.actual` = cap). Such a test would belong to d3's API files, and nobody wrote it.
 9. **TR-D-13 / FU-30 / FU-31.** The deadline is grounded on its time only. Its date part is the buyer's to confirm.
+
+## Added after phase E (delivery-lead, 2026-10-11)
+
+Sources: the phase E handoffs (e0 ho-mv37ojw0-01fb7411; e1 ho-mv38f42c-010fb379, ho-mv38jhfn-01d2ca04, ho-mv39x6r0-013c5688; e2 ho-mv39qe6x-01666ddf; e3 ho-mv3aalih-011f4d67; e4 ho-mv3tpmcv-01dc0d69, ho-mv3v3asc-01ce3c19; e5 ho-mv37hs3x-01066518, ho-mv3v9goy-01de8496; e6 ho-mv3uq93d-0114f12e), the approved rework-4 review rev-mv3v7t3p-0170adbe, and `.eccode/artifacts/phase-e/submission.md`.
+
+### Status of earlier items touched by phase E
+
+| # | Status |
+|---|---|
+| FU-18 | **Closed.** The seven phase E contract rows are real scenarios, plus route rows for GET `/api/paypal/return`, GET `/api/paypal/cancel` and the webhook (signed 200, unsigned 400). 0 skipped rows; a row for an unregistered route now fails (e6). |
+| FU-19 | **Met** for e1 (fault_flags conventions), e2 (real void port `createVoidPort`, resolution hook) and e4 (refund intents sent, `reconciler_last_tick_at` / `_ms` written). f1's part remains. |
+| FU-22 | **Closed by e4** (reconciler housekeeping: sessions, login failures, idempotency keys, invalid/unverified webhook rows after 7 days, stale model reservations). Stale reservations are settled by both d3's sweep and e4's housekeeping through one CAS UPDATE, so a row settles once. |
+| FU-25 | **Amended** by `dec-mv38g19z-01f0a99f`: `RS_EXPLAIN_REPHRASE` stays parsed and inert; g2 documents it as reserved. |
+| FU-27 | **Closed by e1**: `RS_MODEL_TIMEOUT_MS` is bounded to 1..40000 (test `TR-D-7: RS_MODEL_TIMEOUT_MS above 40000 is refused …`). g2 documents the bound. |
+
+### New follow-ups
+
+| # | Task | Additional acceptance criterion | Source |
+|---|---|---|---|
+| FU-33 | **No remaining task owns `test/api/uploads-retention.test.js`.** Routed to phase G by `dec-mv3tqbn4-01d43152`: a user-authorised rework (the maxReworks of 4 is used) or an orchestrator acceptance. delivery-lead lists it in the verification report either way. | The RS-39 test `startApp removes an expired image at startup and another one on the next tick` waits for the file as well as the row (the sweep deletes the row, then unlinks). Resolved when three consecutive `npm test` runs are green on that row (TR-R4-6). Until then a failure is re-run once and reported, never skipped. | e4 remaining issue 2; TR-R4-6; `dec-mv3tqbn4-01d43152` |
+| FU-34 | **No F/G task owns `src/services/webhooks.js`.** A user-authorised rework or an orchestrator acceptance; f2 (owns `reconciler.js`) keeps the backstop either way. | A webhook that moves an operation with `cancel_requested_at` into `captured` calls `queueRefundWhenCancelled` (exported by `saga.js`) in the same transaction, as the void hook already does. Until then the reconciler's step-6 backstop queues the refund on its next tick; f2 must not remove that backstop and should add a test `F-TR-6: … a webhook capture of a cancelled operation is refunded on the next tick`. | e4 remaining issue 6 |
+| FU-35 | orchestrator, **before f1 is dispatched** | Decide where the re-plan drain lives: `drainReplanQueue` is in `reconciler.js` (2 entries per tick, `next_attempt_at = now + min(5 min, 15 s × 2^old failed_drains)`), which F-PL-3 forbids f1 to edit. Either f1 accepts placement and exponent, or the change rides f2 (owner of `reconciler.js`). | e4 remaining issue 3 |
+| FU-36 | f2-compensation-takeover-admin | The consume and restock ledger rows written by local helpers in `saga.js` keep the `inventory_ledger` row format and the SUM(delta) invariant; `test/api/ledgers.test.js` (RS-38) covers both paths (execute consume, compensation restock). Moving the helpers into `ledger.js` is optional. | e4 remaining issue 5 |
+| FU-37 | g3-final-scans-browser | `test/scan/live-refusal.test.js` (named in the spec and in g3's NFR3 criterion) holds the live PayPal refusal proof now kept in `test/integration/rs20-two-process-execute.test.js` (it imports only `live-support.js` and `run-live-paypal.js`), or imports it; the rs20 copy may stay. | e6 remaining issue 3 |
+| FU-38 | f3-frontend-recovery or g1-frontend-a11y-labels (own `test/fixtures/contracts/**`) | `test/fixtures/contracts/payments/view-non-executable.json` is titled or described as the post-claim state (CAPTURE_FAILED / AUTHORIZATION_EXPIRED, fulfilment still confirmed), not "abandoned": a real abandon gives `presentation: "cancelled"`. | e2 remaining issue 5 (a); e5 assumption 3 |
+| FU-39 (optional) | f1-supersession-refusal-expiry (owns `src/services/reservations.js`) | `RESERVATION_LIMIT` details may carry `requestIds` (ids only); the UI uses them first with no change. Not required: the UI's fallback works. | e5 assumption 1; e2 remaining issue 5 (b) |
+| FU-40 | g2-docs-submission (extends FU-21); f3/g1 for the UX note | **Docs:** `.env.example`, README and runbook list `RS_PAYPAL_WEBHOOK_ALGOS` (`dec-mv3abkv0-011839e9`), `RS_LIVE_PAYPAL_WEBHOOK_SAMPLE` and `RS_LIVE_PAYPAL_HEADED`; the runbook says to subscribe the PayPal webhook to the seven mapped event types only (`dec-mv3abkne-01161cf3`); both live entry points and their exit codes (`dec-mv3uqze6-0196f887`); `RS_EXPLAIN_REPHRASE` reserved (`dec-mv38g19z-01f0a99f`). The stale comments naming it in `src/ai/provider.js:11` and `src/ai/rephrase.js:1` ride the next touch of those files. **UX (f3/g1):** the request page stops polling once the plan is executed, so a receipt needs a reload (e6 journey note). | e1, e3, e6 remaining issues |
+
+### Carried to the verification report (owner: delivery-lead), additions
+
+10. **Phase E contract deltas** 1–21 of `.eccode/artifacts/phase-e/submission.md` › "Contract deltas" (the unmapped webhook type, the env-only algorithm list, the redirect outcomes, the execute refusal codes, the inline expiry pass, the fake's and the stub's interpretations).
+11. **LIVE-P1, LIVE-P2, OQ-D5 Unverified** with the list of Sandbox facts the stub only guesses (issue names, link rels, approvable statuses, invoice-id rules, `final_capture`, event shapes, verify-webhook shape, 29-day expiry).
+12. **Residuals without an owner:** SEC-R-2, SEC-R-3, SEC-RW4-I2, SEC-RW4-I4 (no F/G task owns `src/auth/**` or `src/services/extraction.js`), the untested two-process race on one webhook transmission id, FU-33, FU-34; each needs an orchestrator acceptance or a user-authorised rework.
+13. **TK-6:** most engineer evidence carries no tree digest; the phase E submission's own runs do.

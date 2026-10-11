@@ -1,0 +1,85 @@
+{
+  "from": "delivery-lead",
+  "to": "technical-reviewer",
+  "gate": "phase:e-payments",
+  "objective": "Independent review of phase e-payments, submission sub-mv3vs3h1-0181fd20: 76 artifacts, the seven tasks' 74 declared files (eleven completions, resets included) plus .eccode/artifacts/phase-e/submission.md and the extended .eccode/artifacts/plan/followups.md (section 'Added after phase E'). Per plan.md the security reviewer also reviews this phase (money, auth).",
+  "context": "Handoffs: e0 ho-mv37ojw0-01fb7411; e1 ho-mv38f42c-010fb379, reset ho-mv38jhfn-01d2ca04 (FU-25 amended, dec-mv38g19z-01f0a99f), reset ho-mv39x6r0-013c5688 (invoice id per attempt); e2 ho-mv39qe6x-01666ddf; e3 ho-mv3aalih-011f4d67; e4 ho-mv3tpmcv-01dc0d69, reset ho-mv3v3asc-01ce3c19 (userId on the public payment routes' log line); e5 ho-mv37hs3x-01066518, reset ho-mv3v9goy-01de8496 (return notice follows the state); e6 ho-mv3uq93d-0114f12e. All done. The approval must cover task:e0..e6, phase:e-payments (RS-04 paypal/create half, RS-18, RS-19, RS-20, RS-21, RS-23, RS-24, RS-25, RS-27 payment half, RS-31(a), with the design items ARCH-22, ARCH-23, F-TR-3, F-TR-11, SEC-3, SEC-6, SEC-16, T13 and the contract suite on both adapters) and lessons. EVERY payment ran against the DB-backed fake or the loopback PayPal stub; no PayPal host was contacted; the Sandbox adapter is LIVE-DEPENDENT and unverified; LIVE-P1, LIVE-P2 and OQ-D5 stay open until the user provides Sandbox credentials and network access; the live files refuse without RS_LIVE_PAYPAL=1 and were never run with it. rework-4 (FU-23, SEC-R-1) was approved (rev-mv3v7t3p-0170adbe) before this submission; e4 was built in parallel with it (dec-mv3u4zr4-0165c54d), so the decision asks you to re-run the suite with both landed. HEAD 5e1895b, clean during the nine test runs, which carry one tree digest. PATH=/usr/local/bin:/usr/bin:/bin for every delivery-lead run; RS_LIVE_MODEL and RS_LIVE_PAYPAL never set.",
+  "inputs": [
+    ".eccode/artifacts/phase-e/submission.md",
+    ".eccode/artifacts/plan/followups.md (section 'Added after phase E': FU-18/19/22/25/27 status, FU-33..FU-40, verification-report items 10-13)",
+    ".eccode/artifacts/plan/plan.json (phase e-payments, tasks e0-e6)",
+    ".eccode/artifacts/design/spec.md (PaymentProvider and Outcome, PayPal Sandbox wire mapping, 005_fake_paypal.sql, Fake approval listener, Provider call protocol and Sender table, Return handler, Void rule, Payment saga with lease fencing, Reconciler, Webhooks, Customer routes)",
+    ".eccode/handoffs/ho-mv37ojw0-01fb7411.json",
+    ".eccode/handoffs/ho-mv38f42c-010fb379.json",
+    ".eccode/handoffs/ho-mv38jhfn-01d2ca04.json",
+    ".eccode/handoffs/ho-mv39x6r0-013c5688.json",
+    ".eccode/handoffs/ho-mv39qe6x-01666ddf.json",
+    ".eccode/handoffs/ho-mv3aalih-011f4d67.json",
+    ".eccode/handoffs/ho-mv3tpmcv-01dc0d69.json",
+    ".eccode/handoffs/ho-mv3v3asc-01ce3c19.json",
+    ".eccode/handoffs/ho-mv37hs3x-01066518.json",
+    ".eccode/handoffs/ho-mv3v9goy-01de8496.json",
+    ".eccode/handoffs/ho-mv3uq93d-0114f12e.json",
+    ".eccode/reviews/rev-mv3v7t3p-0170adbe.json (rework-4 approval; TR-R4-3 asks this review to confirm short transactions)",
+    ".eccode/drafts/phase-artifacts-check.mjs",
+    "git diff acba8fc 5e1895b -- src public test package.json"
+  ],
+  "dependencies": [
+    "e0-paypal-stub-contract",
+    "e1-payment-adapters",
+    "e2-payment-flow",
+    "e3-webhooks",
+    "e4-saga-reconciler",
+    "e5-frontend-payments",
+    "e6-execute-concurrency-browser"
+  ],
+  "expectedOutput": "A phase review with one criterion per required id (seven task criteria, phase:e-payments) plus lessons, judging the contract deltas (submission 'Contract deltas' 1-21 and e5's assumptions), the remaining issues 1-24 with their owners, FU-34 (webhook compensation backstop) and FU-35 (re-plan drain placement, needed before f1), and TR-R4-3 (short transactions).",
+  "acceptanceCriteria": [
+    "RS-04 (paypal/create half), RS-18, RS-19, RS-20, RS-21, RS-23, RS-24, RS-25, RS-27 (payment half) and RS-31(a) are proved by the named tests in the submission table on the final tree, against the fake or the loopback stub only",
+    "npm test 0 fail with the 8 skipped explained (7 fake-harness OAuth/wire scenarios of the provider contract suite, which pass on the Sandbox harness; fake x PROVIDER_BUSY) and 0 todo; the contract table has 0 skipped rows; npm run test:browser 10/10 incl. RS-31(a) at 360 and 1280 px",
+    "The two-process RS-20 test shows exactly N get_authorization + N capture calls and one claim in both rounds",
+    "The live PayPal files refuse without RS_LIVE_PAYPAL=1 (exit 2 per file); LIVE-P1, LIVE-P2 and OQ-D5 are not claimed",
+    "Artifact list equals the phase's declared and owned changes"
+  ],
+  "completedWork": "Read the eleven handoffs, the approved rework-4 review and its open items, the plan's phase E criteria and tasks, the spec's payment sections and the nine cited decisions. Delivery-lead runs on clean HEAD 5e1895b (the nine test runs share one tree digest 5f628506...53603; the coverage run after submitting has none, see TK-6):\n- npm test: 2087 tests, 2079 pass, 0 fail, 8 skipped, 0 todo, 282 suites; ECCODE_EVAL {\"passed\":200,\"total\":200}; NFR5 p95 59.7 ms (p50 2.7 ms) over 5227 requests, suite 75.4 s (ev:ev-mv3vd6z8-0180d6eb). The uploads-retention RS-39 timer test (FU-33) passed, so no re-run was needed.\n- npm run test:browser: 10/10, incl. RS-31(a) at 360x800 and 1280x800; the journey prints the return log line's userId (9) (ev:ev-mv3vdqgz-01b92989).\n- Plan commands verbatim, run one after another: e0 160/160 (ev:ev-mv3ve6o0-012dc1a7); e1 487 tests, 480 pass, 0 fail, 7 skipped (ev:ev-mv3vedbb-01689109); e2 92/92 (ev:ev-mv3veuba-01656aaa); e3 96/96 (ev:ev-mv3vew5b-01e1ae03); e4 71/71 (ev:ev-mv3vfa8l-0140dd3a); e5 166/166 (ev:ev-mv3vfazx-016842cc); e6 with --timeout 1800: npm test 2087/2079/0 fail/8 skipped, ECCODE_EVAL 200/200, p95 59.8 ms, then browser 10/10 (ev:ev-mv3vhgf6-01393dc9).\n- Artifact coverage against sub-mv3vs3h1-0181fd20, base acba8fc (ev:ev-mv3vs6hq-019e34a8): 76 artifacts = 74 project files + 2 under .eccode/; 74 declared, 74 changed in owned paths; per task e0 4, e1 11, e2 16, e3 3, e4 10, e5 17, e6 17 (e6's test/helpers/** glob also covers e0's two helpers; src/app.js and src/routes/plans.js are owned by e2 and e4); 0 declared but not submitted, 0 undeclared, 0 outside ownership. Informational outside phase ownership: rework-4's nine files and docs/build/{evidence,state}.md.\n- Checked every RS_* token in src, scripts, test/live and the test helpers against .env.example: RS_PAYPAL_WEBHOOK_ALGOS, RS_LIVE_PAYPAL_WEBHOOK_SAMPLE and RS_LIVE_PAYPAL_HEADED are missing (FU-40, g2).\n- Read db.tx (src/db/connection.js): it throws TX_ASYNC and rolls back when the transaction function returns a promise, and every phase E write transaction goes through it; provider calls run outside any transaction (src/services/calls.js L370). This is a code reading for TR-R4-3, not evidence; please confirm.\nThe engineers' evidence is cited per task in submission.md › 'What the phase delivers', red runs marked as red. followups.md: FU-18, FU-22 and FU-27 closed, FU-19 met for e1/e2/e4, FU-25 amended; new FU-33 (recorded from dec-mv3tqbn4-01d43152), FU-34..FU-40; verification-report items 10-13.",
+  "filesChanged": [
+    ".eccode/artifacts/phase-e/submission.md",
+    ".eccode/artifacts/plan/followups.md",
+    ".eccode/artifacts/phase-e/handoff.json"
+  ],
+  "evidence": [
+    "ev:ev-mv3vd6z8-0180d6eb",
+    "ev:ev-mv3vdqgz-01b92989",
+    "ev:ev-mv3ve6o0-012dc1a7",
+    "ev:ev-mv3vedbb-01689109",
+    "ev:ev-mv3veuba-01656aaa",
+    "ev:ev-mv3vew5b-01e1ae03",
+    "ev:ev-mv3vfa8l-0140dd3a",
+    "ev:ev-mv3vfazx-016842cc",
+    "ev:ev-mv3vhgf6-01393dc9",
+    "ev:ev-mv3vs6hq-019e34a8"
+  ],
+  "remainingIssues": [
+    "LIVE-DEPENDENT: the Sandbox adapter, the stub and the live files encode the spec's guesses (issue names, link rels, approvable statuses after a cancel, invoice-id rules rs-so-<id>-a<attempt> and -cap, final_capture, event shapes, verify-webhook shape, 29-day expiry). LIVE-P1, LIVE-P2 and OQ-D5 stay Unverified until the user provides Sandbox credentials and network access (RISK-1, RISK-2, RISK-13, RISK-18).",
+    "FU-34: the webhook route moves an operation into captured without the compensation hook; the reconciler's step-6 backstop queues the refund one tick later. No F/G task owns src/services/webhooks.js: accept, or a user-authorised rework (maxReworks 4 is used).",
+    "FU-35: the re-plan drain lives in reconciler.js (f2's file); F-PL-3 forbids f1 to edit it. Decide before f1 is dispatched.",
+    "e4's notes for f1/f4 (execute refusal codes, supersession through ctx.voidRule, stale intent after 2 x RS_PAYPAL_TIMEOUT_MS, takeover rules, resumed saga) go with the f1 and f4 dispatch; FU-36 (ledger helpers in saga.js) is f2's.",
+    "SEC-R-2 and SEC-R-3 (rework-1 review, info) and SEC-RW4-I2 and SEC-RW4-I4 (rework-4, info) are open; no F/G task owns src/auth/** or src/services/extraction.js. Orchestrator acceptance or a user-authorised rework. TR-R4-3 needs this review's confirmation of short transactions.",
+    "FU-33 / TR-R4-6: the uploads-retention timer race is mitigated (reconciler after the startup retention pass), not removed; it passed in both of my full runs.",
+    "Contract deltas for your judgement (submission 1-21): an unmapped webhook event type is 400 (dec-mv3abkne-01161cf3); RS_PAYPAL_WEBHOOK_ALGOS is env-only (dec-mv3abkv0-011839e9); test:live-paypal exits 1 as a whole (dec-mv3uqze6-0196f887); the redirect outcomes, abandon idempotence, execute refusal codes, the inline expiry pass on execute, the presentation 'cancelled' after abandon, and the fake/stub interpretations. e5's assumption 1 (details.requestIds) is not delivered (fallback works); assumption 3 holds post-claim only (FU-38).",
+    "Tests were written after the code in the first completions of e1, e2, e3 and e4; their mutation proofs (e2 M1-M9, e3 nine, e4 twelve, e6 two) ran in scratch copies with no ev ids, and e1 reset 2's red-first run is unrecorded. Recorded red-first runs exist for e1 reset 1, e4 reset and e5 reset. Please reproduce the mutants you rely on.",
+    "Process: e4 built in parallel with rework-4 (dec-mv3u4zr4-0165c54d); the orchestrator's first e5 reset brief (hide the return notice once authorized) broke e6's journey and the e4 reset's browser runs, and was corrected; the final tree is green.",
+    "Toolkit TK-6: tree pinning was off in this nested project while files were dirty, so 31 of the 44 engineer evidence ids cited carry no tree digest (162 of 520 in the whole record carry one). The repair is ECCode 0.3.4 on a separate branch, under independent review, not yet merged. This submission's nine test runs carry the digest; the post-submission coverage run ev:ev-mv3vs6hq-019e34a8 does not (followups.md and the new phase-e directory were uncommitted when it ran, which is exactly TK-6)."
+  ],
+  "nextAction": "technical-reviewer and security-reviewer: review phase:e-payments (sub-mv3vs3h1-0181fd20) and re-run npm test and npm run test:browser on the tree holding e4 and rework-4 (dec-mv3u4zr4-0165c54d). orchestrator: decide FU-35 before f1 is dispatched; decide or route FU-34, SEC-R-2, SEC-R-3, SEC-RW4-I2, SEC-RW4-I4; ask the user about LIVE-P1/LIVE-P2 (Sandbox credentials and network access).",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This submission and the seven phase E tasks design or change no hook, guard or root discovery; every task recorded the same decision. The guard refusals in this session were raw-text readings of a scratch-file heredoc and a computed sed target, which the lesson's 'Not applicable when' list names."
+    }
+  ]
+}
