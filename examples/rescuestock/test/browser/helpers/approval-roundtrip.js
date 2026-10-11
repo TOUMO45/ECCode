@@ -8,7 +8,7 @@
 //   4. page.waitForURL waits for the browser to be back on the APP origin (the 303 chain, whose form-action CSP is what F-TR-14 fixed);
 //   5. the server log shows exactly ONE new `GET /api/paypal/return` (approve) or `GET /api/paypal/cancel` (cancel), answered 303,
 //      and that request ran as the journey's user: the audit event written under the same request id names the user's id (the
-//      session cookie crossed the sites, SameSite=Lax). If the log line itself carries a userId it must be that user's too;
+//      session cookie crossed the sites, SameSite=Lax). The log line itself must carry that user's id (and role customer), always;
 //   6. no console message matching "Content Security Policy" was emitted while the approval page was open or being left.
 // Waits are for events (a URL, a log line); the timeouts only bound a hang.
 import assert from 'node:assert/strict';
@@ -96,7 +96,10 @@ export async function approvalRoundTrip(page, { harness, userId, trigger, action
     const fresh = log.of(route).slice(before);
     assert.equal(fresh.length, 1, `${label}: exactly one GET ${route} per ${action}, saw ${fresh.length}`);
     assert.equal(entry.status, 303, `${label}: GET ${route} answered ${entry.status}`);
-    if (entry.userId !== undefined) assert.equal(entry.userId, userId, `${label}: the log line names the session's user`);
+    // The log line itself MUST name the session's user (TR-E-3): the public return and cancel routes identify the user inside the
+    // handler and src/app.js copies it into the line. An absent or different userId fails; the audit event below is a second proof.
+    assert.equal(entry.userId, userId, `${label}: the GET ${route} log line names the session's user (userId ${entry.userId})`);
+    assert.equal(entry.role, 'customer', `${label}: the log line names the role`);
     const db = harness.openDb();
     let audit;
     try {
@@ -112,8 +115,7 @@ export async function approvalRoundTrip(page, { harness, userId, trigger, action
 
     // 6. No CSP complaint.
     assert.deepEqual(cspMessages, [], `${label}: no "Content Security Policy" console message`);
-    // `logUserId` is what the request log line itself says about the user (null when the line carries none).
-    return { requestId: entry.requestId, entry, audit: audit[0], approvalUrl, landedOn, logUserId: entry.userId ?? null };
+    return { requestId: entry.requestId, entry, audit: audit[0], approvalUrl, landedOn, logUserId: entry.userId };
   } finally {
     page.off('console', onConsole);
   }
