@@ -517,25 +517,49 @@ describe('RS-23: duplicates', () => {
 
 describe('event mapping and transitions', () => {
   // [event type, resource fields, from-state set-up, expected status, expected outcome, expected flag_reason, column checks]
+  const unknownOf = (prev) => ({ status: 'unknown', prev_status: prev, unknown_since: '2026-10-20T05:59:00.000Z' });
   const cases = [
     ['PAYMENT.AUTHORIZATION.CREATED', 'authorization_pending -> authorized', { status: 'authorization_pending' }, 'authorized', 'applied', null],
     ['PAYMENT.AUTHORIZATION.CREATED', 'approved -> authorized (the return handler has not recorded it yet)', { status: 'approved' }, 'authorized', 'applied', null],
-    ['PAYMENT.AUTHORIZATION.CREATED', 'unknown (lost authorize, prev approved) -> authorized', { status: 'unknown', prev_status: 'approved', unknown_since: '2026-10-20T05:59:00.000Z' }, 'authorized', 'applied', null],
-    ['PAYMENT.AUTHORIZATION.CREATED', 'authorized stays authorized', { status: 'authorized' }, 'authorized', 'ignored', 'ALREADY_IN_STATE'],
+    // TR-E-1 / SEC-E-1: the spec maps this event pending -> authorized only. A late but genuine event must never roll a
+    // capture back to authorized (the reconciler would compensate a purchase whose capture was merely pending).
+    ['PAYMENT.AUTHORIZATION.CREATED', 'TR-E-1: capture_pending is NOT rolled back to authorized: flagged, nothing changes', { status: 'capture_pending' }, 'capture_pending', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.CREATED', 'TR-E-1: unknown (prev authorized) stays unknown: flagged', unknownOf('authorized'), 'unknown', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.CREATED', 'TR-E-1: unknown (prev capture_pending) stays unknown: flagged', unknownOf('capture_pending'), 'unknown', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.CREATED', 'unknown (lost authorize, prev approved) is left to the reconciler: flagged', unknownOf('approved'), 'unknown', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.CREATED', 'unknown (prev authorization_pending) is left to the reconciler: flagged', unknownOf('authorization_pending'), 'unknown', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.CREATED', 'authorized is not authorized again: flagged', { status: 'authorized' }, 'authorized', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.CREATED', 'TR-E-1: captured is not rolled back: flagged', { status: 'captured' }, 'captured', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.CREATED', 'refunded is terminal: flagged', { status: 'refunded' }, 'refunded', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.CREATED', 'authorization_failed is terminal: flagged', { status: 'authorization_failed' }, 'authorization_failed', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.AUTHORIZATION.CREATED', 'voided is terminal: flagged', { status: 'voided' }, 'voided', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.AUTHORIZATION.CREATED', 'created has no authorization yet: flagged', { status: 'created' }, 'created', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.AUTHORIZATION.CREATED', 'unknown with prev refund_pending cannot resolve to authorized: flagged', { status: 'unknown', prev_status: 'refund_pending', unknown_since: '2026-10-20T05:59:00.000Z' }, 'unknown', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.AUTHORIZATION.VOIDED', 'authorized -> voided', { status: 'authorized' }, 'voided', 'applied', null],
     ['PAYMENT.AUTHORIZATION.VOIDED', 'captured is not voidable: flagged', { status: 'captured' }, 'captured', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.VOIDED', 'unknown (prev authorized, lost void) -> voided', unknownOf('authorized'), 'voided', 'applied', null],
+    ['PAYMENT.AUTHORIZATION.VOIDED', 'unknown (prev approved) is left to the reconciler: flagged', unknownOf('approved'), 'unknown', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.VOIDED', 'authorization_pending is not voided by a webhook: flagged', { status: 'authorization_pending' }, 'authorization_pending', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.AUTHORIZATION.VOIDED', 'created has no authorization: flagged', { status: 'created' }, 'created', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.CAPTURE.COMPLETED', 'authorized -> captured', { status: 'authorized' }, 'captured', 'applied', null],
     ['PAYMENT.CAPTURE.COMPLETED', 'capture_pending -> captured', { status: 'capture_pending' }, 'captured', 'applied', null],
+    ['PAYMENT.CAPTURE.COMPLETED', 'unknown (prev capture_pending, lost capture response) -> captured', unknownOf('capture_pending'), 'captured', 'applied', null],
+    ['PAYMENT.CAPTURE.COMPLETED', 'unknown (prev refund_pending) is flagged', unknownOf('refund_pending'), 'unknown', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.CAPTURE.COMPLETED', 'authorization_pending cannot be captured yet: flagged', { status: 'authorization_pending' }, 'authorization_pending', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.CAPTURE.COMPLETED', 'refunded is terminal: flagged', { status: 'refunded' }, 'refunded', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.CAPTURE.PENDING', 'authorized -> capture_pending', { status: 'authorized' }, 'capture_pending', 'applied', null],
+    ['PAYMENT.CAPTURE.PENDING', 'unknown (prev authorized) -> capture_pending', unknownOf('authorized'), 'capture_pending', 'applied', null],
+    ['PAYMENT.CAPTURE.PENDING', 'capture_pending repeated: flagged, nothing changes', { status: 'capture_pending' }, 'capture_pending', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.CAPTURE.PENDING', 'captured cannot go back to capture_pending: flagged', { status: 'captured' }, 'captured', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.CAPTURE.DENIED', 'capture_pending -> authorized', { status: 'capture_pending' }, 'authorized', 'applied', null],
-    ['PAYMENT.CAPTURE.DENIED', 'a denial while merely authorized changes nothing', { status: 'authorized' }, 'authorized', 'ignored', 'ALREADY_IN_STATE'],
+    ['PAYMENT.CAPTURE.DENIED', 'unknown (prev capture_pending) -> authorized', unknownOf('capture_pending'), 'authorized', 'applied', null],
+    ['PAYMENT.CAPTURE.DENIED', 'unknown (prev authorized) is flagged', unknownOf('authorized'), 'unknown', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.CAPTURE.DENIED', 'a denial while merely authorized changes nothing: flagged', { status: 'authorized' }, 'authorized', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.CAPTURE.DENIED', 'a denial for a captured operation is flagged', { status: 'captured' }, 'captured', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.CAPTURE.REFUNDED', 'refund_pending -> refunded', { status: 'refund_pending' }, 'refunded', 'applied', null],
+    ['PAYMENT.CAPTURE.REFUNDED', 'unknown (prev refund_pending) -> refunded', unknownOf('refund_pending'), 'refunded', 'applied', null],
+    ['PAYMENT.CAPTURE.REFUNDED', 'unknown (prev captured) is flagged', unknownOf('captured'), 'unknown', 'flagged', 'TRANSITION_NOT_ALLOWED'],
+    ['PAYMENT.CAPTURE.REFUNDED', 'refund_requested has no refund yet: flagged', { status: 'refund_requested' }, 'refund_requested', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['PAYMENT.CAPTURE.REFUNDED', 'a refund nobody asked for (captured) is flagged, not applied', { status: 'captured' }, 'captured', 'flagged', 'TRANSITION_NOT_ALLOWED'],
     ['CHECKOUT.ORDER.APPROVED', 'is informational: an approved-at-provider order never authorizes (created)', { status: 'created' }, 'created', 'ignored', 'INFORMATIONAL_EVENT'],
     ['CHECKOUT.ORDER.APPROVED', 'is informational (approved)', { status: 'approved' }, 'approved', 'ignored', 'INFORMATIONAL_EVENT'],
@@ -564,11 +588,12 @@ describe('event mapping and transitions', () => {
       const { h, orders } = await fresh();
       const ids = { order: uid('ORD'), auth: uid('AUTH'), capture: uid('CAP'), refund: uid('REF') };
       // The operation already carries the ids its state implies; the event names them.
+      // (an unknown operation carries the ids of the state it came from)
+      const basis = setup.status === 'unknown' ? setup.prev_status : setup.status;
       const stored = { provider_order_id: ids.order };
-      if (!['created', 'approved'].includes(setup.status)) stored.provider_authorization_id = ids.auth;
-      if (['captured', 'refund_pending', 'refunded'].includes(setup.status)) stored.provider_capture_id = ids.capture;
-      if (['refund_pending', 'refunded'].includes(setup.status)) stored.provider_refund_id = ids.refund;
-      if (setup.status === 'capture_pending') stored.provider_capture_id = ids.capture;
+      if (!['created', 'approved'].includes(basis)) stored.provider_authorization_id = ids.auth;
+      if (['captured', 'capture_pending', 'refund_requested', 'refund_pending', 'refunded'].includes(basis)) stored.provider_capture_id = ids.capture;
+      if (['refund_pending', 'refunded'].includes(basis)) stored.provider_refund_id = ids.refund;
       setOp(h, orders[0].id, { ...stored, ...setup });
       const before = op(h, orders[0].id);
       const res = await post(h, 'A', sign(h, eventFor(type, ids)));
@@ -707,7 +732,7 @@ describe('ARCH-22: the resolution hook', () => {
     assert.deepEqual((await post(h, 'A', signed)).json, { outcome: 'duplicate' });
     const second = await post(h, 'A', sign(h, authorizationEvent('PAYMENT.AUTHORIZATION.CREATED', { id: authId })));
     assert.equal(second.status, 200);
-    assert.equal(second.json.outcome, 'ignored', 'the operation is already past that state');
+    assert.equal(second.json.outcome, 'flagged', 'the operation is already past that state (a late event is flagged, never re-applied)');
     assert.deepEqual(voidCalls(h), [`so:${orders[0].id}:void:1`]);
     assert.equal(auditRows(h, 'void_rule.resolution_hook').length, 1, 'the hook audited its one queued void');
   });
@@ -730,13 +755,13 @@ describe('ARCH-22: the resolution hook', () => {
     );
   });
 
-  test('ARCH-22: unknown with a lost authorize and a denied capture also pass through the hook', async () => {
+  test('ARCH-22: an approved operation and a denied capture also pass through the hook (an unknown one is left to the reconciler, TR-E-1)', async () => {
     const { h, orders } = await fresh();
     const port = createNoopProvider();
     h.app.deps.voidRule = createVoidRule({ clock: h.clock, provider: port });
     const cancel = { cancel_requested_at: iso(h.clock.now()), cancel_reason: 'PAYMENT_CANCELLED' };
     const lost = uid('AUTH');
-    setOp(h, orders[0].id, { status: 'unknown', prev_status: 'approved', unknown_since: iso(h.clock.now() - 60_000), provider_authorization_id: lost, ...cancel });
+    setOp(h, orders[0].id, { status: 'approved', provider_authorization_id: lost, ...cancel });
     assert.deepEqual((await post(h, 'A', sign(h, authorizationEvent('PAYMENT.AUTHORIZATION.CREATED', { id: lost })))).json, { outcome: 'applied' });
     const pendingAuth = uid('AUTH');
     const capture = uid('CAP');

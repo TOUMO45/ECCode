@@ -1,0 +1,51 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "e3-webhooks",
+  "objective": "Rework after the phase E review (TR-E-1 = SEC-E-1, major): a late but validly signed PAYMENT.AUTHORIZATION.CREATED must not move an operation backwards. Every webhook event now has a complete origin list; every other origin is stored flagged TRANSITION_NOT_ALLOWED and changes nothing.",
+  "context": "Reset to pending after review rev-mv3xhtuz-017cfbef. Read .eccode/reviews/drafts/phase-e-1.json (TR-E-1) and phase-e-security-1.md (SEC-E-1). Root cause: PAYMENT.AUTHORIZATION.CREATED had no `from` list, so the only gate was the payment state table, which allows capture_pending -> authorized (for CAPTURE.DENIED) and unknown -> authorized; a late genuine event therefore rolled a pending capture back to authorized and the next reconciler tick compensated the purchase. Fix is inside my three files only. No PayPal host contacted; RS_LIVE_MODEL and RS_LIVE_PAYPAL never set; both reviewer probes ran read-only by path (the technical one inside its own scratch copy).",
+  "inputs": [
+    ".eccode/reviews/drafts/phase-e-1.json (TR-E-1)",
+    ".eccode/reviews/drafts/phase-e-security-1.md (SEC-E-1)",
+    ".eccode/artifacts/design/spec.md (Webhooks, Void rule step 4)",
+    "src/services/webhooks.js, src/domain/states.js, test/api/webhooks.test.js"
+  ],
+  "dependencies": [
+    "e2-payment-flow"
+  ],
+  "expectedOutput": "src/services/webhooks.js with explicit `from` / `fromUnknown` lists for all seven events and test/api/webhooks.test.js with the missing mapping rows, ready for re-review.",
+  "acceptanceCriteria": [
+    "PAYMENT.AUTHORIZATION.CREATED moves only approved and authorization_pending to authorized; authorized, capture_pending, captured, voided, refunded and unknown of any prev are stored flagged with TRANSITION_NOT_ALLOWED and change nothing",
+    "every other event's origin list was reviewed against the spec",
+    "mapping-table rows added (capture_pending, unknown prev authorized, unknown prev capture_pending at least), recorded failing first",
+    "the reviewers' reproductions no longer reproduce when re-run unchanged",
+    "plan verification command, npm test and npm run test:browser pass through evidence run"
+  ],
+  "completedWork": "(1) src/services/webhooks.js: WEBHOOK_EVENTS now carries, per event, `from` (the COMPLETE list of statuses it may move) and `fromUnknown` (prev_status values of an unknown operation it may resolve forward; empty = left to the reconciler). applyEvent checks the origin list first (the ALREADY_IN_STATE shortcut is gone: an operation already at the target, past it or in a foreign state is flagged TRANSITION_NOT_ALLOWED and untouched), then the state table as a second gate. Lists checked against the spec (Interface Contracts > Webhooks, L420-L427; Void rule step 4; states.js): PAYMENT.AUTHORIZATION.CREATED from approved, authorization_pending (spec: pending -> authorized; approved is the same moment before the return handler recorded it), fromUnknown none (spec ARCH-22 lets the hook fire on whichever path observes the move; an unknown operation now gets it through the reconciler's read-before-resolve, as the coordinator ruled); PAYMENT.AUTHORIZATION.VOIDED from authorized, fromUnknown authorized (our own void, also one whose answer was lost); previously created and approved were admitted by the state table although no authorization exists there; PAYMENT.CAPTURE.COMPLETED from authorized, capture_pending, fromUnknown the same two (a real capture report); PAYMENT.CAPTURE.PENDING from authorized, fromUnknown authorized (a repeat on capture_pending is now flagged, not silently ignored); PAYMENT.CAPTURE.DENIED from capture_pending, fromUnknown capture_pending (it already had this list); PAYMENT.CAPTURE.REFUNDED from refund_pending, fromUnknown refund_pending (the table already only allowed that; now explicit); CHECKOUT.ORDER.APPROVED informational, never moves. (2) test/api/webhooks.test.js: mapping table grew from 21 to 42 rows (96 -> 117 tests): AUTHORIZATION.CREATED from capture_pending, unknown prev authorized, unknown prev capture_pending, unknown prev approved, unknown prev authorization_pending, authorized, captured, refunded, authorization_failed, voided; VOIDED from unknown prev authorized (applied), unknown prev approved, authorization_pending, created; COMPLETED from unknown prev capture_pending (applied), unknown prev refund_pending, authorization_pending; PENDING from unknown prev authorized (applied) and capture_pending (flagged); DENIED from unknown prev capture_pending (applied), unknown prev authorized, authorized (now flagged); REFUNDED from unknown prev refund_pending (applied), unknown prev captured, refund_requested. Existing expectations changed with the rule: authorized + CREATED and authorized + DENIED are flagged (were ignored ALREADY_IN_STATE), unknown(prev approved) + CREATED is flagged (was applied), the hook test that went through an unknown operation now goes through an approved one, and the 'second event' in the hook test is flagged. Failing first: ev:ev-mv3xsdzb-017a0008 ran the new table against the UNFIXED code: 117 tests, 106 pass, 11 fail, including the three TR-E-1 rows (capture_pending, unknown prev authorized, unknown prev capture_pending moved to authorized). After the fix ev:ev-mv3xsyol-01ba46d3 (plan command verbatim): 117 tests, 117 pass. Reviewer reproductions re-run unchanged by path: tr-probe-webhook-order.test.js (a test passes only if the defect is observed) now FAILS both tests, 0 pass: P1 answer 200 flagged, A stays capture_pending; P2 answer 200 flagged, A stays unknown (ev:ev-mv3xtaeb-0176a6d2). sec-e-webhook-order.mjs W-ORDER: S1 and S4 controls PASS; S2 REPRO lines FAIL (outcome=flagged, A=capture_pending, plan stays executing, captures=2 both COMPLETED and refunds=[] i.e. no compensation) and S3 REPRO lines FAIL (outcome=flagged, A=unknown, no re-send): the defect does not reproduce (ev:ev-mv3xtht4-013fe686, exit 1 because REPRO lines are expected to pass only while the defect exists).",
+  "filesChanged": [
+    "src/services/webhooks.js",
+    "test/api/webhooks.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv3xsyol-01ba46d3",
+    "ev:ev-mv3xv97u-010f8bae",
+    "ev:ev-mv3xvpf1-0108909f"
+  ],
+  "remainingIssues": [
+    "Behaviour change to confirm in review: an event for an operation already in the target state is now flagged (TRANSITION_NOT_ALLOWED, flagged = 1) instead of ignored (ALREADY_IN_STATE), and an unknown operation is never resolved by AUTHORIZATION.CREATED (the reconciler resolves it by reading the provider). This follows the coordinator's instruction; the cost is some operator-visible flagged rows for harmless late duplicates under a different transmission id.",
+    "The security probe sec-e-webhook-order.mjs exits 1 and the technical probe reports 'not ok' by design: their assertions pass only while the defect exists. Both outcomes mean 'not reproduced'.",
+    "Still open from the first completion (unchanged): the pre-check rejects an unmapped event_type (accepted by the orchestrator, dec-mv3abkne-01161cf3); RS_PAYPAL_WEBHOOK_ALGOS is read from the environment (accepted, dec-mv3abkv0-011839e9); live PayPal event shapes are LIVE-DEPENDENT (OQ-D5).",
+    "Tooling note: the shell PATH of this session was not the restricted one and the guard refuses PATH set inline on an eccode command, so eccode commands (including evidence run) ran with the harness PATH. No test spawned anything outside node/npm; the net guard recorded no blocked attempt."
+  ],
+  "nextAction": "reviewers: re-run the phase E review of webhooks.js (TR-E-1 / SEC-E-1) against ev:ev-mv3xsyol-01ba46d3 and the two probe runs; orchestrator: SEC-E-2 / TR-E-2 stay with e2 as routed.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson applies to a hook or guard that maps file writes to a project record or root in a repository with several records; this rework changes a webhook service and its API tests and designs no hook, guard or root discovery, so its 'Applies when' list does not hold. The guard accepted every nested edit to my two files."
+    }
+  ]
+}

@@ -48,17 +48,24 @@ const RESOURCE_TYPE = /^[A-Za-z0-9_.-]{1,32}$/;
 const ISSUE_CODE = /^[A-Z][A-Z0-9_]{0,63}$/;
 
 // event_type -> how it maps. `target` is the payment status the event reports (null = informational, never a transition);
-// `from` limits the statuses the event may move (when absent the state table alone decides); `lookup` lists, in order, the
+// `from` is the COMPLETE list of statuses the event may move (every other status is stored `flagged`, TRANSITION_NOT_ALLOWED,
+// and changes nothing: a late or out-of-order but genuine event must never move an operation backwards, TR-E-1 / SEC-E-1);
+// `fromUnknown` lists the previous statuses (prev_status) of an `unknown` operation the event may resolve forward (empty:
+// an unknown operation is left to the reconciler, which reads the provider before it decides). `lookup` lists, in order, the
 // operation column and the summary key whose value identifies the operation. Column names are constants, never input.
 export const WEBHOOK_EVENTS = Object.freeze({
-  'PAYMENT.AUTHORIZATION.CREATED': { target: 'authorized', lookup: [['provider_authorization_id', 'resource_id'], ['provider_order_id', 'order_id']] },
-  'PAYMENT.AUTHORIZATION.VOIDED': { target: 'voided', lookup: [['provider_authorization_id', 'resource_id'], ['provider_order_id', 'order_id']] },
-  'PAYMENT.CAPTURE.COMPLETED': { target: 'captured', lookup: [['provider_capture_id', 'resource_id'], ['provider_authorization_id', 'authorization_id']] },
-  'PAYMENT.CAPTURE.PENDING': { target: 'capture_pending', lookup: [['provider_capture_id', 'resource_id'], ['provider_authorization_id', 'authorization_id']] },
+  // Spec: "pending -> authorized". `approved` is the same moment seen before the return handler recorded the authorization.
+  // Never from capture_pending/captured/authorized/terminal states, never from unknown (the reconciler resolves those).
+  'PAYMENT.AUTHORIZATION.CREATED': { target: 'authorized', from: ['approved', 'authorization_pending'], fromUnknown: [], lookup: [['provider_authorization_id', 'resource_id'], ['provider_order_id', 'order_id']] },
+  // An authorization that exists is voided: our own void (authorized), including one whose answer was lost.
+  'PAYMENT.AUTHORIZATION.VOIDED': { target: 'voided', from: ['authorized'], fromUnknown: ['authorized'], lookup: [['provider_authorization_id', 'resource_id'], ['provider_order_id', 'order_id']] },
+  'PAYMENT.CAPTURE.COMPLETED': { target: 'captured', from: ['authorized', 'capture_pending'], fromUnknown: ['authorized', 'capture_pending'], lookup: [['provider_capture_id', 'resource_id'], ['provider_authorization_id', 'authorization_id']] },
+  'PAYMENT.CAPTURE.PENDING': { target: 'capture_pending', from: ['authorized'], fromUnknown: ['authorized'], lookup: [['provider_capture_id', 'resource_id'], ['provider_authorization_id', 'authorization_id']] },
   // A denied capture leaves the authorization usable: capture_pending -> authorized.
-  'PAYMENT.CAPTURE.DENIED': { target: 'authorized', from: ['capture_pending'], lookup: [['provider_capture_id', 'resource_id'], ['provider_authorization_id', 'authorization_id']] },
-  'PAYMENT.CAPTURE.REFUNDED': { target: 'refunded', lookup: [['provider_refund_id', 'resource_id'], ['provider_capture_id', 'capture_id']] },
-  'CHECKOUT.ORDER.APPROVED': { target: null, lookup: [['provider_order_id', 'resource_id']] },
+  'PAYMENT.CAPTURE.DENIED': { target: 'authorized', from: ['capture_pending'], fromUnknown: ['capture_pending'], lookup: [['provider_capture_id', 'resource_id'], ['provider_authorization_id', 'authorization_id']] },
+  // Only a refund we asked for: refund_pending -> refunded.
+  'PAYMENT.CAPTURE.REFUNDED': { target: 'refunded', from: ['refund_pending'], fromUnknown: ['refund_pending'], lookup: [['provider_refund_id', 'resource_id'], ['provider_capture_id', 'capture_id']] },
+  'CHECKOUT.ORDER.APPROVED': { target: null, from: [], fromUnknown: [], lookup: [['provider_order_id', 'resource_id']] },
 });
 
 // The allow-list of paypal-auth-algo values: config.paypalWebhookAlgos when the configuration provides it, else the comma
@@ -255,12 +262,14 @@ function applyEvent(ctx, event, summary) {
   const op = found[0];
   result.operationId = op.id;
   if (spec.target === null) return { ...result, flagReason: 'INFORMATIONAL_EVENT' };
-  if (op.status === spec.target) return { ...result, flagReason: 'ALREADY_IN_STATE' };
 
-  // An `unknown` operation is judged by the state it came from, so that a webhook can only resolve it forward.
-  const effective = op.status === 'unknown' ? op.prev_status : op.status;
-  if (spec.from && !spec.from.includes(effective)) return flag('TRANSITION_NOT_ALLOWED', op);
-  const allowed = canTransition('payment', op.status, spec.target) && (op.status !== 'unknown' || effective === spec.target || canTransition('payment', effective, spec.target));
+  // The event's own origin list decides first (TR-E-1): an operation already at the target, past it, or in a state the event
+  // does not belong to is flagged for the operator and not touched. An `unknown` operation is judged by the state it came
+  // from and only for the events that list that state in `fromUnknown`.
+  const origin = op.status === 'unknown' ? (spec.fromUnknown.includes(op.prev_status) ? op.prev_status : null) : (spec.from.includes(op.status) ? op.status : null);
+  if (origin === null) return flag('TRANSITION_NOT_ALLOWED', op);
+  // ... and the state table must allow the edge as well (both gates).
+  const allowed = canTransition('payment', op.status, spec.target) && (op.status !== 'unknown' || canTransition('payment', origin, spec.target));
   if (!allowed) return flag('TRANSITION_NOT_ALLOWED', op);
 
   // The ids the event carries must agree with the ones already stored.

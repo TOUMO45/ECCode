@@ -1,6 +1,6 @@
 {
-  "seq": 1121,
-  "lastHash": "c072480160c5474a4ce6ddc458bae6ab2b41f9802dbe7eec887ec2fca3803b16",
+  "seq": 1132,
+  "lastHash": "ef56d998f25bc9ee54fd4dbae6dabffca2b7c203bf03790e7bd0235108dd6a49",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -6576,8 +6576,8 @@
         "command": "ls test/api/webhooks.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "claim": null,
       "history": [
         {
@@ -6596,20 +6596,30 @@
           "by": "orchestrator",
           "at": "2026-10-11T14:41:17.564Z",
           "reason": "phase E review rev-mv3xhtuz-017cfbef: TR-E-1 major (= SEC-E-1): PAYMENT.AUTHORIZATION.CREATED has no from list, so a late signed event rolls capture_pending or unknown back to authorized"
+        },
+        {
+          "event": "claimed",
+          "by": "backend-engineer",
+          "at": "2026-10-11T14:45:40.015Z",
+          "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-11T14:49:54.877Z"
         }
       ],
       "completedBy": "backend-engineer",
-      "handoffId": "ho-mv3aalih-011f4d67",
+      "handoffId": "ho-mv3xwa94-016b9830",
       "filesChanged": [
         "src/services/webhooks.js",
-        "src/routes/webhooks.js",
         "test/api/webhooks.test.js"
       ],
       "lessonDecisions": [
         {
           "id": "mem-sd-mv1audrd-013b7102",
           "decision": "not-applicable",
-          "note": "The lesson applies to a hook or guard that maps file writes to a project record or root in a repository with several records; this task builds a webhook service, route and API tests and designs no hook, guard or root discovery, so its 'Applies when' list does not hold. The guard accepted every nested write to my three files and refused only an inline python file writer, asking for the Edit tool.",
+          "note": "The lesson applies to a hook or guard that maps file writes to a project record or root in a repository with several records; this rework changes a webhook service and its API tests and designs no hook, guard or root discovery, so its 'Applies when' list does not hold. The guard accepted every nested edit to my two files.",
           "basis": "reason"
         }
       ],
@@ -18843,6 +18853,132 @@
       "tree": "06378d82efa286fcaca83bacb41e70886e881a80ed49f9b5c46b922a5cef3b14",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T14:44:34.134Z"
+    },
+    "ev-mv3xsdzb-017a0008": {
+      "id": "ev-mv3xsdzb-017a0008",
+      "kind": "command",
+      "label": "e3 rework TR-E-1: new mapping rows against the UNFIXED code (expected red)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 2152,
+      "log": ".eccode/evidence/ev-mv3xsdzb-017a0008.log",
+      "logSha256": "3e5d27d734967bf13a5f3d2c7171646452163e47f49f67a283cc6bb1e5c24a20",
+      "logFileSha256": "13bb0d08bef1c6374f976e0299e31b4da8f81b861d2c4b37067368f68b0ae128",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: with the Sandbox adapter against the loopback stub\n    # Subtest: RS-24/SEC-16: the event is verified at the stub with the merchant's webhook id and the operation of the DEFAULT merchant is moved; a forged one is invalid; a body with a BOM is never sent to the stub\n    ok 1 - RS-24/SEC-16: the event is verified at the stub with the merchant's webhook id and the operation of the DEFAULT merchant is moved; a forged one is invalid; a body with a BOM is never sent to the stub\n      ---\n      duration_ms: 457.193047\n      type: 'test'\n      ...\n    1..1\nok 11 - with the Sandbox adapter against the loopback stub\n  ---\n  duration_ms: 457.360137\n  type: 'suite'\n  ...\n1..11\n# tests 117\n# suites 11\n# pass 106\n# fail 11\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2072.598732\n",
+      "gate": null,
+      "task": "e3-webhooks",
+      "tree": "0f5292c878b3e0d84c52e50434a26c9357522b7e3bb93dd0375bec66040ab9a5",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T14:46:53.071Z"
+    },
+    "ev-mv3xsyol-01ba46d3": {
+      "id": "ev-mv3xsyol-01ba46d3",
+      "kind": "command",
+      "label": "e3 verification (plan command verbatim) after TR-E-1 fix",
+      "command": "ls test/api/webhooks.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 2133,
+      "log": ".eccode/evidence/ev-mv3xsyol-01ba46d3.log",
+      "logSha256": "16c3b87846a135ae02b96686b863a0725f29d661f521c0df0724527efdb85164",
+      "logFileSha256": "17d4772f2066df0d53d1b81bcc7dacfb63291fe6713cd489b549a8bc12d54060",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: with the Sandbox adapter against the loopback stub\n    # Subtest: RS-24/SEC-16: the event is verified at the stub with the merchant's webhook id and the operation of the DEFAULT merchant is moved; a forged one is invalid; a body with a BOM is never sent to the stub\n    ok 1 - RS-24/SEC-16: the event is verified at the stub with the merchant's webhook id and the operation of the DEFAULT merchant is moved; a forged one is invalid; a body with a BOM is never sent to the stub\n      ---\n      duration_ms: 424.414003\n      type: 'test'\n      ...\n    1..1\nok 11 - with the Sandbox adapter against the loopback stub\n  ---\n  duration_ms: 424.620219\n  type: 'suite'\n  ...\n1..11\n# tests 117\n# suites 11\n# pass 117\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2064.688646\n",
+      "gate": null,
+      "task": "e3-webhooks",
+      "tree": "f58af4ed06f2be1e0a37f668ee7148a8d20de9d09a8b0a4c9d859ca42760c286",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T14:47:19.904Z"
+    },
+    "ev-mv3xtaeb-0176a6d2": {
+      "id": "ev-mv3xtaeb-0176a6d2",
+      "kind": "command",
+      "label": "TR probe tr-probe-webhook-order after fix (a test PASSES only if the defect is observed)",
+      "command": "node --disable-warning=ExperimentalWarning /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/tre/tr-probe-run.mjs tr-probe-webhook-order.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 1565,
+      "log": ".eccode/evidence/ev-mv3xtaeb-0176a6d2.log",
+      "logSha256": "bf6af6a1dec7ff55baa9c2aaf2c0a1fe40676129ce8676cbc73ee38f09e1748d",
+      "logFileSha256": "bf8a273d6be97427736cab685f7a977f61b72a6e233c649508b395c180f98391",
+      "outputTail": "# \\# P1 webhook answer 200 {\"outcome\":\"flagged\",\"requestId\":\"NsWktrYat91hboZydkWijg\"} -> A capture_pending -> capture_pending\nnot ok 1 - TR-E-P1 observes: a late signed PAYMENT.AUTHORIZATION.CREATED moves a capture_pending operation back to authorized, and the plan is then compensated (capture pending at the provider, void refused, refund)\n  error: |-\n    OBSERVED: the late authorization event moved capture_pending -> authorized\n    + actual - expected\n  name: 'AssertionError'\n  expected: 'authorized'\n  actual: 'capture_pending'\n# \\# P2 webhook answer 200 {\"outcome\":\"flagged\",\"requestId\":\"BQ-zO7wxHbl8o96aW9rEWQ\"} -> A unknown(prev authorized) -> unknown\nnot ok 2 - TR-E-P2 observes: a late signed PAYMENT.AUTHORIZATION.CREATED resolves an unknown capture (prev authorized) to authorized; with the reconciler read failing, the capture is re-sent without a successful read\n  error: |-\n    OBSERVED: the authorization event resolved the unknown capture operation\n    + actual - expected\n  name: 'AssertionError'\n  expected: 'authorized'\n  actual: 'unknown'\n# tests 2\n# pass 0\n# fail 2\n",
+      "gate": null,
+      "task": "e3-webhooks",
+      "tree": "f58af4ed06f2be1e0a37f668ee7148a8d20de9d09a8b0a4c9d859ca42760c286",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T14:47:35.084Z"
+    },
+    "ev-mv3xtht4-013fe686": {
+      "id": "ev-mv3xtht4-013fe686",
+      "kind": "command",
+      "label": "security probe sec-e-webhook-order W-ORDER after fix (a REPRO line PASSES only if the defect reproduces)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/sec-e-webhook-order.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 2586,
+      "log": ".eccode/evidence/ev-mv3xtht4-013fe686.log",
+      "logSha256": "ba20b8dec3d7ac798fdc7f86d8ad564b1ed9ee0ccb474d0fd2faf1e1315581cc",
+      "logFileSha256": "a3ea4185829994ae9676f3084adb2ddff5a835a9f2868549714e31e297df95a2",
+      "outputTail": "PASS S1 control: execute 202, A capture_pending :: capture_pending\nPASS S1 control: without the late event the plan is executed, A and B captured, no refund :: plan=executed A=captured B=captured refunds=0\nPASS S2 setup: execute 202, A capture_pending, plan executing :: capture_pending\nFAIL S2 REPRO: a late, validly signed PAYMENT.AUTHORIZATION.CREATED is APPLIED to a capture_pending operation (spec maps pending -> authorized only) :: http=200 outcome=flagged A=capture_pending\nFAIL S2 REPRO: the next tick takes the plan over and COMPENSATES it (CAPTURE_FAILED) although the capture is still pending at the provider :: plan=executing/null\n  S2 trail after the event: [\"get_capture\"]\nFAIL S2 IMPACT: the buyer is charged and refunded (one capture, one refund for A), B voided, the plan is non_executable (purchase lost; supplier orders read cancelled_payment_incomplete) :: captures=[\"COMPLETED\",\"COMPLETED\"] refunds=[] A=captured B=captured orders=[\"confirmed\",\"confirmed\"]\nFAIL S2 money: never more than one capture per authorization and no refund above the capture\nPASS S3 setup: A unknown(prev authorized), capture call unknown, provider holds one COMPLETED capture :: unknown/authorized call=unknown\nFAIL S3 REPRO: the late event moves unknown(prev authorized) -> authorized without any read; the capture call stays unknown :: http=200 outcome=flagged A=unknown\n  S3 trail (reads were refused, so they never reach the fake): []\nFAIL S3 REPRO: after a takeover the lease holder RE-SENDS the unknown capture of A with no successful read before it (spec: read before any re-send) :: resends of A=0\nFAIL S3 money: the re-send is answered from the PayPal-Request-Id replay (no second capture at the fake) :: captures=1\nPASS S4 control: authorization_pending -> authorized by the event (the spec edge) :: authorization_pending -> authorized\n7 EXPECTATION(S) NOT MET\n",
+      "gate": null,
+      "task": "e3-webhooks",
+      "tree": "f58af4ed06f2be1e0a37f668ee7148a8d20de9d09a8b0a4c9d859ca42760c286",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T14:47:44.725Z"
+    },
+    "ev-mv3xv97u-010f8bae": {
+      "id": "ev-mv3xv97u-010f8bae",
+      "kind": "command",
+      "label": "e3 rework full suite: npm test",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 77739,
+      "log": ".eccode/evidence/ev-mv3xv97u-010f8bae.log",
+      "logSha256": "d8a5dcad797e722af684ee1ca727e7a16be227771ece47eeb1f46fe4e91bfac3",
+      "logFileSha256": "0463f8beb65396b756843a09e1782a88e4725a70cbde6bc208aa221c0dc22f51",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 809 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 432.020848\n  type: 'test'\n  ...\n1..809\n# tests 2109\n# suites 283\n# pass 2101\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 77316.823717\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 5272 requests, p50 2.8 ms, p95 59.8 ms (limit: p95 < 300 ms)\nNFR5 suite time: 77.5 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": null,
+      "task": "e3-webhooks",
+      "tree": "f58af4ed06f2be1e0a37f668ee7148a8d20de9d09a8b0a4c9d859ca42760c286",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T14:49:06.870Z"
+    },
+    "ev-mv3xvpf1-0108909f": {
+      "id": "ev-mv3xvpf1-0108909f",
+      "kind": "command",
+      "label": "e3 rework browser suite: npm run test:browser",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 18018,
+      "log": ".eccode/evidence/ev-mv3xvpf1-0108909f.log",
+      "logSha256": "445b94cd4667494c8b3b54630d61340d3674094b7709dcbff83fb9ad887e44c7",
+      "logFileSha256": "2dc7586b76c8a2cc6d8f0517080a3c67480c11a05fa8f571adae2f759d54916c",
+      "outputTail": "      duration_ms: 976.125171\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 859.816472\n      type: 'test'\n      ...\n    1..3\nok 4 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3252.96162\n  type: 'suite'\n  ...\n1..4\n# tests 10\n# suites 4\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 17772.299792\n",
+      "gate": null,
+      "task": "e3-webhooks",
+      "tree": "f58af4ed06f2be1e0a37f668ee7148a8d20de9d09a8b0a4c9d859ca42760c286",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T14:49:27.857Z"
     }
   },
   "reviews": {
@@ -28987,6 +29123,60 @@
       "id": "ho-mv3xpr5x-01f0502b",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T14:44:50.322Z"
+    },
+    "ho-mv3xwa94-016b9830": {
+      "from": "backend-engineer",
+      "to": "delivery-lead",
+      "task": "e3-webhooks",
+      "objective": "Rework after the phase E review (TR-E-1 = SEC-E-1, major): a late but validly signed PAYMENT.AUTHORIZATION.CREATED must not move an operation backwards. Every webhook event now has a complete origin list; every other origin is stored flagged TRANSITION_NOT_ALLOWED and changes nothing.",
+      "context": "Reset to pending after review rev-mv3xhtuz-017cfbef. Read .eccode/reviews/drafts/phase-e-1.json (TR-E-1) and phase-e-security-1.md (SEC-E-1). Root cause: PAYMENT.AUTHORIZATION.CREATED had no `from` list, so the only gate was the payment state table, which allows capture_pending -> authorized (for CAPTURE.DENIED) and unknown -> authorized; a late genuine event therefore rolled a pending capture back to authorized and the next reconciler tick compensated the purchase. Fix is inside my three files only. No PayPal host contacted; RS_LIVE_MODEL and RS_LIVE_PAYPAL never set; both reviewer probes ran read-only by path (the technical one inside its own scratch copy).",
+      "inputs": [
+        ".eccode/reviews/drafts/phase-e-1.json (TR-E-1)",
+        ".eccode/reviews/drafts/phase-e-security-1.md (SEC-E-1)",
+        ".eccode/artifacts/design/spec.md (Webhooks, Void rule step 4)",
+        "src/services/webhooks.js, src/domain/states.js, test/api/webhooks.test.js"
+      ],
+      "dependencies": [
+        "e2-payment-flow"
+      ],
+      "expectedOutput": "src/services/webhooks.js with explicit `from` / `fromUnknown` lists for all seven events and test/api/webhooks.test.js with the missing mapping rows, ready for re-review.",
+      "acceptanceCriteria": [
+        "PAYMENT.AUTHORIZATION.CREATED moves only approved and authorization_pending to authorized; authorized, capture_pending, captured, voided, refunded and unknown of any prev are stored flagged with TRANSITION_NOT_ALLOWED and change nothing",
+        "every other event's origin list was reviewed against the spec",
+        "mapping-table rows added (capture_pending, unknown prev authorized, unknown prev capture_pending at least), recorded failing first",
+        "the reviewers' reproductions no longer reproduce when re-run unchanged",
+        "plan verification command, npm test and npm run test:browser pass through evidence run"
+      ],
+      "completedWork": "(1) src/services/webhooks.js: WEBHOOK_EVENTS now carries, per event, `from` (the COMPLETE list of statuses it may move) and `fromUnknown` (prev_status values of an unknown operation it may resolve forward; empty = left to the reconciler). applyEvent checks the origin list first (the ALREADY_IN_STATE shortcut is gone: an operation already at the target, past it or in a foreign state is flagged TRANSITION_NOT_ALLOWED and untouched), then the state table as a second gate. Lists checked against the spec (Interface Contracts > Webhooks, L420-L427; Void rule step 4; states.js): PAYMENT.AUTHORIZATION.CREATED from approved, authorization_pending (spec: pending -> authorized; approved is the same moment before the return handler recorded it), fromUnknown none (spec ARCH-22 lets the hook fire on whichever path observes the move; an unknown operation now gets it through the reconciler's read-before-resolve, as the coordinator ruled); PAYMENT.AUTHORIZATION.VOIDED from authorized, fromUnknown authorized (our own void, also one whose answer was lost); previously created and approved were admitted by the state table although no authorization exists there; PAYMENT.CAPTURE.COMPLETED from authorized, capture_pending, fromUnknown the same two (a real capture report); PAYMENT.CAPTURE.PENDING from authorized, fromUnknown authorized (a repeat on capture_pending is now flagged, not silently ignored); PAYMENT.CAPTURE.DENIED from capture_pending, fromUnknown capture_pending (it already had this list); PAYMENT.CAPTURE.REFUNDED from refund_pending, fromUnknown refund_pending (the table already only allowed that; now explicit); CHECKOUT.ORDER.APPROVED informational, never moves. (2) test/api/webhooks.test.js: mapping table grew from 21 to 42 rows (96 -> 117 tests): AUTHORIZATION.CREATED from capture_pending, unknown prev authorized, unknown prev capture_pending, unknown prev approved, unknown prev authorization_pending, authorized, captured, refunded, authorization_failed, voided; VOIDED from unknown prev authorized (applied), unknown prev approved, authorization_pending, created; COMPLETED from unknown prev capture_pending (applied), unknown prev refund_pending, authorization_pending; PENDING from unknown prev authorized (applied) and capture_pending (flagged); DENIED from unknown prev capture_pending (applied), unknown prev authorized, authorized (now flagged); REFUNDED from unknown prev refund_pending (applied), unknown prev captured, refund_requested. Existing expectations changed with the rule: authorized + CREATED and authorized + DENIED are flagged (were ignored ALREADY_IN_STATE), unknown(prev approved) + CREATED is flagged (was applied), the hook test that went through an unknown operation now goes through an approved one, and the 'second event' in the hook test is flagged. Failing first: ev:ev-mv3xsdzb-017a0008 ran the new table against the UNFIXED code: 117 tests, 106 pass, 11 fail, including the three TR-E-1 rows (capture_pending, unknown prev authorized, unknown prev capture_pending moved to authorized). After the fix ev:ev-mv3xsyol-01ba46d3 (plan command verbatim): 117 tests, 117 pass. Reviewer reproductions re-run unchanged by path: tr-probe-webhook-order.test.js (a test passes only if the defect is observed) now FAILS both tests, 0 pass: P1 answer 200 flagged, A stays capture_pending; P2 answer 200 flagged, A stays unknown (ev:ev-mv3xtaeb-0176a6d2). sec-e-webhook-order.mjs W-ORDER: S1 and S4 controls PASS; S2 REPRO lines FAIL (outcome=flagged, A=capture_pending, plan stays executing, captures=2 both COMPLETED and refunds=[] i.e. no compensation) and S3 REPRO lines FAIL (outcome=flagged, A=unknown, no re-send): the defect does not reproduce (ev:ev-mv3xtht4-013fe686, exit 1 because REPRO lines are expected to pass only while the defect exists).",
+      "filesChanged": [
+        "src/services/webhooks.js",
+        "test/api/webhooks.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv3xsyol-01ba46d3",
+        "ev:ev-mv3xv97u-010f8bae",
+        "ev:ev-mv3xvpf1-0108909f"
+      ],
+      "remainingIssues": [
+        "Behaviour change to confirm in review: an event for an operation already in the target state is now flagged (TRANSITION_NOT_ALLOWED, flagged = 1) instead of ignored (ALREADY_IN_STATE), and an unknown operation is never resolved by AUTHORIZATION.CREATED (the reconciler resolves it by reading the provider). This follows the coordinator's instruction; the cost is some operator-visible flagged rows for harmless late duplicates under a different transmission id.",
+        "The security probe sec-e-webhook-order.mjs exits 1 and the technical probe reports 'not ok' by design: their assertions pass only while the defect exists. Both outcomes mean 'not reproduced'.",
+        "Still open from the first completion (unchanged): the pre-check rejects an unmapped event_type (accepted by the orchestrator, dec-mv3abkne-01161cf3); RS_PAYPAL_WEBHOOK_ALGOS is read from the environment (accepted, dec-mv3abkv0-011839e9); live PayPal event shapes are LIVE-DEPENDENT (OQ-D5).",
+        "Tooling note: the shell PATH of this session was not the restricted one and the guard refuses PATH set inline on an eccode command, so eccode commands (including evidence run) ran with the harness PATH. No test spawned anything outside node/npm; the net guard recorded no blocked attempt."
+      ],
+      "nextAction": "reviewers: re-run the phase E review of webhooks.js (TR-E-1 / SEC-E-1) against ev:ev-mv3xsyol-01ba46d3 and the two probe runs; orchestrator: SEC-E-2 / TR-E-2 stay with e2 as routed.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson applies to a hook or guard that maps file writes to a project record or root in a repository with several records; this rework changes a webhook service and its API tests and designs no hook, guard or root discovery, so its 'Applies when' list does not hold. The guard accepted every nested edit to my two files."
+        }
+      ],
+      "id": "ho-mv3xwa94-016b9830",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T14:49:55.039Z"
     }
   },
   "runs": {
@@ -31109,6 +31299,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T14:45:04.535Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T14:50:16.473Z",
+      "durationMinutes": 5.2,
+      "costUsd": null,
+      "tokens": 1,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv3xwr6z-01e8d6cd": {
+      "id": "run-mv3xwr6z-01e8d6cd",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T14:50:16.709Z",
       "status": "running",
       "attempt": 1
     }
@@ -31715,8 +31920,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1316.14,
-    "tokens": 16952201
+    "runtimeMinutes": 1321.34,
+    "tokens": 16952202
   },
   "delivery": null,
   "reworks": [
