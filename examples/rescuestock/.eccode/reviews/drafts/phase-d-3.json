@@ -1,0 +1,284 @@
+{
+  "decision": "approve",
+  "summary": "Third and last technical review of phase D: submission sub-mv36aj2e-01cd090a (115 artifacts), iteration 3 of 3, which responds to rev-mv35hyoj-01e0a18c.\n\nWhat I read:\n- the d1, d2 and d3 diffs (git diff a9d0507 HEAD: 10 files, +596/-36, exactly the files the three handoffs declare);\n- the reset handoffs ho-mv35op30-016a6560 (d1), ho-mv35z5ux-01b0d55a (d2) and ho-mv35zyof-011e9473 (d3), and handoff-3.json;\n- the iteration-3 section of submission.md;\n- followups.md: FU-28 rewritten, FU-30, FU-31, FU-32, and carry items 6, 8 and 9;\n- the decisions dec-mv35aank-0169ec16, dec-mv36cgqs-01f68eb5, dec-mv36cgyj-01f0741d, dec-mv36ch5t-01a1d509 and dec-mv341ap0-010209d2.\n\nTree and safety:\n- The code under src/, test/, public/, scripts/ and package.json is identical from 09749e9 to HEAD b895567 (records only), and eccode audit is OK.\n- Every command ran with PATH=/usr/local/bin:/usr/bin:/bin, which has no claude. I never set RS_LIVE_MODEL=1.\n- Every `claude` in my probes and mutants is the repository's stub, called by absolute path from a temp bin directory.\n\nMy runs after the submission, all green unless stated:\n- npm test: 1288 tests, 1280 pass, 0 fail, 8 skipped (the same 8: seven phase E contract rows, and fake x PROVIDER_BUSY), 0 todo. ECCODE_EVAL {\"passed\":200,\"total\":200}. NFR5 p95 54.0 ms over 3165 requests (ev:ev-mv36glff-0180da98).\n- npm run test:browser: 8/8 (ev:ev-mv36h45j-01fcf22e).\n- Plan commands, verbatim:\n  - d1: 154/154 (ev:ev-mv36h86l-019f5e11);\n  - d2: 112/112, with ECCODE_EVAL 200/200 (ev:ev-mv36hv4x-01404237);\n  - d3: 118/118 (ev:ev-mv36i2sl-01deb1fc);\n  - d4: 136/136 (ev:ev-mv36i7r9-013fe84d);\n  - d5: npm test 1288/1280/0 fail/8 skipped with p95 57.2 ms, then the browser suite 8/8 (ev:ev-mv36jex3-01dee110).\n- Artifact coverage: 113 declared, 112 changed, 0 undeclared, 0 outside ownership (ev:ev-mv36ovxm-01536507).\n- My earlier probes, re-run by path: P5 (ev:ev-mv36n7ym-016a98f1), and P3 and P4 (ev:ev-mv36npp3-01cc274c).\n- New probes P7-P11, 8/8 (ev:ev-mv36n2by-01c422d2):\n  - P7: alignment;\n  - P8: deadline times;\n  - P9: the TR-D-14 route;\n  - P10: the real gate after close(), after the adapter's timeout, and when closed before spawn;\n  - P11: a real server on SIGHUP, and with repeated signals inside the grace period.\n- 20 mutants of my own on the new code:\n  - 18 are killed (ev:ev-mv36sh0c-019c0ced, ev:ev-mv36r8lf-01323bb3);\n  - 2 survive (ev:ev-mv36q12a-0122343d). That run fails by design, because my driver fails on any survivor, and it is cited only in TR-D-18.\n\nResolved in this iteration:\n- TR-D-11 (major, = SEC-D-12): all six conditions hold.\n- TR-D-12 (= SEC-D-11).\n- TR-D-14.\n- TR-D-15 (= SEC-D-16), with FU-32 accepted.\n- TR-D-17.\nEach is verified on HEAD by my own runs.\n\nOpen, and not blocking:\n- TR-D-13 (minor): the date part of the deadline. Its disposition is dec-mv36cgyj-01f0741d and FU-30, owner backend-engineer.\n- TR-D-16 (info): the live runner's SIGHUP. Its disposition is FU-28 (b), owner ai-engineer with FU-26.\n- TR-D-3 (minor): blocked on the user, dec-mv341ap0-010209d2.\n- TR-D-4..TR-D-8: carried to the verification report.\n- New TR-D-18 (info): two mutation survivors in the d2 adapter. One is equivalent; the other is an untested branch where the error would be conservative.\n\nDecision: approve. No blocking or major finding remains. Every open item is minor or info, and each has a recorded decision or follow-up with a named owner. The phase's own criteria are met.\n\n[SECURITY FOLD-IN PENDING: phase-d-security-3.md is not FINAL yet.]",
+  "criteria": [
+    {
+      "id": "task:d1-ai-core",
+      "description": "Extraction core: provider contract, wire schema and strict validator, prompt with random delimiters, deterministic bilingual fake, budget/rate/concurrency gate, opt-in rephrase",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv36h86l-019f5e11",
+        "ev:ev-mv36sh0c-019c0ced",
+        "ev:ev-mv36n2by-01c422d2",
+        "ev:ev-mv36npp3-01cc274c",
+        "artifact:src/ai/schema.js#L306",
+        "artifact:src/ai/schema.js#L333-L372",
+        "artifact:test/unit/ai/schema.test.js#L227",
+        "artifact:test/unit/ai/schema.test.js#L295"
+      ],
+      "notes": "The d1 reset adds whole-number alignment (alignedAt and quoteAlignedInText, L349-L372) and clock masking in numberGrounded (L333-L336). validateExtraction checks NOT_QUOTED for every field kind (L306).\n\nThe d1 plan command passes 154/154. My mutants M15 (alignment off: 17 red), M16 (digit before ignored: 4 red), M17 (digit after ignored: 5 red) and M18 (clock mask removed: 2 red) are all killed.\n\nP7 shows these refused with NUMBER_NOT_IN_INPUT: 250 from \"2500\", 200 from \"1,200\", \"1200\" and \"١٬٢٠٠\", 50 ml from \"250 ml\" and \"2.50 ml\", $12 and $120 from \"$1200\", 20 from \"cups 200\", 30 from \"11:30\", and 5 from \"2.5 ml\". These stay known: \"1,200 cups\"->1200, \"250ml\"->250, \"$120.50\"->12050 cents, \"٢٥٠ مل\"->250, \"١٬٢٠٠ كوب\"->1200, and 200 from a second, aligned occurrence."
+    },
+    {
+      "id": "task:d2-ai-adapters-corpus",
+      "description": "Claude CLI and Anthropic API adapters (deterministic transcript and loopback-stub tests), EXT-1 corpus with rendered images, fake-mode eval and the opt-in live-model runner",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv36hv4x-01404237",
+        "ev:ev-mv36n2by-01c422d2",
+        "ev:ev-mv36npp3-01cc274c",
+        "ev:ev-mv36sh0c-019c0ced",
+        "ev:ev-mv36r8lf-01323bb3",
+        "artifact:src/ai/cli.js#L206",
+        "artifact:src/ai/cli.js#L246",
+        "artifact:src/ai/cli.js#L287",
+        "artifact:test/unit/ai/cli.test.js#L416",
+        "artifact:test/unit/ai/cli.test.js#L437",
+        "artifact:test/unit/ai/cli.test.js#L476"
+      ],
+      "notes": "The d2 plan command passes 112/112, and the EXT-1 fake eval is 200/200.\n\nTR-D-15: a started child that is killed is charged at the cap, in the full usage shape. My P10a and P3c show the model_spend row go from reserved 50000 to settled 50000/50000 through the route after close(). P10b (FU-32) shows the same after the adapter's own timeout. P10c shows a provider closed before the call spawns nothing and settles at 0.\n\nMutants M20, M22, M19b and M19c are killed. M19 and M21 survive; see TR-D-18 (info).\n\nSEC-D-17: the sandbox PATH is the stub directory alone (test L476, green). The live runner's SIGHUP stays FU-28 (b)."
+    },
+    {
+      "id": "task:d3-extraction-service",
+      "description": "Extraction service and routes: upload by magic bytes, extract with gate and degraded path, grounding and provenance, confirm provenance, request deletion, retention sweep",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv36i2sl-01deb1fc",
+        "ev:ev-mv36n7ym-016a98f1",
+        "ev:ev-mv36n2by-01c422d2",
+        "ev:ev-mv36sh0c-019c0ced",
+        "artifact:src/services/extraction.js#L357",
+        "artifact:src/services/extraction.js#L367",
+        "artifact:src/services/extraction.js#L396",
+        "artifact:src/services/extraction.js#L432-L436",
+        "artifact:src/main.js#L176-L186",
+        "artifact:test/api/extract.test.js#L283",
+        "artifact:test/api/extract.test.js#L312",
+        "artifact:test/api/extract.test.js#L336",
+        "artifact:test/api/extract.test.js#L436",
+        "artifact:test/api/extract-image.test.js#L77",
+        "artifact:test/api/extract-image.test.js#L175",
+        "artifact:test/api/uploads-retention.test.js#L781"
+      ],
+      "notes": "The d3 plan command passes 118/118.\n\nWhat changed in d3:\n- Image provenance is limited to IMAGE_PROVENANCE_FIELDS (L367, L436).\n- Every user_text field goes through d1's validator (quoteGrounded, L357, L432).\n- A deadline's time must be in its quote (deadlineTimeInQuote, L396, L433).\n- main.js handles SIGINT, SIGTERM and SIGHUP with process.on and an idempotent stop() (L176-L186).\n\nMutants M9, M9b, M10, M11, M12, M13, M14, M23 and M24 are all killed.\n\nP5, re-run by path: with a photo, the budget, the pickups, cupQuantity and the deadline are unknown. P11: a real server with the CLI stub exits 0 on SIGHUP, and also after a further SIGTERM, SIGHUP and SIGINT inside the grace period; the child and grandchild are gone, and the row is settled at the cap.\n\nThe deadline's date part stays open as TR-D-13 (minor, dec-mv36cgyj-01f0741d)."
+    },
+    {
+      "id": "task:d4-frontend-extraction",
+      "description": "Extraction UI: new request with optional image, provenance badges and original wording, clarification questions, degraded notice with manual form, AI-addressed notice",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv36i7r9-013fe84d",
+        "ev:ev-mv36h45j-01fcf22e",
+        "artifact:public/js/components/fields-table.js#L210-L240"
+      ],
+      "notes": "Unchanged in iteration 3. The d4 plan command passes 136/136 and the browser suite 8/8 on the final tree."
+    },
+    {
+      "id": "task:d5-extraction-contract-browser",
+      "description": "ExtractionProvider contract suite, log and secrets scan for NFR6, HTTP contract extension and the degraded-extraction browser test",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv36jex3-01dee110",
+        "ev:ev-mv36glff-0180da98",
+        "artifact:test/unit/ai/provider-contract.test.js#L31-L95",
+        "artifact:test/browser/degraded-extraction.test.js#L80-L113"
+      ],
+      "notes": "Unchanged in iteration 3. The d5 plan command (npm test, then npm run test:browser) passes: 1288/1280/0 fail/8 skipped, then 8/8. The provider contract accepts d2's new usage shape for killed calls; d2's first red run against the bare marker showed why the full shape is needed."
+    },
+    {
+      "id": "phase:d-extraction",
+      "description": "Bilingual extraction through the ExtractionProvider contract (deterministic fake for tests; Claude CLI and Anthropic API adapters verified against a recorded transcript and a loopback stub), strict schema validation, grounding and provenance, the degraded manual path, model budget/rate/concurrency controls in integer micro-dollars, image upload by magic bytes with retention and request deletion, the EXT-1 corpus and the opt-in live-model runner, and the matching UI.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv36glff-0180da98",
+        "ev:ev-mv36h45j-01fcf22e",
+        "ev:ev-mv36jex3-01dee110",
+        "ev:ev-mv36ovxm-01536507",
+        "ev:ev-mv36n2by-01c422d2",
+        "ev:ev-mv36n7ym-016a98f1",
+        "artifact:.eccode/artifacts/phase-d/submission.md#response-to-rev-mv35hyoj-01e0a18c-iteration-3-the-last",
+        "artifact:.eccode/artifacts/plan/followups.md#added-after-the-phase-d-iteration-2-review-delivery-lead-2026-10-11"
+      ],
+      "notes": "Grounding and provenance now hold on every channel the iteration-2 review named:\n- text quotes must be present and aligned to whole numbers for every field;\n- a deadline's time must be in its quote;\n- image provenance is limited to the four product fields;\n- the ledger charges the cap for every killed started call.\n\nThe residuals each have a decision and an owner:\n- the deadline's date part and the Arabic am/pm markers (dec-mv36cgyj-01f0741d);\n- lexical grounding (dec-mv36ch5t-01a1d509);\n- capacity and diameter from the photo (SEC-D-14, carry item 6);\n- SIGKILL and the runner's SIGHUP (FU-28).\n\nThe full suite, the eval, NFR5 and the browser suite are green, and artifact coverage is complete."
+    },
+    {
+      "id": "lessons",
+      "description": "The verified-lesson decisions recorded by the phase's tasks are judged",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/phase-d/submission.md#lessons-iteration-3"
+      ],
+      "notes": "All five tasks record mem-sd-mv1audrd-013b7102 as not-applicable. I read the lesson with eccode memory show. It applies to a hook or guard that maps file writes to a project root when the repository holds several records.\n\nNo phase D task designs or changes a hook, a guard or root discovery. The d1, d2 and d3 resets change validation, adapter, service and signal code and their tests, so the lesson's 'Applies when' conditions do not hold, and the stated reasons are true. The guard refusals the agents report, mine included, are the raw-text kind that the lesson's 'Not applicable when' list names.\n\nMy own memory searches ('extraction grounding deadline signal handling CLI adapter ledger cap mutation', 'grounding', 'signal handler orphan child', 'ledger cap', each with --check-env) returned no records."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-D-13",
+      "severity": "minor",
+      "status": "open",
+      "title": "A user_text deadline is grounded on its time only: the date part of the resolution condition is not met (FU-30, dec-mv36cgyj-01f0741d); Arabic am/pm is FU-31",
+      "detail": "The time part is resolved. deadlineTimeInQuote (src/services/extraction.js L396) requires the value's HH:MM to be in the quote, as a clock token or an hour with am/pm, aligned like a number and inside an occurrence of the quote.\n\nVerified:\n- My P5c re-run by path (ev:ev-mv36n7ym-016a98f1) shows 06:00 'for the weekend', 23:59 'by 11:30' and 2026-10-21T06:00 'for the weekend' unknown, and 'by 11:30' known.\n- P8 (ev:ev-mv36n2by-01c422d2) shows Arabic 'قبل الساعة ١١:٣٠', '3pm', '12 pm', '12 am', '1:30' and '11:30pm'->23:30 known. It shows unknown, and asked: '11:30' quoted 'by 11:30pm', '11.30', '211:30', '5 amps' and 'noon'.\n- Mutants M12, M13 and M14 are killed (ev:ev-mv36sh0c-019c0ced).\n- The named test is extract.test.js L283.\n\nNot met: 'and its date part too when present'. P8 shows 2026-10-25T11:30 quoted 'on Friday by 11:30' known, and 2026-12-01T11:30 quoted 'on 21 Oct by 11:30' known, although the written date contradicts the value. The submission says so itself. The orchestrator recorded dec-mv36cgyj-01f0741d: an accepted residual for version one, owner backend-engineer, riding FU-23's rework-4 if the user authorizes it.\n\nWhy this stays minor and does not block:\n- the buyer confirms every deadline, with the quote shown next to the value;\n- the plan is approved before any payment;\n- FU-31's unread Arabic markers fail in the safe direction (unknown, asked).",
+      "evidence": [
+        "ev:ev-mv36n2by-01c422d2",
+        "ev:ev-mv36n7ym-016a98f1",
+        "artifact:src/services/extraction.js#L396",
+        "artifact:test/api/extract.test.js#L283",
+        "artifact:.eccode/artifacts/plan/followups.md#added-after-the-phase-d-iteration-2-review-delivery-lead-2026-10-11"
+      ],
+      "recommendation": "Disposition: dec-mv36cgyj-01f0741d. FU-30 and FU-31 have owner backend-engineer, through the user-authorised rework of src/services/extraction.js. delivery-lead lists both in the verification report (carry item 9).\n\nResolved when FU-30's criterion lands: an absolute date written in the quote (ISO, '21 Oct', '21/10', and the Arabic forms) must equal the value's date, or the deadline is unknown and asked. The named test is 'SEC-7: a user_text deadline whose written date differs from its value is unknown (FU-30)'.\n\nA cheap partial check FU-30 may add even without a calendar: a full date-time whose quote carries no date token at all, and whose day is not the request day, is unknown."
+    },
+    {
+      "id": "TR-D-16",
+      "severity": "info",
+      "status": "open",
+      "title": "The server now handles SIGHUP and repeated signals; only the live runner's SIGHUP remains (FU-28 (b))",
+      "detail": "The server part is verified.\n\nmain.js L176-L186 registers SIGINT, SIGTERM and SIGHUP with process.on, and `stopping` swallows repeats. My P11 (ev:ev-mv36n2by-01c422d2) ran a real src/index.js with RS_MODEL_PROVIDER=cli and the stub:\n- on SIGHUP: exit {code 0}, child and grandchild gone, model_spend settled at 50000;\n- with a child that ignores SIGTERM, SIGHUP then SIGTERM, SIGHUP and SIGINT inside the grace period: the server stays up through all four, exits 0, and the child is gone.\nMutants M23 (SIGHUP dropped) and M24 (once restored) are killed (ev:ev-mv36sh0c-019c0ced).\n\nFU-28's rewritten text and g2's runbook name SIGHUP, the double signal and SIGKILL.\n\nNot done: my condition said the runner's SIGHUP (exit 129) goes with any later d2 change. d2 was reset in this iteration and did not take it (test/live/run-live-model.js L34 still lists SIGINT and SIGTERM only). The runner only runs with RS_LIVE_MODEL=1, started by the user, and each orphan is bounded by --max-budget-usd.",
+      "evidence": [
+        "ev:ev-mv36n2by-01c422d2",
+        "ev:ev-mv36sh0c-019c0ced",
+        "artifact:src/main.js#L176-L186",
+        "artifact:test/live/run-live-model.js#L34",
+        "artifact:test/api/uploads-retention.test.js#L781"
+      ],
+      "recommendation": "Disposition: FU-28 (b), owner ai-engineer, with the FU-26 adapter change. Add ['SIGHUP', 129] to INTERRUPT_SIGNALS, with a refusal-style test. The verification report lists it with SIGKILL and the handler-less parent as residuals of SEC-D-2 (carry item 7)."
+    },
+    {
+      "id": "TR-D-18",
+      "severity": "info",
+      "status": "open",
+      "title": "Two mutants of the d2 adapter survive: M19 (the cap in terminate() is pre-empted by the close handler) and M21 (the 'never started is not charged' branch of fail() is untested)",
+      "detail": "From my mutation run (ev:ev-mv36q12a-0122343d, which fails by design because my driver fails on any survivor).\n\n- M19: removing the cap from terminate()'s rejection (src/ai/cli.js L198) leaves cli.test.js 38/38 green. When the child exits, Node emits 'close' right after 'exit' once stdio is closed, so the close handler of a terminated run (L246), which also carries unknownAtCap(), settles first. finish() is idempotent, so terminate()'s own rejection never wins in these runs. M19b (L246 only) and M19c (both sites) are killed (ev:ev-mv36r8lf-01323bb3), so the close() charge is pinned by tests. M19 is an equivalent mutant in practice, and L198 is a redundant backstop.\n- M21: changing fail() to `usageHint ?? unknownAtCap()` (L206), which charges calls that never started a process, also leaves 38/38 green. The d2 test 'TR-D-15: a call that never started a process ... is not charged' (cli.test.js L467) covers two cases, and neither goes through fail():\n  - a provider closed before call(), which is refused at the provider level;\n  - a missing binary, which arrives as the child 'error' event.\n  The fail() branches without a child are untested: close() while the temp cwd is being made, a signal aborted before the spawn, and a synchronous spawn throw. If that code were wrong, the error would over-charge, which is the conservative direction.\n\nNeither affects the ledger behaviour I verified through the route (P10a, P10b, P10c) and on a real server (P11, P4).",
+      "evidence": [
+        "ev:ev-mv36q12a-0122343d",
+        "ev:ev-mv36r8lf-01323bb3",
+        "artifact:src/ai/cli.js#L198",
+        "artifact:src/ai/cli.js#L206",
+        "artifact:test/unit/ai/cli.test.js#L467"
+      ],
+      "recommendation": "Owner: ai-engineer, with the FU-26 adapter change (no later task owns src/ai/cli.js); not required for this phase. Add a test that reaches fail() without a child and asserts err.usage is undefined, for example close() raced against the mkdtemp, or a signal aborted between the call and the spawn. Either drop terminate()'s duplicate usage or comment that the close handler normally settles first. delivery-lead may note it under carry item 8."
+    },
+    {
+      "id": "TR-D-3",
+      "severity": "minor",
+      "status": "open",
+      "title": "FU-23 (ids reused after a hard delete) stays open, blocked on the user; correctly mapped",
+      "detail": "Unchanged. The engine refused rework-4 (USER_AUTH_REQUIRED, limits.maxReworks=3). dec-mv341ap0-010209d2 asks the user to open it or to delegate rework.open. e4 is not dispatched until it is approved. FU-30 and FU-31 would ride the same rework.",
+      "evidence": [
+        "artifact:.eccode/artifacts/phase-d/submission.md#response-to-rev-mv35hyoj-01e0a18c-iteration-3-the-last"
+      ],
+      "recommendation": "Unchanged: the user opens the rework, or delegates rework.open. It must be approved before e4 is dispatched."
+    },
+    {
+      "id": "TR-D-4",
+      "severity": "minor",
+      "status": "open",
+      "title": "The eleven design deltas: carried to the verification report with the three caveats; resolved at the verification gate",
+      "detail": "Unchanged from iteration 2 (carry item 1).",
+      "evidence": [
+        "artifact:.eccode/artifacts/plan/followups.md#added-after-the-phase-d-iteration-2-review-delivery-lead-2026-10-11"
+      ],
+      "recommendation": "Delivery-lead, in the verification report, as carried."
+    },
+    {
+      "id": "TR-D-5",
+      "severity": "info",
+      "status": "open",
+      "title": "Adapter contract evidence (stub transcript, loopback stub): carry item 4; LIVE-M1 stays Unverified",
+      "detail": "Unchanged. No real model was called in this phase, by design.",
+      "recommendation": "As in iteration 1; FU-26 re-records the transcript."
+    },
+    {
+      "id": "TR-D-6",
+      "severity": "info",
+      "status": "open",
+      "title": "ECCODE_EVAL is an assertion count over the fake: carry item 5 and FU-26 (b)",
+      "detail": "Unchanged. TR-D-11..TR-D-13 act only after normaliseExtraction, so a live SEC-7 score must be taken on the stored row.",
+      "recommendation": "As carried."
+    },
+    {
+      "id": "TR-D-7",
+      "severity": "info",
+      "status": "open",
+      "title": "Timeout chain: the 408 NFR6 exception (carry item 2) and the RS_MODEL_TIMEOUT_MS bound (FU-27, owner e1, docs g2)",
+      "detail": "Unchanged.",
+      "recommendation": "As mapped. The orchestrator includes FU-27's criterion in e1's dispatch."
+    },
+    {
+      "id": "TR-D-8",
+      "severity": "info",
+      "status": "open",
+      "title": "SEC-D-3..SEC-D-9 and the FU-24/FU-25 decisions: all mapped",
+      "detail": "Unchanged. Carry item 6 now also lists SEC-D-13 (lexical grounding, dec-mv36ch5t-01a1d509) and SEC-D-14 (capacity and diameter from the photo; my P5 re-run still stores capacityMl 1999 'image' known, as dec-mv35aank-0169ec16 allows).\n\nAnother lexical case, covered by the same decision: a space as thousands separator ('1 200 cups') still grounds 200, because only ',', '.' and ':' continue a number.",
+      "recommendation": "As mapped, in the verification report's risk list."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "TR-D-11",
+      "resolution": "Resolved; this is also security's SEC-D-12. All six conditions hold.\n(1) normaliseExtraction accepts provenance image only when hasImage is true and the field is in the frozen, exported IMAGE_PROVENANCE_FIELDS = productType, material, capacityMl, diameterMm (src/services/extraction.js L367, L436), as dec-mv35aank-0169ec16 decides. Any other image claim is downgraded to unknown with its template question, and the rest of the answer stands.\n(2) The named route test, extract-image.test.js L175, uploads a real PNG and checks both the response and the stored fields_json. Budget 99999, maxPickups 5, cupQuantity and lidQuantity 99999 and deadline 06:00 are all unknown, with their questions. The unit-level twin is extract.test.js L336.\n(3) RS-02 (extract-image.test.js L77) is green, and the EXT-1 fake eval is 200/200 in my npm test and d2 runs.\n(4) My mutants are killed (ev:ev-mv36sh0c-019c0ced): M9 removes the allow-list (2 red), and M9b replaces it with a budget-only deny-list (2 red).\n(5) npm test, the d3 command and the browser suite pass.\n(6) My P5, re-run by path (ev:ev-mv36n7ym-016a98f1): with a photo, P5a and P5b show budgetCents, maxPickups, cupQuantity and the deadline unknown. Without a photo, everything is unknown. capacityMl 1999 'image' stays known, which is the accepted SEC-D-14 residual.",
+      "evidence": [
+        "ev:ev-mv36n7ym-016a98f1",
+        "ev:ev-mv36sh0c-019c0ced",
+        "ev:ev-mv36i2sl-01deb1fc",
+        "ev:ev-mv36glff-0180da98",
+        "ev:ev-mv36h45j-01fcf22e",
+        "ev:ev-mv36hv4x-01404237",
+        "artifact:src/services/extraction.js#L367",
+        "artifact:src/services/extraction.js#L432-L436",
+        "artifact:test/api/extract-image.test.js#L175",
+        "artifact:test/api/extract-image.test.js#L77",
+        "artifact:test/api/extract.test.js#L336"
+      ]
+    },
+    {
+      "id": "TR-D-12",
+      "resolution": "Resolved; this is also security's SEC-D-11. d1's validateExtraction requires the quote to have at least one occurrence aligned to whole numbers (schema.js L306, L349-L372). Before a quote that starts with a digit or separator, there may be no digit, and no separator preceded by a digit; the same holds after a quote that ends in one. Clock times are masked before numbers are read (L333-L336). d3 inherits the rule through quoteGrounded, so there is a single source.\n\nThe conditions:\n- the alignment rule is as I asked;\n- the P3b cases are unknown through the route: my P3b re-run by path (ev:ev-mv36npp3-01cc274c) shows cupQuantity 200 from '1,200 cups', lidQuantity 200 from '1200 lids' and capacityMl 50 from '250 ml' unknown, while diameter 90 stays known;\n- '250' from '2500 cups' is refused in d1's suite (schema.test.js L227) and in my P7;\n- the SEC-7 route test extract.test.js L436 covers 200 from '1,200';\n- '1,200 cups'->1200, '250ml'->250, '$120.50'->120.5 and '٢٥٠ مل'->250 stay known in P7 (ev:ev-mv36n2by-01c422d2).\n\nMutants M15, M16, M17 and M18 are killed (ev:ev-mv36sh0c-019c0ced). A space as thousands separator still grounds; that is lexical and covered by dec-mv36ch5t-01a1d509 (TR-D-8).",
+      "evidence": [
+        "ev:ev-mv36npp3-01cc274c",
+        "ev:ev-mv36n2by-01c422d2",
+        "ev:ev-mv36sh0c-019c0ced",
+        "ev:ev-mv36h86l-019f5e11",
+        "artifact:src/ai/schema.js#L306",
+        "artifact:src/ai/schema.js#L333-L372",
+        "artifact:test/unit/ai/schema.test.js#L227",
+        "artifact:test/api/extract.test.js#L436"
+      ]
+    },
+    {
+      "id": "TR-D-14",
+      "resolution": "Resolved. d3 removed its local substring check. quoteGrounded (extraction.js L357) now runs d1's validateExtraction with the text for every user_text field, numeric or not (L432), so one guard serves every field kind.\n\nThe named test extract.test.js L312 stores these unknown, with their questions: material 'plastic' quoted 'plastic cups', productType 'lids' quoted 'lids only', and a deadline quoted 'by noon, 11:00'. Empty and null quotes are unknown too. The grounded forms stay known. My P9 shows the same through the route (ev:ev-mv36n2by-01c422d2).\n\nMy M2 no longer exists as a line, so I ran its equivalents (ev:ev-mv36sh0c-019c0ced):\n- M10, quoteGrounded forced true: 6 red;\n- M11, the quote check kept for numbers (and deadlines) only: 2 red, the TR-D-14 tests.",
+      "evidence": [
+        "ev:ev-mv36sh0c-019c0ced",
+        "ev:ev-mv36n2by-01c422d2",
+        "ev:ev-mv36i2sl-01deb1fc",
+        "artifact:src/services/extraction.js#L357",
+        "artifact:test/api/extract.test.js#L312"
+      ]
+    },
+    {
+      "id": "TR-D-15",
+      "resolution": "Resolved; this is also security's SEC-D-16. d2 was reset. A call ended by close() rejects PROVIDER_UNAVAILABLE with the per-call cap as its usage, in the full usage shape (cli.js L246, L287). gate.run then settles at the cap.\n\nThe real gate through the route:\n- my P10a (ev:ev-mv36n2by-01c422d2) and my P3c re-run (ev:ev-mv36npp3-01cc274c) show the row reserved 50000 while the stub runs, and settled 50000/50000 after close(); the response is 200, degraded, PROVIDER_UNAVAILABLE;\n- on a real server, P4 SIGTERM and P11 SIGHUP leave the row settled at the cap;\n- P4 SIGKILL leaves the row reserved, which is the FU-28 residual the startup sweep settles.\n\nThe suite's regression guard is cli.test.js L437 (the real gate and SQLite). The HTTP-level row test that carry item 8 says nobody wrote is replaced, as evidence for this phase, by my P3c, P10a and P11 runs. Mutants M22, M19b and M19c are killed. M19 and M21 survive (TR-D-18, info).\n\nFU-32: I accept the extension, as dec-mv36cgqs-01f68eb5 records. Once a child has started, the real spend is unknown and bounded by the cap, so charging the cap on the adapter's own timeout, an abort or a flood keeps the ledger conservative, and it matches the service watchdog. P10b shows the adapter's own timeout settled at the cap. P10c shows a call on a closed provider spawns nothing and settles at 0. The cost is that a buyer who abandons a call is charged the cap against their own share. That is acceptable, and delivery-lead states it in the verification report.",
+      "evidence": [
+        "ev:ev-mv36n2by-01c422d2",
+        "ev:ev-mv36npp3-01cc274c",
+        "ev:ev-mv36sh0c-019c0ced",
+        "ev:ev-mv36r8lf-01323bb3",
+        "ev:ev-mv36hv4x-01404237",
+        "artifact:src/ai/cli.js#L246",
+        "artifact:src/ai/cli.js#L287",
+        "artifact:test/unit/ai/cli.test.js#L437"
+      ]
+    },
+    {
+      "id": "TR-D-17",
+      "resolution": "Resolved as mapped.\n- SEC-D-13 and SEC-D-14 are in carry item 6, and lexical grounding is dec-mv36ch5t-01a1d509.\n- SEC-D-17 is fixed by the d2 reset: the cli.test.js sandbox PATH is the stub directory alone, providers get the stub as an absolute command, and the exit hook removes the temp cwd. 'SEC-D-17: the sandbox PATH is the stub directory alone ...' (cli.test.js L476) passes in my d2 run.\n- The two residuals are disclosed: an empty cwd after an unhandled signal death, and live-runner-refusal keeping '<stub dir>:/usr/bin:/bin' with an assertion that no claude is there.",
+      "evidence": [
+        "ev:ev-mv36hv4x-01404237",
+        "artifact:test/unit/ai/cli.test.js#L476",
+        "artifact:.eccode/artifacts/plan/followups.md#added-after-the-phase-d-iteration-2-review-delivery-lead-2026-10-11"
+      ]
+    }
+  ],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
