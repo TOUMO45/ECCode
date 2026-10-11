@@ -1,0 +1,38 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "rework-5",
+  "objective": "Close the review findings of rev-mv44amic-012cf420 on rework-5: pin the refund_order result state in admin-basic (TR-R5-1, major) and fix its spec citations (TR-R5-2, minor). Test-only; no source change.",
+  "context": "Round 1 (commit 0c7b37b, handoff ho-mv43etq7-01598938) updated lost-response (RS-25 timeout trail) and admin-basic (refund_order sent once). The reviewer confirmed both expectations are what the spec requires, and found that the admin-basic assertion 'status is not refund_requested' was the only one reaching the rejected-refund mapping (src/services/calls.js ~L296): a mutant recording a provider-rejected refund as `refunded` survived the whole suite. In production that would show money as returned when PayPal refused it. lost-response.test.js is unchanged in this round (already in commit 0c7b37b before this claim); only test/api/admin-basic.test.js differs from the claim base. No src file was touched, no live suite was run, nothing was committed.",
+  "inputs": [
+    ".eccode/reviews/rev-mv44amic-012cf420.json",
+    ".eccode/artifacts/design/spec.md (Admin routes > refund_order, Sender table refund row, provider call protocol sections 1 and 4, saga step 5)",
+    "src/services/calls.js (read only)"
+  ],
+  "dependencies": [],
+  "expectedOutput": "admin-basic pins refund_failed for the provider-refused refund and cites the right spec lines; the survived mutant is now killed; npm test green.",
+  "acceptanceCriteria": [
+    "TR-R5-1: the refund_order subtest pins the status refund_failed (and the deterministic last_error_code) instead of 'not refund_requested'",
+    "TR-R5-1: a recorded run in a fresh private scratch copy shows the rejected-refund-to-refunded mutant failing admin-basic, with the diff kept",
+    "TR-R5-2: the comments cite spec Admin routes > refund_order, the Sender table refund row and the provider call protocol's deterministic key, not FU-42/SEC-11",
+    "admin-basic alone and the full npm test are green on the final tree; no source file changes"
+  ],
+  "completedWork": "TR-R5-1: test/api/admin-basic.test.js, refund_order subtest: the line `notEqual(status, 'refund_requested')` is replaced by `equal(status, 'refund_failed')` and `equal(last_error_code, 'INVALID_RESOURCE_ID')`. The code is deterministic: the hand-made capture id FAKE-CAP-1 does not exist at the fake provider, which answers 404 INVALID_RESOURCE_ID, a `rejected` outcome, and calls.js stores the issue as last_error_code. The comment cites provider call protocol section 4 (rejected -> the call fails and the mapped transition runs) and saga step 5 (a failed refund -> refund_failed, which escalates). TR-R5-2: the comments at the two places now cite spec Admin routes > refund_order, the Sender table refund row (the handler sends right after the commit) and the provider call protocol's deterministic key so:<supplierOrderId>:<kind>:<attempt>; FU-42 and SEC-11 are no longer cited there. MUTANT MB (the reviewer's): in a fresh private scratch directory (scratchpad/f4-private/rework5-mb, never reused for another mutant), calls.js L296 records a provider-rejected refund as `refunded` instead of `refund_failed`. The diff is kept at /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/f4-private/rework5-mb/mutant-MB.diff and is also printed at the top of the evidence log. Recorded run ev:ev-mv44crd8-01991c3c: FAILED, 18 tests, 17 pass, 1 fail, the refund_order subtest (expected 'refund_failed', actual 'refunded'). So the mutant that survived the whole suite is now killed. AFTER on the final tree: admin-basic alone ev:ev-mv44d1xi-015aef32 PASSED 18 of 18; full npm test under the suite lock (flock /tmp/rescuestock-suite.lock npm test) ev:ev-mv44f9kb-01db671f PASSED: 2267 tests, 2259 pass, 0 fail, 8 skipped (the existing fake-harness provider-contract cases). TR-R5-4 (info): every mutant of this rework keeps its diff file in its own scratch directory and no scratch directory is reused for a second mutant; the round-1 mutants (r5a, r5b, r5c) each had a directory of their own too, but their diffs were not saved, only their evidence logs; MB is the one with a saved diff.",
+  "filesChanged": [
+    "test/api/admin-basic.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv44d1xi-015aef32",
+    "ev:ev-mv44f9kb-01db671f"
+  ],
+  "remainingIssues": [],
+  "nextAction": "reviewer: re-review TR-R5-1 and TR-R5-2 against admin-basic and the MB evidence.",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This task edits one test file and builds no hook or guard that maps file writes to a project record or root, so the lesson's applies-when condition (designing or debugging root discovery of a tool-call guard) does not hold; no write was denied."
+    }
+  ]
+}
