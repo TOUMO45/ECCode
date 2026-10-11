@@ -1,6 +1,6 @@
 {
-  "seq": 1170,
-  "lastHash": "28ce247f5107d97b92e65c8dfad3542b4691808282a10f177db84f8824497397",
+  "seq": 1175,
+  "lastHash": "c44e71749323c2a77d0ede8d92ba3cc83777c94994fdaa6328f2de1b7514973d",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -19796,6 +19796,48 @@
       "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
       "recordedBy": "security-reviewer",
       "at": "2026-10-11T15:09:54.303Z"
+    },
+    "ev-mv3yoe93-016c0a61": {
+      "id": "ev-mv3yoe93-016c0a61",
+      "kind": "command",
+      "label": "TR-E it2 rerun browser suite (RS-31(a) 360/1280, userId and role required)",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 18080,
+      "log": ".eccode/evidence/ev-mv3yoe93-016c0a61.log",
+      "logSha256": "74254dde9e9190409dd1be441e758002a91d096f340fb16b31abba7710c93449",
+      "logFileSha256": "8cfc5c41110ef44af56ae00773ee38280007a3c2d394f719e63c76fd4c56a99a",
+      "outputTail": "      duration_ms: 1007.726168\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 965.329767\n      type: 'test'\n      ...\n    1..3\nok 4 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3466.363662\n  type: 'suite'\n  ...\n1..4\n# tests 10\n# suites 4\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 17854.326303\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T15:11:46.418Z"
+    },
+    "ev-mv3yoq1h-01b02466": {
+      "id": "ev-mv3yoq1h-01b02466",
+      "kind": "command",
+      "label": "TR-E it2 e2 plan command verbatim",
+      "command": "ls test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/approve-guards.test.js test/api/paypal-create.test.js test/api/paypal-cancel.test.js test/api/amount-tampering.test.js test/api/paypal-return-idempotent.test.js test/api/authorization-denied.test.js test/api/isolation.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 14685,
+      "log": ".eccode/evidence/ev-mv3yoq1h-01b02466.log",
+      "logSha256": "04985da55ca8b664168f4add31dc501982ef6bfbbb4c8f1e63a188ccb9679b1b",
+      "logFileSha256": "bbe2d20cefc547ad88dc78ed30f4a2814872359bf847b2c966a745a527502995",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: SEC-E-2: the public return and cancel URLs are limited per signed-in user before any provider call\n    # Subtest: SEC-E-2: hit LIMIT + 1 of one buyer is 429 RATE_LIMITED with Retry-After and makes no provider call; another buyer, an anonymous caller and the next window are unaffected\n    ok 1 - SEC-E-2: hit LIMIT + 1 of one buyer is 429 RATE_LIMITED with Retry-After and makes no provider call; another buyer, an anonymous caller and the next window are unaffected\n      ---\n      duration_ms: 498.739956\n      type: 'test'\n      ...\n    1..1\nok 24 - SEC-E-2: the public return and cancel URLs are limited per signed-in user before any provider call\n  ---\n  duration_ms: 498.957863\n  type: 'suite'\n  ...\n1..24\n# tests 93\n# suites 24\n# pass 93\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 14609.216145\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T15:12:01.694Z"
     }
   },
   "reviews": {
@@ -32258,8 +32300,29 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T15:03:55.527Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T15:11:38.337Z",
+      "durationMinutes": 7.71,
+      "costUsd": null,
+      "tokens": 65112,
+      "note": null,
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-11T15:11:42.030Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 1,
+            "costUsd": null
+          },
+          "to": {
+            "tokens": 65112,
+            "costUsd": null
+          },
+          "reason": "harness figure for the resumed invocation: 500,105 cumulative minus 434,993 recorded on the first phase E security run"
+        }
+      ]
     },
     "run-mv3yeb93-010ae771": {
       "id": "run-mv3yeb93-010ae771",
@@ -32871,6 +32934,16 @@
       "lessons": [],
       "at": "2026-10-11T15:03:55.135Z",
       "by": "orchestrator"
+    },
+    "dec-mv3yo8bf-01a4492b": {
+      "id": "dec-mv3yo8bf-01a4492b",
+      "title": "Correction of dec-mv3yeak6-01af9b6d: which webhooks resolve unknown operations",
+      "decision": "Supersedes dec-mv3yeak6-01af9b6d, whose wording overstated the rule. PAYMENT.AUTHORIZATION.CREATED never resolves an operation in unknown (stored flagged; the reconciler resolves it by reading first). VOIDED, CAPTURE.COMPLETED, CAPTURE.PENDING, CAPTURE.DENIED and CAPTURE.REFUNDED may move an unknown operation only forward to the state the provider reports, and only from the previous states listed in their fromUnknown lists (contract delta 27 as the submission states it).",
+      "rationale": "The phase E security review iteration 2 (SEC-E2-1) showed the earlier decision text claimed a property the code does not have; the code and the e3 mapping table are correct and every such move is forward to what the provider reports. The orchestrator wrote the overstated wording.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T15:11:38.686Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -32883,8 +32956,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1334.96,
-    "tokens": 17084361
+    "runtimeMinutes": 1342.67,
+    "tokens": 17149473
   },
   "delivery": null,
   "reworks": [
