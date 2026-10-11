@@ -1,0 +1,48 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "e4-saga-reconciler",
+  "objective": "Rework of e4 for one defect found by e6 (ho-mv3uq93d-0114f12e, refusal 2): the http.request log line of the public routes GET /api/paypal/return and /cancel carried no userId, because src/app.js copied ctx.user into the log state before the handler ran and these routes identify the session inside the handler. RS-31(a) needs the session's user id in the server log.",
+  "context": "The original e4 handoff is ho-mv3tpmcv-01dc0d69 (saga, reconciler, execute route, main.js wiring) and stands unchanged. This claim changes src/app.js (log state copied again in the handler's finally block, only when it was not set before: userId and role of the identified user, nothing else; an anonymous call still logs neither) and adds one test to test/api/execute.test.js. rework-4 files (src/db, test/unit/db, src/auth/general-limit.js) and public/** were not touched.",
+  "inputs": [
+    "ho-mv3tpmcv-01dc0d69",
+    "ho-mv3uq93d-0114f12e",
+    "src/app.js",
+    "test/browser/journey-happy.test.js"
+  ],
+  "dependencies": [
+    "e2-payment-flow"
+  ],
+  "expectedOutput": "The request log line of GET /api/paypal/return and /cancel carries userId (and role) of the session user.",
+  "acceptanceCriteria": [
+    "an authenticated GET /api/paypal/return and /cancel log line carries userId; an anonymous one carries neither userId nor role; no other identifier is added",
+    "failing-first test recorded red, then green",
+    "task verification, npm test (twice) and npm run test:browser run and cited honestly"
+  ],
+  "completedWork": "Everything of the first completion (ho-mv3tpmcv-01dc0d69: src/services/saga.js, src/services/reconciler.js, execute route in src/routes/plans.js, saga wiring in src/app.js, reconciler and real void port in src/main.js incl. the first tick after the startup retention pass, the five API test files) is unchanged and still passes. New in this claim: (1) src/app.js: in the handler's finally block, `if (ctx.user && logState.userId === undefined)` copies ctx.user.id and ctx.user.role into the log state, so a public route that calls ctx.auth.identify inside the handler is logged with the session user; the copy before the handler for policy routes is unchanged. (2) test/api/execute.test.js: new test 'RS-31(a): http.request for GET /api/paypal/return and /cancel carries the identified userId (and role); an anonymous call carries neither' (asserts userId equals the session user id, role customer, no other *id key besides requestId, and no userId/role key for the anonymous call). Recorded RED first: ev:ev-mv3uru6g-012c91d5 (1 test, 1 fail, 'the session user of the return is in the server log: undefined !== 6'), then GREEN after the fix: ev:ev-mv3us3wi-01051c67 (1 test, 1 pass). The test was written before the fix, so it is failing-first, not mutation-proven after the fact. Task verification after the fix: ev:ev-mv3uslbn-014d622e (71 tests, 71 pass, 0 fail). npm test run 1 ev:ev-mv3uv5wy-01d75149 PASSED (2087 tests, 2079 pass, 0 fail, 8 skipped); run 2 ev:ev-mv3uxq3y-01cc943c PASSED (same counts). test:browser FAILED twice (ev:ev-mv3uzcl3-01c59200 and rerun ev:ev-mv3v19sz-014d5d49: 10 tests, 8 pass, 2 fail), see remainingIssues.",
+  "filesChanged": [
+    "src/app.js",
+    "test/api/execute.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv3uslbn-014d622e",
+    "ev:ev-mv3us3wi-01051c67",
+    "ev:ev-mv3uv5wy-01d75149",
+    "ev:ev-mv3uxq3y-01cc943c"
+  ],
+  "remainingIssues": [
+    "npm run test:browser is RED by the two viewport cases of test/browser/journey-happy.test.js (e6's test; ev:ev-mv3uzcl3-01c59200 and ev:ev-mv3v19sz-014d5d49): after the first approval round trip it waits 30 s for [data-testid=\"paypal-returned\"] and times out. This is not caused by the log change: with the app.js fix disabled the same two cases fail the same way (checked by a temporary edit, restored, grep-verified). Cause as far as I can tell: returnNoticeModel in public/js/views/request-detail.js (e5, being reset by the frontend-engineer) shows the 'returned' notice only while the order's payment status is one of the waiting statuses, but with the fake provider the return handler authorizes at once (status authorized), so the notice is never rendered. Either e5 shows the notice for the returned outcome or journey-happy must not wait for it. Because the failure comes before the point where the test prints the log line's userId, I could not read that output line; the unit test above proves the log line.",
+    "Everything in remainingIssues of ho-mv3tpmcv-01dc0d69 still applies, except that the contracts.test.js NFR6 row is no longer red in the full suite (npm test is green in both runs here)."
+  ],
+  "nextAction": "delivery-lead: send e4 to review; frontend-engineer (e5) / test-engineer (e6): resolve the paypal-returned notice versus journey-happy mismatch described above, then rerun npm run test:browser.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This rework changes a request-logging line in src/app.js and one API test; it builds no hook or guard that maps file writes to a project record or root, so the lesson's applies-when conditions do not hold."
+    }
+  ]
+}
