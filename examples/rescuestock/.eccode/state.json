@@ -1,6 +1,6 @@
 {
-  "seq": 992,
-  "lastHash": "2de03cac08a93347f58536fa2a700424dad975e75696acea5cacd52f54cec363",
+  "seq": 999,
+  "lastHash": "93c50f4e4f349fd83d082033a8f12123a603c447ba646e16438974c726325a7e",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -6280,8 +6280,8 @@
         "command": "ls test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js",
         "cwd": "."
       },
-      "status": "done",
-      "attempts": 1,
+      "status": "pending",
+      "attempts": 0,
       "claim": null,
       "history": [
         {
@@ -6294,6 +6294,12 @@
           "event": "completed",
           "by": "backend-engineer",
           "at": "2026-10-11T12:52:45.468Z"
+        },
+        {
+          "event": "reset",
+          "by": "orchestrator",
+          "at": "2026-10-11T13:21:48.916Z",
+          "reason": "e6 handoff ho-mv3uq93d-0114f12e: the request log line of the public GET /api/paypal/return and /cancel routes carries no userId, because src/app.js copies ctx.user into the log state before the handler identifies the user; RS-31(a) requires the session's user id in the server log"
         }
       ],
       "completedBy": "backend-engineer",
@@ -6317,7 +6323,8 @@
           "note": "This task builds no hook or guard that maps file writes to a project record or project root: it changes payment saga, reconciler, route and test files only, so the lesson's 'Applies when' conditions (a guard or hook choosing a project root) do not hold.",
           "basis": "reason"
         }
-      ]
+      ],
+      "escalation": null
     },
     "e5-frontend-payments": {
       "id": "e5-frontend-payments",
@@ -6358,8 +6365,8 @@
         "command": "ls test/unit/frontend/payments.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "done",
-      "attempts": 1,
+      "status": "pending",
+      "attempts": 0,
       "claim": null,
       "history": [
         {
@@ -6372,6 +6379,12 @@
           "event": "completed",
           "by": "frontend-engineer",
           "at": "2026-10-11T02:30:48.119Z"
+        },
+        {
+          "event": "reset",
+          "by": "orchestrator",
+          "at": "2026-10-11T13:21:49.234Z",
+          "reason": "e6 handoff ho-mv3uq93d-0114f12e: after the purchase is confirmed the request page still shows the stale notice 'You are back from PayPal… Waiting for PayPal to confirm' (360 px journey screenshot)"
         }
       ],
       "completedBy": "frontend-engineer",
@@ -6401,7 +6414,8 @@
           "note": "This task builds browser UI under public/** and tests; it designs no hook or guard that maps file writes to a project root, so the nested-record root-resolution rule has nothing to apply to.",
           "basis": "reason"
         }
-      ]
+      ],
+      "escalation": null
     },
     "e6-execute-concurrency-browser": {
       "id": "e6-execute-concurrency-browser",
@@ -28168,8 +28182,29 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T12:53:18.415Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T13:21:48.313Z",
+      "durationMinutes": 28.5,
+      "costUsd": null,
+      "tokens": 315250,
+      "note": null,
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-11T13:21:55.357Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 1,
+            "costUsd": null
+          },
+          "to": {
+            "tokens": 315250,
+            "costUsd": null
+          },
+          "reason": "harness usage figure arrived after run end (placeholder 1 recorded)"
+        }
+      ]
     },
     "run-mv3u6qn5-01f940a2": {
       "id": "run-mv3u6qn5-01f940a2",
@@ -28237,6 +28272,24 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T13:18:18.059Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv3ur045-01ed8fde": {
+      "id": "run-mv3ur045-01ed8fde",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T13:21:49.486Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv3ur0b1-014e660a": {
+      "id": "run-mv3ur0b1-014e660a",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T13:21:49.726Z",
       "status": "running",
       "attempt": 1
     }
@@ -28791,6 +28844,16 @@
       "lessons": [],
       "at": "2026-10-11T13:04:42.986Z",
       "by": "orchestrator"
+    },
+    "dec-mv3uqze6-0196f887": {
+      "id": "dec-mv3uqze6-0196f887",
+      "title": "test:live-paypal keeps the spec's node --test line",
+      "decision": "The npm script stays the spec's form, pinned by test/unit/config/node-version.test.js; each live file refuses with exit 2 on its own, while the script as a whole exits 1 because node --test reports a failed child as 1. test/live/paypal/run-live-paypal.js remains an optional launcher with a single clean exit 2; the README (g2) documents both.",
+      "rationale": "Changing the script line requires changing an approved phase B test together with it; the refusal itself is proven per file. Reversible.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T13:21:48.620Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -28803,8 +28866,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1142.6,
-    "tokens": 15257620
+    "runtimeMinutes": 1171.1,
+    "tokens": 15572870
   },
   "delivery": null,
   "reworks": [
