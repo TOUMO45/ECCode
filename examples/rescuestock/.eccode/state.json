@@ -1,6 +1,6 @@
 {
-  "seq": 608,
-  "lastHash": "80b3110bf638c4f17a3398020443fcf58ab2a1fd8bdd7f51351a09ef80a07f8f",
+  "seq": 612,
+  "lastHash": "00842cb40411955e1018e416171787706ac99df7b1e5499550c7fd0bfb6dd0c4",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -5187,41 +5187,36 @@
       "verification": {
         "method": "run the project checks"
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "test-engineer",
-        "at": "2026-10-11T00:07:04.407Z",
-        "baseCommit": "e011e54bc5f2f80d858f55da8c5f735f7cff8840",
-        "runId": "run-mv32cmfs-019d4aba",
-        "dirtyAtClaim": {
-          "public/js/components/fields-table.js": "f47e4aed14c42808805cf248fb115042ded274405339693cbdd35ea5d4432746",
-          "public/js/views/request-new.js": "06bf323369cec87bcaf45602df87f8a6cfcd97d48783fa1a5fe48ac5a8065ec9",
-          "test/api/contracts.test.js": "2adb361ddc69976ee9550843fd49d71cefb407e003e8eabbef53cd713a8c2bf1",
-          "test/unit/frontend/dashboards.test.js": "f0df20e9f3bc8c1442c2c4d997323a302abf1a453d619071c6bc72e7bb08126d",
-          "test/unit/frontend/extraction.test.js": "864034d0e39f32e187bb78aac03cc2e06349877c4b4a1d5a364fd7a03359cf10"
-        },
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.841,
-            "matched": 16,
-            "priority": 19.5,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "test-engineer",
           "at": "2026-10-11T00:07:04.407Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "test-engineer",
+          "at": "2026-10-11T00:10:13.770Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null,
-      "rework": true
+      "completedBy": "test-engineer",
+      "handoffId": "ho-mv32h04t-01f86c40",
+      "rework": true,
+      "filesChanged": [
+        "test/browser/journey-infeasible.test.js"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson concerns a hook or guard resolving the project root for write targets in a repository with more than one record. This task edits one test file inside the nested rescuestock record, which is its claimed file, and no guard or hook code is designed or changed; the guard denied only two scratch commands (a shell redirect and inline python writing files) for legitimate reasons, not for a wrong root.",
+          "basis": "reason"
+        }
+      ]
     }
   },
   "evidence": {
@@ -18057,6 +18052,55 @@
       "id": "ho-mv32g80v-01649548",
       "recordedBy": "test-engineer",
       "at": "2026-10-11T00:09:37.495Z"
+    },
+    "ho-mv32h04t-01f86c40": {
+      "from": "test-engineer",
+      "to": "reviewer",
+      "task": "rework-3",
+      "objective": "FU-16: remove the extract-route 404 tolerance (withoutUnregisteredExtract) from the phase C browser journey so every console error, CSP violation, page error or failed request, a 404 on POST /api/requests/:id/extract included, fails the test.",
+      "context": "The route exists since d3 and d4's reset removed the frontend-side tolerance (EXTRACT_ROUTE_MAY_BE_MISSING is gone from public/js/views/request-new.js; classifyExtractFailure now treats a 404 as 'retry', so a 404 on extract keeps the user on the error state with a Retry button). The journey's path is unchanged (text-only request, manual-form path); only the helper and its use in the final problems assertion were removed.",
+      "inputs": [
+        "test/browser/journey-infeasible.test.js",
+        "test/browser/helpers/harness.js",
+        "public/js/views/request-new.js"
+      ],
+      "dependencies": [],
+      "expectedOutput": "test/browser/journey-infeasible.test.js asserting deepEqual(problems, []) with no filtering, and green browser and unit suites.",
+      "acceptanceCriteria": [
+        "any 404 on POST /api/requests/:id/extract during a journey is a failure",
+        "a regression test fails before the fix and passes after it",
+        "the existing checks still pass"
+      ],
+      "completedWork": "Deleted withoutUnregisteredExtract() and replaced its use with assert.deepEqual(problems, [], ...). Regression evidence from a scratch test (kept outside the project, deleted afterwards) that runs the journey's sign-up and request-creation steps against the real harness, then injects a 404 on the extract route with page.route and issues the extract call from the page: with the removed helper the assertion PASSES and hides 'HTTP 404: POST .../api/requests/1/extract' plus the matching 'console error: Failed to load resource ... 404' (ev:ev-mv32exvz-01f53643); with the strict assertion it FAILS listing exactly those two entries (ev:ev-mv32evim-01a6a1d8). Note: injecting the 404 on the page's own extract call makes the journey stop earlier at waitForURL (the page now shows the Retry error state instead of navigating), which is a first failure of its own; the call was therefore made from the request page so the assertion itself is what is exercised. The real journey passes after the fix (ev:ev-mv32f49o-0164536a: 3 tests, 3 pass, 0 fail, 0 skipped). npm run test:browser: 8 tests, 8 pass, 0 fail, 0 skipped (ev:ev-mv32ffjq-0128651c). npm test: 1216 tests, 1208 pass, 0 fail, 8 skipped (ev:ev-mv32ghnj-01ee0570).",
+      "filesChanged": [
+        "test/browser/journey-infeasible.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv32f49o-0164536a",
+        "ev:ev-mv32ffjq-0128651c",
+        "ev:ev-mv32ghnj-01ee0570",
+        "ev:ev-mv32evim-01a6a1d8",
+        "ev:ev-mv32exvz-01f53643"
+      ],
+      "remainingIssues": [
+        "The failing-first run is a scratch test, not a permanent test in the repository: ownership was limited to the journey file, and the permanent guard is the journey's own unfiltered deepEqual(problems, []). ev:ev-mv32evim-01a6a1d8 is recorded as FAILED on purpose (expected failure).",
+        "During the work the orchestrator's commit 7942bf2 swept my journey edit (and the other agents' modified files) into HEAD; git status afterwards showed only .eccode records changed. The edit itself is in HEAD and unchanged by me since.",
+        "The 8 skipped tests in npm test are pre-existing skips in the unit/api suites, not touched by this task."
+      ],
+      "nextAction": "reviewer: review rework-3 on its own file; the gate phase:rework-3 can then be passed.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson concerns a hook or guard resolving the project root for write targets in a repository with more than one record. This task edits one test file inside the nested rescuestock record, which is its claimed file, and no guard or hook code is designed or changed; the guard denied only two scratch commands (a shell redirect and inline python writing files) for legitimate reasons, not for a wrong root."
+        }
+      ],
+      "id": "ho-mv32h04t-01f86c40",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T00:10:13.895Z"
     }
   },
   "runs": {
@@ -19161,6 +19205,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T00:06:49.308Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T00:10:42.601Z",
+      "durationMinutes": 3.89,
+      "costUsd": null,
+      "tokens": 42136,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv32hmly-01ed1c15": {
+      "id": "run-mv32hmly-01ed1c15",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T00:10:42.805Z",
       "status": "running",
       "attempt": 1
     }
@@ -19539,8 +19598,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 695.1,
-    "tokens": 9502987
+    "runtimeMinutes": 698.99,
+    "tokens": 9545123
   },
   "delivery": null,
   "reworks": [

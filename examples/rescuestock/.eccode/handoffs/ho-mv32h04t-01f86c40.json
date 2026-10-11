@@ -1,0 +1,46 @@
+{
+  "from": "test-engineer",
+  "to": "reviewer",
+  "task": "rework-3",
+  "objective": "FU-16: remove the extract-route 404 tolerance (withoutUnregisteredExtract) from the phase C browser journey so every console error, CSP violation, page error or failed request, a 404 on POST /api/requests/:id/extract included, fails the test.",
+  "context": "The route exists since d3 and d4's reset removed the frontend-side tolerance (EXTRACT_ROUTE_MAY_BE_MISSING is gone from public/js/views/request-new.js; classifyExtractFailure now treats a 404 as 'retry', so a 404 on extract keeps the user on the error state with a Retry button). The journey's path is unchanged (text-only request, manual-form path); only the helper and its use in the final problems assertion were removed.",
+  "inputs": [
+    "test/browser/journey-infeasible.test.js",
+    "test/browser/helpers/harness.js",
+    "public/js/views/request-new.js"
+  ],
+  "dependencies": [],
+  "expectedOutput": "test/browser/journey-infeasible.test.js asserting deepEqual(problems, []) with no filtering, and green browser and unit suites.",
+  "acceptanceCriteria": [
+    "any 404 on POST /api/requests/:id/extract during a journey is a failure",
+    "a regression test fails before the fix and passes after it",
+    "the existing checks still pass"
+  ],
+  "completedWork": "Deleted withoutUnregisteredExtract() and replaced its use with assert.deepEqual(problems, [], ...). Regression evidence from a scratch test (kept outside the project, deleted afterwards) that runs the journey's sign-up and request-creation steps against the real harness, then injects a 404 on the extract route with page.route and issues the extract call from the page: with the removed helper the assertion PASSES and hides 'HTTP 404: POST .../api/requests/1/extract' plus the matching 'console error: Failed to load resource ... 404' (ev:ev-mv32exvz-01f53643); with the strict assertion it FAILS listing exactly those two entries (ev:ev-mv32evim-01a6a1d8). Note: injecting the 404 on the page's own extract call makes the journey stop earlier at waitForURL (the page now shows the Retry error state instead of navigating), which is a first failure of its own; the call was therefore made from the request page so the assertion itself is what is exercised. The real journey passes after the fix (ev:ev-mv32f49o-0164536a: 3 tests, 3 pass, 0 fail, 0 skipped). npm run test:browser: 8 tests, 8 pass, 0 fail, 0 skipped (ev:ev-mv32ffjq-0128651c). npm test: 1216 tests, 1208 pass, 0 fail, 8 skipped (ev:ev-mv32ghnj-01ee0570).",
+  "filesChanged": [
+    "test/browser/journey-infeasible.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv32f49o-0164536a",
+    "ev:ev-mv32ffjq-0128651c",
+    "ev:ev-mv32ghnj-01ee0570",
+    "ev:ev-mv32evim-01a6a1d8",
+    "ev:ev-mv32exvz-01f53643"
+  ],
+  "remainingIssues": [
+    "The failing-first run is a scratch test, not a permanent test in the repository: ownership was limited to the journey file, and the permanent guard is the journey's own unfiltered deepEqual(problems, []). ev:ev-mv32evim-01a6a1d8 is recorded as FAILED on purpose (expected failure).",
+    "During the work the orchestrator's commit 7942bf2 swept my journey edit (and the other agents' modified files) into HEAD; git status afterwards showed only .eccode records changed. The edit itself is in HEAD and unchanged by me since.",
+    "The 8 skipped tests in npm test are pre-existing skips in the unit/api suites, not touched by this task."
+  ],
+  "nextAction": "reviewer: review rework-3 on its own file; the gate phase:rework-3 can then be passed.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "The lesson concerns a hook or guard resolving the project root for write targets in a repository with more than one record. This task edits one test file inside the nested rescuestock record, which is its claimed file, and no guard or hook code is designed or changed; the guard denied only two scratch commands (a shell redirect and inline python writing files) for legitimate reasons, not for a wrong root."
+    }
+  ]
+}
