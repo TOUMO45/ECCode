@@ -1,6 +1,6 @@
 {
-  "seq": 1134,
-  "lastHash": "8640c951dac6281f2ef43b38cda62cd31720c463d60885ef7c92930613b99fe6",
+  "seq": 1142,
+  "lastHash": "5d31609314709b67dfdbe378079ab40cdf643e2baa5ceaaf7822f7145954ad80",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -6859,24 +6859,9 @@
         "command": "ls test/integration/rs20-two-process-execute.test.js test/browser/journey-happy.test.js test/live/paypal/journey-sandbox.test.js >/dev/null && npm test && npm run test:browser",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "test-engineer",
-        "at": "2026-10-11T14:50:34.074Z",
-        "baseCommit": "4ec86eaa71a235bc1a44457d947190440f6f3338",
-        "runId": "run-mv3xwr6z-01e8d6cd",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.816,
-            "matched": 30,
-            "priority": 35.5,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
@@ -6900,32 +6885,24 @@
           "by": "test-engineer",
           "at": "2026-10-11T14:50:34.074Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "test-engineer",
+          "at": "2026-10-11T14:54:27.457Z"
         }
       ],
       "completedBy": "test-engineer",
-      "handoffId": "ho-mv3uq93d-0114f12e",
+      "handoffId": "ho-mv3y24kt-01968292",
       "filesChanged": [
-        "test/helpers/payment-flow.js",
-        "test/integration/rs20-two-process-execute.test.js",
-        "test/api/contracts.test.js",
         "test/browser/helpers/approval-roundtrip.js",
-        "test/browser/helpers/purchase.js",
-        "test/browser/helpers/db.js",
-        "test/browser/journey-happy.test.js",
-        "test/live/paypal/live-support.js",
-        "test/live/paypal/run-live-paypal.js",
-        "test/live/paypal/rs18-cancel-abandon.test.js",
-        "test/live/paypal/rs19-amount.test.js",
-        "test/live/paypal/rs20-double-capture.test.js",
-        "test/live/paypal/rs23-webhook-duplicate.test.js",
-        "test/live/paypal/rs24-webhook-signature.test.js",
-        "test/live/paypal/journey-sandbox.test.js"
+        "test/browser/journey-happy.test.js"
       ],
       "lessonDecisions": [
         {
           "id": "mem-sd-mv1audrd-013b7102",
           "decision": "not-applicable",
-          "note": "The lesson covers designing a hook or guard that maps file writes to a project root in a repository with several records; this task writes test helpers and tests and designs no hook, guard or root discovery, so its 'Applies when' list does not hold. The guard accepted every nested Edit/Write and refused only inline Bash file writers.",
+          "note": "The lesson covers designing a hook or guard that maps file writes to a project root in a repository with several records; this reset edits one test helper and one journey and designs no hook, guard or root discovery, so its 'Applies when' list does not hold.",
           "basis": "reason"
         }
       ],
@@ -19000,6 +18977,90 @@
       "tree": "f58af4ed06f2be1e0a37f668ee7148a8d20de9d09a8b0a4c9d859ca42760c286",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T14:49:27.857Z"
+    },
+    "ev-mv3xxni9-01261164": {
+      "id": "ev-mv3xxni9-01261164",
+      "kind": "command",
+      "label": "RED control: journey-happy against a scratch copy of the tree WITHOUT the src/app.js log-userId fix (expected to FAIL)",
+      "command": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/mut/test/browser/journey-happy.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 5042,
+      "log": ".eccode/evidence/ev-mv3xxni9-01261164.log",
+      "logSha256": "dac35f92e1c0d73c556c25c328e9d0c78b47e138841db59c0a099425615edf9e",
+      "logFileSha256": "74b3baa2bf6d1bf47e5e9938a349f22d52049af2a0745eaf045a0505aad009e6",
+      "outputTail": "        approvalRoundTrip (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/mut/test/browser/helpers/approval-roundtrip.js:101:12)\n        async TestContext.<anonymous> (file:///tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/mut/test/browser/journey-happy.test.js:55:27)\n        async Test.run (node:internal/test_runner/test:1054:7)\n        async Suite.processPendingSubtests (node:internal/test_runner/test:744:7)\n      ...\n    1..2\nnot ok 1 - RS-31(a): a customer buys the A + B plan through the fake PayPal approval page\n  ---\n  duration_ms: 4805.96555\n  type: 'suite'\n  location: '/tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/mut/test/browser/journey-happy.test.js:31:1'\n  failureType: 'subtestsFailed'\n  error: '2 subtests failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 2\n# suites 1\n# pass 0\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 4970.639205\n",
+      "gate": null,
+      "task": "e6-execute-concurrency-browser",
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T14:50:58.709Z"
+    },
+    "ev-mv3xzv1u-01ae7ba8": {
+      "id": "ev-mv3xzv1u-01ae7ba8",
+      "kind": "command",
+      "label": "task verification: existence guard, npm test, npm run test:browser (TR-E-3 reset)",
+      "command": "ls test/integration/rs20-two-process-execute.test.js test/browser/journey-happy.test.js test/live/paypal/journey-sandbox.test.js >/dev/null && npm test && npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 91629,
+      "log": ".eccode/evidence/ev-mv3xzv1u-01ae7ba8.log",
+      "logSha256": "cbfbafdff7bb5404a5ea4bd0496e41c50f24b1ff4256e1d48e91e6991a472cba",
+      "logFileSha256": "f77143ac5315d12b7852db461f11248372ca47b88e4a3c4492c05d775fcf807c",
+      "outputTail": "      duration_ms: 910.781111\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 882.944187\n      type: 'test'\n      ...\n    1..3\nok 4 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3030.897616\n  type: 'suite'\n  ...\n1..4\n# tests 10\n# suites 4\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 16650.229698\n",
+      "gate": null,
+      "task": "e6-execute-concurrency-browser",
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T14:52:41.813Z"
+    },
+    "ev-mv3y1jqc-01b72846": {
+      "id": "ev-mv3y1jqc-01b72846",
+      "kind": "command",
+      "label": "npm test counts (TR-E-3 reset)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 74545,
+      "log": ".eccode/evidence/ev-mv3y1jqc-01b72846.log",
+      "logSha256": "c303d3185a01c12d3d237a4749688a0922234e2fcce23deddf576d5c5967c22e",
+      "logFileSha256": "a3e06033d19dac9cec1900cccd44e183c16c3f660be17a775cfcdf118d8d673e",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 809 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 463.481586\n  type: 'test'\n  ...\n1..809\n# tests 2109\n# suites 283\n# pass 2101\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 74197.100813\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 5272 requests, p50 2.7 ms, p95 57.3 ms (limit: p95 < 300 ms)\nNFR5 suite time: 74.3 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": null,
+      "task": "e6-execute-concurrency-browser",
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T14:54:00.441Z"
+    },
+    "ev-mv3y1qgy-01610816": {
+      "id": "ev-mv3y1qgy-01610816",
+      "kind": "command",
+      "label": "GREEN: journey-happy on the real tree (log userId required)",
+      "command": "node --disable-warning=ExperimentalWarning --test --test-concurrency=1 test/browser/journey-happy.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8340,
+      "log": ".eccode/evidence/ev-mv3y1qgy-01610816.log",
+      "logSha256": "7183fb8ac0810104d64b0700656c3f0c4618d2c5950a8212ee460720b5c53364",
+      "logFileSha256": "6b5fe49bac47c346360abc68d57e7b2fd332fa9d655cceb7d24b700d3a5b8e19",
+      "outputTail": "      duration_ms: 4242.136196\n      type: 'test'\n      ...\n    # Subtest: RS-31(a): at 1280x800 two approvals (one after a cancel) end with the plan executed and the receipt recorded\n    ok 2 - RS-31(a): at 1280x800 two approvals (one after a cancel) end with the plan executed and the receipt recorded\n      ---\n      duration_ms: 3900.755428\n      type: 'test'\n      ...\n    1..2\nok 1 - RS-31(a): a customer buys the A + B plan through the fake PayPal approval page\n  ---\n  duration_ms: 8144.104605\n  type: 'suite'\n  ...\n1..1\n# tests 2\n# suites 1\n# pass 2\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 8283.867562\n",
+      "gate": null,
+      "task": "e6-execute-concurrency-browser",
+      "tree": "2956cda938f0de19063b5ad8ccf09a7c6b8aa9565df412ceb7c058d828e45460",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T14:54:09.176Z"
     }
   },
   "reviews": {
@@ -29198,6 +29259,58 @@
       "id": "ho-mv3xwa94-016b9830",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T14:49:55.039Z"
+    },
+    "ho-mv3y24kt-01968292": {
+      "from": "test-engineer",
+      "to": "delivery-lead",
+      "task": "e6-execute-concurrency-browser",
+      "objective": "Close TR-E-3 of the phase E review: the shared approval round-trip helper must REQUIRE the identified user id in the http.request log line of every GET /api/paypal/return and /cancel, and the requirement must be shown to bite.",
+      "context": "Reset after phase-e-1 (rev-mv3xhtuz-017cfbef). Since e4's reset (ho-mv3v3asc-01ce3c19) src/app.js copies the user that a public route identified into the log state, so the log line carries userId and role. No PayPal host was contacted; RS_LIVE_MODEL and RS_LIVE_PAYPAL were never set; the live suite was not run. The lesson shown at claim (mem-sd-mv1audrd-013b7102) concerns designing hooks; this reset designs none.",
+      "inputs": [
+        ".eccode/reviews/drafts/phase-e-1.json (TR-E-3)",
+        ".eccode/handoffs/ho-mv3v3asc-01ce3c19.json",
+        "test/browser/helpers/approval-roundtrip.js, test/browser/journey-happy.test.js, src/app.js, src/routes/paypal.js"
+      ],
+      "dependencies": [
+        "e3-webhooks",
+        "e4-saga-reconciler",
+        "e5-frontend-payments"
+      ],
+      "expectedOutput": "A helper that fails when the return or cancel log line has no userId, or a different one, or a role other than customer; journey-happy green on the real tree; a recorded red run against a scratch copy without the app.js log fix.",
+      "acceptanceCriteria": [
+        "approvalRoundTrip asserts entry.userId === the session user (and role customer) unconditionally for every return and cancel; the audit-event check stays as the second proof",
+        "A scratch copy of src/app.js without the log fix turns journey-happy red at both widths; the real tree is green",
+        "No browser or integration helper can approach the per-user return/cancel limit of 30 per window",
+        "The plan verification command (npm test and npm run test:browser) is green through evidence run"
+      ],
+      "completedWork": "(1) test/browser/helpers/approval-roundtrip.js: the conditional `if (entry.userId !== undefined)` is replaced by assert.equal(entry.userId, userId) plus assert.equal(entry.role, 'customer') for every return and cancel, with a message naming the route and the seen userId; logUserId is now always the real id; the header comment says so; the audit-event proof (same request id, actor_user_id = the user, role customer, action payment.return|payment.cancel, outcome ok) is unchanged. (2) test/browser/journey-happy.test.js: the informational console.log is replaced by an assertion that the first return's log line names the session user. RED control (recorded, scratch copy, the real tree untouched): a copy of the project whose src/app.js lacks the `if (ctx.user && logState.userId === undefined) {...}` block in the handler's finally: journey-happy 2 tests, 0 pass, 2 fail (both widths), ev:ev-mv3xxni9-01261164 FAILED as intended; the failure text is `approve A: the GET /api/paypal/return log line names the session's user (userId undefined)`. GREEN on the real tree: journey-happy 2/2 ev:ev-mv3y1qgy-01610816; full verification ev:ev-mv3xzv1u-01ae7ba8 PASSED (npm test then npm run test:browser; the browser suite 10/10); npm test alone 2109 tests, 2101 pass, 0 fail, 8 skipped (the same 8 fake-harness scenarios, none mine) ev:ev-mv3y1jqc-01b72846. The RS-39 flake did not occur. Return/cancel limit (e2 reset, 30 hits per user per window, return and cancel together): journey-happy makes 2 returns + 1 cancel per journey and each viewport starts its own server and a fresh customer (3 of 30); the contract table 'pay' world makes 2 returns by one customer and 'abandon' 1 cancel by another; the RS-20 two-process test makes 2 returns per round with a fresh database per round; the live files (never run) make at most 3 hits x 2 orders = 6 returns for rs20-double-capture and 1 cancel for rs18. No helper loops on the routes, so none comes near 30.",
+      "filesChanged": [
+        "test/browser/helpers/approval-roundtrip.js",
+        "test/browser/journey-happy.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv3xzv1u-01ae7ba8",
+        "ev:ev-mv3y1jqc-01b72846",
+        "ev:ev-mv3y1qgy-01610816"
+      ],
+      "remainingIssues": [
+        "ev:ev-mv3xxni9-01261164 is the intended RED control (FAILED on a scratch copy without the app.js log fix); it is cited as the proof that the requirement bites, not as a passing check.",
+        "Carried unchanged from the first e6 handoff (ho-mv3uq93d-0114f12e): the live files were never run (LIVE-P1, LIVE-P2, OQ-D5 open); test:live-paypal exits 1 as a whole while each live file exits 2 (decision recorded by the orchestrator, TR-E-6 delta 4); the NFR3 refusal proof lives in the rs20 file."
+      ],
+      "nextAction": "delivery-lead: resubmit phase E; f4 and g3 reuse approvalRoundTrip, which now fails any journey whose return or cancel log line lacks the session user.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson covers designing a hook or guard that maps file writes to a project root in a repository with several records; this reset edits one test helper and one journey and designs no hook, guard or root discovery, so its 'Applies when' list does not hold."
+        }
+      ],
+      "id": "ho-mv3y24kt-01968292",
+      "recordedBy": "test-engineer",
+      "at": "2026-10-11T14:54:27.601Z"
     }
   },
   "runs": {
@@ -31350,6 +31463,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T14:50:16.709Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T14:54:41.487Z",
+      "durationMinutes": 4.41,
+      "costUsd": null,
+      "tokens": 1,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv3y2ftd-019ae2df": {
+      "id": "run-mv3y2ftd-019ae2df",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T14:54:41.899Z",
       "status": "running",
       "attempt": 1
     }
@@ -31956,8 +32084,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1321.34,
-    "tokens": 16994643
+    "runtimeMinutes": 1325.75,
+    "tokens": 16994644
   },
   "delivery": null,
   "reworks": [
