@@ -45,6 +45,20 @@ async function start(env = {}) {
   return h;
 }
 
+// TR-F-2: `npm test` has no per-test timeout, so a wait that can never end stalls the whole suite. A provider that never answers is
+// only safe to await through this: it FAILS the test, naming what did not return, once `ms` have passed.
+async function within(ms, promise, what) {
+  let timer;
+  const gaveUp = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${what} gave no answer within ${ms} ms: the read-resolve pass has no budget`)), ms);
+  });
+  try {
+    return await Promise.race([promise, gaveUp]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function postTo(url) {
   const u = new URL(url);
   return new Promise((resolve, reject) => {
@@ -216,7 +230,9 @@ describe('SEC-11: a forced reset voids what is authorized before it archives', (
     assert.equal(op(h, w.orders.A).status, 'voided');
   });
 
-  test('SEC-11: the pass is bounded: a provider that never answers ends it at the budget; the unknown operation is stranded and the audit says so', async () => {
+  // TR-F-2: `npm test` has no per-test timeout, so with the budget removed this test used to HANG instead of failing. The wait is now bounded
+  // twice: by within() (a failure naming the cause after 5 s) and by the test's own timeout (the backstop).
+  test('SEC-11: the pass is bounded: a provider that never answers ends it at the budget; the unknown operation is stranded and the audit says so', { timeout: 20_000 }, async () => {
     const h = await start();
     const w = await world(h);
     arm(h, 'lost_response:capture', { value: 'A' });
@@ -228,7 +244,7 @@ describe('SEC-11: a forced reset voids what is authorized before it archives', (
 
     const admin = h.db.prepare("SELECT id, role FROM users WHERE username = 'admin'").get();
     const started = performance.now();
-    const body = await resetDemo({ ...h.app.deps, requestId: 'req-bounded' }, { id: admin.id, role: admin.role }, { force: true, reason: REASON }, { resolveBudgetMs: 150 });
+    const body = await within(5_000, resetDemo({ ...h.app.deps, requestId: 'req-bounded' }, { id: admin.id, role: admin.role }, { force: true, reason: REASON }, { resolveBudgetMs: 150 }), 'the forced reset');
     const elapsed = performance.now() - started;
     assert.ok(elapsed < 5_000, `the reset returned after ${Math.round(elapsed)} ms instead of waiting for the provider`);
     assert.equal(body.reset, true);
@@ -258,7 +274,7 @@ describe('RS-37: the guard and the archive', () => {
     assert.equal(count(h, "SELECT COUNT(*) AS n FROM audit_events WHERE action = 'admin.reset' AND outcome = 'denied'"), 1);
   });
 
-  test('RS-37: operations that are already archived are ignored by the reconciler: a tick after the reset sends, reads and resolves nothing', async () => {
+  test('RS-37: operations that are already archived are ignored by the reconciler: a tick after the reset sends, reads and resolves nothing', { timeout: 20_000 }, async () => {
     const h = await start();
     const w = await world(h);
     arm(h, 'lost_response:capture', { value: 'A' });
@@ -267,7 +283,7 @@ describe('RS-37: the guard and the archive', () => {
     const real = h.app.deps.payments;
     h.app.deps.payments = { ...real, getAuthorization: () => new Promise(() => {}), getOrder: () => new Promise(() => {}) };
     const admin = h.db.prepare("SELECT id, role FROM users WHERE username = 'admin'").get();
-    await resetDemo({ ...h.app.deps, requestId: 'req-archived' }, admin, { force: true, reason: REASON }, { resolveBudgetMs: 100 });
+    await within(5_000, resetDemo({ ...h.app.deps, requestId: 'req-archived' }, admin, { force: true, reason: REASON }, { resolveBudgetMs: 100 }), 'the forced reset');
     h.app.deps.payments = real;
 
     const probe = spy(h);

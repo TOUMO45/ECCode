@@ -1,0 +1,63 @@
+{
+  "from": "backend-engineer",
+  "to": "technical-reviewer",
+  "task": "f2-compensation-takeover-admin",
+  "objective": "Close the review findings of rev-mv45ljos-01f00a5d on f2: TR-F-1 (major, FU-49) the FU-41(a) hold path re-takes the plan every tick and never escalates; SEC-F-1 (minor) no f2 test reaches the rejected-refund mapping; TR-F-2 (minor) the SEC-11 bounded-pass test can only hang.",
+  "context": "Spec: provider call protocol section 6 (an unknown older than RS_UNKNOWN_ESCALATE_MIN feeds derivation row 2), saga step 6, F-TR-7 (no takeover while an operation is capture_pending or unknown). Reviewer's preferred fix for TR-F-1 taken: a held or failed pre-resend read puts the operation back to unknown. Previous f2 handoff ho-mv41a3s6-0138e24d. Every mutant ran in its own fresh scratch directory under scratchpad/f2r2/ with its diff kept as a file; the real tree was never mutated. No live suite was run; network 127.0.0.1 only. The known FU-33 race did not fail in any full run, so no re-run under dec-mv3tqbn4-01d43152 was used.",
+  "inputs": [
+    ".eccode/handoffs/ho-mv41a3s6-0138e24d.json",
+    ".eccode/reviews/rev-mv45ljos-01f00a5d.json",
+    ".eccode/reviews/drafts/phase-f-1.json",
+    ".eccode/reviews/drafts/phase-f-security-1.md",
+    ".eccode/artifacts/design/spec.md",
+    "src/services/saga.js",
+    "src/services/reconciler.js",
+    "src/services/calls.js",
+    "src/domain/derive.js"
+  ],
+  "dependencies": [
+    "e6-execute-concurrency-browser"
+  ],
+  "expectedOutput": "The stuck hold path escalates and its epoch is bounded; the rejected-refund mapping and the SEC-11 bound are pinned by tests that go red under their mutants; all suites green.",
+  "acceptanceCriteria": [
+    "TR-F-1: after RS_UNKNOWN_ESCALATE_MIN of failing reads the plan escalates to failed_needs_attention, lease_epoch stays bounded (<= 2: the initial 1 plus the one takeover the reconciler's single successful read allows), and once the reads recover the same key is sent once and the plan executes (test in capture-compensation.test.js)",
+    "TR-F-1: SEC-F-I2's fencing still holds: a stale holder whose read fails after a takeover writes nothing and sends nothing (test, red under the no-fence mutant)",
+    "SEC-F-1: a provider-rejected compensation refund ends refund_failed, the reservation stays reconciling with REFUND_FAILED and is not restocked, the buyer sees failed_needs_attention; red under mutant MB",
+    "TR-F-2: the SEC-11 bounded-pass test fails (does not hang) when the budget is removed; recorded mutant run"
+  ],
+  "completedWork": "CODE (src/services/saga.js only). New holdOperation(env, lease, op): when readBeforeResend does not answer 'send' (the read failed, or showed CAPTURED / VOIDED / EXPIRED), captureLoop now moves the operation authorized -> unknown (prev_status authorized) before pausing the lease, in one transaction that (a) needs the fence of a call result (plan row still at this executor and epoch, the same fence recordCall uses; a stale holder writes nothing and logs saga.lease_lost), (b) compare-and-sets on status authorized and on the capture call still being unknown with no send_token, and (c) keeps the unknown_since of that call (the original timeout), so the escalation clock is not restarted. Effect: the existing F-TR-7 takeover exclusion applies (the reconciler no longer takes the plan over every tick), derivation row 2 escalates the unknown after RS_UNKNOWN_ESCALATE_MIN, and the reconciler restores the operation again when ITS read shows CREATED, after which one takeover and one same-key re-send complete the plan. derive.js, reconciler.js and calls.js needed no change. BOUND: in the reviewer's scenario lease_epoch is 1 at the timeout, 2 after the single takeover that the reconciler's one successful read allows, and stays 2 over 8 ticks (20 minutes) of failing reads (reviewer measured 2..10 before); 8 failing reads for 8 ticks (one per tick, not two); after recovery it is 3. In general each successful reconciler read can enable at most one takeover, so the epoch grows only with progress, not with ticks. TESTS. capture-compensation.test.js (+3 tests, 20 in the file): (1) TR-F-1 FU-49 stuck plan: not escalated at 11 min, failed_needs_attention at 21 min, epoch <= 2, <= 1 takeover audit row, 1 read per tick, original unknown_since kept, nothing sent while reads fail, then recovery: A sent twice with the same key in all, 2 captures at the provider, plan executed, purchase_confirmed, epoch 3; (2) TR-F-1 fencing: epoch-2 holder blocked in its read, lease lapses, epoch-3 takeover (also blocked), the stale read fails: the operation stays authorized, saga.lease_lost logged, no send; the epoch-3 holder then sends once and the plan executes; (3) SEC-F-1 rejected refund (fault http_422:refund on A, capture_declined on B): refund_failed with INJECTED_UNPROCESSABLE, refund call failed and sent once, no refund at the provider, reservation reconciling with REFUND_FAILED, zero restock rows, buyer rescueStatus failed_needs_attention and no refunded in the view. One existing assertion changed on purpose: the FU-41(a) CAPTURED-by-then test now expects the held operation to be unknown (prev_status authorized) instead of authorized, which is the reviewer's recommended state. admin-reset.test.js: a within(ms, promise, what) helper fails a test after 5 s with a message naming the missing budget; both tests that await a never-answering provider (the SEC-11 bound test and the RS-37 already-archived test, which had the same hang) use it and carry { timeout: 20000 }. The bound test's assertions are unchanged.",
+  "filesChanged": [
+    "src/services/saga.js",
+    "test/api/capture-compensation.test.js",
+    "test/api/admin-reset.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv46ccs3-01292ea1",
+    "ev:ev-mv4684wa-017b7d7b",
+    "ev:ev-mv46aa7g-019c8303",
+    "ev:ev-mv46bahx-01d4536b",
+    "ev:ev-mv45pida-017dcfa9",
+    "ev:ev-mv45w0n6-01ac30a5",
+    "ev:ev-mv45v1ds-01deb801",
+    "ev:ev-mv45vbm0-01dbd580",
+    "ev:ev-mv45wwaa-0115c9c9",
+    "ev:ev-mv45y8q7-01931054",
+    "ev:ev-mv464v52-0153ea2c"
+  ],
+  "remainingIssues": [
+    "Mutant survivor, disclosed: a first version of the TR-F-1 test did not kill the mutant that restarts unknown_since at the hold (ev:ev-mv45svt4-01979495 passed 20/20) because the first tick came at the same clock instant as the timeout; the test now advances 60 s first and the mutant is killed (ev:ev-mv45vbm0-01dbd580). Scratch dirs mut-trf1-nofence, mut-trf1-since and mut-reset-unbounded-new are the superseded versions; the -b and -final dirs are the evidence for the final tests.",
+    "A hold on a CAPTURED/VOIDED/EXPIRED read also makes the operation unknown for the moment until the reconciler's next read resolves it; derive.js row 2 then escalates only after RS_UNKNOWN_ESCALATE_MIN, as for any unknown.",
+    "TR-F-3 (LIVE-P1 labels) and the info items are not f2 code and stay with their owners."
+  ],
+  "nextAction": "technical-reviewer: re-review TR-F-1, SEC-F-1 and TR-F-2 at the new tree; re-run the probe at scratchpad/trf/fu49 (its assertion that the epoch grows now flips).",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This task builds no hook or guard that maps file writes to a project record or root (saga hold path and API tests only), so the lesson's applies-when conditions do not hold; it concerns root discovery in tool-call guards, not payment code."
+    }
+  ]
+}

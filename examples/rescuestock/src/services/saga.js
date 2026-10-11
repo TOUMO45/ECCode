@@ -518,7 +518,8 @@ function finishExecution(env, lease) {
 
 // The read that precedes a re-send of an `unknown` capture, under the lease. 'send' = the provider shows the authorization CREATED,
 // so no capture exists and the same PayPal-Request-Id may go again; 'hold' = send nothing (the read failed, or the authorization is
-// CAPTURED / VOIDED / EXPIRED: the call stays unknown and the reconciler resolves it by reading, protocol section 6); 'lost' = the lease went.
+// CAPTURED / VOIDED / EXPIRED: the call stays unknown and the reconciler resolves it by reading, protocol section 6; the caller also puts
+// the operation back to `unknown`, see holdOperation, TR-F-1); 'lost' = the lease went.
 async function readBeforeResend(env, lease, op) {
   const { db, clock, config, log } = env;
   if (!db.tx(() => guardLease(db, clock, config, lease))) return 'lost';
@@ -534,6 +535,28 @@ async function readBeforeResend(env, lease, op) {
   if (read.value.status === 'CREATED') return 'send';
   log.warn('saga.resend_held', { planVersionId: lease.planId, code: safeIssue(String(read.value.status), 'UNKNOWN') });
   return 'hold';
+}
+
+// TR-F-1 / FU-49: a held pre-resend read puts the operation back to `unknown` (prev_status `authorized`), with the unknown_since of its
+// still-unknown capture call (the time of the original timeout, not of this attempt). Then the takeover exclusion of F-TR-7 applies (the
+// plan is not taken over every tick while the reads keep failing: lease_epoch stays put), and derivation row 2 escalates an unknown older
+// than RS_UNKNOWN_ESCALATE_MIN (provider call protocol section 6). The reconciler restores the operation again when ITS read shows CREATED.
+// It records an observation, so it needs the fence of a call result (the epoch unchanged), exactly like recordCall; a stale holder (the
+// epoch moved on) writes nothing. The compare-and-set on `authorized` and on the still token-less unknown call keeps a newer state intact.
+// Returns 'ok' or 'lost'.
+function holdOperation(env, lease, op) {
+  const { db, clock } = env;
+  return db.tx(() => {
+    if (!fenceLease(db, lease)) return 'lost';
+    const call = db
+      .prepare("SELECT unknown_since FROM provider_calls WHERE payment_operation_id = ? AND kind = 'capture' AND status = 'unknown' AND send_token IS NULL AND archived_at IS NULL ORDER BY attempt DESC, id DESC LIMIT 1")
+      .get(op.id);
+    const fresh = call ? loadOperation(db, op.id) : null;
+    if (fresh?.status === 'authorized') {
+      moveOperation(db, clock, fresh, 'unknown', { prev_status: 'authorized', unknown_since: call.unknown_since ?? isoFromMs(clock.now()) });
+    }
+    return 'ok';
+  });
 }
 
 // Step 3 (and 4): sequential captures in supplier-code order.
@@ -591,6 +614,10 @@ async function captureLoop(env, lease, isStopped) {
         return 'lost';
       }
       if (verdict !== 'send') {
+        if (holdOperation(env, lease, next) === 'lost') {
+          env.log.warn('saga.lease_lost', { planVersionId: lease.planId, epoch: lease.epoch, executorId: lease.executorId });
+          return 'lost';
+        }
         pauseLease(env, lease);
         return 'paused';
       }

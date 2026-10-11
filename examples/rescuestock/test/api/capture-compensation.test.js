@@ -173,6 +173,36 @@ describe('RS-22: compensation (step 5)', () => {
     }
   });
 
+  test('SEC-F-1: a compensation refund the provider REJECTS (http 422) ends refund_failed, never refunded: the reservation stays reconciling with REFUND_FAILED and is not restocked, and the buyer sees failed_needs_attention', async () => {
+    const h = await start();
+    const w = await world(h);
+    arm(h, 'capture_declined', { value: 'B' });
+    arm(h, 'http_422:refund', { value: 'A' });
+    assert.equal((await execute(w)).status, 202);
+    await h.app.deps.saga.idle();
+    const rec = reconcilerOf(h);
+    for (let i = 0; i < 4; i += 1) {
+      h.clock.advance(20_000);
+      await settle(h, rec);
+    }
+    // the outcome of the rejected refund (calls.js, APPLY.refund, outcome.kind 'rejected')
+    assert.equal(op(h, w.orders.A).status, 'refund_failed', 'a rejected refund is refund_failed');
+    assert.equal(op(h, w.orders.A).last_error_code, 'INJECTED_UNPROCESSABLE', 'with the provider issue');
+    assert.equal(callOf(h, w.orders.A, 'refund').status, 'failed');
+    assert.equal(h.db.prepare('SELECT COUNT(*) AS n FROM fake_paypal_refunds').get().n, 0, 'no money came back at the provider');
+    assert.equal(fakeCalls(h, 'refund').length, 1, 'a rejected refund is not sent again');
+    // the reservation
+    const res = reservation(h, w.reservationId);
+    assert.equal(res.status, 'reconciling');
+    assert.equal(res.escalation, 'REFUND_FAILED');
+    assert.equal(h.db.prepare("SELECT COUNT(*) AS n FROM inventory_ledger WHERE reason = 'restock'").get().n, 0, 'nothing is restocked');
+    // the buyer
+    const view = await w.cafe1.get(`/api/requests/${w.requestId}`);
+    assert.equal(view.status, 200);
+    assert.equal(view.json.rescueStatus.status, 'failed_needs_attention');
+    assert.equal(JSON.stringify(view.json).includes('"status":"refunded"'), false, 'nothing in the view reads refunded');
+  });
+
   test('RS-22: compensation is ONE transaction under the fence: when it fails nothing is half done, and the next holder completes it', async () => {
     const h = await start();
     const w = await world(h);
@@ -475,7 +505,9 @@ describe('ARCH-23 / step 6: the takeover', () => {
     assert.equal(reads >= 2, true, 'the saga read the authorization again under its lease');
     assert.equal(captureRequests(h, w.orders.A).length, 1, 'only the faulted send: the held operation was not sent again');
     assert.equal(h.db.prepare('SELECT COUNT(*) AS n FROM fake_paypal_captures').get().n, 1, 'the external capture is the only one');
-    assert.equal(op(h, w.orders.A).status, 'authorized');
+    // TR-F-1: a held read puts the operation back to unknown (prev_status authorized), so it is never taken over again until read
+    assert.equal(op(h, w.orders.A).status, 'unknown');
+    assert.equal(op(h, w.orders.A).prev_status, 'authorized');
     assert.equal(callOf(h, w.orders.A, 'capture').status, 'unknown');
     assert.equal(logs(h, 'saga.resend_held').length, 1);
     assert.equal(plan(h, w.planId).status, 'executing');
@@ -526,6 +558,130 @@ describe('ARCH-23 / step 6: the takeover', () => {
     await settle(h, rec);
     assert.equal(plan(h, w.planId).status, 'executed');
     assert.equal(captureRequests(h, w.orders.A).length, 2);
+  });
+
+  test('TR-F-1 (FU-49): the reconciler restores the operation to authorized (call still unknown) and every later read fails: the plan is not taken over every tick, it escalates after RS_UNKNOWN_ESCALATE_MIN, and once the reads recover the same key is sent once', async () => {
+    const h = await start();
+    const w = await world(h);
+    arm(h, 'timeout:capture', { value: 'A' });
+    assert.equal((await execute(w)).status, 202);
+    await h.app.deps.saga.idle();
+    assert.equal(op(h, w.orders.A).status, 'unknown');
+    assert.equal(plan(h, w.planId).lease_epoch, 1);
+    const unknownSince = op(h, w.orders.A).unknown_since;
+    assert.ok(unknownSince, 'the timeout set unknown_since');
+
+    // The reconciler's first read (step 2) works and shows CREATED; from then on the provider's read endpoint is down.
+    const real = h.app.deps.payments;
+    let reads = 0;
+    h.app.deps.payments = {
+      ...real,
+      async getAuthorization(args) {
+        reads += 1;
+        const out = await real.getAuthorization(args);
+        if (reads === 1) arm(h, 'http_500:get_authorization', { remaining: null });
+        return out;
+      },
+    };
+    const rec = reconcilerOf(h);
+    const status = async () => (await w.cafe1.get(`/api/requests/${w.requestId}`)).json.rescueStatus;
+    const takeovers = () => h.db.prepare("SELECT COUNT(*) AS n FROM audit_events WHERE action = 'saga.takeover' AND entity_id = ?").get(w.planId).n;
+    h.clock.advance(60_000); // the first tick comes a minute after the timeout: the escalation clock still starts at the timeout
+    await settle(h, rec);
+    const readsAfterFirstTick = reads;
+    const epochs = [plan(h, w.planId).lease_epoch];
+    const statuses = [];
+    for (let i = 0; i < 8; i += 1) {
+      h.clock.advance(150_000); // 2.5 minutes a tick: 20 minutes in all, beyond RS_UNKNOWN_ESCALATE_MIN (15)
+      await settle(h, rec);
+      epochs.push(plan(h, w.planId).lease_epoch);
+      statuses.push((await status()).status);
+    }
+    // no send while no read succeeds, and the plan is still waiting for the provider
+    assert.equal(captureRequests(h, w.orders.A).length, 1, 'nothing is sent while the reads fail');
+    assert.equal(fakeCalls(h, 'capture').length, 1, 'B is not captured before A is resolved');
+    assert.equal(plan(h, w.planId).status, 'executing');
+    // The epoch is bounded: 1 at the timeout + exactly one takeover (the one the reconciler's successful read allowed). It does not grow
+    // with the ticks (the reviewer measured 2..10 over these 8 ticks before the fix).
+    assert.ok(Math.max(...epochs) <= 2, `lease_epoch stays <= 2: ${epochs.join(',')}`);
+    assert.ok(takeovers() <= 1, `at most one takeover row: ${takeovers()}`);
+    // one read a tick (the reconciler's): the holder does not read again once the operation is unknown
+    assert.equal(reads - readsAfterFirstTick, 8, 'one failing read per tick, not two');
+    // the unknown is measured from the original timeout, not from the holder's last attempt
+    assert.equal(op(h, w.orders.A).status, 'unknown');
+    assert.equal(op(h, w.orders.A).prev_status, 'authorized');
+    assert.equal(op(h, w.orders.A).unknown_since, unknownSince, 'the original unknown_since is kept');
+    // Row 2: not before RS_UNKNOWN_ESCALATE_MIN (15 min = tick 6 at 2.5 min), then failed_needs_attention
+    assert.equal(statuses[3] === 'failed_needs_attention', false, `10 minutes: not escalated yet (${statuses[3]})`);
+    assert.equal(statuses[7], 'failed_needs_attention', `20 minutes: escalated (${statuses.join(',')})`);
+
+    // Recovery: the reads come back. The reconciler reads CREATED, the lease holder reads CREATED, the SAME key is sent once.
+    h.db.prepare("DELETE FROM fault_flags WHERE name = 'fake_paypal:http_500:get_authorization'").run();
+    h.clock.advance(150_000);
+    await settle(h, rec);
+    assert.equal(op(h, w.orders.A).status, 'captured');
+    assert.equal(op(h, w.orders.B).status, 'captured');
+    assert.equal(plan(h, w.planId).status, 'executed');
+    assert.equal(captureRequests(h, w.orders.A).length, 2, 'the faulted send and ONE re-send, with the same PayPal-Request-Id');
+    assert.equal(captureRequests(h, w.orders.B).length, 1);
+    assert.equal(h.db.prepare('SELECT COUNT(*) AS n FROM fake_paypal_captures').get().n, 2, 'one capture per authorization: money moved once');
+    assert.equal(plan(h, w.planId).lease_epoch, 3, 'the recovery is one more takeover');
+    assert.equal((await status()).status, 'purchase_confirmed');
+  });
+
+  test('TR-F-1 fencing (SEC-F-I2): a STALE holder whose pre-resend read fails after a takeover writes nothing: the operation stays authorized for the new holder, which sends once; the stale one logs saga.lease_lost', async () => {
+    const h = await start();
+    const w = await world(h);
+    arm(h, 'timeout:capture', { value: 'A' });
+    assert.equal((await execute(w)).status, 202);
+    await h.app.deps.saga.idle();
+    const real = h.app.deps.payments;
+    const gates = {};
+    const open = {};
+    for (const n of [2, 4]) gates[n] = new Promise((resolve) => { open[n] = resolve; });
+    let reads = 0;
+    h.app.deps.payments = {
+      ...real,
+      async getAuthorization(args) {
+        reads += 1;
+        const n = reads;
+        // 1: reconciler (tick 1); 2: holder of epoch 2 (held, then FAILS); 3: reconciler (tick 2); 4: holder of epoch 3 (held, then reads for real)
+        if (n === 2) {
+          await gates[2];
+          return { kind: 'unknown', reason: 'timeout' };
+        }
+        if (n === 4) {
+          await gates[4];
+        }
+        return real.getAuthorization(args);
+      },
+    };
+    const until = async (cond) => {
+      for (let i = 0; i < 500 && !cond(); i += 1) await new Promise((resolve) => setTimeout(resolve, 10));
+      assert.ok(cond(), 'condition reached');
+    };
+    const rec = reconcilerOf(h);
+    await rec.tick(); // takeover to epoch 2; its run blocks in the held read
+    await until(() => reads >= 2);
+    assert.equal(plan(h, w.planId).lease_epoch, 2);
+    h.clock.advance(h.config.sagaLeaseMs + 1000); // the stale holder's lease lapses
+    await rec.tick(); // takeover to epoch 3 (the operation is authorized, no unknown); its run blocks in the held read
+    await until(() => reads >= 4);
+    assert.equal(plan(h, w.planId).lease_epoch, 3);
+    assert.equal(op(h, w.orders.A).status, 'authorized');
+
+    open[2](); // the stale holder's read now fails: it must not touch the operation
+    await until(() => logs(h, 'saga.lease_lost').length >= 1 || op(h, w.orders.A).status !== 'authorized');
+    assert.equal(op(h, w.orders.A).status, 'authorized', 'the stale holder did not move the operation to unknown');
+    assert.equal(logs(h, 'saga.lease_lost').length, 1, 'the stale holder logged saga.lease_lost');
+    assert.equal(plan(h, w.planId).lease_epoch, 3);
+    assert.equal(captureRequests(h, w.orders.A).length, 1, 'the stale holder sent nothing');
+
+    open[4](); // the epoch-3 holder reads CREATED and sends the same key once
+    await h.app.deps.saga.idle();
+    assert.equal(plan(h, w.planId).status, 'executed');
+    assert.equal(captureRequests(h, w.orders.A).length, 2);
+    assert.equal(h.db.prepare('SELECT COUNT(*) AS n FROM fake_paypal_captures').get().n, 2, 'one capture per authorization');
   });
 
   test('FU-41(b): an operation that becomes unknown after the takeover and before the resumed run: the saga pauses and sends nothing, and does not compensate', async () => {
