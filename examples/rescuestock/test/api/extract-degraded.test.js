@@ -195,6 +195,26 @@ describe('RS-03: the provider call is bounded and never runs inside a transactio
     assert.doesNotMatch(h.lines.join(''), /secret internals|sk-live/);
   });
 
+  test('RS-03: a provider-level PROVIDER_BUSY (the provider itself is saturated) is 200 degraded, and the reservation is settled at 0 (TR-D-2)', async () => {
+    // The fake has no busy fault, so this is a stub provider; it is the adapters' 429 / 529 / third-concurrent-call code.
+    let calls = 0;
+    h.app.deps.ai = runtimeWith(async () => {
+      calls += 1;
+      throw new ProviderError('PROVIDER_BUSY');
+    });
+    const id = await newRequest(cafe1);
+    const res = await extract(cafe1, id);
+    assert.equal(res.status, 200, res.text);
+    assert.equal(calls, 1);
+    assertDegraded(res.json.extraction, 'PROVIDER_BUSY');
+    assert.equal(res.json.extraction.provider, 'fake');
+    const rows = h.db.prepare('SELECT actual_micro_usd, status FROM model_spend WHERE request_id = ?').all(id).map((r) => ({ ...r }));
+    assert.deepEqual(rows, [{ actual_micro_usd: 0, status: 'settled' }], 'the customer reservation is settled at 0, not left reserved and not charged');
+    assert.equal(count(h, "SELECT COUNT(*) AS n FROM model_spend WHERE status = 'reserved'"), 0);
+    const row = h.db.prepare('SELECT degraded, schema_ok, error_code FROM extractions WHERE request_id = ?').get(id);
+    assert.deepEqual({ ...row }, { degraded: 1, schema_ok: 0, error_code: 'PROVIDER_BUSY' });
+  });
+
   test('RS-03: an answer that is not a valid extraction, or whose usage is unreadable, is PROVIDER_BAD_OUTPUT', async () => {
     h.app.deps.ai = runtimeWith(async () => ({ output: { language: 'en', fields: {}, questions: [], addressedToAssistant: false }, usage: { costUsd: 0 } }));
     const a = await extract(cafe1, await newRequest(cafe1));

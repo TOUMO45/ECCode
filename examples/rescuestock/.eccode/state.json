@@ -1,6 +1,6 @@
 {
-  "seq": 672,
-  "lastHash": "375c6b827bafdcbbdf09e648b8e7c8ff273e29f0cb2d17de0a133087f027e2cf",
+  "seq": 678,
+  "lastHash": "989c6ef94109c0576a7e67ecbda4a69b3610c70afef41608182d138228fee2c4",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -4461,9 +4461,24 @@
         "command": "ls test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js test/fixtures/extraction/manifest.json test/live/run-live-model.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "ai-engineer",
+        "at": "2026-10-11T00:53:04.016Z",
+        "baseCommit": "90d4f972a80635a2fdf789284aae672bcfa8f03b",
+        "runId": "run-mv33ywgw-01504b06",
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.835,
+            "matched": 33,
+            "priority": 33,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -4498,6 +4513,12 @@
           "by": "orchestrator",
           "at": "2026-10-11T00:52:07.914Z",
           "reason": "phase D review rev-mv33xoyz-0143dd56: TR-D-9 minor (detached CLI children survive the parent; track and kill them, close()), TR-D-10 minor (live runner rounds the ceiling before the cap check; SIGINT/SIGTERM; print provider, model and worst case first)"
+        },
+        {
+          "event": "claimed",
+          "by": "ai-engineer",
+          "at": "2026-10-11T00:53:04.016Z",
+          "attempt": 1
         }
       ],
       "completedBy": "ai-engineer",
@@ -4574,9 +4595,24 @@
         "command": "ls test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
         "cwd": "."
       },
-      "status": "pending",
-      "attempts": 0,
-      "claim": null,
+      "status": "claimed",
+      "attempts": 1,
+      "claim": {
+        "agent": "backend-engineer",
+        "at": "2026-10-11T00:52:42.728Z",
+        "baseCommit": "90d4f972a80635a2fdf789284aae672bcfa8f03b",
+        "runId": "run-mv33ywac-01b23de9",
+        "dirtyAtClaim": {},
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.833,
+            "matched": 35,
+            "priority": 31,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -4594,6 +4630,12 @@
           "by": "orchestrator",
           "at": "2026-10-11T00:52:07.643Z",
           "reason": "phase D review rev-mv33xoyz-0143dd56: TR-D-1 major (a quote without digits grounds any number; validator called without the request text), TR-D-2 minor (no API test for a provider-level PROVIDER_BUSY), TR-D-9 share (main.js stop must close the provider)"
+        },
+        {
+          "event": "claimed",
+          "by": "backend-engineer",
+          "at": "2026-10-11T00:52:42.728Z",
+          "attempt": 1
         }
       ],
       "completedBy": "backend-engineer",
@@ -12164,6 +12206,26 @@
       "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
       "recordedBy": "security-reviewer",
       "at": "2026-10-11T00:44:18.122Z"
+    },
+    "ev-mv340dds-01d11bc7": {
+      "id": "ev-mv340dds-01d11bc7",
+      "kind": "command",
+      "label": "SEC-7 TR-D-1 test, failing first (before fix)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-name-pattern='SEC-7: a number the quote' test/api/extract.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 316,
+      "log": ".eccode/evidence/ev-mv340dds-01d11bc7.log",
+      "logSha256": "dafa087bdaf08f1316071134697045dc27660a79023831c22e32909fa6fb6a67",
+      "logFileSha256": "a73bdf05191833d3c7781264fcf059aaffde5745e1e3804dbdb114dafe9b1a9d",
+      "outputTail": "        new Promise (<anonymous>)\n        new SafePromise (node:internal/per_context/primordials:433:3)\n        node:internal/per_context/primordials:464:9\n        Array.map (<anonymous>)\n      ...\n    1..1\nnot ok 1 - SEC-7: post-validation normalisation never trusts the model\n  ---\n  duration_ms: 8.266391\n  type: 'suite'\n  location: '/home/user/ECCode/examples/rescuestock/test/api/extract.test.js:170:1'\n  failureType: 'subtestsFailed'\n  error: '1 subtest failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 226.129394\n",
+      "gate": null,
+      "task": "d3-extraction-service",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T00:53:16.993Z"
     }
   },
   "reviews": {
@@ -20926,6 +20988,21 @@
       "startedAt": "2026-10-11T00:52:08.356Z",
       "status": "running",
       "attempt": 1
+    },
+    "run-mv340cft-01fa2ed4": {
+      "id": "run-mv340cft-01fa2ed4",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T00:53:15.727Z",
+      "status": "failed",
+      "attempt": 1,
+      "endedAt": "2026-10-11T00:53:24.500Z",
+      "durationMinutes": 0.15,
+      "costUsd": 0,
+      "tokens": 0,
+      "note": null,
+      "usageReported": true
     }
   },
   "risks": {
@@ -21338,6 +21415,16 @@
       "lessons": [],
       "at": "2026-10-11T00:32:58.940Z",
       "by": "orchestrator"
+    },
+    "dec-mv341ap0-010209d2": {
+      "id": "dec-mv341ap0-010209d2",
+      "title": "FU-23 rework needs the user's authorization",
+      "decision": "The engine refused rework-4 (USER_AUTH_REQUIRED: limits.maxReworks=3 reached). Only b1 (phase B, approved) owns src/db/**, so the AUTOINCREMENT migration cannot ride any pending task. The orchestrator asks the user either to open the rework as the user actor or to grant a rework.open delegation for rework-4. Until then phase E proceeds through e0..e3; e4 is not dispatched (TR-D-3's condition), and FU-23 stays open as minor.",
+      "rationale": "Reworks past the limit are the user's call by design: three reworks after review point at the plan (here: b1 planned every migration and no later task owns the directory). Blocking phase E entirely would waste the budget on a minor finding the reviewers did not block on.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T00:54:00.146Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -21350,7 +21437,7 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 769.89,
+    "runtimeMinutes": 770.04,
     "tokens": 10532770
   },
   "delivery": null,

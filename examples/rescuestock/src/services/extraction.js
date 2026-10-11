@@ -21,7 +21,7 @@ import { createGate, gateLimitsFromConfig, microUsdOfUsage } from '../ai/gate.js
 import { PROMPT_VERSION } from '../ai/prompt.js';
 import { ProviderError, assertExtractionProvider, selectProvider, toDegraded } from '../ai/provider.js';
 import {
-  FIELD_NAMES as WIRE_FIELDS, budgetUsdToCents, normalizeForCompare, numbersIn, renderQuestions, validateExtraction,
+  FIELD_NAMES as WIRE_FIELDS, budgetUsdToCents, normalizeForCompare, renderQuestions, unknownExtraction, validateExtraction,
 } from '../ai/schema.js';
 import { localToUtcMs, localDay } from '../domain/time.js';
 import { IMAGE_BODY_LIMIT } from '../http/body.js';
@@ -348,6 +348,16 @@ function localDeadline(value, requestDay) {
   return full;
 }
 
+// A numeric user_text value must occur in its own quote, as digits of either script or as a number word (including the Arabic
+// dual forms). This is d1's rule (validateExtraction with the request text: NUMBER_NOT_IN_INPUT); it is applied to ONE field,
+// on an otherwise all-unknown output, so the field is downgraded to unknown and the rest of the answer is kept. A quote with
+// no digits grounds nothing (TR-D-1 / SEC-D-1).
+function numberGroundedInQuote(wire, field, text) {
+  const probe = unknownExtraction();
+  probe.fields[wire] = { value: field.value, provenance: 'user_text', originalWording: field.originalWording };
+  return validateExtraction(probe, { text }).ok === true;
+}
+
 /**
  * normaliseExtraction(output, { text, requestDay, hasImage }) -> { fields, questions, addressedToAssistant, downgraded }
  * `output` is a validated ExtractionOutput. Each rule downgrades ONE field to unknown, adds its question, and never rejects
@@ -374,10 +384,7 @@ export function normaliseExtraction(output, { text, requestDay, hasImage }) {
     if (f.provenance === 'user_text') {
       const quote = typeof f.originalWording === 'string' ? normalizeForCompare(f.originalWording) : '';
       ok = quote !== '' && textNorm.includes(quote);
-      if (ok && typeof value === 'number') {
-        const written = numbersIn(f.originalWording);
-        ok = written.size === 0 || written.has(value); // number words carry no digits; written digits must include the value
-      }
+      if (ok && typeof value === 'number') ok = numberGroundedInQuote(wire, f, text); // TR-D-1: digits or a number word, never "no digits"
       wording = ok ? takeCodePoints(f.originalWording.replace(/\s+/gu, ' ').trim(), MAX_WORDING_CHARS) : null;
     } else if (f.provenance === 'image') {
       ok = hasImage === true;

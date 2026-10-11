@@ -4,6 +4,8 @@
 // (the test writes a one-line `claude` shell wrapper into a temp bin directory that is put on PATH).
 //
 // It records what it was given in $TMPDIR/stub-report.json: { argv, cwd, cwdEntries, envKeys, stdin }.
+// "hang" sleeps with a grandchild in the same process group; "stubborn" sleeps and ignores SIGTERM; both write their pids
+// to $TMPDIR (child.pid, and grandchild.pid for hang).
 // "transcript" replays test/fixtures/extraction/cli-transcript.ndjson, the recorded shape of a successful
 // stream-json run (system init, assistant tool_use of StructuredOutput, result with structured_output).
 import { spawn } from 'node:child_process';
@@ -71,6 +73,13 @@ function run() {
     case 'hang': {
       const grandchild = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
       writeFileSync(join(process.env.TMPDIR, 'grandchild.pid'), String(grandchild.pid));
+      writeFileSync(join(process.env.TMPDIR, 'child.pid'), String(process.pid));
+      return setInterval(() => {}, 1000);
+    }
+    case 'stubborn': {
+      // Ignores SIGTERM, so only the SIGKILL that follows the grace period can end it (TR-D-9).
+      process.on('SIGTERM', () => {});
+      writeFileSync(join(process.env.TMPDIR, 'child.pid'), String(process.pid));
       return setInterval(() => {}, 1000);
     }
     case 'flood': {

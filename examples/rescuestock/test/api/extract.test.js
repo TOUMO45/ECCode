@@ -217,6 +217,31 @@ describe('SEC-7: post-validation normalisation never trusts the model', () => {
     assert.equal(run(output({ capacityMl: field(250, 'user_text', '  250   ml ') }), 'need 250 ml please').fields.capacityMl.value, 250, 'whitespace is collapsed');
   });
 
+  test('SEC-7: a number the quote does not contain, as digits or as a number word, is unknown even when the quote has no digits (TR-D-1)', () => {
+    // The reviewer's cases: the quote is in the text, but it carries no digits and no number word for the stored value.
+    const text = 'We run a cafe: we need cups and two pickups, please.';
+    const n = run(output({
+      cupQuantity: field(777, 'user_text', 'cups'),
+      maxPickups: field(5, 'user_text', 'two pickups'),
+      capacityMl: field(250, 'user_text', 'a cafe'),
+    }), text);
+    for (const name of ['cupQuantity', 'maxPickups', 'capacityMl']) {
+      assert.deepEqual(n.fields[name], { value: null, status: 'unknown', provenance: 'none', originalWording: null }, name);
+    }
+    assert.deepEqual(n.questions.map((q) => q.field), ['cupQuantity', 'capacityMl', 'maxPickups']);
+    // The forms that stay known: digits, Arabic-Indic digits, English and Arabic number words, the Arabic dual.
+    const known = (name, value, wording, source = wording) => run(output({ [name]: field(value, 'user_text', wording) }), source).fields[name];
+    assert.equal(known('maxPickups', 2, 'two pickups', text).value, 2);
+    assert.equal(known('maxPickups', 2, 'نقطتي استلام', 'وبحد أقصى نقطتي استلام').value, 2);
+    assert.equal(known('maxPickups', 3, 'ثلاثة نقاط').value, 3);
+    assert.equal(known('cupQuantity', 2, 'كوبين').value, 2);
+    assert.equal(known('cupQuantity', 250, '٢٥٠ كوب').value, 250);
+    assert.equal(known('cupQuantity', 250, '250 cups').value, 250);
+    assert.equal(known('cupQuantity', 1200, '1,200 cups').value, 1200);
+    assert.equal(known('maxPickups', 4, 'Four pickups').value, 4);
+    assert.equal(known('maxPickups', 2, 'two pickups', text).provenance, 'user_text');
+  });
+
   test('SEC-7: image provenance without an image is downgraded', () => {
     const out = output({ capacityMl: field(250, 'image', '250 ml') });
     assert.equal(run(out, EN, false).fields.capacityMl.status, 'unknown');
@@ -293,5 +318,36 @@ describe('RS-01: the route uses the normalisation on a provider that does not va
     assert.equal(extraction.fields.diameterMm.status, 'unknown');
     assert.equal(extraction.model, 'liar');
     assert.ok(extraction.questions.some((q) => q.field === 'diameterMm'));
+  });
+
+  test('SEC-7: a model-invented number with a digit-free quote is stored unknown with its question, through the route (TR-D-1)', async () => {
+    const text = 'I need cups and two pickups, 250 ml';
+    const liar = {
+      id: 'fake', simulated: true, model: 'liar',
+      extract: async () => ({
+        output: {
+          language: 'en', addressedToAssistant: false, questions: [],
+          fields: {
+            ...unknownExtraction().fields,
+            cupQuantity: { value: 777, provenance: 'user_text', originalWording: 'cups' },
+            maxPickups: { value: 5, provenance: 'user_text', originalWording: 'two pickups' },
+            capacityMl: { value: 250, provenance: 'user_text', originalWording: '250 ml' },
+          },
+        },
+        usage: { model: 'liar', costUsd: 0, inputTokens: 1, outputTokens: 1, latencyMs: 1 },
+      }),
+    };
+    h.app.deps.ai = createAiRuntime({ db: h.db, clock: h.clock, config: h.config, provider: liar });
+    const id = await newRequest(cafe1, text);
+    const res = await extract(cafe1, id);
+    assert.equal(res.status, 200, res.text);
+    const { fields, questions } = res.json.extraction;
+    assert.deepEqual(fields.cupQuantity, { value: null, status: 'unknown', provenance: 'none', originalWording: null });
+    assert.deepEqual(fields.maxPickups, { value: null, status: 'unknown', provenance: 'none', originalWording: null });
+    assert.equal(fields.capacityMl.value, 250);
+    assert.deepEqual(questions.map((q) => q.field), ['cupQuantity', 'maxPickups']);
+    const stored = JSON.parse(h.db.prepare('SELECT fields_json FROM extractions WHERE request_id = ?').get(id).fields_json);
+    assert.equal(stored.cupQuantity.status, 'unknown');
+    assert.equal(stored.maxPickups.provenance, 'none');
   });
 });

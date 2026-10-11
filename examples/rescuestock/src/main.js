@@ -89,7 +89,7 @@ export async function loadAdapterFactories(config, { log, clock }) {
 }
 
 // Builds everything and starts listening. Returns { app, db, config, port, ai, retention, close }.
-export async function startApp({ env = process.env, log = createLogger(), clock = systemClock, routes = [] } = {}) {
+export async function startApp({ env = process.env, log = createLogger(), clock = systemClock, routes = [], provider = null } = {}) {
   // Files the process creates (database, WAL files, uploads) are owner-only (SEC-14).
   process.umask(0o077);
 
@@ -111,7 +111,10 @@ export async function startApp({ env = process.env, log = createLogger(), clock 
 
     // The model: the configured provider, or the labelled fake when its adapter is unavailable. The configuration the app
     // sees names the provider that really runs, so /api/config and the labels never claim a model that is not there.
-    const ai = createAiRuntime({ db, clock, config: requested, factories: await loadAdapterFactories(requested, { log, clock }) });
+    // `provider` is a seam for tests (an ExtractionProvider used as is); production passes none.
+    const ai = createAiRuntime({
+      db, clock, config: requested, provider, factories: provider ? {} : await loadAdapterFactories(requested, { log, clock }),
+    });
     if (ai.selection.fellBack) log.warn('extraction.fallback', { provider: ai.provider.id, kind: ai.selection.requested });
     if (ai.provider.id !== requested.extractionProvider) config = Object.freeze({ ...requested, extractionProvider: ai.provider.id });
 
@@ -129,6 +132,13 @@ export async function startApp({ env = process.env, log = createLogger(), clock 
       retention,
       async close() {
         await retention.stop();
+        // TR-D-9: kill in-flight CLI children (their own process groups) before the app drains. Adapters without close() (the
+        // fake, the API adapter) have nothing to release; a failing close never blocks the shutdown.
+        try {
+          if (typeof ai.provider.close === 'function') await ai.provider.close();
+        } catch (err) {
+          log.warn('extraction.close_failed', { code: err && err.code ? String(err.code) : 'CLOSE_FAILED', kind: err && err.name });
+        }
         await app.close();
         db.close();
       },
