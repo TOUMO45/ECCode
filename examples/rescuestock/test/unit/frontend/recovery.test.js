@@ -774,7 +774,7 @@ test('RS-30: a forced reset needs a reason of 10 to 500 characters, an ordinary 
   });
   const stranded = resetResultModel(recovery.get('admin-reset-forced-stranded').response, SANDBOX_CONFIG);
   assert.equal(stranded.text, 'The demo was reset. 3 payment operations were archived.');
-  assert.deepEqual(stranded.stranded, [{ text: 'Operation 42: unknown, plan executing' }]); // FU-54: the contract fixture now carries planStatus
+  assert.deepEqual(stranded.stranded, [{ text: 'Operation 42: unknown, plan non executable' }]); // FU-54: the contract fixture now carries planStatus
   // FU-54: only the Sandbox adapter has a dashboard to check; the fake provider's records are gone with the reset
   assert.match(stranded.strandedIntro, /PayPal Sandbox dashboard/);
   assert.doesNotMatch(resetResultModel(recovery.get('admin-reset-forced-stranded').response, contract('config').response).strandedIntro, /PayPal Sandbox dashboard/);
@@ -850,7 +850,7 @@ test('RS-30: the admin screen hides the controls of other kinds, shows what each
   assert.deepEqual(calls.at(-1), ['reset', { force: true, reason: 'Demo retake before the judging session' }]);
   assert.match(textOf(byTestId(container, 'reset-done')), /The demo was reset\. 3 payment operations were archived\./);
   assert.match(textOf(byTestId(container, 'reset-done')), /PayPal Sandbox dashboard/);
-  assert.equal(textOf(byTestId(container, 'reset-stranded')), 'Operation 42: unknown, plan executing');
+  assert.equal(textOf(byTestId(container, 'reset-stranded')), 'Operation 42: unknown, plan non executable');
   assert.ok(announced.includes('Applying…') && announced.includes('The demo was reset.'));
   assert.ok(byTestId(container, 'timeline-table') && byTestId(container, 'metrics-model'), 'timeline and metrics are loaded');
 });

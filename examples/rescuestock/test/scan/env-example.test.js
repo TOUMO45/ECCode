@@ -87,8 +87,8 @@ const DEFAULTS = {
   RS_PAYPAL_WEBHOOK_ALGOS: { value: '', active: false },
 };
 
-// Read by test/live/**, test/live/run-live-model.js or src/services/webhooks.js, not by src/config.js (so the "config reads it" and
-// "must be listed" rules below do not apply to them, but the "listed means commented out with the default" rules do).
+// Read by test/live/**, test/live/run-live-model.js or src/services/webhooks.js, not by src/config.js (so the "config reads it" rule below
+// does not apply to them). They MUST be listed in .env.example, commented out and empty (FU-21).
 const LIVE_ONLY = ['RS_LIVE_MODEL_CEILING_USD', 'RS_LIVE_PAYPAL_HEADED', 'RS_LIVE_PAYPAL_WEBHOOK_SAMPLE', 'RS_PAYPAL_WEBHOOK_ALGOS'];
 const LIVE_ONLY_READERS = {
   RS_LIVE_MODEL_CEILING_USD: ['test/live/run-live-model.js'],
@@ -157,9 +157,9 @@ test('NFR4: every process.env name read by src/config.js appears in .env.example
   const missing = read_.filter((n) => !byName.has(n));
   assert.deepEqual(missing, [], `missing from .env.example: ${missing.join(', ')}`);
   // Names that must be in because the spec's Deployment table and the register limit say so.
-  for (const n of [...Object.keys(DEFAULTS).filter((name) => !LIVE_ONLY.includes(name)), ...SECRET_NAMES]) {
+  for (const n of [...Object.keys(DEFAULTS), ...SECRET_NAMES]) {
     assert.ok(byName.has(n), `${n} is not in .env.example`);
-    assert.ok(read_.includes(n), `${n} is in the table but src/config.js does not read it`);
+    if (!LIVE_ONLY.includes(n)) assert.ok(read_.includes(n), `${n} is in the table but src/config.js does not read it`);
   }
 });
 
@@ -185,12 +185,12 @@ test('NFR4: secret lines are commented out, because the loader refuses placehold
   for (const name of SECRET_NAMES) {
     assert.equal(byName.get(name).active, false, `${name} must stay commented out`);
   }
-  for (const name of Object.keys(DEFAULTS).filter((n) => !LIVE_ONLY.includes(n) || byName.has(n))) {
+  for (const name of Object.keys(DEFAULTS)) {
     assert.equal(byName.get(name).active, defaultOf(name).active, `${name} active state differs from the listed default`);
   }
 });
 
-test('NFR4 / FU-21: the live-only variables are inactive documented defaults: read by their live runner or the webhook route, not by loadConfig, named by the README, commented out and empty if .env.example lists them', () => {
+test('NFR4 / FU-21: the live-only variables are inactive documented defaults: read by their live runner or the webhook route, not by loadConfig, named by the README, listed in .env.example, commented out and empty', () => {
   const byConfig = new Set(namesReadByConfig());
   const readme = read('README.md');
   for (const name of LIVE_ONLY) {
@@ -199,10 +199,9 @@ test('NFR4 / FU-21: the live-only variables are inactive documented defaults: re
     for (const file of LIVE_ONLY_READERS[name]) assert.ok(new RegExp(`\\b${name}\\b`).test(read(file)), `${name} is not read by ${file} any more`);
     assert.ok(new RegExp(`\\b${name}\\b`).test(readme), `README must name ${name}`);
     const listed = byName.get(name);
-    if (listed) {
-      assert.equal(listed.active, false, `${name} must stay commented out in .env.example`);
-      assert.equal(listed.value, '', `${name} must have no value in .env.example`);
-    }
+    assert.ok(listed, `${name} must be listed in .env.example (commented out, empty)`);
+    assert.equal(listed.active, false, `${name} must stay commented out in .env.example`);
+    assert.equal(listed.value, '', `${name} must have no value in .env.example`);
   }
 });
 

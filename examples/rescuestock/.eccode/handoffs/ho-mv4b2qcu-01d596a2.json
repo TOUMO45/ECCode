@@ -1,0 +1,58 @@
+{
+  "from": "backend-engineer",
+  "to": "security-reviewer",
+  "task": "rework-7",
+  "objective": "Phase F and G follow-ups in files no other task owns (13 items, round 1, ho-mv4aker9-014c05a3), plus round 2: the foreign tests that pin the stranded-entry shape and the canonical sentence updated exactly, and the four live-only variables required in .env.example.",
+  "context": "ROUND 1 (committed as f4dbe92, handoff ho-mv4aker9-014c05a3) changed: src/services/orders.js, src/services/admin.js, src/config.js, src/services/retention.js, test/api/followups-g-rework.test.js (new), test/api/uploads-retention.test.js, test/timing/planner-sec-b1.test.js, test/scan/env-example.test.js, package.json, package-lock.json, README.md; src/routes/admin.js needed no change. Decisions: dec-mv46ovf2-017bf12d as corrected by dec-mv4740d4-015b3589, dec-mv46ovt6-01a662af, dec-mv48g2fj-018e0ca7; security conditions SEC-F2-C; review rev-mv4954l0-01d87f48. ROUND 2 (this claim, base f4dbe92) changed only the files in filesChanged. All round-1 item results below are unchanged and still hold on the final tree. The scratchpad clock-shift preload (scratchpad/rework7-tools/shift-clock.mjs) is not in the repository; it is loaded through NODE_OPTIONS for one run only.",
+  "inputs": [
+    ".eccode/handoffs/ho-mv4aker9-014c05a3.json",
+    "scratchpad/rework7/other-files-patch.diff",
+    "test/scan/env-example.test.js",
+    "test/api/contracts.test.js"
+  ],
+  "dependencies": [],
+  "expectedOutput": "All 13 items delivered with tests; the full suite green at +0 and +30 days and the browser suite green.",
+  "acceptanceCriteria": [
+    "Round 2: planStatus and owedRefund pinned exactly, and the canonical sentence pinned exactly, in the tests that pin the stranded entry and the labels",
+    "Round 2: the four live-only variables are listed in .env.example (commented, empty) and env-example.test.js requires them; a recorded run fails without the lines",
+    "Full npm test +0 and +30 days and npm run test:browser green on the real tree under the suite lock",
+    "All 13 round-1 item results kept"
+  ],
+  "completedWork": "ROUND 2. (1) The foreign files are changed to the new correct values, none weakened: test/api/admin-basic.test.js and test/api/admin-reset.test.js pin the whole stranded entry with deepEqual including planStatus (non_executable after the reset ended the approved plan; executing for the pending capture) and owedRefund false; test/fixtures/contracts/recovery/admin-reset-forced-stranded.json carries planStatus 'non_executable' and owedRefund false, and test/api/contracts.test.js now compares those two fields by VALUE against the server (values: stranded.0.planStatus, stranded.0.owedRefund), not only by type; test/unit/frontend/recovery.test.js expects 'Operation 42: unknown, plan non executable' at both places (the UI already renders the field); test/fixtures/contracts/labels/config-sandbox-single-credential.json holds the canonical sentence, and the 'config-sandbox-test-mode.json' contract row of contracts.test.js pins labels.singleCredentialNotice by value (sameValues), so the exact sentence 'All demo suppliers are paid to one Sandbox account' is pinned both in followups-g-rework.test.js (round 1) and against the server response. Mutants in fresh scratch dirs: owedRefund always true (scratchpad/rework7/r2-owed-true.diff) is killed, 3 red (ev:ev-mv4av3y6-01fbca8e); the old sentence restored (r2-old-sentence.diff) is killed, 1 red (ev:ev-mv4avigw-01fa6a05). (2) .env.example lists RS_LIVE_MODEL_CEILING_USD, RS_LIVE_PAYPAL_HEADED, RS_LIVE_PAYPAL_WEBHOOK_SAMPLE and RS_PAYPAL_WEBHOOK_ALGOS as commented, empty lines under a comment that only the live suites and the webhook route read them, and the prose block below it is reworded to match; test/scan/env-example.test.js no longer exempts them from 'must be listed' (they stay exempt only from 'src/config.js reads it'), and a new assertion fails when one is missing or active or has a value. Failing without the lines: ev:ev-mv4avxqb-016f0a1e (3 red: 'RS_LIVE_MODEL_CEILING_USD is not in .env.example', and two consequences); with the lines: ev:ev-mv4awgg6-0190ea90 (27 of 27, env-example and docs scan tests). (3) Runs on the real tree under flock /tmp/rescuestock-suite.lock: npm test +0 days 2341 tests, 2333 pass, 0 fail, 8 skipped (ev:ev-mv4ayse3-01219089); npm run test:browser 14 of 14 (ev:ev-mv4azp6h-01093a99); npm test with the preload at +30 days via NODE_OPTIONS, 2341 / 2333 / 0 fail / 8 skipped (ev:ev-mv4b20c3-01dd3314). ROUND 1 ITEM RESULTS (unchanged). 1 FU-59: handoverAllowed blocks an order whose OWN payment operation is refunded (409 HANDOVER_BLOCKED on ready and handover, canMarkReady/canHandover false); the plan-wide rule for the other blocking states stays; tests: refunded order blocked, sibling ready and collected, ready-before-refund order cannot be handed over, refund_pending/refund_failed of A still block B. 2 FU-58/FU-56: checkRefusalReason refuses U+202A-U+202E, U+2066-U+2069, U+2028/2029, DEL, C1 and C0 except tab/LF/CR (existing 422, built from code point ranges so no invisible character is in the source), LRM/RLM stay valid; the admin supplier_refusal reason uses the same function (bounds, blank, controls). 3 FU-54: stranded entries carry planStatus and owedRefund (captured with cancel_requested_at); audit keeps id and status. 4 FU-55: refund_order 404 (unknown or archived) and 422 (malformed body) write a denied audit row (other fault kinds not audited on 422). 5 FU-57: refund_failed operations count in unresolved (reservations with an escalation do not). 6 the server sends the canonical sentence. 7 FU-21: the four variables are inactive documented defaults in the scan test with their real readers, named by the README, and now listed in .env.example. 8 FU-12: package-lock.json generated by npm install --package-lock-only through the proxy (4 packages) and the package.json description is emergency cup and lid purchasing for cafes; a scan test pins both. 9 README states the delivered refunded-order rule. 10 TR-R6-1: the 50/100/250 ms per-call bounds are back with two re-timings (fail only if the minimum of three exceeds), 1000 ms ceiling on the first timing, p95 limit 100 ms over the 150 catalogs; pl-delay survives the old file and is killed by the new one (message 'took 300.2 ms, then 300.3 and 300.6 ms ... minimum of three ... exceeds the per-call bound 50 ms'); green 3 of 3 under 12 busy loops. 11 TR-R6-2: comment cites retention.js L35 and spec L773 correctly. 12 TR-R6-4: the 7 d + 1 min test stamps the file with the pinned time and asserts imageFilesLeft 0, orphans 0, no new image.orphan_delete, no image file left; the no-unlink mutant survives the old test at +0 and +14 days and is killed by the new one at +0, +14, +30 and +400 days. 13 Date robustness: audit of src (the only file-system-time versus injected-clock mix is the orphan age in retention.js; cookies use Max-Age; sessions, CSRF, rate limits, token cache, webhook window, leases all use the injected clock; no TLS), a comment, a boundary test (exactly 1 day removed, 1 ms younger kept, a file stamped after the pinned clock kept; killed by the |age| mutant) and explicit utimes stamping; proof by the clock-shift preload: full locked suite at +0, +14, +30 days green in round 1 on a patched copy and now at +0 and +30 on the real tree; browser suite with the Node side at +30 days 14 of 14. Round-1 evidence ids: ev:ev-mv4aife9-0177979a, ev:ev-mv49bx9k-01e11c8e, ev:ev-mv49y4jx-019255a9, ev:ev-mv4aeunc-01f4d496, ev:ev-mv4ak50t-01127e9d, ev:ev-mv4ak5zf-01832ede, ev:ev-mv4ajsjq-01e0ae52, ev:ev-mv49xotr-01551c66, ev:ev-mv4aijx8-01ecceb2, ev:ev-mv49ho1l-01dbb4c6, ev:ev-mv4a8wvv-0178c772, ev:ev-mv4ab3q6-0166b77a, ev:ev-mv4ade0v-01ca2bd5, ev:ev-mv4aea7f-01c08c76.",
+  "filesChanged": [
+    ".env.example",
+    "test/scan/env-example.test.js",
+    "test/api/admin-basic.test.js",
+    "test/api/admin-reset.test.js",
+    "test/api/contracts.test.js",
+    "test/fixtures/contracts/recovery/admin-reset-forced-stranded.json",
+    "test/fixtures/contracts/labels/config-sandbox-single-credential.json",
+    "test/unit/frontend/recovery.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv4ayse3-01219089",
+    "ev:ev-mv4azp6h-01093a99",
+    "ev:ev-mv4b20c3-01dd3314",
+    "ev:ev-mv4awgg6-0190ea90",
+    "ev:ev-mv4avxqb-016f0a1e",
+    "ev:ev-mv4av3y6-01fbca8e",
+    "ev:ev-mv4avigw-01fa6a05"
+  ],
+  "remainingIssues": [
+    "FU-55 covers refund_order only (404 and 422); 422 on the other fault kinds writes no audit row.",
+    "FU-57 counts operations in refund_failed; reservations with an escalation are not counted.",
+    "Chromium itself and SQLite are not time-shifted in the +30 day run (Chromium cookies use Max-Age, the app uses no SQL clock).",
+    "The final-tree record: HEAD 003b4da already contains the first step of round 2 (the copied patch) because the orchestrator committed it mid-run; the changes after that (value pins in contracts.test.js, fixture planStatus non_executable, the .env.example lines, the stricter scan test) are uncommitted."
+  ],
+  "nextAction": "security-reviewer: review SEC-F2-C items 1-3, the audit and the date audit; delivery-lead: commit.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This rework builds no hook or guard that maps file writes to a project record or root (supplier order guard, admin audit, retention, scan and contract tests, docs), so the lesson's applies-when conditions do not hold."
+    }
+  ]
+}

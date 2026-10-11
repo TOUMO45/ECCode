@@ -230,7 +230,7 @@ const TABLE = [
   // public and auth
   { inline: { status: 'ok', requestId: 'req-0000001' }, route: 'GET /api/health', status: 200, world: 'main', run: (w) => w.anon().get('/api/health') },
   { fixture: 'config.json', world: 'main', run: (w) => w.anon().get('/api/config') },
-  { fixture: 'config-sandbox-test-mode.json', world: 'sandbox', run: (w) => w.anon().get('/api/config') },
+  { fixture: 'config-sandbox-test-mode.json', world: 'sandbox', run: (w) => w.anon().get('/api/config'), sameValues: ['labels.singleCredentialNotice'] }, // the canonical sentence (dec-mv48g2fj-018e0ca7) is pinned, not just its type
   { fixture: 'auth-csrf.json', world: 'main', run: (w) => w.anon().get('/api/auth/csrf') },
   {
     fixture: 'auth-register.json',
@@ -806,6 +806,8 @@ const RECOVERY = [
       await reservedWorld(h, { pay: ['A'] });
       return adminPost(h, { force: true, reason: 'Contract test: one authorization cannot be voided' }, '/api/admin/reset');
     },
+    // FU-54: the plan status as of the archive (the reset ended the approved plan) and owedRefund (false: nothing captured) are pinned exactly
+    values: ['stranded.0.planStatus', 'stranded.0.owedRefund'],
   },
 
   // supplier refuse errors and the re-plan answer
