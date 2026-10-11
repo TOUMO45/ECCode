@@ -200,7 +200,8 @@ describe('RS-37: forced reset archives with a recorded reason and lists what the
     const res = await reset(h, { force: true, reason });
     assert.equal(res.status, 200, res.text);
     assert.equal(res.json.archivedOperations, 2);
-    assert.deepEqual(res.json.stranded, [{ id: ops[0].id, status: 'authorized', providerAuthorizationId: 'FAKE-AUTH-9', providerCaptureId: null }]);
+    // FU-54: planStatus (as of the archive: the reset ended the approved plan) and owedRefund (false: not a captured operation)
+    assert.deepEqual(res.json.stranded, [{ id: ops[0].id, status: 'authorized', providerAuthorizationId: 'FAKE-AUTH-9', providerCaptureId: null, planStatus: 'non_executable', owedRefund: false }]);
     assert.equal(count(h, 'SELECT COUNT(*) AS n FROM payment_operations'), 2, 'never deleted');
     assert.equal(count(h, 'SELECT COUNT(*) AS n FROM payment_operations WHERE archived_at IS NOT NULL'), 2);
     assert.equal(count(h, 'SELECT COUNT(*) AS n FROM provider_calls WHERE archived_at IS NOT NULL'), 1);

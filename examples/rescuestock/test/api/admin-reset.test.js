@@ -182,7 +182,8 @@ describe('SEC-11: a forced reset voids what is authorized before it archives', (
     const probe = spy(h);
     const res = await reset(h, { force: true, reason: REASON });
     assert.equal(res.status, 200, res.text);
-    assert.deepEqual(res.json.stranded, [{ id: op(h, w.orders.A).id, status: 'capture_pending', providerAuthorizationId: authA, providerCaptureId: pendingCaptureId }]);
+    // FU-54: the plan is still executing; a pending capture is not "captured money owed back"
+    assert.deepEqual(res.json.stranded, [{ id: op(h, w.orders.A).id, status: 'capture_pending', providerAuthorizationId: authA, providerCaptureId: pendingCaptureId, planStatus: 'executing', owedRefund: false }]);
     assert.deepEqual(sentKeys(h, 'void'), [`so:${w.orders.B}:void:1`], 'B was authorized, so B was voided; A holds a capture and is not');
     assert.equal(op(h, w.orders.B).status, 'voided');
     assert.equal(op(h, w.orders.A).status, 'capture_pending');
