@@ -1,4 +1,7 @@
-// Launcher of the opt-in live PayPal Sandbox suite (`npm run test:live-paypal`). It refuses (exit 2, a named message on stderr,
+// Optional launcher of the opt-in live PayPal Sandbox suite, giving ONE clean exit code 2 for the whole run. It is NOT wired into
+// package.json: test/unit/config/node-version.test.js pins the test:live-paypal line to the spec's `node --test` form, under which
+// each file refuses by itself (exit 2) and node:test reports the run as failed (exit 1). To use the launcher, change that line and
+// that test together. It refuses (exit 2, a named message on stderr,
 // nothing on stdout, no network) unless RS_LIVE_PAYPAL=1 and the PayPal Sandbox credentials are present (live-support.js
 // evaluateLiveLaunch), and only then runs the test files under node:test, one at a time. The exit code of the run is the exit
 // code of node:test (0 all passed, 1 a failure). Every test file refuses on its own too, so running one directly is safe.

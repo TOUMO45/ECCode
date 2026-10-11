@@ -252,10 +252,9 @@ describe('NFR3: the live PayPal suite files refuse without RS_LIVE_PAYPAL=1 (exi
     }
   });
 
-  test('NFR3: package.json keeps the check-node prefix on test:live-paypal and the live files stay out of npm test', () => {
+  test('NFR3: test:live-paypal keeps the check-node prefix and runs the live files (each refuses by itself); they stay out of npm test', () => {
     const pkg = JSON.parse(readFileSync(join(PROJECT_ROOT, 'package.json'), 'utf8'));
     assert.ok(pkg.scripts['test:live-paypal'].startsWith('node scripts/check-node.cjs && '));
-    assert.match(pkg.scripts['test:live-paypal'], /test\/live\/paypal\/run-live-paypal\.js/);
     assert.match(pkg.scripts['test:live-paypal'], /test\/live\/paypal\/\*\*\/\*\.test\.js/);
     assert.equal(/live/.test(pkg.scripts.test), false);
   });
