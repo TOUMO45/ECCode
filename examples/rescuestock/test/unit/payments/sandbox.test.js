@@ -339,6 +339,38 @@ describe('the wire mapping', () => {
     });
   });
 
+  test('createOrder: invoice_id carries the attempt (rs-<referenceId>-a<attempt>), so an A13 re-create never repeats an invoice id; attempt 1 and no attempt are unchanged', async () => {
+    const { stub, provider } = await setup();
+    const withAttempt = (requestId, attempt) => provider.createOrder({
+      merchantKey: 'DEFAULT', requestId, amountCents: 1250, currency: 'USD', referenceId: 'so-77', returnUrl: RETURN_URL, cancelUrl: CANCEL_URL,
+      ...(attempt === undefined ? {} : { attempt }),
+    });
+    const invoiceOf = () => stub.lastCall('create_order').body.purchase_units[0];
+    assert.equal((await withAttempt('so:77:create_order:1', 1)).kind, 'ok');
+    assert.equal(invoiceOf().invoice_id, 'rs-so-77-a1');
+    assert.equal((await withAttempt('so:77:create_order:2', 2)).kind, 'ok');
+    assert.equal(invoiceOf().invoice_id, 'rs-so-77-a2');
+    assert.equal(invoiceOf().reference_id, 'so-77', 'reference and custom ids stay attempt-free');
+    assert.equal(invoiceOf().custom_id, 'so-77');
+    assert.equal((await withAttempt('so:77:create_order:12', 12)).kind, 'ok');
+    assert.equal(invoiceOf().invoice_id, 'rs-so-77-a12');
+    assert.equal((await withAttempt('so:78:create_order:1')).kind, 'ok');
+    assert.equal(invoiceOf().invoice_id, 'rs-so-77-a1', 'no attempt means attempt 1');
+    const ids = stub.callsOf('create_order').map((c) => c.body.purchase_units[0].invoice_id);
+    assert.deepEqual(ids, ['rs-so-77-a1', 'rs-so-77-a2', 'rs-so-77-a12', 'rs-so-77-a1']);
+  });
+
+  test('createOrder: an attempt that is not a positive integer up to 999 is rejected 400 INVALID_ARGUMENT before anything is sent', async () => {
+    const { stub, provider } = await setup();
+    for (const attempt of [0, -1, 1.5, 1000, '2', NaN, Infinity, {}, [], true]) {
+      const outcome = await provider.createOrder({
+        merchantKey: 'DEFAULT', requestId: 'so:77:create_order:1', amountCents: 100, currency: 'USD', referenceId: 'so-77', attempt, returnUrl: RETURN_URL, cancelUrl: CANCEL_URL,
+      });
+      assert.deepEqual([outcome.kind, outcome.httpStatus, outcome.issue], ['rejected', 400, 'INVALID_ARGUMENT'], String(attempt));
+    }
+    assert.equal(stub.calls.length, 0, 'the double saw nothing');
+  });
+
   test('the ok payloads carry provider paypal-sandbox and sandbox: true, and never the buyer\'s payer data', async () => {
     const { stub, provider } = await setup();
     const o = await create(provider, 'so:1:create_order:1');

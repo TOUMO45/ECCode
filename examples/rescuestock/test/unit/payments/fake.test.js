@@ -132,6 +132,22 @@ describe('the fake as a PaymentProvider', () => {
     assert.equal(w.calls().length, 0, 'a call that never reached the provider is not counted');
   });
 
+  test('createOrder takes the attempt like the Sandbox adapter: the fake stores no invoice id, a re-create (attempt 2) is a new order, a bad attempt is rejected the same way', async () => {
+    const w = world();
+    const base = { merchantKey: w.M, amountCents: 100, currency: 'USD', referenceId: 'so-1', returnUrl: RETURN_URL, cancelUrl: CANCEL_URL };
+    const first = await w.provider.createOrder({ ...base, requestId: 'so:1:create_order:1', attempt: 1 });
+    const second = await w.provider.createOrder({ ...base, requestId: 'so:1:create_order:2', attempt: 2 });
+    assert.deepEqual([first.kind, second.kind], ['ok', 'ok']);
+    assert.notEqual(first.value.orderId, second.value.orderId);
+    assert.equal(w.db.prepare('SELECT COUNT(*) AS n FROM fake_paypal_orders').get().n, 2);
+    assert.equal(JSON.stringify(second.value).includes('rs-so-1'), false, 'no invoice id appears in the answer');
+    for (const attempt of [0, -1, 1.5, 1000, '2', NaN]) {
+      const outcome = await w.provider.createOrder({ ...base, requestId: 'so:1:create_order:3', attempt });
+      assert.deepEqual([outcome.kind, outcome.httpStatus, outcome.issue], ['rejected', 400, 'INVALID_ARGUMENT'], String(attempt));
+    }
+    assert.equal(w.db.prepare('SELECT COUNT(*) AS n FROM fake_paypal_orders').get().n, 2, 'a rejected attempt stored nothing');
+  });
+
   test('a resource belongs to its merchant: another merchant key sees 404 for it and cannot change it', async () => {
     const w = world();
     const a = await w.authorized(1250, 'A');

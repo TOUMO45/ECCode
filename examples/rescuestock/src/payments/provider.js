@@ -50,7 +50,8 @@ export function toPayPalValue(cents) {
 // ---- argument validation (the boundary of the port) ---------------------------------------------------------------------
 
 const ID = /^[A-Za-z0-9._-]{1,64}$/;
-const REFERENCE = /^[A-Za-z0-9._:-]{1,64}$/;
+export const MAX_ATTEMPT = 999;
+const REFERENCE =/^[A-Za-z0-9._:-]{1,64}$/;
 const REQUEST_ID = /^[A-Za-z0-9._:-]{1,108}$/;
 const invalid = () => rejected(400, 'INVALID_ARGUMENT');
 
@@ -78,6 +79,8 @@ export function checkArguments(kind, args) {
       if (!isAmount(args.amountCents) || args.currency !== 'USD') return invalid();
       if (typeof args.referenceId !== 'string' || !REFERENCE.test(args.referenceId)) return invalid();
       if (!isHttpUrl(args.returnUrl) || !isHttpUrl(args.cancelUrl)) return invalid();
+      // attempt (A13 re-create counter) is optional and defaults to 1; when given it is a positive integer up to MAX_ATTEMPT.
+      if (args.attempt !== undefined && !(Number.isInteger(args.attempt) && args.attempt >= 1 && args.attempt <= MAX_ATTEMPT)) return invalid();
       return null;
     case 'get_order':
     case 'authorize':

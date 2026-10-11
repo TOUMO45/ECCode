@@ -202,11 +202,12 @@ export function createSandboxProvider({
 
     createOrder(args) {
       return guarded('create_order', args, async () => {
-        const { merchantKey, requestId, amountCents, currency, referenceId, returnUrl, cancelUrl } = args;
+        const { merchantKey, requestId, amountCents, currency, referenceId, returnUrl, cancelUrl, attempt = 1 } = args;
+        // PayPal rejects a repeated invoice_id (DUPLICATE_INVOICE_ID): a re-create after A13 is attempt + 1, so its invoice id differs.
         const body = JSON.stringify({
           intent: 'AUTHORIZE',
           purchase_units: [{
-            reference_id: referenceId, custom_id: referenceId, invoice_id: `rs-${referenceId}-a1`, description: 'RescueStock demo order (Sandbox)',
+            reference_id: referenceId, custom_id: referenceId, invoice_id: `rs-${referenceId}-a${attempt}`, description: 'RescueStock demo order (Sandbox)',
             amount: money(amountCents, currency),
           }],
           payment_source: {
