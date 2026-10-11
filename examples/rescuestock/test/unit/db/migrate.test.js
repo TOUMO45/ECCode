@@ -30,10 +30,10 @@ function copyMigrations() {
   return dir;
 }
 
-test('RS-38: migrations 001-005 apply to an empty database and create every table of the Data Design', () => {
+test('RS-38: migrations 001-006 apply to an empty database and create every table of the Data Design', () => {
   const db = memoryDb();
   const result = migrate(db, { clock: fixedClock(Date.UTC(2026, 9, 20)) });
-  assert.deepEqual(result.applied, [1, 2, 3, 4, 5]);
+  assert.deepEqual(result.applied, [1, 2, 3, 4, 5, 6]);
   assert.deepEqual(result.skipped, []);
   const expected = [
     'meta', 'suppliers', 'users', 'sessions', 'login_failures', 'products', 'bundle_items', 'compatibility', 'offers', 'inventory',
@@ -53,7 +53,7 @@ test('migrations are recorded in schema_migrations with the sha256 of each file 
   migrate(db, { clock: fixedClock(Date.UTC(2026, 9, 20, 7, 0, 0)) });
   const rows = db.prepare('SELECT version, name, sha256, applied_at FROM schema_migrations ORDER BY version').all();
   assert.deepEqual(rows.map((r) => [r.version, r.name]), [
-    [1, 'core'], [2, 'requests'], [3, 'planning'], [4, 'payments'], [5, 'fake_paypal'],
+    [1, 'core'], [2, 'requests'], [3, 'planning'], [4, 'payments'], [5, 'fake_paypal'], [6, 'autoincrement_ids'],
   ]);
   for (const file of loadMigrationFiles()) {
     const row = rows.find((r) => r.version === file.version);
@@ -70,15 +70,15 @@ test('migrate is idempotent: a second run skips every applied version', () => {
   migrate(db);
   const again = migrate(db);
   assert.deepEqual(again.applied, []);
-  assert.deepEqual(again.skipped, [1, 2, 3, 4, 5]);
-  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 5);
+  assert.deepEqual(again.skipped, [1, 2, 3, 4, 5, 6]);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 6);
   db.close();
 });
 
-test('migration file names are 001..005 with no gaps and no BEGIN/COMMIT of their own', () => {
+test('migration file names are 001..006 with no gaps and no BEGIN/COMMIT of their own', () => {
   const files = loadMigrationFiles();
   assert.deepEqual(files.map((f) => f.file), [
-    '001_core.sql', '002_requests.sql', '003_planning.sql', '004_payments.sql', '005_fake_paypal.sql',
+    '001_core.sql', '002_requests.sql', '003_planning.sql', '004_payments.sql', '005_fake_paypal.sql', '006_autoincrement_ids.sql',
   ]);
   for (const f of files) assert.doesNotMatch(f.sql, /^\s*(BEGIN|COMMIT|ROLLBACK)\b/im, f.file);
 });
@@ -144,7 +144,7 @@ test('NFR1: migrate refuses to start when an applied migration file was changed'
     (err) => err instanceof MigrationError && err.code === 'MIGRATION_CHECKSUM_MISMATCH' && err.version === 3 && /003|migration 3/.test(err.message),
   );
   // Nothing was applied or recorded by the refused run.
-  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 5);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 6);
   db.close();
 });
 
@@ -152,8 +152,8 @@ test('NFR1: a changed applied file is refused before any new migration is applie
   const dir = copyMigrations();
   const db = memoryDb();
   migrate(db, { dir });
-  // Add migration 006 and change 001; the change must be refused and 006 must stay unapplied.
-  writeFileSync(join(dir, '006_extra.sql'), 'CREATE TABLE extra_table (id INTEGER PRIMARY KEY);\n');
+  // Add migration 007 and change 001; the change must be refused and 007 must stay unapplied.
+  writeFileSync(join(dir, '007_extra.sql'), 'CREATE TABLE extra_table (id INTEGER PRIMARY KEY);\n');
   writeFileSync(join(dir, '001_core.sql'), `${readFileSync(join(dir, '001_core.sql'), 'utf8')}\n-- changed\n`);
   assert.throws(() => migrate(db, { dir }), (err) => err.code === 'MIGRATION_CHECKSUM_MISMATCH' && err.version === 1);
   assert.ok(!tableNames(db).includes('extra_table'));
@@ -164,10 +164,10 @@ test('a new migration file is applied on top of the existing ones (append-only)'
   const dir = copyMigrations();
   const db = memoryDb();
   migrate(db, { dir });
-  writeFileSync(join(dir, '006_extra.sql'), 'CREATE TABLE extra_table (id INTEGER PRIMARY KEY);\n');
+  writeFileSync(join(dir, '007_extra.sql'), 'CREATE TABLE extra_table (id INTEGER PRIMARY KEY);\n');
   const result = migrate(db, { dir });
-  assert.deepEqual(result.applied, [6]);
-  assert.deepEqual(result.skipped, [1, 2, 3, 4, 5]);
+  assert.deepEqual(result.applied, [7]);
+  assert.deepEqual(result.skipped, [1, 2, 3, 4, 5, 6]);
   assert.ok(tableNames(db).includes('extra_table'));
   db.close();
 });
@@ -186,12 +186,12 @@ test('a migration that fails half-way is rolled back completely and not recorded
   const db = memoryDb();
   migrate(db, { dir });
   writeFileSync(
-    join(dir, '006_broken.sql'),
+    join(dir, '007_broken.sql'),
     'CREATE TABLE half_done (id INTEGER PRIMARY KEY);\nINSERT INTO half_done (id) VALUES (1);\nINSERT INTO no_such_table (id) VALUES (1);\n',
   );
   assert.throws(() => migrate(db, { dir }), /no_such_table|no such table/);
   assert.ok(!tableNames(db).includes('half_done'), 'the partial table must be rolled back');
-  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 5);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 6);
   db.close();
 });
 
@@ -231,10 +231,10 @@ test('NFR1: two processes starting at the same time apply each migration exactly
     for (const r of results) assert.equal(r.code, 0, `child failed: ${r.err}`);
     const reports = results.map((r) => JSON.parse(r.out.trim()));
     const applied = reports.flatMap((r) => r.applied).sort((a, b) => a - b);
-    assert.deepEqual(applied, [1, 2, 3, 4, 5], 'every version applied by exactly one process');
-    for (const r of reports) assert.equal(r.applied.length + r.skipped.length, 5);
+    assert.deepEqual(applied, [1, 2, 3, 4, 5, 6], 'every version applied by exactly one process');
+    for (const r of reports) assert.equal(r.applied.length + r.skipped.length, 6);
     const db = openDb(file);
-    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 5);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 6);
     db.close();
   }
 });

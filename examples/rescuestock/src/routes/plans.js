@@ -8,12 +8,18 @@
 //     A repeat of the same key and request replays the stored answer with the header Idempotent-Replayed: true.
 //   POST /api/plans/:id/abandon   body {} -> 200 {plan, rescueStatus}: approved -> non_executable (PAYMENT_CANCELLED) and the void rule;
 //     a plan already abandoned answers 200 with its state. 404 | 409 INVALID_STATE (not approved)
-// The execute route is added by the saga task.
+//   POST /api/plans/:id/execute   body {} -> 202 {claimed: true, plan: {id, status: "executing"}} for the claim winner;
+//     200 {claimed: false, plan: {id, status}, rescueStatus} when the plan is already executing or executed (no provider call)
+//     404 | 409 PLAN_SUPERSEDED, PLAN_NOT_EXECUTABLE, RESERVATION_EXPIRED, AUTHORIZATION_PENDING, AUTHORIZATION_MISSING,
+//     COMMITMENT_MISSING, AUTHORIZATION_EXPIRED (the void rule ran), INVALID_STATE | 503 DB_BUSY
+//     The check order and the claim are one BEGIN IMMEDIATE and make no provider call (services/saga.js); the winner's saga then
+//     continues in the background of this process (ctx.saga.begin).
 import { AppError } from '../http/envelope.js';
 import { idParam, int, str, validateObject } from '../http/validate.js';
 import { abandonPlan } from '../services/payments.js';
 import { approvePlan, findOwnedPlan } from '../services/plans.js';
 import { reservationFingerprint, reservePlan } from '../services/reservations.js';
+import { buildRescueStatus } from '../services/view.js';
 
 const HASH = /^[0-9a-f]{64}$/;
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{16,128}$/;
@@ -64,6 +70,27 @@ export function register(router) {
       findOwnedPlan(ctx.db, ctx.user.id, planId); // 404 for a foreign plan before the body is read
       await ctx.body();
       return { status: 200, body: await abandonPlan(ctx, ctx.user, planId) };
+    },
+    { policy: 'customer' },
+  );
+
+  router.add(
+    'POST',
+    '/api/plans/:id/execute',
+    async (ctx) => {
+      const planId = idParam(ctx.params.id);
+      findOwnedPlan(ctx.db, ctx.user.id, planId); // 404 for a foreign plan before the body is read
+      await ctx.body();
+      const outcome = ctx.saga.claim(ctx, ctx.user, planId);
+      if (outcome.claimed) {
+        ctx.saga.begin(planId, outcome.epoch); // steps 2-4 continue in the background of this process
+        return { status: 202, body: { claimed: true, plan: { id: planId, status: 'executing' } } };
+      }
+      const plan = ctx.db.prepare('SELECT status, request_id FROM plan_versions WHERE id = ?').get(planId);
+      return {
+        status: 200,
+        body: { claimed: false, plan: { id: planId, status: plan.status }, rescueStatus: buildRescueStatus(ctx, plan.request_id, ctx.user.id) },
+      };
     },
     { policy: 'customer' },
   );

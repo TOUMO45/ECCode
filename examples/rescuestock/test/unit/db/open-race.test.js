@@ -106,6 +106,6 @@ test('PB-1: many processes opening and migrating one fresh database file at the 
     const results = await Promise.all(Array.from({ length: PROCESSES }, () => runMigrateChild(file)));
     for (const r of results) assert.equal(r.code, 0, `round ${round}: a process failed: ${r.err.trim().split('\n')[0]}`);
     const applied = results.flatMap((r) => JSON.parse(r.out.trim()).applied).sort((a, b) => a - b);
-    assert.deepEqual(applied, [1, 2, 3, 4, 5], `round ${round}: each migration applied exactly once`);
+    assert.deepEqual(applied, [1, 2, 3, 4, 5, 6], `round ${round}: each migration applied exactly once`);
   }
 });

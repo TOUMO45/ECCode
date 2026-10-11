@@ -29,6 +29,7 @@ import { PLAN_RATE_DEFAULT } from './services/plans.js';
 import { createNoopProvider, createVoidRule } from './services/void-rule.js';
 import { flushQueuedVoids } from './services/calls.js';
 import { createPayments } from './payments/provider.js';
+import { createSaga } from './services/saga.js';
 
 const DEFAULT_PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 const MAX_URL_LENGTH = 2048;
@@ -86,6 +87,7 @@ export function createApp({
   voidRule = null,
   voidProvider = null,
   uploadDeadlineMs = DEFAULT_UPLOAD_DEADLINE_MS,
+  executorId = undefined,
 } = {}) {
   if (!db || !config) throw new TypeError('createApp needs db and config');
 
@@ -115,6 +117,9 @@ export function createApp({
     // The F-TR-3 test hook (RS_TEST_HOOKS only): the return handler dies between its commit and the authorize send.
     killProcess: () => process.kill(process.pid, 'SIGKILL'),
   };
+  // The payment saga (ARCH-23): the execute route claims, this runner continues in the background of the process that won the
+  // claim. It reads `deps` at call time (payments, void rule). `executorId` defaults to <hostname>:<pid>:<8 hex>, fixed per process.
+  deps.saga = createSaga(deps, executorId === undefined ? {} : { executorId });
   let paymentsHandle = null;
   // Sessions, CSRF, throttles and the access hook (ARCH-25). An `authorize` passed in (a test double)
   // replaces the access hook only; deps.auth is always there for the auth routes.
@@ -261,6 +266,8 @@ export function createApp({
     async close() {
       if (server) await closeServer(server);
       server = null;
+      // No saga step starts after this; a run in flight pauses its lease (the next process's reconciler resumes the plan).
+      await deps.saga.stop();
       if (paymentsHandle) {
         const handle = paymentsHandle;
         paymentsHandle = null;
