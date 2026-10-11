@@ -1,13 +1,15 @@
 // src/payments/merchants.js (merchant mapping, decision dec-mv16pz0g-01d5c4c2) and the wiring of the payment adapters from the
 // configuration (src/payments/provider.js createPayments), plus the two src/config.js follow-ups that e1 owns:
 //   FU-27 (TR-D-7): RS_MODEL_TIMEOUT_MS is bounded to 1..40000.
-//   FU-25: RS_EXPLAIN_REPHRASE is no longer parsed (decision dec-mv330t7a-017a2211).
+//   FU-25: RS_EXPLAIN_REPHRASE is parsed again, default 0, with no consumer in src/ outside config
+//          (decision dec-mv38g19z-01f0a99f, which amends dec-mv330t7a-017a2211).
 // These config assertions live here because test/unit/config/limits.test.js is outside e1's ownership.
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { inspect } from 'node:util';
 import { ConfigError, MAX_MODEL_TIMEOUT_MS, Secret, loadConfig } from '../../../src/config.js';
 import { fixedClock } from '../../../src/clock.js';
@@ -191,11 +193,26 @@ describe('src/config.js follow-ups owned by e1', () => {
     }
   });
 
-  test('FU-25: RS_EXPLAIN_REPHRASE is not parsed any more: no explainRephrase in the configuration, and any value of the variable is ignored', () => {
-    assert.equal('explainRephrase' in loadConfig({}), false);
-    for (const value of ['0', '1', 'yes', 'true', '']) {
-      const c = loadConfig({ RS_EXPLAIN_REPHRASE: value });
-      assert.equal('explainRephrase' in c, false, value);
+  test('FU-25: RS_EXPLAIN_REPHRASE is parsed (default 0 = false, 1 = true, anything else refused by name) and nothing in src/ outside config reads it', () => {
+    assert.equal(loadConfig({}).explainRephrase, false);
+    assert.equal(loadConfig({ RS_EXPLAIN_REPHRASE: '0' }).explainRephrase, false);
+    assert.equal(loadConfig({ RS_EXPLAIN_REPHRASE: '1' }).explainRephrase, true);
+    for (const bad of ['yes', 'true', '2']) {
+      const err = refusal({ RS_EXPLAIN_REPHRASE: bad });
+      assert.deepEqual(err.variables, ['RS_EXPLAIN_REPHRASE'], bad);
     }
+    const srcDir = fileURLToPath(new URL('../../../src/', import.meta.url));
+    const consumers = [];
+    const walk = (dir) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (entry.name.endsWith('.js') && full !== join(srcDir, 'config.js')) {
+          if (/explainRephrase/.test(readFileSync(full, 'utf8'))) consumers.push(full);
+        }
+      }
+    };
+    walk(srcDir);
+    assert.deepEqual(consumers, [], 'no consumer of config.explainRephrase in src/ outside config.js (decision dec-mv38g19z-01f0a99f)');
   });
 });

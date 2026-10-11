@@ -1,6 +1,6 @@
 {
-  "seq": 841,
-  "lastHash": "780abc75d0df75307d1727ce763db398adb9c1dfa18c186f4c1c6fbcb6e95236",
+  "seq": 849,
+  "lastHash": "b518795c311271cd2d4bc839939fab1590a3b13511b8c5ed5a6c8f170b719c59",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -5906,24 +5906,9 @@
         "command": "ls test/unit/payments/fake.test.js test/unit/payments/sandbox.test.js test/unit/payments/merchants.test.js test/unit/payments/provider-contract.test.js test/api/fake-approval-headers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test \"test/unit/payments/**/*.test.js\" test/api/fake-approval-headers.test.js",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "backend-engineer",
-        "at": "2026-10-11T02:58:00.913Z",
-        "baseCommit": "4e8b453bca47cae2a13bae1ddb0d9391221fb0b7",
-        "runId": "run-mv38g1qj-0164b8e5",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.82,
-            "matched": 31,
-            "priority": 30,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
@@ -5947,28 +5932,24 @@
           "by": "backend-engineer",
           "at": "2026-10-11T02:58:00.913Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-11T03:00:07.215Z"
         }
       ],
       "completedBy": "backend-engineer",
-      "handoffId": "ho-mv38f42c-010fb379",
+      "handoffId": "ho-mv38jhfn-01d2ca04",
       "filesChanged": [
-        "src/payments/provider.js",
-        "src/payments/fake.js",
-        "src/payments/listener.js",
-        "src/payments/sandbox.js",
-        "src/payments/merchants.js",
         "src/config.js",
-        "test/unit/payments/fake.test.js",
-        "test/unit/payments/sandbox.test.js",
-        "test/unit/payments/merchants.test.js",
-        "test/unit/payments/provider-contract.test.js",
-        "test/api/fake-approval-headers.test.js"
+        "test/unit/payments/merchants.test.js"
       ],
       "lessonDecisions": [
         {
           "id": "mem-sd-mv1audrd-013b7102",
           "decision": "not-applicable",
-          "note": "The lesson applies when designing a hook or guard that maps file writes to a project record or root in a repository with several records; this task designs no hook, guard or root discovery, so its 'Applies when' list does not hold. The guard accepted every nested write here and correctly refused an inline python file writer, asking for the Edit tool.",
+          "note": "The lesson concerns hooks or guards mapping file writes to a project record or root in a repository with several records; this task designs no hook, guard or root discovery (it edits two config and test files), so its 'Applies when' list does not hold. The guard accepted every nested write here.",
           "basis": "reason"
         }
       ],
@@ -15076,6 +15057,87 @@
       "task": "e1-payment-adapters",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T02:56:00.251Z"
+    },
+    "ev-mv38h3yl-01d1e5a1": {
+      "id": "ev-mv38h3yl-01d1e5a1",
+      "kind": "command",
+      "label": "failing-first: config defaults, limits and env-example tests red before the edit",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/config/defaults.test.js test/unit/config/limits.test.js test/scan/env-example.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 257,
+      "log": ".eccode/evidence/ev-mv38h3yl-01d1e5a1.log",
+      "logSha256": "9032bf5932be037ef0bbbfd6a74d3fee8dd06a5bc070863924f8d96fd127fa78",
+      "logFileSha256": "9e4d2878867a67245b351c8baf55db6afdbdafae1732a1cc1d459dbdb0d9dd94",
+      "outputTail": "  duration_ms: 1.584503\n  type: 'test'\n  ...\n# Subtest: TR-C-2: out-of-range or malformed planning-limit values are refused by variable name, never by value\nok 23 - TR-C-2: out-of-range or malformed planning-limit values are refused by variable name, never by value\n  ---\n  duration_ms: 5.015889\n  type: 'test'\n  ...\n# Subtest: SEC-C-3: RS_GENERAL_RATE_LIMIT (default 300) and RS_GENERAL_RATE_WINDOW_SEC (default 60) fill generalRateLimit and generalRateWindowSec\nok 24 - SEC-C-3: RS_GENERAL_RATE_LIMIT (default 300) and RS_GENERAL_RATE_WINDOW_SEC (default 60) fill generalRateLimit and generalRateWindowSec\n  ---\n  duration_ms: 4.708983\n  type: 'test'\n  ...\n1..24\n# tests 24\n# suites 0\n# pass 20\n# fail 4\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 194.230233\n",
+      "gate": null,
+      "task": "e1-payment-adapters",
+      "tree": "439298987a97f76628d51143becd4590c6e026c23e9da7cd4b30960bb168b2bb",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T02:58:16.396Z"
+    },
+    "ev-mv38hjlf-01eb4e80": {
+      "id": "ev-mv38hjlf-01eb4e80",
+      "kind": "command",
+      "label": "previously red config and env-example tests pass, untouched",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/config/defaults.test.js test/unit/config/limits.test.js test/scan/env-example.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 249,
+      "log": ".eccode/evidence/ev-mv38hjlf-01eb4e80.log",
+      "logSha256": "087c405ff868eff20c1bf8cad224104d6463f093b89aa12c7ef93520b47c19f5",
+      "logFileSha256": "bc852f3e19c2e35e1285052f055eac30e09be28068618d5cf29a96c1458ef423",
+      "outputTail": "  duration_ms: 0.942701\n  type: 'test'\n  ...\n# Subtest: TR-C-2: out-of-range or malformed planning-limit values are refused by variable name, never by value\nok 23 - TR-C-2: out-of-range or malformed planning-limit values are refused by variable name, never by value\n  ---\n  duration_ms: 2.780735\n  type: 'test'\n  ...\n# Subtest: SEC-C-3: RS_GENERAL_RATE_LIMIT (default 300) and RS_GENERAL_RATE_WINDOW_SEC (default 60) fill generalRateLimit and generalRateWindowSec\nok 24 - SEC-C-3: RS_GENERAL_RATE_LIMIT (default 300) and RS_GENERAL_RATE_WINDOW_SEC (default 60) fill generalRateLimit and generalRateWindowSec\n  ---\n  duration_ms: 2.497316\n  type: 'test'\n  ...\n1..24\n# tests 24\n# suites 0\n# pass 24\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 179.907331\n",
+      "gate": null,
+      "task": "e1-payment-adapters",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T02:58:36.644Z"
+    },
+    "ev-mv38hq48-016d16f1": {
+      "id": "ev-mv38hq48-016d16f1",
+      "kind": "command",
+      "label": "task verification command (payments unit tests, contract suite, listener header test)",
+      "command": "ls test/unit/payments/fake.test.js test/unit/payments/sandbox.test.js test/unit/payments/merchants.test.js test/unit/payments/provider-contract.test.js test/api/fake-approval-headers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test \"test/unit/payments/**/*.test.js\" test/api/fake-approval-headers.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8022,
+      "log": ".eccode/evidence/ev-mv38hq48-016d16f1.log",
+      "logSha256": "1986629497f60d657b9d96d200325a0b86c5dc2245fc61e244158cff6856a397",
+      "logFileSha256": "41ef905c67f053c785a7e179891bdf789d686cefeebce5f5df4129bf91435f81",
+      "outputTail": "      duration_ms: 16.808984\n      type: 'test'\n      ...\n    # Subtest: the Secret wrapper of config.js is what the adapter takes: it reveals only through reveal()\n    ok 2 - the Secret wrapper of config.js is what the adapter takes: it reveals only through reveal()\n      ---\n      duration_ms: 0.436603\n      type: 'test'\n      ...\n    1..2\nok 32 - credentials are Secret values and never logged\n  ---\n  duration_ms: 17.442883\n  type: 'suite'\n  ...\n1..32\n# tests 484\n# suites 82\n# pass 477\n# fail 0\n# cancelled 0\n# skipped 7\n# todo 0\n# duration_ms 7917.977283\n",
+      "gate": null,
+      "task": "e1-payment-adapters",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T02:58:45.102Z"
+    },
+    "ev-mv38ixzz-01f2a686": {
+      "id": "ev-mv38ixzz-01f2a686",
+      "kind": "command",
+      "label": "npm test full suite",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 53188,
+      "log": ".eccode/evidence/ev-mv38ixzz-01f2a686.log",
+      "logSha256": "3788fad2996846218d935f2e43d588ed94fbdf315077770c1472edf16c9f7bca",
+      "logFileSha256": "81b49aab77321414c80863e7f6f85bee7986e6a44c0cb227db2ff29677c2f100",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 734 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 468.563232\n  type: 'test'\n  ...\n1..734\n# tests 1800\n# suites 228\n# pass 1785\n# fail 0\n# cancelled 0\n# skipped 15\n# todo 0\n# duration_ms 52775.214205\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 3165 requests, p50 2.1 ms, p95 54.5 ms (limit: p95 < 300 ms)\nNFR5 suite time: 52.9 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": null,
+      "task": "e1-payment-adapters",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T02:59:41.992Z"
     }
   },
   "reviews": {
@@ -23775,6 +23837,59 @@
       "id": "ho-mv38f42c-010fb379",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T02:56:43.440Z"
+    },
+    "ho-mv38jhfn-01d2ca04": {
+      "from": "backend-engineer",
+      "to": "orchestrator",
+      "task": "e1-payment-adapters",
+      "objective": "Apply decision dec-mv38g19z-01f0a99f (amends FU-25): RS_EXPLAIN_REPHRASE is parsed again in src/config.js, so the four tests the previous e1 completion turned red are green without being touched.",
+      "context": "Correction pass on e1 after handoff ho-mv38f42c-010fb379. The previous completion removed explainRephrase from loadConfig (dec-mv330t7a-017a2211); that broke test/unit/config/defaults.test.js, test/unit/config/limits.test.js and test/scan/env-example.test.js (4 tests, outside e1's ownership). The decision dec-mv38g19z-01f0a99f restores the parsing: field explainRephrase, r.flag('RS_EXPLAIN_REPHRASE', false), same position as before (after anthropicUsdPerMtokOut). The FU-27 clamp (RS_MODEL_TIMEOUT_MS 1..40000, MAX_MODEL_TIMEOUT_MS) is kept. The FU-25 assertion in merchants.test.js now pins the parse and default and that no file under src/ other than config.js mentions explainRephrase. RS_LIVE_MODEL and RS_LIVE_PAYPAL were never set.",
+      "inputs": [
+        ".eccode/handoffs/ho-mv38f42c-010fb379.json",
+        "decision dec-mv38g19z-01f0a99f",
+        "git diff 57d2fc7 -- src/config.js",
+        "src/config.js",
+        "test/unit/payments/merchants.test.js",
+        "test/unit/config/defaults.test.js, test/unit/config/limits.test.js, test/scan/env-example.test.js (read only)"
+      ],
+      "dependencies": [
+        "e0-paypal-stub-contract"
+      ],
+      "expectedOutput": "A green npm test with e1's work otherwise unchanged, ready for e2-payment-flow.",
+      "acceptanceCriteria": [
+        "src/config.js parses RS_EXPLAIN_REPHRASE as a 0/1 flag with default false (field explainRephrase), exactly as before the previous e1 completion",
+        "the FU-27 clamp of RS_MODEL_TIMEOUT_MS to 1..40000 is kept",
+        "test/unit/payments/merchants.test.js 'FU-25: ...' asserts the parse, the default and that src/ outside config.js has no consumer",
+        "test/unit/config/defaults.test.js, test/unit/config/limits.test.js and test/scan/env-example.test.js pass without being edited"
+      ],
+      "completedWork": "(1) src/config.js: restored `explainRephrase: r.flag('RS_EXPLAIN_REPHRASE', false),` after anthropicUsdPerMtokOut; the clamp line for modelTimeoutMs and MAX_MODEL_TIMEOUT_MS are untouched. (2) test/unit/payments/merchants.test.js: the FU-25 test is replaced by 'FU-25: RS_EXPLAIN_REPHRASE is parsed (default 0 = false, 1 = true, anything else refused by name) and nothing in src/ outside config reads it' (checks default false, '0' false, '1' true, 'yes'/'true'/'2' refused naming only RS_EXPLAIN_REPHRASE, and walks src/ asserting no file other than config.js contains explainRephrase); header comment and imports (readFileSync, readdirSync, fileURLToPath) updated. Failing first: the three config files were run before the edit and gave 24 tests, 4 failed (ev:ev-mv38h3yl-01d1e5a1). After the edit the same command passes 24 of 24 (ev:ev-mv38hjlf-01eb4e80); the task verification command passes (484 tests, 477 pass, 0 fail, the rest skipped by design, ev:ev-mv38hq48-016d16f1); npm test passes (1800 tests, 1785 pass, 0 fail, 0 cancelled, 15 skipped, ev:ev-mv38ixzz-01f2a686).",
+      "filesChanged": [
+        "src/config.js",
+        "test/unit/payments/merchants.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv38hjlf-01eb4e80",
+        "ev:ev-mv38hq48-016d16f1",
+        "ev:ev-mv38ixzz-01f2a686"
+      ],
+      "remainingIssues": [
+        "Item 1 of ho-mv38f42c-010fb379 (FU-25 breaking four tests outside e1's ownership) is RESOLVED by this correction. Items 2 to 7 of ho-mv38f42c-010fb379 remainingIssues stand unchanged and are carried by reference: construction notes for e2 (item 2), Outcome shapes for e2/e3/e4 (item 3), fake behaviour for e3/e4/e6 (item 4), spec gaps to confirm in review (item 5), LIVE-DEPENDENT limits of the Sandbox adapter and OQ-D5 (item 6), process note (item 7).",
+        "Comments in src/ai/provider.js:11 and src/ai/rephrase.js:1 mention RS_EXPLAIN_REPHRASE and nothing in src/ reads config.explainRephrase; whichever task implements the rephrase consumer (not e1) will wire it, and the FU-25 test will then need updating by that decision."
+      ],
+      "nextAction": "orchestrator: send e1-payment-adapters to review, then hand e2-payment-flow the construction notes (items 2 and 3) of ho-mv38f42c-010fb379.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson concerns hooks or guards mapping file writes to a project record or root in a repository with several records; this task designs no hook, guard or root discovery (it edits two config and test files), so its 'Applies when' list does not hold. The guard accepted every nested write here."
+        }
+      ],
+      "id": "ho-mv38jhfn-01d2ca04",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T03:00:07.338Z"
     }
   },
   "runs": {
@@ -25267,6 +25382,21 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T02:57:26.833Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T03:00:25.383Z",
+      "durationMinutes": 2.98,
+      "costUsd": null,
+      "tokens": 1,
+      "note": null,
+      "usageReported": true
+    },
+    "run-mv38jvpe-01850456": {
+      "id": "run-mv38jvpe-01850456",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T03:00:25.642Z",
       "status": "running",
       "attempt": 1
     }
@@ -25763,8 +25893,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 963.99,
-    "tokens": 13060057
+    "runtimeMinutes": 966.97,
+    "tokens": 13060058
   },
   "delivery": null,
   "reworks": [

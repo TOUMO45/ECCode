@@ -334,6 +334,7 @@ export function loadConfig(env = process.env, { now = () => Date.now() } = {}) {
     anthropicBaseUrl: parseBaseUrl(r, 'RS_ANTHROPIC_BASE_URL', ANTHROPIC_API, testOffline),
     anthropicUsdPerMtokIn: r.number('RS_ANTHROPIC_USD_PER_MTOK_IN', 1.0, 0, 100000),
     anthropicUsdPerMtokOut: r.number('RS_ANTHROPIC_USD_PER_MTOK_OUT', 5.0, 0, 100000),
+    explainRephrase: r.flag('RS_EXPLAIN_REPHRASE', false),
     adminPassword: r.secret('RS_ADMIN_PASSWORD', { minChars: 16 }),
     demoPassword: r.secret('RS_DEMO_PASSWORD', { minChars: 12 }),
     allowSignup: r.flag('RS_ALLOW_SIGNUP', true),
