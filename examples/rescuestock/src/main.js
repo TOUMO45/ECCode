@@ -11,7 +11,9 @@ import { openDb } from './db/connection.js';
 import { migrate } from './db/migrate.js';
 import { getOrCreateMeta } from './db/meta.js';
 import { createLogger } from './log.js';
+import { createVoidPort } from './services/calls.js';
 import { createAiRuntime } from './services/extraction.js';
+import { createReconciler } from './services/reconciler.js';
 import { startRetention } from './services/retention.js';
 import { ensureAdmin } from './services/users.js';
 
@@ -88,7 +90,9 @@ export async function loadAdapterFactories(config, { log, clock }) {
   return factories;
 }
 
-// Builds everything and starts listening. Returns { app, db, config, port, ai, retention, close }.
+// Builds everything and starts listening. Returns { app, db, config, port, ai, retention, reconciler, payments, close }.
+// The fake approval listener (fake provider only) is started by app.listen(); the reconciler runs once now and then every
+// RS_RECONCILE_INTERVAL_MS. The REAL void port is passed to createApp: without it a void would never leave the process.
 export async function startApp({ env = process.env, log = createLogger(), clock = systemClock, routes = [], provider = null } = {}) {
   // Files the process creates (database, WAL files, uploads) are owner-only (SEC-14).
   process.umask(0o077);
@@ -118,11 +122,15 @@ export async function startApp({ env = process.env, log = createLogger(), clock 
     if (ai.selection.fellBack) log.warn('extraction.fallback', { provider: ai.provider.id, kind: ai.selection.requested });
     if (ai.provider.id !== requested.extractionProvider) config = Object.freeze({ ...requested, extractionProvider: ai.provider.id });
 
-    const app = createApp({ db, clock, config, log, routes, ai });
+    const app = createApp({ db, clock, config, log, routes, ai, voidProvider: createVoidPort({ clock }) });
     const port = await app.listen();
     log.info('listening', { port });
     // The retention sweep: now (startup), then every RS_RETENTION_INTERVAL_MS (default hourly).
     const retention = startRetention({ db, clock, config, log, gate: ai.gate });
+    // The reconciler: now (startup: an intent left by a dead process becomes unknown, a lapsed lease is taken over), then every
+    // RS_RECONCILE_INTERVAL_MS. app.deps holds the payment adapter that listen() built.
+    const reconciler = createReconciler(app.deps);
+    reconciler.start();
     return {
       app,
       db,
@@ -130,7 +138,12 @@ export async function startApp({ env = process.env, log = createLogger(), clock 
       port,
       ai,
       retention,
+      reconciler,
+      get payments() {
+        return app.payments;
+      },
       async close() {
+        await reconciler.stop();
         await retention.stop();
         // TR-D-9: kill in-flight CLI children (their own process groups) before the app drains. Adapters without close() (the
         // fake, the API adapter) have nothing to release; a failing close never blocks the shutdown.

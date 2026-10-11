@@ -1,6 +1,6 @@
 {
-  "seq": 902,
-  "lastHash": "4745e15241f505b799c9f1599c12de6103c4324bf6e7be8fecc07745e38e170e",
+  "seq": 907,
+  "lastHash": "e31d1d457ac556b862758f616e3b735fe10129ce38e46159617df64e61873b81",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -6963,7 +6963,9 @@
         "test/unit/db/**",
         "test/api/id-reuse.test.js",
         "src/auth/general-limit.js",
-        "test/unit/auth/**"
+        "test/unit/auth/**",
+        "src/auth/rbac.js",
+        "test/unit/ai/gate.test.js"
       ],
       "acceptanceCriteria": [
         "Phase D review rev-mv33xoyz-0143dd56 TR-D-3 and security draft: rescue_requests, plan_versions, images and planning_runs use INTEGER PRIMARY KEY without AUTOINCREMENT, so after a hard delete of the highest id the next row reuses it and audit rows or a model_spend row point at another customer's request; migration 006 rebuilds those tables with AUTOINCREMENT (app-only, data preserved), model_spend.request_id gets a foreign key or check, and an RS-39 test shows no id is reused. Rework-1 review SEC-R-1: src/auth/general-limit.js takes the write lock on every signed-in call; GET and HEAD fail open on a busy error (the request proceeds uncounted and the event is logged), with a lock-holder test. Only b1 and c1 (approved) owned these files. Required before e4.",
@@ -6973,9 +6975,26 @@
       "verification": {
         "method": "run the project checks"
       },
-      "status": "done",
+      "status": "claimed",
       "attempts": 1,
-      "claim": null,
+      "claim": {
+        "agent": "backend-engineer",
+        "at": "2026-10-11T12:30:57.655Z",
+        "baseCommit": "507da7e82b11821e174cb7a05adb04a7b4f5f37e",
+        "runId": "run-mv3sxdwo-01014097",
+        "dirtyAtClaim": {
+          "src/main.js": "b93687dd226737c3311733de41816065d7bc98a39cd252c911ee23341e557d02"
+        },
+        "lessons": [
+          {
+            "id": "mem-sd-mv1audrd-013b7102",
+            "score": 0.84,
+            "matched": 23,
+            "priority": 26.5,
+            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
+          }
+        ]
+      },
       "history": [
         {
           "event": "claimed",
@@ -6987,6 +7006,28 @@
           "event": "completed",
           "by": "backend-engineer",
           "at": "2026-10-11T12:30:07.402Z"
+        },
+        {
+          "event": "reset",
+          "by": "orchestrator",
+          "at": "2026-10-11T12:30:47.619Z",
+          "reason": "rework-4 handoff ho-mv3swih9-01bb4f5b: two follow-on edits outside the first file list (rbac.js wiring for SEC-R-1; gate.test.js fixture for the new foreign key)"
+        },
+        {
+          "event": "scope-extended",
+          "by": "orchestrator",
+          "at": "2026-10-11T12:30:47.842Z",
+          "reason": "SEC-R-1 has no effect until src/auth/rbac.js passes the request method, logger and request id to limiter.take (the todo hook test turns green with it); the new model_spend foreign key makes test/unit/ai/gate.test.js line 102 call gate.run with a request id that does not exist, so the test must insert that request first. Both files were owned only by approved tasks (c1, d1).",
+          "files": [
+            "src/auth/rbac.js",
+            "test/unit/ai/gate.test.js"
+          ]
+        },
+        {
+          "event": "claimed",
+          "by": "backend-engineer",
+          "at": "2026-10-11T12:30:57.655Z",
+          "attempt": 1
         }
       ],
       "completedBy": "backend-engineer",
@@ -7008,7 +7049,8 @@
           "note": "The lesson applies to hooks or guards that map file writes to a project record or root. This task changes a SQL migration, the application's general limiter and tests; it contains no hook, guard or root discovery, so none of the 'Applies when' conditions holds.",
           "basis": "reason"
         }
-      ]
+      ],
+      "escalation": null
     }
   },
   "evidence": {
@@ -15724,6 +15766,26 @@
       "task": "rework-4",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T12:29:18.714Z"
+    },
+    "ev-mv3sxp4l-014d613f": {
+      "id": "ev-mv3sxp4l-014d613f",
+      "kind": "command",
+      "label": "SEC-R-1 hook test without todo, rbac.js not yet wired (expected RED, failing-first)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/auth/general-limit-busy.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 892,
+      "log": ".eccode/evidence/ev-mv3sxp4l-014d613f.log",
+      "logSha256": "9c0a4137ac8e6dbf74de18111d9cc2110ed966e6a117e5ff68e77cbcee1c0d90",
+      "logFileSha256": "3025a1de5bfe4c61b360205d757a2e4c76f5c62e0f9841b820b61fd0eda4abfb",
+      "outputTail": "        async Test.run (node:internal/test_runner/test:1054:7)\n        async Promise.all (index 0)\n        async Suite.run (node:internal/test_runner/test:1442:7)\n        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\n      ...\n    1..1\nnot ok 3 - SEC-R-1: the access hook passes the method to the limiter\n  ---\n  duration_ms: 2.091783\n  type: 'suite'\n  location: '/home/user/ECCode/examples/rescuestock/test/unit/auth/general-limit-busy.test.js:118:1'\n  failureType: 'subtestsFailed'\n  error: '1 subtest failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..3\n# tests 11\n# suites 3\n# pass 10\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 829.482149\n",
+      "gate": null,
+      "task": "rework-4",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T12:31:02.620Z"
     }
   },
   "reviews": {
@@ -26360,6 +26422,15 @@
       "startedAt": "2026-10-11T12:17:29.875Z",
       "status": "running",
       "attempt": 1
+    },
+    "run-mv3sxdwo-01014097": {
+      "id": "run-mv3sxdwo-01014097",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T12:30:48.049Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -26964,7 +27035,9 @@
         "test/unit/db/**",
         "test/api/id-reuse.test.js",
         "src/auth/general-limit.js",
-        "test/unit/auth/**"
+        "test/unit/auth/**",
+        "src/auth/rbac.js",
+        "test/unit/ai/gate.test.js"
       ],
       "evidence": [
         "ev:ev-mv33e5qp-017ba56b",
@@ -26972,7 +27045,18 @@
       ],
       "openedBy": "orchestrator",
       "at": "2026-10-11T12:17:29.421Z",
-      "afterDelivery": false
+      "afterDelivery": false,
+      "extensions": [
+        {
+          "at": "2026-10-11T12:30:47.842Z",
+          "by": "orchestrator",
+          "files": [
+            "src/auth/rbac.js",
+            "test/unit/ai/gate.test.js"
+          ],
+          "reason": "SEC-R-1 has no effect until src/auth/rbac.js passes the request method, logger and request id to limiter.take (the todo hook test turns green with it); the new model_spend foreign key makes test/unit/ai/gate.test.js line 102 call gate.run with a request id that does not exist, so the test must insert that request first. Both files were owned only by approved tasks (c1, d1)."
+        }
+      ]
     }
   ]
 }

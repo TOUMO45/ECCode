@@ -61,7 +61,7 @@ export function createAccess({ sessions, publicUrl, limiter = null }) {
 
     // General per-user limit (SEC-C-3): after authentication so it keys on the user id, before the role and
     // CSRF checks so a signed-in client cannot probe them without bound either.
-    if (limiter) limiter.take(ctx.user.id);
+    if (limiter) limiter.take(ctx.user.id, { method: req.method, log: ctx.log, requestId: ctx.requestId });
 
     if (route.policy === 'session') {
       // any signed-in role

@@ -116,8 +116,7 @@ describe('SEC-R-1: without a lock, nothing changes', () => {
 // The access hook is what calls the limiter. It has to hand over the method, the request logger and the request id; until
 // src/auth/rbac.js does, a GET reaches take(userId) with no method and fails closed. rbac.js is outside rework-4's files.
 describe('SEC-R-1: the access hook passes the method to the limiter', () => {
-  // todo: src/auth/rbac.js line 64 must call limiter.take(ctx.user.id, { method: req.method, log: ctx.log, requestId: ctx.requestId }).
-  test('SEC-R-1: authorize() gives limiter.take the request method, the logger and the request id', { todo: 'src/auth/rbac.js is outside the files of rework-4' }, async () => {
+  test('SEC-R-1: authorize() gives limiter.take the request method, the logger and the request id', async () => {
     const seen = [];
     const limiter = { take: (id, info) => seen.push([id, info]) };
     const account = { id: user, username: USERNAME, displayName: 'B', role: 'customer', supplierId: null, supplierCode: null };
