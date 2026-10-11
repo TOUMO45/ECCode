@@ -65,6 +65,21 @@ test('NEW-9: ECCODE_SHARED_MEMORY, ECCODE_ROOT, ECCODE_SEQUENTIAL_ROLES and ECCO
   denied(bash(ctx.dir, 'ECCODE_SHARED_MEMORY=/tmp/x ls', 'learning-debugger'), 'the variable on a command that is not the CLI', reason);
 });
 
+// TK-6 R3-1: the engine now ignores git's repository-selection and config variables; as belt and braces the
+// guard refuses GIT_* and NODE_OPTIONS (which can preload code into the CLI) inline on a line naming the CLI.
+// Other commands keep them (GIT_TERMINAL_PROMPT=0 git fetch, NODE_OPTIONS=--max-old-space-size npm test).
+test('TK-6 R3-1: GIT_* and NODE_OPTIONS cannot be set inline on a line that names the eccode CLI', () => {
+  const ctx = tmpProject();
+  const reason = /GIT_\* and NODE_OPTIONS may not be set inline on an eccode command/;
+  denied(bash(ctx.dir, 'GIT_DIR=/tmp/nowhere eccode evidence run --actor backend-engineer --label x -- npm test', 'backend-engineer'), 'GIT_DIR on the CLI', reason);
+  denied(bash(ctx.dir, 'GIT_WORK_TREE=/tmp eccode gate submit architecture --actor product-architect --artifact a.md', null), 'GIT_WORK_TREE on the CLI', reason);
+  denied(bash(ctx.dir, 'env NODE_OPTIONS=--require=/tmp/x.js node bin/eccode.js status', null), 'a preload through env', reason);
+  denied(bash(ctx.dir, 'export GIT_CONFIG_COUNT=1; eccode status', null), 'exported in the same line', reason);
+  allowed(bash(ctx.dir, 'GIT_PAGER=cat git log -1', 'backend-engineer'), 'GIT_* on a command that is not the CLI');
+  allowed(bash(ctx.dir, 'NODE_OPTIONS=--max-old-space-size=4096 npm test', 'backend-engineer'), 'NODE_OPTIONS on a build');
+  allowed(bash(ctx.dir, 'eccode status', null), 'the CLI without them');
+});
+
 test('NEW-7: a shell function or alias defined around the CLI in the same line is refused', () => {
   const ctx = tmpProject();
   const reason = /shell function or alias/;

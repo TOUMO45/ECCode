@@ -55,6 +55,9 @@ const SHELL_WRITE = new RegExp(String.raw`(>{1,2}\|?|\btee\b|\b(?:sed|perl)\s+(?
 const CODE_WRITE = /\b(writeFileSync|writeFile|writeSync|appendFileSync|appendFile|createWriteStream|rmSync|rmdirSync|unlinkSync|unlink|renameSync|rename|copyFileSync|copyFile|cpSync|truncateSync|ftruncateSync|symlinkSync|fs\.rm|promises\.rm|write_text|write_bytes|os\.remove|os\.rename|os\.replace|os\.rmdir|os\.truncate|shutil\.\w+|File\.(?:write|delete)|IO\.write|FileUtils\.\w+|file_put_contents|fwrite|Deno\.(?:write\w*|remove\w*|rename|copyFile\w*|truncate\w*))\b|\bopen\s*\([^)]*['"][wax]b?\+?['"]/;
 // Variables that change who the CLI acts as, or its clock (order rules), when set inline.
 const IDENTITY_ENV = /^(?:ECCODE_ACTOR|ECCODE_TEST|ECCODE_NOW|ECCODE_ROOT|ECCODE_SHARED_MEMORY|ECCODE_SEQUENTIAL_ROLES|ECCODE_HOOKS)(?:=|$)/;
+// Variables that point the engine's git at another repository or config, or preload code into the CLI,
+// refused inline only on a line that names the CLI (TK-6 R3-1; the engine also strips git's own).
+const CLI_ENV = /^(?:GIT_[A-Za-z0-9_]*|NODE_OPTIONS)(?:=|$)/;
 // A shell function or alias defined in the same command line can hide the CLI from the words the
 // guard binds (`e() { eccode "$@"; }; e … --actor user`).
 // Unanchored: a definition can follow `then`, a `{`, a leading blank, sit inside `bash -c '…'` (checked at every
@@ -337,6 +340,9 @@ function eccodeActors(cmd) {
     if (mentionsEccode && !wrapperSeen.has(raw) && SHELL_WRAPPER.test(raw)) {
       wrapperSeen.add(raw);
       problems.push('a shell function or alias is defined in the same command line, so the eccode invocation behind it cannot be bound; call the eccode CLI directly');
+    }
+    if (mentionsEccode && words.some((w) => CLI_ENV.test(w.text))) {
+      problems.push("GIT_* and NODE_OPTIONS may not be set inline on an eccode command: they point the engine's git at another repository or config, or preload code into the CLI; run the eccode command without them");
     }
     if (words.some((w) => IDENTITY_ENV.test(w.text))) problems.push('ECCODE_ACTOR / ECCODE_TEST / ECCODE_NOW / ECCODE_ROOT / ECCODE_SHARED_MEMORY / ECCODE_SEQUENTIAL_ROLES / ECCODE_HOOKS may not be set inline; pass --actor <your role> and --root explicitly');
     // `V=ECCODE_SHARED_MEMORY; export $V=/tmp/x`, `declare "$N"=…`, `printf -v "$N" …`, `declare -n`:
