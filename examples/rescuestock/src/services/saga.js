@@ -16,6 +16,9 @@
 // Step 2 reads each authorization (no journal row); step 3 captures sequentially in supplier-code order and pauses (lease_until
 // = now) without a send while the first operation that is not captured is capture_pending or unknown (F-TR-7); step 4 marks
 // the plan executed; step 5 is the compensation. Step 6 (takeover) is the reconciler's: it calls saga.start() with the new epoch.
+// A capture call that is `unknown` and has no send_token is sent again only by the lease holder, with the same PayPal-Request-Id, and
+// only after the holder has read the authorization itself under the lease (FU-41a, readBeforeResend): the reconciler's read of an
+// earlier tick is not trusted. An archived plan (a forced demo reset archived its operations) is never resumed or marked executed.
 import { randomBytes } from 'node:crypto';
 import { hostname } from 'node:os';
 import { isoFromMs } from '../clock.js';

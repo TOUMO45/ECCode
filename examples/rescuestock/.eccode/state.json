@@ -1,6 +1,6 @@
 {
-  "seq": 1208,
-  "lastHash": "fa12cfe693613e36291be9736f1b6832b4ba9e543da0b256babf14025cf59649",
+  "seq": 1227,
+  "lastHash": "11764414b3c78de7c3fd3f723525ad9f505396905e225b5ecca10d7b8ccfbd2c",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -7251,34 +7251,38 @@
         "command": "ls test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/replan-queue.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/reservation-expiry.test.js test/api/replan-queue.test.js",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "backend-engineer",
-        "at": "2026-10-11T15:52:17.796Z",
-        "baseCommit": "308dc65ea4aff89f8956ec9c572fa9b5e5523746",
-        "runId": "run-mv4043wk-01c7a048",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.849,
-            "matched": 28,
-            "priority": 33,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "backend-engineer",
           "at": "2026-10-11T15:52:17.796Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-11T16:11:13.327Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "backend-engineer",
+      "handoffId": "ho-mv40suhb-012306c3",
+      "filesChanged": [
+        "test/api/supersession.test.js",
+        "test/api/supplier-refusal.test.js",
+        "test/api/replan-queue.test.js",
+        "test/api/reservation-expiry.test.js"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "This task builds or changes no hook or guard and no code that maps file writes to a project root: it adds API tests for supersession, refusal and expiry. The lesson's 'Applies when' conditions (a guard choosing a project root) do not hold; I only observed the symptom once from a Bash call run at the outer repository and recovered by running from the project directory.",
+          "basis": "reason"
+        }
+      ]
     },
     "f2-compensation-takeover-admin": {
       "id": "f2-compensation-takeover-admin",
@@ -20235,6 +20239,237 @@
       "tree": "80ac284a5ff842c6e1ab14a6294c0be8e6b70190d06724ca25f9dff75e8f1022",
       "recordedBy": "frontend-engineer",
       "at": "2026-10-11T15:51:27.200Z"
+    },
+    "ev-mv40l7m6-01ff0595": {
+      "id": "ev-mv40l7m6-01ff0595",
+      "kind": "command",
+      "label": "verification: supersession, refusal, expiry, replan-queue API tests",
+      "command": "ls test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/replan-queue.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/reservation-expiry.test.js test/api/replan-queue.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 9556,
+      "log": ".eccode/evidence/ev-mv40l7m6-01ff0595.log",
+      "logSha256": "6d85d4f69175734f00960793c4ba456cfe70eaa2a26ec6514c125611204fdb37",
+      "logFileSha256": "d33e0b0b0052a8295326ff48342ec5200fc386aeaf79db592714fa18f61efba3",
+      "outputTail": "      duration_ms: 512.397939\n      type: 'test'\n      ...\n    # Subtest: RS-32: after the claim the fault changes nothing (the order is not open any more)\n    ok 2 - RS-32: after the claim the fault changes nothing (the order is not open any more)\n      ---\n      duration_ms: 587.170507\n      type: 'test'\n      ...\n    1..2\nok 15 - RS-32 (refusal half): the admin supplier_refusal fault runs the same service\n  ---\n  duration_ms: 1100.148616\n  type: 'suite'\n  ...\n1..15\n# tests 40\n# suites 15\n# pass 40\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 9493.527367\n",
+      "gate": null,
+      "task": "f1-supersession-refusal-expiry",
+      "tree": "a4971a3da95849d3ae6775a0afd639d8e1cd95c969f7daaa229dec9592003534",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:05:17.136Z"
+    },
+    "ev-mv40mlp2-015002c8": {
+      "id": "ev-mv40mlp2-015002c8",
+      "kind": "command",
+      "label": "f2 verification: compensation, void race, admin reset, refund_order, ledgers under the net guard",
+      "command": "ls test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/capture-compensation.test.js test/api/void-capture-race.test.js test/api/admin-reset.test.js test/api/admin-refund-order.test.js test/api/ledgers.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 21918,
+      "log": ".eccode/evidence/ev-mv40mlp2-015002c8.log",
+      "logSha256": "b39a54ad80f9c612065ba1c764a2ecf75de6f35f2d2021cf49faf07f5783f455",
+      "logFileSha256": "af7cebcb095e1e0003fb0fb7673a1f24ef3830cedf93c76e8a107885af52f6ed",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: FU-34: a webhook capture of a cancelled operation\n    # Subtest: F-TR-6: a webhook capture of a cancelled operation is refunded on the next tick, exactly once\n    ok 1 - F-TR-6: a webhook capture of a cancelled operation is refunded on the next tick, exactly once\n      ---\n      duration_ms: 575.037836\n      type: 'test'\n      ...\n    1..1\nok 14 - FU-34: a webhook capture of a cancelled operation\n  ---\n  duration_ms: 575.432496\n  type: 'suite'\n  ...\n1..14\n# tests 56\n# suites 14\n# pass 56\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 21843.531242\n",
+      "gate": null,
+      "task": "f2-compensation-takeover-admin",
+      "tree": "09ee23e262e1e24711307ed77255cc42f09c54918b9bd2bf9d5f27db74bb315f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:06:22.057Z"
+    },
+    "ev-mv40nmb3-01f6649c": {
+      "id": "ev-mv40nmb3-01f6649c",
+      "kind": "command",
+      "label": "npm test (full suite)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 108811,
+      "log": ".eccode/evidence/ev-mv40nmb3-01f6649c.log",
+      "logSha256": "c62f5c6c9ee9c044dd4ab554f8820bb1c80bba95137d6a63186b159044ffcdf0",
+      "logFileSha256": "3cfe7d1dd4acba7555d6b8aae96ea859f1f21470d2c00da179d426af5f569874",
+      "outputTail": "  duration_ms: 634.868305\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 872 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 557.731827\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 873 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 511.976539\n  type: 'test'\n  ...\n1..873\n# tests 2236\n# suites 308\n# pass 2226\n# fail 2\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 108466.69411\n",
+      "gate": null,
+      "task": "f1-supersession-refusal-expiry",
+      "tree": "09ee23e262e1e24711307ed77255cc42f09c54918b9bd2bf9d5f27db74bb315f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:07:09.540Z"
+    },
+    "ev-mv40o9rb-010baf4e": {
+      "id": "ev-mv40o9rb-010baf4e",
+      "kind": "command",
+      "label": "npm run test:browser",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 22066,
+      "log": ".eccode/evidence/ev-mv40o9rb-010baf4e.log",
+      "logSha256": "675bde2430baf43031ff53cb5a06bd1bf0e4f8cc8b0a40ffaab8186f34da75db",
+      "logFileSha256": "123b03bf180168f941e52e511dcc9f7418a165c6ea84f20132f26eb273d267d6",
+      "outputTail": "      duration_ms: 1156.411903\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1149.38352\n      type: 'test'\n      ...\n    1..3\nok 4 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3839.667696\n  type: 'suite'\n  ...\n1..4\n# tests 10\n# suites 4\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 21719.237862\n",
+      "gate": null,
+      "task": "f1-supersession-refusal-expiry",
+      "tree": "09ee23e262e1e24711307ed77255cc42f09c54918b9bd2bf9d5f27db74bb315f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:07:39.862Z"
+    },
+    "ev-mv40ospd-01dc6128": {
+      "id": "ev-mv40ospd-01dc6128",
+      "kind": "command",
+      "label": "verification (final tree): supersession, refusal, expiry, replan-queue API tests",
+      "command": "ls test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/replan-queue.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/supersession.test.js test/api/supplier-refusal.test.js test/api/reservation-expiry.test.js test/api/replan-queue.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 13146,
+      "log": ".eccode/evidence/ev-mv40ospd-01dc6128.log",
+      "logSha256": "28571c179e68a8c4e15977cd7e4e3e5f6c4f87fb2cf0b3a90393ca5c84880e24",
+      "logFileSha256": "bac875f89564bd67cc6b66f47c6a659403c8568a958d5a0a329fb1ab95881c22",
+      "outputTail": "      duration_ms: 627.964426\n      type: 'test'\n      ...\n    # Subtest: RS-32: after the claim the fault changes nothing (the order is not open any more)\n    ok 2 - RS-32: after the claim the fault changes nothing (the order is not open any more)\n      ---\n      duration_ms: 722.827225\n      type: 'test'\n      ...\n    1..2\nok 15 - RS-32 (refusal half): the admin supplier_refusal fault runs the same service\n  ---\n  duration_ms: 1351.759244\n  type: 'suite'\n  ...\n1..15\n# tests 40\n# suites 15\n# pass 40\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 13077.70509\n",
+      "gate": null,
+      "task": "f1-supersession-refusal-expiry",
+      "tree": "09ee23e262e1e24711307ed77255cc42f09c54918b9bd2bf9d5f27db74bb315f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:08:04.435Z"
+    },
+    "ev-mv40pczl-017d0a64": {
+      "id": "ev-mv40pczl-017d0a64",
+      "kind": "command",
+      "label": "npm test (full suite, run 1)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 119706,
+      "log": ".eccode/evidence/ev-mv40pczl-017d0a64.log",
+      "logSha256": "23fbf87a7c38658d66b62be25a1983cc242e02501e4da221a9e2bc75c9200928",
+      "logFileSha256": "899a8518ae9e3911f95c0658f6b963b4156c984eb3e59509578263d1091bf721",
+      "outputTail": "  duration_ms: 545.380832\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 872 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 455.737654\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 873 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 575.054561\n  type: 'test'\n  ...\n1..873\n# tests 2236\n# suites 308\n# pass 2226\n# fail 2\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 119334.895837\n",
+      "gate": null,
+      "task": "f2-compensation-takeover-admin",
+      "tree": "09ee23e262e1e24711307ed77255cc42f09c54918b9bd2bf9d5f27db74bb315f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:08:30.732Z"
+    },
+    "ev-mv40qizh-0178646b": {
+      "id": "ev-mv40qizh-0178646b",
+      "kind": "command",
+      "label": "npm run test:browser",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 23134,
+      "log": ".eccode/evidence/ev-mv40qizh-0178646b.log",
+      "logSha256": "abd91e17aeb67009666a209e194818de536ee706bc166f8daa0c6cd6d7fadacc",
+      "logFileSha256": "1ef10f88417adcea33898bb9fcdf8eb1a76140659d20d6ccf0690d7577b5894b",
+      "outputTail": "      duration_ms: 1269.988909\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1195.945066\n      type: 'test'\n      ...\n    1..3\nok 4 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3998.512312\n  type: 'suite'\n  ...\n1..4\n# tests 10\n# suites 4\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 22841.769851\n",
+      "gate": null,
+      "task": "f2-compensation-takeover-admin",
+      "tree": "09ee23e262e1e24711307ed77255cc42f09c54918b9bd2bf9d5f27db74bb315f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:09:25.171Z"
+    },
+    "ev-mv40r2b6-0183d269": {
+      "id": "ev-mv40r2b6-0183d269",
+      "kind": "command",
+      "label": "failing-first: the five f2 test files against the BASE source (HEAD at claim), scratch copy",
+      "command": "node /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/f2-redrun.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 20369,
+      "log": ".eccode/evidence/ev-mv40r2b6-0183d269.log",
+      "logSha256": "af82219b2aa9945c253083b33e35e8a66441f7ed76b4ea5d3bd8f6f876412a4f",
+      "logFileSha256": "a93325223b94a4918589d03bb96795cb12f28ffb60e8ac4707d60a2c9353573d",
+      "outputTail": "green  ARCH-23: the epoch is a fence of its own: a capture result is refused after the epoch changed although its send_token is still valid; saga.lease_lost \ngreen  ARCH-23: a capture is not started without the lease: after lease_until nobody has taken over, a start is refused (G(now) needs lease_until > now) and \ngreen  ARCH-23: the capture start itself needs the lease (step 3, not only step 2): a resumed run whose lease lapsed sends nothing\nRED    FU-41(a): before the lease holder sends an unknown capture again it reads the authorization itself; one that is CAPTURED by then is held, never sent, \nRED    FU-41(a): the saga's own read comes first in the trail of a re-send: get_authorization (reconciler), get_authorization (lease holder), then the captur\nRED    FU-41(a): a read that fails under the lease sends nothing; the operation stays unknown-resolvable and the next tick completes the plan\ngreen  FU-41(b): an operation that becomes unknown after the takeover and before the resumed run: the saga pauses and sends nothing, and does not compensate\ngreen  FU-41(b): the same for an operation that becomes capture_pending after the takeover\ngreen  ARCH-23: a capture that got a retryable answer (429) is resumed by a takeover once its back-off is over, with the same key\ngreen  RS-38: reserve writes one reserve row per item and abandon one release row per item; the sums hold after each step\ngreen  RS-38: an expired reservation writes one expire row per item (exactly once, even if the pass runs twice)\ngreen  RS-38: the claim writes one consume row per item (on_hand and reserved both go down); an executed plan writes no restock\ngreen  RS-38: a compensation writes one restock row per item when the reservation is released, and the stock is back\ngreen  RS-38: while a refund is outstanding nothing is restocked; two reconcilers that both see it settle restock exactly once\ngreen  RS-38: a supplier stock change writes a restock row (up) or an adjust row (down)\ngreen  FU-36: a consume row and a restock row carry the same fields as a reserve row; the balances are the running sums; refs and actors are as documented\ngreen  F-TR-6: capture_lands_after_void_intent: the void is rejected, the read shows CAPTURED, and the operation ends refunded: one capture, one void attempt\ngreen  F-TR-6: `captured` and the queued refund are ONE transaction: when the refund cannot be queued nothing is left half done (no captured operation withou\ngreen  F-TR-6: the void answer was lost and a capture landed PENDING: the reconciler reads it, the operation is capture_pending, and when the poll sees COMPL\nRED    FU-45: the void is refused because the authorization EXPIRED: the operation is voided (settled), void_failed stays 0, and it never escalates\nRED    FU-45: an unknown void (timeout) on an authorization that expired meanwhile is settled the same way by the reconciler\ngreen  FU-45 (limit): a void the provider refuses while the authorization is still CREATED stays authorized with void_failed = 1 and escalates\ngreen  F-TR-6: a webhook capture of a cancelled operation is refunded on the next tick, exactly once\nBASE totals: 29 pass, 27 fail\n",
+      "gate": null,
+      "task": "f2-compensation-takeover-admin",
+      "tree": "09ee23e262e1e24711307ed77255cc42f09c54918b9bd2bf9d5f27db74bb315f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:09:50.142Z"
+    },
+    "ev-mv40r6im-01e3bb9b": {
+      "id": "ev-mv40r6im-01e3bb9b",
+      "kind": "command",
+      "label": "npm test (full suite, final tree)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 106659,
+      "log": ".eccode/evidence/ev-mv40r6im-01e3bb9b.log",
+      "logSha256": "5e75bc19862aa84987e9c2c2a1dad440c2a72529b632bba894795fbba07afd06",
+      "logFileSha256": "6d7be3d24e58968b8c57be80a4690fb7fa2aea0f2170bb940498f2e8277713ff",
+      "outputTail": "  duration_ms: 472.395231\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 872 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 354.4809\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 873 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 506.900004\n  type: 'test'\n  ...\n1..873\n# tests 2236\n# suites 308\n# pass 2226\n# fail 2\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 106318.296397\n",
+      "gate": null,
+      "task": "f1-supersession-refusal-expiry",
+      "tree": "09ee23e262e1e24711307ed77255cc42f09c54918b9bd2bf9d5f27db74bb315f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:09:55.612Z"
+    },
+    "ev-mv40rqyo-0197eef2": {
+      "id": "ev-mv40rqyo-0197eef2",
+      "kind": "command",
+      "label": "npm run test:browser (final tree)",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 18781,
+      "log": ".eccode/evidence/ev-mv40rqyo-0197eef2.log",
+      "logSha256": "3012a93ae87a551f02d2648a9bf3245f376627209ca112b8b7b6d1a6b74bc6e5",
+      "logFileSha256": "0a881d3e37cc64519e34c3b5d7cb70a3f569e6503846d646291ca6236a047e7a",
+      "outputTail": "      duration_ms: 1087.573835\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1167.989951\n      type: 'test'\n      ...\n    1..3\nok 4 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3612.991899\n  type: 'suite'\n  ...\n1..4\n# tests 10\n# suites 4\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 18532.983737\n",
+      "gate": null,
+      "task": "f1-supersession-refusal-expiry",
+      "tree": "09ee23e262e1e24711307ed77255cc42f09c54918b9bd2bf9d5f27db74bb315f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:10:22.110Z"
+    },
+    "ev-mv40tukk-01494b37": {
+      "id": "ev-mv40tukk-01494b37",
+      "kind": "command",
+      "label": "mutation proofs: 14 mutants of saga/calls/reconciler/admin against the five f2 test files, scratch copy",
+      "command": "node /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/f2-mutate.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 123621,
+      "log": ".eccode/evidence/ev-mv40tukk-01494b37.log",
+      "logSha256": "8bf5fd70bc978790295da6d39fc1ac2acd3b7a67b1f88aa4a3c44e1550ef3335",
+      "logFileSha256": "c8d4937644abdb619a8a0837c132d50723500e83be24b23f71311c9c08c8aac1",
+      "outputTail": "M-saga-archived [RS-38: a resumed saga marks a plan executed although every operation is archived]\n  KILLED: pass 10 fail 1\n    red: RS-38: an executing plan whose operations the reset archived is never taken over, resumed or marked executed, \nM-refund-no-send [refund_order: the handler queues but does not send]\n  KILLED: pass 3 fail 10\n    red: refund_order: the transition and the queued call commit together and the handler sends the refund: refunded, o\n    red: refund_order: refunding every captured order of the plan makes the request cancelled (\"All payments were refun\n    red: FU-42: the capture and the refund both ask for supplier_orders.total_cents, even when payment_operations.amoun\n    red: refund_order: a captured operation under a plan that is NOT executed (the saga is still running) is refused; s\n    red: refund_order: two simultaneous calls give one refund: one 200, one 409\n    red: refund_order: PENDING -> refund_pending, polled by the reconciler until the provider completes it; the reconci\n    red: refund_order: FAILED -> refund_failed (terminal, an escalation: the request needs attention) and the refund is\n    red: refund_order: a retryable answer (429) leaves the refund queued with its back-off; the reconciler sends it wit\nM-refund-any-plan [refund_order: allowed for a captured operation of a plan that is not executed]\n  KILLED: pass 12 fail 1\n    red: refund_order: a captured operation under a plan that is NOT executed (the saga is still running) is refused; s\nM-refund-audit-lost [refund_order: the denied audit row is written inside the transaction that throws (rolled back)]\n  KILLED: pass 9 fail 4\n    red: refund_order: an unknown order is 404; an operation that is not captured is 409 INVALID_STATE with the states,\n    red: refund_order: a captured operation under a plan that is NOT executed (the saga is still running) is refused; s\n    red: refund_order: two simultaneous calls give one refund: one 200, one 409\n    red: refund_order: FAILED -> refund_failed (terminal, an escalation: the request needs attention) and the refund is\nWARNING: src/services/saga.js differs from the project tree\nWARNING: src/services/reconciler.js differs from the project tree\n",
+      "gate": null,
+      "task": "f2-compensation-takeover-admin",
+      "tree": "09ee23e262e1e24711307ed77255cc42f09c54918b9bd2bf9d5f27db74bb315f",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:12:00.146Z"
     }
   },
   "reviews": {
@@ -30904,6 +31139,68 @@
       "id": "ho-mv403lay-01fa3938",
       "recordedBy": "frontend-engineer",
       "at": "2026-10-11T15:51:35.197Z"
+    },
+    "ho-mv40suhb-012306c3": {
+      "from": "backend-engineer",
+      "to": "delivery-lead",
+      "task": "f1-supersession-refusal-expiry",
+      "objective": "Supersession on offer and stock changes, the durable re-plan queue, supplier refusal with a re-plan that excludes the supplier, and reservation expiry with voids: prove them against the spec with API tests named RS-13, RS-15 and RS-17 [D], and fix any defect found in the services this task owns.",
+      "context": "Built against spec revision 3 (Supersession, Re-plan queue semantics F-TR-2, Reservation expiry pass, Supplier routes refuse, Void rule, derivation rows 4, 4a, 6, 12), c3's handoff (supersession.js primitives, reservations, void rule), e2 ho-mv39qe6x-01666ddf (resolution hook), e4 ho-mv3tpmcv-01dc0d69 (approved plans are superseded through ctx.voidRule; the execute claim refuses a superseded plan and runs the expiry inline; the drain backoff exponent uses failed_drains before the increment), f3 ho-mv403lay-01fa3938 (contract assumptions F1-a..), decision dec-mv3vui7s-014f6e7c (the drain stays in reconciler.js and calls runPlanningFor in plans.js; f1 works behind that function) and the F-PL-3 boundary. RESULT: every behaviour in the acceptance criteria was already implemented correctly by c3/e4; no production defect was found by a failing test, so NO src file was changed. The work is the three new API test files and the extended reservation-expiry file (40 tests in the verification command). No code in void-rule.js, reconciler.js, saga.js, calls.js, admin.js or src/routes/admin.js was changed (f2 is editing them; the tree has f2's uncommitted changes in admin.js, reconciler.js, saga.js). No Sandbox/PayPal host was contacted (net guard), RS_LIVE_MODEL and RS_LIVE_PAYPAL were never set. Tests drive the drain by calling drainReplanQueue(h.app.deps) or a reconciler tick, and install the real void port (createVoidRule + createVoidPort) where a provider void is asserted.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md (Supersession, Reservation, Re-plan queue semantics, Void rule, Supplier routes, Rescue status derivation)",
+        ".eccode/artifacts/architecture/brief.md (RS-13, RS-15, RS-17)",
+        ".eccode/artifacts/plan/plan.json",
+        ".eccode/artifacts/plan/followups.md (FU-35, FU-39)",
+        ".eccode/handoffs/ho-mv39qe6x-01666ddf.json",
+        ".eccode/handoffs/ho-mv3tpmcv-01dc0d69.json",
+        ".eccode/handoffs/ho-mv403lay-01fa3938.json",
+        "src/services/{supersession,orders,reservations,plans,reconciler,ledger,saga,view,admin}.js, src/domain/{derive,explain}.js, src/routes/supplier.js",
+        "test/api/{supplier-orders,void-rule-lost-authorize,execute,admin-basic,abuse-limits}.test.js, test/helpers/*"
+      ],
+      "dependencies": [
+        "e6-execute-concurrency-browser"
+      ],
+      "expectedOutput": "Tests that pin supersession, the re-plan queue, supplier refusal and expiry to the spec, for the reviewer (phase F), f4 (restart/lease/return-crash tests) and g3 (final scans).",
+      "acceptanceCriteria": [
+        "Supersession selection and effect exactly as the spec (price, prep fee, ready time, withdrawal, on_hand decrease; not after the affected supplier confirmed or the plan is executing; other customers' reservations never supersede); approved versions also get the void rule; messages 'Prices changed: review plan vN' / 'Review the new plan'",
+        "Re-plan queue (F-TR-2): removed only with the new planning run (feasible or infeasible) or request deletion/archive; up to 3 recomputes on offers_hash change; failures back off with failed_drains and never drop the entry; after 5 failed drains the next step is REPLAN",
+        "Supplier refusal before the claim: order refused, void rule SUPPLIER_REFUSED, re-plan excluding that supplier; after the claim 409 ORDER_EXECUTED; the admin supplier_refusal and stock_depletion faults use the same services",
+        "RS-13, RS-15 (incl. expiry after the claim changing nothing and the exact message), RS-17 [D] tests named with their ids",
+        "F-PL-3 boundary: no change in void-rule.js, reconciler.js, saga.js, calls.js, admin.js, src/routes/admin.js"
+      ],
+      "completedWork": "(1) test/api/supersession.test.js (new, 9 tests): RS-13 full flow on an approved, reserved plan with both authorizations: PATCH price of B -> old version superseded PRICE_CHANGED, one void call per authorization (so:<id>:void:1, both succeeded), reservation released with exactly two release ledger rows and stock back, both orders cancelled, reserve and execute on the old version 409 PLAN_SUPERSEDED with no capture, request reads replanning (4a, WAIT) then, after the drain, plan_found rule 12 REVIEW_NEW_PLAN with 'Prices changed: review plan v2', new proposed version 8500 with a new planHash and superseded_by set, approvable and reservable; prep fee and ready-time changes give the same message (v2, v3); no supersession after the affected supplier confirmed (another supplier's change still supersedes); no supersession after the real execute claim (price, fee, ready time, withdrawal, admin depletion fault) and, in a forced state, an executing version is never selected; a plan that does not use the changed offer is untouched; another customer's reservation never supersedes (their approved plan is a quote; reserve answers OUT_OF_STOCK and queues a re-plan OUT_OF_STOCK); OFFER_WITHDRAWN and AVAILABILITY_DROPPED read 'Review the new plan', a drop that still covers the planned bundles supersedes nothing, an infeasible re-plan reads no_feasible_plan; RS-32 supersession half: the admin stock_depletion fault supersedes an authorized plan under the void rule. (2) test/api/replan-queue.test.js (new, 10 tests): entry removed only by the stored run (feasible and infeasible) and re-enqueue keeps failed_drains and enqueued_at; archived/deleted requests are dropped without a run, the delete route takes the entry with a hard-deleted request; two offers_hash conflicts then success on the third attempt; three conflicts: nothing stored, failed_drains 1, last_error DB_BUSY, next_attempt_at +15 s; backoff 15 s, 30 s, 1, 2, 4 min then the 5 min cap using the count before the increment, not due means untouched, never dropped; after 5 failed drains nextStep REPLAN (WAIT before, text 'Finding a new plan with current stock…') and the customer's POST /plan stores the run and removes the entry; PLAN_IN_PROGRESS keeps the entry; two entries per tick; a freshly created reconciler drains a surviving entry. (3) test/api/supplier-refusal.test.js (new, 8 tests): RS-17 [D] with both authorizations: order refused with reason, sibling cancelled, both authorizations voided once, reservation released, plan non_executable SUPPLIER_REFUSED with detail, re-plan queued, audit rows; with the no-op void port the request reads cancelling (rule 4, WAIT) while voids are outstanding, the refused order shows refusalReason and presentation refused (in orders while the closed version is newest, in cancellingOrders with payment.cancelRequested once the new version exists), cancelling beats 4a; after the voids the new proposed version leaves the refusing supplier out (B+E), has its own planHash, and the message is exactly 'Supplier A refused the order: Out of lids. No money was taken.' with REVIEW_NEW_PLAN; the exclusion survives later plan calls and supersessions; foreign order 404, repeat 200 with no writes, a confirmed order can be refused, the sibling of a closed plan is INVALID_STATE; after the real claim 409 ORDER_EXECUTED for both suppliers with nothing changed (audited denied); reason validation 1-300; RS-32 refusal half: the admin supplier_refusal fault runs the same service (and changes nothing after the claim). (4) test/api/reservation-expiry.test.js (extended, +5 tests, 13 old tests unchanged): RS-15 through the reconciler tick with both authorizations: reservation expired once, stock back to its prior value, one expire ledger row per item, one provider void per authorization, plan non_executable RESERVATION_EXPIRED, orders cancelled, no queued re-plan, request cancelled rule 6 nextStep REPLAN with the exact message 'Reservation expired — no money was taken; re-plan with current stock'; a second tick changes nothing; two racing reconcilers expire it once; an expiry pass after the real execute claim (clock +90 min) changes nothing (reservation consumed, plan executing, no message); a claim past expires_at is 409 RESERVATION_EXPIRED, runs the expiry inline once and voids the authorizations. FAILING-FIRST: not applicable, no defect was found; all new tests passed on first correct run (test-code mistakes only: fixture assumptions about the view and the session idling out). MUTATION PROOF in a scratch copy under the session scratchpad (real tree never mutated; plain node --test runs, no ev id): 30 mutants (27 single, 3 double). KILLED: supersession ignoring a confirmed supplier, selecting executing versions (killed only after adding the forced-state test), stock drop superseding regardless of quantity, approved version superseded without the void rule, no enqueue on supersession, enqueue resetting failed_drains, selection NOT IN the offer (killed only after adding the unused-offer test) and ignoring the offer, planner retries 1 and 5, stored run not answering the queue, exclusion of refusing suppliers dropped, no ORDER_EXECUTED, refusal without queue/reason/void rule, markNonExecutable without void rule, expiry leaving the plan executable, expiry queuing a re-plan, drain backoff exponent +1 (reconciler.js, scratch only), drain dropping the entry on failure, drain ignoring next_attempt_at, drain keeping archived requests, and the double mutants expiry-reaches-consumed and expiry-ignores-expires_at. SURVIVED, equivalent by layered guards: removing only the status filter of the expiry SELECT, only the status filter of closeReservation's CAS, only the expires_at filter of the CAS (each is covered by the other layer; the double mutants are killed), and ignoring closeReservation's return value (a second pass cannot select the row).",
+      "filesChanged": [
+        "test/api/supersession.test.js",
+        "test/api/supplier-refusal.test.js",
+        "test/api/replan-queue.test.js",
+        "test/api/reservation-expiry.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv40ospd-01dc6128",
+        "ev:ev-mv40rqyo-0197eef2",
+        "ev:ev-mv40r6im-01e3bb9b"
+      ],
+      "remainingIssues": [
+        "npm test (ev:ev-mv40r6im-01e3bb9b, final tree): 2236 tests, 2226 pass, 2 FAIL, 8 skipped. Both failures are in f2's area and are NOT caused by f1 (f1 changed no src file): test/api/admin-basic.test.js 'RS-32 (admin half) and SEC-11: the fault routes', subtest refund_order (expected refund_requested, actual refund_failed; refund path: admin.js/calls.js, f2) and test/api/lost-response.test.js 'RS-25: a lost response on a capture' subtest 'a timeout' (an extra get_authorization before the re-send; saga.js/calls.js, f2). They were red before f1 started (f3 cited the same two). Verification command: 40 of 40 pass (ev:ev-mv40ospd-01dc6128); npm run test:browser 10 of 10 (ev:ev-mv40rqyo-0197eef2). Earlier same-result runs on earlier trees: ev:ev-mv40l7m6-01ff0595 (verification), ev:ev-mv40nmb3-01f6649c (npm test, same two red), ev:ev-mv40o9rb-010baf4e (browser). The tree kept changing under f2 (admin.js, reconciler.js, saga.js, admin-reset.test.js), so the three cited runs are the latest.",
+        "FU-39 NOT done (optional): adding requestIds to RESERVATION_LIMIT details would break test/api/abuse-limits.test.js line 83 (assert.deepEqual(details, { reservationIds: [...] })) and possibly the contract fixture error-reservation-limit.json, both outside f1's files. Whoever owns abuse-limits.test.js can take it together with the one-line join in reservations.js (reservationIds from the active rows, plus requestIds from plan_versions). e5's UI already falls back correctly.",
+        "SPEC DEVIATION to decide (unchanged since c3/e4, kept by dec-mv3vui7s-014f6e7c): spec Supersession > Replan says 'after commit, the handler drains the queue for affected requests (the reconciler also drains it)'. Today only the reconciler drains (2 entries per tick, every RS_RECONCILE_INTERVAL_MS, default 15 s), so after a supplier change, a refusal or an admin fault the customer sees replanning/'Finding a new plan with current stock…' for up to one interval. c3's tests (supplier-orders.test.js) assert replanning right after the change, so an immediate drain in src/routes/supplier.js would also need those tests changed. The planner is synchronous CPU work (150-800 ms), which argues for leaving it in the tick. Recommend recording this as an accepted deviation, or a follow-up for f4/g3.",
+        "A superseded or refused request has the NEW version only after a drain; the view in between is replanning (4a) or, while a void is outstanding, cancelling (4). While a void is outstanding the request keeps reading cancelling (WAIT) even after the drain stored the new version (row 4 precedes rows 4a and 12); the new version is already currentPlanId then, and the old orders are in cancellingOrders. The UI should offer Approve only once the rescue status says REVIEW_NEW_PLAN or APPROVE_PLAN (f3 already does).",
+        "Tooling observation: one Bash call without a leading cd (cwd at the outer repository) was refused 'backend-engineer has no claimed task', which is the symptom of lesson mem-sd-mv1audrd-013b7102 in the 0.3.5 hook; the next call with cd to the project passed. No data was affected."
+      ],
+      "nextAction": "technical-reviewer: review phase F after f2 and f4 complete; delivery-lead: decide FU-39 (needs abuse-limits.test.js owner) and the handler-drain deviation; f2: the two red tests above are in your files (refund_order in admin-basic.test.js, RS-25 timeout in lost-response.test.js).",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "This task builds or changes no hook or guard and no code that maps file writes to a project root: it adds API tests for supersession, refusal and expiry. The lesson's 'Applies when' conditions (a guard choosing a project root) do not hold; I only observed the symptom once from a Bash call run at the outer repository and recovered by running from the project directory."
+        }
+      ],
+      "id": "ho-mv40suhb-012306c3",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T16:11:13.522Z"
     }
   },
   "runs": {
@@ -33230,8 +33527,29 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T15:51:59.029Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T16:11:41.380Z",
+      "durationMinutes": 19.71,
+      "costUsd": null,
+      "tokens": 231132,
+      "note": null,
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-11T16:11:58.668Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 1,
+            "costUsd": null
+          },
+          "to": {
+            "tokens": 231132,
+            "costUsd": null
+          },
+          "reason": "harness figure for this invocation: 248,118 cumulative minus 16,986 recorded on the refused first run"
+        }
+      ]
     }
   },
   "risks": {
@@ -33844,6 +34162,26 @@
       "lessons": [],
       "at": "2026-10-11T15:11:38.686Z",
       "by": "orchestrator"
+    },
+    "dec-mv40tgfo-01d03e4f": {
+      "id": "dec-mv40tgfo-01d03e4f",
+      "title": "Re-plan after a supersession is drained by the reconciler, not the request handler",
+      "decision": "Accepted deviation from the spec's 'drain after commit': the customer sees replanning ('Finding a new plan with current stock…', polling) for up to one reconciler interval (default 15 s) before the new plan appears; the request handler does not run the planner inline.",
+      "rationale": "f1 found the behaviour consistent with dec-mv3vui7s-014f6e7c (drain lives in reconciler.js); an inline drain would put synchronous planner CPU work on the request path and contradict c3's approved test that asserts replanning right after a change. Listed in the verification report.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T16:11:41.718Z",
+      "by": "orchestrator"
+    },
+    "dec-mv40tgp9-0139d534": {
+      "id": "dec-mv40tgp9-0139d534",
+      "title": "FU-39 not done: RESERVATION_LIMIT keeps reservation ids only",
+      "decision": "RESERVATION_LIMIT details keep reservationIds without requestIds; the UI's fallback (list the customer's requests and link the reserved ones) stays the behaviour.",
+      "rationale": "Adding requestIds would break an approved test's exact comparison outside f1's files; the fallback works and was tested by e5.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T16:11:42.104Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -33856,8 +34194,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1389.96,
-    "tokens": 17547112
+    "runtimeMinutes": 1409.67,
+    "tokens": 17778244
   },
   "delivery": null,
   "reworks": [

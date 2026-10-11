@@ -354,27 +354,30 @@ async function refundOrder(ctx, user, supplierOrderId) {
           'WHERE so.id = ? AND po.archived_at IS NULL',
       )
       .get(supplierOrderId);
-    if (!row) throw new AppError(404, 'NOT_FOUND');
-    if (row.operation_status !== 'captured' || row.plan_status !== 'executed') {
+    if (!row) return { refusal: new AppError(404, 'NOT_FOUND') };
+    // A refusal COMMITS its audit row (a throw inside the transaction would roll the row back with everything else).
+    const refuse = (from) => {
       recordAudit(db, clock, {
         actorUserId: user.id, actorRole: user.role, action: 'admin.fault', entityType: 'supplier_order', entityId: supplierOrderId,
         outcome: 'denied', detail: { kind: 'refund_order', code: 'INVALID_STATE' }, requestId: ctx.requestId,
       });
-      throw new AppError(409, 'INVALID_STATE', { details: { from: row.operation_status, to: 'refund_requested' } });
-    }
+      return { refusal: new AppError(409, 'INVALID_STATE', { details: { from, to: 'refund_requested' } }) };
+    };
+    if (row.operation_status !== 'captured' || row.plan_status !== 'executed') return refuse(row.operation_status);
     const operation = loadOperation(db, row.operation_id);
-    if (!moveOperation(db, clock, operation, 'refund_requested')) throw new AppError(409, 'INVALID_STATE', { details: { from: 'captured', to: 'refund_requested' } });
+    if (!moveOperation(db, clock, operation, 'refund_requested')) return refuse('captured');
     const { call } = queueCall(db, clock, { operationId: row.operation_id, supplierOrderId, kind: 'refund', attempt: 1, requestId: ctx.requestId });
     recordAudit(db, clock, {
       actorUserId: user.id, actorRole: user.role, action: 'admin.fault', entityType: 'supplier_order', entityId: supplierOrderId,
       outcome: 'ok', detail: { kind: 'refund_order', supplierOrderId }, requestId: ctx.requestId,
     });
-    return call.id;
+    return { callId: call.id };
   });
+  if (queued.refusal) throw queued.refusal;
   try {
-    await runCall(ctx, queued);
+    await runCall(ctx, queued.callId);
   } catch {
-    ctx.log.error('provider.send_failed', { providerCallId: queued, code: 'SEND_FAILED' });
+    ctx.log.error('provider.send_failed', { providerCallId: queued.callId, code: 'SEND_FAILED' });
   }
   return { applied: { kind: 'refund_order', supplierOrderId } };
 }

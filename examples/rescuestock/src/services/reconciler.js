@@ -15,6 +15,7 @@
 //   8. drain the re-plan queue
 //   9. housekeeping: sessions, login failures, idempotency keys, invalid/unverified webhook rows older than 7 days (SEC-6),
 //      stale reserved model-spend rows
+// readResolvePass() is the forced demo reset's bounded copy of steps 1-3 (admin.js, SEC-11).
 // The resolution paths run the void rule's resolution hook (voidRule.onAuthorized) in the same transaction as every move into
 // `authorized`, and the compensation hook (queueRefundWhenCancelled) in the same transaction as every move into `captured`.
 // An operation that a webhook already moved past the state of an open call makes that call resolved (CAS on the status, no error).

@@ -104,7 +104,6 @@ function spy(h) {
   );
   return { log, count: (name) => log.filter((n) => n === name).length, restore: () => { h.app.deps.payments = real; } };
 }
-const fakeCalls = (h, kind) => h.db.prepare('SELECT * FROM fake_paypal_calls WHERE kind = ? ORDER BY id').all(kind);
 const count = (h, sql, ...args) => h.db.prepare(sql).get(...args).n;
 const arm = (h, fault, { value = '', remaining = 1 } = {}) =>
   h.db.prepare("INSERT INTO fault_flags (name, value, remaining, created_at) VALUES (?, ?, ?, '2026-10-20T06:00:00.000Z')").run(`fake_paypal:${fault}`, value, remaining);
@@ -345,5 +344,11 @@ describe('RS-38: a reset and the stock', () => {
     assert.equal(plan(h, w.planId).status, 'executing', 'not executed: its operations are archived');
     assert.equal(plan(h, w.planId).lease_epoch, 1);
     assert.deepEqual(probe.log, [], 'no capture, and not even a read, for an archived operation');
+
+    // A run that still holds the lease (it was in flight when the reset archived the operations) stops too and never marks the plan executed.
+    h.db.prepare('UPDATE plan_versions SET lease_until = ? WHERE id = ?').run(new Date(h.clock.now() + 60_000).toISOString(), w.planId);
+    assert.equal(await h.app.deps.saga.start(w.planId, 1), 'archived');
+    assert.equal(plan(h, w.planId).status, 'executing');
+    assert.deepEqual(probe.log, []);
   });
 });
