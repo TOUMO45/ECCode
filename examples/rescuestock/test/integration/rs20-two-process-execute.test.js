@@ -12,7 +12,14 @@
 // database and alternates which process serves the buyer's approvals.
 import { afterEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { NET_GUARD_PATH, PROJECT_ROOT } from '../helpers/node-proc.js';
+import { LIVE_MESSAGES, createSuiteReport, evaluateLiveLaunch, missingCredentialsMessage } from '../live/paypal/live-support.js';
+import { runLivePaypal } from '../live/paypal/run-live-paypal.js';
 import { createClient } from '../helpers/fixtures.js';
 import { approveAtFake, confirmOrderAsSupplier, createPayment, waitFor } from '../helpers/payment-flow.js';
 import { approvedPlan, idempotencyKey, reserve } from '../helpers/plan-flow.js';
@@ -151,4 +158,105 @@ describe('RS-20 / F-TR-8: two OS processes, five concurrent execute calls each, 
       }
     });
   }
+});
+
+// ---- NFR3 / LIVE-P1: the live PayPal suite refuses without the flag, and nothing here touches the network ------------------------
+// The live files in test/live/paypal talk to the REAL PayPal Sandbox. These tests prove that WITHOUT RS_LIVE_PAYPAL=1 each of them,
+// and the npm launcher, exits 2 with the named message before doing anything; the children run under the offline network guard
+// and with an environment that holds no RS_* variable. The cases that need the flag set go through the pure function
+// evaluateLiveLaunch(env) with plain objects: RS_LIVE_PAYPAL=1 is never put into any process environment here.
+const LIVE_DIR = join(PROJECT_ROOT, 'test', 'live', 'paypal');
+const LIVE_FILES = readdirSync(LIVE_DIR).filter((f) => f.endsWith('.test.js')).sort();
+const DEFAULT_SET = Object.freeze({ RS_PAYPAL_DEFAULT_CLIENT_ID: 'id-value-1', RS_PAYPAL_DEFAULT_CLIENT_SECRET: 'secret-value-2', RS_PAYPAL_DEFAULT_WEBHOOK_ID: 'hook-value-3' });
+const FIVE_SETS = Object.freeze(Object.fromEntries(['A', 'B', 'C', 'D', 'E'].flatMap((k) => ['CLIENT_ID', 'CLIENT_SECRET', 'WEBHOOK_ID'].map((p) => [`RS_PAYPAL_${k}_${p}`, `${k}-${p}`]))));
+
+function runNodeClean(args, env = {}) {
+  return spawnSync(process.execPath, ['--disable-warning=ExperimentalWarning', `--import=${NET_GUARD_PATH}`, ...args], {
+    cwd: PROJECT_ROOT, env: { PATH: '/usr/local/bin:/usr/bin:/bin', ...env }, encoding: 'utf8', timeout: 30_000,
+  });
+}
+
+describe('NFR3: the live PayPal suite files refuse without RS_LIVE_PAYPAL=1 (exit 2, named message, nothing on stdout, no network)', () => {
+  test('NFR3: the directory holds the RS-18, RS-19, RS-20, RS-23, RS-24 files and the Sandbox journey', () => {
+    assert.deepEqual(LIVE_FILES, [
+      'journey-sandbox.test.js', 'rs18-cancel-abandon.test.js', 'rs19-amount.test.js', 'rs20-double-capture.test.js', 'rs23-webhook-duplicate.test.js', 'rs24-webhook-signature.test.js',
+    ]);
+  });
+
+  for (const file of LIVE_FILES) {
+    test(`NFR3: ${file} run without RS_LIVE_PAYPAL exits 2 with the fixed message and prints nothing else`, () => {
+      for (const extra of [{}, { RS_LIVE_PAYPAL: '0' }, { RS_LIVE_PAYPAL: '' }, { RS_LIVE_PAYPAL: 'true' }, { RS_LIVE_PAYPAL: 'yes' }, { ...DEFAULT_SET }]) {
+        const r = runNodeClean([join(LIVE_DIR, file)], extra);
+        assert.equal(r.status, 2, `${file} with ${JSON.stringify(Object.keys(extra))}: exit ${r.status}, stderr ${r.stderr}`);
+        assert.equal(r.stderr.trim(), LIVE_MESSAGES.notEnabled);
+        assert.equal(r.stdout, '');
+      }
+    });
+  }
+
+  test('NFR3: the npm launcher refuses the same way and never starts the test files', async () => {
+    const r = runNodeClean([join(LIVE_DIR, 'run-live-paypal.js'), 'test/live/paypal/**/*.test.js']);
+    assert.equal(r.status, 2);
+    assert.equal(r.stderr.trim(), 'Set RS_LIVE_PAYPAL=1 to run the live PayPal Sandbox suite (it contacts the PayPal Sandbox)');
+    assert.equal(r.stdout, '');
+    // Injected: a refused launch never reaches spawnTests; an allowed one passes the patterns on and returns its exit code.
+    let spawned = 0;
+    const errs = [];
+    assert.equal(await runLivePaypal({ env: {}, guardInstalled: false, argv: [], err: (s) => errs.push(s), spawnTests: async () => { spawned += 1; return 0; } }), 2);
+    assert.equal(spawned, 0);
+    assert.deepEqual(errs, [`${LIVE_MESSAGES.notEnabled}\n`]);
+    let seen = null;
+    const env = { RS_LIVE_PAYPAL: '1', ...DEFAULT_SET };
+    assert.equal(await runLivePaypal({ env, guardInstalled: false, argv: ['x/*.test.js'], err: () => {}, spawnTests: async (patterns) => { seen = patterns; return 7; } }), 7);
+    assert.deepEqual(seen, ['x/*.test.js']);
+    assert.equal(await runLivePaypal({ env, guardInstalled: false, argv: [], err: () => {}, spawnTests: async (patterns) => { seen = patterns; return 0; } }), 0);
+    assert.deepEqual(seen, ['test/live/paypal/**/*.test.js']);
+  });
+
+  test('NFR3: the flag alone is not enough: the missing credential variables are named (never a value); guard and offline flag refuse', () => {
+    const noCreds = evaluateLiveLaunch({ RS_LIVE_PAYPAL: '1' }, { guardInstalled: false });
+    assert.equal(noCreds.ok, false);
+    assert.equal(noCreds.message, missingCredentialsMessage({ RS_LIVE_PAYPAL: '1' }));
+    for (const name of Object.keys(DEFAULT_SET)) assert.match(noCreds.message, new RegExp(name));
+    for (const missing of Object.keys(DEFAULT_SET)) {
+      const r = evaluateLiveLaunch({ RS_LIVE_PAYPAL: '1', ...DEFAULT_SET, [missing]: '' }, { guardInstalled: false });
+      assert.equal(r.ok, false, `without ${missing}`);
+      assert.match(r.message, new RegExp(missing));
+      for (const value of Object.values(DEFAULT_SET)) assert.equal(r.message.includes(value), false, 'no credential value in a message');
+    }
+    assert.deepEqual(evaluateLiveLaunch({ RS_LIVE_PAYPAL: '1', ...DEFAULT_SET }, { guardInstalled: true }), { ok: false, message: LIVE_MESSAGES.netGuard });
+    assert.deepEqual(evaluateLiveLaunch({ RS_LIVE_PAYPAL: '1', RS_TEST_OFFLINE: '1', ...DEFAULT_SET }, { guardInstalled: false }), { ok: false, message: LIVE_MESSAGES.offline });
+    assert.deepEqual(evaluateLiveLaunch({ RS_LIVE_PAYPAL: '1', ...DEFAULT_SET }, { guardInstalled: false }), { ok: true, mode: 'single-credential', keys: ['DEFAULT'] });
+    // Per-supplier mode needs all of A to E; four complete sets are not enough.
+    assert.deepEqual(evaluateLiveLaunch({ RS_LIVE_PAYPAL: '1', ...FIVE_SETS }, { guardInstalled: false }), { ok: true, mode: 'per-supplier', keys: ['A', 'B', 'C', 'D', 'E'] });
+    const four = { ...FIVE_SETS };
+    delete four.RS_PAYPAL_E_WEBHOOK_ID;
+    assert.equal(evaluateLiveLaunch({ RS_LIVE_PAYPAL: '1', ...four }, { guardInstalled: false }).ok, false);
+  });
+
+  test('NFR3: a suite report carries the suite, the provider and the merchant mode, and a skipped check is never counted as passed', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rs-live-report-'));
+    try {
+      const report = createSuiteReport('unit', { mode: 'single-credential', keys: ['DEFAULT'] }, { reportDir: dir });
+      report.record('a passed check', 'passed');
+      report.record('a skipped check', 'skipped', 'needs a person');
+      const file = report.write();
+      const body = JSON.parse(readFileSync(file, 'utf8'));
+      assert.equal(body.suite, 'live-paypal:unit');
+      assert.equal(body.provider, 'paypal-sandbox');
+      assert.equal(body.merchantMode, 'single-credential');
+      assert.deepEqual(body.counts, { passed: 1, failed: 0, skipped: 1 });
+      assert.equal(body.pass, false, 'a run with a skipped check is not a pass');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('NFR3: package.json keeps the check-node prefix on test:live-paypal and the live files stay out of npm test', () => {
+    const pkg = JSON.parse(readFileSync(join(PROJECT_ROOT, 'package.json'), 'utf8'));
+    assert.ok(pkg.scripts['test:live-paypal'].startsWith('node scripts/check-node.cjs && '));
+    assert.match(pkg.scripts['test:live-paypal'], /test\/live\/paypal\/run-live-paypal\.js/);
+    assert.match(pkg.scripts['test:live-paypal'], /test\/live\/paypal\/\*\*\/\*\.test\.js/);
+    assert.equal(/live/.test(pkg.scripts.test), false);
+  });
 });

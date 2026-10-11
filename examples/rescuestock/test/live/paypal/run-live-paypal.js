@@ -17,6 +17,7 @@ export async function runLivePaypal({
   env = process.env,
   argv = process.argv.slice(2),
   err = (s) => process.stderr.write(s),
+  guardInstalled,
   spawnTests = (patterns) => new Promise((resolve) => {
     const child = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', '--test', '--test-concurrency=1', ...patterns], { cwd: ROOT, stdio: 'inherit', env });
     child.once('error', (e) => {
@@ -26,7 +27,7 @@ export async function runLivePaypal({
     child.once('close', (code, signal) => resolve(signal ? 1 : (code ?? 1)));
   }),
 } = {}) {
-  const launch = evaluateLiveLaunch(env);
+  const launch = guardInstalled === undefined ? evaluateLiveLaunch(env) : evaluateLiveLaunch(env, { guardInstalled });
   if (!launch.ok) {
     err(`${launch.message}\n`);
     return 2;

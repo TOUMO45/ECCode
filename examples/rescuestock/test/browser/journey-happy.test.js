@@ -57,6 +57,7 @@ describe('RS-31(a): a customer buys the A + B plan through the fake PayPal appro
           trigger: () => page.click('[data-testid="paypal-approve-A"]'),
         });
         await page.waitForSelector('[data-testid="paypal-returned"]');
+        console.log(`# GET /api/paypal/return log line userId: ${approvedA.logUserId === null ? 'absent (the user is proven by the audit event of the same request id)' : approvedA.logUserId}`);
 
         // 4. Cancel supplier B's approval (RS-18 path): the browser comes back on /api/paypal/cancel with the session.
         const cancelledB = await approvalRoundTrip(page, {

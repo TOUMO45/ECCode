@@ -112,7 +112,8 @@ export async function approvalRoundTrip(page, { harness, userId, trigger, action
 
     // 6. No CSP complaint.
     assert.deepEqual(cspMessages, [], `${label}: no "Content Security Policy" console message`);
-    return { requestId: entry.requestId, entry, audit: audit[0], approvalUrl, landedOn };
+    // `logUserId` is what the request log line itself says about the user (null when the line carries none).
+    return { requestId: entry.requestId, entry, audit: audit[0], approvalUrl, landedOn, logUserId: entry.userId ?? null };
   } finally {
     page.off('console', onConsole);
   }
