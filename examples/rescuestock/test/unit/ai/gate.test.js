@@ -96,6 +96,8 @@ describe('reservation before the call, settlement and refund', () => {
   test('NFR6: budget is reserved BEFORE the provider is called and settled with the reported cost afterwards', async () => {
     const gate = setup({ dailyBudgetMicroUsd: 1_000_000, callCapMicroUsd: 100_000 });
     const c = customer();
+    // model_spend.request_id is a foreign key since migration 006, so the request the call names has to exist.
+    fx.db.prepare("INSERT INTO rescue_requests (id, customer_id, language, intake_status, created_at) VALUES (7, ?, 'en', 'draft', ?)").run(c, new Date(fx.clock.now()).toISOString());
     const provider = createFakeProvider({ costMicroUsd: 3700, sleep: async () => {} });
     let during;
     await gate.run({
