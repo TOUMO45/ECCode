@@ -1,0 +1,263 @@
+{
+  "decision": "changes_requested",
+  "summary": "Technical review of phase:f-compensation, iteration 1 (sub-mv44juz3-01ac72c7; commit aab23e6, tree a9aba38c; 61 artifacts, all unchanged on disk; no code change since aab23e6). The security draft phase-f-security-1.md (FINAL, verdict APPROVE, SEC-F-1 minor, SEC-F-I1..I7 info) is folded in.\n\n**What I checked.** I read the full src diff bf1a723..HEAD: saga.js, reconciler.js, calls.js, admin.js and routes/admin.js (+219/-39), and the f3 public diff, and checked them against the spec: provider call protocol 1-7, the payment saga steps 1-6, the reconciler, Admin routes and derivation row 2.\n\n**Plan commands, re-run verbatim.**\n- f1: 40/40 (ev:ev-mv44zcfv-01cfa3ef).\n- f2: 56/56 (ev:ev-mv44ztri-017e5d46).\n- f3: 205/205 (ev:ev-mv44zv7u-010f184d).\n- f4 under the suite lock: the first run had one failure, the known FU-33 race (ev:ev-mv451ngy-01bf3721). The single re-run allowed by dec-mv3tqbn4-01d43152 passed: npm test 2267 tests, 2259 pass, 0 fail, 8 skipped; NFR5 p95 65.7 ms; browser 14/14, with RS-17 and RS-32(a) at 360 and 1280 (ev:ev-mv455hce-01858e59).\n\n**Mutation.** I ran 9 mutants of my own on phase F logic, each in a fresh directory with its diff kept (ev:ev-mv45c3hv-0174ae15; sources ev:ev-mv45fn0w-015fc010). 7 are killed. Of the two survivors, MF6 is equivalent and MF4 is reachable only inside one reconciler interval (TR-F-5). MF3 is killed only by a hang (TR-F-2).\n\n**Correctness.** RS-13, RS-15, RS-17, RS-22 (PENDING), RS-26, RS-32(a), RS-37, RS-38, F-TR-2 and F-TR-6 conform as tested, and so do FU-36, FU-38, FU-41, FU-42, FU-43 and FU-45. Security confirms money never moves twice or backward (P-MONEY, P-RESET, P-FENCE).\n\n**Decision: changes requested on TR-F-1 (major), FU-49.** My reproduction probe (ev:ev-mv455seu-01b2f7c0) shows the following:\n- once the reconciler's read has restored the operation to `authorized` and later reads fail, the plan is taken over every tick (epoch 2 -> 10 over 8 ticks) with two reads per tick and no send;\n- after 20 minutes the buyer still reads 'Payments are being captured' / WAIT. Nothing escalates, whereas the same outage with the operation still `unknown` escalates at 15 minutes with the epoch at 1.\n\n**Disagreement with security.** Security measured the same thing (SEC-F-I2, ev:ev-mv452q7k-0170c0b2) and rates it info, as consistent with F-TR-7 as written. I agree there is no fencing hole and no money risk. I rate it major because:\n- protocol section 6 requires that an unknown older than RS_UNKNOWN_ESCALATE_MIN feeds row 2;\n- this silent stuck state is new in phase F;\n- the fix is small.\n\n**Other findings.**\n- TR-F-2 (minor): the SEC-11 bound test can only hang.\n- TR-F-3 (minor): two LIVE-P1 labels and RISK-18's title overstate the live coverage.\n- SEC-F-1 (minor, with my concurrence; my TR-F-4 is merged into it): the compensation path of a rejected refund is unpinned by f2.\n- Info: TR-F-5, TR-F-6, TR-F-7 (FU-33 priority) and SEC-F-I1, I3, I4, I5, I6, I7.",
+  "criteria": [
+    {
+      "id": "task:f1-supersession-refusal-expiry",
+      "description": "Supersession on offer and stock changes, durable re-plan queue, supplier refusal with re-plan excluding the supplier, expiry with voids",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv44zcfv-01cfa3ef",
+        "ev:ev-mv45c3hv-0174ae15",
+        "ev:ev-mv455hce-01858e59",
+        "ev:ev-mv457l53-01b9bd8b",
+        "ev:ev-mv457rbc-01dec9c1",
+        "artifact:test/api/supersession.test.js#L186",
+        "artifact:test/api/supplier-refusal.test.js#L91",
+        "artifact:test/api/replan-queue.test.js#L142",
+        "artifact:test/api/reservation-expiry.test.js#L284"
+      ],
+      "notes": "**Plan command.** The f1 plan command, verbatim, passes 40/40.\n\n**Coverage.** The four files name RS-13, RS-15, RS-17 [D] and F-TR-2, with the exact messages and the 'not after confirm or claim' cases.\n- My mutant MF7 (supersession.js supplierCommitted -> false) is killed by L186.\n- RS-17 [B] is green at 360 and 1280 in my f4 run.\n- Security's P-REFUSE and P-RACE show no cross-supplier or cross-café effect, and never both a refusal and a claim.\n\n**F-PL-3 boundary.** f1 changed no source file: `git diff bf1a723..HEAD -- src` touches only f2's five files.\n\nf1's own 30 mutants carry no ev id; MF7 is a recorded substitute for one class of them.\n\nThe handler-side drain deviation is decided by dec-mv40tgfo-01d03e4f, and FU-39 by dec-mv40tgp9-0139d534.\n\nSEC-F-I4 and SEC-F-I6 (refusal-reason hygiene) are info."
+    },
+    {
+      "id": "task:f2-compensation-takeover-admin",
+      "description": "Capture-failure compensation with refunds and restock, lease takeover with epoch and send-token fencing, admin refund_order and forced reset, ledger completeness",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv44ztri-017e5d46",
+        "ev:ev-mv45c3hv-0174ae15",
+        "ev:ev-mv455seu-01b2f7c0",
+        "ev:ev-mv44uzzh-01744558",
+        "ev:ev-mv44xmul-01d64afc",
+        "ev:ev-mv452q7k-0170c0b2",
+        "artifact:src/services/saga.js#L522",
+        "artifact:src/services/saga.js#L585",
+        "artifact:src/services/reconciler.js#L379",
+        "artifact:src/services/reconciler.js#L408",
+        "artifact:src/services/admin.js#L147",
+        "artifact:src/services/admin.js#L347",
+        "artifact:test/api/capture-compensation.test.js#L505"
+      ],
+      "notes": "**Met parts.**\n- **Plan command:** passes 56/56.\n- **Compensation (step 5):** one transaction under the fence (f2's M-tx and M-f-tr-6-split are killed).\n- **Refund results and release check:** capture-compensation L142.\n- **F-TR-7 for capture_pending:** L220; epoch 1 across ticks.\n- **F-TR-6 and FU-45:** void-capture-race L100 and L167; my MF9 is killed.\n- **FU-41(a):** my MF1 (CAPTURED -> send) and MF2 (failed read -> send) are both killed.\n- **FU-42:** the refund sends `order_total_cents`. loadOperation's OP_SELECT joins it (calls.js L51), so every refund path carries it.\n- **SEC-11:** voids first, then one pass bounded by real time, then the archive transaction with `stranded` (MF5 killed).\n- **refund_order:** sends after commit, and its denied audit rows are durable.\n- **RS-38:** ledger rows hold.\n- **Security confirms:** P-MONEY M1-M6, P-RESET R1-R7, P-FENCE F2 (no stale-holder send).\n\n**Not met: TR-F-1.**\n- The task criterion says 'Takeover (step 6): epoch + 1 ... only when ... no operation is capture_pending or unknown (F-TR-7)'.\n- The FU-41(a) hold path makes a new durable state: operation `authorized` with its capture call `unknown`.\n- In that state the takeover repeats every tick, and no escalation ever comes (ev:ev-mv455seu-01b2f7c0; security's F1, ev:ev-mv452q7k-0170c0b2).\n\nSEC-F-1 is a follow-up, not blocking."
+    },
+    {
+      "id": "task:f3-frontend-recovery",
+      "description": "Recovery UI: refusal reason and new plan, replanning and price-change states, compensation section, expired reservation, admin faults and supplier refusal forms",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv44zv7u-010f184d",
+        "ev:ev-mv45c3hv-0174ae15",
+        "ev:ev-mv455hce-01858e59",
+        "ev:ev-mv45fi73-01be9d51",
+        "artifact:public/js/components/compensation.js#L17",
+        "artifact:test/unit/frontend/recovery.test.js#L187"
+      ],
+      "notes": "**Plan command.** The f3 plan command, verbatim, passes 205/205; it includes the frontend scan (textContent only).\n\n**Safety and accessibility.**\n- No innerHTML, insertAdjacentHTML or outerHTML in public/js.\n- Labelled inputs on the refuse and fault forms.\n- `role=alert` on 'Contact the organiser'.\n- Focus moves to 'Why this plan' on 'Review the new plan'.\n\n**Tests.** My MF8 (a failed void shown as queued) is killed by recovery.test.js, 3 red. Security's Chromium XSS probe shows markup inert.\n\n**Carried items.**\n- FU-50 (completed voids of a closed plan not listed) and FU-51 (360 px checks of the unreached states) are carried, with owners.\n- SEC-F-I1(c) (Sandbox-only wording of the stranded list) is info."
+    },
+    {
+      "id": "task:f4-restart-takeover-browser",
+      "description": "Restart, lease-takeover and return-crash multi-process tests, refusal and replacement browser journeys",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv455hce-01858e59",
+        "artifact:test/integration/rs26-restart.test.js#L98",
+        "artifact:test/integration/lease-takeover.test.js#L110",
+        "artifact:test/browser/journey-replacement.test.js#L35"
+      ],
+      "notes": "**Plan command.** The f4 plan command, verbatim, under the suite lock: the re-run is green.\n- npm test: 2267 tests, 2259 pass, 0 fail, 8 skipped.\n- Browser: 14/14.\n- The two RS-26 tests, ARCH-26 variants A and B, and F-TR-3 (a), (b) and (c) pass as real processes.\n- RS-17 and RS-32(a) pass at 360x800 and 1280x800.\n\nThe first run (ev:ev-mv451ngy-01bf3721) failed only on FU-33 (TR-F-7). Security's f4 run (ev:ev-mv45e3qc-011dac75) passed.\n\n**Disclosed and accepted.** Return-crash (b) and (c) write product rows from the test process. The multi-process tests ran on Node 22.22 only; the 22.5 run is the user's.\n\nf4's bite proofs are recorded per mutant, and the M5 survivor is a redundant backstop."
+    },
+    {
+      "id": "phase:f-compensation",
+      "description": "Supersession with the durable re-plan queue, supplier refusal with re-planning excluding the supplier, expiry voids, capture-failure compensation, lease takeover with epoch and send-token fencing, restart recovery, admin refund_order and forced reset, ledger completeness, the recovery UI, restart, takeover and replacement-journey tests",
+      "met": false,
+      "evidence": [
+        "ev:ev-mv455hce-01858e59",
+        "ev:ev-mv455seu-01b2f7c0",
+        "artifact:.eccode/artifacts/phase-f/submission.md#what-the-phase-delivers",
+        "artifact:.eccode/artifacts/plan/followups.md#new-follow-ups"
+      ],
+      "notes": "**Met (plan criteria 1-10):**\n- 1-3 and 5-9: met as tested.\n- 10: npm test and test:browser pass on the re-run.\n\n**Held back by TR-F-1 (plan criterion 4).** RS-22 'including F-TR-7' holds for PENDING. The FU-41(a) hold path, new in this phase, repeats the takeover while the capture is unresolved, and it loses the row-2 escalation that protocol section 6 requires for an unknown older than RS_UNKNOWN_ESCALATE_MIN.\n\n**Honest labels.**\n- 'Fake only' is honest for every criterion.\n- TR-F-3 corrects two 'LIVE-P1 fact' labels and RISK-18's title."
+    },
+    {
+      "id": "lessons",
+      "description": "The four tasks' not-applicable decisions on mem-sd-mv1audrd-013b7102 hold",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv44zcfv-01cfa3ef",
+        "artifact:.eccode/artifacts/phase-f/submission.md#lessons"
+      ],
+      "notes": "None of f1-f4 builds or changes a hook, guard or root discovery, so the lesson's 'Applies when' conditions do not hold.\n\nf1 reported a 'has no claimed task' refusal for a call made from the outer repository. That concerns the toolkit's guard, not phase F's work. The orchestrator may route it to learning-debugger if it recurs with an absolute nested target path."
+    },
+    {
+      "id": "security",
+      "description": "Security review folded in: phase-f-security-1.md (FINAL), verdict APPROVE",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv44uzzh-01744558",
+        "ev:ev-mv44xmul-01d64afc",
+        "ev:ev-mv451665-01a9729f",
+        "ev:ev-mv452q7k-0170c0b2",
+        "ev:ev-mv457l53-01b9bd8b",
+        "ev:ev-mv457rbc-01dec9c1",
+        "ev:ev-mv45f6xa-01a86f74",
+        "ev:ev-mv45fi73-01be9d51",
+        "ev:ev-mv45g2ab-014fd54e"
+      ],
+      "notes": "**Verdict.** No blocking or major security finding.\n\n**Folded in.**\n- SEC-F-1 (minor) is carried below, merged with my TR-F-4.\n- SEC-F-I1, I3, I4, I5, I6 and I7 are carried below as info.\n- SEC-F-I2 (FU-49) is the same observation as TR-F-1; I rate it higher, as explained there.\n\n**Phase E items closed by F.** SEC-E-1 recommendation 5 (FU-41a), SEC-E-I3 (FU-45) and SEC-11 are closed, per security's table (P-CARRY)."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-F-1",
+      "severity": "major",
+      "title": "FU-49: the FU-41(a) hold path repeats the takeover every tick while the holder's read fails, and the stuck plan never escalates",
+      "detail": "**The state.** After a capture timeout, reconciler step 2 reads CREATED and restores the operation to `authorized`. The capture call stays `unknown` (reconciler.js L195-L201). Step 5 takes the plan over, because no operation is `capture_pending` or `unknown`. If the holder's read then fails, readBeforeResend returns 'hold' and pauseLease sets lease_until = now (saga.js L585-L597). The next tick repeats all of it.\n\n**My probe** (ev:ev-mv455seu-01b2f7c0, scratch copy of the final src plus one added test file; source in ev:ev-mv45fn0w-015fc010):\n- the first read succeeds, then the fake's get_authorization fails (http_500, unlimited);\n- over 8 ticks of 2.5 min: epochs 2,3,...,10, two get_authorization per tick, 0 capture sends, 9 saga.takeover and 9 saga.resend_read_failed logs;\n- after 20 min the operation is `authorized`, the call `unknown`, the plan `executing`;\n- the buyer's rescueStatus is `payment_authorized`, rule 10, WAIT, 'Payments are being captured.';\n- when the fault is cleared, the plan completes with one capture per authorization.\n\n**Security measured the same** (SEC-F-I2, ev:ev-mv452q7k-0170c0b2: +10 epochs and +10 takeover audit rows over 10 ticks, zero sends, 'derivation row 2 and metrics unresolved stay silent').\n\n**Compare** the same outage when the first read also fails (lost-response.test.js L256, 'F-TR-7: while an operation is unknown the plan is not taken over ...'): the epoch stays 1, and the request is `failed_needs_attention` after RS_UNKNOWN_ESCALATE_MIN.\n\n**Why this does not conform.**\n- **Escalation.** Spec, provider call protocol section 6: 'A read that itself fails leaves the call unknown until the next tick. An unknown older than RS_UNKNOWN_ESCALATE_MIN feeds derivation row 2.' derive.js row 2 looks only at op.status `unknown` (and authorize calls of `approved` operations), so an `unknown` capture call under an `authorized` operation never escalates.\n- **F-TR-7.** F-TR-7's intent ('the reconciler takes over a paused plan only when that operation is resolved'; 'lease_epoch does not grow while ... pending') is defeated: the operation counts as resolved for the takeover query but not for its own holder.\n- **Durability.** The state is new in phase F. Before FU-41(a) the holder re-sent at once, and a failed send put the operation back into `unknown`.\n\n**Money is safe**, and security's F2 shows no fencing hole. The defect is a silent stuck plan with takeover and read churn (5,760 epochs and audit rows a day per plan at 15 s) for as long as the outage lasts, while the buyer is told the payments are being captured.",
+      "evidence": [
+        "ev:ev-mv455seu-01b2f7c0",
+        "ev:ev-mv45fn0w-015fc010",
+        "ev:ev-mv452q7k-0170c0b2",
+        "artifact:src/services/saga.js#L522",
+        "artifact:src/services/saga.js#L585",
+        "artifact:src/services/reconciler.js#L408",
+        "artifact:test/api/capture-compensation.test.js#L505"
+      ],
+      "recommendation": "Owner: backend-engineer (f2 owns saga.js and reconciler.js; src/domain/derive.js has no phase F owner, so the orchestrator scopes a rework if that file is chosen).\n\nResolved when both of the following hold:\n\n(a) **The stuck state escalates.** With the holder's read failing for longer than RS_UNKNOWN_ESCALATE_MIN, the request reads `failed_needs_attention` (row 2), with a test. Either option is acceptable:\n- On a failed or held holder read, the operation goes back to `unknown` (prev_status `authorized`, the original unknown_since kept), so the existing F-TR-7 takeover exclusion and row 2 apply unchanged. This is my preferred fix: it also stops the epoch growth.\n- Or derivation row 2 escalates on a capture call `unknown` for longer than RS_UNKNOWN_ESCALATE_MIN.\n\n(b) **The epoch is settled.** Either the same test shows that lease_epoch no longer grows per tick in this state (security's suggestion, lease_until = now + back-off on a failed read, also serves), or an orchestrator decision accepts the per-tick takeover with its rationale and the verification report states it.\n\nThe FU-41(a) tests and lost-response stay green, the full suite passes under the lock, and my probe's expectations flip: the epoch stays bounded and the status escalates."
+    },
+    {
+      "id": "TR-F-2",
+      "severity": "minor",
+      "title": "SEC-11 'the pass is bounded' can only hang, never fail, when the bound is removed",
+      "detail": "admin-reset.test.js L219 makes the provider's reads never resolve, awaits resetDemo, and only then asserts `elapsed < 5000`.\n\nWith the budget removed (my MF3; f2's M-reset-unbounded, 'pass 4 fail 0'), the await never returns. My runner killed the mutant only through its own 90 s --test-timeout ('cancelled 1, fail 0'; ev:ev-mv45c3hv-0174ae15). npm test sets no per-test timeout, so this regression would stall the whole suite until the evidence run's 1800 s limit, instead of reporting a red test.",
+      "evidence": [
+        "ev:ev-mv45c3hv-0174ae15",
+        "artifact:test/api/admin-reset.test.js#L219"
+      ],
+      "recommendation": "Owner: backend-engineer (f2's file), at the next touch of admin-reset.test.js, or as a phase G test item. Resolved when the test bounds its own wait, for example with `{ timeout: 10_000 }` on the test or a Promise.race against a timer with an assertion, and an unbounded-pass mutant shows a red assertion (fail >= 1) within that time."
+    },
+    {
+      "id": "TR-F-3",
+      "severity": "minor",
+      "title": "Two 'LIVE-P1 fact' labels and RISK-18's title claim live coverage that no live test provides",
+      "detail": "The submission's criteria table says:\n- RS-21: 'the live DENIED/PENDING semantics are LIVE-P1 facts';\n- F-TR-6: 'PayPal's answer to a void after capture is a LIVE-P1 fact'.\n\nLIVE-P1 is RS-18/19/20/23/24 (plan.json). None of the live files (test/live/paypal: rs18, rs19, rs20, rs23, rs24, journey-sandbox) exercises an authorization DENIED or PENDING, or a void after capture. So these facts stay unverified even after the user's LIVE-P1 run.\n\nRISK-18's title reads 'live RS-19/20/22/23/24 evidence', but the spec's evidence table (spec.md, Testing: RS-22 row) makes RS-22 [D] only, and no live RS-22 file exists or is planned.\n\nThe 'Fake only' column itself is honest. followups.md item 18 already lists the facts as LIVE-DEPENDENT and flags RISK-18; security agrees on the honesty of the labels (section 6).",
+      "evidence": [
+        "ev:ev-mv44ztri-017e5d46",
+        "artifact:.eccode/artifacts/phase-f/submission.md#what-is-real-and-what-is-simulated",
+        "artifact:.eccode/artifacts/plan/followups.md#carried-to-the-verification-report-owner-delivery-lead-additions"
+      ],
+      "recommendation": "Owners: the orchestrator for the risk record (RISK-18 title: drop '22', or extend LIVE-P1 by decision), and g2 or the delivery-lead for docs/evidence-table.md and the verification report. Resolved when:\n- the evidence table and the verification report list authorization DENIED/PENDING (RS-21), void-after-capture (F-TR-6), PayPal-Request-Id retention across a takeover, and capture/refund PENDING/FAILED as LIVE-DEPENDENT and not covered by LIVE-P1 (or name a live test that covers them);\n- RISK-18's title matches LIVE-P1's actual scope."
+    },
+    {
+      "id": "SEC-F-1",
+      "severity": "minor",
+      "title": "(security, technical concurs; merges TR-F-4) No f2 test reaches the rejected-refund mapping; its compensation-path effects are unpinned",
+      "detail": "**The mapping is covered suite-wide, but only on the admin path.** It is calls.js L295-L297 (`rejected` -> `refund_failed`).\n- Mutant MB (-> 'refunded') passes all 56 f2 tests (security, ev:ev-mv45a1qw-01b3e8ca).\n- It is killed only by rework-5's admin-basic refund_order subtest: security's ev:ev-mv45adl5-0146e187, and my kill-check on the same tree, ev:ev-mv44wbl4-0121944a.\n\n**On the compensation path the mutant misbehaves** (security, ev:ev-mv45ahqj-01d67bc3, P-MONEY M4 under MB). A refund rejected during compensation is recorded as `refunded`, the reservation is released with restock rows, and the buyer reads `cancelled` / 'being refunded' while no money came back.\n\n**Today's code is correct** (P-MONEY M4 and M4b on the real tree, ev:ev-mv44uzzh-01744558).\n\n**Answer to the orchestrator's question.** The admin-basic pin is enough to stop MB itself from shipping. It is not enough for f2's own compensation contract (reconciling, escalation, no restock), so this is a minor follow-up, not a block.\n\n**Origin.** f2's handoff (remaining issue 1) proposed reducing admin-basic to 'assert only that one call exists'. That suggestion produced the TR-R5-1 gap; rework-5 corrected it.",
+      "evidence": [
+        "ev:ev-mv45a1qw-01b3e8ca",
+        "ev:ev-mv45ahqj-01d67bc3",
+        "ev:ev-mv44uzzh-01744558",
+        "ev:ev-mv44wbl4-0121944a",
+        "artifact:src/services/calls.js#L296"
+      ],
+      "recommendation": "Owner: backend-engineer or test-engineer (f2's test files), together with TR-F-1. Resolved when an f2 test in capture-compensation.test.js (or void-capture-race.test.js) drives a compensation whose refund is `rejected` (for example fault http_422:refund), and asserts:\n- `refund_failed` with the provider issue;\n- the reservation stays `reconciling` with escalation REFUND_FAILED;\n- there are no restock rows;\n- the buyer reads `failed_needs_attention`;\n- mutant MB fails it."
+    },
+    {
+      "id": "TR-F-5",
+      "severity": "info",
+      "title": "Two of my mutants survived: MF6 is equivalent, MF4 is reachable only before a regular reconciler tick",
+      "detail": "**MF6** (saga.js L257, the empty-plan guard of releaseIfSettled, removed): any reset closes every `reconciling` reservation in the same transaction that archives the operations (admin.js closedReconciling). So no `reconciling` reservation with only archived operations reaches the release check. The guard is defensive, and the mutant is equivalent.\n\n**MF4** (the reset pass skips 'stale started intents -> unknown'): a started intent becomes stale after 2 x RS_PAYPAL_TIMEOUT_MS (40 s), and every regular reconciler tick (15 s) marks it anyway. Only a stale intent that the regular tick has not yet marked (at most one interval) would be listed as stranded by a forced reset, rather than resolved.",
+      "evidence": [
+        "ev:ev-mv45c3hv-0174ae15",
+        "artifact:src/services/saga.js#L257"
+      ],
+      "recommendation": "No change required. Optional, owner f2 or phase G: a forced-reset test with a stale started void intent would pin MF4. Resolved by the verification report listing both survivors with this reasoning."
+    },
+    {
+      "id": "TR-F-6",
+      "severity": "info",
+      "title": "A forced reset does not fence a live executing saga; a capture landing after the archive leaves a stale `stranded` entry",
+      "detail": "settleForForcedReset queues voids for `authorized` operations of executing plans and runs a pass of up to 30 s outside any transaction. Meanwhile the plan's lease holder may still start a capture: the capture guard checks the lease and `authorized`, not cancel_requested_at, and nothing in the reset changes lease_epoch.\n\nSecurity's P-RESET R4 and R5 (ev:ev-mv44xmul-01d64afc) show the in-reset races resolve correctly: a capture applied with its answer held is refunded, and a capture held before the provider is refused after the void.\n\nThe residual is a capture that lands after the archiving transaction:\n- its result is recorded on the archived row;\n- the refund that the cancellation hook queues is never sent, because startCall refuses archived operations (security confirms by reading);\n- the `stranded` entry reported to the operator says `authorized`, while PayPal shows the authorization CAPTURED.\n\nThis complements SEC-F-I1. It is demo-only, admin-only, needs force plus a reason, and spends Sandbox money; SEC-11 accepts manual clean-up.",
+      "evidence": [
+        "ev:ev-mv44xmul-01d64afc",
+        "artifact:src/services/admin.js#L147",
+        "artifact:src/services/reconciler.js#L379"
+      ],
+      "recommendation": "No change required for this gate. Owner: delivery-lead (verification report, item 16). Resolved when the report states that the `stranded` statuses are as of the archive, and that a capture in flight for an executing plan can complete after it. Optionally, the archive transaction could bump lease_epoch of executing plans to fence late result writes."
+    },
+    {
+      "id": "TR-F-7",
+      "severity": "info",
+      "title": "FU-33: the race is in the test, not in contention; raise it to the first phase G item",
+      "detail": "**Two of my last four locked full suites on the real tree hit uploads-retention.test.js L711:**\n- rework-5 ev:ev-mv44rydx-01958248, with no other suite and no run of mine active (load average 2.3);\n- phase F ev:ev-mv451ngy-01bf3721, while I ran the small f1-f3 commands beside it.\n\nThe delivery-lead's ev:ev-mv445oiq-01166891 and f4's ev:ev-mv43j15k-01209f8b failed the same way.\n\n**Cause.** The cause is deterministic in the test. retention.js deletes the row (L37) and then unlinks the file asynchronously (L47). The test polls only for the row and then checks `existsSync` at once, so any scheduling delay between the two fails it. Load only widens the window.\n\n**Cost.** Each occurrence costs a 2-4 minute full re-run, and it trains every role to discount red runs.\n\n**Answer to the orchestrator.** Yes, this raises FU-33's priority.",
+      "evidence": [
+        "ev:ev-mv451ngy-01bf3721",
+        "ev:ev-mv455hce-01858e59"
+      ],
+      "recommendation": "Owner: orchestrator (FU-33, dec-mv3tqbn4-01d43152). Make it the first phase G change, before any further full-suite evidence is gathered. Resolved when the test waits for the file as well as the row (the one-line fix) and three consecutive locked npm test runs pass it."
+    },
+    {
+      "id": "SEC-F-I1",
+      "severity": "info",
+      "title": "(security) The forced reset's `stranded` list does not say which captured money is owed back; its wording assumes the Sandbox",
+      "detail": "**What the list shows.** A `captured` operation with cancel_requested_at set reads like a completed sale (R7). Captured operations of an executing plan are archived as they are and listed (R2, R4, R5), as SEC-11 specifies.\n\n**Wording.** The admin screen says 'Check each one in the PayPal Sandbox dashboard' even with the fake provider (public/js/views/admin.js L130).",
+      "evidence": [
+        "ev:ev-mv44xmul-01d64afc"
+      ],
+      "recommendation": "Owner: g2 or g3 via the orchestrator. Resolved when each stranded entry carries planStatus and cancelRequested (or owedRefund) and the intro is worded by provider, or when the verification report records the decision not to."
+    },
+    {
+      "id": "SEC-F-I3",
+      "severity": "info",
+      "title": "(security) refund_order 404 and every 422 on the fault routes write no audit row",
+      "detail": "The spec says 'Every faults and refund_order call writes an audit event with the actor and the target ids'. The 409 refusals are durable (P-MONEY M1, M2). Because the admin is trusted, this is about completeness only.",
+      "evidence": [
+        "ev:ev-mv44uzzh-01744558"
+      ],
+      "recommendation": "Owner: orchestrator (follow-up). Resolved when a denied audit row is written for 404 and 422 on the fault routes, or the verification report states the narrower reading."
+    },
+    {
+      "id": "SEC-F-I4",
+      "severity": "info",
+      "title": "(security) The admin supplier_refusal reason bypasses checkRefusalReason",
+      "detail": "applyFault validates the reason with str(1, 300) only (admin.js L428). It therefore stores ESC/BEL and blank reasons that the supplier route refuses (P-REFUSE S4, S7). The buyer sees them as text.",
+      "evidence": [
+        "ev:ev-mv457l53-01b9bd8b"
+      ],
+      "recommendation": "Owner: orchestrator (follow-up). Resolved when applyFault uses checkRefusalReason, with a test."
+    },
+    {
+      "id": "SEC-F-I5",
+      "severity": "info",
+      "title": "(security) Admin metrics `reconciler.unresolved` is 0 while an operation is refund_failed (and for the TR-F-1 plans)",
+      "detail": "`unresolved` counts only unknown, *_pending and void_failed. `operationsByStatus` does show `refund_failed`.",
+      "evidence": [
+        "ev:ev-mv44uzzh-01744558"
+      ],
+      "recommendation": "Owner: orchestrator (follow-up, or with TR-F-1). Resolved when `unresolved` also counts refund_failed and escalated reservations, or the verification report lists the narrower meaning."
+    },
+    {
+      "id": "SEC-F-I6",
+      "severity": "info",
+      "title": "(security) Bidi override controls are accepted in a refusal reason",
+      "detail": "checkRefusalReason accepts U+202E, which can visually reverse the system's trailing sentence after the reason. Markup is inert in Chromium (ev:ev-mv45fi73-01be9d51).",
+      "evidence": [
+        "ev:ev-mv457l53-01b9bd8b",
+        "ev:ev-mv45fi73-01be9d51"
+      ],
+      "recommendation": "Owner: orchestrator (follow-up). Resolved when U+202A-U+202E and U+2066-U+2069 are refused or stripped, or the reason is isolated (FSI...PDI) when the message is composed."
+    },
+    {
+      "id": "SEC-F-I7",
+      "severity": "info",
+      "title": "(security) A refunded order can still be marked ready and handed over",
+      "detail": "After `refunded`, supplier A's card shows canMarkReady true, and ready and handover return 200 ('collected'), so the goods are released for a refunded payment. This matches the brief's literal guard (refund_* does not match `refunded`) and OQ-D2. orders.js L27 is c3's file, not phase F's.",
+      "evidence": [
+        "ev:ev-mv45f8im-01c9a052"
+      ],
+      "recommendation": "Owner: orchestrator, as a product decision. Resolved when a decision states whether a refunded order may be collected; if not, add `refunded` to HANDOVER_BLOCKING_PAYMENT for that order, with a test."
+    }
+  ],
+  "resolvedFindings": [],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
