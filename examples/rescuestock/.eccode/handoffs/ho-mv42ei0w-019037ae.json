@@ -1,0 +1,39 @@
+{
+  "from": "frontend-engineer",
+  "to": "delivery-lead",
+  "task": "f3-frontend-recovery",
+  "objective": "Fix the one fixture defect f4 found: recovery/plan-replan-feasible.json lacked the top-level labels object that POST /api/requests/:id/plan returns.",
+  "context": "createPlan (src/services/plans.js, labelsOf(ctx.config)) returns {planningRun, plan, labels, requestId}; the labels shape and the fake-provider values are those of test/fixtures/contracts/plan-create-feasible.json. The object was added before requestId, nothing else changed. test/api/contracts.test.js was not edited; f4's optional: ['labels'] tolerance can now be removed by f4.",
+  "inputs": [
+    "src/services/plans.js (read only)",
+    "test/fixtures/contracts/plan-create-feasible.json (read only)"
+  ],
+  "dependencies": [],
+  "expectedOutput": "A plan-route fixture with the same keys as the live route.",
+  "acceptanceCriteria": [
+    "plan-replan-feasible.json carries labels with the live values (simulatedPayments true, simulatedExtraction true, sandbox false, demoData true, priceNotice 'Test prices, not market prices', merchantMode per-supplier, singleCredentialNotice null, testMode false)",
+    "no other file changes"
+  ],
+  "completedWork": "labels added to test/fixtures/contracts/recovery/plan-replan-feasible.json. Verification command: 205 tests, 205 pass. test/api/contracts.test.js: 81 tests, 81 pass, 0 skipped. npm test was not rerun (known red on the two approved test/api tests awaiting the rework).",
+  "filesChanged": [
+    "test/fixtures/contracts/recovery/plan-replan-feasible.json"
+  ],
+  "evidence": [
+    "ev:ev-mv42dwq7-01826dd5",
+    "ev:ev-mv42eayv-01724429"
+  ],
+  "remainingIssues": [
+    "The contract assumptions of the earlier f3 handoff (ho-mv403lay-01fa3938) still stand for f1, f2 and f4."
+  ],
+  "nextAction": "test-engineer (f4): remove the optional: ['labels'] tolerance for the plan route row.",
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This claim edits one JSON test fixture; it designs no hook or guard mapping writes to a project root, and the repository's nested record is addressed with an explicit cwd."
+    }
+  ]
+}
