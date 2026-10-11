@@ -1,0 +1,91 @@
+{
+  "decision": "approve",
+  "summary": "Technical review of rework-3 (sub-mv32kio2-01649f99): test/browser/journey-infeasible.test.js plus the submission. The file's sha256 at HEAD and in the working tree is aef89270..., which matches the submission. Its diff since the claim base e011e54 is +1/-18, the only commit touching it since the base is 7942bf2, and test/browser, public and src have no uncommitted changes (ev:ev-mv3351jw-0188869e).\n\nThe change:\n- The helper withoutUnregisteredExtract() and its three-line comment are deleted (17 lines).\n- The journey's final health assertion (L97) is now an unfiltered assert.deepEqual(problems, [], ...).\n- Nothing else in the journey changed: the steps, selectors, database checks and screenshot are byte-identical to the base.\n- No .js file outside node_modules mentions withoutUnregisteredExtract or EXTRACT_ROUTE_MAY_BE_MISSING (ev:ev-mv3351jw-0188869e).\n\nWhy the unfiltered assertion catches a 404 on the extract route. I read the harness: newJourney pushes 'HTTP <status>: <method> <url>' for every response with status >= 400 (harness.js L66-L67), plus every console error. The journey's text-only path calls POST /api/requests/:id/extract (request-new.js L205-L211). It reaches waitForURL only when that call succeeds, or when it fails with a degraded 429 or 503 (L218-L220). In that degraded case the >= 400 response would itself be in problems and fail L97. A passing journey therefore proves the extract call answered below 400.\n\nThe frontend no longer tolerates a 404 either. classifyExtractFailure (request-new.js L45-L50) returns 'retry' for a 404, so the page stays on the error state with Retry. The unit rows for FU-16 pass (extraction.test.js L431 and L672-L682, 36/36, ev:ev-mv33481c-0186bea7). The engineer's first scratch run, ev:ev-mv32eef8-01a1865d, shows the same behaviour in the browser: a 404 on the page's own call stops the journey at waitForURL.\n\nMy checks ran after the submission, all on one tree (644325026d5e...):\n- npm run test:browser: 8/8 pass, 3 suites (ev:ev-mv3336jn-01854cbc);\n- the journey file alone: 3/3 (ev:ev-mv333e72-01e37f9b);\n- the frontend extraction unit file: 36/36 (ev:ev-mv33481c-0186bea7);\n- npm test: exit 0, 1216 tests, 1208 pass, 0 fail, 8 skipped (ev:ev-mv336kwi-018b30c5);\n- scope and diff: ev:ev-mv3351jw-0188869e.\n\nI tried to reproduce the injected-404 case myself with a scratch probe in the session scratchpad. The tool-call guard refused the write ('technical-reviewer reviews/designs but does not edit project files; ...'). I did not work around it. I rely on the engineer's two logs together with my reading of the harness and of the assertion. See TR-RW3-1 for why that is enough.\n\nDecision: approve. There are three info findings and none blocks.",
+  "criteria": [
+    {
+      "id": "task:rework-3",
+      "description": "FU-16: remove the extract-route 404 tolerance from the phase C browser journey",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv3351jw-0188869e",
+        "ev:ev-mv333e72-01e37f9b",
+        "ev:ev-mv3336jn-01854cbc",
+        "ev:ev-mv336kwi-018b30c5",
+        "ev:ev-mv32exvz-01f53643",
+        "artifact:test/browser/journey-infeasible.test.js#L97",
+        "artifact:test/browser/helpers/harness.js#L66-L67",
+        "artifact:.eccode/artifacts/rework-3/submission.md#finding-change-test-evidence",
+        "artifact:.eccode/handoffs/ho-mv32h04t-01f86c40.json#acceptanceCriteria"
+      ],
+      "notes": "I checked each of the handoff's acceptance criteria.\n(1) Any 404 on POST /api/requests/:id/extract during a journey is a failure. The helper and all filtering are gone, and L97 compares the raw problems list with []. The harness records every response >= 400 (harness.js L66-L67), so a 404 on that route, or on any route, fails the row. The page now also stops at waitForURL on such a 404, which gives a second failure point (ev:ev-mv32eef8-01a1865d).\n(2) A regression test fails before the fix and passes after it. With the same injected 404, the strict assertion fails and lists exactly the extract 404 and its console line (ev:ev-mv32evim-01a6a1d8, an intended failure, cited in TR-RW3-1 because the engine does not accept a failed check as support for a met criterion). The old helper passes and prints the two entries it hid (ev:ev-mv32exvz-01f53643). That is a valid before/after contrast on the assertion that changed. Because the scratch file was deleted, its source cannot be inspected. I accept the logs for the reason given in TR-RW3-1.\n(3) The existing checks still pass. Browser suite 8/8, journey 3/3, npm test 1208 pass / 0 fail / 8 skipped of 1216, all on the final tree.\nScope: the diff since e011e54 changes the owned file only by +1/-18. The journey's steps and its other assertions are unchanged (ev:ev-mv3351jw-0188869e)."
+    },
+    {
+      "id": "phase:rework-3",
+      "description": "c6's test/browser/journey-infeasible.test.js tolerates a 404 on POST /api/requests/:id/extract through withoutUnregisteredExtract() because the route did not exist in phase C. d3 added the route and d4's reset removed the frontend tolerance (ho-mv32b3pf-011eac5d). Phase C is approved and no phase D task owns the file, so a rework removes the helper: any 404 on that route during a journey is a failure.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv3336jn-01854cbc",
+        "ev:ev-mv33481c-0186bea7",
+        "ev:ev-mv3351jw-0188869e",
+        "artifact:public/js/views/request-new.js#L45-L50",
+        "artifact:test/unit/frontend/extraction.test.js#L672-L682",
+        "artifact:test/browser/journey-infeasible.test.js#L97",
+        "artifact:.eccode/artifacts/rework-3/submission.md#where-the-change-is-in-git"
+      ],
+      "notes": "The rework's purpose is met. The test side and the app side now agree that the extract route exists and that a 404 on it is a failure:\n- Test side: the journey's assertion has no filter (L97).\n- App side: d4's reset removed EXTRACT_ROUTE_MAY_BE_MISSING. classifyExtractFailure sends a 404 to 'retry', so there is no navigation and the page shows the error with Retry (request-new.js L45-L50). The FU-16 unit rows pin this behaviour, and they pass in my run (ev:ev-mv33481c-0186bea7).\nThe full browser suite passes 8/8 on the final tree (ev:ev-mv3336jn-01854cbc). The triggering run ev:ev-mv3226jz-0198f037 passed only with the tolerance in place. The same journey now passes without it.\nThe two degraded-extraction journeys (phase D) already assert an unfiltered deepEqual(problems, []) (degraded-extraction.test.js L181 and L241). No browser journey keeps a filter now."
+    },
+    {
+      "id": "lessons",
+      "description": "The rework's not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv3351jw-0188869e",
+        "artifact:.eccode/handoffs/ho-mv32h04t-01f86c40.json#lessonDecisions",
+        "artifact:.eccode/artifacts/rework-3/submission.md#lessons"
+      ],
+      "notes": "I read the lesson with memory search --check-env. It applies to a hook or guard that maps file writes to a project record or root in a repository with several records. The --check-env result 'APPLIES' checks only the environment (node >= 18.17), not the scope.\nThis rework deletes a test helper and changes one assertion in a browser test file. It designs or changes no hook, guard or root discovery (ev:ev-mv3351jw-0188869e), so not-applicable holds.\nThe engineer's two guard denials were for scratch writes outside its claimed file. Those are the role and claim rules working, which the lesson's 'Not applicable when' list covers. My own scratch probe was refused with the role message for a target outside the record's draft areas (the session scratchpad), not inside the nested record's draft area. That is also outside the lesson's wrong-root case. My draft write into this record's .eccode/reviews/drafts/ was allowed.\nThe decision matches rework-1 and rework-2, which I accepted."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-RW3-1",
+      "severity": "info",
+      "title": "The failing-first proof is a deleted scratch test; the evidence logs suffice and no permanent regression test is required",
+      "detail": "The record's output says 'a regression test that fails without it', and its criterion says 'a regression test fails before the fix and passes after it'. Here the fix is the removal of a filter inside a test, so the regression test is the journey itself. Its unfiltered L97, together with the harness collector at harness.js L66-L67, fails on any >= 400 response.\nThe engineer showed the contrast on the changed assertion with an injected 404: the strict assertion fails (ev:ev-mv32evim-01a6a1d8) and the old helper passes (ev:ev-mv32exvz-01f53643). The logs record the command, the exit code and the exact problem entries. The scratch source was deleted, so only its output can be inspected.\nI considered requiring a permanent test, for example a test/browser/extract-404-guard.test.js owned by test-engineer that injects a 404 through page.route and asserts that the journey's problem collection carries it. I do not require it, for three reasons:\n(a) It would test the harness, not the journey. A filter re-added to journey-infeasible.test.js would not make it fail, so it does not protect against the regression in question.\n(b) It would add little. The collector is a few page.on handlers that all three browser journeys share, and the FU-16 unit rows already pin the app-side 404 handling (extraction.test.js L431, L672-L682).\n(c) The engineer's ownership was the journey file only, and the submission discloses this.\nMy own attempt at an independent browser probe was refused by the guard (scratch file write), so I could not re-run the contrast. My conclusion rests on reading the harness and the assertion.",
+      "evidence": [
+        "ev:ev-mv32evim-01a6a1d8",
+        "ev:ev-mv32exvz-01f53643",
+        "ev:ev-mv32eef8-01a1865d",
+        "ev:ev-mv33481c-0186bea7",
+        "artifact:.eccode/artifacts/rework-3/submission.md#disclosure-the-failing-first-proof-is-a-scratch-test-not-a-test-in-the-repository",
+        "artifact:.eccode/handoffs/ho-mv32h04t-01f86c40.json#remainingIssues"
+      ],
+      "recommendation": "No action required for this gate, and no follow-up. If the orchestrator wants scratch-test proofs to be inspectable in future reworks, the engineer could record the scratch source with 'evidence file' before deleting it. That would be a workflow note, not a condition of this gate."
+    },
+    {
+      "id": "TR-RW3-2",
+      "severity": "info",
+      "title": "No security review for rework-3; the recorded decision dec-mv32cj1p-01fd33ad names rework-2 only",
+      "detail": "There is no rework-3 security draft. The change deletes a test helper and changes one test assertion, with no runtime code, route, auth, policy or hook, so I see no security surface. The orchestrator's reasoning in dec-mv32cj1p-01fd33ad applies equally to this rework, but the decision's title and text name only phase:rework-2.",
+      "evidence": [
+        "ev:ev-mv3351jw-0188869e"
+      ],
+      "recommendation": "Owner: orchestrator. Resolved when the decision log or the pilot report row for rework-3 states that no security review was dispatched for this test-only rework, referring to dec-mv32cj1p-01fd33ad's reasoning. Not blocking."
+    },
+    {
+      "id": "TR-RW3-3",
+      "severity": "info",
+      "title": "The edit landed in 7942bf2, an orchestrator commit titled for rework-2 and d4, together with other agents' files",
+      "detail": "git log e011e54..HEAD for the journey file shows only 7942bf2 ('rework-2 approved, d4 corrections done, d5 reset and rework-3 (FU-16) opened'). That commit also carries d4's public/** and test/unit/frontend/** edits. The submission and the handoff disclose this. The committed content equals the submitted sha256 aef89270..., so the review is unaffected. Only the git history understates where rework-3's change is.",
+      "evidence": [
+        "ev:ev-mv3351jw-0188869e",
+        "artifact:.eccode/artifacts/rework-3/submission.md#where-the-change-is-in-git"
+      ],
+      "recommendation": "Owner: orchestrator. No action for this gate. The pilot report or the verification report should name 7942bf2 as the commit that holds rework-3's change, so a reader of the history can find it."
+    }
+  ],
+  "resolvedFindings": [],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}

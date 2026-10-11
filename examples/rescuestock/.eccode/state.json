@@ -1,6 +1,6 @@
 {
-  "seq": 635,
-  "lastHash": "aa48100018c78c501fc729a7c5012f21a48354cca055fe83f56c24f831b28214",
+  "seq": 655,
+  "lastHash": "c613750f2fa0efcdca5bcb4493f84960da21e1fdda891bd33c5b21dbefa561f2",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -3200,7 +3200,7 @@
     "phase:rework-3": {
       "id": "phase:rework-3",
       "kind": "phase",
-      "status": "submitted",
+      "status": "approved",
       "iterations": 0,
       "authors": [
         "delivery-lead"
@@ -3224,13 +3224,15 @@
           "notes": "rework-3 (FU-16): withoutUnregisteredExtract() deleted from test/browser/journey-infeasible.test.js; final assertion is an unfiltered deepEqual(problems, []). Failing first by a scratch test outside the repo (owner held only the journey file): strict FAILS ev:ev-mv32evim-01a6a1d8 vs old helper passes ev:ev-mv32exvz-01f53643; journey 3/3 ev:ev-mv32f49o-0164536a; browser 8/8 ev:ev-mv32ffjq-0128651c; npm test 1216/1208 pass/0 fail/8 skipped ev:ev-mv32ghnj-01ee0570; delivery-lead browser 8/8 ev:ev-mv32jbs1-016d62d1. Lesson mem-sd-mv1audrd-013b7102 not-applicable."
         }
       ],
-      "reviews": [],
+      "reviews": [
+        "rev-mv339qdf-01d94e2d"
+      ],
       "openFindings": [],
-      "approvedBy": null,
-      "approvedSubmission": null,
+      "approvedBy": "technical-reviewer",
+      "approvedSubmission": "sub-mv32kio2-01649f99",
       "escalation": null,
       "startedAt": "2026-10-11T00:06:45.242Z",
-      "approvedAt": null
+      "approvedAt": "2026-10-11T00:32:33.988Z"
     }
   },
   "plan": {
@@ -11650,6 +11652,320 @@
       "task": null,
       "recordedBy": "delivery-lead",
       "at": "2026-10-11T00:23:54.264Z"
+    },
+    "ev-mv3336jn-01854cbc": {
+      "id": "ev-mv3336jn-01854cbc",
+      "kind": "command",
+      "label": "rerun browser suite (npm run test:browser) on the rework-3 tree",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 13268,
+      "log": ".eccode/evidence/ev-mv3336jn-01854cbc.log",
+      "logSha256": "9329dd30f5806499119edd6398acd04106a8705e3323700c3ba59ad90ec6d408",
+      "logFileSha256": "f8f64fbe13843e6fd670369b8ad7c9cc8f77ec63e4787a06d42b1cc14b28666a",
+      "outputTail": "      duration_ms: 1435.917905\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1342.23414\n      type: 'test'\n      ...\n    1..3\nok 3 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 4413.508341\n  type: 'suite'\n  ...\n1..3\n# tests 8\n# suites 3\n# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 12831.889675\n",
+      "gate": "phase:rework-3",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:27:28.473Z"
+    },
+    "ev-mv333e72-01e37f9b": {
+      "id": "ev-mv333e72-01e37f9b",
+      "kind": "command",
+      "label": "rerun the RS-33 journey file alone",
+      "command": "node --disable-warning=ExperimentalWarning --test test/browser/journey-infeasible.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 4583,
+      "log": ".eccode/evidence/ev-mv333e72-01e37f9b.log",
+      "logSha256": "b3692cb98f2c6ab4798f7dd88fef3df0652b33a6eaefa21402e5add8d6ae5f34",
+      "logFileSha256": "a7ef43d63cea484a6d54260270d137f56903d8070fcb32e91f6e4635cf97e262",
+      "outputTail": "      duration_ms: 1474.505126\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1235.384209\n      type: 'test'\n      ...\n    1..3\nok 1 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 4110.646864\n  type: 'suite'\n  ...\n1..1\n# tests 3\n# suites 1\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 4447.752705\n",
+      "gate": "phase:rework-3",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:27:38.399Z"
+    },
+    "ev-mv333smy-01a0ead7": {
+      "id": "ev-mv333smy-01a0ead7",
+      "kind": "command",
+      "label": "TR rerun npm test on 2a68680 (post-submission)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 48860,
+      "log": ".eccode/evidence/ev-mv333smy-01a0ead7.log",
+      "logSha256": "d506622cc47c05a016e24e5c1cd4db449f65a13e20e93776c9ae0145e995b774",
+      "logFileSha256": "25a59f05c1b59382f015cf4af84f79b3e758345cfd695cded13a3418a5299b20",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 668 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 475.116123\n  type: 'test'\n  ...\n1..668\n# tests 1216\n# suites 140\n# pass 1208\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 48415.365875\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 3156 requests, p50 2.6 ms, p95 71.1 ms (limit: p95 < 300 ms)\nNFR5 suite time: 48.6 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:27:57.107Z"
+    },
+    "ev-mv3347i2-01dbb746": {
+      "id": "ev-mv3347i2-01dbb746",
+      "kind": "command",
+      "label": "TR d1 plan command verbatim",
+      "command": "ls test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/schema.test.js test/unit/ai/prompt.test.js test/unit/ai/fake.test.js test/unit/ai/gate.test.js test/unit/ai/rephrase.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 578,
+      "log": ".eccode/evidence/ev-mv3347i2-01dbb746.log",
+      "logSha256": "57a78ca300ec6542d6cecc6f0c702f78e107316e9a08a01dc15017f2fa220017",
+      "logFileSha256": "387ff840cd1e8dd2abd660e166ab896ee045ada07360bd773c82d49d5d9ebe72",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: server-written questions\n    # Subtest: SEC-7: field names render to the server templates of domain/explain.js, in canonical order, budgetUsd as the budget question\n    ok 1 - SEC-7: field names render to the server templates of domain/explain.js, in canonical order, budgetUsd as the budget question\n      ---\n      duration_ms: 0.389996\n      type: 'test'\n      ...\n    1..1\nok 24 - server-written questions\n  ---\n  duration_ms: 0.520283\n  type: 'suite'\n  ...\n1..24\n# tests 111\n# suites 24\n# pass 111\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 495.785552\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:28:16.356Z"
+    },
+    "ev-mv33481c-0186bea7": {
+      "id": "ev-mv33481c-0186bea7",
+      "kind": "command",
+      "label": "frontend no longer tolerates an extract 404: extraction unit tests (FU-16 rows) under the net guard",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/frontend/extraction.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 311,
+      "log": ".eccode/evidence/ev-mv33481c-0186bea7.log",
+      "logSha256": "de1dfd04af9ca5143df72df9f2132c87f082ccc44f934eb30701ef6b7681604c",
+      "logFileSha256": "9c92373d03a6cf1ad595ee20515040b20611bff7865e7ea46dc7c8997a223eda",
+      "outputTail": "  duration_ms: 0.403067\n  type: 'test'\n  ...\n# Subtest: FU-13: the order-owned supplier name is the seeded \"Demo Supplier X\", the plan total keeps the planner's \"Supplier X\"\nok 35 - FU-13: the order-owned supplier name is the seeded \"Demo Supplier X\", the plan total keeps the planner's \"Supplier X\"\n  ---\n  duration_ms: 0.241403\n  type: 'test'\n  ...\n# Subtest: RS-03: the extract fixtures cover success and degraded (both HTTP 200), the image upload fixture 201; a 404 is not a fixture\nok 36 - RS-03: the extract fixtures cover success and degraded (both HTTP 200), the image upload fixture 201; a 404 is not a fixture\n  ---\n  duration_ms: 0.481797\n  type: 'test'\n  ...\n1..36\n# tests 36\n# suites 0\n# pass 36\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 250.830103\n",
+      "gate": "phase:rework-3",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:28:17.041Z"
+    },
+    "ev-mv334ed2-017e93b1": {
+      "id": "ev-mv334ed2-017e93b1",
+      "kind": "command",
+      "label": "TR rerun npm run test:browser (post-submission)",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 9608,
+      "log": ".eccode/evidence/ev-mv334ed2-017e93b1.log",
+      "logSha256": "29a9921778d616d123c292c518fa806200759ba693d40768a0a799ac8e36ce6d",
+      "logFileSha256": "df047a8bd64c02ff448ded2253cfe1ab64b53a7bb79793427f0b4a890e86540d",
+      "outputTail": "      duration_ms: 1211.114835\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1210.356501\n      type: 'test'\n      ...\n    1..3\nok 3 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3713.587634\n  type: 'suite'\n  ...\n1..3\n# tests 8\n# suites 3\n# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 9350.887643\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:28:25.290Z"
+    },
+    "ev-mv334g5o-01452068": {
+      "id": "ev-mv334g5o-01452068",
+      "kind": "command",
+      "label": "TR d2 plan command verbatim",
+      "command": "ls test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js test/fixtures/extraction/manifest.json test/live/run-live-model.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/live-runner-refusal.test.js test/eval/extraction-fake.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 4213,
+      "log": ".eccode/evidence/ev-mv334g5o-01452068.log",
+      "logSha256": "add0c30032e1c84726aea2192c8695bcf456c031898b4bd602748ca07e2f9b63",
+      "logFileSha256": "8a73804aa6d7d619243b23bf48e003e5b3642c1d1a8609fc5e30ca26d0641311",
+      "outputTail": "      duration_ms: 25.417704\n      type: 'test'\n      ...\n    # Subtest: NFR3: a provider that cannot be created exits 2 without a report\n    ok 3 - NFR3: a provider that cannot be created exits 2 without a report\n      ---\n      duration_ms: 2.754027\n      type: 'test'\n      ...\n    1..3\nok 15 - the run itself, with the deterministic fake standing in for the model\n  ---\n  duration_ms: 58.037585\n  type: 'suite'\n  ...\n1..15\n# tests 96\n# suites 15\n# pass 96\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 4125.258095\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:28:27.569Z"
+    },
+    "ev-mv334lq0-017e2114": {
+      "id": "ev-mv334lq0-017e2114",
+      "kind": "command",
+      "label": "TR d3 plan command verbatim",
+      "command": "ls test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/extract.test.js test/api/extract-image.test.js test/api/extract-degraded.test.js test/api/injection.test.js test/api/confirm-provenance.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 6971,
+      "log": ".eccode/evidence/ev-mv334lq0-017e2114.log",
+      "logSha256": "7b5833132bffdbd02933d5ed4a70f3444aa2bbbe4b82c94da52b156eb1edfcad",
+      "logFileSha256": "407ef9e70c1da49b15765b1b213563cb98a0984a85bff94b04d45a8b5a4364ab",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: RS-39: the process starts the sweep at startup and then on a timer\n    # Subtest: RS-39: startApp removes an expired image at startup and another one on the next tick (RS_RETENTION_INTERVAL_MS)\n    ok 1 - RS-39: startApp removes an expired image at startup and another one on the next tick (RS_RETENTION_INTERVAL_MS)\n      ---\n      duration_ms: 148.987738\n      type: 'test'\n      ...\n    1..1\nok 21 - RS-39: the process starts the sweep at startup and then on a timer\n  ---\n  duration_ms: 149.309367\n  type: 'suite'\n  ...\n1..21\n# tests 105\n# suites 21\n# pass 105\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 6876.530854\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:28:34.812Z"
+    },
+    "ev-mv334mdr-01847a4a": {
+      "id": "ev-mv334mdr-01847a4a",
+      "kind": "command",
+      "label": "TR d4 plan command verbatim",
+      "command": "ls test/unit/frontend/extraction.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 546,
+      "log": ".eccode/evidence/ev-mv334mdr-01847a4a.log",
+      "logSha256": "b794f07223b0cbfa02e0529ee0eac1316827579e15e32f2b27523acc745280f2",
+      "logFileSha256": "8df80863f9a42b1feb69918f35784541add74a6efb3aedc911c420882c8787e3",
+      "outputTail": "  duration_ms: 2.717068\n  type: 'test'\n  ...\n# Subtest: SEC-C-4: a link with a backslash, a space or a control character is not navigable, even when it looks like https\nok 135 - SEC-C-4: a link with a backslash, a space or a control character is not navigable, even when it looks like https\n  ---\n  duration_ms: 1.103618\n  type: 'test'\n  ...\n# Subtest: RS-02: formatBytes shows photo sizes for people\nok 136 - RS-02: formatBytes shows photo sizes for people\n  ---\n  duration_ms: 0.232161\n  type: 'test'\n  ...\n1..136\n# tests 136\n# suites 0\n# pass 136\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 473.009622\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:28:35.635Z"
+    },
+    "ev-mv3351jw-0188869e": {
+      "id": "ev-mv3351jw-0188869e",
+      "kind": "command",
+      "label": "rework-3 scope: owned file diff since e011e54, commits touching it, sha256 vs submission, no residual helper",
+      "command": "git diff --numstat e011e54 -- test/browser/journey-infeasible.test.js && git diff e011e54 -- test/browser/journey-infeasible.test.js && git log --oneline e011e54..HEAD -- test/browser/journey-infeasible.test.js && git status --short -- test/browser public src && sha256sum test/browser/journey-infeasible.test.js && ! grep -rn --include=*.js --exclude-dir=node_modules -e withoutUnregisteredExtract -e EXTRACT_ROUTE_MAY_BE_MISSING .",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 53,
+      "log": ".eccode/evidence/ev-mv3351jw-0188869e.log",
+      "logSha256": "5ae368aa5f5dfd077e534d7116097c440605501dae0a9ab91a56c4fc64f93389",
+      "logFileSha256": "3fb949c585fd55310d9cb94600293569c53c1a3831a7639e2570371545fa814b",
+      "outputTail": "-  return problems.filter((p) => {\n-    if (isExtract404(p)) return false;\n-    if (consoleLinesToDrop > 0 && /^console error: Failed to load resource: the server responded with a status of 404/.test(p)) {\n-      consoleLinesToDrop -= 1;\n-      return false;\n-    }\n-    return true;\n-  });\n-}\n-\n let harness;\n before(async () => {\n   harness = await startBrowserHarness();\n@@ -111,7 +94,7 @@ describe('RS-33: an infeasible request ends with an explanation and no purchase'\n       // Layout and page health at this width.\n       const overflow = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, inner: window.innerWidth }));\n       assert.ok(overflow.scroll <= overflow.inner, `no horizontal scroll at ${viewport.width}px: scrollWidth ${overflow.scroll} > ${overflow.inner}`);\n-      assert.deepEqual(withoutUnregisteredExtract(problems), [], 'no console errors, CSP violations, page errors or failed requests during the journey');\n+      assert.deepEqual(problems, [], 'no console errors, CSP violations, page errors or failed requests during the journey');\n \n       // 5. Screenshot.\n       const path = await takeScreenshot(page, SCREENSHOT_NAME, viewport.width);\n7942bf2 RescueStock: rework-2 approved, d4 corrections done, d5 reset and rework-3 (FU-16) opened\naef8927035fdd08afedf9821478d0e33b653b5710341bb7a10c567acd23e5327  test/browser/journey-infeasible.test.js\n",
+      "gate": "phase:rework-3",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:28:55.329Z"
+    },
+    "ev-mv335hqq-0176e557": {
+      "id": "ev-mv335hqq-0176e557",
+      "kind": "command",
+      "label": "TR probe: real claude --help lists every flag of the CLI adapter argv (no model call)",
+      "command": "claude --help",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 284,
+      "log": ".eccode/evidence/ev-mv335hqq-0176e557.log",
+      "logSha256": "550db4f88ae1d97bf7244ca96dc89554aabd3978241ceb69f79001e816c35f09",
+      "logFileSha256": "bb21504cf85d25acd29b32f8f87882d4dbaa4999cf03c8672442ea2739f6852d",
+      "outputTail": "                                        terminal output\n  mcp                                   Configure and manage MCP servers\n  plugin|plugins                        Manage Claude Code plugins\n  purge [options] [path]                Delete all Claude Code state for a\n                                        project (transcripts, tasks, file\n                                        history, config entry)\n  respawn [options] [id]                Restart a background session, or all of\n                                        them with --all, so it runs the current\n                                        Claude Code version\n  rm <id>                               Delete a background session, and its\n                                        worktree when that is safe. Works on\n                                        sessions that have already exited\n  setup-token                           Set up a long-lived authentication token\n                                        (requires Claude subscription)\n  stop|kill <id>                        Stop a background session. Its\n                                        conversation is kept: `claude attach\n                                        <id>` opens it again, `claude --resume`\n                                        works once it is stopped\n  ultrareview [options] [target]        Run a cloud-hosted multi-agent code\n                                        review of the current branch (or a PR\n                                        number / base branch) and print the\n                                        findings\n  update|upgrade                        Check for updates and install if\n                                        available\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:29:16.311Z"
+    },
+    "ev-mv336ejk-01e379b6": {
+      "id": "ev-mv336ejk-01e379b6",
+      "kind": "command",
+      "label": "TR d5 plan command verbatim",
+      "command": "ls test/unit/ai/provider-contract.test.js test/scan/secrets.test.js test/browser/degraded-extraction.test.js >/dev/null && npm test && npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 71250,
+      "log": ".eccode/evidence/ev-mv336ejk-01e379b6.log",
+      "logSha256": "d8fc7450042b34209adce9f92bb4ecec0fe1b6e706e3c5f3a724f3bd948ff3bc",
+      "logFileSha256": "26e1b0d916d93345219f9a76d854f1e1cc8adad72d65431efcb12f377e05ef6a",
+      "outputTail": "      duration_ms: 1226.425826\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1263.422828\n      type: 'test'\n      ...\n    1..3\nok 3 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3983.094836\n  type: 'suite'\n  ...\n1..3\n# tests 8\n# suites 3\n# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11041.757447\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:29:58.811Z"
+    },
+    "ev-mv336kwi-018b30c5": {
+      "id": "ev-mv336kwi-018b30c5",
+      "kind": "command",
+      "label": "rework-3: npm test full suite (the existing checks still pass)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 67059,
+      "log": ".eccode/evidence/ev-mv336kwi-018b30c5.log",
+      "logSha256": "8f68e6d13c8953d10d6c4364568d75e466a69216f6caa228727c38eda9a1ce5f",
+      "logFileSha256": "2310f53e4735f87839485ba2c07f8ba068fbcf78b6cdb8d675f2d71461b82439",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 668 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 465.43635\n  type: 'test'\n  ...\n1..668\n# tests 1216\n# suites 140\n# pass 1208\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 66591.521085\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 3868 requests, p50 3.5 ms, p95 125.3 ms (limit: p95 < 300 ms)\nNFR5 suite time: 66.8 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": "phase:rework-3",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:30:07.049Z"
+    },
+    "ev-mv337a71-01b57e0c": {
+      "id": "ev-mv337a71-01b57e0c",
+      "kind": "command",
+      "label": "TR probe: provider-level PROVIDER_BUSY at the route, and number grounding of digit-free quotes",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/probes/tr-probe-d.test.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 843,
+      "log": ".eccode/evidence/ev-mv337a71-01b57e0c.log",
+      "logSha256": "9ad77ef4236f6d24f7b5c0d1bf9e45f2f27af8b6a05ab35c9d54605026f55bef",
+      "logFileSha256": "5958924fd8007cadd57019246f6b6ad1bf56f179d4452b66274ee551517ee418",
+      "outputTail": "      ...\n# P2 stored {\"cupQuantity\":{\"value\":777,\"status\":\"known\",\"provenance\":\"user_text\",\"originalWording\":\"cups\"},\"maxPickups\":{\"value\":5,\"status\":\"known\",\"provenance\":\"user_text\",\"originalWording\":\"two pickups\"}}\n# P2 schema.js validateExtraction(raw, {text}) {\"ok\":false,\"errors\":[{\"path\":\"fields.cupQuantity.value\",\"code\":\"NUMBER_NOT_IN_INPUT\"},{\"path\":\"fields.maxPickups.value\",\"code\":\"NUMBER_NOT_IN_INPUT\"}]}\n    # Subtest: P2: number grounding of digit-free quotes\n    ok 2 - P2: number grounding of digit-free quotes\n      ---\n      duration_ms: 28.932953\n      type: 'test'\n      ...\n    1..2\nok 1 - TR probes\n  ---\n  duration_ms: 506.603117\n  type: 'suite'\n  ...\n1..1\n# tests 2\n# suites 1\n# pass 2\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 752.455279\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T00:30:39.815Z"
+    },
+    "ev-mv338izg-017aea51": {
+      "id": "ev-mv338izg-017aea51",
+      "kind": "command",
+      "label": "security-reviewer: npm test on the submitted tree (phase D)",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 44541,
+      "log": ".eccode/evidence/ev-mv338izg-017aea51.log",
+      "logSha256": "1431ccf18a003d223dd18d20f36c3643082824ac879b6b733e7fbec222cfc35b",
+      "logFileSha256": "091d56c9dcaeec9d009c8f57b05c57aa0cc2b4cd091f1e6ecc895ae2a0e8ff42",
+      "outputTail": "  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 668 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 554.236321\n  type: 'test'\n  ...\n1..668\n# tests 1216\n# suites 140\n# pass 1208\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 44158.087821\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 3156 requests, p50 2.2 ms, p95 56.4 ms (limit: p95 < 300 ms)\nNFR5 suite time: 44.3 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-11T00:31:37.900Z"
     }
   },
   "reviews": {
@@ -16385,6 +16701,102 @@
       "reviewer": "technical-reviewer",
       "at": "2026-10-11T00:06:11.159Z",
       "submissionId": "sub-mv31tlv1-01663c96"
+    },
+    "rev-mv339qdf-01d94e2d": {
+      "decision": "approve",
+      "summary": "Technical review of rework-3 (sub-mv32kio2-01649f99): test/browser/journey-infeasible.test.js plus the submission. The file's sha256 at HEAD and in the working tree is aef89270..., which matches the submission. Its diff since the claim base e011e54 is +1/-18, the only commit touching it since the base is 7942bf2, and test/browser, public and src have no uncommitted changes (ev:ev-mv3351jw-0188869e).\n\nThe change:\n- The helper withoutUnregisteredExtract() and its three-line comment are deleted (17 lines).\n- The journey's final health assertion (L97) is now an unfiltered assert.deepEqual(problems, [], ...).\n- Nothing else in the journey changed: the steps, selectors, database checks and screenshot are byte-identical to the base.\n- No .js file outside node_modules mentions withoutUnregisteredExtract or EXTRACT_ROUTE_MAY_BE_MISSING (ev:ev-mv3351jw-0188869e).\n\nWhy the unfiltered assertion catches a 404 on the extract route. I read the harness: newJourney pushes 'HTTP <status>: <method> <url>' for every response with status >= 400 (harness.js L66-L67), plus every console error. The journey's text-only path calls POST /api/requests/:id/extract (request-new.js L205-L211). It reaches waitForURL only when that call succeeds, or when it fails with a degraded 429 or 503 (L218-L220). In that degraded case the >= 400 response would itself be in problems and fail L97. A passing journey therefore proves the extract call answered below 400.\n\nThe frontend no longer tolerates a 404 either. classifyExtractFailure (request-new.js L45-L50) returns 'retry' for a 404, so the page stays on the error state with Retry. The unit rows for FU-16 pass (extraction.test.js L431 and L672-L682, 36/36, ev:ev-mv33481c-0186bea7). The engineer's first scratch run, ev:ev-mv32eef8-01a1865d, shows the same behaviour in the browser: a 404 on the page's own call stops the journey at waitForURL.\n\nMy checks ran after the submission, all on one tree (644325026d5e...):\n- npm run test:browser: 8/8 pass, 3 suites (ev:ev-mv3336jn-01854cbc);\n- the journey file alone: 3/3 (ev:ev-mv333e72-01e37f9b);\n- the frontend extraction unit file: 36/36 (ev:ev-mv33481c-0186bea7);\n- npm test: exit 0, 1216 tests, 1208 pass, 0 fail, 8 skipped (ev:ev-mv336kwi-018b30c5);\n- scope and diff: ev:ev-mv3351jw-0188869e.\n\nI tried to reproduce the injected-404 case myself with a scratch probe in the session scratchpad. The tool-call guard refused the write ('technical-reviewer reviews/designs but does not edit project files; ...'). I did not work around it. I rely on the engineer's two logs together with my reading of the harness and of the assertion. See TR-RW3-1 for why that is enough.\n\nDecision: approve. There are three info findings and none blocks.",
+      "criteria": [
+        {
+          "id": "task:rework-3",
+          "description": "FU-16: remove the extract-route 404 tolerance from the phase C browser journey",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3351jw-0188869e",
+            "ev:ev-mv333e72-01e37f9b",
+            "ev:ev-mv3336jn-01854cbc",
+            "ev:ev-mv336kwi-018b30c5",
+            "ev:ev-mv32exvz-01f53643",
+            "artifact:test/browser/journey-infeasible.test.js#L97",
+            "artifact:test/browser/helpers/harness.js#L66-L67",
+            "artifact:.eccode/artifacts/rework-3/submission.md#finding-change-test-evidence",
+            "artifact:.eccode/handoffs/ho-mv32h04t-01f86c40.json#acceptanceCriteria"
+          ],
+          "notes": "I checked each of the handoff's acceptance criteria.\n(1) Any 404 on POST /api/requests/:id/extract during a journey is a failure. The helper and all filtering are gone, and L97 compares the raw problems list with []. The harness records every response >= 400 (harness.js L66-L67), so a 404 on that route, or on any route, fails the row. The page now also stops at waitForURL on such a 404, which gives a second failure point (ev:ev-mv32eef8-01a1865d).\n(2) A regression test fails before the fix and passes after it. With the same injected 404, the strict assertion fails and lists exactly the extract 404 and its console line (ev:ev-mv32evim-01a6a1d8, an intended failure, cited in TR-RW3-1 because the engine does not accept a failed check as support for a met criterion). The old helper passes and prints the two entries it hid (ev:ev-mv32exvz-01f53643). That is a valid before/after contrast on the assertion that changed. Because the scratch file was deleted, its source cannot be inspected. I accept the logs for the reason given in TR-RW3-1.\n(3) The existing checks still pass. Browser suite 8/8, journey 3/3, npm test 1208 pass / 0 fail / 8 skipped of 1216, all on the final tree.\nScope: the diff since e011e54 changes the owned file only by +1/-18. The journey's steps and its other assertions are unchanged (ev:ev-mv3351jw-0188869e)."
+        },
+        {
+          "id": "phase:rework-3",
+          "description": "c6's test/browser/journey-infeasible.test.js tolerates a 404 on POST /api/requests/:id/extract through withoutUnregisteredExtract() because the route did not exist in phase C. d3 added the route and d4's reset removed the frontend tolerance (ho-mv32b3pf-011eac5d). Phase C is approved and no phase D task owns the file, so a rework removes the helper: any 404 on that route during a journey is a failure.",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3336jn-01854cbc",
+            "ev:ev-mv33481c-0186bea7",
+            "ev:ev-mv3351jw-0188869e",
+            "artifact:public/js/views/request-new.js#L45-L50",
+            "artifact:test/unit/frontend/extraction.test.js#L672-L682",
+            "artifact:test/browser/journey-infeasible.test.js#L97",
+            "artifact:.eccode/artifacts/rework-3/submission.md#where-the-change-is-in-git"
+          ],
+          "notes": "The rework's purpose is met. The test side and the app side now agree that the extract route exists and that a 404 on it is a failure:\n- Test side: the journey's assertion has no filter (L97).\n- App side: d4's reset removed EXTRACT_ROUTE_MAY_BE_MISSING. classifyExtractFailure sends a 404 to 'retry', so there is no navigation and the page shows the error with Retry (request-new.js L45-L50). The FU-16 unit rows pin this behaviour, and they pass in my run (ev:ev-mv33481c-0186bea7).\nThe full browser suite passes 8/8 on the final tree (ev:ev-mv3336jn-01854cbc). The triggering run ev:ev-mv3226jz-0198f037 passed only with the tolerance in place. The same journey now passes without it.\nThe two degraded-extraction journeys (phase D) already assert an unfiltered deepEqual(problems, []) (degraded-extraction.test.js L181 and L241). No browser journey keeps a filter now."
+        },
+        {
+          "id": "lessons",
+          "description": "The rework's not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3351jw-0188869e",
+            "artifact:.eccode/handoffs/ho-mv32h04t-01f86c40.json#lessonDecisions",
+            "artifact:.eccode/artifacts/rework-3/submission.md#lessons"
+          ],
+          "notes": "I read the lesson with memory search --check-env. It applies to a hook or guard that maps file writes to a project record or root in a repository with several records. The --check-env result 'APPLIES' checks only the environment (node >= 18.17), not the scope.\nThis rework deletes a test helper and changes one assertion in a browser test file. It designs or changes no hook, guard or root discovery (ev:ev-mv3351jw-0188869e), so not-applicable holds.\nThe engineer's two guard denials were for scratch writes outside its claimed file. Those are the role and claim rules working, which the lesson's 'Not applicable when' list covers. My own scratch probe was refused with the role message for a target outside the record's draft areas (the session scratchpad), not inside the nested record's draft area. That is also outside the lesson's wrong-root case. My draft write into this record's .eccode/reviews/drafts/ was allowed.\nThe decision matches rework-1 and rework-2, which I accepted."
+        }
+      ],
+      "findings": [
+        {
+          "id": "TR-RW3-1",
+          "severity": "info",
+          "title": "The failing-first proof is a deleted scratch test; the evidence logs suffice and no permanent regression test is required",
+          "detail": "The record's output says 'a regression test that fails without it', and its criterion says 'a regression test fails before the fix and passes after it'. Here the fix is the removal of a filter inside a test, so the regression test is the journey itself. Its unfiltered L97, together with the harness collector at harness.js L66-L67, fails on any >= 400 response.\nThe engineer showed the contrast on the changed assertion with an injected 404: the strict assertion fails (ev:ev-mv32evim-01a6a1d8) and the old helper passes (ev:ev-mv32exvz-01f53643). The logs record the command, the exit code and the exact problem entries. The scratch source was deleted, so only its output can be inspected.\nI considered requiring a permanent test, for example a test/browser/extract-404-guard.test.js owned by test-engineer that injects a 404 through page.route and asserts that the journey's problem collection carries it. I do not require it, for three reasons:\n(a) It would test the harness, not the journey. A filter re-added to journey-infeasible.test.js would not make it fail, so it does not protect against the regression in question.\n(b) It would add little. The collector is a few page.on handlers that all three browser journeys share, and the FU-16 unit rows already pin the app-side 404 handling (extraction.test.js L431, L672-L682).\n(c) The engineer's ownership was the journey file only, and the submission discloses this.\nMy own attempt at an independent browser probe was refused by the guard (scratch file write), so I could not re-run the contrast. My conclusion rests on reading the harness and the assertion.",
+          "evidence": [
+            "ev:ev-mv32evim-01a6a1d8",
+            "ev:ev-mv32exvz-01f53643",
+            "ev:ev-mv32eef8-01a1865d",
+            "ev:ev-mv33481c-0186bea7",
+            "artifact:.eccode/artifacts/rework-3/submission.md#disclosure-the-failing-first-proof-is-a-scratch-test-not-a-test-in-the-repository",
+            "artifact:.eccode/handoffs/ho-mv32h04t-01f86c40.json#remainingIssues"
+          ],
+          "recommendation": "No action required for this gate, and no follow-up. If the orchestrator wants scratch-test proofs to be inspectable in future reworks, the engineer could record the scratch source with 'evidence file' before deleting it. That would be a workflow note, not a condition of this gate."
+        },
+        {
+          "id": "TR-RW3-2",
+          "severity": "info",
+          "title": "No security review for rework-3; the recorded decision dec-mv32cj1p-01fd33ad names rework-2 only",
+          "detail": "There is no rework-3 security draft. The change deletes a test helper and changes one test assertion, with no runtime code, route, auth, policy or hook, so I see no security surface. The orchestrator's reasoning in dec-mv32cj1p-01fd33ad applies equally to this rework, but the decision's title and text name only phase:rework-2.",
+          "evidence": [
+            "ev:ev-mv3351jw-0188869e"
+          ],
+          "recommendation": "Owner: orchestrator. Resolved when the decision log or the pilot report row for rework-3 states that no security review was dispatched for this test-only rework, referring to dec-mv32cj1p-01fd33ad's reasoning. Not blocking."
+        },
+        {
+          "id": "TR-RW3-3",
+          "severity": "info",
+          "title": "The edit landed in 7942bf2, an orchestrator commit titled for rework-2 and d4, together with other agents' files",
+          "detail": "git log e011e54..HEAD for the journey file shows only 7942bf2 ('rework-2 approved, d4 corrections done, d5 reset and rework-3 (FU-16) opened'). That commit also carries d4's public/** and test/unit/frontend/** edits. The submission and the handoff disclose this. The committed content equals the submitted sha256 aef89270..., so the review is unaffected. Only the git history understates where rework-3's change is.",
+          "evidence": [
+            "ev:ev-mv3351jw-0188869e",
+            "artifact:.eccode/artifacts/rework-3/submission.md#where-the-change-is-in-git"
+          ],
+          "recommendation": "Owner: orchestrator. No action for this gate. The pilot report or the verification report should name 7942bf2 as the commit that holds rework-3's change, so a reader of the history can find it."
+        }
+      ],
+      "resolvedFindings": [],
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "id": "rev-mv339qdf-01d94e2d",
+      "gate": "phase:rework-3",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-11T00:32:33.988Z",
+      "submissionId": "sub-mv32kio2-01649f99"
     }
   },
   "rejectedReviews": [
@@ -16422,6 +16834,15 @@
       "at": "2026-10-11T00:06:02.999Z",
       "reasons": [
         "finding TR-RW2-2: artifact:.eccode/artifacts/design/spec.md#customer-routes-role-customer-every-query-is-scoped-where-customer_id--session-user-a-foreign-or-archived-id--404: anchor \"#customer-routes-role-customer-every-query-is-scoped-where-customer_id--session-user-a-foreign-or-archived-id--404\" not found in .eccode/artifacts/design/spec.md (headings: \"rescuestock — technical design (revision 3)\", \"findings disposition (revision 3)\", \"findings disposition (revision 2)\", \"resolution of the architecture review's open findings\", \"memory consulted\", \"external facts used (source and date)\", \"components\", \"technology choices\", \"interface contracts\", \"conventions (apply to every route)\", \"error catalog (fixed)\", \"shared response objects\", \"authentication (arch-25)\", \"public and health\", \"customer routes (role `customer`; every query is scoped `where customer_id = session user`; a foreign or archived id → 404)\", \"supplier routes (role `supplier`; every query scoped to `users.supplier_id`)\", \"admin routes (role `admin`)\", \"webhooks\", \"fake approval listener (revision 2, sec-12; only when `rs_payment_provider=fake`)\", \"rbac matrix (default deny; the router refuses any route without a policy entry at startup)\", … 36 more); cite a heading of the file"
+      ],
+      "decision": "approve"
+    },
+    {
+      "gate": "phase:rework-3",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-11T00:31:57.182Z",
+      "reasons": [
+        "criterion task:rework-3: cites ev:ev-mv32evim-01a6a1d8, which failed (exit 1); failed checks cannot support a met criterion"
       ],
       "decision": "approve"
     }
@@ -20002,8 +20423,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T00:25:38.535Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T00:33:01.429Z",
+      "durationMinutes": 7.38,
+      "costUsd": null,
+      "tokens": 80650,
+      "note": null,
+      "usageReported": true
     }
   },
   "risks": {
@@ -20398,6 +20825,16 @@
       "lessons": [],
       "at": "2026-10-11T00:25:37.868Z",
       "by": "orchestrator"
+    },
+    "dec-mv33a9jm-0122049d": {
+      "id": "dec-mv33a9jm-0122049d",
+      "title": "No security review for rework-3",
+      "decision": "phase:rework-3 was reviewed by the technical-reviewer only (rev-mv339qdf-01d94e2d), as rework-2 was.",
+      "rationale": "The rework deletes a filter inside one browser test and changes no runtime code, route, policy or hook. Raised as TR-RW3-2 (info). Rework-3's change is held by commit 7942bf2 (TR-RW3-3).",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T00:32:58.940Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -20410,8 +20847,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 713.89,
-    "tokens": 9789757
+    "runtimeMinutes": 721.27,
+    "tokens": 9870407
   },
   "delivery": null,
   "reworks": [
