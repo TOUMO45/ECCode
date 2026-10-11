@@ -23,11 +23,23 @@ import { supplierDirectory } from '../view-helpers.js';
 export const SECTION_ORDER = Object.freeze(['status', 'need', 'why', 'rejected', 'total', 'commitments', 'failure', 'actions']);
 
 // ?paypal=returned|cancelled&order=<id> after the buyer comes back from the approval page.
+// The notice describes a moment, not an outcome: it is shown only while that moment is still the truth, and is
+// dropped as soon as the outcome is known (authorized, captured, plan executed or non_executable). A waiting
+// message is never shown after the outcome.
+const WAITING_PAYMENT_STATUSES = Object.freeze(['approved', 'authorization_pending', 'unknown']);
+
 export function returnNoticeModel(query, view) {
   const outcome = query?.paypal;
   if (outcome !== 'returned' && outcome !== 'cancelled') return null;
   const orderId = Number(query.order);
   const order = [...(view.orders ?? []), ...(view.cancellingOrders ?? [])].find((o) => o.id === orderId);
+  const planStatus = (view.plans ?? []).find((p) => p.id === view.currentPlanId)?.status ?? null;
+  if (planStatus === 'executed' || planStatus === 'non_executable' || planStatus === 'executing') return null;
+  if (outcome === 'returned') {
+    if (!order || !WAITING_PAYMENT_STATUSES.includes(order.payment?.status)) return null;
+  } else if (order && order.payment?.status !== 'created') {
+    return null; // the buyer has approved since: there is nothing left to retry
+  }
   const name = order ? (supplierDirectory(view).get(order.supplier.code)?.name ?? `Supplier ${order.supplier.code}`) : 'the supplier';
   if (outcome === 'returned') {
     return { tone: 'info', text: `You are back from PayPal for ${name}. Waiting for PayPal to confirm; this page updates by itself.`, testid: 'paypal-returned' };

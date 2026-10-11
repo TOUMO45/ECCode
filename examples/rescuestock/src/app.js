@@ -205,6 +205,13 @@ export function createApp({
       try {
         result = await route.handler(ctx);
       } finally {
+        // Public routes that identify the session themselves (ctx.auth.identify in the PayPal return and cancel handlers) set
+        // ctx.user inside the handler: the log line names that user too (RS-31(a)). Nothing else is copied; an anonymous call
+        // still logs neither userId nor role.
+        if (ctx.user && logState.userId === undefined) {
+          logState.userId = ctx.user.id;
+          logState.role = ctx.user.role;
+        }
         // Sender table: "void: the caller of the void rule, right after commit". A failure here never changes the answer.
         try {
           await flushQueuedVoids(ctx, ctx.voidRule?.provider);

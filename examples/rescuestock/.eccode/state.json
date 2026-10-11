@@ -1,6 +1,6 @@
 {
-  "seq": 1002,
-  "lastHash": "1240e6b5a4e34533ec6389b29c73c06748cd1432479ac34ad54d903d6989213d",
+  "seq": 1004,
+  "lastHash": "8c05042bde0e3b9e744ad9f9f96ea3481d06b22601bbc0b0f0eb26c7ad9fa039",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -16977,6 +16977,46 @@
       "task": "e4-saga-reconciler",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T13:22:28.474Z"
+    },
+    "ev-mv3urzew-016f4c86": {
+      "id": "ev-mv3urzew-016f4c86",
+      "kind": "command",
+      "label": "e5 fix RED first: return notice must not outlive the outcome (expected failing)",
+      "command": "node --test test/unit/frontend/payments.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 303,
+      "log": ".eccode/evidence/ev-mv3urzew-016f4c86.log",
+      "logSha256": "299866a831d4e0b2ad026c27ea4261fa8eef697ec925528e076b12b0726c4881",
+      "logFileSha256": "34d904fbb222931031130741bf8cd8614d6239e8680626d5f0f49da834182d33",
+      "outputTail": "  duration_ms: 0.205564\n  type: 'test'\n  ...\n# Subtest: NFR2: the page polls while a payment is in flight, and stops when nothing is left to wait for\nok 24 - NFR2: the page polls while a payment is in flight, and stops when nothing is left to wait for\n  ---\n  duration_ms: 1.12914\n  type: 'test'\n  ...\n# Subtest: NFR2: the poller refreshes every 2 s, backs off to 10 s after 2 minutes, pauses while hidden and resumes when visible\nok 25 - NFR2: the poller refreshes every 2 s, backs off to 10 s after 2 minutes, pauses while hidden and resumes when visible\n  ---\n  duration_ms: 0.541274\n  type: 'test'\n  ...\n1..25\n# tests 25\n# suites 0\n# pass 23\n# fail 2\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 229.415775\n",
+      "gate": null,
+      "task": "e5-frontend-payments",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T13:22:35.258Z"
+    },
+    "ev-mv3us3wi-01051c67": {
+      "id": "ev-mv3us3wi-01051c67",
+      "kind": "command",
+      "label": "GREEN: execute.test.js RS-31(a) log userId after the app.js fix",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-name-pattern=RS-31 test/api/execute.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 969,
+      "log": ".eccode/evidence/ev-mv3us3wi-01051c67.log",
+      "logSha256": "8f2d484a2addfffc2a610b2e39d3dea263df504cac879308293fe5677bd64c4f",
+      "logFileSha256": "ce8b0a83eb1e3fe0e3680c2a0c3d9e7695b4cc7ce4b1318b53c1b7e61238e16e",
+      "outputTail": "TAP version 13\n# Subtest: RS-31(a): the request log line names the session user of the public PayPal routes\n    # Subtest: RS-31(a): http.request for GET /api/paypal/return and /cancel carries the identified userId (and role); an anonymous call carries neither\n    ok 1 - RS-31(a): http.request for GET /api/paypal/return and /cancel carries the identified userId (and role); an anonymous call carries neither\n      ---\n      duration_ms: 664.972428\n      type: 'test'\n      ...\n    1..1\nok 1 - RS-31(a): the request log line names the session user of the public PayPal routes\n  ---\n  duration_ms: 666.767143\n  type: 'suite'\n  ...\n1..1\n# tests 1\n# suites 1\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 902.435693\n",
+      "gate": null,
+      "task": "e4-saga-reconciler",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T13:22:41.109Z"
     }
   },
   "reviews": {
