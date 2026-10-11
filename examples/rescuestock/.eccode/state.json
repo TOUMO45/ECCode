@@ -1,6 +1,6 @@
 {
-  "seq": 872,
-  "lastHash": "e4e7fc3e8d91755b58a576b4e0deb50c183ee0115c1d08814e36c943f4441f44",
+  "seq": 880,
+  "lastHash": "3f6c3422642214384c26f4805d2c04d866b0779982e235e709c32ecc616a97b2",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -6112,34 +6112,37 @@
         "command": "ls test/api/webhooks.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "backend-engineer",
-        "at": "2026-10-11T03:34:47.424Z",
-        "baseCommit": "734a687d30cc7a5008adfa54811f17fde8178074",
-        "runId": "run-mv39r8rt-018b8dbc",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.798,
-            "matched": 18,
-            "priority": 38,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
           "by": "backend-engineer",
           "at": "2026-10-11T03:34:47.424Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "backend-engineer",
+          "at": "2026-10-11T03:49:11.868Z"
         }
       ],
-      "completedBy": null,
-      "handoffId": null
+      "completedBy": "backend-engineer",
+      "handoffId": "ho-mv3aalih-011f4d67",
+      "filesChanged": [
+        "src/services/webhooks.js",
+        "src/routes/webhooks.js",
+        "test/api/webhooks.test.js"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson applies to a hook or guard that maps file writes to a project record or root in a repository with several records; this task builds a webhook service, route and API tests and designs no hook, guard or root discovery, so its 'Applies when' list does not hold. The guard accepted every nested write to my three files and refused only an inline python file writer, asking for the Edit tool.",
+          "basis": "reason"
+        }
+      ]
     },
     "e4-saga-reconciler": {
       "id": "e4-saga-reconciler",
@@ -15357,6 +15360,46 @@
       "task": "e1-payment-adapters",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T03:37:10.359Z"
+    },
+    "ev-mv3a7mg2-015ad8e8": {
+      "id": "ev-mv3a7mg2-015ad8e8",
+      "kind": "command",
+      "label": "e3 verification: webhook API tests under the net guard",
+      "command": "ls test/api/webhooks.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/webhooks.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 2126,
+      "log": ".eccode/evidence/ev-mv3a7mg2-015ad8e8.log",
+      "logSha256": "6ccb248c092dd2856c14ce78a6c6c34175d21d033689a1e685bdf46c416b8048",
+      "logFileSha256": "ab42eb538bb415ae668de4e1ff40cf28554a52258df16cf85c302e788d35567d",
+      "outputTail": "  type: 'suite'\n  ...\n# Subtest: with the Sandbox adapter against the loopback stub\n    # Subtest: RS-24/SEC-16: the event is verified at the stub with the merchant's webhook id and the operation of the DEFAULT merchant is moved; a forged one is invalid; a body with a BOM is never sent to the stub\n    ok 1 - RS-24/SEC-16: the event is verified at the stub with the merchant's webhook id and the operation of the DEFAULT merchant is moved; a forged one is invalid; a body with a BOM is never sent to the stub\n      ---\n      duration_ms: 484.385856\n      type: 'test'\n      ...\n    1..1\nok 11 - with the Sandbox adapter against the loopback stub\n  ---\n  duration_ms: 484.580035\n  type: 'suite'\n  ...\n1..11\n# tests 96\n# suites 11\n# pass 96\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2059.065405\n",
+      "gate": null,
+      "task": "e3-webhooks",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T03:46:53.053Z"
+    },
+    "ev-mv3a96vq-0142da7d": {
+      "id": "ev-mv3a96vq-0142da7d",
+      "kind": "command",
+      "label": "e3 full suite: npm test",
+      "command": "npm test",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 62656,
+      "log": ".eccode/evidence/ev-mv3a96vq-0142da7d.log",
+      "logSha256": "6b182ff8e5df8e6f20b6fe0a4b8088313be0a1473eeaebd906557958e6236940",
+      "logFileSha256": "65423d10c7a860cc750e57aab8df0f0c3d86952940e7fbe1314983b2b7201440",
+      "outputTail": "  duration_ms: 550.946904\n  type: 'test'\n  ...\n# Subtest: SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\nok 761 - SEC-5: the seed refuses a placeholder or short RS_DEMO_PASSWORD, naming the variable only\n  ---\n  duration_ms: 412.165229\n  type: 'test'\n  ...\n# Subtest: SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\nok 762 - SEC-14: npm run seed creates the data directories with mode 0700 and the database with 0600\n  ---\n  duration_ms: 512.878846\n  type: 'test'\n  ...\n1..762\n# tests 1964\n# suites 256\n# pass 1948\n# fail 1\n# cancelled 0\n# skipped 15\n# todo 0\n# duration_ms 62273.784291\n",
+      "gate": null,
+      "task": "e3-webhooks",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T03:48:06.192Z"
     }
   },
   "reviews": {
@@ -24231,6 +24274,64 @@
       "id": "ho-mv39x6r0-013c5688",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T03:38:46.344Z"
+    },
+    "ho-mv3aalih-011f4d67": {
+      "from": "backend-engineer",
+      "to": "delivery-lead",
+      "task": "e3-webhooks",
+      "objective": "Verified PayPal webhooks: POST /api/webhooks/paypal/:merchantKey (public, CSRF-exempt, session-free, policy signature) with a byte-exact raw body of at most 65,536 bytes, cheap pre-checks before any provider call, a 60 per IP per minute limit, verification through PaymentProvider.verifyWebhook, dedupe among valid rows only, merchant-scoped mapping, state-table-guarded transitions with compare-and-set, the resolution hook in the same transaction, and a minimised stored summary; API tests for RS-23, RS-24, SEC-6, SEC-16, T13 and ARCH-22.",
+      "context": "Built against spec revision 3 (Webhooks, Security T13, Void rule step 4, webhook_events schema), e2's handoff ho-mv39qe6x-01666ddf (ctx.voidRule.onAuthorized in the same transaction as any move into authorized; moveOperation from calls.js for the CAS transitions; app.deps.payments and the void port flush), e1's handoffs ho-mv38f42c-010fb379 and ho-mv38jhfn-01d2ca04 (isActiveMerchantKey; verifyWebhook gets the lower-case header object and the raw Buffer; ok {verified:false} for missing headers; rejected WEBHOOK_ID_MISSING), e0's ho-mv37ojw0-01fb7411 (webhook-signer.js, verify_webhook counted in fake_paypal_calls) and c1's routing contract (rbac lets exactly POST /api/webhooks/paypal/:merchantKey through for policy signature). I did not touch src/payments/** (another engineer is resetting e1 there), src/config.js, .env.example, src/app.js or any test outside my three files. No PayPal or Sandbox host was contacted (net guard: zero blocked attempts asserted), RS_LIVE_MODEL and RS_LIVE_PAYPAL were never set, the certificate URL of an event is only pattern-checked and passed on, never fetched; the Sandbox adapter ran only against test/helpers/paypal-stub.js on loopback.",
+      "inputs": [
+        ".eccode/artifacts/design/spec.md (Webhooks, Security T13, SEC-6, SEC-16, Void rule step 4, webhook_events, Error catalog)",
+        ".eccode/handoffs/ho-mv39qe6x-01666ddf.json",
+        ".eccode/handoffs/ho-mv38f42c-010fb379.json",
+        ".eccode/handoffs/ho-mv38jhfn-01d2ca04.json",
+        ".eccode/handoffs/ho-mv37ojw0-01fb7411.json",
+        "src/auth/rbac.js, src/auth/client-ip.js, src/http/{body,envelope,router}.js, src/payments/{provider,merchants,fake,sandbox}.js, src/services/{calls,void-rule,audit}.js, src/domain/states.js, src/log.js, src/db/migrations/004_payments.sql",
+        "test/helpers/{webhook-signer,paypal-stub,app-harness,plan-flow,fixtures,net-guard}.js"
+      ],
+      "dependencies": [
+        "e2-payment-flow"
+      ],
+      "expectedOutput": "src/services/webhooks.js, src/routes/webhooks.js and test/api/webhooks.test.js, ready for e4 (the reconciler must tolerate an operation a webhook already moved) and e6 (a route: row for the webhook route in the contract table).",
+      "acceptanceCriteria": [
+        "Route public, CSRF-exempt, session-free, raw body <= 65,536 bytes kept byte-exact; unknown merchantKey -> 404; 60 per IP per minute -> 429 with no row (SEC-6)",
+        "Pre-checks before any provider call: five headers present, transmission id pattern, auth algo allow-list (RS_PAYPAL_WEBHOOK_ALGOS), time within 15 min, cert URL https on a paypal.com host and never fetched, JSON with a mapped event_type; failure -> invalid row with flag_reason, 400 WEBHOOK_SIGNATURE_INVALID",
+        "RS-23: a valid duplicate transmission id -> 200 duplicate with no effect; dedupe only among valid rows; RS-24: verification FAILURE -> invalid row, 400, no transition; unreachable verification -> unverified row, 503",
+        "Mapping requires merchant_key, provider = active adapter and archived_at IS NULL (SEC-16); transitions only as states.js allows (CAS), else flagged; the resolution hook queues a void for a cancelled operation turning authorized",
+        "Stored payload is the minimised summary only (no payer data)"
+      ],
+      "completedWork": "(1) src/services/webhooks.js (new). receivePaypalWebhook(ctx): merchantKey not an active configured key (isActiveMerchantKey) -> 404 before anything is read or counted; takeWebhookSlot: 60 admitted requests per IP per 60 s in rate_events (kind webhook, key ip:<throttleKey from ctx.clientIp()>, one BEGIN IMMEDIATE, a refused request is not inserted) -> 429 RATE_LIMITED details.limit webhook_ip with Retry-After; readRawBody with limit 65,536 -> 413 PAYLOAD_TOO_LARGE; precheck({headers, rawBody, nowMs, algos}) (exported, pure): five headers present (non-empty, <= 1024 chars), transmission id ^[A-Za-z0-9-]{1,64}$, auth algo in webhookAlgos(config) (config.paypalWebhookAlgos if present, else the comma list RS_PAYPAL_WEBHOOK_ALGOS, else SHA256withRSA; a malformed list falls back to the default), transmission time ISO-8601 within +-15 min of ctx.clock, cert URL https on paypal.com or *.paypal.com with no credentials and port empty or 443, body = one JSON object (UTF-8 decoded with ignoreBOM, a leading BOM stripped for PARSING only, nesting <= 32) whose event_type is one of the seven mapped events (Object.hasOwn); any failure -> row signature_status invalid, outcome rejected, flag_reason (HEADER_MISSING, TRANSMISSION_ID_INVALID, AUTH_ALGO_NOT_ALLOWED, TRANSMISSION_TIME_INVALID, TRANSMISSION_TIME_OUT_OF_WINDOW, CERT_URL_INVALID, BODY_NOT_JSON_OBJECT, EVENT_TYPE_NOT_MAPPED), payload_json NULL, payload_sha256 of the raw bytes, transmission_id kept only when well-formed (else '-'), then 400 WEBHOOK_SIGNATURE_INVALID with no details. Then: a valid row with this transmission id -> 200 {outcome:'duplicate'} before any provider call, no row, no audit (RS-23); verify() calls ctx.payments.verifyWebhook({merchantKey, headers: the five lower-case headers, rawBody: the received Buffer}) under an outer deadline of RS_PAYPAL_TIMEOUT_MS + 1 s: ok verified true -> valid; ok verified false -> invalid row SIGNATURE_VERIFICATION_FAILED + 400 (RS-24); rejected INVALID_ARGUMENT -> invalid + 400; every other rejected (incl. WEBHOOK_ID_MISSING, flag_reason = the issue code), retryable, unknown, a throwing adapter and a missing adapter -> unverified row + 503 PROVIDER_UNAVAILABLE with Retry-After 30. A valid event: ONE db.tx re-checks the dedupe, finds the operation (WEBHOOK_EVENTS table: authorization events by authorization id then related order id; capture events by capture id then related authorization id; refund by refund id then the up-link capture id; order by order id; always AND merchant_key = :merchantKey AND provider = config.paymentProvider AND archived_at IS NULL, parameterised, column names from constants), applies the transition with calls.js moveOperation (CAS) only if states.js allows it (an unknown operation is judged by its prev_status), checks that ids in the event agree with stored ones (AUTHORIZATION/CAPTURE/REFUND_ID_MISMATCH -> flagged), sets provider ids and authorization_expires_at from the event, clears unknown_since when leaving unknown, calls ctx.voidRule.onAuthorized(db, {operationId, requestId}) in the same transaction for every move into authorized, writes one audit event webhook.apply (event type, from, to), inserts the valid row (outcome applied | ignored (NO_MATCHING_OPERATION, ALREADY_IN_STATE, INFORMATIONAL_EVENT) | flagged with flagged = 1 and flag_reason TRANSITION_NOT_ALLOWED, AMBIGUOUS_RESOURCE, *_ID_MISMATCH, STATE_CHANGED) and answers 200 {outcome}. The partial UNIQUE index race is caught as a duplicate. Stored payload_json is summarise(event): only event_type, event_id, resource_type, resource_id, resource_status, order_id, authorization_id, capture_id, each pattern-checked; nothing under payer, payee, shipping or amounts is read. Log: one webhook.received line per request with provider, code and httpStatus (allow-listed keys only). (2) src/routes/webhooks.js: router.add POST /api/webhooks/paypal/:merchantKey policy signature. (3) test/api/webhooks.test.js: 96 tests, all passing: access (policy signature, no cookie/CSRF/foreign Origin, 404 for Z F a AA, GET 405), body limit (65,536 accepted, 65,537 -> 413), 38 pre-check cases (each header missing/empty/overlong, id shapes, algo, five time shapes, ten cert URL shapes, eleven body shapes) each asserting 400, one invalid row with the flag_reason, payload_json NULL, sha256 of the bytes and ZERO fake_paypal_calls, the accepted edges (64-char id, 14:59 either way, +03:00 offset, paypal.com and api.sandbox.paypal.com:443) and zero net-guard blocked attempts, RS_PAYPAL_WEBHOOK_ALGOS, forged-id poisoning (T13), RS-24 (tampered body, wrong secret, garbage signature, altered headers, re-serialised body, unreachable with http 500/429/422 faults then the retry applied, WEBHOOK_ID_MISSING, throwing and missing adapter), RS-23 (replay x3, different payload under a used id, five concurrent copies -> one applied + four duplicate + one hook call), 21 event/transition cases plus id fallbacks, id mismatches, no-match, SEC-16 (other merchant URL, other provider, archived, with a positive control), the hook (real void port: one so:<id>:void:1 row, replay and second event add none; recorder port; unknown and denied-capture paths; rollback of move, row and audit when the hook throws, then the retry applies), byte-exact raw body (BOM, whitespace/CRLF outside the object, BOM + raw non-ASCII + escapes, odd layout with duplicate keys: the adapter receives Buffer-equal bytes, stored sha256 matches, the five headers arrive lower-case), SEC-6 (61st request -> 429 with Retry-After, no row, no provider call, counter not incremented, 404 for an unknown key, admitted after the window; per-client budgets with RS_TRUST_PROXY=1 and an IPv6 /64 shared), T13 privacy (payer data, amounts, notes and shipping never in webhook_events, audit_events, payment_operations, any log line or any answer; refused/unverified/failed requests leak neither the signature nor the shared secret; log lines carry requestId and only allow-listed keys), and one Sandbox-adapter test against paypal-stub.js (verify_webhook received the merchant's webhook id; forged -> 400; a BOM body is never sent to the stub). Failing-first: the tests were written after the code (not test-first); each named behaviour was then pinned by mutation (scratch edits, file restored byte-identical, cmp verified): dedupe over all rows (7 tests fail), no merchant/provider/archived scoping (SEC-16 test fails), hook disabled (5 fail), body trimmed before verification (5 fail incl. the Sandbox test), rate limit removed (2 fail), CAS/state-table check bypassed (7 fail), cert host by substring (2 fail), time window one-sided (1 fails), full event stored as payload (privacy test fails). Test-code defects found and fixed while writing: the 200 body carries requestId (split off by the helper, pinned once), audit_events is append-only (tests use a per-test id floor), the fake reports a rejected verification with its own issue code. No production defect was found by a failing test.",
+      "filesChanged": [
+        "src/services/webhooks.js",
+        "src/routes/webhooks.js",
+        "test/api/webhooks.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv3a7mg2-015ad8e8"
+      ],
+      "remainingIssues": [
+        "npm test is RED by one test, outside my files and expected: ev:ev-mv3a96vq-0142da7d (FAILED, 1964 tests, 1948 pass, 1 fail, 15 skipped, 0 cancelled). test/api/contracts.test.js 'NFR6: every registered route has a scenario in the table' now lists THREE registered routes without a scenario: GET /api/paypal/return, GET /api/paypal/cancel (e2) and POST /api/webhooks/paypal/:merchantKey (e3). e6 (test-engineer) adds `route:` rows (no fixture is needed or exists for the webhook route; a scenario would sign with webhook-signer.js and the fake's secret from RS_FAKE_WEBHOOK_SECRET, and expect 200 {outcome} plus requestId, and 400 WEBHOOK_SIGNATURE_INVALID for an unsigned body). rbac.test.js and every other test pass: the route is policy signature, not public, so the by-design rbac failure did not occur and no edit to that test is needed.",
+        "SPEC CONFLICT (decision needed from the orchestrator): the Webhooks pre-check says the body must have a MAPPED event_type (failure -> invalid row, 400) while the event list says 'Unknown types -> ignored'. I followed the task's acceptance criterion: an unmapped type is a pre-check failure (invalid row EVENT_TYPE_NOT_MAPPED, 400), because it is the only reading that keeps SEC-6's 'no provider call for junk'. Consequence: a PayPal webhook subscribed to extra event types gets 400 and PayPal retries those until it gives up; the README/runbook must say to subscribe the webhook to the seven mapped events only. If the orchestrator prefers 'ignored', it is a one-line change in precheck() (keep a well-formed string, drop the mapped check, let applyEvent return ignored) and the test table in 'SEC-6: ... event_type that is not mapped'.",
+        "src/config.js does not parse RS_PAYPAL_WEBHOOK_ALGOS and .env.example does not list it (both outside my files; the spec names the variable). webhookAlgos(config) reads config.paypalWebhookAlgos if the configuration provides an array, otherwise process.env.RS_PAYPAL_WEBHOOK_ALGOS at request time, otherwise SHA256withRSA. The owner of src/config.js should add `paypalWebhookAlgos: r.list(...)` (and the .env.example line, which test/scan/env-example.test.js checks against config.js), after which the env fallback can go.",
+        "A body with a leading BOM is accepted by the route (parsed without it, verified as the exact bytes). The fake adapter verifies it (HMAC over the bytes); the Sandbox adapter answers ok {verified:false} for it (JSON.parse refuses a BOM), so on the Sandbox such a body is an invalid row and 400 without a provider call (tested). PayPal does not send a BOM, so this affects only a hand-made request. Whitespace outside the object is passed through unchanged; the Sandbox double verifies the member span, so a whitespace-wrapped body signed over all bytes would not verify there (e1's note (h)); not tested at the stub.",
+        "Not covered by e3 tests (not mine or not reachable here): the real PayPal event shapes and names (OQ-D5, LIVE-DEPENDENT: PAYMENT.AUTHORIZATION.CREATED/VOIDED, PAYMENT.CAPTURE.*, the supplementary_data.related_ids and the 'up' link used for fallback matching are PayPal-doc conventions verified only against my own fixtures); a webhook-driven end-to-end run through the real fake approval, return and capture flow (operations are put into a state with SQL set-up, as the stated state is what the route reacts to); two real OS processes racing one transmission id (the single-process concurrency test and the partial UNIQUE index catch are covered; the index race branch is not exercised by a test); retention of invalid/unverified rows after 7 days (retention.js, not mine).",
+        "Rate counter rows: an admitted request inserts one rate_events row (kind webhook, key ip:<key>); the route deletes that key's expired rows on each request, and retention.js purges rate_events older than 24 h. A flood from many distinct IPv6 /64 prefixes leaves one row each until retention runs (bounded by 60 per key per minute)."
+      ],
+      "nextAction": "orchestrator: (1) decide the pre-check/ignored conflict above and send it back if 'ignored' is preferred; (2) assign src/config.js + .env.example for RS_PAYPAL_WEBHOOK_ALGOS; (3) e6 (test-engineer): add the three missing route rows to test/api/contracts.test.js (npm test is red by exactly that test); (4) give e4 the notes below; (5) send e3 to review. NOTES FOR e4/e6. e4 (reconciler, saga): a webhook can move an operation without the reconciler: authorization_pending|approved|unknown(prev ok) -> authorized (+ provider_authorization_id, authorization_expires_at, the resolution hook), authorized -> voided, authorized|capture_pending -> captured (+ provider_capture_id), authorized -> capture_pending, capture_pending -> authorized (denied), refund_pending -> refunded (+ provider_refund_id). It clears unknown_since when it moves an unknown operation, leaves prev_status as it was and does NOT touch provider_calls rows: an open unknown/intent call row of that operation stays for the reconciler, which must therefore treat 'the operation is already past that state' as a resolved call (CAS on status, no error), exactly like recordCall's authorize/void mappers already do. A capture event moves an operation outside the saga lease; the saga must re-read the operation status after its capture call and accept captured as done. Webhook rows never reach the reconciler; it keeps polling (webhooks are secondary). The admin timeline already reads webhook_events (source 'webhook', detail outcome/signatureStatus/flagged). Flagged rows (outcome flagged, flagged = 1, flag_reason) are the operator's list; nothing else reads them yet. e6: the route answers 200 {outcome: applied|ignored|flagged|duplicate, requestId}; errors 400 WEBHOOK_SIGNATURE_INVALID (no details), 404 NOT_FOUND, 413 PAYLOAD_TOO_LARGE, 429 RATE_LIMITED details.limit webhook_ip + Retry-After, 503 PROVIDER_UNAVAILABLE + Retry-After 30 (and 503 DB_BUSY). Tests sign with signEvent({event|rawBody, transmissionTime: <harness clock ISO>}) and the harness env must set RS_FAKE_WEBHOOK_SECRET to FAKE_WEBHOOK_SECRET (the fake otherwise generates a random key in meta). The harness clock is fixed at 2026-10-20T06:00:00Z, so the signer's default new Date() transmission time is outside the 15-minute window: always pass transmissionTime.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "The lesson applies to a hook or guard that maps file writes to a project record or root in a repository with several records; this task builds a webhook service, route and API tests and designs no hook, guard or root discovery, so its 'Applies when' list does not hold. The guard accepted every nested write to my three files and refused only an inline python file writer, asking for the Edit tool."
+        }
+      ],
+      "id": "ho-mv3aalih-011f4d67",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T03:49:12.002Z"
     }
   },
   "runs": {
@@ -25783,8 +25884,29 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T03:34:08.761Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T03:49:57.011Z",
+      "durationMinutes": 15.8,
+      "costUsd": null,
+      "tokens": 255718,
+      "note": null,
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-11T03:50:01.062Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 1,
+            "costUsd": null
+          },
+          "to": {
+            "tokens": 255718,
+            "costUsd": null
+          },
+          "reason": "harness usage figure arrived after run end (placeholder 1 recorded)"
+        }
+      ]
     },
     "run-mv39r8yp-01afc4a5": {
       "id": "run-mv39r8yp-01afc4a5",
@@ -26292,6 +26414,26 @@
       "lessons": [],
       "at": "2026-10-11T03:34:18.486Z",
       "by": "orchestrator"
+    },
+    "dec-mv3abkne-01161cf3": {
+      "id": "dec-mv3abkne-01161cf3",
+      "title": "Webhooks: an unmapped event type is invalid (400), not ignored",
+      "decision": "The webhook route keeps e3's behaviour: an event whose event_type is not one of the seven mapped types fails the pre-checks and is stored as an invalid row with EVENT_TYPE_NOT_MAPPED and answered 400, before any provider call. The runbook (g2) must say to subscribe the PayPal webhook only to the seven mapped event types.",
+      "rationale": "The spec's event list says unknown types are ignored while its pre-check requires a mapped type; the task's acceptance criterion chose the pre-check, which keeps SEC-6's rule that junk never reaches the provider. Reversible: one line in precheck() and one test table.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T03:49:57.340Z",
+      "by": "orchestrator"
+    },
+    "dec-mv3abkv0-011839e9": {
+      "id": "dec-mv3abkv0-011839e9",
+      "title": "RS_PAYPAL_WEBHOOK_ALGOS stays an environment fallback until phase G",
+      "decision": "webhookAlgos() reads config.paypalWebhookAlgos when present, else the RS_PAYPAL_WEBHOOK_ALGOS environment variable, else SHA256withRSA. g2 lists the variable in .env.example and the README; the config field is added only if the env-example scan can stay green with it (g2 reports).",
+      "rationale": "src/config.js (e1) and .env.example (g2) are owned by tasks in different phases and the env-example scan ties them together; adding one side alone turns the suite red. Reversible.",
+      "alternatives": null,
+      "lessons": [],
+      "at": "2026-10-11T03:49:57.616Z",
+      "by": "orchestrator"
     }
   },
   "citations": [
@@ -26304,8 +26446,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1005.74,
-    "tokens": 13664243
+    "runtimeMinutes": 1021.54,
+    "tokens": 13919961
   },
   "delivery": null,
   "reworks": [
