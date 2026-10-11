@@ -1,6 +1,6 @@
 {
-  "seq": 1031,
-  "lastHash": "cc23f32095b447252e10e462fbc753afe5cb8e9b5f78678cae252f8b851511b8",
+  "seq": 1035,
+  "lastHash": "52959229da873177ccac60a1fc90d6655e08720e678727dad098ac8173728989",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -17443,6 +17443,46 @@
       "task": null,
       "recordedBy": "security-reviewer",
       "at": "2026-10-11T13:30:50.932Z"
+    },
+    "ev-mv3v55rb-01a9eca2": {
+      "id": "ev-mv3v55rb-01a9eca2",
+      "kind": "command",
+      "label": "TR iteration 2: SEC-RW4-1 re-check on the current 006 (S1 my ev-mv3u855g scenario; S2 empty tables with audit-named ids; S3 upgraded vs fresh schema, triggers, FKs)",
+      "command": "node /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/probes/tr-seqcheck-r4b.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 111,
+      "log": ".eccode/evidence/ev-mv3v55rb-01a9eca2.log",
+      "logSha256": "695b9333348be85ac78bdfcfe84ef63b84c97f683aa81e0fe6320c151bf2b1ea",
+      "logFileSha256": "745331ced7e172575c4759104b1a4a6b7cf9ece6b7b7f0deb38d99cb522408e6",
+      "outputTail": "S1 X deleted request/image/run/plan version/extraction 2/11/101/30/7 on 005; Y's next after 006: 3/12/102/31/8; X audit rows on Y's ids 0: ok\nS2 empty tables at the upgrade, audit names 5/50/5000/500/70; next after 006: 6/51/5001/501/71: ok\nS3 upgraded(empty 005) == fresh: true; objects whose text changed: extractions, images, model_spend, plan_versions, planning_runs, requirements, rescue_requests; append-only refusals 2 (audit UPDATE/DELETE; inventory_ledger has no row to hit); FKs extractions [request_id->rescue_requests:CASCADE] requirements [confirmed_by->users:NO ACTION,request_id->rescue_requests:CASCADE]: ok\nRESULT: the current 006 hands out none of the named ids, also with empty tables; schema equals fresh\n",
+      "gate": "phase:rework-4",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T13:32:50.026Z"
+    },
+    "ev-mv3v562s-0146e998": {
+      "id": "ev-mv3v562s-0146e998",
+      "kind": "command",
+      "label": "TR iteration 2: my iteration-1 reproduction script ev-mv3u855g re-run unchanged on the current 006 (expected to FAIL now: its case (a) no longer reuses ids)",
+      "command": "node /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/probes/tr-seqcheck-r4.mjs",
+      "cwd": ".",
+      "purpose": "reproduction",
+      "exitCode": 1,
+      "status": "failed",
+      "timedOut": false,
+      "durationMs": 114,
+      "log": ".eccode/evidence/ev-mv3v562s-0146e998.log",
+      "logSha256": "2f6de18ae9e3b540d7d48e3cddc8fc0d029afd10a622a5187718cd860d6c12a4",
+      "logFileSha256": "6cda6ad119951b46cb69696925da741c93d9775483753b3b9d465da0bf7aee96",
+      "outputTail": "006 as submitted: Y's next request/image/run/plan version = 3/12/102/31 (X deleted 2/11/101/30 on 005); X's audit rows on Y's request id: 0; fk 0; integrity ok; rows unchanged true\n006 + sequence statements: next ids = 3/12/102/31; X's audit rows on Y's request id: 0; fk 0; integrity ok; rows unchanged true\nRESULT: expectation not met\n",
+      "gate": "phase:rework-4",
+      "task": null,
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T13:32:50.430Z"
     }
   },
   "reviews": {
@@ -28905,8 +28945,29 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T13:23:37.033Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T13:32:52.039Z",
+      "durationMinutes": 9.25,
+      "costUsd": null,
+      "tokens": 86738,
+      "note": null,
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-11T13:32:55.424Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 1,
+            "costUsd": null
+          },
+          "to": {
+            "tokens": 86738,
+            "costUsd": null
+          },
+          "reason": "harness figure for the resumed invocation: 356,457 cumulative minus 269,719 recorded on the first security run"
+        }
+      ]
     },
     "run-mv3utbcl-0137329e": {
       "id": "run-mv3utbcl-0137329e",
@@ -29490,8 +29551,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1186.39,
-    "tokens": 15635096
+    "runtimeMinutes": 1195.64,
+    "tokens": 15721834
   },
   "delivery": null,
   "reworks": [

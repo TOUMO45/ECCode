@@ -60,7 +60,7 @@ After migrating at HEAD:
 | S4 | a `model_spend` row naming request 7, which was never audited | the request floor rises (next id 8), and the row itself is set to NULL | — |
 | S5 | an empty 005 database | six `sqlite_sequence` rows at 0; the first request gets id 1 | — |
 | S6a | ids stored as the string `"45"`, the float `150.9` and the negative `-5` | the floor rises to 46 and 151; the negative id changes nothing | — |
-| S6b | absurd values: `planVersionId` 1e300 or `runId` 2^63−1, and a `request` entity id of 999999999999999 | the sequence pins at 2^63−1, so the next plan version or run insert fails with SQLITE_FULL (13). The next request id becomes 1000000000000000 (16 digits), which `idParam` refuses. | **No.** `sanitizeDetail` keeps only safe integers (≤ 2^53−1, which leaves ample headroom). Entity ids are server-generated. Every `denied` audit row naming a plan or order is written only after `findOwnedPlan` / `findOwnedOrder` (routes `plans.js` lines 37–90; `orders.js` and `payments.js` audit after the ownership checks). So a client cannot plant an id. |
+| S6b | absurd values: `planVersionId` 1e300 or `runId` 2^63−1, and a `request` entity id of 999999999999999 | the sequence pins at 2^63−1, so the next plan version or run insert fails with SQLITE_FULL (13). The next request id becomes 1000000000000000 (16 digits), which `idParam` refuses. | **No.** `sanitizeDetail` keeps only safe integers (≤ 2^53−1, which leaves ample headroom). Entity ids are server-generated. The `denied` audit rows that name a plan version (`plan.approve`, `reservation.create`, `plan.execute`, `plan.abandon`) come from routes that call `findOwnedPlan` first (`src/routes/plans.js`). So a client cannot plant an arbitrary id in a source the floor reads. |
 | — | the highest id is the one deleted | covered by S1 and M2 | — |
 
 **Assessment:** SEC-RW4-1 is resolved. The floor reads every source the app actually writes for these tables:
@@ -98,7 +98,7 @@ After migrating at HEAD:
 ## (3) What changed since my iteration-1 review
 
 - `git diff de5bde2 HEAD` over the nine files touches only two:
-  - `src/db/migrations/006_autoincrement_ids.sql` (+59/−12 overall): the extractions/requirements rebuild and the floor;
+  - `src/db/migrations/006_autoincrement_ids.sql` (+55/−4): the extractions/requirements rebuild and the floor;
   - `test/unit/db/migrate-006.test.js`.
 - **Test changes:**
   - `REBUILT` grows to six tables.
