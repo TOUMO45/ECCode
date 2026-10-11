@@ -81,7 +81,11 @@ export async function approvalRoundTrip(page, { harness, userId, trigger, action
     await page.locator('button', { hasText: BUTTONS[action] }).click();
 
     // 4. Back on the app origin.
-    await page.waitForURL((url) => url.origin === appOrigin, { timeout: 15000 });
+    try {
+      await page.waitForURL((url) => url.origin === appOrigin, { timeout: 15000 });
+    } catch (err) {
+      throw new Error(`${label}: the browser did not come back to ${appOrigin} (still on ${page.url()}); CSP console messages: ${JSON.stringify(cspMessages)}; ${err.message}`);
+    }
     const landedOn = page.url();
     assert.ok(landedOn.includes(OUTCOME_QUERY[action]), `${label}: the browser came back to ${landedOn} (expected ${OUTCOME_QUERY[action]})`);
     await page.waitForLoadState('load');
