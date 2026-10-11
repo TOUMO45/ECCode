@@ -1,0 +1,179 @@
+{
+  "decision": "approve",
+  "summary": "Technical review of phase:rework-7, iteration 1 (sub-mv4bez91-0173458d; handoffs ho-mv4aker9-014c05a3 and ho-mv4b2qcu-01d596a2; decisions dec-mv46ovt6-01a662af, dec-mv46ovf2-017bf12d as corrected by dec-mv4740d4-015b3589, and dec-mv48g2fj-018e0ca7). Run run-mv4bflas-01f6302a. The security review (.eccode/reviews/drafts/rework-7-security-1.md, FINAL, approve) is folded in.\n\n**Scope.**\n- All 19 artifacts match the submitted sha256.\n- `git diff 1996afa 1f4e430` gives the 18 project files.\n- Every check I cite ran on the submitted tree 51dc3468. The later commit f63d5b1 changes only records.\n\n**My checks are all green.** Real clock: npm test 2341/2333/0 fail/8 skipped, the browser suite 14/14, and the eight changed test files 216/216. With the clock-shift preload: npm test at +9 days (2026-10-20T21:22Z, just past the pin) and at +100 days (2027-01-19) is green, 2341/2333/0/8.\n\n**Your rework-6 findings are resolved against my own resolution conditions:**\n- TR-R6-1: my pl-delay mutant is now killed by the re-timed per-call bound. The file is green 3/3 under 12 busy loops on 4 CPUs, and a locked npm test is green.\n- TR-R6-2: the comment is corrected.\n- TR-R6-4: the one-line no-unlink mutant is killed at shifts of 0, 9, 30, 100 and 400 days, and the real tree is green at each.\n\n**The other items are correct and pinned by tests.** FU-59 per order, FU-58/56, FU-54, FU-55, FU-57, the canonical sentence, FU-21, FU-12 and the README were each checked against the diff and the spec or decision. Nine correctness mutants, each in a fresh copy, are all killed on their own subtests.\n\n**The clock-shift method is sound enough for the claim on the Node side.** My probe confirms it shifts the clock in the test process, in the file-system time paths the code uses, and in child servers. The paths it misses are not used by the code. One finding (TR-R7-1, minor): the preload is outside the repository, so the claim cannot be re-run by the verification gate or by anyone later.\n\nNo blocking or major finding. Decision: approve.",
+  "criteria": [
+    {
+      "id": "task:rework-7",
+      "description": "Rework: phase F and G review follow-ups in files no remaining task owns, delivered with tests, round 1 and round 2",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4bq4ws-01b1abe1",
+        "ev:ev-mv4c2pnw-01f4d300",
+        "ev:ev-mv4biwc1-01d635bc",
+        "artifact:src/services/orders.js#L56",
+        "artifact:src/services/orders.js#L142",
+        "artifact:src/services/admin.js#L228",
+        "artifact:src/services/admin.js#L363",
+        "artifact:src/services/admin.js#L443",
+        "artifact:src/services/admin.js#L449",
+        "artifact:src/services/admin.js#L642",
+        "artifact:src/config.js#L376",
+        "artifact:test/api/followups-g-rework.test.js#L113"
+      ],
+      "notes": "**The items against the diff and their tests.** Nine of my mutants, each in a fresh copy with its diff printed, each turn followups-g-rework red on the subtest that pins them (ev:ev-mv4bq4ws-01b1abe1).\n\n- **FU-59, per order** (dec-mv4740d4).\n  - orders.js L56-L57 reads the order's OWN live operation; `supplier_order_id` is UNIQUE.\n  - The plan-wide list (L27) is unchanged.\n  - Mutant fu59-planwide (refunded blocks the whole plan) is killed on the sibling subtest. Mutant fu59-none is killed on the refunded order.\n- **FU-58 / FU-56.**\n  - The forbidden set is built from code point ranges (L142-L143): C0 except tab/LF/CR, DEL plus C1, U+2028/2029, U+202A-202E and U+2066-2069.\n  - The admin supplier_refusal now uses the same checkRefusalReason (admin.js L443).\n  - Mutants fu58-nobidi, fu58-noisolate and fu56-str are killed.\n- **FU-54.**\n  - `owedRefund = captured && cancel_requested_at !== null` and `planStatus` on every entry (admin.js L218-L229).\n  - The inner joins are safe because both foreign keys are NOT NULL.\n  - Mutant fu54-capturedonly is killed.\n  - The round-2 pins (admin-basic L204, admin-reset L186, the contracts value pins, the fixture, recovery.test.js L777/L853) are green in ev:ev-mv4c2pnw-01f4d300.\n- **FU-55.**\n  - The 404 path writes a denied admin.fault row inside the committing transaction (admin.js L363-L371). The 422 path writes a code-only row (L447-L461).\n  - Mutants fu55-no404 and fu55-no422 are killed.\n- **FU-57.** refund_failed is in `unresolved` (L642); mutant fu57-off is killed.\n- **Canonical sentence.** config.js L376 matches spec L1254 and brief A2 exactly, without a full stop, as does the UI constant public/js/texts.js L12.\n- **FU-21 and FU-12.** See the C-docs criterion.\n- **Real tree.** The eight changed test files pass 216/216 (ev:ev-mv4c2pnw-01f4d300), and npm test is green (ev:ev-mv4biwc1-01d635bc)."
+    },
+    {
+      "id": "phase:rework-7",
+      "description": "FU-59 per order; FU-58/56; FU-54; FU-55; FU-57; canonical sentence; FU-21; FU-12; TR-R6-1/2/4; date robustness past 2026-10-20; security reviews before delivery",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4biwc1-01d635bc",
+        "ev:ev-mv4bzdu2-012809ac",
+        "ev:ev-mv4c1nep-01dedc0d",
+        "ev:ev-mv4c3zpy-01b16590",
+        "ev:ev-mv4bq7eu-019cc03d",
+        "ev:ev-mv4bqi0v-01dfd6b6",
+        "ev:ev-mv4bw9lu-01d41ccd",
+        "ev:ev-mv4bsf9l-018c618e",
+        "artifact:src/services/retention.js#L79",
+        "artifact:test/api/uploads-retention.test.js#L634",
+        "artifact:.eccode/reviews/drafts/rework-7-security-1.md#sec-f2-c-condition-by-condition"
+      ],
+      "notes": "**Real clock.**\n- npm test under the lock: 2341 / 2333 / 0 fail / 8 skipped, NFR5 p95 59.1 ms (ev:ev-mv4biwc1-01d635bc).\n- Browser suite under the lock: 14/14 (ev:ev-mv4c3zpy-01b16590).\n\n**Date robustness.** The preload is the engineer's, sha256 e1686fdb, printed in each log.\n- +9 days: the child sees 2026-10-20T21:22Z, just past the 2026-10-20T06:00Z pin; npm test 2341/2333/0/8 (ev:ev-mv4bzdu2-012809ac).\n- +100 days: the child sees 2027-01-19, past the year boundary; npm test 2341/2333/0/8 (ev:ev-mv4c1nep-01dedc0d).\n- uploads-retention at shifts of 0, 9, 30, 100 and 400 days: green on the real tree (ev:ev-mv4bw9lu-01d41ccd).\n- The engineer's and delivery-lead's +30 runs agree.\n\n**The orphan-age boundary test** (uploads-retention L634) pins `clock - mtime` with three files: exactly 1 day old is removed, 1 ms younger is kept, and one stamped after the clock is kept. The engineer's |clock - mtime| mutant is killed (ev:ev-mv49xotr-01551c66).\n\n**My own audit of where real time meets the injected clock in src agrees with item 13.**\n- Date.now appears only in systemClock, AI-provider latency defaults, the DB busy-retry deadline and the config default demo date (relative or today-based).\n- mtime is used only in retention.js L83 and the static ETag.\n- There is no SQL clock: no CURRENT_TIMESTAMP and no datetime('now') in src, migrations or test.\n- The client uses only relative time (poll.js).\n\n**TR-R6-1/2/4** are resolved below. **Security** reviewed before delivery: FINAL, approve; see the security criterion."
+    },
+    {
+      "id": "C-method",
+      "description": "The clock-shift method is sound enough to support 'nothing breaks once real time passes 2026-10-20' (as asked)",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4bsf9l-018c618e",
+        "ev:ev-mv4bzdu2-012809ac",
+        "ev:ev-mv4c1nep-01dedc0d",
+        "artifact:test/helpers/node-proc.js#L72",
+        "artifact:test/helpers/server-proc.js#L48"
+      ],
+      "notes": "**What my probe shows** (ev:ev-mv4bsf9l-018c618e, at +30 days).\n- **Shifted:** Date.now and new Date(); statSync; the named `stat` import from node:fs/promises, which is what retention.js uses; the fs.stat callback.\n- **Round-trips:** utimes with a Date.\n- **Children:** a child spawned through childEnv(baseServerEnv()), the way every test server starts, sees the shifted clock. NODE_OPTIONS is merged, not replaced (node-proc.js L72-L84). CLOCK_SHIFT_DAYS has no RS_ prefix, so server-proc.js L48 does not blank it.\n\n**Gaps.** Two were disclosed by the delivery-lead, and I found two more:\n- FileHandle.stat is not shifted;\n- a string time passed to utimes does not round-trip;\n- Intl.DateTimeFormat().format() with no date reads the unpatched clock;\n- calling `Date()` without new throws a TypeError.\n\nNone of these paths is used by src, test, scripts or public (grep). The last one would fail loudly rather than hide a problem.\n\n**Children the shift does not reach.** They are built with a minimal env: the rs20 live-refusal checks, seed.test.js runSeed, and start-old-node. I read them. They are either time-irrelevant (refusal exit codes) or pin RS_DEMO_DATE, so running them unshifted hides nothing about date passage.\n\n**Not shifted.** SQLite, which has no clock in use, and Chromium, whose client code uses only relative time.\n\n**Verdict.** Sound enough for the claim on the Node side and on the server side of the browser flows. The remaining weakness is reproducibility: TR-R7-1."
+    },
+    {
+      "id": "C-docs",
+      "description": "FU-21, FU-12 and the README change are correct",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4c2pnw-01f4d300",
+        "artifact:README.md#live-suites-opt-in-never-part-of-npm-test",
+        "artifact:README.md#honest-limits",
+        "artifact:.env.example#L141",
+        "artifact:test/scan/env-example.test.js#L193",
+        "artifact:test/scan/env-example.test.js#L270"
+      ],
+      "notes": "**FU-21.**\n- The four names are commented out and empty in .env.example (L141-L146) and are explained in the prose below them.\n- The README names them (L107-L112), and the descriptions match their readers.\n- The scan test (L193) requires them listed, commented and empty, and checks each one's real reader file. It exempts them only from 'config reads it'. Red first without the lines: ev:ev-mv4avxqb-016f0a1e.\n\n**FU-12.**\n- The description now names emergency cup and lid purchasing for cafes; no near-expiry wording remains.\n- The lockfile (v3) has three dev packages at 1.56.1, each resolved from registry.npmjs.org with sha512. The installed @playwright/test is 1.56.1.\n- SEC-R7-I2 (no node_modules/fsevents entry) is confirmed by my reading; see TR-R7-3.\n\n**README 'Refunded orders' (L243)** matches the code. The order itself gets 409 HANDOVER_BLOCKED, siblings are unaffected, and the five other blocking states are exactly HANDOVER_BLOCKING_PAYMENT (orders.js L27).\n\nAll scan tests pass (in ev:ev-mv4c2pnw-01f4d300)."
+    },
+    {
+      "id": "security",
+      "description": "Security review of rework-7 before delivery (SEC-F2-C), folded in",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/reviews/drafts/rework-7-security-1.md#sec-f2-c-condition-by-condition",
+        "artifact:.eccode/reviews/drafts/rework-7-security-1.md#fu-55-fu-57-lockfile",
+        "ev:ev-mv4bq4ws-01b1abe1"
+      ],
+      "notes": "The security-reviewer's draft is FINAL: approve, with SEC-F2-C conditions 1-3 met, five security mutants killed, and SEC-F-I1(a)/(c), I3, I4, I5, I6 and I7 closed or closed with the disclosed limits.\n\nIts two info items are carried here as TR-R7-2 (SEC-R7-I1) and TR-R7-3 (SEC-R7-I2).\n\nMy own nine correctness mutants overlap with its conditions 1 and 2 and agree."
+    },
+    {
+      "id": "lessons",
+      "description": "The tasks' not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4c2pnw-01f4d300",
+        "artifact:.eccode/artifacts/rework-7/submission.md#lessons"
+      ],
+      "notes": "This rework changes services, config, tests and docs, and builds no hook, guard or root discovery, so the lesson's 'Applies when' conditions do not hold. Not applicable.\n\nI saw only raw-text over-denials of my own shell lines (variable substitution near the eccode CLI), which are listed under 'Not applicable when'."
+    },
+    {
+      "id": "C-checks",
+      "description": "Reviewer's own post-submission checks on the submitted tree, under the suite lock, fresh mutant directories, no live suites",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4biwc1-01d635bc",
+        "ev:ev-mv4c2pnw-01f4d300",
+        "ev:ev-mv4c3zpy-01b16590",
+        "ev:ev-mv4bzdu2-012809ac",
+        "ev:ev-mv4c1nep-01dedc0d",
+        "ev:ev-mv4bq4ws-01b1abe1",
+        "ev:ev-mv4bq7eu-019cc03d",
+        "ev:ev-mv4bqi0v-01dfd6b6",
+        "ev:ev-mv4bw9lu-01d41ccd",
+        "ev:ev-mv4bsf9l-018c618e"
+      ],
+      "notes": "**All runs are on tree 51dc3468.**\n\n**Mutants.** Each is in a fresh directory under scratchpad/tr-r7/<name>/, built by tools/mkcopy.sh, which refuses an existing directory:\n- pl-delay, ur-nounlink1;\n- fu59-planwide, fu59-none, fu58-nobidi, fu58-noisolate, fu56-str, fu54-capturedonly, fu55-no404, fu55-no422, fu57-off.\nEach diff is kept as mutant.diff and printed at the top of its log. The specs are in tools/m/specs.json and the check scripts in tools/.\n\n**One red run, not cited.** ev:ev-mv4bseeu-017a0735 was my first TR-R6-4 matrix. It required exactly one failing test, but past the pin the mutant also fails the startApp timer test, because the orphan step no longer rescues that file. The mutant was killed at every shift even then. I corrected the rule to 'the 7 d + 1 min test is among the failures' and re-ran it: ev:ev-mv4bw9lu-01d41ccd.\n\n**Safety.** Every command ran with `env -u RS_LIVE_MODEL -u RS_LIVE_PAYPAL`, 127.0.0.1 only. I made no edits to the real tree and no commits."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-R7-1",
+      "severity": "minor",
+      "title": "The date-robustness claim rests on a clock-shift preload that lives outside the repository, so the verification gate cannot re-run it from the project",
+      "detail": "The preload `scratchpad/rework7-tools/shift-clock.mjs` (sha256 e1686fdb) is only in a session scratchpad.\n\n**The claim is supported today.**\n- Full suites are green at +9, +30 and +100 days, and uploads-retention at up to +400 (ev:ev-mv4bzdu2-012809ac, ev:ev-mv4c1nep-01dedc0d, ev:ev-mv4bw9lu-01d41ccd).\n- My probe shows the preload takes effect where it must (ev:ev-mv4bsf9l-018c618e).\n\n**But the claim cannot be reproduced later.** No project file or npm script can repeat it. A later change could reintroduce a real-time dependence, for example a new mtime comparison or a SQL clock, and nothing in npm test would notice before 2026-10-20.\n\nThe preload also has known blind spots: FileHandle.stat, a string time to utimes, Intl's default date, and the `Date()` call form. Today they are unused, and the delivery-lead disclosed the first two; nothing in the project records them.",
+      "evidence": [
+        "ev:ev-mv4bsf9l-018c618e",
+        "ev:ev-mv4bzdu2-012809ac",
+        "artifact:.eccode/artifacts/rework-7/submission.md#the-clock-shift-method-item-13"
+      ],
+      "recommendation": "Owner: the orchestrator routes it (no current task owns test/helpers/**).\n\nResolved when one of these holds:\n- The preload is committed as a reviewed project tool, for example test/helpers/shift-clock.mjs plus an npm script such as `test:shifted` that takes CLOCK_SHIFT_DAYS. Its blind spots are listed in its header. The verification gate re-runs it at a shift past 2026-10-20.\n- Or the verification report records that it re-ran the scratch preload, identified by sha256, at a shift past the pin, and lists the blind spots as an accepted residual."
+    },
+    {
+      "id": "TR-R7-2",
+      "severity": "info",
+      "title": "Disclosed narrowings accepted: FU-55 audits refund_order 404/422 only, FU-57 counts operations only, and the refusal rule leaves U+200B-200D, FEFF and 061C (SEC-R7-I1 folded in)",
+      "detail": "**What is covered.** FU-55's wording was 'every 422 on the fault routes'. The delivered rule covers the money-moving kind; L325 pins the narrower behaviour. FU-57 counts refund_failed operations, not escalated reservations.\n\n**The security reviewer accepts these** (draft, 'FU-55, FU-57, lockfile'), and also rates SEC-R7-I1: misleading words inside a supplier reason, isolated and labelled by g1, residual by design.\n\n**Correctness.** I checked that the narrowed rules are what the code does, and my fu55 and fu57 mutants are killed. The unrefused zero-width characters and U+061C do not reorder text, and g1 isolates the reason when it is shown.",
+      "evidence": [
+        "ev:ev-mv4bq4ws-01b1abe1",
+        "artifact:.eccode/reviews/drafts/rework-7-security-1.md#fu-55-fu-57-lockfile",
+        "artifact:test/api/followups-g-rework.test.js#L325"
+      ],
+      "recommendation": "No change for this gate. Resolved when the verification report lists the two narrowed follow-ups as delivered with their limits."
+    },
+    {
+      "id": "TR-R7-3",
+      "severity": "info",
+      "title": "SEC-R7-I2 confirmed: package-lock.json has no node_modules/fsevents entry for playwright's optional macOS dependency",
+      "detail": "**What is missing.** playwright 1.56.1 declares `optionalDependencies: {fsevents: 2.3.2}`. The lock records that dependency in the playwright entry but has no `node_modules/fsevents` package entry, so a macOS install would resolve it outside the integrity pin.\n\n**Impact.** It has no effect on Linux or CI and is development-only. Not demonstrated, because there is no network here.",
+      "evidence": [
+        "artifact:package-lock.json#packages",
+        "artifact:.eccode/reviews/drafts/rework-7-security-1.md#fu-55-fu-57-lockfile"
+      ],
+      "recommendation": "Optional. Resolved when the lock is regenerated from an empty node_modules (npm then records the darwin-only optional entry with its integrity) and the FU-12 scan test still passes, or when the verification report documents the gap."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "TR-R6-1",
+      "resolution": "**My resolution condition is met in full.**\n- **The mutant is killed.** My pl-delay mutant (exact, never throws, holds 300 ms on 49 inputs) was rebuilt in a fresh copy of the current tree. The rework-7 planner-sec-b1 test now kills it in tests 1 and 2: 'the minimum of three, 300.2 ms, still exceeds the per-call bound 50 ms' and '... 300.1 ms ... 100 ms', with no PLANNER_LIMIT (kill-check ev:ev-mv4bq7eu-019cc03d).\n- **Stable under contention.** The real file is green 3/3 under 12 busy loops on 4 CPUs, held under the lock: worst 51.0-56.7 ms, catalog p95 18.3-27.7 ms against a limit of 100 (ev:ev-mv4bqi0v-01dfd6b6).\n- **A locked npm test is green** (ev:ev-mv4biwc1-01d635bc).\n- **Mechanism.** assertUnderBound re-times only calls over the pre-rework bound. The 1000 ms ceiling and the 20 ms sweep p95 stay, and test 3 gained a 100 ms catalog p95 computed from the re-timed minima.",
+      "evidence": [
+        "ev:ev-mv4bq7eu-019cc03d",
+        "ev:ev-mv4bqi0v-01dfd6b6",
+        "ev:ev-mv4biwc1-01d635bc",
+        "artifact:test/timing/planner-sec-b1.test.js#L53"
+      ]
+    },
+    {
+      "id": "TR-R6-2",
+      "resolution": "The comment at uploads-retention L748-L752 now cites src/services/retention.js L35 for the row-then-file ordering, and the spec's 'Retention and deletion' (L773) only for what it says. That is my resolution condition. The test is unchanged in behaviour and green in ev:ev-mv4c2pnw-01f4d300.",
+      "evidence": [
+        "ev:ev-mv4c2pnw-01f4d300",
+        "artifact:test/api/uploads-retention.test.js#L748"
+      ]
+    },
+    {
+      "id": "TR-R6-4",
+      "resolution": "**What the test now pins.** The 7 d + 1 min test stamps the file with the pinned upload time (L540) and asserts `imageFilesLeft === 0`, `orphans === 0`, no new image.orphan_delete event, and no file of the image left (L556-L561).\n\n**The kill holds at every date.** The engineer's one-line no-unlink mutant, rebuilt by me in a fresh copy, fails that test at real-clock shifts of 0, 9, 30, 100 and 400 days. The real tree passes 42/42 at every shift (kill-check ev:ev-mv4bw9lu-01d41ccd).\n\nPast the pin, the mutant also fails the startApp timer test, as expected.",
+      "evidence": [
+        "ev:ev-mv4bw9lu-01d41ccd",
+        "artifact:test/api/uploads-retention.test.js#L556"
+      ]
+    }
+  ],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
