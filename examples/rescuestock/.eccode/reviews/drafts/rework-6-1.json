@@ -1,48 +1,48 @@
 {
   "decision": "approve",
-  "summary": "Technical review of phase:rework-6, iteration 1 (sub-mv47spzw-01781921; handoff ho-mv47ltf3-01c9351a; decision dec-mv46ovt6-01a662af; commit 223780a). Run run-mv47te5g-0126322e.\n\n**Scope and hashes.** The three artifacts match the submitted sha256 (submission 8cefaaa2, uploads-retention 295bb790, planner-sec-b1 95a40b59). `git diff --stat 66206c9 223780a` touches only the two test files. g1 (0a57aea) landed frontend files while I reviewed; it does not touch either test file, src/domain, or src/services/retention.js. I re-ran every check I cite on the current tree (28de3ab8). My earlier runs on the submitted tree 622af87f had the same results; they are listed in the C-checks notes and are not cited, because the tree has changed since.\n\n**FU-33 is fixed and the test is not weakened.**\n- I reproduced the race: the pre-rework test fails on a 300 ms delayed-unlink mutant.\n- The revised test passes on that mutant.\n- The revised test fails at the new bounded wait (L718), with its message, when the swept file is never removed.\n- Full npm test under the lock is green: 2307 tests, 2299 pass, 0 fail, 8 skipped.\n- **FU-33's close rule is met.** Locked green runs on the fixed test: ev-mv47hp51, ev-mv47qjdl, my ev-mv47y0fp-01c51970 (on 622af87f, the third), ev-mv48e1xg (frontend-engineer) and my ev-mv48mk97-01920d24. There was no red run in between.\n\n**FU-46 meets its own resolution text.** Every exactness assertion is kept, the p95 stays at 20 ms, and a generous ceiling is added. Real algorithmic regressions remain killed: the full-enumeration mutants by PLANNER_LIMIT (engineer's evidence); my no-lower-bound mutant with the cap raised 20x by the 1000 ms ceiling alone. Five other single-cut mutants do not change timing under either the old or the new test.\n\n**What is lost (TR-R6-1, minor).** My mutant pl-delay is exact and never throws, but holds the event loop for 300 ms (the SEC-B-1 symptom) on 49 inputs. It survives the revised file, and the pre-rework per-call bounds kill it. I name a noise-robust assertion that would catch it.\n\n**Other findings.** Two minor/info traceability items, and info notes on the disclosures. None of them blocks. Decision: approve.",
+  "summary": "Technical review of phase:rework-6, iteration 1 (sub-mv47spzw-01781921; handoff ho-mv47ltf3-01c9351a; decision dec-mv46ovt6-01a662af; commit 223780a). Run run-mv47te5g-0126322e.\n\n**Scope and hashes.** The three artifacts match the submitted sha256 (submission 8cefaaa2, uploads-retention 295bb790, planner-sec-b1 95a40b59). `git diff --stat 66206c9 223780a` touches only the two test files. g1 (0a57aea, frontend) and g2 (a809320, docs) landed while I reviewed. Neither touches either test file, src/domain, src/services/retention.js or src/main.js. I re-ran every check I cite on the current tree (04590e53). My earlier runs on the submitted tree 622af87f had the same results; they are listed in the C-checks notes and are not cited, because the tree has changed since.\n\n**FU-33 is fixed and the test is not weakened.**\n- I reproduced the race: the pre-rework test fails on a 300 ms delayed-unlink mutant.\n- The revised test passes on that mutant.\n- The revised test fails at the new bounded wait (L718), with its message, when the swept file is never removed.\n- Full npm test under the lock is green: 2323 tests, 2315 pass, 0 fail, 8 skipped.\n- **FU-33's close rule is met.** Locked green runs on the fixed test: ev-mv47hp51, ev-mv47qjdl, my ev-mv47y0fp-01c51970 (on 622af87f, the third), ev-mv48e1xg (frontend-engineer), my ev-mv48mk97-01920d24 (after g1) and my ev-mv492fzq-01f78197 (after g2). There was no red run in between.\n\n**FU-46 meets its own resolution text.** Every exactness assertion is kept, the p95 stays at 20 ms, and a generous ceiling is added. Real algorithmic regressions remain killed: the full-enumeration mutants by PLANNER_LIMIT (engineer's evidence); my no-lower-bound mutant with the cap raised 20x by the 1000 ms ceiling alone. Five other single-cut mutants do not change timing under either the old or the new test.\n\n**What is lost (TR-R6-1, minor).** My mutant pl-delay is exact and never throws, but holds the event loop for 300 ms (the SEC-B-1 symptom) on 49 inputs. It survives the revised file, and the pre-rework per-call bounds kill it. I name a noise-robust assertion that would catch it.\n\n**Other findings.** Two minor/info traceability items, and info notes on the disclosures. None of them blocks. Decision: approve.",
   "criteria": [
     {
       "id": "task:rework-6",
       "description": "Rework: FU-33 (TR-F-7) retention test waits for the file; FU-46 SEC-B-1 per-call bound robust to host noise; a regression test fails before the fix and passes after; the existing checks still pass",
       "met": true,
       "evidence": [
-        "ev:ev-mv48ndz6-01faec70",
-        "ev:ev-mv48nmfy-0138988b",
-        "ev:ev-mv48nwxf-019ae428",
-        "ev:ev-mv48mvw7-01ebcdb0",
-        "ev:ev-mv48mxa9-01f0afee",
-        "ev:ev-mv48p2md-01f16a78",
-        "ev:ev-mv48mk97-01920d24",
+        "ev:ev-mv492wu2-01d37b92",
+        "ev:ev-mv4935i7-01c5d198",
+        "ev:ev-mv493g8c-013ac111",
+        "ev:ev-mv492mqs-01aff62a",
+        "ev:ev-mv492o1e-010e3ee8",
+        "ev:ev-mv493yql-018b9f5c",
+        "ev:ev-mv492fzq-01f78197",
         "artifact:test/api/uploads-retention.test.js#L714",
         "artifact:test/api/uploads-retention.test.js#L718",
         "artifact:test/timing/planner-sec-b1.test.js#L82",
         "artifact:test/timing/planner-sec-b1.test.js#L93",
         "artifact:.eccode/artifacts/rework-6/submission.md#acceptance-criteria"
       ],
-      "notes": "**FU-33.**\n- **Fails before, passes after.** The pre-rework test (66206c9) fails on my mutant ur-delay, where the unlink starts 300 ms after the row is gone: 41 tests, 40 pass, 1 fail, at the immediate file check, expected false, actual true (ev:ev-mv48ndz6-01faec70, a check that passes only on that failure). The revised test passes on the same mutant, 41/41 (ev:ev-mv48nmfy-0138988b).\n- **Not weakened.** On my mutant ur-never, the timer-tick image's file is removed neither by the sweep nor by the orphan sweep. The revised test fails exactly at L718, with 'the file of the swept image is unlinked within 5 s of its row going' (kill-check ev:ev-mv48nwxf-019ae428). The poll at L714-L717 only delays the assertion; it cannot turn a file that is still present into a pass.\n- **Real tree.** The file alone passes 41/41 (ev:ev-mv48mvw7-01ebcdb0).\n\n**FU-46.**\n- **Exactness kept in all three tests.** No call may throw (L57, L82, L121). The A-only plan, its lines, total, pickups and maxPickups-1 equality are kept, and so are `calls == 1008`, `20 < feasible < 150` and the p95 < 20 ms (L93).\n- **The ceiling is chosen from measurements** (L12-L24).\n- **Kills.** The engineer's full-enumeration mutants are killed by PLANNER_LIMIT (ev:ev-mv47dqfe-018e0d01, ev:ev-mv47dsj8-0120cf95; their diffs are in scratchpad/rework6/pl-*/mutant.diff and I checked them). My pl-nolb-cap mutant (exact, never throws) is killed by the 1000 ms ceiling alone: catalog 35 took 1328 ms (ev:ev-mv48p2md-01f16a78).\n- **Real tree.** The file alone passes 3/3 (ev:ev-mv48mxa9-01f0afee).\n- The lost per-call sensitivity is recorded as TR-R6-1 (minor).\n\n**Existing checks.** npm test under the lock passes: 2307 / 2299 / 0 fail / 8 skipped (ev:ev-mv48mk97-01920d24)."
+      "notes": "**FU-33.**\n- **Fails before, passes after.** The pre-rework test (66206c9) fails on my mutant ur-delay, where the unlink starts 300 ms after the row is gone: 41 tests, 40 pass, 1 fail, at the immediate file check, expected false, actual true (ev:ev-mv492wu2-01d37b92, a check that passes only on that failure). The revised test passes on the same mutant, 41/41 (ev:ev-mv4935i7-01c5d198).\n- **Not weakened.** On my mutant ur-never, the timer-tick image's file is removed neither by the sweep nor by the orphan sweep. The revised test fails exactly at L718, with 'the file of the swept image is unlinked within 5 s of its row going' (kill-check ev:ev-mv493g8c-013ac111). The poll at L714-L717 only delays the assertion; it cannot turn a file that is still present into a pass.\n- **Real tree.** The file alone passes 41/41 (ev:ev-mv492mqs-01aff62a).\n\n**FU-46.**\n- **Exactness kept in all three tests.** No call may throw (L57, L82, L121). The A-only plan, its lines, total, pickups and maxPickups-1 equality are kept, and so are `calls == 1008`, `20 < feasible < 150` and the p95 < 20 ms (L93).\n- **The ceiling is chosen from measurements** (L12-L24).\n- **Kills.** The engineer's full-enumeration mutants are killed by PLANNER_LIMIT (ev:ev-mv47dqfe-018e0d01, ev:ev-mv47dsj8-0120cf95; their diffs are in scratchpad/rework6/pl-*/mutant.diff and I checked them). My pl-nolb-cap mutant (exact, never throws) is killed by the 1000 ms ceiling alone: catalog 35 took 1335.6 ms (ev:ev-mv493yql-018b9f5c).\n- **Real tree.** The file alone passes 3/3 (ev:ev-mv492o1e-010e3ee8).\n- The lost per-call sensitivity is recorded as TR-R6-1 (minor).\n\n**Existing checks.** npm test under the lock passes: 2323 / 2315 / 0 fail / 8 skipped (ev:ev-mv492fzq-01f78197)."
     },
     {
       "id": "phase:rework-6",
       "description": "FU-33 (TR-F-7) retention race and FU-46 SEC-B-1 per-call timing flake fixed; test-only, dec-mv46ovt6-01a662af",
       "met": true,
       "evidence": [
-        "ev:ev-mv48mk97-01920d24",
-        "ev:ev-mv48nwxf-019ae428",
-        "ev:ev-mv48oyj8-01600f49",
-        "ev:ev-mv48pr50-01e290e5",
+        "ev:ev-mv492fzq-01f78197",
+        "ev:ev-mv493g8c-013ac111",
+        "ev:ev-mv493ue1-01c2135e",
+        "ev:ev-mv49479d-013eb6ff",
         "artifact:src/services/retention.js#L47",
         "artifact:test/timing/planner-sec-b1.test.js#L23",
         "artifact:.eccode/artifacts/rework-6/submission.md#scope"
       ],
-      "notes": "**Test-only.** `git diff --stat 66206c9 223780a` lists only the two test files. src/domain, src/services/retention.js and src/main.js are unchanged up to HEAD 0a57aea. The handoff's filesChanged lists exactly the two files.\n\n**Root cause addressed.** sweepExpiredImages deletes the row and audit event in a transaction (L36-L44) and then awaits the unlink (L47). The test now waits on the observable file, bounded at 5 s.\n\n**FU-33 close condition: met.** Five locked full runs in a row on the fixed test are green, with no red run in between:\n- ev:ev-mv47hp51-018946ca\n- ev:ev-mv47qjdl-01aee9c0\n- ev:ev-mv47y0fp-01c51970 (mine, on tree 622af87f: 2270 / 2262 / 0 fail / 8 skipped, NFR5 p95 60.6 ms)\n- ev:ev-mv48e1xg-01cfcf2e\n- ev:ev-mv48mk97-01920d24 (mine, on the current tree)\nThe phase F reviewer's unlocked run, ev:ev-mv47tl1n-016af5d0, also passes RS-39.\n\n**FU-46.** The flake source, wall-clock bounds per call, is replaced as FU-46 allows ('a generous per-call ceiling'). The trade-off is measured in TR-R6-1:\n- the pre-rework bounds kill pl-delay (ev:ev-mv48oyj8-01600f49);\n- six single-cut search mutants were measured on all three workloads (ev:ev-mv48pr50-01e290e5)."
+      "notes": "**Test-only.** `git diff --stat 66206c9 223780a` lists only the two test files. src/domain, src/services/retention.js and src/main.js are unchanged up to HEAD a809320. The handoff's filesChanged lists exactly the two files.\n\n**Root cause addressed.** sweepExpiredImages deletes the row and audit event in a transaction (L36-L44) and then awaits the unlink (L47). The test now waits on the observable file, bounded at 5 s.\n\n**FU-33 close condition: met.** Six locked full runs in a row on the fixed test are green, with no red run in between:\n- ev:ev-mv47hp51-018946ca\n- ev:ev-mv47qjdl-01aee9c0\n- ev:ev-mv47y0fp-01c51970 (mine, on tree 622af87f: 2270 / 2262 / 0 fail / 8 skipped, NFR5 p95 60.6 ms)\n- ev:ev-mv48e1xg-01cfcf2e\n- ev:ev-mv48mk97-01920d24 (mine, after g1: 2307 / 2299 / 0 fail / 8 skipped)\n- ev:ev-mv492fzq-01f78197 (mine, on the current tree: 2323 / 2315 / 0 fail / 8 skipped, NFR5 p95 63.3 ms)\nThe phase F reviewer's unlocked run, ev:ev-mv47tl1n-016af5d0, also passes RS-39.\n\n**FU-46.** The flake source, wall-clock bounds per call, is replaced as FU-46 allows ('a generous per-call ceiling'). The trade-off is measured in TR-R6-1:\n- the pre-rework bounds kill pl-delay (ev:ev-mv493ue1-01c2135e);\n- six single-cut search mutants were measured on all three workloads (ev:ev-mv49479d-013eb6ff)."
     },
     {
       "id": "lessons",
       "description": "The task's not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
       "met": true,
       "evidence": [
-        "ev:ev-mv48mvw7-01ebcdb0",
+        "ev:ev-mv492mqs-01aff62a",
         "artifact:.eccode/artifacts/rework-6/submission.md#lessons"
       ],
       "notes": "I read the lesson (memory search). It applies to hooks and guards that map file writes to a project record or root. This task edits two test files and builds no hook, guard or root discovery, so the 'Applies when' conditions do not hold. Not applicable.\n\nI was refused several shell lines myself during this review: lines whose raw text held `>` inside a quoted argument, or variable paths in a copy. These are the raw-text over-denials the lesson lists under 'Not applicable when'. No wrong-root denial occurred."
@@ -52,17 +52,17 @@
       "description": "Reviewer's own post-submission checks on the current tree: each file alone, full npm test under the suite lock, mutants in fresh scratch directories with diffs kept and printed first",
       "met": true,
       "evidence": [
-        "ev:ev-mv48mk97-01920d24",
-        "ev:ev-mv48mvw7-01ebcdb0",
-        "ev:ev-mv48mxa9-01f0afee",
-        "ev:ev-mv48ndz6-01faec70",
-        "ev:ev-mv48nmfy-0138988b",
-        "ev:ev-mv48nwxf-019ae428",
-        "ev:ev-mv48oyj8-01600f49",
-        "ev:ev-mv48p2md-01f16a78",
-        "ev:ev-mv48pr50-01e290e5"
+        "ev:ev-mv492fzq-01f78197",
+        "ev:ev-mv492mqs-01aff62a",
+        "ev:ev-mv492o1e-010e3ee8",
+        "ev:ev-mv492wu2-01d37b92",
+        "ev:ev-mv4935i7-01c5d198",
+        "ev:ev-mv493g8c-013ac111",
+        "ev:ev-mv493ue1-01c2135e",
+        "ev:ev-mv493yql-018b9f5c",
+        "ev:ev-mv49479d-013eb6ff"
       ],
-      "notes": "**Cited runs.** All are on the current tree 28de3ab8:\n- npm test under `flock /tmp/rescuestock-suite.lock`, `--timeout 1800`: 2307 tests, 2299 pass, 0 fail, 8 skipped; NFR5 p95 63.7 ms, ok.\n- uploads-retention alone: 41/41.\n- planner-sec-b1 alone: 3/3.\n- FU-33: reproduction check, revised test on ur-delay, ur-never kill-check.\n- FU-46: pl-delay old-test kill-check, pl-nolb-cap ceiling kill-check, single-cut timing probe.\n- The pl-delay survivor run (ev:ev-mv48owz8-014723b9) is cited under TR-R6-1.\n\n**Same checks on the submitted tree 622af87f, before g1 landed.** Not cited because the tree has changed; the results are identical:\n- npm test, ev:ev-mv47y0fp-01c51970: 2270/2262/0/8;\n- the files alone, ev:ev-mv47yiqq-011e880a and ev:ev-mv47yjw7-0176cb90;\n- earlier copies of the mutant runs, ev:ev-mv4846ih-018d5604, ev:ev-mv485107-015433e7, ev:ev-mv484nm3-01445011, ev:ev-mv480w0w-0128ecf5, ev:ev-mv4814ew-01a79255 and ev:ev-mv481fab-0141e289.\n\n**Mutants.** Each is in its own fresh directory under scratchpad/tr-r6/<name>/ (ur-delay, ur-never, pl-delay, pl-nolb-cap, pl-nomemo, pl-noirr, pl-nolb, pl-nomand, pl-nobreak, pl-noroot). Each diff is kept as mutant.diff and printed at the top of its log; the check scripts are in scratchpad/tr-r6/tools/. No directory was reused. pl-delay and ur-delay also hold a copy of the pre-rework test, from git show 66206c9, as a separate file.\n\n**Safety.** Everything ran with `env -u RS_LIVE_MODEL -u RS_LIVE_PAYPAL`, 127.0.0.1 only through net-guard. All runs were serialized under the suite lock, so they did not load the phase F reviewer's runs. The real tree was not edited."
+      "notes": "**Cited runs.** All are on the current tree 04590e53:\n- npm test under `flock /tmp/rescuestock-suite.lock`, `--timeout 1800`: 2323 tests, 2315 pass, 0 fail, 8 skipped; NFR5 p95 63.3 ms, ok.\n- uploads-retention alone: 41/41.\n- planner-sec-b1 alone: 3/3.\n- FU-33: reproduction check, revised test on ur-delay, ur-never kill-check.\n- FU-46: pl-delay old-test kill-check, pl-nolb-cap ceiling kill-check, single-cut timing probe.\n- The pl-delay survivor run (ev:ev-mv493ssw-01fd0bfd) is cited under TR-R6-1.\n\n**Same checks on earlier trees.** Not cited because the tree has changed since; the results are identical. On the submitted tree 622af87f, and during or after g1:\n- npm test, ev:ev-mv47y0fp-01c51970: 2270/2262/0/8;\n- the files alone, ev:ev-mv47yiqq-011e880a and ev:ev-mv47yjw7-0176cb90;\n- earlier copies of the mutant runs, ev:ev-mv4846ih-018d5604, ev:ev-mv485107-015433e7, ev:ev-mv484nm3-01445011, ev:ev-mv480w0w-0128ecf5, ev:ev-mv4814ew-01a79255 and ev:ev-mv481fab-0141e289;\n- after g1 (tree 28de3ab8): npm test ev:ev-mv48mk97-01920d24, 2307/2299/0/8, plus the same nine checks.\n\n**Mutants.** Each is in its own fresh directory under scratchpad/tr-r6/<name>/ (ur-delay, ur-never, pl-delay, pl-nolb-cap, pl-nomemo, pl-noirr, pl-nolb, pl-nomand, pl-nobreak, pl-noroot). Each diff is kept as mutant.diff and printed at the top of its log; the check scripts are in scratchpad/tr-r6/tools/. No directory was reused. pl-delay and ur-delay also hold a copy of the pre-rework test, from git show 66206c9, as a separate file.\n\n**Safety.** Everything ran with `env -u RS_LIVE_MODEL -u RS_LIVE_PAYPAL`, 127.0.0.1 only through net-guard. All runs were serialized under the suite lock, so they did not load the phase F reviewer's runs. The real tree was not edited."
     },
     {
       "id": "C-spec",
@@ -72,7 +72,7 @@
         "artifact:.eccode/artifacts/design/spec.md#retention-and-deletion",
         "artifact:src/services/retention.js#L79",
         "artifact:test/helpers/app-harness.js#L24",
-        "ev:ev-mv48nwxf-019ae428"
+        "ev:ev-mv493g8c-013ac111"
       ],
       "notes": "**The spec.** L773: 'The hourly sweep deletes rows and files ... and writes an image.retention_delete audit event per image. Startup also removes orphan files older than 1 day.' L979: 'orphan files, and an audit row per deletion'.\n\n**Why the engineer's first no-unlink mutant passes** (ev:ev-mv476e0b-01cc6895):\n- the orphan step of the same pass removes the file, with its own image.orphan_delete audit row;\n- so the file and the row are gone and every deletion has an audit row, as the spec requires;\n- the outcome is spec-conformant and hides no product defect.\n\n**Its survival depends on the date.** The orphan age check (retention.js L79) compares the pinned clock, FIXED_NOW_MS 2026-10-20T06:00Z (app-harness L24), with the file's real mtime. After 2026-10-19T06:00Z wall-clock time, a freshly written file is not 'older than 1 day' by that clock, and the same mutant would die at L718.\n\nThe gap in attribution is pre-existing. It is recorded as TR-R6-4 (info)."
     }
@@ -82,12 +82,12 @@
       "id": "TR-R6-1",
       "severity": "minor",
       "title": "SEC-B-1 lost its per-call latency sensitivity below 1 s: an exact, non-throwing mutant that holds the event loop 300 ms on 49 inputs passes the revised test",
-      "detail": "**What SEC-B-1 was about.** rev-mv1ijr52-01b2f4b6 raised it with two harms: PLANNER_LIMIT on fillable requests, and 'holds the event loop up to about 0.3 s'.\n- The first harm is still pinned exactly.\n- The second was pinned by the per-call bounds: 50 ms for test 1, 100 ms for each sweep call, 250 ms for each 12-offer catalog. All three are now 1000 ms (L63, L84, L124).\n- The only aggregate bound left is the sweep p95, and it is blind to any slowdown that affects up to 5 % of the 1,008 calls. Test 3 has no aggregate bound at all.\n\n**The survivor.** Mutant pl-delay (scratchpad/tr-r6/pl-delay/mutant.diff, printed first in each log):\n- planner.js busy-waits 300 ms when cups >= 10,000, maxPickups is 5 and every offer holds 100-200 bundles;\n- that is 48 sweep calls (4.8 %) plus the stock-100 / 10,000-cup headline call;\n- the results stay exact and nothing throws.\n- **The revised file passes it, 3/3** (ev:ev-mv48owz8-014723b9, exit 0 = survives). Test 2 takes 14.9 s instead of about 0.3 s.\n- **The pre-rework file kills it** on exactly the removed bounds, 'took 301.1 ms' in test 1 and 'took 301.6 ms' in test 2 (kill-check ev:ev-mv48oyj8-01600f49).\n\n**Why it is minor, not blocking.**\n1. FU-46 itself prescribes 'the p95 plus a generous per-call ceiling', and that is what was built and disclosed (disclosures 1 and 2).\n2. Real algorithmic regressions are still killed:\n   - full enumeration, by PLANNER_LIMIT (engineer);\n   - no lower bound, by PLANNER_LIMIT at the 2M cap (7 catalogs throw, ev:ev-mv48pr50-01e290e5);\n   - no lower bound with the cap at 40M, by the ceiling alone (ev:ev-mv48p2md-01f16a78).\n   The other five single-cut mutants (no dominance table, no irredundancy cut, no subset mandatory cut, no incumbent break, no subset root bound) do not change timing under either test. The worst is pl-noroot at 216 ms on a 12-offer catalog, which is under the old 250 ms too (ev:ev-mv48pr50-01e290e5).\n3. What slips is an input-targeted hold of 0.1-1 s, which a pure planner is unlikely to acquire.\n4. The old bounds were a recorded source of red full runs (186.9 ms, 327.9 ms).\n\nThe residual is still real for the security reading of SEC-B-1: an attacker picks one input, and a p95 does not protect a single input.",
+      "detail": "**What SEC-B-1 was about.** rev-mv1ijr52-01b2f4b6 raised it with two harms: PLANNER_LIMIT on fillable requests, and 'holds the event loop up to about 0.3 s'.\n- The first harm is still pinned exactly.\n- The second was pinned by the per-call bounds: 50 ms for test 1, 100 ms for each sweep call, 250 ms for each 12-offer catalog. All three are now 1000 ms (L63, L84, L124).\n- The only aggregate bound left is the sweep p95, and it is blind to any slowdown that affects up to 5 % of the 1,008 calls. Test 3 has no aggregate bound at all.\n\n**The survivor.** Mutant pl-delay (scratchpad/tr-r6/pl-delay/mutant.diff, printed first in each log):\n- planner.js busy-waits 300 ms when cups >= 10,000, maxPickups is 5 and every offer holds 100-200 bundles;\n- that is 48 sweep calls (4.8 %) plus the stock-100 / 10,000-cup headline call;\n- the results stay exact and nothing throws.\n- **The revised file passes it, 3/3** (ev:ev-mv493ssw-01fd0bfd, exit 0 = survives). Test 2 takes 14.9 s instead of about 0.3 s.\n- **The pre-rework file kills it** on exactly the removed bounds, 'took 301.7 ms' in test 1 and 'took 302.0 ms' in test 2 (kill-check ev:ev-mv493ue1-01c2135e).\n\n**Why it is minor, not blocking.**\n1. FU-46 itself prescribes 'the p95 plus a generous per-call ceiling', and that is what was built and disclosed (disclosures 1 and 2).\n2. Real algorithmic regressions are still killed:\n   - full enumeration, by PLANNER_LIMIT (engineer);\n   - no lower bound, by PLANNER_LIMIT at the 2M cap (7 catalogs throw, ev:ev-mv49479d-013eb6ff);\n   - no lower bound with the cap at 40M, by the ceiling alone (ev:ev-mv493yql-018b9f5c).\n   The other five single-cut mutants (no dominance table, no irredundancy cut, no subset mandatory cut, no incumbent break, no subset root bound) do not change timing under either test. The worst is pl-noroot, at 137-216 ms on a 12-offer catalog across my runs, which is under the old 250 ms too (ev:ev-mv49479d-013eb6ff).\n3. What slips is an input-targeted hold of 0.1-1 s, which a pure planner is unlikely to acquire.\n4. The old bounds were a recorded source of red full runs (186.9 ms, 327.9 ms).\n\nThe residual is still real for the security reading of SEC-B-1: an attacker picks one input, and a p95 does not protect a single input.",
       "evidence": [
-        "ev:ev-mv48owz8-014723b9",
-        "ev:ev-mv48oyj8-01600f49",
-        "ev:ev-mv48p2md-01f16a78",
-        "ev:ev-mv48pr50-01e290e5",
+        "ev:ev-mv493ssw-01fd0bfd",
+        "ev:ev-mv493ue1-01c2135e",
+        "ev:ev-mv493yql-018b9f5c",
+        "ev:ev-mv49479d-013eb6ff",
         "artifact:test/timing/planner-sec-b1.test.js#L63",
         "artifact:test/timing/planner-sec-b1.test.js#L84",
         "artifact:test/timing/planner-sec-b1.test.js#L124"
@@ -110,10 +110,10 @@
       "id": "TR-R6-3",
       "severity": "info",
       "title": "Disclosure 2's 'no mutant can show the ceiling alone firing' is inaccurate: an exact, non-throwing mutant is killed by the 1000 ms ceiling alone",
-      "detail": "**The ceiling fires.** Mutant pl-nolb-cap removes the node lower-bound cut and raises the node cap from 2M to 40M. It never throws, and the revised test fails only at test 3: 'catalog 35 took 1328.0 ms (runaway ceiling 1000 ms ...)' (kill-check ev:ev-mv48p2md-01f16a78).\n\n**What stays true.**\n- The p95 line is still not shown firing by any mutant.\n- With the same cut and the 2M cap, 7 of the 150 catalogs throw PLANNER_LIMIT, so exactness kills that variant (ev:ev-mv48pr50-01e290e5).\n\nThis corrects the record in the test's favour; it is not a defect.",
+      "detail": "**The ceiling fires.** Mutant pl-nolb-cap removes the node lower-bound cut and raises the node cap from 2M to 40M. It never throws, and the revised test fails only at test 3: 'catalog 35 took 1335.6 ms (runaway ceiling 1000 ms ...)' (kill-check ev:ev-mv493yql-018b9f5c).\n\n**What stays true.**\n- The p95 line is still not shown firing by any mutant.\n- With the same cut and the 2M cap, 7 of the 150 catalogs throw PLANNER_LIMIT, so exactness kills that variant (ev:ev-mv49479d-013eb6ff).\n\nThis corrects the record in the test's favour; it is not a defect.",
       "evidence": [
-        "ev:ev-mv48p2md-01f16a78",
-        "ev:ev-mv48pr50-01e290e5",
+        "ev:ev-mv493yql-018b9f5c",
+        "ev:ev-mv49479d-013eb6ff",
         "artifact:.eccode/artifacts/rework-6/submission.md#disclosures-for-the-reviewer"
       ],
       "recommendation": "No change to the tests.\n\nResolved when the verification report states FU-46's coverage as: exactness (PLANNER_LIMIT) plus the ceiling, both shown firing by a mutant; the p95 not shown firing."
@@ -122,9 +122,9 @@
       "id": "TR-R6-4",
       "severity": "info",
       "title": "No RS-39 test attributes a swept image's unlink to the image step; the no-unlink mutant survives through the orphan step, and only while the wall clock is before 2026-10-19",
-      "detail": "**Why the engineer's first no-unlink mutant passes** (ev:ev-mv476e0b-01cc6895).\n- The orphan step of the same pass unlinks the file and writes image.orphan_delete. The outcome is spec-conformant (L773, L979), so this is not a product defect.\n- Survival needs the orphan age check (retention.js L79) to see the fresh file as older than 1 day, measured against the pinned clock (FIXED_NOW_MS 2026-10-20T06:00Z, app-harness L24).\n- From 2026-10-19T06:00Z wall-clock time, the same mutant would be killed at L718.\n\n**Pre-existing gap.** No test pins that the image step itself unlinks. The 7 d + 1 min test checks only that the file is gone. The gap is not introduced by rework-6, and the rework's new wait is not weakened by it: my ur-never kill-check is red at L718 (ev:ev-mv48nwxf-019ae428).",
+      "detail": "**Why the engineer's first no-unlink mutant passes** (ev:ev-mv476e0b-01cc6895).\n- The orphan step of the same pass unlinks the file and writes image.orphan_delete. The outcome is spec-conformant (L773, L979), so this is not a product defect.\n- Survival needs the orphan age check (retention.js L79) to see the fresh file as older than 1 day, measured against the pinned clock (FIXED_NOW_MS 2026-10-20T06:00Z, app-harness L24).\n- From 2026-10-19T06:00Z wall-clock time, the same mutant would be killed at L718.\n\n**Pre-existing gap.** No test pins that the image step itself unlinks. The 7 d + 1 min test checks only that the file is gone. The gap is not introduced by rework-6, and the rework's new wait is not weakened by it: my ur-never kill-check is red at L718 (ev:ev-mv493g8c-013ac111).",
       "evidence": [
-        "ev:ev-mv48nwxf-019ae428",
+        "ev:ev-mv493g8c-013ac111",
         "artifact:src/services/retention.js#L79",
         "artifact:test/helpers/app-harness.js#L24"
       ],
@@ -136,8 +136,8 @@
       "title": "Disclosures 5 and 6 accepted: one scratch directory reused (both diffs recoverable from their logs); the 20-run loop log shows exit codes, not counts",
       "detail": "**Disclosure 5, the directory reuse.**\n- ur-nounlink/mutant.diff now holds only the extended version.\n- I checked both logs: ev:ev-mv476e0b-01cc6895 prints the one-line `leftForOrphanSweep += 1` diff, with 33/33 pass; ev:ev-mv476u2l-01edbb7b prints that line plus the orphan-sweep `continue`, with 30/33.\n- Both versions are recoverable. The one-directory-per-mutant rule (TR-R5-4) was broken once; nothing was lost.\n\n**Disclosure 6, the loop log.**\n- ev:ev-mv47lom9-015c619a stops at the first non-zero exit, and node --test exits non-zero on any failing or cancelled test. The 20 'run N ok' lines therefore prove 20 clean runs.\n- The command has no name filter, so each run executed the whole file. Only the per-run counts are missing.\n- My own locked runs supersede the loop for FU-33 in any case.",
       "evidence": [
-        "ev:ev-mv48mvw7-01ebcdb0",
-        "ev:ev-mv48mk97-01920d24"
+        "ev:ev-mv492mqs-01aff62a",
+        "ev:ev-mv492fzq-01f78197"
       ],
       "recommendation": "No change for this gate. For later loops, print each run's '# tests/# pass/# fail' lines (for example `| grep -E '^# (tests|pass|fail)'`) instead of discarding the TAP, and never reuse a mutant directory.\n\nResolved going forward when the next mutant or loop evidence follows this."
     }
