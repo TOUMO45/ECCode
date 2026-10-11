@@ -1,6 +1,6 @@
 {
-  "seq": 1004,
-  "lastHash": "8c05042bde0e3b9e744ad9f9f96ea3481d06b22601bbc0b0f0eb26c7ad9fa039",
+  "seq": 1011,
+  "lastHash": "b747d134c0ca157266dfb633bb06bf981902dbf1a42b70445c007fe23601727d",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -4180,7 +4180,7 @@
     "phase:rework-4": {
       "id": "phase:rework-4",
       "kind": "phase",
-      "status": "changes_requested",
+      "status": "submitted",
       "iterations": 1,
       "authors": [
         "delivery-lead"
@@ -4234,6 +4234,55 @@
           ],
           "respondsTo": null,
           "notes": "rework-4 (FU-23/TR-D-3, SEC-R-1), handoffs ho-mv3swih9-01bb4f5b and ho-mv3t23oc-01dfb735 (scope extended with rbac.js and gate.test.js; second claim's filesChanged names 3 files because the first claim's 6 were in the snapshot base 507da7e). Mine: green set 120/120 ev:ev-mv3t3hzo-014c57e6; npm test 2017/2000 pass/2 fail/15 skipped ev:ev-mv3t54i6-01a9b844 (e6 route-table row; uploads-retention startApp timer test, e4 main.js, green alone ev:ev-mv3t6bo7-015fdd78); browser 8/8 ev:ev-mv3t65gk-01e2adc7."
+        },
+        {
+          "id": "sub-mv3ussgo-0158904e",
+          "actor": "delivery-lead",
+          "at": "2026-10-11T13:23:12.792Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/rework-4/submission.md",
+              "sha256": "40f57ef7a5bc1c88be646a1cde769dfe3f36649e8fd61a4ee9687a1d3cd9e50f"
+            },
+            {
+              "path": "src/db/migrations/006_autoincrement_ids.sql",
+              "sha256": "ffc60c84cb6dc4ea122d4e8fafd16860845534b4ec8cc7ed7b4e76b106832752"
+            },
+            {
+              "path": "src/auth/general-limit.js",
+              "sha256": "470ba04b181ecce7e9e9227853cc24e2a820a109a6466a8500c00809e8369d91"
+            },
+            {
+              "path": "src/auth/rbac.js",
+              "sha256": "2d39fe358800e677eba5618d8e398a5a8fc08dc039a26087fd5e9203c298afaf"
+            },
+            {
+              "path": "test/api/id-reuse.test.js",
+              "sha256": "a8e21b74d8ee552eb142cbc205418e860cfe242d87fad700b76f5a135c0b3249"
+            },
+            {
+              "path": "test/unit/auth/general-limit-busy.test.js",
+              "sha256": "47ccca2e34efa9388e6d4c9cef4f99aa101375452860c1f5d330a4f7bc63b853"
+            },
+            {
+              "path": "test/unit/db/migrate-006.test.js",
+              "sha256": "a0c49500ead92ca23d10524494c9b38df08571a47f5038b34a057a1ba2de260a"
+            },
+            {
+              "path": "test/unit/db/migrate.test.js",
+              "sha256": "c6329ccb4e9f308595c9cbc584b5b9b037a333cc0a95429a40513a3d554588d2"
+            },
+            {
+              "path": "test/unit/db/open-race.test.js",
+              "sha256": "9d8832b3a0936ef285d6b01f5568fa509c6e8a25680ba018c0214933721c2498"
+            },
+            {
+              "path": "test/unit/ai/gate.test.js",
+              "sha256": "b13f0042a82d41337336c99b4da760ec296cf71cfae4bdce825806f01b545724"
+            }
+          ],
+          "respondsTo": "rev-mv3ua9lc-01c4624b",
+          "notes": "Iteration 2 for rev-mv3ua9lc-01c4624b: SEC-RW4-1 fixed (006 floors sequences from ids named in audit_events and model_spend) and SEC-RW4-I1 fixed (extractions, requirements AUTOINCREMENT), handoff ho-mv3um18e-0136c6a3; TR-R4-1 by dec-mv3u4zzu-01f07c5a, TR-R4-8 by dec-mv3u4zr4-0165c54d, TR-R4-9 is toolkit TK-6 (0.3.4 under review), other info items carried. Mine: green set 131/131 ev:ev-mv3untto-01de5834; npm test 2084/2076 pass/0 fail/8 skipped ev:ev-mv3upref-0144ba0f; browser 10/10 ev:ev-mv3uq8gw-0191a49a. The engineer's unnamed npm test failure (ev:ev-mv3uhgi4-01a5789c) was e6's rs20 NFR3 package.json test, not the timer flake."
         }
       ],
       "reviews": [
@@ -17017,6 +17066,46 @@
       "task": "e4-saga-reconciler",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T13:22:41.109Z"
+    },
+    "ev-mv3usa2z-013c026d": {
+      "id": "ev-mv3usa2z-013c026d",
+      "kind": "command",
+      "label": "e5 fix verification: frontend scan and unit tests",
+      "command": "ls test/unit/frontend/payments.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 1087,
+      "log": ".eccode/evidence/ev-mv3usa2z-013c026d.log",
+      "logSha256": "ea5f6fe0b0cd13b9f0e5b419fc4dde921842eb14517a574822e7a7a89a713742",
+      "logFileSha256": "245f876434380b1bdeded19ee218639263b9b0032b94aa77ec5453372d8dafd3",
+      "outputTail": "  duration_ms: 0.247432\n  type: 'test'\n  ...\n# Subtest: NFR2: the page polls while a payment is in flight, and stops when nothing is left to wait for\nok 165 - NFR2: the page polls while a payment is in flight, and stops when nothing is left to wait for\n  ---\n  duration_ms: 1.055349\n  type: 'test'\n  ...\n# Subtest: NFR2: the poller refreshes every 2 s, backs off to 10 s after 2 minutes, pauses while hidden and resumes when visible\nok 166 - NFR2: the poller refreshes every 2 s, backs off to 10 s after 2 minutes, pauses while hidden and resumes when visible\n  ---\n  duration_ms: 0.556345\n  type: 'test'\n  ...\n1..166\n# tests 166\n# suites 0\n# pass 166\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1002.114452\n",
+      "gate": null,
+      "task": "e5-frontend-payments",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T13:22:49.155Z"
+    },
+    "ev-mv3uslbn-014d622e": {
+      "id": "ev-mv3uslbn-014d622e",
+      "kind": "command",
+      "label": "task verification (rework: app.js log userId)",
+      "command": "ls test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js >/dev/null && node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/api/execute.test.js test/api/lost-response.test.js test/api/authorization-pending.test.js test/api/void-rule-lost-authorize.test.js test/api/reconciler.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 22240,
+      "log": ".eccode/evidence/ev-mv3uslbn-014d622e.log",
+      "logSha256": "bb4563a4da9e42548a5b816537a3497efc7a078ffc830ce18bac27e630fcd7c3",
+      "logFileSha256": "f5db271c43b2eceb55448675298e782044f3f164a4c0144b5d50351153ec522e",
+      "outputTail": "      duration_ms: 777.506941\n      type: 'test'\n      ...\n    # Subtest: row 2 (a): an approved operation whose queued authorize cannot be sent (429) is failed_needs_attention after RS_UNKNOWN_ESCALATE_MIN, and leaves it once sent\n    ok 2 - row 2 (a): an approved operation whose queued authorize cannot be sent (429) is failed_needs_attention after RS_UNKNOWN_ESCALATE_MIN, and leaves it once sent\n      ---\n      duration_ms: 550.991981\n      type: 'test'\n      ...\n    1..2\nok 20 - derivation row 2: a cancellation that does not finish needs attention\n  ---\n  duration_ms: 1328.927881\n  type: 'suite'\n  ...\n1..20\n# tests 71\n# suites 20\n# pass 71\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 22106.064263\n",
+      "gate": null,
+      "task": "e4-saga-reconciler",
+      "recordedBy": "backend-engineer",
+      "at": "2026-10-11T13:23:03.686Z"
     }
   },
   "reviews": {
@@ -28374,8 +28463,29 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T13:18:18.059Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T13:23:36.771Z",
+      "durationMinutes": 5.31,
+      "costUsd": null,
+      "tokens": 46429,
+      "note": null,
+      "usageReported": true,
+      "corrections": [
+        {
+          "at": "2026-10-11T13:23:41.209Z",
+          "by": "orchestrator",
+          "from": {
+            "tokens": 1,
+            "costUsd": null
+          },
+          "to": {
+            "tokens": 46429,
+            "costUsd": null
+          },
+          "reason": "harness figure for the resumed invocation: 123,907 cumulative minus 77,478 recorded on the first submission run"
+        }
+      ]
     },
     "run-mv3ur045-01ed8fde": {
       "id": "run-mv3ur045-01ed8fde",
@@ -28392,6 +28502,24 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T13:21:49.726Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv3utb3f-016a6eef": {
+      "id": "run-mv3utb3f-016a6eef",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T13:23:37.033Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv3utbcl-0137329e": {
+      "id": "run-mv3utbcl-0137329e",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T13:23:37.351Z",
       "status": "running",
       "attempt": 1
     }
@@ -28968,8 +29096,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1171.1,
-    "tokens": 15572870
+    "runtimeMinutes": 1176.41,
+    "tokens": 15619299
   },
   "delivery": null,
   "reworks": [

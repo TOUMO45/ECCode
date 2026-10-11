@@ -694,7 +694,10 @@ test('NFR2: the request page shows loading, then the page; an error shows messag
 test('RS-18: coming back from PayPal shows a notice for the right supplier', () => {
   const view = body('request-view-reserved');
   assert.equal(returnNoticeModel({}, view), null);
+  // "waiting" is only true while PayPal has not confirmed (see payments.test.js for the cases after the outcome)
+  view.orders[0].payment.status = 'authorization_pending';
   assert.match(returnNoticeModel({ paypal: 'returned', order: '31' }, view).text, /back from PayPal for Supplier A/);
+  view.orders[0].payment.status = 'created';
   assert.match(returnNoticeModel({ paypal: 'cancelled', order: '32' }, view).text, /approval for Supplier B was cancelled\. Nothing was paid\./);
   assert.match(returnNoticeModel({ paypal: 'cancelled', order: '999' }, view).text, /for the supplier was cancelled/);
 });
