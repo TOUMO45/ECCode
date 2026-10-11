@@ -40,11 +40,12 @@
   "evidence": [
     "ev:ev-mv428xz6-01acdf8d",
     "ev:ev-mv42a1pa-018a24df",
-    "ev:ev-mv42ajyn-0139efe2"
+    "ev:ev-mv42hgmv-01da98cf"
   ],
   "remainingIssues": [
     "npm test is RED on exactly two tests that are not in this task's files: lost-response RS-25 (timeout subtest) and admin-basic RS-32 admin half (refund_order subtest). Cause: behaviour f2 was required to add; owners are e4 and c3; fifth rework pending (dec-mv41b2g0-018dc143). The verification command as written therefore stops at npm test, so the browser suite was run as its own evidence (ev:ev-mv428xz6-01acdf8d, 14 of 14).",
-    "FIXTURE DEFECT (f3's file, outside this task): test/fixtures/contracts/recovery/plan-replan-feasible.json lacks the top-level `labels` object that POST /api/requests/:id/plan answers (plan-create-feasible.json has it). The contract row tolerates it with optional: ['labels'] and a comment; add `labels` to the fixture and delete that entry.",
+    "The fixture defect found by the contract rows (recovery/plan-replan-feasible.json lacked `labels`) was fixed by f3 (ho-mv42ei0w-019037ae) and the tolerance in contracts.test.js was removed: the row passes with no optional entry (contracts.test.js alone, 81 of 81, ev:ev-mv42hgmv-01da98cf).",
+    "EVIDENCE FRESHNESS: the browser (ev:ev-mv428xz6-01acdf8d) and multi-process (ev:ev-mv42a1pa-018a24df) runs predate f3's fixture fix and the rework-5 changes; the completion run must re-run the declared verification command on the final tree and cite its new ev id.",
     "SURVIVING MUTANT M5: the reconciler backstop that cancels a queued authorize of a cancelled operation is redundant with the void rule (which cancels the call in the same transaction as the expiry); no test can distinguish them. Not a gap in the tests of the spec's behaviour.",
     "return-crash (b) moves reservations.expires_at into the past with a short write from the test process while every server process is dead, because the real clock cannot be injected into a spawned server and RS_RESERVATION_TTL_MIN has a minimum of one minute. return-crash (c) arms http_429:authorize by inserting the fault_flags row (the admin route accepts only http_500 for kind faults). Both write only the rows the product itself would write.",
     "return-crash (c) waits the real 5 s back-off of the first retryable answer (calls.js BACKOFF_MS); it waits on the database state, with a 40 s bound.",
