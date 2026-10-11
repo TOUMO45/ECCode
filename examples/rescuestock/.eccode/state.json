@@ -1,6 +1,6 @@
 {
-  "seq": 660,
-  "lastHash": "3975fff045c82a52e995771b045c6951d0fb3008c1c7c95daff92ecc05c3383b",
+  "seq": 665,
+  "lastHash": "fba7d721b27a99535874f4bc9c76104f1893e1a6d672540c5b15a7db6a2ccdea",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -12067,6 +12067,69 @@
       "task": null,
       "recordedBy": "security-reviewer",
       "at": "2026-10-11T00:42:46.096Z"
+    },
+    "ev-mv33nzz8-010dae0c": {
+      "id": "ev-mv33nzz8-010dae0c",
+      "kind": "command",
+      "label": "security-reviewer: phase D Chromium probe B1 B2 (hostile extraction wording on the request page, polyglot image navigation)",
+      "command": "node --disable-warning=ExperimentalWarning /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/sec-phd-browser.mjs",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 3205,
+      "log": ".eccode/evidence/ev-mv33nzz8-010dae0c.log",
+      "logSha256": "743fbc2e0d5f7e57538579dafeffa49bec7a3f82b1513d5587f85805af680466",
+      "logFileSha256": "30ea38c60825701fd03f7d786ca3ac2e5457d9e28a0a61a023c005a853b65d9c",
+      "outputTail": "PASS B setup: upload 201 and extraction 200 with the hostile wording stored | 201 200 {\"value\":90,\"status\":\"known\",\"provenance\":\"image\",\"originalWording\":\"<svg onload=\\\"window.__xss=2\\\">90 MM <a href=\\\"javascript:window.__xss=3\\\">x</a>\"}\nPASS B1 d4 request page: hostile user_text wording appears as literal text; no script ran, no <img>/<svg> created, no javascript: link, no dialog | {\"shown\":true,\"xss\":null,\"imgs\":0,\"svgs\":0,\"jsLinks\":0,\"aiNotice\":true,\"photoLabel\":true,\"svgText\":true}\nPASS B1 the AI-addressed notice and \"Text read from the photo\" are shown; the image wording is literal text | {\"xss\":null,\"imgs\":0,\"svgs\":0,\"jsLinks\":0,\"aiNotice\":true,\"photoLabel\":true,\"svgText\":true}\nPASS B1 no CSP violation and no page error\nPASS B2 direct navigation to the PNG+HTML polyglot: rendered as image/png, no script ran (title unchanged, no fetch), no extra request | {\"type\":\"image/png\",\"title\":\"\",\"poly\":null,\"fetched\":null,\"html\":\"<html style=\\\"height: 100%;\\\"><head><meta name=\\\"viewport\\\" content=\\\"width=device-width, minimum-scale=0.1\\\"></head><body style=\\\"margin: 0px; height: 100%; backgroun\",\"extra\":[]}\n\nALL EXPECTATIONS MET\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-11T00:43:39.735Z"
+    },
+    "ev-mv33oi25-01b61f93": {
+      "id": "ev-mv33oi25-01b61f93",
+      "kind": "command",
+      "label": "security-reviewer: access-control, CSRF, injection, upload, gate, adapter and secrets suites alone (net guard)",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test --test-concurrency=4 test/unit/auth/rbac.test.js test/unit/auth/csrf.test.js test/unit/auth/general-limit.test.js test/api/isolation.test.js test/api/auth.test.js test/api/contracts.test.js test/api/injection.test.js test/api/uploads-retention.test.js test/api/model-budget-rate.test.js test/api/extract-degraded.test.js test/api/confirm-provenance.test.js test/api/rate-limits.test.js test/unit/ai/cli.test.js test/unit/ai/anthropic.test.js test/unit/ai/prompt.test.js test/unit/ai/schema.test.js test/unit/ai/gate.test.js test/unit/ai/provider-contract.test.js test/unit/ai/live-runner-refusal.test.js test/scan/secrets.test.js test/scan/frontend.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 13260,
+      "log": ".eccode/evidence/ev-mv33oi25-01b61f93.log",
+      "logSha256": "aa09199882440efddef17b57575263972f8aaa9cb3bcd192b9d0314e8c5bcac6",
+      "logFileSha256": "5744b87f7445ec8a597335e93c361090333bcdc957536a5a12e417067a23c5a8",
+      "outputTail": "      duration_ms: 3.00263\n      type: 'test'\n      ...\n    # Subtest: RS-30: every route of the shipped table declares one of the six policies, and public mutating routes are the auth pair only\n    ok 2 - RS-30: every route of the shipped table declares one of the six policies, and public mutating routes are the auth pair only\n      ---\n      duration_ms: 0.621647\n      type: 'test'\n      ...\n    1..2\nok 96 - RS-30: startup refuses a route without a policy\n  ---\n  duration_ms: 10.063622\n  type: 'suite'\n  ...\n1..96\n# tests 427\n# suites 76\n# pass 419\n# fail 0\n# cancelled 0\n# skipped 8\n# todo 0\n# duration_ms 13105.01541\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-11T00:44:03.163Z"
+    },
+    "ev-mv33otm0-013ea25d": {
+      "id": "ev-mv33otm0-013ea25d",
+      "kind": "command",
+      "label": "security-reviewer: npm run test:browser on the submitted tree",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 9237,
+      "log": ".eccode/evidence/ev-mv33otm0-013ea25d.log",
+      "logSha256": "6b2acba67a96505e936d0914ec423e39fcac439702cff7d92e59d6f78135bccf",
+      "logFileSha256": "346194bd32d9c19451db5976e8ec9e347391bedcf8631d6118ff43b8002f2452",
+      "outputTail": "      duration_ms: 1020.864031\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 1011.768738\n      type: 'test'\n      ...\n    1..3\nok 3 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3311.609541\n  type: 'suite'\n  ...\n1..3\n# tests 8\n# suites 3\n# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 8976.204277\n",
+      "gate": "phase:d-extraction",
+      "task": null,
+      "tree": "644325026d5e2f3cff16996232de87f1daeabbc5c5036dec3589e8b5bf49d831",
+      "recordedBy": "security-reviewer",
+      "at": "2026-10-11T00:44:18.122Z"
     }
   },
   "reviews": {
@@ -20506,8 +20569,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T00:25:38.069Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T00:47:57.956Z",
+      "durationMinutes": 22.33,
+      "costUsd": null,
+      "tokens": 312987,
+      "note": null,
+      "usageReported": true
     },
     "run-mv330tjv-010fc41b": {
       "id": "run-mv330tjv-010fc41b",
@@ -20734,6 +20803,14 @@
       "status": "open",
       "updatedAt": "2026-10-10T22:42:47.616Z",
       "updatedBy": "orchestrator"
+    },
+    "RISK-21": {
+      "id": "RISK-21",
+      "title": "Incident: a review probe started a real live-model run",
+      "severity": "medium",
+      "status": "open",
+      "updatedAt": "2026-10-11T00:47:57.723Z",
+      "updatedBy": "orchestrator"
     }
   },
   "decisions": {
@@ -20948,8 +21025,8 @@
   ],
   "totals": {
     "costUsd": 0,
-    "runtimeMinutes": 721.27,
-    "tokens": 9870407
+    "runtimeMinutes": 743.6,
+    "tokens": 10183394
   },
   "delivery": null,
   "reworks": [
