@@ -133,10 +133,14 @@ describe('RS-25: a lost response on a capture', () => {
     await settle(h, reconcilerOf(h));
 
     const trail = fakeKinds(h, mark);
-    assert.deepEqual(trail.map((c) => c.kind), ['get_authorization', 'capture', 'capture'], 'the read comes before the re-send');
-    assert.equal(trail[1].request_id, `so:${w.orders.A}:capture:1`, 'the same key');
-    assert.equal(trail[1].replayed, 0);
-    assert.equal(trail[2].request_id, `so:${w.orders.B}:capture:1`);
+    // Two reads, then the two captures. Spec, saga step 6 / ARCH-26 (2) and FU-41(a) (followups.md): before the lease holder re-sends an
+    // `unknown` capture it reads the authorization ITSELF under the lease; the reconciler's step-2 read (the first get_authorization)
+    // is not trusted for the send (f2 handoff ho-mv41a3s6-0138e24d). The holder's read (second get_authorization) shows CREATED, so the
+    // capture goes again with the SAME key; order B was never in doubt and is sent without a read.
+    assert.deepEqual(trail.map((c) => c.kind), ['get_authorization', 'get_authorization', 'capture', 'capture'], 'both reads come before the re-send');
+    assert.equal(trail[2].request_id, `so:${w.orders.A}:capture:1`, 'the same key');
+    assert.equal(trail[2].replayed, 0);
+    assert.equal(trail[3].request_id, `so:${w.orders.B}:capture:1`);
     const all = fakeCalls(h, 'capture').filter((c) => c.request_id === `so:${w.orders.A}:capture:1`);
     assert.equal(all.length, 2, 'the faulted send and the re-send');
     assert.equal(h.db.prepare('SELECT COUNT(*) AS n FROM fake_paypal_captures').get().n, 2, 'one capture per authorization');

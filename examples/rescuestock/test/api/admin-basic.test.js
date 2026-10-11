@@ -377,7 +377,7 @@ describe('RS-32 (admin half) and SEC-11: the fault routes', () => {
     }
   });
 
-  test('refund_order: only an operation captured under an executed plan; it becomes refund_requested with a queued refund call so:<id>:refund:1; anything else is 409 INVALID_STATE, an unknown order 404', async () => {
+  test('refund_order: only an operation captured under an executed plan; its refund call so:<id>:refund:1 is committed and sent once by the handler; anything else is 409 INVALID_STATE, an unknown order 404', async () => {
     const h2 = await start();
     try {
       const customer = await signIn(h2, 'cafe1');
@@ -395,11 +395,21 @@ describe('RS-32 (admin half) and SEC-11: the fault routes', () => {
       const ok = await refund(order.id);
       assert.equal(ok.status, 200, ok.text);
       assert.deepEqual(ok.json.applied, { kind: 'refund_order', supplierOrderId: order.id });
-      assert.equal(h2.db.prepare('SELECT status FROM payment_operations WHERE supplier_order_id = ?').get(order.id).status, 'refund_requested');
-      const call = h2.db.prepare('SELECT kind, operation_key, status, started_at FROM provider_calls').get();
-      assert.deepEqual({ ...call }, { kind: 'refund', operation_key: `so:${order.id}:refund:1`, status: 'intent', started_at: null });
+      // Spec, Sender table (refund row): the refund_order handler sends the queued refund call itself, right after the commit
+      // (reconciler step 6 only if that send cannot be made); f2 handoff ho-mv41a3s6-0138e24d. So the call is no longer left queued:
+      // the operation has left refund_requested (this hand-made capture id FAKE-CAP-1 does not exist at the fake provider, so the
+      // refund is refused and the operation ends refund_failed; the executed-world tests in admin-refund-order.test.js cover the
+      // completed refund) and the one call carries the deterministic key so:<id>:refund:1 (spec, Admin routes > refund_order).
+      assert.notEqual(h2.db.prepare('SELECT status FROM payment_operations WHERE supplier_order_id = ?').get(order.id).status, 'refund_requested');
+      const call = h2.db.prepare('SELECT kind, operation_key, send_count FROM provider_calls').get();
+      assert.deepEqual({ ...call }, { kind: 'refund', operation_key: `so:${order.id}:refund:1`, send_count: 1 });
+      assert.equal(count(h2, 'SELECT COUNT(*) AS n FROM provider_calls'), 1);
+      // Exactly ONE provider call for the refund: sent once (FU-42 / SEC-11: one refund per captured order), never twice, never zero.
+      const sent = h2.db.prepare("SELECT request_id FROM fake_paypal_calls WHERE kind = 'refund'").all();
+      assert.deepEqual(sent.map((r) => r.request_id), [`so:${order.id}:refund:1`]);
       assert.equal((await refund(order.id)).status, 409, 'a second refund is refused');
       assert.equal(count(h2, 'SELECT COUNT(*) AS n FROM provider_calls'), 1);
+      assert.equal(h2.db.prepare("SELECT COUNT(*) AS n FROM fake_paypal_calls WHERE kind = 'refund'").get().n, 1, 'and the refusal sent nothing');
     } finally {
       await h2.close();
     }

@@ -1,0 +1,43 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "rework-5",
+  "objective": "Update the two approved tests that went stale after f2's spec-required behaviour (decision dec-mv41b2g0-018dc143): the RS-25 timeout trail in lost-response and the refund_order subtest in admin-basic. Test-only; no source change.",
+  "context": "f2 (ho-mv41a3s6-0138e24d) added (1) FU-41(a): the lease holder reads the authorization itself before it re-sends an unknown capture (spec: ARCH-26 (2) and Payment saga step 6, followups.md FU-41), and (2) refund_order sends the queued refund right after the commit (spec: Sender table, refund row: 'the compensation caller or the refund_order handler, right after commit'). The old expectations pinned the earlier behaviour. Both new expectations were checked against those spec lines, not only against what the code does. No src file, fixture or f4 file was touched; no live suite was run.",
+  "inputs": [
+    "ev:ev-mv40pczl-017d0a64",
+    ".eccode/artifacts/design/spec.md (ARCH-26, saga step 6, Sender table, Admin routes refund_order)",
+    ".eccode/artifacts/plan/followups.md (FU-41, FU-42)",
+    ".eccode/handoffs/ho-mv41a3s6-0138e24d.json"
+  ],
+  "dependencies": [],
+  "expectedOutput": "npm test green; the two tests pin the spec behaviour and fail when it is reverted.",
+  "acceptanceCriteria": [
+    "lost-response RS-25 timeout subtest: trail get_authorization, get_authorization, capture, capture; the same key, replayed 0, one capture per authorization kept",
+    "admin-basic refund_order subtest: 404, early 409 and second 409 kept; after the 200 exactly one provider call with key so:<id>:refund:1",
+    "a regression test fails before the fix and passes after it",
+    "the existing checks still pass"
+  ],
+  "completedWork": "BEFORE (current tree, each file alone): lost-response ev:ev-mv439cua-010718f4 FAILED 9 tests, 8 pass, 1 fail (the RS-25 timeout trail has an extra get_authorization); admin-basic ev:ev-mv439gxz-01147594 FAILED 18 tests, 17 pass, 1 fail (the refund_order subtest expected refund_requested; the handler now sends the refund). CHANGES. test/api/lost-response.test.js, RS-25 timeout subtest: deepEqual of the trail is now ['get_authorization', 'get_authorization', 'capture', 'capture'] and the indices follow (capture of A is trail[2] with the same key and replayed 0, capture of B is trail[3]); every other assertion of the subtest is kept (two sends of A's key, two captures at the provider, send_count 2, plan executed, epoch 2); a comment cites ARCH-26 (2), saga step 6, FU-41(a) and the f2 handoff. test/api/admin-basic.test.js, refund_order subtest: the 404, the early 409 and the second 409 are kept. After the 200 it asserts the operation left refund_requested (the hand-made capture id FAKE-CAP-1 does not exist at the fake provider, so the refund is refused and the operation ends refund_failed; the completed refund is covered by admin-refund-order.test.js), exactly one provider_calls row {kind refund, key so:<id>:refund:1, send_count 1} and exactly one fake_paypal_calls refund row with request id so:<id>:refund:1; the second refund (409) sends nothing; the test title now says the call is committed and sent once. Comments cite the Sender table refund row, Admin routes refund_order, FU-42/SEC-11 and the f2 handoff. MUTATION CHECK (private scratch copies, the real tree untouched; each recorded): reverting f2's read-before-resend (readBeforeResend returns 'send') turns lost-response red, ev:ev-mv43azjb-01f640ff; refund_order that never sends turns admin-basic red, ev:ev-mv43b3lz-01563942; refund_order that sends the same refund twice (the second send straight to the provider) turns admin-basic red, ev:ev-mv43bm23-01f616d9. A first 'send twice' attempt (re-running runCall on a reset call) SURVIVED (ev:ev-mv43b7zh-015445ff, passed) because the refund start guard refuses a second start once the operation is refund_failed, so it never sent twice; it was replaced by the direct provider call that does. AFTER: lost-response alone ev:ev-mv43btqg-01084c9e PASSED 9 of 9; admin-basic alone ev:ev-mv43by2u-010c440b PASSED 18 of 18; full npm test ev:ev-mv43e8b9-015088e3 PASSED: 2267 tests, 2259 pass, 0 fail, 8 skipped (the existing fake-harness provider-contract cases, none changed here).",
+  "filesChanged": [
+    "test/api/lost-response.test.js",
+    "test/api/admin-basic.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv43btqg-01084c9e",
+    "ev:ev-mv43by2u-010c440b",
+    "ev:ev-mv43e8b9-015088e3"
+  ],
+  "remainingIssues": [
+    "f4-restart-takeover-browser is still claimed and needs its verbatim verification command re-run on this tree now that npm test is green."
+  ],
+  "nextAction": "reviewer: review the two updated expectations against the spec lines cited in the comments; test-engineer: re-run the f4 verification command and complete f4.",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This task edits two test files and builds no hook or guard that maps file writes to a project record or root, so the lesson's applies-when condition (designing or debugging root discovery of a tool-call guard) does not hold; no write was denied."
+    }
+  ]
+}
