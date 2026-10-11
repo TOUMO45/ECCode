@@ -1,6 +1,6 @@
 {
-  "seq": 1043,
-  "lastHash": "68b2b6b05a135c96f6474685f8c110e45b50a895c980ed193551dc97646d0ed9",
+  "seq": 1048,
+  "lastHash": "84e5d459cc940cd8c184a4e2ea3633aa4fddf510b93ca59e44c3f6df6cabb0fe",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -6401,24 +6401,9 @@
         "command": "ls test/unit/frontend/payments.test.js >/dev/null && node --test test/scan/frontend.test.js \"test/unit/frontend/**/*.test.js\"",
         "cwd": "."
       },
-      "status": "claimed",
+      "status": "done",
       "attempts": 1,
-      "claim": {
-        "agent": "frontend-engineer",
-        "at": "2026-10-11T13:22:18.447Z",
-        "baseCommit": "e470ce7c773be988881f9735d05d660b5230ee72",
-        "runId": "run-mv3ur0b1-014e660a",
-        "dirtyAtClaim": {},
-        "lessons": [
-          {
-            "id": "mem-sd-mv1audrd-013b7102",
-            "score": 0.81,
-            "matched": 20,
-            "priority": 20.5,
-            "title": "A tool-call guard must resolve the project root from the target's real path, not from the harness's project directory, or nested projects are judged by the wrong record"
-          }
-        ]
-      },
+      "claim": null,
       "history": [
         {
           "event": "claimed",
@@ -6442,33 +6427,25 @@
           "by": "frontend-engineer",
           "at": "2026-10-11T13:22:18.447Z",
           "attempt": 1
+        },
+        {
+          "event": "completed",
+          "by": "frontend-engineer",
+          "at": "2026-10-11T13:36:10.888Z"
         }
       ],
       "completedBy": "frontend-engineer",
-      "handoffId": "ho-mv37hs3x-01066518",
+      "handoffId": "ho-mv3v9goy-01de8496",
       "filesChanged": [
-        "public/css/app.css",
-        "public/js/components/commitments.js",
-        "public/js/components/notice.js",
-        "public/js/components/payments.js",
-        "public/js/poll.js",
         "public/js/views/request-detail.js",
-        "public/js/views/supplier-orders.js",
-        "test/scan/frontend.test.js",
-        "test/fixtures/contracts/payments/view-approve-simulated.json",
-        "test/fixtures/contracts/payments/view-approve-sandbox-single-credential.json",
-        "test/fixtures/contracts/payments/view-after-cancel.json",
-        "test/fixtures/contracts/payments/view-complete-purchase.json",
-        "test/fixtures/contracts/payments/view-non-executable.json",
-        "test/fixtures/contracts/payments/view-ready-receipt.json",
-        "test/fixtures/contracts/payments/supplier-orders-ready-handover.json",
-        "test/unit/frontend/payments.test.js"
+        "test/unit/frontend/payments.test.js",
+        "test/unit/frontend/dashboards.test.js"
       ],
       "lessonDecisions": [
         {
           "id": "mem-sd-mv1audrd-013b7102",
           "decision": "not-applicable",
-          "note": "This task builds browser UI under public/** and tests; it designs no hook or guard that maps file writes to a project root, so the nested-record root-resolution rule has nothing to apply to.",
+          "note": "This claim edits one browser view-model and its unit tests; it designs no hook or guard mapping writes to a project root, so the nested-record root rule has nothing to apply to.",
           "basis": "reason"
         }
       ],
@@ -17570,6 +17547,27 @@
       "tree": "5f628506540c9cbe22846492e482c9a5d765f40d926ad33ae47e490e34153603",
       "recordedBy": "frontend-engineer",
       "at": "2026-10-11T13:35:21.467Z"
+    },
+    "ev-mv3v8wiy-01fe65f2": {
+      "id": "ev-mv3v8wiy-01fe65f2",
+      "kind": "command",
+      "label": "e5 fix npm run test:browser (corrected)",
+      "command": "npm run test:browser",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 17444,
+      "log": ".eccode/evidence/ev-mv3v8wiy-01fe65f2.log",
+      "logSha256": "7b6535cc4f6b1705aefc9e3676002645be99d4ca2cb9a26bc1276ef475d2e37b",
+      "logFileSha256": "7bb1ab89d0cf73927857596e5ce53f69b9112380d14f1acc2c4fdeb47f6b33d2",
+      "outputTail": "      duration_ms: 937.218427\n      type: 'test'\n      ...\n    # Subtest: RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n    ok 3 - RS-33: at 1280x800 the infeasible request shows blocking constraints, candidate codes and relaxations; nothing is reserved, ordered or paid\n      ---\n      duration_ms: 952.676856\n      type: 'test'\n      ...\n    1..3\nok 4 - RS-33: an infeasible request ends with an explanation and no purchase\n  ---\n  duration_ms: 3218.248923\n  type: 'suite'\n  ...\n1..4\n# tests 10\n# suites 4\n# pass 10\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 17219.731351\n",
+      "gate": null,
+      "task": "e5-frontend-payments",
+      "tree": "5f628506540c9cbe22846492e482c9a5d765f40d926ad33ae47e490e34153603",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T13:35:44.691Z"
     }
   },
   "reviews": {
@@ -27311,6 +27309,56 @@
       "id": "ho-mv3v3asc-01ce3c19",
       "recordedBy": "backend-engineer",
       "at": "2026-10-11T13:31:23.506Z"
+    },
+    "ho-mv3v9goy-01de8496": {
+      "from": "frontend-engineer",
+      "to": "delivery-lead",
+      "task": "e5-frontend-payments",
+      "objective": "Fix the defect e6 found (ho-mv3uq93d-0114f12e): after the purchase is confirmed the request page still showed 'You are back from PayPal… Waiting for PayPal to confirm'.",
+      "context": "The return notice (?paypal=returned&order=<id>) now follows the current state, per the coordinator's corrected brief: while the returned order's payment is approved, authorization_pending or unknown it reads 'You are back from PayPal for <supplier>. Waiting for PayPal to confirm; this page updates by itself.'; once the payment is authorized, capture_pending or captured it reads 'PayPal approval for <supplier> is confirmed.' (tone ok, no 'waiting'; with the fake provider the return handler authorizes at once, so this is the usual first look and e6's journey keeps its data-testid paypal-returned); once the current plan is executed or non_executable the notice is not shown at all. An unknown order or a payment that did not go through shows nothing rather than a claim. The 'cancelled' notice is also dropped once the plan is executed or non_executable or the order is no longer 'created'. My first attempt hid the notice once authorized; that broke test/browser/journey-happy.test.js (waits for paypal-returned) and was superseded before completion, and its evidence runs (ev-mv3urzew-016f4c86 red, ev-mv3usa2z-013c026d, ev-mv3uupm7-01f221e7, and the failed browser run ev-mv3uwete-0154f72a) are not cited as proof. Only public/js/views/request-detail.js and two frontend unit test files changed; src/app.js and e4's files were not touched, and e6's journey test was not edited.",
+      "inputs": [
+        ".eccode/handoffs/ho-mv3uq93d-0114f12e.json",
+        "coordinator correction to the brief (three notice states)",
+        "test/browser/journey-happy.test.js (read only)"
+      ],
+      "dependencies": [],
+      "expectedOutput": "Green verification command, npm test and npm run test:browser including journey-happy at 360 and 1280 px.",
+      "acceptanceCriteria": [
+        "After a PayPal return the paypal-returned notice waits only while the payment is approved or authorization_pending",
+        "Once authorized or captured it says the approval is confirmed, with no waiting wording",
+        "Once the plan is executed or non_executable the return notice is not shown",
+        "Failing-first case recorded red against the original code, then green",
+        "journey-happy green at both widths"
+      ],
+      "completedWork": "returnNoticeModel in public/js/views/request-detail.js implements the three states. The new case in test/unit/frontend/payments.test.js (view-model and rendered page; waiting for approved/authorization_pending/unknown, confirmed for authorized/capture_pending/captured, absent for executed and non_executable plans with any order status, absent for an unknown order; plus the cancelled-notice case) was recorded red against the original code first (ev:ev-mv3v6fdd-0132eec1, 2 failing, 23 passing), then the fix made it green. test/unit/frontend/dashboards.test.js's old return-notice case used an order still in 'created', where 'waiting' is untrue; it now sets authorization_pending first. Verification command: 166 tests, 166 pass. npm test: 2087 tests, 2079 pass, 0 fail, 8 skipped. npm run test:browser: 10 of 10 pass, including RS-31(a) happy journey at 360x800 and 1280x800 (seen as ok 1 and ok 2 in the evidence log).",
+      "filesChanged": [
+        "public/js/views/request-detail.js",
+        "test/unit/frontend/payments.test.js",
+        "test/unit/frontend/dashboards.test.js"
+      ],
+      "evidence": [
+        "ev:ev-mv3v6n1n-01b3262e",
+        "ev:ev-mv3v8elz-01764295",
+        "ev:ev-mv3v8wiy-01fe65f2"
+      ],
+      "remainingIssues": [
+        "The red run ev:ev-mv3v6fdd-0132eec1 is a deliberate FAILED record (the new cases against the original returnNoticeModel); it is the failing-first proof, not a defect.",
+        "Contract assumption 3 of the first handoff still stands: Order.payment.status exposes approved, authorization_pending, authorized and captured in RequestView.orders."
+      ],
+      "nextAction": "delivery-lead: re-run e6's review of the happy journey screenshot (test/browser/out/journey-happy-360.png) if desired; no further frontend work is known.",
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "lessonDecisions": [
+        {
+          "id": "mem-sd-mv1audrd-013b7102",
+          "decision": "not-applicable",
+          "note": "This claim edits one browser view-model and its unit tests; it designs no hook or guard mapping writes to a project root, so the nested-record root rule has nothing to apply to."
+        }
+      ],
+      "id": "ho-mv3v9goy-01de8496",
+      "recordedBy": "frontend-engineer",
+      "at": "2026-10-11T13:36:11.030Z"
     }
   },
   "runs": {
@@ -29208,8 +29256,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T13:21:49.726Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T13:36:27.142Z",
+      "durationMinutes": 14.62,
+      "costUsd": null,
+      "tokens": 1,
+      "note": null,
+      "usageReported": true
     },
     "run-mv3utb3f-016a6eef": {
       "id": "run-mv3utb3f-016a6eef",
@@ -29270,6 +29324,15 @@
           "reason": "harness figure for the resumed invocation: 340,666 cumulative minus 269,027 recorded on the earlier review runs"
         }
       ]
+    },
+    "run-mv3v9tn1-01387512": {
+      "id": "run-mv3v9tn1-01387512",
+      "agent": "orchestrator",
+      "task": null,
+      "gate": null,
+      "startedAt": "2026-10-11T13:36:27.578Z",
+      "status": "running",
+      "attempt": 1
     }
   },
   "risks": {
@@ -29844,8 +29907,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1207.35,
-    "tokens": 15793473
+    "runtimeMinutes": 1221.97,
+    "tokens": 15793474
   },
   "delivery": null,
   "reworks": [
