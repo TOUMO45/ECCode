@@ -1,0 +1,191 @@
+{
+  "decision": "approve",
+  "summary": "Technical review of rework-4 (sub-mv3t8kff-017759bd: migration 006, the fail-open general limiter, the access-hook wiring and six test files, plus the submission), against the resolution conditions of TR-D-3 (phase D review rev-mv33xoyz-0143dd56) and SEC-R-1 (rework-1 review). I read the nine-file diff since 46046ed, both handoffs, the rework record with its extension, and dec-mv3sg8cv-0146d001. Every check below ran after the submission. The submitted files are unchanged (sha256 equal to the submission, ev:ev-mv3tpsb0-01a2c0fe).\n\nDeclared checks, re-run verbatim:\n- Green set from ho-mv3t23oc-01dfb735: 120 tests, 120 pass, 0 fail, 0 skipped, 0 todo (ev:ev-mv3teu8p-01309af2).\n- npm test, run 1 (ev:ev-mv3tgz6r-011bfe69) and run 2 (ev:ev-mv3tiyy9-01f99271): each 2055 tests, 2039 pass, 1 fail, 15 skipped, 0 todo; ECCODE_EVAL 200/200. The one failure in both is e6's known route-table row ('NFR6: every registered route has a scenario in the table'). The uploads-retention timer test passed in both.\n- npm test, run 3 (ev:ev-mv3u0bm4-018df267). This run went through my filter, which passes only if every failure is that e6 row. It ran after e4's final commit a08aac7, while e6 was editing test/api/contracts.test.js: 2062 tests, 2054 pass, 0 fail, 8 skipped, 0 todo; ECCODE_EVAL 200/200; the timer test ok.\n- The counts grow (2017, then 2055, then 2062) because e4 and e6 tests landed during the review. No rework-4 file changed.\n- npm run test:browser: 8/8 (ev:ev-mv3tj9bo-01e55981).\n\nMy own checks:\n- Falsification on scratch copies (ev:ev-mv3toj9i-01cfede3). The control is green, 87/87. The pre-rework source (006 removed; limiter and hook taken from 46046ed) fails 7 of 14: all 3 RS-39 tests and 4 SEC-R-1 tests. All 13 mutants are killed: six on the migration (images without AUTOINCREMENT; plan_approvals not restored; replan_queue not restored; defer_foreign_keys removed; the dangling model_spend pointer copied; ON DELETE CASCADE instead of SET NULL), five on the limiter (POST added to the fail-open methods; a call with no method treated as a read; busy timeout not restored; a non-busy read error swallowed; no log line), and one on the hook (rbac.js not wired).\n- Probes (ev:ev-mv3tp49m-017879bb):\n  - P1, through createApp with the lock held by another OS process: a signed-in GET answers 200 in 54 ms and is not counted. It writes exactly one rate_limit.busy_open line, which carries the response's X-Request-Id and no identifier. A signed-in POST answers 503 DB_BUSY with Retry-After 1. The busy timeout is back at 5000 ms afterwards, and the next GET is counted.\n  - P2: 006 on a WAL file database at 005 with the demo seed and 300 request trees. All 3454 rows of 37 tables are equal, except 43 dangling spend pointers, which are now NULL. The schema equals that of a fresh 001-006 seeded database, the FK and integrity checks are clean, and every sequence equals the table's max id.\n  - P3 measures how long the migration takes on a larger database (TR-R4-1).\n- Artifact coverage (ev:ev-mv3tps3r-01befc44): 9 files declared across both handoffs, 9 changed in the rework's ownership since 46046ed, 9 submitted. Nothing is undeclared and nothing lies outside the ownership. The other changed files are all e4's.\n\nDecision: approve. No blocking or major finding. TR-R4-1 (minor): the migration's run time grows quadratically with the number of plan versions. Info: TR-R4-2..TR-R4-9. TR-R4-9 is a toolkit defect I found while checking the record: tree pinning is off in this nested project whenever any file is dirty. The security draft rework-4-security-1.md is folded in below with its ids.",
+  "criteria": [
+    {
+      "id": "task:rework-4",
+      "description": "FU-23 and SEC-R-1: ids never reused; general limit fails open on busy reads",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv3teu8p-01309af2",
+        "ev:ev-mv3toj9i-01cfede3",
+        "ev:ev-mv3tp49m-017879bb",
+        "ev:ev-mv3tps3r-01befc44",
+        "artifact:src/db/migrations/006_autoincrement_ids.sql#L27-L43",
+        "artifact:src/db/migrations/006_autoincrement_ids.sql#L83-L104",
+        "artifact:src/auth/general-limit.js#L48-L76",
+        "artifact:src/auth/rbac.js#L64",
+        "artifact:test/api/id-reuse.test.js#L80-L108",
+        "artifact:test/unit/auth/general-limit-busy.test.js#L40-L85",
+        "artifact:test/unit/auth/general-limit-busy.test.js#L118-L134",
+        "artifact:test/unit/db/migrate-006.test.js#L91-L148",
+        "artifact:test/unit/db/migrate-006.test.js#L197-L236",
+        "artifact:test/unit/ai/gate.test.js#L99-L100"
+      ],
+      "notes": "Migration 006 under the runner's model. The runner (src/db/migrate.js) applies the file in one BEGIN IMMEDIATE with foreign_keys ON.\n- defer_foreign_keys is set first. Nine tables are staged in TEMP. Five are dropped, child first. No RENAME is used. The four tables are recreated with AUTOINCREMENT, and model_spend gets REFERENCES rescue_requests(id) ON DELETE SET NULL.\n- I checked every REFERENCES in 001-005. The only children with ON DELETE actions are the CASCADE children extractions, requirements, images, planning_runs, plan_versions, plan_approvals and replan_queue, and all of them are staged and restored. No child uses SET NULL or RESTRICT, which the implicit DELETE would have applied silently. The no-action children (reservations, supplier_orders) are satisfied again at COMMIT.\n- None of the rebuilt tables has a trigger. The append-only triggers on audit_events and inventory_ledger are untouched and still fire.\n- Column order matches 002/003: no ALTER TABLE exists in 001-005, so INSERT ... SELECT * is safe.\n- The data-equality and schema-equality tests are strong. M2, M3, M4 and M5 are each killed. The atomic-rollback and lost-parent tests restore the 005 database exactly, with no staging table left behind.\n\nSET NULL against gate.js. The budget sums of src/ai/gate.js (global per day; own per day and customer) never read request_id. A hard delete therefore keeps the day's spend, which id-reuse case 3 shows, and the pointer can never name another customer's request. I agree with SET NULL over a CHECK (which cannot look at another table) and over a tombstone (a second source of truth).\n\nThe limiter's fail-open scope:\n- Only GET and HEAD, case-insensitive. A missing method fails closed.\n- Only a busy error fails open. Reads wait at most 50 ms, a value bounded to 0-5000.\n- The busy timeout is restored in a finally block, so it is restored even when the transaction throws (L3 is killed). Over-limit is still 429.\n\nThe hook passes method, ctx.log and ctx.requestId. ctx.requestId is resolveRequestId's validated or generated id, never raw input.\n\nThe gate-test fixture only inserts request 7 for the test's customer. No assertion changed (+2/-0).\n\nFailing first: my F1 reproduces the engineer's ev:ev-mv3skw6z-010f1667 and ev:ev-mv3sq19p-013611a4 on the pre-rework source."
+    },
+    {
+      "id": "phase:rework-4",
+      "description": "Phase D review rev-mv33xoyz-0143dd56 TR-D-3 and security draft: rescue_requests, plan_versions, images and planning_runs use INTEGER PRIMARY KEY without AUTOINCREMENT, so after a hard delete of the highest id the next row reuses it and audit rows or a model_spend row point at another customer's request; migration 006 rebuilds those tables with AUTOINCREMENT (app-only, data preserved), model_spend.request_id gets a foreign key or check, and an RS-39 test shows no id is reused. Rework-1 review SEC-R-1: src/auth/general-limit.js takes the write lock on every signed-in call; GET and HEAD fail open on a busy error (the request proceeds uncounted and the event is logged), with a lock-holder test. Only b1 and c1 (approved) owned these files. Required before e4.",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv3u0bm4-018df267",
+        "ev:ev-mv3tj9bo-01e55981",
+        "ev:ev-mv3teu8p-01309af2",
+        "ev:ev-mv3tp49m-017879bb",
+        "ev:ev-mv3tpsb0-01a2c0fe",
+        "artifact:.eccode/artifacts/rework-4/submission.md#finding-change-tests-evidence",
+        "artifact:.eccode/artifacts/rework-4/submission.md#migration-006-safety-argument-from-the-engineers-handoff-checked-against-the-sql",
+        "artifact:.eccode/artifacts/rework-4/submission.md#scope-extension-between-the-two-claims",
+        "artifact:.eccode/artifacts/rework-4/submission.md#disclosure-fileschanged-of-the-second-claim"
+      ],
+      "notes": "The existing checks pass. In my third full run, every test passes on the tree that holds rework-4 and e4's final code, including every rework-4 test, the SEC-C-3 tests (with the 301st-call refusal and p95 under 300 ms) and NFR5. My two earlier full runs failed only on e6's known route-table row; I cite them under TR-R4-6 and TR-R4-8, not here.\n\nThe uploads-retention timer failure in the delivery lead's ev:ev-mv3t54i6-01a9b844 did not recur in my three runs. I judge it a test race that does not touch this rework (TR-R4-6).\n\nScope extension. The two files (rbac.js, gate.test.js) were owned only by approved tasks, and the extension's reason names the exact edits. The diffs are 1 line and +2 lines.\n\nThe refused second handoff. The union of both handoffs' filesChanged is the nine files, which my coverage check confirms against git and the artifacts (ev:ev-mv3tps3r-01befc44). completedWork names all nine. Together these suffice (TR-R4-7).\n\n'Required before e4.' e4 was built in parallel and completed before this approval (TR-R4-8). e4's tree already contained 006 and the wired limiter, e4 owns none of these files, and run 3 includes e4's final commit. The condition holds provided phase:e-payments is not approved before this gate.\n\neccode audit flags only files awaiting re-review: rework-4's own nine, plus phase E work that is pending."
+    },
+    {
+      "id": "lessons",
+      "description": "The rework's not-applicable decision on mem-sd-mv1audrd-013b7102 holds",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv3tps3r-01befc44",
+        "artifact:.eccode/artifacts/rework-4/submission.md#lessons"
+      ],
+      "notes": "The lesson applies to hooks or guards that map file writes to a project record or root. The rework's nine files are a SQL migration, the application's rate limiter and access hook, and tests (coverage check). None of them is a tool-call guard, a pre-commit hook or root discovery. Not applicable, as recorded in both handoffs."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-R4-1",
+      "severity": "minor",
+      "title": "Migration 006's run time grows quadratically with the number of plan versions: about 9 s at 5000 request trees, holding the write lock",
+      "detail": "I measured how long 006 holds the write lock on scratch file databases. Each request tree has 2 plan versions; every 5th tree also has a reservation and a supplier order.\n- 1000 trees: 0.27-0.35 s.\n- 2000 trees: 1.1 s.\n- 4000 trees: 5.3 s.\n- 5000 trees: 8.7 s.\nSo each doubling costs about 4 to 5 times as much (ev:ev-mv3tpe9a-016d484a, ev:ev-mv3tp49m-017879bb P3).\n\nAlmost all of the time is spent in two statements, DROP TABLE plan_versions and INSERT INTO plan_versions (about 0.4 s each at 2000 trees). This is consistent with SQLite scanning child tables that have no index on the referencing column, once per parent row deleted or re-inserted. The children are plan_versions.superseded_by (a self-reference), reservations.plan_version_id and supplier_orders.plan_version_id. The deferred-violation counter stays above 0 for the whole migration, so the scan runs for every row.\n\nThe submission's remaining issue 4 describes this as the cost of a linear copy. It is superlinear. Two practical effects:\n- Beyond about 4000 trees the migration outlasts the 5 s busy timeout of a second process that starts at the same time, so that process fails to start.\n- Every write of an already running process waits, or gets DB_BUSY, for the whole migration.\n\nAt the demo's scale (10 requests per customer per day) this does not matter. A fresh database pays nothing, and P2 at 300 trees is instant. Once 006 is approved its checksum is frozen, so the cost can only be documented afterwards, not removed.",
+      "evidence": [
+        "ev:ev-mv3tpe9a-016d484a",
+        "ev:ev-mv3tp49m-017879bb",
+        "artifact:src/db/migrations/006_autoincrement_ids.sql#L39-L43",
+        "artifact:src/db/migrations/006_autoincrement_ids.sql#L93-L99",
+        "artifact:.eccode/artifacts/rework-4/submission.md#remaining-issues-not-fixed-by-this-rework"
+      ],
+      "recommendation": "Owner: the orchestrator, with g2 for the README. Resolved when the operator note and the verification report state the measured cost: upgrading from 005 holds the write lock about 1 s at 2000 request trees and about 9 s at 5000, growing quadratically. They must also state that the upgrade should be run by one process before traffic. Alternatively, the backend-engineer changes 006 before this approval is relied on: index plan_versions(superseded_by), reservations(plan_version_id) and supplier_orders(plan_version_id) for the duration of the copy and drop the indexes before the end, so the schema stays identical. A re-measurement must then show near-linear growth."
+    },
+    {
+      "id": "TR-R4-2",
+      "severity": "info",
+      "title": "SEC-R-1 has no committed HTTP-level test; HEAD answers 405 through the router, so the HEAD branch is reachable only by direct callers",
+      "detail": "The committed proof works in two parts. A limiter unit test holds a real lock in another process. A hook test uses a mock limiter and checks that the method, the logger and the request id are passed. Both parts are mutant-tested (L1-L5 and R1 are killed).\n\nMy end-to-end probe P1 closes the gap between them: GET 200 in 54 ms, one busy_open line, POST 503 DB_BUSY. It also shows that HEAD /api/requests answers 405 before the access hook, so HEAD fail-open never happens through the app. That is harmless.",
+      "evidence": [
+        "ev:ev-mv3tp49m-017879bb",
+        "artifact:test/unit/auth/general-limit-busy.test.js#L118-L134"
+      ],
+      "recommendation": "Owner: optional, the next src/auth or test/api touch. Resolved when an API test holds the lock with test/helpers/lock-proc.js and shows a signed-in GET 200 and a POST 503 DB_BUSY through createApp; or the orchestrator records that the unit tests plus this probe suffice."
+    },
+    {
+      "id": "TR-R4-3",
+      "severity": "info",
+      "title": "Residual availability limit (pre-existing): a state-changing call that waits for a held lock stalls the whole process for RS_DB_BUSY_TIMEOUT_MS",
+      "detail": "node:sqlite's busy handler waits synchronously. In P4 the lock was held by another process. A 100 ms timer, set right after a signed-in POST was sent, fired only at 5015 ms, when the POST came back 503. The event-loop delay histogram reported only 55 ms; I rely on the timer, not the histogram. During that wait no request of the process is served, including the GETs that SEC-R-1 lets fail open.\n\nSEC-R-1's fail-open therefore helps only while no write of the same process is waiting. This is the existing busy-timeout design, outside the condition of this rework. It matters once e4's reconciler writes from several processes that share one database file, which the spec allows.",
+      "evidence": [
+        "ev:ev-mv3tubgu-01ef127a"
+      ],
+      "recommendation": "Owner: phase E's reviewers and the orchestrator. Resolved when the phase E review confirms that reconciler and saga transactions stay short (no provider call or await inside db.tx), and the verification report lists this residual; or a later rework lowers the default write wait for request handlers."
+    },
+    {
+      "id": "TR-R4-4",
+      "severity": "info",
+      "title": "TR-D-3's last condition is superseded: model_spend rows of a hard-deleted request now keep the row but lose the pointer (SET NULL)",
+      "detail": "I wrote the condition 'the verification report states that model_spend rows of a hard-deleted request keep the old request id' before the rework chose a foreign key. After 006 the row stays with request_id NULL, which id-reuse case 3 shows. Pointers that were already dangling before the upgrade are set to NULL during it (P2: 43 of them).",
+      "evidence": [
+        "ev:ev-mv3teu8p-01309af2",
+        "ev:ev-mv3tp49m-017879bb",
+        "artifact:test/api/id-reuse.test.js#L100-L108"
+      ],
+      "recommendation": "Owner: the orchestrator (verification report). Resolved when the report says that a hard delete keeps the request's model_spend rows for the daily budget with request_id NULL, and that dangling pointers are cleared by 006."
+    },
+    {
+      "id": "TR-R4-5",
+      "severity": "info",
+      "title": "The new foreign key turns a narrow delete-during-extract race into 500 INTERNAL before the provider is called (previously 500 after a paid call)",
+      "detail": "extractRequest checks ownership, then awaits loadImageForModel, then calls gate.run. Suppose the same customer hard-deletes the request during that await.\n- Now: reserve's INSERT fails on the model_spend foreign key, which toAppError maps to 500 INTERNAL, and no provider call is made.\n- Before 006: the reservation inserted a dangling pointer, the model was called and charged, and storeExtraction then failed on the extractions foreign key.\nRephrase catches any gate error and keeps the template. This is a net improvement. A 404 would be the cleaner answer.",
+      "evidence": [
+        "artifact:src/services/extraction.js#L547-L559",
+        "artifact:src/ai/gate.js#L160-L176",
+        "artifact:src/app.js#L55-L61"
+      ],
+      "recommendation": "Owner: optional, the next touch of src/services/extraction.js. Resolved when a foreign-key failure at reserve is mapped to 404 NOT_FOUND for the request, with a test; or the orchestrator records it as accepted."
+    },
+    {
+      "id": "TR-R4-6",
+      "severity": "info",
+      "title": "The uploads-retention startApp timer test is a test race that does not touch this rework",
+      "detail": "The test polls until the second image row is gone and then asserts at once that the file is gone. sweepExpiredImages commits the row deletion first and only then awaits the unlink, so a loaded process can be observed in that gap.\n\nRework-4 changes nothing on this path. The images rebuild changes only how ids are allocated, and the test looks rows up by the id it inserted. The limiter is not involved, because startApp's sweep is not an HTTP call. The failure was recorded once (ev:ev-mv3t54i6-01a9b844), while e4's startApp was adding startup work. It was green in all three of my full runs, the third one after e4's final commit.",
+      "evidence": [
+        "ev:ev-mv3tgz6r-011bfe69",
+        "ev:ev-mv3tiyy9-01f99271",
+        "ev:ev-mv3u0bm4-018df267",
+        "ev:ev-mv3t54i6-01a9b844",
+        "artifact:src/services/retention.js#L35-L46",
+        "artifact:test/api/uploads-retention.test.js#L704-L711"
+      ],
+      "recommendation": "Owner: the orchestrator routes it to the owner of test/api/uploads-retention.test.js (or e4, which owns src/main.js). Resolved when the test also polls for the file's absence before asserting, and three consecutive npm test runs are green on that row."
+    },
+    {
+      "id": "TR-R4-7",
+      "severity": "info",
+      "title": "The refused second handoff: the record is complete through the union of both handoffs; the engine gap is TK-5",
+      "detail": "The engine refused the second claim's full list because the orchestrator's snapshot commit 507da7e had become that claim's base. The second handoff therefore lists 3 files, and its completedWork names all nine. The first handoff declares the other six.\n\nMy coverage check reads every handoff of the task: 9 declared, 9 changed since 46046ed, 9 submitted, and 0 undeclared (ev:ev-mv3tps3r-01befc44). This suffices for review. The weakness is in the engine: a snapshot commit made during a claim hides that claim's earlier changes from completion accounting.",
+      "evidence": [
+        "ev:ev-mv3tps3r-01befc44",
+        "artifact:.eccode/artifacts/rework-4/submission.md#disclosure-fileschanged-of-the-second-claim"
+      ],
+      "recommendation": "Owner: the ECCode toolkit (pilot item TK-5). Resolved when completion compares a claim's files against the task's first claim base, or snapshot commits during a claim stop rebasing it; nothing is required of this rework."
+    },
+    {
+      "id": "TR-R4-8",
+      "severity": "info",
+      "title": "e4 was built and completed in parallel with this rework, against dec-mv39rg82-01a682bc ('e4 is not dispatched before both land') and my TR-D-3 condition",
+      "detail": "dec-mv3sg8cv-0146d001 opened rework-4 and resumed phase E at the same time, and e4-saga-reconciler is now done (commit a08aac7). The risk is contained:\n- e4 owns none of the rework's files;\n- e4's snapshots already contained 006 and the wired limiter;\n- my third full run, after e4's final commit, is fully green, including every rework-4 test and every e4 test (my earlier runs failed only on e6's row).\nWhat the ordering protected remains true only if phase:e-payments is reviewed and approved after this gate.",
+      "evidence": [
+        "ev:ev-mv3u0bm4-018df267",
+        "ev:ev-mv3tgz6r-011bfe69",
+        "ev:ev-mv3tps3r-01befc44"
+      ],
+      "recommendation": "Owner: the orchestrator. Resolved when phase:e-payments is approved only after phase:rework-4, and the decision log records that e4's parallel build replaced the 'before e4' ordering."
+    },
+    {
+      "id": "TR-R4-9",
+      "severity": "info",
+      "title": "Toolkit defect: tree pinning is off in this nested project whenever any file is dirty, so cited checks are not bound to the tree under review",
+      "detail": "lib/project.js treeDigest() takes the dirty paths from git status, strips the project prefix and passes them to git hash-object --stdin-paths with the project directory as cwd. git resolves those paths from the repository root, so the hash fails ('could not open test/api/contracts.test.js'). treeDigest then returns null.\n\nThe record files .eccode/state.json and events.jsonl are always dirty between commits. My evidence runs therefore carry no tree, and checkReview's stale-check skips them (`tree ? ... : []`). This review's checks are not pinned to a tree. The delivery lead's ev:ev-mv3t3hzo-014c57e6, by contrast, carries one: it ran right after a commit.\n\nFor this gate the effect is limited. The rework's nine files are unchanged since the submission (ev:ev-mv3tpsb0-01a2c0fe), and the engine's artifact sha256 check still applies. The guarantee 'a check vouches for the tree under review' is silently void for nested projects, though.",
+      "evidence": [
+        "ev:ev-mv3u16vc-014dd303"
+      ],
+      "recommendation": "Owner: the ECCode toolkit (orchestrator to file it as a TK item; learning-debugger if the cause is disputed). Resolved when treeDigest hashes dirty files with paths that git resolves correctly (for example, run hash-object from the repository top level with repository-relative paths, or pass absolute paths). A regression test must run treeDigest in a project below the repository root with a modified tracked file and an untracked file, and show a non-null digest that changes when either file changes."
+    }
+  ],
+  "resolvedFindings": [
+    {
+      "id": "TR-D-3",
+      "resolution": "Condition met.\n- Migration 006 rebuilds rescue_requests, plan_versions, images and planning_runs with AUTOINCREMENT and preserves every row, index, trigger and foreign key. migrate-006 shows this, and my P2 confirms it on a WAL file database with the demo seed.\n- model_spend.request_id is now a foreign key, ON DELETE SET NULL.\n- The RS-39 tests show that after a hard delete of the highest ids, Y's request, plan version, planning run and image ids are all larger, and Y's admin timeline carries none of X's audit events.\n- They fail on the pre-rework source (F1: 3 of 3) and pass now. M1 and M6 are killed.\nThe 'before e4' part is TR-R4-8, and the report wording is TR-R4-4.",
+      "evidence": [
+        "ev:ev-mv3teu8p-01309af2",
+        "ev:ev-mv3toj9i-01cfede3",
+        "ev:ev-mv3tp49m-017879bb",
+        "artifact:src/db/migrations/006_autoincrement_ids.sql#L45-L91",
+        "artifact:test/api/id-reuse.test.js#L80-L98"
+      ]
+    },
+    {
+      "id": "SEC-R-1",
+      "resolution": "Condition met. take() fails open only for GET and HEAD and only on a busy error. Reads wait at most 50 ms, the timeout is restored, and the call logs one rate_limit.busy_open line with the request id only. State-changing methods, and a call with no method, keep failing closed.\n\nThe access hook passes the method, so the fix is live. Through createApp with the lock held by another process, a signed-in GET answers 200 in 54 ms, uncounted, and a POST answers 503 DB_BUSY with Retry-After 1 (P1). My condition asked for exactly this.\n\nThe lock-holder unit tests fail on the old limiter, and all five limiter mutants and the hook mutant are killed. A committed HTTP-level test is optional (TR-R4-2). The residual whole-process stall is pre-existing (TR-R4-3).",
+      "evidence": [
+        "ev:ev-mv3tp49m-017879bb",
+        "ev:ev-mv3toj9i-01cfede3",
+        "ev:ev-mv3teu8p-01309af2",
+        "artifact:src/auth/general-limit.js#L62-L76",
+        "artifact:src/auth/rbac.js#L64"
+      ]
+    }
+  ],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}

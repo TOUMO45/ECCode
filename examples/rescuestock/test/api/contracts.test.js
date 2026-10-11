@@ -6,8 +6,9 @@
 //     inside `error` of a failure body (equal to the header), `error.code`/`error.message` strings, no stack text;
 //   - the field types of the success body (or of the error envelope) against the fixture's `response`, by key set
 //     and type, never by value (test/helpers/contract-shape.js).
-// A route that is not registered yet is reported as SKIPPED with the reason, never as passed (phase E routes only,
-// FU-18). A test also fails for every registered route that has no scenario in the table.
+// A route that is not registered is reported as SKIPPED with the reason, never as passed. Since phase E (task e6) every route
+// of the spec is registered, so the table holds no skip row. A test also fails for every registered route that has no scenario
+// in the table.
 //
 // Mismatches between a fixture and the server are named failures: "(fixture test/fixtures/contracts/<file>)" and the
 // path of the field. The six fixture defects that c6 had marked `todo` were corrected by d4 (FU-13) and their table
@@ -20,6 +21,10 @@ import { compareShape } from '../helpers/contract-shape.js';
 import { FIXTURE_DIR, createClient, uniqueUsername } from '../helpers/fixtures.js';
 import { approvedPlan, canonicalFields, idempotencyKey, reserve } from '../helpers/plan-flow.js';
 import { loadClearPhoto, setModelFault, uploadImage } from '../helpers/extraction.js';
+import { approveAtFake, cancelAtFake, confirmOrderAsSupplier, createPayment } from '../helpers/payment-flow.js';
+import { FAKE_WEBHOOK_SECRET, buildEvent, signEvent } from '../helpers/webhook-signer.js';
+import { createVoidPort } from '../../src/services/calls.js';
+import { createVoidRule } from '../../src/services/void-rule.js';
 import { ensureAdmin } from '../../src/services/users.js';
 
 const CONTRACT_DIR = `${FIXTURE_DIR}/contracts`;
@@ -40,9 +45,11 @@ const FREE_FORM = Object.freeze([/(^|\.)trace\.inputs$/, /(^|\.)trace\.candidate
 
 // ---- worlds: one seeded application per group of scenarios -----------------------------------------------------------
 
-async function makeWorld(env = {}) {
+async function makeWorld(env = {}, { voidPort = false } = {}) {
   const h = await startHarness({ seed: true, env: { ...BASE_ENV, ...env } });
   await ensureAdmin({ db: h.db, config: h.config, clock: h.clock });
+  // The payment worlds run the REAL void port (createApp keeps the no-op recorder as its default; c3's tests pin that).
+  if (voidPort) h.app.deps.voidRule = createVoidRule({ clock: h.clock, provider: createVoidPort({ clock: h.clock }) });
   const memo = new Map();
   const world = {
     h,
@@ -100,14 +107,120 @@ async function reservedFlow(w) {
   });
 }
 
-class SkipScenario extends Error {}
-const skip = (reason) => {
-  throw new SkipScenario(reason);
-};
+// The payment worlds (phase E). Every step is memoized in the world, so a row may run alone or in table order and each real
+// call happens once. Stock allows ONE reservation of A + B per database (RS-FIX-1: A has a single bundle), hence two worlds:
+//   'pay'      reserve -> suppliers confirm -> PayPal create -> approve at the fake page -> return -> execute (claim, replay, saga)
+//              -> supplier ready -> handover -> buyer receipt
+//   'abandon'  reserve -> suppliers confirm -> PayPal create -> cancel at the fake page -> abandon
+function steps(w, prefix) {
+  return {
+    // A customer with an approved plan, a reservation and both supplier orders confirmed.
+    reserved: () =>
+      w.once(`${prefix}:reserved`, async () => {
+        const client = await w.customer();
+        const { requestId, plan } = await w.approved(client);
+        const res = await reserve(client, plan.id, idempotencyKey(`${prefix}-contract`));
+        assert.equal(res.status, 201, res.text);
+        const orders = Object.fromEntries(res.json.orders.map((o) => [o.supplier.code, o.id]));
+        const suppliers = {};
+        for (const code of ['A', 'B']) {
+          suppliers[code] = await w.login(`supplier-${code.toLowerCase()}`);
+          await confirmOrderAsSupplier(suppliers[code], orders[code]);
+        }
+        return { client, requestId, plan, orders, suppliers };
+      }),
+    // POST /api/orders/:id/paypal/create for A and B (the answers are kept by supplier code).
+    created: () =>
+      w.once(`${prefix}:created`, async () => {
+        const r = await steps(w, prefix).reserved();
+        const responses = {};
+        for (const code of ['A', 'B']) responses[code] = await createPayment(r.client, r.orders[code]);
+        return { ...r, responses };
+      }),
+  };
+}
+
+// 'pay' world: both approvals done at the fake page; `returns` are the app's 303 answers to GET /api/paypal/return.
+function authorizedPay(w) {
+  return w.once('pay:authorized', async () => {
+    const c = await steps(w, 'pay').created();
+    const returns = {};
+    for (const code of ['A', 'B']) {
+      const { ret } = await approveAtFake(c.client, c.responses[code].json.approvalUrl);
+      assert.equal(ret.status, 303, ret.text);
+      returns[code] = ret;
+    }
+    return { ...c, returns };
+  });
+}
+
+// Execute: the claim answers 202, a second call answers 200 while the plan is still executing (the saga is held back with
+// autoRun = false), then the saga runs to `executed`.
+function executedPay(w) {
+  return w.once('pay:executed', async () => {
+    const c = await authorizedPay(w);
+    const saga = w.h.app.deps.saga;
+    saga.autoRun = false;
+    const claim = await c.client.post(`/api/plans/${c.plan.id}/execute`, {});
+    assert.equal(claim.status, 202, claim.text);
+    const replay = await c.client.post(`/api/plans/${c.plan.id}/execute`, {});
+    assert.equal(replay.status, 200, replay.text);
+    saga.autoRun = true;
+    saga.start(c.plan.id, 1);
+    await saga.idle();
+    const row = w.h.db.prepare('SELECT status FROM plan_versions WHERE id = ?').get(c.plan.id);
+    assert.equal(row.status, 'executed', 'the saga captured both orders');
+    return { ...c, claim, replay };
+  });
+}
+
+function readyPay(w) {
+  return w.once('pay:ready', async () => {
+    const c = await executedPay(w);
+    const ready = await c.suppliers.A.post(`/api/supplier/orders/${c.orders.A}/ready`, {});
+    assert.equal(ready.status, 200, ready.text);
+    return { ...c, ready };
+  });
+}
+
+function handoverPay(w) {
+  return w.once('pay:handover', async () => {
+    const c = await readyPay(w);
+    const handover = await c.suppliers.A.post(`/api/supplier/orders/${c.orders.A}/handover`, {});
+    assert.equal(handover.status, 200, handover.text);
+    return { ...c, handover };
+  });
+}
+
+// 'abandon' world: the buyer cancelled the approval of A at the fake page, then abandons the purchase.
+function abandonedWorld(w) {
+  return w.once('abandon:abandoned', async () => {
+    const c = await steps(w, 'abandon').created();
+    const { back } = await cancelAtFake(c.client, c.responses.A.json.approvalUrl);
+    assert.equal(back.status, 303, back.text);
+    const abandon = await c.client.post(`/api/plans/${c.plan.id}/abandon`, {});
+    return { ...c, cancelBack: back, abandon };
+  });
+}
+
+// A signed fake-provider webhook for merchant key A (an event that matches no operation, so the answer is `ignored`).
+function webhookRequest(w, { signed = true } = {}) {
+  const event = buildEvent({ eventType: 'PAYMENT.CAPTURE.COMPLETED', resource: { id: 'FAKECAP-CONTRACT-UNKNOWN', status: 'COMPLETED' } });
+  const sig = signEvent({ event, secret: FAKE_WEBHOOK_SECRET, transmissionTime: new Date(w.h.clock.now()).toISOString() });
+  return w.h.request({
+    method: 'POST',
+    path: '/api/webhooks/paypal/A',
+    record: false,
+    body: sig.rawBody,
+    headers: { 'Content-Type': 'application/json', ...(signed ? sig.headers : {}) },
+  });
+}
 
 // ---- the route table -----------------------------------------------------------------------------------------------
-// { fixture | inline, route, status, world, run(w) -> response, optional?, free?, sameValues? }
-//   sameValues: dotted paths whose VALUE (a capability flag) must equal the fixture's.
+// { fixture | inline, route, status, world, run(w) -> response, optional?, free?, sameValues?, name?, redirect?, binary? }
+//   sameValues: dotted paths whose VALUE (a capability flag, a state, a provider label) must equal the fixture's.
+//   redirect:   a 303 with no JSON body whose Location must match this pattern (GET /api/paypal/return and /cancel).
+//   name:       distinguishes two rows of one route that has no fixture.
 const TABLE = [
   // public and auth
   { inline: { status: 'ok', requestId: 'req-0000001' }, route: 'GET /api/health', status: 200, world: 'main', run: (w) => w.anon().get('/api/health') },
@@ -318,11 +431,73 @@ const TABLE = [
       return client.get(`/api/requests/${requestId}`);
     },
   },
-  { fixture: 'plan-execute.json', world: 'flow', run: () => skip('POST /api/plans/:id/execute is not registered yet') },
-  { fixture: 'plan-execute-replay.json', world: 'flow', run: () => skip('POST /api/plans/:id/execute is not registered yet') },
-  { fixture: 'plan-abandon.json', world: 'flow', run: () => skip('POST /api/plans/:id/abandon is not registered yet') },
-  { fixture: 'order-paypal-create.json', world: 'flow', run: () => skip('POST /api/orders/:id/paypal/create is not registered yet') },
-  { fixture: 'order-receipt.json', world: 'flow', run: () => skip('POST /api/orders/:id/receipt is not registered yet') },
+  // payments (phase E): the 'pay' world buys A + B end to end, the 'abandon' world cancels one approval and abandons.
+  {
+    fixture: 'order-paypal-create.json',
+    world: 'pay',
+    sameValues: ['payment.status', 'payment.provider', 'payment.simulated', 'payment.sandbox', 'payment.merchantMode', 'payment.amountCents', 'payment.currency', 'approvalIndex', 'approvalsNeeded'],
+    run: async (w) => (await steps(w, 'pay').created()).responses.A,
+  },
+  {
+    // 303 with no JSON body: the buyer comes back from the fake approval page with the session cookie (SameSite Lax, no CSRF token).
+    route: 'GET /api/paypal/return',
+    status: 303,
+    world: 'pay',
+    redirect: /^\/#\/requests\/\d+\?paypal=returned&order=\d+$/,
+    run: async (w) => (await authorizedPay(w)).returns.A,
+  },
+  {
+    fixture: 'plan-execute.json',
+    world: 'pay',
+    sameValues: ['claimed', 'plan.status'],
+    run: async (w) => (await executedPay(w)).claim,
+  },
+  {
+    fixture: 'plan-execute-replay.json',
+    world: 'pay',
+    sameValues: ['claimed', 'plan.status'], // asked while the plan is still executing, as the fixture shows
+    run: async (w) => (await executedPay(w)).replay,
+  },
+  {
+    route: 'GET /api/paypal/cancel',
+    status: 303,
+    world: 'abandon',
+    redirect: /^\/#\/requests\/\d+\?paypal=cancelled&order=\d+$/,
+    run: async (w) => (await abandonedWorld(w)).cancelBack,
+  },
+  {
+    fixture: 'plan-abandon.json',
+    world: 'abandon',
+    sameValues: ['plan.status', 'plan.nonExecutableReason', 'rescueStatus.status', 'rescueStatus.underlying.plan', 'rescueStatus.underlying.reservation'],
+    run: async (w) => (await abandonedWorld(w)).abandon,
+  },
+  {
+    // Signed with the fake adapter's secret (RS_FAKE_WEBHOOK_SECRET); the event names no known operation, so it is `ignored`.
+    name: 'signed event, no matching operation',
+    route: 'POST /api/webhooks/paypal/:merchantKey',
+    status: 200,
+    world: 'pay',
+    inline: { outcome: 'ignored', requestId: 'req-hook-0000001' },
+    sameValues: ['outcome'],
+    run: (w) => webhookRequest(w),
+  },
+  {
+    name: 'unsigned event',
+    route: 'POST /api/webhooks/paypal/:merchantKey',
+    status: 400,
+    world: 'pay',
+    inline: { error: { code: 'WEBHOOK_SIGNATURE_INVALID', message: 'The webhook signature is not valid.', requestId: 'req-hook-0000002' } },
+    run: (w) => webhookRequest(w, { signed: false }),
+  },
+  {
+    fixture: 'order-receipt.json',
+    world: 'pay',
+    sameValues: ['order.fulfilmentStatus', 'order.payment.status', 'order.payment.provider', 'order.payment.simulated', 'order.receiptRecorded', 'order.handoverRecorded', 'order.presentation'],
+    run: async (w) => {
+      const c = await handoverPay(w);
+      return c.client.post(`/api/orders/${c.orders.A}/receipt`, {});
+    },
+  },
 
   // supplier
   {
@@ -357,8 +532,18 @@ const TABLE = [
       return b.post(`/api/supplier/orders/${order.id}/refuse`, { reason: 'Out of cups today' });
     },
   },
-  { fixture: 'supplier-order-ready.json', world: 'flow', run: () => skip('a ready order needs an executed plan (POST /api/plans/:id/execute is not registered yet)') },
-  { fixture: 'supplier-order-handover.json', world: 'flow', run: () => skip('a handover needs an executed plan (POST /api/plans/:id/execute is not registered yet)') },
+  {
+    fixture: 'supplier-order-ready.json',
+    world: 'pay',
+    sameValues: ['order.fulfilmentStatus', 'order.canMarkReady', 'order.canHandover', 'order.payment.status', 'order.payment.simulated', 'order.payment.sandbox', 'order.presentation'],
+    run: async (w) => (await readyPay(w)).ready,
+  },
+  {
+    fixture: 'supplier-order-handover.json',
+    world: 'pay',
+    sameValues: ['order.fulfilmentStatus', 'order.canMarkReady', 'order.canHandover', 'order.payment.status', 'order.presentation'],
+    run: async (w) => (await handoverPay(w)).handover,
+  },
   { fixture: 'supplier-inventory.json', world: 'flow', run: async (w) => (await w.login('supplier-c')).get('/api/supplier/inventory') },
   {
     fixture: 'supplier-inventory-patch.json',
@@ -405,7 +590,7 @@ function adminOf(w) {
   return w.once('admin', () => w.login('admin', ADMIN_PASSWORD));
 }
 
-const WORLD_ENV = { main: {}, flow: {}, sandbox: { RS_PAYMENT_PROVIDER: 'paypal-sandbox', RS_PAYPAL_DEFAULT_CLIENT_ID: 'AaContractClientId12345', RS_PAYPAL_DEFAULT_CLIENT_SECRET: 'EeContractClientSecret12345', RS_PAYPAL_DEFAULT_WEBHOOK_ID: 'WH-CONTRACT-12345' } };
+const WORLD_ENV = { main: {}, flow: {}, pay: { RS_FAKE_WEBHOOK_SECRET: FAKE_WEBHOOK_SECRET }, abandon: {}, sandbox: { RS_PAYMENT_PROVIDER: 'paypal-sandbox', RS_PAYPAL_DEFAULT_CLIENT_ID: 'AaContractClientId12345', RS_PAYPAL_DEFAULT_CLIENT_SECRET: 'EeContractClientSecret12345', RS_PAYPAL_DEFAULT_WEBHOOK_ID: 'WH-CONTRACT-12345' } };
 
 // ---- checks ----------------------------------------------------------------------------------------------------------
 
@@ -441,6 +626,16 @@ function assertBinaryImage(res, expectedStatus, label) {
   assert.match(String(res.headers['cache-control']), /no-store/, `${label}: no-store`);
   assert.match(String(res.headers['x-request-id']), REQUEST_ID_RE, `${label}: X-Request-Id header`);
   assert.ok(Buffer.isBuffer(res.bytes) && res.bytes.equals(res.expectedBytes), `${label}: the body is the uploaded image, byte for byte`);
+}
+
+// GET /api/paypal/return and /cancel: 303 to a same-origin hash route, no JSON body, no caching, the request id header.
+function assertRedirect(res, expectedStatus, locationPattern, label) {
+  assert.equal(res.status, expectedStatus, `${label}: status ${res.status}, body ${res.text.slice(0, 200)}`);
+  assert.match(String(res.headers.location), locationPattern, `${label}: Location`);
+  assert.equal(res.text, '', `${label}: a redirect has no body`);
+  assert.equal(res.json, null, `${label}: no JSON body`);
+  assert.match(String(res.headers['cache-control']), /no-store/, `${label}: no-store`);
+  assert.match(String(res.headers['x-request-id']), REQUEST_ID_RE, `${label}: X-Request-Id header`);
 }
 
 function valueAt(obj, path) {
@@ -489,7 +684,7 @@ describe('NFR6: every example response in test/fixtures/contracts has a scenario
 
 const worlds = new Map();
 const worldFor = (name) => {
-  if (!worlds.has(name)) worlds.set(name, makeWorld(WORLD_ENV[name]));
+  if (!worlds.has(name)) worlds.set(name, makeWorld(WORLD_ENV[name], { voidPort: name === 'pay' || name === 'abandon' }));
   return worlds.get(name);
 };
 
@@ -511,26 +706,19 @@ describe('NFR6: contract scenarios drive each registered route and compare statu
     const expectedResponse = fx ? fx.response : scenario.inline;
     const label = scenario.fixture ? `fixture ${fixturePath(scenario.fixture)}` : `inline ${route}`;
 
-    test(`NFR6: contract ${scenario.fixture ?? route}: ${route} -> ${status}${fx?.variant ? ` (${fx.variant.slice(0, 60)})` : ''}`, async (t) => {
+    test(`NFR6: contract ${scenario.fixture ?? route}${scenario.name ? ` (${scenario.name})` : ''}: ${route} -> ${status}${fx?.variant ? ` (${fx.variant.slice(0, 60)})` : ''}`, async () => {
       const w = await worldFor(scenario.world);
       const [method, template] = route.split(' ');
+      // Every route of the spec is registered (phase E is built): an unregistered route FAILS here, it is never skipped.
       const registered = w.h.app.router.list().some((r) => r.method === method && r.template === template);
-      if (!registered) {
-        t.skip(`${route} is not registered yet`);
-        return;
-      }
-      let res;
-      try {
-        res = await scenario.run(w);
-      } catch (err) {
-        if (err instanceof SkipScenario) {
-          t.skip(err.message);
-          return;
-        }
-        throw err;
-      }
+      assert.ok(registered, `${route} is not registered`);
+      const res = await scenario.run(w);
       if (scenario.binary) {
         assertBinaryImage(res, status, label);
+        return;
+      }
+      if (scenario.redirect) {
+        assertRedirect(res, status, scenario.redirect, label);
         return;
       }
       assertEnvelope(res, status, label);
@@ -545,6 +733,16 @@ describe('NFR6: contract scenarios drive each registered route and compare statu
       assert.deepEqual(problems, [], `${label} differs from the server response`);
     });
   }
+
+  test('NFR6: every route of the table is registered, so no scenario can be skipped (phase E: 0 skipped rows)', async () => {
+    const w = await worldFor('main');
+    const registered = new Set(w.h.app.router.list().map((r) => `${r.method} ${r.template}`));
+    const routes = TABLE.map((s) => (s.fixture ? loadFixture(s.fixture).route : s.route));
+    assert.deepEqual(routes.filter((r) => !registered.has(r)), [], 'table routes that are not registered');
+    for (const needed of ['GET /api/paypal/return', 'GET /api/paypal/cancel', 'POST /api/webhooks/paypal/:merchantKey', 'POST /api/plans/:id/execute', 'POST /api/plans/:id/abandon', 'POST /api/orders/:id/paypal/create', 'POST /api/orders/:id/receipt', 'POST /api/supplier/orders/:id/ready', 'POST /api/supplier/orders/:id/handover']) {
+      assert.ok(routes.includes(needed), `${needed} has a row in the table`);
+    }
+  });
 
   test('NFR6: every registered route has a scenario in the table', async () => {
     const w = await worldFor('main');
