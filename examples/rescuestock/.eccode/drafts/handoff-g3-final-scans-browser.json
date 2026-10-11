@@ -1,0 +1,87 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "g3-final-scans-browser",
+  "objective": "Phase G final scans and browser checks: the secrets (RS-29), SQL (T20) and live-refusal (NFR3/FU-37) scans; the labelling API test (RS-34 [D], both adapters); the browser tests a11y-states (NFR2), six-questions (RS-35) and labelling (RS-34 [B]); docs/evidence-table.md for all 45 criteria with a test that keeps it honest; the committed clock-shift tool and one full +30-day run; the recorded 360 px recovery-state checks; three consecutive locked npm test runs; a final clean checkout.",
+  "context": "Run run-mv4c6ux3-01f49eae, phase G. No live suite was run (RS_LIVE_MODEL and RS_LIVE_PAYPAL were never set); every payment result is from the fake adapter or from the Sandbox adapter against the loopback stub; every host used was 127.0.0.1 except the registry access that scripts/clean-checkout.sh needs for npm install. Nothing was committed, npm install was run only inside the clean-checkout script and, for the lockfile experiment, as npm install --package-lock-only in an empty scratch directory. No source file under src/ or public/ was changed; the only existing files edited are test/scan/secrets.test.js (an RS-29 section appended) and test/browser/helpers/approval-roundtrip.js (stub and keyboard options). package.json and package-lock.json were not touched. Every mutant lives in its own fresh directory under scratchpad/g3/<name>/ with mutant.diff, and the diff is printed first in the evidence log.",
+  "inputs": [
+    "plan and followups (RS-29, RS-34, RS-35, NFR2, NFR3, T20, FU-33, FU-37, FU-44, FU-51, FU-52, TR-R7-1, SEC-R7-I2)",
+    "docs/runbooks/live-paypal.md (the list of what no live file covers)",
+    "scripts/clean-checkout.sh, scripts/report-p95.js (read only; report-p95 needed no change)",
+    "public/js/**, src/services/**, src/payments/fake.js (read only)"
+  ],
+  "dependencies": [],
+  "expectedOutput": "The scans, the labelling and accessibility tests and the self-verifying evidence table, all green on the final tree under the suite lock, each new check shown to fail on a deliberate fault, and the clean checkout passing.",
+  "acceptanceCriteria": [
+    "secrets (RS-29), sql (T20) and live-refusal (NFR3) scans exist and pass; each fails on a mutant",
+    "test/api/labelling.test.js passes for the fake adapter and the Sandbox adapter against the stub",
+    "browser tests a11y-states, six-questions and labelling pass in Chromium at 360 and 1280 px and fail on mutants",
+    "docs/evidence-table.md has one row for each of the 45 criteria with a status from the fixed vocabulary, tests by file and title, ev ids and blockers, and test/scan/evidence-table.test.js checks it, including the cited logs where the record is present",
+    "three consecutive locked npm test runs pass, including the RS-39 rows (FU-33)",
+    "a locked +30-day npm test with test/helpers/shift-clock.mjs passes",
+    "the verification command (files exist, npm test, npm run test:browser, sh scripts/clean-checkout.sh) passes"
+  ],
+  "completedWork": "SCANS. test/scan/sql.test.js (T20, 4 tests): every .prepare( and .exec( call under src/ and scripts/ is static SQL or an allow-listed constant. DEVIATION FROM THE SPEC, stated openly: the spec asks to forbid template literals in db.prepare( calls; the code base builds about thirty statements from constants and ? placeholder lists with template literals, so a literal ban fails correct code. The test pins what the ban protects: a per-file allow-list (each entry with its reason, a stale-entry check, the routes and http layer scanned with an empty list), so any new interpolation fails. test/scan/live-refusal.test.js (NFR3/FU-37, 15 tests): the live model script, each test/live/paypal/*.test.js, the launcher, evaluateLaunch and evaluateLiveLaunch, and the package scripts exit 2 without their flag and print the fixed message only. test/scan/secrets.test.js (RS-29): appended section scanning public/, fixtures, recorded live responses, the PNG text chunks of every screenshot under test/browser/out (skipped, with a reason, when there is none), README and docs, and config redaction errors with canaries and secret shapes. LABELLING. test/api/labelling.test.js (RS-34 [D], 13 tests) for the fake adapter and the Sandbox adapter against the loopback stub: the exact label set of GET /api/config, provider, simulated and sandbox on every payment object, demo and price notice, config refusals. test/browser/labelling.test.js (RS-34 [B], 4 tests): banners on every route, payment badges, demo data, the price notice, the provider's own approval page and the admin provider list for both adapters at 360 and 1280 px (the sandbox environment sets RS_TEST_HOOKS undefined because the Sandbox adapter refuses it). test/browser/six-questions.test.js (RS-35, 2 tests): the six answers in order with provenance, decision trace, rejection codes with explanations, cents totals, commitment next to offer, compensation state. test/browser/a11y-states.test.js (NFR2, 8 tests): the keyboard-only purchase (register to complete, no pointer), empty, loading, error with Retry, timeout, degraded extraction, expired reservation with Re-plan, refunding and failed-needs-attention (Contact the organiser) at 360 px (FU-51), the admin forced-reset stranded list audited and walkable, the forced-reset text per adapter in Chromium, and the RLM and zero-width refusal reason isolated in <bdi> (the two g1 items that were unverified). Helpers: a11y-audit.js (hand-written audit: names, 44 px targets, computed 4.5:1 contrast, focus indicators through real Tab, no horizontal scroll), keyboard.js, api-purchase.js, and approval-roundtrip.js gained stub and keyboard options. EVIDENCE TABLE. docs/evidence-table.md: 45 rows, 28 verified, 2 fake-only (RS-25, RS-34), 15 LIVE-DEPENDENT (RS-01, 02, 03, 05, 18 to 24, 26, 31, 32, NFR6), each with suites, tests by file and title, the ev ids of runs on the final tree, and the unverified part with its blocker (LIVE-M1, LIVE-P1, LIVE-P2, OQ-D5, USER-Q9; A2 and SEC-18 where they apply); the FU-52 list that no live file covers, identical to the runbook (FU-44: cross-merchant signature rejection is in it, as a documentation branch); the mutation proofs; the date-robustness command; the limits. test/scan/evidence-table.test.js (11 tests) checks all 45 ids once, the status vocabulary, that every named test is in its file, that every non-verified or live-tagged row names a blocker, the SEC-18, A2, F-TR-18, F-TR-9 and Q9 wordings, parity with the runbook list, and, when the project record is present, that each cited run exited 0 and shows each named test as ok and not skipped (reported as skipped in a clean checkout). DATE ROBUSTNESS. test/helpers/shift-clock.mjs committed with its blind spots in the header; one full locked +30-day npm test passed (ev:ev-mv4dxpjf-01ff87f2) and a separate run proves the preload is active under that command (Date.now() 30.000 days ahead in the process and in a child, file times shifted, explicit utimes round trip: ev:ev-mv4dy7qb-017f57f9). RUNS ON THE FINAL TREE, each under flock /tmp/rescuestock-suite.lock: npm test three times in a row, each 2393 tests, 2385 pass, 0 fail, 8 skipped (the fake model has no busy fault, 1; the fake payment adapter has no wire, 7), RS-39 rows ok each time (FU-33): ev:ev-mv4dnlhv-0167b2b1, ev:ev-mv4dpxim-01093245, ev:ev-mv4ds3no-0151407a; NFR5 p95 59.0, 57.6 and 56.2 ms (limit 300), suite 103.5, 101.5 and 100.5 s (limit 300); npm run test:browser 28 of 28, 0 skipped: ev:ev-mv4dv7a8-0168c15d; secrets.test.js alone after the browser run, 15 of 15, 0 skipped, so the screenshots were scanned: ev:ev-mv4dvgym-016f8416; the multi-process files four rounds at concurrency 4, 25 of 25 each round: ev:ev-mv4dzgo7-017ffe03. VERIFICATION COMMAND verbatim, with the whole evidence run under the lock: ev:ev-mv4e8gcg-0101a228 PASSED (exit 0, 335 s): npm test 2393 tests, 2385 pass, 0 fail, 8 skipped; test:browser 28 of 28; clean checkout (npm install from the registry, npm test in the empty copy 2393 tests, 2383 pass, 0 fail, 10 skipped: the 8 above plus the cited-run check and the screenshot scan, which skip with a printed reason when there is no record or no screenshots; npm start and GET /api/health 200). MUTANTS (red expected, all red for the intended test; diffs kept under scratchpad/g3/<name>/mutant.diff): m-sql ev:ev-mv4d772a-0113a2e4, m-public ev:ev-mv4d79w3-011a9f8f, m-leak ev:ev-mv4d7cja-010e6cc5, m-refusal ev:ev-mv4d7f96-01900c43, m-labels-api ev:ev-mv4d7j26-01f4e39e, m-banner ev:ev-mv4dai8x-01be2775, m-contrast ev:ev-mv4dbmkw-01a366da, m-focus ev:ev-mv4dbyo0-0162cb51, m-prov ev:ev-mv4dc2h9-01f8bf41, m-bdi ev:ev-mv4ddhl0-0135a046, and for the table m-tbl-row ev:ev-mv4dkvtv-0186c75f (a row missing), m-tbl-blocker ev:ev-mv4dl2da-014fee9b (a blocker dropped), m-tbl-id ev:ev-mv4dl2v6-01b303bd (a malformed ev id), m-tbl-log ev:ev-mv4dl3l9-012c6441 (a cited run whose log does not show the row's tests; the logs were copied beside the copy and the copy of the test pointed at them, because the record is not part of a copy). SEC-R7-I2: the lock CAN be regenerated to include fsevents. npm install --package-lock-only in an empty scratch directory from the unchanged package.json yields the current lock plus exactly one node_modules/fsevents 2.3.2 block (optional, darwin only, dev, hasInstallScript, integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==); the file is scratchpad/g3-lock/package-lock.json, sha256 d870b67d1cdcb2b91c1a9a4bb2f1e1fd3cb780fa3aab0a5e914df5c58dd6dd62 (the current package-lock.json is 68f510e46be540f540a48b183097a604e94872a3de006ca993be8dc6e86518a1; package.json is identical in both, sha256 2697e082c47151d73ca2c54c28ba7d1db891289dfd3c996e43d62d5cd7a11a54). The lock is not in this task's ownership, so it was not changed: the coordinator or the owner must apply it, and the table's Limits section says so.",
+  "filesChanged": [
+    "docs/evidence-table.md",
+    "test/api/labelling.test.js",
+    "test/browser/a11y-states.test.js",
+    "test/browser/helpers/a11y-audit.js",
+    "test/browser/helpers/api-purchase.js",
+    "test/browser/helpers/approval-roundtrip.js",
+    "test/browser/helpers/keyboard.js",
+    "test/browser/labelling.test.js",
+    "test/browser/six-questions.test.js",
+    "test/helpers/shift-clock.mjs",
+    "test/scan/evidence-table.test.js",
+    "test/scan/live-refusal.test.js",
+    "test/scan/secrets.test.js",
+    "test/scan/sql.test.js"
+  ],
+  "evidence": [
+    "ev:ev-mv4e8gcg-0101a228",
+    "ev:ev-mv4dnlhv-0167b2b1",
+    "ev:ev-mv4dpxim-01093245",
+    "ev:ev-mv4ds3no-0151407a",
+    "ev:ev-mv4dv7a8-0168c15d",
+    "ev:ev-mv4dvgym-016f8416",
+    "ev:ev-mv4dzgo7-017ffe03",
+    "ev:ev-mv4dxpjf-01ff87f2",
+    "ev:ev-mv4dy7qb-017f57f9",
+    "ev:ev-mv4d772a-0113a2e4",
+    "ev:ev-mv4d79w3-011a9f8f",
+    "ev:ev-mv4d7cja-010e6cc5",
+    "ev:ev-mv4d7f96-01900c43",
+    "ev:ev-mv4d7j26-01f4e39e",
+    "ev:ev-mv4dai8x-01be2775",
+    "ev:ev-mv4dbmkw-01a366da",
+    "ev:ev-mv4dbyo0-0162cb51",
+    "ev:ev-mv4dc2h9-01f8bf41",
+    "ev:ev-mv4ddhl0-0135a046",
+    "ev:ev-mv4dkvtv-0186c75f",
+    "ev:ev-mv4dl2da-014fee9b",
+    "ev:ev-mv4dl2v6-01b303bd",
+    "ev:ev-mv4dl3l9-012c6441"
+  ],
+  "remainingIssues": [
+    "NOT VERIFIED (all listed per row in docs/evidence-table.md): every LIVE-M1 item (real model: RS-01, 02, 03, 05, NFR6 cost report), every LIVE-P1 and LIVE-P2 item (real PayPal Sandbox: RS-18 to 24, 31(b), 32(b), and the items no live file covers per FU-52, including cross-merchant signature rejection, FU-44), OQ-D5 facts about the real PayPal API, and USER-Q9 (the Node 22.5 run, the user's). Nothing in the table rests on a live run.",
+    "RS-36 (I): a new inspection of the final domain/derive.js against the final derivation table (F-TR-9) is NOT part of this evidence; the phase B review did it for revision 2 and the rows added later are pinned only by tests.",
+    "Browser evidence is Chromium only, Linux only, Node 22.22 only; other browsers, screen readers and real touch devices were not run.",
+    "T20 is a deviation: an allow-list of interpolations instead of the literal ban on template literals in prepare( calls (about thirty correct call sites would fail the literal ban). The reviewer should accept or reject the deviation.",
+    "Focus on a native date-time control is shown by comparing pictures of the focused and unfocused control (visible inputs only), because the control has no app focus ring and no :focus-visible style on its host; this is a weaker check than a style assertion and cannot show which part of the control is highlighted.",
+    "RS-29 matches secret SHAPES by patterns plus canary values; a secret of an unknown shape would pass the pattern part. Screenshots are scanned for file names and PNG text chunks, not pixels.",
+    "The table cites runs made before the table's last edit (its ids and three prose sections were written after them); the verification run is on the final bytes. The cited-run check of the table test is skipped in a clean checkout (10 skipped there, with printed reasons), so it is not part of the clean-checkout pass count.",
+    "The clock-shift tool does not move Chromium, SQLite, FileHandle.stat, string times to utimes, Intl.DateTimeFormat without a date, or children spawned with a minimal environment (listed in its header); a passing +30-day run says nothing about them.",
+    "The lockfile lacks node_modules/fsevents (macOS only, optional). The regenerated lock is at scratchpad/g3-lock/package-lock.json (sha256 d870b67d...dd62); applying it is for the lock's owner.",
+    "Statements about the hackathon rules and the PayPal dashboard in docs/submission and docs/runbooks remain unverified against primary sources (g2 handoff)."
+  ],
+  "nextAction": "reviewer: review the three scans, the three browser tests, the evidence table and its test, and the mutant diffs under scratchpad/g3/<name>/mutant.diff; the lock's owner decides on the regenerated package-lock.json.",
+  "lessonsConsulted": ["mem-sd-mv1audrd-013b7102"],
+  "lessonDecisions": [
+    {
+      "id": "mem-sd-mv1audrd-013b7102",
+      "decision": "not-applicable",
+      "note": "This task adds tests, one test tool and a document and builds no hook or guard that maps file writes to a project record or root, so the lesson's applies-when condition (designing or debugging root discovery of a tool-call guard) does not hold; no write to a task file was denied."
+    }
+  ]
+}

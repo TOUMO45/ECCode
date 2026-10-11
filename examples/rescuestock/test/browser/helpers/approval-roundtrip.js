@@ -16,6 +16,9 @@ import { setTimeout as sleep } from 'node:timers/promises';
 
 export const APPROVAL_PAGE_TITLE = 'Simulated payment approval — not PayPal';
 const APPROVAL_URL = /^http:\/\/127\.0\.0\.1:\d+\/fake-paypal\/checkout\/FAKE-[0-9a-f]{32}$/;
+// The Sandbox adapter against the loopback stub (test/helpers/paypal-stub.js): its approval page is the stub's (g3, labelling).
+export const STUB_APPROVAL_PAGE_TITLE = 'Simulated PayPal approval — local test stub, not PayPal';
+const STUB_APPROVAL_URL = /^http:\/\/127\.0\.0\.1:\d+\/checkoutnow\?token=[A-Za-z0-9_-]+$/;
 const ROUTES = Object.freeze({ approve: '/api/paypal/return', cancel: '/api/paypal/cancel' });
 const AUDIT_ACTIONS = Object.freeze({ approve: 'payment.return', cancel: 'payment.cancel' });
 const BUTTONS = Object.freeze({ approve: 'Approve (simulated)', cancel: 'Cancel' });
@@ -53,7 +56,9 @@ async function eventually(read, what, timeoutMs = 15000) {
  *   userId   the id of the signed-in user (users.id)
  * Returns { requestId, entry, audit, approvalUrl, landedOn }.
  */
-export async function approvalRoundTrip(page, { harness, userId, trigger, action = 'approve', label = action }) {
+export async function approvalRoundTrip(page, { harness, userId, trigger, action = 'approve', label = action, stub = false, keyboard = false }) {
+  const approvalUrlPattern = stub ? STUB_APPROVAL_URL : APPROVAL_URL;
+  const approvalTitle = stub ? STUB_APPROVAL_PAGE_TITLE : APPROVAL_PAGE_TITLE;
   assert.ok(Object.hasOwn(ROUTES, action), `action is approve or cancel, not ${action}`);
   assert.ok(Number.isInteger(userId), 'the journey knows its user id');
   const appOrigin = new URL(harness.publicUrl).origin;
@@ -69,16 +74,27 @@ export async function approvalRoundTrip(page, { harness, userId, trigger, action
     await trigger();
 
     // 2. The fake approval page, on another site than the app.
-    await page.waitForURL(APPROVAL_URL, { timeout: 15000 });
+    await page.waitForURL(approvalUrlPattern, { timeout: 15000 });
     const approvalUrl = page.url();
     const approvalOrigin = new URL(approvalUrl).origin;
     assert.notEqual(approvalOrigin, appOrigin, `${label}: the approval page is on another origin than the app`);
     assert.equal(new URL(approvalUrl).hostname, '127.0.0.1', `${label}: the approval page is on 127.0.0.1`);
     assert.equal(new URL(appOrigin).hostname, 'localhost', `${label}: the app is on localhost (cross-site)`);
-    assert.equal((await page.textContent('h1')).trim(), APPROVAL_PAGE_TITLE, `${label}: the approval page says it is simulated`);
+    assert.equal((await page.textContent('h1')).trim(), approvalTitle,`${label}: the approval page says it is simulated`);
 
     // 3. Press the button of this action.
-    await page.locator('button', { hasText: BUTTONS[action] }).click();
+    if (keyboard) {
+      // NFR2 keyboard-only run: Tab to the button of this action on the approval page and press Enter; no pointer is used.
+      let reached = false;
+      for (let i = 0; i < 12 && !reached; i += 1) {
+        await page.keyboard.press('Tab');
+        reached = await page.evaluate((text) => (document.activeElement?.textContent ?? '').includes(text), BUTTONS[action]);
+      }
+      assert.ok(reached, `${label}: Tab reaches "${BUTTONS[action]}" on the approval page`);
+      await page.keyboard.press('Enter');
+    } else {
+      await page.locator('button', { hasText: BUTTONS[action] }).click();
+    }
 
     // 4. Back on the app origin.
     try {
