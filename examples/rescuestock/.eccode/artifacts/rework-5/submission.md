@@ -1,6 +1,65 @@
 # phase:rework-5: submission
 
-Author: delivery-lead (run `run-mv43fvlo-01d19015`). Gate: `phase:rework-5`. Date: 2026-10-11. Iteration 1.
+Author: delivery-lead (iteration 1: run `run-mv43fvlo-01d19015`; iteration 2: run `run-mv44g7s0-01c2245f`). Gate: `phase:rework-5`. Date: 2026-10-11.
+
+**Iteration 2** responds to review `rev-mv44amic-012cf420`. The iteration 2 section comes first. The iteration 1 text follows it, unchanged except for markers where iteration 2 supersedes it.
+
+## Iteration 2: response to rev-mv44amic-012cf420
+
+- **The review:** the technical review `rev-mv44amic-012cf420` (on `sub-mv43raev-013fd872`) requested changes:
+  - **TR-R5-1 (major):** the `refund_order` status assertion was too loose.
+  - **TR-R5-2 (minor):** a wrong citation.
+  - **TR-R5-3 and TR-R5-4:** info.
+  - The reviewer found the lost-response half, the phase criterion, the lessons decision and "nothing weakened" met.
+- **The rework:**
+  - The orchestrator reset `rework-5`. Second claim, handoff **`ho-mv44fohe-01197e16`**.
+  - Only `test/api/admin-basic.test.js` changed, committed in **`8542265`** (`git show 8542265 --stat`: 1 file, +9/-3).
+  - `test/api/lost-response.test.js` is byte-identical to `0c7b37b` (sha256 `cd21749c…`, unchanged from iteration 1).
+- **Still test-only:**
+  - `git diff --stat 0c7b37b -- src` is empty, and so is `git diff --stat HEAD -- src test`.
+  - The working tree holds only `.eccode` record changes and the other delivery-lead's `.eccode/artifacts/phase-f/`.
+- **Line numbers moved.** The edit adds 4 lines above the old L403. In the final file:
+  - the pins the review asked for at "L403" are at **L407-L408**;
+  - the comment it cited at "L407" is at **L412-L413**.
+
+### Every finding of rev-mv44amic-012cf420
+
+| Finding | Severity | Response | Change or record | Evidence |
+|---|---|---|---|---|
+| **TR-R5-1:** the `refund_order` subtest asserted only `notEqual 'refund_requested'`, so a provider-rejected refund recorded as `refunded` (mutant MB) passed the whole suite | major | **Resolved** | `admin-basic.test.js`. The `notEqual` was replaced by two exact pins:<br>- **L407:** `assert.equal(refundedOp.status, 'refund_failed')`;<br>- **L408:** `assert.equal(refundedOp.last_error_code, 'INVALID_RESOURCE_ID')`. This is the review's optional item 2.<br>**The code is deterministic.** The fake answers an unknown capture id with `notFound()` = `rejected(404, 'INVALID_RESOURCE_ID')` (`src/payments/fake.js` L149). `calls.js` L296 stores it through `safeCode` (L44), which keeps a well-formed issue string.<br>**The comment (L403-L405)** cites provider call protocol section 4 (`rejected` -> the call fails and the mapped transition runs) and saga step 5 (failed refund -> `refund_failed`, which escalates).<br>**The status pin is what kills MB.** MB keeps the issue code, so the code pin alone would not catch it. The code pin also tells a rejected refund apart from the FAILED-status 200 path that `admin-refund-order.test.js` L250 covers.<br>**Review item 3:**<br>- the MB run is red on the new test;<br>- admin-basic alone and `npm test` (under the lock) are green on the final tree.<br>**Review item 4:** no source change. | **MB killed** (engineer, fresh scratch dir `f4-private/rework5-mb`; the diff is printed first in the log): ev:ev-mv44crd8-01991c3c. **failed as intended: 18 tests, 17 pass, 1 fail**, `refund_order` (log L110-L127: expected `'refund_failed'`, actual `'refunded'`).<br>**Engineer green:** ev:ev-mv44d1xi-015aef32 (18/18); ev:ev-mv44f9kb-01db671f (`npm test` under the lock, 2267/2259/0/8).<br>**Mine:** ev:ev-mv44h4jb-01035f22 (18/18) and ev:ev-mv44l9zt-01799632 (`npm test` under the lock, 2267/2259/0/8). |
+| **TR-R5-2:** the comment cited "FU-42 / SEC-11" for "one refund per captured order" | minor | **Resolved** | **L412-L413** now cite spec Sender table, refund row (sent once by the handler right after the commit), spec Admin routes > `refund_order`, and the provider call protocol's deterministic key.<br>**L402-L403** add the key form `so:<supplierOrderId>:<kind>:<attempt>`.<br>`grep -n "FU-42\|SEC-11" test/api/admin-basic.test.js` now finds SEC-11 only in three places:<br>- the file header (L8);<br>- the RS-37 title (L191);<br>- the title of the enclosing fault-routes `describe` (L232).<br>Those are the fault-route and audit-naming uses SEC-11 is for, not a citation for the one-refund rule. FU-42 is not cited anywhere in the file. | `git show 8542265 -- test/` |
+| **TR-R5-3:** the exact RS-25 trail pins "B is sent without a read", while ARCH-26 (2) and saga step 6 literally say intent calls "(queued or started)" are read after a takeover | info | **Left for the spec owner. No change to this gate.** | **Proposed decision, for the orchestrator to record or route to the product-architect:**<br>- **Title:** "RS-25: a queued capture call is not read after a takeover".<br>- **Decision:** the current behaviour stands. After a lease takeover, the holder reads provider state only for capture calls that are `started` or `unknown`. A `queued` call (`started_at IS NULL`) is sent without a prior read.<br>- **Rationale:** a queued call is provably unsent, because a send needs the start CAS (protocol step 2, Sender table). `captureLoop` relies on this (`saga.js` L577-L578). FU-41 (a) scopes the new read to `unknown`, token-less calls. The pre-rework approved trail already pinned this.<br>- **Follow-up:** when the spec is next revised, reword saga step 6 and ARCH-26 (2) to "started or unknown".<br>I have **not** recorded this decision. That belongs to the spec owner through the orchestrator. | reviewer: ev:ev-mv43uk3i-01e8e95a |
+| **TR-R5-4:** the surviving round-1 engineer mutant's source is gone (its scratch directory was reused) | info | **Resolved going forward**, with a caveat | **Rule, now in force for this delivery:**<br>- every mutant gets a fresh scratch directory of its own, never reused;<br>- its diff is kept as a file in that directory **and** printed at the top of the evidence log, so the diff outlives the session scratchpad.<br>The round-2 handoff states the rule, and MB follows it: `rework5-mb/mutant-MB.diff`, also at log L4-L14 of ev:ev-mv44crd8-01991c3c. I checked that the diff file matches the log: a one-line change at `calls.js` L296, `'refund_failed'` -> `'refunded'`.<br>**Engineer's caveat, disclosed:** only MB's diff is saved.<br>- The round-1 mutants r5a, r5b and r5c each had their own directory, but their diffs were not saved. Only their evidence logs and labels describe them.<br>- r5c's first "send twice" mutant (ev:ev-mv43b7zh-015445ff) is still unrecoverable.<br>The review already accepted its explanation against `calls.js` L312/L364. | ev:ev-mv44crd8-01991c3c; handoff `ho-mv44fohe-01197e16` |
+
+### Iteration 2 evidence
+
+| Who | Evidence | Command | Result |
+|---|---|---|---|
+| engineer | ev:ev-mv44crd8-01991c3c | MUTANT MB (`calls.js` L296 `refund_failed` -> `refunded`, private scratch copy): admin-basic | **failed as intended:** 18 tests, 17 pass, 1 fail (`refund_order`, expected `'refund_failed'`, actual `'refunded'`) |
+| engineer | ev:ev-mv44d1xi-015aef32 | `admin-basic.test.js` alone | passed: 18/18 |
+| engineer | ev:ev-mv44f9kb-01db671f | `flock /tmp/rescuestock-suite.lock npm test` | passed: 2267 tests, 2259 pass, 0 fail, 8 skipped |
+| **delivery-lead** | **ev:ev-mv44h4jb-01035f22** | `admin-basic.test.js` alone (the engineer's command, verbatim) | **passed: 18 tests, 18 pass, 0 fail, 0 skipped, 0 todo** |
+| **delivery-lead** | **ev:ev-mv44l9zt-01799632** | `flock /tmp/rescuestock-suite.lock npm test` (decision `dec-mv43s14b-01addb18`, `--timeout 1800`) | **passed: 2267 tests, 2259 pass, 0 fail, 8 skipped, 0 todo; suite 101.6 s.** NFR5 posttest: 7130 requests, p50 3.0 ms, p95 61.7 ms, ok. The 185 s wall time includes about 84 s waiting on the lock, which the phase F delivery-lead's concurrent `npm test` (ev:ev-mv44j3fw-01fb2787) held. |
+
+- **Same tree:** my two runs and the engineer's three record the same tree digest, `a9aba38c…`.
+- **The suite lock worked as decided:** the two full suites ran one after the other, not side by side, and neither shows a timing failure. Iteration 1's SEC-B-1 flake does not recur.
+- **The 8 skips** are the existing fake-harness provider-contract cases.
+
+### Artifacts of iteration 2
+
+- **Artifacts:** this file and the same two test files as in iteration 1, re-hashed.
+  - `test/api/lost-response.test.js`: unchanged (sha256 `cd21749c…`).
+  - `test/api/admin-basic.test.js`: now sha256 `0af4d6de…` (was `261761d4…`).
+- **Acceptance criteria:** with TR-R5-1 resolved, `task:rework-5` is now met in full. The admin-basic half pins the exact result state, and the reverted behaviour is shown red by MB, by the round-1 mutants ev:ev-mv43b3lz-01563942 and ev:ev-mv43bm23-01f616d9, and by the before-run ev:ev-mv439gxz-01147594. The other criteria are unchanged from iteration 1.
+- **Lessons:** the round-2 handoff again records `mem-sd-mv1audrd-013b7102` as not-applicable (one test file edited; no hook or guard built). I agree.
+- **Live suites and network:**
+  - No live suite was run. My evidence commands ran under `env -u RS_LIVE_MODEL -u RS_LIVE_PAYPAL`.
+  - Network was 127.0.0.1 only, through `test/helpers/net-guard.js`.
+- **No commits by me.** The only file I changed is this one.
+
+---
+
+*The iteration 1 text follows.*
 
 ## Why this rework exists
 
@@ -26,7 +85,7 @@ Author: delivery-lead (run `run-mv43fvlo-01d19015`). Gate: `phase:rework-5`. Dat
   - The handoff states that no `src` file, fixture or f4 file was touched, and that no live suite was run.
 - **Submitted artifacts:** this file and the two test files. Both test files are byte-identical to `0c7b37b`:
   - `lost-response.test.js`: sha256 `cd21749c…`
-  - `admin-basic.test.js`: sha256 `261761d4…`
+  - `admin-basic.test.js`: sha256 `261761d4…` (iteration 1; in iteration 2 it is `0af4d6de…`, commit `8542265`)
 
 ## What changed in the two tests (checked against the diff)
 
@@ -62,6 +121,8 @@ Author: delivery-lead (run `run-mv43fvlo-01d19015`). Gate: `phase:rework-5`. Dat
 - **Title:** now says the call "is committed and sent once by the handler".
 
 ### Observations for the reviewer (no change made; tests are not mine to edit)
+
+> **Superseded in iteration 2.** Observation 1 became TR-R5-1 and observation 2 became TR-R5-2. Both are resolved in `8542265`; see the iteration 2 section above. The `notEqual 'refund_requested'` assertion described under "What changed" is now `equal 'refund_failed'` plus `equal last_error_code 'INVALID_RESOURCE_ID'` (L407-L408).
 
 1. **The operation status is asserted only as `notEqual 'refund_requested'`.** The test does not pin it with `equal 'refund_failed'`.
    - The before-log (`ev-mv439gxz-01147594`, line 116) shows the actual status is `refund_failed`. The fake provider refuses the hand-made capture id `FAKE-CAP-1`.
