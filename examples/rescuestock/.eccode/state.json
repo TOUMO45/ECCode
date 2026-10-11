@@ -1,6 +1,6 @@
 {
-  "seq": 1099,
-  "lastHash": "0c5d002f952471d87c6d2ce8b4cd6d7587172f88243f4092857b74434635a6e4",
+  "seq": 1102,
+  "lastHash": "79c5b24795093118744922b8a14b98a7a14628f95fea82a9e9aa2850fc592f79",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -3968,8 +3968,8 @@
     "phase:e-payments": {
       "id": "phase:e-payments",
       "kind": "phase",
-      "status": "submitted",
-      "iterations": 0,
+      "status": "changes_requested",
+      "iterations": 1,
       "authors": [
         "delivery-lead"
       ],
@@ -4288,8 +4288,31 @@
           "notes": "Phase E (e0-e6, 11 completions). Delivery-lead runs on clean HEAD 5e1895b: npm test 2087/2079 pass/0 fail/8 skipped, ECCODE_EVAL 200/200, p95 59.7 ms ev:ev-mv3vd6z8-0180d6eb; browser 10/10 ev:ev-mv3vdqgz-01b92989; plan commands e0 160/160 ev:ev-mv3ve6o0-012dc1a7, e1 487/480/7 skipped ev:ev-mv3vedbb-01689109, e2 92/92 ev:ev-mv3veuba-01656aaa, e3 96/96 ev:ev-mv3vew5b-01e1ae03, e4 71/71 ev:ev-mv3vfa8l-0140dd3a, e5 166/166 ev:ev-mv3vfazx-016842cc, e6 npm test + browser ev:ev-mv3vhgf6-01393dc9. All payments simulated (DB-backed fake or loopback stub); no PayPal host contacted; LIVE-P1/LIVE-P2/OQ-D5 Unverified. rework-4 approved before this submission (dec-mv3u4zr4-0165c54d)."
         }
       ],
-      "reviews": [],
-      "openFindings": [],
+      "reviews": [
+        "rev-mv3xhtuz-017cfbef"
+      ],
+      "openFindings": [
+        {
+          "id": "TR-E-1",
+          "severity": "major",
+          "status": "open",
+          "title": "(= SEC-E-1) A late, validly signed PAYMENT.AUTHORIZATION.CREATED moves capture_pending and unknown(prev authorized|capture_pending) back to authorized: a pending purchase is compensated, and an unknown capture is re-sent without a read",
+          "detail": "Where:\n- src/services/webhooks.js L54 maps 'PAYMENT.AUTHORIZATION.CREATED' to target 'authorized' with no `from` list.\n- L261-L264 then admit every edge into authorized that the payment table allows. That includes capture_pending -> authorized (an edge that exists for CAPTURE.DENIED) and unknown -> authorized when prev_status is authorized or capture_pending (effective === target, or canTransition(capture_pending, authorized)).\n- The spec maps this event 'pending -> authorized' (spec Webhooks, events list).\n- e3's mapping table (test/api/webhooks.test.js L521-L527) has rows for authorization_pending, approved, unknown(prev approved), authorized, voided, created and unknown(prev refund_pending). It has none for capture_pending or unknown(prev authorized), so no test notices.\n\nMy reproduction (ev:ev-mv3wp57z-01f9ce7d, which passes when the defect is observed):\n- P1: fault capture_pending on A, then execute. A is capture_pending. A signed late AUTHORIZATION.CREATED is answered 200 applied, and A becomes authorized. Over the next ticks the plan is taken over and compensated (non_executable CAPTURE_FAILED): A's void is refused because a capture is pending, resolveRejectedVoid puts A back in capture_pending, and B is voided. When the provider completes A's capture, A is captured and then refunded: the buyer is charged and refunded, and the purchase is lost.\n- P2: fault lost_response:capture on A, so A is unknown(prev authorized) with the capture applied. The late event moves A to authorized, while the capture call stays unknown. With get_authorization and get_order failing (http 500), the next tick takes the plan over and the saga re-sends capture:1 with no successful read. Only the fake's PayPal-Request-Id replay prevents a second capture (capture:A:replayed).\n- Security reproduced both (W-ORDER S2, S3; ev:ev-mv3w48uy-0190adfa, a reproduction run).\n\nMoney was neither lost nor doubled in any run. Layer 3 of 'why no double capture' (read before any re-send, spec Payment saga step 6) is bypassed, leaving layers 4-5, which are LIVE-DEPENDENT for the Sandbox (request-id retention, final_capture). PayPal does deliver events late and out of order: it retries for days, and this route answers 503 whenever verification is unreachable.",
+          "evidence": [
+            "ev:ev-mv3wp57z-01f9ce7d",
+            "ev:ev-mv3wopms-010bc400",
+            "ev:ev-mv3w48uy-0190adfa",
+            "artifact:src/services/webhooks.js#L54",
+            "artifact:src/services/webhooks.js#L261-L264",
+            "artifact:test/api/webhooks.test.js#L521-L527",
+            "artifact:src/services/saga.js#L547-L559",
+            "artifact:.eccode/artifacts/design/spec.md#webhooks",
+            "artifact:.eccode/reviews/drafts/phase-e-security-1.md#sec-e-1-major-a-late-paymentauthorizationcreated-rolls-a-capture-back-to-authorized"
+          ],
+          "recommendation": "Owner: backend-engineer, through an e3 reset inside this phase (webhooks.js and webhooks.test.js are e3's).\n\nResolved when all of these hold:\n1. PAYMENT.AUTHORIZATION.CREATED gets from: ['approved', 'authorization_pending']. 'approved' stays because the event can beat the return handler's own answer. The existing effective = prev_status rule keeps unknown(prev approved | authorization_pending) resolving.\n2. capture_pending, unknown(prev authorized), unknown(prev capture_pending) and every other origin are answered 200 flagged TRANSITION_NOT_ALLOWED, with no column change and no audit.\n3. The e3 mapping table gains those three rows, named after this finding.\n4. My probe tr-probe-webhook-order.test.js and security's W-ORDER are re-run unchanged, and their P1/P2 and S2/S3 'OBSERVED'/REPRO assertions now fail. S1 and S4 still pass.\n5. The e3 plan command, npm test and npm run test:browser are green.\n\nThe defence in depth for saga.js is TR-E-4 (f2).",
+          "reviewId": "rev-mv3xhtuz-017cfbef"
+        }
+      ],
       "approvedBy": null,
       "approvedSubmission": null,
       "escalation": null,
@@ -18696,6 +18719,27 @@
       "tree": "5f628506540c9cbe22846492e482c9a5d765f40d926ad33ae47e490e34153603",
       "recordedBy": "technical-reviewer",
       "at": "2026-10-11T14:23:42.272Z"
+    },
+    "ev-mv3xewar-0170b19e": {
+      "id": "ev-mv3xewar-0170b19e",
+      "kind": "command",
+      "label": "TR-E killed mutants re-run without the two survivors (M2, M6 are in ev-mv3wo4q9): amount source, capture fence, lease guard, start CAS, takeover exclusion, read-before-resend, claim checks, void rule, resolution hooks, webhook dedupe, RS-20 second capture, listener CSP",
+      "command": "node /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/tre/tr-mutate-e1.mjs C0-control C1-control-browser-journey M1-create-amount-from-operation-row M2b-capture-amount-one-cent-more M3-capture-result-fence-removed M4-lease-guard-ignores-lease_until M5-start-CAS-ignores-started_at M7-takeover-ignores-pending-and-unknown M8-unknown-capture-resent-without-reading-CAPTURED M9-claim-ignores-AUTHORIZATION_PENDING M10-claim-expiry-refusal-without-void-rule M11-void-rule-voids-in-flight-authorize-locally M12-void-rule-queues-no-provider-void M13-resolution-hook-removed-from-authorize-record M14-resolution-hook-removed-from-webhook M15-webhook-dedupe-over-all-rows M16-webhook-pre-verify-dedupe-removed M17-saga-sends-a-second-capture-with-a-new-request-id M18-listener-csp-form-action-without-app-origin",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 751706,
+      "log": ".eccode/evidence/ev-mv3xewar-0170b19e.log",
+      "logSha256": "7051703fe93d6da2f02690be45c6c72e127587cd9013bec075f0e2c0072c5afc",
+      "logFileSha256": "6bca619aa4512059d1566ddc26edf928166dabe0088c3f0d83b8fbe2b7288133",
+      "outputTail": "   not ok: RS-23: duplicates\n   not ok: ARCH-22: a cancelled operation turning authorized by a webhook queues so:<id>:void:1 exactly once (real void port); a replay and a second event add none\n   not ok: ARCH-22: the recorder port sees exactly one intent; an operation without cancel_requested_at queues none\n   not ok: ARCH-22: unknown with a lost authorize and a denied capture also pass through the hook\n   not ok: ARCH-22: the move, the row, the audit and the hook are one transaction: a failing hook rolls everything back and PayPal's retry then succeeds\nM15-webhook-dedupe-over-all-rows: KILLED exit 1 tests 96 pass 89 fail 7 (test/api/webhooks.test.js)\n   not ok: SEC-6: invalid rows never count as \"seen\": the same forged id sent twice is two invalid rows and a genuine event with that id is still applied (T13)\n   not ok: SEC-6: cheap pre-checks reject before any provider call\n   not ok: RS-24: a tampered body, a wrong secret and a garbage signature are invalid rows, 400, and no transition\n   not ok: RS-24: verification unreachable (HTTP 500, 429, 422 at the provider) -> `unverified` row, 503 PROVIDER_UNAVAILABLE, no transition; PayPal's retry of the same id is then applied\n   not ok: RS-24: a missing webhook id (rejected WEBHOOK_ID_MISSING), an adapter that throws and a missing adapter are `unverified` 503; a rejected INVALID_ARGUMENT is invalid 400; ok verifie\n   not ok: RS-24: verification\nM16-webhook-pre-verify-dedupe-removed: KILLED exit 1 tests 96 pass 95 fail 1 (test/api/webhooks.test.js)\n   not ok: RS-23: a valid transmission id seen twice is applied once; the replay is 200 duplicate with no row, no provider call, no audit and no change\n   not ok: RS-23: duplicates\nM17-saga-sends-a-second-capture-with-a-new-request-id: KILLED exit 1 tests 13 pass 11 fail 2 (test/integration/rs20-two-process-execute.test.js)\n   not ok: RS-20: round 1: one 202 and nine 200 {claimed:false}; fake_paypal_calls gained exactly N get_authorization + N capture, request ids so:<id>:capture:1\n   not ok: RS-20: round 2: one 202 and nine 200 {claimed:false}; fake_paypal_calls gained exactly N get_authorization + N capture, request ids so:<id>:capture:1\n   not ok: RS-20 / F-TR-8: two OS processes, five concurrent execute calls each, one claim, exactly N reads and N captures\nM18-listener-csp-form-action-without-app-origin: KILLED exit 1 tests 2 pass 0 fail 2 (test/browser/journey-happy.test.js)\n   not ok: RS-31(a): at 360x800 two approvals (one after a cancel) end with the plan executed and the receipt recorded\n   not ok: RS-31(a): at 1280x800 two approvals (one after a cancel) end with the plan executed and the receipt recorded\n   not ok: RS-31(a): a customer buys the A + B plan through the fake PayPal approval page\nmutation summary: all mutants killed, controls green\n",
+      "gate": "phase:e-payments",
+      "task": null,
+      "tree": "5f628506540c9cbe22846492e482c9a5d765f40d926ad33ae47e490e34153603",
+      "recordedBy": "technical-reviewer",
+      "at": "2026-10-11T14:36:23.558Z"
     }
   },
   "reviews": {
@@ -24836,6 +24880,310 @@
       "reviewer": "technical-reviewer",
       "at": "2026-10-11T13:34:53.461Z",
       "submissionId": "sub-mv3ussgo-0158904e"
+    },
+    "rev-mv3xhtuz-017cfbef": {
+      "decision": "changes_requested",
+      "summary": "First technical review of phase E: submission sub-mv3vs3h1-0181fd20 (76 artifacts), iteration 1 of 3. I bound the review to the artifacts by the sha256 recorded in the submission: all 76 match, and nothing under src/, test/, public/, scripts/ or package.json changed between 5e1895b and HEAD 38145b5 (records only). All my test runs carry the submission's tree digest 5f628506...53603.\n\nWhat I read:\n- submission.md, handoff.json, and all eleven e0-e6 handoffs;\n- the plan's phase E tasks and criteria;\n- the spec's payment sections: port and Outcome, wire mapping, 004/005, listener, transaction discipline, provider call protocol and sender table, return handler, void rule, saga, reconciler, webhooks, execute check order;\n- followups.md (phase E section, FU-33..FU-40);\n- the cited decisions plus dec-mv3vui7s-014f6e7c, dec-mv3vuigy-0109feb6 and dec-mv3vuiqw-01d3c5c9;\n- the code of calls.js, payments.js, void-rule.js, saga.js, reconciler.js, webhooks.js, fake.js, sandbox.js (call path), db.tx, app.js wiring and the execute route;\n- the security-reviewer's FINAL draft phase-e-security-1.md, folded in below.\n\nSafety: every command ran with PATH=/usr/local/bin:/usr/bin:/bin. I never set RS_LIVE_MODEL or RS_LIVE_PAYPAL and never ran the live PayPal suite. No PayPal host was contacted (net guard on every suite run; payments only against the fake or the loopback stub). Every mutant and probe ran in a scratch copy; the reviewed tree was never written.\n\nMy runs after the submission, all green unless stated:\n- npm test: 2087 tests, 2079 pass, 0 fail, 8 skipped (the 7 fake-harness OAuth/wire scenarios and fake x PROVIDER_BUSY), 0 todo. ECCODE_EVAL {\"passed\":200,\"total\":200}. NFR5 p95 62.8 ms over 5227 requests (ev:ev-mv3vxrpc-0149549b). The RS-39 uploads-retention timer test passed, so no re-run under dec-mv3tqbn4-01d43152 was needed; it also passed in the e6 run.\n- npm run test:browser: 10/10, including RS-31(a) at 360 and 1280 px, with the log line's userId 9 at both widths (ev:ev-mv3vyrjf-019df6a9).\n- Plan commands, verbatim:\n  - e0: 160/160 (ev:ev-mv3vzw0q-0181f487);\n  - e1: 487 tests, 480 pass, 7 skipped by design (ev:ev-mv3w02vw-01d44e58);\n  - e2: 92/92 (ev:ev-mv3w0fej-015bce20);\n  - e3: 96/96 (ev:ev-mv3w0hhh-014c66ac);\n  - e4: 71/71 (ev:ev-mv3w0x9f-015d4e13);\n  - e5: 166/166 (ev:ev-mv3w0y8o-01eb4845);\n  - e6: npm test 2087/2079/0 fail/8 skipped with p95 63.0 ms, then the browser suite 10/10 (ev:ev-mv3w37b9-011bb315).\n- Artifact coverage: 74 declared = 74 changed in owned paths = 74 submitted; 0 undeclared, 0 outside ownership (ev:ev-mv3w3fse-015bbcde).\n- TR-R4-3 probe: db.tx refuses an async function (TX_ASYNC), and 0 of 2019 provider-method entries happened inside an open transaction, across the unit+api+integration suite and the browser journey, with a positive control (ev:ev-mv3wykva-018b0000). An earlier run of the same probe failed only because my copy lacked .gitignore (ev:ev-mv3wr9gl-01927595, not cited for any criterion).\n- 19 mutants of my own on the money paths. 17 are killed and both controls are green (ev:ev-mv3xewar-0170b19e). The first full run (ev:ev-mv3wo4q9-014c6847) fails by design because two mutants survive (M2, M6, see TR-E-4 and TR-E-5); it is cited only in those findings.\n- Probe P1/P2 (ev:ev-mv3wp57z-01f9ce7d, also ev:ev-mv3wopms-010bc400). It passes when it OBSERVES the defect of TR-E-1, so it is cited only there.\n\nDecision: changes requested, because of one major finding.\n\nTR-E-1 (= SEC-E-1, major): a validly signed but late PAYMENT.AUTHORIZATION.CREATED moves capture_pending, or unknown(prev authorized), back to authorized. The spec maps that event pending -> authorized only. Reproduced independently by me and by security:\n- a purchase whose capture is merely pending is compensated, so the buyer is charged and refunded and the purchase is lost;\n- an unknown capture is re-sent without a successful read.\nMoney was neither lost nor doubled, because the PayPal-Request-Id replay held.\n\nWhy changes requested now rather than an approval with a routed follow-up: the phase is not approved yet, so the orchestrator can reset e3 (webhooks.js) and e2 inside this phase. After an approval no remaining task owns webhooks.js and the rework limit is used. The fix is small and test-shaped.\n\nAlso to fix in the same round:\n- TR-E-2 (= SEC-E-2, minor): the public return route is not rate-limited per user and costs one provider read per hit. It rides the e2 reset.\n- TR-E-3 (minor): the shared approval round-trip helper accepts a log line without userId. Owner: e6 if it is reset, else f4.\n\nInfo: TR-E-4 to TR-E-8 (two mutation survivors, contract deltas incl. four unlisted ones, the security info items SEC-E-I1..I5, TR-R4-3 confirmed).\n\nEverything else I checked holds:\n- the call protocol's queue/start/record CAS and fences;\n- PayPal-Request-Id = operation key on every mutating call;\n- read-before-resend on every reconciler path;\n- a claim with no provider call in its transaction;\n- the pause and takeover exclusion (F-TR-7);\n- the reconciler tick order;\n- the void rule and its hooks;\n- webhook dedupe among valid rows;\n- the two-process RS-20 test, which bites on a second capture;\n- the cross-site journey, whose CSP assertion bites.\n\nDecisions judged:\n- FU-34 (dec-mv3vuigy-0109feb6): accepted. The backstop is tested (reconciler.test.js L385), and security's P-FU34 shows no loss or doubling in the window.\n- FU-35 (dec-mv3vui7s-014f6e7c): accepted. The drain uses the pre-increment failed_drains, which matches the spec's formula.\n- Four security residuals (dec-mv3vuiqw-01d3c5c9): unchanged by this phase.\n- dec-mv3abkne-01161cf3, dec-mv3abkv0-011839e9, dec-mv3uqze6-0196f887 and dec-mv38g19z-01f0a99f: accepted.",
+      "criteria": [
+        {
+          "id": "task:e0-paypal-stub-contract",
+          "description": "PayPal loopback stub, fake webhook signer and the shared PaymentProvider contract suite (test-engineer owned)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3vzw0q-0181f487",
+            "ev:ev-mv3w02vw-01d44e58",
+            "artifact:.eccode/artifacts/phase-e/submission.md#what-the-phase-delivers",
+            "artifact:test/helpers/paypal-stub.js#L1"
+          ],
+          "notes": "The e0 plan command passes 160/160, including the reference adapter and the leaky negative control. In my e1 run, the suite runs against the fake and the Sandbox adapter (216 tests, 209 pass, 7 skipped by design: the fake has no OAuth or wire). The stub's approval page sends one CSP. The stub's interpretations (submission delta 19) are acceptable; they are the spec's guesses and stay LIVE-DEPENDENT (LIVE-P1, OQ-D5)."
+        },
+        {
+          "id": "task:e1-payment-adapters",
+          "description": "Payment adapters: DB-backed fake with faults and replay model, fake approval listener with its own CSP, Sandbox REST v2 adapter (stub-verified), merchant mapping",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3w02vw-01d44e58",
+            "ev:ev-mv3xewar-0170b19e",
+            "ev:ev-mv3wykva-018b0000",
+            "artifact:src/payments/sandbox.js#L159-L184",
+            "artifact:src/payments/fake.js#L368-L407",
+            "artifact:src/payments/provider.js#L73-L76",
+            "artifact:src/http/headers.js#L12-L17"
+          ],
+          "notes": "The e1 plan command passes 487/480/7 skipped by design.\n\nWhat I checked in the code:\n- The Sandbox adapter sends paypal-request-id = requestId on every call that carries one (sandbox.js L169), and checkArguments refuses a mutating call without a well-formed requestId before anything is sent (provider.js L76). One AbortSignal covers OAuth and the call.\n- The fake runs each call in one BEGIN IMMEDIATE: fault, replay by (merchant_key, request_id), effect, then a fake_paypal_calls row.\n\nWhat my runs show:\n- Mutant M18 (listener CSP form-action without the app origin) is killed by the browser journey (2/2 red).\n- The TR-R4-3 probe counted 2019 entries into the fake and Sandbox provider methods across the suites, none inside a transaction.\n\nThe fake and stub interpretations (deltas 18, 19, 20) are acceptable. The adapter remains unverified against real PayPal (LIVE-P1, LIVE-P2)."
+        },
+        {
+          "id": "task:e2-payment-flow",
+          "description": "Provider call protocol and payment flow: paypal/create, return and cancel handlers, abandon, void rule with the resolution hook, order presentation and receipt",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3w0fej-015bce20",
+            "ev:ev-mv3xewar-0170b19e",
+            "ev:ev-mv3wykva-018b0000",
+            "artifact:src/services/calls.js#L130-L156",
+            "artifact:src/services/calls.js#L162-L200",
+            "artifact:src/services/calls.js#L315-L327",
+            "artifact:src/services/calls.js#L348-L390",
+            "artifact:src/services/void-rule.js#L119-L137",
+            "artifact:src/services/payments.js#L194-L233",
+            "artifact:test/api/amount-tampering.test.js#L106"
+          ],
+          "notes": "The e2 plan command passes 92/92.\n\nThe protocol matches spec section 2-4:\n- Start is its own transaction with CAS status = 'intent' AND started_at IS NULL, and status = 'unknown' AND send_token IS NULL only for a caller that resolved the call (L139-L147).\n- Send happens outside any transaction under a deadline of the timeout + 1 s (L370).\n- Record is a CAS on id, send_token and status 'intent', with the mapped transition and an optional fence in the same transaction. Zero rows log provider.result_fenced.\n- Every sender passes requestId = call.operation_key (L318-L326). The capture sender in saga.js does the same.\n\nMutants killed:\n- M1: create amount from the operation row (2 RS-19 tests red);\n- M5: start CAS without started_at (the protocol unit test red);\n- M11: in-flight authorize voided locally;\n- M12: no provider void queued (20 red);\n- M13: the resolution hook removed from the authorize record.\n\nThe return handler's steps 1-6 match the spec. A foreign token is 404 before any provider call.\n\nSEC-E-2 (TR-E-2, minor) concerns the return route's provider reads and rides an e2 reset with TR-E-1. Its acceptance criteria are otherwise met."
+        },
+        {
+          "id": "task:e3-webhooks",
+          "description": "Verified PayPal webhooks: pre-checks, per-IP limit, signature verification, dedupe among valid events, merchant-scoped mapping",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv3w0hhh-014c66ac",
+            "ev:ev-mv3xewar-0170b19e",
+            "artifact:src/services/webhooks.js#L54",
+            "artifact:src/services/webhooks.js#L261-L264",
+            "artifact:test/api/webhooks.test.js#L521-L527",
+            "artifact:.eccode/artifacts/design/spec.md#webhooks"
+          ],
+          "notes": "The e3 plan command passes 96/96.\n\nThese parts are sound:\n- the pre-checks, the per-IP limit and the byte-exact verification;\n- dedupe only among valid rows: M15 (dedupe over all rows) and M16 (pre-verify dedupe removed) are killed;\n- the hook in the same transaction: M14 is killed.\n\nNot met: the acceptance criterion 'transitions only as states.js allows (CAS), else flagged', read with the spec's mapping 'PAYMENT.AUTHORIZATION.CREATED (pending -> authorized)'. The event has no `from` list (L54), so capture_pending and unknown(prev authorized|capture_pending) are moved to authorized. The mapping table (L521-L527) has no row for either. See TR-E-1."
+        },
+        {
+          "id": "task:e4-saga-reconciler",
+          "description": "Execute claim and capture saga (steps 1-4) with lease fencing, and the reconciler (stale intents, read-before-resend, pending polls, expiry, sender table, housekeeping)",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3w0x9f-015d4e13",
+            "ev:ev-mv3xewar-0170b19e",
+            "ev:ev-mv3wykva-018b0000",
+            "artifact:src/services/saga.js#L137-L209",
+            "artifact:src/services/saga.js#L403-L452",
+            "artifact:src/services/saga.js#L515-L569",
+            "artifact:src/services/reconciler.js#L161-L209",
+            "artifact:src/services/reconciler.js#L372-L412",
+            "artifact:src/services/reconciler.js#L551-L600",
+            "artifact:src/db/connection.js#L84-L111",
+            "artifact:.eccode/artifacts/design/spec.md#reconciler-servicesreconcilerjs"
+          ],
+          "notes": "The e4 plan command passes 71/71.\n\nThe claim (saga.js L137-L209) runs inside one db.tx. db.tx refuses a promise (TX_ASYNC, connection.js L94-L97), so no provider call can be awaited in it. It follows the spec's check order on stored data, then makes the conditional approved -> executing UPDATE with epoch + 1, consumes the reservation and queues capture:1 per order. The AUTHORIZATION_EXPIRED refusal commits the void rule.\n\nCaptures:\n- start under G(now), with the epoch stamped on the call;\n- record fenced by the epoch and the send_token;\n- AUTHORIZATION_ALREADY_CAPTURED turns the call unknown and pauses, resolved by reading, never guessed;\n- unknown and PENDING pause.\n\nReconciler: the tick order is 1-9 as in the spec (L563-L587).\n- Step 2 reads before every re-send on all four kinds.\n- Takeover excludes plans with capture_pending/unknown operations or a backing-off capture.\n- Housekeeping purges sessions, login failures, idempotency keys, 7-day invalid/unverified webhook rows and stale model-spend rows. Rate events are purged by retention.js hourly instead: unlisted delta, TR-E-6.\n\nMutants killed:\n- M2b (capture amount +1, 31 red);\n- M3 (result fence removed);\n- M4 (lease guard ignores lease_until);\n- M7 (takeover ignores pending/unknown);\n- M8 (unknown capture with CAPTURED read treated as CREATED);\n- M9 (claim ignores AUTHORIZATION_PENDING);\n- M10 (expiry refusal without the void rule).\n\nM6 (no pause at L531) survives: TR-E-4.\n\nThe resend-without-read path of SEC-E-1(b) needs e3's defect to occur. f2 should add the step-6 read as defence in depth (TR-E-4)."
+        },
+        {
+          "id": "task:e5-frontend-payments",
+          "description": "Payment UI: approvals per supplier with provider badges, try-again and abandon, complete purchase, receipt, supplier ready/handover, cancelled presentation, polling",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3w0y8o-01eb4845",
+            "ev:ev-mv3vyrjf-019df6a9",
+            "artifact:public/js/views/request-detail.js#L35-L56"
+          ],
+          "notes": "The e5 plan command passes 166/166, and the browser suite is 10/10 on the final tree.\n\nreturnNoticeModel follows the state (waiting / confirmed / absent). I looked at the 360 px final screenshot: receipt recorded, status 'Purchase confirmed', simulated badges.\n\nThe UI shows nothing for paypal=not_approved or check_failed (delta 6). This is an info UX note for f3 (TR-E-6). Assumption 1 is not delivered, and the fallback works (FU-39). The fixture title is FU-38."
+        },
+        {
+          "id": "task:e6-execute-concurrency-browser",
+          "description": "Two-process execute test, HTTP contract extension, opt-in live PayPal suite files, and the cross-site happy-path browser journey",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3w37b9-011bb315",
+            "ev:ev-mv3xewar-0170b19e",
+            "artifact:test/integration/rs20-two-process-execute.test.js#L129-L144",
+            "artifact:test/browser/helpers/approval-roundtrip.js#L72-L114"
+          ],
+          "notes": "The e6 plan command passes: npm test 2087/2079/0 fail/8 skipped, then the browser suite 10/10.\n\nRS-20 two-process test:\n- it asserts exactly 2N provider calls (N get_authorization + N capture), none replayed, all from the winner's pid, reads before captures, keys so:<id>:capture:1, and N fake captures;\n- my M17 (the saga sends a second capture under a new request id) turns both rounds red, so the test would fail on a second capture.\n\nThe contract table has 52 NFR6 scenarios and 0 skipped rows. 'Every route of the table is registered' and 'every registered route has a scenario' are green.\n\nThe journey is cross-site: it asserts the app on localhost, the approval page on 127.0.0.1, waitForURL on the app origin, and exactly one GET return/cancel per action. My M18 (CSP form-action without the app origin) turns both widths red, so the CSP assertion bites.\n\nThe log line's userId check in the shared helper is conditional (L99): TR-E-3, minor.\n\nThe live files refuse per file (NFR3 tests in my npm test run)."
+        },
+        {
+          "id": "phase:e-payments",
+          "description": "The PaymentProvider contract with a DB-backed fake (faults, PayPal-Request-Id replay model, fake approval listener on a different site with its own CSP) and the Sandbox REST v2 adapter verified against a loopback paypal-stub; the provider call protocol with the sender table; create/return/cancel/abandon with the void rule; the execute claim and captures with lease fencing; the reconciler (stale intents, read-before-resend, pending polls, expiry); verified webhooks; the payment UI; and the two-process execute and browser happy-path journeys.",
+          "met": false,
+          "evidence": [
+            "ev:ev-mv3vxrpc-0149549b",
+            "ev:ev-mv3vyrjf-019df6a9",
+            "ev:ev-mv3w37b9-011bb315",
+            "ev:ev-mv3w3fse-015bbcde",
+            "ev:ev-mv3xewar-0170b19e",
+            "ev:ev-mv3wykva-018b0000",
+            "artifact:.eccode/artifacts/phase-e/submission.md#criteria-task-tests-evidence",
+            "artifact:.eccode/artifacts/phase-e/submission.md#what-is-real-and-what-is-simulated",
+            "artifact:.eccode/reviews/drafts/phase-e-security-1.md#verdict"
+          ],
+          "notes": "RS-04 (create half), RS-18, RS-19, RS-20, RS-21, RS-23, RS-24, RS-25, RS-27 (payment half) and RS-31(a) are each proved by the named tests, green in my runs, against the fake or the stub only. ARCH-22, ARCH-23, F-TR-3, F-TR-11, SEC-3 and the contract suite on both adapters are likewise covered. LIVE-P1, LIVE-P2 and OQ-D5 are correctly not claimed. Artifact coverage is exact.\n\nNot met as a whole, because 'verified webhooks' and the spec's mapping are violated (TR-E-1, major). Through it, a genuine late event both loses a purchase and bypasses the read-before-resend layer of the saga."
+        },
+        {
+          "id": "lessons",
+          "description": "The verified-lesson decisions recorded by the phase's tasks are judged",
+          "met": true,
+          "evidence": [
+            "artifact:.eccode/artifacts/phase-e/submission.md#lessons"
+          ],
+          "notes": "Every phase E task and reset records mem-sd-mv1audrd-013b7102 as not-applicable. I read the record. It applies to a hook or guard that maps file writes to a project root in a repository with several records.\n\nNo phase E task designs or changes a hook, a guard or root discovery, so its 'Applies when' list does not hold, and the stated reasons are true. The refusals the agents report are raw-text readings of inline writers, which the record's 'Not applicable when' list names. So are mine: a cd plus a relative or variable path, and an inline node writer; all were redone with absolute paths or the Write tool.\n\nMy own memory searches returned only that record ('payments PayPal webhooks saga reconciler lease fencing', with --check-env) or nothing ('idempotency double capture concurrency')."
+        },
+        {
+          "id": "provider-call-protocol",
+          "description": "Queue/start/record CAS and fences under concurrency; PayPal-Request-Id = operation key on every mutating call; read-before-resend for unknown outcomes",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3xewar-0170b19e",
+            "ev:ev-mv3w0x9f-015d4e13",
+            "artifact:src/services/calls.js#L130-L156",
+            "artifact:src/services/reconciler.js#L139-L264",
+            "artifact:.eccode/artifacts/design/spec.md#provider-call-protocol-servicescallsjs-every-mutating-paypal-call"
+          ],
+          "notes": "Killed: M3, M4, M5 and M8, and M17 for RS-20.\n\nEvery re-send in the reconciler follows a read:\n- authorize: getOrder, then APPROVED without an authorization;\n- capture: CREATED, and only the lease holder re-sends;\n- void: CREATED or PENDING;\n- refund: a COMPLETED capture without a refund.\nEach re-send uses the same key through the start CAS on unknown/send_token NULL, so two reconcilers cannot both send.\n\nThe only gap is TR-E-1's path, where a webhook clears unknown without resolving the call."
+        },
+        {
+          "id": "tr-r4-3-short-transactions",
+          "description": "TR-R4-3 (rework-4): db.tx refuses async functions and no provider call runs inside a transaction anywhere in src/",
+          "met": true,
+          "evidence": [
+            "ev:ev-mv3wykva-018b0000",
+            "artifact:src/db/connection.js#L84-L111",
+            "artifact:.eccode/artifacts/design/spec.md#transaction-discipline"
+          ],
+          "notes": "Confirmed in three ways.\n\nStatically: every provider-method call site in src/ outside src/payments is an awaited call in an async function, outside any db.tx callback:\n- calls.js L370, L405 and L410;\n- payments.js L125 and L200;\n- reconciler.js L141-L333;\n- saga.js L424 and L468;\n- webhooks.js L342.\n\nDynamically: in an instrumented copy, a positive control marks a provider call made inside db.tx, and db.tx(async) throws TX_ASYNC. Across the unit+api+integration suite (2000 tests, 0 fail) and the browser journey, 0 of 2019 provider-method entries happened while a transaction was open.\n\nSEC-RW4-I4 (the GET session touch waits the busy timeout) stays accepted by dec-mv3vuiqw-01d3c5c9."
+        },
+        {
+          "id": "security-review-folded",
+          "description": "The security-reviewer's FINAL draft for phase E is folded in",
+          "met": true,
+          "evidence": [
+            "artifact:.eccode/reviews/drafts/phase-e-security-1.md#verdict",
+            "artifact:.eccode/reviews/drafts/phase-e-security-1.md#sec-e-1-major-a-late-paymentauthorizationcreated-rolls-a-capture-back-to-authorized",
+            "artifact:.eccode/reviews/drafts/phase-e-security-1.md#sec-e-2-minor-unthrottled-provider-reads-through-the-public-return-route",
+            "artifact:.eccode/reviews/drafts/phase-e-security-1.md#info",
+            "ev:ev-mv3wasl0-0199c6ae",
+            "ev:ev-mv3wcx8e-0176eb51",
+            "ev:ev-mv3w6n02-01e20cac",
+            "ev:ev-mv3wgm5s-01f3cefb",
+            "ev:ev-mv3wifuf-01eb0c2d",
+            "ev:ev-mv3wjn71-01f4dee7",
+            "ev:ev-mv3weypr-01b9ee01"
+          ],
+          "notes": "Folded as follows:\n- SEC-E-1 = TR-E-1 (major);\n- SEC-E-2 = TR-E-2 (minor);\n- SEC-E-I1..I5 = TR-E-7 (info).\n\nSecurity finds no way to change an amount, move money twice, reach another customer's payment, forge a webhook, or read a secret or payer data. Its seven class checks pass.\n\nSecurity's position is approve-with-conditions only if SEC-E-1 is routed by decision before delivery, otherwise changes required. Because the phase is still open and webhooks.js has no later owner, I take the in-phase route: changes requested."
+        }
+      ],
+      "findings": [
+        {
+          "id": "TR-E-1",
+          "severity": "major",
+          "status": "open",
+          "title": "(= SEC-E-1) A late, validly signed PAYMENT.AUTHORIZATION.CREATED moves capture_pending and unknown(prev authorized|capture_pending) back to authorized: a pending purchase is compensated, and an unknown capture is re-sent without a read",
+          "detail": "Where:\n- src/services/webhooks.js L54 maps 'PAYMENT.AUTHORIZATION.CREATED' to target 'authorized' with no `from` list.\n- L261-L264 then admit every edge into authorized that the payment table allows. That includes capture_pending -> authorized (an edge that exists for CAPTURE.DENIED) and unknown -> authorized when prev_status is authorized or capture_pending (effective === target, or canTransition(capture_pending, authorized)).\n- The spec maps this event 'pending -> authorized' (spec Webhooks, events list).\n- e3's mapping table (test/api/webhooks.test.js L521-L527) has rows for authorization_pending, approved, unknown(prev approved), authorized, voided, created and unknown(prev refund_pending). It has none for capture_pending or unknown(prev authorized), so no test notices.\n\nMy reproduction (ev:ev-mv3wp57z-01f9ce7d, which passes when the defect is observed):\n- P1: fault capture_pending on A, then execute. A is capture_pending. A signed late AUTHORIZATION.CREATED is answered 200 applied, and A becomes authorized. Over the next ticks the plan is taken over and compensated (non_executable CAPTURE_FAILED): A's void is refused because a capture is pending, resolveRejectedVoid puts A back in capture_pending, and B is voided. When the provider completes A's capture, A is captured and then refunded: the buyer is charged and refunded, and the purchase is lost.\n- P2: fault lost_response:capture on A, so A is unknown(prev authorized) with the capture applied. The late event moves A to authorized, while the capture call stays unknown. With get_authorization and get_order failing (http 500), the next tick takes the plan over and the saga re-sends capture:1 with no successful read. Only the fake's PayPal-Request-Id replay prevents a second capture (capture:A:replayed).\n- Security reproduced both (W-ORDER S2, S3; ev:ev-mv3w48uy-0190adfa, a reproduction run).\n\nMoney was neither lost nor doubled in any run. Layer 3 of 'why no double capture' (read before any re-send, spec Payment saga step 6) is bypassed, leaving layers 4-5, which are LIVE-DEPENDENT for the Sandbox (request-id retention, final_capture). PayPal does deliver events late and out of order: it retries for days, and this route answers 503 whenever verification is unreachable.",
+          "evidence": [
+            "ev:ev-mv3wp57z-01f9ce7d",
+            "ev:ev-mv3wopms-010bc400",
+            "ev:ev-mv3w48uy-0190adfa",
+            "artifact:src/services/webhooks.js#L54",
+            "artifact:src/services/webhooks.js#L261-L264",
+            "artifact:test/api/webhooks.test.js#L521-L527",
+            "artifact:src/services/saga.js#L547-L559",
+            "artifact:.eccode/artifacts/design/spec.md#webhooks",
+            "artifact:.eccode/reviews/drafts/phase-e-security-1.md#sec-e-1-major-a-late-paymentauthorizationcreated-rolls-a-capture-back-to-authorized"
+          ],
+          "recommendation": "Owner: backend-engineer, through an e3 reset inside this phase (webhooks.js and webhooks.test.js are e3's).\n\nResolved when all of these hold:\n1. PAYMENT.AUTHORIZATION.CREATED gets from: ['approved', 'authorization_pending']. 'approved' stays because the event can beat the return handler's own answer. The existing effective = prev_status rule keeps unknown(prev approved | authorization_pending) resolving.\n2. capture_pending, unknown(prev authorized), unknown(prev capture_pending) and every other origin are answered 200 flagged TRANSITION_NOT_ALLOWED, with no column change and no audit.\n3. The e3 mapping table gains those three rows, named after this finding.\n4. My probe tr-probe-webhook-order.test.js and security's W-ORDER are re-run unchanged, and their P1/P2 and S2/S3 'OBSERVED'/REPRO assertions now fail. S1 and S4 still pass.\n5. The e3 plan command, npm test and npm run test:browser are green.\n\nThe defence in depth for saga.js is TR-E-4 (f2)."
+        },
+        {
+          "id": "TR-E-2",
+          "severity": "minor",
+          "status": "open",
+          "title": "(= SEC-E-2) GET /api/paypal/return is public, so the 300/min user limit does not apply: every hit on an unapproved order is one provider getOrder with the merchant's credentials",
+          "detail": "src/routes/paypal.js registers return with policy public. The general limiter is not applied to public routes. payments.js L200 calls getOrder on every hit while the operation is created.\n\nSecurity's reproduction (ev:ev-mv3wkmdf-014def88): 400 hits within one minute gave 400 getOrder calls and no 429, while 400 paypal/create calls are cut at 300.\n\nImpact: availability, not money or data. In single-credential mode one account can spend the shared PayPal app's rate budget, and other buyers then see retryable/503.",
+          "evidence": [
+            "ev:ev-mv3wkmdf-014def88",
+            "artifact:src/services/payments.js#L194-L205",
+            "artifact:src/routes/paypal.js#L1-L33",
+            "artifact:.eccode/reviews/drafts/phase-e-security-1.md#sec-e-2-minor-unthrottled-provider-reads-through-the-public-return-route"
+          ],
+          "recommendation": "Owner: backend-engineer, through an e2 reset dispatched with TR-E-1 (routes/paypal.js and services/payments.js are e2's).\n\nResolved when a test shows the return route bounded per identified user, with the anonymous redirect, the 404 for a foreign token, the RS-20 three-hit and the crash-hook tests unchanged. Either:\n- apply the general limiter after ctx.auth.identify; or\n- allow at most one getOrder per operation per few seconds, answering paypal=check_failed otherwise.\n\nIf the orchestrator decides not to dispatch e2, record an acceptance decision naming the residual. It must not ride into delivery silently."
+        },
+        {
+          "id": "TR-E-3",
+          "severity": "minor",
+          "status": "open",
+          "title": "The shared approval round-trip helper accepts a GET /api/paypal/return log line without userId, so the plan's 'with the session's user id in the server log' clause is not enforced by the browser journey",
+          "detail": "test/browser/helpers/approval-roundtrip.js L99 reads `if (entry.userId !== undefined) assert.equal(entry.userId, userId, ...)`. A regression of the e4-reset log fix (src/app.js L211-L214) would leave journey-happy green.\n\nToday the line does carry userId 9 at both widths (my browser run), and the API test execute.test.js L701 pins the log line, so this is a test-strength issue, not a defect. The e6 handoff says the check 'tightens by itself'; it does not, because an absent field still passes. f4 and g3 reuse this helper.",
+          "evidence": [
+            "ev:ev-mv3vyrjf-019df6a9",
+            "artifact:test/browser/helpers/approval-roundtrip.js#L97-L99",
+            "artifact:test/api/execute.test.js#L701",
+            "artifact:src/app.js#L211-L214"
+          ],
+          "recommendation": "Owner: test-engineer. In an e6 reset if one is dispatched this round; otherwise f4, which owns test/browser/helpers/** and is the next reuser, by recorded follow-up.\n\nResolved when the helper asserts entry.userId === userId unconditionally, and a scratch negative control (the app.js finally-block copy removed) turns journey-happy red at both widths."
+        },
+        {
+          "id": "TR-E-4",
+          "severity": "info",
+          "status": "open",
+          "title": "Mutant M6 survives: the F-TR-7 pause guard inside captureLoop (saga.js L531) is untested; the saga also re-sends an unknown capture relying on the reconciler's earlier read (SEC-E-1 recommendation 5)",
+          "detail": "From my first mutant run (ev:ev-mv3wo4q9-014c6847, which fails by design because my driver fails on any survivor): replacing the condition at saga.js L531 with false leaves the e4 suite 71/71 green.\n\nThe rule is pinned elsewhere:\n- the takeover exclusion: M7 is killed (ev:ev-mv3xewar-0170b19e);\n- the pause after a PENDING or unknown answer (L566).\n\nSo L531 is defence in depth that matters only when an operation changes between the takeover and the run, for example through a webhook or a second process.\n\nRelated: captureLoop treats an authorized operation with an unknown, token-less capture call as resendable (L552, L559) without its own read. Spec step 6 says the new holder reads before any send. Today that is safe only because step 2 of the same tick read first, and TR-E-1 is the path that breaks it.",
+          "evidence": [
+            "ev:ev-mv3wo4q9-014c6847",
+            "ev:ev-mv3xewar-0170b19e",
+            "artifact:src/services/saga.js#L531-L534",
+            "artifact:src/services/saga.js#L547-L559",
+            "artifact:.eccode/artifacts/design/spec.md#payment-saga-with-lease-fencing-arch-23-arch-26-resolved"
+          ],
+          "recommendation": "Owner: f2-compensation-takeover-admin (owns saga.js), by follow-up.\n- (a) Before re-sending an unknown capture call in captureLoop, read the authorization under the lease, as spec step 6 says.\n- (b) Add a test where an operation becomes capture_pending or unknown after the takeover and before the resumed run; it must pause and send nothing. M6 must then be killed.\nThis is not a condition of this gate."
+        },
+        {
+          "id": "TR-E-5",
+          "severity": "info",
+          "status": "open",
+          "title": "Mutant M2 survives: no test pins the capture (or refund) amount to supplier_orders.total_cents when payment_operations.amount_cents disagrees",
+          "detail": "Taking the capture amount from payment_operations.amount_cents instead of supplier_orders.total_cents leaves 78/78 green (ev:ev-mv3wo4q9-014c6847). M2b (+1 cent) is killed (31 red).\n\nThe mutant is equivalent in practice. amount_cents is written once, at reservation, equal to the order total (reservations.js L177), and is never updated. total_cents is never updated either (security AMT-3). Refunds use amount_cents (calls.js L326).\n\nThe RS-19 test pins only create_order against a disagreeing row (amount-tampering.test.js L106).",
+          "evidence": [
+            "ev:ev-mv3wo4q9-014c6847",
+            "artifact:src/services/saga.js#L424-L427",
+            "artifact:src/services/calls.js#L325-L326",
+            "artifact:test/api/amount-tampering.test.js#L106"
+          ],
+          "recommendation": "Optional, for f2 (capture-compensation.test.js): assert the capture and refund request amounts against supplier_orders.total_cents with a disagreeing operation row, or document that the two columns are equal by construction. The verification report lists it with delta 24 (TR-E-6)."
+        },
+        {
+          "id": "TR-E-6",
+          "severity": "info",
+          "status": "open",
+          "title": "Contract deltas 1-21 judged acceptable; four unlisted deltas (22-25) to add to the verification report",
+          "detail": "Deltas 1-4 are each recorded by a decision. I accept them:\n- the unmapped type 400, with the runbook subscribing only the seven events;\n- the env-only algorithm list, which falls back to the default;\n- RS_EXPLAIN_REPHRASE inert;\n- test:live-paypal exiting 1 as a whole.\n\nDeltas 5-21 are acceptable additions or interpretations, none of which contradicts a contract:\n- 5: 400/403 follow the RBAC matrix;\n- 6: the extra redirect outcomes;\n- 7: idempotent abandon;\n- 8: an upper-case issue only;\n- 9: approvalUrl null;\n- 10: 'cancelled' after the void rule;\n- 11-12: INVALID_STATE and the inline expiry pass;\n- 13: accepted by dec-mv3vuigy-0109feb6 with a tested backstop;\n- 14-17: placement;\n- 18-20: fake and stub interpretations, LIVE-DEPENDENT;\n- 21: FU-37.\n\nUnlisted, found by reading:\n- 22: PAYMENT.AUTHORIZATION.CREATED also applies from approved and unknown(prev approved). This is an acceptable widening of 'pending -> authorized'; the wider part is TR-E-1.\n- 23: reconciler housekeeping does not purge rate_events (spec Reconciler step 9). retention.js does it hourly (24 h, 48 h for request_create), so the effect is equivalent.\n- 24: refunds send payment_operations.amount_cents, while create and capture send supplier_orders.total_cents. They are equal by construction (TR-E-5).\n- 25: the UI renders no notice for paypal=not_approved or check_failed. The buyer sees the unchanged order with its approval button.",
+          "evidence": [
+            "artifact:.eccode/artifacts/phase-e/submission.md#contract-deltas",
+            "artifact:src/services/reconciler.js#L517-L535",
+            "artifact:public/js/views/request-detail.js#L35-L37",
+            "artifact:.eccode/artifacts/design/spec.md#reconciler-servicesreconcilerjs"
+          ],
+          "recommendation": "Owner: delivery-lead. Add 22-25 to verification-report item 10. Optional for f3: a neutral notice for not_approved/check_failed ('PayPal did not confirm the approval; try again')."
+        },
+        {
+          "id": "TR-E-7",
+          "severity": "info",
+          "status": "open",
+          "title": "Security info items SEC-E-I1..I5 folded",
+          "detail": "- SEC-E-I1: the fake's and the stub's webhook signatures are not merchant-bound. Offline this is contained by the global dedupe and SEC-16 scoping; it is LIVE-DEPENDENT for PayPal.\n- SEC-E-I2: a forged body under a seen transmission id gets 200 duplicate with no effect. Accepted.\n- SEC-E-I3: an expired authorization cannot be voided and escalates with void_failed (remaining issue 9, f2).\n- SEC-E-I4: the FU-34 one-tick window shows no loss or doubling (ev:ev-mv3wifuf-01eb0c2d), so dec-mv3vuigy-0109feb6 is accepted by both reviewers.\n- SEC-E-I5: the return handler can authorize before the expiry pass, and the next pass voids it.",
+          "evidence": [
+            "ev:ev-mv3wifuf-01eb0c2d",
+            "ev:ev-mv3w6n02-01e20cac",
+            "ev:ev-mv3wjn71-01f4dee7",
+            "artifact:.eccode/reviews/drafts/phase-e-security-1.md#info"
+          ],
+          "recommendation": "Owners:\n- I1: g2/g3, adding merchantKey to the fake's signing string, or listing it as LIVE-P1;\n- I3: f2, treating EXPIRED read back after a rejected void as settled.\nI2, I4 and I5 need no action. delivery-lead carries them to the verification report."
+        },
+        {
+          "id": "TR-E-8",
+          "severity": "info",
+          "status": "open",
+          "title": "Tests-after-code disclosure (e1-e4) and the engineers' scratch mutation proofs without evidence ids: my own recorded mutants suffice for the money paths",
+          "detail": "The engineers' mutation proofs (e2 M1-M9, e3 nine, e4 twelve, e6 two) have no ev ids, and e1 reset 2's red-first run is unrecorded.\n\nI reproduced the ones that matter on the final tree, recorded: 17 mutants killed with green controls (ev:ev-mv3xewar-0170b19e). They cover:\n- the amount source;\n- the capture result fence, the lease guard and the start CAS;\n- the takeover exclusion and read-before-resend;\n- the claim's AUTHORIZATION_PENDING and the expiry void rule;\n- the void rule (local void of an in-flight authorize, a missing provider void);\n- the resolution hooks (authorize record, webhook);\n- webhook dedupe (over all rows, pre-verify);\n- RS-20's sensitivity to a second capture;\n- the listener CSP.\n\nThis matches e2's M2/M3/M6/M7, e3's dedupe, hook and scoping, e4's lease, fence and takeover, and e6's two controls.\n\nThe two survivors are explained (TR-E-4, TR-E-5). The test-after-code gap is closed for this review. The process note stays in the pilot report.",
+          "evidence": [
+            "ev:ev-mv3xewar-0170b19e",
+            "ev:ev-mv3wo4q9-014c6847",
+            "artifact:.eccode/artifacts/phase-e/submission.md#remaining-issues-the-handoffs-disclose-with-my-assessment"
+          ],
+          "recommendation": "Nothing further for this gate. For the e2/e3 resets of this round: record the red-first run of each new test through evidence run before the fix, so that the new rows carry their own proof."
+        }
+      ],
+      "resolvedFindings": [],
+      "lessonsConsulted": [
+        "mem-sd-mv1audrd-013b7102"
+      ],
+      "id": "rev-mv3xhtuz-017cfbef",
+      "gate": "phase:e-payments",
+      "reviewer": "technical-reviewer",
+      "at": "2026-10-11T14:38:40.236Z",
+      "submissionId": "sub-mv3vs3h1-0181fd20"
     }
   },
   "rejectedReviews": [
@@ -30519,8 +30867,14 @@
       "task": null,
       "gate": null,
       "startedAt": "2026-10-11T13:52:33.864Z",
-      "status": "running",
-      "attempt": 1
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-11T14:39:18.159Z",
+      "durationMinutes": 46.74,
+      "costUsd": null,
+      "tokens": 1,
+      "note": null,
+      "usageReported": true
     }
   },
   "risks": {
@@ -31125,8 +31479,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 1265.31,
-    "tokens": 16519118
+    "runtimeMinutes": 1312.05,
+    "tokens": 16519119
   },
   "delivery": null,
   "reworks": [
