@@ -1,0 +1,637 @@
+{
+  "decision": "approve",
+  "summary": "Independent technical review of the verification gate (submission sub-mv4j9qah-011a105c: 449 artifacts, commit a3669fe, tree digest 00d2d372). I authored none of the report. Run run-mv4jai6c-014ba430.\n\n**Re-runs on the final tree, all green under the suite lock:**\n- **g3's command**, verbatim as one argument, with the lock held around the whole evidence run (ev:ev-mv4jijpz-01edcd99, exit 0, 343 s):\n  - `npm test`: 2406 tests, 2398 pass, 0 fail, 8 skipped; ECCODE_EVAL 200/200; NFR5 p95 56.6 ms, 103.6 s;\n  - `npm run test:browser`: 28/28;\n  - the clean checkout: `npm install` from the registry, `npm test` 2406/2396/0/10 skipped, `npm start` with health 200.\n- **The +30-day `npm test`** with the committed test/helpers/shift-clock.mjs: the child sees 2026-11-11T00:55Z; 2406/2398/0/8 (ev:ev-mv4jlh46-01a3c88c).\n\n**The report is honest.**\n- I applied the table's contract to all 45 rows against MY run: 104 named tests, every one `ok` and not skipped, 0 problems; 28 verified, 2 fake-only, 15 LIVE-DEPENDENT.\n- Every LIVE item names its exact runbook step.\n- All 17 cited decisions and 4 cited reviews exist.\n- Section 1 matches commit 7acbba5, which changed only the review draft and the records; there is no code change e299d01..a3669fe outside .eccode.\n- The release checklist leaves its two user-owned items unchecked.\n- Nothing claims a live result, compliance, users or savings; the README and the submission drafts say the opposite explicitly.\n\n**Unreviewed changes.** The engine check (read-only, via lib/delivery.js unreviewedChanges) finds no changed file. It lists only the 10 known release-baseline warnings (TK-6, unpinned). All 449 artifact hashes match.\n\n**Risk triage.**\n- The mitigations of RISK-3, 4, 5, 6, 8, 9 and 17 are supported. Their tests are `ok` in my run, the cited runs exist, and the cited reviews exist.\n- RISK-11 closed and RISK-15 (an earlier mitigation; NFR1 green) are fair.\n- Section 6.1 explains RISK-1, 2, 13 and 16 honestly.\n- **TR-V-1 (minor).** The 6.1 acceptance package does not say that the residuals of the two mitigated payment risks, RISK-3 and RISK-8, cannot be closed by any existing runbook (FU-52). Only section 4 says so.\n- **Info:** TR-V-2 to TR-V-5.\n\nNothing blocks the gate. Decision: approve. Delivery still needs the user's acceptance of RISK-1, 2, 13 and 16, as the report says.",
+  "criteria": [
+    {
+      "id": "RS-01",
+      "description": "Equivalent Arabic and English requests (RS-FIX-1 wording) yield identical core fields: product type, quantities, capacity, diameter, deadline, budget, max pickups. [D with fake provider; LM with real ",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D LM). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: extract.test.js :: RS-01: the RS-FIX-1 request in English and in Arabic yields identical ; fake.test.js :: RS-01: the RS-FIX-1 English and Arabic requests yield the same eight c. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-M1 (A4/Q3): English and Arabic through the REAL model are not shown equal; offline the fake parser and the CLI and Anthropic adapters (recorded transcript, loopback stub) are. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-02",
+      "description": "A clear package image yields capacity/diameter specifications carrying `provenance: \"image\"`. [D fake; LM real]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D LM). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: extract-image.test.js :: RS-02: a clear photo yields capacity and diameter with provenance imag; cli.test.js :: RS-02: stdin is one stream-json user line. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-M1 (A4/Q3): reading real photos with the real model, and the CLI image input shape (`schemaAccepted`, F-TR-13), are not run. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-03",
+      "description": "An ambiguous image yields `unknown` for unreadable fields plus at least one clarification question, and no numeric value absent from the image. Degraded path: when the provider times out, errors, retu",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D B LM). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: extract-degraded.test.js :: -> 200, degraded true, schemaOk false,; extract-image.test.js :: RS-03: an ambiguous photo gives unknown for the unreadable field; degraded-extraction.test.js :: RS-03: the harness forces the fake provider timeout through the admin . The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-M1 (A4/Q3): the EXT-1 ambiguous images are not run against the real model. Degraded paths (timeout, invalid JSON, schema, budget, rate) are verified with the fake. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-04",
+      "description": "With budget or deadline missing, `POST /api/plans/:id/approve` and `POST /api/orders/:id/paypal/create` return 409 with a named reason (`MISSING_BUDGET` / `MISSING_DEADLINE`) and no reservation or pay",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: approve-guards.test.js :: RS-04: approve without a budget is 409 MISSING_BUDGET; requests-plans.test.js :: RS-04: REQUIREMENTS_INCOMPLETE lists the missing core fields. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-05",
+      "description": "Injection strings in image text and catalog text appear only as data in `fields_json`/catalog; after extraction no permission, amount, supplier, plan version or role differs from the control run; expl",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D LM). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: injection.test.js :: RS-05: an English injection is flagged (addressedToAssistant); fake.test.js :: RS-05: text injection changes no core field against the control run. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-M1 (A4/Q3): resistance of the REAL model to injection (the EXT-1 injection cases) is not run; offline, the structure (data line, fixed prompt, no tool, output shape without permissions) and the fake are verified. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-06",
+      "description": "With RS-FIX-1 and its pinned inventory, the planner returns plan A+B with total 8400 cents (A 4000 + B 4400), 2 pickups, ready 10:30; multiplicity guard: with A's on_hand set to 2 the same planner ret",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: planner-fixture.test.js :: RS-06: with RS-FIX-1 and its pinned inventory the planner returns A+B,; planner-oracle.property.test.js :: RS-06: planner equals the brute-force oracle on 500 seeded random cata. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-07",
+      "description": "Supplier C's bundle is listed under rejections with code `INCOMPATIBLE_LID_DIAMETER` (cups 90 mm, lids 95 mm, no confirmed compatibility row). [D]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: planner-fixture.test.js :: RS-07: supplier C is listed under rejections with INCOMPATIBLE_LID_DIA; compat.test.js :: RS-07: cups 90 mm with lids 95 mm and no confirmed row are incompatibl. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-08",
+      "description": "Supplier D's bundle is rejected with code `READY_AFTER_DEADLINE` (ready 11:20 > deadline 11:00). [D]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: planner-fixture.test.js :: RS-08: supplier D is rejected with READY_AFTER_DEADLINE. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-09",
+      "description": "With the pinned inventory and B removed (on_hand 0 or offer withdrawn; B listed `OUT_OF_STOCK` or withdrawn) the best plan is A+E at 9500 cents (A 4000 + E 5500), 2 pickups, ready 10:40. [D]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: planner-fixture.test.js :: RS-09: with B removed (on_hand 0, or offer withdrawn) the best plan is; requests-plans.test.js :: RS-09: a supplier that refused an order of this request is left out of. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-10",
+      "description": "With the pinned inventory, B removed and budget 9000 cents the planner returns no feasible plan, lists blocking constraints including `OVER_BUDGET`, gives A and E the per-candidate codes `INSUFFICIENT",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: planner-fixture.test.js :: RS-10: B removed and budget 9000 gives no plan. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-11",
+      "description": "With the pinned inventory and max pickups = 1 the canonical scenario is infeasible; each compatible, in-time candidate (A, B, E) carries exactly the per-candidate codes `INSUFFICIENT_QTY` (alone it su",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: planner-fixture.test.js :: RS-11: with max pickups 1 the scenario is infeasible. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-12",
+      "description": "A plan whose cups or lids total < required quantity cannot be produced as feasible, and approval of a tampered plan body is refused with 409. [D]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: approve-guards.test.js :: RS-12: approving with the current hash and total is 200; planner-fixture.test.js :: RS-12: planner half - cups or lids below the requirement are never fea. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-13",
+      "description": "After the price of an offer used by an approved plan changes, while that supplier's order is not yet `confirmed` and the plan is not `executing`, the approved version becomes `superseded`, totals are ",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: supersession.test.js :: RS-13: voids one per authorization, reservation released with one ledg; supplier-orders.test.js :: RS-13: a price change supersedes a proposed plan that uses the offer (. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: The voids go to the fake provider; a plain void on the real Sandbox is checked by LIVE-P2 (RS-32(b) asserts both authorizations VOIDED at PayPal), which was not run."
+    },
+    {
+      "id": "RS-14",
+      "description": "Two separate OS processes, each connection with `PRAGMA busy_timeout = 5000`, reserve supplier A's last bundle (pinned inventory, on_hand = 1) concurrently against the same SQLite file; exactly one re",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: rs14-two-process-reserve.test.js :: RS-14: round ; rs14-db-busy.test.js :: RS-14: reserve under a lock held by another process is 503 DB_BUSY. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-15",
+      "description": "An expired reservation is released exactly once: inventory returns to its prior value, the ledger holds one release row, and a second expiry pass is a no-op; an expiry pass run after the execute claim",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: reservation-expiry.test.js :: RS-15 (part): before expires_at the pass changes nothing; reservation-expiry.test.js :: RS-15: the tick releases the reservation once, voids every authorizati. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: The voids that expiry queues go to the fake provider; a plain void on the real Sandbox is checked by LIVE-P2 (RS-32(b)), which was not run."
+    },
+    {
+      "id": "RS-16",
+      "description": "Two `reserve` calls with the same `Idempotency-Key` and body return the same reservation id and create no second reservation or ledger row; the same key with a different body returns 422 `IDEMPOTENCY_",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: reserve-idempotency.test.js :: RS-16: a new key reserves the plan. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-17",
+      "description": "Supplier refusal before the execute claim sets the order to `refused`; every outstanding authorization of that plan version ends `voided`, its reservation is `released`, the plan is `non_executable` (",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D B). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: supplier-refusal.test.js :: RS-17: the refusal is audited, the order refused with its reason; refusal.test.js :: RS-17: at . I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: The authorization voids run against the fake provider."
+    },
+    {
+      "id": "RS-18",
+      "description": "Cancelling on PayPal (cancel URL) leaves that supplier's operation `created` with `buyer_cancelled_at` (no provider authorization exists) or `voided`, no capture call or capture row exists, and `execu",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D LP). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: paypal-cancel.test.js :: RS-18: the cancel sets buyer_cancelled_at, leaves the operation; paypal-create.test.js :: RS-18: \"Try approval again\" after a cancel reads the order. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1 (A6/Q2), (A2): cancel and abandon against the real Sandbox are not run (`rs18-cancel-abandon.test.js` exists and refuses without its flag). 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-19",
+      "description": "A client-supplied amount/currency/supplier on any payment route is ignored; the PayPal order amount equals the server-approved supplier-order total. [D; LP]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D LP). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: amount-tampering.test.js :: RS-19: every tampered field in the body of paypal/create is ignored; paypal-create.test.js :: RS-19: the first call queues so:<id>:create_order:1. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1 (A6/Q2), (A2): the amount the real Sandbox receives and its refusal of tampering are not run; the fake and the loopback stub show the exact request body the adapter sends. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-20",
+      "description": "Two server processes on the same SQLite file each receive N = 5 concurrent `execute` requests for the same plan: exactly one `approved → executing` claim commits (conditional UPDATE inside `BEGIN IMME",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D LP). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: rs20-two-process-execute.test.js :: RS-20: round ; paypal-return-idempotent.test.js :: RS-20: three hits (refresh, back-navigation) produce exactly one autho; execute.test.js :: RS-20: the claim answers 202 {claimed:true}. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1 (A6/Q2), (A2), OQ-D5; SEC-18: the double-capture argument's layers 4 and 5 (`PayPal-Request-Id` replay, `final_capture` refusing a second capture) rest on the fake's model of PayPal until the live run. The exactly-one-capture-per-order result holds against the fake. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-21",
+      "description": "If one supplier's authorization is DENIED, no capture call occurs on any supplier order, the plan is `non_executable` (`AUTHORIZATION_FAILED`, naming the supplier), every other authorization ends `voi",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: authorization-denied.test.js :: RS-21: B is DENIED after A was authorized; authorization-pending.test.js :: RS-21: execute is 409 AUTHORIZATION_PENDING. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1 does NOT cover this (FU-52): authorization DENIED or PENDING is exercised by no live file; the fake's model is the only evidence (OQ-D5). 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-22",
+      "description": "With capture failing on the second supplier, the first capture is refunded and every uncaptured authorization voided; statuses read `refund_requested → refund_pending → refunded|refund_failed`; the pl",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: capture-compensation.test.js :: RS-22: the second capture is declined: plan non_executable; execute.test.js :: RS-22: the second capture is declined: the first is refunded. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1 does NOT cover this (FU-52): capture PENDING or DECLINED, refund PENDING or FAILED, a void after a capture and the EXPIRED read after a refused void are exercised by no live file; compensation rests on the fake's model of PayPal (SEC-18, OQ-D5). 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-23",
+      "description": "Delivering the same webhook (same transmission id) twice applies its effect once. [D; LP]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D LP). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: webhooks.test.js :: RS-23: a valid transmission id seen twice is applied once. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1 (A6/Q2), (A2), Q6 (a public webhook URL): real signed deliveries and the real event names (OQ-D5) are not run. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-24",
+      "description": "A webhook with an invalid signature is rejected (4xx), recorded with `signature_status: invalid`, and applies no transition. [D; LP]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D LP). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: webhooks.test.js :: RS-24: a tampered body, a wrong secret and a garbage signature are inv. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1 (A6/Q2), (A2): real PayPal verification is not run. Cross-merchant signature rejection (FU-44) is not covered by LIVE-P1 either: the fake's signing string does not include the merchant key. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-25",
+      "description": "After a simulated lost response on capture, the operation is `unknown`; the reconciler fetches provider state and only then marks `captured` (COMPLETED), marks `capture_pending` (PENDING, polled until",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `fake-only` (D). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: lost-response.test.js :: RS-25: the capture was applied but the answer is lost; lost-response.test.js :: RS-25: nothing was applied (a timeout). The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: OQ-D5, SEC-18: no live file covers a lost capture answer (LIVE-P1 does NOT; the fake's model is the only evidence): that the real Sandbox shows what the fake shows after a lost answer (the capture visible through a read of the authorization and the order) is not run. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-26",
+      "description": "Killing and restarting the server mid-saga preserves orders, payment operations, provider calls and recovery progress; after the saga lease expires, the reconciler takes it over and completes the saga",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: rs26-restart.test.js :: RS-26: killed with the first capture applied at the provider; lease-takeover.test.js :: ARCH-26 variant A (freeze_after_capture_apply); lease-takeover.test.js :: ARCH-26 variant B (freeze_before_capture_apply); return-crash.test.js :: F-TR-3 (a): restart. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1 does NOT cover this (FU-52): `PayPal-Request-Id` retention across a process takeover is exercised by no live file. SEC-18: RS-26 on the Sandbox rests on the fake's model of PayPal. The process-level behaviour (kill, restart, takeover, one non-replayed capture per order) is verified with the fake; only Linux was run (SIGSTOP). 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-27",
+      "description": "Customer X requesting customer Y's request or order id receives 404/403 and no data, including `GET /api/paypal/return?token=` and `/cancel?token=` with Y's PayPal order token (404, no authorize call,",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: isolation.test.js :: RS-27: customer X reserving customer Y; paypal-create.test.js :: an unknown order and an archived request are 404 with no provider call. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-28",
+      "description": "Supplier A patching supplier B's inventory receives 403 and B's inventory is unchanged. [D]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: isolation.test.js :: RS-28: supplier A patching supplier B. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-29",
+      "description": "A scan of built frontend assets, API responses, logs, screenshots and submission files finds no client id/secret value; config redacts secrets in errors. [D scan; I]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D B I). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: secrets.test.js :: RS-29: no file under public/ holds a canary; secrets.test.js :: RS-29: every tracked or unignored file (src, scripts, package.json, ev; secrets.test.js :: RS-29: a canary planted in each of 17 places; secrets.test.js :: RS-29: the answers of a server that holds the canaries; secrets.test.js :: RS-29: every screenshot under test/browser/out is a PNG with a plain f; secrets.test.js :: RS-29: an invalid secret (too short; frontend.test.js :: RS-29: no secret, client id, token or credential-shaped value is in pu. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: Scope (SEC-G-1): every git-tracked or untracked-unignored file is read, including the project record `.eccode/` and its run logs in `.eccode/evidence`, `src/`, `scripts/`, `package.json`, the lockfile, every document of any type, every PNG chunk except pixel data and the bytes after IEND, and the screenshots of the browser run (the B tag: the browser run writes them, the scan reads them). Each fil"
+    },
+    {
+      "id": "RS-30",
+      "description": "Customer and supplier sessions calling admin fault/reset routes receive 403; unauthenticated 401. [D]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: auth.test.js :: RS-30: admin routes: anonymous 401 UNAUTHENTICATED; isolation.test.js :: RS-30: anonymous reserve is 401. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-31",
+      "description": "(a) Browser journey at 360 px and 1280 px: request → review → plan → reservation → PayPal approvals → supplier confirmations → capture → readiness → collection, with screenshots, using the fake adapte",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D B LP). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: journey-happy.test.js :: RS-31(a): at ; execute.test.js :: RS-31(a): http.request for GET /api/paypal/return and /cancel carries . The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1, LIVE-P2 (A6/Q2): RS-31(b), the hosted Sandbox approval page with a Sandbox buyer account and its screenshots, is not run. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-32",
+      "description": "(a) Browser journey: B becomes unavailable after approval (the admin stock-depletion fault withdraws B's offer before B confirms); the buyer reviews and approves the $95 (9500 cents) A+E plan; the old",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D B LP). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: journey-replacement.test.js :: RS-32(a): at ; supersession.test.js :: RS-32 (supersession half); supplier-refusal.test.js :: RS-32: refuses every open order of the supplier like the supplier; admin-basic.test.js :: RS-32: stock_depletion withdraws B. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1, LIVE-P2 (A6/Q2): RS-32(b), the same replacement on the hosted Sandbox, is not run. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-33",
+      "description": "Browser journey: an infeasible request ends on an explanation screen with blocking constraints, per-candidate codes and computed relaxations; no reservation, order or payment operation exists. [B: tes",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D B). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: journey-infeasible.test.js :: RS-33: at ; dashboards.test.js :: RS-33: an infeasible request shows blocking constraints. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-34",
+      "description": "Labelling, asserted for both payment adapters: (1) fake adapter payloads (payments and extraction) carry `\"simulated\": true`, and the UI shows a \"Simulated\" provider badge and a persistent banner whil",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `fake-only` (D B). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: labelling.test.js :: RS-34: GET /api/config carries the exact label set for this adapter; labelling.test.js :: RS-34: every payment object (create answer and request view) carries p; labelling.test.js :: banners on every route, payment badges, demo data and price notice; a11y-labels.test.js :: RS-34: the label fixtures are GET /api/config answers with the live la. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-P1 (A2, SEC-3): the Sandbox adapter's labels were shown against the loopback stub in test mode only; the same page against the real Sandbox host (no test-mode banner, the real single-credential notice) is not run. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "RS-35",
+      "description": "The request page shows all six answers (requirements with provenance, decision trace, rejections, cents totals, offer vs commitment, compensation state and next step), with explanation text rendered f",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D B I). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: six-questions.test.js :: requirements with provenance, decision trace, rejection codes with exp; a11y-labels.test.js :: RS-35: the request page answers the six questions in the spec. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: (I) inspected by the phase G technical review (rev-mv4fdv59-01732f16): the screenshot six-questions-1280 answers all six questions from codes."
+    },
+    {
+      "id": "RS-36",
+      "description": "State tables persist plan, reservation, payment-operation and fulfilment statuses separately; the rescue status endpoint is computed by the derivation table and a schema query shows no column storing ",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D I). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: derive.test.js :: RS-36 row 1: needs_input; rescue-status.test.js :: RS-36 (i): refund_requested or refund_pending on any operation is; schema-no-rescue-status.test.js :: RS-36: no table or column is named like a rescue status. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: (I) F-TR-9, the inspection that `domain/derive.js` implements the derivation table row by row, is a person's and was done: the phase G technical review (FU-62, `rev-mv4fdv59-01732f16`) read the final `derive.js` against the brief's table and revision 2 row by row, found that it conforms, and found no table that stores a rescue status; the phase B review (`rev-mv1hc5zg-01a3fc75`) had done it for re"
+    },
+    {
+      "id": "RS-37",
+      "description": "Admin reset returns 409 while any payment operation is `approved|authorization_pending|authorized|capture_pending|captured|refund_requested|refund_pending|unknown`; forced reset records a reason and a",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: admin-basic.test.js :: RS-37: an operation in approved, authorization_pending; admin-reset.test.js :: RS-37: a refused reset (money held, no force) changes nothing. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: The forced reset's void and read-resolve pass run against the fake provider (SEC-11)."
+    },
+    {
+      "id": "RS-38",
+      "description": "Any UPDATE/DELETE on `audit_events` or `inventory_ledger` fails; every reserve, release, expire, consume and restock writes a ledger row. [D]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: ledgers.test.js :: RS-38: reserve writes one reserve row per item; triggers.test.js :: RS-38: UPDATE on inventory_ledger fails. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "RS-39",
+      "description": "Upload accepts only bodies whose magic bytes identify PNG, JPEG or WebP (a body declared `image/png` but carrying other bytes is rejected with 415) and of at most 5 MB (413 above); the stored name is ",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "ev:ev-mv4jlh46-01a3c88c"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: uploads-retention.test.js :: RS-39: PNG, JPEG and WebP are accepted; uploads-retention.test.js :: RS-39: startApp removes an expired image at startup and another one on. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems)."
+    },
+    {
+      "id": "NFR1",
+      "description": "On Node ≥ 22.13 (floor per `dec-mv16pyxx-01bad0bf`; RS-NF-1 states ≥ 22.5, see Q9) a clean clone runs `npm install` (npm registry only) then `npm test`, which passes with the non-loopback network guar",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "ev:ev-mv4jlh46-01a3c88c"
+      ],
+      "notes": "Status `verified` (D I). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: start-health.test.js :: NFR1: the start script splits into the Node gate and src/index.js; node-version.test.js :: NFR1: the gate accepts Node 22.13.0 and newer and refuses anything old; start-old-node.test.js :: NFR1: every flagged script begins with the flag-free Node gate. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: USER-Q9: the run on the Node 22.5 branch (the floor the user has not yet confirmed) is the user's; only Node 22.22 was available, and the older binaries used by `start-old-node` are 20 and 21. The clean-checkout run is in the handoff, not in this table."
+    },
+    {
+      "id": "NFR2",
+      "description": "Playwright checks at 360 px and 1280 px: keyboard-only completion of the happy path, visible focus, labelled controls, text status indicators; loading/empty/error/retry/timeout/expired-reservation/deg",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D B). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: a11y-states.test.js :: register, ask, type the details, approve, reserve, approve both paymen; a11y-states.test.js :: empty, loading, error with Retry, timeout, degraded extraction, expire; a11y-states.test.js :: the admin forced-reset stranded list is audited and walkable (FU-51); a11y-states.test.js :: keeps its order and the reason is a; a11y-labels.test.js :: NFR2: every control on every view the SPA builds has a label. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: Chromium only (other browsers, screen readers and real touch devices were not run). No accessibility library was used: the audit is hand-written (names, 44 px targets, computed 4.5:1 contrast, focus indicators, no horizontal scroll); a native date-time control's focus is shown by comparing pictures of it, not by its style."
+    },
+    {
+      "id": "NFR3",
+      "description": "Per `dec-mv16pz32-013c4cd1`, `npm test` (offline deterministic `node --test`), `npm run test:browser` (Playwright; the README documents the one-time `npx playwright install chromium`), `npm run test:l",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D I). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: live-refusal.test.js :: NFR3: test/live/run-live-model.js without RS_LIVE_MODEL=1 exits 2; live-refusal.test.js :: with no flag exits 2 with the fixed message, prints nothing else, and ; live-refusal.test.js :: with no flag runs the six live files, every one refuses with the fixed; live-refusal.test.js :: a standalone launcher that package.json does not use; live-runner-refusal.test.js :: NFR3: without RS_LIVE_MODEL=1 the runner exits 2. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: That the live scripts REFUSE is verified, including the real `npm run test:live-model` and `npm run test:live-paypal` lines run without a flag under the net guard (the second prints six refusals and exits 1, as the runbook says); that they RUN correctly is not (LIVE-M1, LIVE-P1: never run). (I) inspected by the phase G technical review (rev-mv4fdv59-01732f16): both runners label their reports (liv"
+    },
+    {
+      "id": "NFR4",
+      "description": "Config reads secrets only from `process.env`; `.env.example` contains names and placeholders only; a test asserts no real-looking value. [D; I]",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D I). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: env-example.test.js :: NFR4: .env.example has no duplicate variable; health-config.test.js :: NFR4: no secret, client id or merchant id appears. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: (I) inspected by the phase G technical review (rev-mv4fdv59-01732f16): secrets are read only from process.env, and the secret entries of `.env.example` are commented placeholders."
+    },
+    {
+      "id": "NFR5",
+      "description": "The planner solves RS-FIX-1 and each of 200 seeded generator catalogs (seeds 1–200; 12 offers; bundle sizes {50, 100, 200}; required quantity 100–400 in steps of 100; on_hand 0–2; price 1000–10000 cen",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria"
+      ],
+      "notes": "Status `verified` (D). In my own run of g3's command on the final tree (ev:ev-mv4jijpz-01edcd99), every named test of the row is `ok`, not skipped: planner-generator.test.js :: NFR5: the planner solves RS-FIX-1 (base and each pinned variant) in un; report-p95.test.js :: NFR5: percentile is nearest-rank. I checked mechanically that each title is text in its file (tools/spot.py: 45 rows, 0 problems). The row's stated limit stands as written: The API p95 and the suite time are printed by `scripts/report-p95.js` in the log of each full `npm test` run (below), on this host only."
+    },
+    {
+      "id": "NFR6",
+      "description": "Every response and log line carries `requestId`; the RS-29 scan also asserts that no log line contains an `Authorization` header value, an access token, a client secret, a payer email or name, or a ra",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:docs/evidence-table.md#the-table",
+        "artifact:.eccode/artifacts/verification/submission.md#3-the-45-criteria",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "notes": "Status `LIVE-DEPENDENT` (D LM). The OFFLINE part is met: in my own run (ev:ev-mv4jijpz-01edcd99) every named test is `ok`, not skipped: model-budget-rate.test.js :: NFR6: with a fake per-call cost cap of USD 0.10; secrets.test.js :: NFR6: sign-up, sign-in, requests, a photo, extraction. The live or real-service part is NOT verified, and the report and table say so, with its blocker and the step that closes it: LIVE-M1 (A4/Q3): the real cost report is not run. The budget case runs with RS_MODEL_CUSTOMER_DAILY_SHARE=1 (F-TR-18): it shows the global daily budget refusing the third extract; with the default per-customer share a single customer is stopped earlier, which the unit tests of the gate show separately. 'met' here means that the brief's deterministic part passes and the live part is honestly marked Unverified with its blocker, as the brief allows for LM/LP parts. It does not mean that a live run happened; none did."
+    },
+    {
+      "id": "C-runs",
+      "description": "Independent re-run of the full suite, the evals and the browser suite (g3's command verbatim under the lock) and the +30-day run, on the final tree",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "ev:ev-mv4jlh46-01a3c88c",
+        "artifact:.eccode/artifacts/verification/submission.md#2-runs-on-the-final-tree"
+      ],
+      "notes": "**g3's command.** Taken from the plan's g3-final-scans-browser verification and passed as ONE argument to `eccode evidence run`. The whole evidence run was wrapped in `flock /tmp/rescuestock-suite.lock`, with `--timeout 2400`.\n- Exit 0. npm test 2406/2398/0 fail/8 skipped, 0 todo.\n- The 8 skips are exactly those described in section 2: the fake model's missing `busy` fault (1), and the fake payment adapter's missing wire/OAuth (7).\n- **Evals.** The offline extraction eval passes, ECCODE_EVAL 200/200 on the fake provider. It is pipeline evidence, not model quality, as the report says. The live-model eval was not run: it is forbidden here, and it is LIVE-M1.\n- NFR5 p95 56.6 ms over 7603 requests, suite 103.6 s. Browser 28/28.\n- **Clean checkout:** npm install (the only off-host traffic, to the npm registry), npm test 2406/2396/0/10 skipped (the 2 extra skips are by design: no record and no screenshots in a copy), npm start with /api/health 200.\n\n**+30 days.** The committed helper (sha256 e29e4111) is used exactly as documented, under the lock. The shifted date is printed first: real 2026-10-12T00:55Z, shifted 2026-11-11T00:55Z. Result 2406/2398/0/8.\n\n**Both runs carry tree 00d2d372, the submission's digest.** No live suite was run; RS_LIVE_MODEL and RS_LIVE_PAYPAL were unset."
+    },
+    {
+      "id": "C-report",
+      "description": "The report is honest: the criteria map, live items with exact steps, accepted limits traceable, the section 1 account, the release checklist, and no claim of a live result, compliance, users or savings",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:.eccode/artifacts/verification/submission.md#1-the-red-run-of-the-first-attempt-cause-and-fix",
+        "artifact:.eccode/artifacts/verification/submission.md#5-accepted-limits-and-decisions",
+        "artifact:.eccode/artifacts/verification/submission.md#7-release-checklist-from-planmd-release-checklist-completed",
+        "artifact:README.md#what-is-simulated"
+      ],
+      "notes": "**Criteria map.** My tools/spot.py parsed every row of docs/evidence-table.md and checked my own run, not the cited runs: 45 rows, the status counts 28/2/15 as stated, 104 named tests, each title present in its file and `ok` (not skipped) in ev:ev-mv4jijpz-01edcd99, 0 problems. I also read the assertions of RS-06 (8400 cents, A 4000 + B 4400, 2 pickups, 10:30) and RS-10 (OVER_BUDGET, A and E coded INSUFFICIENT_QTY + OVER_BUDGET, exactly two relaxations, 9500); they match the brief.\n\n**Live items (section 4).** LIVE-M1, LIVE-P1, LIVE-P2, OQ-D5 and USER-Q9 each name the runbook section and the exact command. OQ-D5 states plainly that the FU-52 items need new live tests that do not exist.\n\n**Accepted limits (section 5).** All 17 decision ids and 4 review ids cited in the report exist in the record (tools/refs.py). Items 8-12 and 14 trace to my own rework-6 and rework-7 reviews, and I confirm they are stated as I found them.\n\n**Section 1.**\n- Commit 7acbba5 changes only .eccode/reviews/drafts/rework-8-security-1.md (one masked line plus a dated note) and the records.\n- `git diff e299d01 a3669fe` outside .eccode is empty, so the code is identical.\n- The RS-29 whole-project test is `ok` in my run.\n- The report does not quote the fragment; I do not either.\n\n**Release checklist.** It is completed honestly: the open-risks and user-side items are left unchecked.\n\n**No overclaim.** A search of the report, README, runbooks, evidence table and docs/submission finds no claim of a live result, compliance, users or savings. README L58, project-description L48, the demo script L9 and the checklist L23 explicitly disclaim them. The project description's 'Update after live runs' paragraphs say the live runs are not done."
+    },
+    {
+      "id": "C-risks",
+      "description": "Risk triage: the evidence supports each risk marked mitigated or closed, and section 6.1 explains the four left for the user honestly",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:.eccode/artifacts/verification/submission.md#6-risk-triage-delivery-lead-on-the-final-tree",
+        "artifact:.eccode/artifacts/verification/submission.md#61-residual-risks-for-the-user-to-accept-high-severity-the-delivery-lead-cannot-accept-them"
+      ],
+      "notes": "**Mitigated risks.** I read each risk record against its cited runs and reviews (tools/refs.py). Every cited test family is `ok` in my own run ev:ev-mv4jijpz-01edcd99.\n- **RISK-3 (critical):** RS-20 two-process, RS-25, ARCH-23/26, FU-41, TR-F-1 are ok, and multi-process x4 ev-mv4gvr0e passed. The residual (layers 4-5 rest on the fake's model) is stated in the record.\n- **RISK-4:** RS-14 two-process and DB_BUSY, RS-15, RS-16, RS-38 are ok. There is no live dependency.\n- **RISK-5:** RS-27, RS-28, RS-30 are ok.\n- **RISK-6:** RS-05 is ok. It is correctly scoped as containment, with the real model's resistance as LIVE-M1.\n- **RISK-8:** RS-22/25/26, F-TR-6, FU-45, TR-F-1, SEC-11 are ok. The residual is stated.\n- **RISK-9:** RS-29 is all ok, plus secrets 19/19.\n- **RISK-17:** NFR6 is ok.\n- **RISK-15:** an earlier mitigation; the node-floor tests (NFR1) are ok.\n- **RISK-11 closed:** every gate up to rework-8 is approved.\n\nThe cited reviews rev-mv3zia2y-019d3b45, rev-mv47u18k-01c284af and rev-mv372j5t-01a05e8f exist.\n\n**No mitigation overstates what was built.** But the user-acceptance package leaves the payment residuals implicit: see TR-V-1. The records also cite the red first-attempt run as their primary run: TR-V-2.\n\n**Section 6.1** states, for each of RISK-1, 2, 13 and 16, what is unverified, why, what the code does and how to verify. That is accurate against the code and the tests I ran. The RISK-16 text matches limit 4 (open localhost) and the browser cross-site round trip, which is 28/28 in my run."
+    },
+    {
+      "id": "C-unreviewed",
+      "description": "The engine's unreviewed-changes check: no file changed since its last approved review",
+      "met": true,
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:.eccode/artifacts/verification/submission.md#8-artifacts-and-process"
+      ],
+      "notes": "**The engine's own check, read-only.** I called lib/delivery.js unreviewedChanges(state, root, config) from a scratch script (tr-ver/tools/unreviewed.cjs) that writes nothing. It returns 10 entries, all `unpinned: true` release-baseline warnings (architecture, design, plan, phases B, C and D, reworks 1-4; TK-6). No changed path is reported.\n\n**Hashes and tree.**\n- All 449 submitted artifact hashes match the files on disk.\n- The submission pins all 448 tracked files outside .eccode, plus the report.\n- `eccode audit`: 1849 events, chain intact, approved artifacts unchanged.\n- The working tree outside .eccode is clean at HEAD 782437f, whose code equals a3669fe."
+    },
+    {
+      "id": "lessons",
+      "description": "Lesson decisions of this submission",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/verification/submission.md#9-lessons"
+      ],
+      "notes": "mem-sd-mv1audrd-013b7102 does not apply: no hook or guard is built here. The guard refusals I met were raw-text readings: a computed variable on an eccode line, and python code read as a shell function. I agree with the report.\n\nThe proposed lesson candidate (review drafts must mask secret-shaped quotes, or the scan should know the tests' declared fakes) is sound and is for the memory owner."
+    }
+  ],
+  "findings": [
+    {
+      "id": "TR-V-1",
+      "severity": "minor",
+      "title": "Section 6.1, the user's acceptance package, does not say that the residuals of the mitigated payment risks RISK-3 and RISK-8 cannot be closed by any existing runbook",
+      "detail": "**The two risks.** RISK-3 (double capture, critical) and RISK-8 (lost or unknown outcome, high) are marked mitigated. That is fair: their mechanisms are built and green in my run.\n\n**Their residuals are not closable today.** The residuals rest on the fake's model of PayPal: PayPal-Request-Id replay and final_capture (SEC-18), and DENIED/PENDING authorizations, capture PENDING/DECLINED, refund PENDING/FAILED, Request-Id retention across a takeover and the EXPIRED read after a refused void (FU-52). Section 4 (the OQ-D5 row) and the evidence table say that NO live test exists for these, so even a clean LIVE-P1/P2 run leaves them unverified.\n\n**What 6.1 says instead.** For RISK-1 it says 'Unverified: every LIVE-P1 and LIVE-P2 item … How to verify: follow docs/runbooks/live-paypal.md §1-6'. A user who reads only 6.1 to accept RISK-1 and RISK-2 could conclude that running the runbooks verifies the payment layer. Only RISK-13 mentions FU-52, and only for the EXPIRED read.\n\nNothing is false, but the acceptance is less informed than it should be.",
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:.eccode/artifacts/verification/submission.md#61-residual-risks-for-the-user-to-accept-high-severity-the-delivery-lead-cannot-accept-them",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each",
+        "artifact:docs/evidence-table.md#not-covered-by-any-live-file"
+      ],
+      "recommendation": "Owner: delivery-lead, or the orchestrator in the user-acceptance prompt.\n\nResolved when, before the user is asked to accept RISK-1 and RISK-2, the text the user sees (6.1 or the acceptance prompt) states:\n- that RISK-3 and RISK-8 are mitigated against the fake's model of PayPal;\n- that the FU-52 and SEC-18 items listed in section 4's OQ-D5 row stay unverified even after the runbooks, until new live tests are written.\n\nNo code change is needed."
+    },
+    {
+      "id": "TR-V-2",
+      "severity": "info",
+      "title": "Six risk records cite the red first-attempt run as their primary evidence, and name the 'final tree' as 411d71d",
+      "detail": "**The citation.** The mitigation texts of RISK-3, 4, 5, 6, 8 and 17 say 'all ok in ev:ev-mv4idy1w-018b0e70 (its only failure is the unrelated RS-29 whole-project hit)'. That run's status is failed.\n- The claim is true for the named leaf tests.\n- Each record also cites ev:ev-mv4hjjqn-013f05aa, which passed on the same tree digest 00d2d372.\n- The final green runs (ev:ev-mv4j2zpz-0142cd44, and mine) are not cited.\n\n**The commit name.** '411d71d' is a records commit with the same code as e299d01 and a3669fe; it is not wrong, only stale.",
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:.eccode/artifacts/verification/submission.md#6-risk-triage-delivery-lead-on-the-final-tree"
+      ],
+      "recommendation": "Optional. Resolved when the risk records cite a passing final-tree run (for example ev:ev-mv4j2zpz-0142cd44 or ev:ev-mv4jijpz-01edcd99) instead of the red one, or when this note is accepted as it stands."
+    },
+    {
+      "id": "TR-V-3",
+      "severity": "info",
+      "title": "Status classification: RS-25 is 'fake-only' while RS-21, RS-22 and RS-26, in the same situation (no live file exists), are 'LIVE-DEPENDENT'",
+      "detail": "**The definitions.** By the table's own definitions both statuses mean 'not verified against the real service', and each of these rows states its blocker. Nothing is overstated.\n\n**The inconsistency.** The difference between the four rows is not explained, and a reader comparing the counts (2 fake-only, 15 LIVE-DEPENDENT) could read RS-25 as closer to verified than RS-21/22/26.",
+      "evidence": [
+        "artifact:docs/evidence-table.md#how-to-read-a-row",
+        "artifact:docs/evidence-table.md#the-table"
+      ],
+      "recommendation": "Optional. Resolved when RS-25 is reclassified LIVE-DEPENDENT ('or by a live file that does not exist'), or when the table explains why it is fake-only."
+    },
+    {
+      "id": "TR-V-4",
+      "severity": "info",
+      "title": "The documented +30-day command loads the helper by a relative path (--import=./test/helpers/shift-clock.mjs)",
+      "detail": "**The risk.** Inherited by a child started with another working directory, a relative preload path does not resolve and that child fails to start. The failure is loud, not silent.\n\n**Today.** Every child in the suite starts from the project root, and the run is green (ev:ev-mv4jlh46-01a3c88c). A future test spawning from a temporary directory would fail under the shift only.",
+      "evidence": [
+        "ev:ev-mv4jlh46-01a3c88c",
+        "artifact:docs/evidence-table.md#date-robustness"
+      ],
+      "recommendation": "Optional. Resolved when the documented command uses an absolute path (for example `--import=\"$PWD/test/helpers/shift-clock.mjs\"`), or when the helper's header notes the cwd assumption."
+    },
+    {
+      "id": "TR-V-5",
+      "severity": "info",
+      "title": "The 15 LIVE-DEPENDENT and 2 fake-only criteria are recorded here as met for their deterministic part only",
+      "detail": "**How I recorded them.** The gate needs one criterion per id. For RS-01, 02, 03, 05, 18-26, 31, 32, 34 and NFR6, I record 'met' because:\n- the brief's deterministic (D/B) part passes in my run;\n- the live (LM/LP) part is marked Unverified with its blocker and its closing step, as the brief prescribes (for example RS-31(b) and RS-32(b): 'Unverified with blocker A6/Q2 until the user runs it').\n\n**What this does not mean.** It does not mean a live run happened; none did. The report never says otherwise.",
+      "evidence": [
+        "ev:ev-mv4jijpz-01edcd99",
+        "artifact:.eccode/artifacts/verification/submission.md#4-live-items-still-open-with-the-step-that-closes-each"
+      ],
+      "recommendation": "No change. Resolved when the delivered handoff repeats that the live parts are unverified (LIVE-M1, LIVE-P1, LIVE-P2, FU-52) and lists the user's runbook steps."
+    }
+  ],
+  "resolvedFindings": [],
+  "lessonsConsulted": [
+    "mem-sd-mv1audrd-013b7102"
+  ]
+}
