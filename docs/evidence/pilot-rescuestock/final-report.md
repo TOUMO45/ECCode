@@ -8,6 +8,8 @@
 
 Every RescueStock gate is approved: architecture, design, plan, phases B to G, reworks 1 to 8, and verification. The verification approval was independent: `rev-mv4johr6-0184624c`, with the reviewer's own full re-run `ev-mv4jijpz-01edcd99`. **`eccode deliver` has not run yet.** The engine refuses delivery while a high or critical risk is open. Four high risks can only be closed by a live PayPal run or accepted by the user, and only the user can accept a risk (RISK-1, 2, 13, 16, section 3). Nothing in this report rests on a live PayPal or live model run, because none was run.
 
+**2026-10-12 update:** the user declined to accept the four risks and asked for real external verification. Its status, prerequisites and per-criterion separation of real versus simulated results are in [external-verification.md](external-verification.md). No live run has happened yet.
+
 ## The five verdicts
 
 | # | Verdict | Status |
