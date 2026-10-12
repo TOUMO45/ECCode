@@ -1,4 +1,6 @@
-# ECCode pilot report: RescueStock (in progress)
+# ECCode pilot report: RescueStock
+
+**Status (2026-10-12):** every gate approved, including verification; `eccode deliver` waits only on the user's decision on four high, live-dependent risks. The five verdicts are in [final-report.md](final-report.md).
 
 **Purpose.** Record how ECCode 0.3.0 performed while delivering RescueStock, with enough detail to judge the toolkit without trusting agent summaries. The record of truth is `examples/rescuestock/.eccode/events.jsonl` (hash-chained); this page is derived from it plus the orchestrator's notes. RescueStock is a case study its developers know; nothing here is a benchmark result and nothing here revises the failed requirement-7 verdict in `docs/acceptance-report.md`.
 
@@ -182,10 +184,12 @@ Phase C summary: approved on the first iteration with 13 non-blocking findings; 
 **Budget stop (2026-10-10):** after c3's run closed at 482.7 recorded minutes the engine refused the next `run start` with `BUDGET_EXCEEDED` and the recovery text "Stop and report to the user. Raising limits requires the user's explicit authorization." The orchestrator stopped per decision dec-mv2oy2zj-0109743e, with the c2 one-case fix and c6 pending. The 35 earlier runs the refusal lists as "unknown usage" predate usage corrections; recorded spend stays a lower bound as the engine states.
 
 ## Review findings and their validity
-(filled per gate)
+Per-review findings are in the dispatch log rows above and in `examples/rescuestock/.eccode/reviews/`. Totals from `eccode metrics`: 30 recorded reviews, 12 of them requested changes (40%), 13 review records were refused by the gate rules (most for citing a failing or stale run, or an unpinned anchor), and every refusal was corrected by the reviewer, never worked around. Two reviewer disagreements surfaced explicitly (FU-49 rated info by security and major by technical; the recording reviewer's rating set the decision). Reviewer claims that turned out wrong were recorded as such: a review's own driver bugs (run-mv4hmyoz), a check that required exactly one failing test (run-mv4bflas), and a mutant runner whose rows always exit 0 (run-mv4bfkwi).
 
 ## Defects caught before integration / escaped review
-(filled per phase)
+**Caught by an independent reviewer before the next phase built on them** (selection): plan verification commands that passed on no work (F-PL-1); an invented number grounded by a digit-free quote (TR-D-1); a refund the provider refused shown as returned once a test assertion was loosened (TR-R5-1); a payment plan stuck on failing reads that never escalated (TR-F-1); the compensation path's rejected refund untested (SEC-F-1); the orchestrator's own plan-wide handover rule that would have blocked sibling orders (security re-review of phase F); a secrets scan that missed 10 of 17 planted canaries and an SQL scan with four bypasses (SEC-G-1, SEC-G-2); a README demo that stalled on an unmentioned diameter and an address that logged the user out (TR-G-5, rework-8).
+
+**Escaped an earlier review and caught later:** the refunded-order handover rule (c3, caught at phase F); the test clocks pinned to a date nine days ahead, with one real-versus-injected time comparison (caught by the rework-6 reviewer); the retention test race (FU-33, caught by repeated full runs and fixed in rework-6); a review draft quoting a fake key that the widened secrets scan then flagged (caught at verification). **Not caught by any review here:** anything that only the live PayPal Sandbox or the real model would show (verdict 3 of the final report).
 
 ## Incidents
 

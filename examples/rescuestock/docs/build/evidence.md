@@ -1,6 +1,9 @@
 # Evidence (RescueStock)
 Requirement-to-evidence matrix. Status: Passed | Failed | Unverified. Every row names the test or probe, the commit and the environment. Filled per slice; the final acceptance report is `docs/acceptance-report.md`.
 
+**Superseded on 2026-10-12.** The rows below were filled per slice during phases B and C. The final, independently reviewed matrix for all 45 criteria is `docs/evidence-table.md` (28 verified, 2 fake-only, 15 LIVE-DEPENDENT; final-tree runs ev-mv4jijpz-01edcd99 and ev-mv4j2zpz-0142cd44, verification approved rev-mv4johr6-0184624c). The final report with the five verdicts is `docs/evidence/pilot-rescuestock/final-report.md` at the repository root. Where a row below disagrees with the evidence table, the evidence table is current.
+
+
 | Requirement | Status | Evidence and tested version | Limitation or blocker |
 |---|---|---|---|
 | RS-06 plan A+B 8400 cents, A×2 guard | Passed | `test/unit/domain/planner-fixture.test.js` (`RS-06:` tests); phase B approval `rev-mv1k04zq-01814d87`, reviewer's own run `ev-mv1jv3k8-01ae4b0c` and brute-force agreement on 6,000 random catalogs; Node 22.22, Linux | deterministic suite only |
