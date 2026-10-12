@@ -1,6 +1,6 @@
 {
-  "seq": 1784,
-  "lastHash": "163bd555e06c07e3ae1c7b7b64880d837253deb3fc30bf546dbb2d90b7b94af0",
+  "seq": 1792,
+  "lastHash": "8ea4d2398b30ef353e1971ac45dbc8b412277b3288b91b68c9846e3b130c8674",
   "project": {
     "name": "RescueStock",
     "idea": "Emergency purchasing assistant for small cafés: Arabic/English request and optional package image to structured requirements, exact supply plans over indivisible cup/lid bundles from demonstration suppliers, buyer approval, atomic inventory reservation, supplier confirmation, PayPal Sandbox authorize-then-capture per supplier with compensation, replanning when a supplier drops out. PayPal AI Hackathon entry built with ECCode 0.3.0.",
@@ -5854,10 +5854,60 @@
     "phase:rework-8": {
       "id": "phase:rework-8",
       "kind": "phase",
-      "status": "in_progress",
+      "status": "submitted",
       "iterations": 0,
-      "authors": [],
-      "submissions": [],
+      "authors": [
+        "delivery-lead"
+      ],
+      "submissions": [
+        {
+          "id": "sub-mv4hmffg-01c74aff",
+          "actor": "delivery-lead",
+          "at": "2026-10-12T00:02:07.133Z",
+          "artifacts": [
+            {
+              "path": ".eccode/artifacts/rework-8/submission.md",
+              "sha256": "9a5de8d4c722126dbbd0266744a6c5d5a6877343ecc0a9bc2f2cfd496266d19e"
+            },
+            {
+              "path": "test/scan/secrets.test.js",
+              "sha256": "08c849f49650eeb9f5d81f2b6d483e1425936cf9dafc5bc271c67f235051286b"
+            },
+            {
+              "path": "test/scan/sql.test.js",
+              "sha256": "cf8abe15791436a720ce93a36653f50b459d1e4ba3476d009f67dabe066ac9db"
+            },
+            {
+              "path": "test/scan/evidence-table.test.js",
+              "sha256": "d7e474e29a858194661ba3658d9f717bf6dc319a37e9a2619054fd0ef606d662"
+            },
+            {
+              "path": "test/scan/live-refusal.test.js",
+              "sha256": "04ad8078ce70ab8cc6e05eb1bd6455dae302cbeead98fe009119d0add0bb5fdd"
+            },
+            {
+              "path": "docs/evidence-table.md",
+              "sha256": "00567bbd087927eff8e55775ee2a2406b2320375163796347cecd7cc017abf33"
+            },
+            {
+              "path": "README.md",
+              "sha256": "3a6c607c6f7284fdd2bd61cdd623bba85572df08c21afb9d93b978cf9b0d298f"
+            },
+            {
+              "path": "scripts/clean-checkout.sh",
+              "sha256": "4bf7045fc09dbe45b07f7db4170978ed9135d63f9a1a1dbc46589366724a2183"
+            },
+            {
+              "path": "docs/submission/project-description.md",
+              "sha256": "db22d1abebbbb3990024c85f240071341d4deee82598fcde1a00e863e2245a08"
+            }
+          ],
+          "respondsTo": null,
+          "notes": "rework-8 (dec-mv4feq7b-01e42a8f), handoff ho-mv4h8mfw-01b601a9, commit e299d01; 8 files, no src/public/package change. Resolves SEC-G-1, SEC-G-2/TR-G-4, TR-G-1, TR-G-2, TR-G-3, SEC-G-I1, TR-G-5, FU-60, TR-G-6, SEC-G-I4 (rev-mv4fdv59-01732f16 and phase-g-security-1.md), each with a before run and a killing or passing after run. Mine on tree 00d2d372: four scans 58/58 ev:ev-mv4hbi1w-01d9f0d8; g3 verification command verbatim as one argument with flock held around the whole evidence run: npm test 2406/2398/0 fail/8 skipped, browser 28/28, clean checkout 448 files, copy 2406/2396/0/10, health 200 ev:ev-mv4hjjqn-013f05aa; README demo 18 ok 0 failed on the default port 3000 with a scratch database ev:ev-mv4hka1l-01370497. Disclosed: localhost and supplier-confirm demo findings; live-paypal.md L115 nit left for the verification report; leftover servers stopped by the orchestrator; SQL scan re-pin, shape-only secrets scan, clean-checkout probe-only; no +30-day run on the final bytes. Technical and security review requested.",
+          "commit": "1724ee4cdf8898f9a0c664a05a132ffdf9f05cba",
+          "tree": "00d2d3721127ffa0604362a3ecea2324a2133f2feeeb78e71d63d53f82ce6a82"
+        }
+      ],
       "reviews": [],
       "openFindings": [],
       "approvedBy": null,
@@ -30241,6 +30291,69 @@
       "tree": "00d2d3721127ffa0604362a3ecea2324a2133f2feeeb78e71d63d53f82ce6a82",
       "recordedBy": "test-engineer",
       "at": "2026-10-11T23:51:12.352Z"
+    },
+    "ev-mv4hbi1w-01d9f0d8": {
+      "id": "ev-mv4hbi1w-01d9f0d8",
+      "kind": "command",
+      "label": "DL rework-8: the four scan tests (secrets, sql, evidence-table, live-refusal), commit e299d01",
+      "command": "node --disable-warning=ExperimentalWarning --import ./test/helpers/net-guard.js --test test/scan/secrets.test.js test/scan/sql.test.js test/scan/evidence-table.test.js test/scan/live-refusal.test.js",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 4979,
+      "log": ".eccode/evidence/ev-mv4hbi1w-01d9f0d8.log",
+      "logSha256": "d7673413312f7eec3d8faaa6790fbca29c1c3d653cd838874b450ad8fdce72e6",
+      "logFileSha256": "7779c2f22aef5ddd40773bc5d58fb5573a610975ba263c296421f0de45958ebf",
+      "outputTail": "  duration_ms: 174.358311\n  type: 'test'\n  ...\n# Subtest: T20: every file named by the allow-list or the references list exists and was scanned (a renamed file must not leave a silent entry)\nok 24 - T20: every file named by the allow-list or the references list exists and was scanned (a renamed file must not leave a silent entry)\n  ---\n  duration_ms: 2.282337\n  type: 'test'\n  ...\n# Subtest: T20: the route and HTTP layers, which see request data first, have no allow-list at all: any SQL there is a static literal\nok 25 - T20: the route and HTTP layers, which see request data first, have no allow-list at all: any SQL there is a static literal\n  ---\n  duration_ms: 9.713338\n  type: 'test'\n  ...\n1..25\n# tests 58\n# suites 19\n# pass 58\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 4905.294351\n",
+      "gate": "phase:rework-8",
+      "task": null,
+      "tree": "00d2d3721127ffa0604362a3ecea2324a2133f2feeeb78e71d63d53f82ce6a82",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T23:53:37.621Z"
+    },
+    "ev-mv4hjjqn-013f05aa": {
+      "id": "ev-mv4hjjqn-013f05aa",
+      "kind": "command",
+      "label": "DL rework-8: g3 verification command verbatim (plan g3-final-scans-browser), one shell argument, suite lock held around the whole evidence run, commit e299d01; clean-checkout reaches the npm registry",
+      "command": "ls test/scan/sql.test.js test/scan/live-refusal.test.js test/scan/evidence-table.test.js test/api/labelling.test.js test/browser/a11y-states.test.js test/browser/six-questions.test.js test/browser/labelling.test.js docs/evidence-table.md >/dev/null && npm test && npm run test:browser && sh scripts/clean-checkout.sh",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 366507,
+      "log": ".eccode/evidence/ev-mv4hjjqn-013f05aa.log",
+      "logSha256": "ec4cc1e703eec70a70558d4f0e81d4edb168cc1710806c7aefd31086437f501e",
+      "logFileSha256": "6f592bf2c593792d47e7a54262ee9802fae5f2930ff67c4bdb8390911d3e7b35",
+      "outputTail": "  type: 'test'\n  ...\n1..963\n# tests 2406\n# suites 337\n# pass 2396\n# fail 0\n# cancelled 0\n# skipped 10\n# todo 0\n# duration_ms 110639.385321\n\n> rescuestock@0.1.0 posttest\n> node scripts/report-p95.js\n\nNFR5 API latency: 7603 requests, p50 3.1 ms, p95 62.8 ms (limit: p95 < 300 ms)\nNFR5 suite time: 110.8 s (limit: < 300 s)\nNFR5 latency and suite time: ok\n\n==> clean-checkout: npm start, then GET /api/health\nGET /api/health -> 200 ok (port 39755)\n\n==> clean-checkout: ok\nclean-checkout: npm install, npm test and npm start passed in an empty copy\n",
+      "gate": "phase:rework-8",
+      "task": null,
+      "tree": "00d2d3721127ffa0604362a3ecea2324a2133f2feeeb78e71d63d53f82ce6a82",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-11T23:59:53.043Z"
+    },
+    "ev-mv4hka1l-01370497": {
+      "id": "ev-mv4hka1l-01370497",
+      "kind": "command",
+      "label": "DL rework-8: README demo as written (engineer script scratchpad/r8/readme-demo.mjs via run-demo.sh, fresh copy r8/dl-demo with its own database, port 3000 if free), commit e299d01",
+      "command": "sh /tmp/claude-0/-home-user-ECCode/f72396f5-b89f-576d-a680-29d481cd71c9/scratchpad/r8/run-demo.sh dl-demo with-diameter",
+      "cwd": ".",
+      "purpose": "check",
+      "exitCode": 0,
+      "status": "passed",
+      "timedOut": false,
+      "durationMs": 8506,
+      "log": ".eccode/evidence/ev-mv4hka1l-01370497.log",
+      "logSha256": "022df4d54ccbd30d14d7e6d0fb440765ecdac6142ac8041b2eaca2a6f38c038c",
+      "logFileSha256": "45ed1f6cab4e135c7aee1d03c9c50651488ef7b26c85cc5221a2bff1fed153df",
+      "outputTail": "OK   the seed printed a password for cafe1 and the suppliers -- 7 accounts\nOK   npm start listens on 127.0.0.1:3000 and /api/health is 200 -- {\"ts\":\"2026-10-12T00:00:19.516Z\",\"level\":\"info\",\"msg\":\"retention.sweep\",\"requestId\":\"sys-77498824\",\"counts\":{\"images\":0,\"orphans\":0,\"rateEvents\":0,\"staleSpend\":0,\"failed\":0}} | {\"ts\":\"2026-10-12T00:00\nparsed password lengths: supplier-a:16 supplier-b:16 supplier-c:16 supplier-d:16 supplier-e:16 cafe1:16 cafe2:16\nOK   signed in as cafe1 with the seeded password\nform values after the sample text: {\"productType\":\"cups_and_lids\",\"cupQuantity\":\"200\",\"lidQuantity\":\"200\",\"capacityMl\":\"250\",\"diameterMm\":\"\",\"material\":\"\",\"deadline\":\"2026-10-12T11:00\",\"budgetCents\":\"120.00\",\"maxPickups\":\"2\"}\nempty fields: [\"diameterMm\",\"material\"]\npage mentions the diameter: true\nOK   the cup diameter is empty (README: the sample text has no cup diameter); the quantities, capacity, deadline, budget and pickups are filled in -- [\"diameterMm\",\"material\"]\nOK   the plan is suppliers A and B for USD 84.00 -- lan Plan v1 — A+B Plan status: Proposed Best plan: A+B for $84.00 in total, 2 pickups, ready by 10:30. Wh\nOK   supplier C is rejected as incompatible (95 mm lids on 90 mm cups)\nOK   supplier D is rejected as too late\nafter reserve and before any supplier confirmed: the Approve button for A is present: true, disabled: false\nOK   the payment approvals are offered right after reserving, labelled Simulated\nOK   supplier A: the approval page is labelled \"Simulated payment approval — not PayPal\" -- Simulated payment approval — not PayPal This is a local simulation of a payment approval page. No re\nOK   supplier B: the approval page is labelled \"Simulated payment approval — not PayPal\" -- Simulated payment approval — not PayPal This is a local simulation of a payment approval page. No re\nafter both approvals and before any supplier confirmed: the Complete the purchase button is usable: false; text: Not yet confirmed Order status: Waiting for the supplier to confirm Supplier B Demo data Catalog offer 1 bundle, read\nOK   the purchase cannot be completed before the suppliers have confirmed\nOK   supplier-a confirmed its order in the browser -- Order R1-V1 is confirmed.\nOK   supplier-b confirmed its order in the browser -- Order R1-V1 is confirmed.\nOK   after the suppliers confirmed and both payments are approved, Complete the purchase is usable\nOK   Complete the purchase: \"Purchase started\"\nOK   the request page shows \"Purchase confirmed\"\nOK   Chromium made no request outside 127.0.0.1/localhost\ndemo result: 18 ok, 0 failed\n",
+      "gate": "phase:rework-8",
+      "task": null,
+      "tree": "00d2d3721127ffa0604362a3ecea2324a2133f2feeeb78e71d63d53f82ce6a82",
+      "recordedBy": "delivery-lead",
+      "at": "2026-10-12T00:00:27.134Z"
     }
   },
   "reviews": {
@@ -46046,6 +46159,30 @@
       "task": null,
       "gate": "phase:rework-8",
       "startedAt": "2026-10-11T23:52:38.404Z",
+      "status": "ok",
+      "attempt": 1,
+      "endedAt": "2026-10-12T00:02:31.285Z",
+      "durationMinutes": 9.88,
+      "costUsd": null,
+      "tokens": 57696,
+      "note": "resumed delivery-lead: cumulative 258536 minus earlier 200840; rework-8 submitted sub-mv4hmffg-01c74aff",
+      "usageReported": true
+    },
+    "run-mv4hmybm-01fe6bb4": {
+      "id": "run-mv4hmybm-01fe6bb4",
+      "agent": "security-reviewer",
+      "task": null,
+      "gate": "phase:rework-8",
+      "startedAt": "2026-10-12T00:02:31.760Z",
+      "status": "running",
+      "attempt": 1
+    },
+    "run-mv4hmyoz-015ec4e7": {
+      "id": "run-mv4hmyoz-015ec4e7",
+      "agent": "technical-reviewer",
+      "task": null,
+      "gate": "phase:rework-8",
+      "startedAt": "2026-10-12T00:02:32.233Z",
       "status": "running",
       "attempt": 1
     }
@@ -46812,8 +46949,8 @@
   ],
   "totals": {
     "costUsd": 1.1,
-    "runtimeMinutes": 2030.15,
-    "tokens": 22428562
+    "runtimeMinutes": 2040.03,
+    "tokens": 22486258
   },
   "delivery": null,
   "reworks": [
