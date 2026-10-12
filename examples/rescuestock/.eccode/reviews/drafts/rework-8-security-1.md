@@ -6,6 +6,8 @@
 - **One new minor finding, SEC-R8-1:** three further T20 bypasses in the allow-listed files. It does not block: the code is safe today, and the fix is three pins (or one sentence in the verification report).
 - Three info items.
 
+2026-10-12: masked a quoted fake test key so the RS-29 whole-project scan stays green; findings and verdict unchanged.
+
 Reviewer: security-reviewer, run run-mv4hmybm-01fe6bb4. Gate: `phase:rework-8`. Submission: `sub-mv4hmffg-01c74aff`.
 - **Handoff:** ho-mv4h8mfw-01b601a9, commit `e299d01`.
 - **Read:**
@@ -65,7 +67,7 @@ Reviewer: security-reviewer, run run-mv4hmybm-01fe6bb4. Gate: `phase:rework-8`. 
   - the shape-sample file (`secrets.test.js`) is exempt from the *shape* checks.
 
   See SEC-R8-I2.
-- No exception is broad enough to hide a real value elsewhere. Each `has` fragment is a fake (`user:pw@`, `sk-live-should-not-leak`, `WH-STUB-DEFAULT`, …), and the 16 record entries quote earlier scan output.
+- No exception is broad enough to hide a real value elsewhere. Each `has` fragment is a fake (a URL-password placeholder, a "should not leak" key placeholder `sk-…(fake, masked)`, the stub webhook id, …), and the 16 record entries quote earlier scan output.
 
 ## SEC-G-2: resolved; the pin-and-hash design judged
 
