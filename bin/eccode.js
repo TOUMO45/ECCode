@@ -95,7 +95,11 @@ Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR, never fo
 `;
 
 function shellQuote(arg) {
-  return /^[A-Za-z0-9_\/.,:=@%+-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, "'\\''")}'`;
+  if (/^[A-Za-z0-9_\/.,:=@%+-]+$/.test(arg)) return arg;
+  // Evidence commands run through the platform shell (sh, or cmd.exe on
+  // Windows, which has no single quotes: CRT parsing reads "" as a literal ").
+  if (process.platform === 'win32') return `"${arg.replace(/"/g, '""')}"`;
+  return `'${arg.replace(/'/g, "'\\''")}'`;
 }
 
 function findRoot(flags) {
