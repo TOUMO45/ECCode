@@ -120,7 +120,8 @@ test('happy path produces a verified final handoff', () => {
 
 test('evidence logs redact secrets and record exit codes', () => {
   const ctx = tmpProject();
-  const ev = evidence.runCommand(ctx.store, 'test-engineer', { label: 'leaky', command: 'echo "ANTHROPIC key sk-ant-api03-abcdefghijklmnop and api_key=supersecret123"; exit 4' });
+  // node -e instead of shell echo/exit so the same command works under sh and cmd.exe
+  const ev = evidence.runCommand(ctx.store, 'test-engineer', { label: 'leaky', command: `node -e "console.log('ANTHROPIC key sk-ant-api03-abcdefghijklmnop and api_key=supersecret123'); process.exit(4)"` });
   assert.strictEqual(ev.exitCode, 4);
   assert.strictEqual(ev.status, 'failed');
   const log = fs.readFileSync(path.join(ctx.dir, ev.log), 'utf8');
@@ -185,19 +186,27 @@ test('run usage corrections are append-only and adjust totals by the delta', () 
   expectCode(() => runs.correctRun(ctx.store, id, 'orchestrator', { tokens: 1 }), 'INVALID_INPUT');
 });
 
-test('evidence run preserves argument quoting from the CLI (sh -c with compound commands)', () => {
-  const ctx = tmpProject();
+function evidenceCli(ctx, args) {
   const { spawnSync } = require('child_process');
   const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
-  const run = (args) => spawnSync(process.execPath, [bin, 'evidence', 'run', '--actor', 'test-engineer', '--label', 'q', '--json', '--root', ctx.dir, '--', ...args], { encoding: 'utf8' });
-  let res = run(['sh', '-c', 'test -d .eccode && echo "it works"']);
+  return spawnSync(process.execPath, [bin, 'evidence', 'run', '--actor', 'test-engineer', '--label', 'q', '--json', '--root', ctx.dir, '--', ...args], { encoding: 'utf8' });
+}
+
+test('evidence run preserves argument quoting from the CLI (argv vector)', () => {
+  const ctx = tmpProject();
+  let res = evidenceCli(ctx, ['node', '-e', 'process.exit(require("fs").existsSync(".eccode") ? 0 : 3)']);
   assert.strictEqual(res.status, 0, res.stderr);
-  let ev = JSON.parse(res.stdout);
+  assert.strictEqual(JSON.parse(res.stdout).status, 'passed');
+  res = evidenceCli(ctx, ['echo one && echo two']); // a single argument is a shell command string
+  assert.match(JSON.parse(res.stdout).outputTail, /one\s*\ntwo/);
+});
+
+// POSIX shell syntax: check commands are written for the shell they run on.
+test('evidence run preserves sh -c compound commands (POSIX shells)', { skip: process.platform === 'win32' && 'sh -c semantics' }, () => {
+  const ctx = tmpProject();
+  const res = evidenceCli(ctx, ['sh', '-c', 'test -d .eccode && echo "it works"']);
+  assert.strictEqual(res.status, 0, res.stderr);
+  const ev = JSON.parse(res.stdout);
   assert.strictEqual(ev.status, 'passed');
   assert.match(ev.outputTail, /it works/);
-  res = run(['node', '-e', 'process.exit(require("fs").existsSync(".eccode") ? 0 : 3)']);
-  assert.strictEqual(JSON.parse(res.stdout).status, 'passed');
-  res = run(['echo one && echo two']); // a single argument is a shell command string
-  ev = JSON.parse(res.stdout);
-  assert.match(ev.outputTail, /one\ntwo/);
 });
