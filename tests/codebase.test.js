@@ -76,6 +76,23 @@ test('rust and java imports resolve', () => {
   assert.deepStrictEqual(f['src/com/shop/api/Server.java'].external, ['java.util.List']);
 });
 
+test('dynamic module loading is flagged, and impact names those files instead of missing them', () => {
+  const dir = repo({
+    'src/registry.js': "const plugin = require(process.env.PLUGIN_PATH);\nmodule.exports = plugin;\n",
+    'src/static.js': "const { a } = require('./lib');\nmodule.exports = a;\n",
+    'src/lib.js': 'exports.a = 1;\n',
+    'jobs/loader.py': 'import importlib\n\ndef load(name):\n    return importlib.import_module(name)\n',
+  });
+  const index = cb.indexProject(dir);
+  assert.strictEqual(index.files['src/registry.js'].dynamic, true);
+  assert.strictEqual(index.files['jobs/loader.py'].dynamic, true);
+  assert.strictEqual(index.files['src/static.js'].dynamic, undefined);
+  const imp = cb.impact(dir, ['src/lib.js'], { index });
+  assert.deepStrictEqual(imp.dependents.map((d) => d.file), ['src/static.js']);
+  assert.deepStrictEqual(imp.dynamicCallers, ['jobs/loader.py', 'src/registry.js']);
+  assert.match(cb.onboardBrief(dir).text, /dynamic module loading[\s\S]*src\/registry\.js/);
+});
+
 test('cache: unchanged files are reused, edits are re-indexed (needs .eccode dir)', () => {
   const dir = repo({ 'a.js': "const b = require('./b');\n", 'b.js': 'module.exports = 1;\n' });
   fs.mkdirSync(path.join(dir, '.eccode'));

@@ -51,6 +51,13 @@ test('go test check really runs (skipped without go)', { skip: !has('go version'
   assert.strictEqual(stack.runCheck(dir, loadConfig(dir), 'go-test').exitCode, 0);
 });
 
+test('cargo test check really runs (skipped without cargo)', { skip: !has('cargo --version') }, () => {
+  const { dir } = tmpProject();
+  write(dir, 'Cargo.toml', '[package]\nname = "x"\nversion = "0.1.0"\nedition = "2021"\n');
+  write(dir, 'src/lib.rs', 'pub fn sum(a: i32, b: i32) -> i32 { a + b }\n\n#[cfg(test)]\nmod tests {\n    #[test]\n    fn adds() { assert_eq!(super::sum(1, 2), 3); }\n}\n');
+  assert.strictEqual(stack.runCheck(dir, loadConfig(dir), 'cargo-test').exitCode, 0);
+});
+
 test('built-in secrets scan: code hits fail, test-fixture hits only warn, markers suppress', () => {
   const { dir } = tmpProject();
   const key = 'sk-ant-' + 'a'.repeat(24); // assembled so this file never alarms itself

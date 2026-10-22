@@ -10,7 +10,7 @@ const { DEFAULT_CONFIG } = require('../lib/config');
 const ROOT = path.join(__dirname, '..');
 const errors = [];
 const fm = (file) => {
-  const text = fs.readFileSync(file, 'utf8');
+  const text = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n'); // CRLF checkouts (Windows) must validate too
   const m = text.match(/^---\n([\s\S]*?)\n---\n/);
   if (!m) {
     errors.push(`${path.relative(ROOT, file)}: missing frontmatter`);

@@ -87,6 +87,25 @@ test('guard: commands touching the record may only read it or call eccode', () =
   assert.strictEqual(bash(dir, null, 'git add .eccode && git commit -m record'), 'allow'); // the main session commits the record
 });
 
+test('guard: shell writes obey task ownership at write time, like the file tools', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  const gates2 = require('../lib/gates');
+  gates2.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  tasks.claim(ctx.store, ctx.config, 'ui', 'frontend-engineer');
+  const fe = 'frontend-engineer';
+  assert.strictEqual(bash(ctx.dir, fe, 'echo "x" > src/web/app.js'), 'allow'); // inside the claim
+  assert.strictEqual(bash(ctx.dir, fe, 'echo "backdoor()" > src/server/auth.js'), 'deny'); // other task's files
+  assert.strictEqual(bash(ctx.dir, fe, 'echo draft >> .eccode/drafts/notes.md'), 'allow');
+  assert.strictEqual(bash(ctx.dir, fe, 'node build.js | tee src/server/auth.js'), 'deny');
+  assert.strictEqual(bash(ctx.dir, fe, 'cp /tmp/x src/server/auth.js'), 'deny');
+  assert.strictEqual(bash(ctx.dir, fe, 'rm tests/c.test.js'), 'deny');
+  assert.strictEqual(bash(ctx.dir, fe, 'npm test > /tmp/out.log'), 'allow'); // outside the project
+  assert.strictEqual(bash(ctx.dir, 'backend-engineer', 'echo x > src/server/a.js'), 'deny'); // no claim yet
+  assert.strictEqual(bash(ctx.dir, 'technical-reviewer', 'echo x > src/web/app.js'), 'deny'); // reviewers never edit code
+  assert.strictEqual(bash(ctx.dir, null, 'echo x > src/web/app.js'), 'allow'); // main session: not role-bound
+});
+
 test('guard: ECCODE_STRICT=1 fails closed on internal errors', () => {
   const run = (env) => spawnSync(process.execPath, [GUARD], { input: '{ not json', encoding: 'utf8', env: { ...process.env, ...env } });
   assert.strictEqual(run({}).stdout, '');
@@ -115,6 +134,34 @@ test('audit --against <ref> detects history rewritten after it was committed', (
   execFileSync('git', ['checkout', '--', '.eccode'], { cwd: dir });
   store.commit('risk.added', 'orchestrator', { id: 'R2', title: 'appending is fine', severity: 'low' });
   assert.match(cli(dir, ['audit', '--against', 'HEAD']).stdout, /history matches HEAD/);
+});
+
+test('session start warns when upstream history was rewritten locally', () => {
+  const ctx = tmpProject();
+  const { dir, store } = ctx;
+  const START = path.join(__dirname, '..', 'scripts', 'hooks', 'session-start.js');
+  const bare = fs.mkdtempSync(path.join(require('os').tmpdir(), 'eccode-origin-'));
+  execFileSync('git', ['init', '-q', '--bare', bare]);
+  execFileSync('git', ['remote', 'add', 'origin', bare], { cwd: dir });
+  store.commit('risk.added', 'orchestrator', { id: 'R1', title: 'payment double-charge', severity: 'critical' });
+  commit(dir, 'record');
+  execFileSync('git', ['push', '-q', '-u', 'origin', 'HEAD'], { cwd: dir });
+  const hook = () => {
+    const r = spawnSync(process.execPath, [START], { input: JSON.stringify({ cwd: dir }), encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: '' } });
+    return JSON.parse(r.stdout).hookSpecificOutput.additionalContext;
+  };
+  assert.match(hook(), /Record anchored: history matches origin\//);
+  let prev = '0'.repeat(64);
+  const forged = store.readEvents().map((ev) => {
+    const { hash, ...body } = ev;
+    if (body.type === 'risk.added') body.data = { ...body.data, severity: 'low' };
+    body.prevHash = prev;
+    prev = sha256(prev + JSON.stringify(body));
+    return { ...body, hash: prev };
+  });
+  fs.writeFileSync(store.eventsFile, forged.map((e) => JSON.stringify(e)).join('\n') + '\n');
+  store.rebuildSnapshot();
+  assert.match(hook(), /WARNING: the record diverges from origin\/.*history rewritten/);
 });
 
 function completePhase(ctx, sneak) {
