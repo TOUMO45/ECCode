@@ -25,8 +25,18 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
   Ask the user with a focused question. Only `--actor user` commands record their answer, and you run those only after the user has actually answered.
 
 ## 1. Start or resume
-- **New:** `eccode init --name "<name>" --idea "<idea>"`, then show the user `eccode status --brief`.
-- **Resume:** `eccode resume`. If a previous session left runs open, run `eccode recover --all`. That releases their claims and counts the attempts. Continue from the reported **NEXT** action.
+- **Pick the track first.** How much process a change gets is a decision, not a default:
+  | Track | Gates before implementation | Extra rule the engine enforces |
+  |---|---|---|
+  | `greenfield` | architecture → design → plan | — |
+  | `feature` | design → plan | — |
+  | `refactor` | plan | the `--behavior` command must be recorded passing before the first claim and again after the last phase approval; breaking changes are refused even when declared |
+  | `fix` | plan | verification needs the failing reproduction and the same command passing after the fix |
+  | `quick` | none (a one-task plan is imported from `--owner/--files/--command`) | phase review and verification still apply |
+- **New project:** `eccode init --name "<name>" --idea "<idea>" [--track <t>]`, then show the user `eccode status --brief`.
+- **Existing codebase:** run `eccode onboard` first and read the brief (modules, entry points, hot spots, most-depended files). Give its path to every author you dispatch. Suggest required checks to the user once: `eccode stack` lists what this repository supports; adopting any (`eccode stack adopt --checks <ids> --actor user`) makes reviewers run them at verification.
+- **Next change on a delivered project:** `eccode work start --track <t> --title "..." --actor orchestrator` (refactor adds `--behavior "<command>"`; quick adds `--owner/--files/--command`). The engine refuses a new work item while one is active; only the user can abandon one.
+- **Resume:** `eccode resume`. If a previous session left runs open, run `eccode recover --all`. That releases their claims and counts the attempts. Continue from the reported **NEXT** action, which also names the active work item and track.
 - **Limits.** The defaults in `.eccode/config.json` are `maxConcurrency`, `maxReviewIterations`, `maxTaskRetries`, `maxRuntimeMinutes`, `maxCostUsd` and `staleRunMinutes`. Tell the user what they are; change them only if the user asks.
 
 ## 2. Run accounting (every dispatch)
@@ -62,7 +72,7 @@ For each `phase:<id>`, in order:
    - A failed completion means the engine rejected the handoff. Send the agent back with the exact refusal.
    - On `task fail`, retry within `maxTaskRetries`. A repeated failure escalates.
    - For a non-trivial failure, dispatch `learning-debugger`.
-4. **Check.** Run integration checks across tasks yourself when they span ownership (`eccode evidence run --actor orchestrator ...`).
+4. **Check.** Run integration checks across tasks yourself when they span ownership (`eccode evidence run --actor orchestrator ...`). `eccode impact --changed` names the dependents and tests a change reaches; `--run --actor orchestrator` executes and records the affected tests.
 5. **Independent review.** Have `delivery-lead` submit the phase. Then dispatch `technical-reviewer` (and `security-reviewer` for phases touching auth, input handling or AI). Reviewers re-run checks themselves.
 6. **Fix blocking findings.** Map each finding to its owning task, run `eccode task reset <id> --actor orchestrator --reason "<finding>"`, then redispatch. Re-submit with `--responds-to`. The reviewer must resolve each finding with evidence.
 7. **Record before dependent work.** The next phase cannot start until this gate is approved (enforced).

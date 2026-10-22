@@ -193,7 +193,8 @@ test('lite measures and warns without refusing; off records nothing', () => {
   write(ctx.dir, 'src/server/app.js', `x(); ${JS_MARK}hack\n`);
   completeApi(ctx, ['src/server/package.json', 'src/server/app.js']);
   const l = ctx.store.state().tasks.api.lean;
-  assert.strictEqual(l.warnings.length, 3); // undeclared dependency, undeclared marker, no test
+  assert.strictEqual(l.warnings.length, 4); // undeclared dependency, undeclared marker, no test, no affected test by import index
+  assert.strictEqual(l.impact.dependents, 0);
   assert.deepStrictEqual(leanSummary(ctx.store.state()), {
     tasks: 1,
     linesAdded: 4, // package.json: "dependencies": {} becomes 3 lines (+3/−1); new untracked app.js: +1
@@ -201,7 +202,7 @@ test('lite measures and warns without refusing; off records nothing', () => {
     newDependencies: ['lodash'],
     shortcutsDeclared: 1,
     codeTasksWithTests: '0/1',
-    warnings: 3,
+    warnings: 4,
   });
 
   const off = leanProject('off');

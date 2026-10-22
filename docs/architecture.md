@@ -27,6 +27,13 @@ ECCode separates **judgment**, which agents supply in prompts, from **rules**, w
 │ delivery.js final handoff, refused unless all gates approved and reviewed files unchanged  │
 │ lean.js     claim baseline + completion checks (declared dependencies and shortcuts, test  │
 │             or reason), per-task line stats, reuse map, deferred-shortcut ledger           │
+│ compat.js   public-surface baseline (exports, routes, migrations); undeclared breaking     │
+│             changes refused; refactor track refuses them outright                          │
+│ codebase.js import-resolved index (8 languages), onboarding brief, impact analysis         │
+│ works.js    work items and tracks; fix needs a reproduction pair, refactor a behavior      │
+│             command green before and after                                                 │
+│ stack.js    stack detection, runnable checks, user-adopted required checks, secrets scan   │
+│ bench.js    paired with/without-skill benchmark with hidden checks measured by the harness │
 │ status.js   next action, resume brief                                                      │
 │ store.js    append-only hash-chained events.jsonl + rebuildable state.json, file lock      │
 │ memory/     4-layer memory, retrieval, applicability, lesson review, promotion, metrics,   │
@@ -50,6 +57,10 @@ ECCode separates **judgment**, which agents supply in prompts, from **rules**, w
 | Retrieval | BM25 + char-trigram, verified-first weighting, optional external embedder | Embedding store | Lexical retrieval works offline at zero cost. The `ECCODE_EMBED_COMMAND` embedder (user environment only, never the project config) adds semantic similarity where it's worth the cost. Without it we don't claim semantic search. |
 | Lean discipline | Prompt guidance (`lean-change`) plus engine checks on what can be checked: declared new dependencies, declared `shortcut:` markers, a test or a stated reason | Prompt-only (Ponytail), diff-size budgets | Undeclared dependencies and hidden debt become visible to the independent reviewer. Diff budgets would refuse correct-but-large changes, so ECCode measures lines instead of capping them. |
 | Harness portability | Engine + CLI are harness-neutral; Claude Code adapter is plugin/installer; `export agents-md` for others | Per-harness forks | Rules enforced by the CLI apply in every harness. Only the prompts and hooks differ. |
+
+## Work items and tracks
+
+One record, many deliveries. `project.initialized` opens work item `w1`; after `deliver`, `work.started` archives it and opens the next with its own git base and a track that sets the document gates: `greenfield` (architecture → design → plan), `feature` (design → plan), `refactor`/`fix` (plan), `quick` (an auto-imported one-task plan). Implementation phases and verification apply to every track. `fix` adds the reproduction-pair rule, `refactor` the behavior-command rule and a ban on breaking changes. A snapshot schema change bumps `STATE_VERSION`: an older `state.json` is treated as a stale cache (replayed, not trusted, never reported as tampering).
 
 ## Gate model
 

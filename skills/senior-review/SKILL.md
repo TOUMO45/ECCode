@@ -36,7 +36,9 @@ Review as if you will be paged when this breaks. Check in this order: **correct 
 - **Propose the smallest fix that works.** Prefer fixes that delete code. Never propose layers, frameworks or config the problem does not need.
 
 ## 4. In an ECCode gate review
-- **Read each task's lean record:** `eccode task list --json` → `lean`, which holds lines added/removed, `newDependencies`, `shortcuts`, `testsNotNeeded` and `warnings`.
+- **Read each task's lean record:** `eccode task list --json` → `lean`, which holds lines added/removed, `newDependencies`, `shortcuts`, `testsNotNeeded`, `warnings`, the measured `impact` (dependents, modules, affected tests) and detected `breaking` changes against declared ones.
+  - Run the affected tests yourself: `eccode impact --changed --run --actor <you>` records them as your evidence.
+  - Challenge every `breakingChanges` entry: is the reason real, is the migration path for callers stated, does the removal belong in this track?
   - For every new dependency: is the reason real, or would the codebase, the platform or an installed package do? Supply-chain questions (maintenance, license, known vulnerabilities) go to `security-reviewer`.
   - For every `testsNotNeeded`: is the logic really trivial, or covered elsewhere? Name the test.
   - Every warning recorded under `lean.level: lite` is a candidate finding.
@@ -49,6 +51,8 @@ Review as if you will be paged when this breaks. Check in this order: **correct 
   | Lean and small speed issues | `minor` |
   | Observations | `info` |
 
+- **Required stack checks.** At verification, the engine refuses your approval until you have recorded a passing run of every check in `eccode stack` marked `*` (adopted by the user). Run each exactly as listed, with `eccode evidence run --actor <you> -- "<command>"`.
+- **Track rules.** On a `fix` work item, confirm the reproduction pair is honest (the failing run reproduces the reported bug, not an arbitrary command). On a `refactor`, confirm the behavior command is a meaningful suite, not `true`.
 - **Recommendations.** Each finding's `recommendation` states the smallest fix and the condition that resolves it. The review JSON rules of the `review-gate` skill still apply.
 
 ## 5. One-shot report (`/eccode:review`, `/eccode:audit`)

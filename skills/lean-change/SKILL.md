@@ -11,7 +11,8 @@ The best change is usually the smallest one that **completely** solves the probl
 - Read the task, its acceptance criteria and the code it touches.
 - List everything the change has to reach: callers of each function you change (grep them all), tests, fixtures, config, exports, docs. That list is the scope. Features nobody asked for are not.
 - Ask what the change could break for users: data destroyed or exposed, callers that stop working, contracts that change shape.
-- See what already exists before writing anything: `eccode map --path <area>` lists the top-level functions, classes and exports of each directory. Then grep for the concept itself (e.g. `slug`, `retry`, `formatMoney`).
+- See what already exists before writing anything: `eccode map --path <area>` lists the top-level functions, classes and exports of each directory; `eccode onboard` gives the whole-repository brief (modules, entry points, hot spots, most-depended files). Then grep for the concept itself (e.g. `slug`, `retry`, `formatMoney`).
+- Know the blast radius before you edit a shared file: `eccode impact <file>` lists every dependent and the tests that cover them (`--run --actor <you>` executes and records those tests). The engine records the same impact summary on your completion for the reviewer.
 
 ## 2. Take the first rung that fully works
 1. **Not needed.** Drop options, flexibility and features that no requirement asks for. Name what you left out in one line (handoff `remainingIssues` or your final reply).
@@ -36,6 +37,7 @@ Validation at trust boundaries · error handling that prevents data loss · auth
 - **A test, or a reason.** New non-trivial logic (a branch, a loop, parsing, money, security, data writes, a bug fix) gets one focused test that fails when the logic breaks. A trivial change needs no test; then say why in `handoff.testsNotNeeded` (for example "rename only" or "covered by contract test X in task Y").
 - **Deferred shortcuts.** If you knowingly accept a limit, mark it where it lives, in the file's comment syntax, for example `// shortcut: in-memory cache, move to Redis when we run a second instance`. The text names the limit, then when to upgrade. Declare each one in `handoff.shortcuts` (`file`, `limit`, `upgradeWhen`). `eccode debt` lists every marker, so a deferral cannot quietly become permanent.
 - **New dependencies.** Declare each in `handoff.newDependencies` with a `reason` and `alternativesChecked` (what you checked in the codebase, the standard library and the installed dependencies).
+- **Breaking changes.** Removing a public export or HTTP route, editing or deleting an existing migration, and destructive SQL in a new migration are detected against the claim-time baseline. Declare each in `handoff.breakingChanges` with the engine-detected `kind` and `name`, a `reason` and the `migration` path for callers — or restore it. On the refactor track they are refused outright.
 
 ## What the engine checks at `eccode task complete`
 It compares the task's files with a baseline taken when the task was claimed. The project's `lean.level` (in `.eccode/config.json`) sets what happens:

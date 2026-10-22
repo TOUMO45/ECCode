@@ -51,6 +51,21 @@
         }
       }
     },
-    "testsNotNeeded": { "description": "Why changed code ships without a changed test file (lean checks require a test or this reason).", "type": "string", "minLength": 10 }
+    "testsNotNeeded": { "description": "Why changed code ships without a changed test file (lean checks require a test or this reason).", "type": "string", "minLength": 10 },
+    "breakingChanges": {
+      "description": "Every removed public export or HTTP route, edited/deleted migration, or destructive new migration, using the engine-detected kind and name.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "name", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "enum": ["export", "route", "migration", "destructive-migration"] },
+          "name": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 10 },
+          "migration": { "type": "string", "minLength": 5 }
+        }
+      }
+    }
   }
 }

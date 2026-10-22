@@ -65,6 +65,7 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 | `memory.staleAfterDays` | 180 | Age after which a lesson must be revalidated |
 | `memory.embedCommand` | — | Ignored in the project config (a repository must not run commands). Use the `ECCODE_EMBED_COMMAND` environment variable |
 | `memory.sharedDir` | `~/.eccode/memory` | Shared lesson store. `ECCODE_SHARED_MEMORY` overrides it |
+| `stack.required` | `[]` | Check ids (`eccode stack`) whose passing reviewer-run is required for every verification approval. Managed by `eccode stack adopt --actor user` |
 | `lean.level` | `full` | `off` · `lite` (measure and warn) · `full` (refuse undeclared new dependencies, undeclared `shortcut:` markers, code changed without a test or a reason) · `strict` (also plan-approved dependencies and markers that name an upgrade trigger). See [lean.md](lean.md) |
 | `lean.mapChars` | 4000 | Default output budget of `eccode map` |
 | `improvement.requireUserForAdoption` | true | Workflow changes need `--actor user` |
@@ -82,7 +83,7 @@ Environment variables:
 
 ## Use
 
-In Claude Code, `/eccode:start <idea>` makes the main session follow the `orchestrate` skill. It:
+In Claude Code, `/eccode:start <idea>` makes the main session follow the `orchestrate` skill. On an existing codebase it runs `eccode onboard` first and picks a **track** (`greenfield`, `feature`, `refactor`, `fix`, `quick`) that sizes the gates to the change; after a delivery, `eccode work start` opens the next work item on the same record. It:
 1. initializes `.eccode/`;
 2. dispatches the architect, then an **independent** reviewer, then the designer and its reviewer;
 3. has the delivery lead plan the work, followed by a plan review;
@@ -138,4 +139,8 @@ With branch protection on `main`, history already merged there cannot be rewritt
 | `[INVALID_HANDOFF] lean: … shortcut marker(s) but handoff.shortcuts declares …` | A `shortcut:` comment was added but not declared | Declare each in `shortcuts` (`file`, `limit`, `upgradeWhen`), or remove the shortcut |
 | `[INVALID_HANDOFF] lean: code changed … but no test file did` | Code changed with no test | Add one test that fails when the logic breaks, or explain in `testsNotNeeded` |
 | `[INVALID_HANDOFF] lean: … not pre-approved in the plan` | `lean.level` is `strict` | The plan lists the package in the task's `allowedDependencies` (plan review), or the task does without it |
+| `[TRACK_RULE]` on `gate submit verification` | fix: no reproduction pair; refactor: the behavior command isn't recorded green before the first claim and after the last approval | Record the missing runs (`eccode evidence run …`), exactly as the message says |
+| `[WORK_ACTIVE]` on `work start` | The previous work item is still active | `eccode deliver`, or the user abandons it (`eccode work abandon --actor user --reason …`) |
+| `compat: … removed/edited …` on `task complete` | An undeclared breaking change or migration edit | Declare it in `handoff.breakingChanges` with the detected kind and name, or restore the surface. Refactors may not break at all |
+| `required stack check … has no passing run` on a verification review | The user adopted checks the reviewer didn't run | Run each `*` row from `eccode stack` as the reviewer and cite the `ev:` ids |
 | `[LESSON_NOT_VERIFIABLE]` | The lesson lacks a check that fails before the fix and passes after, or similar evidence | Record the reproduction and verification with the **same** command |
