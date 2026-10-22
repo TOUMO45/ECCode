@@ -34,6 +34,8 @@ ECCode separates **judgment**, which agents supply in prompts, from **rules**, w
 │             command green before and after                                                 │
 │ stack.js    stack detection, runnable checks, user-adopted required checks, secrets scan   │
 │ bench.js    paired with/without-skill benchmark with hidden checks measured by the harness │
+│ mcp.js      the engine as typed MCP tools over stdio, one server per role, actor locked at │
+│             startup: a no-Bash agent has no shell to obfuscate (docs/mcp.md)               │
 │ status.js   next action, resume brief                                                      │
 │ store.js    append-only hash-chained events.jsonl + rebuildable state.json, file lock      │
 │ memory/     4-layer memory, retrieval, applicability, lesson review, promotion, metrics,   │
@@ -123,7 +125,7 @@ See [memory.md](memory.md).
 
 ## Known limitations
 
-- **Self-asserted identity.** `--actor` is not cryptographically bound. Within one OS user, no local secret could be hidden from an agent that has a shell. Outside Claude Code with hooks, a caller could claim any role. With hooks, the guard binds `--actor` to the running subagent and blocks record writes, but it reads shell text: deliberately obfuscated commands (quoting tricks, variables, scripts written to disk first) can get past it.
+- **Self-asserted identity (CLI surface).** In MCP mode the actor is locked per server and no tool takes an actor argument, so this limit applies only to the CLI surface. There, `--actor` is not cryptographically bound. Within one OS user, no local secret could be hidden from an agent that has a shell. Outside Claude Code with hooks, a caller could claim any role. With hooks, the guard binds `--actor` to the running subagent and blocks record writes, but it reads shell text: deliberately obfuscated commands (quoting tricks, variables, scripts written to disk first) can get past it.
 - **The hash chain is tamper-evident, not tamper-proof.** Someone with write access can recompute the whole chain. `eccode audit --against <ref>` detects any rewrite of history committed at `<ref>`. Comparing against a protected remote branch in CI moves that check outside the agents' reach. Moving the engine behind an MCP server (structured calls instead of shell text) is the planned structural fix.
 - **Cost accounting** is only as good as the usage numbers reported when a run closes. Claude Code reports tokens and duration to the orchestrator, not dollars, so you need to configure `pricing.usdPerMillionTokens` to get estimates.
 - **Structure, not substance.** Gate rules prove an approval is evidence-backed and independent. They cannot prove the reviewer's judgment is right. Independent re-execution of checks is the main mitigation.

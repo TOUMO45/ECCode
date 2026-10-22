@@ -93,6 +93,24 @@ test('dynamic module loading is flagged, and impact names those files instead of
   assert.match(cb.onboardBrief(dir).text, /dynamic module loading[\s\S]*src\/registry\.js/);
 });
 
+test('what the index cannot cover is named: generated files, and dynamic loading in every supported language', () => {
+  const dir = repo({
+    'src/app.js': "const { a } = require('./lib');\nmodule.exports = a;\n",
+    'src/lib.js': 'exports.a = 1;\n',
+    'migrations/0001_init.py': 'def up():\n    pass\n',
+    'src/types.gen.ts': 'export type T = { x: number };\n',
+    'svc/loader.rb': 'def load(name)\n  Object.const_get(name)\nend\n',
+    'svc/Hook.java': 'public class Hook { void f() throws Exception { getClass().getClassLoader().loadClass("x"); } }\n',
+  });
+  const index = cb.indexProject(dir);
+  assert.deepStrictEqual(index.skipped.generated.sort(), ['migrations/0001_init.py', 'src/types.gen.ts']);
+  assert.strictEqual(index.files['svc/loader.rb'].dynamic, true);
+  assert.strictEqual(index.files['svc/Hook.java'].dynamic, true);
+  const imp = cb.impact(dir, ['src/lib.js'], { index });
+  assert.deepStrictEqual(imp.notCovered, { generated: 2, unreadable: 0 });
+  assert.match(cb.onboardBrief(dir).text, /## Not indexed \(generated or unreadable; their dependents are not tracked\)[\s\S]*migrations\/0001_init\.py/);
+});
+
 test('cache: unchanged files are reused, edits are re-indexed (needs .eccode dir)', () => {
   const dir = repo({ 'a.js': "const b = require('./b');\n", 'b.js': 'module.exports = 1;\n' });
   fs.mkdirSync(path.join(dir, '.eccode'));

@@ -86,6 +86,10 @@ Benchmark
         Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
         hidden checks, lines, dependencies and tests are measured by the harness, never self-reported
 
+MCP (the engine as typed tool calls; see docs/mcp.md)
+  mcp --actor <role>               Serve gates/tasks/evidence/impact as MCP tools over stdio, locked to one role.
+                                   One server per role + no Bash for the agent = no shell to obfuscate.
+
 Other
   metrics [--json]                 Rejection rate, repeat bugs, time-to-fix, recurrence, regressions, lean totals
   install --target <dir> [--scope project|user]   Copy agents/skills/commands/hooks into .claude/
@@ -150,6 +154,11 @@ function main(argv) {
     print(flags, `Initialized ECCode project in ${store.dir}`, { root: store.root });
     return 0;
   }
+  if (group === 'mcp') {
+    // Long-running: serves the engine as MCP tools, locked to one actor.
+    require('../lib/mcp').serve({ root, actor: need(actor, '--actor') });
+    return undefined; // the stdin listener keeps the process alive until the client closes it
+  }
   if (group === 'install') return require('../lib/install').cli(flags, print);
   if (group === 'export') return require('../lib/install').exportCli(sub, flags, print);
 
@@ -197,6 +206,7 @@ function main(argv) {
       res.dependents.length > max ? `  … ${res.dependents.length - max} more (--max ${res.dependents.length})` : null,
       res.tests.length ? `Affected tests (run these): ${res.tests.join(' ')}` : 'WARNING: no affected test file found in the index for this change.',
       res.dynamicCallers.length ? `Note: ${res.dynamicCallers.length} file(s) use dynamic module loading and may also be affected (static analysis cannot tell): ${res.dynamicCallers.slice(0, 8).join(', ')}${res.dynamicCallers.length > 8 ? ', …' : ''}` : null,
+      res.notCovered && (res.notCovered.generated || res.notCovered.unreadable) ? `Note: ${res.notCovered.generated} generated and ${res.notCovered.unreadable} unreadable file(s) are outside the index; their dependents are not tracked (eccode onboard lists them).` : null,
     ].filter(Boolean).join('\n');
     print(flags, text, res);
     if (flags.run) {

@@ -103,6 +103,9 @@ eccode status --brief          # always shows the NEXT action
 ```
 `eccode help` lists every command. Exit codes: `0` ok, `1` usage error, `2` refused by a workflow rule. `memory check` returns `3` when a lesson doesn't apply.
 
+### Maximum containment: MCP mode
+For implementers and reviewers that should have no shell at all, serve the engine as typed tools (`eccode mcp --actor <role>`) and give the agent only that server plus Read/Grep/Glob/Edit/Write. See [mcp.md](mcp.md).
+
 ### Anchor the record in CI
 Commit `.eccode/` with the code. In CI, on every pull request, run:
 ```bash

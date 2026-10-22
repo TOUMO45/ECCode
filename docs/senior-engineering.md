@@ -69,6 +69,10 @@ For external comparability, pair this with SWE-bench Verified or Harbor (see [to
 - Shell writes obey ownership at write time: an implementer's `echo code > other-task/file`, `tee`, `sed -i`, `cp`, `mv` or `rm` outside its claimed globs is denied by the guard, with the same policy as the Edit/Write tools.
 - The CI workflow runs the full check on Node 18/20/22 across Linux, macOS and Windows, audits the record against the PR base, and audits the example records.
 
+## MCP mode: no shell to obfuscate
+
+The one guard limit the shell surface cannot escape — obfuscated command text — is removed structurally in [MCP mode](mcp.md): `eccode mcp --actor <role>` serves the engine as typed tools locked to one role, the agent runs with **no Bash**, commands execute only through `evidence_run`, and the live no-Bash session test (full task cycle, forged record write denied) is quoted in that document.
+
 ## What stays honest
 
 - The index and the compat snapshot are regex-based; their misses are documented where they appear.
