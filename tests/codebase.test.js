@@ -123,6 +123,35 @@ test('cache: unchanged files are reused, edits are re-indexed (needs .eccode dir
   assert.ok(third.files['b.js'].defs.includes('extra'));
 });
 
+test('runtime trace resolves what static analysis cannot: dynamic require and importlib', () => {
+  const dir = repo({
+    'src/plugin.js': 'module.exports = { name: "plugin" };\n',
+    'src/registry.js': "const which = ['./plu', 'gin'].join(''); // defeat any static parser\nmodule.exports = require(which);\n",
+    'run.js': "const p = require('./src/registry');\nif (p.name !== 'plugin') process.exit(1);\n",
+    'jobs/task.py': 'VALUE = 7\n',
+    'jobs/loader.py': "import importlib\nmod = importlib.import_module('.'.join(['jobs', 'task']))\nassert mod.VALUE == 7\n",
+  });
+  const index = cb.indexProject(dir);
+  // Static view: registry's dynamic require is invisible; the file is flagged.
+  assert.deepStrictEqual(index.files['src/registry.js'].imports, []);
+  assert.strictEqual(index.files['src/registry.js'].dynamic, true);
+  const staticImpact = cb.impact(dir, ['src/plugin.js'], { index });
+  assert.deepStrictEqual(staticImpact.dependents, []);
+  // Runtime view: the trace observes the load and finds the real dependent.
+  const trace = cb.traceRun(dir, `node run.js`);
+  assert.strictEqual(trace.exitCode, 0);
+  const merged = cb.mergeTrace(staticImpact, trace);
+  assert.deepStrictEqual(merged.runtime.targetsLoaded, ['src/plugin.js']);
+  assert.ok(merged.runtime.runtimeDependents.includes('src/registry.js'), JSON.stringify(merged.runtime));
+  assert.ok(merged.runtime.dynamicCallersObserved.includes('src/registry.js'));
+  // Python: the reflective import is observed as a load of the target.
+  const pyTrace = cb.traceRun(dir, 'python3 -c "import jobs.loader"'); // from the root, so the jobs package resolves
+  assert.strictEqual(pyTrace.exitCode, 0, 'traced python run failed');
+  assert.ok(pyTrace.loaded.includes('jobs/task.py'), JSON.stringify(pyTrace.loaded));
+  const pyMerged = cb.mergeTrace(cb.impact(dir, ['jobs/task.py'], { index }), pyTrace);
+  assert.deepStrictEqual(pyMerged.runtime.targetsLoaded, ['jobs/task.py']);
+});
+
 test('onboard brief names modules, entry points, most-depended files and its own limits', () => {
   const dir = repo({
     'package.json': JSON.stringify({ name: 'shop', main: 'src/index.js' }),

@@ -174,11 +174,23 @@ test('feature track skips architecture; abandon needs the user and frees the rec
   assert.strictEqual(new Store(ctx.dir).audit().ok, true);
 });
 
-test('endurance: ten consecutive work items of mixed tracks deliver on one record', () => {
+test('endurance: twenty-five consecutive work items in a seeded random track order deliver on one record', () => {
   const ctx = deliveredProject(); // w1 (greenfield)
   const { store, config, dir } = ctx;
-  for (let i = 2; i <= 11; i++) {
-    const track = ['quick', 'fix', 'quick', 'feature-abandoned', 'quick'][(i - 2) % 5];
+  // Seeded PRNG: the sequence is random but reproducible (seed 7).
+  let seedState = 7;
+  const rand = () => {
+    seedState = (seedState * 1103515245 + 12345) % 2147483648;
+    return seedState / 2147483648;
+  };
+  const sequence = [];
+  for (let i = 2; i <= 26; i++) sequence.push(['quick', 'fix', 'feature-abandoned'][Math.floor(rand() * 3)]);
+  let delivered = 1; // w1
+  let abandoned = 0;
+  for (let i = 2; i <= 26; i++) {
+    const track = sequence[i - 2];
+    if (track === 'feature-abandoned') abandoned += 1;
+    else delivered += 1;
     if (track === 'feature-abandoned') {
       works.startWork(store, config, 'orchestrator', { track: 'feature', title: `Feature attempt ${i} later dropped` });
       works.abandonWork(store, 'user', `scope for item ${i} moved to the next quarter`);
@@ -216,16 +228,17 @@ test('endurance: ten consecutive work items of mixed tracks deliver on one recor
     commit(dir, `w${i}`);
   }
   const st = store.state();
-  assert.strictEqual(st.work.id, 'w11');
-  assert.strictEqual(st.work.status, 'delivered');
+  assert.strictEqual(st.work.id, 'w26');
   const past = Object.values(st.pastWorks);
-  assert.strictEqual(past.length, 10);
-  assert.strictEqual(past.filter((p) => p.work.status === 'delivered').length, 8); // w1 + seven of w2..w10
-  assert.strictEqual(past.filter((p) => p.work.status === 'abandoned').length, 2);
+  assert.strictEqual(past.length, 25);
+  const all = [...past.map((p) => p.work), st.work];
+  assert.strictEqual(all.filter((w) => w.status === 'delivered').length, delivered);
+  assert.strictEqual(all.filter((w) => w.status === 'abandoned').length, abandoned);
+  assert.ok(delivered >= 10 && abandoned >= 3, `seeded mix degenerated: ${delivered} delivered / ${abandoned} abandoned`);
   // The whole multi-delivery history replays and audits clean.
   const audit = new Store(dir).audit();
   assert.strictEqual(audit.ok, true, audit.errors.join('; '));
-  assert.ok(audit.events > 150, `expected a long record, got ${audit.events} events`); // 166 events across 11 work items
+  assert.ok(audit.events > 300, `expected a long record, got ${audit.events} events`);
 });
 
 test('snapshots from an older engine schema are stale caches, not tampering', () => {
