@@ -55,3 +55,23 @@ Paired medians across 2 task(s): the "with" variant produced the smaller diff on
 | slugify-reuse | with | 2/2 | +12/−2 | — | 1 | 22 | 0 |
 | slugify-reuse | with | 2/2 | +13/−2 | — | 1 | 17 | 0 |
 | slugify-reuse | with | 2/2 | +13/−2 | — | 1 | 17 | 0 |
+
+## Exact statistics across both haiku suites (added after the runs)
+
+Two-sided exact permutation tests on per-run lines added (difference of
+means, all 252 relabelings enumerated; minimum attainable p with n=5+5 is
+0.0079). Computed by `lib/bench.js permutationTest` from the raw rows above:
+
+| Task | with (lines) | without (lines) | exact p |
+|---|---|---|---|
+| relative-time | 34,31,27,28,33 | 46,44,42,60,38 | **0.0079** |
+| slugify-reuse | 12,11,12,13,13 | 14,14,19,14,14 | **0.0079** |
+| dedupe-objects | 22,25,24,24,22 | 25,44,26,27,45 | **0.0159** |
+| fix-last-page | 8,9,8,9,14 | 19,10,14,9,10 | 0.214 |
+| csv-sum | 23,22,27,24,21 | 18,29,22,31,18 | 1.0 |
+
+Reading: on the three tasks where leanness has room to act (existing helpers
+to reuse, a library temptation), the reduction is individually significant at
+p < 0.05 with exact tests; on the two tasks that are already minimal, there
+is honestly nothing to reduce. Reports generated from now on print these
+p-values automatically.

@@ -90,6 +90,15 @@ test('the report pairs variants per task and keeps raw runs visible', () => {
   assert.match(md, /demonstration, not a statistic/);
 });
 
+test('the permutation test is exact: identical groups give p=1, separated groups the minimum p', () => {
+  const sep = bench.permutationTest([10, 11, 12, 10, 11], [40, 44, 45, 42, 41]);
+  assert.strictEqual(sep.splits, 252);
+  assert.ok(sep.p <= 2 / 252 + 1e-9, `expected the minimal exact p, got ${sep.p}`);
+  const same = bench.permutationTest([20, 21, 22], [20, 21, 22]);
+  assert.strictEqual(same.p, 1);
+  assert.strictEqual(bench.permutationTest([], [1]), null);
+});
+
 test('the with-variant prompt embeds the lean skill; the sandbox never holds the hidden checks during the run', () => {
   assert.match(bench.leanPrompt(), /smallest option that fully solves|Lean change/i);
   const task = bench.listTasks(bench.DEFAULT_SUITE).find((t) => t.id === 'csv-sum');
