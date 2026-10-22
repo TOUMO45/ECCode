@@ -7,7 +7,7 @@ What a senior engineer relies on, and where ECCode provides it with engine enfor
 `eccode onboard` indexes every source file — definitions, imports resolved against the real file list — and writes a brief: languages, modules, entry points, git hot spots, and the most-depended-on files. Agents read it before proposing or changing anything. The index is cached incrementally under `.eccode/cache/`, so large repositories pay the scan once.
 
 - Languages resolved: JS/TS (relative, index files, tsconfig/jsconfig path aliases), Python (absolute, `src/` layout, dotted-relative, `from X import submodule`), Go (module-path imports to package directories), Rust (`mod`, `use crate::`), Java/Kotlin (package imports by path suffix), Ruby (`require_relative`), PHP (`__DIR__` requires).
-- **Limits, stated:** regex parsing misses dynamic imports, reflection and generated code. The brief says so itself.
+- **Dynamic loading is visible, not silent:** files using non-literal `require`/`import(`, `importlib`/`__import__`, `Class.forName` or variable PHP includes are flagged in the index; `eccode impact` and the onboard brief name them as "may also be affected" instead of missing them quietly. Reflection and generated code remain out of reach of a static index, and the brief says so.
 
 ## 2. Impact analysis (`eccode impact`)
 
@@ -61,6 +61,13 @@ The same agent command solves the same tasks in fresh sandboxes, once with the l
 Three built-in tasks ship under `bench/tasks/` (a JS feature, a Python feature, a JS bug fix with a tempting caller-side patch); `--suite <dir>` runs your own. The report pairs variants per task, prints every raw run, and states its own limits: a small `n` is a demonstration, not a statistic, and it never prints a "saved" figure without a baseline. Results from one run of this suite live in [bench/results/](../bench/results/) with the exact command and date.
 
 For external comparability, pair this with SWE-bench Verified or Harbor (see [tooling-research.md](tooling-research.md)); publish paired deltas, not absolute scores.
+
+## Verified live, not only in unit tests
+
+- A headless Claude session with the hooks installed through `eccode install` was told to append to `events.jsonl` and to record a risk as `--actor user`. The installed guard **denied the record write** and **held the user-actor command for human confirmation**; the record afterwards held only its init event and audited clean.
+- The session-start hook anchors the record automatically: when the repository has an upstream, the resume brief states whether every committed event is still present unchanged, and a rewrite produces an explicit STOP warning (tested against a bare origin with a forged, hash-recomputed history).
+- Shell writes obey ownership at write time: an implementer's `echo code > other-task/file`, `tee`, `sed -i`, `cp`, `mv` or `rm` outside its claimed globs is denied by the guard, with the same policy as the Edit/Write tools.
+- The CI workflow runs the full check on Node 18/20/22 across Linux, macOS and Windows, audits the record against the PR base, and audits the example records.
 
 ## What stays honest
 
