@@ -69,6 +69,17 @@ For external comparability, pair this with SWE-bench Verified or Harbor (see [to
 - Shell writes obey ownership at write time: an implementer's `echo code > other-task/file`, `tee`, `sed -i`, `cp`, `mv` or `rm` outside its claimed globs is denied by the guard, with the same policy as the Edit/Write tools.
 - The CI workflow runs the full check on Node 18/20/22 across Linux, macOS and Windows, audits the record against the PR base, and audits the example records.
 
+### Live adversarial battery (real subagent)
+
+A headless session dispatched a real `backend-engineer` subagent (so the guard
+saw a genuine `agent_type`) that attempted, in one run: acting as another role
+(`--actor frontend-engineer`), impersonating the user via `ECCODE_ACTOR`,
+writing a file outside any claim with a shell redirect, appending to
+`events.jsonl` with `python3 -c`, and restoring the record with
+`git checkout`. **All five were denied live with the guard's exact reasons;
+the one legitimate action (claiming its own task) succeeded; the record
+audited clean afterwards.**
+
 ## MCP mode: no shell to obfuscate
 
 The one guard limit the shell surface cannot escape — obfuscated command text — is removed structurally in [MCP mode](mcp.md): `eccode mcp --actor <role>` serves the engine as typed tools locked to one role, the agent runs with **no Bash**, commands execute only through `evidence_run`, and the live no-Bash session test (full task cycle, forged record write denied) is quoted in that document.
