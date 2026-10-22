@@ -194,7 +194,10 @@ function evidenceCli(ctx, args) {
 
 test('evidence run preserves argument quoting from the CLI (argv vector)', () => {
   const ctx = tmpProject();
-  let res = evidenceCli(ctx, ['node', '-e', 'process.exit(require("fs").existsSync(".eccode") ? 0 : 3)']);
+  // Spaces, parentheses and semicolons must survive the platform shell; a
+  // payload with embedded double quotes is POSIX-only (next test), because
+  // cmd.exe quoting of nested quotes is CRT-dependent.
+  let res = evidenceCli(ctx, ['node', '-e', 'const n = 2 + 2; process.exit(n === 4 ? 0 : 3)']);
   assert.strictEqual(res.status, 0, res.stderr);
   assert.strictEqual(JSON.parse(res.stdout).status, 'passed');
   res = evidenceCli(ctx, ['echo one && echo two']); // a single argument is a shell command string
@@ -202,11 +205,13 @@ test('evidence run preserves argument quoting from the CLI (argv vector)', () =>
 });
 
 // POSIX shell syntax: check commands are written for the shell they run on.
-test('evidence run preserves sh -c compound commands (POSIX shells)', { skip: process.platform === 'win32' && 'sh -c semantics' }, () => {
+test('evidence run preserves sh -c compound commands and nested quotes (POSIX shells)', { skip: process.platform === 'win32' && 'sh -c semantics' }, () => {
   const ctx = tmpProject();
-  const res = evidenceCli(ctx, ['sh', '-c', 'test -d .eccode && echo "it works"']);
+  let res = evidenceCli(ctx, ['sh', '-c', 'test -d .eccode && echo "it works"']);
   assert.strictEqual(res.status, 0, res.stderr);
   const ev = JSON.parse(res.stdout);
   assert.strictEqual(ev.status, 'passed');
   assert.match(ev.outputTail, /it works/);
+  res = evidenceCli(ctx, ['node', '-e', 'process.exit(require("fs").existsSync(".eccode") ? 0 : 3)']);
+  assert.strictEqual(JSON.parse(res.stdout).status, 'passed');
 });
