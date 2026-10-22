@@ -174,6 +174,60 @@ test('feature track skips architecture; abandon needs the user and frees the rec
   assert.strictEqual(new Store(ctx.dir).audit().ok, true);
 });
 
+test('endurance: ten consecutive work items of mixed tracks deliver on one record', () => {
+  const ctx = deliveredProject(); // w1 (greenfield)
+  const { store, config, dir } = ctx;
+  for (let i = 2; i <= 11; i++) {
+    const track = ['quick', 'fix', 'quick', 'feature-abandoned', 'quick'][(i - 2) % 5];
+    if (track === 'feature-abandoned') {
+      works.startWork(store, config, 'orchestrator', { track: 'feature', title: `Feature attempt ${i} later dropped` });
+      works.abandonWork(store, 'user', `scope for item ${i} moved to the next quarter`);
+      continue;
+    }
+    if (track === 'fix') {
+      works.startWork(store, config, 'orchestrator', { track: 'fix', title: `Fix defect number ${i}` });
+      gates.startGate(store, config, 'plan', 'orchestrator');
+      write(dir, `.eccode/artifacts/plan${i}.json`, JSON.stringify({
+        phases: [{ id: 'fix', name: 'Fix', goal: `repair defect number ${i}`, acceptanceCriteria: ['defect gone'] }],
+        tasks: [task(`bug${i}`, 'backend-engineer', ['src/server/**'], [], 'fix')],
+      }));
+      gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: [`.eccode/artifacts/plan${i}.json`] });
+      gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([[`artifact:.eccode/artifacts/plan${i}.json`]]));
+      gates.startGate(store, config, `phase:fix`, 'orchestrator');
+      runTask(ctx, `bug${i}`, 'backend-engineer', 'src/server/a.js', `// fix ${i}\n`);
+      approvePhase(ctx, 'phase:fix');
+      const repro = `node -e "process.exit(process.env.OK${i} ? 0 : 1)"`;
+      evidence.runCommand(store, 'backend-engineer', { label: 'repro', command: repro, purpose: 'reproduction' });
+      process.env[`OK${i}`] = '1';
+      try {
+        evidence.runCommand(store, 'backend-engineer', { label: 'fixed', command: repro });
+      } finally {
+        delete process.env[`OK${i}`];
+      }
+      approveVerification(ctx, ['src/server/a.js'], i);
+    } else {
+      works.startWork(store, config, 'orchestrator', { track: 'quick', title: `Quick change number ${i}`, quick: { owner: 'frontend-engineer', files: 'src/web/**', command: 'node -e "process.exit(0)"' } });
+      gates.startGate(store, config, 'phase:change', 'orchestrator');
+      runTask(ctx, 'change', 'frontend-engineer', 'src/web/b.js', `// change ${i}\n`);
+      approvePhase(ctx, 'phase:change');
+      approveVerification(ctx, ['src/web/b.js'], i);
+    }
+    deliver(store, 'delivery-lead');
+    commit(dir, `w${i}`);
+  }
+  const st = store.state();
+  assert.strictEqual(st.work.id, 'w11');
+  assert.strictEqual(st.work.status, 'delivered');
+  const past = Object.values(st.pastWorks);
+  assert.strictEqual(past.length, 10);
+  assert.strictEqual(past.filter((p) => p.work.status === 'delivered').length, 8); // w1 + seven of w2..w10
+  assert.strictEqual(past.filter((p) => p.work.status === 'abandoned').length, 2);
+  // The whole multi-delivery history replays and audits clean.
+  const audit = new Store(dir).audit();
+  assert.strictEqual(audit.ok, true, audit.errors.join('; '));
+  assert.ok(audit.events > 150, `expected a long record, got ${audit.events} events`); // 166 events across 11 work items
+});
+
 test('snapshots from an older engine schema are stale caches, not tampering', () => {
   const ctx = tmpProject();
   const snap = JSON.parse(fs.readFileSync(path.join(ctx.dir, '.eccode/state.json'), 'utf8'));
