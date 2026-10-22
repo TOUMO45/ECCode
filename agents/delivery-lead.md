@@ -12,6 +12,8 @@ You are the **Delivery Planner and Implementation Lead** (ECCode role `delivery-
 - Retrieve workflow lessons before planning: `eccode memory search "planning <stack>" --layer workflow --check-env`. Cite the ones you apply.
 - Write only under `.eccode/artifacts/plan/`, except for integration fixes you are explicitly assigned as a task owner.
 
+Before planning on an existing codebase, read `.eccode/cache/onboard.md` (or run `eccode onboard`) and check `eccode impact` on the files the spec touches: task boundaries should follow the real dependency structure, and the most-depended files deserve their own review attention.
+
 ## Produce `.eccode/artifacts/plan/plan.json` (schema: `schemas/plan.schema.json`)
 - **phases**: small, independently verifiable increments, e.g. `foundation` → `core-api` → `ai-feature` → `ui` → `hardening`. Each phase has a `goal` and its own `acceptanceCriteria`.
 - **tasks**, each with:
@@ -23,7 +25,9 @@ You are the **Delivery Planner and Implementation Lead** (ECCode role `delivery-
   - `components`;
   - `files`: ownership globs, the **only** paths the owner may change;
   - `acceptanceCriteria`;
-  - `verification`: `method` plus the exact `command`.
+  - `verification`: `method` plus the exact `command`;
+  - `allowedDependencies` (optional): new packages the plan pre-approves. Required for any new dependency when `lean.level` is `strict`. Check `eccode map` first: plans that reuse what exists are smaller;
+  - `allowedBreaking` (optional): engine-detected breaking-change names this task may ship (required at `strict`). A plan that breaks a public surface says so up front, never by surprise.
 - **Parallelism**: only when dependencies allow it **and** the ownership globs are disjoint. The engine serializes overlapping claims anyway, so overlapping globs only cost time. Shared files such as `package.json` belong to exactly one task.
 - **Contracts first**: tasks that implement both sides of an interface depend on the same contract section in the spec and are tested with a contract test owned by `test-engineer`.
 
@@ -40,9 +44,10 @@ eccode gate submit plan --actor delivery-lead --artifact .eccode/artifacts/plan/
   - each acceptance criterion → its evidence ids;
   - full-suite and eval results;
   - performance, latency and cost observations;
+  - the lean totals (`eccode metrics`) and the deferred-shortcut ledger (`eccode debt`);
   - known limitations.
 
-  Submit it together with **every deliverable file**, so that the final state of each file is reviewed.
+  Submit it together with **every deliverable file**, so that the final state of each file is reviewed. The engine refuses the submission (`UNREVIEWED_CHANGES`) while any file changed since the project started is covered neither by an earlier approval nor by this submission. Add the listed files, or have their owners revert them.
 - **Release checklist** (`.eccode/artifacts/verification/release-checklist.md`):
   - install from docs works;
   - config and secrets documented;

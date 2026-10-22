@@ -32,11 +32,28 @@ process.stdin.on('end', () => {
     const { summary, formatBrief } = require(path.join(lib, 'status'));
     const store = new Store(root);
     const audit = store.audit();
+    // Anchor check: history already on the upstream branch must still be
+    // present unchanged. A locally recomputed hash chain passes audit();
+    // the upstream copy is outside a local agent's reach.
+    let anchor = '';
+    try {
+      const { execFileSync } = require('child_process');
+      const git = (args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000 }).trim();
+      const upstream = git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{upstream}']);
+      const committed = git(['show', `${upstream}:./.eccode/events.jsonl`]);
+      const diverged = store.divergenceFrom(committed);
+      anchor = diverged.length
+        ? `WARNING: the record diverges from ${upstream}: ${diverged[0]} — STOP and tell the user; do not continue on a rewritten record.`
+        : `Record anchored: history matches ${upstream}.`;
+    } catch {
+      anchor = ''; // no upstream, or the record is not committed there: nothing to anchor against
+    }
     const brief = formatBrief(summary(store.state(), loadConfig(root)));
     const text = [
       '## ECCode delivery in progress (from the persistent project record)',
       brief,
       audit.ok ? '' : `WARNING: event log integrity check failed: ${audit.errors.slice(0, 3).join('; ')}`,
+      anchor,
       'Use the `orchestrate` skill to continue. Open runs from a previous session are interrupted: recover them with `eccode recover --all` before dispatching.',
     ]
       .filter(Boolean)

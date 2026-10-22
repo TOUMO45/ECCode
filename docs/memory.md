@@ -59,7 +59,7 @@ eccode memory check <id>
 - character-trigram similarity, which handles inflections, identifiers and typos;
 - a trust weight (verified 1.0, provisional 0.85, untrusted 0.75).
 
-Set `memory.embedCommand` to add an external embedding model. The command reads `{"texts":[…]}` on stdin and prints `{"vectors":[…]}`. Without it, retrieval is lexical.
+Set the `ECCODE_EMBED_COMMAND` environment variable to add an external embedding model. The command reads `{"texts":[…]}` on stdin and prints `{"vectors":[…]}`. Without it, retrieval is lexical. It is deliberately **not** read from `.eccode/config.json`: that file travels with the repository, and a cloned repository must not be able to run commands on your machine.
 
 **Applicability verdicts:**
 

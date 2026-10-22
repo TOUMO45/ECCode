@@ -174,8 +174,11 @@ test('scope checks work when the project is a subdirectory of a larger git repo'
   tasks.claim(store, ctx.config, 'api', 'backend-engineer');
   write(dir, 'src/server/app.js', 'module.exports = 2;\n'); // tracked file modified
   const ev = passCheck(store, 'backend-engineer');
-  tasks.complete(store, ctx.config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [ev.id], ['src/server/app.js']));
-  assert.strictEqual(store.state().tasks.api.status, 'done');
+  const handoff = { ...handoffFor('api', 'backend-engineer', [ev.id], ['src/server/app.js']), testsNotNeeded: 'constant change covered by the contract suite' };
+  tasks.complete(store, ctx.config, 'api', 'backend-engineer', handoff); // default lean level (full)
+  const t = store.state().tasks.api;
+  assert.strictEqual(t.status, 'done');
+  assert.deepStrictEqual([t.lean.linesAdded, t.lean.linesRemoved], [1, 1]); // git paths resolved from the nested project
 });
 
 test('tasks cannot modify records or approved artifacts under .eccode/ (only .eccode/drafts/)', () => {

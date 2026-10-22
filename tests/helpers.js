@@ -45,17 +45,19 @@ x
 x
 `;
 
-function tmpProject({ configOverrides } = {}) {
+function tmpProject({ configOverrides, beforeInit } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-test-'));
   execFileSync('git', ['init', '-q'], { cwd: dir });
   execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  if (beforeInit) beforeInit(dir);
   const store = init(dir, { name: 'Test', idea: 'Test idea for the pipeline' });
-  if (configOverrides) {
-    const file = path.join(dir, '.eccode', 'config.json');
-    const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
-    for (const [k, v] of Object.entries(configOverrides)) cfg[k] = { ...cfg[k], ...v };
-    writeJson(file, cfg);
-  }
+  // Lean checks are off unless a test asks for them: gate and task fixtures
+  // change code without tests on purpose. tests/lean.test.js covers lean levels.
+  const overrides = { lean: { level: 'off' }, ...configOverrides };
+  const file = path.join(dir, '.eccode', 'config.json');
+  const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
+  for (const [k, v] of Object.entries(overrides)) cfg[k] = { ...cfg[k], ...v };
+  writeJson(file, cfg);
   return { dir, store, config: loadConfig(dir) };
 }
 
@@ -125,7 +127,7 @@ function task(id, owner, files, dependencies = [], phase = 'core') {
     outputs: [`${id} output`],
     files,
     acceptanceCriteria: [`${id} works`],
-    verification: { method: 'run checks', command: 'true' },
+    verification: { method: 'run checks', command: 'node -e "process.exit(0)"' }, // what passCheck runs
   };
 }
 

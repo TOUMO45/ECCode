@@ -11,11 +11,16 @@ const { EccodeError, readJson } = require('../lib/util');
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
 Project
-  init --name <n> --idea <text>          Create .eccode/ in the project root
+  init --name <n> --idea <text> [--track greenfield|feature|refactor|fix|quick]   Create .eccode/
+  work start --track <t> --title <text> --actor <orchestrator|user> [--behavior <cmd>]
+             [--owner <role> --files <glob,glob> --command <cmd>]     Start the next work item (quick needs owner/files/command)
+  work abandon --actor user --reason <text>   Abandon the active work item (user decision)
+  work list [--json]                     Current and archived work items
   status [--json|--brief]                Gates, tasks, budget and the next action
   resume                                 Resume brief for a new session (read-only)
   recover [--all]                        Close interrupted runs, release their claims
-  audit                                  Verify the hash chain, snapshot==replay, and approved artifacts
+  audit [--against <git-ref>]            Verify the hash chain, snapshot==replay, approved artifacts; with
+                                         --against, that history committed at <ref> was not rewritten
   rebuild                                Rewrite state.json by replaying events.jsonl
   deliver --actor delivery-lead          Produce the verified final handoff
 
@@ -67,16 +72,38 @@ Self-improvement
   improve rollback <id> --actor <a> --reason <text>
   improve list
 
+Codebase (work in any repository; see docs/lean.md and docs/senior-engineering.md)
+  onboard [--refresh] [--json]     Index the codebase; brief: modules, entry points, hot spots, most-depended files
+  impact <file>... | --changed [--base <ref>] [--run --actor <a>]   Who depends on these files, affected tests; --run executes them
+  map [--path <dir>] [--chars n]   What already exists (top-level names per directory): reuse before you write
+  stack [--json]                   Detected stacks and their checks (project scripts first); * = required
+  stack run <id|all> [--record --actor <a>]   Run a check; exit = the check's exit code
+  stack adopt --checks <id,id> --actor user [--remove]   Make checks required at the verification gate
+  debt [--json]                    Ledger of deferred shortcut markers in code, flagging those with no upgrade trigger
+
+Benchmark
+  bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|both] [--suite <dir>] [--out <file>] [--keep]
+        Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
+        hidden checks, lines, dependencies and tests are measured by the harness, never self-reported
+
+MCP (the engine as typed tool calls; see docs/mcp.md)
+  mcp --actor <role>               Serve gates/tasks/evidence/impact as MCP tools over stdio, locked to one role.
+                                   One server per role + no Bash for the agent = no shell to obfuscate.
+
 Other
-  metrics [--json]                 Rejection rate, repeat bugs, time-to-fix, recurrence, regressions
+  metrics [--json]                 Rejection rate, repeat bugs, time-to-fix, recurrence, regressions, lean totals
   install --target <dir> [--scope project|user]   Copy agents/skills/commands/hooks into .claude/
   export agents-md [--out AGENTS.md]               Generic AGENTS.md for other harnesses
 
-Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR), --json
+Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR, never for user), --json
 `;
 
 function shellQuote(arg) {
-  return /^[A-Za-z0-9_\/.,:=@%+-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, "'\\''")}'`;
+  if (/^[A-Za-z0-9_\/.,:=@%+-]+$/.test(arg)) return arg;
+  // Evidence commands run through the platform shell (sh, or cmd.exe on
+  // Windows, which has no single quotes: CRT parsing reads "" as a literal ").
+  if (process.platform === 'win32') return `"${arg.replace(/"/g, '""')}"`;
+  return `'${arg.replace(/'/g, "'\\''")}'`;
 }
 
 function findRoot(flags) {
@@ -92,7 +119,10 @@ function findRoot(flags) {
 }
 
 function need(value, name) {
-  if (value === undefined || value === true || value === '') throw new EccodeError('USAGE', `Missing required ${name}`);
+  if (value === undefined || value === true || value === '') {
+    const hint = name === '--actor' && process.env.ECCODE_ACTOR === 'user' ? ' (ECCODE_ACTOR=user is ignored: pass --actor user explicitly)' : '';
+    throw new EccodeError('USAGE', `Missing required ${name}${hint}`);
+  }
   return value;
 }
 
@@ -114,18 +144,134 @@ function main(argv) {
     return 0;
   }
   const root = findRoot(flags);
-  const actor = flags.actor || process.env.ECCODE_ACTOR;
+  // User authority must be visible in the command itself, where the guard hook
+  // can ask the human to confirm it, so ECCODE_ACTOR never supplies "user".
+  const actor = flags.actor || (process.env.ECCODE_ACTOR === 'user' ? undefined : process.env.ECCODE_ACTOR);
   const { openProject, init } = require('../lib/project');
 
   if (group === 'init') {
-    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator' });
+    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', track: flags.track });
     print(flags, `Initialized ECCode project in ${store.dir}`, { root: store.root });
     return 0;
+  }
+  if (group === 'mcp') {
+    // Long-running: serves the engine as MCP tools, locked to one actor.
+    require('../lib/mcp').serve({ root, actor: need(actor, '--actor') });
+    return undefined; // the stdin listener keeps the process alive until the client closes it
   }
   if (group === 'install') return require('../lib/install').cli(flags, print);
   if (group === 'export') return require('../lib/install').exportCli(sub, flags, print);
 
   const { store, config } = openProject(root);
+  if (group === 'bench') {
+    const bench = require('../lib/bench');
+    const variants = flags.variant === 'with' ? ['with'] : flags.variant === 'without' ? ['without'] : ['without', 'with'];
+    const { records, markdown } = bench.run({
+      suite: flags.suite ? path.resolve(flags.suite) : undefined,
+      agentCmd: need(flags.agent, '--agent'),
+      tasks: flags.tasks ? String(flags.tasks).split(',').map((x) => x.trim()) : null,
+      runs: Number(flags.runs || 1),
+      variants,
+      timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
+      keep: Boolean(flags.keep),
+      onProgress: (m) => process.stderr.write(`bench: ${m}\n`),
+    });
+    if (flags.out) {
+      require('../lib/util').writeFileAtomic(path.resolve(flags.out), markdown);
+      process.stderr.write(`bench: report written to ${flags.out}\n`);
+    }
+    print(flags, markdown, records);
+    return 0;
+  }
+  if (group === 'onboard') {
+    const { onboardBrief } = require('../lib/codebase');
+    const b = onboardBrief(root, { refresh: Boolean(flags.refresh) });
+    if (fs.existsSync(path.join(root, '.eccode'))) {
+      require('../lib/util').writeFileAtomic(path.join(root, '.eccode', 'cache', 'onboard.md'), b.text + '\n');
+    }
+    print(flags, b.text, { modules: b.modules, files: Object.keys(b.index.files).length, builtAt: b.index.builtAt });
+    return 0;
+  }
+  if (group === 'impact') {
+    const { impact } = require('../lib/codebase');
+    const { gitChangedFiles } = require('../lib/project');
+    const targets = flags.changed ? gitChangedFiles(root, flags.base || 'HEAD') : args._.slice(1);
+    if (!targets || !targets.length) throw new EccodeError('USAGE', 'Usage: eccode impact <file>... | eccode impact --changed [--base <ref>]');
+    const res = impact(root, targets);
+    const max = Number(flags.max || 25);
+    const text = [
+      `Impact of ${res.targets.length} file(s): ${res.targets.join(', ')}${res.notIndexed.length ? `\n(not in the index, no dependents known: ${res.notIndexed.join(', ')})` : ''}`,
+      `Dependents: ${res.dependents.length} file(s) in module(s) ${res.modules.join(', ') || '-'}`,
+      ...res.dependents.slice(0, max).map((d) => `  ${'  '.repeat(d.distance - 1)}${d.file} (distance ${d.distance})`),
+      res.dependents.length > max ? `  … ${res.dependents.length - max} more (--max ${res.dependents.length})` : null,
+      res.tests.length ? `Affected tests (run these): ${res.tests.join(' ')}` : 'WARNING: no affected test file found in the index for this change.',
+      res.dynamicCallers.length ? `Note: ${res.dynamicCallers.length} file(s) use dynamic module loading and may also be affected (static analysis cannot tell): ${res.dynamicCallers.slice(0, 8).join(', ')}${res.dynamicCallers.length > 8 ? ', …' : ''}` : null,
+      res.notCovered && (res.notCovered.generated || res.notCovered.unreadable) ? `Note: ${res.notCovered.generated} generated and ${res.notCovered.unreadable} unreadable file(s) are outside the index; their dependents are not tracked (eccode onboard lists them).` : null,
+    ].filter(Boolean).join('\n');
+    print(flags, text, res);
+    if (flags.run) {
+      if (!res.tests.length) return 2;
+      const cmds = require('../lib/stack').testRunCommands(root, res.tests);
+      let worst = 0;
+      for (const command of cmds) {
+        const ev = require('../lib/evidence').runCommand(store, need(actor, '--actor'), { label: 'impact: affected tests', command });
+        process.stdout.write(`ev:${ev.id} ${ev.status.toUpperCase()} — ${command}\n`);
+        if (ev.exitCode !== 0) worst = 2;
+      }
+      return worst;
+    }
+    return 0;
+  }
+  if (group === 'stack') {
+    const stack = require('../lib/stack');
+    const cfg = config || require('../lib/config').DEFAULT_CONFIG;
+    if (sub === 'run') {
+      const ids = need(arg, '<check id|all>') === 'all'
+        ? stack.checks(root, cfg).filter((c) => c.available).map((c) => c.id)
+        : [arg];
+      let worst = 0;
+      for (const id of ids) {
+        if (flags.record) {
+          const c = stack.checks(root, cfg).find((x) => x.id === id);
+          const ev = require('../lib/evidence').runCommand(store, need(actor, '--actor'), { label: `stack:${id}`, command: c && !id.startsWith('eccode-') ? c.command : `node ${JSON.stringify(__filename)} stack run ${id}`, gate: flags.gate });
+          process.stdout.write(`${id}: ${ev.status.toUpperCase()} (ev:${ev.id})\n`);
+          worst = Math.max(worst, ev.exitCode === 0 ? 0 : 2);
+        } else {
+          const r = stack.runCheck(root, cfg, id);
+          process.stdout.write(`${id}: ${r.exitCode === 0 ? 'PASSED' : `FAILED (exit ${r.exitCode})`}\n${r.output.trim()}\n`);
+          worst = Math.max(worst, r.exitCode === 0 ? 0 : 2);
+        }
+      }
+      return worst;
+    }
+    if (sub === 'adopt') {
+      if (need(actor, '--actor') !== 'user') throw new EccodeError('USER_AUTH_REQUIRED', 'Required checks are policy: eccode stack adopt needs --actor user');
+      store.assertInitialized();
+      const required = stack.adopt(root, String(need(flags.checks, '--checks')).split(',').map((x) => x.trim()).filter(Boolean), { remove: Boolean(flags.remove) });
+      print(flags, `Required stack checks: ${required.join(', ') || '(none)'}`, { required });
+      return 0;
+    }
+    const list = stack.checks(root, cfg);
+    const text = [
+      `Stacks: ${stack.detect(root).map((s) => `${s.id} (${s.evidence})`).join(' · ') || '(none detected)'}`,
+      ...list.map((c) => `${c.required ? '*' : ' '} ${c.id.padEnd(16)} [${c.kind}] ${c.available ? '' : '(tool missing) '}${c.command}${c.networked ? '  (uses the network)' : ''}`),
+      'Legend: * required at verification (eccode stack adopt --actor user). Project scripts beat standard tools.',
+    ].join('\n');
+    print(flags, text, list);
+    return 0;
+  }
+  if (group === 'map' || group === 'debt') {
+    const lean = require('../lib/lean');
+    if (group === 'debt') {
+      const ledger = lean.debtLedger(root);
+      print(flags, lean.formatLedger(ledger), ledger);
+      return 0;
+    }
+    const chars = Number(flags.chars || (config ? config.lean.mapChars : require('../lib/config').DEFAULT_CONFIG.lean.mapChars));
+    const map = lean.reuseMap(root, { under: flags.path, chars });
+    print(flags, map.text || '(no source files with top-level definitions found)', map);
+    return 0;
+  }
   const memoryGroups = { memory: '../lib/memory/cli', improve: '../lib/memory/improve-cli' };
   if (memoryGroups[group]) return require(memoryGroups[group]).run({ store, config, sub, arg, flags, rest: args.rest, actor, print, need, loadJsonFile, root });
   store.assertInitialized();
@@ -162,9 +308,20 @@ function main(argv) {
     }
     case 'audit': {
       const res = store.audit();
+      let against = '';
+      if (flags.against) {
+        const { git } = require('../lib/project');
+        const ref = flags.against;
+        if (git(root, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]) === null) res.errors.push(`--against: unknown git ref ${ref}`);
+        else {
+          const committed = git(root, ['show', `${ref}:./.eccode/events.jsonl`]);
+          res.errors.push(...(committed === null ? [] : store.divergenceFrom(committed)));
+          against = committed === null ? ` (no record at ${ref} to compare)` : `, history matches ${ref}`;
+        }
+      }
       const changes = require('../lib/delivery').unreviewedChanges(store.state(), store.root);
-      const ok = res.ok && !changes.length;
-      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}`, { ...res, unreviewedChanges: changes, ok });
+      const ok = res.errors.length === 0 && !changes.length;
+      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged${against}.` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}`, { ...res, unreviewedChanges: changes, ok });
       return ok ? 0 : 2;
     }
     case 'deliver': {
@@ -176,6 +333,26 @@ function main(argv) {
       }
       const res = require('../lib/delivery').deliver(store, need(actor, '--actor'), { metrics });
       print(flags, `Delivered. Final handoff: ${res.report}`, res);
+      return 0;
+    }
+    case 'work': {
+      const works = require('../lib/works');
+      if (sub === 'start') {
+        const { event } = works.startWork(store, config, need(actor, '--actor'), {
+          track: need(flags.track, '--track'),
+          title: need(flags.title, '--title'),
+          behavior: flags.behavior,
+          quick: { title: flags.title, owner: flags.owner, files: flags.files, command: flags.command },
+        });
+        print(flags, `Work ${event.data.id} started on the ${flags.track} track. Next: eccode status --brief`, event.data);
+      } else if (sub === 'abandon') {
+        works.abandonWork(store, need(actor, '--actor'), need(flags.reason, '--reason'));
+        print(flags, 'Work item abandoned by user decision. Start the next one with eccode work start.');
+      } else if (sub === 'list') {
+        const st = store.state();
+        const rows = [...Object.values(st.pastWorks).map((p) => p.work), ...(st.work ? [st.work] : [])];
+        print(flags, rows.map((w) => `${w.id} [${w.track}] ${w.status}${w.delivery ? ` delivered ${w.delivery.at}` : ''} — ${w.title}`).join('\n') || '(none)', rows);
+      } else throw new EccodeError('USAGE', `Unknown work subcommand ${sub}`);
       return 0;
     }
     case 'gate': {

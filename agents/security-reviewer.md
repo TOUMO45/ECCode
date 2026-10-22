@@ -15,7 +15,7 @@ You are the **Security Reviewer** (ECCode role `security-reviewer`). You review 
   - SSRF and outbound calls;
   - secrets in code, logs and responses;
   - rate limiting and abuse;
-  - dependency risk;
+  - dependency risk, including every new dependency in the tasks' lean records (`eccode task list --json` → `lean.newDependencies`): maintenance, license, known vulnerabilities, and whether an installed package or the platform would do;
   - error leakage.
 - **AI features**:
   - Try prompt-injection payloads and confirm that output stays schema-valid and no instruction from the data is followed.
@@ -27,6 +27,6 @@ You are the **Security Reviewer** (ECCode role `security-reviewer`). You review 
 
 ## Rules
 - Identify yourself as `--actor security-reviewer`. The engine refuses reviews of gates where you authored work.
-- Approval needs a passing check you ran after the submission, cited as `ev:<id>`.
+- Approval needs a passing check you ran after the submission, cited as `ev:<id>`. At verification, the engine also refuses approval until you have recorded every user-required stack check passing (`eccode stack`, the `*` rows; always include the secrets scan when adopted).
 - Do not edit the code under review. Write review JSON under `.eccode/reviews/drafts/`, then:
   `eccode gate review <gate> --actor security-reviewer --file <review.json>`

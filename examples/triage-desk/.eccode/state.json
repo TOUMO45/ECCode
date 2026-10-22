@@ -1,4 +1,5 @@
 {
+  "stateVersion": 2,
   "seq": 537,
   "lastHash": "63807605dfe9f87deea221ef3de92c0260ed192920ee041e7fa7d24d54c828ac",
   "project": {
@@ -6,6 +7,23 @@
     "idea": "A small web app for a support team: an agent pastes an incoming customer support ticket, and an AI feature classifies it (category, urgency), writes a one-sentence summary and suggests a first reply; the agent reviews and edits the suggestion. Must stay safe against prompt injection in ticket text, work without an API key via a clearly labelled deterministic fallback, and have an evaluation suite with explicit thresholds. Keep it small: Node.js, no database, single-page UI.",
     "createdAt": "2026-10-07T21:04:52.506Z"
   },
+  "work": {
+    "id": "w1",
+    "track": "greenfield",
+    "title": "TriageDesk",
+    "startedAt": "2026-10-07T21:04:52.506Z",
+    "status": "delivered",
+    "baseCommit": null,
+    "dirtyAtInit": {},
+    "behaviorCommand": null,
+    "delivery": {
+      "at": "2026-10-08T06:05:23.953Z",
+      "by": "delivery-lead",
+      "report": ".eccode/delivery/final-handoff.md",
+      "summary": "9 gates approved"
+    }
+  },
+  "pastWorks": {},
   "gateOrder": [
     "architecture",
     "design",
@@ -10129,13 +10147,13 @@
   "risks": {
     "RISK-1": {
       "id": "RISK-1",
-      "mitigation": "NFR2 controls (fixed prompt with marker, redacted+neutralised ticket, no tools, restricted json_schema, V1-V4), detector flag + UI warning, fallback drops detector-matched sentences before scoring, metrics injection_leak=0 / injection_steer (fallback<=0.25, live 0) / attack_success on >=20 attacks incl >=2 held-out families reported as 'k failures in N'; residual: fallback keyword steering, covered by flag + human review",
-      "status": "open",
-      "updatedAt": "2026-10-07T21:21:17.379Z",
-      "updatedBy": "product-architect",
       "title": "Prompt injection in ticket text manipulates classification/reply or leaks system prompt; residual: fallback keyword steering",
       "severity": "high",
-      "owner": "ai-engineer"
+      "mitigation": "NFR2 controls (fixed prompt with marker, redacted+neutralised ticket, no tools, restricted json_schema, V1-V4), detector flag + UI warning, fallback drops detector-matched sentences before scoring, metrics injection_leak=0 / injection_steer (fallback<=0.25, live 0) / attack_success on >=20 attacks incl >=2 held-out families reported as 'k failures in N'; residual: fallback keyword steering, covered by flag + human review",
+      "owner": "ai-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:21:17.379Z",
+      "updatedBy": "product-architect"
     },
     "RISK-2": {
       "id": "RISK-2",
@@ -10150,52 +10168,52 @@
     "RISK-3": {
       "id": "RISK-3",
       "title": "Live model (Haiku 5.5) slow/unavailable/refuses/truncates (adaptive thinking counts toward max_tokens)/returns invalid output",
+      "severity": "medium",
       "mitigation": "20s timeout, single attempt, effort low explicit, max_tokens 2048 with rationale (configurable), truncated reason+count, non-2xx -> model_error, V1-V4 validator, deterministic fallback with reason, fallback_rate and raw_model_validity metrics",
+      "owner": "ai-engineer",
       "status": "open",
       "updatedAt": "2026-10-07T21:21:17.455Z",
-      "updatedBy": "product-architect",
-      "severity": "medium",
-      "owner": "ai-engineer"
+      "updatedBy": "product-architect"
     },
     "RISK-4": {
       "id": "RISK-4",
-      "mitigation": "Dataset by test-engineer: >=60 benign rows, holdout >=20 with per-class minimums checked by runner; holdout floors (threshold-0.10) enforced with non-zero exit (AC8); dataset+thresholds sha256 recorded as evidence before any rules commit and checked by verification gate; N printed per metric",
-      "status": "open",
-      "updatedAt": "2026-10-07T21:21:17.519Z",
-      "updatedBy": "product-architect",
       "title": "Eval not meaningful: fallback rules overfit a small same-team dataset, or dataset edited after rules exist",
       "severity": "medium",
-      "owner": "test-engineer"
+      "mitigation": "Dataset by test-engineer: >=60 benign rows, holdout >=20 with per-class minimums checked by runner; holdout floors (threshold-0.10) enforced with non-zero exit (AC8); dataset+thresholds sha256 recorded as evidence before any rules commit and checked by verification gate; N printed per metric",
+      "owner": "test-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:21:17.519Z",
+      "updatedBy": "product-architect"
     },
     "RISK-5": {
       "id": "RISK-5",
       "title": "API key leak or key-spend abuse (incl. DNS rebinding from a malicious web page) via unauthenticated local server",
+      "severity": "high",
       "mitigation": "Key from env only, never echoed (AC10/AC14); Host allowlist (127.0.0.1/localhost/[::1]:PORT) + Origin check before body parsing, no CORS headers (NFR3, AC17); bind 127.0.0.1; body and max_tokens caps; one call per request. Likelihood re-rated Low after Host/Origin check (inherent Medium); impact High. Auth + rate limiting required before non-local deployment",
+      "owner": "backend-engineer",
       "status": "open",
       "updatedAt": "2026-10-07T21:21:17.583Z",
-      "updatedBy": "product-architect",
-      "severity": "high",
-      "owner": "backend-engineer"
+      "updatedBy": "product-architect"
     },
     "RISK-6": {
       "id": "RISK-6",
-      "mitigation": "Metadata-only logs tested with marker (AC10), no persistence, R11 redaction of emails/phones/Luhn-valid cards before live call (AC16), live-mode notice naming redacted classes and what is not removed",
-      "status": "open",
-      "updatedAt": "2026-10-07T21:21:17.637Z",
-      "updatedBy": "product-architect",
       "title": "Ticket PII logged locally or sent to third party without awareness",
       "severity": "medium",
-      "owner": "backend-engineer"
+      "mitigation": "Metadata-only logs tested with marker (AC10), no persistence, R11 redaction of emails/phones/Luhn-valid cards before live call (AC16), live-mode notice naming redacted classes and what is not removed",
+      "owner": "backend-engineer",
+      "status": "open",
+      "updatedAt": "2026-10-07T21:21:17.637Z",
+      "updatedBy": "product-architect"
     },
     "RISK-7": {
       "id": "RISK-7",
       "title": "Model id / Messages API surface (claude-haiku-5-5, output_config.format restricted schema, effort) checked against docs only, not live",
+      "severity": "medium",
       "mitigation": "Model via ANTHROPIC_MODEL, /api/health reports model, restricted schema keyword allowlist + AC9 schema walk, any non-2xx -> model_error visible in UI (AC4 c-f), first live call confirms, unverified status reported honestly",
+      "owner": "ai-engineer",
       "status": "open",
       "updatedAt": "2026-10-07T21:21:17.687Z",
-      "updatedBy": "product-architect",
-      "severity": "medium",
-      "owner": "ai-engineer"
+      "updatedBy": "product-architect"
     },
     "RISK-8": {
       "id": "RISK-8",

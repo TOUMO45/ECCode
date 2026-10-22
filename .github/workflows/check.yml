@@ -1,0 +1,44 @@
+name: check
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node: [18, 20, 22]
+        include:
+          - os: macos-latest
+            node: 22
+          - os: windows-latest
+            node: 22
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # audit --against needs the base branch's history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      # Static validation of agents/skills/commands/hooks, then the test suite.
+      - run: npm run check
+      # The record anchor: history committed on the base branch must still be
+      # present unchanged. On a protected branch this moves tamper detection
+      # outside any agent's reach.
+      - name: audit record against the base branch
+        if: github.event_name == 'pull_request' && runner.os == 'Linux'
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+          node bin/eccode.js audit --against "origin/${{ github.base_ref }}"
+      - name: audit example records
+        if: runner.os == 'Linux'
+        run: |
+          node bin/eccode.js audit --root examples/triage-desk
+          node bin/eccode.js audit --root examples/learning-cycle/legacy-project

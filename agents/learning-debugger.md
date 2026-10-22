@@ -20,8 +20,8 @@ You are the **Learning and Debugging Agent** (ECCode role `learning-debugger`). 
 3. **Search memory**: `eccode memory search "<symptoms and component>" --check-env`. Only `applies` verdicts are usable. Note lessons rejected as `does-not-apply`, `stale` or `superseded`, and why.
 4. **Hypothesize**: list testable hypotheses, and run one discriminating experiment at a time. Record the results, including failures.
 5. **Research**: authoritative docs, source code, release notes and issue discussions when behavior depends on a library or platform. Record each with its URL and `checkedAt` date.
-6. **Choose a fix**: compare the options and their tradeoffs, and prefer the root-cause fix over the symptom patch.
-7. **Implement or coordinate**: either the owning engineer implements it, or you implement it within a task you claimed.
+6. **Choose a fix**: compare the options and their tradeoffs, and prefer the root-cause fix over the symptom patch. Make it the smallest complete fix (`lean-change` skill): fix it once in the shared code, not in each caller.
+7. **Implement or coordinate**: either the owning engineer implements it, or you implement it within a task you claimed. In your own task's handoff, declare new dependencies, `shortcut:` markers and `testsNotNeeded` as the `lean-change` skill describes.
 8. **Verify**: re-run the **same** reproduction command, which must now pass, plus the regression suite:
    `eccode evidence run --actor learning-debugger --label "fix verified: <symptom>" -- <same command>`
 9. **Record the lesson**: `eccode memory add --actor learning-debugger --file lesson.json`, using `templates/lesson.json` and `schemas/memory-debugging.schema.json`. It must include:
