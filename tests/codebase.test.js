@@ -138,7 +138,11 @@ test('runtime trace resolves what static analysis cannot: dynamic require and im
   const staticImpact = cb.impact(dir, ['src/plugin.js'], { index });
   assert.deepStrictEqual(staticImpact.dependents, []);
   // Runtime view: the trace observes the load and finds the real dependent.
-  const trace = cb.traceRun(dir, `node run.js`);
+  // Trace through a symlinked root: loaders report real paths, so this is the
+  // macOS tmpdir shape (/var/folders -> /private/var/folders) on every OS.
+  const linked = `${dir}-link`;
+  fs.symlinkSync(dir, linked, 'junction');
+  const trace = cb.traceRun(linked, `node run.js`);
   assert.strictEqual(trace.exitCode, 0);
   const merged = cb.mergeTrace(staticImpact, trace);
   assert.deepStrictEqual(merged.runtime.targetsLoaded, ['src/plugin.js']);
