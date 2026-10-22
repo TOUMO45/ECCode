@@ -15,7 +15,8 @@ Project
   status [--json|--brief]                Gates, tasks, budget and the next action
   resume                                 Resume brief for a new session (read-only)
   recover [--all]                        Close interrupted runs, release their claims
-  audit                                  Verify the hash chain, snapshot==replay, and approved artifacts
+  audit [--against <git-ref>]            Verify the hash chain, snapshot==replay, approved artifacts; with
+                                         --against, that history committed at <ref> was not rewritten
   rebuild                                Rewrite state.json by replaying events.jsonl
   deliver --actor delivery-lead          Produce the verified final handoff
 
@@ -76,7 +77,7 @@ Other
   install --target <dir> [--scope project|user]   Copy agents/skills/commands/hooks into .claude/
   export agents-md [--out AGENTS.md]               Generic AGENTS.md for other harnesses
 
-Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR), --json
+Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR, never for user), --json
 `;
 
 function shellQuote(arg) {
@@ -96,7 +97,10 @@ function findRoot(flags) {
 }
 
 function need(value, name) {
-  if (value === undefined || value === true || value === '') throw new EccodeError('USAGE', `Missing required ${name}`);
+  if (value === undefined || value === true || value === '') {
+    const hint = name === '--actor' && process.env.ECCODE_ACTOR === 'user' ? ' (ECCODE_ACTOR=user is ignored: pass --actor user explicitly)' : '';
+    throw new EccodeError('USAGE', `Missing required ${name}${hint}`);
+  }
   return value;
 }
 
@@ -118,7 +122,9 @@ function main(argv) {
     return 0;
   }
   const root = findRoot(flags);
-  const actor = flags.actor || process.env.ECCODE_ACTOR;
+  // User authority must be visible in the command itself, where the guard hook
+  // can ask the human to confirm it, so ECCODE_ACTOR never supplies "user".
+  const actor = flags.actor || (process.env.ECCODE_ACTOR === 'user' ? undefined : process.env.ECCODE_ACTOR);
   const { openProject, init } = require('../lib/project');
 
   if (group === 'init') {
@@ -178,9 +184,20 @@ function main(argv) {
     }
     case 'audit': {
       const res = store.audit();
+      let against = '';
+      if (flags.against) {
+        const { git } = require('../lib/project');
+        const ref = flags.against;
+        if (git(root, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]) === null) res.errors.push(`--against: unknown git ref ${ref}`);
+        else {
+          const committed = git(root, ['show', `${ref}:./.eccode/events.jsonl`]);
+          res.errors.push(...(committed === null ? [] : store.divergenceFrom(committed)));
+          against = committed === null ? ` (no record at ${ref} to compare)` : `, history matches ${ref}`;
+        }
+      }
       const changes = require('../lib/delivery').unreviewedChanges(store.state(), store.root);
-      const ok = res.ok && !changes.length;
-      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged.` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}`, { ...res, unreviewedChanges: changes, ok });
+      const ok = res.errors.length === 0 && !changes.length;
+      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged${against}.` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}`, { ...res, unreviewedChanges: changes, ok });
       return ok ? 0 : 2;
     }
     case 'deliver': {

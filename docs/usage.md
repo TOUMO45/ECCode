@@ -63,7 +63,7 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 | `review.requiredSections` | see file | Headings that must appear in architecture and design artifacts |
 | `roles.<gate>.authors/reviewers` | see file | Who may submit and who may approve. You can add ECC language reviewers here |
 | `memory.staleAfterDays` | 180 | Age after which a lesson must be revalidated |
-| `memory.embedCommand` | null | Optional external embedder for semantic retrieval |
+| `memory.embedCommand` | — | Ignored in the project config (a repository must not run commands). Use the `ECCODE_EMBED_COMMAND` environment variable |
 | `memory.sharedDir` | `~/.eccode/memory` | Shared lesson store. `ECCODE_SHARED_MEMORY` overrides it |
 | `lean.level` | `full` | `off` · `lite` (measure and warn) · `full` (refuse undeclared new dependencies, undeclared `shortcut:` markers, code changed without a test or a reason) · `strict` (also plan-approved dependencies and markers that name an upgrade trigger). See [lean.md](lean.md) |
 | `lean.mapChars` | 4000 | Default output budget of `eccode map` |
@@ -72,7 +72,9 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 
 Environment variables:
 - `ECCODE_ROOT`: project root.
-- `ECCODE_ACTOR`: default actor.
+- `ECCODE_ACTOR`: default actor. It never supplies `user`: user decisions need an explicit `--actor user`, which the guard hook asks the human to confirm.
+- `ECCODE_EMBED_COMMAND`: optional external embedder for semantic memory retrieval.
+- `ECCODE_STRICT=1`: the guard hook fails closed (denies) on its own internal errors instead of allowing the tool call.
 - `ECCODE_HOOKS=off`: disable the hooks.
 - `ECCODE_SEQUENTIAL_ROLES=1`: allow the main session to act as roles. Use it only in disclosed sequential mode.
 - `ECCODE_SHARED_MEMORY`: shared memory location.
@@ -100,6 +102,13 @@ eccode status --brief          # always shows the NEXT action
 ```
 `eccode help` lists every command. Exit codes: `0` ok, `1` usage error, `2` refused by a workflow rule. `memory check` returns `3` when a lesson doesn't apply.
 
+### Anchor the record in CI
+Commit `.eccode/` with the code. In CI, on every pull request, run:
+```bash
+node bin/eccode.js audit --against origin/main   # or the plugin/installed CLI path
+```
+With branch protection on `main`, history already merged there cannot be rewritten without this check failing: the agents' machine cannot change what the remote holds. Set `ECCODE_STRICT=1` where you prefer the guard hook to fail closed.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
@@ -119,6 +128,12 @@ eccode status --brief          # always shows the NEXT action
 | `Audit FAILED` | The event log was edited or an approved file changed | Restore from git. Changes to approved files need a new review |
 | Guard denies an edit | Wrong role or file, or no claim | Follow the reason text. `ECCODE_HOOKS=off` disables hooks for debugging only |
 | `eccode` not found | Plugin bin directory isn't on PATH | Use `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` or `node .claude/eccode/bin/eccode.js` |
+| `[INVALID_HANDOFF] … planned verification command` | The handoff cites checks, but none is a passing run of the plan's `verification.command` | Run it exactly as one argument: `eccode evidence run --actor <you> --task <id> --label verify -- "<command>"`, then cite that `ev:` id |
+| `[UNREVIEWED_CHANGES]` on `gate submit verification` | Files changed since the project started that no approved gate, and not this submission, covers | Add them with `--artifact`, so the verification reviewer sees their final content, or revert them |
+| `deliver` refused: `… changed since the project started but no approved gate reviewed it` | A file changed after the verification approval | Revert it. Further changes belong in a new delivery |
+| Claude Code asks you to confirm an `eccode … --actor user` command | The guard makes user decisions explicit | Approve only if you made that decision yourself |
+| `Missing required --actor (ECCODE_ACTOR=user is ignored …)` | `ECCODE_ACTOR` never supplies `user` | Pass `--actor user` explicitly |
+| Guard denies a command "touching the ECCode record" | The command reads or writes `events.jsonl`, `state.json`, config, evidence or memory records with something other than read-only tools | Read with `cat`, `jq`, `grep`, or `git diff/log/show`; change state only through `eccode` commands |
 | `[INVALID_HANDOFF] lean: new dependency … is not declared` | A package was added during the task | Prefer the codebase, the standard library or an installed package. If it is really needed, declare it in `newDependencies` with `reason` and `alternativesChecked` |
 | `[INVALID_HANDOFF] lean: … shortcut marker(s) but handoff.shortcuts declares …` | A `shortcut:` comment was added but not declared | Declare each in `shortcuts` (`file`, `limit`, `upgradeWhen`), or remove the shortcut |
 | `[INVALID_HANDOFF] lean: code changed … but no test file did` | Code changed with no test | Add one test that fails when the logic breaks, or explain in `testsNotNeeded` |

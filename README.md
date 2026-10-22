@@ -14,8 +14,11 @@ In most agent frameworks, "the reviewer must approve before merging" is a senten
 - **Implementation without re-execution:** an implementation or verification approval doesn't cite a check that **the reviewer** ran after the submission.
 - **Unresolved findings:** blocking findings from the previous round are not explicitly resolved, with evidence.
 - **Out of order:** a stage starts before its predecessor is approved. After N rejections, the stage escalates to **you**.
+- **Unreviewed code:** a file changed since the project started that no approved review covered. The verification submission and `deliver` both refuse it.
+- **A substitute check:** a task cites `true` or any other command instead of the verification command its approved plan pinned.
+- **A decision made for you:** an agent records `--actor user`. Subagents are blocked, and the main session triggers a Claude Code confirmation prompt.
 
-Everything is recorded in an append-only, hash-chained event log, so work can resume after any interruption and the final handoff is generated from evidence rather than from agent summaries.
+Everything is recorded in an append-only, hash-chained event log, so work can resume after any interruption and the final handoff is generated from evidence rather than from agent summaries. `eccode audit --against origin/main` proves that history already committed was not rewritten. Run it in CI with branch protection to anchor the record outside the agents' reach.
 
 **Lean by default.** Implementers reuse before they write: not needed → already in the codebase → standard library → installed dependency → minimal new code. They never cut validation, security or accessibility. The engine refuses a task completion that adds an **undeclared dependency** or an **undeclared `shortcut:`**, or that changes code with **neither a test nor a stated reason**. It records lines added and removed for every task. The idea is adapted from [Ponytail](https://github.com/DietrichGebert/ponytail); ECCode makes it checkable. See [docs/lean.md](docs/lean.md).
 

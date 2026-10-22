@@ -44,7 +44,7 @@ eccode gate submit plan --actor delivery-lead --artifact .eccode/artifacts/plan/
   - the lean totals (`eccode metrics`) and the deferred-shortcut ledger (`eccode debt`);
   - known limitations.
 
-  Submit it together with **every deliverable file**, so that the final state of each file is reviewed.
+  Submit it together with **every deliverable file**, so that the final state of each file is reviewed. The engine refuses the submission (`UNREVIEWED_CHANGES`) while any file changed since the project started is covered neither by an earlier approval nor by this submission. Add the listed files, or have their owners revert them.
 - **Release checklist** (`.eccode/artifacts/verification/release-checklist.md`):
   - install from docs works;
   - config and secrets documented;

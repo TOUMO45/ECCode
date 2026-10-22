@@ -69,7 +69,7 @@ For each `phase:<id>`, in order:
 
 ## 5. Verification and delivery
 1. `gate start verification`.
-2. `delivery-lead` writes the verification report and submits it **with every deliverable file**.
+2. `delivery-lead` writes the verification report and submits it **with every deliverable file**. The engine refuses the submission while any changed file is unreviewed (`UNREVIEWED_CHANGES`).
 3. An independent reviewer re-runs the full suite and the evals.
 4. `eccode deliver --actor delivery-lead` produces `.eccode/delivery/final-handoff.md`.
 5. Report to the user:
