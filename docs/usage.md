@@ -17,7 +17,7 @@ Or from a shell: `claude plugin marketplace add <repo-or-path>`, then `claude pl
 
 This installs:
 - 12 agents (`eccode:product-architect`, …);
-- skills and commands (`/eccode:start`, `/eccode:resume`, `/eccode:status`, `/eccode:investigate`, `/eccode:deliver`, `/eccode:improve`);
+- skills and commands (`/eccode:start`, `/eccode:resume`, `/eccode:status`, `/eccode:investigate`, `/eccode:deliver`, `/eccode:improve`, and the everyday `/eccode:lean`, `/eccode:review`, `/eccode:audit`, `/eccode:debt`);
 - the two hooks.
 
 Inside agent and skill text, the CLI is `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js`.
@@ -65,6 +65,8 @@ claude plugin validate . && claude plugin validate .claude-plugin/plugin.json --
 | `memory.staleAfterDays` | 180 | Age after which a lesson must be revalidated |
 | `memory.embedCommand` | null | Optional external embedder for semantic retrieval |
 | `memory.sharedDir` | `~/.eccode/memory` | Shared lesson store. `ECCODE_SHARED_MEMORY` overrides it |
+| `lean.level` | `full` | `off` · `lite` (measure and warn) · `full` (refuse undeclared new dependencies, undeclared `shortcut:` markers, code changed without a test or a reason) · `strict` (also plan-approved dependencies and markers that name an upgrade trigger). See [lean.md](lean.md) |
+| `lean.mapChars` | 4000 | Default output budget of `eccode map` |
 | `improvement.requireUserForAdoption` | true | Workflow changes need `--actor user` |
 | `improvement.protectedPaths` | config, settings, hooks, engine | Paths self-improvement can never change |
 
@@ -117,4 +119,8 @@ eccode status --brief          # always shows the NEXT action
 | `Audit FAILED` | The event log was edited or an approved file changed | Restore from git. Changes to approved files need a new review |
 | Guard denies an edit | Wrong role or file, or no claim | Follow the reason text. `ECCODE_HOOKS=off` disables hooks for debugging only |
 | `eccode` not found | Plugin bin directory isn't on PATH | Use `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` or `node .claude/eccode/bin/eccode.js` |
+| `[INVALID_HANDOFF] lean: new dependency … is not declared` | A package was added during the task | Prefer the codebase, the standard library or an installed package. If it is really needed, declare it in `newDependencies` with `reason` and `alternativesChecked` |
+| `[INVALID_HANDOFF] lean: … shortcut marker(s) but handoff.shortcuts declares …` | A `shortcut:` comment was added but not declared | Declare each in `shortcuts` (`file`, `limit`, `upgradeWhen`), or remove the shortcut |
+| `[INVALID_HANDOFF] lean: code changed … but no test file did` | Code changed with no test | Add one test that fails when the logic breaks, or explain in `testsNotNeeded` |
+| `[INVALID_HANDOFF] lean: … not pre-approved in the plan` | `lean.level` is `strict` | The plan lists the package in the task's `allowedDependencies` (plan review), or the task does without it |
 | `[LESSON_NOT_VERIFIABLE]` | The lesson lacks a check that fails before the fix and passes after, or similar evidence | Record the reproduction and verification with the **same** command |

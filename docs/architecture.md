@@ -25,6 +25,8 @@ ECCode separates **judgment**, which agents supply in prompts, from **rules**, w
 │ runs.js     agent runs: runtime/token/cost accounting, budgets, interruption recovery,     │
 │             risks, decisions                                                               │
 │ delivery.js final handoff, refused unless all gates approved and reviewed files unchanged  │
+│ lean.js     claim baseline + completion checks (declared dependencies and shortcuts, test  │
+│             or reason), per-task line stats, reuse map, deferred-shortcut ledger           │
 │ status.js   next action, resume brief                                                      │
 │ store.js    append-only hash-chained events.jsonl + rebuildable state.json, file lock      │
 │ memory/     4-layer memory, retrieval, applicability, lesson review, promotion, metrics,   │
@@ -46,6 +48,7 @@ ECCode separates **judgment**, which agents supply in prompts, from **rules**, w
 | Concurrency control | O_EXCL lock file + ownership globs | Worktrees only | Many agents can share one workspace safely. Overlapping claims are refused. Worktrees remain available for risky parallel work. |
 | Identity | Asserted `--actor`, bound by a PreToolUse hook to the subagent's `agent_type` | Signed tokens per agent | The harness tells hooks which subagent is calling. Signing would need key management the harness doesn't provide. This limitation is documented. |
 | Retrieval | BM25 + char-trigram, verified-first weighting, optional external embedder | Embedding store | Lexical retrieval works offline at zero cost. The `embedCommand` hook adds semantic similarity where it's worth the cost. Without it we don't claim semantic search. |
+| Lean discipline | Prompt guidance (`lean-change`) plus engine checks on what can be checked: declared new dependencies, declared `shortcut:` markers, a test or a stated reason | Prompt-only (Ponytail), diff-size budgets | Undeclared dependencies and hidden debt become visible to the independent reviewer. Diff budgets would refuse correct-but-large changes, so ECCode measures lines instead of capping them. |
 | Harness portability | Engine + CLI are harness-neutral; Claude Code adapter is plugin/installer; `export agents-md` for others | Per-harness forks | Rules enforced by the CLI apply in every harness. Only the prompts and hooks differ. |
 
 ## Gate model

@@ -17,15 +17,17 @@ In most agent frameworks, "the reviewer must approve before merging" is a senten
 
 Everything is recorded in an append-only, hash-chained event log, so work can resume after any interruption and the final handoff is generated from evidence rather than from agent summaries.
 
+**Lean by default.** Implementers reuse before they write: not needed → already in the codebase → standard library → installed dependency → minimal new code. They never cut validation, security or accessibility. The engine refuses a task completion that adds an **undeclared dependency** or an **undeclared `shortcut:`**, or that changes code with **neither a test nor a stated reason**. It records lines added and removed for every task. The idea is adapted from [Ponytail](https://github.com/DietrichGebert/ponytail); ECCode makes it checkable. See [docs/lean.md](docs/lean.md).
+
 ## Components
 
 | | |
 |---|---|
 | **12 agents** | product-architect · architecture-reviewer · technical-designer · technical-reviewer · delivery-lead · learning-debugger · frontend / backend / ai / test / devops engineers · security-reviewer |
-| **7 skills** | `orchestrate` (lead orchestrator playbook) · review-gate · handoff-protocol · verification-evidence · debug-investigation · engineering-memory · self-improvement |
-| **6 commands** | `/eccode:start` · `/eccode:resume` · `/eccode:status` · `/eccode:investigate` · `/eccode:deliver` · `/eccode:improve` |
+| **9 skills** | `orchestrate` (lead orchestrator playbook) · review-gate · handoff-protocol · verification-evidence · debug-investigation · engineering-memory · self-improvement · **lean-change** · **senior-review** |
+| **10 commands** | `/eccode:start` · `/eccode:resume` · `/eccode:status` · `/eccode:investigate` · `/eccode:deliver` · `/eccode:improve` · `/eccode:lean` · `/eccode:review` · `/eccode:audit` · `/eccode:debt` |
 | **2 hooks** | SessionStart injects a resume brief. PreToolUse is a guard that ties `--actor` to the subagent actually running, enforces file ownership and protects the record. |
-| **Engine + CLI** | Zero-dependency Node ≥18: gates, tasks, evidence, runs and budgets, recovery, delivery, memory, self-improvement, metrics |
+| **Engine + CLI** | Zero-dependency Node ≥18: gates, tasks, evidence, runs and budgets, recovery, delivery, memory, self-improvement, metrics, lean checks, `eccode map` (what already exists) and `eccode debt` (deferred-shortcut ledger) |
 | **Memory** | Four layers (project, debugging, knowledge, workflow). A lesson is verified only when **the same check failed before the fix and passed after it**, a reviewer who is not the author signs off, and it carries applicability conditions checked against the current environment. Lessons can be promoted to shared memory after a privacy scan. |
 
 ## Quick start
@@ -43,7 +45,7 @@ node ECCode/bin/eccode.js install --target ./my-project
 cd ECCode && npm run check
 ```
 
-See [docs/usage.md](docs/usage.md) for installation, configuration, usage and troubleshooting, [docs/architecture.md](docs/architecture.md) for the design, and [docs/memory.md](docs/memory.md) for the learning system.
+See [docs/usage.md](docs/usage.md) for installation, configuration, usage and troubleshooting, [docs/architecture.md](docs/architecture.md) for the design, [docs/memory.md](docs/memory.md) for the learning system, [docs/lean.md](docs/lean.md) for lean changes, and [docs/tooling-research.md](docs/tooling-research.md) for the open-source tools on the roadmap.
 
 ## Demonstration
 

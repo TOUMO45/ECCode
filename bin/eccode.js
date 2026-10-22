@@ -67,8 +67,12 @@ Self-improvement
   improve rollback <id> --actor <a> --reason <text>
   improve list
 
+Lean (work in any repository; see docs/lean.md)
+  map [--path <dir>] [--chars n]   What already exists (top-level names per directory): reuse before you write
+  debt [--json]                    Ledger of deferred shortcut markers in code, flagging those with no upgrade trigger
+
 Other
-  metrics [--json]                 Rejection rate, repeat bugs, time-to-fix, recurrence, regressions
+  metrics [--json]                 Rejection rate, repeat bugs, time-to-fix, recurrence, regressions, lean totals
   install --target <dir> [--scope project|user]   Copy agents/skills/commands/hooks into .claude/
   export agents-md [--out AGENTS.md]               Generic AGENTS.md for other harnesses
 
@@ -126,6 +130,18 @@ function main(argv) {
   if (group === 'export') return require('../lib/install').exportCli(sub, flags, print);
 
   const { store, config } = openProject(root);
+  if (group === 'map' || group === 'debt') {
+    const lean = require('../lib/lean');
+    if (group === 'debt') {
+      const ledger = lean.debtLedger(root);
+      print(flags, lean.formatLedger(ledger), ledger);
+      return 0;
+    }
+    const chars = Number(flags.chars || (config ? config.lean.mapChars : require('../lib/config').DEFAULT_CONFIG.lean.mapChars));
+    const map = lean.reuseMap(root, { under: flags.path, chars });
+    print(flags, map.text || '(no source files with top-level definitions found)', map);
+    return 0;
+  }
   const memoryGroups = { memory: '../lib/memory/cli', improve: '../lib/memory/improve-cli' };
   if (memoryGroups[group]) return require(memoryGroups[group]).run({ store, config, sub, arg, flags, rest: args.rest, actor, print, need, loadJsonFile, root });
   store.assertInitialized();

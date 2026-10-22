@@ -21,6 +21,36 @@
     "evidence": { "type": "array", "items": { "type": "string", "pattern": "^ev:" } },
     "remainingIssues": { "type": "array", "items": { "type": "string" } },
     "nextAction": { "type": "string", "minLength": 5 },
-    "lessonsConsulted": { "type": "array", "items": { "type": "string" } }
+    "lessonsConsulted": { "type": "array", "items": { "type": "string" } },
+    "newDependencies": {
+      "description": "Every dependency this task added (lean checks refuse undeclared ones): why the codebase, the standard library and the installed dependencies were not enough.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "reason", "alternativesChecked"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "manifest": { "type": "string" },
+          "reason": { "type": "string", "minLength": 10 },
+          "alternativesChecked": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 5 } }
+        }
+      }
+    },
+    "shortcuts": {
+      "description": "Every deferral marker this task added in code: the limit it accepts and when to upgrade.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "limit", "upgradeWhen"],
+        "additionalProperties": false,
+        "properties": {
+          "file": { "type": "string", "minLength": 1 },
+          "limit": { "type": "string", "minLength": 5 },
+          "upgradeWhen": { "type": "string", "minLength": 5 }
+        }
+      }
+    },
+    "testsNotNeeded": { "description": "Why changed code ships without a changed test file (lean checks require a test or this reason).", "type": "string", "minLength": 10 }
   }
 }

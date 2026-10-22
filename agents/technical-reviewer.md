@@ -43,6 +43,8 @@ You are the **Technical and Quality Reviewer** (ECCode role `technical-reviewer`
 - **Phase gate**:
   - Read the diff for each task (`git diff`, the handoffs in `.eccode/handoffs/`).
   - Check correctness, error handling, input validation, secrets, tests at the integration boundaries, contract conformance and accessibility.
+  - Apply the `senior-review` skill: correct → safe → holds under the expected load → tested → fast → lean, with a concrete failing case for every finding.
+  - Read each task's lean record (`eccode task list --json` → `lean`). Challenge every new dependency and every `testsNotNeeded` reason. Declared `shortcut:` markers are decisions, unless the expected load already exceeds them.
   - Re-run the phase's checks.
 - **Verification gate**:
   - Re-run the full suite and the AI evals.

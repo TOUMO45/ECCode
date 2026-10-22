@@ -15,7 +15,7 @@ You are the **Security Reviewer** (ECCode role `security-reviewer`). You review 
   - SSRF and outbound calls;
   - secrets in code, logs and responses;
   - rate limiting and abuse;
-  - dependency risk;
+  - dependency risk, including every new dependency in the tasks' lean records (`eccode task list --json` → `lean.newDependencies`): maintenance, license, known vulnerabilities, and whether an installed package or the platform would do;
   - error leakage.
 - **AI features**:
   - Try prompt-injection payloads and confirm that output stays schema-valid and no instruction from the data is followed.

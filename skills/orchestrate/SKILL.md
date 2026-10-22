@@ -55,7 +55,7 @@ For each document gate (`architecture`, `design`, `plan`):
 For each `phase:<id>`, in order:
 1. **Confirm scope.** `eccode gate start phase:<id> --actor orchestrator`, then read the phase's acceptance criteria back to yourself from the plan.
 2. **Assign.** Run `eccode task next` for the ready tasks.
-   - Dispatch the task owners. Each dispatch includes: task id, CLI string, the contract sections to build against, and file ownership.
+   - Dispatch the task owners. Each dispatch includes: task id, CLI string, the contract sections to build against, file ownership, and a reminder to follow the `lean-change` skill (reuse before writing; declare new dependencies, shortcuts and skipped tests).
    - Dispatch in parallel (several Agent calls in one message) **only** for tasks that `task next` lists together: their dependencies are done and their ownership is disjoint. The engine also enforces `maxConcurrency`.
    - Workspace isolation comes from ownership globs plus the guard hook. For risky parallel work, you may run an implementer with worktree isolation, then merge its diff after reviewing it.
 3. **Implement and integrate.** Agents claim, build, run checks and complete with handoffs.
@@ -76,7 +76,7 @@ For each `phase:<id>`, in order:
    - **verified** capabilities, with evidence ids;
    - unverified items and limitations;
    - open risks;
-   - metrics (`eccode metrics`).
+   - metrics (`eccode metrics`, including lean totals) and the deferred-shortcut ledger (`eccode debt`).
 
 ## 6. Learning loop
 - When a meaningful bug or failure occurs, dispatch `learning-debugger` (see the `debug-investigation` skill). Lessons need an independent `eccode memory review`.
