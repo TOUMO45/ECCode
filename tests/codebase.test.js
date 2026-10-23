@@ -182,3 +182,16 @@ test('onboard brief names modules, entry points, most-depended files and its own
   assert.match(b.text, /src\/util\.js ← 2 dependents/);
   assert.match(b.text, /regex-based index/);
 });
+
+test('the installed toolkit under .claude/ is not part of the project index', () => {
+  const dir = repo({
+    'src/app.js': "require('./db');\n",
+    'src/db.js': 'module.exports = {};\n',
+    '.claude/eccode/lib/util.js': 'module.exports = {};\n',
+    '.claude/eccode/lib/store.js': "require('./util');\n",
+  });
+  const index = cb.indexProject(dir);
+  const files = Object.keys(index.files);
+  assert.ok(files.includes('src/app.js'));
+  assert.ok(!files.some((f) => f.startsWith('.claude/')), `toolkit files leaked into the index: ${files}`);
+});
