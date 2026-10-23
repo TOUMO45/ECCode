@@ -7,6 +7,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const bench = require('../lib/bench');
 
 const GOOD_RELATIVE = `
@@ -61,9 +62,11 @@ test('lean vs bloated solutions measure differently; both pass the functional hi
   assert.deepStrictEqual([good.hiddenPassed, good.hiddenTotal], [2, 2], JSON.stringify(good.checks));
   assert.deepStrictEqual(good.newDeps, []);
   assert.strictEqual(good.testFilesChanged, 1);
+  assert.ok(good.testLinesAdded > 0 && good.testLinesAdded < good.linesAdded, `test lines ${good.testLinesAdded} of ${good.linesAdded}`);
   assert.strictEqual(bloat.hiddenPassed, 1, 'functional check passes, no-new-deps check fails');
   assert.deepStrictEqual(bloat.newDeps, ['humanize-duration']);
   assert.strictEqual(bloat.testFilesChanged, 0);
+  assert.strictEqual(bloat.testLinesAdded, 0);
   assert.ok(bloat.linesAdded > good.linesAdded, `bloat ${bloat.linesAdded} > lean ${good.linesAdded}`);
 });
 
@@ -88,6 +91,11 @@ test('the report pairs variants per task and keeps raw runs visible', () => {
   assert.match(md, /humanize-duration/);
   assert.match(md, /## Failed hidden checks/);
   assert.match(md, /demonstration, not a statistic/);
+  // Test lines are reported apart from code lines, per run and per task.
+  assert.match(md, /\| Agent exit \| Lines added in tests \|/);
+  assert.match(md, /Median code lines added \(tests excluded\)/);
+  const withRun = records[0];
+  assert.match(md, new RegExp(`\\| relative-time \\| with \\| 2/2 \\| \\+${withRun.linesAdded}/−${withRun.linesRemoved} \\|[^\\n]*\\| ${withRun.testLinesAdded} \\|`));
 });
 
 test('the permutation test is exact: identical groups give p=1, separated groups the minimum p', () => {
@@ -142,7 +150,36 @@ test('tally recomputes headline numbers from recorded report files', () => {
   const t = bench.tally(dir);
   assert.deepStrictEqual(t.total, { files: 2, runs: 3, hiddenPassed: 5, hiddenTotal: 6, depRuns: 1, agentFailures: 1, pairedSmaller: 1, pairedLarger: 0, pairedEqual: 0 }); // signs come from raw runs: only a.md has both variants; summary cells are ignored
   assert.strictEqual(t.perFile.length, 2);
-  assert.deepStrictEqual(t.perFile[0], { file: 'a.md', runs: 2, hiddenPassed: 3, hiddenTotal: 4, depRuns: 1, agentFailures: 0 });
+  assert.deepStrictEqual(t.perFile[0], { file: 'a.md', model: 'unknown', runs: 2, hiddenPassed: 3, hiddenTotal: 4, depRuns: 1, agentFailures: 0 });
+  assert.strictEqual(t.byModel.unknown.codeStratified, null, 'older reports record no test lines, so no tests-excluded figure is invented');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('tally reports effects per model, and with tests excluded where reports record test lines', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tally-'));
+  const file = (model, rows, header = '| Task | Variant | Hidden | Lines +/− | New deps | Test files | Seconds | Agent exit | Lines added in tests |') => [
+    '# ECCode paired benchmark', '', `Agent command: \`claude -p --model ${model}\`.`, '', '## Raw runs', '', header, '|---|', ...rows, '',
+  ].join('\n');
+  // Model A shrinks diffs; model B grows them, entirely in test lines.
+  fs.writeFileSync(path.join(dir, 'a.md'), file('alpha', [
+    '| t | without | 1/1 | +20/−0 | — | 1 | 5 | 0 | 5 |', '| t | without | 1/1 | +22/−0 | — | 1 | 5 | 0 | 5 |',
+    '| t | with | 1/1 | +10/−0 | — | 1 | 5 | 0 | 5 |', '| t | with | 1/1 | +12/−0 | — | 1 | 5 | 0 | 5 |',
+  ]));
+  fs.writeFileSync(path.join(dir, 'b.md'), file('beta', [
+    '| t | without | 1/1 | +10/−0 | — | 0 | 5 | 0 | 0 |', '| t | without | 1/1 | +12/−0 | — | 0 | 5 | 0 | 0 |',
+    '| t | with | 1/1 | +20/−0 | — | 1 | 5 | 0 | 10 |', '| t | with | 1/1 | +22/−0 | — | 1 | 5 | 0 | 10 |',
+  ]));
+  const t = bench.tally(dir);
+  assert.deepStrictEqual(Object.keys(t.byModel), ['alpha', 'beta']);
+  assert.strictEqual(t.byModel.alpha.stratified.delta, -10);
+  assert.strictEqual(t.byModel.beta.stratified.delta, 10);
+  assert.strictEqual(t.byModel.beta.codeStratified.delta, 0, 'with tests excluded, beta wrote the same code');
+  assert.deepStrictEqual(t.byModel.beta.testsWith, { wrote: 2, runs: 2 });
+  assert.deepStrictEqual(t.byModel.beta.testsWithout, { wrote: 0, runs: 2 });
+  assert.strictEqual(t.stratified.delta, 0, 'the pooled figure hides both effects, which is why tally prints per model');
+  const out = spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), 'bench', 'tally', '--dir', dir], { encoding: 'utf8', env: { ...process.env, ECCODE_ROOT: dir } });
+  assert.match(out.stdout, /beta: 4 paired-variant runs; mean with-without = 10\.00 lines/);
+  assert.match(out.stdout, /tests excluded \(4 runs that record test lines\): 0\.00 lines/);
   fs.rmSync(dir, { recursive: true, force: true });
 });
 

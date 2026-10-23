@@ -86,7 +86,7 @@ Codebase (work in any repository; see docs/lean.md and docs/senior-engineering.m
 
 Benchmark
   bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|both] [--suite <dir>] [--out <file>] [--keep]
-  bench tally [--dir bench/results]       Recompute run totals (runs, hidden checks, deps, failures) from recorded reports
+  bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
         Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
         hidden checks, lines, dependencies and tests are measured by the harness, never self-reported
 
@@ -173,9 +173,11 @@ function main(argv) {
     const bench = require('../lib/bench');
     if (sub === 'tally') {
       const t = bench.tally(path.resolve(root, flags.dir || 'bench/results'));
+      const pv = (st) => `p ${st.atFloor ? '≤' : '='} ${st.p < 0.001 ? st.p.toExponential(2) : st.p.toFixed(4)}`;
+      const perModel = Object.entries(t.byModel).map(([m, b]) => `  ${m}: ${b.runs} paired-variant runs; ${b.stratified ? `mean with-without = ${b.stratified.delta.toFixed(2)} lines (${b.stratified.strata} strata), two-sided ${pv(b.stratified)}` : 'not enough paired rows'}; runs changing a test file: with ${b.testsWith.wrote}/${b.testsWith.runs}, without ${b.testsWithout.wrote}/${b.testsWithout.runs}${b.codeStratified ? `; tests excluded (${b.codeStratified.runs} runs that record test lines): ${b.codeStratified.delta.toFixed(2)} lines, ${pv(b.codeStratified)}` : ''}`);
       const text = t.perFile
         .map((f) => `${f.file}: ${f.runs} runs, hidden ${f.hiddenPassed}/${f.hiddenTotal}, dep-adding ${f.depRuns}, agent failures ${f.agentFailures}`)
-        .concat(`TOTAL: ${t.total.runs} runs across ${t.total.files} report files, hidden ${t.total.hiddenPassed}/${t.total.hiddenTotal}, dep-adding ${t.total.depRuns}, agent failures ${t.total.agentFailures}`, `Paired medians per task-batch: with-variant smaller ${t.total.pairedSmaller}, larger ${t.total.pairedLarger}, equal ${t.total.pairedEqual}`, t.stratified ? `Stratified permutation (labels shuffled within each task-batch, ${t.stratified.strata} strata, ${t.stratified.runs} runs): mean with-without = ${t.stratified.delta.toFixed(2)} lines, two-sided p ${t.stratified.atFloor ? '≤' : '='} ${t.stratified.p < 0.001 ? t.stratified.p.toExponential(2) : t.stratified.p.toFixed(4)} over ${t.stratified.resamples} seeded resamples` : 'Stratified permutation: not enough paired raw rows')
+        .concat(`TOTAL: ${t.total.runs} runs across ${t.total.files} report files, hidden ${t.total.hiddenPassed}/${t.total.hiddenTotal}, dep-adding ${t.total.depRuns}, agent failures ${t.total.agentFailures}`, `Paired medians per task-batch: with-variant smaller ${t.total.pairedSmaller}, larger ${t.total.pairedLarger}, equal ${t.total.pairedEqual}`, t.stratified ? `Stratified permutation (labels shuffled within each task-batch, ${t.stratified.strata} strata, ${t.stratified.runs} runs): mean with-without = ${t.stratified.delta.toFixed(2)} lines, two-sided p ${t.stratified.atFloor ? '≤' : '='} ${t.stratified.p < 0.001 ? t.stratified.p.toExponential(2) : t.stratified.p.toFixed(4)} over ${t.stratified.resamples} seeded resamples (pools every model; read the per-model lines)` : 'Stratified permutation: not enough paired raw rows', 'Per model (the same test within each model):', ...perModel)
         .join('\n');
       print(flags, text, t);
       return 0;
