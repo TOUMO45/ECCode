@@ -84,6 +84,12 @@ Codebase (work in any repository; see docs/lean.md and docs/senior-engineering.m
   stack adopt --checks <id,id> --actor user [--remove]   Make checks required at the verification gate
   debt [--json]                    Ledger of deferred shortcut markers in code, flagging those with no upgrade trigger
 
+Bugs and problem solving (see docs/bugs.md)
+  bugs [--task <id> | --base <ref>] [--all] [--files a,b] [--no-external] [--json]
+                                   Bug patterns on the lines a change added (whole files with --all), plus the
+                                   findings of installed analyzers (ruff, go vet, eslint, semgrep) on the same
+                                   lines; exit 1 on any error. Task completion refuses undeclared errors
+
 Benchmark
   bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|both] [--suite <dir>] [--out <file>] [--keep]
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
@@ -208,6 +214,19 @@ function main(argv) {
     }
     print(flags, b.text, { modules: b.modules, files: Object.keys(b.index.files).length, builtAt: b.index.builtAt });
     return 0;
+  }
+  if (group === 'bugs') {
+    const bugs = require('../lib/bugs');
+    let base = flags.base || 'HEAD';
+    if (flags.task) {
+      const t = store.state().tasks[flags.task];
+      if (!t) throw new EccodeError('NOT_FOUND', `Unknown task ${flags.task}`);
+      const claimBase = (t.claim && t.claim.baseCommit) || (t.history || []).map((h) => h.base).filter(Boolean).pop();
+      if (claimBase) base = claimBase;
+    }
+    const res = bugs.scan(root, { base, all: Boolean(flags.all), files: flags.files ? String(flags.files).split(',').map((x) => x.trim()).filter(Boolean) : null, external: !flags['no-external'] });
+    print(flags, bugs.format(res), res);
+    return res.findings.some((f) => f.severity === 'error') ? 1 : 0;
   }
   if (group === 'impact') {
     const { impact } = require('../lib/codebase');

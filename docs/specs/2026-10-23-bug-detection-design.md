@@ -29,7 +29,6 @@ Make ECCode catch bugs in the code an agent writes, and make bug fixing provable
   - assignment inside an `if` condition: error;
   - `new Promise(async …)`: warning;
   - empty `catch {}`: warning;
-  - `parseInt` without a radix: warning;
   - skipped test (`it.skip`, `xit`): warning, tests only.
 - Python:
   - `breakpoint()` and `pdb`/`ipdb.set_trace()`: error;
@@ -41,6 +40,8 @@ Make ECCode catch bugs in the code an agent writes, and make bug fixing provable
   - skip decorators on tests: warning.
 - Go: `t.Skip`: warning, tests only.
 - All code: merge-conflict markers: error, raw.
+
+Measured precision on real code changed four rules and removed one (`parseInt` without a radix: ES5 removed octal guessing, so it is style rather than a bug). See bench/bugs/precision-2026-10-23.md.
 
 **External analyzers.** They run when installed, never downloaded, and only their findings on the scanned lines are kept:
 - `ruff check` (Python). Pyflakes-class codes F821, F811, F841 and F632 count as errors; everything else is a warning.
