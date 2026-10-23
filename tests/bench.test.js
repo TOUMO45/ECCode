@@ -156,3 +156,29 @@ test('the report header grades its own sample size', () => {
   assert.match(big, /n >= 10 times per task; the exact permutation test enumerates every split/);
   assert.doesNotMatch(big, /demonstration, not a statistic/);
 });
+
+test('stratified permutation: within-batch shuffles, batch effects cancel, seeded and reproducible', () => {
+  const rows = (stratum, variant, xs) => xs.map((lines) => ({ stratum, variant, lines }));
+  // A consistent within-stratum effect across four strata is detected ...
+  const effect = [
+    ...rows('a|t1', 'without', [20, 22, 21, 23, 20]), ...rows('a|t1', 'with', [15, 16, 14, 17, 15]),
+    ...rows('b|t2', 'without', [40, 42, 41, 43, 40]), ...rows('b|t2', 'with', [35, 36, 34, 37, 35]),
+    ...rows('c|t3', 'without', [12, 11, 13, 12, 11]), ...rows('c|t3', 'with', [8, 7, 9, 8, 7]),
+    ...rows('d|t4', 'without', [30, 31, 29, 32, 30]), ...rows('d|t4', 'with', [25, 26, 24, 27, 25]),
+  ];
+  const sig = bench.stratifiedTest(effect, { resamples: 2000 });
+  assert.ok(sig.p < 0.01, `expected small p, got ${sig.p}`);
+  assert.ok(sig.delta < -4 && sig.delta > -6, `delta ${sig.delta}`);
+  // ... while strata with wildly different baselines but NO within-stratum
+  // effect stay null: batch differences alone cannot manufacture significance.
+  const baselineOnly = [
+    ...rows('big|t', 'without', [100, 104, 98, 102]), ...rows('big|t', 'with', [101, 99, 103, 102]),
+    ...rows('small|t', 'without', [10, 12, 9, 11]), ...rows('small|t', 'with', [11, 10, 12, 9]),
+  ];
+  const nul = bench.stratifiedTest(baselineOnly, { resamples: 2000 });
+  assert.ok(nul.p > 0.1, `expected large p for baseline-only differences, got ${nul.p}`);
+  // Seeded: the same input yields the same p, so a published figure reproduces.
+  assert.strictEqual(bench.stratifiedTest(effect, { resamples: 2000 }).p, sig.p);
+  // A stratum missing one variant is excluded rather than guessed at.
+  assert.strictEqual(bench.stratifiedTest(rows('x|t', 'with', [1, 2, 3]), {}), null);
+});

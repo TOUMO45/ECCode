@@ -173,7 +173,7 @@ function main(argv) {
       const t = bench.tally(path.resolve(root, flags.dir || 'bench/results'));
       const text = t.perFile
         .map((f) => `${f.file}: ${f.runs} runs, hidden ${f.hiddenPassed}/${f.hiddenTotal}, dep-adding ${f.depRuns}, agent failures ${f.agentFailures}`)
-        .concat(`TOTAL: ${t.total.runs} runs across ${t.total.files} report files, hidden ${t.total.hiddenPassed}/${t.total.hiddenTotal}, dep-adding ${t.total.depRuns}, agent failures ${t.total.agentFailures}`, `Paired medians per task-batch: with-variant smaller ${t.total.pairedSmaller}, larger ${t.total.pairedLarger}, equal ${t.total.pairedEqual}`)
+        .concat(`TOTAL: ${t.total.runs} runs across ${t.total.files} report files, hidden ${t.total.hiddenPassed}/${t.total.hiddenTotal}, dep-adding ${t.total.depRuns}, agent failures ${t.total.agentFailures}`, `Paired medians per task-batch: with-variant smaller ${t.total.pairedSmaller}, larger ${t.total.pairedLarger}, equal ${t.total.pairedEqual}`, t.stratified ? `Stratified permutation (labels shuffled within each task-batch, ${t.stratified.strata} strata, ${t.stratified.runs} runs): mean with-without = ${t.stratified.delta.toFixed(2)} lines, two-sided p = ${t.stratified.p < 0.001 ? t.stratified.p.toExponential(2) : t.stratified.p.toFixed(4)} over ${t.stratified.resamples} seeded resamples` : 'Stratified permutation: not enough paired raw rows')
         .join('\n');
       print(flags, text, t);
       return 0;
