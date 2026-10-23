@@ -52,6 +52,20 @@
       }
     },
     "testsNotNeeded": { "description": "Why changed code ships without a changed test file (lean checks require a test or this reason).", "type": "string", "minLength": 10 },
+    "acceptedFindings": {
+      "description": "Bug-scan findings (eccode bugs) this task keeps on purpose: the rule and file as the engine reported them, and why.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule", "file", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "rule": { "type": "string", "minLength": 3 },
+          "file": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 10 }
+        }
+      }
+    },
     "breakingChanges": {
       "description": "Every removed public export or HTTP route, edited/deleted migration, or destructive new migration, using the engine-detected kind and name.",
       "type": "array",

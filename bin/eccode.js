@@ -84,6 +84,21 @@ Codebase (work in any repository; see docs/lean.md and docs/senior-engineering.m
   stack adopt --checks <id,id> --actor user [--remove]   Make checks required at the verification gate
   debt [--json]                    Ledger of deferred shortcut markers in code, flagging those with no upgrade trigger
 
+Bugs and problem solving (see docs/bugs.md)
+  bugs [--task <id> | --base <ref>] [--all] [--files a,b] [--no-external] [--json]
+                                   Bug patterns on the lines a change added (whole files with --all), plus the
+                                   findings of installed analyzers (ruff, go vet, eslint, semgrep) on the same
+                                   lines; exit 1 on any error. Task completion refuses undeclared errors
+  mutate --test "<cmd>" [--task <id> | --base <ref>] [--files a,b] [--max 25] [--timeout <s>]
+         [--min-score <0-100>] [--record --actor <a>]
+                                   Mutation testing on the changed code lines: one boundary, equality, logical,
+                                   boolean, +/- or negation change at a time; a survivor is behavior no test
+                                   checks. Files are always restored (also after a killed run)
+  fix verify --actor <a> (--task <id> | --base <ref>) [--test "<cmd>"]
+                                   Proof the regression test catches the bug: it must FAIL on the pre-fix code
+                                   (a temporary worktree at the base with the new tests) and PASS on the fix.
+                                   Exit 0 only when proven; the pair counts as the fix track's reproduction
+
 Benchmark
   bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|both] [--suite <dir>] [--out <file>] [--keep]
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
@@ -208,6 +223,48 @@ function main(argv) {
     }
     print(flags, b.text, { modules: b.modules, files: Object.keys(b.index.files).length, builtAt: b.index.builtAt });
     return 0;
+  }
+  if (group === 'bugs') {
+    const bugs = require('../lib/bugs');
+    let base = flags.base || 'HEAD';
+    if (flags.task) {
+      const t = store.state().tasks[flags.task];
+      if (!t) throw new EccodeError('NOT_FOUND', `Unknown task ${flags.task}`);
+      const claimBase = (t.claim && t.claim.baseCommit) || (t.history || []).map((h) => h.base).filter(Boolean).pop();
+      if (claimBase) base = claimBase;
+    }
+    const res = bugs.scan(root, { base, all: Boolean(flags.all), files: flags.files ? String(flags.files).split(',').map((x) => x.trim()).filter(Boolean) : null, external: !flags['no-external'] });
+    print(flags, bugs.format(res), res);
+    return res.findings.some((f) => f.severity === 'error') ? 1 : 0;
+  }
+  if (group === 'mutate') {
+    const mutate = require('../lib/mutate');
+    let base = flags.base || 'HEAD';
+    let test = flags.test;
+    if (flags.task) {
+      const t = store.state().tasks[flags.task];
+      if (!t) throw new EccodeError('NOT_FOUND', `Unknown task ${flags.task}`);
+      if (t.claim && t.claim.baseCommit) base = t.claim.baseCommit;
+      if (!test && t.verification && t.verification.command) test = t.verification.command;
+    }
+    const res = mutate.run(root, {
+      test: need(test, '--test'),
+      base,
+      files: flags.files ? String(flags.files).split(',').map((x) => x.trim()).filter(Boolean) : null,
+      max: flags.max ? Number(flags.max) : 25,
+      timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
+      onProgress: (m) => process.stderr.write(`mutate: ${m}\n`),
+    });
+    if (flags.record) res.evidence = mutate.record(store, need(actor, '--actor'), res, { task: flags.task, gate: flags.gate }).id;
+    print(flags, `${mutate.format(res)}${res.evidence ? `\nRecorded as ev:${res.evidence}` : ''}`, res);
+    return flags['min-score'] !== undefined && res.score !== null && res.score * 100 < Number(flags['min-score']) ? 1 : 0;
+  }
+  if (group === 'fix') {
+    if (sub !== 'verify') throw new EccodeError('USAGE', 'Usage: eccode fix verify --actor <a> (--task <id> | --base <ref>) [--test "<cmd>"]');
+    const fixverify = require('../lib/fixverify');
+    const r = fixverify.verify(store, need(actor, '--actor'), { test: flags.test, task: flags.task, base: flags.base, timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined });
+    print(flags, fixverify.format(r), r);
+    return r.verdict === 'proven' ? 0 : 1;
   }
   if (group === 'impact') {
     const { impact } = require('../lib/codebase');

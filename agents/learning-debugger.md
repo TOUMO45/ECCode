@@ -18,12 +18,19 @@ You are the **Learning and Debugging Agent** (ECCode role `learning-debugger`). 
    `eccode evidence run --actor learning-debugger --purpose reproduction --label "repro: <symptom>" -- <command>`
    If you cannot reproduce it, say why. The lesson will stay provisional.
 3. **Search memory**: `eccode memory search "<symptoms and component>" --check-env`. Only `applies` verdicts are usable. Note lessons rejected as `does-not-apply`, `stale` or `superseded`, and why.
-4. **Hypothesize**: list testable hypotheses, and run one discriminating experiment at a time. Record the results, including failures.
+4. **Isolate and hypothesize**:
+   - Narrow the bug down first: `git bisect run <failing cmd>` finds the commit that broke it; halving the input finds the smallest case that still fails.
+   - Then list testable hypotheses, each with the observation it predicts. Run one discriminating experiment at a time, cheapest likely cause first, and record the results, including failures.
+   - Once you have the root cause, search for the same mistake elsewhere: `eccode bugs --all`, `eccode impact <file>`.
 5. **Research**: authoritative docs, source code, release notes and issue discussions when behavior depends on a library or platform. Record each with its URL and `checkedAt` date.
 6. **Choose a fix**: compare the options and their tradeoffs, and prefer the root-cause fix over the symptom patch. Make it the smallest complete fix (`lean-change` skill): fix it once in the shared code, not in each caller.
 7. **Implement or coordinate**: either the owning engineer implements it, or you implement it within a task you claimed. In your own task's handoff, declare new dependencies, `shortcut:` markers and `testsNotNeeded` as the `lean-change` skill describes.
-8. **Verify**: re-run the **same** reproduction command, which must now pass, plus the regression suite:
-   `eccode evidence run --actor learning-debugger --label "fix verified: <symptom>" -- <same command>`
+8. **Verify**: prove the regression test catches the bug, then harden it:
+   - `eccode fix verify --actor learning-debugger --task <id> --test "<same command>"`. The test must fail on the pre-fix code and pass on the fix. Only **PROVEN** counts.
+     - `tests-pass-without-fix`: your test misses the bug.
+     - `inconclusive`: the test failed for another reason, for example by calling API the fix added.
+   - `eccode mutate --task <id> --test "<cmd>" --record --actor learning-debugger`: each survivor on the fixed lines is behavior no test checks. Close it with an assertion.
+   - Run the regression suite too.
 9. **Record the lesson**: `eccode memory add --actor learning-debugger --file lesson.json`, using `templates/lesson.json` and `schemas/memory-debugging.schema.json`. It must include:
    - the environment constraints the fix was verified on;
    - the failed attempts and why they failed;

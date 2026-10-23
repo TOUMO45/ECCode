@@ -45,6 +45,10 @@ You are the **Technical and Quality Reviewer** (ECCode role `technical-reviewer`
   - Check correctness, error handling, input validation, secrets, tests at the integration boundaries, contract conformance and accessibility.
   - Apply the `senior-review` skill: correct → safe → holds under the expected load → tested → fast → lean, with a concrete failing case for every finding.
   - Read each task's lean record (`eccode task list --json` → `lean`): new dependencies, `testsNotNeeded` reasons, the measured `impact`, and detected vs declared `breaking` changes. Declared `shortcut:` markers are decisions, unless the expected load already exceeds them. Run the affected tests yourself: `eccode impact --changed --run --actor technical-reviewer`.
+  - Look for bugs, not only style:
+    - `eccode bugs --task <id>` runs the built-in bug rules plus any installed analyzers on the lines each task added. Read `lean.bugs` too: findings the author declared in `acceptedFindings` need a real reason.
+    - On logic-heavy changes, run `eccode mutate --task <id> --test "<cmd>" --record --actor technical-reviewer`. A survivor is risky logic without a test that would fail if it broke, a `major` finding.
+    - On a fix, require a **PROVEN** `eccode fix verify` (two evidence entries labelled `fix-verify`).
   - Re-run the phase's checks.
 - **Verification gate**:
   - Re-run the full suite and the AI evals.
