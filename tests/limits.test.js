@@ -44,14 +44,31 @@ test('the register is one unbroken table (renders as a table on GitHub)', () => 
 
 test('figures quoted in the docs match what bench tally derives from the records', () => {
   const t = bench.tally(path.join(ROOT, 'bench', 'results'));
+  // The pre-registered Sonnet batch is analysed on its own, as its protocol says.
+  const batchDir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-sonnet-batch-'));
+  for (const f of fs.readdirSync(path.join(ROOT, 'bench', 'results')).filter((x) => x.startsWith('2026-10-23-sonnet-n10-'))) fs.copyFileSync(path.join(ROOT, 'bench', 'results', f), path.join(batchDir, f));
+  const batch = bench.tally(batchDir).byModel.sonnet;
+  fs.rmSync(batchDir, { recursive: true, force: true });
+  assert.ok(batch && batch.runs === 160, 'the pre-registered Sonnet batch has 160 paired runs');
+  const near = (a, b) => Math.abs(a - b) <= 0.005;
   const bad = [];
-  for (const doc of ['docs/senior-engineering.md', 'docs/final-report.md', 'docs/limits.md', 'README.md']) {
+  for (const doc of ['docs/senior-engineering.md', 'docs/final-report.md', 'docs/limits.md', 'docs/lean.md', 'README.md']) {
     const text = fs.readFileSync(path.join(ROOT, doc), 'utf8');
     for (const m of text.matchAll(/(\d+) live agent runs/g)) if (Number(m[1]) !== t.total.runs) bad.push(`${doc}: "${m[0]}" (records: ${t.total.runs})`);
     for (const m of text.matchAll(/(\d+)\/(\d+) hidden checks/g)) if (Number(m[1]) !== t.total.hiddenPassed || Number(m[2]) !== t.total.hiddenTotal) bad.push(`${doc}: "${m[0]}" (records: ${t.total.hiddenPassed}/${t.total.hiddenTotal})`);
-    for (const m of text.matchAll(/−(\d+\.\d+) lines per change|(\d+\.\d+) fewer lines per change/g)) {
-      const v = Number(m[1] || m[2]);
-      if (Math.abs(v + t.stratified.delta) > 0.005) bad.push(`${doc}: "${m[0]}" (records: ${(-t.stratified.delta).toFixed(2)})`);
+    // Pooled figures (both models) unless the phrase names its model.
+    for (const m of text.matchAll(/(?:−(\d+\.\d+) lines per change|(\d+\.\d+) fewer lines per change)(?! on Haiku)/g)) {
+      if (!near(-Number(m[1] || m[2]), t.stratified.delta)) bad.push(`${doc}: "${m[0]}" (records, pooled: ${t.stratified.delta.toFixed(2)})`);
+    }
+    for (const m of text.matchAll(/(\d+\.\d+) fewer lines per change on Haiku/g)) {
+      if (!near(-Number(m[1]), t.byModel.haiku.stratified.delta)) bad.push(`${doc}: "${m[0]}" (records: ${t.byModel.haiku.stratified.delta.toFixed(2)})`);
+    }
+    for (const m of text.matchAll(/\+(\d+\.\d+) lines per change in the pre-registered Sonnet batch/g)) {
+      if (!near(Number(m[1]), batch.stratified.delta)) bad.push(`${doc}: "${m[0]}" (records: ${batch.stratified.delta.toFixed(2)})`);
+    }
+    for (const m of text.matchAll(/runs writing tests ros(?:e|ing) from (\d+)\/(\d+) to (\d+)\/(\d+)/g)) {
+      const want = [batch.testsWithout.wrote, batch.testsWithout.runs, batch.testsWith.wrote, batch.testsWith.runs];
+      if (m.slice(1, 5).map(Number).join() !== want.join()) bad.push(`${doc}: "${m[0]}" (records: ${want[0]}/${want[1]} to ${want[2]}/${want[3]})`);
     }
   }
   assert.deepStrictEqual(bad, []);
@@ -60,7 +77,7 @@ test('figures quoted in the docs match what bench tally derives from the records
 test('every file the register cites as evidence exists', () => {
   const missing = [];
   for (const x of rows()) {
-    for (const m of x.evidence.matchAll(/(?:^|[\s(`])((?:docs|lib|tests|scripts|bench|\.github)\/[\w./-]+\.(?:md|js|mjs|cjs|py|yml))/g)) {
+    for (const m of x.evidence.matchAll(/(?:^|[\s(`])((?:docs|lib|tests|scripts|bench|\.github)\/[\w./-]+\.(?:md|js|mjs|cjs|py|yml|txt))/g)) {
       if (!fs.existsSync(path.join(ROOT, m[1]))) missing.push(`row ${x.n}: ${m[1]}`);
     }
   }
@@ -80,7 +97,7 @@ test('by design (row 4): a trace that never loads the target says so instead of 
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test('by design (row 5): reports grade their own sample size', () => {
+test('row 5: reports still grade their own sample size', () => {
   const rec = (variant, lines) => ({ task: 't', variant, hiddenPassed: 1, hiddenTotal: 1, linesAdded: lines, linesRemoved: 0, newDeps: [], testFilesChanged: 1, durationMs: 1000, agentExit: 0, filesChanged: 1, checks: [] });
   assert.match(bench.report([rec('without', 3), rec('with', 2)], { agentCmd: 'x' }), /demonstration, not a statistic/);
   const big = [];

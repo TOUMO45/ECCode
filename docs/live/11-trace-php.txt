@@ -1,0 +1,26 @@
+# Runtime trace, PHP (autoloader triggered by new $class)
+
+## Prompt
+
+You are checking what a change to lib/Plugin.php would affect in this project. Run this exactly with the Bash tool and quote its output verbatim:
+node .claude/eccode/bin/eccode.js impact lib/Plugin.php --trace -- "php app/main.php"
+Then answer from that output only: (a) which files static analysis lists as dependents of lib/Plugin.php; (b) which file the runtime trace observed loading lib/Plugin.php, and whether static analysis could see that dependency; (c) the exit code of the traced command.
+
+## Answer (verbatim)
+
+Output, verbatim:
+
+```
+Impact of 1 file(s): lib/Plugin.php
+Dependents: 0 file(s) in module(s) lib
+WARNING: no affected test file found in the index for this change.
+Runtime trace (exit 0): 1 in-project loads observed; targets loaded by the command: lib/Plugin.php; runtime-only dependents found: app/main.php; direct edges the static graph lacks: app/main.php -> lib/Plugin.php; dynamic loaders observed in action: none
+```
+
+(a) Static analysis lists no dependents of `lib/Plugin.php`. It reports "Dependents: 0 file(s) in module(s) lib."
+
+(b) The runtime trace observed `app/main.php` as the file that loads `lib/Plugin.php`. Static analysis could not see that dependency: the output lists `app/main.php -> lib/Plugin.php` as a direct edge the static graph lacks. No dynamic loaders were observed.
+
+(c) The traced command exited with code 0.
+
+The output also warns that no affected test file was found in the index for this change.

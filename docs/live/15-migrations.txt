@@ -1,0 +1,68 @@
+# Safe change: migrations (edited applied migration, destructive SQL, additive migration)
+
+## Prompt
+
+You are backend-engineer on this project (sequential single-context mode: you act as that role directly). The ECCode CLI is node .claude/eccode/bin/eccode.js. Do these steps in order. Quote every eccode command's output verbatim. When a step says a refusal is EXPECTED, quote it and continue with the next step; never work around a refusal in any other way.
+1. node .claude/eccode/bin/eccode.js task claim db --actor backend-engineer
+2. Edit migrations/001_init.sql: append the line ALTER TABLE carts ADD COLUMN note TEXT;
+3. node .claude/eccode/bin/eccode.js evidence run --actor backend-engineer --task db --label verify -- "node -e \"process.exit(0)\""   (note the evidence id it prints, like ev-...)
+4. Write .eccode/drafts/handoff-db.json with exactly this JSON, with EVID replaced by the step-3 id (without the ev: prefix): {"from":"backend-engineer","to":"delivery-lead","task":"db","objective":"Complete task db","context":"Schema change.","inputs":[".eccode/artifacts/spec.md"],"expectedOutput":"Working schema","acceptanceCriteria":["db works"],"completedWork":"Added a note column.","filesChanged":["migrations/001_init.sql"],"evidence":["ev:EVID"],"remainingIssues":[],"nextAction":"Phase review","testsNotNeeded":"Schema-only change, exercised when migrations run."}
+5. node .claude/eccode/bin/eccode.js task complete db --actor backend-engineer --handoff .eccode/drafts/handoff-db.json   (a refusal is EXPECTED: an applied migration was edited)
+6. Run git checkout -- migrations/001_init.sql, then create migrations/002_drop_total.sql containing: ALTER TABLE carts DROP COLUMN total;
+7. Repeat step 3 (new evidence id). In the handoff set filesChanged to ["migrations/002_drop_total.sql"] and the new evidence id. Then repeat step 5   (a refusal is EXPECTED: destructive SQL)
+8. Replace the content of migrations/002_drop_total.sql with: ALTER TABLE carts ADD COLUMN note TEXT;   Repeat step 3 (new id), update the handoff's evidence id, and repeat step 5   (this one should succeed).
+Finish with a short summary of what each completion attempt returned.
+
+## Answer (verbatim)
+
+Task `db` completed on the final attempt. The two earlier completion attempts were refused, as the steps expected.
+
+**Step 1 (claim):**
+```
+Claimed db (base e3b957eb1e47bcffbfcce216719a3271f2731416).
+```
+
+**Step 2:** Appended `ALTER TABLE carts ADD COLUMN note TEXT;` to `migrations/001_init.sql`.
+
+**Step 3 (evidence, first run):**
+```
+Evidence ev:ev-mvko96mh-010995b2 — PASSED (exit 0, 37ms)
+```
+
+**Step 4:** Wrote `.eccode/drafts/handoff-db.json` with `ev:ev-mvko96mh-010995b2`.
+
+**Step 5 (completion attempt 1, refusal expected):**
+```
+eccode: [INVALID_HANDOFF] Task completion rejected:
+- compat: existing migration migrations/001_init.sql was edited; databases that already ran it will diverge, add a new migration instead. Declare it in handoff.breakingChanges ({kind: "migration", name: "migrations/001_init.sql", reason, migration}) so the reviewer decides with eyes open — or restore it.
+```
+Result: rejected, as expected. I did not add `breakingChanges`, because the instructions said to continue.
+
+**Step 6:** Ran `git checkout -- migrations/001_init.sql`, which restored the original file. Created `migrations/002_drop_total.sql` with `ALTER TABLE carts DROP COLUMN total;`.
+
+**Step 7 (evidence, second run, then completion attempt 2, refusal expected):**
+```
+Evidence ev:ev-mvko9cby-0156119e — PASSED (exit 0, 32ms)
+```
+```
+eccode: [INVALID_HANDOFF] Task completion rejected:
+- compat: new migration migrations/002_drop_total.sql contains destructive SQL (ALTER TABLE carts DROP). Declare it in handoff.breakingChanges ({kind: "destructive-migration", name: "migrations/002_drop_total.sql", reason, migration}) so the reviewer decides with eyes open — or restore it.
+```
+Result: rejected, as expected. I did not add `breakingChanges`.
+
+**Step 8 (evidence, third run, then completion attempt 3, success):** Replaced the content of `migrations/002_drop_total.sql` with `ALTER TABLE carts ADD COLUMN note TEXT;`.
+```
+Evidence ev:ev-mvko9gjg-01cbb085 — PASSED (exit 0, 32ms)
+```
+```
+Task db completed with validated handoff.
+```
+
+**Summary of completion attempts:**
+1. Refused: `001_init.sql` was edited after it had been applied.
+2. Refused: `002_drop_total.sql` contained destructive SQL.
+3. Succeeded: `002_drop_total.sql` now adds the `note` column instead of dropping `total`. The handoff cites `ev:ev-mvko9gjg-01cbb085`.
+
+Two things to be aware of:
+- The `verify` check is `node -e "process.exit(0)"`, which only proves the command runs. It does not exercise the migration against a database. The handoff says so under `testsNotNeeded`.
+- The handoff lists `filesChanged` as only `migrations/002_drop_total.sql`, and the `note` column is now added by that file. The original `001` edit was reverted, so the `note` column is no longer in `001`.

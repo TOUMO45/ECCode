@@ -1,0 +1,31 @@
+# Function-level impact through codebase-memory-mcp (eccode impact --calls)
+
+## Prompt
+
+You are checking what a change to src/util.js would affect, down to individual functions. Run this exactly with the Bash tool and quote its output verbatim:
+node .claude/eccode/bin/eccode.js impact src/util.js --calls
+Then answer from that output only: (a) the file-level dependents of src/util.js; (b) for each function defined in src/util.js, which functions call it and in which file; (c) which tool produced the function-level answer.
+
+## Answer (verbatim)
+
+Output of `node .claude/eccode/bin/eccode.js impact src/util.js --calls`, quoted verbatim:
+
+```
+Impact of 1 file(s): src/util.js
+Dependents: 1 file(s) in module(s) src
+  src/cart.js (distance 1)
+Affected tests (run these): tests/cart.test.js
+Function-level callers (codebase-memory-mcp 0.12.1, resolved call graph):
+  src/util.js#money <- src/cart.js#lineTotal
+  src/util.js#clamp <- src/cart.js#lineTotal
+```
+
+**(a) File-level dependents of src/util.js:** `src/cart.js` (distance 1, module `src`). The affected test to run is `tests/cart.test.js`.
+
+**(b) Callers of each function defined in src/util.js:**
+- `money`: called by `lineTotal` in `src/cart.js`.
+- `clamp`: called by `lineTotal` in `src/cart.js`.
+
+The output lists callers only for `money` and `clamp`, so it doesn't show whether other functions in `src/util.js` exist or have callers.
+
+**(c) Tool for the function-level answer:** codebase-memory-mcp 0.12.1, using a resolved call graph.

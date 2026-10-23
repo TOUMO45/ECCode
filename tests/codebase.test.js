@@ -342,3 +342,18 @@ test('every tracer honors the second spelling of the project root (Windows 8.3 s
   }
   assert.deepStrictEqual(missing, []);
 });
+
+const CBM = process.env.ECCODE_CBM || (require('child_process').spawnSync('which', ['codebase-memory-mcp']).status === 0 ? 'codebase-memory-mcp' : null);
+test('impact --calls adds function-level callers from codebase-memory-mcp', { skip: !CBM && !process.env.ECCODE_REQUIRE_TRACERS && 'codebase-memory-mcp not installed' }, () => {
+  const dir = repo({
+    'src/util.js': 'function money(c) { return c / 100; }\nfunction clamp(x, lo, hi) { return Math.min(hi, Math.max(lo, x)); }\nmodule.exports = { money, clamp };\n',
+    'src/cart.js': "const { money, clamp } = require('./util');\nfunction lineTotal(i) { return money(clamp(i.qty, 1, 99) * i.cents); }\nmodule.exports = { lineTotal };\n",
+  });
+  require('child_process').execFileSync('git', ['add', '-A'], { cwd: dir });
+  require('child_process').execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'x'], { cwd: dir });
+  const r = require('child_process').spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), 'impact', 'src/util.js', '--calls', '--root', dir], { encoding: 'utf8', env: process.env, timeout: 300000 });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.match(r.stdout, /Function-level callers \(codebase-memory-mcp [\d.]+, resolved call graph\)/);
+  assert.match(r.stdout, /src\/util\.js#clamp <- src\/cart\.js#lineTotal/);
+  assert.match(r.stdout, /src\/util\.js#money <- src\/cart\.js#lineTotal/);
+});

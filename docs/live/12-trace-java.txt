@@ -1,0 +1,25 @@
+# Runtime trace, Java (Class.forName with a class name built at runtime)
+
+## Prompt
+
+You are checking what a change to src/main/java/app/Plugin.java would affect in this project. Run this exactly with the Bash tool and quote its output verbatim:
+node .claude/eccode/bin/eccode.js impact src/main/java/app/Plugin.java --trace -- "java -cp build/classes app.Main"
+Then answer from that output only: (a) which files static analysis lists as dependents of src/main/java/app/Plugin.java; (b) which file the runtime trace observed loading src/main/java/app/Plugin.java, and whether static analysis could see that dependency; (c) the exit code of the traced command.
+
+## Answer (verbatim)
+
+The command ran and exited 0. Output, verbatim:
+
+```
+Impact of 1 file(s): src/main/java/app/Plugin.java
+Dependents: 0 file(s) in module(s) src
+WARNING: no affected test file found in the index for this change.
+Note: 1 file(s) use dynamic module loading and may also be affected (static analysis cannot tell): src/main/java/app/Main.java
+Runtime trace (exit 0): 2 in-project loads observed; targets loaded by the command: src/main/java/app/Plugin.java; runtime-only dependents found: src/main/java/app/Main.java; direct edges the static graph lacks: src/main/java/app/Main.java -> src/main/java/app/Plugin.java; dynamic loaders observed in action: src/main/java/app/Main.java
+```
+
+**(a) Static dependents:** None. The output says "Dependents: 0 file(s) in module(s) src." Static analysis lists no dependents of `Plugin.java`. It does warn that `src/main/java/app/Main.java` may be affected through dynamic module loading, but that file is not in the static dependents list.
+
+**(b) Runtime load:** The trace says the command loaded `src/main/java/app/Plugin.java`. It also reports a direct edge `src/main/java/app/Main.java -> src/main/java/app/Plugin.java` that the static graph lacks, with `Main.java` as the dynamic loader. So static analysis could not see this dependency.
+
+**(c) Exit code:** 0. The trace line reads "Runtime trace (exit 0)", and my wrapper's exit check also returned 0.

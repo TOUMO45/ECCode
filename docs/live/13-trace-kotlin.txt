@@ -1,0 +1,26 @@
+# Runtime trace, Kotlin (Class.forName with a class name built at runtime)
+
+## Prompt
+
+You are checking what a change to src/main/kotlin/app/Plugin.kt would affect in this project. Run this exactly with the Bash tool and quote its output verbatim:
+node .claude/eccode/bin/eccode.js impact src/main/kotlin/app/Plugin.kt --trace -- "java -cp app.jar app.MainKt"
+Then answer from that output only: (a) which files static analysis lists as dependents of src/main/kotlin/app/Plugin.kt; (b) which file the runtime trace observed loading src/main/kotlin/app/Plugin.kt, and whether static analysis could see that dependency; (c) the exit code of the traced command.
+
+## Answer (verbatim)
+
+**Output (verbatim):**
+
+```
+Impact of 1 file(s): src/main/kotlin/app/Plugin.kt
+Dependents: 0 file(s) in module(s) src
+WARNING: no affected test file found in the index for this change.
+Note: 1 file(s) use dynamic module loading and may also be affected (static analysis cannot tell): src/main/kotlin/app/Main.kt
+Runtime trace (exit 0): 2 in-project loads observed; targets loaded by the command: src/main/kotlin/app/Plugin.kt; runtime-only dependents found: src/main/kotlin/app/Main.kt; direct edges the static graph lacks: src/main/kotlin/app/Main.kt -> src/main/kotlin/app/Plugin.kt; dynamic loaders observed in action: src/main/kotlin/app/Main.kt
+EXIT_CODE=0
+```
+
+**(a) Static dependents:** Static analysis lists no dependents of `src/main/kotlin/app/Plugin.kt` ("Dependents: 0 file(s)"). It also reports no affected test file in the index.
+
+**(b) Runtime trace:** The trace observed `src/main/kotlin/app/Main.kt` as a runtime-only dependent, with a direct load edge `src/main/kotlin/app/Main.kt -> src/main/kotlin/app/Plugin.kt`. Static analysis could not see that dependency. It only flagged `Main.kt` as a file that uses dynamic module loading, so it may be affected but the tool could not establish the edge.
+
+**(c) Exit code:** The traced command exited with code 0.

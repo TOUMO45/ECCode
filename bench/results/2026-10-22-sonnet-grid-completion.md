@@ -1,6 +1,6 @@
 # Paired grid completion: 2026-10-22, claude-sonnet, remaining two tasks, n=3
 
-> **Follow-up — unsettled for this model.** These tasks were later run at n≥10 per variant with haiku only; sonnet was never re-run at n≥10. So the sonnet-specific conclusions in this file (for example, how much of the effect remains on the stronger model) rest only on these small samples and are **not settled**. The runs stay in the record and in the all-data stratified test (`eccode bench tally`).
+> **Follow-up — settled by the pre-registered n=10 batch** ([2026-10-23-sonnet-n10-a.md](2026-10-23-sonnet-n10-a.md), [-b.md](2026-10-23-sonnet-n10-b.md); protocol committed before the first run). The test-discipline reading below holds: runs changing a test file 80/80 with the skill, 45/80 without. The diff-size reading was too mild: on Sonnet the skill makes diffs **larger** (+3.00 lines per change, p = 1.0e-4), not merely unchanged. The runs below stay in the record.
 
 With this run the grid is complete: **two models × all five tasks** (98 runs
 total across the four recorded suites). Sonnet findings on the two remaining

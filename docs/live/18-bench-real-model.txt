@@ -1,0 +1,44 @@
+# Benchmark harness with a real model inside
+
+## Prompt
+
+You are checking ECCode's benchmark harness end to end with a real model inside it. Run this with the Bash tool (it takes a few minutes; it runs one real Claude agent session inside a fresh sandbox): bash <scratch>/live2/run-bench.sh
+Show the script's content first with: cat <scratch>/live2/run-bench.sh
+Then run: cat <scratch>/live2/out/bench-real-report.md
+Answer from the outputs only: (a) which model and agent command the harness ran; (b) how many hidden checks passed and how many lines the agent added; (c) whether the hidden checks were present in the sandbox while the agent worked, according to the report.
+
+## Script the session ran
+
+#!/bin/bash
+cd <repo>
+node bin/eccode.js bench --agent 'cat PROMPT.md | claude -p --model haiku --allowedTools "Read Grep Glob Edit Write Bash(npm test) Bash(node --test*) Bash(pytest*)"' --tasks csv-sum --runs 1 --variant with --out <scratch>/live2/out/bench-real-report.md
+
+## Report the harness wrote (verbatim)
+
+# ECCode paired benchmark
+
+Agent command: `cat PROMPT.md | claude -p --model haiku --allowedTools "Read Grep Glob Edit Write Bash(npm test) Bash(node --test*) Bash(pytest*)"`. "with" prepends the lean-change skill text to the prompt; "without" is the bare prompt. Hidden checks never exist in the sandbox while the agent works. Small n means a demonstration, not a statistic — read the raw rows, not just the medians.
+
+| Task | Variant | n | Hidden checks | Median lines added | Runs adding a dependency | Runs changing a test | Median seconds |
+|---|---|---|---|---|---|---|---|
+| csv-sum | with | 1 | 2/2 | 21 | 0/1 | 1/1 | 26 |
+
+Paired medians across 1 task(s): the "with" variant produced the smaller diff on 0, the larger on 0, equal on 1. Sign counts, not significance.
+
+## Raw runs
+
+| Task | Variant | Hidden | Lines +/− | New deps | Test files | Seconds | Agent exit |
+|---|---|---|---|---|---|---|---|
+| csv-sum | with | 2/2 | +21/−1 | — | 1 | 26 | 0 |
+
+## Answer (verbatim)
+
+**(a) Model and command:** The script runs `claude -p --model haiku` with this agent command:
+
+`cat PROMPT.md | claude -p --model haiku --allowedTools "Read Grep Glob Edit Write Bash(npm test) Bash(node --test*) Bash(pytest*)"`
+
+The report shows the `haiku` alias only, not a resolved model version. The task was `csv-sum`, one run, variant `with`.
+
+**(b) Hidden checks and lines added:** 2/2 hidden checks passed. The agent added 21 lines (raw diff +21/−1), and the run made no new dependencies. The report also shows one test file changed.
+
+**(c) Hidden checks during the run:** The report states that "Hidden checks never exist in the sandbox while the agent works." That is the report's own claim. The output doesn't show how the harness enforces it, so I haven't verified it.

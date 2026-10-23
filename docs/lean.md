@@ -71,6 +71,8 @@ const sessions = new Map(); // shortcut: in-memory sessions, move to Redis when 
 
 ECCode reports what it measured: lines a task added and removed, and the dependencies, markers and tests it found. It never prints "lines saved". The larger version that was not written has no baseline to subtract from. A with-and-without comparison needs a controlled benchmark; see [tooling-research.md](tooling-research.md).
 
+That benchmark (`eccode bench`, results in [bench/results/](../bench/results/)) finds the effect of this skill depends on the model. On Haiku, which already writes tests, the skill gives 5.37 fewer lines per change on Haiku (p ≤ 5.0e-5). On Sonnet, a pre-registered batch gives +3.00 lines per change in the pre-registered Sonnet batch (p = 1.0e-4), while runs writing tests rose from 45/80 to 80/80. On both models the hidden checks pass and no run adds a dependency. Read the skill as test-and-reuse discipline first; smaller diffs follow where the model already writes tests ([limits.md](limits.md), row 36).
+
 ## Limits
 
 - **Test detection** uses paths and names (`test/`, `tests/`, `__tests__/`, `spec/`, `e2e/`, `*.test.*`, `*.spec.*`, `*_test.*`, `test_*.py`). A changed test file shows a test was touched, not that it is meaningful. Judging that is the reviewer's job, and mutation testing is the planned upgrade.

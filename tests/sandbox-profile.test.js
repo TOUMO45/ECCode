@@ -131,3 +131,14 @@ test('MCP servers ECCode did not install are named every session', () => {
   assert.match(out, /Other MCP servers in \.mcp\.json run outside the record protection: files\./);
   assert.doesNotMatch(out, /eccode_orchestrator, /); // ECCode's own servers are not listed
 });
+
+test('install --with-codebase-memory registers the server and it is not flagged as foreign', { skip: !process.env.ECCODE_CBM && !process.env.ECCODE_REQUIRE_TRACERS && 'set ECCODE_CBM to a codebase-memory-mcp binary' }, () => {
+  const { install: inst } = require('../lib/install');
+  const ctx = tmpProject();
+  inst({ target: ctx.dir, scope: 'project', profile: 'no-shell', codebaseMemory: true });
+  const mcp = JSON.parse(fs.readFileSync(path.join(ctx.dir, '.mcp.json'), 'utf8'));
+  assert.strictEqual(mcp.mcpServers.codebase_memory.command, process.env.ECCODE_CBM);
+  const hook = path.join(__dirname, '..', 'scripts', 'hooks', 'session-start.js');
+  const out = spawnSync(process.execPath, [hook], { input: JSON.stringify({ cwd: ctx.dir }), encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: ctx.dir } }).stdout;
+  assert.doesNotMatch(out, /Other MCP servers/);
+});

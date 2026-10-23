@@ -1,0 +1,25 @@
+# Runtime trace, Ruby (require_relative with a path built at runtime)
+
+## Prompt
+
+You are checking what a change to lib/plugin.rb would affect in this project. Run this exactly with the Bash tool and quote its output verbatim:
+node .claude/eccode/bin/eccode.js impact lib/plugin.rb --trace -- "ruby app/main.rb"
+Then answer from that output only: (a) which files static analysis lists as dependents of lib/plugin.rb; (b) which file the runtime trace observed loading lib/plugin.rb, and whether static analysis could see that dependency; (c) the exit code of the traced command.
+
+## Answer (verbatim)
+
+Verbatim output of the command, exit status appended by my wrapper:
+
+```
+Impact of 1 file(s): lib/plugin.rb
+Dependents: 0 file(s) in module(s) lib
+WARNING: no affected test file found in the index for this change.
+Runtime trace (exit 0): 2 in-project loads observed; targets loaded by the command: lib/plugin.rb; runtime-only dependents found: app/main.rb; direct edges the static graph lacks: app/main.rb -> lib/plugin.rb; dynamic loaders observed in action: none
+EXIT_CODE=0
+```
+
+**(a)** Static analysis lists no dependents of `lib/plugin.rb`. It reports "Dependents: 0 file(s) in module(s) lib", so no files are named.
+
+**(b)** The runtime trace observed `app/main.rb` as the file loading `lib/plugin.rb`. The output says the static graph lacks this edge (`app/main.rb -> lib/plugin.rb`), so static analysis could not see that dependency.
+
+**(c)** The traced command exited with code 0. The trace line says "Runtime trace (exit 0)", and my wrapper's `EXIT_CODE=0` agrees.
