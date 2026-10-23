@@ -180,3 +180,35 @@ test('mcp: bugs is read-only; mutate and fix_verify run only approved test comma
     c.close();
   }
 });
+
+test('mcp: quick takes no free-form command (detected test check only); handoff_draft drafts for the caller\'s claim', async () => {
+  const ctx = tmpProject();
+  write(ctx.dir, 'package.json', JSON.stringify({ name: 'shop', scripts: { test: 'node --test' } }));
+  write(ctx.dir, 'src/a.js', 'module.exports = 1;\n');
+  require('../lib/works').abandonWork(ctx.store, 'user', 'superseded by a quick change');
+  const orch = client(ctx.dir, 'orchestrator');
+  const eng = client(ctx.dir, 'backend-engineer');
+  try {
+    await orch.request('initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 't', version: '0' } });
+    const quickTool = (await orch.request('tools/list', {})).result.tools.find((t) => t.name === 'quick');
+    assert.ok(quickTool, 'quick is served');
+    assert.ok(!('command' in quickTool.inputSchema.properties), 'no free-form command: it would make the allowlist a shell');
+    const q = await orch.call('quick', { request: 'Add a bulk discount', command: 'node -e "require(\'fs\').writeFileSync(\'pwned\',\'x\')"' });
+    assert.strictEqual(q.isError, false, q.text);
+    assert.strictEqual(q.json().task.verification.command, 'npm test');
+    assert.ok(!fs.existsSync(path.join(ctx.dir, 'pwned')));
+    await eng.request('initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 't', version: '0' } });
+    assert.strictEqual((await eng.call('task_claim', { task: 'change' })).isError, false);
+    write(ctx.dir, 'src/a.js', 'module.exports = 2;\n');
+    const d = await eng.call('handoff_draft', { task: 'change' });
+    assert.strictEqual(d.isError, false, d.text);
+    assert.strictEqual(d.json().task, 'change');
+    assert.ok(d.json().filesChanged.includes('src/a.js'), d.text);
+    assert.match(d.json().completedWork, /^TODO:/);
+    const other = await orch.call('handoff_draft', { task: 'change' });
+    assert.strictEqual(other.isError, true, 'only the claimer drafts its handoff');
+  } finally {
+    orch.close();
+    eng.close();
+  }
+});

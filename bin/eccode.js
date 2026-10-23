@@ -6,12 +6,22 @@
 const fs = require('fs');
 const path = require('path');
 const { parseArgs } = require('../lib/cli-args');
-const { EccodeError, readJson } = require('../lib/util');
+const { EccodeError, readJson, toPosix, ensureDir } = require('../lib/util');
 
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
+Start here
+  quick "<change>" --actor orchestrator [--owner <role>] [--files <globs>] [--command <cmd>]
+                                         One small, reviewed change: creates the record if needed, a one-task
+                                         quick work item with its check and ownership read from the repository,
+                                         starts its gate, and prints every remaining step (Claude Code: /eccode:quick)
+  status --brief                         Where the work stands and the next action
+  onboard                                Brief on an unfamiliar codebase before changing it
+  impact --changed | bugs                What a change affects; slips in the lines it added
+  The full reference follows.
+
 Project
-  init --name <n> --idea <text> [--track greenfield|feature|refactor|fix|quick]   Create .eccode/
+  init --name <n> --idea <text> [--track greenfield|feature|refactor|fix]   Create .eccode/ (a quick change: eccode quick)
   work start --track <t> --title <text> --actor <orchestrator|user> [--behavior <cmd>]
              [--owner <role> --files <glob,glob> --command <cmd>]     Start the next work item (quick needs owner/files/command)
   work abandon --actor user --reason <text>   Abandon the active work item (user decision)
@@ -44,6 +54,9 @@ Evidence & records
   evidence file <path> --actor <a> [--label l] [--note n]
   evidence list [--json] | evidence show <id>
   handoff record --actor <a> --file <handoff.json>
+  handoff draft --task <id> --actor <owner> [--out .eccode/drafts/<f>.json]
+                                         The handoff for your claimed task with what the record knows filled in
+                                         (changed files, the passing planned check, criteria); fill the TODO fields
   run start --actor <agent> [--task t] [--gate g]       (prints run id)
   run end <runId> --actor orchestrator --status ok|failed [--tokens n] [--cost-usd x] [--note n]
   run correct <runId> --actor orchestrator [--tokens n] [--cost-usd x] --reason <text>   (append-only)
@@ -171,8 +184,24 @@ function main(argv) {
   const { openProject, init } = require('../lib/project');
 
   if (group === 'init') {
-    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', track: flags.track });
+    const quick = flags.track === 'quick' ? { owner: flags.owner, files: flags.files, command: flags.command } : undefined;
+    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', track: flags.track, quick });
     print(flags, `Initialized ECCode project in ${store.dir}`, { root: store.root });
+    return 0;
+  }
+  if (group === 'quick') {
+    const q = require('../lib/quick');
+    const res = q.start(root, need(actor, '--actor'), { request: need(sub, '"<request>"'), owner: flags.owner, files: flags.files, command: flags.command, name: flags.name });
+    const t = res.task;
+    print(flags, [
+      `Quick change ${res.workId} started${res.created ? ' (new record)' : ''}: "${t.title}"`,
+      `  task change: owner ${t.owner}; files ${t.files.join(', ')}; verification: ${t.verification.command}`,
+      ...res.defaults.map((d) => `  from the repository: ${d}`),
+      '  gate phase:change is started.',
+      '',
+      'The rest of the path (eccode status shows where you are):',
+      ...q.steps('eccode', t),
+    ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps: q.steps('eccode', t) });
     return 0;
   }
   if (group === 'mcp') {
@@ -541,7 +570,20 @@ function main(argv) {
       throw new EccodeError('USAGE', `Unknown evidence subcommand ${sub}`);
     }
     case 'handoff': {
-      if (sub !== 'record') throw new EccodeError('USAGE', 'Usage: eccode handoff record --file <handoff.json>');
+      if (sub === 'draft') {
+        const draft = require('../lib/quick').draftHandoff(store, need(flags.task, '--task'), need(actor, '--actor'));
+        const text = JSON.stringify(draft, null, 2) + '\n';
+        if (flags.out) {
+          const out = path.resolve(root, flags.out);
+          const rel = toPosix(path.relative(store.root, out));
+          if (!/^\.eccode\/drafts\//.test(rel)) throw new EccodeError('USAGE', '--out must be under .eccode/drafts/ (the shared draft area)');
+          ensureDir(path.dirname(out));
+          fs.writeFileSync(out, text);
+          process.stdout.write(`Draft written to ${rel}: fill in the TODO fields, then eccode task complete ${flags.task} --actor ${actor} --handoff ${rel}\n`);
+        } else process.stdout.write(text);
+        return 0;
+      }
+      if (sub !== 'record') throw new EccodeError('USAGE', 'Usage: eccode handoff record --file <handoff.json> | handoff draft --task <id> --actor <owner> [--out .eccode/drafts/<f>.json]');
       const id = tasks.recordHandoff(store, need(actor, '--actor'), loadJsonFile(need(flags.file, '--file')));
       print(flags, `Handoff ${id} recorded.`, { id });
       return 0;
