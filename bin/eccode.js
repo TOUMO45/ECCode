@@ -173,7 +173,7 @@ function main(argv) {
       const t = bench.tally(path.resolve(root, flags.dir || 'bench/results'));
       const text = t.perFile
         .map((f) => `${f.file}: ${f.runs} runs, hidden ${f.hiddenPassed}/${f.hiddenTotal}, dep-adding ${f.depRuns}, agent failures ${f.agentFailures}`)
-        .concat(`TOTAL: ${t.total.runs} runs across ${t.total.files} report files, hidden ${t.total.hiddenPassed}/${t.total.hiddenTotal}, dep-adding ${t.total.depRuns}, agent failures ${t.total.agentFailures}`)
+        .concat(`TOTAL: ${t.total.runs} runs across ${t.total.files} report files, hidden ${t.total.hiddenPassed}/${t.total.hiddenTotal}, dep-adding ${t.total.depRuns}, agent failures ${t.total.agentFailures}`, `Paired medians per task-batch: with-variant smaller ${t.total.pairedSmaller}, larger ${t.total.pairedLarger}, equal ${t.total.pairedEqual}`)
         .join('\n');
       print(flags, text, t);
       return 0;

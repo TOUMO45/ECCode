@@ -124,7 +124,8 @@ test('tally recomputes headline numbers from recorded report files', () => {
     '# ECCode paired benchmark', '', 'Agent command: `x`.', '',
     '| Task | Variant | n | Hidden checks | Median lines added | Runs adding a dependency | Runs changing a test | Median seconds |',
     '|---|---|---|---|---|---|---|---|',
-    '| t | without | 2 | 4/4 | 10 | 0/2 | 0/2 | 5 |', '',
+    '| t | without | 2 | 4/4 | 10 | 0/2 | 0/2 | 5 |',
+    '| t | **paired Δ** |  |  | -2 (exact permutation p=0.100 over 20 splits) |  |  |  |', '',
     '## Raw runs', '',
     '| Task | Variant | Hidden | Lines +/− | New deps | Test files | Seconds | Agent exit |',
     '|---|---|---|---|---|---|---|---|',
@@ -139,7 +140,7 @@ test('tally recomputes headline numbers from recorded report files', () => {
   fs.writeFileSync(path.join(dir, 'b.md'), report(['| t | with | 2/2 | +9/−1 | — | 1 | 7 | 1 |']).replace(/\n/g, '\r\n'));
   fs.writeFileSync(path.join(dir, 'notes.md'), '# No raw runs section\n');
   const t = bench.tally(dir);
-  assert.deepStrictEqual(t.total, { files: 2, runs: 3, hiddenPassed: 5, hiddenTotal: 6, depRuns: 1, agentFailures: 1 });
+  assert.deepStrictEqual(t.total, { files: 2, runs: 3, hiddenPassed: 5, hiddenTotal: 6, depRuns: 1, agentFailures: 1, pairedSmaller: 2, pairedLarger: 0, pairedEqual: 0 });
   assert.strictEqual(t.perFile.length, 2);
   assert.deepStrictEqual(t.perFile[0], { file: 'a.md', runs: 2, hiddenPassed: 3, hiddenTotal: 4, depRuns: 1, agentFailures: 0 });
   fs.rmSync(dir, { recursive: true, force: true });
