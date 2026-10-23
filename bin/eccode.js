@@ -114,10 +114,13 @@ Bugs and problem solving (see docs/bugs.md)
                                    Exit 0 only when proven; the pair counts as the fix track's reproduction
 
 Benchmark
-  bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|both] [--suite <dir>] [--out <file>] [--keep]
+  bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|engine|both|all|<a,b>] [--suite <dir>]
+        [--engine-profile guard|no-shell|sandbox] [--engine-agents inherit|as-shipped] [--timeout <s>] [--out <file>] [--keep]
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
         Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
-        hidden checks, lines, dependencies and tests are measured by the harness, never self-reported
+        "engine" installs the toolkit and asks for delivery through the quick track (bench/suites/engine:
+        multi-file tasks with regression traps). Hidden checks, lines, dependencies, tests, and the tokens and
+        cost the agent reports (claude -p --output-format json) are measured by the harness, never self-reported
 
 MCP (the engine as typed tool calls; see docs/mcp.md)
   mcp --actor <role>               Serve gates/tasks/evidence/impact as MCP tools over stdio, locked to one role.
@@ -223,11 +226,15 @@ function main(argv) {
       const text = t.perFile
         .map((f) => `${f.file}: ${f.runs} runs, hidden ${f.hiddenPassed}/${f.hiddenTotal}, dep-adding ${f.depRuns}, agent failures ${f.agentFailures}`)
         .concat(`TOTAL: ${t.total.runs} runs across ${t.total.files} report files, hidden ${t.total.hiddenPassed}/${t.total.hiddenTotal}, dep-adding ${t.total.depRuns}, agent failures ${t.total.agentFailures}`, `Paired medians per task-batch: with-variant smaller ${t.total.pairedSmaller}, larger ${t.total.pairedLarger}, equal ${t.total.pairedEqual}`, t.stratified ? `Stratified permutation (labels shuffled within each task-batch, ${t.stratified.strata} strata, ${t.stratified.runs} runs): mean with-without = ${t.stratified.delta.toFixed(2)} lines, two-sided p ${t.stratified.atFloor ? '≤' : '='} ${t.stratified.p < 0.001 ? t.stratified.p.toExponential(2) : t.stratified.p.toFixed(4)} over ${t.stratified.resamples} seeded resamples (pools every model; read the per-model lines)` : 'Stratified permutation: not enough paired raw rows', 'Per model (the same test within each model):', ...perModel)
+        .concat(Object.entries(t.engine).length ? ['Engine batches (engine vs without, same files; pass = every hidden check):'] : [], Object.entries(t.engine).map(([m, e]) => `  ${m}: without ${e.without.allPass}/${e.without.runs} pass, median ${e.without.medianTokens === null ? '—' : e.without.medianTokens} tokens; engine ${e.engine.allPass}/${e.engine.runs} pass, median ${e.engine.medianTokens === null ? '—' : e.engine.medianTokens} tokens, delivered ${e.engine.delivered}/${e.engine.runs}, audit ok ${e.engine.auditOk}/${e.engine.runs}${e.passRate ? `; pass-rate difference ${e.passRate.delta >= 0 ? '+' : ''}${(e.passRate.delta * 100).toFixed(1)} points, stratified p ${e.passRate.atFloor ? '≤' : '='} ${e.passRate.p.toFixed(4)}` : ''}`))
         .join('\n');
       print(flags, text, t);
       return 0;
     }
-    const variants = flags.variant === 'with' ? ['with'] : flags.variant === 'without' ? ['without'] : ['without', 'with'];
+    const VARIANTS = ['without', 'with', 'engine'];
+    const variants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? VARIANTS : String(flags.variant).split(',').map((v) => v.trim());
+    const unknown = variants.filter((v) => !VARIANTS.includes(v));
+    if (unknown.length) throw new EccodeError('USAGE', `Unknown --variant ${unknown.join(', ')}: use with, without, engine, both (without,with), all, or a comma list`);
     const { records, markdown } = bench.run({
       suite: flags.suite ? path.resolve(flags.suite) : undefined,
       agentCmd: need(flags.agent, '--agent'),
@@ -236,6 +243,8 @@ function main(argv) {
       variants,
       timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
       keep: Boolean(flags.keep),
+      engineProfile: flags['engine-profile'] || 'guard',
+      engineAgents: flags['engine-agents'] || 'inherit',
       onProgress: (m) => process.stderr.write(`bench: ${m}\n`),
     });
     if (flags.out) {
@@ -316,10 +325,12 @@ function main(argv) {
     const max = Number(flags.max || 25);
     const text = [
       `Impact of ${res.targets.length} file(s): ${res.targets.join(', ')}${res.notIndexed.length ? `\n(not in the index, no dependents known: ${res.notIndexed.join(', ')})` : ''}`,
-      `Dependents: ${res.dependents.length} file(s) in module(s) ${res.modules.join(', ') || '-'}`,
-      ...res.dependents.slice(0, max).map((d) => `  ${'  '.repeat(d.distance - 1)}${d.file} (distance ${d.distance})`),
+      `Dependents: ${res.dependents.length} file(s) in ${res.moduleCounts.length} module(s)${res.moduleCounts.length ? `: ${res.moduleCounts.slice(0, 10).map((m) => `${m.module} (${m.files})`).join(', ')}${res.moduleCounts.length > 10 ? `, … ${res.moduleCounts.length - 10} more` : ''}` : ''}`,
+      res.dependents.length ? '  nearest first; at each distance, the files most depended on first' : null,
+      ...res.dependents.slice(0, max).map((d) => `  ${'  '.repeat(d.distance - 1)}${d.file} (distance ${d.distance}${d.reach ? `; ${d.reach} file(s) depend on it` : ''})`),
       res.dependents.length > max ? `  … ${res.dependents.length - max} more (--max ${res.dependents.length})` : null,
-      res.tests.length ? `Affected tests (run these): ${res.tests.join(' ')}` : 'WARNING: no affected test file found in the index for this change.',
+      res.tests.length ? `Affected tests (run these): ${res.tests.slice(0, 40).join(' ')}${res.tests.length > 40 ? ` … ${res.tests.length - 40} more (--json lists all; --run runs all)` : ''}` : 'WARNING: no affected test file found in the index for this change.',
+      res.testSupport.length ? `Test support reached (helpers, fixtures, runners; not tests to run): ${res.testSupport.length} file(s): ${res.testSupport.slice(0, 6).join(', ')}${res.testSupport.length > 6 ? ', …' : ''}` : null,
       res.dynamicCallers.length ? `Note: ${res.dynamicCallers.length} file(s) use dynamic module loading and may also be affected (static analysis cannot tell): ${res.dynamicCallers.slice(0, 8).join(', ')}${res.dynamicCallers.length > 8 ? ', …' : ''}` : null,
       res.notCovered && (res.notCovered.generated || res.notCovered.unreadable) ? `Note: ${res.notCovered.generated} generated and ${res.notCovered.unreadable} unreadable file(s) are outside the index; their dependents are not tracked (eccode onboard lists them).` : null,
       res.runtime ? `Runtime trace (exit ${res.runtime.exitCode}): ${res.runtime.loadsObserved} in-project loads observed; targets loaded by the command: ${res.runtime.targetsLoaded.join(', ') || 'none'}; runtime-only dependents found: ${res.runtime.runtimeDependents.join(', ') || 'none'}; direct edges the static graph lacks: ${res.runtime.runtimeOnlyEdges.join(', ') || 'none'}; dynamic loaders observed in action: ${res.runtime.dynamicCallersObserved.join(', ') || 'none'}${res.runtime.loadsObserved === 0 ? ' (nothing observed: the command may not run this project\'s Node or Python code)' : ''}${res.runtime.loadsObserved > 0 && res.runtime.targetsNotLoaded.length ? ` (the command never loaded ${res.runtime.targetsNotLoaded.join(', ')}, so this trace says nothing about the runtime callers of ${res.runtime.targetsNotLoaded.length === 1 ? 'that target' : 'those targets'}: trace a command that exercises it)` : ''}${res.runtime.esmTraced ? '' : ' (ESM imports were not traced: this Node lacks module.register, needs >= 18.19 / 20.6)'}${!res.runtime.jvmTraced && res.targets.some((t) => /\.(java|kt)$/.test(t)) ? ' (JVM classes were not traced: no JDK javac/jar found to build the tracing agent)' : ''}` : null,

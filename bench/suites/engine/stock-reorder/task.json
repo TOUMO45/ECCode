@@ -1,0 +1,10 @@
+{
+  "id": "stock-reorder",
+  "title": "A per-product reorder level, with saved data and a positional CSV consumer",
+  "prompt": "Each product needs its own reorder level. Add a reorder_level field to products; saved products have none, and for them it is 10 (today's fixed threshold). low_stock() must flag a product whose quantity is below its own reorder level, and the CSV export must include each product's reorder level. Tests run with: pytest -q",
+  "hiddenChecks": [
+    { "id": "feature", "command": "pytest -q .bench-hidden/test_reorder.py" },
+    { "id": "regression", "command": "pytest -q .bench-hidden/test_consumers.py" },
+    { "id": "no-new-deps", "command": "node .bench-hidden/no-new-deps.js" }
+  ]
+}

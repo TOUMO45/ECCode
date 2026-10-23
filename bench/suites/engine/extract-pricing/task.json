@@ -1,0 +1,10 @@
+{
+  "id": "extract-pricing",
+  "title": "Move pricing out of the cart without breaking the cart's public API",
+  "prompt": "Move the price calculation (priceOf with its bulk-discount and tax rules) out of src/cart.js into a new module src/pricing.js, so the upcoming invoice service can price items without loading the cart. Behavior must not change. Tests run with: npm test",
+  "hiddenChecks": [
+    { "id": "feature", "command": "node --test .bench-hidden/pricing.test.js" },
+    { "id": "regression", "command": "node --test .bench-hidden/cart-api.test.js" },
+    { "id": "no-new-deps", "command": "node .bench-hidden/no-new-deps.js" }
+  ]
+}
