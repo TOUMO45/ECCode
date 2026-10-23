@@ -7,4 +7,4 @@ Use the `debug-investigation` skill. Dispatch the `learning-debugger` agent with
 
 $ARGUMENTS
 
-The agent follows the problem-solving method: reproduce, isolate, form hypotheses, find the root cause, fix, prove the fix with `eccode fix verify` (PROVEN only), and harden it with `eccode mutate`. Open a run (`eccode run start`) for the dispatch and close it afterwards. When the agent reports a lesson id, dispatch an independent reviewer (`technical-reviewer` or `security-reviewer`) to run `eccode memory review`. Report the lesson's final status and evidence ids.
+The agent follows the problem-solving method: reproduce, isolate, form hypotheses, find the root cause, fix, prove the fix with `eccode fix verify` (PROVEN only), and harden it with `eccode mutate`. Open a run for the dispatch (`eccode run start --actor orchestrator --for learning-debugger`) and close it afterwards with the tokens the Agent result reports. When the agent reports a lesson id, dispatch an independent reviewer (`technical-reviewer` or `security-reviewer`) to run `eccode memory review`. Report the lesson's final status and evidence ids.

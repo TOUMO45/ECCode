@@ -21,9 +21,9 @@ You coordinate; agents do the work. Never edit project files or act as another r
 5. **Deliver.** Dispatch `delivery-lead`: `E deliver --actor delivery-lead`.
 6. **Report.** Show the user `E status --brief` and the path of the final handoff. Claim only what the record shows.
 
-**Cost.** Around every dispatch, open and close a run so the record carries what the track cost:
+**Cost.** Around every dispatch, open and close a run so the record carries what the change cost:
 ```
-RUN=$(E run start --actor <role> --task change)        # or --gate <gate> for reviews
-E run end $RUN --actor orchestrator --status ok --tokens <total tokens of the Agent result>
+E run start --actor orchestrator --for <role> --task change      # or --gate <gate> for reviews; prints the run id
+E run end <run id> --actor orchestrator --status ok --tokens <total tokens of the Agent result>
 ```
-`E metrics` reports tokens, cost and time per track.
+Write the run id literally (no `$RUN`: the guard cannot read shell expansion and would ask a human). `E metrics` reports tokens, cost, runs and wall time per track.

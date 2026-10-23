@@ -41,11 +41,11 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
 
 ## 2. Run accounting (every dispatch)
 ```
-RUN=$(eccode run start --actor <role> [--task <id>] [--gate <gate>])
+eccode run start --actor orchestrator --for <role> [--task <id>] [--gate <gate>]   # prints the run id
 # … dispatch the agent …
-eccode run end $RUN --actor orchestrator --status ok|failed --tokens <usage.total_tokens from the Agent result>
+eccode run end <run id> --actor orchestrator --status ok|failed --tokens <total_tokens from the Agent result>
 ```
-If the harness reports cost, add `--cost-usd`. Otherwise the engine estimates cost from tokens when `pricing.usdPerMillionTokens` is configured. When a run start is refused with `BUDGET_EXCEEDED`, stop and ask the user.
+Write the printed run id literally. The guard cannot read identity through shell expansion (`$RUN`), so it would stop to ask a human. If the harness reports cost, add `--cost-usd`. `eccode metrics` turns these runs into the cost of each work item and each track. Otherwise the engine estimates cost from tokens when `pricing.usdPerMillionTokens` is configured. When a run start is refused with `BUDGET_EXCEEDED`, stop and ask the user.
 
 ## 3. The workflow
 ```

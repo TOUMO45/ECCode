@@ -57,7 +57,8 @@ Evidence & records
   handoff draft --task <id> --actor <owner> [--out .eccode/drafts/<f>.json]
                                          The handoff for your claimed task with what the record knows filled in
                                          (changed files, the passing planned check, criteria); fill the TODO fields
-  run start --actor <agent> [--task t] [--gate g]       (prints run id)
+  run start --actor <agent> [--task t] [--gate g]       (prints run id; the orchestrator opens a dispatched
+            role's run with --actor orchestrator --for <role>)
   run end <runId> --actor orchestrator --status ok|failed [--tokens n] [--cost-usd x] [--note n]
   run correct <runId> --actor orchestrator [--tokens n] [--cost-usd x] --reason <text>   (append-only)
   risk add --id R1 --title t --severity low|medium|high|critical [--mitigation m] [--owner o] --actor a
@@ -590,7 +591,7 @@ function main(argv) {
     }
     case 'run': {
       if (sub === 'start') {
-        const id = runs.startRun(store, config, need(actor, '--actor'), { task: flags.task, gate: flags.gate });
+        const id = runs.startRun(store, config, need(actor, '--actor'), { task: flags.task, gate: flags.gate, agent: flags.for });
         print(flags, id, { id });
       } else if (sub === 'end') {
         const { state } = runs.endRun(store, config, need(arg, '<runId>'), need(actor, '--actor'), {
