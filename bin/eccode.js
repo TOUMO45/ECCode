@@ -96,7 +96,9 @@ MCP (the engine as typed tool calls; see docs/mcp.md)
 
 Other
   metrics [--json]                 Rejection rate, repeat bugs, time-to-fix, recurrence, regressions, lean totals
-  install --target <dir> [--scope project|user]   Copy agents/skills/commands/hooks into .claude/
+  install --target <dir> [--scope project|user] [--profile sandbox|no-shell|guard]
+        Copy agents/skills/commands/hooks into .claude/. Default profile: sandbox where Claude Code
+        supports it (macOS; Linux/WSL2 with bubblewrap+socat), otherwise no-shell. guard = text guard only.
   export agents-md [--out AGENTS.md]               Generic AGENTS.md for other harnesses
 
 Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR, never for user), --json

@@ -30,7 +30,8 @@ test('every registered limit has a valid disposition, and open ones are counted 
   const open = r.filter((x) => x.disposition.startsWith('Open'));
   const text = fs.readFileSync(path.join(ROOT, 'docs', 'limits.md'), 'utf8');
   const words = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
-  assert.match(text, new RegExp(`\\*\\*${words[open.length]} limits? (is|are) open\\*\\* \\(rows? ${open.map((x) => x.n).join(', ')}\\)`), 'header must state exactly which rows are open');
+  if (open.length === 0) assert.match(text, /\*\*No limit is open\.\*\*/, 'header must say no limit is open');
+  else assert.match(text, new RegExp(`\\*\\*${words[open.length]} limits? (is|are) open\\*\\* \\(rows? ${open.map((x) => x.n).join(', ')}\\)`), 'header must state exactly which rows are open');
 });
 
 test('the register is one unbroken table (renders as a table on GitHub)', () => {

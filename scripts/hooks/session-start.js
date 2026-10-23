@@ -49,11 +49,29 @@ process.stdin.on('end', () => {
       anchor = ''; // no upstream, or the record is not committed there: nothing to anchor against
     }
     const brief = formatBrief(summary(store.state(), loadConfig(root)));
+    const PROTECTION = {
+      sandbox: 'Record protection: OS sandbox. Shell commands cannot write the record; record changes go through the eccode MCP tools of your role (mcp__eccode_<role>__*).',
+      'no-shell': 'Record protection: no shell. Shell tools are denied in this project; use the eccode MCP tools of your role (mcp__eccode_<role>__*) and the file tools.',
+      guard: 'Record protection: text guard only (profile "guard"). Obfuscated shell commands can get past it. For enforced protection reinstall with `eccode install --profile sandbox` (or `--profile no-shell`).',
+    };
+    const protection = PROTECTION[require(path.join(lib, 'install')).protectionProfile(root)];
+    // MCP servers ECCode did not install run outside both the sandbox and the
+    // shell deny; name them so their file-write tools can be denied.
+    let others = [];
+    try {
+      const mcp = JSON.parse(fs.readFileSync(path.join(root, '.mcp.json'), 'utf8'));
+      others = Object.keys(mcp.mcpServers || {}).filter((n) => !n.startsWith('eccode_'));
+    } catch { /* no project MCP config */ }
+    const foreign = others.length
+      ? `Other MCP servers in .mcp.json run outside the record protection: ${others.join(', ')}. If any can write files, deny those tools (permissions.deny: "mcp__<server>__<tool>").`
+      : '';
     const text = [
       '## ECCode delivery in progress (from the persistent project record)',
       brief,
       audit.ok ? '' : `WARNING: event log integrity check failed: ${audit.errors.slice(0, 3).join('; ')}`,
       anchor,
+      protection,
+      foreign,
       'Use the `orchestrate` skill to continue. Open runs from a previous session are interrupted: recover them with `eccode recover --all` before dispatching.',
     ]
       .filter(Boolean)

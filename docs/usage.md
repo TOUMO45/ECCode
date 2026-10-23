@@ -25,8 +25,9 @@ Inside agent and skill text, the CLI is `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.j
 ### B. Project-local copy (no plugin system)
 ```bash
 git clone https://github.com/TOUMO45/ECCode && cd your-project
-node ../ECCode/bin/eccode.js install --target .        # add --no-hooks to skip settings.json changes
-node ../ECCode/bin/eccode.js install --target . --sandbox  # recommended: OS-enforced record (see docs/mcp.md)
+node ../ECCode/bin/eccode.js install --target .        # enforced record protection by default (see docs/mcp.md)
+# --profile sandbox | no-shell | guard   (default: sandbox where Claude Code supports it, else no-shell)
+# --no-hooks skips settings.json changes
 ```
 This copies the files into the project's `.claude/` directory:
 - `agents/`

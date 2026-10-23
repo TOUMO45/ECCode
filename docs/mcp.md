@@ -39,9 +39,23 @@ Every engine rule applies unchanged: gate order, author ≠ approver, evidence r
 
 A headless Claude session configured exactly as above (no Bash; `mcp__eccode` + Write + Read) ran a full cycle — `status` → `task_claim` → Write the file → `evidence_run` → `task_complete` — and the engine recorded the task as done by the locked role. Told to then append a forged line to `.eccode/events.jsonl` with Write, the installed hook denied it; the record stayed clean and `eccode audit` passed. Protocol-level behavior (initialize, tools/list, locked-actor refusals, malformed-line recovery) is covered in `tests/mcp.test.js`.
 
-## Sandboxed profile: the record is read-only to every shell command
+## Protection profiles: the record is enforced by default
 
-`eccode install --target <project> --sandbox` turns the record boundary from text inspection into an OS rule. It writes:
+`eccode install --target <project>` picks an enforced profile by default. Every session states which one is active.
+
+| Profile | Chosen by default when | What enforces the record |
+|---|---|---|
+| `sandbox` | macOS; Linux and WSL2 with bubblewrap and socat | Claude Code's OS sandbox makes the record read-only to every shell command |
+| `no-shell` | Platforms without Claude Code's sandbox (native Windows, Linux without bubblewrap) | Claude Code's permission rules deny every shell tool (Bash, PowerShell, Monitor), so there is no command line at all; Edit deny rules and the guard keep file tools off the record |
+| `guard` | Never by default (explicit `--profile guard`) | The text guard only; every session says obfuscated commands can get past it |
+
+In both enforced profiles the record is written only by one `eccode_<role>` MCP server per role, and the guard allows each agent only its own role's server. Commands run as approved evidence through `evidence_run`, inside the integrity window. Verified live: [sandbox](live/7-sandboxed-profile.txt), [no-shell](live/8-no-shell-profile.txt) (the session had no Bash tool even with `--allowedTools Bash`; a Write to the record was refused by permission rules).
+
+MCP servers that ECCode did not install run outside both profiles' protection. Every session names them so that any file-write tools they have can be denied.
+
+### The sandbox profile in detail
+
+`eccode install --target <project> --profile sandbox` (or `--sandbox`) turns the record boundary from text inspection into an OS rule. It writes:
 
 - `.claude/settings.json` turns on Claude Code's Bash sandbox (`sandbox.enabled`) and sets `failIfUnavailable` (refuse to start without a working sandbox) and `allowUnsandboxedCommands: false` (no unsandboxed retry). It also adds `sandbox.filesystem.denyWrite` entries for the record paths: `events.jsonl`, `state.json`, `config.json`, `evidence/`, `improvements/`, `memory/records/` and the lock. These are plain paths, because the Linux sandbox skips glob entries.
 - `.mcp.json` gets one `eccode_<role>` server per role. Claude Code runs MCP servers outside the sandbox, so these servers are the only processes that write the record.
