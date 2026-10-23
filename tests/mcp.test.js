@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
+const fs = require('fs');
 const { spawn, spawnSync } = require('child_process');
 const gates = require('../lib/gates');
 const { tmpProject, write, approveThroughPlan, expectCode } = require('./helpers');
@@ -57,6 +58,12 @@ test('mcp: initialize, tools/list, and a full claim→evidence→complete cycle 
     const list = await c.request('tools/list', {});
     const names = list.result.tools.map((t) => t.name);
     for (const n of ['status', 'task_claim', 'task_complete', 'evidence_run', 'gate_review', 'impact', 'map']) assert.ok(names.includes(n), n);
+
+    // The persistent codebase brief is served over MCP and saved like the CLI saves it.
+    const brief = await c.call('onboard', {});
+    assert.strictEqual(brief.isError, false, brief.text);
+    assert.match(brief.text, /Codebase brief/);
+    assert.ok(fs.existsSync(path.join(ctx.dir, '.eccode', 'cache', 'onboard.md')), 'onboard brief not saved');
 
     // Identity is the server's, not an argument: there is no actor parameter anywhere.
     assert.ok(!JSON.stringify(list.result.tools).includes('"actor"'));
