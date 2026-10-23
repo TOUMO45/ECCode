@@ -195,3 +195,20 @@ test('the installed toolkit under .claude/ is not part of the project index', ()
   assert.ok(files.includes('src/app.js'));
   assert.ok(!files.some((f) => f.startsWith('.claude/')), `toolkit files leaked into the index: ${files}`);
 });
+
+test('runtime trace reports direct edges the static graph lacks, even from files that are already static dependents', () => {
+  // Found by a live session: index.js reaches util.js statically only through
+  // cart.js (distance 2), but at runtime it also loads util.js directly through
+  // a dynamic require. That direct edge must be reported, not dropped because
+  // index.js already appears as a dependent.
+  const dir = repo({
+    'src/util.js': 'exports.money = (c) => c / 100;\n',
+    'src/cart.js': "const { money } = require('./util');\nexports.total = (c) => money(c);\n",
+    'src/index.js': "require('./cart');\nconst u = require(['./u', 'til'].join(''));\nmodule.exports = { money: u.money };\n",
+  });
+  const staticImpact = cb.impact(dir, ['src/util.js']);
+  assert.deepStrictEqual(staticImpact.dependents.map((d) => `${d.file}@${d.distance}`), ['src/cart.js@1', 'src/index.js@2']);
+  const merged = cb.mergeTrace(staticImpact, cb.traceRun(dir, 'node src/index.js'));
+  assert.deepStrictEqual(merged.runtime.runtimeOnlyEdges, ['src/index.js -> src/util.js']);
+  assert.ok(merged.runtime.dynamicCallersObserved.includes('src/index.js'), JSON.stringify(merged.runtime));
+});

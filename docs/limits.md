@@ -26,6 +26,8 @@ documented one and the closure decision is recorded here. Nothing is open.
 | 16 | Original table, process row: "the full workflow still runs every gate" | Closed — eliminated | Five tracks with their own gate loads, from all five gates (greenfield) to verification only (quick) (lib/reducer.js, tests/works.test.js) |
 | 17 | Original table, deliveries row: "Each project still allows only one delivery" | Closed — eliminated | Work items w1..wN on one record; 25 seeded consecutive deliveries in tests/works.test.js |
 
+| 18 | Runtime trace dropped direct edges from files that were already static dependents (found by the live impact session: `src/index.js` loads `src/util.js` directly at runtime but was reported only at distance 2 via `src/cart.js`) | Closed — eliminated | `mergeTrace` reports every observed edge into the impact set that the static graph lacks (`runtimeOnlyEdges`) and counts their dynamic sources as observed loaders (lib/codebase.js, regression test in tests/codebase.test.js) |
+
 The register is checked by CI, not only asserted: tests/limits.test.js fails the build if a row lacks a valid disposition, if cited evidence goes missing, or if a by-design behavior (rows 4 and 5) regresses.
 
 Register maintained with the same rule as the rest of the record: a new limit
