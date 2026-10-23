@@ -30,7 +30,7 @@ jobs:
       # One job runs every runtime tracer for real (Ruby, PHP, Java, Kotlin):
       # with ECCODE_REQUIRE_TRACERS=1 a missing interpreter fails the tests
       # instead of skipping them, so "tested" cannot silently mean "skipped".
-      - name: install the Kotlin compiler and pytest (no skipped language checks)
+      - name: install Kotlin, pytest and codebase-memory-mcp (no skipped checks)
         if: runner.os == 'Linux' && matrix.node == 22
         run: |
           curl -sSL -o /tmp/kotlin.zip https://github.com/JetBrains/kotlin/releases/download/v2.0.21/kotlin-compiler-2.0.21.zip
@@ -38,6 +38,11 @@ jobs:
           echo "ECCODE_KOTLINC=/tmp/kotlinc/bin/kotlinc" >> "$GITHUB_ENV"
           echo "ECCODE_REQUIRE_TRACERS=1" >> "$GITHUB_ENV"
           pipx install pytest  # the stack-pack pytest check runs for real here too
+          # codebase-memory-mcp, pinned by version and SHA-256, for impact --calls.
+          curl -sSL -o /tmp/cbm.tar.gz https://github.com/DeusData/codebase-memory-mcp/releases/download/v0.12.1/codebase-memory-mcp-linux-amd64-portable.tar.gz
+          echo "8c3d0341064301e78ecc84cf7348d4e2c6562a0f57448243ea560aaa34de36c1  /tmp/cbm.tar.gz" | sha256sum -c -
+          mkdir -p /tmp/cbm && tar -xzf /tmp/cbm.tar.gz -C /tmp/cbm
+          echo "ECCODE_CBM=/tmp/cbm/codebase-memory-mcp" >> "$GITHUB_ENV"
       # Static validation of agents/skills/commands/hooks, then the test suite.
       - run: npm run check
       # The record anchor: history committed on the base branch must still be

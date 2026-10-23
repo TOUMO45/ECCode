@@ -60,7 +60,9 @@ process.stdin.on('end', () => {
     let others = [];
     try {
       const mcp = JSON.parse(fs.readFileSync(path.join(root, '.mcp.json'), 'utf8'));
-      others = Object.keys(mcp.mcpServers || {}).filter((n) => !n.startsWith('eccode_'));
+      // codebase_memory is ECCode's own optional integration; its writes go to
+      // its index (ADRs included), never to repository files.
+      others = Object.keys(mcp.mcpServers || {}).filter((n) => !n.startsWith('eccode_') && n !== 'codebase_memory');
     } catch { /* no project MCP config */ }
     const foreign = others.length
       ? `Other MCP servers in .mcp.json run outside the record protection: ${others.join(', ')}. If any can write files, deny those tools (permissions.deny: "mcp__<server>__<tool>").`
