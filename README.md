@@ -24,6 +24,8 @@ In most agent frameworks, "the reviewer must approve before merging" is a senten
 
 Everything is recorded in an append-only, hash-chained event log, so work can resume after any interruption and the final handoff is generated from evidence rather than from agent summaries. `eccode audit --against origin/main` proves that history already committed was not rewritten. Run it in CI with branch protection to anchor the record outside the agents' reach.
 
+**One step for a small change.** `/eccode:quick "<change>"` (or `eccode quick "<change>" --actor orchestrator`) creates the record if needed, imports a one-task plan whose verification command and ownership are read from the repository, starts its gate and prints every remaining step. The owning engineer implements and tests the change, `handoff draft` fills the handoff fields the record already knows, an independent reviewer re-runs the check, and `deliver` closes it. `eccode metrics` reports what each work item and each track cost: runs, tokens, review rounds and wall time.
+
 **Sized to the task.** One record carries many deliveries: after `deliver`, `eccode work start --track feature|refactor|fix|quick|greenfield` opens the next work item with gates sized to its risk. On an existing codebase, `eccode onboard` briefs agents first (modules, entry points, hot spots, most-depended files) and `eccode impact` names what a change reaches before it is made. See [docs/senior-engineering.md](docs/senior-engineering.md).
 
 **Lean by default.** Implementers reuse before they write: not needed → already in the codebase → standard library → installed dependency → minimal new code. They never cut validation, security or accessibility. The engine refuses a task completion that adds an **undeclared dependency** or an **undeclared `shortcut:`**, or that changes code with **neither a test nor a stated reason**. It records lines added and removed for every task. The idea is adapted from [Ponytail](https://github.com/DietrichGebert/ponytail); ECCode makes it checkable. See [docs/lean.md](docs/lean.md).
@@ -34,9 +36,9 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
 |---|---|
 | **12 agents** | product-architect · architecture-reviewer · technical-designer · technical-reviewer · delivery-lead · learning-debugger · frontend / backend / ai / test / devops engineers · security-reviewer |
 | **9 skills** | `orchestrate` (lead orchestrator playbook) · review-gate · handoff-protocol · verification-evidence · debug-investigation · engineering-memory · self-improvement · **lean-change** · **senior-review** |
-| **11 commands** | `/eccode:start` · `/eccode:resume` · `/eccode:status` · `/eccode:investigate` · `/eccode:deliver` · `/eccode:improve` · `/eccode:lean` · `/eccode:review` · `/eccode:audit` · `/eccode:debt` · `/eccode:onboard` |
+| **12 commands** | `/eccode:quick` · `/eccode:start` · `/eccode:resume` · `/eccode:status` · `/eccode:investigate` · `/eccode:deliver` · `/eccode:improve` · `/eccode:lean` · `/eccode:review` · `/eccode:audit` · `/eccode:debt` · `/eccode:onboard` |
 | **2 hooks** | SessionStart injects a resume brief. PreToolUse is a guard that ties `--actor` to the subagent actually running, enforces file ownership and protects the record. |
-| **Engine + CLI + MCP** | Zero-dependency Node ≥18: gates, tasks, evidence, runs and budgets, recovery, delivery, memory, self-improvement, metrics, lean and breaking-change checks, work items and tracks, codebase index (`onboard`, `impact`, `map`, `debt`), stack packs (`stack`), bug detection and problem solving (`bugs`, `mutate`, `fix verify`), paired benchmark (`bench`), and `eccode mcp` (the engine as typed tools, one actor-locked server per role, for no-Bash agents) |
+| **Engine + CLI + MCP** | Zero-dependency Node ≥18: gates, tasks, evidence, runs and budgets, recovery, delivery, memory, self-improvement, metrics, lean and breaking-change checks, work items and tracks, codebase index (`onboard`, `impact`, `map`, `debt`), stack packs (`stack`), bug detection and problem solving (`bugs`, `mutate`, `fix verify`), the one-step path (`quick`, `handoff draft`), cost per track (`metrics`), paired benchmark (`bench`, with an `engine` variant that puts the whole engine in the loop), and `eccode mcp` (the engine as typed tools, one actor-locked server per role, for no-Bash agents) |
 | **Bugs and problem solving** | `eccode bugs` flags slips in the lines a change adds (calibrated on 4.6M lines of real code) and runs ruff, go vet, eslint or semgrep when they are installed; completion refuses undeclared errors. `eccode mutate` measures whether the tests would notice a broken change. `eccode fix verify` proves a regression test fails on the pre-fix code and passes on the fix. |
 | **Memory** | Four layers (project, debugging, knowledge, workflow). A lesson is verified only when **the same check failed before the fix and passed after it**, a reviewer who is not the author signs off, and it carries applicability conditions checked against the current environment. Lessons can be promoted to shared memory after a privacy scan. |
 
@@ -47,6 +49,7 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
 /plugin marketplace add TOUMO45/ECCode
 /plugin install eccode@eccode
 /eccode:start "A small web app where support agents paste a ticket and get an AI triage…"
+/eccode:quick "Search should ignore case"          # one small, reviewed change on an existing codebase
 
 # …or copy into a project without the plugin system
 node ECCode/bin/eccode.js install --target ./my-project   # enforced record protection by default: OS sandbox, or no shell where there is none

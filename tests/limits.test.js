@@ -122,3 +122,10 @@ test('by design (row 36): the follow-up records still meet the closing rule regi
   }
   assert.deepStrictEqual(bad, []);
 });
+
+test('by design (row 49): metrics labels recorded usage as what was reported at run end', () => {
+  const ctx = require('./helpers').tmpProject();
+  const out = spawnSync(process.execPath, [CLI, '--root', ctx.dir, 'metrics'], { encoding: 'utf8' }).stdout;
+  assert.match(out, /costPerTrack \(usage as reported at run end\)/);
+  fs.rmSync(ctx.dir, { recursive: true, force: true });
+});

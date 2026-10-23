@@ -17,6 +17,12 @@ What a senior engineer relies on, and where ECCode provides it with engine enfor
 
 `eccode impact <files>` (or `--changed [--base <ref>]`) walks the reverse import graph: every dependent with its distance, the affected test files, and the modules touched. `--run --actor <role>` executes exactly those tests and records them as evidence (`node --test` / `pytest` / `go test`, grouped by language).
 
+**At scale.** Measured on the Python 3.13 standard library (589 files, 280,766 lines; [bench/impact/stdlib-2026-10-23.md](../bench/impact/stdlib-2026-10-23.md)):
+- Absolute Python imports resolve from the file's import root, its nearest ancestor that is not a package, as on `sys.path`. In a `Lib/` layout this took the dependents of `Lib/os.py` from 127 to 360.
+- Affected tests are runnable tests only: a file under a test path counts when its name follows the runner's convention, or it defines tests the runner would collect. Helpers, fixtures, runners and `conftest.py` are listed apart as test support. On the standard library the "affected tests" of `os.py` went from 44 to 2; the other 42 were `test/support` and `test/libregrtest`.
+- A directory holding most of the code and several code subdirectories (`Lib/`, a large `src/`) opens into its children as modules. Modules are listed largest first with counts (`Lib/asyncio (30), Lib/email (27), …`), where before there was one module, `Lib`.
+- Dependents are ranked nearest first and, at each distance, by how many files depend on them in turn (`threading.py` with 46 first), so the files a reviewer should open first lead the list.
+
 Enforced side: every task completion records an `impact` summary (dependents, modules, affected tests) in its lean record, and warns when no test file depends on the changed files. Reviewers re-run the affected tests themselves.
 
 ## 3. Many deliveries per project (work items)
@@ -33,7 +39,11 @@ A delivered project is not finished — `eccode work start` opens the next work 
 | `fix` | plan | see below |
 | `quick` | none — a one-task plan is imported from `--owner/--files/--command` | — |
 
-Every track ends in implementation phases plus verification, with all existing rules (independent review, evidence, lean, coverage) intact. A one-line fix no longer pays for an architecture gate, and a rewrite no longer sneaks through as a "quick change": the track is chosen explicitly, and recorded.
+Every track ends in implementation phases plus verification, with all existing rules (independent review, evidence, lean, coverage) intact.
+
+**One step for the quick track.** `eccode quick "<change>" --actor orchestrator` (in Claude Code, `/eccode:quick`) creates the record if there is none, or starts the next work item on a delivered one. It imports the one-task plan, starts its gate and prints every remaining step as the command each role runs. The verification command is the detected test check, ownership is the tracked top-level layout without dot directories, and both are printed so they can be overridden. `eccode handoff draft` fills the fields of the owner's handoff that the record already knows (changed files inside the ownership, the owner's latest passing run of the planned command, the criteria). Completion refuses a handoff that still holds a draft's `TODO:` placeholder. `init --track quick` used to create a record with no task to claim; it now refuses and points to `eccode quick`. Live: [docs/live/22-quick-track-engine.txt](live/22-quick-track-engine.txt).
+
+**What a track costs.** `eccode metrics` reads the cost of each work item from the event log: the runs opened while it was active (one per dispatch), the tokens, cost and run minutes reported when they ended (corrections applied), its review rounds, and the wall time from start to delivery. It rolls these up per track, with medians over delivered items, and counts runs that reported no usage instead of guessing them. The orchestrator opens each dispatched role's run with `eccode run start --actor orchestrator --for <role>`. The previously documented `run start --actor <role>` was refused by the guard, because the main session may act only as the orchestrator, so no dispatch could be accounted for until this fix. Usage in the record is what the Agent results report for dispatched work. A whole session, main loop and cache reads included, costs more: in the pilot below, 73,856 tokens reported against 1,583,949 measured. A one-line fix no longer pays for an architecture gate, and a rewrite no longer sneaks through as a "quick change": the track is chosen explicitly, and recorded.
 
 ## 5. Safe fixes, refactors and breaking changes
 

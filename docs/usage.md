@@ -85,6 +85,22 @@ Environment variables:
 
 ## Use
 
+### One small change: `/eccode:quick`
+
+For a change that does not need design documents, `/eccode:quick "<change>"` is the whole path. The orchestrator runs:
+```bash
+eccode quick "Search should ignore case" --actor orchestrator
+```
+It creates the record if there is none (or starts the next work item on a delivered one), imports a one-task plan and starts the `phase:change` gate. Defaults come from the repository and are printed: the verification command is the detected test check (`npm test`, `pytest -q`, `go test ./...`), ownership is every tracked top-level directory and root file except dot directories, and the owner is `backend-engineer`. Override them with `--command`, `--files` and `--owner`. The output lists the remaining steps in order:
+1. The owner claims `change`, makes the change with a test, runs the verification command through `eccode evidence run`, writes `eccode handoff draft --task change --actor <owner> --out .eccode/drafts/handoff-change.json`, fills in its TODO fields (completion refuses a TODO left in), completes the task and submits the phase.
+2. `technical-reviewer` reads the diff, runs the check itself and reviews `phase:change`.
+3. The orchestrator starts `verification`; `delivery-lead` submits a short verification note; `security-reviewer` re-runs the check and reviews.
+4. `delivery-lead` runs `eccode deliver`.
+
+Every rule of the quick track still applies: the pinned check, independent review, verification and the record. Around each dispatch the orchestrator opens a run for the role it dispatches, `eccode run start --actor orchestrator --for <role>`, and closes it with the tokens the Agent result reports. `eccode metrics` then reports runs, tokens, cost, review rounds and wall time per work item and per track.
+
+### The full workflow
+
 In Claude Code, `/eccode:start <idea>` makes the main session follow the `orchestrate` skill. On an existing codebase it runs `eccode onboard` first and picks a **track** (`greenfield`, `feature`, `refactor`, `fix`, `quick`) that sizes the gates to the change; after a delivery, `eccode work start` opens the next work item on the same record. It:
 1. initializes `.eccode/`;
 2. dispatches the architect, then an **independent** reviewer, then the designer and its reviewer;
