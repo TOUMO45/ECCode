@@ -143,3 +143,15 @@ test('a pre-fix failure counts only as an assertion failure or an error inside t
   assert.strictEqual(env.verdict, 'inconclusive', JSON.stringify(env.pre));
   assert.match(env.reason, /local\.json/);
 });
+
+test('a missing file is matched however the temp path is spelled (Windows 8.3 short vs long names)', () => {
+  const ctx = project();
+  write(ctx.dir, 'local.json', '{}\n');
+  const out = (p) => `Error: ENOENT: no such file or directory, open '${p}'`;
+  const long = 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\eccode-fixverify-Ab12\\pre-fix\\local.json';
+  for (const p of [long, '/tmp/eccode-fixverify-Ab12/pre-fix/local.json', 'local.json']) {
+    assert.match(fixverify.inconclusiveReason(out(p), ctx.dir, ctx.base, ['src/cart.js'], '') || '', /local\.json/, p);
+  }
+  assert.match(fixverify.inconclusiveReason(out('C:\\x\\pre-fix\\app\\local.json'), ctx.dir, ctx.base, ['src/cart.js'], 'app/') || '', /local\.json/, 'project in a subdirectory of the repo');
+  assert.doesNotMatch(fixverify.inconclusiveReason(`${out('/etc/nothing-here.json')}\nAssertionError`, ctx.dir, ctx.base, ['src/cart.js'], '') || '', /nothing-here/);
+});
