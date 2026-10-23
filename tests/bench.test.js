@@ -248,3 +248,28 @@ test('report header names the test it actually used, and floors read as upper bo
   for (let i = 0; i < 10; i++) ten.push(rec('without', 10 + i), rec('with', 5 + i));
   assert.match(bench.report(ten, { agentCmd: 'x' }), /so the p-values are exact/); // C(20,10) splits: enumerable
 });
+
+test('follow-up suite: every task fails on its fixture, passes with its reference, and catches an added dependency', () => {
+  const has = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8' }).status === 0;
+  const need = { 'py-median': has('pytest', ['--version']), 'go-truncate': has('go', ['version']) };
+  const suite = path.join(__dirname, '..', 'bench', 'suites', 'followup');
+  const tasks = bench.listTasks(suite);
+  assert.deepStrictEqual(tasks.map((t) => t.id).sort(), ['go-truncate', 'parse-duration', 'py-median', 'top-words']);
+  const addDep = {
+    'top-words': "const f='package.json',p=JSON.parse(require('fs').readFileSync(f));p.dependencies={lodash:'^4'};require('fs').writeFileSync(f,JSON.stringify(p))",
+    'parse-duration': "const f='package.json',p=JSON.parse(require('fs').readFileSync(f));p.dependencies={ms:'^2'};require('fs').writeFileSync(f,JSON.stringify(p))",
+    'py-median': "const f='pyproject.toml',fs=require('fs');fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace('dependencies = []','dependencies = [\"numpy\"]'))",
+    'go-truncate': "require('fs').appendFileSync('go.mod','\\nrequire golang.org/x/text v0.14.0\\n')",
+  };
+  for (const t of tasks) {
+    if (need[t.id] === false && !process.env.ECCODE_REQUIRE_TRACERS) continue; // toolchain absent on this runner
+    const ref = path.join(__dirname, 'bench-reference', `${t.id}.js`);
+    const noop = bench.runOnce(t, { agentCmd: 'node -e ""', variant: 'without' });
+    assert.strictEqual(noop.checks[0].passed, false, `${t.id}: the functional check must fail on the untouched fixture`);
+    const good = bench.runOnce(t, { agentCmd: `node "${ref}"`, variant: 'with' });
+    assert.deepStrictEqual([good.hiddenPassed, good.hiddenTotal], [2, 2], `${t.id}: ${JSON.stringify(good.checks)}`);
+    assert.ok(good.testLinesAdded > 0 && good.testLinesAdded < good.linesAdded, `${t.id}: test lines counted apart`);
+    const dep = bench.runOnce(t, { agentCmd: `node "${ref}" && node -e "${addDep[t.id].replace(/"/g, '\\"')}"`, variant: 'with' });
+    assert.strictEqual(dep.checks[1].passed, false, `${t.id}: the no-new-deps check must catch an added dependency`);
+  }
+});

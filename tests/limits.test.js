@@ -104,3 +104,21 @@ test('row 5: reports still grade their own sample size', () => {
   for (let i = 0; i < 10; i++) big.push(rec('without', 10 + i), rec('with', 5 + i));
   assert.doesNotMatch(bench.report(big, { agentCmd: 'x' }), /demonstration, not a statistic/);
 });
+
+test('by design (row 36): the follow-up records still meet the closing rule registered before they ran, and the docs quote them', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-followup-'));
+  for (const f of fs.readdirSync(path.join(ROOT, 'bench', 'results')).filter((x) => x.startsWith('2026-10-23-sonnet-followup-'))) fs.copyFileSync(path.join(ROOT, 'bench', 'results', f), path.join(dir, f));
+  const s = bench.tally(dir).byModel.sonnet;
+  fs.rmSync(dir, { recursive: true, force: true });
+  assert.ok(s && s.runs === 80 && s.codeStratified && s.codeStratified.runs === 80, 'the follow-up batch has 80 runs that record test lines');
+  // bench/protocols/2026-10-23-sonnet-code-lines.md: the row closes only if the tests-excluded mean is <= 0.
+  assert.ok(s.codeStratified.delta <= 0, `closing rule no longer holds: tests-excluded mean ${s.codeStratified.delta}`);
+  const bad = [];
+  for (const doc of ['docs/senior-engineering.md', 'docs/final-report.md', 'docs/limits.md', 'docs/lean.md']) {
+    const text = fs.readFileSync(path.join(ROOT, doc), 'utf8');
+    const quoted = [...text.matchAll(/−(\d+\.\d+) code lines per change in the pre-registered follow-up/g)];
+    if (!quoted.length) bad.push(`${doc}: does not state the follow-up figure`);
+    for (const m of quoted) if (Math.abs(-Number(m[1]) - s.codeStratified.delta) > 0.005) bad.push(`${doc}: "${m[0]}" (records: ${s.codeStratified.delta.toFixed(2)})`);
+  }
+  assert.deepStrictEqual(bad, []);
+});
