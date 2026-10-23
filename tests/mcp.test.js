@@ -156,3 +156,27 @@ test('mcp: evidence_run is not a shell — unapproved commands are refused, appr
     c.close();
   }
 });
+
+test('mcp: bugs is read-only; mutate and fix_verify run only approved test commands', async () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  write(ctx.dir, 'src/server/a.js', 'if (x === NaN) go();\n');
+  const c = client(ctx.dir, 'backend-engineer');
+  try {
+    await c.request('initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 't', version: '0' } });
+    const names = (await c.request('tools/list', {})).result.tools.map((t) => t.name);
+    for (const n of ['bugs', 'mutate', 'fix_verify']) assert.ok(names.includes(n), n);
+    const scan = await c.call('bugs', {});
+    assert.strictEqual(scan.isError, false, scan.text);
+    assert.match(scan.text, /ERROR src\/server\/a\.js:1 js\/nan-compare/);
+    for (const [tool, args] of [['mutate', { test: 'node -e "require(\'fs\').writeFileSync(\'pwned\',\'x\')"' }], ['fix_verify', { test: 'npm test', base: 'HEAD' }]]) {
+      const r = await c.call(tool, args);
+      assert.strictEqual(r.isError, true, r.text);
+      assert.match(r.text, /COMMAND_NOT_APPROVED/);
+    }
+    assert.ok(!fs.existsSync(path.join(ctx.dir, 'pwned')), 'the refused command must not run');
+  } finally {
+    c.close();
+  }
+});

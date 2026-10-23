@@ -1,6 +1,6 @@
 ---
 name: debug-investigation
-description: Evidence-based debugging and learning cycle for ECCode - capture, reproduce, search memory, hypothesize, research, fix, verify the same check flips from failing to passing, independent review, and save a structured lesson. Use for any meaningful bug, failed check, or repeated task failure.
+description: Professional, evidence-based problem solving for ECCode - state the problem, reproduce it with the smallest failing check, isolate (git bisect, input halving), test ranked hypotheses one variable at a time, fix at the root, prove the fix with eccode fix verify (fails before, passes after), harden with eccode mutate and eccode bugs, then save a reviewed lesson. Use for any meaningful bug, failed check, or repeated task failure.
 ---
 
 # Debug investigation and learning cycle
@@ -13,6 +13,39 @@ capture → reproduce (ev, purpose=reproduction, FAILS) → memory search (--che
 → implement (task owner) → verify (SAME command PASSES + regression suite)
 → eccode memory add (provisional) → independent eccode memory review → verified lesson
 ```
+
+## The problem-solving method
+
+Work the steps in order. Each one leaves evidence that another engineer can check.
+
+1. **State the problem precisely.** Write down the expected behavior, the actual behavior, the scope (which inputs, which users, which versions), and when it started. A vague problem gets a vague fix.
+2. **Reproduce it with the smallest failing check.** Write one test or command that fails because of the bug, and record it: `eccode evidence run --actor <you> --purpose reproduction -- "<cmd>"`. If you cannot reproduce it, you cannot claim to have fixed it. Say so and keep the lesson provisional.
+3. **Isolate it.**
+   - When a version used to work, find the commit that broke it: `git bisect start <bad> <good> && git bisect run <failing cmd>`.
+   - Shrink the input by halving it until the failure stops, then keep the last half that still fails.
+   - Delete code paths from the reproduction until only the ones the bug needs remain.
+4. **Form hypotheses with predictions.** For each candidate cause, write "if this is the cause, then <this observation> will be true". Rank the hypotheses by likelihood × cost to test, and test the cheap, likely ones first. Search memory first: `eccode memory search "<symptom>" --check-env`.
+5. **Run experiments that change one thing at a time.** Record each one as evidence. When an experiment refutes a hypothesis, write it into `failedAttempts`.
+6. **Find the root cause.** It is the earliest point where the program's state goes wrong, not the line that crashed.
+   - Keep asking why until you reach a code-level cause.
+   - Then look for the same mistake elsewhere: `eccode bugs --all`, `grep`, and `eccode impact <file>` for the callers of the broken code.
+7. **Make the minimal fix at the root.** Fix the shared function, not each caller. If the fix changes a public API, run the change as a fix work item and declare the break.
+8. **Prove the fix:** `eccode fix verify --actor <you> --task <id> --test "<cmd>"`.
+   - The engine runs your regression test on the pre-fix code, where it must fail, and on the fix, where it must pass.
+   - Only **PROVEN** counts.
+   - `tests-pass-without-fix` means your test does not catch the bug. `inconclusive` means it failed for another reason, such as calling API the fix added. Test the broken behavior through API that existed before the fix.
+9. **Harden it.**
+   - `eccode mutate --task <id> --test "<cmd>" --record --actor <you>` flips operators on the lines you changed. Each survivor is fixed behavior that no test checks: add the missing assertion.
+   - `eccode bugs --task <id>` catches slips such as a leftover `debugger` or a swallowed exception before completion does.
+10. **Record a lesson** (below), so the next occurrence is solved from memory, not from scratch.
+
+**Anti-patterns** (each is a review finding):
+- Changing things until the symptom disappears (shotgun debugging).
+- Patching a caller while the shared function stays wrong.
+- Retrying a "flaky" test without finding the race.
+- Weakening, skipping or deleting a test to get green.
+- Catching and ignoring the exception the bug throws.
+- Declaring a fix that `fix verify` did not prove.
 
 ## Lesson record (`templates/lesson.json`, schema `schemas/memory-debugging.schema.json`)
 Required fields:

@@ -32,6 +32,9 @@ Review as if you will be paged when this breaks. Check in this order: **correct 
 - **State a concrete case.** Write "this input or situation leads to this wrong outcome". No case, no finding. Taste and "consider…" are not findings.
 - **Re-read the lines.** Confirm the caller exists, the value can really be empty, the code is really unused (grep tests, config, and string or dynamic references too).
 - **Demonstrate it when you can,** with a recorded command (`eccode evidence run --actor <you> …`). A failing check is the strongest evidence there is.
+- **Let the engine hunt too.**
+  - `eccode bugs` (on the diff, or `--all` for an audit) finds slips: comparisons with NaN, `forEach(async …)`, a `typeof` compared with a misspelled type name, mutable default arguments, `is` used with a literal, swallowed exceptions, leftover `debugger`, `.only` and skips. With ruff, go vet, eslint or semgrep installed, it adds their findings on the same lines.
+  - `eccode mutate --test "<cmd>"` turns "is this tested?" into a measurement. A surviving mutant is a concrete untested behavior: name the line and the flipped operator in the finding.
 - **Declared shortcuts are decisions.** A `shortcut:` marker in the task's lean record or in `eccode debt` is not a finding, unless the expected load already exceeds the limit it names.
 - **Propose the smallest fix that works.** Prefer fixes that delete code. Never propose layers, frameworks or config the problem does not need.
 
@@ -52,7 +55,7 @@ Review as if you will be paged when this breaks. Check in this order: **correct 
   | Observations | `info` |
 
 - **Required stack checks.** At verification, the engine refuses your approval until you have recorded a passing run of every check in `eccode stack` marked `*` (adopted by the user). Run each exactly as listed, with `eccode evidence run --actor <you> -- "<command>"`.
-- **Track rules.** On a `fix` work item, confirm the reproduction pair is honest (the failing run reproduces the reported bug, not an arbitrary command). On a `refactor`, confirm the behavior command is a meaningful suite, not `true`.
+- **Track rules.** On a `fix` work item, confirm the reproduction pair is honest (the failing run reproduces the reported bug, not an arbitrary command). The strongest proof is `eccode fix verify` reporting **PROVEN**: the regression test failed on the pre-fix code and passed on the fix. Treat `inconclusive` or `tests-pass-without-fix` as a blocking finding. On a `refactor`, confirm the behavior command is a meaningful suite, not `true`.
 - **Recommendations.** Each finding's `recommendation` states the smallest fix and the condition that resolves it. The review JSON rules of the `review-gate` skill still apply.
 
 ## 5. One-shot report (`/eccode:review`, `/eccode:audit`)

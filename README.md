@@ -36,7 +36,8 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
 | **9 skills** | `orchestrate` (lead orchestrator playbook) · review-gate · handoff-protocol · verification-evidence · debug-investigation · engineering-memory · self-improvement · **lean-change** · **senior-review** |
 | **11 commands** | `/eccode:start` · `/eccode:resume` · `/eccode:status` · `/eccode:investigate` · `/eccode:deliver` · `/eccode:improve` · `/eccode:lean` · `/eccode:review` · `/eccode:audit` · `/eccode:debt` · `/eccode:onboard` |
 | **2 hooks** | SessionStart injects a resume brief. PreToolUse is a guard that ties `--actor` to the subagent actually running, enforces file ownership and protects the record. |
-| **Engine + CLI + MCP** | Zero-dependency Node ≥18: gates, tasks, evidence, runs and budgets, recovery, delivery, memory, self-improvement, metrics, lean and breaking-change checks, work items and tracks, codebase index (`onboard`, `impact`, `map`, `debt`), stack packs (`stack`), paired benchmark (`bench`), and `eccode mcp` (the engine as typed tools, one actor-locked server per role, for no-Bash agents) |
+| **Engine + CLI + MCP** | Zero-dependency Node ≥18: gates, tasks, evidence, runs and budgets, recovery, delivery, memory, self-improvement, metrics, lean and breaking-change checks, work items and tracks, codebase index (`onboard`, `impact`, `map`, `debt`), stack packs (`stack`), bug detection and problem solving (`bugs`, `mutate`, `fix verify`), paired benchmark (`bench`), and `eccode mcp` (the engine as typed tools, one actor-locked server per role, for no-Bash agents) |
+| **Bugs and problem solving** | `eccode bugs` flags slips in the lines a change adds (calibrated on 4.6M lines of real code) and runs ruff, go vet, eslint or semgrep when they are installed; completion refuses undeclared errors. `eccode mutate` measures whether the tests would notice a broken change. `eccode fix verify` proves a regression test fails on the pre-fix code and passes on the fix. |
 | **Memory** | Four layers (project, debugging, knowledge, workflow). A lesson is verified only when **the same check failed before the fix and passed after it**, a reviewer who is not the author signs off, and it carries applicability conditions checked against the current environment. Lessons can be promoted to shared memory after a privacy scan. |
 
 ## Quick start
@@ -54,7 +55,7 @@ node ECCode/bin/eccode.js install --target ./my-project   # enforced record prot
 cd ECCode && npm run check
 ```
 
-See [docs/usage.md](docs/usage.md) for installation, configuration, usage and troubleshooting, [docs/architecture.md](docs/architecture.md) for the design, [docs/memory.md](docs/memory.md) for the learning system, [docs/lean.md](docs/lean.md) for lean changes, [docs/senior-engineering.md](docs/senior-engineering.md) for onboarding, impact, tracks, breaking-change rules, stack packs and the benchmark, and [docs/tooling-research.md](docs/tooling-research.md) for the open-source tools on the roadmap.
+See [docs/usage.md](docs/usage.md) for installation, configuration, usage and troubleshooting, [docs/architecture.md](docs/architecture.md) for the design, [docs/memory.md](docs/memory.md) for the learning system, [docs/lean.md](docs/lean.md) for lean changes, [docs/bugs.md](docs/bugs.md) for bug detection, mutation testing and proving fixes, [docs/senior-engineering.md](docs/senior-engineering.md) for onboarding, impact, tracks, breaking-change rules, stack packs and the benchmark, and [docs/tooling-research.md](docs/tooling-research.md) for the open-source tools on the roadmap.
 
 ## Demonstration
 
