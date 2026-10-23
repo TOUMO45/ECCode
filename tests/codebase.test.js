@@ -130,6 +130,9 @@ test('runtime trace resolves what static analysis cannot: dynamic require and im
     'run.js': "const p = require('./src/registry');\nif (p.name !== 'plugin') process.exit(1);\n",
     'jobs/task.py': 'VALUE = 7\n',
     'jobs/loader.py': "import importlib\nmod = importlib.import_module('.'.join(['jobs', 'task']))\nassert mod.VALUE == 7\n",
+    'esm/feature.mjs': 'export const name = "feature";\n',
+    'esm/host.mjs': "import './side.mjs';\nconst which = ['./fea', 'ture.mjs'].join(''); // defeat any static parser\nconst m = await import(which);\nif (m.name !== 'feature') process.exit(1);\n",
+    'esm/side.mjs': 'export const side = 1;\n',
   });
   const index = cb.indexProject(dir);
   // Static view: registry's dynamic require is invisible; the file is flagged.
@@ -148,6 +151,16 @@ test('runtime trace resolves what static analysis cannot: dynamic require and im
   assert.deepStrictEqual(merged.runtime.targetsLoaded, ['src/plugin.js']);
   assert.ok(merged.runtime.runtimeDependents.includes('src/registry.js'), JSON.stringify(merged.runtime));
   assert.ok(merged.runtime.dynamicCallersObserved.includes('src/registry.js'));
+  // ESM: static `import` and a variable-built dynamic import() both bypass
+  // Module._load; the registered ESM loader observes them as edges.
+  if (typeof require('module').register === 'function') {
+    const esmTrace = cb.traceRun(linked, 'node esm/host.mjs');
+    assert.strictEqual(esmTrace.exitCode, 0);
+    assert.deepStrictEqual(
+      esmTrace.edges.map((e) => `${e.from} -> ${e.to}`).sort(),
+      ['esm/host.mjs -> esm/feature.mjs', 'esm/host.mjs -> esm/side.mjs']
+    );
+  }
   // Python: the reflective import is observed as a load of the target.
   const pyTrace = cb.traceRun(dir, 'python3 -c "import jobs.loader"'); // from the root, so the jobs package resolves
   assert.strictEqual(pyTrace.exitCode, 0, 'traced python run failed');
