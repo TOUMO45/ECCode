@@ -74,7 +74,10 @@ Self-improvement
 
 Codebase (work in any repository; see docs/lean.md and docs/senior-engineering.md)
   onboard [--refresh] [--json]     Index the codebase; brief: modules, entry points, hot spots, most-depended files
-  impact <file>... | --changed [--base <ref>] [--run --actor <a>]   Who depends on these files, affected tests; --run executes them
+  impact <file>... | --changed [--base <ref>] [--run --actor <a>] [--trace -- <command...>]
+                                   Who depends on these files, affected tests; --run executes them; --trace
+                                   runs a command under runtime load tracers, so dynamic requires and
+                                   reflective imports are resolved by observation, not parsing
   map [--path <dir>] [--chars n]   What already exists (top-level names per directory): reuse before you write
   stack [--json]                   Detected stacks and their checks (project scripts first); * = required
   stack run <id|all> [--record --actor <a>]   Run a check; exit = the check's exit code
@@ -197,7 +200,13 @@ function main(argv) {
     const { gitChangedFiles } = require('../lib/project');
     const targets = flags.changed ? gitChangedFiles(root, flags.base || 'HEAD') : args._.slice(1);
     if (!targets || !targets.length) throw new EccodeError('USAGE', 'Usage: eccode impact <file>... | eccode impact --changed [--base <ref>]');
-    const res = impact(root, targets);
+    let res = impact(root, targets);
+    if (flags.trace) {
+      const { traceRun, mergeTrace } = require('../lib/codebase');
+      const command = (args.rest || []).length === 1 ? args.rest[0] : (args.rest || []).map((x) => x).join(' ');
+      if (!command) throw new EccodeError('USAGE', 'impact --trace needs the command after --, e.g. eccode impact src/x.js --trace -- "npm test"');
+      res = mergeTrace(res, traceRun(root, command));
+    }
     const max = Number(flags.max || 25);
     const text = [
       `Impact of ${res.targets.length} file(s): ${res.targets.join(', ')}${res.notIndexed.length ? `\n(not in the index, no dependents known: ${res.notIndexed.join(', ')})` : ''}`,
@@ -207,6 +216,7 @@ function main(argv) {
       res.tests.length ? `Affected tests (run these): ${res.tests.join(' ')}` : 'WARNING: no affected test file found in the index for this change.',
       res.dynamicCallers.length ? `Note: ${res.dynamicCallers.length} file(s) use dynamic module loading and may also be affected (static analysis cannot tell): ${res.dynamicCallers.slice(0, 8).join(', ')}${res.dynamicCallers.length > 8 ? ', …' : ''}` : null,
       res.notCovered && (res.notCovered.generated || res.notCovered.unreadable) ? `Note: ${res.notCovered.generated} generated and ${res.notCovered.unreadable} unreadable file(s) are outside the index; their dependents are not tracked (eccode onboard lists them).` : null,
+      res.runtime ? `Runtime trace (exit ${res.runtime.exitCode}): ${res.runtime.loadsObserved} in-project loads observed; targets loaded by the command: ${res.runtime.targetsLoaded.join(', ') || 'none'}; runtime-only dependents found: ${res.runtime.runtimeDependents.join(', ') || 'none'}; dynamic loaders observed in action: ${res.runtime.dynamicCallersObserved.join(', ') || 'none'}${res.runtime.loadsObserved === 0 ? ' (nothing observed: the command may not run Node/Python, or uses ESM-only imports)' : ''}` : null,
     ].filter(Boolean).join('\n');
     print(flags, text, res);
     if (flags.run) {

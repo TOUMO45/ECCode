@@ -11,6 +11,8 @@ What a senior engineer relies on, and where ECCode provides it with engine enfor
 
 ## 2. Impact analysis (`eccode impact`)
 
+**Runtime tracing closes the static gap by observation.** `eccode impact <files> --trace -- "<command>"` runs the command under load tracers (a Node `require` hook and a Python `sys.meta_path` finder): dynamic requires built from variables and `importlib`/reflective imports resolve because they are *observed*, not parsed. The output reports which targets the command actually loaded, which runtime-only dependents appeared, and which flagged dynamic loaders were seen in action — and says plainly when a trace observed nothing. Tested against a string-concatenated `require` and an `importlib.import_module` call that no static parser can see.
+
 `eccode impact <files>` (or `--changed [--base <ref>]`) walks the reverse import graph: every dependent with its distance, the affected test files, and the modules touched. `--run --actor <role>` executes exactly those tests and records them as evidence (`node --test` / `pytest` / `go test`, grouped by language).
 
 Enforced side: every task completion records an `impact` summary (dependents, modules, affected tests) in its lean record, and warns when no test file depends on the changed files. Reviewers re-run the affected tests themselves.
@@ -58,7 +60,7 @@ The same agent command solves the same tasks in fresh sandboxes, once with the l
 - **hidden checks** copied into the sandbox only after the agent finishes (functional tests, "no new dependency", "fixed at the root cause, not in the caller");
 - lines added/removed, files changed, dependencies added, test files changed, wall time.
 
-Three built-in tasks ship under `bench/tasks/` (a JS feature, a Python feature, a JS bug fix with a tempting caller-side patch); `--suite <dir>` runs your own. The report pairs variants per task, prints every raw run, and states its own limits: a small `n` is a demonstration, not a statistic, and it never prints a "saved" figure without a baseline. Results from one run of this suite live in [bench/results/](../bench/results/) with the exact command and date.
+Seven built-in tasks ship under `bench/tasks/` spanning JavaScript, Python, and Go: features, a bug fix with a tempting caller-side patch, a dependency temptation, and a reuse temptation; `--suite <dir>` runs your own. The report pairs variants per task, prints every raw run, and states its own limits: a small `n` is a demonstration, not a statistic, and it never prints a "saved" figure without a baseline. Results from one run of this suite live in [bench/results/](../bench/results/) with the exact command and date.
 
 For external comparability, pair this with SWE-bench Verified or Harbor (see [tooling-research.md](tooling-research.md)); publish paired deltas, not absolute scores.
 
@@ -70,6 +72,8 @@ For external comparability, pair this with SWE-bench Verified or Harbor (see [to
 - The CI workflow runs the full check on Node 18/20/22 across Linux, macOS and Windows, audits the record against the PR base, and audits the example records.
 
 ### Live adversarial battery (real subagent)
+
+Beyond the 29 handcrafted guard cases, a **seeded fuzz battery** (`tests/guard-fuzz.test.js`, seed 42) generates 240 attack variants per run — interpreters, redirects, file tools, actor and env injection, quoting and chaining tricks — all of which must be denied, and 120 generated legitimate commands — record reads, own-role eccode calls, in-claim writes, drafts — all of which must be allowed, so over-blocking fails the suite too. Disabling the record guard makes dozens of generated attacks pass instantly (mutation-checked), so the battery demonstrably has teeth.
 
 A headless session dispatched a real `backend-engineer` subagent (so the guard
 saw a genuine `agent_type`) that attempted, in one run: acting as another role

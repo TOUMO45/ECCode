@@ -43,4 +43,6 @@ A headless Claude session configured exactly as above (no Bash; `mcp__eccode` + 
 - **Unchanged:** the engine's rules and their limits — it proves process and evidence, not the quality of a reviewer's judgment.
 - **Trade-off:** agents cannot run ad-hoc commands outside `evidence_run`. That is the point: on this surface, everything an agent executes is recorded evidence.
 
+The CLI surface itself is additionally fuzzed: a seeded battery of 240 generated attack variants (all denied) and 120 generated legitimate commands (all allowed) runs in the test suite on every CI job.
+
 The CLI remains the default surface (hooks bind identity there); MCP mode is the containment option for implementers and reviewers, and the two share one record.
