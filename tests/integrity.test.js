@@ -51,3 +51,19 @@ test('a command that changes tracked files outside the claim fails; inside the c
   const again = evidence.runCommand(ctx.store, 'backend-engineer', { label: 'z', command: 'node -e "process.exit(0)"' });
   assert.strictEqual(again.status, 'passed', JSON.stringify(again.integrity));
 });
+
+test('a failing node --test check is recorded as failed even when ECCode itself runs under a Node test runner', () => {
+  // This file runs under `node --test`, so NODE_TEST_CONTEXT is inherited here
+  // exactly as it would be when ECCode is started from inside a test runner.
+  const ctx = tmpProject();
+  write(ctx.dir, 'failing.test.js', "require('node:test')('fails', () => { throw new Error('boom'); });\n");
+  const prev = process.env.NODE_TEST_CONTEXT;
+  process.env.NODE_TEST_CONTEXT = prev || 'child-v8';
+  try {
+    const ev = evidence.runCommand(ctx.store, 'orchestrator', { label: 'nested', command: 'node --test failing.test.js' });
+    assert.strictEqual(ev.status, 'failed', `a failing test must not record as ${ev.status}`);
+    assert.notStrictEqual(ev.exitCode, 0);
+  } finally {
+    if (prev === undefined) delete process.env.NODE_TEST_CONTEXT; else process.env.NODE_TEST_CONTEXT = prev;
+  }
+});
