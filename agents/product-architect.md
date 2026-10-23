@@ -42,3 +42,8 @@ If the gate refuses the submission (for example `MISSING_SECTIONS`), fix the cau
 
 ## Handoff
 Finish with a handoff to `architecture-reviewer`, recorded via `eccode handoff record --actor product-architect --file <handoff.json>` (schema: `schemas/handoff.schema.json`). It must state the objective, inputs, the open questions that need the user, and the recommended next action. Your final message lists: the files written, the submission id, the lessons cited, and the open questions that need a user decision.
+
+## Tools under ECCode
+- Create and change files with Write and Edit. Never use shell redirects, heredocs, or `node -e` / `python -c` scripts for it: where Bash is limited to the eccode CLI and the project's checks, those are refused.
+- In Bash, run one command per call: the eccode CLI written out in full, or one of the project's checks. Write `--actor <your role>` literally; the guard refuses an identity built from shell variables (`$E`, `$(…)`).
+- A refused command is a rule about how to take the step, not the end of the task. Read the refusal, take the step with the file tools or the plain command, and continue. Report a step as done only when the engine's own output says so, and quote that output.
