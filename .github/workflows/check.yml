@@ -27,6 +27,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
+      # One job runs every runtime tracer for real (Ruby, PHP, Java, Kotlin):
+      # with ECCODE_REQUIRE_TRACERS=1 a missing interpreter fails the tests
+      # instead of skipping them, so "tested" cannot silently mean "skipped".
+      - name: install the Kotlin compiler (tracer tests)
+        if: runner.os == 'Linux' && matrix.node == 22
+        run: |
+          curl -sSL -o /tmp/kotlin.zip https://github.com/JetBrains/kotlin/releases/download/v2.0.21/kotlin-compiler-2.0.21.zip
+          unzip -q /tmp/kotlin.zip -d /tmp
+          echo "ECCODE_KOTLINC=/tmp/kotlinc/bin/kotlinc" >> "$GITHUB_ENV"
+          echo "ECCODE_REQUIRE_TRACERS=1" >> "$GITHUB_ENV"
       # Static validation of agents/skills/commands/hooks, then the test suite.
       - run: npm run check
       # The record anchor: history committed on the base branch must still be

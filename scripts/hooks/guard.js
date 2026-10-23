@@ -163,6 +163,15 @@ function roleOf(agentType) {
 function main(input) {
   if (process.env.ECCODE_HOOKS === 'off') return;
   const tool = input.tool_name;
+  // eccode MCP servers are locked to one role each: an agent may call only its
+  // own role's server, the main session only the orchestrator's. Structural:
+  // the role is in the tool name, not in any text the agent writes.
+  const server = /^mcp__eccode_([\w-]+)__/.exec(String(tool || ''));
+  if (server) {
+    const caller = input.agent_type ? String(input.agent_type).split(':').pop() : 'orchestrator';
+    if (server[1] !== caller) out('deny', `This eccode MCP server acts as ${server[1]}; ${input.agent_type ? `this subagent is ${caller}` : 'the main session is the orchestrator'}. Use the eccode_${caller} server.`);
+    return;
+  }
   const ti = input.tool_input || {};
   const root = findRoot(process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd());
   if (!root) return; // not an ECCode project: no opinion

@@ -1,0 +1,28 @@
+The verification run is done. Three of the four Bash commands were blocked, and the MCP write succeeded.
+
+**1) `node -e "...appendFileSync(... 'x\n')"`**
+- Exit code 1. Failed with `EROFS: read-only file system, open '.eccode/events.jsonl'`.
+- Full error: `Error: EROFS: read-only file system, open '.eccode/events.jsonl' ... errno: -30, code: 'EROFS'`
+
+**2) `python3 -c "open('.ecc'+'ode/state.json','a').write('x')"`**
+- Not executed. A PreToolUse hook blocked it: "This command touches the ECCode record (events.jsonl, state.json, config, evidence, improvements, memory records) with something other than a read-only tool or the eccode CLI." No exit code was returned.
+
+**3) `echo ok > src/b.js && cat src/b.js`**
+- Succeeded. Output: `ok`. No error was reported, so it exited 0, though the tool did not print the status explicitly.
+
+**4) `node .claude/eccode/bin/eccode.js risk add --id R1 ...`**
+- Exit code 2. Output: `eccode: [RECORD_READ_ONLY] The ECCode record is read-only in this shell (sandboxed profile). Record changes go through the eccode MCP tools of your role; user decisions are made by the human in their own terminal.`
+
+**MCP `mcp__eccode_orchestrator__risk_add` (id R2, title "mcp write", severity "low")**
+- Succeeded. Result: `Risk R2 recorded.`
+- I loaded the tool's schema with ToolSearch first, since it was deferred.
+
+**Summary**
+- **Succeeded:** command 3 (writing `src/b.js`, which is outside the ECCode record), and the MCP `risk_add` for R2.
+- **Blocked:**
+  - Command 1 by the read-only filesystem on `.eccode/`.
+  - Command 2 by a PreToolUse hook that reserves ECCode record writes for the `eccode` CLI and read-only tools.
+  - Command 4 by the sandboxed profile, which makes the record read-only to the shell and points record changes to the eccode MCP tools.
+- **Note:** The shell paths to the record were blocked, but the MCP tool wrote R2. Per the CLI's own message, MCP is the sanctioned route for record changes. So R2 is now in the project record, and R1 is not, because command 4 never ran.
+- I did not retry or work around any of the failures.
+- `src/b.js` now exists in the working directory with the content `ok`. It was created by command 3, so you may want to remove it.
