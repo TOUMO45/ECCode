@@ -89,6 +89,11 @@ Bugs and problem solving (see docs/bugs.md)
                                    Bug patterns on the lines a change added (whole files with --all), plus the
                                    findings of installed analyzers (ruff, go vet, eslint, semgrep) on the same
                                    lines; exit 1 on any error. Task completion refuses undeclared errors
+  mutate --test "<cmd>" [--task <id> | --base <ref>] [--files a,b] [--max 25] [--timeout <s>]
+         [--min-score <0-100>] [--record --actor <a>]
+                                   Mutation testing on the changed code lines: one boundary, equality, logical,
+                                   boolean, +/- or negation change at a time; a survivor is behavior no test
+                                   checks. Files are always restored (also after a killed run)
 
 Benchmark
   bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|both] [--suite <dir>] [--out <file>] [--keep]
@@ -227,6 +232,28 @@ function main(argv) {
     const res = bugs.scan(root, { base, all: Boolean(flags.all), files: flags.files ? String(flags.files).split(',').map((x) => x.trim()).filter(Boolean) : null, external: !flags['no-external'] });
     print(flags, bugs.format(res), res);
     return res.findings.some((f) => f.severity === 'error') ? 1 : 0;
+  }
+  if (group === 'mutate') {
+    const mutate = require('../lib/mutate');
+    let base = flags.base || 'HEAD';
+    let test = flags.test;
+    if (flags.task) {
+      const t = store.state().tasks[flags.task];
+      if (!t) throw new EccodeError('NOT_FOUND', `Unknown task ${flags.task}`);
+      if (t.claim && t.claim.baseCommit) base = t.claim.baseCommit;
+      if (!test && t.verification && t.verification.command) test = t.verification.command;
+    }
+    const res = mutate.run(root, {
+      test: need(test, '--test'),
+      base,
+      files: flags.files ? String(flags.files).split(',').map((x) => x.trim()).filter(Boolean) : null,
+      max: flags.max ? Number(flags.max) : 25,
+      timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
+      onProgress: (m) => process.stderr.write(`mutate: ${m}\n`),
+    });
+    if (flags.record) res.evidence = mutate.record(store, need(actor, '--actor'), res, { task: flags.task, gate: flags.gate }).id;
+    print(flags, `${mutate.format(res)}${res.evidence ? `\nRecorded as ev:${res.evidence}` : ''}`, res);
+    return flags['min-score'] !== undefined && res.score !== null && res.score * 100 < Number(flags['min-score']) ? 1 : 0;
   }
   if (group === 'impact') {
     const { impact } = require('../lib/codebase');
