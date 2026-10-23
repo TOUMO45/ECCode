@@ -308,7 +308,7 @@ test('engine variant: the toolkit is installed and committed first, the record i
     assert.deepStrictEqual([r.hiddenPassed, r.hiddenTotal], [3, 3]);
     assert.deepStrictEqual({ ...r.engine }, { initialized: true, delivered: true, auditOk: true, reviews: 2, changesRequested: 0, runsRecorded: 1, tokensReported: 1234, toolkitChanged: false, agents: 'inherit' });
     assert.match(fs.readFileSync(path.join(r.sandbox, '.claude', 'agents', 'technical-reviewer.md'), 'utf8'), /^model: inherit$/m, 'same model throughout: the process is compared, not a model mix');
-    assert.deepStrictEqual(r.usage, { costUsd: 0.4321, tokens: 1365, outputTokens: 55, turns: 12, subagents: 4 });
+    assert.deepStrictEqual(r.usage, { answer: null, costUsd: 0.4321, tokens: 1365, outputTokens: 55, turns: 12, subagents: 4 });
     assert.ok(r.linesAdded > 0 && r.linesAdded < 30, `only the change counts, not .claude/ or .eccode/: ${r.linesAdded}`);
     const log = execFileSync('git', ['log', '--format=%s'], { cwd: r.sandbox, encoding: 'utf8' });
     assert.match(log, /eccode toolkit\nfixture/);
@@ -330,8 +330,8 @@ test('engine variant: the toolkit is installed and committed first, the record i
 test('usageOf reads the agent result line (json or stream-json) and nothing else', () => {
   assert.strictEqual(bench.usageOf('plain text output'), null);
   assert.strictEqual(bench.usageOf('{"type":"assistant"}\n'), null);
-  const line = JSON.stringify({ type: 'result', total_cost_usd: 0.01, num_turns: 2, usage: { input_tokens: 3, output_tokens: 4, cache_read_input_tokens: 5, cache_creation_input_tokens: 6 } });
-  assert.deepStrictEqual(bench.usageOf(`{"type":"system"}\n${line}\n`), { costUsd: 0.01, tokens: 18, outputTokens: 4, turns: 2, subagents: null });
+  const line = JSON.stringify({ type: 'result', result: 'Delivered.', total_cost_usd: 0.01, num_turns: 2, usage: { input_tokens: 3, output_tokens: 4, cache_read_input_tokens: 5, cache_creation_input_tokens: 6 } });
+  assert.deepStrictEqual(bench.usageOf(`{"type":"system"}\n${line}\n`), { answer: 'Delivered.', costUsd: 0.01, tokens: 18, outputTokens: 4, turns: 2, subagents: null });
 });
 
 test('bench --save keeps every finished run on disk, and bench report rebuilds the report from them', () => {
