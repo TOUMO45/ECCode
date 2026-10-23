@@ -318,8 +318,8 @@ test('engine variant: the toolkit is installed and committed first, the record i
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tally-'));
     fs.writeFileSync(path.join(dir, 'e.md'), md);
     const tl = bench.tally(dir);
-    assert.deepStrictEqual(tl.engine.m1.engine, { runs: 1, allPass: 1, medianTokens: 1365, delivered: 1, auditOk: 1 });
-    assert.deepStrictEqual(tl.engine.m1.without, { runs: 1, allPass: 0, medianTokens: null, delivered: 0, auditOk: 0 });
+    assert.deepStrictEqual(tl.engine.m1.engine, { runs: 1, allPass: 1, medianTokens: 1365, medianCostUsd: 0.4321, medianSeconds: Math.round(r.durationMs / 1000), delivered: 1, auditOk: 1 });
+    assert.deepStrictEqual(tl.engine.m1.without, { runs: 1, allPass: 0, medianTokens: null, medianCostUsd: null, medianSeconds: Math.round(r.durationMs / 1000), delivered: 0, auditOk: 0 });
     assert.strictEqual(tl.stratified, null, 'engine rows never enter the lean-skill strata');
     fs.rmSync(dir, { recursive: true, force: true });
   } finally {
