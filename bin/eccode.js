@@ -94,6 +94,10 @@ Bugs and problem solving (see docs/bugs.md)
                                    Mutation testing on the changed code lines: one boundary, equality, logical,
                                    boolean, +/- or negation change at a time; a survivor is behavior no test
                                    checks. Files are always restored (also after a killed run)
+  fix verify --actor <a> (--task <id> | --base <ref>) [--test "<cmd>"]
+                                   Proof the regression test catches the bug: it must FAIL on the pre-fix code
+                                   (a temporary worktree at the base with the new tests) and PASS on the fix.
+                                   Exit 0 only when proven; the pair counts as the fix track's reproduction
 
 Benchmark
   bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|both] [--suite <dir>] [--out <file>] [--keep]
@@ -254,6 +258,13 @@ function main(argv) {
     if (flags.record) res.evidence = mutate.record(store, need(actor, '--actor'), res, { task: flags.task, gate: flags.gate }).id;
     print(flags, `${mutate.format(res)}${res.evidence ? `\nRecorded as ev:${res.evidence}` : ''}`, res);
     return flags['min-score'] !== undefined && res.score !== null && res.score * 100 < Number(flags['min-score']) ? 1 : 0;
+  }
+  if (group === 'fix') {
+    if (sub !== 'verify') throw new EccodeError('USAGE', 'Usage: eccode fix verify --actor <a> (--task <id> | --base <ref>) [--test "<cmd>"]');
+    const fixverify = require('../lib/fixverify');
+    const r = fixverify.verify(store, need(actor, '--actor'), { test: flags.test, task: flags.task, base: flags.base, timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined });
+    print(flags, fixverify.format(r), r);
+    return r.verdict === 'proven' ? 0 : 1;
   }
   if (group === 'impact') {
     const { impact } = require('../lib/codebase');
