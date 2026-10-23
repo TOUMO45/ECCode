@@ -7,6 +7,7 @@
 //   node docs/live/fixtures/build.js all <out-dir>        all fixtures (JVM ones need javac; Kotlin needs $ECCODE_KOTLINC)
 //   node docs/live/fixtures/build.js refactor-ok <out-dir> the accepted-refactor fixture (session 17)
 //   node docs/live/fixtures/build.js approve-phase <fixture-dir> <evidence-id>
+//   node docs/live/fixtures/build.js problem-solving <out-dir>  fixtures for sessions 19-21
 //
 // Fixtures install with `--profile guard`: these sessions test engine rules,
 // so Bash stays available to the agent.
@@ -84,6 +85,31 @@ function approvePhase(dir, evId) {
   gates.startGate(ctx.store, ctx.config, 'verification', 'orchestrator');
 }
 
+// Sessions 19-21 (bugs, mutate, fix verify): plain records, no plan, Bash available.
+const SHOP_PKG = JSON.stringify({ name: 'shop', version: '1.0.0', scripts: { test: 'node --test' } });
+const TEST_HEAD = "const test = require('node:test');\nconst assert = require('node:assert');\n";
+function problemSolving(target) {
+  // 19: a reported bug in the base commit (the loop skips the first item).
+  repo(path.join(target, 'bugfix'), {
+    'package.json': SHOP_PKG,
+    'src/cart.js': 'function total(items) {\n  let sum = 0;\n  for (let i = 1; i < items.length; i++) sum += items[i];\n  return sum;\n}\nmodule.exports = { total };\n',
+    'tests/cart.test.js': `${TEST_HEAD}const { total } = require('../src/cart');\ntest('empty cart', () => assert.strictEqual(total([]), 0));\n`,
+    'BUG.md': '# Bug report\n\nCustomers report that the order total is too low: an order with items priced 1, 2 and 3 shows 5 instead of 6.\n',
+  });
+  // 20: new pricing code with a test that only covers typical values (uncommitted, as a change in progress).
+  const m = repo(path.join(target, 'mutate'), { 'package.json': SHOP_PKG, 'src/price.js': 'module.exports = {};\n' });
+  fs.writeFileSync(path.join(m, 'src/price.js'), 'function price(qty) {\n  if (qty > 10) return qty * 9;\n  return qty * 10;\n}\nfunction shipping(total, member) {\n  if (total >= 50 || member) return 0;\n  return 5;\n}\nmodule.exports = { price, shipping };\n');
+  fs.mkdirSync(path.join(m, 'tests'), { recursive: true });
+  fs.writeFileSync(path.join(m, 'tests/price.test.js'), `${TEST_HEAD}const { price, shipping } = require('../src/price');\ntest('typical orders', () => {\n  assert.strictEqual(price(5), 50);\n  assert.strictEqual(price(20), 180);\n  assert.strictEqual(shipping(100, false), 0);\n  assert.strictEqual(shipping(10, false), 5);\n});\n`);
+  // 21: a change with planted slips, for review (uncommitted).
+  const b = repo(path.join(target, 'bugs-review'), { 'package.json': SHOP_PKG, 'src/report.js': 'module.exports = {};\n' });
+  fs.writeFileSync(path.join(b, 'src/report.js'), "async function save(row) { return row; }\nfunction summarize(rows) {\n  const total = rows.reduce((a, r) => a + r.amount, 0) / rows.length;\n  if (total === NaN) return 0;\n  rows.forEach(async (r) => { await save(r); });\n  debugger;\n  return total;\n}\nfunction label(x) {\n  if (typeof x === 'strng') return x;\n  return String(x);\n}\nmodule.exports = { summarize, label };\n");
+  fs.mkdirSync(path.join(b, 'app'), { recursive: true });
+  fs.writeFileSync(path.join(b, 'app/tally.py'), 'def add(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\n\ndef is_single(count):\n    if count is 1:\n        return True\n    return False\n');
+  fs.mkdirSync(path.join(b, 'tests'), { recursive: true });
+  fs.writeFileSync(path.join(b, 'tests/report.test.js'), `${TEST_HEAD}const { label } = require('../src/report');\ntest.only('label', () => assert.strictEqual(label(1), '1'));\n`);
+}
+
 const [cmd, target, arg] = process.argv.slice(2);
 if (!target) throw new Error('usage: build.js all|refactor-ok <out-dir> | approve-phase <fixture-dir> <evidence-id>');
 if (cmd === 'all') {
@@ -101,6 +127,8 @@ if (cmd === 'all') {
   repo(path.join(target, 'cbm'), SHOP);
 } else if (cmd === 'refactor-ok') {
   refactorFixture(path.join(target, 'refactor-ok'));
+} else if (cmd === 'problem-solving') {
+  problemSolving(target);
 } else if (cmd === 'approve-phase') {
   approvePhase(target, arg);
 } else {

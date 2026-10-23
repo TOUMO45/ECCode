@@ -100,3 +100,39 @@ test('CLI: report, --min-score exit code, and --record stores mutation evidence'
   assert.ok(ev.mutation.survived >= 2 && typeof ev.mutation.score === 'number');
   fs.rmSync(ctx.dir, { recursive: true, force: true });
 });
+
+test('TypeScript mutants run only when the project can syntax-check them; otherwise they are skipped and reported', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-mutate-ts-'));
+  write(dir, 'package.json', '{"name":"m","version":"1.0.0","scripts":{"test":"node -e \\"process.exit(0)\\""}}');
+  write(dir, 'src/a.ts', 'export {};\n');
+  execFileSync('git', ['init', '-q'], { cwd: dir });
+  execFileSync('git', ['add', '-A'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'base'], { cwd: dir });
+  write(dir, 'src/a.ts', 'export function big(n: number): boolean {\n  return n > 10 && n < 100;\n}\n');
+  const r = mutate.run(dir, { test: 'node -e "process.exit(0)"' });
+  assert.strictEqual(r.total, 0, 'no TypeScript compiler in this project: nothing is mutated');
+  assert.ok(r.skippedUnchecked >= 3);
+  assert.match(mutate.format(r), /TypeScript\/JSX mutant\(s\) skipped/);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('with the project\'s TypeScript compiler, TS mutants run and broken TypeScript is rejected', { skip: !fs.existsSync(path.join(execFileSync('npm', ['root', '-g'], { encoding: 'utf8', shell: process.platform === 'win32' }).trim(), 'typescript')) && 'no typescript to link' }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-mutate-ts2-'));
+  write(dir, 'package.json', '{"name":"m","version":"1.0.0"}');
+  write(dir, 'src/a.ts', 'export {};\n');
+  execFileSync('git', ['init', '-q'], { cwd: dir });
+  write(dir, '.gitignore', 'node_modules/\n');
+  execFileSync('git', ['add', '-A'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'base'], { cwd: dir });
+  fs.mkdirSync(path.join(dir, 'node_modules'));
+  fs.symlinkSync(path.join(execFileSync('npm', ['root', '-g'], { encoding: 'utf8', shell: process.platform === 'win32' }).trim(), 'typescript'), path.join(dir, 'node_modules', 'typescript'), process.platform === 'win32' ? 'junction' : 'dir');
+  write(dir, 'src/a.ts', 'export function big(n: number): boolean {\n  return n > 10 && n < 100;\n}\n');
+  const r = mutate.run(dir, { test: 'node -e "process.exit(0)"' });
+  assert.strictEqual(r.skippedUnchecked, 0);
+  assert.ok(r.total >= 3, JSON.stringify(r));
+  assert.strictEqual(r.invalid, 0, 'these mutants all parse');
+  write(dir, 'src/broken.ts', 'export const x = (n: number) => n >= ;\n');
+  assert.strictEqual(mutate.tsChecker(dir)(path.join(dir, 'src/broken.ts')), false);
+  assert.strictEqual(mutate.tsChecker(dir)(path.join(dir, 'src/a.ts')), true);
+  fs.rmSync(dir, { recursive: true, force: true });
+});

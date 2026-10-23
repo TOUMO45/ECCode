@@ -123,3 +123,23 @@ test('Python: proven, and a test importing a function the fix adds is inconclusi
   assert.strictEqual(r.verdict, 'inconclusive', JSON.stringify(r.pre));
   assert.match(r.reason, /grand_total/);
 });
+
+test('a pre-fix failure counts only as an assertion failure or an error inside the fixed code', () => {
+  // A crash inside the fixed source is the bug's own symptom: proven.
+  const ctx = project();
+  write(ctx.dir, 'src/cart.js', FIXED.replace('let s = 0;', 'if (!items) return 0;\n  let s = 0;'));
+  write(ctx.dir, 'tests/cart.test.js', `${HEAD}const { total } = require('../src/cart');\ntest('null cart', () => assert.strictEqual(total(null), 0));\n`);
+  assert.strictEqual(fixverify.verify(ctx.store, 'backend-engineer', { test: 'node --test', base: ctx.base }).verdict, 'proven');
+  // A test that crashes in its own code (here: only in the pre-fix checkout), not in the fixed code: inconclusive.
+  write(ctx.dir, 'tests/cart.test.js', `${HEAD}const { total } = require('../src/cart');\ntest('own crash', () => { if (process.cwd().includes('pre-fix')) null.x; assert.strictEqual(total([1, 2, 3]), 6); });\n`);
+  const own = fixverify.verify(ctx.store, 'backend-engineer', { test: 'node --test', base: ctx.base });
+  assert.strictEqual(own.verdict, 'inconclusive', JSON.stringify(own.pre));
+  assert.match(own.reason, /no test assertion failed/);
+  // A file present in the working tree but not in the pre-fix checkout: the environments differ.
+  write(ctx.dir, 'local.json', '{"rate": 1}\n');
+  fs.appendFileSync(path.join(ctx.dir, '.gitignore'), 'local.json\n');
+  write(ctx.dir, 'tests/cart.test.js', `${HEAD}const fs = require('fs');\nconst { total } = require('../src/cart');\ntest('rate', () => { const { rate } = JSON.parse(fs.readFileSync('local.json', 'utf8')); assert.strictEqual(total([1, 2, 3]) * rate, 6); });\n`);
+  const env = fixverify.verify(ctx.store, 'backend-engineer', { test: 'node --test', base: ctx.base });
+  assert.strictEqual(env.verdict, 'inconclusive', JSON.stringify(env.pre));
+  assert.match(env.reason, /local\.json/);
+});

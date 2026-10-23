@@ -1,0 +1,67 @@
+# Problem solving: reproduce, root cause, fix, prove (fix verify), harden (mutate), scan (bugs)
+
+## Prompt
+
+You are backend-engineer on this project (sequential single-context mode: you act as that role directly). Read BUG.md. The ECCode CLI is node .claude/eccode/bin/eccode.js. Solve the bug the professional way, in this order, quoting every eccode command's output verbatim:
+1. Reproduce: add one test to tests/cart.test.js that fails because of the reported bug. Run npm test and confirm it fails.
+2. Find the root cause in src/cart.js. Explain it in one sentence, then fix it with the smallest change at the root. Do not change the test to make it pass.
+3. Prove the fix: node .claude/eccode/bin/eccode.js fix verify --actor backend-engineer --base c873841ac644 --test "npm test"
+4. Harden: node .claude/eccode/bin/eccode.js mutate --base c873841ac644 --test "npm test". If a mutant on a line you changed survives, add an assertion that kills it, then run mutate again.
+5. Scan: node .claude/eccode/bin/eccode.js bugs --base c873841ac644
+Finish with: the root cause, the fix verify verdict, the final mutation score, and the bugs result.
+
+## Answer (verbatim)
+
+**Root cause:** `total()` in `src/cart.js` starts its loop at `i = 1`, so `items[0]` is never added. For `[1, 2, 3]` it returns `2 + 3 = 5`.
+
+**Fix:** one line in `src/cart.js`, changing `for (let i = 1; ...)` to `for (let i = 0; ...)`. The test was not altered. I added one test, `sums every item, including the first`, to `tests/cart.test.js`.
+
+### Step 1: Reproduce
+`npm test` on the unfixed code failed as expected:
+```
+not ok 2 - sums every item, including the first
+  error: |-
+    Expected values to be strictly equal:
+
+    5 !== 6
+```
+`# pass 1` / `# fail 1`, exit 1.
+
+### Step 2: Fix
+After the one-line change, `npm test` passed: `# tests 2`, `# pass 2`, `# fail 0`, exit 0.
+
+### Step 3: `eccode fix verify`
+```
+Fix verification against c873841ac644: tests tests/cart.test.js; fix in src/cart.js
+  pre-fix  (worktree at the base, new tests copied in): exit 1  ev:ev-mvlfhqv9-01e26369 (reproduction)
+  post-fix (working tree): exit 0  ev:ev-mvlfhr7p-020e3650
+PROVEN: The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.
+```
+**Verdict: PROVEN.**
+
+### Step 4: `eccode mutate`
+```
+mutate: 1/1 killed src/cart.js:3 < -> <=
+Mutation testing: 1 mutant(s) on 1 changed line(s) in 1 file(s) since c873841ac644; test: npm test (baseline 0.4 s)
+KILLED   src/cart.js:3  boundary: < -> <=
+Score: 1/1 killed (100%).
+```
+No survivors, so no extra assertion was needed.
+
+### Step 5: `eccode bugs`
+```
+Bug scan: 2 file(s), 2 line(s) added since c873841ac644; analyzers: built-in rules only
+No bug patterns on the scanned lines.
+```
+Exit 0.
+
+### Notes
+- I also ran `eccode --help` to check the flags. Its usage text is not quoted above because it is long and is not part of the procedure.
+- One Bash call was blocked by a hook because of shell expansion in a command that also named eccode. I split the command and reran it. The block did not change any result.
+- The changes are uncommitted in the working tree. I did not commit, because you did not ask for it.
+
+### Summary
+- **Root cause:** the loop in `total()` starts at index 1 and skips the first item.
+- **Fix verify verdict:** PROVEN (`ev:ev-mvlfhqv9-01e26369` fails pre-fix, `ev:ev-mvlfhr7p-020e3650` passes post-fix).
+- **Final mutation score:** 100% (1/1 killed).
+- **Bugs result:** no bug patterns on the scanned lines, exit 0.

@@ -41,7 +41,7 @@ eccode bugs --no-external --json  # built-in rules only, machine-readable
 | `py/bare-except` | warning | `except:`, which also catches KeyboardInterrupt and SystemExit |
 | `py/mutable-default` | warning | `def f(x=[])`: the default is shared between calls (a bug if mutated) |
 
-**Installed analyzers.** These run when they are present; nothing is ever downloaded. Their findings are kept only for the scanned lines.
+**Installed analyzers.** These run when they are present; nothing is ever downloaded. Their findings are kept only for the scanned lines. When an analyzer reports the same thing as a built-in rule on the same line (ruff `F632` and `py/is-literal`, for example), it is shown once.
 - `ruff`: undefined names, redefinitions, `is` with literals, syntax errors and similar count as errors; style codes are warnings.
 - `go vet`: everything it reports is an error.
 - `eslint`: only when the project has an eslint config.
@@ -79,7 +79,7 @@ eccode mutate --test "pytest -q" --min-score 80 --record --actor test-engineer
 
 **Safety.**
 - Mutants are generated on the masked text, so strings and comments never change.
-- A mutant that does not parse (`node --check`, `ast.parse`, `gofmt -e`) counts as invalid, never as killed.
+- A mutant that does not parse (`node --check`, `ast.parse`, `gofmt -e`, or the project's own TypeScript compiler for TS/JSX) counts as invalid, never as killed. Without a TypeScript compiler, TS/JSX mutants are skipped and counted in the report.
 - Every file is restored in `finally`. A recovery copy under `.eccode/cache/` lets the next run repair a file left behind by a killed process.
 - The session runs inside the record's integrity window.
 
@@ -111,9 +111,15 @@ eccode fix verify --actor backend-engineer --base main --test "pytest -q tests/t
 | **PROVEN** | The test fails on the pre-fix code and passes with the fix. The two runs also satisfy the `fix` track's reproduction rule. |
 | `tests-pass-without-fix` | The tests pass on the pre-fix code, so they do not catch the bug |
 | `fix-fails-tests` | The tests fail before the fix and still fail after it, so the fix is incomplete |
-| `inconclusive` | The pre-fix run failed, but for a reason unrelated to the bug: a load error, or a call to API the fix adds (for example `sum is not a function`). It is recorded as a plain check, not as a reproduction. |
+| `inconclusive` | The pre-fix run failed, but the failure says nothing about the bug. It is recorded as a plain check, not as a reproduction. |
 
-It exits 0 only for PROVEN.
+A pre-fix failure counts only when **a test assertion failed, or an error was raised inside the code the fix changed**. It is *inconclusive* when:
+- the tests failed to load (module not found, syntax error);
+- the tests called API that the fix adds (for example `sum is not a function`);
+- a file the run needed exists only in the working tree (untracked, ignored or generated), so the two environments differ;
+- the run crashed in the test's own code, timed out, or failed during setup.
+
+It exits 0 only for PROVEN. Whether the behavior the test catches is *the reported* bug stays the reviewer's judgment. The engine proves that the test asserts a behavior the fix changed.
 
 ## The method (`debug-investigation` skill)
 

@@ -147,6 +147,10 @@ test('installed analyzers report only on scanned lines (ruff, go vet)', { skip: 
     const ruff = r.findings.filter((f) => f.tool === 'ruff');
     assert.deepStrictEqual(ruff.map((f) => `${f.rule}@${f.line}:${f.severity}`), ['F821@9:error'], JSON.stringify(r.findings));
     assert.ok(r.analyzers.some((a) => a.tool === 'ruff' && a.ran));
+    // An analyzer finding equivalent to a built-in one on the same line is shown once (as the built-in).
+    fs.appendFileSync(path.join(dir, 'pkg/a.py'), '\n\ndef h(n):\n    return n is 1\n');
+    const both = bugs.scan(dir, {}).findings.filter((f) => f.line === 13);
+    assert.deepStrictEqual(both.map((f) => `${f.tool}:${f.rule}`), ['eccode:py/is-literal'], JSON.stringify(both));
     fs.rmSync(dir, { recursive: true, force: true });
   }
   if (bugs.hasTool('go')) {

@@ -1,0 +1,64 @@
+# Bug scan in review: seven planted slips found, fixed, rescanned clean
+
+## Prompt
+
+You are technical-reviewer on this project (sequential single-context mode). The uncommitted change adds src/report.js, app/tally.py and tests/report.test.js. The ECCode CLI is node .claude/eccode/bin/eccode.js.
+1. Run node .claude/eccode/bin/eccode.js bugs and quote the output verbatim.
+2. For each finding, say in one sentence why it is or is not a real bug, then fix every finding with the smallest change that keeps the intended behavior. Do not add suppression comments.
+3. Run node .claude/eccode/bin/eccode.js bugs again and quote the output verbatim.
+Finish with a one-line summary per finding: what it was and how you fixed it.
+
+## Answer (verbatim)
+
+## ECCode bugs, before the fixes
+
+```
+Bug scan: 3 file(s), 28 line(s) added since HEAD; analyzers: ruff (3 on these lines)
+WARNING app/tally.py:1 ruff:B006 - Do not use mutable data structures for argument defaults
+WARNING app/tally.py:1 py/mutable-default - mutable default argument is shared between calls (a bug if the function mutates it) (fix: default to None and create the object inside the function)
+  > def add(item, bucket=[]):
+ERROR app/tally.py:7 ruff:F632 - Use `==` to compare constant literals
+WARNING app/tally.py:7 ruff:SIM103 - Return the condition `count is 1` directly
+ERROR app/tally.py:7 py/is-literal - `is` compares identity, not value: with a literal the result depends on interning (fix: use == / !=)
+  > if count is 1:
+ERROR src/report.js:4 js/nan-compare - comparison with NaN is always false (or always true with !==) (fix: use Number.isNaN(x))
+  > if (total === NaN) return 0;
+ERROR src/report.js:5 js/async-foreach - forEach does not await async callbacks: errors are lost and work finishes after the caller continues (fix: use for…of with await, or await Promise.all(items.map(async …)))
+  > rows.forEach(async (r) => { await save(r); });
+ERROR src/report.js:6 js/debugger - `debugger` statement left in code (fix: remove it)
+  > debugger;
+ERROR src/report.js:10 js/typeof-typo - typeof compared with a string typeof never returns, so the condition is constant (fix: use one of: undefined, object, boolean, number, string, function, symbol, bigint)
+  > if (typeof x === 'strng') return x;
+ERROR tests/report.test.js:4 js/focused-test - focused test: every other test in the file stops running (fix: remove .only / the f prefix)
+  > test.only('label', () => assert.strictEqual(label(1), '1'));
+7 error(s), 3 warning(s). At task completion, built-in errors are refused unless declared in handoff.acceptedFindings.
+```
+
+## Verdicts and fixes
+
+- **`app/tally.py:1` mutable default (B006, mutable-default):** Real. The shared default list makes `add('a')` followed by `add('b')` return `['a', 'b']`. Fixed with `bucket=None` and a new list created inside the function when it is `None`.
+- **`app/tally.py:7` `count is 1` (F632, is-literal):** Real. `is` compares identity and only works here because CPython caches small integers. Fixed by returning `count == 1`, which also clears the SIM103 warning on the same line.
+- **`src/report.js:4` `total === NaN` (nan-compare):** Real. The guard can never fire, so an empty `rows` array returns `NaN` instead of `0`. Fixed with `Number.isNaN(total)`.
+- **`src/report.js:5` async `forEach` (async-foreach):** Real. `summarize` returned before the saves finished, and save errors were lost. Fixed by making `summarize` async and using `for (const r of rows) await save(r);`. This changes the return type to a Promise, so any synchronous caller of `summarize` would now break. I only checked the three changed files for callers and found none, so that check is still open for the rest of the repo.
+- **`src/report.js:6` `debugger`:** Real. Removed the leftover statement.
+- **`src/report.js:10` `'strng'` typo (typeof-typo):** Real. The string passthrough branch could never run. Fixed the literal to `'string'`.
+- **`tests/report.test.js:4` `test.only` (focused-test):** Real as a latent bug. Any test added later to the file would be silently skipped. Changed `test.only(` to `test(`.
+
+## ECCode bugs, after the fixes
+
+```
+Bug scan: 3 file(s), 27 line(s) added since HEAD; analyzers: ruff (0 on these lines)
+No bug patterns on the scanned lines.
+```
+
+Exit code 0. I also ran `node --test tests/report.test.js` and it passes (1 of 1). `node --test tests/` fails only because this Node version treats the directory as a file path; that is a runner invocation issue, not a test failure. The `app/tally.py` changes have no tests, so they are checked only by the bug scan and by reading.
+
+## Summary per finding
+
+- **tally.py mutable default:** `bucket=[]` replaced with `bucket=None` and a fresh list per call.
+- **tally.py `is 1`:** replaced with `return count == 1`.
+- **report.js NaN check:** `=== NaN` replaced with `Number.isNaN(total)`.
+- **report.js async forEach:** `summarize` is now async and awaits each `save` in order (a return-type change; callers outside these files are unchecked).
+- **report.js debugger:** statement removed.
+- **report.js `'strng'`:** corrected to `'string'`.
+- **report.test.js `test.only`:** changed to `test`.
