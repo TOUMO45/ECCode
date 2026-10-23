@@ -247,3 +247,98 @@ test('audit regressions: ESM chains keep upstream callers, partial loads are nam
   fs.writeFileSync(cacheFile, JSON.stringify(c));
   assert.strictEqual(cb.indexProject(dir).reused, 0);
 });
+
+function hasTool(cmd, args = ['--version']) {
+  const r = require('child_process').spawnSync(cmd, args, { encoding: 'utf8', env: { ...process.env, JAVA_TOOL_OPTIONS: '' }, shell: process.platform === 'win32' });
+  // Where CI requires the tracers, a missing tool must fail, never skip.
+  return r.status === 0 || process.env.ECCODE_REQUIRE_TRACERS === '1';
+}
+
+test('runtime trace resolves reflective loads in Ruby (interpolated require_relative, const_get autoload)', { skip: !hasTool('ruby') && 'ruby not installed' }, () => {
+  const dir = repo({
+    'lib/plugin.rb': "module Plugin; NAME = 'plugin'; end\n",
+    'lib/widget.rb': 'class Widget; end\n',
+    'app/main.rb': "name = %w[plu gin].join\nrequire_relative \"../lib/#{name}\"\nautoload :Widget, File.expand_path('../lib/widget', __dir__)\nObject.const_get(['Wid', 'get'].join)\nabort 'bad' unless Plugin::NAME == 'plugin'\n",
+  });
+  const t = cb.traceRun(dir, 'ruby app/main.rb');
+  assert.strictEqual(t.exitCode, 0);
+  const edges = t.edges.map((e) => `${e.from} -> ${e.to}`).sort();
+  assert.deepStrictEqual(edges, ['app/main.rb -> lib/plugin.rb', 'app/main.rb -> lib/widget.rb']);
+});
+
+test('runtime trace resolves reflective loads in PHP (variable include, new $class autoload)', { skip: !hasTool('php') && 'php not installed' }, () => {
+  const dir = repo({
+    'lib/helpers.php': "<?php\nfunction helper_name() { return 'helper'; }\n",
+    'lib/Plugin.php': "<?php\nclass Plugin { public function name() { return 'plugin'; } }\n",
+    'app/main.php': "<?php\nspl_autoload_register(function ($c) { require __DIR__ . '/../lib/' . $c . '.php'; });\n$file = implode('', ['help', 'ers']);\ninclude __DIR__ . \"/../lib/$file.php\";\n$cls = 'Plu' . 'gin';\n$p = new $cls();\nif ($p->name() !== 'plugin' || helper_name() !== 'helper') { exit(1); }\n",
+  });
+  const t = cb.traceRun(dir, 'php app/main.php');
+  assert.strictEqual(t.exitCode, 0);
+  const edges = t.edges.map((e) => `${e.from} -> ${e.to}`).sort();
+  assert.deepStrictEqual(edges, ['app/main.php -> lib/Plugin.php', 'app/main.php -> lib/helpers.php']);
+});
+
+test('runtime trace resolves reflective loads on the JVM (Class.forName with a runtime-built name)', { skip: !(hasTool('javac', ['-version']) && hasTool('jar', ['--version'])) && 'JDK not installed' }, () => {
+  const dir = repo({
+    'src/main/java/app/Plugin.java': 'package app;\npublic class Plugin { public String name() { return "plugin"; } }\n',
+    'src/main/java/app/Main.java': 'package app;\npublic class Main {\n  public static void main(String[] a) throws Exception {\n    String cls = String.join("", "app.Plu", "gin");\n    Object p = Class.forName(cls).getDeclaredConstructor().newInstance();\n    if (!"plugin".equals(p.getClass().getMethod("name").invoke(p))) System.exit(1);\n  }\n}\n',
+  });
+  const r = require('child_process').spawnSync('javac', ['-d', 'build/classes', 'src/main/java/app/Main.java', 'src/main/java/app/Plugin.java'], { cwd: dir, encoding: 'utf8', env: { ...process.env, JAVA_TOOL_OPTIONS: '' }, shell: process.platform === 'win32' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  const t = cb.traceRun(dir, 'java -cp build/classes app.Main');
+  assert.strictEqual(t.exitCode, 0);
+  assert.strictEqual(t.jvmTraced, true);
+  assert.ok(t.edges.some((e) => e.from === 'src/main/java/app/Main.java' && e.to === 'src/main/java/app/Plugin.java'), JSON.stringify(t.edges));
+  // The JVM reports canonical (long) paths; the agent must honor the second root spelling.
+  const real = fs.realpathSync.native(dir); // the JVM reports canonical long paths (Windows: no 8.3 names)
+  const alt = cb.traceRun(dir, 'java -cp build/classes app.Main', { rootSpellings: [path.join(path.dirname(real), 'no-such-spelling'), real] });
+  assert.ok(alt.edges.some((e) => e.from === 'src/main/java/app/Main.java' && e.to === 'src/main/java/app/Plugin.java'), JSON.stringify(alt.edges));
+});
+
+const KOTLINC = process.env.ECCODE_KOTLINC || 'kotlinc';
+test('runtime trace resolves reflective loads in Kotlin (top-level main compiled to MainKt)', { skip: !(hasTool(KOTLINC, ['-version']) && hasTool('java', ['-version'])) && 'kotlinc not installed' }, () => {
+  const dir = repo({
+    'src/main/kotlin/app/Plugin.kt': 'package app\nclass Plugin { fun name() = "plugin" }\n',
+    'src/main/kotlin/app/Main.kt': 'package app\nfun main() {\n    val cls = listOf("app.Plu", "gin").joinToString("")\n    val p = Class.forName(cls).getDeclaredConstructor().newInstance()\n    if (p.javaClass.getMethod("name").invoke(p) != "plugin") kotlin.system.exitProcess(1)\n}\n',
+  });
+  const r = require('child_process').spawnSync(KOTLINC, ['src/main/kotlin/app/Main.kt', 'src/main/kotlin/app/Plugin.kt', '-include-runtime', '-d', 'app.jar'], { cwd: dir, encoding: 'utf8', env: { ...process.env, JAVA_TOOL_OPTIONS: '' }, shell: process.platform === 'win32' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  const t = cb.traceRun(dir, 'java -cp app.jar app.MainKt');
+  assert.strictEqual(t.exitCode, 0);
+  assert.ok(t.edges.some((e) => e.from === 'src/main/kotlin/app/Main.kt' && e.to === 'src/main/kotlin/app/Plugin.kt'), JSON.stringify(t.edges));
+});
+
+test('every tracer honors the second spelling of the project root (Windows 8.3 short vs long paths)', () => {
+  // Windows CI temp dirs are 8.3 short paths that Node keeps but the JVM and
+  // PHP expand, so CI saw no edges there. Linux cannot produce two spellings
+  // naturally: give a primary root that matches nothing and the real root as
+  // the alternate, and every available tracer must still record its edges.
+  const dir = repo({
+    'src/plugin.js': 'module.exports = 1;\n',
+    'run.js': "require(['./src/plu', 'gin'].join(''));\n",
+    'jobs/task.py': 'VALUE = 1\n',
+    'jobs/loader.py': "import importlib\nimportlib.import_module('jobs.task')\n",
+    'lib/plugin.rb': 'module Plugin; end\n',
+    'app/main.rb': "require_relative ['../lib/plu', 'gin'].join\n",
+    'lib/Helper.php': '<?php\nfunction helper() { return 1; }\n',
+    'app/main.php': "<?php\ninclude __DIR__ . '/../lib/' . 'Helper' . '.php';\n",
+  });
+  // The alternate is the spelling each runtime reports: Node, Python and Ruby
+  // keep the working directory's form; PHP's realpath() expands to the long
+  // form (identical on Linux and macOS).
+  const cwdForm = fs.realpathSync(dir);
+  const longForm = fs.realpathSync.native(dir);
+  const cases = [
+    ['node', 'node run.js', 'run.js -> src/plugin.js', cwdForm],
+    ['python3', 'python3 -c "import jobs.loader"', 'jobs/loader.py -> jobs/task.py', cwdForm],
+    ['ruby', 'ruby app/main.rb', 'app/main.rb -> lib/plugin.rb', cwdForm],
+    ['php', 'php app/main.php', 'app/main.php -> lib/Helper.php', longForm],
+  ];
+  const missing = [];
+  for (const [tool, cmd, edge, real] of cases) {
+    if (tool !== 'node' && !hasTool(tool)) continue;
+    const t = cb.traceRun(dir, cmd, { rootSpellings: [path.join(path.dirname(real), 'no-such-spelling'), real] });
+    if (!t.edges.some((e) => `${e.from} -> ${e.to}` === edge)) missing.push(`${tool}: ${JSON.stringify(t.edges)}`);
+  }
+  assert.deepStrictEqual(missing, []);
+});

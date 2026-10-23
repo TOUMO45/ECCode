@@ -10,5 +10,6 @@ Final answers of headless Claude sessions (`claude -p --model haiku`), saved ver
 | 4-deliveries.txt | Many deliveries | `work list` and `work start` while w2 is active |
 | 5-stack-packs.txt | Stack packs | `stack`, `stack run node-test`, `stack run eccode-secrets` |
 | 6-ask-path.txt | Trust: user decisions | `work abandon --actor user` held for the human |
+| 7-sandboxed-profile.txt | Trust: record integrity under any shell command | Project installed with `eccode install --sandbox` (bubblewrap): a record write whose path is built at runtime fails with EROFS at the OS level; the CLI reports RECORD_READ_ONLY; the role's MCP server records the change; audit OK |
 
 Earlier live sessions are described in [senior-engineering.md](../senior-engineering.md): the CLI guard, the MCP no-Bash cycle, the adversarial battery, the multi-round safe-changes session and the bench-machinery session. Their transcripts were not saved. Only their recorded outcomes (event logs and audits) are described there.
