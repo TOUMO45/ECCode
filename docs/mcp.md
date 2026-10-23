@@ -29,7 +29,9 @@ Give the backend agent `mcp__eccode_backend` plus `Read, Grep, Glob, Edit, Write
 
 ## Tools
 
-`status`, `gate_show`, `gate_start`, `gate_submit`, `gate_review`, `task_next`, `task_list`, `task_claim`, `task_complete`, `task_fail`, `evidence_run`, `evidence_file`, `handoff_record`, `risk_add`, `decision_add`, `memory_search`, `memory_cite`, `map`, `impact`, `audit`.
+`status`, `gate_show`, `gate_start`, `gate_submit`, `gate_review`, `task_next`, `task_list`, `task_claim`, `task_complete`, `task_fail`, `evidence_run`, `evidence_file`, `handoff_record`, `risk_add`, `decision_add`, `memory_search`, `memory_cite`, `onboard`, `map`, `impact`, `audit`.
+
+`onboard`, `map` and `impact` make the server the project's **codebase memory**: the import-resolved index persists in `.eccode/cache/` (rebuilt incrementally, so a big repository pays the full scan once), and any agent — including a no-Bash one — reads the brief, the reuse map and the reverse-dependency graph as typed tool calls.
 
 Every engine rule applies unchanged: gate order, author ≠ approver, evidence resolution, lean and compatibility checks, track rules, required stack checks. A refusal comes back as the tool result with the same `[CODE] message` the CLI prints.
 

@@ -1,5 +1,7 @@
 # Paired grid completion: 2026-10-22, claude-sonnet, remaining two tasks, n=3
 
+> **Follow-up.** Every task in this file was later run at n≥10 per variant with haiku (sonnet was not re-run at n≥10) ([2026-10-23-haiku-n10-remaining.md](2026-10-23-haiku-n10-remaining.md), [2026-10-23-haiku-n10-replication.md](2026-10-23-haiku-n10-replication.md)), and the two headline tasks at a pre-registered n=25 ([2026-10-23-haiku-n25-preregistered.md](2026-10-23-haiku-n25-preregistered.md)). This file's runs stay in the record and in the all-data stratified test (`eccode bench tally`); its small-n figures are not the basis of any conclusion.
+
 With this run the grid is complete: **two models × all five tasks** (98 runs
 total across the four recorded suites). Sonnet findings on the two remaining
 tasks, honestly read:

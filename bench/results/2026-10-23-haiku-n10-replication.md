@@ -1,5 +1,7 @@
 # Benchmark run — 2026-10-23, claude -p (haiku), replication at n=10 per variant
 
+> **Follow-up.** The non-significant result below was followed by one pre-registered n=25 replication of both tasks, which was decisive (relative-time −11 median lines, p = 6.0e-5; slugify-reuse −4, p = 1.0e-5): [2026-10-23-haiku-n25-preregistered.md](2026-10-23-haiku-n25-preregistered.md).
+
 A replication of the two strongest n=5 effects (`relative-time`,
 `slugify-reuse`, both p=0.0079 on 2026-10-22) at double the sample size:
 n=10 per variant per task, 40 fresh agent runs, exact permutation test over

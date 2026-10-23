@@ -1,5 +1,7 @@
 # Paired run: 2026-10-22, claude-haiku (headless), reuse/dependency-temptation tasks, n=5
 
+> **Follow-up.** Every task in this file was later run at n≥10 per variant ([2026-10-23-haiku-n10-remaining.md](2026-10-23-haiku-n10-remaining.md), [2026-10-23-haiku-n10-replication.md](2026-10-23-haiku-n10-replication.md)), and the two headline tasks at a pre-registered n=25 ([2026-10-23-haiku-n25-preregistered.md](2026-10-23-haiku-n25-preregistered.md)). This file's runs stay in the record and in the all-data stratified test (`eccode bench tally`); its small-n figures are not the basis of any conclusion.
+
 Executed with `eccode bench --tasks dedupe-objects,slugify-reuse --runs 5` (20
 agent runs). These two tasks were added specifically to discriminate on the
 lean ladder's reuse and dependency rungs. Honest reading:
