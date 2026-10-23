@@ -21,5 +21,5 @@ Commits 5d2f3fd, fd4d17b, 363c17e and 0a8ed8e change the engine for each (regist
 - **Decision rule for register row 56** ("engine runs stopped before delivery"):
   - delivered with a clean audit in at least 18 of 20 runs: the row closes as eliminated;
   - otherwise: the row stays open (mitigated), restated with the delivery rate and the causes that remain.
-- Reporting: the report is committed verbatim as `bench/engine-results/2026-10-23-engine-followup-sonnet.md`. Nothing is re-run or dropped.
+- Reporting: the report is committed verbatim as `bench/engine-results/2026-10-23-engine-followup-sonnet.md`. Nothing is re-run or dropped. (Amended before reporting, 2026-10-23: it is stored in `bench/engine-followup/` instead, so that `bench tally` never pools this engine-only batch with the registered engine-vs-without comparison.)
 - Stopping rule: one batch.

@@ -176,3 +176,16 @@ test('on a reviewed plan only the user changes ownership', () => {
   assert.deepStrictEqual(ctx.store.state().tasks.api.files, ['src/server/**', 'src/shared/**']);
   fs.rmSync(ctx.dir, { recursive: true, force: true });
 });
+
+test('a test run\'s caches are not changes: __pycache__, .pytest_cache and node_modules never need review', () => {
+  const dir = repo();
+  const { gitChangedFiles } = require('../lib/project');
+  const base = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: dir, encoding: 'utf8' }).trim();
+  write(dir, 'inventory/__pycache__/models.cpython-313.pyc', 'x');
+  write(dir, '.pytest_cache/v/cache/lastfailed', '{}');
+  write(dir, 'node_modules/left-pad/index.js', 'module.exports = 1;\n');
+  write(dir, 'tools/gen.pyc', 'x');
+  write(dir, 'src/new.js', 'module.exports = 2;\n');
+  assert.deepStrictEqual(gitChangedFiles(dir, base), ['src/new.js']);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
