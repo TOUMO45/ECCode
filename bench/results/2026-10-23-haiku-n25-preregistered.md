@@ -1,26 +1,14 @@
-# Benchmark run — 2026-10-23, claude -p (haiku), pre-registered n=25 replication
+# Benchmark run — 2026-10-23, claude -p (haiku), fixed-protocol n=25 replication
 
-Pre-registered before the data existed (stated in the session transcript):
-relative-time and slugify-reuse — the two tasks whose n=10 batch was
-direction-consistent but not significant — re-run once at a fixed n=25 per
-variant (100 fresh live runs), analysed with the permutation test, reported
-verbatim whatever the outcome, with no further sampling on these tasks
-afterward. This run also exposed and fixed a harness gap: above the exact
-enumeration cap the permutation test used to return nothing; it now falls
-back to a seeded Monte Carlo permutation test (100,000 resamples,
-reproducible), labelled as such in the report.
+Protocol, stated in the working session before any of these runs started: relative-time and slugify-reuse — the two tasks whose n=10 batch was direction-consistent but not significant — re-run once at a fixed n=25 per variant (100 fresh live runs), analysed with a permutation test on lines added, reported verbatim whatever the outcome, with no further sampling on these tasks afterward. **The protocol was not committed to the repository before the run**, so this is a fixed-protocol replication, not a pre-registration in the strict sense; the file name keeps its original wording.
 
-**Outcome: both effects replicate decisively.** relative-time: −11 median
-lines (p = 6.0e-5); slugify-reuse: −4 median lines (p = 1.0e-5). 100/100
-hidden checks passed, 0 dependency additions, every run wrote tests in both
-variants. The full batch sequence for these tasks stays on record: n=5
-(significant), n=10 (direction-consistent, not significant), n=25
-(decisive) — the n=10 batch reads, in hindsight, as small-sample noise
-around an effect the larger samples pin down.
+One analysis change happened after the data came in: above the exact-enumeration cap the permutation test returned nothing, so a seeded Monte Carlo permutation test (100,000 resamples, reproducible) was added to the harness and used here. The effect estimates (median deltas) do not depend on it.
+
+**Outcome: both effects replicate decisively.** relative-time: −11 median lines (Monte Carlo p = 6.0e-5); slugify-reuse: −4 median lines (p ≤ 1.0e-5 — no resample was as extreme, so this is an upper bound). 100/100 hidden checks passed, 0 dependency additions, every run wrote tests in both variants. The full batch sequence for these tasks stays on record: n=5 (significant), n=10 (direction-consistent, not significant), n=25 (decisive).
 
 # ECCode paired benchmark
 
-Agent command: `cat PROMPT.md | claude -p --model haiku --allowedTools "Read Grep Glob Edit Write Bash(npm test) Bash(node --test*) Bash(pytest*)"`. "with" prepends the lean-change skill text to the prompt; "without" is the bare prompt. Hidden checks never exist in the sandbox while the agent works. Each variant ran n >= 25 times per task; the exact permutation test enumerates every split, so the p-values are exact, not asymptotic. Read the raw rows alongside the medians.
+Agent command: `cat PROMPT.md | claude -p --model haiku --allowedTools "Read Grep Glob Edit Write Bash(npm test) Bash(node --test*) Bash(pytest*)"`. "with" prepends the lean-change skill text to the prompt; "without" is the bare prompt. Hidden checks never exist in the sandbox while the agent works. Each variant ran n >= 25 times per task. Where every split can be enumerated the permutation test is exact; above that it is a seeded Monte Carlo permutation test (each row says which), and "p≤" marks a p-value at the resampling floor. Read the raw rows alongside the medians.
 
 | Task | Variant | n | Hidden checks | Median lines added | Runs adding a dependency | Runs changing a test | Median seconds |
 |---|---|---|---|---|---|---|---|
@@ -29,7 +17,7 @@ Agent command: `cat PROMPT.md | claude -p --model haiku --allowedTools "Read Gre
 | relative-time | **paired Δ** |  |  | -11 (Monte Carlo permutation p=6.00e-5 over 100000 seeded resamples) |  |  |  |
 | slugify-reuse | without | 25 | 50/50 | 16 | 0/25 | 25/25 | 17 |
 | slugify-reuse | with | 25 | 50/50 | 12 | 0/25 | 25/25 | 21 |
-| slugify-reuse | **paired Δ** |  |  | -4 (Monte Carlo permutation p=1.00e-5 over 100000 seeded resamples) |  |  |  |
+| slugify-reuse | **paired Δ** |  |  | -4 (Monte Carlo permutation p≤1.00e-5 over 100000 seeded resamples) |  |  |  |
 
 Paired medians across 2 task(s): the "with" variant produced the smaller diff on 2, the larger on 0, equal on 0. Sign counts, not significance.
 

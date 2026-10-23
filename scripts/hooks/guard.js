@@ -117,6 +117,43 @@ function findRoot(start) {
   }
 }
 
+/**
+ * Every --actor value in a command, as the shell would see the word: quotes
+ * removed and adjacent pieces joined (us''er -> user). A value containing
+ * shell expansion is marked dynamic.
+ */
+function actorWords(cmd) {
+  const out = [];
+  const re = /--actor(?:=|\s+)/g;
+  let m;
+  while ((m = re.exec(cmd))) {
+    let i = m.index + m[0].length;
+    let value = '';
+    let dynamic = false;
+    while (i < cmd.length && !/[\s;|&]/.test(cmd[i])) {
+      const ch = cmd[i];
+      if (ch === "'") {
+        const end = cmd.indexOf("'", i + 1);
+        value += cmd.slice(i + 1, end === -1 ? cmd.length : end);
+        i = end === -1 ? cmd.length : end + 1;
+      } else if (ch === '"') {
+        const end = cmd.indexOf('"', i + 1);
+        const seg = cmd.slice(i + 1, end === -1 ? cmd.length : end);
+        if (/[$`]/.test(seg)) dynamic = true;
+        value += seg;
+        i = end === -1 ? cmd.length : end + 1;
+      } else {
+        if (ch === '$' || ch === '`') dynamic = true;
+        if (ch === '\\') { value += cmd[i + 1] || ''; i += 2; continue; }
+        value += ch;
+        i += 1;
+      }
+    }
+    out.push({ value, dynamic });
+  }
+  return out;
+}
+
 function roleOf(agentType) {
   if (!agentType) return null;
   const name = String(agentType).split(':').pop();
@@ -139,8 +176,16 @@ function main(input) {
       out('deny', 'This command touches the ECCode record (events.jsonl, state.json, config, evidence, improvements, memory records) with something other than a read-only tool or the eccode CLI. The record is written only by eccode commands; read it with cat, jq, grep or git diff/log/show.');
     }
     if (/\beccode(\.js)?\b/.test(cmd)) {
-      const flagged = [...cmd.matchAll(/--actor[= ]+["']?([\w-]+)/g)].map((m) => m[1]);
+      const parsed = actorWords(cmd);
+      const flagged = parsed.map((w) => w.value);
       const actors = flagged.length ? flagged : [process.env.ECCODE_ACTOR].filter(Boolean);
+      // Identity must be literal: an --actor value or eccode argument built by
+      // shell expansion ($VAR, $(...), backticks) cannot be checked from text.
+      const argvPart = cmd.split(/\s--\s/)[0];
+      if (parsed.some((w) => w.dynamic) || /\$[\w{(]|`/.test(argvPart)) {
+        if (role) out('deny', `Identity must be written literally: use --actor ${role} with no shell expansion in the eccode arguments.`);
+        out('ask', 'ECCode: this eccode command builds its arguments with shell expansion, so the acting identity cannot be read from the command text. Approve only if you, the human, intend exactly what it will run.');
+      }
       if (role) {
         if (/\bECCODE_ACTOR\s*=/.test(cmd)) {
           out('deny', `Subagents identify themselves with --actor ${role}; setting ECCODE_ACTOR inside a command is not allowed.`);

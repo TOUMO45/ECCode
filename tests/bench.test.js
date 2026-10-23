@@ -140,7 +140,7 @@ test('tally recomputes headline numbers from recorded report files', () => {
   fs.writeFileSync(path.join(dir, 'b.md'), report(['| t | with | 2/2 | +9/−1 | — | 1 | 7 | 1 |']).replace(/\n/g, '\r\n'));
   fs.writeFileSync(path.join(dir, 'notes.md'), '# No raw runs section\n');
   const t = bench.tally(dir);
-  assert.deepStrictEqual(t.total, { files: 2, runs: 3, hiddenPassed: 5, hiddenTotal: 6, depRuns: 1, agentFailures: 1, pairedSmaller: 2, pairedLarger: 0, pairedEqual: 0 });
+  assert.deepStrictEqual(t.total, { files: 2, runs: 3, hiddenPassed: 5, hiddenTotal: 6, depRuns: 1, agentFailures: 1, pairedSmaller: 1, pairedLarger: 0, pairedEqual: 0 }); // signs come from raw runs: only a.md has both variants; summary cells are ignored
   assert.strictEqual(t.perFile.length, 2);
   assert.deepStrictEqual(t.perFile[0], { file: 'a.md', runs: 2, hiddenPassed: 3, hiddenTotal: 4, depRuns: 1, agentFailures: 0 });
   fs.rmSync(dir, { recursive: true, force: true });
@@ -153,7 +153,7 @@ test('the report header grades its own sample size', () => {
   const many = [];
   for (let i = 0; i < 10; i++) { many.push(rec('t', 'without', 10 + i)); many.push(rec('t', 'with', 8 + i)); }
   const big = bench.report(many, { agentCmd: 'x' });
-  assert.match(big, /n >= 10 times per task; the exact permutation test enumerates every split/);
+  assert.match(big, /n >= 10 times per task\. The exact permutation test enumerates every split/);
   assert.doesNotMatch(big, /demonstration, not a statistic/);
 });
 
@@ -197,4 +197,17 @@ test('permutation test falls back to seeded Monte Carlo above the exact cap', ()
   const exact = bench.permutationTest([1, 2, 3, 4, 5], [6, 7, 8, 9, 10]);
   assert.strictEqual(exact.splits, 252);
   assert.ok(!exact.monteCarlo);
+});
+
+test('report header names the test it actually used, and floors read as upper bounds', () => {
+  const rec = (variant, lines) => ({ task: 't', variant, hiddenPassed: 1, hiddenTotal: 1, linesAdded: lines, linesRemoved: 0, newDeps: [], testFilesChanged: 1, durationMs: 1000, agentExit: 0, filesChanged: 1, checks: [] });
+  const big = [];
+  for (let i = 0; i < 25; i++) big.push(rec('without', 40 + (i % 5)), rec('with', 20 + (i % 5)));
+  const md = bench.report(big, { agentCmd: 'x' });
+  assert.doesNotMatch(md, /so the p-values are exact/); // n=25 uses Monte Carlo, so "exact" would be false
+  assert.match(md, /seeded Monte Carlo permutation test/);
+  assert.match(md, /Monte Carlo permutation p≤/); // fully separated: no resample as extreme
+  const ten = [];
+  for (let i = 0; i < 10; i++) ten.push(rec('without', 10 + i), rec('with', 5 + i));
+  assert.match(bench.report(ten, { agentCmd: 'x' }), /so the p-values are exact/); // C(20,10) splits: enumerable
 });

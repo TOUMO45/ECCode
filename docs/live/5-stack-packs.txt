@@ -1,0 +1,47 @@
+**Stack command output:**
+```
+Stacks: node (package.json)
+  node-test        [test] npm test
+  eccode-secrets   [secrets] eccode stack run eccode-secrets
+Legend: * required at verification (eccode stack adopt --actor user). Project scripts beat standard tools.
+```
+
+**`stack run node-test --actor orchestrator` output:**
+```
+node-test: PASSED
+> shop@1.0.0 test
+> node --test
+
+TAP version 13
+# Subtest: line total
+ok 1 - line total
+  ---
+  duration_ms: 0.795463
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 85.569346
+```
+
+**`stack run eccode-secrets --actor orchestrator` output:**
+```
+eccode-secrets: PASSED
+No secrets found in code.
+```
+
+**Summary**
+
+- **Stack detected:** `node`, from `package.json`.
+- **Checks detected:**
+  - `node-test` [test], which runs `npm test`. It passed: 1 test ran, 1 passed, 0 failed.
+  - `eccode-secrets` [secrets]. It passed, with no secrets found in code.
+- **Required at verification:** neither check is marked with `*`, so neither is currently required at verification. The legend says `eccode stack adopt --actor user` sets that.
+
+The session-start notes mention a delivery in progress for project "shop" with a pending gate. I did not start any gates or dispatch agents, since you asked only for these three checks.

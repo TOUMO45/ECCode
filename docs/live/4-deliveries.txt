@@ -1,0 +1,16 @@
+The project has had **2 work items**:
+
+```
+w1 [greenfield] delivered delivered 2026-10-23T01:13:33.024Z — shop
+w2 [quick] active — tighten money formatting
+```
+
+So one is **delivered** (w1, greenfield) and one is **active** (w2, quick).
+
+The start attempt was refused, with exit code 2:
+
+```
+eccode: [WORK_ACTIVE] Work item w2 ("tighten money formatting", quick) is still active. Deliver it (eccode deliver) or have the user abandon it (eccode work abandon --actor user --reason ...).
+```
+
+No new item was created. The engine allows only one active work item at a time. I haven't delivered or abandoned w2, since delivering it needs the gates to pass and abandoning it is your decision. To start "fix rounding of half cents", either finish w2 with `eccode deliver`, or abandon it yourself with `eccode work abandon --actor user --reason ...`. Tell me which you want.
