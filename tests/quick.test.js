@@ -110,8 +110,15 @@ test('the printed path delivers: claim, change, evidence, drafted handoff, phase
   ok(['gate', 'submit', 'phase:change', '--actor', 'backend-engineer']);
   const ev = JSON.parse(ok(['evidence', 'run', '--actor', 'technical-reviewer', '--label', 'review', '--gate', 'phase:change', '--json', '--', 'npm', 'test']));
   const review = { decision: 'approve', summary: 'The discount and its boundary test pass under the reviewer run.', criteria: [{ id: 'C1', description: 'the change works and its verification command passes', met: true, evidence: [`ev:${ev.id}`] }], findings: [] };
-  write(dir, '.eccode/reviews/phase.json', JSON.stringify(review));
-  ok(['gate', 'review', 'phase:change', '--actor', 'technical-reviewer', '--file', '.eccode/reviews/phase.json']);
+  write(dir, '.eccode/reviews/drafts/old-round.json', '{}');
+  const hourAgo = new Date(Date.now() - 3600 * 1000);
+  fs.utimesSync(path.join(dir, '.eccode/reviews/drafts/old-round.json'), hourAgo, hourAgo); // written before this submission
+  write(dir, '.eccode/reviews/drafts/phase-change.json', JSON.stringify(review));
+  // A reviewer that wrote its review but never ran gate review: status names the draft and the command.
+  assert.doesNotMatch(ok(['status', '--brief']), /old-round/, 'a draft from before the latest submission is not this round\'s');
+  assert.match(ok(['status', '--brief']), /never recorded \(\.eccode\/reviews\/drafts\/phase-change\.json\): dispatch its reviewer again to run eccode gate review phase:change --actor <reviewer> --file \.eccode\/reviews\/drafts\/phase-change\.json/);
+  ok(['gate', 'review', 'phase:change', '--actor', 'technical-reviewer', '--file', '.eccode/reviews/drafts/phase-change.json']);
+  assert.doesNotMatch(ok(['status', '--brief']), /never recorded/);
   ok(['gate', 'start', 'verification', '--actor', 'orchestrator']);
   write(dir, '.eccode/artifacts/verification.md', '# Verification\nnpm test passes with the discount.\n');
   ok(['gate', 'submit', 'verification', '--actor', 'delivery-lead', '--artifact', '.eccode/artifacts/verification.md']);

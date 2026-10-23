@@ -432,14 +432,14 @@ function main(argv) {
 
   switch (group) {
     case 'status': {
-      const sum = status.summary(store.state(), config);
+      const sum = status.summary(store.state(), config, { root: store.root });
       if (flags.brief) print({}, status.formatBrief(sum));
       else print(flags, status.formatBrief(sum) + '\n\n' + JSON.stringify(sum.gates, null, 2), sum);
       return 0;
     }
     case 'resume': {
       const state = store.state();
-      const sum = status.summary(state, config);
+      const sum = status.summary(state, config, { root: store.root });
       const lastHandoffs = Object.values(state.handoffs).slice(-3).map((h) => `- ${h.at} ${h.from}→${h.to}: ${h.nextAction}`);
       const text = [status.formatBrief(sum), lastHandoffs.length ? 'Recent handoffs:\n' + lastHandoffs.join('\n') : ''].filter(Boolean).join('\n');
       print(flags, text, { ...sum, recentHandoffs: lastHandoffs });
