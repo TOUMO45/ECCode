@@ -182,3 +182,19 @@ test('stratified permutation: within-batch shuffles, batch effects cancel, seede
   // A stratum missing one variant is excluded rather than guessed at.
   assert.strictEqual(bench.stratifiedTest(rows('x|t', 'with', [1, 2, 3]), {}), null);
 });
+
+test('permutation test falls back to seeded Monte Carlo above the exact cap', () => {
+  const a = Array.from({ length: 25 }, (_, i) => 35 + (i % 5)); // clearly separated groups
+  const b = Array.from({ length: 25 }, (_, i) => 46 + (i % 5));
+  const r = bench.permutationTest(a, b);
+  assert.strictEqual(r.monteCarlo, true);
+  assert.strictEqual(r.splits, 100000);
+  assert.ok(r.p < 0.001, `expected tiny p for separated groups, got ${r.p}`);
+  assert.strictEqual(bench.permutationTest(a, b).p, r.p); // seeded: reproducible
+  const same = bench.permutationTest(a, a.slice());
+  assert.ok(same.p > 0.9, `identical groups should be null-ish, got ${same.p}`);
+  // Small samples keep the exact path, unchanged.
+  const exact = bench.permutationTest([1, 2, 3, 4, 5], [6, 7, 8, 9, 10]);
+  assert.strictEqual(exact.splits, 252);
+  assert.ok(!exact.monteCarlo);
+});
