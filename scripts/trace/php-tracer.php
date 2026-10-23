@@ -13,7 +13,7 @@ if (getenv('ECCODE_TRACE_FILE') && getenv('ECCODE_TRACE_ROOT') && !class_exists(
         private $fp;
         private $dir;
         public static $out;
-        public static $root;
+        public static $roots = array();
 
         private static function native(callable $fn)
         {
@@ -31,24 +31,37 @@ if (getenv('ECCODE_TRACE_FILE') && getenv('ECCODE_TRACE_ROOT') && !class_exists(
             return str_replace('\\', '/', $p);
         }
 
+        // Project-relative path for either spelling of the root (8.3 short or
+        // long on Windows, compared case-insensitively there); null outside.
+        private static function rel($p)
+        {
+            $win = DIRECTORY_SEPARATOR === '\\';
+            foreach (self::$roots as $r) {
+                if ($win ? stripos($p, $r) === 0 : strpos($p, $r) === 0) {
+                    return substr($p, strlen($r));
+                }
+            }
+            return null;
+        }
+
         private static function log($path)
         {
             $target = self::norm((string) realpath($path));
-            $root = self::$root;
-            if ($target === '' || strpos($target, $root) !== 0) {
+            $to = $target === '' ? null : self::rel($target);
+            if ($to === null) {
                 return;
             }
             $from = null;
             foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) as $frame) {
                 $f = isset($frame['file']) ? self::norm($frame['file']) : '';
-                if ($f !== '' && strpos($f, $root) === 0 && $f !== $target && $f !== self::norm(__FILE__)) {
-                    $from = $f;
+                if ($f !== '' && $f !== $target && $f !== self::norm(__FILE__) && self::rel($f) !== null) {
+                    $from = self::rel($f);
                     break;
                 }
             }
-            $rec = array('to' => substr($target, strlen($root)));
+            $rec = array('to' => $to);
             if ($from !== null) {
-                $rec['from'] = substr($from, strlen($root));
+                $rec['from'] = $from;
             }
             $out = self::$out;
             self::native(function () use ($out, $rec) {
@@ -124,7 +137,11 @@ if (getenv('ECCODE_TRACE_FILE') && getenv('ECCODE_TRACE_ROOT') && !class_exists(
     }
 
     EccodeTraceStream::$out = getenv('ECCODE_TRACE_FILE');
-    EccodeTraceStream::$root = str_replace('\\', '/', getenv('ECCODE_TRACE_ROOT'));
+    foreach (array(getenv('ECCODE_TRACE_ROOT'), getenv('ECCODE_TRACE_ROOT_ALT')) as $r) {
+        if ($r) {
+            EccodeTraceStream::$roots[] = str_replace('\\', '/', $r);
+        }
+    }
     stream_wrapper_unregister('file');
     stream_wrapper_register('file', 'EccodeTraceStream');
 }

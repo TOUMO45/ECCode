@@ -14,18 +14,31 @@ import java.security.ProtectionDomain;
 
 public final class EccodeTraceAgent implements ClassFileTransformer {
     private final String out;
-    private final String root;
+    private final String[] roots;
+    private static final boolean WIN = java.io.File.separatorChar == '\\';
 
-    private EccodeTraceAgent(String out, String root) {
+    private EccodeTraceAgent(String out, String[] roots) {
         this.out = out;
-        this.root = root;
+        this.roots = roots;
     }
 
     public static void premain(String args, Instrumentation inst) {
         String out = System.getenv("ECCODE_TRACE_FILE");
         String root = System.getenv("ECCODE_TRACE_ROOT");
         if (out == null || root == null) return;
-        inst.addTransformer(new EccodeTraceAgent(out, root.replace('\\', '/')));
+        String alt = System.getenv("ECCODE_TRACE_ROOT_ALT");
+        String[] roots = alt == null ? new String[] { root } : new String[] { root, alt };
+        for (int i = 0; i < roots.length; i++) roots[i] = roots[i].replace('\\', '/');
+        inst.addTransformer(new EccodeTraceAgent(out, roots));
+    }
+
+    // Either spelling of the root (8.3 short or long on Windows, compared
+    // case-insensitively there).
+    private boolean underRoot(String path) {
+        for (String r : roots) {
+            if (WIN ? path.regionMatches(true, 0, r, 0, r.length()) : path.startsWith(r)) return true;
+        }
+        return false;
     }
 
     private boolean inProject(ProtectionDomain pd) {
@@ -33,7 +46,7 @@ public final class EccodeTraceAgent implements ClassFileTransformer {
             CodeSource cs = pd == null ? null : pd.getCodeSource();
             if (cs == null || cs.getLocation() == null) return false;
             String loc = Paths.get(cs.getLocation().toURI()).toString().replace('\\', '/');
-            return (loc + "/").startsWith(root);
+            return underRoot(loc + "/");
         } catch (Throwable t) {
             return false;
         }

@@ -9,6 +9,17 @@ import sys
 
 _out = os.environ.get("ECCODE_TRACE_FILE")
 _root = os.environ.get("ECCODE_TRACE_ROOT")
+_roots = [r for r in (_root, os.environ.get("ECCODE_TRACE_ROOT_ALT")) if r]
+_win = os.name == "nt"
+
+
+def _rel(p):
+    """Project-relative path for either spelling of the root (8.3 short or long
+    on Windows, compared case-insensitively there); None outside the project."""
+    for r in _roots:
+        if (p.lower() if _win else p).startswith(r.lower() if _win else r):
+            return p[len(r):].replace(os.sep, "/")
+    return None
 
 if _out and _root:
     class _EccodeTraceFinder:
@@ -25,9 +36,9 @@ if _out and _root:
                 if spec is None:
                     continue
                 origin = getattr(spec, "origin", None)
-                if isinstance(origin, str) and origin.startswith(_root):
+                rel = _rel(origin) if isinstance(origin, str) else None
+                if rel:
                     try:
-                        rel = os.path.relpath(origin, _root).replace(os.sep, "/")
                         rec = {"to": rel}
                         importer = _importer(origin)
                         if importer:
@@ -47,8 +58,9 @@ if _out and _root:
             return None
         while frame is not None:
             fn = frame.f_code.co_filename
-            if fn.startswith(_root) and fn != origin and not fn.endswith("sitecustomize.py"):
-                return os.path.relpath(fn, _root).replace(os.sep, "/")
+            rel = _rel(fn)
+            if rel and fn != origin and not fn.endswith("sitecustomize.py"):
+                return rel
             frame = frame.f_back
         return None
 

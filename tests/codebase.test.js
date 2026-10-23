@@ -289,6 +289,10 @@ test('runtime trace resolves reflective loads on the JVM (Class.forName with a r
   assert.strictEqual(t.exitCode, 0);
   assert.strictEqual(t.jvmTraced, true);
   assert.ok(t.edges.some((e) => e.from === 'src/main/java/app/Main.java' && e.to === 'src/main/java/app/Plugin.java'), JSON.stringify(t.edges));
+  // The JVM reports canonical (long) paths; the agent must honor the second root spelling.
+  const real = fs.realpathSync(dir);
+  const alt = cb.traceRun(dir, 'java -cp build/classes app.Main', { rootSpellings: [path.join(path.dirname(real), 'no-such-spelling'), real] });
+  assert.ok(alt.edges.some((e) => e.from === 'src/main/java/app/Main.java' && e.to === 'src/main/java/app/Plugin.java'), JSON.stringify(alt.edges));
 });
 
 const KOTLINC = process.env.ECCODE_KOTLINC || 'kotlinc';
@@ -302,4 +306,36 @@ test('runtime trace resolves reflective loads in Kotlin (top-level main compiled
   const t = cb.traceRun(dir, 'java -cp app.jar app.MainKt');
   assert.strictEqual(t.exitCode, 0);
   assert.ok(t.edges.some((e) => e.from === 'src/main/kotlin/app/Main.kt' && e.to === 'src/main/kotlin/app/Plugin.kt'), JSON.stringify(t.edges));
+});
+
+test('every tracer honors the second spelling of the project root (Windows 8.3 short vs long paths)', () => {
+  // Windows CI temp dirs are 8.3 short paths that Node keeps but the JVM and
+  // PHP expand, so CI saw no edges there. Linux cannot produce two spellings
+  // naturally: give a primary root that matches nothing and the real root as
+  // the alternate, and every available tracer must still record its edges.
+  const dir = repo({
+    'src/plugin.js': 'module.exports = 1;\n',
+    'run.js': "require(['./src/plu', 'gin'].join(''));\n",
+    'jobs/task.py': 'VALUE = 1\n',
+    'jobs/loader.py': "import importlib\nimportlib.import_module('jobs.task')\n",
+    'lib/plugin.rb': 'module Plugin; end\n',
+    'app/main.rb': "require_relative ['../lib/plu', 'gin'].join\n",
+    'lib/Helper.php': '<?php\nfunction helper() { return 1; }\n',
+    'app/main.php': "<?php\ninclude __DIR__ . '/../lib/' . 'Helper' . '.php';\n",
+  });
+  const real = fs.realpathSync(dir);
+  const spellings = [path.join(path.dirname(real), 'no-such-spelling'), real];
+  const cases = [
+    ['node', 'node run.js', 'run.js -> src/plugin.js'],
+    ['python3', 'python3 -c "import jobs.loader"', 'jobs/loader.py -> jobs/task.py'],
+    ['ruby', 'ruby app/main.rb', 'app/main.rb -> lib/plugin.rb'],
+    ['php', 'php app/main.php', 'app/main.php -> lib/Helper.php'],
+  ];
+  const missing = [];
+  for (const [tool, cmd, edge] of cases) {
+    if (tool !== 'node' && !hasTool(tool)) continue;
+    const t = cb.traceRun(dir, cmd, { rootSpellings: spellings });
+    if (!t.edges.some((e) => `${e.from} -> ${e.to}` === edge)) missing.push(`${tool}: ${JSON.stringify(t.edges)}`);
+  }
+  assert.deepStrictEqual(missing, []);
 });
