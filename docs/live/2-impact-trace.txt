@@ -1,0 +1,25 @@
+The command ran with exit 0. Output, verbatim:
+
+```
+Impact of 1 file(s): src/util.js
+Dependents: 2 file(s) in module(s) src
+  src/cart.js (distance 1)
+    src/index.js (distance 2)
+Affected tests (run these): tests/cart.test.js
+Runtime trace (exit 0): 2 in-project loads observed; targets loaded by the command: src/util.js; runtime-only dependents found: none; direct edges the static graph lacks: src/index.js -> src/util.js; dynamic loaders observed in action: src/index.js
+```
+
+**(a) Static dependents of src/util.js**
+- `src/cart.js`, distance 1
+- `src/index.js`, distance 2 (reached through `src/cart.js`)
+
+**(b) Direct edges the runtime trace found that the static graph lacks**
+- `src/index.js -> src/util.js`. The static graph only reaches `src/index.js` indirectly, so it misses this direct load.
+
+**(c) Dynamic loaders observed in action**
+- `src/index.js`. The output does not say which mechanism it uses, so I can't tell from this run whether it is a conditional `require`, a dynamic `import()`, or something else.
+
+**(d) What this means for someone changing src/util.js**
+- The static analysis alone understates the blast radius. `src/index.js` depends on `src/util.js` directly, not only through `src/cart.js`, so a breaking change can reach the entry point even if `src/cart.js` is left alone.
+- The suggested test set is only `tests/cart.test.js`. Nothing in the output ties a test to `src/index.js`, so a change to `src/util.js` could break the entry point without any suggested test failing. Run the existing test suite in full, or add a test that exercises `src/index.js`, before trusting a change.
+- Treat `src/index.js` as a distance-1 dependent for review purposes. The tool's distance of 2 predates the trace edge and was not recomputed.

@@ -129,3 +129,30 @@ test('mcp: refuses to serve as user, and the record survives a malformed line', 
     c.close();
   }
 });
+
+test('mcp: evidence_run is not a shell — unapproved commands are refused, approved ones run', async () => {
+  // Found by an independent audit: evidence_run executed any command, so a
+  // locked server could write outside its ownership or run the CLI as another
+  // role. It now runs only commands approved upstream.
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  const c = client(ctx.dir, 'backend-engineer');
+  try {
+    await c.request('initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 't', version: '0' } });
+    const write = await c.call('evidence_run', { label: 'x', command: `node -e "require('fs').writeFileSync('README.md','x')"` });
+    assert.strictEqual(write.isError, true, write.text);
+    assert.match(write.text, /COMMAND_NOT_APPROVED/);
+    assert.ok(!fs.existsSync(path.join(ctx.dir, 'README.md')), 'the refused command must not run');
+    const before = fs.readFileSync(path.join(ctx.dir, '.eccode', 'events.jsonl'), 'utf8');
+    const cli = path.join(__dirname, '..', 'bin', 'eccode.js');
+    const asUser = await c.call('evidence_run', { label: 'x', command: `node ${JSON.stringify(cli)} risk add --id R9 --title t --severity low --actor user` });
+    assert.strictEqual(asUser.isError, true, asUser.text);
+    assert.strictEqual(fs.readFileSync(path.join(ctx.dir, '.eccode', 'events.jsonl'), 'utf8'), before, 'no event may be recorded');
+    const ok = await c.call('evidence_run', { label: 'checks', command: 'node -e "process.exit(0)"' }); // the plan's verification command
+    assert.strictEqual(ok.isError, false, ok.text);
+    assert.strictEqual(ok.json().status, 'passed');
+  } finally {
+    c.close();
+  }
+});

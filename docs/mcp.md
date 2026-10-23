@@ -1,6 +1,6 @@
 # MCP server mode: the engine as typed tool calls
 
-The guard hook reads shell text, and shell text can be obfuscated. MCP mode removes the problem instead of parsing harder: the engine is served as **typed tools** over MCP, each server instance is **locked to one role at startup**, and the agent gets **no Bash at all**. There is then no command line to disguise — state changes go through the engine's rules, commands run only through `evidence_run` (executed and recorded by the engine), and file writes stay under the PreToolUse guard's structured path checks.
+The guard hook reads shell text, and shell text can be obfuscated. MCP mode removes the problem instead of parsing harder: the engine is served as **typed tools** over MCP, each server instance is **locked to one role at startup**, and the agent gets **no Bash at all**. State changes go through the engine's rules; `evidence_run` executes **only commands approved upstream** — planned task verification commands, the work item's behavior command, and detected stack checks — and refuses anything else (`COMMAND_NOT_APPROVED`); file writes stay under the PreToolUse guard's structured path checks.
 
 ## Start a server
 
@@ -41,9 +41,10 @@ A headless Claude session configured exactly as above (no Bash; `mcp__eccode` + 
 
 ## What this mode does and does not change
 
-- **Closed by construction:** shell-command obfuscation (there is no shell), `--actor` impersonation (there is no actor argument), direct record writes (no shell; Write is hook-guarded on structured paths).
+- **Closed by construction:** a general shell (`evidence_run` runs only approved commands — an independent audit found it previously ran any command, which let a locked server write outside its ownership or act as the user; fixed and tested in `tests/mcp.test.js`), `--actor` impersonation (no tool takes an actor argument, and no unapproved command can call the CLI), direct record writes through Write (hook-guarded on structured paths).
+- **Contained by review, not construction:** approved commands such as `npm test` run project code, and an agent that may edit tests could put code there. That code is in the diff, and every changed file must be reviewed before verification (see [limits.md](limits.md), row 20).
 - **Unchanged:** the engine's rules and their limits — it proves process and evidence, not the quality of a reviewer's judgment.
-- **Trade-off:** agents cannot run ad-hoc commands outside `evidence_run`. That is the point: on this surface, everything an agent executes is recorded evidence.
+- **Trade-off:** agents cannot run ad-hoc commands at all — only the approved ones, each recorded as evidence. That is the point.
 
 The CLI surface itself is additionally fuzzed: a seeded battery of 240 generated attack variants (all denied) and 120 generated legitimate commands (all allowed) runs in the test suite on every CI job.
 

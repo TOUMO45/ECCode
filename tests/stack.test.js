@@ -4,6 +4,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { execFileSync, spawnSync } = require('child_process');
 const stack = require('../lib/stack');
@@ -122,4 +123,17 @@ test('affected-test runners group files by language', () => {
     stack.testRunCommands('.', ['tests/a.test.js', 'pkg/b_test.go', 'tests/test_c.py', 'pkg2/d_test.go']),
     ['node --test tests/a.test.js', 'pytest -q tests/test_c.py', 'go test ./pkg ./pkg2'],
   );
+});
+
+test('secrets scan still reads .claude/ even though the codebase index skips it', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-secrets-claude-'));
+  const token = ['gh', 'p_'].join('') + 'A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8'; // assembled so this file holds no literal token
+  fs.mkdirSync(path.join(dir, '.claude'));
+  fs.writeFileSync(path.join(dir, '.claude', 'settings.json'), JSON.stringify({ env: { GITHUB_TOKEN: token } }));
+  fs.writeFileSync(path.join(dir, '.env'), `TOKEN=${token}\n`);
+  const found = stack.scanSecrets(dir);
+  const files = found.code.map((x) => x.split(':')[0]);
+  assert.ok(files.includes('.claude/settings.json'), JSON.stringify(found));
+  assert.ok(files.includes('.env'), JSON.stringify(found));
+  fs.rmSync(dir, { recursive: true, force: true });
 });

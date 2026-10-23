@@ -111,3 +111,37 @@ test('fuzz: 240 generated attack variants are denied; 120 generated legitimate c
   }
   assert.deepStrictEqual(failures, [], `seed 42 reproduces these:\n${failures.slice(0, 12).join('\n')}`);
 });
+
+// Identity written through quoting or shell expansion. An independent audit
+// found these read as "no actor" (allowed with no ask): the guard now unquotes
+// the --actor word and fails closed on expansion in eccode arguments.
+const OBFUSCATED_IDENTITY = [
+  "node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low --actor us''er",
+  'node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low --actor "us"er',
+  'node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low --actor u\\ser',
+  'node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low --actor "$(echo user)"',
+  'node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low --actor `echo user`',
+  'U=user; node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low --actor $U',
+  'A=--actor; node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low $A user',
+];
+
+test('obfuscated identity: denied inside a subagent, held for the human in the main session', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  const failures = [];
+  for (const cmd of OBFUSCATED_IDENTITY) {
+    const sub = decision(ctx.dir, 'frontend-engineer', cmd);
+    if (sub !== 'deny') failures.push(`subagent ${sub}: ${cmd}`);
+    const main = decision(ctx.dir, null, cmd);
+    if (main !== 'ask' && main !== 'deny') failures.push(`main ${main}: ${cmd}`);
+  }
+  // Literal identities and expansion inside an evidence command stay allowed.
+  for (const cmd of [
+    'node .claude/eccode/bin/eccode.js task list',
+    'node .claude/eccode/bin/eccode.js evidence run --actor frontend-engineer --label t -- "echo $HOME"',
+  ]) {
+    const got = decision(ctx.dir, 'frontend-engineer', cmd);
+    if (got !== 'allow') failures.push(`legitimate ${got}: ${cmd}`);
+  }
+  assert.deepStrictEqual(failures, []);
+});

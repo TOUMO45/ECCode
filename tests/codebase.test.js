@@ -165,6 +165,8 @@ test('runtime trace resolves what static analysis cannot: dynamic require and im
   const pyTrace = cb.traceRun(dir, 'python3 -c "import jobs.loader"'); // from the root, so the jobs package resolves
   assert.strictEqual(pyTrace.exitCode, 0, 'traced python run failed');
   assert.ok(pyTrace.loaded.includes('jobs/task.py'), JSON.stringify(pyTrace.loaded));
+  // The reflective importer is identified, not just the load.
+  assert.ok(pyTrace.edges.some((e) => e.from === 'jobs/loader.py' && e.to === 'jobs/task.py'), JSON.stringify(pyTrace.edges));
   const pyMerged = cb.mergeTrace(cb.impact(dir, ['jobs/task.py'], { index }), pyTrace);
   assert.deepStrictEqual(pyMerged.runtime.targetsLoaded, ['jobs/task.py']);
 });
@@ -211,4 +213,37 @@ test('runtime trace reports direct edges the static graph lacks, even from files
   const merged = cb.mergeTrace(staticImpact, cb.traceRun(dir, 'node src/index.js'));
   assert.deepStrictEqual(merged.runtime.runtimeOnlyEdges, ['src/index.js -> src/util.js']);
   assert.ok(merged.runtime.dynamicCallersObserved.includes('src/index.js'), JSON.stringify(merged.runtime));
+});
+
+test('audit regressions: ESM chains keep upstream callers, partial loads are named, aliased require is flagged, the cache follows the parser', () => {
+  const dir = repo({
+    'esm/util.mjs': 'export const u = 1;\n',
+    'esm/cart.mjs': "const m = await import(['./ut', 'il.mjs'].join(''));\nexport const c = m.u;\n",
+    'esm/index.mjs': "const m = await import(['./ca', 'rt.mjs'].join(''));\nconsole.log(m.c);\n",
+    'src/a.js': 'module.exports = 1;\n',
+    'src/b.js': 'module.exports = 2;\n',
+    'src/hidden.js': "const r = require;\nmodule.exports = (x) => r(x);\n",
+    'run.js': "require('./src/a');\n",
+  });
+  // ESM logs edges top-down; the merge must still reach index.mjs.
+  if (typeof require('module').register === 'function') {
+    const m = cb.mergeTrace(cb.impact(dir, ['esm/util.mjs']), cb.traceRun(dir, 'node esm/index.mjs'));
+    assert.deepStrictEqual(m.runtime.runtimeDependents, ['esm/cart.mjs', 'esm/index.mjs']);
+  }
+  // Two targets, one loaded: the other is named, not silently absent.
+  const p = cb.mergeTrace(cb.impact(dir, ['src/a.js', 'src/b.js']), cb.traceRun(dir, 'node run.js'));
+  assert.deepStrictEqual(p.runtime.targetsLoaded, ['src/a.js']);
+  assert.deepStrictEqual(p.runtime.targetsNotLoaded, ['src/b.js']);
+  // `const r = require` makes r a dynamic loader.
+  const index = cb.indexProject(dir);
+  assert.strictEqual(index.files['src/hidden.js'].dynamic, true);
+  // A cache written by another parser version is not reused.
+  fs.mkdirSync(path.join(dir, '.eccode'), { recursive: true });
+  cb.indexProject(dir, { refresh: true });
+  assert.ok(cb.indexProject(dir).reused > 0, 'same parser: cache reused');
+  const cacheFile = path.join(dir, '.eccode', 'cache', 'codebase.json');
+  const c = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+  c.version = 'older-parser';
+  fs.writeFileSync(cacheFile, JSON.stringify(c));
+  assert.strictEqual(cb.indexProject(dir).reused, 0);
 });

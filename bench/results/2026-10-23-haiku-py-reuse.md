@@ -1,6 +1,6 @@
 # Benchmark run — 2026-10-23, claude -p (haiku), Python reuse temptation, n=5 per variant
 
-> **Follow-up.** Every task in this file was later run at n≥10 per variant ([2026-10-23-haiku-n10-remaining.md](2026-10-23-haiku-n10-remaining.md), [2026-10-23-haiku-n10-replication.md](2026-10-23-haiku-n10-replication.md)), and the two headline tasks at a pre-registered n=25 ([2026-10-23-haiku-n25-preregistered.md](2026-10-23-haiku-n25-preregistered.md)). This file's runs stay in the record and in the all-data stratified test (`eccode bench tally`); its small-n figures are not the basis of any conclusion.
+> **Follow-up.** Every task in this file was later run at n≥10 per variant ([2026-10-23-haiku-n10-remaining.md](2026-10-23-haiku-n10-remaining.md), [2026-10-23-haiku-n10-replication.md](2026-10-23-haiku-n10-replication.md)), and the two headline tasks at a fixed-protocol n=25 ([2026-10-23-haiku-n25-preregistered.md](2026-10-23-haiku-n25-preregistered.md)). This file's runs stay in the record and in the all-data stratified test (`eccode bench tally`); its small-n figures are not the basis of any conclusion.
 
 `py-page-id` is the Python mirror of `slugify-reuse`: an existing `normalize()`
 helper in the same module, and a prompt that never mentions it. The JS original

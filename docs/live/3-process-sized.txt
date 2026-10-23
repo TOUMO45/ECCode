@@ -1,0 +1,23 @@
+**1) `status --brief`** (verbatim):
+
+```
+ECCode project "shop" (event #26)
+Work: w2 [quick] active — tighten money formatting (1 earlier work item(s) archived)
+Gates: phase:change=pending → verification=pending
+Tasks: 1 pending
+Budget: $0/25, 0/480 min
+NEXT: start-gate [phase:change] — eccode gate start phase:change --actor orchestrator, then dispatch the task owners
+```
+
+**2) `gate start architecture --actor orchestrator`** (verbatim, exit code 2):
+
+```
+eccode: [UNKNOWN_GATE] Unknown gate "architecture". Gates: phase:change, verification
+```
+
+**Answers**
+
+- **Gates on the active work item:** Work item w2 (quick, "tighten money formatting") has two gates: `phase:change` (pending) and `verification` (pending). The status line lists them in that order, with `phase:change` before `verification`.
+- **Architecture gate:** The start attempt failed. ECCode doesn't recognize `architecture` as a gate name for this project, and the only valid gates are `phase:change` and `verification`. Nothing was started or changed.
+
+The status output's NEXT step is to start `phase:change`. I haven't run that because you only asked for the two commands above. Say the word and I'll start it.
