@@ -117,3 +117,41 @@ fs.appendFileSync('src/report.py', '\\n\\ndef sum_column(text, name):\\n    tota
     fs.rmSync(r.sandbox, { recursive: true, force: true });
   }
 });
+
+test('tally recomputes headline numbers from recorded report files', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tally-'));
+  const report = (rows) => [
+    '# ECCode paired benchmark', '', 'Agent command: `x`.', '',
+    '| Task | Variant | n | Hidden checks | Median lines added | Runs adding a dependency | Runs changing a test | Median seconds |',
+    '|---|---|---|---|---|---|---|---|',
+    '| t | without | 2 | 4/4 | 10 | 0/2 | 0/2 | 5 |', '',
+    '## Raw runs', '',
+    '| Task | Variant | Hidden | Lines +/− | New deps | Test files | Seconds | Agent exit |',
+    '|---|---|---|---|---|---|---|---|',
+    ...rows, '',
+    '## Appendix', '', '| t | 1,2,3 | 4,5,6 | 0.5 |',
+  ].join('\n');
+  fs.writeFileSync(path.join(dir, 'a.md'), report([
+    '| t | without | 2/2 | +10/−0 | — | 0 | 5 | 0 |',
+    '| t | with | 1/2 | +8/−0 | lodash | 1 | 6 | 0 |',
+  ]));
+  // CRLF file with an agent failure; appendix rows must not count as runs
+  fs.writeFileSync(path.join(dir, 'b.md'), report(['| t | with | 2/2 | +9/−1 | — | 1 | 7 | 1 |']).replace(/\n/g, '\r\n'));
+  fs.writeFileSync(path.join(dir, 'notes.md'), '# No raw runs section\n');
+  const t = bench.tally(dir);
+  assert.deepStrictEqual(t.total, { files: 2, runs: 3, hiddenPassed: 5, hiddenTotal: 6, depRuns: 1, agentFailures: 1 });
+  assert.strictEqual(t.perFile.length, 2);
+  assert.deepStrictEqual(t.perFile[0], { file: 'a.md', runs: 2, hiddenPassed: 3, hiddenTotal: 4, depRuns: 1, agentFailures: 0 });
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('the report header grades its own sample size', () => {
+  const rec = (task, variant, lines) => ({ task, variant, hiddenPassed: 2, hiddenTotal: 2, linesAdded: lines, linesRemoved: 0, newDeps: [], testFilesChanged: 1, durationMs: 1000, agentExit: 0, filesChanged: 1, checks: [] });
+  const small = bench.report([rec('t', 'without', 10), rec('t', 'with', 8)], { agentCmd: 'x' });
+  assert.match(small, /demonstration, not a statistic/);
+  const many = [];
+  for (let i = 0; i < 10; i++) { many.push(rec('t', 'without', 10 + i)); many.push(rec('t', 'with', 8 + i)); }
+  const big = bench.report(many, { agentCmd: 'x' });
+  assert.match(big, /n >= 10 times per task; the exact permutation test enumerates every split/);
+  assert.doesNotMatch(big, /demonstration, not a statistic/);
+});

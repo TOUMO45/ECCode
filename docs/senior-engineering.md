@@ -60,7 +60,7 @@ The same agent command solves the same tasks in fresh sandboxes, once with the l
 - **hidden checks** copied into the sandbox only after the agent finishes (functional tests, "no new dependency", "fixed at the root cause, not in the caller");
 - lines added/removed, files changed, dependencies added, test files changed, wall time.
 
-Seven built-in tasks ship under `bench/tasks/` spanning JavaScript, Python, and Go: features, a bug fix with a tempting caller-side patch, a dependency temptation, and a reuse temptation; `--suite <dir>` runs your own. The report pairs variants per task, prints every raw run, and states its own limits: a small `n` is a demonstration, not a statistic, and it never prints a "saved" figure without a baseline. Results from one run of this suite live in [bench/results/](../bench/results/) with the exact command and date.
+Seven built-in tasks ship under `bench/tasks/` spanning JavaScript, Python, and Go: features, a bug fix with a tempting caller-side patch, a dependency temptation, and a reuse temptation; `--suite <dir>` runs your own. The report pairs variants per task, prints every raw run, and states its own limits: a small `n` is a demonstration, not a statistic, and it never prints a "saved" figure without a baseline. Results from runs of this suite live in [bench/results/](../bench/results/) with the exact command and date, and `eccode bench tally` recomputes the headline totals (runs, hidden-check passes, dependency additions, agent failures) from those files, so any claim about past runs is derived from the records rather than remembered.
 
 For external comparability, pair this with SWE-bench Verified or Harbor (see [tooling-research.md](tooling-research.md)); publish paired deltas, not absolute scores.
 
