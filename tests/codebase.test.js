@@ -290,7 +290,7 @@ test('runtime trace resolves reflective loads on the JVM (Class.forName with a r
   assert.strictEqual(t.jvmTraced, true);
   assert.ok(t.edges.some((e) => e.from === 'src/main/java/app/Main.java' && e.to === 'src/main/java/app/Plugin.java'), JSON.stringify(t.edges));
   // The JVM reports canonical (long) paths; the agent must honor the second root spelling.
-  const real = fs.realpathSync(dir);
+  const real = fs.realpathSync.native(dir); // the JVM reports canonical long paths (Windows: no 8.3 names)
   const alt = cb.traceRun(dir, 'java -cp build/classes app.Main', { rootSpellings: [path.join(path.dirname(real), 'no-such-spelling'), real] });
   assert.ok(alt.edges.some((e) => e.from === 'src/main/java/app/Main.java' && e.to === 'src/main/java/app/Plugin.java'), JSON.stringify(alt.edges));
 });
@@ -323,18 +323,21 @@ test('every tracer honors the second spelling of the project root (Windows 8.3 s
     'lib/Helper.php': '<?php\nfunction helper() { return 1; }\n',
     'app/main.php': "<?php\ninclude __DIR__ . '/../lib/' . 'Helper' . '.php';\n",
   });
-  const real = fs.realpathSync(dir);
-  const spellings = [path.join(path.dirname(real), 'no-such-spelling'), real];
+  // The alternate is the spelling each runtime reports: Node, Python and Ruby
+  // keep the working directory's form; PHP's realpath() expands to the long
+  // form (identical on Linux and macOS).
+  const cwdForm = fs.realpathSync(dir);
+  const longForm = fs.realpathSync.native(dir);
   const cases = [
-    ['node', 'node run.js', 'run.js -> src/plugin.js'],
-    ['python3', 'python3 -c "import jobs.loader"', 'jobs/loader.py -> jobs/task.py'],
-    ['ruby', 'ruby app/main.rb', 'app/main.rb -> lib/plugin.rb'],
-    ['php', 'php app/main.php', 'app/main.php -> lib/Helper.php'],
+    ['node', 'node run.js', 'run.js -> src/plugin.js', cwdForm],
+    ['python3', 'python3 -c "import jobs.loader"', 'jobs/loader.py -> jobs/task.py', cwdForm],
+    ['ruby', 'ruby app/main.rb', 'app/main.rb -> lib/plugin.rb', cwdForm],
+    ['php', 'php app/main.php', 'app/main.php -> lib/Helper.php', longForm],
   ];
   const missing = [];
-  for (const [tool, cmd, edge] of cases) {
+  for (const [tool, cmd, edge, real] of cases) {
     if (tool !== 'node' && !hasTool(tool)) continue;
-    const t = cb.traceRun(dir, cmd, { rootSpellings: spellings });
+    const t = cb.traceRun(dir, cmd, { rootSpellings: [path.join(path.dirname(real), 'no-such-spelling'), real] });
     if (!t.edges.some((e) => `${e.from} -> ${e.to}` === edge)) missing.push(`${tool}: ${JSON.stringify(t.edges)}`);
   }
   assert.deepStrictEqual(missing, []);
