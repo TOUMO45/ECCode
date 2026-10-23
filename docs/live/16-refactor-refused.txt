@@ -1,0 +1,87 @@
+# Safe change: refactor track refusals (one work item, three sessions)
+
+## Session a: backend-engineer removes a public export, then renames a parameter
+
+### Prompt
+
+You are backend-engineer on this refactor work item (sequential single-context mode: you act as that role directly). The ECCode CLI is node .claude/eccode/bin/eccode.js. Do these steps in order. Quote every eccode command's output verbatim. When a step says a refusal is EXPECTED, quote it and continue; never work around a refusal in any other way.
+1. node .claude/eccode/bin/eccode.js task claim tidy --actor backend-engineer
+2. Move clamp into its only caller: in src/util.js change the export line to module.exports = { money }; and in src/cart.js change the first line to const { money } = require('./util'); and add a new second line: const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
+3. node .claude/eccode/bin/eccode.js evidence run --actor backend-engineer --task tidy --label verify -- "node -e \"process.exit(0)\""   (note the evidence id)
+4. Write .eccode/drafts/handoff-tidy.json with exactly this JSON, EVID replaced by the step-3 id (without the ev: prefix): {"from":"backend-engineer","to":"delivery-lead","task":"tidy","objective":"Complete task tidy","context":"Refactor.","inputs":[".eccode/artifacts/spec.md"],"expectedOutput":"Same behavior","acceptanceCriteria":["tidy works"],"completedWork":"Moved clamp into cart.","filesChanged":["src/util.js","src/cart.js"],"evidence":["ev:EVID"],"remainingIssues":[],"nextAction":"Phase review","testsNotNeeded":"Behavior unchanged; tests/cart.test.js covers it.","breakingChanges":[{"kind":"export","name":"src/util.js#clamp","reason":"moved into its only caller","migration":"none needed inside the project"}]}
+5. node .claude/eccode/bin/eccode.js task complete tidy --actor backend-engineer --handoff .eccode/drafts/handoff-tidy.json   (a refusal is EXPECTED even though the breaking change is declared: the refactor track preserves behavior)
+6. Run git checkout -- src/util.js src/cart.js. Then make a behavior-preserving change: in src/util.js rename money's parameter c to cents (both places in that line).
+7. Repeat step 3 (new id). In the handoff set filesChanged to ["src/util.js"], set completedWork to "Renamed a parameter.", remove the breakingChanges field, and use the new evidence id. Repeat step 5   (this one should succeed).
+Finish with a short summary of what each completion attempt returned.
+
+### Answer (verbatim)
+
+Step 7 did not succeed. The completion was refused on a schema check in the handoff's `context` field, which is only 9 characters. I stopped there rather than edit that field, because you specified the JSON exactly.
+
+**Step-by-step results**
+
+1. Claim: `Claimed tidy (base 6682a370c788242a2c4815d753bfd0656d520140).`
+2. Edits applied: `src/util.js` export changed to `module.exports = { money };`, and `src/cart.js` changed to import only `money` and define `clamp` inline.
+3. Evidence: `Evidence ev:ev-mvkoa0or-01fa9ef6 — PASSED (exit 0, 40ms)`
+4. Handoff written to `.eccode/drafts/handoff-tidy.json` with `ev:ev-mvkoa0or-01fa9ef6`.
+5. Completion attempt 1 (expected refusal):
+   ```
+   eccode: [INVALID_HANDOFF] Task completion rejected:
+   - $.context: must be at least 10 non-blank characters
+   - compat: refactor track preserves behavior, but: public definition "clamp" removed from src/util.js (or the file was deleted/renamed). Restore it, or run this change as a feature/fix work item instead.
+   ```
+   The `compat` line is the expected refusal. The `context` error was present too, so this refusal was not only the one you anticipated.
+6. Reverted with `git checkout -- src/util.js src/cart.js`, then renamed `c` to `cents` in `money`. The diff now shows only that rename.
+7. New evidence: `Evidence ev:ev-mvkoacaf-01c5973e — PASSED (exit 0, 45ms)`. The handoff was rewritten with `filesChanged: ["src/util.js"]`, `completedWork: "Renamed a parameter."`, no `breakingChanges`, and the new evidence id.
+   Completion attempt 2:
+   ```
+   eccode: [INVALID_HANDOFF] Task completion rejected:
+   - $.context: must be at least 10 non-blank characters
+   ```
+
+**Current state**
+- `src/util.js`: `money(cents)` rename only.
+- `src/cart.js`: back to original.
+- Task `tidy` is still claimed and not completed.
+
+**Things to decide**
+- The fix for the schema refusal is to make `context` at least 10 non-blank characters, for example `"Refactor of pricing helpers."`. I haven't made that change because it alters the handoff you specified. Say the word and I'll apply it and resubmit step 7.
+- Step 2 as written left the `clamp` definition in `src/util.js`, so it's now unused but still present. The step-5 refusal flagged this as a removed public definition. Once the rename is completed, that dead code will still be there unless someone removes it.
+
+## Session b: the same agent fixes the handoff context its first completion lacked
+
+### Prompt
+
+You are backend-engineer on this refactor work item (sequential single-context mode). In .eccode/drafts/handoff-tidy.json, set "context" to "Refactor of the pricing helpers." and change nothing else. Then run exactly: node .claude/eccode/bin/eccode.js task complete tidy --actor backend-engineer --handoff .eccode/drafts/handoff-tidy.json and quote its output verbatim. If it is refused, quote the refusal and stop.
+
+### Answer (verbatim)
+
+The handoff was updated and the task completed. I changed only the `context` field in `.eccode/drafts/handoff-tidy.json`, from `"Refactor."` to `"Refactor of the pricing helpers."`.
+
+The command output, verbatim:
+
+```
+Task tidy completed with validated handoff.
+```
+
+The task was not refused.
+
+## Session c: delivery-lead submits verification without the behavior baseline
+
+### Prompt
+
+You are delivery-lead on this refactor work item (sequential single-context mode). Run this exactly with the Bash tool and quote the full output verbatim; if it is refused, quote the refusal and stop (do not work around it):
+node .claude/eccode/bin/eccode.js gate submit verification --actor delivery-lead --artifact .eccode/artifacts/verify.md
+Then explain in one or two sentences, from the output only, why the submission was accepted or refused.
+
+### Answer (verbatim)
+
+The submission was refused. The full output, quoted verbatim:
+
+```
+eccode: [TRACK_RULE] The refactor track requires more evidence before verification:
+- refactor track: the behavior command must be recorded passing BEFORE the first task claim (eccode evidence run ... -- "npm test"), to prove the baseline was green.
+- refactor track: the behavior command must be recorded passing again AFTER the last phase approval, to prove behavior was preserved.
+```
+
+The refactor track requires the behavior command (for example `npm test`) to be recorded as passing through `eccode evidence run` both before the first task claim and again after the last phase approval, and the submission lacks that evidence. I stopped here as instructed and did not try to work around the refusal.

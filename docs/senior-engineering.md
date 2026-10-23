@@ -87,8 +87,12 @@ For external comparability, pair this with SWE-bench Verified or Harbor (see [to
   | Process sized to the task | `status` + `gate start architecture` on a quick work item | Two gates only (`phase:change`, `verification`); the architecture gate refused as unknown for this track |
   | Many deliveries | `work list` + `work start` while w2 is active | w1 delivered, w2 active; a third item refused until w2 is delivered or the user abandons it |
   | Safe refactoring / breaking changes | Multi-round implementer session | Undeclared export removal refused, mis-named declaration refused, exactly-named declaration accepted |
+  | Safe refactoring: refactor track | docs/live/16 and 17: one work item per outcome | Without a recorded baseline: export removal refused even when declared, then verification refused with TRACK_RULE (`npm test` never recorded before the first claim or after the approval). With `npm test` recorded first and again after approval: the verification submission accepted |
+  | Safe changes: migrations | docs/live/15: one implementer session | Edit of an applied migration refused; a new `DROP COLUMN` migration refused as destructive; an additive migration accepted |
   | Stack packs | `stack`, `stack run node-test`, `stack run eccode-secrets` | Node stack detected; both checks run and pass; adopt-to-require legend shown |
-  | Benchmark proof | `bench tally` + a real `bench --agent` run | Record totals read correctly; the mini run passed both hidden checks; hidden checks absent while the agent works |
+  | Benchmark proof | `bench tally` + a real `bench --agent` run; docs/live/18 (saved transcript of the harness running a real `claude -p --model haiku` agent) | Record totals read correctly; the mini run passed both hidden checks; hidden checks absent while the agent works. Every benchmark run is itself a live headless Claude session: each recorded run is a real agent in a fresh sandbox, graded by hidden checks the agent never saw |
+  | Impact analysis, every traced language | docs/live/9–13: one session per language | Python `importlib`, Ruby `require_relative`, PHP `new $class`, Java and Kotlin `Class.forName`, each with a name built at runtime: static analysis found 0 dependents, the trace found the real loader edge, exit 0 |
+  | Understands a big codebase: function level | docs/live/14: `impact --calls` | codebase-memory-mcp 0.12.1's call graph: `money` and `clamp` in src/util.js are called by `src/cart.js#lineTotal` |
 - The CI workflow runs the full check on Node 18/20/22 across Linux, macOS and Windows, audits the record against the PR base, and audits the example records.
 
 ### Live adversarial battery (real subagent)

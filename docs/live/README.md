@@ -2,6 +2,8 @@
 
 Final answers of headless Claude sessions (`claude -p --model haiku`), saved verbatim as each session printed them. Scratch paths are shortened to `<scratch>`. Each session drove the installed toolkit in a fixture project, and only the answer comes from the agent; the command outputs it quotes come from ECCode. All ran on 2026-10-23. Sessions 1–5 ran before the fixes from the independent audit (the MCP `evidence_run` allowlist, guard identity parsing, trace and index fixes); those fixes do not change the code paths the sessions exercise, except that session 2 was re-run after the runtime-edge fix it prompted. Session 6 ran after the audit fixes.
 
+Sessions 9–18 ran on 2026-10-23 after v0.7.0, each in a fresh fixture built by [fixtures/build.js](fixtures/build.js), and their files include the prompt as well as the answer. Steps that no session's agent plays (the technical-reviewer's own test run and phase approval, starting the verification gate) were done between sessions by `build.js approve-phase` and are named in the Setup column. Two session prompts were wrong, and the transcripts keep the refusals they caused: in 16a the handoff `context` was shorter than the schema's 10 characters, and in 17a the handoff cited `npm test` where the task's pinned verification command is `node -e "process.exit(0)"`. Sessions 16b and 17b fix exactly that and nothing else.
+
 | File | Row it verifies | Setup |
 |---|---|---|
 | 1-codebase-mcp-onboard.txt | Understands a big codebase | No-Bash agent with only the `onboard`/`impact` tools of an `eccode mcp` server |
@@ -10,7 +12,17 @@ Final answers of headless Claude sessions (`claude -p --model haiku`), saved ver
 | 4-deliveries.txt | Many deliveries | `work list` and `work start` while w2 is active |
 | 5-stack-packs.txt | Stack packs | `stack`, `stack run node-test`, `stack run eccode-secrets` |
 | 6-ask-path.txt | Trust: user decisions | `work abandon --actor user` held for the human |
-| 8-no-shell-profile.txt | Trust: record integrity without an OS sandbox | Project installed with `eccode install --profile no-shell`: the session had no Bash tool even though `--allowedTools` listed it; Write to the record refused by permission rules; a normal Write and the role's MCP write succeeded; audit OK |
 | 7-sandboxed-profile.txt | Trust: record integrity under any shell command | Project installed with `eccode install --sandbox` (bubblewrap): a record write whose path is built at runtime fails with EROFS at the OS level; the CLI reports RECORD_READ_ONLY; the role's MCP server records the change; audit OK |
+| 8-no-shell-profile.txt | Trust: record integrity without an OS sandbox | Project installed with `eccode install --profile no-shell`: the session had no Bash tool even though `--allowedTools` listed it; Write to the record refused by permission rules; a normal Write and the role's MCP write succeeded; audit OK |
+| 9-trace-python.txt | Impact analysis, Python | `impact --trace` over `importlib.import_module` with a name joined at runtime: 0 static dependents; the trace finds `jobs/loader.py -> jobs/task.py` |
+| 10-trace-ruby.txt | Impact analysis, Ruby | `require_relative` of a path interpolated at runtime: the TracePoint finds `app/main.rb -> lib/plugin.rb` |
+| 11-trace-php.txt | Impact analysis, PHP | `new $cls` through an autoloader: the stream wrapper finds `app/main.php -> lib/Plugin.php` |
+| 12-trace-java.txt | Impact analysis, Java | `Class.forName` of a joined class name: the JVM agent finds `Main.java -> Plugin.java` |
+| 13-trace-kotlin.txt | Impact analysis, Kotlin | The same through a Kotlin jar: `MainKt` is mapped back to `Main.kt` |
+| 14-function-callers.txt | Understands a big codebase (codebase-memory-mcp) | `impact src/util.js --calls` with codebase-memory-mcp 0.12.1: `money` and `clamp` are called by `src/cart.js#lineTotal` |
+| 15-migrations.txt | Safe changes: migrations | One session: editing an applied migration refused; a new migration with `DROP COLUMN` refused; an additive migration accepted |
+| 16-refactor-refused.txt | Safe changes: refactor track | (a) removing the public `clamp` export refused on a refactor work item, then a parameter rename refused only for the short `context`; (b) the rename completes; then `approve-phase`; (c) verification refused with TRACK_RULE, because `npm test` was never recorded before the first claim or after the approval |
+| 17-refactor-accepted.txt | Safe changes: refactor track | (a) `npm test` recorded first, then claim, rename and completion (refused: wrong verification command cited, see above); (b) completion with the pinned command; then `approve-phase`; (c) `npm test` again after the approval, and the verification submission is accepted |
+| 18-bench-real-model.txt | Proof via benchmark | The session runs `eccode bench` with a real `claude -p --model haiku` agent inside the sandbox and reads back the report the harness wrote (2/2 hidden checks) |
 
 Earlier live sessions are described in [senior-engineering.md](../senior-engineering.md): the CLI guard, the MCP no-Bash cycle, the adversarial battery, the multi-round safe-changes session and the bench-machinery session. Their transcripts were not saved. Only their recorded outcomes (event logs and audits) are described there.

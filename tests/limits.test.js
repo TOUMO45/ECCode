@@ -60,7 +60,7 @@ test('figures quoted in the docs match what bench tally derives from the records
 test('every file the register cites as evidence exists', () => {
   const missing = [];
   for (const x of rows()) {
-    for (const m of x.evidence.matchAll(/(?:^|[\s(`])((?:docs|lib|tests|scripts|bench|\.github)\/[\w./-]+\.(?:md|js|mjs|cjs|py|yml))/g)) {
+    for (const m of x.evidence.matchAll(/(?:^|[\s(`])((?:docs|lib|tests|scripts|bench|\.github)\/[\w./-]+\.(?:md|js|mjs|cjs|py|yml|txt))/g)) {
       if (!fs.existsSync(path.join(ROOT, m[1]))) missing.push(`row ${x.n}: ${m[1]}`);
     }
   }

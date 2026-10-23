@@ -1,0 +1,25 @@
+# Runtime trace, Python (importlib with a module name built at runtime)
+
+## Prompt
+
+You are checking what a change to jobs/task.py would affect in this project. Run this exactly with the Bash tool and quote its output verbatim:
+node .claude/eccode/bin/eccode.js impact jobs/task.py --trace -- "python3 -c \"import jobs.loader\""
+Then answer from that output only: (a) which files static analysis lists as dependents of jobs/task.py; (b) which file the runtime trace observed loading jobs/task.py, and whether static analysis could see that dependency; (c) the exit code of the traced command.
+
+## Answer (verbatim)
+
+The command output, verbatim:
+
+```
+Impact of 1 file(s): jobs/task.py
+Dependents: 0 file(s) in module(s) jobs
+WARNING: no affected test file found in the index for this change.
+Note: 1 file(s) use dynamic module loading and may also be affected (static analysis cannot tell): jobs/loader.py
+Runtime trace (exit 0): 3 in-project loads observed; targets loaded by the command: jobs/task.py; runtime-only dependents found: jobs/loader.py; direct edges the static graph lacks: jobs/loader.py -> jobs/task.py; dynamic loaders observed in action: jobs/loader.py
+```
+
+**(a)** Static analysis lists no dependents of `jobs/task.py`. The output reports "Dependents: 0 file(s)". It also warns that no affected test file was found in the index.
+
+**(b)** The runtime trace observed `jobs/loader.py` loading `jobs/task.py`, recorded as the direct edge `jobs/loader.py -> jobs/task.py`. Static analysis could not see this dependency. The static graph lacks that edge, and the tool flags `jobs/loader.py` as a file that uses dynamic module loading, which static analysis cannot resolve.
+
+**(c)** The traced command exited with code 0.
