@@ -86,6 +86,7 @@ Codebase (work in any repository; see docs/lean.md and docs/senior-engineering.m
 
 Benchmark
   bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|both] [--suite <dir>] [--out <file>] [--keep]
+  bench tally [--dir bench/results]       Recompute run totals (runs, hidden checks, deps, failures) from recorded reports
         Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
         hidden checks, lines, dependencies and tests are measured by the harness, never self-reported
 
@@ -168,6 +169,15 @@ function main(argv) {
   const { store, config } = openProject(root);
   if (group === 'bench') {
     const bench = require('../lib/bench');
+    if (sub === 'tally') {
+      const t = bench.tally(path.resolve(root, flags.dir || 'bench/results'));
+      const text = t.perFile
+        .map((f) => `${f.file}: ${f.runs} runs, hidden ${f.hiddenPassed}/${f.hiddenTotal}, dep-adding ${f.depRuns}, agent failures ${f.agentFailures}`)
+        .concat(`TOTAL: ${t.total.runs} runs across ${t.total.files} report files, hidden ${t.total.hiddenPassed}/${t.total.hiddenTotal}, dep-adding ${t.total.depRuns}, agent failures ${t.total.agentFailures}`, `Paired medians per task-batch: with-variant smaller ${t.total.pairedSmaller}, larger ${t.total.pairedLarger}, equal ${t.total.pairedEqual}`)
+        .join('\n');
+      print(flags, text, t);
+      return 0;
+    }
     const variants = flags.variant === 'with' ? ['with'] : flags.variant === 'without' ? ['without'] : ['without', 'with'];
     const { records, markdown } = bench.run({
       suite: flags.suite ? path.resolve(flags.suite) : undefined,
