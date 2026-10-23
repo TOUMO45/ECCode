@@ -14,7 +14,7 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
   - If subagents are not available in this harness, run the roles **sequentially yourself**.
   - In that case, say so to the user once ("roles executed sequentially in one context; independence is reduced").
   - Never present sequential role-play as independent agents.
-- **Never** state that an agent ran, a check passed or a gate was approved unless the engine record shows it. `eccode status`, `eccode evidence list` and `eccode gate show` are the source of truth, not an agent's summary.
+- **Never** state that an agent ran, a check passed or a gate was approved unless the engine record shows it. After every dispatch, run `eccode status --brief`. If the dispatched step is not recorded, re-dispatch the same role with its own report and the exact NEXT command, up to twice, before you report a stall. `eccode status`, `eccode evidence list` and `eccode gate show` are the source of truth, not an agent's summary.
 - **User authorization.** Agent approvals never stand in for the user on:
   - raising budgets;
   - accepting risks;

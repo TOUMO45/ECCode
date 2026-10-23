@@ -71,6 +71,8 @@ Each refusal is logged (`review.rejected`) and counted in metrics.
 
 6. `eccode gate review <gate> --actor <you> --file <draft>`
 
+Write the review file with the Write tool, not a shell redirect or heredoc: where Bash is limited to the `eccode` CLI, a shell write is refused. Then run the command. The review exists only when the engine prints `Review <id> recorded`; until you have seen that line, report the review as not recorded and quote the engine's own message.
+
 ## Severity guide
 | Severity | Meaning | Blocks approval |
 |---|---|---|

@@ -23,6 +23,8 @@ If the owner reports that the guard refused a file outside the task's ownership,
 5. **Deliver.** Dispatch `delivery-lead`: `E deliver --actor delivery-lead`.
 6. **Report.** Show the user `E status --brief` and the path of the final handoff. Claim only what the record shows.
 
+**After every dispatch, check the record, not the agent's summary.** Run `E status --brief`. If the step you dispatched is not recorded (the task still `claimed`, the gate still `submitted`), dispatch the same role again. Give it its own report and the exact command from the NEXT line, and tell it to write JSON files with the Write tool. Do this up to twice before you report a stall. An agent that says a step was denied must show the engine's message; a stall is only what the record and that message show.
+
 **Cost.** Around every dispatch, open and close a run so the record carries what the change cost:
 ```
 E run start --actor orchestrator --for <role> --task change      # or --gate <gate> for reviews; prints the run id
