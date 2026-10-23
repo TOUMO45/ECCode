@@ -115,7 +115,9 @@ Bugs and problem solving (see docs/bugs.md)
 
 Benchmark
   bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|engine|both|all|<a,b>] [--suite <dir>]
-        [--engine-profile guard|no-shell|sandbox] [--engine-agents inherit|as-shipped] [--timeout <s>] [--out <file>] [--keep]
+        [--engine-profile guard|no-shell|sandbox] [--engine-agents inherit|as-shipped] [--timeout <s>] [--out <file>]
+        [--save <runs.jsonl>] [--keep]
+  bench report <runs.jsonl> --agent "<cmd>" [--out <file>]   Rebuild a report from runs saved with --save
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
         Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
         "engine" installs the toolkit and asks for delivery through the quick track (bench/suites/engine:
@@ -231,6 +233,18 @@ function main(argv) {
       print(flags, text, t);
       return 0;
     }
+    if (sub === 'report') {
+      // Rebuild a report from runs saved with --save (one JSON record per line).
+      const file = path.resolve(need(arg, '<runs.jsonl>'));
+      const records = fs.readFileSync(file, 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l));
+      const markdown = bench.report(records, { agentCmd: need(flags.agent, '--agent') });
+      if (flags.out) {
+        require('../lib/util').writeFileAtomic(path.resolve(flags.out), markdown);
+        process.stderr.write(`bench: report of ${records.length} saved runs written to ${flags.out}\n`);
+      }
+      print(flags, markdown, records);
+      return 0;
+    }
     const VARIANTS = ['without', 'with', 'engine'];
     const variants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? VARIANTS : String(flags.variant).split(',').map((v) => v.trim());
     const unknown = variants.filter((v) => !VARIANTS.includes(v));
@@ -246,6 +260,7 @@ function main(argv) {
       engineProfile: flags['engine-profile'] || 'guard',
       engineAgents: flags['engine-agents'] || 'inherit',
       onProgress: (m) => process.stderr.write(`bench: ${m}\n`),
+      onRecord: flags.save ? (r) => fs.appendFileSync(path.resolve(flags.save), JSON.stringify(r) + '\n') : undefined,
     });
     if (flags.out) {
       require('../lib/util').writeFileAtomic(path.resolve(flags.out), markdown);

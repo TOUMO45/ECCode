@@ -333,3 +333,18 @@ test('usageOf reads the agent result line (json or stream-json) and nothing else
   const line = JSON.stringify({ type: 'result', total_cost_usd: 0.01, num_turns: 2, usage: { input_tokens: 3, output_tokens: 4, cache_read_input_tokens: 5, cache_creation_input_tokens: 6 } });
   assert.deepStrictEqual(bench.usageOf(`{"type":"system"}\n${line}\n`), { costUsd: 0.01, tokens: 18, outputTokens: 4, turns: 2, subagents: null });
 });
+
+test('bench --save keeps every finished run on disk, and bench report rebuilds the report from them', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-save-'));
+  const save = path.join(dir, 'runs.jsonl');
+  const cli = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const suite = path.join(__dirname, '..', 'bench', 'suites', 'engine');
+  let r = spawnSync(process.execPath, [cli, 'bench', '--suite', suite, '--tasks', 'search-case', '--variant', 'without', '--runs', '2', '--agent', 'node -e ""', '--save', save], { encoding: 'utf8', cwd: dir });
+  assert.strictEqual(r.status, 0, r.stderr);
+  const lines = fs.readFileSync(save, 'utf8').trim().split('\n');
+  assert.strictEqual(lines.length, 2, 'one line per finished run');
+  r = spawnSync(process.execPath, [cli, 'bench', 'report', save, '--agent', 'x --model m', '--out', path.join(dir, 'r.md')], { encoding: 'utf8', cwd: dir });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.match(fs.readFileSync(path.join(dir, 'r.md'), 'utf8'), /\| search-case \| without \| 2\/3 \| \+0\/−0 \|/, 'the untouched fixture fails only its feature check');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
