@@ -2,8 +2,9 @@
 // Runtime module-load tracer (CommonJS). Loaded via NODE_OPTIONS=--require by
 // `eccode impact --trace`: every in-project require() — including dynamic ones
 // built from variables, which no static index can resolve — is appended as a
-// from→to edge to ECCODE_TRACE_FILE. ESM `import` statements inside ESM files
-// bypass Module._load; the impact output says when a trace saw nothing.
+// from→to edge to ECCODE_TRACE_FILE. ESM `import`/import() edges are covered
+// by esm-loader.mjs (module.register); the impact output says when a trace saw
+// nothing.
 const Module = require('module');
 const fs = require('fs');
 const path = require('path');
