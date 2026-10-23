@@ -207,6 +207,10 @@ test('mcp: quick takes no free-form command (detected test check only); handoff_
     assert.match(d.json().completedWork, /^TODO:/);
     const other = await orch.call('handoff_draft', { task: 'change' });
     assert.strictEqual(other.isError, true, 'only the claimer drafts its handoff');
+    assert.strictEqual((await orch.call('task_fail', { task: 'change', reason: 'ownership needs tests/' })).isError, false);
+    const rs = await orch.call('task_rescope', { task: 'change', files: 'src/**,tests/**', reason: 'the test goes under tests/' });
+    assert.strictEqual(rs.isError, false, rs.text);
+    assert.strictEqual((await eng.call('task_rescope', { task: 'change', files: '**', reason: 'let me own everything' })).isError, true, 'the owner cannot widen its own ownership');
   } finally {
     orch.close();
     eng.close();

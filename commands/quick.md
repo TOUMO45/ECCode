@@ -11,6 +11,8 @@ $ARGUMENTS
 
 You coordinate; agents do the work. Never edit project files or act as another role yourself; the guard refuses it. When the engine refuses a step, send its exact message back to the agent that took the step.
 
+If the owner reports that the guard refused a file outside the task's ownership, and the change really needs that file, correct the ownership instead of stopping. Release the task with `E task fail change --actor orchestrator --reason "<why>"`. Widen it with `E task rescope change --files "<globs>" --actor orchestrator --reason "<why>"`. Then dispatch the owner again; its new claim starts from the current files.
+
 1. **Set up.** Run `E quick "<the change, one line>" --actor orchestrator`. Add `--owner frontend-engineer` for UI work, `--files <globs>` to narrow ownership, `--command "<cmd>"` when no test command is detected. The printed path is the plan.
 2. **Implement.** Dispatch the owner subagent (usually `backend-engineer`) with the request, `E`, and step 1 of the printed path. It must:
    - claim `change`, make the change with a test, and run the exact verification command through `E evidence run`;

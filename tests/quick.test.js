@@ -123,3 +123,49 @@ test('the printed path delivers: claim, change, evidence, drafted handoff, phase
   assert.strictEqual(new Store(dir).audit().ok, true);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('a typo in --files is refused before it can strand the owner; a new directory is not a typo', () => {
+  const dir = repo();
+  let r = cli(dir, ['quick', 'Move pricing out of the cart', '--actor', 'orchestrator', '--files', 'src/**,test/**']);
+  assert.notStrictEqual(r.status, 0);
+  assert.match(r.stderr, /test\/\*\*: there is no test\/ here; did you mean tests\/\?/);
+  assert.ok(!fs.existsSync(path.join(dir, '.eccode', 'events.jsonl')), 'nothing is created');
+  r = cli(dir, ['quick', 'Add a pricing module', '--actor', 'orchestrator', '--files', 'src/**,src/pricing/**,lib/**,tests/**']);
+  assert.strictEqual(r.status, 0, r.stderr);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('ownership that missed a file is corrected: release the task, rescope it, claim again', () => {
+  const dir = repo();
+  const ok = (args) => {
+    const r = cli(dir, args);
+    assert.strictEqual(r.status, 0, `${args.join(' ')}\n${r.stdout}${r.stderr}`);
+    return r.stdout;
+  };
+  ok(['quick', 'Add a bulk discount to price', '--actor', 'orchestrator', '--files', 'src/**']);
+  ok(['task', 'claim', 'change', '--actor', 'backend-engineer']);
+  let r = cli(dir, ['task', 'rescope', 'change', '--files', 'src/**,tests/**', '--actor', 'orchestrator', '--reason', 'the test file is outside the ownership']);
+  assert.notStrictEqual(r.status, 0, 'a claimed task is released first');
+  assert.match(r.stderr, /release it first/);
+  ok(['task', 'fail', 'change', '--actor', 'orchestrator', '--reason', 'ownership misses tests/']);
+  r = cli(dir, ['task', 'rescope', 'change', '--files', 'src/**,tests/**', '--actor', 'backend-engineer', '--reason', 'the test file is outside the ownership']);
+  assert.notStrictEqual(r.status, 0, 'the owner cannot widen its own ownership');
+  r = cli(dir, ['task', 'rescope', 'change', '--files', 'src/**,tests/**', '--actor', 'orchestrator', '--reason', 'short']);
+  assert.notStrictEqual(r.status, 0, 'a reason is required');
+  ok(['task', 'rescope', 'change', '--files', 'src/**,tests/**', '--actor', 'orchestrator', '--reason', 'the test file is outside the ownership']);
+  const t = new Store(dir).state().tasks.change;
+  assert.deepStrictEqual(t.files, ['src/**', 'tests/**']);
+  assert.deepStrictEqual(t.history.find((h) => h.event === 'rescoped').from, ['src/**']);
+  ok(['task', 'claim', 'change', '--actor', 'backend-engineer']);
+  assert.strictEqual(new Store(dir).audit().ok, true);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('on a reviewed plan only the user changes ownership', () => {
+  const ctx = require('./helpers').tmpProject();
+  require('./helpers').approveThroughPlan(ctx);
+  expectCode(() => require('../lib/tasks').rescope(ctx.store, ctx.config, 'api', 'orchestrator', { files: 'src/**', reason: 'widen the api task please' }), 'ROLE_NOT_ALLOWED');
+  require('../lib/tasks').rescope(ctx.store, ctx.config, 'api', 'user', { files: 'src/server/**,src/shared/**', reason: 'the api task needs the shared types' });
+  assert.deepStrictEqual(ctx.store.state().tasks.api.files, ['src/server/**', 'src/shared/**']);
+  fs.rmSync(ctx.dir, { recursive: true, force: true });
+});

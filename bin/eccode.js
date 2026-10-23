@@ -48,6 +48,8 @@ Plan & tasks
   task complete <id> --actor <owner> --handoff <handoff.json>
   task fail <id> --actor <owner> --reason <text>
   task reset <id> --actor <orchestrator|delivery-lead|user> --reason <text>
+  task rescope <id> --files <glob,glob> --actor <orchestrator (quick track)|user> --reason <text>
+                                         Correct a pending task's ownership (release a claimed one with task fail)
 
 Evidence & records
   evidence run --actor <a> --label <l> [--purpose check|reproduction] [--gate g] [--task t] -- <command...>
@@ -556,6 +558,9 @@ function main(argv) {
       } else if (sub === 'reset') {
         tasks.reset(store, need(arg, '<task>'), need(actor, '--actor'), need(flags.reason, '--reason'));
         print(flags, `Task ${arg} reset to pending.`);
+      } else if (sub === 'rescope') {
+        tasks.rescope(store, config, need(arg, '<task>'), need(actor, '--actor'), { files: need(flags.files, '--files'), reason: need(flags.reason, '--reason') });
+        print(flags, `Task ${arg} now owns ${flags.files}.`);
       } else throw new EccodeError('USAGE', `Unknown task subcommand ${sub}`);
       return 0;
     }
