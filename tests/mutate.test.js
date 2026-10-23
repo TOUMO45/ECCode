@@ -116,7 +116,9 @@ test('TypeScript mutants run only when the project can syntax-check them; otherw
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test('with the project\'s TypeScript compiler, TS mutants run and broken TypeScript is rejected', { skip: !fs.existsSync(path.join(execFileSync('npm', ['root', '-g'], { encoding: 'utf8', shell: process.platform === 'win32' }).trim(), 'typescript')) && 'no typescript to link' }, () => {
+const GLOBAL_TS = path.join(execFileSync('npm', ['root', '-g'], { encoding: 'utf8', shell: process.platform === 'win32' }).trim(), 'typescript');
+test('with the project\'s TypeScript compiler, TS mutants run and broken TypeScript is rejected', { skip: !fs.existsSync(GLOBAL_TS) && !process.env.ECCODE_REQUIRE_TRACERS && 'no typescript to link' }, () => {
+  assert.ok(fs.existsSync(GLOBAL_TS), 'ECCODE_REQUIRE_TRACERS=1: a TypeScript compiler must be installed so this check runs, not skips');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-mutate-ts2-'));
   write(dir, 'package.json', '{"name":"m","version":"1.0.0"}');
   write(dir, 'src/a.ts', 'export {};\n');

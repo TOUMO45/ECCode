@@ -139,7 +139,8 @@ test('a scan covers only the lines added since the base; --all covers whole file
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test('installed analyzers report only on scanned lines (ruff, go vet)', { skip: !(bugs.hasTool('ruff') || bugs.hasTool('go')) && 'neither ruff nor go installed' }, () => {
+test('installed analyzers report only on scanned lines (ruff, go vet)', { skip: !(bugs.hasTool('ruff') || bugs.hasTool('go')) && !process.env.ECCODE_REQUIRE_TRACERS && 'neither ruff nor go installed' }, () => {
+  if (process.env.ECCODE_REQUIRE_TRACERS) assert.ok(bugs.hasTool('ruff') && bugs.hasTool('go'), 'ECCODE_REQUIRE_TRACERS=1: both analyzers must run here, not be skipped');
   if (bugs.hasTool('ruff')) {
     const { dir } = gitRepo({ 'pkg/a.py': 'import os\n\n\ndef f():\n    return undefined_old\n' });
     fs.appendFileSync(path.join(dir, 'pkg/a.py'), '\n\ndef g():\n    return undefined_new\n');
