@@ -129,3 +129,24 @@ test('by design (row 49): metrics labels recorded usage as what was reported at 
   assert.match(out, /costPerTrack \(usage as reported at run end\)/);
   fs.rmSync(ctx.dir, { recursive: true, force: true });
 });
+
+test('engine-benchmark figures quoted in the docs match what bench tally derives from the engine reports', () => {
+  const t = bench.tally(path.join(ROOT, 'bench', 'engine-results'));
+  const near = (a, b) => Math.abs(a - b) <= 0.005;
+  const bad = [];
+  let quoted = 0;
+  for (const doc of ['docs/senior-engineering.md', 'docs/limits.md', 'README.md']) {
+    const text = fs.readFileSync(path.join(ROOT, doc), 'utf8');
+    const re = /\*\*(\w+), engine batch:\*\* (\d+)\/(\d+) runs passed every hidden check without the engine and (\d+)\/(\d+) with it.*?; median cost per run \$(\d+\.\d+) without and \$(\d+\.\d+) with the engine/g;
+    for (const m of text.matchAll(re)) {
+      quoted += 1;
+      const e = t.engine[m[1].toLowerCase()];
+      if (!e) { bad.push(`${doc}: no engine batch for ${m[1]}`); continue; }
+      const want = [e.without.allPass, e.without.runs, e.engine.allPass, e.engine.runs].join();
+      if (m.slice(2, 6).map(Number).join() !== want) bad.push(`${doc}: "${m[0].slice(0, 80)}…" (records: ${want})`);
+      if (!near(Number(m[6]), e.without.medianCostUsd) || !near(Number(m[7]), e.engine.medianCostUsd)) bad.push(`${doc}: cost "${m[6]} / ${m[7]}" (records: ${e.without.medianCostUsd} / ${e.engine.medianCostUsd})`);
+    }
+  }
+  assert.ok(quoted >= 1, 'the docs quote the engine batches');
+  assert.deepStrictEqual(bad, []);
+});

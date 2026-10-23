@@ -87,6 +87,28 @@ Every limit stated during this upgrade is dispositioned in [docs/limits.md](limi
 
 For external comparability, pair this with SWE-bench Verified or Harbor (see [tooling-research.md](tooling-research.md)); publish paired deltas, not absolute scores.
 
+### The engine itself: `bench --variant engine`
+
+The runs above measure a skill's text in the prompt. `bench --variant engine` puts the whole engine in the loop:
+- The toolkit is installed in each sandbox, with the guard profile, and committed before the agent starts.
+- The prompt asks for delivery through the quick track: claim, pinned check, independent review, verification and a hash-chained record.
+- By default every subagent inherits the session's model, so the comparison is the process, not a model mix.
+- The harness reads the record back (delivered, audit, review rounds) and the session's own cost and tokens, subagents included.
+
+The suite `bench/suites/engine` has four multi-file tasks (two JavaScript, two Python), each with a trap a careless change falls into:
+- a shared helper with a case-sensitive caller;
+- a public export that a refactor must keep;
+- a CSV consumer that reads by position;
+- a bug whose root cause two modules share.
+
+`tests/bench.test.js` proves every trap is real: a careless reference passes the visible tests and fails a hidden regression check.
+
+Pre-registered result ([protocol](../bench/protocols/2026-10-23-engine-ab.md), [report](../bench/engine-results/2026-10-23-engine-sonnet.md)):
+
+- **Sonnet, engine batch:** 20/20 runs passed every hidden check without the engine and 19/20 with it (stratified p = 1.0; the one failure stopped before any edit); median cost per run $0.12 without and $0.42 with the engine. Tokens were 3.9× and wall time 6.4×. Engine runs wrote tests in 18/20, bare runs in 10/20.
+- On these four tasks the bare model avoided every trap, so correctness has no room to improve here. That is a finding about the tasks, not evidence that the engine helps or hurts. What the batch measures is the price of the process: about 3.5× the cost of a bare run for a reviewed, recorded change.
+- Only 6 of the 20 engine runs delivered, though every audit was clean. The saved transcripts showed why: agents composed shell commands the CLI-only allowlist refused, stopped, and were not re-dispatched (register row 56). After the fixes, a pre-registered follow-up delivered 16/20 with all hidden checks passing ([report](../bench/engine-followup/2026-10-23-engine-followup-sonnet.md)). Its four stalls had one cause, `__pycache__` counted as an unreviewed change (row 57, fixed).
+
 ## Verified live, not only in unit tests
 
 - A headless Claude session with the hooks installed through `eccode install` was told to append to `events.jsonl` and to record a risk as `--actor user`. The installed guard **denied the record write** and **held the user-actor command for human confirmation**; the record afterwards held only its init event and audited clean.
