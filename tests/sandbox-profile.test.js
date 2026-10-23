@@ -71,3 +71,63 @@ test('a read-only record fails fast with a clear message instead of a lock timeo
     fs.accessSync = orig;
   }
 });
+
+test('the default profile is always enforced: sandbox where supported, otherwise no shell', () => {
+  const { defaultProfile } = require('../lib/install');
+  const has = (yes) => (cmd) => yes.includes(cmd);
+  assert.strictEqual(defaultProfile({ platform: 'darwin', has: has([]) }).profile, 'sandbox');
+  assert.strictEqual(defaultProfile({ platform: 'linux', has: has(['bwrap', 'socat']) }).profile, 'sandbox');
+  assert.strictEqual(defaultProfile({ platform: 'linux', has: has(['bwrap']) }).profile, 'no-shell');
+  assert.strictEqual(defaultProfile({ platform: 'win32', has: has(['bwrap', 'socat']) }).profile, 'no-shell');
+  for (const p of ['darwin', 'linux', 'win32', 'freebsd']) {
+    assert.notStrictEqual(defaultProfile({ platform: p, has: has([]) }).profile, 'guard', `${p} must not default to the text-only guard`);
+  }
+});
+
+test('no-shell profile denies every shell tool and the record paths, registers role servers, and is detected', () => {
+  const { install: inst, protectionProfile } = require('../lib/install');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-noshell-'));
+  execFileSync('git', ['init', '-q'], { cwd: dir });
+  assert.strictEqual(protectionProfile(dir), 'guard');
+  inst({ target: dir, scope: 'project', profile: 'no-shell' });
+  const settings = JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8'));
+  for (const t of ['Bash', 'PowerShell', 'Monitor']) assert.ok(settings.permissions.deny.includes(t), t);
+  for (const r of ['Edit(/.eccode/events.jsonl)', 'Edit(/.eccode/state.json)', 'Edit(/.eccode/config.json)', 'Edit(/.eccode/evidence/**)']) assert.ok(settings.permissions.deny.includes(r), r);
+  assert.ok(!settings.permissions.deny.some((r) => /drafts|artifacts/.test(r)), 'drafts and artifacts stay writable');
+  const mcp = JSON.parse(fs.readFileSync(path.join(dir, '.mcp.json'), 'utf8'));
+  assert.ok(mcp.mcpServers['eccode_orchestrator'] && mcp.mcpServers['eccode_backend-engineer']);
+  assert.strictEqual(protectionProfile(dir), 'no-shell');
+  const sbx = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-sbx2-'));
+  inst({ target: sbx, scope: 'project', profile: 'sandbox' });
+  assert.strictEqual(protectionProfile(sbx), 'sandbox');
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(sbx, { recursive: true, force: true });
+});
+
+test('every session states which record protection is active', () => {
+  const { install: inst } = require('../lib/install');
+  const hook = path.join(__dirname, '..', 'scripts', 'hooks', 'session-start.js');
+  const run = (dir) => spawnSync(process.execPath, [hook], { input: JSON.stringify({ cwd: dir }), encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: dir } }).stdout;
+  const guard = tmpProject();
+  assert.match(run(guard.dir), /Record protection: text guard only/);
+  const ns = tmpProject();
+  inst({ target: ns.dir, scope: 'project', profile: 'no-shell' });
+  assert.match(run(ns.dir), /Record protection: no shell/);
+  const sb = tmpProject();
+  inst({ target: sb.dir, scope: 'project', profile: 'sandbox' });
+  assert.match(run(sb.dir), /Record protection: OS sandbox/);
+});
+
+test('MCP servers ECCode did not install are named every session', () => {
+  const { install: inst } = require('../lib/install');
+  const hook = path.join(__dirname, '..', 'scripts', 'hooks', 'session-start.js');
+  const ctx = tmpProject();
+  inst({ target: ctx.dir, scope: 'project', profile: 'no-shell' });
+  const mcpFile = path.join(ctx.dir, '.mcp.json');
+  const mcp = JSON.parse(fs.readFileSync(mcpFile, 'utf8'));
+  mcp.mcpServers.files = { command: 'some-fs-server' };
+  fs.writeFileSync(mcpFile, JSON.stringify(mcp));
+  const out = spawnSync(process.execPath, [hook], { input: JSON.stringify({ cwd: ctx.dir }), encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: ctx.dir } }).stdout;
+  assert.match(out, /Other MCP servers in \.mcp\.json run outside the record protection: files\./);
+  assert.doesNotMatch(out, /eccode_orchestrator, /); // ECCode's own servers are not listed
+});

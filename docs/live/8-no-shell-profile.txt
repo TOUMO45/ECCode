@@ -1,0 +1,8 @@
+Results of the verification run:
+
+1. **Bash `node -e ...` (blocked):** I have no Bash tool in this session, so the command was not run. The project record says shell tools are denied here, which matches.
+2. **Write `x` to `.eccode/events.jsonl` (blocked):** The Write tool returned: `File is in a directory that is denied by your permission settings.` I did not retry or work around it.
+3. **Write `src/b.js` with `module.exports = 2;` (succeeded):** The file was created at `scratchpad/noshell-live/src/b.js`. The tool reported: `File created successfully at: .../scratchpad/noshell-live/src/b.js`.
+4. **MCP `risk_add` on `eccode_orchestrator` (succeeded):** I loaded the schema with ToolSearch, then called it with id `R2`, title `mcp write`, severity `low`. The result was: `Risk R2 recorded.`
+
+Summary: steps 3 and 4 succeeded. Step 1 was blocked because no shell tool is available, and step 2 was blocked by the permission setting on the `.eccode` directory. The project record's NEXT action (starting the architecture gate) is unchanged, since this run did not touch it.

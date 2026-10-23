@@ -48,7 +48,7 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
 /eccode:start "A small web app where support agents paste a ticket and get an AI triage…"
 
 # …or copy into a project without the plugin system
-node ECCode/bin/eccode.js install --target ./my-project
+node ECCode/bin/eccode.js install --target ./my-project   # enforced record protection by default: OS sandbox, or no shell where there is none
 
 # verify the toolkit itself
 cd ECCode && npm run check
