@@ -1,6 +1,6 @@
 # ECCode: Final Report
 
-**Date:** 2026-10-07 · **Branch:** `claude/keen-allen-5z33eb`
+**Date:** 2026-10-07 · **Branch:** `claude/keen-allen-5z33eb` · **See the [2026-10-23 addendum](#addendum-2026-10-23-the-senior-engineering-upgrade-v020--v050) for the current state; figures below describe the repository as of this report's date.**
 
 This report sorts its claims into three groups: **Verified** (backed by tests, executed evidence or the hash-chained record), **Observed** (seen in the demo run, single sample) and **Not verified**. All figures come from the repository and its records. None are estimates unless they say so.
 
@@ -126,3 +126,21 @@ Sample sizes are small. These are observations from one delivery, not trends.
 - Make `run end` require usage figures, as the provisional lesson recommends.
 - Run the guard hook live in a plugin-installed session, and run the live-model evals with a key.
 - Mirror agents to Codex and Gemini natively. Today `export agents-md` gives sequential, disclosed role execution only.
+
+## Addendum 2026-10-23: the senior-engineering upgrade (v0.2.0 → v0.5.0)
+
+Seven merged PRs (#1–#7) since this report. The suite is now **117 tests**, green in CI on Node 18/20/22 × Linux, macOS, Windows. Same claim discipline as above: every figure here is recomputable from the repository.
+
+**Verified (tests + CI + the hash-chained record):**
+
+- **Lean discipline** (`docs/lean.md`): claim-time baselines of dependencies and `shortcut:` markers; completion refused for undeclared dependencies, markers, or code without a test (or a ≥10-char `testsNotNeeded`). Levels off/lite/full/strict.
+- **Nine trust gaps closed**, the last structurally: `eccode mcp --actor <role>` serves the engine as typed tools to no-Bash agents (`docs/mcp.md`). Guard hardening includes write-time shell ownership, env/flag identity rules, `audit --against <ref>`, and a session-start upstream anchor. A seeded fuzz battery (240 generated attacks denied, 120 legitimate commands allowed) runs in every CI job.
+- **Codebase intelligence**: 8-language import-resolved index (`onboard`, `impact`, `map`, `debt`) plus runtime tracing — dynamic `require`, ESM static/dynamic `import` (via `module.register`), and Python `importlib` loads observed and merged into impact reports.
+- **Work items and tracks**: many deliveries per record (greenfield/feature/refactor/fix/quick), per-track gate order; a 25-work-item seeded endurance test audits a 300+ event record.
+- **Compatibility safety**: claim-time public-surface baselines; undeclared breaking changes refused at completion; refactor track refuses them outright; applied-migration edits and destructive SQL refused.
+- **Stack packs**: detection, runnable checks, a built-in secrets scan, `stack adopt` making checks required at verification.
+
+**Measured (recorded benchmark runs; recompute with `eccode bench tally`):** 282 live agent runs across 8 tasks, 3 languages, 2 models; 564/564 hidden checks passed; 0 dependency additions; 0 agent failures. Every task has an n=10-per-variant batch. Stratified permutation over all runs (labels shuffled within task-batches, seeded): the with-skill variant adds on average **4.31 fewer lines per change**, two-sided p = 5.0e-5. Per-batch results vary and are all recorded, including non-significant batches and one null.
+
+**Observed live (seven headless sessions, transcripts drove fixes):** guard denial of record writes; a full no-Bash MCP cycle; a subagent adversarial battery; the `--actor user` ask held for human confirmation with a clean record; `onboard`/`impact --trace` answered correctly in an unfamiliar project (and exposed a real indexing defect, fixed with a regression test); the compat ladder — undeclared export removal refused, mis-named declaration refused, exactly-named declaration accepted; a second work item opened on a delivered record with the detected stack check green.
+
