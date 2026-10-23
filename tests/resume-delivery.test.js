@@ -146,14 +146,17 @@ test('concurrent writers never corrupt the log', async () => {
   const ctx = tmpProject();
   const { spawn } = require('child_process');
   const bin = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const stderr = [];
   const procs = Array.from({ length: 6 }, (_, i) =>
     new Promise((resolve) => {
       const p = spawn(process.execPath, [bin, 'risk', 'add', '--id', `R${i}`, '--title', `risk ${i}`, '--severity', 'low', '--actor', 'delivery-lead', '--root', ctx.dir]);
+      stderr[i] = '';
+      p.stderr.on('data', (d) => { stderr[i] += d; });
       p.on('exit', resolve);
     }),
   );
   const codes = await Promise.all(procs);
-  assert.deepStrictEqual(codes, [0, 0, 0, 0, 0, 0]);
+  assert.deepStrictEqual(codes, [0, 0, 0, 0, 0, 0], `writer stderr:\n${stderr.map((e, i) => `#${i}: ${e.trim()}`).join('\n')}`);
   const st = new Store(ctx.dir).state();
   assert.strictEqual(Object.keys(st.risks).length, 6);
   assert.strictEqual(ctx.store.audit().ok, true);
@@ -214,4 +217,42 @@ test('evidence run preserves sh -c compound commands and nested quotes (POSIX sh
   assert.match(ev.outputTail, /it works/);
   res = evidenceCli(ctx, ['node', '-e', 'process.exit(require("fs").existsSync(".eccode") ? 0 : 3)']);
   assert.strictEqual(JSON.parse(res.stdout).status, 'passed');
+});
+
+test('Windows contention errors (EPERM/EACCES/EBUSY) are retried, not fatal', () => {
+  // CI on Windows saw a concurrent writer exit 1: a lock file being deleted,
+  // or a state file another process holds open, reports EPERM there rather
+  // than EEXIST. Simulated deterministically so every OS runs this check.
+  const fs = require('fs');
+  const util = require('../lib/util');
+  const dir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'eccode-win-'));
+  const plat = Object.getOwnPropertyDescriptor(process, 'platform');
+  const orig = { openSync: fs.openSync, renameSync: fs.renameSync, readFileSync: fs.readFileSync };
+  const failTimes = (name, n, code) => {
+    let left = n;
+    fs[name] = function (...args) {
+      if (left > 0 && (name !== 'openSync' || args[1] === 'wx') && (name !== 'readFileSync' || String(args[0]).endsWith('.json'))) {
+        left -= 1;
+        throw Object.assign(new Error(`${code}: simulated`), { code });
+      }
+      return orig[name].apply(fs, args);
+    };
+  };
+  Object.defineProperty(process, 'platform', { value: 'win32' });
+  try {
+    failTimes('openSync', 3, 'EPERM');
+    assert.strictEqual(util.withLock(path.join(dir, '.lock'), () => 'locked'), 'locked');
+    failTimes('renameSync', 3, 'EBUSY');
+    util.writeFileAtomic(path.join(dir, 'state.json'), '{"ok":true}\n');
+    failTimes('readFileSync', 2, 'EACCES');
+    assert.deepStrictEqual(util.readJson(path.join(dir, 'state.json')), { ok: true });
+    // Non-transient errors still fail fast.
+    fs.renameSync = () => { throw Object.assign(new Error('ENOSPC'), { code: 'ENOSPC' }); };
+    assert.throws(() => util.writeFileAtomic(path.join(dir, 'x.json'), '{}'), /ENOSPC/);
+    assert.ok(!fs.readdirSync(dir).some((f) => f.endsWith('.tmp')), 'a failed write leaves no temp file behind');
+  } finally {
+    Object.assign(fs, orig);
+    Object.defineProperty(process, 'platform', plat);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

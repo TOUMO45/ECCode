@@ -38,6 +38,7 @@ An independent audit on 2026-10-23 checked every row against the code. It found 
 | 25 | The secrets scan stopped reading `.claude/` after row 11's first fix | Closed — eliminated | The `.claude/` exclusion now applies to the codebase index only; regression test in tests/stack.test.js |
 | 26 | Report headers claimed exact p-values when Monte Carlo was used, and floor p-values printed as "=" | Closed — eliminated | The header names the test used, and floors print as "p≤" (lib/bench.js, tests/bench.test.js) |
 | 27 | Doc figures drifted from the records (a dated addendum still cited 282 runs) | Closed — eliminated | tests/limits.test.js checks the run and hidden-check figures in the docs against `bench tally` |
+| 28 | On Windows, a concurrent writer could exit with an error on transient contention (EPERM/EACCES/EBUSY from a lock file mid-delete or a state file held open) | Closed — eliminated | Found by CI (one Windows job failed `concurrent writers never corrupt the log`). Lock acquisition, atomic rename and JSON reads retry these errors with backoff; other errors still fail fast (lib/util.js). Windows behavior is simulated deterministically on every OS in tests/resume-delivery.test.js |
 
 This register is checked by CI as well as written by hand. tests/limits.test.js fails the build if any of these happen:
 - a row lacks a valid disposition;
