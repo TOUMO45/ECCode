@@ -150,3 +150,16 @@ test('engine-benchmark figures quoted in the docs match what bench tally derives
   assert.ok(quoted >= 1, 'the docs quote the engine batches');
   assert.deepStrictEqual(bad, []);
 });
+
+test('delivery follow-up figures quoted in the docs match the follow-up reports (row 56 closing rule)', () => {
+  const report = (f) => fs.readFileSync(path.join(ROOT, 'bench', 'engine-followup', f), 'utf8');
+  const delivered = (text) => {
+    const row = text.split('\n').find((l) => l.startsWith('| **all tasks** |'));
+    return row.split('|')[8].trim().split(' / ')[0];
+  };
+  assert.strictEqual(delivered(report('2026-10-23-engine-followup-sonnet.md')), '16/20');
+  const second = delivered(report('2026-10-23-engine-followup-2-sonnet.md'));
+  assert.ok(Number(second.split('/')[0]) >= 18, `row 56 closes only at >= 18/20 (bench/protocols/2026-10-23-engine-delivery-followup-2.md): ${second}`);
+  const doc = fs.readFileSync(path.join(ROOT, 'docs', 'senior-engineering.md'), 'utf8');
+  assert.match(doc, new RegExp(`Delivery went from 6/20 to 16/20 to ${second.replace('/', '\\/')}`));
+});
