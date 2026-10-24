@@ -217,3 +217,12 @@ test('every orchestrating playbook says to wait for a dispatched agent before en
     assert.match(text, /run_in_background: false/, `${f}: dispatch in the foreground (the Agent tool starts agents in the background by default in headless sessions)`);
   }
 });
+
+// Mealie pilot, b1 and b2 item 2: the plan pinned the code task to tests
+// whose fixtures a later, dependent task updated, so neither could finish.
+test('plans pin each task to a check that can pass once that task alone is done', () => {
+  for (const f of ['agents/delivery-lead.md', 'agents/technical-reviewer.md']) {
+    const text = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+    assert.match(text, /can pass once that task alone is done/i, f);
+  }
+});
