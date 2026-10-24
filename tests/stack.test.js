@@ -191,3 +191,18 @@ test('a task runner gives a tool its arguments only on a command line that runs 
   assert.strictEqual(probe('justfile', 'test:\n    python -m pytest -q backend\n'), 'pytest -q backend');
   assert.strictEqual(probe('Makefile', 'test:\n\tpytest -k "slow and not db"\n'), 'pytest -q', 'quoted arguments are not copied');
 });
+
+// Mealie pilot, after-fix A7: a Nuxt frontend got `npx tsc --noEmit`, which
+// fails on its clean tree: its tsconfig extends the config `nuxt prepare`
+// generates, and Nuxt type-checks through vue-tsc. A project that defines no
+// typecheck of its own gets none rather than a check that cannot pass.
+test('a Nuxt project gets no plain tsc check; a plain TypeScript project keeps it', () => {
+  const { dir } = tmpProject();
+  write(dir, 'frontend/package.json', JSON.stringify({ name: 'web', scripts: { test: 'vitest' }, dependencies: { nuxt: '^4.4.2' } }));
+  write(dir, 'frontend/tsconfig.json', JSON.stringify({ extends: './.nuxt/tsconfig.json' }));
+  write(dir, 'lib/package.json', JSON.stringify({ name: 'lib', scripts: { test: 'node --test' } }));
+  write(dir, 'lib/tsconfig.json', '{"compilerOptions":{"strict":true}}');
+  const ids = stack.checks(dir, loadConfig(dir)).map((c) => `${c.id} ${c.command}`);
+  assert.ok(!ids.some((c) => /frontend && npx tsc/.test(c)), ids.join('\n'));
+  assert.ok(ids.some((c) => /lib && npx tsc --noEmit/.test(c)), ids.join('\n'));
+});
