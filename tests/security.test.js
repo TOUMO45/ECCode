@@ -285,3 +285,24 @@ test('guard: a literal cd moves relative write targets; git stash list only read
   assert.strictEqual(bash(dir, 'backend-engineer', 'git stash list; ls -la .eccode | head'), 'allow');
   assert.strictEqual(bash(dir, 'backend-engineer', 'git stash; ls -la .eccode'), 'deny', 'git stash itself writes');
 });
+
+// Mealie pilot, b2 and c1: commands that never called the eccode CLI were held
+// as "identity built by shell expansion" because the word eccode appeared in a
+// path (.claude/eccode, a scratch dir named eccode-chain-…) next to a $.
+test('guard: shell expansion is checked in eccode CLI calls only, and a built CLI call is still caught', () => {
+  const { dir } = tmpProject();
+  const fine = [
+    'ls .eccode/handoffs | head; f=$(ls .eccode/handoffs/* | head -1); cat "$f" | head -40; grep -rln "handoff" .claude/eccode --include=*.js | head',
+    'S=/tmp/mp/claude-0/-tmp-mp-eccode-chain-engine-Bd/scratchpad; cat $S/fake.log',
+    'grep -rn "x" $(python3 -c "print(1)")/integrations; ls .eccode/artifacts/design',
+  ];
+  for (const c of fine) assert.strictEqual(bash(dir, 'technical-designer', c), 'allow', c);
+  const built = [
+    'E="node .claude/eccode/bin/eccode.js"; $E task claim T1 --actor technical-designer',
+    'bash -c "node .claude/eccode/bin/eccode.js task claim T1 --actor $ROLE"',
+    'node .claude/eccode/bin/eccode.js task claim $(echo T1) --actor technical-designer',
+    '$(echo node) .claude/eccode/bin/eccode.js status',
+    'eccode gate review design --actor `whoami`',
+  ];
+  for (const c of built) assert.strictEqual(bash(dir, 'technical-designer', c), 'deny', c);
+});

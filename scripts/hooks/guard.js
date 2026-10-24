@@ -126,6 +126,25 @@ function writesRecord(cmd, { subagent }) {
   return false;
 }
 
+/**
+ * Whether shell expansion can change an eccode CLI call: a segment that calls
+ * the CLI (or names eccode.js, as in `bash -c "…"`) and expands something, or
+ * a command word that is itself expanded ($E, $(…)) in a command that names
+ * the CLI. A `.eccode/` or `.claude/eccode` path next to a `$` is not a call.
+ */
+function builtCliCall(cmd) {
+  const segments = shellSkeleton(cmd).split(/\|\||&&|[;|\n]/);
+  const wordsOf = (seg) => seg.trim().replace(/^\(+/, '').split(/\s+/).filter((w) => w && !/^\w+=/.test(w));
+  const isCli = (w) => /(^|\/)eccode(\.js)?$/.test(w || '');
+  const callsCli = (seg) => {
+    const w = wordsOf(seg);
+    return /eccode\.js\b/.test(seg) || (w.length > 0 && (isCli(w[0]) || (['node', 'npx'].includes(path.basename(w[0])) && isCli(w[1]))));
+  };
+  const expands = (text) => /\$[\w{(]|`/.test(text);
+  if (!segments.some(callsCli)) return false;
+  return segments.some((seg) => (callsCli(seg) && expands(seg)) || expands(wordsOf(seg)[0] || ''));
+}
+
 function findRoot(start) {
   let dir = start;
   for (;;) {
@@ -210,7 +229,7 @@ function main(input) {
       // Identity must be literal: an --actor value or eccode argument built by
       // shell expansion ($VAR, $(...), backticks) cannot be checked from text.
       const argvPart = cmd.split(/\s--\s/)[0];
-      if (parsed.some((w) => w.dynamic) || /\$[\w{(]|`/.test(argvPart)) {
+      if (parsed.some((w) => w.dynamic) || builtCliCall(argvPart)) {
         if (role) out('deny', `Identity must be written literally: use --actor ${role} with no shell expansion in the eccode arguments.`);
         out('ask', 'ECCode: this eccode command builds its arguments with shell expansion, so the acting identity cannot be read from the command text. Approve only if you, the human, intend exactly what it will run.');
       }
