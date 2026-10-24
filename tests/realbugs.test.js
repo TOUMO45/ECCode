@@ -177,6 +177,9 @@ test('debug and method variants end to end on a source task: the debug track del
     const debug = bench.runOnce(t, { agentCmd: `node "${agent}"`, variant: 'debug' });
     assert.strictEqual(debug.agentExit, 0, JSON.stringify(debug.checks));
     assert.deepStrictEqual([debug.hiddenPassed, debug.hiddenTotal], [2, 2], 'the fix passes, and the task environment reached the hidden checks');
+    assert.match(debug.patch, /^diff --git a\/src\/price\.js[\s\S]*-module\.exports = \{ price: \(n\) => \(n > 10[\s\S]*\+module\.exports = \{ price: \(n\) => \(n >= 10/m, 'the change itself is kept');
+    assert.doesNotMatch(debug.patch, /\.eccode\/|\.claude\/|PROMPT\.md/, 'without the tooling');
+    assert.strictEqual(debug.patchTruncated, false);
     assert.deepStrictEqual({ delivered: debug.engine.delivered, auditOk: debug.engine.auditOk, reviews: debug.engine.reviews, track: debug.engine.track, fixProven: debug.engine.fixProven }, { delivered: true, auditOk: true, reviews: 1, track: 'debug', fixProven: true });
     assert.ok(debug.engine.mutation && debug.engine.mutation.total >= 1 && debug.engine.mutation.killed >= 1, JSON.stringify(debug.engine.mutation));
     // The method variant: the debugging method's text, nothing installed.
@@ -216,6 +219,8 @@ test('debug and method variants end to end on a source task: the debug track del
 test('bench warns when the temporary directory is too long for Unix-socket tests', () => {
   assert.strictEqual(bench.tmpdirWarning('/tmp'), null);
   assert.match(bench.tmpdirWarning(`/tmp/${'x'.repeat(120)}`), /AF_UNIX path too long[\s\S]*Set TMPDIR to a short directory/);
+  assert.match(bench.tmpdirWarning('/tmp/c/s/scratchpad/run'), /inside a session scratchpad/);
+  assert.strictEqual(bench.tmpdirWarning('/tmp/scratchpads'), null, 'only a scratchpad directory itself');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tmpdir-'));
   const long = path.join(dir, 'x'.repeat(70));
   fs.mkdirSync(long);

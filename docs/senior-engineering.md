@@ -136,7 +136,28 @@ A pre-registered batch compares four variants on it, 240 runs ([protocol](../ben
 - the debug track;
 - the quick track.
 
-REALBUGS_RESULTS
+Result, 240 runs ([protocol](../bench/protocols/2026-10-24-realbugs.md); [report](../bench/realbugs-results/2026-10-24-realbugs-sonnet.md)):
+
+- **Real bugs, Sonnet:** passing both hidden checks: 57/60 without, 57/60 with the method text, 56/60 on the debug track and 57/60 on the quick track (stratified tests, Holm-corrected: p = 1.0 for both primary comparisons); median cost per run $0.13, $0.19, $0.44 and $0.49.
+- **No variant changed correctness.** The bare model fixed every one of the twenty bugs: its fix passed the bug check in 60/60 runs.
+  - The failures shared by three variants are tornado-13's regression check, which no run could pass in this batch. A Unix-socket test needed a shorter temporary directory than the batch used (the protocol's second amendment).
+  - The debug track's extra failure is tornado-15. The fix was correct and proven, but it also reworded a log message that the original test matches. My bug report's paraphrase of that message invited the rewording.
+  - Scored as the second amendment registered (tornado-13 by its bug check), the rates are 60/60, 60/60, 59/60 and 60/60.
+  - Register row 59 stays open. These are public bugs that the model may have seen fixed, and a bare agent left no room to improve.
+- **What the process changed is how a fix is proven, not whether it is right:**
+  - runs that wrote a test: 21/60 bare, 55/60 with the method text, 60/60 on the debug track, 58/60 on the quick track;
+  - on the debug track, `fix verify` proved every run's regression test (60/60), and the tests killed 78 of the 80 mutants made on the changed lines;
+  - reviews requested changes in four runs, and each finding was real:
+    - on youtube-dl-41, the debug track's reviewer ran a differential check over generated dates and found that the first fix broke date formats that parse today, which the hidden tests do not cover;
+    - on tornado-10, the quick track's reviewer found that the new test leaked a template cache into other test modules, and asked for the teardown the real fix also has.
+- **Cost:**
+  - the method text alone cost 1.38× a bare run, the debug track 3.3× and the quick track 3.65×; the two tracks took 5.3× the time;
+  - the debug track **missed its rule as the lighter mode**: its median cost was 0.91× the quick track's, where the rule asked for 0.6× or less (register row 69). With the same model, its cost is set by the work that proves the fix, not by the number of dispatches;
+  - it delivered with a clean audit in 59 of 60 runs, against a rule of 80%.
+- **Delivery:** 59/60 on both tracks, every audit clean. The two undelivered runs were black-20: the engine counted black's grammar caches as changes (row 68, fixed after the batch).
+- **The batch itself:**
+  - The two amendments record the defects found while it ran; the first start's five runs are listed and excluded.
+  - Agents in several runs wrote scratch scripts into a directory shared by all runs, because the batch's temporary directory sat inside this session's scratchpad. The transcripts show no run reading a file another run wrote (row 70).
 
 ## Verified live, not only in unit tests
 

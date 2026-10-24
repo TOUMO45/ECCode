@@ -168,3 +168,38 @@ The evaluation of v0.9.0 named four planned capabilities that were missing and o
 - After the fixes, two pre-registered follow-ups delivered 16/20 and then 19/20, every audit clean.
 
 The open question, whether the engine improves correctness where bare agents do fail, needs a harder suite run through the same harness.
+
+## Addendum 2026-10-24: real bugs and the debug track (v0.11.0)
+
+Two steps followed the v0.10.0 evaluation: a benchmark on real bugs, and a lighter debug mode. Both are built, tested and measured. The suite is 214 tests.
+
+**Built:**
+- **Debug track** (`eccode debug`, `/eccode:debug`), the lighter mode for one bug:
+  - one task, whose phase is the track's only gate;
+  - the phase is submitted only after `fix verify` has proven the regression test and a mutation run is recorded;
+  - one independent review; the orchestrator delivers.
+- **Real-bug suite** (`bench/suites/realbugs`): twenty BugsInPy bugs in youtube-dl, black, tornado, thefuck and tqdm.
+  - Each task is the project at its pre-fix commit, without history, with a hand-written bug report. The fix's own tests are the hidden checks.
+  - CI validates every task live.
+- **Benchmark variants:** `debug` (the debug track) and `method` (the debugging method as text, nothing installed).
+
+**Measured (pre-registered, 240 runs, Sonnet):**
+- **Real bugs, Sonnet:** passing both hidden checks: 57/60 without, 57/60 with the method text, 56/60 on the debug track and 57/60 on the quick track (Holm-corrected stratified tests, p = 1.0); median cost per run $0.13, $0.19, $0.44 and $0.49.
+- The bare model fixed every bug (bug check 60/60), so correctness had no room to improve again (row 59, open).
+- What the process changed is the proof:
+  - tests written in 60/60 debug-track runs, against 21/60 bare;
+  - every debug-track regression test proven to fail before the fix and pass after;
+  - review findings, in four runs, that the projects' tests do not cover.
+- The debug track missed its rule as the lighter mode: 0.91× the quick track's cost, not 0.6× or less (row 69).
+
+**Found by measuring (rows 60–71):**
+- Engine defects, each fixed and tested:
+  - `fix verify`, `mutate` and `bugs --task` lost the task's base after completion;
+  - a pinned check could not be corrected on a one-task track;
+  - grammar caches counted as changes;
+  - a Windows export rewrote line endings.
+- Benchmark defects:
+  - two bug reports gave a test command that collects nothing, or were silent on failures that already exist;
+  - a temporary directory too long for Unix sockets;
+  - benchmark agents writing outside their sandbox.
+- Each is disclosed in the protocol's amendments or the register.
