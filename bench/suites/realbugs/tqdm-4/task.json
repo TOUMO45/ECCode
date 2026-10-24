@@ -1,0 +1,40 @@
+{
+  "id": "tqdm-4",
+  "title": "A numeric unit_scale crashes when the total is unknown",
+  "source": {
+    "repo": "https://github.com/tqdm/tqdm",
+    "commit": "03b347646492131d889871939b40457d29147216",
+    "fixedCommit": "964dee631d0ed30e2f799b42fc58ba5e73795a08",
+    "bugsinpy": "tqdm/4"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "Iterating `tqdm(generator, unit_scale=10)` over a generator (no known total) crashes with `TypeError: unsupported operand type(s) for *=: 'NoneType' and 'int'`. With an unknown total the bar must still count and scale: ten items with `unit_scale=10` show `100it`.\n\nTests: `python -m pytest -q tqdm/tests/tests_tqdm.py` runs the main test file. pytest collects only files named test_*.py, so name each tqdm/tests/tests_*.py file you want to run.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tqdm/tests/tests_tqdm.py::test_nototal"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tqdm/tests/tests_tqdm.py --deselect tqdm/tests/tests_tqdm.py::test_nototal"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tqdm/tests/tests_tqdm.py::test_nototal"
+    ],
+    "regressionTests": 50,
+    "failingOnFixedHere": [],
+    "failingBeforeAndAfter": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "tqdm/_tqdm.py"
+    ],
+    "hiddenFiles": [
+      "tqdm/tests/tests_tqdm.py"
+    ]
+  }
+}

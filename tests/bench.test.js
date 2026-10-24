@@ -306,7 +306,7 @@ test('engine variant: the toolkit is installed and committed first, the record i
   try {
     assert.strictEqual(r.agentExit, 0, JSON.stringify(r.checks));
     assert.deepStrictEqual([r.hiddenPassed, r.hiddenTotal], [3, 3]);
-    assert.deepStrictEqual({ ...r.engine }, { initialized: true, delivered: true, auditOk: true, reviews: 2, changesRequested: 0, runsRecorded: 1, tokensReported: 1234, toolkitChanged: false, agents: 'inherit' });
+    assert.deepStrictEqual({ ...r.engine }, { initialized: true, delivered: true, auditOk: true, reviews: 2, changesRequested: 0, runsRecorded: 1, tokensReported: 1234, toolkitChanged: false, agents: 'inherit', track: 'quick' });
     assert.match(fs.readFileSync(path.join(r.sandbox, '.claude', 'agents', 'technical-reviewer.md'), 'utf8'), /^model: inherit$/m, 'same model throughout: the process is compared, not a model mix');
     assert.deepStrictEqual(r.usage, { answer: null, costUsd: 0.4321, tokens: 1365, outputTokens: 55, turns: 12, subagents: 4 });
     assert.ok(r.linesAdded > 0 && r.linesAdded < 30, `only the change counts, not .claude/ or .eccode/: ${r.linesAdded}`);

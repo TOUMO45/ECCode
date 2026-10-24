@@ -1,0 +1,49 @@
+{
+  "id": "thefuck-24",
+  "title": "The same suggestion shows up twice when rules give it different priorities",
+  "source": {
+    "repo": "https://github.com/nvbn/thefuck",
+    "commit": "12394ca8423a438915fed996383b44471fc1139d",
+    "fixedCommit": "5d74344994da89ed01afd448f1c9d86b85e85351",
+    "bugsinpy": "thefuck/24"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/thefuck/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "When two rules suggest the same corrected command (same script, same side effect) with different priorities, thefuck shows it twice. `CorrectedCommand('ls', None, 100)` and `CorrectedCommand('ls', None, 200)` (from `thefuck.types`) compare unequal and hash differently. Two corrected commands must be equal, and hash equally, exactly when their script and side effect are equal; the priority must not matter. A different side effect still makes them different.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker). In this environment, before any change and unrelated to this bug, tests/rules/test_git_add.py, tests/rules/test_git_checkout.py fail to import and tests/test_main.py::TestGetCommand::test_get_command_calls fails; leave them out with `--ignore=<file>` or `--deselect <test>`.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_types.py::TestCorrectedCommand::test_equality tests/test_types.py::TestCorrectedCommand::test_hashable"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests --ignore=tests/rules/test_git_add.py --ignore=tests/rules/test_git_checkout.py --deselect tests/test_main.py::TestGetCommand::test_get_command_calls --deselect tests/test_types.py::TestCorrectedCommand::test_equality --deselect tests/test_types.py::TestCorrectedCommand::test_hashable"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tests/test_types.py::TestCorrectedCommand::test_equality",
+      "tests/test_types.py::TestCorrectedCommand::test_hashable"
+    ],
+    "regressionTests": 246,
+    "failingOnFixedHere": [
+      "tests/rules/test_git_add.py",
+      "tests/rules/test_git_checkout.py",
+      "tests/test_main.py::TestGetCommand::test_get_command_calls"
+    ],
+    "failingBeforeAndAfter": [
+      "tests/rules/test_git_add.py",
+      "tests/rules/test_git_checkout.py",
+      "tests/test_main.py::TestGetCommand::test_get_command_calls"
+    ],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "thefuck/types.py"
+    ],
+    "hiddenFiles": [
+      "tests/test_types.py"
+    ]
+  }
+}

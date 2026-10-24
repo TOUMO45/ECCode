@@ -1,0 +1,40 @@
+{
+  "id": "black-10",
+  "title": "Comments in tab-indented code move to the wrong block",
+  "source": {
+    "repo": "https://github.com/psf/black",
+    "commit": "f6643c4f0cfbae1f2493fdfce46cfbae3d26f46b",
+    "fixedCommit": "66aa676278948368dff251dffd58c850cb8b889e",
+    "bugsinpy": "black/10"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/black/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "When the source is indented with tabs, Black can move a comment into the wrong block. This input (tabs shown as \\t)\n\n```\nif 1:\n\\tif 2:\n\\t\\tpass\n\\t# comment\n\\tpass\n```\n\nshould become\n\n```python\nif 1:\n    if 2:\n        pass\n    # comment\n    pass\n```\n\nwith the comment at the level of the outer block's body, but Black indents the comment as if it belonged to the inner `if 2:` block. A comment indented with two tabs at that point (`\\t\\t# comment`) belongs to the inner block and must stay there. The same code indented with spaces is formatted correctly today.\n\nTests: `python -m pytest -q tests/test_black.py`.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_black.py::BlackTestCase::test_comment_indentation"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_black.py --deselect tests/test_black.py::BlackTestCase::test_comment_indentation"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tests/test_black.py::BlackTestCase::test_comment_indentation"
+    ],
+    "regressionTests": 89,
+    "failingOnFixedHere": [],
+    "failingBeforeAndAfter": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "blib2to3/pgen2/driver.py"
+    ],
+    "hiddenFiles": [
+      "tests/test_black.py"
+    ]
+  }
+}

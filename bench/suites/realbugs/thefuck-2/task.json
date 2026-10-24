@@ -1,0 +1,40 @@
+{
+  "id": "thefuck-2",
+  "title": "thefuck splits PATH on ':' on every platform",
+  "source": {
+    "repo": "https://github.com/nvbn/thefuck",
+    "commit": "40ab4eb62db57627bff10cf029d29c94704086a2",
+    "fixedCommit": "78ef9eec88f43d5727986be2237f6e0e250cbbbc",
+    "bugsinpy": "thefuck/2"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/thefuck/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "On Windows, PATH entries are separated by `;`, but thefuck splits PATH on `:` when it lists the available executables (`thefuck.utils.get_all_executables`). With `PATH=C:\\foo;C:\\bar` it looks in directories such as `C` and `\\foo;C`, so commands are not found and suggestions are wrong. PATH must be split with the separator of the platform thefuck runs on.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker).",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_utils.py::test_get_all_executables_pathsep"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests --deselect tests/test_utils.py::test_get_all_executables_pathsep"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tests/test_utils.py::test_get_all_executables_pathsep"
+    ],
+    "regressionTests": 521,
+    "failingOnFixedHere": [],
+    "failingBeforeAndAfter": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "thefuck/utils.py"
+    ],
+    "hiddenFiles": [
+      "tests/test_utils.py"
+    ]
+  }
+}

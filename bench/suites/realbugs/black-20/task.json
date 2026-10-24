@@ -1,0 +1,40 @@
+{
+  "id": "black-20",
+  "title": "black --diff names files by their base name only",
+  "source": {
+    "repo": "https://github.com/psf/black",
+    "commit": "2e52a2b3ecc0fe025439c3db05a4457ab14f167b",
+    "fixedCommit": "06e95b1e9bcd43c4574840f8174ba4b2c5d281bd",
+    "bugsinpy": "black/20"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/black/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "With `--diff`, the diff headers name the file by its base name only (`--- foo.py  (original)` and `+++ foo.py  (formatted)`), so the diffs of files in different directories cannot be told apart or applied with `patch`. The headers must show the file's path as Black was given it, e.g. `--- src/pkg/foo.py  (original)`.\n\nTests: `python -m pytest -q tests/test_black.py`.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_black.py::BlackTestCase::test_expression_diff"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_black.py --deselect tests/test_black.py::BlackTestCase::test_expression_diff"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tests/test_black.py::BlackTestCase::test_expression_diff"
+    ],
+    "regressionTests": 38,
+    "failingOnFixedHere": [],
+    "failingBeforeAndAfter": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "black.py"
+    ],
+    "hiddenFiles": [
+      "tests/test_black.py"
+    ]
+  }
+}

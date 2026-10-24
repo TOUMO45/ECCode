@@ -1,0 +1,41 @@
+{
+  "id": "tornado-10",
+  "title": "render_string() fails inside a WebSocketHandler",
+  "source": {
+    "repo": "https://github.com/tornadoweb/tornado",
+    "commit": "ecd8968c5135b810cd607b5902dda2cd32122b39",
+    "fixedCommit": "5931d913b4ea250891a0b582f1f8b2901b868c79",
+    "bugsinpy": "tornado/10"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "Calling `self.render_string(...)` in a `WebSocketHandler`, for example in `on_message` to render a template and send it with `write_message`, fails with `TypeError: 'NoneType' object is not iterable` raised from `get_template_namespace`. It worked in earlier releases. Templates must be renderable for as long as the websocket connection is open.\n\nTests: `python -m pytest -q tornado/test/<module>_test.py` runs one test module.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tornado/test/websocket_test.py::WebSocketTest::test_render_message"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tornado/test/websocket_test.py --deselect tornado/test/websocket_test.py::WebSocketTest::test_render_message"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tornado/test/websocket_test.py::WebSocketTest::test_render_message"
+    ],
+    "regressionTests": 32,
+    "failingOnFixedHere": [],
+    "failingBeforeAndAfter": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "tornado/web.py",
+      "tornado/websocket.py"
+    ],
+    "hiddenFiles": [
+      "tornado/test/websocket_test.py"
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "id": "tornado-15",
+  "title": "StaticFileHandler serves files outside the static directory",
+  "source": {
+    "repo": "https://github.com/tornadoweb/tornado",
+    "commit": "fdfaf3dffa49479c7461050eacca07bc5ee8d207",
+    "fixedCommit": "ecb3ea7543cc942659faf3d2144853018afa6139",
+    "bugsinpy": "tornado/15"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "Security: `StaticFileHandler` serves files outside its static root when their path starts with the root's name. With `static_path='/srv/app/static'`, a request for `/static/../static_foo.txt` serves `/srv/app/static_foo.txt`, which is outside the static directory. Every request that resolves outside the root directory must be refused with 403 and logged as not in the root static directory, as other traversal attempts already are.\n\nTests: `python -m pytest -q tornado/test/<module>_test.py` runs one test module. In this environment, before any change and unrelated to this bug, tornado/test/web_test.py::ClearAllCookiesTest::test_clear_all_cookies fails; leave it out with `--ignore=<file>` or `--deselect <test>`.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tornado/test/web_test.py::StaticFileTest::test_path_traversal_protection"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tornado/test/web_test.py --deselect tornado/test/web_test.py::ClearAllCookiesTest::test_clear_all_cookies --deselect tornado/test/web_test.py::StaticFileTest::test_path_traversal_protection"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tornado/test/web_test.py::StaticFileTest::test_path_traversal_protection"
+    ],
+    "regressionTests": 155,
+    "failingOnFixedHere": [
+      "tornado/test/web_test.py::ClearAllCookiesTest::test_clear_all_cookies"
+    ],
+    "failingBeforeAndAfter": [
+      "tornado/test/web_test.py::ClearAllCookiesTest::test_clear_all_cookies"
+    ],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "setup.py",
+      "tornado/web.py"
+    ],
+    "hiddenFiles": [
+      "tornado/test/static_foo.txt",
+      "tornado/test/web_test.py"
+    ]
+  }
+}

@@ -163,3 +163,29 @@ test('delivery follow-up figures quoted in the docs match the follow-up reports 
   const doc = fs.readFileSync(path.join(ROOT, 'docs', 'senior-engineering.md'), 'utf8');
   assert.match(doc, new RegExp(`Delivery went from 6/20 to 16/20 to ${second.replace('/', '\\/')}`));
 });
+
+test('real-bug figures quoted in the docs match the saved runs (register rows 59 and 69)', () => {
+  const runs = fs.readFileSync(path.join(ROOT, 'bench', 'realbugs-results', '2026-10-24-realbugs-sonnet.runs.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  assert.strictEqual(runs.length, 240, 'the registered batch: 4 variants x 20 tasks x 3 runs');
+  const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
+  const fig = {};
+  for (const v of ['without', 'method', 'debug', 'engine']) {
+    const rs = runs.filter((r) => r.variant === v);
+    fig[v] = { pass: `${rs.filter((r) => r.hiddenTotal > 0 && r.hiddenPassed === r.hiddenTotal).length}/${rs.length}`, cost: median(rs.map((r) => r.usage.costUsd)).toFixed(2) };
+  }
+  const bad = [];
+  for (const doc of ['docs/senior-engineering.md', 'docs/final-report.md', 'README.md']) {
+    const text = fs.readFileSync(path.join(ROOT, doc), 'utf8');
+    for (const m of text.matchAll(/\*\*Real bugs, Sonnet:\*\* passing both hidden checks: (\d+\/\d+) without, (\d+\/\d+) with the method text, (\d+\/\d+) on the debug track and (\d+\/\d+) on the quick track.*?; median cost per run \$(\d+\.\d+), \$(\d+\.\d+), \$(\d+\.\d+) and \$(\d+\.\d+)/g)) {
+      const want = ['without', 'method', 'debug', 'engine'];
+      want.forEach((v, i) => {
+        if (m[1 + i] !== fig[v].pass) bad.push(`${doc}: ${v} pass ${m[1 + i]} (runs: ${fig[v].pass})`);
+        if (m[5 + i] !== fig[v].cost) bad.push(`${doc}: ${v} cost $${m[5 + i]} (runs: $${fig[v].cost})`);
+      });
+    }
+  }
+  assert.deepStrictEqual(bad, []);
+  assert.match(fs.readFileSync(path.join(ROOT, 'docs', 'senior-engineering.md'), 'utf8'), /\*\*Real bugs, Sonnet:\*\*/, 'the figures are quoted where the suite is described');
+  // Row 69's rule: the debug track's median cost against the quick track's.
+  assert.ok(Number(fig.debug.cost) / Number(fig.engine.cost) > 0.6, 'row 69 is open only while the debug track misses its pre-registered cost rule');
+});

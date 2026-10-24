@@ -1,0 +1,40 @@
+{
+  "id": "youtube-dl-41",
+  "title": "unified_strdate returns None for dates like 1968-12-10",
+  "source": {
+    "repo": "https://github.com/ytdl-org/youtube-dl",
+    "commit": "81c2f20b5386d89a62dc27293654d75b77f47473",
+    "fixedCommit": "026fcc04956f2077a50cd4b4e9b87f45d2bcddea",
+    "bugsinpy": "youtube-dl/41"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "`youtube_dl.utils.unified_strdate('1968-12-10')` returns None instead of `'19681210'`, so upload dates written as YYYY-MM-DD are lost. Every date format that is parsed correctly today must keep working.\n\nTests: `python -m pytest -q test/<file>.py` runs one test file. test/test_download.py and the per-site tests need network access.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider test/test_utils.py::TestUtil::test_unified_dates"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider test/test_utils.py --deselect test/test_utils.py::TestUtil::test_unified_dates"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "test/test_utils.py::TestUtil::test_unified_dates"
+    ],
+    "regressionTests": 17,
+    "failingOnFixedHere": [],
+    "failingBeforeAndAfter": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "youtube_dl/utils.py"
+    ],
+    "hiddenFiles": [
+      "test/test_utils.py"
+    ]
+  }
+}

@@ -7,13 +7,15 @@ You are the orchestrator for one quick change:
 
 $ARGUMENTS
 
-**CLI.** Use `eccode` if it is on PATH, else `node .claude/eccode/bin/eccode.js` (project install) or `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` (plugin). Below it is written `eccode`. Write that command out in full in every command you run and in every prompt you write: the guard refuses commands that build it or `--actor` from shell variables (`E=…; $E`). Tell every agent you dispatch to create files with the Write and Edit tools, never with shell redirects or heredocs.
+**CLI.** Use `eccode` if it is on PATH, else `node .claude/eccode/bin/eccode.js` (project install) or `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` (plugin). Below it is written `eccode`. Write that command out in full, exactly as above, in every command you run and in every prompt you write: the approved-commands list matches it literally (an absolute path to the same file does not match), and the guard refuses commands that build it or `--actor` from shell variables (`E=…; $E`). Tell every agent you dispatch to create files with the Write and Edit tools, never with shell redirects or heredocs.
 
 You coordinate; agents do the work. Never edit project files or act as another role yourself; the guard refuses it. When the engine refuses a step, send its exact message back to the agent that took the step.
 
 If the owner reports that the guard refused a file outside the task's ownership, and the change really needs that file, correct the ownership instead of stopping. Release the task with `eccode task fail change --actor orchestrator --reason "<why>"`. Widen it with `eccode task rescope change --files "<globs>" --actor orchestrator --reason "<why>"`. Then dispatch the owner again; its new claim starts from the current files.
 
-1. **Set up.** Run `eccode quick "<the change, one line>" --actor orchestrator`. Add `--owner frontend-engineer` for UI work, `--files <globs>` to narrow ownership, `--command "<cmd>"` when no test command is detected. The printed path is the plan.
+If the pinned verification command cannot pass for a reason that has nothing to do with the change, correct the pin the same way. Examples: it collects no tests, or a test in it already failed before any change and the owner shows that failure in the base code. Release the task, then `eccode task rescope change --command "<command that leaves the unrelated failure out>" --actor orchestrator --reason "<the unrelated failure, by name>"`, and dispatch the owner again. Never re-pin to hide a failure the change caused.
+
+1. **Set up.** Run `eccode quick "<the change, one line>" --actor orchestrator`. Add `--owner frontend-engineer` for UI work, `--files <globs>` to narrow ownership, and `--command "<cmd>"` when no test command is detected, or when the detected one is the whole suite of a large repository that is slow or needs a network: then pin the narrowest test command that covers the change (the request or the README says how tests run). The pinned command must pass for the task to complete. The printed path is the plan.
 2. **Implement.** Dispatch the owner subagent (usually `backend-engineer`) with the request, the CLI command, and step 1 of the printed path. It must:
    - claim `change`, make the change with a test, and run the exact verification command through `eccode evidence run`;
    - write `eccode handoff draft --task change --actor <owner> --out .eccode/drafts/handoff-change.json`, fill in its TODO fields, and complete the task;

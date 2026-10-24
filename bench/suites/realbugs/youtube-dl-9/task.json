@@ -1,0 +1,40 @@
+{
+  "id": "youtube-dl-9",
+  "title": "-f 'bestvideo+bestaudio/best' does not fall back to best",
+  "source": {
+    "repo": "https://github.com/ytdl-org/youtube-dl",
+    "commit": "0130afb76e5cb6f470f39f127c8d09eea3e82d0d",
+    "fixedCommit": "cf2ac6df6896dac4d23918867bb86fac1e1088d9",
+    "bugsinpy": "youtube-dl/9"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "A format spec like `-f 'bestvideo[height>=999999]+bestaudio/best'` should mean: merge the best video that matches the filter with the best audio, or, if that is not possible, take `best`. Instead it is read as `bestvideo[height>=999999]+(bestaudio/best)`, so when no video matches the filter the selection fails (\"requested format not available\") instead of falling back to `best`.\n\nIn format selection `+` must bind tighter than `/` and `,`. Parentheses must keep grouping as they do now, e.g. `(bestvideo[ext=mp4],bestvideo[ext=webm])+bestaudio`.\n\nTests: `python -m pytest -q test/<file>.py` runs one test file. test/test_download.py and the per-site tests need network access.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider test/test_YoutubeDL.py::TestFormatSelection::test_youtube_format_selection"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider test/test_YoutubeDL.py --deselect test/test_YoutubeDL.py::TestFormatSelection::test_youtube_format_selection"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "test/test_YoutubeDL.py::TestFormatSelection::test_youtube_format_selection"
+    ],
+    "regressionTests": 13,
+    "failingOnFixedHere": [],
+    "failingBeforeAndAfter": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "youtube_dl/YoutubeDL.py"
+    ],
+    "hiddenFiles": [
+      "test/test_YoutubeDL.py"
+    ]
+  }
+}

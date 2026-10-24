@@ -1,0 +1,310 @@
+{
+  "source": "BugsInPy (https://github.com/soarsmu/BugsInPy) at commit 11c5f1eea954a42132cfd06bf257766a7963e0fd",
+  "python": "3.8.20 (uv)",
+  "screening": "every bug of the listed projects: the fixed commit's test files copied onto the buggy commit, BugsInPy's failing tests run with pytest: they must fail there and pass on the fixed commit. Projects screened but not drawn from: PySnooper (no bug reproduced: one passes on the buggy code under Python 3, two name tests that do not exist), cookiecutter (its run commands are tox invocations that need other interpreters), httpie (one of five reproduced).",
+  "screened": {
+    "PySnooper": {
+      "screened": 3,
+      "reproduced": []
+    },
+    "tqdm": {
+      "screened": 9,
+      "reproduced": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    "youtube-dl": {
+      "screened": 43,
+      "reproduced": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43
+      ]
+    },
+    "thefuck": {
+      "screened": 32,
+      "reproduced": [
+        1,
+        2,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32
+      ]
+    },
+    "black": {
+      "screened": 23,
+      "reproduced": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        22,
+        23
+      ]
+    },
+    "cookiecutter": {
+      "screened": 4,
+      "reproduced": []
+    },
+    "httpie": {
+      "screened": 5,
+      "reproduced": [
+        5
+      ]
+    },
+    "tornado": {
+      "screened": 16,
+      "reproduced": [
+        1,
+        2,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ]
+    }
+  },
+  "draw": "five projects with at least nine reproduced bugs; four bugs each; the reproduced bugs of each project shuffled with Python random.Random(\"20261024:<project>\").shuffle and taken in that order, skipping a bug only for a recorded exclusion reason",
+  "seed": 20261024,
+  "order": {
+    "youtube-dl": [
+      16,
+      9,
+      41,
+      4,
+      27,
+      11,
+      8,
+      15,
+      36,
+      37,
+      21,
+      1,
+      35,
+      33,
+      6,
+      34,
+      29,
+      3,
+      38,
+      32,
+      14,
+      40,
+      25,
+      31,
+      5,
+      39,
+      43,
+      28,
+      22,
+      2,
+      30,
+      26,
+      42,
+      10,
+      7,
+      23,
+      17,
+      19,
+      12,
+      18,
+      13,
+      20,
+      24
+    ],
+    "black": [
+      19,
+      10,
+      20,
+      23,
+      17,
+      6,
+      1,
+      22,
+      15,
+      13,
+      12,
+      8,
+      4,
+      7,
+      11,
+      3,
+      2,
+      5,
+      9,
+      18,
+      14,
+      16
+    ],
+    "tornado": [
+      10,
+      13,
+      7,
+      15,
+      16,
+      12,
+      1,
+      9,
+      4,
+      5,
+      6,
+      11,
+      14,
+      2,
+      8
+    ],
+    "thefuck": [
+      2,
+      24,
+      28,
+      31,
+      22,
+      25,
+      27,
+      1,
+      32,
+      29,
+      30,
+      23,
+      26
+    ],
+    "tqdm": [
+      6,
+      9,
+      2,
+      1,
+      4,
+      3,
+      8,
+      7,
+      5
+    ]
+  },
+  "accepted": {
+    "youtube-dl": [
+      16,
+      9,
+      41,
+      4
+    ],
+    "black": [
+      19,
+      10,
+      20,
+      17
+    ],
+    "tornado": [
+      10,
+      13,
+      7,
+      15
+    ],
+    "thefuck": [
+      2,
+      24,
+      31,
+      22
+    ],
+    "tqdm": [
+      6,
+      9,
+      1,
+      4
+    ]
+  },
+  "excluded": [
+    {
+      "id": "black-23",
+      "reason": "feature, not a bug: support for Python 2 print and exec statements, whose expected output (e.g. backticks rendered as \"` sys `\") no bug report could specify"
+    },
+    {
+      "id": "thefuck-28",
+      "reason": "feature, not a bug: a new fixcolcmd setting whose name and format the hidden test requires"
+    },
+    {
+      "id": "tqdm-2",
+      "reason": "the fixed tests call API the buggy code does not have (format_meter without bar_width, {bar:10}): 38 of its tests fail on the buggy code for that reason alone"
+    }
+  ]
+}
