@@ -306,3 +306,48 @@ test('guard: shell expansion is checked in eccode CLI calls only, and a built CL
   ];
   for (const c of built) assert.strictEqual(bash(dir, 'technical-designer', c), 'deny', c);
 });
+
+// Final review of the pilot branch: forms the guard must refuse. Each was
+// allowed at some point of the branch (a cd that fails, an escaped quote
+// outside quotes, find actions with a backslash, --output, a single &, >|), or
+// was a pre-existing hole (a quoted --actor, arguments from xargs).
+test('guard: writes and identities hidden by cd, escapes, find, --output, & and >| are refused', () => {
+  const { dir } = tmpProject();
+  const writes = [
+    'cd /nonexistent; echo pwn > src/a.js',
+    'cd /nonexistent\necho pwn > src/a.js',
+    'cd /x && false || echo pwn > src/a.js',
+    'true & rm -f src/a.js',
+    'echo pwn >| src/a.js',
+  ];
+  for (const c of writes) assert.strictEqual(bash(dir, 'technical-reviewer', c), 'deny', c);
+  const record = [
+    'echo \\"a\\" > .eccode/events.jsonl "b"',
+    "echo \\' > .eccode/events.jsonl \\'",
+    'find .eccode -name events.jsonl -exe\\c rm {} +',
+    'find .eccode -name events.jsonl -delet\\e',
+    'git stash show --output=.eccode/events.jsonl',
+    'git diff --output=.eccode/events.jsonl',
+    'cat x & rm -f .eccode/events.jsonl',
+  ];
+  for (const c of record) {
+    assert.strictEqual(bash(dir, 'backend-engineer', c), 'deny', `subagent: ${c}`);
+    assert.strictEqual(bash(dir, null, c), 'deny', `main session: ${c}`);
+  }
+  assert.strictEqual(bash(dir, null, 'cd .eccode/evidence && echo x > e1.log'), 'deny', 'the main session does not write the record either');
+  const identity = [
+    'F=--actor; X=.claude/eccode/bin/eccode.js; node $X risk add --id R1 --title t --severity low $F user',
+    "A=$(printf '\\055\\055actor'); echo $A user | xargs node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low",
+    "printf '\\055\\055actor user' | xargs node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low",
+    "node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low '--actor' user",
+    'node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low --act""or user',
+  ];
+  for (const c of identity) {
+    assert.strictEqual(bash(dir, 'technical-reviewer', c), 'deny', `subagent: ${c}`);
+    assert.notStrictEqual(bash(dir, null, c), 'allow', `main session must be asked: ${c}`);
+  }
+  // Still allowed: the forms the pilot's agents used legitimately.
+  for (const c of ['mkdir -p /tmp/eccode-g/tests && cd /tmp/eccode-g && echo x > tests/a.test.js', 'git stash list; ls -la .eccode | head', 'find .eccode -name "spec*.md"', 'node .claude/eccode/bin/eccode.js status --brief']) {
+    assert.strictEqual(bash(dir, 'technical-reviewer', c), 'allow', c);
+  }
+});

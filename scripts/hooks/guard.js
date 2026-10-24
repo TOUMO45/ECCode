@@ -34,6 +34,10 @@ const ROLES = new Set([...IMPLEMENTERS, 'product-architect', 'architecture-revie
 const RECORD_FILES = /(^|\/)\.eccode\/(events\.jsonl|state\.json|config\.json|evidence\/|improvements\/|memory\/records\/)/;
 // Shell text that refers to the record (bare `.eccode` covers `cd .eccode && …`).
 const RECORD_REF = /events\.jsonl|state\.json|\.eccode\/(config\.json|evidence|improvements|memory)|\.eccode\/?(?=$|[\s"';&|)])/;
+// A call of the eccode CLI: eccode.js, or the command word eccode (bare or in
+// a bin directory). The record directory (.eccode/), the toolkit directory
+// (.claude/eccode) and paths that merely contain the word are not calls.
+const CLI_REF = /eccode\.js\b|(^|[\s;&|(`'"=]|bin\/)eccode(?=$|[\s;&|)'"`])/;
 // find's actions that write, delete or run something; without them find only lists.
 const FIND_ACTIONS = /^-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)$/;
 const READ_ONLY = new Set(['cat', 'head', 'tail', 'less', 'more', 'jq', 'grep', 'egrep', 'fgrep', 'rg', 'wc', 'ls', 'stat', 'file', 'diff', 'cmp', 'sha256sum', 'shasum', 'md5sum', 'cd', 'pwd', 'echo', 'printf', 'sort', 'uniq', 'cut', 'tr', 'test', '[', 'true']);
@@ -61,10 +65,16 @@ function shellSkeleton(cmd) {
   return cmd
     // Heredoc bodies are data for the command that reads them, not commands.
     .replace(/<<-?\s*(['"]?)(\w+)\1[^\n]*\n[\s\S]*?\n[ \t]*\2[ \t]*(?=\n|$)/g, '<<$2')
-    // Quoted text can neither redirect nor split commands: keep it as one word
-    // (inside double quotes a backslash escapes the next character, \" too).
-    .replace(/'([^']*)'|"((?:[^"\\]|\\[\s\S])*)"/g, (m, a, b) => (a !== undefined ? a : b).replace(/[;|&<>\s]/g, '_'));
+    // Quoted text can neither redirect nor split commands: keep it as one word.
+    // A backslash outside quotes makes the next character literal (\" is not a
+    // quote); inside double quotes it escapes the next character too.
+    .replace(/\\([\s\S])|'([^']*)'|"((?:[^"\\]|\\[\s\S])*)"/g, (m, e, a, b) => (e !== undefined ? e : a !== undefined ? a : b).replace(/[;|&<>\s]/g, '_'))
+    // `>|` (noclobber override) is a redirection like `>`.
+    .replace(/>\|/g, '> ');
 }
+
+// Command separators: ||, &&, ;, |, newline, and a single & (background).
+const SEPARATORS = /\|\||&&|[;|\n]|(?<![>&])&(?![>&])/;
 
 /**
  * Literal paths a shell command writes to: redirections and write-tool
@@ -76,12 +86,14 @@ function bashWriteTargets(cmd) {
   const skeleton = shellSkeleton(cmd);
   let dir = '';
   const at = (t) => (t && dir && !path.isAbsolute(t) ? path.join(dir, t) : t);
-  // A cd moves the shell only on its own between &&, ; or newlines: not in a
-  // subshell, a pipeline, after || or in the background.
+  // A cd moves later targets only along an && chain: if it fails, nothing
+  // after it in the chain runs. Any other separator (;, newline, ||, |, &)
+  // may run the next command where the shell already was; a subshell undoes it.
   const subshell = /[()]/.test(skeleton);
-  const parts = skeleton.split(/(\|\||&&|[;|\n])/);
+  const parts = skeleton.split(new RegExp(`(${SEPARATORS.source})`));
   for (let i = 0; i < parts.length; i += 2) {
     const segment = parts[i];
+    if (i > 0 && parts[i - 1] !== '&&') dir = '';
     for (const m of segment.replace(/\d*>&\d+/g, '').matchAll(/>>?\s*([^\s;&|)]+)/g)) targets.push(at(m[1]));
     const words = segment.trim().replace(/^\(+/, '').split(/\s+/).filter((w) => w && !/^\w+=/.test(w));
     if (!words.length) continue;
@@ -89,7 +101,7 @@ function bashWriteTargets(cmd) {
     const args = words.slice(1).filter((a) => !a.startsWith('-'));
     if (name === 'cd') {
       const to = words[1];
-      const alone = !subshell && words.length === 2 && ![parts[i - 1], parts[i + 1]].some((sep) => sep === '|' || sep === '||') && !/(^|[^&])&([^&]|$)/.test(segment);
+      const alone = !subshell && words.length === 2 && parts[i + 1] === '&&';
       dir = alone && to && !/[$`~*?]/.test(to) && !to.startsWith('-') ? (path.isAbsolute(to) ? to : path.join(dir, to)) : '';
     } else if (name === 'tee') targets.push(...args.map(at));
     else if (name === 'truncate' || name === 'unlink' || name === 'rm') targets.push(...args.map(at));
@@ -103,14 +115,14 @@ function writesRecord(cmd, { subagent }) {
   if (!RECORD_REF.test(cmd)) return false; // heredoc bodies count: `python3 - <<EOF` can write too
   const shell = shellSkeleton(cmd);
   for (const m of shell.matchAll(/>>?\s*([^\s;&|]+)/g)) if (RECORD_REF.test(m[1])) return true;
-  for (const segment of shell.split(/\|\||&&|[;|\n]/)) {
+  for (const segment of shell.split(SEPARATORS)) {
     const words = segment.trim().split(/\s+/).filter((w) => w && !/^\w+=/.test(w));
     if (!words.length) continue;
     const name = path.basename(words[0]);
     const args = words.slice(1);
     if (READ_ONLY.has(name)) continue;
     if (name === 'sed' && !args.some((a) => /^(-i|--in-place)/.test(a))) continue;
-    if (name === 'find' && !args.some((a) => FIND_ACTIONS.test(a))) continue; // find only lists
+    if (name === 'find' && !args.some((a) => FIND_ACTIONS.test(a) || /[\\$`]/.test(a))) continue; // find only lists
     if (/^eccode(\.js)?$/.test(name) || (['node', 'npx'].includes(name) && /(^|\/)eccode(\.js)?$/.test(args[0] || ''))) {
       // `evidence run … -- <cmd>` and `improve evaluate … -- <cmd>` execute <cmd>.
       const at = cmd.indexOf(' -- ');
@@ -118,31 +130,14 @@ function writesRecord(cmd, { subagent }) {
       continue;
     }
     if (name === 'git') {
+      // --output writes a file, whatever the subcommand.
+      if (args.some((a) => /^--output(=|$)/.test(a))) return true;
       const subs = args.filter((a, i) => !a.startsWith('-') && !['-C', '-c'].includes(args[i - 1]));
       if (!subagent || GIT_READ.has(subs[0]) || (subs[0] === 'stash' && ['list', 'show'].includes(subs[1]))) continue;
     }
     return true;
   }
   return false;
-}
-
-/**
- * Whether shell expansion can change an eccode CLI call: a segment that calls
- * the CLI (or names eccode.js, as in `bash -c "…"`) and expands something, or
- * a command word that is itself expanded ($E, $(…)) in a command that names
- * the CLI. A `.eccode/` or `.claude/eccode` path next to a `$` is not a call.
- */
-function builtCliCall(cmd) {
-  const segments = shellSkeleton(cmd).split(/\|\||&&|[;|\n]/);
-  const wordsOf = (seg) => seg.trim().replace(/^\(+/, '').split(/\s+/).filter((w) => w && !/^\w+=/.test(w));
-  const isCli = (w) => /(^|\/)eccode(\.js)?$/.test(w || '');
-  const callsCli = (seg) => {
-    const w = wordsOf(seg);
-    return /eccode\.js\b/.test(seg) || (w.length > 0 && (isCli(w[0]) || (['node', 'npx'].includes(path.basename(w[0])) && isCli(w[1]))));
-  };
-  const expands = (text) => /\$[\w{(]|`/.test(text);
-  if (!segments.some(callsCli)) return false;
-  return segments.some((seg) => (callsCli(seg) && expands(seg)) || expands(wordsOf(seg)[0] || ''));
 }
 
 function findRoot(start) {
@@ -222,14 +217,19 @@ function main(input) {
     if (writesRecord(cmd, { subagent: Boolean(role) })) {
       out('deny', 'This command touches the ECCode record (events.jsonl, state.json, config, evidence, improvements, memory records) with something other than a read-only tool or the eccode CLI. The record is written only by eccode commands; read it with cat, jq, grep or git diff/log/show.');
     }
-    if (/\beccode(\.js)?\b/.test(cmd)) {
+    if (CLI_REF.test(cmd)) {
       const parsed = actorWords(cmd);
       const flagged = parsed.map((w) => w.value);
       const actors = flagged.length ? flagged : [process.env.ECCODE_ACTOR].filter(Boolean);
       // Identity must be literal: an --actor value or eccode argument built by
-      // shell expansion ($VAR, $(...), backticks) cannot be checked from text.
+      // shell expansion ($VAR, $(...), backticks), a flag name written with
+      // quotes or escapes ('--actor', --act""or), or arguments fed through
+      // xargs or eval cannot be checked from text.
       const argvPart = cmd.split(/\s--\s/)[0];
-      if (parsed.some((w) => w.dynamic) || builtCliCall(argvPart)) {
+      // More --actor flags once quotes and escapes are removed: one was hidden.
+      const hidden = actorWords(argvPart.replace(/\\(.)/g, '$1').replace(/['"]/g, '')).length > actorWords(argvPart).length
+        || /(^|[\s;&|(])(xargs|eval)\s/.test(argvPart);
+      if (parsed.some((w) => w.dynamic) || /\$[\w{(]|`/.test(argvPart) || hidden) {
         if (role) out('deny', `Identity must be written literally: use --actor ${role} with no shell expansion in the eccode arguments.`);
         out('ask', 'ECCode: this eccode command builds its arguments with shell expansion, so the acting identity cannot be read from the command text. Approve only if you, the human, intend exactly what it will run.');
       }
@@ -251,12 +251,11 @@ function main(input) {
         }
       }
     }
-    // Shell writes obey the same ownership policy as the file tools.
-    if (role && !role.startsWith('other:')) {
-      for (const target of bashWriteTargets(cmd)) {
-        const reason = ownershipDenial(root, lib, role, path.resolve(input.cwd || root, target));
-        if (reason) out('deny', `Shell write to ${target}: ${reason}`);
-      }
+    // Shell writes obey the same ownership policy as the file tools; nobody,
+    // the main session included, writes a record file from the shell.
+    for (const target of bashWriteTargets(cmd)) {
+      const reason = ownershipDenial(root, lib, role, path.resolve(input.cwd || root, target));
+      if (reason) out('deny', `Shell write to ${target}: ${reason}`);
     }
     return;
   }
