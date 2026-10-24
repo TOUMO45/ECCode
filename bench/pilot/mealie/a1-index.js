@@ -30,7 +30,11 @@ function intra(lang, spec) {
 /** Resolution of every intra-project import spec, through the index's own resolver. */
 function importStats(root, index) {
   const files = Object.keys(index.files);
-  const ctx = { fileSet: new Set(files), dirSet: new Set(files.map((f) => path.posix.dirname(f)).map((d) => (d === '.' ? '' : d))), root, alias: codebase.aliases(root), goModule: null };
+  // The index's own context where ECCode has one (per-directory aliases, JSON
+  // assets); the root-only aliases of ECCode before it otherwise.
+  const ctx = codebase.resolveContext
+    ? codebase.resolveContext(root, lean.listFiles(root), files)
+    : { fileSet: new Set(files), dirSet: new Set(files.map((f) => path.posix.dirname(f)).map((d) => (d === '.' ? '' : d))), root, alias: codebase.aliases(root), goModule: null };
   const out = {};
   const unresolved = {};
   for (const f of files) {
@@ -91,7 +95,7 @@ function main(commit) {
     const notIndexedSource = {};
     for (const f of lean.listFiles(tree)) {
       const ext = path.extname(f).slice(1);
-      if (!SOURCE_NOT_INDEXED.includes(ext)) continue;
+      if (!SOURCE_NOT_INDEXED.includes(ext) || index.files[f]) continue;
       notIndexedSource[ext] = notIndexedSource[ext] || { files: 0, lines: 0 };
       notIndexedSource[ext].files += 1;
       notIndexedSource[ext].lines += fs.readFileSync(path.join(tree, f), 'utf8').split('\n').length;

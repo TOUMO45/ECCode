@@ -410,3 +410,39 @@ test('python Lib/ layout: absolute imports resolve from the nearest non-package 
   assert.deepStrictEqual(imp.modules, ['Lib/json', 'Lib/asyncio', 'Lib/os.py', 'Lib/shutil.py']);
   assert.match(cb.onboardBrief(dir).text, /\| Lib\/json\/ \| 2 \|/);
 });
+
+test('js/ts: a Nuxt sub-project resolves its aliases without the generated tsconfig, plus its own paths and JSON imports', () => {
+  const dir = repo({
+    'frontend/package.json': '{"name":"web"}',
+    'frontend/nuxt.config.ts': 'export default defineNuxtConfig({});\n',
+    // The real config extends the one `nuxt prepare` generates; a fresh checkout has none.
+    'frontend/tsconfig.json': '{ "extends": "./.nuxt/tsconfig.json", "compilerOptions": { "paths": { "#shared/*": ["./shared/*"] } } }',
+    'frontend/app/lib/money.ts': 'export const formatMoney = (x: number) => `$${x}`;\n',
+    'frontend/app/lang/en.json': '{"hello":"Hello"}\n',
+    'frontend/shared/units.ts': 'export const g = 1;\n',
+    'frontend/app/composables/use-money.ts': "import { formatMoney } from '~/lib/money';\nimport en from '../lang/en.json';\nimport { g } from '#shared/units';\nexport const useMoney = () => [formatMoney, en, g];\n",
+    'frontend/app/composables/use-money.test.ts': "import { useMoney } from '@/composables/use-money';\nuseMoney;\n",
+    'frontend/server/report.ts': "import { useMoney } from '~~/app/composables/use-money';\nimport { formatMoney } from '@@/app/lib/money';\nexport const r = [useMoney, formatMoney];\n",
+  });
+  const index = cb.indexProject(dir);
+  assert.deepStrictEqual(index.files['frontend/app/composables/use-money.ts'].imports, ['frontend/app/lang/en.json', 'frontend/app/lib/money.ts', 'frontend/shared/units.ts']);
+  assert.deepStrictEqual(index.files['frontend/app/composables/use-money.test.ts'].imports, ['frontend/app/composables/use-money.ts']);
+  assert.deepStrictEqual(index.files['frontend/server/report.ts'].imports, ['frontend/app/composables/use-money.ts', 'frontend/app/lib/money.ts']);
+  assert.deepStrictEqual(cb.impact(dir, ['frontend/app/lib/money.ts'], { index }).tests, ['frontend/app/composables/use-money.test.ts']);
+});
+
+test('vue: single-file components are indexed through their script blocks; impact follows them to tests', () => {
+  const dir = repo({
+    'frontend/nuxt.config.ts': 'export default defineNuxtConfig({});\n',
+    'frontend/app/lib/money.ts': 'export const formatMoney = (x: number) => `$${x}`;\n',
+    'frontend/app/components/Price.vue': '<template>\n  <span>{{ formatMoney(1) }}</span>\n</template>\n\n<script setup lang="ts">\nimport { formatMoney } from "~/lib/money";\n// import { ignored } from "~/lib/commented";\n</script>\n\n<style scoped>\n@import "./price.css";\n</style>\n',
+    'frontend/app/components/Price.test.ts': "import Price from './Price.vue';\nPrice;\n",
+  });
+  const index = cb.indexProject(dir);
+  const sfc = index.files['frontend/app/components/Price.vue'];
+  assert.ok(sfc, 'the component is indexed');
+  assert.strictEqual(sfc.lang, 'js');
+  assert.deepStrictEqual(sfc.imports, ['frontend/app/lib/money.ts'], 'script imports only: not the commented one, not the style @import');
+  assert.deepStrictEqual(index.files['frontend/app/components/Price.test.ts'].imports, ['frontend/app/components/Price.vue']);
+  assert.deepStrictEqual(cb.impact(dir, ['frontend/app/lib/money.ts'], { index }).tests, ['frontend/app/components/Price.test.ts']);
+});
