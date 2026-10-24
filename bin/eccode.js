@@ -40,7 +40,7 @@ Project
   deliver --actor delivery-lead          Produce the verified final handoff
 
 Gates (architecture, design, plan, phase:<id>, verification)
-  gate start <gate> --actor <role>
+  gate start <gate> --actor <role> [--reviewers r1,r2]   (orchestrator: each named reviewer must approve)
   gate submit <gate> --actor <role> --artifact <path>... [--responds-to <reviewId>] [--notes <text>]
   gate review <gate> --actor <reviewer> --file <review.json>
   gate reopen <gate> --actor user --resolution <text>
@@ -551,8 +551,9 @@ function main(argv) {
     case 'gate': {
       const gateId = need(arg, '<gate>');
       if (sub === 'start') {
-        gates.startGate(store, config, gateId, need(actor, '--actor'));
-        print(flags, `Gate ${gateId} started.`, { gate: gateId, status: 'in_progress' });
+        const reviewers = flags.reviewers ? String(flags.reviewers).split(',').map((r) => r.trim()).filter(Boolean) : undefined;
+        gates.startGate(store, config, gateId, need(actor, '--actor'), { reviewers });
+        print(flags, `Gate ${gateId} started.${reviewers ? ` Each of ${reviewers.join(', ')} must approve.` : ''}`, { gate: gateId, status: 'in_progress', ...(reviewers ? { reviewers } : {}) });
       } else if (sub === 'submit') {
         const { event } = gates.submit(store, config, gateId, need(actor, '--actor'), {
           artifacts: flags.artifact || [],

@@ -63,7 +63,7 @@ For each document gate (`architecture`, `design`, `plan`):
 
 ## 4. Implementation phases
 For each `phase:<id>`, in order:
-1. **Confirm scope.** `eccode gate start phase:<id> --actor orchestrator`, then read the phase's acceptance criteria back to yourself from the plan.
+1. **Confirm scope.** `eccode gate start phase:<id> --actor orchestrator`, then read the phase's acceptance criteria back to yourself from the plan. For a phase touching auth, input handling or AI, start it with `--reviewers technical-reviewer,security-reviewer`: the gate is then approved only once both approve the same submission, so a later security finding is never lost to an earlier approval.
 2. **Assign.** Run `eccode task next` for the ready tasks.
    - Dispatch the task owners. Each dispatch includes: task id, CLI string, the contract sections to build against, file ownership, and a reminder to follow the `lean-change` skill (reuse before writing; declare new dependencies, shortcuts and skipped tests).
    - Dispatch in parallel (several Agent calls in one message) **only** for tasks that `task next` lists together: their dependencies are done and their ownership is disjoint. The engine also enforces `maxConcurrency`.
@@ -73,7 +73,7 @@ For each `phase:<id>`, in order:
    - On `task fail`, retry within `maxTaskRetries`. A repeated failure escalates.
    - For a non-trivial failure, dispatch `learning-debugger`.
 4. **Check.** Run integration checks across tasks yourself when they span ownership (`eccode evidence run --actor orchestrator ...`). `eccode impact --changed` names the dependents and tests a change reaches; `--run --actor orchestrator` executes and records the affected tests.
-5. **Independent review.** Have `delivery-lead` submit the phase. Then dispatch `technical-reviewer` (and `security-reviewer` for phases touching auth, input handling or AI). Reviewers re-run checks themselves.
+5. **Independent review.** Have `delivery-lead` submit the phase. Then dispatch `technical-reviewer` (and `security-reviewer` for phases touching auth, input handling or AI, named with `--reviewers` at gate start). Reviewers re-run checks themselves.
 6. **Fix blocking findings.** Map each finding to its owning task, run `eccode task reset <id> --actor orchestrator --reason "<finding>"`, then redispatch. Re-submit with `--responds-to`. The reviewer must resolve each finding with evidence.
 7. **Record before dependent work.** The next phase cannot start until this gate is approved (enforced).
 
