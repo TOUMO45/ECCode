@@ -260,7 +260,8 @@ test('a repository cannot make ECCode run commands: the embedder comes only from
 // refused a reviewer's edit of its own scratch file outside the project.
 test('guard: escaped quotes inside double quotes do not hide a write target; a read-only find of the record is allowed', () => {
   const { dir } = tmpProject();
-  const scratch = path.join(require('os').tmpdir(), 'eccode-scratch-probe.js');
+  // Forward slashes: in a shell command, a Windows backslash is an escape.
+  const scratch = path.join(require('os').tmpdir(), 'eccode-scratch-probe.js').split(path.sep).join('/');
   const sedCmd = `sed -i "s|\\"/plans/' OR 1=1--\\"|\\"/plans/%27%20OR%201=1--\\"|" ${scratch}; grep -n "OR 1" ${scratch}`;
   assert.strictEqual(bash(dir, 'security-reviewer', sedCmd), 'allow', 'the target is the scratch file, outside the project');
   assert.strictEqual(bash(dir, 'security-reviewer', 'sed -i "s|\\"a\\"|b|" src/app.js'), 'deny', 'a reviewer still may not edit project files');
@@ -274,7 +275,8 @@ test('guard: escaped quotes inside double quotes do not hide a write target; a r
 // target against the project; `git stash list` counted as a write.
 test('guard: a literal cd moves relative write targets; git stash list only reads', () => {
   const { dir } = tmpProject();
-  const scratch = path.join(require('os').tmpdir(), 'eccode-scratch-g');
+  // Forward slashes: in a shell command, a Windows backslash is an escape.
+  const scratch = path.join(require('os').tmpdir(), 'eccode-scratch-g').split(path.sep).join('/');
   assert.strictEqual(bash(dir, 'technical-reviewer', `mkdir -p ${scratch}/tests && cd ${scratch} && echo "x" > tests/a.test.js`), 'allow');
   assert.strictEqual(bash(dir, 'technical-reviewer', 'cd src && echo x > a.js'), 'deny', 'a cd inside the project still lands in the project');
   assert.strictEqual(bash(dir, 'technical-reviewer', `cd ${scratch}; cd ${dir}; echo x > src/a.js`), 'deny', 'the last cd counts');
