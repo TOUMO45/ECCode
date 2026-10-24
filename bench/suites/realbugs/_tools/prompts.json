@@ -1,0 +1,82 @@
+{
+  "youtube-dl-16": {
+    "title": "TTML/DFXP subtitles that are not UTF-8 cannot be converted to SRT",
+    "prompt": "Converting TTML (DFXP) subtitles to SRT fails when the subtitle document is not UTF-8. A document that starts with `<?xml version=\"1.0\" encoding=\"UTF-16\"?>` and is encoded in UTF-16 cannot be converted, because the subtitle file is read as UTF-8 text before it is parsed; the XML declaration should decide the encoding.\n\n`youtube_dl.utils.dfxp2srt` should take the raw bytes of the subtitle document (as read from the file in binary mode), for UTF-8 and non-UTF-8 documents alike, and return the SRT text; the subtitle conversion that calls it should pass it the file's bytes.\n\nTests: `python -m pytest -q test/<file>.py` runs one test file. test/test_download.py and the per-site tests need network access."
+  },
+  "youtube-dl-9": {
+    "title": "-f 'bestvideo+bestaudio/best' does not fall back to best",
+    "prompt": "A format spec like `-f 'bestvideo[height>=999999]+bestaudio/best'` should mean: merge the best video that matches the filter with the best audio, or, if that is not possible, take `best`. Instead it is read as `bestvideo[height>=999999]+(bestaudio/best)`, so when no video matches the filter the selection fails (\"requested format not available\") instead of falling back to `best`.\n\nIn format selection `+` must bind tighter than `/` and `,`. Parentheses must keep grouping as they do now, e.g. `(bestvideo[ext=mp4],bestvideo[ext=webm])+bestaudio`.\n\nTests: `python -m pytest -q test/<file>.py` runs one test file. test/test_download.py and the per-site tests need network access."
+  },
+  "youtube-dl-41": {
+    "title": "unified_strdate returns None for dates like 1968-12-10",
+    "prompt": "`youtube_dl.utils.unified_strdate('1968-12-10')` returns None instead of `'19681210'`, so upload dates written as YYYY-MM-DD are lost. Every date format that is parsed correctly today must keep working.\n\nTests: `python -m pytest -q test/<file>.py` runs one test file. test/test_download.py and the per-site tests need network access."
+  },
+  "youtube-dl-4": {
+    "title": "The JavaScript interpreter fails on calls to functions without arguments",
+    "prompt": "youtube-dl's JavaScript interpreter (`youtube_dl.jsinterp.JSInterpreter`) cannot evaluate a call to a function that takes no arguments when the call appears inside another function's body. With\n\n```js\nfunction x() { return 2; }\nfunction y(a) { return x() + a; }\nfunction z() { return y(3); }\n```\n\n`JSInterpreter(code).call_function('z')` should return 5, but it raises an error. Calls that pass arguments work.\n\nTests: `python -m pytest -q test/<file>.py` runs one test file. test/test_download.py and the per-site tests need network access."
+  },
+  "black-19": {
+    "title": "Black inserts blank lines between decorators when a comment sits between them",
+    "prompt": "Black adds empty lines inside a decorator stack when there are comments between the decorators. Formatting\n\n```python\n@property\n# TODO: X\n@property\n# TODO: Y\n# TODO: Z\n@property\ndef foo():\n    pass\n```\n\nshould leave it unchanged, but Black inserts blank lines before the comments, separating them, and the decorators after them, from the decorators above. Comments between decorators belong to the decorator stack: no blank lines may be inserted there. The output must be stable (formatting it again changes nothing).\n\nTests: `python -m pytest -q tests/test_black.py`."
+  },
+  "black-10": {
+    "title": "Comments in tab-indented code move to the wrong block",
+    "prompt": "When the source is indented with tabs, Black can move a comment into the wrong block. This input (tabs shown as \\t)\n\n```\nif 1:\n\\tif 2:\n\\t\\tpass\n\\t# comment\n\\tpass\n```\n\nshould become\n\n```python\nif 1:\n    if 2:\n        pass\n    # comment\n    pass\n```\n\nwith the comment at the level of the outer block's body, but Black indents the comment as if it belonged to the inner `if 2:` block. A comment indented with two tabs at that point (`\\t\\t# comment`) belongs to the inner block and must stay there. The same code indented with spaces is formatted correctly today.\n\nTests: `python -m pytest -q tests/test_black.py`."
+  },
+  "black-20": {
+    "title": "black --diff names files by their base name only",
+    "prompt": "With `--diff`, the diff headers name the file by its base name only (`--- foo.py  (original)` and `+++ foo.py  (formatted)`), so the diffs of files in different directories cannot be told apart or applied with `patch`. The headers must show the file's path as Black was given it, e.g. `--- src/pkg/foo.py  (original)`.\n\nTests: `python -m pytest -q tests/test_black.py`."
+  },
+  "black-17": {
+    "title": "Black crashes on an empty file",
+    "prompt": "Formatting an empty file, or an empty string through `black.format_str`, crashes with `IndexError: string index out of range`. An empty file must format to an empty file and be reported as unchanged: `black.format_file_in_place` returns False and the file stays empty.\n\nTests: `python -m pytest -q tests/test_black.py`."
+  },
+  "tornado-10": {
+    "title": "render_string() fails inside a WebSocketHandler",
+    "prompt": "Calling `self.render_string(...)` in a `WebSocketHandler`, for example in `on_message` to render a template and send it with `write_message`, fails with `TypeError: 'NoneType' object is not iterable` raised from `get_template_namespace`. It worked in earlier releases. Templates must be renderable for as long as the websocket connection is open.\n\nTests: `python -m pytest -q tornado/test/<module>_test.py` runs one test module."
+  },
+  "tornado-13": {
+    "title": "HTTP1Connection crashes on an HTTP/1.0 response without Content-Length",
+    "prompt": "On the client side, reading an HTTP/1.0 response that has no Content-Length header (its body ends when the server closes the connection) with `tornado.http1connection.HTTP1Connection.read_response` crashes with `AttributeError: 'ResponseStartLine' object has no attribute 'method'`. The response must be read normally: the headers are delivered to the delegate, then the body up to the close.\n\nTests: `python -m pytest -q tornado/test/<module>_test.py` runs one test module."
+  },
+  "tornado-7": {
+    "title": "The result of IOLoop.run_in_executor cannot be awaited in a native coroutine",
+    "prompt": "`IOLoop.current().run_in_executor(None, func, *args)` returns an object that works with `yield` in a `gen.coroutine` but not with `await` in an `async def` coroutine: `TypeError: object Future can't be used in 'await' expression`. The result must be awaitable from native coroutines and still usable from `gen.coroutine`, and several calls must still run in parallel in the executor.\n\nTests: `python -m pytest -q tornado/test/<module>_test.py` runs one test module."
+  },
+  "tornado-15": {
+    "title": "StaticFileHandler serves files outside the static directory",
+    "prompt": "Security: `StaticFileHandler` serves files outside its static root when their path starts with the root's name. With `static_path='/srv/app/static'`, a request for `/static/../static_foo.txt` serves `/srv/app/static_foo.txt`, which is outside the static directory. Every request that resolves outside the root directory must be refused with 403 and logged as not in the root static directory, as other traversal attempts already are.\n\nTests: `python -m pytest -q tornado/test/<module>_test.py` runs one test module."
+  },
+  "thefuck-2": {
+    "title": "thefuck splits PATH on ':' on every platform",
+    "prompt": "On Windows, PATH entries are separated by `;`, but thefuck splits PATH on `:` when it lists the available executables (`thefuck.utils.get_all_executables`). With `PATH=C:\\foo;C:\\bar` it looks in directories such as `C` and `\\foo;C`, so commands are not found and suggestions are wrong. PATH must be split with the separator of the platform thefuck runs on.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker)."
+  },
+  "thefuck-24": {
+    "title": "The same suggestion shows up twice when rules give it different priorities",
+    "prompt": "When two rules suggest the same corrected command (same script, same side effect) with different priorities, thefuck shows it twice. `CorrectedCommand('ls', None, 100)` and `CorrectedCommand('ls', None, 200)` (from `thefuck.types`) compare unequal and hash differently. Two corrected commands must be equal, and hash equally, exactly when their script and side effect are equal; the priority must not matter. A different side effect still makes them different.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker)."
+  },
+  "thefuck-31": {
+    "title": "The git_diff_staged rule puts --staged after the file name",
+    "prompt": "After `git add foo`, `git diff foo` prints nothing, and thefuck suggests `git diff foo --staged`, which git rejects (`fatal: bad flag '--staged' used after filename`). The suggestion must put `--staged` right after `diff`: `git diff --staged foo`. A plain `git diff` must still become `git diff --staged`.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker)."
+  },
+  "thefuck-22": {
+    "title": "IndexError when no rule matches",
+    "prompt": "When no rule produces a corrected command, thefuck crashes with `IndexError: list index out of range` instead of reporting that there is nothing to fix. A `thefuck.types.SortedCorrectedCommandsSequence` built from an empty iterator must behave as an empty sequence: `list(seq) == []`.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker)."
+  },
+  "tqdm-6": {
+    "title": "tqdm(..., disable=True) breaks on iterators without a length",
+    "prompt": "Wrapping an iterator that has no `__len__` in `tqdm(..., disable=True)` raises `AttributeError: 'tqdm' object has no attribute 'total'` when it is consumed with `list()`. For example `list(tqdm(pool.imap(f, range(100)), disable=True))` with a `multiprocessing.Pool` fails. A disabled bar must behave exactly like the iterable it wraps.\n\nTests: `python -m pytest -q tqdm/tests`."
+  },
+  "tqdm-9": {
+    "title": "Wrong SI prefix at unit boundaries, and len() of a bar without an iterable",
+    "prompt": "Two bugs.\n\n1. With `unit_scale=True` the number of decimals is chosen before the value is rounded, so values that round up to the next boundary come out wrong: 9999 is shown as `10.00K` instead of `10.0K`, 99999 as `100.0K` instead of `100K`, and 999999 as `1000K` instead of `1.00M` (likewise at every prefix up to Z). The printed value must have three significant figures for the value as it is printed, moving to the next prefix when the rounded value reaches 1000 (`9.99K`, `10.0K`, `99.5K`, `100K`, `1.00M`); values in Y keep one decimal (`1.0Y`, `1000.0Y`).\n2. `len()` of a bar created without an iterable, such as `tqdm(total=2)`, raises `TypeError: object of type 'NoneType' has no len()`; it must return the total. `len()` of a bar over a list stays the list's length.\n\nTests: `python -m pytest -q tqdm/tests`."
+  },
+  "tqdm-1": {
+    "title": "tenumerate crashes when given a start value",
+    "prompt": "`tqdm.contrib.tenumerate(iterable, start)` must behave like `enumerate(iterable, start)` with a progress bar. With a start value, `list(tenumerate(a, 42))` raises `TypeError` instead of numbering from 42; it must equal `list(enumerate(a, 42))`.\n\nTests: `python -m pytest -q tqdm/tests`."
+  },
+  "tqdm-4": {
+    "title": "A numeric unit_scale crashes when the total is unknown",
+    "prompt": "Iterating `tqdm(generator, unit_scale=10)` over a generator (no known total) crashes with `TypeError: unsupported operand type(s) for *=: 'NoneType' and 'int'`. With an unknown total the bar must still count and scale: ten items with `unit_scale=10` show `100it`.\n\nTests: `python -m pytest -q tqdm/tests`."
+  }
+}

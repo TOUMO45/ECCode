@@ -15,6 +15,11 @@ Start here
                                          One small, reviewed change: creates the record if needed, a one-task
                                          quick work item with its check and ownership read from the repository,
                                          starts its gate, and prints every remaining step (Claude Code: /eccode:quick)
+  debug "<bug>" --actor orchestrator [--owner <role>] [--files <globs>] [--command <cmd>]
+                                         One bug, fixed at its root: the same setup on the debug track. The owner
+                                         reproduces it with a test, fixes it, proves the test (fix verify) and
+                                         records a mutation run; one independent review; no verification gate
+                                         (Claude Code: /eccode:debug)
   status --brief                         Where the work stands and the next action
   onboard                                Brief on an unfamiliar codebase before changing it
   impact --changed | bugs                What a change affects; slips in the lines it added
@@ -23,7 +28,7 @@ Start here
 Project
   init --name <n> --idea <text> [--track greenfield|feature|refactor|fix]   Create .eccode/ (a quick change: eccode quick)
   work start --track <t> --title <text> --actor <orchestrator|user> [--behavior <cmd>]
-             [--owner <role> --files <glob,glob> --command <cmd>]     Start the next work item (quick needs owner/files/command)
+             [--owner <role> --files <glob,glob> --command <cmd>]     Start the next work item (quick and debug need owner/files/command)
   work abandon --actor user --reason <text>   Abandon the active work item (user decision)
   work list [--json]                     Current and archived work items
   status [--json|--brief]                Gates, tasks, budget and the next action
@@ -48,7 +53,7 @@ Plan & tasks
   task complete <id> --actor <owner> --handoff <handoff.json>
   task fail <id> --actor <owner> --reason <text>
   task reset <id> --actor <orchestrator|delivery-lead|user> --reason <text>
-  task rescope <id> --files <glob,glob> --actor <orchestrator (quick track)|user> --reason <text>
+  task rescope <id> --files <glob,glob> --actor <orchestrator (quick, debug tracks)|user> --reason <text>
                                          Correct a pending task's ownership (release a claimed one with task fail)
 
 Evidence & records
@@ -116,14 +121,16 @@ Bugs and problem solving (see docs/bugs.md)
                                    Exit 0 only when proven; the pair counts as the fix track's reproduction
 
 Benchmark
-  bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|engine|both|all|<a,b>] [--suite <dir>]
+  bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|method|engine|debug|both|all|<a,b>] [--suite <dir>]
         [--engine-profile guard|no-shell|sandbox] [--engine-agents inherit|as-shipped] [--timeout <s>] [--out <file>]
         [--save <runs.jsonl>] [--keep]
   bench report <runs.jsonl> --agent "<cmd>" [--out <file>]   Rebuild a report from runs saved with --save
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
         Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
         "engine" installs the toolkit and asks for delivery through the quick track (bench/suites/engine:
-        multi-file tasks with regression traps). Hidden checks, lines, dependencies, tests, and the tokens and
+        multi-file tasks with regression traps); "debug" asks for the fix through the debug track
+        (bench/suites/realbugs: real bugs at their pre-fix commits); "method" prepends the debugging
+        method's text with nothing installed. Hidden checks, lines, dependencies, tests, and the tokens and
         cost the agent reports (claude -p --output-format json) are measured by the harness, never self-reported
 
 MCP (the engine as typed tool calls; see docs/mcp.md)
@@ -192,24 +199,25 @@ function main(argv) {
   const { openProject, init } = require('../lib/project');
 
   if (group === 'init') {
-    const quick = flags.track === 'quick' ? { owner: flags.owner, files: flags.files, command: flags.command } : undefined;
+    const quick = ['quick', 'debug'].includes(flags.track) ? { owner: flags.owner, files: flags.files, command: flags.command } : undefined;
     const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', track: flags.track, quick });
     print(flags, `Initialized ECCode project in ${store.dir}`, { root: store.root });
     return 0;
   }
-  if (group === 'quick') {
+  if (group === 'quick' || group === 'debug') {
     const q = require('../lib/quick');
-    const res = q.start(root, need(actor, '--actor'), { request: need(sub, '"<request>"'), owner: flags.owner, files: flags.files, command: flags.command, name: flags.name });
+    const res = q.start(root, need(actor, '--actor'), { request: need(sub, group === 'debug' ? '"<bug>"' : '"<request>"'), owner: flags.owner, files: flags.files, command: flags.command, name: flags.name, track: group });
     const t = res.task;
+    const steps = q.steps('eccode', t, group);
     print(flags, [
-      `Quick change ${res.workId} started${res.created ? ' (new record)' : ''}: "${t.title}"`,
-      `  task change: owner ${t.owner}; files ${t.files.join(', ')}; verification: ${t.verification.command}`,
+      `${group === 'debug' ? 'Bug fix' : 'Quick change'} ${res.workId} started${res.created ? ' (new record)' : ''}: "${t.title}"`,
+      `  task ${t.id}: owner ${t.owner}; files ${t.files.join(', ')}; verification: ${t.verification.command}`,
       ...res.defaults.map((d) => `  from the repository: ${d}`),
-      '  gate phase:change is started.',
+      `  gate phase:${t.id} is started.`,
       '',
       'The rest of the path (eccode status shows where you are):',
-      ...q.steps('eccode', t),
-    ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps: q.steps('eccode', t) });
+      ...steps,
+    ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps });
     return 0;
   }
   if (group === 'mcp') {
@@ -230,7 +238,10 @@ function main(argv) {
       const text = t.perFile
         .map((f) => `${f.file}: ${f.runs} runs, hidden ${f.hiddenPassed}/${f.hiddenTotal}, dep-adding ${f.depRuns}, agent failures ${f.agentFailures}`)
         .concat(`TOTAL: ${t.total.runs} runs across ${t.total.files} report files, hidden ${t.total.hiddenPassed}/${t.total.hiddenTotal}, dep-adding ${t.total.depRuns}, agent failures ${t.total.agentFailures}`, `Paired medians per task-batch: with-variant smaller ${t.total.pairedSmaller}, larger ${t.total.pairedLarger}, equal ${t.total.pairedEqual}`, t.stratified ? `Stratified permutation (labels shuffled within each task-batch, ${t.stratified.strata} strata, ${t.stratified.runs} runs): mean with-without = ${t.stratified.delta.toFixed(2)} lines, two-sided p ${t.stratified.atFloor ? '≤' : '='} ${t.stratified.p < 0.001 ? t.stratified.p.toExponential(2) : t.stratified.p.toFixed(4)} over ${t.stratified.resamples} seeded resamples (pools every model; read the per-model lines)` : 'Stratified permutation: not enough paired raw rows', 'Per model (the same test within each model):', ...perModel)
-        .concat(Object.entries(t.engine).length ? ['Engine batches (engine vs without, same files; pass = every hidden check):'] : [], Object.entries(t.engine).map(([m, e]) => `  ${m}: without ${e.without.allPass}/${e.without.runs} pass, median ${e.without.medianTokens === null ? '—' : e.without.medianTokens} tokens, $${e.without.medianCostUsd === null ? '—' : e.without.medianCostUsd}, ${e.without.medianSeconds} s; engine ${e.engine.allPass}/${e.engine.runs} pass, median ${e.engine.medianTokens === null ? '—' : e.engine.medianTokens} tokens, $${e.engine.medianCostUsd === null ? '—' : e.engine.medianCostUsd}, ${e.engine.medianSeconds} s, delivered ${e.engine.delivered}/${e.engine.runs}, audit ok ${e.engine.auditOk}/${e.engine.runs}${e.passRate ? `; pass-rate difference ${e.passRate.delta >= 0 ? '+' : ''}${(e.passRate.delta * 100).toFixed(1)} points, stratified p ${e.passRate.atFloor ? '≤' : '='} ${e.passRate.p.toFixed(4)}` : ''}`))
+        .concat(Object.entries(t.engine).length ? ['Engine batches (engine and debug vs without, same files; pass = every hidden check):'] : [], Object.entries(t.engine).map(([m, e]) => {
+          const side = (name, x, rate) => `${name} ${x.allPass}/${x.runs} pass, median ${x.medianTokens === null ? '—' : x.medianTokens} tokens, $${x.medianCostUsd === null ? '—' : x.medianCostUsd}, ${x.medianSeconds} s${name === 'without' || name === 'method' ? '' : `, delivered ${x.delivered}/${x.runs}, audit ok ${x.auditOk}/${x.runs}`}${rate ? `; pass-rate difference ${rate.delta >= 0 ? '+' : ''}${(rate.delta * 100).toFixed(1)} points, stratified p ${rate.atFloor ? '≤' : '='} ${rate.p.toFixed(4)}` : ''}`;
+          return `  ${m}: ${[side('without', e.without), e.engine.runs ? side('engine', e.engine, e.passRate) : null, e.debug ? side('debug', e.debug, e.debugPassRate) : null, e.method ? side('method', e.method, e.methodPassRate) : null].filter(Boolean).join('; ')}`;
+        }))
         .join('\n');
       print(flags, text, t);
       return 0;
@@ -247,10 +258,10 @@ function main(argv) {
       print(flags, markdown, records);
       return 0;
     }
-    const VARIANTS = ['without', 'with', 'engine'];
-    const variants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? VARIANTS : String(flags.variant).split(',').map((v) => v.trim());
+    const VARIANTS = ['without', 'with', 'method', 'engine', 'debug'];
+    const variants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? ['without', 'with', 'engine'] : String(flags.variant).split(',').map((v) => v.trim());
     const unknown = variants.filter((v) => !VARIANTS.includes(v));
-    if (unknown.length) throw new EccodeError('USAGE', `Unknown --variant ${unknown.join(', ')}: use with, without, engine, both (without,with), all, or a comma list`);
+    if (unknown.length) throw new EccodeError('USAGE', `Unknown --variant ${unknown.join(', ')}: use with, without, method, engine, debug, both (without,with), all (without,with,engine), or a comma list`);
     const { records, markdown } = bench.run({
       suite: flags.suite ? path.resolve(flags.suite) : undefined,
       agentCmd: need(flags.agent, '--agent'),
@@ -286,7 +297,7 @@ function main(argv) {
     if (flags.task) {
       const t = store.state().tasks[flags.task];
       if (!t) throw new EccodeError('NOT_FOUND', `Unknown task ${flags.task}`);
-      const claimBase = (t.claim && t.claim.baseCommit) || (t.history || []).map((h) => h.base).filter(Boolean).pop();
+      const claimBase = require('../lib/tasks').taskBase(t);
       if (claimBase) base = claimBase;
     }
     const res = bugs.scan(root, { base, all: Boolean(flags.all), files: flags.files ? String(flags.files).split(',').map((x) => x.trim()).filter(Boolean) : null, external: !flags['no-external'] });
@@ -300,7 +311,7 @@ function main(argv) {
     if (flags.task) {
       const t = store.state().tasks[flags.task];
       if (!t) throw new EccodeError('NOT_FOUND', `Unknown task ${flags.task}`);
-      if (t.claim && t.claim.baseCommit) base = t.claim.baseCommit;
+      base = require('../lib/tasks').taskBase(t) || base;
       if (!test && t.verification && t.verification.command) test = t.verification.command;
     }
     const res = mutate.run(root, {

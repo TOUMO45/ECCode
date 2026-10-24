@@ -1,0 +1,43 @@
+{
+  "id": "thefuck-31",
+  "title": "The git_diff_staged rule puts --staged after the file name",
+  "source": {
+    "repo": "https://github.com/nvbn/thefuck",
+    "commit": "66e2ec7e3f0d3f848c01d87bb3503b0ff90fc78a",
+    "fixedCommit": "1285303363bc420bd7606bd5f808e3f2b4f0e83f",
+    "bugsinpy": "thefuck/31"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/thefuck/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "After `git add foo`, `git diff foo` prints nothing, and thefuck suggests `git diff foo --staged`, which git rejects (`fatal: bad flag '--staged' used after filename`). The suggestion must put `--staged` right after `diff`: `git diff --staged foo`. A plain `git diff` must still become `git diff --staged`.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker).",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/rules/test_git_diff_staged.py::test_get_new_command"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests --ignore=tests/rules/test_git_add.py --ignore=tests/rules/test_git_checkout.py --deselect tests/rules/test_git_diff_staged.py::test_get_new_command --deselect tests/test_main.py::TestGetCommand::test_get_command_calls"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tests/rules/test_git_diff_staged.py::test_get_new_command"
+    ],
+    "regressionTests": 187,
+    "failingOnFixedHere": [
+      "tests/rules/test_git_add.py",
+      "tests/rules/test_git_checkout.py",
+      "tests/test_main.py::TestGetCommand::test_get_command_calls"
+    ],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "thefuck/rules/git_diff_staged.py"
+    ],
+    "hiddenFiles": [
+      "tests/rules/test_git_diff_staged.py"
+    ]
+  }
+}

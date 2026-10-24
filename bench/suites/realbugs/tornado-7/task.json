@@ -1,0 +1,39 @@
+{
+  "id": "tornado-7",
+  "title": "The result of IOLoop.run_in_executor cannot be awaited in a native coroutine",
+  "source": {
+    "repo": "https://github.com/tornadoweb/tornado",
+    "commit": "fa3409179588536f2f743d16e537f6f9827fa92f",
+    "fixedCommit": "a3b44cd701e0e82693363701bc0346b0125d2362",
+    "bugsinpy": "tornado/7"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "`IOLoop.current().run_in_executor(None, func, *args)` returns an object that works with `yield` in a `gen.coroutine` but not with `await` in an `async def` coroutine: `TypeError: object Future can't be used in 'await' expression`. The result must be awaitable from native coroutines and still usable from `gen.coroutine`, and several calls must still run in parallel in the executor.\n\nTests: `python -m pytest -q tornado/test/<module>_test.py` runs one test module.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tornado/test/ioloop_test.py::TestIOLoopFutures::test_run_in_executor_native"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tornado/test/ioloop_test.py --deselect tornado/test/ioloop_test.py::TestIOLoopFutures::test_run_in_executor_native"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tornado/test/ioloop_test.py::TestIOLoopFutures::test_run_in_executor_native"
+    ],
+    "regressionTests": 50,
+    "failingOnFixedHere": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "tornado/ioloop.py"
+    ],
+    "hiddenFiles": [
+      "tornado/test/ioloop_test.py"
+    ]
+  }
+}

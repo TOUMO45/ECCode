@@ -7,7 +7,7 @@ You are the orchestrator for one quick change:
 
 $ARGUMENTS
 
-**CLI.** Use `eccode` if it is on PATH, else `node .claude/eccode/bin/eccode.js` (project install) or `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` (plugin). Below it is written `eccode`. Write that command out in full in every command you run and in every prompt you write: the guard refuses commands that build it or `--actor` from shell variables (`E=…; $E`). Tell every agent you dispatch to create files with the Write and Edit tools, never with shell redirects or heredocs.
+**CLI.** Use `eccode` if it is on PATH, else `node .claude/eccode/bin/eccode.js` (project install) or `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js` (plugin). Below it is written `eccode`. Write that command out in full, exactly as above, in every command you run and in every prompt you write: the approved-commands list matches it literally (an absolute path to the same file does not match), and the guard refuses commands that build it or `--actor` from shell variables (`E=…; $E`). Tell every agent you dispatch to create files with the Write and Edit tools, never with shell redirects or heredocs.
 
 You coordinate; agents do the work. Never edit project files or act as another role yourself; the guard refuses it. When the engine refuses a step, send its exact message back to the agent that took the step.
 

@@ -1,0 +1,40 @@
+{
+  "id": "black-19",
+  "title": "Black inserts blank lines between decorators when a comment sits between them",
+  "source": {
+    "repo": "https://github.com/psf/black",
+    "commit": "337a4199f90ca48a19cf26511e0cec330b13bd4e",
+    "fixedCommit": "29e97d1d4a7717f1bd0ca35cacf2f2ce6d815b0c",
+    "bugsinpy": "black/19"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/black/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "Black adds empty lines inside a decorator stack when there are comments between the decorators. Formatting\n\n```python\n@property\n# TODO: X\n@property\n# TODO: Y\n# TODO: Z\n@property\ndef foo():\n    pass\n```\n\nshould leave it unchanged, but Black inserts blank lines before the comments, separating them, and the decorators after them, from the decorators above. Comments between decorators belong to the decorator stack: no blank lines may be inserted there. The output must be stable (formatting it again changes nothing).\n\nTests: `python -m pytest -q tests/test_black.py`.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_black.py::BlackTestCase::test_comment_in_decorator"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_black.py --deselect tests/test_black.py::BlackTestCase::test_comment_in_decorator"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tests/test_black.py::BlackTestCase::test_comment_in_decorator"
+    ],
+    "regressionTests": 40,
+    "failingOnFixedHere": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "black.py"
+    ],
+    "hiddenFiles": [
+      "tests/comments6.py",
+      "tests/test_black.py"
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "id": "tornado-13",
+  "title": "HTTP1Connection crashes on an HTTP/1.0 response without Content-Length",
+  "source": {
+    "repo": "https://github.com/tornadoweb/tornado",
+    "commit": "d7d9c467cda38f4c9352172ba7411edc29a85196",
+    "fixedCommit": "34903f9e1a99441b2729bbe6f1d65d46cf352ea7",
+    "bugsinpy": "tornado/13"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "On the client side, reading an HTTP/1.0 response that has no Content-Length header (its body ends when the server closes the connection) with `tornado.http1connection.HTTP1Connection.read_response` crashes with `AttributeError: 'ResponseStartLine' object has no attribute 'method'`. The response must be read normally: the headers are delivered to the delegate, then the body up to the close.\n\nTests: `python -m pytest -q tornado/test/<module>_test.py` runs one test module.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tornado/test/http1connection_test.py::HTTP1ConnectionTest::test_http10_no_content_length"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tornado/test/httpserver_test.py --deselect tornado/test/httpserver_test.py::BodyLimitsTest::test_body_size_override_reset --deselect tornado/test/httpserver_test.py::BodyLimitsTest::test_large_body_buffered --deselect tornado/test/httpserver_test.py::BodyLimitsTest::test_large_body_buffered_chunked --deselect tornado/test/httpserver_test.py::BodyLimitsTest::test_large_body_streaming --deselect tornado/test/httpserver_test.py::BodyLimitsTest::test_large_body_streaming_chunked --deselect tornado/test/httpserver_test.py::BodyLimitsTest::test_timeout --deselect tornado/test/httpserver_test.py::HTTPServerRawTest::test_malformed_first_line --deselect tornado/test/httpserver_test.py::HTTPServerRawTest::test_malformed_headers --deselect tornado/test/httpserver_test.py::UnixSocketTest::test_unix_socket_bad_request"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tornado/test/http1connection_test.py::HTTP1ConnectionTest::test_http10_no_content_length"
+    ],
+    "regressionTests": 60,
+    "failingOnFixedHere": [
+      "tornado/test/httpserver_test.py::BodyLimitsTest::test_body_size_override_reset",
+      "tornado/test/httpserver_test.py::BodyLimitsTest::test_large_body_buffered",
+      "tornado/test/httpserver_test.py::BodyLimitsTest::test_large_body_buffered_chunked",
+      "tornado/test/httpserver_test.py::BodyLimitsTest::test_large_body_streaming",
+      "tornado/test/httpserver_test.py::BodyLimitsTest::test_large_body_streaming_chunked",
+      "tornado/test/httpserver_test.py::BodyLimitsTest::test_timeout",
+      "tornado/test/httpserver_test.py::HTTPServerRawTest::test_malformed_first_line",
+      "tornado/test/httpserver_test.py::HTTPServerRawTest::test_malformed_headers",
+      "tornado/test/httpserver_test.py::UnixSocketTest::test_unix_socket_bad_request"
+    ],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "tornado/http1connection.py",
+      "tornado/test/runtests.py"
+    ],
+    "hiddenFiles": [
+      "tornado/test/http1connection_test.py"
+    ]
+  }
+}

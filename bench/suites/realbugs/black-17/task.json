@@ -1,0 +1,40 @@
+{
+  "id": "black-17",
+  "title": "Black crashes on an empty file",
+  "source": {
+    "repo": "https://github.com/psf/black",
+    "commit": "bbc09a4f013f2a584f143f3f5e3f76f6082367d4",
+    "fixedCommit": "7fc6ce990669464f5172b63fafa3724f5f308be3",
+    "bugsinpy": "black/17"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/black/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "Formatting an empty file, or an empty string through `black.format_str`, crashes with `IndexError: string index out of range`. An empty file must format to an empty file and be reported as unchanged: `black.format_file_in_place` returns False and the file stays empty.\n\nTests: `python -m pytest -q tests/test_black.py`.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_black.py::BlackTestCase::test_empty tests/test_black.py::BlackTestCase::test_empty_ff"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_black.py --deselect tests/test_black.py::BlackTestCase::test_empty --deselect tests/test_black.py::BlackTestCase::test_empty_ff"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tests/test_black.py::BlackTestCase::test_empty",
+      "tests/test_black.py::BlackTestCase::test_empty_ff"
+    ],
+    "regressionTests": 64,
+    "failingOnFixedHere": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "black.py"
+    ],
+    "hiddenFiles": [
+      "tests/test_black.py"
+    ]
+  }
+}

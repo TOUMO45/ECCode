@@ -1,0 +1,39 @@
+{
+  "id": "tqdm-1",
+  "title": "tenumerate crashes when given a start value",
+  "source": {
+    "repo": "https://github.com/tqdm/tqdm",
+    "commit": "8cc777fe8401a05d07f2c97e65d15e4460feab88",
+    "fixedCommit": "c0dcf39b046d1b4ff6de14ac99ad9a1b10487512",
+    "bugsinpy": "tqdm/1"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "`tqdm.contrib.tenumerate(iterable, start)` must behave like `enumerate(iterable, start)` with a progress bar. With a start value, `list(tenumerate(a, 42))` raises `TypeError` instead of numbering from 42; it must equal `list(enumerate(a, 42))`.\n\nTests: `python -m pytest -q tqdm/tests`.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tqdm/tests/tests_contrib.py::test_enumerate"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tqdm/tests/tests_contrib.py tqdm/tests/tests_tqdm.py --deselect tqdm/tests/tests_contrib.py::test_enumerate"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tqdm/tests/tests_contrib.py::test_enumerate"
+    ],
+    "regressionTests": 60,
+    "failingOnFixedHere": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "tqdm/contrib/__init__.py"
+    ],
+    "hiddenFiles": [
+      "tqdm/tests/tests_contrib.py"
+    ]
+  }
+}

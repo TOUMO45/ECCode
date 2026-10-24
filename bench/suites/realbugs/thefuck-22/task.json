@@ -1,0 +1,43 @@
+{
+  "id": "thefuck-22",
+  "title": "IndexError when no rule matches",
+  "source": {
+    "repo": "https://github.com/nvbn/thefuck",
+    "commit": "faa7ee603057fa98c25507d30180c055d10d13d4",
+    "fixedCommit": "e2e8b6fc865452b4cfc1bed70e5b9b49807258ae",
+    "bugsinpy": "thefuck/22"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/thefuck/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "When no rule produces a corrected command, thefuck crashes with `IndexError: list index out of range` instead of reporting that there is nothing to fix. A `thefuck.types.SortedCorrectedCommandsSequence` built from an empty iterator must behave as an empty sequence: `list(seq) == []`.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker).",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests/test_types.py::TestSortedCorrectedCommandsSequence::test_with_blank"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider tests --ignore=tests/rules/test_git_add.py --ignore=tests/rules/test_git_checkout.py --deselect tests/test_main.py::TestGetCommand::test_get_command_calls --deselect tests/test_types.py::TestSortedCorrectedCommandsSequence::test_with_blank"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "tests/test_types.py::TestSortedCorrectedCommandsSequence::test_with_blank"
+    ],
+    "regressionTests": 250,
+    "failingOnFixedHere": [
+      "tests/rules/test_git_add.py",
+      "tests/rules/test_git_checkout.py",
+      "tests/test_main.py::TestGetCommand::test_get_command_calls"
+    ],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "thefuck/types.py"
+    ],
+    "hiddenFiles": [
+      "tests/test_types.py"
+    ]
+  }
+}

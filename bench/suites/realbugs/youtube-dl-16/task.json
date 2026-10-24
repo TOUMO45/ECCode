@@ -1,0 +1,40 @@
+{
+  "id": "youtube-dl-16",
+  "title": "TTML/DFXP subtitles that are not UTF-8 cannot be converted to SRT",
+  "source": {
+    "repo": "https://github.com/ytdl-org/youtube-dl",
+    "commit": "68d43a61b552007a718894967b869c0f1d8ff00f",
+    "fixedCommit": "3869028ffb6be6ab719e5cf1004276dfdfd1216d",
+    "bugsinpy": "youtube-dl/16"
+  },
+  "env": {
+    "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "prompt": "Converting TTML (DFXP) subtitles to SRT fails when the subtitle document is not UTF-8. A document that starts with `<?xml version=\"1.0\" encoding=\"UTF-16\"?>` and is encoded in UTF-16 cannot be converted, because the subtitle file is read as UTF-8 text before it is parsed; the XML declaration should decide the encoding.\n\n`youtube_dl.utils.dfxp2srt` should take the raw bytes of the subtitle document (as read from the file in binary mode), for UTF-8 and non-UTF-8 documents alike, and return the SRT text; the subtitle conversion that calls it should pass it the file's bytes.\n\nTests: `python -m pytest -q test/<file>.py` runs one test file. test/test_download.py and the per-site tests need network access.",
+  "hiddenChecks": [
+    {
+      "id": "bug",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider test/test_utils.py::TestUtil::test_dfxp2srt"
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/place.js && python -m pytest -q -p no:cacheprovider test/test_utils.py --deselect test/test_utils.py::TestUtil::test_dfxp2srt"
+    }
+  ],
+  "measured": {
+    "bugTests": [
+      "test/test_utils.py::TestUtil::test_dfxp2srt"
+    ],
+    "regressionTests": 75,
+    "failingOnFixedHere": [],
+    "passingOnlyWithFixOutsideItsTests": [],
+    "fixFiles": [
+      "youtube_dl/postprocessor/ffmpeg.py",
+      "youtube_dl/utils.py"
+    ],
+    "hiddenFiles": [
+      "test/test_utils.py"
+    ]
+  }
+}
