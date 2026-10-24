@@ -138,3 +138,19 @@ test('repeated rejections escalate; only the user can reopen', () => {
   gates.reopenGate(ctx.store, 'architecture', 'user', 'User accepted narrower scope: no rate limiting in v1');
   assert.strictEqual(ctx.store.state().gates.architecture.status, 'in_progress');
 });
+
+// Mealie pilot, c1: design and plan reviewers cited the approved architecture
+// brief and design spec to show the work traces back to them, and were refused.
+test('a review may cite what earlier gates approved, not other files', () => {
+  const ctx = tmpProject();
+  const { DESIGN_MD } = require('./helpers');
+  submitArch(ctx);
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  gates.startGate(ctx.store, ctx.config, 'design', 'orchestrator');
+  write(ctx.dir, '.eccode/artifacts/spec.md', DESIGN_MD);
+  write(ctx.dir, 'notes.md', '# notes\n');
+  gates.submit(ctx.store, ctx.config, 'design', 'technical-designer', { artifacts: ['.eccode/artifacts/spec.md'] });
+  expectCode(() => gates.recordReview(ctx.store, ctx.config, 'design', 'technical-reviewer', approval([['artifact:notes.md']])), 'REVIEW_REJECTED');
+  gates.recordReview(ctx.store, ctx.config, 'design', 'technical-reviewer', approval([['artifact:.eccode/artifacts/spec.md#Components', 'artifact:.eccode/artifacts/brief.md#Requirements']]));
+  assert.strictEqual(ctx.store.state().gates.design.status, 'approved');
+});
