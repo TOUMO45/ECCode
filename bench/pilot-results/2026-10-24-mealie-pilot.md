@@ -279,7 +279,7 @@ The five recorded checks cost $2.38. The third check's cost was lost with its re
 - **Leftover processes (row 100).** The batch's harness did not stop what an agent left running. The b1 frontend item failed both hidden checks in the batch and passes them in a clean tree.
 - **The disk filled during Part A's after-fix run.** The cause was a leftover of this work, not of the batch:
   - When the leftover-process test was run red, before its fix existed, nothing stopped its writer, and it kept creating files for about three hours.
-  - The session's disk was full at 19:50. The batch had ended at 19:28.
+  - The writer ran beside the batch from about 16:45, creating a small file every 5 ms. The session's disk was full at 19:50. The batch had ended at 19:28, before any write failed.
   - The after-fix run's A4 and A7 failed at once, and the last fixes of its A5 replay ran on a full disk.
   - After freeing the space and bounding that test's writer to a minute, A5 and A4 were run again in parallel, as in the measured run, and then A7. The figures above come from that rerun. The first A5 output is kept outside the repository and not used.
 - **The analysis.** `analyse.js` was run once on partial data while the batch ran, before labelling was complete, to check the pipeline. Its output was discarded, and no figure here comes from it.
