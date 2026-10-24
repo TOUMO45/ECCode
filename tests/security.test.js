@@ -281,6 +281,9 @@ test('guard: a literal cd moves relative write targets; git stash list only read
   assert.strictEqual(bash(dir, 'technical-reviewer', 'cd src && echo x > a.js'), 'deny', 'a cd inside the project still lands in the project');
   assert.strictEqual(bash(dir, 'technical-reviewer', `cd ${scratch}; cd ${dir}; echo x > src/a.js`), 'deny', 'the last cd counts');
   assert.strictEqual(bash(dir, 'technical-reviewer', 'cd "$SOMEWHERE" && echo x > src/a.js'), 'deny', 'a cd the guard cannot read leaves targets in the project');
+  // A tilde expands only at the start of a word: Windows short names (RUNNER~1) are literal.
+  assert.strictEqual(bash(dir, 'technical-reviewer', `mkdir -p ${scratch}/RUNNER~1 && cd ${scratch}/RUNNER~1 && echo x > a.test.js`), 'allow', 'a tilde inside a path is literal');
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'cd ~/elsewhere && echo x > src/a.js'), 'deny', 'a leading tilde is not resolved, so targets stay in the project');
   for (const sneaky of [`(cd ${scratch} && true); echo x > src/a.js`, `cd ${scratch} | true; echo x > src/a.js`, `cd ${scratch} & true; echo x > src/a.js`, `true || cd ${scratch}; echo x > src/a.js`]) {
     assert.strictEqual(bash(dir, 'technical-reviewer', sneaky), 'deny', `a cd that does not move the shell: ${sneaky}`);
   }

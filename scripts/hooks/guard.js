@@ -102,7 +102,8 @@ function bashWriteTargets(cmd) {
     if (name === 'cd') {
       const to = words[1];
       const alone = !subshell && words.length === 2 && parts[i + 1] === '&&';
-      dir = alone && to && !/[$`~*?]/.test(to) && !to.startsWith('-') ? (path.isAbsolute(to) ? to : path.join(dir, to)) : '';
+      // A tilde expands only at the start of a word (Windows short names hold one: RUNNER~1).
+      dir = alone && to && !/[$`*?]/.test(to) && !to.startsWith('~') && !to.startsWith('-') ? (path.isAbsolute(to) ? to : path.join(dir, to)) : '';
     } else if (name === 'tee') targets.push(...args.map(at));
     else if (name === 'truncate' || name === 'unlink' || name === 'rm') targets.push(...args.map(at));
     else if ((name === 'cp' || name === 'mv') && args.length >= 2) targets.push(at(args[args.length - 1]));
