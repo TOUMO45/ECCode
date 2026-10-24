@@ -268,3 +268,20 @@ test('guard: escaped quotes inside double quotes do not hide a write target; a r
   assert.strictEqual(bash(dir, 'backend-engineer', `find ${dir}/.eccode -name '*.json' -delete`), 'deny', 'a find that deletes is a write');
   assert.strictEqual(bash(dir, 'backend-engineer', `find .eccode -name events.jsonl -exec sh -c 'echo x >> {}' \;`), 'deny');
 });
+
+// Mealie pilot, b1 and c1: a reviewer wrote a scratch test under its own
+// scratch directory after `cd` there, and the guard resolved the relative
+// target against the project; `git stash list` counted as a write.
+test('guard: a literal cd moves relative write targets; git stash list only reads', () => {
+  const { dir } = tmpProject();
+  const scratch = path.join(require('os').tmpdir(), 'eccode-scratch-g');
+  assert.strictEqual(bash(dir, 'technical-reviewer', `mkdir -p ${scratch}/tests && cd ${scratch} && echo "x" > tests/a.test.js`), 'allow');
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'cd src && echo x > a.js'), 'deny', 'a cd inside the project still lands in the project');
+  assert.strictEqual(bash(dir, 'technical-reviewer', `cd ${scratch}; cd ${dir}; echo x > src/a.js`), 'deny', 'the last cd counts');
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'cd "$SOMEWHERE" && echo x > src/a.js'), 'deny', 'a cd the guard cannot read leaves targets in the project');
+  for (const sneaky of [`(cd ${scratch} && true); echo x > src/a.js`, `cd ${scratch} | true; echo x > src/a.js`, `cd ${scratch} & true; echo x > src/a.js`, `true || cd ${scratch}; echo x > src/a.js`]) {
+    assert.strictEqual(bash(dir, 'technical-reviewer', sneaky), 'deny', `a cd that does not move the shell: ${sneaky}`);
+  }
+  assert.strictEqual(bash(dir, 'backend-engineer', 'git stash list; ls -la .eccode | head'), 'allow');
+  assert.strictEqual(bash(dir, 'backend-engineer', 'git stash; ls -la .eccode'), 'deny', 'git stash itself writes');
+});

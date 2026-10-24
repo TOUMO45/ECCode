@@ -66,20 +66,35 @@ function shellSkeleton(cmd) {
     .replace(/'([^']*)'|"((?:[^"\\]|\\[\s\S])*)"/g, (m, a, b) => (a !== undefined ? a : b).replace(/[;|&<>\s]/g, '_'));
 }
 
-/** Literal paths a shell command writes to: redirections and write-tool arguments. */
+/**
+ * Literal paths a shell command writes to: redirections and write-tool
+ * arguments, each joined to the directory of the last literal `cd` before it
+ * (a cd the text cannot resolve leaves targets where they were).
+ */
 function bashWriteTargets(cmd) {
   const targets = [];
   const skeleton = shellSkeleton(cmd);
-  for (const m of skeleton.replace(/\d*>&\d+/g, '').matchAll(/>>?\s*([^\s;&|)]+)/g)) targets.push(m[1]);
-  for (const segment of skeleton.split(/\|\||&&|[;|\n]/)) {
-    const words = segment.trim().split(/\s+/).filter((w) => w && !/^\w+=/.test(w));
+  let dir = '';
+  const at = (t) => (t && dir && !path.isAbsolute(t) ? path.join(dir, t) : t);
+  // A cd moves the shell only on its own between &&, ; or newlines: not in a
+  // subshell, a pipeline, after || or in the background.
+  const subshell = /[()]/.test(skeleton);
+  const parts = skeleton.split(/(\|\||&&|[;|\n])/);
+  for (let i = 0; i < parts.length; i += 2) {
+    const segment = parts[i];
+    for (const m of segment.replace(/\d*>&\d+/g, '').matchAll(/>>?\s*([^\s;&|)]+)/g)) targets.push(at(m[1]));
+    const words = segment.trim().replace(/^\(+/, '').split(/\s+/).filter((w) => w && !/^\w+=/.test(w));
     if (!words.length) continue;
     const name = path.basename(words[0]);
     const args = words.slice(1).filter((a) => !a.startsWith('-'));
-    if (name === 'tee') targets.push(...args);
-    else if (name === 'truncate' || name === 'unlink' || name === 'rm') targets.push(...args);
-    else if ((name === 'cp' || name === 'mv') && args.length >= 2) targets.push(args[args.length - 1]);
-    else if (name === 'sed' && /\ssed\s[^;|&]*(-i|--in-place)/.test(` ${segment} `)) targets.push(args[args.length - 1]);
+    if (name === 'cd') {
+      const to = words[1];
+      const alone = !subshell && words.length === 2 && ![parts[i - 1], parts[i + 1]].some((sep) => sep === '|' || sep === '||') && !/(^|[^&])&([^&]|$)/.test(segment);
+      dir = alone && to && !/[$`~*?]/.test(to) && !to.startsWith('-') ? (path.isAbsolute(to) ? to : path.join(dir, to)) : '';
+    } else if (name === 'tee') targets.push(...args.map(at));
+    else if (name === 'truncate' || name === 'unlink' || name === 'rm') targets.push(...args.map(at));
+    else if ((name === 'cp' || name === 'mv') && args.length >= 2) targets.push(at(args[args.length - 1]));
+    else if (name === 'sed' && /\ssed\s[^;|&]*(-i|--in-place)/.test(` ${segment} `)) targets.push(at(args[args.length - 1]));
   }
   return targets.filter((t) => t && t !== '/dev/null' && !t.startsWith('<'));
 }
@@ -103,8 +118,8 @@ function writesRecord(cmd, { subagent }) {
       continue;
     }
     if (name === 'git') {
-      const sub = args.find((a, i) => !a.startsWith('-') && !['-C', '-c'].includes(args[i - 1]));
-      if (!subagent || GIT_READ.has(sub)) continue;
+      const subs = args.filter((a, i) => !a.startsWith('-') && !['-C', '-c'].includes(args[i - 1]));
+      if (!subagent || GIT_READ.has(subs[0]) || (subs[0] === 'stash' && ['list', 'show'].includes(subs[1]))) continue;
     }
     return true;
   }
