@@ -30,6 +30,8 @@ test('install --sandbox writes the OS-enforced profile and one MCP server per ro
   assert.match(settings.hooks.PreToolUse[0].matcher, /mcp__eccode_/);
   const mcp = JSON.parse(fs.readFileSync(path.join(dir, '.mcp.json'), 'utf8'));
   for (const role of LOCKABLE) assert.deepStrictEqual(mcp.mcpServers[`eccode_${role}`].args.slice(-2), ['--actor', role]);
+  // Pilot after-fix run: Claude Code's 60 s default cut evidence_run off mid-suite.
+  for (const role of LOCKABLE) assert.ok(mcp.mcpServers[`eccode_${role}`].timeout >= 600000 + 60000, `${role}: a call outlasts evidence_run's own 10-minute limit`);
   // Re-running is idempotent: no duplicate deny entries.
   install({ target: dir, scope: 'project', sandbox: true });
   const again = JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8'));

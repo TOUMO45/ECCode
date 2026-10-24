@@ -1,0 +1,16 @@
+Prompt (claude -p --model haiku --setting-sources project,local --allowedTools "ToolSearch mcp__eccode_orchestrator"), in a project installed with `eccode install --profile no-shell` whose quick task pins `npm test`, a script that takes 75 seconds:
+
+> Load the tool mcp__eccode_orchestrator__evidence_run (use ToolSearch if it is deferred) and call it once with label "smoke" and command "npm test". Then reply with only the raw tool result text, verbatim.
+
+(a) .mcp.json as install writes it (each eccode server with "timeout": 3600000), 87 s:
+
+{
+  "id": "ev:ev-mvml2ew0-01a01959",
+  "status": "passed",
+  "exitCode": 0,
+  "outputTail": "\n> test\n> node -e \"setTimeout(()=>console.log(1),75000)\"\n\n1\n"
+}
+
+(b) the same project with "timeout" removed from every eccode server (prompt as above, label "smoke2", "Do not retry." added), 72 s:
+
+MCP server "eccode_orchestrator" tool "evidence_run" timed out after 60s
