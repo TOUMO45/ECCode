@@ -152,3 +152,31 @@ test('strict requires plan pre-approval; lite only warns', () => {
   assert.ok(lean.warnings.some((w) => w.includes('listTickets')));
   assert.deepStrictEqual(lean.breaking, [{ kind: 'export', name: `${API}#listTickets` }]);
 });
+
+const fsx = require('fs');
+const osx = require('os');
+const pathx = require('path');
+const scratch = () => fsx.mkdtempSync(pathx.join(osx.tmpdir(), 'eccode-compat-'));
+
+test('test helpers are not public API: removing one is not a breaking change', () => {
+  const dir = scratch();
+  write(dir, 'tests/utils/factories.py', 'def random_user():\n    return 1\n');
+  write(dir, 'src/app.py', 'def run():\n    return 1\n');
+  const base = compat.snapshot(dir, ['**']);
+  write(dir, 'tests/utils/factories.py', '# moved to tests/fixtures\n');
+  write(dir, 'src/app.py', '# gone\n');
+  assert.deepStrictEqual(compat.detect(dir, base, ['**']).map((d) => d.name), ['src/app.py#run']);
+});
+
+test('a new Python migration is destructive when its upgrade drops data, not when its downgrade does', () => {
+  const dir = scratch();
+  const base = compat.snapshot(dir, ['**']);
+  write(dir, 'mealie/alembic/versions/001_add.py', 'from alembic import op\n\ndef upgrade():\n    op.add_column("users", sa.Column("x"))\n\n\ndef downgrade():\n    op.drop_column("users", "x")\n    op.execute("DROP TABLE tmp")\n');
+  write(dir, 'mealie/alembic/versions/002_drop.py', 'from alembic import op\n\ndef upgrade():\n    with op.batch_alter_table("users") as batch_op:\n        batch_op.drop_column("x")\n\n\ndef downgrade():\n    pass\n');
+  write(dir, 'mealie/alembic/versions/003_table.py', 'def upgrade():\n    op.drop_table("audit")\n');
+  write(dir, 'shop/migrations/0004_remove.py', 'from django.db import migrations\n\nclass Migration(migrations.Migration):\n    operations = [migrations.RemoveField(model_name="order", name="note")]\n');
+  write(dir, 'migrations/005_cleanup.sql', 'DROP TABLE audit_log;\n');
+  const found = compat.detect(dir, base, ['**']).filter((d) => d.kind === 'destructive-migration');
+  assert.deepStrictEqual(found.map((d) => d.name).sort(), ['mealie/alembic/versions/002_drop.py', 'mealie/alembic/versions/003_table.py', 'migrations/005_cleanup.sql', 'shop/migrations/0004_remove.py']);
+  assert.match(found.find((d) => d.name.endsWith('002_drop.py')).detail, /drop_column/);
+});
