@@ -177,7 +177,7 @@ test('on a reviewed plan only the user changes ownership', () => {
   fs.rmSync(ctx.dir, { recursive: true, force: true });
 });
 
-test('a test run\'s caches are not changes: __pycache__, .pytest_cache and node_modules never need review', () => {
+test('a test run\'s caches are not changes: __pycache__, .pytest_cache, pickled grammar caches and node_modules never need review', () => {
   const dir = repo();
   const { gitChangedFiles } = require('../lib/project');
   const base = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: dir, encoding: 'utf8' }).trim();
@@ -185,6 +185,7 @@ test('a test run\'s caches are not changes: __pycache__, .pytest_cache and node_
   write(dir, '.pytest_cache/v/cache/lastfailed', '{}');
   write(dir, 'node_modules/left-pad/index.js', 'module.exports = 1;\n');
   write(dir, 'tools/gen.pyc', 'x');
+  write(dir, 'blib2to3/Grammar3.8.20.final.0.pickle', 'x'); // black's grammar cache, written by its first test run
   write(dir, 'src/new.js', 'module.exports = 2;\n');
   assert.deepStrictEqual(gitChangedFiles(dir, base), ['src/new.js']);
   fs.rmSync(dir, { recursive: true, force: true });
