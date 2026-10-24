@@ -272,3 +272,35 @@ test('a refactor record started by init needs and keeps its behavior command', (
   assert.strictEqual(store.state().work.behaviorCommand, 'pytest -q tests');
   for (const d of [bare, dir]) fs.rmSync(d, { recursive: true, force: true });
 });
+
+// Mealie pilot, b2 item 3: verification asked for a fix in a test file; the
+// orchestrator reset the owning task as the playbook says, but its phase gate
+// stayed approved, so the task could neither be claimed nor delivered.
+test('reworking a task of an approved phase reopens the phase, and the work item can still deliver', () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  runTask(ctx, 'api', 'backend-engineer', 'src/server/a.js');
+  runTask(ctx, 'ui', 'frontend-engineer', 'src/web/b.js');
+  runTask(ctx, 'tests', 'test-engineer', 'tests/c.test.js');
+  approvePhase(ctx, 'phase:core');
+  gates.startGate(ctx.store, ctx.config, 'verification', 'orchestrator');
+  write(ctx.dir, '.eccode/artifacts/verify.md', '# Verification\nOne finding.\n');
+  gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verify.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'] });
+  const ev = passCheck(ctx.store, 'security-reviewer');
+  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', require('./helpers').rejection('VR-1', { criteria: [{ id: 'C1', description: 'tests are tidy', met: false, evidence: [`ev:${ev.id}`] }] }));
+  tasks.reset(ctx.store, 'tests', 'orchestrator', 'VR-1: unsorted imports in the test file');
+  assert.strictEqual(ctx.store.state().gates['phase:core'].status, 'in_progress', 'the phase is open again for the rework');
+  runTask(ctx, 'tests', 'test-engineer', 'tests/c.test.js', '// tests, imports sorted\n');
+  approvePhase(ctx, 'phase:core');
+  // Verification answers its review: resubmitted, and the finding resolved with new evidence.
+  write(ctx.dir, '.eccode/artifacts/verify.md', '# Verification\nVR-1 fixed.\n');
+  const g = ctx.store.state().gates.verification;
+  gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verify.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'], respondsTo: g.reviews[g.reviews.length - 1] });
+  const ev2 = passCheck(ctx.store, 'security-reviewer');
+  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', approval([[`ev:${ev2.id}`, 'artifact:.eccode/artifacts/verify.md']], { resolvedFindings: [{ id: 'VR-1', resolution: 'imports sorted in the reworked task', evidence: [`ev:${ev2.id}`] }] }));
+  deliver(ctx.store, 'delivery-lead');
+  assert.strictEqual(ctx.store.state().work.status, 'delivered');
+  assert.strictEqual(ctx.store.audit().ok, true);
+  assert.deepStrictEqual(ctx.store.rebuild().gates, ctx.store.state().gates, 'the log replays to the same state');
+});
