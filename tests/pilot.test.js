@@ -409,3 +409,108 @@ test('fastapi-routes.py writes only the served routes, whatever the app prints o
   execFileSync(py, [path.join(__dirname, '..', 'bench', 'pilot', 'mealie', 'fastapi-routes.py'), tree, out], { encoding: 'utf8' });
   assert.deepStrictEqual(fs.readFileSync(out, 'utf8').trim().split('\n'), ['GET /api/a', 'POST /api/b']);
 });
+
+test('fixPopulation keeps code fixes with tests and drops dependency bumps', () => {
+  const { fixPopulation } = require('../bench/pilot/mealie/scratch');
+  const c = (subject, files) => ({ sha: subject, subject, parent: 'p', files: files.map((p) => ({ status: 'M', path: p })) });
+  const kept = fixPopulation([
+    c('fix: keep ids (#1)', ['mealie/a.py', 'tests/unit_tests/test_a.py']),
+    c('fix(deps): update pydantic (#2)', ['mealie/a.py', 'tests/unit_tests/test_a.py']),
+    c('fix: frontend only (#3)', ['frontend/x.ts']),
+    c('fix(api): scoped fix (#4)', ['mealie/routes/b.py', 'tests/integration_tests/test_b.py']),
+    c('feat: new thing (#5)', ['mealie/c.py', 'tests/unit_tests/test_c.py']),
+    c('fix: code without a test (#6)', ['mealie/d.py']),
+  ]).map((x) => x.sha);
+  assert.deepStrictEqual(kept, ['fix: keep ids (#1)', 'fix(api): scoped fix (#4)']);
+});
+
+test('report marks a criterion met or missed from a results fixture', () => {
+  const { criteria } = require('../bench/pilot/mealie/report');
+  const row = (recall) => criteria({ a2: { medians: { staticRecall: recall } } }, {}).find((r) => r.id === 'impact-static-recall');
+  assert.strictEqual(row(0.92).met, true);
+  assert.strictEqual(row(0.85).met, false);
+  assert.strictEqual(row(0.92).criterion, '≥ 0.90');
+  const missing = criteria({}, {}).find((r) => r.id === 'compat-precision');
+  assert.strictEqual(missing.met, null, 'no result, no verdict');
+});
+
+test('a6 counts every line of a new file as added', () => {
+  const { addedCount } = require('../bench/pilot/mealie/a6-bugs');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-a6-'));
+  fs.writeFileSync(path.join(dir, 'new.py'), 'a = 1\nb = 2\nc = 3\n');
+  assert.strictEqual(addedCount(dir, 'new.py', null), 3);
+  assert.strictEqual(addedCount(dir, 'old.py', new Set([4, 9])), 2);
+});
+
+test('a hidden check can carry its own timeout', () => {
+  const task = { id: 't', hiddenChecks: [{ id: 'slow', command: 'node -e "setTimeout(() => {}, 1500)"', timeoutMs: 500 }, { id: 'ok', command: 'node -e "setTimeout(() => {}, 300)"', timeoutMs: 5000 }] };
+  const [slow, ok] = bench.runChecks(task, os.tmpdir(), {});
+  assert.strictEqual(slow.passed, false, 'stopped at its own timeout');
+  assert.strictEqual(ok.passed, true);
+});
+
+test('a chain item without a source keeps the tree: the next item builds on the agent\'s own work', () => withCache(() => {
+  const chain = require('../lib/chain');
+  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-chain-'));
+  execFileSync('git', ['init', '-q'], { cwd: sandbox });
+  const suite = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-nosrc-'));
+  fs.mkdirSync(path.join(suite, 'g1', 'fixture'), { recursive: true });
+  fs.writeFileSync(path.join(suite, 'g1', 'fixture', 'README.md'), 'start\n');
+  fs.writeFileSync(path.join(suite, 'g1', 'task.json'), JSON.stringify({ id: 'g1', order: 1, prompt: 'Build it.' }));
+  fs.mkdirSync(path.join(suite, 'g2'));
+  fs.writeFileSync(path.join(suite, 'g2', 'task.json'), JSON.stringify({ id: 'g2', order: 2, prompt: 'Extend it.' }));
+  const [g1, g2] = bench.listTasks(suite).sort((a, b) => a.order - b.order);
+  chain.syncSource(g1, sandbox);
+  assert.strictEqual(fs.readFileSync(path.join(sandbox, 'README.md'), 'utf8'), 'start\n');
+  fs.writeFileSync(path.join(sandbox, 'app.js'), 'agent work\n');
+  chain.syncSource(g2, sandbox);
+  assert.strictEqual(fs.readFileSync(path.join(sandbox, 'app.js'), 'utf8'), 'agent work\n', 'nothing is reset without an upstream');
+}));
+
+const PLANNER = path.join(__dirname, '..', 'bench', 'suites', 'planner');
+const hasSqlite = (() => {
+  try {
+    require('node:sqlite');
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+/** Run the planner check (the hidden one) against a project directory; {code, out}. */
+function plannerCheck(projectDir, tag) {
+  const hidden = path.join(projectDir, '.bench-hidden');
+  fs.cpSync(path.join(PLANNER, '_hidden'), hidden, { recursive: true });
+  const r = require('child_process').spawnSync(process.execPath, [path.join(hidden, 'check.js'), tag], { cwd: projectDir, encoding: 'utf8', timeout: 180000 });
+  return { code: r.status, out: `${r.stdout}${r.stderr}` };
+}
+
+test('the acceptance suite passes against the reference', { skip: !hasSqlite && 'the reference needs node:sqlite (Node >= 22.5)' }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'planner-ref-'));
+  fs.cpSync(path.join(PLANNER, 'reference'), dir, { recursive: true });
+  for (const tag of ['c1', 'c2', 'c3']) {
+    const r = plannerCheck(dir, tag);
+    assert.strictEqual(r.code, 0, `${tag}:\n${r.out.split('\n').filter((l) => /not ok|Error|expected|actual/.test(l)).slice(0, 20).join('\n')}`);
+  }
+});
+
+test('the acceptance suite fails against an empty service', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'planner-empty-'));
+  fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'empty', scripts: { start: 'node server.js' } }));
+  fs.writeFileSync(path.join(dir, 'server.js'), "require('http').createServer((q, s) => { s.writeHead(q.url === '/health' ? 200 : 404, { 'content-type': 'application/json' }); s.end(q.url === '/health' ? '{\"ok\":true}' : '{}'); }).listen(process.env.PORT);\n");
+  assert.notStrictEqual(plannerCheck(dir, 'c1').code, 0);
+});
+
+test("c3's check refuses an edited old migration", { skip: !hasSqlite && 'the reference needs node:sqlite (Node >= 22.5)' }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'planner-edit-'));
+  fs.cpSync(path.join(PLANNER, 'reference'), dir, { recursive: true });
+  const first = fs.readdirSync(path.join(dir, 'migrations')).filter((f) => f.endsWith('.sql')).sort()[0];
+  fs.appendFileSync(path.join(dir, 'migrations', first), '\n-- households were added here instead of in a new migration\n');
+  const r = plannerCheck(dir, 'c3');
+  assert.notStrictEqual(r.code, 0);
+  assert.match(r.out, /c3: migrations are append-only/);
+});
+
+test('the dev copy of the fake Mealie server is the hidden one', () => {
+  assert.strictEqual(fs.readFileSync(path.join(PLANNER, 'c1', 'fixture', 'dev', 'fake-mealie', 'server.js'), 'utf8'), fs.readFileSync(path.join(PLANNER, '_hidden', 'fake-mealie', 'server.js'), 'utf8'));
+});

@@ -1,0 +1,22 @@
+{
+  "id": "planner-c2",
+  "title": "Diet filters and label groups",
+  "order": 2,
+  "track": "feature",
+  "prompt": "Extend mealie-planner (this repository) with diet filters and a shopping list grouped by food label.\n\n- POST /plans accepts rules.diet, a list of \"vegetarian\", \"vegan\" and \"gluten-free\". Food labels come from GET {MEALIE_URL}/api/foods?page=<n>&perPage=<n>, paginated like the recipes, with items [{\"id\", \"name\", \"label\": {\"name\"} or null}]. A recipe is excluded when any of its ingredients' foods carries a banned label:\n  - vegetarian bans Meat and Fish;\n  - vegan bans Meat, Fish, Dairy and Egg;\n  - gluten-free bans Gluten.\n  Food names match case-insensitively; a food that is not in the list has no label. Diet filters combine with the other rules. An unknown diet value is 400.\n- GET /plans/:id/shopping-list?groupBy=label returns {\"planId\", \"groups\": [{\"label\", \"items\": [...]}], \"notes\"}: the same items as without grouping, each in the group of its food's label (\"Other\" when there is none), groups sorted by label with \"Other\" last.\n- Everything that works today keeps working.",
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "node .bench-hidden/check.js c2",
+      "timeoutMs": 900000
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/check.js c1",
+      "timeoutMs": 900000
+    }
+  ],
+  "measured": {
+    "acceptanceTests": 4
+  }
+}
