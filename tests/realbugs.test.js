@@ -212,3 +212,14 @@ test('debug and method variants end to end on a source task: the debug track del
     for (const d of [origin, suite]) fs.rmSync(d, { recursive: true, force: true });
   }
 });
+
+test('bench warns when the temporary directory is too long for Unix-socket tests', () => {
+  assert.strictEqual(bench.tmpdirWarning('/tmp'), null);
+  assert.match(bench.tmpdirWarning(`/tmp/${'x'.repeat(120)}`), /AF_UNIX path too long[\s\S]*Set TMPDIR to a short directory/);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tmpdir-'));
+  const long = path.join(dir, 'x'.repeat(70));
+  fs.mkdirSync(long);
+  const r = spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), 'bench', '--suite', path.join(__dirname, '..', 'bench', 'suites', 'engine'), '--tasks', 'search-case', '--variant', 'without', '--agent', 'node -e ""'], { cwd: dir, encoding: 'utf8', env: { ...process.env, TMPDIR: long, TMP: long, TEMP: long } });
+  assert.match(r.stderr, /bench: WARNING: the temporary directory is \d+ characters long/);
+  fs.rmSync(dir, { recursive: true, force: true });
+});

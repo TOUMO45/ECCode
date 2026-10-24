@@ -29,7 +29,7 @@ ECCODE_REALBUGS_VENVS=$HOME/.cache/eccode/realbugs-venvs sh bench/suites/realbug
 ECCODE_REALBUGS_VENVS=$HOME/.cache/eccode/realbugs-venvs ECCODE_REALBUGS_VALIDATE=1 node --test tests/realbugs.test.js
 ECCODE_REALBUGS_VENVS=$HOME/.cache/eccode/realbugs-venvs eccode bench --suite bench/suites/realbugs --agent "<cmd>" --variant without,debug
 ```
-The first run clones the five repositories into `ECCODE_BENCH_CACHE` (default `~/.cache/eccode/bench-repos`). The validation test checks every task end to end: the pre-fix tree fails the bug check and passes the regression check, and with the real fix applied both pass.
+Keep `TMPDIR` short (under 60 characters): tornado's Unix-socket tests bind a socket in it, and a longer path fails them with `AF_UNIX path too long` whatever the agent did; `bench` warns when it is too long. The first run clones the five repositories into `ECCODE_BENCH_CACHE` (default `~/.cache/eccode/bench-repos`). The validation test checks every task end to end: the pre-fix tree fails the bug check and passes the regression check, and with the real fix applied both pass.
 
 **Limits.** These are public bugs fixed years ago, so a model may have seen the fixes in training. That affects every variant alike, so it shifts pass rates without favoring any variant. The reports are written to be fair to the hidden tests: where a test pins an interface the fix chose (dfxp2srt taking bytes), the report states it. They still cannot rule out a correct fix that the original tests reject.
 
