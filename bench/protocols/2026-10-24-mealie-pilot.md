@@ -211,3 +211,4 @@ The harness now strips these settings too, so later runs start as plain headless
 - **Found by the after-fix check of the MCP item:**
   - The quick track's detected check was pinned to the frontend sub-project's tests for a backend change. This regression came from a pilot fix to stack detection.
   - Claude Code's 60-second default MCP call timeout cut off `evidence_run` on a full suite.
+- **Greenfield chain (c1, item 1):** the integrity window around a checked command restored the record to its pre-command snapshot. While two agents worked, `mutate` therefore erased a passing evidence run another engineer had just recorded, whose completion was then refused ("evidence … does not exist"), and the orchestrator's run end. The window now holds the record lock while the command runs. Other writers wait for it, and an engine write from inside a checked command is refused (`tests/integrity.test.js`).
