@@ -214,7 +214,7 @@ Every earlier batch ran on fixtures, sandboxes or small slices of projects. This
   - breaking-change precision went from 0.087 to 1.0 on two detections;
   - bug-rule false positives went from 4.5 to 0 per 10,000 changed lines.
 
-  But impact selects 80–90% of the suite for any module the app imports, so its share criterion depends on the sample (row 74). {partA-rest-final}
+  But impact selects 80–90% of the suite for any module the app imports, so its share criterion depends on the sample (row 74). After the fixes, `fix verify` agreed with the direct runs (1.0, from 0.974). Stack detection found both stacks, and its checks matched the tools. `mutate` still gets no mutant on 16 of 41 real fixes (row 78).
 - **The engine at the protocol commit (Parts B and C):**
   - 6 of 20 Mealie work items delivered with a clean audit, against a rule of 80% per chain; no record failed its audit;
   - 1.79 false refusals per item, against at most 1;

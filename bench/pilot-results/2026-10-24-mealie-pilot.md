@@ -8,9 +8,8 @@ ECCode ran on Mealie, a real FastAPI and Nuxt project ECCode's authors did not w
 
 - **Model-free capabilities (Part A).**
   - **Measured run:** 10 criteria met, 6 missed, 1 with no verdict.
-  - **After-fix run:** the misses in TS/JS import resolution, breaking-change precision and bug-rule false positives are closed.
+  - **After-fix run:** 15 met, 1 missed, 1 with no verdict ([after-fix report](2026-10-24-mealie-part-a-after.md)). Every measured miss is closed: TS/JS import resolution, breaking-change precision, `fix verify` agreement, bug-rule false positives, stack detection and stack checks.
   - **New miss:** impact's share-of-suite criterion now fails. That verdict turns on which modules a sample draws (row 74).
-  - **Not yet in:** {A-after-pending}
 - **The engine on real work (Parts B and C), at the protocol commit.** It missed every pre-registered engine criterion except "no record fails its audit":
   - 6 of 20 Mealie work items were delivered with a clean audit (3 of 10 per chain, rule ≥ 80%);
   - agents met 1.79 false refusals per item run (rule ≤ 1);
@@ -39,7 +38,7 @@ ECCode ran on Mealie, a real FastAPI and Nuxt project ECCode's authors did not w
 
 ## Part A: model-free measurements
 
-Measured at P with ECCode at the protocol commit (verbatim, [part A report](2026-10-24-mealie-part-a.md)). Then measured again at P with ECCode at the fixes, in an after-fix run (worktree at `2be2f16`, results in the same format).
+Measured at P with ECCode at the protocol commit (verbatim, [part A report](2026-10-24-mealie-part-a.md)). Then measured again at P with ECCode at the fixes, in an after-fix run (worktree at `2be2f16`, results in the same format). A7 was run once more at `1b850b9`, after the fix for a false check the after run itself found.
 
 | Capability | Measure | Criterion | Measured | After the fixes |
 |---|---|---|---|---|
@@ -54,9 +53,9 @@ Measured at P with ECCode at the protocol commit (verbatim, [part A report](2026
 | fix verify (A4) | agreement with running the tests directly | 100% | **0.974** (4 disagreements labelled) | 1 (raw agreement 0.927; 3 disagreements, all labelled oracle-wrong) |
 | mutate (A5) | runs completing | ≥ 90% | 0.976 | 0.976 (173 mutants, kill rate 0.68; 16 of 41 fixes get no mutant) |
 | Bug rules (A6) | false positives per 10,000 changed lines | ≤ 1 | **4.506** (92 hits) | 0 (1 hit, the one labelled real) |
-| Stack (A7) | stacks detected at the pin | Python and Node | **python** | {A7-detect} |
-| Stack (A7) | detected checks runnable, result equal to the tool run directly | all | **1/2** | {A7-checks} |
-| Secrets (A7) | error-level false positives at the pin | ≤ 5 | 0 | {A7-secrets} |
+| Stack (A7) | stacks detected at the pin | Python and Node | **python** | node, python |
+| Stack (A7) | detected checks runnable, result equal to the tool run directly | all | **1/2** | 5/5 at the fix commit (at `2be2f16`, a sixth check, plain `tsc`, exited 2 on the clean tree; counted as a miss) |
+| Secrets (A7) | error-level false positives at the pin | ≤ 5 | 0 | 0 |
 
 Reading the after-fix column:
 - **A2's share.** The after-fix sample differs from the measured one by five modules. The A4 fix stopped counting `mealie/services/migrations/` as generated code, so the population the seeded sample is drawn from grew from 282 to 296 modules. On the 35 modules both samples share, the median share was 0.807 before the fixes and 0.817 after. The HTTP-reach fix barely moved it, and recall stayed 1.0. The share is bimodal. A module the app imports selects 80–90% of the test files, because every integration test loads the app; a leaf module selects a handful. The measured 0.459 sat in the gap between the two, so the verdict turns on the draw (row 74).

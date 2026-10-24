@@ -173,7 +173,10 @@ Results:
   - **Breaking-change precision:** 0.087 at first, from data importers taken for migrations, test functions taken for API and moves taken for removals; 1.0 on two detections after the fixes (row 75).
   - **Bug-rule false positives:** 4.5 per 10,000 changed lines at first; 0 after the fixes (row 79).
   - **Impact:** recall against coverage was 1.0, and impact now follows tests that reach a module over HTTP (row 73). But for any module the app imports, impact selects 80–90% of the suite. The share-of-suite criterion was met in one sample and missed in the next, depending on how many leaf modules the sample drew (row 74).
-  - {partA-rest}
+  - **`fix verify`:** agreement with running the tests directly went from 0.974 to 1.0 (row 77).
+  - **`mutate`:** runs completed (0.976 both times), but 16 of 41 real fixes get no mutant, because it has no statement-deletion operator (row 78).
+  - **Stack detection:** it now finds the Node frontend beside the Python backend, and its five checks match the tools run directly (row 80).
+  - **Route-removal recall:** unmeasured, because no commit in the sample removed a route (row 76).
 - **Parts B and C:** at the protocol commit the engine missed every engine criterion except "no record fails its audit".
   - **Delivery:** 6 of 20 Mealie items were delivered with a clean audit, against a rule of 80% per chain (row 104). The quick and debug items were delivered in both chains.
   - **Friction:** 1.79 false refusals per engine item, against a rule of at most 1 (row 105).

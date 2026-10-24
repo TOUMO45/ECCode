@@ -1,0 +1,1140 @@
+{
+ "range": "v3.20.0..v3.27.0",
+ "population": 42,
+ "rows": [
+  {
+   "sha": "95277e0e6bc94252a81cf2e8b978c4df01b635de",
+   "subject": "fix: truncate scraped recipe slug to filesystem-safe length (#7862)",
+   "tests": [
+    "tests/unit_tests/services_tests/scraper_tests/test_scraper.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "        ``OSError: [Errno 36] File name too long`` in ``RecipeService.check_assets``.",
+     "E       AssertionError: assert 1315 <= 250",
+     "E        +  where 1315 = len('high-protein-low-calorie-recipes-smash-or-pass-high-protein-low-calorie-recipes-smash-or-pass-high-protein-low-calori...ie-recipes-smash-or-pass-high-protein-low-calorie-recipes-smash-or-pass-high-protein-low-calorie-recipes-smash-or-pass')",
+     "E        +    where 'high-protein-low-calorie-recipes-smash-or-pass-high-protein-low-calorie-recipes-smash-or-pass-high-protein-low-calori...ie-recipes-smash-or-pass-high-protein-low-calorie-recipes-smash-or-pass-high-protein-low-calorie-recipes-smash-or-pass' = Recipe(id=UUID('2294a6a4-83cb-4236-a358-6a04a17b42d7'), user_id=UUID('e5f0625a-d56b-4db8-b1a2-b6371b5082ec'), househol...cipe_ingredient=[], recipe_instructions=[], nutrition=None, settings=None, assets=[], notes=[], extras={}, comments=[]).slug",
+     "FAILED tests/unit_tests/services_tests/scraper_tests/test_scraper.py::test_create_from_html_truncates_long_slug"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 37194
+  },
+  {
+   "sha": "bda2f3637c6b51559c69dee265e1d5c81e4d86cb",
+   "subject": "fix: handle IntegrityError with 409 conflict response (#7712)",
+   "tests": [
+    "tests/integration_tests/category_tag_tool_tests/test_organizers_common.py",
+    "tests/integration_tests/user_household_tests/test_shopping_list_labels.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 400 == 409",
+     "E        +  where 400 = <Response [400 Bad Request]>.status_code",
+     "sqlite3.IntegrityError: UNIQUE constraint failed: categories.slug, categories.group_id",
+     "sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed: categories.slug, categories.group_id",
+     "ERROR    root:mixins.py:50 (sqlite3.IntegrityError) UNIQUE constraint failed: categories.slug, categories.group_id",
+     "sqlite3.IntegrityError: UNIQUE constraint failed: categories.slug, categories.group_id"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 78073
+  },
+  {
+   "sha": "f287322707d2de1708881255dba52118177c06f1",
+   "subject": "fix: scope bulk update/delete repository methods to caller's group/household (#7899)",
+   "tests": [
+    "tests/integration_tests/public_explorer_tests/test_public_recipes.py",
+    "tests/integration_tests/user_household_tests/test_group_shopping_list_items.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AttributeError: 'NoneType' object has no attribute 'list_items'",
+     "E       AttributeError: 'NoneType' object has no attribute 'list_items'",
+     "FAILED tests/integration_tests/user_household_tests/test_group_shopping_list_items.py::test_shopping_list_items_cannot_update_other_household_items",
+     "FAILED tests/integration_tests/user_household_tests/test_group_shopping_list_items.py::test_shopping_list_items_cannot_delete_other_household_items"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": false,
+   "ms": 70271
+  },
+  {
+   "sha": "280cd58b9d5ef83cdf23830eb58146cf0126d4a2",
+   "subject": "fix: harden LDAP and OIDC authentication providers (#7902)",
+   "tests": [
+    "tests/unit_tests/core/security/providers/test_openid_provider.py",
+    "tests/unit_tests/test_security.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       Failed: DID NOT RAISE MissingClaimException",
+     "E       Failed: DID NOT RAISE MissingClaimException",
+     "E       Failed: DID NOT RAISE MissingClaimException",
+     "E       AssertionError: assert PrivateUser(id=UUID('55f1fc38-b31b-4ac0-84a6-798787f46a11'), username='1y3u3y04ut', full_name='4hu9gb5bok', email='gpo...35b3651a3709'), household_slug='family', tokens=[], cache_key='1234', password='LDAP', login_attemps=0, locked_at=None) is None",
+     "E       AssertionError: assert '\\\\2a' in '(&(|(uid=a*)(uid=*)(mail=a*)(uid=*))(&(objectClass=user)(|(uid=a*)(uid=*)(mail=a*)(uid=*))))'",
+     "ERROR    ldap_provider:ldap_provider.py:82 [LDAP] No user was found with the provided user filter"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 40005
+  },
+  {
+   "sha": "6889101a760a457019276c10514e630660b3ed28",
+   "subject": "fix: restrict user ratings and favorites reads to the requesting user (#7903)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_ratings.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 200 == 403",
+     "E        +  where 200 = <Response [200 OK]>.status_code",
+     "E       assert 200 == 403",
+     "E        +  where 200 = <Response [200 OK]>.status_code",
+     "FAILED tests/integration_tests/user_recipe_tests/test_recipe_ratings.py::test_cannot_read_other_users_ratings_or_favorites_cross_group",
+     "FAILED tests/integration_tests/user_recipe_tests/test_recipe_ratings.py::test_cannot_read_other_users_ratings_or_favorites_same_group"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 67659
+  },
+  {
+   "sha": "f1854201e974e43d67835250ad599bea858be928",
+   "subject": "fix: handle HowToSection missing itemListElement in clean_instructions (#7616)",
+   "tests": [
+    "tests/unit_tests/services_tests/scraper_tests/test_cleaner_parts.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "            TypeError: If the instructions field is not a supported type a TypeError is raised.",
+     "                    except json.JSONDecodeError:",
+     "E               KeyError: 'itemListElement'",
+     "            TypeError: If the instructions field is not a supported type a TypeError is raised.",
+     "                    except json.JSONDecodeError:",
+     "E               KeyError: 'itemListElement'"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 45049
+  },
+  {
+   "sha": "e14b08210af4ef97b994c13914005b0993d15bb1",
+   "subject": "fix: improve IntegrityError message for unique constraint violations (#8050)",
+   "tests": [
+    "tests/utils/routes/test_mixins.py"
+   ],
+   "verdict": "inconclusive",
+   "reason": "The pre-fix run failed, but the tests fail to load on the pre-fix code (ModuleNotFoundError), which says nothing about the bug.",
+   "engine": {
+    "pre": 2,
+    "post": 4
+   },
+   "direct": {
+    "pre": 2,
+    "post": 4,
+    "preLines": [
+     "E   ModuleNotFoundError: No module named 'psycopg2'",
+     "ERROR tests/utils/routes/test_mixins.py"
+    ]
+   },
+   "expected": "not-proven",
+   "agree": false,
+   "ms": 25547
+  },
+  {
+   "sha": "07aac89902fa5231af5c907cc9628ff679dd6248",
+   "subject": "fix: Allow psycopg2-binary to be optional again (#8065)",
+   "tests": [
+    "tests/utils/routes/test_mixins.py"
+   ],
+   "verdict": "inconclusive",
+   "reason": "The pre-fix run failed, but the tests fail to load on the pre-fix code (ModuleNotFoundError), which says nothing about the bug.",
+   "engine": {
+    "pre": 4,
+    "post": 0
+   },
+   "direct": {
+    "pre": 4,
+    "post": 0,
+    "preLines": [
+     "E   ModuleNotFoundError: No module named 'psycopg2'"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": true,
+   "ms": 25325
+  },
+  {
+   "sha": "458e6dc4555a78fe48ba40cc2938c7fc4510d0db",
+   "subject": "fix: cascade delete a user's meal plans and shopping lists (#8120)",
+   "tests": [
+    "tests/integration_tests/admin_tests/test_admin_user_actions.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 400 == 200",
+     "E        +  where 400 = <Response [400 Bad Request]>.status_code",
+     "ERROR    root:mixins.py:73 Multiple rows returned with uselist=False for lazily-loaded attribute 'User.mealplans' ",
+     "FAILED tests/integration_tests/admin_tests/test_admin_user_actions.py::test_delete_user_with_multiple_mealplans_and_shopping_lists"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 42458
+  },
+  {
+   "sha": "f6704b8562e3c281ed49bf08f47987289a3e3810",
+   "subject": "fix: registration with seed data returns a 500 (#8170)",
+   "tests": [
+    "tests/integration_tests/user_group_tests/test_group_registration.py",
+    "tests/integration_tests/user_group_tests/test_group_seeder.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 2,
+    "post": 0,
+    "preLines": [
+     "E   ModuleNotFoundError: No module named 'tests.utils.seed_data'",
+     "E   ModuleNotFoundError: No module named 'tests.utils.seed_data'",
+     "ERROR tests/integration_tests/user_group_tests/test_group_registration.py",
+     "ERROR tests/integration_tests/user_group_tests/test_group_seeder.py"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": false,
+   "ms": 94855
+  },
+  {
+   "sha": "e01629a37ca518f5a8d480907edf8071fd5498ec",
+   "subject": "fix: return HTTP 200 for SPA fallback responses (#7656)",
+   "tests": [
+    "tests/unit_tests/test_spa_static_files.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 404 == 200",
+     "E        +  where 404 = <starlette.responses.FileResponse object at 0x7f7752a2f0b0>.status_code",
+     "FAILED tests/unit_tests/test_spa_static_files.py::test_unknown_path_returns_200_with_html_body"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 26299
+  },
+  {
+   "sha": "e4d8eaa05be3873fd31cdedf9c376534ad4848fa",
+   "subject": "fix: fallback to regular HTML if video download fails (#8203)",
+   "tests": [
+    "tests/unit_tests/services_tests/test_recipe_import_workflow.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       RuntimeError: ERROR: unable to download video",
+     "E       RuntimeError: ERROR: unable to download video",
+     "FAILED tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_a_failing_compiler_hands_over_to_the_next",
+     "FAILED tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_a_failing_url_compiler_falls_back_to_reading_the_page"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 29174
+  },
+  {
+   "sha": "d20dce1b9251b0622ff82830ff63d794c1acbeba",
+   "subject": "fix: allow deleting a user who both rated and favorited a recipe (#8121) (#8131)",
+   "tests": [
+    "tests/integration_tests/admin_tests/test_admin_user_actions.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 400 == 200",
+     "E        +  where 400 = <Response [400 Bad Request]>.status_code",
+     "sqlalchemy.orm.exc.StaleDataError: DELETE statement on table 'users_to_recipes' expected to delete 1 row(s); Only 0 were matched.",
+     "ERROR    root:mixins.py:73 DELETE statement on table 'users_to_recipes' expected to delete 1 row(s); Only 0 were matched.",
+     "sqlalchemy.orm.exc.StaleDataError: DELETE statement on table 'users_to_recipes' expected to delete 1 row(s); Only 0 were matched.",
+     "FAILED tests/integration_tests/admin_tests/test_admin_user_actions.py::test_delete_user_with_rated_and_favorited_recipe"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 33670
+  },
+  {
+   "sha": "41e625767238698ff010c1c46ac422e3af5f95d5",
+   "subject": "fix: close long-lived token auth transaction (#7897)",
+   "tests": [
+    "tests/unit_tests/core/test_dependencies.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert False is True",
+     "E        +  where False = <test_dependencies.FakeSession object at 0x7fb6ba9ea960>.committed",
+     "E       assert False is True",
+     "E        +  where False = <test_dependencies.FakeSession object at 0x7fb6ba9e8830>.rolled_back",
+     "FAILED tests/unit_tests/core/test_dependencies.py::test_validate_long_live_token_commits_after_successful_lookup",
+     "FAILED tests/unit_tests/core/test_dependencies.py::test_validate_long_live_token_rolls_back_after_failed_lookup"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 27690
+  },
+  {
+   "sha": "92382560590325b2170b115e5b3dd01c1265018d",
+   "subject": "fix: stamp timeline events at request time, not process start (#7896)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_timeline_events.py",
+    "tests/unit_tests/schema_tests/test_recipe_timeline_event_timestamp.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert datetime.datetime(2026, 10, 24, 20, 41, 36, 46810, tzinfo=datetime.timezone.utc) <= datetime.datetime(2026, 10, 24, 20, 41, 30, 848914, tzinfo=TzInfo(0))",
+     "E       AssertionError: assert datetime.datetime(2026, 10, 24, 20, 41, 30, 848914, tzinfo=datetime.timezone.utc) == FakeDatetime(2020, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)",
+     "E        +  where datetime.datetime(2026, 10, 24, 20, 41, 30, 848914, tzinfo=datetime.timezone.utc) = RecipeTimelineEventIn(recipe_id=UUID('1881ffd2-196e-4de1-974a-4a8b1356a487'), user_id=None, subject='made this', event...age='does not have image', timestamp=datetime.datetime(2026, 10, 24, 20, 41, 30, 848914, tzinfo=datetime.timezone.utc)).timestamp",
+     "E        +  and   FakeDatetime(2020, 1, 1, 12, 0, tzinfo=datetime.timezone.utc) = datetime(2020, 1, 1, 12, 0, tzinfo=datetime.timezone.utc)",
+     "FAILED tests/integration_tests/user_recipe_tests/test_recipe_timeline_events.py::test_create_timeline_event_defaults_timestamp_to_request_time",
+     "FAILED tests/unit_tests/schema_tests/test_recipe_timeline_event_timestamp.py::test_omitted_timestamp_is_stamped_at_instance_creation"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 53539
+  },
+  {
+   "sha": "8e42fc572f48bc542ea0fd7bedf3f5884208f8e4",
+   "subject": "fix: repoint shopping list items when merging a food or unit (#8146)",
+   "tests": [
+    "tests/unit_tests/repository_tests/test_food_repository.py",
+    "tests/unit_tests/repository_tests/test_unit_repository.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert UUID('3194f5dd-932b-4640-8737-a8b500b47ff3') == UUID('b82801ea-f750-49ab-99d9-d578aaa4539a')",
+     "E        +  where UUID('3194f5dd-932b-4640-8737-a8b500b47ff3') = ShoppingListItemOut(quantity=1.0, unit=None, food=None, referenced_recipe=None, note='cq8ke41pnb', display='1 cq8ke41p...o=datetime.timezone.utc), updated_at=datetime.datetime(2026, 10, 24, 20, 43, 29, 144541, tzinfo=datetime.timezone.utc)).food_id",
+     "E        +  and   UUID('b82801ea-f750-49ab-99d9-d578aaa4539a') = IngredientFood(id=UUID('b82801ea-f750-49ab-99d9-d578aaa4539a'), name='fsjqbw6tnm', plural_name=None, description='', e...o=datetime.timezone.utc), updated_at=datetime.datetime(2026, 10, 24, 20, 43, 29, 119582, tzinfo=datetime.timezone.utc)).id",
+     "E       AssertionError: assert UUID('6cc0b2e4-14a2-4da0-ad77-15fae4ebafad') == UUID('1212ed84-5107-4a6f-8981-b601c938194f')",
+     "E        +  where UUID('6cc0b2e4-14a2-4da0-ad77-15fae4ebafad') = ShoppingListItemOut(quantity=1.0, unit=None, food=None, referenced_recipe=None, note='yjy96vf7gx', display='1 yjy96vf7...o=datetime.timezone.utc), updated_at=datetime.datetime(2026, 10, 24, 20, 43, 29, 729700, tzinfo=datetime.timezone.utc)).unit_id",
+     "E        +  and   UUID('1212ed84-5107-4a6f-8981-b601c938194f') = IngredientUnit(id=UUID('1212ed84-5107-4a6f-8981-b601c938194f'), name='02xwj2ecb8', plural_name=None, description='', e...o=datetime.timezone.utc), updated_at=datetime.datetime(2026, 10, 24, 20, 43, 29, 709938, tzinfo=datetime.timezone.utc)).id"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 30110
+  },
+  {
+   "sha": "f6cb9bec6fef701e83d9b13358e7ab22ebdcdb90",
+   "subject": "fix: parse day- and week-only ISO 8601 durations in recipe time cleaner (#7895)",
+   "tests": [
+    "tests/unit_tests/services_tests/scraper_tests/test_cleaner_parts.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert '1 day' == 'P1D'",
+     "E         ",
+     "E         - P1D",
+     "E         + 1 day",
+     "E       AssertionError: assert '3 days' == 'P3D'",
+     "E         "
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 28867
+  },
+  {
+   "sha": "30b8332c5012af0c68ddf40475327a51f7960693",
+   "subject": "fix: strip trailing footnote markers from parsed ingredient names (#8145)",
+   "tests": [
+    "tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E               AssertionError: assert 'cooking oil*' == 'cooking oil'",
+     "E                 ",
+     "E                 - cooking oil",
+     "E                 + cooking oil*",
+     "E                 ?            +",
+     "E               AssertionError: assert 'cooking oil*' == 'cooking oil'"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 39441
+  },
+  {
+   "sha": "22b8b981fae452fdf9fce9cfe3b4bea6228a122c",
+   "subject": "fix: resize images before AI import to avoid provider size limits (#8241)",
+   "tests": [
+    "tests/unit_tests/pkgs/img/test_minify.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       TypeError: PillowMinifier.to_jpg() got an unexpected keyword argument 'max_dimension'",
+     "E       TypeError: PillowMinifier.to_jpg() got an unexpected keyword argument 'max_dimension'",
+     "E       TypeError: PillowMinifier.to_jpg() got an unexpected keyword argument 'max_dimension'",
+     "E       TypeError: PillowMinifier.to_jpg() got an unexpected keyword argument 'max_dimension'",
+     "FAILED tests/unit_tests/pkgs/img/test_minify.py::test_to_jpg_max_dimension_downscales",
+     "FAILED tests/unit_tests/pkgs/img/test_minify.py::test_to_jpg_max_dimension_never_upscales"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 35633
+  },
+  {
+   "sha": "aa0bf11e7c0039cb24f2d6c89d95ceade055d250",
+   "subject": "fix: remove unsupported partitioned cookie (#8278)",
+   "tests": [
+    "tests/unit_tests/test_session_cookie.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert 'partitioned' not in {'path': '/', 'secure': True, 'samesite': 'none', 'partitioned': True}",
+     "E        +  where {'path': '/', 'secure': True, 'samesite': 'none', 'partitioned': True} = session_cookie_attrs(<starlette.requests.Request object at 0x7f56d26cb0e0>)",
+     "E        +    where <starlette.requests.Request object at 0x7f56d26cb0e0> = build_request(scheme='https', headers={'x-mealie-embedded': 'true'})",
+     "E               ValueError: Partitioned cookies are only supported in Python 3.14 and above.",
+     "FAILED tests/unit_tests/test_session_cookie.py::test_no_attribute_starlette_cannot_emit",
+     "FAILED tests/unit_tests/test_session_cookie.py::test_embedded_https_cookie_is_actually_sendable"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 27840
+  },
+  {
+   "sha": "aa4473ec7e2a0047b5452221366ba108e48380e4",
+   "subject": "fix: cascade group deletion to households and recipes (#8283)",
+   "tests": [
+    "tests/integration_tests/admin_tests/test_admin_group_actions.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 409 == 200",
+     "E        +  where 409 = <Response [409 Conflict]>.status_code",
+     "sqlite3.IntegrityError: NOT NULL constraint failed: households.group_id",
+     "sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) NOT NULL constraint failed: households.group_id",
+     "ERROR    root:mixins.py:73 (sqlite3.IntegrityError) NOT NULL constraint failed: households.group_id",
+     "sqlite3.IntegrityError: NOT NULL constraint failed: households.group_id"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 34436
+  },
+  {
+   "sha": "fb221afa258c8dd2c4ac95b1996c33ef9db3f477",
+   "subject": "fix: harden server-initiated HTTP against SSRF and DNS rebinding (#7914)",
+   "tests": [
+    "tests/integration_tests/user_household_tests/test_group_recipe_actions.py",
+    "tests/integration_tests/user_household_tests/test_group_webhooks.py",
+    "tests/unit_tests/core/security/providers/test_openid_provider.py",
+    "tests/unit_tests/pkgs/safehttp/test_fetch.py",
+    "tests/unit_tests/pkgs/safehttp/test_transport.py"
+   ],
+   "verdict": "inconclusive",
+   "reason": "The pre-fix run failed, but the tests call SafeTransport, which the fix adds; a failure on missing API says nothing about the bug. Test the behavior the bug broke through API that existed before the fix.",
+   "engine": {
+    "pre": 2,
+    "post": 0
+   },
+   "direct": {
+    "pre": 2,
+    "post": 0,
+    "preLines": [
+     "E   ImportError: cannot import name 'SafeTransport' from 'mealie.pkgs.safehttp.transport' (<scratch>/pilot-pre-NzIDWH/mealie/pkgs/safehttp/transport.py)",
+     "ERROR tests/unit_tests/pkgs/safehttp/test_transport.py"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": true,
+   "ms": 35516
+  },
+  {
+   "sha": "56d039c7e3a73c28fc56f6daaa8f07e9d2e7383a",
+   "subject": "fix: harden public filtering (#8286)",
+   "tests": [
+    "tests/integration_tests/public_explorer_tests/test_public_recipes.py",
+    "tests/unit_tests/repository_tests/test_pagination.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 200 == 400",
+     "E        +  where 200 = <Response [200 OK]>.status_code",
+     "E                   IndexError: pop from an empty deque",
+     "FAILED tests/integration_tests/public_explorer_tests/test_public_recipes.py::test_get_all_public_recipes_filter_cannot_escape_public_filter",
+     "FAILED tests/unit_tests/repository_tests/test_pagination.py::test_malformed_query_filters[parenthesis closed before they're opened]"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 117164
+  },
+  {
+   "sha": "cd4caffde93d354e819d96afbb80ba5a8f70bb77",
+   "subject": "fix: import Recipe Keeper categories and yields (#8299)",
+   "tests": [
+    "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert [] == ['Bread']",
+     "E         ",
+     "E         Right contains one more item: 'Bread'",
+     "E         Use -v to get more diff",
+     "FAILED tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipekeeper_imports_categories_and_yield"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 131061
+  },
+  {
+   "sha": "9429a591c3433d165a772d198be9b92c601dbfff",
+   "subject": "fix: coerce null food/unit description to empty string (#8309)",
+   "tests": [
+    "tests/unit_tests/schema_tests/test_ingredient_food.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       pydantic_core._pydantic_core.ValidationError: 1 validation error for IngredientFood",
+     "E       description",
+     "E         Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]",
+     "E           For further information visit https://errors.pydantic.dev/2.13/v/string_type",
+     "E       pydantic_core._pydantic_core.ValidationError: 1 validation error for IngredientUnit",
+     "E       description"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 28385
+  },
+  {
+   "sha": "35c1c1735adbe5041088879982c9735a58d78815",
+   "subject": "fix: filter related fields with EXISTS instead of joins (#8297)",
+   "tests": [
+    "tests/unit_tests/repository_tests/test_pagination.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert 2 == 5",
+     "E        +  where 2 = len([RecipeSummary(id=UUID('93c5bfbb-3073-4f30-8f20-fb6f7ca2cf47'), user_id=UUID('0bdc6849-46c3-4f7d-85d9-a2b4b4cec804'), ...ezone.utc), updated_at=datetime.datetime(2026, 10, 24, 21, 2, 7, 79346, tzinfo=datetime.timezone.utc), last_made=None)])",
+     "E        +    where [RecipeSummary(id=UUID('93c5bfbb-3073-4f30-8f20-fb6f7ca2cf47'), user_id=UUID('0bdc6849-46c3-4f7d-85d9-a2b4b4cec804'), ...ezone.utc), updated_at=datetime.datetime(2026, 10, 24, 21, 2, 7, 79346, tzinfo=datetime.timezone.utc), last_made=None)] = RecipePagination(page=1, per_page=5, total=5, total_pages=1, items=[RecipeSummary(id=UUID('93c5bfbb-3073-4f30-8f20-fb6...time.datetime(2026, 10, 24, 21, 2, 7, 79346, tzinfo=datetime.timezone.utc), last_made=None)], next=None, previous=None).items",
+     "E       AssertionError: assert [] == [UUID('2bb65f...c18ba99e674')]",
+     "E         ",
+     "E         Right contains one more item: UUID('2bb65f15-bd8f-4910-a844-fc18ba99e674')"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 97241
+  },
+  {
+   "sha": "f7d75eeebb1b058064348c1ca61a423fe8c875ad",
+   "subject": "fix: substitution recipe ref handling (#8311)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_substitutions.py",
+    "tests/unit_tests/repository_tests/test_food_repository.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert [] == ['197f10a8-6d...058a8cd75b1b']",
+     "E         ",
+     "E         Right contains one more item: '197f10a8-6df5-4616-8d12-058a8cd75b1b'",
+     "E         Use -v to get more diff",
+     "E       AssertionError: assert ['58988b92-a2...ed0b32', None] == ['967cf6a0-df...ed0b32', None]",
+     "E         "
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 40122
+  },
+  {
+   "sha": "30ba9a65409fc0dfa8ca44797d747cc66244eada",
+   "subject": "fix: fix missing images / keep recipes.image in sync with the images on disk (#8276)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py",
+    "tests/unit_tests/services_tests/scraper_tests/test_scraper.py",
+    "tests/unit_tests/test_recipe_image_backfill.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert None == '158'",
+     "E       AssertionError: assert True is False",
+     "E        +  where True = bool('tnbG')",
+     "E        +    where 'tnbG' = Recipe(id=UUID('aadc6c20-b6a9-4054-a43f-f52f1dbc287b'), user_id=UUID('5f25ade8-8c36-495e-9c97-0adc5f82d0ae'), househol...cipe_ingredient=[], recipe_instructions=[], nutrition=None, settings=None, assets=[], notes=[], extras={}, comments=[]).image",
+     "E       AssertionError: assert True is False",
+     "E        +  where True = bool('u9Zd')"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 37496
+  },
+  {
+   "sha": "ace0b0b1817cdd290d8fbd55ed1cb7d7f84666ca",
+   "subject": "fix: ignore blank Paprika ingredient lines (#8213)",
+   "tests": [
+    "tests/unit_tests/services_tests/test_paprika_migration.py"
+   ],
+   "verdict": "inconclusive",
+   "reason": "The pre-fix run failed, but the tests call split_paprika_ingredients, which the fix adds; a failure on missing API says nothing about the bug. Test the behavior the bug broke through API that existed before the fix.",
+   "engine": {
+    "pre": 2,
+    "post": 0
+   },
+   "direct": {
+    "pre": 2,
+    "post": 0,
+    "preLines": [
+     "E   ImportError: cannot import name 'split_paprika_ingredients' from 'mealie.services.migrations.paprika' (<scratch>/pilot-pre-nUrmfe/mealie/services/migrations/paprika.py)",
+     "ERROR tests/unit_tests/services_tests/test_paprika_migration.py"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": true,
+   "ms": 30215
+  },
+  {
+   "sha": "d204b7198c46dede24f00944100f7ab267c14094",
+   "subject": "fix: auto_init merges model_config.exclude with default {\"id\"} instead of replacing it (#8336)",
+   "tests": [
+    "tests/unit_tests/test_auto_init_config.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert {'households_...redient_food'} == {'households_...t_food', 'id'}",
+     "E         ",
+     "E         Extra items in the right set:",
+     "E         'id'",
+     "E         Use -v to get more diff",
+     "FAILED tests/unit_tests/test_auto_init_config.py::test_get_config_merges_custom_exclude_with_default_id_exclusion"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 27314
+  },
+  {
+   "sha": "97d0940abe474d31b1dbc12965d31ccdb5b3e6f0",
+   "subject": "fix: apply a submitted API key when updating an AI provider (#8344)",
+   "tests": [
+    "tests/integration_tests/user_group_tests/test_group_ai_providers.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E           AssertionError: assert 'original-key' == 'rotated-key'",
+     "E             ",
+     "E             - rotated-key",
+     "E             + original-key",
+     "FAILED tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_update_provider_rotates_the_api_key"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 33642
+  },
+  {
+   "sha": "fae43c2fdf637458f5cd0ca9807b9cac821b8882",
+   "subject": "fix: aggregate to-many orderings instead of joining (#8332)",
+   "tests": [
+    "tests/unit_tests/repository_tests/test_pagination.py",
+    "tests/unit_tests/repository_tests/test_query_filter_builder.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert 2 == 5",
+     "E        +  where 2 = len([RecipeSummary(id=UUID('49970994-c357-4e35-a0a9-044048da7ae2'), user_id=UUID('018f878b-0f3d-4ee1-8a9b-02cf5b2df95d'), ...one.utc), updated_at=datetime.datetime(2026, 10, 24, 21, 11, 19, 52741, tzinfo=datetime.timezone.utc), last_made=None)])",
+     "E        +    where [RecipeSummary(id=UUID('49970994-c357-4e35-a0a9-044048da7ae2'), user_id=UUID('018f878b-0f3d-4ee1-8a9b-02cf5b2df95d'), ...one.utc), updated_at=datetime.datetime(2026, 10, 24, 21, 11, 19, 52741, tzinfo=datetime.timezone.utc), last_made=None)] = RecipePagination(page=1, per_page=5, total=5, total_pages=1, items=[RecipeSummary(id=UUID('49970994-c357-4e35-a0a9-044...me.datetime(2026, 10, 24, 21, 11, 19, 52741, tzinfo=datetime.timezone.utc), last_made=None)], next=None, previous=None).items",
+     "E       ValueError: too many values to unpack (expected 2)",
+     "E       ValueError: too many values to unpack (expected 2)",
+     "E       ValueError: too many values to unpack (expected 2)"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 92944
+  },
+  {
+   "sha": "41d9334e5202d48be8368ce2d295eac290e80005",
+   "subject": "fix: return a 422 instead of a 500 when a recipe PUT omits the name (#8298)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 400 == 422",
+     "E        +  where 400 = <Response [400 Bad Request]>.status_code",
+     "ERROR    root:recipe_crud_routes.py:108 SQL Integrity Error on recipe controller action",
+     "FAILED tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_update_missing_name_returns_error_not_500"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 86642
+  },
+  {
+   "sha": "bad9a0cc053b0c0ce8fc25d113f2022f3db7e014",
+   "subject": "fix: rescue markdown-fenced responses when a provider ignores strict schema output (#8133)",
+   "tests": [
+    "tests/unit_tests/schema_tests/test_openai_base.py",
+    "tests/unit_tests/services_tests/ingredient_parser/test_openai_parser.py",
+    "tests/unit_tests/services_tests/test_openai_service.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E           pydantic_core._pydantic_core.ValidationError: 1 validation error for _SampleSchema",
+     "E             Invalid JSON: expected value at line 1 column 1 [type=json_invalid, input_value='```json\\n{\"answer\": \"hi\"}\\n```', input_type=str]",
+     "E               For further information visit https://errors.pydantic.dev/2.13/v/json_invalid",
+     "E           pydantic_core._pydantic_core.ValidationError: 1 validation error for _SampleSchema",
+     "E             Invalid JSON: expected value at line 1 column 1 [type=json_invalid, input_value='```\\n{\"answer\": \"hi\"}\\n```', input_type=str]",
+     "E               For further information visit https://errors.pydantic.dev/2.13/v/json_invalid"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 34562
+  },
+  {
+   "sha": "0f176fdd99bdd446fd42c519fce918c4f9098692",
+   "subject": "fix: webhooks dont fire around midnight (#8379)",
+   "tests": [
+    "tests/unit_tests/services_tests/scheduler/tasks/test_post_webhook.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert set() == {UUID('7c2875...1640d8bfd30')}",
+     "E         ",
+     "E         Extra items in the right set:",
+     "E         UUID('b5681d4e-2863-4152-956d-f1640d8bfd30')",
+     "E         UUID('7c28759a-eaa8-41e9-a53b-451787431c4a')",
+     "E         Use -v to get more diff"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 28788
+  },
+  {
+   "sha": "250d4996c9f59c51efd1008d84893bbe0f743765",
+   "subject": "fix: Add permission checks for Group & Household members, hide totalUsers card for non-managers (#8348)",
+   "tests": [
+    "tests/integration_tests/user_household_tests/test_household_self_service.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 200 == 403",
+     "E        +  where 200 = <Response [200 OK]>.status_code",
+     "FAILED tests/integration_tests/user_household_tests/test_household_self_service.py::test_get_household_members_unauthorized"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 31362
+  },
+  {
+   "sha": "f6e3aae7d54955913933aafc3612d4d93726db8f",
+   "subject": "fix: cURL fails when IPv6 isn't supported (#8425)",
+   "tests": [
+    "tests/unit_tests/pkgs/safehttp/test_transport.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert ['example.tes...3.184.216.34'] == ['example.tes...3.184.216.34']",
+     "E         ",
+     "E         At index 0 diff: 'example.test:80:2606:2800:220:1::1' != 'example.test:80:[2606:2800:220:1::1],93.184.216.34'",
+     "E         Left contains one more item: 'example.test:80:93.184.216.34'",
+     "E         Use -v to get more diff",
+     "E               curl_cffi.requests.exceptions.DNSError: Failed to perform, curl: (6) Could not resolve host: pinned.example. See https://curl.se/libcurl/c/libcurl-errors.html first for more details."
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 33340
+  },
+  {
+   "sha": "8a035a82d994ac60929cab2a0a924d7fd364162b",
+   "subject": "fix: fall back to servings for recipe yield display (#7881)",
+   "tests": [
+    "tests/unit_tests/schema_tests/test_recipe.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert '8.0 slices' == '8 slices'",
+     "E         ",
+     "E         - 8 slices",
+     "E         + 8.0 slices",
+     "E         ?  ++",
+     "E       AssertionError: assert '8.0 servings' == '8 servings'"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 27863
+  },
+  {
+   "sha": "2479499f948485fb99d164cc5b14f32455b9931e",
+   "subject": "fix: prevent duplicate iOS camera photos from overwriting recipe step assets (#8111)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert 'image.jpg' != 'image.jpg'",
+     "FAILED tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_assets_create_duplicate_name"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 36313
+  },
+  {
+   "sha": "6b247268fbeaa1aa559e5e9a69b095ecc01f7243",
+   "subject": "fix: keep instruction section and step headings when importing (#8331)",
+   "tests": [
+    "tests/unit_tests/services_tests/scraper_tests/test_cleaner_parts.py",
+    "tests/unit_tests/services_tests/scraper_tests/test_scraper_strategies.py"
+   ],
+   "verdict": "inconclusive",
+   "reason": "The pre-fix run failed, but the tests call prefer_structured_instructions, which the fix adds; a failure on missing API says nothing about the bug. Test the behavior the bug broke through API that existed before the fix.",
+   "engine": {
+    "pre": 2,
+    "post": 0
+   },
+   "direct": {
+    "pre": 2,
+    "post": 0,
+    "preLines": [
+     "E   ImportError: cannot import name 'prefer_structured_instructions' from 'mealie.services.scraper.scraper_strategies' (<scratch>/pilot-pre-dIKQ8b/mealie/services/scraper/scraper_strategies.py)",
+     "ERROR tests/unit_tests/services_tests/scraper_tests/test_scraper_strategies.py"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": true,
+   "ms": 29141
+  },
+  {
+   "sha": "d1b02872ea5c28285b02099e078ea682ec9f96f6",
+   "subject": "fix: keep caller-supplied id when creating a model via auto_init (#8432)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py",
+    "tests/unit_tests/repository_tests/test_recipe_repository.py",
+    "tests/unit_tests/test_auto_init_config.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert ['40628845-69...b3afe69b0e70'] == ['94a4d117-6e...828ed10ed31d']",
+     "E         ",
+     "E         At index 0 diff: '40628845-6942-4dca-af9b-b3afe69b0e70' != '94a4d117-6ed1-4f9d-9774-828ed10ed31d'",
+     "E         Use -v to get more diff",
+     "ERROR    root:scraper_strategies.py:161 Error parsing recipe func_call for 'cookTime'",
+     "ERROR    root:scraper_strategies.py:161 Error parsing recipe func_call for 'prepTime'"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 101907
+  }
+ ],
+ "skipped": [
+  {
+   "id": "cb32b6249f0e46138bfbda2479e313715c4a1946",
+   "reason": "fix verify printed no result: eccode: [NO_FIX] No source file changed since 210bb0b242627d05e994f3b54f4bb072ef02dc1a: there is no fix to verify."
+  }
+ ],
+ "agreement": 0.926829268292683,
+ "byVerdict": {
+  "proven": 36,
+  "inconclusive": 5
+ }
+}
