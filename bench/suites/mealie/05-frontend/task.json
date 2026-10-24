@@ -1,0 +1,45 @@
+{
+  "id": "mealie-05-frontend",
+  "category": "frontend",
+  "order": 5,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "cbddafabfc163c824389fd0b0e3790de04abf410"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-833cf9863f61/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: logging in to an embedded Mealie (in an iframe, over HTTPS) fails with a 500.\n\nWhen Mealie runs inside another site, the frontend flags the request (the X-Mealie-Embedded header) and the server sets the session cookie with SameSite=None, Secure and Partitioned. Partitioned is not supported by the Python 3.12 standard library that Starlette uses to write cookies, so setting the cookie raises and every embedded login over HTTPS answers 500. The frontend asks for a partitioned cookie as well when it clears the token cookie.\n\nExpected: drop Partitioned on both sides, keep everything else.\n- Backend: session_cookie_attrs(request) returns no \"partitioned\" key in any case; secure and samesite stay as they are (embedded over HTTPS: samesite \"none\" and secure). set_session_cookie(response, request, token, expires_in, remember_me) then works for an embedded HTTPS request: its Set-Cookie header starts with mealie.access_token=<token>; and has SameSite=none and Secure, and no Partitioned.\n- Frontend: getTokenCookieOptions() returns options without a partitioned property; its secure and sameSite values are unchanged. Update the comments that still describe a partitioned cookie.\n\nTests: backend `python -m pytest -q -p no:cacheprovider tests/unit_tests`; frontend `cd frontend && npx vitest run app/composables` (all frontend specs: `cd frontend && npx vitest run`). The whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 9 minutes).",
+  "title": "fix: remove unsupported partitioned cookie (#8278)",
+  "track": "fix",
+  "fixCommit": "aa0bf11e7c0039cb24f2d6c89d95ceade055d250",
+  "hidden": {
+    "fromSource": {
+      "commit": "aa0bf11e7c0039cb24f2d6c89d95ceade055d250",
+      "paths": [
+        "frontend/app/composables/__tests__/use-token-cookie.test.ts",
+        "tests/unit_tests/test_session_cookie.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/test_session_cookie.py::test_no_attribute_starlette_cannot_emit\" \"tests/unit_tests/test_session_cookie.py::test_embedded_https_cookie_is_actually_sendable\" && (cd frontend && npx vitest run \"app/composables/__tests__/use-token-cookie.test.ts\")",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/test_session_cookie.py\" --deselect \"tests/unit_tests/test_session_cookie.py::test_no_attribute_starlette_cannot_emit\" --deselect \"tests/unit_tests/test_session_cookie.py::test_embedded_https_cookie_is_actually_sendable\" && (cd frontend && npx vitest run \"app/composables/use-search.test.ts\" \"app/composables/__tests__/use-auth-backend.test.ts\" \"app/composables/__tests__/use-mealplan-rules.test.ts\" \"app/composables/__tests__/use-passwords.test.ts\" \"app/composables/__tests__/use-utils.test.ts\" \"app/composables/recipe-page/use-cook-mode-query.test.ts\" \"app/lib/recipe/recipe-visibility.test.ts\" \"app/lib/sanitize/markdown.test.ts\" \"app/lib/sanitize/text.test.ts\" \"app/lib/validators/inputs.test.ts\" \"app/lib/validators/password.test.ts\" \"app/lib/validators/redirect.test.ts\" \"app/plugins/__tests__/axios.test.ts\" \"app/components/Domain/Recipe/RecipeDialogSearch.test.ts\" \"app/composables/partials/__tests__/use-actions-factory.test.ts\" \"app/composables/recipe-page/__tests__/use-extract-ingredient-references.test.ts\" \"app/composables/recipes/__tests__/use-parse-ingredients-dialog.test.ts\" \"app/composables/recipes/__tests__/use-recipe-ingredients.test.ts\" \"app/composables/recipes/__tests__/use-recipe-permissions.test.ts\" \"app/composables/recipes/__tests__/use-scaled-amount.test.ts\" \"app/composables/shopping-list-page/__tests__/use-shopping-list-item-editor.test.ts\" \"app/composables/shopping-list-page/__tests__/use-shopping-list-page.test.ts\" \"app/lib/api/base/routes.test.ts\" \"app/components/Domain/Announcement/Announcements/announcements.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-copy.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-crud.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-data.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-item-actions.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-labels.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-recipes.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-sorting.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-state.test.ts\")",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 3,
+    "regression": 39,
+    "failingBeforeAndAfter": []
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "mealie-07-quick",
+  "category": "quick",
+  "order": 7,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "56fbf6ad00b080ee22d4e3f9bf489cd6e890b163"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-e926cd36ad3a/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: a food or unit whose description is NULL in the database breaks the API.\n\nFoods and units created by older versions or by imports can have a NULL description column. Reading one fails: the IngredientFood and IngredientUnit schemas declare description as a string, so validating such a row raises a pydantic ValidationError.\n\nExpected: IngredientFood.model_validate(row) and IngredientUnit.model_validate(row) accept a row whose description is None and give description == \"\"; a non-empty description is kept as it is.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 9 minutes).",
+  "title": "fix: coerce null food/unit description to empty string (#8309)",
+  "track": "quick",
+  "fixCommit": "9429a591c3433d165a772d198be9b92c601dbfff",
+  "hidden": {
+    "fromSource": {
+      "commit": "9429a591c3433d165a772d198be9b92c601dbfff",
+      "paths": [
+        "tests/unit_tests/schema_tests/test_ingredient_food.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/schema_tests/test_ingredient_food.py::test_food_with_null_description_validates\" \"tests/unit_tests/schema_tests/test_ingredient_food.py::test_unit_with_null_description_validates\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/schema_tests/test_ingredient_food.py\" --deselect \"tests/unit_tests/schema_tests/test_ingredient_food.py::test_food_with_null_description_validates\" --deselect \"tests/unit_tests/schema_tests/test_ingredient_food.py::test_unit_with_null_description_validates\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 2,
+    "regression": 1,
+    "failingBeforeAndAfter": []
+  }
+}

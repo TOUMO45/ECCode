@@ -1,0 +1,46 @@
+{
+  "id": "mealie-02-fix",
+  "category": "fix",
+  "order": 2,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "f287322707d2de1708881255dba52118177c06f1"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-72483cd3b141/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Security report: two weaknesses in Mealie's external login providers.\n\n1. OIDC trusts email addresses the identity provider has not verified. With OpenID Connect login on, OpenIDProvider.authenticate() matches and creates accounts by the email claim even when the claims say the address is unverified (\"email_verified\": false) or say nothing about it. Since an existing Mealie account is matched by its email, anyone who can register an unverified address at the identity provider can log into the Mealie account that uses that address.\n   Expected: a new setting OIDC_REQUIRES_EMAIL_VERIFICATION (environment variable; default true). While it is true, authenticate() raises MissingClaimException unless the claims carry \"email_verified\" set to true, for new and existing accounts alike. Set to false, logins work as they do today.\n\n2. LDAP:\n   a. A login with an empty password succeeds against directories that treat a bind with a valid DN and an empty password as an anonymous bind, so anyone could log in as a known user. An empty password must be refused before any bind: the provider's get_user() returns None.\n   b. The username goes into the LDAP search filter unescaped, so a username such as `a*)(uid=*` rewrites the filter (LDAP injection). The username must be escaped wherever it enters a filter (RFC 4515: `*` becomes `\\2a`, and so on for `(`, `)`, `\\` and NUL).\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/core/security/providers/test_openid_provider.py tests/unit_tests/test_security.py`; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 9 minutes).",
+  "title": "fix: harden LDAP and OIDC authentication providers (#7902)",
+  "track": "fix",
+  "fixCommit": "280cd58b9d5ef83cdf23830eb58146cf0126d4a2",
+  "hidden": {
+    "fromSource": {
+      "commit": "280cd58b9d5ef83cdf23830eb58146cf0126d4a2",
+      "paths": [
+        "tests/e2e/login.spec.ts",
+        "tests/unit_tests/core/security/providers/test_openid_provider.py",
+        "tests/unit_tests/test_security.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/core/security/providers/test_openid_provider.py::test_rejects_unverified_email\" \"tests/unit_tests/core/security/providers/test_openid_provider.py::test_rejects_missing_email_verified\" \"tests/unit_tests/core/security/providers/test_openid_provider.py::test_does_not_adopt_existing_account_with_unverified_email\" \"tests/unit_tests/test_security.py::test_ldap_rejects_empty_password\" \"tests/unit_tests/test_security.py::test_ldap_escapes_username_in_search_filter\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/core/security/providers/test_openid_provider.py\" \"tests/unit_tests/test_security.py\" --deselect \"tests/unit_tests/core/security/providers/test_openid_provider.py::test_rejects_unverified_email\" --deselect \"tests/unit_tests/core/security/providers/test_openid_provider.py::test_rejects_missing_email_verified\" --deselect \"tests/unit_tests/core/security/providers/test_openid_provider.py::test_does_not_adopt_existing_account_with_unverified_email\" --deselect \"tests/unit_tests/test_security.py::test_ldap_rejects_empty_password\" --deselect \"tests/unit_tests/test_security.py::test_ldap_escapes_username_in_search_filter\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 5,
+    "regression": 32,
+    "failingBeforeAndAfter": []
+  }
+}

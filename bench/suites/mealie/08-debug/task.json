@@ -1,0 +1,44 @@
+{
+  "id": "mealie-08-debug",
+  "category": "debug",
+  "order": 8,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "ed7d7aa91e5c98e57de20823d4850dc39707ad6c"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-3f666b706a40/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug report: models that declare their own auto_init exclusions lose primary-key protection.\n\nMealie's SQLAlchemy models are initialised through the @auto_init() decorator, which copies the incoming keyword data onto the row and skips the keys in its configuration's exclude set. By default that set is {\"id\"}, so an id in the incoming data never overwrites a primary key. Models with a model_config = ConfigDict(exclude={...}) of their own (foods, groups, households, shopping-list items, ...) are not protected: an id in the data passed to them, or to their nested one-to-many elements on update, is written onto the row.\n\nFind the cause and fix it. Expected: a model's own exclude adds to the default exclusions instead of replacing them. The configuration auto_init resolves for a model class (_get_config(cls) in the decorator's module, an AutoInitConfig) has exclude equal to {\"id\"} together with the model's own entries (\"id\" once if the model lists it too); a class without a model_config, or whose model_config sets other keys only (such as get_attr), keeps exclude == {\"id\"}.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 9 minutes).",
+  "title": "fix: auto_init merges model_config.exclude with default {\"id\"} instead of replacing it (#8336)",
+  "track": "debug",
+  "fixCommit": "d204b7198c46dede24f00944100f7ab267c14094",
+  "hidden": {
+    "fromSource": {
+      "commit": "d204b7198c46dede24f00944100f7ab267c14094",
+      "paths": [
+        "tests/unit_tests/test_auto_init_config.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/test_auto_init_config.py::test_get_config_merges_custom_exclude_with_default_id_exclusion\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/test_auto_init_config.py\" --deselect \"tests/unit_tests/test_auto_init_config.py::test_get_config_merges_custom_exclude_with_default_id_exclusion\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 3,
+    "failingBeforeAndAfter": []
+  }
+}

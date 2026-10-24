@@ -1,0 +1,44 @@
+{
+  "id": "mealie-09-security",
+  "category": "security",
+  "order": 9,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "8553cfee3a7aba098a35ce7082248731a7e29dfc"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-393d7fe39c20/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Security: two group and household endpoints are open to every member.\n\n- GET /api/households/members returns the household's users, with their e-mail addresses and permissions, to any logged-in member of the household.\n- PUT /api/groups/preferences lets any member of a group change the group's preferences.\n\nExpected: both require the can_manage permission, checked the way the other management endpoints check it (the controller's permission checks); a user without it gets 403. Users with can_manage keep today's behaviour: the members list still holds exactly the household's own users. GET /api/groups/members stays as it is.\n\nFrontend: the user profile page shows household statistics cards; hide the total-users card (totalUsers) from users who cannot manage, and keep the other cards.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_household_tests tests/integration_tests/user_group_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 9 minutes).",
+  "title": "fix: Add permission checks for Group & Household members, hide totalUsers card for non-managers (#8348)",
+  "track": "fix",
+  "fixCommit": "250d4996c9f59c51efd1008d84893bbe0f743765",
+  "hidden": {
+    "fromSource": {
+      "commit": "250d4996c9f59c51efd1008d84893bbe0f743765",
+      "paths": [
+        "tests/integration_tests/user_household_tests/test_household_self_service.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_household_tests/test_household_self_service.py::test_get_household_members_unauthorized\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_household_tests/test_household_self_service.py\" --deselect \"tests/integration_tests/user_household_tests/test_household_self_service.py::test_get_household_members_unauthorized\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 4,
+    "failingBeforeAndAfter": []
+  }
+}
