@@ -90,7 +90,9 @@ test('an event another agent records while a check runs is kept, not reverted', 
   fs.writeFileSync(path.join(tmp, 'check.js'), `const env = { ...process.env }; delete env.ECCODE_EVIDENCE;\nrequire('child_process').spawn(process.execPath, [${JSON.stringify(path.join(tmp, 'agent.js'))}], { env, detached: true, stdio: 'ignore' }).unref();\nsetTimeout(() => {}, 1500);\n`);
   const ev = evidence.runCommand(ctx.store, 'backend-engineer', { label: 'slow check', command: `node "${path.join(tmp, 'check.js')}"` });
   assert.ok(waitFor(done), 'the other agent finished');
-  assert.strictEqual(fs.readFileSync(done, 'utf8').trim(), '0', 'its write succeeded once the check ended');
+  const writer = fs.readFileSync(done, 'utf8');
+  assert.match(writer, /^0/, 'its write succeeded once the check ended');
+  assert.match(writer, /waiting for the record: a check is running \(slow check, pid \d+\)/, 'and it said what it waited for');
   assert.strictEqual(ev.status, 'passed');
   assert.strictEqual(ev.integrity, undefined, 'the other agent\'s write is not the check\'s');
   assert.ok(ctx.store.readEvents().some((e) => e.type === 'risk.recorded' && e.data.id === 'R9'), 'the event survived');
@@ -124,4 +126,44 @@ test('a live window\'s lock is never broken as stale; a dead holder\'s is', () =
   fs.utimesSync(lock, old, old);
   assert.strictEqual(withLock(lock, () => 'taken', { timeoutMs: 1000, staleMs: 50 }), 'taken');
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// Final review: the window refused every engine write in the command's process
+// tree, so a project whose tests create their own ECCode records (ECCode
+// itself) failed under evidence run. Only the windowed record is refused.
+test('a checked command may write an ECCode record of its own, not the windowed one', () => {
+  const ctx = project();
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-own-'));
+  execFileSync('git', ['init', '-q'], { cwd: tmp });
+  const ev = evidence.runCommand(ctx.store, 'backend-engineer', { label: 'own record', command: `node "${CLI}" init --root "${tmp}" --name t --idea "a record the tests create"` });
+  assert.strictEqual(ev.status, 'passed', fs.readFileSync(path.join(ctx.dir, ev.log), 'utf8'));
+  assert.ok(fs.existsSync(path.join(tmp, '.eccode', 'events.jsonl')));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+// Final review: mutate held one window over the baseline and every mutant, so
+// another agent's write waited for the whole run. Each test run is its own window.
+test('a write waits for one test run of mutate, not for the whole mutation run', () => {
+  const mutate = require('../lib/mutate');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-mwin-'));
+  const git = (...a) => execFileSync('git', a, { cwd: dir, stdio: 'pipe' });
+  write(dir, 'src/a.js', 'module.exports = (x) => x;\n');
+  git('init', '-q');
+  git('add', '-A');
+  git('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'base');
+  execFileSync(process.execPath, [CLI, 'init', '--root', dir, '--name', 't', '--idea', 'mutation windows'], { stdio: 'pipe' });
+  write(dir, 'src/a.js', 'module.exports = (x) => (x > 1 ? x + 1 : x - 1) && x < 9 && x !== 3;\n');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-mwin-w-'));
+  const done = path.join(tmp, 'done');
+  fs.writeFileSync(path.join(tmp, 'agent.js'), `setTimeout(() => { require('child_process').spawnSync(process.execPath, [${JSON.stringify(CLI)}, 'risk', 'add', '--id', 'R1', '--title', 'meanwhile', '--severity', 'low', '--actor', 'orchestrator'], { cwd: ${JSON.stringify(dir)} }); require('fs').writeFileSync(${JSON.stringify(done)}, String(Date.now())); }, 1500);\n`);
+  const env = { ...process.env };
+  delete env.ECCODE_EVIDENCE;
+  require('child_process').spawn(process.execPath, [path.join(tmp, 'agent.js')], { env, detached: true, stdio: 'ignore' }).unref();
+  const r = mutate.run(dir, { test: 'node -e "setTimeout(() => {}, 700)"', timeoutMs: 30000 });
+  const ended = Date.now();
+  assert.ok(r.total >= 4, `enough mutants to tell: ${r.total}`);
+  assert.ok(waitFor(done), 'the other agent wrote');
+  assert.ok(Number(fs.readFileSync(done, 'utf8')) < ended - 1000, 'it got in between two test runs, not after the last one');
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(tmp, { recursive: true, force: true });
 });
