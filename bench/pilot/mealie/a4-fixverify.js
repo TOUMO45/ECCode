@@ -9,7 +9,9 @@
 //   post fails                 -> not proven (the fix fails its test)
 //   pre fails on missing API   -> inconclusive (ImportError, AttributeError, ...)
 //   pre fails otherwise        -> proven
-// The engine's verdict must equal it; every disagreement is a defect.
+// The engine's verdict must equal it. This regex oracle cannot judge every
+// reason a test fails, so each disagreement is labelled by hand afterwards
+// (labels/fixverify.json: engine-wrong or oracle-wrong, with the reason).
 // usage: node a4-fixverify.js <range> [--jobs 1]
 const fs = require('fs');
 const os = require('os');
@@ -22,7 +24,8 @@ const MISSING_API = /\b(ImportError|ModuleNotFoundError|AttributeError|NameError
 function expectedVerdict(pre, post) {
   if (pre.code === 0) return 'not-proven';
   if (post.code !== 0) return 'not-proven';
-  return MISSING_API.test(pre.tail) ? 'inconclusive' : 'proven';
+  // The whole output: Mealie's warnings summary pushes a collection error far above the tail.
+  return MISSING_API.test(pre.out || pre.tail) ? 'inconclusive' : 'proven';
 }
 
 function one(mirror, c) {
@@ -61,7 +64,7 @@ function one(mirror, c) {
       verdict: r.verdict,
       reason: r.reason,
       engine: { pre: r.pre && r.pre.exitCode, post: r.post && r.post.exitCode },
-      direct: { pre: direct.pre.code, post: direct.post.code, preTail: direct.pre.code ? direct.pre.tail.split('\n').filter((l) => /Error|FAILED|assert/.test(l)).slice(0, 4) : [] },
+      direct: { pre: direct.pre.code, post: direct.post.code, preLines: direct.pre.code ? direct.pre.out.split('\n').filter((l) => /^E\s|Error:|^FAILED|^ERROR/.test(l)).slice(0, 6) : [] },
       expected,
       agree: r.verdict === expected,
       ms: Date.now() - started,

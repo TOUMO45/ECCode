@@ -155,3 +155,21 @@ test('a missing file is matched however the temp path is spelled (Windows 8.3 sh
   assert.match(fixverify.inconclusiveReason(out('C:\\x\\pre-fix\\app\\local.json'), ctx.dir, ctx.base, ['src/cart.js'], 'app/') || '', /local\.json/, 'project in a subdirectory of the repo');
   assert.doesNotMatch(fixverify.inconclusiveReason(`${out('/etc/nothing-here.json')}\nAssertionError`, ctx.dir, ctx.base, ['src/cart.js'], '') || '', /nothing-here/);
 });
+
+test('an error raised in the fixed code counts when pytest prints its frame as a relative path', () => {
+  // Found by the Mealie pilot's development run: pytest prints traceback
+  // frames relative to its rootdir, at the start of a line, so a crash in the
+  // fixed file (the bug's own symptom) read as "no error in the fixed code".
+  const ctx = project();
+  const sources = ['mealie/routes/groups/controller_labels.py'];
+  const out = [
+    'tests/integration_tests/test_labels.py:31: in test_duplicate_label',
+    '    response = api_client.post(api_routes.groups_labels, json=data)',
+    'mealie/routes/groups/controller_labels.py:57: in create_one',
+    '    return self.mixins.create_one(data)',
+    'E   sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed',
+  ].join('\n');
+  assert.strictEqual(fixverify.inconclusiveReason(out, ctx.dir, ctx.base, sources, ''), null, 'the failure went through the fixed code');
+  assert.match(fixverify.inconclusiveReason(out.replace(/controller_labels/g, 'controller_tags'), ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'a frame of another file is not the fixed code');
+  assert.match(fixverify.inconclusiveReason(out.replace('mealie/routes/groups/controller_labels.py:57', 'other/mealie/routes/groups/controller_labels.py.bak:57'), ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'a longer path that merely contains the file is not it');
+});

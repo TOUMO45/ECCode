@@ -56,11 +56,12 @@ function scratchRepo(mirror, c, { full = true } = {}) {
   return { root, base, testFiles, testCmd, venvEnv, cleanup };
 }
 
-/** Run a shell command in cwd with the venv first on PATH; {code, tail, ms}. */
+/** Run a shell command in cwd with the venv first on PATH; {code, out, tail, ms} (out: the whole output). */
 function run(command, cwd, venvEnv, timeoutMs = 1800000) {
   const started = Date.now();
   const r = spawnSync(command, { cwd, shell: true, encoding: 'utf8', timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...venvEnv } });
-  return { code: typeof r.status === 'number' ? r.status : 1, tail: `${r.stdout || ''}${r.stderr || ''}`.split('\n').slice(-40).join('\n'), ms: Date.now() - started };
+  const out = `${r.stdout || ''}${r.stderr || ''}`;
+  return { code: typeof r.status === 'number' ? r.status : 1, out, tail: out.split('\n').slice(-40).join('\n'), ms: Date.now() - started };
 }
 
 /** The installed eccode CLI of this repository, run in cwd. */
