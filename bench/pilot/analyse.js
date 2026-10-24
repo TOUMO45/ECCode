@@ -133,6 +133,38 @@ function readEvents(recordDir) {
   return fs.readFileSync(path.join(recordDir, 'events.jsonl'), 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l));
 }
 
+/**
+ * Amendment (2026-10-24, during the batch, before any label or figure): every
+ * benchmark session inherited the operator's Claude Code session id, so the
+ * items of a chain (one sandbox) appended to one transcript file and item k's
+ * copy held the lines of items 1..k. An item counts only the lines it added:
+ * the leading lines an earlier item's copy of the same file already held.
+ */
+function ownOffset(text, prevText) {
+  if (!prevText || !String(text).startsWith(prevText)) return 0;
+  const n = (prevText.match(/\n/g) || []).length;
+  return prevText.endsWith('\n') ? n : n + 1;
+}
+
+/** The lines of one session file that an earlier item of the same chain already held. */
+function sessionOffset(runsDir, proc, r, dir, file, text) {
+  if (!r.chain || !r.chain.transcripts || !(r.chain.index > 0)) return 0;
+  const own = `-${r.chain.index + 1}-${r.task}`;
+  if (!r.chain.transcripts.dir.endsWith(own)) return 0;
+  const base = r.chain.transcripts.dir.slice(0, -own.length);
+  const root = path.join(runsDir, `tr-${proc}`);
+  const names = fs.existsSync(root) ? fs.readdirSync(root) : [];
+  for (let j = r.chain.index; j >= 1; j--) {
+    const prevDir = names.find((n) => n.startsWith(`${base}-${j}-`));
+    const prev = prevDir && path.join(root, prevDir, path.relative(dir, file));
+    if (prev && fs.existsSync(prev)) {
+      const off = ownOffset(text, fs.readFileSync(prev, 'utf8'));
+      if (off) return off;
+    }
+  }
+  return 0;
+}
+
 /** Every refusal in the engine-variant transcripts, with a stable id: <proc>/<transcript dir>/<file>:<line>. */
 function allRefusals(runsDir, runs) {
   const out = [];
@@ -141,11 +173,24 @@ function allRefusals(runsDir, runs) {
       const { dir, sessions } = runFiles(runsDir, proc, r);
       for (const s of sessions) {
         const session = `${proc}/${path.relative(path.join(runsDir, `tr-${proc}`), s).split(path.sep).join('/')}`;
-        for (const x of extractRefusals(fs.readFileSync(s, 'utf8'), session)) out.push({ ...x, proc, task: r.task, dir: dir && path.basename(dir) });
+        const text = fs.readFileSync(s, 'utf8');
+        const off = sessionOffset(runsDir, proc, r, dir, s, text);
+        for (const x of extractRefusals(text, session)) {
+          if (Number(x.id.slice(x.id.lastIndexOf(':') + 1)) > off) out.push({ ...x, proc, task: r.task, dir: dir && path.basename(dir) });
+        }
       }
     }
   }
   return out;
+}
+
+/** The tool-result text of one item's own transcript lines. */
+function itemToolText(runsDir, proc, r) {
+  const { dir, sessions } = runFiles(runsDir, proc, r);
+  return sessions.map((s) => {
+    const text = fs.readFileSync(s, 'utf8');
+    return toolResultText(text.split('\n').slice(sessionOffset(runsDir, proc, r, dir, s, text)).join('\n'));
+  }).join('\n');
 }
 
 function criteria(runsDir, runs, labels) {
@@ -174,7 +219,7 @@ function criteria(runsDir, runs, labels) {
     const s = runs[p] && runs[p].summaries[0];
     const items = recs(p).map((r) => {
       const f = runFiles(runsDir, p, r);
-      return { lessons: lessonIds(f.record, s), toolText: f.sessions.map((x) => toolResultText(fs.readFileSync(x, 'utf8'))).join('\n') };
+      return { lessons: lessonIds(f.record, s), toolText: itemToolText(runsDir, p, r) };
     });
     const surfaced = lessonsSurfaced(items);
     const lat = s && s.latencyMs;
@@ -249,7 +294,7 @@ function markdown({ rows, stops }) {
   return `${lines.join('\n')}\n`;
 }
 
-module.exports = { gateOrder, gatesInOrder, migrationChange, deliveredShare, toolResultText, lessonsSurfaced, criteria, readRuns, markdown };
+module.exports = { gateOrder, gatesInOrder, migrationChange, deliveredShare, toolResultText, lessonsSurfaced, criteria, readRuns, markdown, allRefusals, itemToolText, ownOffset };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);

@@ -348,3 +348,18 @@ test('bench --save keeps every finished run on disk, and bench report rebuilds t
   assert.match(fs.readFileSync(path.join(dir, 'r.md'), 'utf8'), /\| search-case \| without \| 2\/3 \| \+0\/−0 \|/, 'the untouched fixture fails only its feature check');
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+// Mealie pilot: run under a Claude Code session, every benchmark session
+// inherited its session id, so the items of a chain (one sandbox) appended to
+// one transcript file. Each agent starts as its own session.
+test('the agent does not inherit the operator session\'s Claude Code identity', () => {
+  const inherited = {
+    CLAUDE_CODE_SESSION_ID: 'parent', CLAUDE_CODE_REMOTE_SESSION_ID: 'parent', CLAUDE_CODE_CHILD_SESSION: '1', CLAUDE_PID: '1',
+    CLAUDE_AFTER_LAST_COMPACT: '1', CLAUDE_CODE_MESSAGING_SOCKET: '/s', CLAUDE_CODE_MESSAGING_TOKEN: 't', CLAUDECODE: '1', CLAUDE_CODE_SESSION_ATTENDED: '1',
+  };
+  const env = bench.agentEnv({ ...inherited, ANTHROPIC_BASE_URL: 'https://api', PATH: '/bin', NODE_TEST_CONTEXT: 'child' });
+  for (const k of Object.keys(inherited)) assert.ok(!(k in env), k);
+  assert.strictEqual(env.ANTHROPIC_BASE_URL, 'https://api', 'what the agent needs to reach the API stays');
+  assert.strictEqual(env.PATH, '/bin');
+  assert.ok(!('NODE_TEST_CONTEXT' in env));
+});

@@ -181,3 +181,28 @@ Found by the development runs at v3.18.0 or by the harness's tests, before any m
 - **Instruments:** A4's oracle read only the last 40 lines of output (a collection error sat above Mealie's warnings summary); A3's route lister counted log lines as routes; A6 counted no added lines for new files; A7's direct commands did not match the Taskfile; the report had no row for the spec's stack-detection requirement; the planner's hidden check passed vacuously, deadlocked and leaked servers. Each was fixed with a test.
 - **Harness:** hidden checks carry their own timeouts; the frontend environments (pnpm after #7663, yarn engines, `nuxt prepare` per tree) — the twelve environment-caused skips of the first draw are on record in `selection.json`.
 - **Measured as they are, not fixed before the run:** the A2 HTTP-reach gap, TS alias resolution and `.vue` indexing, removed test helpers counted as removed exports, and Alembic `op.drop_*` not seen by the destructive-SQL rule.
+
+## Amendment 1 (2026-10-24T16:07Z, during the batch, before any label or figure)
+
+**What was found.** The first saved records showed it. The batch was launched from a Claude Code session, and every benchmark session inherited that session's id (`CLAUDE_CODE_SESSION_ID`). The items of a chain share one sandbox directory, so they appended to one transcript file. The copy kept for item k therefore holds the lines of items 1 to k. This was checked on b1's first three items:
+- Each copy is an exact prefix of the next.
+- Only the main session's file is affected. Subagent files are new for each item.
+
+**The sessions themselves were independent.** The first request of every later item has the same input size as item 1's (about 37k tokens), so no item saw an earlier item's conversation.
+
+**What it would do to the analysis.** Read as copied, the transcripts would:
+- count an earlier item's refusals again in every later item;
+- credit a later item with "surfacing" a lesson whose id is only in the earlier item's own lines.
+
+**The amendment.** For each chain item, the analysis counts only the lines its copy added to the copy of an earlier item of the same chain (`ownOffset`, `sessionOffset`, `itemToolText` in `bench/pilot/analyse.js`; test in `tests/pilot.test.js`). No run, criterion or label rule changes.
+
+**For later runs.** The harness no longer passes the launching session's identity and IPC variables to agents (`agentEnv` in `lib/bench.js`; test in `tests/bench.test.js`). This batch keeps running unchanged from the pinned worktree.
+
+**Also disclosed.** The rest of the launching session's environment reached every session of this batch and of the earlier batches, in all variants alike. That includes, for example, `CLAUDE_EFFORT` and `CLAUDE_AUTO_BACKGROUND_TASKS`. Whether each of these variables changes a headless session's behaviour was not tested. Subagents in this batch were launched as background tasks.
+
+**Defects found in ECCode so far.** Each is fixed with a failing-first test in the main tree. None changes this batch, which runs from the pinned worktree:
+- **MCP item (b4):** in the no-shell profile, role agents had no MCP tools, so they could not claim a task.
+- **Refactor items (b1, b2 item 1):** `init --track refactor` accepted no behaviour command, so the work item could never pass verification.
+- **Found by the after-fix check of the MCP item:**
+  - The quick track's detected check was pinned to the frontend sub-project's tests for a backend change. This regression came from a pilot fix to stack detection.
+  - Claude Code's 60-second default MCP call timeout cut off `evidence_run` on a full suite.

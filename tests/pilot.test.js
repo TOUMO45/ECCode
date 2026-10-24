@@ -632,3 +632,36 @@ test('A7: a project-script check is compared with the tool its script runs', () 
   assert.strictEqual(toolOf({ id: 'ruff', command: 'ruff check mealie' }), 'ruff');
   assert.strictEqual(toolOf({ id: 'tsc', command: 'cd frontend && npx tsc --noEmit' }), null);
 });
+
+// Amendment (2026-10-24, during the batch): every benchmark session inherited
+// the operator's session id, so a chain's items (one sandbox) appended to one
+// transcript file and item k's copy held items 1..k. Only an item's own lines count.
+test('analyse: a chain item counts only the transcript lines it added', () => {
+  const { allRefusals, itemToolText, ownOffset } = require('../bench/pilot/analyse');
+  const line = (o) => JSON.stringify(o);
+  const use = (id, command) => line({ message: { content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] } });
+  const refused = (id, text) => line({ message: { content: [{ type: 'tool_result', tool_use_id: id, is_error: true, content: text }] } });
+  const result = (text) => line({ message: { content: [{ type: 'tool_result', tool_use_id: 'x', content: text }] } });
+  const item1 = [use('a', 'eccode task claim T1'), refused('a', 'eccode: [WORK_ACTIVE] w1 is active'), result('lesson L-7 recorded')].join('\n') + '\n';
+  const item2 = item1 + [use('b', 'eccode gate start plan'), refused('b', 'eccode: [INVALID_TRANSITION] plan is approved'), result('nothing about lessons')].join('\n') + '\n';
+  assert.strictEqual(ownOffset(item2, item1), 3, 'the lines the previous copy already held');
+  assert.strictEqual(ownOffset(item2, 'something else\n'), 0, 'not a prefix: every line counts');
+  assert.strictEqual(ownOffset(item2, null), 0);
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-analyse-'));
+  const sess = 'abc.jsonl';
+  const base = 'eccode-chain-engine-XyZ123';
+  const rec = (index, task) => ({ task, variant: 'engine', chain: { index, transcripts: { dir: `${base}-${index + 1}-${task}`, files: [] } } });
+  const records = [rec(0, 'mealie-01-refactor'), rec(1, 'mealie-02-fix')];
+  fs.writeFileSync(path.join(dir, 'b1.jsonl'), records.map((r) => JSON.stringify(r)).join('\n') + '\n');
+  for (const [r, text] of [[records[0], item1], [records[1], item2]]) {
+    fs.mkdirSync(path.join(dir, 'tr-b1', r.chain.transcripts.dir), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'tr-b1', r.chain.transcripts.dir, sess), text);
+  }
+  const runs = { b1: { records, summaries: [], stopped: [] } };
+  const ref = allRefusals(dir, runs);
+  assert.deepStrictEqual(ref.map((x) => [x.task, x.code]), [['mealie-01-refactor', 'WORK_ACTIVE'], ['mealie-02-fix', 'INVALID_TRANSITION']], 'item 1\'s refusal once, not again in item 2');
+  assert.ok(itemToolText(dir, 'b1', records[0]).includes('L-7'));
+  assert.ok(!itemToolText(dir, 'b1', records[1]).includes('L-7'), 'item 1\'s own result is not item 2 surfacing the lesson');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
