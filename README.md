@@ -34,7 +34,7 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
 - **The model-free tools mostly held up at that scale.**
   - Indexing took under a second.
   - Impact analysis's recall against coverage was 1.0, and against injected faults 0.94, then 1.0 after a fix. But it selects most of the suite for any module the app imports.
-  - The index's TS/JS resolution, breaking-change precision and bug-rule false positives each missed their criterion at first, and were fixed and measured again.
+  - Six of the seventeen criteria missed at first: TS/JS resolution, breaking-change precision, `fix verify` agreement, bug-rule false positives, and stack detection and its checks. Each was fixed, and all six were met when measured again.
 - **The engine at the protocol commit** delivered 6 of 20 real work items with a clean audit, where the rule was 80%, and refused correct steps 1.8 times per item.
 - **Correctness:** the bare agent passed every hidden check in 17 of 20 runs, the engine in 13 of 20.
 - **Every stop is on the register,** and most causes are fixed with tests. Showing that the fixes raise delivery needs the pilot run again. See [the pilot report](bench/pilot-results/2026-10-24-mealie-pilot.md).
