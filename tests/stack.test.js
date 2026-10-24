@@ -172,3 +172,22 @@ test('python checks use the arguments the project\'s own task runner gives them,
   write(plain, 'Makefile', 'lint:\n\tpoetry run ruff check src tests\n');
   assert.strictEqual(stack.checks(plain, loadConfig(plain)).find((c) => c.id === 'ruff').command, 'ruff check src tests');
 });
+
+// Final review: the task-file reader took the first "pytest" anywhere (a pip
+// line, a description, a comment, an echo) for the project's test command.
+test('a task runner gives a tool its arguments only on a command line that runs that tool', () => {
+  const probe = (file, text) => {
+    const { dir } = tmpProject();
+    write(dir, 'pyproject.toml', '[project]\nname = "x"\n');
+    write(dir, file, text);
+    return Object.fromEntries(stack.checks(dir, loadConfig(dir)).map((c) => [c.id, c])).pytest.command;
+  };
+  assert.strictEqual(probe('Makefile', 'deps:\n\tpip install pytest pytest-cov\n'), 'pytest -q', 'a pip line installs pytest, it does not run it');
+  assert.strictEqual(probe('Taskfile.yml', 'version: "3"\ntasks:\n  test:\n    desc: run pytest against the backend\n    cmds:\n      - echo start\n'), 'pytest -q', 'a description');
+  assert.strictEqual(probe('Makefile', '# We use pytest (see docs)\ntest:\n\techo hi\n'), 'pytest -q', 'a comment');
+  assert.strictEqual(probe('justfile', 'test:\n    echo "running pytest -x"\n'), 'pytest -q', 'an echo');
+  assert.strictEqual(probe('Makefile', 'test:\n\t@poetry run pytest -x tests/unit\n'), 'pytest -x tests/unit', 'a recipe line, after its @ prefix and the runner');
+  assert.strictEqual(probe('Taskfile.yml', 'version: "3"\ntasks:\n  test:\n    cmds:\n      - cmd: uv run pytest -q tests\n'), 'pytest -q tests');
+  assert.strictEqual(probe('justfile', 'test:\n    python -m pytest -q backend\n'), 'pytest -q backend');
+  assert.strictEqual(probe('Makefile', 'test:\n\tpytest -k "slow and not db"\n'), 'pytest -q', 'quoted arguments are not copied');
+});
