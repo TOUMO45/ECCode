@@ -51,8 +51,8 @@ Measured at P with ECCode at the protocol commit (verbatim, [part A report](2026
 | Impact (A2) | recall against injected faults, pooled | ≥ 0.90 | 0.938 | 1 |
 | Compat (A3) | precision of detections over W | ≥ 0.90 | **0.087** (2 true of 23) | 1 (2 true of 2) |
 | Compat (A3) | recall against FastAPI's route table | ≥ 0.90 | no verdict: no removal in the sample | no verdict: no removal in the sample |
-| fix verify (A4) | agreement with running the tests directly | 100% | **0.974** (4 disagreements labelled) | {A4} |
-| mutate (A5) | runs completing | ≥ 90% | 0.976 | {A5} |
+| fix verify (A4) | agreement with running the tests directly | 100% | **0.974** (4 disagreements labelled) | 1 (raw agreement 0.927; 3 disagreements, all labelled oracle-wrong) |
+| mutate (A5) | runs completing | ≥ 90% | 0.976 | 0.976 (173 mutants, kill rate 0.68; 16 of 41 fixes get no mutant) |
 | Bug rules (A6) | false positives per 10,000 changed lines | ≤ 1 | **4.506** (92 hits) | 0 (1 hit, the one labelled real) |
 | Stack (A7) | stacks detected at the pin | Python and Node | **python** | {A7-detect} |
 | Stack (A7) | detected checks runnable, result equal to the tool run directly | all | **1/2** | {A7-checks} |
@@ -62,6 +62,8 @@ Reading the after-fix column:
 - **A2's share.** The after-fix sample differs from the measured one by five modules. The A4 fix stopped counting `mealie/services/migrations/` as generated code, so the population the seeded sample is drawn from grew from 282 to 296 modules. On the 35 modules both samples share, the median share was 0.807 before the fixes and 0.817 after. The HTTP-reach fix barely moved it, and recall stayed 1.0. The share is bimodal. A module the app imports selects 80–90% of the test files, because every integration test loads the app; a leaf module selects a handful. The measured 0.459 sat in the gap between the two, so the verdict turns on the draw (row 74).
 - **A2's route modules.** The six sampled route modules had no predicted test before the HTTP-reach fix. After it, recall is 1.0 on four of them, and 0.5 and 0.45 on the other two (row 73).
 - **A3.** Two detections after the fixes, both already labelled true, so precision is 1 on a sample of 2 (row 75). The five migrations added in W drop nothing in `upgrade()`, so the destructive-migration rule had nothing to find.
+- **A4.** 41 fixes were replayed, against 39 measured: the two fixes under `mealie/services/migrations/` now count as code. The measured run's one engine-wrong disagreement now agrees. The after-fix run's three disagreements are labelled oracle-wrong. The third is new: the oracle reads any `AttributeError` as a missing API, but this one is the bug, shown by rerunning the test with a full traceback. That label was made after the after-fix verdict was known.
+- **A5.** The criterion (runs completing) was met before and after. The new operators reached five more fixes, but 16 of 41 still get no mutant: their changed lines hold calls and statements, such as an added `.filter_by(...)` (row 78).
 - **A6.** The changed-line count grew by 44 lines (26,631 to 26,675) for the same A4 reason.
 
 ## Parts B and C: the engine on real work
