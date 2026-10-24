@@ -180,3 +180,20 @@ test('a new Python migration is destructive when its upgrade drops data, not whe
   assert.deepStrictEqual(found.map((d) => d.name).sort(), ['mealie/alembic/versions/002_drop.py', 'mealie/alembic/versions/003_table.py', 'migrations/005_cleanup.sql', 'shop/migrations/0004_remove.py']);
   assert.match(found.find((d) => d.name.endsWith('002_drop.py')).detail, /drop_column/);
 });
+
+test('a definition moved to another file is a move, reported, not a removed export', () => {
+  const dir = scratch();
+  write(dir, 'src/a.py', 'def helper():\n    return 1\n\n\ndef gone():\n    return 2\n');
+  write(dir, 'src/c.py', 'def gone():\n    return 3\n');
+  const base = compat.snapshot(dir, ['**']);
+  write(dir, 'src/a.py', '# split up\n');
+  write(dir, 'src/util/new.py', 'def helper():\n    return 1\n');
+  assert.deepStrictEqual(compat.detect(dir, base, ['**']).map((d) => d.name), ['src/a.py#gone'], 'gone stays a removal: c.py had its own before');
+  assert.deepStrictEqual(compat.detectAll(dir, base, ['**']).moved, [{ name: 'helper', from: 'src/a.py', to: 'src/util/new.py' }]);
+});
+
+test('a migration is a file a migration tool would run: versioned or dated, or under alembic/versions', () => {
+  const dir = scratch();
+  for (const f of ['mealie/services/migrations/paprika.py', 'mealie/services/migrations/utils/migration_helpers.py', 'shop/migrations/__init__.py', 'shop/migrations/0004_remove.py', 'db/migrate/20240101_add_users.rb', 'prisma/migrations/20240101_init/migration.sql', 'mealie/alembic/versions/b3f1c9a27d84_add.py', 'sql/migrations/V2__add.sql', 'migrations/001_init.sql']) write(dir, f, '-- x\n');
+  assert.deepStrictEqual(Object.keys(compat.snapshot(dir, ['**']).migrations).sort(), ['db/migrate/20240101_add_users.rb', 'mealie/alembic/versions/b3f1c9a27d84_add.py', 'migrations/001_init.sql', 'prisma/migrations/20240101_init/migration.sql', 'shop/migrations/0004_remove.py', 'sql/migrations/V2__add.sql']);
+});
