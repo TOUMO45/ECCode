@@ -232,9 +232,12 @@ test('mcp: quick and task_rescope narrow the detected check to named test paths,
     const q = await orch.call('quick', { request: 'Add a bulk discount', files: 'src/**,tests/**', tests: ['tests/a.test.js'] });
     assert.strictEqual(q.isError, false, q.text);
     assert.strictEqual(q.json().task.verification.command, 'npm test -- tests/a.test.js');
-    const rs = await orch.call('task_rescope', { task: 'change', tests: ['tests'], reason: 'the whole tests directory covers the change' });
+    // A node --test check takes files: Node 21 and later refuse a directory.
+    assert.strictEqual((await orch.call('task_rescope', { task: 'change', tests: ['tests'], reason: 'the whole tests directory covers the change' })).isError, true);
+    write(ctx.dir, 'tests/b.test.js', "require('node:test')('b', () => {});\n");
+    const rs = await orch.call('task_rescope', { task: 'change', tests: ['tests/a.test.js', 'tests/b.test.js'], reason: 'both test files cover the change' });
     assert.strictEqual(rs.isError, false, rs.text);
-    assert.strictEqual(ctx.store.state().tasks.change.verification.command, 'npm test -- tests');
+    assert.strictEqual(ctx.store.state().tasks.change.verification.command, 'npm test -- tests/a.test.js tests/b.test.js');
     assert.strictEqual((await orch.call('task_rescope', { task: 'change', tests: ['$(id)'], reason: 'trying a command' })).isError, true);
   } finally {
     orch.close();
