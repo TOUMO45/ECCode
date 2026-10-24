@@ -149,3 +149,140 @@ test('the refactor prompt names its behavior command', () => {
   assert.ok(bench.enginePrompt('engine', 'refactor', { behavior: 'python -m pytest -q tests' }).includes('--behavior "python -m pytest -q tests"'));
   assert.ok(!bench.enginePrompt('engine', 'feature', { behavior: 'x' }).includes('--behavior'));
 });
+
+/** An upstream with three commits, one per chain item: u1, u2, u3. */
+function chainOrigin({ withClaude = false } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-upstream-'));
+  const g = (args) => execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', ...args], { cwd: dir, encoding: 'utf8' }).trim();
+  g(['init', '-q']);
+  fs.mkdirSync(path.join(dir, 'src'));
+  fs.writeFileSync(path.join(dir, 'check.js'), 'process.exit(0);\n');
+  fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'chain', scripts: { test: 'node check.js' } }));
+  const commits = [];
+  for (const v of ['v1', 'v2', 'v3']) {
+    fs.writeFileSync(path.join(dir, 'src', 'value.txt'), `${v}\n`);
+    if (v === 'v2') fs.writeFileSync(path.join(dir, 'src', 'renamed-upstream.txt'), 'teammate file\n');
+    if (withClaude && v === 'v2') {
+      fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
+      fs.writeFileSync(path.join(dir, '.claude', 'settings.json'), '{}');
+    }
+    g(['add', '-A']);
+    g(['commit', '-qm', v]);
+    commits.push(g(['rev-parse', 'HEAD']));
+  }
+  return { dir, commits };
+}
+
+/** Tasks c1..c3 at the upstream's three commits; c1 has a hidden file. */
+function chainTasks(o) {
+  const suite = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-chain-suite-'));
+  ['c1', 'c2', 'c3'].forEach((id, i) => {
+    const dir = path.join(suite, id);
+    fs.mkdirSync(dir);
+    if (id === 'c1') {
+      fs.mkdirSync(path.join(dir, 'hidden'));
+      fs.writeFileSync(path.join(dir, 'hidden', 'flag.txt'), 'hidden of c1\n');
+    }
+    fs.writeFileSync(path.join(dir, 'task.json'), JSON.stringify({
+      id, order: i + 1, track: 'quick',
+      source: { repo: o.dir, commit: o.commits[i] },
+      prompt: `Item: ${id}\nAppend the item id to src/value.txt.`,
+      hiddenChecks: [{ id: 'value', command: `node -e "process.exit(require('fs').readFileSync('src/value.txt','utf8').includes('${id}') ? 0 : 1)"` }],
+    }));
+  });
+  return bench.listTasks(suite).sort((a, b) => a.order - b.order);
+}
+
+const CHAIN_AGENT = `node "${path.join(__dirname, 'bench-reference', 'chain', 'fake-chain-agent.js')}"`;
+
+test('chain mode: three items on one record', async (t) => {
+  const chain = require('../lib/chain');
+  const obs = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-obs-')), 'obs.jsonl');
+  process.env.ECCODE_TEST_OBS = obs;
+  let res;
+  try {
+    res = withCache(() => chain.runChain(chainTasks(chainOrigin()), { agentCmd: CHAIN_AGENT, variant: 'engine', timeoutMs: 180000 }));
+  } finally {
+    delete process.env.ECCODE_TEST_OBS;
+  }
+  const seen = fs.readFileSync(obs, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+
+  await t.test('a chain delivers three items on one record, audit clean', () => {
+    assert.strictEqual(res.records.length, 3);
+    for (const r of res.records) {
+      assert.strictEqual(r.engine.delivered, true, `${r.task} delivered`);
+      assert.strictEqual(r.hiddenPassed, 1, `${r.task}: ${JSON.stringify(r.checks)}`);
+    }
+    assert.strictEqual(res.summary.auditOk, true);
+    assert.deepStrictEqual(res.records.map((r) => r.chain.index), [0, 1, 2]);
+    assert.strictEqual(res.records[1].engine.track, 'quick');
+  });
+
+  await t.test('sync removes files upstream does not have', () => {
+    assert.strictEqual(seen[1].extra, false, 'c1 left src/extra.txt; the sync to u2 removed it');
+    assert.strictEqual(seen[1].value, 'v2\n', "c1's edit is replaced by upstream's tree");
+    assert.ok(res.records[1].chain.sync.removed > 0);
+  });
+
+  await t.test('hidden files never reach the next item', () => {
+    assert.deepStrictEqual(seen.map((s) => s.hidden), [false, false, false]);
+  });
+
+  await t.test('the chain summary times status, metrics and audit', () => {
+    for (const k of ['status', 'metrics', 'audit']) assert.strictEqual(typeof res.summary.latencyMs[k], 'number', k);
+    assert.ok(res.summary.events > 0);
+    assert.ok(res.summary.recordBytes > 0);
+    assert.strictEqual(typeof res.records[1].chain.indexMs, 'number', 'the incremental index is timed on items after the first');
+  });
+});
+
+test('sync refuses a source tree with .claude or .eccode', () => withCache(() => {
+  const chain = require('../lib/chain');
+  const o = chainOrigin({ withClaude: true });
+  const tasks = chainTasks(o);
+  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-chain-'));
+  execFileSync('git', ['init', '-q'], { cwd: sandbox });
+  chain.syncSource(tasks[0], sandbox);
+  assert.throws(() => chain.syncSource(tasks[1], sandbox), /\.claude/);
+}));
+
+test('a crashed item is abandoned by the operator and the next one runs', () => withCache(() => {
+  const chain = require('../lib/chain');
+  const o = chainOrigin();
+  process.env.ECCODE_TEST_CRASH_ITEM = 'c2';
+  let res;
+  try {
+    res = chain.runChain(chainTasks(o), { agentCmd: CHAIN_AGENT, variant: 'engine', timeoutMs: 180000 });
+  } finally {
+    delete process.env.ECCODE_TEST_CRASH_ITEM;
+  }
+  assert.deepStrictEqual(res.records.map((r) => r.engine.delivered), [true, false, true]);
+  assert.strictEqual(res.records[1].chain.abandoned, true, 'the stuck work item was abandoned by the operator');
+  assert.strictEqual(res.summary.auditOk, true);
+}));
+
+test('--max-cost stops before the next run once the cap is reached', () => withCache(() => {
+  const o = origin();
+  const suite = path.dirname(suiteWith(o, { hiddenChecks: [{ id: 'any', command: 'true' }] }).dir);
+  const agent = `node -e "process.stdout.write(JSON.stringify({type:'result',total_cost_usd:0.2,num_turns:1}) + '\\n')"`;
+  const out = bench.run({ suite, agentCmd: agent, variants: ['without'], runs: 5, maxCostUsd: 0.3 });
+  assert.strictEqual(out.records.length, 2);
+  assert.deepStrictEqual(out.stopped, { reason: 'max-cost', spentUsd: 0.4 });
+  const chain = require('../lib/chain');
+  const c = chain.runChain(chainTasks(chainOrigin()), { agentCmd: agent, variant: 'without', maxCostUsd: 0.3 });
+  assert.strictEqual(c.records.length, 2);
+  assert.strictEqual(c.stopped.reason, 'max-cost');
+}));
+
+test('bench --chain saves records, a chain-summary line per chain, and report skips the typed lines', () => withCache(() => {
+  const o = chainOrigin();
+  const tasks = chainTasks(o);
+  const save = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-save-')), 'runs.jsonl');
+  const cliPath = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const agent = `node -e "process.stdout.write(JSON.stringify({type:'result',total_cost_usd:0.1,num_turns:1}) + '\\n')"`;
+  execFileSync(process.execPath, [cliPath, 'bench', '--suite', path.dirname(tasks[0].dir), '--chain', '--variant', 'without', '--runs', '2', '--agent', agent, '--save', save], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  const lines = fs.readFileSync(save, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  assert.deepStrictEqual(lines.map((l) => l.type || l.task), ['c1', 'c2', 'c3', 'chain-summary', 'c1', 'c2', 'c3', 'chain-summary']);
+  assert.deepStrictEqual(lines.filter((l) => !l.type).map((l) => l.chainRun), [1, 1, 1, 2, 2, 2]);
+  assert.strictEqual(bench.loadRuns(fs.readFileSync(save, 'utf8')).length, 6, 'loadRuns keeps run records only');
+}));
