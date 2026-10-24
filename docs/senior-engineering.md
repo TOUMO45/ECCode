@@ -17,6 +17,12 @@ What a senior engineer relies on, and where ECCode provides it with engine enfor
 
 `eccode impact <files>` (or `--changed [--base <ref>]`) walks the reverse import graph: every dependent with its distance, the affected test files, and the modules touched. `--run --actor <role>` executes exactly those tests and records them as evidence (`node --test` / `pytest` / `go test`, grouped by language).
 
+**At scale.** Measured on the Python 3.13 standard library (589 files, 280,766 lines; [bench/impact/stdlib-2026-10-23.md](../bench/impact/stdlib-2026-10-23.md)):
+- Absolute Python imports resolve from the file's import root, its nearest ancestor that is not a package, as on `sys.path`. In a `Lib/` layout this took the dependents of `Lib/os.py` from 127 to 360.
+- Affected tests are runnable tests only: a file under a test path counts when its name follows the runner's convention, or it defines tests the runner would collect. Helpers, fixtures, runners and `conftest.py` are listed apart as test support. On the standard library the "affected tests" of `os.py` went from 44 to 2; the other 42 were `test/support` and `test/libregrtest`.
+- A directory holding most of the code and several code subdirectories (`Lib/`, a large `src/`) opens into its children as modules. Modules are listed largest first with counts (`Lib/asyncio (30), Lib/email (27), …`), where before there was one module, `Lib`.
+- Dependents are ranked nearest first and, at each distance, by how many files depend on them in turn (`threading.py` with 46 first), so the files a reviewer should open first lead the list.
+
 Enforced side: every task completion records an `impact` summary (dependents, modules, affected tests) in its lean record, and warns when no test file depends on the changed files. Reviewers re-run the affected tests themselves.
 
 ## 3. Many deliveries per project (work items)
@@ -33,7 +39,11 @@ A delivered project is not finished — `eccode work start` opens the next work 
 | `fix` | plan | see below |
 | `quick` | none — a one-task plan is imported from `--owner/--files/--command` | — |
 
-Every track ends in implementation phases plus verification, with all existing rules (independent review, evidence, lean, coverage) intact. A one-line fix no longer pays for an architecture gate, and a rewrite no longer sneaks through as a "quick change": the track is chosen explicitly, and recorded.
+Every track ends in implementation phases plus verification, with all existing rules (independent review, evidence, lean, coverage) intact.
+
+**One step for the quick track.** `eccode quick "<change>" --actor orchestrator` (in Claude Code, `/eccode:quick`) creates the record if there is none, or starts the next work item on a delivered one. It imports the one-task plan, starts its gate and prints every remaining step as the command each role runs. The verification command is the detected test check, ownership is the tracked top-level layout without dot directories, and both are printed so they can be overridden. `eccode handoff draft` fills the fields of the owner's handoff that the record already knows (changed files inside the ownership, the owner's latest passing run of the planned command, the criteria). Completion refuses a handoff that still holds a draft's `TODO:` placeholder. `init --track quick` used to create a record with no task to claim; it now refuses and points to `eccode quick`. Live: [docs/live/22-quick-track-engine.txt](live/22-quick-track-engine.txt).
+
+**What a track costs.** `eccode metrics` reads the cost of each work item from the event log: the runs opened while it was active (one per dispatch), the tokens, cost and run minutes reported when they ended (corrections applied), its review rounds, and the wall time from start to delivery. It rolls these up per track, with medians over delivered items, and counts runs that reported no usage instead of guessing them. The orchestrator opens each dispatched role's run with `eccode run start --actor orchestrator --for <role>`. The previously documented `run start --actor <role>` was refused by the guard, because the main session may act only as the orchestrator, so no dispatch could be accounted for until this fix. Usage in the record is what the Agent results report for dispatched work. A whole session, main loop and cache reads included, costs more: in the pilot below, 73,856 tokens reported against 1,583,949 measured. A one-line fix no longer pays for an architecture gate, and a rewrite no longer sneaks through as a "quick change": the track is chosen explicitly, and recorded.
 
 ## 5. Safe fixes, refactors and breaking changes
 
@@ -73,9 +83,33 @@ What the recorded runs show (every number recomputable with `eccode bench tally`
 
 The records keep every case, including the non-significant small-task batches, the recorded null and the Sonnet total-lines reversal. What holds on both models is discipline: hidden checks 100%, no dependency creep, helpers reused, and a test in every with-skill run (176/176 on Haiku, 80/80 and 40/40 in the two Sonnet batches). Code without its tests is smaller with the skill on both models, wherever it has been measured. Results from runs of this suite live in [bench/results/](../bench/results/) with the exact command and date, and `eccode bench tally` recomputes the headline totals (runs, hidden-check passes, dependency additions, agent failures) from those files, so any claim about past runs is derived from the records rather than remembered.
 
-Every limit stated during this upgrade is dispositioned in [docs/limits.md](limits.md) — eliminated with evidence, or closed by design with the rationale recorded. No limit is open: row 36, the Sonnet total-lines reversal, closed by design under the follow-up batch's pre-registered decision rule (the extra lines are tests; the code is smaller).
+Every limit stated during this upgrade is dispositioned in [docs/limits.md](limits.md) — eliminated with evidence, closed by design with the rationale recorded, or open with its containment named. Row 36, the Sonnet total-lines reversal, closed by design under the follow-up batch's pre-registered decision rule (the extra lines are tests; the code is smaller). One row is open, row 59: whether the engine improves correctness, which these engine tasks could not show because the bare agents made no mistakes to catch. Row 56, engine runs that stopped before delivery, closed under its pre-registered rule.
 
 For external comparability, pair this with SWE-bench Verified or Harbor (see [tooling-research.md](tooling-research.md)); publish paired deltas, not absolute scores.
+
+### The engine itself: `bench --variant engine`
+
+The runs above measure a skill's text in the prompt. `bench --variant engine` puts the whole engine in the loop:
+- The toolkit is installed in each sandbox, with the guard profile, and committed before the agent starts.
+- The prompt asks for delivery through the quick track: claim, pinned check, independent review, verification and a hash-chained record.
+- By default every subagent inherits the session's model, so the comparison is the process, not a model mix.
+- The harness reads the record back (delivered, audit, review rounds) and the session's own cost and tokens, subagents included.
+
+The suite `bench/suites/engine` has four multi-file tasks (two JavaScript, two Python), each with a trap a careless change falls into:
+- a shared helper with a case-sensitive caller;
+- a public export that a refactor must keep;
+- a CSV consumer that reads by position;
+- a bug whose root cause two modules share.
+
+`tests/bench.test.js` proves every trap is real: a careless reference passes the visible tests and fails a hidden regression check.
+
+Pre-registered result, 80 runs ([protocol](../bench/protocols/2026-10-23-engine-ab.md); reports for [Sonnet](../bench/engine-results/2026-10-23-engine-sonnet.md) and [Opus](../bench/engine-results/2026-10-23-engine-opus.md)):
+
+- **Sonnet, engine batch:** 20/20 runs passed every hidden check without the engine and 19/20 with it (stratified p = 1.0; the one failure stopped before any edit); median cost per run $0.12 without and $0.42 with the engine. Tokens were 3.9× and wall time 6.4×. Engine runs wrote tests in 18/20, bare runs in 10/20.
+- **Opus, engine batch:** 20/20 runs passed every hidden check without the engine and 20/20 with it (stratified p = 1.0); median cost per run $0.27 without and $1.35 with the engine. Tokens were 5.5× and wall time 9×. Engine runs wrote tests in 20/20, bare runs in 15/20.
+- On these four tasks both models avoided every trap without the engine, so correctness had no room to improve. That is a finding about the tasks, not evidence that the engine helps or hurts. What the batches measure is the price of the process: 3.4× (Sonnet) to 5.0× (Opus) the median cost of a bare run, for a change that an independent reviewer checked and that the record proves.
+- Delivery: 12 of 20 Opus engine runs delivered. All 8 that did not were on the two Python tasks and stopped at the `__pycache__` refusal (row 57).
+- Delivery on Sonnet: only 6 of the 20 engine runs delivered, though every audit was clean. The saved transcripts showed why: agents composed shell commands the CLI-only allowlist refused, stopped, and were not re-dispatched (register row 56). After the fixes, a pre-registered follow-up delivered 16/20 with all hidden checks passing ([report](../bench/engine-followup/2026-10-23-engine-followup-sonnet.md)). Its four stalls had one cause, `__pycache__` counted as an unreviewed change (row 57). After that fix, the second follow-up delivered 19/20 with every audit clean and every hidden check passing, at a median cost of $0.49 per change ([protocol](../bench/protocols/2026-10-23-engine-delivery-followup-2.md), [report](../bench/engine-followup/2026-10-23-engine-followup-2-sonnet.md)). Delivery went from 6/20 to 16/20 to 19/20; each step is a before/after comparison of engine versions, not a randomized one.
 
 ## Verified live, not only in unit tests
 

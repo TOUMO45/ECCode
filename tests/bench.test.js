@@ -7,7 +7,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const { spawnSync, execFileSync } = require('child_process');
 const bench = require('../lib/bench');
 
 const GOOD_RELATIVE = `
@@ -272,4 +272,79 @@ test('follow-up suite: every task fails on its fixture, passes with its referenc
     const dep = bench.runOnce(t, { agentCmd: `node "${ref}" && node -e "${addDep[t.id].replace(/"/g, '\\"')}"`, variant: 'with' });
     assert.strictEqual(dep.checks[1].passed, false, `${t.id}: the no-new-deps check must catch an added dependency`);
   }
+});
+
+test('engine suite: every task fails untouched, passes with its good reference, and its careless reference passes the visible tests but fails a hidden regression check', () => {
+  const has = (cmd, args) => spawnSync(cmd, args, { encoding: 'utf8' }).status === 0;
+  const pytest = has('pytest', ['--version']);
+  const suite = path.join(__dirname, '..', 'bench', 'suites', 'engine');
+  const tasks = bench.listTasks(suite);
+  assert.deepStrictEqual(tasks.map((t) => t.id).sort(), ['extract-pricing', 'search-case', 'stock-reorder', 'utc-month']);
+  const visible = { 'search-case': 'npm test', 'extract-pricing': 'npm test', 'stock-reorder': 'pytest -q', 'utc-month': 'pytest -q' };
+  for (const t of tasks) {
+    if (visible[t.id].startsWith('pytest') && !pytest && !process.env.ECCODE_REQUIRE_TRACERS) continue;
+    const ids = bench.hiddenChecksOf(t).map((c) => c.id);
+    assert.ok(ids.includes('feature') && ids.includes('no-new-deps') && ids.length === 3, `${t.id}: ${ids}`);
+    const ref = (kind) => path.join(__dirname, 'bench-reference', 'engine', `${t.id}.${kind}.js`);
+    const noop = bench.runOnce(t, { agentCmd: 'node -e ""', variant: 'without' });
+    assert.strictEqual(noop.checks.find((c) => c.id === 'feature').passed, false, `${t.id}: the feature check must fail on the untouched fixture`);
+    const good = bench.runOnce(t, { agentCmd: `node "${ref('good')}" && ${visible[t.id]}`, variant: 'without' });
+    assert.strictEqual(good.agentExit, 0, `${t.id}: the good reference passes the visible tests`);
+    assert.deepStrictEqual([good.hiddenPassed, good.hiddenTotal], [3, 3], `${t.id}: ${JSON.stringify(good.checks)}`);
+    const careless = bench.runOnce(t, { agentCmd: `node "${ref('careless')}" && ${visible[t.id]}`, variant: 'without' });
+    assert.strictEqual(careless.agentExit, 0, `${t.id}: the careless reference passes the visible tests (the trap is invisible to them)`);
+    const failed = careless.checks.filter((c) => !c.passed).map((c) => c.id);
+    assert.ok(failed.some((id) => id !== 'feature' && id !== 'no-new-deps'), `${t.id}: the careless change must fail a regression check, failed: ${failed}`);
+  }
+});
+
+test('engine variant: the toolkit is installed and committed first, the record is read back, usage is parsed, and tooling never counts as the change', () => {
+  const suite = path.join(__dirname, '..', 'bench', 'suites', 'engine');
+  const t = bench.listTasks(suite).find((x) => x.id === 'search-case');
+  const ref = path.join(__dirname, 'bench-reference', 'engine');
+  const r = bench.runOnce(t, { agentCmd: `node "${path.join(ref, 'fake-engine-agent.js')}" "${path.join(ref, 'search-case.good.js')}" "npm test"`, variant: 'engine', keep: true });
+  try {
+    assert.strictEqual(r.agentExit, 0, JSON.stringify(r.checks));
+    assert.deepStrictEqual([r.hiddenPassed, r.hiddenTotal], [3, 3]);
+    assert.deepStrictEqual({ ...r.engine }, { initialized: true, delivered: true, auditOk: true, reviews: 2, changesRequested: 0, runsRecorded: 1, tokensReported: 1234, toolkitChanged: false, agents: 'inherit' });
+    assert.match(fs.readFileSync(path.join(r.sandbox, '.claude', 'agents', 'technical-reviewer.md'), 'utf8'), /^model: inherit$/m, 'same model throughout: the process is compared, not a model mix');
+    assert.deepStrictEqual(r.usage, { answer: null, costUsd: 0.4321, tokens: 1365, outputTokens: 55, turns: 12, subagents: 4 });
+    assert.ok(r.linesAdded > 0 && r.linesAdded < 30, `only the change counts, not .claude/ or .eccode/: ${r.linesAdded}`);
+    const log = execFileSync('git', ['log', '--format=%s'], { cwd: r.sandbox, encoding: 'utf8' });
+    assert.match(log, /eccode toolkit\nfixture/);
+    const md = bench.report([r, { ...r, variant: 'without', engine: undefined, usage: null, hiddenPassed: 2, checks: r.checks.map((c, i) => ({ ...c, passed: i !== 1 })) }], { agentCmd: 'x --model m1' });
+    assert.match(md, /## Engine vs without/);
+    assert.match(md, /\| search-case \| 0\/1 → 1\/1 \| Fisher 1\.000 \| regression 1; none \| — → 1365 \|/);
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tally-'));
+    fs.writeFileSync(path.join(dir, 'e.md'), md);
+    const tl = bench.tally(dir);
+    assert.deepStrictEqual(tl.engine.m1.engine, { runs: 1, allPass: 1, medianTokens: 1365, medianCostUsd: 0.4321, medianSeconds: Math.round(r.durationMs / 1000), delivered: 1, auditOk: 1 });
+    assert.deepStrictEqual(tl.engine.m1.without, { runs: 1, allPass: 0, medianTokens: null, medianCostUsd: null, medianSeconds: Math.round(r.durationMs / 1000), delivered: 0, auditOk: 0 });
+    assert.strictEqual(tl.stratified, null, 'engine rows never enter the lean-skill strata');
+    fs.rmSync(dir, { recursive: true, force: true });
+  } finally {
+    fs.rmSync(r.sandbox, { recursive: true, force: true });
+  }
+});
+
+test('usageOf reads the agent result line (json or stream-json) and nothing else', () => {
+  assert.strictEqual(bench.usageOf('plain text output'), null);
+  assert.strictEqual(bench.usageOf('{"type":"assistant"}\n'), null);
+  const line = JSON.stringify({ type: 'result', result: 'Delivered.', total_cost_usd: 0.01, num_turns: 2, usage: { input_tokens: 3, output_tokens: 4, cache_read_input_tokens: 5, cache_creation_input_tokens: 6 } });
+  assert.deepStrictEqual(bench.usageOf(`{"type":"system"}\n${line}\n`), { answer: 'Delivered.', costUsd: 0.01, tokens: 18, outputTokens: 4, turns: 2, subagents: null });
+});
+
+test('bench --save keeps every finished run on disk, and bench report rebuilds the report from them', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-save-'));
+  const save = path.join(dir, 'runs.jsonl');
+  const cli = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const suite = path.join(__dirname, '..', 'bench', 'suites', 'engine');
+  let r = spawnSync(process.execPath, [cli, 'bench', '--suite', suite, '--tasks', 'search-case', '--variant', 'without', '--runs', '2', '--agent', 'node -e ""', '--save', save], { encoding: 'utf8', cwd: dir });
+  assert.strictEqual(r.status, 0, r.stderr);
+  const lines = fs.readFileSync(save, 'utf8').trim().split('\n');
+  assert.strictEqual(lines.length, 2, 'one line per finished run');
+  r = spawnSync(process.execPath, [cli, 'bench', 'report', save, '--agent', 'x --model m', '--out', path.join(dir, 'r.md')], { encoding: 'utf8', cwd: dir });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.match(fs.readFileSync(path.join(dir, 'r.md'), 'utf8'), /\| search-case \| without \| 2\/3 \| \+0\/−0 \|/, 'the untouched fixture fails only its feature check');
+  fs.rmSync(dir, { recursive: true, force: true });
 });

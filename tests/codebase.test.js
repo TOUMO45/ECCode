@@ -30,7 +30,8 @@ test('js/ts: relative, index and tsconfig-alias imports resolve; dependents and 
   const imp = cb.impact(dir, ['src/lib/money.ts'], { index });
   assert.deepStrictEqual(imp.dependents.map((d) => [d.file, d.distance]), [['src/orders/page.tsx', 1]]);
   assert.deepStrictEqual(imp.tests, ['src/orders/page.test.tsx']);
-  assert.deepStrictEqual(imp.modules, ['src']);
+  // src/ holds all the code and several code directories, so its children are the modules.
+  assert.deepStrictEqual(imp.modules, ['src/lib', 'src/orders']);
 });
 
 test('python: absolute, src-layout and dotted-relative imports resolve', () => {
@@ -356,4 +357,56 @@ test('impact --calls adds function-level callers from codebase-memory-mcp', { sk
   assert.match(r.stdout, /Function-level callers \(codebase-memory-mcp [\d.]+, resolved call graph\)/);
   assert.match(r.stdout, /src\/util\.js#clamp <- src\/cart\.js#lineTotal/);
   assert.match(r.stdout, /src\/util\.js#money <- src\/cart\.js#lineTotal/);
+});
+
+test('impact at scale: dependents ranked by what depends on them, test support apart from runnable tests', () => {
+  const dir = repo({
+    'core/util.js': 'exports.u = 1;\n',
+    'core/a.js': "require('./util');\n",
+    'core/b.js': "require('./util');\n",
+    'core/hub.js': "require('./util');\n",
+    'api/x.js': "require('../core/hub');\n",
+    'api/y.js': "require('../core/hub');\n",
+    'web/z.js': "require('../core/hub');\n",
+    'tests/helpers.js': "module.exports = require('../core/util');\n",
+    'tests/util.test.js': "require('./helpers');\n",
+    'tests/legacy.js': "const test = require('node:test');\nrequire('./helpers');\ntest('legacy', () => {});\n",
+    'app/conftest.py': 'import app.db\n',
+    'app/__init__.py': '',
+    'app/db.py': 'X = 1\n',
+    'app/tests/test_db.py': 'import app.db\n\ndef test_x():\n    pass\n',
+    'app/tests/testutils.py': 'import app.db\n',
+    'app/tests/factories.py': 'import app.db\n\ndef test_client():\n    return app.db\n',
+  });
+  const imp = cb.impact(dir, ['core/util.js']);
+  assert.deepStrictEqual(imp.dependents.filter((d) => d.distance === 1).map((d) => d.file), ['core/hub.js', 'core/a.js', 'core/b.js'], 'the hub (3 dependents of its own) first');
+  assert.strictEqual(imp.dependents[0].reach, 3);
+  assert.deepStrictEqual(imp.tests, ['tests/legacy.js', 'tests/util.test.js'], 'named tests and files that define tests');
+  assert.deepStrictEqual(imp.testSupport, ['tests/helpers.js']);
+  assert.deepStrictEqual(imp.moduleCounts, [{ module: 'core', files: 4 }, { module: 'api', files: 2 }, { module: 'web', files: 1 }]);
+  const py = cb.impact(dir, ['app/db.py']);
+  assert.deepStrictEqual(py.tests, ['app/tests/test_db.py']);
+  assert.deepStrictEqual(py.testSupport.sort(), ['app/tests/factories.py', 'app/tests/testutils.py'], 'pytest collects test*.py only: a factory named test_client elsewhere is support, and so is a test*.py without tests');
+  assert.ok(!py.tests.includes('app/conftest.py'));
+});
+
+test('python Lib/ layout: absolute imports resolve from the nearest non-package root, and Lib/ opens into modules', () => {
+  const dir = repo({
+    'Lib/os.py': 'sep = "/"\n',
+    'Lib/shutil.py': 'import os\n',
+    'Lib/json/__init__.py': 'from json.decoder import x\n',
+    'Lib/json/decoder.py': 'import os\nx = 1\n',
+    'Lib/asyncio/__init__.py': '',
+    'Lib/asyncio/events.py': 'import os\n',
+    'Lib/test/__init__.py': '',
+    'Lib/test/test_os.py': 'import os\n\ndef test_sep():\n    assert os.sep\n',
+    'Lib/test/support/__init__.py': 'import os\n',
+    'Tools/scripts/sep.py': 'print(1)\n',
+  });
+  const imp = cb.impact(dir, ['Lib/os.py']);
+  assert.deepStrictEqual(imp.dependents.map((d) => d.file).sort(), ['Lib/asyncio/events.py', 'Lib/json/__init__.py', 'Lib/json/decoder.py', 'Lib/shutil.py']);
+  assert.deepStrictEqual(imp.tests, ['Lib/test/test_os.py']);
+  assert.deepStrictEqual(imp.testSupport, ['Lib/test/support/__init__.py']);
+  assert.deepStrictEqual(imp.modules, ['Lib/json', 'Lib/asyncio', 'Lib/os.py', 'Lib/shutil.py']);
+  assert.match(cb.onboardBrief(dir).text, /\| Lib\/json\/ \| 2 \|/);
 });

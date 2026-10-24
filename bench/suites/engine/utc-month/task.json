@@ -1,0 +1,10 @@
+{
+  "id": "utc-month",
+  "title": "A month-boundary bug whose cause is shared by the report and invoice numbering",
+  "prompt": "Bug: the monthly sales report puts some late-evening orders in the wrong month. An order placed at 2026-12-31T23:30:00-05:00 is counted in 2026-12, but that moment is 2027-01-01 in UTC, and all our periods are UTC (see the README). Find the cause and fix it. Tests run with: pytest -q",
+  "hiddenChecks": [
+    { "id": "feature", "command": "pytest -q .bench-hidden/test_report.py" },
+    { "id": "root-cause", "command": "pytest -q .bench-hidden/test_root_cause.py" },
+    { "id": "no-new-deps", "command": "node .bench-hidden/no-new-deps.js" }
+  ]
+}

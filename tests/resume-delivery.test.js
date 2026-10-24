@@ -108,6 +108,11 @@ test('happy path produces a verified final handoff', () => {
   approveThroughPlan(ctx);
   completePhase(ctx);
   verify(ctx);
+  // Another role's open run blocks delivery; the deliverer's own dispatch run does not.
+  const other = runs.startRun(ctx.store, ctx.config, 'orchestrator', { agent: 'test-engineer' });
+  assert.match(expectCode(() => deliver(ctx.store, 'delivery-lead'), 'DELIVERY_BLOCKED').message, /test-engineer\) is still open/);
+  runs.endRun(ctx.store, ctx.config, other, 'orchestrator', { status: 'ok' });
+  runs.startRun(ctx.store, ctx.config, 'orchestrator', { agent: 'delivery-lead' });
   runs.recordRisk(ctx.store, 'delivery-lead', { id: 'R1', title: 'LLM provider outage', severity: 'medium', mitigation: 'fallback classifier' });
   const res = deliver(ctx.store, 'delivery-lead');
   const report = fs.readFileSync(path.join(ctx.dir, res.report), 'utf8');

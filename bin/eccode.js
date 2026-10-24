@@ -6,12 +6,22 @@
 const fs = require('fs');
 const path = require('path');
 const { parseArgs } = require('../lib/cli-args');
-const { EccodeError, readJson } = require('../lib/util');
+const { EccodeError, readJson, toPosix, ensureDir } = require('../lib/util');
 
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
+Start here
+  quick "<change>" --actor orchestrator [--owner <role>] [--files <globs>] [--command <cmd>]
+                                         One small, reviewed change: creates the record if needed, a one-task
+                                         quick work item with its check and ownership read from the repository,
+                                         starts its gate, and prints every remaining step (Claude Code: /eccode:quick)
+  status --brief                         Where the work stands and the next action
+  onboard                                Brief on an unfamiliar codebase before changing it
+  impact --changed | bugs                What a change affects; slips in the lines it added
+  The full reference follows.
+
 Project
-  init --name <n> --idea <text> [--track greenfield|feature|refactor|fix|quick]   Create .eccode/
+  init --name <n> --idea <text> [--track greenfield|feature|refactor|fix]   Create .eccode/ (a quick change: eccode quick)
   work start --track <t> --title <text> --actor <orchestrator|user> [--behavior <cmd>]
              [--owner <role> --files <glob,glob> --command <cmd>]     Start the next work item (quick needs owner/files/command)
   work abandon --actor user --reason <text>   Abandon the active work item (user decision)
@@ -38,13 +48,19 @@ Plan & tasks
   task complete <id> --actor <owner> --handoff <handoff.json>
   task fail <id> --actor <owner> --reason <text>
   task reset <id> --actor <orchestrator|delivery-lead|user> --reason <text>
+  task rescope <id> --files <glob,glob> --actor <orchestrator (quick track)|user> --reason <text>
+                                         Correct a pending task's ownership (release a claimed one with task fail)
 
 Evidence & records
   evidence run --actor <a> --label <l> [--purpose check|reproduction] [--gate g] [--task t] -- <command...>
   evidence file <path> --actor <a> [--label l] [--note n]
   evidence list [--json] | evidence show <id>
   handoff record --actor <a> --file <handoff.json>
-  run start --actor <agent> [--task t] [--gate g]       (prints run id)
+  handoff draft --task <id> --actor <owner> [--out .eccode/drafts/<f>.json]
+                                         The handoff for your claimed task with what the record knows filled in
+                                         (changed files, the passing planned check, criteria); fill the TODO fields
+  run start --actor <agent> [--task t] [--gate g]       (prints run id; the orchestrator opens a dispatched
+            role's run with --actor orchestrator --for <role>)
   run end <runId> --actor orchestrator --status ok|failed [--tokens n] [--cost-usd x] [--note n]
   run correct <runId> --actor orchestrator [--tokens n] [--cost-usd x] --reason <text>   (append-only)
   risk add --id R1 --title t --severity low|medium|high|critical [--mitigation m] [--owner o] --actor a
@@ -100,10 +116,15 @@ Bugs and problem solving (see docs/bugs.md)
                                    Exit 0 only when proven; the pair counts as the fix track's reproduction
 
 Benchmark
-  bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|both] [--suite <dir>] [--out <file>] [--keep]
+  bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|engine|both|all|<a,b>] [--suite <dir>]
+        [--engine-profile guard|no-shell|sandbox] [--engine-agents inherit|as-shipped] [--timeout <s>] [--out <file>]
+        [--save <runs.jsonl>] [--keep]
+  bench report <runs.jsonl> --agent "<cmd>" [--out <file>]   Rebuild a report from runs saved with --save
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
         Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
-        hidden checks, lines, dependencies and tests are measured by the harness, never self-reported
+        "engine" installs the toolkit and asks for delivery through the quick track (bench/suites/engine:
+        multi-file tasks with regression traps). Hidden checks, lines, dependencies, tests, and the tokens and
+        cost the agent reports (claude -p --output-format json) are measured by the harness, never self-reported
 
 MCP (the engine as typed tool calls; see docs/mcp.md)
   mcp --actor <role>               Serve gates/tasks/evidence/impact as MCP tools over stdio, locked to one role.
@@ -171,8 +192,24 @@ function main(argv) {
   const { openProject, init } = require('../lib/project');
 
   if (group === 'init') {
-    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', track: flags.track });
+    const quick = flags.track === 'quick' ? { owner: flags.owner, files: flags.files, command: flags.command } : undefined;
+    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', track: flags.track, quick });
     print(flags, `Initialized ECCode project in ${store.dir}`, { root: store.root });
+    return 0;
+  }
+  if (group === 'quick') {
+    const q = require('../lib/quick');
+    const res = q.start(root, need(actor, '--actor'), { request: need(sub, '"<request>"'), owner: flags.owner, files: flags.files, command: flags.command, name: flags.name });
+    const t = res.task;
+    print(flags, [
+      `Quick change ${res.workId} started${res.created ? ' (new record)' : ''}: "${t.title}"`,
+      `  task change: owner ${t.owner}; files ${t.files.join(', ')}; verification: ${t.verification.command}`,
+      ...res.defaults.map((d) => `  from the repository: ${d}`),
+      '  gate phase:change is started.',
+      '',
+      'The rest of the path (eccode status shows where you are):',
+      ...q.steps('eccode', t),
+    ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps: q.steps('eccode', t) });
     return 0;
   }
   if (group === 'mcp') {
@@ -193,11 +230,27 @@ function main(argv) {
       const text = t.perFile
         .map((f) => `${f.file}: ${f.runs} runs, hidden ${f.hiddenPassed}/${f.hiddenTotal}, dep-adding ${f.depRuns}, agent failures ${f.agentFailures}`)
         .concat(`TOTAL: ${t.total.runs} runs across ${t.total.files} report files, hidden ${t.total.hiddenPassed}/${t.total.hiddenTotal}, dep-adding ${t.total.depRuns}, agent failures ${t.total.agentFailures}`, `Paired medians per task-batch: with-variant smaller ${t.total.pairedSmaller}, larger ${t.total.pairedLarger}, equal ${t.total.pairedEqual}`, t.stratified ? `Stratified permutation (labels shuffled within each task-batch, ${t.stratified.strata} strata, ${t.stratified.runs} runs): mean with-without = ${t.stratified.delta.toFixed(2)} lines, two-sided p ${t.stratified.atFloor ? '≤' : '='} ${t.stratified.p < 0.001 ? t.stratified.p.toExponential(2) : t.stratified.p.toFixed(4)} over ${t.stratified.resamples} seeded resamples (pools every model; read the per-model lines)` : 'Stratified permutation: not enough paired raw rows', 'Per model (the same test within each model):', ...perModel)
+        .concat(Object.entries(t.engine).length ? ['Engine batches (engine vs without, same files; pass = every hidden check):'] : [], Object.entries(t.engine).map(([m, e]) => `  ${m}: without ${e.without.allPass}/${e.without.runs} pass, median ${e.without.medianTokens === null ? '—' : e.without.medianTokens} tokens, $${e.without.medianCostUsd === null ? '—' : e.without.medianCostUsd}, ${e.without.medianSeconds} s; engine ${e.engine.allPass}/${e.engine.runs} pass, median ${e.engine.medianTokens === null ? '—' : e.engine.medianTokens} tokens, $${e.engine.medianCostUsd === null ? '—' : e.engine.medianCostUsd}, ${e.engine.medianSeconds} s, delivered ${e.engine.delivered}/${e.engine.runs}, audit ok ${e.engine.auditOk}/${e.engine.runs}${e.passRate ? `; pass-rate difference ${e.passRate.delta >= 0 ? '+' : ''}${(e.passRate.delta * 100).toFixed(1)} points, stratified p ${e.passRate.atFloor ? '≤' : '='} ${e.passRate.p.toFixed(4)}` : ''}`))
         .join('\n');
       print(flags, text, t);
       return 0;
     }
-    const variants = flags.variant === 'with' ? ['with'] : flags.variant === 'without' ? ['without'] : ['without', 'with'];
+    if (sub === 'report') {
+      // Rebuild a report from runs saved with --save (one JSON record per line).
+      const file = path.resolve(need(arg, '<runs.jsonl>'));
+      const records = fs.readFileSync(file, 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l));
+      const markdown = bench.report(records, { agentCmd: need(flags.agent, '--agent') });
+      if (flags.out) {
+        require('../lib/util').writeFileAtomic(path.resolve(flags.out), markdown);
+        process.stderr.write(`bench: report of ${records.length} saved runs written to ${flags.out}\n`);
+      }
+      print(flags, markdown, records);
+      return 0;
+    }
+    const VARIANTS = ['without', 'with', 'engine'];
+    const variants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? VARIANTS : String(flags.variant).split(',').map((v) => v.trim());
+    const unknown = variants.filter((v) => !VARIANTS.includes(v));
+    if (unknown.length) throw new EccodeError('USAGE', `Unknown --variant ${unknown.join(', ')}: use with, without, engine, both (without,with), all, or a comma list`);
     const { records, markdown } = bench.run({
       suite: flags.suite ? path.resolve(flags.suite) : undefined,
       agentCmd: need(flags.agent, '--agent'),
@@ -206,7 +259,10 @@ function main(argv) {
       variants,
       timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
       keep: Boolean(flags.keep),
+      engineProfile: flags['engine-profile'] || 'guard',
+      engineAgents: flags['engine-agents'] || 'inherit',
       onProgress: (m) => process.stderr.write(`bench: ${m}\n`),
+      onRecord: flags.save ? (r) => fs.appendFileSync(path.resolve(flags.save), JSON.stringify(r) + '\n') : undefined,
     });
     if (flags.out) {
       require('../lib/util').writeFileAtomic(path.resolve(flags.out), markdown);
@@ -286,10 +342,12 @@ function main(argv) {
     const max = Number(flags.max || 25);
     const text = [
       `Impact of ${res.targets.length} file(s): ${res.targets.join(', ')}${res.notIndexed.length ? `\n(not in the index, no dependents known: ${res.notIndexed.join(', ')})` : ''}`,
-      `Dependents: ${res.dependents.length} file(s) in module(s) ${res.modules.join(', ') || '-'}`,
-      ...res.dependents.slice(0, max).map((d) => `  ${'  '.repeat(d.distance - 1)}${d.file} (distance ${d.distance})`),
+      `Dependents: ${res.dependents.length} file(s) in ${res.moduleCounts.length} module(s)${res.moduleCounts.length ? `: ${res.moduleCounts.slice(0, 10).map((m) => `${m.module} (${m.files})`).join(', ')}${res.moduleCounts.length > 10 ? `, … ${res.moduleCounts.length - 10} more` : ''}` : ''}`,
+      res.dependents.length ? '  nearest first; at each distance, the files most depended on first' : null,
+      ...res.dependents.slice(0, max).map((d) => `  ${'  '.repeat(d.distance - 1)}${d.file} (distance ${d.distance}${d.reach ? `; ${d.reach} file(s) depend on it` : ''})`),
       res.dependents.length > max ? `  … ${res.dependents.length - max} more (--max ${res.dependents.length})` : null,
-      res.tests.length ? `Affected tests (run these): ${res.tests.join(' ')}` : 'WARNING: no affected test file found in the index for this change.',
+      res.tests.length ? `Affected tests (run these): ${res.tests.slice(0, 40).join(' ')}${res.tests.length > 40 ? ` … ${res.tests.length - 40} more (--json lists all; --run runs all)` : ''}` : 'WARNING: no affected test file found in the index for this change.',
+      res.testSupport.length ? `Test support reached (helpers, fixtures, runners; not tests to run): ${res.testSupport.length} file(s): ${res.testSupport.slice(0, 6).join(', ')}${res.testSupport.length > 6 ? ', …' : ''}` : null,
       res.dynamicCallers.length ? `Note: ${res.dynamicCallers.length} file(s) use dynamic module loading and may also be affected (static analysis cannot tell): ${res.dynamicCallers.slice(0, 8).join(', ')}${res.dynamicCallers.length > 8 ? ', …' : ''}` : null,
       res.notCovered && (res.notCovered.generated || res.notCovered.unreadable) ? `Note: ${res.notCovered.generated} generated and ${res.notCovered.unreadable} unreadable file(s) are outside the index; their dependents are not tracked (eccode onboard lists them).` : null,
       res.runtime ? `Runtime trace (exit ${res.runtime.exitCode}): ${res.runtime.loadsObserved} in-project loads observed; targets loaded by the command: ${res.runtime.targetsLoaded.join(', ') || 'none'}; runtime-only dependents found: ${res.runtime.runtimeDependents.join(', ') || 'none'}; direct edges the static graph lacks: ${res.runtime.runtimeOnlyEdges.join(', ') || 'none'}; dynamic loaders observed in action: ${res.runtime.dynamicCallersObserved.join(', ') || 'none'}${res.runtime.loadsObserved === 0 ? ' (nothing observed: the command may not run this project\'s Node or Python code)' : ''}${res.runtime.loadsObserved > 0 && res.runtime.targetsNotLoaded.length ? ` (the command never loaded ${res.runtime.targetsNotLoaded.join(', ')}, so this trace says nothing about the runtime callers of ${res.runtime.targetsNotLoaded.length === 1 ? 'that target' : 'those targets'}: trace a command that exercises it)` : ''}${res.runtime.esmTraced ? '' : ' (ESM imports were not traced: this Node lacks module.register, needs >= 18.19 / 20.6)'}${!res.runtime.jvmTraced && res.targets.some((t) => /\.(java|kt)$/.test(t)) ? ' (JVM classes were not traced: no JDK javac/jar found to build the tracing agent)' : ''}` : null,
@@ -374,14 +432,14 @@ function main(argv) {
 
   switch (group) {
     case 'status': {
-      const sum = status.summary(store.state(), config);
+      const sum = status.summary(store.state(), config, { root: store.root });
       if (flags.brief) print({}, status.formatBrief(sum));
       else print(flags, status.formatBrief(sum) + '\n\n' + JSON.stringify(sum.gates, null, 2), sum);
       return 0;
     }
     case 'resume': {
       const state = store.state();
-      const sum = status.summary(state, config);
+      const sum = status.summary(state, config, { root: store.root });
       const lastHandoffs = Object.values(state.handoffs).slice(-3).map((h) => `- ${h.at} ${h.from}→${h.to}: ${h.nextAction}`);
       const text = [status.formatBrief(sum), lastHandoffs.length ? 'Recent handoffs:\n' + lastHandoffs.join('\n') : ''].filter(Boolean).join('\n');
       print(flags, text, { ...sum, recentHandoffs: lastHandoffs });
@@ -500,6 +558,9 @@ function main(argv) {
       } else if (sub === 'reset') {
         tasks.reset(store, need(arg, '<task>'), need(actor, '--actor'), need(flags.reason, '--reason'));
         print(flags, `Task ${arg} reset to pending.`);
+      } else if (sub === 'rescope') {
+        tasks.rescope(store, config, need(arg, '<task>'), need(actor, '--actor'), { files: need(flags.files, '--files'), reason: need(flags.reason, '--reason') });
+        print(flags, `Task ${arg} now owns ${flags.files}.`);
       } else throw new EccodeError('USAGE', `Unknown task subcommand ${sub}`);
       return 0;
     }
@@ -541,14 +602,27 @@ function main(argv) {
       throw new EccodeError('USAGE', `Unknown evidence subcommand ${sub}`);
     }
     case 'handoff': {
-      if (sub !== 'record') throw new EccodeError('USAGE', 'Usage: eccode handoff record --file <handoff.json>');
+      if (sub === 'draft') {
+        const draft = require('../lib/quick').draftHandoff(store, need(flags.task, '--task'), need(actor, '--actor'));
+        const text = JSON.stringify(draft, null, 2) + '\n';
+        if (flags.out) {
+          const out = path.resolve(root, flags.out);
+          const rel = toPosix(path.relative(store.root, out));
+          if (!/^\.eccode\/drafts\//.test(rel)) throw new EccodeError('USAGE', '--out must be under .eccode/drafts/ (the shared draft area)');
+          ensureDir(path.dirname(out));
+          fs.writeFileSync(out, text);
+          process.stdout.write(`Draft written to ${rel}: fill in the TODO fields, then eccode task complete ${flags.task} --actor ${actor} --handoff ${rel}\n`);
+        } else process.stdout.write(text);
+        return 0;
+      }
+      if (sub !== 'record') throw new EccodeError('USAGE', 'Usage: eccode handoff record --file <handoff.json> | handoff draft --task <id> --actor <owner> [--out .eccode/drafts/<f>.json]');
       const id = tasks.recordHandoff(store, need(actor, '--actor'), loadJsonFile(need(flags.file, '--file')));
       print(flags, `Handoff ${id} recorded.`, { id });
       return 0;
     }
     case 'run': {
       if (sub === 'start') {
-        const id = runs.startRun(store, config, need(actor, '--actor'), { task: flags.task, gate: flags.gate });
+        const id = runs.startRun(store, config, need(actor, '--actor'), { task: flags.task, gate: flags.gate, agent: flags.for });
         print(flags, id, { id });
       } else if (sub === 'end') {
         const { state } = runs.endRun(store, config, need(arg, '<runId>'), need(actor, '--actor'), {

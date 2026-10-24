@@ -48,7 +48,7 @@ process.stdin.on('end', () => {
     } catch {
       anchor = ''; // no upstream, or the record is not committed there: nothing to anchor against
     }
-    const brief = formatBrief(summary(store.state(), loadConfig(root)));
+    const brief = formatBrief(summary(store.state(), loadConfig(root), { root: store.root }));
     const PROTECTION = {
       sandbox: 'Record protection: OS sandbox. Shell commands cannot write the record; record changes go through the eccode MCP tools of your role (mcp__eccode_<role>__*).',
       'no-shell': 'Record protection: no shell. Shell tools are denied in this project; use the eccode MCP tools of your role (mcp__eccode_<role>__*) and the file tools.',

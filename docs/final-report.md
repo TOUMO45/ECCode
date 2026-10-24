@@ -147,3 +147,24 @@ Seven merged PRs (#1–#7) since this report. The suite is now **117 tests**, gr
 
 **Independent audit (2026-10-23):** a fresh reviewer checked every limit against the code and found real defects, including a general shell in MCP `evidence_run` and identity bypasses through shell quoting. All are fixed with mutation-checked regression tests. The three limits left open after that audit were then closed: the sandboxed profile (`eccode install --sandbox`) makes the record read-only to every shell command at the OS level (live-verified); an integrity window around every evidence command reverts record changes and fails runs that touch tracked files outside the caller's claim; and runtime tracers now cover Java, Kotlin, Ruby and PHP. The last open limit (projects without a sandbox relying on the textual guard) closed when installs became enforced by default. That means the OS sandbox where Claude Code has one, otherwise a no-shell profile in which permission rules deny every shell tool, which also holds on native Windows (live-verified). No limit in [limits.md](limits.md) is open. The last one, row 36 (on Sonnet the lean-change skill makes total diffs larger), closed by design under a pre-registered follow-up: the extra lines are tests, and the code itself is smaller.
 
+
+## Addendum 2026-10-24: planned capability completed (v0.10.0)
+
+The evaluation of v0.9.0 named four planned capabilities that were missing and one question no run had answered. All four are built, tested and documented, and the question has a measured answer. The suite is 198 tests.
+
+**Built:**
+- **One-step path** (`eccode quick`, `/eccode:quick`, `handoff draft`): one command sets up a reviewed quick change from the repository. Live session: docs/live/22-quick-track-engine.txt.
+- **Cost per track** (`eccode metrics`): runs, tokens, cost, review rounds and wall time per work item and per track. This fixed run accounting from the main session, which the guard had always refused.
+- **Engine benchmark** (`bench --variant engine`, suite `bench/suites/engine`): the whole engine in the loop on multi-file tasks with regression traps.
+- **Impact at scale**, measured on the Python standard library: Lib/-layout imports resolve (dependents of os.py 127 → 360), affected tests exclude test support (44 → 2), modules and dependents are ranked.
+
+**Measured (pre-registered):**
+- 80 runs on two models compared agents with and without the engine.
+- Every run passed every hidden check except one engine run that stopped before any edit. The bare agents made none of the mistakes the traps invite, so the comparison had no room to show a gain (register row 59, open).
+- The reviewed, recorded path cost 3.4× (Sonnet) to 5.0× (Opus) the median cost of a bare run. Engine runs wrote tests more often.
+
+**Found by measuring:**
+- The batches' transcripts exposed defects that kept correct changes from delivering: an ownership typo with no recovery, a delivery refused by its own run, a CLI shorthand the guard refuses, reviewers that never recorded, and test caches counted as changes (rows 54–57).
+- After the fixes, two pre-registered follow-ups delivered 16/20 and then 19/20, every audit clean.
+
+The open question, whether the engine improves correctness where bare agents do fail, needs a harder suite run through the same harness.

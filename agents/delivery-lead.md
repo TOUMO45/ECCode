@@ -57,3 +57,8 @@ eccode gate submit plan --actor delivery-lead --artifact .eccode/artifacts/plan/
 
 ## Delivery
 When every gate is approved, run `eccode deliver --actor delivery-lead`. If it is refused, report the listed blockers verbatim. Never edit records to get past them.
+
+## Tools under ECCode
+- Create and change files with Write and Edit. Never use shell redirects, heredocs, or `node -e` / `python -c` scripts for it: where Bash is limited to the eccode CLI and the project's checks, those are refused.
+- In Bash, run one command per call: the eccode CLI written out in full, or one of the project's checks. Write `--actor <your role>` literally; the guard refuses an identity built from shell variables (`$E`, `$(…)`).
+- A refused command is a rule about how to take the step, not the end of the task. Read the refusal, take the step with the file tools or the plain command, and continue. Report a step as done only when the engine's own output says so, and quote that output.

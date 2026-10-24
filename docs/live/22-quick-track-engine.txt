@@ -1,0 +1,107 @@
+# The one-step path, live: a headless session delivers through the quick track with real subagents
+
+The engine-benchmark pilot (bench/protocols/2026-10-23-engine-ab.md, disclosed there and excluded from the analysis): one `claude -p --model sonnet --output-format json` session in a sandbox with the toolkit installed (guard profile, every subagent on the session's model), task search-case from bench/suites/engine. The harness did not save the agent's final answer; this file is the prompt and the record the session left, read back with the commands shown. Hidden checks afterwards: 3/3 (feature, regression, no new dependency). The session reported 1,583,949 tokens (cache reads included) and $0.54 over 127 s; the bare run of the same task took 271,609 tokens, $0.11 and 16 s, and also passed 3/3.
+
+## Prompt (PROMPT.md, written by the harness)
+
+This repository has the ECCode toolkit installed under .claude/. Deliver the change below through its quick track:
+follow .claude/commands/eccode/quick.md step by step, with `node .claude/eccode/bin/eccode.js` as the CLI and the ECCode
+subagents it names. The change is done when the delivery step succeeds.
+
+The change:
+Search should ignore case: searching 'ada lovelace' must find a profile named 'Ada Lovelace', and so must 'LOVELACE'. Results stay the same handles, in the same order. Tests run with: npm test
+
+## The record
+
+$ eccode work list
+w1 [quick] delivered delivered 2026-10-23T22:31:25.272Z — Make search case-insensitive (handles and order unchanged)
+
+$ eccode status --brief
+ECCode project "people" (event #27)
+Work: w1 [quick] delivered — Make search case-insensitive (handles and order unchanged)
+Gates: phase:change=approved → verification=approved
+Tasks: 1 done
+Budget: (run accounting below)
+NEXT: done — Delivered at 2026-10-23T22:31:25.272Z: .eccode/delivery/final-handoff.md. Next change: eccode work start --track quick|fix|refactor|feature|greenfield --title "..."
+
+$ eccode audit
+Audit OK: 27 events, chain intact, approved artifacts unchanged.
+
+## Who did what (events in order, from .eccode/events.jsonl)
+
+ 1 project.initialized orchestrator
+ 2 plan.imported       orchestrator
+ 3 gate.started        orchestrator
+ 4 run.started         orchestrator
+ 5 task.claimed        backend-engineer
+ 6 evidence.recorded   backend-engineer
+ 7 evidence.recorded   backend-engineer
+ 8 task.completed      backend-engineer
+ 9 handoff.recorded    backend-engineer
+10 gate.submitted      backend-engineer
+11 run.ended           orchestrator
+12 run.started         orchestrator
+13 evidence.recorded   technical-reviewer
+14 review.recorded     technical-reviewer
+15 run.ended           orchestrator
+16 gate.started        orchestrator
+17 run.started         orchestrator
+18 evidence.recorded   delivery-lead
+19 gate.submitted      delivery-lead
+20 run.ended           orchestrator
+21 run.started         orchestrator
+22 evidence.recorded   security-reviewer
+23 review.recorded     security-reviewer
+24 run.ended           orchestrator
+25 run.started         orchestrator
+26 run.ended           orchestrator
+27 delivery.completed  delivery-lead
+
+## Evidence: every passing check, by who ran it
+
+backend-engineer    passed npm test  (task change)
+backend-engineer    passed npm test  (task change)
+technical-reviewer  passed npm test  (gate phase:change)
+delivery-lead       passed npm test  (gate verification)
+security-reviewer   passed npm test  (gate verification)
+
+## The two independent reviews (decision and summary, verbatim)
+
+phase:change: technical-reviewer - approve
+  Search is now case-insensitive by lowercasing in tokens() only, which both the index and the query use. normalize() is unchanged, so directory handles stay case-sensitive. Two new tests cover both behaviours. I re-ran npm test and all 5 tests passed.
+
+verification: security-reviewer - approve
+  Change lowercases search tokens in src/text.js tokens(); normalize() is unchanged so handles stay case-sensitive. No new dependencies, no I/O, no injection, authz, or secrets surface. My own post-submission npm test run passed 5/5 (ev:ev-mvljngtv-01f98b17). No stack checks are marked required in eccode stack.
+
+## Run accounting the orchestrator recorded
+
+$ eccode metrics (costPerTrack line)
+- costPerTrack (usage as reported at run end):
+    quick: 1 work item (1 delivered); 5 runs (0 without usage); 73856 tokens; $0; 1.71 run min; 0 change requests; per delivery (median): 73856 tokens, 5 runs, 1.84 wall min, 2 reviews
+
+The orchestrator reported the tokens each dispatch's Agent result showed (73,856 in all). The harness measured 1,583,949 for the whole session: the record counts dispatched work as reported, not the main session or cache reads, so session cost comes from the agent's own result line (bench) or the bill.
+
+## The change
+
+$ git diff HEAD --stat -- . ":!.eccode"
+ src/text.js          |  4 ++--
+ tests/search.test.js | 11 +++++++++++
+ 2 files changed, 13 insertions(+), 2 deletions(-)
+
+$ git diff HEAD -- src
+diff --git a/src/text.js b/src/text.js
+index 32e4a81..b541a50 100644
+--- a/src/text.js
++++ b/src/text.js
+@@ -6,9 +6,9 @@ function normalize(s) {
+   return String(s).trim().replace(/\s+/g, ' ');
+ }
+ 
+-/** The words of a string, normalized. */
++/** The words of a string, normalized and lowercased (search is case-insensitive). */
+ function tokens(s) {
+-  const n = normalize(s);
++  const n = normalize(s).toLowerCase();
+   return n ? n.split(' ') : [];
+ }
+ 

@@ -122,3 +122,44 @@ test('by design (row 36): the follow-up records still meet the closing rule regi
   }
   assert.deepStrictEqual(bad, []);
 });
+
+test('by design (row 49): metrics labels recorded usage as what was reported at run end', () => {
+  const ctx = require('./helpers').tmpProject();
+  const out = spawnSync(process.execPath, [CLI, '--root', ctx.dir, 'metrics'], { encoding: 'utf8' }).stdout;
+  assert.match(out, /costPerTrack \(usage as reported at run end\)/);
+  fs.rmSync(ctx.dir, { recursive: true, force: true });
+});
+
+test('engine-benchmark figures quoted in the docs match what bench tally derives from the engine reports', () => {
+  const t = bench.tally(path.join(ROOT, 'bench', 'engine-results'));
+  const near = (a, b) => Math.abs(a - b) <= 0.005;
+  const bad = [];
+  let quoted = 0;
+  for (const doc of ['docs/senior-engineering.md', 'docs/limits.md', 'README.md']) {
+    const text = fs.readFileSync(path.join(ROOT, doc), 'utf8');
+    const re = /\*\*(\w+), engine batch:\*\* (\d+)\/(\d+) runs passed every hidden check without the engine and (\d+)\/(\d+) with it.*?; median cost per run \$(\d+\.\d+) without and \$(\d+\.\d+) with the engine/g;
+    for (const m of text.matchAll(re)) {
+      quoted += 1;
+      const e = t.engine[m[1].toLowerCase()];
+      if (!e) { bad.push(`${doc}: no engine batch for ${m[1]}`); continue; }
+      const want = [e.without.allPass, e.without.runs, e.engine.allPass, e.engine.runs].join();
+      if (m.slice(2, 6).map(Number).join() !== want) bad.push(`${doc}: "${m[0].slice(0, 80)}…" (records: ${want})`);
+      if (!near(Number(m[6]), e.without.medianCostUsd) || !near(Number(m[7]), e.engine.medianCostUsd)) bad.push(`${doc}: cost "${m[6]} / ${m[7]}" (records: ${e.without.medianCostUsd} / ${e.engine.medianCostUsd})`);
+    }
+  }
+  assert.ok(quoted >= 1, 'the docs quote the engine batches');
+  assert.deepStrictEqual(bad, []);
+});
+
+test('delivery follow-up figures quoted in the docs match the follow-up reports (row 56 closing rule)', () => {
+  const report = (f) => fs.readFileSync(path.join(ROOT, 'bench', 'engine-followup', f), 'utf8');
+  const delivered = (text) => {
+    const row = text.split('\n').find((l) => l.startsWith('| **all tasks** |'));
+    return row.split('|')[8].trim().split(' / ')[0];
+  };
+  assert.strictEqual(delivered(report('2026-10-23-engine-followup-sonnet.md')), '16/20');
+  const second = delivered(report('2026-10-23-engine-followup-2-sonnet.md'));
+  assert.ok(Number(second.split('/')[0]) >= 18, `row 56 closes only at >= 18/20 (bench/protocols/2026-10-23-engine-delivery-followup-2.md): ${second}`);
+  const doc = fs.readFileSync(path.join(ROOT, 'docs', 'senior-engineering.md'), 'utf8');
+  assert.match(doc, new RegExp(`Delivery went from 6/20 to 16/20 to ${second.replace('/', '\\/')}`));
+});

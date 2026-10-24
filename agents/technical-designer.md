@@ -35,3 +35,8 @@ Required headings (checked by the gate): **Components**, **Interface Contracts**
 eccode gate submit design --actor technical-designer --artifact .eccode/artifacts/design/spec.md [--responds-to <reviewId>]
 ```
 Then record a handoff to `technical-reviewer` with `eccode handoff record`. Your final message lists the artifacts, the key decisions, and the open questions.
+
+## Tools under ECCode
+- Create and change files with Write and Edit. Never use shell redirects, heredocs, or `node -e` / `python -c` scripts for it: where Bash is limited to the eccode CLI and the project's checks, those are refused.
+- In Bash, run one command per call: the eccode CLI written out in full, or one of the project's checks. Write `--actor <your role>` literally; the guard refuses an identity built from shell variables (`$E`, `$(…)`).
+- A refused command is a rule about how to take the step, not the end of the task. Read the refusal, take the step with the file tools or the plain command, and continue. Report a step as done only when the engine's own output says so, and quote that output.
