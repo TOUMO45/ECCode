@@ -515,3 +515,61 @@ test("c3's check refuses an edited old migration", { skip: !hasSqlite && 'the re
 test('the dev copy of the fake Mealie server is the hidden one', () => {
   assert.strictEqual(fs.readFileSync(path.join(PLANNER, 'c1', 'fixture', 'dev', 'fake-mealie', 'server.js'), 'utf8'), fs.readFileSync(path.join(PLANNER, '_hidden', 'fake-mealie', 'server.js'), 'utf8'));
 });
+
+test('A7: the direct commands are the ones Mealie\'s own Taskfile runs at P', (t) => {
+  const lib = require('../bench/pilot/lib');
+  const { DIRECT } = require('../bench/pilot/mealie/a7-stack');
+  const mirror = lib.mealieMirror();
+  if (!fs.existsSync(mirror)) return t.skip(`no Mealie mirror at ${mirror}`);
+  const P = 'dbe84cc91b9e1dfc88b783a1e31d8a8495800337';
+  const show = (f) => execFileSync('git', ['--git-dir', mirror, 'show', `${P}:${f}`], { encoding: 'utf8' });
+  const taskfile = show('Taskfile.yml');
+  // Python tools run through `uv run` there; here the venv is first on PATH.
+  for (const tool of ['ruff', 'mypy']) assert.ok(taskfile.includes(`uv run ${DIRECT[tool]}\n`), `${tool}: Taskfile runs "uv run ${DIRECT[tool]}"`);
+  assert.ok(taskfile.includes('uv run pytest'), 'pytest through uv run');
+  assert.match(DIRECT.pytest, /^python -m pytest\b/);
+  // Frontend tasks run in frontend/; `yarn test` is vitest, test:ci its no-watch form.
+  assert.strictEqual(DIRECT.eslint, `cd frontend && ${taskfile.match(/ui:lint:[\s\S]*?- (yarn lint[^\n]*)/)[1]}`);
+  assert.match(show('frontend/package.json'), /"test:ci": "vitest --watch=false"/);
+  assert.strictEqual(DIRECT.vitest, 'cd frontend && yarn test:ci');
+});
+
+test('report: fix verify agreement counts the disagreements labelled engine-wrong; an unlabelled one leaves no verdict', () => {
+  const { criteria } = require('../bench/pilot/mealie/report');
+  const a4 = { agreement: 0.5, rows: [{ sha: 'a', agree: true }, { sha: 'b', agree: false }] };
+  const row = (labels) => criteria({ a4 }, labels).find((r) => r.id === 'fixverify-agreement');
+  assert.strictEqual(row({}).met, null, 'a disagreement without a label: no verdict');
+  assert.match(row({}).note, /1 of 1 disagreements unlabelled/);
+  assert.strictEqual(row({ fixverify: { b: { label: 'oracle-wrong', reason: 'x' } } }).met, true);
+  assert.strictEqual(row({ fixverify: { b: { label: 'engine-wrong', reason: 'x' } } }).met, false);
+  assert.strictEqual(row({ fixverify: { b: { label: 'engine-wrong', reason: 'x' } } }).result, 0.5);
+  assert.match(row({ fixverify: { b: { label: 'oracle-wrong', reason: 'x' } } }).note, /raw agreement 0\.5/);
+});
+
+test('copyRecord copies the engine record without its index cache, and reports false when there is none', () => {
+  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-rec-'));
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-rec-dest-'));
+  assert.strictEqual(bench.copyRecord(sandbox, path.join(dest, 'a')), false);
+  fs.mkdirSync(path.join(sandbox, '.eccode', 'cache'), { recursive: true });
+  fs.mkdirSync(path.join(sandbox, '.eccode', 'reviews'));
+  fs.writeFileSync(path.join(sandbox, '.eccode', 'events.jsonl'), '{}\n');
+  fs.writeFileSync(path.join(sandbox, '.eccode', 'cache', 'index.json'), '{}');
+  fs.writeFileSync(path.join(sandbox, '.eccode', 'reviews', 'r1.json'), '{}');
+  assert.strictEqual(bench.copyRecord(sandbox, path.join(dest, 'b')), true);
+  assert.ok(fs.existsSync(path.join(dest, 'b', 'record', 'events.jsonl')));
+  assert.ok(fs.existsSync(path.join(dest, 'b', 'record', 'reviews', 'r1.json')));
+  assert.ok(!fs.existsSync(path.join(dest, 'b', 'record', 'cache')), 'the index cache is left out');
+});
+
+test('with --transcripts, each engine chain item keeps the record as it stood after the item', () => withCache(() => {
+  const chain = require('../lib/chain');
+  const tr = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tr-rec-'));
+  const res = chain.runChain(chainTasks(chainOrigin()), { agentCmd: CHAIN_AGENT, variant: 'engine', timeoutMs: 180000, transcripts: tr });
+  const counts = res.records.map((r) => {
+    assert.strictEqual(r.chain.transcripts.record, true, `${r.task}: record kept`);
+    const dir = path.join(tr, r.chain.transcripts.dir, 'record');
+    assert.ok(!fs.existsSync(path.join(dir, 'cache')), 'the index cache is left out');
+    return fs.readFileSync(path.join(dir, 'events.jsonl'), 'utf8').split('\n').filter(Boolean).length;
+  });
+  assert.ok(counts[0] < counts[1] && counts[1] < counts[2], `the record grows item by item: ${counts}`);
+}));

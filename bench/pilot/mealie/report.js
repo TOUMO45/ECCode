@@ -56,7 +56,20 @@ function criteria(results, labels) {
   const compat = r.a3 ? labelledShare(det, labels.compat || {}, (l) => l === 'true') : { value: undefined, note: '' };
   add('compat-precision', 'Compat (A3)', 'precision of detections over the window', '≥ 0.90', compat.value, ge(0.9), compat.note);
   add('compat-route-recall', 'Compat (A3)', "recall against FastAPI's route table", '≥ 0.90', at(r, 'a3.routeRecall.recall'), ge(0.9));
-  add('fixverify-agreement', 'fix verify (A4)', 'agreement with running the tests directly', '100%', at(r, 'a4.agreement'), (v) => v === 1);
+  // A disagreement with the direct run is a defect of the engine unless its hand
+  // label says the regex oracle misjudged the failure (labels/fixverify.json, by sha).
+  const fvRows = at(r, 'a4.rows');
+  let fv = { value: undefined, note: '' };
+  if (Array.isArray(fvRows) && fvRows.length) {
+    const fvLabels = labels.fixverify || {};
+    const disagreements = fvRows.filter((x) => !x.agree);
+    const unlabelled = disagreements.filter((x) => !fvLabels[x.sha]);
+    const raw = `raw agreement ${fmt(r.a4.agreement)}`;
+    fv = unlabelled.length
+      ? { value: null, note: `${raw}; ${unlabelled.length} of ${disagreements.length} disagreements unlabelled` }
+      : { value: (fvRows.length - disagreements.filter((x) => fvLabels[x.sha].label === 'engine-wrong').length) / fvRows.length, note: `${raw}; ${disagreements.length} disagreements labelled` };
+  }
+  add('fixverify-agreement', 'fix verify (A4)', 'agreement with running the tests directly, each disagreement labelled engine-wrong or oracle-wrong', '100%', fv.value, (v) => v === 1, fv.note);
   add('mutate-completed', 'mutate (A5)', 'runs completing', '≥ 90%', at(r, 'a5.completedShare'), ge(0.9));
   const hits = (at(r, 'a6.hits') || []).map((h) => h.id);
   const bugLabels = labels.bugs || {};
@@ -91,7 +104,7 @@ if (require.main === module) {
   const opt = (n, d) => (argv.includes(`--${n}`) ? argv[argv.indexOf(`--${n}`) + 1] : d);
   const results = readDir(opt('results', path.join(__dirname, 'results')), FILES);
   const labelsDir = opt('labels', path.join(__dirname, 'labels'));
-  const labels = readDir(labelsDir, { compat: 'compat', bugs: 'bugs', secrets: 'secrets' });
+  const labels = readDir(labelsDir, { compat: 'compat', bugs: 'bugs', secrets: 'secrets', fixverify: 'fixverify' });
   const md = markdown(criteria(results, labels));
   const out = opt('out', null);
   if (out) fs.writeFileSync(out, md);

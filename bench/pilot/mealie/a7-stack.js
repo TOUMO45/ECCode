@@ -14,12 +14,14 @@ const stack = require('../../../lib/stack');
 const { loadConfig } = require('../../../lib/config');
 const env = require('../../suites/mealie/_tools/env');
 
-// How Mealie's CI runs each tool (Taskfile.yml at the pin), from the repository root.
+// How Mealie's own Taskfile.yml runs each tool at the pin, from the repository
+// root (Python tools there run through `uv run`; here the venv is first on PATH;
+// `yarn test` is vitest, and test:ci is its no-watch form).
 const DIRECT = {
   pytest: 'python -m pytest -q -p no:cacheprovider',
-  ruff: 'ruff check .',
+  ruff: 'ruff check mealie',
   mypy: 'mypy mealie',
-  eslint: 'cd frontend && yarn lint',
+  eslint: 'cd frontend && yarn lint --max-warnings=0',
   vitest: 'cd frontend && yarn test:ci',
 };
 
