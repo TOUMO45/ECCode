@@ -372,3 +372,40 @@ test('the behavioural fault makes every function and method of the module raise,
   const out = execFileSync(py, ['-c', probe], { cwd: dir, encoding: 'utf8' });
   assert.strictEqual(out.trim(), 'ok');
 });
+
+test('detectBetween finds a route moved between files as a removal from the old file', () => {
+  const { detectBetween } = require('../bench/pilot/mealie/a3-compat');
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-a3-p-'));
+  const commit = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-a3-c-'));
+  fs.writeFileSync(path.join(parent, 'r1.py'), '@router.get("/a")\ndef a():\n    return 1\n');
+  fs.writeFileSync(path.join(parent, 'r2.py'), 'X = 1\n');
+  fs.writeFileSync(path.join(commit, 'r1.py'), 'Y = 2\n');
+  fs.writeFileSync(path.join(commit, 'r2.py'), 'X = 1\n\n@router.get("/a")\ndef a():\n    return 1\n');
+  const found = detectBetween(parent, commit, ['r1.py', 'r2.py'], 'abc');
+  const routes = found.filter((f) => f.kind === 'route');
+  assert.strictEqual(routes.length, 1, JSON.stringify(found));
+  assert.strictEqual(routes[0].id, 'abc:route:GET /a');
+});
+
+test('upgradeBody keeps only the upgrade() function of an Alembic migration', () => {
+  const { upgradeBody } = require('../bench/pilot/mealie/a3-compat');
+  const text = 'def upgrade():\n    op.add_column("t", c)\n\n\ndef downgrade():\n    op.drop_column("t", "c")\n';
+  assert.match(upgradeBody(text), /add_column/);
+  assert.doesNotMatch(upgradeBody(text), /drop_column/);
+});
+
+test('bench.cacheDir honours ECCODE_BENCH_CACHE (the pilot scripts locate the mirror with it)', () => withCache(() => {
+  assert.strictEqual(bench.cacheDir(), process.env.ECCODE_BENCH_CACHE);
+}));
+
+test('fastapi-routes.py writes only the served routes, whatever the app prints on import', (t) => {
+  const py = ['python3', 'python'].find((p) => require('child_process').spawnSync(p, ['--version']).status === 0);
+  if (!py) return t.skip('no python on PATH');
+  const tree = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-routes-'));
+  fs.mkdirSync(path.join(tree, 'mealie'));
+  fs.writeFileSync(path.join(tree, 'mealie', '__init__.py'), '');
+  fs.writeFileSync(path.join(tree, 'mealie', 'app.py'), 'import time\nprint(f"[INFO] {time.time()} setup plugin")\nclass R:\n    def __init__(self, methods, path):\n        self.methods, self.path = methods, path\nclass App:\n    routes = [R({"GET", "HEAD"}, "/api/a"), R({"POST"}, "/api/b"), R(None, "/docs")]\napp = App()\n');
+  const out = path.join(tree, 'routes.txt');
+  execFileSync(py, [path.join(__dirname, '..', 'bench', 'pilot', 'mealie', 'fastapi-routes.py'), tree, out], { encoding: 'utf8' });
+  assert.deepStrictEqual(fs.readFileSync(out, 'utf8').trim().split('\n'), ['GET /api/a', 'POST /api/b']);
+});
