@@ -367,6 +367,23 @@ test('the agent does not inherit the operator session\'s Claude Code identity', 
   assert.ok(!('NODE_TEST_CONTEXT' in env));
 });
 
+// Final review: a denylist missed the launcher's extra directories, plugin and
+// skill sync, remote-session handles and entrypoint. Only authentication and
+// the model provider pass; every other Claude Code variable is the launcher's.
+test('the agent keeps only the Claude Code variables that authenticate it or pick its provider', () => {
+  const launcher = {
+    CLAUDE_ADDITIONAL_DIRECTORIES: '/mnt/user-data', CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: '1', CLAUDE_CODE_SYNC_PLUGINS: '1', CLAUDE_CODE_SYNC_SKILLS: '1',
+    CLAUDE_CODE_REMOTE: 'true', CLAUDE_CODE_REMOTE_SDK_URL: 'https://x', CLAUDE_SESSION_INGRESS_TOKEN_FILE: '/t', CLAUDE_CODE_TEE_SDK_STDOUT: 'true',
+    CLAUDE_CODE_ENTRYPOINT: 'remote_desktop', CLAUDE_CODE_SOME_FUTURE_SETTING: '1',
+  };
+  const auth = { CLAUDE_CODE_OAUTH_TOKEN: 'o', CLAUDE_CONFIG_DIR: '/c', CLAUDE_CODE_USE_BEDROCK: '1', CLAUDE_CODE_USE_VERTEX: '1', CLAUDE_CODE_SKIP_BEDROCK_AUTH: '1', CLAUDE_CODE_CLIENT_CERT: '/cert' };
+  const env = bench.agentEnv({ ...launcher, ...auth, ANTHROPIC_API_KEY: 'k', ECCODE_BENCH_VARIANT: 'engine' });
+  for (const k of Object.keys(launcher)) assert.ok(!(k in env), k);
+  for (const [k, v] of Object.entries(auth)) assert.strictEqual(env[k], v, k);
+  assert.strictEqual(env.ANTHROPIC_API_KEY, 'k');
+  assert.strictEqual(env.ECCODE_BENCH_VARIANT, 'engine');
+});
+
 // Mealie pilot, after-fix check: processes an agent left running kept writing
 // into the sandbox, removing it failed (ENOTEMPTY) and the run's record was lost.
 test('an agent\'s leftover processes are stopped when it exits, and the run is kept', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {
