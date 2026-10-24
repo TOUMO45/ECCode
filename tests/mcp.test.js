@@ -240,3 +240,56 @@ test('mcp: quick and task_rescope narrow the detected check to named test paths,
     orch.close();
   }
 });
+
+// Pilot, fifth after-fix check of the MCP item: both gates approved over MCP,
+// then nothing could deliver, and runs could not be opened or closed: deliver,
+// run_start and run_end were CLI-only.
+test('mcp: run_start, run_end and deliver close a work item without a shell', async () => {
+  const tasks = require('../lib/tasks');
+  const { passCheck, handoffFor, approval } = require('./helpers');
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  for (const [id, owner, file] of [['api', 'backend-engineer', 'src/server/a.js'], ['ui', 'frontend-engineer', 'src/web/b.js'], ['tests', 'test-engineer', 'tests/c.test.js']]) {
+    tasks.claim(ctx.store, ctx.config, id, owner);
+    write(ctx.dir, file, `// ${id}\n`);
+    const ev = passCheck(ctx.store, owner);
+    tasks.complete(ctx.store, ctx.config, id, owner, handoffFor(id, owner, [ev.id], [file]));
+  }
+  gates.submit(ctx.store, ctx.config, 'phase:core', 'delivery-lead');
+  gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', approval([[`ev:${passCheck(ctx.store, 'technical-reviewer').id}`]]));
+  gates.startGate(ctx.store, ctx.config, 'verification', 'orchestrator');
+  write(ctx.dir, '.eccode/artifacts/verify.md', '# Verification\nAll green.\n');
+  gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verify.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'] });
+  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', approval([[`ev:${passCheck(ctx.store, 'security-reviewer').id}`, 'artifact:.eccode/artifacts/verify.md']]));
+  const orch = client(ctx.dir, 'orchestrator');
+  const lead = client(ctx.dir, 'delivery-lead');
+  try {
+    for (const c of [orch, lead]) await c.request('initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 't', version: '0' } });
+    const run = await orch.call('run_start', { for: 'delivery-lead', gate: 'verification' });
+    assert.strictEqual(run.isError, false, run.text);
+    const ended = await orch.call('run_end', { run: run.json().id, status: 'ok', tokens: 1200 });
+    assert.strictEqual(ended.isError, false, ended.text);
+    assert.strictEqual(ctx.store.state().totals.tokens, 1200);
+    const d = await lead.call('deliver', {});
+    assert.strictEqual(d.isError, false, d.text);
+    assert.strictEqual(ctx.store.state().work.status, 'delivered');
+    assert.strictEqual(ctx.store.audit().ok, true);
+  } finally {
+    orch.close();
+    lead.close();
+  }
+});
+
+test('every eccode command the quick and debug playbooks use has an MCP tool', () => {
+  const names = new Set(require('../lib/mcp').tools().map((t) => t.name));
+  const missing = [];
+  for (const f of ['commands/quick.md', 'commands/debug.md']) {
+    const text = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+    for (const m of text.matchAll(/`eccode ([a-z]+)(?: ([a-z]+))?/g)) {
+      const two = m[2] ? `${m[1]}_${m[2]}` : null;
+      if (!(two && names.has(two)) && !names.has(m[1])) missing.push(`${f}: eccode ${m[1]}${m[2] ? ` ${m[2]}` : ''}`);
+    }
+  }
+  assert.deepStrictEqual([...new Set(missing)], [], 'a step the no-shell profile cannot take');
+});
