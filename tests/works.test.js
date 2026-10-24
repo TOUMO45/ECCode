@@ -252,3 +252,23 @@ test('snapshots from an older engine schema are stale caches, not tampering', ()
   assert.strictEqual(store.audit().ok, true); // old-schema snapshot is not an error
   assert.strictEqual(store.state().work.id, 'w1'); // reads come from replay, not the stale cache
 });
+
+// Pilot b1/b2 item 1: `init --track refactor` started w1 with no behavior
+// command, which verification then always refused; only the user could abandon it.
+test('a refactor record started by init needs and keeps its behavior command', () => {
+  const { init } = require('../lib/project');
+  const os = require('os');
+  const fresh = () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-rinit-'));
+    execFileSync('git', ['init', '-q'], { cwd: dir });
+    return dir;
+  };
+  const bare = fresh();
+  expectCode(() => init(bare, { name: 'r', idea: 'share the slug logic', track: 'refactor' }), 'INVALID_INPUT');
+  assert.ok(!fs.existsSync(path.join(bare, '.eccode', 'events.jsonl')), 'a refusal leaves no record');
+  const dir = fresh();
+  const store = init(dir, { name: 'r', idea: 'share the slug logic', track: 'refactor', behavior: 'pytest -q tests' });
+  assert.strictEqual(store.state().work.track, 'refactor');
+  assert.strictEqual(store.state().work.behaviorCommand, 'pytest -q tests');
+  for (const d of [bare, dir]) fs.rmSync(d, { recursive: true, force: true });
+});

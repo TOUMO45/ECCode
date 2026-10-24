@@ -33,7 +33,7 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
   | `refactor` | plan | the `--behavior` command must be recorded passing before the first claim and again after the last phase approval; breaking changes are refused even when declared |
   | `fix` | plan | verification needs the failing reproduction and the same command passing after the fix |
   | `quick` | none (a one-task plan is imported from `--owner/--files/--command`) | phase review and verification still apply |
-- **New project:** `eccode init --name "<name>" --idea "<idea>" [--track <t>]`, then show the user `eccode status --brief`.
+- **New project:** `eccode init --name "<name>" --idea "<idea>" [--track <t>]` (refactor adds `--behavior "<command>"`, as with `work start`), then show the user `eccode status --brief`.
 - **Existing codebase:** run `eccode onboard` first and read the brief (modules, entry points, hot spots, most-depended files). Give its path to every author you dispatch. Suggest required checks to the user once: `eccode stack` lists what this repository supports; adopting any (`eccode stack adopt --checks <ids> --actor user`) makes reviewers run them at verification.
 - **Next change on a delivered project:** `eccode work start --track <t> --title "..." --actor orchestrator` (refactor adds `--behavior "<command>"`; quick adds `--owner/--files/--command`). The engine refuses a new work item while one is active; only the user can abandon one.
 - **Resume:** `eccode resume`. If a previous session left runs open, run `eccode recover --all`. That releases their claims and counts the attempts. Continue from the reported **NEXT** action, which also names the active work item and track.

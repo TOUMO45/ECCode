@@ -26,7 +26,7 @@ Start here
   The full reference follows.
 
 Project
-  init --name <n> --idea <text> [--track greenfield|feature|refactor|fix]   Create .eccode/ (a quick change: eccode quick)
+  init --name <n> --idea <text> [--track greenfield|feature|refactor|fix] [--behavior <cmd>]   Create .eccode/ (refactor needs --behavior; a quick change: eccode quick)
   work start --track <t> --title <text> --actor <orchestrator|user> [--behavior <cmd>]
              [--owner <role> --files <glob,glob> --command <cmd>]     Start the next work item (quick and debug need owner/files/command)
   work abandon --actor user --reason <text>   Abandon the active work item (user decision)
@@ -204,7 +204,7 @@ function main(argv) {
 
   if (group === 'init') {
     const quick = ['quick', 'debug'].includes(flags.track) ? { owner: flags.owner, files: flags.files, command: flags.command } : undefined;
-    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', track: flags.track, quick });
+    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', track: flags.track, quick, behavior: flags.behavior });
     print(flags, `Initialized ECCode project in ${store.dir}`, { root: store.root });
     return 0;
   }

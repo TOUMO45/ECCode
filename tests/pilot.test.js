@@ -149,6 +149,9 @@ test('enginePrompt names start.md and the track for fix, feature, refactor and g
 test('the refactor prompt names its behavior command', () => {
   assert.ok(bench.enginePrompt('engine', 'refactor', { behavior: 'python -m pytest -q tests' }).includes('--behavior "python -m pytest -q tests"'));
   assert.ok(!bench.enginePrompt('engine', 'feature', { behavior: 'x' }).includes('--behavior'));
+  // A fresh record on the refactor track is started by init, so init carries it too.
+  const initLine = bench.enginePrompt('engine', 'refactor', { behavior: 'python -m pytest -q tests' }).split('\n').find((l) => l.includes('init --name'));
+  assert.ok(initLine.includes('--track refactor --behavior "python -m pytest -q tests"'), initLine);
 });
 
 /** An upstream with three commits, one per chain item: u1, u2, u3. */
