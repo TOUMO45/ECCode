@@ -52,6 +52,25 @@ test('a command that changes tracked files outside the claim fails; inside the c
   assert.strictEqual(again.status, 'passed', JSON.stringify(again.integrity));
 });
 
+// Mealie pilot (b1 item 9, b2 items 3 and 4): in a parallel phase, a teammate
+// edited its own files while an engineer's tests ran, and the engineer's
+// evidence failed for "changing" them. Files another active claim owns are that
+// claim's agent's to change; the evidence names them instead of failing.
+test('a change to files another agent\'s claim owns is named, not blamed on the check', () => {
+  const ctx = project();
+  tasks.claim(ctx.store, ctx.config, 'ui', 'frontend-engineer'); // owns src/web/**
+  const ev = evidence.runCommand(ctx.store, 'backend-engineer', { label: 'x', command: `node -e "require('fs').appendFileSync('src/web/ui.js', '// teammate\\\\n')"` });
+  assert.strictEqual(ev.status, 'passed', JSON.stringify(ev.integrity));
+  assert.deepStrictEqual(ev.concurrent, ['src/web/ui.js']);
+  // A file no other claim owns still fails the check.
+  write(ctx.dir, 'README.md', 'x\n');
+  execFileSync('git', ['add', 'README.md'], { cwd: ctx.dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'readme'], { cwd: ctx.dir });
+  const out = evidence.runCommand(ctx.store, 'backend-engineer', { label: 'y', command: `node -e "require('fs').appendFileSync('README.md', 'y\\\\n')"` });
+  assert.strictEqual(out.status, 'failed');
+  assert.match(out.integrity.join(' '), /outside backend-engineer's claimed ownership: README\.md/);
+});
+
 test('a failing node --test check is recorded as failed even when ECCode itself runs under a Node test runner', () => {
   // This file runs under `node --test`, so NODE_TEST_CONTEXT is inherited here
   // exactly as it would be when ECCode is started from inside a test runner.
