@@ -30,11 +30,37 @@ test('install --sandbox writes the OS-enforced profile and one MCP server per ro
   assert.match(settings.hooks.PreToolUse[0].matcher, /mcp__eccode_/);
   const mcp = JSON.parse(fs.readFileSync(path.join(dir, '.mcp.json'), 'utf8'));
   for (const role of LOCKABLE) assert.deepStrictEqual(mcp.mcpServers[`eccode_${role}`].args.slice(-2), ['--actor', role]);
+  // Pilot after-fix run: Claude Code's 60 s default cut evidence_run off mid-suite.
+  for (const role of LOCKABLE) assert.ok(mcp.mcpServers[`eccode_${role}`].timeout >= 600000 + 60000, `${role}: a call outlasts evidence_run's own 10-minute limit`);
   // Re-running is idempotent: no duplicate deny entries.
   install({ target: dir, scope: 'project', sandbox: true });
   const again = JSON.parse(fs.readFileSync(path.join(dir, '.claude', 'settings.json'), 'utf8'));
   assert.strictEqual(again.sandbox.filesystem.denyWrite.length, settings.sandbox.filesystem.denyWrite.length);
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// Pilot b4: a no-shell subagent had only its frontmatter tools (Bash denied),
+// so it could not claim its task. Each role agent must list its own server's tools.
+test('enforced profiles give each role agent its own eccode MCP tools, and no-shell drops Bash', () => {
+  const { tools } = require('../lib/mcp');
+  const names = tools().map((t) => t.name);
+  const toolsOf = (dir, role) => fs.readFileSync(path.join(dir, '.claude', 'agents', `${role}.md`), 'utf8').match(/^tools: (.*)$/m)[1].split(',').map((t) => t.trim());
+  for (const profile of ['no-shell', 'sandbox', 'guard']) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), `eccode-agents-${profile}-`));
+    execFileSync('git', ['init', '-q'], { cwd: dir });
+    install({ target: dir, scope: 'project', profile });
+    install({ target: dir, scope: 'project', profile }); // idempotent
+    const backend = toolsOf(dir, 'backend-engineer');
+    if (profile === 'guard') assert.ok(!backend.some((t) => t.startsWith('mcp__')), 'guard keeps the CLI path');
+    else {
+      for (const n of names) assert.strictEqual(backend.filter((t) => t === `mcp__eccode_backend-engineer__${n}`).length, 1, `${profile}: ${n}`);
+      assert.ok(!backend.some((t) => /^mcp__eccode_(?!backend-engineer__)/.test(t)), 'only its own role server');
+      assert.strictEqual(backend.includes('Bash'), profile === 'sandbox', 'Bash only where it is sandboxed');
+      assert.ok(toolsOf(dir, 'technical-reviewer').includes('mcp__eccode_technical-reviewer__gate_review'));
+      for (const keep of ['Read', 'Grep', 'Glob', 'Write', 'Edit']) assert.ok(backend.includes(keep), keep);
+    }
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 function decide(dir, tool, agent) {

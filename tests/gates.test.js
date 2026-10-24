@@ -138,3 +138,83 @@ test('repeated rejections escalate; only the user can reopen', () => {
   gates.reopenGate(ctx.store, 'architecture', 'user', 'User accepted narrower scope: no rate limiting in v1');
   assert.strictEqual(ctx.store.state().gates.architecture.status, 'in_progress');
 });
+
+// Mealie pilot, c1: design and plan reviewers cited the approved architecture
+// brief and design spec to show the work traces back to them, and were refused.
+// Mealie pilot (b2 item 6): the orchestrator dispatched the technical and the
+// security reviewer to one phase, as the playbook says for auth code. The
+// technical approval closed the gate, and the security reviewer's blocking
+// finding (an SSRF bypass) was then refused: the gate was no longer submitted.
+test('a gate started with named reviewers is approved only once each of them approves', () => {
+  const roles = { architecture: { authors: ['product-architect'], reviewers: ['architecture-reviewer', 'security-reviewer'] } };
+  const ctx = tmpProject({ configOverrides: { roles } });
+  const both = ['architecture-reviewer', 'security-reviewer'];
+  expectCode(() => gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator', { reviewers: ['technical-reviewer'] }), 'INVALID_INPUT');
+  expectCode(() => gates.startGate(ctx.store, ctx.config, 'architecture', 'product-architect', { reviewers: both }), 'ROLE_NOT_ALLOWED');
+  gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator', { reviewers: both });
+  write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD);
+  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
+  const ok = (extra) => approval([['artifact:.eccode/artifacts/brief.md#Requirements']], extra);
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', ok());
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'submitted', 'one approval of two leaves the gate open');
+  const next = require('../lib/status').nextAction(ctx.store.state(), ctx.config, ctx.dir);
+  assert.deepStrictEqual(next.awaiting, ['security-reviewer']);
+  assert.match(next.detail, /Waiting for security-reviewer to review/);
+  const { event } = gates.recordReview(ctx.store, ctx.config, 'architecture', 'security-reviewer', rejection('S1'));
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'changes_requested', 'the later blocking finding is recorded');
+  write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD + '\n## Requirements (rev 2)\n- R2 rate limiting\n');
+  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'], respondsTo: event.data.reviewId });
+  const resolved = { resolvedFindings: [{ id: 'S1', resolution: 'R2 adds a rate limit requirement.', evidence: ['artifact:.eccode/artifacts/brief.md#Requirements'] }] };
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'security-reviewer', ok(resolved));
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'submitted', 'an approval of the earlier submission does not count');
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', ok());
+  const g = ctx.store.state().gates.architecture;
+  assert.strictEqual(g.status, 'approved');
+  assert.deepStrictEqual(g.reviewers, both);
+  assert.strictEqual(ctx.store.audit().ok, true);
+});
+
+test('gate start --reviewers through the CLI and MCP names the reviewers', () => {
+  const { spawnSync } = require('child_process');
+  const roles = { architecture: { authors: ['product-architect'], reviewers: ['architecture-reviewer', 'security-reviewer'] } };
+  const ctx = tmpProject({ configOverrides: { roles } });
+  const cli = path.join(__dirname, '..', 'bin', 'eccode.js');
+  const r = spawnSync(process.execPath, [cli, 'gate', 'start', 'architecture', '--actor', 'orchestrator', '--reviewers', 'architecture-reviewer,security-reviewer'], { cwd: ctx.dir, encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.deepStrictEqual(ctx.store.state().gates.architecture.reviewers, ['architecture-reviewer', 'security-reviewer']);
+  const tool = require('../lib/mcp').tools().find((t) => t.name === 'gate_start');
+  assert.ok(tool.schema.reviewers, 'gate_start takes reviewers');
+});
+
+// Mealie pilot (b2 item 5): a reviewer cited fix verify's pre-fix run, which
+// failed as a reproduction should, to show the test fails before the fix; the
+// gate refused it as a failed check. A failed reproduction supports a met
+// criterion; a failed check, or a run the integrity window failed, does not.
+test('a failed reproduction run supports a met criterion; a failed check does not', () => {
+  const evidence = require('../lib/evidence');
+  const ctx = tmpProject();
+  submitArch(ctx);
+  const run = (purpose, command) => `ev:${evidence.runCommand(ctx.store, 'orchestrator', { label: purpose, purpose, command }).id}`;
+  const check = run('check', 'node -e "process.exit(1)"');
+  const tampered = run('reproduction', `node -e "require('fs').appendFileSync('.eccode/events.jsonl', 'x\\\\n'); process.exit(1)"`);
+  const repro = run('reproduction', 'node -e "process.exit(1)"');
+  for (const ref of [check, tampered]) {
+    expectCode(() => gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md', ref]])), 'REVIEW_REJECTED');
+  }
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md', repro]]));
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'approved');
+});
+
+test('a review may cite what earlier gates approved, not other files', () => {
+  const ctx = tmpProject();
+  const { DESIGN_MD } = require('./helpers');
+  submitArch(ctx);
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  gates.startGate(ctx.store, ctx.config, 'design', 'orchestrator');
+  write(ctx.dir, '.eccode/artifacts/spec.md', DESIGN_MD);
+  write(ctx.dir, 'notes.md', '# notes\n');
+  gates.submit(ctx.store, ctx.config, 'design', 'technical-designer', { artifacts: ['.eccode/artifacts/spec.md'] });
+  expectCode(() => gates.recordReview(ctx.store, ctx.config, 'design', 'technical-reviewer', approval([['artifact:notes.md']])), 'REVIEW_REJECTED');
+  gates.recordReview(ctx.store, ctx.config, 'design', 'technical-reviewer', approval([['artifact:.eccode/artifacts/spec.md#Components', 'artifact:.eccode/artifacts/brief.md#Requirements']]));
+  assert.strictEqual(ctx.store.state().gates.design.status, 'approved');
+});

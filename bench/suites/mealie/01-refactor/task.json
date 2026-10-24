@@ -1,0 +1,44 @@
+{
+  "id": "mealie-01-refactor",
+  "category": "refactor",
+  "order": 1,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "dbe84cc91b9e1dfc88b783a1e31d8a8495800337"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-d4cafba63e08/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "RepositoryGroup (mealie/repos/repository_group.py) and RepositoryHousehold (mealie/repos/repository_household.py) each carry their own copy of the same two pieces of logic:\n- get_by_slug_or_id: take a slug or an id (a UUID or its string form) and return the matching record;\n- update: re-derive the slug from the name before saving.\n\nPut each piece of logic in one place that both repositories use, so that a change to it is made once. This is a refactor: behavior must not change. Both repositories keep the same public methods with the same signatures and the same results, and every existing test still passes.\n\nTests: `python -m pytest -q -p no:cacheprovider tests` (the whole backend suite, about 9 minutes). For quicker loops while you work, tests/unit_tests/repository_tests and tests/integration_tests/admin_tests cover these repositories.",
+  "title": "One home for the slug-or-id lookup and the slug-on-update logic of groups and households",
+  "track": "refactor",
+  "behavior": "python -m pytest -q -p no:cacheprovider tests",
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python .bench-hidden/dup_check.py . fa80d96d1b5e4da0 43142149732a1b0d",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider tests",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "duplicatedAtBase": {
+      "fa80d96d1b5e4da0": [
+        "mealie/repos/repository_group.py get_by_slug_or_id",
+        "mealie/repos/repository_household.py get_by_slug_or_id"
+      ],
+      "43142149732a1b0d": [
+        "mealie/repos/repository_group.py update",
+        "mealie/repos/repository_household.py update"
+      ]
+    },
+    "chosenBy": "a normalized-AST duplicate scan of mealie/ at the base commit; the largest pair of duplicated methods shared by two classes of one layer"
+  }
+}

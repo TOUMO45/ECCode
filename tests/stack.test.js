@@ -137,3 +137,72 @@ test('secrets scan still reads .claude/ even though the codebase index skips it'
   assert.ok(files.includes('.env'), JSON.stringify(found));
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('a Node project in a sub-directory is detected, with its own package manager and scripts', () => {
+  const { dir } = tmpProject();
+  write(dir, 'pyproject.toml', '[project]\nname = "x"\n');
+  write(dir, 'frontend/package.json', JSON.stringify({ name: 'web', scripts: { test: 'vitest', 'lint:js': 'eslint .', lint: 'yarn lint:js' } }));
+  write(dir, 'frontend/yarn.lock', '# yarn lockfile v1\n');
+  write(dir, 'frontend/tsconfig.json', '{}');
+  write(dir, 'node_modules/dep/package.json', '{"name":"dep","scripts":{"test":"x"}}');
+  const stacks = stack.detect(dir);
+  assert.deepStrictEqual(stacks.map((s) => [s.id, s.dir || '', s.evidence]), [['node', 'frontend', 'frontend/package.json'], ['python', '', 'pyproject.toml']]);
+  assert.strictEqual(stacks[0].manager, 'yarn');
+  const byId = Object.fromEntries(stack.checks(dir, loadConfig(dir)).map((c) => [c.id, c]));
+  assert.strictEqual(byId['node-test'].command, 'cd frontend && yarn test');
+  assert.strictEqual(byId['node-test'].script, 'vitest', 'the script body names the tool');
+  assert.strictEqual(byId['node-lint'].command, 'cd frontend && yarn lint');
+  assert.strictEqual(byId['node-lint'].script, 'yarn lint:js → eslint .', 'a script that calls another is followed one step');
+  assert.strictEqual(byId.tsc.command, 'cd frontend && npx tsc --noEmit');
+  assert.strictEqual(byId['node-test'].dir, 'frontend', 'a sub-project check names its directory');
+  assert.strictEqual(byId.pytest.dir, undefined);
+});
+
+test('python checks use the arguments the project\'s own task runner gives them, and mypy configured in pyproject', () => {
+  const { dir } = tmpProject();
+  write(dir, 'pyproject.toml', '[project]\nname = "x"\n\n[tool.mypy]\nstrict_optional = true\n');
+  write(dir, 'Taskfile.yml', 'version: "3"\ntasks:\n  py:lint:\n    cmds:\n      - uv run ruff check mealie\n  py:mypy:\n    cmds:\n      - uv run mypy mealie\n  py:test:\n    cmds:\n      - uv run pytest {{ .CLI_ARGS }}\n');
+  const byId = Object.fromEntries(stack.checks(dir, loadConfig(dir)).map((c) => [c.id, c]));
+  assert.strictEqual(byId.ruff.command, 'ruff check mealie');
+  assert.strictEqual(byId.ruff.source, 'project-task');
+  assert.strictEqual(byId.mypy.command, 'mypy mealie', 'offered: [tool.mypy] is mypy configuration');
+  assert.strictEqual(byId.pytest.command, 'pytest -q', 'template arguments are not copied; the default stays');
+  const { dir: plain } = tmpProject();
+  write(plain, 'pyproject.toml', '[project]\nname = "y"\n');
+  write(plain, 'Makefile', 'lint:\n\tpoetry run ruff check src tests\n');
+  assert.strictEqual(stack.checks(plain, loadConfig(plain)).find((c) => c.id === 'ruff').command, 'ruff check src tests');
+});
+
+// Final review: the task-file reader took the first "pytest" anywhere (a pip
+// line, a description, a comment, an echo) for the project's test command.
+test('a task runner gives a tool its arguments only on a command line that runs that tool', () => {
+  const probe = (file, text) => {
+    const { dir } = tmpProject();
+    write(dir, 'pyproject.toml', '[project]\nname = "x"\n');
+    write(dir, file, text);
+    return Object.fromEntries(stack.checks(dir, loadConfig(dir)).map((c) => [c.id, c])).pytest.command;
+  };
+  assert.strictEqual(probe('Makefile', 'deps:\n\tpip install pytest pytest-cov\n'), 'pytest -q', 'a pip line installs pytest, it does not run it');
+  assert.strictEqual(probe('Taskfile.yml', 'version: "3"\ntasks:\n  test:\n    desc: run pytest against the backend\n    cmds:\n      - echo start\n'), 'pytest -q', 'a description');
+  assert.strictEqual(probe('Makefile', '# We use pytest (see docs)\ntest:\n\techo hi\n'), 'pytest -q', 'a comment');
+  assert.strictEqual(probe('justfile', 'test:\n    echo "running pytest -x"\n'), 'pytest -q', 'an echo');
+  assert.strictEqual(probe('Makefile', 'test:\n\t@poetry run pytest -x tests/unit\n'), 'pytest -x tests/unit', 'a recipe line, after its @ prefix and the runner');
+  assert.strictEqual(probe('Taskfile.yml', 'version: "3"\ntasks:\n  test:\n    cmds:\n      - cmd: uv run pytest -q tests\n'), 'pytest -q tests');
+  assert.strictEqual(probe('justfile', 'test:\n    python -m pytest -q backend\n'), 'pytest -q backend');
+  assert.strictEqual(probe('Makefile', 'test:\n\tpytest -k "slow and not db"\n'), 'pytest -q', 'quoted arguments are not copied');
+});
+
+// Mealie pilot, after-fix A7: a Nuxt frontend got `npx tsc --noEmit`, which
+// fails on its clean tree: its tsconfig extends the config `nuxt prepare`
+// generates, and Nuxt type-checks through vue-tsc. A project that defines no
+// typecheck of its own gets none rather than a check that cannot pass.
+test('a Nuxt project gets no plain tsc check; a plain TypeScript project keeps it', () => {
+  const { dir } = tmpProject();
+  write(dir, 'frontend/package.json', JSON.stringify({ name: 'web', scripts: { test: 'vitest' }, dependencies: { nuxt: '^4.4.2' } }));
+  write(dir, 'frontend/tsconfig.json', JSON.stringify({ extends: './.nuxt/tsconfig.json' }));
+  write(dir, 'lib/package.json', JSON.stringify({ name: 'lib', scripts: { test: 'node --test' } }));
+  write(dir, 'lib/tsconfig.json', '{"compilerOptions":{"strict":true}}');
+  const ids = stack.checks(dir, loadConfig(dir)).map((c) => `${c.id} ${c.command}`);
+  assert.ok(!ids.some((c) => /frontend && npx tsc/.test(c)), ids.join('\n'));
+  assert.ok(ids.some((c) => /lib && npx tsc --noEmit/.test(c)), ids.join('\n'));
+});

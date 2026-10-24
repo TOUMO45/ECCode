@@ -1,0 +1,44 @@
+{
+  "id": "mealie-03-fullstack",
+  "category": "fullstack",
+  "order": 3,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "318f05f2abeecdf6943d8004fc70af426f00e166"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-ea8b687b4031/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Feature: tell the user why pasted recipe data could not be imported.\n\nOn the page that creates a recipe from pasted HTML or JSON, data Mealie cannot read (JSON without the schema.org Recipe declaration, malformed JSON, HTML with no recipe in it) gives no useful feedback. The streaming endpoint POST /api/recipes/create/html-or-json/stream sends an error event whose message is only the exception's class name; POST /api/recipes/create/html-or-json answers 400 with that same class name as detail.message; and the page shows nothing.\n\nExpected, backend:\n- The error event's message carries the reason when the failure is an HTTPException that has one: the \"details\" value of a dict detail (the scraper raises its ParserErrors values that way, for example {\"details\": \"BAD_RECIPE_DATA\"}), or the detail itself when it is a non-empty string. Any other exception keeps its class name.\n- So for each of the three inputs above the stream still answers 200 and its first error event has message == ParserErrors.BAD_RECIPE_DATA.value, and the non-streaming endpoint answers 400 with detail.message == \"BAD_RECIPE_DATA\".\n\nExpected, frontend:\n- The recipe API client's create-from-HTML-or-JSON call always settles, exactly once, closing the stream: on the done event; on an error event, with the backend's message or \"Recipe creation failed\" when the payload is not a backend message; and when the stream closes without either event.\n- The import page shows an error card when an import fails: only ld+json or microdata containing a schema.org Recipe can be imported, and pasted JSON must declare both \"@context\": \"https://schema.org/\" and \"@type\": \"Recipe\"; with links to Google's recipe structured-data docs, Mealie's GitHub issues and the schema.org Recipe page. Starting a new import clears it. Add the English string.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_recipe_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 9 minutes); frontend specs: `cd frontend && npx vitest run`.",
+  "title": "feat: Add feedback for bad JSON in HTML-JSON page (#7956)",
+  "track": "feature",
+  "fixCommit": "5e886b11a11a179363dc69e5fde7d6875bd32263",
+  "hidden": {
+    "fromSource": {
+      "commit": "5e886b11a11a179363dc69e5fde7d6875bd32263",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_crud.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[missing-schema-declaration]\" \"tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[malformed-json]\" \"tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[no-recipe-data]\" \"tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_invalid_data\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_recipe_tests/test_recipe_crud.py\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[missing-schema-declaration]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[malformed-json]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[no-recipe-data]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_invalid_data\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 4,
+    "regression": 50,
+    "failingBeforeAndAfter": []
+  }
+}

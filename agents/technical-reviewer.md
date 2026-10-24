@@ -39,6 +39,7 @@ You are the **Technical and Quality Reviewer** (ECCode role `technical-reviewer`
   - Tasks cover the spec.
   - Every task has an owner, dependencies, inputs, outputs, file ownership, acceptance criteria and a verification method.
   - Parallel tasks don't overlap in ownership.
+  - Each task's verification command can pass once that task alone is done. A code task pinned to tests that a later task updates can never complete.
   - The phases are independently verifiable. Run `eccode plan validate <file>`.
 - **Phase gate**:
   - Read the diff for each task (`git diff`, the handoffs in `.eccode/handoffs/`).

@@ -410,3 +410,63 @@ test('python Lib/ layout: absolute imports resolve from the nearest non-package 
   assert.deepStrictEqual(imp.modules, ['Lib/json', 'Lib/asyncio', 'Lib/os.py', 'Lib/shutil.py']);
   assert.match(cb.onboardBrief(dir).text, /\| Lib\/json\/ \| 2 \|/);
 });
+
+test('js/ts: a Nuxt sub-project resolves its aliases without the generated tsconfig, plus its own paths and JSON imports', () => {
+  const dir = repo({
+    'frontend/package.json': '{"name":"web"}',
+    'frontend/nuxt.config.ts': 'export default defineNuxtConfig({});\n',
+    // The real config extends the one `nuxt prepare` generates; a fresh checkout has none.
+    'frontend/tsconfig.json': '{ "extends": "./.nuxt/tsconfig.json", "compilerOptions": { "paths": { "#shared/*": ["./shared/*"] } } }',
+    'frontend/app/lib/money.ts': 'export const formatMoney = (x: number) => `$${x}`;\n',
+    'frontend/app/lang/en.json': '{"hello":"Hello"}\n',
+    'frontend/shared/units.ts': 'export const g = 1;\n',
+    'frontend/app/composables/use-money.ts': "import { formatMoney } from '~/lib/money';\nimport en from '../lang/en.json';\nimport { g } from '#shared/units';\nexport const useMoney = () => [formatMoney, en, g];\n",
+    'frontend/app/composables/use-money.test.ts': "import { useMoney } from '@/composables/use-money';\nuseMoney;\n",
+    'frontend/server/report.ts': "import { useMoney } from '~~/app/composables/use-money';\nimport { formatMoney } from '@@/app/lib/money';\nexport const r = [useMoney, formatMoney];\n",
+  });
+  const index = cb.indexProject(dir);
+  assert.deepStrictEqual(index.files['frontend/app/composables/use-money.ts'].imports, ['frontend/app/lang/en.json', 'frontend/app/lib/money.ts', 'frontend/shared/units.ts']);
+  assert.deepStrictEqual(index.files['frontend/app/composables/use-money.test.ts'].imports, ['frontend/app/composables/use-money.ts']);
+  assert.deepStrictEqual(index.files['frontend/server/report.ts'].imports, ['frontend/app/composables/use-money.ts', 'frontend/app/lib/money.ts']);
+  assert.deepStrictEqual(cb.impact(dir, ['frontend/app/lib/money.ts'], { index }).tests, ['frontend/app/composables/use-money.test.ts']);
+});
+
+test('vue: single-file components are indexed through their script blocks; impact follows them to tests', () => {
+  const dir = repo({
+    'frontend/nuxt.config.ts': 'export default defineNuxtConfig({});\n',
+    'frontend/app/lib/money.ts': 'export const formatMoney = (x: number) => `$${x}`;\n',
+    'frontend/app/components/Price.vue': '<template>\n  <span>{{ formatMoney(1) }}</span>\n</template>\n\n<script setup lang="ts">\nimport { formatMoney } from "~/lib/money";\n// import { ignored } from "~/lib/commented";\n</script>\n\n<style scoped>\n@import "./price.css";\n</style>\n',
+    'frontend/app/components/Price.test.ts': "import Price from './Price.vue';\nPrice;\n",
+  });
+  const index = cb.indexProject(dir);
+  const sfc = index.files['frontend/app/components/Price.vue'];
+  assert.ok(sfc, 'the component is indexed');
+  assert.strictEqual(sfc.lang, 'js');
+  assert.deepStrictEqual(sfc.imports, ['frontend/app/lib/money.ts'], 'script imports only: not the commented one, not the style @import');
+  assert.deepStrictEqual(index.files['frontend/app/components/Price.test.ts'].imports, ['frontend/app/components/Price.vue']);
+  assert.deepStrictEqual(cb.impact(dir, ['frontend/app/lib/money.ts'], { index }).tests, ['frontend/app/components/Price.test.ts']);
+});
+
+test('python: tests reach the route modules that serve the URLs they call (literals, helper constants and helper functions)', () => {
+  const dir = repo({
+    'app/__init__.py': '',
+    'app/services/__init__.py': '',
+    'app/services/food_service.py': 'def find(item_id):\n    return item_id\n',
+    'app/routes/__init__.py': 'from . import foods, units\n',
+    'app/routes/foods.py': 'from fastapi import APIRouter\nfrom app.services.food_service import find\n\nrouter = APIRouter(prefix="/foods", tags=["foods"])\n\n\n@router.get("")\ndef list_foods():\n    return []\n\n\n@router.get("/{item_id}")\ndef get_food(item_id: int):\n    return find(item_id)\n',
+    'app/routes/units.py': 'from fastapi import APIRouter\n\nrouter = APIRouter(prefix="/units")\n\n\n@router.get("")\ndef list_units():\n    return []\n',
+    'app/main.py': 'from fastapi import FastAPI\nfrom app.routes import foods, units\n\napp = FastAPI()\n',
+    'tests/__init__.py': '',
+    'tests/conftest.py': 'from app.main import app\n',
+    'tests/utils/__init__.py': '',
+    'tests/utils/api_routes.py': 'prefix = "/api"\n\nfoods = "/api/foods"\nunits = "/api/units"\n\n\ndef foods_item_id(item_id):\n    """`/api/foods/{item_id}`"""\n    return f"{prefix}/foods/{item_id}"\n',
+    'tests/test_foods.py': 'from tests.utils import api_routes\n\n\ndef test_get(api_client):\n    api_client.get(api_routes.foods_item_id(1))\n',
+    'tests/test_units.py': 'from tests.utils.api_routes import units\n\n\ndef test_list(api_client):\n    api_client.get(units)\n',
+    'tests/test_literal.py': 'def test_list(api_client):\n    api_client.get("/api/foods")\n',
+    'tests/test_other.py': 'def test_math():\n    assert 1 + 1 == 2\n',
+  });
+  const index = cb.indexProject(dir);
+  assert.deepStrictEqual(index.files['app/routes/foods.py'].routes, ['/foods', '/foods/{item_id}']);
+  assert.deepStrictEqual(cb.impact(dir, ['app/services/food_service.py'], { index }).tests.sort(), ['tests/test_foods.py', 'tests/test_literal.py']);
+  assert.deepStrictEqual(cb.impact(dir, ['app/routes/units.py'], { index }).tests, ['tests/test_units.py']);
+});

@@ -190,3 +190,68 @@ test('a test run\'s caches are not changes: __pycache__, .pytest_cache, pickled 
   assert.deepStrictEqual(gitChangedFiles(dir, base), ['src/new.js']);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+// Pilot after-fix run of mealie-07-quick: with the frontend detected as a Node
+// sub-project, a backend change was pinned to `cd frontend && pnpm test`.
+test('the detected check is the one for the owned files: a sub-project only when every file is in it', () => {
+  const { pickTestCheck } = require('../lib/quick');
+  const checks = [
+    { id: 'node-test', kind: 'test', available: true, dir: 'frontend', command: 'cd frontend && pnpm test' },
+    { id: 'node-lint', kind: 'lint', available: true, dir: 'frontend', command: 'cd frontend && pnpm lint' },
+    { id: 'pytest', kind: 'test', available: true, command: 'pytest -q' },
+  ];
+  assert.strictEqual(pickTestCheck(checks, ['mealie/schema/recipe/recipe_ingredient.py', 'tests/unit_tests/**']).command, 'pytest -q');
+  assert.strictEqual(pickTestCheck(checks, ['frontend/components/**', 'frontend/lib/x.ts']).command, 'cd frontend && pnpm test');
+  assert.strictEqual(pickTestCheck(checks, ['frontend/**', 'mealie/**']).command, 'pytest -q', 'a change across both: the root project');
+  assert.strictEqual(pickTestCheck(checks, []).command, 'pytest -q', 'no files: the root project');
+  assert.strictEqual(pickTestCheck([checks[0]], ['mealie/x.py']).command, 'cd frontend && pnpm test', 'the only test check is still offered');
+  assert.strictEqual(pickTestCheck([{ ...checks[2], available: false }], ['x.py']), null);
+});
+
+// Pilot after-fix runs: the orchestrator ended its turn while a background
+// engineer was still working; the headless session then stopped the engineer.
+test('every orchestrating playbook says to wait for a dispatched agent before ending the turn', () => {
+  for (const f of ['commands/quick.md', 'commands/debug.md', 'skills/orchestrate/SKILL.md']) {
+    const text = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+    assert.match(text, /never end your turn while a dispatched agent is still working/i, f);
+    assert.match(text, /run_in_background: false/, `${f}: dispatch in the foreground (the Agent tool starts agents in the background by default in headless sessions)`);
+  }
+});
+
+// Mealie pilot, b1 and b2 item 2: the plan pinned the code task to tests
+// whose fixtures a later, dependent task updated, so neither could finish.
+test('plans pin each task to a check that can pass once that task alone is done', () => {
+  for (const f of ['agents/delivery-lead.md', 'agents/technical-reviewer.md']) {
+    const text = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+    assert.match(text, /can pass once that task alone is done/i, f);
+  }
+});
+
+// Pilot after-fix checks of the MCP item: the whole Mealie suite, the only
+// command MCP could pin, outran evidence_run's limit. MCP may narrow the
+// detected check to named test paths, never to a free-form command.
+test('the detected check narrows to named test paths only', () => {
+  const { narrowCheck } = require('../lib/quick');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-narrow-'));
+  write(dir, 'tests/unit/test_food.py', 'def test_x():\n    pass\n');
+  write(dir, 'frontend/lib/a.test.ts', '');
+  const py = { id: 'pytest', kind: 'test', available: true, command: 'pytest -q' };
+  assert.strictEqual(narrowCheck(dir, py, ['tests/unit/test_food.py', 'tests/unit/test_food.py::test_x[a-1]']), 'pytest -q tests/unit/test_food.py tests/unit/test_food.py::test_x[a-1]');
+  assert.strictEqual(narrowCheck(dir, py, ['tests/unit']), 'pytest -q tests/unit', 'a directory');
+  const npm = { id: 'node-test', kind: 'test', available: true, command: 'npm test', script: 'node --test' };
+  write(dir, 'tests/unit/a.test.js', '');
+  assert.strictEqual(narrowCheck(dir, npm, ['tests/unit/a.test.js']), 'npm test -- tests/unit/a.test.js');
+  // Pilot: `node --test <directory>` fails on Node 21 and later ("Cannot find
+  // module"), so a check narrowed to a directory could never pass.
+  expectCode(() => narrowCheck(dir, npm, ['tests/unit']), 'INVALID_INPUT', 'node --test takes files, not a directory');
+  expectCode(() => narrowCheck(dir, { ...npm, command: 'node --test', script: undefined }, ['tests/unit']), 'INVALID_INPUT');
+  const front = { id: 'node-test', kind: 'test', available: true, dir: 'frontend', command: 'cd frontend && pnpm test', script: 'vitest' };
+  assert.strictEqual(narrowCheck(dir, front, ['frontend/lib/a.test.ts']), 'cd frontend && pnpm test lib/a.test.ts', 'paths relative to the sub-project');
+  for (const bad of ['tests/unit; rm -rf /', '$(id)', 'tests/unit && x', '"tests/unit"', '../outside.py', '/etc/passwd', 'tests/missing.py', 'tests/unit|tee x']) {
+    expectCode(() => narrowCheck(dir, py, [bad]), 'INVALID_INPUT');
+  }
+  expectCode(() => narrowCheck(dir, front, ['tests/unit']), 'INVALID_INPUT', 'outside the sub-project');
+  expectCode(() => narrowCheck(dir, { ...npm, script: 'make check' }, ['tests/unit']), 'INVALID_INPUT', 'a script that may not take paths');
+  assert.match(fs.readFileSync(path.join(__dirname, '..', 'commands', 'quick.md'), 'utf8'), /pass those test paths as `tests`/, 'the playbook says how to narrow over MCP');
+  fs.rmSync(dir, { recursive: true, force: true });
+});

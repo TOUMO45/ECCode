@@ -26,7 +26,7 @@ Start here
   The full reference follows.
 
 Project
-  init --name <n> --idea <text> [--track greenfield|feature|refactor|fix]   Create .eccode/ (a quick change: eccode quick)
+  init --name <n> --idea <text> [--track greenfield|feature|refactor|fix] [--behavior <cmd>]   Create .eccode/ (refactor needs --behavior; a quick change: eccode quick)
   work start --track <t> --title <text> --actor <orchestrator|user> [--behavior <cmd>]
              [--owner <role> --files <glob,glob> --command <cmd>]     Start the next work item (quick and debug need owner/files/command)
   work abandon --actor user --reason <text>   Abandon the active work item (user decision)
@@ -40,7 +40,7 @@ Project
   deliver --actor delivery-lead          Produce the verified final handoff
 
 Gates (architecture, design, plan, phase:<id>, verification)
-  gate start <gate> --actor <role>
+  gate start <gate> --actor <role> [--reviewers r1,r2]   (orchestrator: each named reviewer must approve)
   gate submit <gate> --actor <role> --artifact <path>... [--responds-to <reviewId>] [--notes <text>]
   gate review <gate> --actor <reviewer> --file <review.json>
   gate reopen <gate> --actor user --resolution <text>
@@ -123,6 +123,10 @@ Bugs and problem solving (see docs/bugs.md)
 Benchmark
   bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|method|engine|debug|both|all|<a,b>] [--suite <dir>]
         [--engine-profile guard|no-shell|sandbox] [--engine-agents inherit|as-shipped] [--timeout <s>] [--out <file>]
+        [--chain]: one sandbox and record across the suite's items in order (task.order), synced to each
+        item's source between them; --runs counts chains. [--max-cost <usd>]: stop before the next run once
+        the runs of this process have reported that much. [--transcripts <dir>]: copy each run's Claude Code
+        session files there (keep it outside the repository: they quote the code the agent read)
         [--save <runs.jsonl>] [--keep]
   bench report <runs.jsonl> --agent "<cmd>" [--out <file>]   Rebuild a report from runs saved with --save
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
@@ -200,7 +204,7 @@ function main(argv) {
 
   if (group === 'init') {
     const quick = ['quick', 'debug'].includes(flags.track) ? { owner: flags.owner, files: flags.files, command: flags.command } : undefined;
-    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', track: flags.track, quick });
+    const store = init(root, { name: need(flags.name, '--name'), idea: need(flags.idea, '--idea'), actor: actor || 'orchestrator', track: flags.track, quick, behavior: flags.behavior });
     print(flags, `Initialized ECCode project in ${store.dir}`, { root: store.root });
     return 0;
   }
@@ -249,7 +253,7 @@ function main(argv) {
     if (sub === 'report') {
       // Rebuild a report from runs saved with --save (one JSON record per line).
       const file = path.resolve(need(arg, '<runs.jsonl>'));
-      const records = fs.readFileSync(file, 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l));
+      const records = bench.loadRuns(fs.readFileSync(file, 'utf8'));
       const markdown = bench.report(records, { agentCmd: need(flags.agent, '--agent') });
       if (flags.out) {
         require('../lib/util').writeFileAtomic(path.resolve(flags.out), markdown);
@@ -262,25 +266,54 @@ function main(argv) {
     const variants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? ['without', 'with', 'engine'] : String(flags.variant).split(',').map((v) => v.trim());
     const unknown = variants.filter((v) => !VARIANTS.includes(v));
     if (unknown.length) throw new EccodeError('USAGE', `Unknown --variant ${unknown.join(', ')}: use with, without, method, engine, debug, both (without,with), all (without,with,engine), or a comma list`);
-    const { records, markdown } = bench.run({
-      suite: flags.suite ? path.resolve(flags.suite) : undefined,
+    const save = flags.save ? (r) => fs.appendFileSync(path.resolve(flags.save), JSON.stringify(r) + '\n') : () => {};
+    const maxCostUsd = flags['max-cost'] !== undefined ? Number(flags['max-cost']) : null;
+    const common = {
       agentCmd: need(flags.agent, '--agent'),
-      tasks: flags.tasks ? String(flags.tasks).split(',').map((x) => x.trim()) : null,
-      runs: Number(flags.runs || 1),
-      variants,
       timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
       keep: Boolean(flags.keep),
       engineProfile: flags['engine-profile'] || 'guard',
       engineAgents: flags['engine-agents'] || 'inherit',
+      maxCostUsd,
+      transcripts: flags.transcripts ? path.resolve(flags.transcripts) : null,
       onProgress: (m) => process.stderr.write(`bench: ${m}\n`),
-      onRecord: flags.save ? (r) => fs.appendFileSync(path.resolve(flags.save), JSON.stringify(r) + '\n') : undefined,
-    });
+    };
+    let records;
+    let markdown;
+    let stopped = null;
+    if (flags.chain) {
+      // One sandbox and record per chain; --runs counts chains.
+      const chain = require('../lib/chain');
+      if (variants.length !== 1) throw new EccodeError('USAGE', '--chain runs one --variant per process');
+      const only = flags.tasks ? String(flags.tasks).split(',').map((x) => x.trim()) : null;
+      const tasks = chain.chainOrder(bench.listTasks(flags.suite ? path.resolve(flags.suite) : path.join(__dirname, '..', 'bench', 'tasks')).filter((t) => !only || only.includes(t.id)));
+      const warning = bench.tmpdirWarning();
+      if (warning) common.onProgress(`WARNING: ${warning}`);
+      records = [];
+      for (let k = 1; k <= Number(flags.runs || 1) && !stopped; k++) {
+        const res = chain.runChain(tasks, { ...common, variant: variants[0], spentBefore: bench.spentUsd(records), onRecord: (r) => save({ ...r, chainRun: k }) });
+        records.push(...res.records.map((r) => ({ ...r, chainRun: k })));
+        save({ type: 'chain-summary', chain: k, variant: variants[0], ...res.summary });
+        stopped = res.stopped || null;
+      }
+      markdown = bench.report(records, { agentCmd: common.agentCmd });
+    } else {
+      ({ records, markdown, stopped = null } = bench.run({
+        ...common,
+        suite: flags.suite ? path.resolve(flags.suite) : undefined,
+        tasks: flags.tasks ? String(flags.tasks).split(',').map((x) => x.trim()) : null,
+        runs: Number(flags.runs || 1),
+        variants,
+        onRecord: save,
+      }));
+    }
+    if (stopped) save({ type: 'stopped', ...stopped });
     if (flags.out) {
       require('../lib/util').writeFileAtomic(path.resolve(flags.out), markdown);
       process.stderr.write(`bench: report written to ${flags.out}\n`);
     }
     print(flags, markdown, records);
-    return 0;
+    return stopped ? 1 : 0;
   }
   if (group === 'onboard') {
     const { onboardBrief } = require('../lib/codebase');
@@ -518,8 +551,9 @@ function main(argv) {
     case 'gate': {
       const gateId = need(arg, '<gate>');
       if (sub === 'start') {
-        gates.startGate(store, config, gateId, need(actor, '--actor'));
-        print(flags, `Gate ${gateId} started.`, { gate: gateId, status: 'in_progress' });
+        const reviewers = flags.reviewers ? String(flags.reviewers).split(',').map((r) => r.trim()).filter(Boolean) : undefined;
+        gates.startGate(store, config, gateId, need(actor, '--actor'), { reviewers });
+        print(flags, `Gate ${gateId} started.${reviewers ? ` Each of ${reviewers.join(', ')} must approve.` : ''}`, { gate: gateId, status: 'in_progress', ...(reviewers ? { reviewers } : {}) });
       } else if (sub === 'submit') {
         const { event } = gates.submit(store, config, gateId, need(actor, '--actor'), {
           artifacts: flags.artifact || [],

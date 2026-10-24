@@ -136,6 +136,7 @@ eccode evidence run --actor technical-reviewer --label "tests" -- npm test
 eccode gate review architecture --actor architecture-reviewer --file review.json
 eccode status --brief          # always shows the NEXT action
 ```
+When a gate gets more than one reviewer (a phase touching auth gets the technical and the security reviewer), name them as it starts: `eccode gate start phase:<id> --actor orchestrator --reviewers technical-reviewer,security-reviewer`. The gate is then approved only once each of them has approved the same submission.
 `eccode help` lists every command. Exit codes: `0` ok, `1` usage error, `2` refused by a workflow rule. `memory check` returns `3` when a lesson doesn't apply.
 
 ### Maximum containment: MCP mode

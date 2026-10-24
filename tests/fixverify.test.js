@@ -155,3 +155,38 @@ test('a missing file is matched however the temp path is spelled (Windows 8.3 sh
   assert.match(fixverify.inconclusiveReason(out('C:\\x\\pre-fix\\app\\local.json'), ctx.dir, ctx.base, ['src/cart.js'], 'app/') || '', /local\.json/, 'project in a subdirectory of the repo');
   assert.doesNotMatch(fixverify.inconclusiveReason(`${out('/etc/nothing-here.json')}\nAssertionError`, ctx.dir, ctx.base, ['src/cart.js'], '') || '', /nothing-here/);
 });
+
+test('an error raised in the fixed code counts when pytest prints its frame as a relative path', () => {
+  // Found by the Mealie pilot's development run: pytest prints traceback
+  // frames relative to its rootdir, at the start of a line, so a crash in the
+  // fixed file (the bug's own symptom) read as "no error in the fixed code".
+  const ctx = project();
+  const sources = ['mealie/routes/groups/controller_labels.py'];
+  const out = [
+    'tests/integration_tests/test_labels.py:31: in test_duplicate_label',
+    '    response = api_client.post(api_routes.groups_labels, json=data)',
+    'mealie/routes/groups/controller_labels.py:57: in create_one',
+    '    return self.mixins.create_one(data)',
+    'E   sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed',
+  ].join('\n');
+  assert.strictEqual(fixverify.inconclusiveReason(out, ctx.dir, ctx.base, sources, ''), null, 'the failure went through the fixed code');
+  assert.match(fixverify.inconclusiveReason(out.replace(/controller_labels/g, 'controller_tags'), ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'a frame of another file is not the fixed code');
+  assert.match(fixverify.inconclusiveReason(out.replace('mealie/routes/groups/controller_labels.py:57', 'other/mealie/routes/groups/controller_labels.py.bak:57'), ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'a longer path that merely contains the file is not it');
+});
+
+test('an error that names a definition of the fixed code counts, though a library raised it', () => {
+  // Found by the Mealie pilot's A4: pydantic raised the bug's ValidationError
+  // for a model the fix changes; the traceback has no frame in the fixed file.
+  const ctx = project();
+  write(ctx.dir, 'mealie/schema/recipe_ingredient.py', 'class IngredientFood:\n    pass\n\n\ndef get(x):\n    return x\n');
+  const sources = ['mealie/schema/recipe_ingredient.py'];
+  const out = [
+    'tests/unit_tests/schema_tests/test_ingredient_food.py:48: in test_food_with_null_description_validates',
+    '    food = IngredientFood.model_validate(_food_row(None))',
+    'E   pydantic_core._pydantic_core.ValidationError: 1 validation error for IngredientFood',
+    'E   description',
+  ].join('\n');
+  assert.strictEqual(fixverify.inconclusiveReason(out, ctx.dir, ctx.base, sources, ''), null);
+  assert.match(fixverify.inconclusiveReason(out.replace(/IngredientFood/g, 'RecipeTool'), ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'another class is not the fixed code');
+  assert.match(fixverify.inconclusiveReason('E   KeyError: get', ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'a short common name is not evidence');
+});

@@ -1,0 +1,46 @@
+{
+  "id": "mealie-10-routes",
+  "category": "routes",
+  "order": 10,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "6a42f7a027e6554e67c6f50016a6523b32dd12e5"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-c7e466217435/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Feature: a connectivity test for a group's AI providers.\n\nGroup managers configure AI providers (base_url, api_key, model, ...) under /api/groups/ai-providers, but learn only later, when a recipe import fails, that a provider does not answer or cannot read images. Add a test that sends one real chat message, and reports whether the provider can read an image:\n\n- POST /api/groups/ai-providers/providers/test tests an unsaved provider: the body is the same as for creating one. Nothing is saved.\n- POST /api/groups/ai-providers/providers/{provider_id}/test tests a saved provider; an optional body of the same shape overrides its values for the test (a field that is not given, such as apiKey, keeps the saved value). An unknown id is a 404.\n- Both need the can_manage permission (403 otherwise) and answer 200 with a result {success, message, supportsImages}, a new schema AIProviderTestResult (success, a bool; message, an optional string; supports_images, an optional bool that stays None when the image check did not run), exported with the other AI provider schemas. A failed test is a 200 too.\n\nIn OpenAIService:\n- ping(provider, message, images=None) sends one chat message to the provider with the general.debug prompt, through get_response (response_schema OpenAIText, the images as attachments, the given provider), and returns its answer. The admin debug endpoint uses it too instead of its own copy of those steps.\n- test_connection(provider) returns an AIProviderTestResult. It pings with a text message. If that raises, the result is success=False with a message naming only the error: the class name of the exception's __cause__ (or of the exception itself when it has none), followed by \" (HTTP <status>)\" when that error has a status_code, for example \"NotFoundError (HTTP 404)\" or \"Exception\". Never relay the provider's response text or error body (managers could aim base_url at an internal host); log the full error instead. An empty answer is success=False with message \"No response received from the provider.\". In both cases supports_images is None and no image is sent.\n- After a successful text ping, ping again with a test image bundled with the service: a picture of a short recipe titled \"Tomato & Egg Stir-Fry\" (with a small data file next to it naming the keywords to look for). supports_images is True when the reply mentions the recipe (case-insensitive), False when it does not, when the reply is empty, or when that ping raises. A provider without image support is still success=True.\n\nAdd the frontend side as well: a Test button in the AI provider dialog that shows the result, the API client methods and types, and the English strings.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/services_tests tests/integration_tests/user_group_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 9 minutes).",
+  "title": "feat: add connectivity test for AI providers (#8123)",
+  "track": "feature",
+  "fixCommit": "5530edebe3a1ca9ac3638133e2b3af3aa624b180",
+  "hidden": {
+    "fromSource": {
+      "commit": "5530edebe3a1ca9ac3638133e2b3af3aa624b180",
+      "paths": [
+        "tests/integration_tests/user_group_tests/test_group_ai_providers.py",
+        "tests/unit_tests/services_tests/test_openai_service.py",
+        "tests/utils/api_routes/__init__.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_unsaved_provider_success\" \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_unsaved_provider_failure\" \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_unsaved_provider_reports_text_only_provider\" \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_unsaved_provider_never_persists\" \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_saved_provider_success\" \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_saved_provider_uses_override_values\" \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_unsaved_provider_requires_can_manage\" \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_saved_provider_requires_can_manage\" \"tests/unit_tests/services_tests/test_openai_service.py::test_ping_builds_debug_prompt_and_delegates_to_get_response\" \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_success_recognizes_test_image\" \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_success_but_image_reply_does_not_mention_recipe\" \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_success_but_image_request_errors\" \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_text_failure_never_attempts_image_check\" \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_empty_response_is_a_failure\" \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_failure_never_returns_the_providers_response_body\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_group_tests/test_group_ai_providers.py\" \"tests/unit_tests/services_tests/test_openai_service.py\" --deselect \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_unsaved_provider_success\" --deselect \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_unsaved_provider_failure\" --deselect \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_unsaved_provider_reports_text_only_provider\" --deselect \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_unsaved_provider_never_persists\" --deselect \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_saved_provider_success\" --deselect \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_saved_provider_uses_override_values\" --deselect \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_unsaved_provider_requires_can_manage\" --deselect \"tests/integration_tests/user_group_tests/test_group_ai_providers.py::test_test_saved_provider_requires_can_manage\" --deselect \"tests/unit_tests/services_tests/test_openai_service.py::test_ping_builds_debug_prompt_and_delegates_to_get_response\" --deselect \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_success_recognizes_test_image\" --deselect \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_success_but_image_reply_does_not_mention_recipe\" --deselect \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_success_but_image_request_errors\" --deselect \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_text_failure_never_attempts_image_check\" --deselect \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_empty_response_is_a_failure\" --deselect \"tests/unit_tests/services_tests/test_openai_service.py::test_connection_failure_never_returns_the_providers_response_body\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 15,
+    "regression": 39,
+    "failingBeforeAndAfter": []
+  }
+}

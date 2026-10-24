@@ -1,0 +1,15 @@
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"node .claude/eccode/bin/eccode.js status --brief"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"Work w1 [debug] active. NEXT: claim fix"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Bash","input":{"command":"node .claude/eccode/bin/eccode.js gate submit phase:fix --actor backend-engineer"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t2","content":"Exit code 2\neccode: [TRACK_RULE] debug track: no proven fix verification for this work item requires more evidence before phase:fix is submitted","is_error":true}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t3","name":"Bash","input":{"command":"python -m pytest -q tests/test_x.py"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t3","content":"Exit code 1\nFAILED tests/test_x.py::test_a - assert 1 == 2","is_error":true}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t4","name":"Bash","input":{"command":"node .claude/eccode/bin/eccode.js task claim fix --actor frontend-engineer"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t4","content":[{"type":"text","text":"Exit code 2\neccode: [NOT_OWNER] task fix is owned by backend-engineer"}],"is_error":true}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t5","name":"Bash","input":{"command":"rm -rf .eccode/cache"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t5","content":"rm in /tmp/x needs approval.","is_error":true}]},"toolDenialKind":"user-rejected","permissionDecision":{"decision":"reject","source":"config","reasonCode":"bashMiss:too-complex"}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"eccode: [FAKE] quoted in prose is not a refusal"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t6","name":"Bash","input":{"command":"echo x >> .eccode/events.jsonl"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t6","content":"This command touches the ECCode record","is_error":true}]},"permissionDecision":{"decision":"deny","source":"hook"}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t7","name":"Read","input":{"file_path":"src/missing.py"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t7","content":"File does not exist.","is_error":true}]},"permissionDecision":{"decision":"accept","source":"config","reasonType":"rule"}}

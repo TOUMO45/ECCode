@@ -1,0 +1,46 @@
+{
+  "id": "mealie-04-feature",
+  "category": "feature",
+  "order": 4,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "66afe5b4d302559a3e9985802c2c60ec93eb257e"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-3fc17c2bf840/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Feature: OIDC login for native (mobile and desktop) clients.\n\nMealie's OIDC login works only in a browser: GET /api/auth/oauth redirects to the identity provider and GET /api/auth/oauth/callback finishes the login with the session cookie. Native apps have to log in through the system browser (passkey-only providers such as Pocket ID do not work in embedded WebViews), run their own PKCE authorization request, catch the authorization code at a redirect URI of their own, and then need Mealie to exchange that code. Add two public endpoints for that, available whenever OIDC is configured (no new setting):\n\n- GET /api/auth/oauth/native/config returns what a client needs to build its authorization request: authorization_endpoint (from the provider's metadata), client_id and scope.\n- POST /api/auth/oauth/native/token takes JSON {code, code_verifier, redirect_uri, nonce (optional)}, exchanges the code with the provider through the same registered authlib client the web flow uses (oauth.create_client(\"oidc\"): fetch_access_token with the code, code_verifier and redirect_uri, then parse_id_token with the nonce), finds or creates the user from the claims the way the web callback does, and answers with a Mealie access token in the same shape as the other login responses.\n\nErrors: while OIDC is not configured both endpoints answer 404 with detail \"OIDC is not configured\". A code the provider rejects (authlib raises OAuthError) is a 401. Anything else (an unreachable provider, an id_token that fails validation, whose joserfc errors are not OAuthError) is not turned into a 401: it stays a server error (500), as on the web callback.\n\nPut the endpoints in the module of the web OIDC routes (GET /api/auth/oauth and /oauth/callback) and use that module's settings and oauth objects: tests replace them. Add the request and response schemas next to the other auth schemas, the matching TypeScript types to the frontend's API types, and a section on the native flow to the OIDC documentation page (the native client registers its redirect URI on the same OIDC client at the provider).\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 9 minutes).",
+  "title": "feat: add native OIDC endpoints for mobile/desktop clients (#7804)",
+  "track": "feature",
+  "fixCommit": "29897e35ec0d1b4fe75f845e6d629cc5ab794c13",
+  "hidden": {
+    "fromSource": {
+      "commit": "29897e35ec0d1b4fe75f845e6d629cc5ab794c13",
+      "paths": [
+        "tests/e2e/oidc-native.spec.ts",
+        "tests/integration_tests/user_tests/test_oidc_native.py",
+        "tests/utils/api_routes/__init__.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_config_returns_404_when_oidc_not_configured\" \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_404_when_oidc_not_configured\" \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_401_when_code_is_rejected\" \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_500_on_unexpected_errors\" \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_500_when_id_token_is_rejected\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_tests/test_user_api_token.py\" \"tests/integration_tests/user_tests/test_user_crud.py\" \"tests/integration_tests/user_tests/test_user_images.py\" \"tests/integration_tests/user_tests/test_user_login.py\" \"tests/integration_tests/user_tests/test_user_password_services.py\" \"tests/integration_tests/user_tests/test_user_registration.py\" --deselect \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_config_returns_404_when_oidc_not_configured\" --deselect \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_404_when_oidc_not_configured\" --deselect \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_401_when_code_is_rejected\" --deselect \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_500_on_unexpected_errors\" --deselect \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_500_when_id_token_is_rejected\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 5,
+    "regression": 23,
+    "failingBeforeAndAfter": []
+  }
+}

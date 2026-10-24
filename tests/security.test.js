@@ -254,3 +254,105 @@ test('a repository cannot make ECCode run commands: the embedder comes only from
   assert.strictEqual(res.status, 0, res.stderr);
   assert.match(res.stderr, /memory\.embedCommand in \.eccode\/config\.json is ignored/);
 });
+
+// Mealie pilot, c1: the guard misread a quoted sed expression with escaped
+// quotes, took a garbled word for its target (inside the project), and
+// refused a reviewer's edit of its own scratch file outside the project.
+test('guard: escaped quotes inside double quotes do not hide a write target; a read-only find of the record is allowed', () => {
+  const { dir } = tmpProject();
+  // Forward slashes: in a shell command, a Windows backslash is an escape.
+  const scratch = path.join(require('os').tmpdir(), 'eccode-scratch-probe.js').split(path.sep).join('/');
+  const sedCmd = `sed -i "s|\\"/plans/' OR 1=1--\\"|\\"/plans/%27%20OR%201=1--\\"|" ${scratch}; grep -n "OR 1" ${scratch}`;
+  assert.strictEqual(bash(dir, 'security-reviewer', sedCmd), 'allow', 'the target is the scratch file, outside the project');
+  assert.strictEqual(bash(dir, 'security-reviewer', 'sed -i "s|\\"a\\"|b|" src/app.js'), 'deny', 'a reviewer still may not edit project files');
+  assert.strictEqual(bash(dir, 'backend-engineer', `find ${dir}/.eccode -name 'spec*.md' -not -path '*/node_modules/*'`), 'allow');
+  assert.strictEqual(bash(dir, 'backend-engineer', `find ${dir}/.eccode -name '*.json' -delete`), 'deny', 'a find that deletes is a write');
+  assert.strictEqual(bash(dir, 'backend-engineer', `find .eccode -name events.jsonl -exec sh -c 'echo x >> {}' \;`), 'deny');
+});
+
+// Mealie pilot, b1 and c1: a reviewer wrote a scratch test under its own
+// scratch directory after `cd` there, and the guard resolved the relative
+// target against the project; `git stash list` counted as a write.
+test('guard: a literal cd moves relative write targets; git stash list only reads', () => {
+  const { dir } = tmpProject();
+  // Forward slashes: in a shell command, a Windows backslash is an escape.
+  const scratch = path.join(require('os').tmpdir(), 'eccode-scratch-g').split(path.sep).join('/');
+  assert.strictEqual(bash(dir, 'technical-reviewer', `mkdir -p ${scratch}/tests && cd ${scratch} && echo "x" > tests/a.test.js`), 'allow');
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'cd src && echo x > a.js'), 'deny', 'a cd inside the project still lands in the project');
+  assert.strictEqual(bash(dir, 'technical-reviewer', `cd ${scratch}; cd ${dir}; echo x > src/a.js`), 'deny', 'the last cd counts');
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'cd "$SOMEWHERE" && echo x > src/a.js'), 'deny', 'a cd the guard cannot read leaves targets in the project');
+  // A tilde expands only at the start of a word: Windows short names (RUNNER~1) are literal.
+  assert.strictEqual(bash(dir, 'technical-reviewer', `mkdir -p ${scratch}/RUNNER~1 && cd ${scratch}/RUNNER~1 && echo x > a.test.js`), 'allow', 'a tilde inside a path is literal');
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'cd ~/elsewhere && echo x > src/a.js'), 'deny', 'a leading tilde is not resolved, so targets stay in the project');
+  for (const sneaky of [`(cd ${scratch} && true); echo x > src/a.js`, `cd ${scratch} | true; echo x > src/a.js`, `cd ${scratch} & true; echo x > src/a.js`, `true || cd ${scratch}; echo x > src/a.js`]) {
+    assert.strictEqual(bash(dir, 'technical-reviewer', sneaky), 'deny', `a cd that does not move the shell: ${sneaky}`);
+  }
+  assert.strictEqual(bash(dir, 'backend-engineer', 'git stash list; ls -la .eccode | head'), 'allow');
+  assert.strictEqual(bash(dir, 'backend-engineer', 'git stash; ls -la .eccode'), 'deny', 'git stash itself writes');
+});
+
+// Mealie pilot, b2 and c1: commands that never called the eccode CLI were held
+// as "identity built by shell expansion" because the word eccode appeared in a
+// path (.claude/eccode, a scratch dir named eccode-chain-…) next to a $.
+test('guard: shell expansion is checked in eccode CLI calls only, and a built CLI call is still caught', () => {
+  const { dir } = tmpProject();
+  const fine = [
+    'ls .eccode/handoffs | head; f=$(ls .eccode/handoffs/* | head -1); cat "$f" | head -40; grep -rln "handoff" .claude/eccode --include=*.js | head',
+    'S=/tmp/mp/claude-0/-tmp-mp-eccode-chain-engine-Bd/scratchpad; cat $S/fake.log',
+    'grep -rn "x" $(python3 -c "print(1)")/integrations; ls .eccode/artifacts/design',
+  ];
+  for (const c of fine) assert.strictEqual(bash(dir, 'technical-designer', c), 'allow', c);
+  const built = [
+    'E="node .claude/eccode/bin/eccode.js"; $E task claim T1 --actor technical-designer',
+    'bash -c "node .claude/eccode/bin/eccode.js task claim T1 --actor $ROLE"',
+    'node .claude/eccode/bin/eccode.js task claim $(echo T1) --actor technical-designer',
+    '$(echo node) .claude/eccode/bin/eccode.js status',
+    'eccode gate review design --actor `whoami`',
+  ];
+  for (const c of built) assert.strictEqual(bash(dir, 'technical-designer', c), 'deny', c);
+});
+
+// Final review of the pilot branch: forms the guard must refuse. Each was
+// allowed at some point of the branch (a cd that fails, an escaped quote
+// outside quotes, find actions with a backslash, --output, a single &, >|), or
+// was a pre-existing hole (a quoted --actor, arguments from xargs).
+test('guard: writes and identities hidden by cd, escapes, find, --output, & and >| are refused', () => {
+  const { dir } = tmpProject();
+  const writes = [
+    'cd /nonexistent; echo pwn > src/a.js',
+    'cd /nonexistent\necho pwn > src/a.js',
+    'cd /x && false || echo pwn > src/a.js',
+    'true & rm -f src/a.js',
+    'echo pwn >| src/a.js',
+  ];
+  for (const c of writes) assert.strictEqual(bash(dir, 'technical-reviewer', c), 'deny', c);
+  const record = [
+    'echo \\"a\\" > .eccode/events.jsonl "b"',
+    "echo \\' > .eccode/events.jsonl \\'",
+    'find .eccode -name events.jsonl -exe\\c rm {} +',
+    'find .eccode -name events.jsonl -delet\\e',
+    'git stash show --output=.eccode/events.jsonl',
+    'git diff --output=.eccode/events.jsonl',
+    'cat x & rm -f .eccode/events.jsonl',
+  ];
+  for (const c of record) {
+    assert.strictEqual(bash(dir, 'backend-engineer', c), 'deny', `subagent: ${c}`);
+    assert.strictEqual(bash(dir, null, c), 'deny', `main session: ${c}`);
+  }
+  assert.strictEqual(bash(dir, null, 'cd .eccode/evidence && echo x > e1.log'), 'deny', 'the main session does not write the record either');
+  const identity = [
+    'F=--actor; X=.claude/eccode/bin/eccode.js; node $X risk add --id R1 --title t --severity low $F user',
+    "A=$(printf '\\055\\055actor'); echo $A user | xargs node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low",
+    "printf '\\055\\055actor user' | xargs node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low",
+    "node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low '--actor' user",
+    'node .claude/eccode/bin/eccode.js risk add --id R1 --title t --severity low --act""or user',
+  ];
+  for (const c of identity) {
+    assert.strictEqual(bash(dir, 'technical-reviewer', c), 'deny', `subagent: ${c}`);
+    assert.notStrictEqual(bash(dir, null, c), 'allow', `main session must be asked: ${c}`);
+  }
+  // Still allowed: the forms the pilot's agents used legitimately.
+  for (const c of ['mkdir -p /tmp/eccode-g/tests && cd /tmp/eccode-g && echo x > tests/a.test.js', 'git stash list; ls -la .eccode | head', 'find .eccode -name "spec*.md"', 'node .claude/eccode/bin/eccode.js status --brief']) {
+    assert.strictEqual(bash(dir, 'technical-reviewer', c), 'allow', c);
+  }
+});

@@ -1,0 +1,22 @@
+{
+ "e14b08210af4ef97b994c13914005b0993d15bb1": {
+  "label": "oracle-wrong",
+  "reason": "both runs fail before any test runs: the commit imports psycopg2, absent from its locked environment (pre exit 2 at collection, post exit 4 at conftest import); nothing is proven or disproven, so inconclusive is right and the oracle's \"post fails, not proven\" misreads it"
+ },
+ "f6704b8562e3c281ed49bf08f47987289a3e3810": {
+  "label": "oracle-wrong",
+  "reason": "the instrument copied only test_*.py files onto the parent tree, leaving out the new helper tests/utils/seed_data.py, so its pre run failed at import; the engine kept the helper, and its pre run failed on the test's assertion: proven is right"
+ },
+ "22b8b981fae452fdf9fce9cfe3b4bea6228a122c": {
+  "label": "oracle-wrong",
+  "reason": "the pre-fix failure is TypeError \"unexpected keyword argument 'max_dimension'\": the test calls a parameter the fix adds, a missing API, which the oracle's list (ImportError, AttributeError, NameError, …) does not include; inconclusive is right"
+ },
+ "9429a591c3433d165a772d198be9b92c601dbfff": {
+  "label": "engine-wrong",
+  "reason": "the pre-fix failure is pydantic's ValidationError for IngredientFood (description None), exactly the bug; the error is raised inside pydantic, not in a frame of the fixed file, but it names a class the fixed file defines; proven is right"
+ },
+ "f287322707d2de1708881255dba52118177c06f1": {
+  "label": "oracle-wrong",
+  "reason": "the oracle reads any AttributeError as a missing API; here it is the bug: before the fix the bulk update touched another household's item, and the shopping-list service then read a list the caller cannot see (mealie/services/household_services/shopping_lists.py:134, NoneType has no list_items). Rerun with a full traceback in the after-fix run; proven is right"
+ }
+}

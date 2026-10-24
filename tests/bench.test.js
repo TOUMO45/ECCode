@@ -348,3 +348,57 @@ test('bench --save keeps every finished run on disk, and bench report rebuilds t
   assert.match(fs.readFileSync(path.join(dir, 'r.md'), 'utf8'), /\| search-case \| without \| 2\/3 \| \+0\/−0 \|/, 'the untouched fixture fails only its feature check');
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+// Mealie pilot: run under a Claude Code session, every benchmark session
+// inherited its session id, so the items of a chain (one sandbox) appended to
+// one transcript file. Each agent starts as its own session.
+test('the agent does not inherit the operator session\'s Claude Code identity', () => {
+  const inherited = {
+    CLAUDE_CODE_SESSION_ID: 'parent', CLAUDE_CODE_REMOTE_SESSION_ID: 'parent', CLAUDE_CODE_CHILD_SESSION: '1', CLAUDE_PID: '1',
+    CLAUDE_AFTER_LAST_COMPACT: '1', CLAUDE_CODE_MESSAGING_SOCKET: '/s', CLAUDE_CODE_MESSAGING_TOKEN: 't', CLAUDECODE: '1', CLAUDE_CODE_SESSION_ATTENDED: '1',
+    // the launching session's own settings: effort, background subagents, spawn depth, compaction, debug output
+    CLAUDE_EFFORT: 'xhigh', CLAUDE_AUTO_BACKGROUND_TASKS: 'true', CLAUDE_CODE_BG_TASKS_REPORT_RUNNING: '0', CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH: '1',
+    CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: '50', CLAUDE_CODE_DIAGNOSTICS_FILE: '/d', CLAUDE_CODE_DEBUG: '1',
+  };
+  const env = bench.agentEnv({ ...inherited, ANTHROPIC_BASE_URL: 'https://api', PATH: '/bin', NODE_TEST_CONTEXT: 'child' });
+  for (const k of Object.keys(inherited)) assert.ok(!(k in env), k);
+  assert.strictEqual(env.ANTHROPIC_BASE_URL, 'https://api', 'what the agent needs to reach the API stays');
+  assert.strictEqual(env.PATH, '/bin');
+  assert.ok(!('NODE_TEST_CONTEXT' in env));
+});
+
+// Final review: a denylist missed the launcher's extra directories, plugin and
+// skill sync, remote-session handles and entrypoint. Only authentication and
+// the model provider pass; every other Claude Code variable is the launcher's.
+test('the agent keeps only the Claude Code variables that authenticate it or pick its provider', () => {
+  const launcher = {
+    CLAUDE_ADDITIONAL_DIRECTORIES: '/mnt/user-data', CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: '1', CLAUDE_CODE_SYNC_PLUGINS: '1', CLAUDE_CODE_SYNC_SKILLS: '1',
+    CLAUDE_CODE_REMOTE: 'true', CLAUDE_CODE_REMOTE_SDK_URL: 'https://x', CLAUDE_SESSION_INGRESS_TOKEN_FILE: '/t', CLAUDE_CODE_TEE_SDK_STDOUT: 'true',
+    CLAUDE_CODE_ENTRYPOINT: 'remote_desktop', CLAUDE_CODE_SOME_FUTURE_SETTING: '1',
+  };
+  const auth = { CLAUDE_CODE_OAUTH_TOKEN: 'o', CLAUDE_CONFIG_DIR: '/c', CLAUDE_CODE_USE_BEDROCK: '1', CLAUDE_CODE_USE_VERTEX: '1', CLAUDE_CODE_SKIP_BEDROCK_AUTH: '1', CLAUDE_CODE_CLIENT_CERT: '/cert' };
+  const env = bench.agentEnv({ ...launcher, ...auth, ANTHROPIC_API_KEY: 'k', ECCODE_BENCH_VARIANT: 'engine' });
+  for (const k of Object.keys(launcher)) assert.ok(!(k in env), k);
+  for (const [k, v] of Object.entries(auth)) assert.strictEqual(env[k], v, k);
+  assert.strictEqual(env.ANTHROPIC_API_KEY, 'k');
+  assert.strictEqual(env.ECCODE_BENCH_VARIANT, 'engine');
+});
+
+// Mealie pilot, after-fix check: processes an agent left running kept writing
+// into the sandbox, removing it failed (ENOTEMPTY) and the run's record was lost.
+test('an agent\'s leftover processes are stopped when it exits, and the run is kept', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {
+  const task = bench.listTasks(path.join(__dirname, '..', 'bench', 'suites', 'followup')).find((t) => t.id === 'top-words');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-linger-'));
+  const beat = path.join(tmp, 'beat');
+  // The writer outlives the run it must be stopped with, but never by more than a
+  // minute: if the harness fails to stop it, it must not fill the disk (it did once).
+  fs.writeFileSync(path.join(tmp, 'writer.js'), `const fs = require('fs'); let i = 0;\nsetInterval(() => { fs.writeFileSync('junk' + (i++) + '.txt', 'x'); fs.appendFileSync(${JSON.stringify(beat)}, '.'); }, 5);\nsetTimeout(() => process.exit(0), 60000);\n`);
+  fs.writeFileSync(path.join(tmp, 'agent.js'), `require('child_process').spawn(process.execPath, [${JSON.stringify(path.join(tmp, 'writer.js'))}], { stdio: 'ignore' }).unref();\n`);
+  const r = bench.runOnce(task, { agentCmd: `node "${path.join(tmp, 'agent.js')}"`, variant: 'without' });
+  assert.strictEqual(r.task, 'top-words', 'the run is recorded');
+  const size = () => (fs.existsSync(beat) ? fs.statSync(beat).size : 0);
+  const a = size();
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
+  assert.strictEqual(size(), a, 'the leftover writer was stopped');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

@@ -1,0 +1,107 @@
+{
+ "b1:10-mealie-10-routes:design:technical-reviewer:Unsaved test route returns 500 when apiKey is omitted": {
+  "severity": "major",
+  "label": "real",
+  "reason": "read against the design: the route builds AIProviderOut from a model whose api_key is optional, so the omitted-key case the spec promises is not handled (not run)"
+ },
+ "b1:4-mealie-04-feature:design:technical-reviewer:No-id_token path contradicts between flow and error matrix": {
+  "severity": "major",
+  "label": "real",
+  "reason": "the flow and the error matrix of the design disagree on a token without id_token; the cited lines raise on a falsy claim (read, not run)"
+ },
+ "b1:4-mealie-04-feature:design:technical-reviewer:Client-caused id_token validation failures return 500": {
+  "severity": "major",
+  "label": "real",
+  "reason": "a client-caused validation error surfacing as 500 is a design gap (read, not run)"
+ },
+ "b1:4-mealie-04-feature:design:technical-reviewer:Authlib behaviour unverified; design depends on it": {
+  "severity": "major",
+  "label": "real",
+  "reason": "a design resting on library behaviour nobody checked; a valid risk, raised before any code (read)"
+ },
+ "b1:4-mealie-04-feature:plan:technical-reviewer:Repo-wide `ruff check mealie tests` fails at baseline, so T1/T2 verification and the phase criterion cannot pass": {
+  "severity": "major",
+  "label": "real",
+  "reason": "ruff fails at the source commit outside the change; Part A (A7) measured the same at P: `ruff check .` exits 1, the Taskfile`s narrower command exits 0"
+ },
+ "b1:4-mealie-04-feature:plan:technical-reviewer:T2 verification does not run the new module's nine cases explicitly or the security regression": {
+  "severity": "major",
+  "label": "real",
+  "reason": "the planned check does not name the new tests and chains the failing lint, so a red lint hides the result (read)"
+ },
+ "b1:6-mealie-06-migration:plan:technical-reviewer:Verify commands do not enforce the acceptance criteria": {
+  "severity": "major",
+  "label": "real",
+  "reason": "no command in the plan checks the acceptance criteria it names (read)"
+ },
+ "b1:6-mealie-06-migration:plan:technical-reviewer:Design case 13 is unowned and unrecorded": {
+  "severity": "major",
+  "label": "real",
+  "reason": "a design case no task owns; the reviewer itself judged it minor in effect (read)"
+ },
+ "b2:10-mealie-10-routes:plan:technical-reviewer:admin_debug ping test has no owning task or file": {
+  "severity": "major",
+  "label": "real",
+  "reason": "a required test with no owning task or file (read)"
+ },
+ "b2:10-mealie-10-routes:plan:technical-reviewer:T6 verification command is not runnable and does not match acceptance": {
+  "severity": "major",
+  "label": "real",
+  "reason": "the planned `npx --prefix frontend eslint` command could not pass; b2 item 9 later stalled on the same form of command"
+ },
+ "b2:3-mealie-03-fullstack:verification:technical-reviewer:ruff I001 introduced in test_recipe_crud.py": {
+  "severity": "major",
+  "label": "real",
+  "reason": "the reviewer`s own ruff run shows I001 on the changed test file"
+ },
+ "b2:5-mealie-05-frontend:phase:fix-partitioned:technical-reviewer:Malformed return object formatting in getTokenCookieOptions": {
+  "severity": "major",
+  "label": "real",
+  "reason": "the closing brace left on the sameSite line by the removal; the project formatter rewrites it (read)"
+ },
+ "b2:6-mealie-06-migration:design:technical-reviewer:Hash is over the stripped claim, diverging from sha256(claim as sent)": {
+  "severity": "blocking",
+  "label": "real",
+  "reason": "hashing the stripped claim diverges from hashing the claim as sent (read)"
+ },
+ "c1:1-planner-c1:architecture:architecture-reviewer:SQLite driver choice and Node 18 compatibility are unverified": {
+  "severity": "major",
+  "label": "real",
+  "reason": "a native SQLite module chosen with no install possible to check it; a valid risk (read)"
+ },
+ "c1:1-planner-c1:architecture:architecture-reviewer:Pagination loop guard contradicts the empty-page requirement": {
+  "severity": "major",
+  "label": "real",
+  "reason": "two requirements of the brief contradict each other (read)"
+ },
+ "c1:1-planner-c1:architecture:architecture-reviewer:Blocking open questions and invented behaviours that go beyond or against PROMPT.md": {
+  "severity": "major",
+  "label": "real",
+  "reason": "defaults invented beyond the request and marked blocking (read)"
+ },
+ "c1:1-planner-c1:design:technical-reviewer:npm test script `node --test tests/` fails on Node 22": {
+  "severity": "major",
+  "label": "real",
+  "reason": "`node --test tests/` exits 1 on Node 22.22 (\"Cannot find module\"); reproduced here, and by the final review"
+ },
+ "c1:1-planner-c1:plan:technical-reviewer:Producer-task verification depends on tests written by a later task": {
+  "severity": "major",
+  "label": "real",
+  "reason": "each producer task is verified by tests a later task writes: the failure mode of row 94"
+ },
+ "c1:1-planner-c1:architecture:architecture-reviewer:Pagination termination can silently drop recipes": {
+  "severity": "major",
+  "label": "real",
+  "reason": "the stop rule can end before the last page when a page is short (read)"
+ },
+ "c1:1-planner-c1:design:technical-reviewer:Ingredient elements from Mealie are not shape-validated": {
+  "severity": "major",
+  "label": "real",
+  "reason": "ingredient elements are dereferenced without a shape check (read)"
+ },
+ "c1:2-planner-c2:design:technical-reviewer:Foods paging dedupes by normalised name, so valid listings fail with 502 incomplete listing": {
+  "severity": "major",
+  "label": "real",
+  "reason": "the reused paging loop dedupes by a key that foods do not share uniquely (read)"
+ }
+}

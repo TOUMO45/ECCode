@@ -6,7 +6,7 @@ What a senior engineer relies on, and where ECCode provides it with engine enfor
 
 `eccode onboard` indexes every source file — definitions, imports resolved against the real file list — and writes a brief: languages, modules, entry points, git hot spots, and the most-depended-on files. Agents read it before proposing or changing anything. The index is cached incrementally under `.eccode/cache/`, so large repositories pay the scan once.
 
-- Languages resolved: JS/TS (relative, index files, tsconfig/jsconfig path aliases), Python (absolute, `src/` layout, dotted-relative, `from X import submodule`), Go (module-path imports to package directories), Rust (`mod`, `use crate::`), Java/Kotlin (package imports by path suffix), Ruby (`require_relative`), PHP (`__DIR__` requires).
+- Languages resolved: JS/TS (relative, index files, JSON files, tsconfig/jsconfig path aliases read per directory with `extends` followed, Nuxt's `~`/`@`/`~~`/`@@` aliases where a `nuxt.config` sits, and Vue single-file components through their `<script>` blocks), Python (absolute, `src/` layout, dotted-relative, `from X import submodule`), Go (module-path imports to package directories), Rust (`mod`, `use crate::`), Java/Kotlin (package imports by path suffix), Ruby (`require_relative`), PHP (`__DIR__` requires).
 - **Dynamic loading is visible, not silent:** files using non-literal `require`/`import(`, `importlib`/`__import__`, `Class.forName` or variable PHP includes are flagged in the index; `eccode impact` and the onboard brief name them as "may also be affected" instead of missing them quietly. Reflection and generated code remain out of reach of a static index, and the brief says so.
 
 ## 2. Impact analysis (`eccode impact`)
@@ -15,7 +15,7 @@ What a senior engineer relies on, and where ECCode provides it with engine enfor
 
 **Runtime tracing closes the static gap by observation.** `eccode impact <files> --trace -- "<command>"` runs the command under load tracers (a Node `require` hook, an ESM loader registered through `module.register`, a Python `sys.meta_path` finder, a Ruby `TracePoint`, a PHP `file://` stream wrapper, and a JVM agent for Java and Kotlin, compiled on first use and cached): dynamic requires built from variables, static and dynamic ESM `import`, and `importlib`/reflective imports resolve because they are *observed*, not parsed. The output reports which targets the command actually loaded, which runtime-only dependents appeared, and which flagged dynamic loaders were seen in action — and says plainly when a trace observed nothing. Tested against a string-concatenated `require`, a variable-built ESM `import()`, and an `importlib.import_module` call that no static parser can see — each traced through a symlinked root, the macOS tmpdir shape. On a Node older than 18.18 the ESM loader is skipped rather than risked (an unknown flag in `NODE_OPTIONS` would abort the traced command); CJS and Python tracing still run.
 
-`eccode impact <files>` (or `--changed [--base <ref>]`) walks the reverse import graph: every dependent with its distance, the affected test files, and the modules touched. `--run --actor <role>` executes exactly those tests and records them as evidence (`node --test` / `pytest` / `go test`, grouped by language).
+`eccode impact <files>` (or `--changed [--base <ref>]`) walks the reverse import graph: every dependent with its distance, the affected test files, and the modules touched. **Tests also reach the modules that serve the URLs they call:** the index records the paths each file serves (router prefix plus decorator path for FastAPI and Flask, Express-style calls) and the URLs each runnable test calls (string literals, f-strings, and the constants or functions of URL-helper modules it imports), so a change to a service behind a route selects the tests that call that route, although no test imports it. `--run --actor <role>` executes exactly those tests and records them as evidence (`node --test` / `pytest` / `go test`, grouped by language).
 
 **At scale.** Measured on the Python 3.13 standard library (589 files, 280,766 lines; [bench/impact/stdlib-2026-10-23.md](../bench/impact/stdlib-2026-10-23.md)):
 - Absolute Python imports resolve from the file's import root, its nearest ancestor that is not a package, as on `sys.path`. In a `Lib/` layout this took the dependents of `Lib/os.py` from 127 to 360.
@@ -61,14 +61,14 @@ That is two dispatches where the quick track has five. The delivery lead's verif
 - **Fix track:** the verification gate refuses submission until the record holds the failing reproduction (`--purpose reproduction`) and the **same command** passing later. The rule that already governed memory lessons now governs deliveries.
 - **Refactor track:** `work start --behavior "<command>"` names the behavior suite. Verification refuses submission unless that command was recorded passing **before the first task claim** and again **after the last phase approval**. Any detected breaking change on a refactor is refused, even if declared.
 - **Breaking changes (all tracks):** at the first claim the engine snapshots the task area's public surface — exported definitions, HTTP routes (express-style calls, Python decorators, Go handlers), and migration files. At completion it refuses (at the default `lean.level: full`):
-  - a removed export or route not declared in `handoff.breakingChanges` (engine-detected kind and name, a reason, and the callers' migration path);
+  - a removed export or route not declared in `handoff.breakingChanges` (engine-detected kind and name, a reason, and the callers' migration path). Test files are not public API; a definition gone from one file and newly defined in another is a **move**, reported as a warning naming both files rather than a removal to declare;
   - an **edited or deleted existing migration** (applied migrations are history);
-  - **destructive SQL** in a new migration (`DROP`, `TRUNCATE`, `DELETE` without `WHERE`, `ALTER … DROP`) left undeclared.
+  - **destructive SQL** in a new migration (`DROP`, `TRUNCATE`, `DELETE` without `WHERE`, `ALTER … DROP`), or a framework's own dropping operation (Alembic `op.drop_table`/`drop_column`, Django `RemoveField`/`DeleteModel`), left undeclared. A Python migration is judged by its `upgrade()` body; a migration is a file a migration tool runs (under `alembic/versions`, or a versioned or dated name in a migrations directory), so a `migrations/` package of ordinary modules is not one.
   `strict` additionally requires the plan to pre-approve each breaking change (`task.allowedBreaking`).
 
 ## 6. Stack packs (`eccode stack`)
 
-`eccode stack` detects the stacks from their manifests and lists runnable checks — the project's own scripts first (`npm test`, `npm run lint`), then standard tools that are actually installed (tsc, pytest, ruff, mypy, go test/vet/gofmt, cargo test/clippy/fmt, maven/gradle, rspec, composer), plus universal ones: a built-in dependency-free secrets scan (`eccode stack run eccode-secrets`; high-confidence token patterns, test-fixture hits downgraded to warnings, `eccode-allow-secret` suppresses a line) and gitleaks/OSV-Scanner when installed.
+`eccode stack` detects the stacks from their manifests — a Node project at the root or, without one, in a first-level directory such as `frontend/` (run there with its lockfile's package manager) — and lists runnable checks: the project's own scripts first (`npm test`, `cd frontend && yarn lint`), the arguments its own task runner (Taskfile, Makefile, justfile) gives pytest, ruff and mypy, then standard tools that are actually installed (tsc, pytest, ruff, mypy, go test/vet/gofmt, cargo test/clippy/fmt, maven/gradle, rspec, composer), plus universal ones: a built-in dependency-free secrets scan (`eccode stack run eccode-secrets`; high-confidence token patterns, test-fixture hits downgraded to warnings, `eccode-allow-secret` suppresses a line) and gitleaks/OSV-Scanner when installed.
 
 `eccode stack adopt --checks <ids> --actor user` makes checks **required**: a verification approval is refused until the reviewer has recorded each one passing after the submission. Adoption is policy, so it needs the user (the guard turns `--actor user` into a confirmation prompt).
 
@@ -158,6 +158,46 @@ Result, 240 runs ([protocol](../bench/protocols/2026-10-24-realbugs.md); [report
 - **The batch itself:**
   - The two amendments record the defects found while it ran; the first start's five runs are listed and excluded.
   - Agents in several runs wrote scratch scripts into a directory shared by all runs, because the batch's temporary directory sat inside this session's scratchpad. The transcripts show no run reading a file another run wrote (row 70).
+
+### On a real project: the Mealie pilot
+
+Every earlier batch ran on fixtures, benchmark sandboxes or small slices of projects. The pilot ran every capability on one large, living codebase ECCode's authors did not write ([protocol](../bench/protocols/2026-10-24-mealie-pilot.md); [report](../bench/pilot-results/2026-10-24-mealie-pilot.md)):
+- **The subject:** Mealie, a FastAPI, SQLAlchemy and Alembic backend with a Nuxt, TypeScript and Vue frontend. It was pinned at v3.20.0, and the window ran over the 410 commits to v3.27.0.
+- **Part A, model-free.** Index, impact, breaking-change detection, `fix verify`, `mutate`, bug rules, stack detection and the secrets scan were measured against something other than the agent: the project's history, a coverage run, injected faults and FastAPI's route table. They were measured once as registered, then again after the fixes.
+- **Part B.** Ten real changes from Mealie's history, one per track, were run as engine work items in two ten-item chains that share one record each, against a bare agent run twice per item. The quick item was also run with no shell, over MCP.
+- **Part C.** A greenfield companion service, built and then extended through a migration, in two chains.
+
+Results:
+- **Part A.** At the protocol commit, 10 criteria were met, 6 missed and 1 had no verdict.
+  - **Index:** TS/JS imports resolved 0.376 at first; 0.998 after the fixes, with `.vue` files indexed (row 72).
+  - **Breaking-change precision:** 0.087 at first, from data importers taken for migrations, test functions taken for API and moves taken for removals; 1.0 on two detections after the fixes (row 75).
+  - **Bug-rule false positives:** 4.5 per 10,000 changed lines at first; 0 after the fixes (row 79).
+  - **Impact:** recall against coverage was 1.0, and impact now follows tests that reach a module over HTTP (row 73). But for any module the app imports, impact selects 80–90% of the suite. The share-of-suite criterion was met in one sample and missed in the next, depending on how many leaf modules the sample drew (row 74).
+  - **`fix verify`:** agreement with running the tests directly went from 0.974 to 1.0 (row 77).
+  - **`mutate`:** runs completed (0.976 both times), but 16 of 41 real fixes get no mutant, because it has no statement-deletion operator (row 78).
+  - **Stack detection:** it now finds the Node frontend beside the Python backend, and its five checks match the tools run directly (row 80).
+  - **Route-removal recall:** unmeasured, because no commit in the sample removed a route (row 76).
+- **Parts B and C:** at the protocol commit the engine missed every engine criterion except "no record fails its audit".
+  - **Delivery:** 6 of 20 Mealie items were delivered with a clean audit, against a rule of 80% per chain (row 104). The quick and debug items were delivered in both chains.
+  - **Friction:** 1.79 false refusals per engine item, against a rule of at most 1 (row 105).
+  - **Memory:** no lesson was recorded in either chain (row 106).
+  - **MCP:** the quick item under MCP was delivered in 0 of 2 runs (row 107); a later check outside the batch delivered it with no shell.
+  - **Greenfield:** neither chain delivered all three requests (row 108).
+- **Correctness (no criterion, underpowered by design):** the bare agent passed every hidden check in 17 of 20 Mealie runs, the engine in 13 of 20 (p = 0.12), or 14 of 20 in a clean recheck. The engine's misses were mostly items it abandoned part-way. This is the opposite direction to the hope behind row 59, and it is reported as such.
+- **Cost:** the engine cost 3.9× to 6.6× a bare run per Mealie track, and 10× to 14× on the greenfield service.
+- **What the gates did catch:**
+  - all 21 blocking and major review findings, read against what they cite, describe real gaps, most of them in designs and plans before any code;
+  - one security review demonstrated an SSRF bypass, though the record refused the finding because the first approval had closed the gate (row 103).
+- **What the pilot fixed:** 37 register rows (72–108) record what it found. Of the 50 false refusals, 47 trace to defects now fixed, each with a test that failed first:
+  - the integrity window erasing other agents' work;
+  - role agents without their MCP tools;
+  - guard misreads;
+  - approved artifacts that reviews could not cite;
+  - rework that stranded a work item;
+  - a gate closed by its first reviewer;
+  - a failed reproduction refused as evidence.
+  The other three are a named limit (row 91). Four items stopped on the benchmark's own tool list or environment.
+- **What it does not show:** whether the fixed engine now meets the criteria. That needs the same protocol run again at the fix commit.
 
 ## Verified live, not only in unit tests
 

@@ -1,0 +1,22 @@
+{
+  "id": "planner-c3",
+  "title": "Households, through a new migration",
+  "order": 3,
+  "track": "feature",
+  "prompt": "Add households to mealie-planner (this repository): plans can belong to a household.\n\n- POST /households with {\"name\"} returns 201 {\"id\", \"name\"}; a missing or empty name is 400.\n- GET /households/:id returns 200 with the household, or 404.\n- POST /plans accepts an optional \"householdId\"; an unknown household is 404. A plan includes \"householdId\" (null when it has none).\n- GET /households/:id/plans returns 200 [{\"id\", \"weekStart\"}], sorted by weekStart and then id; an unknown household is 404.\n- The schema change comes in a new migration file; existing migration files are not edited, so a database created by the current version keeps working after the upgrade.\n- Everything that works today keeps working.",
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "node .bench-hidden/check.js c3",
+      "timeoutMs": 900000
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/check.js c1 && node .bench-hidden/check.js c2",
+      "timeoutMs": 1800000
+    }
+  ],
+  "measured": {
+    "acceptanceTests": 5
+  }
+}

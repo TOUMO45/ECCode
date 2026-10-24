@@ -29,7 +29,7 @@ test('every registered limit has a valid disposition, and open ones are counted 
   for (const x of r) assert.match(x.disposition, /^(Closed — (eliminated|by design)|Open — (mitigated|named))$/, `row ${x.n}: ${x.disposition}`);
   const open = r.filter((x) => x.disposition.startsWith('Open'));
   const text = fs.readFileSync(path.join(ROOT, 'docs', 'limits.md'), 'utf8');
-  const words = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
+  const words = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'];
   if (open.length === 0) assert.match(text, /\*\*No limit is open\.\*\*/, 'header must say no limit is open');
   else assert.match(text, new RegExp(`\\*\\*${words[open.length]} limits? (is|are) open\\*\\* \\(rows? ${open.map((x) => x.n).join(', ')}\\)`), 'header must state exactly which rows are open');
 });
@@ -77,7 +77,7 @@ test('figures quoted in the docs match what bench tally derives from the records
 test('every file the register cites as evidence exists', () => {
   const missing = [];
   for (const x of rows()) {
-    for (const m of x.evidence.matchAll(/(?:^|[\s(`])((?:docs|lib|tests|scripts|bench|\.github)\/[\w./-]+\.(?:md|js|mjs|cjs|py|yml|txt))/g)) {
+    for (const m of x.evidence.matchAll(/(?:^|[\s(`])((?:docs|lib|tests|scripts|bench|\.github)\/[\w./-]+\.(?:md|jsonl|json|js|mjs|cjs|py|yml|txt)\b)/g)) {
       if (!fs.existsSync(path.join(ROOT, m[1]))) missing.push(`row ${x.n}: ${m[1]}`);
     }
   }

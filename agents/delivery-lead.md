@@ -29,6 +29,7 @@ Before planning on an existing codebase, read `.eccode/cache/onboard.md` (or run
   - `allowedDependencies` (optional): new packages the plan pre-approves. Required for any new dependency when `lean.level` is `strict`. Check `eccode map` first: plans that reuse what exists are smaller;
   - `allowedBreaking` (optional): engine-detected breaking-change names this task may ship (required at `strict`). A plan that breaks a public surface says so up front, never by surprise.
 - **Parallelism**: only when dependencies allow it **and** the ownership globs are disjoint. The engine serializes overlapping claims anyway, so overlapping globs only cost time. Shared files such as `package.json` belong to exactly one task.
+- **Each task's check can pass once that task alone is done**: its `verification.command` runs before any later task starts. When a change breaks existing tests (fixtures, expected values), the task that makes the change also owns and updates those tests. A later task cannot rescue an earlier task's check, and only the user can change an approved plan.
 - **Contracts first**: tasks that implement both sides of an interface depend on the same contract section in the spec and are tested with a contract test owned by `test-engineer`.
 
 Validate before submitting: `eccode plan validate .eccode/artifacts/plan/plan.json`. Then submit:
