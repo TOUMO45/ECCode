@@ -37,6 +37,30 @@ test('install --sandbox writes the OS-enforced profile and one MCP server per ro
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
+// Pilot b4: a no-shell subagent had only its frontmatter tools (Bash denied),
+// so it could not claim its task. Each role agent must list its own server's tools.
+test('enforced profiles give each role agent its own eccode MCP tools, and no-shell drops Bash', () => {
+  const { tools } = require('../lib/mcp');
+  const names = tools().map((t) => t.name);
+  const toolsOf = (dir, role) => fs.readFileSync(path.join(dir, '.claude', 'agents', `${role}.md`), 'utf8').match(/^tools: (.*)$/m)[1].split(',').map((t) => t.trim());
+  for (const profile of ['no-shell', 'sandbox', 'guard']) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), `eccode-agents-${profile}-`));
+    execFileSync('git', ['init', '-q'], { cwd: dir });
+    install({ target: dir, scope: 'project', profile });
+    install({ target: dir, scope: 'project', profile }); // idempotent
+    const backend = toolsOf(dir, 'backend-engineer');
+    if (profile === 'guard') assert.ok(!backend.some((t) => t.startsWith('mcp__')), 'guard keeps the CLI path');
+    else {
+      for (const n of names) assert.strictEqual(backend.filter((t) => t === `mcp__eccode_backend-engineer__${n}`).length, 1, `${profile}: ${n}`);
+      assert.ok(!backend.some((t) => /^mcp__eccode_(?!backend-engineer__)/.test(t)), 'only its own role server');
+      assert.strictEqual(backend.includes('Bash'), profile === 'sandbox', 'Bash only where it is sandboxed');
+      assert.ok(toolsOf(dir, 'technical-reviewer').includes('mcp__eccode_technical-reviewer__gate_review'));
+      for (const keep of ['Read', 'Grep', 'Glob', 'Write', 'Edit']) assert.ok(backend.includes(keep), keep);
+    }
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 function decide(dir, tool, agent) {
   const r = spawnSync(process.execPath, [GUARD], {
     input: JSON.stringify({ cwd: dir, tool_name: tool, ...(agent ? { agent_type: `eccode:${agent}` } : {}), tool_input: {} }),
