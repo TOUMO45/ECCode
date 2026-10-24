@@ -34,6 +34,8 @@ const ROLES = new Set([...IMPLEMENTERS, 'product-architect', 'architecture-revie
 const RECORD_FILES = /(^|\/)\.eccode\/(events\.jsonl|state\.json|config\.json|evidence\/|improvements\/|memory\/records\/)/;
 // Shell text that refers to the record (bare `.eccode` covers `cd .eccode && …`).
 const RECORD_REF = /events\.jsonl|state\.json|\.eccode\/(config\.json|evidence|improvements|memory)|\.eccode\/?(?=$|[\s"';&|)])/;
+// find's actions that write, delete or run something; without them find only lists.
+const FIND_ACTIONS = /^-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)$/;
 const READ_ONLY = new Set(['cat', 'head', 'tail', 'less', 'more', 'jq', 'grep', 'egrep', 'fgrep', 'rg', 'wc', 'ls', 'stat', 'file', 'diff', 'cmp', 'sha256sum', 'shasum', 'md5sum', 'cd', 'pwd', 'echo', 'printf', 'sort', 'uniq', 'cut', 'tr', 'test', '[', 'true']);
 const GIT_READ = new Set(['diff', 'log', 'show', 'status', 'blame', 'grep', 'ls-files', 'rev-parse', 'cat-file']);
 // Where each kind of role may write under .eccode/ (drafts are shared scratch).
@@ -59,8 +61,9 @@ function shellSkeleton(cmd) {
   return cmd
     // Heredoc bodies are data for the command that reads them, not commands.
     .replace(/<<-?\s*(['"]?)(\w+)\1[^\n]*\n[\s\S]*?\n[ \t]*\2[ \t]*(?=\n|$)/g, '<<$2')
-    // Quoted text can neither redirect nor split commands: keep it as one word.
-    .replace(/'([^']*)'|"([^"]*)"/g, (m, a, b) => (a !== undefined ? a : b).replace(/[;|&<>\s]/g, '_'));
+    // Quoted text can neither redirect nor split commands: keep it as one word
+    // (inside double quotes a backslash escapes the next character, \" too).
+    .replace(/'([^']*)'|"((?:[^"\\]|\\[\s\S])*)"/g, (m, a, b) => (a !== undefined ? a : b).replace(/[;|&<>\s]/g, '_'));
 }
 
 /** Literal paths a shell command writes to: redirections and write-tool arguments. */
@@ -92,6 +95,7 @@ function writesRecord(cmd, { subagent }) {
     const args = words.slice(1);
     if (READ_ONLY.has(name)) continue;
     if (name === 'sed' && !args.some((a) => /^(-i|--in-place)/.test(a))) continue;
+    if (name === 'find' && !args.some((a) => FIND_ACTIONS.test(a))) continue; // find only lists
     if (/^eccode(\.js)?$/.test(name) || (['node', 'npx'].includes(name) && /(^|\/)eccode(\.js)?$/.test(args[0] || ''))) {
       // `evidence run … -- <cmd>` and `improve evaluate … -- <cmd>` execute <cmd>.
       const at = cmd.indexOf(' -- ');

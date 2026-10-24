@@ -254,3 +254,17 @@ test('a repository cannot make ECCode run commands: the embedder comes only from
   assert.strictEqual(res.status, 0, res.stderr);
   assert.match(res.stderr, /memory\.embedCommand in \.eccode\/config\.json is ignored/);
 });
+
+// Mealie pilot, c1: the guard misread a quoted sed expression with escaped
+// quotes, took a garbled word for its target (inside the project), and
+// refused a reviewer's edit of its own scratch file outside the project.
+test('guard: escaped quotes inside double quotes do not hide a write target; a read-only find of the record is allowed', () => {
+  const { dir } = tmpProject();
+  const scratch = path.join(require('os').tmpdir(), 'eccode-scratch-probe.js');
+  const sedCmd = `sed -i "s|\\"/plans/' OR 1=1--\\"|\\"/plans/%27%20OR%201=1--\\"|" ${scratch}; grep -n "OR 1" ${scratch}`;
+  assert.strictEqual(bash(dir, 'security-reviewer', sedCmd), 'allow', 'the target is the scratch file, outside the project');
+  assert.strictEqual(bash(dir, 'security-reviewer', 'sed -i "s|\\"a\\"|b|" src/app.js'), 'deny', 'a reviewer still may not edit project files');
+  assert.strictEqual(bash(dir, 'backend-engineer', `find ${dir}/.eccode -name 'spec*.md' -not -path '*/node_modules/*'`), 'allow');
+  assert.strictEqual(bash(dir, 'backend-engineer', `find ${dir}/.eccode -name '*.json' -delete`), 'deny', 'a find that deletes is a write');
+  assert.strictEqual(bash(dir, 'backend-engineer', `find .eccode -name events.jsonl -exec sh -c 'echo x >> {}' \;`), 'deny');
+});
