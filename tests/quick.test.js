@@ -190,3 +190,20 @@ test('a test run\'s caches are not changes: __pycache__, .pytest_cache, pickled 
   assert.deepStrictEqual(gitChangedFiles(dir, base), ['src/new.js']);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+// Pilot after-fix run of mealie-07-quick: with the frontend detected as a Node
+// sub-project, a backend change was pinned to `cd frontend && pnpm test`.
+test('the detected check is the one for the owned files: a sub-project only when every file is in it', () => {
+  const { pickTestCheck } = require('../lib/quick');
+  const checks = [
+    { id: 'node-test', kind: 'test', available: true, dir: 'frontend', command: 'cd frontend && pnpm test' },
+    { id: 'node-lint', kind: 'lint', available: true, dir: 'frontend', command: 'cd frontend && pnpm lint' },
+    { id: 'pytest', kind: 'test', available: true, command: 'pytest -q' },
+  ];
+  assert.strictEqual(pickTestCheck(checks, ['mealie/schema/recipe/recipe_ingredient.py', 'tests/unit_tests/**']).command, 'pytest -q');
+  assert.strictEqual(pickTestCheck(checks, ['frontend/components/**', 'frontend/lib/x.ts']).command, 'cd frontend && pnpm test');
+  assert.strictEqual(pickTestCheck(checks, ['frontend/**', 'mealie/**']).command, 'pytest -q', 'a change across both: the root project');
+  assert.strictEqual(pickTestCheck(checks, []).command, 'pytest -q', 'no files: the root project');
+  assert.strictEqual(pickTestCheck([checks[0]], ['mealie/x.py']).command, 'cd frontend && pnpm test', 'the only test check is still offered');
+  assert.strictEqual(pickTestCheck([{ ...checks[2], available: false }], ['x.py']), null);
+});

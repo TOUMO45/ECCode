@@ -154,6 +154,8 @@ test('a Node project in a sub-directory is detected, with its own package manage
   assert.strictEqual(byId['node-lint'].command, 'cd frontend && yarn lint');
   assert.strictEqual(byId['node-lint'].script, 'yarn lint:js → eslint .', 'a script that calls another is followed one step');
   assert.strictEqual(byId.tsc.command, 'cd frontend && npx tsc --noEmit');
+  assert.strictEqual(byId['node-test'].dir, 'frontend', 'a sub-project check names its directory');
+  assert.strictEqual(byId.pytest.dir, undefined);
 });
 
 test('python checks use the arguments the project\'s own task runner gives them, and mypy configured in pyproject', () => {
