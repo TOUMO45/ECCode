@@ -159,6 +159,43 @@ Result, 240 runs ([protocol](../bench/protocols/2026-10-24-realbugs.md); [report
   - The two amendments record the defects found while it ran; the first start's five runs are listed and excluded.
   - Agents in several runs wrote scratch scripts into a directory shared by all runs, because the batch's temporary directory sat inside this session's scratchpad. The transcripts show no run reading a file another run wrote (row 70).
 
+### On a real project: the Mealie pilot
+
+Every earlier batch ran on fixtures, benchmark sandboxes or small slices of projects. The pilot ran every capability on one large, living codebase ECCode's authors did not write ([protocol](../bench/protocols/2026-10-24-mealie-pilot.md); [report](../bench/pilot-results/2026-10-24-mealie-pilot.md)):
+- **The subject:** Mealie, a FastAPI, SQLAlchemy and Alembic backend with a Nuxt, TypeScript and Vue frontend. It was pinned at v3.20.0, and the window ran over the 410 commits to v3.27.0.
+- **Part A, model-free.** Index, impact, breaking-change detection, `fix verify`, `mutate`, bug rules, stack detection and the secrets scan were measured against something other than the agent: the project's history, a coverage run, injected faults and FastAPI's route table. They were measured once as registered, then again after the fixes.
+- **Part B.** Ten real changes from Mealie's history, one per track, were run as engine work items in two ten-item chains that share one record each, against a bare agent run twice per item. The quick item was also run with no shell, over MCP.
+- **Part C.** A greenfield companion service, built and then extended through a migration, in two chains.
+
+Results:
+- **Part A.** At the protocol commit, 10 criteria were met, 6 missed and 1 had no verdict.
+  - **Index:** TS/JS imports resolved 0.376 at first; 0.998 after the fixes, with `.vue` files indexed (row 72).
+  - **Breaking-change precision:** 0.087 at first, from data importers taken for migrations, test functions taken for API and moves taken for removals; 1.0 on two detections after the fixes (row 75).
+  - **Bug-rule false positives:** 4.5 per 10,000 changed lines at first; 0 after the fixes (row 79).
+  - **Impact:** recall against coverage was 1.0, and impact now follows tests that reach a module over HTTP (row 73). But for any module the app imports, impact selects 80–90% of the suite. The share-of-suite criterion was met in one sample and missed in the next, depending on how many leaf modules the sample drew (row 74).
+  - {partA-rest}
+- **Parts B and C:** at the protocol commit the engine missed every engine criterion except "no record fails its audit".
+  - **Delivery:** 6 of 20 Mealie items were delivered with a clean audit, against a rule of 80% per chain (row 104). The quick and debug items were delivered in both chains.
+  - **Friction:** 1.79 false refusals per engine item, against a rule of at most 1 (row 105).
+  - **Memory:** no lesson was recorded in either chain (row 106).
+  - **MCP:** the quick item under MCP was delivered in 0 of 2 runs (row 107); a later check outside the batch delivered it with no shell.
+  - **Greenfield:** neither chain delivered all three requests (row 108).
+- **Correctness (no criterion, underpowered by design):** the bare agent passed every hidden check in 17 of 20 Mealie runs, the engine in 13 of 20 (p = 0.12), or 14 of 20 in a clean recheck. The engine's misses were mostly items it abandoned part-way. This is the opposite direction to the hope behind row 59, and it is reported as such.
+- **Cost:** the engine cost 3.9× to 6.6× a bare run per Mealie track, and 10× to 14× on the greenfield service.
+- **What the gates did catch:**
+  - all 21 blocking and major review findings, read against what they cite, describe real gaps, most of them in designs and plans before any code;
+  - one security review demonstrated an SSRF bypass, though the record refused the finding because the first approval had closed the gate (row 103).
+- **What the pilot fixed:** 37 register rows (72–108) record what it found. Of the 50 false refusals, 47 trace to defects now fixed, each with a test that failed first:
+  - the integrity window erasing other agents' work;
+  - role agents without their MCP tools;
+  - guard misreads;
+  - approved artifacts that reviews could not cite;
+  - rework that stranded a work item;
+  - a gate closed by its first reviewer;
+  - a failed reproduction refused as evidence.
+  The other three are a named limit (row 91). Four items stopped on the benchmark's own tool list or environment.
+- **What it does not show:** whether the fixed engine now meets the criteria. That needs the same protocol run again at the fix commit.
+
 ## Verified live, not only in unit tests
 
 - A headless Claude session with the hooks installed through `eccode install` was told to append to `events.jsonl` and to record a risk as `--actor user`. The installed guard **denied the record write** and **held the user-actor command for human confirmation**; the record afterwards held only its init event and audited clean.

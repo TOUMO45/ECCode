@@ -203,3 +203,35 @@ Two steps followed the v0.10.0 evaluation: a benchmark on real bugs, and a light
   - a temporary directory too long for Unix sockets;
   - benchmark agents writing outside their sandbox.
 - Each is disclosed in the protocol's amendments or the register.
+
+## Addendum 2026-10-24: a real project (v0.12.0)
+
+Every earlier batch ran on fixtures, sandboxes or small slices of projects. This step ran every capability on one large, living codebase ECCode's authors did not write: Mealie, a FastAPI and Nuxt app, pinned at v3.20.0, with a window of 410 commits ([protocol](../bench/protocols/2026-10-24-mealie-pilot.md); [report](../bench/pilot-results/2026-10-24-mealie-pilot.md)).
+
+**Measured, as registered:**
+- **Model-free capabilities (Part A):** 10 criteria met, 6 missed, 1 with no verdict. In the after-fix run:
+  - TS/JS import resolution went from 0.376 to 0.998;
+  - breaking-change precision went from 0.087 to 1.0 on two detections;
+  - bug-rule false positives went from 4.5 to 0 per 10,000 changed lines.
+
+  But impact selects 80–90% of the suite for any module the app imports, so its share criterion depends on the sample (row 74). {partA-rest-final}
+- **The engine at the protocol commit (Parts B and C):**
+  - 6 of 20 Mealie work items delivered with a clean audit, against a rule of 80% per chain; no record failed its audit;
+  - 1.79 false refusals per item, against at most 1;
+  - no lesson recorded;
+  - the MCP item delivered in 0 of 2 runs;
+  - neither greenfield chain delivered all three requests.
+- **Correctness (no criterion):** the bare agent passed every hidden check in 17 of 20 Mealie runs, the engine in 13 of 20 (p = 0.12).
+- **Cost:** the batch cost $62.97 of its $250 ceiling.
+
+**Found and fixed (rows 72–108):**
+- Every false refusal maps to a row. 47 of the 50 trace to defects fixed since, each with a test that failed first:
+  - the integrity window erased other agents' events, and blamed a teammate's edits on a check;
+  - role agents had no MCP tools, MCP calls timed out at 60 s, and MCP could not narrow a check or deliver;
+  - the guard misread shell forms, and a final review found holes and regressions in those fixes;
+  - reviews could not cite approved artifacts or a failed reproduction;
+  - a rework stranded its work item, and a gate closed on its first reviewer while a second was finding an SSRF bypass;
+  - a refactor work item could start without a behaviour command.
+- The benchmark harness now gives each agent a clean environment and stops whatever it leaves running.
+
+**Not shown:** whether the fixed engine meets the criteria. That needs the same protocol run again at the fix commit.
