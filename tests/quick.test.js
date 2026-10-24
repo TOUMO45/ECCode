@@ -214,5 +214,6 @@ test('every orchestrating playbook says to wait for a dispatched agent before en
   for (const f of ['commands/quick.md', 'commands/debug.md', 'skills/orchestrate/SKILL.md']) {
     const text = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
     assert.match(text, /never end your turn while a dispatched agent is still working/i, f);
+    assert.match(text, /run_in_background: false/, `${f}: dispatch in the foreground (the Agent tool starts agents in the background by default in headless sessions)`);
   }
 });

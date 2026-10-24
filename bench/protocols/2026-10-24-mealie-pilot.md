@@ -203,7 +203,13 @@ Found by the development runs at v3.18.0 or by the harness's tests, before any m
 - Whether `CLAUDE_EFFORT` changes a headless session's behaviour was not tested.
 - In the after-fix checks of the MCP item (outside the batch), the orchestrator ended its turn while a background engineer was working. The session then stopped the engineer.
 
-The harness now strips these settings too, so later runs start as plain headless sessions. The playbooks now say never to end the turn while a dispatched agent is working (`tests/quick.test.js`).
+The harness now strips these settings too, so later runs start as plain headless sessions. Stripping them did not change the default: in a third after-fix check, the subagent again started in the background. In this version of Claude Code the Agent tool starts agents in the background unless the call passes `run_in_background: false`. The playbooks now say to dispatch in the foreground and never to end the turn while a dispatched agent is working (`tests/quick.test.js`).
+
+That third check also lost its record. The stopped engineer's test run kept writing into the sandbox, so removing the sandbox failed (ENOTEMPTY). The harness now:
+- runs each agent in its own process group and stops what it left running;
+- reports a removal failure instead of losing the run (`tests/bench.test.js`).
+
+The registered batch runs with the earlier harness, so a removal failure there would end its process.
 
 **Defects found in ECCode so far.** Each is fixed with a failing-first test in the main tree. None changes this batch, which runs from the pinned worktree:
 - **MCP item (b4):** in the no-shell profile, role agents had no MCP tools, so they could not claim a task.
