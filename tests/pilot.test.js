@@ -351,3 +351,24 @@ test('replay records skips with reasons', () => {
   assert.deepStrictEqual(out.results, ['A', 'C']);
   assert.deepStrictEqual(out.skipped, [{ id: 'b', reason: 'merge commit' }]);
 });
+
+test('testFilesFromContexts strips test ids and phases', () => {
+  const { testFilesFromContexts } = require('../bench/pilot/mealie/a2-impact');
+  assert.deepStrictEqual([...testFilesFromContexts(['tests/x/test_y.py::test_z|run', 'tests/x/test_y.py::TestA::test_b[1]', 'tests/unit_tests/test_q.py::test_r', ''])].sort(), ['tests/unit_tests/test_q.py', 'tests/x/test_y.py']);
+});
+
+test('a2 strata follow the spec', () => {
+  const { stratumOf } = require('../bench/pilot/mealie/a2-impact');
+  assert.deepStrictEqual(['mealie/routes/a.py', 'mealie/services/b/c.py', 'mealie/repos/d.py', 'mealie/db/models/e.py', 'mealie/schema/f.py', 'mealie/core/g.py', 'mealie/pkgs/h.py'].map(stratumOf), ['routes', 'services', 'repos', 'db/models', 'schema', 'core', 'other']);
+});
+
+test('the behavioural fault makes every function and method of the module raise, and the module still imports', (t) => {
+  const { faultSource } = require('../bench/pilot/mealie/a2-impact');
+  const py = ['python3', 'python'].find((p) => require('child_process').spawnSync(p, ['--version']).status === 0);
+  if (!py) return t.skip('no python on PATH');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-fault-'));
+  fs.writeFileSync(path.join(dir, 'm.py'), faultSource('X = 1\n\ndef f():\n    return 2\n\nclass C:\n    def g(self):\n        return 3\n\n    @property\n    def p(self):\n        return 4\n\n    @classmethod\n    def k(cls):\n        return 5\n'));
+  const probe = 'import m\nassert m.X == 1\nfor call in (m.f, lambda: m.C().g(), lambda: m.C().p, lambda: m.C.k()):\n    try:\n        call()\n    except RuntimeError as e:\n        assert "eccode-pilot fault" in str(e)\n    else:\n        raise SystemExit("did not raise")\nprint("ok")\n';
+  const out = execFileSync(py, ['-c', probe], { cwd: dir, encoding: 'utf8' });
+  assert.strictEqual(out.trim(), 'ok');
+});
