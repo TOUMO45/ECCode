@@ -13,7 +13,7 @@ You coordinate; agents do the work. Never edit project files or act as another r
 
 If the owner reports that the guard refused a file outside the task's ownership, and the change really needs that file, correct the ownership instead of stopping. Release the task with `eccode task fail change --actor orchestrator --reason "<why>"`. Widen it with `eccode task rescope change --files "<globs>" --actor orchestrator --reason "<why>"`. Then dispatch the owner again; its new claim starts from the current files.
 
-1. **Set up.** Run `eccode quick "<the change, one line>" --actor orchestrator`. Add `--owner frontend-engineer` for UI work, `--files <globs>` to narrow ownership, `--command "<cmd>"` when no test command is detected. The printed path is the plan.
+1. **Set up.** Run `eccode quick "<the change, one line>" --actor orchestrator`. Add `--owner frontend-engineer` for UI work, `--files <globs>` to narrow ownership, and `--command "<cmd>"` when no test command is detected, or when the detected one is the whole suite of a large repository that is slow or needs a network: then pin the narrowest test command that covers the change (the request or the README says how tests run). The pinned command must pass for the task to complete. The printed path is the plan.
 2. **Implement.** Dispatch the owner subagent (usually `backend-engineer`) with the request, the CLI command, and step 1 of the printed path. It must:
    - claim `change`, make the change with a test, and run the exact verification command through `eccode evidence run`;
    - write `eccode handoff draft --task change --actor <owner> --out .eccode/drafts/handoff-change.json`, fill in its TODO fields, and complete the task;
