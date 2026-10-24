@@ -446,3 +446,27 @@ test('vue: single-file components are indexed through their script blocks; impac
   assert.deepStrictEqual(index.files['frontend/app/components/Price.test.ts'].imports, ['frontend/app/components/Price.vue']);
   assert.deepStrictEqual(cb.impact(dir, ['frontend/app/lib/money.ts'], { index }).tests, ['frontend/app/components/Price.test.ts']);
 });
+
+test('python: tests reach the route modules that serve the URLs they call (literals, helper constants and helper functions)', () => {
+  const dir = repo({
+    'app/__init__.py': '',
+    'app/services/__init__.py': '',
+    'app/services/food_service.py': 'def find(item_id):\n    return item_id\n',
+    'app/routes/__init__.py': 'from . import foods, units\n',
+    'app/routes/foods.py': 'from fastapi import APIRouter\nfrom app.services.food_service import find\n\nrouter = APIRouter(prefix="/foods", tags=["foods"])\n\n\n@router.get("")\ndef list_foods():\n    return []\n\n\n@router.get("/{item_id}")\ndef get_food(item_id: int):\n    return find(item_id)\n',
+    'app/routes/units.py': 'from fastapi import APIRouter\n\nrouter = APIRouter(prefix="/units")\n\n\n@router.get("")\ndef list_units():\n    return []\n',
+    'app/main.py': 'from fastapi import FastAPI\nfrom app.routes import foods, units\n\napp = FastAPI()\n',
+    'tests/__init__.py': '',
+    'tests/conftest.py': 'from app.main import app\n',
+    'tests/utils/__init__.py': '',
+    'tests/utils/api_routes.py': 'prefix = "/api"\n\nfoods = "/api/foods"\nunits = "/api/units"\n\n\ndef foods_item_id(item_id):\n    """`/api/foods/{item_id}`"""\n    return f"{prefix}/foods/{item_id}"\n',
+    'tests/test_foods.py': 'from tests.utils import api_routes\n\n\ndef test_get(api_client):\n    api_client.get(api_routes.foods_item_id(1))\n',
+    'tests/test_units.py': 'from tests.utils.api_routes import units\n\n\ndef test_list(api_client):\n    api_client.get(units)\n',
+    'tests/test_literal.py': 'def test_list(api_client):\n    api_client.get("/api/foods")\n',
+    'tests/test_other.py': 'def test_math():\n    assert 1 + 1 == 2\n',
+  });
+  const index = cb.indexProject(dir);
+  assert.deepStrictEqual(index.files['app/routes/foods.py'].routes, ['/foods', '/foods/{item_id}']);
+  assert.deepStrictEqual(cb.impact(dir, ['app/services/food_service.py'], { index }).tests.sort(), ['tests/test_foods.py', 'tests/test_literal.py']);
+  assert.deepStrictEqual(cb.impact(dir, ['app/routes/units.py'], { index }).tests, ['tests/test_units.py']);
+});
