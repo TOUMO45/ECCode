@@ -239,7 +239,12 @@ test('the detected check narrows to named test paths only', () => {
   assert.strictEqual(narrowCheck(dir, py, ['tests/unit/test_food.py', 'tests/unit/test_food.py::test_x[a-1]']), 'pytest -q tests/unit/test_food.py tests/unit/test_food.py::test_x[a-1]');
   assert.strictEqual(narrowCheck(dir, py, ['tests/unit']), 'pytest -q tests/unit', 'a directory');
   const npm = { id: 'node-test', kind: 'test', available: true, command: 'npm test', script: 'node --test' };
-  assert.strictEqual(narrowCheck(dir, npm, ['tests/unit']), 'npm test -- tests/unit');
+  write(dir, 'tests/unit/a.test.js', '');
+  assert.strictEqual(narrowCheck(dir, npm, ['tests/unit/a.test.js']), 'npm test -- tests/unit/a.test.js');
+  // Pilot: `node --test <directory>` fails on Node 21 and later ("Cannot find
+  // module"), so a check narrowed to a directory could never pass.
+  expectCode(() => narrowCheck(dir, npm, ['tests/unit']), 'INVALID_INPUT', 'node --test takes files, not a directory');
+  expectCode(() => narrowCheck(dir, { ...npm, command: 'node --test', script: undefined }, ['tests/unit']), 'INVALID_INPUT');
   const front = { id: 'node-test', kind: 'test', available: true, dir: 'frontend', command: 'cd frontend && pnpm test', script: 'vitest' };
   assert.strictEqual(narrowCheck(dir, front, ['frontend/lib/a.test.ts']), 'cd frontend && pnpm test lib/a.test.ts', 'paths relative to the sub-project');
   for (const bad of ['tests/unit; rm -rf /', '$(id)', 'tests/unit && x', '"tests/unit"', '../outside.py', '/etc/passwd', 'tests/missing.py', 'tests/unit|tee x']) {
