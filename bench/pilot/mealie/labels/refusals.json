@@ -739,6 +739,110 @@
   "label": "agent-error",
   "reason": "the review file did not follow the review schema (\"approved\" for approve)"
  },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308.jsonl:1482": {
+  "label": "correct",
+  "reason": "ECCode's guard held the command for a human because its eccode identity was built with shell expansion (by design: identity is read from the command text, row 23); a headless run has no human, so the ask became a refusal"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308.jsonl:1693": {
+  "label": "correct",
+  "reason": "the main session is the orchestrator and may not act as the security-reviewer (by design: roles are separate agents)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a13b2efaa304b1ba5.jsonl:44": {
+  "label": "false",
+  "reason": "the command never called the eccode CLI; the guard read the word eccode in a path (.claude/eccode, a scratch directory named after the sandbox) next to a $ as an eccode call built by expansion (fixed after the batch)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a13b2efaa304b1ba5.jsonl:58": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `uv run ruff format mealie/core/security/providers/openid_provider.py mealie/alem`"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a13b2efaa304b1ba5.jsonl:63": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `uv run ruff format mealie/core/security/providers/openid_provider.py mealie/alem`"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a13b2efaa304b1ba5.jsonl:72": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `uv run ruff check mealie/core/security/providers/openid_provider.py`"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a1d2455601eb0bf9c.jsonl:12": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `node /tmp/mp/eccode-chain-engine-7Um6dE/.claude/eccode/bin/eccode.js task claim `"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a1d2455601eb0bf9c.jsonl:13": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `node /tmp/mp/eccode-chain-engine-7Um6dE/.claude/eccode/bin/eccode.js task list -`"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a3298cf9e7d778c7d.jsonl:37": {
+  "label": "false",
+  "reason": "the plan reviewer cited the design spec the previous gate approved, to show the plan covers it; reviews could cite only the submission (fixed after the batch: approved artifacts are citable)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a3e42175266addffe.jsonl:12": {
+  "label": "false",
+  "reason": "the reworked task could not be claimed because its phase gate stayed approved after the reset the playbook prescribes (fixed after the batch: a reset reopens the phase and later gates)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a4f9868b762fcaefc.jsonl:11": {
+  "label": "false",
+  "reason": "the security reviewer's blocking finding (an SSRF bypass) was refused because the technical reviewer's approval had already closed the gate both were dispatched to (fixed after the batch: a gate's named reviewers must each approve)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a57e88de189c8da7c.jsonl:114": {
+  "label": "false",
+  "reason": "the cited evidence runs existed (their logs are in the record) but their events were erased when another check's window restored the record (fixed after the batch: the window keeps other agents' writes)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a57e88de189c8da7c.jsonl:20": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:subcommandResults denial is the benchmark's --allowedTools list: `ls .claude/skills 2>/dev/null | head -30; ls .claude/eccode 2>/dev/null | head; `"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a57e88de189c8da7c.jsonl:31": {
+  "label": "agent-error",
+  "reason": "evidence run without its required --label"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a57e88de189c8da7c.jsonl:94": {
+  "label": "false",
+  "reason": "the cited evidence runs existed (their logs are in the record) but their events were erased when another check's window restored the record (fixed after the batch: the window keeps other agents' writes)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-a58892b88711d6d1f.jsonl:26": {
+  "label": "agent-error",
+  "reason": "the review file did not follow the review schema (a resolved finding needs a resolution; notes is not a field)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-aa374cffaa0d87dbf.jsonl:29": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `grep -o '.\\{0,400\\}external_avatar_hash.\\{0,600\\}' .eccode/state.json | head -c `"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-aa374cffaa0d87dbf.jsonl:49": {
+  "label": "agent-error",
+  "reason": "the review file did not follow the review schema (\"request_changes\" for changes_requested)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-aa374cffaa0d87dbf.jsonl:59": {
+  "label": "correct",
+  "reason": "a review may cite only what is under review or recorded evidence; the design reviewer cited a source file outside the submission (an evidence file would have pinned it)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-aa741fce4c95ff799.jsonl:143": {
+  "label": "false",
+  "reason": "the cited runs passed (tests and alembic heads/upgrade/downgrade) and failed only on the integrity window, which counted another agent's writes during them (fixed after the batch: the window keeps other agents' writes and blames only the command)"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-aa741fce4c95ff799.jsonl:37": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `ls tests/unit_tests/core/security tests/unit_tests/core/security/providers; uv r`"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-aa741fce4c95ff799.jsonl:49": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `git status --short --ignored | grep -v eccode | head -20; env | grep -E \"DATA_DI`"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-aa741fce4c95ff799.jsonl:71": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `git worktree add --detach /tmp/mp/claude-0/-tmp-mp-eccode-chain-engine-7Um6dE/cb`"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-adbb3641395319173.jsonl:22": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `uv run ruff check mealie tests/unit_tests/core/security/providers`"
+ },
+ "b2/eccode-chain-engine-7Um6dE-6-mealie-06-migration/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-adbb3641395319173.jsonl:24": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `uv run alembic heads`"
+ },
+ "b2/eccode-chain-engine-7Um6dE-7-mealie-07-quick/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-af3f832077e152371.jsonl:44": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `timeout 110 bash -c 'until [ -s /tmp/mp/claude-0/-tmp-mp-eccode-chain-engine-7Um`"
+ },
  "b4/eccode-bench-mealie-07-quick-engine-AE3Txt/cb0c0fda-acc1-5e47-bc23-acb4451df308/subagents/agent-aeed5cad1de1c7ba6.jsonl:26": {
   "label": "false",
   "reason": "the guard refused the edit because no task was claimed, and the engineer could not claim one: ECCode's no-shell install gave role agents no MCP tools (fixed after the batch, register row)"
