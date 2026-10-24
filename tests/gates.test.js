@@ -141,6 +141,25 @@ test('repeated rejections escalate; only the user can reopen', () => {
 
 // Mealie pilot, c1: design and plan reviewers cited the approved architecture
 // brief and design spec to show the work traces back to them, and were refused.
+// Mealie pilot (b2 item 5): a reviewer cited fix verify's pre-fix run, which
+// failed as a reproduction should, to show the test fails before the fix; the
+// gate refused it as a failed check. A failed reproduction supports a met
+// criterion; a failed check, or a run the integrity window failed, does not.
+test('a failed reproduction run supports a met criterion; a failed check does not', () => {
+  const evidence = require('../lib/evidence');
+  const ctx = tmpProject();
+  submitArch(ctx);
+  const run = (purpose, command) => `ev:${evidence.runCommand(ctx.store, 'orchestrator', { label: purpose, purpose, command }).id}`;
+  const check = run('check', 'node -e "process.exit(1)"');
+  const tampered = run('reproduction', `node -e "require('fs').appendFileSync('.eccode/events.jsonl', 'x\\\\n'); process.exit(1)"`);
+  const repro = run('reproduction', 'node -e "process.exit(1)"');
+  for (const ref of [check, tampered]) {
+    expectCode(() => gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md', ref]])), 'REVIEW_REJECTED');
+  }
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md', repro]]));
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'approved');
+});
+
 test('a review may cite what earlier gates approved, not other files', () => {
   const ctx = tmpProject();
   const { DESIGN_MD } = require('./helpers');
