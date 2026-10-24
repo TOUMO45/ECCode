@@ -226,3 +226,27 @@ test('plans pin each task to a check that can pass once that task alone is done'
     assert.match(text, /can pass once that task alone is done/i, f);
   }
 });
+
+// Pilot after-fix checks of the MCP item: the whole Mealie suite, the only
+// command MCP could pin, outran evidence_run's limit. MCP may narrow the
+// detected check to named test paths, never to a free-form command.
+test('the detected check narrows to named test paths only', () => {
+  const { narrowCheck } = require('../lib/quick');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-narrow-'));
+  write(dir, 'tests/unit/test_food.py', 'def test_x():\n    pass\n');
+  write(dir, 'frontend/lib/a.test.ts', '');
+  const py = { id: 'pytest', kind: 'test', available: true, command: 'pytest -q' };
+  assert.strictEqual(narrowCheck(dir, py, ['tests/unit/test_food.py', 'tests/unit/test_food.py::test_x[a-1]']), 'pytest -q tests/unit/test_food.py tests/unit/test_food.py::test_x[a-1]');
+  assert.strictEqual(narrowCheck(dir, py, ['tests/unit']), 'pytest -q tests/unit', 'a directory');
+  const npm = { id: 'node-test', kind: 'test', available: true, command: 'npm test', script: 'node --test' };
+  assert.strictEqual(narrowCheck(dir, npm, ['tests/unit']), 'npm test -- tests/unit');
+  const front = { id: 'node-test', kind: 'test', available: true, dir: 'frontend', command: 'cd frontend && pnpm test', script: 'vitest' };
+  assert.strictEqual(narrowCheck(dir, front, ['frontend/lib/a.test.ts']), 'cd frontend && pnpm test lib/a.test.ts', 'paths relative to the sub-project');
+  for (const bad of ['tests/unit; rm -rf /', '$(id)', 'tests/unit && x', '"tests/unit"', '../outside.py', '/etc/passwd', 'tests/missing.py', 'tests/unit|tee x']) {
+    expectCode(() => narrowCheck(dir, py, [bad]), 'INVALID_INPUT');
+  }
+  expectCode(() => narrowCheck(dir, front, ['tests/unit']), 'INVALID_INPUT', 'outside the sub-project');
+  expectCode(() => narrowCheck(dir, { ...npm, script: 'make check' }, ['tests/unit']), 'INVALID_INPUT', 'a script that may not take paths');
+  assert.match(fs.readFileSync(path.join(__dirname, '..', 'commands', 'quick.md'), 'utf8'), /pass those test paths as `tests`/, 'the playbook says how to narrow over MCP');
+  fs.rmSync(dir, { recursive: true, force: true });
+});

@@ -216,3 +216,27 @@ test('mcp: quick takes no free-form command (detected test check only); handoff_
     eng.close();
   }
 });
+
+test('mcp: quick and task_rescope narrow the detected check to named test paths, never to a command', async () => {
+  const ctx = tmpProject();
+  write(ctx.dir, 'package.json', JSON.stringify({ name: 'shop', scripts: { test: 'node --test' } }));
+  write(ctx.dir, 'src/a.js', 'module.exports = 1;\n');
+  write(ctx.dir, 'tests/a.test.js', "require('node:test')('a', () => {});\n");
+  require('../lib/works').abandonWork(ctx.store, 'user', 'superseded by a quick change');
+  const orch = client(ctx.dir, 'orchestrator');
+  try {
+    await orch.request('initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 't', version: '0' } });
+    const bad = await orch.call('quick', { request: 'Add a bulk discount', tests: ['tests/a.test.js; touch pwned'] });
+    assert.strictEqual(bad.isError, true, 'shell syntax is not a test path');
+    assert.ok(!fs.existsSync(path.join(ctx.dir, 'pwned')));
+    const q = await orch.call('quick', { request: 'Add a bulk discount', files: 'src/**,tests/**', tests: ['tests/a.test.js'] });
+    assert.strictEqual(q.isError, false, q.text);
+    assert.strictEqual(q.json().task.verification.command, 'npm test -- tests/a.test.js');
+    const rs = await orch.call('task_rescope', { task: 'change', tests: ['tests'], reason: 'the whole tests directory covers the change' });
+    assert.strictEqual(rs.isError, false, rs.text);
+    assert.strictEqual(ctx.store.state().tasks.change.verification.command, 'npm test -- tests');
+    assert.strictEqual((await orch.call('task_rescope', { task: 'change', tests: ['$(id)'], reason: 'trying a command' })).isError, true);
+  } finally {
+    orch.close();
+  }
+});
