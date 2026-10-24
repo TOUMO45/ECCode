@@ -12,7 +12,7 @@
 // The engine's verdict must equal it. This regex oracle cannot judge every
 // reason a test fails, so each disagreement is labelled by hand afterwards
 // (labels/fixverify.json: engine-wrong or oracle-wrong, with the reason).
-// usage: node a4-fixverify.js <range> [--jobs 1]
+// usage: node a4-fixverify.js <range>
 const fs = require('fs');
 const os = require('os');
 const path = require('path');

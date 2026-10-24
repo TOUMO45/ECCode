@@ -589,3 +589,35 @@ test('report: the stack row requires both the Python and the Node stacks', () =>
   assert.strictEqual(row(['python', 'node']).met, true);
   assert.strictEqual(row(['python']).result, 'python');
 });
+
+test('analyse: gate order of the first work item, and the greenfield order rule', () => {
+  const { gateOrder, gatesInOrder } = require('../bench/pilot/analyse');
+  const ap = (gate, decision = 'approve') => ({ type: 'review.recorded', data: { gate, review: { decision } } });
+  const events = [{ type: 'project.initialized', data: {} }, ap('architecture', 'request_changes'), ap('architecture'), ap('design'), ap('plan'), ap('phase:api'), ap('phase:api'), ap('phase:db'), ap('verification'), { type: 'work.started', data: {} }, ap('design'), ap('phase:next-item')];
+  const order = gateOrder(events);
+  assert.deepStrictEqual(order, ['architecture', 'design', 'plan', 'phase:api', 'phase:db', 'verification'], 'first approvals only, first work item only');
+  assert.strictEqual(gatesInOrder(order), true);
+  assert.strictEqual(gatesInOrder(['design', 'architecture', 'plan', 'phase:a', 'verification']), false);
+  assert.strictEqual(gatesInOrder(['architecture', 'design', 'plan', 'verification']), false, 'at least one phase');
+});
+
+test('analyse: migration files a patch adds, modifies or deletes', () => {
+  const { migrationChange } = require('../bench/pilot/analyse');
+  const patch = [
+    'diff --git a/migrations/003_households.sql b/migrations/003_households.sql\nnew file mode 100644\n--- /dev/null\n+++ b/migrations/003_households.sql\n@@ -0,0 +1 @@\n+CREATE TABLE h (id INTEGER);\n',
+    'diff --git a/migrations/001_init.sql b/migrations/001_init.sql\nindex 1..2 100644\n--- a/migrations/001_init.sql\n+++ b/migrations/001_init.sql\n@@ -1 +1 @@\n-a\n+b\n',
+    'diff --git a/db/migration/002.sql b/db/migration/002.sql\ndeleted file mode 100644\n',
+    'diff --git a/src/server.js b/src/server.js\nnew file mode 100644\n',
+  ].join('');
+  assert.deepStrictEqual(migrationChange(patch), { added: ['migrations/003_households.sql'], modified: ['migrations/001_init.sql'], deleted: ['db/migration/002.sql'] });
+});
+
+test('analyse: delivered share, tool-result text and lessons surfaced in a later item', () => {
+  const { deliveredShare, toolResultText, lessonsSurfaced } = require('../bench/pilot/analyse');
+  assert.strictEqual(deliveredShare([{ engine: { delivered: true, auditOk: true } }, { engine: { delivered: true, auditOk: false } }, { engine: { delivered: false, auditOk: true } }, {}]), 0.25);
+  const jsonl = [{ message: { content: [{ type: 'tool_result', content: 'lesson L-1: run the migrations first' }] } }, { message: { content: [{ type: 'text', text: 'L-2 in my own words', content: 'L-2 typed' }] } }, { message: { content: [{ type: 'tool_result', content: [{ type: 'text', text: 'brief' }] }] } }].map((x) => JSON.stringify(x)).join('\n');
+  assert.strictEqual(toolResultText(jsonl), 'lesson L-1: run the migrations first\nbrief', 'tool results only, not the agent\'s own text');
+  const r = lessonsSurfaced([{ lessons: [], toolText: '' }, { lessons: ['L-1'], toolText: 'L-1 here, in the item that recorded it' }, { lessons: ['L-1', 'L-2'], toolText: 'nothing' }, { lessons: ['L-1', 'L-2'], toolText: 'see L-1' }]);
+  assert.strictEqual(r.recorded, 2);
+  assert.deepStrictEqual(r.surfaced, [{ lesson: 'L-1', recordedIn: 1, surfacedIn: 3 }], 'only a later item counts');
+});
