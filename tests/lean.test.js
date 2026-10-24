@@ -272,3 +272,9 @@ test('the final handoff carries the lean record and the debt ledger', () => {
   const json = JSON.parse(fs.readFileSync(path.join(dir, '.eccode/delivery/final-handoff.json'), 'utf8'));
   assert.deepStrictEqual([json.lean.length, json.debt.total], [3, 1]);
 });
+
+test('a migrations/ package of ordinary modules is code; versioned migration files are generated', () => {
+  const lean = require('../lib/lean');
+  for (const f of ['app/migrations/0001_initial.py', 'db/migrations/20240101_add.sql', 'migrations/V2__users.sql']) assert.ok(lean.GENERATED.test(f), `${f} is generated`);
+  for (const f of ['mealie/services/migrations/paprika.py', 'mealie/services/migrations/utils/migration_helpers.py', 'app/migrations/__init__.py']) assert.ok(!lean.GENERATED.test(f), `${f} is code`);
+});

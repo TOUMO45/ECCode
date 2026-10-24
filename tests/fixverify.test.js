@@ -173,3 +173,20 @@ test('an error raised in the fixed code counts when pytest prints its frame as a
   assert.match(fixverify.inconclusiveReason(out.replace(/controller_labels/g, 'controller_tags'), ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'a frame of another file is not the fixed code');
   assert.match(fixverify.inconclusiveReason(out.replace('mealie/routes/groups/controller_labels.py:57', 'other/mealie/routes/groups/controller_labels.py.bak:57'), ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'a longer path that merely contains the file is not it');
 });
+
+test('an error that names a definition of the fixed code counts, though a library raised it', () => {
+  // Found by the Mealie pilot's A4: pydantic raised the bug's ValidationError
+  // for a model the fix changes; the traceback has no frame in the fixed file.
+  const ctx = project();
+  write(ctx.dir, 'mealie/schema/recipe_ingredient.py', 'class IngredientFood:\n    pass\n\n\ndef get(x):\n    return x\n');
+  const sources = ['mealie/schema/recipe_ingredient.py'];
+  const out = [
+    'tests/unit_tests/schema_tests/test_ingredient_food.py:48: in test_food_with_null_description_validates',
+    '    food = IngredientFood.model_validate(_food_row(None))',
+    'E   pydantic_core._pydantic_core.ValidationError: 1 validation error for IngredientFood',
+    'E   description',
+  ].join('\n');
+  assert.strictEqual(fixverify.inconclusiveReason(out, ctx.dir, ctx.base, sources, ''), null);
+  assert.match(fixverify.inconclusiveReason(out.replace(/IngredientFood/g, 'RecipeTool'), ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'another class is not the fixed code');
+  assert.match(fixverify.inconclusiveReason('E   KeyError: get', ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'a short common name is not evidence');
+});
