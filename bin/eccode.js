@@ -125,7 +125,8 @@ Benchmark
         [--engine-profile guard|no-shell|sandbox] [--engine-agents inherit|as-shipped] [--timeout <s>] [--out <file>]
         [--chain]: one sandbox and record across the suite's items in order (task.order), synced to each
         item's source between them; --runs counts chains. [--max-cost <usd>]: stop before the next run once
-        the runs of this process have reported that much
+        the runs of this process have reported that much. [--transcripts <dir>]: copy each run's Claude Code
+        session files there (keep it outside the repository: they quote the code the agent read)
         [--save <runs.jsonl>] [--keep]
   bench report <runs.jsonl> --agent "<cmd>" [--out <file>]   Rebuild a report from runs saved with --save
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
@@ -274,6 +275,7 @@ function main(argv) {
       engineProfile: flags['engine-profile'] || 'guard',
       engineAgents: flags['engine-agents'] || 'inherit',
       maxCostUsd,
+      transcripts: flags.transcripts ? path.resolve(flags.transcripts) : null,
       onProgress: (m) => process.stderr.write(`bench: ${m}\n`),
     };
     let records;

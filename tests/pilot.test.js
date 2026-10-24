@@ -286,3 +286,36 @@ test('bench --chain saves records, a chain-summary line per chain, and report sk
   assert.deepStrictEqual(lines.filter((l) => !l.type).map((l) => l.chainRun), [1, 1, 1, 2, 2, 2]);
   assert.strictEqual(bench.loadRuns(fs.readFileSync(save, 'utf8')).length, 6, 'loadRuns keeps run records only');
 }));
+
+test('transcriptDir encodes like Claude Code', () => {
+  assert.strictEqual(bench.transcriptDir('/tmp/a.b/c'), path.join(os.homedir(), '.claude', 'projects', '-tmp-a-b-c'));
+});
+
+test('extractRefusals finds the refusals in the fixture and nothing else', () => {
+  const { extractRefusals } = require('../bench/pilot/refusals');
+  const text = fs.readFileSync(path.join(__dirname, 'bench-reference', 'transcripts', 'refusals.jsonl'), 'utf8');
+  const found = extractRefusals(text, 'fixture');
+  assert.deepStrictEqual(found.map((r) => [r.kind, r.code]), [['eccode', 'TRACK_RULE'], ['eccode', 'NOT_OWNER'], ['denial', 'config:bashMiss:too-complex'], ['denial', 'hook:deny']]);
+  assert.strictEqual(found[0].command, 'node .claude/eccode/bin/eccode.js gate submit phase:fix --actor backend-engineer');
+  assert.match(found[1].message, /owned by backend-engineer/);
+  assert.match(found[0].id, /^fixture:\d+$/);
+});
+
+test('copyTranscripts copies the session files written since the run started', () => {
+  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tr-'));
+  const dir = bench.transcriptDir(sandbox);
+  fs.mkdirSync(path.join(dir, 's1', 'subagents'), { recursive: true });
+  const old = path.join(dir, 'old.jsonl');
+  fs.writeFileSync(old, '{}\n');
+  fs.utimesSync(old, new Date(Date.now() - 60000), new Date(Date.now() - 60000));
+  const since = Date.now() - 1000;
+  fs.writeFileSync(path.join(dir, 's1.jsonl'), '{}\n');
+  fs.writeFileSync(path.join(dir, 's1', 'subagents', 'agent-a.jsonl'), '{}\n');
+  const dest = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tr-dest-'));
+  try {
+    const copied = bench.copyTranscripts(sandbox, dest, since).map((f) => path.relative(dest, f)).sort();
+    assert.deepStrictEqual(copied, ['s1.jsonl', path.join('s1', 'subagents', 'agent-a.jsonl')].sort(), 'the old session file is left out');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
