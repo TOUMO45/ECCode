@@ -140,7 +140,7 @@ Result, 240 runs ([protocol](../bench/protocols/2026-10-24-realbugs.md); [report
 
 - **Real bugs, Sonnet:** passing both hidden checks: 57/60 without, 57/60 with the method text, 56/60 on the debug track and 57/60 on the quick track (stratified tests, Holm-corrected: p = 1.0 for both primary comparisons); median cost per run $0.13, $0.19, $0.44 and $0.49.
 - **No variant changed correctness.** The bare model fixed every one of the twenty bugs: its fix passed the bug check in 60/60 runs.
-  - The failures shared by three variants are tornado-13's regression check, which no run could pass in this batch. A Unix-socket test needed a shorter temporary directory than the batch used (the protocol's second amendment).
+  - Every variant's three failures are tornado-13: all twelve of its runs failed the regression check, which no run could pass in this batch. A Unix-socket test needed a shorter temporary directory than the batch used (the protocol's second amendment).
   - The debug track's extra failure is tornado-15. The fix was correct and proven, but it also reworded a log message that the original test matches. My bug report's paraphrase of that message invited the rewording.
   - Scored as the second amendment registered (tornado-13 by its bug check), the rates are 60/60, 60/60, 59/60 and 60/60.
   - Register row 59 stays open. These are public bugs that the model may have seen fixed, and a bare agent left no room to improve.
