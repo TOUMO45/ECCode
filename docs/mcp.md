@@ -29,7 +29,11 @@ Give the backend agent `mcp__eccode_backend` plus `Read, Grep, Glob, Edit, Write
 
 ## Tools
 
-`status`, `gate_show`, `gate_start`, `gate_submit`, `gate_review`, `task_next`, `task_list`, `task_claim`, `task_complete`, `task_fail`, `evidence_run`, `evidence_file`, `handoff_record`, `risk_add`, `decision_add`, `memory_search`, `memory_cite`, `onboard`, `map`, `impact`, `audit`.
+`status`, `gate_show`, `gate_start`, `gate_submit`, `gate_review`, `task_next`, `task_list`, `task_claim`, `task_complete`, `task_rescope`, `task_fail`, `evidence_run`, `bugs`, `mutate`, `fix_verify`, `evidence_file`, `handoff_draft`, `quick`, `debug`, `handoff_record`, `run_start`, `run_end`, `deliver`, `risk_add`, `decision_add`, `memory_search`, `memory_cite`, `onboard`, `map`, `impact`, `metrics`, `audit`.
+
+Every command that the quick and debug playbooks use has a tool. A test fails when one does not, so a session without a shell can take every step from setup to delivery. No tool takes a free-form command. `quick`, `debug` and `task_rescope` can narrow the detected test check to named test paths (`tests`): each must be an existing file or directory or a pytest node id, contain no shell syntax, and be given to a runner that takes paths. On a big project the whole suite can outrun the 10-minute check limit. Install gives each eccode server a one-hour call timeout, because Claude Code's default of 60 s cut off longer checks ([live](live/23-mcp-call-timeout.txt)).
+
+In the enforced profiles each role agent's tool list names its own server's tools: a subagent gets only the tools its definition lists. Under no-shell, Bash is dropped from that list. The Mealie pilot found both gaps, and a no-shell quick item then ran from setup to delivery on Mealie (bench/pilot-results/2026-10-24-mealie-pilot.md).
 
 `onboard`, `map` and `impact` make the server the project's **codebase memory**: the import-resolved index persists in `.eccode/cache/` (rebuilt incrementally, so a big repository pays the full scan once), and any agent — including a no-Bash one — reads the brief, the reuse map and the reverse-dependency graph as typed tool calls.
 
@@ -68,7 +72,7 @@ Verified live on Linux with bubblewrap ([docs/live/7-sandboxed-profile.txt](live
 - Linux and WSL2: needs `bubblewrap` and `socat`.
 - Native Windows: has no sandbox. With `failIfUnavailable` Claude Code refuses to start rather than run unprotected, so use WSL2 there or install without `--sandbox` (textual guard only).
 
-Commands that `evidence_run` executes run in the MCP server, outside the sandbox. They are covered by the integrity window instead: any change a command makes to the record is reverted, and a run that changes tracked files outside the caller's claim fails (lib/evidence.js).
+Commands that `evidence_run` executes run in the MCP server, outside the sandbox. They are covered by the integrity window instead. The record stays locked while the command runs, so any change to it is the command's own and is reverted. Other agents' writes wait for the window instead of being erased. A run that changes tracked files outside the caller's claim fails (lib/evidence.js).
 
 ## What this mode does and does not change
 
