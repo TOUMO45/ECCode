@@ -319,3 +319,35 @@ test('copyTranscripts copies the session files written since the run started', (
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('sample is seeded and stratified', () => {
+  const { sample } = require('../bench/pilot/lib');
+  const items = Array.from({ length: 60 }, (_, i) => ({ id: i, s: ['routes', 'services', 'core'][i % 3] }));
+  const a = sample(items, 9, 42, (x) => x.s);
+  assert.deepStrictEqual(a, sample(items, 9, 42, (x) => x.s), 'the same seed gives the same draw');
+  assert.notDeepStrictEqual(a.map((x) => x.id), sample(items, 9, 7, (x) => x.s).map((x) => x.id), 'another seed, another draw');
+  assert.strictEqual(a.length, 9);
+  for (const s of ['routes', 'services', 'core']) assert.ok(a.filter((x) => x.s === s).length >= 3, `${s} gets its share`);
+  const small = [{ id: 'a', s: 'x' }, ...Array.from({ length: 10 }, (_, i) => ({ id: i, s: 'y' }))];
+  const b = sample(small, 6, 42, (x) => x.s);
+  assert.strictEqual(b.length, 6, 'a stratum too small for its share gives its rest to the others');
+  assert.strictEqual(b.filter((x) => x.s === 'x').length, 1);
+});
+
+test('recallPrecision on known sets', () => {
+  const { recallPrecision } = require('../bench/pilot/lib');
+  const r = recallPrecision(new Set(['a', 'b', 'c']), new Set(['b', 'c', 'd']));
+  assert.deepStrictEqual(r, { recall: 2 / 3, precision: 2 / 3, tp: 2, fp: 1, fn: 1 });
+  assert.strictEqual(recallPrecision(new Set(['a']), new Set()).recall, null, 'no truth, no recall');
+  assert.strictEqual(recallPrecision(new Set(), new Set(['a'])).precision, null, 'nothing predicted, no precision');
+});
+
+test('replay records skips with reasons', () => {
+  const { replay } = require('../bench/pilot/lib');
+  const out = replay([{ id: 'a' }, { id: 'b' }, { id: 'c' }], (x) => {
+    if (x.id === 'b') throw new Error('merge commit\nwith detail');
+    return x.id.toUpperCase();
+  });
+  assert.deepStrictEqual(out.results, ['A', 'C']);
+  assert.deepStrictEqual(out.skipped, [{ id: 'b', reason: 'merge commit' }]);
+});
