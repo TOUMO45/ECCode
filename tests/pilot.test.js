@@ -573,3 +573,19 @@ test('with --transcripts, each engine chain item keeps the record as it stood af
   });
   assert.ok(counts[0] < counts[1] && counts[1] < counts[2], `the record grows item by item: ${counts}`);
 }));
+
+test('a2 frontend truth: the source files a spec file loaded, from the setup file\'s lines', () => {
+  const { loadedModules } = require('../bench/pilot/mealie/a2-impact');
+  const tree = path.join(os.tmpdir(), 'a2-tree');
+  const f = (p) => path.join(tree, 'frontend', p);
+  const text = `${JSON.stringify([f('app/tests/setup.ts'), f('a2-loaded.mjs'), 'fs', f('app/lib/validators/inputs.test.ts'), f('app/lib/validators/inputs.ts'), `mock:${f('app/composables/use-i18n.ts')}`, f('node_modules/vue/index.js'), '/elsewhere/x.ts'])}\nnull\n`;
+  assert.deepStrictEqual([...loadedModules(text, tree, { setupFile: f('a2-loaded.mjs') })].sort(), ['frontend/app/lib/validators/inputs.test.ts', 'frontend/app/lib/validators/inputs.ts', 'frontend/app/tests/setup.ts'].sort());
+});
+
+test('report: the stack row requires both the Python and the Node stacks', () => {
+  const { criteria } = require('../bench/pilot/mealie/report');
+  const row = (stacks) => criteria({ a7: { stacks, checks: [], secrets: { hits: [] } } }, {}).find((r) => r.id === 'stack-detect');
+  assert.strictEqual(row(['python']).met, false);
+  assert.strictEqual(row(['python', 'node']).met, true);
+  assert.strictEqual(row(['python']).result, 'python');
+});

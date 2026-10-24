@@ -12,7 +12,8 @@
 // function and method raises) and the suite runs; the test files that fail,
 // minus those failing without any fault, are compared with the prediction.
 // Frontend: 10 modules under frontend/app/lib and frontend/app/composables;
-// truth from running each vitest spec file alone under coverage.
+// truth from running each vitest spec file alone and recording the modules it
+// loads (a2-loaded.mjs; Mealie's coverage provider cannot run at the pin).
 // usage: node a2-impact.js <commit> [--sample 40] [--faults 10] [--jobs 3] [--skip-frontend]
 const fs = require('fs');
 const os = require('os');
@@ -136,6 +137,29 @@ async function backend(tree, venvEnv, index, opts, log) {
   return { allTests: allTests.length, coverageExitCode: cov.exitCode, traceExitCode: trace.exitCode, baselineFailing: [...baseline].sort(), population: population.length, excludedUncovered: population.length - covered.length, sample, faults };
 }
 
+/**
+ * Tree-relative source files a spec file loaded, from the lines a2-loaded.mjs
+ * appended: absolute paths inside the tree only (no node_modules, no vitest
+ * mock ids, no builtins, not our setup file). A line of null means vitest's
+ * internals had no module map; it adds nothing.
+ */
+function loadedModules(text, tree, { setupFile = null } = {}) {
+  const out = new Set();
+  for (const line of String(text).split('\n').filter((l) => l.trim())) {
+    for (const file of JSON.parse(line) || []) {
+      if (typeof file !== 'string' || !path.isAbsolute(file) || file === setupFile) continue;
+      const rel = path.relative(tree, file);
+      if (rel.startsWith('..') || path.isAbsolute(rel) || rel.split(path.sep).includes('node_modules')) continue;
+      out.add(rel.split(path.sep).join('/'));
+    }
+  }
+  return out;
+}
+
+// The truth: each spec file run alone, our setup file recording the modules it
+// loaded (vitest's module graph). Mealie's coverage provider at the pin is
+// @vitest/coverage-v8 3.2.4 under vitest 4.1.9, which fails ("Running mixed
+// versions is not supported"), so coverage cannot give it.
 function frontend(tree, index, opts, log) {
   const front = path.join(tree, 'frontend');
   try {
@@ -143,27 +167,32 @@ function frontend(tree, index, opts, log) {
   } catch (e) {
     return { ran: false, cause: String(e.message).split('\n')[0] };
   }
+  const base = ['vitest.config.ts', 'vitest.config.mts', 'vitest.config.js', 'vitest.config.mjs'].find((c) => fs.existsSync(path.join(front, c)));
+  if (!base) return { ran: false, cause: 'no vitest config in frontend/' };
+  // Inside the tree: vite serves setup files only from under its root.
+  const setupFile = path.join(front, 'eccode-a2-loaded.mjs');
+  fs.copyFileSync(path.join(HERE, 'a2-loaded.mjs'), setupFile);
+  fs.writeFileSync(path.join(front, 'vitest.eccode-a2.config.mjs'), `import { mergeConfig } from 'vitest/config';\nimport base from './${base}';\nexport default mergeConfig(base, { test: { setupFiles: ['./eccode-a2-loaded.mjs'] } });\n`);
   const specs = Object.keys(index.files).filter((f) => f.startsWith('frontend/') && /\.(spec|test)\.[jt]sx?$/.test(f));
   const coveredBy = new Map();
   const failures = [];
   for (const spec of specs) {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-a2-vitest-'));
+    const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pilot-a2-vitest-')), 'loaded.jsonl');
     const rel = path.relative(front, path.join(tree, spec));
-    const r = spawnSync('npx', ['vitest', 'run', rel, '--coverage.enabled', '--coverage.reporter=json', `--coverage.reportsDirectory=${dir}`, '--coverage.all=false'], { cwd: front, encoding: 'utf8', timeout: 600000, maxBuffer: 64 * 1024 * 1024 });
-    const json = path.join(dir, 'coverage-final.json');
-    if (!fs.existsSync(json)) {
+    const r = spawnSync('npx', ['vitest', 'run', rel, '--config', 'vitest.eccode-a2.config.mjs'], { cwd: front, encoding: 'utf8', timeout: 600000, maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ECCODE_A2_LOADED: out } });
+    const loaded = fs.existsSync(out) ? loadedModules(fs.readFileSync(out, 'utf8'), tree, { setupFile }) : new Set();
+    fs.rmSync(path.dirname(out), { recursive: true, force: true });
+    if (!loaded.size) {
       failures.push({ spec, exit: r.status, tail: `${r.stdout || ''}${r.stderr || ''}`.split('\n').slice(-5).join('\n') });
       continue;
     }
-    for (const [abs, data] of Object.entries(JSON.parse(fs.readFileSync(json, 'utf8')))) {
-      if (!Object.values(data.s || {}).some((n) => n > 0)) continue;
-      const mod = path.relative(tree, abs).split(path.sep).join('/');
+    for (const mod of loaded) {
+      if (mod === spec) continue;
       if (!coveredBy.has(mod)) coveredBy.set(mod, new Set());
       coveredBy.get(mod).add(spec);
     }
-    fs.rmSync(dir, { recursive: true, force: true });
   }
-  if (!coveredBy.size) return { ran: false, cause: 'no spec file produced coverage', failures };
+  if (!coveredBy.size) return { ran: false, cause: 'no spec file reported the modules it loaded', failures };
   const population = Object.keys(index.files).filter((f) => /^frontend\/app\/(lib|composables)\/.*\.ts$/.test(f) && !/\.(spec|test)\.ts$/.test(f));
   const covered = population.filter((f) => coveredBy.has(f));
   const sample = lib.sample(covered, opts.frontend, 42).map((module) => {
@@ -172,7 +201,7 @@ function frontend(tree, index, opts, log) {
     return { module, truth: [...truth].sort(), static: score(new Set(st.tests.filter((t) => specs.includes(t))), truth, specs.length) };
   });
   log(`frontend: ${specs.length} spec files, ${failures.length} failed to run, ${covered.length} covered modules`);
-  return { ran: true, specs: specs.length, specFailures: failures, population: population.length, excludedUncovered: population.length - covered.length, sample };
+  return { ran: true, truth: 'modules each spec file loaded (vitest module graph)', specs: specs.length, specFailures: failures, population: population.length, excludedUncovered: population.length - covered.length, sample };
 }
 
 function medians(rows, pick) {
@@ -216,7 +245,7 @@ async function main(argv) {
   }
 }
 
-module.exports = { testFilesFromContexts, stratumOf, faultSource, junitFailures };
+module.exports = { testFilesFromContexts, stratumOf, faultSource, junitFailures, loadedModules, frontend };
 
 if (require.main === module) {
   main(process.argv.slice(2)).catch((e) => {

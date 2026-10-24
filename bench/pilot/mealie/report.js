@@ -76,6 +76,8 @@ function criteria(results, labels) {
   const unlabelledBugs = hits.filter((id) => !bugLabels[id]).length;
   const fpRate = r.a6 && !unlabelledBugs && r.a6.changedLines ? (hits.filter((id) => bugLabels[id].label === 'false-positive').length / r.a6.changedLines) * 10000 : undefined;
   add('bugs-fp-rate', 'Bug rules (A6)', 'false positives per 10,000 changed lines', '≤ 1', fpRate, le(1), r.a6 ? `${hits.length} hits, ${unlabelledBugs} unlabelled` : '');
+  const stacks = at(r, 'a7.stacks');
+  add('stack-detect', 'Stack (A7)', 'stacks detected at the pin', 'Python and Node', Array.isArray(stacks) ? stacks.join(', ') : undefined, () => ['python', 'node'].every((x) => stacks.includes(x)));
   const checks = at(r, 'a7.checks');
   add('stack-checks', 'Stack (A7)', 'detected checks runnable, result equal to the tool run directly', 'all', Array.isArray(checks) ? `${checks.filter((c) => c.available && c.equal !== false).length}/${checks.length}` : undefined, () => checks.every((c) => c.available && c.equal !== false));
   const secretIds = (at(r, 'a7.secrets.hits') || []).filter((h) => h.where === 'code').map((h) => h.id);
