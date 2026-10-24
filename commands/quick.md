@@ -25,7 +25,7 @@ If the pinned verification command cannot pass for a reason that has nothing to 
 5. **Deliver.** Dispatch `delivery-lead`: `eccode deliver --actor delivery-lead`.
 6. **Report.** Show the user `eccode status --brief` and the path of the final handoff. Claim only what the record shows.
 
-**After every dispatch, check the record, not the agent's summary.** Run `eccode status --brief`. If the step you dispatched is not recorded (the task still `claimed`, the gate still `submitted`), dispatch the same role again. Give it its own report and the exact command from the NEXT line, and tell it to write JSON files with the Write tool. Do this up to twice before you report a stall. An agent that says a step was denied must show the engine's message; a stall is only what the record and that message show.
+**After every dispatch, check the record, not the agent's summary.** Wait for each dispatched agent to report before you check the record or take the next step, and never end your turn while a dispatched agent is still working: a headless session (`claude -p`) can end with your turn and stop the agent mid-step. Run `eccode status --brief`. If the step you dispatched is not recorded (the task still `claimed`, the gate still `submitted`), dispatch the same role again. Give it its own report and the exact command from the NEXT line, and tell it to write JSON files with the Write tool. Do this up to twice before you report a stall. An agent that says a step was denied must show the engine's message; a stall is only what the record and that message show.
 
 **Cost.** Around every dispatch, open and close a run so the record carries what the change cost:
 ```

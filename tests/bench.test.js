@@ -356,6 +356,9 @@ test('the agent does not inherit the operator session\'s Claude Code identity', 
   const inherited = {
     CLAUDE_CODE_SESSION_ID: 'parent', CLAUDE_CODE_REMOTE_SESSION_ID: 'parent', CLAUDE_CODE_CHILD_SESSION: '1', CLAUDE_PID: '1',
     CLAUDE_AFTER_LAST_COMPACT: '1', CLAUDE_CODE_MESSAGING_SOCKET: '/s', CLAUDE_CODE_MESSAGING_TOKEN: 't', CLAUDECODE: '1', CLAUDE_CODE_SESSION_ATTENDED: '1',
+    // the launching session's own settings: effort, background subagents, spawn depth, compaction, debug output
+    CLAUDE_EFFORT: 'xhigh', CLAUDE_AUTO_BACKGROUND_TASKS: 'true', CLAUDE_CODE_BG_TASKS_REPORT_RUNNING: '0', CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH: '1',
+    CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: '50', CLAUDE_CODE_DIAGNOSTICS_FILE: '/d', CLAUDE_CODE_DEBUG: '1',
   };
   const env = bench.agentEnv({ ...inherited, ANTHROPIC_BASE_URL: 'https://api', PATH: '/bin', NODE_TEST_CONTEXT: 'child' });
   for (const k of Object.keys(inherited)) assert.ok(!(k in env), k);

@@ -198,7 +198,12 @@ Found by the development runs at v3.18.0 or by the harness's tests, before any m
 
 **For later runs.** The harness no longer passes the launching session's identity and IPC variables to agents (`agentEnv` in `lib/bench.js`; test in `tests/bench.test.js`). This batch keeps running unchanged from the pinned worktree.
 
-**Also disclosed.** The rest of the launching session's environment reached every session of this batch and of the earlier batches, in all variants alike. That includes, for example, `CLAUDE_EFFORT` and `CLAUDE_AUTO_BACKGROUND_TASKS`. Whether each of these variables changes a headless session's behaviour was not tested. Subagents in this batch were launched as background tasks.
+**Also disclosed.** The rest of the launching session's environment reached every session of this batch and of the earlier batches, in all variants alike. That includes `CLAUDE_EFFORT=xhigh`, `CLAUDE_AUTO_BACKGROUND_TASKS=true` and `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1`.
+- Every subagent of this batch ran as a background task (46 of 46 at 16:20Z).
+- Whether `CLAUDE_EFFORT` changes a headless session's behaviour was not tested.
+- In the after-fix checks of the MCP item (outside the batch), the orchestrator ended its turn while a background engineer was working. The session then stopped the engineer.
+
+The harness now strips these settings too, so later runs start as plain headless sessions. The playbooks now say never to end the turn while a dispatched agent is working (`tests/quick.test.js`).
 
 **Defects found in ECCode so far.** Each is fixed with a failing-first test in the main tree. None changes this batch, which runs from the pinned worktree:
 - **MCP item (b4):** in the no-shell profile, role agents had no MCP tools, so they could not claim a task.

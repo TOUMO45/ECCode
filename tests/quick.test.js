@@ -207,3 +207,12 @@ test('the detected check is the one for the owned files: a sub-project only when
   assert.strictEqual(pickTestCheck([checks[0]], ['mealie/x.py']).command, 'cd frontend && pnpm test', 'the only test check is still offered');
   assert.strictEqual(pickTestCheck([{ ...checks[2], available: false }], ['x.py']), null);
 });
+
+// Pilot after-fix runs: the orchestrator ended its turn while a background
+// engineer was still working; the headless session then stopped the engineer.
+test('every orchestrating playbook says to wait for a dispatched agent before ending the turn', () => {
+  for (const f of ['commands/quick.md', 'commands/debug.md', 'skills/orchestrate/SKILL.md']) {
+    const text = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+    assert.match(text, /never end your turn while a dispatched agent is still working/i, f);
+  }
+});
