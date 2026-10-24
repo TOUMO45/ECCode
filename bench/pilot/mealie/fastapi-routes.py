@@ -24,5 +24,5 @@ for r in app.routes:
     for m in getattr(r, "methods", None) or []:
         if m != "HEAD":
             routes.add(f"{m} {r.path}")
-with open(out, "w") as fh:
+with open(out, "w", newline="\n") as fh:  # the same bytes on every platform
     fh.write("\n".join(sorted(routes)) + "\n")

@@ -82,7 +82,8 @@ test('task.setup runs before the agent with ECCODE_BENCH_TASK_DIR', () => withCa
   const o = origin();
   const task = suiteWith(o, {
     setup: 'node -e "require(\'fs\').writeFileSync(\'setup.txt\', process.env.ECCODE_BENCH_TASK_DIR)"',
-    hiddenChecks: [{ id: 'saw', command: 'node -e "process.exit(require(\'fs\').readFileSync(\'agent-saw.txt\', \'utf8\') === process.argv[1] ? 0 : 1)" "$EXPECT"' }],
+    // The expected value comes through the environment, not a shell argument: cmd.exe has no $NAME.
+    hiddenChecks: [{ id: 'saw', command: 'node -e "process.exit(require(\'fs\').readFileSync(\'agent-saw.txt\', \'utf8\') === process.env.EXPECT ? 0 : 1)"' }],
     env: { EXPECT: '${ECCODE_TEST_EXPECT}' },
   });
   process.env.ECCODE_TEST_EXPECT = task.dir;
