@@ -621,3 +621,11 @@ test('analyse: delivered share, tool-result text and lessons surfaced in a later
   assert.strictEqual(r.recorded, 2);
   assert.deepStrictEqual(r.surfaced, [{ lesson: 'L-1', recordedIn: 1, surfacedIn: 3 }], 'only a later item counts');
 });
+
+test('A7: a project-script check is compared with the tool its script runs', () => {
+  const { toolOf } = require('../bench/pilot/mealie/a7-stack');
+  assert.strictEqual(toolOf({ id: 'node-test', command: 'cd frontend && yarn test', script: 'vitest' }), 'vitest');
+  assert.strictEqual(toolOf({ id: 'node-lint', command: 'cd frontend && yarn lint', script: 'yarn lint:js → eslint .' }), 'eslint');
+  assert.strictEqual(toolOf({ id: 'ruff', command: 'ruff check mealie' }), 'ruff');
+  assert.strictEqual(toolOf({ id: 'tsc', command: 'cd frontend && npx tsc --noEmit' }), null);
+});

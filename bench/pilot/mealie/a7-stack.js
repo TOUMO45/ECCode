@@ -26,7 +26,7 @@ const DIRECT = {
 };
 
 function toolOf(check) {
-  return Object.keys(DIRECT).find((t) => new RegExp(`\\b${t}\\b`).test(`${check.id} ${check.command || ''}`)) || null;
+  return Object.keys(DIRECT).find((t) => new RegExp(`\\b${t}\\b`).test(`${check.id} ${check.command || ''} ${check.script || ''}`)) || null;
 }
 
 function main(argv) {

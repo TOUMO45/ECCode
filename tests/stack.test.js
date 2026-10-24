@@ -137,3 +137,36 @@ test('secrets scan still reads .claude/ even though the codebase index skips it'
   assert.ok(files.includes('.env'), JSON.stringify(found));
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('a Node project in a sub-directory is detected, with its own package manager and scripts', () => {
+  const { dir } = tmpProject();
+  write(dir, 'pyproject.toml', '[project]\nname = "x"\n');
+  write(dir, 'frontend/package.json', JSON.stringify({ name: 'web', scripts: { test: 'vitest', 'lint:js': 'eslint .', lint: 'yarn lint:js' } }));
+  write(dir, 'frontend/yarn.lock', '# yarn lockfile v1\n');
+  write(dir, 'frontend/tsconfig.json', '{}');
+  write(dir, 'node_modules/dep/package.json', '{"name":"dep","scripts":{"test":"x"}}');
+  const stacks = stack.detect(dir);
+  assert.deepStrictEqual(stacks.map((s) => [s.id, s.dir || '', s.evidence]), [['node', 'frontend', 'frontend/package.json'], ['python', '', 'pyproject.toml']]);
+  assert.strictEqual(stacks[0].manager, 'yarn');
+  const byId = Object.fromEntries(stack.checks(dir, loadConfig(dir)).map((c) => [c.id, c]));
+  assert.strictEqual(byId['node-test'].command, 'cd frontend && yarn test');
+  assert.strictEqual(byId['node-test'].script, 'vitest', 'the script body names the tool');
+  assert.strictEqual(byId['node-lint'].command, 'cd frontend && yarn lint');
+  assert.strictEqual(byId['node-lint'].script, 'yarn lint:js → eslint .', 'a script that calls another is followed one step');
+  assert.strictEqual(byId.tsc.command, 'cd frontend && npx tsc --noEmit');
+});
+
+test('python checks use the arguments the project\'s own task runner gives them, and mypy configured in pyproject', () => {
+  const { dir } = tmpProject();
+  write(dir, 'pyproject.toml', '[project]\nname = "x"\n\n[tool.mypy]\nstrict_optional = true\n');
+  write(dir, 'Taskfile.yml', 'version: "3"\ntasks:\n  py:lint:\n    cmds:\n      - uv run ruff check mealie\n  py:mypy:\n    cmds:\n      - uv run mypy mealie\n  py:test:\n    cmds:\n      - uv run pytest {{ .CLI_ARGS }}\n');
+  const byId = Object.fromEntries(stack.checks(dir, loadConfig(dir)).map((c) => [c.id, c]));
+  assert.strictEqual(byId.ruff.command, 'ruff check mealie');
+  assert.strictEqual(byId.ruff.source, 'project-task');
+  assert.strictEqual(byId.mypy.command, 'mypy mealie', 'offered: [tool.mypy] is mypy configuration');
+  assert.strictEqual(byId.pytest.command, 'pytest -q', 'template arguments are not copied; the default stays');
+  const { dir: plain } = tmpProject();
+  write(plain, 'pyproject.toml', '[project]\nname = "y"\n');
+  write(plain, 'Makefile', 'lint:\n\tpoetry run ruff check src tests\n');
+  assert.strictEqual(stack.checks(plain, loadConfig(plain)).find((c) => c.id === 'ruff').command, 'ruff check src tests');
+});
