@@ -103,11 +103,13 @@ The suite `bench/suites/engine` has four multi-file tasks (two JavaScript, two P
 
 `tests/bench.test.js` proves every trap is real: a careless reference passes the visible tests and fails a hidden regression check.
 
-Pre-registered result ([protocol](../bench/protocols/2026-10-23-engine-ab.md), [report](../bench/engine-results/2026-10-23-engine-sonnet.md)):
+Pre-registered result, 80 runs ([protocol](../bench/protocols/2026-10-23-engine-ab.md); reports for [Sonnet](../bench/engine-results/2026-10-23-engine-sonnet.md) and [Opus](../bench/engine-results/2026-10-23-engine-opus.md)):
 
 - **Sonnet, engine batch:** 20/20 runs passed every hidden check without the engine and 19/20 with it (stratified p = 1.0; the one failure stopped before any edit); median cost per run $0.12 without and $0.42 with the engine. Tokens were 3.9× and wall time 6.4×. Engine runs wrote tests in 18/20, bare runs in 10/20.
-- On these four tasks the bare model avoided every trap, so correctness has no room to improve here. That is a finding about the tasks, not evidence that the engine helps or hurts. What the batch measures is the price of the process: about 3.5× the cost of a bare run for a reviewed, recorded change.
-- Only 6 of the 20 engine runs delivered, though every audit was clean. The saved transcripts showed why: agents composed shell commands the CLI-only allowlist refused, stopped, and were not re-dispatched (register row 56). After the fixes, a pre-registered follow-up delivered 16/20 with all hidden checks passing ([report](../bench/engine-followup/2026-10-23-engine-followup-sonnet.md)). Its four stalls had one cause, `__pycache__` counted as an unreviewed change (row 57, fixed).
+- **Opus, engine batch:** 20/20 runs passed every hidden check without the engine and 20/20 with it (stratified p = 1.0); median cost per run $0.27 without and $1.35 with the engine. Tokens were 5.5× and wall time 9×. Engine runs wrote tests in 20/20, bare runs in 15/20.
+- On these four tasks both models avoided every trap without the engine, so correctness had no room to improve. That is a finding about the tasks, not evidence that the engine helps or hurts. What the batches measure is the price of the process: 3.4× (Sonnet) to 5.0× (Opus) the median cost of a bare run, for a change that an independent reviewer checked and that the record proves.
+- Delivery: 12 of 20 Opus engine runs delivered. All 8 that did not were on the two Python tasks and stopped at the `__pycache__` refusal (row 57).
+- Delivery on Sonnet: only 6 of the 20 engine runs delivered, though every audit was clean. The saved transcripts showed why: agents composed shell commands the CLI-only allowlist refused, stopped, and were not re-dispatched (register row 56). After the fixes, a pre-registered follow-up delivered 16/20 with all hidden checks passing ([report](../bench/engine-followup/2026-10-23-engine-followup-sonnet.md)). Its four stalls had one cause, `__pycache__` counted as an unreviewed change (row 57, fixed).
 
 ## Verified live, not only in unit tests
 
