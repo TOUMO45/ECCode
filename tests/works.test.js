@@ -304,3 +304,38 @@ test('reworking a task of an approved phase reopens the phase, and the work item
   assert.strictEqual(ctx.store.audit().ok, true);
   assert.deepStrictEqual(ctx.store.rebuild().gates, ctx.store.state().gates, 'the log replays to the same state');
 });
+
+// Final review of 699066b: a rework must reopen what was approved after it,
+// and a delivered work item is not reworked in place.
+test('a rework reopens the later gates already submitted or approved; a delivered item is not reworked', () => {
+  const ready = () => {
+    const ctx = tmpProject();
+    approveThroughPlan(ctx);
+    gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+    runTask(ctx, 'api', 'backend-engineer', 'src/server/a.js');
+    runTask(ctx, 'ui', 'frontend-engineer', 'src/web/b.js');
+    runTask(ctx, 'tests', 'test-engineer', 'tests/c.test.js');
+    approvePhase(ctx, 'phase:core');
+    return ctx;
+  };
+  // (A) verification approved, then a rework: verification must be approved again.
+  const a = ready();
+  approveVerification(a, ['src/server/a.js', 'src/web/b.js', 'tests/c.test.js']);
+  tasks.reset(a.store, 'tests', 'orchestrator', 'a finding after verification');
+  assert.strictEqual(a.store.state().gates.verification.status, 'in_progress');
+  runTask(a, 'tests', 'test-engineer', 'tests/d.test.js');
+  approvePhase(a, 'phase:core');
+  expectCode(() => deliver(a.store, 'delivery-lead'), 'DELIVERY_BLOCKED');
+  // (C) verification submitted, then a rework: it cannot be approved while the phase is open.
+  const c = ready();
+  gates.startGate(c.store, c.config, 'verification', 'orchestrator');
+  write(c.dir, '.eccode/artifacts/verify.md', '# Verification\nAll green.\n');
+  gates.submit(c.store, c.config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verify.md'] });
+  tasks.reset(c.store, 'api', 'orchestrator', 'a finding during verification');
+  const ev = passCheck(c.store, 'security-reviewer');
+  expectCode(() => gates.recordReview(c.store, c.config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verify.md']])), 'REVIEW_REJECTED');
+  // (B) a delivered work item.
+  const b = deliveredProject();
+  expectCode(() => tasks.reset(b.store, 'api', 'orchestrator', 'rework after delivery'), 'INVALID_TRANSITION');
+  assert.ok(b.store.readEvents().every((e) => e.type !== 'task.reset'));
+});
