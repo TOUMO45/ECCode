@@ -157,7 +157,8 @@ test('debug and method variants end to end on a source task: the debug track del
     const debug = bench.runOnce(t, { agentCmd: `node "${agent}"`, variant: 'debug' });
     assert.strictEqual(debug.agentExit, 0, JSON.stringify(debug.checks));
     assert.deepStrictEqual([debug.hiddenPassed, debug.hiddenTotal], [2, 2], 'the fix passes, and the task environment reached the hidden checks');
-    assert.deepStrictEqual({ delivered: debug.engine.delivered, auditOk: debug.engine.auditOk, reviews: debug.engine.reviews, track: debug.engine.track }, { delivered: true, auditOk: true, reviews: 1, track: 'debug' });
+    assert.deepStrictEqual({ delivered: debug.engine.delivered, auditOk: debug.engine.auditOk, reviews: debug.engine.reviews, track: debug.engine.track, fixProven: debug.engine.fixProven }, { delivered: true, auditOk: true, reviews: 1, track: 'debug', fixProven: true });
+    assert.ok(debug.engine.mutation && debug.engine.mutation.total >= 1 && debug.engine.mutation.killed >= 1, JSON.stringify(debug.engine.mutation));
     // The method variant: the debugging method's text, nothing installed.
     const method = bench.runOnce(t, { agentCmd: 'node -e "const p=require(\'fs\').readFileSync(\'PROMPT.md\',\'utf8\'); process.exit(/Debug investigation/.test(p) && !require(\'fs\').existsSync(\'.claude\') ? 0 : 3)"', variant: 'method' });
     assert.strictEqual(method.agentExit, 0, 'the method prompt carries the debug-investigation text and no toolkit is installed');
@@ -167,8 +168,13 @@ test('debug and method variants end to end on a source task: the debug track del
     const md = bench.report([without, method, debug], { agentCmd: 'claude -p --model m2' });
     assert.match(md, /## Debug track vs without/);
     assert.match(md, /\| shop-1 \| 0\/1 → 1\/1 \| Fisher 1\.000 \| bug 1; none \| — → 370 \| — → 0\.20 \|/);
+    assert.match(md, /delivered, audit ok, 1 reviews, fix proven, mutants \d+\/\d+ killed \|/, 'the raw row carries the debug proofs');
     assert.match(md, /## Method text vs without/);
     assert.match(md, /\| shop-1 \| 0\/1 → 0\/1 \|[^\n]*\| — \|\n/, 'no engine record for the method text');
+    const quick = { ...debug, variant: 'engine', hiddenPassed: 1, checks: debug.checks.map((c) => ({ ...c, passed: c.id !== 'bug' })), engine: { ...debug.engine, track: 'quick' } };
+    const vsEngine = bench.report([without, debug, quick], { agentCmd: 'claude -p --model m2' });
+    assert.match(vsEngine, /## Debug track vs engine \(quick track\)\n[\s\S]*\| shop-1 \| 0\/1 → 1\/1 \| Fisher 1\.000 \| bug 1; none \|/, 'debug is compared with the quick track too');
+    assert.doesNotMatch(md, /vs engine/, 'and only when both ran');
     const tdir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tally-'));
     fs.writeFileSync(path.join(tdir, 'r.md'), md);
     const tl = bench.tally(tdir);
