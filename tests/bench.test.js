@@ -390,7 +390,9 @@ test('an agent\'s leftover processes are stopped when it exits, and the run is k
   const task = bench.listTasks(path.join(__dirname, '..', 'bench', 'suites', 'followup')).find((t) => t.id === 'top-words');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-linger-'));
   const beat = path.join(tmp, 'beat');
-  fs.writeFileSync(path.join(tmp, 'writer.js'), `const fs = require('fs'); let i = 0;\nsetInterval(() => { fs.writeFileSync('junk' + (i++) + '.txt', 'x'); fs.appendFileSync(${JSON.stringify(beat)}, '.'); }, 5);\nsetTimeout(() => {}, 8000);\n`);
+  // The writer outlives the run it must be stopped with, but never by more than a
+  // minute: if the harness fails to stop it, it must not fill the disk (it did once).
+  fs.writeFileSync(path.join(tmp, 'writer.js'), `const fs = require('fs'); let i = 0;\nsetInterval(() => { fs.writeFileSync('junk' + (i++) + '.txt', 'x'); fs.appendFileSync(${JSON.stringify(beat)}, '.'); }, 5);\nsetTimeout(() => process.exit(0), 60000);\n`);
   fs.writeFileSync(path.join(tmp, 'agent.js'), `require('child_process').spawn(process.execPath, [${JSON.stringify(path.join(tmp, 'writer.js'))}], { stdio: 'ignore' }).unref();\n`);
   const r = bench.runOnce(task, { agentCmd: `node "${path.join(tmp, 'agent.js')}"`, variant: 'without' });
   assert.strictEqual(r.task, 'top-words', 'the run is recorded');
