@@ -42,7 +42,7 @@ eccode bugs --no-external --json  # built-in rules only, machine-readable
 | `py/mutable-default` | warning | `def f(x=[])`: the default is shared between calls (a bug if mutated) |
 
 **Installed analyzers.** These run when they are present; nothing is ever downloaded. Their findings are kept only for the scanned lines. When an analyzer reports the same thing as a built-in rule on the same line (ruff `F632` and `py/is-literal`, for example), it is shown once.
-- `ruff`: undefined names, redefinitions, `is` with literals, syntax errors and similar count as errors; style codes are warnings.
+- `ruff`: asked for bug classes only, whatever the project's own lint config selects (pyflakes, syntax errors, bugbear, async misuse, pylint errors, dangling asyncio tasks); style is the project linter's job (`eccode stack`). Undefined names, redefinitions, `is` with literals, syntax errors and similar count as errors; the rest are warnings. B008 on FastAPI's parameter functions (`Depends`, `Query`, `File`, …) is dropped: calling them in a default is the framework's idiom.
 - `go vet`: everything it reports is an error.
 - `eslint`: only when the project has an eslint config.
 - `semgrep`: only when the project has `.semgrep.yml`.
@@ -71,7 +71,7 @@ eccode mutate --test "pytest -q" --min-score 80 --record --actor test-engineer
 
 **What it does.**
 1. Runs the test command once on the unmodified code. If it fails, nothing can be judged and the run stops.
-2. For each mutant, makes one small change to a changed, non-test code line: a boundary (`<` ↔ `<=`, `>` ↔ `>=`), an equality (`===` ↔ `!==`), a logical operator (`&&` ↔ `||`, `and` ↔ `or`), a boolean, `+` ↔ `-`, or a dropped negation.
+2. For each mutant, makes one small change to a changed, non-test code line: a boundary (`<` ↔ `<=`, `>` ↔ `>=`), an equality (`===` ↔ `!==`), a logical operator (`&&` ↔ `||`, `and` ↔ `or`), a boolean, `+` ↔ `-`, or a dropped negation; in Python also `is` ↔ `is not`, `in` ↔ `not in` (never a `for` clause), an integer constant plus one, and a returned expression replaced with `None`.
 3. Runs the tests again.
    - **Killed:** the tests fail. They noticed.
    - **Survived:** the tests still pass. No test checks that behavior.
