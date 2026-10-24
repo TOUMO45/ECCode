@@ -109,3 +109,43 @@ test('a failing setup skips the agent', () => withCache(() => {
     fs.rmSync(record.sandbox, { recursive: true, force: true });
   }
 }));
+
+// The texts the quick and debug variants have always used: changing them
+// would change what earlier batches measured.
+const QUICK_TEXT = [
+  'This repository has the ECCode toolkit installed under .claude/. Deliver the change below through its quick track:',
+  'follow .claude/commands/eccode/quick.md step by step, with `node .claude/eccode/bin/eccode.js` as the CLI and the ECCode',
+  'subagents it names. The change is done when the delivery step succeeds.',
+  '',
+  'The change:',
+  '',
+].join('\n');
+const DEBUG_TEXT = [
+  'This repository has the ECCode toolkit installed under .claude/. Fix the bug below through its debug track:',
+  'follow .claude/commands/eccode/debug.md step by step, with `node .claude/eccode/bin/eccode.js` as the CLI and the ECCode',
+  'subagents it names. The fix is done when the delivery step succeeds.',
+  '',
+  'The bug:',
+  '',
+].join('\n');
+
+test('enginePrompt keeps the quick and debug texts', () => {
+  assert.strictEqual(bench.enginePrompt('engine'), QUICK_TEXT);
+  assert.strictEqual(bench.enginePrompt('engine', 'quick'), QUICK_TEXT);
+  assert.strictEqual(bench.enginePrompt('debug'), DEBUG_TEXT);
+  assert.strictEqual(bench.enginePrompt('engine', 'debug'), DEBUG_TEXT);
+});
+
+test('enginePrompt names start.md and the track for fix, feature, refactor and greenfield', () => {
+  for (const t of ['fix', 'feature', 'refactor', 'greenfield']) {
+    const p = bench.enginePrompt('engine', t, { behavior: 'pytest -q' });
+    assert.match(p, /\.claude\/commands\/eccode\/start\.md/, t);
+    assert.ok(p.includes(`--track ${t}`), `${t}: names its track`);
+    assert.match(p, /work start --track/, `${t}: says how to start the next work item on a delivered record`);
+  }
+});
+
+test('the refactor prompt names its behavior command', () => {
+  assert.ok(bench.enginePrompt('engine', 'refactor', { behavior: 'python -m pytest -q tests' }).includes('--behavior "python -m pytest -q tests"'));
+  assert.ok(!bench.enginePrompt('engine', 'feature', { behavior: 'x' }).includes('--behavior'));
+});
