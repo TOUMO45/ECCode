@@ -139,6 +139,7 @@ test('debug: the orchestrator may correct ownership; init and work start need th
   const t = require('../lib/mcp').tools().find((x) => x.name === 'debug');
   assert.ok(t, 'debug is served over MCP');
   assert.ok(!('command' in t.schema), 'no free-form command over MCP: it would make the allowlist a shell');
+  assert.ok(!('command' in require('../lib/mcp').tools().find((x) => x.name === 'task_rescope').schema), 'nor through rescope');
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
@@ -184,5 +185,38 @@ test('a fix that still fails its regression test (fix-fails-tests) is no proof',
   const state = new Store(dir).state();
   assert.ok(Object.values(state.evidence).some((e) => e.fixVerify && e.fixVerify.phase === 'pre-fix' && e.purpose === 'reproduction'), 'the pre-fix run reproduced the bug');
   assert.deepStrictEqual(require('../lib/works').provenFixVerifications(state), [], 'but the fix never passed it');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('a pinned check that cannot pass for an unrelated reason is re-pinned by the orchestrator, after release, and recorded', () => {
+  const dir = repo();
+  const ok = okIn(dir);
+  // A suite with a failure that predates the bug: the pinned command can never pass.
+  write(dir, 'tests/legacy.test.js', "const test = require('node:test');\ntest('already broken', () => { throw new Error('unrelated'); });\n");
+  execFileSync('git', ['add', '-A'], { cwd: dir });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'legacy'], { cwd: dir });
+  ok(['debug', 'An order of 10 items gets no bulk discount', '--actor', 'orchestrator']);
+  ok(['task', 'claim', 'fix', '--actor', 'backend-engineer']);
+  let r = cli(dir, ['task', 'rescope', 'fix', '--command', 'node --test tests/price.test.js', '--actor', 'orchestrator', '--reason', 'tests/legacy.test.js fails before any change']);
+  assert.notStrictEqual(r.status, 0, 'not while claimed');
+  assert.match(r.stderr, /release it first/);
+  ok(['task', 'fail', 'fix', '--actor', 'orchestrator', '--reason', 'the pinned suite has an unrelated failing test']);
+  r = cli(dir, ['task', 'rescope', 'fix', '--command', 'node --test tests/price.test.js', '--actor', 'backend-engineer', '--reason', 'tests/legacy.test.js fails before any change']);
+  assert.notStrictEqual(r.status, 0, 'the owner cannot move its own goalposts');
+  expectCode(() => require('../lib/tasks').rescope(require('../lib/project').openProject(dir).store, require('../lib/config').loadConfig(dir), 'fix', 'orchestrator', { reason: 'nothing to change here' }), 'INVALID_INPUT');
+  ok(['task', 'rescope', 'fix', '--command', 'node --test tests/price.test.js', '--actor', 'orchestrator', '--reason', 'tests/legacy.test.js fails before any change']);
+  const t = new Store(dir).state().tasks.fix;
+  assert.strictEqual(t.verification.command, 'node --test tests/price.test.js');
+  assert.deepStrictEqual(t.files, ['src/**', 'tests/**', 'package.json'], 'files unchanged when only the command is given');
+  const h = t.history.find((x) => x.event === 'rescoped');
+  assert.strictEqual(h.fromCommand, 'npm test', 'the record keeps what was pinned before, and why it changed');
+  assert.match(h.reason, /legacy/);
+  // The new pin is what completion now needs.
+  ok(['task', 'claim', 'fix', '--actor', 'backend-engineer']);
+  write(dir, 'tests/price.test.js', BASE_TEST + REGRESSION);
+  write(dir, 'src/price.js', FIXED);
+  ok(['evidence', 'run', '--actor', 'backend-engineer', '--task', 'fix', '--label', 'verify', '--', 'node', '--test', 'tests/price.test.js']);
+  const draft = JSON.parse(ok(['handoff', 'draft', '--task', 'fix', '--actor', 'backend-engineer']));
+  assert.strictEqual(draft.evidence.length, 1, 'the passing run of the new pinned command is cited');
   fs.rmSync(dir, { recursive: true, force: true });
 });

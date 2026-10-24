@@ -99,9 +99,26 @@ It creates the record if there is none (or starts the next work item on a delive
 
 Every rule of the quick track still applies: the pinned check, independent review, verification and the record. Around each dispatch the orchestrator opens a run for the role it dispatches, `eccode run start --actor orchestrator --for <role>`, and closes it with the tokens the Agent result reports. `eccode metrics` then reports runs, tokens, cost, review rounds and wall time per work item and per track.
 
+### One bug: `/eccode:debug`
+
+For one bug, `/eccode:debug "<bug report>"` is the lighter path: one owner and one reviewer, with the proof that the fix fixes the bug enforced instead of a delivery ceremony. The orchestrator picks the narrowest test command that covers the bug and runs:
+```bash
+eccode debug "Ten items get no bulk discount" --actor orchestrator --command "npm test -- tests/price.test.js"
+```
+It sets up a debug work item whose one task is `fix` and whose only gate is `phase:fix` (there is no verification gate). The printed path:
+1. The owner claims `fix` and **reproduces first**: a regression test for the reported symptom, recorded failing (`eccode evidence run ... --purpose reproduction`). Then it traces the root cause and fixes it.
+2. The owner proves the test with `eccode fix verify --actor <owner> --task fix`. The test runs on the code before the fix, where it must fail, and on the fix, where it must pass. Only PROVEN counts. Then `eccode mutate --task fix --test "<cmd>" --record` flips operators on the changed lines; a survivor is fixed behavior no test checks.
+3. The owner drafts and completes the handoff (the root cause, the fix, what the proofs showed) and submits `phase:fix`. **The engine refuses the submission until fix verify has proven the test and a mutation run is recorded.**
+4. `technical-reviewer` reads the bug report, the diff and the handoff, asks whether the root cause is fixed or only the example, re-runs the check itself and reviews.
+5. The orchestrator runs `eccode deliver --actor orchestrator`. The final handoff carries the fix proof (the pre-fix failure and the post-fix pass, by evidence id) and the mutation result.
+
+If the pinned command cannot pass for a reason unrelated to the bug, the orchestrator releases the task (`eccode task fail fix`) and re-pins it with `eccode task rescope fix --command "<cmd>" --actor orchestrator --reason "<the unrelated failure>"`. Two examples: a test in it already failed before any change, or it collects no tests. The record keeps the previous command and the reason. The same works on the quick track, and `--files` corrects ownership the same way.
+
+Every changed file must still be in the reviewed submission, the reviewer must run a check of its own, and the record is hash-chained as on every track. What the debug track drops is the verification gate and its two dispatches (delivery lead and security reviewer): two dispatches in all instead of five.
+
 ### The full workflow
 
-In Claude Code, `/eccode:start <idea>` makes the main session follow the `orchestrate` skill. On an existing codebase it runs `eccode onboard` first and picks a **track** (`greenfield`, `feature`, `refactor`, `fix`, `quick`) that sizes the gates to the change; after a delivery, `eccode work start` opens the next work item on the same record. It:
+In Claude Code, `/eccode:start <idea>` makes the main session follow the `orchestrate` skill. On an existing codebase it runs `eccode onboard` first and picks a **track** (`greenfield`, `feature`, `refactor`, `fix`, `quick`, `debug`) that sizes the gates to the change; after a delivery, `eccode work start` opens the next work item on the same record. It:
 1. initializes `.eccode/`;
 2. dispatches the architect, then an **independent** reviewer, then the designer and its reviewer;
 3. has the delivery lead plan the work, followed by a plan review;

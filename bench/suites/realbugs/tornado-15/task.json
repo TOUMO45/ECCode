@@ -11,7 +11,7 @@
     "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
     "PYTHONDONTWRITEBYTECODE": "1"
   },
-  "prompt": "Security: `StaticFileHandler` serves files outside its static root when their path starts with the root's name. With `static_path='/srv/app/static'`, a request for `/static/../static_foo.txt` serves `/srv/app/static_foo.txt`, which is outside the static directory. Every request that resolves outside the root directory must be refused with 403 and logged as not in the root static directory, as other traversal attempts already are.\n\nTests: `python -m pytest -q tornado/test/<module>_test.py` runs one test module.",
+  "prompt": "Security: `StaticFileHandler` serves files outside its static root when their path starts with the root's name. With `static_path='/srv/app/static'`, a request for `/static/../static_foo.txt` serves `/srv/app/static_foo.txt`, which is outside the static directory. Every request that resolves outside the root directory must be refused with 403 and logged as not in the root static directory, as other traversal attempts already are.\n\nTests: `python -m pytest -q tornado/test/<module>_test.py` runs one test module. In this environment, before any change and unrelated to this bug, tornado/test/web_test.py::ClearAllCookiesTest::test_clear_all_cookies fails; leave it out with `--ignore=<file>` or `--deselect <test>`.",
   "hiddenChecks": [
     {
       "id": "bug",
@@ -28,6 +28,9 @@
     ],
     "regressionTests": 155,
     "failingOnFixedHere": [
+      "tornado/test/web_test.py::ClearAllCookiesTest::test_clear_all_cookies"
+    ],
+    "failingBeforeAndAfter": [
       "tornado/test/web_test.py::ClearAllCookiesTest::test_clear_all_cookies"
     ],
     "passingOnlyWithFixOutsideItsTests": [],

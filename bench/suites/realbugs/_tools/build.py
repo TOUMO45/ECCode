@@ -126,6 +126,10 @@ def build(args, project, bug, prompts):
         # Outside the fix's own tests, a test that only the fix makes pass is
         # not part of this bug's report: neither checked nor required.
         other = sorted(k for k in rf if rf[k] == 'passed' and rb.get(k) == 'failed' and k not in bug_tests)
+        # Failing before and after the fix in this environment: the bug report
+        # names them, as a project's CI notes would, so no variant mistakes
+        # them for the bug or pins a check that can never pass.
+        known = sorted(k for k in rf if rf[k] == 'failed' and rb.get(k) == 'failed' and k not in bug_tests)
         regression = [k for k in rf if rf[k] == 'passed' and rb.get(k) == 'passed' and k not in bug_tests]
         out = os.path.join(SUITE, tid)
         shutil.rmtree(out, ignore_errors=True)
@@ -140,19 +144,25 @@ def build(args, project, bug, prompts):
             open(os.path.join(out, 'fixture', name), 'w').write(text)
         deselect = sorted(set(bug_tests) | set(env_failing) | set(other))
         p = prompts[tid]
+        prompt = p['prompt']
+        if known:
+            mods = [k for k in known if '::' not in k]
+            tests = [k for k in known if '::' in k]
+            parts = ([f"{', '.join(mods)} fail{'s' if len(mods) == 1 else ''} to import"] if mods else []) + ([f"{', '.join(tests)} fail{'s' if len(tests) == 1 else ''}"] if tests else [])
+            prompt += f" In this environment, before any change and unrelated to this bug, {' and '.join(parts)}; leave {'it' if len(known) == 1 else 'them'} out with `--ignore=<file>` or `--deselect <test>`."
         task = {
             'id': tid,
             'title': p['title'],
             'source': {'repo': REPOS[project], 'commit': buggy, 'fixedCommit': fixed, 'bugsinpy': f'{project}/{bug}'},
             'env': {'PATH': '${ECCODE_REALBUGS_VENVS}/' + VENV[project] + '/bin:${PATH}', 'PYTHONDONTWRITEBYTECODE': '1'},
-            'prompt': p['prompt'],
+            'prompt': prompt,
             'hiddenChecks': [
                 {'id': 'bug', 'command': f'node .bench-hidden/place.js && {PYTEST} ' + ' '.join(bug_tests)},
                 # A module that fails to collect here is ignored (deselecting it
                 # would not stop the collection error); single tests are deselected.
                 {'id': 'regression', 'command': f'node .bench-hidden/place.js && {PYTEST} ' + ' '.join(reg_files) + ''.join(f' --ignore={k}' if '::' not in k else f' --deselect {k}' for k in deselect if any(k.split('::')[0] == r or k.startswith(r.rstrip('/') + '/') for r in reg_files))},
             ],
-            'measured': {'bugTests': bug_tests, 'regressionTests': len(regression), 'failingOnFixedHere': env_failing, 'passingOnlyWithFixOutsideItsTests': other, 'fixFiles': sorted(fix_files), 'hiddenFiles': test_patch},
+            'measured': {'bugTests': bug_tests, 'regressionTests': len(regression), 'failingOnFixedHere': env_failing, 'failingBeforeAndAfter': known, 'passingOnlyWithFixOutsideItsTests': other, 'fixFiles': sorted(fix_files), 'hiddenFiles': test_patch},
         }
         json.dump(task, open(os.path.join(out, 'task.json'), 'w'), indent=2, ensure_ascii=False)
         open(os.path.join(out, 'task.json'), 'a').write('\n')

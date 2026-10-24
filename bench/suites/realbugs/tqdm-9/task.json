@@ -11,7 +11,7 @@
     "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
     "PYTHONDONTWRITEBYTECODE": "1"
   },
-  "prompt": "Two bugs.\n\n1. With `unit_scale=True` the number of decimals is chosen before the value is rounded, so values that round up to the next boundary come out wrong: 9999 is shown as `10.00K` instead of `10.0K`, 99999 as `100.0K` instead of `100K`, and 999999 as `1000K` instead of `1.00M` (likewise at every prefix up to Z). The printed value must have three significant figures for the value as it is printed, moving to the next prefix when the rounded value reaches 1000 (`9.99K`, `10.0K`, `99.5K`, `100K`, `1.00M`); values in Y keep one decimal (`1.0Y`, `1000.0Y`).\n2. `len()` of a bar created without an iterable, such as `tqdm(total=2)`, raises `TypeError: object of type 'NoneType' has no len()`; it must return the total. `len()` of a bar over a list stays the list's length.\n\nTests: `python -m pytest -q tqdm/tests`.",
+  "prompt": "Two bugs.\n\n1. With `unit_scale=True` the number of decimals is chosen before the value is rounded, so values that round up to the next boundary come out wrong: 9999 is shown as `10.00K` instead of `10.0K`, 99999 as `100.0K` instead of `100K`, and 999999 as `1000K` instead of `1.00M` (likewise at every prefix up to Z). The printed value must have three significant figures for the value as it is printed, moving to the next prefix when the rounded value reaches 1000 (`9.99K`, `10.0K`, `99.5K`, `100K`, `1.00M`); values in Y keep one decimal (`1.0Y`, `1000.0Y`).\n2. `len()` of a bar created without an iterable, such as `tqdm(total=2)`, raises `TypeError: object of type 'NoneType' has no len()`; it must return the total. `len()` of a bar over a list stays the list's length.\n\nTests: `python -m pytest -q tqdm/tests/tests_tqdm.py` runs the main test file. pytest collects only files named test_*.py, so name each tqdm/tests/tests_*.py file you want to run.",
   "hiddenChecks": [
     {
       "id": "bug",
@@ -29,6 +29,7 @@
     ],
     "regressionTests": 12,
     "failingOnFixedHere": [],
+    "failingBeforeAndAfter": [],
     "passingOnlyWithFixOutsideItsTests": [],
     "fixFiles": [
       "tqdm/_tqdm.py"

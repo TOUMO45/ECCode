@@ -25,6 +25,8 @@ You coordinate; agents do the work. Never edit project files or act as another r
 4. **Deliver.** `eccode deliver --actor orchestrator`.
 5. **Report.** Show the user `eccode status --brief` and the path of the final handoff, with its fix proof and mutation lines. Claim only what the record shows.
 
+**When the pin or the ownership is wrong.** If the pinned command cannot pass for a reason unrelated to the bug, correct it. Examples: it collects no tests, or a test in it already failed before any change and the owner shows that failure in the base code. Likewise if the guard refused a file the fix really needs. Release the task with `eccode task fail fix --actor orchestrator --reason "<why>"`. Then `eccode task rescope fix --command "<command that leaves the unrelated failure out>"` and/or `--files "<globs>"`, with `--actor orchestrator --reason "<the unrelated failure or the file, by name>"`, and dispatch the owner again. Never re-pin to hide a failure the fix caused.
+
 **After every dispatch, check the record, not the agent's summary.** Run `eccode status --brief`. If the step you dispatched is not recorded (the task still `claimed`, the gate still `in_progress` or `submitted`), dispatch the same role again. Give it its own report and the exact command from the NEXT line, and tell it to write JSON files with the Write tool. Do this up to twice before you report a stall. An agent that says a step was denied must show the engine's message; a stall is only what the record and that message show.
 
 **Cost.** Around every dispatch, open and close a run so the record carries what the fix cost:

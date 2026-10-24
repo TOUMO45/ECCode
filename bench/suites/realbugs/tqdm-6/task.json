@@ -11,7 +11,7 @@
     "PATH": "${ECCODE_REALBUGS_VENVS}/py38/bin:${PATH}",
     "PYTHONDONTWRITEBYTECODE": "1"
   },
-  "prompt": "Wrapping an iterator that has no `__len__` in `tqdm(..., disable=True)` raises `AttributeError: 'tqdm' object has no attribute 'total'` when it is consumed with `list()`. For example `list(tqdm(pool.imap(f, range(100)), disable=True))` with a `multiprocessing.Pool` fails. A disabled bar must behave exactly like the iterable it wraps.\n\nTests: `python -m pytest -q tqdm/tests`.",
+  "prompt": "Wrapping an iterator that has no `__len__` in `tqdm(..., disable=True)` raises `AttributeError: 'tqdm' object has no attribute 'total'` when it is consumed with `list()`. For example `list(tqdm(pool.imap(f, range(100)), disable=True))` with a `multiprocessing.Pool` fails. A disabled bar must behave exactly like the iterable it wraps.\n\nTests: `python -m pytest -q tqdm/tests/tests_tqdm.py` runs the main test file. pytest collects only files named test_*.py, so name each tqdm/tests/tests_*.py file you want to run.",
   "hiddenChecks": [
     {
       "id": "bug",
@@ -28,6 +28,7 @@
     ],
     "regressionTests": 46,
     "failingOnFixedHere": [],
+    "failingBeforeAndAfter": [],
     "passingOnlyWithFixOutsideItsTests": [],
     "fixFiles": [
       "tqdm/_tqdm.py"

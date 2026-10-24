@@ -38,8 +38,19 @@ A delivered project is not finished — `eccode work start` opens the next work 
 | `refactor` | plan | see below |
 | `fix` | plan | see below |
 | `quick` | none — a one-task plan is imported from `--owner/--files/--command` | — |
+| `debug` | none — a one-task plan (task `fix`), and no verification gate | see below |
 
-Every track ends in implementation phases plus verification, with all existing rules (independent review, evidence, lean, coverage) intact.
+Every track has implementation phases and keeps all existing rules (independent review, evidence, lean, coverage). Every track but `debug` ends in verification.
+
+**The debug track: one bug, the lighter mode.** `eccode debug "<bug>" --actor orchestrator` (in Claude Code, `/eccode:debug`) sets up one task, `fix`, whose phase gate is the track's only gate:
+- The owner reproduces the bug with a test recorded failing, fixes the root cause, and proves the test with `fix verify`: it fails on the code before the fix and passes with it.
+- The owner then records a mutation run on the changed lines.
+- The phase submission is refused until both proofs are in the record. A pre-fix failure that was inconclusive (a test that only fails because it calls API the fix adds) does not count, and neither does a fix that still fails its test.
+- One independent reviewer approves the phase after running a check of its own. The orchestrator delivers.
+- The phase submission must cover every file changed since the work item started, as the verification gate does on the other tracks.
+- The final handoff states the fix proof (both runs, by evidence id) and the mutation result.
+
+That is two dispatches where the quick track has five. The delivery lead's verification note and the security reviewer's second review are dropped; the proof that the fix fixes the bug is enforced instead.
 
 **One step for the quick track.** `eccode quick "<change>" --actor orchestrator` (in Claude Code, `/eccode:quick`) creates the record if there is none, or starts the next work item on a delivered one. It imports the one-task plan, starts its gate and prints every remaining step as the command each role runs. The verification command is the detected test check, ownership is the tracked top-level layout without dot directories, and both are printed so they can be overridden. `eccode handoff draft` fills the fields of the owner's handoff that the record already knows (changed files inside the ownership, the owner's latest passing run of the planned command, the criteria). Completion refuses a handoff that still holds a draft's `TODO:` placeholder. `init --track quick` used to create a record with no task to claim; it now refuses and points to `eccode quick`. Live: [docs/live/22-quick-track-engine.txt](live/22-quick-track-engine.txt).
 
@@ -110,6 +121,22 @@ Pre-registered result, 80 runs ([protocol](../bench/protocols/2026-10-23-engine-
 - On these four tasks both models avoided every trap without the engine, so correctness had no room to improve. That is a finding about the tasks, not evidence that the engine helps or hurts. What the batches measure is the price of the process: 3.4× (Sonnet) to 5.0× (Opus) the median cost of a bare run, for a change that an independent reviewer checked and that the record proves.
 - Delivery: 12 of 20 Opus engine runs delivered. All 8 that did not were on the two Python tasks and stopped at the `__pycache__` refusal (row 57).
 - Delivery on Sonnet: only 6 of the 20 engine runs delivered, though every audit was clean. The saved transcripts showed why: agents composed shell commands the CLI-only allowlist refused, stopped, and were not re-dispatched (register row 56). After the fixes, a pre-registered follow-up delivered 16/20 with all hidden checks passing ([report](../bench/engine-followup/2026-10-23-engine-followup-sonnet.md)). Its four stalls had one cause, `__pycache__` counted as an unreviewed change (row 57). After that fix, the second follow-up delivered 19/20 with every audit clean and every hidden check passing, at a median cost of $0.49 per change ([protocol](../bench/protocols/2026-10-23-engine-delivery-followup-2.md), [report](../bench/engine-followup/2026-10-23-engine-followup-2-sonnet.md)). Delivery went from 6/20 to 16/20 to 19/20; each step is a before/after comparison of engine versions, not a randomized one.
+
+### Real bugs: `bench/suites/realbugs`
+
+The engine suite left correctness untested, because the bare models made no mistakes on it (register row 59). The realbugs suite is twenty real bugs from BugsInPy (youtube-dl, black, tornado, thefuck, tqdm), drawn by a seeded shuffle after screening eight projects ([README](../bench/suites/realbugs/README.md)):
+- Each task is the project at its commit before the fix, with no history, so the fix is nowhere in the sandbox.
+- The bug report is written as a user would write it.
+- The hidden checks are the fix's own tests: the ones only the real fix passes, and the rest of those files (or of the project's offline suite) as the regression check.
+- Every task is validated live in CI: the pre-fix tree fails the bug check and passes the regression check, and the real fix passes both.
+
+A pre-registered batch compares four variants on it, 240 runs ([protocol](../bench/protocols/2026-10-24-realbugs.md)):
+- the bare bug report;
+- the debugging method's text alone;
+- the debug track;
+- the quick track.
+
+REALBUGS_RESULTS
 
 ## Verified live, not only in unit tests
 

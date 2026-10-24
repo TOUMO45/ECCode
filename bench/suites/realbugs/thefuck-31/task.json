@@ -11,7 +11,7 @@
     "PATH": "${ECCODE_REALBUGS_VENVS}/thefuck/bin:${PATH}",
     "PYTHONDONTWRITEBYTECODE": "1"
   },
-  "prompt": "After `git add foo`, `git diff foo` prints nothing, and thefuck suggests `git diff foo --staged`, which git rejects (`fatal: bad flag '--staged' used after filename`). The suggestion must put `--staged` right after `diff`: `git diff --staged foo`. A plain `git diff` must still become `git diff --staged`.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker).",
+  "prompt": "After `git add foo`, `git diff foo` prints nothing, and thefuck suggests `git diff foo --staged`, which git rejects (`fatal: bad flag '--staged' used after filename`). The suggestion must put `--staged` right after `diff`: `git diff --staged foo`. A plain `git diff` must still become `git diff --staged`.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker). In this environment, before any change and unrelated to this bug, tests/rules/test_git_add.py, tests/rules/test_git_checkout.py fail to import and tests/test_main.py::TestGetCommand::test_get_command_calls fails; leave them out with `--ignore=<file>` or `--deselect <test>`.",
   "hiddenChecks": [
     {
       "id": "bug",
@@ -28,6 +28,11 @@
     ],
     "regressionTests": 187,
     "failingOnFixedHere": [
+      "tests/rules/test_git_add.py",
+      "tests/rules/test_git_checkout.py",
+      "tests/test_main.py::TestGetCommand::test_get_command_calls"
+    ],
+    "failingBeforeAndAfter": [
       "tests/rules/test_git_add.py",
       "tests/rules/test_git_checkout.py",
       "tests/test_main.py::TestGetCommand::test_get_command_calls"

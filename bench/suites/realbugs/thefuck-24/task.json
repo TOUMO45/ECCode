@@ -11,7 +11,7 @@
     "PATH": "${ECCODE_REALBUGS_VENVS}/thefuck/bin:${PATH}",
     "PYTHONDONTWRITEBYTECODE": "1"
   },
-  "prompt": "When two rules suggest the same corrected command (same script, same side effect) with different priorities, thefuck shows it twice. `CorrectedCommand('ls', None, 100)` and `CorrectedCommand('ls', None, 200)` (from `thefuck.types`) compare unequal and hash differently. Two corrected commands must be equal, and hash equally, exactly when their script and side effect are equal; the priority must not matter. A different side effect still makes them different.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker).",
+  "prompt": "When two rules suggest the same corrected command (same script, same side effect) with different priorities, thefuck shows it twice. `CorrectedCommand('ls', None, 100)` and `CorrectedCommand('ls', None, 200)` (from `thefuck.types`) compare unequal and hash differently. Two corrected commands must be equal, and hash equally, exactly when their script and side effect are equal; the priority must not matter. A different side effect still makes them different.\n\nTests: `python -m pytest -q tests` (the functional tests skip themselves without Docker). In this environment, before any change and unrelated to this bug, tests/rules/test_git_add.py, tests/rules/test_git_checkout.py fail to import and tests/test_main.py::TestGetCommand::test_get_command_calls fails; leave them out with `--ignore=<file>` or `--deselect <test>`.",
   "hiddenChecks": [
     {
       "id": "bug",
@@ -29,6 +29,11 @@
     ],
     "regressionTests": 246,
     "failingOnFixedHere": [
+      "tests/rules/test_git_add.py",
+      "tests/rules/test_git_checkout.py",
+      "tests/test_main.py::TestGetCommand::test_get_command_calls"
+    ],
+    "failingBeforeAndAfter": [
       "tests/rules/test_git_add.py",
       "tests/rules/test_git_checkout.py",
       "tests/test_main.py::TestGetCommand::test_get_command_calls"

@@ -53,7 +53,7 @@ Plan & tasks
   task complete <id> --actor <owner> --handoff <handoff.json>
   task fail <id> --actor <owner> --reason <text>
   task reset <id> --actor <orchestrator|delivery-lead|user> --reason <text>
-  task rescope <id> --files <glob,glob> --actor <orchestrator (quick, debug tracks)|user> --reason <text>
+  task rescope <id> [--files <glob,glob>] [--command "<cmd>"] --actor <orchestrator (quick, debug tracks)|user> --reason <text>
                                          Correct a pending task's ownership (release a claimed one with task fail)
 
 Evidence & records
@@ -570,8 +570,8 @@ function main(argv) {
         tasks.reset(store, need(arg, '<task>'), need(actor, '--actor'), need(flags.reason, '--reason'));
         print(flags, `Task ${arg} reset to pending.`);
       } else if (sub === 'rescope') {
-        tasks.rescope(store, config, need(arg, '<task>'), need(actor, '--actor'), { files: need(flags.files, '--files'), reason: need(flags.reason, '--reason') });
-        print(flags, `Task ${arg} now owns ${flags.files}.`);
+        tasks.rescope(store, config, need(arg, '<task>'), need(actor, '--actor'), { files: flags.files, command: flags.command, reason: need(flags.reason, '--reason') });
+        print(flags, [flags.files ? `Task ${arg} now owns ${flags.files}.` : null, flags.command ? `Task ${arg} now verifies with: ${flags.command}` : null].filter(Boolean).join('\n'));
       } else throw new EccodeError('USAGE', `Unknown task subcommand ${sub}`);
       return 0;
     }

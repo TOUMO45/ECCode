@@ -54,6 +54,21 @@ test('realbugs: no bug report contains the fix\'s code or names a file it change
   }
 });
 
+test('realbugs: every report names the tests that already fail here, and says how its tests run', () => {
+  for (const t of tasks) {
+    for (const k of t.measured.failingBeforeAndAfter) assert.ok(t.prompt.includes(k), `${t.id}: the report must name ${k}, which fails before and after the fix in this environment`);
+    assert.ok(!/Tests: `python -m pytest -q tqdm\/tests`/.test(t.prompt), `${t.id}: pytest collects no tqdm tests from the directory alone`);
+  }
+});
+
+/** The concrete test command a report gives (none when it is a template like test/<file>.py), with the known failures left out. */
+function statedCommand(t) {
+  const m = t.prompt.match(/Tests: `([^`]+)`/);
+  if (!m || m[1].includes('<')) return null;
+  const known = t.measured.failingBeforeAndAfter.map((k) => (k.includes('::') ? ` --deselect ${k}` : ` --ignore=${k}`)).join('');
+  return `${m[1]}${known}`;
+}
+
 const live = process.env.ECCODE_REALBUGS_VALIDATE === '1';
 test('realbugs (live): the pre-fix tree fails the bug check, the real fix passes every check', { skip: live ? false : 'set ECCODE_REALBUGS_VALIDATE=1 with ECCODE_REALBUGS_VENVS (see bench/suites/realbugs/_tools/setup.sh)' }, () => {
   const only = process.env.ECCODE_REALBUGS_ONLY ? process.env.ECCODE_REALBUGS_ONLY.split(',') : null;
@@ -66,6 +81,11 @@ test('realbugs (live): the pre-fix tree fails the bug check, the real fix passes
       const before = Object.fromEntries(bench.runChecks(t, dir).map((c) => [c.id, c]));
       if (before.bug.passed) problems.push(`${t.id}: the bug check passes on the pre-fix tree`);
       if (!before.regression.passed) problems.push(`${t.id}: the regression check fails on the pre-fix tree:\n${before.regression.tail}`);
+      const stated = statedCommand(t);
+      if (stated) {
+        const c = spawnSync(`${stated} --collect-only -q -p no:cacheprovider`, { cwd: dir, shell: true, encoding: 'utf8', env: require('../lib/util').commandEnv(bench.taskEnv(t)) });
+        if (c.status !== 0) problems.push(`${t.id}: the report's test command does not collect cleanly on the pre-fix tree (exit ${c.status}):\n${`${c.stdout}${c.stderr}`.split('\n').slice(-4).join('\n')}`);
+      }
       const r = spawnSync('git', ['apply', '--whitespace=nowarn', path.join(t.dir, 'reference', 'fix.patch')], { cwd: dir, encoding: 'utf8' });
       if (r.status !== 0) {
         problems.push(`${t.id}: the real fix does not apply: ${r.stderr}`);
