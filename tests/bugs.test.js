@@ -229,3 +229,38 @@ test('CLI: exit 1 with errors, 0 without, and JSON output', () => {
   assert.strictEqual(j.findings[0].rule, 'js/assign-in-condition');
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('ruff reports bug classes only, whatever the project selects; FastAPI parameter defaults are not B008 bugs', { skip: !bugs.hasTool('ruff') && 'ruff not installed' }, () => {
+  const { dir } = gitRepo({
+    'pyproject.toml': '[project]\nname = "x"\n\n[tool.ruff.lint]\nselect = ["I", "SIM", "B", "ASYNC", "RUF", "F", "PIE"]\n',
+    'pkg/__init__.py': '',
+    'pkg/a.py': 'def base():\n    return 1\n',
+  });
+  fs.appendFileSync(path.join(dir, 'pkg/a.py'), [
+    'import sys',
+    'import os',
+    'from fastapi import Depends',
+    '',
+    '',
+    'def route(session=Depends(base)):',
+    '    if session:',
+    '        if os.sep:',
+    '            pass',
+    '    return sys.argv',
+    '',
+    '',
+    'def collect(item, acc=[]):',
+    '    acc.append(item)',
+    '    return acc',
+    '',
+    '',
+    'async def load(p):',
+    '    with open(p) as f:',
+    '        return f.read() + missing_name',
+    '',
+  ].join('\n'));
+  const r = bugs.scan(dir, {});
+  // B006 is shown once, as the equivalent built-in rule (py/mutable-default).
+  assert.deepStrictEqual(r.findings.map((f) => `${f.tool}:${f.rule}`).sort(), ['eccode:py/mutable-default', 'ruff:ASYNC230', 'ruff:F821'], JSON.stringify(r.findings));
+  fs.rmSync(dir, { recursive: true, force: true });
+});
