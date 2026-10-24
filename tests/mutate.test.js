@@ -37,7 +37,7 @@ test('mutants come only from changed code lines, never from strings or comments'
   assert.ok(ms.every((m) => m.line === 2), JSON.stringify(ms));
   assert.deepStrictEqual(ms.map((m) => `${m.from}->${m.to}`).sort(), ['&&->||', '<-><='].sort());
   const py = mutate.mutantsFor('app/a.py', 'msg = "x and y"\nif x > 1 and not done:\n    return True\n', null);
-  assert.deepStrictEqual(py.map((m) => `${m.line}:${m.from.trim()}->${m.to.trim()}`).sort(), ['2:>->>=', '2:and->or', '2:not->', '3:True->False'].sort());
+  assert.deepStrictEqual(py.map((m) => `${m.line}:${m.from.trim()}->${m.to.trim()}`).sort(), ['2:>->>=', '2:and->or', '2:not->', '2:1->2', '3:True->False', '3:True->None'].sort());
   assert.deepStrictEqual(mutate.mutantsFor('tests/a.test.js', 'if (a < b) x();\n', null), [], 'test files are not mutated');
 });
 
@@ -137,4 +137,25 @@ test('with the project\'s TypeScript compiler, TS mutants run and broken TypeScr
   assert.strictEqual(mutate.tsChecker(dir)(path.join(dir, 'src/broken.ts')), false);
   assert.strictEqual(mutate.tsChecker(dir)(path.join(dir, 'src/a.ts')), true);
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('python mutants reach the lines real fixes change: identity, membership, constants and returned values', () => {
+  const text = [
+    'def f(a, items):',
+    '    if a is None:',
+    '        return 409',
+    '    if a not in items:',
+    '        return [i for i in items]',
+    '    for k in items:',
+    '        pass',
+    '    return a',
+    '',
+  ].join('\n');
+  const got = mutate.mutantsFor('app/x.py', text, null).map((m) => `${m.line}:${m.op}:${m.from}->${m.to}`);
+  for (const want of ['2:identity:is->is not', '3:constant:409->410', '3:return-value:409->None', '4:membership:not in->in', '5:return-value:[i for i in items]->None', '8:return-value:a->None']) {
+    assert.ok(got.includes(want), `${want} in ${JSON.stringify(got)}`);
+  }
+  assert.ok(!got.some((g) => /^[56]:membership/.test(g)), `no membership mutant on a for clause: ${JSON.stringify(got)}`);
+  assert.ok(!got.some((g) => g.startsWith('4:negation')), 'not in is the membership operator, not a negation');
+  assert.ok(!got.some((g) => /return-value:None->/.test(g)));
 });
