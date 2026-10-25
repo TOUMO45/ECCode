@@ -651,6 +651,16 @@ test('analyse: gate order of the first work item, and the greenfield order rule'
   assert.strictEqual(gatesInOrder(['architecture', 'design', 'plan', 'verification']), false, 'at least one phase');
 });
 
+test('analyse: the greenfield rows read the suite the runs used (the rerun\'s pantry)', () => {
+  const { criteria } = require('../bench/pilot/analyse');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-analyse-gf-'));
+  const done = (task) => ({ task, chainRun: 1, engine: { delivered: true, auditOk: true, initialized: true }, patch: '' });
+  const runs = { c1: { records: [done('pantry-c1'), done('pantry-c2')], summaries: [], stopped: [] } };
+  const row = (opts) => criteria(dir, runs, { refusals: {} }, opts).rows.find((r) => r.id === 'greenfield-1').result;
+  assert.match(row({ greenfield: 'pantry' }), /2\/3 delivered/);
+  assert.match(row(undefined), /0\/3 delivered/, 'the pilot\'s planner by default');
+});
+
 test('analyse: migration files a patch adds, modifies or deletes', () => {
   const { migrationChange } = require('../bench/pilot/analyse');
   const patch = [
