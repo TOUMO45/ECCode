@@ -102,13 +102,15 @@ function taskEnvVars(venv) {
   };
 }
 
-module.exports = { envKey, lockfileOf, pythonVersionFor, pythonEnv, nodeModules, taskEnvVars };
-
-if (require.main === module) {
-  const [what, tree] = process.argv.slice(2);
+function cli(argv) {
+  const [what, tree] = argv;
   if (!['python', 'node'].includes(what) || !tree) {
     process.stderr.write('usage: node env.js python|node <tree>\n');
     process.exit(2);
   }
   process.stdout.write(`${what === 'python' ? pythonEnv(path.resolve(tree)) : nodeModules(path.resolve(tree))}\n`);
 }
+
+module.exports = { envKey, lockfileOf, pythonVersionFor, pythonEnv, nodeModules, taskEnvVars, cli };
+
+if (require.main === module) cli(process.argv.slice(2));

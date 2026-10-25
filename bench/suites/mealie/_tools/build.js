@@ -5,19 +5,23 @@
 // file is written: tasks name commits, and hidden tests are exported from the
 // mirror at run time (task.hidden.fromSource).
 // Items run in upstream order: by the date of their source commit.
-// usage: node build.js
+// usage: node build.js [--suite <dir>]   (default: this suite; another suite
+// keeps its own _tools/selection.json and _tools/prompts.json, and its
+// refactor item names its base commit as prompts.refactor.source)
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const lib = require('../../../pilot/lib');
 const env = require('./env');
 
-const SUITE = path.join(__dirname, '..');
-const selection = JSON.parse(fs.readFileSync(path.join(__dirname, 'selection.json'), 'utf8'));
-const prompts = JSON.parse(fs.readFileSync(path.join(__dirname, 'prompts.json'), 'utf8'));
+const argv = process.argv.slice(2);
+const SUITE = argv.includes('--suite') ? path.resolve(argv[argv.indexOf('--suite') + 1]) : path.join(__dirname, '..');
+const TOOLS = path.join(SUITE, '_tools');
+const selection = JSON.parse(fs.readFileSync(path.join(TOOLS, 'selection.json'), 'utf8'));
+const prompts = JSON.parse(fs.readFileSync(path.join(TOOLS, 'prompts.json'), 'utf8'));
 const refactor = prompts.refactor;
 
-const P = 'dbe84cc91b9e1dfc88b783a1e31d8a8495800337';
+const P = refactor.source || 'dbe84cc91b9e1dfc88b783a1e31d8a8495800337';
 const FULL_SUITE = 'python -m pytest -q -p no:cacheprovider tests';
 const TRACK = { fix: 'fix', debug: 'debug', quick: 'quick', feature: 'feature', migration: 'feature', fullstack: 'feature', security: 'fix', refactor: 'refactor' };
 const q = (s) => JSON.stringify(s);
@@ -63,7 +67,7 @@ function main() {
     const prompt = prompts[it.category];
     if (!prompt) throw new Error(`prompts.json has no request for ${it.category}`);
     const common = {
-      id: `mealie-${id}`,
+      id: `${path.basename(SUITE)}-${id}`,
       category: it.category,
       order,
       source: { repo: lib.MEALIE, commit: it.source },

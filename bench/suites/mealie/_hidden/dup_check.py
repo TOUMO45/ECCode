@@ -2,6 +2,7 @@
 
 usage: python dup_check.py <root> <hash> [<hash> ...]
        python dup_check.py <root> --hash <file.py> <function>   (print one body's hash)
+       python dup_check.py <root> --scan                       (every body two or more functions share, largest first)
 
 A function body is normalized (docstring dropped, every name and argument
 renamed, annotations dropped) and hashed. The check passes when each given
@@ -48,8 +49,22 @@ def functions(root):
                         yield os.path.relpath(path, root), node
 
 
+def scan(root):
+    """Bodies shared by functions of two or more classes, largest first: how the refactor items are chosen."""
+    by_hash = {}
+    for rel, fn in functions(root):
+        lines = fn.end_lineno - fn.lineno + 1
+        by_hash.setdefault(body_hash(fn), []).append((rel.replace(os.sep, "/"), fn.name, lines))
+    shared = [(h, where) for h, where in by_hash.items() if len(where) > 1 and len({w[0] for w in where}) > 1]
+    for h, where in sorted(shared, key=lambda x: (-max(w[2] for w in x[1]), x[0])):
+        print(f"{h} {max(w[2] for w in where)} lines: {'; '.join(f'{w[0]} {w[1]}' for w in where)}")
+    return 0
+
+
 def main(argv):
     root = argv[1]
+    if argv[2] == "--scan":
+        return scan(root)
     if argv[2] == "--hash":
         target, fname = argv[3], argv[4]
         for rel, fn in functions(root):
