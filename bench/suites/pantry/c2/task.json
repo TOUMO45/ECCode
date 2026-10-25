@@ -1,0 +1,22 @@
+{
+  "id": "pantry-c2",
+  "title": "Shopping list and tag filter",
+  "order": 2,
+  "track": "feature",
+  "prompt": "Extend mealie-pantry (this repository) with a shopping list for the recipes we plan to cook, and a tag filter.\n\n- POST /shopping-list with {\"recipes\": [\"<slug>\", ...]} returns 200 {\"items\": [{\"food\", \"quantity\", \"unit\", \"label\"}]}: what to buy so that the pantry holds everything these recipes need together, that is what the pantry lacks of their needs summed (a slug listed twice counts twice). A missing or empty list, or an entry that is not a non-empty string, is 400; a recipe Mealie does not know is 404.\n- label is the label of the item's food in Mealie: GET {MEALIE_URL}/api/foods?page=<n>&perPage=<n> is paginated like the recipes, with items [{\"id\", \"name\", \"label\": {\"name\"} or null}], and food names match case-insensitively. It is \"Other\" when the food is not in that list or has no label. Items are sorted by label with \"Other\" last, then by food, then by unit, null first.\n- GET /recipes/cookable accepts tags=<slug>,<slug>,...: then only recipes that carry every one of those tags are listed.\n- Everything that works today keeps working.",
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "node .bench-hidden/check.js c2",
+      "timeoutMs": 900000
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/check.js c1",
+      "timeoutMs": 900000
+    }
+  ],
+  "measured": {
+    "acceptanceTests": 4
+  }
+}

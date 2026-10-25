@@ -519,6 +519,53 @@ test('the dev copy of the fake Mealie server is the hidden one', () => {
   assert.strictEqual(fs.readFileSync(path.join(PLANNER, 'c1', 'fixture', 'dev', 'fake-mealie', 'server.js'), 'utf8'), fs.readFileSync(path.join(PLANNER, '_hidden', 'fake-mealie', 'server.js'), 'utf8'));
 });
 
+// The rerun's greenfield suite (bench/suites/pantry): fresh requests, the same grading.
+const PANTRY = path.join(__dirname, '..', 'bench', 'suites', 'pantry');
+function pantryCheck(projectDir, tag) {
+  const hidden = path.join(projectDir, '.bench-hidden');
+  fs.cpSync(path.join(PANTRY, '_hidden'), hidden, { recursive: true });
+  const r = require('child_process').spawnSync(process.execPath, [path.join(hidden, 'check.js'), tag], { cwd: projectDir, encoding: 'utf8', timeout: 180000 });
+  return { code: r.status, out: `${r.stdout}${r.stderr}` };
+}
+const pantryReference = (prefix) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  fs.cpSync(path.join(PANTRY, 'reference'), dir, { recursive: true });
+  return dir;
+};
+
+test('pantry: the acceptance suite passes against the reference', { skip: !hasSqlite && 'the reference needs node:sqlite (Node >= 22.5)' }, () => {
+  const dir = pantryReference('pantry-ref-');
+  for (const tag of ['c1', 'c2', 'c3']) {
+    const r = pantryCheck(dir, tag);
+    assert.strictEqual(r.code, 0, `${tag}:\n${r.out.split('\n').filter((l) => /not ok|Error|expected|actual/.test(l)).slice(0, 20).join('\n')}`);
+  }
+});
+
+test('pantry: the acceptance suite fails against an empty service and against a client that reads one page of recipes', { skip: !hasSqlite && 'the reference needs node:sqlite (Node >= 22.5)' }, () => {
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'pantry-empty-'));
+  fs.writeFileSync(path.join(empty, 'package.json'), JSON.stringify({ name: 'empty', scripts: { start: 'node server.js' } }));
+  fs.writeFileSync(path.join(empty, 'server.js'), "require('http').createServer((q, s) => { s.writeHead(q.url === '/health' ? 200 : 404, { 'content-type': 'application/json' }); s.end(q.url === '/health' ? '{\"ok\":true}' : '{}'); }).listen(process.env.PORT);\n");
+  assert.notStrictEqual(pantryCheck(empty, 'c1').code, 0);
+  const onePage = pantryReference('pantry-page-');
+  const server = path.join(onePage, 'server.js');
+  fs.writeFileSync(server, fs.readFileSync(server, 'utf8').replace('if (page >= p.total_pages) return out;', 'return out;'));
+  const r = pantryCheck(onePage, 'c1');
+  assert.notStrictEqual(r.code, 0);
+  assert.match(r.out, /not ok \d+ - c1: cookable recipes read every page of Mealie/);
+});
+
+test("pantry: c3's check refuses an edited first migration", { skip: !hasSqlite && 'the reference needs node:sqlite (Node >= 22.5)' }, () => {
+  const dir = pantryReference('pantry-edit-');
+  fs.appendFileSync(path.join(dir, 'migrations', '001_init.sql'), '\n-- expiry dates were added here instead of in a new migration\n');
+  const r = pantryCheck(dir, 'c3');
+  assert.notStrictEqual(r.code, 0);
+  assert.match(r.out, /c3: migrations are append-only/);
+});
+
+test('pantry: the dev copy of the fake Mealie server is the hidden one', () => {
+  assert.strictEqual(fs.readFileSync(path.join(PANTRY, 'c1', 'fixture', 'dev', 'fake-mealie', 'server.js'), 'utf8'), fs.readFileSync(path.join(PANTRY, '_hidden', 'fake-mealie', 'server.js'), 'utf8'));
+});
+
 test('A7: the direct commands are the ones Mealie\'s own Taskfile runs at P', (t) => {
   const lib = require('../bench/pilot/lib');
   const { DIRECT } = require('../bench/pilot/mealie/a7-stack');
