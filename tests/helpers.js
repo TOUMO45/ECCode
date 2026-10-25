@@ -163,4 +163,28 @@ function expectCode(fn, code) {
   throw new Error(`expected ${code}, but call succeeded`);
 }
 
-module.exports = { tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, ARCH_MD, DESIGN_MD };
+/** A filled debugging lesson on the project's memory: a fix or debug work item records one before its last gate. */
+function recordLesson(store, actor = 'backend-engineer', title = 'Boundary check off by one at the limit') {
+  const { Memory } = require('../lib/memory/records');
+  return new Memory(store).add(actor, {
+    layer: 'debugging',
+    content: {
+      title,
+      problem: 'A value exactly at the limit took the wrong branch.',
+      symptoms: ['the limit value is treated as below it'],
+      component: 'src',
+      environment: {},
+      reproduction: { steps: [], evidence: [] },
+      rootCause: { explanation: 'The comparison used > where the rule says from the limit.', evidence: [] },
+      failedAttempts: [],
+      solution: { description: 'Compare with >= at the limit.', tradeoffs: 'none' },
+      verification: { evidence: [] },
+      sources: [],
+      appliesWhen: ['a rule starts at a boundary value'],
+      notApplicableWhen: ['no boundary is involved'],
+      confidence: 'medium',
+    },
+  });
+}
+
+module.exports = { tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };

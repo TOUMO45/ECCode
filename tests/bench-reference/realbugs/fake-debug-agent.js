@@ -2,7 +2,7 @@
 // A scripted stand-in for an agent that follows .claude/commands/eccode/debug.md
 // in a bench sandbox, using the INSTALLED toolkit: debug, claim, a regression
 // test recorded failing, the fix, evidence, fix verify, a mutation run, a drafted
-// handoff, one review, delivery by the orchestrator. It ends with a result line
+// handoff, a lesson drafted from the record, one review, delivery by the orchestrator. It ends with a result line
 // shaped like `claude -p --output-format json`.
 // Usage (cwd = sandbox): node fake-debug-agent.js
 const fs = require('fs');
@@ -31,6 +31,12 @@ h.context = 'Root cause: the bulk boundary compared with > instead of >=.';
 h.completedWork = 'The boundary is >= 10; the regression test is proven by fix verify and kills the boundary mutant.';
 fs.writeFileSync('.eccode/drafts/handoff-fix.json', JSON.stringify(h));
 E('task', 'complete', 'fix', '--actor', 'backend-engineer', '--handoff', '.eccode/drafts/handoff-fix.json');
+E('memory', 'draft', '--task', 'fix', '--actor', 'backend-engineer', '--out', '.eccode/drafts/lesson-fix.json');
+const lesson = JSON.parse(fs.readFileSync('.eccode/drafts/lesson-fix.json', 'utf8'));
+Object.assign(lesson.content, { symptoms: ['an order of 10 items is charged full price'], appliesWhen: ['a discount starts at a quantity'], notApplicableWhen: ['flat pricing'] });
+lesson.content.solution.tradeoffs = 'none';
+fs.writeFileSync('.eccode/drafts/lesson-fix.json', JSON.stringify(lesson));
+E('memory', 'add', '--file', '.eccode/drafts/lesson-fix.json', '--actor', 'backend-engineer');
 E('gate', 'submit', 'phase:fix', '--actor', 'backend-engineer');
 E('run', 'end', run, '--actor', 'orchestrator', '--tokens', '777');
 const ev = JSON.parse(E('evidence', 'run', '--actor', 'technical-reviewer', '--gate', 'phase:fix', '--label', 'review', '--json', '--', command));

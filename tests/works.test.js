@@ -11,7 +11,7 @@ const works = require('../lib/works');
 const evidence = require('../lib/evidence');
 const { deliver } = require('../lib/delivery');
 const { Store } = require('../lib/store');
-const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, task, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, task, expectCode, recordLesson } = require('./helpers');
 
 const commit = (dir, msg) => {
   execFileSync('git', ['add', '-A'], { cwd: dir });
@@ -110,6 +110,8 @@ test('fix track: verification needs the same check failing before the fix and pa
   } finally {
     delete process.env.FIXED;
   }
+  assert.match(expectCode(submitV, 'TRACK_RULE').message, /no lesson recorded for this work item[\s\S]*memory draft --task bugfix --actor backend-engineer/);
+  recordLesson(store);
   submitV();
   const ev = passCheck(store, 'security-reviewer');
   gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verify3.md']]));
@@ -216,6 +218,7 @@ test('endurance: twenty-five consecutive work items in a seeded random track ord
       } finally {
         delete process.env[`OK${i}`];
       }
+      recordLesson(store, 'backend-engineer', `What defect number ${i} taught`);
       approveVerification(ctx, ['src/server/a.js'], i);
     } else {
       works.startWork(store, config, 'orchestrator', { track: 'quick', title: `Quick change number ${i}`, quick: { owner: 'frontend-engineer', files: 'src/web/**', command: 'node -e "process.exit(0)"' } });

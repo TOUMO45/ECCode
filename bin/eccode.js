@@ -74,6 +74,7 @@ Evidence & records
 
 Memory (layers: project, debugging, knowledge, workflow)
   memory add --file <record.json> --actor <a> [--scope project|shared]
+  memory draft --task <id> --actor <owner> [--out .eccode/drafts/<f>.json]   A debugging lesson drafted from the fix's record
   memory search <query> [--layer l] [--scope project|shared|all] [--check-env] [--limit n] [--json]
   memory show <id> [--history] | memory list [--layer l] [--status s]
   memory review <id> --actor <reviewer> --decision verify|reject --notes <text>
@@ -221,7 +222,8 @@ function main(argv) {
       '',
       'The rest of the path (eccode status shows where you are):',
       ...steps,
-    ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps });
+      ...require('../lib/memory/draft').lessonsText(res.lessons),
+    ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps, lessons: res.lessons });
     return 0;
   }
   if (group === 'mcp') {
@@ -537,7 +539,8 @@ function main(argv) {
           behavior: flags.behavior,
           quick: { title: flags.title, owner: flags.owner, files: flags.files, command: flags.command },
         });
-        print(flags, `Work ${event.data.id} started on the ${flags.track} track. Next: eccode status --brief`, event.data);
+        const lessons = require('../lib/memory/draft').lessonsFor(store, config, flags.title);
+        print(flags, [`Work ${event.data.id} started on the ${flags.track} track. Next: eccode status --brief`, ...require('../lib/memory/draft').lessonsText(lessons)].join('\n'), { ...event.data, lessons });
       } else if (sub === 'abandon') {
         works.abandonWork(store, need(actor, '--actor'), need(flags.reason, '--reason'));
         print(flags, 'Work item abandoned by user decision. Start the next one with eccode work start.');
@@ -592,7 +595,8 @@ function main(argv) {
         print(flags, list.map((t) => `${t.id} [${t.status}] phase=${t.phase} owner=${t.owner} attempts=${t.attempts} — ${t.title}`).join('\n') || '(none)', list);
       } else if (sub === 'claim') {
         const { event } = tasks.claim(store, config, need(arg, '<task>'), need(actor, '--actor'), { runId: flags.run });
-        print(flags, `Claimed ${arg} (base ${event.data.baseCommit || 'no git'}).`, event.data);
+        const lessons = require('../lib/memory/draft').lessonsForTask(store, config, arg);
+        print(flags, [`Claimed ${arg} (base ${event.data.baseCommit || 'no git'}).`, ...require('../lib/memory/draft').lessonsText(lessons)].join('\n'), { ...event.data, lessons });
       } else if (sub === 'complete') {
         tasks.complete(store, config, need(arg, '<task>'), need(actor, '--actor'), loadJsonFile(need(flags.handoff, '--handoff')));
         print(flags, `Task ${arg} completed with validated handoff.`);
