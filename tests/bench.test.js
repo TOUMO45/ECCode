@@ -384,6 +384,22 @@ test('the agent keeps only the Claude Code variables that authenticate it or pic
   assert.strictEqual(env.ECCODE_BENCH_VARIANT, 'engine');
 });
 
+// Rerun prep: lessons can be promoted to shared memory, by default the
+// operator's ~/.eccode/memory. Runs and chains must not read each other's.
+test('an agent\'s shared memory lives in its sandbox, whatever the launcher set', () => {
+  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-shared-'));
+  const saved = process.env.ECCODE_SHARED_MEMORY;
+  process.env.ECCODE_SHARED_MEMORY = path.join(os.tmpdir(), 'the-operators-memory');
+  try {
+    const { agent } = bench.runAgent(sandbox, `node -e "process.stdout.write(process.env.ECCODE_SHARED_MEMORY)"`, {}, 'engine', 30000);
+    assert.strictEqual(agent.stdout, path.join(sandbox, '.eccode', 'shared-memory'));
+  } finally {
+    if (saved === undefined) delete process.env.ECCODE_SHARED_MEMORY;
+    else process.env.ECCODE_SHARED_MEMORY = saved;
+    fs.rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
 // Mealie pilot, after-fix check: processes an agent left running kept writing
 // into the sandbox, removing it failed (ENOTEMPTY) and the run's record was lost.
 test('an agent\'s leftover processes are stopped when it exits, and the run is kept', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {
