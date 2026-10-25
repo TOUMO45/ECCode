@@ -17,6 +17,14 @@ test('mealie env: envKey is stable and 12 hex characters', () => {
   assert.notStrictEqual(envKey('a'), envKey('b'));
 });
 
+test('mealie env: the venv uses the Python the tree requires (Mealie moved to 3.14 in v3.28)', () => {
+  const { pythonVersionFor } = require(path.join(TOOLS, 'env.js'));
+  assert.strictEqual(pythonVersionFor('[project]\nrequires-python = ">=3.14,<3.15"\n'), '3.14');
+  assert.strictEqual(pythonVersionFor('[project]\nrequires-python = ">=3.12"\n'), '3.12');
+  assert.strictEqual(pythonVersionFor('[project]\nrequires-python = "==3.14.*"\n'), '3.14');
+  assert.strictEqual(pythonVersionFor('[project]\nname = "mealie"\n'), '3.12', 'the pilot\'s default when the tree states none');
+});
+
 const fs = require('fs');
 const { spawnSync } = require('child_process');
 const bench = require('../lib/bench');

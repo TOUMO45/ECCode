@@ -34,13 +34,24 @@ function run(cmd, args, cwd, env) {
   return r.stdout;
 }
 
-/** The venv for this tree's uv.lock (Python 3.12, dev group included). */
+/**
+ * The Python a tree requires: the lower bound of pyproject's requires-python
+ * (Mealie moved from 3.12 to 3.14 in v3.28, #8521); 3.12 when it states none.
+ */
+function pythonVersionFor(pyprojectText) {
+  const m = /^requires-python\s*=\s*"[^"]*?(?:>=|==|~=)\s*(\d+\.\d+)/m.exec(String(pyprojectText || ''));
+  return m ? m[1] : '3.12';
+}
+
+/** The venv for this tree's uv.lock (the Python it requires, dev group included). */
 function pythonEnv(tree, { envs = process.env.ECCODE_MEALIE_ENVS } = {}) {
   const key = envKey(fs.readFileSync(path.join(tree, 'uv.lock'), 'utf8'));
   const venv = path.join(envsDir(envs), `py-${key}`);
   const ready = path.join(venv, '.eccode-ready');
   if (fs.existsSync(ready)) return venv;
-  run('uv', ['sync', '--frozen', '--python', '3.12', '--no-install-project'], tree, { ...process.env, UV_PROJECT_ENVIRONMENT: venv });
+  const pyproject = path.join(tree, 'pyproject.toml');
+  const version = pythonVersionFor(fs.existsSync(pyproject) ? fs.readFileSync(pyproject, 'utf8') : '');
+  run('uv', ['sync', '--frozen', '--python', version, '--no-install-project'], tree, { ...process.env, UV_PROJECT_ENVIRONMENT: venv });
   fs.writeFileSync(ready, `${new Date().toISOString()}\n`);
   return venv;
 }
@@ -91,7 +102,7 @@ function taskEnvVars(venv) {
   };
 }
 
-module.exports = { envKey, lockfileOf, pythonEnv, nodeModules, taskEnvVars };
+module.exports = { envKey, lockfileOf, pythonVersionFor, pythonEnv, nodeModules, taskEnvVars };
 
 if (require.main === module) {
   const [what, tree] = process.argv.slice(2);
