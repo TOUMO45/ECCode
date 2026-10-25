@@ -1,0 +1,44 @@
+{
+  "id": "mealie2-05-frontend",
+  "category": "frontend",
+  "order": 5,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "4bc9734b36f415ff33205b59766ee27d5ed54e8f"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-353cc813eed3/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: the AI provider dialog can fill its form with the wrong provider.\n\nIn the group settings, the dialog that edits an AI provider (the GroupAIProviderDialog component) loads the provider with getOne(id) from the useAIProviders composable whenever it opens or its providerId changes. When the user moves to another provider before the first request has answered (closes provider A's edit dialog and opens provider B's, say) and A's answer arrives after B's, the form is filled with A's data while B is being edited, and saving would write A's values onto B.\n\nExpected: only the answer for the dialog's current state (open, with its current providerId) fills the form. An answer for an earlier state, including one requested before the dialog was closed, is ignored.\n\nTests: frontend unit tests run with `cd frontend && npx vitest run <spec file>`; components are tested with @vue/test-utils, next to the component. The backend is not involved.",
+  "title": "fix: prevent stale AI provider fetch from clobbering the edit form (#8452)",
+  "track": "fix",
+  "fixCommit": "ed4fd9ffee719f3a99e56e1849ffcd4b4e134894",
+  "hidden": {
+    "fromSource": {
+      "commit": "ed4fd9ffee719f3a99e56e1849ffcd4b4e134894",
+      "paths": [
+        "frontend/app/components/Domain/Group/GroupAIProviderDialog.test.ts"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "(cd frontend && npx vitest run \"app/components/Domain/Group/GroupAIProviderDialog.test.ts\")",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "(cd frontend && npx vitest run \"app/composables/use-search.test.ts\" \"app/components/global/DropZone.test.ts\" \"app/composables/__tests__/use-auth-backend.test.ts\" \"app/composables/__tests__/use-mealplan-rules.test.ts\" \"app/composables/__tests__/use-passwords.test.ts\" \"app/composables/__tests__/use-query-filter-builder.test.ts\" \"app/composables/__tests__/use-toast.test.ts\" \"app/composables/__tests__/use-token-cookie.test.ts\" \"app/composables/__tests__/use-utils.test.ts\" \"app/composables/recipe-page/use-cook-mode-query.test.ts\" \"app/lib/recipe/recipe-finder.test.ts\" \"app/lib/recipe/recipe-visibility.test.ts\" \"app/lib/sanitize/markdown.test.ts\" \"app/lib/sanitize/text.test.ts\" \"app/lib/validators/inputs.test.ts\" \"app/lib/validators/password.test.ts\" \"app/lib/validators/redirect.test.ts\" \"app/middleware/__tests__/auth.test.ts\" \"app/pages/register/index.test.ts\" \"app/plugins/__tests__/axios.test.ts\" \"app/components/Domain/Recipe/RecipeDataAliasManagerDialog.test.ts\" \"app/components/Domain/Recipe/RecipeDialogSearch.test.ts\" \"app/components/Domain/Recipe/RecipeIngredients.test.ts\" \"app/composables/partials/__tests__/use-actions-factory.test.ts\" \"app/composables/recipe-page/__tests__/use-extract-ingredient-references.test.ts\" \"app/composables/recipes/__tests__/use-ingredient-substitutions.test.ts\" \"app/composables/recipes/__tests__/use-parse-ingredients-dialog.test.ts\" \"app/composables/recipes/__tests__/use-recipe-ingredients.test.ts\" \"app/composables/recipes/__tests__/use-recipe-nutrition.test.ts\" \"app/composables/recipes/__tests__/use-recipe-permissions.test.ts\" \"app/composables/recipes/__tests__/use-recipe-time.test.ts\" \"app/composables/recipes/__tests__/use-scaled-amount.test.ts\" \"app/composables/recipes/__tests__/use-unit-conversion.test.ts\" \"app/composables/recipes/__tests__/use-unit-system.test.ts\" \"app/composables/shopping-list-page/__tests__/use-shopping-list-item-editor.test.ts\" \"app/composables/shopping-list-page/__tests__/use-shopping-list-page.test.ts\" \"app/composables/shopping-list-page/sub-composables/use-shopping-list-search.test.ts\" \"app/lib/api/base/routes.test.ts\" \"app/components/Domain/Announcement/Announcements/announcements.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-copy.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-crud.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-data.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-item-actions.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-labels.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-recipes.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-sorting.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-state.test.ts\")",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 47,
+    "failingBeforeAndAfter": []
+  }
+}

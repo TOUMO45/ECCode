@@ -1,0 +1,44 @@
+{
+  "id": "mealie2-01-refactor",
+  "category": "refactor",
+  "order": 1,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "dedc6cc75f2bd8e89108ad998970e7bdf6d4444f"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-f7723fb456a8/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "PlanRulesCreate and PlanRulesOut (mealie/schema/meal_plan/plan_rules.py) and CreateCookBook and ReadCookBook (mealie/schema/cookbook/cookbook.py) each carry their own copy of the same two validators:\n- validate_query_filter_string (on PlanRulesCreate and CreateCookBook): check that a query filter string builds a valid recipe query, and raise ValueError(\"Invalid query filter string\") when it does not;\n- validate_query_filter (on PlanRulesOut and ReadCookBook): build the QueryFilterJSON for the stored query_filter_string, logging and returning an empty QueryFilterJSON when it cannot be built.\n\nPut each piece of logic in one place that both schemas use, so that a change to it is made once. This is a refactor: behavior must not change. The four schema classes keep the same fields, the same validation results and the same errors, and every existing test still passes.\n\nTests: `python -m pytest -q -p no:cacheprovider tests` (the whole backend suite). For quicker loops while you work, tests/unit_tests and tests/integration_tests/user_household_tests cover these schemas.",
+  "title": "One home for the query-filter validation of meal-plan rules and cookbooks",
+  "track": "refactor",
+  "behavior": "python -m pytest -q -p no:cacheprovider tests",
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python .bench-hidden/dup_check.py . a80223546dc650cf 69bdf8183eace575",
+      "timeoutMs": 120000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider tests",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "duplicatedAtBase": {
+      "a80223546dc650cf": [
+        "mealie/schema/meal_plan/plan_rules.py validate_query_filter_string",
+        "mealie/schema/cookbook/cookbook.py validate_query_filter_string"
+      ],
+      "69bdf8183eace575": [
+        "mealie/schema/meal_plan/plan_rules.py validate_query_filter",
+        "mealie/schema/cookbook/cookbook.py validate_query_filter"
+      ]
+    },
+    "chosenBy": "dup_check.py --scan at the base commit (v3.27.0): the largest set of duplicated methods two classes of one layer share, the pilot's pair (repository_group.py / repository_household.py, still present) excluded"
+  }
+}
