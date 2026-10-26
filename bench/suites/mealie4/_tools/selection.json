@@ -1322,6 +1322,108 @@
     }
    },
    "frontend": null
+  },
+  "feature-4a280cbd": {
+   "sha": "4a280cbdd096d74e2b46f860b1c6ab27a93640a4",
+   "parent": "ce0be528e7cfce4bf1fa846c3c136186dd719af5",
+   "subject": "feat: reverse proxy auth (#8183)",
+   "hidden": [
+    "tests/integration_tests/user_tests/test_reverse_proxy_login.py",
+    "tests/unit_tests/core/security/providers/test_reverse_proxy_provider.py",
+    "tests/utils/api_routes/__init__.py"
+   ],
+   "backend": {
+    "tests": [
+     "tests/integration_tests/user_tests/test_reverse_proxy_login.py",
+     "tests/unit_tests/core/security/providers/test_reverse_proxy_provider.py"
+    ],
+    "target": [
+     "tests/integration_tests/user_tests/test_reverse_proxy_login.py::test_reverse_proxy_login_disabled_returns_404",
+     "tests/integration_tests/user_tests/test_reverse_proxy_login.py::test_reverse_proxy_login_missing_header_returns_401",
+     "tests/integration_tests/user_tests/test_reverse_proxy_login.py::test_reverse_proxy_login_existing_user",
+     "tests/integration_tests/user_tests/test_reverse_proxy_login.py::test_reverse_proxy_login_creates_new_user",
+     "tests/integration_tests/user_tests/test_reverse_proxy_login.py::test_reverse_proxy_login_signup_disabled_returns_401",
+     "tests/integration_tests/user_tests/test_reverse_proxy_login.py::test_reverse_proxy_login_missing_secret_returns_401",
+     "tests/integration_tests/user_tests/test_reverse_proxy_login.py::test_reverse_proxy_login_wrong_secret_returns_401",
+     "tests/integration_tests/user_tests/test_reverse_proxy_login.py::test_reverse_proxy_login_correct_secret_allows_login",
+     "tests/unit_tests/core/security/providers/test_reverse_proxy_provider.py::test_no_username",
+     "tests/unit_tests/core/security/providers/test_reverse_proxy_provider.py::test_authenticates_existing_user",
+     "tests/unit_tests/core/security/providers/test_reverse_proxy_provider.py::test_authenticates_existing_user_by_email",
+     "tests/unit_tests/core/security/providers/test_reverse_proxy_provider.py::test_creates_new_user_when_signup_enabled",
+     "tests/unit_tests/core/security/providers/test_reverse_proxy_provider.py::test_does_not_create_new_user_when_signup_disabled"
+    ],
+    "regressionFiles": [
+     "tests/integration_tests/user_tests/test_oidc_native.py",
+     "tests/integration_tests/user_tests/test_user_api_token.py",
+     "tests/integration_tests/user_tests/test_user_crud.py",
+     "tests/integration_tests/user_tests/test_user_images.py",
+     "tests/integration_tests/user_tests/test_user_login.py",
+     "tests/integration_tests/user_tests/test_user_password_services.py",
+     "tests/integration_tests/user_tests/test_user_registration.py",
+     "tests/unit_tests/core/security/providers/test_credentials_provider.py",
+     "tests/unit_tests/core/security/providers/test_openid_provider.py"
+    ],
+    "regression": 108,
+    "failingBoth": [],
+    "venvKey": {
+     "parent": "py-9002883a3889",
+     "commit": "py-9002883a3889"
+    }
+   },
+   "frontend": null
+  },
+  "fix-ec3e0305": {
+   "sha": "ec3e0305498e41780130e6018a263d022df7a5e6",
+   "parent": "4a280cbdd096d74e2b46f860b1c6ab27a93640a4",
+   "subject": "fix: remove aggregate recipe last made data (#7907)",
+   "hidden": [
+    "tests/integration_tests/public_explorer_tests/test_public_recipes.py",
+    "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py",
+    "tests/integration_tests/test_openapi.py",
+    "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py",
+    "tests/integration_tests/user_recipe_tests/test_recipe_owner.py",
+    "tests/unit_tests/repository_tests/test_pagination.py",
+    "tests/unit_tests/services_tests/scheduler/tasks/test_create_timeline_events.py"
+   ],
+   "backend": {
+    "tests": [
+     "tests/integration_tests/public_explorer_tests/test_public_recipes.py",
+     "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py",
+     "tests/integration_tests/test_openapi.py",
+     "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py",
+     "tests/integration_tests/user_recipe_tests/test_recipe_owner.py",
+     "tests/unit_tests/repository_tests/test_pagination.py",
+     "tests/unit_tests/services_tests/scheduler/tasks/test_create_timeline_events.py"
+    ],
+    "target": [
+     "tests/integration_tests/public_explorer_tests/test_public_recipes.py::test_public_recipes_reject_household_last_made_queries",
+     "tests/integration_tests/public_explorer_tests/test_public_recipes.py::test_public_cookbook_rejects_household_last_made_filter",
+     "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[copymethat_archive]",
+     "tests/integration_tests/test_openapi.py::test_last_made_is_only_exposed_on_household_recipes",
+     "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[True-True]",
+     "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[True-False]",
+     "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[False-True]",
+     "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[False-False]",
+     "tests/integration_tests/user_recipe_tests/test_recipe_owner.py::test_user_update_last_made",
+     "tests/unit_tests/services_tests/scheduler/tasks/test_create_timeline_events.py::test_new_mealplan_event"
+    ],
+    "regressionFiles": [
+     "tests/integration_tests/public_explorer_tests/test_public_recipes.py",
+     "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py",
+     "tests/integration_tests/test_openapi.py",
+     "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py",
+     "tests/integration_tests/user_recipe_tests/test_recipe_owner.py",
+     "tests/unit_tests/repository_tests/test_pagination.py",
+     "tests/unit_tests/services_tests/scheduler/tasks/test_create_timeline_events.py"
+    ],
+    "regression": 184,
+    "failingBoth": [],
+    "venvKey": {
+     "parent": "py-9002883a3889",
+     "commit": "py-9002883a3889"
+    }
+   },
+   "frontend": null
   }
  },
  "skipped": [
