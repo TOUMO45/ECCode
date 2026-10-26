@@ -227,6 +227,27 @@ test('plans pin each task to a check that can pass once that task alone is done'
   }
 });
 
+// Proof run, every engine run: Claude Code refuses a subagent's Write of a
+// Markdown file whose name starts with report, summary, findings or analysis
+// ("Subagents should return findings as text"), and the delivery lead was told
+// to write .eccode/artifacts/verification/report.md.
+test('no file an agent is told to write is one Claude Code refuses to subagents', () => {
+  const refused = /^(REPORT|SUMMARY|FINDINGS|ANALYSIS).*\.md$/i;
+  const root = path.join(__dirname, '..');
+  const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]));
+  const bad = [];
+  const seen = new Set();
+  // Agents read paths from their files and from strings the CLI and hooks print.
+  for (const f of ['agents', 'skills', 'commands', 'templates', 'lib', 'scripts'].flatMap((d) => walk(path.join(root, d)))) {
+    for (const m of fs.readFileSync(f, 'utf8').matchAll(/[\w./<>{}*$-]+\.md\b/gi)) {
+      seen.add(m[0]);
+      if (refused.test(path.basename(m[0]))) bad.push(`${path.relative(root, f)}: ${m[0]}`);
+    }
+  }
+  assert.ok(seen.has('.eccode/artifacts/verification/verification-report.md'), 'the scan reads the delivery lead\'s instructions');
+  assert.deepStrictEqual(bad, []);
+});
+
 // Pilot after-fix checks of the MCP item: the whole Mealie suite, the only
 // command MCP could pin, outran evidence_run's limit. MCP may narrow the
 // detected check to named test paths, never to a free-form command.

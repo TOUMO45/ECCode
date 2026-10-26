@@ -274,3 +274,20 @@ Each has a test that failed first. Six limits are named, among them that the rec
 **Part A** ([report](../bench/pilot-results/2026-10-25-mealie-rerun-part-a.md)): 14 of 17 criteria met as measured, on history none of the fixes saw. Missed: impact's share of the suite and compat precision (0.571; 0.80 after the fix).
 
 **Not shown:** that the engine raises correctness where bare agents fail, or that the fixes made after this run raise delivery.
+
+## Addendum 2026-10-26: the proof run (v0.14.0)
+
+A pre-registered run looked for the bare agent's mistakes on purpose, to measure whether the engine catches them ([protocol](../bench/protocols/2026-10-26-mealie-proof.md); [report](../bench/pilot-results/2026-10-26-mealie-proof.md)). It took every eligible change of Mealie history newer than any ECCode fix: 19 items, each run twice bare and twice through the engine.
+
+**Measured, as registered:**
+- **Primary: no verdict.** The bare agent passed every hidden check in 36 of 38 runs, the engine in 36 of 38. All four failures are one frontend test on item 19 whose DOM event the request does not name (`spec-gap`), so no item was hard and the comparison could not run.
+- **Delivery: met.** 38 of 38 engine runs delivered with a clean audit, against 80% (row 104, closed for single items).
+- **Friction: met.** 0.08 false refusals per engine run.
+- **Cost:** $61.30, against a $250 budget; stage 2 spent nothing.
+
+**Reported, no criterion:** every engine run left tests (bare 13 of 38), and every fix-track run a proven regression test and a lesson. Checked after the fact: 37 of 38 engine patches and 30 of 38 bare patches would pass Mealie's lint and format CI step on the files they touch. Each engine run cost a median 10.8× a bare run's.
+
+**Found and fixed (rows 131–133):** a verification report name Claude Code refuses to subagents, a lesson draft that hid the shape of a failed attempt, and `fix verify` calling a reproduction inconclusive when only some of its tests needed new API.
+
+**Not shown:** that the engine raises correctness where a bare agent errs. On 19 changes of a well-tested project, this model made no such error.
+

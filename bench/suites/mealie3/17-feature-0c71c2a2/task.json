@@ -1,0 +1,45 @@
+{
+  "id": "mealie3-17-feature-0c71c2a2",
+  "category": "feature-0c71c2a2",
+  "order": 17,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "4ab0d7305645f3d3950ba8cac215aab644ad765e"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-d50915e3efd9/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Feature: add centiliter to the seeded ingredient units.\n\nCentiliters (cl) are common in European recipes, but the English (en-US) unit seed data has no centiliter. A unit called \"cl\" is therefore not recognised as a standard unit and gets no standardized amount, so it cannot be converted like milliliters and liters.\n\nExpected:\n- The en-US unit seed data gets a centiliter entry, keyed \"centiliter\", with the name \"centiliter\", the plural name \"centiliters\", the abbreviation \"cl\" and an empty description, like its neighbours. Seeding units for en-US then also creates \"centiliter\".\n- When a unit is created without a standard set by the user, it is standardized from its name, plural name, abbreviation or plural abbreviation (case-insensitive), as today. A centiliter is 10 milliliters: a unit created with the name \"cl\" comes back with standard_unit \"milliliter\" and standard_quantity 10. The other standard units keep their values.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/repository_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "feat: add centiliter to seeded ingredient units (#8766)",
+  "track": "feature",
+  "fixCommit": "0c71c2a22684bc44a2f42a9c0bce540ac79b35c4",
+  "hidden": {
+    "fromSource": {
+      "commit": "0c71c2a22684bc44a2f42a9c0bce540ac79b35c4",
+      "paths": [
+        "tests/unit_tests/repository_tests/test_unit_repository.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/repository_tests/test_unit_repository.py::test_centiliter_standardization\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/repository_tests/test_unit_repository.py\" --deselect \"tests/unit_tests/repository_tests/test_unit_repository.py::test_centiliter_standardization\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 16,
+    "failingBeforeAndAfter": []
+  }
+}

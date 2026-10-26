@@ -910,3 +910,108 @@ test('A6: a changed-files scratch repo keeps the project\'s lint configuration, 
     s.cleanup();
   }
 });
+
+test('proof run: hard items are those a stage-1 bare run failed by agent error; the primary test uses stage-2 runs on them only', () => {
+  const { runKeys, hardItems, primary, delivery } = require('../bench/pilot/proof');
+  const row = (process, task, variant, ok, extra = {}) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, usage: { costUsd: variant === 'engine' ? 2 : 0.5 }, ...extra });
+  const stage1 = [
+    row('w1', 'a', 'without', false), row('w1', 'a', 'without', true),
+    row('w1', 'b', 'without', false), row('w1', 'c', 'without', true),
+    { process: 'w1', task: 'd', variant: 'without' }, // cut: no result line
+    row('e1', 'a', 'engine', true),
+  ];
+  const keys = runKeys(stage1);
+  assert.deepStrictEqual(keys.slice(0, 3), ['w1:a:1', 'w1:a:2', 'w1:b:1']);
+  const labels = { 'w1:a:1': { label: 'agent-error' }, 'w1:b:1': { label: 'spec-gap' }, 'w1:d:1': { label: 'harness' } };
+  assert.deepStrictEqual(hardItems(stage1, labels), ['a'], 'b is a spec gap, d a harness failure, c passed');
+  assert.throws(() => hardItems(stage1, {}), /unlabelled/, 'every failed bare run is labelled before stage 2');
+  const stage2 = [row('w2', 'a', 'without', false), row('w2', 'a', 'without', false), row('e2', 'a', 'engine', true), row('e2', 'a', 'engine', true), row('e2', 'z', 'engine', false)];
+  const p = primary(stage2, ['a']);
+  assert.deepStrictEqual([p.engine, p.without], [{ passed: 2, runs: 2 }, { passed: 0, runs: 2 }], 'item z is not hard and does not count');
+  assert.strictEqual(p.test.delta, 1);
+  const d = delivery([row('e1', 'a', 'engine', true, { engine: { delivered: true, auditOk: true } }), row('e1', 'b', 'engine', true, { engine: { delivered: true, auditOk: false } }), { process: 'e1', task: 'c', variant: 'engine' }]);
+  assert.deepStrictEqual(d, { delivered: 1, runs: 3, share: 1 / 3 });
+});
+
+test('proof run: friction is the false refusals per engine run, from the engine processes\' transcripts only', () => {
+  const { friction } = require('../bench/pilot/proof');
+  const { write } = require('./helpers');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-proof-friction-'));
+  const use = (id, command) => ({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] } });
+  const refused = (id, text) => ({ type: 'user', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: id, is_error: true, content: text }] } });
+  const jsonl = (events) => `${events.map((e) => JSON.stringify(e)).join('\n')}\n`;
+  const run = 'tr-e1/eccode-bench-x-engine-AAAAAA';
+  write(dir, `${run}/s1.jsonl`, jsonl([use('t1', 'eccode gate submit verification'), refused('t1', 'eccode: [TRACK_RULE] no reproduction pair')]));
+  write(dir, `${run}/s1/subagents/agent-1.jsonl`, jsonl([use('t2', 'eccode memory help'), refused('t2', 'eccode: [USAGE] Unknown memory subcommand')]));
+  write(dir, `${run}/record/events.jsonl`, jsonl([use('t8', 'eccode x'), refused('t8', 'eccode: [USAGE] the record copy is not a transcript')]));
+  write(dir, 'tr-w1/eccode-bench-x-without-BBBBBB/s.jsonl', jsonl([use('t9', 'eccode x'), refused('t9', 'eccode: [USAGE] a bare run is not counted')]));
+  const rows = [{ process: 'e1', task: 'x', variant: 'engine' }, { process: 'e1', task: 'y', variant: 'engine' }, { process: 'w1', task: 'x', variant: 'without' }];
+  const ids = [`e1/eccode-bench-x-engine-AAAAAA/s1.jsonl:2`, `e1/eccode-bench-x-engine-AAAAAA/s1/subagents/agent-1.jsonl:2`];
+  assert.deepStrictEqual(friction(dir, rows, { [ids[0]]: { label: 'false' }, [ids[1]]: { label: 'correct' } }), { refusals: 2, unlabelled: [], false: 1, runs: 2, perRun: 0.5 });
+  assert.deepStrictEqual(friction(dir, rows, {}).unlabelled.sort(), [...ids].sort(), 'every refusal is labelled before the figure');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('proof run: the report gives the primary verdict, both secondary criteria over stage-1 engine runs, and stage-1 correctness', () => {
+  const { report } = require('../bench/pilot/proof');
+  const row = (process, task, variant, ok, extra = {}) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, durationMs: variant === 'engine' ? 600000 : 60000, usage: { costUsd: variant === 'engine' ? 2 : 0.5 }, engine: variant === 'engine' ? { delivered: true, auditOk: true } : undefined, ...extra });
+  const stage1 = [
+    row('w1', 'a', 'without', false), row('w1', 'a', 'without', true), row('w1', 'b', 'without', true), row('w1', 'b', 'without', true),
+    row('e1', 'a', 'engine', true), row('e1', 'a', 'engine', true), row('e1', 'b', 'engine', true), row('e1', 'b', 'engine', true, { engine: { delivered: false } }),
+  ];
+  const md = report({ stage1, stage2: null, labels: { 'w1:a:1': { label: 'spec-gap' } }, friction: { refusals: 9, unlabelled: [], false: 1, runs: 4, perRun: 0.25 } });
+  assert.match(md, /Hard items[^\n]*: none\./);
+  assert.match(md, /Primary[^\n]*no verdict[^\n]*fewer than 3 hard items/i);
+  assert.match(md, /Delivery[^\n]*3\/4 stage-1 engine runs \(75%\)[^\n]*missed/i);
+  assert.match(md, /Friction[^\n]*1 false refusal in 4 stage-1 engine runs \(0\.25 per run\)[^\n]*met/i);
+  assert.match(md, /Stage 1, all items: engine 4\/4, bare 3\/4/);
+  assert.match(md, /Stratified permutation test/);
+  assert.match(md, /Median run time: engine 10\.0 min, bare 1\.0 min/);
+  const unlabelled = report({ stage1, stage2: null, labels: { 'w1:a:1': { label: 'spec-gap' } }, friction: { refusals: 9, unlabelled: ['x'], false: 1, runs: 4, perRun: 0.25 } });
+  assert.match(unlabelled, /Friction[^\n]*1 refusal unlabelled/i, 'no friction verdict before every refusal is labelled');
+});
+
+test('proof run tools: the replay splits a backend-and-frontend target; the lint check counts only what a patch introduces', () => {
+  const { parts } = require('../bench/pilot/mealie/proof-replay');
+  assert.deepStrictEqual(parts('python -m pytest -q a.py && (cd frontend && npx vitest run b.test.ts)', true), ['python -m pytest -q a.py', '(cd frontend && npx vitest run b.test.ts)']);
+  assert.deepStrictEqual(parts('python -m pytest -q a.py', true), ['python -m pytest -q a.py'], 'a backend-only target stays whole');
+  assert.strictEqual(parts('a && (b)', false).length, 1, 'whole unless asked');
+  const { changedPython, introduced } = require('../bench/pilot/mealie/proof-lint');
+  const patch = ['diff --git a/m/a.py b/m/a.py', '--- a/m/a.py', '+++ b/m/a.py', 'diff --git a/m/gone.py b/m/gone.py', '--- a/m/gone.py', '+++ /dev/null', 'diff --git a/f/x.ts b/f/x.ts', '+++ b/f/x.ts', 'diff --git a/m/new.py b/m/new.py', '+++ b/m/new.py'].join('\n');
+  assert.deepStrictEqual(changedPython(patch).map((f) => f.path), ['m/a.py', 'm/new.py'], 'added or changed Python files, not deleted ones or other languages');
+  const before = { counts: { 'm/a.py': { E501: 2 }, 'm/new.py': null }, unformatted: new Set(['m/a.py']) };
+  assert.deepStrictEqual(introduced(before, { counts: { 'm/a.py': { E501: 2 }, 'm/new.py': {} }, unformatted: new Set(['m/a.py']) }), { violations: 0, codes: [], unformatted: [], clean: true }, 'what was there before is not the patch\'s');
+  assert.deepStrictEqual(introduced(before, { counts: { 'm/a.py': { E501: 3 }, 'm/new.py': { 'I001*': 1 } }, unformatted: new Set(['m/a.py', 'm/new.py']) }), { violations: 2, codes: ['E501', 'I001*'], unformatted: ['m/new.py'], clean: false });
+  assert.strictEqual(introduced(before, { counts: { 'm/a.py': { E501: 1 }, 'm/new.py': {} }, unformatted: new Set() }).violations, 0, 'fixing old violations is not negative');
+});
+
+test('proof lint: a ruff that did not run fails loudly; renames compare with the old file; counts are per code', () => {
+  // Found by the independent review: a missing ruff read as clean, a renamed
+  // file's old violations counted as new, and a removed violation hid a new one.
+  const { changedPython, introduced, ruffStatus } = require('../bench/pilot/mealie/proof-lint');
+  assert.throws(() => ruffStatus({ status: null, error: new Error('spawn ruff ENOENT') }, 'ruff check'), /ruff check did not run/);
+  assert.throws(() => ruffStatus({ status: 2, stderr: 'invalid config' }, 'ruff check'), /ruff check exited 2/);
+  assert.doesNotThrow(() => ruffStatus({ status: 1 }, 'ruff check'));
+  const patch = ['diff --git a/m/old.py b/m/new.py', 'similarity index 90%', 'rename from m/old.py', 'rename to m/new.py', '--- a/m/old.py', '+++ b/m/new.py', 'diff --git a/m/a b.py b/m/a b.py', '--- a/m/a b.py\t', '+++ b/m/a b.py\t'].join('\n');
+  assert.deepStrictEqual(changedPython(patch), [{ path: 'm/new.py', before: 'm/old.py' }, { path: 'm/a b.py', before: 'm/a b.py' }]);
+  const before = { counts: { 'm/a.py': { F401: 1, E501: 1 } }, unformatted: new Set() };
+  assert.deepStrictEqual(introduced(before, { counts: { 'm/a.py': { E501: 1, B904: 1 } }, unformatted: new Set() }), { violations: 1, codes: ['B904'], unformatted: [], clean: false }, 'removing F401 does not hide the new B904');
+});
+
+test('proof run: the primary verdict waits for stage 2, needs runs on the hard items, and follows the test\'s sign; empty inputs do not throw', () => {
+  // Found by the independent review of the report: with 3 hard items and no
+  // stage 2 it printed no primary line, with no stage-2 runs "missed 0/0",
+  // "met" ignored the test's sign, and 0 engine runs threw.
+  const { report } = require('../bench/pilot/proof');
+  const row = (process, task, variant, ok) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, durationMs: 60000, usage: { costUsd: 1 }, engine: variant === 'engine' ? { delivered: true, auditOk: true } : undefined });
+  const stage1 = ['a', 'b', 'c'].flatMap((t) => [row('w1', t, 'without', false), row('e1', t, 'engine', true)]);
+  const labels = { 'w1:a:1': { label: 'agent-error' }, 'w1:b:1': { label: 'agent-error' }, 'w1:c:1': { label: 'agent-error' } };
+  assert.match(report({ stage1, stage2: null, labels }), /Primary:\*\* pending: 3 hard items, stage 2 not run yet/);
+  assert.match(report({ stage1, stage2: [row('w2', 'z', 'without', true)], labels }), /Primary:\*\* no verdict: no stage-2 run on the hard items/);
+  const stage2 = ['a', 'b', 'c'].flatMap((t) => [0, 1, 2, 3].flatMap(() => [row('w2', t, 'without', true), row('e2', t, 'engine', false)]));
+  assert.match(report({ stage1, stage2, labels }), /Primary:\*\* missed: engine 0\/12, bare 12\/12/, 'the bare agent ahead is not met');
+  const bareOnly = [row('w1', 'a', 'without', true)];
+  assert.doesNotThrow(() => report({ stage1: bareOnly, stage2: null, labels: {}, friction: { refusals: 0, unlabelled: [], false: 0, runs: 0, perRun: null } }));
+  assert.match(report({ stage1: bareOnly, stage2: null, labels: {}, friction: { refusals: 0, unlabelled: [], false: 0, runs: 0, perRun: null } }), /Friction:\*\* no verdict: no engine run/);
+  assert.match(report({ stage1: [{ ...row('w1', 'a', 'without', true), durationMs: undefined }], stage2: null, labels: {} }), /Median run time: engine — min, bare — min/);
+});

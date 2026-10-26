@@ -1,0 +1,45 @@
+{
+  "id": "mealie3-12-fix-4a8e710f",
+  "category": "fix-4a8e710f",
+  "order": 12,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "2c46e40d33455ebbd010e3c7bbc8c943b3834535"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-d50915e3efd9/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: a misspelled DB_ENGINE silently starts Mealie on SQLite.\n\nDB_ENGINE is documented to take sqlite or postgres. Any other value is quietly treated as sqlite. A typo like \"postgress\" therefore runs a deployment meant for Postgres on a local SQLite file, and nothing reports the mistake.\n\nExpected: loading the settings (get_app_settings()) with any other DB_ENGINE value raises a ValueError whose message contains \"DB_ENGINE\", so the app refuses to start. sqlite and postgres work as before, and an unset or empty DB_ENGINE still means sqlite.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/test_config.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: reject an unrecognized DB_ENGINE instead of using SQLite (#8605)",
+  "track": "fix",
+  "fixCommit": "4a8e710f8fcaf91cb7882011903637efefa99d72",
+  "hidden": {
+    "fromSource": {
+      "commit": "4a8e710f8fcaf91cb7882011903637efefa99d72",
+      "paths": [
+        "tests/unit_tests/test_config.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/test_config.py::test_unknown_db_engine_is_rejected\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/test_config.py\" --deselect \"tests/unit_tests/test_config.py::test_unknown_db_engine_is_rejected\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 63,
+    "failingBeforeAndAfter": []
+  }
+}

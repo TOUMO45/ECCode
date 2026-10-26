@@ -63,6 +63,7 @@ function filled(draft) {
   c.appliesWhen = ['a price or discount rule has a quantity boundary'];
   c.notApplicableWhen = ['the discount is not quantity based'];
   c.solution.tradeoffs = 'none: the boundary now matches the price list';
+  c.failedAttempts = [{ approach: 'rounding the discounted price', whyFailed: 'the wrong tier was chosen before any rounding' }];
   return draft;
 }
 
@@ -82,10 +83,14 @@ test('debug track: the phase waits for a lesson; memory draft fills it from the 
   assert.ok(draft.content.reproduction.evidence.includes(`ev:${repro.id}`), 'the failing reproduction is cited');
   assert.ok(draft.content.verification.evidence.includes(`ev:${verify.id}`), 'the passing verification is cited');
   assert.strictEqual(draft.content.verification.regressionTest, 'npm test');
+  // Proof run: with failedAttempts drafted as [], agents wrote its entries as
+  // strings and memory add refused them; the draft shows the entry's shape.
+  assert.deepStrictEqual(Object.keys(draft.content.failedAttempts[0]).sort(), ['approach', 'whyFailed']);
   r = cli(dir, ['memory', 'add', '--file', '.eccode/drafts/lesson-fix.json', '--actor', 'backend-engineer']);
   assert.notStrictEqual(r.status, 0, 'a draft that still holds TODO fields is not a lesson');
   assert.match(r.stderr, /TODO/);
   assert.match(r.stderr, /symptoms/);
+  assert.match(r.stderr, /failedAttempts/);
   write(dir, '.eccode/drafts/lesson-fix.json', JSON.stringify(filled(draft)));
   ok(['memory', 'add', '--file', '.eccode/drafts/lesson-fix.json', '--actor', 'backend-engineer']);
   const st = new Store(dir).state();

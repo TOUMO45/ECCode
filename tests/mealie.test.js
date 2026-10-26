@@ -34,6 +34,8 @@ const TRACKS = ['quick', 'debug', 'fix', 'feature', 'refactor'];
 const MIRROR = path.join(bench.cacheDir(), 'github.com-mealie-recipes-mealie.git');
 // The pilot's suite, and the rerun's fresh draw from a later window under the same rules.
 const SUITES = ['mealie', 'mealie2'].map((name) => ({ name, dir: path.join(__dirname, '..', 'bench', 'suites', name) }));
+// The proof run's suite: every eligible change of its window, no categories.
+const MEALIE3 = { name: 'mealie3', dir: path.join(__dirname, '..', 'bench', 'suites', 'mealie3') };
 
 for (const { name, dir: SUITE } of SUITES) {
   test(`${name}: ten tasks, each with a track from the allowed set, the ten categories covered`, () => {
@@ -55,7 +57,9 @@ for (const { name, dir: SUITE } of SUITES) {
     }
     assert.deepStrictEqual(tasks.map((t) => t.order).sort((a, b) => a - b), tasks.map((_, i) => i + 1), 'orders 1..10');
   });
+}
 
+for (const { name, dir: SUITE } of [...SUITES, MEALIE3]) {
   test(`${name}: no prompt contains a line of its fix or names a file it changes`, (t) => {
     if (!fs.existsSync(MIRROR)) return t.skip(`no Mealie mirror at ${MIRROR} (the first bench export creates it)`);
     for (const task of bench.listTasks(SUITE).filter((x) => x.fixCommit)) {
@@ -91,6 +95,26 @@ for (const { name, dir: SUITE } of SUITES) {
   });
 }
 
+test('mealie3: one task per accepted change of the window, fix or feature track by its subject, none used before', (t) => {
+  const tasks = bench.listTasks(MEALIE3.dir);
+  if (!tasks.length) return t.skip('mealie3 is not built yet (select.js --all, then build.js)');
+  const selection = JSON.parse(fs.readFileSync(path.join(MEALIE3.dir, '_tools', 'selection.json'), 'utf8'));
+  assert.strictEqual(selection.mode, 'all');
+  assert.deepStrictEqual(tasks.map((t) => t.category).sort(), Object.keys(selection.accepted).sort(), 'every accepted change is a task, and no other');
+  const used = new Set(SUITES.flatMap(({ dir }) => bench.listTasks(dir)).flatMap((t) => [t.fixCommit, t.source.commit]).filter(Boolean));
+  for (const t of tasks) {
+    const a = selection.accepted[t.category];
+    assert.strictEqual(t.fixCommit, a.sha, `${t.id}: the task is the recorded draw`);
+    assert.strictEqual(t.source.commit, a.parent);
+    assert.strictEqual(t.track, /^fix/.test(a.subject) ? 'fix' : 'feature', `${t.id}: track by subject`);
+    assert.match(t.id, /^mealie3-\d\d-(fix|feature)-[0-9a-f]{8}$/);
+    assert.ok(t.hiddenChecks.some((c) => c.id === 'target') && t.hiddenChecks.some((c) => c.id === 'regression'), `${t.id}: target and regression checks`);
+    assert.ok(t.prompt.length > 200, `${t.id}: an issue-style request`);
+    assert.ok(!used.has(t.fixCommit), `${t.id}: used by an earlier suite`);
+  }
+  assert.deepStrictEqual(tasks.map((t) => t.order).sort((a, b) => a - b), tasks.map((_, i) => i + 1));
+});
+
 test('mealie2: the rerun\'s items are fresh: no commit and no refactor target of the pilot comes back', () => {
   const [pilot, rerun] = SUITES.map(({ dir }) => bench.listTasks(dir));
   const used = new Set(pilot.flatMap((t) => [t.fixCommit, t.source.commit]).filter(Boolean));
@@ -124,4 +148,19 @@ test('mealie env: pnpm\'s pre-run deps check is off, so a linked node_modules is
       assert.strictEqual(task.env.pnpm_config_verify_deps_before_run, 'false', `${path.basename(dir)}/${d}`);
     }
   }
+});
+
+test('mealie select --all: every fix or feature with backend tests within the cap, no dependency bumps, named by kind and commit', () => {
+  const { ALL_POOL, allKey } = require(path.join(TOOLS, 'select.js'));
+  const commit = (subject, files, lines = 10) => ({ sha: 'abcdef0123456789', subject, files: files.map((p) => ({ status: 'M', path: p })), numstat: files.map((p) => ({ path: p, lines })) });
+  const code = ['mealie/services/x.py', 'tests/unit_tests/test_x.py'];
+  assert.strictEqual(ALL_POOL(commit('fix: keep servings when translating (#1)', code)), true);
+  assert.strictEqual(ALL_POOL(commit('feat: instruction durations (#2)', code)), true);
+  assert.strictEqual(ALL_POOL(commit('fix(deps): update pillow', code)), false, 'dependency update');
+  assert.strictEqual(ALL_POOL(commit('fix: bump sqlalchemy (#8798)', code)), false, 'a bump is a dependency change');
+  assert.strictEqual(ALL_POOL(commit('chore: tidy', code)), false);
+  assert.strictEqual(ALL_POOL(commit('fix: no tests', ['mealie/services/x.py'])), false);
+  assert.strictEqual(ALL_POOL(commit('fix: too big', code, 500)), false, 'over the size cap');
+  assert.strictEqual(allKey(commit('fix: a', code)), 'fix-abcdef01');
+  assert.strictEqual(allKey(commit('feat: b', code)), 'feature-abcdef01');
 });

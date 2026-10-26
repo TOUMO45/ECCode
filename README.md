@@ -57,6 +57,11 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
   Afterwards compat precision was 0.80 on fresh history, and route recall 1 of 1 in each window.
 
   See [the rerun report](bench/pilot-results/2026-10-25-mealie-rerun.md) and [its Part A](bench/pilot-results/2026-10-25-mealie-rerun-part-a.md).
+- **The proof run** was registered to find the bare agent's mistakes and measure whether the engine catches them. It took every eligible change of fresh Mealie history, 19 items, each run twice bare and twice through the engine.
+  - **No verdict on correctness.** The bare agent passed every hidden check in 36 of 38 runs, the engine in 36 of 38. All four failures were one test whose DOM event the request did not name, so no item was hard.
+  - **Delivery met:** 38 of 38 engine runs delivered with a clean audit (rule 80%), with 0.08 false refusals per run.
+  - **What the engine added:** tests in every run (bare: 13 of 38), and a proven regression test and a lesson in every fix. Checked after the fact, 37 of 38 engine patches passed Mealie's lint gate, against 30 of 38 bare. It cost a median 10.8× a bare run.
+  - Three defects found and fixed (rows 131–133). See [the proof run report](bench/pilot-results/2026-10-26-mealie-proof.md).
 
 **Sized to the task.** One record carries many deliveries: after `deliver`, `eccode work start --track feature|refactor|fix|quick|greenfield` opens the next work item with gates sized to its risk. On an existing codebase, `eccode onboard` briefs agents first (modules, entry points, hot spots, most-depended files) and `eccode impact` names what a change reaches before it is made. See [docs/senior-engineering.md](docs/senior-engineering.md).
 

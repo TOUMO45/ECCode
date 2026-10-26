@@ -1,0 +1,45 @@
+{
+  "id": "mealie3-15-fix-9ca95fbb",
+  "category": "fix-9ca95fbb",
+  "order": 15,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "fb05f2da33b33c51e8fb93072a1132ceeeaaa8c2"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-d50915e3efd9/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: the brute-force ingredient parser splits a multi-word food into a unit and a food.\n\nWith the foods \"onion\" and \"green onion\" in the group, parsing \"1 green onion\" with the brute parser (RegisteredParser.brute, parse_one) gives quantity 1, a unit \"green\" that matches no unit, and the food \"onion\". The parser already re-joins a wrongly split unit and food, but only when neither of them matched anything. Here the second word alone matches a food, so the join never happens.\n\nExpected, in ABCIngredientParser.find_ingredient_match (used by all parsers):\n- When the unit matched no known unit but the food did match, take the unit and food words as parsed, joined with a space (\"green onion\"). If that is exactly the name, plural name or alias of a known food (after the usual normalization), use that food and drop the unit. \"1 green onion\" then parses to quantity 1, no unit, food \"green onion\" and no note; a parsed unit \"green\" with food \"onion\" ends as the food \"green onion\" (an IngredientFood) and unit None.\n- In that case a fuzzy match must not replace the food that already matched: a parsed unit \"gren\" with food \"onion\" keeps the unit \"gren\" as parsed (a CreateIngredientUnit) and the matched food \"onion\", even though \"gren onion\" is close to \"green onion\".\n- When neither unit nor food matched, the joined name is still fuzzy matched as today. Everything else stays the same: for example, unit \"very unique\" with food \"fresh ginger\" keeps both, and unit \"cup\" with food \"gren onion\" still gives \"Cups\" and \"green onion\".\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/services_tests/ingredient_parser` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: match multi-word foods when the brute parser splits off an unknown unit (#8744)",
+  "track": "fix",
+  "fixCommit": "9ca95fbb2976413bb2fdd5cfb7ff997d2e24cbd2",
+  "hidden": {
+    "fromSource": {
+      "commit": "9ca95fbb2976413bb2fdd5cfb7ff997d2e24cbd2",
+      "paths": [
+        "tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py::test_brute_parser[1 green onion]\" \"tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py::test_parser_ingredient_match[multi-word food split into unit and food]\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py\" --deselect \"tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py::test_brute_parser[1 green onion]\" --deselect \"tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py::test_parser_ingredient_match[multi-word food split into unit and food]\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 2,
+    "regression": 47,
+    "failingBeforeAndAfter": []
+  }
+}

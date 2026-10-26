@@ -1,0 +1,45 @@
+{
+  "id": "mealie3-11-fix-2c46e40d",
+  "category": "fix-2c46e40d",
+  "order": 11,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "8b53861e17a0ca87935e8c03b7e6c1bcef27c2e4"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-d50915e3efd9/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: the recipe image upload accepts any file type and fails with a 500.\n\nPUT /api/recipes/{slug}/image takes the file (image) and its type (extension, a form field). The extension is never checked. An upload declared as svg, svg+xml, pdf, mp4 or exe, or with the extension \".\", goes on to image processing and fails with an internal server error. A file declared as png whose bytes are not an image also fails with a 500.\n\nExpected:\n- The extension is checked before anything is processed, ignoring case and a leading dot. Accepted are the raster formats the image minifier turns into webp: jpg, jpeg, jpe, jfif, png, webp, heic, avif, gif, bmp, tif and tiff. Any other extension (svg, svg+xml, pdf, mp4, exe, \".\") answers 400 with a detail.message that contains \"Unsupported image file type\" (ideally also naming the type and the supported ones).\n- An accepted extension with bytes that are not a readable image answers 400 with detail.message exactly \"Uploaded file is not a valid image\".\n- After either 400 the recipe's image is unchanged (it stays null on a recipe that had none).\n- Good uploads still answer 200 with a non-empty image key: a JPEG sent as \"JPG\", a PNG as \"png\", and GIF and BMP images as \"gif\" and \"bmp\".\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: validate image type on recipe hero image upload (#8498)",
+  "track": "fix",
+  "fixCommit": "2c46e40d33455ebbd010e3c7bbc8c943b3834535",
+  "hidden": {
+    "fromSource": {
+      "commit": "2c46e40d33455ebbd010e3c7bbc8c943b3834535",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[svg]\" \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[svg+xml]\" \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[pdf]\" \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[mp4]\" \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[exe]\" \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[.]\" \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_corrupt_image\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[svg]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[svg+xml]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[pdf]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[mp4]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[exe]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_unsupported_extension[.]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_image_upload_rejects_corrupt_image\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 7,
+    "regression": 12,
+    "failingBeforeAndAfter": []
+  }
+}

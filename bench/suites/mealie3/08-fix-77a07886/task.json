@@ -1,0 +1,45 @@
+{
+  "id": "mealie3-08-fix-77a07886",
+  "category": "fix-77a07886",
+  "order": 8,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "677c21262ccde53e85f8a34e0a37f822bbc57e40"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-abec607fbd6f/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: the setup wizard says a user's own username and email are taken.\n\nA user whose account already exists (for example one created on their first OIDC login) goes through the setup wizard and re-submits their own name and email. The wizard checks them with GET /api/validators/user/name?name=... and GET /api/validators/user/email?email=..., which answer {\"valid\": false}, because a user with that name or email exists: the user themself.\n\nExpected: when the request is signed in, the signed-in user's own username and own email are valid (200, \"valid\": true). A username or email that belongs to any other user, in the same group or in another group, is still invalid (\"valid\": false). The endpoints keep working without signing in, and then behave as today: an existing username or email is invalid, an unused one is valid. Matching stays case-insensitive.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/test_validators.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: accept the signed-in user's own username and email in validators (#8811)",
+  "track": "fix",
+  "fixCommit": "77a078868e596c3b40eb39952f959bca7327ad6c",
+  "hidden": {
+    "fromSource": {
+      "commit": "77a078868e596c3b40eb39952f959bca7327ad6c",
+      "paths": [
+        "tests/integration_tests/test_validators.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/test_validators.py::test_validators_user_allow_current_user\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/test_validators.py\" --deselect \"tests/integration_tests/test_validators.py::test_validators_user_allow_current_user\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 4,
+    "failingBeforeAndAfter": []
+  }
+}

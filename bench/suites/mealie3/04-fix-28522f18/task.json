@@ -1,0 +1,45 @@
+{
+  "id": "mealie3-04-fix-28522f18",
+  "category": "fix-28522f18",
+  "order": 4,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "40c92a12f3bee9b40271660efcafb104af0a06c5"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-1489520137db/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: a failed image upload deletes the recipe's current image (issue #8499).\n\nWhen a recipe already has an image and a user uploads a replacement that Pillow cannot read, for example a broken file sent with the extension \"webp\", the upload fails as it should, but afterwards the recipe's original.webp is gone and the recipe shows no image.\n\nExpected: RecipeDataService.write_image(file_data, extension, image_dir=None) leaves the live image files alone until the new image has been read and all its variants made. The live files are original.webp, min-original.webp and tiny-original.webp in the target directory (the recipe's dir_image, or image_dir when given, as for timeline event images).\n- Invalid data, e.g. write_image(b\"not-an-image\", \"webp\"): it raises Pillow's UnidentifiedImageError as today, and all three existing files keep their exact bytes.\n- A valid image, e.g. a JPEG with extension \"jpg\": all three files are replaced by the new image's variants, and write_image returns the path of original.webp in that directory, whatever extension was uploaded (today it returns original.<extension>).\nAll current callers of write_image keep working: recipe image upload, image scraping, the recipe zip import, timeline event images, the AI recipe service and migration image imports.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/services_tests/test_recipe_data_service.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: preserve recipe image when upload validation fails (#8506)",
+  "track": "fix",
+  "fixCommit": "28522f18657cdb6faf39c355c9d6f63b8f3c788c",
+  "hidden": {
+    "fromSource": {
+      "commit": "28522f18657cdb6faf39c355c9d6f63b8f3c788c",
+      "paths": [
+        "tests/unit_tests/services_tests/test_recipe_data_service.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/test_recipe_data_service.py::test_write_image_preserves_existing_files_when_webp_is_invalid\" \"tests/unit_tests/services_tests/test_recipe_data_service.py::test_write_image_replaces_all_variants_after_successful_validation\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/test_recipe_data_service.py\" --deselect \"tests/unit_tests/services_tests/test_recipe_data_service.py::test_write_image_preserves_existing_files_when_webp_is_invalid\" --deselect \"tests/unit_tests/services_tests/test_recipe_data_service.py::test_write_image_replaces_all_variants_after_successful_validation\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 2,
+    "regression": 17,
+    "failingBeforeAndAfter": []
+  }
+}

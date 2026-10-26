@@ -19,9 +19,10 @@ const SUITE = argv.includes('--suite') ? path.resolve(argv[argv.indexOf('--suite
 const TOOLS = path.join(SUITE, '_tools');
 const selection = JSON.parse(fs.readFileSync(path.join(TOOLS, 'selection.json'), 'utf8'));
 const prompts = JSON.parse(fs.readFileSync(path.join(TOOLS, 'prompts.json'), 'utf8'));
-const refactor = prompts.refactor;
+// A suite drawn with --all (mealie3) has no refactor item.
+const refactor = prompts.refactor || null;
 
-const P = refactor.source || 'dbe84cc91b9e1dfc88b783a1e31d8a8495800337';
+const P = refactor ? refactor.source || 'dbe84cc91b9e1dfc88b783a1e31d8a8495800337' : null;
 const FULL_SUITE = 'python -m pytest -q -p no:cacheprovider tests';
 const TRACK = { fix: 'fix', debug: 'debug', quick: 'quick', feature: 'feature', migration: 'feature', fullstack: 'feature', security: 'fix', refactor: 'refactor' };
 const q = (s) => JSON.stringify(s);
@@ -58,7 +59,7 @@ function main() {
   const mirror = lib.mealieMirror();
   const time = (c) => Number(execFileSync('git', ['--git-dir', mirror, 'log', '-1', '--format=%ct', c], { encoding: 'utf8' }).trim());
   const items = Object.entries(selection.accepted).map(([category, a]) => ({ category, a, source: a.parent, at: time(a.parent) }));
-  items.push({ category: 'refactor', a: null, source: P, at: time(P) });
+  if (refactor) items.push({ category: 'refactor', a: null, source: P, at: time(P) });
   items.sort((x, y) => x.at - y.at || x.category.localeCompare(y.category));
   for (const d of fs.readdirSync(SUITE)) if (/^\d\d-/.test(d)) fs.rmSync(path.join(SUITE, d), { recursive: true, force: true });
   items.forEach((it, i) => {

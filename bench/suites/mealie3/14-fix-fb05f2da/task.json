@@ -1,0 +1,45 @@
+{
+  "id": "mealie3-14-fix-fb05f2da",
+  "category": "fix-fb05f2da",
+  "order": 14,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "dedda0d1206143d9b3a176d54ed9a08cb8d784a2"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-d50915e3efd9/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: adding a scaled recipe to a shopping list undercounts a food the recipe lists twice.\n\nWhen a recipe lists the same food on two lines, adding it to a shopping list (POST /api/households/shopping/lists/{item_id}/recipe) merges the two lines into one list item. With a scale (recipe_increment_quantity) other than 1, only the first line is scaled. A recipe with quantity 1 of a food (note \"batter\") and quantity 2 of the same food (note \"topping\"), added at scale 2, gives a list item with quantity 4 instead of 6.\n\nExpected: every line is scaled before the lines are combined. In that example the list has a single item with quantity 6 and one recipe reference with recipeQuantity 3 (the recipe's own, unscaled total) and recipeScale 2. The merging of notes and everything else about adding recipes to lists stay as they are.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_household_tests/test_group_shopping_lists.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: scale merged duplicate ingredients when adding a recipe to a shopping list (#8764)",
+  "track": "fix",
+  "fixCommit": "fb05f2da33b33c51e8fb93072a1132ceeeaaa8c2",
+  "hidden": {
+    "fromSource": {
+      "commit": "fb05f2da33b33c51e8fb93072a1132ceeeaaa8c2",
+      "paths": [
+        "tests/integration_tests/user_household_tests/test_group_shopping_lists.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_household_tests/test_group_shopping_lists.py::test_shopping_list_add_recipe_scale_merges_duplicate_foods\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_household_tests/test_group_shopping_lists.py\" --deselect \"tests/integration_tests/user_household_tests/test_group_shopping_lists.py::test_shopping_list_add_recipe_scale_merges_duplicate_foods\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 30,
+    "failingBeforeAndAfter": []
+  }
+}

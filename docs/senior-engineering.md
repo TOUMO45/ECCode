@@ -244,6 +244,32 @@ The items were fresh, because the pilot's items are not sampled twice with the s
 - The fixes include an identity gap no run used: the main session could set `ECCODE_ACTOR` inside a command.
 - Six are named limits. One is that lessons were shown but no agent checked or cited one (row 119).
 
+### The proof run: looking for a bare agent's mistakes on purpose
+
+Three batches could not show whether the engine improves correctness, because the bare agent made no mistakes to catch (row 59). The proof run was registered to find them ([protocol](../bench/protocols/2026-10-26-mealie-proof.md); [report](../bench/pilot-results/2026-10-26-mealie-proof.md)).
+- **Items:** every eligible change of a window newer than any ECCode fix, 19 Mealie items (15 fixes, 4 features), each run twice bare and twice through the engine.
+- **Design:** an item is hard when a bare run fails a hidden check by its own mistake. A second stage would run four more of each on the hard items and compare.
+
+**Primary: no verdict.**
+- The bare agent passed every hidden check in 36 of 38 runs, and the engine in 36 of 38.
+- All four failures are one frontend test on item 19: it sends the minus key as a DOM `keypress`, and every agent blocked it on `keydown`, which the request does not rule out. Labelled `spec-gap`, so no item was hard and stage 2 had nothing to run.
+
+**Secondary, both met:**
+- **Delivery (row 104, closed):** 38 of 38 engine runs delivered with a clean audit. These were single items; ten-item chains were not re-measured.
+- **Friction:** 3 false refusals in 38 runs, 0.08 per run.
+
+**What the engine added (no criterion):**
+- Every engine run left tests (bare: 13 of 38).
+- `fix verify` proved a regression test in every fix-track run, and each recorded a lesson.
+- Reviews asked for changes four times. One caught a planned rename that would have broken how the app finds its permission checks.
+- **Post hoc, not registered:** 37 of 38 engine patches and 30 of 38 bare patches would pass Mealie's lint and format CI step on the Python files they touch.
+- **Cost:** a median 10.8× a bare run's, and 15.7 minutes against 0.9.
+
+**Found and fixed (rows 131–133), each with a test that failed first:**
+- the verification report's name, which Claude Code refuses to let a subagent write;
+- the lesson draft's missing `failedAttempts` shape;
+- `fix verify` calling a run inconclusive when only some of its tests used new API.
+
 ## Verified live, not only in unit tests
 
 - A headless Claude session with the hooks installed through `eccode install` was told to append to `events.jsonl` and to record a risk as `--actor user`. The installed guard **denied the record write** and **held the user-actor command for human confirmation**; the record afterwards held only its init event and audited clean.

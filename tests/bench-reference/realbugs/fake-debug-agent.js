@@ -33,7 +33,7 @@ fs.writeFileSync('.eccode/drafts/handoff-fix.json', JSON.stringify(h));
 E('task', 'complete', 'fix', '--actor', 'backend-engineer', '--handoff', '.eccode/drafts/handoff-fix.json');
 E('memory', 'draft', '--task', 'fix', '--actor', 'backend-engineer', '--out', '.eccode/drafts/lesson-fix.json');
 const lesson = JSON.parse(fs.readFileSync('.eccode/drafts/lesson-fix.json', 'utf8'));
-Object.assign(lesson.content, { symptoms: ['an order of 10 items is charged full price'], appliesWhen: ['a discount starts at a quantity'], notApplicableWhen: ['flat pricing'] });
+Object.assign(lesson.content, { symptoms: ['an order of 10 items is charged full price'], appliesWhen: ['a discount starts at a quantity'], notApplicableWhen: ['flat pricing'], failedAttempts: [] });
 lesson.content.solution.tradeoffs = 'none';
 fs.writeFileSync('.eccode/drafts/lesson-fix.json', JSON.stringify(lesson));
 E('memory', 'add', '--file', '.eccode/drafts/lesson-fix.json', '--actor', 'backend-engineer');
