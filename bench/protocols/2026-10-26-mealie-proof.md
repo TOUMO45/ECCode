@@ -1,7 +1,5 @@
 # Pre-registered protocol: does the engine catch the mistakes a bare agent makes?
 
-**DRAFT, not yet registered:** the live validation of items 14–19 is still running. Registration is the commit that removes this line.
-
 Committed and pushed before any measured run starts; the git commit timestamp is the registration. Where this protocol says nothing, the rerun's protocol ([2026-10-25-mealie-rerun.md](2026-10-25-mealie-rerun.md)) and, through it, the pilot's are what run.
 
 **Why.** Three batches could not show whether ECCode's engine improves correctness: the engine benchmark, twenty real bugs and the Mealie pilot and rerun. In each, the bare agent passed almost every hidden check, so the engine had nothing to catch (register row 59). The rerun also left delivery short: 7 of 20 work items with a clean audit, against a rule of 80% (row 104). Most of what stopped delivery has been fixed since (rows 109–130).
