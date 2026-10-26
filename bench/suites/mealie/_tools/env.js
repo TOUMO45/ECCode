@@ -34,13 +34,24 @@ function run(cmd, args, cwd, env) {
   return r.stdout;
 }
 
-/** The venv for this tree's uv.lock (Python 3.12, dev group included). */
+/**
+ * The Python a tree requires: the lower bound of pyproject's requires-python
+ * (Mealie moved from 3.12 to 3.14 in v3.28, #8521); 3.12 when it states none.
+ */
+function pythonVersionFor(pyprojectText) {
+  const m = /^requires-python\s*=\s*"[^"]*?(?:>=|==|~=)\s*(\d+\.\d+)/m.exec(String(pyprojectText || ''));
+  return m ? m[1] : '3.12';
+}
+
+/** The venv for this tree's uv.lock (the Python it requires, dev group included). */
 function pythonEnv(tree, { envs = process.env.ECCODE_MEALIE_ENVS } = {}) {
   const key = envKey(fs.readFileSync(path.join(tree, 'uv.lock'), 'utf8'));
   const venv = path.join(envsDir(envs), `py-${key}`);
   const ready = path.join(venv, '.eccode-ready');
   if (fs.existsSync(ready)) return venv;
-  run('uv', ['sync', '--frozen', '--python', '3.12', '--no-install-project'], tree, { ...process.env, UV_PROJECT_ENVIRONMENT: venv });
+  const pyproject = path.join(tree, 'pyproject.toml');
+  const version = pythonVersionFor(fs.existsSync(pyproject) ? fs.readFileSync(pyproject, 'utf8') : '');
+  run('uv', ['sync', '--frozen', '--python', version, '--no-install-project'], tree, { ...process.env, UV_PROJECT_ENVIRONMENT: venv });
   fs.writeFileSync(ready, `${new Date().toISOString()}\n`);
   return venv;
 }
@@ -88,16 +99,21 @@ function taskEnvVars(venv) {
     VIRTUAL_ENV: venv,
     UV_PROJECT_ENVIRONMENT: venv,
     PYTHONDONTWRITEBYTECODE: '1',
+    // pnpm 10+ checks the install before each script and reinstalls when it
+    // cannot tell, which it refuses for node_modules linked from outside the tree.
+    pnpm_config_verify_deps_before_run: 'false',
   };
 }
 
-module.exports = { envKey, lockfileOf, pythonEnv, nodeModules, taskEnvVars };
-
-if (require.main === module) {
-  const [what, tree] = process.argv.slice(2);
+function cli(argv) {
+  const [what, tree] = argv;
   if (!['python', 'node'].includes(what) || !tree) {
     process.stderr.write('usage: node env.js python|node <tree>\n');
     process.exit(2);
   }
   process.stdout.write(`${what === 'python' ? pythonEnv(path.resolve(tree)) : nodeModules(path.resolve(tree))}\n`);
 }
+
+module.exports = { envKey, lockfileOf, pythonVersionFor, pythonEnv, nodeModules, taskEnvVars, cli };
+
+if (require.main === module) cli(process.argv.slice(2));

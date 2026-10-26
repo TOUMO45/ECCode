@@ -57,7 +57,7 @@ Plan & tasks
                                          Correct a pending task's ownership (release a claimed one with task fail)
 
 Evidence & records
-  evidence run --actor <a> --label <l> [--purpose check|reproduction] [--gate g] [--task t] -- <command...>
+  evidence run --actor <a> --label <l> [--purpose check|reproduction] [--gate g] [--task t] [--timeout <s>] -- <command...>
   evidence file <path> --actor <a> [--label l] [--note n]
   evidence list [--json] | evidence show <id>
   handoff record --actor <a> --file <handoff.json>
@@ -74,6 +74,7 @@ Evidence & records
 
 Memory (layers: project, debugging, knowledge, workflow)
   memory add --file <record.json> --actor <a> [--scope project|shared]
+  memory draft --task <id> --actor <owner> [--out .eccode/drafts/<f>.json]   A debugging lesson drafted from the fix's record
   memory search <query> [--layer l] [--scope project|shared|all] [--check-env] [--limit n] [--json]
   memory show <id> [--history] | memory list [--layer l] [--status s]
   memory review <id> --actor <reviewer> --decision verify|reject --notes <text>
@@ -101,7 +102,7 @@ Codebase (work in any repository; see docs/lean.md and docs/senior-engineering.m
                                    reflective imports are resolved by observation, not parsing
   map [--path <dir>] [--chars n]   What already exists (top-level names per directory): reuse before you write
   stack [--json]                   Detected stacks and their checks (project scripts first); * = required
-  stack run <id|all> [--record --actor <a>]   Run a check; exit = the check's exit code
+  stack run <id|all> [--timeout <s>] [--record --actor <a>]   Run a check (default 600 s); exit = the check's exit code
   stack adopt --checks <id,id> --actor user [--remove]   Make checks required at the verification gate
   debt [--json]                    Ledger of deferred shortcut markers in code, flagging those with no upgrade trigger
 
@@ -171,6 +172,14 @@ function findRoot(flags) {
   }
 }
 
+/** --timeout <seconds> as milliseconds (at least 1), or undefined when absent. */
+function timeoutOf(flags) {
+  if (flags.timeout === undefined) return undefined;
+  const seconds = Number(flags.timeout);
+  if (flags.timeout === true || !Number.isFinite(seconds) || seconds <= 0) throw new EccodeError('INVALID_INPUT', '--timeout takes a number of seconds greater than 0');
+  return Math.max(1, Math.round(seconds * 1000));
+}
+
 function need(value, name) {
   if (value === undefined || value === true || value === '') {
     const hint = name === '--actor' && process.env.ECCODE_ACTOR === 'user' ? ' (ECCODE_ACTOR=user is ignored: pass --actor user explicitly)' : '';
@@ -221,7 +230,8 @@ function main(argv) {
       '',
       'The rest of the path (eccode status shows where you are):',
       ...steps,
-    ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps });
+      ...require('../lib/memory/draft').lessonsText(res.lessons),
+    ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps, lessons: res.lessons });
     return 0;
   }
   if (group === 'mcp') {
@@ -270,7 +280,7 @@ function main(argv) {
     const maxCostUsd = flags['max-cost'] !== undefined ? Number(flags['max-cost']) : null;
     const common = {
       agentCmd: need(flags.agent, '--agent'),
-      timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
+      timeoutMs: timeoutOf(flags),
       keep: Boolean(flags.keep),
       engineProfile: flags['engine-profile'] || 'guard',
       engineAgents: flags['engine-agents'] || 'inherit',
@@ -352,7 +362,7 @@ function main(argv) {
       base,
       files: flags.files ? String(flags.files).split(',').map((x) => x.trim()).filter(Boolean) : null,
       max: flags.max ? Number(flags.max) : 25,
-      timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
+      timeoutMs: timeoutOf(flags),
       onProgress: (m) => process.stderr.write(`mutate: ${m}\n`),
     });
     if (flags.record) res.evidence = mutate.record(store, need(actor, '--actor'), res, { task: flags.task, gate: flags.gate }).id;
@@ -362,7 +372,7 @@ function main(argv) {
   if (group === 'fix') {
     if (sub !== 'verify') throw new EccodeError('USAGE', 'Usage: eccode fix verify --actor <a> (--task <id> | --base <ref>) [--test "<cmd>"]');
     const fixverify = require('../lib/fixverify');
-    const r = fixverify.verify(store, need(actor, '--actor'), { test: flags.test, task: flags.task, base: flags.base, timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined });
+    const r = fixverify.verify(store, need(actor, '--actor'), { test: flags.test, task: flags.task, base: flags.base, timeoutMs: timeoutOf(flags) });
     print(flags, fixverify.format(r), r);
     return r.verdict === 'proven' ? 0 : 1;
   }
@@ -423,15 +433,16 @@ function main(argv) {
         ? stack.checks(root, cfg).filter((c) => c.available).map((c) => c.id)
         : [arg];
       let worst = 0;
+      const timeoutMs = timeoutOf(flags) || 600000;
       for (const id of ids) {
         if (flags.record) {
           const c = stack.checks(root, cfg).find((x) => x.id === id);
-          const ev = require('../lib/evidence').runCommand(store, need(actor, '--actor'), { label: `stack:${id}`, command: c && !id.startsWith('eccode-') ? c.command : `node ${JSON.stringify(__filename)} stack run ${id}`, gate: flags.gate });
+          const ev = require('../lib/evidence').runCommand(store, need(actor, '--actor'), { label: `stack:${id}`, command: c && !id.startsWith('eccode-') ? c.command : `node ${JSON.stringify(__filename)} stack run ${id}`, gate: flags.gate, timeoutMs });
           process.stdout.write(`${id}: ${ev.status.toUpperCase()} (ev:${ev.id})\n`);
           worst = Math.max(worst, ev.exitCode === 0 ? 0 : 2);
         } else {
-          const r = stack.runCheck(root, cfg, id);
-          process.stdout.write(`${id}: ${r.exitCode === 0 ? 'PASSED' : `FAILED (exit ${r.exitCode})`}\n${r.output.trim()}\n`);
+          const r = stack.runCheck(root, cfg, id, { timeoutMs });
+          process.stdout.write(`${id}: ${r.exitCode === 0 ? 'PASSED' : r.timedOut ? `TIMED OUT after ${timeoutMs / 1000} s` : `FAILED (exit ${r.exitCode})`}\n${r.output.trim()}\n`);
           worst = Math.max(worst, r.exitCode === 0 ? 0 : 2);
         }
       }
@@ -537,7 +548,8 @@ function main(argv) {
           behavior: flags.behavior,
           quick: { title: flags.title, owner: flags.owner, files: flags.files, command: flags.command },
         });
-        print(flags, `Work ${event.data.id} started on the ${flags.track} track. Next: eccode status --brief`, event.data);
+        const lessons = require('../lib/memory/draft').lessonsFor(store, config, flags.title);
+        print(flags, [`Work ${event.data.id} started on the ${flags.track} track. Next: eccode status --brief`, ...require('../lib/memory/draft').lessonsText(lessons)].join('\n'), { ...event.data, lessons });
       } else if (sub === 'abandon') {
         works.abandonWork(store, need(actor, '--actor'), need(flags.reason, '--reason'));
         print(flags, 'Work item abandoned by user decision. Start the next one with eccode work start.');
@@ -592,7 +604,8 @@ function main(argv) {
         print(flags, list.map((t) => `${t.id} [${t.status}] phase=${t.phase} owner=${t.owner} attempts=${t.attempts} — ${t.title}`).join('\n') || '(none)', list);
       } else if (sub === 'claim') {
         const { event } = tasks.claim(store, config, need(arg, '<task>'), need(actor, '--actor'), { runId: flags.run });
-        print(flags, `Claimed ${arg} (base ${event.data.baseCommit || 'no git'}).`, event.data);
+        const lessons = require('../lib/memory/draft').lessonsForTask(store, config, arg);
+        print(flags, [`Claimed ${arg} (base ${event.data.baseCommit || 'no git'}).`, ...require('../lib/memory/draft').lessonsText(lessons)].join('\n'), { ...event.data, lessons });
       } else if (sub === 'complete') {
         tasks.complete(store, config, need(arg, '<task>'), need(actor, '--actor'), loadJsonFile(need(flags.handoff, '--handoff')));
         print(flags, `Task ${arg} completed with validated handoff.`);
@@ -622,7 +635,7 @@ function main(argv) {
           gate: flags.gate,
           task: flags.task,
           purpose: flags.purpose || 'check',
-          timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
+          timeoutMs: timeoutOf(flags),
         });
         print(flags, `Evidence ev:${ev.id} — ${ev.status.toUpperCase()} (exit ${ev.exitCode}, ${ev.durationMs}ms)\n${ev.outputTail}`, ev);
         return 0;

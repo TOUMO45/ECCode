@@ -1,0 +1,45 @@
+{
+  "id": "mealie2-09-debug",
+  "category": "debug",
+  "order": 9,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "c794a53c297e9d92a7b4337dfee9da853e1e01dd"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-f6e753baf63c/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug report: the NLP ingredient parser turns a second measurement of the same ingredient into a substitution.\n\nRecipes often give one ingredient in two measurements: \"3 tablespoons (42g) water, at room temperature\", \"2 tablespoons (30ml) vegetable oil\", \"153 grams 00 flour (1 cup plus 1 tablespoon)\". Parsed with the NLP parser (RegisteredParser.nlp, parse_one), the measurement in parentheses comes back as an alternative ingredient: the parsed ingredient gets a substitution such as \"30 milliliter\", as if there were a second food to choose from.\n\nFind the cause and fix it. Expected: an amount that has no food name of its own is another measurement of the main ingredient, not an alternative. It joins the main ingredient's extra amounts, which the parser already writes into the note in parentheses: \"2 tablespoons (30ml) vegetable oil\" parses to 2 tablespoon vegetable oil, displayed \"2 tablespoon vegetable oil (30 ml)\", with no substitution; \"153 grams 00 flour (1 cup plus 1 tablespoon)\" displays \"153 gram 00 flour (1 cup, 1 tablespoon)\"; \"1 cup plus 2 tablespoons (134g) King Arthur Unbleached Bread Flour\" keeps both \"2 tablespoons\" and \"134 g\" in its note. A real alternative (\"1 cup fresh basil or 2 tablespoons dried basil\", \"2 cups chicken broth or beef broth\") stays a substitution as today.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/services_tests/ingredient_parser` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: don't treat unnamed measurement as ingredient substitution (#8502)",
+  "track": "debug",
+  "fixCommit": "5c1f789d2a15d630b17ccc00ff650c6d861be1b7",
+  "hidden": {
+    "fromSource": {
+      "commit": "5c1f789d2a15d630b17ccc00ff650c6d861be1b7",
+      "paths": [
+        "tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_keeps_all_text[153 grams 00 flour (1 cup plus 1 tablespoon)-153 gram 00 flour (1 cup, 1 tablespoon)]\" \"tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_keeps_all_text[2 tablespoons (30ml) vegetable oil-2 tablespoon vegetable oil (30 ml)]\" \"tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_unnamed_amounts_are_not_substitutions[3 tablespoons (42g) water, at room temperature-expected_extra_amounts0]\" \"tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_unnamed_amounts_are_not_substitutions[1 cup plus 2 tablespoons (134g) King Arthur Unbleached Bread Flour-expected_extra_amounts1]\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py\" --deselect \"tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_keeps_all_text[153 grams 00 flour (1 cup plus 1 tablespoon)-153 gram 00 flour (1 cup, 1 tablespoon)]\" --deselect \"tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_keeps_all_text[2 tablespoons (30ml) vegetable oil-2 tablespoon vegetable oil (30 ml)]\" --deselect \"tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_unnamed_amounts_are_not_substitutions[3 tablespoons (42g) water, at room temperature-expected_extra_amounts0]\" --deselect \"tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_unnamed_amounts_are_not_substitutions[1 cup plus 2 tablespoons (134g) King Arthur Unbleached Bread Flour-expected_extra_amounts1]\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 4,
+    "regression": 15,
+    "failingBeforeAndAfter": []
+  }
+}

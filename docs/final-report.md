@@ -235,3 +235,42 @@ Every earlier batch ran on fixtures, sandboxes or small slices of projects. This
 - The benchmark harness now gives each agent a clean environment and stops whatever it leaves running.
 
 **Not shown:** whether the fixed engine meets the criteria. That needs the same protocol run again at the fix commit.
+
+## Addendum 2026-10-26: the rerun at the fix commit (v0.13.0)
+
+The pilot's protocol was run again with the fixed engine, on fresh items ([protocol](../bench/protocols/2026-10-25-mealie-rerun.md); [report](../bench/pilot-results/2026-10-25-mealie-rerun.md)):
+- ten new Mealie changes from v3.27.0..v3.29.0;
+- a new three-request greenfield service.
+
+The criteria were unchanged. Since the pilot, a fix or debug item records a lesson, and the benchmark's tool list gained read-only shell commands.
+
+**Measured, as registered.** A container restart cut the last four items of each Mealie chain. They count as failures in the primary reading, and a continued reading is reported beside it.
+- **Met:**
+  - false refusals, 0.64 per engine item (pilot 1.79);
+  - a lesson recorded and later surfaced, in both chains;
+  - the no-shell item, 2 of 2;
+  - no record failing its audit.
+- **Missed:**
+  - delivery: 7 of 20 Mealie items (11 of 20 when the chains continued), against 80% per chain;
+  - the greenfield criterion in both chains. Chain 1 met every condition except one the harness's patch cap left unverifiable.
+- **Correctness (no criterion):** among the Mealie runs that finished, the engine missed one hidden check in 18 runs, and the bare agent none in 19.
+- **Cost:** $48.57 of its $145 ceiling.
+
+**Found and fixed (rows 109–130):**
+- a gate that could be neither reviewed nor resubmitted after its artifact changed;
+- the refactor baseline checked only at verification;
+- an evidence timeout that left the tests running;
+- six guard misreads;
+- deleting git-ignored artifacts refused by ownership;
+- an identity gap no run used: `ECCODE_ACTOR` set inside a main-session command;
+- found by an independent review of those fixes: a check that outlived a killed eccode process, and two read-only tools that write files (`sort -o`, `uniq`);
+- found by its Part A:
+  - `mutate` leaving a timed-out mutant's tests running, and `stack run` reporting a timed-out check as a failure;
+  - compat reading a deleted dev script's definitions as API, and missing routes on routers with other names;
+  - four measurement instruments that could not see what they measured. The route table saw none of Mealie's API routes, in the pilot too, so route recall had never been measured.
+
+Each has a test that failed first. Six limits are named, among them that the recorded lessons were shown to later agents but never used (row 119), a rework deadlock (row 120), and migration edits reported whatever they change (row 126).
+
+**Part A** ([report](../bench/pilot-results/2026-10-25-mealie-rerun-part-a.md)): 14 of 17 criteria met as measured, on history none of the fixes saw. Missed: impact's share of the suite and compat precision (0.571; 0.80 after the fix).
+
+**Not shown:** that the engine raises correctness where bare agents fail, or that the fixes made after this run raise delivery.

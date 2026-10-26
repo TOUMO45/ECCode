@@ -11,7 +11,7 @@ const os = require('os');
 const path = require('path');
 const { execFileSync, spawnSync } = require('child_process');
 const { Store } = require('../lib/store');
-const { write, expectCode } = require('./helpers');
+const { write, expectCode, recordLesson } = require('./helpers');
 
 const CLI = path.join(__dirname, '..', 'bin', 'eccode.js');
 
@@ -56,6 +56,7 @@ function fixedAndCompleted(dir) {
   draft.completedWork = 'The boundary is >= 10; a regression test prices 10 items; fix verify and mutate are recorded.';
   write(dir, '.eccode/drafts/handoff-fix.json', JSON.stringify(draft));
   ok(['task', 'complete', 'fix', '--actor', 'backend-engineer', '--handoff', '.eccode/drafts/handoff-fix.json']);
+  recordLesson(new Store(dir));
   return ok;
 }
 

@@ -11,6 +11,7 @@ const bench = require('../../../lib/bench');
 const env = require('../../suites/mealie/_tools/env');
 
 const FIX = /^fix(\([^)]*\))?!?:/;
+const LINT_CONFIG = ['pyproject.toml', 'ruff.toml', '.ruff.toml', 'setup.cfg', 'mypy.ini'];
 
 /** Code fixes (`fix:` or `fix(scope):`, not dependency bumps) that change both mealie/ and tests/. */
 function fixPopulation(commits) {
@@ -35,7 +36,9 @@ function scratchRepo(mirror, c, { full = true } = {}) {
   const removed = c.files.filter((f) => f.status === 'D' || f.from).map((f) => f.from || f.path);
   if (full) lib.treeAt(lib.MEALIE, c.parent, root);
   else {
-    const before = [...new Set([...changed, ...removed])].filter((f) => exists(mirror, c.parent, f));
+    // With the project's lint configuration, so the analyzers judge the change
+    // as the project does (its Python target, its rule set).
+    const before = [...new Set([...changed, ...removed, ...LINT_CONFIG])].filter((f) => exists(mirror, c.parent, f));
     if (before.length) bench.exportPaths({ repo: lib.MEALIE, commit: c.parent }, before, root);
   }
   git(root, ['init', '-q']);

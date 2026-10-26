@@ -186,3 +186,41 @@ test('a write waits for one test run of mutate, not for the whole mutation run',
   fs.rmSync(dir, { recursive: true, force: true });
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+// Mealie rerun, b2 item 1: the full test suite outlived the 600 s evidence
+// timeout; only the shell was killed, the tests under it ran on and left a
+// half-migrated test database, and nothing said how to allow more time.
+test('an evidence run that times out stops everything it started and says how to give it more time', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {
+  const { dir, store } = tmpProject();
+  const late = path.join(dir, 'late.txt');
+  // The path goes in as an argument: quoting it inside the -e script would break it.
+  const ev = evidence.runCommand(store, 'backend-engineer', { label: 'slow suite', command: `node -e "setTimeout(() => require('fs').writeFileSync(process.argv[1], 'x'), 1500)" ${JSON.stringify(late)} & sleep 5`, timeoutMs: 500 });
+  assert.strictEqual(ev.timedOut, true);
+  assert.strictEqual(ev.status, 'failed');
+  assert.doesNotMatch(ev.outputTail, /SyntaxError/);
+  assert.match(ev.outputTail, /timed out after 0\.5 s.*--timeout <seconds>/);
+  const until = Date.now() + 2500;
+  while (Date.now() < until) { /* wait past the grandchild's write */ }
+  assert.strictEqual(fs.existsSync(late), false, 'the process the command started was stopped with it');
+});
+
+// Review of the fix above: in its own group, the command outlived an eccode
+// process that was killed (Ctrl-C, a stopped tool call, an agent's group
+// killed by the bench harness), and went on writing into the project.
+test('an evidence run whose eccode process is killed stops with it', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {
+  const { dir } = tmpProject();
+  const marker = path.join(dir, 'marker.txt');
+  const runner = `const evidence = require(${JSON.stringify(path.join(__dirname, '..', 'lib', 'evidence'))}); const { Store } = require(${JSON.stringify(path.join(__dirname, '..', 'lib', 'store'))});
+evidence.runCommand(new Store(${JSON.stringify(dir)}), 'backend-engineer', { label: 'slow', command: 'sleep 3 && echo late > marker.txt', timeoutMs: 30000 });`;
+  const child = require('child_process').spawn(process.execPath, ['-e', runner], { cwd: dir, detached: true, stdio: 'ignore' });
+  const sleep = (ms) => { const until = Date.now() + ms; while (Date.now() < until) { /* wait */ } };
+  sleep(1000);
+  process.kill(-child.pid, 'SIGKILL'); // the eccode process and its own group, as a harness kills an agent
+  sleep(4500);
+  assert.strictEqual(fs.existsSync(marker), false, 'the check did not outlive the eccode process');
+});
+
+test('evidence run --timeout is in the help', () => {
+  const res = require('child_process').spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), 'help'], { encoding: 'utf8' });
+  assert.match(res.stdout, /evidence run [^\n]*--timeout <s>/);
+});

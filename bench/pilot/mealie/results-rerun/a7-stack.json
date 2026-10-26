@@ -1,0 +1,79 @@
+{
+ "commit": "dedc6cc75f2bd8e89108ad998970e7bdf6d4444f",
+ "stacks": [
+  "node",
+  "python"
+ ],
+ "checks": [
+  {
+   "id": "node-test",
+   "command": "cd frontend && pnpm test",
+   "source": "project-script",
+   "available": true,
+   "eccodeExit": 1,
+   "ms": 3947,
+   "tool": "vitest",
+   "directCommand": "cd frontend && yarn test:ci",
+   "directExit": 1,
+   "equal": true
+  },
+  {
+   "id": "node-lint",
+   "command": "cd frontend && pnpm lint",
+   "source": "project-script",
+   "available": true,
+   "eccodeExit": 1,
+   "ms": 1769,
+   "tool": "eslint",
+   "directCommand": "cd frontend && yarn lint --max-warnings=0",
+   "directExit": 1,
+   "equal": true
+  },
+  {
+   "id": "pytest",
+   "command": "pytest -q",
+   "source": "standard",
+   "available": true,
+   "eccodeExit": 0,
+   "ms": 561090,
+   "tool": "pytest",
+   "directCommand": "python -m pytest -q -p no:cacheprovider",
+   "directExit": 0,
+   "equal": true
+  },
+  {
+   "id": "ruff",
+   "command": "ruff check mealie",
+   "source": "project-task",
+   "available": true,
+   "eccodeExit": 0,
+   "ms": 1582,
+   "tool": "ruff",
+   "directCommand": "ruff check mealie",
+   "directExit": 0,
+   "equal": true
+  },
+  {
+   "id": "mypy",
+   "command": "mypy mealie",
+   "source": "project-task",
+   "available": true,
+   "eccodeExit": 0,
+   "ms": 9435,
+   "tool": "mypy",
+   "directCommand": "mypy mealie",
+   "directExit": 0,
+   "equal": true
+  }
+ ],
+ "secrets": {
+  "code": 0,
+  "tests": 1,
+  "hits": [
+   {
+    "id": "tests/data/html/nutty-umami-noodles-with-scallion-brown-butter-and-snow-peas-recipe.html:1",
+    "where": "tests"
+   }
+  ]
+ }
+}

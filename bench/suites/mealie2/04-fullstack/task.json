@@ -1,0 +1,46 @@
+{
+  "id": "mealie2-04-fullstack",
+  "category": "fullstack",
+  "order": 4,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "e1d0ffdc9d81fc6ab2be8ffdfe89ac58f72355e1"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-e6d30c40d136/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Feature: partitioned session cookies for an embedded Mealie.\n\nMealie embedded in another site (in an iframe) needs a session cookie that the browser will send in that context. It already gets SameSite=None when the client flags the embedding (the x-mealie-embedded: true header, honoured over HTTPS only). Browsers that block third-party cookies also need the cookie to be partitioned (CHIPS: one cookie per top-level site). On Python 3.12 Starlette could not emit the Partitioned attribute, so neither side asked for it; Mealie now runs on Python 3.14, where it can.\n\nExpected:\n- the server's session-cookie attributes, session_cookie_attrs(request) (shared by login and logout, so that logout clears the same cookie), gain \"partitioned\": True exactly when the embedded flag is honoured (HTTPS and the header) and False otherwise. The Set-Cookie header of an embedded HTTPS login then carries Partitioned; a top-level or plain-HTTP login's does not;\n- the frontend's token cookie options, getTokenCookieOptions() of the use-token-cookie composable, gain partitioned: true in exactly the case where they use SameSite=None (a production build, over HTTPS, inside a frame), and partitioned: false otherwise.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/test_session_cookie.py` and `(cd frontend && npx vitest run app/composables/__tests__/use-token-cookie.test.ts)` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "feat: use partitioned cookies to support embedded auth (#8522)",
+  "track": "feature",
+  "fixCommit": "59e3e14e87e148499fad3d248cba291b99f085dc",
+  "hidden": {
+    "fromSource": {
+      "commit": "59e3e14e87e148499fad3d248cba291b99f085dc",
+      "paths": [
+        "frontend/app/composables/__tests__/use-token-cookie.test.ts",
+        "tests/unit_tests/test_session_cookie.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/test_session_cookie.py::test_plain_http_gets_an_insecure_lax_cookie\" \"tests/unit_tests/test_session_cookie.py::test_embedded_over_https_relaxes_samesite_and_partitions\" \"tests/unit_tests/test_session_cookie.py::test_embedded_behind_an_untrusted_proxy_still_relaxes_samesite\" \"tests/unit_tests/test_session_cookie.py::test_embedded_over_plain_http_stays_lax\" \"tests/unit_tests/test_session_cookie.py::test_embedded_https_cookie_is_actually_sendable\" && (cd frontend && npx vitest run \"app/composables/__tests__/use-token-cookie.test.ts\")",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/test_session_cookie.py\" --deselect \"tests/unit_tests/test_session_cookie.py::test_plain_http_gets_an_insecure_lax_cookie\" --deselect \"tests/unit_tests/test_session_cookie.py::test_embedded_over_https_relaxes_samesite_and_partitions\" --deselect \"tests/unit_tests/test_session_cookie.py::test_embedded_behind_an_untrusted_proxy_still_relaxes_samesite\" --deselect \"tests/unit_tests/test_session_cookie.py::test_embedded_over_plain_http_stays_lax\" --deselect \"tests/unit_tests/test_session_cookie.py::test_embedded_https_cookie_is_actually_sendable\" && (cd frontend && npx vitest run \"app/composables/use-search.test.ts\" \"app/components/global/DropZone.test.ts\" \"app/composables/__tests__/use-auth-backend.test.ts\" \"app/composables/__tests__/use-mealplan-rules.test.ts\" \"app/composables/__tests__/use-passwords.test.ts\" \"app/composables/__tests__/use-query-filter-builder.test.ts\" \"app/composables/__tests__/use-toast.test.ts\" \"app/composables/__tests__/use-utils.test.ts\" \"app/composables/recipe-page/use-cook-mode-query.test.ts\" \"app/lib/recipe/recipe-finder.test.ts\" \"app/lib/recipe/recipe-visibility.test.ts\" \"app/lib/sanitize/markdown.test.ts\" \"app/lib/sanitize/text.test.ts\" \"app/lib/validators/inputs.test.ts\" \"app/lib/validators/password.test.ts\" \"app/lib/validators/redirect.test.ts\" \"app/pages/register/index.test.ts\" \"app/plugins/__tests__/axios.test.ts\" \"app/components/Domain/Recipe/RecipeDataAliasManagerDialog.test.ts\" \"app/components/Domain/Recipe/RecipeDialogSearch.test.ts\" \"app/components/Domain/Recipe/RecipeIngredients.test.ts\" \"app/composables/partials/__tests__/use-actions-factory.test.ts\" \"app/composables/recipe-page/__tests__/use-extract-ingredient-references.test.ts\" \"app/composables/recipes/__tests__/use-ingredient-substitutions.test.ts\" \"app/composables/recipes/__tests__/use-parse-ingredients-dialog.test.ts\" \"app/composables/recipes/__tests__/use-recipe-ingredients.test.ts\" \"app/composables/recipes/__tests__/use-recipe-nutrition.test.ts\" \"app/composables/recipes/__tests__/use-recipe-permissions.test.ts\" \"app/composables/recipes/__tests__/use-scaled-amount.test.ts\" \"app/composables/shopping-list-page/__tests__/use-shopping-list-item-editor.test.ts\" \"app/composables/shopping-list-page/__tests__/use-shopping-list-page.test.ts\" \"app/lib/api/base/routes.test.ts\" \"app/components/Domain/Announcement/Announcements/announcements.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-copy.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-crud.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-data.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-item-actions.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-labels.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-recipes.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-sorting.test.ts\" \"app/composables/shopping-list-page/sub-composables/__tests__/use-shopping-list-state.test.ts\")",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 6,
+    "regression": 44,
+    "failingBeforeAndAfter": []
+  }
+}

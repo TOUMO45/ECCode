@@ -1,0 +1,46 @@
+{
+  "id": "mealie2-07-migration",
+  "category": "migration",
+  "order": 7,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "342ba4c8f94ca3a56df62770eb45388ef82417ab"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-47e17a768d76/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: cookbooks and meal-plan rules keep dead rows in their old organizer join tables.\n\nAlembic revision 86054b40fd06 copied the categories, tags and tools that cookbooks and meal-plan rules were filtered by into their query_filter_string, but it left the rows of the join tables it copied them from: cookbooks_to_categories, cookbooks_to_tags, cookbooks_to_tools, plan_rules_to_categories and plan_rules_to_tags. That dead data still references categories, tags and tools, and it still shows on the cookbooks' and plan rules' categories, tags and tools relationships after a database, or a restored backup, is migrated.\n\nAdd an Alembic migration with revision id 3697d65c5f92, after the current head, whose upgrade() deletes every row of those five tables and nothing else: the tables themselves stay, and other join tables (plan_rules_to_households, recipes_to_categories, ...) are untouched. Its downgrade() does nothing, since the data lives on in query_filter_string. After the upgrade, a migrated database or a restored backup has cookbooks and plan rules with no categories, tags or tools, and a non-empty query_filter_string wherever one of them had such organizers.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: delete orphaned legacy cookbook/plan-rule join table rows (#8350)",
+  "track": "feature",
+  "fixCommit": "0254fd7df063a3a8c461cf1f6a20f888fdfeefc4",
+  "hidden": {
+    "fromSource": {
+      "commit": "0254fd7df063a3a8c461cf1f6a20f888fdfeefc4",
+      "paths": [
+        "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py",
+        "tests/unit_tests/test_clear_legacy_organizer_join_tables_migration.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py::test_database_restore_data\" \"tests/unit_tests/test_clear_legacy_organizer_join_tables_migration.py::test_clear_legacy_organizer_join_tables_empties_only_legacy_tables\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py\" \"tests/unit_tests/test_clear_legacy_organizer_join_tables_migration.py\" --deselect \"tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py::test_database_restore_data\" --deselect \"tests/unit_tests/test_clear_legacy_organizer_join_tables_migration.py::test_clear_legacy_organizer_join_tables_empties_only_legacy_tables\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 2,
+    "regression": 2,
+    "failingBeforeAndAfter": []
+  }
+}

@@ -305,6 +305,14 @@ test('extractRefusals finds the refusals in the fixture and nothing else', () =>
   assert.match(found[0].id, /^fixture:\d+$/);
 });
 
+test('extractRefusals counts a refused tool call once when an api-request-blob event repeats its result', () => {
+  const { extractRefusals } = require('../bench/pilot/refusals');
+  const use = { type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', id: 'toolu_1', name: 'Bash', input: { command: 'node .claude/eccode/bin/eccode.js work show w2' } }] } };
+  const result = { type: 'tool_result', tool_use_id: 'toolu_1', is_error: true, content: 'Exit code 2\neccode: [USAGE] Unknown work subcommand show' };
+  const text = [use, { type: 'user', message: { role: 'user', content: [result] } }, { type: 'api-request-blob', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'toolu_0', content: 'ok' }, result] } }].map((e) => JSON.stringify(e)).join('\n');
+  assert.deepStrictEqual(extractRefusals(text, 's').map((x) => [x.id, x.code]), [['s:2', 'USAGE']]);
+});
+
 test('copyTranscripts copies the session files written since the run started', () => {
   const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tr-'));
   const dir = bench.transcriptDir(sandbox);
@@ -519,22 +527,78 @@ test('the dev copy of the fake Mealie server is the hidden one', () => {
   assert.strictEqual(fs.readFileSync(path.join(PLANNER, 'c1', 'fixture', 'dev', 'fake-mealie', 'server.js'), 'utf8'), fs.readFileSync(path.join(PLANNER, '_hidden', 'fake-mealie', 'server.js'), 'utf8'));
 });
 
-test('A7: the direct commands are the ones Mealie\'s own Taskfile runs at P', (t) => {
+// The rerun's greenfield suite (bench/suites/pantry): fresh requests, the same grading.
+const PANTRY = path.join(__dirname, '..', 'bench', 'suites', 'pantry');
+function pantryCheck(projectDir, tag) {
+  const hidden = path.join(projectDir, '.bench-hidden');
+  fs.cpSync(path.join(PANTRY, '_hidden'), hidden, { recursive: true });
+  const r = require('child_process').spawnSync(process.execPath, [path.join(hidden, 'check.js'), tag], { cwd: projectDir, encoding: 'utf8', timeout: 180000 });
+  return { code: r.status, out: `${r.stdout}${r.stderr}` };
+}
+const pantryReference = (prefix) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  fs.cpSync(path.join(PANTRY, 'reference'), dir, { recursive: true });
+  return dir;
+};
+
+test('pantry: the acceptance suite passes against the reference', { skip: !hasSqlite && 'the reference needs node:sqlite (Node >= 22.5)' }, () => {
+  const dir = pantryReference('pantry-ref-');
+  for (const tag of ['c1', 'c2', 'c3']) {
+    const r = pantryCheck(dir, tag);
+    assert.strictEqual(r.code, 0, `${tag}:\n${r.out.split('\n').filter((l) => /not ok|Error|expected|actual/.test(l)).slice(0, 20).join('\n')}`);
+  }
+});
+
+test('pantry: the acceptance suite fails against an empty service and against a client that reads one page of recipes', { skip: !hasSqlite && 'the reference needs node:sqlite (Node >= 22.5)' }, () => {
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'pantry-empty-'));
+  fs.writeFileSync(path.join(empty, 'package.json'), JSON.stringify({ name: 'empty', scripts: { start: 'node server.js' } }));
+  fs.writeFileSync(path.join(empty, 'server.js'), "require('http').createServer((q, s) => { s.writeHead(q.url === '/health' ? 200 : 404, { 'content-type': 'application/json' }); s.end(q.url === '/health' ? '{\"ok\":true}' : '{}'); }).listen(process.env.PORT);\n");
+  assert.notStrictEqual(pantryCheck(empty, 'c1').code, 0);
+  const onePage = pantryReference('pantry-page-');
+  const server = path.join(onePage, 'server.js');
+  fs.writeFileSync(server, fs.readFileSync(server, 'utf8').replace('if (page >= p.total_pages) return out;', 'return out;'));
+  const r = pantryCheck(onePage, 'c1');
+  assert.notStrictEqual(r.code, 0);
+  assert.match(r.out, /not ok \d+ - c1: cookable recipes read every page of Mealie/);
+});
+
+test("pantry: c3's check refuses an edited first migration", { skip: !hasSqlite && 'the reference needs node:sqlite (Node >= 22.5)' }, () => {
+  const dir = pantryReference('pantry-edit-');
+  fs.appendFileSync(path.join(dir, 'migrations', '001_init.sql'), '\n-- expiry dates were added here instead of in a new migration\n');
+  const r = pantryCheck(dir, 'c3');
+  assert.notStrictEqual(r.code, 0);
+  assert.match(r.out, /c3: migrations are append-only/);
+});
+
+test('pantry: the dev copy of the fake Mealie server is the hidden one', () => {
+  assert.strictEqual(fs.readFileSync(path.join(PANTRY, 'c1', 'fixture', 'dev', 'fake-mealie', 'server.js'), 'utf8'), fs.readFileSync(path.join(PANTRY, '_hidden', 'fake-mealie', 'server.js'), 'utf8'));
+});
+
+test('A7: the direct commands are the ones Mealie\'s own Taskfile runs, with the package manager of the commit', (t) => {
   const lib = require('../bench/pilot/lib');
-  const { DIRECT } = require('../bench/pilot/mealie/a7-stack');
+  const { directFor } = require('../bench/pilot/mealie/a7-stack');
   const mirror = lib.mealieMirror();
   if (!fs.existsSync(mirror)) return t.skip(`no Mealie mirror at ${mirror}`);
-  const P = 'dbe84cc91b9e1dfc88b783a1e31d8a8495800337';
-  const show = (f) => execFileSync('git', ['--git-dir', mirror, 'show', `${P}:${f}`], { encoding: 'utf8' });
-  const taskfile = show('Taskfile.yml');
-  // Python tools run through `uv run` there; here the venv is first on PATH.
-  for (const tool of ['ruff', 'mypy']) assert.ok(taskfile.includes(`uv run ${DIRECT[tool]}\n`), `${tool}: Taskfile runs "uv run ${DIRECT[tool]}"`);
-  assert.ok(taskfile.includes('uv run pytest'), 'pytest through uv run');
-  assert.match(DIRECT.pytest, /^python -m pytest\b/);
-  // Frontend tasks run in frontend/; `yarn test` is vitest, test:ci its no-watch form.
-  assert.strictEqual(DIRECT.eslint, `cd frontend && ${taskfile.match(/ui:lint:[\s\S]*?- (yarn lint[^\n]*)/)[1]}`);
-  assert.match(show('frontend/package.json'), /"test:ci": "vitest --watch=false"/);
-  assert.strictEqual(DIRECT.vitest, 'cd frontend && yarn test:ci');
+  // P, the pilot's pin (yarn), and P2, the rerun's (pnpm 11).
+  for (const [commit, manager] of [['dbe84cc91b9e1dfc88b783a1e31d8a8495800337', 'yarn'], ['dedc6cc75f2bd8e89108ad998970e7bdf6d4444f', 'pnpm']]) {
+    const show = (f) => execFileSync('git', ['--git-dir', mirror, 'show', `${commit}:${f}`], { encoding: 'utf8' });
+    const tree = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-a7-'));
+    for (const f of execFileSync('git', ['--git-dir', mirror, 'ls-tree', '--name-only', commit, 'frontend/'], { encoding: 'utf8' }).split('\n').filter((x) => /lock|pnpm-workspace/.test(x))) {
+      fs.mkdirSync(path.join(tree, 'frontend'), { recursive: true });
+      fs.writeFileSync(path.join(tree, f), '');
+    }
+    const DIRECT = directFor(tree);
+    const taskfile = show('Taskfile.yml');
+    // Python tools run through `uv run` there; here the venv is first on PATH.
+    for (const tool of ['ruff', 'mypy']) assert.ok(taskfile.includes(`uv run ${DIRECT[tool]}\n`), `${commit.slice(0, 8)} ${tool}: Taskfile runs "uv run ${DIRECT[tool]}"`);
+    assert.ok(taskfile.includes('uv run pytest'), 'pytest through uv run');
+    assert.match(DIRECT.pytest, /^python -m pytest\b/);
+    // Frontend tasks run in frontend/; `test` is vitest, test:ci its no-watch form.
+    assert.strictEqual(DIRECT.eslint, `cd frontend && ${taskfile.match(new RegExp(`ui:lint:[\\s\\S]*?- (${manager} lint[^\\n]*)`))[1]}`, `${commit.slice(0, 8)} eslint`);
+    assert.match(show('frontend/package.json'), /"test:ci": "vitest --watch=false"/);
+    assert.strictEqual(DIRECT.vitest, `cd frontend && ${manager} test:ci`, `${commit.slice(0, 8)} vitest`);
+    fs.rmSync(tree, { recursive: true, force: true });
+  }
 });
 
 test('report: fix verify agreement counts the disagreements labelled engine-wrong; an unlabelled one leaves no verdict', () => {
@@ -604,6 +668,16 @@ test('analyse: gate order of the first work item, and the greenfield order rule'
   assert.strictEqual(gatesInOrder(['architecture', 'design', 'plan', 'verification']), false, 'at least one phase');
 });
 
+test('analyse: the greenfield rows read the suite the runs used (the rerun\'s pantry)', () => {
+  const { criteria } = require('../bench/pilot/analyse');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-analyse-gf-'));
+  const done = (task) => ({ task, chainRun: 1, engine: { delivered: true, auditOk: true, initialized: true }, patch: '' });
+  const runs = { c1: { records: [done('pantry-c1'), done('pantry-c2')], summaries: [], stopped: [] } };
+  const row = (opts) => criteria(dir, runs, { refusals: {} }, opts).rows.find((r) => r.id === 'greenfield-1').result;
+  assert.match(row({ greenfield: 'pantry' }), /2\/3 delivered/);
+  assert.match(row(undefined), /0\/3 delivered/, 'the pilot\'s planner by default');
+});
+
 test('analyse: migration files a patch adds, modifies or deletes', () => {
   const { migrationChange } = require('../bench/pilot/analyse');
   const patch = [
@@ -664,4 +738,175 @@ test('analyse: a chain item counts only the transcript lines it added', () => {
   assert.ok(itemToolText(dir, 'b1', records[0]).includes('L-7'));
   assert.ok(!itemToolText(dir, 'b1', records[1]).includes('L-7'), 'item 1\'s own result is not item 2 surfacing the lesson');
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// Rerun amendment 1: a container restart killed the batch processes mid-item.
+const resume = require('../bench/pilot/resume');
+
+/** A chain cut off during c2: c1 done and saved, c2's agent crashed with its work item open. */
+function cutChain() {
+  const chain = require('../lib/chain');
+  const tasks = chainTasks(chainOrigin());
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-resume-'));
+  const sandbox = path.join(dir, 'sandbox');
+  fs.mkdirSync(sandbox);
+  execFileSync('git', ['init', '-q'], { cwd: sandbox });
+  const save = path.join(dir, 'runs', 'b1.jsonl');
+  fs.mkdirSync(path.dirname(save));
+  const r = chain.runChainItem(tasks[0], sandbox, { agentCmd: CHAIN_AGENT, variant: 'engine', first: true, index: 0, timeoutMs: 180000 });
+  fs.appendFileSync(save, JSON.stringify({ ...r, chainRun: 1 }) + '\n');
+  // What runChainItem does for c2 up to its agent, then an agent killed mid-work.
+  chain.syncSource(tasks[1], sandbox);
+  fs.writeFileSync(path.join(sandbox, 'PROMPT.md'), bench.promptFor(tasks[1], 'engine').prompt);
+  bench.git(sandbox, ['add', '-A']);
+  bench.git(sandbox, ['commit', '-q', '-m', 'item: c2']);
+  process.env.ECCODE_TEST_CRASH_ITEM = 'c2';
+  try {
+    bench.runAgent(sandbox, CHAIN_AGENT, bench.taskEnv(tasks[1]), 'engine', 180000);
+  } finally {
+    delete process.env.ECCODE_TEST_CRASH_ITEM;
+  }
+  return { dir, suite: path.dirname(tasks[0].dir), sandbox, save, registered: path.join(dir, 'registered', 'b1.jsonl') };
+}
+
+test('resume: a chain cut off by a restart continues on its sandbox; the cut item is a failure, and the registered reading counts the rest as not delivered', () => withCache(() => {
+  const c = cutChain();
+  // The harness had copied c2's transcripts: its agent had exited when the restart came.
+  const tr = path.join(c.dir, 'tr');
+  fs.mkdirSync(path.join(tr, `${path.basename(c.sandbox)}-2-c2`), { recursive: true });
+  const posthoc = path.join(c.dir, 'posthoc.jsonl');
+  resume.resumeChain({ suite: c.suite, sandbox: c.sandbox, save: c.save, registered: c.registered, chainRun: 1, interrupted: 'c2', cause: 'container restart (test)', agentCmd: CHAIN_AGENT, variant: 'engine', timeoutMs: 180000, transcripts: tr, posthoc, keep: true });
+  const read = (f) => fs.readFileSync(f, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const main = read(c.save);
+  assert.deepStrictEqual(main.map((l) => l.type || l.task), ['c1', 'c2', 'c3', 'chain-summary']);
+  const [, cut, next, summary] = main;
+  assert.strictEqual(cut.hiddenPassed, 0);
+  assert.strictEqual(cut.agentExit, 1);
+  assert.strictEqual(cut.usage, null);
+  assert.strictEqual(cut.engine.delivered, false);
+  assert.strictEqual(cut.engine.initialized, true);
+  assert.strictEqual(cut.infrastructure.cause, 'container restart (test)');
+  assert.strictEqual(cut.chain.index, 1);
+  assert.strictEqual(cut.chain.abandoned, true, 'the open work item is abandoned by the registered operator policy');
+  assert.strictEqual(cut.chainRun, 1);
+  assert.strictEqual(cut.amendment, 1);
+  assert.strictEqual(cut.infrastructure.agentFinished, true);
+  assert.strictEqual(cut.chain.transcripts.record, true, 'the record as the operator left it is kept next to the transcripts');
+  const graded = read(posthoc);
+  assert.deepStrictEqual(graded.map((g) => [g.task, g.posthoc, g.hiddenPassed, g.hiddenTotal]), [['c2', true, 0, 1]], 'graded from a copy, outside both readings');
+  assert.strictEqual(next.engine.delivered, true, 'the next item runs on the same record');
+  assert.strictEqual(next.hiddenPassed, 1);
+  assert.strictEqual(next.chain.index, 2);
+  assert.strictEqual(next.amendment, 1);
+  assert.strictEqual(summary.auditOk, true);
+  assert.strictEqual(summary.chain, 1);
+  const reg = read(c.registered);
+  assert.deepStrictEqual(reg.map((l) => l.type || l.task), ['c1', 'c2', 'c3', 'chain-summary']);
+  assert.deepStrictEqual(reg[1], cut);
+  assert.strictEqual(reg[2].infrastructure.neverStarted, true);
+  assert.strictEqual(reg[2].engine.delivered, false);
+  assert.strictEqual(reg[2].hiddenPassed, 0);
+  assert.strictEqual(reg[3].at, 'restart', 'the registered summary is the record as the chain left it');
+  assert.throws(() => resume.resumeChain({ suite: c.suite, sandbox: c.sandbox, save: c.save, registered: c.registered, chainRun: 1, interrupted: 'c2', cause: 'again', agentCmd: CHAIN_AGENT, variant: 'engine' }), /already resumed/);
+}));
+
+test('resume: a sandbox that is not on the named item is refused', () => withCache(() => {
+  const c = cutChain();
+  assert.throws(() => resume.resumeChain({ suite: c.suite, sandbox: c.sandbox, save: c.save, registered: c.registered, chainRun: 1, interrupted: 'c3', cause: 'x', agentCmd: CHAIN_AGENT, variant: 'engine' }), /not on item c3/);
+}));
+
+test('resume: an independent run cut off by a restart is a failure; the runs that never started run once and are failures in the registered reading', () => withCache(() => {
+  const o = origin();
+  const task = suiteWith(o, { hiddenChecks: [{ id: 'any', command: 'true' }] });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-resume-'));
+  const sandbox = path.join(dir, `eccode-bench-${task.id}-without-x`);
+  fs.mkdirSync(sandbox);
+  bench.materialize(task, sandbox);
+  const save = path.join(dir, 'runs', 'b3.jsonl');
+  fs.mkdirSync(path.dirname(save));
+  fs.writeFileSync(save, JSON.stringify({ task: 't1', variant: 'without', hiddenPassed: 1, hiddenTotal: 1, usage: { costUsd: 0.1 } }) + '\n');
+  const agent = `node -e "process.stdout.write(JSON.stringify({type:'result',total_cost_usd:0.1,num_turns:1}) + '\\n')"`;
+  resume.resumeRuns({ suite: path.dirname(task.dir), sandbox, save, registered: path.join(dir, 'registered', 'b3.jsonl'), interrupted: 't1', variant: 'without', cause: 'container restart (test)', then: [['t1', 2]], agentCmd: agent, maxCostUsd: 10 });
+  const read = (f) => fs.readFileSync(f, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const main = read(save);
+  assert.deepStrictEqual(main.map((l) => [l.hiddenPassed, l.amendment || 0]), [[1, 0], [0, 1], [1, 1], [1, 1]]);
+  assert.strictEqual(main[1].infrastructure.cause, 'container restart (test)');
+  assert.strictEqual(fs.existsSync(sandbox), false, 'the cut run\'s sandbox is removed, as the harness does');
+  const reg = read(path.join(dir, 'registered', 'b3.jsonl'));
+  assert.deepStrictEqual(reg.map((l) => [l.hiddenPassed, Boolean(l.infrastructure && l.infrastructure.neverStarted)]), [[1, false], [0, false], [0, true], [0, true]]);
+}));
+
+test('readings: registered, its sensitivity without runs that have no result line, and the continued reading', () => {
+  const { readings } = require('../bench/pilot/readings');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-readings-'));
+  const line = (r) => JSON.stringify(r) + '\n';
+  const ok = { task: 'i1', usage: { costUsd: 1, turns: 9 }, hiddenPassed: 1, hiddenTotal: 1 };
+  const cut = { task: 'i2', usage: null, hiddenPassed: 0, hiddenTotal: 1, infrastructure: { cause: 'restart', neverStarted: false }, amendment: 1 };
+  const later = { task: 'i3', usage: { costUsd: 1, turns: 4 }, hiddenPassed: 1, hiddenTotal: 1, amendment: 1 };
+  const never = { task: 'i3', usage: null, hiddenPassed: 0, hiddenTotal: 1, infrastructure: { cause: 'restart', neverStarted: true }, amendment: 1 };
+  const zero = { task: 'i4', usage: { costUsd: 0, turns: 0 }, hiddenPassed: 0, hiddenTotal: 1 };
+  fs.writeFileSync(path.join(dir, 'b1.jsonl'), line(ok) + line(cut) + line(later) + line({ type: 'chain-summary', chain: 1, amendment: 1 }));
+  fs.mkdirSync(path.join(dir, 'registered'));
+  fs.writeFileSync(path.join(dir, 'registered', 'b1.jsonl'), line(ok) + line(cut) + line(never) + line({ type: 'chain-summary', chain: 1, at: 'restart' }));
+  fs.writeFileSync(path.join(dir, 'c2.jsonl'), line(ok) + line(zero));
+  fs.mkdirSync(path.join(dir, 'tr-b1'));
+  const out = readings(dir);
+  const tasks = (reading, p) => fs.readFileSync(path.join(out[reading], `${p}.jsonl`), 'utf8').trim().split('\n').map((l) => JSON.parse(l)).map((r) => r.type || r.task);
+  assert.deepStrictEqual(tasks('registered', 'b1'), ['i1', 'i2', 'i3', 'chain-summary']);
+  assert.deepStrictEqual(tasks('registered', 'c2'), ['i1', 'i4'], 'a process the restart did not cut is the same in every reading');
+  assert.deepStrictEqual(tasks('sensitivity', 'b1'), ['i1', 'chain-summary']);
+  assert.deepStrictEqual(tasks('sensitivity', 'c2'), ['i1'], 'zero turns counts as never started');
+  assert.deepStrictEqual(tasks('continued', 'b1'), ['i1', 'i2', 'i3', 'chain-summary']);
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(out.continued, 'b1.jsonl'), 'utf8').split('\n')[2]).usage.turns, 4);
+  assert.ok(fs.existsSync(path.join(out.registered, 'tr-b1')), 'transcripts are reachable from every reading');
+});
+
+test('A4: the oracle names its verdicts as fix verify does', () => {
+  const { expectedVerdict } = require('../bench/pilot/mealie/a4-fixverify');
+  assert.strictEqual(expectedVerdict({ code: 0 }, { code: 0 }), 'tests-pass-without-fix');
+  assert.strictEqual(expectedVerdict({ code: 1, out: 'E   assert 1 == 2' }, { code: 1 }), 'fix-fails-tests');
+  assert.strictEqual(expectedVerdict({ code: 1, out: "ImportError: cannot import name 'x'" }, { code: 0 }), 'inconclusive');
+  assert.strictEqual(expectedVerdict({ code: 1, out: 'E   assert 500 == 200' }, { code: 0 }), 'proven');
+  // In fix verify's order: a pre-fix run that fails for a missing API is inconclusive whatever the post-fix run does.
+  assert.strictEqual(expectedVerdict({ code: 1, out: "ImportError: cannot import name 'x'" }, { code: 1 }), 'inconclusive');
+});
+
+test('A3: the route table reads routes FastAPI keeps under an included router (0.141+) as well as top-level ones', (t) => {
+  const py = ['python3', 'python'].find((p) => require('child_process').spawnSync(p, ['--version']).status === 0);
+  if (!py) return t.skip('no python');
+  const tree = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-routes-'));
+  fs.mkdirSync(path.join(tree, 'mealie'));
+  fs.writeFileSync(path.join(tree, 'mealie', '__init__.py'), '');
+  // The two shapes: a plain route with methods and a path, and FastAPI 0.141's
+  // _IncludedRouter, whose routes come from effective_route_contexts().
+  fs.writeFileSync(path.join(tree, 'mealie', 'app.py'), [
+    'from types import SimpleNamespace as N',
+    'class _IncludedRouter:',
+    '    def effective_route_contexts(self):',
+    '        return [N(methods={"GET"}, path="/api/app/about"), N(methods={"POST", "HEAD"}, path="/api/groups/seeders/labels"),',
+    '                N(methods=None, path=None, starlette_route=N(methods={"GET"}, path="/api/plain"))]',
+    'app = N(routes=[N(methods={"GET", "HEAD"}, path="/docs"), _IncludedRouter()])',
+    '',
+  ].join('\n'));
+  const out = path.join(tree, 'routes.txt');
+  const r = require('child_process').spawnSync(py, [path.join(__dirname, '..', 'bench', 'pilot', 'mealie', 'fastapi-routes.py'), tree, out], { encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.deepStrictEqual(fs.readFileSync(out, 'utf8').split('\n').filter(Boolean), ['GET /api/app/about', 'GET /api/plain', 'GET /docs', 'POST /api/groups/seeders/labels']);
+});
+
+test('A6: a changed-files scratch repo keeps the project\'s lint configuration, so the analyzers judge it as the project does', (t) => {
+  const lib = require('../bench/pilot/lib');
+  const { scratchRepo } = require('../bench/pilot/mealie/scratch');
+  const mirror = lib.mealieMirror();
+  if (!fs.existsSync(mirror)) return t.skip(`no Mealie mirror at ${mirror}`);
+  const sha = '6fb78ba468401e7b9b5679ae39454ca6cf0742df';
+  const parent = execFileSync('git', ['--git-dir', mirror, 'rev-parse', `${sha}^`], { encoding: 'utf8' }).trim();
+  const s = scratchRepo(mirror, { sha, parent, files: [{ path: 'mealie/core/settings/branding.py', status: 'A' }] }, { full: false });
+  try {
+    assert.ok(fs.existsSync(path.join(s.root, 'mealie/core/settings/branding.py')));
+    assert.match(fs.readFileSync(path.join(s.root, 'pyproject.toml'), 'utf8'), /target-version = "py314"/);
+    assert.strictEqual(execFileSync('git', ['status', '--porcelain', 'pyproject.toml'], { cwd: s.root, encoding: 'utf8' }), '', 'configuration is part of the base, not of the change');
+  } finally {
+    s.cleanup();
+  }
 });

@@ -1,0 +1,22 @@
+{
+  "id": "pantry-c3",
+  "title": "Expiry dates, through a new migration",
+  "order": 3,
+  "track": "feature",
+  "prompt": "Add expiry dates to mealie-pantry (this repository).\n\n- POST /pantry/items accepts an optional \"expiresOn\" (\"YYYY-MM-DD\"; anything else is 400). Amounts of one food and kind with different expiry dates are kept apart, as lots; amounts with the same date (or both without one) add up as before. The response is still the food's total of that kind, now with \"expiresOn\": the earliest date among its lots, or null when none has a date.\n- GET /pantry lists each food's totals with \"expiresOn\" the same way.\n- GET /pantry/expiring?before=YYYY-MM-DD returns 200 {\"items\": [{\"food\", \"quantity\", \"unit\", \"expiresOn\"}]}: every lot whose date is on or before that day, sorted by date, then by food, then by unit. A missing or invalid date is 400.\n- POST /cook takes from the lots that expire first; lots without a date go last.\n- The schema change comes in a new migration file; existing migration files are not edited, so a database created by the current version keeps working after the upgrade.\n- Everything that works today keeps working.",
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "node .bench-hidden/check.js c3",
+      "timeoutMs": 900000
+    },
+    {
+      "id": "regression",
+      "command": "node .bench-hidden/check.js c1 && node .bench-hidden/check.js c2",
+      "timeoutMs": 1800000
+    }
+  ],
+  "measured": {
+    "acceptanceTests": 5
+  }
+}

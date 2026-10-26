@@ -1,0 +1,874 @@
+{
+ "range": "v3.27.0..v3.29.0",
+ "population": 32,
+ "rows": [
+  {
+   "sha": "377896aff3cb8aa44bc48bb7c25de15582f41c9f",
+   "subject": "fix: add explicitly selected on-hand ingredients to the shopping list (#8441)",
+   "tests": [
+    "tests/integration_tests/user_household_tests/test_group_shopping_lists.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert {'dfe26d57-aa...7c60b295fd39'} == {'afa6dc45-85...7c60b295fd39'}",
+     "E         ",
+     "E         Extra items in the right set:",
+     "E         'afa6dc45-8544-4352-bc7b-0fa995dc6d10'",
+     "E         Use -v to get more diff",
+     "FAILED tests/integration_tests/user_household_tests/test_group_shopping_lists.py::test_shopping_lists_add_recipe_on_hand_food"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 47797
+  },
+  {
+   "sha": "54de7e8a8fb0a93393b2e7e627b5a5fa34aea927",
+   "subject": "fix: allow SMTP encryption without authentication (#8210)",
+   "tests": [
+    "tests/unit_tests/test_config.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert False is True",
+     "E        +  where True = SMTPValidationCase(host='email.mealie.io', port='587', auth_strategy='tls', from_name='Mealie', from_email='mealie@mealie.io', user=None, password=None, is_valid=True).is_valid",
+     "E       AssertionError: assert False is True",
+     "E        +  where True = SMTPValidationCase(host='email.mealie.io', port='465', auth_strategy='ssl', from_name='Mealie', from_email='mealie@mealie.io', user='', password='', is_valid=True).is_valid",
+     "FAILED tests/unit_tests/test_config.py::test_smtp_enable_with_bad_data_tls[tls_without_credentials]",
+     "FAILED tests/unit_tests/test_config.py::test_smtp_enable_with_bad_data_tls[ssl_without_credentials]"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 26842
+  },
+  {
+   "sha": "b377b3949f824cd28c7f632caaeff2a512e18826",
+   "subject": "fix: labels get-by-id returns 404 instead of 500 for missing id (#8227)",
+   "tests": [
+    "tests/integration_tests/user_household_tests/test_shopping_list_labels.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E               fastapi.exceptions.ResponseValidationError: 1 validation error:",
+     "E                 {'type': 'model_attributes_type', 'loc': ('response',), 'msg': 'Input should be a valid dictionary or object to extract fields from', 'input': None}",
+     "E               ",
+     "E                 File \"<scratch>/pilot-pre-innN4n/mealie/routes/groups/controller_labels.py\", line 71, in get_one",
+     "E                   GET /api/groups/labels/{item_id}",
+     "FAILED tests/integration_tests/user_household_tests/test_shopping_list_labels.py::test_label_get_one_404"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 48446
+  },
+  {
+   "sha": "2fcc1481f004a545eeda1940937cc9fe0c8af7a0",
+   "subject": "fix: import recipe notes from Paprika archives (#8384)",
+   "tests": [
+    "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert []",
+     "E        +  where [] = Recipe(id=UUID('fc179732-1c3b-4ef7-9cc7-8df2f0540ba3'), user_id=UUID('8075a36c-0d40-463e-997b-1b079325422c'), househol...assets=False, landscape_view=False, disable_comments=False, locked=False), assets=[], notes=[], extras={}, comments=[]).notes",
+     "FAILED tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_paprika_imports_notes"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 135944
+  },
+  {
+   "sha": "002096ecdcb0b1d7b16b9d37781244b5508f39c6",
+   "subject": "fix: use relative redirects for SPA directory routes (#8410)",
+   "tests": [
+    "tests/unit_tests/test_spa_static_files.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert 'https://evil...gin/?direct=1' == '/login/?direct=1'",
+     "E         ",
+     "E         - /login/?direct=1",
+     "E         + https://evil.example/login/?direct=1",
+     "E       AssertionError: assert 'http://meali...ample//login/' == '/login/'",
+     "E         "
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 25281
+  },
+  {
+   "sha": "6fa04c345ceacf85300384bd212db89b896bfa22",
+   "subject": "fix: default the recipe name when an AI import returns a blank one (#8343)",
+   "tests": [
+    "tests/unit_tests/services_tests/test_recipe_import_workflow.py"
+   ],
+   "verdict": "inconclusive",
+   "reason": "The pre-fix run failed, but the tests call DEFAULT_RECIPE_NAME, which the fix adds; a failure on missing API says nothing about the bug. Test the behavior the bug broke through API that existed before the fix.",
+   "engine": {
+    "pre": 2,
+    "post": 0
+   },
+   "direct": {
+    "pre": 2,
+    "post": 0,
+    "preLines": [
+     "E   ImportError: cannot import name 'DEFAULT_RECIPE_NAME' from 'mealie.services.recipe.import_workflow.recipe_conversion' (<scratch>/pilot-pre-ENkrin/mealie/services/recipe/import_workflow/recipe_conversion.py)",
+     "ERROR tests/unit_tests/services_tests/test_recipe_import_workflow.py"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": true,
+   "ms": 27030
+  },
+  {
+   "sha": "2bcba88a97621ebf3524d43d2316eac4754e10db",
+   "subject": "fix: reject whitespace-only recipe comments (#8295)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_comments.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 201 == 422",
+     "E        +  where 201 = <Response [201 Created]>.status_code",
+     "E       assert 201 == 422",
+     "E        +  where 201 = <Response [201 Created]>.status_code",
+     "E       assert 201 == 422",
+     "E        +  where 201 = <Response [201 Created]>.status_code"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 32593
+  },
+  {
+   "sha": "ba61719d098cefaa7e35c97c07fec470d4cef431",
+   "subject": "fix: Exporting using ZIP file results in empty fields (#8083)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert None",
+     "E        +  where None = RecipeIngredient(quantity=1.0, unit=None, food=None, referenced_recipe=None, note='', display='1', title=None, original_text=None, substitutions=[], reference_id=UUID('e69dffa2-31c9-4b37-9712-cddc166e3b52')).food",
+     "E       AssertionError: assert None",
+     "E        +  where None = RecipeIngredient(quantity=1.0, unit=None, food=None, referenced_recipe=None, note='', display='1', title=None, original_text=None, substitutions=[], reference_id=UUID('1659862c-2396-4033-be3d-4e6920d72b4b')).food",
+     "E       AssertionError: assert None",
+     "E        +  where None = RecipeIngredient(quantity=1.0, unit=None, food=None, referenced_recipe=None, note='', display='1', title=None, original_text=None, substitutions=[], reference_id=UUID('5ef38a0f-da05-45b1-a296-98fc7e49e20c')).unit"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 106255
+  },
+  {
+   "sha": "e1c228e6e2b307aa8536cb779a99013e46974e93",
+   "subject": "fix: localize meal plan rule summaries and notifications (#8102)",
+   "tests": [
+    "tests/unit_tests/services_tests/event_bus_service/test_event_types.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       TypeError: EventBusMessage.from_type() got an unexpected keyword argument 'translator'",
+     "E       TypeError: EventBusMessage.from_type() got an unexpected keyword argument 'translator'",
+     "E       TypeError: EventBusMessage.from_type() got an unexpected keyword argument 'translator'",
+     "E       AssertionError: Missing event title translations: ['notifications.event-title.test-message', 'notifications.event-title.webhook-task', 'notifications.event-title.recipe-created', 'notifications.event-title.recipe-updated', 'notifications.event-title.recipe-deleted', 'notifications.event-title.user-signup', 'notifications.event-title.data-migrations', 'notifications.event-title.data-export', 'notifications.event-title.data-import', 'notifications.event-title.mealplan-entry-created', 'notifications.event-title.mealplan-entry-updated', 'notifications.event-title.mealplan-entry-deleted', 'notifications.event-title.shopping-list-created', 'notifications.event-title.shopping-list-updated', 'notifications.event-title.shopping-list-deleted', 'notifications.event-title.cookbook-created', 'notifications.event-title.cookbook-updated', 'notifications.event-title.cookbook-deleted', 'notifications.event-title.tag-created', 'notifications.event-title.tag-updated', 'notifications.event-title.tag-deleted', 'notifications.event-title.category-created', 'notifications.event-title.category-updated', 'notifications.event-title.category-deleted', 'notifications.event-title.label-created', 'notifications.event-title.label-updated', 'notifications.event-title.label-deleted']",
+     "E       assert not ['notifications.event-title.test-message', 'notifications.event-title.webhook-task', 'notifications.event-title.recipe....event-title.recipe-updated', 'notifications.event-title.recipe-deleted', 'notifications.event-title.user-signup', ...]",
+     "FAILED tests/unit_tests/services_tests/event_bus_service/test_event_types.py::test_event_message_uses_localized_title"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 26380
+  },
+  {
+   "sha": "643c49013b3fd11443c033bfb85f716d05c551c0",
+   "subject": "fix: admin unable to edit recipes in other households (#7810) (#8018)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 500 == 200",
+     "E        +  where 500 = <Response [500 Internal Server Error]>.status_code",
+     "AttributeError: 'NoneType' object has no attribute 'id'",
+     "ERROR    root:recipe_crud_routes.py:133 Unknown Error on recipe controller action",
+     "ERROR    root:recipe_crud_routes.py:134 'NoneType' object has no attribute 'id'",
+     "AttributeError: 'NoneType' object has no attribute 'id'"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": false,
+   "ms": 48438
+  },
+  {
+   "sha": "87be3b8ab4b32df03d6959197c2b4608dd98a743",
+   "subject": "fix: support FB share URLs with redirecting (#8443)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py",
+    "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py",
+    "tests/unit_tests/services_tests/test_compile_source.py",
+    "tests/unit_tests/services_tests/test_recipe_import_workflow.py",
+    "tests/unit_tests/services_tests/test_transcription.py"
+   ],
+   "verdict": "inconclusive",
+   "reason": "The pre-fix run failed, but the tests call resilient_fetch, which the fix adds; a failure on missing API says nothing about the bug. Test the behavior the bug broke through API that existed before the fix.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AttributeError: <module 'mealie.services.recipe.import_workflow.steps.compile_source' from '<scratch>/pilot-pre-Od5COi/mealie/services/recipe/import_workflow/steps/compile_source.py'> has no attribute 'resilient_fetch'",
+     "E       AttributeError: <module 'mealie.services.recipe.import_workflow.steps.compile_source' from '<scratch>/pilot-pre-Od5COi/mealie/services/recipe/import_workflow/steps/compile_source.py'> has no attribute 'resilient_fetch'",
+     "E       AttributeError: <module 'mealie.services.recipe.import_workflow.steps.compile_source' from '<scratch>/pilot-pre-Od5COi/mealie/services/recipe/import_workflow/steps/compile_source.py'> has no attribute 'resilient_fetch'",
+     "E       AttributeError: <module 'mealie.services.recipe.import_workflow.steps.compile_source' from '<scratch>/pilot-pre-Od5COi/mealie/services/recipe/import_workflow/steps/compile_source.py'> has no attribute 'resilient_fetch'",
+     "E       AttributeError: <module 'mealie.services.recipe.import_workflow.steps.compile_source' from '<scratch>/pilot-pre-Od5COi/mealie/services/recipe/import_workflow/steps/compile_source.py'> has no attribute 'resilient_fetch'",
+     "E       AttributeError: <module 'mealie.services.recipe.import_workflow.steps.compile_source' from '<scratch>/pilot-pre-Od5COi/mealie/services/recipe/import_workflow/steps/compile_source.py'> has no attribute 'resilient_fetch'"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": true,
+   "ms": 46392
+  },
+  {
+   "sha": "c1ffdfc3c8d52528185c54ba50dc197df54f3620",
+   "subject": "fix: set original_text for nlp and brute parsed ingredients (#8458)",
+   "tests": [
+    "tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py",
+    "tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E           AssertionError: assert None == '1 theelepel koffie'",
+     "E            +  where None = RecipeIngredient(quantity=1.0, unit=CreateIngredientUnit(id=None, name='theelepel', plural_name=None, description='', ...l koffie', title=None, original_text=None, substitutions=[], reference_id=UUID('18888dd9-faf2-4d39-8700-4b9ef76080a7')).original_text",
+     "E           AssertionError: assert None == '3 theelepels koffie'",
+     "E            +  where None = RecipeIngredient(quantity=3.0, unit=CreateIngredientUnit(id=None, name='theelepels', plural_name=None, description='',...s koffie', title=None, original_text=None, substitutions=[], reference_id=UUID('5d66c182-1463-4c4b-b67f-b0db5ed11c1b')).original_text",
+     "E           AssertionError: assert None == '1 eetlepel tarwe'",
+     "E            +  where None = RecipeIngredient(quantity=1.0, unit=CreateIngredientUnit(id=None, name='eetlepel', plural_name=None, description='', e...el tarwe', title=None, original_text=None, substitutions=[], reference_id=UUID('81aaeb9a-39f4-4528-af7e-3137592048c1')).original_text"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 45295
+  },
+  {
+   "sha": "af5464c5e0b932b14c187edf2289c55665f3bf0f",
+   "subject": "fix: allow non-ASCII characters in SMTP credentials (#8397)",
+   "tests": [
+    "tests/unit_tests/services_tests/test_email_service.py"
+   ],
+   "verdict": "inconclusive",
+   "reason": "The pre-fix run failed, but the tests call UTF8AuthSMTP, which the fix adds; a failure on missing API says nothing about the bug. Test the behavior the bug broke through API that existed before the fix.",
+   "engine": {
+    "pre": 2,
+    "post": 0
+   },
+   "direct": {
+    "pre": 2,
+    "post": 0,
+    "preLines": [
+     "E   ImportError: cannot import name 'UTF8AuthSMTP' from 'mealie.services.email.email_senders' (<scratch>/pilot-pre-zXKbLA/mealie/services/email/email_senders.py)",
+     "ERROR tests/unit_tests/services_tests/test_email_service.py"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": true,
+   "ms": 23899
+  },
+  {
+   "sha": "5fa5aac1f9823d6e9ba3c2486d1d2de2bd6c21f3",
+   "subject": "fix: allow re-importing a recipe zip into the same instance (#8468)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       sqlite3.IntegrityError: UNIQUE constraint failed: recipes.id",
+     "E       sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed: recipes.id",
+     "E       [SQL: INSERT INTO recipes (id, slug, group_id, user_id, rating, name, description, image, total_time, prep_time, perform_time, cook_time, recipe_yield, recipe_yield_quantity, recipe_servings, org_url, date_added, date_updated, last_made, name_normalized, description_normalized, \"recipeCuisine\", is_ocr_recipe, created_at, update_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]",
+     "E       [parameters: ('2302db0f8f1d4276b597e892395626c0', '1lq0dir6g2-9', 'f91e92e711754983bb90165ca538986f', '7a3dc13f741347ce9fcfcf10384abec0', None, '1lq0dir6g2 (9)', '', None, None, None, None, None, None, 0.0, 0.0, None, '2026-10-26', '2026-10-26 03:34:06.467125', None, '1lq0dir6g2  9', '', None, 0, '2026-10-26 03:34:06.226290', '2026-10-26 03:34:06.468703')]",
+     "E       (Background on this error at: https://sqlalche.me/e/20/gkpj)",
+     "E       sqlite3.IntegrityError: UNIQUE constraint failed: recipes.id"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 60153
+  },
+  {
+   "sha": "a0bdca405f9595a40ed59e60c16c78fe3cb44a54",
+   "subject": "fix: preserve identity fields and fix slug when saving JSON-edited recipes (#7785)",
+   "tests": [
+    "tests/unit_tests/repository_tests/test_recipe_repository.py",
+    "tests/unit_tests/schema_tests/test_recipe.py",
+    "tests/unit_tests/services_tests/scraper_tests/test_cleaner_parts.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E               sqlalchemy.exc.PendingRollbackError: This Session's transaction has been rolled back due to a previous exception during flush. To begin a new transaction with this Session, first issue Session.rollback(). Original exception was: (sqlite3.IntegrityError) NOT NULL constraint failed: recipes.group_id",
+     "E               [SQL: UPDATE recipes SET slug=?, group_id=?, user_id=?, name=?, date_updated=?, name_normalized=?, update_at=? WHERE recipes.id = ?]",
+     "E               [parameters: ('0847f9xcb1', None, None, '0847f9xcb1', '2026-10-26 03:36:10.649635', '0847f9xcb1', '2026-10-26 03:36:10.651158', '0eee52b25caf4388a78477df9fca17f9')]",
+     "E               (Background on this error at: https://sqlalche.me/e/20/gkpj) (Background on this error at: https://sqlalche.me/e/20/7s2a)",
+     "        except ValueError:",
+     "E           sqlalchemy.exc.SAWarning: Session's state has been changed on a non-active transaction - this state will be discarded."
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 38020
+  },
+  {
+   "sha": "151be463266459df15f8327f5cfefee9dbb8daaa",
+   "subject": "fix: classify create/url imports on the landing URL (#8547)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py",
+    "tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py",
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py",
+    "tests/unit_tests/services_tests/scraper_tests/test_url_identity.py"
+   ],
+   "verdict": "inconclusive",
+   "reason": "The pre-fix run failed, but the tests call resilient_fetch, which the fix adds; a failure on missing API says nothing about the bug. Test the behavior the bug broke through API that existed before the fix.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AttributeError: <module 'mealie.services.scraper.recipe_scraper' from '<scratch>/pilot-pre-Pi4d4d/mealie/services/scraper/recipe_scraper.py'> has no attribute 'resilient_fetch'",
+     "E       AttributeError: <module 'mealie.services.scraper.recipe_scraper' from '<scratch>/pilot-pre-Pi4d4d/mealie/services/scraper/recipe_scraper.py'> has no attribute 'resilient_fetch'",
+     "E       AttributeError: <module 'mealie.services.scraper.recipe_scraper' from '<scratch>/pilot-pre-Pi4d4d/mealie/services/scraper/recipe_scraper.py'> has no attribute 'resilient_fetch'",
+     "E       AttributeError: <module 'mealie.services.scraper.recipe_scraper' from '<scratch>/pilot-pre-Pi4d4d/mealie/services/scraper/recipe_scraper.py'> has no attribute 'resilient_fetch'",
+     "E       AttributeError: <module 'mealie.services.scraper.recipe_scraper' from '<scratch>/pilot-pre-Pi4d4d/mealie/services/scraper/recipe_scraper.py'> has no attribute 'resilient_fetch'",
+     "E       AttributeError: <module 'mealie.services.scraper.recipe_scraper' from '<scratch>/pilot-pre-Pi4d4d/mealie/services/scraper/recipe_scraper.py'> has no attribute 'resilient_fetch'"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": true,
+   "ms": 61504
+  },
+  {
+   "sha": "4f635f56b8d9246d024859e7b385d4e0e1da680b",
+   "subject": "fix: format JSON-LD recipe ingredients for external parsers (#8393)",
+   "tests": [
+    "tests/unit_tests/test_spa_recipe_ingredients.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert ['2.5 Deziliter Milch '] == ['2.5 dl Milch']",
+     "E         ",
+     "E         At index 0 diff: '2.5 Deziliter Milch ' != '2.5 dl Milch'",
+     "E         Use -v to get more diff",
+     "E       AssertionError: assert ['200.0 Gramm...nen Streifen'] == ['200 g Lauch...nen Streifen']",
+     "E         "
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 26843
+  },
+  {
+   "sha": "4bc9734b36f415ff33205b59766ee27d5ed54e8f",
+   "subject": "fix: keep recipe references on checked shopping list items (#8509)",
+   "tests": [
+    "tests/integration_tests/user_household_tests/test_group_shopping_lists.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E           assert 0 == 1",
+     "E            +  where 0 = len([])",
+     "E               assert 0 == 1",
+     "E                +  where 0 = len([])",
+     "E               IndexError: list index out of range",
+     "FAILED tests/integration_tests/user_household_tests/test_group_shopping_lists.py::test_shopping_list_recipe_refs_restored_when_unchecked"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 50249
+  },
+  {
+   "sha": "ee0bc2a1196b934fdf97524c01bb18fe517503f7",
+   "subject": "fix: stop the release check from hanging when GitHub is unreachable (#8634)",
+   "tests": [
+    "tests/unit_tests/core/test_release_checker.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert None",
+     "E        +  where None = <built-in method get of dict object at 0x7f8ff4e43f40>('timeout')",
+     "E        +    where <built-in method get of dict object at 0x7f8ff4e43f40> = {}.get",
+     "E        +      where {} = call('https://api.github.com/repos/mealie-recipes/mealie/releases/latest').kwargs",
+     "E        +        where call('https://api.github.com/repos/mealie-recipes/mealie/releases/latest') = <MagicMock id='140256264906672'>.call_args",
+     "E       AssertionError: assert 2 == 1"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 24950
+  },
+  {
+   "sha": "10fa95e2ed0fa48f5b1c923eb28abd4266f1446d",
+   "subject": "fix: Allow video assets (#8685)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py"
+   ],
+   "verdict": "tests-pass-without-fix",
+   "reason": "The changed tests pass on the pre-fix code (pre-fix@6961713d9147), so they do not catch the bug. Write a test that fails for the reported symptom before the fix.",
+   "engine": {
+    "pre": 0,
+    "post": 0
+   },
+   "direct": {
+    "pre": 0,
+    "post": 0,
+    "preLines": []
+   },
+   "expected": "not-proven",
+   "agree": false,
+   "ms": 33288
+  },
+  {
+   "sha": "72c62e8cfaa6e5c2f439dbdae217b31505372f2d",
+   "subject": "fix: apply household visibility preference to recipes imported from zip (#8557)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py",
+    "tests/integration_tests/user_recipe_tests/test_recipe_import_as.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: Imported recipe should inherit the household's recipe_public=True preference",
+     "E       assert False is True",
+     "FAILED tests/integration_tests/user_recipe_tests/test_recipe_import_as.py::test_zip_import_applies_household_public_preference"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 61375
+  },
+  {
+   "sha": "0254fd7df063a3a8c461cf1f6a20f888fdfeefc4",
+   "subject": "fix: delete orphaned legacy cookbook/plan-rule join table rows (#8350)",
+   "tests": [
+    "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py",
+    "tests/unit_tests/test_clear_legacy_organizer_join_tables_migration.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E           assert not [<mealie.db.models.recipe.category.Category object at 0x7fc269065550>, <mealie.db.models.recipe.category.Category obje...cipe.category.Category object at 0x7fc26ade1e50>, <mealie.db.models.recipe.category.Category object at 0x7fc269cbf360>]",
+     "E            +  where [<mealie.db.models.recipe.category.Category object at 0x7fc269065550>, <mealie.db.models.recipe.category.Category obje...cipe.category.Category object at 0x7fc26ade1e50>, <mealie.db.models.recipe.category.Category object at 0x7fc269cbf360>] = <mealie.db.models.household.mealplan.GroupMealPlanRules object at 0x7fc269066660>.categories",
+     "E                       Exception: Migration \"_86054b40fd06_added_query_filter_string_to_cookbook_and_mealplan\" failed on backup \"<scratch>/pilot-pre-QW4jto/tests/data/backups/backup-version-44e8d670719d-1.zip\"",
+     "E       StopIteration",
+     "FAILED tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py::test_database_restore_data",
+     "FAILED tests/unit_tests/test_clear_legacy_organizer_join_tables_migration.py::test_clear_legacy_organizer_join_tables_empties_only_legacy_tables"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 61599
+  },
+  {
+   "sha": "ec3e0305498e41780130e6018a263d022df7a5e6",
+   "subject": "fix: remove aggregate recipe last made data (#7907)",
+   "tests": [
+    "tests/integration_tests/public_explorer_tests/test_public_recipes.py",
+    "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py",
+    "tests/integration_tests/test_openapi.py",
+    "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py",
+    "tests/integration_tests/user_recipe_tests/test_recipe_owner.py",
+    "tests/unit_tests/repository_tests/test_pagination.py",
+    "tests/unit_tests/services_tests/scheduler/tasks/test_create_timeline_events.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 200 == 400",
+     "E        +  where 200 = <Response [200 OK]>.status_code",
+     "E       assert 200 == 400",
+     "E        +  where 200 = <Response [200 OK]>.status_code",
+     "E           assert None",
+     "E       AssertionError: assert 'last_made' not in {'id': FieldInfo(annotation=Union[Annotated[UUID, UuidVersion], NoneType], required=False, default=None, alias='id', a..._factory=uuid4, alias='groupId', alias_priority=1, validate_default=True, metadata=[UuidVersion(uuid_version=4)]), ...}"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 118056
+  },
+  {
+   "sha": "31ef8e581a2b9a57f0a854992a2dc05625d20c38",
+   "subject": "fix: test audio-only AI providers with a transcription request (#8587)",
+   "tests": [
+    "tests/unit_tests/services_tests/test_openai_service.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert False is True",
+     "E        +  where False = AIProviderTestResult(success=False, message='No response received from the provider.', supports_images=None).success",
+     "E       assert 0 == 1",
+     "E        +  where 0 = len([])",
+     "E        +    where [] = <test_openai_service._FakeTranscriptions object at 0x7f68bd755810>.calls",
+     "FAILED tests/unit_tests/services_tests/test_openai_service.py::test_connection_audio_only_provider_passes_on_transcription"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 25609
+  },
+  {
+   "sha": "29457ba0245e62b671728bd416a325ae4ed63f14",
+   "subject": "fix: allow more than ten recipes with the same name (#8505)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py",
+    "tests/unit_tests/repository_tests/test_recipe_repository.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E           assert 400 == 201",
+     "E            +  where 400 = <Response [400 Bad Request]>.status_code",
+     "ERROR    root:recipe_crud_routes.py:154 SQL Integrity Error on recipe controller action",
+     "E           assert 400 == 201",
+     "E            +  where 400 = <Response [400 Bad Request]>.status_code",
+     "ERROR    root:recipe_crud_routes.py:154 SQL Integrity Error on recipe controller action"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 64718
+  },
+  {
+   "sha": "c794a53c297e9d92a7b4337dfee9da853e1e01dd",
+   "subject": "fix: skip unparseable nutrition values during unit conversion (#8378)",
+   "tests": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py",
+    "tests/unit_tests/services_tests/scraper_tests/test_cleaner_parts.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       assert 400 == 201",
+     "E        +  where 400 = <Response [400 Bad Request]>.status_code",
+     "KeyError: 'sodiumContent'",
+     "ERROR    root:recipe_crud_routes.py:340 Error in streaming recipe creation",
+     "KeyError: 'sodiumContent'",
+     "E       assert 400 == 201"
+    ]
+   },
+   "expected": "inconclusive",
+   "agree": false,
+   "ms": 40253
+  },
+  {
+   "sha": "5c1f789d2a15d630b17ccc00ff650c6d861be1b7",
+   "subject": "fix: don't treat unnamed measurement as ingredient substitution (#8502)",
+   "tests": [
+    "tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: '153 gram 00 flour or 1 cup and 1 tablespoon' does not sufficiently match expected '153 gram 00 flour (1 cup, 1 tablespoon)'",
+     "E       assert 82.92682926829268 >= 90",
+     "E       AssertionError: '2 tablespoon vegetable oil or 30 milliliter' does not sufficiently match expected '2 tablespoon vegetable oil (30 ml)'",
+     "E       assert 77.92207792207793 >= 90",
+     "E       AssertionError: assert not [RecipeIngredientSubstitution(substitute_food_id=None, note='42 gram', substitute_food=None)]",
+     "E        +  where [RecipeIngredientSubstitution(substitute_food_id=None, note='42 gram', substitute_food=None)] = RecipeIngredient(quantity=3.0, unit=CreateIngredientUnit(id=None, name='tablespoon', plural_name=None, description='',...titute_food_id=None, note='42 gram', substitute_food=None)], reference_id=UUID('64c8d074-29cb-49e3-8ab9-d5d468dfb7b7')).substitutions"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 25620
+  },
+  {
+   "sha": "9bb350ee32cc6bbfbfe147c45f3eac01fdc11c6a",
+   "subject": "fix(scraper): unwrap schema.org Text nodes in clean_ingredients (#8683)",
+   "tests": [
+    "tests/unit_tests/services_tests/scraper_tests/test_cleaner_parts.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E       AssertionError: assert ['1 cup of fl...cup of sugar'] == [{'@type': 'P...up of sugar'}]",
+     "E         ",
+     "E         At index 0 diff: '1 cup of flour' != {'@type': 'PronounceableText', 'textValue': '1 cup of flour'}",
+     "E         Use -v to get more diff",
+     "E       AssertionError: assert ['1 cup of fl...cup of sugar'] == ['1 cup of fl...up of sugar'}]",
+     "E         "
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 22120
+  },
+  {
+   "sha": "aef778758ad5817291d97f5675eaf0e73205d76a",
+   "subject": "fix: evaluate LDAP_ADMIN_FILTER as the query account, not the logging-in user (#8678)",
+   "tests": [
+    "tests/unit_tests/test_security.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E           ldap.INSUFFICIENT_ACCESS",
+     "FAILED tests/unit_tests/test_security.py::test_ldap_admin_filter_searches_as_query_account"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 22110
+  },
+  {
+   "sha": "eaf8415cc27970ae01d31b16da9e69ef1bf1b564",
+   "subject": "fix: use trigram indexes for fuzzy recipe search on Postgres (#8673)",
+   "tests": [
+    "tests/unit_tests/repository_tests/test_recipe_repository.py"
+   ],
+   "verdict": "tests-pass-without-fix",
+   "reason": "The changed tests pass on the pre-fix code (pre-fix@69575cc614e3), so they do not catch the bug. Write a test that fails for the reported symptom before the fix.",
+   "engine": {
+    "pre": 0,
+    "post": 0
+   },
+   "direct": {
+    "pre": 0,
+    "post": 0,
+    "preLines": []
+   },
+   "expected": "not-proven",
+   "agree": false,
+   "ms": 31557
+  },
+  {
+   "sha": "46a0010474e53490cf04167eee228f93c2d4d428",
+   "subject": "fix: accept OpenAI-compatible responses with unknown service_tier (Groq) (#8565)",
+   "tests": [
+    "tests/unit_tests/services_tests/test_openai_service.py"
+   ],
+   "verdict": "proven",
+   "reason": "The regression test fails on the pre-fix code and passes with the fix: it catches this bug and will catch its return.",
+   "engine": {
+    "pre": 1,
+    "post": 0
+   },
+   "direct": {
+    "pre": 1,
+    "post": 0,
+    "preLines": [
+     "E           pydantic_core._pydantic_core.ValidationError: 1 validation error for ChatCompletion",
+     "E           service_tier",
+     "E             Input should be 'auto', 'default', 'flex', 'scale', 'priority' or 'fast' [type=literal_error, input_value='on_demand', input_type=str]",
+     "E               For further information visit https://errors.pydantic.dev/2.14/v/literal_error",
+     "E           Exception: OpenAI Request Failed. ValidationError: 1 validation error for ChatCompletion",
+     "E           service_tier"
+    ]
+   },
+   "expected": "proven",
+   "agree": true,
+   "ms": 22642
+  }
+ ],
+ "skipped": [
+  {
+   "id": "c266cff686d821d95554e9bc5296b800fe3ea1fb",
+   "reason": "fix verify printed no result: eccode: [NO_FIX] No source file changed since f376990f3f0efead3c6bf6e4ed899125da9001bc: there is no fix to verify."
+  }
+ ],
+ "agreement": 0.8709677419354839,
+ "byVerdict": {
+  "proven": 25,
+  "inconclusive": 4,
+  "tests-pass-without-fix": 2
+ }
+}

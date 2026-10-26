@@ -12,7 +12,8 @@
 // Frontend items use vitest at the spec-file level. Every skip is recorded
 // with its reason. The refactor item is not drawn (spec: no pure refactor
 // with tests exists in the window); it is written by hand in prompts.json.
-// usage: ECCODE_MEALIE_ENVS=<dir> node select.js [--range v3.20.0..v3.27.0] [--only <category>]
+// usage: ECCODE_MEALIE_ENVS=<dir> node select.js [--suite <dir>] [--range v3.20.0..v3.27.0] [--only <category>]
+// --suite writes <dir>/_tools/selection.json (default: this suite's).
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -21,7 +22,6 @@ const lib = require('../../../pilot/lib');
 const bench = require('../../../../lib/bench');
 const env = require('./env');
 
-const OUT = path.join(__dirname, 'selection.json');
 const FIX = /^fix(\([^)]*\))?!?:/;
 const FEAT = /^feat(\([^)]*\))?!?:/;
 const DEPS = /^fix\(deps\)/;
@@ -153,6 +153,7 @@ function validateFrontend(c, t) {
 function main(argv) {
   const range = argv.includes('--range') ? argv[argv.indexOf('--range') + 1] : 'v3.20.0..v3.27.0';
   const only = argv.includes('--only') ? argv[argv.indexOf('--only') + 1] : null;
+  const OUT = argv.includes('--suite') ? path.resolve(argv[argv.indexOf('--suite') + 1], '_tools', 'selection.json') : path.join(__dirname, 'selection.json');
   const mirror = lib.mealieMirror();
   const commits = lib.commitsIn(mirror, range).filter((c) => c.parent && !c.merge);
   for (const c of commits) {

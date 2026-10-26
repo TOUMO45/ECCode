@@ -1,0 +1,45 @@
+{
+  "id": "mealie2-10-security",
+  "category": "security",
+  "order": 10,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "9bb350ee32cc6bbfbfe147c45f3eac01fdc11c6a"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-f6e753baf63c/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Security report: with LDAP_ADMIN_FILTER set, admin rights depend on what the logging-in user may read.\n\nDuring an LDAP login, LDAPProvider first binds as the user to check the password. When LDAP_ADMIN_FILTER is set, it then decides whether the user is an admin by searching the user's own entry with that filter, on the same connection, still bound as the user. Many directories let only the query account (LDAP_QUERY_BIND, LDAP_QUERY_PASSWORD) read entries and group memberships. There the user's own search is refused (ldap.INSUFFICIENT_ACCESS), so a real admin either loses admin rights or cannot log in, and in general the outcome depends on the user's own read permissions instead of the directory's group membership.\n\nExpected: the admin filter is evaluated as the query account. After the user's password has been checked, the admin search runs bound as LDAP_QUERY_BIND with LDAP_QUERY_PASSWORD, so on a directory where only the query account may search, a user the filter matches logs in as an admin. The rest stays as it is: a wrong password still fails, and a filter error or a missing entry still means not an admin, with a warning.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/test_security.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: evaluate LDAP_ADMIN_FILTER as the query account, not the logging-in user (#8678)",
+  "track": "fix",
+  "fixCommit": "aef778758ad5817291d97f5675eaf0e73205d76a",
+  "hidden": {
+    "fromSource": {
+      "commit": "aef778758ad5817291d97f5675eaf0e73205d76a",
+      "paths": [
+        "tests/unit_tests/test_security.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/test_security.py::test_ldap_admin_filter_searches_as_query_account\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/test_security.py\" --deselect \"tests/unit_tests/test_security.py::test_ldap_admin_filter_searches_as_query_account\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 18,
+    "failingBeforeAndAfter": []
+  }
+}

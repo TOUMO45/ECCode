@@ -1,0 +1,47 @@
+{
+  "id": "mealie2-06-quick",
+  "category": "quick",
+  "order": 6,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "10fa95e2ed0fa48f5b1c923eb28abd4266f1446d"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-016d00ec4b62/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Feature: let the native OIDC endpoints use a client of their own, possibly a public one.\n\nThe native (mobile and desktop) OIDC endpoints, GET /api/auth/oauth/native/config and POST /api/auth/oauth/native/token, use the web login's OIDC client, registered with authlib as \"oidc\". Google and Microsoft do not allow custom-scheme redirect URIs on confidential (secret-holding) clients, so a native app needs a separate, public client that relies on PKCE and sends no client secret.\n\nAdd:\n- two settings (environment variables): OIDC_NATIVE_CLIENT_ID (str or None, default None) and OIDC_NATIVE_CONFIDENTIAL (bool, default True). Neither is required for OIDC_READY;\n- a function _register_native_oidc_client(oauth_registry, client_args) next to the auth routes' module-level `settings` and `oauth` (where the web client \"oidc\" is registered), called right after that registration. It registers a second authlib client named \"oidc_native\" on the registry it is given:\n  - client_id: OIDC_NATIVE_CLIENT_ID, or OIDC_CLIENT_ID when that is unset or empty; client_secret: OIDC_CLIENT_SECRET; the web client's server_metadata_url, client_kwargs=client_args and code_challenge_method \"S256\";\n  - when OIDC_NATIVE_CONFIDENTIAL is false and OIDC_NATIVE_CLIENT_ID is set, no client secret (None) and client_kwargs with \"token_endpoint_auth_method\": \"none\" added, in a copy: client_args is shared with the web client and must not change;\n  - when OIDC_NATIVE_CONFIDENTIAL is false without an OIDC_NATIVE_CLIENT_ID, a logged warning that contains \"OIDC_NATIVE_CONFIDENTIAL=false has no effect\", and the confidential web settings;\n- both native endpoints use oauth.create_client(\"oidc_native\"); the config endpoint returns that client's client_id and scope. The web login is unchanged.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/test_config.py tests/integration_tests/user_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "feat: support public (secretless) native OIDC clients for Google and Microsoft (#8653)",
+  "track": "quick",
+  "fixCommit": "0601d2bcba2656c37c6ee8a246a707ff4976b2e8",
+  "hidden": {
+    "fromSource": {
+      "commit": "0601d2bcba2656c37c6ee8a246a707ff4976b2e8",
+      "paths": [
+        "tests/integration_tests/user_tests/test_oidc_native.py",
+        "tests/unit_tests/test_config.py",
+        "tests/unit_tests/test_oidc_native_client.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_401_when_code_is_rejected\" \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_config_returns_native_client_parameters\" \"tests/unit_tests/test_config.py::test_oidc_native_settings[defaults]\" \"tests/unit_tests/test_config.py::test_oidc_native_settings[native id set]\" \"tests/unit_tests/test_config.py::test_oidc_native_settings[public native client]\" \"tests/unit_tests/test_config.py::test_oidc_native_settings[native settings optional for OIDC_READY]\" \"tests/unit_tests/test_oidc_native_client.py::test_no_native_id_uses_web_client\" \"tests/unit_tests/test_oidc_native_client.py::test_native_id_confidential_keeps_secret\" \"tests/unit_tests/test_oidc_native_client.py::test_native_id_public_drops_secret\" \"tests/unit_tests/test_oidc_native_client.py::test_public_without_native_id_warns_and_stays_confidential\" \"tests/unit_tests/test_oidc_native_client.py::test_empty_native_id_falls_back_to_web_client\" \"tests/unit_tests/test_oidc_native_client.py::test_public_native_client_leaves_web_client_unaffected\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_tests/test_oidc_native.py\" \"tests/unit_tests/test_config.py\" \"tests/unit_tests/test_oidc_native_client.py\" --deselect \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_401_when_code_is_rejected\" --deselect \"tests/integration_tests/user_tests/test_oidc_native.py::test_native_config_returns_native_client_parameters\" --deselect \"tests/unit_tests/test_config.py::test_oidc_native_settings[defaults]\" --deselect \"tests/unit_tests/test_config.py::test_oidc_native_settings[native id set]\" --deselect \"tests/unit_tests/test_config.py::test_oidc_native_settings[public native client]\" --deselect \"tests/unit_tests/test_config.py::test_oidc_native_settings[native settings optional for OIDC_READY]\" --deselect \"tests/unit_tests/test_oidc_native_client.py::test_no_native_id_uses_web_client\" --deselect \"tests/unit_tests/test_oidc_native_client.py::test_native_id_confidential_keeps_secret\" --deselect \"tests/unit_tests/test_oidc_native_client.py::test_native_id_public_drops_secret\" --deselect \"tests/unit_tests/test_oidc_native_client.py::test_public_without_native_id_warns_and_stays_confidential\" --deselect \"tests/unit_tests/test_oidc_native_client.py::test_empty_native_id_falls_back_to_web_client\" --deselect \"tests/unit_tests/test_oidc_native_client.py::test_public_native_client_leaves_web_client_unaffected\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 12,
+    "regression": 63,
+    "failingBeforeAndAfter": []
+  }
+}

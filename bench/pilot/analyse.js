@@ -4,7 +4,10 @@
 // bench/protocols/2026-10-24-mealie-pilot.md, "Outcomes and criteria")
 // computed from the saved runs (b1..b4, c1, c2 .jsonl), the copies of the
 // engine records and transcripts kept next to them, and the refusal labels.
-// usage: node analyse.js --runs <dir> [--labels bench/pilot/mealie/labels] [--out report.md] [--json out.json]
+// usage: node analyse.js --runs <dir> [--labels bench/pilot/mealie/labels] [--greenfield planner|pantry]
+//                        [--title "<report title>"] [--out report.md] [--json out.json]
+// --greenfield names the Part C suite the runs used (its tasks <name>-c1..c3):
+// the pilot's planner by default, the rerun's pantry.
 const fs = require('fs');
 const path = require('path');
 const bench = require('../../lib/bench');
@@ -193,7 +196,7 @@ function itemToolText(runsDir, proc, r) {
   }).join('\n');
 }
 
-function criteria(runsDir, runs, labels) {
+function criteria(runsDir, runs, labels, { greenfield = 'planner' } = {}) {
   const rows = [];
   const add = (id, capability, measure, criterion, result, met, note = '') => rows.push({ id, capability, measure, criterion, result, met, note });
   const recs = (p) => (runs[p] && runs[p].records) || [];
@@ -237,17 +240,17 @@ function criteria(runsDir, runs, labels) {
       add(`greenfield-${k}`, 'Greenfield (C)', `engine chain ${k}`, 'gates in order; c1–c3 delivered; c3 adds a migration, edits none', null, null);
       continue;
     }
-    const c1 = chain.find((r) => r.task === 'planner-c1');
-    const c3 = chain.find((r) => r.task === 'planner-c3');
+    const c1 = chain.find((r) => r.task === `${greenfield}-c1`);
+    const c3 = chain.find((r) => r.task === `${greenfield}-c3`);
     const order = c1 ? gateOrder(readEvents(runFiles(runsDir, 'c1', c1).record)) : [];
     const mig = c3 ? migrationChange(c3.patch) : null;
-    const delivered = ['planner-c1', 'planner-c2', 'planner-c3'].map((t) => chain.find((r) => r.task === t)).filter((r) => r && deliveredClean(r)).length;
+    const delivered = ['c1', 'c2', 'c3'].map((c) => chain.find((r) => r.task === `${greenfield}-${c}`)).filter((r) => r && deliveredClean(r)).length;
     const migOk = Boolean(mig && mig.added.length && !mig.modified.length && !mig.deleted.length && !c3.patchTruncated);
     add(`greenfield-${k}`, 'Greenfield (C)', `engine chain ${k}`, 'gates in order; c1–c3 delivered; c3 adds a migration, edits none', `gates ${order.join(' → ') || 'none'}; ${delivered}/3 delivered; c3 migrations +${mig ? mig.added.length : 0} ~${mig ? mig.modified.length : 0} -${mig ? mig.deleted.length : 0}${c3 && c3.patchTruncated ? ' (patch truncated)' : ''}`, gatesInOrder(order) && delivered === 3 && migOk);
   }
 
   // Correctness (B, C): every hidden check passed, engine against bare, stratified by item.
-  for (const [label, eng, bare] of [['Mealie', ['b1', 'b2'], ['b3']], ['planner', ['c1'], ['c2']]]) {
+  for (const [label, eng, bare] of [['Mealie', ['b1', 'b2'], ['b3']], [greenfield, ['c1'], ['c2']]]) {
     const rowsT = [...eng.flatMap((p) => recs(p).map((r) => ({ stratum: r.task, variant: 'with', lines: passedAll(r) ? 1 : 0 }))), ...bare.flatMap((p) => recs(p).map((r) => ({ stratum: r.task, variant: 'without', lines: passedAll(r) ? 1 : 0 })))];
     const t = bench.stratifiedTest(rowsT);
     const share = (ps) => {
@@ -287,8 +290,8 @@ function lessonIds(recordDir, summary) {
   return summary.lessons.filter((l) => text.includes(l));
 }
 
-function markdown({ rows, stops }) {
-  const lines = ['# Mealie pilot, Parts B and C', '', '| Capability | Measure | Criterion | Result | Met |', '|---|---|---|---|---|'];
+function markdown({ rows, stops }, title = 'Mealie pilot, Parts B and C') {
+  const lines = [`# ${title}`, '', '| Capability | Measure | Criterion | Result | Met |', '|---|---|---|---|---|'];
   for (const r of rows) lines.push(`| ${r.capability} | ${r.measure} | ${r.criterion} | ${r.result === null ? '—' : r.result}${r.note ? ` (${r.note})` : ''} | ${r.met === null ? '—' : r.met ? 'met' : 'missed'} |`);
   if (stops.length) lines.push('', `Stopped processes: ${stops.join('; ')}.`);
   return `${lines.join('\n')}\n`;
@@ -301,14 +304,14 @@ if (require.main === module) {
   const opt = (n, d) => (argv.includes(`--${n}`) ? argv[argv.indexOf(`--${n}`) + 1] : d);
   const runsDir = opt('runs', null);
   if (!runsDir) {
-    process.stderr.write('usage: analyse.js --runs <dir> [--labels dir] [--out file.md] [--json file.json]\n');
+    process.stderr.write('usage: analyse.js --runs <dir> [--labels dir] [--greenfield planner|pantry] [--title text] [--out file.md] [--json file.json]\n');
     process.exit(2);
   }
   const labelsDir = opt('labels', path.join(__dirname, 'mealie', 'labels'));
   const refusalsFile = path.join(labelsDir, 'refusals.json');
   const labels = { refusals: fs.existsSync(refusalsFile) ? JSON.parse(fs.readFileSync(refusalsFile, 'utf8')) : {} };
-  const result = criteria(runsDir, readRuns(runsDir), labels);
-  const md = markdown(result);
+  const result = criteria(runsDir, readRuns(runsDir), labels, { greenfield: opt('greenfield', 'planner') });
+  const md = markdown(result, opt('title', undefined));
   if (opt('out', null)) fs.writeFileSync(opt('out', null), md);
   if (opt('json', null)) fs.writeFileSync(opt('json', null), `${JSON.stringify(result, null, 2)}\n`);
   process.stdout.write(md);

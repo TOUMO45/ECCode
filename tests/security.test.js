@@ -356,3 +356,146 @@ test('guard: writes and identities hidden by cd, escapes, find, --output, & and 
     assert.strictEqual(bash(dir, 'technical-reviewer', c), 'allow', c);
   }
 });
+
+// Mealie rerun: false refusals of the guard, each from a batch transcript, and
+// the forms each fix must still refuse.
+test('guard: a stderr redirection is not a cp destination', () => {
+  const { dir } = tmpProject();
+  assert.strictEqual(bash(dir, 'test-engineer', `rm -rf /tmp/eccode-mut && mkdir /tmp/eccode-mut && cd ${dir} && cp -r src package.json /tmp/eccode-mut/ 2>&1 | tail -2`), 'allow');
+  assert.strictEqual(bash(dir, 'test-engineer', 'cp /tmp/x src/a.js 2>&1'), 'deny', 'the real destination still counts');
+});
+
+test('guard: parentheses inside quotes do not make a subshell, so a cd to a scratch directory still moves the targets', () => {
+  const { dir } = tmpProject();
+  const scratch = path.join(require('os').tmpdir(), 'eccode-scratch-q').split(path.sep).join('/');
+  assert.strictEqual(bash(dir, 'backend-engineer', `cd ${scratch} && sed -i "s/p.cook(new Map([[1, 2]]))/p.cook(x)/" check.js && node check.js`), 'allow');
+  assert.strictEqual(bash(dir, 'technical-reviewer', `cd ${scratch} && echo "require('node:test')('a',()=>{})" > test/a.test.js`), 'allow');
+  assert.strictEqual(bash(dir, 'technical-reviewer', `(cd ${scratch} && true); echo "(x)" > src/a.js`), 'deny', 'a real subshell still undoes the cd');
+});
+
+test('guard: a write under a fresh mktemp directory is outside the project', () => {
+  const { dir } = tmpProject();
+  assert.strictEqual(bash(dir, 'backend-engineer', 'D=$(mktemp -d) && (node server.js > $D/fake.log 2>&1 &); sleep 1; cat $D/fake.log'), 'allow');
+  assert.strictEqual(bash(dir, 'delivery-lead', 'D=$(mktemp -d) && node x.js > "$D/m.log"'), 'allow');
+  for (const c of ['D=$(mktemp -d); D=src; echo x > $D/a.js', 'D=$(mktemp -d -p .) && echo x > $D/a.js', 'export TMPDIR=$PWD/src; D=$(mktemp -d); echo x > $D/a.js', 'D=src; echo x > $D/a.js']) {
+    assert.strictEqual(bash(dir, 'technical-reviewer', c), 'deny', c);
+  }
+});
+
+test('guard: a grep pattern that names .eccode is not a use of the record; env and xargs with a read-only command only read', () => {
+  const { dir } = tmpProject();
+  const fine = [
+    'ls -la src | head -3; env | grep -i -E "node_path|eccode"; git status --short | grep -v .eccode',
+    "git status --short | grep -v '^.. .eccode' ; npm test 2>&1 | tail -8",
+    'cat package.json; find src -type f | xargs wc -l; ls .eccode .eccode/* | head -40',
+  ];
+  for (const c of fine) assert.strictEqual(bash(dir, 'backend-engineer', c), 'allow', c);
+  const record = [
+    'grep -v x .eccode/state.json; npm test',
+    'grep -rn x .eccode/ | xargs rm',
+    'env python3 -c "open(\'.eccode/events.jsonl\',\'a\')"',
+    'ls .eccode | xargs -I{} sh -c "echo > .eccode/{}"',
+    'cd .eccode && npm test',
+  ];
+  for (const c of record) assert.strictEqual(bash(dir, 'backend-engineer', c), 'deny', c);
+});
+
+test('guard: in a direct eccode call, escaped and single-quoted dollars are literal; a re-read string is not', () => {
+  const { dir } = tmpProject();
+  assert.strictEqual(bash(dir, 'delivery-lead', 'node .claude/eccode/bin/eccode.js fix verify --actor delivery-lead --task A --test "for d in a b; do echo \\$d; done; npm test"'), 'allow');
+  assert.strictEqual(bash(dir, 'delivery-lead', "node .claude/eccode/bin/eccode.js fix verify --actor delivery-lead --task A --test 'echo $HOME; npm test'"), 'allow');
+  const built = [
+    'node .claude/eccode/bin/eccode.js task claim T1 --actor delivery-lead --note "it\'s $(id)"',
+    "bash -c 'node .claude/eccode/bin/eccode.js gate review x $T'",
+    'bash -c "node .claude/eccode/bin/eccode.js gate review x \\$T"',
+    'node .claude/eccode/bin/eccode.js task claim T1 --actor delivery-lead "\\\\$X"',
+  ];
+  for (const c of built) assert.strictEqual(bash(dir, 'delivery-lead', c), 'deny', c);
+});
+
+test('guard: the main session may not act as a role by setting ECCODE_ACTOR in the command', () => {
+  const { dir } = tmpProject();
+  for (const c of ['ECCODE_ACTOR=delivery-lead node .claude/eccode/bin/eccode.js deliver', 'export ECCODE_ACTOR=delivery-lead; node .claude/eccode/bin/eccode.js deliver', 'env ECCODE_ACTOR="delivery-lead" eccode deliver']) {
+    assert.strictEqual(bash(dir, null, c), 'deny', c);
+  }
+  assert.strictEqual(bash(dir, null, 'ECCODE_ACTOR=delivery-lead node .claude/eccode/bin/eccode.js deliver', { ECCODE_SEQUENTIAL_ROLES: '1' }), 'allow', 'disclosed sequential mode');
+  assert.strictEqual(bash(dir, null, 'ECCODE_ACTOR=orchestrator node .claude/eccode/bin/eccode.js status'), 'allow');
+  assert.strictEqual(bash(dir, null, 'ECCODE_ACTOR=$ROLE node .claude/eccode/bin/eccode.js deliver'), 'ask', 'an actor built by expansion asks the human');
+});
+
+test('guard: a refused write names the draft areas of the agent\'s own role', () => {
+  const { dir } = tmpProject();
+  const reason = (agent, file) => {
+    const res = spawnSync(process.execPath, [GUARD], { input: JSON.stringify({ cwd: dir, tool_name: 'Write', agent_type: `eccode:${agent}`, tool_input: { file_path: path.join(dir, file) } }), encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: '', ECCODE_ACTOR: '' } });
+    return JSON.parse(res.stdout).hookSpecificOutput.permissionDecisionReason;
+  };
+  const designer = reason('technical-designer', '.eccode/handoffs/design.json');
+  assert.match(designer, /\.eccode\/artifacts\//);
+  assert.match(designer, /\.eccode\/drafts\//);
+  assert.doesNotMatch(designer, /reviews\/drafts/);
+  assert.match(reason('technical-reviewer', 'src/a.js'), /\.eccode\/reviews\/drafts\//);
+});
+
+// Mealie rerun, b2 item 1: a timed-out test run left a half-migrated database
+// in tests/.temp (git-ignored); the guard refused the engineer's rm, and the
+// item could not finish.
+test('guard: an engineer may delete git-ignored artifacts outside its ownership, but not write them', () => {
+  const ctx = tmpProject();
+  write(ctx.dir, '.gitignore', '*.temp\n*.db\n.nuxt\nnode_modules/\n.claude/settings.local.json\n');
+  write(ctx.dir, 'tests/.temp/mealie.db', 'x');
+  write(ctx.dir, 'pantry.db', 'x');
+  write(ctx.dir, 'src/server/b.js', 'b();\n');
+  write(ctx.dir, 'vendor.db', 'tracked on purpose\n');
+  execFileSync('git', ['add', '-A'], { cwd: ctx.dir });
+  execFileSync('git', ['add', '-f', 'vendor.db'], { cwd: ctx.dir });
+  commit(ctx.dir, 'files');
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  const be = (c) => bash(ctx.dir, 'backend-engineer', c);
+  assert.strictEqual(be('rm -rf tests/.temp'), 'allow');
+  assert.strictEqual(be(`rm ${ctx.dir}/pantry.db`), 'allow');
+  assert.strictEqual(be('rm frontend/.nuxt/.nuxt'), 'allow');
+  for (const c of ['echo x > tests/.temp/x', 'cp /tmp/x node_modules/lib/index.js', 'rm .claude/settings.local.json', 'rm -rf .git/hooks', 'rm src/server/../../README.md', 'rm *.db', 'rm vendor.db', 'rm -rf tests']) {
+    assert.strictEqual(be(c), 'deny', c);
+  }
+});
+
+// Review of the rerun's guard relaxations: each relaxation keeps no more than
+// its false refusals needed, and two older holes (sort -o, uniq IN OUT) close.
+test('guard: only an inverted grep pattern is data; a pattern that selects record files is not', () => {
+  const { dir } = tmpProject();
+  assert.strictEqual(bash(dir, 'backend-engineer', 'git status --short | grep -v .eccode; npm test'), 'allow');
+  assert.strictEqual(bash(dir, 'backend-engineer', 'grep -rl events.jsonl . | xargs truncate -s0'), 'deny');
+});
+
+test('guard: a mktemp path is not outside the project when TMPDIR points into it', () => {
+  const { dir } = tmpProject();
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'D=$(mktemp -d) && echo x > $D/a.js', { TMPDIR: path.join(dir, 'tmp') }), 'deny');
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'D=$(mktemp -d) && echo x > $D/a.js', { TMPDIR: require('os').tmpdir() }), 'allow');
+});
+
+test('guard: sort -o and uniq with an output file write, directly or through xargs', () => {
+  const { dir } = tmpProject();
+  for (const c of ['sort -o .eccode/events.jsonl x', 'ls | xargs sort -o .eccode/events.jsonl', 'uniq a .eccode/state.json', 'sort --output=.eccode/events.jsonl x']) {
+    assert.strictEqual(bash(dir, 'backend-engineer', c), 'deny', c);
+  }
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'sort -o src/a.js x'), 'deny', 'a reviewer may not write a project file with sort -o');
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'uniq x src/a.js'), 'deny');
+  for (const c of ['sort -u .eccode/events.jsonl | head', 'uniq -c x | sort', 'ls .eccode | xargs sort | head']) {
+    assert.strictEqual(bash(dir, 'technical-reviewer', c), 'allow', c);
+  }
+});
+
+test('guard: secrets and keys are never deletable as ignored artifacts', () => {
+  const ctx = tmpProject();
+  write(ctx.dir, '.gitignore', '.env\n.env.local\n*.pem\n*.key\nbuild/\n');
+  write(ctx.dir, '.env', 'SECRET=1\n');
+  write(ctx.dir, 'build/out.js', 'x\n');
+  commit(ctx.dir, 'ignore');
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  for (const c of ['rm .env', 'rm -f .env.local', 'rm certs/server.pem', 'rm deploy.key']) assert.strictEqual(bash(ctx.dir, 'backend-engineer', c), 'deny', c);
+  assert.strictEqual(bash(ctx.dir, 'backend-engineer', 'rm -rf build'), 'allow');
+});

@@ -21,11 +21,12 @@ const { fixPopulation, scratchRepo, run, eccode } = require('./scratch');
 
 const MISSING_API = /\b(ImportError|ModuleNotFoundError|AttributeError|NameError)\b|cannot import name/;
 
+// In fix verify's own words and order (lib/fixverify.js), so a match is an agreement.
 function expectedVerdict(pre, post) {
-  if (pre.code === 0) return 'not-proven';
-  if (post.code !== 0) return 'not-proven';
+  if (pre.code === 0) return 'tests-pass-without-fix';
   // The whole output: Mealie's warnings summary pushes a collection error far above the tail.
-  return MISSING_API.test(pre.out || pre.tail) ? 'inconclusive' : 'proven';
+  if (MISSING_API.test(pre.out || pre.tail)) return 'inconclusive';
+  return post.code !== 0 ? 'fix-fails-tests' : 'proven';
 }
 
 function one(mirror, c) {

@@ -34,9 +34,14 @@ function extractRefusals(jsonlText, session) {
     }
   }
   const out = [];
+  // Claude Code also writes api-request-blob events that repeat tool results
+  // already in the transcript: a refused tool call counts once, where it first appears.
+  const seen = new Set();
   for (const { line, ev } of rows) {
     for (const c of (ev.message && Array.isArray(ev.message.content) ? ev.message.content : [])) {
       if (c.type !== 'tool_result' || !c.is_error) continue;
+      if (c.tool_use_id && seen.has(c.tool_use_id)) continue;
+      if (c.tool_use_id) seen.add(c.tool_use_id);
       const text = textOf(c.content);
       const command = commands.get(c.tool_use_id) || null;
       const m = text.match(CODE);

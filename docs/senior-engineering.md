@@ -176,7 +176,7 @@ Results:
   - **`fix verify`:** agreement with running the tests directly went from 0.974 to 1.0 (row 77).
   - **`mutate`:** runs completed (0.976 both times), but 16 of 41 real fixes get no mutant, because it has no statement-deletion operator (row 78).
   - **Stack detection:** it now finds the Node frontend beside the Python backend, and its five checks match the tools run directly (row 80).
-  - **Route-removal recall:** unmeasured, because no commit in the sample removed a route (row 76).
+  - **Route-removal recall:** no verdict. The rerun found the reason: the route table read only FastAPI's top-level routes, and saw none of Mealie's API (row 127). Fixed, it found one removal in each window's sample: compat detected W2's, and W's once it read routes on routers of other names (rows 76, 129).
 - **Parts B and C:** at the protocol commit the engine missed every engine criterion except "no record fails its audit".
   - **Delivery:** 6 of 20 Mealie items were delivered with a clean audit, against a rule of 80% per chain (row 104). The quick and debug items were delivered in both chains.
   - **Friction:** 1.79 false refusals per engine item, against a rule of at most 1 (row 105).
@@ -198,6 +198,51 @@ Results:
   - a failed reproduction refused as evidence.
   The other three are a named limit (row 91). Four items stopped on the benchmark's own tool list or environment.
 - **What it does not show:** whether the fixed engine now meets the criteria. That needs the same protocol run again at the fix commit.
+
+### The rerun at the fix commit
+
+The pilot's protocol was run again with the fixed engine ([protocol](../bench/protocols/2026-10-25-mealie-rerun.md); [report](../bench/pilot-results/2026-10-25-mealie-rerun.md)). Since the pilot:
+- a fix or debug item records a lesson before its last gate, and later items are shown the lessons;
+- the benchmark's tool list gained read-only shell commands.
+
+The items were fresh, because the pilot's items are not sampled twice with the same model: ten Mealie changes drawn under the pilot's rules from v3.27.0..v3.29.0, and a new three-request greenfield service. The criteria were the pilot's, unchanged.
+
+**A container restart cut the batch,** so the report gives two readings:
+- **The registered reading is primary:** cut runs are failures, and a dead chain's remaining items count as not delivered.
+- **A continued reading is beside it:** each chain resumed on its surviving sandbox; no run was sampled twice.
+
+**Met, in every reading:**
+- false refusals, 0.64 per engine item (row 105, closed);
+- a lesson recorded in one item and shown in a later one, in both chains (row 106, closed);
+- the no-shell item, 2 of 2 (row 107, closed);
+- no record failing its audit.
+
+**Missed:**
+- **Delivery:** 3 and 4 of 10 per chain in the registered reading, and 5 and 6 when the chains continued, against 80% (row 104).
+  - Three stops were defects, fixed since with tests that failed first: a gate that could be neither reviewed nor resubmitted, the refactor baseline checked too late, and an evidence timeout that left the tests running.
+  - Two were the benchmark's environment.
+  - One was a plan problem.
+  - One was a rework deadlock, now a named limit (row 120).
+- **Greenfield (row 108).**
+  - Chain 1 delivered all three requests with its gates in order. But its last patch passed the harness's 60,000-character cap, so the registered check could not show that no earlier migration was edited.
+  - Chain 2 lost an item to the restart.
+
+**Correctness (no criterion):**
+- Among the Mealie runs that finished, the engine missed one hidden check in 18 runs, and the bare agent none in 19.
+- The registered reading's gap, 11 of 20 against 16 of 20, is the restart's: those runs count as failures.
+
+**Part A at P2 over W2** ([report](../bench/pilot-results/2026-10-25-mealie-rerun-part-a.md)): 14 of 17 criteria met as measured.
+- Missed: impact's share of the suite (0.784, row 74) and compat precision (0.571; 0.80 after the row 125 fix).
+- Two of the "met" rows and the route criterion rested on instruments that could not see what they measured (row 127):
+  - the route table read no API route;
+  - the frontend checks failed on both sides.
+- `mutate` left a timed-out mutant's tests running (row 128), and `stack run` reported a timed-out check as a failure (row 130).
+- Compat could not see routes on routers with other names, 36 of Mealie's 272 (row 129).
+
+**Found:** rows 109–130.
+- Sixteen are defects, each fixed with a test that failed first (one found by an independent review of the fixes). 16 of the batch's 20 false refusals were in their classes.
+- The fixes include an identity gap no run used: the main session could set `ECCODE_ACTOR` inside a command.
+- Six are named limits. One is that lessons were shown but no agent checked or cited one (row 119).
 
 ## Verified live, not only in unit tests
 

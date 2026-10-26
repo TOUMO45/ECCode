@@ -206,3 +206,48 @@ test('a Nuxt project gets no plain tsc check; a plain TypeScript project keeps i
   assert.ok(!ids.some((c) => /frontend && npx tsc/.test(c)), ids.join('\n'));
   assert.ok(ids.some((c) => /lib && npx tsc --noEmit/.test(c)), ids.join('\n'));
 });
+
+test('a check that times out says so, names --timeout, and is stopped with everything it started', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {
+  const { dir } = tmpProject();
+  const late = path.join(dir, 'late.txt');
+  write(dir, 'package.json', JSON.stringify({ name: 'x', scripts: { test: 'node slow.js' } }));
+  write(dir, 'slow.js', `require('child_process').spawn(process.execPath, ['-e', "setTimeout(() => require('fs').writeFileSync(process.argv[1], 'x'), 1500)", ${JSON.stringify(late)}], { stdio: 'ignore' });\nsetTimeout(() => {}, 10000);\n`);
+  const r = stack.runCheck(dir, loadConfig(dir), 'node-test', { timeoutMs: 700 });
+  assert.notStrictEqual(r.exitCode, 0);
+  assert.strictEqual(r.timedOut, true);
+  assert.match(r.output, /timed out after 0\.7 s.*--timeout <seconds>/);
+  const until = Date.now() + 2500;
+  while (Date.now() < until) { /* wait past the writer's time */ }
+  assert.strictEqual(fs.existsSync(late), false, 'the process the check started was stopped with it');
+  // The CLI takes --timeout for both paths, and says so in its help.
+  const out = spawnSync(process.execPath, [CLI, 'stack', 'run', 'node-test', '--timeout', '0.7'], { cwd: dir, encoding: 'utf8' });
+  assert.match(out.stdout, /node-test: TIMED OUT after 0\.7 s/);
+  assert.match(execFileSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' }), /stack run <id\|all> \[--timeout <s>\]/);
+});
+
+test('a check whose eccode process is killed stops with it', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {
+  const { dir } = tmpProject();
+  const marker = path.join(dir, 'marker.txt');
+  write(dir, 'package.json', JSON.stringify({ name: 'x', scripts: { test: 'sleep 3 && echo late > marker.txt' } }));
+  const runner = `const stack = require(${JSON.stringify(path.join(__dirname, '..', 'lib', 'stack'))}); const { loadConfig } = require(${JSON.stringify(path.join(__dirname, '..', 'lib', 'config'))});
+stack.runCheck(${JSON.stringify(dir)}, loadConfig(${JSON.stringify(dir)}), 'node-test', { timeoutMs: 30000 });`;
+  const child = require('child_process').spawn(process.execPath, ['-e', runner], { cwd: dir, detached: true, stdio: 'ignore' });
+  const sleep = (ms) => { const until = Date.now() + ms; while (Date.now() < until) { /* wait */ } };
+  sleep(1000);
+  process.kill(-child.pid, 'SIGKILL'); // the eccode process and its own group, as a harness kills an agent
+  sleep(4500);
+  assert.strictEqual(fs.existsSync(marker), false, 'the check did not outlive the eccode process');
+});
+
+test('--timeout takes a number of seconds above 0; anything else is refused before running', () => {
+  const { dir } = tmpProject();
+  write(dir, 'package.json', JSON.stringify({ name: 'x', scripts: { test: 'node -e ""' } }));
+  for (const bad of [['--timeout'], ['--timeout', 'abc'], ['--timeout', '-5'], ['--timeout', '0']]) {
+    const r = spawnSync(process.execPath, [CLI, 'stack', 'run', 'node-test', ...bad], { cwd: dir, encoding: 'utf8' });
+    assert.notStrictEqual(r.status, 0, bad.join(' '));
+    assert.match(r.stderr, /--timeout takes a number of seconds greater than 0/, bad.join(' '));
+    assert.doesNotMatch(r.stderr, /internal error|RangeError/, bad.join(' '));
+  }
+  const ok = spawnSync(process.execPath, [CLI, 'stack', 'run', 'node-test', '--timeout', '0.0001'], { cwd: dir, encoding: 'utf8' });
+  assert.doesNotMatch(ok.stderr, /internal error|RangeError/, 'a tiny timeout rounds up to 1 ms rather than crashing');
+});

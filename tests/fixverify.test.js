@@ -47,7 +47,7 @@ test('proven: the regression test fails on the pre-fix code and passes on the fi
   assert.strictEqual(ev[r.post.id].command, ev[r.pre.id].command);
   assert.strictEqual(worktrees(ctx.dir), 1, 'temporary worktree removed');
   // The fix track's rule: a failing reproduction and the same command passing later.
-  const state = { ...ctx.store.state(), work: { track: 'fix', startedAt: '0' } };
+  const state = { ...ctx.store.state(), work: { track: 'fix', startedAt: '0' }, lessons: [{ id: 'mem-d1', layer: 'debugging', at: '1' }] };
   assert.deepStrictEqual(works.checkTrackRules(state), []);
 });
 

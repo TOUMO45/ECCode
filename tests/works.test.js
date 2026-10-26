@@ -11,7 +11,7 @@ const works = require('../lib/works');
 const evidence = require('../lib/evidence');
 const { deliver } = require('../lib/delivery');
 const { Store } = require('../lib/store');
-const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, task, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, task, expectCode, recordLesson } = require('./helpers');
 
 const commit = (dir, msg) => {
   execFileSync('git', ['add', '-A'], { cwd: dir });
@@ -110,6 +110,8 @@ test('fix track: verification needs the same check failing before the fix and pa
   } finally {
     delete process.env.FIXED;
   }
+  assert.match(expectCode(submitV, 'TRACK_RULE').message, /no lesson recorded for this work item[\s\S]*memory draft --task bugfix --actor backend-engineer/);
+  recordLesson(store);
   submitV();
   const ev = passCheck(store, 'security-reviewer');
   gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verify3.md']]));
@@ -130,14 +132,15 @@ test('refactor track: the behavior command must be green before the first claim 
   gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/rplan.json'] });
   gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/rplan.json']]));
   gates.startGate(store, config, 'phase:extract', 'orchestrator');
-  // Deliberately claim BEFORE recording the baseline run: the gate must catch it.
+  // Claiming BEFORE the baseline run is refused at the claim, while the rule can
+  // still be met (rerun b1 item 1 learnt it only at verification, too late).
+  const early = expectCode(() => tasks.claim(store, config, 'move', 'backend-engineer'), 'TRACK_RULE');
+  assert.match(early.message, /behavior command passing before the first task claim/);
+  assert.ok(early.message.includes(JSON.stringify(behavior)), 'the message gives the command to run');
+  evidence.runCommand(store, 'backend-engineer', { label: 'another check', command: 'node -e "process.exit(0)" # another-suite' });
+  expectCode(() => tasks.claim(store, config, 'move', 'backend-engineer'), 'TRACK_RULE'); // a different command, even passing, does not count
+  evidence.runCommand(store, 'backend-engineer', { label: 'behavior before', command: behavior });
   runTask(ctx, 'move', 'backend-engineer', 'src/server/a.js', '// moved\n');
-  approvePhase(ctx, 'phase:extract');
-  evidence.runCommand(store, 'backend-engineer', { label: 'behavior after', command: behavior });
-  gates.startGate(store, config, 'verification', 'orchestrator');
-  write(dir, '.eccode/artifacts/verify4.md', '# V\nok\n');
-  const submitV = () => gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verify4.md', 'src/server/a.js'] });
-  assert.match(expectCode(submitV, 'TRACK_RULE').message, /BEFORE the first task claim/);
 
   // Run 2: baseline recorded first, then the change, then the after-run.
   const ctx2 = deliveredProject();
@@ -159,6 +162,26 @@ test('refactor track: the behavior command must be green before the first claim 
   assert.match(expectCode(submit2, 'TRACK_RULE').message, /AFTER the last phase approval/);
   evidence.runCommand(ctx2.store, 'delivery-lead', { label: 'behavior after', command: behavior });
   submit2();
+});
+
+test('refactor track: verification still refuses a record whose first claim came before the baseline', () => {
+  // A record written before the claim-time check (or edited around it): the
+  // verification gate is the backstop.
+  const state = {
+    work: { track: 'refactor', startedAt: '2026-10-26T00:00:00.000Z', behaviorCommand: 'npm test' },
+    evidence: { e1: { kind: 'command', command: 'npm test', status: 'passed', at: '2026-10-26T00:02:00.000Z' } },
+    tasks: { move: { history: [{ event: 'claimed', at: '2026-10-26T00:01:00.000Z' }] } },
+    gateOrder: ['plan', 'phase:extract', 'verification'],
+    gates: { 'phase:extract': { approvedAt: '2026-10-26T00:03:00.000Z' } },
+    lessons: [],
+  };
+  const problems = works.checkTrackRules(state);
+  assert.strictEqual(problems.length, 2);
+  assert.match(problems[0], /BEFORE the first task claim/);
+  assert.match(problems[1], /AFTER the last phase approval/);
+  state.evidence.e0 = { kind: 'command', command: 'npm test', status: 'passed', at: '2026-10-26T00:00:30.000Z' };
+  state.evidence.e2 = { kind: 'command', command: 'npm test', status: 'passed', at: '2026-10-26T00:04:00.000Z' };
+  assert.deepStrictEqual(works.checkTrackRules(state), []);
 });
 
 test('feature track skips architecture; abandon needs the user and frees the record', () => {
@@ -216,6 +239,7 @@ test('endurance: twenty-five consecutive work items in a seeded random track ord
       } finally {
         delete process.env[`OK${i}`];
       }
+      recordLesson(store, 'backend-engineer', `What defect number ${i} taught`);
       approveVerification(ctx, ['src/server/a.js'], i);
     } else {
       works.startWork(store, config, 'orchestrator', { track: 'quick', title: `Quick change number ${i}`, quick: { owner: 'frontend-engineer', files: 'src/web/**', command: 'node -e "process.exit(0)"' } });

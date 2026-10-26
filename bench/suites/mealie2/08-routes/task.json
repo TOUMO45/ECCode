@@ -1,0 +1,47 @@
+{
+  "id": "mealie2-08-routes",
+  "category": "routes",
+  "order": 8,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "ec3e0305498e41780130e6018a263d022df7a5e6"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-9002883a3889/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Feature: custom branding, the app's name and logo.\n\nSelf-hosters want Mealie to show their own name and logo. Add:\n- a settings class Branding in a new module mealie.core.settings.branding: a pydantic-settings BaseSettings read from BRANDING_-prefixed environment variables, with two fields: name, a str defaulting to \"Mealie\" (BRANDING_NAME), and logo_path, a str or None defaulting to None (BRANDING_LOGO_PATH),, and a read-only property logo_file: logo_path as a Path when it names an existing file (not a directory) whose suffix, in any case, is .svg, .png, .ico, .webp, .jpg or .jpeg, and None otherwise. logo_file is worked out when the object is built and again whenever a field is assigned (validation on assignment), not on every read;\n- AppSettings gets a field branding: Branding (default Branding()), so get_app_settings().branding is the live branding;\n- the public app info, GET /api/app/about, gets brandingName (the branding name) and brandingLogoUrl (\"/api/app/about/branding-logo\" when logo_file is set, null otherwise); its AppInfo schema carries them as branding_name (default \"Mealie\") and branding_logo_url (default None);\n- GET /api/app/about/branding-logo serves the logo file (its media type guessed from the file name, with Cache-Control: public, max-age=604800), or 404 when no valid logo is configured;\n- the web app manifest's name and short_name use the branding name, and a logo path that is set but is not a valid image file is logged as a warning at startup (the default logo is then used). The frontend shows the custom name and logo (not graded).\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/core tests/integration_tests/admin_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "feat: support customizing app icon, favicon, banner title, and HTML title (#8078)",
+  "track": "feature",
+  "fixCommit": "6fb78ba468401e7b9b5679ae39454ca6cf0742df",
+  "hidden": {
+    "fromSource": {
+      "commit": "6fb78ba468401e7b9b5679ae39454ca6cf0742df",
+      "paths": [
+        "tests/integration_tests/admin_tests/test_admin_about.py",
+        "tests/unit_tests/core/settings/test_branding.py",
+        "tests/utils/api_routes/__init__.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/admin_tests/test_admin_about.py::test_public_about_get_app_info[private group]\" \"tests/integration_tests/admin_tests/test_admin_about.py::test_public_about_get_app_info[public group]\" \"tests/integration_tests/admin_tests/test_admin_about.py::test_admin_about_get_app_info\" \"tests/integration_tests/admin_tests/test_admin_about.py::test_admin_about_get_app_statistics\" \"tests/integration_tests/admin_tests/test_admin_about.py::test_admin_about_check_app_config\" \"tests/integration_tests/admin_tests/test_admin_about.py::test_public_about_get_app_info_branding_defaults\" \"tests/integration_tests/admin_tests/test_admin_about.py::test_public_about_get_app_info_branding_custom\" \"tests/integration_tests/admin_tests/test_admin_about.py::test_public_about_get_app_info_branding_missing_file_falls_back\" \"tests/unit_tests/core/settings/test_branding.py::test_branding_defaults\" \"tests/unit_tests/core/settings/test_branding.py::test_branding_env_vars\" \"tests/unit_tests/core/settings/test_branding.py::test_branding_logo_file_valid\" \"tests/unit_tests/core/settings/test_branding.py::test_branding_logo_file_missing_path_falls_back\" \"tests/unit_tests/core/settings/test_branding.py::test_branding_logo_file_directory_falls_back\" \"tests/unit_tests/core/settings/test_branding.py::test_branding_logo_file_disallowed_suffix_falls_back\" \"tests/unit_tests/core/settings/test_branding.py::test_branding_logo_file_unset\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/admin_tests/test_admin_ai_providers.py\" \"tests/integration_tests/admin_tests/test_admin_backup.py\" \"tests/integration_tests/admin_tests/test_admin_group_actions.py\" \"tests/integration_tests/admin_tests/test_admin_household_actions.py\" \"tests/integration_tests/admin_tests/test_admin_user_actions.py\" --deselect \"tests/integration_tests/admin_tests/test_admin_about.py::test_public_about_get_app_info[private group]\" --deselect \"tests/integration_tests/admin_tests/test_admin_about.py::test_public_about_get_app_info[public group]\" --deselect \"tests/integration_tests/admin_tests/test_admin_about.py::test_admin_about_get_app_info\" --deselect \"tests/integration_tests/admin_tests/test_admin_about.py::test_admin_about_get_app_statistics\" --deselect \"tests/integration_tests/admin_tests/test_admin_about.py::test_admin_about_check_app_config\" --deselect \"tests/integration_tests/admin_tests/test_admin_about.py::test_public_about_get_app_info_branding_defaults\" --deselect \"tests/integration_tests/admin_tests/test_admin_about.py::test_public_about_get_app_info_branding_custom\" --deselect \"tests/integration_tests/admin_tests/test_admin_about.py::test_public_about_get_app_info_branding_missing_file_falls_back\" --deselect \"tests/unit_tests/core/settings/test_branding.py::test_branding_defaults\" --deselect \"tests/unit_tests/core/settings/test_branding.py::test_branding_env_vars\" --deselect \"tests/unit_tests/core/settings/test_branding.py::test_branding_logo_file_valid\" --deselect \"tests/unit_tests/core/settings/test_branding.py::test_branding_logo_file_missing_path_falls_back\" --deselect \"tests/unit_tests/core/settings/test_branding.py::test_branding_logo_file_directory_falls_back\" --deselect \"tests/unit_tests/core/settings/test_branding.py::test_branding_logo_file_disallowed_suffix_falls_back\" --deselect \"tests/unit_tests/core/settings/test_branding.py::test_branding_logo_file_unset\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 15,
+    "regression": 31,
+    "failingBeforeAndAfter": []
+  }
+}
