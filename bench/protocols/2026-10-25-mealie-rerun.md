@@ -135,3 +135,73 @@ The pilot's, unchanged: one batch; a chain that dies is not restarted; a defect 
 Two smoke sessions ran before this registration, with the Mealie agent command of `bench/pilot/agents-rerun.sh`, the debug track and the guard profile. Both are excluded from every result; they cost $0.54 together.
 - `followup/py-median` ($0.20). It is a feature request, not a bug, so `fix verify` judged the proof inconclusive (the test needs a function that did not exist), and the orchestrator stopped before delivery, as it should. It showed the command and the profile loading.
 - A synthetic bug written for the smoke and kept outside the repository: an order of exactly 10 items is priced without its bulk discount (JavaScript, `npm test`), $0.34. It was delivered with a clean audit, the fix proven by `fix verify`, one review and a mutation run, and the lesson was recorded before the phase was submitted. Its two `npm test` refusals came from the Mealie tool list, which has no `npm`. A third was Claude Code refusing a command that put the CLI in a shell variable.
+
+## Amendment 1 (2026-10-26T01:45Z, during the batch, before any summary figure)
+
+**What happened.** The batch started at 2026-10-25T23:37:36Z. At about 2026-10-26T01:30Z the container restarted and every process still running was killed. The last writes were at 01:29:15Z. It was an infrastructure event; no defect in the engine, the harness or a variant caused it.
+
+**Runs finished at the restart**, each with its result line:
+- b1 and b2: items 1–6;
+- b3: items 01–08, two runs each (16 runs);
+- b4: both runs (complete);
+- c1: chain 1, items c1–c3 and its summary; chain 2, item c1;
+- c2: both chains (complete).
+
+They had spent $39.00 by their result lines: b1 $7.83, b2 $9.05, b3 $2.52, b4 $1.79, c1 $15.88, c2 $1.93.
+
+**Cut off** (no result line):
+- b1 item 7 (`07-migration`): its agent had exited, since the harness had copied its transcripts at 01:29:15Z; the hidden checks were running.
+- b2 item 7 (`07-migration`): its agent was still working (it started at 01:23:41Z).
+- b3 run 17 (`09-debug`, run 1): its agent had exited (transcripts copied at 01:29:07Z); the hidden checks were running.
+- c1 chain 2, item `pantry-c2`: its agent was still working (it started at 01:21:21Z).
+
+Their costs were lost with their result lines. No spend figure or budget share counts them.
+
+**Never started:**
+- b1 and b2: items 8–10;
+- b3: `09-debug` run 2, and `10-security` runs 1 and 2;
+- c1 chain 2: `pantry-c3`.
+
+**What the operator had seen** before writing this, to establish which runs had finished: the hidden-check counts and delivery flags of the finished runs, and the report tables that b4 and c2 printed when they ended. No refusal labels existed beyond the 76 rule-based ones committed at 82ac5de, and no summary figure had been computed: no criterion, no rate, no test.
+
+**The registered reading stays primary.** The rules apply as registered:
+- the cut runs have no result line, so they are failures;
+- a chain that dies is not restarted, and its remaining items count as not delivered, with the cause;
+- the runs that never started count as failures.
+
+The criteria are decided on this reading. One criterion is defined "after item 10" (the long-lived record): in this reading it is not evaluable for b1 and b2, and the report says so. As the pilot's rules require, a sensitivity analysis without the runs that have no result line is reported next to the primary reading.
+
+**This amendment adds a continued reading**, reported next to the primary one, criterion by criterion.
+
+Why add it:
+- The restart was independent of the variants, but it fell almost entirely on the engine side. The engine side lost ten item runs, the bare side three runs and one cut run.
+- On the registered reading, the engine chains' last four items carry no information about the engine. That includes the debug item, the first place where a lesson recorded at the fix item could surface in a later item.
+
+The chains can continue without sampling any item twice:
+- their sandboxes and records survived, because the processes were killed and the harness never ran its cleanup;
+- the cut items stay failures in this reading too;
+- each remaining item gets its one run.
+
+**Procedure.** `bench/pilot/resume.js` was written for this amendment and is committed with it, with tests in `tests/pilot.test.js`. It is copied into the worktree pinned at 8662f5e and run from there, so the engine and the harness are the ones registered. The commands are listed below.
+- **For a cut chain item**, it:
+  - copies the item's transcripts (since the item's own commit);
+  - reads the record's outcome;
+  - closes the item by the harness's registered operator policy (`closeStuckItem`: recover the open runs, then abandon as the user, with the registered reason);
+  - copies the record;
+  - saves a failure record: `agentExit` 1, hidden 0, `engine.delivered` false, `usage` null, and `infrastructure` with the cause, whether the agent had exited and whether the record showed the item delivered, plus `amendment: 1`.
+  
+  The remaining items then run through the harness's own `runChainItem`, on the same sandbox and record. The chain summary comes last.
+- **For b3**: the cut run's failure record, then each run that never started, once, through `runOnce`.
+- **Budget:** each process keeps its registered share, measured against the spend of its result lines.
+- **The registered reading** is written beside the batch files (`registered/<process>.jsonl`). It holds the same failure records for the cut runs, a failure for each run that never started (`infrastructure.neverStarted`) and, for each chain, the summary of its record as the restart left it (`at: "restart"`).
+- **The two cut runs whose agents had exited** (b1 item 7 and b3 run 17) also have their hidden checks run once, on a copy of the sandbox as it was left, before anything else touches it. The result is reported as a note and enters neither reading.
+
+No item, variant, criterion, label rule or budget share changes.
+
+```sh
+R=<scratch>; S=$R/registered
+node bench/pilot/resume.js chain --suite bench/suites/mealie2 --sandbox <b1 sandbox> --chain-run 1 --interrupted mealie2-07-migration --variant engine --engine-profile guard --engine-agents inherit --timeout 3600 --max-cost 40 --save $R/b1.jsonl --registered $S/b1.jsonl --transcripts $R/tr-b1 --posthoc $R/posthoc.jsonl --cause "container restart, 2026-10-26T01:30Z" --agent "$AGENT_B"
+node bench/pilot/resume.js chain ... b2 (same, its own sandbox, files and share)
+node bench/pilot/resume.js runs --suite bench/suites/mealie2 --sandbox <b3 sandbox> --interrupted mealie2-09-debug --variant without --then mealie2-09-debug:1,mealie2-10-security:2 --timeout 3600 --max-cost 15 --save $R/b3.jsonl --registered $S/b3.jsonl --transcripts $R/tr-b3 --posthoc $R/posthoc.jsonl --cause "container restart, 2026-10-26T01:30Z" --agent "$AGENT_B"
+node bench/pilot/resume.js chain --suite bench/suites/pantry --sandbox <c1 chain 2 sandbox> --chain-run 2 --interrupted pantry-c2 --variant engine --engine-profile guard --engine-agents inherit --timeout 3600 --max-cost 35 --save $R/c1.jsonl --registered $S/c1.jsonl --transcripts $R/tr-c1 --cause "container restart, 2026-10-26T01:30Z" --agent "$AGENT_C"
+```

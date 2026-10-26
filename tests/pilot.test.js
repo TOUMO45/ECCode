@@ -722,3 +722,99 @@ test('analyse: a chain item counts only the transcript lines it added', () => {
   assert.ok(!itemToolText(dir, 'b1', records[1]).includes('L-7'), 'item 1\'s own result is not item 2 surfacing the lesson');
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+// Rerun amendment 1: a container restart killed the batch processes mid-item.
+const resume = require('../bench/pilot/resume');
+
+/** A chain cut off during c2: c1 done and saved, c2's agent crashed with its work item open. */
+function cutChain() {
+  const chain = require('../lib/chain');
+  const tasks = chainTasks(chainOrigin());
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-resume-'));
+  const sandbox = path.join(dir, 'sandbox');
+  fs.mkdirSync(sandbox);
+  execFileSync('git', ['init', '-q'], { cwd: sandbox });
+  const save = path.join(dir, 'runs', 'b1.jsonl');
+  fs.mkdirSync(path.dirname(save));
+  const r = chain.runChainItem(tasks[0], sandbox, { agentCmd: CHAIN_AGENT, variant: 'engine', first: true, index: 0, timeoutMs: 180000 });
+  fs.appendFileSync(save, JSON.stringify({ ...r, chainRun: 1 }) + '\n');
+  // What runChainItem does for c2 up to its agent, then an agent killed mid-work.
+  chain.syncSource(tasks[1], sandbox);
+  fs.writeFileSync(path.join(sandbox, 'PROMPT.md'), bench.promptFor(tasks[1], 'engine').prompt);
+  bench.git(sandbox, ['add', '-A']);
+  bench.git(sandbox, ['commit', '-q', '-m', 'item: c2']);
+  process.env.ECCODE_TEST_CRASH_ITEM = 'c2';
+  try {
+    bench.runAgent(sandbox, CHAIN_AGENT, bench.taskEnv(tasks[1]), 'engine', 180000);
+  } finally {
+    delete process.env.ECCODE_TEST_CRASH_ITEM;
+  }
+  return { dir, suite: path.dirname(tasks[0].dir), sandbox, save, registered: path.join(dir, 'registered', 'b1.jsonl') };
+}
+
+test('resume: a chain cut off by a restart continues on its sandbox; the cut item is a failure, and the registered reading counts the rest as not delivered', () => withCache(() => {
+  const c = cutChain();
+  // The harness had copied c2's transcripts: its agent had exited when the restart came.
+  const tr = path.join(c.dir, 'tr');
+  fs.mkdirSync(path.join(tr, `${path.basename(c.sandbox)}-2-c2`), { recursive: true });
+  const posthoc = path.join(c.dir, 'posthoc.jsonl');
+  resume.resumeChain({ suite: c.suite, sandbox: c.sandbox, save: c.save, registered: c.registered, chainRun: 1, interrupted: 'c2', cause: 'container restart (test)', agentCmd: CHAIN_AGENT, variant: 'engine', timeoutMs: 180000, transcripts: tr, posthoc, keep: true });
+  const read = (f) => fs.readFileSync(f, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const main = read(c.save);
+  assert.deepStrictEqual(main.map((l) => l.type || l.task), ['c1', 'c2', 'c3', 'chain-summary']);
+  const [, cut, next, summary] = main;
+  assert.strictEqual(cut.hiddenPassed, 0);
+  assert.strictEqual(cut.agentExit, 1);
+  assert.strictEqual(cut.usage, null);
+  assert.strictEqual(cut.engine.delivered, false);
+  assert.strictEqual(cut.engine.initialized, true);
+  assert.strictEqual(cut.infrastructure.cause, 'container restart (test)');
+  assert.strictEqual(cut.chain.index, 1);
+  assert.strictEqual(cut.chain.abandoned, true, 'the open work item is abandoned by the registered operator policy');
+  assert.strictEqual(cut.chainRun, 1);
+  assert.strictEqual(cut.amendment, 1);
+  assert.strictEqual(cut.infrastructure.agentFinished, true);
+  assert.strictEqual(cut.chain.transcripts.record, true, 'the record as the operator left it is kept next to the transcripts');
+  const graded = read(posthoc);
+  assert.deepStrictEqual(graded.map((g) => [g.task, g.posthoc, g.hiddenPassed, g.hiddenTotal]), [['c2', true, 0, 1]], 'graded from a copy, outside both readings');
+  assert.strictEqual(next.engine.delivered, true, 'the next item runs on the same record');
+  assert.strictEqual(next.hiddenPassed, 1);
+  assert.strictEqual(next.chain.index, 2);
+  assert.strictEqual(next.amendment, 1);
+  assert.strictEqual(summary.auditOk, true);
+  assert.strictEqual(summary.chain, 1);
+  const reg = read(c.registered);
+  assert.deepStrictEqual(reg.map((l) => l.type || l.task), ['c1', 'c2', 'c3', 'chain-summary']);
+  assert.deepStrictEqual(reg[1], cut);
+  assert.strictEqual(reg[2].infrastructure.neverStarted, true);
+  assert.strictEqual(reg[2].engine.delivered, false);
+  assert.strictEqual(reg[2].hiddenPassed, 0);
+  assert.strictEqual(reg[3].at, 'restart', 'the registered summary is the record as the chain left it');
+  assert.throws(() => resume.resumeChain({ suite: c.suite, sandbox: c.sandbox, save: c.save, registered: c.registered, chainRun: 1, interrupted: 'c2', cause: 'again', agentCmd: CHAIN_AGENT, variant: 'engine' }), /already resumed/);
+}));
+
+test('resume: a sandbox that is not on the named item is refused', () => withCache(() => {
+  const c = cutChain();
+  assert.throws(() => resume.resumeChain({ suite: c.suite, sandbox: c.sandbox, save: c.save, registered: c.registered, chainRun: 1, interrupted: 'c3', cause: 'x', agentCmd: CHAIN_AGENT, variant: 'engine' }), /not on item c3/);
+}));
+
+test('resume: an independent run cut off by a restart is a failure; the runs that never started run once and are failures in the registered reading', () => withCache(() => {
+  const o = origin();
+  const task = suiteWith(o, { hiddenChecks: [{ id: 'any', command: 'true' }] });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-resume-'));
+  const sandbox = path.join(dir, `eccode-bench-${task.id}-without-x`);
+  fs.mkdirSync(sandbox);
+  bench.materialize(task, sandbox);
+  const save = path.join(dir, 'runs', 'b3.jsonl');
+  fs.mkdirSync(path.dirname(save));
+  fs.writeFileSync(save, JSON.stringify({ task: 't1', variant: 'without', hiddenPassed: 1, hiddenTotal: 1, usage: { costUsd: 0.1 } }) + '\n');
+  const agent = `node -e "process.stdout.write(JSON.stringify({type:'result',total_cost_usd:0.1,num_turns:1}) + '\\n')"`;
+  resume.resumeRuns({ suite: path.dirname(task.dir), sandbox, save, registered: path.join(dir, 'registered', 'b3.jsonl'), interrupted: 't1', variant: 'without', cause: 'container restart (test)', then: [['t1', 2]], agentCmd: agent, maxCostUsd: 10 });
+  const read = (f) => fs.readFileSync(f, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const main = read(save);
+  assert.deepStrictEqual(main.map((l) => [l.hiddenPassed, l.amendment || 0]), [[1, 0], [0, 1], [1, 1], [1, 1]]);
+  assert.strictEqual(main[1].infrastructure.cause, 'container restart (test)');
+  assert.strictEqual(fs.existsSync(sandbox), false, 'the cut run\'s sandbox is removed, as the harness does');
+  const reg = read(path.join(dir, 'registered', 'b3.jsonl'));
+  assert.deepStrictEqual(reg.map((l) => [l.hiddenPassed, Boolean(l.infrastructure && l.infrastructure.neverStarted)]), [[1, false], [0, false], [0, true], [0, true]]);
+}));
