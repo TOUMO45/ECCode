@@ -1,0 +1,45 @@
+{
+  "id": "mealie3-07-fix-cdae185e",
+  "category": "fix-cdae185e",
+  "order": 7,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "4b32e54bba05942017f55f004b361b77582d22be"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-abec607fbd6f/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: a rejected recipe asset upload shows no error.\n\nPOST /api/recipes/{slug}/assets refuses an asset whose extension is not allowed (html, svg, js, htm, xhtml, xml and other scriptable types) with 400, which is right. But the response's detail is a bare string. The frontend only shows an error toast when the response has detail.message, so the upload fails silently.\n\nExpected: the asset upload's 400 rejections carry their message in the usual error shape (ErrorResponse, text in detail.message), like other endpoints. An extension that is not allowed answers 400 with detail.message \"Unsupported file extension\". The upload's other 400 rejections (\"Missing required fields\", and the invalid file name or extension error) keep their current text and carry it the same way. Status codes, which uploads are accepted or refused, and the rule that nothing is written for a refused upload stay as they are.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: show an error when a recipe asset upload is rejected (#8809)",
+  "track": "fix",
+  "fixCommit": "cdae185e281d0e7b9a4b9e976fcaab4b884d5833",
+  "hidden": {
+    "fromSource": {
+      "commit": "cdae185e281d0e7b9a4b9e976fcaab4b884d5833",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_asset_dangerous_extension_blocked\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_asset_dangerous_extension_blocked\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 7,
+    "failingBeforeAndAfter": []
+  }
+}

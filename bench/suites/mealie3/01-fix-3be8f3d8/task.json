@@ -1,0 +1,46 @@
+{
+  "id": "mealie3-01-fix-3be8f3d8",
+  "category": "fix-3be8f3d8",
+  "order": 1,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "89a14202dd8044749cce444147ea4b301c77af13"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-ec40e6870125/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Security report: data migrations reach into other groups, and an archive can unpack to any size.\n\n1. Group scoping. A migration archive (POST /api/groups/migrations) can carry ids from another group. A recipe tool given with another group's tool id is linked by that id and overwritten: that tool moves into the importing group and is renamed. An ingredient's sub-recipe reference (referencedRecipe) naming another group's recipe, by id or slug, links and exposes that recipe. Seen with the Mealie alpha and Nextcloud migrations.\n\nExpected: migrated recipes get the same group checks as the single-recipe zip import (POST /api/recipes/create/zip). Another group's tool keeps its group and name; the recipe gets a tool of the importing group instead (found there by id or slug, or created from the given name), with a different id. A sub-recipe reference is kept only when its id is a recipe of the importing group; otherwise referencedRecipe is null. The recipe itself still imports.\n\n2. Archive size. Migrations unpack the uploaded zip with no limit. Add to the migration utilities module (the one holding import_image, scrape_image and safe_local_path):\n- MAX_EXTRACTED_ARCHIVE_SIZE, the most one migration may unpack: 5 GiB (5,368,709,120 bytes);\n- ArchiveTooLargeError, a ValueError subclass;\n- extract_zip(archive, dest, max_size=None): unpacks the zip into dest and returns the bytes unpacked, the sum of the members' uncompressed sizes (members of 5 and 3 bytes give 8; a total equal to max_size is allowed). max_size defaults to MAX_EXTRACTED_ARCHIVE_SIZE, looked up when called. Over the limit it raises ArchiveTooLargeError before writing anything; dest is not even created.\nEvery migration that reads a zip honours the limit, and zips nested in an export (Cook'n, Tandoor) count toward the same total. The tests patch MAX_EXTRACTED_ARCHIVE_SIZE on that module to 1024, so migrators must read it at run time. A migration over the limit still answers 200; its report has status \"failure\" and exactly one entry, with the message \"Archive is too large to import\".\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/recipe_migration_tests tests/unit_tests/services_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: scope migration imports to the group and limit archive size (#8761)",
+  "track": "fix",
+  "fixCommit": "3be8f3d85490a163021f74a87bc840635ebe25f6",
+  "hidden": {
+    "fromSource": {
+      "commit": "3be8f3d85490a163021f74a87bc840635ebe25f6",
+      "paths": [
+        "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py",
+        "tests/unit_tests/services_tests/test_migration_extract_zip.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[nextcloud_archive]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[paprika_archive]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[chowdown_archive]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[copymethat_archive]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[mealie_alpha_archive]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[tandoor_archive]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[plantoeat_archive]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[plantoeat_csv]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[myrecipebox_csv]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[recipekeeper_archive]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[cookn_archive]\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_plantoeat_rejects_invalid_file_type\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_bad_mealie_alpha_data_is_ignored\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipekeeper_imports_categories_and_yield\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_paprika_imports_notes\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_mealie_alpha_migration_cannot_reach_another_group\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_nextcloud_migration_cannot_take_over_another_groups_tool\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_migration_rejects_archive_over_size_limit\" \"tests/unit_tests/services_tests/test_migration_extract_zip.py::test_extract_zip_returns_bytes_written\" \"tests/unit_tests/services_tests/test_migration_extract_zip.py::test_extract_zip_over_limit_writes_nothing\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/test_compile_source.py\" \"tests/unit_tests/services_tests/test_email_service.py\" \"tests/unit_tests/services_tests/test_mealplan_ical.py\" \"tests/unit_tests/services_tests/test_openai_service.py\" \"tests/unit_tests/services_tests/test_organizer_resolver.py\" \"tests/unit_tests/services_tests/test_paprika_migration.py\" \"tests/unit_tests/services_tests/test_recipe_data_service.py\" \"tests/unit_tests/services_tests/test_recipe_import_workflow.py\" \"tests/unit_tests/services_tests/test_transcription.py\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[nextcloud_archive]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[paprika_archive]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[chowdown_archive]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[copymethat_archive]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[mealie_alpha_archive]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[tandoor_archive]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[plantoeat_archive]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[plantoeat_csv]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[myrecipebox_csv]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[recipekeeper_archive]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[cookn_archive]\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_plantoeat_rejects_invalid_file_type\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_bad_mealie_alpha_data_is_ignored\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipekeeper_imports_categories_and_yield\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_paprika_imports_notes\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_mealie_alpha_migration_cannot_reach_another_group\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_nextcloud_migration_cannot_take_over_another_groups_tool\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_migration_rejects_archive_over_size_limit\" --deselect \"tests/unit_tests/services_tests/test_migration_extract_zip.py::test_extract_zip_returns_bytes_written\" --deselect \"tests/unit_tests/services_tests/test_migration_extract_zip.py::test_extract_zip_over_limit_writes_nothing\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 20,
+    "regression": 119,
+    "failingBeforeAndAfter": []
+  }
+}

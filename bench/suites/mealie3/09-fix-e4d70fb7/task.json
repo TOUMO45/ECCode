@@ -1,0 +1,46 @@
+{
+  "id": "mealie3-09-fix-e4d70fb7",
+  "category": "fix-e4d70fb7",
+  "order": 9,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "a89f032abfc5c0369409e1187d44e61013725254"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-ec945b71e3b7/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: household statistics fail since the SQLAlchemy 2.1 upgrade, and so does counting recipes by household.\n\nGET /api/households/statistics answers 500 for every user. RepositoryGeneric.count_all(match_key, match_value) fails the same way when match_key names an attribute that is not a column of the model's own table. A recipe's household_id is one: recipes have no household column, the household comes through the recipe's user. SQLAlchemy reports that no FROM entity has a household_id property. Counting by a real column, such as group_id, still works.\n\nExpected: GET /api/households/statistics answers 200 again. Its totalRecipes counts the recipes of the caller's household: a recipe created by a user raises that household's totalRecipes by exactly 1 and leaves the totalRecipes of another household in the same group unchanged. The other totals keep their meaning (users of the household; categories, tags and tools of the group). count_all filters on any attribute of the model, a column or one that comes through a relationship: on the unfiltered recipe repository, with two recipes created in a fresh group and household, count_all(\"group_id\", group_id) and count_all(\"household_id\", household_id) both return 2, and count_all(\"household_id\", <unknown UUID>) returns 0. count_all() without arguments still counts everything.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/repository_tests/test_recipe_repository.py tests/integration_tests/user_household_tests/test_household_self_service.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: switch `filter_by` statements to explicit expressions to properly resolve proxy attrs (#8814)",
+  "track": "fix",
+  "fixCommit": "e4d70fb7a1fc2b625b6be5400daf249de1cfe90c",
+  "hidden": {
+    "fromSource": {
+      "commit": "e4d70fb7a1fc2b625b6be5400daf249de1cfe90c",
+      "paths": [
+        "tests/integration_tests/user_household_tests/test_household_self_service.py",
+        "tests/unit_tests/repository_tests/test_recipe_repository.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_household_tests/test_household_self_service.py::test_get_household_statistics\" \"tests/unit_tests/repository_tests/test_recipe_repository.py::test_recipe_repo_count_all\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_household_tests/test_household_self_service.py\" \"tests/unit_tests/repository_tests/test_recipe_repository.py\" --deselect \"tests/integration_tests/user_household_tests/test_household_self_service.py::test_get_household_statistics\" --deselect \"tests/unit_tests/repository_tests/test_recipe_repository.py::test_recipe_repo_count_all\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 2,
+    "regression": 35,
+    "failingBeforeAndAfter": []
+  }
+}
