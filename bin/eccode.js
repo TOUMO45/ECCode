@@ -102,7 +102,7 @@ Codebase (work in any repository; see docs/lean.md and docs/senior-engineering.m
                                    reflective imports are resolved by observation, not parsing
   map [--path <dir>] [--chars n]   What already exists (top-level names per directory): reuse before you write
   stack [--json]                   Detected stacks and their checks (project scripts first); * = required
-  stack run <id|all> [--record --actor <a>]   Run a check; exit = the check's exit code
+  stack run <id|all> [--timeout <s>] [--record --actor <a>]   Run a check (default 600 s); exit = the check's exit code
   stack adopt --checks <id,id> --actor user [--remove]   Make checks required at the verification gate
   debt [--json]                    Ledger of deferred shortcut markers in code, flagging those with no upgrade trigger
 
@@ -425,15 +425,16 @@ function main(argv) {
         ? stack.checks(root, cfg).filter((c) => c.available).map((c) => c.id)
         : [arg];
       let worst = 0;
+      const timeoutMs = flags.timeout ? Number(flags.timeout) * 1000 : 600000;
       for (const id of ids) {
         if (flags.record) {
           const c = stack.checks(root, cfg).find((x) => x.id === id);
-          const ev = require('../lib/evidence').runCommand(store, need(actor, '--actor'), { label: `stack:${id}`, command: c && !id.startsWith('eccode-') ? c.command : `node ${JSON.stringify(__filename)} stack run ${id}`, gate: flags.gate });
+          const ev = require('../lib/evidence').runCommand(store, need(actor, '--actor'), { label: `stack:${id}`, command: c && !id.startsWith('eccode-') ? c.command : `node ${JSON.stringify(__filename)} stack run ${id}`, gate: flags.gate, timeoutMs });
           process.stdout.write(`${id}: ${ev.status.toUpperCase()} (ev:${ev.id})\n`);
           worst = Math.max(worst, ev.exitCode === 0 ? 0 : 2);
         } else {
-          const r = stack.runCheck(root, cfg, id);
-          process.stdout.write(`${id}: ${r.exitCode === 0 ? 'PASSED' : `FAILED (exit ${r.exitCode})`}\n${r.output.trim()}\n`);
+          const r = stack.runCheck(root, cfg, id, { timeoutMs });
+          process.stdout.write(`${id}: ${r.exitCode === 0 ? 'PASSED' : r.timedOut ? `TIMED OUT after ${timeoutMs / 1000} s` : `FAILED (exit ${r.exitCode})`}\n${r.output.trim()}\n`);
           worst = Math.max(worst, r.exitCode === 0 ? 0 : 2);
         }
       }
