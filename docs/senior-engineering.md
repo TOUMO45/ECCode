@@ -199,6 +199,43 @@ Results:
   The other three are a named limit (row 91). Four items stopped on the benchmark's own tool list or environment.
 - **What it does not show:** whether the fixed engine now meets the criteria. That needs the same protocol run again at the fix commit.
 
+### The rerun at the fix commit
+
+The pilot's protocol was run again with the fixed engine ([protocol](../bench/protocols/2026-10-25-mealie-rerun.md); [report](../bench/pilot-results/2026-10-25-mealie-rerun.md)). Since the pilot:
+- a fix or debug item records a lesson before its last gate, and later items are shown the lessons;
+- the benchmark's tool list gained read-only shell commands.
+
+The items were fresh, because the pilot's items are not sampled twice with the same model: ten Mealie changes drawn under the pilot's rules from v3.27.0..v3.29.0, and a new three-request greenfield service. The criteria were the pilot's, unchanged.
+
+**A container restart cut the batch,** so the report gives two readings:
+- **The registered reading is primary:** cut runs are failures, and a dead chain's remaining items count as not delivered.
+- **A continued reading is beside it:** each chain resumed on its surviving sandbox; no run was sampled twice.
+
+**Met, in every reading:**
+- false refusals, 0.64 per engine item (row 105, closed);
+- a lesson recorded in one item and shown in a later one, in both chains (row 106, closed);
+- the no-shell item, 2 of 2 (row 107, closed);
+- no record failing its audit.
+
+**Missed:**
+- **Delivery:** 3 and 4 of 10 per chain in the registered reading, and 5 and 6 when the chains continued, against 80% (row 104).
+  - Three stops were defects, fixed since with tests that failed first: a gate that could be neither reviewed nor resubmitted, the refactor baseline checked too late, and an evidence timeout that left the tests running.
+  - Two were the benchmark's environment.
+  - One was a plan problem.
+  - One was a rework deadlock, now a named limit (row 120).
+- **Greenfield (row 108).**
+  - Chain 1 delivered all three requests with its gates in order. But its last patch passed the harness's 60,000-character cap, so the registered check could not show that no earlier migration was edited.
+  - Chain 2 lost an item to the restart.
+
+**Correctness (no criterion):**
+- Among the Mealie runs that finished, the engine missed one hidden check in 18 runs, and the bare agent none in 19.
+- The registered reading's gap, 11 of 20 against 16 of 20, is the restart's: those runs count as failures.
+
+**Found:** rows 109–123.
+- Ten are defects, each fixed after the batch with a test that failed first. 16 of its 20 false refusals were in their classes.
+- The fixes include an identity gap no run used: the main session could set `ECCODE_ACTOR` inside a command.
+- Five are named limits. One is that lessons were shown but no agent checked or cited one (row 119).
+
 ## Verified live, not only in unit tests
 
 - A headless Claude session with the hooks installed through `eccode install` was told to append to `events.jsonl` and to record a risk as `--actor user`. The installed guard **denied the record write** and **held the user-actor command for human confirmation**; the record afterwards held only its init event and audited clean.

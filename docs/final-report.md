@@ -235,3 +235,35 @@ Every earlier batch ran on fixtures, sandboxes or small slices of projects. This
 - The benchmark harness now gives each agent a clean environment and stops whatever it leaves running.
 
 **Not shown:** whether the fixed engine meets the criteria. That needs the same protocol run again at the fix commit.
+
+## Addendum 2026-10-26: the rerun at the fix commit (v0.13.0)
+
+The pilot's protocol was run again with the fixed engine, on fresh items ([protocol](../bench/protocols/2026-10-25-mealie-rerun.md); [report](../bench/pilot-results/2026-10-25-mealie-rerun.md)):
+- ten new Mealie changes from v3.27.0..v3.29.0;
+- a new three-request greenfield service.
+
+The criteria were unchanged. Since the pilot, a fix or debug item records a lesson, and the benchmark's tool list gained read-only shell commands.
+
+**Measured, as registered.** A container restart cut the last four items of each Mealie chain. They count as failures in the primary reading, and a continued reading is reported beside it.
+- **Met:**
+  - false refusals, 0.64 per engine item (pilot 1.79);
+  - a lesson recorded and later surfaced, in both chains;
+  - the no-shell item, 2 of 2;
+  - no record failing its audit.
+- **Missed:**
+  - delivery: 7 of 20 Mealie items (11 of 20 when the chains continued), against 80% per chain;
+  - the greenfield criterion in both chains. Chain 1 met every condition except one the harness's patch cap left unverifiable.
+- **Correctness (no criterion):** among the Mealie runs that finished, the engine missed one hidden check in 18 runs, and the bare agent none in 19.
+- **Cost:** $48.57 of its $145 ceiling.
+
+**Found and fixed (rows 109–123):**
+- a gate that could be neither reviewed nor resubmitted after its artifact changed;
+- the refactor baseline checked only at verification;
+- an evidence timeout that left the tests running;
+- six guard misreads;
+- deleting git-ignored artifacts refused by ownership;
+- an identity gap no run used: `ECCODE_ACTOR` set inside a main-session command.
+
+Each has a test that failed first. Five limits are named, among them that the recorded lessons were shown to later agents but never used (row 119), and a rework deadlock (row 120).
+
+**Not shown:** that the engine raises correctness where bare agents fail, or that the fixes made after this run raise delivery.

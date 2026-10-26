@@ -30,14 +30,23 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
 
 **Measured, including the engine itself.** `eccode bench --variant engine` installs the toolkit in each sandbox and asks for delivery through the quick track. In a pre-registered batch of 80 runs on four multi-file tasks with regression traps, both models tested passed every hidden check with or without the engine; the traps did not catch either. The reviewed, recorded path cost 3.4× (Sonnet) to 5.0× (Opus) the median cost of a bare run, and engine runs wrote tests more often (18/20 vs 10/20 on Sonnet). The batches also found engine defects that kept runs from delivering; each is fixed and registered. A second pre-registered batch ran on twenty real bugs from five open-source projects: 240 runs, comparing a bare agent, the debugging method as text, the debug track and the quick track. The bare agent already fixed every bug, so again no variant changed correctness. What the engine changed is the proof. Every debug-track run proved its regression test fails before the fix and passes after, and reviews caught regressions the projects' own tests miss. The debug track cost 3.3× a bare run, and the quick track 3.65×. Whether the engine improves correctness where bare agents do fail is still open. See [docs/senior-engineering.md](docs/senior-engineering.md) and [docs/limits.md](docs/limits.md).
 
-**Tested on a real project, and it was not ready.** A pre-registered pilot ran every capability on Mealie, a FastAPI and Nuxt app ECCode's authors did not write, at v3.20.0 and over the 410 commits to v3.27.0.
+**Tested on a real project, then tested again.** A pre-registered pilot ran every capability on Mealie, a FastAPI and Nuxt app ECCode's authors did not write, at v3.20.0 and over the 410 commits to v3.27.0.
 - **The model-free tools mostly held up at that scale.**
   - Indexing took under a second.
   - Impact analysis's recall against coverage was 1.0, and against injected faults 0.94, then 1.0 after a fix. But it selects most of the suite for any module the app imports.
   - Six of the seventeen criteria missed at first: TS/JS resolution, breaking-change precision, `fix verify` agreement, bug-rule false positives, and stack detection and its checks. Each was fixed, and all six were met when measured again.
 - **The engine at the protocol commit** delivered 6 of 20 real work items with a clean audit, where the rule was 80%, and refused correct steps 1.8 times per item.
 - **Correctness:** the bare agent passed every hidden check in 17 of 20 runs, the engine in 13 of 20.
-- **Every stop is on the register,** and most causes are fixed with tests. Showing that the fixes raise delivery needs the pilot run again. See [the pilot report](bench/pilot-results/2026-10-24-mealie-pilot.md).
+- **Every stop is on the register,** and most causes are fixed with tests. See [the pilot report](bench/pilot-results/2026-10-24-mealie-pilot.md).
+- **The rerun at the fix commit,** on ten fresh Mealie changes and a new greenfield service, met six of the nine engine criteria, against one in the pilot:
+  - false refusals fell to 0.64 per item (rule ≤ 1);
+  - lessons were recorded and shown to later items;
+  - the no-shell item was delivered in 2 of 2 runs;
+  - no record failed its audit.
+- **Delivery is still short** of the 80% rule. 7 of 20 items were delivered in the registered reading, where a container restart cut the last four items of each chain. 11 of 20 were delivered when the chains continued.
+- **The bare agent was right almost every time.** Among the Mealie runs that finished, it missed no hidden check, and the engine missed one. On the greenfield service, the bare agent missed one and the engine none.
+
+  See [the rerun report](bench/pilot-results/2026-10-25-mealie-rerun.md).
 
 **Sized to the task.** One record carries many deliveries: after `deliver`, `eccode work start --track feature|refactor|fix|quick|greenfield` opens the next work item with gates sized to its risk. On an existing codebase, `eccode onboard` briefs agents first (modules, entry points, hot spots, most-depended files) and `eccode impact` names what a change reaches before it is made. See [docs/senior-engineering.md](docs/senior-engineering.md).
 
