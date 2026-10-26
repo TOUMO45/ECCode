@@ -37,9 +37,16 @@ This rerun asks the same questions of the fixed engine, on ten fresh Mealie chan
   - **Registered reading:** 11 of 20 runs passed every hidden check, against 16 of 20 (stratified permutation test, p = 0.03). All of that gap is runs the restart cut or never started.
   - **Continued reading:** 17 of 20 against 19 of 20 (p = 0.58).
   - **Runs that finished:** the engine missed one hidden check in 18 runs, the bare agent none in 19.
-- **What the batch found.** 16 register rows (109–124):
-  - 11 closed with fixes and tests: a gate dead end, the refactor baseline checked too late, an evidence timeout that left the tests running, six guard misreads, and an identity gap no run used;
-  - 5 named as open.
+- **What the batch and its Part A found.** 20 register rows (109–128):
+  - 14 closed with fixes and tests:
+    - a gate dead end;
+    - the refactor baseline checked too late;
+    - evidence and `mutate` timeouts that left the tests running;
+    - six guard misreads;
+    - an identity gap no run used;
+    - compat reading a standalone script as API;
+    - four Part A instruments that could not see what they measured;
+  - 6 named as open.
 
   16 of the 20 false refusals fall in classes the fixes remove.
 - **What is not shown.**
@@ -225,7 +232,21 @@ Both records stayed audit-clean over ten items: 415 and 443 events. `status`, `m
 
 See [the Part A report](2026-10-25-mealie-rerun-part-a.md). It was measured with ECCode at the protocol commit, after Parts B and C, as registered.
 
-## Defects found while the batch ran
+- **As measured:** 14 of 17 criteria met. Missed: impact's share of the suite (0.784, row 74) and compat precision (0.571). Route recall has no verdict.
+- **Two "met" rows and the "no verdict" rested on blind instruments** (row 127):
+  - A3's route table could see none of Mealie's API routes, in the pilot as well;
+  - A7's frontend checks failed on both sides, for environment reasons.
+- **Also found:**
+  - `mutate` left a timed-out mutant's tests running (row 128);
+  - compat read a deleted dev script's definitions as API (row 125);
+  - migration edits are reported whatever they change (row 126).
+- **After the fixes (post hoc):**
+  - compat precision 0.80;
+  - route recall 1 of 1 on W2's sample;
+  - no bug-rule false positive;
+  - A7's frontend checks: A7_AFTER.
+
+## Defects found by the batch and its Part A
 
 Each was fixed after the batch, with a test that failed first, and has a register row. An independent review of the fixes then found:
 - that the first evidence fix let a check outlive a killed eccode process;
@@ -248,6 +269,9 @@ Those were fixed the same way.
 | 122 | `api-request-blob` events made the refusal count repeat 4 refusals | Amendment 2 |
 | 123 | The harness could not continue a chain an infrastructure failure cut | bench/pilot/resume.js (amendment 1) |
 | 124 | `sort -o FILE` and `uniq IN OUT` were on the guard's read-only list, though they write (older than this batch) | Both are write targets, and `xargs` is judged by the program it runs |
+| 125 | Compat read a standalone Python script's definitions as public API (Part A) | A script (main guard, outside any package, imported by nothing) has no import surface |
+| 127 | Four Part A instruments assumed the pilot's environment (route table, A4's verdict names, A6's lint configuration, A7's package manager) | Each fixed; see the Part A report |
+| 128 | `mutate` left a timed-out mutant's tests running (Part A) | Each mutant's command runs in its own process group, stopped whole |
 
 ## Environment and harness disclosures
 

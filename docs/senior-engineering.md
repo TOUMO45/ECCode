@@ -176,7 +176,7 @@ Results:
   - **`fix verify`:** agreement with running the tests directly went from 0.974 to 1.0 (row 77).
   - **`mutate`:** runs completed (0.976 both times), but 16 of 41 real fixes get no mutant, because it has no statement-deletion operator (row 78).
   - **Stack detection:** it now finds the Node frontend beside the Python backend, and its five checks match the tools run directly (row 80).
-  - **Route-removal recall:** unmeasured, because no commit in the sample removed a route (row 76).
+  - **Route-removal recall:** no verdict. The rerun found the reason: the route table read only FastAPI's top-level routes, and saw none of Mealie's API (row 127). Fixed, it found W_ROUTES_SHORT (row 76).
 - **Parts B and C:** at the protocol commit the engine missed every engine criterion except "no record fails its audit".
   - **Delivery:** 6 of 20 Mealie items were delivered with a clean audit, against a rule of 80% per chain (row 104). The quick and debug items were delivered in both chains.
   - **Friction:** 1.79 false refusals per engine item, against a rule of at most 1 (row 105).
@@ -231,10 +231,17 @@ The items were fresh, because the pilot's items are not sampled twice with the s
 - Among the Mealie runs that finished, the engine missed one hidden check in 18 runs, and the bare agent none in 19.
 - The registered reading's gap, 11 of 20 against 16 of 20, is the restart's: those runs count as failures.
 
-**Found:** rows 109–124.
-- Eleven are defects, each fixed after the batch with a test that failed first (one found by an independent review of the fixes). 16 of its 20 false refusals were in their classes.
+**Part A at P2 over W2** ([report](../bench/pilot-results/2026-10-25-mealie-rerun-part-a.md)): 14 of 17 criteria met as measured.
+- Missed: impact's share of the suite (0.784, row 74) and compat precision (0.571; 0.80 after the row 125 fix).
+- Two of the "met" rows and the route criterion rested on instruments that could not see what they measured (row 127):
+  - the route table read no API route;
+  - the frontend checks failed on both sides.
+- `mutate` left a timed-out mutant's tests running (row 128).
+
+**Found:** rows 109–128.
+- Fourteen are defects, each fixed with a test that failed first (one found by an independent review of the fixes). 16 of the batch's 20 false refusals were in their classes.
 - The fixes include an identity gap no run used: the main session could set `ECCODE_ACTOR` inside a command.
-- Five are named limits. One is that lessons were shown but no agent checked or cited one (row 119).
+- Six are named limits. One is that lessons were shown but no agent checked or cited one (row 119).
 
 ## Verified live, not only in unit tests
 

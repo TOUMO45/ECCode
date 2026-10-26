@@ -256,15 +256,21 @@ The criteria were unchanged. Since the pilot, a fix or debug item records a less
 - **Correctness (no criterion):** among the Mealie runs that finished, the engine missed one hidden check in 18 runs, and the bare agent none in 19.
 - **Cost:** $48.57 of its $145 ceiling.
 
-**Found and fixed (rows 109–124):**
+**Found and fixed (rows 109–128):**
 - a gate that could be neither reviewed nor resubmitted after its artifact changed;
 - the refactor baseline checked only at verification;
 - an evidence timeout that left the tests running;
 - six guard misreads;
 - deleting git-ignored artifacts refused by ownership;
 - an identity gap no run used: `ECCODE_ACTOR` set inside a main-session command;
-- found by an independent review of those fixes: a check that outlived a killed eccode process, and two read-only tools that write files (`sort -o`, `uniq`).
+- found by an independent review of those fixes: a check that outlived a killed eccode process, and two read-only tools that write files (`sort -o`, `uniq`);
+- found by its Part A:
+  - `mutate` leaving a timed-out mutant's tests running;
+  - compat reading a deleted dev script's definitions as API;
+  - four measurement instruments that could not see what they measured. The route table saw none of Mealie's API routes, in the pilot too, so route recall had never been measured.
 
-Each has a test that failed first. Five limits are named, among them that the recorded lessons were shown to later agents but never used (row 119), and a rework deadlock (row 120).
+Each has a test that failed first. Six limits are named, among them that the recorded lessons were shown to later agents but never used (row 119), a rework deadlock (row 120), and migration edits reported whatever they change (row 126).
+
+**Part A** ([report](../bench/pilot-results/2026-10-25-mealie-rerun-part-a.md)): 14 of 17 criteria met as measured, on history none of the fixes saw. Missed: impact's share of the suite and compat precision (0.571; 0.80 after the fix).
 
 **Not shown:** that the engine raises correctness where bare agents fail, or that the fixes made after this run raise delivery.

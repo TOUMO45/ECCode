@@ -45,8 +45,13 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
   - no record failed its audit.
 - **Delivery is still short** of the 80% rule. 7 of 20 items were delivered in the registered reading, where a container restart cut the last four items of each chain. 11 of 20 were delivered when the chains continued.
 - **The bare agent was right almost every time.** Among the Mealie runs that finished, it missed no hidden check, and the engine missed one. On the greenfield service, the bare agent missed one and the engine none.
+- **The model-free half met 14 of its 17 criteria on fresh history.** Checking the instruments found two of them blind:
+  - the route table saw none of Mealie's API routes, in the pilot as well;
+  - the frontend checks failed on both sides for environment reasons.
 
-  See [the rerun report](bench/pilot-results/2026-10-25-mealie-rerun.md).
+  Those, a `mutate` timeout that left tests running, and a compat misread are fixed with tests. Afterwards compat precision was 0.80, and the first route removal the table could see was detected.
+
+  See [the rerun report](bench/pilot-results/2026-10-25-mealie-rerun.md) and [its Part A](bench/pilot-results/2026-10-25-mealie-rerun-part-a.md).
 
 **Sized to the task.** One record carries many deliveries: after `deliver`, `eccode work start --track feature|refactor|fix|quick|greenfield` opens the next work item with gates sized to its risk. On an existing codebase, `eccode onboard` briefs agents first (modules, entry points, hot spots, most-depended files) and `eccode impact` names what a change reaches before it is made. See [docs/senior-engineering.md](docs/senior-engineering.md).
 
