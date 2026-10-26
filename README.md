@@ -49,7 +49,12 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
   - the route table saw none of Mealie's API routes, in the pilot as well;
   - the frontend checks failed on both sides for environment reasons.
 
-  Those, a `mutate` timeout that left tests running, and a compat misread are fixed with tests. Afterwards compat precision was 0.80, and the first route removal the table could see was detected.
+  Those are fixed with tests, along with four engine defects the checks turned up:
+  - timeouts in `mutate` and `stack run` that left tests running;
+  - compat reading a dev script as API;
+  - compat missing routes on routers with other names.
+
+  Afterwards compat precision was 0.80 on fresh history, and route recall 1 of 1 in each window.
 
   See [the rerun report](bench/pilot-results/2026-10-25-mealie-rerun.md) and [its Part A](bench/pilot-results/2026-10-25-mealie-rerun-part-a.md).
 

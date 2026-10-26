@@ -256,7 +256,7 @@ The criteria were unchanged. Since the pilot, a fix or debug item records a less
 - **Correctness (no criterion):** among the Mealie runs that finished, the engine missed one hidden check in 18 runs, and the bare agent none in 19.
 - **Cost:** $48.57 of its $145 ceiling.
 
-**Found and fixed (rows 109–128):**
+**Found and fixed (rows 109–130):**
 - a gate that could be neither reviewed nor resubmitted after its artifact changed;
 - the refactor baseline checked only at verification;
 - an evidence timeout that left the tests running;
@@ -265,8 +265,8 @@ The criteria were unchanged. Since the pilot, a fix or debug item records a less
 - an identity gap no run used: `ECCODE_ACTOR` set inside a main-session command;
 - found by an independent review of those fixes: a check that outlived a killed eccode process, and two read-only tools that write files (`sort -o`, `uniq`);
 - found by its Part A:
-  - `mutate` leaving a timed-out mutant's tests running;
-  - compat reading a deleted dev script's definitions as API;
+  - `mutate` leaving a timed-out mutant's tests running, and `stack run` reporting a timed-out check as a failure;
+  - compat reading a deleted dev script's definitions as API, and missing routes on routers with other names;
   - four measurement instruments that could not see what they measured. The route table saw none of Mealie's API routes, in the pilot too, so route recall had never been measured.
 
 Each has a test that failed first. Six limits are named, among them that the recorded lessons were shown to later agents but never used (row 119), a rework deadlock (row 120), and migration edits reported whatever they change (row 126).

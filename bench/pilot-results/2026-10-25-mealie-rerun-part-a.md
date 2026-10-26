@@ -49,8 +49,11 @@ ECCode ran at the protocol commit `8662f5e`, after Parts B and C ended, with no 
     - the definitions of a deleted standalone dev script (fixed, row 125);
     - edits to applied migrations that change nothing a database ran (named, row 126).
 - **Each defect is fixed with a test that failed first; the after-fix figures are below, run post hoc and not registered.**
-  - Compat precision rises to 0.80 (8 of 10). Route recall is 1 of 1 on W2's sample, the first removal the table could see.
+  - Compat precision rises to 0.80 (8 of 10).
+  - Route recall is 1 of 1 on W2's sample, the first removal the table could see.
+  - On the pilot's window W, the table then found a removal compat missed: the route sat on `user_router`, and compat read only routers named `router` and the like, which left 36 of Mealie's 272 route decorators unseen (row 129). Fixed, W gives 1 of 1.
   - A6 has no false positives, and A7's frontend checks pass both ways.
+  - Under load, A7's after-fix run also showed that `stack run` reported a timed-out check as a failure (row 130).
 
 ## Reading the measures
 
@@ -96,6 +99,8 @@ ECCode ran at the protocol commit `8662f5e`, after Parts B and C ended, with no 
 | 126 | An edit to an applied migration is reported whatever it changes | Named: telling a connection cleanup from a changed operation needs the migration's meaning, not its text. The finding names the file, so the author can say why the edit is safe |
 | 127 | Part A's instruments assumed the pilot's environment:<br>• the route table read only top-level routes;<br>• A4's oracle used its own verdict names;<br>• A6's scratch repo had no lint configuration;<br>• A7 ran the frontend with yarn | Fixed, each with a test:<br>• the table walks FastAPI's included routers (`fastapi-routes.py`);<br>• the oracle uses `fix verify`'s names;<br>• the scratch repo keeps `pyproject.toml` and the other lint configuration;<br>• A7 takes the package manager from the commit's lockfile (tests/pilot.test.js) |
 | 128 | A timed-out mutant's tests went on running after `mutate` moved on | Fixed: each mutant's command runs in its own process group, stopped whole when it ends or times out (lib/mutate.js; tests/mutate.test.js) |
+| 129 | Compat read routes only on routers named `router`, `app`, `api`, `bp` or `blueprint` (found after the table fix, on W) | Fixed: routers named `<name>_router`, `<name>Router` and the like are read too (lib/compat.js; tests/compat.test.js) |
+| 130 | `stack run` reported a timed-out check as exit 1, with no word of the timeout, gave every check a fixed 600 s, and left its tests running (found by the after-fix A7) | Fixed: grouped and stopped whole; the timeout is reported with `--timeout`, which `stack run` now takes (lib/stack.js; tests/stack.test.js). A7 gives both sides the same 30 minutes |
 | 101 | pnpm refused the benchmark's linked `node_modules` | Mitigated: every Mealie task, and the Part A environment, sets `pnpm_config_verify_deps_before_run=false` (tests/mealie.test.js). `go-task` is still not installed |
 
 ## After the fixes (post hoc, not registered)

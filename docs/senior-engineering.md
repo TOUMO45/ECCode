@@ -176,7 +176,7 @@ Results:
   - **`fix verify`:** agreement with running the tests directly went from 0.974 to 1.0 (row 77).
   - **`mutate`:** runs completed (0.976 both times), but 16 of 41 real fixes get no mutant, because it has no statement-deletion operator (row 78).
   - **Stack detection:** it now finds the Node frontend beside the Python backend, and its five checks match the tools run directly (row 80).
-  - **Route-removal recall:** no verdict. The rerun found the reason: the route table read only FastAPI's top-level routes, and saw none of Mealie's API (row 127). Fixed, it found W_ROUTES_SHORT (row 76).
+  - **Route-removal recall:** no verdict. The rerun found the reason: the route table read only FastAPI's top-level routes, and saw none of Mealie's API (row 127). Fixed, it found one removal in each window's sample: compat detected W2's, and W's once it read routes on routers of other names (rows 76, 129).
 - **Parts B and C:** at the protocol commit the engine missed every engine criterion except "no record fails its audit".
   - **Delivery:** 6 of 20 Mealie items were delivered with a clean audit, against a rule of 80% per chain (row 104). The quick and debug items were delivered in both chains.
   - **Friction:** 1.79 false refusals per engine item, against a rule of at most 1 (row 105).
@@ -236,10 +236,11 @@ The items were fresh, because the pilot's items are not sampled twice with the s
 - Two of the "met" rows and the route criterion rested on instruments that could not see what they measured (row 127):
   - the route table read no API route;
   - the frontend checks failed on both sides.
-- `mutate` left a timed-out mutant's tests running (row 128).
+- `mutate` left a timed-out mutant's tests running (row 128), and `stack run` reported a timed-out check as a failure (row 130).
+- Compat could not see routes on routers with other names, 36 of Mealie's 272 (row 129).
 
-**Found:** rows 109–128.
-- Fourteen are defects, each fixed with a test that failed first (one found by an independent review of the fixes). 16 of the batch's 20 false refusals were in their classes.
+**Found:** rows 109–130.
+- Sixteen are defects, each fixed with a test that failed first (one found by an independent review of the fixes). 16 of the batch's 20 false refusals were in their classes.
 - The fixes include an identity gap no run used: the main session could set `ECCODE_ACTOR` inside a command.
 - Six are named limits. One is that lessons were shown but no agent checked or cited one (row 119).
 

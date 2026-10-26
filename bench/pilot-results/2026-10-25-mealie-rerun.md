@@ -37,14 +37,14 @@ This rerun asks the same questions of the fixed engine, on ten fresh Mealie chan
   - **Registered reading:** 11 of 20 runs passed every hidden check, against 16 of 20 (stratified permutation test, p = 0.03). All of that gap is runs the restart cut or never started.
   - **Continued reading:** 17 of 20 against 19 of 20 (p = 0.58).
   - **Runs that finished:** the engine missed one hidden check in 18 runs, the bare agent none in 19.
-- **What the batch and its Part A found.** 20 register rows (109–128):
-  - 14 closed with fixes and tests:
+- **What the batch and its Part A found.** 22 register rows (109–130):
+  - 16 closed with fixes and tests:
     - a gate dead end;
     - the refactor baseline checked too late;
-    - evidence and `mutate` timeouts that left the tests running;
+    - evidence, `mutate` and `stack run` timeouts that left the tests running (and, for `stack run`, read as a failure);
     - six guard misreads;
     - an identity gap no run used;
-    - compat reading a standalone script as API;
+    - compat reading a standalone script as API, and missing routes on routers with other names;
     - four Part A instruments that could not see what they measured;
   - 6 named as open.
 
@@ -242,7 +242,7 @@ See [the Part A report](2026-10-25-mealie-rerun-part-a.md). It was measured with
   - migration edits are reported whatever they change (row 126).
 - **After the fixes (post hoc):**
   - compat precision 0.80;
-  - route recall 1 of 1 on W2's sample;
+  - route recall 1 of 1 on W2's sample, and 1 of 1 on the pilot's window once compat read every router (row 129);
   - no bug-rule false positive;
   - A7's frontend checks: A7_AFTER.
 
@@ -272,6 +272,8 @@ Those were fixed the same way.
 | 125 | Compat read a standalone Python script's definitions as public API (Part A) | A script (main guard, outside any package, imported by nothing) has no import surface |
 | 127 | Four Part A instruments assumed the pilot's environment (route table, A4's verdict names, A6's lint configuration, A7's package manager) | Each fixed; see the Part A report |
 | 128 | `mutate` left a timed-out mutant's tests running (Part A) | Each mutant's command runs in its own process group, stopped whole |
+| 129 | Compat read routes only on routers named `router`, `app`, `api`, `bp` or `blueprint` (Part A, post hoc) | Routers named `<name>_router`, `<name>Router` and the like are read too |
+| 130 | `stack run` reported a timed-out check as exit 1, with no word of the timeout, and left its tests running (Part A, post hoc) | Grouped and stopped whole; the timeout is reported, with `--timeout` |
 
 ## Environment and harness disclosures
 
