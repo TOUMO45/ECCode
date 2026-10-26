@@ -211,3 +211,10 @@ test('a standalone Python script is not public API: its definitions can go; a pa
   for (const f of ['dev/scripts/convert_seed.py', 'pkg/cli.py', 'tools/shared.py']) write(dir, f, '# gone\n');
   assert.deepStrictEqual(compat.detect(dir, base, ['**']).map((d) => d.name).sort(), ['pkg/cli.py#main', 'pkg/cli.py#transform', 'tools/shared.py#main', 'tools/shared.py#transform']);
 });
+
+test('routes are read on routers of any name: user_router, item_router, userRouter', () => {
+  const py = '@user_router.get("/refresh")\nasync def refresh():\n    pass\n\n@item_router.post("/items/{id}")\ndef add():\n    pass\n\n@cache.get("key")\ndef cached():\n    pass\n';
+  assert.deepStrictEqual(compat.routesIn('mealie/routes/auth.py', py), ['GET /refresh', 'POST /items/{id}']);
+  const js = "userRouter.get('/users', list);\nadmin_router.delete('/users/:id', drop);\nconfig.get('/not-a-route');\n";
+  assert.deepStrictEqual(compat.routesIn('src/routes.js', js), ['DELETE /users/:id', 'GET /users']);
+});
