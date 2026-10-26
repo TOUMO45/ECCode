@@ -1015,3 +1015,52 @@ test('proof run: the primary verdict waits for stage 2, needs runs on the hard i
   assert.match(report({ stage1: bareOnly, stage2: null, labels: {}, friction: { refusals: 0, unlabelled: [], false: 0, runs: 0, perRun: null } }), /Friction:\*\* no verdict: no engine run/);
   assert.match(report({ stage1: [{ ...row('w1', 'a', 'without', true), durationMs: undefined }], stage2: null, labels: {} }), /Median run time: engine — min, bare — min/);
 });
+
+test('multifile run: stage 1 is bare-only; hard items by agent error; at most 6 go to stage 2, drawn deterministically in upstream order', () => {
+  const { report, chooseHard } = require('../bench/pilot/multifile');
+  const order = (id) => 'abcdefgh'.indexOf(id) + 1;
+  const row = (process, task, variant, ok) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, durationMs: 60000, usage: { costUsd: 1 } });
+  assert.throws(() => report({ stage1: [row('w1', 'a', 'without', true), row('e1', 'a', 'engine', true)], stage2: null, labels: {}, order }), /stage 1 is bare-only/);
+  assert.deepStrictEqual(chooseHard(['c', 'a', 'b'], order), ['a', 'b', 'c'], 'all of them, in upstream order');
+  const eight = 'hgfedcba'.split('');
+  const six = chooseHard(eight, order);
+  assert.strictEqual(six.length, 6);
+  assert.strictEqual(new Set(six).size, 6);
+  assert.ok(six.every((x) => eight.includes(x)));
+  assert.deepStrictEqual(six, [...six].sort((x, y) => order(x) - order(y)), 'in upstream order');
+  assert.deepStrictEqual(chooseHard(eight, order), six, 'the same draw every time');
+  assert.deepStrictEqual(chooseHard([...eight].reverse(), order), six, 'whatever order the hard items come in');
+});
+
+test('multifile run: the report\'s primary verdict, secondary criteria over stage-2 engine runs, and an item a ceiling cut to one variant', () => {
+  const { report } = require('../bench/pilot/multifile');
+  const order = (id) => 'abc'.indexOf(id) + 1;
+  const row = (process, task, variant, ok) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, durationMs: variant === 'engine' ? 3600000 : 600000, usage: { costUsd: variant === 'engine' ? 6 : 1 }, engine: variant === 'engine' ? { delivered: true, auditOk: true } : undefined });
+  const stage1 = ['a', 'b', 'c'].flatMap((t) => [row('w1', t, 'without', false), row('w1', t, 'without', true), row('w1', t, 'without', true)]);
+  const labels = { 'w1:a:1': { label: 'agent-error' }, 'w1:b:1': { label: 'agent-error' }, 'w1:c:1': { label: 'agent-error' } };
+  const six = (f) => [0, 1, 2, 3, 4, 5].map(f);
+  const stage2 = [
+    ...['a', 'b'].flatMap((t) => [...six((i) => row('s2w', t, 'without', i < 2)), ...six(() => row('s2e1', t, 'engine', true))]),
+    ...six(() => row('s2w', 'c', 'without', false)), // the engine process for c stopped at its ceiling
+  ];
+  const friction = { refusals: 30, unlabelled: [], false: 3, runs: 12, perRun: 0.25 };
+  const md = report({ stage1, stage2, labels, friction, order });
+  assert.match(md, /Hard items[^\n]*: a, b, c/);
+  assert.match(md, /Primary:\*\* met: engine 12\/12, bare 4\/18/);
+  assert.match(md, /Stratified permutation test[^\n]*\(2 items/, 'c has no runs of both variants');
+  assert.match(md, /\| c \| 0\/6 \| no engine run \|/);
+  assert.match(md, /Delivery:\*\* 12\/12 stage-2 engine runs on the hard items \(100%\)[^\n]*met/);
+  assert.match(md, /Friction:\*\* 3 false refusals in 12 stage-2 engine runs on the hard items \(0\.25 per run\)[^\n]*met/);
+  assert.match(md, /Median cost, engine over bare: 6\.0×/);
+  assert.match(md, /Stage 1, all items: bare 6\/9/);
+  const two = report({ stage1, stage2, labels: { ...labels, 'w1:c:1': { label: 'spec-gap' } }, order });
+  assert.match(two, /Primary:\*\* no verdict[^\n]*2 hard items, fewer than 3 hard items/);
+  assert.match(report({ stage1, stage2: null, labels, order }), /Primary:\*\* pending: 3 hard items, stage 2 not run yet/);
+});
+
+test('multifile run: tests in the patch counts tests/ and frontend spec files only', () => {
+  const { withTests } = require('../bench/pilot/multifile');
+  const patch = (...files) => files.map((f) => `diff --git a/${f} b/${f}\n--- a/${f}\n+++ b/${f}\n`).join('');
+  const rows = [{ patch: patch('mealie/x.py', 'tests/unit_tests/test_x.py') }, { patch: patch('mealie/x.py') }, { patch: patch('frontend/composables/a.spec.ts') }, { patch: patch('frontend/lib/b.test.ts') }, {}];
+  assert.deepStrictEqual(withTests(rows), { n: 3, runs: 5 });
+});
