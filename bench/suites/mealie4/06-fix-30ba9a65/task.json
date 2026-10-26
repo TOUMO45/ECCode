@@ -1,0 +1,47 @@
+{
+  "id": "mealie4-06-fix-30ba9a65",
+  "category": "fix-30ba9a65",
+  "order": 6,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "0314e875b400ba2dab278afedae7bd5a9bf74ebd"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-e926cd36ad3a/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: recipe pictures disappear after an edit, and recipes without a picture keep asking for one that 404s.\n\nThe frontend decides whether a recipe has a picture from the recipe's image value (the cache key stored in recipes.image): empty means no picture (it shows the placeholder and requests nothing), anything else means it requests the picture from /api/media/recipes/{id}/images/.... That value has drifted out of sync with the files on disk, in both directions:\n\n1. Edits clear it. Upload a picture with PUT /api/recipes/{slug}/image (form field extension \"jpg\", file field image); it answers 200 with a non-empty image key. Then GET /api/recipes/{slug}, remove the image key from the JSON and PUT the rest back to /api/recipes/{slug}. The update answers 200, but the recipe's image is now null, although GET /api/media/recipes/{id}/images/original.webp still serves the file. The picture vanishes from the UI.\n2. Scraping sets it regardless. finalize_scraped_recipe(recipe, translator), the step create_from_html uses to finish a scraped recipe, gives the recipe a fresh cache key whether or not an image was downloaded: also when there is no image URL, when the image is the placeholder \"no image\", and when the download produced nothing. When the download raises, it stores \"no image\", which also reads as \"has a picture\". Every render of such a recipe then requests a file that 404s.\n\nExpected:\n- A PUT /api/recipes/{slug} whose body has no image key answers 200 and keeps the stored image: a later GET returns exactly the key the upload returned, and GET /api/media/recipes/{id}/images/original.webp still answers 200. An explicit \"image\": null still clears it (GET then returns null), and an explicit value is still stored as given.\n- RecipeDataService.scrape_image(image_url) returns the Path of the image file it wrote, or None when nothing was downloaded (the request failed or gave no usable response). It still raises, as today, for non-image content and for input it cannot read a URL from.\n- finalize_scraped_recipe downloads through RecipeDataService.scrape_image (on a RecipeDataService for the recipe, called with just the image URL) and leaves a fresh non-empty cache key in image only when that call returned a path. In every other case image ends up empty (None): when the call returned None, when the image is None or \"no image\" (no download is attempted for those), and when the download raised. Name and slug handling stay as they are.\n- The same rule applies wherever an image is fetched: POST /api/recipes/{slug}/image with a URL whose download yields no file answers 400 with an ErrorResponse saying the image could not be downloaded, and leaves the recipe's image as it was; recipes created by the data migrations (importers) never keep the source's image reference (an archive path or a URL) as their image value, and get a cache key only once their image file has been written.\n- Existing installs are repaired once by a new Alembic migration with revision id 4b91d3a7c0e2, revising f2191b69db2e (the current head), so it becomes the only head. Its file is named by the project's migration file template (so the name carries the revision id), with a create date later than the newest existing migration's, so the files still sort in revision order. Upgrade: a recipe whose folder holds images/original.webp but whose image is empty or \"no image\" gets a new cache key; a recipe whose image is set but which has no such file gets NULL. If some recipes reference an image but no recipe has an image file at all (for example, the data volume is not mounted), nothing is cleared; only the repairs are made. Downgrade does nothing.\n- That migration module can be imported on its own, outside an Alembic run, and has a module-level function _image_on_disk that takes two positional arguments, the recipe data directory (a Path) and a recipe id, and returns a bool. It is True exactly when <data directory>/<recipe id as a dashed UUID string>/images/original.webp is a file. The id may arrive as a uuid.UUID (Postgres), as the dashed string, or as the 32-character undashed hex string SQLite stores; all three find the same file. It is False when the recipe's images folder exists without original.webp (for a UUID and for the undashed hex alike). It only looks and creates no folders.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests tests/integration_tests/user_recipe_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: fix missing images / keep recipes.image in sync with the images on disk (#8276)",
+  "track": "fix",
+  "fixCommit": "30ba9a65409fc0dfa8ca44797d747cc66244eada",
+  "hidden": {
+    "fromSource": {
+      "commit": "30ba9a65409fc0dfa8ca44797d747cc66244eada",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py",
+        "tests/unit_tests/services_tests/scraper_tests/test_scraper.py",
+        "tests/unit_tests/test_recipe_image_backfill.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_update_without_image_field_keeps_image\" \"tests/unit_tests/services_tests/scraper_tests/test_scraper.py::test_finalize_only_stamps_a_cache_key_when_an_image_landed[download-failed]\" \"tests/unit_tests/services_tests/scraper_tests/test_scraper.py::test_finalize_only_stamps_a_cache_key_when_an_image_landed[placeholder-url]\" \"tests/unit_tests/services_tests/scraper_tests/test_scraper.py::test_finalize_only_stamps_a_cache_key_when_an_image_landed[no-image-url]\" \"tests/unit_tests/test_recipe_image_backfill.py::test_image_on_disk_finds_every_id_spelling\" \"tests/unit_tests/test_recipe_image_backfill.py::test_image_on_disk_is_false_without_a_file\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py\" \"tests/unit_tests/services_tests/scraper_tests/test_scraper.py\" \"tests/unit_tests/test_recipe_image_backfill.py\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py::test_recipe_update_without_image_field_keeps_image\" --deselect \"tests/unit_tests/services_tests/scraper_tests/test_scraper.py::test_finalize_only_stamps_a_cache_key_when_an_image_landed[download-failed]\" --deselect \"tests/unit_tests/services_tests/scraper_tests/test_scraper.py::test_finalize_only_stamps_a_cache_key_when_an_image_landed[placeholder-url]\" --deselect \"tests/unit_tests/services_tests/scraper_tests/test_scraper.py::test_finalize_only_stamps_a_cache_key_when_an_image_landed[no-image-url]\" --deselect \"tests/unit_tests/test_recipe_image_backfill.py::test_image_on_disk_finds_every_id_spelling\" --deselect \"tests/unit_tests/test_recipe_image_backfill.py::test_image_on_disk_is_false_without_a_file\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 6,
+    "regression": 8,
+    "failingBeforeAndAfter": []
+  }
+}

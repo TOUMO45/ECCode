@@ -1,0 +1,46 @@
+{
+  "id": "mealie4-08-fix-e1c228e6",
+  "category": "fix-e1c228e6",
+  "order": 8,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "ba61719d098cefaa7e35c97c07fec470d4cef431"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-dfc5aadca0e0/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: notification titles and meal plan notifications are always in English.\n\nNotifications sent through the event bus (Apprise and the other listeners) get their title from EventBusMessage.from_type, which turns the event type's name into English (EventTypes.mealplan_entry_created becomes \"Mealplan Entry Created\"). Meal plan entries also send a hard-coded English body naming the date and the raw entry type value. Users who run Mealie in another language still get English, and \"Mealplan\" is not even a word.\n\nExpected:\n1. EventBusMessage.from_type(event_type, body=\"\", translator=None) takes a new optional keyword argument translator, after body; EventBusMessage and EventTypes stay where they are. A translator is anything with t(key, default=None, **kwargs), such as a JsonProvider (mealie.pkgs.i18n.json_provider) or what get_locale_provider returns.\n   - With a translator, the title is its translation of notifications.event-title.<name>, where <name> is the EventTypes member name with underscores replaced by hyphens (mealplan_entry_created uses notifications.event-title.mealplan-entry-created). Example: with a JsonProvider built from a dict in which notifications > event-title > mealplan-entry-created is \"已创建膳食计划条目\", and body \"测试正文\", the title is \"已创建膳食计划条目\" and the body stays \"测试正文\".\n   - If the translator has no such key, the title falls back to today's English title, never the key itself: with JsonProvider({}) it is \"Mealplan Entry Created\".\n   - Without a translator nothing changes: title \"Mealplan Entry Created\", the body as given, and an empty body still becomes \"generic\".\n2. The backend's en-US translation catalogue (the one get_locale_provider serves for en-US, which already holds notifications.generic-created and mealplan.no-recipes-match-your-rules) gains:\n   - a notifications.event-title.<name> entry for every one of the 27 EventTypes members, from test-message and webhook-task through label-deleted, none missing. The English titles are the member names in title case, except that the three meal plan titles read \"Meal Plan Entry Created\", \"Meal Plan Entry Updated\" and \"Meal Plan Entry Deleted\". So from_type(EventTypes.mealplan_entry_created, translator=JsonProvider(<that catalogue>)) gives the title \"Meal Plan Entry Created\".\n   - mealplan.entry-type.<type> for each meal plan entry type (breakfast, lunch, dinner, side, snack, drink, dessert), each the lower-case English word (mealplan.entry-type.dinner is \"dinner\").\n   - notifications.mealplan-entry-created, notifications.mealplan-entry-updated and notifications.mealplan-entry-deleted, with the placeholders {date} and {entry_type}. Translating notifications.mealplan-entry-created with date \"2026-08-17\" and entry_type set to the translation of mealplan.entry-type.dinner gives exactly \"Meal plan entry created for 2026-08-17 for dinner\"; the updated and deleted messages read the same with \"updated\" and \"deleted\".\n   - a body for the test notification.\n3. Events raised while handling a request use that request's language (Accept-Language): meal plan entry notifications (POST /api/households/mealplans, POST /api/households/mealplans/random, PUT and DELETE /api/households/mealplans/{item_id}) get the translated title and the translated body above, with the translated entry type (the raw value when there is no translation), and the test notification (POST /api/households/events/notifications/{item_id}/test) gets a translated title and body. Events raised outside a request, such as by scheduled tasks, keep the English title.\n\nThe meal plan rule summaries in the UI are frontend work and not part of this task.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/services_tests tests/integration_tests/user_household_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: localize meal plan rule summaries and notifications (#8102)",
+  "track": "fix",
+  "fixCommit": "e1c228e6e2b307aa8536cb779a99013e46974e93",
+  "hidden": {
+    "fromSource": {
+      "commit": "e1c228e6e2b307aa8536cb779a99013e46974e93",
+      "paths": [
+        "tests/unit_tests/services_tests/event_bus_service/__init__.py",
+        "tests/unit_tests/services_tests/event_bus_service/test_event_types.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/event_bus_service/test_event_types.py::test_event_message_uses_localized_title\" \"tests/unit_tests/services_tests/event_bus_service/test_event_types.py::test_event_message_uses_fallback_for_missing_translation\" \"tests/unit_tests/services_tests/event_bus_service/test_event_types.py::test_english_notification_translations\" \"tests/unit_tests/services_tests/event_bus_service/test_event_types.py::test_every_event_type_has_an_english_title_translation\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/unit_tests/services_tests/event_bus_service/test_event_types.py\" --deselect \"tests/unit_tests/services_tests/event_bus_service/test_event_types.py::test_event_message_uses_localized_title\" --deselect \"tests/unit_tests/services_tests/event_bus_service/test_event_types.py::test_event_message_uses_fallback_for_missing_translation\" --deselect \"tests/unit_tests/services_tests/event_bus_service/test_event_types.py::test_english_notification_translations\" --deselect \"tests/unit_tests/services_tests/event_bus_service/test_event_types.py::test_every_event_type_has_an_english_title_translation\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 4,
+    "regression": 2,
+    "failingBeforeAndAfter": []
+  }
+}

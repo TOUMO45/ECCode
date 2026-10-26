@@ -1,0 +1,45 @@
+{
+  "id": "mealie4-15-feature-c935e04f",
+  "category": "feature-c935e04f",
+  "order": 15,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "cd2097ee9de9c2c2c3f8c831859d72bd02ff9f7d"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-f961f39ac8aa/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING ",
+  "title": "feat: declare route permissions with a require() dependency (#8763)",
+  "track": "feature",
+  "fixCommit": "c935e04fb90730a9b7f3f000dd0fc0362c07bce1",
+  "hidden": {
+    "fromSource": {
+      "commit": "c935e04fb90730a9b7f3f000dd0fc0362c07bce1",
+      "paths": [
+        "tests/integration_tests/test_route_permissions.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/test_route_permissions.py::test_routes_declare_expected_permissions\" \"tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:organize-can_organize]\" \"tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:manage-can_manage]\" \"tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:invite-can_invite]\" \"tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[household:manage-can_manage_household]\" \"tests/integration_tests/test_route_permissions.py::test_require_any_valid_user_allows_any_user\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/test_openapi.py\" \"tests/integration_tests/test_repository_factory.py\" \"tests/integration_tests/test_spa.py\" \"tests/integration_tests/test_validators.py\" --deselect \"tests/integration_tests/test_route_permissions.py::test_routes_declare_expected_permissions\" --deselect \"tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:organize-can_organize]\" --deselect \"tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:manage-can_manage]\" --deselect \"tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:invite-can_invite]\" --deselect \"tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[household:manage-can_manage_household]\" --deselect \"tests/integration_tests/test_route_permissions.py::test_require_any_valid_user_allows_any_user\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 6,
+    "regression": 51,
+    "failingBeforeAndAfter": []
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "id": "mealie4-12-fix-ec3e0305",
+  "category": "fix-ec3e0305",
+  "order": 12,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "4a280cbdd096d74e2b46f860b1c6ab27a93640a4"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-9002883a3889/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: recipes still expose a group-wide \"last made\" date that mixes households.\n\nLast-made dates are tracked per household. PATCH /api/recipes/{slug}/last-made records the time for the caller's household, and GET /api/households/self/recipes/{slug} returns it as lastMade. But each recipe also still carries a group-wide lastMade, the latest date any household made it. This value is updated in the background whenever a household's date changes, and also by the meal-plan timeline task. It appears as lastMade in recipe JSON (GET /api/recipes/{slug}, recipe lists, suggestions and the public explore pages), so users see another household's activity as if it were theirs. Anonymous visitors of a public group can also sort and filter recipes by it.\n\nExpected:\n\n1. The recipe schemas Recipe and RecipeSummary no longer have a last_made field, so recipe JSON (a single recipe, lists, suggestions and the explore endpoints) has no lastMade key at all. HouseholdRecipeSummary (in mealie.schema.household.household) keeps last_made, and it becomes the only place where the value is exposed.\n\n2. Nothing writes the group-wide value any more. Keep the recipes.last_made column and the RecipeModel.last_made attribute: household-aware lastMade filtering and sorting, and cookbook filter validation, are built on them, and the column may be read directly. Leave its value NULL, with no database migration. For example, after anyone calls PATCH /api/recipes/{slug}/last-made, selecting RecipeModel.last_made for that recipe from the database gives None. The same holds after the meal-plan timeline task (create_mealplan_timeline_events) runs.\n\n3. Per-household behaviour stays as it is:\n   - PATCH /api/recipes/{slug}/last-made stays in the API and answers 200 for any user of the group, including on another household's recipe, whether or not that household is private or locks recipe edits, and on locked recipes.\n   - It sets the caller's household's lastMade to exactly the given timestamp, even when that is earlier than the stored one. A UTC ISO timestamp sent with a \"Z\" suffix is returned as the same string by GET /api/households/self/recipes/{slug}.\n   - Other households are not affected, and their lastMade stays null.\n   - The meal-plan timeline task still creates the event and sets the household's lastMade to today. It changes nothing else on the recipe apart from dateUpdated and updatedAt.\n\n4. Recipe queries made for a signed-in user (a recipes repository bound with by_user, as GET /api/recipes is) keep supporting lastMade in orderBy and queryFilter. As today, it is resolved against that user's household. Cookbooks can still be saved with a lastMade filter.\n\n5. The public explore endpoints have no household, so they must refuse lastMade instead of using a stale value:\n   - GET /api/explore/groups/{group_slug}/recipes and GET /api/explore/groups/{group_slug}/recipes/suggestions answer 400 when orderBy names lastMade (or last_made, also inside a comma-separated list or with a :asc/:desc suffix).\n   - They also answer 400 when queryFilter has a condition on lastMade, e.g. \"lastMade IS NOT NULL\".\n   - The same applies to the filter of a public cookbook selected with ?cookbook=<id>: a public cookbook in a public household whose filter is \"lastMade IS NOT NULL\" gives 400.\n   - Only conditions on the attribute count. queryFilter 'name = \"last_made\"' still answers 200, and an invalid filter such as 'name IS \"last_made\"' still answers 400, as any invalid filter does.\n   - All other public queries behave as before.\n\n6. CopyMeThat import: the export marks some recipes as made (\"I made this\", the made_this element). The importer used to put that on the group-wide value. Instead, it now records the import time as the importing user's household's last-made date for those recipes. After importing tests/data/migrations/copymethat.zip, GET /api/households/self/recipes/spam-zoodles with the importer's token answers 200 with a non-empty lastMade, and every report entry is still a success.\n\nUI changes are not part of this task.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/public_explorer_tests tests/integration_tests/user_recipe_tests tests/integration_tests/recipe_migration_tests tests/integration_tests/test_openapi.py tests/unit_tests/repository_tests tests/unit_tests/services_tests/scheduler` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: remove aggregate recipe last made data (#7907)",
+  "track": "fix",
+  "fixCommit": "ec3e0305498e41780130e6018a263d022df7a5e6",
+  "hidden": {
+    "fromSource": {
+      "commit": "ec3e0305498e41780130e6018a263d022df7a5e6",
+      "paths": [
+        "tests/integration_tests/public_explorer_tests/test_public_recipes.py",
+        "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py",
+        "tests/integration_tests/test_openapi.py",
+        "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py",
+        "tests/integration_tests/user_recipe_tests/test_recipe_owner.py",
+        "tests/unit_tests/repository_tests/test_pagination.py",
+        "tests/unit_tests/services_tests/scheduler/tasks/test_create_timeline_events.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/public_explorer_tests/test_public_recipes.py::test_public_recipes_reject_household_last_made_queries\" \"tests/integration_tests/public_explorer_tests/test_public_recipes.py::test_public_cookbook_rejects_household_last_made_filter\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[copymethat_archive]\" \"tests/integration_tests/test_openapi.py::test_last_made_is_only_exposed_on_household_recipes\" \"tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[True-True]\" \"tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[True-False]\" \"tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[False-True]\" \"tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[False-False]\" \"tests/integration_tests/user_recipe_tests/test_recipe_owner.py::test_user_update_last_made\" \"tests/unit_tests/services_tests/scheduler/tasks/test_create_timeline_events.py::test_new_mealplan_event\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/public_explorer_tests/test_public_recipes.py\" \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py\" \"tests/integration_tests/test_openapi.py\" \"tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py\" \"tests/integration_tests/user_recipe_tests/test_recipe_owner.py\" \"tests/unit_tests/repository_tests/test_pagination.py\" \"tests/unit_tests/services_tests/scheduler/tasks/test_create_timeline_events.py\" --deselect \"tests/integration_tests/public_explorer_tests/test_public_recipes.py::test_public_recipes_reject_household_last_made_queries\" --deselect \"tests/integration_tests/public_explorer_tests/test_public_recipes.py::test_public_cookbook_rejects_household_last_made_filter\" --deselect \"tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[copymethat_archive]\" --deselect \"tests/integration_tests/test_openapi.py::test_last_made_is_only_exposed_on_household_recipes\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[True-True]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[True-False]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[False-True]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_user_can_update_last_made_on_other_household[False-False]\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_owner.py::test_user_update_last_made\" --deselect \"tests/unit_tests/services_tests/scheduler/tasks/test_create_timeline_events.py::test_new_mealplan_event\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 10,
+    "regression": 184,
+    "failingBeforeAndAfter": []
+  }
+}

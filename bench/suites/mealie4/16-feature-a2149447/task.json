@@ -1,0 +1,45 @@
+{
+  "id": "mealie4-16-feature-a2149447",
+  "category": "feature-a2149447",
+  "order": 16,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "c701777c25890c38e48d1d8ddd371dd9169fcb97"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-f961f39ac8aa/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING PENDING ",
+  "title": "feat: enforce route permission helpers with semgrep in CI (#8769)",
+  "track": "feature",
+  "fixCommit": "a2149447d98b9bfb34a3dc5b223e1aa9aa8be6b1",
+  "hidden": {
+    "fromSource": {
+      "commit": "a2149447d98b9bfb34a3dc5b223e1aa9aa8be6b1",
+      "paths": [
+        "tests/integration_tests/test_route_permissions.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/test_route_permissions.py::test_routes_declare_expected_permissions\" \"tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/invitations]\" \"tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/invitations/email]\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/test_route_permissions.py\" --deselect \"tests/integration_tests/test_route_permissions.py::test_routes_declare_expected_permissions\" --deselect \"tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/invitations]\" --deselect \"tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/invitations/email]\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 3,
+    "regression": 69,
+    "failingBeforeAndAfter": []
+  }
+}
