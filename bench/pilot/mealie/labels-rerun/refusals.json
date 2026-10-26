@@ -11,6 +11,18 @@
   "label": "correct",
   "reason": "the refactor track needs the behaviour command recorded passing before the first claim, to prove the baseline was green; nobody recorded it (the rule is checked only at verification, when it can no longer be met: register row)"
  },
+ "b1/eccode-chain-engine-TXdB9H-10-mealie2-10-security/635139dd-eee6-4b53-9691-85fcdb5afa43.jsonl:305": {
+  "label": "correct",
+  "reason": "the main session is the orchestrator and may not act as another role (by design: roles are separate agents)"
+ },
+ "b1/eccode-chain-engine-TXdB9H-10-mealie2-10-security/635139dd-eee6-4b53-9691-85fcdb5afa43.jsonl:83": {
+  "label": "correct",
+  "reason": "ECCode's guard held the command for a human because its eccode identity was built with shell expansion (by design: identity is read from the command text, row 23); a headless run has no human, so the ask became a refusal"
+ },
+ "b1/eccode-chain-engine-TXdB9H-10-mealie2-10-security/635139dd-eee6-4b53-9691-85fcdb5afa43/subagents/agent-af48b15d8a3e287bd.jsonl:72": {
+  "label": "correct",
+  "reason": "a review may cite the submission, approved artifacts or recorded evidence; the reviewer cited project files outside them (an evidence run would have pinned them)"
+ },
  "b1/eccode-chain-engine-TXdB9H-2-mealie2-02-fix/f66ceb21-6911-45c0-9aa8-aafa86accf15.jsonl:100": {
   "label": "correct",
   "reason": "ECCode's guard held the command for a human because its eccode identity was built with shell expansion (by design: identity is read from the command text, row 23); a headless run has no human, so the ask became a refusal"
@@ -259,6 +271,10 @@
   "label": "agent-error",
   "reason": "the handoff named another task than the one being completed"
  },
+ "b1/eccode-chain-engine-TXdB9H-9-mealie2-09-debug/18dbaad7-1f45-4f91-9db0-5b267fb03327/subagents/agent-ac9482cb79e7ff32c.jsonl:39": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-TXdB9H && cat > /tmp/probe.py <<'E' from ingredie`"
+ },
  "b2/eccode-chain-engine-t8OdJ2-1-mealie2-01-refactor/f1543bf5-7e5a-4c11-93fb-863b0a484350.jsonl:135": {
   "label": "harness",
   "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `ps -eo pid,etime,args | grep \"[p]ytest\" | head -20`"
@@ -286,6 +302,30 @@
  "b2/eccode-chain-engine-t8OdJ2-1-mealie2-01-refactor/f1543bf5-7e5a-4c11-93fb-863b0a484350/subagents/agent-acb393a18fbc8dc59.jsonl:117": {
   "label": "false",
   "reason": "the engineer deleted tests/.temp, a git-ignored build or test artifact, not a project file; ownership covered it anyway, so housekeeping that protects nothing was refused"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-10-mealie2-10-security/924c9d7f-6529-4f7c-a305-e838a226d493.jsonl:210": {
+  "label": "correct",
+  "reason": "the main session is the orchestrator and may not act as another role (by design: roles are separate agents)"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-10-mealie2-10-security/924c9d7f-6529-4f7c-a305-e838a226d493.jsonl:28": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:other denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && node .claude/eccode/bin/eccode.js recov`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-10-mealie2-10-security/924c9d7f-6529-4f7c-a305-e838a226d493.jsonl:56": {
+  "label": "correct",
+  "reason": "ECCode's guard held the command for a human because its eccode identity was built with shell expansion (by design: identity is read from the command text, row 23); a headless run has no human, so the ask became a refusal"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-10-mealie2-10-security/924c9d7f-6529-4f7c-a305-e838a226d493.jsonl:92": {
+  "label": "correct",
+  "reason": "ECCode's guard held the command for a human because its eccode identity was built with shell expansion (by design: identity is read from the command text, row 23); a headless run has no human, so the ask became a refusal"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-10-mealie2-10-security/924c9d7f-6529-4f7c-a305-e838a226d493/subagents/agent-ad705db58d6e1621c.jsonl:48": {
+  "label": "agent-error",
+  "reason": "the engineer ran fix verify after writing the test but before making the fix; fix verify compares the code before and after a fix, and no source file had changed yet"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-10-mealie2-10-security/924c9d7f-6529-4f7c-a305-e838a226d493/subagents/agent-af0ecc5f55bde33a4.jsonl:34": {
+  "label": "false",
+  "reason": "the guard read the stderr redirection 2>&1 as the destination of cp; the real destination was /tmp/oldchk, outside the project"
  },
  "b2/eccode-chain-engine-t8OdJ2-2-mealie2-02-fix/c8190f59-0d2c-421b-b827-a4be1c3eb981.jsonl:104": {
   "label": "correct",
@@ -578,6 +618,82 @@
  "b2/eccode-chain-engine-t8OdJ2-7-mealie2-07-migration/8eaeb8bf-f813-435f-b9f8-5cd09dcd6497/subagents/agent-ac41201287368f218.jsonl:37": {
   "label": "harness",
   "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && git worktree remove --force /tmp/mp/bas`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d.jsonl:182": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:subcommandResults denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && node .claude/eccode/bin/eccode.js run e`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d.jsonl:193": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:subcommandResults denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && ls frontend/node_modules 2>&1 | head -3`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d.jsonl:220": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:subcommandResults denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && which task node pnpm npm yarn; ls front`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d.jsonl:231": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:unknown denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && ls -d frontend/node_modules`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d.jsonl:242": {
+  "label": "correct",
+  "reason": "the main session is the orchestrator and may not act as another role (by design: roles are separate agents)"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d.jsonl:80": {
+  "label": "correct",
+  "reason": "ECCode's guard held the command for a human because its eccode identity was built with shell expansion (by design: identity is read from the command text, row 23); a headless run has no human, so the ask became a refusal"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-a0ccb8a9899fd1865.jsonl:117": {
+  "label": "agent-error",
+  "reason": "the review file did not follow its schema"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-a0ccb8a9899fd1865.jsonl:123": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:unknown denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && sed -i 's/\"description\": \"The file-dele`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-a0ccb8a9899fd1865.jsonl:25": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && cat > /tmp/br_test.py <<'EOF' from path`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-a0ccb8a9899fd1865.jsonl:39": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && uv run python /tmp/brtest/br_test.py 2>`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-a144d8aa8e88c1a46.jsonl:21": {
+  "label": "correct",
+  "reason": "the phase still had a pending task (its frontend task could not run its planned check: go-task is not installed in the benchmark environment, noted in the report)"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-a720931c0a5f6c9e4.jsonl:100": {
+  "label": "agent-error",
+  "reason": "the handoff file did not follow its schema"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-a720931c0a5f6c9e4.jsonl:73": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && cat > /tmp/chk.py <<'EOF' from mealie.c`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-a744650e3a93b5382.jsonl:71": {
+  "label": "agent-error",
+  "reason": "the handoff file did not follow its schema"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-a9b700e03e78c2c8a.jsonl:100": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:unknown denial is the benchmark's --allowedTools list: `ls /tmp/mp/eccode-chain-engine-t8OdJ2/frontend/node_modules/.bin/vitest`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-a9b700e03e78c2c8a.jsonl:39": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:subcommandResults denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2/frontend/app; grep -rln \"AppLogo\\|appName\\`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-8-mealie2-08-routes/0f305f6a-dcfd-4675-a2b0-15b4143c283d/subagents/agent-ab5b5092e2a177131.jsonl:38": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:subcommandResults denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && ls mealie/core/settings mealie/routes/s`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-9-mealie2-09-debug/df3bdf37-34c7-48ea-9c6d-11e3795c24cb/subagents/agent-ad9f0ad92808ed6a7.jsonl:76": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && git stash -q -- mealie && python -c \" i`"
+ },
+ "b2/eccode-chain-engine-t8OdJ2-9-mealie2-09-debug/df3bdf37-34c7-48ea-9c6d-11e3795c24cb/subagents/agent-ad9f0ad92808ed6a7.jsonl:94": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-t8OdJ2 && PYTHONPATH=. python /tmp/mp/probe_fix.p`"
  },
  "c1/eccode-chain-engine-66qRPU-1-pantry-c1/396666e9-4c3c-4b22-afd8-490e28fd4f4e.jsonl:254": {
   "label": "harness",
@@ -994,5 +1110,53 @@
  "c1/eccode-chain-engine-arhPm2-2-pantry-c2/8ed7b752-23dd-4d3e-86b1-6f1bda7c2512/subagents/agent-af63bfc822a456d82.jsonl:59": {
   "label": "agent-error",
   "reason": "the review cited prose (\"plan validate output\", \"npm test run in this review\") as evidence ids; evidence is cited by its ev: id"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a.jsonl:230": {
+  "label": "correct",
+  "reason": "the main session is the orchestrator and may not act as another role (by design: roles are separate agents)"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a.jsonl:53": {
+  "label": "correct",
+  "reason": "ECCode's guard held the command for a human because its eccode identity was built with shell expansion (by design: identity is read from the command text, row 23); a headless run has no human, so the ask became a refusal"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a/subagents/agent-a35bc44d54352e5bf.jsonl:61": {
+  "label": "agent-error",
+  "reason": "the review cited prose (\"rerun of node --test …: 31 pass\") as an evidence id; evidence is cited by its ev: id"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a/subagents/agent-a3ede91ff935b1a4c.jsonl:44": {
+  "label": "agent-error",
+  "reason": "the review file did not follow its schema"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a/subagents/agent-a827827245d138ce1.jsonl:198": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:too-complex denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-arhPm2 && python3 - <<'EOF' 2>&1 | head -3 print(`"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a/subagents/agent-a827827245d138ce1.jsonl:65": {
+  "label": "false",
+  "reason": "the test engineer edited test files it owned after cd into test/; parentheses inside the quoted sed expression made the guard assume a subshell, drop the cd, and resolve server.test.js at the project root"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a/subagents/agent-ab4b11d5c94698895.jsonl:110": {
+  "label": "agent-error",
+  "reason": "the review file did not follow its schema"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a/subagents/agent-ab4b11d5c94698895.jsonl:117": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:unknown denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-arhPm2 && sed -i 's/\"detail\": \"The diff to the ex`"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a/subagents/agent-ab4b11d5c94698895.jsonl:26": {
+  "label": "agent-error",
+  "reason": "evidence run without its required --label"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a/subagents/agent-ae4208a9d79782999.jsonl:118": {
+  "label": "correct",
+  "reason": "lean and compat rules: changed logic with no test or reason, and a migration that drops a table without a declaration (the handoff also cited an evidence id that does not exist)"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a/subagents/agent-ae4208a9d79782999.jsonl:133": {
+  "label": "agent-error",
+  "reason": "the handoff cited evidence without its ev: prefix, so no passing check was found"
+ },
+ "c1/eccode-chain-engine-arhPm2-3-pantry-c3/0ac28c5a-be5e-4c60-9be9-adaa44baec7a/subagents/agent-ae4208a9d79782999.jsonl:61": {
+  "label": "harness",
+  "reason": "the guard profile adds no permission rules, so this config:bashMiss:no-rule-match denial is the benchmark's --allowedTools list: `cd /tmp/mp/eccode-chain-engine-arhPm2 && python3 -I - <<'EOF' p='src/server.js' `"
  }
 }
