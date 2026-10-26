@@ -197,3 +197,17 @@ test('a migration is a file a migration tool would run: versioned or dated, or u
   for (const f of ['mealie/services/migrations/paprika.py', 'mealie/services/migrations/utils/migration_helpers.py', 'shop/migrations/__init__.py', 'shop/migrations/0004_remove.py', 'db/migrate/20240101_add_users.rb', 'prisma/migrations/20240101_init/migration.sql', 'mealie/alembic/versions/b3f1c9a27d84_add.py', 'sql/migrations/V2__add.sql', 'migrations/001_init.sql']) write(dir, f, '-- x\n');
   assert.deepStrictEqual(Object.keys(compat.snapshot(dir, ['**']).migrations).sort(), ['db/migrate/20240101_add_users.rb', 'mealie/alembic/versions/b3f1c9a27d84_add.py', 'migrations/001_init.sql', 'prisma/migrations/20240101_init/migration.sql', 'shop/migrations/0004_remove.py', 'sql/migrations/V2__add.sql']);
 });
+
+test('a standalone Python script is not public API: its definitions can go; a package module or an imported script cannot', () => {
+  const dir = scratch();
+  const MAIN = 'def transform():\n    return 1\n\n\ndef main():\n    transform()\n\n\nif __name__ == "__main__":\n    main()\n';
+  write(dir, 'dev/scripts/convert_seed.py', MAIN);
+  write(dir, 'pkg/__init__.py', '');
+  write(dir, 'pkg/cli.py', MAIN);
+  write(dir, 'tools/shared.py', MAIN);
+  write(dir, 'tools/report.py', 'from shared import transform\n\nif __name__ == "__main__":\n    transform()\n');
+  const base = compat.snapshot(dir, ['**']);
+  assert.ok(!('dev/scripts/convert_seed.py' in base.exports), 'a script outside any package, imported by nothing, has no import surface');
+  for (const f of ['dev/scripts/convert_seed.py', 'pkg/cli.py', 'tools/shared.py']) write(dir, f, '# gone\n');
+  assert.deepStrictEqual(compat.detect(dir, base, ['**']).map((d) => d.name).sort(), ['pkg/cli.py#main', 'pkg/cli.py#transform', 'tools/shared.py#main', 'tools/shared.py#transform']);
+});

@@ -99,6 +99,9 @@ function taskEnvVars(venv) {
     VIRTUAL_ENV: venv,
     UV_PROJECT_ENVIRONMENT: venv,
     PYTHONDONTWRITEBYTECODE: '1',
+    // pnpm 10+ checks the install before each script and reinstalls when it
+    // cannot tell, which it refuses for node_modules linked from outside the tree.
+    pnpm_config_verify_deps_before_run: 'false',
   };
 }
 

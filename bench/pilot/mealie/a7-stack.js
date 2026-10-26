@@ -14,19 +14,28 @@ const stack = require('../../../lib/stack');
 const { loadConfig } = require('../../../lib/config');
 const env = require('../../suites/mealie/_tools/env');
 
-// How Mealie's own Taskfile.yml runs each tool at the pin, from the repository
-// root (Python tools there run through `uv run`; here the venv is first on PATH;
-// `yarn test` is vitest, and test:ci is its no-watch form).
-const DIRECT = {
+// How Mealie's own Taskfile.yml runs each tool at the commit, from the
+// repository root (Python tools there run through `uv run`; here the venv is
+// first on PATH; `test` is vitest, and test:ci is its no-watch form). The
+// frontend's package manager is the one its lockfile names: yarn at the
+// pilot's pin, pnpm at the rerun's.
+const PYTHON_DIRECT = {
   pytest: 'python -m pytest -q -p no:cacheprovider',
   ruff: 'ruff check mealie',
   mypy: 'mypy mealie',
-  eslint: 'cd frontend && yarn lint --max-warnings=0',
-  vitest: 'cd frontend && yarn test:ci',
 };
+const frontendDirect = (manager) => ({
+  eslint: `cd frontend && ${manager} lint --max-warnings=0`,
+  vitest: `cd frontend && ${manager} test:ci`,
+});
+
+function directFor(root) {
+  const lock = env.lockfileOf(path.join(root, 'frontend'));
+  return { ...PYTHON_DIRECT, ...frontendDirect(lock ? lock.manager : 'yarn') };
+}
 
 function toolOf(check) {
-  return Object.keys(DIRECT).find((t) => new RegExp(`\\b${t}\\b`).test(`${check.id} ${check.command || ''} ${check.script || ''}`)) || null;
+  return Object.keys({ ...PYTHON_DIRECT, ...frontendDirect('') }).find((t) => new RegExp(`\\b${t}\\b`).test(`${check.id} ${check.command || ''} ${check.script || ''}`)) || null;
 }
 
 function main(argv) {
@@ -46,6 +55,7 @@ function main(argv) {
       const config = loadConfig(root);
       const stacks = stack.detect(root);
       const checks = stack.checks(root, config);
+      const DIRECT = directFor(root);
       const rows = checks.filter((c) => c.id !== 'eccode-secrets').map((c) => {
         if (!c.available) return { id: c.id, command: c.command, available: false };
         const started = Date.now();
@@ -72,6 +82,6 @@ function main(argv) {
   }
 }
 
-module.exports = { toolOf, DIRECT };
+module.exports = { toolOf, directFor };
 
 if (require.main === module) main(process.argv.slice(2));

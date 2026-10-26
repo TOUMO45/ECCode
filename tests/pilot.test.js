@@ -574,22 +574,31 @@ test('pantry: the dev copy of the fake Mealie server is the hidden one', () => {
   assert.strictEqual(fs.readFileSync(path.join(PANTRY, 'c1', 'fixture', 'dev', 'fake-mealie', 'server.js'), 'utf8'), fs.readFileSync(path.join(PANTRY, '_hidden', 'fake-mealie', 'server.js'), 'utf8'));
 });
 
-test('A7: the direct commands are the ones Mealie\'s own Taskfile runs at P', (t) => {
+test('A7: the direct commands are the ones Mealie\'s own Taskfile runs, with the package manager of the commit', (t) => {
   const lib = require('../bench/pilot/lib');
-  const { DIRECT } = require('../bench/pilot/mealie/a7-stack');
+  const { directFor } = require('../bench/pilot/mealie/a7-stack');
   const mirror = lib.mealieMirror();
   if (!fs.existsSync(mirror)) return t.skip(`no Mealie mirror at ${mirror}`);
-  const P = 'dbe84cc91b9e1dfc88b783a1e31d8a8495800337';
-  const show = (f) => execFileSync('git', ['--git-dir', mirror, 'show', `${P}:${f}`], { encoding: 'utf8' });
-  const taskfile = show('Taskfile.yml');
-  // Python tools run through `uv run` there; here the venv is first on PATH.
-  for (const tool of ['ruff', 'mypy']) assert.ok(taskfile.includes(`uv run ${DIRECT[tool]}\n`), `${tool}: Taskfile runs "uv run ${DIRECT[tool]}"`);
-  assert.ok(taskfile.includes('uv run pytest'), 'pytest through uv run');
-  assert.match(DIRECT.pytest, /^python -m pytest\b/);
-  // Frontend tasks run in frontend/; `yarn test` is vitest, test:ci its no-watch form.
-  assert.strictEqual(DIRECT.eslint, `cd frontend && ${taskfile.match(/ui:lint:[\s\S]*?- (yarn lint[^\n]*)/)[1]}`);
-  assert.match(show('frontend/package.json'), /"test:ci": "vitest --watch=false"/);
-  assert.strictEqual(DIRECT.vitest, 'cd frontend && yarn test:ci');
+  // P, the pilot's pin (yarn), and P2, the rerun's (pnpm 11).
+  for (const [commit, manager] of [['dbe84cc91b9e1dfc88b783a1e31d8a8495800337', 'yarn'], ['dedc6cc75f2bd8e89108ad998970e7bdf6d4444f', 'pnpm']]) {
+    const show = (f) => execFileSync('git', ['--git-dir', mirror, 'show', `${commit}:${f}`], { encoding: 'utf8' });
+    const tree = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-a7-'));
+    for (const f of execFileSync('git', ['--git-dir', mirror, 'ls-tree', '--name-only', commit, 'frontend/'], { encoding: 'utf8' }).split('\n').filter((x) => /lock|pnpm-workspace/.test(x))) {
+      fs.mkdirSync(path.join(tree, 'frontend'), { recursive: true });
+      fs.writeFileSync(path.join(tree, f), '');
+    }
+    const DIRECT = directFor(tree);
+    const taskfile = show('Taskfile.yml');
+    // Python tools run through `uv run` there; here the venv is first on PATH.
+    for (const tool of ['ruff', 'mypy']) assert.ok(taskfile.includes(`uv run ${DIRECT[tool]}\n`), `${commit.slice(0, 8)} ${tool}: Taskfile runs "uv run ${DIRECT[tool]}"`);
+    assert.ok(taskfile.includes('uv run pytest'), 'pytest through uv run');
+    assert.match(DIRECT.pytest, /^python -m pytest\b/);
+    // Frontend tasks run in frontend/; `test` is vitest, test:ci its no-watch form.
+    assert.strictEqual(DIRECT.eslint, `cd frontend && ${taskfile.match(new RegExp(`ui:lint:[\\s\\S]*?- (${manager} lint[^\\n]*)`))[1]}`, `${commit.slice(0, 8)} eslint`);
+    assert.match(show('frontend/package.json'), /"test:ci": "vitest --watch=false"/);
+    assert.strictEqual(DIRECT.vitest, `cd frontend && ${manager} test:ci`, `${commit.slice(0, 8)} vitest`);
+    fs.rmSync(tree, { recursive: true, force: true });
+  }
 });
 
 test('report: fix verify agreement counts the disagreements labelled engine-wrong; an unlabelled one leaves no verdict', () => {
@@ -850,4 +859,12 @@ test('readings: registered, its sensitivity without runs that have no result lin
   assert.deepStrictEqual(tasks('continued', 'b1'), ['i1', 'i2', 'i3', 'chain-summary']);
   assert.strictEqual(JSON.parse(fs.readFileSync(path.join(out.continued, 'b1.jsonl'), 'utf8').split('\n')[2]).usage.turns, 4);
   assert.ok(fs.existsSync(path.join(out.registered, 'tr-b1')), 'transcripts are reachable from every reading');
+});
+
+test('A4: the oracle names its verdicts as fix verify does', () => {
+  const { expectedVerdict } = require('../bench/pilot/mealie/a4-fixverify');
+  assert.strictEqual(expectedVerdict({ code: 0 }, { code: 0 }), 'tests-pass-without-fix');
+  assert.strictEqual(expectedVerdict({ code: 1, out: 'E   assert 1 == 2' }, { code: 1 }), 'fix-fails-tests');
+  assert.strictEqual(expectedVerdict({ code: 1, out: "ImportError: cannot import name 'x'" }, { code: 0 }), 'inconclusive');
+  assert.strictEqual(expectedVerdict({ code: 1, out: 'E   assert 500 == 200' }, { code: 0 }), 'proven');
 });

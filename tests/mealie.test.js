@@ -114,3 +114,14 @@ test('mealie env: the frontend lockfile names the package manager (yarn before #
   fs.writeFileSync(path.join(dir, 'pnpm-lock.yaml'), "lockfileVersion: '9.0'\n");
   assert.deepStrictEqual(lockfileOf(dir), { manager: 'pnpm', file: 'pnpm-lock.yaml' }, 'pnpm wins when both exist (the switch kept no yarn.lock, but be explicit)');
 });
+
+test('mealie env: pnpm\'s pre-run deps check is off, so a linked node_modules is not reinstalled (it refuses one outside the tree)', () => {
+  const { taskEnvVars } = require(path.join(TOOLS, 'env.js'));
+  assert.strictEqual(taskEnvVars('/v').pnpm_config_verify_deps_before_run, 'false');
+  for (const { dir } of SUITES) {
+    for (const d of fs.readdirSync(dir).filter((x) => /^\d\d-/.test(x))) {
+      const task = JSON.parse(fs.readFileSync(path.join(dir, d, 'task.json'), 'utf8'));
+      assert.strictEqual(task.env.pnpm_config_verify_deps_before_run, 'false', `${path.basename(dir)}/${d}`);
+    }
+  }
+});

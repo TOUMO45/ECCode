@@ -71,7 +71,7 @@ function main() {
       category: it.category,
       order,
       source: { repo: lib.MEALIE, commit: it.source },
-      env: { PATH: `\${ECCODE_MEALIE_ENVS}/py-${venvKey(mirror, it.source)}/bin:\${PATH}`, PYTHONDONTWRITEBYTECODE: '1', ECCODE_MEALIE_ENVS: '${ECCODE_MEALIE_ENVS}' },
+      env: { PATH: `\${ECCODE_MEALIE_ENVS}/py-${venvKey(mirror, it.source)}/bin:\${PATH}`, PYTHONDONTWRITEBYTECODE: '1', pnpm_config_verify_deps_before_run: 'false', ECCODE_MEALIE_ENVS: '${ECCODE_MEALIE_ENVS}' },
       // The venv and node_modules live outside the sandbox; this links and
       // prepares them for the item's tree (cheap once built by setup.sh).
       setup: 'node "$ECCODE_BENCH_TASK_DIR/../_tools/env.js" python . > /dev/null && node "$ECCODE_BENCH_TASK_DIR/../_tools/env.js" node . > /dev/null',
