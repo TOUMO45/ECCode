@@ -152,7 +152,7 @@ This was decided after the registered result was known. It is reported as a lead
 | Bare | 30 of 38 | 5 runs: `I001` (unsorted imports, 3), `B904`, `E501` | 6 runs |
 | Engine | 37 of 38 | none | 1 run |
 
-- **One finding checked by hand:** the `B904` is real. A bare patch for item 11 raises `HTTPException` inside an `except` block without `from`.
+- **Findings checked by hand:** the `B904` is real. A bare patch for item 11 raises `HTTPException` inside an `except` block without `from`. One bare run on item 05 left a scratch test file in the project (`test_tmp_chk.py`), the file ruff would reformat.
 - **The difference:** 0.18 (about 7 runs in 38), p = 0.024 by the same stratified test.
 - **How to read it:** it is one post hoc measure, chosen after the primary result was known. It would need its own registered run to count. It fits what the records show: engine runs ran ruff and the project's checks as evidence before delivery.
 - **How it was checked:** the first version of the script could not see formatting, because ruff 0.17 words its output differently. This was caught on a test file and fixed by reading the exit code of a per-file `ruff format --check`. The comparison was then rerun from scratch, and the committed tool reproduces it.
@@ -178,14 +178,15 @@ The guard's rule in row 91 stays as it is. Judging the line segment by segment w
   - **The defect:** Claude Code refuses a subagent's Write of a Markdown file whose name matches `^(REPORT|SUMMARY|FINDINGS|ANALYSIS).*\.md$` (case-insensitive), as its own code shows. The delivery lead was told to write `.eccode/artifacts/verification/report.md`.
   - **The effect:** every engine run hit it. The delivery leads always got the report written another way, but four submits sent in the same batch found no file.
   - **History:** it was already in the rerun's transcripts and went unnoticed there.
-  - **The fix:** the file is now `verification-report.md`, and a test scans every file shipped to agents for a path that rule refuses.
+  - **The fix:** the file is now `verification-report.md`, and a test scans every file shipped to agents, and the strings the CLI and hooks print, for a path that rule refuses.
 - **Row 132, fixed (`e3e15f8`).**
   - **The defect:** `memory draft` left `failedAttempts` as `[]`, with nothing to show that an entry is `{approach, whyFailed}`. Agents wrote strings, and `memory add` refused the lesson on its schema (8 refusals).
   - **The fix:** the draft now holds one entry with TODO placeholders, to fill in or delete.
 - **Row 133, fixed (`cde1a39`).**
   - **The defect:** `fix verify` called a whole pre-fix run inconclusive when any test failed on a name the fix adds.
   - **The case:** on item 05, 16 tests failed importing a helper the fix adds, and 6 failed assertions through API that existed before it, so the run did show the bug. Recorded as a check, it could not support a review, and two reviewers were refused.
-  - **The fix:** a run is no longer inconclusive on new API when another test's report shows an assertion failure that does not name it. This applies to pytest output; other output keeps the stricter rule.
+  - **The fix:** a run is no longer inconclusive on new API when another test's report, in pytest's FAILURES section, shows an assertion failure that does not name it. Other output keeps the stricter rule.
+  - **Corrected after review:** the independent review of the first version of this fix found two holes. The last report ran on into pytest's short test summary, whose truncated `FAILED ... AssertionError` line could make a run of new-API tests read as proven; and an error at setup counted as a test. Both are fixed with tests, and the rule was checked against real pytest 9.1.1 output.
 - **Row 91, named:** one false refusal (see Refusals).
 
 ## Disclosures
@@ -195,6 +196,7 @@ The guard's rule in row 91 stays as it is. Judging the line segment by segment w
   - each result line as it arrived (pass or fail, delivery, cost);
   - the replays of the failed runs;
   - the refusals, labelled in passes as runs finished, using the rerun's rules and a reading of each remaining refusal's full output, command and record.
+- **An independent review** of the branch's code found, besides the two `fix verify` holes above, that the lint tool would have read a ruff that did not run as clean, and several smaller gaps in the tools and the analysis's edge cases. Each was fixed with a test. The lint figures were recomputed with the corrected tool and did not change.
 - **One labelling error, corrected before the labels were committed.** A rule written for one ownership refusal (a scratch test file) gave its reason to another (an edit of `mealie/pkgs/img/minify.py`). The label, `correct`, did not change. Each rule whose reason describes one case is now pinned to the run it was checked on, and ownership refusals name the file.
 - **Smoke runs** before registration: one bare and one engine run on item 2, both passing, disclosed in the protocol.
 - **Environment:**

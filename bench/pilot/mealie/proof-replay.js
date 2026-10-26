@@ -6,6 +6,8 @@
 // places the hidden tests and runs the target check, keeping all of its
 // output. With --split, a target written as "<backend> && (<frontend>)" runs
 // as its two parts.
+// <n> counts the task's runs in <runs.jsonl> from 1. Pass one process's file
+// (<scratch>/stage1/w2.jsonl) and it is the n of a label key <process>:<task>:<n>.
 // usage: node proof-replay.js <suite dir> <runs.jsonl> <task id> <n> <out dir> [--split]
 const fs = require('fs');
 const path = require('path');

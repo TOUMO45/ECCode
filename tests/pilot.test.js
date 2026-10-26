@@ -977,10 +977,41 @@ test('proof run tools: the replay splits a backend-and-frontend target; the lint
   assert.deepStrictEqual(parts('python -m pytest -q a.py', true), ['python -m pytest -q a.py'], 'a backend-only target stays whole');
   assert.strictEqual(parts('a && (b)', false).length, 1, 'whole unless asked');
   const { changedPython, introduced } = require('../bench/pilot/mealie/proof-lint');
-  const patch = ['diff --git a/m/a.py b/m/a.py', '--- a/m/a.py', '+++ b/m/a.py', 'diff --git a/m/gone.py b/m/gone.py', '--- a/m/gone.py', '+++ /dev/null', 'diff --git a/f/x.ts b/f/x.ts', '+++ b/f/x.ts', '+++ b/m/new.py'].join('\n');
-  assert.deepStrictEqual(changedPython(patch), ['m/a.py', 'm/new.py'], 'added or changed Python files, not deleted ones or other languages');
-  const before = { counts: { 'm/a.py': 2, 'm/new.py': null }, unformatted: new Set(['m/a.py']) };
-  assert.deepStrictEqual(introduced(before, { counts: { 'm/a.py': 2, 'm/new.py': 0 }, unformatted: new Set(['m/a.py']) }), { violations: 0, unformatted: [], clean: true }, 'what was there before is not the patch\'s');
-  assert.deepStrictEqual(introduced(before, { counts: { 'm/a.py': 3, 'm/new.py': 1 }, unformatted: new Set(['m/a.py', 'm/new.py']) }), { violations: 2, unformatted: ['m/new.py'], clean: false });
-  assert.strictEqual(introduced(before, { counts: { 'm/a.py': 1, 'm/new.py': 0 }, unformatted: new Set() }).violations, 0, 'fixing old violations does not offset new ones elsewhere, and is not negative');
+  const patch = ['diff --git a/m/a.py b/m/a.py', '--- a/m/a.py', '+++ b/m/a.py', 'diff --git a/m/gone.py b/m/gone.py', '--- a/m/gone.py', '+++ /dev/null', 'diff --git a/f/x.ts b/f/x.ts', '+++ b/f/x.ts', 'diff --git a/m/new.py b/m/new.py', '+++ b/m/new.py'].join('\n');
+  assert.deepStrictEqual(changedPython(patch).map((f) => f.path), ['m/a.py', 'm/new.py'], 'added or changed Python files, not deleted ones or other languages');
+  const before = { counts: { 'm/a.py': { E501: 2 }, 'm/new.py': null }, unformatted: new Set(['m/a.py']) };
+  assert.deepStrictEqual(introduced(before, { counts: { 'm/a.py': { E501: 2 }, 'm/new.py': {} }, unformatted: new Set(['m/a.py']) }), { violations: 0, codes: [], unformatted: [], clean: true }, 'what was there before is not the patch\'s');
+  assert.deepStrictEqual(introduced(before, { counts: { 'm/a.py': { E501: 3 }, 'm/new.py': { 'I001*': 1 } }, unformatted: new Set(['m/a.py', 'm/new.py']) }), { violations: 2, codes: ['E501', 'I001*'], unformatted: ['m/new.py'], clean: false });
+  assert.strictEqual(introduced(before, { counts: { 'm/a.py': { E501: 1 }, 'm/new.py': {} }, unformatted: new Set() }).violations, 0, 'fixing old violations is not negative');
+});
+
+test('proof lint: a ruff that did not run fails loudly; renames compare with the old file; counts are per code', () => {
+  // Found by the independent review: a missing ruff read as clean, a renamed
+  // file's old violations counted as new, and a removed violation hid a new one.
+  const { changedPython, introduced, ruffStatus } = require('../bench/pilot/mealie/proof-lint');
+  assert.throws(() => ruffStatus({ status: null, error: new Error('spawn ruff ENOENT') }, 'ruff check'), /ruff check did not run/);
+  assert.throws(() => ruffStatus({ status: 2, stderr: 'invalid config' }, 'ruff check'), /ruff check exited 2/);
+  assert.doesNotThrow(() => ruffStatus({ status: 1 }, 'ruff check'));
+  const patch = ['diff --git a/m/old.py b/m/new.py', 'similarity index 90%', 'rename from m/old.py', 'rename to m/new.py', '--- a/m/old.py', '+++ b/m/new.py', 'diff --git a/m/a b.py b/m/a b.py', '--- a/m/a b.py\t', '+++ b/m/a b.py\t'].join('\n');
+  assert.deepStrictEqual(changedPython(patch), [{ path: 'm/new.py', before: 'm/old.py' }, { path: 'm/a b.py', before: 'm/a b.py' }]);
+  const before = { counts: { 'm/a.py': { F401: 1, E501: 1 } }, unformatted: new Set() };
+  assert.deepStrictEqual(introduced(before, { counts: { 'm/a.py': { E501: 1, B904: 1 } }, unformatted: new Set() }), { violations: 1, codes: ['B904'], unformatted: [], clean: false }, 'removing F401 does not hide the new B904');
+});
+
+test('proof run: the primary verdict waits for stage 2, needs runs on the hard items, and follows the test\'s sign; empty inputs do not throw', () => {
+  // Found by the independent review of the report: with 3 hard items and no
+  // stage 2 it printed no primary line, with no stage-2 runs "missed 0/0",
+  // "met" ignored the test's sign, and 0 engine runs threw.
+  const { report } = require('../bench/pilot/proof');
+  const row = (process, task, variant, ok) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, durationMs: 60000, usage: { costUsd: 1 }, engine: variant === 'engine' ? { delivered: true, auditOk: true } : undefined });
+  const stage1 = ['a', 'b', 'c'].flatMap((t) => [row('w1', t, 'without', false), row('e1', t, 'engine', true)]);
+  const labels = { 'w1:a:1': { label: 'agent-error' }, 'w1:b:1': { label: 'agent-error' }, 'w1:c:1': { label: 'agent-error' } };
+  assert.match(report({ stage1, stage2: null, labels }), /Primary:\*\* pending: 3 hard items, stage 2 not run yet/);
+  assert.match(report({ stage1, stage2: [row('w2', 'z', 'without', true)], labels }), /Primary:\*\* no verdict: no stage-2 run on the hard items/);
+  const stage2 = ['a', 'b', 'c'].flatMap((t) => [0, 1, 2, 3].flatMap(() => [row('w2', t, 'without', true), row('e2', t, 'engine', false)]));
+  assert.match(report({ stage1, stage2, labels }), /Primary:\*\* missed: engine 0\/12, bare 12\/12/, 'the bare agent ahead is not met');
+  const bareOnly = [row('w1', 'a', 'without', true)];
+  assert.doesNotThrow(() => report({ stage1: bareOnly, stage2: null, labels: {}, friction: { refusals: 0, unlabelled: [], false: 0, runs: 0, perRun: null } }));
+  assert.match(report({ stage1: bareOnly, stage2: null, labels: {}, friction: { refusals: 0, unlabelled: [], false: 0, runs: 0, perRun: null } }), /Friction:\*\* no verdict: no engine run/);
+  assert.match(report({ stage1: [{ ...row('w1', 'a', 'without', true), durationMs: undefined }], stage2: null, labels: {} }), /Median run time: engine — min, bare — min/);
 });

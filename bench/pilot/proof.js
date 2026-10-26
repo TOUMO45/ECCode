@@ -65,7 +65,8 @@ const walk = (d) => (fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true 
 /**
  * False refusals per engine run (row 105's rule: at most 1). Refusals come
  * from the engine processes' transcripts (tr-<process>), not their record
- * copies, each with the id refusals.js gives it: <process>/<file>:<line>.
+ * copies. Each id is <process>/<file under tr-<process>>:<line>, the
+ * extractor's line id prefixed with where the transcript lies; the labels use it.
  */
 function friction(dir, rows, labels) {
   const procs = [...new Set(rows.filter((r) => r.variant === 'engine').map((r) => r.process))].sort();
@@ -99,19 +100,26 @@ function report({ stage1, stage2, labels, friction: f }) {
   }
   const hard = hardItems(stage1, labels);
   lines.push('', `Hard items (a stage-1 bare run failed by agent error): ${hard.length ? hard.join(', ') : 'none'}.`, '', '## Criteria', '');
+  const p = stage2 && hard.length ? primary(stage2, hard) : null;
+  const ran = p && p.engine.runs + p.without.runs > 0;
   if (hard.length < 3) lines.push(`- **Primary:** no verdict: ${hard.length} hard item${hard.length === 1 ? '' : 's'}, fewer than 3 hard items.`);
-  if (stage2 && hard.length) {
-    const p = primary(stage2, hard);
-    const met = p.test && p.engine.passed / p.engine.runs > p.without.passed / p.without.runs && p.test.p < 0.05;
-    if (hard.length >= 3) lines.push(`- **Primary:** ${met ? 'met' : 'missed'}: engine ${p.engine.passed}/${p.engine.runs}, bare ${p.without.passed}/${p.without.runs} on the hard items in stage 2.`);
-    else lines.push(`  Stage 2 on the hard items: engine ${p.engine.passed}/${p.engine.runs}, bare ${p.without.passed}/${p.without.runs}.`);
+  else if (!stage2) lines.push(`- **Primary:** pending: ${hard.length} hard items, stage 2 not run yet.`);
+  else if (!ran) lines.push('- **Primary:** no verdict: no stage-2 run on the hard items.');
+  else {
+    // The engine's share is higher and the test, whose sign is per item, agrees.
+    const met = Boolean(p.test) && p.engine.runs > 0 && p.without.runs > 0 && p.engine.passed / p.engine.runs > p.without.passed / p.without.runs && p.test.delta > 0 && p.test.p < 0.05;
+    lines.push(`- **Primary:** ${met ? 'met' : 'missed'}: engine ${p.engine.passed}/${p.engine.runs}, bare ${p.without.passed}/${p.without.runs} on the hard items in stage 2.`);
+  }
+  if (ran) {
+    if (hard.length < 3) lines.push(`  Stage 2 on the hard items: engine ${p.engine.passed}/${p.engine.runs}, bare ${p.without.passed}/${p.without.runs}.`);
     lines.push(`  ${testLine(p.test)}`);
   }
   const d = delivery(stage1);
   lines.push(`- **Delivery:** ${d.delivered}/${d.runs} stage-1 engine runs (${d.share === null ? '—' : `${(d.share * 100).toFixed(0)}%`}) delivered with a clean audit; rule at least 80%: ${d.share !== null && d.share >= 0.8 ? 'met' : 'missed'}.`);
   if (f) {
     const n = f.unlabelled.length;
-    lines.push(n
+    if (!f.runs) lines.push('- **Friction:** no verdict: no engine run.');
+    else lines.push(n
       ? `- **Friction:** no verdict yet: ${n} refusal${n === 1 ? '' : 's'} unlabelled.`
       : `- **Friction:** ${f.false} false refusal${f.false === 1 ? '' : 's'} in ${f.runs} stage-1 engine runs (${f.perRun.toFixed(2)} per run) among ${f.refusals} refusals; rule at most 1 per run: ${f.perRun <= 1 ? 'met' : 'missed'}.`);
   }
@@ -119,7 +127,7 @@ function report({ stage1, stage2, labels, friction: f }) {
   lines.push('', '## Reported, no criterion', '', `Stage 1, all items: engine ${s1.engine.passed}/${s1.engine.runs}, bare ${s1.without.passed}/${s1.without.runs}.`, testLine(s1.test));
   const of = (v, g) => median(stage1.filter((r) => r.variant === v).map(g));
   const ratio = of('engine', cost) / of('without', cost);
-  const min = (v) => (of(v, (r) => r.durationMs) / 60000).toFixed(1);
+  const min = (v) => { const m = of(v, (r) => r.durationMs); return m === null ? '—' : (m / 60000).toFixed(1); };
   lines.push(`Median cost, engine over bare: ${Number.isFinite(ratio) ? `${ratio.toFixed(1)}×` : '—'}.`, `Median run time: engine ${min('engine')} min, bare ${min('without')} min.`);
   return `${lines.join('\n')}\n`;
 }
