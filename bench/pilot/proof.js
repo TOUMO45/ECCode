@@ -5,10 +5,11 @@
 // agent-error (the request states what the failing test checks). The primary
 // comparison uses stage-2 runs on the hard items only: the stage-1 bare runs
 // chose the items, so they would bias it.
-// usage: node bench/pilot/proof.js --stage1 <dir> --labels <file> [--stage2 <dir>] [--out <file.md>]
+// usage: node bench/pilot/proof.js --stage1 <dir> --labels <file> [--stage2 <dir>] [--refusals <file>] [--out <file.md>]
 const fs = require('fs');
 const path = require('path');
 const { stratifiedTest } = require('../../lib/bench');
+const { extractRefusals } = require('./refusals');
 
 const readRuns = (dir) => fs.readdirSync(dir).filter((f) => f.endsWith('.jsonl')).sort()
   .flatMap((f) => fs.readFileSync(path.join(dir, f), 'utf8').split('\n').filter((l) => l.trim()).map((l) => ({ process: path.basename(f, '.jsonl'), ...JSON.parse(l) })));
@@ -59,13 +60,37 @@ function delivery(rows) {
   return { delivered, runs: engine.length, share: engine.length ? delivered / engine.length : null };
 }
 
+const walk = (d) => (fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1)).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)])) : []);
+
+/**
+ * False refusals per engine run (row 105's rule: at most 1). Refusals come
+ * from the engine processes' transcripts (tr-<process>), not their record
+ * copies, each with the id refusals.js gives it: <process>/<file>:<line>.
+ */
+function friction(dir, rows, labels) {
+  const procs = [...new Set(rows.filter((r) => r.variant === 'engine').map((r) => r.process))].sort();
+  const refusals = procs.flatMap((proc) => walk(path.join(dir, `tr-${proc}`))
+    .filter((f) => f.endsWith('.jsonl') && !f.includes(`${path.sep}record${path.sep}`))
+    .flatMap((f) => extractRefusals(fs.readFileSync(f, 'utf8'), `${proc}/${path.relative(path.join(dir, `tr-${proc}`), f).split(path.sep).join('/')}`)));
+  const runs = rows.filter((r) => r.variant === 'engine').length;
+  const falseOnes = refusals.filter((x) => labels[x.id] && labels[x.id].label === 'false').length;
+  return { refusals: refusals.length, unlabelled: refusals.filter((x) => !labels[x.id]).map((x) => x.id), false: falseOnes, runs, perRun: runs ? falseOnes / runs : null };
+}
+
 const median = (xs) => {
   const s = xs.filter((x) => typeof x === 'number').sort((a, b) => a - b);
   return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : null;
 };
 const cost = (r) => (r.usage ? r.usage.costUsd : undefined);
 
-function report({ stage1, stage2, labels }) {
+const testLine = (t) => (t ? `Stratified permutation test: difference ${t.delta.toFixed(3)}, p = ${t.p.toFixed(4)} (${t.strata} items, ${t.runs} runs).` : 'Stratified permutation test: no item has runs of both variants.');
+
+/**
+ * The registered analysis: the primary verdict over stage-2 runs on the hard
+ * items, the two secondary criteria over stage-1 engine runs (friction only
+ * once every refusal is labelled), and what is reported without a criterion.
+ */
+function report({ stage1, stage2, labels, friction: f }) {
   const tasks = [...new Set(stage1.map((r) => r.task))].sort();
   const lines = ['# Proof run: analysis', '', '## Stage 1: every item', '', '| Item | Bare passed | Engine passed |', '|---|---|---|'];
   for (const t of tasks) {
@@ -73,25 +98,40 @@ function report({ stage1, stage2, labels }) {
     lines.push(`| ${t} | ${of('without').passed}/${of('without').runs} | ${of('engine').passed}/${of('engine').runs} |`);
   }
   const hard = hardItems(stage1, labels);
-  lines.push('', `Hard items (a stage-1 bare run failed by agent error): ${hard.length ? hard.join(', ') : 'none'}.`);
-  if (stage2) {
+  lines.push('', `Hard items (a stage-1 bare run failed by agent error): ${hard.length ? hard.join(', ') : 'none'}.`, '', '## Criteria', '');
+  if (hard.length < 3) lines.push(`- **Primary:** no verdict: ${hard.length} hard item${hard.length === 1 ? '' : 's'}, fewer than 3 hard items.`);
+  if (stage2 && hard.length) {
     const p = primary(stage2, hard);
-    lines.push('', '## Stage 2: the hard items (primary)', '', `Engine ${p.engine.passed}/${p.engine.runs}, bare ${p.without.passed}/${p.without.runs}.`);
-    if (p.test) lines.push(`Stratified permutation test: difference ${p.test.delta.toFixed(3)}, p = ${p.test.p.toFixed(4)} (${p.test.strata} items, ${p.test.runs} runs).`);
+    const met = p.test && p.engine.passed / p.engine.runs > p.without.passed / p.without.runs && p.test.p < 0.05;
+    if (hard.length >= 3) lines.push(`- **Primary:** ${met ? 'met' : 'missed'}: engine ${p.engine.passed}/${p.engine.runs}, bare ${p.without.passed}/${p.without.runs} on the hard items in stage 2.`);
+    else lines.push(`  Stage 2 on the hard items: engine ${p.engine.passed}/${p.engine.runs}, bare ${p.without.passed}/${p.without.runs}.`);
+    lines.push(`  ${testLine(p.test)}`);
   }
-  const all = stage2 ? stage1.concat(stage2) : stage1;
-  const d = delivery(all);
-  const ratio = median(all.filter((r) => r.variant === 'engine').map(cost)) / median(all.filter((r) => r.variant === 'without').map(cost));
-  lines.push('', '## Delivery and cost (every engine run)', '', `Delivered with a clean audit: ${d.delivered}/${d.runs}${d.share === null ? '' : ` (${(d.share * 100).toFixed(0)}%)`}.`, `Median cost, engine over bare: ${Number.isFinite(ratio) ? `${ratio.toFixed(1)}×` : '—'}.`);
+  const d = delivery(stage1);
+  lines.push(`- **Delivery:** ${d.delivered}/${d.runs} stage-1 engine runs (${d.share === null ? '—' : `${(d.share * 100).toFixed(0)}%`}) delivered with a clean audit; rule at least 80%: ${d.share !== null && d.share >= 0.8 ? 'met' : 'missed'}.`);
+  if (f) {
+    const n = f.unlabelled.length;
+    lines.push(n
+      ? `- **Friction:** no verdict yet: ${n} refusal${n === 1 ? '' : 's'} unlabelled.`
+      : `- **Friction:** ${f.false} false refusal${f.false === 1 ? '' : 's'} in ${f.runs} stage-1 engine runs (${f.perRun.toFixed(2)} per run) among ${f.refusals} refusals; rule at most 1 per run: ${f.perRun <= 1 ? 'met' : 'missed'}.`);
+  }
+  const s1 = primary(stage1, tasks);
+  lines.push('', '## Reported, no criterion', '', `Stage 1, all items: engine ${s1.engine.passed}/${s1.engine.runs}, bare ${s1.without.passed}/${s1.without.runs}.`, testLine(s1.test));
+  const of = (v, g) => median(stage1.filter((r) => r.variant === v).map(g));
+  const ratio = of('engine', cost) / of('without', cost);
+  const min = (v) => (of(v, (r) => r.durationMs) / 60000).toFixed(1);
+  lines.push(`Median cost, engine over bare: ${Number.isFinite(ratio) ? `${ratio.toFixed(1)}×` : '—'}.`, `Median run time: engine ${min('engine')} min, bare ${min('without')} min.`);
   return `${lines.join('\n')}\n`;
 }
 
-module.exports = { readRuns, passed, runKeys, hardItems, primary, delivery, report };
+module.exports = { readRuns, passed, runKeys, hardItems, primary, delivery, friction, report };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);
   const opt = (n) => (argv.includes(`--${n}`) ? argv[argv.indexOf(`--${n}`) + 1] : null);
-  const md = report({ stage1: readRuns(opt('stage1')), stage2: opt('stage2') ? readRuns(opt('stage2')) : null, labels: JSON.parse(fs.readFileSync(opt('labels'), 'utf8')) });
+  const stage1 = readRuns(opt('stage1'));
+  const refusals = opt('refusals') ? JSON.parse(fs.readFileSync(opt('refusals'), 'utf8')) : null;
+  const md = report({ stage1, stage2: opt('stage2') ? readRuns(opt('stage2')) : null, labels: JSON.parse(fs.readFileSync(opt('labels'), 'utf8')), friction: refusals && friction(opt('stage1'), stage1, refusals) });
   if (opt('out')) fs.writeFileSync(opt('out'), md);
   process.stdout.write(md);
 }

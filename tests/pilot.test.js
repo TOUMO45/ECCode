@@ -932,3 +932,41 @@ test('proof run: hard items are those a stage-1 bare run failed by agent error; 
   const d = delivery([row('e1', 'a', 'engine', true, { engine: { delivered: true, auditOk: true } }), row('e1', 'b', 'engine', true, { engine: { delivered: true, auditOk: false } }), { process: 'e1', task: 'c', variant: 'engine' }]);
   assert.deepStrictEqual(d, { delivered: 1, runs: 3, share: 1 / 3 });
 });
+
+test('proof run: friction is the false refusals per engine run, from the engine processes\' transcripts only', () => {
+  const { friction } = require('../bench/pilot/proof');
+  const { write } = require('./helpers');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-proof-friction-'));
+  const use = (id, command) => ({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] } });
+  const refused = (id, text) => ({ type: 'user', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: id, is_error: true, content: text }] } });
+  const jsonl = (events) => `${events.map((e) => JSON.stringify(e)).join('\n')}\n`;
+  const run = 'tr-e1/eccode-bench-x-engine-AAAAAA';
+  write(dir, `${run}/s1.jsonl`, jsonl([use('t1', 'eccode gate submit verification'), refused('t1', 'eccode: [TRACK_RULE] no reproduction pair')]));
+  write(dir, `${run}/s1/subagents/agent-1.jsonl`, jsonl([use('t2', 'eccode memory help'), refused('t2', 'eccode: [USAGE] Unknown memory subcommand')]));
+  write(dir, `${run}/record/events.jsonl`, jsonl([use('t8', 'eccode x'), refused('t8', 'eccode: [USAGE] the record copy is not a transcript')]));
+  write(dir, 'tr-w1/eccode-bench-x-without-BBBBBB/s.jsonl', jsonl([use('t9', 'eccode x'), refused('t9', 'eccode: [USAGE] a bare run is not counted')]));
+  const rows = [{ process: 'e1', task: 'x', variant: 'engine' }, { process: 'e1', task: 'y', variant: 'engine' }, { process: 'w1', task: 'x', variant: 'without' }];
+  const ids = [`e1/eccode-bench-x-engine-AAAAAA/s1.jsonl:2`, `e1/eccode-bench-x-engine-AAAAAA/s1/subagents/agent-1.jsonl:2`];
+  assert.deepStrictEqual(friction(dir, rows, { [ids[0]]: { label: 'false' }, [ids[1]]: { label: 'correct' } }), { refusals: 2, unlabelled: [], false: 1, runs: 2, perRun: 0.5 });
+  assert.deepStrictEqual(friction(dir, rows, {}).unlabelled.sort(), [...ids].sort(), 'every refusal is labelled before the figure');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('proof run: the report gives the primary verdict, both secondary criteria over stage-1 engine runs, and stage-1 correctness', () => {
+  const { report } = require('../bench/pilot/proof');
+  const row = (process, task, variant, ok, extra = {}) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, durationMs: variant === 'engine' ? 600000 : 60000, usage: { costUsd: variant === 'engine' ? 2 : 0.5 }, engine: variant === 'engine' ? { delivered: true, auditOk: true } : undefined, ...extra });
+  const stage1 = [
+    row('w1', 'a', 'without', false), row('w1', 'a', 'without', true), row('w1', 'b', 'without', true), row('w1', 'b', 'without', true),
+    row('e1', 'a', 'engine', true), row('e1', 'a', 'engine', true), row('e1', 'b', 'engine', true), row('e1', 'b', 'engine', true, { engine: { delivered: false } }),
+  ];
+  const md = report({ stage1, stage2: null, labels: { 'w1:a:1': { label: 'spec-gap' } }, friction: { refusals: 9, unlabelled: [], false: 1, runs: 4, perRun: 0.25 } });
+  assert.match(md, /Hard items[^\n]*: none\./);
+  assert.match(md, /Primary[^\n]*no verdict[^\n]*fewer than 3 hard items/i);
+  assert.match(md, /Delivery[^\n]*3\/4 stage-1 engine runs \(75%\)[^\n]*missed/i);
+  assert.match(md, /Friction[^\n]*1 false refusal in 4 stage-1 engine runs \(0\.25 per run\)[^\n]*met/i);
+  assert.match(md, /Stage 1, all items: engine 4\/4, bare 3\/4/);
+  assert.match(md, /Stratified permutation test/);
+  assert.match(md, /Median run time: engine 10\.0 min, bare 1\.0 min/);
+  const unlabelled = report({ stage1, stage2: null, labels: { 'w1:a:1': { label: 'spec-gap' } }, friction: { refusals: 9, unlabelled: ['x'], false: 1, runs: 4, perRun: 0.25 } });
+  assert.match(unlabelled, /Friction[^\n]*1 refusal unlabelled/i, 'no friction verdict before every refusal is labelled');
+});
