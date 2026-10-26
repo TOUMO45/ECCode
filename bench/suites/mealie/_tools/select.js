@@ -12,7 +12,7 @@
 // Frontend items use vitest at the spec-file level. Every skip is recorded
 // with its reason. The refactor item is not drawn (spec: no pure refactor
 // with tests exists in the window); it is written by hand in prompts.json.
-// usage: ECCODE_MEALIE_ENVS=<dir> node select.js [--suite <dir>] [--range v3.20.0..v3.27.0] [--only <category>]
+// usage: ECCODE_MEALIE_ENVS=<dir> node select.js [--suite <dir>] [--range v3.20.0..v3.27.0] [--only <category> | --all]
 // --suite writes <dir>/_tools/selection.json (default: this suite's).
 const fs = require('fs');
 const os = require('os');
@@ -53,6 +53,14 @@ const BASE_POOLS = {
   security: (c) => FIX.test(c.subject) && !DEPS.test(c.subject) && (SECURITY.test(c.subject) || under(c, 'mealie/core/security/').length > 0) && backendTests(c).length > 0,
 };
 const POOLS = Object.fromEntries(Object.entries(BASE_POOLS).map(([k, pred]) => [k, (c) => pred(c) && withinCap(c)]));
+// --all (the proof run's pool, protocol 2026-10-26): every fix or feature in
+// the window that changes mealie/ with backend tests, within the cap, in
+// upstream order, no category quotas. A dependency bump is not a change an
+// agent could be asked to make from a request.
+const BUMP = /\bbump\b/i;
+const ALL_POOL = (c) => (FIX.test(c.subject) || FEAT.test(c.subject)) && !DEPS.test(c.subject) && !BUMP.test(c.subject)
+  && under(c, 'mealie/').length > 0 && backendTests(c).length > 0 && withinCap(c);
+const allKey = (c) => `${FIX.test(c.subject) ? 'fix' : 'feature'}-${c.sha.slice(0, 8)}`;
 // The draw order: fix and debug share one pool, debug taking the next valid commit.
 const ORDER = [['fix', 'fix'], ['debug', 'fix'], ['quick', 'quick'], ['feature', 'feature'], ['migration', 'migration'], ['routes', 'routes'], ['frontend', 'frontend'], ['fullstack', 'fullstack'], ['security', 'security']];
 
@@ -163,6 +171,7 @@ function main(argv) {
     });
     if (c.files.some((f) => f.path.startsWith('mealie/routes/'))) c.routeDiff = spawnSync('git', ['--git-dir', mirror, 'diff', '-U0', c.parent, c.sha, '--', 'mealie/routes'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).stdout;
   }
+  if (argv.includes('--all')) return drawAll(commits, OUT, range);
   const pools = Object.fromEntries(Object.entries(POOLS).map(([k, pred]) => [k, lib.shuffle(commits.filter(pred), bench.mulberry32(42)).map((c) => c.sha)]));
   const prior = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : null;
   const selection = { ...(prior || {}), range, seed: 42, sizeCap: SIZE_CAP, pools, accepted: (prior && prior.accepted) || {}, skipped: (prior && prior.skipped) || [] };
@@ -205,6 +214,34 @@ function main(argv) {
   process.stdout.write(`${Object.keys(selection.accepted).length} accepted, ${selection.skipped.length} skipped\n`);
 }
 
-module.exports = { POOLS, BASE_POOLS, withinCap, SIZE_CAP, junitOutcomes };
+/** --all: validate every eligible commit, in upstream order; each accepted one keyed by allKey. */
+function drawAll(commits, OUT, range) {
+  const prior = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : null;
+  const eligible = commits.filter(ALL_POOL);
+  const selection = { ...(prior || {}), range, mode: 'all', sizeCap: SIZE_CAP, pool: eligible.map((c) => c.sha), accepted: (prior && prior.accepted) || {}, skipped: (prior && prior.skipped) || [] };
+  for (const c of eligible) {
+    const key = allKey(c);
+    if (selection.accepted[key] || selection.skipped.some((s) => s.sha === c.sha)) continue;
+    process.stderr.write(`select: candidate ${c.sha.slice(0, 8)} ${c.subject}\n`);
+    let t;
+    try {
+      t = trees(c);
+      const backend = validateBackend(c, t);
+      const frontend = frontSpecs(c).length ? validateFrontend(c, t) : null;
+      selection.accepted[key] = { sha: c.sha, parent: c.parent, subject: c.subject, hidden: t.hidden, backend, frontend };
+      process.stderr.write(`select: accepted ${key}\n`);
+    } catch (e) {
+      selection.skipped.push({ category: 'all', sha: c.sha, subject: c.subject, reason: String(e.message).split('\n')[0] });
+      process.stderr.write(`select: skipped ${c.sha.slice(0, 8)}: ${String(e.message).split('\n')[0]}\n`);
+    } finally {
+      if (t) t.cleanup();
+    }
+    fs.writeFileSync(OUT, `${JSON.stringify(selection, null, 1)}\n`);
+  }
+  fs.writeFileSync(OUT, `${JSON.stringify(selection, null, 1)}\n`);
+  process.stdout.write(`${Object.keys(selection.accepted).length} accepted, ${selection.skipped.length} skipped\n`);
+}
+
+module.exports = { POOLS, BASE_POOLS, ALL_POOL, allKey, withinCap, SIZE_CAP, junitOutcomes };
 
 if (require.main === module) main(process.argv.slice(2));

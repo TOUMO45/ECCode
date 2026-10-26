@@ -910,3 +910,25 @@ test('A6: a changed-files scratch repo keeps the project\'s lint configuration, 
     s.cleanup();
   }
 });
+
+test('proof run: hard items are those a stage-1 bare run failed by agent error; the primary test uses stage-2 runs on them only', () => {
+  const { runKeys, hardItems, primary, delivery } = require('../bench/pilot/proof');
+  const row = (process, task, variant, ok, extra = {}) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, usage: { costUsd: variant === 'engine' ? 2 : 0.5 }, ...extra });
+  const stage1 = [
+    row('w1', 'a', 'without', false), row('w1', 'a', 'without', true),
+    row('w1', 'b', 'without', false), row('w1', 'c', 'without', true),
+    { process: 'w1', task: 'd', variant: 'without' }, // cut: no result line
+    row('e1', 'a', 'engine', true),
+  ];
+  const keys = runKeys(stage1);
+  assert.deepStrictEqual(keys.slice(0, 3), ['w1:a:1', 'w1:a:2', 'w1:b:1']);
+  const labels = { 'w1:a:1': { label: 'agent-error' }, 'w1:b:1': { label: 'spec-gap' }, 'w1:d:1': { label: 'harness' } };
+  assert.deepStrictEqual(hardItems(stage1, labels), ['a'], 'b is a spec gap, d a harness failure, c passed');
+  assert.throws(() => hardItems(stage1, {}), /unlabelled/, 'every failed bare run is labelled before stage 2');
+  const stage2 = [row('w2', 'a', 'without', false), row('w2', 'a', 'without', false), row('e2', 'a', 'engine', true), row('e2', 'a', 'engine', true), row('e2', 'z', 'engine', false)];
+  const p = primary(stage2, ['a']);
+  assert.deepStrictEqual([p.engine, p.without], [{ passed: 2, runs: 2 }, { passed: 0, runs: 2 }], 'item z is not hard and does not count');
+  assert.strictEqual(p.test.delta, 1);
+  const d = delivery([row('e1', 'a', 'engine', true, { engine: { delivered: true, auditOk: true } }), row('e1', 'b', 'engine', true, { engine: { delivered: true, auditOk: false } }), { process: 'e1', task: 'c', variant: 'engine' }]);
+  assert.deepStrictEqual(d, { delivered: 1, runs: 3, share: 1 / 3 });
+});
