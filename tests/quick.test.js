@@ -236,11 +236,15 @@ test('no file an agent is told to write is one Claude Code refuses to subagents'
   const root = path.join(__dirname, '..');
   const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]));
   const bad = [];
-  for (const f of ['agents', 'skills', 'commands', 'templates'].flatMap((d) => walk(path.join(root, d)))) {
-    for (const m of fs.readFileSync(f, 'utf8').matchAll(/[\w./<>{}-]+\.md\b/g)) {
+  const seen = new Set();
+  // Agents read paths from their files and from strings the CLI and hooks print.
+  for (const f of ['agents', 'skills', 'commands', 'templates', 'lib', 'scripts'].flatMap((d) => walk(path.join(root, d)))) {
+    for (const m of fs.readFileSync(f, 'utf8').matchAll(/[\w./<>{}*$-]+\.md\b/gi)) {
+      seen.add(m[0]);
       if (refused.test(path.basename(m[0]))) bad.push(`${path.relative(root, f)}: ${m[0]}`);
     }
   }
+  assert.ok(seen.has('.eccode/artifacts/verification/verification-report.md'), 'the scan reads the delivery lead\'s instructions');
   assert.deepStrictEqual(bad, []);
 });
 

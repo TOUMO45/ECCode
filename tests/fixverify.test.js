@@ -211,8 +211,37 @@ test('a pre-fix run where other tests fail an assertion still shows the bug, tho
     '>       assert should_run(lang) is expected',
     'E       AssertionError: assert True is False',
   ];
-  assert.strictEqual(fixverify.inconclusiveReason([...missing, ...asserted].join('\n'), ctx.dir, ctx.base, sources, ''), null, 'the assertion failure shows the bug');
-  assert.match(fixverify.inconclusiveReason(missing.join('\n'), ctx.dir, ctx.base, sources, '') || '', /language_code, which the fix adds/, 'only the new API failed');
+  const failures = (...lines) => ['=================================== FAILURES ===================================', ...lines].join('\n');
+  assert.strictEqual(fixverify.inconclusiveReason(failures(...missing, ...asserted), ctx.dir, ctx.base, sources, ''), null, 'the assertion failure shows the bug');
+  assert.match(fixverify.inconclusiveReason(failures(...missing), ctx.dir, ctx.base, sources, '') || '', /language_code, which the fix adds/, 'only the new API failed');
   const both = [...missing, '>       assert language_code("DE") == "de"', 'E       AssertionError'];
-  assert.match(fixverify.inconclusiveReason(both.join('\n'), ctx.dir, ctx.base, sources, '') || '', /language_code, which the fix adds/, 'an assertion in a test that calls the new API does not count');
+  assert.match(fixverify.inconclusiveReason(failures(...both), ctx.dir, ctx.base, sources, '') || '', /language_code, which the fix adds/, 'an assertion in a test that calls the new API does not count');
+});
+
+test('only the FAILURES section counts: the summary, setup errors and passed-test output cannot make a run conclusive', () => {
+  // Found by the independent review of the fix above: the last failure report
+  // ran on into pytest's short test summary, whose "FAILED ... AssertionError"
+  // line (truncated before the new name) made a run of new-API tests read as
+  // conclusive; an ERROR at setup section counted as a failure report too.
+  const ctx = project();
+  write(ctx.dir, 'src/cart.js', `${FIXED}function language_code(v) {\n  return v;\n}\n`);
+  const sources = ['src/cart.js'];
+  const header = (t) => `${'_'.repeat(20)} ${t} ${'_'.repeat(20)}`;
+  const missing = [header('test_new_helper'), '>       from shop.translate import language_code', "E       ImportError: cannot import name 'language_code' from 'shop.translate'"];
+  const hasattr = [header('test_helper_exported'), '>       assert hasattr(t, "language_code")', 'E       AssertionError: assert False'];
+  const typeError = [header('test_strict_mode'), '>       t.translate("x", strict=True)', "E       TypeError: translate() got an unexpected keyword argument 'strict'"];
+  const summary = ['=========================== short test summary info ============================', 'FAILED tests/test_t.py::test_new_helper - ImportError: cannot import name...', 'FAILED tests/test_t.py::test_helper_exported - AssertionError: assert False', 'FAILED tests/test_t.py::test_strict_mode - TypeError: translate() got an une...', '============================== 3 failed in 0.12s ==============================='];
+  const failures = (...blocks) => ['=================================== FAILURES ===================================', ...blocks.flat()];
+  assert.match(fixverify.inconclusiveReason([...failures(missing, hasattr, typeError), ...summary].join('\n'), ctx.dir, ctx.base, sources, '') || '', /language_code, which the fix adds/, 'the summary line belongs to no test');
+  const setupError = ['==================================== ERRORS ====================================', header('ERROR at setup of test_uses_db'), '>       assert False, "database not ready"', 'E       AssertionError: database not ready'];
+  assert.match(fixverify.inconclusiveReason([...setupError, ...failures(missing), ...summary].join('\n'), ctx.dir, ctx.base, sources, '') || '', /language_code, which the fix adds/, 'a setup error is not a test that showed the bug');
+  const asserted = [header('test_should_run[en-US-False]'), '>       assert should_run(lang) is expected', 'E       AssertionError: assert True is False'];
+  const longSummary = ['=========================== short test summary info ============================', "FAILED tests/test_t.py::test_new_helper - ImportError: cannot import name 'language_code' from 'shop.translate'", 'FAILED tests/test_t.py::test_should_run[en-US-False] - AssertionError: assert True is False'];
+  assert.strictEqual(fixverify.inconclusiveReason([...failures(missing, asserted), ...longSummary].join('\n'), ctx.dir, ctx.base, sources, ''), null, 'the item-05 shape with a full-width summary that names the new API');
+  const passes = ['==================================== PASSES ====================================', header('test_logs_warning'), '----------------------------- Captured stdout call -----------------------------', 'AssertionError was handled'];
+  assert.match(fixverify.inconclusiveReason([...failures(missing), ...passes].join('\n'), ctx.dir, ctx.base, sources, '') || '', /language_code, which the fix adds/, 'a passed test\'s captured output is not a failure');
+  const long = (t) => `_ ${t} _`;
+  const traceback = [...missing, '_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _', 'E       AssertionError: deep inside the same test'];
+  assert.match(fixverify.inconclusiveReason(failures(traceback).join('\n'), ctx.dir, ctx.base, sources, '') || '', /language_code, which the fix adds/, 'a traceback separator does not start a new test');
+  assert.strictEqual(fixverify.inconclusiveReason(failures(missing, [long('test_a_very_long_parametrized_name[case-with-a-long-identifier-that-fills-the-line]'), ...asserted.slice(1)]).join('\n'), ctx.dir, ctx.base, sources, ''), null, 'a long title printed with single underscores is its own test');
 });
