@@ -1,0 +1,6 @@
+{
+ "6fb78ba468401e7b9b5679ae39454ca6cf0742df:mealie/core/settings/branding.py:17:F821": {
+  "label": "false-positive",
+  "reason": "the return annotation names its own class, which Python 3.14 (Mealie requires >=3.14; its ruff target is py314) evaluates lazily: the module imports under 3.14, ruff passes it at py314, and a bug scan of the full tree finds nothing. The hit comes from the measurement scratch repo, which holds only the changed files, so ruff ran without the project configuration"
+ }
+}
