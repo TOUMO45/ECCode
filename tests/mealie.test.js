@@ -36,6 +36,8 @@ const MIRROR = path.join(bench.cacheDir(), 'github.com-mealie-recipes-mealie.git
 const SUITES = ['mealie', 'mealie2'].map((name) => ({ name, dir: path.join(__dirname, '..', 'bench', 'suites', name) }));
 // The proof run's suite: every eligible change of its window, no categories.
 const MEALIE3 = { name: 'mealie3', dir: path.join(__dirname, '..', 'bench', 'suites', 'mealie3') };
+// The multi-file run's suite: the large changes the size cap kept out.
+const MEALIE4 = { name: 'mealie4', dir: path.join(__dirname, '..', 'bench', 'suites', 'mealie4') };
 
 for (const { name, dir: SUITE } of SUITES) {
   test(`${name}: ten tasks, each with a track from the allowed set, the ten categories covered`, () => {
@@ -59,7 +61,7 @@ for (const { name, dir: SUITE } of SUITES) {
   });
 }
 
-for (const { name, dir: SUITE } of [...SUITES, MEALIE3]) {
+for (const { name, dir: SUITE } of [...SUITES, MEALIE3, MEALIE4]) {
   test(`${name}: no prompt contains a line of its fix or names a file it changes`, (t) => {
     if (!fs.existsSync(MIRROR)) return t.skip(`no Mealie mirror at ${MIRROR} (the first bench export creates it)`);
     for (const task of bench.listTasks(SUITE).filter((x) => x.fixCommit)) {
@@ -113,6 +115,35 @@ test('mealie3: one task per accepted change of the window, fix or feature track 
     assert.ok(!used.has(t.fixCommit), `${t.id}: used by an earlier suite`);
   }
   assert.deepStrictEqual(tasks.map((t) => t.order).sort((a, b) => a - b), tasks.map((_, i) => i + 1));
+});
+
+test('mealie4: one task per accepted multi-file change, fix or feature track by its subject, none used before', (t) => {
+  const tasks = bench.listTasks(MEALIE4.dir);
+  if (!tasks.length) return t.skip('mealie4 is not built yet (select.js --large, then build.js)');
+  const { LARGE_POOL, earlierItems } = require(path.join(TOOLS, 'select.js'));
+  const selection = JSON.parse(fs.readFileSync(path.join(MEALIE4.dir, '_tools', 'selection.json'), 'utf8'));
+  assert.strictEqual(selection.mode, 'large');
+  assert.deepStrictEqual(tasks.map((x) => x.category).sort(), Object.keys(selection.accepted).sort(), 'every accepted change is a task, and no other');
+  const used = earlierItems(path.join(__dirname, '..', 'bench', 'suites'));
+  for (const task of tasks) {
+    const a = selection.accepted[task.category];
+    assert.strictEqual(task.fixCommit, a.sha, `${task.id}: the task is the recorded draw`);
+    assert.strictEqual(task.source.commit, a.parent);
+    assert.strictEqual(task.track, /^fix/.test(a.subject) ? 'fix' : 'feature', `${task.id}: track by subject`);
+    assert.match(task.id, /^mealie4-\d\d-(fix|feature)-[0-9a-f]{8}$/);
+    assert.ok(task.hiddenChecks.some((c) => c.id === 'target') && task.hiddenChecks.some((c) => c.id === 'regression'), `${task.id}: target and regression checks`);
+    assert.ok(task.prompt.length > 200, `${task.id}: an issue-style request`);
+    assert.ok(!used.has(task.fixCommit), `${task.id}: an item of an earlier suite`);
+    if (fs.existsSync(MIRROR)) {
+      const numstat = spawnSync('git', ['--git-dir', MIRROR, 'diff', '--numstat', a.parent, a.sha], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).stdout.split('\n').filter(Boolean).map((l) => {
+        const [x, d, ...p] = l.split('\t');
+        return { path: p.join('\t'), lines: (Number(x) || 0) + (Number(d) || 0) };
+      });
+      const files = numstat.map((r) => ({ status: 'M', path: r.path }));
+      assert.ok(LARGE_POOL({ sha: a.sha, subject: a.subject, files, numstat }, new Set()), `${task.id}: meets the multi-file rule`);
+    }
+  }
+  assert.deepStrictEqual(tasks.map((x) => x.order).sort((p, q) => p - q), tasks.map((_, i) => i + 1));
 });
 
 test('mealie2: the rerun\'s items are fresh: no commit and no refactor target of the pilot comes back', () => {
