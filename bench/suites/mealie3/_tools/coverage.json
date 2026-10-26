@@ -1,0 +1,195 @@
+{
+ "feature-0c71c2a2": {
+  "covers": [
+   "test_centiliter_standardization: a unit created with name \"cl\" gets standard_unit \"milliliter\" and standard_quantity 10.",
+   "test_seed_units (unchanged test): the en-US seed now includes centiliter; it compares against the seed file, so it stays consistent."
+  ],
+  "note": ""
+ },
+ "feature-8b53861e": {
+  "covers": [
+   "test_paste_mealie_export_keeps_contents[snake_case|camelCase]: pasting the zip JSON or the API JSON answers 201; new id and slug; description, recipeYield, recipeServings, orgURL, extras, nutrition and settings (except public) equal; categories, tags, tools by name; notes; ingredient title/quantity/unit/food/note; step title/summary/text and ingredientReferences to the new ingredient; source recipe untouched",
+   "test_paste_mealie_export_from_another_group: a g2 user pastes another group's export; 201; recipe, categories, tags, tools (and food/unit when they show groupId) belong to g2; source recipe and its organizers unchanged",
+   "test_paste_mealie_export_follows_household_visibility[True|False]: settings.public follows the household recipePublic preference, not the dump",
+   "test_paste_mealie_export_honours_organizer_options: include_tags/include_categories false give empty tags and recipeCategory; tools kept",
+   "test_paste_mealie_export_drops_files_and_comments: image becomes null, assets [], comments [] even with a comment that would not validate",
+   "test_paste_mealie_export_streams_done: stream endpoint answers 200 with a done event whose data.slug is the new recipe",
+   "test_paste_mealie_export_skips_the_scraper: create_from_html (patched to fail in the recipe routes module) is never called for a dump",
+   "test_paste_broken_mealie_export_returns_a_clear_error: quantity 'not a number' gives 400 with detail.message exactly the invalid-export message",
+   "test_paste_broken_mealie_export_streams_a_clear_error: same dump on the stream endpoint gives an error event whose data.message is that message",
+   "test_recognises_complete_dump[snake_case|camelCase]: parse_mealie_export returns the parsed dict for both key styles",
+   "test_recognises_dump_with_surrounding_whitespace: leading/trailing whitespace still recognised",
+   "test_ignores_anything_else[16 cases]: None for schema.org (@context/@type), @type only, plain JSON, loose Mealie-shaped JSON, no slug, blank slug, no groupId, ingredients without reference ids, empty ingredients, string ingredients, JSON array, HTML, malformed JSON, empty string, deeply nested array and object"
+  ],
+  "note": "test_paste_mealie_export_skips_the_scraper monkeypatches create_from_html at its import site in the recipe routes module; the request names the symbol but not that module, since its file is changed by the commit. The parse_mealie_export rules are stated in full because the unit test checks each one; they mirror the upstream function's conditions closely, but no line is copied. The error message is a translation upstream (en-US); the request asks for a translated message without naming the key. The request is longer than usual because the tests check many cases."
+ },
+ "feature-8d6783bc": {
+  "covers": [
+   "test_blank_duration_is_unspecified[None]: durationSeconds None gives duration_seconds None and dumps durationSeconds null.",
+   "test_legacy_step_is_not_assigned_a_time: a step without the field has duration_seconds None and its text unchanged.",
+   "test_exact_duration_survives_model_and_recipe_json[1,90,3661,172801,2147483647]: RecipeStep -> RecipeInstruction(session, **model_dump()) -> RecipeStep.model_validate -> Recipe JSON by alias round trip keeps exact seconds.",
+   "test_whole_numeric_json_spellings_are_equivalent[1,1.0,1e0,2147483647.0]: model_validate_json gives an int equal to the number.",
+   "test_duration_rejects_lossy_or_out_of_range_input[True,False,-1,1.5,0.5,2147483647.5,inf,-inf,nan,'PT1M','90','0','',' ',2147483648,2147483648.0,1e30]: ValidationError.",
+   "test_duration_column_is_nullable_without_a_zero_default: RecipeInstruction.__table__.c.duration_seconds is Integer, nullable, no default, no server_default.",
+   "test_additive_migration_sql_without_database[sqlite,postgresql]: loads the migration by its exact file name; down_revision a91720b8a7e7; offline SQL has ALTER TABLE RECIPE_INSTRUCTIONS ADD COLUMN DURATION_SECONDS INTEGER and no NOT NULL, DEFAULT or UPDATE.",
+   "test_raw_json_export_preserves_exact_duration: TemplateService raw render keeps durationSeconds 3661.",
+   "test_existing_instruction_update_and_clear_without_database: handle_one_to_many_list sets 42 then None on an existing RecipeInstruction, text unchanged.",
+   "test_api_schema_documents_optional_integer_seconds: JSON schema by alias: durationSeconds not required, default None, anyOf [integer min 1 max 2147483647, null].",
+   "test_edit_and_clear_duration_preserve_step_text: re-validating with duration_seconds (field name) 42 then None edits and clears, text kept.",
+   "test_zero_is_unspecified[0,0.0,None]: duration_seconds None.",
+   "test_duration_persists_edits_clears_and_exports_for_zip_import[None,0]: PUT/GET store [None, None, 3661], edit to 42, raw export + zip import keeps [None, None, 42], clearing with null or 0 gives null and keeps text 'Rest'.",
+   "test_api_persists_whole_numeric_spellings[1,1.0,1e0,2147483647.0]: PUT with raw JSON number answers 200 and GET returns an int.",
+   "test_api_rejects_invalid_duration_without_saving[True,False,'90',-1,1.5,2147483647.5,'',' ',2147483648]: PUT answers 422 and the instructions are unchanged.",
+   "test_duration_migration_preserves_populated_database: alembic heads == ['afdc42353aa4']; downgrade/upgrade round trips keep all other data; column nullable; upgrade leaves every duration NULL.",
+   "CookTime.test.ts 'always shows a blank optional input without emitting a duration': one input, value '', placeholder 'Minutes', no emit.",
+   "CookTime.test.ts 'converts minutes to seconds, edits, and clears': 60->3600, 35791394->2147483640, 42->2520, ''->null; modelValue 120 shows '2'.",
+   "CookTime.test.ts 'blocks typing a minus sign': keypress '-' is defaultPrevented.",
+   "CookTime.test.ts 'clears the duration for 0 minutes but keeps showing 0': from 120, '0' emits null; after modelValue null the input still shows '0'.",
+   "CookTime.test.ts 'preserves exact imported %s seconds until edited' [1,61,3661,1048708914,2094174799,2147483647]: input shows floor(value/60), text contains 'Saved duration:', blur emits nothing, '2' emits 120.",
+   "CookTime.test.ts 'displays %s with units': display mode, no input, text exactly '1h 1m 1s' / '1m 30s' / '1m' / '30s' / '' for 3661/90/60/30/null."
+  ],
+  "note": "test_additive_migration_sql_without_database loads the migration by its exact file name (date, revision id and slug), so the request gives the revision id, down revision, message and create date, and says the file is named from them by the project's migration file template (alembic.ini file_template) instead of spelling out the changed path. Likewise CookTime is placed 'in the same folder as the spec' instead of by path. The spec mounts with createVuetify() and only VNumberInput registered, so the request requires a Vuetify v-number-input; the hint must be visible without focus for 'Saved duration:' to be in the text. Only the spec is graded on the frontend."
+ },
+ "feature-c9bf6f1c": {
+  "covers": [
+   "test_default_oidc_ssl_context_returns_none: cafile=None, verify_strict=True gives None.",
+   "test_relaxed_strict_default_ca: cafile=None, verify_strict=False gives an SSLContext without VERIFY_X509_STRICT and with default CAs loaded (get_ca_certs() non-empty).",
+   "test_custom_ca_strict: CA file + verify_strict=True gives an SSLContext with VERIFY_X509_STRICT set and CAs loaded.",
+   "test_custom_ca_relaxed_strict: CA file + verify_strict=False gives an SSLContext without VERIFY_X509_STRICT and CAs loaded.",
+   "test_oidc_client_args_verify_integration: OIDC_TLS_CACERTFILE and OIDC_VERIFY_X509_STRICT exist on the auth module's settings (monkeypatched) and feed the function to give a relaxed context with the CA."
+  ],
+  "note": "The tests import the auth routes module (from mealie.routes.auth import auth). Its dotted name is the path of a changed file, so the request describes it as the module that registers the OIDC clients instead of naming it. get_ca_certs() being non-empty for the default-CA case depends on the environment's default verify paths being a CA file; the request asks for a context that trusts the system's default CAs, which is what the test relies on."
+ },
+ "fix-173eb922": {
+  "covers": [
+   "test_translating_keeps_the_servings: draft '4 servings' (servings 4) + translation with no yield -> name 'Vegan Tzatziki', recipe_servings 4, recipe_yield_quantity 0",
+   "test_translating_keeps_the_yield_quantity_and_translates_its_wording: draft '12 Stücke' (quantity 12, yield 'Stücke') + translation yield 'pieces' -> quantity 12, yield 'pieces', servings 0",
+   "test_translating_keeps_the_structured_times: total_time_seconds stays 600 after translation",
+   "test_language_code[...]: de-DE, de_de, DE, German, Deutsch, ' german ' -> 'de'; English -> 'en'; Brazilian Portuguese -> 'pt'; Chinese -> 'zh'; Klingon, '', None -> None",
+   "test_translation_is_skipped_when_the_source_is_in_the_target_language: (de-DE, German), (de-DE, Deutsch), (de-DE, de), (en-US, English), (en-GB, en-US) -> should_run False",
+   "test_translation_runs_when_the_source_is_in_another_language: (en-US, German), (de-DE, fr-FR), (de-DE, None), (de-DE, Klingon) -> should_run True",
+   "test_translation_is_skipped_without_a_target_language: translate_language None -> should_run False",
+   "test_structured_data_reports_the_page_language: HTML with ld+json and <html lang=\"de\"> -> 'de', lang=\" de-DE \" -> 'de-DE', lang=\"\" -> None, no lang -> None"
+  ],
+  "note": "language_code lives in an existing module the fix changes, so it is located by the symbol TranslateRecipeStep rather than by path. The test file is new, so its directory is given. Longer than usual because the tests check many language cases."
+ },
+ "fix-28522f18": {
+  "covers": [
+   "test_write_image_preserves_existing_files_when_webp_is_invalid: with existing original/min-original/tiny-original .webp files, write_image(b'not-an-image', 'webp') raises PIL.UnidentifiedImageError and all three files keep their bytes",
+   "test_write_image_replaces_all_variants_after_successful_validation: write_image(<valid jpg bytes>, 'jpg') returns dir_image/'original.webp' and all three variant files exist with new content"
+  ],
+  "note": "Upstream also narrowed write_image to bytes and changed the migration import_image caller to read the file; the tests only pass bytes, so the request just asks that existing callers keep working."
+ },
+ "fix-2c46e40d": {
+  "covers": [
+   "test_recipe_image_upload_rejects_unsupported_extension[svg|svg+xml|pdf|mp4|exe|.]: 400, detail.message contains 'Unsupported image file type', recipe image stays null",
+   "test_recipe_image_upload_rejects_corrupt_image: extension png with non-image bytes gives 400 with detail.message exactly 'Uploaded file is not a valid image', recipe image stays null",
+   "test_recipe_image_upload_accepts_uppercase_extension: a JPEG with extension 'JPG' gives 200 and a non-empty image",
+   "test_recipe_image_upload_accepts_gif_and_bmp[GIF|BMP]: small GIF and BMP images with extensions 'gif'/'bmp' give 200 and a non-empty image",
+   "test_recipe_image_upload_accepts_png: a PNG with extension 'png' gives 200 and a non-empty image"
+  ],
+  "note": "Only jpg (any case), png, gif and bmp are tested as accepted; the rest of the accepted list (jpeg, jpe, jfif, webp, heic, avif, tif, tiff) is upstream's set and is stated so the agent does not narrow it. The parent already accepts GIF and BMP (no check at all), so those tests guard against an allow-list that is too tight. The 'Unsupported image file type' check is a substring match."
+ },
+ "fix-3be8f3d8": {
+  "covers": [
+   "test_mealie_alpha_migration_cannot_reach_another_group: Mealie alpha import with another group's tool id and a sub-recipe slug of another group's recipe leaves that tool's group and name unchanged; the imported recipe has exactly one tool, in the importer's group, with a different id; every referencedRecipe is null",
+   "test_nextcloud_migration_cannot_take_over_another_groups_tool: Nextcloud import with another group's tool id leaves that tool's group and name unchanged",
+   "test_migration_rejects_archive_over_size_limit: with migration_helpers.MAX_EXTRACTED_ARCHIVE_SIZE patched to 1024, a Chowdown zip unpacking 2048 bytes answers 200 and its report has status 'failure' and entries' messages == ['Archive is too large to import']",
+   "test_extract_zip_returns_bytes_written: extract_zip(archive, dest, max_size=8) on members of 5 and 3 bytes returns 8 and writes nested paths (dir/two.txt)",
+   "test_extract_zip_over_limit_writes_nothing: 100-byte member with max_size=99 raises ArchiveTooLargeError and dest does not exist afterwards"
+  ],
+  "note": "The tests import ArchiveTooLargeError and extract_zip from mealie.services.migrations.utils.migration_helpers and patch MAX_EXTRACTED_ARCHIVE_SIZE on it; that module already exists and the fix changes it, so the request points to it by the symbols it holds (import_image, scrape_image, safe_local_path) rather than by path or dotted name. The pointer to POST /api/recipes/create/zip names existing behaviour to match; it hints at reusing RecipeService.clean_recipe_dict but the expected outcomes are also spelled out. The new unit test file does not exist at the parent, so its directory is given."
+ },
+ "fix-4a8e710f": {
+  "covers": [
+   "test_unknown_db_engine_is_rejected: DB_ENGINE=postgress makes get_app_settings() raise ValueError matching 'DB_ENGINE'",
+   "existing test_default_connection_args / test_pg_connection_args (unchanged): sqlite and postgres still build their DB URLs"
+  ],
+  "note": "A pydantic ValidationError is a ValueError subclass, so restricting the field's type also passes as long as the message names DB_ENGINE. 'Unset or empty still means sqlite' is upstream behaviour kept as is; it is not tested by the new test."
+ },
+ "fix-4ab0d730": {
+  "covers": [
+   "test_validate_url_blocks_private_target: host resolving to 10.0.0.5 raises InvalidDomainError.",
+   "test_validate_url_blocks_loopback_literal: http://127.0.0.1:8742/ raises InvalidDomainError without DNS.",
+   "test_validate_url_allows_public_target: host resolving to 93.184.216.34 returns None.",
+   "test_validate_url_respects_allow_and_deny_lists: allow_hosts by name allows 10.0.0.5; adding deny_hosts 10.0.0.0/8 blocks again.",
+   "test_group_recipe_actions_trigger_post_blocked_target[127.0.0.1:8742, 192.168.1.10, [::1]]: trigger answers 400, detail.message contains HTTP_ALLOW_LIST, safehttp.post never called.",
+   "test_group_recipe_actions_trigger_post_allow_listed_target: with HTTP_ALLOW_LIST=127.0.0.1 (patched get_app_settings in the controller module), 202 and one post with url and allow_hosts ['127.0.0.1'].",
+   "autouse fixture mock_outbound_post: safehttp.validate_url patched to a no-op on the package, so the existing trigger tests keep answering 202 without DNS lookups."
+  ],
+  "note": "The integration tests monkeypatch safehttp.validate_url on the package and get_app_settings on the controller module, so the request states that the endpoint must call them through those names; the controller module is described, not named, because its dotted name is the path of a changed file."
+ },
+ "fix-4b32e54b": {
+  "covers": [
+   "test_route_rejects_user_without_permission[route]: for every permission-guarded route, an unprivileged user gets 403 and detail.message equals the en-US text of exceptions.permission-denied",
+   "test_require_permission_checks_user_flag[perm-flag]: RequirePermission(perm)(user, translator) passes with the flag true and raises HTTPException 403 with it false, for the four perm/flag pairs",
+   "test_require_any_valid_user_allows_any_user: RequirePermission(Perm.ANY_VALID_USER)(user, translator) does not raise",
+   "unchanged in the file but still run: test_routes_declare_expected_permissions (route-to-permission map unchanged), test_route_allows_user_with_permission (holders never get 403)"
+  ],
+  "note": "The unit tests call RequirePermission instances directly with a second positional translator argument, so the request states that call shape and names get_locale_provider/Translator. The message key exceptions.permission-denied already exists at the parent."
+ },
+ "fix-4d074185": {
+  "covers": [
+   "test_locale_provider_defaults: get('en-US') is get('asdfadsf') (same object) and set(factory._store) == {'en-US'}",
+   "test_locale_provider_loads_supported_locale: get('af-ZA') is not get('en-US') and set(factory._store) == {'af-ZA', 'en-US'}",
+   "test_locale_provider_rejects_path_traversal: an absolute path to a JSON file outside the directory, a ../ path to it, '../en-US' and './en-US' each return the fallback provider object, whose t('secret') == 'secret'; set(factory._store) == {'en-US'}"
+  ],
+  "note": "The tests drop the old reference counting (release(), InUseProvider.locks) but do not assert it is gone; an agent that keeps it still passes. The tests read the private _store dict, so the request names it."
+ },
+ "fix-77a07886": {
+  "covers": [
+   "test_validators_user_allow_current_user: signed in as unique_user, its own username and own email are valid (200, valid is True)",
+   "test_validators_user_allow_current_user: signed in as unique_user, a user from another group (g2_user) has username and email still invalid (valid is False)",
+   "unchanged in the file but still run: test_validators_username / test_validators_email (anonymous calls: existing name/email invalid, random one valid)"
+  ],
+  "note": ""
+ },
+ "fix-9ca95fbb": {
+  "covers": [
+   "test_brute_parser[1 green onion]: \"1 green onion\" parses to quantity 1, no unit, food \"green onion\", no note.",
+   "test_parser_ingredient_match[multi-word food split into unit and food]: unit \"green\" + food \"onion\" gives matched IngredientFood \"green onion\" and unit None.",
+   "test_parser_ingredient_match[matched food not replaced by fuzzy multi-word match]: unit \"gren\" + food \"onion\" keeps CreateIngredientUnit \"gren\" and matched food \"onion\".",
+   "test_brute_parser / test_brute_parser_confidence / test_parser_ingredient_match (existing params): unchanged results, e.g. 'no unit match', 'nested match 3', 'yellow onion'."
+  ],
+  "note": ""
+ },
+ "fix-cdae185e": {
+  "covers": [
+   "test_recipe_asset_dangerous_extension_blocked: for html, svg, js, htm, xhtml and xml, the upload answers 400 and response.json()['detail']['message'] == 'Unsupported file extension'",
+   "unchanged in the file but still run: test_recipe_asset_exploit (path-escaping name/extension gives 400, no file written), asset create/duplicate-name/served-as-attachment tests"
+  ],
+  "note": "Only the disallowed-extension message is asserted. The other two rejections are mentioned for consistency (upstream changed all three) but are untested. The from-URL asset endpoint shares the same save path and already uses ErrorResponse for its own errors."
+ },
+ "fix-dedda0d1": {
+  "covers": [
+   "test_create_from_images: after an AI import with one JPEG, GET /api/recipes/{slug} has a non-empty image, and original.webp is still served with 200 (the AI provider is mocked)"
+  ],
+  "note": "The commit only adds one assertion (recipe['image'] is truthy) to an existing test."
+ },
+ "fix-e4d70fb7": {
+  "covers": [
+   "test_get_household_statistics: GET /api/households/statistics is 200 for unique_user and h2_user (same group, other household)",
+   "test_get_household_statistics: after unique_user's repos create one recipe, unique_user's totalRecipes is +1 and h2_user's totalRecipes is unchanged",
+   "test_recipe_repo_count_all: unfiltered recipes.count_all('group_id', UUID(group_id)) == 2 after creating two recipes",
+   "test_recipe_repo_count_all: unfiltered recipes.count_all('household_id', UUID(household_id)) == 2 (association proxy through the user)",
+   "test_recipe_repo_count_all: unfiltered recipes.count_all('household_id', uuid4()) == 0"
+  ],
+  "note": "Both tests fail at the parent only under SQLAlchemy 2.1.x (pinned 2.1.4 in pyproject/uv.lock since #8798, an ancestor of this commit). In 2.1, Select.filter_by resolves names against the FROM tables when the selected column is func.count(model.id), and a table's namespace has no association proxies, so it raises InvalidRequestError. Under 2.0.x it resolved against the mapped class, and the tests would very likely pass before the fix. The cached py envs under /root/.cache/eccode/mealie-envs that I checked hold only 2.0.x, so make sure this item's env is built from the parent's lockfile. I confirmed the 2.1.4 behaviour by reading the installed SQLAlchemy source in the uv cache, not by running it. The request names the SQLAlchemy upgrade as context, as a maintainer would; it does not describe the fix."
+ },
+ "fix-f4b4f87e": {
+  "covers": [
+   "test_routes_declare_expected_permissions: the set of routes declaring each Perm through a RequirePermission dependency equals EXPECTED_ROUTE_PERMISSIONS exactly, now with the 15 listed routes under GROUP_ORGANIZE",
+   "test_route_rejects_user_without_permission[<route>]: unprivileged_user (can_organize false) gets 403 on each expected route, including the 15 new ones, with random ids and body {}",
+   "test_route_allows_user_with_permission[<route>]: unique_user gets a status other than 403 on each expected route",
+   "test_labels_empty_excludes_unused_label_from_other_group: setup now creates the other group's label through the repository (g2_user gets 403 from the API); GET /api/groups/labels/empty excludes it and lists the caller's own unused label",
+   "test_tools_empty_excludes_unused_tool_from_other_group: same for tools and GET /api/organizers/tools/empty"
+  ],
+  "note": "The route-permission test checks isinstance(dependency.call, RequirePermission) on each route's dependant, so the request has to say the permission is declared on the route and name RequirePermission; it stops short of spelling out the decorator argument. The two merge-test changes only move setup off the API."
+ },
+ "fix-fb05f2da": {
+  "covers": [
+   "test_shopping_list_add_recipe_scale_merges_duplicate_foods: recipe with the same food at 1 and 2, added at recipe_increment_quantity 2, gives one list item with quantity 6, one recipe reference with recipeQuantity 3 and recipeScale 2"
+  ],
+  "note": "One-line fix; the example values in the request are exactly the test's."
+ }
+}
