@@ -196,6 +196,16 @@ test('mealie select --all: every fix or feature with backend tests within the ca
   assert.strictEqual(allKey(commit('feat: b', code)), 'feature-abcdef01');
 });
 
+test('mealie build: test ids reach pytest intact through the shell (backticks, dollars, quotes, backslashes)', () => {
+  // Found validating mealie4: a parametrised id with backticks ran as a command substitution.
+  const { checksFor } = require(path.join(TOOLS, 'build.js'));
+  const ids = ['t.py::test_a[support `,` seperated numbers]', 't.py::test_b[$HOME]', "t.py::test_c[it's]", 't.py::test_d[1 \\u6642 "q" !x]'];
+  const [target, regression] = checksFor({ backend: { target: ids, failingBoth: [], regressionFiles: ['t.py'] } });
+  const run = (command) => spawnSync('sh', ['-c', command.replace('python -m pytest -q -p no:cacheprovider', "printf '%s\\n'")], { encoding: 'utf8' }).stdout.split('\n').filter(Boolean);
+  assert.deepStrictEqual(run(target.command), ids);
+  assert.deepStrictEqual(run(regression.command), ['t.py', ...ids.flatMap((id) => ['--deselect', id])]);
+});
+
 test('mealie select --large: multi-file fixes and features with backend tests, 100–1,500 counted lines, no earlier item', () => {
   const { LARGE_POOL, LARGE_RULE, largeCounts, earlierItems } = require(path.join(TOOLS, 'select.js'));
   assert.deepStrictEqual(LARGE_RULE, { files: 5, mealieFiles: 4, minLines: 100, maxLines: 1500 });

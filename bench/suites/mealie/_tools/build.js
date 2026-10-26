@@ -25,7 +25,8 @@ const refactor = prompts.refactor || null;
 const P = refactor ? refactor.source || 'dbe84cc91b9e1dfc88b783a1e31d8a8495800337' : null;
 const FULL_SUITE = 'python -m pytest -q -p no:cacheprovider tests';
 const TRACK = { fix: 'fix', debug: 'debug', quick: 'quick', feature: 'feature', migration: 'feature', fullstack: 'feature', security: 'fix', refactor: 'refactor' };
-const q = (s) => JSON.stringify(s);
+// Single-quoted for sh: a parametrised test id may hold backticks, $ or quotes.
+const q = (s) => `'${String(s).replace(/'/g, "'\\''")}'`;
 
 function trackOf(category, subject) {
   if (TRACK[category]) return TRACK[category];
