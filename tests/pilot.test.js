@@ -305,6 +305,14 @@ test('extractRefusals finds the refusals in the fixture and nothing else', () =>
   assert.match(found[0].id, /^fixture:\d+$/);
 });
 
+test('extractRefusals counts a refused tool call once when an api-request-blob event repeats its result', () => {
+  const { extractRefusals } = require('../bench/pilot/refusals');
+  const use = { type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', id: 'toolu_1', name: 'Bash', input: { command: 'node .claude/eccode/bin/eccode.js work show w2' } }] } };
+  const result = { type: 'tool_result', tool_use_id: 'toolu_1', is_error: true, content: 'Exit code 2\neccode: [USAGE] Unknown work subcommand show' };
+  const text = [use, { type: 'user', message: { role: 'user', content: [result] } }, { type: 'api-request-blob', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'toolu_0', content: 'ok' }, result] } }].map((e) => JSON.stringify(e)).join('\n');
+  assert.deepStrictEqual(extractRefusals(text, 's').map((x) => [x.id, x.code]), [['s:2', 'USAGE']]);
+});
+
 test('copyTranscripts copies the session files written since the run started', () => {
   const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-tr-'));
   const dir = bench.transcriptDir(sandbox);

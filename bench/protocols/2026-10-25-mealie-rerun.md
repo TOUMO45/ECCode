@@ -205,3 +205,11 @@ node bench/pilot/resume.js chain ... b2 (same, its own sandbox, files and share)
 node bench/pilot/resume.js runs --suite bench/suites/mealie2 --sandbox <b3 sandbox> --interrupted mealie2-09-debug --variant without --then mealie2-09-debug:1,mealie2-10-security:2 --timeout 3600 --max-cost 15 --save $R/b3.jsonl --registered $S/b3.jsonl --transcripts $R/tr-b3 --posthoc $R/posthoc.jsonl --cause "container restart, 2026-10-26T01:30Z" --agent "$AGENT_B"
 node bench/pilot/resume.js chain --suite bench/suites/pantry --sandbox <c1 chain 2 sandbox> --chain-run 2 --interrupted pantry-c2 --variant engine --engine-profile guard --engine-agents inherit --timeout 3600 --max-cost 35 --save $R/c1.jsonl --registered $S/c1.jsonl --transcripts $R/tr-c1 --cause "container restart, 2026-10-26T01:30Z" --agent "$AGENT_C"
 ```
+
+## Amendment 2 (2026-10-26T01:52Z, during the batch, before any summary figure)
+
+**What was found.** This happened while the refusals were being labelled. Claude Code (2.1.310, the version every agent of this batch ran) writes `api-request-blob` events, and these repeat tool results already in the transcript. The extractor (`extractRefusals` in `bench/pilot/refusals.js`) read every event, so a refusal repeated in such an event counted twice.
+
+**Size so far.** Of the 142 refusals extracted from the items finished before the restart, 4 were repeats. Each repeats the same tool call (the same `tool_use_id`) that a `user` event a few lines earlier already holds.
+
+**The amendment.** A refused tool call counts once, where it first appears: the extractor skips a tool result whose `tool_use_id` it has already seen. The test is in `tests/pilot.test.js`. Nothing else changes: no run, criterion or label rule. The four repeats were never labelled.
