@@ -867,6 +867,8 @@ test('A4: the oracle names its verdicts as fix verify does', () => {
   assert.strictEqual(expectedVerdict({ code: 1, out: 'E   assert 1 == 2' }, { code: 1 }), 'fix-fails-tests');
   assert.strictEqual(expectedVerdict({ code: 1, out: "ImportError: cannot import name 'x'" }, { code: 0 }), 'inconclusive');
   assert.strictEqual(expectedVerdict({ code: 1, out: 'E   assert 500 == 200' }, { code: 0 }), 'proven');
+  // In fix verify's order: a pre-fix run that fails for a missing API is inconclusive whatever the post-fix run does.
+  assert.strictEqual(expectedVerdict({ code: 1, out: "ImportError: cannot import name 'x'" }, { code: 1 }), 'inconclusive');
 });
 
 test('A3: the route table reads routes FastAPI keeps under an included router (0.141+) as well as top-level ones', (t) => {
@@ -881,14 +883,15 @@ test('A3: the route table reads routes FastAPI keeps under an included router (0
     'from types import SimpleNamespace as N',
     'class _IncludedRouter:',
     '    def effective_route_contexts(self):',
-    '        return [N(methods={"GET"}, path="/api/app/about"), N(methods={"POST", "HEAD"}, path="/api/groups/seeders/labels")]',
+    '        return [N(methods={"GET"}, path="/api/app/about"), N(methods={"POST", "HEAD"}, path="/api/groups/seeders/labels"),',
+    '                N(methods=None, path=None, starlette_route=N(methods={"GET"}, path="/api/plain"))]',
     'app = N(routes=[N(methods={"GET", "HEAD"}, path="/docs"), _IncludedRouter()])',
     '',
   ].join('\n'));
   const out = path.join(tree, 'routes.txt');
   const r = require('child_process').spawnSync(py, [path.join(__dirname, '..', 'bench', 'pilot', 'mealie', 'fastapi-routes.py'), tree, out], { encoding: 'utf8' });
   assert.strictEqual(r.status, 0, r.stderr);
-  assert.deepStrictEqual(fs.readFileSync(out, 'utf8').split('\n').filter(Boolean), ['GET /api/app/about', 'GET /docs', 'POST /api/groups/seeders/labels']);
+  assert.deepStrictEqual(fs.readFileSync(out, 'utf8').split('\n').filter(Boolean), ['GET /api/app/about', 'GET /api/plain', 'GET /docs', 'POST /api/groups/seeders/labels']);
 });
 
 test('A6: a changed-files scratch repo keeps the project\'s lint configuration, so the analyzers judge it as the project does', (t) => {

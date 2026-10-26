@@ -8,10 +8,11 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { spawnSync, execFileSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const lib = require('../lib');
 const stack = require('../../../lib/stack');
 const { loadConfig } = require('../../../lib/config');
+const { spawnGrouped } = require('../../../lib/util');
 const env = require('../../suites/mealie/_tools/env');
 
 // How Mealie's own Taskfile.yml runs each tool at the commit, from the
@@ -65,7 +66,8 @@ function main(argv) {
         const via = stack.runCheck(root, config, c.id, { timeoutMs: TIMEOUT_MS });
         const ms = Date.now() - started;
         const tool = toolOf(c);
-        const direct = tool ? spawnSync(DIRECT[tool], { cwd: root, shell: true, encoding: 'utf8', timeout: TIMEOUT_MS, maxBuffer: 64 * 1024 * 1024, env: process.env }) : null;
+        // Stopped whole at its timeout, as ECCode's side is, so nothing runs on into the next row.
+        const direct = tool ? spawnGrouped(DIRECT[tool], { cwd: root, timeoutMs: TIMEOUT_MS, maxBuffer: 64 * 1024 * 1024, env: process.env }) : null;
         return { id: c.id, command: c.command, source: c.source, available: true, eccodeExit: via.exitCode, ms, tool, directCommand: tool ? DIRECT[tool] : null, directExit: direct ? direct.status : null, equal: direct ? (via.exitCode === 0) === (direct.status === 0) : null };
       });
       const secrets = stack.scanSecrets(root);

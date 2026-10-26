@@ -27,7 +27,9 @@ def served(routes):
         contexts = getattr(r, "effective_route_contexts", None)
         if callable(contexts):
             for c in contexts():
-                yield c.methods, c.path
+                # A plain Starlette route (add_route, @router.route) keeps its methods and path on starlette_route.
+                plain = getattr(c, "starlette_route", None)
+                yield c.methods or getattr(plain, "methods", None), c.path or getattr(plain, "path", None)
         else:
             yield getattr(r, "methods", None), getattr(r, "path", None)
 
