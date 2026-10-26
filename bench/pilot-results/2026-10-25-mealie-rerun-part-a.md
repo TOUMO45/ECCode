@@ -103,6 +103,12 @@ ECCode ran at the protocol commit `8662f5e`, after Parts B and C ended, with no 
 | 130 | `stack run` reported a timed-out check as exit 1, with no word of the timeout, gave every check a fixed 600 s, and left its tests running (found by the after-fix A7) | Fixed: grouped and stopped whole; the timeout is reported with `--timeout`, which `stack run` now takes (lib/stack.js; tests/stack.test.js). A7 gives both sides the same 30 minutes |
 | 101 | pnpm refused the benchmark's linked `node_modules` | Mitigated: every Mealie task, and the Part A environment, sets `pnpm_config_verify_deps_before_run=false` (tests/mealie.test.js). `go-task` is still not installed |
 
+An independent review of these fixes found eight defects, each fixed with a test that failed first:
+- `stack run` and `mutate` had lost the watchdog that stops a command when eccode itself is killed. That was a regression of the first fixes, so the three now share one runner.
+- `--timeout` was not validated.
+- Compat looked for a script's importers only in the task's files, read imports one line at a time, and reported a module that gained a main guard as all removed.
+- Three instrument details: A4's verdict order, plain Starlette routes in the route table, and A7's direct run not stopped whole.
+
 ## After the fixes (post hoc, not registered)
 
 ECCode at the fix commits, the same windows and pin, the same labels, and every new detection labelled first. Results: [results-rerun-after](../pilot/mealie/results-rerun-after) (W2 and P2) and [results-after-routes](../pilot/mealie/results-after-routes) (the pilot's W). Not run again: A1 and A2, which no fix touched; A4, whose two name-only disagreements are settled by their labels; and A5, where the `mutate` fix only stops a timed-out mutant's processes and cannot lower the runs completing.
