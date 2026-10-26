@@ -159,3 +159,22 @@ test('python mutants reach the lines real fixes change: identity, membership, co
   assert.ok(!got.some((g) => g.startsWith('4:negation')), 'not in is the membership operator, not a negation');
   assert.ok(!got.some((g) => /return-value:None->/.test(g)));
 });
+
+test('a mutant whose tests time out is stopped with everything they started', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {
+  const dir = repo(STRONG);
+  const late = path.join(dir, 'late.txt');
+  // The unmutated source passes at once; a mutant starts a writer and hangs past its time.
+  write(dir, 'check.js', [
+    "const fs = require('fs');",
+    `if (fs.readFileSync('src/price.js', 'utf8') === ${JSON.stringify(CODE)}) process.exit(0);`,
+    `require('child_process').spawn(process.execPath, ['-e', "setTimeout(() => require('fs').writeFileSync(process.argv[1], 'x'), 1500)", ${JSON.stringify(late)}], { stdio: 'ignore' });`,
+    'setTimeout(() => {}, 10000);',
+    '',
+  ].join('\n'));
+  const r = mutate.run(dir, { test: 'node check.js', files: ['src/price.js'], max: 1, timeoutMs: 700 });
+  assert.strictEqual(r.timeouts, 1, JSON.stringify(r.mutants));
+  const until = Date.now() + 2500;
+  while (Date.now() < until) { /* wait past the writer's time */ }
+  assert.strictEqual(fs.existsSync(late), false, 'the process the timed-out tests started was stopped with them');
+  fs.rmSync(dir, { recursive: true, force: true });
+});

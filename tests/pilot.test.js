@@ -890,3 +890,20 @@ test('A3: the route table reads routes FastAPI keeps under an included router (0
   assert.strictEqual(r.status, 0, r.stderr);
   assert.deepStrictEqual(fs.readFileSync(out, 'utf8').split('\n').filter(Boolean), ['GET /api/app/about', 'GET /docs', 'POST /api/groups/seeders/labels']);
 });
+
+test('A6: a changed-files scratch repo keeps the project\'s lint configuration, so the analyzers judge it as the project does', (t) => {
+  const lib = require('../bench/pilot/lib');
+  const { scratchRepo } = require('../bench/pilot/mealie/scratch');
+  const mirror = lib.mealieMirror();
+  if (!fs.existsSync(mirror)) return t.skip(`no Mealie mirror at ${mirror}`);
+  const sha = '6fb78ba468401e7b9b5679ae39454ca6cf0742df';
+  const parent = execFileSync('git', ['--git-dir', mirror, 'rev-parse', `${sha}^`], { encoding: 'utf8' }).trim();
+  const s = scratchRepo(mirror, { sha, parent, files: [{ path: 'mealie/core/settings/branding.py', status: 'A' }] }, { full: false });
+  try {
+    assert.ok(fs.existsSync(path.join(s.root, 'mealie/core/settings/branding.py')));
+    assert.match(fs.readFileSync(path.join(s.root, 'pyproject.toml'), 'utf8'), /target-version = "py314"/);
+    assert.strictEqual(execFileSync('git', ['status', '--porcelain', 'pyproject.toml'], { cwd: s.root, encoding: 'utf8' }), '', 'configuration is part of the base, not of the change');
+  } finally {
+    s.cleanup();
+  }
+});

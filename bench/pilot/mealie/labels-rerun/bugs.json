@@ -2,5 +2,9 @@
  "6fb78ba468401e7b9b5679ae39454ca6cf0742df:mealie/core/settings/branding.py:17:F821": {
   "label": "false-positive",
   "reason": "the return annotation names its own class, which Python 3.14 (Mealie requires >=3.14; its ruff target is py314) evaluates lazily: the module imports under 3.14, ruff passes it at py314, and a bug scan of the full tree finds nothing. The hit comes from the measurement scratch repo, which holds only the changed files, so ruff ran without the project configuration"
+ },
+ "04d380a588b56bb95649a85559fa8cb7c445b7f7:mealie/pkgs/safehttp/fetch.py:121:ASYNC109": {
+  "label": "style",
+  "reason": "(the after-fix run, with the project configuration in the scratch repo) ruff async rule ASYNC109, prefer asyncio.timeout to a timeout parameter: a correct design finding, not a defect; the parameter bounds a streaming read across chunks and predates the change, which added max_bytes to the same line"
  }
 }
