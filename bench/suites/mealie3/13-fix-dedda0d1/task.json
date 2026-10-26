@@ -1,0 +1,45 @@
+{
+  "id": "mealie3-13-fix-dedda0d1",
+  "category": "fix-dedda0d1",
+  "order": 13,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "4a8e710f8fcaf91cb7882011903637efefa99d72"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-d50915e3efd9/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Bug: a recipe created by Import with AI from images has no cover image.\n\nPOST /api/recipes/create/ai with one or more images creates the recipe and writes the first image's files (GET /api/media/recipes/{recipe_id}/images/original.webp serves it), but the recipe does not record an image: GET /api/recipes/{slug} returns \"image\": null, so the recipe shows no cover.\n\nExpected: when the AI import gets images, the created recipe's image field is set to a non-empty image key, as after an upload through PUT /api/recipes/{slug}/image, and original.webp is still served. Recipes created without images are unchanged.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: set the cover image on recipes created from AI images (#8739)",
+  "track": "fix",
+  "fixCommit": "dedda0d1206143d9b3a176d54ed9a08cb8d784a2",
+  "hidden": {
+    "fromSource": {
+      "commit": "dedda0d1206143d9b3a176d54ed9a08cb8d784a2",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_images\"",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider \"tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py\" --deselect \"tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_images\"",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 36,
+    "failingBeforeAndAfter": []
+  }
+}
