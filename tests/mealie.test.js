@@ -164,3 +164,41 @@ test('mealie select --all: every fix or feature with backend tests within the ca
   assert.strictEqual(allKey(commit('fix: a', code)), 'fix-abcdef01');
   assert.strictEqual(allKey(commit('feat: b', code)), 'feature-abcdef01');
 });
+
+test('mealie select --large: multi-file fixes and features with backend tests, 100–1,500 counted lines, no earlier item', () => {
+  const { LARGE_POOL, LARGE_RULE, largeCounts, earlierItems } = require(path.join(TOOLS, 'select.js'));
+  assert.deepStrictEqual(LARGE_RULE, { files: 5, mealieFiles: 4, minLines: 100, maxLines: 1500 });
+  const BACKEND = ['mealie/a.py', 'mealie/b.py', 'mealie/c.py', 'mealie/d.py'];
+  // counted: the files whose lines are spread evenly (any remainder on the first);
+  // extra: files that are present but not counted (tests, docs, translations, lockfiles).
+  const big = (subject, counted, lines, extra = ['tests/unit_tests/test_x.py'], sha = 'abcdef0123456789') => {
+    const each = Math.floor(lines / counted.length);
+    const numstat = counted.map((p, i) => ({ path: p, lines: each + (i === 0 ? lines - each * counted.length : 0) })).concat(extra.map((p) => ({ path: p, lines: 50 })));
+    return { sha, subject, files: [...counted, ...extra].map((p) => ({ status: 'M', path: p })), numstat };
+  };
+  const none = new Set();
+  const five = [...BACKEND, 'frontend/pages/x.vue'];
+  assert.strictEqual(LARGE_POOL(big('feat: organizer merge (#1)', five, 120), none), true);
+  assert.strictEqual(LARGE_POOL(big('fix: harden http (#2)', five, 100), none), true, 'at exactly 100 lines');
+  assert.strictEqual(LARGE_POOL(big('fix: harden http (#2)', five, 1500), none), true, 'at exactly 1,500 lines');
+  assert.strictEqual(LARGE_POOL(big('fix: x', five, 99), none), false, 'under 100 lines');
+  assert.strictEqual(LARGE_POOL(big('fix: x', five, 1501), none), false, 'over 1,500 lines');
+  assert.strictEqual(LARGE_POOL(big('fix: x', BACKEND, 400), none), false, '4 counted files');
+  assert.strictEqual(LARGE_POOL(big('fix: x', ['mealie/a.py', 'mealie/b.py', 'mealie/c.py', 'frontend/x.vue', 'frontend/y.ts'], 400), none), false, 'only 3 under mealie/');
+  for (const uncounted of ['tests/unit_tests/test_y.py', 'docs/docs/x.md', 'frontend/lang/messages/en-US.json', 'uv.lock']) {
+    assert.strictEqual(LARGE_POOL(big('fix: x', BACKEND, 400, ['tests/unit_tests/test_x.py', uncounted]), none), false, `${uncounted} is not counted`);
+  }
+  assert.strictEqual(LARGE_POOL(big('fix(deps): update pillow', five, 400), none), false, 'dependency update');
+  assert.strictEqual(LARGE_POOL(big('fix: bump sqlalchemy', five, 400), none), false, 'a bump');
+  assert.strictEqual(LARGE_POOL(big('chore: tidy', five, 400), none), false);
+  assert.strictEqual(LARGE_POOL(big('feat: x', five, 400, []), none), false, 'no backend test');
+  assert.strictEqual(LARGE_POOL(big('feat: x', five, 400), new Set(['abcdef0123456789'])), false, 'an earlier item');
+  const binary = big('feat: x', five, 120);
+  binary.numstat.push({ path: 'mealie/static/logo.png', lines: NaN });
+  binary.files.push({ status: 'A', path: 'mealie/static/logo.png' });
+  assert.deepStrictEqual(largeCounts(binary), { files: 6, mealieFiles: 5, lines: 120 }, 'a binary file counts as a file of 0 lines');
+  const used = earlierItems(path.join(__dirname, '..', 'bench', 'suites'));
+  assert.ok([...used].some((s) => s.startsWith('3be8f3d8')), 'mealie3\'s first item');
+  assert.ok([...used].some((s) => s.startsWith('7808c944')), 'a pilot item');
+  for (const s of used) assert.match(s, /^[0-9a-f]{40}$/);
+});

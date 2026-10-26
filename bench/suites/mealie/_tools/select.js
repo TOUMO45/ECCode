@@ -12,7 +12,7 @@
 // Frontend items use vitest at the spec-file level. Every skip is recorded
 // with its reason. The refactor item is not drawn (spec: no pure refactor
 // with tests exists in the window); it is written by hand in prompts.json.
-// usage: ECCODE_MEALIE_ENVS=<dir> node select.js [--suite <dir>] [--range v3.20.0..v3.27.0] [--only <category> | --all]
+// usage: ECCODE_MEALIE_ENVS=<dir> node select.js [--suite <dir>] [--range v3.20.0..v3.27.0] [--only <category> | --all | --large [--fallback <range>]]
 // --suite writes <dir>/_tools/selection.json (default: this suite's).
 const fs = require('fs');
 const os = require('os');
@@ -61,6 +61,35 @@ const BUMP = /\bbump\b/i;
 const ALL_POOL = (c) => (FIX.test(c.subject) || FEAT.test(c.subject)) && !DEPS.test(c.subject) && !BUMP.test(c.subject)
   && under(c, 'mealie/').length > 0 && backendTests(c).length > 0 && withinCap(c);
 const allKey = (c) => `${FIX.test(c.subject) ? 'fix' : 'feature'}-${c.sha.slice(0, 8)}`;
+// --large (the multi-file run's pool, spec docs/specs/2026-10-26-multifile-run-design.md):
+// the changes the cap kept out. Counted as the cap counts (no tests, docs,
+// translations or lockfiles): at least 5 files, 4 of them under mealie/, and
+// 100 to 1,500 lines; never an item of an earlier suite.
+const LARGE_RULE = { files: 5, mealieFiles: 4, minLines: 100, maxLines: 1500 };
+/** Counted files, those under mealie/, and their lines (a binary file is a file of 0 lines). */
+function largeCounts(c) {
+  const counted = (c.numstat || []).filter((r) => !NOT_COUNTED.test(r.path));
+  return {
+    files: counted.length,
+    mealieFiles: counted.filter((r) => r.path.startsWith('mealie/')).length,
+    lines: counted.reduce((n, r) => n + (Number.isFinite(r.lines) ? r.lines : 0), 0),
+  };
+}
+const LARGE_POOL = (c, used) => {
+  if (!(FIX.test(c.subject) || FEAT.test(c.subject)) || DEPS.test(c.subject) || BUMP.test(c.subject)) return false;
+  if (!backendTests(c).length || used.has(c.sha)) return false;
+  const n = largeCounts(c);
+  return n.files >= LARGE_RULE.files && n.mealieFiles >= LARGE_RULE.mealieFiles && n.lines >= LARGE_RULE.minLines && n.lines <= LARGE_RULE.maxLines;
+};
+/** The commits accepted by the earlier Mealie suites (their selection.json files). */
+function earlierItems(suitesDir) {
+  return new Set(['mealie', 'mealie2', 'mealie3'].flatMap((s) => {
+    const file = path.join(suitesDir, s, '_tools', 'selection.json');
+    return fs.existsSync(file) ? Object.values(JSON.parse(fs.readFileSync(file, 'utf8')).accepted).map((a) => a.sha) : [];
+  }));
+}
+// Fewer accepted than this from the window draws the fallback window too.
+const LARGE_MIN_ITEMS = 12;
 // The draw order: fix and debug share one pool, debug taking the next valid commit.
 const ORDER = [['fix', 'fix'], ['debug', 'fix'], ['quick', 'quick'], ['feature', 'feature'], ['migration', 'migration'], ['routes', 'routes'], ['frontend', 'frontend'], ['fullstack', 'fullstack'], ['security', 'security']];
 
@@ -163,15 +192,23 @@ function main(argv) {
   const only = argv.includes('--only') ? argv[argv.indexOf('--only') + 1] : null;
   const OUT = argv.includes('--suite') ? path.resolve(argv[argv.indexOf('--suite') + 1], '_tools', 'selection.json') : path.join(__dirname, 'selection.json');
   const mirror = lib.mealieMirror();
-  const commits = lib.commitsIn(mirror, range).filter((c) => c.parent && !c.merge);
-  for (const c of commits) {
-    c.numstat = spawnSync('git', ['--git-dir', mirror, 'diff', '--numstat', c.parent, c.sha], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).stdout.split('\n').filter(Boolean).map((l) => {
-      const [a, d, ...p] = l.split('\t');
-      return { path: p.join('\t'), lines: (Number(a) || 0) + (Number(d) || 0) };
-    });
-    if (c.files.some((f) => f.path.startsWith('mealie/routes/'))) c.routeDiff = spawnSync('git', ['--git-dir', mirror, 'diff', '-U0', c.parent, c.sha, '--', 'mealie/routes'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).stdout;
-  }
+  const commitsOf = (r) => {
+    const commits = lib.commitsIn(mirror, r).filter((c) => c.parent && !c.merge);
+    for (const c of commits) {
+      c.numstat = spawnSync('git', ['--git-dir', mirror, 'diff', '--numstat', c.parent, c.sha], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).stdout.split('\n').filter(Boolean).map((l) => {
+        const [a, d, ...p] = l.split('\t');
+        return { path: p.join('\t'), lines: (Number(a) || 0) + (Number(d) || 0) };
+      });
+      if (c.files.some((f) => f.path.startsWith('mealie/routes/'))) c.routeDiff = spawnSync('git', ['--git-dir', mirror, 'diff', '-U0', c.parent, c.sha, '--', 'mealie/routes'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).stdout;
+    }
+    return commits;
+  };
+  const commits = commitsOf(range);
   if (argv.includes('--all')) return drawAll(commits, OUT, range);
+  if (argv.includes('--large')) {
+    const fallback = argv.includes('--fallback') ? argv[argv.indexOf('--fallback') + 1] : null;
+    return drawLarge(commits, fallback ? commitsOf(fallback) : null, OUT, range, fallback);
+  }
   const pools = Object.fromEntries(Object.entries(POOLS).map(([k, pred]) => [k, lib.shuffle(commits.filter(pred), bench.mulberry32(42)).map((c) => c.sha)]));
   const prior = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : null;
   const selection = { ...(prior || {}), range, seed: 42, sizeCap: SIZE_CAP, pools, accepted: (prior && prior.accepted) || {}, skipped: (prior && prior.skipped) || [] };
@@ -242,6 +279,47 @@ function drawAll(commits, OUT, range) {
   process.stdout.write(`${Object.keys(selection.accepted).length} accepted, ${selection.skipped.length} skipped\n`);
 }
 
-module.exports = { POOLS, BASE_POOLS, ALL_POOL, allKey, withinCap, SIZE_CAP, junitOutcomes };
+/** Validates one eligible commit into selection (accepted under allKey, or skipped with its reason). */
+function validateInto(selection, c, OUT) {
+  const key = allKey(c);
+  if (selection.accepted[key] || selection.skipped.some((s) => s.sha === c.sha)) return;
+  process.stderr.write(`select: candidate ${c.sha.slice(0, 8)} ${c.subject}\n`);
+  let t;
+  try {
+    t = trees(c);
+    const backend = validateBackend(c, t);
+    const frontend = frontSpecs(c).length ? validateFrontend(c, t) : null;
+    selection.accepted[key] = { sha: c.sha, parent: c.parent, subject: c.subject, hidden: t.hidden, backend, frontend };
+    process.stderr.write(`select: accepted ${key}\n`);
+  } catch (e) {
+    selection.skipped.push({ category: 'large', sha: c.sha, subject: c.subject, reason: String(e.message).split('\n')[0] });
+    process.stderr.write(`select: skipped ${c.sha.slice(0, 8)}: ${String(e.message).split('\n')[0]}\n`);
+  } finally {
+    if (t) t.cleanup();
+  }
+  fs.writeFileSync(OUT, `${JSON.stringify(selection, null, 1)}\n`);
+}
+
+/**
+ * --large: validate every eligible commit of the window in upstream order;
+ * when fewer than LARGE_MIN_ITEMS are accepted, every eligible commit of the
+ * fallback window too (the rule fixed before the draw).
+ */
+function drawLarge(commits, fallbackCommits, OUT, range, fallbackRange) {
+  const used = earlierItems(path.join(__dirname, '..', '..'));
+  const prior = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : null;
+  const eligible = commits.filter((c) => LARGE_POOL(c, used));
+  const selection = { ...(prior || {}), range, mode: 'large', rule: LARGE_RULE, minItems: LARGE_MIN_ITEMS, fallbackRange: fallbackRange || null, pool: eligible.map((c) => c.sha), fallbackUsed: false, accepted: (prior && prior.accepted) || {}, skipped: (prior && prior.skipped) || [] };
+  for (const c of eligible) validateInto(selection, c, OUT);
+  if (Object.keys(selection.accepted).length < LARGE_MIN_ITEMS && fallbackCommits) {
+    const more = fallbackCommits.filter((c) => LARGE_POOL(c, used));
+    Object.assign(selection, { fallbackUsed: true, fallbackPool: more.map((c) => c.sha) });
+    for (const c of more) validateInto(selection, c, OUT);
+  }
+  fs.writeFileSync(OUT, `${JSON.stringify(selection, null, 1)}\n`);
+  process.stdout.write(`${Object.keys(selection.accepted).length} accepted, ${selection.skipped.length} skipped${selection.fallbackUsed ? ' (fallback window drawn)' : ''}\n`);
+}
+
+module.exports = { POOLS, BASE_POOLS, ALL_POOL, allKey, withinCap, SIZE_CAP, junitOutcomes, LARGE_RULE, LARGE_POOL, largeCounts, earlierItems, drawLarge };
 
 if (require.main === module) main(process.argv.slice(2));
