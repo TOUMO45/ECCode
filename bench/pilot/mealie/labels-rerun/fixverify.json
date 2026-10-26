@@ -1,0 +1,18 @@
+{
+ "643c49013b3fd11443c033bfb85f716d05c551c0": {
+  "label": "oracle-wrong",
+  "reason": "the oracle reads any AttributeError as a missing API; here it is the bug: before the fix an admin's edit of a recipe in another household reached recipe_crud_routes.py with no household (NoneType has no attribute 'id') and answered 500 instead of 200; the test fails on the pre-fix code for the reported symptom, so proven is right"
+ },
+ "10fa95e2ed0fa48f5b1c923eb28abd4266f1446d": {
+  "label": "oracle-wrong",
+  "reason": "a vocabulary mismatch in the instrument, not a disagreement: the direct run passes before and after the fix (pre 0, post 0), the oracle calls that not-proven, and the engine names the same case tests-pass-without-fix, its specific not-proven verdict (lib/fixverify.js); the engine is right"
+ },
+ "eaf8415cc27970ae01d31b16da9e69ef1bf1b564": {
+  "label": "oracle-wrong",
+  "reason": "a vocabulary mismatch in the instrument, not a disagreement: the direct run passes before and after the fix (pre 0, post 0), the oracle calls that not-proven, and the engine names the same case tests-pass-without-fix; the engine is right"
+ },
+ "c794a53c297e9d92a7b4337dfee9da853e1e01dd": {
+  "label": "oracle-wrong",
+  "reason": "the pre-fix failure is the bug: KeyError 'sodiumContent' while converting nutrition units, so creating a recipe answers 400 instead of 201; the oracle's missing-API pattern matched a name elsewhere in the full pre-fix output, not this failure; proven is right"
+ }
+}
