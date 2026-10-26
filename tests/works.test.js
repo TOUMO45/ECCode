@@ -132,14 +132,15 @@ test('refactor track: the behavior command must be green before the first claim 
   gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/rplan.json'] });
   gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/rplan.json']]));
   gates.startGate(store, config, 'phase:extract', 'orchestrator');
-  // Deliberately claim BEFORE recording the baseline run: the gate must catch it.
+  // Claiming BEFORE the baseline run is refused at the claim, while the rule can
+  // still be met (rerun b1 item 1 learnt it only at verification, too late).
+  const early = expectCode(() => tasks.claim(store, config, 'move', 'backend-engineer'), 'TRACK_RULE');
+  assert.match(early.message, /behavior command passing before the first task claim/);
+  assert.ok(early.message.includes(JSON.stringify(behavior)), 'the message gives the command to run');
+  evidence.runCommand(store, 'backend-engineer', { label: 'behavior before', command: 'node -e "process.exit(1)" # behavior-suite' });
+  expectCode(() => tasks.claim(store, config, 'move', 'backend-engineer'), 'TRACK_RULE'); // a different command does not count
+  evidence.runCommand(store, 'backend-engineer', { label: 'behavior before', command: behavior });
   runTask(ctx, 'move', 'backend-engineer', 'src/server/a.js', '// moved\n');
-  approvePhase(ctx, 'phase:extract');
-  evidence.runCommand(store, 'backend-engineer', { label: 'behavior after', command: behavior });
-  gates.startGate(store, config, 'verification', 'orchestrator');
-  write(dir, '.eccode/artifacts/verify4.md', '# V\nok\n');
-  const submitV = () => gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verify4.md', 'src/server/a.js'] });
-  assert.match(expectCode(submitV, 'TRACK_RULE').message, /BEFORE the first task claim/);
 
   // Run 2: baseline recorded first, then the change, then the after-run.
   const ctx2 = deliveredProject();

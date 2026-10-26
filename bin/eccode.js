@@ -57,7 +57,7 @@ Plan & tasks
                                          Correct a pending task's ownership (release a claimed one with task fail)
 
 Evidence & records
-  evidence run --actor <a> --label <l> [--purpose check|reproduction] [--gate g] [--task t] -- <command...>
+  evidence run --actor <a> --label <l> [--purpose check|reproduction] [--gate g] [--task t] [--timeout <s>] -- <command...>
   evidence file <path> --actor <a> [--label l] [--note n]
   evidence list [--json] | evidence show <id>
   handoff record --actor <a> --file <handoff.json>

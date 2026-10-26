@@ -30,7 +30,7 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
   |---|---|---|
   | `greenfield` | architecture → design → plan | — |
   | `feature` | design → plan | — |
-  | `refactor` | plan | the `--behavior` command must be recorded passing before the first claim and again after the last phase approval; breaking changes are refused even when declared |
+  | `refactor` | plan | the `--behavior` command must be recorded passing before the first claim (the claim is refused until it is: run `eccode evidence run --actor orchestrator --label baseline [--timeout <s>] -- "<command>"` right after the work starts) and again after the last phase approval; breaking changes are refused even when declared |
   | `fix` | plan | verification needs the failing reproduction, the same command passing after the fix, and a debugging lesson recorded in this work item |
   | `quick` | none (a one-task plan is imported from `--owner/--files/--command`) | phase review and verification still apply |
 - **New project:** `eccode init --name "<name>" --idea "<idea>" [--track <t>]` (refactor adds `--behavior "<command>"`, as with `work start`), then show the user `eccode status --brief`.

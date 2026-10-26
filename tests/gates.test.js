@@ -92,6 +92,26 @@ test('reviews of an artifact that changed after submission are refused', () => {
   assert.match(err.message, /changed after submission/);
 });
 
+test('the author resubmits a submitted gate whose artifact changed, and the review sees the new submission', () => {
+  const ctx = tmpProject();
+  submitArch(ctx);
+  fs.appendFileSync(path.join(ctx.dir, '.eccode/artifacts/brief.md'), '\n## Notes\nA late fix.\n');
+  expectCode(() => gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']])), 'REVIEW_REJECTED');
+  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
+  const g = ctx.store.state().gates.architecture;
+  assert.strictEqual(g.status, 'submitted');
+  assert.strictEqual(g.submissions.length, 2);
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'approved');
+});
+
+test('a submitted gate whose artifacts are unchanged waits for its review', () => {
+  const ctx = tmpProject();
+  submitArch(ctx);
+  const err = expectCode(() => gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] }), 'INVALID_TRANSITION');
+  assert.match(err.message, /submitted/);
+});
+
 test('changes requested → resubmission must respond → approval must resolve earlier findings', () => {
   const ctx = tmpProject();
   submitArch(ctx);
