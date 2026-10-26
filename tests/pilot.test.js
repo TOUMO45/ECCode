@@ -970,3 +970,17 @@ test('proof run: the report gives the primary verdict, both secondary criteria o
   const unlabelled = report({ stage1, stage2: null, labels: { 'w1:a:1': { label: 'spec-gap' } }, friction: { refusals: 9, unlabelled: ['x'], false: 1, runs: 4, perRun: 0.25 } });
   assert.match(unlabelled, /Friction[^\n]*1 refusal unlabelled/i, 'no friction verdict before every refusal is labelled');
 });
+
+test('proof run tools: the replay splits a backend-and-frontend target; the lint check counts only what a patch introduces', () => {
+  const { parts } = require('../bench/pilot/mealie/proof-replay');
+  assert.deepStrictEqual(parts('python -m pytest -q a.py && (cd frontend && npx vitest run b.test.ts)', true), ['python -m pytest -q a.py', '(cd frontend && npx vitest run b.test.ts)']);
+  assert.deepStrictEqual(parts('python -m pytest -q a.py', true), ['python -m pytest -q a.py'], 'a backend-only target stays whole');
+  assert.strictEqual(parts('a && (b)', false).length, 1, 'whole unless asked');
+  const { changedPython, introduced } = require('../bench/pilot/mealie/proof-lint');
+  const patch = ['diff --git a/m/a.py b/m/a.py', '--- a/m/a.py', '+++ b/m/a.py', 'diff --git a/m/gone.py b/m/gone.py', '--- a/m/gone.py', '+++ /dev/null', 'diff --git a/f/x.ts b/f/x.ts', '+++ b/f/x.ts', '+++ b/m/new.py'].join('\n');
+  assert.deepStrictEqual(changedPython(patch), ['m/a.py', 'm/new.py'], 'added or changed Python files, not deleted ones or other languages');
+  const before = { counts: { 'm/a.py': 2, 'm/new.py': null }, unformatted: new Set(['m/a.py']) };
+  assert.deepStrictEqual(introduced(before, { counts: { 'm/a.py': 2, 'm/new.py': 0 }, unformatted: new Set(['m/a.py']) }), { violations: 0, unformatted: [], clean: true }, 'what was there before is not the patch\'s');
+  assert.deepStrictEqual(introduced(before, { counts: { 'm/a.py': 3, 'm/new.py': 1 }, unformatted: new Set(['m/a.py', 'm/new.py']) }), { violations: 2, unformatted: ['m/new.py'], clean: false });
+  assert.strictEqual(introduced(before, { counts: { 'm/a.py': 1, 'm/new.py': 0 }, unformatted: new Set() }).violations, 0, 'fixing old violations does not offset new ones elsewhere, and is not negative');
+});
