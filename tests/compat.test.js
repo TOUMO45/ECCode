@@ -218,3 +218,19 @@ test('routes are read on routers of any name: user_router, item_router, userRout
   const js = "userRouter.get('/users', list);\nadmin_router.delete('/users/:id', drop);\nconfig.get('/not-a-route');\n";
   assert.deepStrictEqual(compat.routesIn('src/routes.js', js), ['DELETE /users/:id', 'GET /users']);
 });
+
+test('a script is judged by importers anywhere in the project, across multi-line imports, and a file turning script keeps its definitions', () => {
+  const dir = scratch();
+  const MAIN = 'def transform():\n    return 1\n\n\nif __name__ == "__main__":\n    transform()\n';
+  write(dir, 'tools/shared.py', MAIN);
+  write(dir, 'tools/report.py', 'from shared import transform\n');
+  // Only the task's file is in scope; its importer is not.
+  assert.deepStrictEqual(compat.snapshot(dir, ['tools/shared.py']).exports, { 'tools/shared.py': ['transform'] });
+  write(dir, 'ns/seed.py', MAIN);
+  write(dir, 'app/use.py', 'from ns import (\n    seed,\n)\n');
+  assert.ok('ns/seed.py' in compat.snapshot(dir, ['ns/**']).exports, 'a parenthesised import names the module');
+  write(dir, 'lib/plain.py', 'def util():\n    return 1\n');
+  const base = compat.snapshot(dir, ['lib/**']);
+  write(dir, 'lib/plain.py', 'def util():\n    return 1\n\n\nif __name__ == "__main__":\n    util()\n');
+  assert.deepStrictEqual(compat.detect(dir, base, ['lib/**']), [], 'gaining a main guard removes nothing');
+});

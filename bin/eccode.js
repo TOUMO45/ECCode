@@ -172,6 +172,14 @@ function findRoot(flags) {
   }
 }
 
+/** --timeout <seconds> as milliseconds (at least 1), or undefined when absent. */
+function timeoutOf(flags) {
+  if (flags.timeout === undefined) return undefined;
+  const seconds = Number(flags.timeout);
+  if (flags.timeout === true || !Number.isFinite(seconds) || seconds <= 0) throw new EccodeError('INVALID_INPUT', '--timeout takes a number of seconds greater than 0');
+  return Math.max(1, Math.round(seconds * 1000));
+}
+
 function need(value, name) {
   if (value === undefined || value === true || value === '') {
     const hint = name === '--actor' && process.env.ECCODE_ACTOR === 'user' ? ' (ECCODE_ACTOR=user is ignored: pass --actor user explicitly)' : '';
@@ -272,7 +280,7 @@ function main(argv) {
     const maxCostUsd = flags['max-cost'] !== undefined ? Number(flags['max-cost']) : null;
     const common = {
       agentCmd: need(flags.agent, '--agent'),
-      timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
+      timeoutMs: timeoutOf(flags),
       keep: Boolean(flags.keep),
       engineProfile: flags['engine-profile'] || 'guard',
       engineAgents: flags['engine-agents'] || 'inherit',
@@ -354,7 +362,7 @@ function main(argv) {
       base,
       files: flags.files ? String(flags.files).split(',').map((x) => x.trim()).filter(Boolean) : null,
       max: flags.max ? Number(flags.max) : 25,
-      timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
+      timeoutMs: timeoutOf(flags),
       onProgress: (m) => process.stderr.write(`mutate: ${m}\n`),
     });
     if (flags.record) res.evidence = mutate.record(store, need(actor, '--actor'), res, { task: flags.task, gate: flags.gate }).id;
@@ -364,7 +372,7 @@ function main(argv) {
   if (group === 'fix') {
     if (sub !== 'verify') throw new EccodeError('USAGE', 'Usage: eccode fix verify --actor <a> (--task <id> | --base <ref>) [--test "<cmd>"]');
     const fixverify = require('../lib/fixverify');
-    const r = fixverify.verify(store, need(actor, '--actor'), { test: flags.test, task: flags.task, base: flags.base, timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined });
+    const r = fixverify.verify(store, need(actor, '--actor'), { test: flags.test, task: flags.task, base: flags.base, timeoutMs: timeoutOf(flags) });
     print(flags, fixverify.format(r), r);
     return r.verdict === 'proven' ? 0 : 1;
   }
@@ -425,7 +433,7 @@ function main(argv) {
         ? stack.checks(root, cfg).filter((c) => c.available).map((c) => c.id)
         : [arg];
       let worst = 0;
-      const timeoutMs = flags.timeout ? Number(flags.timeout) * 1000 : 600000;
+      const timeoutMs = timeoutOf(flags) || 600000;
       for (const id of ids) {
         if (flags.record) {
           const c = stack.checks(root, cfg).find((x) => x.id === id);
@@ -627,7 +635,7 @@ function main(argv) {
           gate: flags.gate,
           task: flags.task,
           purpose: flags.purpose || 'check',
-          timeoutMs: flags.timeout ? Number(flags.timeout) * 1000 : undefined,
+          timeoutMs: timeoutOf(flags),
         });
         print(flags, `Evidence ev:${ev.id} — ${ev.status.toUpperCase()} (exit ${ev.exitCode}, ${ev.durationMs}ms)\n${ev.outputTail}`, ev);
         return 0;

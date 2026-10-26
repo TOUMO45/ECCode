@@ -224,3 +224,30 @@ test('a check that times out says so, names --timeout, and is stopped with every
   assert.match(out.stdout, /node-test: TIMED OUT after 0\.7 s/);
   assert.match(execFileSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' }), /stack run <id\|all> \[--timeout <s>\]/);
 });
+
+test('a check whose eccode process is killed stops with it', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {
+  const { dir } = tmpProject();
+  const marker = path.join(dir, 'marker.txt');
+  write(dir, 'package.json', JSON.stringify({ name: 'x', scripts: { test: 'sleep 3 && echo late > marker.txt' } }));
+  const runner = `const stack = require(${JSON.stringify(path.join(__dirname, '..', 'lib', 'stack'))}); const { loadConfig } = require(${JSON.stringify(path.join(__dirname, '..', 'lib', 'config'))});
+stack.runCheck(${JSON.stringify(dir)}, loadConfig(${JSON.stringify(dir)}), 'node-test', { timeoutMs: 30000 });`;
+  const child = require('child_process').spawn(process.execPath, ['-e', runner], { cwd: dir, detached: true, stdio: 'ignore' });
+  const sleep = (ms) => { const until = Date.now() + ms; while (Date.now() < until) { /* wait */ } };
+  sleep(1000);
+  process.kill(-child.pid, 'SIGKILL'); // the eccode process and its own group, as a harness kills an agent
+  sleep(4500);
+  assert.strictEqual(fs.existsSync(marker), false, 'the check did not outlive the eccode process');
+});
+
+test('--timeout takes a number of seconds above 0; anything else is refused before running', () => {
+  const { dir } = tmpProject();
+  write(dir, 'package.json', JSON.stringify({ name: 'x', scripts: { test: 'node -e ""' } }));
+  for (const bad of [['--timeout'], ['--timeout', 'abc'], ['--timeout', '-5'], ['--timeout', '0']]) {
+    const r = spawnSync(process.execPath, [CLI, 'stack', 'run', 'node-test', ...bad], { cwd: dir, encoding: 'utf8' });
+    assert.notStrictEqual(r.status, 0, bad.join(' '));
+    assert.match(r.stderr, /--timeout takes a number of seconds greater than 0/, bad.join(' '));
+    assert.doesNotMatch(r.stderr, /internal error|RangeError/, bad.join(' '));
+  }
+  const ok = spawnSync(process.execPath, [CLI, 'stack', 'run', 'node-test', '--timeout', '0.0001'], { cwd: dir, encoding: 'utf8' });
+  assert.doesNotMatch(ok.stderr, /internal error|RangeError/, 'a tiny timeout rounds up to 1 ms rather than crashing');
+});
