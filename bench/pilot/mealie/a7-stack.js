@@ -29,6 +29,9 @@ const frontendDirect = (manager) => ({
   vitest: `cd frontend && ${manager} test:ci`,
 });
 
+// The same time for both sides: Mealie's backend suite takes about 9 minutes alone.
+const TIMEOUT_MS = 1800000;
+
 function directFor(root) {
   const lock = env.lockfileOf(path.join(root, 'frontend'));
   return { ...PYTHON_DIRECT, ...frontendDirect(lock ? lock.manager : 'yarn') };
@@ -59,10 +62,10 @@ function main(argv) {
       const rows = checks.filter((c) => c.id !== 'eccode-secrets').map((c) => {
         if (!c.available) return { id: c.id, command: c.command, available: false };
         const started = Date.now();
-        const via = stack.runCheck(root, config, c.id);
+        const via = stack.runCheck(root, config, c.id, { timeoutMs: TIMEOUT_MS });
         const ms = Date.now() - started;
         const tool = toolOf(c);
-        const direct = tool ? spawnSync(DIRECT[tool], { cwd: root, shell: true, encoding: 'utf8', timeout: 1800000, maxBuffer: 64 * 1024 * 1024, env: process.env }) : null;
+        const direct = tool ? spawnSync(DIRECT[tool], { cwd: root, shell: true, encoding: 'utf8', timeout: TIMEOUT_MS, maxBuffer: 64 * 1024 * 1024, env: process.env }) : null;
         return { id: c.id, command: c.command, source: c.source, available: true, eccodeExit: via.exitCode, ms, tool, directCommand: tool ? DIRECT[tool] : null, directExit: direct ? direct.status : null, equal: direct ? (via.exitCode === 0) === (direct.status === 0) : null };
       });
       const secrets = stack.scanSecrets(root);
