@@ -35,7 +35,7 @@ function readings(batch) {
     write(out.sensitivity, registered.filter(started));
     write(out.continued, lines(own));
     const tr = path.join(batch, `tr-${p}`);
-    if (fs.existsSync(tr)) for (const dir of Object.values(out)) fs.symlinkSync(path.resolve(tr), path.join(dir, `tr-${p}`), 'dir');
+    if (fs.existsSync(tr)) for (const dir of Object.values(out)) fs.symlinkSync(path.resolve(tr), path.join(dir, `tr-${p}`), process.platform === 'win32' ? 'junction' : 'dir');
   }
   return out;
 }

@@ -190,7 +190,7 @@ test('a write waits for one test run of mutate, not for the whole mutation run',
 // Mealie rerun, b2 item 1: the full test suite outlived the 600 s evidence
 // timeout; only the shell was killed, the tests under it ran on and left a
 // half-migrated test database, and nothing said how to allow more time.
-test('an evidence run that times out stops everything it started and says how to give it more time', () => {
+test('an evidence run that times out stops everything it started and says how to give it more time', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {
   const { dir, store } = tmpProject();
   const late = path.join(dir, 'late.txt');
   const ev = evidence.runCommand(store, 'backend-engineer', { label: 'slow suite', command: `node -e "setTimeout(() => require('fs').writeFileSync(${JSON.stringify(late)}, 'x'), 1500)" & sleep 5`, timeoutMs: 500 });
