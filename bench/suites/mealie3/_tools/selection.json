@@ -579,6 +579,239 @@
     }
    },
    "frontend": null
+  },
+  "fix-fb05f2da": {
+   "sha": "fb05f2da33b33c51e8fb93072a1132ceeeaaa8c2",
+   "parent": "dedda0d1206143d9b3a176d54ed9a08cb8d784a2",
+   "subject": "fix: scale merged duplicate ingredients when adding a recipe to a shopping list (#8764)",
+   "hidden": [
+    "tests/integration_tests/user_household_tests/test_group_shopping_lists.py"
+   ],
+   "backend": {
+    "tests": [
+     "tests/integration_tests/user_household_tests/test_group_shopping_lists.py"
+    ],
+    "target": [
+     "tests/integration_tests/user_household_tests/test_group_shopping_lists.py::test_shopping_list_add_recipe_scale_merges_duplicate_foods"
+    ],
+    "regressionFiles": [
+     "tests/integration_tests/user_household_tests/test_group_shopping_lists.py"
+    ],
+    "regression": 30,
+    "failingBoth": [],
+    "venvKey": {
+     "parent": "py-d50915e3efd9",
+     "commit": "py-d50915e3efd9"
+    }
+   },
+   "frontend": null
+  },
+  "fix-9ca95fbb": {
+   "sha": "9ca95fbb2976413bb2fdd5cfb7ff997d2e24cbd2",
+   "parent": "fb05f2da33b33c51e8fb93072a1132ceeeaaa8c2",
+   "subject": "fix: match multi-word foods when the brute parser splits off an unknown unit (#8744)",
+   "hidden": [
+    "tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py"
+   ],
+   "backend": {
+    "tests": [
+     "tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py"
+    ],
+    "target": [
+     "tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py::test_brute_parser[1 green onion]",
+     "tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py::test_parser_ingredient_match[multi-word food split into unit and food]"
+    ],
+    "regressionFiles": [
+     "tests/unit_tests/services_tests/ingredient_parser/test_brute_parser.py"
+    ],
+    "regression": 47,
+    "failingBoth": [],
+    "venvKey": {
+     "parent": "py-d50915e3efd9",
+     "commit": "py-d50915e3efd9"
+    }
+   },
+   "frontend": null
+  },
+  "fix-4ab0d730": {
+   "sha": "4ab0d7305645f3d3950ba8cac215aab644ad765e",
+   "parent": "9ca95fbb2976413bb2fdd5cfb7ff997d2e24cbd2",
+   "subject": "fix: report blocked recipe action targets instead of dropping them silently (#8747)",
+   "hidden": [
+    "tests/integration_tests/user_household_tests/test_group_recipe_actions.py",
+    "tests/unit_tests/pkgs/safehttp/test_transport.py"
+   ],
+   "backend": {
+    "tests": [
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py"
+    ],
+    "target": [
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_create_one",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_get_all",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_get_one[True]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_get_one[False]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_update_one",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_delete_one",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_trigger_post[True-True]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_trigger_post[True-False]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_trigger_post[False-True]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_trigger_post[False-False]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_trigger_invalid_type",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_trigger_post_blocked_target[http://127.0.0.1:8742/]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_trigger_post_blocked_target[http://192.168.1.10/hook]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_trigger_post_blocked_target[http://[::1]/]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_trigger_post_allow_listed_target",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[https://example.com-True]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[http://example.com-True]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[HTTPS://EXAMPLE.COM-True]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[HTTP://EXAMPLE.COM-True]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[javascript:alert('xss')-False]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[JAVASCRIPT:alert('xss')-False]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[data:text/html,<script>alert('xss')</script>-False]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[file:///etc/passwd-False]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[ftp://example.com-False]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[//example.com-False]",
+     "tests/integration_tests/user_household_tests/test_group_recipe_actions.py::test_group_recipe_actions_url_scheme_validation[example.com-False]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[8.8.8.8-False]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[2606:4700:4700::1111-False]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[10.0.0.1-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[172.16.5.5-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[192.168.1.1-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[127.0.0.1-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[169.254.169.254-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[100.64.0.1-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[0.0.0.0-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[224.0.0.1-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[::1-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[fe80::1-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[fc00::1-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_is_blocked_ip[::ffff:127.0.0.1-True]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_blocks_host_resolving_to_private",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_allows_public_host_and_returns_pin",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_pin_covers_all_resolved_addresses",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_rejects_when_any_resolved_address_is_unsafe",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_ip_literal_public_needs_no_pin",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_ip_literal_metadata_blocked",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_ipv6_resolution_is_validated",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_allow_list_bypasses_block",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_allow_list_cidr_bypasses_block",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_deny_list_overrides_allow",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_deny_list_blocks_public_host",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_unresolvable_host_is_rejected",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_async_transport_pins_connection_to_validated_ip",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_async_transport_falls_back_to_a_reachable_address[ips0]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_async_transport_falls_back_to_a_reachable_address[ips1]",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_validate_url_blocks_private_target",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_validate_url_blocks_loopback_literal",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_validate_url_allows_public_target",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_validate_url_respects_allow_and_deny_lists",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_sync_post_blocks_loopback_by_default",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_sync_post_allows_configured_host",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_noproxy_is_set_when_no_proxy_is_configured",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_noproxy_is_cleared_when_a_proxy_is_configured",
+     "tests/unit_tests/pkgs/safehttp/test_transport.py::test_pin_and_proxy_options_coexist"
+    ],
+    "regressionFiles": [
+     "tests/integration_tests/user_household_tests/test_group_cookbooks.py",
+     "tests/integration_tests/user_household_tests/test_group_invitation.py",
+     "tests/integration_tests/user_household_tests/test_group_mealplan.py",
+     "tests/integration_tests/user_household_tests/test_group_mealplan_ical.py",
+     "tests/integration_tests/user_household_tests/test_group_mealplan_rules.py",
+     "tests/integration_tests/user_household_tests/test_group_notifications.py",
+     "tests/integration_tests/user_household_tests/test_group_shopping_list_items.py",
+     "tests/integration_tests/user_household_tests/test_group_shopping_lists.py",
+     "tests/integration_tests/user_household_tests/test_group_webhooks.py",
+     "tests/integration_tests/user_household_tests/test_household_perferences.py",
+     "tests/integration_tests/user_household_tests/test_household_permissions.py",
+     "tests/integration_tests/user_household_tests/test_household_self_service.py",
+     "tests/integration_tests/user_household_tests/test_organize_permissions.py",
+     "tests/integration_tests/user_household_tests/test_shopping_list_labels.py",
+     "tests/unit_tests/pkgs/safehttp/test_fetch.py",
+     "tests/unit_tests/pkgs/safehttp/test_flaresolverr.py"
+    ],
+    "regression": 205,
+    "failingBoth": [],
+    "venvKey": {
+     "parent": "py-d50915e3efd9",
+     "commit": "py-d50915e3efd9"
+    }
+   },
+   "frontend": null
+  },
+  "feature-0c71c2a2": {
+   "sha": "0c71c2a22684bc44a2f42a9c0bce540ac79b35c4",
+   "parent": "4ab0d7305645f3d3950ba8cac215aab644ad765e",
+   "subject": "feat: add centiliter to seeded ingredient units (#8766)",
+   "hidden": [
+    "tests/unit_tests/repository_tests/test_unit_repository.py"
+   ],
+   "backend": {
+    "tests": [
+     "tests/unit_tests/repository_tests/test_unit_repository.py"
+    ],
+    "target": [
+     "tests/unit_tests/repository_tests/test_unit_repository.py::test_centiliter_standardization"
+    ],
+    "regressionFiles": [
+     "tests/unit_tests/repository_tests/test_unit_repository.py"
+    ],
+    "regression": 16,
+    "failingBoth": [],
+    "venvKey": {
+     "parent": "py-d50915e3efd9",
+     "commit": "py-d50915e3efd9"
+    }
+   },
+   "frontend": null
+  },
+  "feature-c9bf6f1c": {
+   "sha": "c9bf6f1cab3e54dfa676c4fa5db64811839ef4a1",
+   "parent": "f70a0165187fcbb20d5a6a177ed0a226ea86c337",
+   "subject": "feat: add OIDC_VERIFY_X509_STRICT setting and adjust SSL verification… (#8715)",
+   "hidden": [
+    "tests/unit_tests/test_oidc_ssl.py"
+   ],
+   "backend": {
+    "tests": [
+     "tests/unit_tests/test_oidc_ssl.py"
+    ],
+    "target": [
+     "tests/unit_tests/test_oidc_ssl.py::test_default_oidc_ssl_context_returns_none",
+     "tests/unit_tests/test_oidc_ssl.py::test_relaxed_strict_default_ca",
+     "tests/unit_tests/test_oidc_ssl.py::test_custom_ca_strict",
+     "tests/unit_tests/test_oidc_ssl.py::test_custom_ca_relaxed_strict",
+     "tests/unit_tests/test_oidc_ssl.py::test_oidc_client_args_verify_integration"
+    ],
+    "regressionFiles": [
+     "tests/unit_tests/test_ai_prompt_overrides_migration.py",
+     "tests/unit_tests/test_alembic.py",
+     "tests/unit_tests/test_auto_init_config.py",
+     "tests/unit_tests/test_clear_legacy_organizer_join_tables_migration.py",
+     "tests/unit_tests/test_code_generation.py",
+     "tests/unit_tests/test_config.py",
+     "tests/unit_tests/test_exceptions.py",
+     "tests/unit_tests/test_locale_config.py",
+     "tests/unit_tests/test_meal_plan_recipe_scale_migration.py",
+     "tests/unit_tests/test_oidc_native_client.py",
+     "tests/unit_tests/test_recipe_export_types.py",
+     "tests/unit_tests/test_recipe_image_backfill.py",
+     "tests/unit_tests/test_recipe_parser.py",
+     "tests/unit_tests/test_security.py",
+     "tests/unit_tests/test_session_cookie.py",
+     "tests/unit_tests/test_spa_recipe_ingredients.py",
+     "tests/unit_tests/test_spa_static_files.py",
+     "tests/unit_tests/test_structured_recipe_times_migration.py",
+     "tests/unit_tests/test_utils.py"
+    ],
+    "regression": 198,
+    "failingBoth": [],
+    "venvKey": {
+     "parent": "py-d50915e3efd9",
+     "commit": "py-d50915e3efd9"
+    }
+   },
+   "frontend": null
   }
  },
  "skipped": [
