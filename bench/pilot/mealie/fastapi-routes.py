@@ -19,10 +19,23 @@ sys.path.insert(0, tree)
 
 from mealie.app import app  # noqa: E402
 
+
+def served(routes):
+    """(methods, path) for each route; FastAPI 0.141+ keeps an included router
+    as one node whose routes, with their full paths, are its effective contexts."""
+    for r in routes:
+        contexts = getattr(r, "effective_route_contexts", None)
+        if callable(contexts):
+            for c in contexts():
+                yield c.methods, c.path
+        else:
+            yield getattr(r, "methods", None), getattr(r, "path", None)
+
+
 routes = set()
-for r in app.routes:
-    for m in getattr(r, "methods", None) or []:
+for methods, route_path in served(app.routes):
+    for m in methods or []:
         if m != "HEAD":
-            routes.add(f"{m} {r.path}")
+            routes.add(f"{m} {route_path}")
 with open(out, "w", newline="\n") as fh:  # the same bytes on every platform
     fh.write("\n".join(sorted(routes)) + "\n")

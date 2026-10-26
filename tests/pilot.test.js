@@ -868,3 +868,25 @@ test('A4: the oracle names its verdicts as fix verify does', () => {
   assert.strictEqual(expectedVerdict({ code: 1, out: "ImportError: cannot import name 'x'" }, { code: 0 }), 'inconclusive');
   assert.strictEqual(expectedVerdict({ code: 1, out: 'E   assert 500 == 200' }, { code: 0 }), 'proven');
 });
+
+test('A3: the route table reads routes FastAPI keeps under an included router (0.141+) as well as top-level ones', (t) => {
+  const py = ['python3', 'python'].find((p) => require('child_process').spawnSync(p, ['--version']).status === 0);
+  if (!py) return t.skip('no python');
+  const tree = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-routes-'));
+  fs.mkdirSync(path.join(tree, 'mealie'));
+  fs.writeFileSync(path.join(tree, 'mealie', '__init__.py'), '');
+  // The two shapes: a plain route with methods and a path, and FastAPI 0.141's
+  // _IncludedRouter, whose routes come from effective_route_contexts().
+  fs.writeFileSync(path.join(tree, 'mealie', 'app.py'), [
+    'from types import SimpleNamespace as N',
+    'class _IncludedRouter:',
+    '    def effective_route_contexts(self):',
+    '        return [N(methods={"GET"}, path="/api/app/about"), N(methods={"POST", "HEAD"}, path="/api/groups/seeders/labels")]',
+    'app = N(routes=[N(methods={"GET", "HEAD"}, path="/docs"), _IncludedRouter()])',
+    '',
+  ].join('\n'));
+  const out = path.join(tree, 'routes.txt');
+  const r = require('child_process').spawnSync(py, [path.join(__dirname, '..', 'bench', 'pilot', 'mealie', 'fastapi-routes.py'), tree, out], { encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  assert.deepStrictEqual(fs.readFileSync(out, 'utf8').split('\n').filter(Boolean), ['GET /api/app/about', 'GET /docs', 'POST /api/groups/seeders/labels']);
+});
