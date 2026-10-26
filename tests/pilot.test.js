@@ -826,3 +826,28 @@ test('resume: an independent run cut off by a restart is a failure; the runs tha
   const reg = read(path.join(dir, 'registered', 'b3.jsonl'));
   assert.deepStrictEqual(reg.map((l) => [l.hiddenPassed, Boolean(l.infrastructure && l.infrastructure.neverStarted)]), [[1, false], [0, false], [0, true], [0, true]]);
 }));
+
+test('readings: registered, its sensitivity without runs that have no result line, and the continued reading', () => {
+  const { readings } = require('../bench/pilot/readings');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-readings-'));
+  const line = (r) => JSON.stringify(r) + '\n';
+  const ok = { task: 'i1', usage: { costUsd: 1, turns: 9 }, hiddenPassed: 1, hiddenTotal: 1 };
+  const cut = { task: 'i2', usage: null, hiddenPassed: 0, hiddenTotal: 1, infrastructure: { cause: 'restart', neverStarted: false }, amendment: 1 };
+  const later = { task: 'i3', usage: { costUsd: 1, turns: 4 }, hiddenPassed: 1, hiddenTotal: 1, amendment: 1 };
+  const never = { task: 'i3', usage: null, hiddenPassed: 0, hiddenTotal: 1, infrastructure: { cause: 'restart', neverStarted: true }, amendment: 1 };
+  const zero = { task: 'i4', usage: { costUsd: 0, turns: 0 }, hiddenPassed: 0, hiddenTotal: 1 };
+  fs.writeFileSync(path.join(dir, 'b1.jsonl'), line(ok) + line(cut) + line(later) + line({ type: 'chain-summary', chain: 1, amendment: 1 }));
+  fs.mkdirSync(path.join(dir, 'registered'));
+  fs.writeFileSync(path.join(dir, 'registered', 'b1.jsonl'), line(ok) + line(cut) + line(never) + line({ type: 'chain-summary', chain: 1, at: 'restart' }));
+  fs.writeFileSync(path.join(dir, 'c2.jsonl'), line(ok) + line(zero));
+  fs.mkdirSync(path.join(dir, 'tr-b1'));
+  const out = readings(dir);
+  const tasks = (reading, p) => fs.readFileSync(path.join(out[reading], `${p}.jsonl`), 'utf8').trim().split('\n').map((l) => JSON.parse(l)).map((r) => r.type || r.task);
+  assert.deepStrictEqual(tasks('registered', 'b1'), ['i1', 'i2', 'i3', 'chain-summary']);
+  assert.deepStrictEqual(tasks('registered', 'c2'), ['i1', 'i4'], 'a process the restart did not cut is the same in every reading');
+  assert.deepStrictEqual(tasks('sensitivity', 'b1'), ['i1', 'chain-summary']);
+  assert.deepStrictEqual(tasks('sensitivity', 'c2'), ['i1'], 'zero turns counts as never started');
+  assert.deepStrictEqual(tasks('continued', 'b1'), ['i1', 'i2', 'i3', 'chain-summary']);
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(out.continued, 'b1.jsonl'), 'utf8').split('\n')[2]).usage.turns, 4);
+  assert.ok(fs.existsSync(path.join(out.registered, 'tr-b1')), 'transcripts are reachable from every reading');
+});
