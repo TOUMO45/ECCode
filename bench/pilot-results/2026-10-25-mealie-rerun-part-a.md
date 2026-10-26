@@ -52,7 +52,7 @@ ECCode ran at the protocol commit `8662f5e`, after Parts B and C ended, with no 
   - Compat precision rises to 0.80 (8 of 10).
   - Route recall is 1 of 1 on W2's sample, the first removal the table could see.
   - On the pilot's window W, the table then found a removal compat missed: the route sat on `user_router`, and compat read only routers named `router` and the like, which left 36 of Mealie's 272 route decorators unseen (row 129). Fixed, W gives 1 of 1.
-  - A6 has no false positives, and A7's frontend checks pass both ways.
+  - A6 has no false positives. All five A7 checks pass, through ECCode and directly, when run alone.
   - Under load, A7's after-fix run also showed that `stack run` reported a timed-out check as a failure (row 130).
 
 ## Reading the measures
@@ -75,7 +75,7 @@ ECCode ran at the protocol commit `8662f5e`, after Parts B and C ended, with no 
 - **The six false ones:**
   - four definitions of `dev/scripts/convert_seed_files_to_new_format.py`. It is a one-off script with a main guard, outside any package, that nothing imports, deleted in 3d1978a;
   - two edits to applied migrations in e1d0ffd, the Python 3.14 upgrade: a connection cleanup in a helper (`engine.dispose()`) and an unquoted type annotation. Neither changes anything a database ran.
-- **Route recall: no verdict.** The table saw no route at all (above).
+- **Route recall: no verdict.** The table saw only the four documentation routes, none of the API (above).
 
 **A4, `fix verify`.** 31 of the 32 fixes in W2 were replayed. c266cff was skipped correctly: it changed only a message file and a test, and the engine answered that there is no fix to verify. Raw agreement with running the tests directly is 0.871. All four disagreements are labelled oracle-wrong:
 - **643c4901:** the AttributeError the oracle reads as a missing API is the bug. An admin's edit in another household reached the route with no household and answered 500.
@@ -105,9 +105,19 @@ ECCode ran at the protocol commit `8662f5e`, after Parts B and C ended, with no 
 
 ## After the fixes (post hoc, not registered)
 
-ECCode at the fix commits, the same window and pin, the same labels. Results: [results-rerun-after](../pilot/mealie/results-rerun-after).
+ECCode at the fix commits, the same windows and pin, the same labels, and every new detection labelled first. Results: [results-rerun-after](../pilot/mealie/results-rerun-after) (W2 and P2) and [results-after-routes](../pilot/mealie/results-after-routes) (the pilot's W). Not run again: A1 and A2, which no fix touched; A4, whose two name-only disagreements are settled by their labels; and A5, where the `mutate` fix only stops a timed-out mutant's processes and cannot lower the runs completing.
 
-AFTER_TABLE
+| Measure | Criterion | As measured | After the fixes | What changed |
+|---|---|---|---|---|
+| Compat precision (A3, W2) | ≥ 0.90 | 0.571 (8 of 14) | 0.800 (8 of 10), missed | The deleted script's four definitions are no longer detections (row 125); the two migration edits remain (row 126) |
+| Route recall (A3, W2's 15-commit sample) | ≥ 0.90 | no verdict (the table saw no API route) | 1 of 1 | The table walks included routers (row 127): `POST /api/groups/seeders/labels`, 3d1978a |
+| Route recall (A3, the pilot's W, 18-commit sample) | ≥ 0.90 | no verdict, in the pilot too | 1 of 1; compat precision on W 3 of 3 | `GET /api/auth/refresh` on `user_router`, a1a49d2: missed until compat read routers of any name (row 129) |
+| Bug-rule false positives (A6) | ≤ 1 per 10,000 lines | 0.70 (1 of 1 hit) | 0 (1 hit, labelled style) | With `pyproject.toml` the F821 is gone; ruff's ASYNC109 now applies (a correct design finding, not a defect) |
+| Checks equal to the tools run directly (A7) | all | 5/5, two of them failing on both sides | 5/5, all passing on both sides | pnpm on the linked `node_modules` (row 101); the commit's package manager and the same 30 minutes for both sides (row 127) |
+
+Two notes on the after-fix runs:
+- **The first after-fix A7 ran beside two A3 runs.** ECCode's pytest check hit `stack run`'s fixed 600 s and read as a failure (row 130; kept as `a7-stack.under-load.json`).
+- **Run alone, with both sides given 30 minutes, the same check passed in 618 s,** itself past the old limit. The registered run had taken 561 s.
 
 ## How it ran
 

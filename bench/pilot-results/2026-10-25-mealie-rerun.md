@@ -244,7 +244,7 @@ See [the Part A report](2026-10-25-mealie-rerun-part-a.md). It was measured with
   - compat precision 0.80;
   - route recall 1 of 1 on W2's sample, and 1 of 1 on the pilot's window once compat read every router (row 129);
   - no bug-rule false positive;
-  - A7's frontend checks: A7_AFTER.
+  - all five A7 checks equal and passing on both sides, when run alone.
 
 ## Defects found by the batch and its Part A
 
