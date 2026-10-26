@@ -83,11 +83,11 @@ const SEPARATORS = /\|\||&&|[;|\n]|(?<![>&])&(?![>&])/;
  * before it (a cd the text cannot resolve leaves targets where they were).
  * `remove` marks a deletion (rm, unlink).
  */
-function bashWriteTargets(cmd) {
+function bashWriteTargets(cmd, root) {
   const targets = [];
   const skeleton = shellSkeleton(cmd);
   let dir = '';
-  const temp = mktempVars(cmd);
+  const temp = mktempVars(cmd, root);
   // A target under a variable that holds a fresh mktemp path is outside the project.
   const at = (t) => (!t || temp.has((/^\$\{?(\w+)\}?(\/|$)/.exec(t) || [])[1]) ? null : dir && !path.isAbsolute(t) ? path.join(dir, t) : t);
   // A cd moves later targets only along an && chain: if it fails, nothing
@@ -103,8 +103,11 @@ function bashWriteTargets(cmd) {
     // Redirections are not arguments: `cp a b 2>&1` copies to b.
     const words = plain.replace(/&?\d*>>?\s*[^\s;&|)]+/g, ' ').replace(/\d*<<?-?\s*[^\s;&|)]+/g, ' ').trim().replace(/^\(+/, '').split(/\s+/).filter((w) => w && !/^\w+=/.test(w));
     if (!words.length) continue;
-    const name = path.basename(words[0]);
-    const args = words.slice(1).filter((a) => !a.startsWith('-'));
+    let [name, argv] = [path.basename(words[0]), words.slice(1)];
+    if (name === 'xargs') [name, argv] = programOfXargs(argv);
+    const args = argv.filter((a) => !a.startsWith('-'));
+    const output = outputFileOf(name, argv);
+    if (output) targets.push({ path: at(output), remove: false });
     if (name === 'cd') {
       const to = words[1];
       const alone = !subshell && words.length === 2 && parts[i + 1] === '&&';
@@ -123,9 +126,12 @@ function bashWriteTargets(cmd) {
  * plain `mktemp` or `mktemp -d` (under the system temp directory). A command
  * that sets TMPDIR keeps none: mktemp would follow it.
  */
-function mktempVars(cmd) {
+function mktempVars(cmd, root) {
   const out = new Set();
   if (/\bTMPDIR\b/.test(cmd)) return out;
+  // A TMPDIR inside the project puts mktemp's paths in it.
+  const tmp = process.env.TMPDIR;
+  if (tmp && root && !path.relative(root, path.resolve(tmp)).startsWith('..')) return out;
   const fresh = new Map();
   for (const m of cmd.matchAll(/(?:^|[\s;&|(])(?:export\s+|local\s+|readonly\s+)?([A-Za-z_]\w*)=/g)) {
     const ok = /^"?\$\(mktemp(?:\s+-d)?\)"?(?=$|[\s;&|)])/.test(cmd.slice(m.index + m[0].length));
@@ -135,23 +141,55 @@ function mktempVars(cmd) {
   return out;
 }
 
-// grep's pattern argument (the first one after its options): data, not a path.
+// grep's pattern argument (the first one after its options). Inverted
+// (-v), it only filters lines out, so naming the record there is data, not a
+// path; a plain pattern can select record files by their content.
 const GREP_PATTERN = /(^|[\s;&|(])((?:e|f)?grep|rg)((?:\s+--?[\w-]+(?:=\S*)?)*)\s+('[^']*'|"(?:[^"\\]|\\[\s\S])*"|[^\s;&|)]+)/g;
+const INVERTED = /(^|\s)(-[a-zA-Z]*v[a-zA-Z]*|--invert-match)(?=\s|$)/;
+
+/** The program xargs runs and its arguments ('' when an option's value hides it). */
+function programOfXargs(args) {
+  const i = args.findIndex((a) => !a.startsWith('-'));
+  return i < 0 ? ['', []] : [path.basename(args[i]), args.slice(i + 1)];
+}
+
+/** The file a usually read-only tool writes: sort -o FILE, uniq IN OUT. */
+function outputFileOf(name, argv) {
+  if (name === 'sort') {
+    for (let i = 0; i < argv.length; i++) {
+      const a = argv[i];
+      if (a === '--output') return argv[i + 1] || null;
+      if (a.startsWith('--output=')) return a.slice(9);
+      if (/^-[a-zA-Z]*o$/.test(a)) return argv[i + 1] || null;
+      const m = /^-[a-zA-Z]*o(.+)$/.exec(a);
+      if (m && !a.startsWith('--')) return m[1];
+    }
+    return null;
+  }
+  if (name === 'uniq') {
+    const positional = [];
+    for (let i = 0; i < argv.length; i++) {
+      if (/^-[fsw]$/.test(argv[i])) i += 1;
+      else if (!argv[i].startsWith('-') || argv[i] === '-') positional.push(argv[i]);
+    }
+    return positional[1] || null;
+  }
+  return null;
+}
 
 function writesRecord(cmd, { subagent }) {
   // Heredoc bodies count (`python3 - <<EOF` can write too); a grep pattern that
   // names the record (`git status | grep -v .eccode`) does not.
-  if (!RECORD_REF.test(cmd.replace(GREP_PATTERN, (m, pre, prog, opts) => `${pre}${prog}${opts} _`))) return false;
+  if (!RECORD_REF.test(cmd.replace(GREP_PATTERN, (m, pre, prog, opts, pattern) => (INVERTED.test(opts) ? `${pre}${prog}${opts} _` : m)))) return false;
   const shell = shellSkeleton(cmd);
   for (const m of shell.matchAll(/>>?\s*([^\s;&|]+)/g)) if (RECORD_REF.test(m[1])) return true;
   for (const segment of shell.split(SEPARATORS)) {
     const words = segment.trim().split(/\s+/).filter((w) => w && !/^\w+=/.test(w));
     if (!words.length) continue;
-    const name = path.basename(words[0]);
-    const args = words.slice(1);
-    if (READ_ONLY.has(name)) continue;
+    let [name, args] = [path.basename(words[0]), words.slice(1)];
+    if (name === 'xargs') [name, args] = programOfXargs(args); // xargs runs its program: judge that
+    if (READ_ONLY.has(name) && !outputFileOf(name, args)) continue;
     if (name === 'env' && !args.some((a) => !a.startsWith('-'))) continue; // env alone prints the environment
-    if (name === 'xargs' && READ_ONLY.has(path.basename(args.find((a) => !a.startsWith('-')) || ''))) continue;
     if (name === 'sed' && !args.some((a) => /^(-i|--in-place)/.test(a))) continue;
     if (name === 'find' && !args.some((a) => FIND_ACTIONS.test(a) || /[\\$`]/.test(a))) continue; // find only lists
     if (/^eccode(\.js)?$/.test(name) || (['node', 'npx'].includes(name) && /(^|\/)eccode(\.js)?$/.test(args[0] || ''))) {
@@ -328,7 +366,7 @@ function main(input) {
     }
     // Shell writes obey the same ownership policy as the file tools; nobody,
     // the main session included, writes a record file from the shell.
-    for (const { path: target, remove } of bashWriteTargets(cmd)) {
+    for (const { path: target, remove } of bashWriteTargets(cmd, root)) {
       const abs = path.resolve(input.cwd || root, target);
       const reason = ownershipDenial(root, lib, role, abs);
       if (reason && !(remove && ignoredArtifact(root, abs))) out('deny', `Shell write to ${target}: ${reason}`);
@@ -359,8 +397,15 @@ function ignoredArtifact(root, abs) {
   const git = (args) => spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
   if (git(['check-ignore', '-q', '--', rel]).status !== 0) return false;
   const tracked = git(['ls-files', '-z', '--', rel]);
-  return tracked.status === 0 && tracked.stdout === '';
+  if (tracked.status !== 0 || tracked.stdout !== '') return false;
+  // Ignored is also where secrets and keys live: those are never artifacts.
+  const ignored = git(['ls-files', '-z', '-o', '-i', '--exclude-standard', '--', rel]);
+  const files = [rel, ...(ignored.stdout || '').split('\0').filter(Boolean)];
+  return ignored.status === 0 && !files.some((f) => SECRET_FILE.test(f));
 }
+
+// Secret and key files by name: .env and its variants, keys and certificates.
+const SECRET_FILE = /(^|\/)(\.env(\.[^/]*)?|id_[a-z0-9]+|[^/]*\.(pem|key|p12|pfx|jks|keystore))$/i;
 
 /** The shared ownership policy; returns a denial reason or null. */
 function ownershipDenial(root, lib, role, abs) {

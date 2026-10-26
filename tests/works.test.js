@@ -137,8 +137,8 @@ test('refactor track: the behavior command must be green before the first claim 
   const early = expectCode(() => tasks.claim(store, config, 'move', 'backend-engineer'), 'TRACK_RULE');
   assert.match(early.message, /behavior command passing before the first task claim/);
   assert.ok(early.message.includes(JSON.stringify(behavior)), 'the message gives the command to run');
-  evidence.runCommand(store, 'backend-engineer', { label: 'behavior before', command: 'node -e "process.exit(1)" # behavior-suite' });
-  expectCode(() => tasks.claim(store, config, 'move', 'backend-engineer'), 'TRACK_RULE'); // a different command does not count
+  evidence.runCommand(store, 'backend-engineer', { label: 'another check', command: 'node -e "process.exit(0)" # another-suite' });
+  expectCode(() => tasks.claim(store, config, 'move', 'backend-engineer'), 'TRACK_RULE'); // a different command, even passing, does not count
   evidence.runCommand(store, 'backend-engineer', { label: 'behavior before', command: behavior });
   runTask(ctx, 'move', 'backend-engineer', 'src/server/a.js', '// moved\n');
 
@@ -162,6 +162,26 @@ test('refactor track: the behavior command must be green before the first claim 
   assert.match(expectCode(submit2, 'TRACK_RULE').message, /AFTER the last phase approval/);
   evidence.runCommand(ctx2.store, 'delivery-lead', { label: 'behavior after', command: behavior });
   submit2();
+});
+
+test('refactor track: verification still refuses a record whose first claim came before the baseline', () => {
+  // A record written before the claim-time check (or edited around it): the
+  // verification gate is the backstop.
+  const state = {
+    work: { track: 'refactor', startedAt: '2026-10-26T00:00:00.000Z', behaviorCommand: 'npm test' },
+    evidence: { e1: { kind: 'command', command: 'npm test', status: 'passed', at: '2026-10-26T00:02:00.000Z' } },
+    tasks: { move: { history: [{ event: 'claimed', at: '2026-10-26T00:01:00.000Z' }] } },
+    gateOrder: ['plan', 'phase:extract', 'verification'],
+    gates: { 'phase:extract': { approvedAt: '2026-10-26T00:03:00.000Z' } },
+    lessons: [],
+  };
+  const problems = works.checkTrackRules(state);
+  assert.strictEqual(problems.length, 2);
+  assert.match(problems[0], /BEFORE the first task claim/);
+  assert.match(problems[1], /AFTER the last phase approval/);
+  state.evidence.e0 = { kind: 'command', command: 'npm test', status: 'passed', at: '2026-10-26T00:00:30.000Z' };
+  state.evidence.e2 = { kind: 'command', command: 'npm test', status: 'passed', at: '2026-10-26T00:04:00.000Z' };
+  assert.deepStrictEqual(works.checkTrackRules(state), []);
 });
 
 test('feature track skips architecture; abandon needs the user and frees the record', () => {

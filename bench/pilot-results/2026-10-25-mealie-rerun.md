@@ -37,8 +37,8 @@ This rerun asks the same questions of the fixed engine, on ten fresh Mealie chan
   - **Registered reading:** 11 of 20 runs passed every hidden check, against 16 of 20 (stratified permutation test, p = 0.03). All of that gap is runs the restart cut or never started.
   - **Continued reading:** 17 of 20 against 19 of 20 (p = 0.58).
   - **Runs that finished:** the engine missed one hidden check in 18 runs, the bare agent none in 19.
-- **What the batch found.** 15 register rows (109–123):
-  - 10 closed with fixes and tests: a gate dead end, the refactor baseline checked too late, an evidence timeout that left the tests running, six guard misreads, and an identity gap no run used;
+- **What the batch found.** 16 register rows (109–124):
+  - 11 closed with fixes and tests: a gate dead end, the refactor baseline checked too late, an evidence timeout that left the tests running, six guard misreads, and an identity gap no run used;
   - 5 named as open.
 
   16 of the 20 false refusals fall in classes the fixes remove.
@@ -227,20 +227,27 @@ See [the Part A report](2026-10-25-mealie-rerun-part-a.md). It was measured with
 
 ## Defects found while the batch ran
 
-Each was fixed after the batch (commit `79e3da3`), with a test that failed first, and has a register row:
+Each was fixed after the batch, with a test that failed first, and has a register row. An independent review of the fixes then found:
+- that the first evidence fix let a check outlive a killed eccode process;
+- that its timeout test could not fail;
+- two places to keep the guard's relaxations narrower;
+- the `sort -o` hole.
+
+Those were fixed the same way.
 
 | Row | Defect | Fix |
 |---|---|---|
 | 109 | A gate whose submitted artifact changed could be neither reviewed nor resubmitted | The author replaces a stale submission (`gate submit` on a submitted gate whose artifacts changed); the refusal names the command |
 | 110 | The refactor track's baseline rule was checked only at verification | The first claim is refused until the behaviour command has passed in this work item, with the command to run |
-| 111 | An evidence run's timeout killed only the shell; the tests under it kept writing, and nothing said how to allow more time | The command runs in its own process group, stopped when it ends or times out; the output names `--timeout`, now in the help |
+| 111 | An evidence run's timeout killed only the shell; the tests under it kept writing, and nothing said how to allow more time | The command runs in its own process group, stopped when it ends or times out, and by a watchdog if the eccode process dies first; the output names `--timeout`, now in the help |
 | 112 | Guard misreads: `2>&1` as a cp destination; quoted parentheses as a subshell; `$D` from mktemp as a project path; escaped or single-quoted `$` in a direct eccode call | Each fixed, with the forms that must stay refused tested beside it |
-| 113 | The record rule fired when `.eccode` was only a grep pattern; `env` alone and `xargs <read-only command>` counted as writers | A grep pattern is data; both read |
-| 114 | Ownership refused deleting git-ignored artifacts, which no review sees | An engineer may delete an ignored path no tracked file lives under (never `.git`, `.claude` or `.eccode`, never a glob); writing one still needs ownership |
+| 113 | The record rule fired when `.eccode` was only an inverted grep pattern; `env` alone and `xargs <read-only command>` counted as writers | An inverted grep pattern is data; both read |
+| 114 | Ownership refused deleting git-ignored artifacts, which no review sees | An engineer may delete an ignored path no tracked file lives under (never `.git`, `.claude` or `.eccode`, a glob, or a secret or key file); writing one still needs ownership |
 | 115 | The main session could act as any role by setting `ECCODE_ACTOR` inside the command (no batch run did) | Treated as `--actor`: refused for a role outside sequential mode, asked when built by expansion |
 | 116 | A designer's refused write was told to use the reviewers' draft area | The message names the role's own areas |
 | 122 | `api-request-blob` events made the refusal count repeat 4 refusals | Amendment 2 |
 | 123 | The harness could not continue a chain an infrastructure failure cut | bench/pilot/resume.js (amendment 1) |
+| 124 | `sort -o FILE` and `uniq IN OUT` were on the guard's read-only list, though they write (older than this batch) | Both are write targets, and `xargs` is judged by the program it runs |
 
 ## Environment and harness disclosures
 

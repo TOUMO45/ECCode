@@ -460,3 +460,42 @@ test('guard: an engineer may delete git-ignored artifacts outside its ownership,
     assert.strictEqual(be(c), 'deny', c);
   }
 });
+
+// Review of the rerun's guard relaxations: each relaxation keeps no more than
+// its false refusals needed, and two older holes (sort -o, uniq IN OUT) close.
+test('guard: only an inverted grep pattern is data; a pattern that selects record files is not', () => {
+  const { dir } = tmpProject();
+  assert.strictEqual(bash(dir, 'backend-engineer', 'git status --short | grep -v .eccode; npm test'), 'allow');
+  assert.strictEqual(bash(dir, 'backend-engineer', 'grep -rl events.jsonl . | xargs truncate -s0'), 'deny');
+});
+
+test('guard: a mktemp path is not outside the project when TMPDIR points into it', () => {
+  const { dir } = tmpProject();
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'D=$(mktemp -d) && echo x > $D/a.js', { TMPDIR: path.join(dir, 'tmp') }), 'deny');
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'D=$(mktemp -d) && echo x > $D/a.js', { TMPDIR: require('os').tmpdir() }), 'allow');
+});
+
+test('guard: sort -o and uniq with an output file write, directly or through xargs', () => {
+  const { dir } = tmpProject();
+  for (const c of ['sort -o .eccode/events.jsonl x', 'ls | xargs sort -o .eccode/events.jsonl', 'uniq a .eccode/state.json', 'sort --output=.eccode/events.jsonl x']) {
+    assert.strictEqual(bash(dir, 'backend-engineer', c), 'deny', c);
+  }
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'sort -o src/a.js x'), 'deny', 'a reviewer may not write a project file with sort -o');
+  assert.strictEqual(bash(dir, 'technical-reviewer', 'uniq x src/a.js'), 'deny');
+  for (const c of ['sort -u .eccode/events.jsonl | head', 'uniq -c x | sort', 'ls .eccode | xargs sort | head']) {
+    assert.strictEqual(bash(dir, 'technical-reviewer', c), 'allow', c);
+  }
+});
+
+test('guard: secrets and keys are never deletable as ignored artifacts', () => {
+  const ctx = tmpProject();
+  write(ctx.dir, '.gitignore', '.env\n.env.local\n*.pem\n*.key\nbuild/\n');
+  write(ctx.dir, '.env', 'SECRET=1\n');
+  write(ctx.dir, 'build/out.js', 'x\n');
+  commit(ctx.dir, 'ignore');
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  for (const c of ['rm .env', 'rm -f .env.local', 'rm certs/server.pem', 'rm deploy.key']) assert.strictEqual(bash(ctx.dir, 'backend-engineer', c), 'deny', c);
+  assert.strictEqual(bash(ctx.dir, 'backend-engineer', 'rm -rf build'), 'allow');
+});

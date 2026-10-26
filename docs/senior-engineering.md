@@ -231,8 +231,8 @@ The items were fresh, because the pilot's items are not sampled twice with the s
 - Among the Mealie runs that finished, the engine missed one hidden check in 18 runs, and the bare agent none in 19.
 - The registered reading's gap, 11 of 20 against 16 of 20, is the restart's: those runs count as failures.
 
-**Found:** rows 109–123.
-- Ten are defects, each fixed after the batch with a test that failed first. 16 of its 20 false refusals were in their classes.
+**Found:** rows 109–124.
+- Eleven are defects, each fixed after the batch with a test that failed first (one found by an independent review of the fixes). 16 of its 20 false refusals were in their classes.
 - The fixes include an identity gap no run used: the main session could set `ECCODE_ACTOR` inside a command.
 - Five are named limits. One is that lessons were shown but no agent checked or cited one (row 119).
 
