@@ -190,3 +190,29 @@ test('an error that names a definition of the fixed code counts, though a librar
   assert.match(fixverify.inconclusiveReason(out.replace(/IngredientFood/g, 'RecipeTool'), ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'another class is not the fixed code');
   assert.match(fixverify.inconclusiveReason('E   KeyError: get', ctx.dir, ctx.base, sources, '') || '', /no test assertion failed/, 'a short common name is not evidence');
 });
+
+test('a pre-fix run where other tests fail an assertion still shows the bug, though some tests call new API', () => {
+  // Proof run, item 05: 16 tests failed importing a helper the fix adds, and 6
+  // failed assertions through API that existed before it. Fix verify called
+  // the whole run inconclusive, and the review gate refused two reviewers who
+  // cited it as the reproduction.
+  const ctx = project();
+  write(ctx.dir, 'src/cart.js', `${FIXED}function language_code(v) {\n  return v;\n}\n`);
+  const sources = ['src/cart.js'];
+  const missing = [
+    '___________________________ test_language_code[de-de] ___________________________',
+    '    def test_language_code(value, expected):',
+    '>       from shop.translate import language_code',
+    "E       ImportError: cannot import name 'language_code' from 'shop.translate'",
+  ];
+  const asserted = [
+    '_______________________ test_should_run[en-US-False] _______________________',
+    '    def test_should_run(lang, expected):',
+    '>       assert should_run(lang) is expected',
+    'E       AssertionError: assert True is False',
+  ];
+  assert.strictEqual(fixverify.inconclusiveReason([...missing, ...asserted].join('\n'), ctx.dir, ctx.base, sources, ''), null, 'the assertion failure shows the bug');
+  assert.match(fixverify.inconclusiveReason(missing.join('\n'), ctx.dir, ctx.base, sources, '') || '', /language_code, which the fix adds/, 'only the new API failed');
+  const both = [...missing, '>       assert language_code("DE") == "de"', 'E       AssertionError'];
+  assert.match(fixverify.inconclusiveReason(both.join('\n'), ctx.dir, ctx.base, sources, '') || '', /language_code, which the fix adds/, 'an assertion in a test that calls the new API does not count');
+});
