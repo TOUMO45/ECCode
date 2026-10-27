@@ -53,7 +53,8 @@ Plan & tasks
   task complete <id> --actor <owner> --handoff <handoff.json>
   task fail <id> --actor <owner> --reason <text>
   task reset <id> --actor <orchestrator|delivery-lead|user> --reason <text>
-  task rescope <id> [--files <glob,glob>] [--command "<cmd>"] --actor <orchestrator (quick, debug tracks)|user> --reason <text>
+  task rescope <id> [--files <glob,glob>] [--command "<cmd>"] --actor <orchestrator (quick, debug tracks)|user|delivery-lead (proposes, on a reviewed plan)> --reason <text>
+  task rescope-review <id> --decision approve|reject --reason <text> --actor <plan reviewer, not the proposer>
                                          Correct a pending task's ownership (release a claimed one with task fail)
 
 Evidence & records
@@ -617,8 +618,16 @@ function main(argv) {
         tasks.reset(store, need(arg, '<task>'), need(actor, '--actor'), need(flags.reason, '--reason'));
         print(flags, `Task ${arg} reset to pending.`);
       } else if (sub === 'rescope') {
-        tasks.rescope(store, config, need(arg, '<task>'), need(actor, '--actor'), { files: flags.files, command: flags.command, reason: need(flags.reason, '--reason') });
-        print(flags, [flags.files ? `Task ${arg} now owns ${flags.files}.` : null, flags.command ? `Task ${arg} now verifies with: ${flags.command}` : null].filter(Boolean).join('\n'));
+        const r = tasks.rescope(store, config, need(arg, '<task>'), need(actor, '--actor'), { files: flags.files, command: flags.command, reason: need(flags.reason, '--reason') });
+        if (r && r.proposed) {
+          print(flags, `Rescope ${r.proposal} proposed for ${arg}; nothing changes until a plan reviewer approves it:\n  eccode task rescope-review ${arg} --decision approve|reject --reason "..." --actor technical-reviewer`, r);
+        } else {
+          print(flags, [flags.files ? `Task ${arg} now owns ${flags.files}.` : null, flags.command ? `Task ${arg} now verifies with: ${flags.command}` : null].filter(Boolean).join('\n'));
+        }
+      } else if (sub === 'rescope-review') {
+        tasks.reviewRescope(store, config, need(arg, '<task>'), need(actor, '--actor'), { decision: need(flags.decision, '--decision'), reason: need(flags.reason, '--reason') });
+        const t = store.state().tasks[arg];
+        print(flags, flags.decision === 'approve' ? `Rescope approved: task ${arg} owns ${t.files.join(',')}${t.verification && t.verification.command ? `; verifies with: ${t.verification.command}` : ''}.` : `Rescope rejected for ${arg}; the task is unchanged.`, t);
       } else throw new EccodeError('USAGE', `Unknown task subcommand ${sub}`);
       return 0;
     }

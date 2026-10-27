@@ -247,6 +247,28 @@ test('mcp: quick and task_rescope narrow the detected check to named test paths,
 // Pilot, fifth after-fix check of the MCP item: both gates approved over MCP,
 // then nothing could deliver, and runs could not be opened or closed: deliver,
 // run_start and run_end were CLI-only.
+// Delivery run: the no-shell profile needs the reviewed rescope too.
+test('mcp: the delivery lead proposes a rescope and a plan reviewer approves it with task_rescope_review', async () => {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  const lead = client(ctx.dir, 'delivery-lead');
+  const reviewer = client(ctx.dir, 'technical-reviewer');
+  try {
+    for (const c of [lead, reviewer]) await c.request('initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 't', version: '0' } });
+    const p = await lead.call('task_rescope', { task: 'api', files: 'src/server/**,src/shared/**', reason: 'the api task needs the shared types' });
+    assert.strictEqual(p.isError, false, p.text);
+    assert.match(p.text, /proposed/);
+    assert.deepStrictEqual(ctx.store.state().tasks.api.files, ['src/server/**']);
+    assert.strictEqual((await lead.call('task_rescope_review', { task: 'api', decision: 'approve', reason: 'I approve my own proposal' })).isError, true, 'not the proposer');
+    const r = await reviewer.call('task_rescope_review', { task: 'api', decision: 'approve', reason: 'shared types are the api contract' });
+    assert.strictEqual(r.isError, false, r.text);
+    assert.deepStrictEqual(ctx.store.state().tasks.api.files, ['src/server/**', 'src/shared/**']);
+  } finally {
+    lead.close();
+    reviewer.close();
+  }
+});
+
 test('mcp: run_start, run_end and deliver close a work item without a shell', async () => {
   const tasks = require('../lib/tasks');
   const { passCheck, handoffFor, approval } = require('./helpers');

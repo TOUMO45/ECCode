@@ -177,6 +177,76 @@ test('on a reviewed plan only the user changes ownership', () => {
   fs.rmSync(ctx.dir, { recursive: true, force: true });
 });
 
+// Delivery run: on large changes, three engine runs stopped because only the
+// user may rescope a reviewed plan's task, and no one answers a headless run.
+// The plan's author now proposes, and a plan reviewer who is not the proposer
+// approves or rejects: an independent, recorded approval in the user's place.
+test('on a reviewed plan the delivery lead proposes a rescope and a plan reviewer applies it', () => {
+  const ctx = require('./helpers').tmpProject();
+  require('./helpers').approveThroughPlan(ctx);
+  const tasks = require('../lib/tasks');
+  const p = tasks.rescope(ctx.store, ctx.config, 'api', 'delivery-lead', { files: 'src/server/**,src/shared/**', reason: 'the api task needs the shared types' });
+  assert.strictEqual(p.proposed, true);
+  assert.match(p.proposal, /^rsc-/);
+  assert.deepStrictEqual(ctx.store.state().tasks.api.files, ['src/server/**'], 'a proposal changes nothing');
+  assert.strictEqual(ctx.store.state().tasks.api.rescopeProposal.by, 'delivery-lead');
+  expectCode(() => tasks.reviewRescope(ctx.store, ctx.config, 'api', 'delivery-lead', { decision: 'approve', reason: 'I approve my own proposal' }), 'ROLE_NOT_ALLOWED');
+  tasks.reviewRescope(ctx.store, ctx.config, 'api', 'technical-reviewer', { decision: 'approve', reason: 'shared types are the api contract' });
+  const t = ctx.store.state().tasks.api;
+  assert.deepStrictEqual(t.files, ['src/server/**', 'src/shared/**']);
+  assert.strictEqual(t.rescopeProposal, null);
+  const h = t.history.find((x) => x.event === 'rescoped');
+  assert.strictEqual(h.approvedBy, 'technical-reviewer');
+  assert.strictEqual(h.proposal, p.proposal);
+  assert.strictEqual(ctx.store.audit().ok, true);
+  fs.rmSync(ctx.dir, { recursive: true, force: true });
+});
+
+test('a rescope proposal: engineers cannot propose, one at a time, a rejection or a user rescope closes it, and only a pending, unconflicted task changes', () => {
+  const ctx = require('./helpers').tmpProject();
+  require('./helpers').approveThroughPlan(ctx);
+  const tasks = require('../lib/tasks');
+  const gates = require('../lib/gates');
+  const propose = (files, reason = 'the task needs another directory') => tasks.rescope(ctx.store, ctx.config, 'api', 'delivery-lead', { files, reason });
+  const review = (decision, actor = 'technical-reviewer') => tasks.reviewRescope(ctx.store, ctx.config, 'api', actor, { decision, reason: 'checked against the approved design' });
+  const proposal = () => ctx.store.state().tasks.api.rescopeProposal;
+  expectCode(() => tasks.rescope(ctx.store, ctx.config, 'api', 'backend-engineer', { files: 'src/**', reason: 'let me own everything' }), 'ROLE_NOT_ALLOWED');
+  propose('src/server/**,src/shared/**');
+  expectCode(() => propose('src/server/**,lib/**'), 'INVALID_TRANSITION');
+  review('reject');
+  assert.strictEqual(proposal(), null, 'a rejection closes the proposal');
+  assert.deepStrictEqual(ctx.store.state().tasks.api.files, ['src/server/**']);
+  expectCode(() => review('approve'), 'INVALID_TRANSITION');
+  propose('src/server/**,src/shared/**');
+  tasks.rescope(ctx.store, ctx.config, 'api', 'user', { files: 'src/server/**,lib/**', reason: 'the user decides the api task owns lib' });
+  assert.strictEqual(proposal(), null, 'a user rescope supersedes an open proposal');
+  expectCode(() => review('approve'), 'INVALID_TRANSITION');
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  propose('src/server/**,src/shared/**');
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  expectCode(() => review('approve'), 'INVALID_TRANSITION');
+  tasks.fail(ctx.store, ctx.config, 'api', 'backend-engineer', 'released for the rescope');
+  tasks.claim(ctx.store, ctx.config, 'ui', 'frontend-engineer');
+  review('reject');
+  propose('src/server/**,src/web/**');
+  expectCode(() => review('approve'), 'OWNERSHIP_CONFLICT');
+  assert.strictEqual(ctx.store.audit().ok, true);
+  fs.rmSync(ctx.dir, { recursive: true, force: true });
+});
+
+test('task rescope and rescope-review through the CLI', () => {
+  const ctx = require('./helpers').tmpProject();
+  require('./helpers').approveThroughPlan(ctx);
+  let r = cli(ctx.dir, ['task', 'rescope', 'api', '--files', 'src/server/**,src/shared/**', '--reason', 'the api task needs the shared types', '--actor', 'delivery-lead']);
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /rescope-review api/);
+  r = cli(ctx.dir, ['task', 'rescope-review', 'api', '--decision', 'approve', '--reason', 'shared types are the api contract', '--actor', 'technical-reviewer']);
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /src\/shared\/\*\*/);
+  assert.match(cli(ctx.dir, ['--help']).stdout, /task rescope-review <id>/);
+  fs.rmSync(ctx.dir, { recursive: true, force: true });
+});
+
 test('a test run\'s caches are not changes: __pycache__, .pytest_cache, pickled grammar caches and node_modules never need review', () => {
   const dir = repo();
   const { gitChangedFiles } = require('../lib/project');
