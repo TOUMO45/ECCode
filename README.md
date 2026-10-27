@@ -62,6 +62,12 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
   - **Delivery met:** 38 of 38 engine runs delivered with a clean audit (rule 80%), with 0.08 false refusals per run.
   - **What the engine added:** tests in every run (bare: 13 of 38), and a proven regression test and a lesson in every fix. Checked after the fact, 37 of 38 engine patches passed Mealie's lint gate, against 30 of 38 bare. It cost a median 10.8× a bare run.
   - Three defects found and fixed (rows 131–133). See [the proof run report](bench/pilot-results/2026-10-26-mealie-proof.md).
+- **The multi-file run** asked again on the 16 largest eligible changes of Mealie's recent history (121 to 1,355 lines in 6 to 30 files), screening each with three bare runs.
+  - **The bare agent did get large changes wrong:** its own mistakes on three items, which made them hard.
+  - **Primary missed:** on those items, 6 fresh runs of each variant gave the engine 12 of 18 and the bare agent 9 of 18 (p = 0.50, rule p < 0.05). The engine fixed the bare agent's mistakes on two items (6/6 against 3/6, and 4/6 against 1/6), but four of its six runs on the third reached the 7,200 s timeout. Graded on a clean tree with the timeout set aside, 17 of 18 engine patches pass (post hoc).
+  - **Delivery missed:** 9 of 18 engine runs delivered (rule 80%; row 138). Four timed out, and five stopped to ask a user, four of them after the benchmark's tool list refused a command they needed. Friction met: 0.17 false refusals per run.
+  - It cost a median 7.7× a bare run and took 48.5 minutes against 6.3.
+  - Five defects found and fixed, one mitigated (rows 134–137, and `ps` for row 91). See [the multi-file run report](bench/pilot-results/2026-10-27-mealie-multifile.md).
 
 **Sized to the task.** One record carries many deliveries: after `deliver`, `eccode work start --track feature|refactor|fix|quick|greenfield` opens the next work item with gates sized to its risk. On an existing codebase, `eccode onboard` briefs agents first (modules, entry points, hot spots, most-depended files) and `eccode impact` names what a change reaches before it is made. See [docs/senior-engineering.md](docs/senior-engineering.md).
 

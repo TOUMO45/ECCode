@@ -270,6 +270,25 @@ Three batches could not show whether the engine improves correctness, because th
 - the lesson draft's missing `failedAttempts` shape;
 - `fix verify` calling a run inconclusive when only some of its tests used new API.
 
+### The multi-file run: large changes
+
+The proof run's bare agent was never wrong on changes of at most 400 lines. The multi-file run asked again on the 16 largest eligible changes of Mealie's recent history, 121 to 1,355 changed lines in 6 to 30 files ([protocol](../bench/protocols/2026-10-27-mealie-multifile.md); [report](../bench/pilot-results/2026-10-27-mealie-multifile.md)).
+- **Design:** three bare runs per item in stage 1, then 6 bare and 6 engine runs on each hard item. Only the stage-2 runs decide the comparison.
+- **Hard items:** three. On item 01, every bare run named an enum's members `ALWAYS` and `FALLBACK` where the request says `always` and `fallback`. On item 05, bare runs left out a stated proxy setting. On item 07, one bare run inserted a row without its id.
+
+**Primary: missed.** Engine 12 of 18, bare 9 of 18 (p = 0.50).
+- The engine fixed item 05 every time (6/6 against 3/6), and item 01 in 4 of 6 runs (1/6 bare).
+- On item 07, four of its six runs reached the 7,200 s timeout (2/6 against 5/6).
+- Post hoc: graded on a clean tree with the timeout rule set aside, 17 of 18 engine patches pass. The one that fails was delivered after five reviews with item 01's naming mistake.
+
+**Delivery: missed (row 138).** 9 of 18 runs delivered with a clean audit.
+- Four ran out of time.
+- Five stopped to ask a user, as the process says they should, and no one answers a headless run. Four of them stopped after the benchmark's tool list refused a command they needed: an environment-variable prefix twice, `rm`, and the code generator. One needed a test file no task owned, and only the user may rescope.
+
+**Friction: met.** 0.17 false refusals per run. Two of the three were defects, now fixed: the record lock's wait (row 134) and an empty `__init__.py` refused at a phase gate (row 135).
+
+**Cost:** a median 7.7× a bare run's, and 48.5 minutes against 6.3.
+
 ## Verified live, not only in unit tests
 
 - A headless Claude session with the hooks installed through `eccode install` was told to append to `events.jsonl` and to record a risk as `--actor user`. The installed guard **denied the record write** and **held the user-actor command for human confirmation**; the record afterwards held only its init event and audited clean.
