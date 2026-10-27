@@ -73,6 +73,7 @@ For each `phase:<id>`, in order:
    - A failed completion means the engine rejected the handoff. Send the agent back with the exact refusal.
    - On `task fail`, retry within `maxTaskRetries`. A repeated failure escalates.
    - For a non-trivial failure, dispatch `learning-debugger`.
+   - When a planned check cannot run as written, or a file that must change belongs to no task, dispatch `delivery-lead` to propose a rescope (`eccode task rescope … --actor delivery-lead`), then `technical-reviewer` to decide it (`eccode task rescope-review <task> --decision approve|reject --reason "…" --actor technical-reviewer`). Do not ask the user: the reviewer's recorded approval stands in for theirs.
 4. **Check.** Run integration checks across tasks yourself when they span ownership (`eccode evidence run --actor orchestrator ...`). `eccode impact --changed` names the dependents and tests a change reaches; `--run --actor orchestrator` executes and records the affected tests.
 5. **Independent review.** Have `delivery-lead` submit the phase. Then dispatch `technical-reviewer` (and `security-reviewer` for phases touching auth, input handling or AI, named with `--reviewers` at gate start). Reviewers re-run checks themselves.
 6. **Fix blocking findings.** Map each finding to its owning task, run `eccode task reset <id> --actor orchestrator --reason "<finding>"`, then redispatch. Re-submit with `--responds-to`. The reviewer must resolve each finding with evidence.
@@ -99,6 +100,7 @@ For each `phase:<id>`, in order:
 |---|---|
 | Agent crashed or timed out | `run end --status failed`. Then `eccode recover` (or `--all` after a restart) and retry within limits |
 | Engine refusal | It is a rule, not a bug. Fix the cause and never bypass it by editing `.eccode/` files |
+| A planned check cannot run, or a needed file belongs to no task | Release the task if claimed (`task reset`), have `delivery-lead` propose a rescope and `technical-reviewer` decide it with `task rescope-review` |
 | Repeated rejections | The gate escalates automatically. Present the recovery options and ask the user |
 | Budget or runtime exhausted | Stop, summarize state, ask the user |
 | `eccode audit` fails | Stop; the record or approved artifacts were modified. Report to the user |

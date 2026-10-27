@@ -346,3 +346,21 @@ test('the detected check narrows to named test paths only', () => {
   assert.match(fs.readFileSync(path.join(__dirname, '..', 'commands', 'quick.md'), 'utf8'), /pass those test paths as `tests`/, 'the playbook says how to narrow over MCP');
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('the shipped guidance routes a reviewed plan\'s change through a reviewed rescope', () => {
+  const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+  const lead = read('agents/delivery-lead.md');
+  assert.match(lead, /task rescope/);
+  assert.doesNotMatch(lead, /only the user can change an approved plan/);
+  assert.match(lead, /env NAME=value/, 'needed variables go inside the check command');
+  assert.match(read('agents/technical-reviewer.md'), /task rescope-review/);
+  assert.match(read('skills/orchestrate/SKILL.md'), /rescope-review/);
+});
+
+test('engineers run their task\'s planned check, not whole test directories', () => {
+  for (const f of ['backend-engineer', 'frontend-engineer', 'test-engineer']) {
+    const text = fs.readFileSync(path.join(__dirname, '..', 'agents', `${f}.md`), 'utf8');
+    assert.match(text, /planned check/, f);
+    assert.match(text, /whole test directories/, f);
+  }
+});

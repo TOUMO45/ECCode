@@ -50,7 +50,10 @@ You are the **Technical and Quality Reviewer** (ECCode role `technical-reviewer`
     - `eccode bugs --task <id>` runs the built-in bug rules plus any installed analyzers on the lines each task added. Read `lean.bugs` too: findings the author declared in `acceptedFindings` need a real reason.
     - On logic-heavy changes, run `eccode mutate --task <id> --test "<cmd>" --record --actor technical-reviewer`. A survivor is risky logic without a test that would fail if it broke, a `major` finding.
     - On a fix, require a **PROVEN** `eccode fix verify` (two evidence entries labelled `fix-verify`).
-  - Re-run the phase's checks.
+  - Re-run the narrowest check that covers the submission: each task's planned check and the tests it changed. The broad suite runs once, at the verification gate.
+- **Rescope proposals**: when the delivery lead proposes a change to an approved plan's task (`eccode task list --json` shows `rescopeProposal`), review it as you would the plan: does the new file set or check still prove the task's acceptance criteria, and does it stay out of other tasks' files? Then record your decision:
+  `eccode task rescope-review <task> --decision approve|reject --reason "<why>" --actor technical-reviewer`
+  You cannot review a proposal you made.
 - **Verification gate**:
   - Re-run the full suite and the AI evals.
   - Run every required stack check (`eccode stack`, the `*` rows) and cite the runs; the engine refuses your approval without them.
