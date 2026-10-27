@@ -418,3 +418,22 @@ test('an agent\'s leftover processes are stopped when it exits, and the run is k
   assert.strictEqual(size(), a, 'the leftover writer was stopped');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('a large change is saved whole, so a failed run can be replayed from its record', () => {
+  // Found in the multi-file run's smoke runs: 1,300-line changes were cut at 60,000 characters.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-bigpatch-'));
+  try {
+    execFileSync('git', ['init', '-q', '.'], { cwd: dir });
+    fs.writeFileSync(path.join(dir, 'a.py'), 'x = 1\n');
+    execFileSync('git', ['-c', 'user.email=x@x', '-c', 'user.name=x', '-c', 'commit.gpgsign=false', 'add', '-A'], { cwd: dir });
+    execFileSync('git', ['-c', 'user.email=x@x', '-c', 'user.name=x', '-c', 'commit.gpgsign=false', 'commit', '-qm', 'base'], { cwd: dir });
+    fs.writeFileSync(path.join(dir, 'big.py'), Array.from({ length: 4000 }, (_, i) => `value_${i} = "${'v'.repeat(40)}"`).join('\n') + '\n');
+    const measured = bench.measureChange(dir, new Set());
+    assert.ok(measured.patch.length > 200000, `patch kept whole (${measured.patch.length} chars)`);
+    assert.match(measured.patch, /value_3999 = /);
+    const record = bench.resultRecord({ id: 't' }, 'without', { agent: { status: 0, stdout: '' }, durationMs: 1, measured, checks: [], setup: null });
+    assert.strictEqual(record.patchTruncated, false);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
