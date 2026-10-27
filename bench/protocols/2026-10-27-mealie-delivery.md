@@ -166,10 +166,10 @@ Committed before the batch continued.
 - **After the batch,** each cut run is run once more, as the protocol's infrastructure rule says: `D --tasks <item> --runs 1` with the process's variant and engine flags, into `<scratch>/delivery-rerun/<process>.jsonl`, with transcripts in the process's own `<scratch>/delivery/tr-<process>`, so the analysis finds them.
 
 **The two readings,** built by `readings()` in `bench/pilot/multifile.js` from `<scratch>/delivery` and `<scratch>/delivery-rerun`:
-- **Registered:** the files under `registered/`. It holds 32 planned engine runs, of which at most 6 could deliver: the 26 that never started count as not delivered.
+- **Registered:** the files under `registered/`. It holds 32 planned engine runs, of which at most 3 can deliver: the 3 cut runs and the 26 that never started count as not delivered.
 - **Continued:** every run that ran, meaning each process file without its cut-run record, followed by that process's replacement run.
 
-**Both readings are reported,** with the primary verdict in each, as the protocol says. **The continued reading answers the run's question.** The registered reading can show at most 6 of 32 delivered, so it measures the restart, not the engine. This choice is made with the three finished engine runs known, as disclosed above.
+**Both readings are reported,** with the primary verdict in each, as the protocol says. **The continued reading answers the run's question.** The registered reading can show at most 3 of 32 delivered, so it measures the restart, not the engine. This choice is made with the three finished engine runs known, as disclosed above.
 
 **Labels.** `failures.json` is keyed `<process>:<task>:<n>` over the continued reading. The registered reading's keys differ for the cut items (its second run of item 01 in e1 is the cut run; in the continued reading it is the replacement), so its labels go in `failures-registered.json`: the continued reading's labels for runs both readings share, plus `harness` for each cut and never-started run. Refusals are labelled once, by transcript line, and both readings share them.
 
