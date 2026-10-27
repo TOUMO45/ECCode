@@ -437,3 +437,66 @@ test('a large change is saved whole, so a failed run can be replayed from its re
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// Multi-file run, stage 2: hidden checks ran in the agent's sandbox and read a
+// git-ignored test database the agent's own test runs had left, so a change
+// that passes on a clean tree failed both checks. The checks now see the
+// starting tree plus the change: ignored files the agent left are removed,
+// ignored files that were there before it started (setup's links) stay.
+test('hidden checks do not see the ignored files an agent left, and keep the ones setup made', () => {
+  const suite = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-leftover-'));
+  const dir = path.join(suite, 'leftover');
+  fs.mkdirSync(path.join(dir, 'fixture'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'fixture', '.gitignore'), 'tests/.temp/\nenv-link/\n');
+  fs.writeFileSync(path.join(dir, 'fixture', 'a.txt'), 'old\n');
+  fs.writeFileSync(path.join(dir, 'task.json'), JSON.stringify({
+    id: 'leftover',
+    prompt: 'Change a.txt to say new.',
+    setup: 'mkdir -p env-link && echo env > env-link/marker',
+    hiddenChecks: [
+      { id: 'change', command: 'grep -qx new a.txt' },
+      { id: 'clean', command: 'test ! -e tests/.temp/stale.db' },
+      { id: 'setup kept', command: 'test -e env-link/marker' },
+    ],
+  }));
+  const agent = agentScript("fs.writeFileSync('a.txt', 'new\\n'); fs.mkdirSync('tests/.temp', { recursive: true }); fs.writeFileSync('tests/.temp/stale.db', 'old schema');");
+  try {
+    const [task] = bench.listTasks(suite);
+    const r = bench.runOnce(task, { agentCmd: agent, variant: 'without' });
+    assert.deepStrictEqual(r.checks.map((c) => [c.id, c.passed]), [['change', true], ['clean', true], ['setup kept', true]]);
+    assert.strictEqual(r.filesChanged, 1, 'the ignored leftover was never part of the change');
+  } finally {
+    fs.rmSync(suite, { recursive: true, force: true });
+  }
+});
+
+// Multi-file run, stage 2: three engine runs hit the 7,200 s timeout. An agent
+// cut off prints no result line, so the runs carried no usage at all and
+// nothing said they had timed out. The record now says so, with the token
+// counts of the session's transcripts (each message once).
+test('a run cut by the timeout says so, and keeps the token counts its transcripts show', { skip: process.platform === 'win32' && 'HOME and process groups are POSIX' }, () => {
+  const task = bench.listTasks(path.join(__dirname, '..', 'bench', 'suites', 'followup')).find((t) => t.id === 'top-words');
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-home-'));
+  const saved = process.env.HOME;
+  process.env.HOME = home;
+  const agent = agentScript(`
+const path = require('path');
+const dir = path.join(process.env.HOME, '.claude', 'projects', process.cwd().replace(/[^a-zA-Z0-9]/g, '-'));
+fs.mkdirSync(path.join(dir, 's', 'subagents'), { recursive: true });
+const u = { input_tokens: 2, output_tokens: 100, cache_read_input_tokens: 1000, cache_creation_input_tokens: 50 };
+const line = (id) => JSON.stringify({ type: 'assistant', message: { id, usage: u, content: [] } });
+fs.writeFileSync(path.join(dir, 's.jsonl'), [line('a'), line('a'), JSON.stringify({ type: 'user' }), line('b')].join('\\n') + '\\n');
+fs.writeFileSync(path.join(dir, 's', 'subagents', 'agent-1.jsonl'), line('c') + '\\n');
+setTimeout(() => {}, 60000);`);
+  try {
+    const r = bench.runOnce(task, { agentCmd: agent, variant: 'without', timeoutMs: 3000 });
+    assert.strictEqual(r.timedOut, true);
+    assert.strictEqual(r.usage, null, 'no result line, no reported usage');
+    assert.deepStrictEqual(r.transcriptUsage, { messages: 3, tokens: 3456, outputTokens: 300, inputTokens: 6, cacheReadTokens: 3000, cacheCreationTokens: 150 });
+    const done = bench.resultRecord(task, 'without', { agent: { status: 0, stdout: '' }, durationMs: 1, measured: { linesAdded: 0, linesRemoved: 0, testLinesAdded: 0, changed: [], newDeps: [], patch: '' }, checks: [], setup: null });
+    assert.strictEqual(done.timedOut, undefined, 'a run that ended is not marked');
+  } finally {
+    process.env.HOME = saved;
+    fs.rmSync(home, { recursive: true, force: true });
+  }
+});
