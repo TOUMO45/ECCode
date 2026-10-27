@@ -1058,6 +1058,27 @@ test('multifile run: the report\'s primary verdict, secondary criteria over stag
   assert.match(report({ stage1, stage2: null, labels, order }), /Primary:\*\* pending: 3 hard items, stage 2 not run yet/);
 });
 
+// The multi-file run: item 07's third engine run reached the 7,200 s timeout
+// with both hidden checks passing, and the analysis counted it as a pass. The
+// protocol counts a run cut by the timeout as a failure in every pass rate.
+test('multifile run: a run cut by the timeout fails, whatever its hidden checks', () => {
+  const { report } = require('../bench/pilot/multifile');
+  const order = (id) => 'abc'.indexOf(id) + 1;
+  const row = (process, task, variant, ok, extra = {}) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, durationMs: 600000, usage: { costUsd: 1 }, engine: variant === 'engine' ? { delivered: true, auditOk: true } : undefined, ...extra });
+  const cut = { durationMs: 7200095, usage: null, agentExit: 1 }; // a record from before the harness marked timeouts
+  const stage1 = ['a', 'b', 'c'].flatMap((t) => [row('w1', t, 'without', false), row('w1', t, 'without', true), row('w1', t, 'without', true, t === 'c' ? cut : {})]);
+  const labels = { 'w1:a:1': { label: 'agent-error' }, 'w1:b:1': { label: 'agent-error' }, 'w1:c:1': { label: 'agent-error' }, 'w1:c:3': { label: 'harness' } };
+  const six = (f) => [0, 1, 2, 3, 4, 5].map(f);
+  const stage2 = ['a', 'b', 'c'].flatMap((t) => [
+    ...six(() => row('s2w', t, 'without', true)),
+    ...six((i) => row('s2e1', t, 'engine', true, t !== 'c' ? {} : i === 0 ? cut : i === 1 ? { timedOut: true } : {})),
+  ]);
+  const md = report({ stage1, stage2, labels, order });
+  assert.match(md, /\| c \| 1\/3 \|/, 'a stage-1 run cut by the timeout fails');
+  assert.match(md, /\| c \| 6\/6 \| 4\/6 \|/, 'stage-2 runs cut by the timeout fail, marked or known by their duration');
+  assert.match(md, /Primary:\*\* missed: engine 16\/18, bare 18\/18/);
+});
+
 test('multifile run: tests in the patch counts tests/ and frontend spec files only', () => {
   const { withTests } = require('../bench/pilot/multifile');
   const patch = (...files) => files.map((f) => `diff --git a/${f} b/${f}\n--- a/${f}\n+++ b/${f}\n`).join('');
