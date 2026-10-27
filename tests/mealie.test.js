@@ -243,3 +243,28 @@ test('mealie select --large: multi-file fixes and features with backend tests, 1
   assert.ok([...used].some((s) => s.startsWith('7808c944')), 'a pilot item');
   for (const s of used) assert.match(s, /^[0-9a-f]{40}$/);
 });
+
+test('mealie4 tasks run in Mealie\'s dev environment; the delivery run\'s agent command adds only rm of the test temp dir', () => {
+  // The multi-file run's items 05 and 07 stopped on PRODUCTION and PYTHONPATH
+  // (Mealie's Taskfile sets PRODUCTION=false; an editable install puts the tree
+  // on the path), and item 01 on a stale tests/.temp the tool list could not delete.
+  const { DEV_ENV } = require(path.join(TOOLS, 'build.js'));
+  assert.deepStrictEqual(DEV_ENV, { PRODUCTION: 'false', PYTHONPATH: '.' });
+  const suite = path.join(__dirname, '..', 'bench', 'suites', 'mealie4');
+  const items = fs.readdirSync(suite).filter((x) => /^\d\d-/.test(x));
+  assert.strictEqual(items.length, 16);
+  for (const d of items) {
+    const task = JSON.parse(fs.readFileSync(path.join(suite, d, 'task.json'), 'utf8'));
+    assert.strictEqual(task.env.PRODUCTION, 'false', d);
+    assert.strictEqual(task.env.PYTHONPATH, '.', d);
+  }
+  const tools = (file, name) => {
+    const m = fs.readFileSync(path.join(__dirname, '..', 'bench', 'pilot', file), 'utf8').match(new RegExp(`^export ${name}='[^']*--allowedTools "([^"]*)"`, 'm'));
+    assert.ok(m, `${file} exports ${name}`);
+    return m[1].match(/Bash\([^)]*\)|\S+/g);
+  };
+  const b = tools('agents-rerun.sh', 'AGENT_B');
+  const d = tools('agents-delivery.sh', 'AGENT_D');
+  assert.deepStrictEqual(d.filter((x) => !b.includes(x)), ['Bash(rm -rf tests/.temp*)', 'Bash(rm -r tests/.temp*)', 'Bash(rm tests/.temp*)']);
+  assert.deepStrictEqual(b.filter((x) => !d.includes(x)), []);
+});

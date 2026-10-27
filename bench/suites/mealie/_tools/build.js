@@ -26,6 +26,9 @@ const P = refactor ? refactor.source || 'dbe84cc91b9e1dfc88b783a1e31d8a849580033
 const FULL_SUITE = 'python -m pytest -q -p no:cacheprovider tests';
 const TRACK = { fix: 'fix', debug: 'debug', quick: 'quick', feature: 'feature', migration: 'feature', fullstack: 'feature', security: 'fix', refactor: 'refactor' };
 // Single-quoted for sh: a parametrised test id may hold backticks, $ or quotes.
+// Mealie's dev environment, as its Taskfile.yml gives every dev task
+// (PRODUCTION=false) and an editable install would (the tree importable).
+const DEV_ENV = { PRODUCTION: 'false', PYTHONPATH: '.' };
 const q = (s) => `'${String(s).replace(/'/g, "'\\''")}'`;
 
 function trackOf(category, subject) {
@@ -73,7 +76,7 @@ function main() {
       category: it.category,
       order,
       source: { repo: lib.MEALIE, commit: it.source },
-      env: { PATH: `\${ECCODE_MEALIE_ENVS}/py-${venvKey(mirror, it.source)}/bin:\${PATH}`, PYTHONDONTWRITEBYTECODE: '1', pnpm_config_verify_deps_before_run: 'false', ECCODE_MEALIE_ENVS: '${ECCODE_MEALIE_ENVS}' },
+      env: { PATH: `\${ECCODE_MEALIE_ENVS}/py-${venvKey(mirror, it.source)}/bin:\${PATH}`, PYTHONDONTWRITEBYTECODE: '1', pnpm_config_verify_deps_before_run: 'false', ECCODE_MEALIE_ENVS: '${ECCODE_MEALIE_ENVS}', ...DEV_ENV },
       // The venv and node_modules live outside the sandbox; this links and
       // prepares them for the item's tree (cheap once built by setup.sh).
       setup: 'node "$ECCODE_BENCH_TASK_DIR/../_tools/env.js" python . > /dev/null && node "$ECCODE_BENCH_TASK_DIR/../_tools/env.js" node . > /dev/null',
@@ -110,6 +113,6 @@ function main() {
   });
 }
 
-module.exports = { checksFor, trackOf };
+module.exports = { checksFor, trackOf, DEV_ENV };
 
 if (require.main === module) main();
