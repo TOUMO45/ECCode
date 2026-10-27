@@ -1064,3 +1064,25 @@ test('multifile run: tests in the patch counts tests/ and frontend spec files on
   const rows = [{ patch: patch('mealie/x.py', 'tests/unit_tests/test_x.py') }, { patch: patch('mealie/x.py') }, { patch: patch('frontend/composables/a.spec.ts') }, { patch: patch('frontend/lib/b.test.ts') }, {}];
   assert.deepStrictEqual(withTests(rows), { n: 3, runs: 5 });
 });
+
+test('multifile run: the two readings after a restart: registered counts cut and unstarted runs, continued swaps each cut run for its replacement', () => {
+  const { readings } = require('../bench/pilot/multifile');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-mf-readings-'));
+  const w = (rel, rows) => { fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); fs.writeFileSync(path.join(dir, rel), rows.map((r) => JSON.stringify(r)).join('\n') + '\n'); };
+  const run = (task, ok) => ({ task, variant: 'without', hiddenPassed: ok ? 2 : 1, hiddenTotal: 2 });
+  const cut = { task: 'b', variant: 'without', hiddenPassed: 0, hiddenTotal: 2, infrastructure: { cause: 'restart', neverStarted: false }, amendment: 1 };
+  const unstarted = { task: 'c', variant: 'without', hiddenPassed: 0, hiddenTotal: 2, infrastructure: { cause: 'restart', neverStarted: true }, amendment: 1 };
+  w('stage1/w1.jsonl', [run('a', true), cut, { ...run('c', false), amendment: 1 }, { type: 'stopped', reason: 'max-cost' }]);
+  w('stage1/registered/w1.jsonl', [run('a', true), cut, unstarted]);
+  w('stage1/w2.jsonl', [run('d', true)]);
+  fs.mkdirSync(path.join(dir, 'stage1', 'tr-w1'));
+  w('rerun/w1.jsonl', [run('b', true)]);
+  const out = readings(path.join(dir, 'stage1'), path.join(dir, 'rerun'));
+  const tasks = (d, p) => fs.readFileSync(path.join(d, `${p}.jsonl`), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l).task);
+  assert.deepStrictEqual(tasks(out.registered, 'w1'), ['a', 'b', 'c'], 'as registered: the cut run and the unstarted one are failures');
+  assert.deepStrictEqual(tasks(out.continued, 'w1'), ['a', 'c', 'b'], 'every run that ran, the cut run replaced after the stage; no stopped line');
+  assert.deepStrictEqual(tasks(out.registered, 'w2'), ['d'], 'a process the restart did not cut is the same in both');
+  assert.deepStrictEqual(tasks(out.continued, 'w2'), ['d']);
+  assert.ok(fs.existsSync(path.join(out.continued, 'tr-w1')), 'transcripts stay reachable for the friction count');
+  fs.rmSync(dir, { recursive: true, force: true });
+});

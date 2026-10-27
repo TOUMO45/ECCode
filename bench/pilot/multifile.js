@@ -7,6 +7,7 @@
 // secondary criteria. The proof run's functions do the counting.
 // usage: node bench/pilot/multifile.js --stage1 <dir> --labels <file> [--stage2 <dir>] [--refusals <file>] [--out <file.md>]
 const fs = require('fs');
+const path = require('path');
 const { mulberry32 } = require('../../lib/bench');
 const { shuffle } = require('./lib');
 const { readRuns, passed, runKeys, hardItems, primary, delivery, friction: frictionOf } = require('./proof');
@@ -99,7 +100,36 @@ function report({ stage1, stage2, labels, friction: f, order = idOrder }) {
   return `${lines.join('\n')}\n`;
 }
 
-module.exports = { chooseHard, withTests, report, idOrder };
+const jsonl = (file) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l)) : []);
+const cutRun = (r) => Boolean(r.infrastructure && r.infrastructure.neverStarted === false);
+
+/**
+ * The two readings of a stage after a container restart (protocol amendment 1),
+ * as runs directories this script reads, each with links to tr-<process>:
+ * registered: each process's registered/<process>.jsonl (cut and never-started
+ * runs are failures), or its own file when the restart did not cut it;
+ * continued: every run that ran, each cut run's record dropped and its
+ * replacement (<rerun>/<process>.jsonl) appended after the stage.
+ */
+function readings(stage, rerun) {
+  const out = { registered: path.join(stage, 'reading-registered'), continued: path.join(stage, 'reading-continued') };
+  const write = (dir, p, rows) => fs.writeFileSync(path.join(dir, `${p}.jsonl`), rows.map((r) => `${JSON.stringify(r)}\n`).join(''));
+  for (const dir of Object.values(out)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.mkdirSync(dir);
+  }
+  for (const f of fs.readdirSync(stage).filter((x) => x.endsWith('.jsonl')).sort()) {
+    const p = path.basename(f, '.jsonl');
+    const own = jsonl(path.join(stage, f)).filter((r) => !r.type);
+    const registered = path.join(stage, 'registered', f);
+    write(out.registered, p, fs.existsSync(registered) ? jsonl(registered).filter((r) => !r.type) : own);
+    write(out.continued, p, [...own.filter((r) => !cutRun(r)), ...(rerun ? jsonl(path.join(rerun, f)).filter((r) => !r.type) : [])]);
+    if (fs.existsSync(path.join(stage, `tr-${p}`))) for (const dir of Object.values(out)) fs.symlinkSync(path.resolve(stage, `tr-${p}`), path.join(dir, `tr-${p}`));
+  }
+  return out;
+}
+
+module.exports = { chooseHard, withTests, report, idOrder, readings };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);
