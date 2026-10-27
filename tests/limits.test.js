@@ -29,7 +29,7 @@ test('every registered limit has a valid disposition, and open ones are counted 
   for (const x of r) assert.match(x.disposition, /^(Closed — (eliminated|by design)|Open — (mitigated|named))$/, `row ${x.n}: ${x.disposition}`);
   const open = r.filter((x) => x.disposition.startsWith('Open'));
   const text = fs.readFileSync(path.join(ROOT, 'docs', 'limits.md'), 'utf8');
-  const words = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty'];
+  const words = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty', 'Twenty-one', 'Twenty-two', 'Twenty-three', 'Twenty-four', 'Twenty-five', 'Twenty-six', 'Twenty-seven', 'Twenty-eight', 'Twenty-nine', 'Thirty'];
   if (open.length === 0) assert.match(text, /\*\*No limit is open\.\*\*/, 'header must say no limit is open');
   else assert.match(text, new RegExp(`\\*\\*${words[open.length]} limits? (is|are) open\\*\\* \\(rows? ${open.map((x) => x.n).join(', ')}\\)`), 'header must state exactly which rows are open');
 });

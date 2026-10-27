@@ -470,7 +470,7 @@ test('hidden checks do not see the ignored files an agent left, and keep the one
   }
 });
 
-// Multi-file run, stage 2: three engine runs hit the 7,200 s timeout. An agent
+// Multi-file run, stage 2: four engine runs hit the 7,200 s timeout. An agent
 // cut off prints no result line, so the runs carried no usage at all and
 // nothing said they had timed out. The record now says so, with the token
 // counts of the session's transcripts (each message once).
@@ -498,5 +498,47 @@ setTimeout(() => {}, 60000);`);
   } finally {
     process.env.HOME = saved;
     fs.rmSync(home, { recursive: true, force: true });
+  }
+});
+
+// Final review: git lists an ignored nested repository as a directory
+// (`ign/nested/`), which a plain rmSync refuses, and nothing caught the error,
+// so one such leftover stopped the whole batch. It is removed whole, and a
+// leftover that cannot be removed is named in the run's record instead.
+test('an ignored nested repository the agent left is removed whole, and the batch goes on', () => {
+  const suite = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-nested-'));
+  const dir = path.join(suite, 'nested');
+  fs.mkdirSync(path.join(dir, 'fixture'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'fixture', '.gitignore'), 'ign/\n');
+  fs.writeFileSync(path.join(dir, 'fixture', 'a.txt'), 'old\n');
+  fs.writeFileSync(path.join(dir, 'task.json'), JSON.stringify({ id: 'nested', prompt: 'Change a.txt.', hiddenChecks: [{ id: 'clean', command: 'test ! -e ign/nested/data.db' }] }));
+  const agent = agentScript("fs.writeFileSync('a.txt', 'new\\n'); fs.mkdirSync('ign/nested', { recursive: true }); require('child_process').execFileSync('git', ['init', '-q'], { cwd: 'ign/nested' }); fs.writeFileSync('ign/nested/data.db', 'stale');");
+  try {
+    const [task] = bench.listTasks(suite);
+    const r = bench.runOnce(task, { agentCmd: agent, variant: 'without' });
+    assert.deepStrictEqual(r.checks.map((c) => [c.id, c.passed]), [['clean', true]]);
+    assert.strictEqual(r.leftoversKept, undefined, 'nothing failed to go');
+  } finally {
+    fs.rmSync(suite, { recursive: true, force: true });
+  }
+});
+
+test('a leftover that cannot be removed is returned, not thrown', () => {
+  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-kept-'));
+  const copy = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-kept-copy-'));
+  try {
+    execFileSync('git', ['init', '-q', '.'], { cwd: sandbox });
+    fs.writeFileSync(path.join(sandbox, '.gitignore'), 'ign/\n');
+    fs.mkdirSync(path.join(sandbox, 'ign'));
+    fs.writeFileSync(path.join(sandbox, 'ign', 'x'), 'left');
+    // In the copy the same path is a non-empty directory, which a file's removal refuses.
+    fs.mkdirSync(path.join(copy, 'ign', 'x'), { recursive: true });
+    fs.writeFileSync(path.join(copy, 'ign', 'x', 'y'), 'z');
+    const kept = bench.removeLeftovers(sandbox, new Set(), copy);
+    assert.strictEqual(kept.length, 1);
+    assert.match(kept[0], /^ign\/x \(/);
+  } finally {
+    fs.rmSync(sandbox, { recursive: true, force: true });
+    fs.rmSync(copy, { recursive: true, force: true });
   }
 });

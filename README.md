@@ -67,7 +67,7 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
   - **Primary missed:** on those items, 6 fresh runs of each variant gave the engine 12 of 18 and the bare agent 9 of 18 (p = 0.50, rule p < 0.05). The engine fixed the bare agent's mistakes on two items (6/6 against 3/6, and 4/6 against 1/6), but four of its six runs on the third reached the 7,200 s timeout. Graded on a clean tree with the timeout set aside, 17 of 18 engine patches pass (post hoc).
   - **Delivery missed:** 9 of 18 engine runs delivered (rule 80%; row 138). Four timed out, and five stopped to ask a user, four of them after the benchmark's tool list refused a command they needed. Friction met: 0.17 false refusals per run.
   - It cost a median 7.7× a bare run and took 48.5 minutes against 6.3.
-  - Five defects found and fixed, one mitigated (rows 134–137, and `ps` for row 91). See [the multi-file run report](bench/pilot-results/2026-10-27-mealie-multifile.md).
+  - Defects found: two engine defects fixed (rows 134–135), two harness limits mitigated (rows 136–137), the run's own analysis corrected, and `ps` added to the guard's read-only list (row 91). See [the multi-file run report](bench/pilot-results/2026-10-27-mealie-multifile.md).
 
 **Sized to the task.** One record carries many deliveries: after `deliver`, `eccode work start --track feature|refactor|fix|quick|greenfield` opens the next work item with gates sized to its risk. On an existing codebase, `eccode onboard` briefs agents first (modules, entry points, hot spots, most-depended files) and `eccode impact` names what a change reaches before it is made. See [docs/senior-engineering.md](docs/senior-engineering.md).
 

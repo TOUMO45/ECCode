@@ -313,11 +313,12 @@ A pre-registered run asked the proof run's question on large changes ([protocol]
 
 **Found:** rows 134–138.
 - Fixed, each with a test that failed first:
-  - a record lock that timed out the moment a check ended;
-  - a gate that refused an empty changed file;
-  - hidden checks that read a stale test database the agent had left.
+  - a record lock that timed out the moment a check ended (row 134);
+  - a gate that refused an empty changed file (row 135).
 - `ps` was added to the guard's read-only list (row 91).
-- Mitigated: a timed-out run's cost is unknown to the cost ceiling (row 137).
+- Mitigated:
+  - hidden checks that read a stale test database the agent had left (row 136). This is fixed for single runs and source-backed chains, but not in greenfield chains.
+  - a timed-out run's cost is unknown to the cost ceiling (row 137).
 - Named: delivery on large changes (row 138).
 - The run's own analysis counted a timed-out run by its hidden checks; it was fixed before any figure was reported.
 

@@ -21,13 +21,14 @@ The proof run could not tell whether ECCode's engine improves correctness: on Me
 - **Friction: met.** 3 false refusals in 18 stage-2 engine runs, 0.17 per run, among 348 refusals.
 - **The engine costs more and takes much longer.** The median stage-2 engine run cost 7.7× a bare run ($3.27 against $0.43, with the four timed-out runs' cost estimated) and took 48.5 minutes against 6.3.
 - **The run found six defects.**
-  - Five are fixed, each with a test that failed first.
-  - One is still open, and mitigated: a timed-out run's cost.
-  - Two of the fixed defects had stopped engine runs:
-    - a lock that timed out the moment a check ended (row 134);
-    - a gate that refused an empty `__init__.py` (row 135).
-  - One harness defect failed engine runs whose changes pass on a clean tree: hidden checks read a stale test database the agent's own runs had left (row 136).
+  - Four are fixed, each with a test that failed first. Two are mitigated and stay open.
+  - Two engine defects refused legitimate steps, both in one item 05 run. A subagent stopped at each, and the run still delivered:
+    - a lock that timed out the moment a check ended (row 134, fixed);
+    - a gate that refused an empty `__init__.py` (row 135, fixed).
+  - One harness defect failed engine runs whose changes pass on a clean tree: hidden checks read a stale test database the agent's own runs had left (row 136). It is fixed for single runs and source-backed chains; in a greenfield chain, later items' checks still see earlier items' leftovers.
+  - The cost of a timed-out run is unknown to the cost ceiling (row 137, mitigated).
   - One defect was in this run's own analysis: it counted a timed-out run by its hidden checks. It was fixed before any figure was reported.
+  - `ps` joined the guard's read-only list (row 91's rule stands).
 
 ## What ran
 
@@ -98,6 +99,7 @@ Every failed run was labelled from three sources: the replayed failing check's f
 | s2e1 item 01, run 6 | `agent-error` | Delivered after five reviews with the bare runs' mistake: `ALWAYS` and `FALLBACK`. |
 | s2e1 item 01, run 2 | `harness` | Both checks fail on `duplicate column name: original_text`, because they ran over a stale `tests/.temp/mealie.db` the agent's own test runs had left. The agent tried to delete it, but the benchmark's tool list refuses `rm` for every variant. On a clean tree, the change passes both checks. |
 | s2e3 item 07, runs 2, 4 and 5 | `harness` | Each reached the 7,200 s timeout. In the sandbox, their checks failed on the stale database or on tests it broke. On a clean tree, each change passes both checks. |
+| s2e3 item 07, run 3 | `harness` | Reached the 7,200 s timeout with both hidden checks passing; a run cut by the timeout counts as a failure. Labelled later, in the commit that fixed the final review's findings: the committed labels had missed it because the first analysis read it as a pass (see The criteria). No figure changes. |
 
 The bare failures' check output names the code error itself: an import failure, a `KeyError`, a constraint. A stale database cannot cause these.
 
@@ -125,6 +127,9 @@ node bench/pilot/multifile.js --stage1 <scratch>/stage1/reading-continued --stag
 ```
 
 **A correction before reporting.** The first computation counted s2e3's item 07 run 3 as an engine pass, giving 13 of 18 and p = 0.30. That run reached the timeout with both hidden checks passing. The protocol says "a run cut by the timeout still counts as a failure in every pass rate", but the tool judged runs by their hidden checks alone. The proof run had no timeout, so it had never mattered. The tool was fixed with a test that failed first (`multifile run: a run cut by the timeout fails, whatever its hidden checks`), and the figures above are from the fixed tool.
+- **Where the fix sits:** in `bench/pilot/proof.js`'s `passed()`, which now fails a run marked `timedOut`, and in `multifile.js`, which marks runs of at least 7,200 s.
+- **A departure from the plan:** the plan and spec keep `proof.js` as the proof run registered it. The change leaves every proof-run figure as it was, because no proof-run record carries `timedOut`, and its tests still pass.
+- **The registered command after the final review:** it now also skips a saved file's typed lines, so a process stopped at its cost ceiling is not read as a run. The figures did not change.
 
 ### Sensitivity readings (post hoc, not registered)
 
@@ -209,9 +214,10 @@ Engine transcripts only, every stage-2 engine run. Each refused call is counted 
 - **Row 135, fixed (`800cbb0`).**
   - **The defect:** a gate refused any empty artifact. A phase gate always submits its tasks' changed files, so an empty tests-package `__init__.py` blocked the phase, and nothing could cover the file at verification either. The delivery lead stopped to report it.
   - **The fix:** an empty file is accepted beside others. A submission of nothing but empty files is still refused.
-- **Row 136, fixed (`86c9668`), harness.**
+- **Row 136, mitigated (`86c9668`), harness.**
   - **The defect:** hidden checks ran in the agent's sandbox, over git-ignored files its session left behind. A test database the agent's test runs had migrated failed changes that pass on a clean tree: four engine runs here.
-  - **The fix:** before the checks, the harness removes ignored files the agent left. Ignored files that were there before it started, such as setup's links, and the record stay.
+  - **The fix:** before the checks, the harness removes ignored files the agent left. Ignored files that were there before it started, such as setup's links, and the record stay. The final review found that an ignored nested repository crashed the cleanup and with it the batch; such a leftover is now removed whole, and one that cannot be removed is named in the run's record.
+  - **What stays open:** in a greenfield chain, an item's checks still see the ignored files earlier items' agents left. Its setup runs on the shared workspace, so the harness cannot tell them from setup's own.
 - **Row 137, mitigated (`86c9668`), harness.**
   - **The defect:** a run cut by the timeout carried no cost and no mark.
   - **The fix:** it is now marked `timedOut` and keeps its transcripts' token counts, counting each message once. On the 32 stage-2 runs that ended, those counts equalled the reported tokens in 28 and came within 1.4% in the other 4.

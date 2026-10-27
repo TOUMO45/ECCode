@@ -1079,6 +1079,25 @@ test('multifile run: a run cut by the timeout fails, whatever its hidden checks'
   assert.match(md, /Primary:\*\* missed: engine 16\/18, bare 18\/18/);
 });
 
+// Final review: `eccode bench --save` writes {type:'stopped'} when a process
+// stops at its --max-cost, which the protocol gives every stage-1 process. The
+// registered command then refused stage 1 as holding an engine run.
+test('multifile run: a process stopped at its cost ceiling is not a run', () => {
+  const { report } = require('../bench/pilot/multifile');
+  const order = (id) => 'abc'.indexOf(id) + 1;
+  const row = (task, ok) => ({ process: 'w1', task, variant: 'without', hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, durationMs: 600000, usage: { costUsd: 1 } });
+  const stage1 = [row('a', true), row('b', true), { type: 'stopped', reason: 'max-cost', spentUsd: 20 }];
+  const md = report({ stage1, stage2: null, labels: {}, order });
+  assert.match(md, /Stage 1, all items: bare 2\/2/);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-mf-stopped-'));
+  fs.writeFileSync(path.join(dir, 'w1.jsonl'), stage1.map((r) => JSON.stringify(r)).join('\n') + '\n');
+  fs.writeFileSync(path.join(dir, 'labels.json'), '{}');
+  const cli = require('child_process').spawnSync(process.execPath, [path.join(__dirname, '..', 'bench', 'pilot', 'multifile.js'), '--stage1', dir, '--labels', path.join(dir, 'labels.json')], { encoding: 'utf8' });
+  assert.strictEqual(cli.status, 0, cli.stderr);
+  assert.match(cli.stdout, /Stage 1, all items: bare 2\/2/);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
 test('multifile run: tests in the patch counts tests/ and frontend spec files only', () => {
   const { withTests } = require('../bench/pilot/multifile');
   const patch = (...files) => files.map((f) => `diff --git a/${f} b/${f}\n--- a/${f}\n+++ b/${f}\n`).join('');

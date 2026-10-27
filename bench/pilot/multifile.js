@@ -16,7 +16,9 @@ const MAX_HARD = 6;
 // The registered timeout. Records from before the harness marked a timed-out
 // run (timedOut) are known by their duration: only a killed agent runs this long.
 const TIMEOUT_MS = 7200000;
-const marked = (rows) => rows && rows.map((r) => (!r.timedOut && r.durationMs >= TIMEOUT_MS ? { ...r, timedOut: true } : r));
+// The runs of a saved file: typed lines (a process stopped at its --max-cost)
+// are not runs, and a run cut by the timeout is marked.
+const marked = (rows) => rows && rows.filter((r) => !r.type).map((r) => (!r.timedOut && r.durationMs >= TIMEOUT_MS ? { ...r, timedOut: true } : r));
 /** An item's place in upstream order, from its id (mealie4-07-fix-… is 7). */
 const idOrder = (id) => Number((/-(\d\d)-/.exec(id) || [])[1]);
 
@@ -45,8 +47,8 @@ const ON_HARD = 'stage-2 engine runs on the hard items';
 
 /** The registered analysis, in the spec's order: screening, hard items, stage 2, criteria, the rest. */
 function report({ stage1, stage2, labels, friction: f, order = idOrder }) {
-  if (stage1.some((r) => r.variant !== 'without')) throw new Error('stage 1 is bare-only: an engine run was passed as stage 1');
   [stage1, stage2] = [marked(stage1), marked(stage2)];
+  if (stage1.some((r) => r.variant !== 'without')) throw new Error('stage 1 is bare-only: an engine run was passed as stage 1');
   const byOrder = (x, y) => (order(x) - order(y)) || x.localeCompare(y);
   const tasks = [...new Set(stage1.map((r) => r.task))].sort(byOrder);
   const keys = runKeys(stage1);
@@ -139,11 +141,11 @@ module.exports = { chooseHard, withTests, report, idOrder, readings };
 if (require.main === module) {
   const argv = process.argv.slice(2);
   const opt = (n) => (argv.includes(`--${n}`) ? argv[argv.indexOf(`--${n}`) + 1] : null);
-  const stage1 = readRuns(opt('stage1'));
-  const stage2 = opt('stage2') ? readRuns(opt('stage2')) : null;
+  const stage1 = marked(readRuns(opt('stage1')));
+  const stage2 = opt('stage2') ? marked(readRuns(opt('stage2'))) : null;
   const labels = JSON.parse(fs.readFileSync(opt('labels'), 'utf8'));
   const refusals = opt('refusals') ? JSON.parse(fs.readFileSync(opt('refusals'), 'utf8')) : null;
-  const chosen = chooseHard(hardItems(marked(stage1), labels));
+  const chosen = chooseHard(hardItems(stage1, labels));
   const f = refusals && stage2 ? frictionOf(opt('stage2'), stage2.filter((r) => chosen.includes(r.task)), refusals) : null;
   const md = report({ stage1, stage2, labels, friction: f });
   if (opt('out')) fs.writeFileSync(opt('out'), md);
