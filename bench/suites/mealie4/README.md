@@ -41,3 +41,5 @@ select.js --suite bench/suites/mealie4 --range v3.20.0..753325676331cf8df48cae7c
 - the backend is always in scope; frontend work is in scope only when the change adds or changes frontend specs.
 
 Agents drafted the requests from the commits and their tests. The operator reviewed, corrected and approved each one before registration. `_tools/coverage.json` keeps, for each request, the test functions it covers and the drafter's notes. A `spec-gap` label is judged against it.
+
+**The delivery run's environment** ([spec](../../../docs/specs/2026-10-27-delivery-run-design.md), section 4.1). Every task's `env` holds Mealie's dev environment, `PRODUCTION=false` (as Mealie's `Taskfile.yml` sets for every dev task) and `PYTHONPATH=.` (the tree importable, as an editable install makes it), from `DEV_ENV` in `../mealie/_tools/build.js`. The tasks were rebuilt with it after the multi-file run, which ran without it; nothing else in them changed, and every item was validated live again (the delivery run's protocol has the result).
