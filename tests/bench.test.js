@@ -473,12 +473,18 @@ test('hidden checks do not see the ignored files an agent left, and keep the one
 // Multi-file run, stage 2: four engine runs hit the 7,200 s timeout. An agent
 // cut off prints no result line, so the runs carried no usage at all and
 // nothing said they had timed out. The record now says so, with the token
-// counts of the session's transcripts (each message once).
+// counts of the session's transcripts (each message once). The temporary
+// directory is reached through a link, as macOS's /var/folders is: Claude Code
+// names a session's transcript folder from the resolved working directory.
 test('a run cut by the timeout says so, and keeps the token counts its transcripts show', { skip: process.platform === 'win32' && 'HOME and process groups are POSIX' }, () => {
   const task = bench.listTasks(path.join(__dirname, '..', 'bench', 'suites', 'followup')).find((t) => t.id === 'top-words');
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-home-'));
-  const saved = process.env.HOME;
+  const real = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-realtmp-'));
+  const linked = `${real}-link`;
+  fs.symlinkSync(real, linked);
+  const saved = { HOME: process.env.HOME, TMPDIR: process.env.TMPDIR };
   process.env.HOME = home;
+  process.env.TMPDIR = linked;
   const agent = agentScript(`
 const path = require('path');
 const dir = path.join(process.env.HOME, '.claude', 'projects', process.cwd().replace(/[^a-zA-Z0-9]/g, '-'));
@@ -496,8 +502,10 @@ setTimeout(() => {}, 60000);`);
     const done = bench.resultRecord(task, 'without', { agent: { status: 0, stdout: '' }, durationMs: 1, measured: { linesAdded: 0, linesRemoved: 0, testLinesAdded: 0, changed: [], newDeps: [], patch: '' }, checks: [], setup: null });
     assert.strictEqual(done.timedOut, undefined, 'a run that ended is not marked');
   } finally {
-    process.env.HOME = saved;
+    for (const [k, v] of Object.entries(saved)) if (v === undefined) delete process.env[k]; else process.env[k] = v;
     fs.rmSync(home, { recursive: true, force: true });
+    fs.rmSync(linked, { force: true });
+    fs.rmSync(real, { recursive: true, force: true });
   }
 });
 
