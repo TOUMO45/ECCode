@@ -1126,3 +1126,64 @@ test('multifile run: the two readings after a restart: registered counts cut and
   assert.ok(fs.existsSync(path.join(out.continued, 'tr-w1')), 'transcripts stay reachable for the friction count');
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+// The delivery run (docs/specs/2026-10-27-delivery-run-design.md): delivery is
+// counted over the 32 planned engine runs, so a run a ceiling kept from
+// starting counts as not delivered.
+const deliveryRow = (process, task, variant, { ok = true, delivered = true, durationMs = 3600000, ...extra } = {}) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, durationMs, usage: { costUsd: variant === 'engine' ? 3 : 0.5 }, engine: variant === 'engine' ? { delivered, auditOk: true } : undefined, ...extra });
+
+test('delivery run: planned runs never started count as not delivered', () => {
+  const { report } = require('../bench/pilot/delivery');
+  const engine = (n) => Array.from({ length: 30 }, (_, i) => deliveryRow(`e${1 + (i % 3)}`, `mealie4-${String(1 + (i % 16)).padStart(2, '0')}-x`, 'engine', { delivered: i < n }));
+  const missed = report({ engine: engine(25), bare: [], labels: {}, planned: 32, inSample: [] });
+  assert.match(missed, /Delivery \(primary\):\*\* 25\/32 planned engine runs[^\n]*missed/);
+  assert.match(missed, /2 planned runs never started/);
+  assert.match(report({ engine: engine(26), bare: [], labels: {}, planned: 32, inSample: [] }), /Delivery \(primary\):\*\* 26\/32 planned engine runs[^\n]*met/);
+  assert.throws(() => report({ engine: engine(26), bare: [], labels: {}, planned: 29, inSample: [] }), /more engine runs than planned/);
+});
+
+test('delivery run: within 2 hours counts only runs that ended by 7,200 s', () => {
+  const { report } = require('../bench/pilot/delivery');
+  const engine = [deliveryRow('e1', 'mealie4-01-x', 'engine', { durationMs: 9000000 }), deliveryRow('e1', 'mealie4-01-x', 'engine', { durationMs: 7200000 })];
+  const md = report({ engine, bare: [], labels: {}, planned: 2, inSample: [] });
+  assert.match(md, /Delivery \(primary\):\*\* 2\/2 /);
+  assert.match(md, /Within 2 hours:\*\* 1\/2 /);
+  // A run at the 4-hour limit is cut whatever it recorded: marked by its duration.
+  const cut = report({ engine: [deliveryRow('e1', 'mealie4-01-x', 'engine', { durationMs: 14400050 })], bare: [], labels: { 'e1:mealie4-01-x:1': { label: 'harness' } }, planned: 1, inSample: [] });
+  assert.match(cut, /Timeouts:\*\* engine 1, bare 0/);
+  assert.match(cut, /Hidden checks, engine against bare:\*\* engine 0\/1/);
+});
+
+test('delivery run: in-sample and out-of-sample are reported apart, and an unlabelled failure stops the analysis', () => {
+  const { report } = require('../bench/pilot/delivery');
+  const engine = [
+    deliveryRow('e1', 'mealie4-01-x', 'engine'), deliveryRow('e1', 'mealie4-01-x', 'engine', { delivered: false }),
+    deliveryRow('e2', 'mealie4-08-x', 'engine'), deliveryRow('e2', 'mealie4-08-x', 'engine'),
+  ];
+  const bare = [deliveryRow('w', 'mealie4-01-x', 'without', { ok: false }), deliveryRow('w', 'mealie4-08-x', 'without')];
+  assert.throws(() => report({ engine, bare, labels: {}, planned: 6, inSample: ['mealie4-01-x'] }), /unlabelled failed runs: w:mealie4-01-x:1/);
+  const md = report({ engine, bare, labels: { 'w:mealie4-01-x:1': { label: 'agent-error' } }, planned: 6, inSample: ['mealie4-01-x'] });
+  assert.match(md, /In-sample \(mealie4-01-x\):\*\* 1\/2 /);
+  assert.match(md, /Out-of-sample:\*\* 2\/4 /, 'planned minus the in-sample runs; one planned run never started');
+  assert.match(md, /Hidden checks, engine against bare:\*\* engine 4\/4, bare 1\/2/);
+});
+
+test('delivery run: rescopes are counted from the copied records', () => {
+  const { rescopes, report } = require('../bench/pilot/delivery');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-delivery-'));
+  const rec = path.join(dir, 'tr-e1', 'run-a', 'record');
+  fs.mkdirSync(rec, { recursive: true });
+  const ev = (type, data) => JSON.stringify({ seq: 1, ts: '2026-10-27T00:00:00Z', type, actor: 'x', data });
+  fs.writeFileSync(path.join(rec, 'events.jsonl'), [
+    ev('task.rescope_proposed', { task: 'T1', proposal: 'rsc-1' }),
+    ev('task.rescoped', { task: 'T1', proposal: 'rsc-1', approvedBy: 'technical-reviewer' }),
+    ev('task.rescope_proposed', { task: 'T2', proposal: 'rsc-2' }),
+    ev('task.rescope_reviewed', { task: 'T2', proposal: 'rsc-2', decision: 'reject' }),
+    ev('task.rescoped', { task: 'T3' }), // the user's own rescope: not a reviewed one
+  ].join('\n') + '\n');
+  const rows = [deliveryRow('e1', 'mealie4-01-x', 'engine', { transcripts: { dir: 'run-a' } }), deliveryRow('e1', 'mealie4-01-x', 'engine', { transcripts: { dir: 'run-b' } })];
+  const r = rescopes(dir, rows);
+  assert.deepStrictEqual(r, { proposed: 2, approved: 1, rejected: 1 });
+  assert.match(report({ engine: rows, bare: [], labels: {}, planned: 2, inSample: [], rescopes: r }), /Rescopes:\*\* 2 proposed, 1 approved, 1 rejected/);
+  fs.rmSync(dir, { recursive: true, force: true });
+});

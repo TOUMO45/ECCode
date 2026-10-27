@@ -18,7 +18,7 @@ const MAX_HARD = 6;
 const TIMEOUT_MS = 7200000;
 // The runs of a saved file: typed lines (a process stopped at its --max-cost)
 // are not runs, and a run cut by the timeout is marked.
-const marked = (rows) => rows && rows.filter((r) => !r.type).map((r) => (!r.timedOut && r.durationMs >= TIMEOUT_MS ? { ...r, timedOut: true } : r));
+const marked = (rows, limitMs = TIMEOUT_MS) => rows && rows.filter((r) => !r.type).map((r) => (!r.timedOut && r.durationMs >= limitMs ? { ...r, timedOut: true } : r));
 /** An item's place in upstream order, from its id (mealie4-07-fix-… is 7). */
 const idOrder = (id) => Number((/-(\d\d)-/.exec(id) || [])[1]);
 
@@ -136,7 +136,7 @@ function readings(stage, rerun) {
   return out;
 }
 
-module.exports = { chooseHard, withTests, report, idOrder, readings };
+module.exports = { chooseHard, withTests, report, idOrder, readings, marked };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);
