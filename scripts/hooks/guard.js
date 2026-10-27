@@ -40,7 +40,7 @@ const RECORD_REF = /events\.jsonl|state\.json|\.eccode\/(config\.json|evidence|i
 const CLI_REF = /eccode\.js\b|(^|[\s;&|(`'"=]|bin\/)eccode(?=$|[\s;&|)'"`])/;
 // find's actions that write, delete or run something; without them find only lists.
 const FIND_ACTIONS = /^-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)$/;
-const READ_ONLY = new Set(['cat', 'head', 'tail', 'less', 'more', 'jq', 'grep', 'egrep', 'fgrep', 'rg', 'wc', 'ls', 'stat', 'file', 'diff', 'cmp', 'sha256sum', 'shasum', 'md5sum', 'cd', 'pwd', 'echo', 'printf', 'sort', 'uniq', 'cut', 'tr', 'test', '[', 'true']);
+const READ_ONLY = new Set(['cat', 'head', 'tail', 'less', 'more', 'jq', 'grep', 'egrep', 'fgrep', 'rg', 'wc', 'ls', 'stat', 'file', 'diff', 'cmp', 'sha256sum', 'shasum', 'md5sum', 'cd', 'pwd', 'echo', 'printf', 'sort', 'uniq', 'cut', 'tr', 'test', '[', 'true', 'ps']);
 const GIT_READ = new Set(['diff', 'log', 'show', 'status', 'blame', 'grep', 'ls-files', 'rev-parse', 'cat-file']);
 // Where each kind of role may write under .eccode/ (drafts are shared scratch).
 const DOC_AUTHORS = new Set(['product-architect', 'technical-designer', 'delivery-lead']);
