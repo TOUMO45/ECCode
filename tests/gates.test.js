@@ -238,3 +238,27 @@ test('a review may cite what earlier gates approved, not other files', () => {
   gates.recordReview(ctx.store, ctx.config, 'design', 'technical-reviewer', approval([['artifact:.eccode/artifacts/spec.md#Components', 'artifact:.eccode/artifacts/brief.md#Requirements']]));
   assert.strictEqual(ctx.store.state().gates.design.status, 'approved');
 });
+
+// Multi-file run (s2e2 item 05): a task added an empty tests package
+// __init__.py, and its phase gate, which always submits the tasks' changed
+// files, was refused; nothing could cover that file at verification either.
+test('an empty file a task changed goes into its phase gate; a submission of nothing but empty files is refused', () => {
+  const tasks = require('../lib/tasks');
+  const { approveThroughPlan, passCheck, handoffFor } = require('./helpers');
+  const ctx = tmpProject();
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  for (const [id, owner, files] of [['api', 'backend-engineer', ['src/server/app.js', 'src/server/__init__.py']], ['ui', 'frontend-engineer', ['src/web/b.js']], ['tests', 'test-engineer', ['tests/c.test.js']]]) {
+    tasks.claim(ctx.store, ctx.config, id, owner);
+    for (const f of files) write(ctx.dir, f, f.endsWith('__init__.py') ? '' : `// ${id}\n`);
+    const ev = passCheck(ctx.store, owner);
+    tasks.complete(ctx.store, ctx.config, id, owner, { ...handoffFor(id, owner, [ev.id], files), testsNotNeeded: 'fixture change, covered by phase checks' });
+  }
+  gates.submit(ctx.store, ctx.config, 'phase:core', 'delivery-lead');
+  const sub = ctx.store.state().gates['phase:core'].submissions.at(-1);
+  assert.ok(sub.artifacts.some((a) => a.path === 'src/server/__init__.py'), 'the empty file is submitted');
+  const fresh = tmpProject();
+  gates.startGate(fresh.store, fresh.config, 'architecture', 'orchestrator');
+  write(fresh.dir, 'brief.md', '');
+  expectCode(() => gates.submit(fresh.store, fresh.config, 'architecture', 'product-architect', { artifacts: ['brief.md'] }), 'EMPTY_ARTIFACT');
+});

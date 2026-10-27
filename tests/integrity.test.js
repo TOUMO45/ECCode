@@ -147,6 +147,29 @@ test('a live window\'s lock is never broken as stale; a dead holder\'s is', () =
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
+// Multi-file run (s2e2 item 05): an evidence run waited behind two running
+// checks, then timed out at once on the brief ordinary lock their owner took
+// to record its result, because the 10 s clock had run all along.
+test('the ordinary lock wait starts again once a running check lets go', async () => {
+  const { withLock, sleepSync } = require('../lib/util');
+  const { spawn } = require('child_process');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-lock-'));
+  const lock = path.join(dir, '.lock');
+  const holder = spawn(process.execPath, ['-e', `
+    const fs = require('fs'); const lock = ${JSON.stringify(lock)};
+    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, window: true, label: 'full-tests' }));
+    setTimeout(() => {
+      fs.writeFileSync(lock + '.next', JSON.stringify({ pid: process.pid }));
+      fs.renameSync(lock + '.next', lock);
+      setTimeout(() => fs.unlinkSync(lock), 100);
+    }, 2500);`], { stdio: 'ignore' });
+  const exited = new Promise((resolve) => holder.on('exit', resolve));
+  while (!fs.existsSync(lock)) sleepSync(10);
+  assert.strictEqual(withLock(lock, () => 'taken', { timeoutMs: 2000, staleMs: 30000, windowWaitMs: 60000 }), 'taken');
+  await exited;
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
 // Final review: the window refused every engine write in the command's process
 // tree, so a project whose tests create their own ECCode records (ECCode
 // itself) failed under evidence run. Only the windowed record is refused.
