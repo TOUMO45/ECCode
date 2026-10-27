@@ -15,7 +15,8 @@ const readRuns = (dir) => fs.readdirSync(dir).filter((f) => f.endsWith('.jsonl')
   .flatMap((f) => fs.readFileSync(path.join(dir, f), 'utf8').split('\n').filter((l) => l.trim()).map((l) => ({ process: path.basename(f, '.jsonl'), ...JSON.parse(l) })));
 
 /** Passed every hidden check; a run with no result line (cut, or no checks ran) did not. */
-const passed = (r) => r.hiddenTotal > 0 && r.hiddenPassed === r.hiddenTotal;
+// A run cut by the timeout fails whatever its hidden checks (the protocols' rule).
+const passed = (r) => !r.timedOut && r.hiddenTotal > 0 && r.hiddenPassed === r.hiddenTotal;
 
 /** One key per run: process:task:n, n counting that process's runs of the task from 1. */
 function runKeys(rows) {

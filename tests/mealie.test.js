@@ -36,6 +36,8 @@ const MIRROR = path.join(bench.cacheDir(), 'github.com-mealie-recipes-mealie.git
 const SUITES = ['mealie', 'mealie2'].map((name) => ({ name, dir: path.join(__dirname, '..', 'bench', 'suites', name) }));
 // The proof run's suite: every eligible change of its window, no categories.
 const MEALIE3 = { name: 'mealie3', dir: path.join(__dirname, '..', 'bench', 'suites', 'mealie3') };
+// The multi-file run's suite: the large changes the size cap kept out.
+const MEALIE4 = { name: 'mealie4', dir: path.join(__dirname, '..', 'bench', 'suites', 'mealie4') };
 
 for (const { name, dir: SUITE } of SUITES) {
   test(`${name}: ten tasks, each with a track from the allowed set, the ten categories covered`, () => {
@@ -59,7 +61,7 @@ for (const { name, dir: SUITE } of SUITES) {
   });
 }
 
-for (const { name, dir: SUITE } of [...SUITES, MEALIE3]) {
+for (const { name, dir: SUITE } of [...SUITES, MEALIE3, MEALIE4]) {
   test(`${name}: no prompt contains a line of its fix or names a file it changes`, (t) => {
     if (!fs.existsSync(MIRROR)) return t.skip(`no Mealie mirror at ${MIRROR} (the first bench export creates it)`);
     for (const task of bench.listTasks(SUITE).filter((x) => x.fixCommit)) {
@@ -115,6 +117,35 @@ test('mealie3: one task per accepted change of the window, fix or feature track 
   assert.deepStrictEqual(tasks.map((t) => t.order).sort((a, b) => a - b), tasks.map((_, i) => i + 1));
 });
 
+test('mealie4: one task per accepted multi-file change, fix or feature track by its subject, none used before', (t) => {
+  const tasks = bench.listTasks(MEALIE4.dir);
+  if (!tasks.length) return t.skip('mealie4 is not built yet (select.js --large, then build.js)');
+  const { LARGE_POOL, earlierItems } = require(path.join(TOOLS, 'select.js'));
+  const selection = JSON.parse(fs.readFileSync(path.join(MEALIE4.dir, '_tools', 'selection.json'), 'utf8'));
+  assert.strictEqual(selection.mode, 'large');
+  assert.deepStrictEqual(tasks.map((x) => x.category).sort(), Object.keys(selection.accepted).sort(), 'every accepted change is a task, and no other');
+  const used = earlierItems(path.join(__dirname, '..', 'bench', 'suites'));
+  for (const task of tasks) {
+    const a = selection.accepted[task.category];
+    assert.strictEqual(task.fixCommit, a.sha, `${task.id}: the task is the recorded draw`);
+    assert.strictEqual(task.source.commit, a.parent);
+    assert.strictEqual(task.track, /^fix/.test(a.subject) ? 'fix' : 'feature', `${task.id}: track by subject`);
+    assert.match(task.id, /^mealie4-\d\d-(fix|feature)-[0-9a-f]{8}$/);
+    assert.ok(task.hiddenChecks.some((c) => c.id === 'target') && task.hiddenChecks.some((c) => c.id === 'regression'), `${task.id}: target and regression checks`);
+    assert.ok(task.prompt.length > 200, `${task.id}: an issue-style request`);
+    assert.ok(!used.has(task.fixCommit), `${task.id}: an item of an earlier suite`);
+    if (fs.existsSync(MIRROR)) {
+      const numstat = spawnSync('git', ['--git-dir', MIRROR, 'diff', '--numstat', a.parent, a.sha], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).stdout.split('\n').filter(Boolean).map((l) => {
+        const [x, d, ...p] = l.split('\t');
+        return { path: p.join('\t'), lines: (Number(x) || 0) + (Number(d) || 0) };
+      });
+      const files = numstat.map((r) => ({ status: 'M', path: r.path }));
+      assert.ok(LARGE_POOL({ sha: a.sha, subject: a.subject, files, numstat }, new Set()), `${task.id}: meets the multi-file rule`);
+    }
+  }
+  assert.deepStrictEqual(tasks.map((x) => x.order).sort((p, q) => p - q), tasks.map((_, i) => i + 1));
+});
+
 test('mealie2: the rerun\'s items are fresh: no commit and no refactor target of the pilot comes back', () => {
   const [pilot, rerun] = SUITES.map(({ dir }) => bench.listTasks(dir));
   const used = new Set(pilot.flatMap((t) => [t.fixCommit, t.source.commit]).filter(Boolean));
@@ -163,4 +194,52 @@ test('mealie select --all: every fix or feature with backend tests within the ca
   assert.strictEqual(ALL_POOL(commit('fix: too big', code, 500)), false, 'over the size cap');
   assert.strictEqual(allKey(commit('fix: a', code)), 'fix-abcdef01');
   assert.strictEqual(allKey(commit('feat: b', code)), 'feature-abcdef01');
+});
+
+test('mealie build: test ids reach pytest intact through the shell (backticks, dollars, quotes, backslashes)', () => {
+  // Found validating mealie4: a parametrised id with backticks ran as a command substitution.
+  const { checksFor } = require(path.join(TOOLS, 'build.js'));
+  const ids = ['t.py::test_a[support `,` seperated numbers]', 't.py::test_b[$HOME]', "t.py::test_c[it's]", 't.py::test_d[1 \\u6642 "q" !x]'];
+  const [target, regression] = checksFor({ backend: { target: ids, failingBoth: [], regressionFiles: ['t.py'] } });
+  const run = (command) => spawnSync('sh', ['-c', command.replace('python -m pytest -q -p no:cacheprovider', "printf '%s\\n'")], { encoding: 'utf8' }).stdout.split('\n').filter(Boolean);
+  assert.deepStrictEqual(run(target.command), ids);
+  assert.deepStrictEqual(run(regression.command), ['t.py', ...ids.flatMap((id) => ['--deselect', id])]);
+});
+
+test('mealie select --large: multi-file fixes and features with backend tests, 100–1,500 counted lines, no earlier item', () => {
+  const { LARGE_POOL, LARGE_RULE, largeCounts, earlierItems } = require(path.join(TOOLS, 'select.js'));
+  assert.deepStrictEqual(LARGE_RULE, { files: 5, mealieFiles: 4, minLines: 100, maxLines: 1500 });
+  const BACKEND = ['mealie/a.py', 'mealie/b.py', 'mealie/c.py', 'mealie/d.py'];
+  // counted: the files whose lines are spread evenly (any remainder on the first);
+  // extra: files that are present but not counted (tests, docs, translations, lockfiles).
+  const big = (subject, counted, lines, extra = ['tests/unit_tests/test_x.py'], sha = 'abcdef0123456789') => {
+    const each = Math.floor(lines / counted.length);
+    const numstat = counted.map((p, i) => ({ path: p, lines: each + (i === 0 ? lines - each * counted.length : 0) })).concat(extra.map((p) => ({ path: p, lines: 50 })));
+    return { sha, subject, files: [...counted, ...extra].map((p) => ({ status: 'M', path: p })), numstat };
+  };
+  const none = new Set();
+  const five = [...BACKEND, 'frontend/pages/x.vue'];
+  assert.strictEqual(LARGE_POOL(big('feat: organizer merge (#1)', five, 120), none), true);
+  assert.strictEqual(LARGE_POOL(big('fix: harden http (#2)', five, 100), none), true, 'at exactly 100 lines');
+  assert.strictEqual(LARGE_POOL(big('fix: harden http (#2)', five, 1500), none), true, 'at exactly 1,500 lines');
+  assert.strictEqual(LARGE_POOL(big('fix: x', five, 99), none), false, 'under 100 lines');
+  assert.strictEqual(LARGE_POOL(big('fix: x', five, 1501), none), false, 'over 1,500 lines');
+  assert.strictEqual(LARGE_POOL(big('fix: x', BACKEND, 400), none), false, '4 counted files');
+  assert.strictEqual(LARGE_POOL(big('fix: x', ['mealie/a.py', 'mealie/b.py', 'mealie/c.py', 'frontend/x.vue', 'frontend/y.ts'], 400), none), false, 'only 3 under mealie/');
+  for (const uncounted of ['tests/unit_tests/test_y.py', 'docs/docs/x.md', 'frontend/lang/messages/en-US.json', 'uv.lock']) {
+    assert.strictEqual(LARGE_POOL(big('fix: x', BACKEND, 400, ['tests/unit_tests/test_x.py', uncounted]), none), false, `${uncounted} is not counted`);
+  }
+  assert.strictEqual(LARGE_POOL(big('fix(deps): update pillow', five, 400), none), false, 'dependency update');
+  assert.strictEqual(LARGE_POOL(big('fix: bump sqlalchemy', five, 400), none), false, 'a bump');
+  assert.strictEqual(LARGE_POOL(big('chore: tidy', five, 400), none), false);
+  assert.strictEqual(LARGE_POOL(big('feat: x', five, 400, []), none), false, 'no backend test');
+  assert.strictEqual(LARGE_POOL(big('feat: x', five, 400), new Set(['abcdef0123456789'])), false, 'an earlier item');
+  const binary = big('feat: x', five, 120);
+  binary.numstat.push({ path: 'mealie/static/logo.png', lines: NaN });
+  binary.files.push({ status: 'A', path: 'mealie/static/logo.png' });
+  assert.deepStrictEqual(largeCounts(binary), { files: 6, mealieFiles: 5, lines: 120 }, 'a binary file counts as a file of 0 lines');
+  const used = earlierItems(path.join(__dirname, '..', 'bench', 'suites'));
+  assert.ok([...used].some((s) => s.startsWith('3be8f3d8')), 'mealie3\'s first item');
+  assert.ok([...used].some((s) => s.startsWith('7808c944')), 'a pilot item');
+  for (const s of used) assert.match(s, /^[0-9a-f]{40}$/);
 });

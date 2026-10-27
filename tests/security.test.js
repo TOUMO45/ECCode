@@ -499,3 +499,12 @@ test('guard: secrets and keys are never deletable as ignored artifacts', () => {
   for (const c of ['rm .env', 'rm -f .env.local', 'rm certs/server.pem', 'rm deploy.key']) assert.strictEqual(bash(ctx.dir, 'backend-engineer', c), 'deny', c);
   assert.strictEqual(bash(ctx.dir, 'backend-engineer', 'rm -rf build'), 'allow');
 });
+
+// Multi-file run (stage 2, item 07): a reviewer listing the newest evidence
+// and counting running pytest processes was refused: ps was not on the
+// read-only list. ps writes no file; the rest of row 91 stands.
+test('guard: ps beside a read of the record only reads', () => {
+  const { dir } = tmpProject();
+  assert.strictEqual(bash(dir, 'security-reviewer', 'ls -t .eccode/evidence | head -3; ps aux | grep -c "[p]ytest"'), 'allow');
+  assert.strictEqual(bash(dir, 'security-reviewer', 'ls -t .eccode/evidence; ps aux > .eccode/evidence/x'), 'deny');
+});

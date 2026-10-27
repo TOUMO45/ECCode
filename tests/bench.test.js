@@ -418,3 +418,135 @@ test('an agent\'s leftover processes are stopped when it exits, and the run is k
   assert.strictEqual(size(), a, 'the leftover writer was stopped');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('a large change is saved whole, so a failed run can be replayed from its record', () => {
+  // Found in the multi-file run's smoke runs: 1,300-line changes were cut at 60,000 characters.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-bigpatch-'));
+  try {
+    execFileSync('git', ['init', '-q', '.'], { cwd: dir });
+    fs.writeFileSync(path.join(dir, 'a.py'), 'x = 1\n');
+    execFileSync('git', ['-c', 'user.email=x@x', '-c', 'user.name=x', '-c', 'commit.gpgsign=false', 'add', '-A'], { cwd: dir });
+    execFileSync('git', ['-c', 'user.email=x@x', '-c', 'user.name=x', '-c', 'commit.gpgsign=false', 'commit', '-qm', 'base'], { cwd: dir });
+    fs.writeFileSync(path.join(dir, 'big.py'), Array.from({ length: 4000 }, (_, i) => `value_${i} = "${'v'.repeat(40)}"`).join('\n') + '\n');
+    const measured = bench.measureChange(dir, new Set());
+    assert.ok(measured.patch.length > 200000, `patch kept whole (${measured.patch.length} chars)`);
+    assert.match(measured.patch, /value_3999 = /);
+    const record = bench.resultRecord({ id: 't' }, 'without', { agent: { status: 0, stdout: '' }, durationMs: 1, measured, checks: [], setup: null });
+    assert.strictEqual(record.patchTruncated, false);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// Multi-file run, stage 2: hidden checks ran in the agent's sandbox and read a
+// git-ignored test database the agent's own test runs had left, so a change
+// that passes on a clean tree failed both checks. The checks now see the
+// starting tree plus the change: ignored files the agent left are removed,
+// ignored files that were there before it started (setup's links) stay.
+test('hidden checks do not see the ignored files an agent left, and keep the ones setup made', () => {
+  const suite = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-leftover-'));
+  const dir = path.join(suite, 'leftover');
+  fs.mkdirSync(path.join(dir, 'fixture'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'fixture', '.gitignore'), 'tests/.temp/\nenv-link/\n');
+  fs.writeFileSync(path.join(dir, 'fixture', 'a.txt'), 'old\n');
+  fs.writeFileSync(path.join(dir, 'task.json'), JSON.stringify({
+    id: 'leftover',
+    prompt: 'Change a.txt to say new.',
+    setup: 'mkdir -p env-link && echo env > env-link/marker',
+    hiddenChecks: [
+      { id: 'change', command: 'grep -qx new a.txt' },
+      { id: 'clean', command: 'test ! -e tests/.temp/stale.db' },
+      { id: 'setup kept', command: 'test -e env-link/marker' },
+    ],
+  }));
+  const agent = agentScript("fs.writeFileSync('a.txt', 'new\\n'); fs.mkdirSync('tests/.temp', { recursive: true }); fs.writeFileSync('tests/.temp/stale.db', 'old schema');");
+  try {
+    const [task] = bench.listTasks(suite);
+    const r = bench.runOnce(task, { agentCmd: agent, variant: 'without' });
+    assert.deepStrictEqual(r.checks.map((c) => [c.id, c.passed]), [['change', true], ['clean', true], ['setup kept', true]]);
+    assert.strictEqual(r.filesChanged, 1, 'the ignored leftover was never part of the change');
+  } finally {
+    fs.rmSync(suite, { recursive: true, force: true });
+  }
+});
+
+// Multi-file run, stage 2: four engine runs hit the 7,200 s timeout. An agent
+// cut off prints no result line, so the runs carried no usage at all and
+// nothing said they had timed out. The record now says so, with the token
+// counts of the session's transcripts (each message once). The temporary
+// directory is reached through a link, as macOS's /var/folders is: Claude Code
+// names a session's transcript folder from the resolved working directory.
+test('a run cut by the timeout says so, and keeps the token counts its transcripts show', { skip: process.platform === 'win32' && 'HOME and process groups are POSIX' }, () => {
+  const task = bench.listTasks(path.join(__dirname, '..', 'bench', 'suites', 'followup')).find((t) => t.id === 'top-words');
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-home-'));
+  const real = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-realtmp-'));
+  const linked = `${real}-link`;
+  fs.symlinkSync(real, linked);
+  const saved = { HOME: process.env.HOME, TMPDIR: process.env.TMPDIR };
+  process.env.HOME = home;
+  process.env.TMPDIR = linked;
+  const agent = agentScript(`
+const path = require('path');
+const dir = path.join(process.env.HOME, '.claude', 'projects', process.cwd().replace(/[^a-zA-Z0-9]/g, '-'));
+fs.mkdirSync(path.join(dir, 's', 'subagents'), { recursive: true });
+const u = { input_tokens: 2, output_tokens: 100, cache_read_input_tokens: 1000, cache_creation_input_tokens: 50 };
+const line = (id) => JSON.stringify({ type: 'assistant', message: { id, usage: u, content: [] } });
+fs.writeFileSync(path.join(dir, 's.jsonl'), [line('a'), line('a'), JSON.stringify({ type: 'user' }), line('b')].join('\\n') + '\\n');
+fs.writeFileSync(path.join(dir, 's', 'subagents', 'agent-1.jsonl'), line('c') + '\\n');
+setTimeout(() => {}, 60000);`);
+  try {
+    const r = bench.runOnce(task, { agentCmd: agent, variant: 'without', timeoutMs: 3000 });
+    assert.strictEqual(r.timedOut, true);
+    assert.strictEqual(r.usage, null, 'no result line, no reported usage');
+    assert.deepStrictEqual(r.transcriptUsage, { messages: 3, tokens: 3456, outputTokens: 300, inputTokens: 6, cacheReadTokens: 3000, cacheCreationTokens: 150 });
+    const done = bench.resultRecord(task, 'without', { agent: { status: 0, stdout: '' }, durationMs: 1, measured: { linesAdded: 0, linesRemoved: 0, testLinesAdded: 0, changed: [], newDeps: [], patch: '' }, checks: [], setup: null });
+    assert.strictEqual(done.timedOut, undefined, 'a run that ended is not marked');
+  } finally {
+    for (const [k, v] of Object.entries(saved)) if (v === undefined) delete process.env[k]; else process.env[k] = v;
+    fs.rmSync(home, { recursive: true, force: true });
+    fs.rmSync(linked, { force: true });
+    fs.rmSync(real, { recursive: true, force: true });
+  }
+});
+
+// Final review: git lists an ignored nested repository as a directory
+// (`ign/nested/`), which a plain rmSync refuses, and nothing caught the error,
+// so one such leftover stopped the whole batch. It is removed whole, and a
+// leftover that cannot be removed is named in the run's record instead.
+test('an ignored nested repository the agent left is removed whole, and the batch goes on', () => {
+  const suite = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-nested-'));
+  const dir = path.join(suite, 'nested');
+  fs.mkdirSync(path.join(dir, 'fixture'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'fixture', '.gitignore'), 'ign/\n');
+  fs.writeFileSync(path.join(dir, 'fixture', 'a.txt'), 'old\n');
+  fs.writeFileSync(path.join(dir, 'task.json'), JSON.stringify({ id: 'nested', prompt: 'Change a.txt.', hiddenChecks: [{ id: 'clean', command: 'test ! -e ign/nested/data.db' }] }));
+  const agent = agentScript("fs.writeFileSync('a.txt', 'new\\n'); fs.mkdirSync('ign/nested', { recursive: true }); require('child_process').execFileSync('git', ['init', '-q'], { cwd: 'ign/nested' }); fs.writeFileSync('ign/nested/data.db', 'stale');");
+  try {
+    const [task] = bench.listTasks(suite);
+    const r = bench.runOnce(task, { agentCmd: agent, variant: 'without' });
+    assert.deepStrictEqual(r.checks.map((c) => [c.id, c.passed]), [['clean', true]]);
+    assert.strictEqual(r.leftoversKept, undefined, 'nothing failed to go');
+  } finally {
+    fs.rmSync(suite, { recursive: true, force: true });
+  }
+});
+
+test('a leftover that cannot be removed is returned, not thrown', () => {
+  const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-kept-'));
+  const copy = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-kept-copy-'));
+  try {
+    execFileSync('git', ['init', '-q', '.'], { cwd: sandbox });
+    fs.writeFileSync(path.join(sandbox, '.gitignore'), 'ign/\n');
+    fs.mkdirSync(path.join(sandbox, 'ign'));
+    fs.writeFileSync(path.join(sandbox, 'ign', 'x'), 'left');
+    // In the copy the same path is a non-empty directory, which a file's removal refuses.
+    fs.mkdirSync(path.join(copy, 'ign', 'x'), { recursive: true });
+    fs.writeFileSync(path.join(copy, 'ign', 'x', 'y'), 'z');
+    const kept = bench.removeLeftovers(sandbox, new Set(), copy);
+    assert.strictEqual(kept.length, 1);
+    assert.match(kept[0], /^ign\/x \(/);
+  } finally {
+    fs.rmSync(sandbox, { recursive: true, force: true });
+    fs.rmSync(copy, { recursive: true, force: true });
+  }
+});

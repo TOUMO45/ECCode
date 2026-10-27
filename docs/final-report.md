@@ -291,3 +291,36 @@ A pre-registered run looked for the bare agent's mistakes on purpose, to measure
 
 **Not shown:** that the engine raises correctness where a bare agent errs. On 19 changes of a well-tested project, this model made no such error.
 
+## Addendum 2026-10-27: the multi-file run (v0.15.0)
+
+A pre-registered run asked the proof run's question on large changes ([protocol](../bench/protocols/2026-10-27-mealie-multifile.md); [report](../bench/pilot-results/2026-10-27-mealie-multifile.md)). It took the 16 largest eligible changes of Mealie's recent history, 121 to 1,355 changed lines in 6 to 30 files. Stage 1 ran each three times bare; stage 2 ran 6 bare and 6 engine runs on each hard item.
+
+**Measured, as registered:**
+- **Hard items: three.** The bare agent passed 40 of 48 stage-1 runs. Its own mistakes made items 01, 05 and 07 hard; item 03's two failures were gaps in its request. A container restart in stage 1 left only item 01 hard in the registered reading, which has no verdict (amendment 1).
+- **Primary: missed.** Engine 12 of 18, bare 9 of 18 on the hard items in stage 2; difference 0.167, p = 0.50.
+  - Item 01: engine 4/6, bare 1/6.
+  - Item 05: engine 6/6, bare 3/6.
+  - Item 07: engine 2/6, bare 5/6. Four engine runs reached the 7,200 s timeout, which counts as a failure.
+- **Delivery: missed.** 9 of 18 stage-2 engine runs delivered with a clean audit, against 80% (row 138, open).
+- **Friction: met.** 0.17 false refusals per engine run.
+- **Cost:** about $97 with four timed-out runs estimated, against a $310 budget.
+
+**Reported, no criterion:**
+- Graded on a clean tree with the timeout rule set aside, 17 of 18 engine patches pass, against 9 of 18 bare (post hoc).
+- The engine's one failing patch there repeats the bare agent's naming mistake, past five reviews.
+- Mealie's lint gate showed no difference here: 12 of 18 engine and 11 of 18 bare patches pass.
+- A median engine run cost 7.7× a bare run's and took 48.5 minutes against 6.3.
+
+**Found:** rows 134–138.
+- Fixed, each with a test that failed first:
+  - a record lock that timed out the moment a check ended (row 134);
+  - a gate that refused an empty changed file (row 135).
+- `ps` was added to the guard's read-only list (row 91).
+- Mitigated:
+  - hidden checks that read a stale test database the agent had left (row 136). This is fixed for single runs and source-backed chains, but not in greenfield chains.
+  - a timed-out run's cost is unknown to the cost ceiling (row 137).
+- Named: delivery on large changes (row 138).
+- The run's own analysis counted a timed-out run by its hidden checks; it was fixed before any figure was reported.
+
+**Not shown:** that the engine raises correctness on large changes. It fixed the bare agent's mistakes on two of three items, but timed out on the third, and the registered test missed.
+

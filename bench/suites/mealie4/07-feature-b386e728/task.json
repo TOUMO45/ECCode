@@ -1,0 +1,46 @@
+{
+  "id": "mealie4-07-feature-b386e728",
+  "category": "feature-b386e728",
+  "order": 7,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "029419e5e6f822c1db55a2dabd5599e0877a7e96"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-393d7fe39c20/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" python . > /dev/null && node \"$ECCODE_BENCH_TASK_DIR/../_tools/env.js\" node . > /dev/null",
+  "prompt": "Feature: link recipe notes to instruction steps.\n\nA step can already point at the ingredients it uses (ingredientReferences). Cooks want the same for notes: a step should be able to point at one or more of the recipe's notes (for example \"see the note on resting the dough\"), and the links should survive saving and loading the recipe.\n\nExpected:\n1. Every recipe note has a stable identifier. RecipeNote (title, text) gains reference_id (referenceId in JSON), a UUID. A note built or sent without one (missing, null or empty) gets a new random UUID, so RecipeNote(title=..., text=...) already has one, and every note of a recipe read back after it is created has a non-None reference_id. A note sent with a reference_id keeps it: it is stored with the note and returned unchanged by later reads and updates, so links to it stay valid. Clients that send notes with only title and text keep working; their notes get ids.\n2. A new model NoteReference, importable from the same module as RecipeStep (next to IngredientReferences), with a single field reference_id (referenceId in JSON), an optional UUID that defaults to None.\n3. RecipeStep gains note_references (noteReferences in JSON): a list of NoteReference, empty by default. RecipeStep(text=\"step one\", note_references=[]) is valid.\n4. The recipe repository stores a step's note references and loads them back. For example: create a recipe through a user's repositories (repos.recipes.create) with notes=[RecipeNote(title=\"my note\", text=\"note body\")] and one step RecipeStep(text=\"step one\", note_references=[]); read reference_id from the returned recipe's first note; set the returned recipe's first step's note_references to [NoteReference(reference_id=<that id>)] and call repos.recipes.update(recipe.slug, recipe). The recipe it returns has exactly one note reference on its first step, and that reference's reference_id equals the note's reference_id (as a UUID). Through the API, GET /api/recipes/{slug} returns each note with its referenceId and each step with noteReferences ([{\"referenceId\": ...}]), and PUT /api/recipes/{slug} stores them.\n5. When a recipe is updated through the API (PUT /api/recipes/{slug}), a step's note reference whose id matches none of the recipe's notes after the update is dropped, the same way references to removed ingredients are dropped today.\n6. A new Alembic migration, revising the current head 4b91d3a7c0e2 and so becoming the only head, adds the storage this needs and gives every existing note a fresh reference id. Its file is named by the project's migration file template with a create date later than the newest existing migration's, so the files still sort in revision order. Downgrade removes what it added.\n\nShowing and choosing linked notes in the recipe editor and on the recipe page is UI work and not part of this task.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/repository_tests tests/integration_tests/user_recipe_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "feat: add recipe note linking to recipe instructions (#7591)",
+  "track": "feature",
+  "fixCommit": "b386e7289f58d949f7b15c99034f082a66a2bbca",
+  "hidden": {
+    "fromSource": {
+      "commit": "b386e7289f58d949f7b15c99034f082a66a2bbca",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_crud.py",
+        "tests/unit_tests/repository_tests/test_recipe_repository.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/unit_tests/repository_tests/test_recipe_repository.py::test_recipe_note_step_references'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py' 'tests/unit_tests/repository_tests/test_recipe_repository.py' --deselect 'tests/unit_tests/repository_tests/test_recipe_repository.py::test_recipe_note_step_references'",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 75,
+    "failingBeforeAndAfter": []
+  }
+}
