@@ -144,3 +144,33 @@ As in the multi-file run: a run that ends with no result line because of an infr
 - **The environment change could make items easier for both variants.** The re-validation above confirms each hidden check still fails at its source commit.
 - **Disk.** About 5 GB is free; old scratch sandboxes are cleared if it falls under 4 GB, never the saved runs.
 - **A restart.** The procedure above applies.
+
+## Amendment 1: the container restart during the batch
+
+Committed before the batch continued.
+
+**What happened.** The container restarted at about 23:34 UTC (its uptime starts at 23:34:33), 68 minutes after the batch launched at 22:26:22, and all four processes stopped. The cause is not known; free disk was 4.5 GB afterwards.
+- **Finished runs, with a result line:** e1: item 01 once; e2: item 07 once; e3: item 12 once; w: items 01, 02 and 03 twice each.
+- **Cut runs** (started, no result line, the agent still working: no transcripts had been copied):
+  - e1: item 01's second run, from 22:49:53;
+  - e2: item 07's second run, from 23:27:50;
+  - e3: item 12's second run, from 22:59:05;
+  - w: item 04's first run, from 23:32:56.
+- **Never started:** 51 runs (e1 10, e2 8, e3 8, w 25).
+- **Known to the operator at this amendment:** the three finished engine runs (all delivered with a clean audit; item 01's fails one hidden check, items 07 and 12 pass both) and the six finished bare runs (3 pass every hidden check).
+
+**How the batch continues.** Each process continues with `bench/pilot/resume.js runs` (the rerun's and the multi-file run's amendment-1 tool) from the pinned worktree `/tmp/mp/wt5`, with its own `--save` and `--transcripts`, `--timeout 14400` (the tool's default is 3,600 s, so it is passed), `--agent "$AGENT_D"`, and the process's `--max-cost` (60 for e1–e3, 30 for w), the cost already spent counting toward it. Engine processes add `--engine-profile guard --engine-agents inherit`.
+- It records the cut run from its surviving sandbox in the process's file, as a failure that did not deliver, then runs each never-started run once, in the original order.
+- Its `--registered` file, `<scratch>/delivery/registered/<process>.jsonl`, is the registered reading: the process file as it stood at the restart, plus the cut run, plus every never-started run, each counted as failed and not delivered.
+- `--posthoc <scratch>/delivery/posthoc.jsonl` grades a cut run whose agent had finished; none had, so it records nothing.
+- **After the batch,** each cut run is run once more, as the protocol's infrastructure rule says: `D --tasks <item> --runs 1` with the process's variant and engine flags, into `<scratch>/delivery-rerun/<process>.jsonl`, with transcripts in the process's own `<scratch>/delivery/tr-<process>`, so the analysis finds them.
+
+**The two readings,** built by `readings()` in `bench/pilot/multifile.js` from `<scratch>/delivery` and `<scratch>/delivery-rerun`:
+- **Registered:** the files under `registered/`. It holds 32 planned engine runs, of which at most 6 could deliver: the 26 that never started count as not delivered.
+- **Continued:** every run that ran, meaning each process file without its cut-run record, followed by that process's replacement run.
+
+**Both readings are reported,** with the primary verdict in each, as the protocol says. **The continued reading answers the run's question.** The registered reading can show at most 6 of 32 delivered, so it measures the restart, not the engine. This choice is made with the three finished engine runs known, as disclosed above.
+
+**Labels.** `failures.json` is keyed `<process>:<task>:<n>` over the continued reading. The registered reading's keys differ for the cut items (its second run of item 01 in e1 is the cut run; in the continued reading it is the replacement), so its labels go in `failures-registered.json`: the continued reading's labels for runs both readings share, plus `harness` for each cut and never-started run. Refusals are labelled once, by transcript line, and both readings share them.
+
+**If the container restarts again,** the same procedure applies, from each process's file as it then stands, and the amendment that records it is committed first.
