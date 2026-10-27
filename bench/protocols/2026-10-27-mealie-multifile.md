@@ -230,3 +230,31 @@ An agent that reaches the 7,200 s timeout is not an infrastructure failure.
 - **The bare agent may still pass everything.** Then the primary again has no verdict, and that is evidence too: with a full request, Sonnet rarely fails even 500-line Mealie changes.
 - **Regression to the mean.** Items chosen because the bare agent failed may pass more often on fresh runs. Fresh stage-2 runs decide the primary, so this cannot favour the engine.
 - **Requests that leak structure.** Some tests monkeypatch internals, so their requests must name those seams. That makes the items easier for both variants alike.
+
+## Amendment 1: the container restart in stage 1
+
+Committed before stage 1 continued.
+
+**What happened.** At about 01:28 UTC the container restarted, 38 minutes into stage 1, and all three stage-1 processes stopped.
+- **Finished runs, with a result line:**
+  - w1: item 01 three times, item 02 once;
+  - w2: item 07 once;
+  - w3: item 12 twice.
+- **Cut runs** (started, no result line): item 02's second run (w1, from 01:22), item 07's second run (w2, from 01:22) and item 12's third run (w3, from 01:26).
+- **Never started:** the remaining 38 runs.
+
+**How stage 1 continues.** Each process continues with `bench/pilot/resume.js runs`, the rerun's amendment-1 tool, from the pinned worktree. It is run with the process's own `--save`, `--transcripts` and `--max-cost 20`; the cost already spent counts toward the ceiling.
+- It records the cut run from its surviving sandbox in the process's file, then runs each never-started run once, in the original order.
+- Its `--registered` file, `<scratch>/stage1/registered/<process>.jsonl`, is the registered reading: the process file as it stood at the restart, plus the cut run as a failure, plus every never-started run as a failure.
+- After stage 1, each cut run is run once more, as the protocol's infrastructure rule says, into `<scratch>/stage1-rerun/<process>.jsonl`.
+
+**The two readings of stage 1.**
+- **Registered:** the files under `registered/`.
+- **Continued:** every run that ran, meaning each process file without its cut-run record, followed by that process's replacement runs.
+
+**Which reading chooses the hard items: the continued one.**
+- Cut and never-started runs are labelled `harness`, which can never make an item hard. The registered reading's hard items are therefore a subset of the continued reading's. With 38 runs never started, the registered reading would screen most items with no run at all.
+- Both readings and their hard items are reported.
+- Labels are keyed `<process>:<task>:<n>` over the continued reading. The registered reading adds only harness labels, for its cut and never-started runs.
+
+**If the container restarts again** during either stage, the same procedure applies: resume from each cut sandbox, with the registered and continued readings, and run each cut run once more after its stage. The primary verdict is reported in both readings, as the protocol says.
