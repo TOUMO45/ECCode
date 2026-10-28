@@ -521,3 +521,15 @@ test('guard: sed writes only with -i or --in-place, not when a path merely holds
   assert.strictEqual(bash(dir, 'security-reviewer', 'sed -ni s/x/y/p notes-iPIAtW/app.js'), 'deny', '-i among combined flags');
   assert.strictEqual(bash(dir, 'security-reviewer', 'sed --in-place=.bak s/x/y/ notes-iPIAtW/app.js'), 'deny');
 });
+
+test('guard: GNU sed\'s abbreviated --in-place (--in, --in-p=bak) is a write too, to a project file or the record', () => {
+  // Found by the delivery run's final review: GNU sed accepts any unambiguous
+  // abbreviation of --in-place, and no other long option starts with "i".
+  const { dir } = tmpProject();
+  write(dir, 'notes-iPIAtW/app.js', 'x\n');
+  assert.strictEqual(bash(dir, 'security-reviewer', 'sed --in s/x/y/ notes-iPIAtW/app.js'), 'deny');
+  assert.strictEqual(bash(dir, 'security-reviewer', 'sed --in-p=.bak s/x/y/ notes-iPIAtW/app.js'), 'deny');
+  for (const cmd of ['sed --in s/a/b/ .eccode/config.json', 'sed -Ei s/a/b/ .eccode/config.json', 'sed -ni s/a/b/p .eccode/config.json']) {
+    assert.strictEqual(bash(dir, 'backend-engineer', cmd), 'deny', `a record write: ${cmd}`);
+  }
+});

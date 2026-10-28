@@ -77,12 +77,18 @@ function shellSkeleton(cmd) {
 // Command separators: ||, &&, ;, |, newline, and a single & (background).
 const SEPARATORS = /\|\||&&|[;|\n]|(?<![>&])&(?![>&])/;
 
+// sed writes in place only by an option word: -i, -i.bak, a cluster like -ni or
+// -Ei, or GNU's --in-place and any abbreviation of it (--in, --in-p=bak; no other
+// long option starts with "i"). A path may hold "-i" and is not one.
+const sedInPlace = (a) => /^-[a-zA-Z]*i/.test(a) || /^--i/.test(a);
+
 /**
  * Literal paths a shell command writes to ({path, remove}): redirections and
  * write-tool arguments, each joined to the directory of the last literal `cd`
  * before it (a cd the text cannot resolve leaves targets where they were).
  * `remove` marks a deletion (rm, unlink).
  */
+
 function bashWriteTargets(cmd, root) {
   const targets = [];
   const skeleton = shellSkeleton(cmd);
@@ -116,8 +122,7 @@ function bashWriteTargets(cmd, root) {
     } else if (name === 'tee' || name === 'truncate') targets.push(...args.map((a) => ({ path: at(a), remove: false })));
     else if (name === 'unlink' || name === 'rm') targets.push(...args.map((a) => ({ path: at(a), remove: true })));
     else if ((name === 'cp' || name === 'mv') && args.length >= 2) targets.push({ path: at(args[args.length - 1]), remove: false });
-    // In place only by an option word (-i, -i.bak, -ni, --in-place): a path may hold "-i".
-    else if (name === 'sed' && argv.some((a) => /^-[a-zA-Z]*i/.test(a) || a.startsWith('--in-place'))) targets.push({ path: at(args[args.length - 1]), remove: false });
+    else if (name === 'sed' && argv.some(sedInPlace)) targets.push({ path: at(args[args.length - 1]), remove: false });
   }
   return targets.filter((t) => t.path && t.path !== '/dev/null' && !t.path.startsWith('<'));
 }
@@ -191,7 +196,7 @@ function writesRecord(cmd, { subagent }) {
     if (name === 'xargs') [name, args] = programOfXargs(args); // xargs runs its program: judge that
     if (READ_ONLY.has(name) && !outputFileOf(name, args)) continue;
     if (name === 'env' && !args.some((a) => !a.startsWith('-'))) continue; // env alone prints the environment
-    if (name === 'sed' && !args.some((a) => /^(-i|--in-place)/.test(a))) continue;
+    if (name === 'sed' && !args.some(sedInPlace)) continue;
     if (name === 'find' && !args.some((a) => FIND_ACTIONS.test(a) || /[\\$`]/.test(a))) continue; // find only lists
     if (/^eccode(\.js)?$/.test(name) || (['node', 'npx'].includes(name) && /(^|\/)eccode(\.js)?$/.test(args[0] || ''))) {
       // `evidence run … -- <cmd>` and `improve evaluate … -- <cmd>` execute <cmd>.
