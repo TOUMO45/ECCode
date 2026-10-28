@@ -1156,6 +1156,23 @@ test('multifile run: the two readings after a restart: registered counts cut and
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
+// Delivery run amendment 3: an expired credential stopped an engine run that
+// still wrote a result line; the continued reading drops it like a cut run.
+test('readings: a run named as cut by infrastructure is dropped from the continued reading, though it wrote a result line', () => {
+  const { readings } = require('../bench/pilot/multifile');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-mf-readings-'));
+  const w = (rel, rows) => { fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); fs.writeFileSync(path.join(dir, rel), rows.map((r) => JSON.stringify(r)).join('\n') + '\n'); };
+  const run = (task, delivered) => ({ task, variant: 'engine', hiddenPassed: 2, hiddenTotal: 2, engine: { delivered, auditOk: true } });
+  w('stage/e1.jsonl', [run('a', true), run('f', true), run('f', false), { type: 'stopped' }]);
+  w('rerun/e1.jsonl', [run('f', true)]);
+  const out = readings(path.join(dir, 'stage'), path.join(dir, 'rerun'), { cut: ['e1:f:2'] });
+  const rows = (d) => fs.readFileSync(path.join(d, 'e1.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  assert.deepStrictEqual(rows(out.continued).map((r) => [r.task, r.engine.delivered]), [['a', true], ['f', true], ['f', true]], 'the named run is dropped and its replacement appended');
+  assert.deepStrictEqual(rows(out.registered).map((r) => [r.task, r.engine.delivered]), [['a', true], ['f', true], ['f', false]], 'the registered reading keeps it');
+  assert.throws(() => readings(path.join(dir, 'stage'), path.join(dir, 'rerun'), { cut: ['e1:f:3'] }), /no run e1:f:3/);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
 // The delivery run (docs/specs/2026-10-27-delivery-run-design.md): delivery is
 // counted over the 32 planned engine runs, so a run a ceiling kept from
 // starting counts as not delivered.
