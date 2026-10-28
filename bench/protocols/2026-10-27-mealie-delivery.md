@@ -199,3 +199,18 @@ Committed before the batch continued again.
 **A memory log.** To see whether load comes before a restart, a logger appends the time, memory in use and the counts of agent and test processes to `/tmp/mp/memlog.txt` every 30 seconds. It is on disk, which survives a restart. It is reported, with no criterion.
 
 **If the container restarts again,** the same procedure applies with the next amendment number, committed first.
+
+## Amendment 3: an expired credential
+
+Committed before the affected runs were run again.
+
+**What happened.** From 13:04:20 to about 13:05:40 UTC on 2026-10-28, the agent CLI's credential was refused (API 401, "OAuth access token has expired"); it authenticated again by 13:06. Only e1 was running.
+- **e1's second run of item 06** (from 12:19): its subagent and its orchestrator received the 401 at 13:04:20–22, and its session ended. The harness wrote a result line at 13:05:26: not delivered, both hidden checks passing.
+- **e1's replacement run of item 01** (amendment 1's) started at 13:05:26 and received the 401 at its first call. The operator stopped its process at 13:06; it wrote no result line.
+
+**How it is counted.** The protocol's infrastructure rule names a run that ends with no result line. Item 06's second run has one, but the same kind of failure stopped its agent, so the rule applies to it:
+- **Registered reading:** unchanged (it is the batch as the first restart left it).
+- **Continued reading:** item 06's second run is dropped and replaced by one fresh run, as a cut run is. The report also gives the continued reading with this run kept as not delivered.
+- e1's replacement runs (items 01 and 02) and the new one for item 06 run from `/tmp/mp/wt5b` into `<scratch>/delivery-rerun/e1.jsonl`.
+
+**This choice cannot change the primary verdict.** Before the new runs, the continued reading had 22 of 30 engine runs delivered with item 06's second run kept, so with every remaining run delivering it reaches at most 25 of 32, under the 26 the rule needs.
