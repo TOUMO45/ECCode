@@ -226,12 +226,11 @@
       }
     },
     "testChanges": {
-      "description": "Every test file that existed before this task and that the task changed (debug and fix tracks refuse undeclared ones): why the test, not the code, was wrong. New test files need no entry.",
+      "description": "Debug and fix tracks. Every test-infrastructure or pre-existing test file the task changed (file), and every test that passed on the baseline and is now missing, skipped, xfailed or failing (test, as \"<module>::<name>\"): why the test, not the code, had to change. The reviewer must acknowledge each entry. A new test file, or a test appended to an existing one, needs no entry.",
       "type": "array",
       "items": {
         "type": "object",
         "required": [
-          "file",
           "reason"
         ],
         "additionalProperties": false,
@@ -239,6 +238,10 @@
           "file": {
             "type": "string",
             "minLength": 1
+          },
+          "test": {
+            "type": "string",
+            "minLength": 3
           },
           "reason": {
             "type": "string",

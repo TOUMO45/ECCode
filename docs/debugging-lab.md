@@ -24,7 +24,12 @@ Refuted hypotheses stay in the record and in the final handoff: they are evidenc
 | Budget | `debug hypothesis add` after `lab.hypothesisBudget` refuted or withdrawn hypotheses (default 5) or `lab.timeBudgetMinutes` (default 240) without an escalation | `LAB_BUDGET`; `debug escalate --kind rescope\|ask-user` records it |
 | No probe ships | completion, the last gate and `deliver` with an `eccode-trace-probe` marker in a changed file | `INVALID_HANDOFF`, `TRACK_RULE`, `DELIVERY_BLOCKED` |
 
-A new test file, or a test appended to an existing file, needs no declaration: only changed or removed lines of a pre-existing test do.
+A new test file, or a test appended to an existing file, needs no declaration: only changed or removed lines of a pre-existing test do. Two more rules close the ways around that:
+
+- **The test-outcome invariant.** At the claim on these tracks the engine runs the pinned command on the claim base, in a detached worktree, and records every collected test with its outcome (`tests.baseline`; per-test outcomes are captured for pytest runs through `PYTEST_ADDOPTS`, so the command text never changes). At completion, the cited passing run of the pinned command is compared with it: a test that passed on the baseline and is now **missing** (deselected, not collected), **skipped**, **xfail** or **failing** refuses the completion unless declared in `handoff.testChanges` by test (`"<module>::<name>"`) or by file, and the reviewer acknowledges it. Test infrastructure (`conftest.py`, `pytest.ini`, `tox.ini`, `setup.cfg`, `pyproject.toml` when the changed lines concern pytest, `fixtures/` directories) is under the same gate for any change, additions included.
+- **A test that patches the fixed module** (`monkeypatch.setattr`, `mock.patch`, `sys.modules[...] =` on a symbol of a changed source file) is refused unless declared and acknowledged: a regression test runs the real fixed code.
+
+Bypasses refused by `tests/test-invariant.test.js`: a skip added through `conftest.py`, a `--deselect` added to the pytest configuration, an xfail marker added to an existing test, and a new test file that monkeypatches the fixed function.
 
 ## Tools
 
@@ -81,4 +86,4 @@ The final handoff's **Debugging Lab** section lists the reproduction, every hypo
 
 ## Limits
 
-See `docs/limits.md` rows 139–144: Python-only SBFL; bugs at import time or by omission that SBFL cannot rank; bisect needs a known good commit; probes before a block header or inside an expression do not parse; the budget counts refutations, not effort; a reviewer's challenge is judgment, not proof.
+See `docs/limits.md` rows 139–144, 152 and 153: Python-only SBFL; bugs at import time or by omission that SBFL cannot rank; bisect needs a known good commit; probes before a block header or inside an expression do not parse; the budget counts refutations, not effort; a reviewer's challenge is judgment, not proof.

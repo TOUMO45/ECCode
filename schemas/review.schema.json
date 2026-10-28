@@ -147,12 +147,11 @@
       }
     },
     "acknowledgedTestChanges": {
-      "description": "On a debug or fix phase, each existing test file a task declared changed (handoff.testChanges), checked by the reviewer: approval is refused until every declared file is acknowledged.",
+      "description": "On a debug or fix phase, each test change a task declared (handoff.testChanges, by file or by test), checked by the reviewer: approval is refused until every declared entry is acknowledged.",
       "type": "array",
       "items": {
         "type": "object",
         "required": [
-          "file",
           "verdict",
           "reason"
         ],
@@ -161,6 +160,10 @@
           "file": {
             "type": "string",
             "minLength": 1
+          },
+          "test": {
+            "type": "string",
+            "minLength": 3
           },
           "verdict": {
             "enum": [

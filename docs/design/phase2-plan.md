@@ -101,6 +101,7 @@ Found while building (each with the test that pins it):
 - **Probe order** is reads first, deletions last (row 146), after a deletion probe hid a change in another endpoint.
 - **SBFL ties** go to the line more failing tests reach, then fewer passing tests: with two failing tests, the wrong boundary line had tied with the failing API test's own path.
 - **The ECC arm** installs ECC's agents, skills and commands only (its hooks need a plugin root); the protocol names it.
+- **Test-outcome invariant (follow-up).** Line-based test-edit detection was replaced as the primary rule by a per-test outcome baseline recorded at the claim (`tests.baseline`, pytest through `PYTEST_ADDOPTS`) and compared at completion; test infrastructure joined the test-edit gate for any change; a test that patches the fixed module is refused. Bypasses pinned: conftest skip, config deselect, added xfail, monkeypatch in a new test file (tests/test-invariant.test.js).
 - The whole suite's existing fix- and debug-track flows gained the Lab and routing steps (tests/helpers.js `labRootCause`, tests/works.test.js `routeBehavior`): the gates they test are unchanged and still pass.
 
 - "`fix.submitted`" → enforced at task completion and at the last gate (see recon §9).

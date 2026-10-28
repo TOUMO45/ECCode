@@ -171,7 +171,7 @@ test('an existing test\'s lines changed by the fix must be declared, and the rev
   gates.submit(store, config, 'phase:fix', 'backend-engineer');
   const ev = passCheck(store, 'technical-reviewer');
   const review = approval([[`ev:${ev.id}`]]);
-  assert.match(expectCode(() => gates.recordReview(store, config, 'phase:fix', 'technical-reviewer', review), 'REVIEW_REJECTED').message, /changed the existing test tests\/price\.test\.js; approval must acknowledge it/);
+  assert.match(expectCode(() => gates.recordReview(store, config, 'phase:fix', 'technical-reviewer', review), 'REVIEW_REJECTED').message, /declared a change to the test file or infrastructure tests\/price\.test\.js; approval must acknowledge it/);
   gates.recordReview(store, config, 'phase:fix', 'technical-reviewer', { ...review, acknowledgedTestChanges: [{ file: 'tests/price.test.js', verdict: 'legitimate', reason: 'the assertion change keeps the same expected price; the fix is in src/price.js' }] });
   assert.strictEqual(store.state().gates['phase:fix'].status, 'approved');
   fs.rmSync(dir, { recursive: true, force: true });
