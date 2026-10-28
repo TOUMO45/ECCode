@@ -214,3 +214,26 @@ Committed before the affected runs were run again.
 - e1's replacement runs (items 01 and 02) and the new one for item 06 run from `/tmp/mp/wt5b` into `<scratch>/delivery-rerun/e1.jsonl`.
 
 **This choice cannot change the primary verdict.** Before the new runs, the continued reading had 22 of 30 engine runs delivered with item 06's second run kept, so with every remaining run delivering it reaches at most 25 of 32, under the 26 the rule needs.
+
+## Amendment 4: a third container restart, and a correction to amendment 3
+
+Committed before e1's three runs were run again.
+
+**What happened.** The container stopped at about 13:14 UTC on 2026-10-28 (the memory log's last line is 13:14:14) and started again at 14:13:05. The memory log shows no load before it: 0.9 GB of 16 GB in use, load average 0.03. The cause is not known.
+- **Cut:** e1's rerun process (started 13:07:37 from `/tmp/mp/wt5b`), during its first run, item 01's replacement; its agent was dispatching tasks T1 and T2 when the container stopped. It wrote no result line.
+- **Never started:** item 02's replacement and item 06's new run.
+
+**A correction to amendment 3.** Amendment 3 says the operator stopped the process of item 01's first replacement run at 13:06. That stop did not end the run.
+- Its agent had got past the 401 and worked on in its sandbox until 13:09:02. The operator had removed that sandbox at about 13:07, before starting the next process.
+- A harness process then copied the run's transcripts and failed while measuring the change ("fatal: not a git repository", in `measureChange`), so it wrote no result line. Its error went into the log file that the next process had opened at the same path.
+- Why the signal did not stop that harness process is not known.
+- The run is in no reading, as amendment 3 said; only the account of how it ended was wrong. It shared no sandbox with the run this amendment counts as cut.
+
+**How the batch continues.**
+- **The three runs:** e1's three runs (item 01's replacement, item 02's replacement and item 06's new run) are run once each from `/tmp/mp/wt5b`. They keep `--timeout 14400`, `--agent "$AGENT_D"`, the guard profile, inherited agents, and transcripts into `<scratch>/delivery/tr-e1`.
+- **Three processes at once:** to shorten the time a further restart could cut them, the three runs start together, as three processes (the batch ran four at once). Each saves to its own file. After all three end, the files are joined in item order into `<scratch>/delivery-rerun/e1.jsonl`, which the continued reading reads as before.
+- **Before they start:** the two cut runs' sandboxes are removed. The cut run's agent transcript is kept under `tr-e1`, beside the others; no reading uses it.
+- **Unchanged:** the readings and the labels rule.
+- **If the container restarts again,** the same procedure applies with the next amendment number, committed first.
+
+**This cannot change the primary verdict:** at most 25 of 32 engine runs can be delivered in the continued reading, as amendment 3 says.
