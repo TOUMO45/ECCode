@@ -116,7 +116,8 @@ function bashWriteTargets(cmd, root) {
     } else if (name === 'tee' || name === 'truncate') targets.push(...args.map((a) => ({ path: at(a), remove: false })));
     else if (name === 'unlink' || name === 'rm') targets.push(...args.map((a) => ({ path: at(a), remove: true })));
     else if ((name === 'cp' || name === 'mv') && args.length >= 2) targets.push({ path: at(args[args.length - 1]), remove: false });
-    else if (name === 'sed' && /\ssed\s[^;|&]*(-i|--in-place)/.test(` ${segment} `)) targets.push({ path: at(args[args.length - 1]), remove: false });
+    // In place only by an option word (-i, -i.bak, -ni, --in-place): a path may hold "-i".
+    else if (name === 'sed' && argv.some((a) => /^-[a-zA-Z]*i/.test(a) || a.startsWith('--in-place'))) targets.push({ path: at(args[args.length - 1]), remove: false });
   }
   return targets.filter((t) => t.path && t.path !== '/dev/null' && !t.path.startsWith('<'));
 }
