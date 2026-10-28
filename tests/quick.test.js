@@ -390,3 +390,15 @@ test('guidance: the orchestrator runs the command a refused wrapper wraps instea
   assert.match(row, /X itself/);
   assert.match(row, /ask the user only when no allowed command/i);
 });
+
+test('guidance: a refused file move or delete is routed around, not a question, unless the request needs it', () => {
+  // Found in the delivery run: both engine runs of item 14 stopped to ask for a refused
+  // `git mv` or `git rm`; both bare runs passed by writing the new files and leaving the old.
+  const skill = fs.readFileSync(path.join(__dirname, '..', 'skills', 'orchestrate', 'SKILL.md'), 'utf8');
+  const row = skill.split('\n').find((l) => l.startsWith('|') && /move or delete/.test(l));
+  assert.ok(row, 'the orchestrator\'s situation table has a refused move-or-delete row');
+  assert.match(row, /leave/);
+  assert.match(row, /handoff/);
+  assert.match(row, /rescope/);
+  assert.match(row, /ask the user only when the request cannot be met without/i);
+});
