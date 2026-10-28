@@ -836,6 +836,35 @@ test('resume: an independent run cut off by a restart is a failure; the runs tha
   assert.deepStrictEqual(reg.map((l) => [l.hiddenPassed, Boolean(l.infrastructure && l.infrastructure.neverStarted)]), [[1, false], [0, false], [0, true], [0, true]]);
 }));
 
+// The delivery run: the container restarted a second time, 16 minutes after
+// amendment 1's resume. The tool refused any file it had resumed, and would have
+// appended the never-started runs to the registered reading a second time.
+test('resume: a later amendment resumes a file an earlier one resumed, and leaves the registered reading as the first restart left it', () => withCache(() => {
+  const o = origin();
+  const task = suiteWith(o, { hiddenChecks: [{ id: 'any', command: 'true' }] });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-resume-'));
+  const sandbox = path.join(dir, `eccode-bench-${task.id}-without-y`);
+  fs.mkdirSync(sandbox);
+  bench.materialize(task, sandbox);
+  const save = path.join(dir, 'runs', 'w.jsonl');
+  const registered = path.join(dir, 'registered', 'w.jsonl');
+  fs.mkdirSync(path.dirname(save));
+  fs.mkdirSync(path.dirname(registered));
+  const earlier = [{ task: 't1', variant: 'without', hiddenPassed: 1, hiddenTotal: 1, usage: { costUsd: 0.1 } }, { task: 't1', variant: 'without', hiddenPassed: 0, hiddenTotal: 0, infrastructure: { cause: 'first', neverStarted: false }, amendment: 1 }];
+  fs.writeFileSync(save, earlier.map((l) => JSON.stringify(l) + '\n').join(''));
+  fs.writeFileSync(registered, earlier.map((l) => JSON.stringify(l) + '\n').join(''));
+  const agent = `node -e "process.stdout.write(JSON.stringify({type:'result',total_cost_usd:0.1,num_turns:1}) + '\\n')"`;
+  const args = { suite: path.dirname(task.dir), sandbox, save, interrupted: 't1', variant: 'without', cause: 'second restart (test)', then: [['t1', 1]], agentCmd: agent, maxCostUsd: 10 };
+  assert.throws(() => resume.resumeRuns({ ...args, registered }), /already resumed/, 'amendment 1 is the default, and it already ran');
+  assert.throws(() => resume.resumeRuns({ ...args, registered, amendment: 2 }), /registered reading/, 'a later amendment never writes the registered reading');
+  resume.resumeRuns({ ...args, amendment: 2 });
+  const read = (f) => fs.readFileSync(f, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  assert.deepStrictEqual(read(save).map((l) => [l.hiddenPassed, l.amendment || 0, Boolean(l.infrastructure)]), [[1, 0, false], [0, 1, true], [0, 2, true], [1, 2, false]]);
+  assert.strictEqual(read(save)[2].infrastructure.cause, 'second restart (test)');
+  assert.deepStrictEqual(read(registered), earlier, 'the registered reading is unchanged');
+  assert.throws(() => resume.resumeRuns({ ...args, amendment: 2 }), /already resumed/);
+}));
+
 test('readings: registered, its sensitivity without runs that have no result line, and the continued reading', () => {
   const { readings } = require('../bench/pilot/readings');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-readings-'));
