@@ -275,14 +275,30 @@ test('an approved gate whose artifact changed is re-reviewed: its author resubmi
   const err = expectCode(() => gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] }), 'INVALID_TRANSITION');
   assert.match(err.message, /approved/, 'an approval whose files are unchanged stands');
   write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD.replace(/\n/g, '\n\n')); // a formatter's rewrite
-  write(ctx.dir, '.eccode/artifacts/other.md', '# Other\n');
-  expectCode(() => gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/other.md'] }), 'INVALID_INPUT');
   expectCode(() => gates.submit(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', { artifacts: ['.eccode/artifacts/brief.md'] }), 'ROLE_NOT_ALLOWED');
-  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
+  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect');
   assert.strictEqual(ctx.store.state().gates.architecture.status, 'submitted', 'not approved until a reviewer approves the new version');
   gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
   assert.strictEqual(ctx.store.state().gates.architecture.status, 'approved');
   assert.deepStrictEqual(require('../lib/delivery').unreviewedChanges(ctx.store.state(), ctx.dir), []);
+});
+
+test('a re-review resubmits every file the approval covered, so a later edit to an unchanged one is still caught', () => {
+  // Found by the delivery run's final review: a re-review that named only the
+  // changed file dropped the others from the approval, and edits to them went unseen.
+  const ctx = tmpProject();
+  gates.startGate(ctx.store, ctx.config, 'architecture', 'orchestrator');
+  write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD);
+  write(ctx.dir, '.eccode/artifacts/extra.md', '# Extra\n');
+  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md', '.eccode/artifacts/extra.md'] });
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD.replace(/\n/g, '\n\n')); // a formatter's rewrite
+  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: [path.join(ctx.dir, '.eccode/artifacts/brief.md')] });
+  const g = ctx.store.state().gates.architecture;
+  assert.deepStrictEqual(g.submissions[g.submissions.length - 1].artifacts.map((a) => a.path).sort(), ['.eccode/artifacts/brief.md', '.eccode/artifacts/extra.md']);
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  write(ctx.dir, '.eccode/artifacts/extra.md', '# Extra, edited later\n');
+  assert.deepStrictEqual(require('../lib/delivery').unreviewedChanges(ctx.store.state(), ctx.dir).map((c) => `${c.path} ${c.problem}`), ['.eccode/artifacts/extra.md modified after approval']);
 });
 
 test('re-reviewing an approved plan gate keeps its tasks and their progress', () => {
@@ -298,6 +314,20 @@ test('re-reviewing an approved plan gate keeps its tasks and their progress', ()
   assert.strictEqual(ctx.store.state().tasks.api.status, 'claimed', 'the record\'s tasks are kept, not re-imported');
   gates.recordReview(ctx.store, ctx.config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/plan.json']]));
   assert.strictEqual(ctx.store.state().gates.plan.status, 'approved');
+});
+
+test('a re-reviewed plan must be the plan the record runs: changed tasks are refused and pointed to a rescope', () => {
+  // Found by the delivery run's final review: re-review never re-imports, so an
+  // approved plan with other tasks would have been approved but never run.
+  const ctx = tmpProject();
+  require('./helpers').approveThroughPlan(ctx);
+  const file = path.join(ctx.dir, '.eccode/artifacts/plan.json');
+  const plan = JSON.parse(fs.readFileSync(file, 'utf8'));
+  plan.tasks[0].files = [...plan.tasks[0].files, 'src/shared/**']; // a valid plan, with other tasks
+  fs.writeFileSync(file, JSON.stringify(plan, null, 2));
+  const err = expectCode(() => gates.submit(ctx.store, ctx.config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] }), 'INVALID_PLAN');
+  assert.match(err.message, /rescope/);
+  assert.strictEqual(ctx.store.state().gates.plan.status, 'approved', 'nothing was submitted');
 });
 
 test('the audit names the way back for an approved file that changed', () => {
