@@ -1,4 +1,12 @@
 {
+  "e3:mealie4-14-feature-cd2097ee:1": {
+    "label": "agent-error",
+    "reason": "Replayed on a clean tree: most target tests fail (the group and admin AI prompt routes, and the GroupAIPromptEditor spec cannot load) because the run stopped during T1 of its plan and never built the routes or the frontend. It stopped to ask the user to run mkdir and git mv, which the benchmark's tool list refuses; both bare runs of this item passed every hidden check under the same tool list by adding the new prompt files and leaving the old ones, so the item is solvable as given and the stop was the engine run's choice. The harness refusal is the trigger, recorded in the report."
+  },
+  "e3:mealie4-14-feature-cd2097ee:2": {
+    "label": "agent-error",
+    "reason": "Replayed on a clean tree: the target files fail at collection (test_group_ai_providers.py, test_openai_service.py) and the GroupAIPromptEditor spec cannot load, because the run stopped during T1 and never built the rest. It stopped to ask the user to run git rm on the old prompt files, which the tool list refuses; as with run 1, both bare runs passed the item under the same tool list, so the stop was the engine run's choice, with the harness refusal as its trigger."
+  },
   "w:mealie4-01-feature-17398941:1": {
     "label": "agent-error",
     "reason": "Replayed on a clean tree: the target file fails at import with AttributeError on ScraperProxyMode.always, so none of its tests run. The request names the enum members always (\"always\") and fallback (\"fallback\"); the change defines ALWAYS and FALLBACK. The multi-file run's three bare runs of this item failed the same way and carry the same label."
