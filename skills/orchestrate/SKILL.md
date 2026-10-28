@@ -73,6 +73,7 @@ For each `phase:<id>`, in order:
    - A failed completion means the engine rejected the handoff. Send the agent back with the exact refusal.
    - On `task fail`, retry within `maxTaskRetries`. A repeated failure escalates.
    - For a non-trivial failure, dispatch `learning-debugger`.
+   - When a planned check cannot run as written, or a file that must change belongs to no task, dispatch `delivery-lead` to propose a rescope (`eccode task rescope … --actor delivery-lead`), then `technical-reviewer` to decide it (`eccode task rescope-review <task> --decision approve|reject --reason "…" --actor technical-reviewer`). Do not ask the user: the reviewer's recorded approval stands in for theirs.
 4. **Check.** Run integration checks across tasks yourself when they span ownership (`eccode evidence run --actor orchestrator ...`). `eccode impact --changed` names the dependents and tests a change reaches; `--run --actor orchestrator` executes and records the affected tests.
 5. **Independent review.** Have `delivery-lead` submit the phase. Then dispatch `technical-reviewer` (and `security-reviewer` for phases touching auth, input handling or AI, named with `--reviewers` at gate start). Reviewers re-run checks themselves.
 6. **Fix blocking findings.** Map each finding to its owning task, run `eccode task reset <id> --actor orchestrator --reason "<finding>"`, then redispatch. Re-submit with `--responds-to`. The reviewer must resolve each finding with evidence.
@@ -99,6 +100,10 @@ For each `phase:<id>`, in order:
 |---|---|
 | Agent crashed or timed out | `run end --status failed`. Then `eccode recover` (or `--all` after a restart) and retry within limits |
 | Engine refusal | It is a rule, not a bug. Fix the cause and never bypass it by editing `.eccode/` files |
+| A planned check cannot run, or a needed file belongs to no task | Release the task if claimed (`eccode task fail <id> --actor orchestrator --reason "..."`), have `delivery-lead` propose a rescope and `technical-reviewer` decide it with `task rescope-review` |
+| A step's command is refused through a wrapper (`uv run X`, `npx X`, or a `task <name>` that runs X) by the tool list | Run X itself, or have the step's owner run it, when X is allowed; a refused wrapper does not forbid the command it wraps. When a person declines a command, never run it another way. Ask the user only when no allowed command does the step |
+| A file move or delete the plan needs is refused | Reach the request another way: the owner writes the new files, leaves a file it cannot delete and names it in the handoff, or `delivery-lead` proposes a rescope for `technical-reviewer` to decide. Ask the user only when the request cannot be met without the refused step |
+| `eccode audit` or `deliver` reports a file `modified after approval (<gate>)` | A tool rewrote an approved file. Have that gate's author resubmit the gate with the current files, and its reviewer review the change; do not ask the user |
 | Repeated rejections | The gate escalates automatically. Present the recovery options and ask the user |
 | Budget or runtime exhausted | Stop, summarize state, ask the user |
-| `eccode audit` fails | Stop; the record or approved artifacts were modified. Report to the user |
+| `eccode audit` fails for any other reason | Stop; the record was modified. Report to the user |

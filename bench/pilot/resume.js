@@ -21,6 +21,7 @@
 //   node bench/pilot/resume.js runs --suite <dir> --sandbox <dir> --save <file> --registered <file>
 //     --interrupted <task id> --variant <v> --then <id:n,...> --cause <text> --agent <cmd>
 //     [--timeout <s>] [--max-cost <usd>] [--transcripts <dir>] [--posthoc <file>]
+//     [--amendment <n>]   (a later restart: n > 1, and no --registered)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -41,14 +42,14 @@ function startRegistered(save, registered) {
 }
 
 /** A run the restart cut off: no result line, so a failure, with its cause and what the record showed. */
-function interruptedRecord(task, variant, { cause, agentFinished = null, engine = null, chain = null, transcripts = null }) {
+function interruptedRecord(task, variant, { cause, agentFinished = null, engine = null, chain = null, transcripts = null, amendment = AMENDMENT }) {
   return {
     ...bench.failedSetupRecord(task, variant, null),
     ...(engine ? { engine: { ...engine, delivered: false } } : {}),
     ...(transcripts ? { transcripts } : {}),
     ...(chain ? { chain } : {}),
     infrastructure: { cause, agentFinished, neverStarted: false, ...(engine ? { recordDelivered: engine.delivered } : {}) },
-    amendment: AMENDMENT,
+    amendment,
   };
 }
 
@@ -125,8 +126,14 @@ function resumeChain({ suite, sandbox, save, registered, chainRun, interrupted, 
   }
 }
 
-function resumeRuns({ suite, sandbox, save, registered, interrupted, variant, then = [], cause, agentCmd, engineProfile = 'guard', engineAgents = 'inherit', timeoutMs = 3600000, maxCostUsd = null, transcripts = null, posthoc = null, onProgress = () => {} }) {
-  if (readLines(save).some((l) => l.amendment === AMENDMENT)) throw new Error(`${save} was already resumed`);
+/**
+ * A later restart (amendment > 1) resumes the same file again. The registered
+ * reading is the batch as the first restart left it, so only amendment 1 writes it.
+ */
+function resumeRuns({ suite, sandbox, save, registered = null, interrupted, variant, then = [], cause, agentCmd, engineProfile = 'guard', engineAgents = 'inherit', timeoutMs = 3600000, maxCostUsd = null, transcripts = null, posthoc = null, amendment = AMENDMENT, onProgress = () => {} }) {
+  if (readLines(save).some((l) => l.amendment === amendment)) throw new Error(`${save} was already resumed`);
+  if (amendment === AMENDMENT && !registered) throw new Error('the first restart writes the registered reading: --registered is required');
+  if (amendment !== AMENDMENT && registered) throw new Error(`amendment ${amendment} leaves the registered reading as the first restart left it: omit --registered`);
   const tasks = bench.listTasks(suite);
   const byId = (id) => tasks.find((t) => t.id === id) || (() => { throw new Error(`no task ${id} in ${suite}`); })();
   const task = byId(interrupted);
@@ -137,21 +144,21 @@ function resumeRuns({ suite, sandbox, save, registered, interrupted, variant, th
   if (posthoc && agentFinished) append(posthoc, { task: task.id, variant, posthoc: true, ...gradeCopy(task, sandbox, { withGit: true }) });
   const files = transcripts ? bench.copyTranscripts(sandbox, path.join(transcripts, dir), startedAtOf(sandbox)) : null;
   const engine = engineVariant ? { ...bench.engineOutcome(sandbox), toolkitChanged: null, agents: engineAgents, track } : null;
-  const cut = interruptedRecord(task, variant, { cause, agentFinished, engine, transcripts: files ? { dir, files } : null });
-  startRegistered(save, registered);
+  const cut = interruptedRecord(task, variant, { cause, agentFinished, engine, transcripts: files ? { dir, files } : null, amendment });
+  if (registered) startRegistered(save, registered);
   append(save, cut);
-  append(registered, cut);
+  if (registered) append(registered, cut);
   bench.removeSandbox(sandbox);
   const queue = then.flatMap(([id, n]) => Array.from({ length: n }, () => byId(id)));
-  for (const t of queue) append(registered, neverStartedRecord(t, variant, { cause }));
+  if (registered) for (const t of queue) append(registered, neverStartedRecord(t, variant, { cause }));
   for (const [k, t] of queue.entries()) {
     const so = spent(save);
     if (maxCostUsd !== null && so >= maxCostUsd) {
-      append(save, { type: 'stopped', reason: 'max-cost', spentUsd: so, amendment: AMENDMENT });
+      append(save, { type: 'stopped', reason: 'max-cost', spentUsd: so, amendment });
       break;
     }
-    onProgress(`${t.id} ${variant} run ${k + 1}/${queue.length} (amendment ${AMENDMENT})`);
-    append(save, { ...bench.runOnce(t, { agentCmd, variant, timeoutMs, engineProfile, engineAgents, transcripts }), amendment: AMENDMENT });
+    onProgress(`${t.id} ${variant} run ${k + 1}/${queue.length} (amendment ${amendment})`);
+    append(save, { ...bench.runOnce(t, { agentCmd, variant, timeoutMs, engineProfile, engineAgents, transcripts }), amendment });
   }
 }
 
@@ -173,7 +180,7 @@ function main(argv) {
     suite: path.resolve(need('suite')),
     sandbox: path.resolve(need('sandbox')),
     save: path.resolve(need('save')),
-    registered: path.resolve(need('registered')),
+    registered: resolved('registered'),
     interrupted: need('interrupted'),
     cause: need('cause'),
     agentCmd: need('agent'),
@@ -186,8 +193,8 @@ function main(argv) {
     posthoc: resolved('posthoc'),
     onProgress: (m) => process.stderr.write(`resume: ${m}\n`),
   };
-  if (mode === 'chain') return resumeChain({ ...common, chainRun: Number(need('chain-run')), keep: Boolean(flags.keep) });
-  if (mode === 'runs') return resumeRuns({ ...common, then: need('then').split(',').map((x) => x.split(':')).map(([id, n]) => [id, Number(n)]) });
+  if (mode === 'chain') return resumeChain({ ...common, registered: path.resolve(need('registered')), chainRun: Number(need('chain-run')), keep: Boolean(flags.keep) });
+  if (mode === 'runs') return resumeRuns({ ...common, amendment: Number(flags.amendment || AMENDMENT), then: need('then').split(',').map((x) => x.split(':')).map(([id, n]) => [id, Number(n)]) });
   throw new Error('usage: resume.js chain|runs --suite <dir> --sandbox <dir> --save <file> --registered <file> --interrupted <id> --cause <text> --agent <cmd> --variant <v> ...');
 }
 

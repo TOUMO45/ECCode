@@ -419,6 +419,25 @@ test('an agent\'s leftover processes are stopped when it exits, and the run is k
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
+test('an agent\'s leftover in a session of its own (as Claude Code runs its tool commands) is stopped too', { skip: process.platform !== 'linux' && 'found through /proc' }, () => {
+  // Found in the delivery run: the agent CLI runs each tool command with setsid, so
+  // the agent's process group does not hold it, and a timed-out run's test command
+  // could write on into the sandbox while the hidden checks run.
+  const task = bench.listTasks(path.join(__dirname, '..', 'bench', 'suites', 'followup')).find((t) => t.id === 'top-words');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-linger-'));
+  const beat = path.join(tmp, 'beat');
+  fs.writeFileSync(path.join(tmp, 'writer.js'), `const fs = require('fs');\nsetInterval(() => fs.appendFileSync(${JSON.stringify(beat)}, '.'), 5);\nsetTimeout(() => process.exit(0), 60000);\n`);
+  // detached: a new session, outside the agent's process group; its working directory is the sandbox.
+  fs.writeFileSync(path.join(tmp, 'agent.js'), `require('child_process').spawn(process.execPath, [${JSON.stringify(path.join(tmp, 'writer.js'))}], { stdio: 'ignore', detached: true }).unref();\n`);
+  const r = bench.runOnce(task, { agentCmd: `node "${path.join(tmp, 'agent.js')}"`, variant: 'without' });
+  assert.strictEqual(r.task, 'top-words', 'the run is recorded');
+  const size = () => (fs.existsSync(beat) ? fs.statSync(beat).size : 0);
+  const a = size();
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
+  assert.strictEqual(size(), a, 'the leftover in its own session was stopped');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
 test('a large change is saved whole, so a failed run can be replayed from its record', () => {
   // Found in the multi-file run's smoke runs: 1,300-line changes were cut at 60,000 characters.
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-bigpatch-'));

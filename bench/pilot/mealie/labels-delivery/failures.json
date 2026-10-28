@@ -1,0 +1,30 @@
+{
+  "e1:mealie4-01-feature-17398941:1": {
+    "label": "agent-error",
+    "reason": "Replayed on a clean tree: the target file fails at import with AttributeError on ScraperProxyMode.always, so none of its tests run \u2014 the same mistake as both bare runs of this item (the request names the members always and fallback; the change defines ALWAYS and FALLBACK). The run delivered with a clean audit: its reviews did not catch the naming."
+  },
+  "e3:mealie4-14-feature-cd2097ee:1": {
+    "label": "agent-error",
+    "reason": "Replayed on a clean tree: most target tests fail (the group and admin AI prompt routes, and the GroupAIPromptEditor spec cannot load) because the run stopped during T1 of its plan and never built the routes or the frontend. It stopped to ask the user to run mkdir and git mv, which the benchmark's tool list refuses; both bare runs of this item passed every hidden check under the same tool list by adding the new prompt files and leaving the old ones, so the item is solvable as given and the stop was the engine run's choice. The harness refusal is the trigger, recorded in the report."
+  },
+  "e3:mealie4-14-feature-cd2097ee:2": {
+    "label": "agent-error",
+    "reason": "Replayed on a clean tree: the target files fail at collection (test_group_ai_providers.py, test_openai_service.py) and the GroupAIPromptEditor spec cannot load, because the run stopped during T1 and never built the rest. It stopped to ask the user to run git rm on the old prompt files, which the tool list refuses; as with run 1, both bare runs passed the item under the same tool list, so the stop was the engine run's choice, with the harness refusal as its trigger."
+  },
+  "w:mealie4-01-feature-17398941:1": {
+    "label": "agent-error",
+    "reason": "Replayed on a clean tree: the target file fails at import with AttributeError on ScraperProxyMode.always, so none of its tests run. The request names the enum members always (\"always\") and fallback (\"fallback\"); the change defines ALWAYS and FALLBACK. The multi-file run's three bare runs of this item failed the same way and carry the same label."
+  },
+  "w:mealie4-01-feature-17398941:2": {
+    "label": "agent-error",
+    "reason": "Replayed on a clean tree: the same import failure as run 1 (ScraperProxyMode.always missing; the change defines ALWAYS and FALLBACK where the request names always and fallback)."
+  },
+  "w:mealie4-03-feature-a1a49d22:2": {
+    "label": "spec-gap",
+    "reason": "Replayed on a clean tree: the backend part passes; 10 of 41 frontend tests fail with \"plugin is not a function\". The change rewrote the axios plugin as defineNuxtPlugin({ setup }), while the hidden spec's stub calls the plugin as a function; the request does not say which form the plugin takes. The multi-file run labelled the same failure spec-gap."
+  },
+  "w:mealie4-05-fix-fb221afa:2": {
+    "label": "agent-error",
+    "reason": "Replayed on a clean tree: 3 target tests fail (test_noproxy_is_set_when_no_proxy_is_configured, test_noproxy_is_cleared_when_a_proxy_is_configured, test_pin_and_proxy_options_coexist) with KeyError on CurlOpt.NOPROXY: the change never sets it, though the request states it must be \"*\" without a proxy, \"\" with one, and stay \"\" after a pin. Same as the multi-file run's labelled failures of this item."
+  }
+}

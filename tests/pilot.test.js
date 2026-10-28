@@ -836,6 +836,35 @@ test('resume: an independent run cut off by a restart is a failure; the runs tha
   assert.deepStrictEqual(reg.map((l) => [l.hiddenPassed, Boolean(l.infrastructure && l.infrastructure.neverStarted)]), [[1, false], [0, false], [0, true], [0, true]]);
 }));
 
+// The delivery run: the container restarted a second time, 16 minutes after
+// amendment 1's resume. The tool refused any file it had resumed, and would have
+// appended the never-started runs to the registered reading a second time.
+test('resume: a later amendment resumes a file an earlier one resumed, and leaves the registered reading as the first restart left it', () => withCache(() => {
+  const o = origin();
+  const task = suiteWith(o, { hiddenChecks: [{ id: 'any', command: 'true' }] });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-resume-'));
+  const sandbox = path.join(dir, `eccode-bench-${task.id}-without-y`);
+  fs.mkdirSync(sandbox);
+  bench.materialize(task, sandbox);
+  const save = path.join(dir, 'runs', 'w.jsonl');
+  const registered = path.join(dir, 'registered', 'w.jsonl');
+  fs.mkdirSync(path.dirname(save));
+  fs.mkdirSync(path.dirname(registered));
+  const earlier = [{ task: 't1', variant: 'without', hiddenPassed: 1, hiddenTotal: 1, usage: { costUsd: 0.1 } }, { task: 't1', variant: 'without', hiddenPassed: 0, hiddenTotal: 0, infrastructure: { cause: 'first', neverStarted: false }, amendment: 1 }];
+  fs.writeFileSync(save, earlier.map((l) => JSON.stringify(l) + '\n').join(''));
+  fs.writeFileSync(registered, earlier.map((l) => JSON.stringify(l) + '\n').join(''));
+  const agent = `node -e "process.stdout.write(JSON.stringify({type:'result',total_cost_usd:0.1,num_turns:1}) + '\\n')"`;
+  const args = { suite: path.dirname(task.dir), sandbox, save, interrupted: 't1', variant: 'without', cause: 'second restart (test)', then: [['t1', 1]], agentCmd: agent, maxCostUsd: 10 };
+  assert.throws(() => resume.resumeRuns({ ...args, registered }), /already resumed/, 'amendment 1 is the default, and it already ran');
+  assert.throws(() => resume.resumeRuns({ ...args, registered, amendment: 2 }), /registered reading/, 'a later amendment never writes the registered reading');
+  resume.resumeRuns({ ...args, amendment: 2 });
+  const read = (f) => fs.readFileSync(f, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  assert.deepStrictEqual(read(save).map((l) => [l.hiddenPassed, l.amendment || 0, Boolean(l.infrastructure)]), [[1, 0, false], [0, 1, true], [0, 2, true], [1, 2, false]]);
+  assert.strictEqual(read(save)[2].infrastructure.cause, 'second restart (test)');
+  assert.deepStrictEqual(read(registered), earlier, 'the registered reading is unchanged');
+  assert.throws(() => resume.resumeRuns({ ...args, amendment: 2 }), /already resumed/);
+}));
+
 test('readings: registered, its sensitivity without runs that have no result line, and the continued reading', () => {
   const { readings } = require('../bench/pilot/readings');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-readings-'));
@@ -945,10 +974,25 @@ test('proof run: friction is the false refusals per engine run, from the engine 
   write(dir, `${run}/s1/subagents/agent-1.jsonl`, jsonl([use('t2', 'eccode memory help'), refused('t2', 'eccode: [USAGE] Unknown memory subcommand')]));
   write(dir, `${run}/record/events.jsonl`, jsonl([use('t8', 'eccode x'), refused('t8', 'eccode: [USAGE] the record copy is not a transcript')]));
   write(dir, 'tr-w1/eccode-bench-x-without-BBBBBB/s.jsonl', jsonl([use('t9', 'eccode x'), refused('t9', 'eccode: [USAGE] a bare run is not counted')]));
-  const rows = [{ process: 'e1', task: 'x', variant: 'engine' }, { process: 'e1', task: 'y', variant: 'engine' }, { process: 'w1', task: 'x', variant: 'without' }];
+  const rows = [{ process: 'e1', task: 'x', variant: 'engine', transcripts: { dir: 'eccode-bench-x-engine-AAAAAA' } }, { process: 'e1', task: 'y', variant: 'engine' }, { process: 'w1', task: 'x', variant: 'without', transcripts: { dir: 'eccode-bench-x-without-BBBBBB' } }];
   const ids = [`e1/eccode-bench-x-engine-AAAAAA/s1.jsonl:2`, `e1/eccode-bench-x-engine-AAAAAA/s1/subagents/agent-1.jsonl:2`];
   assert.deepStrictEqual(friction(dir, rows, { [ids[0]]: { label: 'false' }, [ids[1]]: { label: 'correct' } }), { refusals: 2, unlabelled: [], false: 1, runs: 2, perRun: 0.5 });
   assert.deepStrictEqual(friction(dir, rows, {}).unlabelled.sort(), [...ids].sort(), 'every refusal is labelled before the figure');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('friction: only the transcripts of the reading\'s own engine runs count, not a cut or abandoned run\'s left beside them', () => {
+  const { friction } = require('../bench/pilot/proof');
+  const { write } = require('./helpers');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-proof-friction-'));
+  const use = (id, command) => ({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] } });
+  const refused = (id, text) => ({ type: 'user', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: id, is_error: true, content: text }] } });
+  const jsonl = (events) => `${events.map((e) => JSON.stringify(e)).join('\n')}\n`;
+  write(dir, 'tr-e1/eccode-bench-x-engine-KEPT01/s.jsonl', jsonl([use('t1', 'eccode x'), refused('t1', 'eccode: [USAGE] a run of the reading')]));
+  write(dir, 'tr-e1/eccode-bench-x-engine-CUT001/s.jsonl', jsonl([use('t2', 'eccode x'), refused('t2', 'eccode: [USAGE] a cut run the reading dropped')]));
+  const rows = [{ process: 'e1', task: 'x', variant: 'engine', transcripts: { dir: 'eccode-bench-x-engine-KEPT01' } }, { process: 'e1', task: 'x', variant: 'engine' }];
+  const f = friction(dir, rows, { 'e1/eccode-bench-x-engine-KEPT01/s.jsonl:2': { label: 'false' } });
+  assert.deepStrictEqual(f, { refusals: 1, unlabelled: [], false: 1, runs: 2, perRun: 0.5 }, 'a never-started run counts as a run with no refusal; the cut run\'s transcript is not the reading\'s');
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
@@ -1124,5 +1168,83 @@ test('multifile run: the two readings after a restart: registered counts cut and
   assert.deepStrictEqual(tasks(out.registered, 'w2'), ['d'], 'a process the restart did not cut is the same in both');
   assert.deepStrictEqual(tasks(out.continued, 'w2'), ['d']);
   assert.ok(fs.existsSync(path.join(out.continued, 'tr-w1')), 'transcripts stay reachable for the friction count');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// Delivery run amendment 3: an expired credential stopped an engine run that
+// still wrote a result line; the continued reading drops it like a cut run.
+test('readings: a run named as cut by infrastructure is dropped from the continued reading, though it wrote a result line', () => {
+  const { readings } = require('../bench/pilot/multifile');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-mf-readings-'));
+  const w = (rel, rows) => { fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); fs.writeFileSync(path.join(dir, rel), rows.map((r) => JSON.stringify(r)).join('\n') + '\n'); };
+  const run = (task, delivered) => ({ task, variant: 'engine', hiddenPassed: 2, hiddenTotal: 2, engine: { delivered, auditOk: true } });
+  w('stage/e1.jsonl', [run('a', true), run('f', true), run('f', false), { type: 'stopped' }]);
+  w('rerun/e1.jsonl', [run('f', true)]);
+  const out = readings(path.join(dir, 'stage'), path.join(dir, 'rerun'), { cut: ['e1:f:2'] });
+  const rows = (d) => fs.readFileSync(path.join(d, 'e1.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  assert.deepStrictEqual(rows(out.continued).map((r) => [r.task, r.engine.delivered]), [['a', true], ['f', true], ['f', true]], 'the named run is dropped and its replacement appended');
+  assert.deepStrictEqual(rows(out.registered).map((r) => [r.task, r.engine.delivered]), [['a', true], ['f', true], ['f', false]], 'the registered reading keeps it');
+  assert.throws(() => readings(path.join(dir, 'stage'), path.join(dir, 'rerun'), { cut: ['e1:f:3'] }), /no run e1:f:3/);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// The delivery run (docs/specs/2026-10-27-delivery-run-design.md): delivery is
+// counted over the 32 planned engine runs, so a run a ceiling kept from
+// starting counts as not delivered.
+const deliveryRow = (process, task, variant, { ok = true, delivered = true, durationMs = 3600000, ...extra } = {}) => ({ process, task, variant, hiddenPassed: ok ? 2 : 1, hiddenTotal: 2, durationMs, usage: { costUsd: variant === 'engine' ? 3 : 0.5 }, engine: variant === 'engine' ? { delivered, auditOk: true } : undefined, ...extra });
+
+test('delivery run: planned runs never started count as not delivered', () => {
+  const { report } = require('../bench/pilot/delivery');
+  const engine = (n) => Array.from({ length: 30 }, (_, i) => deliveryRow(`e${1 + (i % 3)}`, `mealie4-${String(1 + (i % 16)).padStart(2, '0')}-x`, 'engine', { delivered: i < n }));
+  const missed = report({ engine: engine(25), bare: [], labels: {}, planned: 32, inSample: [] });
+  assert.match(missed, /Delivery \(primary\):\*\* 25\/32 planned engine runs[^\n]*missed/);
+  assert.match(missed, /2 planned runs never started/);
+  assert.match(report({ engine: engine(26), bare: [], labels: {}, planned: 32, inSample: [] }), /Delivery \(primary\):\*\* 26\/32 planned engine runs[^\n]*met/);
+  assert.throws(() => report({ engine: engine(26), bare: [], labels: {}, planned: 29, inSample: [] }), /more engine runs than planned/);
+});
+
+test('delivery run: within 2 hours counts only runs that ended by 7,200 s', () => {
+  const { report } = require('../bench/pilot/delivery');
+  const engine = [deliveryRow('e1', 'mealie4-01-x', 'engine', { durationMs: 9000000 }), deliveryRow('e1', 'mealie4-01-x', 'engine', { durationMs: 7200000 })];
+  const md = report({ engine, bare: [], labels: {}, planned: 2, inSample: [] });
+  assert.match(md, /Delivery \(primary\):\*\* 2\/2 /);
+  assert.match(md, /Within 2 hours:\*\* 1\/2 /);
+  // A run at the 4-hour limit is cut whatever it recorded: marked by its duration.
+  const cut = report({ engine: [deliveryRow('e1', 'mealie4-01-x', 'engine', { durationMs: 14400050 })], bare: [], labels: { 'e1:mealie4-01-x:1': { label: 'harness' } }, planned: 1, inSample: [] });
+  assert.match(cut, /Timeouts:\*\* engine 1, bare 0/);
+  assert.match(cut, /Hidden checks, engine against bare:\*\* engine 0\/1/);
+});
+
+test('delivery run: in-sample and out-of-sample are reported apart, and an unlabelled failure stops the analysis', () => {
+  const { report } = require('../bench/pilot/delivery');
+  const engine = [
+    deliveryRow('e1', 'mealie4-01-x', 'engine'), deliveryRow('e1', 'mealie4-01-x', 'engine', { delivered: false }),
+    deliveryRow('e2', 'mealie4-08-x', 'engine'), deliveryRow('e2', 'mealie4-08-x', 'engine'),
+  ];
+  const bare = [deliveryRow('w', 'mealie4-01-x', 'without', { ok: false }), deliveryRow('w', 'mealie4-08-x', 'without')];
+  assert.throws(() => report({ engine, bare, labels: {}, planned: 6, inSample: ['mealie4-01-x'] }), /unlabelled failed runs: w:mealie4-01-x:1/);
+  const md = report({ engine, bare, labels: { 'w:mealie4-01-x:1': { label: 'agent-error' } }, planned: 6, inSample: ['mealie4-01-x'] });
+  assert.match(md, /In-sample \(mealie4-01-x\):\*\* 1\/2 /);
+  assert.match(md, /Out-of-sample:\*\* 2\/4 /, 'planned minus the in-sample runs; one planned run never started');
+  assert.match(md, /Hidden checks, engine against bare:\*\* engine 4\/4, bare 1\/2/);
+});
+
+test('delivery run: rescopes are counted from the copied records', () => {
+  const { rescopes, report } = require('../bench/pilot/delivery');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-delivery-'));
+  const rec = path.join(dir, 'tr-e1', 'run-a', 'record');
+  fs.mkdirSync(rec, { recursive: true });
+  const ev = (type, data) => JSON.stringify({ seq: 1, ts: '2026-10-27T00:00:00Z', type, actor: 'x', data });
+  fs.writeFileSync(path.join(rec, 'events.jsonl'), [
+    ev('task.rescope_proposed', { task: 'T1', proposal: 'rsc-1' }),
+    ev('task.rescoped', { task: 'T1', proposal: 'rsc-1', approvedBy: 'technical-reviewer' }),
+    ev('task.rescope_proposed', { task: 'T2', proposal: 'rsc-2' }),
+    ev('task.rescope_reviewed', { task: 'T2', proposal: 'rsc-2', decision: 'reject' }),
+    ev('task.rescoped', { task: 'T3' }), // the user's own rescope: not a reviewed one
+  ].join('\n') + '\n');
+  const rows = [deliveryRow('e1', 'mealie4-01-x', 'engine', { transcripts: { dir: 'run-a' } }), deliveryRow('e1', 'mealie4-01-x', 'engine', { transcripts: { dir: 'run-b' } })];
+  const r = rescopes(dir, rows);
+  assert.deepStrictEqual(r, { proposed: 2, approved: 1, rejected: 1 });
+  assert.match(report({ engine: rows, bare: [], labels: {}, planned: 2, inSample: [], rescopes: r }), /Rescopes:\*\* 2 proposed, 1 approved, 1 rejected/);
   fs.rmSync(dir, { recursive: true, force: true });
 });

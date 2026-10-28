@@ -247,3 +247,11 @@ test('evidence run --timeout is in the help', () => {
   const res = require('child_process').spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), 'help'], { encoding: 'utf8' });
   assert.match(res.stdout, /evidence run [^\n]*--timeout <s>/);
 });
+
+// Delivery run: a check that ran past the old 10-minute default was stopped
+// and run again, which cost large changes their time.
+test('evidence run waits 30 minutes by default', () => {
+  assert.strictEqual(require('../lib/evidence').DEFAULT_TIMEOUT_MS, 1800000);
+  const help = spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), '--help'], { encoding: 'utf8' }).stdout;
+  assert.match(help, /evidence run [^\n]*default 1800 s/);
+});

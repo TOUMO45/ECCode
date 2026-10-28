@@ -18,7 +18,7 @@ const MAX_HARD = 6;
 const TIMEOUT_MS = 7200000;
 // The runs of a saved file: typed lines (a process stopped at its --max-cost)
 // are not runs, and a run cut by the timeout is marked.
-const marked = (rows) => rows && rows.filter((r) => !r.type).map((r) => (!r.timedOut && r.durationMs >= TIMEOUT_MS ? { ...r, timedOut: true } : r));
+const marked = (rows, limitMs = TIMEOUT_MS) => rows && rows.filter((r) => !r.type).map((r) => (!r.timedOut && r.durationMs >= limitMs ? { ...r, timedOut: true } : r));
 /** An item's place in upstream order, from its id (mealie4-07-fix-… is 7). */
 const idOrder = (id) => Number((/-(\d\d)-/.exec(id) || [])[1]);
 
@@ -117,26 +117,35 @@ const cutRun = (r) => Boolean(r.infrastructure && r.infrastructure.neverStarted 
  * runs are failures), or its own file when the restart did not cut it;
  * continued: every run that ran, each cut run's record dropped and its
  * replacement (<rerun>/<process>.jsonl) appended after the stage.
+ * `cut` names runs (<process>:<task>:<n>, n counting the process's runs of the
+ * task) that an infrastructure failure stopped although they wrote a result
+ * line (the delivery run's amendment 3); the continued reading drops them too.
  */
-function readings(stage, rerun) {
+function readings(stage, rerun, { cut = [] } = {}) {
   const out = { registered: path.join(stage, 'reading-registered'), continued: path.join(stage, 'reading-continued') };
   const write = (dir, p, rows) => fs.writeFileSync(path.join(dir, `${p}.jsonl`), rows.map((r) => `${JSON.stringify(r)}\n`).join(''));
   for (const dir of Object.values(out)) {
     fs.rmSync(dir, { recursive: true, force: true });
     fs.mkdirSync(dir);
   }
+  const named = [];
   for (const f of fs.readdirSync(stage).filter((x) => x.endsWith('.jsonl')).sort()) {
     const p = path.basename(f, '.jsonl');
     const own = jsonl(path.join(stage, f)).filter((r) => !r.type);
+    const seen = new Map();
+    const keyOf = own.map((r) => { seen.set(r.task, (seen.get(r.task) || 0) + 1); return `${p}:${r.task}:${seen.get(r.task)}`; });
     const registered = path.join(stage, 'registered', f);
     write(out.registered, p, fs.existsSync(registered) ? jsonl(registered).filter((r) => !r.type) : own);
-    write(out.continued, p, [...own.filter((r) => !cutRun(r)), ...(rerun ? jsonl(path.join(rerun, f)).filter((r) => !r.type) : [])]);
+    write(out.continued, p, [...own.filter((r, i) => !cutRun(r) && !cut.includes(keyOf[i])), ...(rerun ? jsonl(path.join(rerun, f)).filter((r) => !r.type) : [])]);
+    named.push(...keyOf.filter((k) => cut.includes(k)));
     if (fs.existsSync(path.join(stage, `tr-${p}`))) for (const dir of Object.values(out)) fs.symlinkSync(path.resolve(stage, `tr-${p}`), path.join(dir, `tr-${p}`));
   }
+  const missing = cut.filter((k) => !named.includes(k));
+  if (missing.length) throw new Error(`no run ${missing.join(', ')} in ${stage}`);
   return out;
 }
 
-module.exports = { chooseHard, withTests, report, idOrder, readings };
+module.exports = { chooseHard, withTests, report, idOrder, readings, marked };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);

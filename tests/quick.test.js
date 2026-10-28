@@ -177,6 +177,93 @@ test('on a reviewed plan only the user changes ownership', () => {
   fs.rmSync(ctx.dir, { recursive: true, force: true });
 });
 
+// Delivery run: on large changes, three engine runs stopped because only the
+// user may rescope a reviewed plan's task, and no one answers a headless run.
+// The plan's author now proposes, and a plan reviewer who is not the proposer
+// approves or rejects: an independent, recorded approval in the user's place.
+test('on a reviewed plan the delivery lead proposes a rescope and a plan reviewer applies it', () => {
+  const ctx = require('./helpers').tmpProject();
+  require('./helpers').approveThroughPlan(ctx);
+  const tasks = require('../lib/tasks');
+  const p = tasks.rescope(ctx.store, ctx.config, 'api', 'delivery-lead', { files: 'src/server/**,src/shared/**', reason: 'the api task needs the shared types' });
+  assert.strictEqual(p.proposed, true);
+  assert.match(p.proposal, /^rsc-/);
+  assert.deepStrictEqual(ctx.store.state().tasks.api.files, ['src/server/**'], 'a proposal changes nothing');
+  assert.strictEqual(ctx.store.state().tasks.api.rescopeProposal.by, 'delivery-lead');
+  expectCode(() => tasks.reviewRescope(ctx.store, ctx.config, 'api', 'delivery-lead', { decision: 'approve', reason: 'I approve my own proposal' }), 'ROLE_NOT_ALLOWED');
+  tasks.reviewRescope(ctx.store, ctx.config, 'api', 'technical-reviewer', { decision: 'approve', reason: 'shared types are the api contract' });
+  const t = ctx.store.state().tasks.api;
+  assert.deepStrictEqual(t.files, ['src/server/**', 'src/shared/**']);
+  assert.strictEqual(t.rescopeProposal, null);
+  const h = t.history.find((x) => x.event === 'rescoped');
+  assert.strictEqual(h.approvedBy, 'technical-reviewer');
+  assert.strictEqual(h.proposal, p.proposal);
+  assert.strictEqual(ctx.store.audit().ok, true);
+  fs.rmSync(ctx.dir, { recursive: true, force: true });
+});
+
+test('a rescope proposal: engineers cannot propose, one at a time, a rejection or a user rescope closes it, and only a pending, unconflicted task changes', () => {
+  const ctx = require('./helpers').tmpProject();
+  require('./helpers').approveThroughPlan(ctx);
+  const tasks = require('../lib/tasks');
+  const gates = require('../lib/gates');
+  const propose = (files, reason = 'the task needs another directory') => tasks.rescope(ctx.store, ctx.config, 'api', 'delivery-lead', { files, reason });
+  const review = (decision, actor = 'technical-reviewer') => tasks.reviewRescope(ctx.store, ctx.config, 'api', actor, { decision, reason: 'checked against the approved design' });
+  const proposal = () => ctx.store.state().tasks.api.rescopeProposal;
+  expectCode(() => tasks.rescope(ctx.store, ctx.config, 'api', 'backend-engineer', { files: 'src/**', reason: 'let me own everything' }), 'ROLE_NOT_ALLOWED');
+  propose('src/server/**,src/shared/**');
+  expectCode(() => propose('src/server/**,lib/**'), 'INVALID_TRANSITION');
+  review('reject');
+  assert.strictEqual(proposal(), null, 'a rejection closes the proposal');
+  assert.deepStrictEqual(ctx.store.state().tasks.api.files, ['src/server/**']);
+  expectCode(() => review('approve'), 'INVALID_TRANSITION');
+  propose('src/server/**,src/shared/**');
+  tasks.rescope(ctx.store, ctx.config, 'api', 'user', { files: 'src/server/**,lib/**', reason: 'the user decides the api task owns lib' });
+  assert.strictEqual(proposal(), null, 'a user rescope supersedes an open proposal');
+  expectCode(() => review('approve'), 'INVALID_TRANSITION');
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  propose('src/server/**,src/shared/**');
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  expectCode(() => review('approve'), 'INVALID_TRANSITION');
+  tasks.fail(ctx.store, ctx.config, 'api', 'backend-engineer', 'released for the rescope');
+  tasks.claim(ctx.store, ctx.config, 'ui', 'frontend-engineer');
+  review('reject');
+  propose('src/server/**,src/web/**');
+  expectCode(() => review('approve'), 'OWNERSHIP_CONFLICT');
+  assert.strictEqual(ctx.store.audit().ok, true);
+  fs.rmSync(ctx.dir, { recursive: true, force: true });
+});
+
+test('upgrade: a snapshot of a rescoped task written before rescope proposals is a stale cache, not tampering', () => {
+  // Found by the delivery run's final review: replaying task.rescoped now sets
+  // rescopeProposal, so a snapshot an older engine wrote (stateVersion 4, no such
+  // key) diverged from its replay, and audit and deliver reported tampering.
+  const ctx = require('./helpers').tmpProject();
+  require('./helpers').approveThroughPlan(ctx);
+  require('../lib/tasks').rescope(ctx.store, ctx.config, 'api', 'user', { files: 'src/server/**,src/shared/**', reason: 'the user widens the api task' });
+  const file = path.join(ctx.dir, '.eccode', 'state.json');
+  const snap = JSON.parse(fs.readFileSync(file, 'utf8'));
+  delete snap.tasks.api.rescopeProposal;
+  snap.stateVersion = 4;
+  fs.writeFileSync(file, JSON.stringify(snap));
+  const audit = new Store(ctx.dir).audit();
+  assert.strictEqual(audit.ok, true, audit.errors.join('; '));
+  assert.strictEqual(new Store(ctx.dir).state().tasks.api.rescopeProposal, null, 'reads replay the log');
+});
+
+test('task rescope and rescope-review through the CLI', () => {
+  const ctx = require('./helpers').tmpProject();
+  require('./helpers').approveThroughPlan(ctx);
+  let r = cli(ctx.dir, ['task', 'rescope', 'api', '--files', 'src/server/**,src/shared/**', '--reason', 'the api task needs the shared types', '--actor', 'delivery-lead']);
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /rescope-review api/);
+  r = cli(ctx.dir, ['task', 'rescope-review', 'api', '--decision', 'approve', '--reason', 'shared types are the api contract', '--actor', 'technical-reviewer']);
+  assert.strictEqual(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /src\/shared\/\*\*/);
+  assert.match(cli(ctx.dir, ['--help']).stdout, /task rescope-review <id>/);
+  fs.rmSync(ctx.dir, { recursive: true, force: true });
+});
+
 test('a test run\'s caches are not changes: __pycache__, .pytest_cache, pickled grammar caches and node_modules never need review', () => {
   const dir = repo();
   const { gitChangedFiles } = require('../lib/project');
@@ -275,4 +362,88 @@ test('the detected check narrows to named test paths only', () => {
   expectCode(() => narrowCheck(dir, { ...npm, script: 'make check' }, ['tests/unit']), 'INVALID_INPUT', 'a script that may not take paths');
   assert.match(fs.readFileSync(path.join(__dirname, '..', 'commands', 'quick.md'), 'utf8'), /pass those test paths as `tests`/, 'the playbook says how to narrow over MCP');
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('the shipped guidance routes a reviewed plan\'s change through a reviewed rescope', () => {
+  const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+  const lead = read('agents/delivery-lead.md');
+  assert.match(lead, /task rescope/);
+  assert.doesNotMatch(lead, /only the user can change an approved plan/);
+  assert.match(lead, /env NAME=value/, 'needed variables go inside the check command');
+  assert.match(read('agents/technical-reviewer.md'), /task rescope-review/);
+  assert.match(read('skills/orchestrate/SKILL.md'), /rescope-review/);
+});
+
+test('engineers run their task\'s planned check, not whole test directories', () => {
+  for (const f of ['backend-engineer', 'frontend-engineer', 'test-engineer']) {
+    const text = fs.readFileSync(path.join(__dirname, '..', 'agents', `${f}.md`), 'utf8');
+    assert.match(text, /planned check/, f);
+    assert.match(text, /whole test directories/, f);
+  }
+});
+
+// The delivery run: approved files rewritten by a whole-tree formatter left
+// runs asking the user to reopen a gate; runs asked the user to approve
+// `uv run python <script>` though `python <script>` was allowed.
+test('guidance: a changed approved file is re-reviewed by resubmission, formatters stay on the task\'s files, and a refused wrapper does not forbid its command', () => {
+  const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+  for (const f of ['agents/technical-reviewer.md', 'skills/orchestrate/SKILL.md']) {
+    assert.match(read(f), /modified after approval/, f);
+    assert.match(read(f), /resubmit/, f);
+  }
+  for (const f of ['agents/backend-engineer.md', 'agents/frontend-engineer.md', 'agents/test-engineer.md']) {
+    assert.match(read(f), /formatter/, f);
+    assert.match(read(f), /files your task owns/, f);
+    assert.match(read(f), /`uv run X`/, f);
+  }
+});
+
+test('guidance: files a generator changed outside the task go in remainingIssues, which completion accepts, not filesChanged', () => {
+  // Found by the delivery run's final review: naming them in filesChanged, as the
+  // guidance said, makes task completion refuse files outside the task's ownership.
+  for (const role of ['ai', 'backend', 'devops', 'frontend', 'test']) {
+    const f = `agents/${role}-engineer.md`;
+    const line = fs.readFileSync(path.join(__dirname, '..', f), 'utf8').split('\n').find((l) => /generator/.test(l));
+    assert.match(line, /`remainingIssues`/, f);
+    assert.match(line, /`filesChanged`/, f);
+  }
+});
+
+test('guidance: a claimed task is released with task fail, a changed approved file is no audit stop, and a person\'s refusal is never routed around', () => {
+  // Found by the delivery run's final review.
+  const skill = fs.readFileSync(path.join(__dirname, '..', 'skills', 'orchestrate', 'SKILL.md'), 'utf8').split('\n');
+  const rescope = skill.find((l) => l.startsWith('| A planned check cannot run'));
+  assert.match(rescope, /task fail/, 'task reset refuses a claimed task; the engine itself says task fail');
+  assert.doesNotMatch(rescope, /task reset/);
+  const audit = skill.find((l) => l.startsWith('| `eccode audit` fails'));
+  assert.doesNotMatch(audit, /approved artifacts/, 'a changed approved file has its own row: re-review, not a stop');
+  const wrapper = skill.find((l) => l.startsWith('|') && /`uv run X`/.test(l));
+  assert.match(wrapper, /a person/);
+  for (const role of ['ai', 'backend', 'devops', 'frontend', 'test']) {
+    const line = fs.readFileSync(path.join(__dirname, '..', 'agents', `${role}-engineer.md`), 'utf8').split('\n').find((l) => /`uv run X`/.test(l));
+    assert.match(line, /a person/, role);
+  }
+});
+
+test('guidance: the orchestrator runs the command a refused wrapper wraps instead of stopping to ask', () => {
+  // Found in the delivery run: in items 04 and 09 the orchestrator, not an engineer, stopped
+  // to ask after `uv run` and `task` were refused; in item 09 it declined the allowed
+  // `python dev/code-generation/main.py`.
+  const skill = fs.readFileSync(path.join(__dirname, '..', 'skills', 'orchestrate', 'SKILL.md'), 'utf8');
+  const row = skill.split('\n').find((l) => l.startsWith('|') && /`uv run X`/.test(l));
+  assert.ok(row, 'the orchestrator\'s situation table has a refused-wrapper row');
+  assert.match(row, /X itself/);
+  assert.match(row, /ask the user only when no allowed command/i);
+});
+
+test('guidance: a refused file move or delete is routed around, not a question, unless the request needs it', () => {
+  // Found in the delivery run: both engine runs of item 14 stopped to ask for a refused
+  // `git mv` or `git rm`; both bare runs passed by writing the new files and leaving the old.
+  const skill = fs.readFileSync(path.join(__dirname, '..', 'skills', 'orchestrate', 'SKILL.md'), 'utf8');
+  const row = skill.split('\n').find((l) => l.startsWith('|') && /move or delete/.test(l));
+  assert.ok(row, 'the orchestrator\'s situation table has a refused move-or-delete row');
+  assert.match(row, /leave/);
+  assert.match(row, /handoff/);
+  assert.match(row, /rescope/);
+  assert.match(row, /ask the user only when the request cannot be met without/i);
 });
