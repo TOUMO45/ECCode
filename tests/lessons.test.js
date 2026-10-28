@@ -43,7 +43,13 @@ function provenDebugFix(dir) {
   ok(['debug', 'An order of 10 items gets no bulk discount', '--actor', 'orchestrator']);
   ok(['task', 'claim', 'fix', '--actor', 'backend-engineer']);
   write(dir, 'tests/price.test.js', BASE_TEST + REGRESSION);
-  const repro = JSON.parse(ok(['evidence', 'run', '--actor', 'backend-engineer', '--task', 'fix', '--purpose', 'reproduction', '--label', 'repro', '--json', '--', 'npm', 'test']));
+  // The Debugging Lab (Phase 2): the reproduction is pinned, a hypothesis is
+  // tested with an executed command, and the root cause is declared before the fix.
+  const repro = JSON.parse(ok(['debug', 'repro', '--actor', 'backend-engineer', '--task', 'fix', '--json', '--', 'npm', 'test'])).evidence;
+  ok(['debug', 'hypothesis', 'add', 'The bulk boundary uses > so exactly 10 items miss the discount', '--if-true', 'price(10) returns 100', '--if-false', 'price(10) returns 90', '--actor', 'backend-engineer']);
+  ok(['debug', 'hypothesis', 'test', 'h1', '--supports', '--actor', 'backend-engineer', '--', 'node', '-e', 'process.exit(require("./src/price").price(10) === 100 ? 0 : 1)']);
+  ok(['debug', 'hypothesis', 'close', 'h1', '--status', 'confirmed', '--actor', 'backend-engineer']);
+  ok(['debug', 'rootcause', '--hypothesis', 'h1', '--at', 'src/price.js:1', '--explain', 'The discount condition is n > 10 where the price list says from 10 items, so the boundary value is priced without the discount.', '--why-repro-fails', 'the regression test prices 10 items and gets 100 instead of 90', '--actor', 'backend-engineer']);
   write(dir, 'src/price.js', FIXED);
   const verify = JSON.parse(ok(['evidence', 'run', '--actor', 'backend-engineer', '--task', 'fix', '--label', 'verify', '--json', '--', 'npm', 'test']));
   assert.match(ok(['fix', 'verify', '--actor', 'backend-engineer', '--task', 'fix']), /PROVEN/);

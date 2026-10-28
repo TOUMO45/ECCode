@@ -19,17 +19,17 @@ capture → reproduce (ev, purpose=reproduction, FAILS) → memory search (--che
 Work the steps in order. Each one leaves evidence that another engineer can check.
 
 1. **State the problem precisely.** Write down the expected behavior, the actual behavior, the scope (which inputs, which users, which versions), and when it started. A vague problem gets a vague fix.
-2. **Reproduce it with the smallest failing check.** Write one test or command that fails because of the bug, and record it: `eccode evidence run --actor <you> --purpose reproduction -- "<cmd>"`. If you cannot reproduce it, you cannot claim to have fixed it. Say so and keep the lesson provisional.
+2. **Reproduce it with the smallest failing check.** Write one test or command that fails because of the bug, and pin it: `eccode debug repro --actor <you> --task <id> -- "<cmd>"`. The engine refuses a command that passes, and the proof must run this command. If you cannot reproduce it, you cannot claim to have fixed it. Say so and keep the lesson provisional.
 3. **Isolate it.**
    - When a version used to work, find the commit that broke it: `git bisect start <bad> <good> && git bisect run <failing cmd>`.
    - Shrink the input by halving it until the failure stops, then keep the last half that still fails.
    - Delete code paths from the reproduction until only the ones the bug needs remain.
-4. **Form hypotheses with predictions.** For each candidate cause, write "if this is the cause, then <this observation> will be true". Rank the hypotheses by likelihood × cost to test, and test the cheap, likely ones first. Search memory first: `eccode memory search "<symptom>" --check-env`.
-5. **Run experiments that change one thing at a time.** Record each one as evidence. When an experiment refutes a hypothesis, write it into `failedAttempts`.
+4. **Form hypotheses with predictions.** For each candidate cause, open it: `eccode debug hypothesis add "<cause>" --if-true "<observation>" --if-false "<observation>" --actor <you>`. Rank the hypotheses by likelihood × cost to test, and test the cheap, likely ones first. Search memory first: `eccode memory search "<symptom>" --check-env`. `eccode debug localize --sbfl` (pytest projects) and `eccode debug bisect --good <ref>` narrow the search.
+5. **Run experiments that change one thing at a time.** Each one is a command the engine runs: `eccode debug hypothesis test <id> --supports|--refutes --actor <you> -- "<cmd>"`, or `eccode debug trace <id> --at <file:line> --expr "<expr>"` (a probe that logs the value during the reproduction and reverts itself; mark it afterwards). Close each hypothesis `--status confirmed|refuted|withdrawn`; a confirmation needs executed supporting evidence. When an experiment refutes a hypothesis, write it into `failedAttempts`. After five refutations the engine asks for an escalation (`eccode debug escalate`) before another attempt.
 6. **Find the root cause.** It is the earliest point where the program's state goes wrong, not the line that crashed.
    - Keep asking why until you reach a code-level cause.
    - Then look for the same mistake elsewhere: `eccode bugs --all`, `grep`, and `eccode impact <file>` for the callers of the broken code.
-7. **Make the minimal fix at the root.** Fix the shared function, not each caller. If the fix changes a public API, run the change as a fix work item and declare the break.
+7. **Declare the root cause, then make the minimal fix at the root.** `eccode debug rootcause --hypothesis <id> --at <file:line> --explain "<cause>" --why-repro-fails "<link>" --actor <you>`; the engine refuses a fix without it. Fix the shared function, not each caller. If the fix changes a public API, run the change as a fix work item and declare the break.
 8. **Prove the fix:** `eccode fix verify --actor <you> --task <id> --test "<cmd>"`.
    - The engine runs your regression test on the pre-fix code, where it must fail, and on the fix, where it must pass.
    - Only **PROVEN** counts.

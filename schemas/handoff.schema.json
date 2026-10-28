@@ -3,37 +3,131 @@
   "title": "Agent handoff",
   "description": "What one agent passes to the next. Every field the brief requires is mandatory; evidence entries must be 'ev:<evidenceId>' references that resolve in the project record.",
   "type": "object",
-  "required": ["from", "to", "objective", "context", "inputs", "expectedOutput", "acceptanceCriteria", "completedWork", "evidence", "remainingIssues", "nextAction"],
+  "required": [
+    "from",
+    "to",
+    "objective",
+    "context",
+    "inputs",
+    "expectedOutput",
+    "acceptanceCriteria",
+    "completedWork",
+    "evidence",
+    "remainingIssues",
+    "nextAction"
+  ],
   "additionalProperties": false,
   "properties": {
-    "from": { "type": "string", "minLength": 2 },
-    "to": { "type": "string", "minLength": 2 },
-    "task": { "type": "string" },
-    "gate": { "type": "string" },
-    "objective": { "type": "string", "minLength": 10 },
-    "context": { "type": "string", "minLength": 10 },
-    "inputs": { "type": "array", "items": { "type": "string" } },
-    "dependencies": { "type": "array", "items": { "type": "string" } },
-    "expectedOutput": { "type": "string", "minLength": 5 },
-    "acceptanceCriteria": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 3 } },
-    "completedWork": { "type": "string", "minLength": 10 },
-    "filesChanged": { "type": "array", "items": { "type": "string" } },
-    "evidence": { "type": "array", "items": { "type": "string", "pattern": "^ev:" } },
-    "remainingIssues": { "type": "array", "items": { "type": "string" } },
-    "nextAction": { "type": "string", "minLength": 5 },
-    "lessonsConsulted": { "type": "array", "items": { "type": "string" } },
+    "from": {
+      "type": "string",
+      "minLength": 2
+    },
+    "to": {
+      "type": "string",
+      "minLength": 2
+    },
+    "task": {
+      "type": "string"
+    },
+    "gate": {
+      "type": "string"
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 10
+    },
+    "context": {
+      "type": "string",
+      "minLength": 10
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expectedOutput": {
+      "type": "string",
+      "minLength": 5
+    },
+    "acceptanceCriteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "completedWork": {
+      "type": "string",
+      "minLength": 10
+    },
+    "filesChanged": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^ev:"
+      }
+    },
+    "remainingIssues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "nextAction": {
+      "type": "string",
+      "minLength": 5
+    },
+    "lessonsConsulted": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "newDependencies": {
       "description": "Every dependency this task added (lean checks refuse undeclared ones): why the codebase, the standard library and the installed dependencies were not enough.",
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "reason", "alternativesChecked"],
+        "required": [
+          "name",
+          "reason",
+          "alternativesChecked"
+        ],
         "additionalProperties": false,
         "properties": {
-          "name": { "type": "string", "minLength": 1 },
-          "manifest": { "type": "string" },
-          "reason": { "type": "string", "minLength": 10 },
-          "alternativesChecked": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 5 } }
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "manifest": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 10
+          },
+          "alternativesChecked": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 5
+            }
+          }
         }
       }
     },
@@ -42,27 +136,57 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["file", "limit", "upgradeWhen"],
+        "required": [
+          "file",
+          "limit",
+          "upgradeWhen"
+        ],
         "additionalProperties": false,
         "properties": {
-          "file": { "type": "string", "minLength": 1 },
-          "limit": { "type": "string", "minLength": 5 },
-          "upgradeWhen": { "type": "string", "minLength": 5 }
+          "file": {
+            "type": "string",
+            "minLength": 1
+          },
+          "limit": {
+            "type": "string",
+            "minLength": 5
+          },
+          "upgradeWhen": {
+            "type": "string",
+            "minLength": 5
+          }
         }
       }
     },
-    "testsNotNeeded": { "description": "Why changed code ships without a changed test file (lean checks require a test or this reason).", "type": "string", "minLength": 10 },
+    "testsNotNeeded": {
+      "description": "Why changed code ships without a changed test file (lean checks require a test or this reason).",
+      "type": "string",
+      "minLength": 10
+    },
     "acceptedFindings": {
       "description": "Bug-scan findings (eccode bugs) this task keeps on purpose: the rule and file as the engine reported them, and why.",
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["rule", "file", "reason"],
+        "required": [
+          "rule",
+          "file",
+          "reason"
+        ],
         "additionalProperties": false,
         "properties": {
-          "rule": { "type": "string", "minLength": 3 },
-          "file": { "type": "string", "minLength": 1 },
-          "reason": { "type": "string", "minLength": 10 }
+          "rule": {
+            "type": "string",
+            "minLength": 3
+          },
+          "file": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 10
+          }
         }
       }
     },
@@ -71,13 +195,55 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["kind", "name", "reason"],
+        "required": [
+          "kind",
+          "name",
+          "reason"
+        ],
         "additionalProperties": false,
         "properties": {
-          "kind": { "enum": ["export", "route", "migration", "destructive-migration"] },
-          "name": { "type": "string", "minLength": 1 },
-          "reason": { "type": "string", "minLength": 10 },
-          "migration": { "type": "string", "minLength": 5 }
+          "kind": {
+            "enum": [
+              "export",
+              "route",
+              "migration",
+              "destructive-migration"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 10
+          },
+          "migration": {
+            "type": "string",
+            "minLength": 5
+          }
+        }
+      }
+    },
+    "testChanges": {
+      "description": "Every test file that existed before this task and that the task changed (debug and fix tracks refuse undeclared ones): why the test, not the code, was wrong. New test files need no entry.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 10
+          }
         }
       }
     }

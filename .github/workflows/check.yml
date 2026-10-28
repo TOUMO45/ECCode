@@ -51,6 +51,12 @@ jobs:
           ECCODE_REALBUGS_VENVS=/tmp/realbugs-venvs sh bench/suites/realbugs/_tools/setup.sh
           echo "ECCODE_REALBUGS_VENVS=/tmp/realbugs-venvs" >> "$GITHUB_ENV"
           echo "ECCODE_REALBUGS_VALIDATE=1" >> "$GITHUB_ENV"
+          # The Phase 2 fixtures (a FastAPI service for the Debugging Lab and the
+          # behavior diff): their interpreter, so those tests run instead of skipping.
+          uv venv /tmp/phase2-venv --python 3.12
+          uv pip install --python /tmp/phase2-venv/bin/python pytest==9.2.0 coverage==7.17.0 hypothesis==6.170.13 fastapi==0.162.0 httpx==0.28.1
+          echo "ECCODE_PYTHON=/tmp/phase2-venv/bin/python" >> "$GITHUB_ENV"
+          echo "ECCODE_REQUIRE_PHASE2=1" >> "$GITHUB_ENV"
       # Static validation of agents/skills/commands/hooks, then the test suite.
       - run: npm run check
       # The record anchor: history committed on the base branch must still be

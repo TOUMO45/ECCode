@@ -33,6 +33,12 @@ ECCode separates **judgment**, which agents supply in prompts, from **rules**, w
 │ works.js    work items and tracks; fix needs a reproduction pair, refactor a behavior      │
 │             command green before and after                                                 │
 │ stack.js    stack detection, runnable checks, user-adopted required checks, secrets scan   │
+│ lab.js      Debugging Lab: pinned repro, hypotheses, executed evidence, SBFL (Ochiai),      │
+│             bisect in a worktree, self-reverting trace probes, root cause, budget, test-   │
+│             edit declarations; refuses a fix without a confirmed root cause                │
+│ behavior.js behavior diff: routing, contract, two worktrees, probe corpus (OpenAPI per     │
+│             role, Hypothesis on annotated functions), normalization, nondeterminism,       │
+│             classification; refuses an undeclared or stale difference                      │
 │ bench.js    paired with/without-skill benchmark with hidden checks measured by the harness │
 │ mcp.js      the engine as typed MCP tools over stdio, one server per role, actor locked at │
 │             startup: a no-Bash agent has no shell to obfuscate (docs/mcp.md)               │
@@ -63,6 +69,10 @@ ECCode separates **judgment**, which agents supply in prompts, from **rules**, w
 ## Work items and tracks
 
 One record, many deliveries. `project.initialized` opens work item `w1`; after `deliver`, `work.started` archives it and opens the next with its own git base and a track that sets the document gates: `greenfield` (architecture → design → plan), `feature` (design → plan), `refactor`/`fix` (plan), `quick` (an auto-imported one-task plan). Implementation phases and verification apply to every track. `fix` adds the reproduction-pair rule, `refactor` the behavior-command rule and a ban on breaking changes. A snapshot schema change bumps `STATE_VERSION`: an older `state.json` is treated as a stale cache (replayed, not trusted, never reported as tampering).
+
+## Phase 2 events
+
+`repro.recorded`, `hypothesis.opened`, `hypothesis.evidence`, `hypothesis.marked`, `hypothesis.challenged`, `hypothesis.closed`, `localization.result`, `rootcause.declared`, `lab.escalated`; `behavior.contract`, `behavior.contract.amended`, `behavior.routing`, `behavior.diff.result`, `behavior.waiver`. Their artifacts live under `.eccode/lab/` and `.eccode/behavior/` and are content-hashed into the events; `eccode audit` recomputes those hashes, and the evidence logs' as well. `STATE_VERSION` is 5: the snapshot carries `state.lab` and `state.behavior`, archived with the work item.
 
 ## Gate model
 

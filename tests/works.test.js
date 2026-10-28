@@ -11,7 +11,7 @@ const works = require('../lib/works');
 const evidence = require('../lib/evidence');
 const { deliver } = require('../lib/delivery');
 const { Store } = require('../lib/store');
-const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, task, expectCode, recordLesson } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, task, expectCode, recordLesson, labRootCause } = require('./helpers');
 
 const commit = (dir, msg) => {
   execFileSync('git', ['add', '-A'], { cwd: dir });
@@ -31,8 +31,15 @@ function approvePhase(ctx, gateId) {
   gates.recordReview(ctx.store, ctx.config, gateId, 'technical-reviewer', approval([[`ev:${ev.id}`]]));
 }
 
+/** Phase 2: fix, feature and refactor work items record their risk routing before the last gate. */
+function routeBehavior(ctx, actor = 'delivery-lead') {
+  const w = ctx.store.state().work;
+  if (w && ['fix', 'feature', 'refactor'].includes(w.track)) require('../lib/behavior').route(ctx.store, ctx.config, actor);
+}
+
 function approveVerification(ctx, artifacts, n = '') {
   gates.startGate(ctx.store, ctx.config, 'verification', 'orchestrator');
+  routeBehavior(ctx);
   write(ctx.dir, `.eccode/artifacts/verify${n}.md`, '# Verification\nAll green.\n');
   gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: [`.eccode/artifacts/verify${n}.md`, ...artifacts] });
   const ev = passCheck(ctx.store, 'security-reviewer');
@@ -95,15 +102,21 @@ test('fix track: verification needs the same check failing before the fix and pa
   gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/fixplan.json'] });
   gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/fixplan.json']]));
   gates.startGate(store, config, 'phase:fix', 'orchestrator');
-  runTask(ctx, 'bugfix', 'backend-engineer', 'src/server/a.js', '// fixed\n');
+  // Phase 2: a fix needs the Lab's confirmed root cause before its task completes.
+  const repro = 'node -e "process.exit(process.env.FIXED ? 0 : 1)"';
+  tasks.claim(store, config, 'bugfix', 'backend-engineer');
+  write(dir, 'src/server/a.js', '// fixed\n');
+  assert.match(expectCode(() => tasks.complete(store, config, 'bugfix', 'backend-engineer', handoffFor('bugfix', 'backend-engineer', [passCheck(store, 'backend-engineer').id], ['src/server/a.js'])), 'INVALID_HANDOFF').message, /lab: no reproduction is pinned/);
+  labRootCause(store, 'backend-engineer', { command: repro, at: 'src/server/a.js:1', task: 'bugfix' });
+  tasks.complete(store, config, 'bugfix', 'backend-engineer', handoffFor('bugfix', 'backend-engineer', [passCheck(store, 'backend-engineer').id], ['src/server/a.js']));
   approvePhase(ctx, 'phase:fix');
   gates.startGate(store, config, 'verification', 'orchestrator');
   write(dir, '.eccode/artifacts/verify3.md', '# V\nok\n');
   const submitV = () => gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verify3.md', 'src/server/a.js'] });
-  assert.match(expectCode(submitV, 'TRACK_RULE').message, /no reproduction pair/);
-  const repro = 'node -e "process.exit(process.env.FIXED ? 0 : 1)"';
-  evidence.runCommand(store, 'backend-engineer', { label: 'repro: crash', command: repro, purpose: 'reproduction' });
-  expectCode(submitV, 'TRACK_RULE'); // reproduced, but never shown passing
+  // The reproduction is pinned by the Lab; the same command must be recorded passing.
+  assert.match(expectCode(submitV, 'TRACK_RULE').message, /pinned reproduction[\s\S]*has not been recorded passing/);
+  evidence.runCommand(store, 'backend-engineer', { label: 'another check', command: 'node -e "process.exit(0)"' });
+  expectCode(submitV, 'TRACK_RULE'); // a different command passing is not the proof
   process.env.FIXED = '1';
   try {
     evidence.runCommand(store, 'backend-engineer', { label: 'fix verified', command: repro });
@@ -112,6 +125,8 @@ test('fix track: verification needs the same check failing before the fix and pa
   }
   assert.match(expectCode(submitV, 'TRACK_RULE').message, /no lesson recorded for this work item[\s\S]*memory draft --task bugfix --actor backend-engineer/);
   recordLesson(store);
+  assert.match(expectCode(submitV, 'TRACK_RULE').message, /behavior: no risk routing recorded/);
+  routeBehavior(ctx);
   submitV();
   const ev = passCheck(store, 'security-reviewer');
   gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verify3.md']]));
@@ -161,6 +176,7 @@ test('refactor track: the behavior command must be green before the first claim 
   write(ctx2.dir, '.eccode/artifacts/verify5.md', '# V\nok\n');
   assert.match(expectCode(submit2, 'TRACK_RULE').message, /AFTER the last phase approval/);
   evidence.runCommand(ctx2.store, 'delivery-lead', { label: 'behavior after', command: behavior });
+  routeBehavior(ctx2);
   submit2();
 });
 
@@ -229,10 +245,10 @@ test('endurance: twenty-five consecutive work items in a seeded random track ord
       gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: [`.eccode/artifacts/plan${i}.json`] });
       gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([[`artifact:.eccode/artifacts/plan${i}.json`]]));
       gates.startGate(store, config, `phase:fix`, 'orchestrator');
+      const repro = `node -e "process.exit(process.env.OK${i} ? 0 : 1)"`;
+      labRootCause(store, 'backend-engineer', { command: repro, at: 'src/server/a.js:1' });
       runTask(ctx, `bug${i}`, 'backend-engineer', 'src/server/a.js', `// fix ${i}\n`);
       approvePhase(ctx, 'phase:fix');
-      const repro = `node -e "process.exit(process.env.OK${i} ? 0 : 1)"`;
-      evidence.runCommand(store, 'backend-engineer', { label: 'repro', command: repro, purpose: 'reproduction' });
       process.env[`OK${i}`] = '1';
       try {
         evidence.runCommand(store, 'backend-engineer', { label: 'fixed', command: repro });

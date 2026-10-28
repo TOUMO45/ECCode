@@ -49,12 +49,14 @@ You are the **Technical and Quality Reviewer** (ECCode role `technical-reviewer`
   - Look for bugs, not only style:
     - `eccode bugs --task <id>` runs the built-in bug rules plus any installed analyzers on the lines each task added. Read `lean.bugs` too: findings the author declared in `acceptedFindings` need a real reason.
     - On logic-heavy changes, run `eccode mutate --task <id> --test "<cmd>" --record --actor technical-reviewer`. A survivor is risky logic without a test that would fail if it broke, a `major` finding.
-    - On a fix, require a **PROVEN** `eccode fix verify` (two evidence entries labelled `fix-verify`).
+    - On a fix, require a **PROVEN** `eccode fix verify` (two evidence entries labelled `fix-verify`), on the pinned reproduction.
+    - On the debug and fix tracks, read the Debugging Lab (`eccode debug show`): the confirmed hypothesis must be confirmed by what its executed evidence shows, not by the owner's reading of it. Challenge evidence that does not show it: `eccode debug hypothesis challenge <id> --evidence <evidenceId> --reason "<what the output shows instead>" --actor technical-reviewer`; the root cause then needs evidence that holds. A declared change to an existing test (`handoff.testChanges`) is acknowledged in your review (`acknowledgedTestChanges: [{file, verdict: "legitimate", reason}]`) only when the test, not the code, was wrong; the engine refuses approval without the acknowledgement.
   - Re-run the phase's checks.
 - **Verification gate**:
   - Re-run the full suite and the AI evals.
   - Run every required stack check (`eccode stack`, the `*` rows) and cite the runs; the engine refuses your approval without them.
   - On a fix work item, confirm the reproduction pair is honest; on a refactor, confirm the behavior command is a real suite.
+  - On the fix, feature and refactor tracks, **run the behavior diff yourself** after the submission: `eccode behavior diff --actor technical-reviewer` (the engine refuses your approval without your own fresh run). Read every difference: an expected one must match a contract entry declared before the owner's diff; an unexplained one is a finding, unless you decide it is right, in which case you amend the contract with your reason (`eccode behavior amend --result <id> --file <entries.json> --reason "<why>"`). On a refactor, any difference is a finding. A result labelled `insufficient-coverage` is waived (`eccode behavior waive`) only when you have checked the uncovered surface another way, and you say how.
   - Compare the results with the acceptance criteria.
   - Check that every reviewed file is the final version (`eccode audit`).
 

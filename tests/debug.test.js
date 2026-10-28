@@ -45,8 +45,14 @@ function fixedAndCompleted(dir) {
   ok(['debug', 'An order of 10 items gets no bulk discount', '--actor', 'orchestrator']);
   ok(['task', 'claim', 'fix', '--actor', 'backend-engineer']);
   write(dir, 'tests/price.test.js', BASE_TEST + REGRESSION);
-  const repro = JSON.parse(ok(['evidence', 'run', '--actor', 'backend-engineer', '--task', 'fix', '--purpose', 'reproduction', '--label', 'repro', '--json', '--', 'npm', 'test']));
-  assert.strictEqual(repro.status, 'failed', 'the regression test fails before the fix');
+  // The Debugging Lab (Phase 2): the reproduction is pinned, a hypothesis is
+  // tested with an executed command, and the root cause is declared before the fix.
+  const repro = JSON.parse(ok(['debug', 'repro', '--actor', 'backend-engineer', '--task', 'fix', '--json', '--', 'npm', 'test']));
+  assert.strictEqual(repro.evidence.status, 'failed', 'the regression test fails before the fix');
+  ok(['debug', 'hypothesis', 'add', 'The bulk boundary uses > so exactly 10 items miss the discount', '--if-true', 'price(10) returns 100', '--if-false', 'price(10) returns 90', '--actor', 'backend-engineer']);
+  ok(['debug', 'hypothesis', 'test', 'h1', '--supports', '--actor', 'backend-engineer', '--', 'node', '-e', 'process.exit(require("./src/price").price(10) === 100 ? 0 : 1)']);
+  ok(['debug', 'hypothesis', 'close', 'h1', '--status', 'confirmed', '--actor', 'backend-engineer']);
+  ok(['debug', 'rootcause', '--hypothesis', 'h1', '--at', 'src/price.js:1', '--explain', 'The discount condition is n > 10 where the price list says from 10 items, so the boundary value is priced without the discount.', '--why-repro-fails', 'the regression test prices 10 items and gets 100 instead of 90', '--actor', 'backend-engineer']);
   write(dir, 'src/price.js', FIXED);
   ok(['evidence', 'run', '--actor', 'backend-engineer', '--task', 'fix', '--label', 'verify', '--', 'npm', 'test']);
   const draft = JSON.parse(ok(['handoff', 'draft', '--task', 'fix', '--actor', 'backend-engineer']));
@@ -69,7 +75,7 @@ test('debug sets up one task whose phase is the only gate, and prints the debugg
   assert.strictEqual(st.gates['phase:fix'].status, 'in_progress');
   assert.strictEqual(st.tasks.fix.verification.command, 'npm test');
   assert.match(st.tasks.fix.acceptanceCriteria[0], /fails on the code before the fix/);
-  for (const step of [/--purpose reproduction/, /fix verify --actor backend-engineer --task fix/, /mutate --actor backend-engineer --task fix/, /deliver --actor orchestrator/]) assert.match(out, step);
+  for (const step of [/debug repro --actor backend-engineer --task fix/, /debug rootcause --hypothesis h1/, /fix verify --actor backend-engineer --task fix/, /mutate --actor backend-engineer --task fix/, /deliver --actor orchestrator/]) assert.match(out, step);
   assert.doesNotMatch(out, /delivery-lead|security-reviewer/, 'no delivery ceremony');
   fs.rmSync(dir, { recursive: true, force: true });
 });

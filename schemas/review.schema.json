@@ -3,24 +3,58 @@
   "title": "Gate review",
   "description": "An independent review of the latest submission of a gate. Evidence references use 'ev:<evidenceId>' or 'artifact:<path>[#anchor]'.",
   "type": "object",
-  "required": ["decision", "summary", "criteria", "findings"],
+  "required": [
+    "decision",
+    "summary",
+    "criteria",
+    "findings"
+  ],
   "additionalProperties": false,
   "properties": {
-    "decision": { "enum": ["approve", "changes_requested"] },
-    "summary": { "type": "string", "minLength": 20 },
+    "decision": {
+      "enum": [
+        "approve",
+        "changes_requested"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 20
+    },
     "criteria": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["id", "description", "met", "evidence"],
+        "required": [
+          "id",
+          "description",
+          "met",
+          "evidence"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "description": { "type": "string", "minLength": 5 },
-          "met": { "type": "boolean" },
-          "evidence": { "type": "array", "items": { "type": "string", "pattern": "^(ev:|artifact:)" } },
-          "notes": { "type": "string" }
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 5
+          },
+          "met": {
+            "type": "boolean"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(ev:|artifact:)"
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
         }
       }
     },
@@ -28,16 +62,52 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "severity", "title", "detail", "recommendation"],
+        "required": [
+          "id",
+          "severity",
+          "title",
+          "detail",
+          "recommendation"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
-          "severity": { "enum": ["blocking", "major", "minor", "info"] },
-          "title": { "type": "string", "minLength": 5 },
-          "detail": { "type": "string", "minLength": 10 },
-          "evidence": { "type": "array", "items": { "type": "string", "pattern": "^(ev:|artifact:)" } },
-          "recommendation": { "type": "string", "minLength": 5 },
-          "status": { "enum": ["open", "resolved"] }
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          },
+          "severity": {
+            "enum": [
+              "blocking",
+              "major",
+              "minor",
+              "info"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 5
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 10
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(ev:|artifact:)"
+            }
+          },
+          "recommendation": {
+            "type": "string",
+            "minLength": 5
+          },
+          "status": {
+            "enum": [
+              "open",
+              "resolved"
+            ]
+          }
         }
       }
     },
@@ -45,15 +115,64 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "resolution", "evidence"],
+        "required": [
+          "id",
+          "resolution",
+          "evidence"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string" },
-          "resolution": { "type": "string", "minLength": 10 },
-          "evidence": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^(ev:|artifact:)" } }
+          "id": {
+            "type": "string"
+          },
+          "resolution": {
+            "type": "string",
+            "minLength": 10
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^(ev:|artifact:)"
+            }
+          }
         }
       }
     },
-    "lessonsConsulted": { "type": "array", "items": { "type": "string" } }
+    "lessonsConsulted": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "acknowledgedTestChanges": {
+      "description": "On a debug or fix phase, each existing test file a task declared changed (handoff.testChanges), checked by the reviewer: approval is refused until every declared file is acknowledged.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "verdict",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "type": "string",
+            "minLength": 1
+          },
+          "verdict": {
+            "enum": [
+              "legitimate"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 10
+          }
+        }
+      }
+    }
   }
 }

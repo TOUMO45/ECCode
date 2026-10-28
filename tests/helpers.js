@@ -187,4 +187,28 @@ function recordLesson(store, actor = 'backend-engineer', title = 'Boundary check
   });
 }
 
-module.exports = { tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };
+/**
+ * The Debugging Lab's path to a confirmed root cause (debug and fix tracks
+ * refuse a fix without one): pin a failing reproduction, open a hypothesis,
+ * test it with an executed command marked supports, close it confirmed,
+ * declare the root cause at a file that exists. Returns the lab state.
+ */
+function labRootCause(store, actor = 'backend-engineer', { command = 'node -e "process.exit(1)"', at, task } = {}) {
+  const lab = require('../lib/lab');
+  const { loadConfig } = require('../lib/config');
+  const config = loadConfig(store.root);
+  if (!store.state().lab.repro) lab.recordRepro(store, config, actor, { command, task });
+  const h = lab.openHypothesis(store, config, actor, { statement: 'The boundary comparison excludes the limit value', ifTrue: 'the limit value takes the lower branch', ifFalse: 'the limit value takes the upper branch' });
+  lab.testHypothesis(store, config, actor, { hypothesis: h.id, command: 'node -e "process.exit(0)"', verdict: 'supports', task });
+  lab.closeHypothesis(store, config, actor, { hypothesis: h.id, status: 'confirmed' });
+  let where = at;
+  if (!where) {
+    const fs2 = require('fs');
+    const first = fs2.readdirSync(store.root).find((f) => f !== '.eccode' && f !== '.git' && fs2.statSync(path.join(store.root, f)).isFile());
+    where = `${first}:1`;
+  }
+  lab.declareRootCause(store, config, actor, { hypothesis: h.id, locations: [where], explanation: 'The comparison used > where the rule starts at the limit, so the limit value is priced without the discount.', whyReproFails: 'the reproduction prices the limit value and gets the undiscounted total' });
+  return store.state().lab;
+}
+
+module.exports = { labRootCause, tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };

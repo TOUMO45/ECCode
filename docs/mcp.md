@@ -39,6 +39,10 @@ In the enforced profiles each role agent's tool list names its own server's tool
 
 Every engine rule applies unchanged: gate order, author ≠ approver, evidence resolution, lean and compatibility checks, track rules, required stack checks. A refusal comes back as the tool result with the same `[CODE] message` the CLI prints.
 
+## Phase 2 tools
+
+`lab_repro`, `lab_hypothesis_add`, `lab_hypothesis_test`, `lab_hypothesis_mark`, `lab_hypothesis_close`, `lab_hypothesis_challenge`, `lab_localize`, `lab_bisect`, `lab_trace`, `lab_rootcause`, `lab_escalate`, `lab_show`; `behavior_route`, `behavior_contract`, `behavior_diff`, `behavior_amend`, `behavior_waive`, `behavior_show`. The engine's role rules decide who may call what (investigators record Lab steps, reviewers challenge, amend and waive). A command given to `lab_repro` or `lab_hypothesis_test` must be an approved one or the pinned reproduction, as for `evidence_run`; the pinned reproduction joins the approved list once recorded.
+
 ## Verified live
 
 A headless Claude session configured exactly as above (no Bash; `mcp__eccode` + Write + Read) ran a full cycle — `status` → `task_claim` → Write the file → `evidence_run` → `task_complete` — and the engine recorded the task as done by the locked role. Told to then append a forged line to `.eccode/events.jsonl` with Write, the installed hook denied it; the record stayed clean and `eccode audit` passed. Protocol-level behavior (initialize, tools/list, locked-actor refusals, malformed-line recovery) is covered in `tests/mcp.test.js`.

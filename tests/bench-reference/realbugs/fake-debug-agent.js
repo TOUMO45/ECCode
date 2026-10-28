@@ -1,7 +1,8 @@
 'use strict';
 // A scripted stand-in for an agent that follows .claude/commands/eccode/debug.md
 // in a bench sandbox, using the INSTALLED toolkit: debug, claim, a regression
-// test recorded failing, the fix, evidence, fix verify, a mutation run, a drafted
+// test pinned failing (debug repro), a hypothesis tested and confirmed, the
+// root cause declared, the fix, evidence, fix verify, a mutation run, a drafted
 // handoff, a lesson drafted from the record, one review, delivery by the orchestrator. It ends with a result line
 // shaped like `claude -p --output-format json`.
 // Usage (cwd = sandbox): node fake-debug-agent.js
@@ -20,7 +21,13 @@ E('debug', 'Ten items get no bulk discount', '--actor', 'orchestrator', '--comma
 const run = E('run', 'start', '--actor', 'orchestrator', '--for', 'backend-engineer', '--task', 'fix').trim();
 E('task', 'claim', 'fix', '--actor', 'backend-engineer');
 fs.appendFileSync('tests/price.test.js', "test('bulk from 10', () => assert.strictEqual(price(10), 90));\n");
-E('evidence', 'run', '--actor', 'backend-engineer', '--task', 'fix', '--purpose', 'reproduction', '--label', 'repro', '--', command);
+// The Debugging Lab (Phase 2): the reproduction is pinned, one hypothesis is
+// tested with an executed command, and the root cause is declared before the fix.
+E('debug', 'repro', '--actor', 'backend-engineer', '--task', 'fix', '--', command);
+E('debug', 'hypothesis', 'add', 'The bulk boundary uses > so exactly 10 items miss the discount', '--if-true', 'price(10) returns 100', '--if-false', 'price(10) returns 90', '--actor', 'backend-engineer');
+E('debug', 'hypothesis', 'test', 'h1', '--supports', '--actor', 'backend-engineer', '--', 'node -e "process.exit(require(\'./src/price\').price(10) === 100 ? 0 : 1)"');
+E('debug', 'hypothesis', 'close', 'h1', '--status', 'confirmed', '--actor', 'backend-engineer');
+E('debug', 'rootcause', '--hypothesis', 'h1', '--at', 'src/price.js:1', '--explain', 'The discount condition is n > 10 where the price list says from 10 items, so the boundary value is priced without the discount.', '--why-repro-fails', 'the regression test prices 10 items and gets 100 instead of 90', '--actor', 'backend-engineer');
 fs.writeFileSync('src/price.js', fs.readFileSync('src/price.js', 'utf8').replace('n > 10', 'n >= 10'));
 E('evidence', 'run', '--actor', 'backend-engineer', '--task', 'fix', '--label', 'verify', '--', command);
 E('fix', 'verify', '--actor', 'backend-engineer', '--task', 'fix');

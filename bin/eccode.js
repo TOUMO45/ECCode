@@ -106,6 +106,33 @@ Codebase (work in any repository; see docs/lean.md and docs/senior-engineering.m
   stack adopt --checks <id,id> --actor user [--remove]   Make checks required at the verification gate
   debt [--json]                    Ledger of deferred shortcut markers in code, flagging those with no upgrade trigger
 
+Debugging Lab (debug and fix tracks; see docs/debugging-lab.md)
+  debug repro --actor <owner> [--task t] [--replace --reason <t> (orchestrator|user)] -- <command>
+                                   Run the reproduction and pin it: it must fail; the proof must run this command
+  debug hypothesis add "<statement>" --if-true "<obs>" --if-false "<obs>" --actor <owner>
+  debug hypothesis test <id> [--supports|--refutes|--inconclusive] --actor <owner> -- <command>
+                                   Run a discriminating command; the artifact is the evidence (mark it afterwards if no verdict was given)
+  debug hypothesis mark <evidenceId> --supports|--refutes|--inconclusive --actor <owner>
+  debug hypothesis close <id> --status confirmed|refuted|withdrawn --actor <owner>   (confirmed needs executed supports evidence)
+  debug hypothesis challenge <id> --evidence <evidenceId> --reason <t> --actor <reviewer>
+  debug localize --sbfl [--tests <paths>] [--top 5] [--python <bin>] --actor <owner>   Ochiai ranking from per-test coverage (pytest)
+  debug bisect --good <ref> [--bad HEAD] --actor <owner>                           git bisect run with the pinned reproduction, in a worktree
+  debug trace <id> --at <file:line> --expr <expr> --actor <owner>                  A temporary probe logs the expression during the reproduction, then is reverted
+  debug rootcause --hypothesis <id> --at <file:line>[,..] --explain <t> --why-repro-fails <t> --actor <owner>
+  debug escalate --kind rescope|ask-user --reason <t> --actor <owner|orchestrator>   Required once the hypothesis budget is spent
+  debug show [--json]
+
+Behavior diff (fix, feature and refactor tracks; see docs/behavior-diff.md)
+  behavior route --actor <role>              Record whether the change reaches a public surface (then the diff must run)
+  behavior contract --file <entries.json> --actor <author>   Declare the intended behaviour changes, before the diff runs
+  behavior diff [--runs 2] [--python <bin>] --actor <owner|reviewer>
+                                   Baseline and candidate worktrees run the same probes (HTTP from OpenAPI per role,
+                                   functions with Hypothesis); differences are classified against the contract.
+                                   Exit 2 on an unexplained difference or insufficient coverage
+  behavior amend --result <id> --file <entries.json> --reason <t> --actor <reviewer>   Explain a difference after the fact (reviewer only)
+  behavior waive --result <id> --reason <t> --actor <reviewer>                         Accept insufficient coverage (reviewer only)
+  behavior show [--json]
+
 Bugs and problem solving (see docs/bugs.md)
   bugs [--task <id> | --base <ref>] [--all] [--files a,b] [--no-external] [--json]
                                    Bug patterns on the lines a change added (whole files with --all), plus the
@@ -151,6 +178,130 @@ Other
 
 Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR, never for user), --json
 `;
+
+const LAB_SUBCOMMANDS = new Set(['repro', 'hypothesis', 'localize', 'bisect', 'trace', 'rootcause', 'escalate', 'show']);
+
+/** eccode debug <repro|hypothesis|localize|bisect|trace|rootcause|escalate|show>: the Debugging Lab. */
+function labCli({ root, sub, arg, args, flags, actor, print }) {
+  const { openProject } = require('../lib/project');
+  const { store, config } = openProject(root);
+  store.assertInitialized();
+  const lab = require('../lib/lab');
+  const rest = args.rest || [];
+  const command = () => need(rest.length === 1 ? rest[0] : rest.map(shellQuote).join(' '), 'command after --');
+  if (sub === 'show') {
+    print(flags, lab.show(store.state()), store.state().lab);
+    return 0;
+  }
+  if (sub === 'repro') {
+    const r = lab.recordRepro(store, config, need(actor, '--actor'), { command: command(), cwd: flags.cwd, task: flags.task, timeoutMs: timeoutOf(flags), replace: Boolean(flags.replace), reason: flags.reason, python: flags.python });
+    print(flags, `Reproduction pinned: ${r.repro.id} — ${r.repro.command} failed with exit ${r.repro.exitCode} (ev:${r.evidence.id}). The proof must run this command.\n${r.evidence.outputTail}`, r);
+    return 0;
+  }
+  if (sub === 'hypothesis') {
+    const action = arg;
+    if (action === 'add') {
+      const statement = args._[3];
+      const h = lab.openHypothesis(store, config, need(actor, '--actor'), { statement: need(statement, '"<statement>"'), ifTrue: need(flags['if-true'], '--if-true'), ifFalse: need(flags['if-false'], '--if-false') });
+      print(flags, `Hypothesis ${h.id} opened: ${h.statement}\n  if true: ${h.ifTrue}\n  if false: ${h.ifFalse}\nTest it: eccode debug hypothesis test ${h.id} --actor ${actor} [--supports|--refutes] -- <command>`, h);
+      return 0;
+    }
+    const id = need(args._[3], '<hypothesis id>');
+    if (action === 'test') {
+      const verdict = flags.supports ? 'supports' : flags.refutes ? 'refutes' : flags.inconclusive ? 'inconclusive' : undefined;
+      const e = lab.testHypothesis(store, config, need(actor, '--actor'), { hypothesis: id, command: command(), verdict, note: flags.note, cwd: flags.cwd, task: flags.task, timeoutMs: timeoutOf(flags) });
+      const ev = store.state().evidence[e.evidence];
+      print(flags, `Evidence ${e.id} for ${id}: exit ${e.exitCode} (ev:${e.evidence}), verdict ${e.verdict}${e.verdict === 'pending' ? ` — read the output, then: eccode debug hypothesis mark ${e.id} --supports|--refutes|--inconclusive --actor ${actor}` : ''}\n${ev ? ev.outputTail : ''}`, e);
+      return 0;
+    }
+    if (action === 'mark') {
+      const verdict = flags.supports ? 'supports' : flags.refutes ? 'refutes' : flags.inconclusive ? 'inconclusive' : need(undefined, '--supports | --refutes | --inconclusive');
+      const e = lab.markEvidence(store, config, need(actor, '--actor'), { evidence: id, verdict, note: flags.note });
+      print(flags, `Evidence ${id} marked ${verdict}.`, e);
+      return 0;
+    }
+    if (action === 'close') {
+      const h = lab.closeHypothesis(store, config, need(actor, '--actor'), { hypothesis: id, status: need(flags.status, '--status confirmed|refuted|withdrawn') });
+      print(flags, `Hypothesis ${id} closed: ${h.status}${h.evidence.length ? ` on ${h.evidence.join(', ')}` : ''}.`, h);
+      return 0;
+    }
+    if (action === 'challenge') {
+      const c = lab.challengeEvidence(store, config, need(actor, '--actor'), { evidence: need(flags.evidence, '--evidence <hypothesis evidence id>'), reason: need(flags.reason, '--reason') });
+      print(flags, `Evidence ${c.evidence} of ${c.hypothesis} challenged; it no longer supports a confirmation.`, c);
+      return 0;
+    }
+    throw new EccodeError('USAGE', 'Usage: eccode debug hypothesis add "<statement>" --if-true <obs> --if-false <obs> | test <id> [--supports|--refutes|--inconclusive] -- <cmd> | mark <evidenceId> --supports|--refutes|--inconclusive | close <id> --status confirmed|refuted|withdrawn | challenge <id> --evidence <evidenceId> --reason <text>');
+  }
+  if (sub === 'localize') {
+    if (!flags.sbfl) throw new EccodeError('USAGE', 'Usage: eccode debug localize --sbfl [--tests <path,path>] [--top n] [--python <bin>] --actor <owner>');
+    const r = lab.localizeSbfl(store, config, need(actor, '--actor'), { tests: flags.tests, top: flags.top, python: flags.python, task: flags.task, timeoutMs: timeoutOf(flags) });
+    print(flags, [`SBFL (Ochiai) over ${r.totals.failing} failing and ${r.totals.passing} passing test(s), ${r.totals.linesScored} line(s) scored (ev:${r.evidence}; ${r.artifact}):`, ...(r.suspects.length ? r.suspects.map((x, i) => `  ${i + 1}. ${x.file}:${x.line}  score ${x.score}  (failing ${x.ef}, passing ${x.ep})`) : [r.status === 'no-failing-test' ? '  no test failed in this run: the reproduction did not fail under coverage, so nothing can be ranked' : '  no code line is reached only by failing tests'])].join('\n'), r);
+    return 0;
+  }
+  if (sub === 'bisect') {
+    const r = lab.bisect(store, config, need(actor, '--actor'), { good: need(flags.good, '--good <ref>'), bad: flags.bad, task: flags.task, timeoutMs: timeoutOf(flags) });
+    print(flags, r.suspects.length ? `First bad commit: ${r.suspects[0].commit} — ${r.suspects[0].subject} (ev:${r.evidence}; diff in ${r.artifact})` : `bisect found no first bad commit between ${r.good.slice(0, 12)} and ${r.bad.slice(0, 12)} (ev:${r.evidence}): ${r.problem || 'check that the reproduction passes at --good'}`, r);
+    return 0;
+  }
+  if (sub === 'trace') {
+    const r = lab.trace(store, config, need(actor, '--actor'), { hypothesis: need(arg, '<hypothesis id>'), at: need(flags.at, '--at <file:line>'), expr: need(flags.expr, '--expr <expression>'), task: flags.task, timeoutMs: timeoutOf(flags) });
+    print(flags, [`Trace ${r.id} for ${r.hypothesis} at ${r.trace.file}:${r.trace.line} (probe reverted; ev:${r.evidence}): ${r.trace.expr} observed ${r.trace.observed} time(s)`, ...r.values.slice(0, 20).map((v) => `  ${v}`), r.values.length > 20 ? `  … ${r.values.length - 20} more in the evidence log` : null, `Mark it: eccode debug hypothesis mark ${r.id} --supports|--refutes|--inconclusive --actor ${actor}`].filter(Boolean).join('\n'), r);
+    return 0;
+  }
+  if (sub === 'rootcause') {
+    const r = lab.declareRootCause(store, config, need(actor, '--actor'), { hypothesis: need(flags.hypothesis, '--hypothesis <id>'), locations: flags.at, explanation: need(flags.explain, '--explain'), whyReproFails: need(flags['why-repro-fails'], '--why-repro-fails') });
+    print(flags, `Root cause declared on ${r.hypothesis} at ${r.locations.join(', ')}. The fix may now be completed.`, r);
+    return 0;
+  }
+  if (sub === 'escalate') {
+    const r = lab.escalate(store, config, need(actor, '--actor'), { kind: need(flags.kind, '--kind rescope|ask-user'), reason: need(flags.reason, '--reason') });
+    print(flags, `Escalation recorded (${r.kind}) after ${r.refuted} refuted hypothesis(es). Another hypothesis may be opened once the scope or the question is settled.`, r);
+    return 0;
+  }
+  throw new EccodeError('USAGE', `Unknown debug subcommand ${sub}`);
+}
+
+/** eccode behavior <route|contract|diff|amend|waive|show>: the behavior diff. */
+function behaviorCli({ root, sub, flags, actor, print, loadJsonFile }) {
+  const { openProject } = require('../lib/project');
+  const { store, config } = openProject(root);
+  store.assertInitialized();
+  const behavior = require('../lib/behavior');
+  if (sub === 'show') {
+    print(flags, behavior.show(store.state()), store.state().behavior);
+    return 0;
+  }
+  if (sub === 'route') {
+    const r = behavior.route(store, config, need(actor, '--actor'));
+    print(flags, `Risk routing: ${r.decision} — ${r.reasons.join('; ')}${r.decision === 'run' ? '\nNext: declare intended behaviour changes (eccode behavior contract --file <entries.json>) before running eccode behavior diff.' : ''}`, r);
+    return 0;
+  }
+  if (sub === 'contract') {
+    const c = behavior.contract(store, config, need(actor, '--actor'), loadJsonFile(need(flags.file, '--file <entries.json>')));
+    print(flags, `Behaviour contract ${c.id} declared: ${c.entries.length} entr${c.entries.length === 1 ? 'y' : 'ies'}.`, c);
+    return 0;
+  }
+  if (sub === 'diff') {
+    const r = behavior.diff(store, config, need(actor, '--actor'), { runs: flags.runs, python: flags.python, task: flags.task, timeoutMs: timeoutOf(flags) });
+    const lines = [`Behavior diff ${r.id} (base ${r.base.slice(0, 12)}): ${r.probes} probes, ${r.executed} executed, ${r.dropped} dropped as nondeterministic; ${r.differences.length} difference(s): ${r.expected} expected, ${r.unexplained} unexplained; coverage ${r.coverage}${r.coverageNote ? ` (${r.coverageNote})` : ''}`];
+    for (const d of r.differences.slice(0, 30)) lines.push(`  ${d.classification.padEnd(11)} ${d.probe}: ${d.paths.map((p) => `${p.path} ${JSON.stringify(p.baseline)} -> ${JSON.stringify(p.candidate)}`).join('; ')}`);
+    for (const n of r.notes.slice(0, 10)) lines.push(`  note: ${n}`);
+    lines.push(`Artifact: ${r.artifact}`);
+    print(flags, lines.join('\n'), r);
+    return r.unexplained || r.coverage !== 'ok' ? 2 : 0;
+  }
+  if (sub === 'amend') {
+    const a = behavior.amend(store, config, need(actor, '--actor'), { result: need(flags.result, '--result <id>'), entries: loadJsonFile(need(flags.file, '--file <entries.json>')), reason: need(flags.reason, '--reason') });
+    print(flags, `Contract amended (${a.id}) on ${a.amends}: ${a.entries.length} entr${a.entries.length === 1 ? 'y' : 'ies'}.`, a);
+    return 0;
+  }
+  if (sub === 'waive') {
+    const w = behavior.waive(store, config, need(actor, '--actor'), { result: need(flags.result, '--result <id>'), reason: need(flags.reason, '--reason') });
+    print(flags, `Coverage waived (${w.id}) on ${w.result}.`, w);
+    return 0;
+  }
+  throw new EccodeError('USAGE', 'Usage: eccode behavior route|contract --file <entries.json>|diff [--runs 2] [--python <bin>]|amend --result <id> --file <entries.json> --reason <t>|waive --result <id> --reason <t>|show');
+}
 
 function shellQuote(arg) {
   if (/^[A-Za-z0-9_\/.,:=@%+-]+$/.test(arg)) return arg;
@@ -217,6 +368,7 @@ function main(argv) {
     print(flags, `Initialized ECCode project in ${store.dir}`, { root: store.root });
     return 0;
   }
+  if (group === 'debug' && LAB_SUBCOMMANDS.has(sub)) return labCli({ root, sub, arg, args, flags, actor, print });
   if (group === 'quick' || group === 'debug') {
     const q = require('../lib/quick');
     const res = q.start(root, need(actor, '--actor'), { request: need(sub, group === 'debug' ? '"<bug>"' : '"<request>"'), owner: flags.owner, files: flags.files, command: flags.command, name: flags.name, track: group });
@@ -234,6 +386,7 @@ function main(argv) {
     ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps, lessons: res.lessons });
     return 0;
   }
+  if (group === 'behavior') return behaviorCli({ root, sub, arg, flags, actor, print, loadJsonFile });
   if (group === 'mcp') {
     // Long-running: serves the engine as MCP tools, locked to one actor.
     require('../lib/mcp').serve({ root, actor: need(actor, '--actor') });
@@ -272,10 +425,10 @@ function main(argv) {
       print(flags, markdown, records);
       return 0;
     }
-    const VARIANTS = ['without', 'with', 'method', 'engine', 'debug'];
+    const VARIANTS = ['without', 'with', 'method', 'engine', 'debug', 'ecc'];
     const variants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? ['without', 'with', 'engine'] : String(flags.variant).split(',').map((v) => v.trim());
     const unknown = variants.filter((v) => !VARIANTS.includes(v));
-    if (unknown.length) throw new EccodeError('USAGE', `Unknown --variant ${unknown.join(', ')}: use with, without, method, engine, debug, both (without,with), all (without,with,engine), or a comma list`);
+    if (unknown.length) throw new EccodeError('USAGE', `Unknown --variant ${unknown.join(', ')}: use with, without, method, engine, debug, ecc, both (without,with), all (without,with,engine), or a comma list`);
     const save = flags.save ? (r) => fs.appendFileSync(path.resolve(flags.save), JSON.stringify(r) + '\n') : () => {};
     const maxCostUsd = flags['max-cost'] !== undefined ? Number(flags['max-cost']) : null;
     const common = {
