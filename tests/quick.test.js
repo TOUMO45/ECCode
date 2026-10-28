@@ -380,3 +380,13 @@ test('guidance: a changed approved file is re-reviewed by resubmission, formatte
     assert.match(read(f), /`uv run X`/, f);
   }
 });
+
+test('guidance: the orchestrator runs the command a refused wrapper wraps instead of stopping to ask', () => {
+  // Found in the delivery run: in items 04 and 09 the orchestrator, not an engineer,
+  // declined `python dev/code-generation/main.py` after `uv run` and `task` were refused.
+  const skill = fs.readFileSync(path.join(__dirname, '..', 'skills', 'orchestrate', 'SKILL.md'), 'utf8');
+  const row = skill.split('\n').find((l) => l.startsWith('|') && /`uv run X`/.test(l));
+  assert.ok(row, 'the orchestrator\'s situation table has a refused-wrapper row');
+  assert.match(row, /X itself/);
+  assert.match(row, /ask the user only when no allowed command/i);
+});
