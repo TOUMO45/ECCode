@@ -174,3 +174,28 @@ Committed before the batch continued.
 **Labels.** `failures.json` is keyed `<process>:<task>:<n>` over the continued reading. The registered reading's keys differ for the cut items (its second run of item 01 in e1 is the cut run; in the continued reading it is the replacement), so its labels go in `failures-registered.json`: the continued reading's labels for runs both readings share, plus `harness` for each cut and never-started run. Refusals are labelled once, by transcript line, and both readings share them.
 
 **If the container restarts again,** the same procedure applies, from each process's file as it then stands, and the amendment that records it is committed first.
+
+## Amendment 2: a second container restart
+
+Committed before the batch continued again.
+
+**What happened.** The container restarted again at about 23:56 UTC (its uptime starts at 23:56:34), 16 minutes after amendment 1's processes started their queues (23:40:30), and all four processes stopped. The cause is again not known: the VM exposes no out-of-memory counters, and memory read normal after the restart.
+- **Finished since amendment 1:** w only: item 04 once (passed) and item 05 twice (one passed, one failed a hidden check). No engine run finished.
+- **Cut runs** (no result line; no agent had finished):
+  - e1: item 02's first run, from 23:41:07;
+  - e2: item 08's first run, from 23:41:07;
+  - e3: item 13's first run, from 23:41:10;
+  - w: item 06's first run, from 23:53:40.
+- **Never started:** 44 runs (e1 9, e2 7, e3 7, w 21).
+
+**The resume tool needed a change.** `resume.js runs` refused a file it had already resumed, and it would have appended the never-started runs to the registered reading a second time. It now takes `--amendment <n>`: a later amendment resumes the file again and records its cut run and new runs with that number, and it refuses `--registered`, because the registered reading is the batch as the first restart left it. The change has a test that failed first (`resume: a later amendment resumes a file an earlier one resumed…`), committed as `2571d5d`.
+
+**Where it runs.** From a worktree pinned at this amendment's commit, `/tmp/mp/wt5b`. Its only differences from the protocol commit `67a5db4` are `bench/pilot/resume.js`, its test in `tests/pilot.test.js` and this protocol's text. The engine, the agents, the skills, the suite and `bench/pilot/agents-delivery.sh` are the protocol commit's, so the toolkit each run installs is unchanged.
+
+**How the batch continues.** As amendment 1 says, with `--amendment 2` and no `--registered`: each process records its cut run as a failure that did not deliver, then runs each never-started run once, in the original order, with the same `--timeout 14400`, `--agent "$AGENT_D"`, transcripts and `--max-cost` (cost already spent counting toward it).
+- **After the batch,** these four cut runs are also run once more, like amendment 1's: eight replacement runs in all, into `<scratch>/delivery-rerun/<process>.jsonl`.
+- **The readings are unchanged in kind.** Registered: the files under `registered/`, as amendment 1 wrote them. Continued: each process file without its cut-run records (both amendments'), followed by that process's replacements. Labels follow amendment 1's rule.
+
+**A memory log.** To see whether load comes before a restart, a logger appends the time, memory in use and the counts of agent and test processes to `/tmp/mp/memlog.txt` every 30 seconds. It is on disk, which survives a restart. It is reported, with no criterion.
+
+**If the container restarts again,** the same procedure applies with the next amendment number, committed first.
