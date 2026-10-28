@@ -234,6 +234,23 @@ test('a rescope proposal: engineers cannot propose, one at a time, a rejection o
   fs.rmSync(ctx.dir, { recursive: true, force: true });
 });
 
+test('upgrade: a snapshot of a rescoped task written before rescope proposals is a stale cache, not tampering', () => {
+  // Found by the delivery run's final review: replaying task.rescoped now sets
+  // rescopeProposal, so a snapshot an older engine wrote (stateVersion 4, no such
+  // key) diverged from its replay, and audit and deliver reported tampering.
+  const ctx = require('./helpers').tmpProject();
+  require('./helpers').approveThroughPlan(ctx);
+  require('../lib/tasks').rescope(ctx.store, ctx.config, 'api', 'user', { files: 'src/server/**,src/shared/**', reason: 'the user widens the api task' });
+  const file = path.join(ctx.dir, '.eccode', 'state.json');
+  const snap = JSON.parse(fs.readFileSync(file, 'utf8'));
+  delete snap.tasks.api.rescopeProposal;
+  snap.stateVersion = 4;
+  fs.writeFileSync(file, JSON.stringify(snap));
+  const audit = new Store(ctx.dir).audit();
+  assert.strictEqual(audit.ok, true, audit.errors.join('; '));
+  assert.strictEqual(new Store(ctx.dir).state().tasks.api.rescopeProposal, null, 'reads replay the log');
+});
+
 test('task rescope and rescope-review through the CLI', () => {
   const ctx = require('./helpers').tmpProject();
   require('./helpers').approveThroughPlan(ctx);
@@ -378,6 +395,33 @@ test('guidance: a changed approved file is re-reviewed by resubmission, formatte
     assert.match(read(f), /formatter/, f);
     assert.match(read(f), /files your task owns/, f);
     assert.match(read(f), /`uv run X`/, f);
+  }
+});
+
+test('guidance: files a generator changed outside the task go in remainingIssues, which completion accepts, not filesChanged', () => {
+  // Found by the delivery run's final review: naming them in filesChanged, as the
+  // guidance said, makes task completion refuse files outside the task's ownership.
+  for (const role of ['ai', 'backend', 'devops', 'frontend', 'test']) {
+    const f = `agents/${role}-engineer.md`;
+    const line = fs.readFileSync(path.join(__dirname, '..', f), 'utf8').split('\n').find((l) => /generator/.test(l));
+    assert.match(line, /`remainingIssues`/, f);
+    assert.match(line, /`filesChanged`/, f);
+  }
+});
+
+test('guidance: a claimed task is released with task fail, a changed approved file is no audit stop, and a person\'s refusal is never routed around', () => {
+  // Found by the delivery run's final review.
+  const skill = fs.readFileSync(path.join(__dirname, '..', 'skills', 'orchestrate', 'SKILL.md'), 'utf8').split('\n');
+  const rescope = skill.find((l) => l.startsWith('| A planned check cannot run'));
+  assert.match(rescope, /task fail/, 'task reset refuses a claimed task; the engine itself says task fail');
+  assert.doesNotMatch(rescope, /task reset/);
+  const audit = skill.find((l) => l.startsWith('| `eccode audit` fails'));
+  assert.doesNotMatch(audit, /approved artifacts/, 'a changed approved file has its own row: re-review, not a stop');
+  const wrapper = skill.find((l) => l.startsWith('|') && /`uv run X`/.test(l));
+  assert.match(wrapper, /a person/);
+  for (const role of ['ai', 'backend', 'devops', 'frontend', 'test']) {
+    const line = fs.readFileSync(path.join(__dirname, '..', 'agents', `${role}-engineer.md`), 'utf8').split('\n').find((l) => /`uv run X`/.test(l));
+    assert.match(line, /a person/, role);
   }
 });
 
