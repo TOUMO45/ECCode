@@ -333,25 +333,25 @@ A pre-registered run asked whether large changes deliver once the multi-file run
 **Measured, as registered:**
 - **Primary: missed, by one run.** 25 of 32 planned engine runs delivered with a clean audit in the continued reading (78%, rule 80%). The other readings:
   - 24 of 32 with the credential-cut run kept;
-  - 3 of 32 in the reading registered before the restarts.
+  - 3 of 32 in the registered reading, the batch as the first restart left it.
 - **Friction: met.** 0.06 false refusals per engine run.
-- **Cost:** $148.84 recorded, against a $210 ceiling.
+- **Cost:** $136.88 recorded, against a $210 ceiling.
 
 **Reported, no criterion:**
 - No run timed out. The three in-sample items delivered 6 of 6, and the out-of-sample items 19 of 26.
 - Within 2 hours, 22 of 32 delivered.
 - Hidden checks: engine 29 of 32, bare 28 of 32 (p = 1.0).
-- A median engine run cost 8.2× a bare run's and took 53.3 minutes against 5.6.
+- A median engine run cost 8.1× a bare run's and took 53.3 minutes against 5.6.
 
 **Found:** rows 139–144.
 - **Why runs did not deliver.** All seven stopped to ask a user, and five of their changes pass every hidden check:
-  - Mealie's code generator formats the whole project, Markdown included, and so rewrote approved design files. An engineer's whole-package format did the same. The only way back was the user's (row 140, fixed; row 141, mitigated).
-  - The orchestrator declined a plain `python` command after its `uv run` wrapper was refused (row 142, mitigated).
+  - Mealie's code generator formats the whole project, Markdown included, and so rewrote approved design files. An engineer's whole-package format did the same. An approved gate could not be reviewed again, and no run restored the file (row 140; row 141; both mitigated).
+  - The code generator went unrun after its `uv run` wrapper was refused, as in the multi-file run, though the plain `python` command was allowed (row 142, mitigated).
   - Item 14's planned file moves were refused (row 143, mitigated).
 - **Fixed, each with a test that failed first:**
   - a guard false refusal on `sed -n` under a path holding `-i` (row 139);
-  - re-review of an approved gate whose files changed (row 140).
+  - re-review of an approved gate whose files changed (row 140, mitigated: two gaps remain).
 - **Mitigated:** an agent's leftover processes in sessions of their own are stopped on Linux (row 144).
-- **The final review** found a guard regression in the first `sed` fix, a missing state-version bump, and two gaps in the re-review. All are fixed.
+- **The final review** found a guard regression in the first `sed` fix, a missing state-version bump, two gaps in the re-review, and guidance that led to a refused completion. All are fixed, with tests that failed first; nine minor findings are deferred and listed in the report.
 
 **Not shown:** that large changes deliver under the rule. The fixes for this run's stops are not measured, and row 138 stays open.

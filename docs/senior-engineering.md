@@ -299,10 +299,10 @@ The multi-file run delivered half its engine runs on large changes. The delivery
 - a 4-hour limit.
 
 **Delivery: missed by one run (row 138).** 25 of 32 delivered with a clean audit.
-- No run timed out, and the in-sample items delivered 6 of 6. One run needed four rescopes; the reviewer approved them and it delivered.
-- All seven misses stopped to ask a user, for reasons the multi-file run never reached:
-  - a project tool rewrote an approved file, and only the user could reopen the gate (three runs; now re-reviewed, row 140);
-  - the code generator sat behind refused wrappers (two; row 142);
+- No run timed out, and the in-sample items delivered 6 of 6. One run used four rescopes; the reviewer approved them and it delivered.
+- All seven misses stopped to ask a user:
+  - a project tool rewrote an approved file, and an approved gate could not be reviewed again (three runs; now re-reviewed, row 140);
+  - the code generator sat behind refused wrappers, as in the multi-file run (two; row 142);
   - planned file moves were refused (two; row 143).
 - Five of the seven changes pass every hidden check.
 
@@ -310,7 +310,7 @@ The multi-file run delivered half its engine runs on large changes. The delivery
 
 **Correctness, no criterion:** engine 29 of 32, bare 28 of 32.
 
-**Cost:** a median 8.2× a bare run's, and 53.3 minutes against 5.6.
+**Cost:** a median 8.1× a bare run's, and 53.3 minutes against 5.6.
 
 ## Verified live, not only in unit tests
 

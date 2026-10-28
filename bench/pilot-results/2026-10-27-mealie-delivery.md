@@ -15,16 +15,18 @@ The multi-file run delivered 9 of 18 engine runs on large changes (row 138). Thi
 - **Primary: missed, by one run.** In the continued reading, 25 of 32 planned engine runs (78%) delivered with a clean audit within the 4-hour limit; the rule needs 80%, 26 runs.
   - Keeping item 06's credential-cut run as not delivered gives 24 of 32.
   - The registered reading, frozen at the first container restart, has 3 of 32.
-- **The stops it aimed at are gone:**
+- **Most of the stops it aimed at are gone:**
   - no run reached the time limit (the multi-file run had four);
   - the engine delivered 6 of 6 runs on the three items whose failures shaped its changes;
-  - the one run that needed a rescope proposed four, had them approved by the technical reviewer, and delivered.
-- **Every undelivered run stopped to ask a user,** and no one answers a headless run. Five of the seven changes pass every hidden check. They stopped for three new reasons:
+  - the one run that used a rescope proposed four, had them approved by the technical reviewer, and delivered.
+
+  One came back: Mealie's code generator went unrun in two runs, as in the multi-file run's item 07.
+- **Every undelivered run stopped to ask a user,** and no one answers a headless run. Five of the seven changes pass every hidden check. They stopped for three reasons, two of them new:
   - **a project tool rewrote an approved file, three runs:**
     - Mealie's code generator formats the whole project, and ruff formats Markdown code blocks;
     - in the third run, an engineer formatted the whole package;
-    - the way back was the user's alone;
-  - **Mealie's code generator was not run, two runs:** the tool list refused `uv run` and `task`, and the orchestrator declined the plain `python` command it allowed;
+    - an approved gate could not be reviewed again, and no run restored the approved file;
+  - **Mealie's code generator was not run, two runs:** the tool list refused `uv run` and `task`, though it allowed the plain `python` command. In one run the orchestrator declined that command; in the other no agent tried it;
   - **a file move or delete was refused, both runs of item 14:** the bare agent met the request without it.
 - **Fixed or mitigated after the batch, none measured:**
   - an approved gate whose files changed is now re-reviewed (row 140);
@@ -35,8 +37,8 @@ The multi-file run delivered 9 of 18 engine runs on large changes (row 138). Thi
   Closing row 138 needs another registered run.
 - **Friction: met.** 2 false refusals in 32 engine runs (0.06 per run) among 605 refusals. One was a guard defect, now fixed (row 139); the other is row 91.
 - **Correctness, no criterion:** the engine passed every hidden check in 29 of 32 runs, the bare agent in 28 of 32 (p = 1.0). The bare agent's own mistakes were on items 01 and 05, where the engine passed 1 of 2 and 2 of 2.
-- **Cost:** a median engine run cost 8.2× a bare run ($3.45 against $0.42) and took 53.3 minutes against 5.6. The batch recorded $148.84 of a $210 ceiling.
-- **Found:** six register rows (139–144), and three defects in the run's own tools. A fresh final review found more in the fixes themselves. They are now fixed, including a guard regression that the first sed fix had introduced.
+- **Cost:** a median engine run cost 8.1× a bare run ($3.45 against $0.42) and took 53.3 minutes against 5.6. The batch recorded $136.88 of a $210 ceiling.
+- **Found:** six register rows (139–144), and three defects in the run's own tools. A fresh final review of the fixes found more. Its critical and important findings are fixed, including a guard regression that the first sed fix had introduced. Nine minor ones are deferred and listed under Defects found.
 
 ## What changed since the multi-file run
 
@@ -54,7 +56,7 @@ The multi-file run delivered 9 of 18 engine runs on large changes (row 138). Thi
 
 ## What ran
 
-- **Items:** the multi-file run's 16 mealie4 items, 121 to 1,355 changed lines in 6 to 30 files. The engine had run on items 01, 05 and 07 before (in-sample); the other 13 it had never seen.
+- **Items:** the multi-file run's 16 mealie4 items, 121 to 1,355 changed lines in 6 to 30 files. The engine had run on items 01, 05 and 07 in the multi-file run (in-sample). Of the other 13, it had run once on item 08, in this run's smoke run before registration: delivered, 24.3 minutes, $1.44, not counted.
 - **Runs:**
   - 2 engine runs per item, 32 in all, on the guard profile and the item's track (fix or feature), in processes e1 (items 01–06), e2 (07–11) and e3 (12–16);
   - 2 bare runs per item, 32 in all, in process w.
@@ -74,7 +76,7 @@ The multi-file run delivered 9 of 18 engine runs on large changes (row 138). Thi
   - At 13:06Z, the operator tried to stop the replacement run that had started into that 401. The stop failed: the run's agent worked on until 13:09Z, in a sandbox the operator had already removed for the next attempt, and its harness then crashed. It wrote no result (amendment 4).
   - A third restart, at about 13:14Z, cut the next attempt. The container was down until 14:13Z, and the memory log shows no load before it (amendment 4).
   - The three runs then ran as three processes at once and ended at 15:01Z (item 01), 15:46Z (item 02) and 17:28Z (item 06).
-- **Cost:** $148.84 recorded over the 68 runs that wrote a result: engine $130.81, bare $18.03. The registered ceiling was $210. The eight cut runs and e1's two abandoned attempts recorded no cost.
+- **Cost:** $136.88 recorded over the 65 runs that wrote a result: engine $118.86, bare $18.03. The registered ceiling was $210. The nine runs cut by restarts and the attempt abandoned at 13:06Z recorded no cost.
 
 ## Labels
 
@@ -103,7 +105,7 @@ The registered reading's labels are the continued reading's for the runs both re
 | Continued, item 06's credential-cut run kept | 24 of 32 (75%): missed | 1 false (0.03): met |
 | Registered (the batch as the first restart left it) | 3 of 32 (9%): missed | 0 false: met |
 
-The registered reading counts 51 never-started and 4 cut runs as not delivered, so it says little about the engine. Its medians count the never-started runs as zero minutes and are not reported.
+The registered reading counts 26 never-started and 3 cut engine runs as not delivered, so it measures the restart, not the engine; amendment 1 named the continued reading as the one that answers the run's question. Its medians count the never-started runs as zero minutes and are not reported.
 
 **Reported with no criterion, continued reading:**
 - **Within 2 hours:** 22 of 32. Three delivered runs took longer: item 05's first (133.7 minutes) and both of item 06 (183.2 and 179.0). None was cut by the 4-hour limit, so there is no delivered-then-cut run to name.
@@ -134,7 +136,8 @@ The registered reading counts 51 never-started and 4 cut runs as not delivered, 
 Seven of the 32 planned engine runs did not deliver in the continued reading. Every one stopped to ask a user, and no one answers a headless run. No run reached the 4-hour limit, and every record passed its chain check (the harness's audit, `store.audit`). Delivery itself also requires every approved file to be unchanged, which `deliver` checks.
 
 - **An approved file changed after approval: three runs** (item 02's first, and the second runs of items 09 and 11).
-  - What happened: `deliver` refused the changed file, and the only way back was `gate reopen`, which only the user may run, so the orchestrator stopped to ask.
+  - What happened: the changed file failed the approved-file check. In items 09 and 11 `deliver` refused it; in item 02 the verification reviewer requested changes because `eccode audit` failed.
+  - There was no way to review it again: an approved gate accepted no new submission, and `gate reopen` works only on an escalated gate. The one way on was to restore the approved version. No run did; each orchestrator stopped to ask the user.
   - **Items 09 and 11:** Mealie's code generator (`dev/code-generation/main.py`) ends in `gen_py_schema_exports.py`.
     - That script builds its file list as a generator and uses it up on `ruff check --fix`. It then runs `ruff format` with no paths, which formats the whole project.
     - ruff 0.16 formats the Python blocks in Markdown files, and nothing excludes `.eccode/`, so it rewrote the approved design spec.
@@ -144,7 +147,9 @@ Seven of the 32 planned engine runs did not deliver in the continued reading. Ev
   - Now fixed: the gate's author resubmits with the current files and its reviewer reviews again (row 140). Engineers run formatters only on their own files (row 141).
 - **Mealie's code generator was not run: two runs** (the first runs of items 04 and 09).
   - `uv run python dev/code-generation/main.py` and `task dev:generate` were refused, because the tool list allows neither `uv` nor `task`.
-  - The plain `python dev/code-generation/main.py` was allowed, and `PYTHONPATH=.` (spec 4.1) made it importable. The orchestrator declined it as a way round the refusal and stopped to ask.
+  - The plain `python dev/code-generation/main.py` was allowed, and `PYTHONPATH=.` (spec 4.1) made it importable.
+  - In item 09's run the orchestrator declined it as another wrapper. In item 04's no agent tried it, and the orchestrator asked the user to approve the `uv run` command.
+  - This is the stop the multi-file run's item 07 met, and spec 4.1 was aimed at it: the environment fix made the plain command work, but no run used it.
   - Both changes pass both hidden checks.
   - Now mitigated by guidance for the orchestrator and the engineers (row 142).
 - **A file move or delete was refused: both runs of item 14.**
@@ -163,7 +168,7 @@ Seven of the 32 planned engine runs did not deliver in the continued reading. Ev
 
   The run delivered. In the multi-file run, the same kind of stop waited for the user.
 - **Tests:** every engine patch adds or changes tests (32 of 32), against 21 of 32 bare.
-- **Cost:** a median engine run cost $3.45 and a bare run $0.42 (8.2×). They took 53.3 and 5.6 minutes.
+- **Cost:** a median engine run cost $3.45 and a bare run $0.42 (8.1×). They took 53.3 and 5.6 minutes.
 
 ## Refusals
 
@@ -180,8 +185,8 @@ All 689 refusals in the batch's engine transcripts are labelled. That includes t
 ## Defects found
 
 **Fixed, each with a test that failed first:**
-- **Engine: an approved file that changed had no way back but the user's** (row 140). Three of the run's undelivered engine runs stopped there.
-- **Guard: `sed` read as writing in place** when any word in the command held `-i`, such as a sandbox path ending `-engine-iPIAtW` (row 139). This was the run's only false refusal.
+- **Engine: an approved file that changed could not be reviewed again** (row 140, mitigated). Three of the run's undelivered engine runs stopped there. Its author can now resubmit and a reviewer approves again. Two gaps remain: a deleted approved file in a phase gate, and a re-review that inherits the gate's earlier change requests and so can escalate at its first rejection.
+- **Guard: `sed` read as writing in place** when any word in the command held `-i`, such as a sandbox path ending `-engine-iPIAtW` (row 139). This was one of the run's two false refusals, and the only one a guard defect caused.
 - **Harness: an agent's leftovers in sessions of their own** (row 144, mitigated).
   - Claude Code runs each tool command with `setsid`, so the harness's process-group kill missed a timed-out agent's running command. That command could write on into the sandbox while the hidden checks ran.
   - On Linux the harness now also stops every process working in the sandbox.
@@ -190,7 +195,7 @@ All 689 refusals in the batch's engine transcripts are labelled. That includes t
 **Guidance, not yet measured** (each pinned by a test):
 - formatters run on the task's own files, and a generator's output is named in the handoff (row 141);
 - a refused wrapper does not forbid the command it wraps (row 142).
-  - The first version reached only the engineers. A re-read of the transcripts showed that the orchestrator declined in both runs, so it now carries the rule too.
+  - The first version reached only the engineers. A re-read of the transcripts showed that the orchestrator made the call in both runs, so it now carries the rule too.
 - a refused file move or delete is routed around, not a question, unless the request needs it (row 143). The orchestrator still asks the user before deleting data.
 
 **A limit, named:** completing a task checks ownership against the files its handoff lists, so a formatter's rewrite of another task's file is found at audit, not at completion (row 141).
@@ -202,6 +207,30 @@ All 689 refusals in the batch's engine transcripts are labelled. That includes t
   - Both readings showed the same 638 refusals.
   - The earlier runs' figures are unchanged: none of the 299 refusals the proof run labelled, or the 348 the multi-file run labelled, lies outside a run of its reading.
 
+**The final review.** A fresh whole-branch review of the code found one critical and four important defects in the fixes. All are fixed with tests that failed first:
+- the first `sed` fix had stopped catching GNU's `--in` abbreviations;
+- the state version was not bumped;
+- a re-review could drop the approval's unchanged files;
+- a re-reviewed plan with other tasks would have been approved but not run;
+- the generator guidance named a field that completion refuses.
+
+Three minor findings were re-graded as important and fixed in the guidance:
+- `task fail`, not `task reset`, releases a claimed task;
+- an audit failure from a changed approved file is a re-review, not a stop;
+- a person's refusal is never routed around.
+
+These fixes were checked by their own tests and the suite, not by a second code review.
+
+Nine minor findings are deferred:
+- the two re-review gaps in row 140;
+- `stack run --record` still defaults to 600 s;
+- an outdated comment in `lib/tasks.js`;
+- the rescope hint names `technical-reviewer` whatever the configured reviewers are;
+- the harness's process stop also ends an operator's shell that is working in the sandbox, and its `/proc` read is unguarded;
+- `delivery.js` does not check `--planned`;
+- `resume.js` does not check `--amendment`;
+- the Mealie suites' build applies the dev environment to every suite it rebuilds, the earlier runs' suites included.
+
 ## Disclosures
 
 - **Three container restarts and an expired credential** cut or ended runs. Every amendment was committed before the runs it governs. The registered reading counts every cut and never-started run as not delivered.
@@ -210,8 +239,9 @@ All 689 refusals in the batch's engine transcripts are labelled. That includes t
   - In this shell, a background `setsid` forks, so the recorded pid is a parent that has already exited. The three final processes were watched by their real pids.
   - The run wrote no result and is in no reading.
 - **e1's last three runs ran at once,** as three processes (amendment 4), not one after another. The batch ran four processes at once.
-- **Replacement runs ran after their process ended,** as amendments 1 and 2 allow, under the load of the processes still running. Failed runs were replayed for labels once at most three batch processes remained.
-- **What the runs measured:** every run used the protocol commit's engine, agents and suite. The replacement runs ran from a worktree whose only differences are the resume tool and the protocol text. None of the fixes above was in any run.
+- **Replacement runs ran when their own process ended, not after the whole batch** as amendments 1 and 2 say. That was a ruling, to keep the batch's load at four processes: e3's and w's replacements started at 03:24Z and 03:29Z while e1 and e2 ran, and e2's at 06:20Z while e1 ran. Failed runs were replayed for labels once at most three batch processes remained.
+- **Load during e1's last three runs:** the test suites of the fixes and the whole-branch code review ran in the same 4-core container.
+- **What the runs measured:** every run used the protocol commit's engine, agents and suite. Every run after the second restart, the replacements included, ran from a worktree pinned at amendment 2, whose only differences are the resume tool and the protocol text. None of the fixes above was in any run.
 - **In-sample items.** The engine's changes were shaped by the multi-file run's failures on items 01, 05 and 07, so their six runs are reported apart.
 - **A clean audit** in the criteria is the record's chain check. A delivered run also passed `deliver`'s check that every approved file is unchanged.
 
@@ -219,7 +249,7 @@ All 689 refusals in the batch's engine transcripts are labelled. That includes t
 
 - **The changes did what they aimed at, and delivery still missed by one run.**
   - No run timed out, the in-sample items delivered 6 of 6, and a rescope that once needed the user was reviewed and applied.
-  - The misses came from places the multi-file run never reached: Mealie's own tools rewriting reviewed files, a generator behind refused wrappers, and file moves the tool list refused.
+  - Most misses came from places the multi-file run never reached: Mealie's own tools rewriting reviewed files, and file moves the tool list refused. One came back: the code generator behind refused wrappers, which the environment fix made runnable but no run ran.
   - The undelivered changes were mostly right, 5 of 7 passing every hidden check, and the record of each was intact. What failed was the way forward, not the work.
 - **The fixes are not measured.** Rows 140–143 change exactly what stopped these runs, but no run has used them. Row 138 stays open. Closing it needs a registered run with them in place, ideally on other projects as well as Mealie: two of the three new stops came from Mealie's own tooling.
 - **Correctness: no difference shown.** Engine 29 of 32 and bare 28 of 32. The bare agent made its own mistakes on items 01 and 05. The engine fixed item 05 in both runs and item 01 in one, and lost item 14 by stopping. Row 59 stays open.

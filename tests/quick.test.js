@@ -426,8 +426,9 @@ test('guidance: a claimed task is released with task fail, a changed approved fi
 });
 
 test('guidance: the orchestrator runs the command a refused wrapper wraps instead of stopping to ask', () => {
-  // Found in the delivery run: in items 04 and 09 the orchestrator, not an engineer,
-  // declined `python dev/code-generation/main.py` after `uv run` and `task` were refused.
+  // Found in the delivery run: in items 04 and 09 the orchestrator, not an engineer, stopped
+  // to ask after `uv run` and `task` were refused; in item 09 it declined the allowed
+  // `python dev/code-generation/main.py`.
   const skill = fs.readFileSync(path.join(__dirname, '..', 'skills', 'orchestrate', 'SKILL.md'), 'utf8');
   const row = skill.split('\n').find((l) => l.startsWith('|') && /`uv run X`/.test(l));
   assert.ok(row, 'the orchestrator\'s situation table has a refused-wrapper row');
