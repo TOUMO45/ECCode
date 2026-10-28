@@ -364,3 +364,19 @@ test('engineers run their task\'s planned check, not whole test directories', ()
     assert.match(text, /whole test directories/, f);
   }
 });
+
+// The delivery run: approved files rewritten by a whole-tree formatter left
+// runs asking the user to reopen a gate; runs asked the user to approve
+// `uv run python <script>` though `python <script>` was allowed.
+test('guidance: a changed approved file is re-reviewed by resubmission, formatters stay on the task\'s files, and a refused wrapper does not forbid its command', () => {
+  const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+  for (const f of ['agents/technical-reviewer.md', 'skills/orchestrate/SKILL.md']) {
+    assert.match(read(f), /modified after approval/, f);
+    assert.match(read(f), /resubmit/, f);
+  }
+  for (const f of ['agents/backend-engineer.md', 'agents/frontend-engineer.md', 'agents/test-engineer.md']) {
+    assert.match(read(f), /formatter/, f);
+    assert.match(read(f), /files your task owns/, f);
+    assert.match(read(f), /`uv run X`/, f);
+  }
+});

@@ -262,3 +262,49 @@ test('an empty file a task changed goes into its phase gate; a submission of not
   write(fresh.dir, 'brief.md', '');
   expectCode(() => gates.submit(fresh.store, fresh.config, 'architecture', 'product-architect', { artifacts: ['brief.md'] }), 'EMPTY_ARTIFACT');
 });
+
+// The delivery run: three engine runs stopped on an approved artifact that a
+// project formatter rewrote after approval (Mealie's code generator runs
+// `ruff format` on the whole tree; an agent ran `ruff format mealie`). No
+// approved gate could be submitted again and only an escalated gate reopens,
+// so delivery was refused with no way back but the user.
+test('an approved gate whose artifact changed is re-reviewed: its author resubmits the current file and a reviewer approves again', () => {
+  const ctx = tmpProject();
+  submitArch(ctx);
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  const err = expectCode(() => gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] }), 'INVALID_TRANSITION');
+  assert.match(err.message, /approved/, 'an approval whose files are unchanged stands');
+  write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD.replace(/\n/g, '\n\n')); // a formatter's rewrite
+  write(ctx.dir, '.eccode/artifacts/other.md', '# Other\n');
+  expectCode(() => gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/other.md'] }), 'INVALID_INPUT');
+  expectCode(() => gates.submit(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', { artifacts: ['.eccode/artifacts/brief.md'] }), 'ROLE_NOT_ALLOWED');
+  gates.submit(ctx.store, ctx.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'submitted', 'not approved until a reviewer approves the new version');
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  assert.strictEqual(ctx.store.state().gates.architecture.status, 'approved');
+  assert.deepStrictEqual(require('../lib/delivery').unreviewedChanges(ctx.store.state(), ctx.dir), []);
+});
+
+test('re-reviewing an approved plan gate keeps its tasks and their progress', () => {
+  const ctx = tmpProject();
+  const { approveThroughPlan } = require('./helpers');
+  const tasks = require('../lib/tasks');
+  approveThroughPlan(ctx);
+  gates.startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  tasks.claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  const plan = path.join(ctx.dir, '.eccode/artifacts/plan.json');
+  fs.writeFileSync(plan, JSON.stringify(JSON.parse(fs.readFileSync(plan, 'utf8')))); // reformatted, same plan
+  gates.submit(ctx.store, ctx.config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] });
+  assert.strictEqual(ctx.store.state().tasks.api.status, 'claimed', 'the record\'s tasks are kept, not re-imported');
+  gates.recordReview(ctx.store, ctx.config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/plan.json']]));
+  assert.strictEqual(ctx.store.state().gates.plan.status, 'approved');
+});
+
+test('the audit names the way back for an approved file that changed', () => {
+  const ctx = tmpProject();
+  submitArch(ctx);
+  gates.recordReview(ctx.store, ctx.config, 'architecture', 'architecture-reviewer', approval([['artifact:.eccode/artifacts/brief.md']]));
+  write(ctx.dir, '.eccode/artifacts/brief.md', ARCH_MD + '\n');
+  const res = require('child_process').spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), '--root', ctx.dir, 'audit'], { encoding: 'utf8' });
+  assert.match(res.stdout + res.stderr, /\.eccode\/artifacts\/brief\.md modified after approval \(architecture\): its author resubmits architecture with the current file for a fresh review/);
+});

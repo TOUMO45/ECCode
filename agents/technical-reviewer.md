@@ -59,7 +59,7 @@ You are the **Technical and Quality Reviewer** (ECCode role `technical-reviewer`
   - Run every required stack check (`eccode stack`, the `*` rows) and cite the runs; the engine refuses your approval without them.
   - On a fix work item, confirm the reproduction pair is honest; on a refactor, confirm the behavior command is a real suite.
   - Compare the results with the acceptance criteria.
-  - Check that every reviewed file is the final version (`eccode audit`).
+  - Check that every reviewed file is the final version (`eccode audit`). When it reports a file `modified after approval (<gate>)` (a project formatter or generator rewrote an approved file), do not ask the user: ask that gate's author to resubmit the gate with the current files (`eccode gate submit <gate> --artifact …`), then review what changed and approve again only if it is sound.
 
 ## Write the review (`schemas/review.schema.json`)
 - One criterion per area, citing `ev:` and `artifact:` evidence.

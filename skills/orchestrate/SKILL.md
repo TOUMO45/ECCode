@@ -101,6 +101,7 @@ For each `phase:<id>`, in order:
 | Agent crashed or timed out | `run end --status failed`. Then `eccode recover` (or `--all` after a restart) and retry within limits |
 | Engine refusal | It is a rule, not a bug. Fix the cause and never bypass it by editing `.eccode/` files |
 | A planned check cannot run, or a needed file belongs to no task | Release the task if claimed (`task reset`), have `delivery-lead` propose a rescope and `technical-reviewer` decide it with `task rescope-review` |
+| `eccode audit` or `deliver` reports a file `modified after approval (<gate>)` | A tool rewrote an approved file. Have that gate's author resubmit the gate with the current files, and its reviewer review the change; do not ask the user |
 | Repeated rejections | The gate escalates automatically. Present the recovery options and ask the user |
 | Budget or runtime exhausted | Stop, summarize state, ask the user |
 | `eccode audit` fails | Stop; the record or approved artifacts were modified. Report to the user |

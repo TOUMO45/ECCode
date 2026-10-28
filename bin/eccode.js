@@ -526,7 +526,7 @@ function main(argv) {
       }
       const changes = require('../lib/delivery').unreviewedChanges(store.state(), store.root);
       const ok = res.errors.length === 0 && !changes.length;
-      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged${against}.` : `Audit FAILED:\n- ${[...res.errors, ...changes.map((c) => `${c.path} ${c.problem} (${c.gate})`)].join('\n- ')}`, { ...res, unreviewedChanges: changes, ok });
+      print(flags, ok ? `Audit OK: ${res.events} events, chain intact, approved artifacts unchanged${against}.` : `Audit FAILED:\n- ${[...res.errors, ...changes.map(require('../lib/delivery').describeChange)].join('\n- ')}`, { ...res, unreviewedChanges: changes, ok });
       return ok ? 0 : 2;
     }
     case 'deliver': {
