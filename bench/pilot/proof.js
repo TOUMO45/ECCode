@@ -70,11 +70,18 @@ const walk = (d) => (fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true 
  * extractor's line id prefixed with where the transcript lies; the labels use it.
  */
 function friction(dir, rows, labels) {
-  const procs = [...new Set(rows.filter((r) => r.variant === 'engine').map((r) => r.process))].sort();
-  const refusals = procs.flatMap((proc) => walk(path.join(dir, `tr-${proc}`))
-    .filter((f) => f.endsWith('.jsonl') && !f.includes(`${path.sep}record${path.sep}`))
-    .flatMap((f) => extractRefusals(fs.readFileSync(f, 'utf8'), `${proc}/${path.relative(path.join(dir, `tr-${proc}`), f).split(path.sep).join('/')}`)));
-  const runs = rows.filter((r) => r.variant === 'engine').length;
+  const engine = rows.filter((r) => r.variant === 'engine');
+  // Only the given runs' own transcript directories: a cut or abandoned run's
+  // transcripts can sit beside them under tr-<process> without being in the reading.
+  const own = [...new Set(engine.filter((r) => r.transcripts && r.transcripts.dir).map((r) => `${r.process}/${r.transcripts.dir}`))].sort();
+  const refusals = own.flatMap((key) => {
+    const [proc, run] = key.split('/');
+    const base = path.join(dir, `tr-${proc}`);
+    return walk(path.join(base, run))
+      .filter((f) => f.endsWith('.jsonl') && !f.includes(`${path.sep}record${path.sep}`))
+      .flatMap((f) => extractRefusals(fs.readFileSync(f, 'utf8'), `${proc}/${path.relative(base, f).split(path.sep).join('/')}`));
+  });
+  const runs = engine.length;
   const falseOnes = refusals.filter((x) => labels[x.id] && labels[x.id].label === 'false').length;
   return { refusals: refusals.length, unlabelled: refusals.filter((x) => !labels[x.id]).map((x) => x.id), false: falseOnes, runs, perRun: runs ? falseOnes / runs : null };
 }

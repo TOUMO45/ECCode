@@ -974,10 +974,25 @@ test('proof run: friction is the false refusals per engine run, from the engine 
   write(dir, `${run}/s1/subagents/agent-1.jsonl`, jsonl([use('t2', 'eccode memory help'), refused('t2', 'eccode: [USAGE] Unknown memory subcommand')]));
   write(dir, `${run}/record/events.jsonl`, jsonl([use('t8', 'eccode x'), refused('t8', 'eccode: [USAGE] the record copy is not a transcript')]));
   write(dir, 'tr-w1/eccode-bench-x-without-BBBBBB/s.jsonl', jsonl([use('t9', 'eccode x'), refused('t9', 'eccode: [USAGE] a bare run is not counted')]));
-  const rows = [{ process: 'e1', task: 'x', variant: 'engine' }, { process: 'e1', task: 'y', variant: 'engine' }, { process: 'w1', task: 'x', variant: 'without' }];
+  const rows = [{ process: 'e1', task: 'x', variant: 'engine', transcripts: { dir: 'eccode-bench-x-engine-AAAAAA' } }, { process: 'e1', task: 'y', variant: 'engine' }, { process: 'w1', task: 'x', variant: 'without', transcripts: { dir: 'eccode-bench-x-without-BBBBBB' } }];
   const ids = [`e1/eccode-bench-x-engine-AAAAAA/s1.jsonl:2`, `e1/eccode-bench-x-engine-AAAAAA/s1/subagents/agent-1.jsonl:2`];
   assert.deepStrictEqual(friction(dir, rows, { [ids[0]]: { label: 'false' }, [ids[1]]: { label: 'correct' } }), { refusals: 2, unlabelled: [], false: 1, runs: 2, perRun: 0.5 });
   assert.deepStrictEqual(friction(dir, rows, {}).unlabelled.sort(), [...ids].sort(), 'every refusal is labelled before the figure');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('friction: only the transcripts of the reading\'s own engine runs count, not a cut or abandoned run\'s left beside them', () => {
+  const { friction } = require('../bench/pilot/proof');
+  const { write } = require('./helpers');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-proof-friction-'));
+  const use = (id, command) => ({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', id, name: 'Bash', input: { command } }] } });
+  const refused = (id, text) => ({ type: 'user', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: id, is_error: true, content: text }] } });
+  const jsonl = (events) => `${events.map((e) => JSON.stringify(e)).join('\n')}\n`;
+  write(dir, 'tr-e1/eccode-bench-x-engine-KEPT01/s.jsonl', jsonl([use('t1', 'eccode x'), refused('t1', 'eccode: [USAGE] a run of the reading')]));
+  write(dir, 'tr-e1/eccode-bench-x-engine-CUT001/s.jsonl', jsonl([use('t2', 'eccode x'), refused('t2', 'eccode: [USAGE] a cut run the reading dropped')]));
+  const rows = [{ process: 'e1', task: 'x', variant: 'engine', transcripts: { dir: 'eccode-bench-x-engine-KEPT01' } }, { process: 'e1', task: 'x', variant: 'engine' }];
+  const f = friction(dir, rows, { 'e1/eccode-bench-x-engine-KEPT01/s.jsonl:2': { label: 'false' } });
+  assert.deepStrictEqual(f, { refusals: 1, unlabelled: [], false: 1, runs: 2, perRun: 0.5 }, 'a never-started run counts as a run with no refusal; the cut run\'s transcript is not the reading\'s');
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
