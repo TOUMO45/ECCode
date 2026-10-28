@@ -68,6 +68,13 @@ Everything is recorded in an append-only, hash-chained event log, so work can re
   - **Delivery missed:** 9 of 18 engine runs delivered (rule 80%; row 138). Four timed out, and five stopped to ask a user, four of them after the benchmark's tool list refused a command they needed. Friction met: 0.17 false refusals per run.
   - It cost a median 7.7× a bare run and took 48.5 minutes against 6.3.
   - Defects found: two engine defects fixed (rows 134–135), two harness limits mitigated (rows 136–137), the run's own analysis corrected, and `ps` added to the guard's read-only list (row 91). See [the multi-file run report](bench/pilot-results/2026-10-27-mealie-multifile.md).
+- **The delivery run** removed what stopped the multi-file run's engine runs, then ran all 16 items twice through the engine and twice bare. The changes: a reviewed rescope, a 30-minute evidence default, checks sized to the step, Mealie's dev environment and a 4-hour limit.
+  - **Delivery missed by one run:** 25 of 32 engine runs delivered (rule 80%; row 138).
+    - No run timed out, and the three items the multi-file run failed delivered 6 of 6.
+    - All seven misses stopped to ask a user: a project tool rewrote an approved file (three runs), a code generator sat behind refused wrappers (two), or a file move was refused (two).
+    - Friction met: 0.06 false refusals per run.
+  - **Correctness, no criterion:** engine 29 of 32, bare 28 of 32. A median engine run cost 8.2× a bare run.
+  - Found: rows 139–144, fixed or mitigated after the batch and not yet measured. See [the delivery run report](bench/pilot-results/2026-10-27-mealie-delivery.md).
 
 **Sized to the task.** One record carries many deliveries: after `deliver`, `eccode work start --track feature|refactor|fix|quick|greenfield` opens the next work item with gates sized to its risk. On an existing codebase, `eccode onboard` briefs agents first (modules, entry points, hot spots, most-depended files) and `eccode impact` names what a change reaches before it is made. See [docs/senior-engineering.md](docs/senior-engineering.md).
 

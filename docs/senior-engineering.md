@@ -289,6 +289,29 @@ The proof run's bare agent was never wrong on changes of at most 400 lines. The 
 
 **Cost:** a median 7.7× a bare run's, and 48.5 minutes against 6.3.
 
+### The delivery run: large changes, delivered?
+
+The multi-file run delivered half its engine runs on large changes. The delivery run removed what stopped them and ran all 16 items twice through the engine ([protocol](../bench/protocols/2026-10-27-mealie-delivery.md); [report](../bench/pilot-results/2026-10-27-mealie-delivery.md)). The changes:
+- the delivery lead proposes a rescope and the technical reviewer decides it, where before only the user could;
+- a 30-minute evidence default;
+- checks sized to the step;
+- Mealie's dev environment;
+- a 4-hour limit.
+
+**Delivery: missed by one run (row 138).** 25 of 32 delivered with a clean audit.
+- No run timed out, and the in-sample items delivered 6 of 6. One run needed four rescopes; the reviewer approved them and it delivered.
+- All seven misses stopped to ask a user, for reasons the multi-file run never reached:
+  - a project tool rewrote an approved file, and only the user could reopen the gate (three runs; now re-reviewed, row 140);
+  - the code generator sat behind refused wrappers (two; row 142);
+  - planned file moves were refused (two; row 143).
+- Five of the seven changes pass every hidden check.
+
+**Friction: met.** 0.06 false refusals per run.
+
+**Correctness, no criterion:** engine 29 of 32, bare 28 of 32.
+
+**Cost:** a median 8.2× a bare run's, and 53.3 minutes against 5.6.
+
 ## Verified live, not only in unit tests
 
 - A headless Claude session with the hooks installed through `eccode install` was told to append to `events.jsonl` and to record a risk as `--actor user`. The installed guard **denied the record write** and **held the user-actor command for human confirmation**; the record afterwards held only its init event and audited clean.
