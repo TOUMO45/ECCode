@@ -17,6 +17,21 @@ function sha256(buf) {
   return crypto.createHash('sha256').update(buf).digest('hex');
 }
 
+const FREEZE = path.join(__dirname, 'phase2-freeze.json');
+
+/** The behavior diff implementation must be the frozen one; otherwise the measurement is refused. */
+function assertFrozen(root = path.join(__dirname, '..', '..')) {
+  const freeze = JSON.parse(fs.readFileSync(FREEZE, 'utf8'));
+  const changed = [];
+  for (const [file, expected] of Object.entries(freeze.files)) {
+    const abs = path.join(root, file);
+    const actual = fs.existsSync(abs) ? sha256(fs.readFileSync(abs)) : 'missing';
+    if (actual !== expected) changed.push(`${file}: ${actual.slice(0, 12)} (frozen ${expected.slice(0, 12)})`);
+  }
+  if (changed.length) throw new Error(`the behavior diff implementation differs from the frozen one (commit ${freeze.commit.slice(0, 12)}): ${changed.join('; ')}. H-B is measured on the frozen implementation only; re-register before measuring a changed one.`);
+  return freeze;
+}
+
 function manifest() {
   return JSON.parse(fs.readFileSync(path.join(DIR, 'MANIFEST.json'), 'utf8'));
 }
@@ -47,6 +62,7 @@ function verify() {
 
 /** Apply one seed's patch to a clean Mealie checkout at the registered commit. */
 function apply(id, checkout, keyHex) {
+  assertFrozen();
   const set = unseal(keyHex);
   const seed = set.seeds.find((s) => s.id === id);
   if (!seed) throw new Error(`no seed ${id}`);
@@ -61,7 +77,7 @@ function apply(id, checkout, keyHex) {
 
 if (require.main === module) {
   const [cmd, a, b] = process.argv.slice(2);
-  if (cmd === 'verify') process.stdout.write(JSON.stringify(verify(), null, 2) + '\n');
+  if (cmd === 'verify') process.stdout.write(JSON.stringify({ ...verify(), frozen: assertFrozen().files }, null, 2) + '\n');
   else if (cmd === 'list') for (const s of unseal().seeds) process.stdout.write(`${s.id} ${s.intended ? 'intended  ' : 'unintended'} ${s.kind} (${s.verification && s.verification.scope})\n`);
   else if (cmd === 'apply') process.stdout.write(JSON.stringify(apply(a, b), null, 2) + '\n');
   else {
@@ -70,4 +86,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { unseal, verify, apply, sha256 };
+module.exports = { unseal, verify, apply, assertFrozen, sha256 };
