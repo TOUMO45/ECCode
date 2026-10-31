@@ -6,5 +6,10 @@
   "tornado-10:3": {
     "label": "agent-error",
     "reason": "Bug check: test_render_message fails with the reported TypeError. The run overrides _break_cycles to clear ui when `self.stream is None or self._on_close_called`; in this tornado the handshake calls handler.finish() BEFORE _attach_stream() (websocket.py _accept_connection), so stream is still None at finish time and ui is cleared during the handshake, exactly the reported failure. Runs 1 and 2 deferred on _on_close_called alone and pass. The agent wrote that it did not run a websocket that renders a template to confirm the fix; an assumption about the handshake order went unverified."
+  },
+  "tornado-15:3": {
+    "label": "agent-error",
+    "closeCall": true,
+    "reason": "Bug check: test_path_traversal_protection expects the existing log line (ExpectLog \".*not in root static directory\") and a 403. The run fixes the prefix check correctly (403 is returned) but also rewrites the existing message to \"is not in the root static directory\", a change nobody asked for, so the log expectation fails. The request says the refusal is \"logged as not in the root static directory, as other traversal attempts already are\": the second clause names the existing logging as the convention to keep; the agent saw the existing text, chose the prose wording over it and changed behaviour outside the fix. Close call: the prose wording does contain \"the\"; a reviewer who reads the request as prescribing the exact text would label this spec-gap, and the item would then not be hard (runs 1 and 2 pass). Flagged for the owner."
   }
 }
