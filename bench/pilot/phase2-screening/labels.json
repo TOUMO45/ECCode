@@ -11,5 +11,9 @@
     "label": "agent-error",
     "closeCall": true,
     "reason": "Bug check: test_path_traversal_protection expects the existing log line (ExpectLog \".*not in root static directory\") and a 403. The run fixes the prefix check correctly (403 is returned) but also rewrites the existing message to \"is not in the root static directory\", a change nobody asked for, so the log expectation fails. The request says the refusal is \"logged as not in the root static directory, as other traversal attempts already are\": the second clause names the existing logging as the convention to keep; the agent saw the existing text, chose the prose wording over it and changed behaviour outside the fix. Close call: the prose wording does contain \"the\"; a reviewer who reads the request as prescribing the exact text would label this spec-gap, and the item would then not be hard (runs 1 and 2 pass). Flagged for the owner."
+  },
+  "mealie4-05-fix-fb221afa:2": {
+    "label": "agent-error",
+    "reason": "Target check: three transport tests fail (test_noproxy_is_set_when_no_proxy_is_configured, test_noproxy_is_cleared_when_a_proxy_is_configured, test_pin_and_proxy_options_coexist). The request states the proxy rule in full: with no proxy argument the session's curl option NOPROXY is \"*\", with an explicit proxy it is \"\", and applying a pin leaves it \"\". The patch sets RESOLVE in _apply_pin but never sets NOPROXY at all, so a stated requirement was skipped; the regression check and the rest of the target tests pass. The agent wrote that it did not write tests for the new behaviour and did not run the whole suite."
   }
 }
