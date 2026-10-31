@@ -2,5 +2,9 @@
   "mealie3-01-fix-3be8f3d8:1": {
     "label": "agent-error",
     "reason": "Target check: test_mealie_alpha_migration_cannot_reach_another_group fails because the migrated recipe is never created (GET /api/recipes/<slug> 404). The agent's _restrict_to_group assigns the resolved tool's string id and group_id to the Recipe tool's uuid fields (with a type: ignore[assignment] that silences the checker); pydantic's serializer warning is an error under the test configuration, create_one raises, the per-recipe try records the failure and the recipe is not imported, although the request says the recipe itself still imports. The agent wrote in its answer that it never exercised the new behaviour. Replayed on the agent's patch with the hidden test: replays/mealie3-01-fix-3be8f3d8.1.txt."
+  },
+  "tornado-10:3": {
+    "label": "agent-error",
+    "reason": "Bug check: test_render_message fails with the reported TypeError. The run overrides _break_cycles to clear ui when `self.stream is None or self._on_close_called`; in this tornado the handshake calls handler.finish() BEFORE _attach_stream() (websocket.py _accept_connection), so stream is still None at finish time and ui is cleared during the handshake, exactly the reported failure. Runs 1 and 2 deferred on _on_close_called alone and pass. The agent wrote that it did not run a websocket that renders a template to confirm the fix; an assumption about the handshake order went unverified."
   }
 }
