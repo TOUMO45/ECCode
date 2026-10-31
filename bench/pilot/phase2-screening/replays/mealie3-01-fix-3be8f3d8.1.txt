@@ -1,0 +1,40 @@
+    return self.__pydantic_serializer__.to_python(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<13 lines>...
+        polymorphic_serialization=polymorphic_serialization,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+UserWarning: Pydantic serializer warnings:
+  PydanticSerializationUnexpectedValue(Expected `uuid` - serialized value may not be as expected [field_name='id', input_value='f90fd27d-3ea0-4e2d-ad77-d65aee80384b', input_type=str])
+  PydanticSerializationUnexpectedValue(Expected `uuid` - serialized value may not be as expected [field_name='group_id', input_value='babda28c-11cd-435d-a92e-5c7d2c15a5f4', input_type=str])
+[ERROR|recipe_crud_routes|L149] 2026-10-31T20:57:03: No Entry Found on recipe controller action
+------------------------------ Captured log call -------------------------------
+ERROR    root:_migration_base.py:226 Pydantic serializer warnings:
+  PydanticSerializationUnexpectedValue(Expected `uuid` - serialized value may not be as expected [field_name='id', input_value='f90fd27d-3ea0-4e2d-ad77-d65aee80384b', input_type=str])
+  PydanticSerializationUnexpectedValue(Expected `uuid` - serialized value may not be as expected [field_name='group_id', input_value='babda28c-11cd-435d-a92e-5c7d2c15a5f4', input_type=str])
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-ECCode/11241787-99f9-5d3c-9f8d-b402beb782f8/scratchpad/replay/m01/mealie/services/migrations/_migration_base.py", line 221, in import_recipes_to_database
+    recipe = self.recipe_service.create_one(recipe.model_copy(update={"image": None}))
+  File "/tmp/claude-0/-home-user-ECCode/11241787-99f9-5d3c-9f8d-b402beb782f8/scratchpad/replay/m01/mealie/services/recipe/recipe_service.py", line 215, in create_one
+    data: Recipe = self._recipe_creation_factory(name=create_data.name, additional_attrs=create_data.model_dump())
+                                                                                         ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/root/.cache/eccode/mealie-envs/py-ec40e6870125/lib/python3.14/site-packages/pydantic/main.py", line 520, in model_dump
+    return self.__pydantic_serializer__.to_python(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<13 lines>...
+        polymorphic_serialization=polymorphic_serialization,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+UserWarning: Pydantic serializer warnings:
+  PydanticSerializationUnexpectedValue(Expected `uuid` - serialized value may not be as expected [field_name='id', input_value='f90fd27d-3ea0-4e2d-ad77-d65aee80384b', input_type=str])
+  PydanticSerializationUnexpectedValue(Expected `uuid` - serialized value may not be as expected [field_name='group_id', input_value='babda28c-11cd-435d-a92e-5c7d2c15a5f4', input_type=str])
+ERROR    root:recipe_crud_routes.py:149 No Entry Found on recipe controller action
+=========================== short test summary info ============================
+FAILED tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_mealie_alpha_migration_cannot_reach_another_group
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
