@@ -104,3 +104,33 @@ test('the freeze: the real sealed set verifies against its manifest, and a chang
   assert.throws(() => seeds.assertFrozen(root), /differs from the frozen one/);
   fs.rmSync(root, { recursive: true, force: true });
 });
+
+test('the freeze covers the whole H-B pipeline, and a changed or missing harness file is refused', () => {
+  const freeze = seeds.assertFrozen();
+  const listed = Object.keys(freeze.files).sort();
+  // The rule's output today equals the registered list: nothing the diff can load is unfrozen.
+  assert.deepStrictEqual(seeds.freezeList(), listed);
+  for (const f of ['lib/behavior.js', 'scripts/behavior/probe_runner.py', 'bin/eccode.js', 'lib/compat.js', 'lib/lean.js', 'lib/evidence.js', 'lib/config.js', 'lib/store.js', 'bench/pilot/phase2-seeds.js', 'bench/pilot/phase2-seed-validate.js', 'bench/pilot/phase2-reseal.js']) assert.ok(listed.includes(f), `${f} is frozen`);
+  assert.ok(!listed.includes('lib/bench.js'), 'the H-A harness is not frozen');
+  assert.strictEqual(freeze.implementationCommit, 'e5c57e498d9d00f7c9c29cee1d00752704922a35');
+  assert.strictEqual(seeds.check().ok, true);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-freeze-'));
+  for (const f of listed) {
+    fs.mkdirSync(path.dirname(path.join(root, f)), { recursive: true });
+    fs.copyFileSync(path.join(__dirname, '..', f), path.join(root, f));
+  }
+  assert.doesNotThrow(() => seeds.assertFrozen(root));
+  assert.strictEqual(seeds.check(root).ok, true);
+  // A harness file edited by one byte.
+  fs.appendFileSync(path.join(root, 'bench/pilot/phase2-seed-validate.js'), '\n');
+  assert.throws(() => seeds.assertFrozen(root), /the H-B pipeline differs from the frozen one.*phase2-seed-validate\.js/);
+  assert.deepStrictEqual(seeds.check(root).changed, ['bench/pilot/phase2-seed-validate.js']);
+  // A module of the diff's closure removed.
+  fs.rmSync(path.join(root, 'lib/compat.js'));
+  assert.throws(() => seeds.assertFrozen(root), /lib\/compat\.js: missing/);
+  // A module the rule covers that the freeze does not list is reported by check().
+  fs.copyFileSync(path.join(root, 'lib/util.js'), path.join(root, 'lib/extra.js'));
+  fs.appendFileSync(path.join(root, 'lib/behavior.js'), "\nrequire('./extra');\n");
+  assert.ok(seeds.check(root).unlisted.includes('lib/extra.js'));
+  fs.rmSync(root, { recursive: true, force: true });
+});
