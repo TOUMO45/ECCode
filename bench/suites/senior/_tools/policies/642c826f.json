@@ -1,0 +1,12 @@
+{
+  "roles": ["anonymous", "userA"],
+  "idor": false,
+  "policy": [
+    { "role": "anonymous", "endpoint": "GET /api/recipes", "ownership": "none", "expected": "deny" },
+    { "role": "anonymous", "endpoint": "GET /api/users/self", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "GET /api/recipes", "ownership": "none", "expected": "allow" },
+    { "role": "userA", "endpoint": "GET /api/users/self", "ownership": "none", "expected": "allow" }
+  ],
+  "flaw": "Not observable by the matrix: the flaw is that queryFilter/orderBy could address sensitive columns (user.password, user.email, tokens) and leak them by LIKE probing; the fix answers 400 to such filters, which the grade does not count as a denial, and the matrix sends no queryFilter parameter.",
+  "validated": false
+}

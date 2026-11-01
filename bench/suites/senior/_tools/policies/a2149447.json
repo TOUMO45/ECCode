@@ -1,0 +1,12 @@
+{
+  "roles": ["userA", "admin"],
+  "idor": false,
+  "policy": [
+    { "role": "userA", "endpoint": "POST /api/households/invitations", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "POST /api/organizers/tags", "ownership": "none", "expected": "deny" },
+    { "role": "admin", "endpoint": "POST /api/households/invitations", "ownership": "none", "expected": "allow" },
+    { "role": "admin", "endpoint": "POST /api/organizers/tags", "ownership": "none", "expected": "allow" }
+  ],
+  "flaw": "No access-control flaw is observable by status code: the commit moves the invitation routes' existing can_invite check (already 403) into the declared route-permission dependency and adds a semgrep lint; every route answers the same status before and after.",
+  "validated": false
+}

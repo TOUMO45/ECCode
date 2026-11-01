@@ -55,16 +55,16 @@ test('a debug run is binned into plan, lab, implement, review and orchestrator t
     'full claim run': { minutes: 2, runs: 1 },
     'reviewer re-run': { minutes: 2, runs: 1 },
   });
-  // Wall: plan 0..60 (1 min); lab 60..600 (9 min); implement 600..1260 (11 min); orchestrator 1260..1320 (1 min); review from the submission 1320..1560 (4 min); orchestrator 1560..1620 (1 min).
-  assert.deepStrictEqual(p.wall, { plan: 1, lab: 9, implement: 11, 'orchestrator between dispatches': 2, review: 4 });
-  // Agent time: lab 9 min minus 50+20+10 s of commands = 7.67; implement 11 min minus 30+20+20+120 s = 7.83; review 4 min minus 2 = 2.
-  assert.deepStrictEqual(p.agent, { plan: 1, lab: 7.67, implement: 7.83, 'orchestrator between dispatches': 2, review: 2 });
+  // Wall: plan 0..60 (1 min); implement from the dispatch 60..300 (4 min) until the reproduction opens the Lab; lab 300..600 (5 min); implement again 600..1260 (11 min); orchestrator 1260..1320 (1 min); review from the submission 1320..1560 (4 min); orchestrator 1560..1620 (1 min).
+  assert.deepStrictEqual(p.wall, { plan: 1, implement: 15, lab: 5, 'orchestrator between dispatches': 2, review: 4 });
+  // Agent time: implement 15 min minus the 50 s baseline, the 20 s reproduction (recorded before the event that opens the Lab) and 30+20+20+120 s of checks = 10.67; lab 5 min minus the 10 s hypothesis check = 4.83; review 4 min minus 2 = 2.
+  assert.deepStrictEqual(p.agent, { plan: 1, implement: 10.67, lab: 4.83, 'orchestrator between dispatches': 2, review: 2 });
   assert.deepStrictEqual({ reviews: p.reviews, rejections: p.rejections, dispatches: p.dispatches, tasks: p.tasks, delivered: p.delivered, checkMinutes: p.checkMinutes }, { reviews: 1, rejections: 0, dispatches: 2, tasks: 1, delivered: true, checkMinutes: 6.5 });
   const agg = prof.aggregate([p, p]);
   assert.strictEqual(agg.runs, 2);
   assert.strictEqual(agg.commands['full claim run'].minutes, 4);
   assert.strictEqual(agg.topSinks[0].sink, 'implement (agent time, no command running)');
-  assert.match(prof.table(agg), /\| lab \| 18 \| 15\.34 \|/);
+  assert.match(prof.table(agg), /\| implement \| 30 \| 21\.34 \|/);
   assert.strictEqual(prof.profile([]), null);
 });
 

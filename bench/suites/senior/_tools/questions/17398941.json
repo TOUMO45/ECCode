@@ -1,0 +1,13 @@
+{
+  "question": "After a hard error (a 404, 410, 500... on the first direct attempt), is the fetch over with None, or are the proxy (in fallback mode) and FlareSolverr still tried as they are after a block?",
+  "readings": [
+    "A hard error ends the fetch: no proxy rotation and no FlareSolverr call, result None after that single attempt.",
+    "Any failed direct rotation escalates: after a hard error the proxy is tried in fallback mode and FlareSolverr is tried when configured, since another egress or a real browser might get a different answer."
+  ],
+  "upstream": "A hard error ends the fetch; only a rotation that ended because every impersonation was blocked escalates to the proxy or to FlareSolverr.",
+  "rationale": "The request states that a hard error stops the impersonation rotation but describes the proxy fallback and the FlareSolverr escalation as applying when the direct attempts did not produce a page, which a hard error also fails to do; some sites answer bots with 404, so escalating is a defensible reading with a materially different control flow. The target tests expect exactly one attempt, no proxy and no solve call after a 404 in fallback mode and with FlareSolverr configured.",
+  "pinnedBy": [
+    "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_fallback_mode_does_not_escalate_on_hard_error",
+    "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_no_flaresolverr_on_hard_error"
+  ]
+}

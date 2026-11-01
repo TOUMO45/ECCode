@@ -1,0 +1,11 @@
+{
+  "roles": ["anonymous", "userA"],
+  "idor": false,
+  "policy": [
+    { "role": "anonymous", "endpoint": "GET /api/explore/groups/home/recipes", "ownership": "none", "expected": "deny" },
+    { "role": "anonymous", "endpoint": "GET /api/households/members", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "GET /api/recipes", "ownership": "none", "expected": "allow" }
+  ],
+  "flaw": "Not observable by the matrix: a crafted queryFilter could escape the mandatory public filter (explore recipes/cookbooks/households) and the household scope of the member list; the fix answers 400 to such filters, which the grade does not count as a denial, and the matrix sends no queryFilter parameter.",
+  "validated": false
+}

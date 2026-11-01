@@ -1,0 +1,12 @@
+{
+  "question": "When a term is not translated at all (its singular equals the source singular, so its plural is the English plural too), should resolve_plural keep that English plural or drop it like the other untranslated plurals?",
+  "readings": [
+    "Keep it: the whole term is in the source language, so its plural matches its singular and is still correct to show.",
+    "Drop it: any plural equal to the source plural is untranslated and must not be stored."
+  ],
+  "upstream": "Kept: when the singular equals the source singular the plural is returned as is (\"onion\"/\"onions\" with \"onion\"/\"onions\" gives \"onions\"); only a translated singular with the source plural is dropped.",
+  "rationale": "The stated rules cover translated singulars and empty or repeated plurals but say nothing about a term that fell back to English entirely, and both keeping its English plural (consistent with its English singular) and dropping it (never store a source-language plural) follow from the feature's motivation. The target test expects \"onions\" to be kept for an untranslated term.",
+  "pinnedBy": [
+    "tests/unit_tests/test_locale_config.py::test_resolve_plural[untranslated-term-keeps-its-plural]"
+  ]
+}

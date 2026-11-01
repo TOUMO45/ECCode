@@ -1,0 +1,22 @@
+{
+  "roles": ["userB", "admin", "userA"],
+  "objects": [
+    {
+      "kind": "recipe",
+      "idParam": "slug",
+      "item": { "method": "GET", "path": "/api/recipes/{slug}" },
+      "owned": { "userB": "eccode-recipe-userb", "admin": "eccode-recipe-admin", "userA": "eccode-recipe-usera" }
+    }
+  ],
+  "idor": false,
+  "policy": [
+    { "role": "admin", "endpoint": "PATCH /api/recipes/{slug}", "ownership": "other", "expected": "allow" },
+    { "role": "admin", "endpoint": "DELETE /api/recipes/{slug}/image", "ownership": "other", "expected": "allow" },
+    { "role": "userB", "endpoint": "PATCH /api/recipes/{slug}", "ownership": "own", "expected": "allow" },
+    { "role": "userA", "endpoint": "PATCH /api/recipes/{slug}", "ownership": "other", "expected": "deny" },
+    { "role": "admin", "endpoint": "GET /api/recipes/{slug}", "ownership": "other", "expected": "allow" },
+    { "role": "admin", "endpoint": "DELETE /api/recipes/{slug}", "ownership": "other", "expected": "allow" }
+  ],
+  "flaw": "An administrator was refused (403) when editing a recipe owned by a user of another household whose household locks edits from other households; admins must be able to edit any recipe in the group, as they can already delete any.",
+  "validated": false
+}

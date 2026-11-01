@@ -1,0 +1,19 @@
+{
+  "roles": ["userA", "userB"],
+  "objects": [
+    {
+      "kind": "shopping-list",
+      "create": { "method": "POST", "path": "/api/households/shopping/lists" },
+      "item": { "method": "GET", "path": "/api/households/shopping/lists/{item_id}" }
+    }
+  ],
+  "idor": false,
+  "policy": [
+    { "role": "userB", "endpoint": "GET /api/households/shopping/lists/{item_id}", "ownership": "other", "expected": "deny" },
+    { "role": "userB", "endpoint": "DELETE /api/households/shopping/lists/{item_id}", "ownership": "other", "expected": "deny" },
+    { "role": "userA", "endpoint": "GET /api/households/shopping/lists/{item_id}", "ownership": "own", "expected": "allow" },
+    { "role": "userA", "endpoint": "DELETE /api/households/shopping/lists/{item_id}", "ownership": "own", "expected": "allow" }
+  ],
+  "flaw": "Not observable by status code: the bulk update/delete repository methods ignored the household scope, so a member of another household could change or delete another household's shopping list items, but the routes answer 200 both before (rows touched) and after (no rows touched) the fix; the grade sees only the status.",
+  "validated": false
+}

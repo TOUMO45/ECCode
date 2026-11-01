@@ -1,0 +1,12 @@
+{
+  "question": "Under the without-unit strategy, does an ingredient with a quantity of zero and a unit set count as having a unit (singular food), or as having none because the unit is not displayed when the quantity is zero (plural food)?",
+  "readings": [
+    "Judge by the unit field: a unit that is set means the food stays singular, whatever the quantity.",
+    "Judge by what is displayed: with quantity zero the unit is not shown, so the food is pluralised as if there were no unit."
+  ],
+  "upstream": "Judged by what is displayed: without-unit pluralises the food when the quantity is zero even if a unit is set, and only keeps the singular when both a non-zero quantity and a unit are present.",
+  "rationale": "The request defines without-unit as pluralising only for an ingredient without a unit, and separately states that the unit is not displayed when the quantity is zero; it does not say which notion of \"without a unit\" applies to that case, and the two readings produce different display text for every zero-quantity ingredient with a unit. The parametrized display test covers quantity 0 with every unit variant under without-unit and expects the plural food.",
+  "pinnedBy": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_ingredients.py::test_ingredient_display (parametrizations with quantity 0, a unit set and plural_handling without-unit)"
+  ]
+}

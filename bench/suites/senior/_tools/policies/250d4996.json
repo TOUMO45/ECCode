@@ -1,0 +1,14 @@
+{
+  "roles": ["userA", "admin"],
+  "idor": false,
+  "policy": [
+    { "role": "userA", "endpoint": "GET /api/households/members", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "PUT /api/groups/preferences", "ownership": "none", "expected": "deny" },
+    { "role": "admin", "endpoint": "GET /api/households/members", "ownership": "none", "expected": "allow" },
+    { "role": "admin", "endpoint": "PUT /api/groups/preferences", "ownership": "none", "expected": "allow" },
+    { "role": "userA", "endpoint": "GET /api/groups/members", "ownership": "none", "expected": "allow" },
+    { "role": "userA", "endpoint": "GET /api/groups/preferences", "ownership": "none", "expected": "allow" }
+  ],
+  "flaw": "Any member could list the household's users (with their e-mail addresses and permission flags) and change the group preferences; both should need the manage permission.",
+  "validated": false
+}

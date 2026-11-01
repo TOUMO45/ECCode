@@ -20,6 +20,8 @@ const SUITE = path.join(__dirname, '..');
 const TOOLS = __dirname;
 const TRACK = { migration: 'feature', authorization: 'fix', ambiguous: null };
 const selection = JSON.parse(fs.readFileSync(path.join(TOOLS, 'selection.json'), 'utf8'));
+// The instrument check's results (reference.js), by sha8: an item it dropped is not built.
+const instrument = fs.existsSync(path.join(TOOLS, 'instrument.json')) ? JSON.parse(fs.readFileSync(path.join(TOOLS, 'instrument.json'), 'utf8')) : {};
 
 function venvKey(mirror, commit) {
   return env.envKey(execFileSync('git', ['--git-dir', mirror, 'show', `${commit}:uv.lock`], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
@@ -36,7 +38,9 @@ function main() {
     for (const a of selection.accepted[category] || []) {
       const sha8 = a.sha.slice(0, 8);
       const prompt = prompts[sha8];
-      if (a.dropped) { skipped.push(`${category} ${sha8}: dropped (${a.dropped})`); continue; }
+      const inst = instrument[sha8] || {};
+      if (inst.dropped) { skipped.push(`${category} ${sha8}: dropped (${inst.dropped})`); continue; }
+      if (category !== 'ambiguous' && !inst.referenceGrade && !inst.instrument) { skipped.push(`${category} ${sha8}: instrument check not run`); continue; }
       if (!prompt || !prompt.text || !prompt.reviewed) { skipped.push(`${category} ${sha8}: no reviewed request`); continue; }
       const policy = category === 'authorization' ? path.join(TOOLS, 'policies', `${sha8}.json`) : null;
       const question = category === 'ambiguous' ? path.join(TOOLS, 'questions', `${sha8}.json`) : null;
@@ -61,8 +65,8 @@ function main() {
         hidden: { fromSource: { commit: a.sha, paths: a.hidden } },
         hiddenChecks: checks,
         measured: { target: a.backend.target.length, regression: a.backend.regression, failingBeforeAndAfter: a.backend.failingBoth },
-        ...(a.referenceGrade ? { referenceGrade: { safe: a.referenceGrade.safe } } : {}),
-        ...(a.instrument ? { instrument: a.instrument } : {}),
+        ...(inst.referenceGrade ? { referenceGrade: { safe: inst.referenceGrade.safe } } : {}),
+        ...(inst.instrument ? { instrument: { parentUnsafe: inst.instrument.parentUnsafe, commitSafe: inst.instrument.commitSafe } } : {}),
         ...(a.earlierSuiteItem ? { earlierSuiteItem: a.earlierSuiteItem } : {}),
       };
       fs.mkdirSync(path.join(SUITE, id), { recursive: true });

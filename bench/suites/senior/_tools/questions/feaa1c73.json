@@ -1,0 +1,13 @@
+{
+  "question": "Should ldapDisabled/oidcDisabled be true whenever LDAP_AUTH_ENABLED/OIDC_AUTH_ENABLED is false, including a fresh installation that never configured the provider, or only when the provider was deliberately turned off while its other settings are present (so an unconfigured provider keeps today's \"not ready\" warning)?",
+  "readings": [
+    "Disabled whenever the enable flag is false, regardless of the other LDAP_*/OIDC_* settings; an installation without LDAP or OIDC shows both as disabled.",
+    "Disabled only when the enable flag is false but the provider is otherwise configured (a deliberate switch-off); an unconfigured provider is reported as not ready, as today.",
+    "Disabled whenever the provider is not ready, folding misconfiguration into the same flag."
+  ],
+  "upstream": "Disabled is simply the inverse of LDAP_AUTH_ENABLED / OIDC_AUTH_ENABLED, independent of whether the remaining settings are complete.",
+  "rationale": "The request says the flags report a provider that has been turned off, which can be read as the state of the enable flag or as a deliberate action distinguishable from never having set the provider up; the two give opposite answers for the common installation that uses neither LDAP nor OIDC, which is what the admin page shows most. The target test runs with neither provider configured and asserts ldapDisabled == (not LDAP_AUTH_ENABLED) and oidcDisabled == (not OIDC_AUTH_ENABLED), that is, true.",
+  "pinnedBy": [
+    "tests/integration_tests/admin_tests/test_admin_about.py::test_admin_about_check_app_config"
+  ]
+}

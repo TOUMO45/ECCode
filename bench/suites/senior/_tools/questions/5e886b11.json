@@ -1,0 +1,15 @@
+{
+  "question": "Should the reported message be the ParserErrors code itself, verbatim (\"BAD_RECIPE_DATA\", for the UI to map to a translation), or a translated, human-readable sentence for that error produced on the server?",
+  "readings": [
+    "The raw code: the value of ParserErrors.BAD_RECIPE_DATA exactly as the scraper put it in the HTTPException detail.",
+    "A translated user-facing sentence looked up from the code with the request's translator, since the page shows the message as is."
+  ],
+  "upstream": "The raw detail: the \"details\" entry of the HTTPException's detail dict (\"BAD_RECIPE_DATA\") or its string detail, unchanged.",
+  "rationale": "The message is shown to the user by the paste page, so whether the API returns a machine code or a translated sentence is a contract decision between the frontend (which already maps such codes for the URL importer) and the backend, and the request names the error without fixing its wording. All four target tests compare the message with ParserErrors.BAD_RECIPE_DATA.value.",
+  "pinnedBy": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[missing-schema-declaration]",
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[malformed-json]",
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[no-recipe-data]",
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_invalid_data"
+  ]
+}

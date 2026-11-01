@@ -1,0 +1,12 @@
+{
+  "question": "When the client flags embedding over plain HTTP, should partitioned be False (gated on HTTPS exactly like SameSite=None) or True (set whenever the embedded flag is present, leaving the browser to ignore it)?",
+  "readings": [
+    "Gate it on HTTPS like SameSite=None: an embedded request over plain HTTP gets partitioned False.",
+    "Set it whenever X-Mealie-Embedded is true, regardless of the scheme."
+  ],
+  "upstream": "Gated on HTTPS: partitioned is true only when the request is secure and the embedded flag is set, the same condition that relaxes SameSite.",
+  "rationale": "The request explains the HTTPS gating as a consequence of browsers rejecting SameSite=None without Secure, which says nothing about Partitioned, and the plain-HTTP embedded case is otherwise unspecified; the two readings differ in the attributes of every embedded cookie on an HTTP deployment. The target test sends the embedded flag over plain HTTP and expects partitioned False.",
+  "pinnedBy": [
+    "tests/unit_tests/test_session_cookie.py::test_embedded_over_plain_http_stays_lax"
+  ]
+}

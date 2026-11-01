@@ -1,0 +1,16 @@
+{
+  "roles": ["userA", "admin"],
+  "idor": false,
+  "policy": [
+    { "role": "userA", "endpoint": "POST /api/organizers/tags", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "POST /api/organizers/categories", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "POST /api/foods", "ownership": "none", "expected": "deny" },
+    { "role": "admin", "endpoint": "POST /api/organizers/tags", "ownership": "none", "expected": "allow" },
+    { "role": "admin", "endpoint": "POST /api/foods", "ownership": "none", "expected": "allow" },
+    { "role": "userA", "endpoint": "GET /api/organizers/tags", "ownership": "none", "expected": "allow" },
+    { "role": "userA", "endpoint": "GET /api/organizers/categories", "ownership": "none", "expected": "allow" },
+    { "role": "userA", "endpoint": "GET /api/foods", "ownership": "none", "expected": "allow" }
+  ],
+  "flaw": "A user without the organize-group-data permission could create, update and delete tags, categories and foods (and merge foods); only reads should stay open to every member.",
+  "validated": false
+}

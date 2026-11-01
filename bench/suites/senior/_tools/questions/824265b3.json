@@ -1,0 +1,13 @@
+{
+  "question": "If the translation request fails (the provider raises, or returns nothing usable), should the import save the untranslated recipe and answer 201, or fail the whole import with an error?",
+  "readings": [
+    "Translation is optional: on failure the untranslated recipe is saved and the import answers 201 with the original name.",
+    "Translation was requested, so a failed translation fails the import: 400 with a translated error message (ai-request-failed or unknown-error).",
+    "Retry the translation once and only then fall back or fail."
+  ],
+  "upstream": "The translation step is optional (required = False): a raise, an empty answer, or an answer with neither ingredients nor instructions leaves the untranslated recipe, which is saved with 201.",
+  "rationale": "The request describes the translation step and its skip condition but not its failure mode; losing a requested translation and losing an otherwise successful import are both defensible outcomes with different code paths (an optional workflow step versus a required one). The target test makes the second OpenAIRecipe request raise and expects 201 with the original name.",
+  "pinnedBy": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_a_failed_translation_keeps_the_untranslated_recipe"
+  ]
+}

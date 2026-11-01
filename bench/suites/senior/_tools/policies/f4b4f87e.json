@@ -1,0 +1,22 @@
+{
+  "roles": ["userA", "admin"],
+  "objects": [
+    {
+      "kind": "recipe-action",
+      "create": { "method": "POST", "path": "/api/households/recipe-actions", "json": { "actionType": "link", "title": "eccode action", "url": "https://example.test/recipes/{slug}" } },
+      "owned": { "userA": "-", "admin": "-" }
+    }
+  ],
+  "idor": false,
+  "policy": [
+    { "role": "userA", "endpoint": "POST /api/units", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "POST /api/organizers/tools", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "POST /api/groups/labels", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "POST /api/households/recipe-actions", "ownership": "none", "expected": "deny" },
+    { "role": "admin", "endpoint": "POST /api/units", "ownership": "none", "expected": "allow" },
+    { "role": "admin", "endpoint": "POST /api/organizers/tools", "ownership": "none", "expected": "allow" },
+    { "role": "userA", "endpoint": "GET /api/units", "ownership": "none", "expected": "allow" }
+  ],
+  "flaw": "A user without the organize permission could create, update and delete units, tools, labels and household recipe actions (and seed foods/units), while the same permission already gated foods, tags and categories.",
+  "validated": false
+}

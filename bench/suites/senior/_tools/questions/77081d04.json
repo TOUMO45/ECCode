@@ -1,0 +1,15 @@
+{
+  "question": "When the library returns a parenthetical equivalent amount such as \"(30ml)\" or \"(1 cup plus 1 tablespoon)\" as an extra amount of the line, should it be kept as an alternative (\"or 30 milliliter\"), kept verbatim in the note, or dropped as today?",
+  "readings": [
+    "Keep it as an alternative, rendered like an \"or\" alternative without a food: \"2 tablespoon vegetable oil or 30 milliliter\".",
+    "Keep the parenthetical text in the note as written, for example \"(30ml)\".",
+    "Drop it, as the parser does today, since it is the same amount in another unit."
+  ],
+  "upstream": "Kept as an alternative: every amount beyond the first becomes an alternative rendered as \"or \" plus its display, so \"2 tablespoons (30ml) vegetable oil\" displays as \"2 tablespoon vegetable oil or 30 milliliter\" and \"153 grams 00 flour (1 cup plus 1 tablespoon)\" as \"153 gram 00 flour or 1 cup and 1 tablespoon\".",
+  "rationale": "The request only talks about alternatives introduced by \"or\"; the library also returns parenthetical conversions as extra amounts, and a senior engineer would ask whether users want those repeated as alternatives, left in the note or discarded. The fuzzy-matched display expectations for the flour and vegetable-oil lines only pass when they are rendered as alternatives.",
+  "pinnedBy": [
+    "tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_keeps_all_text[153 grams 00 flour (1 cup plus 1 tablespoon)-153 gram 00 flour or 1 cup and 1 tablespoon]",
+    "tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_keeps_all_text[153 grams all-purpose flour (1 cup plus 1 tablespoon and 2 teaspoons)-153 gram all-purpose flour or 1 cup plus 1 tablespoon and 2 teaspoons]",
+    "tests/unit_tests/services_tests/ingredient_parser/test_nlp_parser.py::test_nlp_parser_keeps_all_text[2 tablespoons (30ml) vegetable oil-2 tablespoon vegetable oil or 30 milliliter]"
+  ]
+}

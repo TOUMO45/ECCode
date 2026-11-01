@@ -1,0 +1,12 @@
+{
+  "question": "Which standardized unit does a centiliter map to: 10 milliliters (standard_unit milliliter, standard_quantity 10) or 0.01 liters (standard_unit liter, standard_quantity 0.01)?",
+  "readings": [
+    "standard_unit \"milliliter\" with standard_quantity 10, like the other small volume units.",
+    "standard_unit \"liter\" with standard_quantity 0.01, since a centiliter is defined as a hundredth of a liter."
+  ],
+  "upstream": "Milliliter, quantity 10.",
+  "rationale": "Both existing volume standards (milliliter with quantity 1 and liter with quantity 1) are available as a base and the request gives the centiliter's value in both, so an engineer must pick one; the choice changes the stored standard_unit of every centiliter unit and how conversions are computed. The target test asserts standard_unit == \"milliliter\" and standard_quantity == 10.",
+  "pinnedBy": [
+    "tests/unit_tests/repository_tests/test_unit_repository.py::test_centiliter_standardization"
+  ]
+}

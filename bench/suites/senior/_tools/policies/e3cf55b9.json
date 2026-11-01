@@ -1,0 +1,12 @@
+{
+  "roles": ["userA", "admin"],
+  "idor": false,
+  "policy": [
+    { "role": "userA", "endpoint": "POST /api/organizers/tags/merge", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "POST /api/organizers/categories/merge", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "GET /api/organizers/tags", "ownership": "none", "expected": "allow" },
+    { "role": "admin", "endpoint": "POST /api/organizers/tags", "ownership": "none", "expected": "allow" }
+  ],
+  "flaw": "No access-control flaw in the parent: the commit adds new merge endpoints (gated by the organize permission) and recipe counts; the parent answers 405 to the new routes and the commit 403 to a user without the permission, both denials. A merge by a permitted user needs two real organizer ids the probe cannot supply.",
+  "validated": false
+}

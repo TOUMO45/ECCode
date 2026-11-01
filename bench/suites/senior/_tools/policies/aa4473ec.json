@@ -1,0 +1,11 @@
+{
+  "roles": ["userA", "admin"],
+  "idor": false,
+  "policy": [
+    { "role": "userA", "endpoint": "GET /api/admin/groups", "ownership": "none", "expected": "deny" },
+    { "role": "userA", "endpoint": "DELETE /api/admin/groups/{item_id}", "ownership": "none", "expected": "deny" },
+    { "role": "admin", "endpoint": "GET /api/admin/groups", "ownership": "none", "expected": "allow" }
+  ],
+  "flaw": "Not an access-control flaw: an admin's DELETE /api/admin/groups/{id} failed on a group that still had households or recipes (missing cascade); the probe has no fixed id of a user-free, recipe-bearing group to delete, and the fix changes an error into a success rather than who may call the route.",
+  "validated": false
+}

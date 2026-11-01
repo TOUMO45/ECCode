@@ -1,0 +1,13 @@
+{
+  "question": "When the download yields a subtitle or caption file, should its text be used as the transcript so the audio is not transcribed, should the audio always be transcribed with the subtitles ignored, or should both be sent to the model?",
+  "readings": [
+    "Subtitles win: when a subtitle file exists its text (timestamps and markup stripped) is the transcription and transcribe_audio is not called; audio is transcribed only without subtitles.",
+    "Always transcribe the audio; the subtitle file is downloaded but not used (or used only if transcription fails).",
+    "Transcribe the audio and include the subtitle text as well, as a second source."
+  ],
+  "upstream": "Subtitles win: the .vtt file is parsed into plain text and used as the transcription, and transcribe_audio is only called when no subtitle text could be obtained.",
+  "rationale": "The request lists the subtitle file among the download's outputs and says the audio is transcribed when the transcription is empty, without saying whether subtitles fill it; the choice trades an API call and its cost against the quality of auto-generated captions, which is exactly what a senior would ask about. The target test gives a subtitle file, makes transcribe_audio raise if it is called, and expects the subtitle text in the model's message.",
+  "pinnedBy": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_uses_subtitle_over_transcription"
+  ]
+}
