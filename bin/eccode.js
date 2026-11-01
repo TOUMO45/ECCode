@@ -170,13 +170,14 @@ Bugs and problem solving (see docs/bugs.md)
                                    Exit 0 only when proven; the pair counts as the fix track's reproduction
 
 Benchmark
-  bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|method|engine|debug|both|all|<a,b>] [--suite <dir>]
+  bench --agent "<cmd>" [--tasks a,b] [--runs n] [--variant with|without|method|engine|debug|both|all|<a,b>] [--suite <dir>] [--concurrency 1|2]
         [--engine-profile guard|no-shell|sandbox] [--engine-agents inherit|as-shipped] [--timeout <s>] [--out <file>]
         [--chain]: one sandbox and record across the suite's items in order (task.order), synced to each
         item's source between them; --runs counts chains. [--max-cost <usd>]: stop before the next run once
         the runs of this process have reported that much. [--transcripts <dir>]: copy each run's Claude Code
         session files there (keep it outside the repository: they quote the code the agent read)
         [--save <runs.jsonl>] [--keep]
+  bench resume --save <runs.jsonl> [--agent "<cmd>"] [--concurrency 1|2]   Continue a batch a restart killed: cut runs re-run, finished ones kept
   bench report <runs.jsonl> --agent "<cmd>" [--out <file>]   Rebuild a report from runs saved with --save
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
         Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
@@ -672,6 +673,29 @@ function main(argv) {
       print(flags, markdown, records);
       return 0;
     }
+    if (sub === 'resume') {
+      // Continue a batch a restart killed: cut runs are recorded, their sandboxes removed, the rest run.
+      const save = path.resolve(need(flags.save, '--save <runs.jsonl>'));
+      return bench.resumeBatch({
+        save,
+        cause: flags.cause || 'the batch was interrupted',
+        agentCmd: flags.agent,
+        concurrency: flags.concurrency ? Number(flags.concurrency) : undefined,
+        transcripts: flags.transcripts ? path.resolve(flags.transcripts) : undefined,
+        timeoutMs: timeoutOf(flags),
+        maxCostUsd: flags['max-cost'] !== undefined ? Number(flags['max-cost']) : undefined,
+        keep: Boolean(flags.keep),
+        onProgress: (m) => process.stderr.write(`bench: ${m}\n`),
+      }).then((res) => {
+        if (flags.out) {
+          require('../lib/util').writeFileAtomic(path.resolve(flags.out), res.markdown);
+          process.stderr.write(`bench: report written to ${flags.out}\n`);
+        }
+        process.stderr.write(`bench: batch ${res.batch.id} ${res.complete ? 'complete' : 'still incomplete'}: ${res.all.length} run(s) recorded, ${res.interrupted.length} cut run(s) re-run\n`);
+        print(flags, res.markdown, res.all);
+        return res.stopped ? 1 : 0;
+      });
+    }
     const VARIANTS = ['without', 'with', 'method', 'engine', 'debug', 'ecc'];
     const variants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? ['without', 'with', 'engine'] : String(flags.variant).split(',').map((v) => v.trim());
     const unknown = variants.filter((v) => !VARIANTS.includes(v));
@@ -708,14 +732,27 @@ function main(argv) {
       }
       markdown = bench.report(records, { agentCmd: common.agentCmd });
     } else {
-      ({ records, markdown, stopped = null } = bench.run({
+      const batchOptions = {
         ...common,
         suite: flags.suite ? path.resolve(flags.suite) : undefined,
         tasks: flags.tasks ? String(flags.tasks).split(',').map((x) => x.trim()) : null,
         runs: Number(flags.runs || 1),
         variants,
-        onRecord: save,
-      }));
+        concurrency: flags.concurrency ? Number(flags.concurrency) : 1,
+      };
+      const finish = (res) => {
+        if (res.stopped && !flags.save) save({ type: 'stopped', ...res.stopped });
+        if (flags.out) {
+          require('../lib/util').writeFileAtomic(path.resolve(flags.out), res.markdown);
+          process.stderr.write(`bench: report written to ${flags.out}\n`);
+        }
+        print(flags, res.markdown, res.records);
+        return res.stopped ? 1 : 0;
+      };
+      // With --save the batch is resumable (a header line, in-flight tracking); without it the runs only print.
+      return flags.save
+        ? bench.startBatch({ ...batchOptions, save: path.resolve(flags.save) }).then(finish)
+        : bench.runBatch({ ...batchOptions, onRecord: save }).then(finish);
     }
     if (stopped) save({ type: 'stopped', ...stopped });
     if (flags.out) {
@@ -1129,18 +1166,26 @@ function main(argv) {
   }
 }
 
+/** The exit code and message of an error the CLI could not handle itself. */
+function fail(err) {
+  if (err instanceof EccodeError) {
+    process.stderr.write(`eccode: [${err.code}] ${err.message}\n`);
+    if (err.details && err.details.recovery) process.stderr.write(`recovery: ${err.details.recovery}\n`);
+    process.exitCode = err.code === 'USAGE' ? 1 : 2;
+  } else {
+    process.stderr.write(`eccode: internal error: ${err && err.stack ? err.stack : err}\n`);
+    process.exitCode = 1;
+  }
+}
+
 if (require.main === module) {
   try {
-    process.exitCode = main(process.argv.slice(2));
+    const result = main(process.argv.slice(2));
+    // A batch of benchmark runs is asynchronous (concurrent runs on worker threads).
+    if (result && typeof result.then === 'function') result.then((code) => { process.exitCode = code; }, fail);
+    else process.exitCode = result;
   } catch (err) {
-    if (err instanceof EccodeError) {
-      process.stderr.write(`eccode: [${err.code}] ${err.message}\n`);
-      if (err.details && err.details.recovery) process.stderr.write(`recovery: ${err.details.recovery}\n`);
-      process.exitCode = err.code === 'USAGE' ? 1 : 2;
-    } else {
-      process.stderr.write(`eccode: internal error: ${err.stack || err}\n`);
-      process.exitCode = 1;
-    }
+    fail(err);
   }
 }
 

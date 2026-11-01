@@ -341,8 +341,10 @@ test('bench --save keeps every finished run on disk, and bench report rebuilds t
   const suite = path.join(__dirname, '..', 'bench', 'suites', 'engine');
   let r = spawnSync(process.execPath, [cli, 'bench', '--suite', suite, '--tasks', 'search-case', '--variant', 'without', '--runs', '2', '--agent', 'node -e ""', '--save', save], { encoding: 'utf8', cwd: dir });
   assert.strictEqual(r.status, 0, r.stderr);
-  const lines = fs.readFileSync(save, 'utf8').trim().split('\n');
-  assert.strictEqual(lines.length, 2, 'one line per finished run');
+  const lines = fs.readFileSync(save, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  assert.strictEqual(lines.length, 3, 'the batch header, then one line per finished run');
+  assert.strictEqual(lines[0].type, 'batch');
+  assert.deepStrictEqual(lines.slice(1).map((l) => [l.batch === lines[0].id, l.runIndex]), [[true, 0], [true, 1]]);
   r = spawnSync(process.execPath, [cli, 'bench', 'report', save, '--agent', 'x --model m', '--out', path.join(dir, 'r.md')], { encoding: 'utf8', cwd: dir });
   assert.strictEqual(r.status, 0, r.stderr);
   assert.match(fs.readFileSync(path.join(dir, 'r.md'), 'utf8'), /\| search-case \| without \| 2\/3 \| \+0\/−0 \|/, 'the untouched fixture fails only its feature check');
