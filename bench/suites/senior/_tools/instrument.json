@@ -471,5 +471,44 @@
   },
   "dropped": "the policy does not separate the parent (safe) from the commit (safe)",
   "at": "2026-11-01T19:51:08.396Z"
+ },
+ "742b498c": {
+  "category": "authorization",
+  "sha": "742b498c1d0f6e30c5338f3b33f9458ce3275eb7",
+  "subject": "fix: enforce ownership check on recipe deletion (GHSA-x5v9-9jvh-7c7q) (#7625)",
+  "instrument": {
+   "parentUnsafe": true,
+   "parent": {
+    "mismatches": [
+     {
+      "role": "userA2",
+      "endpoint": "DELETE /api/recipes/{slug}",
+      "ownership": "other",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 200
+     },
+     {
+      "role": "userA2",
+      "endpoint": "POST /api/recipes/bulk-actions/delete",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 200
+     }
+    ],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   },
+   "commitSafe": true,
+   "commit": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   }
+  },
+  "at": "2026-11-01T19:54:18.197Z"
  }
 }
