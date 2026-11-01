@@ -178,6 +178,9 @@ Benchmark
         session files there (keep it outside the repository: they quote the code the agent read)
         [--save <runs.jsonl>] [--keep]
   bench report <runs.jsonl> --agent "<cmd>" [--out <file>]   Rebuild a report from runs saved with --save
+  bench resume <runs.jsonl> --agent "<cmd>" [same flags as bench]   Continue a killed --save batch: skip the runs
+        already in the file (per task+variant), re-run only the rest, append to the same file; --max-cost stays a
+        total budget across the resume. Refuses a 3rd concurrent stream on this host (cap 2) unless --force
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
         Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
         "engine" installs the toolkit and asks for delivery through the quick track (bench/suites/engine:
@@ -671,8 +674,48 @@ function main(argv) {
       print(flags, markdown, records);
       return 0;
     }
+    if (sub === 'resume') {
+      // Resume a --save batch that was killed mid-run: skip every (task, variant)
+      // run already in the file, re-run only the rest, append to the same file.
+      const file = path.resolve(need(arg, '<runs.jsonl>'));
+      if (!fs.existsSync(file)) throw new EccodeError('NOT_FOUND', `No save file at ${file}; nothing to resume (a resume continues a batch started with --save ${arg || '<runs.jsonl>'})`);
+      if (!flags.force && bench.liveBenchStreams() >= bench.MAX_STREAMS) {
+        throw new EccodeError('TOO_MANY_STREAMS', `${bench.liveBenchStreams()} bench stream(s) already running on this host (cap ${bench.MAX_STREAMS}); wait for one to finish or pass --force`);
+      }
+      const prior = bench.loadRuns(fs.readFileSync(file, 'utf8'));
+      const completed = bench.completedCounts(prior);
+      const spentBefore = bench.spentUsd(prior);
+      const rvariants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? ['without', 'with', 'engine'] : String(flags.variant).split(',').map((v) => v.trim());
+      const save = (r) => fs.appendFileSync(file, JSON.stringify(r) + '\n');
+      const { records, markdown, stopped = null } = bench.run({
+        agentCmd: need(flags.agent, '--agent'),
+        suite: flags.suite ? path.resolve(flags.suite) : undefined,
+        tasks: flags.tasks ? String(flags.tasks).split(',').map((x) => x.trim()) : null,
+        runs: Number(flags.runs || 1),
+        variants: rvariants,
+        timeoutMs: timeoutOf(flags),
+        keep: Boolean(flags.keep),
+        engineProfile: flags['engine-profile'] || 'guard',
+        engineAgents: flags['engine-agents'] || 'inherit',
+        maxCostUsd: flags['max-cost'] !== undefined ? Number(flags['max-cost']) : null,
+        transcripts: flags.transcripts ? path.resolve(flags.transcripts) : null,
+        onProgress: (m) => process.stderr.write(`bench: ${m}\n`),
+        onRecord: save,
+        completed,
+        spentBefore,
+      });
+      if (stopped) save({ type: 'stopped', ...stopped });
+      const skipped = [...completed.values()].reduce((a, b) => a + b, 0);
+      process.stderr.write(`bench: resumed ${file}; ${skipped} completed run(s) skipped (prior spend $${spentBefore.toFixed(2)}), ${records.length} new run(s) recorded\n`);
+      if (flags.out) { require('../lib/util').writeFileAtomic(path.resolve(flags.out), markdown); }
+      print(flags, markdown, records);
+      return stopped ? 1 : 0;
+    }
     const VARIANTS = ['without', 'with', 'method', 'engine', 'debug', 'ecc'];
     const variants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? ['without', 'with', 'engine'] : String(flags.variant).split(',').map((v) => v.trim());
+    if (!flags.force && bench.liveBenchStreams() >= bench.MAX_STREAMS) {
+      throw new EccodeError('TOO_MANY_STREAMS', `${bench.liveBenchStreams()} bench stream(s) already running on this host (cap ${bench.MAX_STREAMS}); wait for one to finish or pass --force`);
+    }
     const unknown = variants.filter((v) => !VARIANTS.includes(v));
     if (unknown.length) throw new EccodeError('USAGE', `Unknown --variant ${unknown.join(', ')}: use with, without, method, engine, debug, ecc, both (without,with), all (without,with,engine), or a comma list`);
     const save = flags.save ? (r) => fs.appendFileSync(path.resolve(flags.save), JSON.stringify(r) + '\n') : () => {};
