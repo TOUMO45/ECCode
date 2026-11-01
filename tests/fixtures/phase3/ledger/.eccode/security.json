@@ -1,0 +1,49 @@
+{
+  "roles": [
+    { "name": "anonymous", "headers": {}, "level": 0 },
+    { "name": "member2", "headers": { "Authorization": "Bearer tok-member2" }, "level": 1 },
+    { "name": "viewer", "headers": { "Authorization": "Bearer tok-viewer" }, "level": 1 },
+    { "name": "member", "headers": { "Authorization": "Bearer tok-member" }, "level": 1 },
+    { "name": "admin", "headers": { "Authorization": "Bearer tok-admin" }, "level": 2 }
+  ],
+  "objects": [
+    {
+      "kind": "account",
+      "idParam": "account_id",
+      "list": { "method": "GET", "path": "/api/accounts", "itemsField": null, "idField": "id" },
+      "item": { "method": "GET", "path": "/api/accounts/{account_id}" },
+      "create": null
+    }
+  ],
+  "policy": [
+    { "role": "member", "endpoint": "GET /api/accounts/{account_id}", "ownership": "own", "expected": "allow" },
+    { "role": "member2", "endpoint": "GET /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+    { "role": "viewer", "endpoint": "GET /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+    { "role": "anonymous", "endpoint": "GET /api/accounts/{account_id}", "ownership": "none", "expected": "deny" },
+
+    { "role": "member2", "endpoint": "DELETE /api/accounts/{account_id}", "ownership": "own", "expected": "deny" },
+    { "role": "viewer", "endpoint": "DELETE /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+
+    { "role": "member", "endpoint": "GET /api/admin/users", "ownership": "none", "expected": "deny" },
+    { "role": "member2", "endpoint": "GET /api/admin/users", "ownership": "none", "expected": "deny" },
+    { "role": "viewer", "endpoint": "GET /api/admin/users", "ownership": "none", "expected": "deny" },
+    { "role": "admin", "endpoint": "GET /api/admin/users", "ownership": "none", "expected": "allow" }
+  ],
+  "authFlows": {
+    "login": {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "json": { "username": "bob", "password": "bob-pass" },
+      "tokenField": "token",
+      "verify": { "method": "GET", "path": "/api/accounts" }
+    },
+    "logout": { "method": "POST", "path": "/api/auth/logout" },
+    "reset": {
+      "request": { "method": "POST", "path": "/api/auth/reset/request", "json": { "username": "bob" }, "tokenField": "reset_token" },
+      "confirm": { "method": "POST", "path": "/api/auth/reset/confirm", "jsonTemplate": { "token": "{token}", "password": "new-pass" } }
+    }
+  },
+  "inputs": [
+    { "endpoint": "GET /api/products", "param": "q", "in": "query", "kind": "sql", "role": "member" }
+  ]
+}
