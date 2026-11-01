@@ -1835,6 +1835,86 @@
       "commit": "py-7ae6d9787ae4"
      }
     }
+   },
+   {
+    "sha": "c935e04fb90730a9b7f3f000dd0fc0362c07bce1",
+    "parent": "cd2097ee9de9c2c2c3f8c831859d72bd02ff9f7d",
+    "subject": "feat: declare route permissions with a require() dependency (#8763)",
+    "lines": 248,
+    "files": [
+     "mealie/routes/_base/base_controllers.py",
+     "mealie/routes/_base/checks.py",
+     "mealie/routes/_base/mixins.py",
+     "mealie/routes/_base/permissions.py",
+     "mealie/routes/groups/controller_group_ai_providers.py",
+     "mealie/routes/groups/controller_group_self_service.py",
+     "mealie/routes/groups/controller_labels.py",
+     "mealie/routes/households/controller_household_self_service.py",
+     "mealie/routes/households/controller_mealplan_ical.py",
+     "mealie/routes/organizers/controller_categories.py",
+     "mealie/routes/organizers/controller_tags.py",
+     "mealie/routes/organizers/controller_tools.py",
+     "mealie/routes/unit_and_foods/foods.py"
+    ],
+    "hidden": [
+     "tests/integration_tests/test_route_permissions.py"
+    ],
+    "backend": {
+     "tests": [
+      "tests/integration_tests/test_route_permissions.py"
+     ],
+     "target": [
+      "tests/integration_tests/test_route_permissions.py::test_routes_declare_expected_permissions",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:organize-can_organize]",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:manage-can_manage]",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:invite-can_invite]",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[household:manage-can_manage_household]",
+      "tests/integration_tests/test_route_permissions.py::test_require_any_valid_user_allows_any_user"
+     ],
+     "regressionFiles": [
+      "tests/integration_tests/test_openapi.py",
+      "tests/integration_tests/test_repository_factory.py",
+      "tests/integration_tests/test_spa.py",
+      "tests/integration_tests/test_validators.py"
+     ],
+     "regression": 51,
+     "failingBoth": [],
+     "venvKey": {
+      "parent": "py-f961f39ac8aa",
+      "commit": "py-f961f39ac8aa"
+     }
+    }
+   },
+   {
+    "sha": "250d4996c9f59c51efd1008d84893bbe0f743765",
+    "parent": "8553cfee3a7aba098a35ce7082248731a7e29dfc",
+    "subject": "fix: Add permission checks for Group & Household members, hide totalUsers card for non-managers (#8348)",
+    "lines": 16,
+    "files": [
+     "frontend/app/pages/user/profile/index.vue",
+     "mealie/routes/groups/controller_group_self_service.py",
+     "mealie/routes/households/controller_household_self_service.py"
+    ],
+    "hidden": [
+     "tests/integration_tests/user_household_tests/test_household_self_service.py"
+    ],
+    "backend": {
+     "tests": [
+      "tests/integration_tests/user_household_tests/test_household_self_service.py"
+     ],
+     "target": [
+      "tests/integration_tests/user_household_tests/test_household_self_service.py::test_get_household_members_unauthorized"
+     ],
+     "regressionFiles": [
+      "tests/integration_tests/user_household_tests/test_household_self_service.py"
+     ],
+     "regression": 4,
+     "failingBoth": [],
+     "venvKey": {
+      "parent": "py-393d7fe39c20",
+      "commit": "py-393d7fe39c20"
+     }
+    }
    }
   ]
  },
