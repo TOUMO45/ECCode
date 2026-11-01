@@ -17,9 +17,9 @@ Each seeded flaw in tests/fixtures/phase3/seeds.js is run through its production
 
 | Flaw | Part | Expected | Verdict | Detail |
 |---|---|---|---|---|
-| b1-notnull-no-default | B1 | caught | caught | 1 blocking [not-null-no-default]; proof not applicable (the seed command failed (ev:ev-mvxtx1qp-02a3bf1b):) |
-| b1-drop-column | B1 | caught | caught | 1 blocking [drop-column]; proof not applicable (the seed command failed (ev:ev-mvxtx2ld-040c0128):) |
-| b1-missing-downgrade | B1 | caught | caught | 1 blocking [missing-downgrade]; proof not applicable (upgrade after downgrade failed (ev:ev-mvxtx560-0a9f7cc9):) |
+| b1-notnull-no-default | B1 | caught | caught | 1 blocking [not-null-no-default]; proof not applicable (the seed command failed (ev:ev-mvxu40md-02ba6f64):) |
+| b1-drop-column | B1 | caught | caught | 1 blocking [drop-column]; proof not applicable (the seed command failed (ev:ev-mvxu41d3-041e504a):) |
+| b1-missing-downgrade | B1 | caught | caught | 1 blocking [missing-downgrade]; proof not applicable (upgrade after downgrade failed (ev:ev-mvxu43ta-0a73551a):) |
 | b1-rename-in-place | B1 | caught | caught | 1 blocking [rename-in-place]; proof round-trips |
 | b1-add-nullable | B1 | clean | correct-clean | 0 blocking [none]; proof round-trips |
 | b1-add-index | B1 | clean | correct-clean | 0 blocking [none]; proof round-trips |
@@ -31,11 +31,11 @@ Each seeded flaw in tests/fixtures/phase3/seeds.js is run through its production
 | b2-optional-param | B2 | clean | correct-clean | additive; breaking [none] |
 | b2-new-endpoint | B2 | clean | correct-clean | additive; breaking [none] |
 | b2-new-field | B2 | clean | correct-clean | none; breaking [none] |
-| b3-nplus1-orders | B3 | caught | caught | GET /api/products 4->4q x1.09; GET /api/orders/1 5->7q x0.84 N+1; GET /api/accounts 4->4q x0.99 |
-| b3-nplus1-accounts | B3 | caught | caught | GET /api/products 4->4q x1.06; GET /api/orders/1 5->5q x0.93; GET /api/accounts 4->8q x1.35 N+1 |
-| b3-latency | B3 | caught | caught | GET /api/products 4->4q x15.7 REG; GET /api/orders/1 5->5q x0.69; GET /api/accounts 4->4q x1.24 |
-| b3-same-queries | B3 | clean | correct-clean | GET /api/products 4->4q x0.86; GET /api/orders/1 5->5q x0.96; GET /api/accounts 4->4q x0.84 |
-| b3-faster | B3 | clean | correct-clean | GET /api/products 4->4q x1.33; GET /api/orders/1 5->5q x1.07; GET /api/accounts 4->4q x0.99 |
+| b3-nplus1-orders | B3 | caught | caught | GET /api/products 4->4q x1.19; GET /api/orders/1 5->7q x1.18 N+1; GET /api/accounts 4->4q x1.09 |
+| b3-nplus1-accounts | B3 | caught | caught | GET /api/products 4->4q x1; GET /api/orders/1 5->5q x0.99; GET /api/accounts 4->8q x1.15 N+1 |
+| b3-latency | B3 | caught | caught | GET /api/products 4->4q x15.52 REG; GET /api/orders/1 5->5q x1.17; GET /api/accounts 4->4q x1.29 |
+| b3-same-queries | B3 | clean | correct-clean | GET /api/products 4->4q x1; GET /api/orders/1 5->5q x0.95; GET /api/accounts 4->4q x0.97 |
+| b3-faster | B3 | clean | correct-clean | GET /api/products 4->4q x1; GET /api/orders/1 5->5q x1; GET /api/accounts 4->4q x0.81 |
 | b4-double-spend | B4 | caught | caught | concurrent transfers: cand BROKEN; duplicate product: cand held |
 | b4-duplicate-insert | B4 | caught | MISSED | concurrent transfers: cand held; duplicate product: cand held |
 | b4-transfer-ok | B4 | clean | correct-clean | concurrent transfers: cand held; duplicate product: cand held |
