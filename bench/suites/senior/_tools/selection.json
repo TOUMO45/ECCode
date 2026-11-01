@@ -2237,6 +2237,86 @@
       "commit": "py-e7e9026dc8e2"
      }
     }
+   },
+   {
+    "sha": "642c826f2b57e2311d2294d42af0dcee3aa1c71c",
+    "parent": "493154caa823bc0cc952aaabee0f5d84aeb4b57a",
+    "subject": "fix: Protect sensitive data in query filter API (GHSA-8m57-7cv5-rjp8) (#7629)",
+    "lines": 548,
+    "files": [
+     "mealie/alembic/versions/2023-10-04-14.29.26_dded3119c1fe_added_unique_constraints.py",
+     "mealie/db/fixes/fix_migration_data.py",
+     "mealie/db/models/_all_models.py",
+     "mealie/db/models/_filterable_column.py",
+     "mealie/db/models/_model_base.py",
+     "mealie/db/models/group/group.py",
+     "mealie/db/models/household/cookbook.py",
+     "mealie/db/models/household/household.py",
+     "mealie/db/models/household/mealplan.py",
+     "mealie/db/models/household/preferences.py",
+     "mealie/db/models/household/shopping_list.py",
+     "mealie/db/models/recipe/api_extras.py",
+     "mealie/db/models/recipe/assets.py",
+     "mealie/db/models/recipe/category.py",
+     "mealie/db/models/recipe/ingredient.py",
+     "mealie/db/models/recipe/labels.py",
+     "mealie/db/models/recipe/nutrition.py",
+     "mealie/db/models/recipe/recipe.py",
+     "mealie/db/models/recipe/recipe_timeline.py",
+     "mealie/db/models/recipe/settings.py",
+     "mealie/db/models/recipe/shared.py",
+     "mealie/db/models/recipe/tag.py",
+     "mealie/db/models/recipe/tool.py",
+     "mealie/db/models/users/users.py",
+     "mealie/repos/repository_factory.py",
+     "mealie/repos/repository_generic.py",
+     "mealie/services/query_filter/builder.py"
+    ],
+    "hidden": [
+     "tests/unit_tests/repository_tests/test_query_filter_builder.py",
+     "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py"
+    ],
+    "backend": {
+     "tests": [
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py",
+      "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py"
+     ],
+     "target": [
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_query_filter_builder_json",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_query_filter_builder_json_uses_raw_value",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_non_filterable_field_user_password_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_non_filterable_field_user_email_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_non_filterable_field_long_live_token_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_filterable_field_does_not_raise",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_deep_traversal_to_filterable_field_works",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_deep_traversal_to_non_filterable_field_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_deep_traversal_user_password_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_filter_query_user_email_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_filter_query_user_password_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_association_proxy_resolving_to_filterable_field_works",
+      "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py::test_database_backup",
+      "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py::test_database_restore",
+      "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py::test_database_restore_data"
+     ],
+     "regressionFiles": [
+      "tests/unit_tests/repository_tests/test_cookbook_repository.py",
+      "tests/unit_tests/repository_tests/test_food_repository.py",
+      "tests/unit_tests/repository_tests/test_group_repository.py",
+      "tests/unit_tests/repository_tests/test_pagination.py",
+      "tests/unit_tests/repository_tests/test_recipe_repository.py",
+      "tests/unit_tests/repository_tests/test_search.py",
+      "tests/unit_tests/repository_tests/test_unit_repository.py",
+      "tests/unit_tests/repository_tests/test_user_repository.py",
+      "tests/unit_tests/services_tests/backup_v2_tests/test_alchemy_exporter.py",
+      "tests/unit_tests/services_tests/backup_v2_tests/test_backup_file.py"
+     ],
+     "regression": 146,
+     "failingBoth": [],
+     "venvKey": {
+      "parent": "py-0fa3d1dcd73a",
+      "commit": "py-0fa3d1dcd73a"
+     }
+    }
    }
   ]
  },
