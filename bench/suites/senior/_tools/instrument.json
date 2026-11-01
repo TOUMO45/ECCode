@@ -611,5 +611,75 @@
   },
   "dropped": "the policy does not separate the parent (safe) from the commit (safe)",
   "at": "2026-11-01T19:58:05.631Z"
+ },
+ "823b938a": {
+  "category": "authorization",
+  "sha": "823b938a2c1680e7fd760a9c174a909b1a50a0ba",
+  "subject": "fix: enforce organize-group-data permission on food/tag/category mutations (#7651)",
+  "instrument": {
+   "parentUnsafe": true,
+   "parent": {
+    "mismatches": [
+     {
+      "role": "userA",
+      "endpoint": "POST /api/organizers/tags",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 201
+     },
+     {
+      "role": "userA",
+      "endpoint": "POST /api/organizers/categories",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 201
+     },
+     {
+      "role": "userA",
+      "endpoint": "POST /api/foods",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 201
+     }
+    ],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   },
+   "commitSafe": true,
+   "commit": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   }
+  },
+  "at": "2026-11-01T20:00:49.297Z"
+ },
+ "aa4473ec": {
+  "category": "authorization",
+  "sha": "aa4473ec7e2a0047b5452221366ba108e48380e4",
+  "subject": "fix: cascade group deletion to households and recipes (#8283)",
+  "instrument": {
+   "parentUnsafe": false,
+   "parent": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   },
+   "commitSafe": true,
+   "commit": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   }
+  },
+  "dropped": "the policy does not separate the parent (safe) from the commit (safe)",
+  "at": "2026-11-01T20:01:47.148Z"
  }
 }
