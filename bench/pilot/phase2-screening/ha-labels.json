@@ -1,0 +1,19 @@
+{
+  "_scheme": "(a) wrong patch delivered; (b) correct patch not delivered: timeout/cost-cap/gate-refusal-with-work-done/escalation; (c) other. Labelled from the run record (patch, checks, delivered/audit) and the agent's own closing statement; the independent 0.B label on tornado-15 is agent-error.",
+  "debug": {
+    "tornado-15:1": { "class": "a", "label_0b": "agent-error", "delivered": true, "reason": "ECCode delivered a patch whose fix is correct but which also rewrote the existing log line \"not in root static directory\" to \"not in the root static directory\"; the hidden test pins the original. The close-call item: with the independent 0.B label (agent-error) it counts; read as a spec-gap it would not." },
+    "mealie3-01-fix-3be8f3d8:1": { "class": "b", "subclass": "escalation (stopped to ask); work partly done", "delivered": false, "reason": "Group-scoping half done and proven (the agent: \"the fix itself is done and proven\"); halted to ask the user about a pytest import-file-mismatch (two test files share a basename, no __init__.py) that breaks the pinned check. Headless: no answer, so the archive-size half was never reached and delivery did not happen." },
+    "mealie3-01-fix-3be8f3d8:2": { "class": "b", "subclass": "escalation/approval; work done", "delivered": false, "reason": "Archive-limit half complete (extract_zip, the constant, the error type, the report entry; 33 tests pass). Halted: fix verify only accepts the pinned reproduction, and pinning the in-repo regression tests needs git stash, which the sandbox asks the user to approve. Blocked on approval, not delivered." },
+    "mealie3-01-fix-3be8f3d8:4": { "class": "b", "subclass": "gate refusal needing user rescope", "delivered": false, "reason": "Reproduction written and pinned; the agent found a flaw in the approved plan and stopped because fixing it needs a user-only rescope. Nothing delivered; no production code written before the halt." }
+  },
+  "ecc": {
+    "tornado-15:1": { "class": "a", "label_0b": "agent-error", "reason": "Same close-call: the path-traversal fix is correct but the log line was changed; the hidden test pins the original. The ECC agent also reported it could not git-commit (the benchmark's realbugs allowedTools omits git commit), but the bench grades the working tree, so that did not cause the miss. Label-dependent like the debug one." }
+  },
+  "bare": {
+    "mealie4-05-fix-fb221afa:1": { "class": "a", "reason": "Incomplete SSRF fix: the agent wrote safehttp changes but 31 existing OIDC tests fail and the target proxy behaviour (NOPROXY) is missing. Capability, not friction." },
+    "mealie4-05-fix-fb221afa:4": { "class": "a", "reason": "Incomplete SSRF fix (same mode: the stated proxy/transport requirements not fully met)." },
+    "mealie4-05-fix-fb221afa:6": { "class": "a", "reason": "Incomplete SSRF fix (same mode)." },
+    "mealie4-05-fix-fb221afa:10": { "class": "a", "reason": "Incomplete SSRF fix (same mode)." },
+    "tornado-10:3": { "class": "a", "reason": "Unverified assumption: the _break_cycles fix clears the template namespace at the wrong point in the websocket handshake; the agent's own tests passed but the hidden test_render_message fails. Capability." }
+  }
+}
