@@ -108,8 +108,12 @@ test('the freeze: the real sealed set verifies against its manifest, and a chang
 test('the freeze covers the whole H-B pipeline, and a changed or missing harness file is refused', () => {
   const freeze = seeds.assertFrozen();
   const listed = Object.keys(freeze.files).sort();
-  // The rule's output today equals the registered list: nothing the diff can load is unfrozen.
-  assert.deepStrictEqual(seeds.freezeList(), listed);
+  // Everything the rule covers today is registered (the freeze may list more: the 0.C harness files).
+  for (const f of seeds.freezeList()) assert.ok(listed.includes(f), `${f} is frozen`);
+  for (const f of ['bench/pilot/phase2-hb/config.js', 'bench/pilot/phase2-hb/mealie_setup.py', 'bench/pilot/phase2-hb/run.js']) assert.ok(listed.includes(f), `${f} is frozen (0.C)`);
+  // The two detector files never change: their hashes are the ones registered on 2026-10-29.
+  assert.strictEqual(freeze.files['lib/behavior.js'], 'aabf35fa54c240c99ec003011c987a29f71430a582dd28fcdca0ed00b8c508c6');
+  assert.strictEqual(freeze.files['scripts/behavior/probe_runner.py'], '03f949952541c0cd625e4ecbab62aeab25be5c38a16b5b06704ade3dfa35e2b4');
   for (const f of ['lib/behavior.js', 'scripts/behavior/probe_runner.py', 'bin/eccode.js', 'lib/compat.js', 'lib/lean.js', 'lib/evidence.js', 'lib/config.js', 'lib/store.js', 'bench/pilot/phase2-seeds.js', 'bench/pilot/phase2-seed-validate.js', 'bench/pilot/phase2-reseal.js']) assert.ok(listed.includes(f), `${f} is frozen`);
   assert.ok(!listed.includes('lib/bench.js'), 'the H-A harness is not frozen');
   assert.strictEqual(freeze.implementationCommit, 'e5c57e498d9d00f7c9c29cee1d00752704922a35');

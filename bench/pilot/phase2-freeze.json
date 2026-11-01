@@ -4,6 +4,9 @@
   "seedsCommit": "4f18441697b1ce4e7fe6d28d0893ecfdeb7ef92c",
   "note": "The whole H-B pipeline, frozen by content hash. Rule (bench/pilot/phase2-seeds.js freezeList): the require closure of lib/behavior.js (engine, normalizers, surface detection, evidence, store, configuration defaults), the CLI entry bin/eccode.js and lib/cli-args.js, the probe runner scripts/behavior/probe_runner.py (probe generation and replay), and the seed harness (phase2-seeds.js apply, phase2-seed-validate.js, phase2-reseal.js). lib/bench.js is the H-A harness and is excluded on purpose. assertFrozen refuses to unseal or apply a seed when any hash differs; `node bench/pilot/phase2-seeds.js check` reports without a key. implementationCommit is the last commit that changed lib/behavior.js and scripts/behavior/probe_runner.py; seedsCommit is the commit that created the sealed set (the detector predates the seeds, protocol section 4a). Not frozen here, registered by hash in the manifest and the protocol instead: bench/suites/phase2-seeds/seeds.sealed and MANIFEST.json (the validation prune rewrites them). Not yet existing, to be registered before measurement: the Mealie .eccode/behavior.json probe configuration and the per-seed runner (apply, init, contract, route, diff).",
   "files": {
+    "bench/pilot/phase2-hb/config.js": "bebe330880fe8370faf6a4d6207e6a706f17db25d0067ed36c95d095b5005df8",
+    "bench/pilot/phase2-hb/mealie_setup.py": "8f08eb867ca5b17ac1b255ae09769c052ac68d9f11c26c02542ac3cdf697d461",
+    "bench/pilot/phase2-hb/run.js": "0a78ce95372fc6baa7c4b082e64b58d63cd56cbdc2e45033820ddbf1e2e309ee",
     "bench/pilot/phase2-reseal.js": "bc8c8df472f44f74486a2aac22b2912bfe17a5b4b72a42139d5d58a4c80270f7",
     "bench/pilot/phase2-seed-validate.js": "99af56e8ff83477a5c44ca7e8d59b11ec9459ad23c2ae2684015e495d521df2e",
     "bench/pilot/phase2-seeds.js": "3b69aaeae8fb89a688aefe478e98cda064ec2f80e60ab06ecdd7e219d110a22c",
@@ -34,5 +37,7 @@
     "lib/util.js": "51b9e77d2e6ab5b75f97873e85a8f04b3fd21520c91bcb02915f68714ac8fc24",
     "lib/works.js": "a9a60103b8086faa9435b16c20c48e26c29f6b6f5db7297e4c9c19c6910bf988",
     "scripts/behavior/probe_runner.py": "03f949952541c0cd625e4ecbab62aeab25be5c38a16b5b06704ade3dfa35e2b4"
-  }
+  },
+  "hbAddedAt": "2026-11-01T00:39:42Z",
+  "hbNote": "0.C (2026-11-01): the Mealie probe configuration generator, its setup script and the per-seed runner are frozen too; the measurement runs from a git worktree of ECCode at the tag phase2-hb-freeze (the commit that added these hashes), verified by `phase2-seeds.js check` there. The two detector files are unchanged. Known before measurement (register row 158): the frozen route detection (lib/compat.js routesIn) keeps decorator-local paths, so Mealie routes under APIRouter prefixes do not match the OpenAPI paths and get no HTTP probe."
 }
