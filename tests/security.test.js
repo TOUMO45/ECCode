@@ -230,7 +230,7 @@ test('a task must cite a passing run of its planned verification command; `true`
   write(dir, 'src/server/app.js', 'module.exports = 1;\n');
   const trivial = evidence.runCommand(store, 'backend-engineer', { label: 'tests', command: 'true' });
   const err = expectCode(() => tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [trivial.id], ['src/server/app.js'])), 'INVALID_HANDOFF');
-  assert.match(err.message, /planned verification command/);
+  assert.match(err.message, /staged verification: the claim must cite a passing run of the task's pinned full verification command/);
   const planned = passCheck(store, 'backend-engineer'); // runs the plan's command
   tasks.complete(store, config, 'api', 'backend-engineer', handoffFor('api', 'backend-engineer', [trivial.id, planned.id], ['src/server/app.js']));
 });

@@ -83,7 +83,7 @@ function rejection(findingId = 'F1', extra = {}) {
     decision: 'changes_requested',
     summary: 'Blocking gap found in the submitted artifacts.',
     criteria: [{ id: 'C1', description: 'criterion one', met: false, evidence: [] }],
-    findings: [{ id: findingId, severity: 'blocking', title: 'Missing requirement', detail: 'The brief omits rate limiting.', recommendation: 'Add a rate-limit requirement.' }],
+    findings: [{ id: findingId, severity: 'blocking', title: 'Missing requirement', detail: 'The brief omits rate limiting (see .eccode/artifacts/brief.md:5).', recommendation: 'Add a rate-limit requirement.' }],
     ...extra,
   };
 }
