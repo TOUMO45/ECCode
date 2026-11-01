@@ -448,5 +448,45 @@
   },
   "dropped": "the policy does not separate the parent (unsafe) from the commit (unsafe)",
   "at": "2026-11-01T19:46:20.689Z"
+ },
+ "e3cf55b9": {
+  "category": "authorization",
+  "sha": "e3cf55b93e06d6ff7e7032326e0aafbced8a9723",
+  "subject": "feat: organizer improvements — recipeCount, merge endpoint, delete unused UI (#7829)",
+  "instrument": {
+   "parentUnsafe": false,
+   "parent": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   },
+   "commitSafe": false,
+   "commit": {
+    "mismatches": [
+     {
+      "role": "userA",
+      "endpoint": "POST /api/organizers/tags/merge",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "other",
+      "status": 422
+     },
+     {
+      "role": "userA",
+      "endpoint": "POST /api/organizers/categories/merge",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "other",
+      "status": 422
+     }
+    ],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   }
+  },
+  "dropped": "the policy does not separate the parent (safe) from the commit (unsafe)",
+  "at": "2026-11-01T19:48:42.345Z"
  }
 }
