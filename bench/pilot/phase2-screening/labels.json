@@ -10,7 +10,13 @@
   "tornado-15:3": {
     "label": "agent-error",
     "closeCall": true,
-    "reason": "Bug check: test_path_traversal_protection expects the existing log line (ExpectLog \".*not in root static directory\") and a 403. The run fixes the prefix check correctly (403 is returned) but also rewrites the existing message to \"is not in the root static directory\", a change nobody asked for, so the log expectation fails. The request says the refusal is \"logged as not in the root static directory, as other traversal attempts already are\": the second clause names the existing logging as the convention to keep; the agent saw the existing text, chose the prose wording over it and changed behaviour outside the fix. Close call: the prose wording does contain \"the\"; a reviewer who reads the request as prescribing the exact text would label this spec-gap, and the item would then not be hard (runs 1 and 2 pass). Flagged for the owner."
+    "reason": "Bug check: test_path_traversal_protection expects the existing log line (ExpectLog \".*not in root static directory\") and a 403. The run fixes the prefix check correctly (403 is returned) but also rewrites the existing message to \"is not in the root static directory\", a change nobody asked for, so the log expectation fails. The request says the refusal is \"logged as not in the root static directory, as other traversal attempts already are\": the second clause names the existing logging as the convention to keep; the agent saw the existing text, chose the prose wording over it and changed behaviour outside the fix. Close call: the prose wording does contain \"the\"; a reviewer who reads the request as prescribing the exact text would label this spec-gap, and the item would then not be hard (runs 1 and 2 pass). Flagged for the owner.",
+    "independent": {
+      "label": "agent-error",
+      "confidence": "high",
+      "by": "an independent labeller agent given only the request, the patch, the hidden-check output and the rubric (2026-11-01)",
+      "decisive": "The prefix fix is correct and the regression suite passes; the hidden test fails solely because the run rewrote the existing log message, which the request's clause 'as other traversal attempts already are' names as the reference. Strongest case for spec-gap: the request's prose contains the new wording; rejected because the wording describes behaviour, not a string to enforce, and the fix did not require touching the message."
+    }
   },
   "mealie4-05-fix-fb221afa:2": {
     "label": "agent-error",
