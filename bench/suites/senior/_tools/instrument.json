@@ -510,5 +510,106 @@
    }
   },
   "at": "2026-11-01T19:54:18.197Z"
+ },
+ "4b32e54b": {
+  "category": "authorization",
+  "sha": "4b32e54bba05942017f55f004b361b77582d22be",
+  "subject": "fix: show an error when a user lacks permission for an action (#8808)",
+  "instrument": {
+   "parentUnsafe": false,
+   "parent": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   },
+   "commitSafe": true,
+   "commit": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   }
+  },
+  "dropped": "the policy does not separate the parent (safe) from the commit (safe)",
+  "at": "2026-11-01T19:55:30.897Z"
+ },
+ "f4b4f87e": {
+  "category": "authorization",
+  "sha": "f4b4f87ec44a9a3dbeec9365b2b035223cb87e72",
+  "subject": "fix: require can_organize to manage units, tools, labels, recipe actions (#8783)",
+  "instrument": {
+   "parentUnsafe": true,
+   "parent": {
+    "mismatches": [
+     {
+      "role": "userA",
+      "endpoint": "POST /api/units",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 201
+     },
+     {
+      "role": "userA",
+      "endpoint": "POST /api/organizers/tools",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 201
+     },
+     {
+      "role": "userA",
+      "endpoint": "POST /api/groups/labels",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 200
+     },
+     {
+      "role": "userA",
+      "endpoint": "POST /api/households/recipe-actions",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 201
+     }
+    ],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   },
+   "commitSafe": true,
+   "commit": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   }
+  },
+  "at": "2026-11-01T19:57:18.353Z"
+ },
+ "72c62e8c": {
+  "category": "authorization",
+  "sha": "72c62e8cfaa6e5c2f439dbdae217b31505372f2d",
+  "subject": "fix: apply household visibility preference to recipes imported from zip (#8557)",
+  "instrument": {
+   "parentUnsafe": false,
+   "parent": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   },
+   "commitSafe": true,
+   "commit": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   }
+  },
+  "dropped": "the policy does not separate the parent (safe) from the commit (safe)",
+  "at": "2026-11-01T19:58:05.631Z"
  }
 }
