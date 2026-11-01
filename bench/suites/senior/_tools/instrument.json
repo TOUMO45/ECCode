@@ -250,5 +250,56 @@
    ]
   },
   "at": "2026-11-01T19:41:45.816Z"
+ },
+ "a2149447": {
+  "category": "authorization",
+  "sha": "a2149447d98b9bfb34a3dc5b223e1aa9aa8be6b1",
+  "subject": "feat: enforce route permission helpers with semgrep in CI (#8769)",
+  "instrument": {
+   "parentUnsafe": false,
+   "parent": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   },
+   "commitSafe": true,
+   "commit": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   }
+  },
+  "dropped": "the policy does not separate the parent (safe) from the commit (safe)",
+  "at": "2026-11-01T19:41:58.045Z"
+ },
+ "4a280cbd": {
+  "category": "migration",
+  "sha": "4a280cbdd096d74e2b46f860b1c6ab27a93640a4",
+  "subject": "feat: reverse proxy auth (#8183)",
+  "referenceGrade": {
+   "safe": false,
+   "reasons": [
+    "1 blocking finding(s): mealie/alembic/versions/2026-10-14-00.00.00_f3a8b6c1d2e4_add_reverse_proxy_auth_method.py:28 missing-downgrade"
+   ],
+   "findings": [
+    "missing-downgrade mealie/alembic/versions/2026-10-14-00.00.00_f3a8b6c1d2e4_add_reverse_proxy_auth_method.py:28"
+   ],
+   "proof": {
+    "seed": true,
+    "downgrade": true,
+    "upgrade": true,
+    "roundTrip": true,
+    "reverted": false,
+    "schemaBefore": "86cff62b3b2d1ebb",
+    "schemaAfter": "86cff62b3b2d1ebb"
+   },
+   "files": [
+    "mealie/alembic/versions/2026-10-14-00.00.00_f3a8b6c1d2e4_add_reverse_proxy_auth_method.py"
+   ]
+  },
+  "dropped": "reference solution fails the migration grade: 1 blocking finding(s): mealie/alembic/versions/2026-10-14-00.00.00_f3a8b6c1d2e4_add_reverse_proxy_auth_method.py:28 missing-downgrade",
+  "at": "2026-11-01T19:42:08.016Z"
  }
 }
