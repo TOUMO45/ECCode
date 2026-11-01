@@ -63,10 +63,17 @@ See `docs/design/phase3-plan.md` §7. The load-bearing ones: H-B is measured fro
 
 **Narrowings:**
 - **Implemented, no gate change — guard routing by surface.** The guards already run only when the change reaches the relevant surface: a change touching no route runs no API/perf/security guard, a change with no migration file runs no migration guard, a change outside the race watch-paths runs no race probe (verified: a feature change reaching no code surface requires only the release-plan presence, no B/C guard). The behavior diff already probes only impacted surfaces (`surfacesOf`). So a small or docs-only change on a guard track pays nothing for the guards it does not need.
-- **Needs a gate decision — scoped pinned verification.** The dominant sink is the pinned verification command being the full suite, which the agent re-runs each iteration. Scoping it to the change's impacted tests (`impact --run`) would cut each run ~5×, but it changes what the verification gate proves (a scoped suite proves less than the full one). The full suite would still run once at the final gate; the iteration checks would be scoped. **Listed, waiting for the owner's decision**, because it weakens the gate's guarantee.
-- **Needs a gate decision — review iterations on low-risk tasks.** The 3–7 review rejections per run drive re-runs; a single review round on a task the risk router marks low would cut them, but fewer review iterations is a gate-guarantee change. **Listed, waiting.**
+- **Implemented, owner-authorized at gate level — staged verification.** `config.verification.staged` (default on). A task iterates on impact-scoped checks; the guarantee is that the *claim of done* cites a passing run of the task's pinned **full** verification command, not that every iteration reruns everything. `lib/tasks.js` refuses a claim whose only cited passing run is scoped (a subset, or a trivially-passing command), naming the scoped run. The full command runs once at the claim and again at the reviewer's independent re-run. This preserves the gate's guarantee (final evidence is the full suite) while removing the per-iteration full-suite re-runs that were ~50–65% of a run's wall-clock. Positive/negative/bypass tests: `tests/review-discipline.test.js`.
+- **Implemented, owner-authorized at gate level — review discipline.** On a code gate (phase/verification), a `changes_requested` finding must cite an executed failing check (`ev:<id>` of a failed command) or a specific `file:line` in its detail; `lib/gates.js` refuses an uncited rejection. Prose gates (architecture/design) are exempt. On an impact-routed low-risk task (guard routing required no production-sensitive guard), after `config.review.maxRejectionsBeforeDecision` rejections (default 1) the reviewer must approve or escalate rather than reject again — this bounds the 3–7 review re-rounds that drove re-runs. Positive/negative/bypass tests: `tests/review-discipline.test.js`. Commit `28c22d0`; full suite green (451 pass). Frozen H-B detector files unchanged (verified by hash).
 
-**Re-measurement.** The clean end-to-end re-measurement (the two Mealie hard items, 3 runs each, cap $60) runs the Phase 3 debug track and must not contend with 0.A's slow runs on the same four cores, so it is sequenced to start when 0.A's debug arm finishes or caps out; the component measurement above (5× per check) already shows the available saving. The $60 cap is reserved for it.
+**Re-measurement (narrowed engine).** Running: the Phase 3 debug track with the narrowing above, on the two Mealie hard items, 3 runs each, cap $30/item ($60 total), two parallel streams (concurrency 2). Compared to 0.A (un-narrowed Phase 2 debug), bare, and ECC for the same items. Baselines on record for the comparison:
+
+| Arm | mealie3-01 | mealie4-05 |
+|---|---|---|
+| 0.A debug (un-narrowed) | 5 runs, 2 pass, 1 delivered, $11.96, 116.7 min (truncated by container restart) | no debug baseline recorded |
+| bare | 10 runs, 10 pass, $3.72, 27.9 min | 10 runs, 6 pass, $4.86, 35.5 min |
+| ECC | 10 runs, 10 pass, $12.03, 78.8 min | 5 runs, 5 pass, $9.52, 81.8 min |
+| narrowed debug (this run) | _pending_ | _pending_ |
 
 ## 4. Cost per track on the fixtures vs targets
 
@@ -106,7 +113,7 @@ Registered (section 1, Part G). 7 categories, ≥12 items each (≥84 items from
 
 ## 7. New limits rows
 
-157 (the freeze covers the whole engine; H-B runs from a worktree), 158 (the frozen route detector misses prefixed routes), 159 (Part A checks presence not quality), 160 (guards FastAPI/SQLAlchemy/Alembic only), 161 (perf is wall-clock, race needs the declared invariant), 162 (security probes are targeted, not a scanner), 163 (the Part D budget, amending the architecture doc), 164 (Part E observed-only, no PR comments without a network API), 165 (Part F targets; quick over target on realbugs). Header: forty-five open.
+157 (the freeze covers the whole engine; H-B runs from a worktree), 158 (the frozen route detector misses prefixed routes), 159 (Part A checks presence not quality), 160 (guards FastAPI/SQLAlchemy/Alembic only), 161 (perf is wall-clock, race needs the declared invariant), 162 (security probes are targeted, not a scanner), 163 (the Part D budget, amending the architecture doc), 164 (Part E observed-only, no PR comments without a network API), 165 (Part F targets; quick over target on realbugs), 166 (guard scorecard 18/20, the two misses structural), 167 (gate-level narrowing: staged verification + bounded low-risk review rounds — a scoped iteration check can pass until the claim's full run). Header: forty-seven open.
 
 ## 8. Recommended next step
 
