@@ -20,9 +20,25 @@ Written 2026-11-01. Branch `claude/eloquent-cray-0g0y6v`. Claims are sorted Veri
 
 Wiring: `STATE_VERSION` 6; new events reduced and their artifacts re-hashed by `audit`; record protection in the guard hook and sandbox profile; `lib/worktree.js` (the behavior diff's worktree pattern, exported for the guards).
 
-## 2. Fixture scorecards (B and C) — IN FLIGHT
+## 2. Fixture scorecards (B and C), with real numbers
 
-`tests/fixtures/phase3/ledger` is a FastAPI + SQLAlchemy + Alembic app (45 tests) with 31 seeded flaws (`seeds.js`). The guard scorecard (`tests/phase3-guards.test.js`, caught / false positives per part) is being built; the numbers go here and in `tests/fixtures/phase3/scorecard.md` when it lands.
+`tests/fixtures/phase3/ledger` is a FastAPI + SQLAlchemy + Alembic app (45 passing tests) with 31 seeded flaws (`seeds.js`). `tests/phase3-guards.test.js` runs each guard on each flaw and writes `tests/fixtures/phase3/scorecard.md`. **Zero false positives across all parts** (every safe counterpart left alone); the test asserts this and that every miss is a documented, justified limitation.
+
+| Part | Guard | Caught / expect | False positives | Clean-correct / expect |
+|---|---|---|---|---|
+| B.1 | migration | 4 / 4 | 0 | 4 / 4 |
+| B.2 | API | 2 / 3 | 0 | 3 / 3 |
+| B.3 | performance | 3 / 3 | 0 | 2 / 2 |
+| B.4 | concurrency | 1–2 / 2 | 0 | 1 / 1 |
+| C | security | 4 / 8 | 0 | 1 / 1 |
+| **all** | | **13–14 / 20** | **0** | **11 / 11** |
+
+The 6–7 misses are each a limitation of the specific guard against this app, not a false reading, and are listed with justifications in the scorecard:
+- **B.2 b2-field-type**: the ledger routes declare no `response_model`, so the OpenAPI response schema is empty and the schema-only API diff cannot see a field's type change (the Phase 2 behavior diff catches this at runtime; the compatibility guard reads the schema).
+- **B.4 b4-double-spend / b4-duplicate-insert**: the app's `BEGIN IMMEDIATE` transactions make the double-spend window sub-millisecond on sqlite (caught ~50–85% of runs, a bonus when the race fires) and make the duplicate-insert check-then-insert atomic (never reproduces). The guard catches a race only when the concurrency actually provokes it.
+- **C c-idor-update**: the IDOR prober issues reads; a PATCH with no body is rejected (422) before the ownership check, so the update IDOR is not observed. **c-mass-assignment / c-field-leak**: the access matrix compares status only and has no privilege-escalation or field-leak oracle. **c-sql-concat**: the injected `OR 1=1` returns 200, and the input probe flags only a 5xx carrying a SQL error.
+
+These gaps are recorded in limits rows 161–162 and row 166. The guards are strong where they are executed oracles (migration static analysis and rollback proof, query-count N+1, access-matrix status mismatches, auth-flow single-use) and honest about what a schema-only or status-only check cannot see.
 
 ## 3. Deviations from the brief (each pinned by a test)
 
