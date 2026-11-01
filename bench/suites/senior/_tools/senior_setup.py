@@ -14,6 +14,7 @@ Deterministic by construction. Adapted from bench/pilot/phase2-hb/mealie_setup.p
 """
 import os
 import sys
+import uuid
 from pathlib import Path
 
 IDS = {
@@ -86,10 +87,11 @@ def main():
                 # Trees between 2026-09-08 and 2026-09-16 drop a caller-supplied id on create
                 # (upstream d204b7198, fixed by d1b02872e): give the row its fixed id by hand, so the
                 # constant token and the recipe seeding below find the principal.
-                created = repos.users.get_by_username("eccode-" + name.lower())
-                if created is not None and str(created.id) != uid:
+                created = repos.users.get_one("eccode-" + name.lower(), "username", any_case=False)
+                if created is not None and uuid.UUID(str(created.id)) != uuid.UUID(uid):
                     from sqlalchemy import text
-                    session.execute(text("UPDATE users SET id = :new WHERE id = :old"), {"new": uid.replace("-", "") if len(str(created.id)) == 32 else uid, "old": str(created.id)})
+                    # Mealie's GUID column stores a 32-character hex string on sqlite.
+                    session.execute(text("UPDATE users SET id = :new WHERE id = :old"), {"new": uuid.UUID(uid).hex, "old": uuid.UUID(str(created.id)).hex})
                     session.commit()
                 try:  # newer trees: the organize permission (default True for a plain member)
                     repos.users.patch(uid, {"can_organize": admin})
