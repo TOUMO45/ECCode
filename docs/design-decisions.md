@@ -31,6 +31,7 @@ With `headless: true` in `.eccode/config.json` or `ECCODE_HEADLESS=1` in the env
 | A non-blocking question (`request ambiguity`) | recorded with its `reading` (or its first `options` entry) as a `request.assumption` in the same step; refused with that instruction when it has neither |
 | An ask-user escalation of the Lab (`debug escalate --kind ask-user`) | carries `--reading "<assumed answer>"`, recorded as an assumption; the investigation continues |
 | A rescope of a reviewed plan's task (user only otherwise) | the orchestrator may, with `--reason`; recorded as an assumption |
+| An approved gate whose artifacts changed after the approval (edits after approval fail the audit; the reopen is the user's) | the orchestrator may reopen it (`gate reopen <gate> --actor orchestrator --resolution`): the approval is dropped, the owner resubmits, a reviewer reviews the current files again; recorded as an assumption |
 | A **blocking** question | still stops planning (`AMBIGUITY_OPEN`) until `request assume` or a user's `request clarify` |
 
 Every assumption carries `headless: true`, is shown in every handoff (`remainingIssues`), in `eccode status` and in the final report under "Assumptions and open questions", so a reader sees what was guessed. The bench pre-approves the agent's own `git stash` and `git worktree` in every sandbox (`lib/bench.js`), and the guard keeps the record out of a stash. A pre-flight (`lib/preflight.js`) records an `environment.finding` when a pytest basename collision would make a pinned check fail whatever the fix.

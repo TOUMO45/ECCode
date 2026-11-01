@@ -23,7 +23,7 @@ const preflight = require('../lib/preflight');
 const bench = require('../lib/bench');
 const { loadConfig } = require('../lib/config');
 const { Store } = require('../lib/store');
-const { tmpProject, write, approveThroughPlan, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, expectCode, ARCH_MD } = require('./helpers');
 
 const CLI = path.join(__dirname, '..', 'bin', 'eccode.js');
 const GUARD = path.join(__dirname, '..', 'scripts', 'hooks', 'guard.js');
@@ -149,6 +149,33 @@ test('headless: the orchestrator may rescope a reviewed plan\'s task, recorded a
   const inter = tmpProject();
   approveThroughPlan(inter);
   expectCode(() => tasks.rescope(inter.store, inter.config, 'api', 'orchestrator', { files: 'src/**', reason: 'widen the api task please' }), 'ROLE_NOT_ALLOWED');
+  for (const c of [ctx, inter]) fs.rmSync(c.dir, { recursive: true, force: true });
+});
+
+test('headless: an approved gate whose artifacts changed after the approval is reopened by the orchestrator, recorded as an assumption; interactive it is the user\'s', () => {
+  const ctx = headlessProject();
+  approveThroughPlan(ctx);
+  const { store, config, dir } = ctx;
+  assert.strictEqual(store.state().gates.architecture.status, 'approved');
+  // Nothing changed: not reopened (an escalated gate stays the user's).
+  expectCode(() => gates.reopenGate(store, 'architecture', 'orchestrator', 'formatting fix after the review', { config }), 'INVALID_TRANSITION');
+  write(dir, '.eccode/artifacts/brief.md', ARCH_MD + '\n<!-- lint: trailing whitespace removed -->\n');
+  const r = gates.reopenGate(store, 'architecture', 'orchestrator', 'formatting-only edit after the review; resubmit and review again', { config });
+  assert.deepStrictEqual(r.event.data.stale, ['.eccode/artifacts/brief.md']);
+  const g = store.state().gates.architecture;
+  assert.deepStrictEqual({ status: g.status, approvedBy: g.approvedBy, approvedSubmission: g.approvedSubmission }, { status: 'in_progress', approvedBy: null, approvedSubmission: null });
+  assert.strictEqual(store.state().design.assumptions.length, 1);
+  assert.match(store.state().design.assumptions[0].reading, /reopened for a fresh submission and review/);
+  // The current file is resubmitted and reviewed again; then the record audits clean.
+  gates.submit(store, config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] });
+  gates.recordReview(store, config, 'architecture', 'architecture-reviewer', require('./helpers').approval([['artifact:.eccode/artifacts/brief.md#Requirements']]));
+  assert.strictEqual(store.state().gates.architecture.status, 'approved');
+  assert.ok(store.audit().ok);
+  // Interactive: the user only.
+  const inter = tmpProject();
+  approveThroughPlan(inter);
+  write(inter.dir, '.eccode/artifacts/brief.md', ARCH_MD + '\n<!-- edited -->\n');
+  expectCode(() => gates.reopenGate(inter.store, 'architecture', 'orchestrator', 'formatting fix after the review', { config: inter.config }), 'USER_AUTH_REQUIRED');
   for (const c of [ctx, inter]) fs.rmSync(c.dir, { recursive: true, force: true });
 });
 
