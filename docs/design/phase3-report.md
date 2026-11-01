@@ -44,6 +44,29 @@ These gaps are recorded in limits rows 161–162 and row 166. The guards are str
 
 See `docs/design/phase3-plan.md` §7. The load-bearing ones: H-B is measured from the `phase2-hb-freeze` worktree, not HEAD, because the freeze covers the whole engine and Phase 3 edits it (row 157); `lib/worktree.js` duplicates the frozen behavior-diff worktree code; the Part D task budget caps size with a waiver, reversing the architecture doc's "measure, never cap" (row 163); hot paths = the change's surfaces + impact dependents; OpenAPI/signature diff is FastAPI/Python only (row 160); design is enforced at claim on refactor (no design gate there); a headless blocking ambiguity is resolved by a recorded assumption; Part E is report-only.
 
+## 4a. Cost profile and narrowing (Part F, directive follow-up)
+
+`bench/pilot/phase3-profile.js` reads an engine run's saved `record/` and attributes wall-clock to phases. On the 0.A ECCode (Phase 2 debug) Mealie runs captured so far (5 runs of mealie3-01):
+
+| Phase | Minutes (summed) | Check runs |
+|---|---|---|
+| other checks (verification / stack: the full Mealie backend suite) | 18.4 | 38 |
+| behaviour diff + guard-labelled probe runs | 15.5 | 19 |
+| lab: reproduce / baseline | 7.9 | 26 |
+| behaviour diff | 4.5 | 12 |
+| fix verify | 2.1 | 8 |
+
+**Top three sinks:** (1) repeated full-suite check runs (the agent re-runs the pinned Mealie suite, ~168 s for 3,583 tests, to check its own work — the longest runs did it 10+ times); (2) review re-rounds (the 31–36 min runs had 7–11 review records, 3–7 rejected, each forcing a re-run); (3) the Lab's reproduction and baseline suite runs. A 36-minute run spent 24 minutes in check commands.
+
+**Measured saving of scoping a check:** the mealie3-01 fix's own target tests (~20 ids, the recipe-migration subset) ran in ~30 s against the ~168 s full suite — about **5× per check**. Since checks are ~50–65% of a run's wall-clock, scoping the iteration checks would cut a ~35-minute run to roughly 15–20 minutes.
+
+**Narrowings:**
+- **Implemented, no gate change — guard routing by surface.** The guards already run only when the change reaches the relevant surface: a change touching no route runs no API/perf/security guard, a change with no migration file runs no migration guard, a change outside the race watch-paths runs no race probe (verified: a feature change reaching no code surface requires only the release-plan presence, no B/C guard). The behavior diff already probes only impacted surfaces (`surfacesOf`). So a small or docs-only change on a guard track pays nothing for the guards it does not need.
+- **Needs a gate decision — scoped pinned verification.** The dominant sink is the pinned verification command being the full suite, which the agent re-runs each iteration. Scoping it to the change's impacted tests (`impact --run`) would cut each run ~5×, but it changes what the verification gate proves (a scoped suite proves less than the full one). The full suite would still run once at the final gate; the iteration checks would be scoped. **Listed, waiting for the owner's decision**, because it weakens the gate's guarantee.
+- **Needs a gate decision — review iterations on low-risk tasks.** The 3–7 review rejections per run drive re-runs; a single review round on a task the risk router marks low would cut them, but fewer review iterations is a gate-guarantee change. **Listed, waiting.**
+
+**Re-measurement.** The clean end-to-end re-measurement (the two Mealie hard items, 3 runs each, cap $60) runs the Phase 3 debug track and must not contend with 0.A's slow runs on the same four cores, so it is sequenced to start when 0.A's debug arm finishes or caps out; the component measurement above (5× per check) already shows the available saving. The $60 cap is reserved for it.
+
 ## 4. Cost per track on the fixtures vs targets
 
 From the realbugs batch (the only data with all tracks today): bare 1×; quick/engine **3.58× bare, over its 1.5× target**; fix/debug **3.49×, within its 4× target**. The quick figure is the full engine cost on realbugs; narrowing (skip the behavior diff on a no-surface quick change; skip perf when no route is reached) is proposed before the measured Senior Bench run. Reported, no gate (Part F). `node bench/pilot/phase3-cost.js <runs.jsonl>`.
