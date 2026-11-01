@@ -30,7 +30,10 @@
     "text": "Feature: declare route permissions with a require() dependency.\n\nEach handler that needs a user permission calls self.checks.can_manage(), self.checks.can_organize() and so on (the OperationChecks helper on BaseUserController) somewhere in its body. Nothing can list which route needs which permission, so a forgotten check is invisible in review.\n\nExpected:\n- A new module mealie.routes._base.permissions with:\n  - Perm, a StrEnum: ANY_VALID_USER = \"any_valid_user\", GROUP_ORGANIZE = \"group:organize\", GROUP_MANAGE = \"group:manage\", GROUP_INVITE = \"group:invite\", HOUSEHOLD_MANAGE = \"household:manage\". The flags: GROUP_ORGANIZE needs can_organize, GROUP_MANAGE can_manage, GROUP_INVITE can_invite, HOUSEHOLD_MANAGE can_manage_household; ANY_VALID_USER accepts every signed-in user.\n  - RequirePermission(perm): a callable dependency that keeps the permission as .perm, takes the current user (get_current_user) and raises HTTPException 403 when the user lacks the flag. Calling it directly with a PrivateUser works (PrivateUser.model_construct(can_manage=True) passes, can_manage=False raises with status_code 403; RequirePermission(Perm.ANY_VALID_USER)(PrivateUser.model_construct()) passes).\n  - require(perm) returns Depends(RequirePermission(perm)), for a route's dependencies list, so the instance stays on the route's dependant and the declared permission can be read back from app.routes (iterate the route contexts, look at each APIRoute's dependant.dependencies for a RequirePermission call).\n  - forbidden() -> HTTPException 403; not_found(message=\"Not found.\") -> HTTPException 404 with an ErrorResponse detail. HttpRepo's 404s use not_found().\n- The routes declare exactly this table (method, path), and no other route declares a permission:\n  - GROUP_ORGANIZE: POST /api/foods, PUT /api/foods/merge, PUT /api/foods/{item_id}, DELETE /api/foods/{item_id}, POST /api/groups/labels/merge, POST /api/organizers/categories, POST /api/organizers/categories/merge, PUT /api/organizers/categories/{item_id}, DELETE /api/organizers/categories/{item_id}, POST /api/organizers/tags, POST /api/organizers/tags/merge, PUT /api/organizers/tags/{item_id}, DELETE /api/organizers/tags/{item_id}, POST /api/organizers/tools/merge.\n  - GROUP_MANAGE: POST /api/groups/ai-providers/providers, POST /api/groups/ai-providers/providers/test, GET, PUT and DELETE /api/groups/ai-providers/providers/{provider_id}, POST /api/groups/ai-providers/providers/{provider_id}/test, GET /api/groups/ai-providers/prompts, PUT and DELETE /api/groups/ai-providers/prompts/{prompt_name}, GET and PUT /api/groups/ai-providers/settings, PUT /api/groups/preferences, GET /api/households/members, PUT /api/households/permissions.\n  - HOUSEHOLD_MANAGE: POST and DELETE /api/households/mealplans/ical, PUT /api/households/preferences.\n- The in-handler checks, OperationChecks and the checks property are removed; who gets 403 does not change.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/test_route_permissions.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
     "coverage": [
       "tests/integration_tests/test_route_permissions.py::test_routes_declare_expected_permissions",
-      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:organize-can_organize]",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:manage-can_manage]",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:invite-can_invite]",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[household:manage-can_manage_household]",
       "tests/integration_tests/test_route_permissions.py::test_require_any_valid_user_allows_any_user"
     ],
     "notes": "The test introspects app.routes for RequirePermission instances and calls the dependency directly, so the class name, the .perm attribute, the enum values and the whole route table are load-bearing and had to be spelled out.",
@@ -47,7 +50,15 @@
   "e3cf55b9": {
     "text": "Feature: recipe counts on tags and categories, and a merge action for each.\n\nThe group data pages for tags and categories cannot show how many recipes use each organizer, and duplicates (\"Dessert\"/\"Desserts\") can only be cleaned up by editing every recipe.\n\nExpected:\n- Every tag returned by GET /api/organizers/tags and every category returned by GET /api/organizers/categories carries recipeCount: the number of recipes carrying it, 0 for an unused one. The single-item and merge responses carry it too.\n- POST /api/organizers/tags/merge and POST /api/organizers/categories/merge, body {\"fromId\": <uuid>, \"toId\": <uuid>}, both behind the organize-group-data permission (403 without can_organize, like create/update/delete):\n  - fromId equal to toId answers 400.\n  - An unknown fromId or toId (not in the caller's group) answers 404.\n  - Otherwise every recipe linked to the source is linked to the target instead; a recipe that already had both keeps a single link to the target (no unique-constraint error); the source is deleted. The response is 200 with the target (TagOut / CategoryOut, including recipeCount, which now counts the merged recipes: two sources with one recipe each give 2, one recipe with both gives 1). Afterwards GET of the source's id answers 404 and each affected recipe lists the target and not the source in tags / recipeCategory.\n- Frontend (not graded): the tags and categories data pages show the count, offer \"Merge\" (pick the target) and \"Delete unused\".\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/category_tag_tool_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
     "coverage": [
-      "tests/integration_tests/category_tag_tool_tests/test_organizers_merge.py"
+      "tests/integration_tests/category_tag_tool_tests/test_organizers_merge.py::test_tag_list_includes_recipe_count_for_tagged_recipe",
+      "tests/integration_tests/category_tag_tool_tests/test_organizers_merge.py::test_tag_list_recipe_count_is_zero_for_empty_tag",
+      "tests/integration_tests/category_tag_tool_tests/test_organizers_merge.py::test_tag_merge_moves_exclusive_recipes_to_target",
+      "tests/integration_tests/category_tag_tool_tests/test_organizers_merge.py::test_tag_merge_overlap_does_not_violate_unique_constraint",
+      "tests/integration_tests/category_tag_tool_tests/test_organizers_merge.py::test_tag_merge_unknown_from_id_returns_404",
+      "tests/integration_tests/category_tag_tool_tests/test_organizers_merge.py::test_tag_merge_same_id_returns_400",
+      "tests/integration_tests/category_tag_tool_tests/test_organizers_merge.py::test_category_list_includes_recipe_count_for_categorised_recipe",
+      "tests/integration_tests/category_tag_tool_tests/test_organizers_merge.py::test_category_merge_moves_exclusive_recipes_to_target",
+      "tests/integration_tests/category_tag_tool_tests/test_organizers_merge.py::test_category_merge_overlap_does_not_violate_unique_constraint"
     ],
     "notes": "All tests of the new file are targets (recipe_count on lists, merge moves/overlap/404/400 for tags and categories).",
     "reviewed": false
@@ -55,9 +66,10 @@
   "742b498c": {
     "text": "Fix: deleting a recipe must require ownership, not merely edit rights.\n\nRecipe deletion reuses the collaborative-editing rule: whoever may edit a recipe may delete it. Recipes are unlocked by default, so any member of the owner's household, and any member of another household when the owner's household allows edits from other households, can delete another user's recipes, one at a time through DELETE /api/recipes/{slug} and in bulk through POST /api/recipes/bulk-actions/delete. Editing a shared recipe is a feature; deleting it is not.\n\nExpected:\n- A recipe can be deleted only by its owner or by an administrator. The recipe's locked setting and the household preference \"lock recipe edits from other households\" play no part in deletion any more: a non-owner is refused even when the recipe is unlocked, and even when the owner's household allows edits from other households.\n- DELETE /api/recipes/{slug} by a non-owner answers 403 and leaves the recipe in place (that user's GET of the recipe still answers 200 with the same id).\n- POST /api/recipes/bulk-actions/delete answers 403 when any of the listed recipes is not owned by the caller, and deletes nothing in that case.\n- The owner can still delete their recipe, and an admin can still delete any recipe in the group, including a locked recipe owned by someone else.\n- Updating is unchanged: a non-owner may still edit an unlocked recipe under the existing household rules.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_recipe_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
     "coverage": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_delete_recipes_from_other_households[False-True]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_delete_recipes_from_other_households[False-False]",
       "tests/integration_tests/user_recipe_tests/test_recipe_owner.py::test_other_user_cant_delete_unlocked_recipe",
-      "tests/integration_tests/user_recipe_tests/test_recipe_owner.py::test_other_user_cant_bulk_delete_unlocked_recipes",
-      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_delete_recipes_from_other_households"
+      "tests/integration_tests/user_recipe_tests/test_recipe_owner.py::test_other_user_cant_bulk_delete_unlocked_recipes"
     ],
     "notes": "The cross-household test is parametrized over the lock preference and the private flag; the request states the rule once for all four cases.",
     "reviewed": false
@@ -65,8 +77,58 @@
   "4b32e54b": {
     "text": "Fix: a refusal by a declared route permission carries no message, so the user sees nothing.\n\nRoutes that declare a permission with require(Perm.X) answer a bare 403 when the caller lacks the flag. The frontend only shows an error toast when the response body carries detail.message, so a user who clicks, say, \"create tag\" without the organize permission sees the action silently do nothing.\n\nExpected:\n- The permission dependency (RequirePermission.__call__) takes the request's translator as a second dependency (get_locale_provider) and refuses with forbidden(translator.t(\"exceptions.permission-denied\")), so the 403 body is an ErrorResponse whose detail.message is the translated \"exceptions.permission-denied\" text (\"You do not have permission to perform this action\" in en-US, the other languages' files already have the key).\n- Every route that declares a permission answers 403 with that message for a user without it; callers with the permission are unaffected.\n- Calling the dependency directly now takes (user, translator): RequirePermission(perm)(user, get_locale_provider()) passes for a user with the flag and raises HTTPException 403 without it; RequirePermission(Perm.ANY_VALID_USER)(user, translator) always passes.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/test_route_permissions.py` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
     "coverage": [
-      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission",
-      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/foods/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/groups/ai-providers/prompts/{prompt_name}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/groups/ai-providers/providers/{provider_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/groups/labels/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/households/mealplans/ical]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/households/recipe-actions/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/organizers/categories/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/organizers/tags/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/organizers/tools/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/units/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[GET     /api/groups/ai-providers/prompts]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[GET     /api/groups/ai-providers/providers/{provider_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[GET     /api/groups/ai-providers/settings]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[GET     /api/households/members]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/foods]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/ai-providers/providers]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/ai-providers/providers/test]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/ai-providers/providers/{provider_id}/test]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/labels]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/labels/merge]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/seeders/foods]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/seeders/units]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/invitations]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/invitations/email]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/mealplans/ical]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/recipe-actions]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/organizers/categories]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/organizers/categories/merge]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/organizers/tags]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/organizers/tags/merge]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/organizers/tools]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/organizers/tools/merge]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/units]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/foods/merge]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/foods/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/groups/ai-providers/prompts/{prompt_name}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/groups/ai-providers/providers/{provider_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/groups/ai-providers/settings]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/groups/labels/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/groups/preferences]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/households/permissions]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/households/preferences]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/households/recipe-actions/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/organizers/categories/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/organizers/tags/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/organizers/tools/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/units/merge]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/units/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:organize-can_organize]",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:manage-can_manage]",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[group:invite-can_invite]",
+      "tests/integration_tests/test_route_permissions.py::test_require_permission_checks_user_flag[household:manage-can_manage_household]",
       "tests/integration_tests/test_route_permissions.py::test_require_any_valid_user_allows_any_user"
     ],
     "notes": "test_route_rejects_user_without_permission is parametrized over every declared route; the request states the message once for all of them. The direct-call signature is load-bearing for the two unit-style tests.",
@@ -76,7 +138,21 @@
     "text": "Fix: the organize permission must also cover units, tools, labels, recipe actions and the seeders.\n\nThe \"User can organize group data\" flag (can_organize) gates foods, tags and categories, declared on their routes with require(Perm.GROUP_ORGANIZE). Units, tools, multi-purpose labels, household recipe actions and the food/unit seeders are still open to every member, although the documentation describes the permission as covering organizers in general.\n\nExpected:\n- These routes declare Perm.GROUP_ORGANIZE through the route-permission dependency, so a user without can_organize gets 403 before the body is read or validated, and a user with it is not refused (any status other than 403, since the check runs first): POST /api/units, PUT /api/units/merge, PUT /api/units/{item_id}, DELETE /api/units/{item_id}; POST /api/organizers/tools, PUT /api/organizers/tools/{item_id}, DELETE /api/organizers/tools/{item_id}; POST /api/groups/labels, PUT /api/groups/labels/{item_id}, DELETE /api/groups/labels/{item_id}; POST /api/households/recipe-actions, PUT /api/households/recipe-actions/{item_id}, DELETE /api/households/recipe-actions/{item_id}; POST /api/groups/seeders/foods, POST /api/groups/seeders/units.\n- The table of declared permissions read back from app.routes grows by exactly these entries under GROUP_ORGANIZE; no other route changes its declared permission.\n- Reads (the lists, single items, /empty) stay open to every member.\n- Docs: the permissions page and the frontend wording for the permission say it covers foods, units, tools, labels, tags, categories and recipe actions; a frontend announcement about the change is welcome (none of this is graded).\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/test_route_permissions.py tests/integration_tests/category_tag_tool_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
     "coverage": [
       "tests/integration_tests/test_route_permissions.py::test_routes_declare_expected_permissions",
-      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission"
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/groups/labels/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/households/recipe-actions/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/organizers/tools/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/units/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/labels]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/seeders/foods]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/seeders/units]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/recipe-actions]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/organizers/tools]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/units]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/groups/labels/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/households/recipe-actions/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/organizers/tools/{item_id}]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/units/merge]",
+      "tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/units/{item_id}]"
     ],
     "notes": "The merge test files change how they create another group's tool/label (through the repository, because that group's plain user loses the permission); that is test plumbing, not stated.",
     "reviewed": false
@@ -92,7 +168,16 @@
   "823b938a": {
     "text": "Fix: the \"organize group data\" permission is not enforced on foods, tags and categories.\n\nEvery user has a can_organize flag (\"User can organize group data\") and the controllers already have a can_organize check alongside can_manage, can_invite and can_manage_household, but the tag, category and food routes never call it: any member can create, rename, delete and merge them.\n\nExpected:\n- For a user without can_organize: POST /api/organizers/tags, POST /api/organizers/categories and POST /api/foods answer 403; PUT and DELETE on /api/organizers/tags/{item_id}, /api/organizers/categories/{item_id} and /api/foods/{item_id} answer 403; PUT /api/foods/merge answers 403. A refused call changes nothing.\n- For a user with can_organize the same calls behave as today: create answers 201, update (PUT with the item's id and a new name) 200, delete 200, merge 200.\n- Reads need no permission: GET on the three collections and GET of a single item answer 200 whatever the flag.\n- The flag is read from the user at request time: granting or removing it takes effect on the next request.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_household_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
     "coverage": [
-      "tests/integration_tests/user_household_tests/test_organize_permissions.py"
+      "tests/integration_tests/user_household_tests/test_organize_permissions.py::test_create_requires_organize_permission[foods]",
+      "tests/integration_tests/user_household_tests/test_organize_permissions.py::test_create_requires_organize_permission[tags]",
+      "tests/integration_tests/user_household_tests/test_organize_permissions.py::test_create_requires_organize_permission[categories]",
+      "tests/integration_tests/user_household_tests/test_organize_permissions.py::test_update_requires_organize_permission[foods]",
+      "tests/integration_tests/user_household_tests/test_organize_permissions.py::test_update_requires_organize_permission[tags]",
+      "tests/integration_tests/user_household_tests/test_organize_permissions.py::test_update_requires_organize_permission[categories]",
+      "tests/integration_tests/user_household_tests/test_organize_permissions.py::test_delete_requires_organize_permission[foods]",
+      "tests/integration_tests/user_household_tests/test_organize_permissions.py::test_delete_requires_organize_permission[tags]",
+      "tests/integration_tests/user_household_tests/test_organize_permissions.py::test_delete_requires_organize_permission[categories]",
+      "tests/integration_tests/user_household_tests/test_organize_permissions.py::test_food_merge_requires_organize_permission"
     ],
     "notes": "All tests of the new file are targets (create/update/delete for foods, tags, categories; food merge; reads stay open).",
     "reviewed": false
@@ -108,8 +193,21 @@
   "642c826f": {
     "text": "Fix: the query filter API can filter and sort on sensitive columns.\n\nThe queryFilter and orderBy parameters of the paginated endpoints resolve any column of the model, and through relationships any column of a related model. A member can therefore filter recipes on user.password or user.email (or tokens on their models) and extract the value character by character with LIKE. Only columns meant for filtering should be reachable.\n\nExpected:\n- A column must be marked to be usable in a query filter or an order_by. Introduce FilterableColumn[T] (module mealie.db.models._filterable_column, re-exported from mealie.db.models._model_base): a drop-in for Mapped[T] on scalar columns that sets the column's info {\"filterable\": True}. The base created_at and update_at columns are marked.\n- QueryFilterBuilder.get_model_and_model_attr_from_attr_string raises NonFilterableValueError (a ValueError, message \"Cannot filter on <column>\", defined in mealie.services.query_filter.builder) when the resolved column is not marked: password and email on the User model, token on LongLiveToken, user.email and user.password reached from RecipeModel. A marked column resolves as before and returns the model and the attribute (full_name on User gives User and User.full_name; user.full_name from RecipeModel too); a single-hop association proxy that resolves to a marked column works (household_id on RecipeModel gives User and User.household_id). filter_query on a non-filterable attribute raises the same error.\n- Mark every column the API filters or sorts today across the models (recipes and their settings, ingredients, nutrition, assets, extras, notes, timeline, shared tokens, tags, categories, tools, labels, units, foods, cookbooks, mealplans, shopping lists and items, households, groups and their preferences, users). On User only id, full_name, username, group_id and household_id are filterable; email, password, auth_method, admin, advanced, cache_key and the token columns are not.\n- An order_by on a non-filterable column answers 400 with detail 'Invalid order_by statement \"<order_by>\": Cannot filter on <column>'; a query filter on one answers 400 like any invalid filter.\n- The labels model moves next to the other recipe models: MultiPurposeLabel is imported from mealie.db.models.recipe.labels (the migration dded3119c1fe, the migration data fix and the model registry follow; mealie.db.models.labels no longer exists).\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/repository_tests tests/unit_tests/services_tests/backup_v2_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
     "coverage": [
-      "tests/unit_tests/repository_tests/test_query_filter_builder.py",
-      "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py"
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_query_filter_builder_json",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_query_filter_builder_json_uses_raw_value",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_non_filterable_field_user_password_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_non_filterable_field_user_email_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_non_filterable_field_long_live_token_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_filterable_field_does_not_raise",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_deep_traversal_to_filterable_field_works",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_deep_traversal_to_non_filterable_field_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_deep_traversal_user_password_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_filter_query_user_email_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_filter_query_user_password_raises",
+      "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_association_proxy_resolving_to_filterable_field_works",
+      "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py::test_database_backup",
+      "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py::test_database_restore",
+      "tests/unit_tests/services_tests/backup_v2_tests/test_backup_v2.py::test_database_restore_data"
     ],
     "notes": "The exact set of columns marked filterable is long; the request gives the rule, the models and the User exceptions the tests check. The backup tests, and the two pre-existing as-json tests of the builder, are targets only because their modules import the moved labels module / the new error class; both module paths are stated.",
     "reviewed": false
@@ -117,7 +215,10 @@
   "643c4901": {
     "text": "Fix: admins cannot edit recipes owned by users of other households.\n\nThe recipe update permission check treats an admin like any other non-owner. When a recipe's owner belongs to another household and that household keeps \"lock recipe edits from other households\" on (the default), an admin's PUT /api/recipes/{slug} is refused with 403. Admins can already delete any recipe in the group; they should be able to edit any recipe too.\n\nExpected:\n- For an administrator the update check always passes: PUT /api/recipes/{slug} (and everything behind the same check: PATCH, image upload and image delete) on a recipe owned by a user of another household answers 200 whatever that household's private_household and lock_recipe_edits_from_other_households preferences are, and a following GET /api/recipes/{slug} returns the updated name.\n- Non-admin rules are unchanged: the owner can always edit; a non-owner cannot edit a locked recipe; a non-owner from another household is refused when the owner's household locks edits from other households.\n- Frontend: useRecipePermissions reports canEditRecipe true for an admin of the recipe's group even when the recipe's household is locked and the admin is in another household, and false for an admin of another group.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_recipe_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).\n\nFrontend: `cd frontend && pnpm test:ci app/composables/recipes/__tests__/use-recipe-permissions.test.ts`.",
     "coverage": [
-      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_admin_update_recipes_in_other_households"
+      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_admin_update_recipes_in_other_households[True-True]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_admin_update_recipes_in_other_households[True-False]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_admin_update_recipes_in_other_households[False-True]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_admin_update_recipes_in_other_households[False-False]"
     ],
     "notes": "Parametrized over the private and lock preferences (four cases); the request states the rule once.",
     "reviewed": false
@@ -125,11 +226,26 @@
   "3be8f3d8": {
     "text": "Fix: migration imports can reach other groups' data, and archives are unpacked without a size limit.\n\nTwo problems with POST /api/groups/migrations. First, the recipes in an archive are created as they come: a tool entry carrying another group's tool id links (and renames into the importer's group) that group's tool, and an ingredient's referencedRecipe pointing at another group's recipe slug links that recipe. Second, every migrator extracts the uploaded zip (and nested zips) with no bound, so a small archive can fill the disk.\n\nExpected:\n- Before a migrated recipe is created it goes through the recipe service's cleaning of an import (the same cleaning the zip import does): tools are resolved or created in the importer's group, so the imported recipe's tools all carry the importer's groupId and never the foreign id, and the other group's tool keeps its name and group; a referencedRecipe that is not the importer's is dropped (null). This holds for the Mealie alpha migrator and for the migrators that go through the scraper cleaner and pass tools through (Nextcloud and the others).\n- A helper extract_zip(archive, dest, max_size=None) -> int in mealie.services.migrations.utils.migration_helpers: sums the declared sizes of the archive's members and raises ArchiveTooLargeError (a ValueError) before writing anything when the sum exceeds max_size (the destination is not created); otherwise extracts and returns the bytes written (max_size equal to the total is fine). The default is MAX_EXTRACTED_ARCHIVE_SIZE = 5 * 1024**3, a module constant tests may patch. Every zip-based migrator (Chowdown, Cook'n, Copy Me That, Mealie alpha, Nextcloud, Paprika, Plan to Eat, Recipe Keeper, Tandoor) extracts through it, and the ones that unpack nested archives pass what remains of the budget, so a zip of zips cannot multiply the limit.\n- A too-large archive does not fail the request: the migration still answers 200 with its report; the report's status is \"failure\" and its only entry has the message \"Archive is too large to import\" (the exception text in the entry's exception field).\n- Every supported migration (Nextcloud, Paprika, Chowdown, Copy Me That, Mealie alpha, Tandoor, Plan to Eat archive and CSV, My Recipe Box CSV, Recipe Keeper, Cook'n) keeps importing its archives exactly as before: recipes, categories, yields, notes, the rejection of a wrong file type for Plan to Eat and the skipping of bad Mealie alpha entries are unchanged.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/recipe_migration_tests tests/unit_tests/services_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
     "coverage": [
-      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[nextcloud_archive]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[paprika_archive]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[chowdown_archive]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[copymethat_archive]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[mealie_alpha_archive]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[tandoor_archive]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[plantoeat_archive]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[plantoeat_csv]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[myrecipebox_csv]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[recipekeeper_archive]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipe_migration[cookn_archive]",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_plantoeat_rejects_invalid_file_type",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_bad_mealie_alpha_data_is_ignored",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_recipekeeper_imports_categories_and_yield",
+      "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_paprika_imports_notes",
       "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_mealie_alpha_migration_cannot_reach_another_group",
       "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_nextcloud_migration_cannot_take_over_another_groups_tool",
       "tests/integration_tests/recipe_migration_tests/test_recipe_migrations.py::test_migration_rejects_archive_over_size_limit",
-      "tests/unit_tests/services_tests/test_migration_extract_zip.py"
+      "tests/unit_tests/services_tests/test_migration_extract_zip.py::test_extract_zip_returns_bytes_written",
+      "tests/unit_tests/services_tests/test_migration_extract_zip.py::test_extract_zip_over_limit_writes_nothing"
     ],
     "notes": "The size test patches MAX_EXTRACTED_ARCHIVE_SIZE on the helpers module, so the constant name and module are stated. The selection also lists the pre-existing migration tests of the module as targets (they fail on the parent in the selector run, presumably through state the new cross-group test leaves behind there); the request states that existing migrations must keep working.",
     "reviewed": false
@@ -138,7 +254,7 @@
     "text": "Fix: a user-supplied query filter can escape the mandatory public filter.\n\nThe explore endpoints build their filter by string concatenation: \"(<queryFilter>) AND (<public filter>)\". A queryFilter such as name <> \"zzz\") OR (name <> \"zzz\" closes the group early and ORs the public condition away, so private recipes, cookbooks and households of a public group become visible; the same concatenation is used for the household member list, the mealplan date and plan-rule filters and the cookbook filter in the recipe repository. The parser only counts parentheses, so a group that closes before it opens passes.\n\nExpected:\n- QueryFilterBuilder.combine_filters(*filter_strings) (a classmethod): skips empty or None parts, validates each remaining part on its own by parsing it, and raises HTTPException 400 with the parser's message when a part is invalid; otherwise wraps each part in parentheses and joins them with \" AND \". All the places above build their filter with it.\n- The parser's parenthesis check tracks depth: a group that closes before it opens ('name <> \"test name\") OR (useAbbreviation=f') is rejected with ValueError \"invalid query string: parenthesis are unbalanced\", like a filter whose counts do not match.\n- GET /api/explore/groups/{group_slug}/recipes?queryFilter=name <> \"zzz\") OR (name <> \"zzz\" on a public group with a public household answers 400 and never lists a private recipe. Valid filters keep working.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/public_explorer_tests tests/unit_tests/repository_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
     "coverage": [
       "tests/integration_tests/public_explorer_tests/test_public_recipes.py::test_get_all_public_recipes_filter_cannot_escape_public_filter",
-      "tests/unit_tests/repository_tests/test_pagination.py::test_malformed_query_filters"
+      "tests/unit_tests/repository_tests/test_pagination.py::test_malformed_query_filters[parenthesis closed before they're opened]"
     ],
     "notes": "The pagination test is parametrized; only its new case (id \"parenthesis closed before they're opened\") fails on the parent.",
     "reviewed": false

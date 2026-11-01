@@ -1,10 +1,28 @@
 {
-  "roles": ["userA", "admin"],
+  "roles": [
+    "userA",
+    "admin"
+  ],
   "idor": false,
   "policy": [
-    { "role": "userA", "endpoint": "POST /api/organizers/tags", "ownership": "none", "expected": "deny" },
-    { "role": "userA", "endpoint": "PUT /api/households/preferences", "ownership": "none", "expected": "deny" },
-    { "role": "admin", "endpoint": "POST /api/organizers/tags", "ownership": "none", "expected": "allow" }
+    {
+      "role": "userA",
+      "endpoint": "POST /api/organizers/tags",
+      "ownership": "none",
+      "expected": "deny"
+    },
+    {
+      "role": "userA",
+      "endpoint": "PUT /api/households/preferences",
+      "ownership": "none",
+      "expected": "deny"
+    },
+    {
+      "role": "admin",
+      "endpoint": "POST /api/organizers/tags",
+      "ownership": "none",
+      "expected": "allow"
+    }
   ],
   "flaw": "No access-control flaw is observable by status code: the commit only adds a translated detail.message to the 403 the permission dependency already answers; the grade judges status codes only.",
   "validated": false

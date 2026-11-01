@@ -1,11 +1,35 @@
 {
-  "roles": ["anonymous", "userA", "admin"],
+  "roles": [
+    "anonymous",
+    "userA",
+    "admin"
+  ],
   "idor": false,
   "policy": [
-    { "role": "userA", "endpoint": "POST /api/organizers/tags", "ownership": "none", "expected": "deny" },
-    { "role": "anonymous", "endpoint": "GET /api/organizers/tools/empty", "ownership": "none", "expected": "deny" },
-    { "role": "userA", "endpoint": "GET /api/organizers/tags/empty", "ownership": "none", "expected": "allow" },
-    { "role": "admin", "endpoint": "GET /api/organizers/categories/empty", "ownership": "none", "expected": "allow" }
+    {
+      "role": "userA",
+      "endpoint": "POST /api/organizers/tags",
+      "ownership": "none",
+      "expected": "deny"
+    },
+    {
+      "role": "anonymous",
+      "endpoint": "GET /api/organizers/tools/empty",
+      "ownership": "none",
+      "expected": "deny"
+    },
+    {
+      "role": "userA",
+      "endpoint": "GET /api/organizers/tags/empty",
+      "ownership": "none",
+      "expected": "allow"
+    },
+    {
+      "role": "admin",
+      "endpoint": "GET /api/organizers/categories/empty",
+      "ownership": "none",
+      "expected": "allow"
+    }
   ],
   "flaw": "The parent's access flaw (GET /api/organizers/tags/empty and /categories/empty list other groups' unused organizers) is a list-content leak the matrix cannot see (it judges status codes and single-object field leaks); the new merge/empty endpoints are a feature, not a flaw, and a merge needs two real ids the probe cannot supply.",
   "validated": false

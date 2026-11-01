@@ -1,12 +1,40 @@
 {
-  "roles": ["userA", "admin"],
+  "roles": [
+    "userA",
+    "admin"
+  ],
   "idor": false,
   "policy": [
-    { "role": "userA", "endpoint": "PUT /api/groups/preferences", "ownership": "none", "expected": "deny" },
-    { "role": "userA", "endpoint": "GET /api/households/members", "ownership": "none", "expected": "deny" },
-    { "role": "userA", "endpoint": "POST /api/organizers/tags", "ownership": "none", "expected": "deny" },
-    { "role": "admin", "endpoint": "GET /api/households/members", "ownership": "none", "expected": "allow" },
-    { "role": "admin", "endpoint": "POST /api/organizers/tags", "ownership": "none", "expected": "allow" }
+    {
+      "role": "userA",
+      "endpoint": "PUT /api/groups/preferences",
+      "ownership": "none",
+      "expected": "deny"
+    },
+    {
+      "role": "userA",
+      "endpoint": "GET /api/households/members",
+      "ownership": "none",
+      "expected": "deny"
+    },
+    {
+      "role": "userA",
+      "endpoint": "POST /api/organizers/tags",
+      "ownership": "none",
+      "expected": "deny"
+    },
+    {
+      "role": "admin",
+      "endpoint": "GET /api/households/members",
+      "ownership": "none",
+      "expected": "allow"
+    },
+    {
+      "role": "admin",
+      "endpoint": "POST /api/organizers/tags",
+      "ownership": "none",
+      "expected": "allow"
+    }
   ],
   "flaw": "No access-control flaw is observable by status code: the commit replaces in-handler permission checks with an equivalent declared dependency (same callers get the same 403); the item is a refactor of how permissions are declared.",
   "validated": false

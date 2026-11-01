@@ -1,28 +1,89 @@
 {
-  "roles": ["userA", "userA2", "userB", "admin"],
+  "roles": [
+    "userA",
+    "userA2",
+    "userB",
+    "admin"
+  ],
   "objects": [
     {
       "kind": "recipe",
       "idParam": "slug",
-      "item": { "method": "GET", "path": "/api/recipes/{slug}" },
-      "owned": { "userA": "eccode-recipe-usera", "userA2": "eccode-recipe-usera2", "userB": "eccode-recipe-userb", "admin": "eccode-recipe-admin" }
+      "item": {
+        "method": "GET",
+        "path": "/api/recipes/{slug}"
+      },
+      "owned": {
+        "userA": "eccode-recipe-usera",
+        "userA2": "eccode-recipe-usera2",
+        "userB": "eccode-recipe-userb",
+        "admin": "eccode-recipe-admin"
+      }
     },
     {
       "kind": "recipe-bulk-delete",
-      "create": { "method": "POST", "path": "/api/recipes/bulk-actions/delete", "json": { "recipes": ["eccode-recipe-admin"] } },
-      "owned": { "userA": "eccode-recipe-admin", "userA2": "eccode-recipe-admin", "userB": "eccode-recipe-admin", "admin": "eccode-recipe-admin" }
+      "create": {
+        "method": "POST",
+        "path": "/api/recipes/bulk-actions/delete",
+        "json": {
+          "recipes": [
+            "eccode-recipe-admin"
+          ]
+        }
+      },
+      "owned": {
+        "userA": "eccode-recipe-admin",
+        "userA2": "eccode-recipe-admin",
+        "userB": "eccode-recipe-admin",
+        "admin": "eccode-recipe-admin"
+      }
     }
   ],
   "idor": false,
   "policy": [
-    { "role": "userA2", "endpoint": "DELETE /api/recipes/{slug}", "ownership": "other", "expected": "deny" },
-    { "role": "userA2", "endpoint": "POST /api/recipes/bulk-actions/delete", "ownership": "none", "expected": "deny" },
-    { "role": "userB", "endpoint": "DELETE /api/recipes/{slug}", "ownership": "other", "expected": "deny" },
-    { "role": "userA", "endpoint": "DELETE /api/recipes/{slug}", "ownership": "own", "expected": "allow" },
-    { "role": "admin", "endpoint": "DELETE /api/recipes/{slug}", "ownership": "other", "expected": "allow" },
-    { "role": "userA2", "endpoint": "GET /api/recipes/{slug}", "ownership": "other", "expected": "allow" },
-    { "role": "userA2", "endpoint": "PATCH /api/recipes/{slug}", "ownership": "other", "expected": "allow" }
+    {
+      "role": "userA2",
+      "endpoint": "DELETE /api/recipes/{slug}",
+      "ownership": "other",
+      "expected": "deny"
+    },
+    {
+      "role": "userA2",
+      "endpoint": "POST /api/recipes/bulk-actions/delete",
+      "ownership": "none",
+      "expected": "deny"
+    },
+    {
+      "role": "userB",
+      "endpoint": "DELETE /api/recipes/{slug}",
+      "ownership": "other",
+      "expected": "deny"
+    },
+    {
+      "role": "userA",
+      "endpoint": "DELETE /api/recipes/{slug}",
+      "ownership": "own",
+      "expected": "allow"
+    },
+    {
+      "role": "admin",
+      "endpoint": "DELETE /api/recipes/{slug}",
+      "ownership": "other",
+      "expected": "allow"
+    },
+    {
+      "role": "userA2",
+      "endpoint": "GET /api/recipes/{slug}",
+      "ownership": "other",
+      "expected": "allow"
+    },
+    {
+      "role": "userA2",
+      "endpoint": "PATCH /api/recipes/{slug}",
+      "ownership": "other",
+      "expected": "allow"
+    }
   ],
   "flaw": "A non-owner in the same household (or with household edits open) could delete another user's unlocked recipe, singly and through the bulk delete action, because deletion reused the collaborative-edit rule instead of requiring ownership (or admin).",
-  "validated": false
+  "validated": true
 }

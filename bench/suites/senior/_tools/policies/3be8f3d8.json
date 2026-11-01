@@ -1,19 +1,48 @@
 {
-  "roles": ["userA", "userC"],
+  "roles": [
+    "userA",
+    "userC"
+  ],
   "objects": [
     {
       "kind": "recipe",
       "idParam": "slug",
-      "item": { "method": "GET", "path": "/api/recipes/{slug}" },
-      "owned": { "userA": "eccode-recipe-usera", "userC": "eccode-recipe-userc" }
+      "item": {
+        "method": "GET",
+        "path": "/api/recipes/{slug}"
+      },
+      "owned": {
+        "userA": "eccode-recipe-usera",
+        "userC": "eccode-recipe-userc"
+      }
     }
   ],
   "idor": false,
   "policy": [
-    { "role": "userC", "endpoint": "GET /api/recipes/{slug}", "ownership": "other", "expected": "deny" },
-    { "role": "userC", "endpoint": "PATCH /api/recipes/{slug}", "ownership": "other", "expected": "deny" },
-    { "role": "userA", "endpoint": "GET /api/recipes/{slug}", "ownership": "own", "expected": "allow" },
-    { "role": "userA", "endpoint": "GET /api/organizers/tools", "ownership": "none", "expected": "allow" }
+    {
+      "role": "userC",
+      "endpoint": "GET /api/recipes/{slug}",
+      "ownership": "other",
+      "expected": "deny"
+    },
+    {
+      "role": "userC",
+      "endpoint": "PATCH /api/recipes/{slug}",
+      "ownership": "other",
+      "expected": "deny"
+    },
+    {
+      "role": "userA",
+      "endpoint": "GET /api/recipes/{slug}",
+      "ownership": "own",
+      "expected": "allow"
+    },
+    {
+      "role": "userA",
+      "endpoint": "GET /api/organizers/tools",
+      "ownership": "none",
+      "expected": "allow"
+    }
   ],
   "flaw": "Not observable by the matrix: the flaw (a migration archive carrying another group's tool id or recipe slug linked and renamed that group's tool, plus an unbounded zip extraction) is reached only through the multipart POST /api/groups/migrations and shows in the stored data, never in a status code; cross-group reads were already denied.",
   "validated": false
