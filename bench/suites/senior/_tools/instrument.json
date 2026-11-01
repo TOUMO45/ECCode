@@ -704,5 +704,67 @@
   },
   "dropped": "the policy does not separate the parent (safe) from the commit (safe)",
   "at": "2026-11-01T20:02:57.765Z"
+ },
+ "643c4901": {
+  "category": "authorization",
+  "sha": "643c49013b3fd11443c033bfb85f716d05c551c0",
+  "subject": "fix: admin unable to edit recipes in other households (#7810) (#8018)",
+  "instrument": {
+   "parentUnsafe": true,
+   "parent": {
+    "mismatches": [
+     {
+      "role": "admin",
+      "endpoint": "PATCH /api/recipes/{slug}",
+      "ownership": "other",
+      "expected": "allow",
+      "observed": "deny",
+      "status": 403
+     },
+     {
+      "role": "admin",
+      "endpoint": "DELETE /api/recipes/{slug}/image",
+      "ownership": "other",
+      "expected": "allow",
+      "observed": "deny",
+      "status": 403
+     }
+    ],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   },
+   "commitSafe": true,
+   "commit": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   }
+  },
+  "at": "2026-11-01T20:06:35.937Z"
+ },
+ "3be8f3d8": {
+  "category": "authorization",
+  "sha": "3be8f3d85490a163021f74a87bc840635ebe25f6",
+  "subject": "fix: scope migration imports to the group and limit archive size (#8761)",
+  "instrument": {
+   "parentUnsafe": false,
+   "parent": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   },
+   "commitSafe": true,
+   "commit": {
+    "mismatches": [],
+    "leaks": [],
+    "idor": [],
+    "errors": []
+   }
+  },
+  "dropped": "the policy does not separate the parent (safe) from the commit (safe)",
+  "at": "2026-11-01T20:07:23.324Z"
  }
 }
