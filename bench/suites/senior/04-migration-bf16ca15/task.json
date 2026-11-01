@@ -1,0 +1,55 @@
+{
+  "id": "senior-migration-bf16ca15",
+  "category": "migration",
+  "order": 4,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "00c2b6b41651c4845bee15e1c05b71bee3c560f1"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-af6d29f0c213/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Feature: subscribe to the household meal plan as an iCal calendar feed.\n\nUsers want their meal plan in their calendar app. Each household gets a secret feed token; the feed is public (the token is the only access control), so the token must never leak through the normal household endpoints. Frontend not graded.\n\nExpected:\n1. household_preferences gets mealplan_ical_token (String, nullable, unique, indexed), not filterable and not exposed: GET /api/households/self and GET /api/households/preferences never contain it, and PUT /api/households/preferences (say firstDayOfWeek 1) leaves it intact.\n2. Token management under /api/households/mealplans/ical (registered before the mealplans router), response {householdId, mealplanIcalToken}: GET returns the token or null (null by default); POST generates a new url-safe token, replacing any old one (old feed URLs then 404), and returns it; DELETE sets it to null. POST and DELETE require can_manage_household (403); GET works for any household member.\n3. The feed: GET /api/households/mealplans/ical/{token}, no authentication; 404 (detail \"Calendar not found\") for an unknown or cleared token; otherwise 200, content-type text/calendar, Content-Disposition inline; filename=\"mealplan.ics\", Cache-Control no-cache. The body starts \"BEGIN:VCALENDAR\\r\\n\" and ends \"END:VCALENDAR\\r\\n\"; lines are CRLF-separated and folded to at most 75 bytes (continuations start with a space; multibyte characters never split); VERSION:2.0, PRODID, CALSCALE, METHOD:PUBLISH, X-WR-CALNAME \"Mealie - {household name}\". One VEVENT per entry of this household only, in date order, for the last FEED_HISTORY_DAYS (90) days (exactly 90 days old is kept, 91 dropped) and all future dates. Event: UID \"mealplan-{entry id}-{group id}@mealie\", DTSTAMP, SUMMARY \"{Type}: {recipe name or title}\" with the type translated and capitalized (\"Dinner\"), DESCRIPTION from the entry text and recipe URL, URL \"{BASE_URL}/g/{group slug}/r/{recipe slug}\" for a recipe entry, TRANSP:TRANSPARENT. Text is escaped: backslash, \";\" and \",\" get a backslash, line breaks become \"\\n\" (\"Leftovers, again; sorry\" -> \"Leftovers\\, again\\; sorry\"). Without a time the event is all-day: DTSTART;VALUE=DATE:YYYYMMDD, DTEND;VALUE=DATE the next day.\n4. Query parameters (camelCase): types (entry types; unknown such as \"brunch\" -> 422) keeps only those; includeNotes=false drops entries without a recipe; tz (IANA name, unknown -> 422, default the server zone) plus a time per type (breakfast, lunch, dinner, side, snack, drink, dessert; e.g. dinner=18:30) makes that type a one-hour event in UTC: dinner 18:30 Europe/Berlin on a July day gives DTSTART {date}T163000Z, DTEND {date}T173000Z; types without a time stay all-day.\n5. Helpers in mealie.services.household_services.mealplan_ical_service: _escape_text(value) (\"a\\\\b;c,d\\r\\ne\\nf\" -> \"a\\\\\\\\b\\\\;c\\\\,d\\\\ne\\\\nf\") and _fold(line) (a short line unchanged; a 212-character line folds into \"\\r\\n \"-joined parts of at most 75 bytes that unfold to the line; 40 repetitions of a pasta emoji and an umlaut fold without splitting a character).\n\nThis change needs a schema migration (an Alembic revision under the project's migrations) that can be rolled back: its downgrade must restore the previous schema, and the migration must not drop columns or tables or run destructive SQL against existing data. Upgrading, downgrading one step and upgrading again must leave the schema as it was. Chain the revision onto the current head (it becomes the only head) with the project's date-prefixed file name, which must sort after every existing migration: the tests derive the latest revision from the file order.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_household_tests tests/unit_tests/services_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "feat: Subscribe to the meal plan as an iCal calendar feed (#8461)",
+  "track": "feature",
+  "fixCommit": "bf16ca15cf0270891fa11af595ec74833e22d8fc",
+  "hidden": {
+    "fromSource": {
+      "commit": "bf16ca15cf0270891fa11af595ec74833e22d8fc",
+      "paths": [
+        "tests/integration_tests/user_household_tests/test_group_mealplan_ical.py",
+        "tests/unit_tests/services_tests/test_mealplan_ical.py",
+        "tests/utils/api_routes/__init__.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_feed_disabled_by_default' 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_feed' 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_feed_filters_and_times' 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_feed_skips_old_entries' 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_token_rotate_and_disable' 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_token_not_exposed_or_cleared_by_preferences' 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_token_requires_manage_household' 'tests/unit_tests/services_tests/test_mealplan_ical.py::test_escape_text' 'tests/unit_tests/services_tests/test_mealplan_ical.py::test_fold_short_line_unchanged' 'tests/unit_tests/services_tests/test_mealplan_ical.py::test_fold_long_line' 'tests/unit_tests/services_tests/test_mealplan_ical.py::test_fold_does_not_split_multibyte_characters'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_household_tests/test_group_cookbooks.py' 'tests/integration_tests/user_household_tests/test_group_invitation.py' 'tests/integration_tests/user_household_tests/test_group_mealplan.py' 'tests/integration_tests/user_household_tests/test_group_mealplan_rules.py' 'tests/integration_tests/user_household_tests/test_group_notifications.py' 'tests/integration_tests/user_household_tests/test_group_recipe_actions.py' 'tests/integration_tests/user_household_tests/test_group_shopping_list_items.py' 'tests/integration_tests/user_household_tests/test_group_shopping_lists.py' 'tests/integration_tests/user_household_tests/test_group_webhooks.py' 'tests/integration_tests/user_household_tests/test_household_perferences.py' 'tests/integration_tests/user_household_tests/test_household_permissions.py' 'tests/integration_tests/user_household_tests/test_household_self_service.py' 'tests/integration_tests/user_household_tests/test_organize_permissions.py' 'tests/integration_tests/user_household_tests/test_shopping_list_labels.py' 'tests/unit_tests/services_tests/test_compile_source.py' 'tests/unit_tests/services_tests/test_email_service.py' 'tests/unit_tests/services_tests/test_openai_service.py' 'tests/unit_tests/services_tests/test_organizer_resolver.py' 'tests/unit_tests/services_tests/test_paprika_migration.py' 'tests/unit_tests/services_tests/test_recipe_data_service.py' 'tests/unit_tests/services_tests/test_recipe_import_workflow.py' 'tests/unit_tests/services_tests/test_transcription.py' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_feed_disabled_by_default' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_feed' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_feed_filters_and_times' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_feed_skips_old_entries' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_token_rotate_and_disable' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_token_not_exposed_or_cleared_by_preferences' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan_ical.py::test_ical_token_requires_manage_household' --deselect 'tests/unit_tests/services_tests/test_mealplan_ical.py::test_escape_text' --deselect 'tests/unit_tests/services_tests/test_mealplan_ical.py::test_fold_short_line_unchanged' --deselect 'tests/unit_tests/services_tests/test_mealplan_ical.py::test_fold_long_line' --deselect 'tests/unit_tests/services_tests/test_mealplan_ical.py::test_fold_does_not_split_multibyte_characters'",
+      "timeoutMs": 3600000
+    },
+    {
+      "id": "grade",
+      "command": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/grade.js\" migration --tree .",
+      "timeoutMs": 1800000
+    }
+  ],
+  "measured": {
+    "target": 11,
+    "regression": 284,
+    "failingBeforeAndAfter": []
+  },
+  "referenceGrade": {
+    "safe": true
+  }
+}

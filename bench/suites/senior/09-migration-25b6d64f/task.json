@@ -1,0 +1,59 @@
+{
+  "id": "senior-migration-25b6d64f",
+  "category": "migration",
+  "order": 9,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "a7a402390752dd900a27f5b3104508cd09c54c66"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-47e17a768d76/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Feature: a recipe scale on meal plan entries.\n\nA meal plan entry points at a recipe but cannot say how much of it is planned (double batch, half batch). Store a scale factor per entry so the plan view and the shopping list quick add can use it (frontend not graded).\n\nExpected:\n- The group_meal_plans table gets recipe_scale: Float, not null, ORM default 1.0 and a server default of 1, so existing rows and rows inserted by code that does not know the column get 1.0. CreatePlanEntry (and so the update and read schemas) gets recipe_scale: float = 1.0, which must be greater than 0; JSON recipeScale.\n- POST /api/households/mealplans without recipeScale stores 1: the create response, GET /api/households/mealplans/{id} and repos.meals.get_one(id).recipe_scale all report 1. With recipeScale 2.5 the create response and GET report 2.5. PUT /api/households/mealplans/{id} can change it (0.5), GET reflects it, and the date-range listing (GET /api/households/mealplans with page, perPage, start_date and end_date) includes recipeScale on each item. recipeScale 0 or -1 on POST or on PUT answers 422 and leaves the stored value as it was.\n- The migration is additive. A unit test runs its upgrade() through alembic's Operations context on a bare sqlite table group_meal_plans(id INTEGER PRIMARY KEY, title VARCHAR NOT NULL) holding one row: afterwards the column exists, that row has recipe_scale 1.0, and a row inserted afterwards without the column also gets 1.0; downgrade() then removes the column and keeps both rows.\n\nMigration identity: revision id a8f3b2c1d4e5; the tests find the file by that id in its name (the project's template gives <date>_<id>_<slug>.py).\n\nThis change needs a schema migration (an Alembic revision under the project's migrations) that can be rolled back: its downgrade must restore the previous schema, and the migration must not drop columns or tables or run destructive SQL against existing data. Upgrading, downgrading one step and upgrading again must leave the schema as it was. Chain the revision onto the current head (it becomes the only head) with the project's date-prefixed file name, which must sort after every existing migration: the tests derive the latest revision from the file order.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_household_tests tests/unit_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "feat: meal plan serving scale and shopping list quick add (#8701)",
+  "track": "feature",
+  "fixCommit": "25b6d64f9ab9b8cd8dcc24bdb12036c296f297c8",
+  "hidden": {
+    "fromSource": {
+      "commit": "25b6d64f9ab9b8cd8dcc24bdb12036c296f297c8",
+      "paths": [
+        "frontend/app/components/Domain/Mealplan/MealPlanScaleControl.test.ts",
+        "frontend/app/composables/__tests__/use-group-mealplan.test.ts",
+        "frontend/app/composables/__tests__/use-mealplan-scale.test.ts",
+        "frontend/app/composables/recipes/__tests__/use-scaled-amount.test.ts",
+        "frontend/app/composables/shopping-list-page/__tests__/use-add-to-shopping-list-dialog.test.ts",
+        "tests/integration_tests/user_household_tests/test_group_mealplan.py",
+        "tests/unit_tests/test_meal_plan_recipe_scale_migration.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_household_tests/test_group_mealplan.py::test_create_mealplan_recipe_scale_defaults_to_one' 'tests/integration_tests/user_household_tests/test_group_mealplan.py::test_create_mealplan_with_recipe_scale' 'tests/integration_tests/user_household_tests/test_group_mealplan.py::test_update_mealplan_recipe_scale' 'tests/integration_tests/user_household_tests/test_group_mealplan.py::test_mealplan_recipe_scale_must_be_positive[0]' 'tests/integration_tests/user_household_tests/test_group_mealplan.py::test_mealplan_recipe_scale_must_be_positive[-1]' 'tests/unit_tests/test_meal_plan_recipe_scale_migration.py::test_recipe_scale_migration_backfills_existing_entries'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_household_tests/test_group_mealplan.py' 'tests/unit_tests/test_meal_plan_recipe_scale_migration.py' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan.py::test_create_mealplan_recipe_scale_defaults_to_one' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan.py::test_create_mealplan_with_recipe_scale' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan.py::test_update_mealplan_recipe_scale' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan.py::test_mealplan_recipe_scale_must_be_positive[0]' --deselect 'tests/integration_tests/user_household_tests/test_group_mealplan.py::test_mealplan_recipe_scale_must_be_positive[-1]' --deselect 'tests/unit_tests/test_meal_plan_recipe_scale_migration.py::test_recipe_scale_migration_backfills_existing_entries'",
+      "timeoutMs": 3600000
+    },
+    {
+      "id": "grade",
+      "command": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/grade.js\" migration --tree .",
+      "timeoutMs": 1800000
+    }
+  ],
+  "measured": {
+    "target": 6,
+    "regression": 13,
+    "failingBeforeAndAfter": []
+  },
+  "referenceGrade": {
+    "safe": true
+  }
+}

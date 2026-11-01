@@ -1,0 +1,54 @@
+{
+  "id": "senior-migration-b386e728",
+  "category": "migration",
+  "order": 1,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "029419e5e6f822c1db55a2dabd5599e0877a7e96"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-393d7fe39c20/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Feature: let an instruction step reference the recipe's notes.\n\nA step can point at ingredients (its ingredient_references carry the ingredient's reference_id), but there is no way to attach one of the recipe's notes to a step. Users want the step view to show the note that belongs to it, so every note needs a stable identity and every step a list of note links.\n\nExpected:\n- Every recipe note gets a stable reference_id (UUID). RecipeNote (mealie.schema.recipe.recipe_notes) gains reference_id: UUID, generated (uuid4) when missing, null or empty; the API serializes it as referenceId, so recipe responses carry one more key per note while title and text are unchanged, and RecipeNote(...).model_dump(mode=\"json\") must serialize it.\n- A new NoteReference model in mealie.schema.recipe.recipe_step (exported from mealie.schema.recipe) with reference_id: UUID | None = None. RecipeStep gains note_references: list[NoteReference], default an empty list, next to ingredient_references.\n- Data model: the notes table gets a nullable, indexed reference_id GUID column, generated for new rows and filled with a fresh UUID for every existing note when the migration runs. A new table recipe_note_ref_link stores the links: integer id primary key, instruction_id (GUID, foreign key to recipe_instructions.id, nullable, indexed), reference_id (GUID, nullable, indexed) and the base created_at/update_at timestamps (created_at indexed like the other base tables). RecipeInstruction gets a note_references relationship to it with delete-orphan cascade, built from the step's note_references the way ingredient_references are built, and excluded from its model config in the same way. Loading a recipe eager-loads the note references like the ingredient references.\n- Round trip through the repositories: a recipe created with notes=[RecipeNote(title=..., text=...)] and recipe_instructions=[RecipeStep(text=..., note_references=[])] comes back with notes[0].reference_id set; after setting recipe_instructions[0].note_references = [NoteReference(reference_id=that id)] and calling repos.recipes.update(slug, recipe), the returned recipe's first step has exactly one note reference whose reference_id is that id.\n- On a recipe update, note references whose note is no longer on the recipe are dropped from the steps, as is already done for ingredient references.\n- Duplicating a recipe still copies the notes (title and text). The editor wiring is not graded.\n\nThis change needs a schema migration (an Alembic revision under the project's migrations) that can be rolled back: its downgrade must restore the previous schema, and the migration must not drop columns or tables or run destructive SQL against existing data. Upgrading, downgrading one step and upgrading again must leave the schema as it was. Chain the revision onto the current head (it becomes the only head) with the project's date-prefixed file name, which must sort after every existing migration: the tests derive the latest revision from the file order.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests/repository_tests tests/integration_tests/user_recipe_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "feat: add recipe note linking to recipe instructions (#7591)",
+  "track": "feature",
+  "fixCommit": "b386e7289f58d949f7b15c99034f082a66a2bbca",
+  "hidden": {
+    "fromSource": {
+      "commit": "b386e7289f58d949f7b15c99034f082a66a2bbca",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_crud.py",
+        "tests/unit_tests/repository_tests/test_recipe_repository.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/unit_tests/repository_tests/test_recipe_repository.py::test_recipe_note_step_references'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py' 'tests/unit_tests/repository_tests/test_recipe_repository.py' --deselect 'tests/unit_tests/repository_tests/test_recipe_repository.py::test_recipe_note_step_references'",
+      "timeoutMs": 3600000
+    },
+    {
+      "id": "grade",
+      "command": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/grade.js\" migration --tree .",
+      "timeoutMs": 1800000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 75,
+    "failingBeforeAndAfter": []
+  },
+  "referenceGrade": {
+    "safe": true
+  }
+}
