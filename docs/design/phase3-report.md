@@ -102,6 +102,56 @@ Reading: on mealie4-05, the item where bare ships an incomplete fix 4 times in 1
 
 From the realbugs batch (the only data with all tracks today): bare 1×; quick/engine **3.58× bare, over its 1.5× target**; fix/debug **3.49×, within its 4× target**. The quick figure is the full engine cost on realbugs; narrowing (skip the behavior diff on a no-surface quick change; skip perf when no route is reached) is proposed before the measured Senior Bench run. Reported, no gate (Part F). `node bench/pilot/phase3-cost.js <runs.jsonl>`.
 
+## 4c. Time profile of the narrowed runs (directive item 3)
+
+**What survived and what did not.** The six registered narrowed runs ran in the first container (the session that launched them). Their transcripts and engine records (`--transcripts`) lived in that container's scratch space and were not committed, so no per-phase profile of those six exists; their run records carry only wall-clock, cost, turns, dispatches, review rounds and the number of checks recorded:
+
+| Item | Run | Minutes | $ | Orchestrator turns | Subagent dispatches | Reviews | Rejections | Checks recorded | Delivered | Hidden |
+|---|---|---|---|---|---|---|---|---|---|---|
+| mealie3-01 | 1 | 46.7 | 3.2303 | 56 | 15 | 3 | 0 | 10 | yes | 2/2 |
+| mealie3-01 | 2 | 52.6 | 3.8384 | 29 | 17 | 6 | 1 | 16 | yes | 2/2 |
+| mealie3-01 | 3 | 61.1 | 4.9313 | 24 | 21 | 6 | 1 | 22 | yes | 2/2 |
+| mealie4-05 | 1 | 55.4 | 5.6597 | 74 | 27 | 6 | 1 | 21 | yes | 2/2 |
+| mealie4-05 | 2 | 101.0 | 6.4738 | 75 | 32 | 10 | 2 | 32 | yes | 2/2 |
+| mealie4-05 | 3 | 59.1 | 5.3217 | 6 | 16 | 5 | 2 | 22 | no | 2/2 |
+| mealie4-05 | 4 (supplementary run 4) | 108.9 | 5.9015 | 54 | 13 | 4 | 0 | 9 | yes | 2/2 |
+
+So that this cannot happen again, every engine run record the bench writes now carries the run's **profile** (`lib/profile.js`, kept in the record by `lib/bench.js` at grading time, before the sandbox is removed): wall-clock minutes per phase from the record's events (plan, lab, implement, review, guards and delivery, behavior diff, orchestrator between dispatches), every executed check binned by what it was for (lab: reproduce/baseline, lab: hypotheses, fix verify, mutation, scoped checks, full claim run, reviewer re-run, behavior diff, production guards), and agent time with no command running per phase. `bench/pilot/phase3-profile.js` reads either saved transcript directories or the records' profiles (`--records`).
+
+**The one fully instrumented narrowed run** is the supplementary mealie4-05 run 4 (launched from this fresh container when run 3 was thought lost with the first container's restart; 108.9 min, $5.90, delivered with a clean audit, hidden 2/2; outside the registered three, flagged `supplementary` in the record). Its record is profiled below (`node bench/pilot/phase3-profile.js <its transcripts dir>`; 48.4 of its 108.5 minutes were executed checks):
+
+| Phase | Wall-clock min | Agent time (no command) min |
+|---|---|---|
+| implement | 45.75 | 40.28 |
+| behavior diff | 31.05 | 1.64 |
+| review | 15.68 | 3.49 |
+| orchestrator between dispatches | 7.17 | 6.07 |
+| lab | 3.84 | 3.65 |
+| guards and delivery | 2.23 | 2.22 |
+| verification | 1.4 | 1.39 |
+| plan | 1.24 | 1.24 |
+| plan review | 0.18 | 0.18 |
+
+| Commands | Minutes | Runs |
+|---|---|---|
+| reviewer re-run | 32.85 | 11 |
+| behavior diff | 9.85 | 4 |
+| full claim run | 2.61 | 4 |
+| lab: reproduce / baseline | 2.17 | 12 |
+| fix verify | 0.46 | 2 |
+| scoped checks | 0.23 | 1 |
+| lab: hypotheses | 0.2 | 2 |
+| production guards | 0 | 1 |
+
+**The top three sinks**, from the command bins (exact) and the agent-time bins (approximate: the interval between two record events is given to the activity under way):
+1. **Agent time implementing, with no command running: 40.3 min.** The model writing a 1,000-line change and its tests across three tasks. No check runs here; this is generation time, and the narrowing cannot touch it.
+2. **The reviewers' independent full-suite re-runs: 32.9 min over 11 runs.** The pinned full command for this item is the Mealie backend suite (729 s in the run's own words), and it ran for the technical reviewer, the security reviewer, and again after each of the 4 rejections of 8 review rounds (the low-risk review bound does not apply: the security guard is routed on this item). This is 68% of all check time and 30% of the run.
+3. **The behavior diff's probe runs: 9.9 min over 4 runs** (baseline runs and candidate runs of the probe runner, on a configuration with no app, so they probed nothing and were waived by the reviewer): a cost with no information on this item.
+
+The staged verification worked as designed on the owner's side: scoped checks 0.2 min, the full claim run 2.6 min over 4 runs; the Lab's reproduction, baseline and hypothesis runs cost 2.4 min. The full-suite re-run on the reviewer's side is the sink the narrowing left in place.
+
+**Proposal (not implemented: it changes a gate, so it waits for the owner's approval). Reviewer mode: one full run per tree, not two or more.** The guarantee today is that the claim of done cites the owner's passing run of the pinned full command, and the reviewer's independent run of the same full command passes on the tree under review. The proposal keeps both halves and removes the duplicate work: (a) the engine already records a tree fingerprint with the owner's full claim run (the test-outcome invariant and the guards carry `treeFingerprint`); the reviewer's independent run becomes a run of the **impacted set** (the tests `impact` selects for the changed files, plus the task's scoped checks), and the engine refuses the approval unless the owner's cited full run has the **same tree fingerprint** as the tree the reviewer ran on, so one full run of exactly this tree exists and was independently spot-checked; (b) on a re-review after `changes_requested`, a reviewer re-run is required only when the fingerprint changed since the reviewer's last run. Same guarantee (a passing full run on exactly the delivered tree, an independent check on it), one full run instead of two per round and none on an unchanged tree. On this run it would have replaced 11 reviewer full-suite runs (32.9 min) with impacted-set runs of about half a minute each: roughly 27 minutes saved of 108 (25%), the behavior diff's 10 minutes on an unconfigured app being the next candidate (skip the probe runs when the configuration names no app, which is not a gate change). Pinned by nothing yet; `docs/limits.md` row 167 names the narrowing's current scope.
+
 ## 5. Part 0 results
 
 - **0.B** (tornado-15 label): an independent labeller, given only the request, patch, hidden-check output and rubric, labelled it `agent-error` with high confidence (the fix is correct but the run rewrote an existing log line the test expects). Hard items with it: 4; without: 3.

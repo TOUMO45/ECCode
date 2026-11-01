@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DIR = path.join(__dirname, '..', 'pilot-results');
-const load = (f) => (fs.existsSync(path.join(DIR, f)) ? fs.readFileSync(path.join(DIR, f), 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l)).filter((r) => !r.type) : []);
+const load = (f) => (fs.existsSync(path.join(DIR, f)) ? fs.readFileSync(path.join(DIR, f), 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l)).filter((r) => !r.type && !r.supplementary) : []);
 const ARMS = {
   'mealie3-01-fix-3be8f3d8': {
     bare: load('2026-11-01-phase2-ha-exploratory.bare-m3.jsonl'),
