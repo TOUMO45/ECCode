@@ -320,6 +320,6 @@ function drawLarge(commits, fallbackCommits, OUT, range, fallbackRange) {
   process.stdout.write(`${Object.keys(selection.accepted).length} accepted, ${selection.skipped.length} skipped${selection.fallbackUsed ? ' (fallback window drawn)' : ''}\n`);
 }
 
-module.exports = { POOLS, BASE_POOLS, ALL_POOL, allKey, withinCap, SIZE_CAP, junitOutcomes, LARGE_RULE, LARGE_POOL, largeCounts, earlierItems, drawLarge };
+module.exports = { POOLS, BASE_POOLS, ALL_POOL, allKey, withinCap, SIZE_CAP, junitOutcomes, LARGE_RULE, LARGE_POOL, largeCounts, earlierItems, drawLarge, trees, validateBackend, backendTests, NOT_COUNTED };
 
 if (require.main === module) main(process.argv.slice(2));
