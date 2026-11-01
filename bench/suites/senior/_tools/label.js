@@ -20,9 +20,15 @@ function patchSummary(patch) {
   return `${files.length} file(s) changed (+${added}/−${removed} lines): ${files.join(', ') || 'none'}`;
 }
 
-function questionOf(taskDir) {
-  const f = path.join(taskDir, 'question.json');
-  return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null;
+/** The registered question of a task id (the task directory is found by the id in its task.json). */
+function questionOf(suite, taskId) {
+  for (const d of fs.readdirSync(suite)) {
+    const tj = path.join(suite, d, 'task.json');
+    if (!fs.existsSync(tj) || JSON.parse(fs.readFileSync(tj, 'utf8')).id !== taskId) continue;
+    const f = path.join(suite, d, 'question.json');
+    return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null;
+  }
+  return null;
 }
 
 function labelRun(run, question, { model = 'sonnet' } = {}) {
@@ -55,7 +61,7 @@ function main(argv) {
     if (flags.only && run.task !== flags.only) continue;
     const key = `${run.task}|${run.variant}|${run.runIndex}`;
     if (labels.runs[key]) continue;
-    const q = questionOf(path.join(suite, run.task));
+    const q = questionOf(suite, run.task);
     if (!q) continue;
     labels.runs[key] = { task: run.task, variant: run.variant, runIndex: run.runIndex, ...labelRun(run, q, { model: flags.model }) };
     fs.writeFileSync(out, JSON.stringify(labels, null, 1) + '\n');

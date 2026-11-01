@@ -1,0 +1,231 @@
+{
+ "rubric": "bench/suites/senior/_tools/rubric.md",
+ "labeller": "model (sonnet)",
+ "runs": {
+  "senior-ambiguous-feadec69|without|1": {
+   "task": "senior-ambiguous-feadec69",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "Implements reading (1) without asking: \"If the value is not `None`, it goes into `ydl_opts[\"cookiefile\"]` as the string given\" — no check for a missing or unreadable file, and no question asked.",
+   "costUsd": 0.0315,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-feadec69|without|0": {
+   "task": "senior-ambiguous-feadec69",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "Implements reading 1 without asking: 'If the value is set, it is added to the options as `cookiefile`, exactly as given', with no check for a missing or unreadable file.",
+   "costUsd": 0.0246,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-feadec69|without|2": {
+   "task": "senior-ambiguous-feadec69",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "Implements 'It adds `cookiefile` to the yt-dlp options only when the setting is not `None`' without asking, passing the configured path to yt-dlp unchanged and never addressing the missing-file case.",
+   "costUsd": 0.0246,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-23c7bd7e|without|1": {
+   "task": "senior-ambiguous-23c7bd7e",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "Delivers a without-unit strategy implementation without asking about the zero-quantity-with-unit case; never raises the question, e.g. 'with no locale context the display now falls back to `without-unit`, which gives \"2 tablespoons chopped onion\"'.",
+   "costUsd": 0.025,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-23c7bd7e|without|0": {
+   "task": "senior-ambiguous-23c7bd7e",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "Delivers a patch (12 files, new plural rules and middleware) and never asks about zero-quantity-with-unit handling; the final answer says 'The new plural rules and the middleware still have no test coverage that I ran', so it implemented a reading without asking.",
+   "costUsd": 0.0247,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-23c7bd7e|without|2": {
+   "task": "senior-ambiguous-23c7bd7e",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "Implemented the spec's no-context default `without-unit` that 'keeps it singular' and never asked about the zero-quantity-with-unit case: 'the spec makes the no-context default `without-unit`, which keeps it singular.'",
+   "costUsd": 0.0249,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-b64f14aa|without|0": {
+   "task": "senior-ambiguous-b64f14aa",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "Implemented reading (1) without asking: \"as_json_model() returns that raw value\" so value becomes \"$NOW-30d\", and never raised the alternatives.",
+   "costUsd": 0.0249,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-b64f14aa|without|1": {
+   "task": "senior-ambiguous-b64f14aa",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "Implemented reading (1) without asking: \"as_json_model() returns raw_value, so the placeholder text reaches the frontend\" with value \"$NOW-30d\".",
+   "costUsd": 0.0253,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-b64f14aa|without|2": {
+   "task": "senior-ambiguous-b64f14aa",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "It implemented reading (1) without asking: \"`as_json_model()` returns that raw value instead of the resolved one\" and \"Its `value` is `\"$NOW-30d\"`\".",
+   "costUsd": 0.0251,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-c4fdab4e|without|0": {
+   "task": "senior-ambiguous-c4fdab4e",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "Delivers `POST /api/recipes/create/url/stream` and `/api/recipes/create/html-or-json/stream` without asking, taking reading (1) (POST) and never raising the GET/EventSource alternative.",
+   "costUsd": 0.026,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-c4fdab4e|without|1": {
+   "task": "senior-ambiguous-c4fdab4e",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "Implemented `/api/recipes/create/url/stream` and `/api/recipes/create/html-or-json/stream` as streaming endpoints without asking whether they should be POST or GET/EventSource; the run's own summary says it tested the HTML endpoint returning 'text/event-stream' and never raised the choice.",
+   "costUsd": 0.0271,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-c4fdab4e|without|2": {
+   "task": "senior-ambiguous-c4fdab4e",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "Implements 'POST /api/recipes/create/url/stream and /api/recipes/create/html-or-json/stream take the same inputs as the existing endpoints' (reading 1) without asking whether EventSource-compatible GET routes were wanted.",
+   "costUsd": 0.0262,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-ed402ec7|without|0": {
+   "task": "senior-ambiguous-ed402ec7",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "It delivered an implementation without asking, taking the 'keep' reading for fully untranslated terms: \"`cup`/`컵`/`cups`: `None`\" and \"`pound`/`libra`/`lbs`: `None`\" are dropped when the plural equals the source plural, while \"`onion`/`onions` with ja-JP: `None`\" drops it too, and it never asks about the choice.",
+   "costUsd": 0.0251,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-ed402ec7|without|1": {
+   "task": "senior-ambiguous-ed402ec7",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "Implements reading (2) without asking: 'onion'/'onions' with 'onion'/'onions' for ja-JP gives `None`' and 'The seeders now drop untranslated plurals.'",
+   "costUsd": 0.025,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-ed402ec7|without|2": {
+   "task": "senior-ambiguous-ed402ec7",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "It delivers an implementation without asking, taking reading (2) for the case where the singular equals the source singular: 'returns None when the singular differs from the source singular and the plural still equals the source plural. Otherwise it keeps the plural.' That implies the plural is kept when the singular equals the source singular, which is reading (1).",
+   "costUsd": 0.0252,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-1344f167|without|1": {
+   "task": "senior-ambiguous-1344f167",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "Implemented reading (2) without asking: \"The downloaded subtitle file is returned in the dict but not used. The transcript always comes from `transcribe_audio`, as your spec describes.\"",
+   "costUsd": 0.0277,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-1344f167|without|2": {
+   "task": "senior-ambiguous-1344f167",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "Implements reading (2) without asking: \"_download_audio returns the subtitle path, but parse() doesn't use it. The transcript always comes from transcribe_audio, as the spec says.\"",
+   "costUsd": 0.0284,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-feaa1c73|without|0": {
+   "task": "senior-ambiguous-feaa1c73",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "Implemented reading 1 without asking: \"`ldap_disabled` is `not LDAP_AUTH_ENABLED`, and `oidc_disabled` is `not OIDC_AUTH_ENABLED`\", so an unconfigured provider is shown as disabled.",
+   "costUsd": 0.0257,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-feaa1c73|without|1": {
+   "task": "senior-ambiguous-feaa1c73",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "Delivers an implementation taking reading (1): \"`ldapDisabled` is true when `LDAP_AUTH_ENABLED` is off, and `oidcDisabled` is true when `OIDC_AUTH_ENABLED` is off\" with no question asked and no mention of unconfigured installations.",
+   "costUsd": 0.0261,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-1344f167|without|0": {
+   "task": "senior-ambiguous-1344f167",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "It delivered an implementation (new transcribe_audio, yt-dlp strategy, parse-recipe-transcription prompt) without asking, and its final answer never raises the subtitle-versus-audio question: 'nothing has exercised the video download or the strategy end to end'.",
+   "costUsd": 0.0252,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-feaa1c73|without|2": {
+   "task": "senior-ambiguous-feaa1c73",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "Implemented reading (1) without asking: \"`ldapDisabled` is true when `LDAP_AUTH_ENABLED` is false, and `oidcDisabled` is true when `OIDC_AUTH_ENABLED` is false.\"",
+   "costUsd": 0.0261,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-29897e35|without|0": {
+   "task": "senior-ambiguous-29897e35",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "Implements reading (1) without asking: \"An `OAuthError` from either call is logged and answered with 401. That includes an `OAuthError` from `parse_id_token`... Other exceptions... propagate as a 500.\"",
+   "costUsd": 0.0257,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-29897e35|without|1": {
+   "task": "senior-ambiguous-29897e35",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "Delivers an implementation taking reading (2) without asking: \"An `OAuthError` from the token exchange is logged and gives 401. Any other exception, such as a `RuntimeError`, propagates and the client sees a 500.\"",
+   "costUsd": 0.0254,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-29897e35|without|2": {
+   "task": "senior-ambiguous-29897e35",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "Delivers an implementation and says \"An `OAuthError` raised by `parse_id_token` isn't caught, so it would surface as a 500 rather than a 401. The spec only named the token exchange for the 401 case, so I left it that way.\"",
+   "costUsd": 0.0259,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-17398941|without|1": {
+   "task": "senior-ambiguous-17398941",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "Implemented a reading without asking: \"A 404, 500 or similar response ends the current rotation. In fallback mode the proxy rotation and FlareSolverr can still run afterwards... If you'd rather a 404 end the whole fetch, it's a small change.\"",
+   "costUsd": 0.0268,
+   "model": "sonnet"
+  }
+ }
+}
