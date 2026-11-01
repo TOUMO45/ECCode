@@ -1,0 +1,46 @@
+{
+  "id": "senior-ambiguous-1344f167",
+  "category": "ambiguous",
+  "order": 20,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "5a223aa92d6c16f7450730e554655eeec3426c9a"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-a804278ede9a/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Feature: import a recipe from a social-media video (YouTube, TikTok, Instagram).\n\nPasting a video link into the URL import finds no recipe: the page carries no schema.org data. Many such videos narrate the recipe, and with OpenAI configured Mealie can download the audio, obtain a transcript and have the model build the recipe from it.\n\nExpected:\n1. Settings: OPENAI_ENABLE_TRANSCRIPTION_SERVICES (bool, default True) and OPENAI_AUDIO_MODEL (str, default \"whisper-1\") on AppSettings. The app info and admin app info gain enable_openai_transcription_services, true when OpenAI is enabled and the setting is on. yt-dlp becomes a dependency (yt-dlp==2026.03.03 in pyproject.toml and the lock file) and ffmpeg is installed in the Docker images.\n2. New exceptions in mealie.core.exceptions: OpenAIServiceError, RateLimitError and VideoDownloadError. OpenAIService turns the OpenAI client's rate-limit error into RateLimitError, and gains transcribe_audio(audio_file_path) -> str | None, which sends the file to the audio transcription API with OPENAI_AUDIO_MODEL and returns the text; if that call fails it falls back to a chat completion with the audio attached (a new OpenAIAttachment base class that the image attachments and a new OpenAILocalAudio share; get_response's images keyword becomes attachments).\n3. Every scraper strategy gets can_scrape() -> bool and RecipeScraper skips a strategy whose can_scrape() is false. The package and Open Graph strategies can scrape when they have a URL or raw HTML; the OpenAI HTML strategy additionally needs OPENAI_ENABLED.\n4. A new strategy RecipeScraperOpenAITranscription in mealie.services.scraper.scraper_strategies, listed in DEFAULT_SCRAPER_STRATEGIES (mealie.services.scraper.recipe_scraper) right after the package strategy. It can scrape only when it has a URL, OpenAI is enabled, OPENAI_ENABLE_TRANSCRIPTION_SERVICES is on (both read from get_app_settings() when asked, so switching the flag on the live settings takes effect) and a yt-dlp extractor other than the generic one accepts the URL. It never fetches the URL as a web page.\n   - _download_audio(self, temp_path) -> dict runs yt-dlp in a worker thread and returns a dict with the keys audio (the Path of the mono, low-bitrate mp3 at <temp_path>/mealie.mp3), subtitle (the Path of a downloaded .vtt subtitle or automatic-caption file in en, fr, es, de or it, or None when the video has none), title, description, thumbnail_url (str or None) and transcription (\"\"). Any download failure, or yt-dlp returning no info, raises VideoDownloadError.\n   - parse(): after the download, if the transcription is still empty, it calls OpenAIService.transcribe_audio on the audio and uses the text; an exception there (other than RateLimitError, which passes through) or an empty text is a failure (OpenAIServiceError).\n   - It then sends one message with the title, the description and the transcription to OpenAIService.get_response(prompt, message, response_schema=OpenAIRecipe), with a new stored prompt that asks for a schema.org recipe built from the transcript and the caption. An empty answer is a failure. The recipe is built from the answer (name, description, yield, times, the ingredients and instructions that have text, notes, image from thumbnail_url, org_url the video URL) and returned with an empty ScrapedExtras.\n5. POST /api/recipes/create/url with such a URL answers 201 with the slug, and the saved recipe has the model's name and as many ingredients and instructions as the model returned. A failure of the strategy (download error, transcription error, empty model answer, or transcription services switched off so the strategy declines) makes the import answer 400, as for any URL that yields no recipe.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_recipe_tests tests/unit_tests/services_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).\n",
+  "title": "feat: Add social media video import (YouTube, TikTok, Instagram) (#6764)",
+  "track": "feature",
+  "fixCommit": "1344f1674da452ef70a334bef8cadbe948104fed",
+  "hidden": {
+    "fromSource": {
+      "commit": "1344f1674da452ef70a334bef8cadbe948104fed",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py",
+        "tests/unit_tests/services_tests/test_openai_service.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video' 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_uses_subtitle_over_transcription' 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_transcription_disabled' 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_download_error' 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_transcription_error' 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_empty_openai_response' 'tests/unit_tests/services_tests/test_openai_service.py::test_get_prompt_default_only' 'tests/unit_tests/services_tests/test_openai_service.py::test_get_prompt_custom_dir_used' 'tests/unit_tests/services_tests/test_openai_service.py::test_get_prompt_custom_empty_falls_back_to_default' 'tests/unit_tests/services_tests/test_openai_service.py::test_get_prompt_raises_when_no_files'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_recipe_tests/test_recipe_bulk_action.py' 'tests/integration_tests/user_recipe_tests/test_recipe_bulk_import.py' 'tests/integration_tests/user_recipe_tests/test_recipe_comments.py' 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_image.py' 'tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py' 'tests/integration_tests/user_recipe_tests/test_recipe_export_as.py' 'tests/integration_tests/user_recipe_tests/test_recipe_foods.py' 'tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py' 'tests/integration_tests/user_recipe_tests/test_recipe_ingredients.py' 'tests/integration_tests/user_recipe_tests/test_recipe_owner.py' 'tests/integration_tests/user_recipe_tests/test_recipe_ratings.py' 'tests/integration_tests/user_recipe_tests/test_recipe_share_tokens.py' 'tests/integration_tests/user_recipe_tests/test_recipe_steps.py' 'tests/integration_tests/user_recipe_tests/test_recipe_suggestions.py' 'tests/integration_tests/user_recipe_tests/test_recipe_timeline_events.py' 'tests/integration_tests/user_recipe_tests/test_recipe_units.py' 'tests/unit_tests/services_tests/test_email_service.py' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_uses_subtitle_over_transcription' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_transcription_disabled' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_download_error' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_transcription_error' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py::test_create_recipe_from_video_empty_openai_response' --deselect 'tests/unit_tests/services_tests/test_openai_service.py::test_get_prompt_default_only' --deselect 'tests/unit_tests/services_tests/test_openai_service.py::test_get_prompt_custom_dir_used' --deselect 'tests/unit_tests/services_tests/test_openai_service.py::test_get_prompt_custom_empty_falls_back_to_default' --deselect 'tests/unit_tests/services_tests/test_openai_service.py::test_get_prompt_raises_when_no_files'",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 10,
+    "regression": 1397,
+    "failingBeforeAndAfter": []
+  }
+}

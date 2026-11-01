@@ -1,0 +1,12 @@
+{
+  "question": "With OIDC_VERIFY_X509_STRICT=false and no OIDC_TLS_CACERTFILE, should the relaxed check apply to the system trust store (a context with the default CAs and the strict flag cleared), or does the setting only affect a custom CA file (no context, httpx defaults)?",
+  "readings": [
+    "Build a context from the system's default CAs with VERIFY_X509_STRICT cleared, so the relaxation also covers a private CA installed in the system store.",
+    "Return None as when nothing is configured: the strict flag is only relaxed on the custom CA file, and the system store keeps Python's defaults."
+  ],
+  "upstream": "A context with the default CAs and the strict flag cleared is returned whenever verify_strict is False, with or without a CA file.",
+  "rationale": "The request specifies the no-cafile-strict case and both cafile cases but not the no-cafile-relaxed one, and whether a security relaxation should extend to the system trust store is a judgement call a senior would raise rather than make. The target test calls the function with cafile=None and verify_strict=False and expects an SSLContext with the flag cleared and a non-empty CA list.",
+  "pinnedBy": [
+    "tests/unit_tests/test_oidc_ssl.py::test_relaxed_strict_default_ca"
+  ]
+}

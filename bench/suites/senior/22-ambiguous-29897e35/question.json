@@ -1,0 +1,12 @@
+{
+  "question": "When parse_id_token rejects the id_token (a joserfc error such as an invalid nonce, signature or claim), is that a client error answered with 401 like a rejected code, or a server error answered with 500?",
+  "readings": [
+    "401: a bad nonce or an invalid token is the client's fault, the same as a rejected authorization code.",
+    "500: only authlib's OAuthError from the token exchange is a rejection; anything else, including id_token validation errors, propagates as a server error."
+  ],
+  "upstream": "500: only OAuthError is caught and mapped to 401; joserfc's InvalidClaimError from parse_id_token propagates, matching the web callback's unwrapped behaviour.",
+  "rationale": "The request maps a rejected code to 401 and an unexpected failure of the exchange request to 500 but says nothing about the id_token validation step, and both readings are reasonable API designs with different client handling. The target test makes parse_id_token raise InvalidClaimError(\"nonce\") and expects 500.",
+  "pinnedBy": [
+    "tests/integration_tests/user_tests/test_oidc_native.py::test_native_token_returns_500_when_id_token_is_rejected"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "question": "In the JSON form of a filter, should a placeholder part's value carry the placeholder text as written (\"$NOW-30d\") instead of the resolved datetime, or should value keep the resolved datetime and the placeholder be exposed some other way (a new field, or by the UI parsing the filter string itself)?",
+  "readings": [
+    "value holds the placeholder verbatim (\"$NOW-30d\"); the resolved datetime is only used to execute the filter.",
+    "value keeps the resolved datetime and a new field on the part carries the placeholder text.",
+    "The JSON form is left as is (resolved values) and the UI recovers placeholders from the raw filter string."
+  ],
+  "upstream": "value holds the raw, unresolved text (\"$NOW-30d\"); the component keeps both the raw value and the resolved value and the JSON form reports the raw one.",
+  "rationale": "queryFilter is an API field read by every consumer of cookbooks and meal plan rules, so changing what value means is a contract decision, and the request gives the UI's need without saying how the JSON form should carry the placeholder. The test compares as_json_model() with a part whose value is exactly \"$NOW-30d\" and no extra fields.",
+  "pinnedBy": [
+    "tests/unit_tests/repository_tests/test_query_filter_builder.py::test_query_filter_builder_json_uses_raw_value"
+  ]
+}

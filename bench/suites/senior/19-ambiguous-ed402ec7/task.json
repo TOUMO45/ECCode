@@ -1,0 +1,45 @@
+{
+  "id": "senior-ambiguous-ed402ec7",
+  "category": "ambiguous",
+  "order": 19,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "0e6b9638b47255e7567f367c14b67079b9b7c5f1"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-632d8d133555/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Feature: ignore untranslated plurals when seeding foods and units.\n\nThe food and unit seeders (mealie.repos.seed.seeders) load a locale's seed file and store every entry's plural_name (and, for units, plural_abbreviation) as is. Crowdin cannot store an empty translation, so for a term that has no plural in the target language translators either repeat the singular or leave the English plural untouched. Seeding ja-JP or ko-KR then creates foods whose plural is their singular, or an English word (\"cups\" on the Korean \"컵\"), and the ingredient display pluralises with the wrong word.\n\nExpected:\n1. Two pure functions in mealie.lang.locale_config, keyword-only arguments:\n   - resolve_plural(*, source_singular, source_plural, singular, plural) -> str | None, where source_singular and source_plural are the same term in the source locale, en-US. Rules: an empty or missing plural, or a plural equal to the singular, gives None (\"garlic\"/\"\" with \"ajo\"/\"\" or \"ajo\"/None; \"teaspoon\"/\"teaspoons\" with \"茶匙\"/\"茶匙\"). A translated singular (one that differs from the source singular) whose plural still equals the source plural gives None: \"cup\"/\"cups\" with \"컵\"/\"cups\", \"pound\"/\"lbs\" with \"libra\"/\"lbs\", and also \"eggplant\"/\"eggplants\" with \"aubergine\"/\"eggplants\", even though that plural might be legitimate. Otherwise the plural is kept: \"onion\"/\"onions\" with \"cebolla\"/\"cebollas\" gives \"cebollas\", and a plural the translation adds although the source has none, \"celery\"/\"\" with \"sellerie\"/\"sellerien\", gives \"sellerien\".\n   - resolve_food_plural(*, source_singular, source_plural, singular, plural, locale) -> str | None. For a locale whose LOCALE_CONFIG entry has plural_food_handling NEVER (ja-JP and zh-TW among them) it is always None, even for a term that is not translated at all (\"onion\"/\"onions\" with \"onion\"/\"onions\" and ja-JP). For any other locale, for None, and for an unknown code such as \"xx-XX\", it applies resolve_plural (\"onion\"/\"onions\" with \"zwiebel\"/\"zwiebeln\" gives \"zwiebeln\" for de-DE, en-US, None and \"xx-XX\").\n2. The seeders use them. AbstractSeeder gets source_locale = \"en-US\" and a cached source_data property holding the en-US file, loaded once per seeder. The unit seeder resolves each unit's plural_name against the same key in the source file (name and plural_name) and its plural_abbreviation against the source's abbreviation and plural_abbreviation; the food seeder resolves each food's plural_name against the same label key and food key in the source file, passing the locale being seeded to resolve_food_plural. A key the source file does not have is compared with the entry itself, that is, treated as untranslated. Everything else about seeding (de-duplication by localized name, labels, descriptions, abbreviations) is unchanged.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).\n",
+  "title": "feat: ignore plurals when they're not translated (#8516)",
+  "track": "feature",
+  "fixCommit": "ed402ec7e6bd10e4dfc8498327aa20e8469a7f78",
+  "hidden": {
+    "fromSource": {
+      "commit": "ed402ec7e6bd10e4dfc8498327aa20e8469a7f78",
+      "paths": [
+        "tests/unit_tests/test_locale_config.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/unit_tests/test_locale_config.py::test_resolve_plural[translated-plural-is-kept]' 'tests/unit_tests/test_locale_config.py::test_resolve_plural[untranslated-term-keeps-its-plural]' 'tests/unit_tests/test_locale_config.py::test_resolve_plural[no-plural-in-either-locale]' 'tests/unit_tests/test_locale_config.py::test_resolve_plural[missing-plural-key]' 'tests/unit_tests/test_locale_config.py::test_resolve_plural[plural-repeating-its-own-singular]' 'tests/unit_tests/test_locale_config.py::test_resolve_plural[translated-singular-with-source-plural]' 'tests/unit_tests/test_locale_config.py::test_resolve_plural[translated-abbreviation-with-source-plural]' 'tests/unit_tests/test_locale_config.py::test_resolve_plural[plural-added-by-the-translation]' 'tests/unit_tests/test_locale_config.py::test_resolve_plural[plural-matching-source-is-dropped]' 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[always-pluralizes]' 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[pluralizes-without-unit]' 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[never-pluralizes]' 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[never-pluralizes-traditional-chinese]' 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[no-locale-falls-back-to-the-string-rules]' 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[unknown-locale-falls-back-to-the-string-rules]' 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_never_locale_drops_untranslated_plurals'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/unit_tests/test_alembic.py' 'tests/unit_tests/test_auto_init_config.py' 'tests/unit_tests/test_code_generation.py' 'tests/unit_tests/test_config.py' 'tests/unit_tests/test_exceptions.py' 'tests/unit_tests/test_recipe_export_types.py' 'tests/unit_tests/test_recipe_image_backfill.py' 'tests/unit_tests/test_recipe_parser.py' 'tests/unit_tests/test_security.py' 'tests/unit_tests/test_session_cookie.py' 'tests/unit_tests/test_spa_static_files.py' 'tests/unit_tests/test_utils.py' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_plural[translated-plural-is-kept]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_plural[untranslated-term-keeps-its-plural]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_plural[no-plural-in-either-locale]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_plural[missing-plural-key]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_plural[plural-repeating-its-own-singular]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_plural[translated-singular-with-source-plural]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_plural[translated-abbreviation-with-source-plural]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_plural[plural-added-by-the-translation]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_plural[plural-matching-source-is-dropped]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[always-pluralizes]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[pluralizes-without-unit]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[never-pluralizes]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[never-pluralizes-traditional-chinese]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[no-locale-falls-back-to-the-string-rules]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_honors_locale[unknown-locale-falls-back-to-the-string-rules]' --deselect 'tests/unit_tests/test_locale_config.py::test_resolve_food_plural_never_locale_drops_untranslated_plurals'",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 16,
+    "regression": 108,
+    "failingBeforeAndAfter": []
+  }
+}

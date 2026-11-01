@@ -1,0 +1,46 @@
+{
+  "id": "senior-ambiguous-c4fdab4e",
+  "category": "ambiguous",
+  "order": 18,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "04dd514e6a4ef063528fb781fb6f7f665b2003f3"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-fdde54cda8f7/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Feature: live progress for recipe imports from a URL or pasted HTML/JSON.\n\nPOST /api/recipes/create/url and POST /api/recipes/create/html-or-json answer only once the whole import is done. With the scraper's stages (fetching the page, extracting the data, downloading the image, and for the AI strategies downloading a video, transcribing it and building the recipe) an import can take a minute with nothing on screen. The create page should show what is happening while it waits.\n\nExpected:\n1. Streaming twins of both endpoints at /api/recipes/create/url/stream and /api/recipes/create/html-or-json/stream, for the same authenticated users, taking the same inputs as the existing endpoints (url, or data with an optional url, plus include_tags and include_categories). They answer 200 with a server-sent event stream (text/event-stream) made of \"event: <name>\" and \"data: <json>\" lines, one blank line between events; the tests read the whole response body and parse it.\n   - Progress: event \"progress\", data {\"message\": \"<text>\"}, sent as each stage starts. An import that goes through the web scraper emits at least one. The stages and their messages, translated backend strings under new en-US keys recipe.create-progress.*: fetching-webpage (\"Fetching webpage...\", only when the page really has to be fetched, so pasted HTML skips it), extracting-recipe-data, creating-recipe-from-webpage-data (the Open Graph strategy), downloading-image (only when the recipe has an image), creating-recipe-with-ai, downloading-video, transcribing-audio-with-ai and creating-recipe-from-transcript-with-ai (the AI strategies).\n   - Success ends with event \"done\", data {\"slug\": \"<slug of the new recipe>\"}, after the recipe is created with tags and categories applied as the existing endpoints do.\n   - Any exception during the import (including the scraper's bad-data HTTPException) ends the stream, still with status 200, with event \"error\", data {\"message\": \"<text describing the failure>\"}; nothing is created.\n   - Plumbing: create_from_html(url, translator, html=None, on_progress=None) and RecipeScraper.scrape(url, html=None, on_progress=None) and each strategy's parse(on_progress=None) accept an optional async callable taking the message; with None nothing changes. The CRUD route class that copies updatedAt into the Last-Modified header must pass a streaming response through untouched.\n2. The existing endpoints share the pipeline and keep their contract: 201 with the slug (declared response model str) on the done event; on an error event, 400 with an ErrorResponse body whose message is the error event's text.\n3. The create pages use the stream endpoints and show the progress text (frontend, not graded).\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_recipe_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).\n",
+  "title": "feat: Recipe import progress (#7252)",
+  "track": "feature",
+  "fixCommit": "c4fdab4e05089e92779153cffc33951e58de6e0b",
+  "hidden": {
+    "fromSource": {
+      "commit": "c4fdab4e05089e92779153cffc33951e58de6e0b",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_crud.py",
+        "tests/utils/api_routes/__init__.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_url_stream_done' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_url_stream_error' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_done' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_error' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_read_update' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_duplicate' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_update_with_empty_relationship' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_rename' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_delete'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_url_stream_done' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_url_stream_error' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_done' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_error' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_read_update' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_duplicate' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_update_with_empty_relationship' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_rename' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_delete'",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 9,
+    "regression": 37,
+    "failingBeforeAndAfter": []
+  }
+}

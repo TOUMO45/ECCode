@@ -1,0 +1,46 @@
+{
+  "id": "senior-ambiguous-59e3e14e",
+  "category": "ambiguous",
+  "order": 30,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "e1d0ffdc9d81fc6ab2be8ffdfe89ac58f72355e1"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-e6d30c40d136/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Feature: partitioned session cookies for embedded (iframe) use.\n\nMealie can be embedded in another site. For that, the login response sets the session cookie with SameSite=None and Secure when the client flags the embedding with the request header X-Mealie-Embedded: true; the flag only changes SameSite over HTTPS, because browsers reject SameSite=None without Secure. Browsers now also block third-party cookies unless they are partitioned (CHIPS), so an embedded session cookie needs the Partitioned attribute as well. Mealie runs on Python 3.14, whose cookie support can emit it (on older Pythons asking for it made every embedded login a 500, which is why it was left out).\n\nExpected:\n- session_cookie_attrs(request), in the auth routes module, returns a partitioned boolean next to path, secure and samesite, always present (True or False), so that set_session_cookie and the logout route, which spread these attributes into set_cookie, set and clear the cookie with the same attributes.\n- An embedded request over HTTPS (request.url.scheme https, or an X-Forwarded-Proto whose first entry is https even when uvicorn was not told to trust the proxy, as today) gets samesite \"none\" and partitioned True.\n- A request without the embedded flag gets partitioned False; over plain HTTP it keeps secure False and samesite \"lax\".\n- The attribute really is emitted: the Set-Cookie header of an embedded HTTPS login contains \"Partitioned\" together with \"SameSite=none\" and \"Secure\".\n- The frontend's getTokenCookieOptions mirrors it, asking for a partitioned cookie only on an embedded HTTPS production page (not graded).\n\nTests: `python -m pytest -q -p no:cacheprovider tests/unit_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).\n",
+  "title": "feat: use partitioned cookies to support embedded auth (#8522)",
+  "track": "feature",
+  "fixCommit": "59e3e14e87e148499fad3d248cba291b99f085dc",
+  "hidden": {
+    "fromSource": {
+      "commit": "59e3e14e87e148499fad3d248cba291b99f085dc",
+      "paths": [
+        "frontend/app/composables/__tests__/use-token-cookie.test.ts",
+        "tests/unit_tests/test_session_cookie.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/unit_tests/test_session_cookie.py::test_plain_http_gets_an_insecure_lax_cookie' 'tests/unit_tests/test_session_cookie.py::test_embedded_over_https_relaxes_samesite_and_partitions' 'tests/unit_tests/test_session_cookie.py::test_embedded_behind_an_untrusted_proxy_still_relaxes_samesite' 'tests/unit_tests/test_session_cookie.py::test_embedded_over_plain_http_stays_lax' 'tests/unit_tests/test_session_cookie.py::test_embedded_https_cookie_is_actually_sendable'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/unit_tests/test_session_cookie.py' --deselect 'tests/unit_tests/test_session_cookie.py::test_plain_http_gets_an_insecure_lax_cookie' --deselect 'tests/unit_tests/test_session_cookie.py::test_embedded_over_https_relaxes_samesite_and_partitions' --deselect 'tests/unit_tests/test_session_cookie.py::test_embedded_behind_an_untrusted_proxy_still_relaxes_samesite' --deselect 'tests/unit_tests/test_session_cookie.py::test_embedded_over_plain_http_stays_lax' --deselect 'tests/unit_tests/test_session_cookie.py::test_embedded_https_cookie_is_actually_sendable'",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 5,
+    "regression": 3,
+    "failingBeforeAndAfter": []
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "question": "Are the stream endpoints POST routes taking the same JSON body as their twins (consumed with a streaming fetch), or GET routes taking the inputs as query parameters so the browser's EventSource API can use them?",
+  "readings": [
+    "POST with the same JSON body as the non-streaming endpoints; the client reads the stream with fetch.",
+    "GET with url/data, include_tags and include_categories as query parameters, so EventSource can subscribe."
+  ],
+  "upstream": "POST routes with the same request body models as the non-streaming endpoints.",
+  "rationale": "EventSource only supports GET, so an engineer adding SSE endpoints for a browser page has to choose between the native API with query parameters and a POST body read through fetch; the request names the inputs and the paths but not the method. All four target tests POST a JSON body to the stream routes.",
+  "pinnedBy": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_url_stream_done",
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_url_stream_error",
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_done",
+    "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_error"
+  ]
+}

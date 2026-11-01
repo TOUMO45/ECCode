@@ -1,0 +1,17 @@
+{
+  "question": "What name does the asset created from a URL get: the file name taken from the URL's path (with some fallback when the URL has none), a fixed name, or a name the client must send with the URL?",
+  "readings": [
+    "The URL path's final segment without its extension and query string (\"pancakes\" for .../photos/pancakes.png?v=2, \"download\" for /download?id=123), with a generic fallback such as \"image\" when the path has no usable file name.",
+    "A fixed generic name for every downloaded asset, for example \"image\" or \"Image from URL\".",
+    "A name supplied by the client in the request body, like the upload endpoint's form field."
+  ],
+  "upstream": "The stem of the URL path's file name, URL-decoded and ignoring the query string, falling back to \"image\" when the stem is empty or slugifies to nothing (\"https://example.test/\" and \"https://example.test/$.png\" both give \"image\").",
+  "rationale": "The request says the asset is stored with a slugified file name and returned with a name but never says where the name comes from, and the request body carries only the URL; the name is user-visible on the recipe page, so a senior would ask before inventing one. The target tests expect name \"pancakes\" and fileName \"pancakes.png\" for .../pancakes.png?v=2, and \"download\" and \"image\" for the other URLs.",
+  "pinnedBy": [
+    "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url",
+    "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_names_the_asset_after_the_file[https://example.test/pancakes.png-pancakes]",
+    "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_names_the_asset_after_the_file[https://example.test/download?id=123-download]",
+    "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_names_the_asset_after_the_file[https://example.test/-image]",
+    "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_names_the_asset_after_the_file[https://example.test/$.png-image]"
+  ]
+}

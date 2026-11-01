@@ -1,0 +1,45 @@
+{
+  "id": "senior-ambiguous-5e886b11",
+  "category": "ambiguous",
+  "order": 29,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "318f05f2abeecdf6943d8004fc70af426f00e166"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-ea8b687b4031/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Feature: report why a pasted HTML/JSON import failed.\n\nPOST /api/recipes/create/html-or-json/stream ends with an error event whenever the import raises, but the event's data.message is the exception's class name, so for a paste the scraper cannot use the page shows \"HTTPException\". That happens for valid JSON that is not tagged as a schema.org Recipe (no \"@context\"/\"@type\"), for malformed JSON ('{\"name\": \"Test\",,,}'), and for HTML with no recipe data at all: in all three the scraper raises its usual HTTPException with status 400 and detail {\"details\": ParserErrors.BAD_RECIPE_DATA} (the ParserErrors enum in mealie.services.scraper.scraper). The non-streaming POST /api/recipes/create/html-or-json has the same problem: its 400 carries detail.message \"HTTPException\".\n\nExpected:\n- For those three pastes the stream still answers 200 and contains an error event, and its data.message now identifies the scraper's bad-recipe-data error (ParserErrors.BAD_RECIPE_DATA) instead of the class name. The non-streaming endpoint answers 400 with the same text in detail.message (for example for the paste {\"name\": \"Test\"}).\n- The rule, applied in one place for both endpoints: when the exception is an HTTPException, its detail is reported, taking the \"details\" entry when the detail is a dict with a non-empty one, or the detail itself when it is a non-empty string. Any other exception keeps reporting its class name as today.\n- Successful imports, progress and done events, and the URL import endpoints are unchanged. The paste page shows the message (frontend, not graded).\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_recipe_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).\n",
+  "title": "feat: Add feedback for bad JSON in HTML-JSON page (#7956)",
+  "track": "feature",
+  "fixCommit": "5e886b11a11a179363dc69e5fde7d6875bd32263",
+  "hidden": {
+    "fromSource": {
+      "commit": "5e886b11a11a179363dc69e5fde7d6875bd32263",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_crud.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[missing-schema-declaration]' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[malformed-json]' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[no-recipe-data]' 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_invalid_data'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[missing-schema-declaration]' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[malformed-json]' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[no-recipe-data]' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_invalid_data'",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 4,
+    "regression": 50,
+    "failingBeforeAndAfter": []
+  }
+}

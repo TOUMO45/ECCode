@@ -1,0 +1,45 @@
+{
+  "id": "senior-ambiguous-feaa1c73",
+  "category": "ambiguous",
+  "order": 21,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "17951bb0f45711f17d5c7ddf24fed49c5af6ccf6"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-71f37880070a/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Feature: tell a switched-off auth provider apart from a misconfigured one on the admin site settings page.\n\nGET /api/admin/about/check (CheckAppConfig) reports ldapReady and oidcReady, and the site settings page turns each into a check: green when ready, a warning otherwise. An admin who turned a provider off with LDAP_AUTH_ENABLED or OIDC_AUTH_ENABLED therefore sees the same warning as an admin whose configuration is incomplete, and has no way to tell the two apart. The page needs a third state for a provider that is turned off.\n\nExpected:\n- CheckAppConfig gets two booleans, ldap_disabled and oidc_disabled (ldapDisabled and oidcDisabled in JSON), next to ldap_ready and oidc_ready. GET /api/admin/about/check returns them, for admins, together with the existing fields (emailReady, ldapReady, oidcReady, baseUrlSet, isUpToDate, all booleans).\n- ldapDisabled reports that LDAP authentication has been turned off, and oidcDisabled that OIDC authentication has been turned off; ldapReady and oidcReady keep meaning what they mean today (the provider is enabled and fully configured).\n- The site settings page (frontend, not graded) shows a turned-off provider in grey with a neutral \"<provider> is disabled\" text that names the environment variable that enables it, a ready provider in green, and a provider that is enabled but incompletely configured with today's warning.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/admin_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).\n",
+  "title": "feat: Added support for disable services (#7434)",
+  "track": "feature",
+  "fixCommit": "feaa1c73af3293619cfc68246eba737ce3121baa",
+  "hidden": {
+    "fromSource": {
+      "commit": "feaa1c73af3293619cfc68246eba737ce3121baa",
+      "paths": [
+        "tests/integration_tests/admin_tests/test_admin_about.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/admin_tests/test_admin_about.py::test_admin_about_check_app_config'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/admin_tests/test_admin_about.py' --deselect 'tests/integration_tests/admin_tests/test_admin_about.py::test_admin_about_check_app_config'",
+      "timeoutMs": 3600000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 4,
+    "failingBeforeAndAfter": []
+  }
+}
