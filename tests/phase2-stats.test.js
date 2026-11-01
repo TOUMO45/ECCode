@@ -86,45 +86,43 @@ test('reseal: round-trips on a throwaway sealed set, updates only the sealed has
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test('the freeze: the real sealed set verifies against its manifest, and a changed implementation is refused', () => {
+test('the freeze: the real sealed set verifies against its manifest; the freeze commit\'s tree passes and a changed implementation is refused', (t) => {
   const v = seeds.verify();
   assert.strictEqual(v.ok, true);
   assert.strictEqual(v.counts.intended, 5);
   assert.ok(v.counts.unintended >= 15);
-  const freeze = seeds.assertFrozen();
+  const freeze = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'bench/pilot/phase2-freeze.json'), 'utf8'));
   assert.ok(freeze.files['lib/behavior.js'] && freeze.files['scripts/behavior/probe_runner.py']);
-  // A root where behavior.js differs by one byte.
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-freeze-'));
-  for (const f of Object.keys(freeze.files)) {
-    fs.mkdirSync(path.dirname(path.join(root, f)), { recursive: true });
-    fs.copyFileSync(path.join(__dirname, '..', f), path.join(root, f));
-  }
-  assert.doesNotThrow(() => seeds.assertFrozen(root));
-  fs.appendFileSync(path.join(root, 'lib/behavior.js'), '\n');
-  assert.throws(() => seeds.assertFrozen(root), /differs from the frozen one/);
-  fs.rmSync(root, { recursive: true, force: true });
+  // The two detector files never change: on HEAD their hashes are the ones registered on 2026-10-29.
+  const sha = (f) => require('crypto').createHash('sha256').update(fs.readFileSync(path.join(__dirname, '..', f))).digest('hex');
+  assert.strictEqual(sha('lib/behavior.js'), 'aabf35fa54c240c99ec003011c987a29f71430a582dd28fcdca0ed00b8c508c6');
+  assert.strictEqual(sha('scripts/behavior/probe_runner.py'), '03f949952541c0cd625e4ecbab62aeab25be5c38a16b5b06704ade3dfa35e2b4');
+  assert.strictEqual(freeze.files['lib/behavior.js'], sha('lib/behavior.js'));
+  assert.strictEqual(freeze.files['scripts/behavior/probe_runner.py'], sha('scripts/behavior/probe_runner.py'));
+  const { frozenTreeFromGit } = require('./helpers');
+  const tree = frozenTreeFromGit();
+  if (!tree.dir) return t.skip(tree.reason);
+  // The freeze commit's own tree is frozen; HEAD is checked only for the detector files above (Phase 3 edits the rest, register row 157).
+  assert.doesNotThrow(() => seeds.assertFrozen(tree.dir));
+  assert.strictEqual(seeds.check(tree.dir).ok, true);
+  fs.appendFileSync(path.join(tree.dir, 'lib/behavior.js'), '\n');
+  assert.throws(() => seeds.assertFrozen(tree.dir), /differs from the frozen one/);
+  fs.rmSync(tree.dir, { recursive: true, force: true });
 });
 
-test('the freeze covers the whole H-B pipeline, and a changed or missing harness file is refused', () => {
-  const freeze = seeds.assertFrozen();
+test('the freeze covers the whole H-B pipeline, and a changed or missing harness file is refused', (t) => {
+  const freeze = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'bench/pilot/phase2-freeze.json'), 'utf8'));
   const listed = Object.keys(freeze.files).sort();
-  // Everything the rule covers today is registered (the freeze may list more: the 0.C harness files).
-  for (const f of seeds.freezeList()) assert.ok(listed.includes(f), `${f} is frozen`);
-  for (const f of ['bench/pilot/phase2-hb/config.js', 'bench/pilot/phase2-hb/mealie_setup.py', 'bench/pilot/phase2-hb/run.js']) assert.ok(listed.includes(f), `${f} is frozen (0.C)`);
-  // The two detector files never change: their hashes are the ones registered on 2026-10-29.
-  assert.strictEqual(freeze.files['lib/behavior.js'], 'aabf35fa54c240c99ec003011c987a29f71430a582dd28fcdca0ed00b8c508c6');
-  assert.strictEqual(freeze.files['scripts/behavior/probe_runner.py'], '03f949952541c0cd625e4ecbab62aeab25be5c38a16b5b06704ade3dfa35e2b4');
-  for (const f of ['lib/behavior.js', 'scripts/behavior/probe_runner.py', 'bin/eccode.js', 'lib/compat.js', 'lib/lean.js', 'lib/evidence.js', 'lib/config.js', 'lib/store.js', 'bench/pilot/phase2-seeds.js', 'bench/pilot/phase2-seed-validate.js', 'bench/pilot/phase2-reseal.js']) assert.ok(listed.includes(f), `${f} is frozen`);
+  for (const f of ['lib/behavior.js', 'scripts/behavior/probe_runner.py', 'bin/eccode.js', 'lib/compat.js', 'lib/lean.js', 'lib/evidence.js', 'lib/config.js', 'lib/store.js', 'bench/pilot/phase2-seeds.js', 'bench/pilot/phase2-seed-validate.js', 'bench/pilot/phase2-reseal.js', 'bench/pilot/phase2-hb/config.js', 'bench/pilot/phase2-hb/mealie_setup.py', 'bench/pilot/phase2-hb/run.js']) assert.ok(listed.includes(f), `${f} is frozen`);
   assert.ok(!listed.includes('lib/bench.js'), 'the H-A harness is not frozen');
   assert.strictEqual(freeze.implementationCommit, 'e5c57e498d9d00f7c9c29cee1d00752704922a35');
-  assert.strictEqual(seeds.check().ok, true);
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-freeze-'));
-  for (const f of listed) {
-    fs.mkdirSync(path.dirname(path.join(root, f)), { recursive: true });
-    fs.copyFileSync(path.join(__dirname, '..', f), path.join(root, f));
-  }
+  const { frozenTreeFromGit } = require('./helpers');
+  const tree = frozenTreeFromGit();
+  if (!tree.dir) return t.skip(tree.reason);
+  const root = tree.dir;
+  // In the freeze commit's tree, everything the rule covers is listed.
+  for (const f of seeds.freezeList(root)) assert.ok(listed.includes(f), `${f} is frozen`);
   assert.doesNotThrow(() => seeds.assertFrozen(root));
-  assert.strictEqual(seeds.check(root).ok, true);
   // A harness file edited by one byte.
   fs.appendFileSync(path.join(root, 'bench/pilot/phase2-seed-validate.js'), '\n');
   assert.throws(() => seeds.assertFrozen(root), /the H-B pipeline differs from the frozen one.*phase2-seed-validate\.js/);

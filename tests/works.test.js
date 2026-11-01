@@ -11,7 +11,7 @@ const works = require('../lib/works');
 const evidence = require('../lib/evidence');
 const { deliver } = require('../lib/delivery');
 const { Store } = require('../lib/store');
-const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, task, expectCode, recordLesson, labRootCause } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, task, expectCode, recordLesson, labRootCause, adrRef, designDecision } = require('./helpers');
 
 const commit = (dir, msg) => {
   execFileSync('git', ['add', '-A'], { cwd: dir });
@@ -43,7 +43,7 @@ function approveVerification(ctx, artifacts, n = '') {
   write(ctx.dir, `.eccode/artifacts/verify${n}.md`, '# Verification\nAll green.\n');
   gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: [`.eccode/artifacts/verify${n}.md`, ...artifacts] });
   const ev = passCheck(ctx.store, 'security-reviewer');
-  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, `artifact:.eccode/artifacts/verify${n}.md`]]));
+  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, `artifact:.eccode/artifacts/verify${n}.md`, ...adrRef({ store: ctx.store })]]));
 }
 
 /** Greenfield w1 delivered end to end, repo committed. */
@@ -129,7 +129,7 @@ test('fix track: verification needs the same check failing before the fix and pa
   routeBehavior(ctx);
   submitV();
   const ev = passCheck(store, 'security-reviewer');
-  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verify3.md']]));
+  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verify3.md', ...adrRef({ store: store })]]));
   deliver(store, 'delivery-lead');
 });
 
@@ -139,6 +139,7 @@ test('refactor track: the behavior command must be green before the first claim 
   const { store, config, dir } = ctx;
   const behavior = 'node -e "process.exit(0)" # behavior-suite';
   works.startWork(store, config, 'orchestrator', { track: 'refactor', title: 'Extract the pricing module', behavior });
+  designDecision({ store, config });
   gates.startGate(store, config, 'plan', 'orchestrator');
   write(dir, '.eccode/artifacts/rplan.json', JSON.stringify({
     phases: [{ id: 'extract', name: 'Extract', goal: 'move pricing into its own module', acceptanceCriteria: ['behavior unchanged'] }],
@@ -160,6 +161,7 @@ test('refactor track: the behavior command must be green before the first claim 
   // Run 2: baseline recorded first, then the change, then the after-run.
   const ctx2 = deliveredProject();
   works.startWork(ctx2.store, ctx2.config, 'orchestrator', { track: 'refactor', title: 'Extract the pricing module', behavior });
+  designDecision(ctx2);
   evidence.runCommand(ctx2.store, 'delivery-lead', { label: 'behavior before', command: behavior });
   gates.startGate(ctx2.store, ctx2.config, 'plan', 'orchestrator');
   write(ctx2.dir, '.eccode/artifacts/rplan.json', JSON.stringify({
@@ -338,7 +340,7 @@ test('reworking a task of an approved phase reopens the phase, and the work item
   const g = ctx.store.state().gates.verification;
   gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verify.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'], respondsTo: g.reviews[g.reviews.length - 1] });
   const ev2 = passCheck(ctx.store, 'security-reviewer');
-  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', approval([[`ev:${ev2.id}`, 'artifact:.eccode/artifacts/verify.md']], { resolvedFindings: [{ id: 'VR-1', resolution: 'imports sorted in the reworked task', evidence: [`ev:${ev2.id}`] }] }));
+  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', approval([[`ev:${ev2.id}`, 'artifact:.eccode/artifacts/verify.md', ...adrRef({ store: ctx.store })]], { resolvedFindings: [{ id: 'VR-1', resolution: 'imports sorted in the reworked task', evidence: [`ev:${ev2.id}`] }] }));
   deliver(ctx.store, 'delivery-lead');
   assert.strictEqual(ctx.store.state().work.status, 'delivered');
   assert.strictEqual(ctx.store.audit().ok, true);

@@ -4,7 +4,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { execFileSync, spawnSync } = require('child_process');
 const { init } = require('../lib/project');
 const { loadConfig } = require('../lib/config');
 const gates = require('../lib/gates');
@@ -99,10 +99,50 @@ function approveThroughPlan(ctx, plan) {
   write(dir, '.eccode/artifacts/spec.md', DESIGN_MD);
   gates.submit(store, config, 'design', 'technical-designer', { artifacts: ['.eccode/artifacts/spec.md'] });
   gates.recordReview(store, config, 'design', 'technical-reviewer', approval([['artifact:.eccode/artifacts/spec.md']]));
+  // Phase 3: no task is owned on a design track without a decision over two alternatives and its ADR.
+  designDecision(ctx);
   gates.startGate(store, config, 'plan', 'orchestrator');
   write(dir, '.eccode/artifacts/plan.json', JSON.stringify(plan || samplePlan(), null, 2));
   gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] });
   gates.recordReview(store, config, 'plan', 'technical-reviewer', approval([['artifact:.eccode/artifacts/plan.json']]));
+}
+
+/** Two alternatives, a decision and its ADR for the current work item; returns the ADR ref the verification reviewer cites. */
+function designDecision(ctx, { interfaces = [] } = {}) {
+  const design = require('../lib/design');
+  const t = (k) => `${k} is acceptable for this test`;
+  const tradeoffs = { complexity: t('complexity'), risk: t('risk'), performance: t('performance'), security: t('security'), reversibility: t('reversibility') };
+  const alt = design.alternatives(ctx.store, ctx.config, 'technical-designer', [{ id: 'A', title: 'Option A', tradeoffs }, { id: 'B', title: 'Option B', tradeoffs }]);
+  design.decide(ctx.store, ctx.config, 'technical-designer', { alternatives: alt.id, chosen: 'A', rationale: 'Option A is the simplest design that meets the requirements', rejected: [{ option: 'B', why: 'more moving parts for no gain' }], interfaces });
+  const adr = design.adr(ctx.store, ctx.config, 'technical-designer', {});
+  return `artifact:${adr.artifact}`;
+}
+
+/** The ADR ref of the current work item (the verification review on a design track must cite it). */
+function adrRef(ctx) {
+  const adrs = ctx.store.state().design.adrs;
+  return adrs.length ? [`artifact:${adrs[adrs.length - 1].artifact}`] : [];
+}
+
+/** The H-B freeze commit (bench/protocols/2026-10-28-phase2.md, 0.C). The measurement runs from a worktree of it; HEAD moves on. */
+const HB_FREEZE_COMMIT = '4fbb80ed23ed58c059ba6bc99fb6318c61562257';
+
+/**
+ * The frozen H-B tree rebuilt from git into a temporary directory (every file the
+ * freeze lists, plus the runner's directory), or null with the reason when the
+ * commit is not in this clone (a shallow checkout).
+ */
+function frozenTreeFromGit() {
+  const root = path.join(__dirname, '..');
+  const has = spawnSync('git', ['cat-file', '-e', `${HB_FREEZE_COMMIT}^{commit}`], { cwd: root });
+  if (has.status !== 0) return { dir: null, reason: `freeze commit ${HB_FREEZE_COMMIT.slice(0, 12)} is not in this clone` };
+  const files = execFileSync('git', ['ls-tree', '-r', '--name-only', HB_FREEZE_COMMIT, 'bench/pilot/phase2-freeze.json', 'bench/pilot/phase2-seeds.js', 'bench/pilot/phase2-hb', 'bench/pilot/phase2-seed-validate.js', 'bench/pilot/phase2-reseal.js', 'bench/suites/phase2-seeds', 'lib', 'bin', 'scripts/behavior', 'package.json'], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-hb-frozen-'));
+  for (const f of files) {
+    fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
+    fs.writeFileSync(path.join(dir, f), execFileSync('git', ['show', `${HB_FREEZE_COMMIT}:${f}`], { cwd: root, maxBuffer: 64 * 1024 * 1024 }));
+  }
+  return { dir, reason: null };
 }
 
 function samplePlan() {
@@ -211,4 +251,4 @@ function labRootCause(store, actor = 'backend-engineer', { command = 'node -e "p
   return store.state().lab;
 }
 
-module.exports = { labRootCause, tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };
+module.exports = { HB_FREEZE_COMMIT, frozenTreeFromGit, designDecision, adrRef, labRootCause, tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };

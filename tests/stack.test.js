@@ -12,7 +12,7 @@ const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const evidence = require('../lib/evidence');
 const { loadConfig } = require('../lib/config');
-const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, expectCode, adrRef } = require('./helpers');
 
 const CLI = path.join(__dirname, '..', 'bin', 'eccode.js');
 const has = (cmd) => spawnSync('sh', ['-c', cmd], { stdio: 'ignore' }).status === 0;
@@ -108,13 +108,13 @@ test('a verification approval is refused until the reviewer ran every required c
   gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/v.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'] });
   ev = passCheck(store, 'security-reviewer');
   const err = expectCode(
-    () => gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/v.md']])),
+    () => gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/v.md', ...adrRef({ store: store })]])),
     'REVIEW_REJECTED',
   );
   assert.match(err.message, /required stack check "eccode-secrets" has no passing run by security-reviewer/);
   const run = evidence.runCommand(store, 'security-reviewer', { label: 'secrets scan', command: `${process.execPath} ${JSON.stringify(CLI)} stack run eccode-secrets` });
   assert.strictEqual(run.status, 'passed');
-  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, `ev:${run.id}`, 'artifact:.eccode/artifacts/v.md']]));
+  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, `ev:${run.id}`, 'artifact:.eccode/artifacts/v.md', ...adrRef({ store: store })]]));
   assert.strictEqual(store.state().gates.verification.status, 'approved');
 });
 

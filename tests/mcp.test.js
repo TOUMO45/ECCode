@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { spawn, spawnSync } = require('child_process');
 const gates = require('../lib/gates');
-const { tmpProject, write, approveThroughPlan, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, expectCode, adrRef } = require('./helpers');
 
 const CLI = path.join(__dirname, '..', 'bin', 'eccode.js');
 
@@ -264,7 +264,7 @@ test('mcp: run_start, run_end and deliver close a work item without a shell', as
   gates.startGate(ctx.store, ctx.config, 'verification', 'orchestrator');
   write(ctx.dir, '.eccode/artifacts/verify.md', '# Verification\nAll green.\n');
   gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verify.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'] });
-  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', approval([[`ev:${passCheck(ctx.store, 'security-reviewer').id}`, 'artifact:.eccode/artifacts/verify.md']]));
+  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', approval([[`ev:${passCheck(ctx.store, 'security-reviewer').id}`, 'artifact:.eccode/artifacts/verify.md', ...adrRef({ store: ctx.store })]]));
   const orch = client(ctx.dir, 'orchestrator');
   const lead = client(ctx.dir, 'delivery-lead');
   try {

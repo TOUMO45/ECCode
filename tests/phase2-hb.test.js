@@ -12,6 +12,7 @@ const { execFileSync } = require('child_process');
 const config = require('../bench/pilot/phase2-hb/config');
 const runner = require('../bench/pilot/phase2-hb/run');
 const { seedChange, python, CHANGES } = require('./fixtures/phase2/build');
+const { frozenTreeFromGit } = require('./helpers');
 
 const ROOT = path.join(__dirname, '..');
 const py = python();
@@ -35,8 +36,7 @@ test('the Mealie configuration is deterministic and chooses nothing per seed', (
   for (const c of [config.USER_ID, config.ADMIN_ID, config.SECRET]) assert.ok(setup.includes(`"${c}"`), `${c} in the setup script`);
 });
 
-test('the runner refuses a tree whose frozen files differ, and accepts this one', () => {
-  assert.match(runner.assertFrozenTree(ROOT), /^frozen: \d+ files/);
+test('the runner accepts the freeze commit\'s tree, refuses a tree whose frozen files differ, and refuses HEAD once Phase 3 changed the engine', (t) => {
   const copy = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-hb-tree-'));
   for (const f of ['bench/pilot/phase2-seeds.js', 'bench/pilot/phase2-freeze.json', 'lib/behavior.js', 'bin/eccode.js']) {
     fs.mkdirSync(path.dirname(path.join(copy, f)), { recursive: true });
@@ -44,6 +44,13 @@ test('the runner refuses a tree whose frozen files differ, and accepts this one'
   }
   assert.throws(() => runner.assertFrozenTree(copy), /not the frozen H-B pipeline/);
   fs.rmSync(copy, { recursive: true, force: true });
+  const headFrozen = require('../bench/pilot/phase2-seeds').check(ROOT).ok;
+  if (headFrozen) assert.match(runner.assertFrozenTree(ROOT), /^frozen: \d+ files/);
+  else assert.throws(() => runner.assertFrozenTree(ROOT), /not the frozen H-B pipeline/);
+  const tree = frozenTreeFromGit();
+  if (!tree.dir) return t.skip(tree.reason);
+  assert.match(runner.assertFrozenTree(tree.dir), /^frozen: 33 files/);
+  fs.rmSync(tree.dir, { recursive: true, force: true });
 });
 
 test('the runner flags a seeded unintended change and passes a declared one through the fixture', { skip: py.python ? false : py.reason }, () => {

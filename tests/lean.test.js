@@ -12,7 +12,7 @@ const { deliver } = require('../lib/delivery');
 const { leanSummary } = require('../lib/memory/metrics');
 const { loadConfig, DEFAULT_CONFIG } = require('../lib/config');
 const { writeJson } = require('../lib/util');
-const { tmpProject, write, approveThroughPlan, samplePlan, passCheck, handoffFor, approval, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, samplePlan, passCheck, handoffFor, approval, expectCode, adrRef } = require('./helpers');
 
 // Built by concatenation so this file never shows up in the toolkit's own debt ledger.
 const JS_MARK = '// short' + 'cut: ';
@@ -263,7 +263,7 @@ test('the final handoff carries the lean record and the debt ledger', () => {
   write(dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green.\n');
   gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verification.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js'] });
   ev = passCheck(store, 'security-reviewer', 'full suite rerun');
-  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verification.md']]));
+  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verification.md', ...adrRef({ store: store })]]));
   const { report } = deliver(store, 'delivery-lead');
   const md = fs.readFileSync(path.join(dir, report), 'utf8');
   assert.match(md, /## Lean record \(measured at task completion\)/);

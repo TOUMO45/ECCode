@@ -14,7 +14,7 @@ const works = require('../lib/works');
 const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const { deliver } = require('../lib/delivery');
-const { tmpProject, write, approval, task, passCheck, handoffFor, expectCode, recordLesson, labRootCause } = require('./helpers');
+const { tmpProject, write, approval, task, passCheck, handoffFor, expectCode, recordLesson, labRootCause, adrRef } = require('./helpers');
 const { sha256 } = require('../lib/util');
 
 function commit(dir, msg) {
@@ -41,7 +41,7 @@ function project() {
   gates.startGate(store, config, 'verification', 'orchestrator');
   write(ctx.dir, '.eccode/artifacts/v.md', '# V\nok\n');
   gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/v.md', 'src/server.js'] });
-  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${passCheck(store, 'security-reviewer').id}`]]));
+  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${passCheck(store, 'security-reviewer').id}`, ...adrRef({ store: store })]]));
   deliver(store, 'delivery-lead');
   commit(ctx.dir, 'w1 delivered');
   return ctx;
@@ -180,7 +180,7 @@ test('verification approval needs the reviewer\'s own fresh diff; delivery re-ch
   recordResult(ctx, 'backend-engineer');
   submit();
   const ev = passCheck(store, 'security-reviewer');
-  const review = approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/v2.md']]);
+  const review = approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/v2.md', ...adrRef({ store: store })]]);
   assert.match(expectCode(() => gates.recordReview(store, config, 'verification', 'security-reviewer', review), 'REVIEW_REJECTED').message, /requires the behavior diff re-run by the reviewer after submission/);
   recordResult(ctx, 'security-reviewer');
   gates.recordReview(store, config, 'verification', 'security-reviewer', review);

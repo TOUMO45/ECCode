@@ -15,7 +15,7 @@ const { deliver } = require('../lib/delivery');
 const { parseArgs } = require('../lib/cli-args');
 const { loadConfig } = require('../lib/config');
 const { sha256 } = require('../lib/util');
-const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, expectCode, adrRef } = require('./helpers');
 
 const GUARD = path.join(__dirname, '..', 'scripts', 'hooks', 'guard.js');
 const CLI = path.join(__dirname, '..', 'bin', 'eccode.js');
@@ -184,7 +184,7 @@ function verifyWith(ctx, extra = []) {
   write(dir, '.eccode/artifacts/verification.md', '# Verification\nAll suites green.\n');
   gates.submit(store, config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/verification.md', 'src/server/a.js', 'src/web/b.js', 'tests/c.test.js', ...extra] });
   const ev = passCheck(store, 'security-reviewer', 'full suite rerun');
-  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verification.md']]));
+  gates.recordReview(store, config, 'verification', 'security-reviewer', approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/verification.md', ...adrRef({ store: store })]]));
 }
 
 test('only reviewed code ships: an unlisted change must reach the verification review', () => {

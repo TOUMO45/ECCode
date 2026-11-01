@@ -124,6 +124,13 @@ Debugging Lab (debug and fix tracks; see docs/debugging-lab.md)
 
 Behavior diff (fix, feature and refactor tracks; see docs/behavior-diff.md)
   behavior route --actor <role>              Record whether the change reaches a public surface (then the diff must run)
+  design alternatives --file <options.json> --actor <designer>   Phase 3: >= 2 options, each with complexity, risk, performance, security, reversibility
+  design decide --file <decision.json> --actor <designer>        {alternatives, chosen, rationale, rejected: [{option, why}], interfaces: [{surface, target}]}
+  design adr [--decision <id>] --actor <designer>                Render the ADR (.eccode/design/<id>.md); the verification reviewer cites it
+  design spike start --question <q> --paths <a,b> | spike close <id> --proved <t>   A throwaway prototype; never delivered
+  design amend --decision <id> --file <interfaces.json> --reason <t> --actor <reviewer>
+  request ambiguity --file <questions.json> --actor orchestrator  [{id, text, blocking}] ; planning stops on a blocking one
+  request clarify <id> --answer <t> --actor user | request assume <id> --reading <t> --rationale <t> --actor orchestrator
   behavior contract --file <entries.json> --actor <author>   Declare the intended behaviour changes, before the diff runs
   behavior diff [--runs 2] [--python <bin>] --actor <owner|reviewer>
                                    Baseline and candidate worktrees run the same probes (HTTP from OpenAPI per role,
@@ -261,6 +268,82 @@ function labCli({ root, sub, arg, args, flags, actor, print }) {
   throw new EccodeError('USAGE', `Unknown debug subcommand ${sub}`);
 }
 
+/** eccode design <alternatives|decide|adr|spike|amend|show>: design before code (Phase 3). */
+function designCli({ root, sub, arg, flags, actor, print, loadJsonFile }) {
+  const { openProject } = require('../lib/project');
+  const { store, config } = openProject(root);
+  store.assertInitialized();
+  const design = require('../lib/design');
+  if (sub === 'show') {
+    print(flags, design.show(store.state()), store.state().design);
+    return 0;
+  }
+  if (sub === 'alternatives') {
+    const a = design.alternatives(store, config, need(actor, '--actor'), loadJsonFile(need(flags.file, '--file <options.json>')));
+    print(flags, `Design alternatives ${a.id} recorded: ${a.options.map((o) => o.id).join(', ')}. Next: eccode design decide --file decision.json --actor ${actor}`, a);
+    return 0;
+  }
+  if (sub === 'decide') {
+    const d = design.decide(store, config, need(actor, '--actor'), loadJsonFile(need(flags.file, '--file <decision.json>')));
+    print(flags, `Design decision ${d.id}: ${d.chosen} (${d.rejected.length} rejected). Next: eccode design adr --actor ${actor}`, d);
+    return 0;
+  }
+  if (sub === 'adr') {
+    const a = design.adr(store, config, need(actor, '--actor'), { decision: flags.decision });
+    print(flags, `ADR ${a.id} rendered: ${a.artifact} (sha256 ${a.artifactSha256.slice(0, 12)}); the verification reviewer cites artifact:${a.artifact}`, a);
+    return 0;
+  }
+  if (sub === 'amend') {
+    const a = design.amend(store, config, need(actor, '--actor'), { decision: need(flags.decision, '--decision <id>'), interfaces: loadJsonFile(need(flags.file, '--file <interfaces.json>')), reason: need(flags.reason, '--reason') });
+    print(flags, `Decision ${a.decision} amended (${a.id}): ${a.interfaces.map((i) => `${i.surface} ${i.target}`).join(', ')}`, a);
+    return 0;
+  }
+  if (sub === 'spike') {
+    const [op, id] = [arg, args._[3]];
+    if (op === 'start') {
+      const s = design.spikeStart(store, config, need(actor, '--actor'), { question: need(flags.question, '--question'), paths: need(flags.paths, '--paths <a,b>') });
+      print(flags, `Spike ${s.id} started on ${s.paths.join(', ')}: ${s.question}. Its code is discarded, never delivered; close it with what it proved.`, s);
+      return 0;
+    }
+    if (op === 'close') {
+      const s = design.spikeClose(store, config, need(actor, '--actor'), need(id, 'spike id'), { proved: need(flags.proved, '--proved') });
+      print(flags, `Spike ${s.id} closed (${Object.keys(s.fileHashes).length} file(s) hashed): ${s.proved}. Remove its files before completing the task.`, s);
+      return 0;
+    }
+  }
+  throw new EccodeError('USAGE', 'eccode design alternatives --file <options.json> | decide --file <decision.json> | adr [--decision <id>] | amend --decision <id> --file <interfaces.json> --reason <t> | spike start --question <q> --paths <a,b> | spike close <id> --proved <t> | show');
+}
+
+/** eccode request <ambiguity|clarify|assume|show>: the ambiguity stop (Phase 3). */
+function requestCli({ root, sub, arg, flags, actor, print, loadJsonFile }) {
+  const { openProject } = require('../lib/project');
+  const { store, config } = openProject(root);
+  store.assertInitialized();
+  const design = require('../lib/design');
+  if (sub === 'show') {
+    const open = design.openQuestions(store.state(), true);
+    print(flags, open.length ? open.map((q) => `${q.id}${q.blocking ? ' (blocking)' : ''}: ${q.text}`).join('\n') : 'No open question.', { open });
+    return 0;
+  }
+  if (sub === 'ambiguity') {
+    const a = design.ambiguity(store, config, need(actor, '--actor'), loadJsonFile(need(flags.file, '--file <questions.json>')));
+    const blocking = a.questions.filter((q) => q.blocking);
+    print(flags, `Ambiguity ${a.id} recorded: ${a.questions.length} question(s), ${blocking.length} blocking.${blocking.length ? ' Planning is refused until each blocking one is clarified by the user or assumed with a recorded reading.' : ''}`, a);
+    return 0;
+  }
+  if (sub === 'clarify') {
+    const c = design.clarify(store, config, need(actor, '--actor'), { question: need(arg, 'question id'), answer: need(flags.answer, '--answer') });
+    print(flags, `Question ${c.question} clarified by the user.`, c);
+    return 0;
+  }
+  if (sub === 'assume') {
+    const a = design.assume(store, config, need(actor, '--actor'), { question: need(arg, 'question id'), reading: need(flags.reading, '--reading'), rationale: need(flags.rationale, '--rationale') });
+    print(flags, `Question ${a.question} assumed (not confirmed by the user): ${a.reading}. Every handoff and the final report show it.`, a);
+    return 0;
+  }
+  throw new EccodeError('USAGE', 'eccode request ambiguity --file <questions.json> | clarify <id> --answer <t> --actor user | assume <id> --reading <t> --rationale <t> --actor orchestrator | show');
+}
+
 /** eccode behavior <route|contract|diff|amend|waive|show>: the behavior diff. */
 function behaviorCli({ root, sub, flags, actor, print, loadJsonFile }) {
   const { openProject } = require('../lib/project');
@@ -387,6 +470,8 @@ function main(argv) {
     return 0;
   }
   if (group === 'behavior') return behaviorCli({ root, sub, arg, flags, actor, print, loadJsonFile });
+  if (group === 'design') return designCli({ root, sub, arg, args, flags, actor, print, loadJsonFile });
+  if (group === 'request') return requestCli({ root, sub, arg, flags, actor, print, loadJsonFile });
   if (group === 'mcp') {
     // Long-running: serves the engine as MCP tools, locked to one actor.
     require('../lib/mcp').serve({ root, actor: need(actor, '--actor') });

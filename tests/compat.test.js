@@ -5,7 +5,7 @@ const assert = require('node:assert');
 const gates = require('../lib/gates');
 const tasks = require('../lib/tasks');
 const compat = require('../lib/compat');
-const { tmpProject, write, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, adrRef } = require('./helpers');
 
 const API = 'src/server/api.js';
 const BASE_API = [
@@ -107,13 +107,14 @@ test('the refactor track refuses breaking changes even when declared', () => {
   write(ctx.dir, '.eccode/artifacts/v.md', '# V\nok\n');
   gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/v.md', 'src/server/app.js', 'src/web/b.js', 'tests/c.test.js', API, 'migrations/001_init.sql'] });
   ev = passCheck(ctx.store, 'security-reviewer');
-  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', require('./helpers').approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/v.md']]));
+  gates.recordReview(ctx.store, ctx.config, 'verification', 'security-reviewer', require('./helpers').approval([[`ev:${ev.id}`, 'artifact:.eccode/artifacts/v.md', ...adrRef({ store: ctx.store })]]));
   deliver(ctx.store, 'delivery-lead');
   require('child_process').execFileSync('git', ['add', '-A'], { cwd: ctx.dir });
   require('child_process').execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'w1'], { cwd: ctx.dir });
 
   const behavior = 'node -e "process.exit(0)" # suite';
   works.startWork(ctx.store, ctx.config, 'orchestrator', { track: 'refactor', title: 'Tidy the ticket API', behavior });
+  require('./helpers').designDecision(ctx);
   require('../lib/evidence').runCommand(ctx.store, 'delivery-lead', { label: 'before', command: behavior });
   gates.startGate(ctx.store, ctx.config, 'plan', 'orchestrator');
   write(ctx.dir, '.eccode/artifacts/rplan.json', JSON.stringify({
