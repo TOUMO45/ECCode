@@ -60,3 +60,14 @@ Correctness on the harness grade; **silent-failure rate** (the arm reported succ
 | Total | **~$5,500–10,500** for three arms; the owner approves before any measured run. The exploratory Phase 2 close-out (0.A) and this run are the only paid work pending approval |
 
 Nothing starts without the owner's approval of this estimate.
+
+## Amendment 1 (2026-11-01, signed by the owner's directive): reduced round 1
+
+**Round 1 is three categories, two arms.** Before screening, the measured design is narrowed to find a signal cheaply:
+- **Categories:** ambiguous request, authorization change, migration with data (the three where a senior engineer's behaviour most clearly diverges from a disciplined junior, and all three harness- or labeller-graded without a second project needed — Mealie supplies all three).
+- **Arms:** bare and ECCode Phase 3 only. **ECC v2.2.3 is added as a third arm in round 2, only for the categories where round 1 shows a signal** (a per-item mean difference favouring Phase 3 with p < 0.1 on the paired permutation test, or a silent-failure-rate gap ≥ 0.2). This spends the expensive ECC arm only where it can discriminate.
+- **Items and power:** ≥ 12 items per category (unchanged). The primary test is per-category bare-vs-Phase-3; two arms do not change its power. Simulation (`phase2-analysis.js`, 10 runs/arm/item, τ = 1.0): at 12 items, power **0.88** at a conservative odds ratio 3 (bare per-item success 0.35), **0.985** at odds ratio 4; migration and authorization, where bare has no guard and near-zero success, sit at the higher end. The ambiguous category uses the labeller's binary (asked / did not) at the same 12-item minimum.
+- **Revised counts and estimate:** round 1 = 3 categories × 12 items × 2 arms × 10 runs = **720 runs**. Bare ≈ $0.3, Phase 3 guard/debug tracks ≈ $2–5 (and, per the Part F profile, dominated by full-suite check runs — the narrowing below applies). **≈ $1,700–3,900, ≈ 2–4 days on three processes** at the 7,200 s ceiling. Round 2 (ECC on the categories that showed a signal) is estimated when round 1's signal is known; at most 3 × 12 × 10 = 360 ECC runs ≈ $540–1,260.
+- **Screening** of round 1's three categories is **authorized at cap $100** once Part 0 items 1 (the security oracles) and 2 (the cost profile and narrowing) are done. The measured arms still wait for the owner's explicit approval of the round-1 estimate above.
+
+Everything else in this protocol (harness-side checks frozen by hash, the metrics, the item-selection and go/no-go rules, independent labellers for the ambiguous category) holds for round 1.
