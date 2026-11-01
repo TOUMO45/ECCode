@@ -177,8 +177,11 @@ Benchmark
         the runs of this process have reported that much. [--transcripts <dir>]: copy each run's Claude Code
         session files there (keep it outside the repository: they quote the code the agent read)
         [--save <runs.jsonl>] [--keep]
-  bench resume --save <runs.jsonl> [--agent "<cmd>"] [--concurrency 1|2]   Continue a batch a restart killed: cut runs re-run, finished ones kept
   bench report <runs.jsonl> --agent "<cmd>" [--out <file>]   Rebuild a report from runs saved with --save
+  bench resume <runs.jsonl> [--agent "<cmd>"] [--concurrency 1|2]   Continue a batch a restart killed. With a batch
+        header (written by --save) the file carries its plan: cut runs are recorded and re-run, finished ones kept; an
+        older file is resumed by count with the same flags as bench. --max-cost stays a total budget across the resume.
+        Refuses a 3rd concurrent stream on this host (cap 2) unless --force
   bench tally [--dir bench/results]       Recompute run totals and the stratified test, pooled and per model, from recorded reports
         Paired runs of an agent command (reads PROMPT.md in each sandbox) with and without the lean skill;
         "engine" installs the toolkit and asks for delivery through the quick track (bench/suites/engine:
@@ -674,30 +677,72 @@ function main(argv) {
       return 0;
     }
     if (sub === 'resume') {
-      // Continue a batch a restart killed: cut runs are recorded, their sandboxes removed, the rest run.
-      const save = path.resolve(need(flags.save, '--save <runs.jsonl>'));
-      return bench.resumeBatch({
-        save,
-        cause: flags.cause || 'the batch was interrupted',
-        agentCmd: flags.agent,
-        concurrency: flags.concurrency ? Number(flags.concurrency) : undefined,
-        transcripts: flags.transcripts ? path.resolve(flags.transcripts) : undefined,
+      // Continue a batch a restart killed. A file with a batch header (written by
+      // --save since 2026-11-01) carries its own plan: cut runs are recorded, their
+      // sandboxes removed, every unfinished run runs again. An older file without
+      // a header is resumed by count: the runs already in it (per task and variant)
+      // are skipped and the flags name the rest. Either way the file is appended to
+      // and --max-cost stays a total budget across the resume.
+      const file = path.resolve(need(arg || flags.save, '<runs.jsonl> (or --save)'));
+      if (!fs.existsSync(file)) throw new EccodeError('NOT_FOUND', `No save file at ${file}; nothing to resume (a resume continues a batch started with --save)`);
+      if (!flags.force && bench.liveBenchStreams() >= bench.MAX_STREAMS) {
+        throw new EccodeError('TOO_MANY_STREAMS', `${bench.liveBenchStreams()} bench stream(s) already running on this host (cap ${bench.MAX_STREAMS}); wait for one to finish or pass --force`);
+      }
+      if (bench.batchOf(file).header) {
+        return bench.resumeBatch({
+          save: file,
+          cause: flags.cause || 'the batch was interrupted',
+          agentCmd: flags.agent,
+          concurrency: flags.concurrency ? Number(flags.concurrency) : undefined,
+          transcripts: flags.transcripts ? path.resolve(flags.transcripts) : undefined,
+          timeoutMs: timeoutOf(flags),
+          maxCostUsd: flags['max-cost'] !== undefined ? Number(flags['max-cost']) : undefined,
+          keep: Boolean(flags.keep),
+          onProgress: (m) => process.stderr.write(`bench: ${m}\n`),
+        }).then((res) => {
+          if (flags.out) {
+            require('../lib/util').writeFileAtomic(path.resolve(flags.out), res.markdown);
+            process.stderr.write(`bench: report written to ${flags.out}\n`);
+          }
+          process.stderr.write(`bench: batch ${res.batch.id} ${res.complete ? 'complete' : 'still incomplete'}: ${res.all.length} run(s) recorded, ${res.interrupted.length} cut run(s) re-run\n`);
+          print(flags, res.markdown, res.all);
+          return res.stopped ? 1 : 0;
+        });
+      }
+      const prior = bench.loadRuns(fs.readFileSync(file, 'utf8'));
+      const completed = bench.completedCounts(prior);
+      const spentBefore = bench.spentUsd(prior);
+      const rvariants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? ['without', 'with', 'engine'] : String(flags.variant).split(',').map((v) => v.trim());
+      const save = (r) => fs.appendFileSync(file, JSON.stringify(r) + '\n');
+      const { records, markdown, stopped = null } = bench.run({
+        agentCmd: need(flags.agent, '--agent'),
+        suite: flags.suite ? path.resolve(flags.suite) : undefined,
+        tasks: flags.tasks ? String(flags.tasks).split(',').map((x) => x.trim()) : null,
+        runs: Number(flags.runs || 1),
+        variants: rvariants,
         timeoutMs: timeoutOf(flags),
-        maxCostUsd: flags['max-cost'] !== undefined ? Number(flags['max-cost']) : undefined,
         keep: Boolean(flags.keep),
+        engineProfile: flags['engine-profile'] || 'guard',
+        engineAgents: flags['engine-agents'] || 'inherit',
+        maxCostUsd: flags['max-cost'] !== undefined ? Number(flags['max-cost']) : null,
+        transcripts: flags.transcripts ? path.resolve(flags.transcripts) : null,
         onProgress: (m) => process.stderr.write(`bench: ${m}\n`),
-      }).then((res) => {
-        if (flags.out) {
-          require('../lib/util').writeFileAtomic(path.resolve(flags.out), res.markdown);
-          process.stderr.write(`bench: report written to ${flags.out}\n`);
-        }
-        process.stderr.write(`bench: batch ${res.batch.id} ${res.complete ? 'complete' : 'still incomplete'}: ${res.all.length} run(s) recorded, ${res.interrupted.length} cut run(s) re-run\n`);
-        print(flags, res.markdown, res.all);
-        return res.stopped ? 1 : 0;
+        onRecord: save,
+        completed,
+        spentBefore,
       });
+      if (stopped) save({ type: 'stopped', ...stopped });
+      const skipped = [...completed.values()].reduce((a, b) => a + b, 0);
+      process.stderr.write(`bench: resumed ${file}; ${skipped} completed run(s) skipped (prior spend $${spentBefore.toFixed(2)}), ${records.length} new run(s) recorded\n`);
+      if (flags.out) { require('../lib/util').writeFileAtomic(path.resolve(flags.out), markdown); }
+      print(flags, markdown, records);
+      return stopped ? 1 : 0;
     }
     const VARIANTS = ['without', 'with', 'method', 'engine', 'debug', 'ecc'];
     const variants = !flags.variant || flags.variant === 'both' ? ['without', 'with'] : flags.variant === 'all' ? ['without', 'with', 'engine'] : String(flags.variant).split(',').map((v) => v.trim());
+    if (!flags.force && bench.liveBenchStreams() >= bench.MAX_STREAMS) {
+      throw new EccodeError('TOO_MANY_STREAMS', `${bench.liveBenchStreams()} bench stream(s) already running on this host (cap ${bench.MAX_STREAMS}); wait for one to finish or pass --force`);
+    }
     const unknown = variants.filter((v) => !VARIANTS.includes(v));
     if (unknown.length) throw new EccodeError('USAGE', `Unknown --variant ${unknown.join(', ')}: use with, without, method, engine, debug, ecc, both (without,with), all (without,with,engine), or a comma list`);
     const save = flags.save ? (r) => fs.appendFileSync(path.resolve(flags.save), JSON.stringify(r) + '\n') : () => {};
