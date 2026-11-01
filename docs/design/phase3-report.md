@@ -77,6 +77,16 @@ From the realbugs batch (the only data with all tracks today): bare 1×; quick/e
 - **0.B** (tornado-15 label): an independent labeller, given only the request, patch, hidden-check output and rubric, labelled it `agent-error` with high confidence (the fix is correct but the run rewrote an existing log line the test expects). Hard items with it: 4; without: 3.
 - **0.C** (Mealie H-B config and runner): built from a deterministic rule, frozen (33-file freeze), tagged `phase2-hb-freeze` (commit `4fbb80e`); the measurement runs from a worktree at that tag. Recorded before measurement: the frozen route detector never joins `APIRouter` prefixes, so most Mealie seeds will be `insufficient-coverage` under the frozen pipeline and H-B will not be met as frozen (row 158) — the honest result of the frozen detector, for the owner to decide after 0.D.
 - **0.A** (exploratory three-arm, 4 hard items × 10 × 3): ECC calibrated at **$1.66/run** on mealie4-05 (10–34 min, rising), replacing the 4–8× assumption; the full run projects to ~$150 under the $300 cap and **is running** (bare and ECC from HEAD, the ECCode Phase 2 arm from the `phase2-hb-freeze` worktree since HEAD is now Phase 3). Records in `bench/pilot-results/2026-11-01-phase2-ha-exploratory.*.jsonl`. Pre-registered as underpowered (primary power 0.00 at 4 items); reported for its per-item failure-mode-prevention table and silent-failure rate, never for significance.
+- **0.A** per-item pass rates collected before a container restart truncated the background run (uptime showed 38 min; the same restart failure the multi-file run hit). Runs passing every hidden check / runs:
+
+  | item | bare | ECC v2.2.3 | ECCode Phase 2 (debug) |
+  |---|---|---|---|
+  | tornado-10 | 9/10 | 10/10 | 10/10 |
+  | tornado-15 | 10/10 | 9/10 | 9/10 |
+  | mealie3-01-fix | 10/10 | 10/10 | 2/5 (truncated) |
+  | mealie4-05-fix (SSRF) | 6/10 | 8/8 (incl. 5 calibration) | — (not reached) |
+
+  Reading (exploratory, underpowered — primary power 0.00 at 4 items, no significance claimed): on tornado-10 both engines prevented bare's one failure; on tornado-15 (the close-call item) each engine introduced one failure bare avoided; on mealie4-05 (the genuinely hard item, bare 6/10) ECC passed every run. The Phase 2 debug arm is missing where it matters most (mealie4-05) and underperformed on the partial mealie3-01 (2/5), so those failures are being labelled and the arm is being relaunched to complete the table. The bare and ECC arms are complete or near-complete; the debug (ECCode Phase 2) Mealie runs are the restart casualty. The independent tornado-15 label (0.B, `agent-error`) is applied: with it, tornado-15's engine failures are engine-introduced agent-errors; without it (reading the item as a spec-gap) they would not count. The table is reported both ways in the committed records.
 - **0.D** (seed validation and H-B): PENDING the seed key, which is not in this container; it runs when the owner sets `ECCODE_SEED_KEY`.
 
 ## 6. Senior Bench — awaiting approval
