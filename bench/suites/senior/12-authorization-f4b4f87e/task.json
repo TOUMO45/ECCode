@@ -1,0 +1,56 @@
+{
+  "id": "senior-authorization-f4b4f87e",
+  "category": "authorization",
+  "order": 12,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "3f9f280eed316b9eebd5b06cae39b2eb49462df1"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-f961f39ac8aa/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Fix: the organize permission must also cover units, tools, labels, recipe actions and the seeders.\n\nThe \"User can organize group data\" flag (can_organize) gates foods, tags and categories, declared on their routes with require(Perm.GROUP_ORGANIZE). Units, tools, multi-purpose labels, household recipe actions and the food/unit seeders are still open to every member, although the documentation describes the permission as covering organizers in general.\n\nExpected:\n- These routes declare Perm.GROUP_ORGANIZE through the route-permission dependency, so a user without can_organize gets 403 before the body is read or validated, and a user with it is not refused (any status other than 403, since the check runs first): POST /api/units, PUT /api/units/merge, PUT /api/units/{item_id}, DELETE /api/units/{item_id}; POST /api/organizers/tools, PUT /api/organizers/tools/{item_id}, DELETE /api/organizers/tools/{item_id}; POST /api/groups/labels, PUT /api/groups/labels/{item_id}, DELETE /api/groups/labels/{item_id}; POST /api/households/recipe-actions, PUT /api/households/recipe-actions/{item_id}, DELETE /api/households/recipe-actions/{item_id}; POST /api/groups/seeders/foods, POST /api/groups/seeders/units.\n- The table of declared permissions read back from app.routes grows by exactly these entries under GROUP_ORGANIZE; no other route changes its declared permission.\n- Reads (the lists, single items, /empty) stay open to every member.\n- Docs: the permissions page and the frontend wording for the permission say it covers foods, units, tools, labels, tags, categories and recipe actions; a frontend announcement about the change is welcome (none of this is graded).\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/test_route_permissions.py tests/integration_tests/category_tag_tool_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: require can_organize to manage units, tools, labels, recipe actions (#8783)",
+  "track": "fix",
+  "fixCommit": "f4b4f87ec44a9a3dbeec9365b2b035223cb87e72",
+  "hidden": {
+    "fromSource": {
+      "commit": "f4b4f87ec44a9a3dbeec9365b2b035223cb87e72",
+      "paths": [
+        "tests/integration_tests/category_tag_tool_tests/test_organizers_labels_merge.py",
+        "tests/integration_tests/category_tag_tool_tests/test_organizers_tools_merge.py",
+        "tests/integration_tests/test_route_permissions.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/test_route_permissions.py::test_routes_declare_expected_permissions' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/groups/labels/{item_id}]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/households/recipe-actions/{item_id}]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/organizers/tools/{item_id}]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/units/{item_id}]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/labels]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/seeders/foods]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/seeders/units]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/recipe-actions]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/organizers/tools]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/units]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/groups/labels/{item_id}]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/households/recipe-actions/{item_id}]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/organizers/tools/{item_id}]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/units/merge]' 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/units/{item_id}]'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/category_tag_tool_tests/test_organizers_labels_merge.py' 'tests/integration_tests/category_tag_tool_tests/test_organizers_tools_merge.py' 'tests/integration_tests/test_route_permissions.py' --deselect 'tests/integration_tests/test_route_permissions.py::test_routes_declare_expected_permissions' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/groups/labels/{item_id}]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/households/recipe-actions/{item_id}]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/organizers/tools/{item_id}]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[DELETE  /api/units/{item_id}]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/labels]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/seeders/foods]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/groups/seeders/units]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/households/recipe-actions]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/organizers/tools]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[POST    /api/units]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/groups/labels/{item_id}]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/households/recipe-actions/{item_id}]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/organizers/tools/{item_id}]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/units/merge]' --deselect 'tests/integration_tests/test_route_permissions.py::test_route_rejects_user_without_permission[PUT     /api/units/{item_id}]'",
+      "timeoutMs": 3600000
+    },
+    {
+      "id": "grade",
+      "command": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/grade.js\" authorization --tree . --config \"$ECCODE_BENCH_TASK_DIR/security.json\"",
+      "timeoutMs": 1800000
+    }
+  ],
+  "measured": {
+    "target": 16,
+    "regression": 99,
+    "failingBeforeAndAfter": []
+  },
+  "instrument": {
+    "parentUnsafe": true,
+    "commitSafe": true
+  }
+}

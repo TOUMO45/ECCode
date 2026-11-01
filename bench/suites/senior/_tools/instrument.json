@@ -429,25 +429,37 @@
   "instrument": {
    "parentUnsafe": true,
    "parent": {
-    "mismatches": [],
+    "mismatches": [
+     {
+      "role": "userA",
+      "endpoint": "GET /api/households/members",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 200
+     },
+     {
+      "role": "userA",
+      "endpoint": "PUT /api/groups/preferences",
+      "ownership": "none",
+      "expected": "deny",
+      "observed": "allow",
+      "status": 200
+     }
+    ],
     "leaks": [],
     "idor": [],
-    "errors": [
-     "setup failed:   Input should be a valid dictionary or object to extract fields from [type=model_attributes_type, input_value=None, input_type=NoneType] |     For further information visit https://errors.pydantic.dev/2.13/v/model_attributes_type"
-    ]
+    "errors": []
    },
-   "commitSafe": false,
+   "commitSafe": true,
    "commit": {
     "mismatches": [],
     "leaks": [],
     "idor": [],
-    "errors": [
-     "setup failed:   Input should be a valid dictionary or object to extract fields from [type=model_attributes_type, input_value=None, input_type=NoneType] |     For further information visit https://errors.pydantic.dev/2.13/v/model_attributes_type"
-    ]
+    "errors": []
    }
   },
-  "dropped": "the policy does not separate the parent (unsafe) from the commit (unsafe)",
-  "at": "2026-11-01T20:10:58.739Z"
+  "at": "2026-11-01T20:13:46.561Z"
  },
  "e3cf55b9": {
   "category": "authorization",

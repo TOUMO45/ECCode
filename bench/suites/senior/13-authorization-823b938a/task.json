@@ -1,0 +1,54 @@
+{
+  "id": "senior-authorization-823b938a",
+  "category": "authorization",
+  "order": 13,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "8eb00c3dc06d6779a08debd3a9db188d96246195"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-0fa3d1dcd73a/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Fix: the \"organize group data\" permission is not enforced on foods, tags and categories.\n\nEvery user has a can_organize flag (\"User can organize group data\") and the controllers already have a can_organize check alongside can_manage, can_invite and can_manage_household, but the tag, category and food routes never call it: any member can create, rename, delete and merge them.\n\nExpected:\n- For a user without can_organize: POST /api/organizers/tags, POST /api/organizers/categories and POST /api/foods answer 403; PUT and DELETE on /api/organizers/tags/{item_id}, /api/organizers/categories/{item_id} and /api/foods/{item_id} answer 403; PUT /api/foods/merge answers 403. A refused call changes nothing.\n- For a user with can_organize the same calls behave as today: create answers 201, update (PUT with the item's id and a new name) 200, delete 200, merge 200.\n- Reads need no permission: GET on the three collections and GET of a single item answer 200 whatever the flag.\n- The flag is read from the user at request time: granting or removing it takes effect on the next request.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_household_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: enforce organize-group-data permission on food/tag/category mutations (#7651)",
+  "track": "fix",
+  "fixCommit": "823b938a2c1680e7fd760a9c174a909b1a50a0ba",
+  "hidden": {
+    "fromSource": {
+      "commit": "823b938a2c1680e7fd760a9c174a909b1a50a0ba",
+      "paths": [
+        "tests/integration_tests/user_household_tests/test_organize_permissions.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_create_requires_organize_permission[foods]' 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_create_requires_organize_permission[tags]' 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_create_requires_organize_permission[categories]' 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_update_requires_organize_permission[foods]' 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_update_requires_organize_permission[tags]' 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_update_requires_organize_permission[categories]' 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_delete_requires_organize_permission[foods]' 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_delete_requires_organize_permission[tags]' 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_delete_requires_organize_permission[categories]' 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_food_merge_requires_organize_permission'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_household_tests/test_organize_permissions.py' --deselect 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_create_requires_organize_permission[foods]' --deselect 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_create_requires_organize_permission[tags]' --deselect 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_create_requires_organize_permission[categories]' --deselect 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_update_requires_organize_permission[foods]' --deselect 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_update_requires_organize_permission[tags]' --deselect 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_update_requires_organize_permission[categories]' --deselect 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_delete_requires_organize_permission[foods]' --deselect 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_delete_requires_organize_permission[tags]' --deselect 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_delete_requires_organize_permission[categories]' --deselect 'tests/integration_tests/user_household_tests/test_organize_permissions.py::test_food_merge_requires_organize_permission'",
+      "timeoutMs": 3600000
+    },
+    {
+      "id": "grade",
+      "command": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/grade.js\" authorization --tree . --config \"$ECCODE_BENCH_TASK_DIR/security.json\"",
+      "timeoutMs": 1800000
+    }
+  ],
+  "measured": {
+    "target": 10,
+    "regression": 3,
+    "failingBeforeAndAfter": []
+  },
+  "instrument": {
+    "parentUnsafe": true,
+    "commitSafe": true
+  }
+}

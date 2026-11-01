@@ -29,7 +29,8 @@ function venvKey(mirror, commit) {
 
 function main() {
   const mirror = lib.mealieMirror();
-  for (const d of fs.readdirSync(SUITE)) if (/^\d\d-/.test(d)) fs.rmSync(path.join(SUITE, d), { recursive: true, force: true });
+  // Task directories are rewritten in place (a screening may be running from them): a directory of an item no longer built is removed.
+  const built = new Set();
   const skipped = [];
   let order = 0;
   for (const category of ['migration', 'authorization', 'ambiguous']) {
@@ -69,6 +70,7 @@ function main() {
         ...(inst.instrument ? { instrument: { parentUnsafe: inst.instrument.parentUnsafe, commitSafe: inst.instrument.commitSafe } } : {}),
         ...(a.earlierSuiteItem ? { earlierSuiteItem: a.earlierSuiteItem } : {}),
       };
+      built.add(id);
       fs.mkdirSync(path.join(SUITE, id), { recursive: true });
       fs.writeFileSync(path.join(SUITE, id, 'task.json'), `${JSON.stringify(task, null, 2)}\n`);
       if (policy) fs.copyFileSync(policy, path.join(SUITE, id, 'security.json'));
@@ -76,6 +78,7 @@ function main() {
       process.stdout.write(`${id}: ${task.track}, ${task.title}\n`);
     }
   }
+  for (const d of fs.readdirSync(SUITE)) if (/^\d\d-/.test(d) && !built.has(d)) fs.rmSync(path.join(SUITE, d), { recursive: true, force: true });
   for (const s of skipped) process.stdout.write(`not built: ${s}\n`);
 }
 

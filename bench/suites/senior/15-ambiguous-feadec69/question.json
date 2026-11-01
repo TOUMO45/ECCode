@@ -1,0 +1,14 @@
+{
+  "question": "What should happen when YTDLP_COOKIEFILE points at a file that does not exist or cannot be read: pass the path to yt-dlp as is, skip the cookie file with a warning, fail the import with a clear error, or refuse to start?",
+  "readings": [
+    "Pass the configured path to yt-dlp unchanged and let yt-dlp report whatever goes wrong.",
+    "Check at download time and, when the file is missing, download without cookies and log a warning.",
+    "Check at download time and fail the video import with a clear error when the file is missing.",
+    "Validate the path when settings load (like the scraper URLs) and refuse to start when it does not exist."
+  ],
+  "upstream": "The path is passed to yt-dlp unchanged, with no existence or readability check anywhere.",
+  "rationale": "The request says the configured value becomes yt-dlp's cookiefile option but says nothing about a missing or unreadable file, and both skipping the cookies and failing fast are defensible for a server setting. The target test sets \"/data/cookies.txt\", which does not exist in the test environment, and asserts that exactly that string reaches yt-dlp, so a download-time check that skips or fails would not pass.",
+  "pinnedBy": [
+    "tests/unit_tests/services_tests/test_transcription.py::test_download_video_passes_configured_cookiefile"
+  ]
+}

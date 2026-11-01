@@ -1,0 +1,55 @@
+{
+  "id": "senior-authorization-742b498c",
+  "category": "authorization",
+  "order": 11,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "eddb0c30e0290c5945b36431876a66d91197c0eb"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-7ae6d9787ae4/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Fix: deleting a recipe must require ownership, not merely edit rights.\n\nRecipe deletion reuses the collaborative-editing rule: whoever may edit a recipe may delete it. Recipes are unlocked by default, so any member of the owner's household, and any member of another household when the owner's household allows edits from other households, can delete another user's recipes, one at a time through DELETE /api/recipes/{slug} and in bulk through POST /api/recipes/bulk-actions/delete. Editing a shared recipe is a feature; deleting it is not.\n\nExpected:\n- A recipe can be deleted only by its owner or by an administrator. The recipe's locked setting and the household preference \"lock recipe edits from other households\" play no part in deletion any more: a non-owner is refused even when the recipe is unlocked, and even when the owner's household allows edits from other households.\n- DELETE /api/recipes/{slug} by a non-owner answers 403 and leaves the recipe in place (that user's GET of the recipe still answers 200 with the same id).\n- POST /api/recipes/bulk-actions/delete answers 403 when any of the listed recipes is not owned by the caller, and deletes nothing in that case.\n- The owner can still delete their recipe, and an admin can still delete any recipe in the group, including a locked recipe owned by someone else.\n- Updating is unchanged: a non-owner may still edit an unlocked recipe under the existing household rules.\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_recipe_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: enforce ownership check on recipe deletion (GHSA-x5v9-9jvh-7c7q) (#7625)",
+  "track": "fix",
+  "fixCommit": "742b498c1d0f6e30c5338f3b33f9458ce3275eb7",
+  "hidden": {
+    "fromSource": {
+      "commit": "742b498c1d0f6e30c5338f3b33f9458ce3275eb7",
+      "paths": [
+        "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py",
+        "tests/integration_tests/user_recipe_tests/test_recipe_owner.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_delete_recipes_from_other_households[False-True]' 'tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_delete_recipes_from_other_households[False-False]' 'tests/integration_tests/user_recipe_tests/test_recipe_owner.py::test_other_user_cant_delete_unlocked_recipe' 'tests/integration_tests/user_recipe_tests/test_recipe_owner.py::test_other_user_cant_bulk_delete_unlocked_recipes'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py' 'tests/integration_tests/user_recipe_tests/test_recipe_owner.py' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_delete_recipes_from_other_households[False-True]' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py::test_delete_recipes_from_other_households[False-False]' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_owner.py::test_other_user_cant_delete_unlocked_recipe' --deselect 'tests/integration_tests/user_recipe_tests/test_recipe_owner.py::test_other_user_cant_bulk_delete_unlocked_recipes'",
+      "timeoutMs": 3600000
+    },
+    {
+      "id": "grade",
+      "command": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/grade.js\" authorization --tree . --config \"$ECCODE_BENCH_TASK_DIR/security.json\"",
+      "timeoutMs": 1800000
+    }
+  ],
+  "measured": {
+    "target": 4,
+    "regression": 44,
+    "failingBeforeAndAfter": []
+  },
+  "instrument": {
+    "parentUnsafe": true,
+    "commitSafe": true
+  }
+}

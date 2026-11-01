@@ -1,0 +1,54 @@
+{
+  "id": "senior-authorization-250d4996",
+  "category": "authorization",
+  "order": 10,
+  "source": {
+    "repo": "https://github.com/mealie-recipes/mealie.git",
+    "commit": "8553cfee3a7aba098a35ce7082248731a7e29dfc"
+  },
+  "env": {
+    "PATH": "${ECCODE_MEALIE_ENVS}/py-393d7fe39c20/bin:${PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "pnpm_config_verify_deps_before_run": "false",
+    "ECCODE_MEALIE_ENVS": "${ECCODE_MEALIE_ENVS}"
+  },
+  "setup": "node \"$ECCODE_BENCH_TASK_DIR/../../mealie/_tools/env.js\" python . > /dev/null",
+  "prompt": "Fix: the household member list and the group preferences are open to every member.\n\nGET /api/households/members returns every user of the caller's household, with e-mail addresses and permission flags, to any signed-in member, and PUT /api/groups/preferences lets any member change the group's preferences. Both are management functions and should be behind the caller's can_manage flag, like PUT /api/households/permissions already is.\n\nExpected:\n- GET /api/households/members answers 403 for a user whose can_manage is false. For a user with can_manage it answers 200 with the paginated list as today, still limited to the caller's household (perPage=-1 returns them all; a user of another household is not listed).\n- PUT /api/groups/preferences answers 403 without can_manage and updates the preferences as today with it.\n- GET /api/groups/members, GET /api/groups/preferences and the household's own preferences routes are unchanged.\n- Frontend: the profile page shows the \"total users\" statistics card only to users who can manage (not graded).\n\nTests: `python -m pytest -q -p no:cacheprovider tests/integration_tests/user_household_tests` for quick loops; the whole backend suite is `python -m pytest -q -p no:cacheprovider tests` (about 8 minutes).",
+  "title": "fix: Add permission checks for Group & Household members, hide totalUsers card for non-managers (#8348)",
+  "track": "fix",
+  "fixCommit": "250d4996c9f59c51efd1008d84893bbe0f743765",
+  "hidden": {
+    "fromSource": {
+      "commit": "250d4996c9f59c51efd1008d84893bbe0f743765",
+      "paths": [
+        "tests/integration_tests/user_household_tests/test_household_self_service.py"
+      ]
+    }
+  },
+  "hiddenChecks": [
+    {
+      "id": "target",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_household_tests/test_household_self_service.py::test_get_household_members_unauthorized'",
+      "timeoutMs": 1800000
+    },
+    {
+      "id": "regression",
+      "command": "python -m pytest -q -p no:cacheprovider 'tests/integration_tests/user_household_tests/test_household_self_service.py' --deselect 'tests/integration_tests/user_household_tests/test_household_self_service.py::test_get_household_members_unauthorized'",
+      "timeoutMs": 3600000
+    },
+    {
+      "id": "grade",
+      "command": "node \"$ECCODE_BENCH_TASK_DIR/../_tools/grade.js\" authorization --tree . --config \"$ECCODE_BENCH_TASK_DIR/security.json\"",
+      "timeoutMs": 1800000
+    }
+  ],
+  "measured": {
+    "target": 1,
+    "regression": 4,
+    "failingBeforeAndAfter": []
+  },
+  "instrument": {
+    "parentUnsafe": true,
+    "commitSafe": true
+  }
+}
