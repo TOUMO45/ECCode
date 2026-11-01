@@ -44,13 +44,17 @@ eccode debug localize --sbfl [--tests tests/] [--top 5] --actor <owner>
 eccode debug bisect --good <ref> [--bad HEAD] --actor <owner>
 eccode debug trace h1 --at shop/pricing.py:34 --expr "(page, start)" --actor <owner>
 eccode debug rootcause --hypothesis h1 --at shop/pricing.py:34 --explain "<cause>" --why-repro-fails "<link>" --actor <owner>
-eccode debug escalate --kind ask-user --reason "<question>" --actor <owner|orchestrator>
+eccode debug escalate --kind ask-user --reason "<question>" [--reading "<assumed answer>"] --actor <owner|orchestrator>   # headless: --reading is required and recorded as an assumption
 eccode debug show
 ```
 
 - **`localize --sbfl`** runs the pinned pytest reproduction and the passing tests once under `coverage.py` with one dynamic context per test function (`scripts/lab/sbfl.py`, in a temporary directory, nothing written into the project), then scores every line with **Ochiai**: `ef / sqrt((ef + nf) · (ef + ep))`, where `ef`/`ep` are the failing/passing tests that execute the line and `nf` the failing tests that do not. Ties go to the line more failing tests reach, then to the one fewer passing tests reach. The ranking is an artifact under `.eccode/lab/`, hashed into `localization.result`. Python only; the interpreter comes from `ECCODE_PYTHON`, the project's `.venv`, or `python3`.
 - **`bisect`** runs `git bisect run` with the pinned reproduction in a detached worktree (uncommitted test files copied in, dependency directories linked), after checking that the reproduction passes at `--good` and fails at `--bad` and that it is runnable at all (exit 126/127 is reported, not treated as "bad"). The working tree is never touched; the worktree is removed in `finally`; the first bad commit's diff is the artifact.
 - **`trace`** inserts one probe line before the statement at `--at` (`__import__("sys").stderr.write("ECCODE_TRACE <id> " + repr(<expr>))` in Python, `process.stderr.write(...)` in JavaScript), checks the file still parses, runs the pinned reproduction, records the observed values as hypothesis evidence, and restores the file byte for byte (a recovery file under `.eccode/cache/` covers a killed run). The marker `eccode-trace-probe` is what the gates look for afterwards.
+
+## Pre-flight: what the test tooling will do to the pinned check
+
+When a debug or fix work item starts, `lib/preflight.js` looks at the test tree the pinned command collects (its path arguments, else `tests/` and `test/`) and records an `environment.finding` for every **pytest basename collision**: two test files with one name in directories without `__init__.py`, which pytest's default import modes both call module `<basename>`, so a session that collects both fails with "import file mismatch" whatever the fix (0.A, mealie3-01 run #1 halted on exactly this). A finding is printed by `eccode debug`, shown by `eccode status`, and never blocks; the ways out are a pinned check that collects one of the files, or `--import-mode=importlib` (detected in the command and in the pytest configuration, in which case there is no finding).
 
 ## Worked example (the fixture `tests/fixtures/phase2`, bug `off-by-one`)
 

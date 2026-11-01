@@ -183,7 +183,7 @@ test('debug and method variants end to end on a source task: the debug track del
     assert.deepStrictEqual({ delivered: debug.engine.delivered, auditOk: debug.engine.auditOk, reviews: debug.engine.reviews, track: debug.engine.track, fixProven: debug.engine.fixProven }, { delivered: true, auditOk: true, reviews: 1, track: 'debug', fixProven: true });
     assert.ok(debug.engine.mutation && debug.engine.mutation.total >= 1 && debug.engine.mutation.killed >= 1, JSON.stringify(debug.engine.mutation));
     // The method variant: the debugging method's text, nothing installed.
-    const method = bench.runOnce(t, { agentCmd: 'node -e "const p=require(\'fs\').readFileSync(\'PROMPT.md\',\'utf8\'); process.exit(/Debug investigation/.test(p) && !require(\'fs\').existsSync(\'.claude\') ? 0 : 3)"', variant: 'method' });
+    const method = bench.runOnce(t, { agentCmd: 'node -e "const p=require(\'fs\').readFileSync(\'PROMPT.md\',\'utf8\'); process.exit(/Debug investigation/.test(p) && !require(\'fs\').existsSync(\'.claude/eccode\') && !require(\'fs\').existsSync(\'.claude/agents\') ? 0 : 3)"', variant: 'method' });
     assert.strictEqual(method.agentExit, 0, 'the method prompt carries the debug-investigation text and no toolkit is installed');
     assert.strictEqual(method.engine, undefined);
     const without = bench.runOnce(t, { agentCmd: 'node -e ""', variant: 'without' });

@@ -24,6 +24,8 @@ You, the main session, are the **lead orchestrator**. Specialists do the work. Y
 
   Ask the user with a focused question. Only `--actor user` commands record their answer, and you run those only after the user has actually answered.
 
+  **Headless (`ECCODE_HEADLESS=1`, every benchmark run): nobody answers.** Never stop to ask. Record a non-blocking question with its reasonable `reading` (`eccode request ambiguity --file q.json`): the engine records the reading as an assumption that every handoff and the final report surface, and work continues. A reviewed plan's task may be rescoped by you (`task rescope … --actor orchestrator --reason`), recorded as an assumption. An ask-user escalation of the Lab carries `--reading`. The only stop is a **blocking** question (`blocking: true`): planning is refused until it is assumed explicitly (`eccode request assume`) or a user clarifies it; mark a question blocking only when no reasonable reading exists.
+
 ## 1. Start or resume
 - **Pick the track first.** How much process a change gets is a decision, not a default:
   | Track | Gates before implementation | Extra rule the engine enforces |
@@ -61,7 +63,7 @@ For each document gate (`architecture`, `design`, `plan`):
 4. **On `changes_requested`:** re-dispatch the author with the review id and findings. The resubmission needs `--responds-to <reviewId>`.
 5. **On `escalated`:** stop and present the recovery options from `eccode status`. Ask the user to decide, then record that decision.
 
-**Open questions that change the outcome** (scope, target users, compliance, paid services) go to the user before design starts. Ask them together in one focused question, not one at a time.
+**Open questions that change the outcome** (scope, target users, compliance, paid services) go to the user before design starts. Ask them together in one focused question, not one at a time. Headless, record them with their readings instead (`eccode request ambiguity`); only a question with no reasonable reading is blocking.
 
 ## 4. Implementation phases
 For each `phase:<id>`, in order:

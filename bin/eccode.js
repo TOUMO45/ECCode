@@ -119,7 +119,7 @@ Debugging Lab (debug and fix tracks; see docs/debugging-lab.md)
   debug bisect --good <ref> [--bad HEAD] --actor <owner>                           git bisect run with the pinned reproduction, in a worktree
   debug trace <id> --at <file:line> --expr <expr> --actor <owner>                  A temporary probe logs the expression during the reproduction, then is reverted
   debug rootcause --hypothesis <id> --at <file:line>[,..] --explain <t> --why-repro-fails <t> --actor <owner>
-  debug escalate --kind rescope|ask-user --reason <t> --actor <owner|orchestrator>   Required once the hypothesis budget is spent
+  debug escalate --kind rescope|ask-user --reason <t> [--reading <t>] --actor <owner|orchestrator>   Required once the hypothesis budget is spent (headless, ask-user carries the assumed answer)
   debug show [--json]
 
 Behavior diff (fix, feature and refactor tracks; see docs/behavior-diff.md)
@@ -275,7 +275,7 @@ function labCli({ root, sub, arg, args, flags, actor, print }) {
     return 0;
   }
   if (sub === 'escalate') {
-    const r = lab.escalate(store, config, need(actor, '--actor'), { kind: need(flags.kind, '--kind rescope|ask-user'), reason: need(flags.reason, '--reason') });
+    const r = lab.escalate(store, config, need(actor, '--actor'), { kind: need(flags.kind, '--kind rescope|ask-user'), reason: need(flags.reason, '--reason'), reading: flags.reading, rationale: flags.rationale });
     print(flags, `Escalation recorded (${r.kind}) after ${r.refuted} refuted hypothesis(es). Another hypothesis may be opened once the scope or the question is settled.`, r);
     return 0;
   }
@@ -342,7 +342,7 @@ function requestCli({ root, sub, arg, flags, actor, print, loadJsonFile }) {
   if (sub === 'ambiguity') {
     const a = design.ambiguity(store, config, need(actor, '--actor'), loadJsonFile(need(flags.file, '--file <questions.json>')));
     const blocking = a.questions.filter((q) => q.blocking);
-    print(flags, `Ambiguity ${a.id} recorded: ${a.questions.length} question(s), ${blocking.length} blocking.${blocking.length ? ' Planning is refused until each blocking one is clarified by the user or assumed with a recorded reading.' : ''}`, a);
+    print(flags, `Ambiguity ${a.id} recorded: ${a.questions.length} question(s), ${blocking.length} blocking.${blocking.length ? ' Planning is refused until each blocking one is clarified by the user or assumed with a recorded reading.' : ''}${a.assumed && a.assumed.length ? ` Headless: ${a.assumed.map((x) => `${x.question} assumed "${x.reading}"`).join('; ')} (not confirmed by the user; shown in every handoff and the report).` : ''}`, a);
     return 0;
   }
   if (sub === 'clarify') {
@@ -618,12 +618,13 @@ function main(argv) {
       `${group === 'debug' ? 'Bug fix' : 'Quick change'} ${res.workId} started${res.created ? ' (new record)' : ''}: "${t.title}"`,
       `  task ${t.id}: owner ${t.owner}; files ${t.files.join(', ')}; verification: ${t.verification.command}`,
       ...res.defaults.map((d) => `  from the repository: ${d}`),
+      ...require('../lib/preflight').lines(res.findings).map((l) => `  ${l}`),
       `  gate phase:${t.id} is started.`,
       '',
       'The rest of the path (eccode status shows where you are):',
       ...steps,
       ...require('../lib/memory/draft').lessonsText(res.lessons),
-    ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps, lessons: res.lessons });
+    ].join('\n'), { workId: res.workId, task: t, defaults: res.defaults, steps, lessons: res.lessons, findings: res.findings });
     return 0;
   }
   if (group === 'behavior') return behaviorCli({ root, sub, arg, flags, actor, print, loadJsonFile });

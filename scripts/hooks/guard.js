@@ -209,6 +209,47 @@ function writesRecord(cmd, { subagent }) {
   return false;
 }
 
+/** The record directory is tracked by git and has uncommitted changes (a plain stash would carry them away). */
+function recordTrackedAndModified(root) {
+  const { spawnSync } = require('child_process');
+  const git = (args) => spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
+  const tracked = git(['ls-files', '--', '.eccode']);
+  if (tracked.status !== 0 || !tracked.stdout.trim()) return false;
+  const status = git(['status', '--porcelain', '--', '.eccode']);
+  return status.status === 0 && Boolean(status.stdout.trim());
+}
+
+/**
+ * A git stash that would carry the ECCode record away, and the reason to deny
+ * it; null otherwise. With -u/-a the untracked record is stashed; when the
+ * record is tracked and modified, a push without an explicit pathspec stashes
+ * it too. Listing, showing and dropping stashes, and a push of named paths
+ * outside .eccode, are fine: the bench pre-approves stashes for the agent's
+ * own files (lib/bench.js).
+ */
+function stashesRecord(cmd, root) {
+  for (const segment of shellSkeleton(cmd).split(SEPARATORS)) {
+    const words = segment.trim().replace(/^\(+/, '').split(/\s+/).filter((w) => w && !/^\w+=/.test(w));
+    if (!words.length || path.basename(words[0]) !== 'git') continue;
+    const args = words.slice(1);
+    const at = args.findIndex((a, k) => a === 'stash' && !['-C', '-c'].includes(args[k - 1]));
+    if (at < 0) continue;
+    const rest = args.slice(at + 1);
+    const dd = rest.indexOf('--');
+    const opts = dd >= 0 ? rest.slice(0, dd) : rest;
+    const sub = opts.find((a) => !a.startsWith('-')) || 'push';
+    if (!['push', 'save'].includes(sub)) continue; // list, show, pop, apply, drop, clear, branch: nothing new is stashed
+    if (opts.some((f) => /^(-[a-zA-Z]*[ua][a-zA-Z]*|--include-untracked|--all)$/.test(f))) {
+      return 'git stash with untracked files would stash the ECCode record (.eccode/ is untracked) and the engine would lose its state. Stash explicit paths instead: git stash push -- <files>';
+    }
+    const pathspec = dd >= 0 ? rest.slice(dd + 1) : [];
+    const namesRecord = pathspec.some((p) => /(^|\/)\.eccode(\/|$)/.test(p) || p === '.');
+    if (pathspec.length && !namesRecord) continue;
+    if (recordTrackedAndModified(root)) return 'git stash would stash the modified ECCode record (.eccode/ is tracked and changed) and the engine would lose its state. Stash explicit paths instead: git stash push -- <files>';
+  }
+  return null;
+}
+
 function findRoot(start) {
   let dir = start;
   for (;;) {
@@ -324,6 +365,8 @@ function main(input) {
     if (writesRecord(cmd, { subagent: Boolean(role) })) {
       out('deny', 'This command touches the ECCode record (events.jsonl, state.json, config, evidence, improvements, memory records) with something other than a read-only tool or the eccode CLI. The record is written only by eccode commands; read it with cat, jq, grep or git diff/log/show.');
     }
+    const stash = stashesRecord(cmd, root);
+    if (stash) out('deny', stash);
     if (CLI_REF.test(cmd)) {
       const parsed = actorWords(cmd);
       const flagged = parsed.map((w) => w.value);

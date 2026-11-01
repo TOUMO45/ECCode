@@ -22,6 +22,19 @@ eccode request assume <id> --reading "…" --rationale "…" --actor orchestrato
 - The verification review on these tracks must cite `artifact:.eccode/design/<adr>.md`; delivery refuses an interface (a behavior-contract target, or a breaking API diff) the ADR does not declare and no amendment covers.
 - A `blocking` question refuses `eccode gate start plan` (and planning on quick/debug is exempt) until the user clarifies it or the orchestrator records an assumption. The assumption is shown in every handoff and in the final report under "Assumptions and open questions", never silently resolved.
 
+## Headless: nobody answers (tests in tests/headless.test.js)
+
+With `headless: true` in `.eccode/config.json` or `ECCODE_HEADLESS=1` in the environment (every benchmark run sets it), the engine turns each place an agent would stop for the user into a recorded assumption, so the work continues, and keeps exactly one stop:
+
+| Where an agent would stop | Headless |
+|---|---|
+| A non-blocking question (`request ambiguity`) | recorded with its `reading` (or its first `options` entry) as a `request.assumption` in the same step; refused with that instruction when it has neither |
+| An ask-user escalation of the Lab (`debug escalate --kind ask-user`) | carries `--reading "<assumed answer>"`, recorded as an assumption; the investigation continues |
+| A rescope of a reviewed plan's task (user only otherwise) | the orchestrator may, with `--reason`; recorded as an assumption |
+| A **blocking** question | still stops planning (`AMBIGUITY_OPEN`) until `request assume` or a user's `request clarify` |
+
+Every assumption carries `headless: true`, is shown in every handoff (`remainingIssues`), in `eccode status` and in the final report under "Assumptions and open questions", so a reader sees what was guessed. The bench pre-approves the agent's own `git stash` and `git worktree` in every sandbox (`lib/bench.js`), and the guard keeps the record out of a stash. A pre-flight (`lib/preflight.js`) records an `environment.finding` when a pytest basename collision would make a pinned check fail whatever the fix.
+
 ## Gates (tests in tests/design.test.js, with bypass cases)
 
 | Rule | Code |
