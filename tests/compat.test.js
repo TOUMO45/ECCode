@@ -103,6 +103,8 @@ test('the refactor track refuses breaking changes even when declared', () => {
   gates.submit(ctx.store, ctx.config, 'phase:core', 'delivery-lead');
   let ev = passCheck(ctx.store, 'technical-reviewer');
   gates.recordReview(ctx.store, ctx.config, 'phase:core', 'technical-reviewer', require('./helpers').approval([[`ev:${ev.id}`]]));
+  // Phase 3: a migration in the change needs its static analysis before the last gate (no commands configured: no rollback proof).
+  require('../lib/guards/migration').analyze(ctx.store, ctx.config, 'backend-engineer');
   gates.startGate(ctx.store, ctx.config, 'verification', 'orchestrator');
   write(ctx.dir, '.eccode/artifacts/v.md', '# V\nok\n');
   gates.submit(ctx.store, ctx.config, 'verification', 'delivery-lead', { artifacts: ['.eccode/artifacts/v.md', 'src/server/app.js', 'src/web/b.js', 'tests/c.test.js', API, 'migrations/001_init.sql'] });

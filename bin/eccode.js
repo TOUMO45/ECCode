@@ -131,6 +131,20 @@ Behavior diff (fix, feature and refactor tracks; see docs/behavior-diff.md)
   design amend --decision <id> --file <interfaces.json> --reason <t> --actor <reviewer>
   request ambiguity --file <questions.json> --actor orchestrator  [{id, text, blocking}] ; planning stops on a blocking one
   request clarify <id> --answer <t> --actor user | request assume <id> --reading <t> --rationale <t> --actor orchestrator
+  guard route --actor <owner>                Phase 3: which production guards this change needs (migration, api, perf, race, security, release)
+  guard migration [--proof] --actor <owner>  Static analysis of the change's migrations; --proof: seed, upgrade → downgrade → upgrade, schema compared
+  guard api --actor <owner>                  OpenAPI and Python signatures, baseline vs candidate: breaking | additive | none
+  guard perf --actor <owner>                 Micro-benchmark of the change's routes in both worktrees; queries per request (N+1)
+  guard race --actor <owner>                 The configured operations under concurrency; invariants checked (.eccode/guards.json)
+  guard release --strategy flag|staged --monitoring <t> --rollback <t> [--flag n | --rollout t] --actor delivery-lead; guard release ack <id> --actor <reviewer>
+  guard waive --guard <g> --result <id> --finding <f> --reason <t> --actor <reviewer> | guard show
+  security policy --file <cells.json> --actor security-reviewer   Phase 3: role x endpoint x ownership -> allow|deny
+  security matrix | idor | authflow | input --actor <owner>        Executed access-control probes against the app (.eccode/security.json)
+  standards show [--limit n] | standards extract --actor <role>   Phase 3: the team's observed conventions (git history, configs); never enforced; shown at onboard
+  plan contracts --file <contracts.json> --actor <designer>   Phase 3: interfaces agreed before implementation; a rescope cites the contract it changes
+  plan checkpoint --evidence ev:<id>,... --actor orchestrator  An integration checkpoint after every N tasks; a task over budget needs task waive-budget
+  task waive-budget <task> --reason <t> --actor orchestrator   Allow one task over the file/line budget
+  task rescope <task> [--files g,g] [--command c] --contract <id|none> --reason <t>   (the contract citation is required when the plan declared contracts)
   behavior contract --file <entries.json> --actor <author>   Declare the intended behaviour changes, before the diff runs
   behavior diff [--runs 2] [--python <bin>] --actor <owner|reviewer>
                                    Baseline and candidate worktrees run the same probes (HTTP from OpenAPI per role,
@@ -344,6 +358,149 @@ function requestCli({ root, sub, arg, flags, actor, print, loadJsonFile }) {
   throw new EccodeError('USAGE', 'eccode request ambiguity --file <questions.json> | clarify <id> --answer <t> --actor user | assume <id> --reading <t> --rationale <t> --actor orchestrator | show');
 }
 
+/** eccode guard <route|migration|api|perf|race|release|waive|show>: production guards (Phase 3). */
+function guardCli({ root, sub, arg, args, flags, actor, print, loadJsonFile }) {
+  const { openProject } = require('../lib/project');
+  const { store, config } = openProject(root);
+  store.assertInitialized();
+  const guards = require('../lib/guards');
+  const opts = { task: flags.task, timeoutMs: timeoutOf(flags), python: flags.python };
+  if (sub === 'show') {
+    print(flags, guards.show(store.state()), store.state().guards);
+    return 0;
+  }
+  if (sub === 'route') {
+    const r = guards.route(store, config, need(actor, '--actor'));
+    print(flags, `Guard routing ${r.id}: ${r.required.length ? r.required.map((g) => `${g} (${r.reasons[g]})`).join('; ') : 'no guard required'}${r.required.length ? '\nRun each before the last gate: eccode guard <name> --actor <owner>' : ''}`, r);
+    return 0;
+  }
+  if (sub === 'migration') {
+    const m = require('../lib/guards/migration');
+    if (flags.proof) {
+      const p = m.proof(store, config, need(actor, '--actor'), opts);
+      print(flags, `Rollback proof ${p.id}: ${p.roundTrip ? 'the schema round-trips (upgrade → downgrade → upgrade)' : 'FAILED: the schema differs after the round trip'}${p.reverted ? '' : '; note: the downgrade changed nothing'} (ev:${p.evidence.join(', ev:')})`, p);
+      return p.roundTrip ? 0 : 2;
+    }
+    const a = m.analyze(store, config, need(actor, '--actor'), opts);
+    const lines = [`Migration analysis ${a.id}: ${a.files.length} file(s), ${a.findings.length} finding(s), ${a.blocking} blocking`];
+    for (const f of a.findings) lines.push(`  ${f.severity.padEnd(8)} ${f.id} ${f.file}:${f.line} ${f.kind}: ${f.message}\n           fix: ${f.fix}`);
+    print(flags, lines.join('\n'), a);
+    return a.blocking ? 2 : 0;
+  }
+  if (sub === 'api') {
+    const d = require('../lib/guards/api').diff(store, config, need(actor, '--actor'), opts);
+    const lines = [`API diff ${d.id}: ${d.classification}; ${d.breaking.length} breaking, ${d.additive.length} additive`];
+    for (const b of d.breaking) lines.push(`  BREAKING ${b.kind} ${b.target}: ${b.detail}`);
+    for (const b of d.additive.slice(0, 20)) lines.push(`  additive ${b.kind} ${b.target}: ${b.detail}`);
+    for (const n of d.notes) lines.push(`  note: ${n}`);
+    print(flags, lines.join('\n'), d);
+    return d.breaking.length ? 2 : 0;
+  }
+  if (sub === 'perf') {
+    const r = require('../lib/guards/perf').run(store, config, need(actor, '--actor'), opts);
+    const lines = [`Performance ${r.id}: ${r.probes.length} probe(s), ${r.regressions} regression(s), ${r.nPlusOnes} N+1`];
+    for (const p of r.probes) lines.push(p.missing ? `  ${p.name}: not measured` : `  ${p.nPlusOne ? 'N+1     ' : p.latencyRegression ? 'SLOWER  ' : 'ok      '} ${p.name}: ${p.baseline.median} -> ${p.candidate.median} ms (${p.ratio}x), queries ${p.baseline.queries ?? '?'} -> ${p.candidate.queries ?? '?'}`);
+    for (const n of r.notes) lines.push(`  note: ${n}`);
+    print(flags, lines.join('\n'), r);
+    return r.regressions || r.nPlusOnes ? 2 : 0;
+  }
+  if (sub === 'race') {
+    const r = require('../lib/guards/race').run(store, config, need(actor, '--actor'), opts);
+    const lines = [`Race probe ${r.id}: ${r.operations.length} operation(s), ${r.failed} broken on the candidate`];
+    for (const op of r.operations) lines.push(`  ${op.candidate && op.candidate.held ? 'held   ' : 'BROKEN '} ${op.name}: ${(op.candidate ? op.candidate.invariants : []).map((i) => `${i.name} ${i.held ? 'ok' : `${i.before} -> ${i.after}`}`).join(', ')}`);
+    for (const n of r.notes) lines.push(`  note: ${n}`);
+    print(flags, lines.join('\n'), r);
+    return r.failed ? 2 : 0;
+  }
+  if (sub === 'release') {
+    const rel = require('../lib/guards/release');
+    if (arg === 'ack') {
+      const a = rel.acknowledge(store, config, need(actor, '--actor'), { plan: need(args._[3], 'plan id') });
+      print(flags, `Release plan ${a.plan} acknowledged by ${actor}.`, a);
+      return 0;
+    }
+    const p = rel.plan(store, config, need(actor, '--actor'), { strategy: need(flags.strategy, '--strategy flag|staged'), flag: flags.flag, rollout: flags.rollout, monitoring: need(flags.monitoring, '--monitoring'), rollback: need(flags.rollback, '--rollback') });
+    print(flags, `Release plan ${p.id} recorded (${p.strategy}). A reviewer acknowledges it: eccode guard release ack ${p.id} --actor <reviewer>`, p);
+    return 0;
+  }
+  if (sub === 'waive') {
+    const w = guards.waive(store, config, need(actor, '--actor'), { guard: need(flags.guard, '--guard'), result: need(flags.result, '--result'), finding: need(flags.finding, '--finding'), reason: need(flags.reason, '--reason') });
+    print(flags, `Waiver ${w.id}: ${w.guard} ${w.result} ${w.finding} (${w.reason})`, w);
+    return 0;
+  }
+  throw new EccodeError('USAGE', 'eccode guard route | migration [--proof] | api | perf | race | release --strategy flag|staged [--flag n|--rollout t] --monitoring t --rollback t | release ack <id> | waive --guard g --result id --finding f --reason t | show (each with --actor)');
+}
+
+/** eccode standards <extract|show>: the team's observed standards (Phase 3, Part E; report-only). */
+function standardsCli({ root, sub, flags, actor, print }) {
+  const standards = require('../lib/standards');
+  const limit = flags.limit ? Number(flags.limit) : undefined;
+  if (sub === 'show' || !sub) {
+    const r = standards.extract(root, limit ? { limit } : {});
+    print(flags, standards.brief(r), r);
+    return 0;
+  }
+  if (sub === 'extract') {
+    const { openProject } = require('../lib/project');
+    const { store, config } = openProject(root);
+    store.assertInitialized();
+    const r = standards.extract(root, limit ? { limit } : {});
+    const id = standards.record(store, config, need(actor, '--actor'), r);
+    print(flags, `${standards.brief(r)}\nRecorded as project memory ${id} (observed, never enforced).`, { record: id, ...r });
+    return 0;
+  }
+  throw new EccodeError('USAGE', 'eccode standards show [--limit n] | extract --actor <role> [--limit n]');
+}
+
+/** eccode plan <contracts|checkpoint>: interface-first planning and integration checkpoints (Phase 3, Part D). */
+function planGroupCli({ root, sub, flags, actor, print, loadJsonFile }) {
+  const { openProject } = require('../lib/project');
+  const { store, config } = openProject(root);
+  store.assertInitialized();
+  const pb = require('../lib/plan-budget');
+  if (sub === 'contracts') {
+    const c = pb.contracts(store, config, need(actor, '--actor'), loadJsonFile(need(flags.file, '--file <contracts.json>')));
+    print(flags, `Plan contracts ${c.id}: ${c.contracts.map((x) => `${x.id} (${x.kind})`).join(', ')}. A rescope must cite the contract it changes.`, c);
+    return 0;
+  }
+  if (sub === 'checkpoint') {
+    const cp = pb.checkpoint(store, config, need(actor, '--actor'), { evidence: flags.evidence });
+    print(flags, `Checkpoint ${cp.id} after ${cp.afterTasks} task(s): passed (ev:${cp.evidence.join(', ev:')}). The next task may be claimed.`, cp);
+    return 0;
+  }
+  if (sub === 'show') {
+    print(flags, pb.show(store.state()), store.state().planning);
+    return 0;
+  }
+  throw new EccodeError('USAGE', 'eccode plan contracts --file <contracts.json> --actor <designer> | plan checkpoint --evidence ev:<id>,... --actor orchestrator | plan show');
+}
+
+/** eccode security <policy|matrix|idor|authflow|input|show>: authorization tested, not described (Phase 3, Part C). */
+function securityCli({ root, sub, flags, actor, print, loadJsonFile }) {
+  const { openProject } = require('../lib/project');
+  const { store, config } = openProject(root);
+  store.assertInitialized();
+  const security = require('../lib/security');
+  const opts = { task: flags.task, timeoutMs: timeoutOf(flags), python: flags.python };
+  if (sub === 'show') {
+    print(flags, security.reportLines(store.state()).join('\n') || 'No security result recorded.', store.state().guards && store.state().guards.security);
+    return 0;
+  }
+  if (sub === 'policy') {
+    const p = security.policy(store, config, need(actor, '--actor'), loadJsonFile(need(flags.file, '--file <cells.json>')));
+    print(flags, `Security policy ${p.id}: ${p.cells.length} cell(s) declared.`, p);
+    return 0;
+  }
+  const run = { matrix: security.matrix, idor: security.idor, authflow: security.authflow, input: security.inputProbes }[sub];
+  if (run) {
+    const r = run(store, config, need(actor, '--actor'), opts);
+    const n = r.unexplained !== undefined ? r.unexplained : (r.flagged || 0);
+    print(flags, `Security ${sub} ${r.id}: ${(r.cells || r.probes || []).length} probe(s), ${n} unexplained/flagged${r.unknown ? `, ${r.unknown} unknown cell(s)` : ''}. Artifact: ${r.artifact}`, r);
+    return n ? 2 : 0;
+  }
+  throw new EccodeError('USAGE', 'eccode security policy --file <cells.json> | matrix | idor | authflow | input | show (each with --actor)');
+}
+
 /** eccode behavior <route|contract|diff|amend|waive|show>: the behavior diff. */
 function behaviorCli({ root, sub, flags, actor, print, loadJsonFile }) {
   const { openProject } = require('../lib/project');
@@ -472,6 +629,10 @@ function main(argv) {
   if (group === 'behavior') return behaviorCli({ root, sub, arg, flags, actor, print, loadJsonFile });
   if (group === 'design') return designCli({ root, sub, arg, args, flags, actor, print, loadJsonFile });
   if (group === 'request') return requestCli({ root, sub, arg, flags, actor, print, loadJsonFile });
+  if (group === 'guard') return guardCli({ root, sub, arg, args, flags, actor, print, loadJsonFile });
+  if (group === 'security') return securityCli({ root, sub, flags, actor, print, loadJsonFile });
+  if (group === 'standards') return standardsCli({ root, sub, flags, actor, print });
+  if (group === 'plan' && ['contracts', 'checkpoint', 'show'].includes(sub)) return planGroupCli({ root, sub, flags, actor, print, loadJsonFile });
   if (group === 'mcp') {
     // Long-running: serves the engine as MCP tools, locked to one actor.
     require('../lib/mcp').serve({ root, actor: need(actor, '--actor') });
@@ -836,6 +997,11 @@ function main(argv) {
       return errors.length ? 2 : 0;
     }
     case 'task': {
+      if (sub === 'waive-budget') {
+        const w = require('../lib/plan-budget').waiveBudget(store, config, need(actor, '--actor'), { task: need(arg, '<task>'), reason: need(flags.reason, '--reason') });
+        print(flags, `Budget waived on ${w.task}: ${w.reason}`, w);
+        return 0;
+      }
       if (sub === 'list' || sub === 'next') {
         const state = store.state();
         const list = sub === 'next' ? tasks.readyTasks(state, config) : Object.values(state.tasks);

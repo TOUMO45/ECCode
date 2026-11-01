@@ -11,7 +11,7 @@ const works = require('../lib/works');
 const evidence = require('../lib/evidence');
 const { deliver } = require('../lib/delivery');
 const { Store } = require('../lib/store');
-const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, task, expectCode, recordLesson, labRootCause, adrRef, designDecision } = require('./helpers');
+const { tmpProject, write, approveThroughPlan, passCheck, handoffFor, approval, task, expectCode, recordLesson, labRootCause, adrRef, designDecision, releasePlan } = require('./helpers');
 
 const commit = (dir, msg) => {
   execFileSync('git', ['add', '-A'], { cwd: dir });
@@ -38,6 +38,7 @@ function routeBehavior(ctx, actor = 'delivery-lead') {
 }
 
 function approveVerification(ctx, artifacts, n = '') {
+  releasePlan(ctx);
   gates.startGate(ctx.store, ctx.config, 'verification', 'orchestrator');
   routeBehavior(ctx);
   write(ctx.dir, `.eccode/artifacts/verify${n}.md`, '# Verification\nAll green.\n');

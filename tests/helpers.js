@@ -99,8 +99,10 @@ function approveThroughPlan(ctx, plan) {
   write(dir, '.eccode/artifacts/spec.md', DESIGN_MD);
   gates.submit(store, config, 'design', 'technical-designer', { artifacts: ['.eccode/artifacts/spec.md'] });
   gates.recordReview(store, config, 'design', 'technical-reviewer', approval([['artifact:.eccode/artifacts/spec.md']]));
-  // Phase 3: no task is owned on a design track without a decision over two alternatives and its ADR.
+  // Phase 3: no task is owned on a design track without a decision over two alternatives and its ADR;
+  // a feature or greenfield delivery carries an acknowledged release plan and the guard routing.
   designDecision(ctx);
+  releasePlan(ctx);
   gates.startGate(store, config, 'plan', 'orchestrator');
   write(dir, '.eccode/artifacts/plan.json', JSON.stringify(plan || samplePlan(), null, 2));
   gates.submit(store, config, 'plan', 'delivery-lead', { artifacts: ['.eccode/artifacts/plan.json'] });
@@ -116,6 +118,18 @@ function designDecision(ctx, { interfaces = [] } = {}) {
   design.decide(ctx.store, ctx.config, 'technical-designer', { alternatives: alt.id, chosen: 'A', rationale: 'Option A is the simplest design that meets the requirements', rejected: [{ option: 'B', why: 'more moving parts for no gain' }], interfaces });
   const adr = design.adr(ctx.store, ctx.config, 'technical-designer', {});
   return `artifact:${adr.artifact}`;
+}
+
+/** The guard routing and an acknowledged release plan for the current work item (feature and greenfield deliveries need one). */
+function releasePlan(ctx) {
+  const guards = require('../lib/guards');
+  const release = require('../lib/guards/release');
+  guards.route(ctx.store, ctx.config, 'orchestrator');
+  const track = ctx.store.state().work.track;
+  if (!release.TRACKS.has(track)) return null;
+  const p = release.plan(ctx.store, ctx.config, 'delivery-lead', { strategy: 'flag', flag: 'test-feature', monitoring: 'error rate of the service stays flat', rollback: 'turn the flag off' });
+  release.acknowledge(ctx.store, ctx.config, 'technical-reviewer', { plan: p.id });
+  return p.id;
 }
 
 /** The ADR ref of the current work item (the verification review on a design track must cite it). */
@@ -251,4 +265,4 @@ function labRootCause(store, actor = 'backend-engineer', { command = 'node -e "p
   return store.state().lab;
 }
 
-module.exports = { HB_FREEZE_COMMIT, frozenTreeFromGit, designDecision, adrRef, labRootCause, tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };
+module.exports = { HB_FREEZE_COMMIT, frozenTreeFromGit, designDecision, releasePlan, adrRef, labRootCause, tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };
