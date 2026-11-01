@@ -4504,6 +4504,375 @@
       "commit": "py-d50915e3efd9"
      }
     }
+   },
+   {
+    "sha": "8b53861e17a0ca87935e8c03b7e6c1bcef27c2e4",
+    "parent": "0f032d1fe10562d4814462fc6b4e000fd6206623",
+    "subject": "feat: import a pasted Mealie recipe export with its full structure (#8651)",
+    "lines": 148,
+    "files": [
+     "frontend/app/pages/g/[groupSlug]/r/create/html.vue",
+     "mealie/lang/messages/en-US.json",
+     "mealie/routes/recipe/recipe_crud_routes.py",
+     "mealie/services/recipe/mealie_export.py",
+     "mealie/services/recipe/recipe_service.py"
+    ],
+    "hidden": [
+     "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py",
+     "tests/unit_tests/services_tests/test_mealie_export.py"
+    ],
+    "backend": {
+     "tests": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py",
+      "tests/unit_tests/services_tests/test_mealie_export.py"
+     ],
+     "target": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_mealie_export_keeps_contents[snake_case]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_mealie_export_keeps_contents[camelCase]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_mealie_export_from_another_group",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_mealie_export_follows_household_visibility[True]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_mealie_export_follows_household_visibility[False]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_mealie_export_honours_organizer_options",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_mealie_export_drops_files_and_comments",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_mealie_export_streams_done",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_mealie_export_skips_the_scraper",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_broken_mealie_export_returns_a_clear_error",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_mealie_export.py::test_paste_broken_mealie_export_streams_a_clear_error",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_recognises_complete_dump[snake_case]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_recognises_complete_dump[camelCase]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_recognises_dump_with_surrounding_whitespace",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[schema-org]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[type-only]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[plain-json-string-lists]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[loose-mealie-shaped]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[no-slug]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[blank-slug]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[no-group-id]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[ingredients-without-reference-ids]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[no-ingredients]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[string-ingredients]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[json-array]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[html]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[malformed-json]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[empty]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[deeply-nested-array]",
+      "tests/unit_tests/services_tests/test_mealie_export.py::test_ignores_anything_else[deeply-nested-object]"
+     ],
+     "regressionFiles": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_bulk_action.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_bulk_import.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_comments.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_crud.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_export_as.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_foods.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_import_as.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_ingredients.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_owner.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_ratings.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_share_tokens.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_steps.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_substitutions.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_suggestions.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_timeline_events.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_units.py",
+      "tests/unit_tests/services_tests/test_compile_source.py",
+      "tests/unit_tests/services_tests/test_email_service.py",
+      "tests/unit_tests/services_tests/test_mealplan_ical.py",
+      "tests/unit_tests/services_tests/test_migration_extract_zip.py",
+      "tests/unit_tests/services_tests/test_openai_service.py",
+      "tests/unit_tests/services_tests/test_organizer_resolver.py",
+      "tests/unit_tests/services_tests/test_paprika_migration.py",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py",
+      "tests/unit_tests/services_tests/test_transcription.py",
+      "tests/unit_tests/services_tests/test_translate_recipe.py"
+     ],
+     "regression": 1690,
+     "failingBoth": [],
+     "venvKey": {
+      "parent": "py-d50915e3efd9",
+      "commit": "py-d50915e3efd9"
+     }
+    }
+   },
+   {
+    "sha": "c9bf6f1cab3e54dfa676c4fa5db64811839ef4a1",
+    "parent": "f70a0165187fcbb20d5a6a177ed0a226ea86c337",
+    "subject": "feat: add OIDC_VERIFY_X509_STRICT setting and adjust SSL verification… (#8715)",
+    "lines": 25,
+    "files": [
+     "mealie/core/settings/settings.py",
+     "mealie/routes/auth/auth.py"
+    ],
+    "hidden": [
+     "tests/unit_tests/test_oidc_ssl.py"
+    ],
+    "backend": {
+     "tests": [
+      "tests/unit_tests/test_oidc_ssl.py"
+     ],
+     "target": [
+      "tests/unit_tests/test_oidc_ssl.py::test_default_oidc_ssl_context_returns_none",
+      "tests/unit_tests/test_oidc_ssl.py::test_relaxed_strict_default_ca",
+      "tests/unit_tests/test_oidc_ssl.py::test_custom_ca_strict",
+      "tests/unit_tests/test_oidc_ssl.py::test_custom_ca_relaxed_strict",
+      "tests/unit_tests/test_oidc_ssl.py::test_oidc_client_args_verify_integration"
+     ],
+     "regressionFiles": [
+      "tests/unit_tests/test_ai_prompt_overrides_migration.py",
+      "tests/unit_tests/test_alembic.py",
+      "tests/unit_tests/test_auto_init_config.py",
+      "tests/unit_tests/test_clear_legacy_organizer_join_tables_migration.py",
+      "tests/unit_tests/test_code_generation.py",
+      "tests/unit_tests/test_config.py",
+      "tests/unit_tests/test_exceptions.py",
+      "tests/unit_tests/test_locale_config.py",
+      "tests/unit_tests/test_meal_plan_recipe_scale_migration.py",
+      "tests/unit_tests/test_oidc_native_client.py",
+      "tests/unit_tests/test_recipe_export_types.py",
+      "tests/unit_tests/test_recipe_image_backfill.py",
+      "tests/unit_tests/test_recipe_parser.py",
+      "tests/unit_tests/test_security.py",
+      "tests/unit_tests/test_session_cookie.py",
+      "tests/unit_tests/test_spa_recipe_ingredients.py",
+      "tests/unit_tests/test_spa_static_files.py",
+      "tests/unit_tests/test_structured_recipe_times_migration.py",
+      "tests/unit_tests/test_utils.py"
+     ],
+     "regression": 198,
+     "failingBoth": [],
+     "venvKey": {
+      "parent": "py-d50915e3efd9",
+      "commit": "py-d50915e3efd9"
+     }
+    }
+   },
+   {
+    "sha": "824265b34076ab92ef1ba30a1fa85a7ae1b45c2d",
+    "parent": "eae0dcbba7d23a86515b99cf30ed6eb6462d864b",
+    "subject": "feat: Refine AI import page (#8067)",
+    "lines": 556,
+    "files": [
+     "frontend/app/lang/messages/en-US.json",
+     "mealie/lang/messages/en-US.json",
+     "mealie/routes/recipe/recipe_crud_routes.py",
+     "mealie/schema/recipe/recipe_scraper.py",
+     "mealie/services/openai/content.py",
+     "mealie/services/openai/prompts/recipes/compile-source.txt",
+     "mealie/services/openai/prompts/recipes/translate-recipe.txt",
+     "mealie/services/recipe/import_workflow/compilers/__init__.py",
+     "mealie/services/recipe/import_workflow/compilers/base.py",
+     "mealie/services/recipe/import_workflow/compilers/image.py",
+     "mealie/services/recipe/import_workflow/compilers/structured_data.py",
+     "mealie/services/recipe/import_workflow/compilers/transcription.py",
+     "mealie/services/recipe/import_workflow/compilers/web_page.py",
+     "mealie/services/recipe/import_workflow/context.py",
+     "mealie/services/recipe/import_workflow/recipe_conversion.py",
+     "mealie/services/recipe/import_workflow/steps/__init__.py",
+     "mealie/services/recipe/import_workflow/steps/build_recipe.py",
+     "mealie/services/recipe/import_workflow/steps/compile_source.py",
+     "mealie/services/recipe/import_workflow/steps/translate_recipe.py",
+     "mealie/services/recipe/import_workflow/workflow.py",
+     "mealie/services/scraper/scraper_strategies.py"
+    ],
+    "hidden": [
+     "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py",
+     "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py",
+     "tests/unit_tests/services_tests/test_recipe_import_workflow.py"
+    ],
+    "backend": {
+     "tests": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py"
+     ],
+     "target": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_content",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_ld_json_skips_the_compile_call",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_images",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_content_and_images",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_url",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_video_url",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_video_url_keeps_accompanying_text",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_url_combines_the_page_with_pasted_content",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_from_video_url_without_audio_provider_falls_back_to_fetching",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_organizers_are_skipped_when_there_is_nothing_to_do",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_existing_organizers_are_attached_without_creating_new_ones",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_new_organizers_are_created_when_requested",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_organizers_are_resolved_from_the_source_not_the_built_recipe",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_existing_organizers_are_offered_to_the_provider",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_organizer_failures_do_not_lose_the_recipe",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_does_not_download_the_no_image_placeholder",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_surfaces_rate_limit_errors",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_preserves_sections_and_nutrition",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_requesting_a_translation_does_not_change_the_build_request",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_translates_in_its_own_step",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_translation_is_skipped_when_the_source_is_already_in_the_language",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_a_failed_translation_keeps_the_untranslated_recipe",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_with_no_source_is_rejected",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_when_source_has_no_recipe",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_when_provider_returns_nothing",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_provider_failures_are_reported_without_leaking_their_text[error0-ai-request-failed]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_provider_failures_are_reported_without_leaking_their_text[error1-video-download-failed]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_provider_failures_are_reported_without_leaking_their_text[error2-ai-not-enabled]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_provider_failures_are_reported_without_leaking_their_text[error3-unknown-error]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_with_ai_disabled",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_with_images_but_no_image_provider",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_stream_emits_progress",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py::test_create_stream_emits_error",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py::test_create_by_url_via_openai",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py::test_create_by_html_or_json_via_openai",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py::test_supplied_html_is_not_fetched_again",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py::test_organizers_are_not_requested_unless_they_are_wanted",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py::test_tags_are_imported_when_requested",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py::test_create_stream_via_openai_emits_progress",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py::test_create_by_url_openai_returns_none",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py::test_create_by_url_openai_disabled",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_workflow_declares_keys",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_declared_progress_keys_are_translatable[recipe.create-progress.creating-recipe]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_declared_progress_keys_are_translatable[recipe.create-progress.translating-recipe]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_declared_progress_keys_are_translatable[recipe.create-progress.organizing-recipe]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_declared_progress_keys_are_translatable[recipe.create-progress.reading-images-with-ai]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_declared_progress_keys_are_translatable[recipe.create-progress.downloading-video]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_declared_progress_keys_are_translatable[recipe.create-progress.reading-source-with-ai]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.creating-recipe]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.creating-recipe-from-transcript-with-ai]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.creating-recipe-from-webpage-data]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.downloading-image]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.downloading-video]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.extracting-recipe-data]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.fetching-webpage]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.organizing-recipe]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.reading-images-with-ai]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.reading-source-with-ai]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.transcribing-audio-with-ai]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_progress_keys_used_in_source_are_translatable[recipe.create-progress.translating-recipe]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_import_error_keys_are_translatable[recipe.import-errors.ai-not-enabled]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_import_error_keys_are_translatable[recipe.import-errors.ai-request-failed]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_import_error_keys_are_translatable[recipe.import-errors.image-provider-not-enabled]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_import_error_keys_are_translatable[recipe.import-errors.no-recipe-found]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_import_error_keys_are_translatable[recipe.import-errors.no-source]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_import_error_keys_are_translatable[recipe.import-errors.provider-returned-nothing]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_import_error_keys_are_translatable[recipe.import-errors.unknown-error]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_import_error_keys_are_translatable[recipe.import-errors.unreadable-source]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_import_error_keys_are_translatable[recipe.import-errors.video-download-failed]",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_short_content_is_not_truncated",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_content_at_the_limit_is_not_truncated",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_long_content_is_truncated_and_marked",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_content_can_be_truncated_to_a_custom_length",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_parts_that_fit_the_budget_are_left_alone",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_parts_share_the_budget_evenly_when_all_are_too_long",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_a_short_part_is_not_crowded_out_by_a_long_one",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_no_parts_is_not_an_error",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_no_orphaned_import_error_keys",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py::test_no_orphaned_progress_keys"
+     ],
+     "regressionFiles": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_bulk_action.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_bulk_import.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_comments.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_crud.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_export_as.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_foods.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_ingredients.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_owner.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_ratings.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_share_tokens.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_steps.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_suggestions.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_timeline_events.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_units.py",
+      "tests/unit_tests/services_tests/test_email_service.py",
+      "tests/unit_tests/services_tests/test_openai_service.py",
+      "tests/unit_tests/services_tests/test_organizer_resolver.py"
+     ],
+     "regression": 1436,
+     "failingBoth": [],
+     "venvKey": {
+      "parent": "py-69f6af21cb12",
+      "commit": "py-69f6af21cb12"
+     }
+    }
+   },
+   {
+    "sha": "5e886b11a11a179363dc69e5fde7d6875bd32263",
+    "parent": "318f05f2abeecdf6943d8004fc70af426f00e166",
+    "subject": "feat: Add feedback for bad JSON in HTML-JSON page (#7956)",
+    "lines": 111,
+    "files": [
+     "frontend/app/lang/messages/en-US.json",
+     "frontend/app/lib/api/user/recipes/recipe.ts",
+     "frontend/app/pages/g/[groupSlug]/r/create/html.vue",
+     "mealie/routes/recipe/recipe_crud_routes.py"
+    ],
+    "hidden": [
+     "tests/integration_tests/user_recipe_tests/test_recipe_crud.py"
+    ],
+    "backend": {
+     "tests": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_crud.py"
+     ],
+     "target": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[missing-schema-declaration]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[malformed-json]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_stream_invalid_data[no-recipe-data]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_crud.py::test_create_by_html_or_json_invalid_data"
+     ],
+     "regressionFiles": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_crud.py"
+     ],
+     "regression": 50,
+     "failingBoth": [],
+     "venvKey": {
+      "parent": "py-ea8b687b4031",
+      "commit": "py-ea8b687b4031"
+     }
+    }
+   },
+   {
+    "sha": "59e3e14e87e148499fad3d248cba291b99f085dc",
+    "parent": "e1d0ffdc9d81fc6ab2be8ffdfe89ac58f72355e1",
+    "subject": "feat: use partitioned cookies to support embedded auth (#8522)",
+    "lines": 14,
+    "files": [
+     "frontend/app/composables/use-token-cookie.ts",
+     "frontend/app/plugins/axios.ts",
+     "mealie/routes/auth/auth.py"
+    ],
+    "hidden": [
+     "frontend/app/composables/__tests__/use-token-cookie.test.ts",
+     "tests/unit_tests/test_session_cookie.py"
+    ],
+    "backend": {
+     "tests": [
+      "tests/unit_tests/test_session_cookie.py"
+     ],
+     "target": [
+      "tests/unit_tests/test_session_cookie.py::test_plain_http_gets_an_insecure_lax_cookie",
+      "tests/unit_tests/test_session_cookie.py::test_embedded_over_https_relaxes_samesite_and_partitions",
+      "tests/unit_tests/test_session_cookie.py::test_embedded_behind_an_untrusted_proxy_still_relaxes_samesite",
+      "tests/unit_tests/test_session_cookie.py::test_embedded_over_plain_http_stays_lax",
+      "tests/unit_tests/test_session_cookie.py::test_embedded_https_cookie_is_actually_sendable"
+     ],
+     "regressionFiles": [
+      "tests/unit_tests/test_session_cookie.py"
+     ],
+     "regression": 3,
+     "failingBoth": [],
+     "venvKey": {
+      "parent": "py-e6d30c40d136",
+      "commit": "py-e6d30c40d136"
+     }
+    }
    }
   ]
  },
