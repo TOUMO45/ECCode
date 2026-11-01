@@ -1,0 +1,45 @@
+{
+  "migration": {
+    "databaseEnv": "LEDGER_DB",
+    "env": { "LEDGER_DB": "{tmp}/m.sqlite" },
+    "python": "/root/.cache/eccode/phase3-venv/bin/python",
+    "seed": "/root/.cache/eccode/phase3-venv/bin/python -c 'import ledger.db as d; d.seed()'",
+    "upgrade": "/root/.cache/eccode/phase3-venv/bin/python -m alembic upgrade head",
+    "downgrade": "/root/.cache/eccode/phase3-venv/bin/python -m alembic downgrade -1"
+  },
+  "perf": {
+    "warmup": 2,
+    "repetitions": 12,
+    "nPlusOneQueries": 2,
+    "probes": [
+      { "name": "GET /api/products", "method": "GET", "path": "/api/products", "role": "member" },
+      { "name": "GET /api/orders/1", "method": "GET", "path": "/api/orders/1", "role": "member" },
+      { "name": "GET /api/accounts", "method": "GET", "path": "/api/accounts", "role": "admin" }
+    ]
+  },
+  "race": {
+    "databaseEnv": "LEDGER_DB",
+    "operations": [
+      {
+        "name": "concurrent transfers",
+        "concurrency": 8,
+        "repeat": 3,
+        "setup": null,
+        "request": { "method": "POST", "path": "/api/transfers", "role": "member", "json": { "from_account": 1, "to_account": 2, "amount": 4000 } },
+        "invariants": [
+          { "name": "total conserved", "kind": "conserved", "query": "SELECT SUM(balance) FROM accounts" },
+          { "name": "no overdraft", "kind": "max", "query": "SELECT -MIN(balance) FROM accounts", "expect": 0 }
+        ]
+      },
+      {
+        "name": "duplicate product",
+        "concurrency": 6,
+        "repeat": 2,
+        "request": { "method": "POST", "path": "/api/products", "role": "admin", "json": { "name": "Race", "sku": "RACE-01", "price": 100 } },
+        "invariants": [
+          { "name": "one RACE-01", "kind": "max", "query": "SELECT COUNT(*) FROM products WHERE sku='RACE-01'", "expect": 1 }
+        ]
+      }
+    ]
+  }
+}

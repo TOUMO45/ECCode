@@ -1,0 +1,16 @@
+{
+  "app": "ledger.app:app",
+  "python": "/root/.cache/eccode/phase3-venv/bin/python",
+  "env": { "LEDGER_DB": "{tmp}/ledger.sqlite" },
+  "setup": "/root/.cache/eccode/phase3-venv/bin/python -c 'import ledger.db as d; d.seed()'",
+  "roles": [
+    { "name": "anonymous", "headers": {} },
+    { "name": "member", "headers": { "Authorization": "Bearer tok-member" } },
+    { "name": "member2", "headers": { "Authorization": "Bearer tok-member2" } },
+    { "name": "admin", "headers": { "Authorization": "Bearer tok-admin" } },
+    { "name": "viewer", "headers": { "Authorization": "Bearer tok-viewer" } }
+  ],
+  "normalizers": [],
+  "ignoreFields": [],
+  "unordered": []
+}
