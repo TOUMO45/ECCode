@@ -30,15 +30,16 @@ Wiring: `STATE_VERSION` 6; new events reduced and their artifacts re-hashed by `
 | B.2 | API | 2 / 3 | 0 | 3 / 3 |
 | B.3 | performance | 3 / 3 | 0 | 2 / 2 |
 | B.4 | concurrency | 1–2 / 2 | 0 | 1 / 1 |
-| C | security | 4 / 8 | 0 | 1 / 1 |
-| **all** | | **13–14 / 20** | **0** | **11 / 11** |
+| C | security | **8 / 8** | 0 | 1 / 1 |
+| **all** | | **18 / 20** | **0** | **11 / 11** |
 
 The 6–7 misses are each a limitation of the specific guard against this app, not a false reading, and are listed with justifications in the scorecard:
 - **B.2 b2-field-type**: the ledger routes declare no `response_model`, so the OpenAPI response schema is empty and the schema-only API diff cannot see a field's type change (the Phase 2 behavior diff catches this at runtime; the compatibility guard reads the schema).
 - **B.4 b4-double-spend / b4-duplicate-insert**: the app's `BEGIN IMMEDIATE` transactions make the double-spend window sub-millisecond on sqlite (caught ~50–85% of runs, a bonus when the race fires) and make the duplicate-insert check-then-insert atomic (never reproduces). The guard catches a race only when the concurrency actually provokes it.
-- **C c-idor-update**: the IDOR prober issues reads; a PATCH with no body is rejected (422) before the ownership check, so the update IDOR is not observed. **c-mass-assignment / c-field-leak**: the access matrix compares status only and has no privilege-escalation or field-leak oracle. **c-sql-concat**: the injected `OR 1=1` returns 200, and the input probe flags only a 5xx carrying a SQL error.
+- **The four Part C misses of the first scorecard are now closed** (directive follow-up): a field-leak oracle (diff a non-owner's response fields against a declared field policy; sensitive names flagged by default), a mass-assignment probe (inject privileged fields on a write, read back, flag what persisted), and a SQL boolean differential (a tautology against a contradiction) took security from 4/8 to **8/8**, including the c-idor-update bonus. A real matrix bug was fixed on the way (request bodies were built from the already-substituted URL; the route-focus filter now tolerates a mount prefix). Zero false positives still hold.
+- **The two remaining misses are both Part B and structural**: **b2-field-type** (the ledger declares no `response_model`, so the schema-only API diff cannot see an int→str response field change; the Phase 2 behavior diff catches this at runtime), and **b4-duplicate-insert** (the check-then-insert is one `BEGIN IMMEDIATE` transaction on sqlite, so a duplicate is never produced; b4-double-spend is sub-ms and caught in most runs, tolerated as flaky).
 
-These gaps are recorded in limits rows 161–162 and row 166. The guards are strong where they are executed oracles (migration static analysis and rollback proof, query-count N+1, access-matrix status mismatches, auth-flow single-use) and honest about what a schema-only or status-only check cannot see.
+Recorded in limits rows 161–162 and 166. The guards are executed oracles (migration static analysis and rollback proof, query-count N+1, body-aware access matrix with field-leak and mass-assignment probes, SQL boolean differential, auth-flow single-use), honest about what a schema-only API diff and a sqlite atomicity artefact cannot show.
 
 ## 3. Deviations from the brief (each pinned by a test)
 
