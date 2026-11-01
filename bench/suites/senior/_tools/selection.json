@@ -4330,6 +4330,180 @@
       "commit": "py-76b4659c01fb"
      }
     }
+   },
+   {
+    "sha": "04d380a588b56bb95649a85559fa8cb7c445b7f7",
+    "parent": "ec9d05abd939a6dabad5f022360a26394f1a6548",
+    "subject": "feat: support drag-and-drop images from web (#8493)",
+    "lines": 358,
+    "files": [
+     "frontend/app/components/Domain/Recipe/RecipePage/RecipePageParts/RecipePageInstructions.vue",
+     "frontend/app/components/global/DropZone.vue",
+     "frontend/app/lang/messages/en-US.json",
+     "frontend/app/lib/api/user/recipes/recipe.ts",
+     "mealie/pkgs/safehttp/__init__.py",
+     "mealie/pkgs/safehttp/fetch.py",
+     "mealie/routes/recipe/recipe_crud_routes.py",
+     "mealie/schema/recipe/__init__.py",
+     "mealie/services/recipe/recipe_data_service.py"
+    ],
+    "hidden": [
+     "frontend/app/components/global/DropZone.test.ts",
+     "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py",
+     "tests/unit_tests/pkgs/safehttp/test_fetch.py",
+     "tests/unit_tests/services_tests/test_recipe_data_service.py",
+     "tests/utils/api_routes/__init__.py"
+    ],
+    "backend": {
+     "tests": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py"
+     ],
+     "target": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_applies_the_download_budget",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_names_the_asset_after_the_file[https://example.test/pancakes.png-pancakes]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_names_the_asset_after_the_file[https://example.test/download?id=123-download]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_names_the_asset_after_the_file[https://example.test/-image]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_names_the_asset_after_the_file[https://example.test/$.png-image]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_rejects_scriptable_image_types",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_reports_download_failures[raises0]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_reports_download_failures[raises1]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_reports_download_failures[raises2]",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_when_nothing_downloads",
+      "tests/integration_tests/user_recipe_tests/test_recipe_asset_from_url.py::test_create_asset_from_url_requires_authentication",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[200-False]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[301-False]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[400-True]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[401-True]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[402-True]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[403-True]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[406-True]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[429-True]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[451-True]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[404-False]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[410-False]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[500-False]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[502-False]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[503-True]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_is_challenge_status[504-False]",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_headers_indicate_challenge",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_body_indicates_challenge",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_body_indicates_challenge_only_samples_head",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_fetch_result_text_decoding",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_success_on_first_attempt",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_rotates_through_all_impersonations_on_block",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_rotates_past_200_challenge_body",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_hard_error_stops_immediately",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_head_request_skips_body",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_rate_limit_triggers_backoff_then_succeeds",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_no_backoff_on_plain_403",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_no_proxy_when_unconfigured",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_always_mode_proxies_first_request",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_fallback_mode_direct_first_then_proxy_on_block",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_fallback_mode_does_not_escalate_on_hard_error",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_always_mode_does_not_double_escalate",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_escalates_to_flaresolverr_when_blocked",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_no_flaresolverr_when_unconfigured",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_no_flaresolverr_on_hard_error",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_no_flaresolverr_for_images",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_no_flaresolverr_for_head",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_flaresolverr_failure_degrades_gracefully",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_build_transport_applies_operator_host_lists",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_build_transport_passes_proxy_through",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_no_size_cap_by_default",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_body_within_cap_is_returned",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_declared_content_length_over_cap_is_refused",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_understated_content_length_is_caught_while_reading",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_missing_content_length_is_caught_while_reading",
+      "tests/unit_tests/pkgs/safehttp/test_fetch.py::test_head_request_ignores_size_cap",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_takes_extension_from_content_type",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_strips_content_type_parameters",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_rejects_non_image_content_types[text/html]",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_rejects_non_image_content_types[text/html; name=image.png]",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_rejects_non_image_content_types[application/octet-stream]",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_rejects_non_image_content_types[None]",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_translates_invalid_domain_error",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_propagates_too_large",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_passes_options_through",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_returns_none_when_nothing_downloads",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_fetch_image_swallows_transport_failures",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_scrape_image_writes_the_real_extension",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_scrape_image_is_uncapped",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_scrape_image_accepts_schema_org_dict",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_scrape_image_picks_largest_from_a_list",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_scrape_image_rejects_unparseable_input",
+      "tests/unit_tests/services_tests/test_recipe_data_service.py::test_scrape_image_returns_none_without_writing_when_download_fails"
+     ],
+     "regressionFiles": [
+      "tests/integration_tests/user_recipe_tests/test_recipe_bulk_action.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_bulk_import.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_comments.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_ai.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_openai.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_create_from_video.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_cross_household.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_crud.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_export_as.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_foods.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_image_assets.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_ingredients.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_owner.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_ratings.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_share_tokens.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_steps.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_substitutions.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_suggestions.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_timeline_events.py",
+      "tests/integration_tests/user_recipe_tests/test_recipe_units.py",
+      "tests/unit_tests/pkgs/safehttp/test_flaresolverr.py",
+      "tests/unit_tests/pkgs/safehttp/test_transport.py",
+      "tests/unit_tests/services_tests/test_compile_source.py",
+      "tests/unit_tests/services_tests/test_email_service.py",
+      "tests/unit_tests/services_tests/test_openai_service.py",
+      "tests/unit_tests/services_tests/test_organizer_resolver.py",
+      "tests/unit_tests/services_tests/test_paprika_migration.py",
+      "tests/unit_tests/services_tests/test_recipe_import_workflow.py",
+      "tests/unit_tests/services_tests/test_transcription.py"
+     ],
+     "regression": 1628,
+     "failingBoth": [],
+     "venvKey": {
+      "parent": "py-91fe80dad1cd",
+      "commit": "py-91fe80dad1cd"
+     }
+    }
+   },
+   {
+    "sha": "0c71c2a22684bc44a2f42a9c0bce540ac79b35c4",
+    "parent": "4ab0d7305645f3d3950ba8cac215aab644ad765e",
+    "subject": "feat: add centiliter to seeded ingredient units (#8766)",
+    "lines": 9,
+    "files": [
+     "mealie/repos/repository_units.py",
+     "mealie/repos/seed/resources/units/locales/en-US.json"
+    ],
+    "hidden": [
+     "tests/unit_tests/repository_tests/test_unit_repository.py"
+    ],
+    "backend": {
+     "tests": [
+      "tests/unit_tests/repository_tests/test_unit_repository.py"
+     ],
+     "target": [
+      "tests/unit_tests/repository_tests/test_unit_repository.py::test_centiliter_standardization"
+     ],
+     "regressionFiles": [
+      "tests/unit_tests/repository_tests/test_unit_repository.py"
+     ],
+     "regression": 16,
+     "failingBoth": [],
+     "venvKey": {
+      "parent": "py-d50915e3efd9",
+      "commit": "py-d50915e3efd9"
+     }
+    }
    }
   ]
  },
