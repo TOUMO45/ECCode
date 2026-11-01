@@ -12,21 +12,69 @@
       "idParam": "account_id",
       "list": { "method": "GET", "path": "/api/accounts", "itemsField": null, "idField": "id" },
       "item": { "method": "GET", "path": "/api/accounts/{account_id}" },
-      "create": null
+      "create": null,
+      "owned": { "member": 1, "member2": 3 }
+    },
+    {
+      "kind": "user",
+      "idParam": "user_id",
+      "item": { "method": "GET", "path": "/api/users/{user_id}" },
+      "owned": { "admin": 1, "member": 2, "viewer": 3, "member2": 4 },
+      "writes": [{ "method": "PATCH", "path": "/api/users/{user_id}" }],
+      "readBack": { "method": "GET", "path": "/api/users/{user_id}" }
     }
+  ],
+  "fields": [
+    { "endpoint": "GET /api/users/{user_id}", "allow": ["id", "username", "role"] }
   ],
   "policy": [
     { "role": "member", "endpoint": "GET /api/accounts/{account_id}", "ownership": "own", "expected": "allow" },
+    { "role": "member", "endpoint": "GET /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+    { "role": "member", "endpoint": "GET /api/accounts/{account_id}", "ownership": "none", "expected": "deny" },
+    { "role": "member2", "endpoint": "GET /api/accounts/{account_id}", "ownership": "own", "expected": "allow" },
     { "role": "member2", "endpoint": "GET /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
     { "role": "viewer", "endpoint": "GET /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+    { "role": "anonymous", "endpoint": "GET /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
     { "role": "anonymous", "endpoint": "GET /api/accounts/{account_id}", "ownership": "none", "expected": "deny" },
+    { "role": "admin", "endpoint": "GET /api/accounts/{account_id}", "ownership": "other", "expected": "allow" },
+    { "role": "admin", "endpoint": "GET /api/accounts/{account_id}", "ownership": "none", "expected": "deny" },
 
-    { "role": "member2", "endpoint": "DELETE /api/accounts/{account_id}", "ownership": "own", "expected": "deny" },
+    { "role": "member", "endpoint": "PATCH /api/accounts/{account_id}", "ownership": "own", "expected": "allow" },
+    { "role": "member", "endpoint": "PATCH /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+    { "role": "member2", "endpoint": "PATCH /api/accounts/{account_id}", "ownership": "own", "expected": "allow" },
+    { "role": "member2", "endpoint": "PATCH /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+    { "role": "viewer", "endpoint": "PATCH /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+    { "role": "anonymous", "endpoint": "PATCH /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+    { "role": "admin", "endpoint": "PATCH /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+
+    { "role": "member", "endpoint": "DELETE /api/accounts/{account_id}", "ownership": "own", "expected": "allow" },
+    { "role": "member", "endpoint": "DELETE /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+    { "role": "member2", "endpoint": "DELETE /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
     { "role": "viewer", "endpoint": "DELETE /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+    { "role": "anonymous", "endpoint": "DELETE /api/accounts/{account_id}", "ownership": "other", "expected": "deny" },
+
+    { "role": "member", "endpoint": "GET /api/users/{user_id}", "ownership": "own", "expected": "allow" },
+    { "role": "member", "endpoint": "GET /api/users/{user_id}", "ownership": "other", "expected": "allow" },
+    { "role": "member", "endpoint": "GET /api/users/{user_id}", "ownership": "none", "expected": "deny" },
+    { "role": "member2", "endpoint": "GET /api/users/{user_id}", "ownership": "own", "expected": "allow" },
+    { "role": "member2", "endpoint": "GET /api/users/{user_id}", "ownership": "other", "expected": "allow" },
+    { "role": "viewer", "endpoint": "GET /api/users/{user_id}", "ownership": "own", "expected": "allow" },
+    { "role": "viewer", "endpoint": "GET /api/users/{user_id}", "ownership": "other", "expected": "allow" },
+    { "role": "anonymous", "endpoint": "GET /api/users/{user_id}", "ownership": "other", "expected": "deny" },
+    { "role": "admin", "endpoint": "GET /api/users/{user_id}", "ownership": "other", "expected": "allow" },
+
+    { "role": "member", "endpoint": "PATCH /api/users/{user_id}", "ownership": "own", "expected": "allow" },
+    { "role": "member", "endpoint": "PATCH /api/users/{user_id}", "ownership": "other", "expected": "deny" },
+    { "role": "member2", "endpoint": "PATCH /api/users/{user_id}", "ownership": "own", "expected": "allow" },
+    { "role": "member2", "endpoint": "PATCH /api/users/{user_id}", "ownership": "other", "expected": "deny" },
+    { "role": "viewer", "endpoint": "PATCH /api/users/{user_id}", "ownership": "other", "expected": "deny" },
+    { "role": "anonymous", "endpoint": "PATCH /api/users/{user_id}", "ownership": "other", "expected": "deny" },
+    { "role": "admin", "endpoint": "PATCH /api/users/{user_id}", "ownership": "other", "expected": "deny" },
 
     { "role": "member", "endpoint": "GET /api/admin/users", "ownership": "none", "expected": "deny" },
     { "role": "member2", "endpoint": "GET /api/admin/users", "ownership": "none", "expected": "deny" },
     { "role": "viewer", "endpoint": "GET /api/admin/users", "ownership": "none", "expected": "deny" },
+    { "role": "anonymous", "endpoint": "GET /api/admin/users", "ownership": "none", "expected": "deny" },
     { "role": "admin", "endpoint": "GET /api/admin/users", "ownership": "none", "expected": "allow" }
   ],
   "authFlows": {

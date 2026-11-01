@@ -10,16 +10,16 @@ Each seeded flaw in tests/fixtures/phase3/seeds.js is run through its production
 | B2 | api (B.2) | 2 / 3 | 0 | 1 | 3 / 3 |
 | B3 | perf (B.3) | 3 / 3 | 0 | 0 | 2 / 2 |
 | B4 | race (B.4) | 1 / 2 | 0 | 1 | 1 / 1 |
-| C | security (C) | 4 / 8 | 0 | 4 | 1 / 1 |
-| **all** | | **14 / 20** | **0** | **6** | **11 / 11** |
+| C | security (C) | 8 / 8 | 0 | 0 | 1 / 1 |
+| **all** | | **18 / 20** | **0** | **2** | **11 / 11** |
 
 ## Per-flaw results
 
 | Flaw | Part | Expected | Verdict | Detail |
 |---|---|---|---|---|
-| b1-notnull-no-default | B1 | caught | caught | 1 blocking [not-null-no-default]; proof not applicable (the seed command failed (ev:ev-mvx7gyf9-020e1daf):) |
-| b1-drop-column | B1 | caught | caught | 1 blocking [drop-column]; proof not applicable (the seed command failed (ev:ev-mvx7gz4i-04177a12):) |
-| b1-missing-downgrade | B1 | caught | caught | 1 blocking [missing-downgrade]; proof not applicable (upgrade after downgrade failed (ev:ev-mvx7h1dc-0addc260):) |
+| b1-notnull-no-default | B1 | caught | caught | 1 blocking [not-null-no-default]; proof not applicable (the seed command failed (ev:ev-mvxtx1qp-02a3bf1b):) |
+| b1-drop-column | B1 | caught | caught | 1 blocking [drop-column]; proof not applicable (the seed command failed (ev:ev-mvxtx2ld-040c0128):) |
+| b1-missing-downgrade | B1 | caught | caught | 1 blocking [missing-downgrade]; proof not applicable (upgrade after downgrade failed (ev:ev-mvxtx560-0a9f7cc9):) |
 | b1-rename-in-place | B1 | caught | caught | 1 blocking [rename-in-place]; proof round-trips |
 | b1-add-nullable | B1 | clean | correct-clean | 0 blocking [none]; proof round-trips |
 | b1-add-index | B1 | clean | correct-clean | 0 blocking [none]; proof round-trips |
@@ -31,30 +31,26 @@ Each seeded flaw in tests/fixtures/phase3/seeds.js is run through its production
 | b2-optional-param | B2 | clean | correct-clean | additive; breaking [none] |
 | b2-new-endpoint | B2 | clean | correct-clean | additive; breaking [none] |
 | b2-new-field | B2 | clean | correct-clean | none; breaking [none] |
-| b3-nplus1-orders | B3 | caught | caught | GET /api/products 4->4q x0.99; GET /api/orders/1 5->7q x0.91 N+1; GET /api/accounts 4->4q x0.66 |
-| b3-nplus1-accounts | B3 | caught | caught | GET /api/products 4->4q x0.71; GET /api/orders/1 5->5q x0.62; GET /api/accounts 4->8q x1.38 N+1 |
-| b3-latency | B3 | caught | caught | GET /api/products 4->4q x14.59 REG; GET /api/orders/1 5->5q x0.65; GET /api/accounts 4->4q x0.67 |
-| b3-same-queries | B3 | clean | correct-clean | GET /api/products 4->4q x1.01; GET /api/orders/1 5->5q x1.41; GET /api/accounts 4->4q x1.65 |
-| b3-faster | B3 | clean | correct-clean | GET /api/products 4->4q x1.06; GET /api/orders/1 5->5q x1.2; GET /api/accounts 4->4q x1.19 |
+| b3-nplus1-orders | B3 | caught | caught | GET /api/products 4->4q x1.09; GET /api/orders/1 5->7q x0.84 N+1; GET /api/accounts 4->4q x0.99 |
+| b3-nplus1-accounts | B3 | caught | caught | GET /api/products 4->4q x1.06; GET /api/orders/1 5->5q x0.93; GET /api/accounts 4->8q x1.35 N+1 |
+| b3-latency | B3 | caught | caught | GET /api/products 4->4q x15.7 REG; GET /api/orders/1 5->5q x0.69; GET /api/accounts 4->4q x1.24 |
+| b3-same-queries | B3 | clean | correct-clean | GET /api/products 4->4q x0.86; GET /api/orders/1 5->5q x0.96; GET /api/accounts 4->4q x0.84 |
+| b3-faster | B3 | clean | correct-clean | GET /api/products 4->4q x1.33; GET /api/orders/1 5->5q x1.07; GET /api/accounts 4->4q x0.99 |
 | b4-double-spend | B4 | caught | caught | concurrent transfers: cand BROKEN; duplicate product: cand held |
 | b4-duplicate-insert | B4 | caught | MISSED | concurrent transfers: cand held; duplicate product: cand held |
 | b4-transfer-ok | B4 | clean | correct-clean | concurrent transfers: cand held; duplicate product: cand held |
-| c-idor-read | C | caught | caught | matrix unexplained=2; idor unexplained=0/0 |
-| c-idor-update | C | caught | MISSED | matrix unexplained=0; idor unexplained=0/0 |
-| c-idor-delete | C | caught | caught | matrix unexplained=2; idor unexplained=0/0 |
-| c-mass-assignment | C | caught | MISSED | matrix unexplained=0; idor unexplained=0/0 |
-| c-field-leak | C | caught | MISSED | matrix unexplained=0; idor unexplained=0/0 |
-| c-missing-auth | C | caught | caught | matrix unexplained=3; idor unexplained=0/0 |
-| c-reset-reuse | C | caught | caught | matrix unexplained=0; idor unexplained=0/0; authflow failed=[reset token is single-use] |
-| c-sql-concat | C | caught | MISSED | matrix unexplained=0; idor unexplained=0/0; input flagged=[none] |
-| c-safe-rename | C | clean | correct-clean | matrix unexplained=0; idor unexplained=0/0 |
+| c-idor-read | C | caught | caught | matrix unexplained=3; idor unexplained=4/25 |
+| c-idor-update | C | caught | caught | matrix unexplained=3; idor unexplained=0/25 |
+| c-idor-delete | C | caught | caught | matrix unexplained=2; idor unexplained=0/25 |
+| c-mass-assignment | C | caught | caught | matrix unexplained=0; idor unexplained=3/25 |
+| c-field-leak | C | caught | caught | matrix unexplained=3; idor unexplained=9/25 |
+| c-missing-auth | C | caught | caught | matrix unexplained=3; idor unexplained=0/25 |
+| c-reset-reuse | C | caught | caught | matrix unexplained=0; idor unexplained=0/25; authflow failed=[reset token is single-use] |
+| c-sql-concat | C | caught | caught | matrix unexplained=0; idor unexplained=0/25; input flagged=[sql] |
+| c-safe-rename | C | clean | correct-clean | matrix unexplained=0; idor unexplained=0/25 |
 
 ## Tolerated misses (guards that genuinely cannot see the flaw)
 
 - **b2-field-type** — missed: the ledger routes declare no response_model, so the OpenAPI response schema is empty and api.diff cannot see a response field change from int to str (the Phase-2 behaviour diff catches this at runtime; the schema-only API guard cannot).
 - **b4-double-spend** — caught this run; tolerated as flaky/unseeable: db.py runs BEGIN IMMEDIATE on every transaction, so the flaw's balance check also holds the write lock; the window the extra commit opens is sub-millisecond and sqlite + the GIL interleave it only ~50-85% of runs, so the overdraft does not reproduce deterministically (a flaky catch, tolerated rather than asserted).
 - **b4-duplicate-insert** — missed: the flaw's existence check (session.execute(select...)) opens the BEGIN IMMEDIATE transaction that the following INSERT commits, so check-and-insert are one atomic transaction on sqlite and no duplicate is ever produced — the race probe cannot distinguish candidate from baseline.
-- **c-idor-update** — missed: access_probe builds the PATCH body from the template path but calls baseline_request with the already-substituted URL, so PATCH /accounts/{id} is sent with no body and returns 422 (validation) before the ownership check — both clean and flawed code return 422, so the IDOR is invisible to the matrix, and the IDOR prober only issues GET item reads.
-- **c-mass-assignment** — missed: the access matrix compares HTTP status only and fills request bodies with required fields alone (role is optional), so neither the injected role nor the resulting privilege escalation is observed; no probe has a privilege-escalation oracle.
-- **c-field-leak** — missed: the matrix compares status only (GET /users/{id} is 200 with or without the leaked fields) and the IDOR field-leak detector needs API-creatable owned objects, but users are not creatable, so the extra email/password_hash fields are never inspected.
-- **c-sql-concat** — missed: the fixed sql payload injected into the LIKE clause executes as valid SQL (the -- comments the trailing %'), returning HTTP 200; the input detector only flags a 5xx carrying a SQL error, so this real injection is not surfaced.

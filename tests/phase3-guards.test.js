@@ -41,14 +41,15 @@ const TEST_OPTS = { skip, timeout: 2400000 };
 // Flaws no guard can catch against this fixture, with the reason (shown in the
 // scorecard). These are tolerated misses; everything else expect:caught must be
 // caught, and nothing expect:clean may be flagged.
+// Part C has no tolerated miss: the four security misses of the first scorecard
+// (c-idor-update, c-mass-assignment, c-field-leak, c-sql-concat) are caught since
+// the access probe builds request bodies from the template path, diffs the fields
+// a non-owner sees against the declared field policy, writes privileged fields
+// and reads them back, and tells a SQL tautology from a contradiction.
 const ALLOWED_MISS = {
   'b2-field-type': 'the ledger routes declare no response_model, so the OpenAPI response schema is empty and api.diff cannot see a response field change from int to str (the Phase-2 behaviour diff catches this at runtime; the schema-only API guard cannot).',
   'b4-double-spend': 'db.py runs BEGIN IMMEDIATE on every transaction, so the flaw\'s balance check also holds the write lock; the window the extra commit opens is sub-millisecond and sqlite + the GIL interleave it only ~50-85% of runs, so the overdraft does not reproduce deterministically (a flaky catch, tolerated rather than asserted).',
   'b4-duplicate-insert': 'the flaw\'s existence check (session.execute(select...)) opens the BEGIN IMMEDIATE transaction that the following INSERT commits, so check-and-insert are one atomic transaction on sqlite and no duplicate is ever produced — the race probe cannot distinguish candidate from baseline.',
-  'c-idor-update': 'access_probe builds the PATCH body from the template path but calls baseline_request with the already-substituted URL, so PATCH /accounts/{id} is sent with no body and returns 422 (validation) before the ownership check — both clean and flawed code return 422, so the IDOR is invisible to the matrix, and the IDOR prober only issues GET item reads.',
-  'c-mass-assignment': 'the access matrix compares HTTP status only and fills request bodies with required fields alone (role is optional), so neither the injected role nor the resulting privilege escalation is observed; no probe has a privilege-escalation oracle.',
-  'c-field-leak': 'the matrix compares status only (GET /users/{id} is 200 with or without the leaked fields) and the IDOR field-leak detector needs API-creatable owned objects, but users are not creatable, so the extra email/password_hash fields are never inspected.',
-  'c-sql-concat': 'the fixed sql payload injected into the LIKE clause executes as valid SQL (the -- comments the trailing %\'), returning HTTP 200; the input detector only flags a 5xx carrying a SQL error, so this real injection is not surfaced.',
 };
 
 const score = { B1: [], B2: [], B3: [], B4: [], C: [] };
