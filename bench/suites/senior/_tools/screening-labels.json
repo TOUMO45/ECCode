@@ -1,0 +1,12 @@
+{
+  "_scheme": "Hand labels of the screening runs that failed CORRECTNESS (the item's target or regression tests), by the Phase 2 rule: agent-error (a stated behaviour the arm got wrong) or spec-gap (a behaviour the request did not state). The harness grade (migration rollback, authorization probes) is the category's usable-item rule and needs no label; the ambiguous category's labels are the model labeller's (2026-11-01-senior-screening.ambiguous.labels.json). Labelled from the run record (the failing test ids, the agent's answer) and the request text.",
+  "migration": {
+    "senior-migration-cd2097ee": { "runs": [0, 2], "label": "agent-error", "reason": "The failing tests pin the prompt assembly order the request states (global instructions before the prompt's instructions, data injections after, the system prompt without global instructions); one of the five, the no-group case, is not stated (a spec gap on its own), but the four stated ones fail too." },
+    "senior-migration-7808c944": { "runs": [0, 1, 2], "label": "agent-error", "reason": "The request states the avatar download's redirect rules (a redirect to a vetted host is followed, a relative Location resolves against the current URL, the chain is capped, with the module-level constants named); the arms' implementations fail those tests in all three runs." },
+    "senior-migration-36d716a4": { "runs": [0, 1, 2], "label": "agent-error", "reason": "The hidden migration tests import the migration by its revision id and call its module-level helpers (load_unit_words, build_component_pattern, parse_seconds, format_seconds, is_empty_time), all named in the request; pytest found no collectors for them in all three runs, so the arms did not put the stated helpers in the migration module under the stated id." }
+  },
+  "authorization": {},
+  "ambiguous": {
+    "_note": "Correctness failures here are expected by design where the arm took the reading the hidden tests do not pin (the registered open decision); they are not labelled agent-error or spec-gap, and the category's rule is the labeller's asked/guessed."
+  }
+}
