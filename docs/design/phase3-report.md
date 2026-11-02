@@ -180,9 +180,17 @@ The staged verification worked as designed on the owner's side: scoped checks 0.
   **Stated plainly, as the directive asks:** on the hard multi-file Mealie item every ECCode debug failure is **(b) — friction and cost, not capability.** The agent did the work (one half proven, the other's 33 tests passing) and then halted for a user decision that a headless run cannot give (a pinned-check import clash, a `git stash` approval, a plan flaw needing rescope). Bare "passes" mealie3-01 10/10 precisely because it never stops to ask — it writes code straight through. This is the headless-friction the multi-file run documented, and it is exactly what the Part A headless-assumption path and the Part D large-change planning are meant to remove; it also motivates item 2's narrowing (fewer, scoped checks and bounded review rounds) and item 3's resumability. bare's own deficit, by contrast, is **(a) capability** — on the two genuinely hard items (mealie4-05 6/10, tornado-10 9/10) it ships incomplete or unverified fixes, which ECC and (where it delivered) ECCode did not. No (a) failure for ECCode on a Mealie item; no (c).
 - **0.D** (seed validation and H-B): PENDING the seed key, which is not in this container; it runs when the owner sets `ECCODE_SEED_KEY`.
 
-## 6. Senior Bench — awaiting approval
+## 6. Senior Bench — round 1 screened; the measured arms await approval
 
-Registered (section 1, Part G). 7 categories, ≥12 items each (≥84 items from ≥2 projects), harness-graded and frozen, arms bare/ECC/Phase 3. The `ledger` fixture flaws are the instrument check (that each harness grade catches what it should), not items. The measured arms are **not started**; the estimate (~$5,500–10,500, three arms) awaits the owner's approval.
+Registered (section 1, Part G; amendments 1 and 2 in `bench/protocols/2026-11-01-senior-bench.md`). Round 1 (three categories, two arms) was **screened on 2026-11-01/02 for $31.88 of the $100 cap** (`bench/suites/senior`, `node bench/suites/senior/_tools/yield.js`):
+
+| Category | Items screened | Bare runs | Runs passing correctness | Runs failing the harness grade / guessed | Usable items (>= 1 failing run) | Spend | Go/no-go (>= 12 usable) |
+|---|---|---|---|---|---|---|---|
+| migration | 9 | 27 | 19/27 | 0/27 | 0 | $15.95 | no-go |
+| authorization | 5 | 15 | 15/15 | 0/15 | 0 | $2.93 | no-go |
+| ambiguous | 16 | 48 | 37/48 | 46/48 | 16 | $13.01 | go |
+
+Migration and authorization are **no-go** as screened: the bare agent writes a reversible migration when the request asks for one (0 of 27 runs fail the rollback grade; 3 of 9 items are still hard by correctness, labelled agent-error), and it fixes a stated access rule every time on the 5 of 16 authorization fixes whose flaw the access matrix can observe at all (register row 169). Ambiguous is **go** with 16 usable items, by construction (0 of 48 bare runs asked; 46 guessed, 2 neither); its discriminating power is in the measured arms, where the Phase 3 arm must stop and ask. The measured round 1 on that category is ≈ 320 runs, about $1,400–2,100, and **does not start without the owner's approval**. The `ledger` fixture flaws remain the instrument check of the harness grades; the per-item instrument check (`_tools/instrument.json`) records why 4 migration and 11 authorization candidates were dropped.
 
 ## 7. New limits rows
 

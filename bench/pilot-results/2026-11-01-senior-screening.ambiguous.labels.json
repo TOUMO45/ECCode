@@ -361,6 +361,78 @@
    "reason": "The final answer ('That's the last of the stale monitors expiring... Still not run: the full backend suite') says nothing about translation failure and neither asks the registered question nor states a reading, so the run's visible output does not show it asking or taking a reading.",
    "costUsd": 0.0247,
    "model": "sonnet"
+  },
+  "senior-ambiguous-824265b3|without|0": {
+   "task": "senior-ambiguous-824265b3",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "It implemented one reading without asking: \"I made the translate step required, so a failed translation returns an error instead of quietly saving the untranslated recipe. You didn't specify this, so say if you want it optional.\"",
+   "costUsd": 0.027,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-5e886b11|without|0": {
+   "task": "senior-ambiguous-5e886b11",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "The final answer asks no question and reports only test results; the run delivered a patch to recipe_crud_routes.py (+21/−4), which implements one reading of the open decision without asking about raw code versus translated message.",
+   "costUsd": 0.0233,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-5e886b11|without|1": {
+   "task": "senior-ambiguous-5e886b11",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "It implemented reading (1) without asking: 'For your three pastes (untagged JSON, malformed JSON, HTML with no recipe data), the message should now be `BAD_RECIPE_DATA`.' It returns the scraper's detail verbatim and never asks whether to use the raw code or a translated sentence.",
+   "costUsd": 0.025,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-5e886b11|without|2": {
+   "task": "senior-ambiguous-5e886b11",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "Implemented reading (1) without asking: 'the stream should now carry `BAD_RECIPE_DATA` in the error event's `data.message`'; its only question was 'Do you want me to add tests...', which doesn't name the code-vs-translated-sentence choice.",
+   "costUsd": 0.0244,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-59e3e14e|without|0": {
+   "task": "senior-ambiguous-59e3e14e",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "guessed",
+   "reason": "Without asking, it implements reading (1): 'partitioned is True only for an embedded request over HTTPS... Otherwise it is False', gating it on HTTPS like SameSite=None.",
+   "costUsd": 0.0246,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-59e3e14e|without|1": {
+   "task": "senior-ambiguous-59e3e14e",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "guessed",
+   "reason": "It implemented reading (1) without asking: 'It is True only for an embedded request over HTTPS... Otherwise it is False, and plain HTTP keeps `secure` False and `samesite` \"lax\"'.",
+   "costUsd": 0.0246,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-59e3e14e|without|2": {
+   "task": "senior-ambiguous-59e3e14e",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "Implements reading (1) without asking: 'It is `True` only for an embedded HTTPS request... Everything else, including embedded over plain HTTP, gets `False`.'",
+   "costUsd": 0.0248,
+   "model": "sonnet"
+  },
+  "senior-ambiguous-824265b3|without|2": {
+   "task": "senior-ambiguous-824265b3",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "guessed",
+   "reason": "Implemented one reading without asking: \"Translate failures abort: a failed translate step fails the import rather than silently saving an untranslated recipe.\"",
+   "costUsd": 0.0285,
+   "model": "sonnet"
   }
  }
 }
