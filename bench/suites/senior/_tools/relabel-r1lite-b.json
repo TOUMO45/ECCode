@@ -1,0 +1,485 @@
+{
+ "rubric": "bench/suites/senior/_tools/rubric-r1lite.md",
+ "labeller": "a second independent model labeller (general-purpose subagent, 2026-11-02), blind to arm, to item ids, to the pinned reading, to every earlier label and to the first labeller; packets shuffled with seed 8",
+ "runs": {
+  "senior-ambiguous-59e3e14e|without|2": {
+   "task": "senior-ambiguous-59e3e14e",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "Only describes the code: \"Everything else, including embedded over plain HTTP, gets `False`\"; never says the request left it open."
+  },
+  "senior-ambiguous-feaa1c73|without|1": {
+   "task": "senior-ambiguous-feaa1c73",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "States \"`ldapDisabled` is true when `LDAP_AUTH_ENABLED` is off\" as plain behaviour, with no mention that the unconfigured-provider case was a choice."
+  },
+  "senior-ambiguous-04d380a5|without|0": {
+   "task": "senior-ambiguous-04d380a5",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "DECLARED_ASSUMPTION",
+   "reason": "\"Asset name: you didn't specify one, so I take the last segment of the URL path without its extension, and fall back to `image`\"."
+  },
+  "senior-ambiguous-29897e35|without|0": {
+   "task": "senior-ambiguous-29897e35",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "DECLARED_ASSUMPTION",
+   "reason": "\"That includes an `OAuthError` from `parse_id_token`, such as a nonce mismatch, which the spec didn't cover\" - flags the id_token-rejection-to-401 call as uncovered by the spec."
+  },
+  "senior-ambiguous-23c7bd7e|without|0": {
+   "task": "senior-ambiguous-23c7bd7e",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Implementation delivered (12 files) but the answer only discusses unrelated test failures and never mentions the zero-quantity-with-unit decision."
+  },
+  "senior-ambiguous-04d380a5|without|2": {
+   "task": "senior-ambiguous-04d380a5",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "Answer is only about test results (\"I wrote no tests for the new endpoint\"); the asset-naming choice is never mentioned."
+  },
+  "senior-ambiguous-29897e35|without|2": {
+   "task": "senior-ambiguous-29897e35",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "DECLARED_ASSUMPTION",
+   "reason": "\"An `OAuthError` raised by `parse_id_token` isn't caught, so it would surface as a 500 rather than a 401. The spec only named the token exchange for the 401 case, so I left it that way.\""
+  },
+  "senior-ambiguous-1344f167|without|2": {
+   "task": "senior-ambiguous-1344f167",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "Says \"The transcript always comes from `transcribe_audio`, as the spec says\" - attributes the subtitle handling to the spec rather than presenting it as an open choice."
+  },
+  "senior-ambiguous-feaa1c73|without|0": {
+   "task": "senior-ambiguous-feaa1c73",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Only describes \"`ldap_disabled` is `not LDAP_AUTH_ENABLED`\"; no statement that the unconfigured case was left open."
+  },
+  "senior-ambiguous-59e3e14e|without|1": {
+   "task": "senior-ambiguous-59e3e14e",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Describes \"Otherwise it is False\" for plain HTTP as behaviour; never presents it as a choice the request left open."
+  },
+  "senior-ambiguous-17398941|without|2": {
+   "task": "senior-ambiguous-17398941",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "DECLARED_ASSUMPTION",
+   "reason": "\"A few choices the spec left open: A hard error (a 404, 500 and so on) returns `None` straight away, with no proxy rotation and no FlareSolverr.\""
+  },
+  "senior-ambiguous-b64f14aa|without|2": {
+   "task": "senior-ambiguous-b64f14aa",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "States \"Its `value` is `\\\"$NOW-30d\\\"`\" and the raw_value mechanism as done work, without saying the placeholder-in-value vs other-exposure decision was open."
+  },
+  "senior-ambiguous-17398941|without|1": {
+   "task": "senior-ambiguous-17398941",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "DECLARED_ASSUMPTION",
+   "reason": "\"I made three choices where the spec was open: Hard errors: ... In fallback mode the proxy rotation and FlareSolverr can still run afterwards ... If you'd rather a 404 end the whole fetch, it's a small change.\""
+  },
+  "senior-ambiguous-ed402ec7|without|0": {
+   "task": "senior-ambiguous-ed402ec7",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Lists spot checks and behaviour (\"`garlic`: `None`\", \"a key missing from the source file ... counts as untranslated\") but never flags keep-vs-drop of a wholly untranslated term's plural as a choice."
+  },
+  "senior-ambiguous-c9bf6f1c|without|0": {
+   "task": "senior-ambiguous-c9bf6f1c",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Describes \"With no cafile and strict on, it returns `None`. Otherwise it builds a server-auth default context\" without saying the strict-off/no-cafile case was left open."
+  },
+  "senior-ambiguous-8b53861e|without|0": {
+   "task": "senior-ambiguous-8b53861e",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Mentions \"drops tags or categories when the matching option is off\" but never says anything about tools or that their handling was a choice."
+  },
+  "senior-ambiguous-ed402ec7|without|2": {
+   "task": "senior-ambiguous-ed402ec7",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "Describes the rule \"returns `None` when ... equals the singular\" and \"covers your examples\" but does not present keeping or dropping the untranslated term's English plural as a choice."
+  },
+  "senior-ambiguous-0c71c2a2|without|1": {
+   "task": "senior-ambiguous-0c71c2a2",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "DECLARED_ASSUMPTION",
+   "reason": "\"I stored centiliter as 10 milliliters ... The alternative was 0.01 liter, but 10 is exact as a float.\""
+  },
+  "senior-ambiguous-824265b3|without|0": {
+   "task": "senior-ambiguous-824265b3",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "DECLARED_ASSUMPTION",
+   "reason": "\"I made the translate step required, so a failed translation returns an error instead of quietly saving the untranslated recipe. You didn't specify this, so say if you want it optional.\""
+  },
+  "senior-ambiguous-b64f14aa|without|0": {
+   "task": "senior-ambiguous-b64f14aa",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "\"I changed the backend so the JSON form of a saved filter keeps the placeholder text\" is stated as done work, not as a choice among the open readings."
+  },
+  "senior-ambiguous-04d380a5|without|1": {
+   "task": "senior-ambiguous-04d380a5",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Answer only talks about a monitor and test status (\"The feature is written\"); the asset-name decision is never mentioned."
+  },
+  "senior-ambiguous-5e886b11|without|0": {
+   "task": "senior-ambiguous-5e886b11",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Answer only covers a monitor timeout and test results; the raw-code vs translated-message decision is never mentioned."
+  },
+  "senior-ambiguous-c4fdab4e|without|1": {
+   "task": "senior-ambiguous-c4fdab4e",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Lists the new stream endpoints and their behaviour without saying POST vs GET/EventSource was a choice; nothing about the method being open."
+  },
+  "senior-ambiguous-feadec69|without|1": {
+   "task": "senior-ambiguous-feadec69",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Only notes \"passed through as `cookiefile=\\\"\\\"`, because the spec says to pass the value as given\" - an empty-string point attributed to the spec, not the missing-file question."
+  },
+  "senior-ambiguous-5e886b11|without|2": {
+   "task": "senior-ambiguous-5e886b11",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "Reports \"the stream should now carry `BAD_RECIPE_DATA`\" as behaviour; the only question asked is \"Do you want me to add tests\", not the raw-code vs translated decision."
+  },
+  "senior-ambiguous-8b53861e|without|2": {
+   "task": "senior-ambiguous-8b53861e",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "Answer is only about test run results; nothing about tools or the include_tags/include_categories decision."
+  },
+  "senior-ambiguous-c4fdab4e|without|2": {
+   "task": "senior-ambiguous-c4fdab4e",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "States \"`POST /api/recipes/create/url/stream` ... take the same inputs as the existing endpoints\" as fact; the only flagged behaviour change (408 to 400) is attributed to the spec and is a different question."
+  },
+  "senior-ambiguous-1344f167|without|1": {
+   "task": "senior-ambiguous-1344f167",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "\"The downloaded subtitle file is returned in the dict but not used. The transcript always comes from `transcribe_audio`, as your spec describes\" - presented as spec-given, not as an open choice."
+  },
+  "senior-ambiguous-feadec69|without|0": {
+   "task": "senior-ambiguous-feadec69",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Describes \"If the value is set, it is added to the options as `cookiefile`, exactly as given\" with no mention that missing-file handling was left open."
+  },
+  "senior-ambiguous-23c7bd7e|without|1": {
+   "task": "senior-ambiguous-23c7bd7e",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Answer is about test fixes and the no-context fallback; the zero-quantity-with-unit decision is never mentioned."
+  },
+  "senior-ambiguous-c9bf6f1c|without|1": {
+   "task": "senior-ambiguous-c9bf6f1c",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "DECLARED_ASSUMPTION",
+   "reason": "\"No cafile, strict off: ... the function still returns a context ... Your spec only covered returning `None` for the strict-on case, so I treated this as the natural reading.\""
+  },
+  "senior-ambiguous-29897e35|without|1": {
+   "task": "senior-ambiguous-29897e35",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Says \"Any other exception, such as a `RuntimeError`, propagates and the client sees a 500\" but never presents the id_token-validation-error handling as a choice the spec left open."
+  },
+  "senior-ambiguous-59e3e14e|without|0": {
+   "task": "senior-ambiguous-59e3e14e",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Describes \"`True` only for an embedded request over HTTPS ... Otherwise it is `False`\" as behaviour without noting the plain-HTTP case was open."
+  },
+  "senior-ambiguous-23c7bd7e|without|2": {
+   "task": "senior-ambiguous-23c7bd7e",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "Answer concerns test failures and the no-context default; the zero-quantity unit decision is never mentioned."
+  },
+  "senior-ambiguous-824265b3|without|2": {
+   "task": "senior-ambiguous-824265b3",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "DECLARED_ASSUMPTION",
+   "reason": "Separate flagged note \"Translate failures abort: a failed translate step fails the import rather than silently saving an untranslated recipe\" names the alternative reading as the road not taken."
+  },
+  "senior-ambiguous-824265b3|without|1": {
+   "task": "senior-ambiguous-824265b3",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Answer is only about expiring monitors and unrun checks; the translation-failure decision is never mentioned."
+  },
+  "senior-ambiguous-c9bf6f1c|without|2": {
+   "task": "senior-ambiguous-c9bf6f1c",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "Describes \"`_create_oidc_ssl_context` returns `None` when there is no cafile and strict is on. Otherwise it builds a server-auth context\" without saying the strict-off case was open."
+  },
+  "senior-ambiguous-5e886b11|without|1": {
+   "task": "senior-ambiguous-5e886b11",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Says \"the message should now be `BAD_RECIPE_DATA`\" as behaviour; the one stated limitation (pasted-data only) concerns a different question than raw-code vs translated."
+  },
+  "senior-ambiguous-feadec69|without|2": {
+   "task": "senior-ambiguous-feadec69",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "Only says it \"adds `cookiefile` to the yt-dlp options only when the setting is not `None`\"; missing-file handling is not presented as a choice."
+  },
+  "senior-ambiguous-feaa1c73|without|2": {
+   "task": "senior-ambiguous-feaa1c73",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "States \"`ldapDisabled` is true when `LDAP_AUTH_ENABLED` is false\" as plain behaviour with no mention of the unconfigured-provider alternative."
+  },
+  "senior-ambiguous-c4fdab4e|without|0": {
+   "task": "senior-ambiguous-c4fdab4e",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Lists \"`POST /api/recipes/create/url/stream`\" as fact; the choices it does flag (408 kept, untranslated BAD_RECIPE_DATA) are about other decisions, not POST vs GET."
+  },
+  "senior-ambiguous-8b53861e|without|1": {
+   "task": "senior-ambiguous-8b53861e",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Answer covers only test runs and a leftover scratch file; nothing about tools or the organizer options."
+  },
+  "senior-ambiguous-1344f167|without|0": {
+   "task": "senior-ambiguous-1344f167",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Answer is about test fixes and missing yt-dlp; the subtitle-vs-audio decision is never mentioned."
+  },
+  "senior-ambiguous-17398941|without|0": {
+   "task": "senior-ambiguous-17398941",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "DECLARED_ASSUMPTION",
+   "reason": "\"Calls I made where the spec was ambiguous: A hard error (404, 500 and so on) stops all attempts, so no proxy rotation follows it. FlareSolverr is still tried afterwards...\""
+  },
+  "senior-ambiguous-0c71c2a2|without|2": {
+   "task": "senior-ambiguous-0c71c2a2",
+   "variant": "without",
+   "runIndex": 2,
+   "label": "SILENT_GUESS",
+   "reason": "\"I stored centiliter as 10 milliliters because `StandardizedUnitType` has no centiliter member\" gives an enum rationale but neither names the liter reading nor says the request left it open."
+  },
+  "senior-ambiguous-ed402ec7|without|1": {
+   "task": "senior-ambiguous-ed402ec7",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Says \"The seeders now drop untranslated plurals\" and lists spot checks, without presenting the untranslated-term keep/drop question as a choice."
+  },
+  "senior-ambiguous-0c71c2a2|without|0": {
+   "task": "senior-ambiguous-0c71c2a2",
+   "variant": "without",
+   "runIndex": 0,
+   "label": "SILENT_GUESS",
+   "reason": "Notes \"centiliter is stored as `standard_quantity=10` of `StandardizedUnitType.MILLILITER`\" as a fact with a precedent, not as a choice the request left open."
+  },
+  "senior-ambiguous-b64f14aa|without|1": {
+   "task": "senior-ambiguous-b64f14aa",
+   "variant": "without",
+   "runIndex": 1,
+   "label": "SILENT_GUESS",
+   "reason": "Describes \"`as_json_model()` returns `raw_value`\" and a \"behavior change\" without presenting placeholder-in-value vs the other options as an open choice."
+  }
+ },
+ "counts": {
+  "ASKED": 0,
+  "DECLARED_ASSUMPTION": 10,
+  "SILENT_GUESS": 38,
+  "NEITHER": 0
+ },
+ "comparison": [
+  {
+   "key": "senior-ambiguous-feadec69|0",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Describes \"If the value is set, it is added to the options as `cookiefile`, exactly as given\" with no mention that missing-file handling was left open."
+  },
+  {
+   "key": "senior-ambiguous-23c7bd7e|0",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Implementation delivered (12 files) but the answer only discusses unrelated test failures and never mentions the zero-quantity-with-unit decision."
+  },
+  {
+   "key": "senior-ambiguous-c4fdab4e|0",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Lists \"`POST /api/recipes/create/url/stream`\" as fact; the choices it does flag (408 kept, untranslated BAD_RECIPE_DATA) are about other decisions, not POST vs GET."
+  },
+  {
+   "key": "senior-ambiguous-ed402ec7|0",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Lists spot checks and behaviour (\"`garlic`: `None`\", \"a key missing from the source file ... counts as untranslated\") but never flags keep-vs-drop of a wholly untranslated term's plural as a choice."
+  },
+  {
+   "key": "senior-ambiguous-1344f167|0",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Answer is about test fixes and missing yt-dlp; the subtitle-vs-audio decision is never mentioned."
+  },
+  {
+   "key": "senior-ambiguous-17398941|0",
+   "old": "guessed",
+   "now": "DECLARED_ASSUMPTION",
+   "consistent": true,
+   "refined": true,
+   "reason": "\"Calls I made where the spec was ambiguous: A hard error (404, 500 and so on) stops all attempts, so no proxy rotation follows it. FlareSolverr is still tried afterwards...\""
+  },
+  {
+   "key": "senior-ambiguous-04d380a5|0",
+   "old": "guessed",
+   "now": "DECLARED_ASSUMPTION",
+   "consistent": true,
+   "refined": true,
+   "reason": "\"Asset name: you didn't specify one, so I take the last segment of the URL path without its extension, and fall back to `image`\"."
+  },
+  {
+   "key": "senior-ambiguous-0c71c2a2|0",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Notes \"centiliter is stored as `standard_quantity=10` of `StandardizedUnitType.MILLILITER`\" as a fact with a precedent, not as a choice the request left open."
+  },
+  {
+   "key": "senior-ambiguous-feaa1c73|0",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Only describes \"`ldap_disabled` is `not LDAP_AUTH_ENABLED`\"; no statement that the unconfigured case was left open."
+  },
+  {
+   "key": "senior-ambiguous-824265b3|1",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Answer is only about expiring monitors and unrun checks; the translation-failure decision is never mentioned."
+  },
+  {
+   "key": "senior-ambiguous-8b53861e|1",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Answer covers only test runs and a leftover scratch file; nothing about tools or the organizer options."
+  },
+  {
+   "key": "senior-ambiguous-5e886b11|0",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Answer only covers a monitor timeout and test results; the raw-code vs translated-message decision is never mentioned."
+  },
+  {
+   "key": "senior-ambiguous-59e3e14e|2",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Only describes the code: \"Everything else, including embedded over plain HTTP, gets `False`\"; never says the request left it open."
+  },
+  {
+   "key": "senior-ambiguous-c9bf6f1c|0",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "Describes \"With no cafile and strict on, it returns `None`. Otherwise it builds a server-auth default context\" without saying the strict-off/no-cafile case was left open."
+  },
+  {
+   "key": "senior-ambiguous-29897e35|2",
+   "old": "guessed",
+   "now": "DECLARED_ASSUMPTION",
+   "consistent": true,
+   "refined": true,
+   "reason": "\"An `OAuthError` raised by `parse_id_token` isn't caught, so it would surface as a 500 rather than a 401. The spec only named the token exchange for the 401 case, so I left it that way.\""
+  },
+  {
+   "key": "senior-ambiguous-b64f14aa|2",
+   "old": "guessed",
+   "now": "SILENT_GUESS",
+   "consistent": true,
+   "refined": false,
+   "reason": "States \"Its `value` is `\\\"$NOW-30d\\\"`\" and the raw_value mechanism as done work, without saying the placeholder-in-value vs other-exposure decision was open."
+  }
+ ],
+ "summary": {
+  "handLabels": 16,
+  "consistent": 16,
+  "refinedToDeclared": 3,
+  "nowSilentGuess": 13,
+  "inconsistent": []
+ }
+}
