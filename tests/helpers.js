@@ -139,6 +139,7 @@ function adrRef(ctx) {
 }
 
 /** The H-B freeze commit (bench/protocols/2026-10-28-phase2.md, 0.C). The measurement runs from a worktree of it; HEAD moves on. */
+const HB2_FREEZE_COMMIT = '72d89a659921b3e56ad3106cf846cfa322b5a878';
 const HB_FREEZE_COMMIT = '4fbb80ed23ed58c059ba6bc99fb6318c61562257';
 
 /**
@@ -146,15 +147,16 @@ const HB_FREEZE_COMMIT = '4fbb80ed23ed58c059ba6bc99fb6318c61562257';
  * freeze lists, plus the runner's directory), or null with the reason when the
  * commit is not in this clone (a shallow checkout).
  */
-function frozenTreeFromGit() {
+/** The H-B pipeline's files at `commit` (default: the v1 freeze commit), materialized from git; `extra` adds paths (the v2 freeze file and tools). */
+function frozenTreeFromGit(commit = HB_FREEZE_COMMIT, extra = []) {
   const root = path.join(__dirname, '..');
-  const has = spawnSync('git', ['cat-file', '-e', `${HB_FREEZE_COMMIT}^{commit}`], { cwd: root });
-  if (has.status !== 0) return { dir: null, reason: `freeze commit ${HB_FREEZE_COMMIT.slice(0, 12)} is not in this clone` };
-  const files = execFileSync('git', ['ls-tree', '-r', '--name-only', HB_FREEZE_COMMIT, 'bench/pilot/phase2-freeze.json', 'bench/pilot/phase2-seeds.js', 'bench/pilot/phase2-hb', 'bench/pilot/phase2-seed-validate.js', 'bench/pilot/phase2-reseal.js', 'bench/suites/phase2-seeds', 'lib', 'bin', 'scripts/behavior', 'package.json'], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
+  const has = spawnSync('git', ['cat-file', '-e', `${commit}^{commit}`], { cwd: root });
+  if (has.status !== 0) return { dir: null, reason: `freeze commit ${commit.slice(0, 12)} is not in this clone` };
+  const files = execFileSync('git', ['ls-tree', '-r', '--name-only', commit, 'bench/pilot/phase2-freeze.json', 'bench/pilot/phase2-seeds.js', 'bench/pilot/phase2-hb', 'bench/pilot/phase2-seed-validate.js', 'bench/pilot/phase2-reseal.js', 'bench/suites/phase2-seeds', 'lib', 'bin', 'scripts/behavior', 'package.json', ...extra], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-hb-frozen-'));
   for (const f of files) {
     fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
-    fs.writeFileSync(path.join(dir, f), execFileSync('git', ['show', `${HB_FREEZE_COMMIT}:${f}`], { cwd: root, maxBuffer: 64 * 1024 * 1024 }));
+    fs.writeFileSync(path.join(dir, f), execFileSync('git', ['show', `${commit}:${f}`], { cwd: root, maxBuffer: 64 * 1024 * 1024 }));
   }
   return { dir, reason: null };
 }
@@ -265,4 +267,4 @@ function labRootCause(store, actor = 'backend-engineer', { command = 'node -e "p
   return store.state().lab;
 }
 
-module.exports = { HB_FREEZE_COMMIT, frozenTreeFromGit, designDecision, releasePlan, adrRef, labRootCause, tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };
+module.exports = { HB_FREEZE_COMMIT, HB2_FREEZE_COMMIT, frozenTreeFromGit, designDecision, releasePlan, adrRef, labRootCause, tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };

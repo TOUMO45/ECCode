@@ -147,3 +147,18 @@ test('the H-B2 freeze lists everything the rule covers plus the Mealie configura
   assert.match(bad.stdout, /NOT FROZEN[\s\S]*lib\/behavior\.js/);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('the H-B2 freeze commit\'s tree is frozen under the v2 freeze file, and one changed byte of a frozen file is refused', (t) => {
+  const { frozenTreeFromGit, HB2_FREEZE_COMMIT } = require('./helpers');
+  const tree = frozenTreeFromGit(HB2_FREEZE_COMMIT, ['bench/pilot/phase2-freeze-v2.json', 'bench/pilot/hb2']);
+  if (!tree.dir) return t.skip(tree.reason);
+  const check = () => spawnSync(process.execPath, [path.join(tree.dir, 'bench/pilot/phase2-seeds.js'), 'check'], { cwd: tree.dir, env: { ...process.env, ECCODE_FREEZE_FILE: path.join(tree.dir, 'bench/pilot/phase2-freeze-v2.json') }, encoding: 'utf8' });
+  const ok = check();
+  assert.strictEqual(ok.status, 0, ok.stdout + ok.stderr);
+  assert.match(ok.stdout, /^frozen: 47 files/);
+  fs.appendFileSync(path.join(tree.dir, 'scripts/behavior/probe_runner.py'), '\n');
+  const bad = check();
+  assert.strictEqual(bad.status, 1);
+  assert.match(bad.stdout, /NOT FROZEN[\s\S]*probe_runner\.py/);
+  fs.rmSync(tree.dir, { recursive: true, force: true });
+});
