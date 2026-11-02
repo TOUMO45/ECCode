@@ -1,9 +1,12 @@
 'use strict';
 // The narrowed re-measurement's comparison table (Phase 3 report §4a): per
 // item and arm, runs, runs passing every hidden check, delivered (engine
-// arms), mean cost and minutes per run, and the cost per prevented failure
-// against bare (protocol amendment 3): (the arm's mean cost per run − bare's)
-// / (bare's failure rate − the arm's), undefined when the denominator is not
+// arms), the intention-to-treat correct count (an engine run counts as correct
+// only when its fix passed the hidden checks AND was delivered: a correct fix
+// the engine refused is a failure of the arm, not a pass), mean cost and
+// minutes per run, and the cost per prevented failure against bare (protocol
+// amendment 3) on the ITT counts: (the arm's mean cost per run − bare's) /
+// (bare's failure rate − the arm's), undefined when the denominator is not
 // positive. Computed from the saved records, never typed in.
 //   node bench/pilot/narrowed-compare.js
 const fs = require('fs');
@@ -25,27 +28,29 @@ const ARMS = {
   },
 };
 const pass = (r) => !r.timedOut && r.hiddenTotal > 0 && r.hiddenPassed === r.hiddenTotal;
+// Intention-to-treat: an engine arm's run is correct only when delivered as well.
+const itt = (r) => pass(r) && (!r.engine || r.engine.delivered === true);
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 const r2 = (x) => (x === null ? '—' : (Math.round(x * 100) / 100).toFixed(2));
 
 function stats(runs) {
   const costs = runs.map((r) => (r.usage && r.usage.costUsd) || 0);
-  return { n: runs.length, passed: runs.filter(pass).length, delivered: runs.filter((r) => r.engine).length ? runs.filter((r) => r.engine && r.engine.delivered).length : null, cost: mean(costs), minutes: mean(runs.map((r) => r.durationMs / 60000)), failRate: runs.length ? runs.filter((r) => !pass(r)).length / runs.length : null };
+  return { n: runs.length, passed: runs.filter(pass).length, delivered: runs.filter((r) => r.engine).length ? runs.filter((r) => r.engine && r.engine.delivered).length : null, correct: runs.filter(itt).length, cost: mean(costs), minutes: mean(runs.map((r) => r.durationMs / 60000)), failRate: runs.length ? runs.filter((r) => !itt(r)).length / runs.length : null };
 }
 
 function table() {
-  const lines = ['| Item | Arm | Runs | Passing every hidden check | Delivered | Mean $/run | Mean min/run | $ per prevented failure vs bare |', '|---|---|---|---|---|---|---|---|'];
+  const lines = ['| Item | Arm | Runs | Passing every hidden check | Delivered | Correct (ITT: passed and delivered) | Mean $/run | Mean min/run | $ per prevented failure vs bare (ITT) |', '|---|---|---|---|---|---|---|---|---|'];
   for (const [item, arms] of Object.entries(ARMS)) {
     const bare = stats(arms.bare);
     for (const [arm, runs] of Object.entries(arms)) {
-      if (!runs.length) { lines.push(`| ${item} | ${arm} | 0 | — | — | — | — | — |`); continue; }
+      if (!runs.length) { lines.push(`| ${item} | ${arm} | 0 | — | — | — | — | — | — |`); continue; }
       const s = stats(runs);
       let cppf = '—';
       if (arm !== 'bare') {
         const denom = bare.failRate - s.failRate;
         cppf = denom > 0 ? `$${r2((s.cost - bare.cost) / denom)}` : 'undefined (no failure prevented)';
       }
-      lines.push(`| ${item} | ${arm} | ${s.n} | ${s.passed}/${s.n} | ${s.delivered === null ? '—' : `${s.delivered}/${s.n}`} | ${r2(s.cost)} | ${r2(s.minutes)} | ${cppf} |`);
+      lines.push(`| ${item} | ${arm} | ${s.n} | ${s.passed}/${s.n} | ${s.delivered === null ? '—' : `${s.delivered}/${s.n}`} | ${s.correct}/${s.n} | ${r2(s.cost)} | ${r2(s.minutes)} | ${cppf} |`);
     }
   }
   return lines.join('\n');

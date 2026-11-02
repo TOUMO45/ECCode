@@ -113,3 +113,37 @@ Each pool is shuffled with `mulberry32(42)` and validated front to back until 16
 - **Ambiguous: go, with the caveat registered in advance.** 16 items, 48 bare runs, **46 labelled guessed** by the model labeller and 2 `neither` (an answer that reported test status without naming the decision; both items are usable through their other runs); 0 asked. Every item is usable, as predicted: a bare agent in a headless run does not stop to ask, so the screening yield is 100% by construction and the category's power lies in the measured arms. Correctness 37 of 48, the failures concentrated where the arm took the reading the hidden tests do not pin (23c7bd7e 0/3, 1344f167 0/3, 824265b3 0/3, 17398941 1/3): the open decision is real and consequential on those items.
 
 **Go/no-go.** Round 1 proceeds on the **ambiguous** category only (16 items ≥ 12; 10 runs per arm per item, bare and Phase 3, ≈ 320 runs; at the screening's bare cost of $0.27 per run and the narrowed engine's $4–6 per run, about **$1,400–2,100** and 2–3 days on two streams). Migration and authorization are no-go as screened; before either is retried the category needs a different instrument (a grade on what the request leaves unsaid, such as a migration item whose request does not mention reversibility, or probes that drive bodies and multipart routes), which is a new registration. **The measured arms do not start without the owner's approval of the round-1 estimate.** Spend: screening $31.88 (migration $15.95, authorization $2.93, ambiguous $13.01) plus $1.22 for the model labeller; the item authoring was unpaid.
+
+
+### Amendment 2, label tables (2026-11-02): automatic and hand, side by side, never merged
+
+**Table A: automatic labels** (the model labeller: `claude -p --model sonnet`, `bench/suites/senior/_tools/label.js` with `rubric.md`, frozen by hash in `labeller-freeze.json`; it saw each run's final answer and patch summary only). Ambiguous category, 48 runs, $1.22:
+
+| Item | Runs | asked | guessed | neither |
+|---|---|---|---|---|
+| senior-ambiguous-04d380a5 | 3 | 0 | 3 | 0 |
+| senior-ambiguous-0c71c2a2 | 3 | 0 | 3 | 0 |
+| senior-ambiguous-1344f167 | 3 | 0 | 3 | 0 |
+| senior-ambiguous-17398941 | 3 | 0 | 3 | 0 |
+| senior-ambiguous-23c7bd7e | 3 | 0 | 3 | 0 |
+| senior-ambiguous-29897e35 | 3 | 0 | 3 | 0 |
+| senior-ambiguous-59e3e14e | 3 | 0 | 3 | 0 |
+| senior-ambiguous-5e886b11 | 3 | 0 | 3 | 0 |
+| senior-ambiguous-824265b3 | 3 | 0 | 2 | 1 |
+| senior-ambiguous-8b53861e | 3 | 0 | 2 | 1 |
+| senior-ambiguous-b64f14aa | 3 | 0 | 3 | 0 |
+| senior-ambiguous-c4fdab4e | 3 | 0 | 3 | 0 |
+| senior-ambiguous-c9bf6f1c | 3 | 0 | 3 | 0 |
+| senior-ambiguous-ed402ec7 | 3 | 0 | 3 | 0 |
+| senior-ambiguous-feaa1c73 | 3 | 0 | 3 | 0 |
+| senior-ambiguous-feadec69 | 3 | 0 | 3 | 0 |
+
+**Table B: hand labels** (the operator, from the run record: the failing test ids, the agent's answer, and the request text; `bench/suites/senior/_tools/screening-labels.json`). Migration category, the 8 runs on 3 items that failed correctness (the harness grade failed on none; this is the Phase 2 agent-error/spec-gap rule, not the category's grade):
+
+| Item | Runs failing correctness | Label | Reason (abridged) |
+|---|---|---|---|
+| senior-migration-cd2097ee | 2 of 3 | agent-error | The failing tests pin the prompt assembly order the request states (global instructions before the prompt's instructions, data injections after, the system prom… |
+| senior-migration-7808c944 | 3 of 3 | agent-error | The request states the avatar download's redirect rules (a redirect to a vetted host is followed, a relative Location resolves against the current URL, the chai… |
+| senior-migration-36d716a4 | 3 of 3 | agent-error | The hidden migration tests import the migration by its revision id and call its module-level helpers (load_unit_words, build_component_pattern, parse_seconds, f… |
+
+Authorization: no run failed anything, so no label. The two tables answer different questions (did the arm ask; was a stated behaviour got wrong) on different runs and are reported apart. The validation of the automatic labeller (a blind second labeller on a stratified sample, agreement and Cohen's kappa) is in `bench/pilot-results/2026-11-01-senior-screening.labeller-validation.json` and the section below.
