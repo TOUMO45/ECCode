@@ -1,0 +1,138 @@
+{
+ "sampleSize": 12,
+ "strata": {
+  "ambiguous": 8,
+  "migration-correctness-failure": 4
+ },
+ "design": "stratified: the two runs the model labeller called neither plus one run from each of 6 other ambiguous items (seed 42); 4 migration runs that failed correctness across the 3 failing items. The second labeller (a fresh agent) saw the rubric, the registered question and readings, the request, the failing checks, the final answer and the patch summary; never the first labels.",
+ "agreement": {
+  "overall": 0.833,
+  "ambiguous": 0.75,
+  "migration": 1.0
+ },
+ "cohensKappa": {
+  "overall": 0.7,
+  "ambiguous": 0.0,
+  "migration": null
+ },
+ "rule": "below 0.8 agreement or kappa, the automatic labels are advisory and no figure built on them is headlined",
+ "verdict": "ADVISORY",
+ "labellerFreeze": {
+  "files": {
+   "bench/suites/senior/_tools/label.js": "04150af0c6d64994550bfebead25cd8e720954bac7451764bdecf4a130e16ce7",
+   "bench/suites/senior/_tools/rubric.md": "2ff44b7c645aa7bf97278f5ce00b0bd35caa218f12ab5e5ce047b16d741f36d1"
+  },
+  "model": "claude -p --model sonnet (Claude Code 2.1.316)",
+  "frozenAt": "2026-11-02"
+ },
+ "rows": [
+  {
+   "id": "senior-ambiguous-feaa1c73|0",
+   "category": "ambiguous",
+   "first": "guessed",
+   "firstBy": "model labeller (label.js, sonnet)",
+   "second": "guessed",
+   "agree": true,
+   "secondReason": "Delivered the implementation taking reading 1 without asking: \"`ldap_disabled` is `not LDAP_AUTH_ENABLED`, and `oidc_disabled` is `not OIDC_AUTH_ENABLED`\" (disabled whenever the flag is false, regardless of other settings)."
+  },
+  {
+   "id": "senior-ambiguous-824265b3|1",
+   "category": "ambiguous",
+   "first": "neither",
+   "firstBy": "model labeller (label.js, sonnet)",
+   "second": "guessed",
+   "agree": false,
+   "secondReason": "Delivered a 15-file implementation including import_workflow/steps/translate_recipe.py and recipe_crud_routes.py; the final answer (\"That's the last of the stale monitors expiring... no action is needed\") asks nothing about failure handling, so one reading was taken silently."
+  },
+  {
+   "id": "senior-migration-7808c944|0",
+   "category": "migration-correctness-failure",
+   "first": "agent-error",
+   "firstBy": "operator (hand)",
+   "second": "agent-error",
+   "agree": true,
+   "secondReason": "Failing checks (test_follows_redirect_to_a_vetted_host[303/307/308], test_relative_location_is_resolved_against_the_current_url, test_redirect_chain_is_capped) test behaviour the request states verbatim: \"redirects (301, 302, 303, 307, 308) are followed by hand, each Location resolved against the cu"
+  },
+  {
+   "id": "senior-ambiguous-8b53861e|1",
+   "category": "ambiguous",
+   "first": "neither",
+   "firstBy": "model labeller (label.js, sonnet)",
+   "second": "guessed",
+   "agree": false,
+   "secondReason": "Delivered a 5-file implementation (recipe_service.py, mealie_export.py, recipe_crud_routes.py) and reported only \"The quick suites now pass\"; nothing asks whether tools are dropped with the organizer options, so a reading was taken silently."
+  },
+  {
+   "id": "senior-ambiguous-5e886b11|0",
+   "category": "ambiguous",
+   "first": "guessed",
+   "firstBy": "model labeller (label.js, sonnet)",
+   "second": "guessed",
+   "agree": true,
+   "secondReason": "Delivered a change to mealie/routes/recipe/recipe_crud_routes.py and reported \"The recipe tests ... pass\"; it never asks whether the message is the raw code or a translated sentence, so one reading was implemented silently."
+  },
+  {
+   "id": "senior-ambiguous-59e3e14e|2",
+   "category": "ambiguous",
+   "first": "guessed",
+   "firstBy": "model labeller (label.js, sonnet)",
+   "second": "guessed",
+   "agree": true,
+   "secondReason": "Took reading 1 without asking: \"It is `True` only for an embedded HTTPS request ... Everything else, including embedded over plain HTTP, gets `False`.\""
+  },
+  {
+   "id": "senior-ambiguous-c9bf6f1c|0",
+   "category": "ambiguous",
+   "first": "guessed",
+   "firstBy": "model labeller (label.js, sonnet)",
+   "second": "guessed",
+   "agree": true,
+   "secondReason": "Took reading 1 without asking: \"With no cafile and strict on, it returns `None`. Otherwise it builds a server-auth default context, which already trusts the system CAs ... With strict off, it clears `VERIFY_X509_STRICT`\", i.e. strict=false with no cafile yields a relaxed system-store context."
+  },
+  {
+   "id": "senior-ambiguous-29897e35|2",
+   "category": "ambiguous",
+   "first": "guessed",
+   "firstBy": "model labeller (label.js, sonnet)",
+   "second": "guessed",
+   "agree": true,
+   "secondReason": "Mentions the alternative but implements reading 2 anyway: \"An `OAuthError` raised by `parse_id_token` isn't caught, so it would surface as a 500 rather than a 401. The spec only named the token exchange for the 401 case, so I left it that way.\""
+  },
+  {
+   "id": "senior-ambiguous-b64f14aa|2",
+   "category": "ambiguous",
+   "first": "guessed",
+   "firstBy": "model labeller (label.js, sonnet)",
+   "second": "guessed",
+   "agree": true,
+   "secondReason": "Took reading 1 without asking: \"Its `value` is `\\\"$NOW-30d\\\"`, so the relative-date field can read the offset (30) from it\"; as_json_model() now returns the raw placeholder instead of the resolved datetime."
+  },
+  {
+   "id": "senior-migration-cd2097ee|0",
+   "category": "migration-correctness-failure",
+   "first": "agent-error",
+   "firstBy": "operator (hand)",
+   "second": "agent-error",
+   "agree": true,
+   "secondReason": "The failing get_prompt tests (global before prompt instructions, global applies to overridden prompt, data injections after, system prompt skips global, no group skips overrides) check behaviour the request states: \"appended to every non-system prompt, before the prompt's own ... (so the result ends"
+  },
+  {
+   "id": "senior-migration-36d716a4|1",
+   "category": "migration-correctness-failure",
+   "first": "agent-error",
+   "firstBy": "operator (hand)",
+   "second": "agent-error",
+   "agree": true,
+   "secondReason": "The failing check is test_is_empty_time, whose behaviour the request states (\"is_empty_time(value) is true for \\\"none\\\" ignoring case and spaces\") and whose direct testing it announces (\"Its helpers are tested directly\"); the tail is a pytest collection error (\"found no collectors for .../test_struc"
+  },
+  {
+   "id": "senior-migration-7808c944|1",
+   "category": "migration-correctness-failure",
+   "first": "agent-error",
+   "firstBy": "operator (hand)",
+   "second": "agent-error",
+   "agree": true,
+   "secondReason": "Same failing checks as run 0 (redirects 303/307/308, relative Location resolution, redirect chain cap); the request states each: \"redirects (301, 302, 303, 307, 308) are followed by hand, each Location resolved against the current URL (relative paths allowed) ... at most MAX_PICTURE_REDIRECTS (3) ho"
+  }
+ ]
+}

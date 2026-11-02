@@ -1,12 +1,99 @@
 {
-  "_scheme": "Hand labels of the screening runs that failed CORRECTNESS (the item's target or regression tests), by the Phase 2 rule: agent-error (a stated behaviour the arm got wrong) or spec-gap (a behaviour the request did not state). The harness grade (migration rollback, authorization probes) is the category's usable-item rule and needs no label; the ambiguous category's labels are the model labeller's (2026-11-01-senior-screening.ambiguous.labels.json). Labelled from the run record (the failing test ids, the agent's answer) and the request text.",
-  "migration": {
-    "senior-migration-cd2097ee": { "runs": [0, 2], "label": "agent-error", "reason": "The failing tests pin the prompt assembly order the request states (global instructions before the prompt's instructions, data injections after, the system prompt without global instructions); one of the five, the no-group case, is not stated (a spec gap on its own), but the four stated ones fail too." },
-    "senior-migration-7808c944": { "runs": [0, 1, 2], "label": "agent-error", "reason": "The request states the avatar download's redirect rules (a redirect to a vetted host is followed, a relative Location resolves against the current URL, the chain is capped, with the module-level constants named); the arms' implementations fail those tests in all three runs." },
-    "senior-migration-36d716a4": { "runs": [0, 1, 2], "label": "agent-error", "reason": "The hidden migration tests import the migration by its revision id and call its module-level helpers (load_unit_words, build_component_pattern, parse_seconds, format_seconds, is_empty_time), all named in the request; pytest found no collectors for them in all three runs, so the arms did not put the stated helpers in the migration module under the stated id." }
+ "_scheme": "Hand labels of the screening runs that failed CORRECTNESS (the item's target or regression tests), by the Phase 2 rule: agent-error (a stated behaviour the arm got wrong) or spec-gap (a behaviour the request did not state). The harness grade (migration rollback, authorization probes) is the category's usable-item rule and needs no label; the ambiguous category's labels are the model labeller's (2026-11-01-senior-screening.ambiguous.labels.json). Labelled from the run record (the failing test ids, the agent's answer) and the request text. Ambiguous: hand labels (asked/guessed/neither, the screening rubric) on one run per item, 16 items; the automatic labels of label.js are ADVISORY after the labeller validation (kappa 0.70 < 0.8).",
+ "migration": {
+  "senior-migration-cd2097ee": {
+   "runs": [
+    0,
+    2
+   ],
+   "label": "agent-error",
+   "reason": "The failing tests pin the prompt assembly order the request states (global instructions before the prompt's instructions, data injections after, the system prompt without global instructions); one of the five, the no-group case, is not stated (a spec gap on its own), but the four stated ones fail too."
   },
-  "authorization": {},
-  "ambiguous": {
-    "_note": "Correctness failures here are expected by design where the arm took the reading the hidden tests do not pin (the registered open decision); they are not labelled agent-error or spec-gap, and the category's rule is the labeller's asked/guessed."
+  "senior-migration-7808c944": {
+   "runs": [
+    0,
+    1,
+    2
+   ],
+   "label": "agent-error",
+   "reason": "The request states the avatar download's redirect rules (a redirect to a vetted host is followed, a relative Location resolves against the current URL, the chain is capped, with the module-level constants named); the arms' implementations fail those tests in all three runs."
+  },
+  "senior-migration-36d716a4": {
+   "runs": [
+    0,
+    1,
+    2
+   ],
+   "label": "agent-error",
+   "reason": "The hidden migration tests import the migration by its revision id and call its module-level helpers (load_unit_words, build_component_pattern, parse_seconds, format_seconds, is_empty_time), all named in the request; pytest found no collectors for them in all three runs, so the arms did not put the stated helpers in the migration module under the stated id."
   }
+ },
+ "authorization": {},
+ "ambiguous": {
+  "_labeller": "operator (hand), from the run's final answer, the files its patch changed and the registered question; one run per item, run 0 unless noted; the 8 items of the blind sample carry the blind second labeller's labels (labeller-validation.json), which the operator spot-checked and adopted",
+  "senior-ambiguous-feadec69|0": {
+   "label": "guessed",
+   "reason": "Delivered: passes the configured path to yt-dlp unchanged ('exactly as given'); never asks what a missing file should do."
+  },
+  "senior-ambiguous-23c7bd7e|0": {
+   "label": "guessed",
+   "reason": "Delivered a 12-file implementation of the plural strategies; the answer discusses test interference and never names the zero-quantity-with-unit decision."
+  },
+  "senior-ambiguous-c4fdab4e|0": {
+   "label": "guessed",
+   "reason": "Delivered POST stream endpoints 'with the same pipeline' without asking POST-with-body vs GET-with-query."
+  },
+  "senior-ambiguous-ed402ec7|0": {
+   "label": "guessed",
+   "reason": "Delivered resolve_plural with 'the rules you described'; the untranslated-term case is implemented, not asked."
+  },
+  "senior-ambiguous-1344f167|0": {
+   "label": "guessed",
+   "reason": "Delivered a 14-file implementation; the answer never names the subtitles-vs-audio decision."
+  },
+  "senior-ambiguous-17398941|0": {
+   "label": "guessed",
+   "reason": "Delivered; the answer lists 'Calls I made where the spec was ambiguous - A hard error \u2026': the reading is declared in the answer, not asked (DECLARED_ASSUMPTION under the Round 1-lite taxonomy; guessed under the screening rubric)."
+  },
+  "senior-ambiguous-04d380a5|0": {
+   "label": "guessed",
+   "reason": "Delivered; 'you didn't specify one, so I take the last segment of the URL path \u2026 fall back to image': declared in the answer, not asked (DECLARED_ASSUMPTION under the Round 1-lite taxonomy)."
+  },
+  "senior-ambiguous-0c71c2a2|0": {
+   "label": "guessed",
+   "reason": "Delivered centiliter as 10 milliliters without asking milliliter vs liter."
+  },
+  "senior-ambiguous-feaa1c73|0": {
+   "label": "guessed",
+   "reason": "blind second labeller: implements reading 1 ('ldap_disabled is not LDAP_AUTH_ENABLED'), no question."
+  },
+  "senior-ambiguous-824265b3|1": {
+   "label": "guessed",
+   "reason": "blind second labeller: 15-file implementation delivered; the answer asks nothing (the model labeller said neither)."
+  },
+  "senior-ambiguous-8b53861e|1": {
+   "label": "guessed",
+   "reason": "blind second labeller: 5-file implementation delivered, no question about tools (the model labeller said neither)."
+  },
+  "senior-ambiguous-5e886b11|0": {
+   "label": "guessed",
+   "reason": "blind second labeller: delivered, no question about raw code vs translated text."
+  },
+  "senior-ambiguous-59e3e14e|2": {
+   "label": "guessed",
+   "reason": "blind second labeller: 'True only for an embedded HTTPS request': reading taken, not asked."
+  },
+  "senior-ambiguous-c9bf6f1c|0": {
+   "label": "guessed",
+   "reason": "blind second labeller: default-CA context with VERIFY_X509_STRICT cleared: reading 1 taken."
+  },
+  "senior-ambiguous-29897e35|2": {
+   "label": "guessed",
+   "reason": "blind second labeller: names the alternative but implements 500 ('I left it that way')."
+  },
+  "senior-ambiguous-b64f14aa|2": {
+   "label": "guessed",
+   "reason": "blind second labeller: value is '$NOW-30d' verbatim: reading 1 taken."
+  }
+ }
 }

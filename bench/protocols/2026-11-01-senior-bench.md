@@ -105,7 +105,7 @@ Each pool is shuffled with `mulberry32(42)` and validated front to back until 16
 |---|---|---|---|---|---|---|---|
 | migration | 9 | 27 | 19/27 | 0/27 | 0 | $15.95 | no-go |
 | authorization | 5 | 15 | 15/15 | 0/15 | 0 | $2.93 | no-go |
-| ambiguous | 16 | 48 | 37/48 | 46/48 | 16 | $13.01 | go |
+| ambiguous | 16 | 48 | 37/48 | 46/48 (automatic, ADVISORY); hand: 0 asked of 20 labelled, 16/16 items guessed | 16 (on hand labels) | $13.01 | go |
 
 **Reading, per category.**
 - **Migration: no-go.** 9 items, 27 bare runs, and the harness migration grade failed **none**: every bare run that added a migration wrote one with a downgrade that round-trips, as the request asked it to. By correctness 8 runs on 3 items failed (`_tools/screening-labels.json`: agent-errors on the stated prompt-assembly order, the stated redirect rules and the stated migration helpers), so 3 of 9 items are hard by the Phase 2 rule, but that is not the category's grade. Stated plainly: when the request says "write a reversible migration", the bare agent writes one; the category as registered does not discriminate on this pool.
@@ -147,3 +147,12 @@ Each pool is shuffled with `mulberry32(42)` and validated front to back until 16
 | senior-migration-36d716a4 | 3 of 3 | agent-error | The hidden migration tests import the migration by its revision id and call its module-level helpers (load_unit_words, build_component_pattern, parse_seconds, f… |
 
 Authorization: no run failed anything, so no label. The two tables answer different questions (did the arm ask; was a stated behaviour got wrong) on different runs and are reported apart. The validation of the automatic labeller (a blind second labeller on a stratified sample, agreement and Cohen's kappa) is in `bench/pilot-results/2026-11-01-senior-screening.labeller-validation.json` and the section below.
+
+
+### Amendment 2, labeller validation (2026-11-02): the automatic labels are ADVISORY
+
+**Design.** A stratified sample of 12 graded runs: the two ambiguous runs the model labeller called `neither` plus one run from each of 6 other ambiguous items (seed 42), and 4 migration runs that failed correctness across the 3 failing items. A second, independent labeller (a fresh agent with no access to any label file) labelled them blind from the rubric, the registered question and readings, the request, the failing checks, the final answer and the patch summary. The model labeller is frozen by hash (`bench/suites/senior/_tools/labeller-freeze.json`: `label.js`, `rubric.md`, model `sonnet`).
+
+**Result** (`bench/pilot-results/2026-11-01-senior-screening.labeller-validation.json`): agreement **10 of 12 = 0.83** overall; ambiguous 6 of 8 = 0.75; migration 4 of 4. **Cohen's kappa 0.70 overall**; on the ambiguous stratum the second labeller's marginals are degenerate (8 of 8 `guessed`), so kappa is 0 there by construction; undefined on migration (both labellers all `agent-error`). Both disagreements are the model labeller's two `neither` labels: the runs delivered 15-file and 5-file implementations while their final answers only reported test status, and the model labeller, which sees the answer and a patch summary only, did not count a delivered implementation as taking a reading, which the rubric requires. **Rule applied: kappa 0.70 < 0.8, so the automatic labels are demoted to advisory and no figure built on them is headlined.**
+
+**What the go for the ambiguous category now rests on.** Hand labels by the operator, one run per item on all 16 items (`screening-labels.json`, `ambiguous`; the 8 sampled items carry the blind second labeller's labels, adopted after a spot check): **16 of 16 items have a hand-labelled `guessed` run; 0 of 20 hand-labelled runs asked.** The automatic 46/48 `guessed` figure is reported as advisory beside it and agrees in direction. Two hand-labelled runs (17398941, 04d380a5) state their assumption in the final answer: `guessed` under this rubric, `DECLARED_ASSUMPTION` under the Round 1-lite taxonomy, which is why that taxonomy exists.
