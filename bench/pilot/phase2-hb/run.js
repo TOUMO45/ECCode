@@ -5,10 +5,14 @@
 // tree (a git worktree at the tag phase2-hb-freeze, verified by its own
 // phase2-seeds.js check). One result line per seed; nothing about a seed's
 // files or patch is printed.
-//   ECCODE_SEED_KEY=<hex> node bench/pilot/phase2-hb/run.js <frozen ECCode tree> <mealie checkout> [--only s01,s02] [--out results.jsonl]
+//   ECCODE_SEED_KEY=<hex> node bench/pilot/phase2-hb/run.js <frozen ECCode tree> <mealie checkout> [--only s01,s02] [--out results.jsonl] [--archive <dir>]
+// With --archive, each seed's engine record (events, hashed artifacts) is audited with `eccode audit` and copied to <dir>/<seed id>/
+// with a sha256 manifest before the store is cleaned up; the record names the audit verdict and the manifest hash. The archive holds
+// what each seed changed in the application's behaviour, so it stays outside the repository; only aggregates are committed.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 
 function sh(cmd, args, { cwd, env, input } = {}) {
@@ -20,6 +24,42 @@ function git(cwd, args) {
   const r = sh('git', args, { cwd });
   if (r.status !== 0) throw new Error(`git ${args.join(' ')}: ${r.stderr.trim()}`);
   return r.stdout.trim();
+}
+
+
+const sha256 = (data) => crypto.createHash('sha256').update(data).digest('hex');
+
+function filesUnder(dir, rel = '') {
+  const out = [];
+  for (const e of fs.readdirSync(path.join(dir, rel), { withFileTypes: true })) {
+    const r = rel ? `${rel}/${e.name}` : e.name;
+    if (e.isDirectory()) out.push(...filesUnder(dir, r));
+    else out.push(r);
+  }
+  return out;
+}
+
+/** `eccode audit` on the checkout's record: chain intact, artifacts match their recorded hashes. */
+function auditOf(tree, checkout) {
+  const r = sh(process.execPath, [path.join(tree, 'bin', 'eccode.js'), 'audit'], { cwd: checkout });
+  return { ok: r.status === 0, exit: r.status, message: (r.stdout || r.stderr).trim().split('\n')[0].slice(0, 300) };
+}
+
+/** Copy the checkout's `.eccode/` (without caches) to <archiveDir>/<seedId>/ with a sha256 manifest; returns {dir, files, manifestSha256}. */
+function archiveStore(checkout, archiveDir, seedId) {
+  const src = path.join(checkout, '.eccode');
+  if (!fs.existsSync(src)) return null;
+  const dst = path.join(archiveDir, seedId);
+  fs.rmSync(dst, { recursive: true, force: true });
+  fs.mkdirSync(dst, { recursive: true });
+  const files = filesUnder(src).filter((f) => !/^cache\//.test(f)).sort();
+  for (const f of files) {
+    fs.mkdirSync(path.dirname(path.join(dst, f)), { recursive: true });
+    fs.copyFileSync(path.join(src, f), path.join(dst, f));
+  }
+  const manifest = files.map((f) => `${sha256(fs.readFileSync(path.join(dst, f)))}  ${f}`).join('\n') + '\n';
+  fs.writeFileSync(path.join(dst, 'MANIFEST.sha256'), manifest);
+  return { dir: dst, files: files.length, manifestSha256: sha256(manifest) };
 }
 
 /** The frozen tree must pass its own freeze check; otherwise nothing runs. */
@@ -58,7 +98,7 @@ function eccode(tree, checkout, args, { allow = [] } = {}) {
  * Run one seed. `apply(checkout)` applies the seed and returns {id, intended, kind, contract, verification};
  * `configure(checkout)` writes .eccode/behavior.json. Both are injectable so the runner is testable on a fixture.
  */
-function runSeed({ tree, checkout, commit, seedId, apply, configure, runs = 2, timeoutS = 1800 }) {
+function runSeed({ tree, checkout, commit, seedId, apply, configure, runs = 2, timeoutS = 1800, archiveDir = null }) {
   clean(checkout, commit);
   eccode(tree, checkout, ['init', '--name', `hb-${seedId}`, '--idea', `H-B measurement of seed ${seedId}`, '--track', 'fix', '--actor', 'orchestrator']);
   configure(checkout);
@@ -91,6 +131,15 @@ function runSeed({ tree, checkout, commit, seedId, apply, configure, runs = 2, t
     record.flagged = false;
     return record;
   } finally {
+    // The engine's own record of this seed is audited and kept before the store is removed.
+    if (archiveDir) {
+      try {
+        record.audit = auditOf(tree, checkout);
+        record.archive = archiveStore(checkout, archiveDir, seedId);
+      } catch (err) {
+        record.archiveError = String(err.message).slice(0, 200);
+      }
+    }
     try { clean(checkout, commit); } catch { /* reported by the next seed */ }
   }
 }
@@ -103,6 +152,7 @@ function main(argv) {
   }
   const only = argv.includes('--only') ? argv[argv.indexOf('--only') + 1].split(',') : null;
   const out = argv.includes('--out') ? argv[argv.indexOf('--out') + 1] : null;
+  const archiveDir = argv.includes('--archive') ? path.resolve(argv[argv.indexOf('--archive') + 1]) : null;
   process.stdout.write(`${assertFrozenTree(path.resolve(tree))}\n`);
   const seeds = require(path.join(path.resolve(tree), 'bench', 'pilot', 'phase2-seeds.js'));
   const config = require(path.join(path.resolve(tree), 'bench', 'pilot', 'phase2-hb', 'config.js'));
@@ -118,10 +168,11 @@ function main(argv) {
       seedId: s.id,
       apply: (dir) => seeds.apply(s.id, dir),
       configure: (dir) => config.write(dir, path.resolve(tree)),
+      archiveDir,
     });
     n += 1;
     if (record.flagged) hits += 1;
-    const line = `${record.id} ${record.intended ? 'intended  ' : 'unintended'} ${record.flagged ? 'flagged' : 'MISSED'}${record.miss ? ` (${record.miss})` : ''}${record.error ? ` ERROR ${record.error}` : ''} probes=${record.probes ?? '-'} unexplained=${record.unexplained ?? '-'} coverage=${record.coverage ?? '-'}`;
+    const line = `${record.id} ${record.intended ? 'intended  ' : 'unintended'} ${record.flagged ? 'flagged' : 'MISSED'}${record.miss ? ` (${record.miss})` : ''}${record.error ? ` ERROR ${record.error}` : ''} probes=${record.probes ?? '-'} unexplained=${record.unexplained ?? '-'} coverage=${record.coverage ?? '-'}${record.audit ? ` audit=${record.audit.ok ? 'ok' : 'FAILED'}` : ''}`;
     process.stdout.write(`${line}\n`);
     if (out) fs.appendFileSync(out, JSON.stringify({ ...record, at: new Date().toISOString() }) + '\n');
   }

@@ -45,7 +45,10 @@ function behaviorConfig(checkout, frozenTree, { nltkData = process.env.NLTK_DATA
       { name: 'admin', headers: { Authorization: `Bearer ${adminToken}` } },
     ],
     normalizers: [],
-    ignoreFields: [],
+    // Mealie generates a random avatar for every user it creates, so the size of its data directory differs from run to run
+    // (a census of 2,481 probes with six baseline runs found no other unexcluded nondeterminism: bench/pilot/hb2/edit-check.js).
+    // With two baseline runs a two-valued field agrees by chance, so these fields are excluded outright.
+    ignoreFields: ['dataDirSize', 'tempDirSize', 'backupsDirSize', 'groupsDirSize', 'recipesDirSize', 'userDirSize'],
     unordered: [],
   };
 }

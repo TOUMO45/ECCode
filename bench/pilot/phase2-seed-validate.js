@@ -16,7 +16,7 @@ const { spawnSync } = require('child_process');
 const seeds = require('./phase2-seeds');
 const { encrypt, sha256 } = require('./phase2-reseal');
 
-const DIR = path.join(__dirname, '..', 'suites', 'phase2-seeds');
+const DIR = seeds.DIR;
 const SUITE = ['run', 'pytest', 'tests', '-p', 'no:cacheprovider', '-n', '4', '--dist', 'loadfile', '-o', 'addopts=-ra', '-q'];
 
 function git(cwd, args) {

@@ -4,11 +4,16 @@
 Runs inside ONE tree (the baseline or the candidate worktree), with the
 project's interpreter. Two commands:
 
-  generate --config <behavior.json> --routes <routes.json> --functions <functions.json> --out <corpus.json>
+  generate --config <behavior.json> --routes <routes.json> --functions <functions.json> [--files <files.json>] --out <corpus.json>
       Builds the probe corpus from this tree: HTTP probes from the FastAPI
       app's OpenAPI schema for the impacted routes (one per configured role,
       with example inputs), and function probes for the impacted functions
-      with Hypothesis (fixed seed, bounded, JSON-able inputs only).
+      with Hypothesis (fixed seed, bounded, JSON-able inputs only). An
+      operation is impacted when its full path matches a route found by
+      pattern, or when the running app's endpoint for it is defined in one of
+      the impacted source files (--files): the endpoint-source join, which sees
+      routes behind APIRouter prefixes, bound-method endpoints and decorated
+      endpoints that a pattern on the decorator cannot.
   run --config <behavior.json> --corpus <corpus.json> --out <results.json>
       Replays the corpus in this tree and writes every probe's raw output.
 
@@ -89,13 +94,20 @@ def jsonable(value, depth=0):
 
 # ------------------------------------------------------------- generate
 
-def example_for_schema(schema, variant, components):
-    """A deterministic example for a JSON schema (OpenAPI parameters and bodies)."""
-    if not isinstance(schema, dict):
+MAX_SCHEMA_DEPTH = 8
+
+
+def example_for_schema(schema, variant, components, depth=0):
+    """A deterministic example for a JSON schema (OpenAPI parameters and bodies).
+
+    A schema that refers to itself (a tree, nested categories) is cut at MAX_SCHEMA_DEPTH with null:
+    an unbounded example is never built.
+    """
+    if not isinstance(schema, dict) or depth > MAX_SCHEMA_DEPTH:
         return None
     if "$ref" in schema:
         name = schema["$ref"].split("/")[-1]
-        return example_for_schema(components.get(name, {}), variant, components)
+        return example_for_schema(components.get(name, {}), variant, components, depth + 1)
     if "example" in schema:
         return schema["example"]
     if "default" in schema and variant == 0:
@@ -105,7 +117,7 @@ def example_for_schema(schema, variant, components):
     for key in ("anyOf", "oneOf"):
         if key in schema and schema[key]:
             options = [o for o in schema[key] if o.get("type") != "null"] or schema[key]
-            return example_for_schema(options[variant % len(options)], variant, components)
+            return example_for_schema(options[variant % len(options)], variant, components, depth + 1)
     t = schema.get("type")
     if isinstance(t, list):
         t = [x for x in t if x != "null"][0] if [x for x in t if x != "null"] else "null"
@@ -129,18 +141,75 @@ def example_for_schema(schema, variant, components):
             return "probe%d@example.test" % variant
         return ["alpha", "", "Zed zed", "a-1", "x" * 40][variant % 5][: schema.get("maxLength", 40)] or "a"
     if t == "array":
-        return [example_for_schema(schema.get("items", {}), variant + i, components) for i in range(min(2, variant + 1))]
+        return [example_for_schema(schema.get("items", {}), variant + i, components, depth + 1) for i in range(min(2, variant + 1))]
     if t == "object" or "properties" in schema:
         out = {}
         required = set(schema.get("required", []))
         for name, sub in (schema.get("properties") or {}).items():
             if name in required or variant % 2 == 0:
-                out[name] = example_for_schema(sub, variant, components)
+                out[name] = example_for_schema(sub, variant, components, depth + 1)
         return out
     return None
 
 
-def generate_http(config, routes, errors):
+def source_files_of(endpoint):
+    """Source files (relative to the working tree) of an endpoint and of everything it wraps or binds."""
+    cwd = os.path.realpath(os.getcwd())
+    found = set()
+    seen = []
+    stack = [endpoint]
+    while stack:
+        fn = stack.pop()
+        if fn is None or any(fn is other for other in seen):
+            continue
+        seen.append(fn)
+        stack.extend([getattr(fn, "__wrapped__", None), getattr(fn, "__func__", None), getattr(fn, "func", None)])
+        code = getattr(fn, "__code__", None)
+        if code is None and not inspect.isroutine(fn) and not inspect.isclass(fn):
+            stack.append(getattr(type(fn), "__call__", None))
+        if code is not None:
+            try:
+                rel = os.path.relpath(os.path.realpath(code.co_filename), cwd).replace(os.sep, "/")
+            except ValueError:
+                continue
+            if not rel.startswith(".."):
+                found.add(rel)
+    return found
+
+
+def api_routes(app, errors):
+    """The app's effective API routes: full path, methods and endpoint.
+
+    Newer FastAPI keeps include_router lazy (app.routes holds an included-router object, not the routes),
+    so the routes are walked the way FastAPI's own OpenAPI generation walks them; older versions flatten
+    them into app.routes, which is read directly.
+    """
+    try:
+        from fastapi import routing
+        walk = getattr(routing, "iter_route_contexts", None)
+        if walk is not None:
+            return [c for c in walk(app.routes) if isinstance(getattr(c, "original_route", None), routing.APIRoute)]
+    except Exception as e:  # noqa: BLE001
+        errors.append("could not walk the app's included routers (%s); reading app.routes as it is" % e)
+    return [r for r in (getattr(app, "routes", None) or []) if getattr(r, "methods", None) and getattr(r, "endpoint", None) is not None]
+
+
+def endpoint_table(app, errors):
+    """{(METHOD, path): source files} for the app's API routes, paths spelled as OpenAPI spells them."""
+    table = {}
+    for route in api_routes(app, errors):
+        methods = getattr(route, "methods", None)
+        endpoint = getattr(route, "endpoint", None)
+        path = getattr(route, "path_format", None) or getattr(route, "path", None)
+        if not methods or not path or endpoint is None:
+            continue
+        found = source_files_of(endpoint)
+        for method in methods:
+            table.setdefault((method.upper(), path), set()).update(found)
+    return table
+
+
+def generate_http(config, routes, errors, files=None, blanket_ok=True):
     probes = []
     app_spec = config.get("app")
     if not app_spec:
@@ -155,10 +224,25 @@ def generate_http(config, routes, errors):
     components = (schema.get("components") or {}).get("schemas") or {}
     roles = config.get("roles") or [{"name": "default", "headers": {}}]
     wanted = {(r["method"].upper(), r["path"]) for r in routes}
+    joined = set()
+    if files:
+        try:
+            impacted = set(files)
+            joined = {key for key, sources in endpoint_table(app, errors).items() if sources & impacted}
+        except Exception as e:  # noqa: BLE001
+            errors.append("could not map the app's routes to their source files: %s" % e)
+    # v1 probed every operation when nothing was named and no function was impacted; that fallback stays
+    # unless the join found the impacted operations, which are then the only ones.
+    restrict = bool(wanted) or bool(joined) or not blanket_ok
+    matched = set()
     for path, methods in (schema.get("paths") or {}).items():
         for method, op in methods.items():
             m = method.upper()
-            if m not in ("GET", "POST", "PUT", "PATCH", "DELETE") or (wanted and (m, path) not in wanted and ("ANY", path) not in wanted):
+            by_file = (m, path) in joined
+            named = (m, path) in wanted or ("ANY", path) in wanted
+            if named:
+                matched.add((m, path) if (m, path) in wanted else ("ANY", path))
+            if m not in ("GET", "POST", "PUT", "PATCH", "DELETE") or (restrict and not named and not by_file):
                 continue
             params = op.get("parameters") or []
             body_schema = None
@@ -171,21 +255,29 @@ def generate_http(config, routes, errors):
                 url = path
                 query = {}
                 headers = {}
-                for p in params:
-                    value = example_for_schema(p.get("schema") or {}, variant, components)
-                    if p.get("in") == "path":
-                        url = url.replace("{%s}" % p["name"], str(value))
-                    elif p.get("in") == "query" and (p.get("required") or variant % 2 == 1):
-                        query[p["name"]] = value
-                    elif p.get("in") == "header" and p.get("required"):
-                        headers[p["name"]] = str(value)
-                body = example_for_schema(body_schema, variant, components) if body_schema else None
+                try:
+                    for p in params:
+                        value = example_for_schema(p.get("schema") or {}, variant, components)
+                        if p.get("in") == "path":
+                            url = url.replace("{%s}" % p["name"], str(value))
+                        elif p.get("in") == "query" and (p.get("required") or variant % 2 == 1):
+                            query[p["name"]] = value
+                        elif p.get("in") == "header" and p.get("required"):
+                            headers[p["name"]] = str(value)
+                    body = example_for_schema(body_schema, variant, components) if body_schema else None
+                except Exception as e:  # noqa: BLE001
+                    errors.append("skipped %s %s variant %d: could not build an example (%s: %s)" % (m, path, variant, type(e).__name__, str(e)[:120]))
+                    continue
                 for role in roles:
                     probes.append({
                         "id": "http:%s %s#%d@%s" % (m, path, variant, role["name"]),
                         "surface": "http", "target": "%s %s" % (m, path), "role": role["name"],
                         "input": {"method": m, "url": url, "query": query, "headers": {**headers, **(role.get("headers") or {})}, "json": body},
+                        **({"via": "endpoint-file"} if by_file else {}),
                     })
+    unmatched = wanted - matched
+    if unmatched and joined:
+        errors.append("%d route path(s) found by pattern matched no OpenAPI operation (declared behind a router prefix); %d operation(s) were found through the endpoint-source join" % (len(unmatched), len(joined)))
     return probes
 
 
@@ -288,10 +380,11 @@ def generate(args):
     config = load_config(args.get("--config"))
     routes = json.load(open(args["--routes"], encoding="utf-8")) if args.get("--routes") and os.path.exists(args["--routes"]) else []
     functions = json.load(open(args["--functions"], encoding="utf-8")) if args.get("--functions") and os.path.exists(args["--functions"]) else []
+    files = json.load(open(args["--files"], encoding="utf-8")) if args.get("--files") and os.path.exists(args["--files"]) else []
     errors = []
     probes = []
-    if routes or not functions:
-        probes += generate_http(config, routes, errors)
+    if routes or files or not functions:
+        probes += generate_http(config, routes, errors, files, blanket_ok=not routes and not functions)
     probes += generate_functions(config, functions, errors)
     probes = ordered(probes)
     with open(args["--out"], "w", encoding="utf-8") as f:

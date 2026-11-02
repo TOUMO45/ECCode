@@ -13,14 +13,15 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 
-const DIR = path.join(__dirname, '..', 'suites', 'phase2-seeds');
+// The registered set and freeze by default; ECCODE_SEED_DIR / ECCODE_FREEZE_FILE select another set and freeze (H-B2, protocol amendment 4).
+const DIR = process.env.ECCODE_SEED_DIR ? path.resolve(process.env.ECCODE_SEED_DIR) : path.join(__dirname, '..', 'suites', 'phase2-seeds');
 const REPO = path.join(__dirname, '..', '..');
 
 function sha256(buf) {
   return crypto.createHash('sha256').update(buf).digest('hex');
 }
 
-const FREEZE = path.join(__dirname, 'phase2-freeze.json');
+const FREEZE = process.env.ECCODE_FREEZE_FILE ? path.resolve(process.env.ECCODE_FREEZE_FILE) : path.join(__dirname, 'phase2-freeze.json');
 
 // The freeze rule (protocol §4a). H-B's result is produced by everything the
 // `eccode behavior diff` command can load, so the frozen set is: the require
@@ -151,4 +152,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { unseal, verify, apply, assertFrozen, check, freezeList, hashes, sha256, FREEZE_ROOTS, FREEZE_EXTRA };
+module.exports = { unseal, verify, apply, assertFrozen, check, freezeList, hashes, sha256, DIR, FREEZE_ROOTS, FREEZE_EXTRA };

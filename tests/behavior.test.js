@@ -210,3 +210,31 @@ test('normalization and flakiness: timestamps, uuids and addresses are normalize
   assert.ok(behavior.targetMatches({ surface: 'function', target: 'clamp' }, { surface: 'function', target: 'src/util.js::clamp' }));
   assert.ok(!behavior.targetMatches({ surface: 'http', target: 'POST /items' }, { surface: 'http', target: 'GET /items' }));
 });
+
+test('normalization of the engine\'s own environment: the two worktree paths and traceback line numbers are not behaviour, a different message still is', () => {
+  const norm = (v) => behavior.normalizeValue(v, behavior.NORMALIZERS, new Set(), new Set());
+  const msg = (side, suffix, line) => `1 validation error: bad input  File "/tmp/eccode-behavior-${side}-${suffix}/${side}/app/routes/items.py", line ${line}, in get_item   GET /api/items/{id}`;
+  // The same failure seen from the baseline and the candidate worktree, after a comment shifted the line.
+  assert.deepStrictEqual(norm({ body: { message: msg('baseline', '6Av3ki', 52) } }), norm({ body: { message: msg('candidate', 'LfhDfj', 53) } }));
+  // A temp directory other than /tmp (macOS style) normalizes too.
+  assert.deepStrictEqual(norm('/var/folders/ab/T/eccode-behavior-baseline-x1_Y2/baseline/app/x.py'), norm('/private/tmp/eccode-behavior-baseline-QQ/baseline/app/x.py'));
+  // What the user could see still differs: another message, another file, another function.
+  assert.notDeepStrictEqual(norm(msg('baseline', 'a', 52)), norm(msg('candidate', 'b', 52).replace('bad input', 'invalid input')));
+  assert.notDeepStrictEqual(norm(msg('baseline', 'a', 52)), norm(msg('candidate', 'b', 52).replace('items.py', 'orders.py')));
+  assert.notDeepStrictEqual(norm(msg('baseline', 'a', 52)), norm(msg('candidate', 'b', 52).replace('in get_item', 'in get_order')));
+  // A user's own path that merely contains the word is left alone.
+  assert.strictEqual(norm('see /home/u/eccode-behavior-notes/baseline.md'), 'see /home/u/eccode-behavior-notes/baseline.md');
+});
+
+test('the two sides of the diff get paths of identical length, so output that depends on the length of a path (logs, sizes) is not a difference', () => {
+  const side = behavior.sideTag;
+  assert.strictEqual(side('baseline').length, side('candidate').length);
+  // The pair that is compared: baseline run 1 and the candidate run; the data directories are named from these.
+  assert.strictEqual(side('baseline run 1', true).length, side('candidate run', true).length);
+  assert.notStrictEqual(side('baseline run 1', true), side('candidate run', true));
+  // The normalizer still recognizes the paths the engine now creates, and the old ones.
+  const norm = (v) => behavior.normalizeValue(v, behavior.NORMALIZERS, new Set(), new Set());
+  assert.strictEqual(norm('/tmp/eccode-behavior-base-ab12Cd/base/app/x.py'), '<worktree>/app/x.py');
+  assert.strictEqual(norm('/tmp/eccode-behavior-cand-zz99Yy/cand/app/x.py'), '<worktree>/app/x.py');
+  assert.strictEqual(norm('/tmp/eccode-behavior-baseline-ab12Cd/baseline/app/x.py'), '<worktree>/app/x.py');
+});

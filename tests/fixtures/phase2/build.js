@@ -33,9 +33,9 @@ function commitAll(dir, message) {
 }
 
 /** The correct service, committed once. */
-function materialize() {
+function materialize(src = SRC) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-phase2-'));
-  copyTree(SRC, dir);
+  copyTree(src, dir);
   git(dir, ['init', '-q']);
   const base = commitAll(dir, 'shop: the correct service');
   return { dir, base };
@@ -104,4 +104,4 @@ function python() {
   return { python: null, reason: `no interpreter with fastapi, httpx, hypothesis, coverage and pytest (tried ${candidates.join(', ')}); set ECCODE_PYTHON to one` };
 }
 
-module.exports = { materialize, seedBug, seedChange, applyPatch, faultyLines, python, BUGS, CHANGES };
+module.exports = { materialize, copyTree, git, commitAll, seedBug, seedChange, applyPatch, faultyLines, python, BUGS, CHANGES };

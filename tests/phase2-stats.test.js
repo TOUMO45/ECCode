@@ -93,16 +93,19 @@ test('the freeze: the real sealed set verifies against its manifest; the freeze 
   assert.ok(v.counts.unintended >= 15);
   const freeze = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'bench/pilot/phase2-freeze.json'), 'utf8'));
   assert.ok(freeze.files['lib/behavior.js'] && freeze.files['scripts/behavior/probe_runner.py']);
-  // The two detector files never change: on HEAD their hashes are the ones registered on 2026-10-29.
-  const sha = (f) => require('crypto').createHash('sha256').update(fs.readFileSync(path.join(__dirname, '..', f))).digest('hex');
+  // The v1 detector files are immutable in git: at the freeze commit (the tree every v1 measurement runs from) their hashes are the ones registered on 2026-10-29.
+  // HEAD's detector is v2 (docs/build/plan.md, amendment 4): it is pinned by its own freeze file once frozen, not by these hashes.
+  const { frozenTreeFromGit, HB_FREEZE_COMMIT } = require('./helpers');
+  const tree = frozenTreeFromGit();
+  if (!tree.dir) return t.skip(tree.reason);
+  const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(path.join(tree.dir, f))).digest('hex');
   assert.strictEqual(sha('lib/behavior.js'), 'aabf35fa54c240c99ec003011c987a29f71430a582dd28fcdca0ed00b8c508c6');
   assert.strictEqual(sha('scripts/behavior/probe_runner.py'), '03f949952541c0cd625e4ecbab62aeab25be5c38a16b5b06704ade3dfa35e2b4');
   assert.strictEqual(freeze.files['lib/behavior.js'], sha('lib/behavior.js'));
   assert.strictEqual(freeze.files['scripts/behavior/probe_runner.py'], sha('scripts/behavior/probe_runner.py'));
-  const { frozenTreeFromGit } = require('./helpers');
-  const tree = frozenTreeFromGit();
-  if (!tree.dir) return t.skip(tree.reason);
-  // The freeze commit's own tree is frozen; HEAD is checked only for the detector files above (Phase 3 edits the rest, register row 157).
+  assert.strictEqual(freeze.implementationCommit, 'e5c57e498d9d00f7c9c29cee1d00752704922a35');
+  assert.ok(HB_FREEZE_COMMIT.startsWith('4fbb80e'));
+  // The freeze commit's own tree is frozen; HEAD is not checked (Phase 3 and v2 edit it, register rows 157 and 175).
   assert.doesNotThrow(() => seeds.assertFrozen(tree.dir));
   assert.strictEqual(seeds.check(tree.dir).ok, true);
   fs.appendFileSync(path.join(tree.dir, 'lib/behavior.js'), '\n');
