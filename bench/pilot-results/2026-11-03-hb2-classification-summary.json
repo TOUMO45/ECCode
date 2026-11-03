@@ -1,0 +1,52 @@
+{
+  "statement": "H-B2 is a new seed set written after v2 was frozen. The original sealed set remains unopened (key unavailable). The old 26 seeds are not measured.",
+  "classifiedAt": "2026-11-03T02:32:37.345Z",
+  "rule": "configuration only if every blocker could be removed with what .eccode/behavior.json can supply (setup data, roles, environment); capability if any blocker needs a change to the frozen engine. Post-hoc judgment, not re-tested.",
+  "misses": {
+    "total": 32,
+    "byLabel": {
+      "capability": 23,
+      "configuration": 9
+    },
+    "byBlockerCode": {
+      "C2": 1,
+      "C7": 1,
+      "C5": 6,
+      "F1": 7,
+      "F3": 1,
+      "C1": 13,
+      "C6": 7,
+      "F2": 2,
+      "C4": 1,
+      "C3": 1
+    },
+    "note": "a miss may carry several blocker codes"
+  },
+  "blockerCodes": {
+    "C1": "a required UUID4 input the example generator cannot make (Mealie declares 347 string fields as format uuid4; the generator recognises uuid, date-time, date, email): every probe is rejected with 422 before the logic",
+    "C2": "a multipart/binary request body (the generator builds JSON bodies only)",
+    "C3": "the changed file is not code (a translation JSON): the routing rule sees no public surface and the diff does not run",
+    "C4": "the effect is in a response header or file name, which the probe output does not record (status, body, content type)",
+    "C5": "the effect is visible only in a later request that depends on an earlier write; probes run independently, reads first and destructive requests last, without chaining",
+    "C6": "request inputs of a kind the generator never produces (padded or mixed-case strings, cross-field consistent payloads, form bodies, specific numeric pairs)",
+    "C7": "needs a network fetch, which the runner closes by design",
+    "F1": "setup data the configuration did not create",
+    "F2": "a role or permission combination not configured",
+    "F3": "the environment (database engine) of the probe run"
+  },
+  "detections": {
+    "flagged": 9,
+    "namedOperationDifferedItself": 8,
+    "describedBehaviorOnOtherOperations": 1,
+    "flaggedOnSomethingUnrelated": 0
+  },
+  "intended": {
+    "total": 8,
+    "accepted": 7,
+    "acceptedWithTheDeclaredChangeShownAsExpectedDifference": 2,
+    "acceptedBecauseNoDifferenceWasObserved": 5,
+    "routingSkip": 1,
+    "unexplainedDifferenceOnADeclaredChange": 0
+  },
+  "setSpent": "The implementer read every seed description to classify; the H-B2 set is no longer blind and cannot serve as a blind set for a later detector version."
+}
