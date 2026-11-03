@@ -140,6 +140,7 @@ function adrRef(ctx) {
 
 /** The H-B freeze commit (bench/protocols/2026-10-28-phase2.md, 0.C). The measurement runs from a worktree of it; HEAD moves on. */
 const HB2_FREEZE_COMMIT = '72d89a659921b3e56ad3106cf846cfa322b5a878';
+const HB3_FREEZE_COMMIT = '0323e0b63109b3ee917e9c1eb6bccf7863d27bb4'; // the H-B3 freeze commit (detector v3), recorded in bench/protocols/2026-11-03-hb3.md
 const HB_FREEZE_COMMIT = '4fbb80ed23ed58c059ba6bc99fb6318c61562257';
 
 /**
@@ -267,4 +268,4 @@ function labRootCause(store, actor = 'backend-engineer', { command = 'node -e "p
   return store.state().lab;
 }
 
-module.exports = { HB_FREEZE_COMMIT, HB2_FREEZE_COMMIT, frozenTreeFromGit, designDecision, releasePlan, adrRef, labRootCause, tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };
+module.exports = { HB_FREEZE_COMMIT, HB2_FREEZE_COMMIT, HB3_FREEZE_COMMIT, frozenTreeFromGit, designDecision, releasePlan, adrRef, labRootCause, tmpProject, write, approval, rejection, approveThroughPlan, samplePlan, task, passCheck, handoffFor, expectCode, recordLesson, ARCH_MD, DESIGN_MD };

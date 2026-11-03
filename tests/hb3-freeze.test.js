@@ -43,3 +43,18 @@ test('the earlier freezes are not rewritten by the v3 builder (v1 and v2 hashes 
   assert.strictEqual(Object.keys(v2.files).length, 47);
   assert.strictEqual(v2.version, 2);
 });
+
+test('the H-B3 freeze commit\'s tree is frozen under the v3 freeze file (48 files), and one changed byte of a frozen file is refused', (t) => {
+  const { frozenTreeFromGit, HB3_FREEZE_COMMIT } = require('./helpers');
+  const tree = frozenTreeFromGit(HB3_FREEZE_COMMIT, ['bench/pilot/phase2-freeze-v3.json', 'bench/pilot/hb2', 'bench/pilot/hb3']);
+  if (!tree.dir) return t.skip(tree.reason);
+  const check = () => spawnSync(process.execPath, [path.join(tree.dir, 'bench/pilot/phase2-seeds.js'), 'check'], { cwd: tree.dir, env: { ...process.env, ECCODE_FREEZE_FILE: path.join(tree.dir, 'bench/pilot/phase2-freeze-v3.json') }, encoding: 'utf8' });
+  const ok = check();
+  assert.strictEqual(ok.status, 0, ok.stdout + ok.stderr);
+  assert.match(ok.stdout, /^frozen: 48 files/);
+  fs.appendFileSync(path.join(tree.dir, 'bench/pilot/phase2-hb/mealie_setup.py'), '\n');
+  const bad = check();
+  assert.strictEqual(bad.status, 1);
+  assert.match(bad.stdout, /NOT FROZEN[\s\S]*mealie_setup\.py/);
+  fs.rmSync(tree.dir, { recursive: true, force: true });
+});
