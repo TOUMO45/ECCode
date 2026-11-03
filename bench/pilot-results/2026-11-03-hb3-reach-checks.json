@@ -1,0 +1,55 @@
+{
+  "note": "Pre-freeze reach checks of detector v3 against the frozen v2 on two behaviour edits of mine to Mealie 753325676331 (not seeds from any set; chosen before running; each run once, 2 baseline runs). Exploratory: they show that the new generator and roles reach behaviour v2 could not, they are not a measurement of H-B3.",
+  "edits": [
+    {
+      "id": "A",
+      "file": "mealie/routes/unit_and_foods/foods.py",
+      "change": "GET /api/foods/{item_id} returns the food with its description upper-cased",
+      "v2": {
+        "probes": 63,
+        "executed": 63,
+        "differences": 0,
+        "unexplained": 0,
+        "coverage": "ok",
+        "elapsedSeconds": 96
+      },
+      "v3": {
+        "probes": 105,
+        "executed": 105,
+        "differences": 12,
+        "unexplained": 12,
+        "coverage": "ok",
+        "elapsedSeconds": 95
+      },
+      "v3Targets": [
+        "GET /api/foods/{item_id}"
+      ],
+      "why": "needs an existing uuid4 id: v2 sent a non-uuid string and got 422/404"
+    },
+    {
+      "id": "B",
+      "file": "mealie/routes/households/controller_invitations.py",
+      "change": "POST /api/households/invitations requires the organize permission instead of the invite permission",
+      "v2": {
+        "probes": 27,
+        "executed": 27,
+        "differences": 0,
+        "unexplained": 0,
+        "coverage": "ok",
+        "elapsedSeconds": 86
+      },
+      "v3": {
+        "probes": 45,
+        "executed": 45,
+        "differences": 6,
+        "unexplained": 6,
+        "coverage": "ok",
+        "elapsedSeconds": 102
+      },
+      "v3Targets": [
+        "POST /api/households/invitations"
+      ],
+      "why": "visible only to a role that holds exactly one of the two permissions: v2 had no such role"
+    }
+  ]
+}

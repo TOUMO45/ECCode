@@ -26,3 +26,16 @@ Status words: **verified** (a check ran on the final tree), **coded**, **blocked
 | The H-B rule (90 percent) | NOT MET | same file; register row 180 |
 | Frozen files untouched | verified | v2 47/47 and v1 33/33 before and after, by the driver and by independent recomputation |
 | Misses are classified | judged, not re-tested | register row 181; 23 capability, 9 configuration |
+
+
+## H-B3 (2026-11-03): detector v3, before the freeze
+
+| Claim | Status | Evidence |
+|---|---|---|
+| The v3 generator makes inputs v2 could not (uuid4 and the uuid family from existing ids, mixed-case email, padded names, minLength, time/uri, a confirmation equal to its sibling) | verified | `tests/behavior-v3.test.js` (10 tests: 3 generator tests against the v2 tree materialized from git, 6 end-to-end seeded changes that v2 does not flag and v3 does, 1 comment-only noise guard); written red first, `913ea05` |
+| The Mealie setup gives the same ids on every fresh setup, five roles with constant tokens, a richer dataset | verified | `tests/hb3-mealie-setup.test.js` (8 tests, 5 of the first 6 red before the setup was rewritten; the 2 later ones red before the canonical-order and single-candidate fixes): first three rows of 19 entity tables are `…0001`, `…0002`, `…0003`; 60 example-id requests answer 200 through 20 routes; two fresh setups equal column by column with an empty list of tolerated columns; design Amendment 1 |
+| Noise floor on v3 | verified | `bench/pilot-results/2026-11-03-hb3-noise-controls.json`: six comment-only edits in two rounds, 12 of 12 with 0 unexplained differences (4,135 / 445 / 675 / 4,160 / 4,135 / 75 probes); the widest took 243 to 308 s against the 900 s bound; six-baseline-run census on `static.py` found the same 12 operation and path pairs as two runs (all high-entropy), 0 on `recipe_crud_routes.py`, so `ignoreFields` is unchanged. The first control found 8 and then 2 unexplained differences (read-back order of a recipe's categories; the random meal plan route over three recipes): fixed in the setup test first, controls repeated |
+| v3 reaches what v2 could not (exploratory, two edits of mine, not seeds) | verified | `bench/pilot-results/2026-11-03-hb3-reach-checks.json`: a changed description on `GET /api/foods/{item_id}`: v2 0 of 63 probes differ, v3 12 of 105; a changed permission on invitations: v2 0 of 27, v3 6 of 45 |
+| The H-B3 report, sealing tool and log analysis | verified | `tests/hb3-report.test.js` (5), `tests/hb3-seal.test.js` (7), `tests/hb3-freeze.test.js` (2), `tests/audit-agent-log.test.js` (8, one new, red first); a hole found while generalising the analyzer (a chained command hid everything after the sealing command) is fixed |
+| No regression | verified | full suite with Python (`ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python`): 596 tests, 588 pass, 0 fail, 8 skipped; without Python the Mealie-fixture tests skip |
+| Freeze, key, seeds, measurement | pending | order of events in `bench/protocols/2026-11-03-hb3.md` section 4 |
