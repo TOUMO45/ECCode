@@ -1,0 +1,208 @@
+{
+  "note": "H-B3 pre-freeze noise controls on detector v3 (docs/design/hb3-detector-v3.md section 5; protocol 2026-11-03-hb3.md step 3). A comment line is prepended to one Mealie file (753325676331); the behavior diff then runs with 2 baseline runs. Zero unexplained differences is a condition of the freeze. Aggregates only. The first control on static.py before the fixes of 2026-11-03 gave 8 and 2 unexplained differences on POST /api/households/mealplans/random and GET /api/households/mealplans/{item_id}; the causes (the read-back order of a recipe's categories, tags and tools; the random meal plan route choosing among three recipes) were fixed in the setup, test first, and every control was repeated.",
+  "fixesCommit": "c079d40",
+  "rounds": [
+    {
+      "round": "round1",
+      "controls": [
+        {
+          "file": "mealie/core/settings/static.py",
+          "probes": 4135,
+          "executed": 4135,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 283,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 60,
+          "elapsedSeconds": 243
+        },
+        {
+          "file": "mealie/routes/recipe/recipe_crud_routes.py",
+          "probes": 445,
+          "executed": 445,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 28,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 0,
+          "elapsedSeconds": 98
+        },
+        {
+          "file": "mealie/services/recipe/recipe_service.py",
+          "probes": 675,
+          "executed": 675,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 45,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 0,
+          "elapsedSeconds": 109
+        },
+        {
+          "file": "mealie/schema/recipe/recipe.py",
+          "probes": 4160,
+          "executed": 4160,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 283,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 60,
+          "elapsedSeconds": 263
+        },
+        {
+          "file": "mealie/repos/repository_recipes.py",
+          "probes": 4135,
+          "executed": 4135,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 283,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 60,
+          "elapsedSeconds": 275
+        },
+        {
+          "file": "mealie/routes/admin/admin_maintenance.py",
+          "probes": 75,
+          "executed": 75,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 5,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 0,
+          "elapsedSeconds": 82
+        }
+      ],
+      "allZeroUnexplained": true
+    },
+    {
+      "round": "round2",
+      "controls": [
+        {
+          "file": "mealie/core/settings/static.py",
+          "probes": 4135,
+          "executed": 4135,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 283,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 60,
+          "elapsedSeconds": 289
+        },
+        {
+          "file": "mealie/routes/recipe/recipe_crud_routes.py",
+          "probes": 445,
+          "executed": 445,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 28,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 0,
+          "elapsedSeconds": 116
+        },
+        {
+          "file": "mealie/services/recipe/recipe_service.py",
+          "probes": 675,
+          "executed": 675,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 45,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 0,
+          "elapsedSeconds": 125
+        },
+        {
+          "file": "mealie/schema/recipe/recipe.py",
+          "probes": 4160,
+          "executed": 4160,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 283,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 60,
+          "elapsedSeconds": 299
+        },
+        {
+          "file": "mealie/repos/repository_recipes.py",
+          "probes": 4135,
+          "executed": 4135,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 283,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 60,
+          "elapsedSeconds": 308
+        },
+        {
+          "file": "mealie/routes/admin/admin_maintenance.py",
+          "probes": 75,
+          "executed": 75,
+          "dropped": 0,
+          "differences": 0,
+          "unexplained": 0,
+          "coverage": "ok",
+          "joinedOperations": 5,
+          "baselineRuns": 2,
+          "nondeterministicProbes": 0,
+          "elapsedSeconds": 87
+        }
+      ],
+      "allZeroUnexplained": true
+    }
+  ],
+  "census": [
+    {
+      "file": "mealie/core/settings/static.py",
+      "baselineRuns": 6,
+      "probes": 4135,
+      "nondeterministicProbes": 60,
+      "distinctOperationPathPairs": 12,
+      "sameSetAsTwoBaselineRuns": true,
+      "pairs": [
+        "GET /api/admin/about $.body.dbUrl",
+        "GET /api/recipes/shared/{token_id}/zip $.body",
+        "POST /api/foods $.body.detail.exception",
+        "POST /api/groups/labels $.body.detail.exception",
+        "POST /api/households/events/notifications $.body.detail.exception",
+        "POST /api/households/invitations $.body.token",
+        "POST /api/households/mealplans/ical $.body.mealplanIcalToken",
+        "POST /api/organizers/categories $.body.detail.exception",
+        "POST /api/organizers/tags $.body.detail.exception",
+        "POST /api/organizers/tools $.body.detail.exception",
+        "POST /api/units $.body.detail.exception",
+        "POST /api/users/api-tokens $.body.token"
+      ],
+      "unexplained": 0
+    },
+    {
+      "file": "mealie/routes/recipe/recipe_crud_routes.py",
+      "baselineRuns": 6,
+      "probes": 445,
+      "nondeterministicProbes": 0,
+      "distinctOperationPathPairs": 0,
+      "unexplained": 0
+    }
+  ],
+  "conclusion": "All 12 controls (6 files, 2 rounds) gave 0 unexplained differences; the widest (4,135 probes) took at most 308 s against the registered bound of 900 s; the six-baseline-run census found on static.py the same 12 operation and path pairs as two runs (tokens, integrity-error texts with fresh ids, zip bytes, the database path, the calendar token: all high-entropy) and none on recipe_crud_routes.py; ignoreFields is unchanged (the six storage sizes)."
+}
