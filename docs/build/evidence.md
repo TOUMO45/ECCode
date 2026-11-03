@@ -14,3 +14,15 @@ Status words: **verified** (a check ran on the final tree), **coded**, **blocked
 | R5 new seed set | pending | brief committed: `bench/protocols/2026-11-02-hb2-seeding-brief.md` |
 | R6 measurement | pending | order fixed in protocol amendment 4 |
 | R8 senior proof | prepared | `r1lite-freeze.js` + 2 tests; the freeze file is not generated until the rubric is extended and the owner approves the budget (≤ $300, interim stop at $120) |
+
+
+## H-B2 (2026-11-02 to 03)
+
+| Claim | Status | Evidence |
+|---|---|---|
+| A new, independent seed set exists | verified | `bench/suites/phase2-seeds-2/` (41 unintended, 8 intended, 10 classes, at least 4 unintended per class); register row 179 |
+| Every seed applies alone and keeps the suite green | verified | the registered validator, 49 of 49 pass, none pruned (`ff247ff` record) |
+| v2 detects a minority; v1 none | verified | `bench/pilot-results/2026-11-03-hb2-aggregate.json`: 9/41 [10.6, 37.6]% against 0/41 [0, 8.6]%; sign test p = 0.0039 |
+| The H-B rule (90 percent) | NOT MET | same file; register row 180 |
+| Frozen files untouched | verified | v2 47/47 and v1 33/33 before and after, by the driver and by independent recomputation |
+| Misses are classified | judged, not re-tested | register row 181; 23 capability, 9 configuration |
