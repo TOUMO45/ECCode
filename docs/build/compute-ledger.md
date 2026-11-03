@@ -8,3 +8,4 @@ Owner decision 6 (2026-11-03): record agent compute (tokens) per task. Figures a
 | 2026-11-02 | Blind behaviour labeller B (same 48 runs, different shuffle) | general-purpose | 126,558 | 3 | 71.9 s | completed in one leg |
 | 2026-11-02 to 03 | H-B2 independent seeding agent | general-purpose | 509,260 (last leg only) | 21 (last leg only); 231 over the whole log | 2,025.9 s (last leg only); 19:32Z to 23:24Z by the log | three container restarts, resumed twice; the earlier legs reported no usage |
 | 2026-11-03 | Second blind labeller on 10 H-B2 misses (decision 4) | general-purpose | 96,974 | 3 | 151.5 s | completed in one leg; 10 of 10 labels agree, kappa 1.0 |
+| 2026-11-03 | H-B3 independent seeding agent | general-purpose | 622,338 | 213 | 8,406.6 s (13:08Z to 15:28Z) | one leg, no container restart; 57 unintended and 10 intended seeds sealed |

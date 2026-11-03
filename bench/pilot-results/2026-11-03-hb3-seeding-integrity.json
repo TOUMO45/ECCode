@@ -1,0 +1,164 @@
+{
+  "note": "Integrity analysis of the independent H-B3 seeding agent's tool log (protocol 2026-11-03-hb3.md step 7), by bench/pilot/hb2/audit-agent-log.js (generalised for H-B3) and a cross-check of every tool input and result for markers of the measured code. The log itself stays outside the repository (it contains the seeds' working ids and descriptions); its hash is recorded. No item was exempted in the tool: it still says independent: false, and each flagged item is adjudicated here.",
+  "log": {
+    "finalSha256": "f1bfca7d36aaffe2061c61d6332e290abb6032172c9107f088077971eff2d6a2",
+    "bytes": 3299745,
+    "toolCalls": 213,
+    "byTool": {
+      "Bash": 196,
+      "Write": 13,
+      "ToolSearch": 1,
+      "Monitor": 1,
+      "TaskStop": 1,
+      "SubagentHandback": 1
+    },
+    "window": [
+      "2026-11-03T13:08:27.525Z",
+      "2026-11-03T15:28:34.048Z"
+    ],
+    "snapshots": [
+      {
+        "file": "h3-seeding-agent-log-at-restart0.jsonl",
+        "bytes": 814563,
+        "sha256": "4f262a05cb649e9d1dfc376053b2dbb969450dc7edd4880a59073a053dc3f714"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1.jsonl",
+        "bytes": 1197994,
+        "sha256": "42614833d01b0af080416d98871f9dc5ce56009674cce7bddc12594c1a8ca738"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1320.jsonl",
+        "bytes": 1469804,
+        "sha256": "f8b0bbb9aade041242795759e5398ceb80d2fca2811cc93a355b10f691dcb8f8"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1330.jsonl",
+        "bytes": 1919433,
+        "sha256": "9fb618ace646158525683fe79594c8d9bb76483c17b678fdad6170b9c3ce700b"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1340.jsonl",
+        "bytes": 2065326,
+        "sha256": "2a5eac3b726fc82d7df2c8aeaeeb307c66c46e28129019d4de1fefb85583e4d9"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1350.jsonl",
+        "bytes": 2238421,
+        "sha256": "fb165d3cfbb5da6449540a5fe5d7fb1d6fac18510c62dc65a473797afcc4a136"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1400.jsonl",
+        "bytes": 2374356,
+        "sha256": "b43b3e748d4ba369c9a9414df91bd257134a4fe77964711d592e384a53a983c9"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1410.jsonl",
+        "bytes": 2466751,
+        "sha256": "2a927b3845629c78020674d29378b8951bb81bad3cfb740f22ccccddea89ec3f"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1420.jsonl",
+        "bytes": 2579933,
+        "sha256": "63bfad1abe22e564b46494f62b4fea3328a21c21e673ec1522153d72f265aea4"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1430.jsonl",
+        "bytes": 2605511,
+        "sha256": "f8fb55e191d718daba1e8eb8708415538dead7e37ce5b5a74907b4891df56ab0"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1440.jsonl",
+        "bytes": 2730840,
+        "sha256": "7254c5f88675f8841a50dfc63d21d22f1d4225f7e08be8827b91c3d8c9fce042"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1450.jsonl",
+        "bytes": 2857984,
+        "sha256": "bc363c860d8dfbdc14a91c2588fc0a869273af314ceb3a7277c6461588e26c7d"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1500.jsonl",
+        "bytes": 2943868,
+        "sha256": "a94dc689a7b519ca97093f5e80b3da08f8ccfdf9eadb420ba6286fdbb24290a9"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart1510.jsonl",
+        "bytes": 2995668,
+        "sha256": "c1b09a14329b88a08da281b30d1a0ebd0340080453184ae0d8f1f0a4c67baa1e"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart2.jsonl",
+        "bytes": 2995668,
+        "sha256": "c1b09a14329b88a08da281b30d1a0ebd0340080453184ae0d8f1f0a4c67baa1e"
+      },
+      {
+        "file": "h3-seeding-agent-log-at-restart3.jsonl",
+        "bytes": 2995668,
+        "sha256": "c1b09a14329b88a08da281b30d1a0ebd0340080453184ae0d8f1f0a4c67baa1e"
+      }
+    ],
+    "containerRestartsDuringSeeding": 0
+  },
+  "analyzer": {
+    "sealCommands": 1,
+    "hard": 1,
+    "review": 2,
+    "keyValueInLog": 0,
+    "independentByTool": false,
+    "hardCategories": {}
+  },
+  "adjudication": [
+    {
+      "item": "HARD, 15:28:07, key",
+      "what": "a pre-seal validation script ended with: ls /root/.cache/eccode/hb3-seeds.key >/dev/null 2>&1 && echo \"key file exists (not read)\"",
+      "verdict": "an existence check of the key file by path, output discarded; the key was not opened, read, copied or printed (key value present in the log: 0)"
+    },
+    {
+      "item": "REVIEW x2, 13:12:30 and 13:12:55",
+      "what": "ps aux filtered by grep for pytest processes, in the default working directory",
+      "verdict": "a process listing that opens no file; its results contain no marker of the repository"
+    }
+  ],
+  "markerCrossCheck": {
+    "inputsScanned": 213,
+    "resultsScanned": 213,
+    "note": "Markers searched in every input and result: /home/user/ECCode, eccode (as a path component it also matches the cache directory /root/.cache/eccode), probe_runner, behavior diff / behavior.json / lib/behavior, exampleIds, hb2 / hb3 / phase2, bench/, detector, scratchpad, claude-0, frozen. Findings: (1) the only repository paths in any input are the one sealing command (hb3/seal.js, the out-dir and the key file); (2) /home/user/ECCode and the harness path /tmp/claude-0/... appear in results only as the harness line that announces a background command (Output is being written to ..., Session cwd remains /home/user/ECCode), never as file content; (3) FROZEN is the agent's own environment variable UV_FROZEN; (4) no result contains the name or content of a detector, probe, configuration or test file of the repository under measurement."
+  },
+  "deviationsFromTheBrief": [
+    "After sealing (15:28:12) and cleaning its scratch, the agent ran: ls .../tasks/ | wc -l; rm -f .../tasks/*.output; ls .../scratchpad | wc -l (the session's harness directories, not the repository). The count of entries of the session scratchpad was requested and its output was lost with the deleted file; no file of the scratchpad was read. The deletion removed the output files of this session's own background commands (its own and the implementer's); nothing the measurement needs lived there. The seeds were already sealed; this cannot have influenced them. It was outside the brief (which named the Mealie checkout and its scratch directory) and is reported as a deviation."
+  ],
+  "conclusion": "No read, listing or search of any detector, probe, configuration or test file of the repository under measurement, no read of the key. H-B3 is NOT marked non-independent. The independence of the agent rests on its brief and on this analysis, not on a technical barrier (register row 183).",
+  "sealed": {
+    "counts": {
+      "unintended": 57,
+      "intended": 10,
+      "total": 67
+    },
+    "plaintextSha256": "f304b54690a3bfb6222d23079b40c67cd9bd0c0109bef3b5fb435892015f9805",
+    "sealedSha256": "36c61991a1c0d8cbc91c8f337d74baea09cf65cb36716a997015fd704fbc6b5a",
+    "perClassUnintended": {
+      "status-code": 5,
+      "message-text": 8,
+      "default-value": 5,
+      "boundary": 6,
+      "permission": 5,
+      "field-exposure": 5,
+      "validation": 6,
+      "ordering": 5,
+      "side-effect": 6,
+      "format": 6
+    },
+    "intendedPerClass": {
+      "status-code": 1,
+      "message-text": 2,
+      "default-value": 1,
+      "boundary": 1,
+      "permission": 1,
+      "field-exposure": 1,
+      "validation": 2,
+      "ordering": 1
+    },
+    "agentReport": "every sealed seed shown on the unpatched and the patched application through Mealie's test client; the backend suite (about 3,581 tests in unit_tests, integration_tests, multitenant_tests, with --dist loadfile) passes with the seeds, applied in groups; candidates that broke it were dropped"
+  }
+}
