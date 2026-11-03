@@ -1,6 +1,6 @@
 # State
 
-**Date:** 2026-11-03 (UTC). **Branch:** `claude/eloquent-cray-0g0y6v`.
+**Date:** 2026-11-03 (UTC). **Branch:** `claude/v3-generalization-fastapi-s1df80` (started from the H-B3 tip `948a95b` of `claude/eloquent-cray-0g0y6v`; it does not contain `21fc8fc`, the squash commit of PR #25 (the tip of `claude/keen-allen-5z33eb`), whose changes conflict with the H-B3 work in `lib/evidence.js`, `lib/reducer.js` and `lib/tasks.js`; the two lines of work have not been reconciled).
 
 **H-B2 is a new seed set written after v2 was frozen; it is spent as a blind set (the implementer read its descriptions); the original sealed set remains unopened (key unavailable); the old 26 seeds are never cited as measured. H-B3 is another new seed set, written after the v3 freeze.**
 
@@ -12,6 +12,8 @@
 
 **Not done, by rule:** no re-run with a changed configuration (tuning after a result); Round 1-lite not launched (no paid run, meter $0).
 
-**Waiting for the owner:** whether to register a detector v4 (the named, unfixed blockers in row 185: boundary values, omitted optional fields, form bodies and chaining, equal ids, header capture, non-code surfaces, dates relative to the run day) with a NEW seed set; the Round 1-lite budget decision stands as before.
+**H-G1 (generalization of frozen v3 to a second FastAPI codebase; owner decisions of 2026-11-03, second message):** protocol `bench/protocols/2026-11-03-hg1.md` registered at commit `e577c13` (22:42:44Z) before any candidate was browsed: selection gates and the fixed first-pass-in-rank-order procedure, the noise gate (12 comment-only controls plus a six-baseline-run census), the seed-set specification (at least 20 unintended, at least 2 per class, 4 intended, every seed shown, new key with a copy for the owner, the brief gains "delete nothing outside your own working directory"), the prediction (v3 at 20 to 50 percent, point 35) and the comparability rule (32.4 to 62.4 percent around 47.4 is preliminary generalization; below is recorded as a limit), no detector change. **Selection ran and found no candidate:** 40 examined, first failing gate M5 17, M3 9, M2 8, M1 5, E2 1 (`bench/pilot-results/2026-11-03-hg1-selection.md`). Nothing is built, no key or seed exists, the freeze is untouched (48 of 48). The positioning correction is done (register row 186; "zero false positives" retired).
+
+**Waiting for the owner:** (1) how to proceed after the null selection (the report lists four options; I recommend amending the candidate source with `pytest in:readme` before any new candidate is examined); (2) v4 is NOT approved (owner decision of 2026-11-03) and is not started. Earlier open question, now answered: whether to register a detector v4 (the named, unfixed blockers in row 185: boundary values, omitted optional fields, form bodies and chaining, equal ids, header capture, non-code surfaces, dates relative to the run day) with a NEW seed set; the Round 1-lite budget decision stands as before.
 
 **Restart:** the scratchpad holds the worktrees (`frozen-hb3` at `0323e0b`, `frozen-hb2`), the result files, the archives and the labels; the key `/root/.cache/eccode/hb3-seeds.key` was never read by the implementer (scripts expand it into the environment of the tool).
