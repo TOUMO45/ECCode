@@ -1,0 +1,84 @@
+{
+  "note": "Post-hoc classification of the 30 v3 unintended misses of H-B3, written after the results were hashed (e0e5d88). The labels are the implementer's judgment from the seed author's description, objective features of the archived record (was the named operation probed, with how many probes, what the application answered) and the answers themselves; they were NOT tested by a re-run, because a re-run with a changed configuration would be tuning. Per-seed labels and reasons stay outside the repository (they paraphrase seed content).",
+  "rule": "CONFIGURATION only if every blocker could be removed with what .eccode/behavior.json can supply (setup data, roles, environment, exampleIds); CAPABILITY if any blocker needs a change to the frozen engine. Where the facts did not decide, the label the rule gives on the facts at hand was chosen and the uncertainty noted outside the repository.",
+  "misses": {
+    "total": 30,
+    "capability": 24,
+    "configuration": 6,
+    "byClass": {
+      "validation": {
+        "capability": 3,
+        "configuration": 0
+      },
+      "message-text": {
+        "capability": 3,
+        "configuration": 0
+      },
+      "permission": {
+        "capability": 1,
+        "configuration": 1
+      },
+      "side-effect": {
+        "capability": 6,
+        "configuration": 0
+      },
+      "default-value": {
+        "capability": 1,
+        "configuration": 0
+      },
+      "ordering": {
+        "capability": 0,
+        "configuration": 3
+      },
+      "format": {
+        "capability": 4,
+        "configuration": 0
+      },
+      "status-code": {
+        "capability": 2,
+        "configuration": 1
+      },
+      "boundary": {
+        "capability": 4,
+        "configuration": 1
+      }
+    }
+  },
+  "blockerCodes": {
+    "C6": 17,
+    "C3": 2,
+    "F4": 2,
+    "C5": 7,
+    "F1": 11,
+    "C8": 1,
+    "C2": 1,
+    "C4": 1
+  },
+  "legend": {
+    "C1": "a required uuid input the generator cannot make that resolves to nothing (solved for the uuid family by v3; none of the v3 misses is blocked by it alone)",
+    "C2": "a multipart/binary request body (the generator builds JSON bodies only)",
+    "C3": "the changed file is not code (a translation JSON): the routing rule sees no public surface and the diff does not run",
+    "C4": "the effect is in a response header or file name, which the probe output does not record (status, body, content type)",
+    "C5": "the effect is visible only in a later request that depends on an earlier write or on state outside the response; probes run independently, reads first and destructive requests last, without chaining",
+    "C6": "request inputs of a kind or combination the generator never produces (form bodies, cross-field consistent payloads, a value just below a minimum, specific amounts or texts, a complete valid body for an update, an equal pair of ids)",
+    "C7": "needs a network fetch, which the runner closes by design",
+    "C8": "an optional field omitted by the caller: the generator sends every property of a body, so the server-side default of a field is never exercised",
+    "F1": "setup data the configuration did not create (or created with dates or ownership that hide the effect)",
+    "F2": "a role or permission combination not configured",
+    "F3": "the environment (database engine) of the probe run",
+    "F4": "a path id that must be the caller's own user id, which the configuration kept out of exampleIds on purpose"
+  },
+  "detections": {
+    "v3": 27,
+    "attributedToTheNamedOperation": 24,
+    "flaggedElsewhere": 3,
+    "unchecked": 0,
+    "note": "The 3 flagged elsewhere differ on other operations that share the changed code (a response model, a schema default, a display function); the differing paths match the seed author's description in all 27. None of the 27 is noise: every differing path was read against the description."
+  },
+  "pairedAgainstV2": {
+    "onlyV3": 13,
+    "onlyV2": 1,
+    "note": "The one seed v2 flagged and v3 missed is a validation boundary: v3 pads a string to a schema minLength (so every new password is long enough) and no probe sends a value just below the minimum; v2 sent a seven-character string and crossed the changed threshold by chance. A loss caused by a designed improvement (minLength honoured), counted as a capability gap (C6)."
+  },
+  "intendedFalsePositive": "The one false positive of the intended seeds comes from the function surface: the contract declared the HTTP operation only, while the engine also found function-level differences in the changed schema class; reported as measured, not re-run with a wider contract."
+}
