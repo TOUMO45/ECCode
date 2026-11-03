@@ -8,8 +8,19 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const USER_ID = '11111111-1111-4111-8111-111111111111';
-const ADMIN_ID = '22222222-2222-4222-8222-222222222222';
+// The probe identities (detector v3, S3). Their ids are reserved (…00a1 to …00a4) and are not among the example ids (…0001 to …0003),
+// so that a DELETE probe on an example id cannot remove the user a later probe authenticates as. mealie_setup.py creates them.
+const PROBE_USERS = [
+  { role: 'user', id: '00000000-0000-4000-8000-0000000000a1', username: 'eccode-probe-user', flags: {} },
+  { role: 'admin', id: '00000000-0000-4000-8000-0000000000a2', username: 'eccode-probe-admin', flags: { admin: true } },
+  { role: 'inviter', id: '00000000-0000-4000-8000-0000000000a3', username: 'eccode-probe-inviter', flags: { can_invite: true } },
+  { role: 'organizer', id: '00000000-0000-4000-8000-0000000000a4', username: 'eccode-probe-organizer', flags: { can_organize: true } },
+];
+const USER_ID = PROBE_USERS[0].id;
+const ADMIN_ID = PROBE_USERS[1].id;
+// The ids that exist in every table after the setup (mealie_setup.py renumbers each GUID table in creation order): the generator's
+// uuid inputs take them, one variant per id.
+const EXAMPLE_IDS = [1, 2, 3].map((n) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`);
 const SECRET = 'eccode-phase2-hb-fixed-secret-2026'; // written by mealie_setup.py under DATA_DIR
 
 const b64url = (buf) => Buffer.from(buf).toString('base64').replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -25,8 +36,7 @@ function token(id) {
 function behaviorConfig(checkout, frozenTree, { nltkData = process.env.NLTK_DATA || '' } = {}) {
   const python = path.join(path.resolve(checkout), '.venv', 'bin', 'python');
   const setup = path.join(path.resolve(frozenTree), 'bench', 'pilot', 'phase2-hb', 'mealie_setup.py');
-  const userToken = token(USER_ID);
-  const adminToken = token(ADMIN_ID);
+  const tokens = Object.fromEntries(PROBE_USERS.map((p) => [p.role, token(p.id)]));
   return {
     app: 'mealie.app:app',
     env: {
@@ -35,14 +45,13 @@ function behaviorConfig(checkout, frozenTree, { nltkData = process.env.NLTK_DATA
       PRODUCTION: 'True',
       ALLOW_SIGNUP: 'True',
       ...(nltkData ? { NLTK_DATA: nltkData } : {}),
-      ECCODE_HB_USER_TOKEN: userToken,
-      ECCODE_HB_ADMIN_TOKEN: adminToken,
+      ...Object.fromEntries(PROBE_USERS.map((p) => [`ECCODE_HB_${p.role.toUpperCase()}_TOKEN`, tokens[p.role]])),
     },
+    exampleIds: EXAMPLE_IDS,
     setup: `${python} ${setup}`,
     roles: [
       { name: 'anonymous', headers: {} },
-      { name: 'user', headers: { Authorization: `Bearer ${userToken}` } },
-      { name: 'admin', headers: { Authorization: `Bearer ${adminToken}` } },
+      ...PROBE_USERS.map((p) => ({ name: p.role, headers: { Authorization: `Bearer ${tokens[p.role]}` } })),
     ],
     normalizers: [],
     // Mealie generates a random avatar for every user it creates, so the size of its data directory differs from run to run
@@ -71,4 +80,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify(cfg, null, 2) + '\n');
 }
 
-module.exports = { behaviorConfig, write, token, USER_ID, ADMIN_ID, SECRET };
+module.exports = { behaviorConfig, write, token, PROBE_USERS, EXAMPLE_IDS, USER_ID, ADMIN_ID, SECRET };

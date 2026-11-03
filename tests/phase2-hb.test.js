@@ -23,10 +23,11 @@ test('the Mealie configuration is deterministic and chooses nothing per seed', (
   const b = config.behaviorConfig('/x/mealie', '/y/eccode', { nltkData: '/n' });
   assert.deepStrictEqual(a, b);
   assert.strictEqual(a.app, 'mealie.app:app');
-  assert.deepStrictEqual(a.roles.map((r) => r.name), ['anonymous', 'user', 'admin']);
+  // Detector v3 (S3): five roles; the ids, tokens, permissions and the example ids are tested in hb3-mealie-setup.test.js.
+  assert.deepStrictEqual(a.roles.map((r) => r.name), ['anonymous', 'user', 'admin', 'inviter', 'organizer']);
   assert.deepStrictEqual([a.normalizers, a.unordered], [[], []]);
-  // The only ignored fields are the six storage sizes of Mealie's admin endpoints (random avatars make them differ per run); a seventh is a registration.
-  assert.deepStrictEqual(a.ignoreFields, ['dataDirSize', 'tempDirSize', 'backupsDirSize', 'groupsDirSize', 'recipesDirSize', 'userDirSize']);
+  // The ignored fields are the six storage sizes of Mealie's admin endpoints (random avatars make them differ per run); a seventh is a registration.
+  assert.deepStrictEqual(a.ignoreFields.slice(0, 6), ['dataDirSize', 'tempDirSize', 'backupsDirSize', 'groupsDirSize', 'recipesDirSize', 'userDirSize']);
   assert.strictEqual(a.env.DATA_DIR, '{tmp}/data');
   assert.match(a.setup, /\/x\/mealie\/\.venv\/bin\/python \/y\/eccode\/bench\/pilot\/phase2-hb\/mealie_setup\.py$/);
   // The tokens are constants of the fixed secret and ids: the same JWT every time, and the setup script sees the same strings.
