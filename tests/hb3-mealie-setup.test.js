@@ -160,3 +160,20 @@ test('setup: two fresh setups give the same ids and the same data, column by col
   }
   assert.deepStrictEqual(differing, [], 'columns that differ between two fresh setups (add to RANDOM only with the reason)');
 });
+
+test('canonical order: the rows of a table without an id (an association) are rewritten in sorted order; tables with an id do not move', () => {
+  const r = spawnSync('python3', [path.join(__dirname, 'fixtures/phase2/rekey_unit.py'), path.join(ROOT, 'bench/pilot/phase2-hb/mealie_setup.py')], { encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  const out = JSON.parse(r.stdout);
+  assert.deepStrictEqual(out.recipes_to_categories, [['1', '4'], ['1', '5'], ['2', '3'], ['2', '9']]);
+  assert.deepStrictEqual(out.recipes_to_tags, [['1', '1'], ['1', '2'], ['2', '1']]);
+  assert.deepStrictEqual(out.recipes, [['b', 'second'], ['a', 'first']], 'a table with an id keeps its creation order');
+  assert.deepStrictEqual(out.alembic_version, [['abc']]);
+});
+
+test('setup: the random meal plan route has one candidate whatever the date and type (a rule with a filter), so it answers the same recipe every time', { skip: skipMealie }, () => {
+  const d = ok(fresh()[0]);
+  assert.strictEqual(d.random.length, 6);
+  assert.ok(d.random.every((x) => x.status === 200), JSON.stringify(d.random));
+  assert.strictEqual(new Set(d.random.map((x) => x.slug)).size, 1, `the recipes picked: ${d.random.map((x) => x.slug)}`);
+});

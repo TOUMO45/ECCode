@@ -25,7 +25,8 @@ Runs inside the worktree, with the checkout's interpreter, before every probe ru
      `exampleIds`) never name a user a probe authenticates as and a DELETE probe cannot remove it;
      the probe tokens get integer ids of 1000 and above for the same reason, the other API tokens
      are numbered from 1; the random tokens the application wrote (invitation tokens, API tokens)
-     are replaced with constants; the calendar token of the default household is "alpha", the first
+     are replaced with constants; the rows of the association tables are put in sorted order (the order a recipe's categories are read
+     back in); the random meal plan route has one candidate (a rule without a day or type whose filter names one recipe); the calendar token of the default household is "alpha", the first
      string example of the probe generator, so the public feed answers.
 Deterministic by construction: what a probe can observe through the API is either a constant of
 this script or something Mealie generates that the engine normalizes (uuids, timestamps); the
@@ -140,8 +141,8 @@ def populate(admin_token, default_group, default_household):
             if i < len(recipe_ids):
                 payload["recipeId"] = recipe_ids[i]
             call("POST", "/api/households/mealplans", json=payload)
-        for day, kind in (("monday", "dinner"), ("tuesday", "lunch"), ("unset", "breakfast")):
-            call("POST", "/api/households/mealplans/rules", json={"day": day, "entryType": kind, "queryFilterString": ""})
+        for day, kind, query_filter in (("monday", "dinner", ""), ("tuesday", "lunch", ""), ("unset", "breakfast", ""), ("unset", "unset", 'name = "gamma"')):
+            call("POST", "/api/households/mealplans/rules", json={"day": day, "entryType": kind, "queryFilterString": query_filter})
         for list_name in ("alpha", "weekly", "party"):
             shopping = make("/api/households/shopping/lists", {"name": list_name})
             if shopping.get("id") and list_name == "alpha":
@@ -193,6 +194,21 @@ def make_reports(repos, group_id):
 def plain_id(n):
     """The n-th plain id as the 32 hex digits a GUID column stores (uuid4 version and variant bits set)."""
     return "00000000000040008000%012x" % n
+
+
+def canonical_order(c):
+    """Rewrite the rows of every table that has no id (the association tables of the many-to-many relations) in sorted order.
+
+    Which row an association table stores first depends on the order SQLAlchemy flushes a set of objects, which differs from run to run,
+    and the order the rows are read back in (a recipe's categories, tags and tools) follows it. Sorted rows read back the same every time.
+    """
+    for (t,) in c.execute("select name from sqlite_master where type='table' and name not like 'sqlite_%' order by name").fetchall():
+        cols = [x[1] for x in c.execute('pragma table_info("%s")' % t)]
+        if "id" in cols or t == "alembic_version" or not cols:
+            continue
+        rows = c.execute('select * from "%s" order by %s' % (t, ", ".join('"%s"' % col for col in cols))).fetchall()
+        c.execute('delete from "%s"' % t)
+        c.executemany('insert into "%s" values (%s)' % (t, ",".join("?" * len(cols))), rows)
 
 
 def rekey(db_path, reserved, probe_tokens):
@@ -248,6 +264,7 @@ def rekey(db_path, reserved, probe_tokens):
     for n, old in enumerate(others, 1):
         c.execute("update long_live_tokens set id = ?, token = ? where id = ?", (n, "api-token-%d" % n, old))
     c.execute("update invite_tokens set token = 'invite-' || id")
+    canonical_order(c)
     c.execute("update household_preferences set mealplan_ical_token = 'alpha' where household_id = (select id from households order by rowid limit 1)")
     c.commit()
     problems = c.execute("pragma foreign_key_check").fetchall()

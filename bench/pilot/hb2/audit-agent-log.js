@@ -4,6 +4,9 @@
 // anything else), the key file, or neither, and whether the key value appears anywhere in the log. It reads the log as
 // data and prints counts and the offending commands only (truncated); it never prints a result's content.
 //   node bench/pilot/hb2/audit-agent-log.js <agent transcript .jsonl> [--key-file <path>]
+// Used for H-B2 and, unchanged in its rules, for H-B3: the sealing command may be bench/pilot/hb2/seal.js or hb3/seal.js, the key files
+// hb2-seeds.key and hb3-seeds.key, and the scratch directories hb2-seeding-scratch and hb3-seeding-scratch. In a chained command only
+// the sealing segment is exempt: whatever else the line names is classified.
 // A call is HARD when it names a path under the repository (other than running the one sealing command), reads the key
 // file in any way but through that command, or edits the repository. It is REVIEW when it would run in the default
 // working directory, which is the repository, without naming a safe directory: a Grep or Glob without a path, a relative
@@ -11,9 +14,10 @@
 const fs = require('fs');
 
 const REPO = '/home/user/ECCode';
-const KEY_FILE = '/root/.cache/eccode/hb2-seeds.key';
-const SAFE = ['/root/.cache/eccode/mealie-seed', '/root/.cache/eccode/hb2-seeding-scratch', '/root/.cache/eccode/nltk_data', '/tmp'];
-const SEAL = /^\s*node\s+\/home\/user\/ECCode\/bench\/pilot\/hb2\/seal\.js\s/;
+const KEY_FILES = ['/root/.cache/eccode/hb2-seeds.key', '/root/.cache/eccode/hb3-seeds.key'];
+const KEY_NAME = /hb\d+-seeds\.key/;
+const SAFE = ['/root/.cache/eccode/mealie-seed', '/root/.cache/eccode/hb2-seeding-scratch', '/root/.cache/eccode/hb3-seeding-scratch', '/root/.cache/eccode/nltk_data', '/tmp'];
+const SEAL = /^\s*node\s+\/home\/user\/ECCode\/bench\/pilot\/hb[23]\/seal\.js\s/;
 
 function categoryOf(p) {
   const rel = p.replace(/^\/home\/user\/ECCode\/?/, '');
@@ -50,13 +54,13 @@ function classify(rawName, input) {
   const i = input || {};
   const name = String(rawName || '').toLowerCase();
   if (SHELL.has(name)) {
-    const cmd = String(i.command || '');
-    const sealing = SEAL.test(cmd);
-    if (cmd.includes('hb2-seeds.key') && !sealing) hits.push(['hard', 'key', 'touches the key file other than through the sealing command']);
-    if (!sealing) {
-      for (const m of cmd.matchAll(/\/home\/user\/ECCode(?:\/[^\s'";|&)<>]*)?/g)) hits.push(['hard', categoryOf(m[0]), `names ${m[0]}`]);
-    }
-    if (!sealing && !hits.length) {
+    const full = String(i.command || '');
+    // Only the segment that is the sealing command is exempt; the rest of a chained line is classified.
+    const segments = full.split(/;|&&|\|\||\n/);
+    const cmd = segments.filter((seg) => !SEAL.test(seg)).join(';');
+    if (KEY_NAME.test(cmd)) hits.push(['hard', 'key', 'touches the key file other than through the sealing command']);
+    for (const m of cmd.matchAll(/\/home\/user\/ECCode(?:\/[^\s'";|&)<>]*)?/g)) hits.push(['hard', categoryOf(m[0]), `names ${m[0]}`]);
+    if (cmd.trim() && !hits.length) {
       const where = bashWhere(cmd);
       const abs = [...cmd.matchAll(/(?:^|\s)(\/[A-Za-z0-9_.\-/]+)/g)].map((m) => m[1]);
       const onlySafeAbs = abs.length > 0 && abs.every((p) => safe(p) || /^\/(usr|bin|opt|dev|etc\/(hosts|os-release))/.test(p));
@@ -66,14 +70,14 @@ function classify(rawName, input) {
   }
   if (READ.has(name)) {
     const p = i.file_path || i.path;
-    if (p === KEY_FILE) hits.push(['hard', 'key', 'reads the key file']);
+    if (KEY_FILES.includes(p)) hits.push(['hard', 'key', 'reads the key file']);
     else if (insideRepo(p)) hits.push(['hard', categoryOf(p), `reads ${p}`]);
     else if (typeof p === 'string' && !p.startsWith('/')) hits.push(['review', 'implicit', `relative path ${p}`]);
     return hits;
   }
   if (SEARCH.has(name)) {
     const p = i.path;
-    if (p === KEY_FILE) hits.push(['hard', 'key', 'searches the key file']);
+    if (KEY_FILES.includes(p)) hits.push(['hard', 'key', 'searches the key file']);
     else if (insideRepo(p)) hits.push(['hard', categoryOf(p), `${name}s ${p}`]);
     else if (!p) hits.push(['review', 'implicit', `${name} without a path`]);
     return hits;
@@ -96,7 +100,7 @@ function analyze(text, { key = null } = {}) {
       if (block.type !== 'tool_use') continue;
       out.toolCalls++;
       out.byTool[block.name] = (out.byTool[block.name] || 0) + 1;
-      if (SHELL.has(String(block.name).toLowerCase()) && SEAL.test(String((block.input || {}).command || ''))) out.sealCommands++;
+      if (SHELL.has(String(block.name).toLowerCase()) && String((block.input || {}).command || '').split(/;|&&|\|\||\n/).some((seg) => SEAL.test(seg))) out.sealCommands++;
       for (const [level, category, why] of classify(block.name, block.input)) {
         const entry = { at: r.timestamp || null, tool: block.name, category, why: why.slice(0, 200), call: JSON.stringify(block.input || {}).slice(0, 220) };
         if (level === 'hard') { out.hard.push(entry); if (category !== 'key' && category !== 'implicit') out.categories[category] = (out.categories[category] || 0) + 1; } else out.review.push(entry);

@@ -105,3 +105,29 @@ test('a command made only of commands that cannot touch a file is inert; anythin
   // An inert command that names the repository is still a hard hit.
   assert.strictEqual(audit.analyze(log([['Bash', { command: 'echo /home/user/ECCode/lib' }]])).hard.length, 1);
 });
+
+test('H-B3: the H-B3 sealing command, scratch directory and key file are recognised like the H-B2 ones', () => {
+  const SEAL3 = 'node /home/user/ECCode/bench/pilot/hb3/seal.js --plain /root/.cache/eccode/hb3-seeding-scratch/seeds.json --key-file /root/.cache/eccode/hb3-seeds.key --out-dir /home/user/ECCode/bench/suites/phase2-seeds-3 --mealie /root/.cache/eccode/mealie-seed --sealed-by "x"';
+  const ok = audit.analyze(log([
+    ['Write', { file_path: '/root/.cache/eccode/hb3-seeding-scratch/seeds.json', content: '{}' }],
+    ['Bash', { command: 'cd /root/.cache/eccode/hb3-seeding-scratch && ls' }],
+    ['Bash', { command: `${SEAL3} 2>&1 | tail -5` }],
+  ]));
+  assert.deepStrictEqual(ok.hard, []);
+  assert.deepStrictEqual(ok.review, []);
+  assert.strictEqual(ok.sealCommands, 1);
+  assert.strictEqual(ok.independent, true);
+  // The key files of both sets are off limits other than through the command.
+  for (const f of ['/root/.cache/eccode/hb3-seeds.key', '/root/.cache/eccode/hb2-seeds.key']) {
+    const r = audit.analyze(log([['Bash', { command: `cat ${f}` }], ['Read', { file_path: f }], ['Grep', { pattern: 'a', path: f }]]));
+    assert.strictEqual(r.hard.length, 3, f);
+    assert.ok(r.hard.every((h) => h.category === 'key'));
+  }
+  // Another file of the repository run in the same call as the sealing command is not hidden by it.
+  const sneaky = audit.analyze(log([['Bash', { command: `${SEAL3} && cat /home/user/ECCode/lib/behavior.js` }], ['Bash', { command: `cd /tmp && ${SEAL3}; cat /home/user/ECCode/scripts/behavior/probe_runner.py` }]]));
+  assert.deepStrictEqual(sneaky.hard.map((h) => h.category), ['detector', 'probe']);
+  // And the repository's other tools are not the sealing command.
+  const other = audit.analyze(log([['Bash', { command: 'node /home/user/ECCode/bench/pilot/hb3/freeze.js' }], ['Bash', { command: 'node /home/user/ECCode/bench/pilot/hb3/seal.js_x --plain a' }]]));
+  assert.strictEqual(other.hard.length, 2);
+  assert.strictEqual(other.sealCommands, 0);
+});

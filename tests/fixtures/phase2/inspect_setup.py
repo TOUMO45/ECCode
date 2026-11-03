@@ -84,6 +84,16 @@ def probe(roles, templates, ids):
                 result["routes"]["%s %s" % (tpl, i)] = r.status_code
         r = client.get("/api/households/mealplans/ical/alpha")
         result["public"]["calendar alpha"] = r.status_code
+        # The random meal plan route, as a probe would call it (the dates and types of the generator's variants, twice): the recipes it picks.
+        result["random"] = []
+        for date, kind in (("2026-01-01", "breakfast"), ("2026-01-02", "lunch"), ("2026-01-03", "dinner")) * 2:
+            r = client.post("/api/households/mealplans/random", json={"date": date, "entryType": kind}, headers=(admin or {}).get("headers") or {})
+            slug = None
+            try:
+                slug = r.json()["recipe"]["slug"]
+            except Exception:  # noqa: BLE001
+                pass
+            result["random"].append({"status": r.status_code, "slug": slug})
     return result
 
 
