@@ -13,7 +13,9 @@ project's interpreter. Two commands:
       pattern, or when the running app's endpoint for it is defined in one of
       the impacted source files (--files): the endpoint-source join, which sees
       routes behind APIRouter prefixes, bound-method endpoints and decorated
-      endpoints that a pattern on the decorator cannot.
+      endpoints that a pattern on the decorator cannot. A configuration may
+      list "exampleIds", ids that exist in the application after its setup:
+      an operation with uuid inputs then gets one variant per id (at most 8).
   run --config <behavior.json> --corpus <corpus.json> --out <results.json>
       Replays the corpus in this tree and writes every probe's raw output.
 
@@ -28,6 +30,7 @@ import importlib
 import inspect
 import json
 import os
+import re
 import socket
 import sys
 import traceback
@@ -95,9 +98,52 @@ def jsonable(value, depth=0):
 # ------------------------------------------------------------- generate
 
 MAX_SCHEMA_DEPTH = 8
+UUID_FORMATS = ("uuid", "uuid1", "uuid3", "uuid4", "uuid5")
+MAX_ID_VARIANTS = 8
+CONFIRM_TOKENS = ("confirmation", "confirm")
 
 
-def example_for_schema(schema, variant, components, depth=0):
+def has_uuid(schema, components, depth=0):
+    """True when a schema, at any depth up to 4, declares a uuid-format string."""
+    if not isinstance(schema, dict) or depth > 4:
+        return False
+    if "$ref" in schema:
+        return has_uuid(components.get(schema["$ref"].split("/")[-1], {}), components, depth + 1)
+    if schema.get("format") in UUID_FORMATS:
+        return True
+    for key in ("anyOf", "oneOf", "allOf"):
+        if any(has_uuid(o, components, depth + 1) for o in (schema.get(key) or [])):
+            return True
+    if has_uuid(schema.get("items"), components, depth + 1):
+        return True
+    return any(has_uuid(sub, components, depth + 1) for sub in (schema.get("properties") or {}).values())
+
+
+def confirm_base(name):
+    """For a confirmation field (passwordConfirm, confirm_password ...) the normalized name of the field it confirms."""
+    n = re.sub(r"[_\-\s]", "", name).lower()
+    for token in CONFIRM_TOKENS:
+        if n.startswith(token) and len(n) > len(token):
+            return n[len(token):]
+        if n.endswith(token) and len(n) > len(token):
+            return n[: -len(token)]
+    return None
+
+
+def uuid_example(variant, ctx):
+    """An id from the configuration's exampleIds when there are any (the first uuid field of an operation takes ids[variant], the next one ids[variant + 1] ...), else a valid synthetic uuid."""
+    if ctx and ctx.get("ids"):
+        ids = ctx["ids"]
+        value = ids[(variant + ctx["n"]) % len(ids)]
+        ctx["n"] += 1
+        return value
+    return "00000000-0000-4000-8000-%012d" % variant
+
+
+STRINGS = ["alpha", "  Beta value  ", "Zed zed", "a-1", "x" * 40]
+
+
+def example_for_schema(schema, variant, components, depth=0, ctx=None):
     """A deterministic example for a JSON schema (OpenAPI parameters and bodies).
 
     A schema that refers to itself (a tree, nested categories) is cut at MAX_SCHEMA_DEPTH with null:
@@ -107,7 +153,7 @@ def example_for_schema(schema, variant, components, depth=0):
         return None
     if "$ref" in schema:
         name = schema["$ref"].split("/")[-1]
-        return example_for_schema(components.get(name, {}), variant, components, depth + 1)
+        return example_for_schema(components.get(name, {}), variant, components, depth + 1, ctx)
     if "example" in schema:
         return schema["example"]
     if "default" in schema and variant == 0:
@@ -117,7 +163,7 @@ def example_for_schema(schema, variant, components, depth=0):
     for key in ("anyOf", "oneOf"):
         if key in schema and schema[key]:
             options = [o for o in schema[key] if o.get("type") != "null"] or schema[key]
-            return example_for_schema(options[variant % len(options)], variant, components, depth + 1)
+            return example_for_schema(options[variant % len(options)], variant, components, depth + 1, ctx)
     t = schema.get("type")
     if isinstance(t, list):
         t = [x for x in t if x != "null"][0] if [x for x in t if x != "null"] else "null"
@@ -131,23 +177,45 @@ def example_for_schema(schema, variant, components, depth=0):
         return variant % 2 == 0
     if t == "string":
         fmt = schema.get("format")
-        if fmt == "uuid":
-            return "00000000-0000-4000-8000-%012d" % variant
+        if fmt in UUID_FORMATS:
+            return uuid_example(variant, ctx)
         if fmt == "date-time":
             return "2026-01-0%dT00:00:00Z" % (1 + variant % 9)
         if fmt == "date":
             return "2026-01-0%d" % (1 + variant % 9)
+        if fmt == "time":
+            return "%02d:30:00" % ((12 + 3 * variant) % 24)
         if fmt == "email":
-            return "probe%d@example.test" % variant
-        return ["alpha", "", "Zed zed", "a-1", "x" * 40][variant % 5][: schema.get("maxLength", 40)] or "a"
+            return ("Probe%d@Example.TEST" if variant % 3 == 2 else "probe%d@example.test") % variant
+        if fmt in ("uri", "url", "uri-reference"):
+            return "https://example.test/%d" % variant
+        if fmt == "ipv4":
+            return "192.0.2.%d" % (1 + variant % 250)
+        if fmt == "ipv6":
+            return "2001:db8::%x" % (1 + variant % 15)
+        if fmt == "hostname":
+            return "host%d.example.test" % variant
+        if fmt == "duration":
+            return "PT%dH" % (1 + variant % 9)
+        value = STRINGS[variant % 5][: schema.get("maxLength", 40)] or "a"
+        minimum = schema.get("minLength", 0)
+        if len(value) < minimum:
+            value = value + "x" * (minimum - len(value))
+        return value
     if t == "array":
-        return [example_for_schema(schema.get("items", {}), variant + i, components, depth + 1) for i in range(min(2, variant + 1))]
+        return [example_for_schema(schema.get("items", {}), variant + i, components, depth + 1, ctx) for i in range(min(2, variant + 1))]
     if t == "object" or "properties" in schema:
         out = {}
         required = set(schema.get("required", []))
         for name, sub in (schema.get("properties") or {}).items():
             if name in required or variant % 2 == 0:
-                out[name] = example_for_schema(sub, variant, components, depth + 1)
+                out[name] = example_for_schema(sub, variant, components, depth + 1, ctx)
+        # A confirmation field repeats the field it confirms.
+        normalized = {re.sub(r"[_\-\s]", "", n).lower(): n for n in out}
+        for name in list(out):
+            base = confirm_base(name)
+            if base and base in normalized and normalized[base] != name:
+                out[name] = out[normalized[base]]
         return out
     return None
 
@@ -223,6 +291,7 @@ def generate_http(config, routes, errors, files=None, blanket_ok=True):
         return probes
     components = (schema.get("components") or {}).get("schemas") or {}
     roles = config.get("roles") or [{"name": "default", "headers": {}}]
+    example_ids = [str(i) for i in (config.get("exampleIds") or [])][:MAX_ID_VARIANTS]
     wanted = {(r["method"].upper(), r["path"]) for r in routes}
     joined = set()
     if files:
@@ -251,20 +320,23 @@ def generate_http(config, routes, errors, files=None, blanket_ok=True):
                 if "json" in ctype:
                     body_schema = media.get("schema")
             variants = 3 if (params or body_schema) else 1
+            if example_ids and (any(has_uuid(p.get("schema") or {}, components) for p in params) or has_uuid(body_schema, components)):
+                variants = max(3, len(example_ids))
             for variant in range(variants):
                 url = path
                 query = {}
                 headers = {}
+                ctx = {"ids": example_ids, "n": 0}
                 try:
                     for p in params:
-                        value = example_for_schema(p.get("schema") or {}, variant, components)
+                        value = example_for_schema(p.get("schema") or {}, variant, components, 0, ctx)
                         if p.get("in") == "path":
                             url = url.replace("{%s}" % p["name"], str(value))
                         elif p.get("in") == "query" and (p.get("required") or variant % 2 == 1):
                             query[p["name"]] = value
                         elif p.get("in") == "header" and p.get("required"):
                             headers[p["name"]] = str(value)
-                    body = example_for_schema(body_schema, variant, components) if body_schema else None
+                    body = example_for_schema(body_schema, variant, components, 0, ctx) if body_schema else None
                 except Exception as e:  # noqa: BLE001
                     errors.append("skipped %s %s variant %d: could not build an example (%s: %s)" % (m, path, variant, type(e).__name__, str(e)[:120]))
                     continue
