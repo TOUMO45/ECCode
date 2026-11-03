@@ -43,6 +43,8 @@ For every seed give also `observableBy`, the HTTP request that shows the changed
 
 **Green suite.** After applying each seed alone, run at least the test files for the code it touches (more if you can) and confirm they pass. The measurement will later run the whole suite for every seed and drop any that fail, so a seed you could not verify may be dropped, not repaired.
 
+**Practical notes (environment, not about the measurement).** Mealie's tests run with `cd /root/.cache/eccode/mealie-seed && NLTK_DATA=/root/.cache/eccode/nltk_data UV_FROZEN=1 .venv/bin/python -m pytest <paths> -q -p no:cacheprovider`. There is no network. Mealie's own test fixtures (`tests/conftest.py`, `tests/fixtures`) give a test client with users and tokens; a throwaway test file that uses them may live in the checkout's `tests/` directory while you work (remove it before you finish; it is never part of a seed), or you can write a script with `fastapi.testclient.TestClient` on `mealie.app.app` and a temporary `DATA_DIR`.
+
 **Output.** Write one JSON file `<scratch>/seeds.json`:
 
 ```json
