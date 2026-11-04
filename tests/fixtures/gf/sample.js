@@ -226,7 +226,7 @@ function buildPlan(breakdown) {
   const s0 = breakdown.tasks.filter((x) => x.slice === 'S0');
   return {
     phases: [{ id: 'skeleton', name: 'Walking skeleton', goal: 'A running app stub with compose, the baseline migration, the mock, generated contract tests and red acceptance tests', acceptanceCriteria: ['the health endpoint answers', 'the compose file is valid'] }],
-    tasks: s0.map((x) => task(x.id, x.owner, x.files, x.dependencies, 'skeleton')),
+    tasks: s0.map((x) => task(x.id, x.owner, [...x.files], [...x.dependencies], 'skeleton')), // copies: a mutation of the breakdown must not reach plan.json
   };
 }
 
