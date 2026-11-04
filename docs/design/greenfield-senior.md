@@ -556,7 +556,7 @@ S1 (G1 pipeline and contract freeze) is implemented as designed, with the deviat
 
 ### 15.1 Independent review of S1 and what was done about it
 
-A fresh reviewer (a general-purpose agent, 120 tool calls, about 28 minutes, 419,658 tokens as reported) was given the code, the design, the plan and the constraints but not my conclusions, and asked to break it. Every finding was reproduced as a failing test before it was fixed. Outcome of the 4 blocking, 8 major and 5 minor findings plus its list of tests that could not fail:
+A fresh reviewer (a general-purpose agent, 121 tool calls, about 28 minutes, 419,658 tokens as reported) was given the code, the design, the plan and the constraints but not my conclusions, and asked to break it. Every finding was reproduced as a failing test before it was fixed. Outcome of the 4 blocking, 8 major and 5 minor findings plus its list of tests that could not fail:
 
 | Finding | Result |
 |---|---|
