@@ -100,15 +100,16 @@ test('bypass GF-ART-1: a registration whose hashes do not match the submission i
   assert.ok(errs.some((e) => /does not match submission/.test(e.message) && Number.isInteger(e.seq)), JSON.stringify(errs));
 });
 
-test('B2 one byte changed in a contract after the seal is GF-FRZ-2 (and the approved file drifted)', () => {
+test('B2 one byte changed in a contract after the seal is GF-FRZ-2, named by file; the frozen half reports it too', () => {
   const ctx = gfProject();
   run(ctx, sample.build(), WRAPPED);
   assert.strictEqual(audit.run(ctx.store, ctx.config).ok, true);
   fs.appendFileSync(path.join(ctx.dir, 'contracts/openapi.json'), ' ');
   const r = audit.run(ctx.store, ctx.config);
   assert.ok(rules(r).includes('GF-FRZ-2'));
-  assert.ok(rules(r).includes('GF-ART-DRIFT'));
   assert.ok(r.errors.some((e) => e.rule === 'GF-FRZ-2' && /openapi\.json/.test(e.message)));
+  assert.ok(r.base.unreviewed.some((u) => u.path === 'contracts/openapi.json'), 'the frozen audit sees "modified after approval"');
+  assert.ok(!rules(r).includes('GF-ART-DRIFT'), 'the approved bundle is still validated at its approved (snapshotted) bytes, not blamed for the edit');
   assert.strictEqual(r.ok, false);
 });
 
