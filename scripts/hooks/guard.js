@@ -29,11 +29,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const IMPLEMENTERS = new Set(['frontend-engineer', 'backend-engineer', 'ai-engineer', 'test-engineer', 'devops-engineer', 'learning-debugger', 'delivery-lead']);
+const IMPLEMENTERS = new Set(['frontend-engineer', 'backend-engineer', 'ai-engineer', 'test-engineer', 'devops-engineer', 'learning-debugger', 'delivery-lead', 'integration-engineer', 'database-engineer', 'security-engineer']);
 const ROLES = new Set([...IMPLEMENTERS, 'product-architect', 'architecture-reviewer', 'technical-designer', 'technical-reviewer', 'security-reviewer']);
-const RECORD_FILES = /(^|\/)\.eccode\/(events\.jsonl|state\.json|config\.json|evidence\/|improvements\/|memory\/records\/|lab\/|behavior\/[^/]+\.json$|design\/[^/]+\.md$|guards\/[^/]+\.json$)/;
+const RECORD_FILES = /(^|\/)\.eccode\/(events\.jsonl|state\.json|config\.json|evidence\/|improvements\/|memory\/records\/|lab\/|behavior\/[^/]+\.json$|design\/[^/]+\.md$|guards\/[^/]+\.json$|contracts\/[^/]+\.json$)/;
 // Shell text that refers to the record (bare `.eccode` covers `cd .eccode && …`).
-const RECORD_REF = /events\.jsonl|state\.json|\.eccode\/(config\.json|evidence|improvements|memory|lab)|\.eccode\/?(?=$|[\s"';&|)])/;
+const RECORD_REF = /events\.jsonl|state\.json|\.eccode\/(config\.json|evidence|improvements|memory|lab|contracts)|\.eccode\/?(?=$|[\s"';&|)])/;
 // A call of the eccode CLI: eccode.js, or the command word eccode (bare or in
 // a bin directory). The record directory (.eccode/), the toolkit directory
 // (.claude/eccode) and paths that merely contain the word are not calls.

@@ -35,6 +35,13 @@ for (const f of fs.readdirSync(path.join(ROOT, 'agents'))) {
 }
 const roles = new Set(Object.values(DEFAULT_CONFIG.roles).flatMap((r) => [...r.authors, ...r.reviewers]));
 for (const r of roles) if (!agentNames.has(r)) errors.push(`config role ${r} has no agent definition`);
+// The Greenfield-Senior group roles are added by a project's config (eccode-gf init), not by DEFAULT_CONFIG: each still needs an agent and a servable role.
+const { NEW_ROLES } = require('../lib/greenfield/constants');
+const { LOCKABLE } = require('../lib/mcp');
+for (const r of NEW_ROLES) {
+  if (!agentNames.has(r)) errors.push(`greenfield role ${r} has no agent definition`);
+  if (!LOCKABLE.has(r)) errors.push(`greenfield role ${r} is not a servable MCP role`);
+}
 
 for (const s of fs.readdirSync(path.join(ROOT, 'skills'))) {
   const file = path.join(ROOT, 'skills', s, 'SKILL.md');
