@@ -383,7 +383,7 @@ All events are `gf.*`, validated in `events.js`, committed through `Store.commit
 
 ## 8. Rule catalog and test matrix
 
-Every rule ships with a **positive** test (valid input accepted), a **negative** test (refused with a stable code), and a **bypass** test (an attempt to get around it that must be refused or caught). The generic bypass battery is run against every rule: **B1** commit the forged `gf.*` event directly through `Store.commit` (the frozen-CLI path); **B2** edit an artifact after its registration or seal; **B3** spoof the actor; **B4** replay the log with events reordered or truncated; **B5** call the frozen function (`gates.startGate`, `tasks.claim`) directly. B1, B2 and B5 must be caught by `gf audit`; B3 and B4 by the store chain and the actor binding. The table adds each rule's own bypass.
+Every rule ships with a **positive** test (valid input accepted), a **negative** test (refused with a stable code), and a **bypass** test (an attempt to get around it that must be refused or caught). The generic bypass battery is run against every rule: **B1** commit the forged `gf.*` event directly through `Store.commit` (the frozen-CLI path); **B2** edit an artifact after its registration or seal; **B3** spoof the actor; **B4** replay the log with events reordered or truncated; **B5** call the frozen function (`gates.startGate`, `tasks.claim`) directly. B1, B2 and B5 must be caught by `gf audit`; B4 by the frozen store's hash chain. **B3 is different:** the log asserts the actor and does not bind it (the frozen engine's own limit, `docs/architecture.md`), so an actor spoof is stopped only where the identity is locked (the MCP server per role, the hook) and is otherwise judged by the content rules, which do not read the actor except where a rule names one (L-GF-17). The table adds each rule's own bypass.
 
 | Rule | Enforces | At | Rule-specific bypass that must fail |
 |---|---|---|---|
@@ -423,7 +423,7 @@ Each slice is committed with tests before the next, and I wait for your go on ea
 
 | Slice | Scope | New files (main) | Exit evidence |
 |---|---|---|---|
-| **S1** | G1 pipeline and contract freeze: events, projection, six schemas and validators, OpenAPI structural validator, `jsonschema.js`, seal and amendment, estimate registration, the `wrap.js` wrappers, `eccode-gf` (`init`, `g1`, `seal`, `amend`, `audit`), MCP `gf_*` tools, 3 agents, orchestrator skill v1, rules GF-INIT/PRD/ARC/CON/THR/WBS/EST/SEAL/FRZ-2/5/MSG | `lib/greenfield/{index,events,projection,rules,wrap,jsonschema,openapi,contracts,messages}.js`, `bin/eccode-gf.js`, `schemas/gf-*.json` | every S1 rule has positive / negative / bypass; a forged-event battery is caught by `gf audit`; the sample G1 bundle seals; a contract edit after the seal is refused |
+| **S1** | G1 pipeline and contract freeze: events, projection, six schemas and validators, OpenAPI structural validator, `jsonschema.js`, seal and amendment, estimate registration, the `wrap.js` wrappers, `eccode-gf` (`init`, `g1`, `seal`, `amend`, `audit`), MCP `gf_*` tools, 3 agents, orchestrator skill v1, rules GF-INIT/PRD/ARC/CON/THR/WBS/EST/SEAL/FRZ-2/5/MSG | `lib/greenfield/{index,events,projection,rules,wrap,jsonschema,openapi,contracts,messages}.js`, `bin/eccode-gf.js`, `schemas/gf-*.json` | every S1 rule has positive / negative / bypass; a forged-event battery is caught by `gf audit`; the sample G1 bundle seals; a contract edit after the seal is detected by the audit (not refusable at write time: the plain CLI is outside the layer) and a contract change goes only through a recorded amendment |
 | **S2** | Ownership map and path-scoped permissions: GF-OWN-1..5, GF-FRZ-1, GF-CONF-1, group role sets in the hook, drafts namespacing | `lib/greenfield/ownership.js`; edits to `guard.js`, `mcp.js` | a task outside its group is refused at plan, write, completion and tree attribution; each bypass is caught |
 | **S3** | Contract-test generation and mock server: GF-FE-1, GF-FRZ-3/4 conformance (via the existing dump scripts), GF-ACC-1/2 | `mock.js`, `contract-tests.js`; tests against a fixture OpenAPI | the generated suite fails against an empty server, passes against a reference server; the mock logs a violation for an undeclared route |
 | **S4** | Parallel group orchestration on a toy project: `slice open / integrate / invalidate`, messages in use, estimates versus actuals, orchestrator skill v2, then **one real run from one idea to a delivery report** | `slice.js`, `report.js`; fixture `tests/fixtures/gf/toy-tasks` | the toy run's delivery report, sent to you as the first demo |
@@ -470,7 +470,7 @@ Each slice is committed with tests before the next, and I wait for your go on ea
 | L-GF-3 | Sub-agents of a group share the group's role id and are not individually identified | By design | S2 |
 | L-GF-4 | `.eccode/drafts/**` stays a shared scratch area, and the orchestrator's dispatch prompt stays an out-of-band channel | Open, named | S2 |
 | L-GF-5 | The mock server is stateless; multi-step flows are verified against the real backend at integration | Open, named | S3 |
-| L-GF-6 | The contract-test and artifact validators implement a stated JSON-Schema subset | Open, named | S3 |
+| L-GF-6 | The artifact validators implement a stated JSON-Schema subset; unsupported keywords are reported on the nodes the validator visits, unknown formats are annotations, and a user-supplied `pattern` is not guarded against catastrophic backtracking (S1 never evaluates one; S3 must before it does) | Open, named | S1 |
 | L-GF-7 | "Hidden" acceptance tests are write-denied and hash-sealed; read-denial depends on the harness running hooks on Read | Open, mitigated | S3 |
 | L-GF-8 | The engine cannot detect an undeclared guess, only make a declared one impossible to omit from the report | Open, named | S4 |
 | L-GF-9 | Per-slice design and plan gates are overhead the `feature` track imposes; their measured cost is reported after S4 | Open, named | S4 |
@@ -533,8 +533,9 @@ S1 (G1 pipeline and contract freeze) is implemented as designed, with the deviat
 |---|---|---|---|
 | GF-INIT-1 | `initProject` | GF-AUD-2 | one supported stack profile; a record is not adopted |
 | GF-PRD-1/2/3, GF-ARC-1, GF-CON-1..5, GF-THR-1, GF-WBS-1..3, GF-EST-1 (artifact shape), GF-ART-2 | `gateSubmit` | the same validators on the approved bundles | the stage artifacts |
-| GF-ART-1 | `gateReview` | yes | every document-gate submission was registered at its committed hashes |
+| GF-ART-1 | `gateReview` | yes | every APPROVED document-gate submission was registered at its committed hashes |
 | GF-ART-DRIFT | `gateSubmit` | yes | an approved stage artifact changed after approval (contracts are exempt once sealed: they are GF-FRZ-2) |
+| GF-THR-1 (reviewers) | `gateStart('design')` | yes | the design gate names the technical and the security reviewer, and both approved the approved submission |
 | GF-SEAL-1, GF-ORD-1 | `gateReview`, `gateStart`, `taskClaim` | yes | nothing is claimed or started in a phase before the seal; the seal matches the approved files |
 | GF-EST-1 | `gateStart`, `estimate.revise` | yes | one estimate, registered before the seal, revised only beside the original |
 | GF-FRZ-2 | detection only | yes | a sealed or amended contract has exactly its recorded bytes |
@@ -552,4 +553,29 @@ S1 (G1 pipeline and contract freeze) is implemented as designed, with the deviat
 7. Estimates are in tokens and hours as decided; the session's own token usage is reported cumulatively by the harness and was not snapshotted at the start of S1, so no S1-only token figure exists (evidence file).
 
 **Not in S1, by design.** Write-time ownership by group and the hook's contract and acceptance paths (S2); the generated mock server, contract tests and acceptance baseline (S3); slices as work items, the pinned integration run and the toy project (S4); the done verification (S5); the protocol (S6).
+
+### 15.1 Independent review of S1 and what was done about it
+
+A fresh reviewer (a general-purpose agent, 120 tool calls, about 28 minutes, 419,658 tokens as reported) was given the code, the design, the plan and the constraints but not my conclusions, and asked to break it. Every finding was reproduced as a failing test before it was fixed. Outcome of the 4 blocking, 8 major and 5 minor findings plus its list of tests that could not fail:
+
+| Finding | Result |
+|---|---|
+| B1 the frozen plan gate imports its tasks from the first `.json`, not `plan.json` | fixed: `plan.json` must be listed first (GF-WBS-1); the audit compares the engine's tasks with `plan.json` |
+| B2 stage artifacts matched by file name let an unvalidated file into the seal | fixed: each name belongs to one gate (GF-ART-2); the seal reads hashes gate by gate |
+| B3 an OpenAPI could hide operations (`paths` item by `$ref`), count `security: [{}]` as secured, or use empty schemas | fixed (GF-CON-1) |
+| B4 `{rel, abs}` entries read any file through the MCP tools | fixed: paths are strings only; nothing about a probed file appears in a message |
+| M1 the hook did not treat `eccode-gf` as the eccode CLI | fixed, with a parity test |
+| M2 PRD and ADR rules were judged against the live design state | fixed: each gate is judged against the record at its approval |
+| M3 a PRD assumption entry could cite any assumption | fixed: its own question's only |
+| M4 a failed seal could not be retried | fixed: `eccode-gf seal`, `gf_seal` |
+| M5 an orphan submission left the audit dirty | fixed: only approved submissions need registrations |
+| M6 the design gate could be approved without the security reviewer | fixed (GF-THR-1), at start and in the audit |
+| M7 audit gaps (estimate, message bytes and replies, classification, duplicate requests, unsealed contract files) | fixed |
+| M8 validators and the audit crashed on malformed input | fixed: type guards, a guarded validator wrapper, an audit that never throws; a 400-case seeded fuzz |
+| m1 symlinked parent directory, non-regular file | fixed |
+| m3 the matrix allowed anonymous on a non-public operation | fixed: anonymous follows `x-gf-public` |
+| m2 ReDoS latent in a user `pattern`; unknown formats ignored; unsupported keywords reported only on visited nodes | named, not fixed: L-GF-6 (S1 evaluates no user pattern) |
+| m4 the three group role names are now reserved by the hook in every ECCode project | named: L-GF-18 |
+| m5 documentation claims the code does not back (refused vs detected, actor spoof, which slice) | corrected in this document and the limits |
+| tests that could not fail (audit chain checks, seal and amendment in-lock checks, `amendedProblems`, non-GF fallthrough, ...) | fixed: `tests/gf-audit-forged.test.js` (24 cases) and `tests/gf-review.test.js`; the rule-removal battery was re-run (evidence file) |
 
