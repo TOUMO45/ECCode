@@ -37,7 +37,7 @@ const RECORD_REF = /events\.jsonl|state\.json|\.eccode\/(config\.json|evidence|i
 // A call of the eccode CLI: eccode.js, or the command word eccode (bare or in
 // a bin directory). The record directory (.eccode/), the toolkit directory
 // (.claude/eccode) and paths that merely contain the word are not calls.
-const CLI_REF = /eccode\.js\b|(^|[\s;&|(`'"=]|bin\/)eccode(?=$|[\s;&|)'"`])/;
+const CLI_REF = /eccode(-gf)?\.js\b|(^|[\s;&|(`'"=]|bin\/)eccode(-gf)?(?=$|[\s;&|)'"`])/;
 // find's actions that write, delete or run something; without them find only lists.
 const FIND_ACTIONS = /^-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)$/;
 const READ_ONLY = new Set(['cat', 'head', 'tail', 'less', 'more', 'jq', 'grep', 'egrep', 'fgrep', 'rg', 'wc', 'ls', 'stat', 'file', 'diff', 'cmp', 'sha256sum', 'shasum', 'md5sum', 'cd', 'pwd', 'echo', 'printf', 'sort', 'uniq', 'cut', 'tr', 'test', '[', 'true', 'ps']);
@@ -192,7 +192,7 @@ function writesRecord(cmd, { subagent }) {
     if (name === 'env' && !args.some((a) => !a.startsWith('-'))) continue; // env alone prints the environment
     if (name === 'sed' && !args.some((a) => /^(-i|--in-place)/.test(a))) continue;
     if (name === 'find' && !args.some((a) => FIND_ACTIONS.test(a) || /[\\$`]/.test(a))) continue; // find only lists
-    if (/^eccode(\.js)?$/.test(name) || (['node', 'npx'].includes(name) && /(^|\/)eccode(\.js)?$/.test(args[0] || ''))) {
+    if (/^eccode(-gf)?(\.js)?$/.test(name) || (['node', 'npx'].includes(name) && /(^|\/)eccode(-gf)?(\.js)?$/.test(args[0] || ''))) {
       // `evidence run … -- <cmd>` and `improve evaluate … -- <cmd>` execute <cmd>.
       const at = cmd.indexOf(' -- ');
       if (at !== -1 && writesRecord(cmd.slice(at + 4).trim().replace(/^(['"])([\s\S]*)\1$/, '$2'), { subagent })) return true;
@@ -307,7 +307,7 @@ function directCalls(cmd) {
   return calls.length > 0 && calls.every((seg) => {
     const words = seg.trim().replace(/^\(+/, '').split(/\s+/).filter((w) => w && !/^\w+=/.test(w));
     const name = words.length ? path.basename(words[0]) : '';
-    return /^eccode(\.js)?$/.test(name) || (['node', 'npx'].includes(name) && /(^|\/)eccode(\.js)?$/.test(words[1] || ''));
+    return /^eccode(-gf)?(\.js)?$/.test(name) || (['node', 'npx'].includes(name) && /(^|\/)eccode(-gf)?(\.js)?$/.test(words[1] || ''));
   });
 }
 

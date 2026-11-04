@@ -249,7 +249,7 @@ test('bypass: a deleted or edited snapshot of a sealed contract is GF-FRZ-2', ()
   assert.ok(audit.run(ctx.store, ctx.config).errors.some((e) => e.rule === 'GF-FRZ-2' && /snapshot/.test(e.message)));
 });
 
-test('bypass: an amended file that no longer validates is reported, and a tampered live contract is not re-validated as if it were approved', () => {
+test('bypass: a contract edited again after its amendment, with no new amendment, is GF-FRZ-2', () => {
   const ctx = sealed();
   const req = request(ctx);
   addOperation(ctx);

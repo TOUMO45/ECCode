@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - **Frozen v3 set:** 48 files in `bench/pilot/phase2-freeze-v3.json` are never edited; `ECCODE_FREEZE_FILE=bench/pilot/phase2-freeze-v3.json node bench/pilot/phase2-seeds.js check` must print `frozen: 48 files` before the first change and after the last. No frozen file may `require` anything under `lib/greenfield/`. `scripts/guards/*.py` are read-only.
-- **Wording:** the word *prevent* (any form) appears only in the owner's phrase "prevention on the managed (MCP) path plus guaranteed detection by log-replay audit in all profiles", or in a sentence that also contains "managed" or "audit". Never bare "prevention".
+- **Wording:** the word *prevent* (any form) appears only in the owner's phrase "prevention on the managed (MCP) path plus guaranteed detection by log-replay audit in all profiles", or in a sentence that also contains "managed" or "audit". The claim never appears without its audit half.
 - **Merge rule:** never merge or touch `origin/claude/v3-generalization-fastapi-*`. Limit ids stay placeholders `L-GF-n` in a separate file, `docs/limits-greenfield.md`; `docs/limits.md` and `tests/limits.test.js` are not edited.
 - **Paid runs:** none. $0 on the meter. Standing rules: no fabricated numbers, labels before figures, nothing tuned after a result.
 - **Non-GF projects behave exactly as before:** every wrapped operation is a straight pass-through unless the log holds `gf.project.initialized`.
@@ -65,7 +65,7 @@ Edits to unfrozen files: `lib/mcp.js` (LOCKABLE + `extendTools`), `scripts/hooks
 
 - [ ] **Step 1: Failing test** `gf-docs.test.js`: (a) `docs/limits-greenfield.md` has a row for each of `L-GF-1`..`L-GF-13`, each with a disposition from {`Open, named`, `Open, mitigated`, `By design`}; (b) in `docs/design/greenfield-senior.md`, `docs/limits-greenfield.md`, `skills/orchestrate-greenfield/SKILL.md`, `agents/{integration,database,security}-engineer.md` and the `eccode-gf` help text, every sentence containing `/prevent/i` also contains `managed` or `audit`; (c) `docs/limits.md` is byte-identical to `git show 948a95b:docs/limits.md`.
 - [ ] **Step 2: Run** `node --test tests/gf-docs.test.js`. Expected: FAIL (file missing).
-- [ ] **Step 3: Write** `docs/limits-greenfield.md` (L-GF-1 the additive-enforcement limit in the owner's exact wording; L-GF-2 stack profile; L-GF-3..12 from design section 11; L-GF-13 the deferred v4 freeze; the process-level E2E check is part of L-GF-10) and add section 14 "Owner decisions of 2026-11-04" plus the corrected wording to the design doc, and the secondary process-level E2E evidence to section 5. Reword every bare "prevent" in the design doc.
+- [ ] **Step 3: Write** `docs/limits-greenfield.md` (L-GF-1 the additive-enforcement limit in the owner's exact wording; L-GF-2 stack profile; L-GF-3..12 from design section 11; L-GF-13 the deferred v4 freeze; the process-level E2E check is part of L-GF-10) and add section 14 "Owner decisions of 2026-11-04" plus the corrected wording to the design doc, and the secondary process-level E2E evidence to section 5. Reword every one-sided enforcement claim in the design doc.
 - [ ] **Step 4: Run** the test. Expected: PASS.
 - [ ] **Step 5: Commit** `docs: record owner decisions and the greenfield limits register`.
 
@@ -235,6 +235,6 @@ Rules and their pinned checks:
 
 ## Self-review
 
-- **Spec coverage:** section 3.1-3.6 (stages, schemas, cross-validation, seal, amendment, estimates, assumptions) are Tasks 4, 5, 7 (assumptions in GF-PRD-3); 2.2 prevent-versus-detect is Tasks 5 and 6; 2.4 roles is Tasks 3 and 8; section 8 rules for S1 (`INIT, PRD, ARC, CON, THR, WBS, EST, SEAL, FRZ-2, FRZ-5, MSG`) each map to a table row or interface above. Out of S1 by design: ownership enforcement at write time (S2), mock/contract tests (S3), slices (S4), done verification (S5).
+- **Spec coverage:** section 3.1-3.6 (stages, schemas, cross-validation, seal, amendment, estimates, assumptions) are Tasks 4, 5, 7 (assumptions in GF-PRD-3); 2.2 the enforcement model is Tasks 5 and 6; 2.4 roles is Tasks 3 and 8; section 8 rules for S1 (`INIT, PRD, ARC, CON, THR, WBS, EST, SEAL, FRZ-2, FRZ-5, MSG`) each map to a table row or interface above. Out of S1 by design: ownership enforcement at write time (S2), mock/contract tests (S3), slices (S4), done verification (S5).
 - **Deviation from the spec, recorded:** the design's single rule `GF-WBS-1` is split into `GF-WBS-1..3`, `GF-ART-1/2/DRIFT`, `GF-ORD-1`, `GF-AUD-1/2` are added, estimates are registered at seal time (not at each submit), and checkpoints are dropped from `breakdown.json` because the base engine already derives them. The design doc's as-built section lists these.
 - **Type consistency:** `validateGate` returns `{ problems, registrations }` in Tasks 4, 5 and 8; rule ids are the strings in the Task 4 table everywhere.

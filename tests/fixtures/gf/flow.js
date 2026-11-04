@@ -68,21 +68,26 @@ function recordRequest(ctx, art) {
 const ev = (p) => approval([[`artifact:${p}`]]);
 
 /** Run the three document gates with `api` (WRAPPED or FROZEN) up to and including `upTo`. Throws where a gate refuses; `ctx.at` says which. */
-function run(ctx, art, api, { upTo = 'plan' } = {}) {
+function run(ctx, art, api, { upTo = 'plan', from = 'architecture', written: resumed } = {}) {
   const { store, config } = ctx;
-  recordRequest(ctx, art);
-  const written = sample.write(ctx.dir, art);
-  ctx.at = 'architecture';
-  api.start(store, config, 'architecture', 'orchestrator');
-  api.submit(store, config, 'architecture', 'product-architect', { artifacts: written.architecture });
-  api.review(store, config, 'architecture', 'architecture-reviewer', ev('.eccode/artifacts/prd.json'));
-  if (upTo === 'architecture') return written;
-  ctx.at = 'design';
-  api.start(store, config, 'design', 'orchestrator', { reviewers: ['technical-reviewer', 'security-reviewer'] });
-  api.submit(store, config, 'design', 'technical-designer', { artifacts: written.design });
-  api.review(store, config, 'design', 'technical-reviewer', ev('contracts/openapi.json'));
-  api.review(store, config, 'design', 'security-reviewer', ev('.eccode/artifacts/threat-model.json'));
-  if (upTo === 'design') return written;
+  let written = resumed;
+  if (from === 'architecture') {
+    recordRequest(ctx, art);
+    written = sample.write(ctx.dir, art);
+    ctx.at = 'architecture';
+    api.start(store, config, 'architecture', 'orchestrator');
+    api.submit(store, config, 'architecture', 'product-architect', { artifacts: written.architecture });
+    api.review(store, config, 'architecture', 'architecture-reviewer', ev('.eccode/artifacts/prd.json'));
+    if (upTo === 'architecture') return written;
+  }
+  if (from !== 'plan') {
+    ctx.at = 'design';
+    api.start(store, config, 'design', 'orchestrator', { reviewers: ['technical-reviewer', 'security-reviewer'] });
+    api.submit(store, config, 'design', 'technical-designer', { artifacts: written.design });
+    api.review(store, config, 'design', 'technical-reviewer', ev('contracts/openapi.json'));
+    api.review(store, config, 'design', 'security-reviewer', ev('.eccode/artifacts/threat-model.json'));
+    if (upTo === 'design') return written;
+  }
   ctx.at = 'plan';
   api.start(store, config, 'plan', 'orchestrator');
   api.submit(store, config, 'plan', 'delivery-lead', { artifacts: written.plan });

@@ -24,6 +24,7 @@ G1 (architecture, design, plan: the existing gates, with the stage rules run fir
   gate submit <gate> --actor <role> --artifact <file> ... [--responds-to <review id>] [--notes <text>]
   gate review <gate> --actor <role> --file <review.json>   Approving the plan gate seals G1
   task claim <task> --actor <role>                         Refused until G1 is sealed
+  seal --actor <role>                                      Retry the seal if it failed after the plan gate was approved
 
 After the seal
   amend request --actor <role> --contract <path> --reason <text> --message <msg id> --proposed <text>
@@ -112,6 +113,12 @@ function main(argv) {
         const status = store.state().gates[gateId].status;
         print(flags, `Review ${event.data.reviewId} recorded; gate ${gateId} is ${status}.`, { reviewId: event.data.reviewId, gateStatus: status });
       }
+      return 0;
+    }
+    case 'seal': {
+      need(actor, '--actor');
+      const r = gf.wrap.seal(store, config);
+      print(flags, `G1 sealed: ${r.event.data.contractsHash.slice(0, 12)}`, { sealed: true, contractsHash: r.event.data.contractsHash, estimateSeq: r.event.data.estimateSeq });
       return 0;
     }
     case 'task': {

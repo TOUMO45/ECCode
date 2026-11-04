@@ -15,7 +15,7 @@ const { NEW_ROLES } = require('../lib/greenfield/constants');
 const { project } = require('../lib/greenfield/projection');
 
 const ROOT = path.join(__dirname, '..');
-const GF_TOOLS = ['gf_status', 'gf_validate', 'gf_message_send', 'gf_message_list', 'gf_amend_request', 'gf_amend_apply', 'gf_estimate_revise', 'gf_audit'];
+const GF_TOOLS = ['gf_status', 'gf_validate', 'gf_message_send', 'gf_message_list', 'gf_amend_request', 'gf_amend_apply', 'gf_estimate_revise', 'gf_seal', 'gf_audit'];
 const WRAPPED_TOOLS = ['gate_start', 'gate_submit', 'gate_review', 'task_claim'];
 const GUARD = path.join(ROOT, 'scripts', 'hooks', 'guard.js');
 
@@ -32,7 +32,7 @@ function guard(dir, agent, tool, input) {
   return res.stdout ? JSON.parse(res.stdout).hookSpecificOutput.permissionDecision : 'allow';
 }
 
-test('the tool table has the eight gf_* tools, and the gate and claim tools keep their names and schemas', () => {
+test('the tool table has the nine gf_* tools, and the gate and claim tools keep their names and schemas', () => {
   const tools = byName();
   for (const n of GF_TOOLS) assert.ok(tools[n], `${n} is missing`);
   for (const n of WRAPPED_TOOLS) assert.ok(tools[n], `${n} is missing`);
@@ -104,7 +104,8 @@ test('gate_start, gate_submit, gate_review and task_claim on a plain project beh
   const a = call('gate_submit', { gate: 'architecture', artifacts: ['.eccode/artifacts/brief.md'] }, via, 'product-architect');
   const b = gates.submit(direct.store, direct.config, 'architecture', 'product-architect', { artifacts: ['.eccode/artifacts/brief.md'] }).event.data;
   assert.deepStrictEqual(Object.keys(a).sort(), Object.keys(b).sort());
-  assert.deepStrictEqual(a.artifacts.map((x) => x.path), b.artifacts.map((x) => x.path));
+  assert.deepStrictEqual(a.artifacts, b.artifacts, 'same artifacts with the same hashes');
+  assert.deepStrictEqual({ gate: a.gate, respondsTo: a.respondsTo, notes: a.notes }, { gate: b.gate, respondsTo: b.respondsTo, notes: b.notes });
   const review = require('./helpers').approval([['artifact:.eccode/artifacts/brief.md#Requirements']]);
   const r1 = call('gate_review', { gate: 'architecture', review }, via, 'architecture-reviewer');
   gates.recordReview(direct.store, direct.config, 'architecture', 'architecture-reviewer', review);

@@ -304,7 +304,7 @@ function write(dir, art) {
   if (!art.__noRehash) threat.accessMatrixSha256 = sha(ser(art.accessMatrix));
   out.design.push(put('.eccode/artifacts/spec.md', DESIGN_MD), put('.eccode/artifacts/threat-model.json', ser(threat)));
   out.plan.push(put('.eccode/artifacts/plan.json', ser(art.plan)), put('.eccode/artifacts/breakdown.json', ser(art.breakdown)), put('.eccode/artifacts/estimates.json', ser(art.estimates)));
-  for (const extra of art.__extraFiles || []) out[extra.gate].push(put(extra.path, extra.content));
+  for (const extra of art.__extraFiles || []) out[extra.gate][extra.first ? 'unshift' : 'push'](put(extra.path, extra.content));
   if (art.__symlink) {
     const abs = path.join(dir, art.__symlink);
     const target = `${abs}.real`;

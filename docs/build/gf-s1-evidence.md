@@ -13,7 +13,7 @@ S1 is the G1 pipeline and contract freeze (`docs/design/greenfield-senior.md`, s
 | `scripts/guards/*.py` untouched | verified | no path under `scripts/guards/` appears in `git diff --name-only 948a95b HEAD` |
 | `docs/limits.md` untouched (merge rule) | verified | `git diff --quiet 948a95b HEAD -- docs/limits.md` exit 0; also asserted by `tests/gf-docs.test.js` |
 | No paid run | verified | no benchmark arm was launched; the benchmark meter is $0 (the session's own compute is reported in section 5) |
-| Wording: "prevent" never bare | verified | `tests/gf-docs.test.js` scans the design doc, the limits file, the skill, the three agents, `bin/eccode-gf.js` and `lib/greenfield/**` |
+| Wording: the enforcement claim never appears without its audit half | verified | `tests/gf-docs.test.js` scans the design doc, the limits file, the skill, the three agents, `bin/eccode-gf.js` and `lib/greenfield/**` |
 
 ## 2. Test-first: what "red" was at each task
 
@@ -21,7 +21,7 @@ Red logs are in the session scratchpad; the table says honestly what each red pr
 
 | Task | Red run (before the code) | What the red proves |
 |---|---|---|
-| T0 docs | 5 tests, 3 fail | per-test red (bare "prevent", no limits file, no section 14) |
+| T0 docs | 5 tests, 3 fail | per-test red (a one-sided enforcement claim, no limits file, no section 14) |
 | T1 jsonschema, T2 openapi, T3 events | 1 test each, 0 pass | the test file ran and the module did not exist (a load error, not a per-test red) |
 | T4 stages, T5 flow, T6 audit, T7 amend | 1 test each, 0 pass | the same: module missing |
 | T8 MCP, roles, hook | 11 tests, 10 fail | per-test red (the hook allowed an unknown role's write; no `gf_*` tools) |

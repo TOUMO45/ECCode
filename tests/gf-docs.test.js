@@ -16,6 +16,8 @@ const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const WORDING_FILES = [
   'docs/design/greenfield-senior.md',
   'docs/limits-greenfield.md',
+  'docs/build/gf-s1-evidence.md',
+  'docs/superpowers/plans/2026-11-04-greenfield-senior-s1.md',
   'skills/orchestrate-greenfield/SKILL.md',
   'agents/integration-engineer.md',
   'agents/database-engineer.md',

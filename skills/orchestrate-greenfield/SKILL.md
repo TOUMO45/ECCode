@@ -14,21 +14,23 @@ You are the lead orchestrator. This playbook extends the `orchestrate` skill for
 `eccode-gf init --name "<name>" --idea "<idea>"` (stack profile `python-fastapi-sqlalchemy-sqlite`, the only one in v1). Then `gf_status`. Never present a non-FastAPI stack as able to reach DONE: it can be built, it cannot be declared done (limit L-GF-2).
 
 ## 1. Ambiguity first (DECLARED_ASSUMPTION)
-Before the architecture is written, list what the idea leaves open and record each question: `request_ambiguity`. Headless, give each non-blocking question its reasonable `reading` so it becomes a recorded assumption and work continues; a blocking question stops planning until it is assumed or the user answers. The PRD must carry an `ambiguityScan` that lists every recorded question, so a guess cannot be silent. The delivery report prints each as DECLARED_ASSUMPTION.
+Before the architecture is written, list what the idea leaves open and record each question: `request_ambiguity`. Headless, give each non-blocking question its reasonable `reading` so it becomes a recorded assumption and work continues; a blocking question stops planning until it is assumed or the user answers. The PRD must carry an `ambiguityScan` that lists every question recorded when it is approved, and an `assumed` entry cites the assumption recorded for its own question, so a guess cannot be silent. The delivery report prints each as DECLARED_ASSUMPTION.
 
 ## 2. The three gates (each: start, author, dry run, submit, independent review)
-For each of `architecture`, `design`, `plan`: `gate_start`; dispatch the author; have the author run **`gf_validate`** on the artifacts before `gate_submit` and fix every rule id it reports; then dispatch the independent reviewer. A submission that breaks a rule is refused with the rule id and commits nothing.
+For each of `architecture`, `design`, `plan`: `gate_start`; dispatch the author; have the author run **`gf_validate`** on the artifacts before `gate_submit` and fix every rule id it reports; then dispatch the independent reviewer. A submission that breaks a rule is refused with the rule id and nothing is registered. (One narrow case commits first: if a file changes between the validation and the frozen submit, the submission exists but is unregistered, so it cannot be approved; save the file again, or have the reviewer request changes, and resubmit.)
 
 | Gate | Author submits | Reviewers |
 |---|---|---|
 | `architecture` | `prd.json` (problem, users, scope, non-goals, `ambiguityScan`, criteria each with a machine-checkable `verify`) and `architecture.json` (components, data flow, technology choices). Each choice has at least two alternatives and its own recorded design decision with an ADR (`design_alternatives`, `design_decide`, `design_adr`) before submission | `architecture-reviewer` |
-| `design` | `contracts/openapi.json`, `db-schema.json`, `migrations-plan.json`, `access-matrix.json`, `fixtures.json` (and optionally `events.json`), plus `threat-model.json` | start with `--reviewers technical-reviewer,security-reviewer`: both approve the same submission |
+| `design` | `contracts/openapi.json`, `db-schema.json`, `migrations-plan.json`, `access-matrix.json`, `fixtures.json` (and optionally `events.json`), plus `threat-model.json` | **must** start with reviewers `technical-reviewer` and `security-reviewer`: the start is refused without both, and both approve the same submission |
 | `plan` | `plan.json` for the walking-skeleton slice, `breakdown.json` for every slice (groups, ownership globs, tasks, estimated lines), `estimates.json` (per group, labelled `agent-estimate-uncalibrated`) | `technical-reviewer` |
+
+Artifacts are matched by file name and each name belongs to one gate (`estimates.json` is a plan-gate file, `prd.json` an architecture-gate file): a stage artifact submitted at another gate is refused. The plan gate imports its tasks from the first `.json` artifact it is given, so list `plan.json` first; a different first file is refused.
 
 Open questions that change the outcome go to the user together, once; headless, they are recorded with their readings.
 
 ## 3. The seal
-When the plan gate is approved the engine registers the estimate and seals G1: one hash over the PRD and the contract files, and a content-addressed snapshot of each contract. Nothing can be claimed or started in a phase before the seal. Check `gf_status`: `sealed: true`.
+When the plan gate is approved the engine registers the estimate and seals G1: one hash over the PRD and the contract files, and a content-addressed snapshot of each contract. Nothing can be claimed or started in a phase before the seal. Check `gf_status`: `sealed: true`. If the plan gate is approved but the seal failed (for example a contract file was touched in between), restore the file and retry with `gf_seal` (`eccode-gf seal`); nothing can be claimed until then.
 
 ## 4. After the seal
 - **Contracts are frozen.** A change is a recorded amendment: the group that needs it sends an `amendment-request` message to `api` (`gf_message_send`), files `gf_amend_request`, the api group edits the file, and a reviewer records `gf_amend_apply` with a reason of at least 30 characters. Never edit a sealed contract without that chain.

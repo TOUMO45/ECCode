@@ -58,11 +58,11 @@ function drive(dir, art, { stopAt = 'plan' } = {}) {
   return w;
 }
 
-test('help states the enforcement wording and names every command; no command is also a bare "prevent"', () => {
+test('help states the enforcement wording and names every command', () => {
   const r = gf(repo(), ['--help']);
   assert.strictEqual(r.code, 0);
   assert.match(r.out, /prevention on the managed \(MCP\) path plus guaranteed detection by log-replay audit in all profiles/);
-  for (const c of ['init', 'status', 'validate', 'gate', 'task claim', 'amend', 'message', 'estimate revise', 'audit']) assert.ok(r.out.includes(c), `${c} missing from help`);
+  for (const c of ['init', 'status', 'validate', 'gate', 'task claim', 'seal', 'amend', 'message', 'estimate revise', 'audit']) assert.ok(r.out.includes(c), `${c} missing from help`);
   assert.strictEqual(gf(repo(), []).code, 0, 'no arguments prints the help');
 });
 

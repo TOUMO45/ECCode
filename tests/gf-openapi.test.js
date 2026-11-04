@@ -73,6 +73,13 @@ for (const [name, mutate, text] of REFUSALS) {
   });
 }
 
+test('a $ref that is not local is GF-CON-1', () => {
+  const d = clone(doc());
+  d.paths['/tasks'].get.responses[200].content['application/json'].schema = { $ref: 'http://example.test/schema.json' };
+  const problems = rules(d);
+  assert.ok(problems.every((p) => p.rule === 'GF-CON-1') && problems.some((p) => /only local \$ref/.test(p.message)), JSON.stringify(problems));
+});
+
 test('a duplicate operationId is reported once, not once per use', () => {
   const d = clone(doc());
   d.paths['/tasks'].post.operationId = 'listTasks';

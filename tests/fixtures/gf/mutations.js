@@ -3,6 +3,7 @@
 // violated; `gate` is where the layer must refuse it (earlier gates must still accept the mutated bundle).
 // Used three ways: stage validators refuse the row (gf-stages), the wrapped gate operations refuse it with the
 // rule id (gf-flow), and the frozen API accepts it while `gf audit` reports the rule id (gf-audit bypass).
+const { task: planTask } = require('../../helpers');
 const task = (art, id) => art.breakdown.tasks.find((t) => t.id === id);
 const group = (art, name) => art.breakdown.groups.find((g) => g.name === name);
 const crit = (art, id) => art.prd.criteria.find((c) => c.id === id);
@@ -25,6 +26,7 @@ const MUTATIONS = [
   { rule: 'GF-PRD-3', gate: A, name: 'no ambiguity claimed while a blocking question is open', apply: (a) => { a.prd.ambiguityScan = { none: true, justification: 'nothing in this idea is ambiguous at all' }; a.extraQuestions = [{ id: 'Q-9', text: 'Which payment provider?', blocking: true }]; } },
   { rule: 'GF-PRD-3', gate: A, name: 'an assumed entry citing an assumption nobody recorded', apply: (a) => { a.prd.ambiguityScan[0].assumptionId = 'Q-404'; } },
   { rule: 'GF-PRD-3', gate: A, name: 'a recorded question missing from the scan', apply: (a) => { a.extraQuestions = [{ id: 'Q-8', text: 'Should there be rate limits?', blocking: false, assume: true }]; } },
+  { rule: 'GF-PRD-3', gate: A, name: 'an assumed entry citing another question\'s assumption', apply: (a) => { a.extraQuestions = [{ id: 'Q-7', text: 'Should tasks have due dates?', blocking: false, assume: false }]; a.prd.ambiguityScan.push({ id: 'Q-7', question: 'Should tasks have due dates?', resolution: 'assumed', assumptionId: 'Q-1' }); } },
   { rule: 'GF-PRD-3', gate: A, name: 'a clarified entry without a user clarification', apply: (a) => { a.prd.ambiguityScan[1].resolution = 'clarified'; delete a.prd.ambiguityScan[1].assumptionId; } },
   // --- architecture ---
   { rule: 'GF-ARC-1', gate: A, name: 'a technology choice with one alternative', apply: (a) => { a.architecture.techChoices[0].alternatives = a.architecture.techChoices[0].alternatives.slice(0, 1); } },
@@ -34,6 +36,9 @@ const MUTATIONS = [
   { rule: 'GF-ARC-1', gate: A, name: 'a decision with no ADR', apply: (a) => { a.skipAdr = ['TC-3']; } },
   // --- contracts ---
   { rule: 'GF-CON-1', gate: D, name: 'a duplicate operationId in the OpenAPI', apply: (a) => { a.openapi.paths['/tasks'].post.operationId = 'listTasks'; } },
+  { rule: 'GF-CON-1', gate: D, name: 'a path item defined by $ref (operations the layer cannot see)', apply: (a) => { const ok = { description: 'ok', content: { 'application/json': { schema: { type: 'object' } } } }; a.openapi.components.pathItems = { Hidden: { delete: { operationId: 'wipeAll', 'x-gf-public': true, responses: { 200: ok, 400: ok } } } }; a.openapi.paths['/hidden'] = { $ref: '#/components/pathItems/Hidden' }; } },
+  { rule: 'GF-CON-1', gate: D, name: 'an operation secured by an empty requirement (anonymous)', apply: (a) => { a.openapi.paths['/tasks'].get.security = [{}]; } },
+  { rule: 'GF-CON-1', gate: D, name: 'a response with an empty schema', apply: (a) => { a.openapi.paths['/tasks'].get.responses[200].content['application/json'].schema = {}; } },
   { rule: 'GF-CON-2', gate: D, name: 'a table without a primary key', apply: (a) => { for (const c of a.dbSchema.tables[0].columns) delete c.primaryKey; } },
   { rule: 'GF-CON-2', gate: D, name: 'a migration step without a down', apply: (a) => { a.migrationsPlan.steps[0].down = 'x'; } },
   { rule: 'GF-CON-2', gate: D, name: 'a table no migration creates', apply: (a) => { a.migrationsPlan.steps[2].creates = []; } },
@@ -43,6 +48,8 @@ const MUTATIONS = [
   { rule: 'GF-CON-3', gate: D, name: 'no anonymous role', apply: (a) => { a.accessMatrix.roles = a.accessMatrix.roles.filter((r) => r.name !== 'anonymous'); a.accessMatrix.cells = a.accessMatrix.cells.filter((c) => c.role !== 'anonymous'); } },
   { rule: 'GF-CON-3', gate: D, name: 'an expected value outside allow and deny', apply: (a) => { a.accessMatrix.cells[0].expected = 'maybe'; } },
   { rule: 'GF-CON-3', gate: D, name: 'a duplicated cell', apply: (a) => { a.accessMatrix.cells.push({ ...a.accessMatrix.cells[0] }); } },
+  { rule: 'GF-CON-3', gate: D, name: 'anonymous allowed on an operation that is not public', apply: (a) => { a.accessMatrix.cells.find((c) => c.role === 'anonymous' && c.operationId === 'listTasks').expected = 'allow'; } },
+  { rule: 'GF-CON-3', gate: D, name: 'anonymous denied on a public operation', apply: (a) => { a.accessMatrix.cells.find((c) => c.role === 'anonymous' && c.operationId === 'health').expected = 'deny'; } },
   { rule: 'GF-CON-4', gate: D, name: 'fixtures naming a role the matrix lacks', apply: (a) => { a.fixtures.roles.superuser = { headers: {} }; } },
   { rule: 'GF-CON-4', gate: D, name: 'credentials for the anonymous role', apply: (a) => { a.fixtures.roles.anonymous = { headers: { Authorization: 'Bearer x' } }; } },
   { rule: 'GF-CON-4', gate: D, name: 'a fixtures login naming an unknown operation', apply: (a) => { a.fixtures.roles.member.login.operationId = 'ghostLogin'; } },
@@ -78,6 +85,10 @@ const MUTATIONS = [
   { rule: 'GF-EST-1', gate: P, name: 'a group with tasks and no estimate', apply: (a) => { delete a.estimates.groups.test; } },
   // --- artifacts on disk ---
   { rule: 'GF-ART-2', gate: A, name: 'a duplicated basename in one submission', apply: (a) => { a.__extraFiles = [{ gate: 'architecture', path: '.eccode/artifacts/dup/prd.json', content: `${JSON.stringify(a.prd, null, 2)}\n` }]; } },
+  { rule: 'GF-ART-2', gate: A, name: 'an estimates.json smuggled into the architecture submission', apply: (a) => { a.__extraFiles = [{ gate: 'architecture', path: '.eccode/artifacts/smuggled/estimates.json', content: `${JSON.stringify(a.estimates, null, 2)}\n` }]; } },
+  { rule: 'GF-ART-2', gate: D, name: 'a prd.json smuggled into the design submission', apply: (a) => { a.__extraFiles = [{ gate: 'design', path: '.eccode/artifacts/smuggled/prd.json', content: `${JSON.stringify(a.prd, null, 2)}\n` }]; } },
+  { rule: 'GF-ART-2', gate: A, name: 'a contracts/events.json smuggled into the architecture submission', apply: (a) => { a.__extraFiles = [{ gate: 'architecture', path: 'contracts/events.json', content: '{"junk":true}\n' }]; } },
+  { rule: 'GF-WBS-1', gate: P, name: 'a plan.json that is not the first json artifact (the frozen gate imports the first)', apply: (a) => { a.__extraFiles = [{ gate: 'plan', first: true, path: '.eccode/artifacts/aaa.json', content: `${JSON.stringify({ ...a.plan, tasks: [...a.plan.tasks, planTask('rogue', 'backend-engineer', ['**'], [], 'skeleton')] }, null, 2)}\n` }]; } },
   { rule: 'GF-ART-2', gate: A, name: 'a symlinked stage artifact', apply: (a) => { a.__symlink = '.eccode/artifacts/prd.json'; } },
 ];
 
