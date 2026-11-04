@@ -23,7 +23,7 @@ The last point decides the architecture. The 48 frozen files include `bin/eccode
 
 | # | Decision | Recommendation | Why it needs you |
 |---|---|---|---|
-| **D1** | Extend without modifying frozen files. Enforcement is *prevented* at write time through the MCP layer and the hook, and *detected* by log replay in every profile. The plain `eccode` CLI cannot refuse a Greenfield-Senior rule (it is frozen). | Accept. Fallback if you reject it: cut a v4 freeze, which means a protocol note and a new hash file. | It trades "refuse everywhere" for "refuse where agents write; detect everywhere". Section 2.2 shows exactly where each applies. |
+| **D1** | Extend without modifying frozen files. Enforcement is **prevention on the managed (MCP) path plus guaranteed detection by log-replay audit in all profiles**; the hook adds best-effort write-time checks. The plain `eccode` CLI cannot refuse a Greenfield-Senior rule (it is frozen). | Accept. Fallback if you reject it: cut a v4 freeze, which means a protocol note and a new hash file. | It trades "refuse everywhere" for "refuse where agents write; detect everywhere". Section 2.2 shows exactly where each applies. |
 | **D2** | Slices are sequential `feature` work items after one `greenfield` work item that holds G1 and the walking skeleton. | Accept. | The behavior diff and the api/perf/race guards refuse the `greenfield` track and need a base commit (1.4, C1-C2). A slice as a `feature` work item gets them with zero frozen edits. The cost is a design gate and a plan gate per slice (S4 estimate). |
 | **D3** | Stack profile v1: Python, FastAPI, SQLAlchemy/Alembic, SQLite; OpenAPI as JSON. Frontend is free (static or React), tested over HTTP and a browser. | Accept. A project outside the profile can be built and tested but cannot reach DONE. | The security guards, api/perf/race guards and behavior diff operate on FastAPI only (C3). Anything else would make criterion G3.4 vacuous. |
 | **D4** | G3.3 ("docker compose up from a clean checkout") fails closed when Docker is unavailable. **The Docker daemon is not running in this sandbox** (C9). | Accept. S4's demo report may honestly end `NOT DONE: deployment unverifiable here` with the other four criteria green. | The first demo you asked for may not be able to say "100% working" in this environment. You can run S5's verifier on a machine with Docker, or I probe for a rootless daemon at S5. |
@@ -117,7 +117,7 @@ tests/gf-*.test.js
 
 Edits to **unfrozen** existing files only: `lib/mcp.js` (register `gf_*` tools, wrap base tools, extend `LOCKABLE`), `scripts/hooks/guard.js` (new role sets, group ownership, contract and acceptance paths), `hooks/hooks.json` (matcher), `lib/status.js` (a GF-aware NEXT line), `scripts/validate-toolkit.js`, `package.json` (`bin`), `docs/`.
 
-### 2.2 Enforcement model: prevent versus detect
+### 2.2 Enforcement model: managed-path prevention and audit detection
 
 Every rule is one pure function in `rules.js` and is evaluated at up to four points.
 
@@ -130,9 +130,9 @@ Every rule is one pure function in `rules.js` and is evaluated at up to four poi
 
 What this means for D1, stated plainly:
 
-- In `sandbox` / `no-shell`: **prevented** at P, detected at A.
-- In the opt-out `guard` profile (CLI + hook): **hook-prevented best effort**, detected at A.
-- With hooks off or a harness without them: **detected only**, at A and D. The project can still be built, but it cannot be declared DONE on top of a violation.
+- In `sandbox` / `no-shell`: **prevention on the managed (MCP) path** (agents have no other writer), plus guaranteed detection by log-replay audit.
+- In the opt-out `guard` profile (CLI + hook): the hook checks best effort, and the audit still detects.
+- With hooks off or a harness without them: **detection only**, by audit at A and D. The project can still be built, but it cannot be declared DONE on top of a violation.
 
 ### 2.3 The log and the projection
 
@@ -330,7 +330,7 @@ Groups work concurrently inside a slice: disjoint globs, `maxConcurrency` 4, cla
 |---|---|---|---|
 | 1 | Every PRD criterion passes as an executable test | The criterion-to-test map from the baseline; run every mapped test; join results by criterion id | A criterion has no test, a test did not run, or the held-out subset fails |
 | 2 | Contract tests pass on both sides; contracts unamended, or amendments justified | Provider + consumer suites; recompute contract hashes against the seal and the amendment chain | Any drift without an amendment; any amendment without reviewer, reason and invalidation |
-| 3 | Full E2E on a deployed instance from a clean checkout | `git clone --no-local` to a fresh directory at the commit; `docker compose up -d --build --wait`; HTTP probes: health, every `http` criterion, the flow criteria; teardown | **No Docker daemon (D4)**, a build failure, or any probe failure. A non-compose "process runner" exists for development and is labelled `DEGRADED`; it can never produce DONE |
+| 3 | Full E2E on a deployed instance from a clean checkout | `git clone --no-local` to a fresh directory at the commit; `docker compose up -d --build --wait`; HTTP probes: health, every `http` criterion, the flow criteria; teardown | **No Docker daemon (D4)**, a build failure, or any probe failure. A non-compose "process runner" exists for development and is labelled `DEGRADED`; it can never produce DONE **Secondary evidence (owner decision 4):** a process-level E2E (uvicorn started from a clean checkout, then the same smoke probes) is run and recorded in the delivery report. It never substitutes for the compose check and never changes the status to DONE. |
 | 4 | Security guards green; behavior diff clean between the final candidate and the last integrated slice | The four security guards fresh on this tree. The final tree equals the last integrated slice commit, **or** an `rc` work item holds a clean diff (or a `skip` routing the engine accepts) | A guard result is stale or failing; the tree differs from the last slice with no clean `rc` diff |
 | 5 | `eccode audit` on the whole history | The same checks `eccode audit` runs (chain, snapshot equals replay, content-hashed artifacts, unreviewed changes †`bin/eccode.js:995-1011`), with `--against <protected ref>` when you give one, **and** `gf audit` (every rule as a replayed invariant) | Either reports an error |
 
@@ -461,11 +461,11 @@ Each slice is committed with tests before the next, and I wait for your go on ea
 
 ## 11. Limits to register in `docs/limits.md`
 
-**Numbering.** Row 186 is already claimed by `cc6af4f` on `origin/claude/v3-generalization-fastapi-s1df80`, a line that is not in this one. I therefore do **not** assign numbers here: each limit below carries a placeholder id (`L-GF-n`) and takes the next free row *at the commit of the slice that introduces it*, checked against every remote branch at that moment. `docs/limits.md` and the open-count sentence pinned in `tests/limits.test.js` will conflict when the two lines meet; that is a merge task for you, and I will not edit the other line.
+**Numbering.** The limits of this layer live in `docs/limits-greenfield.md` with placeholder ids, so that `docs/limits.md` is not touched. Row 186 is already claimed by `cc6af4f` on `origin/claude/v3-generalization-fastapi-s1df80`, a line that is not in this one. I therefore do **not** assign numbers here: each limit below carries a placeholder id (`L-GF-n`) and takes the next free row *at the commit of the slice that introduces it*, checked against every remote branch at that moment. `docs/limits.md` and the open-count sentence pinned in `tests/limits.test.js` will conflict when the two lines meet; that is a merge task for you, and I will not edit the other line.
 
 | Id | Limit | Disposition | Slice |
 |---|---|---|---|
-| L-GF-1 | The plain `eccode` CLI cannot refuse a Greenfield-Senior rule; prevention depends on the MCP and hook layer, detection on `gf audit` | Open, mitigated | S1 |
+| L-GF-1 | The plain `eccode` CLI cannot refuse a Greenfield-Senior rule; prevention on the managed (MCP) path plus guaranteed detection by log-replay audit in all profiles | Open, mitigated | S1 |
 | L-GF-2 | Supported stack is Python / FastAPI / SQLAlchemy / Alembic / SQLite; other stacks can be built and tested but cannot reach DONE | Open, named | S1 |
 | L-GF-3 | Sub-agents of a group share the group's role id and are not individually identified | By design | S2 |
 | L-GF-4 | `.eccode/drafts/**` stays a shared scratch area, and the orchestrator's dispatch prompt stays an out-of-band channel | Open, named | S2 |
@@ -474,9 +474,10 @@ Each slice is committed with tests before the next, and I wait for your go on ea
 | L-GF-7 | "Hidden" acceptance tests are write-denied and hash-sealed; read-denial depends on the harness running hooks on Read | Open, mitigated | S3 |
 | L-GF-8 | The engine cannot detect an undeclared guess, only make a declared one impossible to omit from the report | Open, named | S4 |
 | L-GF-9 | Per-slice design and plan gates are overhead the `feature` track imposes; their measured cost is reported after S4 | Open, named | S4 |
-| L-GF-10 | DONE criterion 3 needs a Docker daemon; without one the project is `NOT DONE: deployment unverifiable` | Open, named | S5 |
+| L-GF-10 | DONE criterion 3 needs a Docker daemon; without one the project is `NOT DONE: deployment unverifiable here`. A process-level E2E (uvicorn from a clean checkout plus smoke probes) is recorded as secondary evidence and never upgrades the status | Open, named | S5 |
 | L-GF-11 | "Behavior diff clean" means no *detected* change (v3 detected 47.4 percent of seeded changes); carries rows 184 and 186 of the other line | Open, named | S5 |
 | L-GF-12 | Estimates are agent predictions from a single project; no calibration claim until several projects | By design | S4 |
+| L-GF-13 | A v4 freeze that absorbs the greenfield layer is deferred until after S5 is stable; until then the layer is additive and the plain `eccode` CLI is outside it | Open, named | S1 |
 
 ---
 
@@ -504,3 +505,16 @@ Final red team of the idea itself, as the brief asks: "this is a wrapper that re
 - **Full suite green** at every slice exit (`npm run check`). **Baseline at `948a95b`, measured in this session:** 569 tests, 516 pass, 0 fail, 53 skipped, 131 s; toolkit validation passed (12 agents, 9 skills, 13 commands). **The 53 skips:** 35 need an interpreter with `fastapi`, `httpx`, `hypothesis`, `coverage`, `pytest` (and `sqlalchemy`, `alembic` for the guard tests); 15 need a Mealie checkout, mirror or an opt-in variable; 1 needs `ECCODE_CBM`; 2 need `kotlinc` / `codebase-memory-mcp`. A repeat run after my doc-only changes gave 569 / 520 pass / 0 fail / **49** skipped: the four `mealieN: no prompt contains a line of its fix` tests ran because the first run created the Mealie mirror cache outside the repository (`/root/.cache/eccode/bench-repos/...`, mtime inside the first run's window). A diff of the two skip lists shows no other difference. A slice report states its own skip count and what the skips cover; "green" is never reported without it.
 - **Every limit in `docs/limits.md`;** no fabricated numbers; labels before figures; estimates pre-registered here, before any build.
 - **Secrets never through chat.** **Paid runs only inside stated caps: $0 until you approve.** **Nothing tuned after a result.**
+
+---
+
+## 14. Owner decisions of 2026-11-04
+
+Recorded verbatim in substance; they change the design as follows.
+
+1. **Additive enforcement: approved.** Wording everywhere is "prevention on the managed (MCP) path plus guaranteed detection by log-replay audit in all profiles", never bare prevention (`tests/gf-docs.test.js` enforces it). Recorded as L-GF-1. A v4 freeze that absorbs the greenfield layer is **deferred** until after S5 is stable and **has not been started** (L-GF-13).
+2. **Slices as sequential `feature` work items after one `greenfield` work item: approved.**
+3. **Stack profile v1 = Python / FastAPI / SQLAlchemy / Alembic / SQLite: approved.** Other stacks can be built but cannot reach DONE in v1 (L-GF-2).
+4. **Docker:** the compose criterion stays fail-closed ("deployment unverifiable here"). **Added:** a secondary, non-substituting process-level E2E check (uvicorn from a clean checkout plus the same smoke probes), recorded in the delivery report; it never upgrades the status to DONE (section 5, L-GF-10).
+5. **Merge lines:** I never merge `claude/v3-generalization-fastapi-*` and this branch; limit ids stay placeholders (`L-GF-n`), kept in `docs/limits-greenfield.md` so that `docs/limits.md` is not edited; reconciliation is the owner's.
+6. **GO: S1 only.** Estimate on record: 8-14 h, 4-8 M tokens. Test first with red and green evidence; every new rule with positive, negative and bypass tests; the frozen set 48 of 48 before and after; the estimate-versus-actual table updated at the end; stop after S1; no paid runs, $0 on the meter. The plan is `docs/superpowers/plans/2026-11-04-greenfield-senior-s1.md`.
