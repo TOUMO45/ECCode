@@ -518,3 +518,38 @@ Recorded verbatim in substance; they change the design as follows.
 4. **Docker:** the compose criterion stays fail-closed ("deployment unverifiable here"). **Added:** a secondary, non-substituting process-level E2E check (uvicorn from a clean checkout plus the same smoke probes), recorded in the delivery report; it never upgrades the status to DONE (section 5, L-GF-10).
 5. **Merge lines:** I never merge `claude/v3-generalization-fastapi-*` and this branch; limit ids stay placeholders (`L-GF-n`), kept in `docs/limits-greenfield.md` so that `docs/limits.md` is not edited; reconciliation is the owner's.
 6. **GO: S1 only.** Estimate on record: 8-14 h, 4-8 M tokens. Test first with red and green evidence; every new rule with positive, negative and bypass tests; the frozen set 48 of 48 before and after; the estimate-versus-actual table updated at the end; stop after S1; no paid runs, $0 on the meter. The plan is `docs/superpowers/plans/2026-11-04-greenfield-senior-s1.md`.
+
+---
+
+## 15. S1 as built (2026-11-04)
+
+S1 (G1 pipeline and contract freeze) is implemented as designed, with the deviations below. Evidence and the estimate-versus-actual table: `docs/build/gf-s1-evidence.md`. Limits: `docs/limits-greenfield.md` (L-GF-1 to L-GF-16).
+
+**What exists.** `lib/greenfield/` (constants, events, projection, jsonschema, openapi, six stage validators, bundle, ownership glob algebra, init, wrap, snapshots, contracts, messages, estimate, audit, index), `bin/eccode-gf.js`, ten `schemas/gf-*.schema.json`, three agents, the `orchestrate-greenfield` skill, and edits to four unfrozen files (`lib/mcp.js`, `scripts/hooks/guard.js`, `scripts/validate-toolkit.js`, `package.json`). No frozen file is edited and none requires anything in `lib/greenfield` (checked by hash, 48 of 48, and by `git diff`).
+
+**Rules as built.** Every rule is enforced on the managed path and re-evaluated by `gf audit`; the audit alone detects what no write-time check can (a contract edited on disk, a forged event).
+
+| Rule | Managed path | Audit | Meaning |
+|---|---|---|---|
+| GF-INIT-1 | `initProject` | GF-AUD-2 | one supported stack profile; a record is not adopted |
+| GF-PRD-1/2/3, GF-ARC-1, GF-CON-1..5, GF-THR-1, GF-WBS-1..3, GF-EST-1 (artifact shape), GF-ART-2 | `gateSubmit` | the same validators on the approved bundles | the stage artifacts |
+| GF-ART-1 | `gateReview` | yes | every document-gate submission was registered at its committed hashes |
+| GF-ART-DRIFT | `gateSubmit` | yes | an approved stage artifact changed after approval (contracts are exempt once sealed: they are GF-FRZ-2) |
+| GF-SEAL-1, GF-ORD-1 | `gateReview`, `gateStart`, `taskClaim` | yes | nothing is claimed or started in a phase before the seal; the seal matches the approved files |
+| GF-EST-1 | `gateStart`, `estimate.revise` | yes | one estimate, registered before the seal, revised only beside the original |
+| GF-FRZ-2 | detection only | yes | a sealed or amended contract has exactly its recorded bytes |
+| GF-FRZ-5 | `requestAmendment`, `applyAmendment` | yes | a reviewer applies a reasoned amendment that moves an unbroken hash chain |
+| GF-MSG-1/2 | `messages.send` | yes | messages come from the actor's own group; an amendment request goes to api |
+| GF-AUD-1/2 | n/a | yes | every gf.* event is known and well-formed; one init, first |
+
+**Deviations from sections 3 to 8 and from the plan.**
+1. `GF-WBS-1` is three rules (`GF-WBS-1..3`); `GF-ART-1`, `GF-ART-2`, `GF-ART-DRIFT`, `GF-ORD-1` and `GF-AUD-1/2` are added.
+2. The estimate is registered at seal time (immediately before `gf.g1.sealed`, which cites it), not at each submit; an estimate in a plan submission is still hash-pinned by the plan gate from the moment it is submitted.
+3. `breakdown.json` has no checkpoint list: the frozen engine derives checkpoints from `plan.checkpointEvery`.
+4. Sealing writes content-addressed snapshots of the sealed contract files (`.eccode/contracts/<sha>.json`). They are needed to classify an amendment against exactly what was sealed and to keep validating the approved bundle at its approved bytes after a legitimate amendment. The hook treats them as record files.
+5. The frozen audit pins approved artifacts, so a contract amended on disk is reported "modified after approval" until a phase review approves the new bytes (the frozen `unreviewedChanges` takes the latest approved version of each path). The amendment event explains the change and the layer's audit stays clean (L-GF-15).
+6. An amendment is validated per file; the consistency of the amended bundle as a whole is a slice-integration check (L-GF-14).
+7. Estimates are in tokens and hours as decided; the session's own token usage is reported cumulatively by the harness and was not snapshotted at the start of S1, so no S1-only token figure exists (evidence file).
+
+**Not in S1, by design.** Write-time ownership by group and the hook's contract and acceptance paths (S2); the generated mock server, contract tests and acceptance baseline (S3); slices as work items, the pinned integration run and the toy project (S4); the done verification (S5); the protocol (S6).
+

@@ -19,3 +19,6 @@ Enforcement wording used everywhere in this layer: **prevention on the managed (
 | L-GF-11 | "Behavior diff clean" means no *detected* change: the behavior diff v3 detected 27 of 57 seeded changes (47.4 percent, exact 95 percent interval 34.0 to 61.0) | Open, named | S5 |
 | L-GF-12 | Estimates are agent predictions from a single project; no calibration claim until several projects | By design | S4 |
 | L-GF-13 | A v4 freeze that absorbs the greenfield layer is deferred until after S5 is stable and has not been started; until then the plain `eccode` CLI is outside the layer | Open, named | S1 |
+| L-GF-14 | The cross-file consistency of an *amended* contract bundle (for example a new operation without its access-matrix cells) is checked at slice integration (S3), not at amendment: an amendment is validated per file, and the approved bundle is re-validated at its sealed bytes from the snapshots | Open, named | S1 |
+| L-GF-15 | Between the edit of a sealed contract and the phase review that approves its new bytes, the frozen audit reports the file as modified after approval (its own rule, unchanged); the amendment event explains the change, and the layer's audit stays clean | Open, named | S1 |
+| L-GF-16 | A Greenfield-Senior project starts with `eccode-gf init`; an existing ECCode project cannot be adopted in v1 | Open, named | S1 |
