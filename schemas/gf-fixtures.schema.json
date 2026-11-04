@@ -1,0 +1,51 @@
+{
+  "$id": "eccode/gf-fixtures",
+  "title": "Contract test fixtures",
+  "type": "object",
+  "required": [
+    "roles"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "roles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [],
+        "additionalProperties": false,
+        "properties": {
+          "login": {
+            "type": "object",
+            "required": [
+              "operationId",
+              "body"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "operationId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "body": {
+                "type": "object"
+              }
+            }
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "ids": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

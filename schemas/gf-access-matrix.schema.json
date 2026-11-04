@@ -1,0 +1,71 @@
+{
+  "$id": "eccode/gf-access-matrix",
+  "title": "Access matrix",
+  "type": "object",
+  "required": [
+    "roles",
+    "cells"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "level"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "level": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "cells": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "role",
+          "operationId",
+          "ownership",
+          "expected"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "string",
+            "minLength": 1
+          },
+          "operationId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ownership": {
+            "enum": [
+              "own",
+              "other",
+              "none"
+            ]
+          },
+          "expected": {
+            "enum": [
+              "allow",
+              "deny"
+            ]
+          }
+        }
+      },
+      "minItems": 1
+    }
+  }
+}

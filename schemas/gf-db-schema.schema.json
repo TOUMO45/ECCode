@@ -1,0 +1,113 @@
+{
+  "$id": "eccode/gf-db-schema",
+  "title": "Database schema",
+  "type": "object",
+  "required": [
+    "tables"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "columns"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "type"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                },
+                "type": {
+                  "enum": [
+                    "integer",
+                    "text",
+                    "boolean",
+                    "datetime",
+                    "float",
+                    "json",
+                    "uuid"
+                  ]
+                },
+                "nullable": {
+                  "type": "boolean"
+                },
+                "primaryKey": {
+                  "type": "boolean"
+                },
+                "unique": {
+                  "type": "boolean"
+                },
+                "references": {
+                  "type": "object",
+                  "required": [
+                    "table",
+                    "column"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "table": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "column": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            },
+            "minItems": 1
+          },
+          "indexes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "columns"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "columns": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1
+                },
+                "unique": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "minItems": 1
+    }
+  }
+}

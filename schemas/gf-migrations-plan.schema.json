@@ -1,0 +1,82 @@
+{
+  "$id": "eccode/gf-migrations-plan",
+  "title": "Migrations plan",
+  "type": "object",
+  "required": [
+    "steps"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "order",
+          "slice",
+          "description",
+          "creates",
+          "up",
+          "down"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "slice": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 5
+          },
+          "creates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "alters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "table",
+                "change"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "table": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "change": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              }
+            }
+          },
+          "up": {
+            "type": "string",
+            "minLength": 5
+          },
+          "down": {
+            "type": "string",
+            "minLength": 5
+          }
+        }
+      },
+      "minItems": 1
+    }
+  }
+}

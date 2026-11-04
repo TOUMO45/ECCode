@@ -1,0 +1,75 @@
+{
+  "$id": "eccode/gf-estimates",
+  "title": "Pre-registered estimates",
+  "description": "Agent predictions, registered before work (rule GF-EST-1). Not calibrated.",
+  "type": "object",
+  "required": [
+    "label",
+    "basis",
+    "groups"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "label": {
+      "const": "agent-estimate-uncalibrated"
+    },
+    "basis": {
+      "type": "string",
+      "minLength": 40
+    },
+    "groups": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "tasks",
+          "minutes",
+          "tokens"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "tasks": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minutes": {
+            "type": "object",
+            "required": [
+              "low",
+              "high"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "low": {
+                "type": "number",
+                "minimum": 0
+              },
+              "high": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "tokens": {
+            "type": "object",
+            "required": [
+              "low",
+              "high"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "low": {
+                "type": "number",
+                "minimum": 0
+              },
+              "high": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

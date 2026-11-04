@@ -1,0 +1,158 @@
+{
+  "$id": "eccode/gf-threat-model",
+  "title": "Threat model",
+  "type": "object",
+  "required": [
+    "assets",
+    "trustBoundaries",
+    "threats",
+    "inputValidation",
+    "accessMatrixSha256"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 5
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "trustBoundaries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "crosses"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 5
+          },
+          "crosses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "threats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "boundary",
+          "category",
+          "description",
+          "mitigation"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "boundary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "enum": [
+              "spoofing",
+              "tampering",
+              "repudiation",
+              "information-disclosure",
+              "denial-of-service",
+              "elevation-of-privilege"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10
+          },
+          "mitigation": {
+            "type": "object",
+            "required": [
+              "ref",
+              "id"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "ref": {
+                "enum": [
+                  "contract",
+                  "criterion",
+                  "component"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "inputValidation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "operationId",
+          "field",
+          "rules"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "operationId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rules": {
+            "type": "string",
+            "minLength": 3
+          }
+        }
+      }
+    },
+    "accessMatrixSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
