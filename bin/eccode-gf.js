@@ -36,6 +36,7 @@ After the seal
   ownership amend --actor <reviewer> --group <g> --to <glob,glob> --reason <text, 30+ characters> --message <msg id>
   task rescope <task> --actor <role> --files <glob,glob> --reason <text>   Refused when a file belongs to another group
   task complete <task> --actor <role> --file <handoff.json>   Refused when the handoff lists a file of another group
+  config pin --actor <orchestrator|user> --scope <label> --reason <text>   Pin the guard configuration (behavior, guards, security) by hash
   attribute --base <commit>        Every path changed since the commit must belong to a group that completed a task declaring it; exit 2 otherwise
   audit [--json]                   Replay the record and check every rule as an invariant; exit 2 on any error
 
@@ -180,6 +181,12 @@ function main(argv) {
       if (!groups) throw new EccodeError('USAGE', `Cannot read ${flags.file}`);
       const r = gf.estimate.revise(store, config, need(actor, '--actor'), { reason: flags.reason, groups });
       print(flags, `Estimate revision ${r.id} recorded beside ${r.of}.`, r);
+      return 0;
+    }
+    case 'config': {
+      if (sub !== 'pin') throw new EccodeError('USAGE', 'config pin');
+      const r = gf.pin.pin(store, config, need(actor, '--actor'), { scope: flags.scope, reason: flags.reason });
+      print(flags, `Pinned ${Object.keys(r.event.data.files).length} guard configuration file(s) under scope ${r.event.data.scope}.`, r.event.data);
       return 0;
     }
     case 'attribute': {
