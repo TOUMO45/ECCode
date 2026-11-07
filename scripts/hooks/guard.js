@@ -457,7 +457,10 @@ function ownershipDenial(root, lib, role, abs) {
   if (rel.startsWith('..') || path.isAbsolute(rel)) return null; // outside the project (e.g. scratch dirs)
   if (RECORD_FILES.test(rel)) return `${rel} is part of the ECCode record and is written only by the eccode CLI.`;
   if (!role || role.startsWith('other:')) return null; // main session or non-ECCode agent
-  if (matchesAny(rel, draftAreas(role))) return null;
+  // Greenfield-Senior group roles: the path must belong to the writer's group, and drafts are namespaced per group.
+  const gf = require(path.join(lib, 'greenfield', 'permissions')).policy(root, role, rel);
+  if (gf && gf.denial) return gf.denial;
+  if (matchesAny(rel, draftAreas(role).map((g) => (gf && g === '.eccode/drafts/**' ? `.eccode/drafts/${gf.group}/**` : g)))) return null;
   if (IMPLEMENTERS.has(role)) {
     const { Store } = require(path.join(lib, 'store'));
     const state = new Store(root).state();
