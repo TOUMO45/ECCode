@@ -23,7 +23,7 @@ function section(text, heading) {
 const row = (text, id) => (text.split('\n').find((l) => l.startsWith(`| ${id} |`)) || '');
 
 test('C1-1: the closing-round verdict is stated one way: findings on the closing tree only if each is withdrawn or deferred', () => {
-  const s = section(D(), '### 16.5');
+  const s = section(D(), '### 18.5');
   assert.match(row(s, 'GF-CLOSE-1'), /may list findings only if each is withdrawn or deferred/);
   assert.doesNotMatch(section(D(), '### 16.8'), /clean and readiness go/);
 });
@@ -42,20 +42,20 @@ test('C1-4: the plan names the engine battery as battery 1', () => {
   assert.match(PLAN(), /\*\*Step 1: Engine battery run 1\*\* \(`eccode-gf close battery`/);
 });
 test('C1-5: what a spoof does not buy is qualified by the recorded change paths', () => {
-  assert.match(section(D(), '### 16.4'), /through a recorded change path/);
+  assert.match(section(D(), '### 18.3'), /through a recorded change path/);
   assert.match(row(LIM(), 'L-GF-17'), /through a recorded change path/);
 });
 test('C1-6: the S2 gap in detecting cross-group file writes is a numbered limit', () => {
   assert.match(row(LIM(), 'L-GF-24'), /eccode-gf attribute/);
 });
 test('C1-7: one rule for who may withdraw a finding', () => {
-  assert.match(row(section(D(), '### 16.5'), 'GF-CLOSE-2'), /withdrawn only by the reviewer role that raised it/);
+  assert.match(row(section(D(), '### 18.5'), 'GF-CLOSE-2'), /withdrawn only by the reviewer role that raised it/);
 });
 test('C1-8: GF-FRZ-1\'s audit half is named and its points are stated', () => {
-  assert.match(row(section(D(), '### 16.2'), 'GF-FRZ-1'), /audit half: GF-FRZ-2/);
+  assert.match(row(section(D(), '### 18.1'), 'GF-FRZ-1'), /audit half: GF-FRZ-2/);
 });
 test('C1-9: the 16.2 table states GF-OWN-3 as built', () => {
-  assert.match(row(section(D(), '### 16.2'), 'GF-OWN-3'), /the completing actor is the task's owner/);
+  assert.match(row(section(D(), '### 18.1'), 'GF-OWN-3'), /the completing actor is the task's owner/);
 });
 test('C1-10: the GF-OWN-1 audit is defined one way', () => {
   assert.match(D(), /\| GF-OWN-1 \(audit\) \| every engine task: its owner is in a group; pending and claimed tasks:/);
@@ -72,7 +72,7 @@ test('C1-13: where a survivor\'s reason is recorded is stated', () => {
   assert.match(D(), /the reasons are in `gf\.slice\.closed\.accepted`/);
 });
 test('C1-14: the GF-CLOSE-4 bypass names what the form check can catch', () => {
-  assert.match(row(section(D(), '### 16.5'), 'GF-CLOSE-4'), /a number written as text/);
+  assert.match(row(section(D(), '### 18.5'), 'GF-CLOSE-4'), /a number written as text/);
 });
 test('C1-15: the dispatch command and tool are named, and what the input hashes mean', () => {
   const d = D();

@@ -33,10 +33,10 @@ test('R1-1: the plan describes the closure rule as built (GF-CLOSE-1..5, dispatc
   hasNot(plan, /\*\*Step 3: Review pass 1:\*\* a fresh general-purpose agent, given the code/);
 });
 test('R1-2: GF-CLOSE-5 has its own row, with its condition and its bypasses, in the 16.5 rule table', () => {
-  has(section(read(DESIGN), '### 16.5'), /\| GF-CLOSE-5 \| each step is its own dispatch[^\n]*\|[^\n]*\|/);
+  has(section(read(DESIGN), '### 18.5'), /\| GF-CLOSE-5 \| each step is its own dispatch[^\n]*\|[^\n]*\|/);
 });
 test('R1-3: the closing-round condition is stated once, with the verdict values per step and what a fixed finding means for the round', () => {
-  const s = section(read(DESIGN), '### 16.5');
+  const s = section(read(DESIGN), '### 18.5');
   has(s, /A fixed finding changes the tree, so a closing round cannot carry one/);
   has(s, /verdict values: comprehension and critique `clean` or `findings`, readiness `go` or `no-go`/);
 });
@@ -87,7 +87,7 @@ test('R1-13: a table says which map version each ownership rule is judged agains
   has(read(DESIGN), /\| Rule \| Map it is judged against \|/);
 });
 test('R1-14: the disjointness decision is described and an amendment\'s reach is stated', () => {
-  const s = section(read(DESIGN), '### 16.3');
+  const s = section(read(DESIGN), '### 18.2');
   has(s, /an amendment cannot change denyGlobs/);
   has(s, /provably inside/);
 });

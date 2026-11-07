@@ -26,23 +26,23 @@ test('D1-1: when and where S2\'s closure record is set up is stated, and the pla
   assert.doesNotMatch(PLAN(), /beside a checkout/);
 });
 test('D1-2: which reviews count when a step has several on the closing tree is stated', () => {
-  assert.match(section(D(), '### 16.5'), /every valid review of a step on the closing tree counts/);
+  assert.match(section(D(), '### 18.5'), /every valid review of a step on the closing tree counts/);
 });
 test('D1-3: the precedence covers the plan\'s interfaces, and the plan\'s clean-only refusal is gone', () => {
   assert.match(D(), /the plan's interfaces are superseded by section 7 and section 18/);
   assert.doesNotMatch(PLAN(), /verdict findings \(GF-CLOSE-1\);/);
 });
 test('D1-4: GF-OWN-1 lists its hook point', () => {
-  assert.match(row(section(D(), '### 16.2'), 'GF-OWN-1'), /\| P \(seal\), H \(fail closed\), A \|/);
+  assert.match(row(section(D(), '### 18.1'), 'GF-OWN-1'), /\| P \(seal\), H \(fail closed\), A \|/);
 });
 test('D1-5: the closed-is-closed row names its rules, and the closure rule is GF-CLOSE-1 to 5 everywhere', () => {
   const d = D();
-  assert.match(row(section(d, '### 16.5'), 'closed is closed (GF-CLOSE-1, 2, 3 and 5)'), /dispatch/);
+  assert.match(row(section(d, '### 18.5'), 'closed is closed (GF-CLOSE-1, 2, 3 and 5)'), /dispatch/);
   assert.doesNotMatch(d, /### 16\.5 The closure rule \(owner condition 1\): GF-CLOSE-1 to 4/);
   assert.doesNotMatch(section(d, '### 16.1'), /Implemented as GF-CLOSE-1 to 4/);
 });
 test('D1-6: what F1 adds against a forged actor is stated', () => {
-  assert.match(section(D(), '### 16.4'), /a forger must name the task's owner/);
+  assert.match(section(D(), '### 18.3'), /a forger must name the task's owner/);
 });
 test('D1-7: "managed path" is defined once and GF-OWN-2\'s strength is stated', () => {
   assert.match(D(), /\*\*The managed path\*\* is the role-locked MCP servers together with the PreToolUse hook/);
