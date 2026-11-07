@@ -271,6 +271,101 @@ test('GF-CLOSE-3: a survivor with an accepted reason of 30 characters or more is
   assert.deepStrictEqual(errs(ctx), []);
 });
 
+// ------------------------------------------------------------------ documentation findings: the paired-run proof
+function docRaised() {
+  const ctx = closeProject();
+  const d = dispatch(ctx, 'comprehension', 'technical-reviewer');
+  review(ctx, 'technical-reviewer', { scope: 'S2', step: 'comprehension', dispatch: d.id, summary: LONG, findings: [{ id: 'D-1', severity: 'minor', kind: 'documentation', summary: 'the closure order is not written down' }] });
+  return ctx;
+}
+const run = (ctx, id, status, purpose, command = 'node --test tests/gf-docs.test.js') => { F(ctx, 'evidence.recorded', ORCH, { id, kind: 'command', label: 'docs check', command, status, purpose, exitCode: status === 'passed' ? 0 : 1 }); return `ev:${id}`; };
+test('GF-CLOSE-2 positive: a documentation finding is fixed by a paired run of one command, failed as a reproduction, then passed', () => {
+  const ctx = docRaised();
+  const pre = run(ctx, 'ev-d-pre', 'failed', 'reproduction');
+  const post = run(ctx, 'ev-d-post', 'passed', 'check');
+  resolve(ctx, ORCH, { finding: 'D-1', resolution: 'fixed', reproduction: pre, proof: post });
+  assert.deepStrictEqual(errs(ctx).filter((e) => e.rule === 'GF-CLOSE-2'), []);
+});
+const PAIRED_ROWS = [
+  ['a reproduction that passed', (c) => ({ reproduction: run(c, 'p1', 'passed', 'reproduction'), proof: run(c, 'q1', 'passed', 'check') }), /must have failed and be recorded with purpose reproduction/],
+  ['a reproduction recorded as a check', (c) => ({ reproduction: run(c, 'p2', 'failed', 'check'), proof: run(c, 'q2', 'passed', 'check') }), /purpose reproduction/],
+  ['a proof that failed', (c) => ({ reproduction: run(c, 'p3', 'failed', 'reproduction'), proof: run(c, 'q3', 'failed', 'check') }), /did not pass/],
+  ['two different commands', (c) => ({ reproduction: run(c, 'p4', 'failed', 'reproduction', 'node --test a.js'), proof: run(c, 'q4', 'passed', 'check', 'node --test b.js') }), /ran different commands/],
+  ['a proof recorded before its reproduction', (c) => { const proof = run(c, 'q5', 'passed', 'check'); return { reproduction: run(c, 'p5', 'failed', 'reproduction'), proof }; }, /recorded before its reproduction/],
+  ['a reproduction that is not recorded', (c) => ({ reproduction: 'ev:ghost', proof: run(c, 'q6', 'passed', 'check') }), /reproduction ev:ghost is not a recorded check/],
+];
+for (const [name, mk, re] of PAIRED_ROWS) {
+  test(`GF-CLOSE-2 negative: a paired-run proof with ${name} is refused`, () => {
+    const ctx = docRaised();
+    refuses(() => resolve(ctx, ORCH, { finding: 'D-1', resolution: 'fixed', ...mk(ctx) }), 'GF-CLOSE-2', re);
+  });
+}
+test('GF-CLOSE-2 negative: a paired run recorded before the documentation finding was raised is refused', () => {
+  const ctx = closeProject();
+  const pre = run(ctx, 'ev-early', 'failed', 'reproduction');
+  const d = dispatch(ctx, 'comprehension', 'technical-reviewer');
+  review(ctx, 'technical-reviewer', { scope: 'S2', step: 'comprehension', dispatch: d.id, summary: LONG, findings: [{ id: 'D-1', severity: 'minor', kind: 'documentation', summary: 'the closure order is not written down' }] });
+  const post = run(ctx, 'ev-late', 'passed', 'check');
+  refuses(() => resolve(ctx, ORCH, { finding: 'D-1', resolution: 'fixed', reproduction: pre, proof: post }), 'GF-CLOSE-2', /was recorded before finding D-1 was raised/);
+});
+test('GF-CLOSE-2 negative: a defect cannot be proven by a paired run: it needs a fix verification', () => {
+  const ctx = raised();
+  refuses(() => resolve(ctx, ORCH, { finding: 'F-1', resolution: 'fixed', reproduction: run(ctx, 'p9', 'failed', 'reproduction'), proof: run(ctx, 'q9', 'passed', 'check') }), 'GF-CLOSE-2', /a defect is proven by a fix verification/);
+});
+test('bypass: a paired-run resolution forged for a defect is GF-CLOSE-2 in the audit', () => {
+  const ctx = raised();
+  const pre = run(ctx, 'p10', 'failed', 'reproduction');
+  const post = run(ctx, 'q10', 'passed', 'check');
+  F(ctx, 'gf.finding.resolved', ORCH, { id: 'res-p', finding: 'F-1', resolution: 'fixed', reproduction: pre, proof: post });
+  expectAudit(ctx, 'GF-CLOSE-2', /res-p.*a defect is proven by a fix verification/);
+});
+
+// ------------------------------------------------------------------ the CLI
+const CLI = path.join(__dirname, '..', 'bin', 'eccode-gf.js');
+const { spawnSync } = require('child_process');
+const cli = (ctx, args) => { const r = spawnSync(process.execPath, [CLI, ...args, '--root', ctx.dir, '--json'], { encoding: 'utf8', env: { ...process.env, ECCODE_ACTOR: '' } }); return { code: r.status, out: r.stdout, err: r.stderr, json: () => JSON.parse(r.stdout) }; };
+test('CLI: dispatch, review from a summary file and findings file, status, and a refused close exit 2 with the reasons', () => {
+  const ctx = closeProject();
+  const d = cli(ctx, ['close', 'dispatch', '--actor', 'orchestrator', '--scope', 'S2', '--role', 'security-reviewer', '--step', 'critique', '--input', 'docs/design.md,docs/plan.md']);
+  assert.strictEqual(d.code, 0, d.err);
+  const dispatchId = d.json().id;
+  const summary = path.join(ctx.dir, '..', `summary-${path.basename(ctx.dir)}.txt`);
+  const findings = path.join(ctx.dir, '..', `findings-${path.basename(ctx.dir)}.json`);
+  fs.writeFileSync(summary, LONG);
+  fs.writeFileSync(findings, JSON.stringify([{ id: 'F-1', severity: 'major', kind: 'defect', summary: 'a forged event is accepted' }]));
+  const r = cli(ctx, ['close', 'review', '--actor', 'security-reviewer', '--scope', 'S2', '--step', 'critique', '--dispatch', dispatchId, '--summary-file', summary, '--findings', findings]);
+  assert.strictEqual(r.code, 0, r.err);
+  assert.strictEqual(r.json().verdict, 'findings');
+  const st = cli(ctx, ['close', 'status', '--scope', 'S2']);
+  assert.strictEqual(st.code, 2);
+  const p = st.json();
+  assert.ok(p.problems.some((x) => /finding F-1 \(major\)/.test(x.message)));
+  assert.strictEqual(p.reviews.length, 1);
+  const bad = cli(ctx, ['close', 'review', '--actor', 'backend-engineer', '--scope', 'S2', '--step', 'critique', '--dispatch', dispatchId, '--summary-file', summary]);
+  assert.strictEqual(bad.code, 2);
+  assert.match(bad.err, /GF-CLOSE-1/);
+});
+test('CLI: a full closure through the command line (battery through the stubbed runner is not possible across processes, so the batteries are recorded in-process, the rest by the CLI)', () => {
+  const ctx = closeProject();
+  battery(ctx);
+  for (const [step, role] of [['comprehension', 'technical-reviewer'], ['critique', 'security-reviewer'], ['readiness', 'architecture-reviewer']]) {
+    const d = cli(ctx, ['close', 'dispatch', '--actor', 'orchestrator', '--scope', 'S2', '--role', role, '--step', step, '--input', 'docs/design.md']).json();
+    const summary = path.join(ctx.dir, '..', `s-${step}-${path.basename(ctx.dir)}.txt`);
+    fs.writeFileSync(summary, LONG);
+    const args = ['close', 'review', '--actor', role, '--scope', 'S2', '--step', step, '--dispatch', d.id, '--summary-file', summary];
+    if (step === 'readiness') args.push('--verdict', 'go', '--evidence', 'docs/design.md:1');
+    const r = cli(ctx, args);
+    assert.strictEqual(r.code, 0, r.err);
+  }
+  battery(ctx);
+  const acc = path.join(ctx.dir, '..', `acc-${path.basename(ctx.dir)}.json`);
+  fs.writeFileSync(acc, JSON.stringify({ unit: 'all-processed-tokens', start: 'unmeasurable', end: 'unmeasurable' }));
+  assert.strictEqual(cli(ctx, ['close', 'status', '--scope', 'S2']).code, 0);
+  const done = cli(ctx, ['close', 'slice', '--actor', 'orchestrator', '--scope', 'S2', '--accounting', acc]);
+  assert.strictEqual(done.code, 0, done.err);
+  assert.deepStrictEqual(errs(ctx), []);
+});
+
 // ------------------------------------------------------------------ bypass: forged events judged by the audit
 const forge = {
   dispatch: (ctx, over = {}) => F(ctx, 'gf.dispatch.recorded', ORCH, { id: 'disp-f', scope: 'S2', role: 'technical-reviewer', step: 'critique', treeHash: tree(ctx), inputs: [{ path: 'docs/design.md', sha256: 'a'.repeat(64) }], ...over }),

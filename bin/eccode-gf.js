@@ -38,6 +38,13 @@ After the seal
   task complete <task> --actor <role> --file <handoff.json>   Refused when the handoff lists a file of another group
   config pin --actor <orchestrator|user> --scope <label> --reason <text>   Pin the guard configuration (behavior, guards, security) by hash
   attribute --base <commit>        Every path changed since the commit must belong to a group that completed a task declaring it; exit 2 otherwise
+Slice closure (three recorded review steps, two batteries, accounting)
+  close dispatch --actor orchestrator --scope <s> --role <reviewer> --step comprehension|critique|readiness --input <path,path>
+  close review --actor <reviewer> --scope <s> --step <step> --dispatch <id> --summary-file <file> [--findings <file.json>] [--verdict go|no-go] [--evidence ev:<id>,path:line]
+  close resolve --actor <role> --finding <id> --resolution fixed|withdrawn|deferred [--proof ev:<id>] [--reproduction ev:<id>] [--reason <text>] [--limit <id>]
+  close battery --actor orchestrator --scope <s> --test "<command>" --base <commit> [--max <n>]
+  close status --scope <s>         What closing the scope now would be refused for
+  close slice --actor orchestrator|user --scope <s> --accounting <file.json> [--accepted <file.json>]
   preflight [--json]               Which regime protects identity between groups (managed-path or text-level) and the warnings (L-GF-17)
   audit [--json]                   Replay the record and check every rule as an invariant; exit 2 on any error
 
@@ -194,6 +201,25 @@ function main(argv) {
       const r = gf.ownership.attribute(store, need(flags.base, '--base'));
       print(flags, r.ok ? `Every changed path since ${flags.base} is attributed to a group that completed a task declaring it (${r.changed.filter((f) => !f.startsWith('.eccode/')).length} path(s)).` : `Attribution FAILED:\n${r.problems.map((p) => `- ${p.rule}: ${p.message}`).join('\n')}`, r);
       return r.ok ? 0 : 2;
+    }
+    case 'close': {
+      const cl = gf.closure;
+      const readFileArg = (name) => { const v = readJson(path.resolve(need(flags[name], `--${name}`))); if (v === null || v === undefined) throw new EccodeError('USAGE', `Cannot read --${name} ${flags[name]}`); return v; };
+      let r;
+      if (sub === 'dispatch') r = cl.recordDispatch(store, config, need(actor, '--actor'), { scope: flags.scope, role: flags.role, step: flags.step, inputs: list(flags.input) || [] }).event.data;
+      else if (sub === 'review') {
+        const summary = flags['summary-file'] ? fs.readFileSync(path.resolve(flags['summary-file']), 'utf8').trim() : flags.summary;
+        r = cl.recordReview(store, config, need(actor, '--actor'), { scope: flags.scope, step: flags.step, dispatch: flags.dispatch, summary, verdict: flags.verdict, findings: flags.findings ? readFileArg('findings') : [], evidence: list(flags.evidence) }).event.data;
+      } else if (sub === 'resolve') r = cl.resolveFinding(store, config, need(actor, '--actor'), { finding: flags.finding, resolution: flags.resolution, proof: flags.proof, reproduction: flags.reproduction, reason: flags.reason, limit: flags.limit }).event.data;
+      else if (sub === 'battery') r = cl.runBattery(store, config, need(actor, '--actor'), { scope: flags.scope, test: flags.test, base: flags.base, max: flags.max ? Number(flags.max) : undefined }).event.data;
+      else if (sub === 'status') {
+        const p = cl.preview(store, config, need(flags.scope, '--scope'));
+        print(flags, p.ok ? `${p.scope} can be closed on tree ${String(p.treeHash).slice(0, 12)}.` : `${p.scope} cannot be closed yet:\n${p.problems.map((x) => `- ${x.rule}: ${x.message}`).join('\n')}`, p);
+        return p.ok ? 0 : 2;
+      } else if (sub === 'slice') r = cl.close(store, config, need(actor, '--actor'), { scope: flags.scope, accounting: readFileArg('accounting'), accepted: flags.accepted ? readFileArg('accepted') : [] }).event.data;
+      else throw new EccodeError('USAGE', 'close dispatch|review|resolve|battery|status|slice');
+      print(flags, `close ${sub}: recorded ${r.id || r.scope}.`, r);
+      return 0;
     }
     case 'preflight': {
       const r = gf.preflight.preflight(store.root);
