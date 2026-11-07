@@ -163,6 +163,7 @@ test('GF-RUN-2 bypass: project code run by a pinned form that writes a new file 
   commitAll(ctx, 'a writing test');
   const r = runner().run(ctx.store, ctx.config, 'backend-engineer', { label: 'w', command: 'pytest -q tests/test_w.py' });
   assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.status, 'failed'); // round 6: the run fails, it is not only reported
   assert.match(r.problems.map((p) => `${p.rule} ${p.message}`).join(' '), /GF-RUN-2 .*web\/evil\.js/);
 });
 test('GF-RUN-2 bypass: project code that changes a tracked file outside the caller\'s claimed ownership fails the run (frozen integrity window)', () => {
