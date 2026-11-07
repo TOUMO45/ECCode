@@ -579,3 +579,117 @@ A fresh reviewer (a general-purpose agent, 121 tool calls, about 28 minutes, 419
 | m5 documentation claims the code does not back (refused vs detected, actor spoof, which slice) | corrected in this document and the limits |
 | tests that could not fail (audit chain checks, seal and amendment in-lock checks, `amendedProblems`, non-GF fallthrough, ...) | fixed: `tests/gf-audit-forged.test.js` (24 cases) and `tests/gf-review.test.js`; the rule-removal battery was re-run (evidence file) |
 
+
+---
+
+## 16. S2: ownership map and path-scoped permissions (design, 2026-11-07, written before any S2 code)
+
+### 16.1 Owner decisions of 2026-11-07 (S1 accepted; binding on S2 and every later slice)
+
+1. **Slice closure is an engine rule, not advice.** A slice is closed only after (a) an independent reviewer pass on the final tree, (b) every finding reproduced as a failing test before any fix, (c) a second mutation or battery run on the post-fix tree. Implemented as GF-CLOSE-1 to 4 (16.5) with positive, negative and bypass tests. My own bypass tests never count as the independent pass.
+2. **Token accounting.** The unit is **all processed tokens** (input + output + cache reads + cache writes, as the harness reports them). Usage is snapshotted at slice start and end; one ledger row per slice and per delegated agent; where the harness cannot give a number the cell says `unmeasurable`, never blank (16.6; `docs/build/compute-ledger.md`).
+3. **FastAPI stack first.** The virtual environment is created before S2 code; skip count recorded before (49 expected, measured: 49) and after; the 35 FastAPI-dependent tests must run in S2's final check (16.8).
+4. **L-GF-17.** Assess in this section how unbound actors affect path-scoped ownership between groups; if ownership is spoofable on the managed path, propose the minimal fix and do not accept it silently (16.4).
+5. **Estimate-versus-actual every slice**, recalibrated from S1's actuals (16.7).
+6. Unchanged: no merge with `claude/v3-generalization-fastapi-*`; placeholder limit ids; frozen 48 of 48 before and after; no paid runs, $0 on the meter; stop after S2 and report.
+
+### 16.2 What S2 builds, and where it deviates from section 4.2
+
+| Rule | Enforces | At | Built in S2 as |
+|---|---|---|---|
+| GF-OWN-1 | every engine task belongs to a group role and its files lie inside that group's effective globs | P (seal), A | the effective map (sealed `breakdown.json` groups plus reviewer amendments), checked against the engine's task table by the audit; the seal-time half already exists as GF-WBS-1/2 |
+| GF-OWN-2 | a write by a group role lies inside its group's globs **and** a claimed task's globs; a path owned by no group is refused | H | `lib/greenfield/permissions.js`, called by `scripts/hooks/guard.js`; fails closed in a Greenfield-Senior project |
+| GF-OWN-3 | `task_complete`: every listed changed file belongs to the completing actor's group | P, A | wrapper around the frozen `tasks.complete`; the audit replays each `task.completed` against the map in force at that event |
+| GF-OWN-4 | tree attribution: every path changed since a base commit is owned by a group that completed a task declaring it | slice, `eccode-gf attribute` | a pure function and a command; its audit integration waits for S4, because the slice base commit is recorded by `gf.slice.opened` (deviation from 4.2, where the audit was listed) |
+| GF-OWN-5 | the map changes only by a reviewer amendment with a reason and a cited message; a rescope cannot move a task out of its group | P, A | `gf.ownership.amended`, a wrapper around `tasks.rescope`, audit replay |
+| GF-FRZ-1 | contract paths are writable by the api group only, and after the seal only while an amendment request for that file is open | H, A | in `permissions.js`; the byte-level guarantee stays GF-FRZ-2 (S1) |
+| GF-CONF-1 | the three guard configs (`behavior.json`, `guards.json`, `security.json`) are pinned by hash; a change after the pin is detected, and no group role may write them | H, A | `gf.config.pinned`, `eccode-gf config pin`; S4's `slice open` calls the same function (deviation: the event exists in S2, not S4) |
+| Drafts | group roles write only `.eccode/drafts/<group>/**` | H | `permissions.js`; narrows the shared scratch channel, does not close it (L-GF-4) |
+| GF-CLOSE-1..4 | slice closure (16.5) | P, A | `lib/greenfield/closure.js` |
+
+Group role sets in the hook were added in S1 (`IMPLEMENTERS`); S2 adds the group-to-glob check that makes them path-scoped. The ownership map is **not** copied into a new snapshot: it is read from the approved, hash-sealed `breakdown.json` (its bytes are also covered by the frozen audit's "modified after approval" check) and every read verifies the bytes against `gf.g1.sealed.hashes`; a mismatch is a GF-OWN-1 problem, and the hook then denies group-role writes (fail closed).
+
+### 16.3 Effective map and its algebra
+
+`effectiveMap(base, amendments)` replaces a group's `globs` with each amendment's `to`, in log order; `from` must equal the globs in force (a chain, as for contracts). Every map, sealed or amended, must pass the same checks as GF-WBS-2 (groups disjoint; `contracts/**` and `mocks/**` belong to api, `tests/acceptance/**` to test); S2 moves those checks into `ownership.js` so the breakdown validator and the amendment use one implementation. An amendment is also refused when it would leave a pending or claimed task of the group outside its new globs.
+
+### 16.4 L-GF-17: can group A forge group B's events? (assessment, before building)
+
+**Method.** Enumerate every way an agent of group A can cause a record entry, or a file write, that is attributed to group B, and for each say what stops it and whether the log could show it afterwards. The managed-path rows are demonstrated by tests in `tests/gf-spoof.test.js`; the others are reasoned from the code cited.
+
+| Vector | Where | Stopped by | Visible afterwards in the log? |
+|---|---|---|---|
+| A calls B's MCP server (`mcp__eccode_B__*`) | managed | the hook: server role must equal the caller's `agent_type` (`guard.js`, `main`); and the harness's per-subagent tool list in the `sandbox` and `no-shell` profiles (`install.js`) | no: the event is well-formed and says actor B |
+| A passes an `actor` argument to a tool of its own server | managed | nothing is needed: the handler reads the server's locked actor, never an argument (tested) | not applicable |
+| A writes B's files with Edit/Write | any | the hook, by the caller's `agent_type`, which the agent cannot set; S2 adds the group-glob check | the write is visible in git; its author is not (see below) |
+| A runs `eccode --actor B ...` | `guard` profile only (the other profiles have no shell) | the hook, on command text (limits rows 91, 117: text-level, obfuscation can pass) | no |
+| A appends a forged, correctly hashed event to `events.jsonl` | needs a writer other than the hook-covered tools | the hook (`RECORD_FILES`); the chain detects change and truncation, not an append | no: the audit judges content; the actor is asserted, not bound (L-GF-17) |
+| the hook is off (`ECCODE_HOOKS=off`) or the harness sends no `agent_type` | any | nothing | no |
+
+**Finding.** On the managed path, group A cannot act as group B **provided two controls that live outside the log hold**: the per-role server lock together with the harness's tool list, and the PreToolUse hook. The Greenfield-Senior layer neither checks that they are in force nor reports it. If either fails, A acts as B and neither the chain nor the audit can tell, because the log asserts the actor and does not bind it. So ownership **is** spoofable on the managed path in the one sense that matters: its guarantee rests on assumptions the layer does not verify, and a failure is silent. I do not accept that silently.
+
+**What a spoof buys.** (1) Writes: an A agent acting as B can claim B's tasks and write B's files; the attribution of a change is per claim, never per author (L-GF-3 is the same fact inside a group). (2) Reviewer-only events (`gf.ownership.amended`, finding resolutions, closure reviews): an A agent acting as a reviewer could amend the map or close its own slice. What a spoof does **not** buy: the sealed contracts, the pinned guard configs and the sealed acceptance tests are content-addressed (GF-FRZ-2, GF-CONF-1, GF-ACC-2): any change to them is detected whoever made it.
+
+**Minimal fix, in S2 (no secret needed).** (F0) A *managed-path preflight*: `eccode-gf preflight` and a section of `eccode-gf audit` report, as a recorded fact and not an assumption, which regime is in force: the install profile (`sandbox`, `no-shell` or `guard`), whether the guard is wired for `mcp__eccode_.*` and the file tools, and whether each group role has a role-locked server entry. `guard` profile or a missing wiring is reported as a **warning that names the consequence** ("a group can act as another undetectably"); `eccode-gf verify-done` (S5) will print the regime in the delivery report. (F1) Make the S2 ownership rules **path-first**: GF-OWN-3 and GF-OWN-4 judge paths against the sealed map, not actor strings, so a spoofed actor buys less. (F2) Say it plainly in the register: L-GF-17 is re-stated with the exact residual.
+
+**Proposed, not built, for the owner's decision.** (F3) *Keyed attestation*: `eccode-gf init` generates a per-role key stored outside the repository and handed to each role-locked server; after each commit the server appends `gf.attest {seq, hash, role, mac}`; the audit verifies the MAC and flags a group-role event without a valid attestation. That turns "a forged actor is undetectable" into "a forged actor is detected unless the agent read the key". Cost: about 250 lines, key management, and the key directory must be read-denied to agents, which only works where the harness runs hooks on Read (the same best-effort class as L-GF-7). Recommended for S5, next to done-verification, which should refuse DONE on an unattested group event. It does not help the plain CLI and does not protect against a defeated hook that also reads the key.
+
+### 16.5 The closure rule (owner condition 1): GF-CLOSE-1 to 4
+
+A **scope** is the thing being closed: a slice id (S4 binds it to `gf.slice.opened`) or any string a project chooses. Events: `gf.review.recorded`, `gf.finding.resolved`, `gf.battery.recorded`, `gf.slice.closed`. `eccode-gf close` commits `gf.slice.closed` only when the check, run inside the lock against the real log, finds all of the following; the audit replays them as invariants.
+
+| Rule | Requires | Bypass that must fail |
+|---|---|---|
+| GF-CLOSE-1 | the latest review of the scope has `verdict: clean`, is bound to the git tree object (`HEAD^{tree}`) that is being closed, on a clean tracked tree, and was recorded by a configured reviewer role that authored nothing in the record (no claim, completion or gate submission under that role) and is not the closer | a clean review of an earlier tree; a reviewer that also completed a task; the closer recording its own review |
+| GF-CLOSE-2 | every finding of every review of the scope is resolved: `fixed` cites a fix-verify proof (post-fix evidence that passed, citing a pre-fix evidence that failed as a reproduction, both recorded after the finding and before the resolution); `withdrawn` only by a reviewer role, with a reason; `deferred` only by `user`, only for minor findings, with a limit id | a fix cited with a proof whose pre-fix run passed; a proof recorded before the finding; the orchestrator withdrawing a blocking finding |
+| GF-CLOSE-3 | at least two batteries (pinned mutation runs: tree clean before and after, evidence recorded by the engine); the first recorded before the first review; the last bound to the closing tree and recorded after the last `fixed` resolution; its survivors listed with a reason each, or none | one battery only; a second battery on the pre-fix tree; a battery recorded before the last fix |
+| GF-CLOSE-4 | `accounting {unit: "all-processed-tokens", start, end}` where each of start and end is a non-negative integer or the string `unmeasurable`; never absent, never null; `end >= start` when both are numbers | a blank; `null`; `0` standing for unknown |
+| closed is closed | after `gf.slice.closed`, a review, resolution or battery for that scope is refused and the audit flags one that exists | a late review event for a closed scope |
+
+**What the engine cannot see (a named limit, L-GF-19).** Independence is **role-level and record-level**: a reviewer role that authored nothing in the record. The engine cannot tell two instances of the same role apart, so "a fresh agent with no context" is the orchestrator's dispatch, which the engine cannot read (the same out-of-band channel as L-GF-4). My own bypass tests are not an independent pass, and the rule gives no way to record them as one: a review is recorded only by a reviewer role, over MCP or `eccode-gf`, with the actor locked.
+
+**How S2 itself is closed.** The process in 16.8 follows the rule by hand and records each element in the evidence file: the ECCode build is not a Greenfield-Senior project, so the engine cannot yet run it on its own slices.
+
+### 16.6 Accounting protocol
+
+- **Unit (registered now): all processed tokens** = `input_tokens + output_tokens + cache_read_tokens + cache_write_tokens`, cumulative since session start, as reported by the harness (`get_session` `external_metadata.usage`). Output tokens are reported beside it, informational.
+- **Snapshots:** at slice start and slice end, the same call. A delegated agent's figure is what its completion notice reports (`subagent_tokens`, `tool_uses`, `duration_ms`); whether the cumulative session figure already includes those tokens is **unmeasurable** (the harness does not say).
+- **Ledger:** one row per slice and one per delegated agent, in `docs/build/compute-ledger.md`. A cell the harness cannot give says `unmeasurable`.
+- **Enforced where an engine record exists:** GF-CLOSE-4.
+- **S1, restated in this unit.** No S1-start or S1-end snapshot was taken. Two cumulative snapshots exist: 01:17Z on 2026-11-04 (recorded in the S1 evidence) and the S2-start snapshot below. Differences of two harness snapshots are measured; anything finer is unmeasurable.
+
+| Snapshot | Taken | Input | Output | Cache read | Cache write | **All processed** | Cost |
+|---|---|---|---|---|---|---|---|
+| 01:17Z, 2026-11-04 (G0 plus the S1 build) | recorded in S1 evidence | 172 | 155,778 | 18,300,440 | 743,276 | **19,199,666** | $5.74 |
+| S2 start, 2026-11-07 15:17Z (G0 plus all of S1, before any S2 work) | `s2-usage-start.json` | 2,704 | 669,298 | 127,190,368 | 1,631,247 | **129,493,617** | $24.70 |
+| difference (the S1 review, fix, verification and documentation phase) | | | | | | **110,293,951** | $18.96 |
+
+In the unit the owner has now fixed, **G0 plus S1 consumed 129.5 M processed tokens, of which 98.2 percent were cache reads**; S1's registered range was 4 to 8 M. The estimate was off by a factor of 16 to 32 in this unit (and the unit was ambiguous when I registered it, which I reported). The review, fix and verification phase used 5.7 times what G0 and the build had, because the context grew with every turn that re-read it. That is the lesson for S2's estimate (16.7): cost follows turns times context, not lines written.
+
+### 16.7 Registered estimate for S2 (before any S2 code)
+
+Labels: judgment ranges, factor-two uncertainty, no calibration claim (L-GF-12).
+
+| Item | Registered |
+|---|---|
+| Wall time, active | 2.5 to 4.5 h (S1 actual: 37 min to the last build commit, 1 h 22 min to the review-fix commit; S2 has about 1.5 times the scope and two independent review passes of about 30 min each) |
+| New production code | 900 to 1,500 JavaScript lines |
+| New test code | 1,600 to 2,800 lines including fixtures |
+| Tests | 130 to 260 (S1 registered 60 to 90 and produced 382; table rows now counted) |
+| **Tokens, all processed** | **40 to 150 M** (S1 measured 129.5 M for G0 plus S1; S2 starts with about 146 k of context rather than several hundred thousand, which lowers the read volume per turn, and has two review phases) |
+| Output tokens (informational) | 0.3 to 1.0 M |
+| Delegated agents | two independent reviewers, 0.3 to 0.6 M tokens each as reported (S1's: 419,658) |
+| Paid runs | $0 |
+
+Predictions, to be scored in the S2 report and not claimed now (the FastAPI baseline run had started before P6 was written; its output had not been read):
+- **P4.** The first independent pass finds at least three defects of major or blocking severity in the S2 code (S1: 4 blocking and 8 major).
+- **P5.** The second pass, on the post-fix tree, finds at least one defect that the first pass's fixes introduced or the first pass missed.
+- **P6.** With the FastAPI virtual environment, at least one of the 35 FastAPI-dependent tests fails on the unchanged S2-start tree because the installed library versions (FastAPI 0.162.1, SQLAlchemy 2.1.8, Starlette 1.10.0, Pydantic 2.14.3) are newer than the code was written against, not because of S2.
+
+### 16.8 S2 exit (the closure rule applied to S2 by hand)
+
+1. Tests green and the **full** suite green with `ECCODE_PYTHON` pointing at the virtual environment; the skip count after, with the 35 FastAPI-dependent tests running (the Mealie and kotlinc skips remain and are named).
+2. Frozen 48 of 48 by hash before and after; `docs/limits.md` and `scripts/guards/*.py` untouched.
+3. Battery run 1 on the build tree, then **review pass 1** (a fresh agent given the code, not my conclusions); every finding reproduced as a failing test before its fix; fixes.
+4. **Battery run 2** on the post-fix tree; **review pass 2 on the final tree**, clean; no commit after it other than evidence.
+5. Evidence file with exact commands and outputs; ledger rows; end snapshot; estimate-versus-actual; stop and report.
