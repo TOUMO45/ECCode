@@ -159,6 +159,12 @@ for (const [name, command] of SHELL) {
     assert.match(r.reason, /src\/server\/main\.py/);
   });
 }
+// The fifth engine battery (round 5) turned `args.length >= 1` into `> 1` for ln and install: no row had one argument.
+test('C2-5: ln with one argument outside the implementer\'s claim is denied (a project that is not Greenfield-Senior)', () => {
+  const ctx = plainTeam();
+  const r = hook(ctx, 'frontend-engineer', 'Bash', { command: 'ln src/server/main.py' });
+  assert.strictEqual(r.decision, 'deny', r.reason);
+});
 test('C2-5: the same commands on the role\'s own claimed path are allowed', () => {
   const ctx = plainTeam();
   for (const [, command] of SHELL.filter(([n]) => !/^git/.test(n))) assert.strictEqual(hook(ctx, 'backend-engineer', 'Bash', { command }).decision, 'allow', command);

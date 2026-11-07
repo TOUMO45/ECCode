@@ -46,6 +46,18 @@ test('D3-1: the same closure forged with Store.commit is reported by the audit',
   const errs = audit.run(ctx.store, ctx.config).errors;
   assert.ok(errs.some((e) => e.rule === 'GF-CLOSE-1' && /recorded by orchestrator, the closer/.test(e.message)), JSON.stringify(errs.map((e) => e.message)));
 });
+// The fifth engine battery (round 5) swapped the label of a dispatch problem: a refused new dispatch named "seq Infinity"
+// and a forged recorded one lost its seq. No test read the label.
+test('a refused new dispatch names no seq; the audit names the seq of a recorded dispatch it reports', () => {
+  const ctx = closeProject();
+  let err;
+  try { X.dispatch(ctx, 'critique', 'security-reviewer', 'S2', ['.eccode/handoffs/h.json']); } catch (e) { err = e; }
+  assert.ok(err, 'refused');
+  assert.doesNotMatch(err.message, /seq|Infinity/);
+  const e = F(ctx, 'gf.dispatch.recorded', ORCH, { id: 'disp-forged', scope: 'S2', role: 'security-reviewer', step: 'critique', treeHash: tree(ctx), inputs: [{ path: '.eccode/handoffs/h.json', sha256: 'a'.repeat(64) }] });
+  const errs = audit.run(ctx.store, ctx.config).errors.filter((x) => x.rule === 'GF-CLOSE-5');
+  assert.ok(errs.some((x) => x.message.includes(`(seq ${e.event.seq})`)), JSON.stringify(errs.map((x) => x.message)));
+});
 test('D3-1: with that configuration, a closure whose reviews are all by other roles still closes', () => {
   const ctx = closerIsReviewer();
   closingRound(ctx, 'architecture-reviewer');

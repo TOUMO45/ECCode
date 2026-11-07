@@ -100,6 +100,11 @@ test('gf.dispatch.recorded: an input that carries a field besides path and sha25
 test('the nested closed objects of the schemas are found (the dispatch inputs among them)', () => {
   assert.ok(NESTED.some(([type, at]) => type === 'gf.dispatch.recorded' && at[0] === 'inputs'), JSON.stringify(NESTED));
 });
+// The fifth engine battery (round 5) flipped `additionalProperties: false` on the closure's `accounting` to true: the
+// walker above reads the schema, so an opened object simply left the list. The list is therefore fixed here.
+test('the nested closed objects are exactly these (a schema that opens one is caught)', () => {
+  assert.deepStrictEqual(NESTED.map(([type, at]) => `${type} ${at.join('.')}`), ['gf.artifact.registered files.0', 'gf.artifact.registered validator', 'gf.dispatch.recorded inputs.0', 'gf.review.recorded findings.0', 'gf.slice.closed steps', 'gf.slice.closed accounting']);
+});
 for (const [type, at] of NESTED) {
   test(`${type}: a field the schema does not name, smuggled into ${at.join('.')}, is refused`, () => {
     assert.ok(events.validate(type, smuggleAt(VALID[type], at)).some((m) => /smuggled|additional/i.test(m)), `${type} ${at.join('.')}`);
