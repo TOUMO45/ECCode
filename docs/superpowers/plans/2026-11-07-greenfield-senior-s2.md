@@ -1,5 +1,7 @@
 # Greenfield-Senior S2 Implementation Plan (ownership map, path-scoped permissions, slice closure)
 
+> **Status:** the pre-build plan, kept as written for the record and amended in place where noted; it is superseded where design section 18 differs.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task (the session is the implementer; the independent reviews in R1 and R2 are fresh agents). Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add GF-OWN-1..5, GF-FRZ-1, GF-CONF-1, the drafts namespacing and the slice-closure rule GF-CLOSE-1..5 (the three-step review of design 17.2) to the Greenfield-Senior layer, with the L-GF-17 preflight, test-first, then close S2 by its own rule.
@@ -66,7 +68,7 @@ Failure modes the design implies and no single task's rule names, most likely fi
 
 **Interfaces:**
 - Consumes: `ownership-ops.loadMap`, `ownership.ownerOfPath`, `contracts.currentHashes`, `projection.project`.
-- Produces: `policy(root, role, rel): null | {drafts: string[], denial: string|null}`. `null` means the project is not a Greenfield-Senior project or `role` is in no group (existing hook rules apply unchanged). For a group role: `drafts` is `['.eccode/drafts/<group>/**']`; `denial` is a reason string or null. Fails closed: if the map cannot be loaded the denial says why. `guard.js` uses `policy` before `draftAreas`: a denial wins; `.eccode/drafts/<group>/**` is allowed; the existing claimed-task check still applies afterwards.
+- Produces: `policy(root, role, rel): null | {drafts: string[], denial: string|null}`. `null` means the project is not a Greenfield-Senior project or `role` is in no group (existing hook rules apply unchanged). For a group role: `drafts` is `['.eccode/drafts/<group>/**']`; `denial` is a reason string or null. After the seal it fails closed: if the map cannot be loaded the denial says why; before the seal it returns no ownership denial (the drafts and symlink rules still apply), and the hook's claimed-task rule answers. `guard.js` uses `policy` before `draftAreas`: a denial wins; `.eccode/drafts/<group>/**` is allowed; the existing claimed-task check still applies afterwards.
 
 - [ ] **Step 1: Write the failing tests** running the real hook (`spawnSync(node, [GUARD])` with a JSON `tool_input` on stdin, `agent_type` set to the role, in a sealed temporary project with a claimed task):
   - positive: `backend-engineer` writes `app/main.py` inside a claimed task's globs: no denial. `integration-engineer` writes `contracts/openapi.json` before the seal... (pre-seal group roles hold no claims, so this row asserts the existing "no claimed task" message is still what a pre-seal write gets).
@@ -149,7 +151,7 @@ Failure modes the design implies and no single task's rule names, most likely fi
 
 **Files:** `docs/build/gf-s2-evidence.md`, `docs/build/compute-ledger.md`, `docs/design/greenfield-senior.md` (section 17 as built), `docs/limits-greenfield.md`, `tests/gf-docs.test.js` (wording scan includes the S2 plan and evidence).
 
-- [ ] **Step 1: Battery run 1** on the build tree: `scratchpad/mutation-run.js` extended with GF-OWN-1, GF-OWN-2, GF-OWN-3, GF-OWN-4, GF-OWN-5, GF-FRZ-1, GF-CONF-1, GF-CLOSE-1, GF-CLOSE-2, GF-CLOSE-3, GF-CLOSE-4. Expected: every rule fails at least two tests when removed.
+- [ ] **Step 1: Engine battery run 1** (`eccode-gf close battery`, a pinned mutation run, the one GF-CLOSE-3 counts) on the build tree, before the first review; then, as extra evidence about the tests, the rule-removal battery `scratchpad/mutation-run.js` extended with GF-OWN-1, GF-OWN-2, GF-OWN-3, GF-OWN-4, GF-OWN-5, GF-FRZ-1, GF-CONF-1, GF-CLOSE-1, GF-CLOSE-2, GF-CLOSE-3, GF-CLOSE-4. Expected: every rule fails at least two tests when removed.
 - [ ] **Step 2: Full check with the venv:** `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=commit.gpgsign GIT_CONFIG_VALUE_0=false ECCODE_PYTHON=$S/venv/bin/python npm run check`. Expected: 0 failures; the 35 FastAPI-dependent tests run; skip count reported.
 - Amended 2026-11-07 by the owner's continuation (design 17.2): the review is three recorded steps, each its own dispatch; round 1 is R1 and R2 on the build tree, round 2 is R1, R2 and R3 on the final tree; S2's closure is recorded with `eccode-gf close` in a record beside a checkout of the final tree.
 - [ ] **Step 3: Review round 1** (design 17.2): R1 comprehension (from the documents alone) and R2 critique, each a zero-context agent with its own recorded dispatch, given the artifacts and the tree only. Every finding becomes a failing test (red log kept) before its fix; a fix is proven by fix-verify where it applies.
