@@ -25,7 +25,26 @@ S2 is the ownership map and path-scoped permissions (`docs/design/greenfield-sen
 | Full check on the S2 review tree `e8fee82` with the venv | **1,366 tests, 1,352 pass, 0 fail, 14 skipped**, 303 s (a mutation run was competing for the four cores) |
 | Final tree | On the last S2 tree (`21ef6eb`, tree `bceec2c`), recorded in the closure record by the round-4 readiness reviewer: `npm run check` with `ECCODE_PYTHON` at the venv, **1,520 tests, 1,506 pass, 0 fail, 14 skipped** (`ev-mw6rpjk2-01e89d2e`); the FastAPI-dependent test files run with 0 skipped with the venv and skip without it (`ev-mw6rtnox-0190fc75`). My own run on the same tree with the evidence documents added (19:33Z to 19:37Z, `ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python npm run check`): **1,520 tests, 1,506 pass, 0 fail, 14 skipped**, 229.6 s. |
 
-The 14 remaining skips: 6 need a Mealie checkout, 4 need `ECCODE_MEALIE_VALIDATE`, 1 needs `ECCODE_REALBUGS_VALIDATE`, 1 needs `ECCODE_CBM`, 1 `kotlinc`, 1 `codebase-memory-mcp`. **None is FastAPI-dependent: the 35 FastAPI-dependent tests run** (49 skips before, 14 after).
+Round 5, with the venv: on `ec0f235` (tree `19affb9`), my own run, **1,597 tests, 1,583 pass, 0 fail, 14 skipped**; on `c79800b` (tree `154055e`), the round-5 readiness reviewer's run, **1,600 tests, 1,586 pass, 0 fail, 14 skipped** (`ev-mw6ykdj5-012fdc0d`).
+
+**The 14 skipped tests, each with its reason (the owner asked for the list).** None is FastAPI-dependent: the 35 FastAPI-dependent tests run (49 skips before, 14 after).
+
+| Test | Reason it is skipped |
+|---|---|
+| runtime trace resolves reflective loads in Kotlin (top-level main compiled to MainKt) | `kotlinc` not installed |
+| impact --calls adds function-level callers from codebase-memory-mcp | `codebase-memory-mcp` not installed |
+| install --with-codebase-memory registers the server and it is not flagged as foreign | `ECCODE_CBM` not set to a codebase-memory-mcp binary |
+| setup: it succeeds and every call it makes through the API is accepted | no Mealie checkout at `/root/.cache/eccode/mealie-seed` |
+| setup: the first three rows of every entity table are the three example ids, on every fresh setup | no Mealie checkout |
+| setup: every example id resolves to an entity through a real route (200), for each kind | no Mealie checkout |
+| setup: five roles authenticate as themselves; users: the reserved probe identities, plain users on the example ids | no Mealie checkout |
+| setup: two fresh setups give the same ids and the same data, column by column | no Mealie checkout |
+| setup: the random meal plan route has one candidate whatever the date and type | no Mealie checkout |
+| mealie live: each target check fails at the source and passes at the fix commit | `ECCODE_MEALIE_VALIDATE=1` not set (with `ECCODE_MEALIE_ENVS`) |
+| mealie2 live: the same | `ECCODE_MEALIE_VALIDATE=1` not set |
+| mealie3 live: the same | `ECCODE_MEALIE_VALIDATE=1` not set |
+| mealie4 live: the same | `ECCODE_MEALIE_VALIDATE=1` not set |
+| realbugs (live): the pre-fix tree fails the bug check, the real fix passes every check | `ECCODE_REALBUGS_VALIDATE=1` not set (with `ECCODE_REALBUGS_VENVS`) |
 
 ## 3. Test-first: what "red" was at each task
 
@@ -72,6 +91,8 @@ The drafts namespace has no rule id, so the battery cannot remove it; its tests 
 | 2 | `f7b3db2` (`010ac02`), 17:09Z to 17:27Z | 20 mutants, **18 killed, 2 survived**: `events.js:83` (`additionalProperties: false` on the dispatch inputs' items flipped to true), `ownership-ops.js:127` (`||` to `&&` in the rescope check's early return). The first got two tests (`78dae31`); the second is killed on the round-3 tree by the test of a rescope of an unknown task (applied by hand) |
 | 3 | `faa7031a` (`78dae31`), 18:31Z to 18:48Z, run before the closing round so that a survivor could still get a test | 20 mutants, **19 killed, 1 survived**: `guard.js:123` (`name === 'ruby'` to `!==`: `ruby -i` dropped as a writer, and any other command with an `-i` flag taken for one). Two tests (`21ef6eb`). The mutation tool picks 20 evenly spaced mutants from the changed source lines and excludes test files, so a tree that adds only tests is mutated in the same 20 places |
 | 4 | `bceec2c` (`21ef6eb`), after the round-4 reviews | 20 mutants, **20 killed, 0 survived** (`bat-mw6swl1p-02ad7c8a`, evidence `ev-mw6swl1f-01744b1f`, 19:13Z to 19:33Z): the same 20 places as battery 3, as predicted before the run |
+| 5 | `19affb9` (`ec0f235`, round 5's fixes), 21:25Z to 21:43Z | 20 mutants, **16 killed, 4 survived**: round 5's new source lines moved the picks. `closure.js:80` (the seq label of a dispatch problem), `events.js:104` (the closure's `accounting` opened) and `guard.js:121` (`ln` with one argument) got tests (`c79800b`), each checked by applying the mutant by hand; `closure.js:160` (`<` to `<=` between two seqs) is equivalent, since no two events share a seq |
+| 6 | `154055e` (`c79800b`), 21:46Z to 22:04Z, the tree round 5 reviewed | 20 mutants, **19 killed**; the one survivor is the equivalent `closure.js:160`, as predicted before the run |
 
 ## 6. L-GF-17 (owner condition 4)
 
@@ -86,15 +107,20 @@ The assessment is design 16.4, written before any S2 code. Result: on the manage
 
 S2 is the first slice put through GF-CLOSE-1 to 5, and it is not closed: the rule refuses, as it should while findings are open. The closure record is a Greenfield-Senior record initialised at 16:22Z, at the start of round 1, inside a separate checkout of the build tree (`scratchpad/s2-record`, a `git worktree` of `e8fee82`), and moved with that checkout from commit to commit (`e8fee82`, `9215bff`, `010ac02`, `86efe13`, `4619c33`, `78dae31` and `21ef6eb`). The repository's tracked dogfood `.eccode/` was moved aside there before `eccode-gf init`: a working-tree change under `.eccode/`, which the clean-tree check excludes; the tree hash still includes the commit's tracked `.eccode/` files (design 16.5, tree identity). Every step below was recorded by the commands of the rule; reviewers recorded their own reviews with their own role. **The record is archived in `docs/build/gf-s2-record/`** (the hash-chained log, the command logs, the paired-run tables, the usage snapshots and the open round-4 reproductions), with how to re-audit it.
 
-**S2 is not closed.** Four review rounds are in the record, each with its own three dispatches (round 1 had two steps, as registered), every finding of rounds 1 to 3 is resolved with its proof (79 resolutions: 28, 32 and 19), and four engine batteries were recorded. Round 4 raised 22 findings (section 8). They are unresolved, and the rule refuses the close: `eccode-gf close status --scope S2` reports **22 problems, every one GF-CLOSE-2**, one per unresolved round-4 finding; nothing else stands in the way: the three steps on the closing tree, readiness go with no standing no-go, the closer not a reviewer, two or more batteries with the last on the closing tree after the last fix and no survivor, all pass. The record's audit is clean (0 errors; 3 warnings, the text-level regime warnings of a checkout that is not an installed project). I stopped there, as I said I would if round 4 were not clean, and put the convergence question to the owner (section 12) instead of starting a fifth round.
+**S2 is not closed.** Five review rounds are in the record. After round 4 the owner approved one last round under a stop rule registered beforehand (section 12). Every finding of rounds 1 to 4 is resolved with its proof (101 resolutions: 28, 32, 19 and 22), and six engine batteries were recorded. Round 5 raised 17 findings and a readiness no-go (section 8). By the owner's stop rule, a major engine-behaviour finding in the critique means stop and report, with no round 6 without the owner's decision. `eccode-gf close status --scope S2` reports **20 problems**:
+- 17 GF-CLOSE-2, one per open round-5 finding;
+- 2 GF-CLOSE-1, for the standing no-go;
+- 1 GF-CLOSE-3, the equivalent survivor, which needs its reason at close.
+
+The record's audit is clean (0 errors). The three engine defects of round 5 are reproduced by failing tests recorded in the record (`ev-mw6yup6k-017be0bf`, `ev-mw6yupe3-016acc6c`, `ev-mw6yupph-01852a37`, purpose `reproduction`); the documentation findings are reproduced when they are fixed, because their tests assert the corrected text.
 
 | Record | Count |
 |---|---|
-| events in the closure record | 309 |
-| dispatches / reviews | 11 / 11 (round 1: 2; rounds 2 to 4: 3 each) |
-| findings raised / resolved | 101 / 79 (rounds 1 to 3: 79 raised, 79 resolved; round 4: 22 raised, all open; readiness steps carry no findings) |
-| fix verifications (defects) / paired runs (documentation) | 12 / 67 for rounds 1 to 3 (R2-1, R2-2, C2-1 to 5, D2-1 to 5 / R1-1 to 26, C1-1 to 27, D1-1 to 14), plus the D3-1 fix verification as evidence |
-| engine batteries | 4 (17, 18, 19 and 20 of 20 killed) |
+| events in the closure record | 394 |
+| dispatches / reviews | 14 / 14 (round 1: 2; rounds 2 to 5: 3 each) |
+| findings raised / resolved | 118 / 101 (rounds 1 to 4: 101 raised, 101 resolved; round 5: 17 raised, all open; readiness steps carry no findings) |
+| fix verifications (defects) / paired runs (documentation) | 20 / 81 for rounds 1 to 4 (R2-1, R2-2, C2-1 to 5, D2-1 to 5, E2-1 to 8 / R1-1 to 26, C1-1 to 27, D1-1 to 14, E1-1 to 14), plus the D3-1 fix verification as evidence |
+| engine batteries | 6 (17, 18, 19, 20, 16 and 19 of 20 killed) |
 
 ## 8. The independent review: findings and dispositions
 
@@ -157,6 +183,20 @@ Residuals the readiness reviewer named: (a) GF-OWN-3 judges the listed files as 
 | 2 | `f7b3db2` | 27 (7 major, 20 minor) | 5 (1 blocking, 3 major, 1 minor) | GO, 36 citations | (round 3's tree had none of its own) |
 | 3 | `9fd568e` | 14 (3 major, 11 minor) | 5 (1 blocking, 1 major, 3 minor) | GO, 26 citations | 19 of 20 on `faa7031a` |
 | 4 | `bceec2c` | 14 (3 major, 11 minor) | 8 (4 major, 4 minor) | GO, 50 citations | 20 of 20 on `bceec2c` |
+| 5 | `154055e` | 15 (1 major, 14 minor) | 2 (1 major, 1 minor) | **NO-GO**, 24 citations | 19 of 20 on `154055e` (the survivor equivalent) |
+
+**Round 5, the last round under the owner's stop rule, on tree `154055e` (`c79800b`).** Before it: the 22 round-4 findings were fixed and resolved (`ec0f235`: GF-RUN-1, no shell for a group role; GF-RUN-2, the runner; E2-5 to E2-8; the deferral rule; section 18 made the single as-built description), batteries 5 and 6 ran on the post-fix trees, and the three reviewers worked on the owner's scope (R1 on section 18 as the single description; R2 on the diff since round 4 and the shell-class closure; R3 readiness). Each finding is classified, as the owner asked, as engine behaviour or documentation only.
+
+| Finding | Severity | Class | What it says |
+|---|---|---|---|
+| F2-1 | major | **engine behaviour** | the runner does not fail, or report, a run whose project code changes a tracked file of another group while that group holds a claim on it: the frozen integrity window files such a change as concurrent and passes the run, while 18.3 and L-GF-29 say the run fails (reproduced: `ev-mw6yup6k-017be0bf`) |
+| R3 no-go, reason 1 | (a readiness reason; no-go) | **engine behaviour** | the writing forms judge a directory argument as a file, so backend-engineer may run `ruff format app/db`, `app/` or `app/auth`, and its run rewrote db's claimed `app/db/models.py` and passed (reproduced: `ev-mw6yupph-01852a37`) |
+| F2-2 | minor | engine behaviour | the runner also accepts the lab reproduction command, a source 18.4 does not name (reproduced: `ev-mw6yupe3-016acc6c`) |
+| R3 no-go, reasons 2 and 3 | (readiness reasons) | documentation only | L-GF-29 and 18.3 state the integrity window wrongly (the same fact as F2-1); 18.4 says alembic is installed here, but it is in the venv only, not on the path; L-GF-24 is stale (also F1-15) |
+| F1-1 | major | documentation only | the documents do not say what the hook's text check of `--actor` compares, nor how a call without an `agent_type` is treated, so whether the orchestrator can record a closing review as a reviewer role through `eccode-gf` cannot be told |
+| F1-2 to F1-15 | minor | documentation only | the preflight row of 18.3 claims more than F0 reads; the accounting form after a counter reset; the cost figures against "$0 on the meter"; 17.5 against 18.4 on the three scanners and their invocations; the owner's tool list not in the documents; GF-WBS-2 missing from section 8; the default map of 2.4 against the algebra of 18.2; document authors drafting `contracts/` against GF-FRZ-1; "declaring" in GF-OWN-4; `steps{}` and `batteries[]` of the closure event; the clean-tree definition in 18.5 without E2-7; 18.7 citing 18.5 as the pre-build design; GF-ACC-2 named as built in 18.3; 2.2 and L-GF-24 still saying shell writes are judged on their text |
+
+What held, by the critic's account: GF-RUN-1 for every group role and all three shell tools, failing closed; the runner's word grammar (no shell syntax, no `-c`, no out-of-project paths); the serve form; E2-5 to E2-8; the deferral rule. By the readiness reviewer's: GF-RUN-1 and GF-RUN-2 built and tested (52 of 52), the full suite green, the frozen 48 untouched, no later-slice item claimed.
 
 ## 9. Accounting and estimate versus actual
 
@@ -168,7 +208,15 @@ Residuals the readiness reviewer named: (a) GF-OWN-3 judges the listed files as 
 | interim | 17:49Z (`s2-usage-interim.json`) | 129,493,617 (unchanged in every field) | 669,298 | $24.70 |
 | interim 2 | 18:32Z (`s2-usage-interim-2.json`) | 129,493,617 (unchanged in every field) | 669,298 | $24.70 |
 | S2 end | 19:13Z (`s2-usage-end.json`) | 395,929,180 | 2,118,265 | $136.98 |
-| **S2** | difference | **266,435,563** (97.0 percent cache reads) | **1,448,967** | **$112.28** |
+| **S2 to the end of round 4** | difference | **266,435,563** (97.0 percent cache reads) | **1,448,967** | **$112.28** |
+| round 5 start | 20:52Z (`r5-usage-start.json`) | 411,656,042 | 2,165,357 | $141.57 |
+| round 5 check | 21:24Z (`r5-usage-check-1.json`) | 411,656,042 (stale: unchanged in every field, `context_usage` too) | 2,165,357 | $141.57 |
+| round 5 end | 22:17Z (`r5-usage-end.json`) | 476,567,295 | 2,518,354 | $172.83 |
+| **round 5** | difference | **64,911,253**, under the owner's cap of 100 M | **352,997** | **$31.26** |
+| between round 4 and round 5 (the report, the archive) | 19:13Z to 20:52Z | 15,726,862 | 47,092 | $4.59 |
+| **S2, all of it** | 15:17Z to 22:17Z | **347,073,678** | **1,849,056** | **$148.13** |
+
+**Per round (the owner's decision of round 5):** rounds 1 to 4 are `unmeasurable` one by one, because the interim snapshots of 17:49Z and 18:32Z were stale; round 5 is measured. The cap could not be watched during the round: the figure was stale from 20:52Z to at least 21:47Z, so I kept my own count of calls (about 52 M by 21:47Z, a judgment) and the end snapshot measured the round.
 
 The usage figure is updated late, not continuously: it stood still from 15:17Z to at least 18:32Z while `context_usage` moved from 146,182 to 574,984. Whether it includes the delegated agents' tokens is unmeasurable. The cost is the harness's own figure for this session's compute; no paid benchmark run was launched (the owner's "no paid runs, $0 on the meter" refers to those).
 
@@ -176,13 +224,13 @@ The usage figure is updated late, not continuously: it stood still from 15:17Z t
 
 | Item | Registered | Actual | Verdict |
 |---|---|---|---|
-| Wall time, active | 2.5 to 4.5 h; amended 3 to 6 h | 15:17Z (start snapshot) to 18:52Z (last S2 commit, `21ef6eb`) is 3 h 35 min; to the report about 4 h 20 min | inside the amended range |
-| New production code | 900 to 1,500 lines | 1,299 added, 30 deleted (`lib`, `bin`, `scripts`, `3f6ee65..21ef6eb`) | inside |
-| New test code | 1,600 to 2,800 lines | 2,532 added, 17 deleted (`tests`) | inside |
-| Tests (`# tests` of `node --test tests/gf-*.test.js`) | 130 to 260 | 538 (382 at `3f6ee65`, 920 at `21ef6eb`) | over, 2.1 times the top; 117 of them are in the seven review-round test files (`tests/gf-review-s2*.test.js`, `tests/gf-docs-s2*.test.js`), and the survivor tests went into existing files |
-| Tokens, all processed | 40 to 150 M; amended 60 to 210 M | 266.4 M | over the amended range by 27 percent of its top |
-| Output tokens (informational) | 0.3 to 1.0 M | 1.45 M | over |
-| Reviewer dispatches | 5 if two rounds suffice, 3 more per further round | 11 (four rounds: 2 + 3 + 3 + 3), as the formula gives for four rounds | the count matched; the number of rounds was not registered |
+| Wall time, active | 2.5 to 4.5 h; amended 3 to 6 h | 15:17Z to 19:45Z (rounds 1 to 4 and the first report), then 20:52Z to about 22:30Z (round 5): about 6 h 10 min active, the owner's decision time excluded | at the top of the amended range, slightly over |
+| New production code | 900 to 1,500 lines | 1,581 added, 32 deleted (`lib`, `bin`, `scripts`, `hooks`, `3f6ee65..c79800b`; round 5 added 291) | over by 5 percent |
+| New test code | 1,600 to 2,800 lines | 3,028 added, 18 deleted (`tests`) | over by 8 percent |
+| Tests (`# tests` of `node --test tests/gf-*.test.js`) | 130 to 260 | 618 (382 at `3f6ee65`, 1,000 at `c79800b`) | over, 2.4 times the top; most of the excess is review-round regression tests |
+| Tokens, all processed | 40 to 150 M; amended 60 to 210 M | 347.1 M (266.4 M to the end of round 4, 15.7 M between, 64.9 M in round 5) | over the amended range by 65 percent of its top |
+| Output tokens (informational) | 0.3 to 1.0 M | 1.85 M | over |
+| Reviewer dispatches | 5 if two rounds suffice, 3 more per further round | 14 (five rounds: 2 + 3 + 3 + 3 + 3), as the formula gives for five rounds | the count matched; the number of rounds was not registered |
 | Delegated research agent | 1, 0.3 to 0.8 M as reported | 1, 192,097 as reported | under |
 | Reviewer agents | 0.3 to 0.6 M each as reported | 113,993 to 358,830 per final notice | at or under |
 | Paid runs | $0 | $0 (no benchmark arm launched) | as registered |
@@ -191,7 +239,7 @@ The usage figure is updated late, not continuously: it stood still from 15:17Z t
 - **P4 (the first independent pass finds at least three defects of major or blocking severity in the S2 code): not confirmed.** Round 1's critique raised 2 (R2-1 blocking, R2-2 major). R1-6, a major documentation finding of the comprehension step, exposed a third code gap while I resolved it; it was recorded as documentation, so it does not count. (A note during the work called P4 confirmed; that was wrong.)
 - **P5 (the second pass finds at least one defect the first pass's fixes introduced or the first pass missed): confirmed.** Round 2's critique raised 5, among them C2-1 (blocking).
 - **P6 (at least one of the 35 FastAPI-dependent tests fails on the unchanged S2-start tree because of the library versions): not confirmed.** The 5 failures of the first venv run were an environment path, not library drift; with the venv at the path the fixtures name, 0 fail (section 2).
-- **P7 (the closing round raises at least one finding the first round did not): confirmed**, in every closing round (32, 19 and 22 findings).
+- **P7 (the closing round raises at least one finding the first round did not): confirmed**, in every closing round (32, 19, 22 and 17 findings).
 
 ## 10. Incidents
 
@@ -201,21 +249,45 @@ The usage figure is updated late, not continuously: it stood still from 15:17Z t
 
 ## 11. Delegated agents (one ledger row each; `docs/build/compute-ledger.md`)
 
-Twelve delegated agents, each a ledger row in `docs/build/compute-ledger.md` with its tokens, tool uses and wall time as the harness reported them: the tool measurement (192,097), and eleven zero-context reviewers (round 1: R1, R2; rounds 2 to 4: R1, R2, R3). Sum of the final notices: **2,931,577**; sum of each agent's largest notice: 3,215,234. The harness does not say whether several notices of one agent are cumulative, so neither sum is the agents' total. Every reviewer recorded its own review with its own role; none was given my conclusions, earlier reviews or the evidence file (which was not in the tree it received).
+Fifteen delegated agents, each a ledger row with its tokens, tool uses and wall time as the harness reported them: the tool measurement (192,097) and fourteen zero-context reviewers (round 1: R1 and R2; rounds 2 to 5: R1, R2 and R3). Round 5's: R1 234,434, R2 202,366, R3 254,587. Sum of the final notices: **3,622,964**. The harness does not say whether several notices of one agent are cumulative, so this is not the agents' exact total. Every reviewer recorded its own review with its own role; none was given my conclusions, earlier reviews or this file.
 
-## 12. The decision for the owner: the closing rounds do not converge
+## 12. The owner's round-5 decision and where it stands
 
-The rule requires a closing round with no unresolved finding. A fixed finding changes the tree and needs a new round; only a minor finding can be deferred, and only by the user. Four rounds have run. Readiness said GO three times in a row, the batteries went 17, 18, 19 and 20 of 20, and blocking findings stopped in round 4. But every round's fresh reviewers found new majors: in round 4, 3 documentation and 4 defects. Two causes are visible in the data:
-1. **The hook's shell-text model is open-ended.** 4 of round 4's 8 defects (E2-1 to E2-4) are further shell forms, after the nine commands of round 2 (C2-5); round 3's blocking D2-1 was another path form (`/proc/self/root`). Modelling one more command per round does not end.
-2. **The design document grows with every fix.** Each round's documentation fixes add text, and new text adds new inconsistencies: E1-1 and E1-8 were introduced by my round-3 fixes.
+After round 4 the owner approved one more round (option A), with these amendments:
+- **Scope:** the structural fix for the shell class, the four remaining defects, the three major documentation findings, and section 18 as the single as-built description.
+- **Stop rule:** registered before the round. If R2 raises no blocking or major engine-behaviour finding, the owner defers the minors and the documentation-only findings, and S2 closes. Documentation-only majors need the owner's explicit deferral. If R2 does raise one: stop and report, with no round 6 without the owner's decision.
+- **Compute cap:** 100 M processed tokens for the round.
 
-Options, my recommendation first:
-- **A. One more round, with structural fixes and a stop rule registered before it (recommended).**
-  - (i) Shell writes: stop modelling commands one at a time. In a Greenfield-Senior project, the hook denies Bash to group roles; tests run through the engine's approved-command runner, as the `no-shell` profile already does. That removes the class E2-1 to E2-4 on the managed path, rather than patching it. The `guard` profile stays best effort and named (L-GF-1). This is a change for S3's builders, and it is yours to make.
-  - (ii) Fix E2-5 to E2-8 in `lib/greenfield`, with no frozen file touched: attribution with its own `git diff --no-renames`; a hard-link check by link count for dispatch inputs and file-tool writes; the clean-tree check without the repository's exclude files; the preflight reading `disableAllHooks` and `env.ECCODE_HOOKS`.
-  - (iii) Fix the three major documentation findings, and consolidate: make section 18 the single as-built statement of S2, and section 16 its history.
-  - (iv) The stop rule: if round 5 raises no blocking or major finding, you defer its minors with limit ids (the rule already allows that) and S2 closes; if it raises a major, I stop again.
-  - Cost, my judgment and not a measurement (the usage figure did not move during rounds 2 to 4, so no per-round figure exists): about 1.5 h and 60 to 100 M all-processed tokens.
-- **B. Let the user defer a major finding too** (an engine change), and close S2 now on `bceec2c` with the 22 findings as named limits carried into S3. About 20 minutes. It weakens the gate you made permanent, which the standing rules forbid, so I do not recommend it.
-- **C. Keep the rule and repeat rounds until one is clean.** There is no bound: each of the last two rounds raised 19 to 22 findings, and S2's 266 M over four rounds and the build suggests some tens of millions of tokens a round (a judgment; no per-round figure was measured). Not recommended.
+**The stop rule is triggered.** R2 raised F2-1, a major engine-behaviour finding. The readiness step is a no-go, for a second engine defect of the same class: the runner's writing forms take a directory as a file. So S2 is stopped, not closed. Round 5 used 64.9 M of its 100 M cap.
 
+What round 5 did settle:
+- The shell class, which every earlier round reopened (C2-5, D2-1, E2-1 to E2-4), was not reopened. Both reviewers attacked GF-RUN-1 and the runner's word grammar, and both held.
+- The batteries killed 19 of 20 on the reviewed tree, the survivor equivalent.
+- The documentation findings went from 14 (3 major) to 15 (1 major).
+
+What remains, for the owner's decision, with my proposal:
+- **The two engine defects share one cause.** The runner trusts the frozen integrity window for tracked files. That window passes a change to a file another agent has claimed, and the writing forms judge a directory argument as if it were a file. A narrow fix: the runner itself diffs the tracked files before and after a run, and fails a run that changed any file outside the caller's group, concurrent claims included. The writing forms then judge a path as a directory (every group with globs under it must be the caller's). Section 18.3, 18.4 and L-GF-29 would be corrected to match.
+- **F2-2:** exclude the lab reproduction from the runner's plan list, or name it in 18.4.
+- **F1-1 and the fourteen minor documentation findings:** fix them or defer them, as the owner's stop rule allows.
+- **This needs a sixth round, which the stop rule reserves to the owner.** Its cost, judged from round 5: about 1.5 h and 50 to 80 M all-processed tokens.
+
+## 13. Recalibrated estimates for S3 to S6, from S2's actuals (registered now, before S3)
+
+Labels: judgment ranges, factor-two uncertainty, no calibration claim (L-GF-12).
+
+The basis is S2's actuals:
+- **Measured:** about 6 h 10 min active; 347 M all-processed tokens and $148.13 of harness compute; 618 tests; 1,581 production and 3,028 test lines.
+- **Against registration:** the build itself (T1 to T6) took about 1.4 h and stayed close to its registration. The closing rounds took the rest: five rounds, about 4.8 h and most of the tokens.
+- **The lesson for the estimates:** a slice's cost is its build plus its closing rounds, and the rounds dominate.
+
+The ranges below assume the three-step closure with a stop rule of at most three rounds after the first (the owner's decision decides it). Harness compute is converted at S2's measured rate, about $0.43 per million all-processed tokens.
+
+| Slice | Wall time, active | Prod / test LOC | Tokens, all processed | Harness compute | Tests (`# tests`) |
+|---|---|---|---|---|---|
+| S3 | 5 to 8 h | 1,200 to 1,800 / 2,500 to 4,000 | 250 to 450 M | $110 to $195 | 400 to 700 |
+| S4a | 6 to 10 h | 1,000 to 1,600 / 2,500 to 4,000 | 300 to 500 M | $130 to $215 | 450 to 750 |
+| S4b | 7 to 12 h build, then 3 to 6 h for the toy run | 900 to 1,400 / 1,800 to 3,000 | 400 to 800 M (the toy run's agents beside it in the ledger) | $170 to $345 | 300 to 600 |
+| S5 | 5 to 8 h | 800 to 1,300 / 1,600 to 2,600 | 250 to 450 M | $110 to $195 | 250 to 500 |
+| S6 | 1 to 3 h (text only, one documentation round) | 0 | 30 to 100 M | $13 to $43 | n/a |
+
+These replace the 17.7 figures as the estimate to score against, which stay registered as they were. The harness compute figure stays in the ledger beside every token figure.

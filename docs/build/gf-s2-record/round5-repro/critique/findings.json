@@ -1,0 +1,14 @@
+[
+  {
+    "id": "F2-1",
+    "severity": "major",
+    "kind": "defect",
+    "summary": "[engine behavior] The runner's integrity window does NOT fail a run that writes another group's concurrently-claimed tracked file, contradicting 18.3's spoof-matrix 'Stopped by' and L-GF-29 ('fails a run that changes ... a tracked file outside the caller's claimed ownership'). lib/greenfield/runner.js run() relies on the frozen lib/evidence.js changedOutsideOwnership, which classifies a changed tracked file in another agent's claimed globs as 'concurrent' (recorded only), not 'outside' (fails, exit 99); runner.js adds an untracked-file check but no tracked-concurrent check. Reproduced in review-f2/concurrent.test.js: backend-engineer (claims s0-app) runs 'pytest -q app/test_cross.py' whose test appends to web/index.html (frontend's claimed s0-web); the run records status=passed, ok=true, problems=[], integrity=null, only a buried concurrent:['web/index.html']. Visible in git and attributable by GF-OWN-4, so it weakens rather than nullifies the stated stop."
+  },
+  {
+    "id": "F2-2",
+    "severity": "minor",
+    "kind": "defect",
+    "summary": "[engine behavior] The runner's plan-pinned-command bypass accepts a source 18.4 does not enumerate ('task checks, the behaviour command, the detected stack checks'). runner.js formProblems' first line short-circuits on mcp.approvedCommands, which also returns s.lab.repro.command (lib/mcp.js:236); a command equal to the pinned reproduction bypasses every pinned-form check, including shell syntax like 'bash -c ...'. lab_repro over MCP requires an already-approved command, but 'eccode debug repro --replace' (lib/lab.js recordRepro, no requireApproved on the replace path) lets the orchestrator/user pin an arbitrary reproduction a group role can then run verbatim through gf_run; the integrity window still applies, so impact is bounded. Reproduced in review-f2/labrepro.probe.js."
+  }
+]
