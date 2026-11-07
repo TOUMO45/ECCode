@@ -345,6 +345,16 @@ test('CLI: dispatch, review from a summary file and findings file, status, and a
   assert.strictEqual(bad.code, 2);
   assert.match(bad.err, /GF-CLOSE-1/);
 });
+test('CLI: close resolve takes the proof as --proof-run (the shared parser treats --proof as a boolean); --proof with a separate value is a usage error that says so', () => {
+  const ctx = raised();
+  const proof = forgeProof(ctx, 21);
+  const bad = cli(ctx, ['close', 'resolve', '--actor', ORCH, '--finding', 'F-1', '--resolution', 'fixed', '--proof', proof]);
+  assert.strictEqual(bad.code, 1, bad.err);
+  assert.match(bad.err, /--proof-run ev:<id>/);
+  const ok = cli(ctx, ['close', 'resolve', '--actor', ORCH, '--finding', 'F-1', '--resolution', 'fixed', '--proof-run', proof]);
+  assert.strictEqual(ok.code, 0, ok.err);
+  assert.strictEqual(ok.json().proof, proof);
+});
 test('CLI: a full closure through the command line (battery through the stubbed runner is not possible across processes, so the batteries are recorded in-process, the rest by the CLI)', () => {
   const ctx = closeProject();
   battery(ctx);

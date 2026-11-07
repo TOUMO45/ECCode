@@ -41,7 +41,7 @@ After the seal
 Slice closure (three recorded review steps, two batteries, accounting)
   close dispatch --actor orchestrator --scope <s> --role <reviewer> --step comprehension|critique|readiness --input <path,path>
   close review --actor <reviewer> --scope <s> --step <step> --dispatch <id> --summary-file <file> [--findings <file.json>] [--verdict go|no-go] [--evidence ev:<id>,path:line]
-  close resolve --actor <role> --finding <id> --resolution fixed|withdrawn|deferred [--proof ev:<id>] [--reproduction ev:<id>] [--reason <text>] [--limit <id>]
+  close resolve --actor <role> --finding <id> --resolution fixed|withdrawn|deferred [--proof-run ev:<id>] [--reproduction ev:<id>] [--reason <text>] [--limit <id>]
   close battery --actor orchestrator --scope <s> --test "<command>" --base <commit> [--max <n>]
   close status --scope <s>         What closing the scope now would be refused for
   close slice --actor orchestrator|user --scope <s> --accounting <file.json> [--accepted <file.json>]
@@ -210,7 +210,12 @@ function main(argv) {
       else if (sub === 'review') {
         const summary = flags['summary-file'] ? fs.readFileSync(path.resolve(flags['summary-file']), 'utf8').trim() : flags.summary;
         r = cl.recordReview(store, config, need(actor, '--actor'), { scope: flags.scope, step: flags.step, dispatch: flags.dispatch, summary, verdict: flags.verdict, findings: flags.findings ? readFileArg('findings') : [], evidence: list(flags.evidence) }).event.data;
-      } else if (sub === 'resolve') r = cl.resolveFinding(store, config, need(actor, '--actor'), { finding: flags.finding, resolution: flags.resolution, proof: flags.proof, reproduction: flags.reproduction, reason: flags.reason, limit: flags.limit }).event.data;
+      } else if (sub === 'resolve') {
+        // The shared argument parser (lib/cli-args.js, frozen) treats --proof as a boolean flag, so a separate value is lost.
+        if (flags.proof === true) throw new EccodeError('USAGE', 'give the proof as --proof-run ev:<id> (or --proof=ev:<id>): --proof alone is a boolean flag of the shared argument parser');
+        const proof = flags['proof-run'] !== undefined ? flags['proof-run'] : flags.proof;
+        r = cl.resolveFinding(store, config, need(actor, '--actor'), { finding: flags.finding, resolution: flags.resolution, proof, reproduction: flags.reproduction, reason: flags.reason, limit: flags.limit }).event.data;
+      }
       else if (sub === 'battery') r = cl.runBattery(store, config, need(actor, '--actor'), { scope: flags.scope, test: flags.test, base: flags.base, max: flags.max ? Number(flags.max) : undefined }).event.data;
       else if (sub === 'status') {
         const p = cl.preview(store, config, need(flags.scope, '--scope'));
