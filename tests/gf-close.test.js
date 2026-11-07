@@ -437,6 +437,12 @@ test('bypass: a resolution forged as withdrawn by the orchestrator, and a fixed 
   F(c2, 'gf.finding.resolved', ORCH, { id: 'res-2', finding: 'F-1', resolution: 'fixed' });
   expectAudit(c2, 'GF-CLOSE-2', /res-2.*fixed needs a proof/);
 });
+test('bypass: a fixed resolution forged BEFORE its proof was recorded is GF-CLOSE-2 in the audit (the proof must precede the resolution)', () => {
+  const ctx = raised();
+  F(ctx, 'gf.finding.resolved', ORCH, { id: 'res-early', finding: 'F-1', resolution: 'fixed', proof: 'ev:ev-post-11' });
+  forgeProof(ctx, 11);
+  expectAudit(ctx, 'GF-CLOSE-2', /res-early.*the proof was recorded after the resolution/);
+});
 test('bypass: a battery forged citing evidence that does not exist is GF-CLOSE-3 in the audit', () => {
   const ctx = closeProject();
   F(ctx, 'gf.battery.recorded', ORCH, { id: 'bat-f', scope: 'S2', round: 1, treeHash: tree(ctx), evidence: 'ev:ghost', total: 5, killed: 5, survived: 0, survivors: [] });

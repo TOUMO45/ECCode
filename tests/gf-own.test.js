@@ -61,6 +61,8 @@ const OWNER_ROWS = [
   ['', null],
   ['.', null],
   ['web\\x.js', null],
+  ['web/\u0000x.js', null],
+  ['app/main\u0000.py', null],
   [undefined, null],
   [42, null],
 ];
@@ -88,7 +90,7 @@ test('mapProblems: a valid map is clean; overlap and a missing reserved path are
   assert.ok(ownership.mapProblems(noApi).some((p) => /api must own contracts\/\*\*/.test(p)));
 });
 
-const GLOB_ROWS = [['app/**', true], ['alembic.ini', true], ['web/auth/**', true], ['', false], ['/abs/**', false], ['../x/**', false], ['a/../b', false], ['a\\b', false], [' ', false], [null, false], [7, false]];
+const GLOB_ROWS = [['app/**', true], ['alembic.ini', true], ['web/auth/**', true], ['', false], ['/abs/**', false], ['../x/**', false], ['a/../b', false], ['a\\b', false], [' ', false], [null, false], [7, false], ['a\u0000b', false], ['./web/**', false]];
 for (const [g, ok] of GLOB_ROWS) test(`validGlob(${JSON.stringify(g)}) is ${ok}`, () => assert.strictEqual(ownership.validGlob(g), ok));
 
 // ------------------------------------------------------------------ loadMap (GF-OWN-1)
@@ -264,6 +266,12 @@ test('bypass: a forged task.rescoped that moves a task into another group is GF-
   const ctx = sealed();
   F(ctx, 'task.rescoped', 'user', { task: 's0-app', files: ['web/x.js'], command: null, reason: 'forged move into the frontend area', from: ['app/main.py', 'app/__init__.py'] });
   expectAudit(ctx, 'GF-OWN-5', /s0-app.*web\/x\.js.*belongs to frontend/);
+});
+test('a rescope that changes only the pinned command (files null) is replayed by the audit without a crash or an ownership error', () => {
+  const ctx = sealed();
+  F(ctx, 'task.rescoped', 'user', { task: 's0-app', files: null, command: 'node --test tests/app.test.js', reason: 'the check is narrowed to the app tests', from: ['app/main.py', 'app/__init__.py'] });
+  const found = errs(ctx);
+  assert.deepStrictEqual(found.filter((e) => /^GF-OWN|^GF-AUD-1/.test(e.rule)), [], JSON.stringify(found));
 });
 test('bypass: a forged rescope that is inside the owner\'s group audits clean on ownership', () => {
   const ctx = sealed();
