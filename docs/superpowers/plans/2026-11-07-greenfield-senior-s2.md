@@ -149,6 +149,7 @@ Failure modes the design implies and no single task's rule names, most likely fi
 
 - [ ] **Step 1: Battery run 1** on the build tree: `scratchpad/mutation-run.js` extended with GF-OWN-1, GF-OWN-2, GF-OWN-3, GF-OWN-4, GF-OWN-5, GF-FRZ-1, GF-CONF-1, GF-CLOSE-1, GF-CLOSE-2, GF-CLOSE-3, GF-CLOSE-4. Expected: every rule fails at least two tests when removed.
 - [ ] **Step 2: Full check with the venv:** `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=commit.gpgsign GIT_CONFIG_VALUE_0=false ECCODE_PYTHON=$S/venv/bin/python npm run check`. Expected: 0 failures; the 35 FastAPI-dependent tests run; skip count reported.
+- Amended 2026-11-07 by the owner's continuation (design 17.2): the review is three recorded steps, each its own dispatch; round 1 is R1 and R2 on the build tree, round 2 is R1, R2 and R3 on the final tree; S2's closure is recorded with `eccode-gf close` in a record beside a checkout of the final tree.
 - [ ] **Step 3: Review pass 1:** a fresh general-purpose agent, given the code, the design section 16 and this plan, not my conclusions. Every finding becomes a failing test (red log kept) before its fix; a fix is proven by fix-verify where it applies.
 - [ ] **Step 4: Battery run 2** on the post-fix tree; **review pass 2** (a fresh agent) on the final tree, clean; no commit after it other than evidence.
 - [ ] **Step 5: Evidence, ledger (one row per delegated agent, the S2 end snapshot, no blank cell), estimate-versus-actual with the registered predictions P4 to P6 scored, commit, push, report; stop.**

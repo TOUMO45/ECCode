@@ -605,7 +605,7 @@ A fresh reviewer (a general-purpose agent, 121 tool calls, about 28 minutes, 419
 | GF-FRZ-1 | contract paths are writable by the api group only, and after the seal only while an amendment request for that file is open | H, A | in `permissions.js`; the byte-level guarantee stays GF-FRZ-2 (S1) |
 | GF-CONF-1 | the three guard configs (`behavior.json`, `guards.json`, `security.json`) are pinned by hash; a change after the pin is detected, and no group role may write them | H, A | `gf.config.pinned`, `eccode-gf config pin`; S4's `slice open` calls the same function (deviation: the event exists in S2, not S4) |
 | Drafts | group roles write only `.eccode/drafts/<group>/**` | H | `permissions.js`; narrows the shared scratch channel, does not close it (L-GF-4) |
-| GF-CLOSE-1..4 | slice closure (16.5) | P, A | `lib/greenfield/closure.js` |
+| GF-CLOSE-1..5 | slice closure (16.5, amended by 17.2: three recorded review steps, each its own dispatch) | P, A | `lib/greenfield/closure.js` |
 
 Group role sets in the hook were added in S1 (`IMPLEMENTERS`); S2 adds the group-to-glob check that makes them path-scoped. The ownership map is **not** copied into a new snapshot: it is read from the approved, hash-sealed `breakdown.json` (its bytes are also covered by the frozen audit's "modified after approval" check) and every read verifies the bytes against `gf.g1.sealed.hashes`; a mismatch is a GF-OWN-1 problem, and the hook then denies group-role writes (fail closed).
 
@@ -635,6 +635,8 @@ Group role sets in the hook were added in S1 (`IMPLEMENTERS`); S2 adds the group
 **Proposed, not built, for the owner's decision.** (F3) *Keyed attestation*: `eccode-gf init` generates a per-role key stored outside the repository and handed to each role-locked server; after each commit the server appends `gf.attest {seq, hash, role, mac}`; the audit verifies the MAC and flags a group-role event without a valid attestation. That turns "a forged actor is undetectable" into "a forged actor is detected unless the agent read the key". Cost: about 250 lines, key management, and the key directory must be read-denied to agents, which only works where the harness runs hooks on Read (the same best-effort class as L-GF-7). Recommended for S5, next to done-verification, which should refuse DONE on an unattested group event. It does not help the plain CLI and does not protect against a defeated hook that also reads the key.
 
 ### 16.5 The closure rule (owner condition 1): GF-CLOSE-1 to 4
+
+**Amended by section 17.2 (owner continuation of 2026-11-07):** the closing review is three recorded steps (comprehension, critique, readiness), each its own dispatch (GF-CLOSE-5); "the latest review" below reads "a review of each step on the closing tree, readiness go". A documentation finding, which has no source change for a fix verification to run on, is proven by a paired run of one command (failed as a reproduction, then passed).
 
 A **scope** is the thing being closed: a slice id (S4 binds it to `gf.slice.opened`) or any string a project chooses. Events: `gf.review.recorded`, `gf.finding.resolved`, `gf.battery.recorded`, `gf.slice.closed`. `eccode-gf close` commits `gf.slice.closed` only when the check, run inside the lock against the real log, finds all of the following; the audit replays them as invariants.
 
@@ -690,6 +692,152 @@ Predictions, to be scored in the S2 report and not claimed now (the FastAPI base
 
 1. Tests green and the **full** suite green with `ECCODE_PYTHON` pointing at the virtual environment; the skip count after, with the 35 FastAPI-dependent tests running (the Mealie and kotlinc skips remain and are named).
 2. Frozen 48 of 48 by hash before and after; `docs/limits.md` and `scripts/guards/*.py` untouched.
-3. Battery run 1 on the build tree, then **review pass 1** (a fresh agent given the code, not my conclusions); every finding reproduced as a failing test before its fix; fixes.
-4. **Battery run 2** on the post-fix tree; **review pass 2 on the final tree**, clean; no commit after it other than evidence.
+3. Battery run 1 on the build tree, then **review round 1** (amended by 17.2: R1 comprehension and R2 critique, each a fresh agent given the artifacts and the tree, not my conclusions); every finding reproduced as a failing test before its fix; fixes.
+4. **Review round 2 on the final tree** (R1, R2 and R3, each its own dispatch), clean and readiness go; **battery run 2** on that tree; close; no commit after it other than evidence. S2's closure is recorded in a Greenfield-Senior record kept beside a checkout of the final tree, by the closure rule itself (17.2).
 5. Evidence file with exact commands and outputs; ledger rows; end snapshot; estimate-versus-actual; stop and report.
+
+---
+
+## 17. Owner continuation of 2026-11-07: five upgrades registered (design-only except the review protocol)
+
+The owner extended the S2 go-message without changing S2's scope (ownership map and path-scoped permissions). Upgrade 2 is **built** in S2; Upgrades 1, 3, 4 and 5 are **registered here** and implemented in the slice named on each. Nothing in this section edits a frozen file (the frozen 48 are checked by hash before and after).
+
+### 17.1 Where each upgrade lands
+
+| Upgrade | What | Status after S2 | Built in |
+|---|---|---|---|
+| 1 | G1.5 problem-anticipation and resolution gate, rules GF-PRE-1 to 4 | registered | S4a (stage, schema, seal rules), S4b (discovered problems at slice integration) |
+| 2 | three-step adversarial review protocol | **built and used to close S2** | S2: GF-CLOSE-1 to 5 |
+| 3 | six deterministic evidence tools | registered with measured costs | S4a (adapters for T1 to T3 and T6), S5 (T4 and T5 run in the DONE verification) |
+| 4 | UX spec as an artifact of G1 | registered | S4a (stage and rules), S5 (the done checks) |
+| 5 | G4 comparison arms; helper MCP tools | noted | S6 (arms), S4 (helper tools) |
+
+The seven G1 artifacts of the owner's wording are the six of S1 (PRD, architecture, contracts, threat model, breakdown, estimates) plus the UX spec; the problem register of Upgrade 1 is the eighth. The order inside the design gate becomes contracts, ux, problems, threat model, so that the register can bind to the contracts and to the UX spec, and the threat model can cite the register's P5 entries (section 17.3).
+
+### 17.2 Upgrade 2: the three-step adversarial review protocol (built in S2)
+
+The independent review that closes a slice is three recorded steps. Each step is its own dispatch of a zero-context reviewer agent that receives only the artifacts the dispatch lists and the final tree, never the implementer's conversation. Pattern aligned with Google's Elephant-Goldfish Model (design-by-context-rich agent, review-by-zero-context agents) as the owner described it; ECCode enforces it in the engine rather than by prompt convention. No code of that model is copied, and I did not study its implementation.
+
+| Step | The reviewer | Recorded as | Findings |
+|---|---|---|---|
+| R1 comprehension | explains the design and the slice back from the documents alone | `gf.review.recorded` step `comprehension`, with a summary of at least 100 characters | what it could not reconstruct is a **documentation defect** (kind `documentation`) |
+| R2 critique | tries to break the rules: forge events, smuggle artifacts, bypass gates | step `critique` | reproducible **defects** (kind `defect`), each reproduced as a failing test before any fix (GF-CLOSE-2) |
+| R3 readiness | a go or no-go verdict | step `readiness`, verdict `go` or `no-go` | none; it cites **evidence**: an executed check (`ev:<id>`) or `path:line` in the tree, each resolved by the engine |
+
+What the engine enforces (GF-CLOSE-1 and GF-CLOSE-5, with GF-CLOSE-2 to 4 as in section 16.5): the orchestrator records a **dispatch** (`gf.dispatch.recorded`) *before* each review, naming the reviewer role, the step, the tree it is dispatched on and the input artifacts with their hashes; inputs under the implementers' working record (drafts, handoffs, memory, runs, lab, the event log) are refused; a review cites its dispatch, must come from that role, for that step, on that tree, and one dispatch carries exactly one review; the reviewer role must have authored nothing in the record; the closing tree needs a review of each step, the readiness verdict `go`, no unresolved finding, and the second battery on that tree. **What it cannot see** is that the dispatched agent really had no context beyond its declared inputs (L-GF-19, restated): the dispatch is a recorded, hash-chained attestation by the orchestrator, checked for form, not an observation.
+
+**Order in a slice.** Battery 1; a first round of R1 and R2 on the build tree (they are independent and may run in parallel); findings reproduced as failing tests, then fixed; a second round on the fixed tree with all three steps, R3 included; battery 2 on that tree; close. Every step of the closing round is on the closing tree; steps of earlier rounds stay in the record with their findings resolved.
+
+### 17.3 Upgrade 1: G1.5, the problem-anticipation and resolution gate
+
+**Why.** A senior team enumerates problems at design time and ships only when every known obstacle has a written, feasible resolution.
+
+**Where.** A fourth stage of the design gate (`problems`, between contracts and threat model), engine-gated like the others, sealed with the contract set. The frozen gates are unchanged: the stage rides on the design gate's submission as `stages: contracts, ux, problems, threat`.
+
+**Artifact `problem-register.json`** (field level; the schema is in the JSON-Schema subset of `lib/greenfield/jsonschema.js`):
+
+```json
+{
+  "version": 1,
+  "coverage": { "P1": { "entries": ["PR-1"] }, "P2": { "none": "at least 40 characters saying why this category has no anticipated problem for this project" }, "...": "P1 to P12 are all required; a category with no entry says why; extra categories are named X-<slug>" },
+  "entries": [{
+    "id": "PR-1", "category": "P1", "description": ">= 30 characters", "severity": "blocker | major | minor", "likelihood": "high | medium | low",
+    "resolution": { "kind": "design-decision | contract-change | task | test | ux-state | scope-amendment | accepted-limit", "text": ">= 30 characters",
+                    "binds": [{ "type": "criterion | contract | decision | assumption | ux | task | test", "ref": "the id or path it is bound to" }] },
+    "status": "open | resolved | accepted"
+  }]
+}
+```
+
+The twelve categories: P1 ambiguity in the idea (every open reading becomes a DECLARED_ASSUMPTION, linked to the PRD); P2 technical feasibility per PRD criterion; P3 integration risks (what the contract tests will and will not catch); P4 data model (migrations, irreversibility, data-loss paths, N+1); P5 authentication and authorization (non-obvious matrix cells, IDOR-prone resources); P6 external dependencies; P7 performance and scale assumptions; P8 failure modes (timeouts, partial writes, retries, idempotency); P9 UX problem states (bound to the UX spec, 17.4); P10 environment and deployment (what this sandbox cannot verify, with the stated fallback evidence); P11 testability; P12 estimation and scope risk.
+
+**Rules.**
+
+| Rule | Enforces | At | Bypass that must fail |
+|---|---|---|---|
+| GF-PRE-1 | the **seal is refused** while a `blocker` entry has no resolution or is not `resolved`, or a P1 entry is not bound to a DECLARED_ASSUMPTION (`assumption` bind, checked against the design record) | design gate, plan approval (seal), audit | a blocker with `status: open`; a P1 whose assumption does not exist |
+| GF-PRE-2 | every resolution **binds to an artifact that exists at the seal**: a PRD criterion, a sealed contract path, a design decision, a UX screen or flow, a breakdown task, a test id; a resolution text that only defers ("later", "tbd", "to be decided", "will handle", "future work") is refused (a heuristic, labelled: the binding is the real check) | seal (the breakdown does not exist at the design gate, so task binds are verified at the seal), audit | a bind to task `t-99` that the breakdown lacks; "we will handle it later" with a valid-looking bind to nothing |
+| GF-PRE-3 | **a living, append-only record.** During a slice, a problem not in the register is committed as `gf.problem.discovered {id, slice, category, severity, resolution, cause}` (hash-chained) before the slice can integrate. To make an undeclared problem visible, `cause` names the engine event that revealed it, and **slice integration refuses** unless every `task.failed`, `task.rescoped`, contract amendment request and `blocker` message in the slice's range cites an anticipated entry or a discovered record. The delivery report shows anticipated against discovered counts and their ratio, per project | `slice integrate` (S4b), audit | a `task.failed` in the slice with no discovered or anticipated citation |
+| GF-PRE-4 | **a discovered blocker with no feasible resolution does not die silently**: it forces one of a recorded contract amendment, a recorded scope amendment to the PRD (`gf.prd.amended`, recorded by the **user**, surfaced to the owner), or an explicit NOT-DONE verdict (`gf.done.refused`). Silent scope shrink is refused: removing or weakening a PRD criterion without `gf.prd.amended` leaves its acceptance test failing, so DONE is refused (GF-DONE-1) | slice integration, DONE | a discovered blocker with resolution kind `scope-amendment` and no `gf.prd.amended` |
+
+The adversarial reviewer of Upgrade 2 attacks the register as well: the critique step's brief includes naming problems the planners missed, and a missed problem found in review is recorded as a `defect` finding against the register.
+
+### 17.4 Upgrade 4: the UX spec, the seventh artifact of G1
+
+`ux-spec.json`, schema-validated and sealed with the contracts; the frontend group builds against it and cannot edit it (it lies under the api-owned reserved paths once the map reserves `contracts/ux-spec.json`; S4a adds that reserved path to GF-WBS-2). The owner's earlier wording of this artifact is not in my working context (it was lost when the conversation was summarized); the schema below follows this message's description, and I ask the owner to confirm it.
+
+```json
+{
+  "version": 1,
+  "designSystem": { "name": "a named, existing design system (for example shadcn/ui, Material, Bootstrap)", "tokens": "optional path to a tokens file" },
+  "responsive": { "approach": "mobile-first | desktop-first", "breakpoints": [{ "name": "mobile", "minWidth": 0 }, { "name": "desktop", "minWidth": 1024 }] },
+  "screens": [{
+    "id": "s-tasks", "title": "...", "route": "/tasks", "roles": ["member", "admin"], "operations": ["listTasks", "createTask"],
+    "states": { "loading": "what is shown", "empty": "what is shown", "error": "what is shown", "denied": "what is shown for a role the matrix denies" },
+    "testIds": { "loading": "data-testid", "empty": "data-testid", "error": "data-testid", "denied": "data-testid" }
+  }],
+  "flows": [{ "id": "f-create-task", "title": "...", "criteria": ["AC-3"], "steps": [{ "screen": "s-tasks", "action": "...", "operation": "createTask" }] }],
+  "budgets": { "lcpMs": 2500, "cls": 0.1, "accessibility": "no axe violation of impact serious or critical" }
+}
+```
+
+**Rules (GF-UX-1 to 4, built in S4a).** GF-UX-1: every screen has all four states and a test id for each; `denied` is required for every screen whose operations have a `deny` cell for one of its roles in the access matrix. GF-UX-2: every operation a screen names exists in the OpenAPI and every non-public operation reachable by a role has a screen or is marked API-only with a reason. GF-UX-3: every PRD criterion whose `verify.kind` is a UI kind maps to a flow, and every flow step names an existing screen. GF-UX-4: a named design system, at least two breakpoints and budgets are present. **P9** of the register binds to screens and states of this artifact. **Done-verification (S5)** adds: Playwright state coverage (T5: each screen state is reached and its test id found), and an accessibility and performance budget through axe and Lighthouse where runnable; where not runnable the report says `unverifiable here`, never a skipped check. **Visual taste is a named limit (L-GF-21), not a guarantee.**
+
+### 17.5 Upgrade 3: deterministic evidence tools
+
+Six tools become **evidence sources**: the engine runs a pinned invocation and records the **raw output's sha256** (the redacted output is stored; a raw output that could hold a secret is hashed in memory and never persisted); an agent-written summary of a tool's output never stands in for it. One event carries them all: `gf.tool.run {tool, version, argv, scope, treeHash, exitCode, rawSha256, artifact {path, sha256}, counts {blocking, advisory}}`. **Rule for all six (GF-TOOL-1):** a tool that is unavailable or cannot run in the environment makes the verdict `unverifiable here`, stated in the delivery report with the reason, and **never** a skipped or silent check (the same honesty as the Docker criterion).
+
+Measured in this sandbox on 2026-11-07 by a delegated agent (ledger row of that date) and spot-checked by me (versions of all five binaries; Ruff and Gitleaks timings and Gitleaks redaction on fixture B re-run: 0.021 s and 0.527 s, two findings, no raw token in the report). Machine: 4 cores, Python 3.13.18, Node 22.23.4. Fixture A is the 1,095-line FastAPI app `tests/fixtures/phase3/ledger`; fixture B is a generated 9,969-line project with a planted lint problem, `eval`, a SQL string built by concatenation and two fake secrets. Times are medians of three runs. Docker: the client is present, **no daemon** (`docker info`: "failed to connect to the docker API at unix:///var/run/docker.sock").
+
+| Tool | Pinned (installed here) | Source, licence | Runs when | Invocation (machine-readable) and exit codes | Refuses delivery when | Measured time per run | Offline, and the `unverifiable here` path |
+|---|---|---|---|---|---|---|---|
+| T1 Ruff | `ruff 0.17.4` | PyPI; MIT | every Python iteration: at task completion on the task's changed files, and at slice integration on the tree | `ruff check --output-format json` and `ruff format --check`; 0 clean, 1 findings, 2 error | a task's changed files have a finding under the project's **pinned** `--select` set (the default set is 407 rules and changes between versions; `E711` is not in it) | 0.015 s on A, 0.021 s on B; format check 0.016 s and 0.013 s: **negligible against the time problem** | runs offline; exit 2 or a missing binary means `unverifiable here` |
+| T2 Gitleaks | `8.30.1` | GitHub release tarball (the release asset URL works through the proxy; the GitHub API does not); MIT | at task completion (the changed files copied into one staging directory and scanned once), at slice integration (`--log-opts="<base>..HEAD"`), at DONE (the whole history); in delivered projects as a pre-commit hook on the staged diff | `gitleaks dir` or `gitleaks git`, with `--no-banner --redact -f json -r <out> --exit-code 7`; 0 none, 7 leaks, 1 fatal error (by default leaks and fatal errors are both 1, so the engine sets 7) | **any finding** | 0.52 s per scan whatever the size (A 0.523 s, B 0.519 s; 3-commit history 0.49 s); one file at a time costs 0.59 s each, so scan a staging directory | offline verified; without `--redact` the report holds the raw secret, so the engine only ever runs it with `--redact` and no raw report exists to persist |
+| T3 Semgrep | `1.184.0`; rules: `semgrep-rules` at commit `16b9e6d45f10649f6a531ec4838ed9924372c3bc` | PyPI, engine LGPL-2.1-or-later; rules under the "Semgrep Rules License v1.0", whose text is on a host the proxy blocks | each integrated slice | `semgrep --config <pinned rule dir> --metrics=off --disable-version-check --json --error`; 0 none, 1 findings, 2 network failure, 7 invalid config | a finding of a rule mapped to a security guard class (injection, access control, secrets, dangerous evaluation) is **blocking**; the rest are advisory; a noisy rule is scoped out by a recorded exclusion with a reason, never ignored | 12.4 s on A and 12.7 s on B with the 371 Python rules (9.8 s of it is loading the configuration), 9.2 to 9.8 s with a FastAPI and SQL subset; found the `eval` and the raw SQL plants | **the registry packs (`p/owasp-top-ten`, `p/fastapi`, ...) cannot be fetched here** (proxy 403 for semgrep.dev); local rules work offline; `python/fastapi` holds one rule only, so "FastAPI ruleset" means the Python, SQLAlchemy and framework rules, stated as such |
+| T4 Trivy | `0.76.2` | GitHub release tarball; Apache-2.0 | the G3 DONE run (S5) | `trivy fs --scanners vuln,misconfig --format json --exit-code 5`; 0 none, 5 findings, 1 fatal | a CRITICAL or HIGH vulnerability with a fixed version, or a HIGH misconfiguration in the Dockerfile or compose file (thresholds registered before the first run) | warm database: 0.12 s on a 20-package `requirements.txt` (202 vulnerabilities found in old pins), 0.95 s with the Dockerfile; **cold: 9.1 to 9.6 s to download 132 MiB, 1.6 GB on disk** | no Docker daemon needed (`fs` and `config`); offline works with a cached database; an empty cache and no network is FATAL exit 1, so the verdict is `unverifiable here`; a stale database is reported with its age |
+| T5 Playwright | `@playwright/test 1.65.0`, `@axe-core/playwright 4.14.0`, `lighthouse 13.6.0`; `@playwright/mcp 0.0.84` as a helper only | npm; Apache-2.0, axe MPL-2.0 | the DONE run and the UX state coverage (S5) | `playwright test --reporter=json`; 0 pass, 1 a failure or no test matched; Lighthouse `--output=json` | a failing E2E or UX-state test, an axe violation of impact serious or critical, a Lighthouse budget missed | 2.3 to 2.7 s for three pages including the browser launch; axe 0.76 s per page; Lighthouse 10.9 s per page | 1.65.0 does not find the preinstalled browser (built for 1.63): run with `executablePath: /opt/pw-browsers/chromium` or pin 1.63.0; no browser means `unverifiable here` |
+| T6 pre-commit | `pre-commit 4.7.0` | PyPI; MIT | **a deliverable**, not a guard on ECCode: every greenfield project ships `.pre-commit-config.yaml` with `repo: local`, `language: system` hooks for T1 and T2 (and T3 where its rules are available) | the hooks' own output; 0 pass, 1 a hook failed, 3 unexpected error | DONE verifies that the config exists, parses and passes `pre-commit run --all-files` on the delivered tree | 1.35 to 1.5 s per commit on A | local hooks need no network (verified offline); remote hook repositories need it on first use (exit 3 offline), which is why the generated config uses local hooks |
+
+**Per-slice time cost these add** (from the medians above): per task completion about 0.6 s (Ruff plus one Gitleaks scan); per slice integration about 10 to 13 s (Semgrep) plus 0.5 s (Gitleaks); per DONE run about 1 s for Trivy with a warm database (10 s cold), about 3 s for the Playwright run, plus 0.8 s of axe and 11 s of Lighthouse per page measured. The raw outputs of Semgrep, Trivy, Lighthouse and Playwright are not byte-stable between runs (they embed timings and report ids), so the recorded sha256 identifies the artifact of one run; it is not compared across runs.
+
+### 17.6 Upgrade 5
+
+- **G4 arms (note for the G4 protocol, no action now).** When the benchmark protocol is finalised, the candidate comparison arms are bare, ECC and, at the owner's selection, Aider, OpenHands and SWE-agent as additional arms. They are **benchmark arms only**: no competing harness is integrated into ECCode. The G4 protocol draft (S6) records this.
+- **Helper MCP tools in S4.** Serena (LSP symbol tools) and Context7 (library documentation) may be offered to build-phase agents as helper MCP tools, with one rule: **anything they fetch is context, never evidence.** It never enters the hash-chained log as proof of anything (the engine records evidence only from its own runs, so a helper's output has no path into the record), and fetched text is treated as untrusted data, not instructions. Their absence never blocks a build (fail-open, unlike the evidence tools).
+
+### 17.7 Slice plan and costs after the upgrades (re-registered 2026-11-07)
+
+The original registrations in sections 9 and 10 stay as registered, for scoring. S4 as registered cannot hold what the upgrades add, so **I propose splitting it** (the owner decides):
+
+| Slice | Scope | Wall time (active, judgment) | New prod / test LOC | Tokens, all processed | Tests |
+|---|---|---|---|---|---|
+| S3 | contract-test generator and mock server, GF-FE-1, GF-FRZ-3/4, GF-ACC-1/2 (unchanged) | 1.5 to 3 h | 1,200 to 1,800 / 1,600 to 2,600 | 60 to 200 M | 150 to 300 |
+| **S4a** | the two new G1 stages (UX spec, problem register), GF-UX-1..4 and GF-PRE-1/2, the seal changes, the tool adapters T1 to T3 and T6, `gf.tool.run`, the sample bundle and mutation rows for both stages | 2 to 4 h | 1,000 to 1,600 / 1,800 to 3,000 | 80 to 250 M | 200 to 350 |
+| **S4b** | `slice open / integrate / invalidate`, GF-PRE-3/4 at integration, `gf.prd.amended`, messages in use, orchestrator skill v2, then the toy run from one idea to a delivery report | 3 to 6 h build, 3 to 6 h toy run | 900 to 1,400 / 1,200 to 2,000 | 150 to 450 M (the toy run's dispatched agents, 8 to 16 M, are reported in the ledger beside it) | 120 to 250 |
+| S5 | done-verification: the five criteria, T4 and T5 runs, the UX done checks, the compose runner and the labelled process runner | 1.5 to 3 h | 800 to 1,300 / 1,000 to 1,800 | 60 to 200 M | 100 to 200 |
+| S6 | the G4 protocol, text only | 1 to 2 h | 0 | 10 to 40 M | n/a |
+
+Basis, stated so it can be scored: the S1 actual was 1 h 22 min wall and 129.5 M all-processed tokens (G0 included) for 2.3 k production and 2.7 k test lines; wall times are the registered figures of section 10 scaled by the measured S1 ratio (about one fifth), tokens are scaled from the S1 measurement by relative scope with a factor-three range, because the cost followed turns times context and not lines (16.6). Every slice also pays for two or more independent review rounds (section 17.2), which S1's review phase showed to be the larger part. Labels: judgment ranges, no calibration claim (L-GF-12).
+
+### 17.8 What I assess as infeasible or in conflict with a frozen file, and the minimal alternative
+
+Nothing in the five upgrades requires editing a frozen file. These items cannot be done exactly as worded; each has a proposed minimal alternative, and none is dropped silently.
+
+| # | Item as worded | Problem | Minimal alternative proposed |
+|---|---|---|---|
+| 1 | GF-PRE-2: every resolution references an artifact that exists "at seal time" | the breakdown (task ids) does not exist when the design gate is reviewed, and the problem register is a design-gate stage | validate the register's shape and every bind that can exist at the design gate (criterion, contract, decision, assumption, ux) when the design gate is submitted, and the task and test binds at plan approval, which is the seal |
+| 2 | GF-PRE-3: a group that hits a problem not in the register must commit it | the engine cannot see a problem that is solved inside a task with no event | require a discovered-problem or anticipated citation for every engine-visible obstacle (task failure, rescope, contract amendment request, blocker message); a problem fixed silently inside a task stays invisible, a named limit like L-GF-8 |
+| 3 | GF-PRE-4: surface a scope amendment "to the owner" | a sealed PRD has no amendment path today, and an engine cannot reach the owner | a new event `gf.prd.amended` (S4b), recordable only by the user; headless, with nobody to answer, the verdict is NOT-DONE |
+| 4 | Upgrade 2: each step "a separate zero-context agent" that receives only artifacts and the tree | the engine cannot observe an agent's context | record and check the dispatch (role, step, tree, hashed inputs, refused inputs, one review per dispatch); the zero-context property itself is the orchestrator's attestation (L-GF-19) |
+| 5 | T2 Gitleaks "on every commit the engine makes" | the engine makes no commits; agents and the orchestrator do | scan at task completion (the changed files), at slice integration (the tree) and at DONE (the history); the pre-commit hook of T6 covers commits in the delivered project |
+| 6 | T5 Playwright MCP as an evidence source | an agent driving a browser over MCP yields an agent's account of it, not raw output | the evidence instrument is the Playwright **test runner** run by the engine with traces; the MCP server is offered to build agents as a helper (context, not evidence) |
+| 7 | "hashed raw output" for every tool | the secret scanner's raw output can contain the secret, and secrets never persist | hash the raw output in memory, persist the redacted output, record both hashes |
+| 8 | T3 Semgrep OWASP and FastAPI rulesets | measured: the registry packs cannot be fetched here (proxy 403), the rule repository's licence text is on the blocked host, and its FastAPI directory holds one rule | pin the rule repository by commit in the engine's cache (not inside delivered projects until the licence is read), map rules to the guard classes, and state which rules ran; the owner may allow the semgrep.dev hosts if the registry packs are wanted |
+| 9 | S4 as registered | it cannot absorb the upgrades | split into S4a and S4b (17.7); the owner decides |
+| 10 | the UX artifact "exactly as previously worded" | that wording is not in my context | the schema above, from this message; the owner confirms or corrects it |
+| 11 | T5 Playwright, pinned | measured: 1.65.0 does not find the preinstalled browser | pin 1.63.0 (the preinstalled browser's version) or pass the executable path; either is recorded in the tool event |
+| 12 | T4 Trivy in every DONE run | the vulnerability database is 1.6 GB and is downloaded on first use | cache it once per machine; the report states the database age, and a cold, offline machine is `unverifiable here` |
+
+### 17.9 S2's registered estimate, amended for the added scope
+
+The owner's continuation added the three-step protocol to the closure rule, the design amendments above, and a delegated measurement of six tools. Registered before the work they cover was measured: **+0.5 to 1.5 h wall, +20 to 60 M all-processed tokens, +1 delegated research agent (0.3 to 0.8 M tokens as reported), and 5 to 6 reviewer dispatches instead of 2** (R1 and R2 of the first round, then R1, R2 and R3 of the closing round). The S2 totals become 3 to 6 h and 60 to 210 M. Prediction **P7**: the closing round (all three steps on the fixed tree) will raise at least one finding the first round did not. Predictions P4 to P6 stand as registered in section 16.7.
