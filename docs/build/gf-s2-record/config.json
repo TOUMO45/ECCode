@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "headless": false,
+  "limits": {
+    "maxConcurrency": 4,
+    "maxReviewIterations": 3,
+    "maxTaskRetries": 2,
+    "maxRuntimeMinutes": 480,
+    "maxCostUsd": 25,
+    "staleRunMinutes": 60
+  },
+  "plan": {
+    "maxFilesPerTask": 3,
+    "maxLinesPerTask": 150,
+    "checkpointEvery": 3
+  },
+  "review": {
+    "requiredSections": {
+      "architecture": [
+        "Users",
+        "Problem",
+        "Requirements",
+        "Acceptance Criteria",
+        "Architecture",
+        "Assumptions",
+        "Open Questions",
+        "Risks"
+      ],
+      "design": [
+        "Components",
+        "Interface Contracts",
+        "Data Design",
+        "Security",
+        "Testing Strategy",
+        "Deployment"
+      ]
+    },
+    "minEvidencePerApproval": 1,
+    "maxRejectionsBeforeDecision": 1
+  },
+  "verification": {
+    "staged": true
+  },
+  "roles": {
+    "architecture": {
+      "authors": [
+        "product-architect"
+      ],
+      "reviewers": [
+        "architecture-reviewer"
+      ]
+    },
+    "design": {
+      "authors": [
+        "technical-designer"
+      ],
+      "reviewers": [
+        "technical-reviewer",
+        "security-reviewer"
+      ]
+    },
+    "plan": {
+      "authors": [
+        "delivery-lead"
+      ],
+      "reviewers": [
+        "technical-reviewer"
+      ]
+    },
+    "phase": {
+      "authors": [
+        "delivery-lead",
+        "frontend-engineer",
+        "backend-engineer",
+        "ai-engineer",
+        "test-engineer",
+        "devops-engineer",
+        "learning-debugger",
+        "integration-engineer",
+        "database-engineer",
+        "security-engineer"
+      ],
+      "reviewers": [
+        "technical-reviewer",
+        "security-reviewer"
+      ]
+    },
+    "verification": {
+      "authors": [
+        "delivery-lead",
+        "test-engineer"
+      ],
+      "reviewers": [
+        "technical-reviewer",
+        "security-reviewer"
+      ]
+    }
+  },
+  "pricing": {
+    "usdPerMillionTokens": null
+  },
+  "memory": {
+    "staleAfterDays": 180,
+    "sharedDir": null,
+    "embedCommand": null,
+    "duplicateThreshold": 0.82
+  },
+  "stack": {
+    "required": []
+  },
+  "lean": {
+    "level": "full",
+    "mapChars": 4000
+  },
+  "lab": {
+    "hypothesisBudget": 5,
+    "timeBudgetMinutes": 240,
+    "topSuspects": 5
+  },
+  "behavior": {
+    "baselineRuns": 2,
+    "functionExamples": 25,
+    "seed": 20261028
+  },
+  "improvement": {
+    "requireUserForAdoption": true,
+    "protectedPaths": [
+      ".eccode/config.json",
+      ".claude/settings.json",
+      ".claude/settings.local.json",
+      "hooks/hooks.json",
+      "lib/**"
+    ]
+  },
+  "gf": {
+    "enabled": true,
+    "schemaVersion": 1,
+    "stackProfile": "python-fastapi-sqlalchemy-sqlite"
+  }
+}
