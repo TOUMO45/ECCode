@@ -38,6 +38,7 @@ After the seal
   task complete <task> --actor <role> --file <handoff.json>   Refused when the handoff lists a file of another group
   config pin --actor <orchestrator|user> --scope <label> --reason <text>   Pin the guard configuration (behavior, guards, security) by hash
   attribute --base <commit>        Every path changed since the commit must belong to a group that completed a task declaring it; exit 2 otherwise
+  preflight [--json]               Which regime protects identity between groups (managed-path or text-level) and the warnings (L-GF-17)
   audit [--json]                   Replay the record and check every rule as an invariant; exit 2 on any error
 
 Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR, never for user), --json
@@ -194,10 +195,16 @@ function main(argv) {
       print(flags, r.ok ? `Every changed path since ${flags.base} is attributed to a group that completed a task declaring it (${r.changed.filter((f) => !f.startsWith('.eccode/')).length} path(s)).` : `Attribution FAILED:\n${r.problems.map((p) => `- ${p.rule}: ${p.message}`).join('\n')}`, r);
       return r.ok ? 0 : 2;
     }
+    case 'preflight': {
+      const r = gf.preflight.preflight(store.root);
+      print(flags, `${r.regime}: profile ${r.profile}, guard ${r.guardWired ? 'wired' : 'not wired'}${r.warnings.length ? `\n${r.warnings.map((w) => `- ${w}`).join('\n')}` : ''}`, r);
+      return 0;
+    }
     case 'audit': {
       const r = gf.audit.run(store, config);
       const lines = [...r.errors.map((e) => `- ${e.rule}${e.seq ? ` (seq ${e.seq})` : ''}: ${e.message}`), ...r.base.errors.map((e) => `- frozen audit: ${e}`), ...r.base.unreviewed.map((u) => `- frozen audit: ${u.path} ${u.problem} (${u.gate})`)];
-      print(flags, r.ok ? `Audit OK${r.enabled ? ' (Greenfield-Senior rules and the frozen checks)' : ' (frozen checks only: not a Greenfield-Senior project)'}.` : `Audit FAILED:\n${lines.join('\n')}`, r);
+      const warn = (r.warnings || []).length ? `\nWarnings (${r.managedPath.regime} regime):\n${r.warnings.map((w) => `- ${w}`).join('\n')}` : '';
+      print(flags, r.ok ? `Audit OK${r.enabled ? ' (Greenfield-Senior rules and the frozen checks)' : ' (frozen checks only: not a Greenfield-Senior project)'}.${warn}` : `Audit FAILED:\n${lines.join('\n')}${warn}`, r);
       return r.ok ? 0 : 2;
     }
     default:
