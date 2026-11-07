@@ -46,14 +46,16 @@ for (const A of GROUP_ROLES) {
       assert.match(viaServer.reason, new RegExp(`acts as ${B}`));
       const viaCli = hook(dir, A, 'Bash', { command: `eccode task claim s0-app --actor ${B}` });
       assert.strictEqual(viaCli.decision, 'deny');
-      assert.match(viaCli.reason, /Identity mismatch/);
+      assert.match(viaCli.reason, /GF-RUN-1/); // round 5: a group role has no shell, so the identity check is not reached
     });
   }
 }
 for (const A of GROUP_ROLES) {
-  test(`hook: ${A} may call its own server and name itself on the command line`, () => {
+  test(`hook: ${A} may call its own server, and has no shell for the command line (GF-RUN-1)`, () => {
     assert.strictEqual(hook(dir, A, `mcp__eccode_${A}__task_next`, {}).decision, 'allow');
-    assert.strictEqual(hook(dir, A, 'Bash', { command: `eccode task next --actor ${A}` }).decision, 'allow');
+    const viaCli = hook(dir, A, 'Bash', { command: `eccode task next --actor ${A}` });
+    assert.strictEqual(viaCli.decision, 'deny');
+    assert.match(viaCli.reason, /GF-RUN-1/);
   });
 }
 test('hook: a group role cannot act as the orchestrator or the user, and the main session cannot act as a group role', () => {

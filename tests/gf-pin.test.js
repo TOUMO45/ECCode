@@ -141,7 +141,7 @@ for (const rel of CONFIGS) {
       assert.match(viaTool.reason, /GF-CONF-1/);
       const viaShell = hook(ctx, role, 'Bash', { command: `echo '{}' > ${rel}` });
       assert.strictEqual(viaShell.decision, 'deny');
-      assert.match(viaShell.reason, /GF-CONF-1|ECCode record/);
+      assert.match(viaShell.reason, /GF-RUN-1/); // round 5: a group role has no shell
     });
   }
 }

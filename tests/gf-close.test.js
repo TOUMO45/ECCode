@@ -179,7 +179,7 @@ const RES_ROWS = [
   ['withdrawal by another reviewer role', (c) => resolve(c, 'technical-reviewer', { finding: 'F-1', resolution: 'withdrawn', reason: 'x'.repeat(30) }), /only the reviewer role that raised a finding may withdraw it/],
   ['a withdrawal reason under 30 characters', (c) => resolve(c, 'security-reviewer', { finding: 'F-1', resolution: 'withdrawn', reason: 'short' }), /reason needs 30 characters/],
   ['a deferral by the orchestrator', (c) => resolve(c, ORCH, { finding: 'F-1', resolution: 'deferred', limit: 'L-GF-6', reason: 'x'.repeat(30) }), /only the user may defer a finding/],
-  ['a deferral of a major finding', (c) => resolve(c, 'user', { finding: 'F-1', resolution: 'deferred', limit: 'L-GF-6', reason: 'x'.repeat(30) }), /a blocking or major finding cannot be deferred/],
+  ['a deferral of a major defect', (c) => resolve(c, 'user', { finding: 'F-1', resolution: 'deferred', limit: 'L-GF-6', reason: 'x'.repeat(30) }), /a major defect cannot be deferred/],
   ['an unknown resolution', (c) => resolve(c, ORCH, { finding: 'F-1', resolution: 'ignored', reason: 'x'.repeat(30) }), /unknown resolution ignored/],
   ['a second resolution of the same finding', (c) => { resolve(c, 'security-reviewer', { finding: 'F-1', resolution: 'withdrawn', reason: 'x'.repeat(30) }); return resolve(c, 'security-reviewer', { finding: 'F-1', resolution: 'withdrawn', reason: 'y'.repeat(30) }); }, /finding F-1 is already resolved/],
 ];

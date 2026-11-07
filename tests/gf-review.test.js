@@ -57,7 +57,8 @@ function guard(dir, agent, command) {
 }
 
 test('M1: the hook treats eccode-gf exactly as it treats the eccode CLI (identity, the main session, the user)', () => {
-  const ctx = gfProject();
+  // In a project that is not Greenfield-Senior: in one that is, a group role has no shell at all (GF-RUN-1, round 5).
+  const ctx = require('./helpers').tmpProject();
   const forms = (rest) => [`eccode ${rest}`, `eccode-gf ${rest}`, `node bin/eccode.js ${rest}`, `node bin/eccode-gf.js ${rest}`, `node .claude/eccode/bin/eccode-gf.js ${rest}`];
   const cases = [
     ['frontend-engineer', 'gate review plan --actor technical-reviewer --file r.json', 'deny'],

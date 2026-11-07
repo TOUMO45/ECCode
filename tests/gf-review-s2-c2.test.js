@@ -11,6 +11,7 @@ const audit = require('../lib/greenfield/audit');
 const closure = require('../lib/greenfield/closure');
 const X = require('./fixtures/gf/close');
 const { closeProject, battery, dispatch, review, resolve, closeIt, threeSteps, forgeProof, put, commitAll, tree, git, F, LONG, ORCH } = X;
+const { tmpProject, approveThroughPlan, samplePlan } = require('./helpers');
 
 const GUARD = path.join(__dirname, '..', 'scripts/hooks/guard.js');
 const rulesOf = (err) => ((err.details && err.details.problems) || []).map((p) => p.rule);
@@ -125,36 +126,47 @@ test('C2-4: a plain draft in the group\'s own namespace is still allowed', () =>
   assert.strictEqual(hook(ctx, 'backend-engineer', 'Write', { file_path: path.join(ctx.dir, '.eccode/drafts/backend/notes.md') }).decision, 'allow');
 });
 
+// C2-5: the hook's shell-text model. Since round 5 a group role has no shell in a Greenfield-Senior project (GF-RUN-1),
+// so the model is tested where it still runs: implementers in an ECCode project that is not Greenfield-Senior, where
+// backend-engineer's claimed task owns src/server/** and frontend-engineer's owns src/web/**.
+function plainTeam() {
+  const ctx = tmpProject();
+  approveThroughPlan(ctx, samplePlan());
+  require('../lib/gates').startGate(ctx.store, ctx.config, 'phase:core', 'orchestrator');
+  require('../lib/tasks').claim(ctx.store, ctx.config, 'api', 'backend-engineer');
+  require('../lib/tasks').claim(ctx.store, ctx.config, 'ui', 'frontend-engineer');
+  return ctx;
+}
 // ------------------------------------------------------------------ C2-5: the shell writes the hook did not model
 const SHELL = [
-  ['ln -sf', 'ln -sf /tmp/x app/main.py'],
-  ['install', 'install /tmp/x app/main.py'],
-  ['dd of=', 'dd if=/tmp/x of=app/main.py'],
-  ['perl -pi', "perl -pi -e 's/a/b/' app/main.py"],
-  ['perl -i -pe', "perl -i -pe 's/a/b/' app/main.py"],
+  ['ln -sf', 'ln -sf /tmp/x src/server/main.py'],
+  ['install', 'install /tmp/x src/server/main.py'],
+  ['dd of=', 'dd if=/tmp/x of=src/server/main.py'],
+  ['perl -pi', "perl -pi -e 's/a/b/' src/server/main.py"],
+  ['perl -i -pe', "perl -i -pe 's/a/b/' src/server/main.py"],
   // The third engine battery (tree faa7031a) left `name === 'ruby'` flipped to `!==` alive: no row named ruby.
-  ['ruby -i -pe', "ruby -i -pe '$_.upcase!' app/main.py"],
-  ['touch', 'touch app/main.py'],
-  ['git checkout --', 'git checkout -- app/main.py'],
-  ['git restore', 'git restore app/main.py'],
-  ['patch', 'patch app/main.py /tmp/d.diff'],
+  ['ruby -i -pe', "ruby -i -pe '$_.upcase!' src/server/main.py"],
+  ['touch', 'touch src/server/main.py'],
+  ['git checkout --', 'git checkout -- src/server/main.py'],
+  ['git restore', 'git restore src/server/main.py'],
+  ['patch', 'patch src/server/main.py /tmp/d.diff'],
 ];
 for (const [name, command] of SHELL) {
-  test(`C2-5: ${name} into another group's path is denied for a group role`, () => {
-    const ctx = sealedTeam();
+  test(`C2-5: ${name} outside the implementer's claim is denied (a project that is not Greenfield-Senior)`, () => {
+    const ctx = plainTeam();
     const r = hook(ctx, 'frontend-engineer', 'Bash', { command });
     assert.strictEqual(r.decision, 'deny', `${command}: ${r.reason}`);
-    assert.match(r.reason, /app\/main\.py/);
+    assert.match(r.reason, /src\/server\/main\.py/);
   });
 }
 test('C2-5: the same commands on the role\'s own claimed path are allowed', () => {
-  const ctx = sealedTeam();
+  const ctx = plainTeam();
   for (const [, command] of SHELL.filter(([n]) => !/^git/.test(n))) assert.strictEqual(hook(ctx, 'backend-engineer', 'Bash', { command }).decision, 'allow', command);
 });
 // The same survivor's other half: with the mutant, any command with an -i flag was taken for an in-place writer.
-for (const command of ['grep -i pattern app/main.py', 'grep -in todo app/main.py', 'sort -i app/main.py']) {
-  test(`C2-5: a read with an -i flag is not a write: ${command} by another group's role is allowed`, () => {
-    const ctx = sealedTeam();
+for (const command of ['grep -i pattern src/server/main.py', 'grep -in todo src/server/main.py', 'sort -i src/server/main.py']) {
+  test(`C2-5: a read with an -i flag is not a write: ${command} by another implementer is allowed (a project that is not Greenfield-Senior)`, () => {
+    const ctx = plainTeam();
     const r = hook(ctx, 'frontend-engineer', 'Bash', { command });
     assert.strictEqual(r.decision, 'allow', `${command}: ${r.reason}`);
   });

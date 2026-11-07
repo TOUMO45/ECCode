@@ -39,6 +39,9 @@ function hook(ctx, role, tool, input, env = {}) {
   return { decision: o.permissionDecision, reason: o.permissionDecisionReason || '' };
 }
 const write = (ctx, role, rel, tool = 'Write') => hook(ctx, role, tool, { file_path: path.join(ctx.dir, rel) });
+// GF-RUN-1 (round 5): in a Greenfield-Senior project a group role has no shell, so a shell form is denied before any
+// path is judged; the file-tool forms are judged on their paths. The shell-text model itself is tested where it still
+// runs, for implementers in a project that is not Greenfield-Senior (tests/gf-review-s2-c2.test.js, C2-5).
 const bash = (ctx, role, command) => hook(ctx, role, 'Bash', { command });
 const must = (r, re) => { assert.strictEqual(r.decision, 'deny', `expected a denial, got ${r.decision}`); assert.match(r.reason, re); };
 
@@ -124,22 +127,19 @@ const SHELL = [
 for (const [name, mk] of SHELL) {
   test(`bypass: ${name} into another group's path by shell is denied like the file tool (frontend into app/main.py)`, () => {
     const ctx = team();
-    // The hook treats every argument of truncate as a write target (an existing behaviour, not S2's), so its
-    // denial may name `-s` or the size first; the write is denied either way.
-    const re = name === 'truncate' ? /Shell write to /: /Shell write to app\/main\.py: .*belongs to backend/;
-    must(bash(ctx, 'frontend-engineer', mk('app/main.py')), re);
+    must(bash(ctx, 'frontend-engineer', mk('app/main.py')), /GF-RUN-1/);
   });
 }
 test('bypass: the contract path by shell and by the other file tools', () => {
   const ctx = team();
-  must(bash(ctx, 'frontend-engineer', 'echo {} > contracts/openapi.json'), /GF-FRZ-1/);
+  must(bash(ctx, 'frontend-engineer', 'echo {} > contracts/openapi.json'), /GF-RUN-1/);
   for (const tool of ['Edit', 'MultiEdit']) must(write(ctx, 'frontend-engineer', 'contracts/openapi.json', tool), /GF-FRZ-1/);
   must(hook(ctx, 'frontend-engineer', 'NotebookEdit', { notebook_path: path.join(ctx.dir, 'app/n.ipynb') }), /belongs to backend/);
 });
 test('bypass: a path that normalises into another group is judged on the normalised path', () => {
   const ctx = team();
   must(write(ctx, 'backend-engineer', 'app/../web/x.js'), /web\/x\.js belongs to frontend, not to backend/);
-  must(bash(ctx, 'backend-engineer', 'echo x > app/../web/x.js'), /belongs to frontend/);
+  must(bash(ctx, 'backend-engineer', 'echo x > app/../web/x.js'), /GF-RUN-1/);
 });
 test('bypass: a symlinked directory inside the project is judged where it points (a frontend path that leads into app/)', () => {
   const ctx = team();

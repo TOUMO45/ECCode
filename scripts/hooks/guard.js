@@ -384,6 +384,12 @@ function main(input) {
   const { matchesAny, toPosix } = require(path.join(lib, 'util'));
   const role = roleOf(input.agent_type);
 
+  // GF-RUN-1: in a Greenfield-Senior project a group role has no shell at all (Bash, PowerShell, Monitor).
+  if (['Bash', 'PowerShell', 'Monitor'].includes(tool) && role && !role.startsWith('other:')) {
+    const denial = require(path.join(lib, 'greenfield', 'permissions')).shellDenial(root, role);
+    if (denial) out('deny', denial);
+  }
+
   if (tool === 'Bash') {
     const cmd = String(ti.command || '');
     if (writesRecord(cmd, { subagent: Boolean(role) })) {

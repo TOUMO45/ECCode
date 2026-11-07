@@ -226,6 +226,11 @@ function main(argv) {
       print(flags, `close ${sub}: recorded ${r.id || r.scope}.`, r);
       return 0;
     }
+    case 'run': {
+      const r = gf.runner.run(store, config, need(actor, '--actor'), { label: flags.label, command: flags.command, purpose: flags.purpose, task: flags.task });
+      print(flags, `${r.status} (${r.evidence}, exit ${r.exitCode})${r.problems.length ? `\n${r.problems.map((x) => `- ${x.rule}: ${x.message}`).join('\n')}` : ''}`, r);
+      return r.ok ? 0 : 2;
+    }
     case 'preflight': {
       const r = gf.preflight.preflight(store.root);
       print(flags, `${r.regime}: profile ${r.profile}, guard ${r.guardWired ? 'wired' : 'not wired'}${r.warnings.length ? `\n${r.warnings.map((w) => `- ${w}`).join('\n')}` : ''}`, r);
