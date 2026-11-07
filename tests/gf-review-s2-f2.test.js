@@ -70,3 +70,39 @@ test('F1-1 (pinned) RESIDUAL (L-GF-33): a command that hides the CLI from the te
   const ctx = closeProject();
   assert.strictEqual(mainSession(ctx.dir, 'node scripts/record-review.js').decision, 'allow');
 });
+
+// ------------------------------------------------------------------ the seventh engine battery (round 6, tree 539add4)
+test('battery 7: a readiness no-go on the closing tree is reported once', () => {
+  const ctx = closeProject();
+  X.battery(ctx);
+  for (const [step, role] of [['comprehension', 'technical-reviewer'], ['critique', 'security-reviewer']]) {
+    const d = X.dispatch(ctx, step, role);
+    X.review(ctx, role, { scope: 'S2', step, dispatch: d.id, summary: X.LONG, findings: [] });
+  }
+  const d = X.dispatch(ctx, 'readiness', 'architecture-reviewer');
+  X.review(ctx, 'architecture-reviewer', { scope: 'S2', step: 'readiness', dispatch: d.id, summary: X.LONG, verdict: 'no-go', evidence: ['docs/design.md:1'] });
+  X.battery(ctx);
+  let err;
+  try { X.closeIt(ctx); } catch (e) { err = e; }
+  const n = ((err && err.details && err.details.problems) || []).filter((p) => /a readiness no-go was recorded on the closing tree/.test(p.message)).length;
+  assert.strictEqual(n, 1, err && err.message);
+});
+test('battery 7: GF-RUN-1 names a value thrown without a message, and still denies', () => {
+  const ctx = team();
+  const { Store } = require('../lib/store');
+  const original = Store.prototype.readEvents;
+  Store.prototype.readEvents = () => { throw 'the log is on fire'; }; // eslint-disable-line no-throw-literal
+  try {
+    const d = require('../lib/greenfield/permissions').shellDenial(ctx.dir, 'backend-engineer');
+    assert.match(d, /GF-RUN-1: .*the log is on fire/);
+  } finally { Store.prototype.readEvents = original; }
+});
+test('battery 7: a plan-pinned command that starts with an environment assignment runs through the shell', () => {
+  const ctx = team();
+  put(ctx, 'tests/test_ok.py', 'def test_ok():\n    assert 1 == 1\n');
+  commitAll(ctx, 'a test');
+  const command = 'PYTHONDONTWRITEBYTECODE=1 pytest -q tests/test_ok.py';
+  F(ctx, 'task.rescoped', 'user', { task: 's0-app', files: null, command, reason: 'the check runs without bytecode files', from: ['app/main.py', 'app/__init__.py'] });
+  const r = runner.run(ctx.store, ctx.config, 'backend-engineer', { label: 'pinned', command });
+  assert.strictEqual(r.status, 'passed', `${r.outputTail} ${JSON.stringify(r.problems)}`);
+});

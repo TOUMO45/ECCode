@@ -100,6 +100,7 @@ const OK = [
   ['security-engineer', 'gitleaks detect --no-git --redact --source=.'],
   ['security-engineer', 'trivy fs --scanners=vuln,secret --exit-code=1 --quiet .'],
   ['frontend-engineer', 'npx playwright test --project=chromium'],
+  ['frontend-engineer', 'playwright test --reporter=line'], // battery 7 (round 6)
 ];
 for (const [role, command] of OK) {
   test(`GF-RUN-2 positive: ${role} may run "${command}"`, () => {
@@ -130,6 +131,11 @@ const BAD = [
   ['backend-engineer', 'serve app.main:app --port 8000 -- ruff format app/main.py', /a pytest or playwright form/],
   ['backend-engineer', 'serve app.main:app --port 80 -- pytest -q', /port/],
   ['orchestrator', 'ruff format app/main.py', /only a group role/],
+  // Battery 7 (round 6): the alembic and playwright forms are matched on every word.
+  ['database-engineer', 'alembic upgrade head --sql', /not a pinned alembic form/],
+  ['database-engineer', 'alembic stamp head', /not a pinned alembic form/],
+  ['backend-engineer', 'bash test', /not a pinned form/],
+  ['backend-engineer', 'bash playwright test', /not a pinned form/],
 ];
 for (const [role, command, re] of BAD) {
   test(`GF-RUN-2 negative: ${role} may not run "${command.replace(/\n/g, ' ')}"`, () => {
