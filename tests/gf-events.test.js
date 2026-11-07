@@ -24,6 +24,7 @@ const VALID = {
   'gf.message': { id: 'msg-1', from: 'frontend', to: ['api'], kind: 'question', subject: 'pagination', body: 'Does listTasks paginate?', refs: [] },
   'gf.contract.amendment.requested': { id: 'req-1', contract: 'contracts/openapi.json', reason: 'the client needs a field the contract lacks', message: 'msg-1', proposed: 'add due to Task' },
   'gf.contract.amended': { id: 'am-1', request: 'req-1', contract: 'contracts/openapi.json', fromSha: SHA, toSha: SHA2, reason: 'approved: the field is needed by AC-4 and is additive', classification: 'additive', affectedOps: ['listTasks'], invalidates: [] },
+  'gf.ownership.amended': { id: 'own-1', group: 'db', from: ['app/db/**'], to: ['app/db/**', 'alembic.ini'], reason: 'the db group needs the alembic configuration file', message: 'msg-1' },
 };
 
 // One invalid payload per type, each violating exactly one field.
@@ -36,6 +37,7 @@ const INVALID = {
   'gf.message': { ...VALID['gf.message'], kind: 'gossip' },
   'gf.contract.amendment.requested': { ...VALID['gf.contract.amendment.requested'], contract: undefined },
   'gf.contract.amended': { ...VALID['gf.contract.amended'], classification: 'maybe' },
+  'gf.ownership.amended': { ...VALID['gf.ownership.amended'], to: [] },
 };
 
 test('the constants: groups map to the roles of the design, three new roles, one stack profile', () => {
@@ -92,7 +94,7 @@ test('commit runs the caller\'s check inside the lock and a throwing check commi
 
 test('projection: rebuilds registrations, estimate, seal, requests, amendments and messages by replay; pure and repeatable', () => {
   const ctx = tmpProject();
-  for (const type of ['gf.project.initialized', 'gf.artifact.registered', 'gf.estimate.registered', 'gf.estimate.revised', 'gf.g1.sealed', 'gf.message', 'gf.contract.amendment.requested', 'gf.contract.amended']) {
+  for (const type of ['gf.project.initialized', 'gf.artifact.registered', 'gf.estimate.registered', 'gf.estimate.revised', 'gf.g1.sealed', 'gf.message', 'gf.contract.amendment.requested', 'gf.contract.amended', 'gf.ownership.amended']) {
     events.commit(ctx.store, type, 'orchestrator', VALID[type]);
   }
   const evs = ctx.store.readEvents();
@@ -106,6 +108,7 @@ test('projection: rebuilds registrations, estimate, seal, requests, amendments a
   assert.strictEqual(a.messages.length, 1);
   assert.strictEqual(a.requests.length, 1);
   assert.strictEqual(a.amendments.length, 1);
+  assert.strictEqual(a.ownershipAmendments.length, 1);
   assert.deepStrictEqual(a.unknown, []);
   assert.deepStrictEqual(a.invalid, []);
   assert.deepStrictEqual(project(evs), a, 'replaying the same events gives a deep-equal result');

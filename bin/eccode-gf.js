@@ -32,6 +32,9 @@ After the seal
   message send --actor <role> --to <group,group> --kind <kind> --subject <text> --body <text> [--in-reply-to <id>]
   message list [--from <group>] [--to <group>] [--kind <kind>]
   estimate revise --actor <role> --reason <text> --file <groups.json>
+  ownership show                   The ownership map in force, after amendments
+  ownership amend --actor <reviewer> --group <g> --to <glob,glob> --reason <text, 30+ characters> --message <msg id>
+  task rescope <task> --actor <role> --files <glob,glob> --reason <text>   Refused when a file belongs to another group
   audit [--json]                   Replay the record and check every rule as an invariant; exit 2 on any error
 
 Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR, never for user), --json
@@ -122,9 +125,24 @@ function main(argv) {
       return 0;
     }
     case 'task': {
-      if (sub !== 'claim') throw new EccodeError('USAGE', 'task claim <task>');
+      if (sub === 'rescope') {
+        const r = gf.ownership.rescope(store, config, need(arg, '<task>'), need(actor, '--actor'), { files: flags.files, reason: flags.reason });
+        print(flags, `Task ${arg} rescoped to ${r.event.data.files.join(', ')}.`, r.event.data);
+        return 0;
+      }
+      if (sub !== 'claim') throw new EccodeError('USAGE', 'task claim|rescope <task>');
       const r = gf.wrap.taskClaim(store, config, need(arg, '<task>'), need(actor, '--actor'), {});
       print(flags, `Task ${arg} claimed by ${actor}.`, r.event.data);
+      return 0;
+    }
+    case 'ownership': {
+      if (sub === 'show') {
+        const d = gf.ownership.describe(store, config);
+        print(flags, d.groups ? Object.entries(d.groups).map(([n, g]) => `${n} [${g.roles.join(', ')}]: ${g.globs.join(', ')}${g.denyGlobs.length ? ` (not ${g.denyGlobs.join(', ')})` : ''}`).join('\n') : `No ownership map: ${d.problems.map((p) => p.message).join('; ') || 'not a Greenfield-Senior project'}`, d);
+      } else if (sub === 'amend') {
+        const r = gf.ownership.amend(store, config, need(actor, '--actor'), { group: flags.group, to: list(flags.to), reason: flags.reason, message: flags.message, ...(flags.from ? { from: list(flags.from) } : {}) });
+        print(flags, `Ownership amendment ${r.event.data.id}: ${r.event.data.group} now owns ${r.event.data.to.join(', ')}.`, r.event.data);
+      } else throw new EccodeError('USAGE', 'ownership show|amend');
       return 0;
     }
     case 'amend': {
