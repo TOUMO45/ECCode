@@ -26,6 +26,11 @@ const VALID = {
   'gf.contract.amended': { id: 'am-1', request: 'req-1', contract: 'contracts/openapi.json', fromSha: SHA, toSha: SHA2, reason: 'approved: the field is needed by AC-4 and is additive', classification: 'additive', affectedOps: ['listTasks'], invalidates: [] },
   'gf.ownership.amended': { id: 'own-1', group: 'db', from: ['app/db/**'], to: ['app/db/**', 'alembic.ini'], reason: 'the db group needs the alembic configuration file', message: 'msg-1' },
   'gf.config.pinned': { id: 'pin-1', scope: 'S1', files: { '.eccode/security.json': SHA }, reason: 'pin the guard configuration' },
+  'gf.dispatch.recorded': { id: 'disp-1', scope: 'S2', role: 'technical-reviewer', step: 'critique', treeHash: 'c'.repeat(40), inputs: [{ path: 'docs/design.md', sha256: SHA }] },
+  'gf.review.recorded': { id: 'rev-1', scope: 'S2', step: 'critique', dispatch: 'disp-1', treeHash: 'c'.repeat(40), summary: 'x'.repeat(120), verdict: 'findings', findings: [{ id: 'F-1', severity: 'major', kind: 'defect', summary: 'a forged event is accepted' }] },
+  'gf.finding.resolved': { id: 'res-1', finding: 'F-1', resolution: 'fixed', proof: 'ev:ev-post-1' },
+  'gf.battery.recorded': { id: 'bat-1', scope: 'S2', round: 1, treeHash: 'c'.repeat(40), evidence: 'ev:ev-1', total: 5, killed: 5, survived: 0, survivors: [] },
+  'gf.slice.closed': { scope: 'S2', treeHash: 'c'.repeat(40), steps: { comprehension: 'r1', critique: 'r2', readiness: 'r3' }, batteries: ['b1', 'b2'], accepted: [], accounting: { unit: 'all-processed-tokens', start: 'unmeasurable', end: 4000 } },
 };
 
 // One invalid payload per type, each violating exactly one field.
@@ -40,6 +45,11 @@ const INVALID = {
   'gf.contract.amended': { ...VALID['gf.contract.amended'], classification: 'maybe' },
   'gf.ownership.amended': { ...VALID['gf.ownership.amended'], to: [] },
   'gf.config.pinned': { ...VALID['gf.config.pinned'], files: { '.eccode/security.json': 'nothex' } },
+  'gf.dispatch.recorded': { ...VALID['gf.dispatch.recorded'], step: 'vibes' },
+  'gf.review.recorded': { ...VALID['gf.review.recorded'], summary: 'too short' },
+  'gf.finding.resolved': { ...VALID['gf.finding.resolved'], resolution: 'ignored' },
+  'gf.battery.recorded': { ...VALID['gf.battery.recorded'], round: 0 },
+  'gf.slice.closed': { ...VALID['gf.slice.closed'], accounting: { unit: 'all-processed-tokens', start: '', end: null } },
 };
 
 test('the constants: groups map to the roles of the design, three new roles, one stack profile', () => {
@@ -96,7 +106,7 @@ test('commit runs the caller\'s check inside the lock and a throwing check commi
 
 test('projection: rebuilds registrations, estimate, seal, requests, amendments and messages by replay; pure and repeatable', () => {
   const ctx = tmpProject();
-  for (const type of ['gf.project.initialized', 'gf.artifact.registered', 'gf.estimate.registered', 'gf.estimate.revised', 'gf.g1.sealed', 'gf.message', 'gf.contract.amendment.requested', 'gf.contract.amended', 'gf.ownership.amended', 'gf.config.pinned']) {
+  for (const type of ['gf.project.initialized', 'gf.artifact.registered', 'gf.estimate.registered', 'gf.estimate.revised', 'gf.g1.sealed', 'gf.message', 'gf.contract.amendment.requested', 'gf.contract.amended', 'gf.ownership.amended', 'gf.config.pinned', 'gf.dispatch.recorded', 'gf.review.recorded', 'gf.finding.resolved', 'gf.battery.recorded', 'gf.slice.closed']) {
     events.commit(ctx.store, type, 'orchestrator', VALID[type]);
   }
   const evs = ctx.store.readEvents();
@@ -112,6 +122,8 @@ test('projection: rebuilds registrations, estimate, seal, requests, amendments a
   assert.strictEqual(a.amendments.length, 1);
   assert.strictEqual(a.ownershipAmendments.length, 1);
   assert.strictEqual(a.configPins.length, 1);
+  assert.strictEqual(a.closures.length, 1);
+  assert.strictEqual(a.reviews.length, 1);
   assert.deepStrictEqual(a.unknown, []);
   assert.deepStrictEqual(a.invalid, []);
   assert.deepStrictEqual(project(evs), a, 'replaying the same events gives a deep-equal result');
