@@ -80,6 +80,32 @@ for (const type of Object.keys(VALID)) {
   });
 }
 
+// The second engine battery of S2 (tree f7b3db2) left a survivor: `additionalProperties: false` on the items of
+// gf.dispatch.recorded's `inputs` could be flipped to true and no test noticed. Every nested object the schemas
+// close is checked here, not only that one.
+function closedObjects(schema, value, at = []) {
+  const out = [];
+  if (!schema || value === null || typeof value !== 'object') return out;
+  if (Array.isArray(value)) { value.forEach((v, i) => out.push(...closedObjects(schema.items, v, [...at, i]))); return out; }
+  if (at.length && schema.additionalProperties === false) out.push(at);
+  for (const [k, v] of Object.entries(value)) if (schema.properties && schema.properties[k]) out.push(...closedObjects(schema.properties[k], v, [...at, k]));
+  return out;
+}
+const smuggleAt = (payload, at) => { const copy = JSON.parse(JSON.stringify(payload)); at.reduce((o, k) => o[k], copy).smuggled = 'x'; return copy; };
+const NESTED = Object.keys(VALID).flatMap((type) => closedObjects(events.TYPES[type], VALID[type]).map((at) => [type, at]));
+test('gf.dispatch.recorded: an input that carries a field besides path and sha256 is refused (the battery-2 survivor)', () => {
+  const p = { ...VALID['gf.dispatch.recorded'], inputs: [{ path: 'docs/design.md', sha256: SHA, note: 'given with the reviewer\'s brief' }] };
+  assert.ok(events.validate('gf.dispatch.recorded', p).some((m) => /note|additional/i.test(m)));
+});
+test('the nested closed objects of the schemas are found (the dispatch inputs among them)', () => {
+  assert.ok(NESTED.some(([type, at]) => type === 'gf.dispatch.recorded' && at[0] === 'inputs'), JSON.stringify(NESTED));
+});
+for (const [type, at] of NESTED) {
+  test(`${type}: a field the schema does not name, smuggled into ${at.join('.')}, is refused`, () => {
+    assert.ok(events.validate(type, smuggleAt(VALID[type], at)).some((m) => /smuggled|additional/i.test(m)), `${type} ${at.join('.')}`);
+  });
+}
+
 test('an unknown gf type is refused by validate', () => {
   assert.ok(events.validate('gf.zzz', {}).some((m) => /unknown/.test(m)));
   assert.strictEqual(events.isGfType('gf.message'), true);
