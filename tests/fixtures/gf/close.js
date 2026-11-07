@@ -65,7 +65,8 @@ function validClosure(ctx, scope = 'S2') {
 
 /** A fix-verify pair as the frozen tool records it (pre-fix failed as a reproduction, post-fix passed and cites it). */
 function forgeProof(ctx, n, over = {}) {
-  const base = 'a'.repeat(40);
+  // The pre-fix run is at the commit under review (HEAD when the proof is made), as the frozen fix verification does.
+  const base = over.base || git(ctx.dir, 'rev-parse', 'HEAD');
   const pre = { id: `ev-pre-${n}`, kind: 'command', label: 'fix-verify: pre-fix', command: 'node --test t.js', status: 'failed', purpose: 'reproduction', exitCode: 1, fixVerify: { phase: 'pre-fix', base, tests: ['t.js'] }, ...(over.pre || {}) };
   const post = { id: `ev-post-${n}`, kind: 'command', label: 'fix-verify: post-fix', command: 'node --test t.js', status: 'passed', purpose: 'check', exitCode: 0, fixVerify: { phase: 'post-fix', base, preFix: `ev-pre-${n}` }, ...(over.post || {}) };
   if (over.noPre !== true) F(ctx, 'evidence.recorded', ORCH, pre);

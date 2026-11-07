@@ -476,3 +476,39 @@ test('closure on a record that is not a Greenfield-Senior project is GF-INIT-1',
   const plain = tmpProject();
   refuses(() => closure.recordDispatch(plain.store, plain.config, ORCH, { scope: 'S2', role: 'technical-reviewer', step: 'critique', inputs: ['x'] }), 'GF-INIT-1', /not a Greenfield-Senior project/);
 });
+
+// ------------------------------------------------------------------ gaps named by the closing readiness review (R3)
+test('GF-CLOSE-3: the first battery must come before the first review (a review recorded before any battery blocks the closure)', () => {
+  const ctx = closeProject();
+  const d = dispatch(ctx, 'critique', 'security-reviewer');
+  review(ctx, 'security-reviewer', { scope: 'S2', step: 'critique', dispatch: d.id, summary: LONG, findings: [] });
+  battery(ctx);
+  const k = dispatch(ctx, 'comprehension', 'technical-reviewer'); const r = dispatch(ctx, 'readiness', 'architecture-reviewer');
+  review(ctx, 'technical-reviewer', { scope: 'S2', step: 'comprehension', dispatch: k.id, summary: LONG, findings: [] });
+  review(ctx, 'architecture-reviewer', { scope: 'S2', step: 'readiness', dispatch: r.id, summary: LONG, verdict: 'go', evidence: ['docs/design.md:1'] });
+  battery(ctx);
+  refuses(() => closeIt(ctx), 'GF-CLOSE-3', /the first battery was recorded after the first review/);
+});
+for (const [what, type, data] of [['a completion', 'task.completed', { task: 's0-app', handoffId: 'ho-r', filesChanged: [] }], ['a gate submission', 'gate.submitted', { gate: 'design', submissionId: 'sub-r', artifacts: [] }]]) {
+  test(`GF-CLOSE-1: a reviewer role that authored ${what} is not independent`, () => {
+    const ctx = closeProject();
+    F(ctx, type, 'security-reviewer', data);
+    const d = dispatch(ctx, 'critique', 'security-reviewer');
+    refuses(() => closure.recordReview(ctx.store, ctx.config, 'security-reviewer', { scope: 'S2', step: 'critique', dispatch: d.id, summary: LONG, findings: [] }), 'GF-CLOSE-1', /authored work in this record/);
+  });
+}
+test('bypass: a review forged for a closed scope (after the closure) is GF-CLOSE-1 in the audit', () => {
+  const ctx = closeProject(); validClosure(ctx); closeIt(ctx);
+  F(ctx, 'gf.dispatch.recorded', ORCH, { id: 'disp-z', scope: 'S2', role: 'security-reviewer', step: 'critique', treeHash: tree(ctx), inputs: [{ path: 'docs/design.md', sha256: 'a'.repeat(64) }] });
+  F(ctx, 'gf.review.recorded', 'security-reviewer', { id: 'rev-z', scope: 'S2', step: 'critique', dispatch: 'disp-z', treeHash: tree(ctx), summary: LONG, verdict: 'clean' });
+  expectAudit(ctx, 'GF-CLOSE-1', /rev-z.*scope S2 is closed/);
+});
+test('GF-CLOSE-1: a no-go verdict may cite a check that failed (the reason for the no-go); a go may not', () => {
+  const ctx = closeProject();
+  F(ctx, 'evidence.recorded', ORCH, { id: 'ev-red', kind: 'command', label: 'suite', command: 'node --test', status: 'failed', purpose: 'check', exitCode: 1 });
+  const d1 = dispatch(ctx, 'readiness', 'architecture-reviewer');
+  const nogo = review(ctx, 'architecture-reviewer', { scope: 'S2', step: 'readiness', dispatch: d1.id, summary: LONG, verdict: 'no-go', evidence: ['ev:ev-red'] });
+  assert.strictEqual(nogo.verdict, 'no-go');
+  const d2 = dispatch(ctx, 'readiness', 'architecture-reviewer');
+  refuses(() => closure.recordReview(ctx.store, ctx.config, 'architecture-reviewer', { scope: 'S2', step: 'readiness', dispatch: d2.id, summary: LONG, verdict: 'go', evidence: ['ev:ev-red'] }), 'GF-CLOSE-1', /ev:ev-red is not a recorded check/);
+});

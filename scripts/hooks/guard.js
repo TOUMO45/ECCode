@@ -83,7 +83,7 @@ const SEPARATORS = /\|\||&&|[;|\n]|(?<![>&])&(?![>&])/;
  * before it (a cd the text cannot resolve leaves targets where they were).
  * `remove` marks a deletion (rm, unlink).
  */
-function bashWriteTargets(cmd, root) {
+function bashWriteTargets(cmd, root, { subagent = false } = {}) {
   const targets = [];
   const skeleton = shellSkeleton(cmd);
   let dir = '';
@@ -117,6 +117,30 @@ function bashWriteTargets(cmd, root) {
     else if (name === 'unlink' || name === 'rm') targets.push(...args.map((a) => ({ path: at(a), remove: true })));
     else if ((name === 'cp' || name === 'mv') && args.length >= 2) targets.push({ path: at(args[args.length - 1]), remove: false });
     else if (name === 'sed' && /\ssed\s[^;|&]*(-i|--in-place)/.test(` ${segment} `)) targets.push({ path: at(args[args.length - 1]), remove: false });
+    // More writers the text shows plainly: link and install targets, dd's of=, in-place perl and ruby, touch, patch.
+    else if ((name === 'ln' || name === 'install') && args.length >= 1) targets.push({ path: at(args[args.length - 1]), remove: false });
+    else if (name === 'dd') { for (const m of plain.matchAll(/(?:^|\s)of=([^\s;&|)]+)/g)) targets.push({ path: at(m[1]), remove: false }); }
+    else if ((name === 'perl' || name === 'ruby') && argv.some((a) => /^-[a-zA-Z]*i/.test(a))) {
+      const files = [];
+      let script = !argv.some((a) => /^-[a-zA-Z]*e$/.test(a));
+      for (let k = 0; k < argv.length; k++) {
+        if (/^-[a-zA-Z]*e$/.test(argv[k])) { k++; continue; }
+        if (argv[k].startsWith('-')) continue;
+        if (script) { script = false; continue; } // without -e, the first word is the script file
+        files.push(argv[k]);
+      }
+      targets.push(...files.map((a) => ({ path: at(a), remove: false })));
+    } else if (name === 'touch') targets.push(...args.map((a) => ({ path: at(a), remove: false })));
+    else if (name === 'patch') {
+      const o = argv.indexOf('-o');
+      if (o >= 0 && argv[o + 1]) targets.push({ path: at(argv[o + 1]), remove: false });
+      else if (args.length) targets.push({ path: at(args[0]), remove: false });
+    } else if (name === 'git' && subagent && (argv[0] === 'checkout' || argv[0] === 'restore')) {
+      // A subagent restoring files writes them; the main session may use any git command (the record rules still apply).
+      const dd = argv.indexOf('--');
+      const paths = dd >= 0 ? argv.slice(dd + 1) : argv[0] === 'restore' ? argv.slice(1).filter((a) => !a.startsWith('-')) : [];
+      targets.push(...paths.map((a) => ({ path: at(a), remove: false })));
+    }
   }
   return targets.filter((t) => t.path && t.path !== '/dev/null' && !t.path.startsWith('<'));
 }
@@ -409,7 +433,7 @@ function main(input) {
     }
     // Shell writes obey the same ownership policy as the file tools; nobody,
     // the main session included, writes a record file from the shell.
-    for (const { path: target, remove } of bashWriteTargets(cmd, root)) {
+    for (const { path: target, remove } of bashWriteTargets(cmd, root, { subagent: Boolean(role) })) {
       const abs = path.resolve(input.cwd || root, target);
       const reason = ownershipDenial(root, lib, role, abs);
       if (reason && !(remove && ignoredArtifact(root, abs))) out('deny', `Shell write to ${target}: ${reason}`);

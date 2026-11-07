@@ -74,6 +74,12 @@ for (const type of Object.keys(VALID)) {
   });
 }
 
+for (const type of Object.keys(VALID)) {
+  test(`${type}: a payload with a field the schema does not name is refused (no event carries extra fields)`, () => {
+    assert.ok(events.validate(type, { ...VALID[type], smuggled: 'x' }).some((m) => /smuggled|additional/i.test(m)), type);
+  });
+}
+
 test('an unknown gf type is refused by validate', () => {
   assert.ok(events.validate('gf.zzz', {}).some((m) => /unknown/.test(m)));
   assert.strictEqual(events.isGfType('gf.message'), true);

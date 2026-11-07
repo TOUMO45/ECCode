@@ -224,6 +224,13 @@ for (const [name, files, re] of RESCOPE_ROWS) {
     assert.deepStrictEqual(ctx.store.state().tasks['s0-app'].files, ['app/main.py', 'app/__init__.py']);
   });
 }
+test('a rescope of a task that does not exist reaches the frozen function, which refuses it as UNKNOWN_TASK (no crash in the check)', () => {
+  const ctx = sealed();
+  let err;
+  try { ops.rescope(ctx.store, ctx.config, 'no-such-task', 'user', { files: 'app/x.py', reason: RESCOPE.reason }); } catch (e) { err = e; }
+  assert.ok(err, 'refused');
+  assert.strictEqual(err.code, 'UNKNOWN_TASK', `${err.code}: ${err.message}`);
+});
 test('the MCP task_rescope tool runs the same check, and a rescope in a project that is not Greenfield-Senior is the frozen behaviour', () => {
   const ctx = sealed();
   const err = refusal(() => call('task_rescope', { task: 's0-app', files: 'web/x.js', reason: RESCOPE.reason }, ctx, 'user'));
