@@ -474,11 +474,37 @@ function ignoredArtifact(root, abs) {
 // Secret and key files by name: .env and its variants, keys and certificates.
 const SECRET_FILE = /(^|\/)(\.env(\.[^/]*)?|id_[a-z0-9]+|[^/]*\.(pem|key|p12|pfx|jks|keystore))$/i;
 
+/**
+ * Where an absolute path that looks outside the project really lands, as a project-relative path, or null when it
+ * is outside. A route such as /proc/self/root/<project> or a symlinked parent can lead back into the project.
+ */
+function realInside(root, abs) {
+  let cur = abs;
+  const tail = [];
+  for (;;) {
+    try { fs.lstatSync(cur); break; } catch {
+      const parent = path.dirname(cur);
+      if (parent === cur) return null;
+      tail.unshift(path.basename(cur));
+      cur = parent;
+    }
+  }
+  try {
+    const real = path.join(fs.realpathSync(cur), ...tail);
+    const rel = path.relative(fs.realpathSync(root), real);
+    return rel && !rel.startsWith('..') && !path.isAbsolute(rel) ? rel.split(path.sep).join('/') : null;
+  } catch { return null; }
+}
+
 /** The shared ownership policy; returns a denial reason or null. */
 function ownershipDenial(root, lib, role, abs) {
   const { matchesAny, toPosix } = require(path.join(lib, 'util'));
-  const rel = toPosix(path.relative(root, abs));
-  if (rel.startsWith('..') || path.isAbsolute(rel)) return null; // outside the project (e.g. scratch dirs)
+  let rel = toPosix(path.relative(root, abs));
+  if (rel.startsWith('..') || path.isAbsolute(rel)) {
+    const inside = realInside(root, abs);
+    if (inside === null) return null; // outside the project (e.g. scratch dirs)
+    rel = inside;
+  }
   if (RECORD_FILES.test(rel)) return `${rel} is part of the ECCode record and is written only by the eccode CLI.`;
   if (!role || role.startsWith('other:')) return null; // main session or non-ECCode agent
   // Greenfield-Senior group roles: the path must belong to the writer's group, and drafts are namespaced per group.
