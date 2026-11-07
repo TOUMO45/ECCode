@@ -132,6 +132,8 @@ const SHELL = [
   ['dd of=', 'dd if=/tmp/x of=app/main.py'],
   ['perl -pi', "perl -pi -e 's/a/b/' app/main.py"],
   ['perl -i -pe', "perl -i -pe 's/a/b/' app/main.py"],
+  // The third engine battery (tree faa7031a) left `name === 'ruby'` flipped to `!==` alive: no row named ruby.
+  ['ruby -i -pe', "ruby -i -pe '$_.upcase!' app/main.py"],
   ['touch', 'touch app/main.py'],
   ['git checkout --', 'git checkout -- app/main.py'],
   ['git restore', 'git restore app/main.py'],
@@ -149,4 +151,12 @@ test('C2-5: the same commands on the role\'s own claimed path are allowed', () =
   const ctx = sealedTeam();
   for (const [, command] of SHELL.filter(([n]) => !/^git/.test(n))) assert.strictEqual(hook(ctx, 'backend-engineer', 'Bash', { command }).decision, 'allow', command);
 });
+// The same survivor's other half: with the mutant, any command with an -i flag was taken for an in-place writer.
+for (const command of ['grep -i pattern app/main.py', 'grep -in todo app/main.py', 'sort -i app/main.py']) {
+  test(`C2-5: a read with an -i flag is not a write: ${command} by another group's role is allowed`, () => {
+    const ctx = sealedTeam();
+    const r = hook(ctx, 'frontend-engineer', 'Bash', { command });
+    assert.strictEqual(r.decision, 'allow', `${command}: ${r.reason}`);
+  });
+}
 void closure;
