@@ -35,6 +35,8 @@ After the seal
   ownership show                   The ownership map in force, after amendments
   ownership amend --actor <reviewer> --group <g> --to <glob,glob> --reason <text, 30+ characters> --message <msg id>
   task rescope <task> --actor <role> --files <glob,glob> --reason <text>   Refused when a file belongs to another group
+  task complete <task> --actor <role> --file <handoff.json>   Refused when the handoff lists a file of another group
+  attribute --base <commit>        Every path changed since the commit must belong to a group that completed a task declaring it; exit 2 otherwise
   audit [--json]                   Replay the record and check every rule as an invariant; exit 2 on any error
 
 Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR, never for user), --json
@@ -130,7 +132,14 @@ function main(argv) {
         print(flags, `Task ${arg} rescoped to ${r.event.data.files.join(', ')}.`, r.event.data);
         return 0;
       }
-      if (sub !== 'claim') throw new EccodeError('USAGE', 'task claim|rescope <task>');
+      if (sub === 'complete') {
+        const handoff = readJson(path.resolve(need(flags.file, '--file')));
+        if (!handoff) throw new EccodeError('USAGE', `Cannot read the handoff file ${flags.file}`);
+        gf.wrap.taskComplete(store, config, need(arg, '<task>'), need(actor, '--actor'), handoff);
+        print(flags, `Task ${arg} completed.`, { task: arg, completed: true });
+        return 0;
+      }
+      if (sub !== 'claim') throw new EccodeError('USAGE', 'task claim|rescope|complete <task>');
       const r = gf.wrap.taskClaim(store, config, need(arg, '<task>'), need(actor, '--actor'), {});
       print(flags, `Task ${arg} claimed by ${actor}.`, r.event.data);
       return 0;
@@ -172,6 +181,11 @@ function main(argv) {
       const r = gf.estimate.revise(store, config, need(actor, '--actor'), { reason: flags.reason, groups });
       print(flags, `Estimate revision ${r.id} recorded beside ${r.of}.`, r);
       return 0;
+    }
+    case 'attribute': {
+      const r = gf.ownership.attribute(store, need(flags.base, '--base'));
+      print(flags, r.ok ? `Every changed path since ${flags.base} is attributed to a group that completed a task declaring it (${r.changed.filter((f) => !f.startsWith('.eccode/')).length} path(s)).` : `Attribution FAILED:\n${r.problems.map((p) => `- ${p.rule}: ${p.message}`).join('\n')}`, r);
+      return r.ok ? 0 : 2;
     }
     case 'audit': {
       const r = gf.audit.run(store, config);
