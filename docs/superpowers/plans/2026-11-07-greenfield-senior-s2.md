@@ -2,13 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task (the session is the implementer; the independent reviews in R1 and R2 are fresh agents). Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add GF-OWN-1..5, GF-FRZ-1, GF-CONF-1, the drafts namespacing and the slice-closure rule GF-CLOSE-1..4 to the Greenfield-Senior layer, with the L-GF-17 preflight, test-first, then close S2 by its own rule.
+**Goal:** Add GF-OWN-1..5, GF-FRZ-1, GF-CONF-1, the drafts namespacing and the slice-closure rule GF-CLOSE-1..5 (the three-step review of design 17.2) to the Greenfield-Senior layer, with the L-GF-17 preflight, test-first, then close S2 by its own rule.
 
 **Architecture:** All new behaviour is additive in `lib/greenfield/` (new files, `gf.*` events in the same hash-chained log, a pure projection) plus two thin edits to existing unfrozen files (`scripts/hooks/guard.js`, `lib/mcp.js`' `extendTools` use). No frozen file is edited or requires `lib/greenfield`. Enforcement wording: prevention on the managed (MCP) path plus guaranteed detection by log-replay audit in all profiles.
 
 **Tech Stack:** Node (`node:test`), the frozen store/gates/tasks called through their exports, git for tree identity, the FastAPI virtual environment (`ECCODE_PYTHON`) for the full check.
 
-**Spec:** `docs/design/greenfield-senior.md` section 16 (S2 design, registered estimate, accounting protocol), sections 4.2 and 8; owner decisions of 2026-11-07 (16.1).
+**Spec:** `docs/design/greenfield-senior.md` section 16 (S2 design, registered estimate, accounting protocol), section 17 (the owner's continuation, the three-step review in 17.2), sections 4.2 and 8; owner decisions of 2026-11-07 (16.1).
 
 ## Global Constraints
 
@@ -28,7 +28,7 @@ Failure modes the design implies and no single task's rule names, most likely fi
 1. A path owned by **no** group (for example `pyproject.toml` when no group declared it): a group role's write is refused with a message that names the remedy (an ownership amendment), not silently allowed. Owned by T2 (`gf-permissions`).
 2. A **glob with `..`, an absolute path, a backslash or an empty string** in an amendment's `to`: refused (GF-OWN-5), never stored. Owned by T1.
 3. **`filesChanged` with a path that normalises into another group** (`app/../web/x.js`, `./web/x.js`, a symlinked directory): judged on the normalised path; a path outside the project root is refused. Owned by T3.
-4. **A group role called while the project is not yet sealed, or whose breakdown file was edited after approval**: the hook fails closed with the reason (GF-OWN-1 hash mismatch), and the audit reports it. Owned by T2.
+4. **A group role whose sealed breakdown file was edited after approval**: after the seal, the hook fails closed with the GF-OWN-1 reason and the audit reports it; before the seal, group roles hold no claim and the hook's claimed-task rule answers. Owned by T2.
 5. **A closure with a review bound to the right tree but recorded by the closer, by a role that also completed a task, or after a late commit**: refused (GF-CLOSE-1). A `gf.review.recorded` whose `treeHash` is not a 40-hex git tree object is refused at the schema. Owned by T5.
 
 ---
@@ -110,7 +110,9 @@ Failure modes the design implies and no single task's rule names, most likely fi
 - [ ] **Step 2: Run to verify it fails**; `$S/red2/pin.txt`. **Step 3: Implement.** **Step 4: Run to verify it passes.**
 - [ ] **Step 5: Commit** "Greenfield S2, T4: guard-config pin (GF-CONF-1)".
 
-### Task 5: Slice-closure rule (GF-CLOSE-1..4)
+### Task 5: Slice-closure rule (GF-CLOSE-1..5)
+
+**As built (amended 2026-11-07 by design 17.2; this block supersedes the interfaces below where they differ):** `gf.dispatch.recorded {id, scope, role, step, treeHash, inputs[{path, sha256}]}` by the orchestrator before each review; `gf.review.recorded {id, scope, step: comprehension|critique|readiness, dispatch, treeHash, summary (>= 100), verdict: clean|findings (comprehension, critique) or go|no-go (readiness), findings[{id, severity, kind: documentation|defect, summary}], evidence[ev:<id> | path:line]}`; `gf.finding.resolved {..., proof, reproduction?}` (a paired run for documentation findings); `gf.slice.closed {scope, treeHash, steps{comprehension, critique, readiness}, batteries[], accepted[], accounting}`; rule GF-CLOSE-5 for the dispatch.
 
 **Files:**
 - Create: `lib/greenfield/closure.js`
@@ -136,7 +138,7 @@ Failure modes the design implies and no single task's rule names, most likely fi
 - Test: `tests/gf-spoof.test.js`
 
 **Interfaces:**
-- `preflight(root): {profile: 'sandbox'|'no-shell'|'guard'|'unknown', guardWired: boolean, roleServers: {[role]: boolean}, warnings: string[]}` reading the project's Claude settings and MCP configuration the way `lib/install.js` writes them (reuse its profile detection; do not duplicate it). `audit.run` returns `managedPath` and a warning (not an error) for the `guard` profile or missing wiring, naming the consequence.
+- `preflight(root): {profile: 'sandbox'|'no-shell'|'guard', guardWired: boolean, roleServers: {[role]: boolean}, warnings: string[]}` reading the project's Claude settings and MCP configuration the way `lib/install.js` writes them (reuse its profile detection; do not duplicate it). `audit.run` returns `managedPath` and a warning (not an error) for the `guard` profile or missing wiring, naming the consequence.
 - CLI `eccode-gf preflight`; MCP `gf_preflight`.
 
 - [ ] **Step 1: Write the failing tests.** Matrix, hook-level: for each ordered pair of group roles (A, B), the real hook denies `mcp__eccode_<B>__task_complete` when `agent_type` is A and allows it for B; `--actor B` from a Bash call by A is denied. Handler-level: every MCP tool of a role-locked server records the server's actor even when the arguments carry an `actor` field. Residual (documented, asserted): a forged `task.completed` by actor B committed with `Store.commit` leaves `audit.run` clean on the ownership rules (the test title cites L-GF-17 so it must change when attestation exists). Preflight: a project installed with each profile reports it; a project with the guard missing reports `guardWired: false` and a warning; the audit includes `managedPath`.
@@ -150,8 +152,8 @@ Failure modes the design implies and no single task's rule names, most likely fi
 - [ ] **Step 1: Battery run 1** on the build tree: `scratchpad/mutation-run.js` extended with GF-OWN-1, GF-OWN-2, GF-OWN-3, GF-OWN-4, GF-OWN-5, GF-FRZ-1, GF-CONF-1, GF-CLOSE-1, GF-CLOSE-2, GF-CLOSE-3, GF-CLOSE-4. Expected: every rule fails at least two tests when removed.
 - [ ] **Step 2: Full check with the venv:** `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=commit.gpgsign GIT_CONFIG_VALUE_0=false ECCODE_PYTHON=$S/venv/bin/python npm run check`. Expected: 0 failures; the 35 FastAPI-dependent tests run; skip count reported.
 - Amended 2026-11-07 by the owner's continuation (design 17.2): the review is three recorded steps, each its own dispatch; round 1 is R1 and R2 on the build tree, round 2 is R1, R2 and R3 on the final tree; S2's closure is recorded with `eccode-gf close` in a record beside a checkout of the final tree.
-- [ ] **Step 3: Review pass 1:** a fresh general-purpose agent, given the code, the design section 16 and this plan, not my conclusions. Every finding becomes a failing test (red log kept) before its fix; a fix is proven by fix-verify where it applies.
-- [ ] **Step 4: Battery run 2** on the post-fix tree; **review pass 2** (a fresh agent) on the final tree, clean; no commit after it other than evidence.
+- [ ] **Step 3: Review round 1** (design 17.2): R1 comprehension (from the documents alone) and R2 critique, each a zero-context agent with its own recorded dispatch, given the artifacts and the tree only. Every finding becomes a failing test (red log kept) before its fix; a fix is proven by fix-verify where it applies.
+- [ ] **Step 4: Review round 2 on the final tree** (R1, R2 and R3, three new dispatches), clean and readiness go; then the engine's battery run 2 on that tree; close; no commit after it other than evidence.
 - [ ] **Step 5: Evidence, ledger (one row per delegated agent, the S2 end snapshot, no blank cell), estimate-versus-actual with the registered predictions P4 to P6 scored, commit, push, report; stop.**
 
 ---

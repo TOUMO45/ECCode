@@ -123,6 +123,12 @@ test('bypass: a forged task.completed listing a foreign file is GF-OWN-3 in the 
   const found = errs(ctx).filter((e) => e.rule === 'GF-OWN-3');
   assert.ok(found.some((e) => /s0-app/.test(e.message) && /backend-engineer/.test(e.message) && /web\/x\.js belongs to frontend/.test(e.message)), JSON.stringify(found));
 });
+test('bypass: a completion forged by one group of ANOTHER group\'s task, listing the forger\'s own files, is GF-OWN-3 (the task owner is checked, not only the actor)', () => {
+  const ctx = sealed();
+  F(ctx, 'task.claimed', 'backend-engineer', { task: 's0-web' });
+  F(ctx, 'task.completed', 'backend-engineer', { task: 's0-web', handoffId: 'ho-x', filesChanged: ['app/main.py'] });
+  assert.ok(errs(ctx).some((e) => e.rule === 'GF-OWN-3' && /s0-web was completed by backend-engineer, but it is owned by frontend-engineer/.test(e.message)), JSON.stringify(errs(ctx).map((e) => e.message)));
+});
 test('bypass: a forged completion of own files audits clean on ownership', () => {
   const ctx = sealed();
   F(ctx, 'task.claimed', 'backend-engineer', { task: 's0-app' });
