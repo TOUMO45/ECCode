@@ -1,0 +1,28 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "be-schemas",
+  "objective": "Pydantic request and response models enforcing the OpenAPI field rules, forbidding unknown fields",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "RegisterIn (email max 254, normalized and checked with is_valid_email; password 8-128), LoginIn (email 1-254, password 1-128, no format check), TaskCreateIn (title trimmed 1-200, description max 2000 default empty), TaskUpdateIn (optional title/description/status enum; explicit null and empty object rejected via model_fields_set), all extra=forbid and strict; TokenOut, UserOut (id,email,role), TaskOut (six contract fields, created_at serialized ISO 8601 UTC with trailing Z)",
+  "filesChanged": [
+    "app/schemas.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8e7tr5-011b47ba"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint",
+  "testsNotNeeded": "Backend code only: tests/** belongs to the test group, which verifies this task in its te-* tasks"
+}

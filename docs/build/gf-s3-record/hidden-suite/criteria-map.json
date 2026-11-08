@@ -1,0 +1,166 @@
+{
+  "AC-1": [
+    "test_ac01_register_returns_201_and_user_shape",
+    "test_ac01_register_email_is_lowercased",
+    "test_ac01_register_body_has_no_password_hash_or_extra_field",
+    "test_ac01_register_response_is_json",
+    "test_ac01_password_length_boundaries_accepted",
+    "test_ac01_each_registration_gets_a_distinct_integer_id"
+  ],
+  "AC-2": [
+    "test_ac02_duplicate_email_returns_409",
+    "test_ac02_duplicate_is_case_insensitive_later_variant",
+    "test_ac02_duplicate_is_case_insensitive_earlier_variant",
+    "test_ac02_conflict_creates_no_second_user",
+    "test_ac02_conflict_with_other_password_still_409"
+  ],
+  "AC-3": [
+    "test_ac03_malformed_email_returns_422",
+    "test_ac03_password_length_out_of_range_returns_422_and_creates_nothing",
+    "test_ac03_missing_or_null_field_returns_422",
+    "test_ac03_unknown_field_returns_422_and_creates_nothing"
+  ],
+  "AC-4": [
+    "test_ac04_regular_registrants_get_role_user",
+    "test_ac04_admin_email_registrant_gets_role_admin",
+    "test_ac04_lookalike_emails_do_not_get_admin",
+    "test_ac04_no_request_field_grants_admin"
+  ],
+  "AC-5": [
+    "test_ac05_login_returns_token_and_type",
+    "test_ac05_token_works_as_bearer_on_protected_endpoint",
+    "test_ac05_two_logins_return_different_tokens_both_valid",
+    "test_ac05_login_response_is_json_without_password",
+    "test_ac05_login_works_for_an_account_registered_with_mixed_case_email"
+  ],
+  "AC-6": [
+    "test_ac06_wrong_password_returns_401",
+    "test_ac06_unknown_email_returns_401",
+    "test_ac06_wrong_password_and_unknown_email_have_identical_body",
+    "test_ac06_missing_field_returns_422",
+    "test_ac06_unknown_field_returns_422_even_with_valid_credentials"
+  ],
+  "AC-7": [
+    "test_ac07_logout_returns_204_with_empty_body",
+    "test_ac07_token_is_rejected_on_every_protected_endpoint_after_logout",
+    "test_ac07_second_logout_with_same_token_is_401",
+    "test_ac07_logout_invalidates_only_that_token",
+    "test_ac07_logout_does_not_affect_other_users_tokens",
+    "test_ac07_user_can_log_in_again_after_logout_and_keeps_tasks",
+    "test_ac07_logged_out_token_cannot_reach_a_foreign_task_either"
+  ],
+  "AC-8": [
+    "test_ac08_protected_endpoints_answer_401_with_detail",
+    "test_ac08_register_and_login_need_no_token",
+    "test_ac08_valid_token_still_works_after_a_rejected_bad_request"
+  ],
+  "AC-9": [
+    "test_ac09_create_returns_201_and_task_shape",
+    "test_ac09_description_defaults_to_empty_string",
+    "test_ac09_title_is_trimmed",
+    "test_ac09_boundary_lengths_are_accepted",
+    "test_ac09_owner_is_the_caller_and_status_is_todo_for_any_caller",
+    "test_ac09_created_at_is_iso_8601_utc",
+    "test_ac09_ids_are_distinct_integers"
+  ],
+  "AC-10": [
+    "test_ac10_invalid_create_returns_422_and_creates_nothing",
+    "test_ac10_cannot_pick_the_owner_by_sending_owner_id"
+  ],
+  "AC-11": [
+    "test_ac11_fresh_user_gets_200_and_empty_array",
+    "test_ac11_list_is_a_bare_array_of_exactly_own_tasks_in_creation_response_shape",
+    "test_ac11_list_is_ordered_by_id_ascending_even_with_interleaved_creators",
+    "test_ac11_list_contains_only_the_callers_tasks",
+    "test_ac11_list_reflects_patched_values",
+    "test_ac11_list_has_no_pagination_wrapper_and_returns_many"
+  ],
+  "AC-12": [
+    "test_ac12_other_users_list_excludes_my_task",
+    "test_ac12_each_user_sees_only_their_own_tasks",
+    "test_ac12_admins_tasks_are_not_in_a_users_list",
+    "test_ac12_user_without_tasks_gets_empty_list_while_others_have_tasks"
+  ],
+  "AC-13": [
+    "test_ac13_owner_gets_200_and_same_task_as_at_creation",
+    "test_ac13_default_description_round_trips_as_empty_string",
+    "test_ac13_repeated_reads_are_identical",
+    "test_ac13_each_of_my_tasks_reads_back_with_its_own_values"
+  ],
+  "AC-14": [
+    "test_ac14_foreign_get_returns_404_not_200_not_403",
+    "test_ac14_foreign_get_body_leaks_no_task_field_or_value",
+    "test_ac14_foreign_id_is_indistinguishable_from_unknown_id",
+    "test_ac14_idor_sweep_every_foreign_task_id_gives_404",
+    "test_ac14_foreign_get_is_404_in_both_directions_and_for_any_status",
+    "test_ac14_owner_still_reads_own_task_after_foreign_probe"
+  ],
+  "AC-15": [
+    "test_ac15_foreign_patch_returns_404_and_changes_nothing",
+    "test_ac15_foreign_patch_body_leaks_no_task_field_or_value",
+    "test_ac15_foreign_patch_is_indistinguishable_from_unknown_id",
+    "test_ac15_patch_cannot_transfer_ownership_to_the_caller",
+    "test_ac15_foreign_patch_is_404_in_both_directions",
+    "test_ac15_owner_can_still_patch_after_foreign_attempt"
+  ],
+  "AC-16": [
+    "test_ac16_get_nonexistent_integer_id_returns_404_for_user",
+    "test_ac16_get_nonexistent_integer_id_returns_404_for_admin",
+    "test_ac16_patch_nonexistent_integer_id_returns_404_for_user_and_admin",
+    "test_ac16_non_integer_id_returns_422_on_get",
+    "test_ac16_non_integer_id_returns_422_on_patch"
+  ],
+  "AC-17": [
+    "test_ac17_patch_title_only_returns_200_full_task_and_keeps_other_fields",
+    "test_ac17_patch_description_only",
+    "test_ac17_patch_status_only_accepts_each_allowed_value",
+    "test_ac17_patch_all_three_fields_at_once",
+    "test_ac17_id_owner_and_created_at_never_change",
+    "test_ac17_subsequent_get_equals_patch_response",
+    "test_ac17_status_can_move_back_and_forth",
+    "test_ac17_boundary_values_title_200_description_2000_and_empty_description",
+    "test_ac17_patch_touches_only_the_addressed_task"
+  ],
+  "AC-18": [
+    "test_ac18_invalid_patch_returns_422_and_changes_nothing",
+    "test_ac18_owner_can_never_be_changed_by_the_owner"
+  ],
+  "AC-19": [
+    "test_ac19_admin_list_contains_tasks_of_all_users",
+    "test_ac19_admin_list_is_ordered_by_id_ascending",
+    "test_ac19_admin_list_elements_have_the_task_fields",
+    "test_ac19_admin_sees_newly_created_foreign_task_but_users_still_do_not"
+  ],
+  "AC-20": [
+    "test_ac20_admin_can_get_any_users_task",
+    "test_ac20_admin_patch_is_applied_and_owner_stays_original",
+    "test_ac20_owner_sees_the_admins_change_and_still_owns_the_task",
+    "test_ac20_admin_cannot_take_ownership_via_owner_id",
+    "test_ac20_admin_edit_does_not_make_the_task_the_admins_in_admin_list",
+    "test_ac20_admin_gets_and_patches_every_users_task"
+  ],
+  "AC-21": [
+    "test_ac21_service_serves_first_requests_with_tables_in_place",
+    "test_ac21_endpoints_live_under_v1"
+  ],
+  "AC-22": [
+    "test_ac22_no_response_ever_contains_the_plaintext_password",
+    "test_ac22_same_password_for_two_users_both_authenticate_and_stay_separate",
+    "test_ac22_all_128_characters_of_the_password_count",
+    "test_ac22_characters_beyond_position_72_count",
+    "test_ac22_near_miss_passwords_are_rejected"
+  ],
+  "AC-23": [
+    "test_ac23_tokens_are_long_opaque_strings",
+    "test_ac23_every_login_yields_a_new_token_across_users",
+    "test_ac23_tokens_look_random_no_long_shared_prefix",
+    "test_ac23_stored_digest_of_a_token_is_not_a_usable_token",
+    "test_ac23_tampered_or_truncated_tokens_are_rejected",
+    "test_ac23_logout_makes_the_token_useless_everywhere"
+  ],
+  "AC-24": [
+    "test_ac24_unique_email_holds_under_concurrent_duplicate_registration",
+    "test_ac24_unique_email_holds_across_case_variants_concurrently",
+    "test_ac24_integer_ids_are_unique_across_many_tasks"
+  ]
+}

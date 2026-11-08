@@ -1,0 +1,27 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "te-create-list",
+  "objective": "Endpoint tests for POST /v1/tasks and GET /v1/tasks (AC-9 to AC-11)",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "test_tasks_create_list.py (22 tests): create answers 201 with id, trimmed title, default empty description, status todo, the caller's owner_id and an ISO 8601 UTC created_at near now; title 1/200 and description 0/2000 are accepted (AC-9); 15 invalid bodies (missing/empty/blank/201-char/number/null/list title, 2001-char or numeric description, unknown owner_id, id, status, created_at and other fields) answer 422 and create nothing (AC-10); owner and status come from the server; the list is an empty array with no tasks and otherwise a bare array equal to exactly the caller's own created tasks, ordered by id, never another user's (AC-11).",
+  "filesChanged": [
+    "tests/unit/test_tasks_create_list.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8epoy0-0174cb0c"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint"
+}

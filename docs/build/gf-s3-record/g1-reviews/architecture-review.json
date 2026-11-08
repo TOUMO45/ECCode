@@ -1,0 +1,101 @@
+{
+  "decision": "approve",
+  "summary": "The PRD captures the idea completely: all 7 endpoints, ownership, admin-sees-all and the BOLA rule (resolved as deny-404, which the idea permits). The 24 criteria carry exact status codes and field names, scope ids are all covered, and the architecture follows the four ADRs. Only minor precision gaps remain for the independent acceptance suite.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "PRD covers all 7 endpoints under /v1 with methods, status codes and bodies",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/prd.json",
+        "artifact:.eccode/artifacts/brief.md"
+      ],
+      "notes": "AC-1..AC-11 and AC-13..AC-18 map one-to-one onto the idea's endpoints; 201/204/401/404/409/422 are explicit."
+    },
+    {
+      "id": "C2",
+      "description": "Ownership, admin-sees-all and the BOLA/IDOR rule are captured correctly",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/prd.json"
+      ],
+      "notes": "AC-12, AC-14, AC-15, AC-16, AC-19, AC-20; foreign id answers 404 identical to unknown id, no task fields in body, PATCH leaves the task unchanged, admin never becomes owner."
+    },
+    {
+      "id": "C3",
+      "description": "Criteria are precise, externally testable and mutually consistent",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/prd.json"
+      ],
+      "notes": "No contradictions found (checked AC-3/AC-10/AC-18 unknown-field 422s, AC-8 401 shape, AC-14/16 404s, AC-4 bootstrap). Residual underspecification is listed in A-1..A-3 and is minor."
+    },
+    {
+      "id": "C4",
+      "description": "No scope invented or dropped relative to the idea",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/prd.json",
+        "artifact:.eccode/artifacts/brief.md"
+      ],
+      "notes": "Nothing dropped. Task fields (title, description, status) and limits are necessary inventions, see A-4; non-goals are explicit."
+    },
+    {
+      "id": "C5",
+      "description": "Architecture components, data flow and tech choices follow from the ADRs",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/architecture.json",
+        "artifact:.eccode/artifacts/brief.md"
+      ],
+      "notes": "tc-start, tc-hash, tc-token and tc-bola cite the four accepted ADR ids with chosen option and at least two rejected alternatives; nine backend components match the brief."
+    },
+    {
+      "id": "C6",
+      "description": "Brief has the required sections and agrees with the PRD",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/brief.md",
+        "artifact:.eccode/artifacts/prd.json"
+      ],
+      "notes": "Users, Problem, Requirements, Acceptance Criteria, Architecture, Assumptions, Open Questions, Risks all present; every scope id S-* is covered by at least one criterion (verified)."
+    }
+  ],
+  "findings": [
+    {
+      "id": "A-1",
+      "severity": "minor",
+      "title": "Configuration semantics too thin for a black-box suite",
+      "detail": "prd.json AC-23 and S-STARTUP say tokens expire after TOKEN_TTL_SECONDS but never say what 0, negative or non-numeric values mean, nor that ADMIN_EMAIL/TOKEN_TTL_SECONDS are read when the app starts (spec.md reads them in create_app). The suite written from prd.json alone can only test expiry with a tiny TTL, and an expiry test with TOKEN_TTL_SECONDS=0 would fail against spec.md's 'invalid values fall back to the default'.",
+      "recommendation": "Add one sentence to AC-23/AC-4: variables are read at process start; TOKEN_TTL_SECONDS must be an integer >= 1, otherwise 86400 applies; a token is valid while now < expires_at."
+    },
+    {
+      "id": "A-2",
+      "severity": "minor",
+      "title": "Login email matching rule is not in the PRD",
+      "detail": "AC-2 states that duplicates are compared case-insensitively and AC-1 that the email is returned lowercased, but AC-5/AC-6 do not say whether login matches the email case-insensitively and ignoring surrounding whitespace (spec.md normalizes). ambiguityScan.none=true overstates this.",
+      "recommendation": "State in AC-5 that login normalizes the email like register (trim, lowercase) so Alice@Example.com logs in as alice@example.com."
+    },
+    {
+      "id": "A-3",
+      "severity": "minor",
+      "title": "AC-22 and AC-24 are not observable by the independent suite",
+      "detail": "AC-24 is defined against contracts/db-schema.json, which the hidden suite never sees, and AC-22 asserts internal storage format. Their verify entries are project unit-test commands, so nothing in prd.json lets another author derive a black-box test.",
+      "recommendation": "Restate each as observable behavior (for AC-24: after alembic upgrade head the tables users, auth_tokens, tasks exist with the named columns) or mark them explicitly as unit-test-only criteria."
+    },
+    {
+      "id": "A-4",
+      "severity": "info",
+      "title": "Task field set and limits are assumptions not listed as such",
+      "detail": "The idea gives no task fields; prd.json fixes title (1-200), description (0-2000) and status (todo, in_progress, done) and TOKEN_TTL_SECONDS. They are sensible and needed for PATCH, but brief.md Assumptions does not name them as choices the owner has not confirmed.",
+      "recommendation": "Add a line to Assumptions listing the invented task fields, limits and status values."
+    },
+    {
+      "id": "A-5",
+      "severity": "minor",
+      "title": "architecture.json dataFlow omits several real edges",
+      "detail": "dataFlow has no edge for auth-routes to orm-models (register and login write users and tokens), task-routes to dto-schemas, auth-dependency to security-helpers (hash_token), app-factory to core-config-db (create_all at startup) or migrations to orm-models (target_metadata). Components themselves are complete.",
+      "recommendation": "Add the five edges so the diagram matches spec.md."
+    }
+  ]
+}

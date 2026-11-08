@@ -1,0 +1,29 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "be-auth-routes",
+  "objective": "Register, login and logout routes under /v1 with admin bootstrap from ADMIN_EMAIL",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "APIRouter(prefix=/v1) with registerUser (201 UserOut; 409 on an existing email or IntegrityError race; role admin only when the normalized email equals settings.admin_email), loginUser (normalized lookup, dummy_verify for unknown emails, one shared 401 Invalid email or password body, inserts an AuthToken digest with expires_at = now + TOKEN_TTL_SECONDS, returns the raw token once), logoutUser (204 empty, sets revoked_at on the presented token only)",
+  "filesChanged": [
+    "app/routes/__init__.py",
+    "app/routes/auth.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8e94ml-014cca4a"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint",
+  "testsNotNeeded": "Backend code only: tests/** belongs to the test group, which verifies this task in its te-* tasks"
+}

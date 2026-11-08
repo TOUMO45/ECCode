@@ -1,0 +1,28 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "be-app",
+  "objective": "Application factory wiring both routers under /v1 and a module-level app importable with no environment variables",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "create_app(settings=None) builds the engine from settings or get_settings(), runs init_db (schema at startup, no lifespan needed), stores settings (explicit or None, so ADMIN_EMAIL/TOKEN_TTL_SECONDS are then read per request), engine and session_factory on app.state, includes the auth and task routers; a RequestValidationError handler returns 422 detail items with only loc, msg and type (never input or ctx, so passwords are not echoed); a generic 500 handler answers JSON; module-level app = create_app()",
+  "filesChanged": [
+    "app/main.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8ebzow-0189c128"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint",
+  "testsNotNeeded": "Backend code only: tests/** belongs to the test group, which verifies this task in its te-* tasks"
+}

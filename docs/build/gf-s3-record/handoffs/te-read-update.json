@@ -1,0 +1,27 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "te-read-update",
+  "objective": "Endpoint tests for GET and PATCH /v1/tasks/{task_id} by the owner, with unknown and non-integer ids (AC-13, AC-16 to AC-18)",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "test_tasks_read_update.py (40 tests): the owner reads the task exactly as created (AC-13); ids 999999, 0, -1 and 2**63 answer 404 with a string detail on GET and PATCH for the owner and for admin, and the non-integer ids abc, 1.5 and one answer 422, with the existing task unchanged (AC-16); 8 partial patches (single fields, empty description, every status, 200-char title, all three) return and persist the full task with only the sent fields changed and id, owner_id and created_at kept, and successive patches accumulate (AC-17); 19 invalid patches (empty object, unknown or upper-case or numeric status, empty/blank/201-char/numeric title, 2001-char or numeric description, null values, owner_id, id, created_at, unknown field) answer 422 and change nothing (AC-18).",
+  "filesChanged": [
+    "tests/unit/test_tasks_read_update.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8eqvsr-01937d31"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint"
+}

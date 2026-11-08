@@ -1,0 +1,28 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "be-deps",
+  "objective": "Bearer authentication dependency answering 401 with WWW-Authenticate: Bearer for any bad token",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "get_current_auth parses Authorization (bearer scheme case-insensitive, exactly one token, length cap), looks up the SHA-256 digest, requires revoked_at None and expires_at > utcnow, loads the user, and raises 401 Not authenticated with WWW-Authenticate: Bearer otherwise; get_current_user returns the user; get_app_settings returns create_app settings or the environment at call time; Annotated aliases CurrentAuth, CurrentUser, DbSession, AppSettings",
+  "filesChanged": [
+    "app/deps.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8e8dur-014af550"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint",
+  "testsNotNeeded": "Backend code only: tests/** belongs to the test group, which verifies this task in its te-* tasks"
+}

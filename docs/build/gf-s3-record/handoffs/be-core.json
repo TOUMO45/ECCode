@@ -1,0 +1,30 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "be-core",
+  "objective": "Settings read from the environment at call time, SQLAlchemy engine/session helpers and idempotent schema creation",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "Settings frozen dataclass with get_settings() reading DATABASE_URL (temp-dir scratch default, never ./app.db), ADMIN_EMAIL (stripped, lowercased, empty=None) and TOKEN_TTL_SECONDS (default 86400, invalid falls back); Base, make_engine (check_same_thread off, StaticPool for in-memory, PRAGMA foreign_keys=ON on connect), make_session_factory, init_db (imports app.models, create_all), get_db request session",
+  "filesChanged": [
+    "app/__init__.py",
+    "app/config.py",
+    "app/db.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8e3jty-01454024"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint",
+  "testsNotNeeded": "Backend code only: tests/** belongs to the test group, which verifies this task in its te-* tasks"
+}

@@ -1,0 +1,27 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "te-bola",
+  "objective": "Authorization tests for cross-user task access (BOLA) and admin access (AC-12, AC-14, AC-15, AC-19, AC-20)",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "test_bola_admin.py (15 tests) with user, other_user and admin from contracts/fixtures.json, each owning a task: cross-user GET both ways answers 404 with a body identical to the unknown-id 999999 response and without any task field or value (AC-14); cross-user PATCH both ways with 4 bodies answers 404 like an unknown id and the owner still sees the original task (AC-15); owner_id cannot be moved by the owner, the admin or the other user and a role field is rejected, the user stays non-admin; each user list holds exactly that user's tasks (AC-12); the admin list holds every user's tasks ordered by id (AC-19); the admin reads and patches either user's task with 200, the change is applied and owner_id stays the original owner while a third user still gets 404 (AC-20).",
+  "filesChanged": [
+    "tests/unit/test_bola_admin.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8etqya-01724cae"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint"
+}

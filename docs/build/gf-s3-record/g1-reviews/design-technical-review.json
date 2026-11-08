@@ -1,0 +1,95 @@
+{
+  "decision": "approve",
+  "summary": "The contract set is complete and consistent with the PRD: seven operationIds with correct status codes, strict request schemas, an adequate three-table schema, a 36-cell access matrix whose hash matches the threat model, and fixtures with two distinct non-admin users plus the admin email. Findings are minor wording and ambiguity items.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "OpenAPI is complete and consistent with the PRD (operations, status codes, schemas, security, error shape)",
+      "met": true,
+      "evidence": [
+        "artifact:contracts/openapi.json",
+        "artifact:.eccode/artifacts/prd.json"
+      ],
+      "notes": "All seven PRD operationIds exist; 201/204/200, 401, 404, 409, 422 and the {detail} error shapes match AC-1..AC-20; request schemas forbid unknown fields; public ops have security []."
+    },
+    {
+      "id": "C2",
+      "description": "DB schema supports every operation and the migration plan matches it",
+      "met": true,
+      "evidence": [
+        "artifact:contracts/db-schema.json",
+        "artifact:contracts/migrations-plan.json",
+        "artifact:.eccode/artifacts/spec.md"
+      ],
+      "notes": "users, auth_tokens (hash, expiry, revoked_at) and tasks (owner_id indexed) cover register, login, logout, owner filtering and admin override; one 0001_initial step creates all three with FKs in dependency order."
+    },
+    {
+      "id": "C3",
+      "description": "Access matrix is correct for every role x operation x ownership",
+      "met": true,
+      "evidence": [
+        "artifact:contracts/access-matrix.json",
+        "artifact:.eccode/artifacts/threat-model.json"
+      ],
+      "notes": "4 roles x 7 operations = 36 cells with own/other for get/update; anonymous denied everywhere but register/login, user/other_user deny on other, admin allow; sha256 of the file equals threat-model accessMatrixSha256."
+    },
+    {
+      "id": "C4",
+      "description": "Fixtures let the criteria be exercised with two distinct non-admin users",
+      "met": true,
+      "evidence": [
+        "artifact:contracts/fixtures.json",
+        "artifact:.eccode/artifacts/prd.json"
+      ],
+      "notes": "user@example.com and other@example.com are distinct, admin@example.com matches ADMIN_EMAIL, passwords satisfy the 8-128 rule, unknown id 999999 matches AC-16."
+    },
+    {
+      "id": "C5",
+      "description": "spec.md is consistent with the contracts and feasible with the installed libraries",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/spec.md",
+        "artifact:contracts/openapi.json",
+        "artifact:contracts/db-schema.json"
+      ],
+      "notes": "Only stdlib, FastAPI, SQLAlchemy 2.x, Alembic, Pydantic are used; scrypt, secrets, hmac from stdlib; email regex avoids email-validator's reserved-domain rejection; out-of-range integer ids handled."
+    }
+  ],
+  "findings": [
+    {
+      "id": "T-1",
+      "severity": "minor",
+      "title": "Unique column plus same-column unique index is ambiguous for AC-24",
+      "detail": "db-schema.json marks users.email and auth_tokens.token_hash as unique: true and also lists a unique index (ix_users_email, ix_auth_tokens_token_hash) on the same column. In SQLAlchemy unique=True with index=True yields only the unique index (no UniqueConstraint), while a hand-written 0001_initial.py or the AC-24 test may expect both. Models, migration and test are built by three tasks and may disagree.",
+      "recommendation": "Add one sentence to spec.md Data Design (or the db-schema description): a unique column is realized only by the named unique index; the migration test accepts a unique index as satisfying the unique flag."
+    },
+    {
+      "id": "T-2",
+      "severity": "minor",
+      "title": "Validation rules live only in prose inside the contract",
+      "detail": "openapi.json RegisterRequest.email has no pattern (only a description) and TaskUpdate.title minLength 1 cannot express strip-then-length, yet spec.md says the contract wins on any disagreement. The regex and trim semantics exist only in spec.md.",
+      "recommendation": "Add the pattern to RegisterRequest.email and note trimming in the TaskUpdate.title description."
+    },
+    {
+      "id": "T-3",
+      "severity": "info",
+      "title": "Access matrix carries no status codes or list scoping",
+      "detail": "access-matrix.json cells are allow/deny only: 401 for anonymous versus 404 for foreign tasks, and own-only versus all scoping of listTasks, are expressed only in openapi.json and the PRD. Acceptable, but the matrix alone cannot drive an expected-status check.",
+      "recommendation": "Optionally add an expectedStatus note per deny cell in spec.md Testing Strategy."
+    },
+    {
+      "id": "T-4",
+      "severity": "info",
+      "title": "OpenAPI under-describes headers and 422 items",
+      "detail": "spec.md and architecture.json require WWW-Authenticate: Bearer on 401, and FastAPI's default 422 items also carry input and ctx, but openapi.json declares neither (additional properties are allowed, so this is not a contradiction).",
+      "recommendation": "Declare the WWW-Authenticate response header on the 401 responses; see S-1 for the input field."
+    },
+    {
+      "id": "T-5",
+      "severity": "info",
+      "title": "Default DATABASE_URL differs on every get_settings() call",
+      "detail": "spec.md makes get_settings() uncached and the default embeds secrets.token_hex(4), so two calls without DATABASE_URL yield two different database files; only create_app's single call is safe.",
+      "recommendation": "State that routes and dependencies must read app.state.settings and never call get_settings() again."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "be-security",
+  "objective": "Password hashing with scrypt, opaque token generation and SHA-256 digest, and email normalization/validation helpers",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "hash_password: hashlib.scrypt n=2**14 r=8 p=1, 16-byte secrets salt, 32-byte key, maxmem 64 MiB, stored as scrypt$n$r$p$salt_b64$hash_b64; verify_password parses the stored params and compares with hmac.compare_digest, False on any malformed value; dummy_verify burns one scrypt on a well-formed non-matching verifier; new_token = secrets.token_urlsafe(32); hash_token = SHA-256 hex; normalize_email strip+lower; is_valid_email spec regex via fullmatch with the 254-char cap",
+  "filesChanged": [
+    "app/security.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8e4tkp-0162a0e0"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint",
+  "testsNotNeeded": "Backend code only: tests/** belongs to the test group, which verifies this task in its te-* tasks"
+}

@@ -1,0 +1,27 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "te-register",
+  "objective": "Endpoint tests for POST /v1/register and the ADMIN_EMAIL admin bootstrap (AC-1 to AC-4)",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "test_register.py (28 tests): 201 body has exactly id (integer), email (lowercased) and role user, password bounds 8 and 128 accepted, distinct ids (AC-1); 409 with a string detail for exact, mixed-case and upper-case-first duplicates, one stored user and the first password still the only valid one (AC-2); 15 invalid bodies (malformed emails, 255-char email, non-string fields, password 7 and 129, missing fields, empty object, unknown role/id) answer 422 with loc/msg/type items and create no user, and role cannot be chosen by the client (AC-3); ADMIN_EMAIL registrant (any case, and an upper-case variable) gets admin, others user, unset or empty ADMIN_EMAIL makes nobody admin (AC-4); no response carries the password, a scrypt verifier or a password_hash field.",
+  "filesChanged": [
+    "tests/unit/test_register.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8eljar-0184fd9c"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint"
+}

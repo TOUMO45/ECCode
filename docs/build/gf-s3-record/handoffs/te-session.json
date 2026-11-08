@@ -1,0 +1,27 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "te-session",
+  "objective": "Endpoint tests for POST /v1/login and /v1/logout, bearer authentication on every protected operation and token storage (AC-5 to AC-8, AC-23)",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "test_login_logout.py (41 tests): login 200 with exactly access_token and token_type bearer, the token works, two logins give two distinct valid tokens (AC-5); wrong password and unknown email answer 401 with an identical body and no token, 5 missing/unknown-field bodies answer 422 (AC-6); logout 204 with an empty body revokes only the presented token, so all five protected calls including a second logout answer 401 while the other token still works (AC-7); missing header, Basic/Token/no scheme, Bearer without token and an unknown token answer 401 with a detail key on logout, list, create, get and patch, without side effects (AC-8); TOKEN_TTL_SECONDS=2 expires a token, only SHA-256 digests are stored and the default TTL is 86400 s (AC-23).",
+  "filesChanged": [
+    "tests/unit/test_login_logout.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8eokfu-01073b30"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint"
+}

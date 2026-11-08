@@ -1,0 +1,27 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "te-migration",
+  "objective": "Contract test of the Alembic migration against contracts/db-schema.json and migrations-plan.json (AC-24)",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "test_migration_contract.py (4 tests): the single head is 0001_initial as in migrations-plan.json; alembic upgrade head on an empty temporary SQLite file creates exactly users, auth_tokens and tasks with the contract's column names, types, nullability, primary keys, foreign keys, unique columns and exactly the named indexes ix_users_email, ix_auth_tokens_token_hash, ix_auth_tokens_user_id, ix_tasks_owner_id, and records version 0001_initial; downgrade base removes every contract table and index and a second upgrade reproduces the schema; startup create_all builds the same contract schema.",
+  "filesChanged": [
+    "tests/unit/test_migration_contract.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8eue2z-01d4da2f"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint"
+}

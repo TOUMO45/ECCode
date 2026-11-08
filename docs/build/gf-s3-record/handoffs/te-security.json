@@ -1,0 +1,27 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "te-security",
+  "objective": "Unit tests for the password and token helpers in app/security.py (AC-22 and the opaque-hashed token decision)",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "test_security.py (28 tests): scrypt$16384$8$1$salt$hash format with a 16-byte salt and 32-byte key recomputed with hashlib.scrypt; a fresh salt per hash and per stored user (two users, same password, different verifiers); right password accepted, 5 wrong ones rejected; 14 malformed verifiers return False (wrong part count, other scheme, bad/too-costly/overflowing n, bad or empty base64, tampered digest, non-string); digest comparison goes through hmac.compare_digest; dummy_verify is always False; hypothesis round trip; 1000 unique url-safe tokens of at least 32 random bytes; hash_token is deterministic SHA-256 hex; the database holds no plaintext password or token and only the token digest.",
+  "filesChanged": [
+    "tests/unit/test_security.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8ekbun-0178adf7"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint"
+}

@@ -1,0 +1,30 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "be-migrations",
+  "objective": "Alembic environment and the initial revision agreeing with contracts/db-schema.json",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "env.py takes the URL from sqlalchemy.url, else DATABASE_URL, else a temp-dir SQLite default, accepts a caller connection via config.attributes, target_metadata = Base.metadata, offline and online modes; revision 0001_initial creates users, auth_tokens (FK users.id) and tasks (FK users.id) with the db-schema column types and nullability, UNIQUE(email)/UNIQUE(token_hash) plus the named indexes ix_users_email (unique), ix_auth_tokens_token_hash (unique), ix_auth_tokens_user_id, ix_tasks_owner_id, identical to app/models.py; downgrade drops tasks, auth_tokens, users; standard script.py.mako",
+  "filesChanged": [
+    "migrations/env.py",
+    "migrations/script.py.mako",
+    "migrations/versions/0001_initial.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8ed652-01ba8803"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint",
+  "testsNotNeeded": "Backend code only: tests/** belongs to the test group, which verifies this task in its te-* tasks"
+}

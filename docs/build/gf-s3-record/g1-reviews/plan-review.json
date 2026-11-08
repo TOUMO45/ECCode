@@ -1,0 +1,119 @@
+{
+  "decision": "approve",
+  "summary": "The 17 tasks are buildable under the stated constraints: file lists sit inside group globs, no file is owned twice, the dependency graph is acyclic and gives each test task the backend code it needs, the 7 operations come from exactly two backend tasks, all 24 criteria map to exactly one test task, and nothing needs an uninstalled library. Findings concern thin backend verification and size margins.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Each task respects the 3-file and under-150-line budget and its group globs",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/plan.json",
+        "artifact:.eccode/artifacts/breakdown.json"
+      ],
+      "notes": "Max 3 files per task; backend files under app/** or migrations/**, tests under tests/**, no backend task touches tests; estLines 70-130; be-migrations and the larger test tasks are tight (P-2)."
+    },
+    {
+      "id": "C2",
+      "description": "Dependency order is correct and acyclic, test tasks depend on the right backend tasks",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/plan.json",
+        "artifact:.eccode/artifacts/breakdown.json"
+      ],
+      "notes": "be-schemas after be-security, be-deps after core/models/security, routes after deps and schemas, be-app after both routers; te-fixtures after be-app and every conftest user after te-fixtures; te-security after be-security; te-migration after be-migrations and be-models."
+    },
+    {
+      "id": "C3",
+      "description": "Every operation is provided by exactly one backend task",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/breakdown.json",
+        "artifact:contracts/openapi.json"
+      ],
+      "notes": "be-auth-routes provides registerUser, loginUser, logoutUser; be-task-routes provides listTasks, createTask, getTask, updateTask; no overlap, none missing."
+    },
+    {
+      "id": "C4",
+      "description": "Every PRD criterion is covered by a test task",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/breakdown.json",
+        "artifact:.eccode/artifacts/prd.json"
+      ],
+      "notes": "AC-1..AC-24 each appear exactly once in test-task criteria; the verify commands of AC-21..AC-24 name test files that te-fixtures, te-security, te-session and te-migration create (AC-22 persistence gap noted in P-4)."
+    },
+    {
+      "id": "C5",
+      "description": "Every verification command is plausible to pass as written",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/plan.json"
+      ],
+      "notes": "ruff 0.16.9 with --no-cache --select E,F --line-length 100 on listed files, and python -m pytest <file> -q for test tasks, all runnable from the repo root with the installed tools; weakness of the lint-only backend checks is P-1."
+    },
+    {
+      "id": "C6",
+      "description": "Nothing requires a library that is not installed",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/spec.md",
+        "artifact:.eccode/artifacts/plan.json"
+      ],
+      "notes": "Only fastapi, starlette, pydantic, sqlalchemy, alembic, httpx (TestClient), pytest and stdlib hashlib.scrypt, hmac, secrets are used; email-validator, jwt, bcrypt, argon2 deliberately avoided."
+    },
+    {
+      "id": "C7",
+      "description": "Estimates are consistent with the plan and config limits",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/estimates.json",
+        "artifact:.eccode/artifacts/breakdown.json"
+      ],
+      "notes": "9 backend and 8 test tasks match the counts; summed 90-260 minutes fits maxRuntimeMinutes 480; labelled uncalibrated."
+    }
+  ],
+  "findings": [
+    {
+      "id": "P-1",
+      "severity": "minor",
+      "title": "Backend verification is lint-only, behavior is first checked by tasks that cannot fix it",
+      "detail": "Every be-* task verifies only with ruff (plan.json tasks[].verification.command), although their acceptance criteria describe behavior. An import error or mapping error in app/models.py passes its task and surfaces later in a te-* task, whose group cannot edit app/**, so retries (maxTaskRetries 2) are wasted on the wrong group.",
+      "recommendation": "Chain an import check onto the backend commands, e.g. 'ruff check ... && python -c \"import app.models\"' and for be-app 'DATABASE_URL=sqlite:// python -c \"import app.main\"' (in-memory URL keeps it independent of the sandbox temp directory)."
+    },
+    {
+      "id": "P-2",
+      "severity": "minor",
+      "title": "Size margins are thin on be-migrations and the larger test tasks",
+      "detail": "be-migrations has 3 files (env.py, script.py.mako, 0001_initial.py) with estLines 110; a normal alembic env.py with offline and online modes, a 3-table revision with indexes and downgrade and the template come to roughly 140-150 lines against the under-150 budget. te-read-update, te-session and te-bola estimate 130 and cover 4 or 5 criteria with many 422 cases.",
+      "recommendation": "Tell be-migrations to write online mode only and a minimal template; tell the test tasks to parametrize 422 cases and keep helpers in conftest; otherwise split be-migrations into env+template and revision."
+    },
+    {
+      "id": "P-3",
+      "severity": "minor",
+      "title": "Test tasks do not list prd.json, access-matrix.json or fixtures.json as inputs",
+      "detail": "te-* inputs are only openapi.json, db-schema.json and spec.md, although te-bola and the register/session tests need the AC text, the access matrix and the fixture accounts (user, other_user, admin@example.com). Also .eccode/artifacts, .eccode/design and contracts are currently untracked in git, and a group sees only HEAD.",
+      "recommendation": "Add the three inputs to the test tasks and make sure contracts/** and spec.md are committed before the build starts."
+    },
+    {
+      "id": "P-4",
+      "severity": "minor",
+      "title": "No test owns the stored-not-plaintext half of AC-22",
+      "detail": "AC-22 requires that no plaintext password is persisted. te-security depends only on be-security and tests helpers; te-register (which has a client and database) lists only 'no password or hash field appears in any response'. No acceptance criterion reads users.password_hash from the database.",
+      "recommendation": "Add to te-register: after registering, the stored password_hash starts with 'scrypt$', differs per user for equal passwords and does not contain the plaintext."
+    },
+    {
+      "id": "P-5",
+      "severity": "minor",
+      "title": "be-migrations must work without alembic.ini",
+      "detail": "brief.md says alembic.ini is added later by the orchestrator, while te-migration depends on be-migrations and runs before that. Its acceptance criteria do not require env.py to work with a programmatic Config (config_file_name None), so an unguarded fileConfig call would fail the test task.",
+      "recommendation": "Add to be-migrations acceptance: env.py runs with a programmatic Config and no ini file; te-migration builds Config in code and sets script_location and sqlalchemy.url."
+    },
+    {
+      "id": "P-6",
+      "severity": "info",
+      "title": "Estimates are uncalibrated",
+      "detail": "estimates.json is labelled agent-estimate-uncalibrated; token ranges (270k-750k) cannot be checked against maxCostUsd 25 in .eccode/config.json.",
+      "recommendation": "No change needed; recalibrate after this run."
+    }
+  ]
+}

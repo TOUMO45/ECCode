@@ -1,0 +1,132 @@
+{
+  "decision": "approve",
+  "summary": "The security design is sound on the points that matter: 256-bit opaque tokens stored as SHA-256, salted scrypt, deny-404 BOLA through one owner-filtered helper, extra=forbid blocking role and owner_id assignment, exact-token logout revocation and shared login error with a dummy hash. Remaining items are minor hardening gaps, chiefly validation errors echoing the submitted password.",
+  "criteria": [
+    {
+      "id": "C1",
+      "description": "Token handling is real: random opaque, hashed at rest, expiry and revocation checked per request",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/spec.md",
+        "artifact:contracts/db-schema.json",
+        "artifact:contracts/openapi.json"
+      ],
+      "notes": "secrets.token_urlsafe(32), SHA-256 digest only, unique indexed token_hash, expires_at and revoked_at tested on every call, raw token returned once."
+    },
+    {
+      "id": "C2",
+      "description": "Password storage uses a salted memory-hard KDF with constant-time comparison",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/spec.md",
+        "artifact:.eccode/artifacts/threat-model.json"
+      ],
+      "notes": "hashlib.scrypt, 16-byte per-user salt, parameters stored in the verifier, hmac.compare_digest; parameters are on the low side (S-3)."
+    },
+    {
+      "id": "C3",
+      "description": "BOLA/IDOR and enumeration are mitigated by design",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/spec.md",
+        "artifact:contracts/access-matrix.json",
+        "artifact:.eccode/artifacts/prd.json"
+      ],
+      "notes": "load_task filters by owner for non-admins so foreign and unknown ids share one 404 path; list filtered; PATCH uses the same helper; login returns one body and burns a hash for unknown emails; out-of-range ids answer 404, not 500."
+    },
+    {
+      "id": "C4",
+      "description": "Mass assignment of owner_id, role, status and id is blocked",
+      "met": true,
+      "evidence": [
+        "artifact:contracts/openapi.json",
+        "artifact:.eccode/artifacts/spec.md",
+        "artifact:.eccode/artifacts/prd.json"
+      ],
+      "notes": "extra=forbid on RegisterIn, TaskCreateIn, TaskUpdateIn; additionalProperties false in the contract; owner_id taken from the caller; PATCH applies only fields in model_fields_set."
+    },
+    {
+      "id": "C5",
+      "description": "Logout invalidation is exact and verifiable",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/spec.md",
+        "artifact:contracts/db-schema.json",
+        "artifact:.eccode/artifacts/prd.json"
+      ],
+      "notes": "revoked_at set on the presented token row only; second logout and any reuse answer 401; other tokens unaffected; AC-7 and AC-23."
+    },
+    {
+      "id": "C6",
+      "description": "Input validation bounds exist for every request field",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/threat-model.json",
+        "artifact:contracts/openapi.json"
+      ],
+      "notes": "inputValidation lists email, password, title, description, status and path ids for all operations; password and email lengths capped."
+    },
+    {
+      "id": "C7",
+      "description": "Error responses do not leak other users' data or internals and mitigations in the threat model are real",
+      "met": true,
+      "evidence": [
+        "artifact:.eccode/artifacts/threat-model.json",
+        "artifact:.eccode/artifacts/spec.md",
+        "artifact:.eccode/artifacts/prd.json"
+      ],
+      "notes": "401/404/409 bodies are generic and 16 threats all reference existing criteria or components; two mitigations are weaker than stated (S-1 validation echo, S-4 admin pre-registration) and are recorded as minor findings."
+    }
+  ],
+  "findings": [
+    {
+      "id": "S-1",
+      "severity": "minor",
+      "title": "Default 422 body echoes the submitted password",
+      "detail": "spec.md says passwords are never returned and relies on FastAPI's default validation body, but that body includes the offending input: a too-short password is echoed in the error item, and a missing email returns the whole body, password included, for register and login. threat-model.json T-11 only covers the 201 body (AC-1). The value goes back only to the sender, so exposure is through logs and proxies.",
+      "recommendation": "Register a RequestValidationError handler in app/main.py that returns loc, msg and type only (drop input and ctx), and add a test that a 422 on register never contains the password."
+    },
+    {
+      "id": "S-2",
+      "severity": "minor",
+      "title": "Default SQLite file sits in the shared temp directory with default permissions",
+      "detail": "spec.md app/config.py builds sqlite:///<gettempdir()>/tasktracker-<token_hex(4)>.db. The file is created with the process umask (typically 0644) in a world-listable directory, so another local user can read verifiers, token digests and all tasks, and the 32-bit name can be pre-created. Not in threat-model.json.",
+      "recommendation": "Create a private directory with tempfile.mkdtemp (mode 0700) and put the database inside it, or chmod the file 0600; add a threat entry for local disclosure of the default store."
+    },
+    {
+      "id": "S-3",
+      "severity": "minor",
+      "title": "scrypt cost is below common guidance and there is no rehash path",
+      "detail": "spec.md fixes n=2**14, r=8, p=1 (16 MiB, tens of ms). OWASP's scrypt guidance starts at N=2**17, and Werkzeug defaults to 2**15. The ADR promises a rehash on login to raise parameters later, but spec.md has no such behavior.",
+      "recommendation": "Use n=2**15 (32 MiB, within the 64 MiB maxmem already specified) and add rehash-on-login when the stored parameters differ, or drop the claim from the ADR."
+    },
+    {
+      "id": "S-4",
+      "severity": "minor",
+      "title": "T-05 mitigation does not address the real abuse path",
+      "detail": "T-05 (take the admin role by registering the admin address) points at AC-4, which only proves the positive case. The attack is registering ADMIN_EMAIL before the operator; spec.md Deployment never tells the operator to do so, and because the default database is a fresh scratch file per process the window reopens at every restart. brief.md Risks mentions it, the threat model does not accept it.",
+      "recommendation": "Record the residual risk as accepted in T-05, add the 'register ADMIN_EMAIL first, set DATABASE_URL for persistence' instruction to spec.md Deployment."
+    },
+    {
+      "id": "S-5",
+      "severity": "info",
+      "title": "T-14 overstates what length caps do for scrypt cost",
+      "detail": "scrypt cost is fixed by n, r, p and independent of password length, so the 8-128 cap bounds input size only. The real exhaustion vector (many concurrent unauthenticated register/login calls, 16 MiB and tens of ms each) is covered only by the accepted non-goal 'no rate limiting'.",
+      "recommendation": "Reword T-14 to name concurrent hashing as accepted residual risk."
+    },
+    {
+      "id": "S-6",
+      "severity": "info",
+      "title": "Register 409 is an account-enumeration oracle by PRD design",
+      "detail": "AC-2 mandates 409 for an existing email, so registered addresses can be probed; T-01 covers only login enumeration.",
+      "recommendation": "Record this as accepted residual risk in the threat model."
+    },
+    {
+      "id": "S-7",
+      "severity": "info",
+      "title": "Expired and revoked token rows are never purged",
+      "detail": "auth_tokens grows by one row per login with no cleanup or per-user cap; harmless at this scale, noted for operations.",
+      "recommendation": "Optionally delete expired rows opportunistically at login."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "from": "backend-engineer",
+  "to": "delivery-lead",
+  "task": "be-task-routes",
+  "objective": "Task list, create, read and patch routes with the owner-or-admin rule answering 404 for foreign ids",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "APIRouter(prefix=/v1): listTasks (owner-filtered for non-admins, admin all, ordered by id asc), createTask (201; owner_id from the caller, status todo), getTask and updateTask through one load_task helper whose query filters by owner for non-admins so unknown, out-of-SQLite-range and foreign ids share one 404 Task not found; PATCH applies only fields in model_fields_set from an explicit title/description/status allowlist and never touches id, owner_id or created_at",
+  "filesChanged": [
+    "app/routes/tasks.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8ebfd4-01148623"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint",
+  "testsNotNeeded": "Backend code only: tests/** belongs to the test group, which verifies this task in its te-* tasks"
+}

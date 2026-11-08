@@ -1,0 +1,28 @@
+{
+  "from": "test-engineer",
+  "to": "delivery-lead",
+  "task": "te-fixtures",
+  "objective": "Shared pytest fixtures (client on a temporary SQLite file with ADMIN_EMAIL=admin@example.com, make_client factory, db_rows, register/login/auth_header/token_for helpers) and the AC-21 startup smoke test",
+  "context": "Implemented against the sealed contracts in contracts/ and the sealed PRD (.eccode/artifacts/prd.json).",
+  "inputs": [
+    "contracts/openapi.json",
+    "contracts/db-schema.json",
+    "contracts/access-matrix.json",
+    ".eccode/artifacts/spec.md"
+  ],
+  "expectedOutput": "Files of the task, passing the task's pinned verification command",
+  "acceptanceCriteria": [
+    "The task's pinned verification command passes",
+    "Only the task's own files were changed"
+  ],
+  "completedWork": "conftest.py: make_client builds create_app() from a scrubbed environment with DATABASE_URL pointing at tmp_path and ADMIN_EMAIL set or unset; client, db_rows, register, login, auth_header, token_for fixtures. test_app_smoke.py (2 tests): a subprocess imports app.main with DATABASE_URL/ADMIN_EMAIL/TOKEN_TTL_SECONDS removed and proves the default database is a SQLite file directly in the system temp dir (not app.db, nothing in ./app.db), users/auth_tokens/tasks exist at startup and register writes there (AC-21); the client fixture answers 401 anonymously and 200 with a bearer token and writes only to its temp file.",
+  "filesChanged": [
+    "tests/unit/conftest.py",
+    "tests/unit/test_app_smoke.py"
+  ],
+  "evidence": [
+    "ev:ev-mw8eiz6b-011d9a1b"
+  ],
+  "remainingIssues": [],
+  "nextAction": "Next task of the plan, then the orchestrator's checkpoint"
+}
