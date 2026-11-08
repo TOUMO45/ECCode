@@ -1,0 +1,14 @@
+[
+  {
+    "id": "G2-1",
+    "severity": "major",
+    "kind": "defect",
+    "summary": "[engine behavior] GF-RUN-2's run-level prevention is defeated by project code that commits its cross-group write. The before/after comparison (lib/greenfield/run-check.js:25-33 snapshot(), via `git diff HEAD --name-only` and `git ls-files --others`) and the frozen integrity window (lib/evidence.js:91,102 via trackedChanges/git diff HEAD) both measure the worktree against HEAD. A pinned run's project code (e.g. a pytest test) can `git add` + `git commit` the cross-group file, advancing HEAD past it, so after the run neither snapshot lists it: run-check computes outside=[] and runner.run returns status 'passed', ok:true, problems:[] (lib/greenfield/runner.js:202-209). The cross-group file is left committed and the tree is clean, so closure's clean-tree check (closure.js) does not catch it either. This contradicts design 18.4 ('a run that changed any file outside the caller's group ... fails, whoever claims the file') and L-GF-29 ('the runner's own comparison fails a run that changed a file outside the caller's group, tracked or untracked'); the committed change remains detectable only by the separate GF-OWN-4 `attribute` command (not wired into any S2 automatic check). Reproduction: commit-hides-crossgroup.test.js"
+  },
+  {
+    "id": "G2-2",
+    "severity": "minor",
+    "kind": "defect",
+    "summary": "[engine behavior] The runner's before/after comparison hides an untracked cross-group write made ignored at runtime. lib/greenfield/run-check.js:26 lists untracked files with `git ls-files --others --exclude-standard`, which honors .git/info/exclude. Project code run through a pinned run can append its own output path to .git/info/exclude (a path under .git that no snapshot lists) and then write a cross-group untracked file; the file appears in neither snapshot, so the run passes though design 18.4 claims an untracked cross-group write fails 'whoever claims the file'. The same file is also invisible to `git status` and to GF-OWN-4 attribution (lib/project.js:109 gitChangedFiles also uses --exclude-standard), so 18.3's 'the change itself stays, visible in git' residual does not hold for it; only closure's clean-tree check (lib/greenfield/closure.js:51, which deliberately uses --exclude-per-directory=.gitignore per E2-7) still lists it while present, so a slice cannot be closed while it remains. Sits in the seam between L-GF-29's 'untracked ... fails' and its 'ignored files ... are not compared'. Reproduction: exclude-hides-crossgroup.test.js"
+  }
+]
