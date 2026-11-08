@@ -61,7 +61,24 @@ How the build answers each class:
 
 ## P4: review and verification
 
-(filled after the independent review and the closing verification)
+**One independent review** (a fresh Claude reviewer, zero context, briefed with the P2 adversary rows, on commit `f32b82a` in an isolated checkout; `docs/build/gf-s2-4-record/reviewer-brief.md`). It read the design, the evidence, the code and all 54 adversary rows, then ran live reproductions through `gf_run` and `isolate.*` on this machine (both mechanisms available).
+
+**Result: one in-scope finding, now fixed.**
+- **R-1 (major): `choose()` selected the sandbox mechanism by availability, ignoring the self-test's per-mechanism verdict.** `selfTest().usable` (which mechanism actually contained the canary) was recorded but never consulted; `groupModeProblems` checked only the aggregate `ok` (any mechanism usable). So on a host where Landlock reports an ABI but does not enforce (LSM off, a boot-param misconfiguration), the canary would exclude Landlock from `usable`, but a no-carve-out group would still run under the non-enforcing Landlock, and an absolute write to another group's real-tree file would reach it. Major on this host (both mechanisms enforce here, so no live leak), blocking-class on an affected host. The adversary missed it (it is distinct from A-54, a write-set TOCTOU).
+- **Fix:** `sandbox.choose` now takes the self-test's `usable` set and returns only a mechanism in it, or null; `isolate.run` and `isolate.installDeps` pass `selfTest().usable` and refuse fail-closed (GF-ISO-0) when no self-test-passing mechanism fits the write set. Red test first (`tests/gf-iso-sandbox.test.js` R-1 row), then the fix, then two integration tests (`tests/gf-iso-guards.test.js` R-1 #1 and #2). The whole class the canary measures is now bound to the mechanism actually used.
+
+**What the review confirmed blocked** (live, both mechanisms): every in-model adversary row — A-1, A-2 (symlink/.venv write-through), A-9, A-10 (/proc self), A-23, A-24, A-25 (git plumbing into the shared .git), A-35 (rename EXDEV), A-38 (rename/case), A-46 (no network for an in-run install), A-50 (widening write discarded on copy-back). It also verified several rows the adversary had marked "cannot be blocked" are in fact defended: A-5, A-6 (hardlink into the real tree or .git, EXDEV), A-17 (/dev is named char devices only), A-48, A-49 (environment scrubbed), A-28, A-31, A-37, A-40 (commit-step config, NFC, regular-file checks). No blocking real-tree breach was reachable.
+
+**Two out-of-model observations** became limits, not findings: L-GF-79 (Landlock network denial is TCP-only; bubblewrap closes all) and L-GF-80 (the per-run private tmp shares a same-uid base, readable by a concurrent run). The same-uid ptrace/memory/environ rows against the engine stay the named residual (L-GF-76), mitigated here by the pid namespace.
+
+**Verdict:** the reviewer gave NO-GO to close as-is on R-1 (a major defect, which GF-CLOSE-2 forbids deferring), and GO with R-1 fixed. R-1 is fixed, so the condition is met.
+
+## Closing verification (one pass, mine)
+
+- R-1 fixed: the red test failed on the pre-fix `choose`, passes on the fix; the two integration tests pass.
+- Full gf suite green; the complete `tests/*.test.js` green at 1,753 tests (0 fail, 49 skipped for the absent FastAPI venv) at concurrency 4; an earlier single `standards.extract` failure was a parallelism flake that passes in isolation and on the limited-concurrency re-run.
+- The rule-removal battery still kills every GF-ISO guard with at least two tests.
+- Frozen 48 of 48 by hash before and after; `docs/limits.md`, `scripts/guards/` and `lib/project.js` untouched.
 
 ## P5: the S2.3 recommendation
 

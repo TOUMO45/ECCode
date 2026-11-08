@@ -132,3 +132,20 @@ test('helper: the Landlock helper refuses a malformed call and reports its ABI w
   assert.strictEqual(spawnSync('python3', ['-I', sandbox.HELPER, '--bogus', '--', 'true'], { encoding: 'utf8' }).status, 2);
   assert.strictEqual(spawnSync('python3', ['-I', sandbox.HELPER, '--rw', '/tmp'], { encoding: 'utf8' }).status, 2);
 });
+
+// R-1 (S2.4 independent review): choose() must not return a mechanism the self-test did not mark usable. On a host
+// where Landlock reports an ABI but does not enforce (LSM off), the canary excludes landlock from `usable`; choose must
+// then NOT pick it (fail closed), or a run would proceed under a non-enforcing sandbox.
+test('R-1: choose never returns a mechanism absent from the usable set, and returns null when none is usable', () => {
+  const both = { mechanisms: ['landlock', 'bwrap'], landlock: { abi: 7 }, bwrap: {} };
+  // landlock available but the canary failed it (not usable); bwrap usable -> bwrap
+  assert.strictEqual(sandbox.choose(both, {}, ['bwrap']), 'bwrap');
+  // only landlock available and not usable -> null (fail closed), not landlock
+  assert.strictEqual(sandbox.choose({ mechanisms: ['landlock'], landlock: { abi: 7 } }, {}, []), null);
+  // both available, neither usable -> null
+  assert.strictEqual(sandbox.choose(both, {}, []), null);
+  // a carve-out needs bwrap, but only landlock is usable -> landlock (contained by copy-back; the widening is recorded)
+  assert.strictEqual(sandbox.choose(both, { carveouts: ['app/db'] }, ['landlock']), 'landlock');
+  // usable omitted keeps the old behaviour (availability only), for callers that pass the self-test separately
+  assert.strictEqual(sandbox.choose(both, {}), 'landlock');
+});

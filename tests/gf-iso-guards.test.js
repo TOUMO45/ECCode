@@ -178,3 +178,21 @@ test('GF-ISO-3 actor #2: a reviewer role cannot merge', () => {
   ctx.store.commit('evidence.recorded', 'orchestrator', { id: 'ev-p2', kind: 'command', label: 'x', command: 'pytest', status: 'passed', exitCode: 0 });
   assert.match(refused(() => isolate.merge(ctx.store, ctx.config, 'technical-reviewer', { scope: 'S0', checks: ['ev:ev-p2'] })).message, /orchestrator's or the user's/);
 });
+
+// ---- GF-ISO-0 R-1 (S2.4 review): the run uses only a self-test-passing mechanism (two tests) ----
+test('R-1 #1: a sandboxed run is refused fail-closed when the self-test marks no mechanism usable, even though one is available', () => {
+  const ctx = project(['app/main.py']);
+  F(ctx, 'task.rescoped', 'user', { task: 's0-app', files: null, command: 'python3 -c pass', reason: 'p', from: ['app/main.py'] });
+  const realSelfTest = sandbox.selfTest;
+  sandbox.selfTest = () => ({ ok: true, usable: [], platform: 'linux', mechanisms: {}, reasons: ['forced: no mechanism contained the canary'], landlock: { abi: 7 }, bwrap: { version: 'x' }, pidns: true });
+  try {
+    const e = refused(() => isolate.run(ctx.store, ctx.config, 'backend-engineer', { label: 'x', command: 'python3 -c pass', shell: true }));
+    assert.ok(rulesOf(e).includes('GF-ISO-0')); assert.match(e.message, /self-test-passing/);
+  } finally { sandbox.selfTest = realSelfTest; }
+});
+test('R-1 #2: choose is called with the self-test usable set, so an available-but-not-usable mechanism is never run', () => {
+  // unit-level guarantee behind #1: with landlock available but not usable, choose picks bwrap or null, never landlock
+  const both = { mechanisms: ['landlock', 'bwrap'], landlock: { abi: 7 }, bwrap: {} };
+  assert.notStrictEqual(sandbox.choose(both, {}, ['bwrap']), 'landlock');
+  assert.strictEqual(sandbox.choose({ mechanisms: ['landlock'], landlock: { abi: 7 } }, {}, []), null);
+});
