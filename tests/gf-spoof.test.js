@@ -73,8 +73,13 @@ test('server: a tool of a role-locked server records the server\'s actor and ign
   const logged = ctx.store.readEvents().filter((e) => e.type === 'gf.message').pop();
   assert.strictEqual(logged.actor, 'frontend-engineer');
   let err;
+  const n = ctx.store.readEvents().length;
   try { call('gf_ownership_amend', { group: 'db', to: ['app/db/**', 'x.ini'], reason: 'r'.repeat(40), message: m.id, actor: 'technical-reviewer' }, ctx, 'frontend-engineer'); } catch (e) { err = e; }
-  assert.ok(err && /frontend-engineer is not a reviewer/.test(err.message), 'an actor argument cannot turn a group role into a reviewer');
+  // Since S2.3 the allowlist refuses the reviewer tool to a group role before the amendment's own reviewer check runs
+  // (GF-RUN-2, default deny); before S2.3 the amendment refused it as "not a reviewer". Either way the actor argument
+  // turns nobody into a reviewer and nothing is recorded.
+  assert.ok(err && /default deny|frontend-engineer is not a reviewer/.test(err.message), 'an actor argument cannot turn a group role into a reviewer');
+  assert.strictEqual(ctx.store.readEvents().length, n, 'nothing was recorded');
 });
 test('server: every role in the engine\'s lockable set has a server entry the installer writes, locked with --actor <role>', () => {
   const ctx = gfProject();
