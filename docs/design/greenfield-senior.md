@@ -1037,3 +1037,58 @@ Added to the G4 protocol (section 6; S6 writes it): for a spec that has a permis
 | Harness compute | about $50 to $95, at S2's measured $0.43 per million |
 
 Basis: S2's measured cost per closing round (rounds 5 and 6: 64.9 M and 38.1 M with fixes, three reviewers and batteries) and the lower-cost table of `docs/build/gf-s2-evidence.md` section 14, scaled by scope: about half of S4a's new stages and adapters. Judgment ranges, no calibration claim (L-GF-12). **This slice is not inside the approved S3 to S6 ceiling** (750 to 1,300 M, $320 to $555): with it, the lower-cost total becomes 870 to 1,520 M and about $370 to $650, which needs the owner's approval before S3.5 starts.
+
+## 20. Senior system-design rules (the owner's addendum of 2026-11-08 to S2.2; design only, not built)
+
+**Status and source.** Registered, not built. No code is written for it, and S2.2's scope and budget are unchanged. The source is a senior engineer's system-design walkthrough of a multi-tenant AI support SaaS. It is used as **context, not evidence** (the GF-REF-3 principle). It was sponsored by an authentication vendor, so no rule here names a vendor: where a rule needs an identity, billing or realtime provider, the provider is a recorded choice of the project (19.2 option (d), item 10), never a default of the layer.
+
+**How each item is registered.** Each item gives:
+- its owner slice;
+- its rule ids (placeholders, like the limit ids);
+- what it requires;
+- its test plan at implementation: a positive row (the rule passes a correct project), a negative row (it refuses a wrong one) and a bypass row (the plausible way around it, which must fail).
+
+"Guard" means one of the existing security or behaviour guards (`security_matrix`, `security_idor`, `security_authflow`, `security_input`, `guard_api`, `guard_perf`, `guard_race`, `guard_migration`), extended. Since S2.2's open finding I2-1, a group role does not run them. Any guard a slice adds is written default-deny from the start: it states what it allows, and refuses the rest.
+
+| # | Item | Rules | Slice | Requires | Test plan (positive / negative / bypass) |
+|---|---|---|---|---|---|
+| 1 | Request pipeline | GF-PIPE-1 | S4b | The contracts declare the stage order: authentication (401), tenant resolution (403), permission (403), input validation (422), entitlement (402, only when the PRD has plans), handler, DTO, output validation. The cross-cutting stages are declared too: rate limit (429), timeout, error handling, observability. A guard probes the status-code order on every integrated endpoint. | P: an endpoint returns 401, then 403, then 422 as each stage's precondition is removed in turn. N: an endpoint that validates input before authenticating (422 for an anonymous caller) is refused. B: an endpoint missing from the contract, but served, is probed too (routes are read from the app, not only from the contract). |
+| 2 | Multi-tenancy | GF-TEN-1, GF-TEN-2, GF-TEN-3 | S4a (TEN-1), S4b (TEN-2, TEN-3) | **TEN-1:** the architecture records single- or multi-tenant as an ADR. **TEN-2:** if multi-tenant, every table carries the tenant key; the tenant id comes only from the server session; a client-supplied tenant id in a body, query or header is ignored or refused (the mass-assignment guard is extended). **TEN-3:** an isolation probe runs on every integrated slice: tenant A's credentials never read or write tenant B's rows. | P: a two-tenant fixture passes. N: a table without the tenant key, or a handler that reads `tenant_id` from the request, is refused. B: a tenant id smuggled through a nested object, an alias field or a header is still ignored or refused; a cross-tenant read through a join or a list endpoint fails the probe. |
+| 3 | Permissions, not roles | GF-PERM-1 | S4b | Code checks permission codes only; roles only group permissions. A Semgrep rule flags role-name checks in handlers. The access matrix gains a permissions column, and the matrix guard checks each cell by permission. | P: a handler gated by a permission code passes. N: `if user.role == "admin"` in a handler is flagged. B: a role check moved into a helper the handler calls, or done through a string built at runtime, is flagged (the rule follows calls within the project, and a permission-less handler fails the matrix). |
+| 4 | Revocation | GF-REV-1 | S4b | A new security guard class: after a role change or a member removal, requests are denied within the declared bound. The PRD declares the bound as a non-functional criterion (item 6); the default is 30 s. | P: a revoked member is denied within the bound. N: a cached session that still works after the bound fails the guard. B: revocation by member removal, by role change and by tenant suspension are each probed, through every authentication path the contracts declare (session, token, API key). |
+| 5 | API hygiene | GF-API-1 to GF-API-4 | S3 | **API-1:** one typed error structure for all errors, declared in the contract. **API-2:** versioned paths (`/v1`). **API-3:** response schemas are explicit allowlists (DTOs), never the ORM model. **API-4:** output is validated at runtime. The contract tests enforce all four. | P: a conforming app passes the generated contract tests. N: an unversioned path; an error body of another shape; a response that serializes the ORM model (an extra field appears). B: a field added to the model after the seal reaches no response (the DTO allowlist and the runtime output validation both catch it), and a 500 error also has the typed shape. |
+| 6 | Non-functional requirements | GF-NFR-1 | S4a | The PRD artifact gains an NFR section: isolation, realtime, security, expected load and latency budgets. Each requirement is machine-checkable (a probe or a test named) or marked "unverifiable here" with a reason. | P: a PRD whose NFRs each name a check, or carry the label with a reason. N: an NFR with neither is refused at the PRD stage. B: a check named for an NFR that is not in the plan is refused at the seal (the binding is checked like G1.5's binds). |
+| 7 | Architecture diagram, scaling notes, glossary | GF-ARCH-1, GF-GLOSS-1 | S4a | **ARCH-1:** the architecture artifact requires a Mermaid diagram, zones, sync versus async flows, one scaling note per component, and the identified bottleneck with its cost. **GLOSS-1:** a naming glossary artifact (one term per concept, for example tenant or workspace), and a lint over the contracts and the code for the glossary's rejected synonyms. | P: a complete architecture and a clean lint. N: a component without a scaling note, no bottleneck, or a diagram that does not parse; a rejected synonym in a contract field. B: a component named in the diagram but not in the scaling notes (the two lists are compared); a synonym in a database column or a route segment, not only in prose. |
+| 8 | Conditional pattern modules | GF-PAT-PAY-1 to 4, GF-PAT-RT-1, GF-PAT-UP-1, GF-PAT-JOB-1, GF-PAT-AI-1 to 3 | S4b and later (one module per slice that needs it) | A module is activated only if the PRD needs it. Each adds checklist items to the problem register (G1.5) and tests. **Payments:** a webhook only invalidates, and the provider is the source of truth (PAY-1); signature verification (PAY-2); dedupe by event id (PAY-3); atomic metering so nothing is charged twice, and a TTL fallback if a webhook is missed (PAY-4). **Realtime:** the channel delivers, and the database is the source of truth (RT-1). **Uploads:** signed URLs (UP-1). **Background jobs:** idempotent, retried, observable (JOB-1). **AI-agent apps:** answers only from the supplied documents (AI-1), off-topic questions declined (AI-2), a human handoff when unsure (AI-3). | P: each module's fixture passes. N: an unsigned webhook accepted; a replayed event charged twice; an answer drawn from outside the documents. B: an event replayed with a new delivery id but the same event id; a webhook body that changes the plan directly instead of invalidating it; an answer that cites a document id that was never supplied. |
+| 9 | ADR lightening | GF-ADR-1 | S4a | At least two alternatives are required only for decisions with irreversible cost (data model, tenancy, authentication model). Other choices use the declared default stack with a one-line ADR. | P: a one-line ADR for a reversible choice. N: a one-line ADR for the tenancy decision is refused. B: an irreversible decision filed under a reversible label (the irreversible classes are fixed by the rule, not by the ADR's own label). **Prediction, registered now:** the lightening saves 10 to 25 percent of the architecture stage's tokens on a G1 run, to be measured on the first G1 run after it is built (a judgment, L-GF-12). |
+| 10 | G0.5 option (d), buy or integrate a managed service | GF-REF-1, GF-REF-2 (extended) | S3.5 (not yet approved) | 19.2 gains **(d) buy/integrate a managed service** (authentication, billing and the like) beside fork, borrow and scratch, under the same ADR and provenance rules. The provenance record names the service, the plan, the data it processes and the exit path. The gate of GF-REF-2 checks for a service what the license gate checks for code: recorded terms, the data that leaves the project, and an exit path. No service is a default. | P: a recorded (d) with its provenance. N: an integration with no provenance record is refused at delivery. B: a service SDK added as a dependency without a (d) decision is found (the dependency manifest is compared with the provenance records). |
+
+**Estimates (lower-cost style: a fresh session, narrow reviews, at most two closing rounds after the first; judgment ranges, L-GF-12).**
+
+| # | Tokens | Wall time (active) | Tests |
+|---|---|---|---|
+| 1 | 20 to 35 M | 1 to 1.5 h | 25 to 40 |
+| 2 | 30 to 55 M | 1.5 to 2.5 h | 35 to 60 |
+| 3 | 12 to 22 M | 0.5 to 1 h | 15 to 25 |
+| 4 | 20 to 35 M | 1 to 1.5 h | 20 to 35 |
+| 5 | 25 to 45 M | 1 to 2 h | 30 to 50 |
+| 6 | 10 to 18 M | 0.5 to 1 h | 12 to 20 |
+| 7 | 15 to 28 M | 0.5 to 1 h | 15 to 25 |
+| 8 | 60 to 120 M (all four modules) | 3 to 5 h | 60 to 110 |
+| 9 | 5 to 10 M | 0.25 to 0.5 h | 6 to 10 |
+| 10 | 5 to 10 M (inside S3.5, which is not approved) | 0.25 to 0.5 h | 8 to 12 |
+| **1 to 7 and 9** | **137 to 248 M, about $59 to $107** | 6 to 11 h | 158 to 265 |
+| **with 8** | **197 to 368 M, about $85 to $158** | 9 to 16 h | 218 to 375 |
+
+**Basis.** S2.2 (two narrow fixes, a targeted review and two batteries) measured 33 M, and S2.1 measured 57 M. Each item is sized as a fraction of those by the number of rules and guards it adds. The dollar figures use S2's measured $0.43 per million.
+
+**Effect on the approved S3 to S6 ceiling** (lower-cost, 750 to 1,300 M and $320 to $555). Section 14's estimate for S3 to S6 already fills that range.
+- Items 1 to 7 and 9 bring it to **887 to 1,548 M**.
+- Adding item 8 brings it to **947 to 1,668 M**.
+- Both **exceed the approved ceiling**. Nothing here is scheduled until the owner decides.
+
+Two levers stay under it:
+- **(a)** the reduced S3 of section 17 of `docs/build/gf-s2-evidence.md` (backend and test groups, one small project), which saves about 80 to 120 M;
+- **(b)** items 8 and 10 after S6, or as separate approvals.
+
+With (a) and (b), the range is about 807 to 1,428 M. Its low end fits; its top end does not. Staying at or under 1,300 M at the top also needs item 2's isolation probes (TEN-3) and item 4 moved into the S4b budget, with S4b's integration toy run kept to one project. That is a choice for the owner, not made here.
