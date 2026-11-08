@@ -1,0 +1,690 @@
+{
+  "problem": "A small team needs a shared task tracker as one FastAPI service on SQLite. People register and log in, each task belongs to the user who created it, a user can see and edit only their own tasks, and an admin sees and edits all tasks. The service must never let one user read or change another user's task by guessing its id (BOLA/IDOR).",
+  "users": [
+    {
+      "id": "U-USER",
+      "description": "A registered person who tracks their own tasks",
+      "goals": [
+        "Create an account and log in",
+        "Create, list, read and edit only my own tasks",
+        "Log out and invalidate my token"
+      ]
+    },
+    {
+      "id": "U-ADMIN",
+      "description": "The administrator, identified by the ADMIN_EMAIL environment variable",
+      "goals": [
+        "See every user's tasks",
+        "Read and edit any task",
+        "Obtain the admin role only by registering with ADMIN_EMAIL"
+      ]
+    }
+  ],
+  "scope": [
+    {
+      "id": "S-REGISTER",
+      "statement": "POST /v1/register creates a user from email and password and returns the user"
+    },
+    {
+      "id": "S-LOGIN",
+      "statement": "POST /v1/login returns an opaque bearer token for valid credentials"
+    },
+    {
+      "id": "S-LOGOUT",
+      "statement": "POST /v1/logout invalidates the presented token"
+    },
+    {
+      "id": "S-AUTHN",
+      "statement": "Every endpoint except register and login requires a valid bearer token and answers 401 otherwise"
+    },
+    {
+      "id": "S-TASK-CREATE",
+      "statement": "POST /v1/tasks creates a task owned by the caller"
+    },
+    {
+      "id": "S-TASK-LIST",
+      "statement": "GET /v1/tasks lists the caller's own tasks (admin: all tasks), without pagination"
+    },
+    {
+      "id": "S-TASK-READ",
+      "statement": "GET /v1/tasks/{id} returns one task to its owner or to an admin"
+    },
+    {
+      "id": "S-TASK-EDIT",
+      "statement": "PATCH /v1/tasks/{id} partially edits a task for its owner or an admin and never changes the owner"
+    },
+    {
+      "id": "S-BOLA",
+      "statement": "A non-admin caller never reads or changes another user's task; the answer is 404, identical to an unknown id"
+    },
+    {
+      "id": "S-ADMIN",
+      "statement": "Role admin is given to the user who registers with the email equal to ADMIN_EMAIL; all others are role user; admin sees and edits all tasks"
+    },
+    {
+      "id": "S-CONVENTIONS",
+      "statement": "All endpoints are under /v1, speak JSON (logout answers 204 with no body), use the header Authorization: Bearer <token>, integer ids, ISO 8601 UTC timestamps and JSON errors shaped {\"detail\": ...}; there is no pagination"
+    },
+    {
+      "id": "S-STARTUP",
+      "statement": "The service starts with uvicorn app.main:app with no setup beyond optional environment variables (DATABASE_URL, ADMIN_EMAIL, TOKEN_TTL_SECONDS)"
+    },
+    {
+      "id": "S-STORAGE",
+      "statement": "Passwords and tokens are stored hashed on SQLite, and the Alembic migration matches the database contract"
+    }
+  ],
+  "nonGoals": [
+    "Task deletion, task sharing, labels or due dates",
+    "Password reset, email verification, refresh tokens or social login",
+    "Rate limiting, CORS configuration or any web user interface",
+    "Pagination, filtering or sorting options on the task list"
+  ],
+  "ambiguityScan": {
+    "none": true,
+    "justification": "The idea fixes the endpoints, roles and the BOLA rule; its one open choice (403 or 404) is settled in the recorded decision deny-404 and stated in AC-14 to AC-16, other details are fixed in these criteria."
+  },
+  "criteria": [
+    {
+      "id": "AC-1",
+      "statement": "POST /v1/register with JSON {email, password} (password 8 to 128 characters, email of the form local@domain.tld) returns 201 and the new user as JSON {id (integer), email (lowercased), role}. The body never contains a password, a hash or any other field.",
+      "covers": [
+        "S-REGISTER"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "http",
+        "operationId": "registerUser",
+        "as": "anonymous",
+        "expect": {
+          "status": 201
+        },
+        "request": {
+          "body": {
+            "email": "alice@example.com",
+            "password": "correct-horse-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "AC-2",
+      "statement": "Registering an email that is already registered (compared case-insensitively, e.g. Alice@Example.com after alice@example.com) returns 409 and creates no second user.",
+      "covers": [
+        "S-REGISTER"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "registerUser",
+            "as": "anonymous",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "registerUser",
+            "as": "anonymous",
+            "expect": {
+              "status": 409
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-3",
+      "statement": "POST /v1/register with invalid input returns 422: a malformed email, a password shorter than 8 or longer than 128 characters, a missing field, or any unknown field (for example role). Nothing is created.",
+      "covers": [
+        "S-REGISTER"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "http",
+        "operationId": "registerUser",
+        "as": "anonymous",
+        "expect": {
+          "status": 422
+        },
+        "request": {
+          "body": {
+            "email": "not-an-email",
+            "password": "correct-horse-1"
+          }
+        }
+      }
+    },
+    {
+      "id": "AC-4",
+      "statement": "Admin bootstrap: the user who registers with an email equal (case-insensitive) to the environment variable ADMIN_EMAIL gets role admin in the register response; every other registrant gets role user. If ADMIN_EMAIL is unset or empty nobody becomes admin.",
+      "covers": [
+        "S-ADMIN",
+        "S-REGISTER"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "registerUser",
+            "as": "anonymous",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "registerUser",
+            "as": "anonymous",
+            "expect": {
+              "status": 201
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-5",
+      "statement": "POST /v1/login with JSON {email, password} of a registered user returns 200 and JSON {access_token (non-empty string), token_type: \"bearer\"}; the token works as the header Authorization: Bearer <access_token> on the protected endpoints. Two logins return two different tokens, both valid.",
+      "covers": [
+        "S-LOGIN"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "registerUser",
+            "as": "anonymous",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "loginUser",
+            "as": "anonymous",
+            "expect": {
+              "status": 200
+            }
+          },
+          {
+            "operationId": "listTasks",
+            "as": "user",
+            "expect": {
+              "status": 200
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-6",
+      "statement": "POST /v1/login with a wrong password, or with an email that is not registered, returns 401 with the same JSON error body for both cases (no user enumeration); a body with a missing field or an unknown field returns 422.",
+      "covers": [
+        "S-LOGIN"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "http",
+        "operationId": "loginUser",
+        "as": "anonymous",
+        "expect": {
+          "status": 401
+        },
+        "request": {
+          "body": {
+            "email": "nobody@example.com",
+            "password": "whatever-123"
+          }
+        }
+      }
+    },
+    {
+      "id": "AC-7",
+      "statement": "POST /v1/logout with a valid bearer token returns 204 with an empty body and invalidates exactly that token: any later call with it, on any protected endpoint including a second logout, returns 401. Other tokens of the same user stay valid.",
+      "covers": [
+        "S-LOGOUT",
+        "S-AUTHN"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "loginUser",
+            "as": "user",
+            "expect": {
+              "status": 200
+            }
+          },
+          {
+            "operationId": "logoutUser",
+            "as": "user",
+            "expect": {
+              "status": 204
+            }
+          },
+          {
+            "operationId": "listTasks",
+            "as": "user",
+            "expect": {
+              "status": 401
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-8",
+      "statement": "POST /v1/logout, GET and POST /v1/tasks, GET and PATCH /v1/tasks/{id} called without an Authorization header, with a scheme other than Bearer, or with an unknown, expired or invalidated token return 401 with a JSON object body that has a detail key.",
+      "covers": [
+        "S-AUTHN",
+        "S-CONVENTIONS"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "http",
+        "operationId": "listTasks",
+        "as": "anonymous",
+        "expect": {
+          "status": 401
+        }
+      }
+    },
+    {
+      "id": "AC-9",
+      "statement": "POST /v1/tasks with JSON {title (1 to 200 characters, trimmed), description (optional string up to 2000 characters, default empty)} returns 201 and the task as JSON {id (integer), title, description, status: \"todo\", owner_id (the caller's user id), created_at (ISO 8601 UTC)}. The caller cannot choose the owner or the initial status.",
+      "covers": [
+        "S-TASK-CREATE"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "http",
+        "operationId": "createTask",
+        "as": "user",
+        "expect": {
+          "status": 201
+        },
+        "request": {
+          "body": {
+            "title": "Write the report",
+            "description": "Q4 numbers"
+          }
+        }
+      }
+    },
+    {
+      "id": "AC-10",
+      "statement": "POST /v1/tasks returns 422 and creates nothing when the title is missing, empty or only whitespace, longer than 200 characters, not a string, or when the body has any unknown field (including owner_id, id, status, created_at) or a description longer than 2000 characters.",
+      "covers": [
+        "S-TASK-CREATE"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "http",
+        "operationId": "createTask",
+        "as": "user",
+        "expect": {
+          "status": 422
+        },
+        "request": {
+          "body": {
+            "title": "   "
+          }
+        }
+      }
+    },
+    {
+      "id": "AC-11",
+      "statement": "GET /v1/tasks returns 200 and a bare JSON array (no wrapper object, no pagination) of exactly the caller's own tasks ordered by id ascending, each with the task fields id, title, description, status, owner_id, created_at; an empty array when the caller has none.",
+      "covers": [
+        "S-TASK-LIST",
+        "S-CONVENTIONS"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "http",
+        "operationId": "listTasks",
+        "as": "user",
+        "expect": {
+          "status": 200
+        }
+      }
+    },
+    {
+      "id": "AC-12",
+      "statement": "A non-admin user's list never contains another user's task: after user A creates a task, GET /v1/tasks as user B returns 200 and an array without it.",
+      "covers": [
+        "S-TASK-LIST",
+        "S-BOLA"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "createTask",
+            "as": "user",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "listTasks",
+            "as": "other_user",
+            "expect": {
+              "status": 200
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-13",
+      "statement": "GET /v1/tasks/{id} by the task's owner returns 200 and the task JSON with the same fields and values as returned at creation.",
+      "covers": [
+        "S-TASK-READ"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "createTask",
+            "as": "user",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "getTask",
+            "as": "user",
+            "expect": {
+              "status": 200
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-14",
+      "statement": "BOLA read rule: GET /v1/tasks/{id} for a task owned by another user, by a caller who is not admin, returns 404 (this product answers 404, never 200 and never 403, so a foreign id looks exactly like an unknown id). The JSON error body {detail} contains none of the task's fields or values.",
+      "covers": [
+        "S-BOLA",
+        "S-TASK-READ"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "createTask",
+            "as": "user",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "getTask",
+            "as": "other_user",
+            "expect": {
+              "status": 404
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-15",
+      "statement": "BOLA write rule: PATCH /v1/tasks/{id} for a task owned by another user, by a caller who is not admin, returns 404 (never 200, never 403) and changes nothing: a later GET by the owner shows the original title, description and status.",
+      "covers": [
+        "S-BOLA",
+        "S-TASK-EDIT"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "createTask",
+            "as": "user",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "updateTask",
+            "as": "other_user",
+            "expect": {
+              "status": 404
+            }
+          },
+          {
+            "operationId": "getTask",
+            "as": "user",
+            "expect": {
+              "status": 200
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-16",
+      "statement": "GET and PATCH /v1/tasks/{id} for an integer id that does not exist (for example 999999, 0 or -1) return 404 for every authenticated caller including admin; a non-integer id (for example abc) returns 422.",
+      "covers": [
+        "S-TASK-READ",
+        "S-TASK-EDIT",
+        "S-BOLA"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "http",
+        "operationId": "getTask",
+        "as": "admin",
+        "expect": {
+          "status": 404
+        },
+        "request": {
+          "path": {
+            "task_id": 999999
+          }
+        }
+      }
+    },
+    {
+      "id": "AC-17",
+      "statement": "PATCH /v1/tasks/{id} by the owner with a JSON object holding any non-empty subset of title (1 to 200 characters), description (up to 2000) and status (todo, in_progress or done) returns 200 and the full updated task; fields not sent are unchanged; id, owner_id and created_at never change.",
+      "covers": [
+        "S-TASK-EDIT"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "createTask",
+            "as": "user",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "updateTask",
+            "as": "user",
+            "expect": {
+              "status": 200
+            }
+          },
+          {
+            "operationId": "getTask",
+            "as": "user",
+            "expect": {
+              "status": 200
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-18",
+      "statement": "PATCH /v1/tasks/{id} returns 422 and changes nothing for an empty object, a status outside todo, in_progress, done, a blank or over-long title, a null value, a non-string value, or any unknown field including owner_id, id and created_at (the owner of a task can never be changed).",
+      "covers": [
+        "S-TASK-EDIT"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "createTask",
+            "as": "user",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "updateTask",
+            "as": "user",
+            "expect": {
+              "status": 422
+            }
+          },
+          {
+            "operationId": "getTask",
+            "as": "user",
+            "expect": {
+              "status": 200
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-19",
+      "statement": "GET /v1/tasks as an admin returns 200 and the tasks of all users, ordered by id ascending.",
+      "covers": [
+        "S-ADMIN",
+        "S-TASK-LIST"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "createTask",
+            "as": "user",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "listTasks",
+            "as": "admin",
+            "expect": {
+              "status": 200
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-20",
+      "statement": "An admin may GET (200) and PATCH (200) any user's task; the change is applied, and owner_id stays the original owner's id (the admin does not become the owner).",
+      "covers": [
+        "S-ADMIN",
+        "S-BOLA",
+        "S-TASK-READ",
+        "S-TASK-EDIT"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "flow",
+        "steps": [
+          {
+            "operationId": "createTask",
+            "as": "user",
+            "expect": {
+              "status": 201
+            }
+          },
+          {
+            "operationId": "getTask",
+            "as": "admin",
+            "expect": {
+              "status": 200
+            }
+          },
+          {
+            "operationId": "updateTask",
+            "as": "admin",
+            "expect": {
+              "status": 200
+            }
+          },
+          {
+            "operationId": "getTask",
+            "as": "user",
+            "expect": {
+              "status": 200
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "AC-21",
+      "statement": "The app starts with uvicorn app.main:app in a clean checkout with no environment variables set and no setup step: DATABASE_URL defaults to a SQLite file in the system temporary directory (never ./app.db), and the tables exist at startup.",
+      "covers": [
+        "S-STARTUP"
+      ],
+      "priority": "P0",
+      "verify": {
+        "kind": "command",
+        "run": "python -m pytest -q tests/unit/test_app_smoke.py",
+        "expectExit": 0
+      }
+    },
+    {
+      "id": "AC-22",
+      "statement": "Passwords are stored only as a salted scrypt verifier with a per-user random salt, compared in constant time; the same password for two users yields different stored values and no plaintext password is persisted or returned.",
+      "covers": [
+        "S-STORAGE"
+      ],
+      "priority": "P1",
+      "verify": {
+        "kind": "command",
+        "run": "python -m pytest -q tests/unit/test_security.py",
+        "expectExit": 0
+      }
+    },
+    {
+      "id": "AC-23",
+      "statement": "Bearer tokens are random opaque strings (at least 32 bytes of entropy); only a SHA-256 digest is stored server-side, so a database read does not reveal a usable token; tokens expire after TOKEN_TTL_SECONDS (default 86400).",
+      "covers": [
+        "S-STORAGE",
+        "S-LOGOUT"
+      ],
+      "priority": "P1",
+      "verify": {
+        "kind": "command",
+        "run": "python -m pytest -q tests/unit/test_login_logout.py",
+        "expectExit": 0
+      }
+    },
+    {
+      "id": "AC-24",
+      "statement": "The Alembic migration in migrations/ creates exactly the tables, columns, unique constraints and indexes of contracts/db-schema.json on an empty SQLite database.",
+      "covers": [
+        "S-STORAGE"
+      ],
+      "priority": "P1",
+      "verify": {
+        "kind": "command",
+        "run": "python -m pytest -q tests/unit/test_migration_contract.py",
+        "expectExit": 0
+      }
+    }
+  ]
+}

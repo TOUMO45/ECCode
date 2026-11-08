@@ -1,0 +1,8 @@
+Build the service specified by prd.json (the product requirements, 24 acceptance criteria) and idea.txt (the owner's fixed scope) in the current directory. Work autonomously until it is complete and your own tests pass.
+
+Environment facts (the same ones the engine's builders were given):
+- Python 3.13. The ONLY libraries available are those in /root/.cache/eccode/phase3-venv (put /root/.cache/eccode/phase3-venv/bin first on PATH): fastapi 0.162.1, starlette 1.10.0, pydantic 2.14.3, sqlalchemy 2.1.8, alembic 1.20.1, httpx 0.28.1, uvicorn 0.40.0, python-multipart, email-validator, pytest 9.0.1, hypothesis, plus the standard library. Do not install anything; there is no passlib/bcrypt/jwt (hash passwords with the standard library, e.g. hashlib.scrypt with a per-user salt; use opaque tokens stored hashed server-side so logout can invalidate them).
+- Stack: Python / FastAPI / SQLAlchemy / Alembic / SQLite only.
+- The app must start with `uvicorn app.main:app` from this directory in a clean checkout with environment variables only: DATABASE_URL (default: a SQLite file in the system temp directory, never ./app.db), schema created at startup, ADMIN_EMAIL (the admin bootstrap rule of the PRD), TOKEN_TTL_SECONDS as the PRD states.
+- Put your own tests under tests/ and run them with `python -m pytest`.
+When done, reply with: the start command, the number of your tests and their result, and anything in the PRD you found ambiguous.
