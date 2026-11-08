@@ -4,7 +4,7 @@ This is S2's Greenfield-Senior closure record, copied out of the session's scrat
 
 | File | What it is |
 |---|---|
-| `events.jsonl` | the record's hash-chained log: 555 events, from `eccode-gf init` (16:22Z, 2026-11-07) to S2.2's targeted review (14:30Z, 2026-11-08) |
+| `events.jsonl` | the record's hash-chained log: 563 events, from `eccode-gf init` (16:22Z, 2026-11-07) to S2.3's battery 13 (16:03Z, 2026-11-08): events 556 to 563 are S2.3's I1-1 reproduction and proof, the I2-1 fix verification, the two resolutions and battery 13 |
 | `config.json` | the record's configuration (the reviewer roles the closure rule reads) |
 | `evidence-logs.tar.gz` | the output logs of every recorded command (`.eccode/evidence/*.log`, 198 files) |
 | `paired-runs-*.tsv` | finding id to evidence id: each documentation finding's reproduction and passing run (rounds 1 to 4; S2.1's G1-1 to G1-5 in `paired-runs-s21.tsv`, reproduction then post-fix run), and the round-5 reproductions (`paired-runs-r5-repro.tsv`) |
@@ -24,3 +24,4 @@ To run the critique's reproductions: copy `round4-repro/` to a scratch directory
 
 After S2.1 (`fbf6bf8`), `close status` lists the standing readiness no-go, the 19 open findings H1-1 to H1-16 and H2-1 to H2-3, and the equivalent survivor `closure.js:443`, and nothing else.
 After S2.2 (`c59ee39`), the record holds 555 events; `close status` lists the standing readiness no-go on `0a9a71e`, the open findings I1-1 and I2-1, and the equivalent survivor `run-check.js:138`, and nothing else.
+After S2.3 (`92bc68d`), the record holds 563 events; `close status` lists the three missing steps of a closing round on tree `be2d7d1e`, and the equivalent survivor `run-check.js:138` of battery 12, and nothing else. `s23-usage-start.json` and `s23-usage-check-1.json` are the S2.3 snapshots: the harness returned no usage field (L-GF-73).

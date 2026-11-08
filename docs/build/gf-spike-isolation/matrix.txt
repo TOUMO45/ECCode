@@ -1,0 +1,124 @@
+=================== bwrap as uid 0
+sandbox identity: 0 cwd /tmp/gfspike/proto/wt-backend
+0 own path write (control, must PASS)
+0 own path write: PASSED (control)
+1 git commit in the worktree (round 6, G2-1): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/worktrees/wt-backend/index.lock': Read-only file system)
+2 git update-index --assume-unchanged (round 6): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/worktrees/wt-backend/index.lock': Read-only file system)
+3 append to .git/info/exclude of the common dir (round 6, G2-2): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.git/info/exclude: Read-only file system)
+4 absolute-path write to the other group's file in this worktree: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/wt-backend/web/index.html: Read-only file system)
+5 absolute-path write to the real tree (web/): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/web/index.html: Read-only file system)
+6 absolute-path write to the other group's worktree: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/wt-frontend/web/index.html: Read-only file system)
+7 write through the symlinked .venv into the real tree: BLOCKED (sh: 1: cannot create .venv/marker: Read-only file system)
+8 absolute write to another group's draft under .eccode/: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.eccode/drafts/frontend/note.md: Read-only file system)
+9 guard-style tool running project code (seed.py, I2-1): PASSED (abs draft of another group: refused (Read-only file system)
+abs frontend file: refused (Read-only file system)
+relative .venv (symlink): refused (Read-only file system)
+relative own path app/: WROTE)
+10 git -C <real tree> commit (round 6): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/index.lock': Read-only file system)
+11 hard link of the other group's file into own path (round 4, E2-2): BLOCKED (ln: failed to create hard link 'app/linked.html' => 'web/index.html': Invalid cross-device link)
+12 rename the other group's file into own path (round 4): BLOCKED (mv: cannot remove 'web/index.html': Read-only file system)
+13 delete the other group's file: BLOCKED (rm: cannot remove 'web/index.html': Read-only file system)
+14 remount own view read-write through a new user namespace: BLOCKED (       dmesg(1) may have more information after failed mount system call.)
+15 write the guard configuration (GF-CONF-1): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.eccode/guards.json: Read-only file system)
+16 write outside the project (home): PASSED (no output)
+--- state after the attempts, read from inside:
+web/index.html: <h1>Tasks</h1>
+HEAD: 1f50d36
+--- outside, real state after the run:
+  repo web/index.html='<h1>Tasks</h1>'  wt-backend web/index.html='<h1>Tasks</h1>'  wt-frontend web/index.html='<h1>Tasks</h1>'
+  HEAD repo=1f50d36 wt-backend=1f50d36  exclude lines=6  assume-unchanged: H web/index.html
+  landed outside own paths: tmp/spike-escape 
+  guards.json='{"migration":{}}'  own path: main.py moved.html own.txt seeded.txt 
+=================== bwrap as uid 1000
+sandbox identity: 1000 cwd /tmp/gfspike/proto/wt-backend
+0 own path write (control, must PASS)
+0 own path write: PASSED (control)
+1 git commit in the worktree (round 6, G2-1): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/worktrees/wt-backend/index.lock': Read-only file system)
+2 git update-index --assume-unchanged (round 6): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/worktrees/wt-backend/index.lock': Read-only file system)
+3 append to .git/info/exclude of the common dir (round 6, G2-2): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.git/info/exclude: Read-only file system)
+4 absolute-path write to the other group's file in this worktree: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/wt-backend/web/index.html: Read-only file system)
+5 absolute-path write to the real tree (web/): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/web/index.html: Read-only file system)
+6 absolute-path write to the other group's worktree: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/wt-frontend/web/index.html: Read-only file system)
+7 write through the symlinked .venv into the real tree: BLOCKED (sh: 1: cannot create .venv/marker: Read-only file system)
+8 absolute write to another group's draft under .eccode/: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.eccode/drafts/frontend/note.md: Read-only file system)
+9 guard-style tool running project code (seed.py, I2-1): PASSED (abs draft of another group: refused (Read-only file system)
+abs frontend file: refused (Read-only file system)
+relative .venv (symlink): refused (Read-only file system)
+relative own path app/: WROTE)
+10 git -C <real tree> commit (round 6): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/index.lock': Read-only file system)
+11 hard link of the other group's file into own path (round 4, E2-2): BLOCKED (ln: failed to create hard link 'app/linked.html' => 'web/index.html': Invalid cross-device link)
+12 rename the other group's file into own path (round 4): BLOCKED (mv: cannot remove 'web/index.html': Read-only file system)
+13 delete the other group's file: BLOCKED (rm: cannot remove 'web/index.html': Read-only file system)
+14 remount own view read-write through a new user namespace: BLOCKED (       dmesg(1) may have more information after failed mount system call.)
+15 write the guard configuration (GF-CONF-1): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.eccode/guards.json: Read-only file system)
+16 write outside the project (home): PASSED (no output)
+--- state after the attempts, read from inside:
+web/index.html: <h1>Tasks</h1>
+HEAD: 1f50d36
+--- outside, real state after the run:
+  repo web/index.html='<h1>Tasks</h1>'  wt-backend web/index.html='<h1>Tasks</h1>'  wt-frontend web/index.html='<h1>Tasks</h1>'
+  HEAD repo=1f50d36 wt-backend=1f50d36  exclude lines=6  assume-unchanged: H web/index.html
+  landed outside own paths: tmp/spike-escape 
+  guards.json='{"migration":{}}'  own path: main.py moved.html own.txt seeded.txt 
+=================== landlock as uid 0
+sandbox identity: 0 cwd /tmp/gfspike/proto/wt-backend
+0 own path write (control, must PASS)
+0 own path write: PASSED (control)
+1 git commit in the worktree (round 6, G2-1): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/worktrees/wt-backend/index.lock': Permission denied)
+2 git update-index --assume-unchanged (round 6): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/worktrees/wt-backend/index.lock': Permission denied)
+3 append to .git/info/exclude of the common dir (round 6, G2-2): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.git/info/exclude: Permission denied)
+4 absolute-path write to the other group's file in this worktree: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/wt-backend/web/index.html: Permission denied)
+5 absolute-path write to the real tree (web/): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/web/index.html: Permission denied)
+6 absolute-path write to the other group's worktree: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/wt-frontend/web/index.html: Permission denied)
+7 write through the symlinked .venv into the real tree: BLOCKED (sh: 1: cannot create .venv/marker: Permission denied)
+8 absolute write to another group's draft under .eccode/: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.eccode/drafts/frontend/note.md: Permission denied)
+9 guard-style tool running project code (seed.py, I2-1): PASSED (abs draft of another group: refused (Permission denied)
+abs frontend file: refused (Permission denied)
+relative .venv (symlink): refused (Permission denied)
+relative own path app/: WROTE)
+10 git -C <real tree> commit (round 6): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/index.lock': Permission denied)
+11 hard link of the other group's file into own path (round 4, E2-2): BLOCKED (ln: failed to create hard link 'app/linked.html' => 'web/index.html': Invalid cross-device link)
+12 rename the other group's file into own path (round 4): BLOCKED (mv: cannot move 'web/index.html' to 'app/moved.html': Permission denied)
+13 delete the other group's file: BLOCKED (rm: cannot remove 'web/index.html': Permission denied)
+14 remount own view read-write through a new user namespace: BLOCKED (unshare: cannot open /proc/self/uid_map: Permission denied)
+15 write the guard configuration (GF-CONF-1): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.eccode/guards.json: Permission denied)
+16 write outside the project (home): PASSED (no output)
+--- state after the attempts, read from inside:
+web/index.html: <h1>Tasks</h1>
+HEAD: 874be0c
+--- outside, real state after the run:
+  repo web/index.html='<h1>Tasks</h1>'  wt-backend web/index.html='<h1>Tasks</h1>'  wt-frontend web/index.html='<h1>Tasks</h1>'
+  HEAD repo=874be0c wt-backend=874be0c  exclude lines=6  assume-unchanged: H web/index.html
+  landed outside own paths: tmp/spike-escape 
+  guards.json='{"migration":{}}'  own path: main.py own.txt seeded.txt 
+=================== landlock as uid 1000
+sandbox identity: 1000 cwd /tmp/gfspike/proto/wt-backend
+0 own path write (control, must PASS)
+0 own path write: PASSED (control)
+1 git commit in the worktree (round 6, G2-1): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/worktrees/wt-backend/index.lock': Permission denied)
+2 git update-index --assume-unchanged (round 6): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/worktrees/wt-backend/index.lock': Permission denied)
+3 append to .git/info/exclude of the common dir (round 6, G2-2): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.git/info/exclude: Permission denied)
+4 absolute-path write to the other group's file in this worktree: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/wt-backend/web/index.html: Permission denied)
+5 absolute-path write to the real tree (web/): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/web/index.html: Permission denied)
+6 absolute-path write to the other group's worktree: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/wt-frontend/web/index.html: Permission denied)
+7 write through the symlinked .venv into the real tree: BLOCKED (sh: 1: cannot create .venv/marker: Permission denied)
+8 absolute write to another group's draft under .eccode/: BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.eccode/drafts/frontend/note.md: Permission denied)
+9 guard-style tool running project code (seed.py, I2-1): PASSED (abs draft of another group: refused (Permission denied)
+abs frontend file: refused (Permission denied)
+relative .venv (symlink): refused (Permission denied)
+relative own path app/: WROTE)
+10 git -C <real tree> commit (round 6): BLOCKED (fatal: Unable to create '/tmp/gfspike/proto/repo/.git/index.lock': Permission denied)
+11 hard link of the other group's file into own path (round 4, E2-2): BLOCKED (ln: failed to create hard link 'app/linked.html' => 'web/index.html': Invalid cross-device link)
+12 rename the other group's file into own path (round 4): BLOCKED (mv: cannot move 'web/index.html' to 'app/moved.html': Permission denied)
+13 delete the other group's file: BLOCKED (rm: cannot remove 'web/index.html': Permission denied)
+14 remount own view read-write through a new user namespace: BLOCKED (unshare: cannot open /proc/self/uid_map: Permission denied)
+15 write the guard configuration (GF-CONF-1): BLOCKED (sh: 1: cannot create /tmp/gfspike/proto/repo/.eccode/guards.json: Permission denied)
+16 write outside the project (home): PASSED (no output)
+--- state after the attempts, read from inside:
+web/index.html: <h1>Tasks</h1>
+HEAD: 874be0c
+--- outside, real state after the run:
+  repo web/index.html='<h1>Tasks</h1>'  wt-backend web/index.html='<h1>Tasks</h1>'  wt-frontend web/index.html='<h1>Tasks</h1>'
+  HEAD repo=874be0c wt-backend=874be0c  exclude lines=6  assume-unchanged: H web/index.html
+  landed outside own paths: tmp/spike-escape 
+  guards.json='{"migration":{}}'  own path: main.py own.txt seeded.txt 

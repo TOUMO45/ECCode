@@ -1,0 +1,49 @@
+## docker server
+Server:
+## apt update + bubblewrap
+apt update exit 0 (0 warnings/errors)
+Fetched 33.9 MB in 3s (10.8 MB/s)
+Reading package lists...
+apt install exit 0
+Unpacking bubblewrap (0.9.0-1ubuntu0.3) ...
+Setting up bubblewrap (0.9.0-1ubuntu0.3) ...
+/usr/bin/bwrap
+bubblewrap 0.9.0
+## bwrap probe (root, unshare-all, ro root, rw /tmp/bw-rw)
+in-bwrap
+uid=0(root) gid=0(root) groups=0(root)
+sh: 1: cannot create /tmp/bw-ro/f: Read-only file system
+ro write refused
+rw-ok
+## bwrap as uid 1000 (unprivileged userns)
+in-bwrap-1000
+uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu)
+sh: 1: cannot create /tmp/bw-ro/f: Read-only file system
+ro write refused
+## @anthropic-ai/sandbox-runtime
+srt exit 0
+Usage: srt [options] [command] [command...]
+
+Run commands in a sandbox with network and filesystem restrictions
+
+Arguments:
+  command                      command to run in the sandbox
+
+Options:
+  -V, --version                output the version number
+  -d, --debug                  enable debug logging
+  -s, --settings <path>        path to config file (default:
+                               ~/.srt-settings.json)
+  -c <command>                 run command string directly (like sh -c), no
+                               escaping applied
+  --control-fd <fd>            read config updates from an inherited file
+                               descriptor >= 3 (JSON lines protocol; give srt a
+                               dedicated read-only end — see the README)
+  -h, --help                   display help for command
+
+Commands:
+  windows-install [options]    Windows: provision the `srt-sandbox` user
+                               account + install WFP filters (one UAC prompt),
+                               then make your user profile readable to
+                               sandboxed commands, except for credential stores
+                               (no elevation; minutes on a large profile the

@@ -1,0 +1,29 @@
+## gvisor?
+Linux version 6.18.44-fc-v310 (builder@sandboxing) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1 SMP @0
+116
+## landlock ABI (syscall 444 with LANDLOCK_CREATE_RULESET_VERSION)
+landlock_create_ruleset(VERSION) -> 7 errno 
+## mount namespace as root
+sh: 1: cannot create /tmp/ro-probe/f: Read-only file system
+write refused: 2
+a
+outside ns:
+a
+## user namespace, unprivileged (uid 1000)
+uid=0(root) gid=0(root) groups=0(root)
+userns-ok
+mount-in-userns-ok
+## pid/net ns
+pidns-ok
+3
+sh: 1: ip: not found
+netns-ok
+## docker daemon
+Client: Docker Engine - Community
+ Version:    29.9.2
+ Context:    default
+## apt bubblewrap
+apt exit 100
+Building dependency tree...
+Reading state information...
+E: Unable to locate package bubblewrap
