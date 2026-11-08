@@ -1,0 +1,134 @@
+'use strict';
+// S2.4 (design 21): the sandbox module. GF-ISO-0 (the self-test canary refuses group mode when the kernel does not
+// contain it; Linux and WSL2 only), GF-ISO-4 (the write set from the map: prefixes, widening, carve-outs, refusals),
+// the scrubbed environment, the disjointness check and the argv of each mechanism. Rows that need a kernel mechanism
+// skip with the reason when this machine has none.
+const test = require('node:test');
+const assert = require('node:assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { spawnSync } = require('child_process');
+const sandbox = require('../lib/greenfield/sandbox');
+
+const pr = sandbox.probe();
+const HAVE = pr.mechanisms.length > 0;
+const skipReason = `no kernel isolation on this machine (Landlock ${pr.landlockError || 'absent'}; bubblewrap ${pr.bwrapError || 'absent'})`;
+const MAP = { groups: {
+  backend: { globs: ['app/**'], denyGlobs: ['app/db/**', 'app/auth/**'] },
+  db: { globs: ['app/db/**', 'migrations/**', 'seed/**'], denyGlobs: [] },
+  delivery: { globs: ['Dockerfile', 'docs/**', 'src/**/*.py'], denyGlobs: [] },
+  bad: { globs: ['*.py'], denyGlobs: [] },
+  record: { globs: ['.eccode/drafts/record/**', '.git/hooks/**'], denyGlobs: [] },
+} };
+
+test('probe: reports the platform, the Landlock ABI, bubblewrap and a pid namespace, and lists the usable mechanisms', () => {
+  assert.strictEqual(pr.platform, process.platform);
+  assert.ok(Array.isArray(pr.mechanisms));
+  if (pr.landlock) { assert.ok(pr.landlock.abi >= 1); assert.ok(pr.mechanisms.includes('landlock')); }
+  if (pr.bwrap) assert.ok(pr.mechanisms.includes('bwrap'));
+  for (const m of pr.mechanisms) assert.ok(['landlock', 'bwrap'].includes(m));
+});
+
+test('GF-ISO-4 positive: a directory glob maps to its directory, a plain path to a file, a denied sub-glob to a carve-out', () => {
+  assert.deepStrictEqual(sandbox.writeSet(MAP, 'backend'), { dirs: ['app'], files: [], widened: [], carveouts: ['app/db', 'app/auth'], problems: [] });
+  assert.deepStrictEqual(sandbox.writeSet(MAP, 'db').dirs, ['app/db', 'migrations', 'seed']);
+});
+test('GF-ISO-4 positive: a glob that is not a prefix is widened to its directory and listed', () => {
+  const ws = sandbox.writeSet(MAP, 'delivery');
+  assert.deepStrictEqual(ws.dirs, ['docs', 'src']); assert.deepStrictEqual(ws.files, ['Dockerfile']);
+  assert.deepStrictEqual(ws.widened, [{ glob: 'src/**/*.py', directory: 'src' }]);
+});
+test('GF-ISO-4 negative: a glob that would widen to the whole project, and a glob into the record or the repository, are refused', () => {
+  assert.match(sandbox.writeSet(MAP, 'bad').problems[0].message, /whole project/);
+  const r = sandbox.writeSet(MAP, 'record');
+  assert.strictEqual(r.problems.length, 2); assert.deepStrictEqual(r.dirs, []);
+  assert.match(sandbox.writeSet(MAP, 'nobody').problems[0].message, /not a group/);
+});
+test('GF-ISO-4 bypass: prefixOf never returns a directory above the literal part of the glob', () => {
+  assert.deepStrictEqual(sandbox.prefixOf('app/**'), { path: 'app', dir: true, exact: true });
+  assert.deepStrictEqual(sandbox.prefixOf('app/*/x/**'), { path: 'app', dir: true, exact: false });
+  assert.deepStrictEqual(sandbox.prefixOf('app/sub/**/'), { path: 'app/sub', dir: true, exact: true });
+  assert.deepStrictEqual(sandbox.prefixOf('Makefile'), { path: 'Makefile', file: true, exact: true });
+  assert.deepStrictEqual(sandbox.prefixOf('**'), { path: '', dir: true, exact: true });
+});
+
+test('env: only the allowlist passes, PATH loses relative and in-project entries, HOME and TMPDIR are the private tmp; secrets and ECCODE_* are dropped', () => {
+  const e = sandbox.scrubEnv({ PATH: '/usr/bin:.:/proj/.venv/bin:relative/bin:/bin', HOME: '/root', ANTHROPIC_API_KEY: 'x', ECCODE_EVIDENCE: '/proj/.eccode/e', HTTPS_PROXY: 'http://p', LANG: 'C.UTF-8', GITHUB_TOKEN: 't', MY_VAR: '1' }, { tmp: '/tmp/t', project: '/proj', pass: ['MY_VAR'] });
+  assert.deepStrictEqual(e, { PATH: '/usr/bin:/bin', LANG: 'C.UTF-8', MY_VAR: '1', HOME: '/tmp/t', TMPDIR: '/tmp/t', TEMP: '/tmp/t', TMP: '/tmp/t' });
+});
+
+test('disjoint: a writable path must be inside the worktree, and no writable path or the tmp may contain a project tree', () => {
+  const ok = sandbox.disjointProblems('/w/wt', ['/w/wt/app'], '/tmp/x', ['/w/real']);
+  assert.deepStrictEqual(ok, []);
+  assert.match(sandbox.disjointProblems('/w/wt', ['/w'], '/tmp/x', ['/w/real'])[0].message, /outside the worktree|would contain/);
+  assert.match(sandbox.disjointProblems('/w/wt', ['/w/wt/app'], '/tmp', ['/tmp/proj'])[0].message, /not disjoint/);
+  assert.match(sandbox.disjointProblems('/tmp/proj/wt', ['/tmp/proj/wt/app'], '/tmp/proj/wt/tmp', ['/tmp/proj'])[0].message, /not disjoint/);
+});
+
+test('argv: Landlock gets the helper with every rw path, the tmp, the device files and --no-net; bubblewrap gets a read-only root, binds, carve-outs on top and --unshare-all', () => {
+  const a = sandbox.argv('landlock', { cwd: '/w', rw: ['/w/app'], rwFiles: ['/w/Dockerfile'], tmp: '/t', probe: { pidns: false, landlock: { abi: 7 } } }, ['sh', '-c', 'true']);
+  assert.ok(a.includes(sandbox.HELPER)); assert.ok(a.includes('--no-net'));
+  assert.deepStrictEqual(a.slice(a.indexOf('--rw'), a.indexOf('--rw') + 4), ['--rw', '/w/app', '--rw', '/t']);
+  assert.ok(a.indexOf('--rw-file') > 0 && a[a.indexOf('--rw-file') + 1] === '/w/Dockerfile');
+  assert.deepStrictEqual(a.slice(-3), ['sh', '-c', 'true']);
+  const b = sandbox.argv('bwrap', { cwd: '/w', rw: ['/w/app'], carveouts: ['/w/app/db'], tmp: '/t', probe: {} }, ['true']);
+  assert.deepStrictEqual(b.slice(0, 3), ['bwrap', '--ro-bind', '/']);
+  assert.ok(b.indexOf('--ro-bind', 3) > b.indexOf('--bind'), 'the carve-out is mounted after the writable bind, so it wins');
+  assert.ok(b.includes('--unshare-all') && b.includes('--cap-drop') && b.includes('--die-with-parent'));
+  const n = sandbox.argv('bwrap', { cwd: '/w', rw: [], tmp: '/t', net: true, probe: {} }, ['true']);
+  assert.ok(!n.includes('--unshare-all') && n.includes('--unshare-pid'), 'with the network allowed every other namespace is still unshared');
+});
+
+test('choose: Landlock first; bubblewrap when the write set has carve-outs and bubblewrap works; null with no mechanism', () => {
+  assert.strictEqual(sandbox.choose({ mechanisms: ['landlock', 'bwrap'], landlock: { abi: 7 }, bwrap: {} }), 'landlock');
+  assert.strictEqual(sandbox.choose({ mechanisms: ['landlock', 'bwrap'], landlock: { abi: 7 }, bwrap: {} }, { carveouts: ['app/db'] }), 'bwrap');
+  assert.strictEqual(sandbox.choose({ mechanisms: ['landlock'], landlock: { abi: 7 } }, { carveouts: ['app/db'] }), 'landlock');
+  assert.strictEqual(sandbox.choose({ mechanisms: [] }), null);
+});
+
+test('GF-ISO-0: the self-test passes here with at least one mechanism, and names what it tried', { skip: HAVE ? false : skipReason }, () => {
+  const t = sandbox.selfTest({ fresh: true });
+  assert.strictEqual(t.ok, true, JSON.stringify(t));
+  for (const m of t.usable) assert.strictEqual(t.mechanisms[m].ok, true);
+  assert.deepStrictEqual(sandbox.groupModeProblems({}), []);
+});
+
+test('GF-ISO-0 negative: group mode is refused (fail closed) when the self-test fails, unless the configuration names the copy fallback', () => {
+  const t = sandbox.selfTest();
+  sandbox._reset();
+  // Force a failing probe by pointing the helper at a Python that does not exist and hiding bwrap.
+  const oldPy = process.env.ECCODE_GF_PYTHON; const oldPath = process.env.PATH;
+  process.env.ECCODE_GF_PYTHON = '/nonexistent/python3'; process.env.PATH = '/nonexistent';
+  try {
+    const f = sandbox.selfTest({ fresh: true });
+    assert.strictEqual(f.ok, false);
+    const p = sandbox.groupModeProblems({});
+    assert.strictEqual(p.length, 1); assert.strictEqual(p[0].rule, 'GF-ISO-0'); assert.match(p[0].message, /fail closed/);
+    assert.deepStrictEqual(sandbox.groupModeProblems({ isolation: 'copy' }), []);
+  } finally {
+    if (oldPy === undefined) delete process.env.ECCODE_GF_PYTHON; else process.env.ECCODE_GF_PYTHON = oldPy;
+    process.env.PATH = oldPath; sandbox._reset(); sandbox.selfTest({ fresh: true });
+  }
+  assert.strictEqual(sandbox.selfTest().ok, t.ok);
+});
+
+test('GF-ISO-0 bypass: a canary that writes through is not contained, whatever the exit code says', { skip: HAVE ? false : skipReason }, () => {
+  // The same checks the self-test applies, run on a bare `sh` (no sandbox) stand in for a kernel that lets a write through.
+  const tree = fs.mkdtempSync(path.join(os.tmpdir(), 'gf-canary-bare-'));
+  fs.mkdirSync(path.join(tree, 'own')); fs.mkdirSync(path.join(tree, 'other')); fs.writeFileSync(path.join(tree, 'other', 'f'), 'keep');
+  spawnSync('sh', ['-c', 'echo ok > own/ok; echo x > other/x; exit 0'], { cwd: tree });
+  const leaked = ['other/x'].filter((p) => fs.existsSync(path.join(tree, p)));
+  assert.deepStrictEqual(leaked, ['other/x'], 'the bare shell wrote through, as expected');
+  // and the self-test's verdict logic marks such a run as not ok (exit 0 does not rescue it)
+  const verdictOk = fs.existsSync(path.join(tree, 'own', 'ok')) && leaked.length === 0;
+  assert.strictEqual(verdictOk, false);
+  fs.rmSync(tree, { recursive: true, force: true });
+});
+
+test('helper: the Landlock helper refuses a malformed call and reports its ABI with --probe', { skip: pr.landlock ? false : 'no Landlock here' }, () => {
+  const r = spawnSync('python3', ['-I', sandbox.HELPER, '--probe'], { encoding: 'utf8' });
+  assert.strictEqual(r.status, 0); assert.strictEqual(JSON.parse(r.stdout).abi, pr.landlock.abi);
+  assert.strictEqual(spawnSync('python3', ['-I', sandbox.HELPER, '--bogus', '--', 'true'], { encoding: 'utf8' }).status, 2);
+  assert.strictEqual(spawnSync('python3', ['-I', sandbox.HELPER, '--rw', '/tmp'], { encoding: 'utf8' }).status, 2);
+});

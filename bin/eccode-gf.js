@@ -45,6 +45,10 @@ Slice closure (three recorded review steps, two batteries, accounting)
   close battery --actor orchestrator --scope <s> --test "<command>" --base <commit> [--max <n>]
   close status --scope <s>         What closing the scope now would be refused for
   close slice --actor orchestrator|user --scope <s> --accounting <file.json> [--accepted <file.json>]
+  isolation check [--actor <role>]  GF-ISO-0 (S2.4): the sandbox self-test under every kernel mechanism here, recorded; group mode is refused while it fails
+  commit --actor <group role> --task <id> [--message <text>]   GF-ISO-2: commit the task's validated files onto gf/<group> (plumbing, sanitized environment)
+  merge --actor orchestrator --scope <s> --checks ev:<id>,ev:<id>   GF-ISO-3: merge the groups' branches in dependency order after the cited checks passed
+  deps install --actor orchestrator --command "<pinned install form>"   the engine-mediated dependency install (network allowed, dependency directories writable)
   preflight [--json]               Which regime protects identity between groups (managed-path or text-level) and the warnings (L-GF-17)
   audit [--json]                   Replay the record and check every rule as an invariant; exit 2 on any error
 
@@ -233,6 +237,28 @@ function main(argv) {
       const moved = `${r.copiedBack.length ? `\ncopied back: ${r.copiedBack.join(', ')}` : ''}${r.discarded.length ? `\ndiscarded (stayed in the copy): ${r.discarded.map((d) => `${d.path} (${d.owner || 'no group'})`).join(', ')}` : ''}`;
       print(flags, `${r.status} (${r.evidence}, exit ${r.exitCode})${r.problems.length ? `\n${r.problems.map((x) => `- ${x.rule}: ${x.message}`).join('\n')}` : ''}${moved}`, r);
       return r.ok ? 0 : 2;
+    }
+    case 'isolation': {
+      if (sub !== 'check') throw new EccodeError('USAGE', 'isolation check');
+      const r = gf.isolate.check(store, actor || 'orchestrator', { fresh: true });
+      print(flags, `${r.ok ? 'group mode available' : 'group mode REFUSED'}: ${r.usable.join(', ') || 'no usable mechanism'}${r.landlock ? ` (Landlock ABI ${r.landlock.abi})` : ''}${r.bwrap ? ` (${r.bwrap.version})` : ''}${r.reasons.length ? `\n${r.reasons.map((x) => `- ${x}`).join('\n')}` : ''}`, r);
+      return r.ok ? 0 : 2;
+    }
+    case 'commit': {
+      const r = gf.isolate.commit(store, config, need(actor, '--actor'), { task: need(flags.task, '--task'), message: flags.message });
+      print(flags, `committed ${r.commit.slice(0, 12)} on ${r.branch}: ${r.files.map((f) => `${f.action} ${f.path}`).join(', ')}`, r);
+      return 0;
+    }
+    case 'merge': {
+      const r = gf.isolate.merge(store, config, need(actor, '--actor'), { scope: need(flags.scope, '--scope'), checks: list(flags.checks) });
+      print(flags, `merged ${r.merges.map((m) => m.group).join(', ')} into ${r.target}: ${r.from.slice(0, 12)} -> ${r.to.slice(0, 12)}`, r);
+      return 0;
+    }
+    case 'deps': {
+      if (sub !== 'install') throw new EccodeError('USAGE', 'deps install --actor orchestrator --command "<pinned form>"');
+      const r = gf.isolate.installDeps(store, config, need(actor, '--actor'), { command: need(flags.command, '--command'), label: flags.label });
+      print(flags, `${r.status} (${r.evidence}): ${r.command}; lockfiles ${r.lockfiles.map((l) => l.path).join(', ') || 'none'}`, r);
+      return r.status === 'passed' ? 0 : 2;
     }
     case 'preflight': {
       const r = gf.preflight.preflight(store.root);

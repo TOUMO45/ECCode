@@ -20,7 +20,7 @@ const FROZEN = { start: gates.startGate, submit: gates.submit, review: gates.rec
 const WRAPPED = { start: wrap.gateStart, submit: wrap.gateSubmit, review: wrap.gateReview };
 
 /** A Greenfield-Senior project in a throwaway git repository (lean checks off, as the engine's own fixtures do). */
-function gfProject() {
+function gfProject({ isolation = 'copy' } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-gf-flow-'));
   execFileSync('git', ['init', '-q'], { cwd: dir });
   execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
@@ -28,6 +28,9 @@ function gfProject() {
   const file = path.join(dir, '.eccode', 'config.json');
   const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
   cfg.lean = { ...cfg.lean, level: 'off' };
+  // S2.4: the S2 fixtures were written against the copy runner, which is now the owner's explicit fallback; the
+  // kernel-isolation tests (tests/gf-iso*.test.js) opt into the default with `gfProject({ isolation: 'kernel' })`.
+  cfg.gf = { ...(cfg.gf || {}), isolation };
   writeJson(file, cfg);
   return { dir, store, config: loadConfig(dir), at: null };
 }

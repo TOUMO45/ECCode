@@ -54,6 +54,12 @@ const INVALID = {
   'gf.slice.accepted': { ...VALID['gf.slice.accepted'], caveat: 'the owner accepted this' },
 };
 
+// S2.4 (design 21): the isolation events.
+VALID['gf.isolation.checked'] = { ok: true, platform: 'linux', usable: ['landlock'], landlockAbi: 7, bwrap: null, pidns: true, reasons: [] };
+VALID['gf.group.committed'] = { id: 'gc-1', group: 'backend', actor: 'backend-engineer', task: 's0-app', branch: 'gf/backend', parent: 'a'.repeat(40), commit: 'b'.repeat(40), tree: 'c'.repeat(40), files: [{ path: 'app/main.py', action: 'modify', mode: '100644', blob: 'd'.repeat(40) }, { path: 'app/old.py', action: 'delete' }], sanitized: ['plumbing-only'] };
+VALID['gf.groups.merged'] = { id: 'gm-1', scope: 'S0', target: 'main', from: 'a'.repeat(40), to: 'b'.repeat(40), order: ['db', 'backend'], merges: [{ group: 'db', branch: 'gf/db', commit: 'c'.repeat(40), merge: 'd'.repeat(40), tree: 'e'.repeat(40) }], checks: ['ev-1'] };
+VALID['gf.deps.installed'] = { id: 'gd-1', command: 'npm ci', evidence: 'ev:ev-2', status: 'passed', mechanism: 'bwrap', lockfiles: [{ path: 'package-lock.json', sha256: 'f'.repeat(64) }] };
+
 test('the constants: groups map to the roles of the design, three new roles, one stack profile', () => {
   assert.deepStrictEqual(Object.keys(C.GROUPS).sort(), ['api', 'backend', 'db', 'delivery', 'frontend', 'security', 'test']);
   assert.deepStrictEqual(C.NEW_ROLES.sort(), ['database-engineer', 'integration-engineer', 'security-engineer']);
@@ -105,7 +111,7 @@ test('the nested closed objects of the schemas are found (the dispatch inputs am
 // The fifth engine battery (round 5) flipped `additionalProperties: false` on the closure's `accounting` to true: the
 // walker above reads the schema, so an opened object simply left the list. The list is therefore fixed here.
 test('the nested closed objects are exactly these (a schema that opens one is caught)', () => {
-  assert.deepStrictEqual(NESTED.map(([type, at]) => `${type} ${at.join('.')}`), ['gf.artifact.registered files.0', 'gf.artifact.registered validator', 'gf.dispatch.recorded inputs.0', 'gf.review.recorded findings.0', 'gf.slice.closed steps', 'gf.slice.closed accounting', 'gf.slice.accepted accepted.0']);
+  assert.deepStrictEqual(NESTED.map(([type, at]) => `${type} ${at.join('.')}`), ['gf.artifact.registered files.0', 'gf.artifact.registered validator', 'gf.dispatch.recorded inputs.0', 'gf.review.recorded findings.0', 'gf.slice.closed steps', 'gf.slice.closed accounting', 'gf.slice.accepted accepted.0', 'gf.group.committed files.0', 'gf.group.committed files.1', 'gf.groups.merged merges.0', 'gf.deps.installed lockfiles.0']);
 });
 for (const [type, at] of NESTED) {
   test(`${type}: a field the schema does not name, smuggled into ${at.join('.')}, is refused`, () => {

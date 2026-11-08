@@ -19,8 +19,8 @@ const tree = (ctx) => git(ctx.dir, 'rev-parse', 'HEAD^{tree}');
 const put = (ctx, rel, text) => { fs.mkdirSync(path.dirname(path.join(ctx.dir, rel)), { recursive: true }); fs.writeFileSync(path.join(ctx.dir, rel), text); };
 
 /** A sealed project with two documents committed; the tree is clean. */
-function closeProject() {
-  const ctx = gfProject();
+function closeProject(opts = {}) {
+  const ctx = gfProject(opts);
   run(ctx, sample.build(), WRAPPED);
   put(ctx, 'docs/design.md', '# Design\nThe task tracker.\n');
   put(ctx, 'docs/plan.md', '# Plan\nSlices S0 to S2.\n');

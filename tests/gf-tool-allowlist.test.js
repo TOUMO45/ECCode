@@ -29,8 +29,8 @@ const ALLOWED = [
   'gate_submit', 'task_claim', 'task_complete', 'task_fail', 'evidence_file', 'handoff_record', 'risk_add', 'decision_add',
   'memory_draft', 'memory_add', 'memory_cite', 'behavior_route', 'behavior_contract', 'guard_route', 'guard_release',
   'gf_message_send', 'gf_amend_request', 'gf_estimate_revise',
-  // the runner: the only route for a command
-  'gf_run',
+  // the runner: the only route for a command; S2.4's commit step and self-test report
+  'gf_run', 'gf_commit', 'gf_isolation_check',
 ];
 /** Everything else on the server today, named so that a tool added later is caught as unclassified. */
 const REFUSED = [
@@ -45,7 +45,7 @@ const REFUSED = [
   'plan_contracts', 'plan_checkpoint', 'task_waive_budget', 'standards_extract',
   'security_policy', 'security_matrix', 'security_idor', 'security_authflow', 'security_input',
   'gf_amend_apply', 'gf_seal', 'gf_ownership_amend', 'gf_config_pin', 'gf_dispatch_record', 'gf_review_record', 'gf_finding_resolve',
-  'gf_battery_run', 'gf_close',
+  'gf_battery_run', 'gf_close', 'gf_merge', 'gf_deps_install',
 ];
 const GROUP_ROLES = Object.values(C.GROUPS).flat();
 const I2_1_TOOLS = ['guard_migration', 'security_matrix', 'security_idor', 'security_authflow', 'security_input', 'guard_api', 'guard_perf', 'guard_race'];
