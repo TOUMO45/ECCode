@@ -219,16 +219,19 @@ function main(argv) {
       else if (sub === 'battery') r = cl.runBattery(store, config, need(actor, '--actor'), { scope: flags.scope, test: flags.test, base: flags.base, max: flags.max ? Number(flags.max) : undefined }).event.data;
       else if (sub === 'status') {
         const p = cl.preview(store, config, need(flags.scope, '--scope'));
-        print(flags, p.ok ? `${p.scope} can be closed on tree ${String(p.treeHash).slice(0, 12)}.` : `${p.scope} cannot be closed yet:\n${p.problems.map((x) => `- ${x.rule}: ${x.message}`).join('\n')}`, p);
+        const acc = p.accepted ? `\n${p.scope} was accepted with limits (not closed) at seq ${p.accepted.seq}: ${p.accepted.findings} finding(s) recorded as numbered limits (GF-CLOSE-6).` : '';
+        print(flags, `${p.ok ? `${p.scope} can be closed on tree ${String(p.treeHash).slice(0, 12)}.` : `${p.scope} cannot be closed yet:\n${p.problems.map((x) => `- ${x.rule}: ${x.message}`).join('\n')}`}${acc}`, p);
         return p.ok ? 0 : 2;
-      } else if (sub === 'slice') r = cl.close(store, config, need(actor, '--actor'), { scope: flags.scope, accounting: readFileArg('accounting'), accepted: flags.accepted ? readFileArg('accepted') : [] }).event.data;
-      else throw new EccodeError('USAGE', 'close dispatch|review|resolve|battery|status|slice');
+      } else if (sub === 'accept') r = cl.accept(store, config, need(actor, '--actor'), { scope: flags.scope, accepted: readFileArg('accepted') }).event.data;
+      else if (sub === 'slice') r = cl.close(store, config, need(actor, '--actor'), { scope: flags.scope, accounting: readFileArg('accounting'), accepted: flags.accepted ? readFileArg('accepted') : [] }).event.data;
+      else throw new EccodeError('USAGE', 'close dispatch|review|resolve|battery|status|slice|accept');
       print(flags, `close ${sub}: recorded ${r.id || r.scope}.`, r);
       return 0;
     }
     case 'run': {
       const r = gf.runner.run(store, config, need(actor, '--actor'), { label: flags.label, command: flags.command, purpose: flags.purpose, task: flags.task });
-      print(flags, `${r.status} (${r.evidence}, exit ${r.exitCode})${r.problems.length ? `\n${r.problems.map((x) => `- ${x.rule}: ${x.message}`).join('\n')}` : ''}`, r);
+      const moved = `${r.copiedBack.length ? `\ncopied back: ${r.copiedBack.join(', ')}` : ''}${r.discarded.length ? `\ndiscarded (stayed in the copy): ${r.discarded.map((d) => `${d.path} (${d.owner || 'no group'})`).join(', ')}` : ''}`;
+      print(flags, `${r.status} (${r.evidence}, exit ${r.exitCode})${r.problems.length ? `\n${r.problems.map((x) => `- ${x.rule}: ${x.message}`).join('\n')}` : ''}${moved}`, r);
       return r.ok ? 0 : 2;
     }
     case 'preflight': {
@@ -239,8 +242,9 @@ function main(argv) {
     case 'audit': {
       const r = gf.audit.run(store, config);
       const lines = [...r.errors.map((e) => `- ${e.rule}${e.seq ? ` (seq ${e.seq})` : ''}: ${e.message}`), ...r.base.errors.map((e) => `- frozen audit: ${e}`), ...r.base.unreviewed.map((u) => `- frozen audit: ${u.path} ${u.problem} (${u.gate})`)];
+      const acc = (r.accepted || []).length ? `\nAccepted with limits, not closed: ${r.accepted.map((a) => `${a.scope} (seq ${a.seq}, ${a.findings} limit(s))`).join(', ')}` : '';
       const warn = (r.warnings || []).length ? `\nWarnings (${r.managedPath.regime} regime):\n${r.warnings.map((w) => `- ${w}`).join('\n')}` : '';
-      print(flags, r.ok ? `Audit OK${r.enabled ? ' (Greenfield-Senior rules and the frozen checks)' : ' (frozen checks only: not a Greenfield-Senior project)'}.${warn}` : `Audit FAILED:\n${lines.join('\n')}${warn}`, r);
+      print(flags, `${r.ok ? `Audit OK${r.enabled ? ' (Greenfield-Senior rules and the frozen checks)' : ' (frozen checks only: not a Greenfield-Senior project)'}.${warn}` : `Audit FAILED:\n${lines.join('\n')}${warn}`}${acc}`, r);
       return r.ok ? 0 : 2;
     }
     default:

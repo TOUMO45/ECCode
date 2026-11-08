@@ -127,6 +127,7 @@ const BAD = [
   ['backend-engineer', 'ruff format', /names the paths it writes/],
   ['backend-engineer', 'alembic revision --autogenerate -m add_x', /migrations/],
   ['security-engineer', 'gitleaks detect --no-git --source=.', /--redact/],
+  ['security-engineer', 'gitleaks detect --redact --source=.', /--no-git: the runner runs it in a copy/],
   ['security-engineer', 'semgrep scan --config=p/python app', /--metrics=off/],
   ['backend-engineer', 'serve app.main:app --port 8000 -- ruff format app/main.py', /a pytest or playwright form/],
   ['backend-engineer', 'serve app.main:app --port 80 -- pytest -q', /port/],
@@ -163,23 +164,22 @@ test('GF-RUN-2: a refused form records nothing', () => {
   assert.ok(rulesOf(err).includes('GF-RUN-2'), err && err.message);
   assert.strictEqual(ctx.store.readEvents().length, before);
 });
-test('GF-RUN-2 bypass: project code run by a pinned form that writes a new file in another group\'s area is reported', () => {
+test('GF-RUN-2 bypass: project code run by a pinned form that writes a new file in another group\'s area leaves it in the copy (S2.1)', () => {
   const ctx = team();
   put(ctx, 'tests/test_w.py', 'import os\n\ndef test_w():\n    os.makedirs("web", exist_ok=True)\n    open("web/evil.js", "w").write("x")\n');
   commitAll(ctx, 'a writing test');
   const r = runner().run(ctx.store, ctx.config, 'backend-engineer', { label: 'w', command: 'pytest -q tests/test_w.py' });
-  assert.strictEqual(r.ok, false);
-  assert.strictEqual(r.status, 'failed'); // round 6: the run fails, it is not only reported
-  assert.match(r.problems.map((p) => `${p.rule} ${p.message}`).join(' '), /GF-RUN-2 .*web\/evil\.js/);
+  assert.strictEqual(fs.existsSync(path.join(ctx.dir, 'web/evil.js')), false);
+  assert.ok(r.discarded.some((d) => d.path === 'web/evil.js'), JSON.stringify(r.discarded));
 });
-test('GF-RUN-2 bypass: project code that changes a tracked file outside the caller\'s claimed ownership fails the run (frozen integrity window)', () => {
+test('GF-RUN-2 bypass: project code that changes another group\'s tracked file leaves it unchanged in the real tree (S2.1; the frozen window would have failed the run)', () => {
   const ctx = team();
   put(ctx, 'web/index.html', '<h1>Tasks</h1>\n');
   put(ctx, 'tests/test_t.py', 'def test_t():\n    open("web/index.html", "a").write("changed")\n');
   commitAll(ctx, 'a page and a test that changes it');
   const r = runner().run(ctx.store, ctx.config, 'backend-engineer', { label: 't', command: 'pytest -q tests/test_t.py' });
-  assert.strictEqual(r.status, 'failed');
-  assert.strictEqual(r.exitCode, 99);
+  assert.strictEqual(fs.readFileSync(path.join(ctx.dir, 'web/index.html'), 'utf8'), '<h1>Tasks</h1>\n');
+  assert.ok(r.discarded.some((d) => d.path === 'web/index.html'), JSON.stringify(r.discarded));
 });
 const freePort = () => new Promise((res) => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); }); });
 const portOpen = (port) => new Promise((res) => { const c = net.connect(port, '127.0.0.1'); c.on('connect', () => { c.destroy(); res(true); }); c.on('error', () => res(false)); });

@@ -20,14 +20,14 @@ function team() {
   return ctx;
 }
 
-test('F2-1: a run whose project code changes a tracked file another group has claimed fails, and names the file', () => {
+test('F2-1: a run whose project code changes a tracked file another group has claimed leaves the real file unchanged, and names it as discarded (S2.1: the copy)', () => {
   const ctx = team();
   put(ctx, 'web/index.html', '<h1>Tasks</h1>\n');
   put(ctx, 'tests/test_cross.py', 'def test_cross():\n    open("web/index.html", "a").write("<!-- injected by backend -->")\n');
   commitAll(ctx, 'a frontend page and a test that changes it');
   const r = runner.run(ctx.store, ctx.config, 'backend-engineer', { label: 'cross', command: 'pytest -q tests/test_cross.py' });
-  assert.strictEqual(r.status, 'failed', JSON.stringify({ status: r.status, ok: r.ok, problems: r.problems }));
-  assert.ok(r.problems.some((p) => /web\/index\.html/.test(p.message)), JSON.stringify(r.problems));
+  assert.strictEqual(fs.readFileSync(path.join(ctx.dir, 'web/index.html'), 'utf8'), '<h1>Tasks</h1>\n', JSON.stringify({ status: r.status, problems: r.problems }));
+  assert.ok(r.discarded.some((d) => d.path === 'web/index.html' && d.owner === 'frontend'), JSON.stringify(r.discarded));
 });
 test('F2-1: a run that changes only the caller\'s own group\'s files passes', () => {
   const ctx = team();

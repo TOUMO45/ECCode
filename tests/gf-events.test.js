@@ -31,6 +31,7 @@ const VALID = {
   'gf.finding.resolved': { id: 'res-1', finding: 'F-1', resolution: 'fixed', proof: 'ev:ev-post-1' },
   'gf.battery.recorded': { id: 'bat-1', scope: 'S2', round: 1, treeHash: 'c'.repeat(40), evidence: 'ev:ev-1', total: 5, killed: 5, survived: 0, survivors: [] },
   'gf.slice.closed': { scope: 'S2', treeHash: 'c'.repeat(40), steps: { comprehension: 'r1', critique: 'r2', readiness: 'r3' }, batteries: ['b1', 'b2'], accepted: [], accounting: { unit: 'all-processed-tokens', start: 'unmeasurable', end: 4000 } },
+  'gf.slice.accepted': { id: 'acc-1', scope: 'S2', treeHash: 'c'.repeat(40), accepted: [{ finding: 'H2-1', severity: 'major', limit: 'L-GF-60', reason: 'accepted by the owner as a numbered limit of the register' }], caveat: require('../lib/greenfield/constants').ACCEPT_CAVEAT },
 };
 
 // One invalid payload per type, each violating exactly one field.
@@ -50,6 +51,7 @@ const INVALID = {
   'gf.finding.resolved': { ...VALID['gf.finding.resolved'], resolution: 'ignored' },
   'gf.battery.recorded': { ...VALID['gf.battery.recorded'], round: 0 },
   'gf.slice.closed': { ...VALID['gf.slice.closed'], accounting: { unit: 'all-processed-tokens', start: '', end: null } },
+  'gf.slice.accepted': { ...VALID['gf.slice.accepted'], caveat: 'the owner accepted this' },
 };
 
 test('the constants: groups map to the roles of the design, three new roles, one stack profile', () => {
@@ -103,7 +105,7 @@ test('the nested closed objects of the schemas are found (the dispatch inputs am
 // The fifth engine battery (round 5) flipped `additionalProperties: false` on the closure's `accounting` to true: the
 // walker above reads the schema, so an opened object simply left the list. The list is therefore fixed here.
 test('the nested closed objects are exactly these (a schema that opens one is caught)', () => {
-  assert.deepStrictEqual(NESTED.map(([type, at]) => `${type} ${at.join('.')}`), ['gf.artifact.registered files.0', 'gf.artifact.registered validator', 'gf.dispatch.recorded inputs.0', 'gf.review.recorded findings.0', 'gf.slice.closed steps', 'gf.slice.closed accounting']);
+  assert.deepStrictEqual(NESTED.map(([type, at]) => `${type} ${at.join('.')}`), ['gf.artifact.registered files.0', 'gf.artifact.registered validator', 'gf.dispatch.recorded inputs.0', 'gf.review.recorded findings.0', 'gf.slice.closed steps', 'gf.slice.closed accounting', 'gf.slice.accepted accepted.0']);
 });
 for (const [type, at] of NESTED) {
   test(`${type}: a field the schema does not name, smuggled into ${at.join('.')}, is refused`, () => {
