@@ -102,6 +102,14 @@ test('R2-2: a battery forged with a survivor list emptier than its evidence is G
   expectAudit(ctx, 'GF-CLOSE-3', /bat-hide.*does not match its evidence/);
   refuses(() => closeIt(ctx), 'GF-CLOSE-3', /1 battery recorded; two are required/);
 });
+test('battery 9 (S2.1): a battery forged with the right survivor count but another survivor key is GF-CLOSE-3 (survivors cannot be swapped)', () => {
+  const ctx = closeProject();
+  battery(ctx);
+  threeSteps(ctx);
+  F(ctx, 'evidence.recorded', ORCH, { id: 'ev-mut', kind: 'mutation', label: 'mutate', command: 'node -e 0', status: 'recorded', mutation: { score: 0.8, total: 5, killed: 4, survived: 1, invalid: 0, timeouts: 0, base: 'HEAD', survivors: [{ file: 'a.js', line: 3, op: 'flip', from: '<', to: '>=' }] } });
+  F(ctx, 'gf.battery.recorded', ORCH, { id: 'bat-swap', scope: 'S2', round: 2, treeHash: tree(ctx), evidence: 'ev:ev-mut', total: 5, killed: 4, survived: 1, survivors: [{ key: 'b.js:9:flip' }] });
+  expectAudit(ctx, 'GF-CLOSE-3', /bat-swap.*does not match its evidence/);
+});
 test('R2-2: a battery forged citing a mutation run that is not the event right before it (an old run relabeled for the closing tree) is GF-CLOSE-3', () => {
   const ctx = closeProject();
   battery(ctx);
