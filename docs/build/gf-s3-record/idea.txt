@@ -1,0 +1,12 @@
+A shared task tracker (one small FastAPI project, Python / FastAPI / SQLAlchemy / Alembic / SQLite). Users register and log in; each task has an owner; a user sees and edits only their own tasks; an admin role sees all tasks. SQLite storage.
+
+Endpoints (7, all under /v1):
+1. POST /v1/register - create a user (email, password); returns the user.
+2. POST /v1/login - returns a bearer token.
+3. POST /v1/logout - invalidates the token.
+4. GET /v1/tasks - the caller's own tasks (admin: all).
+5. POST /v1/tasks - create a task owned by the caller.
+6. GET /v1/tasks/{id} - a single task, only if the caller owns it (admin: any).
+7. PATCH /v1/tasks/{id} - edit a task, only if the caller owns it (admin: any).
+
+Authorization rule (a tested requirement; BOLA/IDOR): a non-owner, non-admin request to GET or PATCH /v1/tasks/{id} for another user's task returns 403 (or 404 without leaking existence), never 200 and never the other user's fields.
