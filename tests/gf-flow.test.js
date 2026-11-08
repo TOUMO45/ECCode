@@ -35,7 +35,7 @@ test('GF-INIT-1: init writes the GF event and the config; a second init, an exis
   assert.ok(cfg.roles.design.reviewers.includes('security-reviewer'));
   assert.ok(cfg.roles.design.reviewers.includes('technical-reviewer'));
   assert.ok(cfg.limits.maxConcurrency >= 4);
-  assert.deepStrictEqual(cfg.gf, { enabled: true, schemaVersion: 1, stackProfile: 'python-fastapi-sqlalchemy-sqlite' });
+  assert.deepStrictEqual(cfg.gf, { enabled: true, schemaVersion: 1, stackProfile: 'python-fastapi-sqlalchemy-sqlite', isolation: 'copy' });
   assert.strictEqual(ctx.store.state().work.track, 'greenfield');
   assert.deepStrictEqual(ctx.store.audit().errors, []);
 
