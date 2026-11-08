@@ -1,0 +1,36 @@
+{
+  "registered": "2026-11-08",
+  "registeredBefore": "the first S3 build step (protocol B4; handoff 'Do first' item 5)",
+  "authority": "owner master prompt (S3 reduced build) + Patch 1 (branch setup) + Patch 2 (owner decisions 1-6)",
+  "estimatePointTokens": 100000000,
+  "estimateRange": "70-130 M all-processed tokens (protocol B4: the reduced-S3 range; midpoint chosen)",
+  "capTokens": 125000000,
+  "pauseAtTokens": 100000000,
+  "pauseAtPercentOfCap": 80,
+  "hardStopTokens": 125000000,
+  "unit": "all-processed tokens (input + cache-read + cache-write + output), measured by lib/greenfield/usage.js over THIS session's transcript plus every subagent transcript the harness writes beside it",
+  "measuredAs": "DELTA from the S3 start snapshot (the 2,000,000 absolute start test was waived by the owner in Patch 2: each message re-reads a ~120K fixed prefix, so ~2.3M accrues during setup alone)",
+  "s3StartSnapshot": {
+    "file": "docs/build/gf-s3-record/snaps/00-probe-pre-venv.json",
+    "takenAt": "2026-11-08T20:34:57.824Z",
+    "allProcessed": 2358697,
+    "input": 42,
+    "cacheRead": 2276053,
+    "cacheWrite": 70266,
+    "output": 12336,
+    "messages": 19
+  },
+  "checkCadence": "a snapshot after EVERY numbered step and after every subagent returns; the cap covers all subagents; a snapshot that cannot be taken stops the run",
+  "ieq": {
+    "formula": "IEQ = input + 0.1*cache_read + 1.25*cache_write + 5*output",
+    "label": "ratio estimate (published pricing ratios; relative cost unit, NOT money)",
+    "usedFor": "cost per accepted criterion",
+    "officialPricePageFetched": false
+  },
+  "dollarEstimate": "none: no official price page has been fetched; no dollar figure is reported",
+  "cleanContextTest": {
+    "rule": "latest assistant message cache-read <= 250,000 tokens at the start of the run (Patch 2 item 2); recorded at every snapshot as the prefix size, which is a cost driver",
+    "resultAtStart": "PASS (169,018 at step-01, 2026-11-08T21:12:27Z)"
+  },
+  "model": "claude-sonnet-5-5 (main session; subagents inherit unless stated)"
+}

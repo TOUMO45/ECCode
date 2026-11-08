@@ -1,0 +1,15 @@
+#!/bin/sh
+# S3 shim for ECCODE_GF_PYTHON (orchestrator-added; NOT part of the frozen engine; recorded as a limit).
+# The engine's Landlock-alone sandbox grants read everywhere. Inside a group's sandbox (a mount namespace that differs
+# from the engine's) this masks the engine-held hidden-suite directory with an empty tmpfs BEFORE Landlock is applied,
+# then execs the real interpreter. In the engine's own namespace it masks nothing (the engine must read the suite).
+HOSTNS=/root/.cache/eccode-gf-shim/host-mntns
+HIDDEN=/root/.cache/eccode-gf-hidden
+REAL=/root/.cache/eccode/phase3-venv/bin/python3
+if [ -r "$HOSTNS" ] && [ -d "$HIDDEN" ]; then
+  cur=$(readlink /proc/self/ns/mnt 2>/dev/null)
+  if [ -n "$cur" ] && [ "$cur" != "$(cat "$HOSTNS")" ]; then
+    mount -t tmpfs -o size=4k,mode=000 gf-hidden-mask "$HIDDEN" 2>/dev/null || true
+  fi
+fi
+exec "$REAL" "$@"

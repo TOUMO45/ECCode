@@ -1,0 +1,23 @@
+S3 environment-parity baseline (Patch 2 item 4). Taken 2026-11-08, head cbae463, in place, after the venv rebuild.
+Command: ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python node --test tests/*.test.js   (started 21:11:59Z, finished 21:17:35Z, 335,959 ms)
+
+Result:    tests 1793 | pass 1752 | fail 1 | cancelled 0 | skipped 40
+Expected:  tests 1793 | pass 1757 | fail 0 | skipped 36   (docs/build/gf-s2-4-record/a3-venv-suite-totals.txt)
+Difference: pass -5, fail +1, skipped +4. Nothing fixed (Patch 2: fix nothing unless it blocks S3). Neither blocks S3.
+
+Venv: python 3.13.18 x86_64; created at /root/.cache/eccode/phase3-venv; pip install --only-binary=:all: -r docs/build/gf-s2-4-record/fastapi-reqs.txt
+(11 pins, no loosening); all wheels available for cp313; wall 50 s; the 11 installed versions equal the 11 pins (case-normalised diff empty).
+REBUILT in this session (it was missing in this environment).
+
+FAIL  not ok 757 - A1: authorizeRun runs a canary with the exact mechanism, write-set width, net and uid it is asked for
+      tests/gf-iso-sandbox.test.js:190-196: sandbox.authorizeRun('both', {rwDirs:3, net:false, fresh:true}).ok must be true; got false.
+      Cause (verified): mechanism 'both' = Landlock inside bubblewrap; this host has no bubblewrap (isolation check: "bwrap": null,
+      usable ["landlock"], weaker ["landlock"]). The test's skip guard (HAVE) is true when ANY mechanism is available, so it runs and fails.
+      Environmental, not an engine defect found here. S3 uses Landlock-alone (recorded as a limit).
+SKIP  +4 "no interpreter with fastapi, httpx, hypothesis, coverage and pytest (tried .../phase3-venv/bin/python, python3)":
+      the scorecard test, the uuid-family test, the seeded-unintended-change runner test, the per-test-baseline claim test.
+      Cause (verified): lib/lab.js:476 probes `import coverage, pytest`; the 11-pin requirements file has no `coverage`, and the original
+      A3 build log (docs/build/gf-s2-4-record/a3-venv-build.log) has no coverage line either. How the original environment satisfied it
+      is UNMEASURABLE from the record. The 36 other skips are the unchanged ones (Mealie checkout, kotlinc, Docker, env flags).
+Repo side effect found and reverted: two `isolation check` runs I made with the repo as the engine root appended events seq 17-18 to the
+repo's own tracked .eccode/events.jsonl and state.json; reverted with git checkout; all later engine commands use --root <project>.

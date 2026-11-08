@@ -1,0 +1,72 @@
+{
+  "takenAt": "2026-11-08T21:17:15.670Z",
+  "host": {
+    "kernel": "6.18.44-fc-v310",
+    "uid": 0
+  },
+  "hiddenDir": "/root/.cache/eccode-gf-hidden",
+  "rows": [
+    {
+      "label": "H0 engine (host namespace) reads the canary",
+      "ok": true,
+      "value": "HIDDEN-CANARY-d920acf43f68a0b1"
+    },
+    {
+      "label": "S1 BASELINE stock engine: cat hidden canary inside the group sandbox",
+      "mechanism": "landlock",
+      "interpreter": "python3 (stock)",
+      "exit": 0,
+      "stdout": "HIDDEN-CANARY-d920acf43f68a0b1\ncat-exit=0",
+      "stderr": ""
+    },
+    {
+      "label": "S2 WITH SHIM: cat hidden canary inside the group sandbox",
+      "mechanism": "landlock",
+      "interpreter": "/root/.cache/eccode-gf-shim/gf-python",
+      "exit": 0,
+      "stdout": "cat-exit=1",
+      "stderr": "cat: /root/.cache/eccode-gf-hidden/canary.txt: No such file or directory"
+    },
+    {
+      "label": "S3 WITH SHIM: list hidden dir inside the group sandbox",
+      "mechanism": "landlock",
+      "interpreter": "/root/.cache/eccode-gf-shim/gf-python",
+      "exit": 0,
+      "stdout": "0\nls-exit=0",
+      "stderr": ""
+    },
+    {
+      "label": "S4 WITH SHIM control: read an ordinary file + write own/ still work",
+      "mechanism": "landlock",
+      "interpreter": "/root/.cache/eccode-gf-shim/gf-python",
+      "exit": 0,
+      "stdout": "read-ok\nwrite-own-ok\nhidden-write-denied",
+      "stderr": "sh: 1: cannot create /root/.cache/eccode-gf-hidden/new: Permission denied"
+    },
+    {
+      "label": "S5 WITH SHIM attack: umount / re-bind the mask, then read",
+      "mechanism": "landlock",
+      "interpreter": "/root/.cache/eccode-gf-shim/gf-python",
+      "exit": 0,
+      "stdout": "umount: /root/.cache/eccode-gf-hidden: must be superuser to unmount.\numount-exit=32\nmount: /root/.cache/eccode-gf-hidden: permission denied.\n       dmesg(1) may have more information after failed mount system call.\nbind-exit=32\ncat: /root/.cache/eccode-gf-hidden/canary.txt: No such file or directory\ncat-exit=1",
+      "stderr": ""
+    },
+    {
+      "label": "S6 WITH SHIM attack: read via /proc/1/root and the parent mount ns",
+      "mechanism": "landlock",
+      "interpreter": "/root/.cache/eccode-gf-shim/gf-python",
+      "exit": 0,
+      "stdout": "cat: /proc/1/root/root/.cache/eccode-gf-hidden/canary.txt: No such file or directory\ncat-exit=1\ncgroup\nipc",
+      "stderr": ""
+    },
+    {
+      "label": "H1 engine (host namespace) STILL reads the canary after all sandbox runs",
+      "ok": true
+    },
+    {
+      "label": "H2 no gf-hidden-mask mount leaked into the host namespace",
+      "ok": true,
+      "maskMountsInHostMountinfo": "0"
+    }
+  ]
+}
