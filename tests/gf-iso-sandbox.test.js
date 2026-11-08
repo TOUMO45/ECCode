@@ -27,7 +27,8 @@ test('probe: reports the platform, the Landlock ABI, bubblewrap and a pid namesp
   assert.ok(Array.isArray(pr.mechanisms));
   if (pr.landlock) { assert.ok(pr.landlock.abi >= 1); assert.ok(pr.mechanisms.includes('landlock')); }
   if (pr.bwrap) assert.ok(pr.mechanisms.includes('bwrap'));
-  for (const m of pr.mechanisms) assert.ok(['landlock', 'bwrap'].includes(m));
+  if (pr.landlock && pr.bwrap) assert.ok(pr.mechanisms.includes('both'), 'the Landlock+bubblewrap combination is listed when both are present');
+  for (const m of pr.mechanisms) assert.ok(['both', 'landlock', 'bwrap'].includes(m));
 });
 
 test('GF-ISO-4 positive: a directory glob maps to its directory, a plain path to a file, a denied sub-glob to a carve-out', () => {
@@ -80,10 +81,13 @@ test('argv: Landlock gets the helper with every rw path, the tmp, the device fil
   assert.ok(!n.includes('--unshare-all') && n.includes('--unshare-pid'), 'with the network allowed every other namespace is still unshared');
 });
 
-test('choose: Landlock first; bubblewrap when the write set has carve-outs and bubblewrap works; null with no mechanism', () => {
-  assert.strictEqual(sandbox.choose({ mechanisms: ['landlock', 'bwrap'], landlock: { abi: 7 }, bwrap: {} }), 'landlock');
-  assert.strictEqual(sandbox.choose({ mechanisms: ['landlock', 'bwrap'], landlock: { abi: 7 }, bwrap: {} }, { carveouts: ['app/db'] }), 'bwrap');
-  assert.strictEqual(sandbox.choose({ mechanisms: ['landlock'], landlock: { abi: 7 } }, { carveouts: ['app/db'] }), 'landlock');
+test('A2 choose: the strongest usable combination (both > bwrap > landlock); null with no mechanism', () => {
+  const all = { mechanisms: ['both', 'bwrap', 'landlock'], landlock: { abi: 7 }, bwrap: {} };
+  assert.strictEqual(sandbox.choose(all), 'both'); // strongest available
+  assert.strictEqual(sandbox.choose(all, {}, ['bwrap', 'landlock']), 'bwrap'); // both not usable -> next strongest
+  assert.strictEqual(sandbox.choose(all, {}, ['landlock']), 'landlock'); // only landlock usable
+  assert.strictEqual(sandbox.choose(all, {}, []), null); // none usable -> fail closed
+  assert.strictEqual(sandbox.choose({ mechanisms: ['bwrap'], bwrap: {} }), 'bwrap'); // no landlock, no combination
   assert.strictEqual(sandbox.choose({ mechanisms: [] }), null);
 });
 
@@ -146,6 +150,49 @@ test('R-1: choose never returns a mechanism absent from the usable set, and retu
   assert.strictEqual(sandbox.choose(both, {}, []), null);
   // a carve-out needs bwrap, but only landlock is usable -> landlock (contained by copy-back; the widening is recorded)
   assert.strictEqual(sandbox.choose(both, { carveouts: ['app/db'] }, ['landlock']), 'landlock');
-  // usable omitted keeps the old behaviour (availability only), for callers that pass the self-test separately
-  assert.strictEqual(sandbox.choose(both, {}), 'landlock');
+  // usable omitted ranks on availability alone; with landlock+bwrap but no combination listed, bwrap is strongest
+  assert.strictEqual(sandbox.choose(both, {}), 'bwrap');
 });
+
+// ============ A2 (S2.4.1): layered isolation, the ptrace and UDP canary rows ============
+test('A2: the self-test ranks usable modes strongest-first and flags the weaker ones', { skip: HAVE ? false : skipReason }, () => {
+  const t = sandbox.selfTest({ fresh: true });
+  assert.ok(t.usable.length >= 1);
+  // usable is sorted by strength; the strongest is the first
+  assert.strictEqual(t.strongest, t.usable[0]);
+  const rank = sandbox.MECH_ORDER;
+  for (let i = 1; i < t.usable.length; i++) assert.ok(rank[t.usable[i - 1]] >= rank[t.usable[i]], `ranked: ${t.usable}`);
+  // every usable mode blocked ptrace of the engine (a precondition for being usable)
+  for (const m of t.usable) assert.strictEqual(t.mechanisms[m].ptraceSafe, true, `${m} is ptrace-safe`);
+  // a weaker mode is any usable mode other than the combination
+  for (const m of t.weaker) assert.notStrictEqual(m, 'both');
+});
+
+test('A2: the canary measures ptrace-addressability of the engine and UDP egress; a mode that cannot block ptrace is not usable', { skip: HAVE ? false : skipReason }, () => {
+  const t = sandbox.selfTest({ fresh: true });
+  for (const [m, v] of Object.entries(t.mechanisms)) {
+    assert.ok('ptraceSafe' in v && 'netUdpOpen' in v, `${m} canary records ptraceSafe and netUdpOpen`);
+    if (v.contained && !v.ptraceSafe) assert.ok(!t.usable.includes(m), `${m} is not usable when it cannot block ptrace of the engine`);
+  }
+  // here the combination and bubblewrap close UDP (network namespace); Landlock alone leaves UDP open (its residual)
+  if (t.mechanisms.both) assert.strictEqual(t.mechanisms.both.netUdpOpen, false);
+  if (t.mechanisms.landlock && t.usable.includes('landlock')) assert.strictEqual(t.mechanisms.landlock.netUdpOpen, true, 'Landlock alone: UDP/DNS egress open (L-GF-79)');
+});
+
+test('A2: the combined mode runs Landlock inside bubblewrap (both prefixes present in its argv)', () => {
+  const a = sandbox.argv('both', { cwd: '/w', rw: ['/w/app'], tmp: '/t', net: false, probe: { landlock: { abi: 7 }, bwrap: {} } }, ['sh', '-c', 'true']);
+  assert.strictEqual(a[0], 'bwrap');
+  assert.ok(a.includes(sandbox.HELPER), 'the Landlock helper runs inside bubblewrap');
+  assert.ok(a.includes('--unshare-all') && a.includes('--no-net'));
+});
+
+// ============ A1 (S2.4.1): canary parity — the authorizing canary matches the run it clears ============
+test('A1: authorizeRun runs a canary with the exact mechanism, write-set width, net and uid it is asked for', { skip: HAVE ? false : skipReason }, () => {
+  const v = sandbox.authorizeRun('both', { rwDirs: 3, net: false, fresh: true });
+  assert.strictEqual(v.mechanism, 'both');
+  assert.strictEqual(v.rwDirs, 3);
+  assert.strictEqual(v.net, false);
+  assert.strictEqual(v.uid, sandbox.probe().uid);
+  assert.strictEqual(v.ok, true);
+});
+

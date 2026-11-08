@@ -55,7 +55,7 @@ const INVALID = {
 };
 
 // S2.4 (design 21): the isolation events.
-VALID['gf.isolation.checked'] = { ok: true, platform: 'linux', usable: ['landlock'], landlockAbi: 7, bwrap: null, pidns: true, reasons: [] };
+VALID['gf.isolation.checked'] = { ok: true, platform: 'linux', usable: ['both', 'landlock'], landlockAbi: 7, bwrap: null, pidns: true, reasons: [] };
 VALID['gf.group.committed'] = { id: 'gc-1', group: 'backend', actor: 'backend-engineer', task: 's0-app', branch: 'gf/backend', parent: 'a'.repeat(40), commit: 'b'.repeat(40), tree: 'c'.repeat(40), files: [{ path: 'app/main.py', action: 'modify', mode: '100644', blob: 'd'.repeat(40) }, { path: 'app/old.py', action: 'delete' }], sanitized: ['plumbing-only'] };
 VALID['gf.groups.merged'] = { id: 'gm-1', scope: 'S0', target: 'main', from: 'a'.repeat(40), to: 'b'.repeat(40), order: ['db', 'backend'], merges: [{ group: 'db', branch: 'gf/db', commit: 'c'.repeat(40), merge: 'd'.repeat(40), tree: 'e'.repeat(40) }], checks: ['ev-1'] };
 VALID['gf.deps.installed'] = { id: 'gd-1', command: 'npm ci', evidence: 'ev:ev-2', status: 'passed', mechanism: 'bwrap', lockfiles: [{ path: 'package-lock.json', sha256: 'f'.repeat(64) }] };

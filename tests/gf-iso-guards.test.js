@@ -196,3 +196,31 @@ test('R-1 #2: choose is called with the self-test usable set, so an available-bu
   assert.notStrictEqual(sandbox.choose(both, {}, ['bwrap']), 'landlock');
   assert.strictEqual(sandbox.choose({ mechanisms: ['landlock'], landlock: { abi: 7 } }, {}, []), null);
 });
+
+// ---- A1 (S2.4.1): canary parity at the run level (two tests) ----
+test('A1 #1: the run records a canary whose mechanism, width, net and uid match the run it authorized', { skip: sandbox.probe().mechanisms.length ? false : 'no kernel isolation here' }, () => {
+  const ctx = project(['app/main.py']);
+  F(ctx, 'task.rescoped', 'user', { task: 's0-app', files: null, command: 'python3 -c pass', reason: 'p', from: ['app/main.py'] });
+  const r = isolate.run(ctx.store, ctx.config, 'backend-engineer', { label: 'x', command: 'python3 -c pass', shell: true });
+  assert.ok(r.isolation.canary, 'the run records its authorizing canary');
+  assert.strictEqual(r.isolation.canary.mechanism, r.isolation.mechanism, 'the canary used the run\'s mechanism (parity)');
+  assert.strictEqual(r.isolation.canary.ok, true);
+  assert.strictEqual(r.isolation.canary.uid, sandbox.probe().uid);
+});
+test('A1 #2: a run is refused fail-closed when the authorizing canary diverges from the run\'s mechanism or is not contained', () => {
+  const ctx = project(['app/main.py']);
+  F(ctx, 'task.rescoped', 'user', { task: 's0-app', files: null, command: 'python3 -c pass', reason: 'p', from: ['app/main.py'] });
+  const real = sandbox.authorizeRun;
+  // a divergent canary: reports a different mechanism than the run will use
+  sandbox.authorizeRun = (m, opts) => ({ ...real(m, opts), mechanism: m === 'both' ? 'landlock' : 'both' });
+  try {
+    const e = refused(() => isolate.run(ctx.store, ctx.config, 'backend-engineer', { label: 'x', command: 'python3 -c pass', shell: true }));
+    assert.ok(rulesOf(e).includes('GF-ISO-0')); assert.match(e.message, /diverged|not contained/);
+  } finally { sandbox.authorizeRun = real; }
+  // an uncontained canary: ok false
+  sandbox.authorizeRun = (m, opts) => ({ ...real(m, opts), ok: false });
+  try {
+    const e = refused(() => isolate.run(ctx.store, ctx.config, 'backend-engineer', { label: 'x', command: 'python3 -c pass', shell: true }));
+    assert.ok(rulesOf(e).includes('GF-ISO-0'));
+  } finally { sandbox.authorizeRun = real; }
+});
