@@ -1,0 +1,21 @@
+R3 READINESS, scope S2 (tree fbf6bf8, S2.1), architecture-reviewer. Verdict: NO-GO.
+
+Why NO-GO (one reason, demonstrated by an executed check). Section 18 says the S2.1 runner fails a run that changes any file of the real tree outside the caller's group (GF-RUN-2 row, docs/design/greenfield-senior.md:829). The threat model says detection by the real-tree hash covers a write that reaches the real tree by an absolute path, which fails the run (docs/design/greenfield-senior.md:812). The real-tree hash leaves out the whole of .eccode/. The stated reason is that "the frozen record window covers it" (docs/design/greenfield-senior.md:882, step 1) and "puts back and fails a change there" (docs/design/greenfield-senior.md:977). As built, that holds for only three files. The frozen record window snapshots events.jsonl, state.json and config.json (lib/evidence.js:153). The frozen integrity window drops every .eccode/ path (lib/evidence.js:233). The wrapper skips all of .eccode/ in its real-tree walk (lib/greenfield/run-check.js:81).
+
+My probe ev:ev-mw7phsul-018e93c7 (status failed by design: it exits 0 only if the claim holds) ran pinned `pytest -q` runs as backend-engineer in a sealed fixture project. Each test wrote by absolute path through ECCODE_EVIDENCE:
+(a) .eccode/drafts/frontend/note.md, another group's drafts namespace: the run passed (exit 0), the file stayed, and the audit reported nothing. The hook denies the same path to a file tool.
+(b) .eccode/security.json, created before any pin: the run passed, and the audit reported nothing. GF-CONF-1 says no group role may write the three guard configs, and the hook's refusal does not wait for a pin (docs/design/greenfield-senior.md:824, :831).
+(c) A pinned security.json loosened: the run passed. Only the audit's GF-CONF-1 drift caught it, after the fact.
+The control case, an append to events.jsonl, failed the run with exit 99, as 18.1 says.
+
+So the S2.1 real-tree check, a promised S2 deliverable, does not do what section 18 says it does for the record directory. The residual is also not registered: L-GF-29 (docs/limits-greenfield.md:37) lists the runner's residuals (caches, objects by size, change-and-restore, concurrent changes) but not .eccode/. Section 18.0's "outside the model" list leaves it out too. A minimal remedy is one of two:
+- hash .eccode/ outside the three window files, treated as outside every group like .git/, or
+- correct 18.0, 18.4 and 18.7 and register the residual.
+
+What I checked and found in order:
+- Frozen set: "frozen: 48 files" (ev:ev-mw7p3lz0-0178369d). None of the 48 files, the freeze file, docs/limits.md or scripts/guards/ changed from 4799154^ to HEAD, and no frozen file requires a greenfield path (ev:ev-mw7pi9pl-017d9fcb). My first version of that check, ev-mw7phzbm-01dc4db2, failed because my grep was too broad: it matched the pre-existing "greenfield" track name. It is superseded and not cited.
+- All 33 gf test files pass: 1071 tests, 0 failures (ev:ev-mw7p5t29-0165e77b). This includes the ownership rules GF-OWN-1..5, GF-FRZ-1, drafts, GF-CONF-1 and the L-GF-17 spoof matrix (313 tests, ev:ev-mw7p4rnv-0119be00), the runner-copy rows (tests/gf-runner-copy.test.js:109) and GF-CLOSE-6 (tests/gf-accept.test.js:47; lib/greenfield/closure.js:405; docs/design/greenfield-senior.md:916).
+- 16.8 item 1: npm run check with ECCODE_PYTHON at /root/.cache/eccode/phase3-venv: 1671 tests, 0 failures, 14 skipped. The skip reasons are exactly the fourteen 16.8 lists, so the 35 FastAPI-dependent tests ran (ev:ev-mw7pbm3f-0132b5e4).
+- S2 does not claim later slices. No gf.ref, GF-PRE, GF-UX, gf.tool.run or gf.slice.opened code exists in lib/ or bin/. Section 19 is marked design only.
+
+Not checked: the closure record's own conditions (batteries, resolutions, accounting), which are the engine's to check at close. The remaining S2 rules look correct as far as the tests show; I found no other gap.

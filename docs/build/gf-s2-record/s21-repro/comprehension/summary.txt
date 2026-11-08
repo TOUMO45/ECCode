@@ -1,0 +1,39 @@
+S2 makes ownership between implementer groups enforceable and adds a recorded closure rule.
+
+Threat model (18.0). S2 defends against accidental or LLM-plausible cross-group writes, mainly by project code an agent runs, through relative or absolute paths, symlinks or git. Hostile git tampering is left to content-hash checks; OS isolation is a named limit. The copy prevents writes through relative paths. The real-tree hash detects other writes and fails the run, but does not undo them.
+
+Ownership map (18.1, 18.2). The effective map is the hash-sealed breakdown.json groups, with reviewer amendments applied in log order. Each amendment's "from" equals the globs in force, and every map passes the GF-WBS-2 checks. Globs may overlap only when one is provably nested and the outer group denies it. An amendment changes globs only and may not strand a pending or claimed task. Enforcement points:
+- the hook: GF-OWN-2 (inside group and claimed-task globs; unowned paths and multi-link files refused), GF-FRZ-1 contracts, GF-CONF-1 guard configs, per-group drafts;
+- the engine: GF-OWN-3 (completion by the task's owner, own-group files only) and GF-OWN-5 amendments;
+- the audit: replays against the map in force at each event, and GF-OWN-1 checks the seal hash;
+- GF-OWN-4 attribution: a command until S4.
+A project is Greenfield-Senior when its record holds gf.project.initialized; an unreadable log fails closed.
+
+No shell and the runner (18.4). A group role is denied Bash, PowerShell and Monitor (GF-RUN-1), because judging shell text never converged. It runs commands through gf_run or eccode-gf run (GF-RUN-2), which accepts either of two kinds. A plan-pinned command is matched whole against the approved plan and run through sh -c. A pinned form of eight tools uses restricted words and fixed flags, with no shell. The wrapper, run by the frozen evidence runner, works in five steps:
+1. It hashes the real tree without git: content, mode, symlink targets and git directories, with objects by name and size; .eccode/ and caches are excluded.
+2. It copies the tree, minus .git and .eccode/, to the system temp directory and runs the command there with git's variables scrubbed.
+3. It rehashes and fails the run (exit 99) on any change outside the caller's group or in git directories.
+4. It copies back only paths the caller's group owns, listing what it discards.
+5. It removes the copy.
+The frozen integrity and record windows apply on top.
+
+Identity (18.3). The actor is asserted, not bound. Three controls hold it: the hook's agent_type check, role-locked MCP servers, and text-level reading of CLI commands. A spoof buys writes and reviewer-only events, but not content-addressed artifacts. Keyed attestation is proposed, not built.
+
+Closure (18.5). There are three steps (comprehension, critique, readiness), each with its own orchestrator-recorded dispatch with input hashes. A review counts when it is valid, is on the clean closing tree, and is by a configured reviewer role that authored nothing and is not the closer. Readiness must be go, and a no-go stands. Every finding must be resolved in one of three ways:
+- fixed, through a fix-verify (defect) or a paired run (documentation);
+- withdrawn by the role that raised it;
+- deferred by the user with a limit id (minor, or major documentation).
+At least two valid mutation batteries are required. The first comes before the first review; the last is on the closing tree after the last fix, with a reason for each survivor. Accounting must be numbers or "unmeasurable". Nothing may be recorded after closure. In owner acceptance (GF-CLOSE-6), the user lists every open finding with its severity, an L-GF id and a reason. No finding may be blocking, and the scope is accepted, not closed.
+
+Accounting (18.6). The unit is all processed tokens, from harness snapshots at slice and round boundaries. Stale figures are "unmeasurable"; only form is enforced.
+
+Not guaranteed:
+- absolute-path writes (detected, not undone);
+- changes restored within a run, and writes outside the project;
+- forged appended events;
+- the hook off, or no agent_type sent;
+- CLI commands hidden from the text check, and the sequential-roles mode;
+- two instances of one role;
+- which tree a paired run saw, and its command;
+- battery inputs;
+- whether accounting figures are true.

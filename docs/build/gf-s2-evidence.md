@@ -327,3 +327,88 @@ The basis is S2's measured total: **395.4 M all-processed tokens and $168.81 of 
 | Lower cost (at most two closing rounds after the first; R1 on the slice's as-built section only, R2 on the diff only, R3 a fixed checklist; one battery per round; a fresh session per slice, so the context starts small) | 150 to 250 M | 180 to 300 M | 250 to 450 M | 150 to 250 M | 20 to 50 M | **750 to 1,300 M** | **$320 to $555** |
 
 These are judgment ranges, not measurements. The lower-cost variant relies on round 5 and round 6, which were measured at 64.9 M and 38.1 M, each with its fixes, three reviewers and batteries. Its risk is a slice that does not converge within two closing rounds. The stop rule then has to say what happens: as in S2, stop and the owner decides. No S3 work has started.
+
+## 15. S2.1, the owner's structural redesign (2026-11-08), and where S2 stands
+
+**The decision.** No round 7. Instead, S2.1 is a structural redesign under the owner's threat model:
+- the runner runs every command in a throwaway copy, and only the caller's group's files come back;
+- a hash of the whole real tree that does not ask git, `.git/` included;
+- a narrow owner-acceptance event;
+- G1-1 to G1-5 fixed, and G1-6 to G1-13 deferred with limit ids.
+
+It got one review round (R1 on section 18 alone, R2 limited to the threat model on the runner and the acceptance event, R3 readiness), a pre-registered stop rule, and a cap of 80 M. The owner also asked for a design-only addendum, G0.5, during the build. It is registered as design section 19, with its slice (S3.5) estimated at 120 to 220 M and $50 to $95. That slice is outside the approved S3 to S6 ceiling.
+
+**Built (design before code).**
+- `e3a25a0` is the design: section 18.0 (the threat model), 18.4 rewritten, GF-CLOSE-6 in 18.5, the G1-1 to G1-5 text, limits L-GF-29 (rewritten) and L-GF-39 to 48, and section 19.
+- `e36122d` is the code: `lib/greenfield/run-check.js` rewritten, `runner.js` reporting `copiedBack` and `discarded`, `gitleaks` requiring `--no-git`, and `gf.slice.accepted` with `closure.accept`, the audit replay, and `eccode-gf close accept` with no MCP tool.
+- `fbf6bf8` kills the ninth battery's live survivor.
+
+**Test-first.** Each new test was red before its code:
+
+| Test file | Failed before the code | Rows that already passed |
+|---|---|---|
+| `tests/gf-runner-copy.test.js` | 18 of 21 | 3 control rows |
+| `tests/gf-accept.test.js` | 10 of 11 | the hook row, which pins existing behaviour |
+| `tests/gf-docs-s2f.test.js` | 7 of 8 | the engine-pinned G1-5 row |
+
+The G1-1 to G1-5 doc tests were also recorded failing as reproductions on the pre-fix text. After the code, the gf suite passed 1,070 of 1,070. The full suite with the FastAPI venv had 1,670 tests: 1,656 passed, 0 failed, 14 skipped (the same 14). The frozen set was 48 of 48 before and after, and `docs/limits.md`, `scripts/guards/` and `lib/project.js` are untouched.
+
+**In the record.**
+
+| Item | Proof |
+|---|---|
+| G2-1 (major defect) | fix verification at `8adc528`: pre-fix `ev-mw7nirhl-0183d431` (reproduction, failed), post-fix `ev-mw7nisdo-02a5cfb0` (passed); resolved fixed |
+| G2-2 (minor defect) | fix verification: `ev-mw7nitg0-01fc114d` / `ev-mw7niubr-024c8511`; resolved fixed |
+| round 6's assume-unchanged evasion (no finding id) | fix verification, kept as evidence: `ev-mw7nj61p-011ab254` / `ev-mw7nj70j-029baf5a` |
+| G1-1 to G1-5 (major documentation) | paired runs, `docs/build/gf-s2-record/paired-runs-s21.tsv` (reproduction, then post-fix run); resolved fixed |
+| G1-6 to G1-13 (minor documentation) | deferred by the user as L-GF-41 to L-GF-48, as the owner's decision approved |
+
+**Batteries.**
+- **Battery 9** ran on tree `8d5c434`: 20 mutants, 18 killed, 2 survived.
+  - `closure.js:331` was live. It is now killed by a test: a battery with the run's survivor count but another survivor key.
+  - `closure.js:443` is equivalent. The written argument is in design 18.7.
+- **Battery 10** ran on the review tree `9340a06`: 20 mutants, 19 killed, 1 survived, `closure.js:443`. That is the equivalent survivor argued in 18.7, so there is no unexplained survivor.
+
+**The review round** (tree `9340a06`; dispatches `disp-mw7p26d7-018e7f00`, `disp-mw7p26h6-015cc5f3`, `disp-mw7p26lt-0167169f`):
+
+| Step | Review | Result |
+|---|---|---|
+| R1 comprehension (technical-reviewer) | `rev-mw7pbs2f-01ca0b71` | 16 documentation findings: H1-1 to H1-6 major, H1-7 to H1-16 minor |
+| R2 critique (security-reviewer) | `rev-mw7pnwrk-01ed3bc1` | 3 defects, all engine behavior and inside the threat model (below) |
+| R3 readiness (architecture-reviewer) | `rev-mw7pjh8r-01f64f1a` | **NO-GO**: the same root cause as H2-2. Its probe `ev-mw7phsul-018e93c7` wrote another group's draft and a guard config by absolute path, and both runs passed. Its other checks passed: frozen 48 files; gf 1,071 of 1,071; full suite 1,671 tests, 0 failed, 14 skipped; GF-CLOSE-6 built; no later-slice code |
+
+R2's three defects:
+
+1. **H2-1 (blocking).** The runner is not the only managed-path route for a group role's commands.
+   - Every role-locked server still offers the frozen `evidence_run`, `fix_verify` and `mutate` tools. They run plan-pinned commands directly in the real tree, under the frozen integrity window only.
+   - The reproduction ran a backend test that creates a file in `web/` and commits a change to `web/index.html`. HEAD moves, and the run passes undetected.
+   - Task completion even sends agents there: it refuses the runner's evidence as a task's pinned run, because the recorded command is the wrapper.
+2. **H2-2 (major).** The real-tree hash leaves out `.eccode/` because "the frozen record window covers it". That window covers only `events.jsonl`, `state.json` and `config.json` (`lib/evidence.js:153`). So an absolute-path write to another group's drafts, to an evidence log or to a new guard config passes undetected.
+3. **H2-3 (minor).** The refusal of an empty acceptance list is not listed in 18.5, and its stated reason is wrong.
+
+I ran R2's three reproductions myself on this tree (`docs/build/gf-s2-record/s21-repro/critique/`), and each failed. I also checked R3's claim against `lib/evidence.js:153`. The design statement that H2-2 and the no-go contradict was mine (18.4 step 1 and 18.7).
+
+R2 listed items outside the threat model, which are recorded as limits and not fixed:
+- most already had a limit: L-GF-17, L-GF-29, L-GF-33 and L-GF-40;
+- three are new: L-GF-49 (a forged closure or acceptance blocks a later valid acceptance), L-GF-50 (git older than 2.31: the git directories are not hashed) and L-GF-51 (a process that leaves the run's process group).
+
+**The stop rule, applied.** The pre-registered rule said: "If R2 raises no blocking/major finding INSIDE the threat model and the battery has no unexplained survivor: S2 closes; report and stop. Otherwise: do not fix; report." R2 raised a blocking and a major finding inside the model. **Nothing was fixed, and S2 is not closed.** The owner decides between acceptance with limits and abandoning the slice.
+
+**What each option means on this record, stated plainly.**
+- **Acceptance with limits, through GF-CLOSE-6 as built**, is refused on this record while H2-1 is open. The event refuses every blocking finding, and H2-1 is a blocking finding against a prevention rule in the owner's own terms (GF-RUN-2, a managed-path rule). It could be recorded only after H2-1 is resolved, and it lists every open finding: today H1-1 to H1-16, H2-1 to H2-3. The standing NO-GO does not block an acceptance.
+- **Abandoning the slice** leaves the record as it is: S2 is not closed, and the code and its tests stay on the branch.
+- For information only, not proposed: H2-1 and H2-2 are narrow in code. One would take the frozen command tools off a group role's server, or route them through the runner, and let the runner's evidence count as a task's pinned run. The other would hash `.eccode/` apart from the three files the frozen window restores, treating it as outside every group like `.git/`. A fix would be another round, which the owner's decision excludes.
+
+**Accounting.**
+
+| Snapshot | Time (2026-11-08) | All processed tokens | Cost |
+|---|---|---|---|
+| start | 09:20Z | 530,444,869 | $195.28 |
+| end | 10:49Z | 587,155,487 | $226.22 |
+
+S2.1 used **56,710,618 all-processed tokens** (cap 80 M) and **$30.94** of harness compute. A check at 09:32Z was stale (unchanged in every field), so the cap could not be watched mid-build. The three reviewers' own tokens were 720,802 as the harness reported them (ledger rows). Whether the session figure includes them is unmeasurable. S2 with S2.1 now totals 457,661,870 tokens and $201.52 since S2's start. No paid benchmark was run; the benchmark meter shows $0.
+
+**Re-audit.** The archive in `docs/build/gf-s2-record/` was re-audited from a fresh clone at `fbf6bf8`:
+- the frozen audit: OK, 503 events, chain intact;
+- the Greenfield-Senior audit: OK, with the three text-level warnings of a checkout that is not an installed project;
+- `close status` lists the standing no-go, the 19 open findings and the equivalent survivor, and nothing else.
