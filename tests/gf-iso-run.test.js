@@ -50,7 +50,7 @@ test('GF-ISO-1 positive: a plan-pinned command that writes the group\'s own path
   assert.strictEqual(read(ctx, 'app/out.txt'), 'ok', 'the own-path write came back');
   assert.ok(r.copiedBack.includes('app/out.txt'));
   assert.strictEqual(r.isolation.rule, 'GF-ISO-1');
-  assert.ok(['landlock', 'bwrap'].includes(r.isolation.mechanism));
+  assert.ok(['both', 'landlock', 'bwrap'].includes(r.isolation.mechanism));
 });
 
 test('GF-ISO-1: a cross-group write (web/, another group) is refused by the kernel and never reaches the real tree (A-1, A-2, I2-1)', { skip: HAVE ? false : reason }, () => {

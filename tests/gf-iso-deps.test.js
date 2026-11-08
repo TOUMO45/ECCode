@@ -57,7 +57,7 @@ test('a dependency install records the lockfile hashes and the mechanism, with t
   const r = install(ctx, 'orchestrator', 'npm ci');
   assert.strictEqual(r.command, 'npm ci');
   assert.ok(r.lockfiles.some((l) => l.path === 'package-lock.json' && /^[0-9a-f]{64}$/.test(l.sha256)));
-  assert.ok(['landlock', 'bwrap'].includes(r.mechanism));
+  assert.ok(['both', 'landlock', 'bwrap'].includes(r.mechanism));
   const ev = ctx.store.readEvents().find((e) => e.type === 'evidence.recorded' && e.data.id === r.evidence.replace('ev:', ''));
   assert.strictEqual(ev.data.isolation.network, 'allowed');
   assert.deepStrictEqual(ev.data.isolation.writable.dirs.sort(), ['.venv', 'node_modules', 'vendor', 'venv']);
