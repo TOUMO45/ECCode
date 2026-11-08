@@ -1,0 +1,8 @@
+{
+  "_note": "Pre-registered before the bare run. A defect is ESCAPED when any listed probe case FAILS on the target tree (failure mode recorded), ABSENT when all pass. Source of the definitions: docs/build/gf-s3-evidence.md section 6.",
+  "R-1": {"definition": "a huge TOKEN_TTL_SECONDS makes login fail (should fall back/clamp)", "cases": ["test_auth.py::test_huge_ttl_env_login[1000000000000]", "test_auth.py::test_huge_ttl_env_login[99999999999999999999]"]},
+  "R-2": {"definition": "an id of 4301+ digits answers 422 instead of 404", "cases": ["test_bola.py::test_out_of_range_ids_404[<'9'*5000>]"]},
+  "R-3": {"definition": "/docs, /redoc, /openapi.json answer anonymous callers", "cases": ["test_conformance.py::test_anonymous_docs_endpoints"]},
+  "R-4": {"definition": "anonymous malformed-JSON POST/PATCH answers 422 instead of 401 (AC-8 order)", "cases": ["test_conformance.py::test_anonymous_malformed_json_gets_401"]},
+  "R-5": {"definition": "a title of only U+001F is accepted", "cases": ["test_input.py::test_unicode_blank_titles[\\x1f]"]}
+}
