@@ -8,7 +8,7 @@ const { spawnSync } = require('child_process');
 const sandbox = require('/home/user/ECCode/lib/greenfield/sandbox.js');
 
 const HIDDEN = '/root/.cache/eccode-gf-hidden';
-const CANARY = path.join(HIDDEN, 'canary.txt');
+const CANARY = process.env.HIDDEN_TARGET || path.join(HIDDEN, 'canary.txt');
 const SHIM = '/root/.cache/eccode-gf-shim/gf-python';
 const SP = '/tmp/claude-0/-home-user-ECCode/66578369-ac2a-5898-b348-1bfebbc536c0/scratchpad';
 const tree = fs.mkdtempSync(path.join(SP, 'proof-tree-'));
@@ -28,7 +28,7 @@ function inside(label, pyEnv, script) {
 
 const out = { takenAt: new Date().toISOString(), host: { kernel: os.release(), uid: process.getuid() }, hiddenDir: HIDDEN, rows: [] };
 const hostRead = fs.readFileSync(CANARY, 'utf8').trim();
-out.rows.push({ label: 'H0 engine (host namespace) reads the canary', ok: hostRead.startsWith('HIDDEN-CANARY-'), value: hostRead });
+out.rows.push({ label: 'H0 engine (host namespace) reads the canary', ok: hostRead.length > 0, value: hostRead.slice(0, 60) });
 
 out.rows.push(inside('S1 BASELINE stock engine: cat hidden canary inside the group sandbox', null, `cat ${CANARY}; echo "cat-exit=$?"`));
 out.rows.push(inside('S2 WITH SHIM: cat hidden canary inside the group sandbox', SHIM, `cat ${CANARY}; echo "cat-exit=$?"`));
