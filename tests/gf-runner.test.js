@@ -101,6 +101,8 @@ const OK = [
   ['security-engineer', 'trivy fs --scanners=vuln,secret --exit-code=1 --quiet .'],
   ['frontend-engineer', 'npx playwright test --project=chromium'],
   ['frontend-engineer', 'playwright test --reporter=line'], // battery 7 (round 6)
+  ['backend-engineer', 'pytest -q -x -v -rA --tb=short tests'], // battery 11 (S2.2): every flag of the pytest form that takes no value
+  ['security-engineer', 'trivy fs --offline-scan --quiet --scanners=vuln .'], // battery 11 (S2.2): trivy's flags that take no value
 ];
 for (const [role, command] of OK) {
   test(`GF-RUN-2 positive: ${role} may run "${command}"`, () => {

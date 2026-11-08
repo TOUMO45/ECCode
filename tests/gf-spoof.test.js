@@ -175,6 +175,15 @@ test('preflight: a group role whose agent lists another role\'s server tools, or
   assert.ok(r.warnings.some((x) => /frontend-engineer/.test(x) && /other role/.test(x)));
   assert.ok(r.warnings.some((x) => /test-engineer/.test(x) && /not locked/.test(x)));
 });
+test('battery 11 (S2.2): outside the guard profile, a group role whose agent lists no tools of its own server is reported', () => {
+  const ctx = fresh();
+  install({ target: ctx.dir, profile: 'no-shell' });
+  const agent = path.join(ctx.dir, '.claude/agents/backend-engineer.md');
+  fs.writeFileSync(agent, fs.readFileSync(agent, 'utf8').replace(/^tools: (.*)$/m, (l, list) => `tools: ${list.split(',').map((t) => t.trim()).filter((t) => !t.startsWith('mcp__eccode_')).join(', ')}`));
+  const r = preflightMod.preflight(ctx.dir);
+  assert.strictEqual(r.agentTools['backend-engineer'], 'missing');
+  assert.ok(r.warnings.some((x) => /backend-engineer's agent lists no tools of its own server/.test(x)), JSON.stringify(r.warnings));
+});
 test('preflight: the process environment ECCODE_HOOKS=off is reported as hooksOff', () => {
   const ctx = fresh();
   install({ target: ctx.dir, profile: 'no-shell' });
