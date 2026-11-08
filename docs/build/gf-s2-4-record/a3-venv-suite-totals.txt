@@ -1,0 +1,16 @@
+# tests 1793
+# pass 1757
+# fail 0
+# skipped 36
+
+A3 reconciliation (recorded after the budget report):
+- Without the FastAPI venv (S2.4 head): 1756 tests, 1707 pass, 0 fail, 49 skipped.
+- With the venv (ECCODE_PYTHON at phase3-venv): 1793 tests, 1757 pass, 0 fail, 36 skipped.
+- The venv resolved 13 of the 49 skips to PASS (49 -> 36) and expanded table-driven FastAPI
+  tests into more subtests (1756 -> 1793 total). ZERO failures: every FastAPI-dependent test
+  passes against the pinned stack (the S2-era "5 fail" note is obsolete; those were fixed).
+- The remaining 36 skips need other things (a Mealie checkout, kotlinc, Docker, specific env
+  flags), not the FastAPI venv.
+- No test was removed or renamed between the S2.2 head and now (A4); the "1704 vs 1678" count
+  variance is entirely venv skip/run accounting plus subtest expansion, now resolved: with the
+  venv the suite is 1757 pass / 0 fail / 36 skip.
