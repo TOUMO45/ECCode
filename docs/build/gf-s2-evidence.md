@@ -412,3 +412,154 @@ S2.1 used **56,710,618 all-processed tokens** (cap 80 M) and **$30.94** of harne
 - the frozen audit: OK, 503 events, chain intact;
 - the Greenfield-Senior audit: OK, with the three text-level warnings of a checkout that is not an installed project;
 - `close status` lists the standing no-go, the 19 open findings and the equivalent survivor, and nothing else.
+
+## 16. S2.2, the owner's narrow fix (2026-11-08), and where S2 stands
+
+**The decision.** A narrow fix of H2-1 and H2-2 only, with:
+- the H2-3 text fixed;
+- R1's findings fixed only where they contradict the engine or block use of the acceptance event, the rest deferred;
+- one targeted review by a single zero-context reviewer;
+- a battery with an equivalence argument per survivor;
+- a pre-registered stop rule, and a cap of 40 M.
+
+**Built.**
+- `9264b39`, the design:
+  - 18.4: "The runner is the only route", and `.eccode/` in the real-tree hash;
+  - 18.5: the empty-acceptance refusal and its real reason, the battery's `round` field, what an accepted scope can still receive;
+  - 18.0: how an outside-the-model finding becomes a limit;
+  - 18.3: the sequential mode still asks before `--actor user`;
+  - 18.7: the closer's own review blocks the close;
+  - limits L-GF-52 to L-GF-60.
+- `ff9da53`, the code:
+  - in a Greenfield-Senior project, a group role is refused the frozen command tools `evidence_run`, `fix_verify`, `mutate`, `lab_repro`, `lab_hypothesis_test`, `lab_localize`, `lab_bisect` and `lab_trace`, decided at each call;
+  - the runner's evidence records the pinned command it ran, through the frozen runner's `extra` field, with `runner.executed` keeping the wrapper's command line, so task completion accepts it;
+  - the real-tree hash includes `.eccode/` except the three files the frozen record window restores and that window's lock files;
+  - the empty-acceptance message states its real reason.
+- `c59ee39` kills the eleventh battery's three live survivors.
+
+**Test-first.**
+- Before the code, 16 of 19 new rows were red (`tests/gf-review-s2-h2.test.js` and `tests/gf-docs-s2g.test.js`). The three rows that passed were controls.
+- The R2 reproductions of H2-1 (a backend test committing a frontend file) and H2-2 (an absolute write to another group's drafts) are permanent rows.
+- After the code: gf suite 1,090 of 1,090; full suite with the FastAPI venv 1,690 tests, 1,676 passed, 0 failed, 14 skipped; frozen 48 of 48.
+- `docs/limits.md`, `scripts/guards/` and `lib/project.js` are untouched.
+
+**One deviation from the owner's words, stated.** H2-2 said to exclude only the three files the frozen record window restores. The runner also leaves out that window's own lock files, `.eccode/.lock` and `.eccode/.lock.waiting-*`.
+- **Why:** another agent creates a `.lock.waiting-*` file whenever it waits to write the record. Hashing those files would fail every run during which any agent records an event.
+- **What they hold:** no data.
+- **Tests:** the deviation is pinned by a test.
+
+**In the record.**
+
+| Item | Proof |
+|---|---|
+| H2-1 (blocking) | fix verification at `fbf6bf8`: `ev-mw7vj754-012902e9` (reproduction, failed) and `ev-mw7vj8d8-0290d939` (passed); resolved fixed |
+| H2-2 (major) | `ev-mw7vjbxa-01d08ae4` / `ev-mw7vjfh4-028aaee3`; resolved fixed |
+| H2-3 (minor) | `ev-mw7vjfxk-01e35d8b` / `ev-mw7vjg3w-0280058a`; resolved fixed |
+| H1-1, H1-2, H1-3, H1-5, H1-6, H1-7, H1-13 | paired runs (`docs/build/gf-s2-record/paired-runs-s22.tsv`); resolved fixed |
+| H1-4, H1-8 to H1-12, H1-14 to H1-16 | deferred by the user as L-GF-52 to L-GF-60, as the owner's decision approved |
+
+**Batteries.**
+- **Battery 11** ran on tree `c83e717`: 20 mutants, 16 killed, 4 survived.
+  - `runner.js:65`, `runner.js:102` and `preflight.js:73` were live. Each is now killed by a test, and every occurrence was checked.
+  - `run-check.js:138` is equivalent outside a race. The argument is in design 18.7.
+- **Battery 12** ran on the review tree `0a9a71e`: 20 mutants, 19 killed, 1 survived, `run-check.js:138`, which is argued. So there is no unexplained survivor.
+
+**The targeted review** (one zero-context reviewer, security-reviewer, three dispatches on tree `0a9a71e`):
+
+| Step | Review | Result |
+|---|---|---|
+| comprehension of the S2.2 text | `rev-mw7xa589-0141c8ab` | I1-1 (minor documentation, below) |
+| critique (the two fixes and the acceptance event, inside the threat model) | `rev-mw7xpk71-0121c017` | **I2-1 (blocking, engine behavior)** |
+| readiness | `rev-mw7xryud-01d09379` | **NO-GO**, on I2-1 alone. Its checks passed: gf suite 1,093 of 1,093 (`ev-mw7xqoi5-01a7d921`), frozen 48 files (`ev-mw7xr2id-01fa2774`), protected files unchanged (`ev-mw7xr2nz-0126d200`) |
+
+**I2-1, blocking: the runner is still not the only route.** H2-1's fix refuses eight tools named in a list (`lib/greenfield/index.js:52`). Other tools of every role-locked server also run project code outside the runner:
+- `guard_migration` with proof runs the configured seed, downgrade and upgrade;
+- `security_matrix`, `security_idor`, `security_authflow` and `security_input` run the configured setup and import the app;
+- `guard_api`, `guard_perf` and `guard_race` run the same kind of probe.
+
+They run in a git worktree whose `.venv`, `venv`, `node_modules` and `vendor` are symlinks into the real tree. In the reproduction (`docs/build/gf-s2-record/s22-repro/i2-1-guard-tools.test.js`), the database group's seed wrote three files into the real tree through `guard_migration` and `security_matrix`, and neither tool refused:
+- another group's draft;
+- a frontend file;
+- a file under `.venv` through the symlink.
+
+The control row, the same seed through `gf_run`, fails the run. I ran the reproduction myself on tree `0a9a71e`: 2 failed, the control passed.
+
+**I1-1, minor.** 18.5 says a scope that does not close for another reason (for example a standing no-go) "cannot be accepted either". The engine accepts a scope that has open findings and a standing no-go; only an empty list is refused. The sentence holds only for a scope with no open finding.
+
+**Root cause of I2-1.** The H2-1 fix closed a class of tools by naming its members. That is the same failure pattern as the text-level shell rules of rounds 2 to 4: an enumeration that misses a member. A rule that closes the class would be default-deny: in a Greenfield-Senior project, a group role may call only a fixed list of tools that run no project code (its `gf_*` tools, the task and message tools, the reads), and every other tool of its server is refused. This is stated for the owner's decision. It is not built and not proposed as work.
+
+**The reviewer's outside-the-scope items** are recorded as limits, not fixed:
+- L-GF-49: a forged acceptance blocks a later valid one;
+- L-GF-51: a background process that writes after the second hash;
+- L-GF-40: no OS isolation;
+- L-GF-61 to L-GF-65 (new): undeclared tool arguments; the liveness cost of hashing `.eccode/`; `bugs` running analyzers in the real tree; the runner's evidence recording `.` as its working directory; `close accept` missing from the help text.
+
+**The stop rule, applied.** The pre-registered rule said: "No blocking/major engine finding inside the scope and battery clean: S2 closes via normal closure ...; Otherwise: STOP and report." The review raised a blocking engine finding inside the scope (I2-1). **Nothing was fixed, and S2 is not closed.**
+
+**What the owner's announced next step meets in the engine, stated plainly.** The owner's next step is to reduce scope to the backend and test groups and close S2 with acceptance and limits. On this record:
+- GF-CLOSE-6 as built refuses every blocking finding, and I2-1 is blocking. So `close accept` is refused while I2-1 is open, whatever the scope.
+- Reducing scope to the backend and test groups does not remove I2-1: the backend role's server has the same guard and security tools.
+- The standing NO-GO on `0a9a71e` does not block an acceptance.
+- I1-1 (minor) is open and would be listed in an acceptance with a limit.
+
+**Accounting.**
+
+| Snapshot | Time (2026-11-08) | All processed tokens | Cost |
+|---|---|---|---|
+| start | 13:21Z | 593,321,209 | $228.07 |
+| end | 14:37Z | 626,476,629 | $242.74 |
+
+S2.2 used **33,155,420 all-processed tokens** (cap 40 M) and **$14.67**. The reviewer's 313,991 tokens are reported separately by the harness. S2 with S2.1 and S2.2 totals **496,983,012 tokens and $218.04** since S2's start. No paid benchmark was run; the benchmark meter shows $0.
+
+## 17. A short note before S3 (the owner asked for it with the S2.2 decision)
+
+**The basis.** S2 took 497 M tokens and $218 in all:
+
+| Segment | Tokens |
+|---|---|
+| build and rounds 1 to 4 | 266 M |
+| round 5 | 65 M |
+| round 6 | 38 M |
+| S2.1 | 57 M |
+| S2.2 | 33 M |
+| the reports in between | about 38 M |
+
+The closing loop, rounds 2 to 6 plus S2.1 and S2.2, was most of it. Its findings came in classes the documents had claimed closed:
+- shell text rules;
+- git-based comparison;
+- `.eccode/` coverage;
+- named tool lists.
+
+The lesson for S3: a slice whose rules enumerate what they block will not converge under hostile review. Each rule should be stated as default-deny before it is built.
+
+**S3 as registered (17.7):** the contract-test generator and the mock server, GF-FE-1, GF-FRZ-3/4 and GF-ACC-1/2. The estimate, in the approved lower-cost style (a fresh session, at most two closing rounds after the first, narrow review scopes):
+
+| Item | Estimate |
+|---|---|
+| Tokens | 180 to 300 M |
+| Harness compute | about $75 to $130 (at S2's $0.43 per million) |
+| Wall time (active) | 3 to 5 h |
+| Tests | 150 to 300 |
+
+Risk: S3's contract tests and mock server are another surface that runs project code, so the closing loop can stall as S2's did.
+
+**Reduced-scope variant, proposed (backend and test groups only, one small project):**
+- Scope:
+  - the contract-test generator for the backend only (pytest tests generated from the sealed OpenAPI);
+  - GF-ACC-1/2 for the test group (sealed acceptance tests);
+  - GF-FRZ-3/4 for those files only.
+- Left out: the mock server and GF-FE-1, the frontend side.
+- Target: one small FastAPI project.
+- Review: one targeted round on the diff, plus at most one fix round.
+- Rules: the new rules are stated default-deny up front.
+
+| Item | Estimate |
+|---|---|
+| Tokens | 70 to 130 M |
+| Harness compute | about $30 to $56 |
+| Wall time (active) | 2 to 4 h |
+| Tests | 80 to 150 |
+
+Basis: S2.2 (a narrow fix, one targeted review, two batteries) measured 33 M, and S2.1 (a redesign, three reviewers) measured 57 M. The reduced S3 is about two to three times S2.2's build plus one or two narrow rounds.
+
+All figures in this section are judgment ranges, not measurements (L-GF-12). S3 has not started. S3.5 (G0.5) is not approved and is not counted here.

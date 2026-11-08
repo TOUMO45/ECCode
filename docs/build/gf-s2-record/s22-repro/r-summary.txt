@@ -1,0 +1,17 @@
+Readiness of S2.2 (security-reviewer) on tree 0a9a71ea (commit c59ee39). Verdict: NO-GO. All three checks pass and no protected file changed; the verdict rests only on my critique, which finds fix H2-1 broken.
+
+Checks, each run from my clone with the engine's evidence command:
+(a) The gf-* suite passes: 1093 tests, 0 failed, 0 skipped (ev:ev-mw7xqoi5-01a7d921).
+(b) The frozen engine is unchanged. The check prints "frozen: 48 files" (ev:ev-mw7xr2id-01fa2774).
+(c) git diff --stat fbf6bf8..HEAD (ev:ev-mw7xr2nz-0126d200). The range also contains 233d60d, the S2.1 evidence commit (docs/build/* only). S2.2's own three commits (9264b39, ff9da53, c59ee39) touch only lib/greenfield/index.js, runner.js, run-check.js and closure.js, docs/design/greenfield-senior.md, docs/limits-greenfield.md and tests. docs/limits.md, scripts/guards/ and lib/project.js are unchanged (the restricted diff is empty).
+
+Fix H2-2 is present and holds. The real-tree hash includes .eccode/ and excepts only the three files the record window restores and that window's lock files (lib/greenfield/run-check.js:30). The S2.2 tests of it pass in (a).
+
+Fix H2-1 is broken (critique finding I2-1, blocking). The refusal covers only the eight tools in COMMAND_TOOLS (lib/greenfield/index.js:52). Other tools of the same role-locked server still run project commands and project code for a group role, outside the runner:
+- guard_migration with proof runs the seed, downgrade and upgrade (lib/guards/migration.js:153).
+- the security_* probes run the setup and import the app (lib/security.js:94).
+- guard_api, guard_perf and guard_race do the same kind of run.
+
+Each runs in a git worktree whose dependency directories are symlinks to the real tree (lib/worktree.js:27), with no copy and no real-tree hash. Every role is given every tool of its server (lib/install.js:168), and the hook checks only the server name (scripts/hooks/guard.js:374). My reproduction (review-i/i2-1-guard-tools.test.js) shows the db group's code writing another group's draft, a frontend path and the real .venv through guard_migration and security_matrix. The same code run through gf_run fails with exit 99.
+
+Residuals, not findings: I1-1 (GF-CLOSE-6 wording) and the OUTSIDE list of my critique review.

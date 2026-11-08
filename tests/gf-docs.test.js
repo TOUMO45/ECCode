@@ -57,9 +57,9 @@ test('the wording check itself sees a bare use (the check is not vacuous)', () =
   assert.ok(ok.every((s) => !/prevent/i.test(s) || /managed|audit/i.test(s)));
 });
 
-test('the greenfield limits register has L-GF-1 to L-GF-60, each with a disposition and the owner\'s wording on L-GF-1', () => {
+test('the greenfield limits register has L-GF-1 to L-GF-65, each with a disposition and the owner\'s wording on L-GF-1', () => {
   const text = read('docs/limits-greenfield.md');
-  for (let n = 1; n <= 60; n++) {
+  for (let n = 1; n <= 65; n++) {
     const row = text.split('\n').find((l) => l.startsWith(`| L-GF-${n} |`));
     assert.ok(row, `row L-GF-${n} is missing`);
     assert.match(row, /\| (Open, named|Open, mitigated|By design) \|/, `L-GF-${n} needs a disposition`);

@@ -34,6 +34,7 @@ Owner decision 6 (2026-11-03): record agent compute (tokens) per task. Figures a
 | 2026-11-08 | Greenfield-senior S2.1 review, R1 comprehension (zero-context, section 18 alone) on tree `9340a06`; recorded review `rev-mw7pbs2f-01ca0b71` itself | general-purpose | 166,743 (as reported) | 15 | 461.9 s | 16 documentation findings (6 major, 10 minor) |
 | 2026-11-08 | Greenfield-senior S2.1 review, R2 critique (hostile, limited to the threat model of design 18.0, on the runner and the acceptance event) on tree `9340a06`; recorded review `rev-mw7pnwrk-01ed3bc1` itself | general-purpose | 312,134 (as reported) | 65 | 1,025.0 s | 3 defects (1 blocking, 1 major, 1 minor), each with a failing reproduction; an outside-the-model list for the register |
 | 2026-11-08 | Greenfield-senior S2.1 review, R3 readiness on tree `9340a06`; recorded review `rev-mw7pjh8r-01f64f1a` itself | general-purpose | 241,925 (as reported) | 49 | 834.9 s | NO-GO: the real-tree hash leaves out `.eccode/`, which the frozen record window covers only for three files |
+| 2026-11-08 | Greenfield-senior S2.2 targeted review (one zero-context reviewer, security-reviewer, three dispatches: comprehension of the S2.2 text, critique of the two fixes and the acceptance event inside the threat model, readiness) on tree `0a9a71e`; recorded reviews `rev-mw7xa589-0141c8ab`, `rev-mw7xpk71-0121c017`, `rev-mw7xryud-01d09379` itself | general-purpose | 313,991 (as reported) | 73 | 1,030.5 s | I1-1 (minor documentation); I2-1 (blocking defect, reproduced); readiness NO-GO on I2-1 alone |
 
 ## Per-slice usage (owner decision of 2026-11-07)
 
@@ -54,4 +55,7 @@ Owner decision 6 (2026-11-03): record agent compute (tokens) per task. Figures a
 | S2, the report after round 6 | 524,922,979 (00:01Z) | 530,444,869 (09:20Z) | 5,521,890 | 20,052 | $1.78 | measured |
 | S2.1 (the owner's structural redesign) | 530,444,869 (09:20Z) | 587,155,487 (10:49Z) | **56,710,618** | 332,238 | $30.94 | measured; the owner's cap was 80 M. A check at 09:32Z was stale (unchanged in every field), so the cap could not be watched during the build. The three reviewers' 720,802 tokens (rows above) are reported by the harness separately; whether this figure includes them is unmeasurable |
 | **S2 with S2.1** | 129,493,617 | 587,155,487 | **457,661,870** | 2,447,035 | **$201.52** | S2 is not closed: S2.1's review stopped it under the owner's stop rule (`docs/build/gf-s2-evidence.md` section 15) |
+| S2, the report after S2.1 | 587,155,487 (10:49Z) | 593,321,209 (13:21Z) | 6,165,722 | 19,954 | $1.85 | measured |
+| S2.2 (the owner's narrow fix) | 593,321,209 (13:21Z) | 626,476,629 (14:37Z) | **33,155,420** | 149,285 | $14.67 | measured; the owner's cap was 40 M. The reviewer's 313,991 tokens (row above) are reported by the harness separately; whether this figure includes them is unmeasurable |
+| **S2 with S2.1 and S2.2** | 129,493,617 | 626,476,629 | **496,983,012** | 2,616,274 | **$218.04** | S2 is not closed: S2.2's review stopped it under the owner's stop rule (`docs/build/gf-s2-evidence.md` section 16) |
 
