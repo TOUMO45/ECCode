@@ -1,0 +1,10 @@
+B-3 anon POST /v1/login 5000-deep object -> 500 len=21 'Internal Server Error'
+B-3 anon POST /v1/register 5000-deep object -> 500 len=21 'Internal Server Error'
+B-7 owner GET /v1/tasks/1 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/+1 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/01 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/1.0 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/%201 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/1_0 -> 404 len=27 '{"detail":"Task not found"}'
+B-10 POST /v1/tasks 5MB title -> 422 len=5000158 '{"detail":[{"
+B-9 default db: task_tracker.db mode 0o644
