@@ -1,0 +1,43 @@
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python node --test tests/gf-runtime.test.js
+ok 1 - I2 GF-VAL-1: the guard's pytest suite passes on a minimal default FastAPI app
+ok 2 - configFromOpenapi: global security, security: [] = public, an empty requirement = public, per-operation override
+ok 3 - install: vendors the package, writes config.json and MANIFEST.sha256 covering every vendored file
+ok 4 - check positive: an installed and mounted guard passes (files and canary)
+ok 5 - check negative: a vendored but NOT mounted guard is refused by the canary
+ok 6 - check negative: a tampered vendored file is refused (even though the canary still passes)
+ok 7 - check negative: a changed config.json, a missing file, an extra file and a stale manifest are refused
+ok 8 - check: the canary fails closed when python cannot run the app
+ok 9 - gate positive: approving phase:build with an installed, mounted guard reaches the frozen review
+ok 10 - gate negative (bypass): a vendored but unmounted guard is refused with GF-RT-1; the frozen review is not reached
+ok 11 - gate negative (bypass): a tampered vendored file is refused with GF-RT-1
+ok 12 - gate negative: a runtime never installed is refused with GF-RT-1
+ok 13 - gate scope: a rejection, another phase gate, and a project without gf.runtime.enforce are not checked
+# tests 13
+# pass 13
+# fail 0
+# skipped 0
+
+$ env -u ECCODE_SEED_KEY PYTHONDONTWRITEBYTECODE=1 /root/.cache/eccode/phase3-venv/bin/python -m pytest -q -p no:cacheprovider -o addopts= tests/runtime
+50 passed, 1 warning in 0.96s
+
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python npm test   (summary)
+# tests 1806
+# pass 1760
+# fail 0
+# cancelled 0
+# skipped 46
+
+$ docs/build/gf-s3-1-record/tools/make-s31-tree.sh <scratchpad>/s31-I2
+installed 3 files into <scratchpad>/s31-I2/eccode_runtime
+patching file app/main.py
+=== vendored manifest (<scratchpad>/s31-I2/eccode_runtime/MANIFEST.sha256) ===
+36cc9d9c7d4172ac2038f882b8a05dc62ce238b7fc41a43c676d1af8d8d8d527  eccode_runtime/__init__.py
+d21b96b0473141120f760703124ef4fec0342cebe3c24b8d12ad5438733940d2  eccode_runtime/config.json
+9c1926182bfbf0d9ea0c09fb5199ab69ec552c267a144bb58f74f6fbb75a26e9  eccode_runtime/guard.py
+=== engine runtime check (GF-RT-1) ===
+GF-RT-1 check: no problems (files match the engine, canary passed)
+
+$ docs/build/gf-s3-1-record/tools/item-check.sh I2 <scratchpad>/s31-I2
+I2 hidden: CRITERIA PASSED: 24 of 24 | cases: 220 pass, 0 fail, 1 skip, total 221
+I2 probes: 6 failed, 110 passed, 3 skipped, 1 warning in 114.66s (0:01:54)
+I2 bola failures: 1 (expected 1 = R-2)

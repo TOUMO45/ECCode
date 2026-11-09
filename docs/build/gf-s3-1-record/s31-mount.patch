@@ -1,0 +1,18 @@
+--- a/app/main.py
++++ b/app/main.py
+@@ -9,6 +9,7 @@
+ from app.config import Settings, get_settings
+ from app.db import init_db, make_engine, make_session_factory
+ from app.routes import auth, tasks
++from eccode_runtime import EccodeGuard
+ 
+ 
+ async def validation_error_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
+@@ -46,6 +47,7 @@
+     app.state.session_factory = make_session_factory(engine)
+     app.add_exception_handler(RequestValidationError, validation_error_handler)
+     app.add_exception_handler(Exception, unhandled_error_handler)
++    app.add_middleware(EccodeGuard)
+     app.include_router(auth.router)
+     app.include_router(tasks.router)
+     return app

@@ -1,0 +1,87 @@
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python node --test tests/gf-runtime.test.js
+(the first test runs: <python> -m pytest -q -p no:cacheprovider -o addopts= tests/runtime)
+
+not ok 1 - I2 GF-VAL-1: the guard's pytest suite passes on a minimal default FastAPI app
+    50 failed, 1 warning in 0.76s
+not ok 2 - configFromOpenapi: global security, security: [] = public, an empty requirement = public, per-operation override
+    Cannot find module '/home/user/ECCode/lib/greenfield/runtime.js'
+not ok 3 - install: vendors the package, writes config.json and MANIFEST.sha256 covering every vendored file
+    Cannot find module '/home/user/ECCode/lib/greenfield/runtime.js'
+not ok 4 - check positive: an installed and mounted guard passes (files and canary)
+    Cannot find module '/home/user/ECCode/lib/greenfield/runtime.js'
+not ok 5 - check negative: a vendored but NOT mounted guard is refused by the canary
+    Cannot find module '/home/user/ECCode/lib/greenfield/runtime.js'
+not ok 6 - check negative: a tampered vendored file is refused (even though the canary still passes)
+    Cannot find module '/home/user/ECCode/lib/greenfield/runtime.js'
+not ok 7 - check negative: a changed config.json, a missing file, an extra file and a stale manifest are refused
+    Cannot find module '/home/user/ECCode/lib/greenfield/runtime.js'
+not ok 8 - check: the canary fails closed when python cannot run the app
+    Cannot find module '/home/user/ECCode/lib/greenfield/runtime.js'
+not ok 9 - gate positive: approving phase:build with an installed, mounted guard reaches the frozen review
+    Cannot find module '/home/user/ECCode/lib/greenfield/runtime.js'
+not ok 10 - gate negative (bypass): a vendored but unmounted guard is refused with GF-RT-1; the frozen review is not reached
+    Cannot find module '/home/user/ECCode/lib/greenfield/runtime.js'
+not ok 11 - gate negative (bypass): a tampered vendored file is refused with GF-RT-1
+    Cannot find module '/home/user/ECCode/lib/greenfield/runtime.js'
+not ok 12 - gate negative: a runtime never installed is refused with GF-RT-1
+ok 13 - gate scope: a rejection, another phase gate, and a project without gf.runtime.enforce are not checked
+# tests 13
+# pass 1
+# fail 12
+# skipped 0
+
+$ env -u ECCODE_SEED_KEY PYTHONDONTWRITEBYTECODE=1 /root/.cache/eccode/phase3-venv/bin/python -m pytest -q -p no:cacheprovider -o addopts= tests/runtime
+     50 E       ModuleNotFoundError: No module named 'eccode_runtime'
+     49 tests/runtime/conftest.py:39: ModuleNotFoundError
+      1 tests/runtime/test_guard_val.py:226: ModuleNotFoundError
+      1 FAILED tests/runtime/test_guard_val.py::test_valid_json_reaches_the_app_unchanged
+      1 FAILED tests/runtime/test_guard_val.py::test_valid_escaped_pair_is_accepted
+      1 FAILED tests/runtime/test_guard_val.py::test_utf16_json_is_rejected_not_utf8
+      1 FAILED tests/runtime/test_guard_val.py::test_unmounted_guard_lets_the_bad_body_through
+      1 FAILED tests/runtime/test_guard_val.py::test_string_over_the_length_cap_is_rejected
+      1 FAILED tests/runtime/test_guard_val.py::test_streamed_body_under_the_cap_is_replayed_unchanged
+      1 FAILED tests/runtime/test_guard_val.py::test_streamed_body_over_the_cap_is_rejected_without_content_length
+      1 FAILED tests/runtime/test_guard_val.py::test_secured_operation_without_authorization_gets_401_first
+      1 FAILED tests/runtime/test_guard_val.py::test_secured_operation_with_authorization_gets_422
+      1 FAILED tests/runtime/test_guard_val.py::test_secured_operation_valid_body_passes_through_without_401
+      1 FAILED tests/runtime/test_guard_val.py::test_rejection_never_contains_request_content
+      1 FAILED tests/runtime/test_guard_val.py::test_raw_encoded_surrogate_is_rejected[{"a": "\xed\xbf\xbf"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_raw_encoded_surrogate_is_rejected[{"a": "\xed\xa0\x80"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_public_operation_without_authorization_gets_422
+      1 FAILED tests/runtime/test_guard_val.py::test_parsed_scalar_top_level_is_rejected[true]
+      1 FAILED tests/runtime/test_guard_val.py::test_parsed_scalar_top_level_is_rejected[null]
+      1 FAILED tests/runtime/test_guard_val.py::test_parsed_scalar_top_level_is_rejected[1]
+      1 FAILED tests/runtime/test_guard_val.py::test_parsed_scalar_top_level_is_rejected["text"]
+      1 FAILED tests/runtime/test_guard_val.py::test_parsed_scalar_top_level_is_rejected[ 3.5 ]
+      1 FAILED tests/runtime/test_guard_val.py::test_non_json_content_type_skips_the_json_filters
+      1 FAILED tests/runtime/test_guard_val.py::test_nesting_over_64_is_rejected_iteratively[65]
+      1 FAILED tests/runtime/test_guard_val.py::test_nesting_over_64_is_rejected_iteratively[1000]
+      1 FAILED tests/runtime/test_guard_val.py::test_nesting_over_64_is_rejected_iteratively[100000]
+      1 FAILED tests/runtime/test_guard_val.py::test_missing_content_type_is_checked_as_json
+      1 FAILED tests/runtime/test_guard_val.py::test_missing_config_fails_closed
+      1 FAILED tests/runtime/test_guard_val.py::test_malformed_json_reaches_the_app_unchanged[{bad]
+      1 FAILED tests/runtime/test_guard_val.py::test_malformed_json_reaches_the_app_unchanged[{"a": 1,}]
+      1 FAILED tests/runtime/test_guard_val.py::test_malformed_json_reaches_the_app_unchanged[tru]
+      1 FAILED tests/runtime/test_guard_val.py::test_malformed_json_reaches_the_app_unchanged[]
+      1 FAILED tests/runtime/test_guard_val.py::test_malformed_json_reaches_the_app_unchanged[[1, 2]
+      1 FAILED tests/runtime/test_guard_val.py::test_malformed_json_reaches_the_app_unchanged["unterminated]
+      1 FAILED tests/runtime/test_guard_val.py::test_lone_escaped_surrogate_is_rejected[{"a": "x\uDFFF"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_lone_escaped_surrogate_is_rejected[{"a": "\udc00"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_lone_escaped_surrogate_is_rejected[{"a": "\ud800x"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_lone_escaped_surrogate_is_rejected[{"a": "\ud800\ud800\udc00"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_lone_escaped_surrogate_is_rejected[{"a": "\ud800"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_lone_escaped_surrogate_is_rejected[{"a": "\uD800\u0041"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_lone_escaped_surrogate_is_rejected[{"\ud800": 1}]
+      1 FAILED tests/runtime/test_guard_val.py::test_lone_escaped_surrogate_is_rejected[["\ud800"]]
+      1 FAILED tests/runtime/test_guard_val.py::test_json_suffix_content_type_is_checked
+      1 FAILED tests/runtime/test_guard_val.py::test_items_endpoint_rejects_before_validation_and_handler
+      1 FAILED tests/runtime/test_guard_val.py::test_invalid_utf8_is_rejected[{"a": "\xff"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_invalid_utf8_is_rejected[{"a": "\xc3"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_invalid_utf8_is_rejected[{"a": "\xc0\xaf"}]
+      1 FAILED tests/runtime/test_guard_val.py::test_invalid_utf8_is_rejected[\xfe\xff\x00{]
+      1 FAILED tests/runtime/test_guard_val.py::test_get_without_body_passes
+      1 FAILED tests/runtime/test_guard_val.py::test_depth_64_and_string_100000_are_accepted
+      1 FAILED tests/runtime/test_guard_val.py::test_brackets_inside_strings_do_not_count_as_depth
+      1 FAILED tests/runtime/test_guard_val.py::test_body_over_the_size_cap_is_rejected_by_content_length
+      1 FAILED tests/runtime/test_guard_val.py::test_body_at_the_size_cap_is_accepted
+      1 50 failed, 1 warning in 1.00s
