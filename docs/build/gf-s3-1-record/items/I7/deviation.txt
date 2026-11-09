@@ -1,0 +1,9 @@
+I7 deviation (canonical form).
+The item text gives the canonical id form as ^(0|[1-9][0-9]*)$. Implemented literally, the guard also rewrote "-1",
+so the app answered 422 instead of its own 404 for a negative id. The first item-check run (label I7, before this
+change) regressed: hidden 23/24 (AC-16: 3 cases with id -1 expect 404), probes 7 failed (test_bola
+test_out_of_range_ids_404[-1] and [-9223372036854775809] new). Per the rules the item was not committed at that point.
+Fix in the engine (no test, probe or check edited): canonical = the form str(int(x)) gives, ^(0|-?[1-9][0-9]*)$, so a
+negative canonical id is passed unchanged and the app keeps its own answer; "-0", "+1", "01", "1.0", " 1", "1 ",
+fullwidth digits and "1_0" are still rewritten to "not-canonical". The B-7 target forms (+1, 01, 1.0, %201) are all
+covered. The item-check below green.txt was re-run after this change.

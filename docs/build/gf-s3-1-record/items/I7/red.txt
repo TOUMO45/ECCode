@@ -1,0 +1,23 @@
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python node --test --test-name-pattern=I7 tests/gf-runtime.test.js
+not ok 1 - I7 configFromOpenapi: integer path params (path-item and operation level, local $ref) are recorded per operation
+not ok 2 - I7 B-7: the guard's canonical-id pytest file passes (non-canonical ids get the app's own 401/422; canonical unchanged)
+# tests 2
+# pass 0
+# fail 2
+# skipped 0
+
+$ env -u ECCODE_SEED_KEY PYTHONDONTWRITEBYTECODE=1 /root/.cache/eccode/phase3-venv/bin/python -m pytest -q -p no:cacheprovider -o addopts= tests/runtime/test_guard_ids.py
+FAILED tests/runtime/test_guard_ids.py::test_only_the_integer_segments_of_a_matching_template_are_rewritten
+FAILED tests/runtime/test_guard_ids.py::test_raw_path_is_rewritten_with_the_path
+12 failed, 2 passed, 1 warning in 0.72s
+
+$ env -u ECCODE_SEED_KEY /root/.cache/eccode/phase3-venv/bin/python docs/build/gf-s3-1-record/tools/ids-check.py <scratchpad>/s31-I6   (the S3.1 tree as of I6)
+GET /v1/tasks/1      owner=200 anonymous=401
+GET /v1/tasks/+1     owner=200 anonymous=401
+GET /v1/tasks/01     owner=200 anonymous=401
+GET /v1/tasks/1.0    owner=200 anonymous=401
+GET /v1/tasks/%201   owner=200 anonymous=401
+GET /v1/tasks/%2B1   owner=200 anonymous=401
+GET /v1/tasks/-0     owner=404 anonymous=401
+GET /v1/tasks/1%20   owner=200 anonymous=401
+B-7 PRESENT: non-canonical ids answered 200 for +1, 01, 1.0, %201, %2B1, 1%20

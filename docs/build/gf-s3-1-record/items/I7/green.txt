@@ -1,0 +1,48 @@
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python node --test --test-name-pattern=I7 tests/gf-runtime.test.js
+ok 1 - I7 configFromOpenapi: integer path params (path-item and operation level, local $ref) are recorded per operation
+ok 2 - I7 B-7: the guard's canonical-id pytest file passes (non-canonical ids get the app's own 401/422; canonical unchanged)
+# tests 2
+# pass 2
+# fail 0
+# skipped 0
+
+$ env -u ECCODE_SEED_KEY PYTHONDONTWRITEBYTECODE=1 /root/.cache/eccode/phase3-venv/bin/python -m pytest -q -p no:cacheprovider -o addopts= tests/runtime/test_guard_ids.py
+14 passed, 1 warning in 0.68s
+
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python npm test   (summary)
+# tests 1828
+# pass 1786
+# fail 0
+# cancelled 0
+# skipped 42
+
+$ docs/build/gf-s3-1-record/tools/make-s31-tree.sh <scratchpad>/s31-I7
+installed 3 files into <scratchpad>/s31-I7/eccode_runtime
+patching file app/main.py
+=== vendored manifest (<scratchpad>/s31-I7/eccode_runtime/MANIFEST.sha256) ===
+36cc9d9c7d4172ac2038f882b8a05dc62ce238b7fc41a43c676d1af8d8d8d527  eccode_runtime/__init__.py
+c117884b433070b7bfcb71e7bb7f8906bf6dbfff8b7212f1753b763cf4837213  eccode_runtime/config.json
+afa41b7ef8a55747d6971e5c1271ed426e5e1c174b7f4904688bd378d4ed01a2  eccode_runtime/guard.py
+=== engine runtime check (GF-RT-1) ===
+GF-RT-1 check: no problems (files match the engine, canary passed)
+
+$ docs/build/gf-s3-1-record/tools/item-check.sh I7 <scratchpad>/s31-I7
+I7 hidden: CRITERIA PASSED: 24 of 24 | cases: 220 pass, 0 fail, 1 skip, total 221
+I7 probes: 5 failed, 111 passed, 3 skipped, 1 warning in 114.14s (0:01:54)
+I7 bola failures: 1 (expected 1 = R-2)
+FAILED test_auth.py::test_huge_ttl_env_login[1000000000000]
+FAILED test_auth.py::test_huge_ttl_env_login[99999999999999999999]
+FAILED test_bola.py::test_out_of_range_ids_404[999999999999999999999999999999999999999999999999999999999999999
+FAILED test_conformance.py::test_anonymous_malformed_json_gets_401
+FAILED test_input.py::test_unicode_blank_titles[\x1f]
+
+$ env -u ECCODE_SEED_KEY /root/.cache/eccode/phase3-venv/bin/python docs/build/gf-s3-1-record/tools/ids-check.py <scratchpad>/s31-I7
+GET /v1/tasks/1      owner=200 anonymous=401
+GET /v1/tasks/+1     owner=422 anonymous=401
+GET /v1/tasks/01     owner=422 anonymous=401
+GET /v1/tasks/1.0    owner=422 anonymous=401
+GET /v1/tasks/%201   owner=422 anonymous=401
+GET /v1/tasks/%2B1   owner=422 anonymous=401
+GET /v1/tasks/-0     owner=422 anonymous=401
+GET /v1/tasks/1%20   owner=422 anonymous=401
+B-7 ABSENT: only the canonical id 1 answers 200

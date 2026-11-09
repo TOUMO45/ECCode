@@ -306,3 +306,26 @@ test('I3 docs switch: ECCODE_DOCS_ENABLED=1 restores them; an unmounted guard le
   load().install(bare);
   for (const p of ['/docs', '/redoc', '/openapi.json']) assert.strictEqual(docsStatus(bare)[p][0], 200, p);
 });
+
+// ---- I7 canonical ids --------------------------------------------------------------------------------------------
+
+test('I7 configFromOpenapi: integer path params (path-item and operation level, local $ref) are recorded per operation', () => {
+  const doc = JSON.parse(JSON.stringify(OPENAPI));
+  doc.components.parameters = { TaskId: { name: 'task_id', in: 'path', required: true, schema: { type: 'integer' } } };
+  doc.paths['/v1/tasks/{task_id}'].parameters = [{ $ref: '#/components/parameters/TaskId' }];
+  doc.paths['/v1/users/{uid}/notes/{slug}'] = { get: { parameters: [{ name: 'uid', in: 'path', schema: { type: 'integer', format: 'int64' } }, { name: 'slug', in: 'path', schema: { type: 'string' } }], responses: {} } };
+  doc.paths['/v1/q'] = { get: { parameters: [{ name: 'page', in: 'query', schema: { type: 'integer' } }], responses: {} } };
+  const cfg = load().configFromOpenapi(doc);
+  assert.deepStrictEqual(cfg.int_params, [
+    { method: 'GET', pathTemplate: '/v1/tasks/{task_id}', params: ['task_id'] },
+    { method: 'PATCH', pathTemplate: '/v1/tasks/{task_id}', params: ['task_id'] },
+    { method: 'GET', pathTemplate: '/v1/users/{uid}/notes/{slug}', params: ['uid'] },
+  ]);
+});
+
+test('I7 B-7: the guard\'s canonical-id pytest file passes (non-canonical ids get the app\'s own 401/422; canonical unchanged)', PY_OPTS, () => {
+  const r = spawnSync(py.python, ['-m', 'pytest', '-q', '-p', 'no:cacheprovider', '-o', 'addopts=', path.join('tests', 'runtime', 'test_guard_ids.py')], { cwd: ROOT, encoding: 'utf8', env: env() });
+  const out = `${r.stdout}${r.stderr}`;
+  assert.strictEqual(r.status, 0, out.slice(-4000));
+  assert.doesNotMatch(out, /skipped|failed|error/i, out.slice(-2000));
+});

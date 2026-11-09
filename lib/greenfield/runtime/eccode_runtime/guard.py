@@ -23,6 +23,13 @@ GF-DOCS-1 (docs closed by default): /docs, /docs/oauth2-redirect, /redoc and /op
 {"detail":"Not Found"} for every method, unless config.json has docs_enabled: true or the environment has exactly
 ECCODE_DOCS_ENABLED=1 when the guard is constructed (the explicit switch).
 
+GF-ID-1 (I7, canonical integer path ids): config.int_params lists, per operation, the path params the contract types
+as integers. A request whose segment for such a param is not a canonical ASCII decimal integer ``^(0|-?[1-9][0-9]*)$``
+(the form ``str(int(x))`` gives; a negative id is canonical, so the app keeps its own 404 for it) after
+percent-decoding (``+1``, ``01``, ``1.0``, `` 1``, a fullwidth digit, ...) is not answered by the guard: the segment
+(in ``path`` and ``raw_path``) is replaced by the fixed token ``not-canonical`` and the request passes on, so the app
+gives exactly its own non-integer-id answer, in its own auth order. Canonical ids of any size are left alone.
+
 Stage order (no credentials -> 401 first): config.secured lists the operations the contract secures (openapi
 ``security``, global or per operation; ``security: []`` is public). A GF-VAL-1 rejection of a request to a secured
 operation that has NO Authorization header is answered 401 {"detail":"Not authenticated"} with
@@ -35,6 +42,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from urllib.parse import quote
 
 RULE_VAL = "GF-VAL-1"
 RULE_DOCS = "GF-DOCS-1"
@@ -45,6 +53,8 @@ DEFAULT_LIMITS = {"max_body_bytes": 1048576, "max_depth": 64, "max_string_length
 _OUTSIDE = re.compile(r'[\[\]{}"]')
 _INSIDE = re.compile(r'["\\]')
 _HEX4 = re.compile(r"[0-9a-fA-F]{4}")
+_CANONICAL = re.compile(r"(0|-?[1-9][0-9]*)", re.ASCII)
+NOT_CANONICAL = "not-canonical"
 
 
 class _Reject(Exception):
@@ -56,6 +66,21 @@ class _Reject(Exception):
 def _template_regex(template: str):
     parts = re.split(r"(\{[^/{}]+\})", template)
     return re.compile("^" + "".join("[^/]+" if p.startswith("{") and p.endswith("}") else re.escape(p) for p in parts) + "$")
+
+
+def _int_template(template: str, params):
+    """Segments of a path template: a literal string, or True for an integer param, or None for another param."""
+    names = set(params)
+    out = []
+    for seg in template.split("/"):
+        m = re.fullmatch(r"\{([^/{}:]+)\}", seg)
+        if m:
+            out.append(True if m.group(1) in names else None)
+        elif "{" in seg or "}" in seg:
+            return None  # a template the guard does not model (converters, partial segments): left alone
+        else:
+            out.append(seg)
+    return out if any(x is True for x in out) else None
 
 
 def _is_json_type(content_type: str | None) -> bool:
@@ -163,6 +188,40 @@ class EccodeGuard:
         self.max_string = int(limits["max_string_length"])
         self.docs_enabled = cfg.get("docs_enabled") is True or os.environ.get("ECCODE_DOCS_ENABLED") == "1"
         self.secured = [(str(op["method"]).upper(), _template_regex(str(op["pathTemplate"]))) for op in cfg.get("secured") or []]
+        self.int_params = []
+        for op in cfg.get("int_params") or []:
+            segs = _int_template(str(op["pathTemplate"]), [str(x) for x in op.get("params") or []])
+            if segs is not None:
+                self.int_params.append((str(op["method"]).upper(), segs))
+
+    def _canonical_ids(self, scope):
+        """I7: the scope with every non-canonical integer-param segment replaced by NOT_CANONICAL (or the same scope)."""
+        if not self.int_params:
+            return scope
+        path = scope.get("path") or ""
+        method = str(scope.get("method", "GET")).upper()
+        method = "GET" if method == "HEAD" else method
+        segs = path.split("/")
+        bad = set()
+        for m, tpl in self.int_params:
+            if m != method or len(tpl) != len(segs):
+                continue
+            # literal segments equal; a param segment (True or None) matches any non-empty segment, as Starlette's str convertor
+            if all((v != "") if (t is None or t is True) else (t == v) for t, v in zip(tpl, segs)):
+                bad.update(i for i, (t, v) in enumerate(zip(tpl, segs)) if t is True and not _CANONICAL.fullmatch(v))
+        if not bad:
+            return scope
+        new_segs = [NOT_CANONICAL if i in bad else v for i, v in enumerate(segs)]
+        new = dict(scope)
+        new["path"] = "/".join(new_segs)
+        raw = scope.get("raw_path")
+        if isinstance(raw, (bytes, bytearray)):
+            rsegs = bytes(raw).split(b"/")
+            if len(rsegs) == len(segs):
+                new["raw_path"] = b"/".join(NOT_CANONICAL.encode() if i in bad else v for i, v in enumerate(rsegs))
+            else:
+                new["raw_path"] = quote(new["path"]).encode()
+        return new
 
     # ---- responses -------------------------------------------------------------------------------------------------
 
@@ -192,6 +251,7 @@ class EccodeGuard:
         if not self.docs_enabled and scope.get("path") in DOCS_PATHS:
             await self._send(send, 404, {"detail": "Not Found"}, RULE_DOCS)
             return
+        scope = self._canonical_ids(scope)
         headers = {}
         for k, v in scope.get("headers") or []:
             headers.setdefault(k.lower(), v)
