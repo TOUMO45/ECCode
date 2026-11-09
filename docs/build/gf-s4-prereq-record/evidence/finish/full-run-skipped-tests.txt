@@ -1,0 +1,70 @@
+B1 migrations: analysis flags blocking migrations; safe ones round-trip
+B2 API: breaking changes classified breaking, additive/none otherwise
+B3 performance: regressions and N+1 flagged, safe refactors within budget
+B4 concurrency: a broken invariant on the candidate is flagged
+C security: matrix/idor/authflow/input catch access-control flaws
+I2 GF-VAL-1: the guard's pytest suite passes on a minimal default FastAPI app
+I3 docs closed: an installed, mounted guard answers 404 GF-DOCS-1 for /docs, /docs/oauth2-redirect, /redoc, /openapi.json
+I3 docs switch: ECCODE_DOCS_ENABLED=1 restores them; an unmounted guard leaves them open (control)
+I7 B-7: the guard's canonical-id pytest file passes (non-canonical ids get the app's own 401/422; canonical unchanged)
+I8 GF-ERR-1: the guard's error-body pytest file passes (no input/ctx, request secrets redacted, 4096-byte cap, success untouched)
+SQL built by concatenation: the boolean differential flags the search though it never errors
+a bound-method endpoint (add_api_route) and a wrapped endpoint (decorator from another module) are found by their source files
+a change inside a route file behind /api and /orders is probed on the full path
+a leaked field: the profile now carries the email and the password hash; the field oracle flags it against the field policy
+a removed owner check: the IDOR probe flags the leak and delivery refuses
+a request body that refers to itself does not abort corpus generation: the operation is probed with a bounded example
+a service change reaches the nested-prefix routes that import it, and only those
+behaviour fixtures: six unintended changes that pass the suite are flagged; three declared changes pass; one refactor yields zero differences
+bypass: a new test file that monkeypatches the fixed module is refused; so is a hidden skip of a baseline test
+bypass: deselecting a test through pytest configuration is refused (missing from the run, and the config is infrastructure)
+check negative: a tampered vendored file is refused (even though the canary still passes)
+check negative: a vendored but NOT mounted guard is refused by the canary
+check positive: an installed and mounted guard passes (files and canary)
+confirmation field: it equals its sibling, and the sibling meets minLength; v2 sent two different values
+control: the frozen v1 detector flags none of the same five changes
+debug fixtures: SBFL ranks the faulty line in the top 5 (or says why not); bisect finds the breaking commit
+end to end: a comment-only change gives zero differences on v3 (the noise floor on the fixture)
+end to end: the "email" change is invisible to the frozen v2 and flagged by v3
+end to end: the "item" change is invisible to the frozen v2 and flagged by v3
+end to end: the "link" change is invisible to the frozen v2 and flagged by v3
+end to end: the "name" change is invisible to the frozen v2 and flagged by v3
+end to end: the "signup" change is invisible to the frozen v2 and flagged by v3
+end to end: the "slot" change is invisible to the frozen v2 and flagged by v3
+every seeded flaw applies, migrates and keeps the suite green (except the listed exceptions)
+formats: a mixed-case email, a padded name that meets minLength, time and uri values; v2 made none of them
+gate negative (bypass): a tampered vendored file is refused with GF-RT-1
+gate negative (bypass): a vendored but unmounted guard is refused with GF-RT-1; the frozen review is not reached
+gate positive: approving phase:build with an installed, mounted guard reaches the frozen review
+impact --calls adds function-level callers from codebase-memory-mcp
+install --with-codebase-memory registers the server and it is not flagged as foreign
+mass assignment: PATCH /notes applies an owner_id from the body; the read-back flags the persisted field
+mealie live: each target check fails at the source and passes at the fix commit
+mealie2 live: each target check fails at the source and passes at the fix commit
+mealie2: no prompt contains a line of its fix or names a file it changes
+mealie3 live: each target check fails at the source and passes at the fix commit
+mealie3: no prompt contains a line of its fix or names a file it changes
+mealie4 live: each target check fails at the source and passes at the fix commit
+mealie4: no prompt contains a line of its fix or names a file it changes
+mealie: no prompt contains a line of its fix or names a file it changes
+realbugs (live): the pre-fix tree fails the bug check, the real fix passes every check
+runtime trace resolves reflective loads in Kotlin (top-level main compiled to MainKt)
+scorecard
+scorecard: zero false positives; every miss is a justified allowed-miss
+setup: every example id resolves to an entity through a real route (200), for each kind
+setup: five roles authenticate as themselves; users: the reserved probe identities, plain users on the example ids
+setup: it succeeds and every call it makes through the API is accepted
+setup: the first three rows of every entity table are the three example ids, on every fresh setup
+setup: the random meal plan route has one candidate whatever the date and type (a rule with a filter), so it answers the same recipe every time
+setup: two fresh setups give the same ids and the same data, column by column
+the H-B2 freeze commit's tree is frozen under the v2 freeze file, and one changed byte of a frozen file is refused
+the H-B3 freeze commit's tree is frozen under the v3 freeze file (48 files), and one changed byte of a frozen file is refused
+the claim records the per-test baseline on the claim base; an intact run completes; a lost, skipped or failing test is refused until declared and acknowledged
+the clean app: its suite passes and the migration round-trips
+the freeze covers the whole H-B pipeline, and a changed or missing harness file is refused
+the freeze: the real sealed set verifies against its manifest; the freeze commit's tree passes and a changed implementation is refused
+the limits register of the other line is not edited here: docs/limits.md equals the H-B3 tip's
+the runner accepts the freeze commit's tree, refuses a tree whose frozen files differ, and refuses HEAD once Phase 3 changed the engine
+the runner flags a seeded unintended change and passes a declared one through the fixture, and archives each seed's audited engine record
+the safe app: the matrix agrees with the policy; IDOR, field, mass-assignment and input probes pass
+uuid family: a uuid4 path id is a valid id from exampleIds, one variant per id; without exampleIds it is a valid synthetic uuid; v2 sent "alpha"
