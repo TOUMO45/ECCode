@@ -1,0 +1,37 @@
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python node --test tests/gf-rejections.test.js
+ok 1 - I4: a GF refusal through wrap writes exactly one entry (who, action, rule, why, when) and rethrows the same error
+ok 2 - I4: a refusal through the MCP tool (gate_start) and through the task claim is logged once each; a success writes nothing
+ok 3 - I4: neither the ECCODE_SEED_KEY value nor a password field value reaches the log
+ok 4 - I4: verify() detects a rewritten, a removed, a reordered and a truncated entry
+ok 5 - I4: the guard protects .eccode/rejections.jsonl like the other record files (Write, Edit, shell redirection)
+# tests 5
+# pass 5
+# fail 0
+# skipped 0
+
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python npm test   (summary)
+# tests 1813
+# pass 1771
+# fail 0
+# cancelled 0
+# skipped 42
+
+$ docs/build/gf-s3-1-record/tools/make-s31-tree.sh <scratchpad>/s31-I4
+installed 3 files into <scratchpad>/s31-I4/eccode_runtime
+patching file app/main.py
+=== vendored manifest (<scratchpad>/s31-I4/eccode_runtime/MANIFEST.sha256) ===
+36cc9d9c7d4172ac2038f882b8a05dc62ce238b7fc41a43c676d1af8d8d8d527  eccode_runtime/__init__.py
+d21b96b0473141120f760703124ef4fec0342cebe3c24b8d12ad5438733940d2  eccode_runtime/config.json
+09e3bf3ad6bdaed9440ca6cdab22e864853953f8e2ee74442e47e678d51d5dc1  eccode_runtime/guard.py
+=== engine runtime check (GF-RT-1) ===
+GF-RT-1 check: no problems (files match the engine, canary passed)
+
+$ docs/build/gf-s3-1-record/tools/item-check.sh I4 <scratchpad>/s31-I4
+I4 hidden: CRITERIA PASSED: 24 of 24 | cases: 220 pass, 0 fail, 1 skip, total 221
+I4 probes: 5 failed, 111 passed, 3 skipped, 1 warning in 106.44s (0:01:46)
+I4 bola failures: 1 (expected 1 = R-2)
+FAILED test_auth.py::test_huge_ttl_env_login[1000000000000]
+FAILED test_auth.py::test_huge_ttl_env_login[99999999999999999999]
+FAILED test_bola.py::test_out_of_range_ids_404[999999999999999999999999999999999999999999999999999999999999999
+FAILED test_conformance.py::test_anonymous_malformed_json_gets_401
+FAILED test_input.py::test_unicode_blank_titles[\x1f]
