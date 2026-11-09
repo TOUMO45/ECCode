@@ -134,8 +134,7 @@ function main(argv) {
       return 0;
     }
     case 'seal': {
-      need(actor, '--actor');
-      const r = gf.wrap.seal(store, config);
+      const r = gf.wrap.seal(store, config, need(actor, '--actor'));
       print(flags, `G1 sealed: ${r.event.data.contractsHash.slice(0, 12)}`, { sealed: true, contractsHash: r.event.data.contractsHash, estimateSeq: r.event.data.estimateSeq });
       return 0;
     }

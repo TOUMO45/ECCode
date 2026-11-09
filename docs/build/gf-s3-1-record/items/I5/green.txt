@@ -1,0 +1,37 @@
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python node --test tests/gf-authz.test.js
+ok 1 - I5 L-GF-86 (literal): gate start phase:build by backend-engineer is refused with GF-ROLE-1 and logged once
+ok 2 - I5 matrix: every denied (action, role) combination is refused with GF-ROLE-1 and logged exactly once
+ok 3 - I5 matrix: every allowed (action, role) combination passes GF-ROLE-1 (later checks may still refuse it)
+ok 4 - I5 default deny: an action with no row is refused for every role; the usual flow and a group role claiming its own task still pass
+# tests 4
+# pass 4
+# fail 0
+# skipped 0
+
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python npm test   (summary)
+# tests 1817
+# pass 1775
+# fail 0
+# cancelled 0
+# skipped 42
+
+$ docs/build/gf-s3-1-record/tools/make-s31-tree.sh <scratchpad>/s31-I5
+installed 3 files into <scratchpad>/s31-I5/eccode_runtime
+patching file app/main.py
+=== vendored manifest (<scratchpad>/s31-I5/eccode_runtime/MANIFEST.sha256) ===
+36cc9d9c7d4172ac2038f882b8a05dc62ce238b7fc41a43c676d1af8d8d8d527  eccode_runtime/__init__.py
+d21b96b0473141120f760703124ef4fec0342cebe3c24b8d12ad5438733940d2  eccode_runtime/config.json
+09e3bf3ad6bdaed9440ca6cdab22e864853953f8e2ee74442e47e678d51d5dc1  eccode_runtime/guard.py
+=== engine runtime check (GF-RT-1) ===
+GF-RT-1 check: no problems (files match the engine, canary passed)
+
+$ docs/build/gf-s3-1-record/tools/item-check.sh I5 <scratchpad>/s31-I5
+I5 hidden: CRITERIA PASSED: 24 of 24 | cases: 220 pass, 0 fail, 1 skip, total 221
+I5 probes: 5 failed, 111 passed, 3 skipped, 1 warning in 109.46s (0:01:49)
+I5 bola failures: 1 (expected 1 = R-2)
+FAILED test_auth.py::test_huge_ttl_env_login[1000000000000]
+FAILED test_auth.py::test_huge_ttl_env_login[99999999999999999999]
+FAILED test_bola.py::test_out_of_range_ids_404[999999999999999999999999999999999999999999999999999999999999999
+FAILED test_conformance.py::test_anonymous_malformed_json_gets_401
+FAILED test_input.py::test_unicode_blank_titles[\x1f]
+note: test 4 was retitled after red.txt (same body; the old title claimed a non-Greenfield check it did not contain).
