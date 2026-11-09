@@ -170,3 +170,5 @@ measured from `init` (`approval.js`: "wall clock since init").
 - No existing test, frozen file, hidden suite, manifest, prediction file or record under `docs/build/gf-s3-record/`
   was modified. The S3 hidden-suite manifest verified 4/4 OK at the start. No arm, comparator or Meterline build was
   run. No Meterline hidden test was written, read or designed.
+
+Freeze point: addendum 2 content frozen at commit 64fdc1e95081cdbff5d626668e39a51bfbe0e438 (this line was added by a second commit that changes only this line).
