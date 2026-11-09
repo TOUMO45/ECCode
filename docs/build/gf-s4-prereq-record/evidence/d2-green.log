@@ -1,0 +1,130 @@
+TAP version 13
+# Subtest: D-2 off by default: initProject writes no gf.approval, and the approver approves nothing (GF-AUTO-0)
+ok 1 - D-2 off by default: initProject writes no gf.approval, and the approver approves nothing (GF-AUTO-0)
+  ---
+  duration_ms: 677.375466
+  type: 'test'
+  ...
+# Subtest: D-2 off by default: a policy with enabled false, or a bound that is not a positive integer, approves nothing
+ok 2 - D-2 off by default: a policy with enabled false, or a bound that is not a positive integer, approves nothing
+  ---
+  duration_ms: 984.317278
+  type: 'test'
+  ...
+# Subtest: D-2 positive: every precondition holds, the slice is approved as one hash-chained auto-approval event
+ok 3 - D-2 positive: every precondition holds, the slice is approved as one hash-chained auto-approval event
+  ---
+  duration_ms: 569.443234
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-1: a slice that is not closed is not approved, and the reason is recorded in the rejection log
+ok 4 - D-2 GF-AUTO-1: a slice that is not closed is not approved, and the reason is recorded in the rejection log
+  ---
+  duration_ms: 313.170517
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-1: a slice is approved once; a second approval of the same scope is refused
+ok 5 - D-2 GF-AUTO-1: a slice is approved once; a second approval of the same scope is refused
+  ---
+  duration_ms: 599.538497
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-1: a record whose GF audit is not clean is not approved (gates green)
+ok 6 - D-2 GF-AUTO-1: a record whose GF audit is not clean is not approved (gates green)
+  ---
+  duration_ms: 732.177887
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-2: the slice budget is a hard stop (maxSlices reached: the next slice needs a human)
+ok 7 - D-2 GF-AUTO-2: the slice budget is a hard stop (maxSlices reached: the next slice needs a human)
+  ---
+  duration_ms: 924.360959
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-2: the token budget counts every closure; an unmeasurable closure refuses (the budget cannot be verified)
+ok 8 - D-2 GF-AUTO-2: the token budget counts every closure; an unmeasurable closure refuses (the budget cannot be verified)
+  ---
+  duration_ms: 1207.610687
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-2: the wall-clock budget runs from gf.project.initialized
+ok 9 - D-2 GF-AUTO-2: the wall-clock budget runs from gf.project.initialized
+  ---
+  duration_ms: 653.106294
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-3: a closing tree whose contract file differs from its sealed hash is never approved
+ok 10 - D-2 GF-AUTO-3: a closing tree whose contract file differs from its sealed hash is never approved
+  ---
+  duration_ms: 712.457384
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-3: a contract amendment since the last approval needs a human
+ok 11 - D-2 GF-AUTO-3: a contract amendment since the last approval needs a human
+  ---
+  duration_ms: 598.246768
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-3: a hidden-suite path inside the closing tree is never approved
+ok 12 - D-2 GF-AUTO-3: a hidden-suite path inside the closing tree is never approved
+  ---
+  duration_ms: 645.429865
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-4: a new denial in the rejection log since the last approval stops the approver; its own refusals do not
+ok 13 - D-2 GF-AUTO-4: a new denial in the rejection log since the last approval stops the approver; its own refusals do not
+  ---
+  duration_ms: 641.945588
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-4: a rejection log whose hash chain is broken stops the approver
+ok 14 - D-2 GF-AUTO-4: a rejection log whose hash chain is broken stops the approver
+  ---
+  duration_ms: 796.909447
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-5: the approval audit reports a forged over-budget auto-approval and a wrong actor
+ok 15 - D-2 GF-AUTO-5: the approval audit reports a forged over-budget auto-approval and a wrong actor
+  ---
+  duration_ms: 718.463044
+  type: 'test'
+  ...
+# Subtest: D-2 GF-AUTO-5: an auto-approval whose policyHash does not match its policy, or with no prior closure, is reported
+ok 16 - D-2 GF-AUTO-5: an auto-approval whose policyHash does not match its policy, or with no prior closure, is reported
+  ---
+  duration_ms: 746.54023
+  type: 'test'
+  ...
+# Subtest: D-2 intervention record: only the user records one, with a type from the closed taxonomy
+ok 17 - D-2 intervention record: only the user records one, with a type from the closed taxonomy
+  ---
+  duration_ms: 273.682861
+  type: 'test'
+  ...
+# Subtest: D-2 counter: a synthetic record gives exactly the known counts by type, auto-approvals apart
+ok 18 - D-2 counter: a synthetic record gives exactly the known counts by type, auto-approvals apart
+  ---
+  duration_ms: 0.5723
+  type: 'test'
+  ...
+# Subtest: D-2 CLI: eccode-gf approve exits 2 with GF-AUTO-0 by default, 0 with a policy; interventions count reads the record
+ok 19 - D-2 CLI: eccode-gf approve exits 2 with GF-AUTO-0 by default, 0 with a policy; interventions count reads the record
+  ---
+  duration_ms: 721.235875
+  type: 'test'
+  ...
+# Subtest: D-2 tools/count-interventions.js: counts from an events.jsonl alone
+ok 20 - D-2 tools/count-interventions.js: counts from an events.jsonl alone
+  ---
+  duration_ms: 25.233598
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12646.690453

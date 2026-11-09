@@ -1,0 +1,482 @@
+TAP version 13
+# Subtest: D-2 off by default: initProject writes no gf.approval, and the approver approves nothing (GF-AUTO-0)
+not ok 1 - D-2 off by default: initProject writes no gf.approval, and the approver approves nothing (GF-AUTO-0)
+  ---
+  duration_ms: 615.160524
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:50:1'
+  failureType: 'testCodeFailure'
+  error: 'not implemented'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Proxy.ni (/home/user/eccode/lib/greenfield/approval.js:3:26)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:53:23)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: D-2 off by default: a policy with enabled false, or a bound that is not a positive integer, approves nothing
+not ok 2 - D-2 off by default: a policy with enabled false, or a bound that is not a positive integer, approves nothing
+  ---
+  duration_ms: 732.443212
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:60:1'
+  failureType: 'testCodeFailure'
+  error: 'expected GF-AUTO-0, got []: not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    refused (/home/user/eccode/tests/gf-approval.test.js:44:10)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:63:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: D-2 positive: every precondition holds, the slice is approved as one hash-chained auto-approval event
+not ok 3 - D-2 positive: every precondition holds, the slice is approved as one hash-chained auto-approval event
+  ---
+  duration_ms: 456.273853
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:74:1'
+  failureType: 'testCodeFailure'
+  error: 'not implemented'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Proxy.ni (/home/user/eccode/lib/greenfield/approval.js:3:26)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:77:22)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-1: a slice that is not closed is not approved, and the reason is recorded in the rejection log
+not ok 4 - D-2 GF-AUTO-1: a slice that is not closed is not approved, and the reason is recorded in the rejection log
+  ---
+  duration_ms: 439.30549
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:94:1'
+  failureType: 'testCodeFailure'
+  error: 'expected GF-AUTO-1, got []: not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    refused (/home/user/eccode/tests/gf-approval.test.js:44:10)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:97:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-1: a slice is approved once; a second approval of the same scope is refused
+not ok 5 - D-2 GF-AUTO-1: a slice is approved once; a second approval of the same scope is refused
+  ---
+  duration_ms: 611.195113
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:103:1'
+  failureType: 'testCodeFailure'
+  error: 'not implemented'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Proxy.ni (/home/user/eccode/lib/greenfield/approval.js:3:26)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:106:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-1: a record whose GF audit is not clean is not approved (gates green)
+not ok 6 - D-2 GF-AUTO-1: a record whose GF audit is not clean is not approved (gates green)
+  ---
+  duration_ms: 1226.780774
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:111:1'
+  failureType: 'testCodeFailure'
+  error: 'expected GF-AUTO-1, got []: not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    refused (/home/user/eccode/tests/gf-approval.test.js:44:10)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:117:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-2: the slice budget is a hard stop (maxSlices reached: the next slice needs a human)
+not ok 7 - D-2 GF-AUTO-2: the slice budget is a hard stop (maxSlices reached: the next slice needs a human)
+  ---
+  duration_ms: 486.946659
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:121:1'
+  failureType: 'testCodeFailure'
+  error: 'not implemented'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Proxy.ni (/home/user/eccode/lib/greenfield/approval.js:3:26)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:124:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-2: the token budget counts every closure; an unmeasurable closure refuses (the budget cannot be verified)
+not ok 8 - D-2 GF-AUTO-2: the token budget counts every closure; an unmeasurable closure refuses (the budget cannot be verified)
+  ---
+  duration_ms: 464.92517
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:131:1'
+  failureType: 'testCodeFailure'
+  error: 'expected GF-AUTO-2, got []: not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    refused (/home/user/eccode/tests/gf-approval.test.js:44:10)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:134:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-2: the wall-clock budget runs from gf.project.initialized
+not ok 9 - D-2 GF-AUTO-2: the wall-clock budget runs from gf.project.initialized
+  ---
+  duration_ms: 470.415393
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:140:1'
+  failureType: 'testCodeFailure'
+  error: 'expected GF-AUTO-2, got []: not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    refused (/home/user/eccode/tests/gf-approval.test.js:44:10)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:144:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-3: a closing tree whose contract file differs from its sealed hash is never approved
+not ok 10 - D-2 GF-AUTO-3: a closing tree whose contract file differs from its sealed hash is never approved
+  ---
+  duration_ms: 631.861778
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:150:1'
+  failureType: 'testCodeFailure'
+  error: 'expected GF-AUTO-3, got []: not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    refused (/home/user/eccode/tests/gf-approval.test.js:44:10)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:160:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-3: a contract amendment since the last approval needs a human
+not ok 11 - D-2 GF-AUTO-3: a contract amendment since the last approval needs a human
+  ---
+  duration_ms: 465.556329
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:163:1'
+  failureType: 'testCodeFailure'
+  error: 'expected GF-AUTO-3, got []: not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    refused (/home/user/eccode/tests/gf-approval.test.js:44:10)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:167:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-3: a hidden-suite path inside the closing tree is never approved
+not ok 12 - D-2 GF-AUTO-3: a hidden-suite path inside the closing tree is never approved
+  ---
+  duration_ms: 682.383806
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:170:1'
+  failureType: 'testCodeFailure'
+  error: 'expected GF-AUTO-3, got []: not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    refused (/home/user/eccode/tests/gf-approval.test.js:44:10)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:178:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-4: a new denial in the rejection log since the last approval stops the approver; its own refusals do not
+not ok 13 - D-2 GF-AUTO-4: a new denial in the rejection log since the last approval stops the approver; its own refusals do not
+  ---
+  duration_ms: 1152.003496
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:182:1'
+  failureType: 'testCodeFailure'
+  error: 'expected GF-AUTO-0, got []: not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    refused (/home/user/eccode/tests/gf-approval.test.js:44:10)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:185:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-4: a rejection log whose hash chain is broken stops the approver
+not ok 14 - D-2 GF-AUTO-4: a rejection log whose hash chain is broken stops the approver
+  ---
+  duration_ms: 446.863356
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:195:1'
+  failureType: 'testCodeFailure'
+  error: 'not implemented'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Proxy.ni (/home/user/eccode/lib/greenfield/interventions.js:3:26)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:199:17)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-5: the approval audit reports a forged over-budget auto-approval and a wrong actor
+not ok 15 - D-2 GF-AUTO-5: the approval audit reports a forged over-budget auto-approval and a wrong actor
+  ---
+  duration_ms: 485.550586
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:206:1'
+  failureType: 'testCodeFailure'
+  error: 'not implemented'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Proxy.ni (/home/user/eccode/lib/greenfield/approval.js:3:26)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:209:26)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 GF-AUTO-5: an auto-approval whose policyHash does not match its policy, or with no prior closure, is reported
+not ok 16 - D-2 GF-AUTO-5: an auto-approval whose policyHash does not match its policy, or with no prior closure, is reported
+  ---
+  duration_ms: 496.109597
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:221:1'
+  failureType: 'testCodeFailure'
+  error: 'not implemented'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Proxy.ni (/home/user/eccode/lib/greenfield/approval.js:3:26)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:224:22)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 intervention record: only the user records one, with a type from the closed taxonomy
+not ok 17 - D-2 intervention record: only the user records one, with a type from the closed taxonomy
+  ---
+  duration_ms: 706.084121
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:232:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /user/. Input:
+    
+    'Error: not implemented'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: 'not implemented'
+  stack: |-
+    Proxy.ni (/home/user/eccode/lib/greenfield/interventions.js:3:26)
+    /home/user/eccode/tests/gf-approval.test.js:234:37
+    getActual (node:assert:609:5)
+    Function.throws (node:assert:757:24)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:234:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:234:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 counter: a synthetic record gives exactly the known counts by type, auto-approvals apart
+not ok 18 - D-2 counter: a synthetic record gives exactly the known counts by type, auto-approvals apart
+  ---
+  duration_ms: 0.444054
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:242:1'
+  failureType: 'testCodeFailure'
+  error: 'not implemented'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Proxy.ni (/home/user/eccode/lib/greenfield/interventions.js:3:26)
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:261:27)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 CLI: eccode-gf approve exits 2 with GF-AUTO-0 by default, 0 with a policy; interventions count reads the record
+not ok 19 - D-2 CLI: eccode-gf approve exits 2 with GF-AUTO-0 by default, 0 with a policy; interventions count reads the record
+  ---
+  duration_ms: 615.268772
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:273:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    eccode-gf: [USAGE] Unknown command "approve". Run eccode-gf --help.
+    
+    
+    1 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:276:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D-2 tools/count-interventions.js: counts from an events.jsonl alone
+not ok 20 - D-2 tools/count-interventions.js: counts from an events.jsonl alone
+  ---
+  duration_ms: 31.18115
+  type: 'test'
+  location: '/home/user/eccode/tests/gf-approval.test.js:288:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    node:internal/modules/cjs/loader:1433
+      throw err;
+      ^
+    
+    Error: Cannot find module '/home/user/eccode/tools/count-interventions.js'
+        at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+        at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+        at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+        at Function._load (node:internal/modules/cjs/loader:1216:25)
+        at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+        at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+        at node:internal/main/run_main_module:36:49 {
+      code: 'MODULE_NOT_FOUND',
+      requireStack: []
+    }
+    
+    Node.js v22.23.4
+    
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+    defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+    resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+    Function._load (node:internal/modules/cjs/loader:1216:25)
+    wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    node:internal/main/run_main_module:36:49 {
+    TestContext.<anonymous> (/home/user/eccode/tests/gf-approval.test.js:298:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 0
+# fail 20
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11306.712246
