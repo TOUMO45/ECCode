@@ -379,8 +379,19 @@ function main(input) {
   }
   const ti = input.tool_input || {};
   const root = findRoot(process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd());
-  if (!root) return; // not an ECCode project: no opinion
   const lib = path.join(__dirname, '..', '..', 'lib');
+  // S3.1 I6 (GF-HID-1): the hidden acceptance suite (gf.hiddenSuite.path, ECCODE_GF_HIDDEN) is read by no agent, the
+  // main session included: Read, Grep, Glob, NotebookRead, the file-writing tools and shell commands that reference
+  // it are denied, before every other rule. Each denial is logged once in the project's rejection log (I4).
+  const hid = require(path.join(lib, 'greenfield', 'hidden')).toolDenial(input, root);
+  if (hid) {
+    if (root) {
+      const who = input.agent_type ? String(input.agent_type).split(':').pop() : 'orchestrator';
+      require(path.join(lib, 'greenfield', 'rejections')).record(root, { actor: who, action: `hook.${tool}`, rule: 'GF-HID-1', reason: hid.reason, data: { tool, target: hid.target } });
+    }
+    out('deny', hid.reason);
+  }
+  if (!root) return; // not an ECCode project: no opinion
   const { matchesAny, toPosix } = require(path.join(lib, 'util'));
   const role = roleOf(input.agent_type);
 
