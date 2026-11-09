@@ -1,0 +1,31 @@
+R-1 | TTL=1000000000000 POST /v1/register -> 201 | {"id":1,"email":"a@example.com","role":"user"} | server alive
+R-1 | TTL=1000000000000 POST /v1/login -> 500 | Internal Server Error | server alive
+R-1 | TTL=99999999999999999999 POST /v1/register -> 201 | {"id":1,"email":"a@example.com","role":"user"} | server alive
+R-1 | TTL=99999999999999999999 POST /v1/login -> 500 | Internal Server Error | server alive
+R-2 | GET /v1/tasks/<4300 nines> -> 404 | {"detail":"Task not found"} | server alive
+R-2 | GET /v1/tasks/<4301 nines> -> 422 | {"detail":[{"type":"int_parsing_size","loc":["path","task_id"],"msg":"Unable to parse input string as an integer, exceeded maximum size"}]} | server alive
+R-2 | GET /v1/tasks/<5000 nines> -> 422 | {"detail":[{"type":"int_parsing_size","loc":["path","task_id"],"msg":"Unable to parse input string as an integer, exceeded maximum size"}]} | server alive
+R-3 | anonymous GET /docs -> 404 | {"detail":"Not Found"} | server alive
+R-3 | anonymous GET /redoc -> 404 | {"detail":"Not Found"} | server alive
+R-3 | anonymous GET /openapi.json -> 404 | {"detail":"Not Found"} | server alive
+R-4 | anonymous POST /v1/tasks body {bad -> 422 | {"detail":[{"type":"json_invalid","loc":["body",1],"msg":"JSON decode error"}]} | server alive
+R-4 | anonymous PATCH /v1/tasks/1 body {bad -> 422 | {"detail":[{"type":"json_invalid","loc":["body",1],"msg":"JSON decode error"}]} | server alive
+R-4 | anonymous POST /v1/tasks {title:''} -> 401 | {"detail":"Not authenticated"} | server alive
+R-5 | POST /v1/tasks title U+001F -> 422 | {"detail":[{"type":"value_error","loc":["body","title"],"msg":"Value error, title must be 1 to 200 characters after trimming"}]} | server alive
+A-1 | POST /v1/register short password Sup3rS -> 422 | {"detail":[{"type":"string_too_short","loc":["body","password"],"msg":"String should have at least 8 characters"}]} | server alive
+A-1 | POST /v1/register missing email -> 422 | {"detail":[{"type":"missing","loc":["body","email"],"msg":"Field required"}]} | server alive
+A-2 | POST /v1/register email with lone surrogate \ud800 -> 422 | {"detail":[{"type":"gf_val","rule":"GF-VAL-1","msg":"lone surrogate"}]} | server alive
+A-2 | POST /v1/login password with \ud800 -> 422 | {"detail":[{"type":"gf_val","rule":"GF-VAL-1","msg":"lone surrogate"}]} | server alive
+A-2 | POST /v1/tasks title with \ud800 -> 422 | {"detail":[{"type":"gf_val","rule":"GF-VAL-1","msg":"lone surrogate"}]} | server alive
+A-3 | POST /v1/login 280-char password (not counted) -> 401 | {"detail":"Invalid email or password"} | server alive
+A-4 | POST /v1/register a@b.c (not counted) -> 422 | {"detail":[{"type":"value_error","loc":["body","email"],"msg":"Value error, invalid email address"}]} | server alive
+B-3 anon POST /v1/login 5000-deep object -> 422 len=73 '{"detail":[{"type":"gf_val","rule":"GF-VAL-1","msg":"nesting too deep"'
+B-3 anon POST /v1/register 5000-deep object -> 422 len=73 '{"detail":[{"type":"gf_val","rule":"GF-VAL-1","msg":"nesting too deep"'
+B-7 owner GET /v1/tasks/1 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/+1 -> 422 len=138 '{"detail":[{"type":"int_parsing","loc":["path","task_id"],"msg":"Input'
+B-7 owner GET /v1/tasks/01 -> 422 len=138 '{"detail":[{"type":"int_parsing","loc":["path","task_id"],"msg":"Input'
+B-7 owner GET /v1/tasks/1.0 -> 422 len=138 '{"detail":[{"type":"int_parsing","loc":["path","task_id"],"msg":"Input'
+B-7 owner GET /v1/tasks/%201 -> 422 len=138 '{"detail":[{"type":"int_parsing","loc":["path","task_id"],"msg":"Input'
+B-7 owner GET /v1/tasks/1_0 -> 422 len=138 '{"detail":[{"type":"int_parsing","loc":["path","task_id"],"msg":"Input'
+B-10 POST /v1/tasks 5MB title -> 422 len=71 '{"detail":[{"type"
+B-9 default db: task_tracker.db mode 0o644
