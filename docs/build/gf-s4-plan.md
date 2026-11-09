@@ -403,4 +403,4 @@ summary, reproduction command, observed vs expected. Do not report style issues.
 and found clean.
 ```
 
-Freeze point: (recorded after commit)
+Freeze point: plan content frozen at commit d4c8427e412b0c35675b74d1c018c4eb912b904f (this line was added by a second commit that changes only this line).
