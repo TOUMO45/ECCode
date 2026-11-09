@@ -1,0 +1,68 @@
+tests/gf-profile-compose.test.js	D-1 CLI: init --stack selects the profile; stack check exits 0 on the scaffold and 2 on a broken one
+tests/gf-profile-compose.test.js	D-1 GF-STACK-1: a broken compose file is refused
+tests/gf-profile-compose.test.js	D-1 GF-STACK-1: the generated compose file validates with docker compose config, no daemon
+tests/gf-profile-compose.test.js	D-1 GF-STACK-2: a service without a healthcheck, a disabled one, or a missing service is refused
+tests/gf-profile-compose.test.js	D-1 GF-STACK-2: every service of the generated file has a healthcheck (4 of 4)
+tests/gf-profile-compose.test.js	D-1 GF-STACK-3: a map that leaves a generated path uncovered, or covers one twice, is refused
+tests/gf-profile-compose.test.js	D-1 GF-STACK-3: the profile ownership map is valid and covers every generated path exactly once
+tests/gf-profile-compose.test.js	D-1 audit: a project on the new profile reports GF-STACK problems in the audit; the v1 audit is untouched
+tests/gf-profile-compose.test.js	D-1 conventions: services, health endpoints and the worker schedule are declared by the profile
+tests/gf-profile-compose.test.js	D-1 scaffold: init writes the engine-owned files and no application code
+tests/gf-profile-compose.test.js	D-1 selection: an unknown profile is still refused with GF-INIT-1, and nothing is written
+tests/gf-profile-compose.test.js	D-1 selection: the new profile is selectable by name; the v1 list and the default are unchanged
+tests/gf-profile-compose.test.js	D-1 selection: the scaffold never overwrites an existing file (GF-STACK-0, no project is created)
+tests/gf-approval.test.js	D-2 CLI: eccode-gf approve exits 2 with GF-AUTO-0 by default, 0 with a policy; interventions count reads the record
+tests/gf-approval.test.js	D-2 GF-AUTO-1: a record whose GF audit is not clean is not approved (gates green)
+tests/gf-approval.test.js	D-2 GF-AUTO-1: a slice is approved once; a second approval of the same scope is refused
+tests/gf-approval.test.js	D-2 GF-AUTO-1: a slice that is not closed is not approved, and the reason is recorded in the rejection log
+tests/gf-approval.test.js	D-2 GF-AUTO-2: the slice budget is a hard stop (maxSlices reached: the next slice needs a human)
+tests/gf-approval.test.js	D-2 GF-AUTO-2: the token budget counts every closure; an unmeasurable closure refuses (the budget cannot be verified)
+tests/gf-approval.test.js	D-2 GF-AUTO-2: the wall-clock budget runs from gf.project.initialized
+tests/gf-approval.test.js	D-2 GF-AUTO-3: a closing tree whose contract file differs from its sealed hash is never approved
+tests/gf-approval.test.js	D-2 GF-AUTO-3: a contract amendment since the last approval needs a human
+tests/gf-approval.test.js	D-2 GF-AUTO-3: a hidden-suite path inside the closing tree is never approved
+tests/gf-approval.test.js	D-2 GF-AUTO-4: a new denial in the rejection log since the last approval stops the approver; its own refusals do not
+tests/gf-approval.test.js	D-2 GF-AUTO-4: a rejection log whose hash chain is broken stops the approver
+tests/gf-approval.test.js	D-2 GF-AUTO-5: an auto-approval whose policyHash does not match its policy, or with no prior closure, is reported
+tests/gf-approval.test.js	D-2 GF-AUTO-5: the approval audit reports a forged over-budget auto-approval and a wrong actor
+tests/gf-approval.test.js	D-2 counter: a synthetic record gives exactly the known counts by type, auto-approvals apart
+tests/gf-approval.test.js	D-2 intervention record: only the user records one, with a type from the closed taxonomy
+tests/gf-approval.test.js	D-2 off by default: a policy with enabled false, or a bound that is not a positive integer, approves nothing
+tests/gf-approval.test.js	D-2 off by default: initProject writes no gf.approval, and the approver approves nothing (GF-AUTO-0)
+tests/gf-approval.test.js	D-2 positive: every precondition holds, the slice is approved as one hash-chained auto-approval event
+tests/gf-approval.test.js	D-2 tools/count-interventions.js: counts from an events.jsonl alone
+tests/pilot.test.js	a chain delivers three items on one record, audit clean
+tests/phase3-fixture-app.test.js	b1-add-default
+tests/phase3-fixture-app.test.js	b1-add-index
+tests/phase3-fixture-app.test.js	b1-add-nullable
+tests/phase3-fixture-app.test.js	b1-drop-column
+tests/phase3-fixture-app.test.js	b1-expand-step
+tests/phase3-fixture-app.test.js	b1-missing-downgrade
+tests/phase3-fixture-app.test.js	b1-notnull-no-default
+tests/phase3-fixture-app.test.js	b1-rename-in-place
+tests/phase3-fixture-app.test.js	b2-field-type
+tests/phase3-fixture-app.test.js	b2-new-endpoint
+tests/phase3-fixture-app.test.js	b2-new-field
+tests/phase3-fixture-app.test.js	b2-new-required-param
+tests/phase3-fixture-app.test.js	b2-optional-param
+tests/phase3-fixture-app.test.js	b2-remove-endpoint
+tests/phase3-fixture-app.test.js	b3-faster
+tests/phase3-fixture-app.test.js	b3-latency
+tests/phase3-fixture-app.test.js	b3-nplus1-accounts
+tests/phase3-fixture-app.test.js	b3-nplus1-orders
+tests/phase3-fixture-app.test.js	b3-same-queries
+tests/phase3-fixture-app.test.js	b4-double-spend
+tests/phase3-fixture-app.test.js	b4-duplicate-insert
+tests/phase3-fixture-app.test.js	b4-transfer-ok
+tests/phase3-fixture-app.test.js	c-field-leak
+tests/phase3-fixture-app.test.js	c-idor-delete
+tests/phase3-fixture-app.test.js	c-idor-read
+tests/phase3-fixture-app.test.js	c-idor-update
+tests/phase3-fixture-app.test.js	c-mass-assignment
+tests/phase3-fixture-app.test.js	c-missing-auth
+tests/phase3-fixture-app.test.js	c-reset-reuse
+tests/phase3-fixture-app.test.js	c-safe-rename
+tests/phase3-fixture-app.test.js	c-sql-concat
+tests/pilot.test.js	hidden files never reach the next item
+tests/pilot.test.js	sync removes files upstream does not have
+tests/pilot.test.js	the chain summary times status, metrics and audit

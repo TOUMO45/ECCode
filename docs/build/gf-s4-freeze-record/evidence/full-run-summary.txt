@@ -1,0 +1,58 @@
+# S4-FREEZE: one clean full run (n=1), branch s4-freeze/base at a530ae12fd07a4a28566e89b7211acad332f8c69 (= a530ae1), nothing else running
+# command: ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python npm test   (npm test = node --test tests/*.test.js)
+# env: node v22.23.4, bwrap 0.9.0-1ubuntu0.3, DEBUG unset, ECCODE_SEED_KEY set (value never printed), commit.gpgsign=true
+# tests 1862
+# suites 0
+# pass 1844
+# fail 0
+# cancelled 0
+# skipped 18
+# todo 0
+# duration_ms 355559.321097
+npm-exit=0
+## failing tests:
+none
+## skip reasons (count):
+      6 no Mealie checkout at /root/.cache/eccode/mealie-seed
+      4 set ECCODE_MEALIE_VALIDATE=1 (and ECCODE_MEALIE_ENVS from _tools/setup.sh) to validate live
+      4 no Mealie mirror at /root/.cache/eccode/bench-repos/github.com-mealie-recipes-mealie.git (the first bench export creates it)
+      1 set ECCODE_REALBUGS_VALIDATE=1 with ECCODE_REALBUGS_VENVS (see bench/suites/realbugs/_tools/setup.sh)
+      1 set ECCODE_CBM to a codebase-memory-mcp binary
+      1 kotlinc not installed
+      1 codebase-memory-mcp not installed
+
+## comparison (each row n=1)
+| run | commit | tests | pass | fail | skip |
+| regression baseline | 1240da2 | 1798 | 1738 | 0 | 60 |
+| last run (S4-PREREQ-B) | a530ae1 content (9faeed2) | 1831 | 1761 | 0 | 70 |
+| this run | a530ae1 | 1862 | 1844 | 0 | 18 |
+
+## reconciliation of the test total
+1798 (baseline) + 33 slice tests (tests/gf-approval.test.js 20, tests/gf-profile-compose.test.js 13) = 1831 (last run)
+1831 + 31 per-flaw subtests of tests/phase3-fixture-app.test.js that exist only when the Python interpreter is present
+(b1-*, b2-*, b3-*, b4-*, c-*; their parent was skipped in both earlier runs) = 1862.
+Name diff vs committed baseline-test-names.tsv: 0 baseline names missing; 68 names new = 33 slice + 31 phase3 subtests
++ 4 tests/pilot.test.js depth-2 subtests ("chain mode" children) that ran in the baseline but are absent from its name
+list (the list has 1794 names for 1798 tests). See names-new-vs-1240da2-baseline.tsv.
+
+## reconciliation of the skip count
+baseline 60 = 46 "no interpreter with fastapi ..." + 14 others (6 Mealie checkout, 4 ECCODE_MEALIE_VALIDATE, 1 realbugs,
+  1 ECCODE_CBM, 1 codebase-memory-mcp, 1 kotlinc).  The baseline also had NO Python test environment (its name list
+  carries the 46 interpreter skips).
+last run 70 = baseline 60 + 4 "no Mealie mirror" + 6 "freeze commit ... is not in this clone" (3+1+1+1).
+  Correction to docs/build/gf-s4-prereq-evidence.md section 1 (not edited here): the +10 there was attributed to the
+  missing Python environment; the skip lists show it was the Mealie mirror (4) and the clone's missing freeze commits (6).
+this run 18 = baseline 14 others + 4 "no Mealie mirror" (mirror absent in this container at run time).
+  46 interpreter skips resolved by the venv; 6 freeze-commit skips resolved (this clone has the commits).
+Follow-up (not a full-suite re-run): the Mealie bare mirror was created with the engine's own command (install.log) and
+tests/mealie.test.js alone was run once: 21 tests / 17 pass / 0 fail / 4 skip; the 4 "no prompt contains a line of its
+fix" tests PASS; the 4 skips are the ECCODE_MEALIE_VALIDATE live tests, skipped in the baseline too (mealie-targeted-run.log).
+Result: every test that ran at 1240da2 ran on a530ae1 in this session and passed; 0 failures.
+
+## still skipped (14, all also skipped in the 1240da2 baseline)
+6  no Mealie checkout at /root/.cache/eccode/mealie-seed (needs a seeded Mealie app; not fabricated)
+4  mealie live validation: needs ECCODE_MEALIE_VALIDATE=1 and per-task Mealie venvs (_tools/setup.sh)
+1  realbugs live validation: needs ECCODE_REALBUGS_VALIDATE=1 and venvs
+1  install --with-codebase-memory: needs ECCODE_CBM binary
+1  impact --calls: codebase-memory-mcp not installed
+1  Kotlin runtime trace: kotlinc not installed
