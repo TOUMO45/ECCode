@@ -199,3 +199,4 @@ bytes as its first prompt.
   the v0.16.0 commit, the sample CSV. No Meterline hidden test or answer key was written, read or designed. No dollar
   figure appears; IEQ is a relative ratio estimate.
 
+Freeze point: addendum 3 content frozen at commit ef25bdb0108276e144f91c9b41dc87eb474c4ef6 (this line was added by a second commit that changes only this line).
