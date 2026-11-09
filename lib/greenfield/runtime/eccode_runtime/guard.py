@@ -30,6 +30,15 @@ percent-decoding (``+1``, ``01``, ``1.0``, `` 1``, a fullwidth digit, ...) is no
 (in ``path`` and ``raw_path``) is replaced by the fixed token ``not-canonical`` and the request passes on, so the app
 gives exactly its own non-integer-id answer, in its own auth order. Canonical ids of any size are left alone.
 
+GF-ERR-1 (I8, error bodies never echo request secrets and are capped): for every 4xx/5xx response of the app (not
+HEAD), the guard buffers the body and (1) removes the ``input`` and ``ctx`` keys of the items of a JSON ``detail``
+list; (2) replaces every request secret value with ``[redacted]`` wherever it appears in the body (raw or
+JSON-escaped): values of JSON body fields whose key matches ``pass(word)?|secret|token`` (found by a regex scan of a
+malformed body too) and the Authorization header value (whole, and its credential part); only values of 4 characters
+or more; (3) caps the body at 4096 bytes: a larger one is replaced by {"detail":"request rejected"} with
+``x-eccode-rule: GF-ERR-1``. Content-Length is rewritten to the bytes sent. Responses below 400 pass unchanged.
+Limit: a compressed (Content-Encoding) error body is not parsed or redacted, only capped.
+
 Stage order (no credentials -> 401 first): config.secured lists the operations the contract secures (openapi
 ``security``, global or per operation; ``security: []`` is public). A GF-VAL-1 rejection of a request to a secured
 operation that has NO Authorization header is answered 401 {"detail":"Not authenticated"} with
@@ -53,6 +62,12 @@ DEFAULT_LIMITS = {"max_body_bytes": 1048576, "max_depth": 64, "max_string_length
 _OUTSIDE = re.compile(r'[\[\]{}"]')
 _INSIDE = re.compile(r'["\\]')
 _HEX4 = re.compile(r"[0-9a-fA-F]{4}")
+RULE_ERR = "GF-ERR-1"
+ERR_CAP = 4096
+ERR_BUFFER_MAX = 32 * 1024 * 1024
+REDACTED = b"[redacted]"
+_SECRET_KEY = re.compile(r"pass(word)?|secret|token", re.I)
+_RAW_PAIR = re.compile(r'"((?:[^"\\]|\\.)*)"\s*:\s*"((?:[^"\\]|\\.)*)"')
 _CANONICAL = re.compile(r"(0|-?[1-9][0-9]*)", re.ASCII)
 NOT_CANONICAL = "not-canonical"
 
@@ -81,6 +96,78 @@ def _int_template(template: str, params):
         else:
             out.append(seg)
     return out if any(x is True for x in out) else None
+
+
+def _unescape(raw: str) -> str:
+    try:
+        return json.loads('"' + raw + '"')
+    except ValueError:
+        return raw
+
+
+def _collect(value, out: set, under_secret: bool = False, depth: int = 0) -> None:
+    if depth > 200:
+        return
+    if isinstance(value, dict):
+        for k, v in value.items():
+            _collect(v, out, under_secret or bool(_SECRET_KEY.search(str(k))), depth + 1)
+    elif isinstance(value, list):
+        for v in value:
+            _collect(v, out, under_secret, depth + 1)
+    elif under_secret and isinstance(value, (str, int, float)) and not isinstance(value, bool):
+        out.add(str(value))
+
+
+def request_secrets(headers: dict, body: bytes | None) -> list:
+    """I8: the secret values of a request (Authorization; secret-named JSON fields, parsed or regex-scanned), >= 4 chars."""
+    out: set = set()
+    auth = headers.get(b"authorization")
+    if auth:
+        v = auth.decode("latin-1").strip()
+        out.add(v)
+        parts = v.split(None, 1)
+        if len(parts) == 2:
+            out.add(parts[1].strip())
+    if body:
+        text = body.decode("utf-8", "replace")
+        try:
+            _collect(json.loads(text), out)
+        except (ValueError, RecursionError):
+            pass
+        for m in _RAW_PAIR.finditer(text):
+            if _SECRET_KEY.search(_unescape(m.group(1))):
+                out.add(_unescape(m.group(2)))
+    return sorted((x for x in out if len(x) >= 4), key=len, reverse=True)
+
+
+def redact_bytes(body: bytes, secrets) -> bytes:
+    for sec in secrets:
+        forms = {sec.encode("utf-8"), json.dumps(sec)[1:-1].encode(), json.dumps(sec, ensure_ascii=False)[1:-1].encode("utf-8")}
+        for f in sorted(forms, key=len, reverse=True):
+            if f:
+                body = body.replace(f, REDACTED)
+    return body
+
+
+def scrub_error_body(body: bytes, content_type: str | None, secrets) -> bytes | None:
+    """I8: the scrubbed error body, or None when it must be replaced (over the cap)."""
+    if content_type is not None and _is_json_type(content_type) and body:
+        try:
+            doc = json.loads(body)
+        except (ValueError, RecursionError):
+            doc = None
+        if isinstance(doc, dict) and isinstance(doc.get("detail"), list):
+            changed = False
+            for item in doc["detail"]:
+                if isinstance(item, dict):
+                    for k in ("input", "ctx"):
+                        if k in item:
+                            del item[k]
+                            changed = True
+            if changed:
+                body = json.dumps(doc, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    body = redact_bytes(body, secrets)
+    return body if len(body) <= ERR_CAP else None
 
 
 def _is_json_type(content_type: str | None) -> bool:
@@ -242,6 +329,50 @@ class EccodeGuard:
             return
         await self._send(send, 422, {"detail": [{"type": "gf_val", "rule": RULE_VAL, "msg": msg}]}, RULE_VAL)
 
+    @staticmethod
+    def _scrubbing_send(send, secrets):
+        """I8: a send that holds a 4xx/5xx response, scrubs and caps its body, and fixes Content-Length."""
+        state = {"start": None, "chunks": [], "size": 0, "over": False}
+
+        async def finish():
+            start = state["start"]
+            headers = list(start.get("headers") or [])
+            ctype = next((v.decode("latin-1") for k, v in headers if k.lower() == b"content-type"), None)
+            encoded = any(k.lower() == b"content-encoding" for k, _ in headers)
+            body = b"".join(state["chunks"])
+            out = None
+            if not state["over"]:
+                out = body if encoded and len(body) <= ERR_CAP else (None if encoded else scrub_error_body(body, ctype, secrets))
+            if out is None:
+                out = b'{"detail":"request rejected"}'
+                headers = [(k, v) for k, v in headers if k.lower() not in (b"content-type", b"content-length", b"content-encoding", b"x-eccode-rule")]
+                headers += [(b"content-type", b"application/json"), (b"x-eccode-rule", RULE_ERR.encode())]
+            headers = [(k, v) for k, v in headers if k.lower() != b"content-length"] + [(b"content-length", str(len(out)).encode())]
+            await send({**start, "headers": headers})
+            await send({"type": "http.response.body", "body": out, "more_body": False})
+
+        async def wrapped(message):
+            kind = message.get("type")
+            if kind == "http.response.start":
+                if int(message.get("status", 200)) >= 400:
+                    state["start"] = message
+                    return
+            elif kind == "http.response.body" and state["start"] is not None:
+                part = message.get("body", b"")
+                if state["size"] + len(part) > ERR_BUFFER_MAX:
+                    state["over"] = True
+                    state["chunks"] = []
+                elif not state["over"]:
+                    state["chunks"].append(part)
+                    state["size"] += len(part)
+                if not message.get("more_body", False):
+                    await finish()
+                    state["start"] = None
+                return
+            await send(message)
+
+        return wrapped
+
     # ---- the ASGI entry ------------------------------------------------------------------------------------------
 
     async def __call__(self, scope, receive, send) -> None:
@@ -258,7 +389,7 @@ class EccodeGuard:
         method = str(scope.get("method", "GET")).upper()
         has_body = b"content-length" in headers or b"transfer-encoding" in headers or method in BODY_METHODS
         if not has_body:
-            await self.app(scope, receive, send)
+            await self.app(scope, receive, send if method == "HEAD" else self._scrubbing_send(send, request_secrets(headers, None)))
             return
         cl = headers.get(b"content-length")
         if cl is not None:
@@ -313,4 +444,4 @@ class EccodeGuard:
                 return {"type": "http.request", "body": body, "more_body": False}
             return await receive()
 
-        await self.app(scope, replay, send)
+        await self.app(scope, replay, send if method == "HEAD" else self._scrubbing_send(send, request_secrets(headers, body)))

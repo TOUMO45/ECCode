@@ -79,7 +79,7 @@ def test_non_canonical_id_gets_the_apps_own_non_integer_answer(tmp_path, raw):
     assert r.status_code == 422, (raw, r.status_code, r.text)
     assert "x-eccode-rule" not in r.headers  # the app answered, not the guard
     assert r.json()["detail"][0]["loc"] == ["path", "item_id"]
-    assert r.json()["detail"][0]["input"] == "not-canonical"
+    assert "input" not in r.json()["detail"][0]  # I8 (GF-ERR-1) removes input; the rewrite itself: test_raw_path_is_rewritten_with_the_path
     anon = c.get(f"/items/{raw}")
     assert anon.status_code == 401, (raw, anon.status_code)  # the app's own auth order: credentials first
     assert seen == []

@@ -1,0 +1,8 @@
+I8 deviation (one assertion of the I7 test changed).
+tests/runtime/test_guard_ids.py (added in I7, commit d39da3f, earlier in this same run) asserted that the app's 422
+detail item carried input == "not-canonical", to show the rewritten token reached the app. I8 removes `input` (and
+`ctx`) from every error detail item by specification, so that assertion cannot hold once I8 is in, whatever the engine
+code does short of exempting `input` (which would contradict I8). The assertion was changed to `"input" not in the
+detail item`; the rewrite itself stays checked by test_raw_path_is_rewritten_with_the_path (path and raw_path seen by
+the app are /items/not-canonical) and by the 422 loc ["path","item_id"] and the 401-first assertions, all unchanged.
+No other existing test, probe or check was edited.

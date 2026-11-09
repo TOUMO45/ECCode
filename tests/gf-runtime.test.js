@@ -329,3 +329,12 @@ test('I7 B-7: the guard\'s canonical-id pytest file passes (non-canonical ids ge
   assert.strictEqual(r.status, 0, out.slice(-4000));
   assert.doesNotMatch(out, /skipped|failed|error/i, out.slice(-2000));
 });
+
+// ---- I8 error bodies -------------------------------------------------------------------------------------------
+
+test('I8 GF-ERR-1: the guard\'s error-body pytest file passes (no input/ctx, request secrets redacted, 4096-byte cap, success untouched)', PY_OPTS, () => {
+  const r = spawnSync(py.python, ['-m', 'pytest', '-q', '-p', 'no:cacheprovider', '-o', 'addopts=', path.join('tests', 'runtime', 'test_guard_err.py')], { cwd: ROOT, encoding: 'utf8', env: env() });
+  const out = `${r.stdout}${r.stderr}`;
+  assert.strictEqual(r.status, 0, out.slice(-4000));
+  assert.doesNotMatch(out, /skipped|failed|error/i, out.slice(-2000));
+});

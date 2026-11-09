@@ -1,0 +1,13 @@
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python node --test --test-name-pattern=I8 tests/gf-runtime.test.js
+not ok 1 - I8 GF-ERR-1: the guard's error-body pytest file passes (no input/ctx, request secrets redacted, 4096-byte cap, success untouched)
+# tests 1
+# pass 0
+# fail 1
+# skipped 0
+
+$ env -u ECCODE_SEED_KEY PYTHONDONTWRITEBYTECODE=1 /root/.cache/eccode/phase3-venv/bin/python -m pytest -q -p no:cacheprovider -o addopts= tests/runtime/test_guard_err.py
+FAILED tests/runtime/test_guard_err.py::test_default_422_for_short_password_does_not_contain_it
+FAILED tests/runtime/test_guard_err.py::test_5mb_title_error_body_is_capped
+FAILED tests/runtime/test_guard_err.py::test_a_body_over_the_cap_after_scrubbing_is_replaced
+FAILED tests/runtime/test_guard_err.py::test_malformed_json_echo_and_authorization_are_redacted
+4 failed, 2 passed, 1 warning in 0.67s
