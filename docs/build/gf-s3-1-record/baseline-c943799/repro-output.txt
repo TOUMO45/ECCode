@@ -1,0 +1,31 @@
+R-1 | TTL=1000000000000 POST /v1/register -> 201 | {"id":1,"email":"a@example.com","role":"user"} | server alive
+R-1 | TTL=1000000000000 POST /v1/login -> 500 | {"detail":"Internal Server Error"} | server alive
+R-1 | TTL=99999999999999999999 POST /v1/register -> 201 | {"id":1,"email":"a@example.com","role":"user"} | server alive
+R-1 | TTL=99999999999999999999 POST /v1/login -> 500 | {"detail":"Internal Server Error"} | server alive
+R-2 | GET /v1/tasks/<4300 nines> -> 404 | {"detail":"Task not found"} | server alive
+R-2 | GET /v1/tasks/<4301 nines> -> 422 | {"detail":[{"loc":["path","task_id"],"msg":"Unable to parse input string as an integer, exceeded maximum size","type":"int_parsing_size"}]} | server alive
+R-2 | GET /v1/tasks/<5000 nines> -> 422 | {"detail":[{"loc":["path","task_id"],"msg":"Unable to parse input string as an integer, exceeded maximum size","type":"int_parsing_size"}]} | server alive
+R-3 | anonymous GET /docs -> 200 |      <!DOCTYPE html>     <html>     <head>     <meta name="viewport" content="width=device-width, initial-scale=1.0">     <link type="text/css" rel="stylesheet" | server alive
+R-3 | anonymous GET /redoc -> 200 |      <!DOCTYPE html>     <html>     <head>     <title>Shared Task Tracker API - ReDoc</title>     <!-- needed for adaptive design -->     <meta charset="utf-8"/ | server alive
+R-3 | anonymous GET /openapi.json -> 200 | {"openapi":"3.1.0","info":{"title":"Shared Task Tracker API","description":"Seven endpoints under /v1; a task is visible only to its owner or an admin.","versio | server alive
+R-4 | anonymous POST /v1/tasks body {bad -> 422 | {"detail":[{"loc":["body",1],"msg":"JSON decode error","type":"json_invalid"}]} | server alive
+R-4 | anonymous PATCH /v1/tasks/1 body {bad -> 422 | {"detail":[{"loc":["body",1],"msg":"JSON decode error","type":"json_invalid"}]} | server alive
+R-4 | anonymous POST /v1/tasks {title:''} -> 401 | {"detail":"Not authenticated"} | server alive
+R-5 | POST /v1/tasks title U+001F -> 201 | {"id":1,"title":"\u001f","description":"","status":"todo","owner_id":1,"created_at":"2026-11-09T01:23:08.145052Z"} | server alive
+A-1 | POST /v1/register short password Sup3rS -> 422 | {"detail":[{"loc":["body","password"],"msg":"String should have at least 8 characters","type":"string_too_short"}]} | server alive
+A-1 | POST /v1/register missing email -> 422 | {"detail":[{"loc":["body","email"],"msg":"Field required","type":"missing"}]} | server alive
+A-2 | POST /v1/register email with lone surrogate \ud800 -> 422 | {"detail":[{"loc":["body","email"],"msg":"Input should be a valid string, unable to parse raw data as a unicode string","type":"string_unicode"}]} | server alive
+A-2 | POST /v1/login password with \ud800 -> 422 | {"detail":[{"loc":["body","password"],"msg":"Input should be a valid string, unable to parse raw data as a unicode string","type":"string_unicode"}]} | server alive
+A-2 | POST /v1/tasks title with \ud800 -> 422 | {"detail":[{"loc":["body","title"],"msg":"Input should be a valid string, unable to parse raw data as a unicode string","type":"string_unicode"}]} | server alive
+A-3 | POST /v1/login 280-char password (not counted) -> 422 | {"detail":[{"loc":["body","password"],"msg":"String should have at most 128 characters","type":"string_too_long"}]} | server alive
+A-4 | POST /v1/register a@b.c (not counted) -> 201 | {"id":2,"email":"a@b.c","role":"user"} | server alive
+B-3 anon POST /v1/login 5000-deep object -> 422 len=230 '{"detail":[{"loc":["body","email"],"msg":"Field required","type":"miss'
+B-3 anon POST /v1/register 5000-deep object -> 422 len=230 '{"detail":[{"loc":["body","email"],"msg":"Field required","type":"miss'
+B-7 owner GET /v1/tasks/1 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/+1 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/01 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/1.0 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/%201 -> 200 len=109 '{"id":1,"title":"t","description":"","status":"todo","owner_id":1,"cre'
+B-7 owner GET /v1/tasks/1_0 -> 404 len=27 '{"detail":"Task not found"}'
+B-10 POST /v1/tasks 5MB title -> 422 len=112 '{"detail":[{"loc"
+B-9 default db: tasktracker-bd688806.db mode 0o644
