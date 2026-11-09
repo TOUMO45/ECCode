@@ -272,3 +272,37 @@ test('gate scope: a rejection, another phase gate, and a project without gf.runt
   r = withFrozenReview(() => wrapLoad().gateReview(ctx.store, ctx.config, 'phase:build', 'technical-reviewer', APPROVE));
   assert.ifError(r.error); assert.strictEqual(r.calls.length, 1);
 });
+
+// ---- I3: docs closed by default ---------------------------------------------------------------------------------
+
+const DOCS_PY = `
+import json, sys
+sys.path.insert(0, sys.argv[1])
+from fastapi.testclient import TestClient
+import app.main
+c = TestClient(app.main.app, raise_server_exceptions=False)
+print(json.dumps({p: [c.get(p).status_code, c.get(p).headers.get("x-eccode-rule")] for p in ["/docs", "/docs/oauth2-redirect", "/redoc", "/openapi.json"]}))
+`;
+function docsStatus(tree, extraEnv = {}) {
+  const e = { ...env(), ...extraEnv };
+  if (!('ECCODE_DOCS_ENABLED' in extraEnv)) delete e.ECCODE_DOCS_ENABLED;
+  const r = spawnSync(py.python, ['-c', DOCS_PY, tree], { cwd: tree, env: e, encoding: 'utf8' });
+  assert.strictEqual(r.status, 0, r.stderr);
+  return JSON.parse(r.stdout.trim().split('\n').pop());
+}
+
+test('I3 docs closed: an installed, mounted guard answers 404 GF-DOCS-1 for /docs, /docs/oauth2-redirect, /redoc, /openapi.json', PY_OPTS, () => {
+  const tree = appTree();
+  load().install(tree);
+  assert.deepStrictEqual(docsStatus(tree), { '/docs': [404, 'GF-DOCS-1'], '/docs/oauth2-redirect': [404, 'GF-DOCS-1'], '/redoc': [404, 'GF-DOCS-1'], '/openapi.json': [404, 'GF-DOCS-1'] });
+});
+
+test('I3 docs switch: ECCODE_DOCS_ENABLED=1 restores them; an unmounted guard leaves them open (control)', PY_OPTS, () => {
+  const tree = appTree();
+  load().install(tree);
+  const on = docsStatus(tree, { ECCODE_DOCS_ENABLED: '1' });
+  for (const p of ['/docs', '/redoc', '/openapi.json']) assert.deepStrictEqual(on[p], [200, null], p);
+  const bare = appTree({ mount: false });
+  load().install(bare);
+  for (const p of ['/docs', '/redoc', '/openapi.json']) assert.strictEqual(docsStatus(bare)[p][0], 200, p);
+});

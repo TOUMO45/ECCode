@@ -19,6 +19,10 @@ GF-VAL-1 (body filters), for every request that carries a body:
   A rejection is 422 {"detail":[{"type":"gf_val","rule":"GF-VAL-1","msg":<fixed reason>}]}; it never contains any
   request content.
 
+GF-DOCS-1 (docs closed by default): /docs, /docs/oauth2-redirect, /redoc and /openapi.json answer 404
+{"detail":"Not Found"} for every method, unless config.json has docs_enabled: true or the environment has exactly
+ECCODE_DOCS_ENABLED=1 when the guard is constructed (the explicit switch).
+
 Stage order (no credentials -> 401 first): config.secured lists the operations the contract secures (openapi
 ``security``, global or per operation; ``security: []`` is public). A GF-VAL-1 rejection of a request to a secured
 operation that has NO Authorization header is answered 401 {"detail":"Not authenticated"} with
@@ -33,6 +37,8 @@ import os
 import re
 
 RULE_VAL = "GF-VAL-1"
+RULE_DOCS = "GF-DOCS-1"
+DOCS_PATHS = frozenset({"/docs", "/docs/oauth2-redirect", "/redoc", "/openapi.json"})
 BODY_METHODS = {"POST", "PUT", "PATCH"}
 DEFAULT_LIMITS = {"max_body_bytes": 1048576, "max_depth": 64, "max_string_length": 100000}
 
@@ -155,6 +161,7 @@ class EccodeGuard:
         self.max_body = int(limits["max_body_bytes"])
         self.max_depth = int(limits["max_depth"])
         self.max_string = int(limits["max_string_length"])
+        self.docs_enabled = cfg.get("docs_enabled") is True or os.environ.get("ECCODE_DOCS_ENABLED") == "1"
         self.secured = [(str(op["method"]).upper(), _template_regex(str(op["pathTemplate"]))) for op in cfg.get("secured") or []]
 
     # ---- responses -------------------------------------------------------------------------------------------------
@@ -181,6 +188,9 @@ class EccodeGuard:
     async def __call__(self, scope, receive, send) -> None:
         if scope.get("type") != "http":
             await self.app(scope, receive, send)
+            return
+        if not self.docs_enabled and scope.get("path") in DOCS_PATHS:
+            await self._send(send, 404, {"detail": "Not Found"}, RULE_DOCS)
             return
         headers = {}
         for k, v in scope.get("headers") or []:

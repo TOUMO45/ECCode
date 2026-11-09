@@ -1,0 +1,58 @@
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python node --test tests/gf-runtime.test.js
+ok 1 - I2 GF-VAL-1: the guard's pytest suite passes on a minimal default FastAPI app
+ok 2 - configFromOpenapi: global security, security: [] = public, an empty requirement = public, per-operation override
+ok 3 - install: vendors the package, writes config.json and MANIFEST.sha256 covering every vendored file
+ok 4 - check positive: an installed and mounted guard passes (files and canary)
+ok 5 - check negative: a vendored but NOT mounted guard is refused by the canary
+ok 6 - check negative: a tampered vendored file is refused (even though the canary still passes)
+ok 7 - check negative: a changed config.json, a missing file, an extra file and a stale manifest are refused
+ok 8 - check: the canary fails closed when python cannot run the app
+ok 9 - gate positive: approving phase:build with an installed, mounted guard reaches the frozen review
+ok 10 - gate negative (bypass): a vendored but unmounted guard is refused with GF-RT-1; the frozen review is not reached
+ok 11 - gate negative (bypass): a tampered vendored file is refused with GF-RT-1
+ok 12 - gate negative: a runtime never installed is refused with GF-RT-1
+ok 13 - gate scope: a rejection, another phase gate, and a project without gf.runtime.enforce are not checked
+ok 14 - I3 docs closed: an installed, mounted guard answers 404 GF-DOCS-1 for /docs, /docs/oauth2-redirect, /redoc, /openapi.json
+ok 15 - I3 docs switch: ECCODE_DOCS_ENABLED=1 restores them; an unmounted guard leaves them open (control)
+# tests 15
+# pass 15
+# fail 0
+# skipped 0
+
+$ env -u ECCODE_SEED_KEY PYTHONDONTWRITEBYTECODE=1 /root/.cache/eccode/phase3-venv/bin/python -m pytest -q -p no:cacheprovider -o addopts= tests/runtime/test_guard_docs.py
+16 passed, 1 warning in 0.61s
+
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python npm test   (summary)
+# tests 1808
+# pass 1766
+# fail 0
+# cancelled 0
+# skipped 42
+
+$ docs/build/gf-s3-1-record/tools/make-s31-tree.sh <scratchpad>/s31-I3
+installed 3 files into <scratchpad>/s31-I3/eccode_runtime
+patching file app/main.py
+=== vendored manifest (<scratchpad>/s31-I3/eccode_runtime/MANIFEST.sha256) ===
+36cc9d9c7d4172ac2038f882b8a05dc62ce238b7fc41a43c676d1af8d8d8d527  eccode_runtime/__init__.py
+d21b96b0473141120f760703124ef4fec0342cebe3c24b8d12ad5438733940d2  eccode_runtime/config.json
+09e3bf3ad6bdaed9440ca6cdab22e864853953f8e2ee74442e47e678d51d5dc1  eccode_runtime/guard.py
+=== engine runtime check (GF-RT-1) ===
+GF-RT-1 check: no problems (files match the engine, canary passed)
+
+$ docs/build/gf-s3-1-record/tools/item-check.sh I3 <scratchpad>/s31-I3
+I3 hidden: CRITERIA PASSED: 24 of 24 | cases: 220 pass, 0 fail, 1 skip, total 221
+I3 probes: 5 failed, 111 passed, 3 skipped, 1 warning in 113.92s (0:01:53)
+I3 bola failures: 1 (expected 1 = R-2)
+predicted: test_conformance.py::test_anonymous_docs_endpoints FAIL -> PASS; probe failures 6 -> 5: 0 docs failures now
+
+$ direct check: copy of the S3.1 tree, env -u ECCODE_SEED_KEY uvicorn app.main:app on 127.0.0.1:18091, curl anonymous GETs
+--- S3.1 tree, uvicorn app.main:app, default (ECCODE_DOCS_ENABLED set to empty, i.e. not the switch)
+anonymous GET /docs -> 404 x-eccode-rule: GF-DOCS-1
+anonymous GET /docs/oauth2-redirect -> 404 x-eccode-rule: GF-DOCS-1
+anonymous GET /redoc -> 404 x-eccode-rule: GF-DOCS-1
+anonymous GET /openapi.json -> 404 x-eccode-rule: GF-DOCS-1
+--- S3.1 tree, uvicorn app.main:app, enabled (ECCODE_DOCS_ENABLED=1)
+anonymous GET /docs -> 200 x-eccode-rule: 
+anonymous GET /docs/oauth2-redirect -> 200 x-eccode-rule: 
+anonymous GET /redoc -> 200 x-eccode-rule: 
+anonymous GET /openapi.json -> 200 x-eccode-rule: 

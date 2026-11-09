@@ -1,0 +1,31 @@
+$ env -u ECCODE_SEED_KEY ECCODE_PYTHON=/root/.cache/eccode/phase3-venv/bin/python node --test tests/gf-runtime.test.js
+not ok 1 - I2 GF-VAL-1: the guard's pytest suite passes on a minimal default FastAPI app
+ok 2 - configFromOpenapi: global security, security: [] = public, an empty requirement = public, per-operation override
+ok 3 - install: vendors the package, writes config.json and MANIFEST.sha256 covering every vendored file
+ok 4 - check positive: an installed and mounted guard passes (files and canary)
+ok 5 - check negative: a vendored but NOT mounted guard is refused by the canary
+ok 6 - check negative: a tampered vendored file is refused (even though the canary still passes)
+ok 7 - check negative: a changed config.json, a missing file, an extra file and a stale manifest are refused
+ok 8 - check: the canary fails closed when python cannot run the app
+ok 9 - gate positive: approving phase:build with an installed, mounted guard reaches the frozen review
+ok 10 - gate negative (bypass): a vendored but unmounted guard is refused with GF-RT-1; the frozen review is not reached
+ok 11 - gate negative (bypass): a tampered vendored file is refused with GF-RT-1
+ok 12 - gate negative: a runtime never installed is refused with GF-RT-1
+ok 13 - gate scope: a rejection, another phase gate, and a project without gf.runtime.enforce are not checked
+not ok 14 - I3 docs closed: an installed, mounted guard answers 404 GF-DOCS-1 for /docs, /docs/oauth2-redirect, /redoc, /openapi.json
+ok 15 - I3 docs switch: ECCODE_DOCS_ENABLED=1 restores them; an unmounted guard leaves them open (control)
+# tests 15
+# pass 13
+# fail 2
+# skipped 0
+
+$ env -u ECCODE_SEED_KEY PYTHONDONTWRITEBYTECODE=1 /root/.cache/eccode/phase3-venv/bin/python -m pytest -q -p no:cacheprovider -o addopts= tests/runtime/test_guard_docs.py
+FAILED tests/runtime/test_guard_docs.py::test_docs_closed_by_default[/docs]
+FAILED tests/runtime/test_guard_docs.py::test_docs_closed_by_default[/docs/oauth2-redirect]
+FAILED tests/runtime/test_guard_docs.py::test_docs_closed_by_default[/redoc]
+FAILED tests/runtime/test_guard_docs.py::test_docs_closed_by_default[/openapi.json]
+FAILED tests/runtime/test_guard_docs.py::test_only_the_explicit_switch_opens_docs[0]
+FAILED tests/runtime/test_guard_docs.py::test_only_the_explicit_switch_opens_docs[]
+FAILED tests/runtime/test_guard_docs.py::test_only_the_explicit_switch_opens_docs[true]
+FAILED tests/runtime/test_guard_docs.py::test_only_the_explicit_switch_opens_docs[yes]
+8 failed, 8 passed, 1 warning in 0.71s
