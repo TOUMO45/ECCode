@@ -14,8 +14,10 @@ Enforcement: prevention on the managed (MCP) path plus guaranteed detection by l
 This CLI runs the same rules as the eccode MCP tools. The plain eccode CLI is outside the layer, and audit finds anything committed through it.
 
 Start
-  init --name <n> --idea <text> [--stack python-fastapi-sqlalchemy-sqlite]
+  init --name <n> --idea <text> [--stack python-fastapi-sqlalchemy-sqlite|python-fastapi-postgres-worker-compose]
                                    A greenfield project with the group roles and the layer switched on
+                                   (the compose profile also writes its engine-owned scaffold: compose.yaml, deploy/)
+  stack check [--json]             GF-STACK-1..3: compose file valid (no daemon), a healthcheck on every service, ownership covers the scaffold
   status [--json]                  Which G1 stages are registered, whether G1 is sealed, estimates, amendments, messages
 
 G1 (architecture, design, plan: the existing gates, with the stage rules run first)
@@ -50,6 +52,10 @@ Slice closure (three recorded review steps, two batteries, accounting)
   merge --actor orchestrator --scope <s> --checks ev:<id>,ev:<id>   GF-ISO-3: merge the groups' branches in dependency order after the cited checks passed
   deps install --actor orchestrator --command "<pinned install form>"   the engine-mediated dependency install (network allowed, dependency directories writable)
   preflight [--json]               Which regime protects identity between groups (managed-path or text-level) and the warnings (L-GF-17)
+Automated slice approval (opt-in: gf.approval.auto in .eccode/config.json; off by default)
+  approve --scope <s>              Approve a closed slice inside the budget, or stop with GF-AUTO-* (exit 2: a human is needed)
+  intervention record --actor user --type approval|clarification-answer|correction|restart|unblock --note <text> [--ref-seq <n>]
+  interventions count [--json]     Human interventions by type, from the event record alone; auto-approvals apart
   audit [--json]                   Replay the record and check every rule as an invariant; exit 2 on any error
 
 Global: --root <dir> (or ECCODE_ROOT), --actor <role> (or ECCODE_ACTOR, never for user), --json
@@ -262,6 +268,35 @@ function main(argv) {
     case 'preflight': {
       const r = gf.preflight.preflight(store.root);
       print(flags, `${r.regime}: profile ${r.profile}, guard ${r.guardWired ? 'wired' : 'not wired'}${r.warnings.length ? `\n${r.warnings.map((w) => `- ${w}`).join('\n')}` : ''}`, r);
+      return 0;
+    }
+    case 'stack': {
+      if (sub !== 'check') throw new EccodeError('USAGE', 'stack check [--json]');
+      const profiles = require('../lib/greenfield/profiles');
+      const { project } = require('../lib/greenfield/projection');
+      const gfs = project(store.readEvents());
+      const sealedMap = gfs.seal ? require('../lib/greenfield/ownership-ops').loadMap(store, config).map : null;
+      const problems = profiles.get(gfs.stackProfile) ? profiles.check(store.root, gfs.stackProfile, { map: sealedMap }) : [];
+      const r = { profile: gfs.stackProfile, scaffolded: Boolean(profiles.get(gfs.stackProfile)), problems };
+      print(flags, !r.scaffolded ? `stack check: ${r.profile} has no engine-owned scaffold; nothing to check.` : (problems.length ? `stack check FAILED:\n${problems.map((x) => `- ${x.rule}: ${x.message}`).join('\n')}` : `stack check OK (${r.profile}).`), r);
+      return problems.length ? 2 : 0;
+    }
+    case 'approve': {
+      const r = require('../lib/greenfield/approval').autoApprove(store, config, need(flags.scope, '--scope'));
+      print(flags, `approve: ${r.event.data.scope} auto-approved (${r.event.data.budget.slicesUsed} of ${r.event.data.budget.maxSlices} slices, ${r.event.data.budget.tokensUsed} of ${r.event.data.budget.maxTokens} tokens).`, r);
+      return 0;
+    }
+    case 'intervention': {
+      if (sub !== 'record') throw new EccodeError('USAGE', 'intervention record --actor user --type <type> --note <text> [--ref-seq <n>]');
+      const refSeq = flags['ref-seq'] === undefined ? undefined : Number(flags['ref-seq']);
+      const r = require('../lib/greenfield/interventions').record(store, need(actor, '--actor'), { type: flags.type, note: flags.note === true ? undefined : flags.note, refSeq });
+      print(flags, `intervention ${r.event.data.type} recorded at seq ${r.event.seq}.`, r.event.data);
+      return 0;
+    }
+    case 'interventions': {
+      if (sub !== 'count') throw new EccodeError('USAGE', 'interventions count [--json]');
+      const c = require('../lib/greenfield/interventions').count(store.readEvents());
+      print(flags, `human interventions: ${c.total} (${Object.entries(c.counted).map(([k, n]) => `${k} ${n}`).join(', ')}); automated approvals: ${c.autoApprovals}${c.invalid.length ? `; ${c.invalid.length} malformed record(s)` : ''}`, c);
       return 0;
     }
     case 'audit': {

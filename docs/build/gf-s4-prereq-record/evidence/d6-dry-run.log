@@ -1,0 +1,28 @@
+## dry run on the generated scaffold, DOCKER_HOST=unix:///nonexistent/operator.sock, POSTGRES_PASSWORD unset
+[deploy-check 15:03:11Z] static: docker compose config on <scratch>/scaffold-tree/compose.yaml (no daemon)
+healthchecks: 4 of 4 services
+[deploy-check 15:03:11Z] PASS (dry run: static checks only; nothing was built or started)
+exit=0
+## negative: worker healthcheck removed
+[deploy-check 15:03:11Z] static: docker compose config on <scratch>/scaffold-tree-bad/compose.yaml (no daemon)
+services without a healthcheck: worker
+[deploy-check 15:03:12Z] FAIL: a service has no healthcheck
+exit=2
+## live mode without a daemon must stop at 'daemon not reachable' (exit 1), after static checks
+[deploy-check 15:03:12Z] fresh copy of <scratch>/scaffold-tree (without .git, .eccode, .env)
+[deploy-check 15:03:12Z] static: docker compose config on /tmp/deploy-check.omftc9/tree/compose.yaml (no daemon)
+healthchecks: 4 of 4 services
+[deploy-check 15:03:12Z] the docker daemon is not reachable
+[deploy-check 15:03:12Z] teardown: down -v
+[deploy-check 15:03:12Z] teardown reported an error (check 'docker ps -a' for project deploycheck179423659210344)
+exit=1
+## rerun after the teardown fix: dry run, then live mode with no daemon
+[deploy-check 15:03:23Z] static: docker compose config on <scratch>/scaffold-tree/compose.yaml (no daemon)
+healthchecks: 4 of 4 services
+[deploy-check 15:03:23Z] PASS (dry run: static checks only; nothing was built or started)
+exit=0
+[deploy-check 15:03:23Z] fresh copy of <scratch>/scaffold-tree (without .git, .eccode, .env)
+[deploy-check 15:03:23Z] static: docker compose config on /tmp/deploy-check.lgsrAx/tree/compose.yaml (no daemon)
+healthchecks: 4 of 4 services
+[deploy-check 15:03:23Z] the docker daemon is not reachable
+exit=1
