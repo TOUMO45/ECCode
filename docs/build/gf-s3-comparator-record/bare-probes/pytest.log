@@ -1,0 +1,842 @@
+.................FF.s............F...................................... [ 60%]
+...FFsFFFFFFFFFFFFFFFFFFFF................F...s                          [100%]
+=================================== FAILURES ===================================
+____________________ test_huge_ttl_env_login[1000000000000] ____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-13/test_huge_ttl_env_login_1000000')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f167ca7e780>
+ttl = '1000000000000'
+
+    @pytest.mark.parametrize("ttl", ["1000000000000", "99999999999999999999"])
+    def test_huge_ttl_env_login(tmp_path, monkeypatch, ttl):
+        from fastapi.testclient import TestClient
+    
+        from app.main import create_app
+        monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path/'h.db'}")
+        monkeypatch.setenv("TOKEN_TTL_SECONDS", ttl)
+        c = TestClient(create_app(), raise_server_exceptions=False)
+        assert reg(c, "a@example.com").status_code == 201
+        r = login(c, "a@example.com")
+        print("huge ttl", ttl, r.status_code, r.text)
+>       assert r.status_code == 200, (r.status_code, r.text)
+E       AssertionError: (500, 'Internal Server Error')
+E       assert 500 == 200
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+
+test_auth.py:96: AssertionError
+----------------------------- Captured stdout call -----------------------------
+huge ttl 1000000000000 500 Internal Server Error
+________________ test_huge_ttl_env_login[99999999999999999999] _________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-13/test_huge_ttl_env_login_9999990')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f167c92e570>
+ttl = '99999999999999999999'
+
+    @pytest.mark.parametrize("ttl", ["1000000000000", "99999999999999999999"])
+    def test_huge_ttl_env_login(tmp_path, monkeypatch, ttl):
+        from fastapi.testclient import TestClient
+    
+        from app.main import create_app
+        monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path/'h.db'}")
+        monkeypatch.setenv("TOKEN_TTL_SECONDS", ttl)
+        c = TestClient(create_app(), raise_server_exceptions=False)
+        assert reg(c, "a@example.com").status_code == 201
+        r = login(c, "a@example.com")
+        print("huge ttl", ttl, r.status_code, r.text)
+>       assert r.status_code == 200, (r.status_code, r.text)
+E       AssertionError: (500, 'Internal Server Error')
+E       assert 500 == 200
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+
+test_auth.py:96: AssertionError
+----------------------------- Captured stdout call -----------------------------
+huge ttl 99999999999999999999 500 Internal Server Error
+_ test_out_of_range_ids_404[99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999] _
+
+client = <starlette.testclient.TestClient object at 0x7f167c9d2350>
+raw = '999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999...9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999'
+
+    @pytest.mark.parametrize("raw", ["0", "-1", "999999", str(2**63 - 1), str(2**63),
+                                     str(-(2**63) - 1), "1" + "0" * 30, "9" * 5000])
+    def test_out_of_range_ids_404(client, raw):
+        _, h = user(client, "x@example.com")
+        _, hadm = user(client, "admin@example.com")
+        for hh in (h, hadm):
+>           assert client.get(f"/v1/tasks/{raw}", headers=hh).status_code == 404, raw
+E           AssertionError: 99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+E           assert 422 == 404
+E            +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+E            +    where <Response [422 Unprocessable Entity]> = get('/v1/tasks/99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999...9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999', headers={'Authorization': 'Bearer 9h2SOIzBiuaJJ1iY1dmMiSKhGDHavf6jEkOsPBhiauI'})
+E            +      where get = <starlette.testclient.TestClient object at 0x7f167c9d2350>.get
+
+test_bola.py:80: AssertionError
+________________________ test_anonymous_docs_endpoints _________________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c9f75b0>
+
+    def test_anonymous_docs_endpoints(client):
+        """S-AUTHN: every endpoint except register and login requires a token (401)."""
+        res = {p: client.get(p).status_code for p in ("/docs", "/redoc", "/openapi.json")}
+        print("anonymous docs statuses", res)
+>       assert all(s in (401, 404) for s in res.values()), res
+E       AssertionError: {'/docs': 200, '/openapi.json': 200, '/redoc': 200}
+E       assert False
+E        +  where False = all(<generator object test_anonymous_docs_endpoints.<locals>.<genexpr> at 0x7f167ca57e00>)
+
+test_conformance.py:51: AssertionError
+----------------------------- Captured stdout call -----------------------------
+anonymous docs statuses {'/docs': 200, '/redoc': 200, '/openapi.json': 200}
+____________________ test_anonymous_malformed_json_gets_401 ____________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c9f4d70>
+
+    def test_anonymous_malformed_json_gets_401(client):
+        """AC-8: POST /v1/tasks and PATCH /v1/tasks/{id} without Authorization answer 401."""
+        hdrs = {"content-type": "application/json"}
+        r1 = client.post("/v1/tasks", content=b"{bad", headers=hdrs)
+        r2 = client.patch("/v1/tasks/1", content=b"{bad", headers=hdrs)
+        r3 = client.post("/v1/tasks", json={"title": ""})
+        print("anon malformed:", r1.status_code, r2.status_code, "anon invalid schema:", r3.status_code)
+        assert r3.status_code == 401
+>       assert r1.status_code == 401 and r2.status_code == 401
+E       assert (422 == 401)
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+test_conformance.py:62: AssertionError
+----------------------------- Captured stdout call -----------------------------
+anon malformed: 422 422 anon invalid schema: 401
+_______________________ test_register_422_no_echo[body0] _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c9f6190>
+body = {'email': 'not-an-email', 'password': 'Sup3rSecretPw!'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "not-an-email", "password": SECRET},
+        {"email": "a@example.com", "password": SECRET[:6]},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com", "password": SECRET, "role": "admin"},
+        {"email": "a@example.com", "password": SECRET, SECRET: SECRET},
+        {"email": SECRET, "password": SECRET},
+        {"password": SECRET},
+        {"email": ["a@example.com"], "password": SECRET},
+        {"email": "a@example.com", "password": [SECRET]},
+        {"email": "a@example.com", "password": {"v": SECRET}},
+    ])
+    def test_register_422_no_echo(client, body):
+        r = client.post("/v1/register", json=body)
+        needles = [SECRET[:6]] if body.get("email") != SECRET else []
+        if SECRET in body:
+            needles = []  # attacker-chosen key echoed in loc is not a password leak
+>       _no_echo(r, *needles)
+
+test_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rS',)
+@py_assert1 = None, @py_assert4 = False, @py_assert3 = None
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+            assert n not in r.text, (n, r.text)
+        for e in r.json()["detail"]:
+>           assert set(e) == {"loc", "msg", "type"}, e
+E           AssertionError: {'ctx': {'error': {}}, 'input': 'not-an-email', 'loc': ['body', 'email'], 'msg': 'Value error, invalid email address', ...}
+E           assert {'ctx', 'inpu...'msg', 'type'} == {'loc', 'msg', 'type'}
+E             
+E             Extra items in the left set:
+E             'ctx'
+E             'input'
+E             Use -v to get more diff
+
+test_input.py:16: AssertionError
+_______________________ test_register_422_no_echo[body1] _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c9f7cb0>
+body = {'email': 'a@example.com', 'password': 'Sup3rS'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "not-an-email", "password": SECRET},
+        {"email": "a@example.com", "password": SECRET[:6]},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com", "password": SECRET, "role": "admin"},
+        {"email": "a@example.com", "password": SECRET, SECRET: SECRET},
+        {"email": SECRET, "password": SECRET},
+        {"password": SECRET},
+        {"email": ["a@example.com"], "password": SECRET},
+        {"email": "a@example.com", "password": [SECRET]},
+        {"email": "a@example.com", "password": {"v": SECRET}},
+    ])
+    def test_register_422_no_echo(client, body):
+        r = client.post("/v1/register", json=body)
+        needles = [SECRET[:6]] if body.get("email") != SECRET else []
+        if SECRET in body:
+            needles = []  # attacker-chosen key echoed in loc is not a password leak
+>       _no_echo(r, *needles)
+
+test_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rS',)
+@py_assert1 = False, @py_assert4 = None
+@py_assert3 = '{"detail":[{"type":"string_too_short","loc":["body","password"],"msg":"String should have at least 8 characters","input":"Sup3rS","ctx":{"min_length":8}}]}'
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+>           assert n not in r.text, (n, r.text)
+E           AssertionError: ('Sup3rS', '{"detail":[{"type":"string_too_short","loc":["body","password"],"msg":"String should have at least 8 characters","input":"Sup3rS","ctx":{"min_length":8}}]}')
+E           assert 'Sup3rS' not in '{"detail":[...ength":8}}]}'
+E             
+E             'Sup3rS' is contained here:
+E               ,"input":"Sup3rS","ctx":{"min_length":8}}]}
+E             ?           ++++++
+
+test_input.py:14: AssertionError
+_______________________ test_register_422_no_echo[body2] _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c9f5a90>
+body = {'email': 'a@example.com', 'password': 'Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSec...etPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "not-an-email", "password": SECRET},
+        {"email": "a@example.com", "password": SECRET[:6]},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com", "password": SECRET, "role": "admin"},
+        {"email": "a@example.com", "password": SECRET, SECRET: SECRET},
+        {"email": SECRET, "password": SECRET},
+        {"password": SECRET},
+        {"email": ["a@example.com"], "password": SECRET},
+        {"email": "a@example.com", "password": [SECRET]},
+        {"email": "a@example.com", "password": {"v": SECRET}},
+    ])
+    def test_register_422_no_echo(client, body):
+        r = client.post("/v1/register", json=body)
+        needles = [SECRET[:6]] if body.get("email") != SECRET else []
+        if SECRET in body:
+            needles = []  # attacker-chosen key echoed in loc is not a password leak
+>       _no_echo(r, *needles)
+
+test_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rS',)
+@py_assert1 = False, @py_assert4 = None
+@py_assert3 = '{"detail":[{"type":"string_too_long","loc":["body","password"],"msg":"String should have at most 128 characters","inp...etPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!","ctx":{"max_length":128}}]}'
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+>           assert n not in r.text, (n, r.text)
+E           AssertionError: ('Sup3rS', '{"detail":[{"type":"string_too_long","loc":["body","password"],"msg":"String should have at most 128 chara...tPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!","ctx":{"max_length":128}}]}')
+E           assert 'Sup3rS' not in '{"detail":[...gth":128}}]}'
+E             
+E             'Sup3rS' is contained here:
+E               ,"input":"Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!","ctx":{"max_length":128}}]}
+E             ?           ++++++
+
+test_input.py:14: AssertionError
+_______________________ test_register_422_no_echo[body3] _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c9d2c10>
+body = {'email': 'a@example.com', 'password': 'Sup3rSecretPw!', 'role': 'admin'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "not-an-email", "password": SECRET},
+        {"email": "a@example.com", "password": SECRET[:6]},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com", "password": SECRET, "role": "admin"},
+        {"email": "a@example.com", "password": SECRET, SECRET: SECRET},
+        {"email": SECRET, "password": SECRET},
+        {"password": SECRET},
+        {"email": ["a@example.com"], "password": SECRET},
+        {"email": "a@example.com", "password": [SECRET]},
+        {"email": "a@example.com", "password": {"v": SECRET}},
+    ])
+    def test_register_422_no_echo(client, body):
+        r = client.post("/v1/register", json=body)
+        needles = [SECRET[:6]] if body.get("email") != SECRET else []
+        if SECRET in body:
+            needles = []  # attacker-chosen key echoed in loc is not a password leak
+>       _no_echo(r, *needles)
+
+test_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rS',)
+@py_assert1 = None, @py_assert4 = False, @py_assert3 = None
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+            assert n not in r.text, (n, r.text)
+        for e in r.json()["detail"]:
+>           assert set(e) == {"loc", "msg", "type"}, e
+E           AssertionError: {'input': 'admin', 'loc': ['body', 'role'], 'msg': 'Extra inputs are not permitted', 'type': 'extra_forbidden'}
+E           assert {'input', 'lo...'msg', 'type'} == {'loc', 'msg', 'type'}
+E             
+E             Extra items in the left set:
+E             'input'
+E             Use -v to get more diff
+
+test_input.py:16: AssertionError
+_______________________ test_register_422_no_echo[body4] _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c9d1fd0>
+body = {'Sup3rSecretPw!': 'Sup3rSecretPw!', 'email': 'a@example.com', 'password': 'Sup3rSecretPw!'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "not-an-email", "password": SECRET},
+        {"email": "a@example.com", "password": SECRET[:6]},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com", "password": SECRET, "role": "admin"},
+        {"email": "a@example.com", "password": SECRET, SECRET: SECRET},
+        {"email": SECRET, "password": SECRET},
+        {"password": SECRET},
+        {"email": ["a@example.com"], "password": SECRET},
+        {"email": "a@example.com", "password": [SECRET]},
+        {"email": "a@example.com", "password": {"v": SECRET}},
+    ])
+    def test_register_422_no_echo(client, body):
+        r = client.post("/v1/register", json=body)
+        needles = [SECRET[:6]] if body.get("email") != SECRET else []
+        if SECRET in body:
+            needles = []  # attacker-chosen key echoed in loc is not a password leak
+>       _no_echo(r, *needles)
+
+test_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = (), @py_assert1 = None
+@py_assert4 = False, @py_assert3 = None
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+            assert n not in r.text, (n, r.text)
+        for e in r.json()["detail"]:
+>           assert set(e) == {"loc", "msg", "type"}, e
+E           AssertionError: {'input': 'Sup3rSecretPw!', 'loc': ['body', 'Sup3rSecretPw!'], 'msg': 'Extra inputs are not permitted', 'type': 'extra_forbidden'}
+E           assert {'input', 'lo...'msg', 'type'} == {'loc', 'msg', 'type'}
+E             
+E             Extra items in the left set:
+E             'input'
+E             Use -v to get more diff
+
+test_input.py:16: AssertionError
+_______________________ test_register_422_no_echo[body5] _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c99e430>
+body = {'email': 'Sup3rSecretPw!', 'password': 'Sup3rSecretPw!'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "not-an-email", "password": SECRET},
+        {"email": "a@example.com", "password": SECRET[:6]},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com", "password": SECRET, "role": "admin"},
+        {"email": "a@example.com", "password": SECRET, SECRET: SECRET},
+        {"email": SECRET, "password": SECRET},
+        {"password": SECRET},
+        {"email": ["a@example.com"], "password": SECRET},
+        {"email": "a@example.com", "password": [SECRET]},
+        {"email": "a@example.com", "password": {"v": SECRET}},
+    ])
+    def test_register_422_no_echo(client, body):
+        r = client.post("/v1/register", json=body)
+        needles = [SECRET[:6]] if body.get("email") != SECRET else []
+        if SECRET in body:
+            needles = []  # attacker-chosen key echoed in loc is not a password leak
+>       _no_echo(r, *needles)
+
+test_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = (), @py_assert1 = None
+@py_assert4 = False, @py_assert3 = None
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+            assert n not in r.text, (n, r.text)
+        for e in r.json()["detail"]:
+>           assert set(e) == {"loc", "msg", "type"}, e
+E           AssertionError: {'ctx': {'error': {}}, 'input': 'Sup3rSecretPw!', 'loc': ['body', 'email'], 'msg': 'Value error, invalid email address', ...}
+E           assert {'ctx', 'inpu...'msg', 'type'} == {'loc', 'msg', 'type'}
+E             
+E             Extra items in the left set:
+E             'ctx'
+E             'input'
+E             Use -v to get more diff
+
+test_input.py:16: AssertionError
+_______________________ test_register_422_no_echo[body6] _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c99ecf0>
+body = {'password': 'Sup3rSecretPw!'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "not-an-email", "password": SECRET},
+        {"email": "a@example.com", "password": SECRET[:6]},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com", "password": SECRET, "role": "admin"},
+        {"email": "a@example.com", "password": SECRET, SECRET: SECRET},
+        {"email": SECRET, "password": SECRET},
+        {"password": SECRET},
+        {"email": ["a@example.com"], "password": SECRET},
+        {"email": "a@example.com", "password": [SECRET]},
+        {"email": "a@example.com", "password": {"v": SECRET}},
+    ])
+    def test_register_422_no_echo(client, body):
+        r = client.post("/v1/register", json=body)
+        needles = [SECRET[:6]] if body.get("email") != SECRET else []
+        if SECRET in body:
+            needles = []  # attacker-chosen key echoed in loc is not a password leak
+>       _no_echo(r, *needles)
+
+test_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rS',)
+@py_assert1 = False, @py_assert4 = None
+@py_assert3 = '{"detail":[{"type":"missing","loc":["body","email"],"msg":"Field required","input":{"password":"Sup3rSecretPw!"}}]}'
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+>           assert n not in r.text, (n, r.text)
+E           AssertionError: ('Sup3rS', '{"detail":[{"type":"missing","loc":["body","email"],"msg":"Field required","input":{"password":"Sup3rSecretPw!"}}]}')
+E           assert 'Sup3rS' not in '{"detail":[...cretPw!"}}]}'
+E             
+E             'Sup3rS' is contained here:
+E               assword":"Sup3rSecretPw!"}}]}
+E             ?           ++++++
+
+test_input.py:14: AssertionError
+_______________________ test_register_422_no_echo[body7] _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c0bc9f0>
+body = {'email': ['a@example.com'], 'password': 'Sup3rSecretPw!'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "not-an-email", "password": SECRET},
+        {"email": "a@example.com", "password": SECRET[:6]},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com", "password": SECRET, "role": "admin"},
+        {"email": "a@example.com", "password": SECRET, SECRET: SECRET},
+        {"email": SECRET, "password": SECRET},
+        {"password": SECRET},
+        {"email": ["a@example.com"], "password": SECRET},
+        {"email": "a@example.com", "password": [SECRET]},
+        {"email": "a@example.com", "password": {"v": SECRET}},
+    ])
+    def test_register_422_no_echo(client, body):
+        r = client.post("/v1/register", json=body)
+        needles = [SECRET[:6]] if body.get("email") != SECRET else []
+        if SECRET in body:
+            needles = []  # attacker-chosen key echoed in loc is not a password leak
+>       _no_echo(r, *needles)
+
+test_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rS',)
+@py_assert1 = None, @py_assert4 = False, @py_assert3 = None
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+            assert n not in r.text, (n, r.text)
+        for e in r.json()["detail"]:
+>           assert set(e) == {"loc", "msg", "type"}, e
+E           AssertionError: {'input': ['a@example.com'], 'loc': ['body', 'email'], 'msg': 'Input should be a valid string', 'type': 'string_type'}
+E           assert {'input', 'lo...'msg', 'type'} == {'loc', 'msg', 'type'}
+E             
+E             Extra items in the left set:
+E             'input'
+E             Use -v to get more diff
+
+test_input.py:16: AssertionError
+_______________________ test_register_422_no_echo[body8] _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c0bc670>
+body = {'email': 'a@example.com', 'password': ['Sup3rSecretPw!']}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "not-an-email", "password": SECRET},
+        {"email": "a@example.com", "password": SECRET[:6]},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com", "password": SECRET, "role": "admin"},
+        {"email": "a@example.com", "password": SECRET, SECRET: SECRET},
+        {"email": SECRET, "password": SECRET},
+        {"password": SECRET},
+        {"email": ["a@example.com"], "password": SECRET},
+        {"email": "a@example.com", "password": [SECRET]},
+        {"email": "a@example.com", "password": {"v": SECRET}},
+    ])
+    def test_register_422_no_echo(client, body):
+        r = client.post("/v1/register", json=body)
+        needles = [SECRET[:6]] if body.get("email") != SECRET else []
+        if SECRET in body:
+            needles = []  # attacker-chosen key echoed in loc is not a password leak
+>       _no_echo(r, *needles)
+
+test_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rS',)
+@py_assert1 = False, @py_assert4 = None
+@py_assert3 = '{"detail":[{"type":"string_type","loc":["body","password"],"msg":"Input should be a valid string","input":["Sup3rSecretPw!"]}]}'
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+>           assert n not in r.text, (n, r.text)
+E           AssertionError: ('Sup3rS', '{"detail":[{"type":"string_type","loc":["body","password"],"msg":"Input should be a valid string","input":["Sup3rSecretPw!"]}]}')
+E           assert 'Sup3rS' not in '{"detail":[...cretPw!"]}]}'
+E             
+E             'Sup3rS' is contained here:
+E               "input":["Sup3rSecretPw!"]}]}
+E             ?           ++++++
+
+test_input.py:14: AssertionError
+_______________________ test_register_422_no_echo[body9] _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c0beeb0>
+body = {'email': 'a@example.com', 'password': {'v': 'Sup3rSecretPw!'}}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "not-an-email", "password": SECRET},
+        {"email": "a@example.com", "password": SECRET[:6]},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com", "password": SECRET, "role": "admin"},
+        {"email": "a@example.com", "password": SECRET, SECRET: SECRET},
+        {"email": SECRET, "password": SECRET},
+        {"password": SECRET},
+        {"email": ["a@example.com"], "password": SECRET},
+        {"email": "a@example.com", "password": [SECRET]},
+        {"email": "a@example.com", "password": {"v": SECRET}},
+    ])
+    def test_register_422_no_echo(client, body):
+        r = client.post("/v1/register", json=body)
+        needles = [SECRET[:6]] if body.get("email") != SECRET else []
+        if SECRET in body:
+            needles = []  # attacker-chosen key echoed in loc is not a password leak
+>       _no_echo(r, *needles)
+
+test_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rS',)
+@py_assert1 = False, @py_assert4 = None
+@py_assert3 = '{"detail":[{"type":"string_type","loc":["body","password"],"msg":"Input should be a valid string","input":{"v":"Sup3rSecretPw!"}}]}'
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+>           assert n not in r.text, (n, r.text)
+E           AssertionError: ('Sup3rS', '{"detail":[{"type":"string_type","loc":["body","password"],"msg":"Input should be a valid string","input":{"v":"Sup3rSecretPw!"}}]}')
+E           assert 'Sup3rS' not in '{"detail":[...cretPw!"}}]}'
+E             
+E             'Sup3rS' is contained here:
+E               ut":{"v":"Sup3rSecretPw!"}}]}
+E             ?           ++++++
+
+test_input.py:14: AssertionError
+________________________ test_login_422_no_echo[body0] _________________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c0bf930>
+body = {'email': 'a@example.com', 'password': 'Sup3rSecretPw!', 'x': 'Sup3rSecretPw!'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "a@example.com", "password": SECRET, "x": SECRET},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com"},
+        {"email": "a@example.com", "password": 12345678},
+    ])
+    def test_login_422_no_echo(client, body):
+        r = client.post("/v1/login", json=body)
+>       _no_echo(r, SECRET[:6] if "x" not in body else "Sup3rSecretPw!Sup3r")
+
+test_input.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rSecretPw!Sup3r',)
+@py_assert1 = None, @py_assert4 = False, @py_assert3 = None
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+            assert n not in r.text, (n, r.text)
+        for e in r.json()["detail"]:
+>           assert set(e) == {"loc", "msg", "type"}, e
+E           AssertionError: {'input': 'Sup3rSecretPw!', 'loc': ['body', 'x'], 'msg': 'Extra inputs are not permitted', 'type': 'extra_forbidden'}
+E           assert {'input', 'lo...'msg', 'type'} == {'loc', 'msg', 'type'}
+E             
+E             Extra items in the left set:
+E             'input'
+E             Use -v to get more diff
+
+test_input.py:16: AssertionError
+________________________ test_login_422_no_echo[body1] _________________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c0d5550>
+body = {'email': 'a@example.com', 'password': 'Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSec...etPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!Sup3rSecretPw!'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "a@example.com", "password": SECRET, "x": SECRET},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com"},
+        {"email": "a@example.com", "password": 12345678},
+    ])
+    def test_login_422_no_echo(client, body):
+        r = client.post("/v1/login", json=body)
+>       _no_echo(r, SECRET[:6] if "x" not in body else "Sup3rSecretPw!Sup3r")
+
+test_input.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [401 Unauthorized]>, needles = ('Sup3rS',), @py_assert1 = 401
+@py_assert4 = 422, @py_assert3 = False
+
+    def _no_echo(r, *needles):
+>       assert r.status_code == 422, (r.status_code, r.text)
+E       AssertionError: (401, '{"detail":"Invalid email or password"}')
+E       assert 401 == 422
+E        +  where 401 = <Response [401 Unauthorized]>.status_code
+
+test_input.py:12: AssertionError
+________________________ test_login_422_no_echo[body2] _________________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c0bfe70>
+body = {'email': 'a@example.com'}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "a@example.com", "password": SECRET, "x": SECRET},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com"},
+        {"email": "a@example.com", "password": 12345678},
+    ])
+    def test_login_422_no_echo(client, body):
+        r = client.post("/v1/login", json=body)
+>       _no_echo(r, SECRET[:6] if "x" not in body else "Sup3rSecretPw!Sup3r")
+
+test_input.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rS',)
+@py_assert1 = None, @py_assert4 = False, @py_assert3 = None
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+            assert n not in r.text, (n, r.text)
+        for e in r.json()["detail"]:
+>           assert set(e) == {"loc", "msg", "type"}, e
+E           AssertionError: {'input': {'email': 'a@example.com'}, 'loc': ['body', 'password'], 'msg': 'Field required', 'type': 'missing'}
+E           assert {'input', 'lo...'msg', 'type'} == {'loc', 'msg', 'type'}
+E             
+E             Extra items in the left set:
+E             'input'
+E             Use -v to get more diff
+
+test_input.py:16: AssertionError
+________________________ test_login_422_no_echo[body3] _________________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c0bdfd0>
+body = {'email': 'a@example.com', 'password': 12345678}
+
+    @pytest.mark.parametrize("body", [
+        {"email": "a@example.com", "password": SECRET, "x": SECRET},
+        {"email": "a@example.com", "password": SECRET * 20},
+        {"email": "a@example.com"},
+        {"email": "a@example.com", "password": 12345678},
+    ])
+    def test_login_422_no_echo(client, body):
+        r = client.post("/v1/login", json=body)
+>       _no_echo(r, SECRET[:6] if "x" not in body else "Sup3rSecretPw!Sup3r")
+
+test_input.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rS',)
+@py_assert1 = None, @py_assert4 = False, @py_assert3 = None
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+            assert n not in r.text, (n, r.text)
+        for e in r.json()["detail"]:
+>           assert set(e) == {"loc", "msg", "type"}, e
+E           AssertionError: {'input': 12345678, 'loc': ['body', 'password'], 'msg': 'Input should be a valid string', 'type': 'string_type'}
+E           assert {'input', 'lo...'msg', 'type'} == {'loc', 'msg', 'type'}
+E             
+E             Extra items in the left set:
+E             'input'
+E             Use -v to get more diff
+
+test_input.py:16: AssertionError
+_________________________ test_malformed_json_no_echo __________________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c0bc050>
+
+    def test_malformed_json_no_echo(client):
+        raw = ('{"email":"a@example.com","password":"' + SECRET + '",}').encode()
+        r = client.post("/v1/register", content=raw, headers={"content-type": "application/json"})
+>       _no_echo(r, SECRET)
+
+test_input.py:53: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+r = <Response [422 Unprocessable Entity]>, needles = ('Sup3rSecretPw!',)
+@py_assert1 = None, @py_assert4 = False, @py_assert3 = None
+
+    def _no_echo(r, *needles):
+        assert r.status_code == 422, (r.status_code, r.text)
+        for n in needles:
+            assert n not in r.text, (n, r.text)
+        for e in r.json()["detail"]:
+>           assert set(e) == {"loc", "msg", "type"}, e
+E           AssertionError: {'ctx': {'error': 'Illegal trailing comma before end of object'}, 'input': {}, 'loc': ['body', 52], 'msg': 'JSON decode error', ...}
+E           assert {'ctx', 'inpu...'msg', 'type'} == {'loc', 'msg', 'type'}
+E             
+E             Extra items in the left set:
+E             'ctx'
+E             'input'
+E             Use -v to get more diff
+
+test_input.py:16: AssertionError
+________ test_register_lone_surrogate_no_500[email-a\ud800@example.com] ________
+
+client = <starlette.testclient.TestClient object at 0x7f167c0bc830>
+field = 'email', val = 'a\ud800@example.com'
+
+    @pytest.mark.parametrize("field,val", [("email", "a\ud800@example.com"),
+                                           ("password", "pass\ud800word1")])
+    def test_register_lone_surrogate_no_500(client, field, val):
+        body = {"email": "s@example.com", "password": "password-123", field: val}
+        raw = json.dumps(body).encode()  # ensure_ascii -> \ud800 escape
+        r = client.post("/v1/register", content=raw, headers={"content-type": "application/json"})
+>       assert r.status_code in (201, 422), (r.status_code, r.text)
+E       AssertionError: (500, 'Internal Server Error')
+E       assert 500 in (201, 422)
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+
+test_input.py:62: AssertionError
+________ test_register_lone_surrogate_no_500[password-pass\ud800word1] _________
+
+client = <starlette.testclient.TestClient object at 0x7f167c99e0b0>
+field = 'password', val = 'pass\ud800word1'
+
+    @pytest.mark.parametrize("field,val", [("email", "a\ud800@example.com"),
+                                           ("password", "pass\ud800word1")])
+    def test_register_lone_surrogate_no_500(client, field, val):
+        body = {"email": "s@example.com", "password": "password-123", field: val}
+        raw = json.dumps(body).encode()  # ensure_ascii -> \ud800 escape
+        r = client.post("/v1/register", content=raw, headers={"content-type": "application/json"})
+>       assert r.status_code in (201, 422), (r.status_code, r.text)
+E       AssertionError: (500, 'Internal Server Error')
+E       assert 500 in (201, 422)
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+
+test_input.py:62: AssertionError
+____________________ test_task_lone_surrogate_no_500[title] ____________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c99ef90>
+field = 'title'
+
+    @pytest.mark.parametrize("field", ["title", "description"])
+    def test_task_lone_surrogate_no_500(client, field):
+        _, h = user(client, "a@example.com")
+        body = {"title": "ok", field: "x\udfffy"}
+        raw = json.dumps(body).encode()
+        r = client.post("/v1/tasks", content=raw, headers={**h, "content-type": "application/json"})
+>       assert r.status_code in (201, 422), (r.status_code, r.text)
+E       AssertionError: (500, 'Internal Server Error')
+E       assert 500 in (201, 422)
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+
+test_input.py:71: AssertionError
+_________________ test_task_lone_surrogate_no_500[description] _________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c9d3cb0>
+field = 'description'
+
+    @pytest.mark.parametrize("field", ["title", "description"])
+    def test_task_lone_surrogate_no_500(client, field):
+        _, h = user(client, "a@example.com")
+        body = {"title": "ok", field: "x\udfffy"}
+        raw = json.dumps(body).encode()
+        r = client.post("/v1/tasks", content=raw, headers={**h, "content-type": "application/json"})
+>       assert r.status_code in (201, 422), (r.status_code, r.text)
+E       AssertionError: (500, 'Internal Server Error')
+E       assert 500 in (201, 422)
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+
+test_input.py:71: AssertionError
+_______________________ test_login_lone_surrogate_no_500 _______________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c9d0bb0>
+
+    def test_login_lone_surrogate_no_500(client):
+        raw = json.dumps({"email": "a\ud800@example.com", "password": "p\ud800"}).encode()
+        r = client.post("/v1/login", content=raw, headers={"content-type": "application/json"})
+>       assert r.status_code in (401, 422), (r.status_code, r.text)
+E       AssertionError: (500, 'Internal Server Error')
+E       assert 500 in (401, 422)
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+
+test_input.py:77: AssertionError
+________________________ test_email_format[a@b.c-True] _________________________
+
+client = <starlette.testclient.TestClient object at 0x7f167c9f66d0>
+email = 'a@b.c', ok = True
+
+    @pytest.mark.parametrize("email,ok", [("a@b", False), ("@b.co", False), ("a b@c.co", False),
+                                          ("a@b.co\n", True), ("a@@b.co", False),
+                                          ("a@b.co\nx@y.zz", False), ("a@b.c", True)])
+    def test_email_format(client, email, ok):
+        r = reg(client, email)
+>       assert (r.status_code == 201) == ok, (email, r.status_code, r.text)
+E       AssertionError: ('a@b.c', 422, '{"detail":[{"type":"value_error","loc":["body","email"],"msg":"Value error, invalid email address","input":"a@b.c","ctx":{"error":{}}}]}')
+E       assert (422 == 201) == True
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+test_input.py:138: AssertionError
+=============================== warnings summary ===============================
+../../../../../../../root/.cache/eccode/phase3-venv/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /root/.cache/eccode/phase3-venv/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED test_auth.py::test_huge_ttl_env_login[1000000000000] - AssertionError:...
+FAILED test_auth.py::test_huge_ttl_env_login[99999999999999999999] - Assertio...
+FAILED test_bola.py::test_out_of_range_ids_404[99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999]
+FAILED test_conformance.py::test_anonymous_docs_endpoints - AssertionError: {...
+FAILED test_conformance.py::test_anonymous_malformed_json_gets_401 - assert (...
+FAILED test_input.py::test_register_422_no_echo[body0] - AssertionError: {'ct...
+FAILED test_input.py::test_register_422_no_echo[body1] - AssertionError: ('Su...
+FAILED test_input.py::test_register_422_no_echo[body2] - AssertionError: ('Su...
+FAILED test_input.py::test_register_422_no_echo[body3] - AssertionError: {'in...
+FAILED test_input.py::test_register_422_no_echo[body4] - AssertionError: {'in...
+FAILED test_input.py::test_register_422_no_echo[body5] - AssertionError: {'ct...
+FAILED test_input.py::test_register_422_no_echo[body6] - AssertionError: ('Su...
+FAILED test_input.py::test_register_422_no_echo[body7] - AssertionError: {'in...
+FAILED test_input.py::test_register_422_no_echo[body8] - AssertionError: ('Su...
+FAILED test_input.py::test_register_422_no_echo[body9] - AssertionError: ('Su...
+FAILED test_input.py::test_login_422_no_echo[body0] - AssertionError: {'input...
+FAILED test_input.py::test_login_422_no_echo[body1] - AssertionError: (401, '...
+FAILED test_input.py::test_login_422_no_echo[body2] - AssertionError: {'input...
+FAILED test_input.py::test_login_422_no_echo[body3] - AssertionError: {'input...
+FAILED test_input.py::test_malformed_json_no_echo - AssertionError: {'ctx': {...
+FAILED test_input.py::test_register_lone_surrogate_no_500[email-a\ud800@example.com]
+FAILED test_input.py::test_register_lone_surrogate_no_500[password-pass\ud800word1]
+FAILED test_input.py::test_task_lone_surrogate_no_500[title] - AssertionError...
+FAILED test_input.py::test_task_lone_surrogate_no_500[description] - Assertio...
+FAILED test_input.py::test_login_lone_surrogate_no_500 - AssertionError: (500...
+FAILED test_input.py::test_email_format[a@b.c-True] - AssertionError: ('a@b.c...
+SKIPPED [1] test_auth.py: N/A on a non-engine tree: asserts the engine's table/column names (users.password_hash, auth_tokens.token_hash) and its scrypt string format
+SKIPPED [1] test_conformance.py: N/A on a non-engine tree: imports the engine's app.db.init_db/make_engine
+SKIPPED [1] test_race.py: N/A on a non-engine tree: asserts the engine's chosen temp-db file name tasktracker-*.db
+26 failed, 90 passed, 3 skipped, 1 warning in 133.94s (0:02:13)
+exit=1 wall=135s

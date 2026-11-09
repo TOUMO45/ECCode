@@ -1,0 +1,21 @@
+R-1 | TTL=1000000000000 POST /v1/register -> 201 | {"id":1,"email":"a@example.com","role":"user"} | server alive
+R-1 | TTL=1000000000000 POST /v1/login -> 500 | Internal Server Error | server alive
+R-1 | TTL=99999999999999999999 POST /v1/register -> 201 | {"id":1,"email":"a@example.com","role":"user"} | server alive
+R-1 | TTL=99999999999999999999 POST /v1/login -> 500 | Internal Server Error | server alive
+R-2 | GET /v1/tasks/<4300 nines> -> 404 | {"detail":"Task not found"} | server alive
+R-2 | GET /v1/tasks/<4301 nines> -> 422 | {"detail":[{"type":"int_parsing_size","loc":["path","task_id"],"msg":"Unable to parse input string as an integer, exceeded maximum size","input":"99999999999999 | server alive
+R-2 | GET /v1/tasks/<5000 nines> -> 422 | {"detail":[{"type":"int_parsing_size","loc":["path","task_id"],"msg":"Unable to parse input string as an integer, exceeded maximum size","input":"99999999999999 | server alive
+R-3 | anonymous GET /docs -> 200 |      <!DOCTYPE html>     <html>     <head>     <meta name="viewport" content="width=device-width, initial-scale=1.0">     <link type="text/css" rel="stylesheet" | server alive
+R-3 | anonymous GET /redoc -> 200 |      <!DOCTYPE html>     <html>     <head>     <title>Task Tracker - ReDoc</title>     <!-- needed for adaptive design -->     <meta charset="utf-8"/>     <meta | server alive
+R-3 | anonymous GET /openapi.json -> 200 | {"openapi":"3.1.0","info":{"title":"Task Tracker","version":"1.0.0"},"paths":{"/v1/register":{"post":{"summary":"Register","operationId":"registerUser","request | server alive
+R-4 | anonymous POST /v1/tasks body {bad -> 422 | {"detail":[{"type":"json_invalid","loc":["body",1],"msg":"JSON decode error","input":{},"ctx":{"error":"Expecting property name enclosed in double quotes"}}]} | server alive
+R-4 | anonymous PATCH /v1/tasks/1 body {bad -> 422 | {"detail":[{"type":"json_invalid","loc":["body",1],"msg":"JSON decode error","input":{},"ctx":{"error":"Expecting property name enclosed in double quotes"}}]} | server alive
+R-4 | anonymous POST /v1/tasks {title:''} -> 401 | {"detail":"Not authenticated"} | server alive
+R-5 | POST /v1/tasks title U+001F -> 422 | {"detail":[{"type":"value_error","loc":["body","title"],"msg":"Value error, title must be 1 to 200 characters after trimming","input":"\u001f","ctx":{"error":{} | server alive
+A-1 | POST /v1/register short password Sup3rS -> 422 | {"detail":[{"type":"string_too_short","loc":["body","password"],"msg":"String should have at least 8 characters","input":"Sup3rS","ctx":{"min_length":8}}]} | server alive
+A-1 | POST /v1/register missing email -> 422 | {"detail":[{"type":"missing","loc":["body","email"],"msg":"Field required","input":{"password":"Sup3rSecretPw!"}}]} | server alive
+A-2 | POST /v1/register email with lone surrogate \ud800 -> 500 | Internal Server Error | server alive
+A-2 | POST /v1/login password with \ud800 -> TRANSPORT ERROR ReadError: [Errno 104] Connection reset by peer | server alive
+A-2 | POST /v1/tasks title with \ud800 -> 500 | Internal Server Error | server alive
+A-3 | POST /v1/login 280-char password (not counted) -> TRANSPORT ERROR ReadError: [Errno 104] Connection reset by peer | server alive
+A-4 | POST /v1/register a@b.c (not counted) -> 422 | {"detail":[{"type":"value_error","loc":["body","email"],"msg":"Value error, invalid email address","input":"a@b.c","ctx":{"error":{}}}]} | server alive

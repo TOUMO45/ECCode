@@ -1,0 +1,57 @@
+{
+  "dialect": "sqlite",
+  "tables": {
+    "users": {
+      "columns": {
+        "id": {"type": "INTEGER", "nullable": false, "primary_key": true},
+        "email": {"type": "VARCHAR(254)", "nullable": false, "primary_key": false},
+        "password_hash": {"type": "VARCHAR(255)", "nullable": false, "primary_key": false},
+        "role": {"type": "VARCHAR(16)", "nullable": false, "primary_key": false},
+        "created_at": {"type": "DATETIME", "nullable": false, "primary_key": false}
+      },
+      "unique_constraints": [
+        {"name": "uq_users_email", "columns": ["email"]}
+      ],
+      "indexes": [],
+      "foreign_keys": [],
+      "check_constraints": ["ck_users_role"]
+    },
+    "auth_tokens": {
+      "columns": {
+        "id": {"type": "INTEGER", "nullable": false, "primary_key": true},
+        "token_hash": {"type": "VARCHAR(64)", "nullable": false, "primary_key": false},
+        "user_id": {"type": "INTEGER", "nullable": false, "primary_key": false},
+        "created_at": {"type": "DATETIME", "nullable": false, "primary_key": false},
+        "expires_at": {"type": "DATETIME", "nullable": false, "primary_key": false}
+      },
+      "unique_constraints": [
+        {"name": "uq_auth_tokens_token_hash", "columns": ["token_hash"]}
+      ],
+      "indexes": [
+        {"name": "ix_auth_tokens_user_id", "columns": ["user_id"], "unique": false}
+      ],
+      "foreign_keys": [
+        {"columns": ["user_id"], "referred_table": "users", "referred_columns": ["id"], "ondelete": "CASCADE"}
+      ],
+      "check_constraints": []
+    },
+    "tasks": {
+      "columns": {
+        "id": {"type": "INTEGER", "nullable": false, "primary_key": true},
+        "title": {"type": "VARCHAR(200)", "nullable": false, "primary_key": false},
+        "description": {"type": "VARCHAR(2000)", "nullable": false, "primary_key": false},
+        "status": {"type": "VARCHAR(16)", "nullable": false, "primary_key": false},
+        "owner_id": {"type": "INTEGER", "nullable": false, "primary_key": false},
+        "created_at": {"type": "DATETIME", "nullable": false, "primary_key": false}
+      },
+      "unique_constraints": [],
+      "indexes": [
+        {"name": "ix_tasks_owner_id", "columns": ["owner_id"], "unique": false}
+      ],
+      "foreign_keys": [
+        {"columns": ["owner_id"], "referred_table": "users", "referred_columns": ["id"], "ondelete": "CASCADE"}
+      ],
+      "check_constraints": ["ck_tasks_status"]
+    }
+  }
+}
