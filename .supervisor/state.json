@@ -2,7 +2,7 @@
   "schema": 1,
   "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
   "created": "2026-11-11 19:46",
-  "updated": "2026-11-11 20:44",
+  "updated": "2026-11-11 20:58",
   "budget": {
     "max_parallel": 3,
     "max_attempts": 3,
@@ -10,11 +10,11 @@
   },
   "counters": {
     "M": 4,
-    "AC": 14,
+    "AC": 15,
     "T": 9,
-    "D": 11,
+    "D": 12,
     "Q": 8,
-    "R": 4
+    "R": 6
   },
   "criteria": {
     "AC1": {
@@ -62,8 +62,10 @@
     },
     "AC8": {
       "text": "Operator scripts for arms a, b, c exist and pass a dry run",
-      "status": "pending",
-      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119"
+      "status": "verified",
+      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119",
+      "evidence": "dry run 2026-11-11: s4-operator prepare a,b,c ok; s4-launch probe a,b,c ok:true; no model started. Bare-arm intervention counter (P-4) and P-8 scoring tools are tracked separately as T9",
+      "at": "2026-11-11 20:58"
     },
     "AC9": {
       "text": "A host with a Docker daemon is chosen and recorded",
@@ -96,6 +98,11 @@
       "text": "docs/build/goal.md and state.md state the current claim and a numeric success test",
       "status": "pending",
       "source": "gf-s4-plan.md:269-270"
+    },
+    "AC15": {
+      "text": "Bare-arm transcript intervention counter (P-4) and the P-8 tools exist and are tested on the S3 record",
+      "status": "pending",
+      "source": "gf-s4-plan-addendum-2.md section 6"
     }
   },
   "tasks": {
@@ -163,7 +170,7 @@
     },
     "T4": {
       "title": "Write and dry-run the operator scripts",
-      "status": "running",
+      "status": "verified",
       "owner": "supervisor",
       "depends": [],
       "criteria": [
@@ -173,11 +180,13 @@
       "attempts": [],
       "strategy": null,
       "started": "2026-11-11 20:44",
-      "note": "order and prepare are built and tested (tests/s4-operator.test.js, 6 pass). Still open: the bubblewrap sandbox and launch wrapper, which needs a host with bwrap"
+      "note": "order and prepare are built and tested (tests/s4-operator.test.js, 6 pass). Still open: the bubblewrap sandbox and launch wrapper, which needs a host with bwrap",
+      "fingerprint": {},
+      "evidence": "node --test tests/s4-operator.test.js: 6 pass; prepare succeeded for arms a, b, c in a dry run; npm run check: 1845 tests, 1785 pass, 0 fail, 60 skipped"
     },
     "T5": {
       "title": "Run Meterline Stage 1",
-      "status": "blocked",
+      "status": "pending",
       "owner": null,
       "depends": [
         "T3",
@@ -190,7 +199,7 @@
       "files": [],
       "attempts": [],
       "strategy": null,
-      "note": "waiting on Q8: The plan's engine export (git archive a530ae1 without docs/) still contains the repository's own .eccode/ record, so the plan's init command is refused (GF-INIT-1). May the export also leave out .eccode/?"
+      "note": "unblocked by Q8: yes: it is the only way init can run as the plan describes, and it keeps ECCode's own history out of the arm's workspace; recorded in every run.json"
     },
     "T6": {
       "title": "Write the Stage 1 report",
@@ -223,8 +232,8 @@
     },
     "T8": {
       "title": "Sandbox and launch wrapper for the arms (plan 3.1), tested on a host with bubblewrap",
-      "status": "pending",
-      "owner": null,
+      "status": "verified",
+      "owner": "supervisor",
       "depends": [],
       "criteria": [
         "AC8"
@@ -234,7 +243,13 @@
         "tests/s4-launch.test.js"
       ],
       "attempts": [],
-      "strategy": null
+      "strategy": null,
+      "started": "2026-11-11 20:58",
+      "fingerprint": {
+        "tests/s4-launch.test.js": "0bfd57ede982f99b",
+        "tools/s4-launch.js": "df518bea75b7a4e2"
+      },
+      "evidence": "node --test tests/s4-launch.test.js: 5 pass; probe ok:true for prepared arms a, b, c on this host (bwrap 0.9.0); claude --version runs inside the arm b sandbox (2.1.322)"
     },
     "T9": {
       "title": "Bare-arm transcript intervention counter (P-4) and the P-8 tools",
@@ -304,6 +319,11 @@
       "text": "The hidden suite, manifest, rubric and review brief are written on the Stage 1 host, not in a cloud session: they must live outside the repository, and a cloud container is deleted after the session",
       "at": "2026-11-11 20:44",
       "why": "plan section 4 and 3.1; owner chose own machine or VM for Stage 1 (D6)"
+    },
+    "D12": {
+      "text": "The plan's engine export (git archive a530ae1 without docs/) still contains the repository's own .eccode/ record, so the plan's init command is refused (GF-INIT-1). May the export also leave out .eccode/? -> yes: it is the only way init can run as the plan describes, and it keeps ECCode's own history out of the arm's workspace; recorded in every run.json",
+      "why": "owner answer to Q8",
+      "at": "2026-11-11 20:53"
     }
   },
   "risks": {
@@ -322,12 +342,20 @@
     "R4": {
       "text": "Could not delete the stray remote branch root/cache/eccode/phase2-seeds.key from this session: the safety check refused a remote branch deletion. The owner approved it; it is harmless (same commit as the default branch) and can be deleted from GitHub's branches page",
       "at": "2026-11-11 20:44"
+    },
+    "R5": {
+      "text": "The arm sandbox binds /opt read-only (Node and Claude Code live there on the cloud host). On the Stage 1 host, check /opt holds nothing an arm must not read",
+      "at": "2026-11-11 20:58"
+    },
+    "R6": {
+      "text": "Not exercised in the dry run: a real model start and model network access from inside the sandbox",
+      "at": "2026-11-11 20:58"
     }
   },
   "next": [
-    "Owner: answer Q8 (export without .eccode/)",
-    "Owner: choose the Stage 1 host and open a session there; run the runbook in docs/build/gf-s4-stage1-runbook.md",
-    "On that host: sandbox and launch wrapper (T8), P-4 and P-8 tools (T9), then a separate fresh session writes the hidden suite (T3)"
+    "Owner: choose the Stage 1 host (Docker daemon + bubblewrap) and open a session there; follow docs/build/gf-s4-stage1-runbook.md",
+    "Unblocked anywhere: bare-arm intervention counter and P-8 tools (T9)",
+    "On the Stage 1 host: a separate fresh session writes the hidden suite, rubric and review brief (T3)"
   ],
   "log": [
     {
@@ -441,6 +469,26 @@
     {
       "at": "2026-11-11 20:44",
       "text": "Q8 asked: The plan's engine export (git archive a530ae1 without docs/) still contains the repository's own .eccode/ record, so the plan's init command is refused (GF-INIT-1). May the export also leave out .eccode/?"
+    },
+    {
+      "at": "2026-11-11 20:53",
+      "text": "Q8 answered: yes: it is the only way init can run as the plan describes, and it keeps ECCode's own history out of the arm's workspace; recorded in every run.json"
+    },
+    {
+      "at": "2026-11-11 20:58",
+      "text": "T8 -> running"
+    },
+    {
+      "at": "2026-11-11 20:58",
+      "text": "T8 -> verified"
+    },
+    {
+      "at": "2026-11-11 20:58",
+      "text": "T4 -> verified"
+    },
+    {
+      "at": "2026-11-11 20:58",
+      "text": "AC8 verified: dry run 2026-11-11: s4-operator prepare a,b,c ok; s4-launch probe a,b,c ok:true; no model started. Bare-arm intervention counter (P-4) and P-8 scoring tools are tracked separately as T9"
     }
   ],
   "cli": "/home/user/Supervisor-Skill/skills/autonomous-supervisor/scripts/supervisor.py",
@@ -463,7 +511,8 @@
         "AC7",
         "AC8",
         "AC9",
-        "AC10"
+        "AC10",
+        "AC15"
       ],
       "at": "2026-11-11 19:46"
     },
@@ -484,7 +533,7 @@
       "at": "2026-11-11 19:46"
     }
   },
-  "dispatches": 3,
+  "dispatches": 4,
   "questions": {
     "Q1": {
       "text": "Confirm interpretations I-1 (a refusal and the operator action on it count as one intervention) and I-2 (an operator-ceiling stop with no budget refusal counts as none)?",
@@ -565,8 +614,10 @@
       "blocks": [
         "T5"
       ],
-      "status": "open",
-      "at": "2026-11-11 20:44"
+      "status": "answered",
+      "at": "2026-11-11 20:44",
+      "answer": "yes: it is the only way init can run as the plan describes, and it keeps ECCode's own history out of the arm's workspace; recorded in every run.json",
+      "answered": "2026-11-11 20:53"
     }
   }
 }
