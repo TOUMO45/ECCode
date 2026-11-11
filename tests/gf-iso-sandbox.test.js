@@ -187,7 +187,10 @@ test('A2: the combined mode runs Landlock inside bubblewrap (both prefixes prese
 });
 
 // ============ A1 (S2.4.1): canary parity — the authorizing canary matches the run it clears ============
-test('A1: authorizeRun runs a canary with the exact mechanism, write-set width, net and uid it is asked for', { skip: HAVE ? false : skipReason }, () => {
+// 'both' needs bubblewrap as well as Landlock. On a Landlock-only host the library correctly refuses it, so the
+// test is skipped with its reason instead of failing (owner decision 2026-11-11; the limit stays registered as L-GF-83).
+const HAVE_BOTH = pr.mechanisms.includes('both');
+test('A1: authorizeRun runs a canary with the exact mechanism, write-set width, net and uid it is asked for', { skip: HAVE_BOTH ? false : 'needs Landlock+bubblewrap (L-GF-83)' }, () => {
   const v = sandbox.authorizeRun('both', { rwDirs: 3, net: false, fresh: true });
   assert.strictEqual(v.mechanism, 'both');
   assert.strictEqual(v.rwDirs, 3);

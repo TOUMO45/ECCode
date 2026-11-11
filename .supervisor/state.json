@@ -2,7 +2,7 @@
   "schema": 1,
   "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
   "created": "2026-11-11 19:46",
-  "updated": "2026-11-11 19:47",
+  "updated": "2026-11-11 20:44",
   "budget": {
     "max_parallel": 3,
     "max_attempts": 3,
@@ -11,10 +11,10 @@
   "counters": {
     "M": 4,
     "AC": 14,
-    "T": 7,
-    "D": 3,
-    "Q": 7,
-    "R": 3
+    "T": 9,
+    "D": 11,
+    "Q": 8,
+    "R": 4
   },
   "criteria": {
     "AC1": {
@@ -40,10 +40,10 @@
     },
     "AC4": {
       "text": "npm run check exits 0 on a Linux host without bubblewrap",
-      "status": "failed",
+      "status": "verified",
       "source": "QA run 2026-11-11",
-      "evidence": "npm run check on this host (Landlock only, no bwrap): 1 fail, tests/gf-iso-sandbox.test.js A1 authorizeRun('both'); already registered as L-GF-83 in docs/limits-greenfield.md:91",
-      "at": "2026-11-11 19:46"
+      "evidence": "npm run check on this Landlock-only host: exit 0; 1840 tests, 1777 pass, 0 fail, 63 skipped (was 1 fail)",
+      "at": "2026-11-11 20:44"
     },
     "AC5": {
       "text": "Hidden acceptance suite and its manifest are written by a party that does not build any arm",
@@ -72,8 +72,10 @@
     },
     "AC10": {
       "text": "Owner has confirmed or changed interpretations I-1 and I-2",
-      "status": "pending",
-      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119"
+      "status": "verified",
+      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119",
+      "evidence": "owner message 2026-11-11 'yes to all your recommendations': I-1 and I-2 accepted as written (D4)",
+      "at": "2026-11-11 20:44"
     },
     "AC11": {
       "text": "Stage 1 ran once per arm under the frozen plan, within the owner's token ceiling",
@@ -126,8 +128,8 @@
     },
     "T2": {
       "title": "Make sandbox test A1 pass or skip honestly on a Landlock-only host",
-      "status": "blocked",
-      "owner": null,
+      "status": "verified",
+      "owner": "supervisor",
       "depends": [],
       "criteria": [
         "AC4"
@@ -137,11 +139,16 @@
       ],
       "attempts": [],
       "strategy": null,
-      "note": "waiting on Q5: May test A1 in tests/gf-iso-sandbox.test.js be changed to skip when bubblewrap is absent? Editing tests and anything that looks like weakening a gate is reserved to you"
+      "note": "unblocked by Q5: yes: skip with the reason 'needs Landlock+bubblewrap', so npm run check is green on Landlock-only hosts and the limit stays registered as L-GF-83",
+      "started": "2026-11-11 20:44",
+      "fingerprint": {
+        "tests/gf-iso-sandbox.test.js": "0769cf1db21ae8aa"
+      },
+      "evidence": "node --test tests/gf-iso-sandbox.test.js: 17 pass, 0 fail, 1 skipped (A1: needs Landlock+bubblewrap); before: A1 failed"
     },
     "T3": {
       "title": "Write the Stage 1 hidden suite, manifest, rubric and review brief (not by a builder session)",
-      "status": "blocked",
+      "status": "pending",
       "owner": null,
       "depends": [],
       "criteria": [
@@ -152,19 +159,21 @@
       "files": [],
       "attempts": [],
       "strategy": null,
-      "note": "waiting on Q4: Who writes the hidden acceptance suite? It must not be a session that also builds an arm"
+      "note": "unblocked by Q4: a separate fresh session with no access to the arms' output, as the plan requires"
     },
     "T4": {
       "title": "Write and dry-run the operator scripts",
-      "status": "pending",
-      "owner": null,
+      "status": "running",
+      "owner": "supervisor",
       "depends": [],
       "criteria": [
         "AC8"
       ],
       "files": [],
       "attempts": [],
-      "strategy": null
+      "strategy": null,
+      "started": "2026-11-11 20:44",
+      "note": "order and prepare are built and tested (tests/s4-operator.test.js, 6 pass). Still open: the bubblewrap sandbox and launch wrapper, which needs a host with bwrap"
     },
     "T5": {
       "title": "Run Meterline Stage 1",
@@ -181,7 +190,7 @@
       "files": [],
       "attempts": [],
       "strategy": null,
-      "note": "waiting on Q1, Q2, Q3 (interpretations, budget approval, Docker host)"
+      "note": "waiting on Q8: The plan's engine export (git archive a530ae1 without docs/) still contains the repository's own .eccode/ record, so the plan's init command is refused (GF-INIT-1). May the export also leave out .eccode/?"
     },
     "T6": {
       "title": "Write the Stage 1 report",
@@ -211,6 +220,33 @@
       "files": [],
       "attempts": [],
       "strategy": null
+    },
+    "T8": {
+      "title": "Sandbox and launch wrapper for the arms (plan 3.1), tested on a host with bubblewrap",
+      "status": "pending",
+      "owner": null,
+      "depends": [],
+      "criteria": [
+        "AC8"
+      ],
+      "files": [
+        "tools/s4-launch.js",
+        "tests/s4-launch.test.js"
+      ],
+      "attempts": [],
+      "strategy": null
+    },
+    "T9": {
+      "title": "Bare-arm transcript intervention counter (P-4) and the P-8 tools",
+      "status": "pending",
+      "owner": null,
+      "depends": [],
+      "criteria": [
+        "AC8"
+      ],
+      "files": [],
+      "attempts": [],
+      "strategy": null
     }
   },
   "decisions": {
@@ -228,6 +264,46 @@
       "text": "No new engine features before Stage 1: nine recorded comparisons show parity with a plain agent at 3-54x cost, so evidence, not features, is the missing piece",
       "at": "2026-11-11 19:46",
       "why": "docs/final-report.md and gf-s3 evidence; limits.md:11"
+    },
+    "D4": {
+      "text": "Confirm interpretations I-1 (a refusal and the operator action on it count as one intervention) and I-2 (an operator-ceiling stop with no budget refusal counts as none)? -> accept both as written in gf-s4-plan-addendum-3.md:112-119",
+      "why": "owner answer to Q1",
+      "at": "2026-11-11 20:39"
+    },
+    "D5": {
+      "text": "Approve Meterline Stage 1 and its spending ceiling? -> approve with the plan's own ceiling: 500M tokens, pause at 400M (gf-s4-plan.md:202); no run before you say so",
+      "why": "owner answer to Q2",
+      "at": "2026-11-11 20:39"
+    },
+    "D6": {
+      "text": "Where does Stage 1 run? It needs a Docker daemon, which the Claude cloud environment does not have -> your own machine or a rented VM with Docker; I prepare scripts so it is one command",
+      "why": "owner answer to Q3",
+      "at": "2026-11-11 20:39"
+    },
+    "D7": {
+      "text": "Who writes the hidden acceptance suite? It must not be a session that also builds an arm -> a separate fresh session with no access to the arms' output, as the plan requires",
+      "why": "owner answer to Q4",
+      "at": "2026-11-11 20:39"
+    },
+    "D8": {
+      "text": "May test A1 in tests/gf-iso-sandbox.test.js be changed to skip when bubblewrap is absent? Editing tests and anything that looks like weakening a gate is reserved to you -> yes: skip with the reason 'needs Landlock+bubblewrap', so npm run check is green on Landlock-only hosts and the limit stays registered as L-GF-83",
+      "why": "owner answer to Q5",
+      "at": "2026-11-11 20:39"
+    },
+    "D9": {
+      "text": "RescueStock: submit to the PayPal AI Hackathon or drop it? Recorded deadline 12 Nov 2026 12:00 PT (secondary source); 0 real integration runs; needs Sandbox credentials, a spend ceiling and a demo video from you -> drop it for this deadline and keep the branch",
+      "why": "owner answer to Q6",
+      "at": "2026-11-11 20:39"
+    },
+    "D10": {
+      "text": "Delete the remote branch named root/cache/eccode/phase2-seeds.key? It looks like a mistaken push: it points at the same commit as claude/busy-pascal-0y560d and holds no key -> delete it",
+      "why": "owner answer to Q7",
+      "at": "2026-11-11 20:39"
+    },
+    "D11": {
+      "text": "The hidden suite, manifest, rubric and review brief are written on the Stage 1 host, not in a cloud session: they must live outside the repository, and a cloud container is deleted after the session",
+      "at": "2026-11-11 20:44",
+      "why": "plan section 4 and 3.1; owner chose own machine or VM for Stage 1 (D6)"
     }
   },
   "risks": {
@@ -242,11 +318,16 @@
     "R3": {
       "text": "Known, not fixed here: unknown command outside a project reports NOT_INITIALIZED instead of USAGE; examples/triage-desk npm run eval exits 1 by design (holdout recall 0.571 vs 0.70, RISK-12)",
       "at": "2026-11-11 19:46"
+    },
+    "R4": {
+      "text": "Could not delete the stray remote branch root/cache/eccode/phase2-seeds.key from this session: the safety check refused a remote branch deletion. The owner approved it; it is harmless (same commit as the default branch) and can be deleted from GitHub's branches page",
+      "at": "2026-11-11 20:44"
     }
   },
   "next": [
-    "Get the owner's answers to Q1-Q7 (one message)",
-    "Meanwhile, unblocked: write and dry-run the operator scripts (T4)"
+    "Owner: answer Q8 (export without .eccode/)",
+    "Owner: choose the Stage 1 host and open a session there; run the runbook in docs/build/gf-s4-stage1-runbook.md",
+    "On that host: sandbox and launch wrapper (T8), P-4 and P-8 tools (T9), then a separate fresh session writes the hidden suite (T3)"
   ],
   "log": [
     {
@@ -308,6 +389,58 @@
     {
       "at": "2026-11-11 19:47",
       "text": "T5 -> blocked (waiting on Q1, Q2, Q3 (interpretations, budget approval, Docker host))"
+    },
+    {
+      "at": "2026-11-11 20:39",
+      "text": "Q1 answered: accept both as written in gf-s4-plan-addendum-3.md:112-119"
+    },
+    {
+      "at": "2026-11-11 20:39",
+      "text": "Q2 answered: approve with the plan's own ceiling: 500M tokens, pause at 400M (gf-s4-plan.md:202); no run before you say so"
+    },
+    {
+      "at": "2026-11-11 20:39",
+      "text": "Q3 answered: your own machine or a rented VM with Docker; I prepare scripts so it is one command"
+    },
+    {
+      "at": "2026-11-11 20:39",
+      "text": "Q4 answered: a separate fresh session with no access to the arms' output, as the plan requires"
+    },
+    {
+      "at": "2026-11-11 20:39",
+      "text": "Q5 answered: yes: skip with the reason 'needs Landlock+bubblewrap', so npm run check is green on Landlock-only hosts and the limit stays registered as L-GF-83"
+    },
+    {
+      "at": "2026-11-11 20:39",
+      "text": "Q6 answered: drop it for this deadline and keep the branch"
+    },
+    {
+      "at": "2026-11-11 20:39",
+      "text": "Q7 answered: delete it"
+    },
+    {
+      "at": "2026-11-11 20:44",
+      "text": "T2 -> running"
+    },
+    {
+      "at": "2026-11-11 20:44",
+      "text": "T2 -> verified"
+    },
+    {
+      "at": "2026-11-11 20:44",
+      "text": "AC4 verified: npm run check on this Landlock-only host: exit 0; 1840 tests, 1777 pass, 0 fail, 63 skipped (was 1 fail)"
+    },
+    {
+      "at": "2026-11-11 20:44",
+      "text": "AC10 verified: owner message 2026-11-11 'yes to all your recommendations': I-1 and I-2 accepted as written (D4)"
+    },
+    {
+      "at": "2026-11-11 20:44",
+      "text": "T4 -> running (order and prepare are built and tested (tests/s4-operator.test.js, 6 pass). Still open: the bubblewrap sandbox and launch wrapper, which needs a host with bwrap)"
+    },
+    {
+      "at": "2026-11-11 20:44",
+      "text": "Q8 asked: The plan's engine export (git archive a530ae1 without docs/) still contains the repository's own .eccode/ record, so the plan's init command is refused (GF-INIT-1). May the export also leave out .eccode/?"
     }
   ],
   "cli": "/home/user/Supervisor-Skill/skills/autonomous-supervisor/scripts/supervisor.py",
@@ -351,7 +484,7 @@
       "at": "2026-11-11 19:46"
     }
   },
-  "dispatches": 1,
+  "dispatches": 3,
   "questions": {
     "Q1": {
       "text": "Confirm interpretations I-1 (a refusal and the operator action on it count as one intervention) and I-2 (an operator-ceiling stop with no budget refusal counts as none)?",
@@ -359,8 +492,10 @@
       "blocks": [
         "T5"
       ],
-      "status": "open",
-      "at": "2026-11-11 19:46"
+      "status": "answered",
+      "at": "2026-11-11 19:46",
+      "answer": "accept both as written in gf-s4-plan-addendum-3.md:112-119",
+      "answered": "2026-11-11 20:39"
     },
     "Q2": {
       "text": "Approve Meterline Stage 1 and its spending ceiling?",
@@ -368,8 +503,10 @@
       "blocks": [
         "T5"
       ],
-      "status": "open",
-      "at": "2026-11-11 19:46"
+      "status": "answered",
+      "at": "2026-11-11 19:46",
+      "answer": "approve with the plan's own ceiling: 500M tokens, pause at 400M (gf-s4-plan.md:202); no run before you say so",
+      "answered": "2026-11-11 20:39"
     },
     "Q3": {
       "text": "Where does Stage 1 run? It needs a Docker daemon, which the Claude cloud environment does not have",
@@ -377,8 +514,10 @@
       "blocks": [
         "T5"
       ],
-      "status": "open",
-      "at": "2026-11-11 19:46"
+      "status": "answered",
+      "at": "2026-11-11 19:46",
+      "answer": "your own machine or a rented VM with Docker; I prepare scripts so it is one command",
+      "answered": "2026-11-11 20:39"
     },
     "Q4": {
       "text": "Who writes the hidden acceptance suite? It must not be a session that also builds an arm",
@@ -386,8 +525,10 @@
       "blocks": [
         "T3"
       ],
-      "status": "open",
-      "at": "2026-11-11 19:46"
+      "status": "answered",
+      "at": "2026-11-11 19:46",
+      "answer": "a separate fresh session with no access to the arms' output, as the plan requires",
+      "answered": "2026-11-11 20:39"
     },
     "Q5": {
       "text": "May test A1 in tests/gf-iso-sandbox.test.js be changed to skip when bubblewrap is absent? Editing tests and anything that looks like weakening a gate is reserved to you",
@@ -395,22 +536,37 @@
       "blocks": [
         "T2"
       ],
-      "status": "open",
-      "at": "2026-11-11 19:46"
+      "status": "answered",
+      "at": "2026-11-11 19:46",
+      "answer": "yes: skip with the reason 'needs Landlock+bubblewrap', so npm run check is green on Landlock-only hosts and the limit stays registered as L-GF-83",
+      "answered": "2026-11-11 20:39"
     },
     "Q6": {
       "text": "RescueStock: submit to the PayPal AI Hackathon or drop it? Recorded deadline 12 Nov 2026 12:00 PT (secondary source); 0 real integration runs; needs Sandbox credentials, a spend ceiling and a demo video from you",
       "default": "drop it for this deadline and keep the branch",
       "blocks": [],
-      "status": "open",
-      "at": "2026-11-11 19:46"
+      "status": "answered",
+      "at": "2026-11-11 19:46",
+      "answer": "drop it for this deadline and keep the branch",
+      "answered": "2026-11-11 20:39"
     },
     "Q7": {
       "text": "Delete the remote branch named root/cache/eccode/phase2-seeds.key? It looks like a mistaken push: it points at the same commit as claude/busy-pascal-0y560d and holds no key",
       "default": "delete it",
       "blocks": [],
+      "status": "answered",
+      "at": "2026-11-11 19:46",
+      "answer": "delete it",
+      "answered": "2026-11-11 20:39"
+    },
+    "Q8": {
+      "text": "The plan's engine export (git archive a530ae1 without docs/) still contains the repository's own .eccode/ record, so the plan's init command is refused (GF-INIT-1). May the export also leave out .eccode/?",
+      "default": "yes: it is the only way init can run as the plan describes, and it keeps ECCode's own history out of the arm's workspace; recorded in every run.json",
+      "blocks": [
+        "T5"
+      ],
       "status": "open",
-      "at": "2026-11-11 19:46"
+      "at": "2026-11-11 20:44"
     }
   }
 }
