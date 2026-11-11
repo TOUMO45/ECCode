@@ -16,7 +16,7 @@
 Or from a shell: `claude plugin marketplace add <repo-or-path>`, then `claude plugin install eccode@eccode`.
 
 This installs:
-- 12 agents (`eccode:product-architect`, …);
+- 15 agents (`eccode:product-architect`, …);
 - skills and commands (`/eccode:start`, `/eccode:resume`, `/eccode:status`, `/eccode:investigate`, `/eccode:deliver`, `/eccode:improve`, and the everyday `/eccode:lean`, `/eccode:review`, `/eccode:audit`, `/eccode:debt`);
 - the two hooks.
 

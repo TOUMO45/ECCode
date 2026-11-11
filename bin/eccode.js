@@ -589,13 +589,20 @@ function print(flags, human, json) {
 }
 
 function loadJsonFile(file) {
-  return readJson(path.resolve(file));
+  const resolved = path.resolve(file);
+  // A missing input file is the caller's mistake: refuse with a code, do not crash with a stack trace.
+  if (!fs.existsSync(resolved)) throw new EccodeError('NOT_FOUND', `File not found: ${file}`);
+  return readJson(resolved);
 }
 
 function main(argv) {
   const args = parseArgs(argv);
   const { flags } = args;
   const [group, sub, arg] = args._;
+  if (flags.version && !group) {
+    process.stdout.write(`${require('../package.json').version}\n`);
+    return 0;
+  }
   if (!group || flags.help || group === 'help') {
     process.stdout.write(HELP);
     return 0;

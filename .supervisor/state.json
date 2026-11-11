@@ -1,0 +1,416 @@
+{
+  "schema": 1,
+  "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
+  "created": "2026-11-11 19:46",
+  "updated": "2026-11-11 19:47",
+  "budget": {
+    "max_parallel": 3,
+    "max_attempts": 3,
+    "max_strategies": 3
+  },
+  "counters": {
+    "M": 4,
+    "AC": 14,
+    "T": 7,
+    "D": 3,
+    "Q": 7,
+    "R": 3
+  },
+  "criteria": {
+    "AC1": {
+      "text": "A missing --file input is refused with [NOT_FOUND] and exit 2, not an internal error with a stack trace",
+      "status": "verified",
+      "source": "QA run 2026-11-11",
+      "evidence": "eccode plan validate nope.json in an initialised project -> '[NOT_FOUND] File not found: nope.json', exit 2; before: 'internal error: Error: ENOENT' with stack, exit 1",
+      "at": "2026-11-11 19:46"
+    },
+    "AC2": {
+      "text": "eccode --version prints the package version",
+      "status": "verified",
+      "source": "QA run 2026-11-11",
+      "evidence": "node bin/eccode.js --version -> 0.16.0 (before: printed the full help)",
+      "at": "2026-11-11 19:46"
+    },
+    "AC3": {
+      "text": "README and docs/usage.md state the agent and skill counts that validate-toolkit reports",
+      "status": "verified",
+      "source": "QA run 2026-11-11",
+      "evidence": "validate-toolkit: 15 agents, 10 skills, 13 commands; README.md Components and docs/usage.md now say 15 agents and 10 skills (were 12 and 9)",
+      "at": "2026-11-11 19:46"
+    },
+    "AC4": {
+      "text": "npm run check exits 0 on a Linux host without bubblewrap",
+      "status": "failed",
+      "source": "QA run 2026-11-11",
+      "evidence": "npm run check on this host (Landlock only, no bwrap): 1 fail, tests/gf-iso-sandbox.test.js A1 authorizeRun('both'); already registered as L-GF-83 in docs/limits-greenfield.md:91",
+      "at": "2026-11-11 19:46"
+    },
+    "AC5": {
+      "text": "Hidden acceptance suite and its manifest are written by a party that does not build any arm",
+      "status": "pending",
+      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119"
+    },
+    "AC6": {
+      "text": "Scoring rubric is written and frozen before any arm runs",
+      "status": "pending",
+      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119"
+    },
+    "AC7": {
+      "text": "Review brief is written and frozen",
+      "status": "pending",
+      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119"
+    },
+    "AC8": {
+      "text": "Operator scripts for arms a, b, c exist and pass a dry run",
+      "status": "pending",
+      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119"
+    },
+    "AC9": {
+      "text": "A host with a Docker daemon is chosen and recorded",
+      "status": "pending",
+      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119"
+    },
+    "AC10": {
+      "text": "Owner has confirmed or changed interpretations I-1 and I-2",
+      "status": "pending",
+      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119"
+    },
+    "AC11": {
+      "text": "Stage 1 ran once per arm under the frozen plan, within the owner's token ceiling",
+      "status": "pending",
+      "source": "gf-s4-plan.md"
+    },
+    "AC12": {
+      "text": "Stage 1 report states M1-M7 per arm with labels before figures, and every limit is registered",
+      "status": "pending",
+      "source": "gf-s4-plan.md"
+    },
+    "AC13": {
+      "text": "Owner has chosen: Stage 2, cut orchestration overhead, or reposition as a verification layer (plan outcome ii), with the Stage 1 result cited",
+      "status": "pending",
+      "source": "gf-s4-plan.md:269-270"
+    },
+    "AC14": {
+      "text": "docs/build/goal.md and state.md state the current claim and a numeric success test",
+      "status": "pending",
+      "source": "gf-s4-plan.md:269-270"
+    }
+  },
+  "tasks": {
+    "T1": {
+      "title": "Fix CLI defects found by QA",
+      "status": "verified",
+      "owner": "supervisor",
+      "depends": [],
+      "criteria": [
+        "AC1",
+        "AC2",
+        "AC3"
+      ],
+      "files": [
+        "bin/eccode.js",
+        "tests/cli-missing-file.test.js",
+        "README.md",
+        "docs/usage.md"
+      ],
+      "attempts": [],
+      "strategy": null,
+      "started": "2026-11-11 19:46",
+      "fingerprint": {
+        "README.md": "0f0393d2d7cd53e0",
+        "bin/eccode.js": "00b46b8f67aa6b28",
+        "docs/usage.md": "57b202c10a23b234",
+        "tests/cli-missing-file.test.js": "bea42c49630de28f"
+      },
+      "evidence": "node --test tests/cli-missing-file.test.js: 3 pass, 0 fail (failed 2 of 3 before the fix); npm run check: 1834 tests, 1771 pass, 1 fail (pre-existing A1), 62 skipped"
+    },
+    "T2": {
+      "title": "Make sandbox test A1 pass or skip honestly on a Landlock-only host",
+      "status": "blocked",
+      "owner": null,
+      "depends": [],
+      "criteria": [
+        "AC4"
+      ],
+      "files": [
+        "tests/gf-iso-sandbox.test.js"
+      ],
+      "attempts": [],
+      "strategy": null,
+      "note": "waiting on Q5: May test A1 in tests/gf-iso-sandbox.test.js be changed to skip when bubblewrap is absent? Editing tests and anything that looks like weakening a gate is reserved to you"
+    },
+    "T3": {
+      "title": "Write the Stage 1 hidden suite, manifest, rubric and review brief (not by a builder session)",
+      "status": "blocked",
+      "owner": null,
+      "depends": [],
+      "criteria": [
+        "AC5",
+        "AC6",
+        "AC7"
+      ],
+      "files": [],
+      "attempts": [],
+      "strategy": null,
+      "note": "waiting on Q4: Who writes the hidden acceptance suite? It must not be a session that also builds an arm"
+    },
+    "T4": {
+      "title": "Write and dry-run the operator scripts",
+      "status": "pending",
+      "owner": null,
+      "depends": [],
+      "criteria": [
+        "AC8"
+      ],
+      "files": [],
+      "attempts": [],
+      "strategy": null
+    },
+    "T5": {
+      "title": "Run Meterline Stage 1",
+      "status": "blocked",
+      "owner": null,
+      "depends": [
+        "T3",
+        "T4"
+      ],
+      "criteria": [
+        "AC9",
+        "AC11"
+      ],
+      "files": [],
+      "attempts": [],
+      "strategy": null,
+      "note": "waiting on Q1, Q2, Q3 (interpretations, budget approval, Docker host)"
+    },
+    "T6": {
+      "title": "Write the Stage 1 report",
+      "status": "pending",
+      "owner": null,
+      "depends": [
+        "T5"
+      ],
+      "criteria": [
+        "AC12"
+      ],
+      "files": [],
+      "attempts": [],
+      "strategy": null
+    },
+    "T7": {
+      "title": "Refresh goal.md and state.md after the direction is chosen",
+      "status": "pending",
+      "owner": null,
+      "depends": [
+        "T6"
+      ],
+      "criteria": [
+        "AC13",
+        "AC14"
+      ],
+      "files": [],
+      "attempts": [],
+      "strategy": null
+    }
+  },
+  "decisions": {
+    "D1": {
+      "text": "Owner rules stay binding: no paid or benchmark run without explicit approval of a budget; no gate weakened; frozen files, hidden suites, manifests and records unchanged; no merge; pushes only as authorised; secrets never in chat or commits",
+      "at": "2026-11-11 19:46",
+      "why": "docs/build/goal.md:7 and S4 plan addenda"
+    },
+    "D2": {
+      "text": "This branch starts from s4-add3/base and does not alter it: the frozen Stage 1 base stays at its recorded hash. Engine fixes here reach the experiment only if the owner re-freezes",
+      "at": "2026-11-11 19:46",
+      "why": "the plan records a freeze-point hash"
+    },
+    "D3": {
+      "text": "No new engine features before Stage 1: nine recorded comparisons show parity with a plain agent at 3-54x cost, so evidence, not features, is the missing piece",
+      "at": "2026-11-11 19:46",
+      "why": "docs/final-report.md and gf-s3 evidence; limits.md:11"
+    }
+  },
+  "risks": {
+    "R1": {
+      "text": "66 tests are skipped on a plain host (Python deps, Mealie cache, bubblewrap, kotlinc): about a third of the greenfield and guard tests do not run in the default environment",
+      "at": "2026-11-11 19:46"
+    },
+    "R2": {
+      "text": "Total cost is the main liability: 54x total and 8.9x builders-only in S3 (n=1). If Stage 1 repeats parity, more gates will not help",
+      "at": "2026-11-11 19:46"
+    },
+    "R3": {
+      "text": "Known, not fixed here: unknown command outside a project reports NOT_INITIALIZED instead of USAGE; examples/triage-desk npm run eval exits 1 by design (holdout recall 0.571 vs 0.70, RISK-12)",
+      "at": "2026-11-11 19:46"
+    }
+  },
+  "next": [
+    "Get the owner's answers to Q1-Q7 (one message)",
+    "Meanwhile, unblocked: write and dry-run the operator scripts (T4)"
+  ],
+  "log": [
+    {
+      "at": "2026-11-11 19:46",
+      "text": "project initialised"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "T1 -> running"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "T1 -> verified"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "AC1 verified: eccode plan validate nope.json in an initialised project -> '[NOT_FOUND] File not found: nope.json', exit 2; before: 'internal error: Error: ENOENT' with stack, exit 1"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "AC2 verified: node bin/eccode.js --version -> 0.16.0 (before: printed the full help)"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "AC3 verified: validate-toolkit: 15 agents, 10 skills, 13 commands; README.md Components and docs/usage.md now say 15 agents and 10 skills (were 12 and 9)"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "AC4 failed: npm run check on this host (Landlock only, no bwrap): 1 fail, tests/gf-iso-sandbox.test.js A1 authorizeRun('both'); already registered as L-GF-83 in docs/limits-greenfield.md:91"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "Q1 asked: Confirm interpretations I-1 (a refusal and the operator action on it count as one intervention) and I-2 (an operator-ceiling stop with no budget refusal counts as none)?"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "Q2 asked: Approve Meterline Stage 1 and its spending ceiling?"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "Q3 asked: Where does Stage 1 run? It needs a Docker daemon, which the Claude cloud environment does not have"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "Q4 asked: Who writes the hidden acceptance suite? It must not be a session that also builds an arm"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "Q5 asked: May test A1 in tests/gf-iso-sandbox.test.js be changed to skip when bubblewrap is absent? Editing tests and anything that looks like weakening a gate is reserved to you"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "Q6 asked: RescueStock: submit to the PayPal AI Hackathon or drop it? Recorded deadline 12 Nov 2026 12:00 PT (secondary source); 0 real integration runs; needs Sandbox credentials, a spend ceiling and a demo video from you"
+    },
+    {
+      "at": "2026-11-11 19:46",
+      "text": "Q7 asked: Delete the remote branch named root/cache/eccode/phase2-seeds.key? It looks like a mistaken push: it points at the same commit as claude/busy-pascal-0y560d and holds no key"
+    },
+    {
+      "at": "2026-11-11 19:47",
+      "text": "T5 -> blocked (waiting on Q1, Q2, Q3 (interpretations, budget approval, Docker host))"
+    }
+  ],
+  "cli": "/home/user/Supervisor-Skill/skills/autonomous-supervisor/scripts/supervisor.py",
+  "milestones": {
+    "M1": {
+      "title": "Toolkit health: a first-time user and npm run check meet no defect",
+      "criteria": [
+        "AC1",
+        "AC2",
+        "AC3",
+        "AC4"
+      ],
+      "at": "2026-11-11 19:46"
+    },
+    "M2": {
+      "title": "Meterline Stage 1 is ready to start (addendum 3 section 6 closed)",
+      "criteria": [
+        "AC5",
+        "AC6",
+        "AC7",
+        "AC8",
+        "AC9",
+        "AC10"
+      ],
+      "at": "2026-11-11 19:46"
+    },
+    "M3": {
+      "title": "Meterline Stage 1 has run (n=1 per arm) and is reported",
+      "criteria": [
+        "AC11",
+        "AC12"
+      ],
+      "at": "2026-11-11 19:46"
+    },
+    "M4": {
+      "title": "Direction chosen from the Stage 1 result",
+      "criteria": [
+        "AC13",
+        "AC14"
+      ],
+      "at": "2026-11-11 19:46"
+    }
+  },
+  "dispatches": 1,
+  "questions": {
+    "Q1": {
+      "text": "Confirm interpretations I-1 (a refusal and the operator action on it count as one intervention) and I-2 (an operator-ceiling stop with no budget refusal counts as none)?",
+      "default": "accept both as written in gf-s4-plan-addendum-3.md:112-119",
+      "blocks": [
+        "T5"
+      ],
+      "status": "open",
+      "at": "2026-11-11 19:46"
+    },
+    "Q2": {
+      "text": "Approve Meterline Stage 1 and its spending ceiling?",
+      "default": "approve with the plan's own ceiling: 500M tokens, pause at 400M (gf-s4-plan.md:202); no run before you say so",
+      "blocks": [
+        "T5"
+      ],
+      "status": "open",
+      "at": "2026-11-11 19:46"
+    },
+    "Q3": {
+      "text": "Where does Stage 1 run? It needs a Docker daemon, which the Claude cloud environment does not have",
+      "default": "your own machine or a rented VM with Docker; I prepare scripts so it is one command",
+      "blocks": [
+        "T5"
+      ],
+      "status": "open",
+      "at": "2026-11-11 19:46"
+    },
+    "Q4": {
+      "text": "Who writes the hidden acceptance suite? It must not be a session that also builds an arm",
+      "default": "a separate fresh session with no access to the arms' output, as the plan requires",
+      "blocks": [
+        "T3"
+      ],
+      "status": "open",
+      "at": "2026-11-11 19:46"
+    },
+    "Q5": {
+      "text": "May test A1 in tests/gf-iso-sandbox.test.js be changed to skip when bubblewrap is absent? Editing tests and anything that looks like weakening a gate is reserved to you",
+      "default": "yes: skip with the reason 'needs Landlock+bubblewrap', so npm run check is green on Landlock-only hosts and the limit stays registered as L-GF-83",
+      "blocks": [
+        "T2"
+      ],
+      "status": "open",
+      "at": "2026-11-11 19:46"
+    },
+    "Q6": {
+      "text": "RescueStock: submit to the PayPal AI Hackathon or drop it? Recorded deadline 12 Nov 2026 12:00 PT (secondary source); 0 real integration runs; needs Sandbox credentials, a spend ceiling and a demo video from you",
+      "default": "drop it for this deadline and keep the branch",
+      "blocks": [],
+      "status": "open",
+      "at": "2026-11-11 19:46"
+    },
+    "Q7": {
+      "text": "Delete the remote branch named root/cache/eccode/phase2-seeds.key? It looks like a mistaken push: it points at the same commit as claude/busy-pascal-0y560d and holds no key",
+      "default": "delete it",
+      "blocks": [],
+      "status": "open",
+      "at": "2026-11-11 19:46"
+    }
+  }
+}
