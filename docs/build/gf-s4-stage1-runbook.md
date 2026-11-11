@@ -7,7 +7,10 @@ Live status and open questions: `.supervisor/MEMORY.md`.
 
 - I-1 and I-2 are confirmed as written in addendum 3, lines 112-119.
 - Stage 1 is approved with the plan's ceiling: 500M all-processed tokens, pause at 400M (plan 9.2).
-- Stage 1 runs on the owner's machine or a rented VM with a Docker daemon, not in the Claude cloud environment.
+- Stage 1 host: first recorded as "the owner's machine or a rented VM", on the untested belief that the cloud
+  environment has no Docker. Tested on 2026-11-11: `dockerd` starts there and `docker run hello-world` works, so a
+  cloud session can host it. Risk: the container is reclaimed after inactivity; each arm's record is committed as
+  soon as the arm exits.
 - The hidden acceptance suite is written by a separate fresh session that builds no arm (Appendix A).
 - Test A1 may skip when bubblewrap is absent (done; the limit stays registered as L-GF-83).
 - RescueStock is dropped for the 12 Nov 2026 deadline; its branch is kept.
@@ -19,6 +22,8 @@ Live status and open questions: `.supervisor/MEMORY.md`.
 | Arm order from a committed seed | `node tools/s4-operator.js order --seed "<seed>"` | `tests/s4-operator.test.js` |
 | Arm workspaces a, b, c with the frozen inputs verified by sha256, `init`, and the config switches | `node tools/s4-operator.js prepare --arm a --out <run dir>` | same test file, 6 pass |
 | Arm sandbox (plan 3.1): probe, print, start | `node tools/s4-launch.js probe --run <run dir>/arm-a` | `tests/s4-launch.test.js`, 5 pass |
+| Bare-arm intervention count and the C5 check against the operator log | `node tools/count-transcript-interventions.js <session.jsonl> --log <operator-log.jsonl>` | `tests/s4-transcript-interventions.test.js`, 5 pass |
+| Contamination scan (S3 script, byte-identical copy) | `tools/contamination-scan.py` | sha256 equals the source on `claude/modest-wozniak-mwpzbm` |
 | ECCode-side intervention count | `tools/count-interventions.js` | existing |
 
 ## Found by the first dry run: the plan's `init` command fails as written
@@ -44,8 +49,10 @@ change on 2026-11-11** (decision D12 in `.supervisor/MEMORY.md`).
 
 1. Hidden acceptance suite, manifest, rubric and review brief (Appendices A, C, F). They are stored outside the
    repository on the Stage 1 host. A cloud container is deleted after the session, so they cannot be written here.
-2. P-4, bare arm: the transcript intervention counter and its test on the S3 record.
-3. P-8: `criteria.py`, `repro-union.py`, the adapter checklist and smoke, the contamination scan list.
+2. P-8, remaining: `criteria.py`, `repro-union.py`, the adapter checklist and smoke, the contamination scan list.
+   They depend on the hidden suite's driver interface.
+3. (closed) P-4, bare arm: `tools/count-transcript-interventions.js`, 5 tests. It could not be tested on the S3
+   record because the S3 bare transcript was never committed; it was checked on one real session transcript.
 4. The seed for the arm order, committed before Stage 1.
 5. `claude --version` recorded on the Stage 1 host and identical for all arms (each `run.json` records it).
 

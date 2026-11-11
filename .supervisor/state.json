@@ -2,7 +2,7 @@
   "schema": 1,
   "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
   "created": "2026-11-11 19:46",
-  "updated": "2026-11-11 20:58",
+  "updated": "2026-11-11 21:26",
   "budget": {
     "max_parallel": 3,
     "max_attempts": 3,
@@ -12,9 +12,9 @@
     "M": 4,
     "AC": 15,
     "T": 9,
-    "D": 12,
+    "D": 15,
     "Q": 8,
-    "R": 6
+    "R": 7
   },
   "criteria": {
     "AC1": {
@@ -69,8 +69,10 @@
     },
     "AC9": {
       "text": "A host with a Docker daemon is chosen and recorded",
-      "status": "pending",
-      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119"
+      "status": "verified",
+      "source": "gf-s4-plan-addendum-3.md section 6 and lines 110-119",
+      "evidence": "this cloud host: dockerd started and 'docker run --rm hello-world' printed 'Hello from Docker!' (Docker 29.9.2, overlayfs); bwrap 0.9.0 works. Recorded as the Stage 1 host option (D13)",
+      "at": "2026-11-11 21:26"
     },
     "AC10": {
       "text": "Owner has confirmed or changed interpretations I-1 and I-2",
@@ -253,15 +255,17 @@
     },
     "T9": {
       "title": "Bare-arm transcript intervention counter (P-4) and the P-8 tools",
-      "status": "pending",
-      "owner": null,
+      "status": "running",
+      "owner": "supervisor",
       "depends": [],
       "criteria": [
         "AC8"
       ],
       "files": [],
       "attempts": [],
-      "strategy": null
+      "strategy": null,
+      "started": "2026-11-11 21:26",
+      "note": "done: tools/count-transcript-interventions.js (5 tests), contamination-scan.py brought over. Still open: criteria.py, repro-union.py, adapter checklist and smoke, contamination scan list - these depend on the hidden suite's shape"
     }
   },
   "decisions": {
@@ -324,6 +328,21 @@
       "text": "The plan's engine export (git archive a530ae1 without docs/) still contains the repository's own .eccode/ record, so the plan's init command is refused (GF-INIT-1). May the export also leave out .eccode/? -> yes: it is the only way init can run as the plan describes, and it keeps ECCode's own history out of the arm's workspace; recorded in every run.json",
       "why": "owner answer to Q8",
       "at": "2026-11-11 20:53"
+    },
+    "D13": {
+      "text": "Stage 1 can be hosted in a Claude cloud session: a Docker daemon starts there and runs containers. This replaces the earlier belief that it needed the owner's machine (D6)",
+      "at": "2026-11-11 21:26",
+      "why": "tried it 2026-11-11: dockerd started, 'docker run hello-world' printed Hello from Docker; bubblewrap 0.9.0 installed by apt. The earlier claim was never tested"
+    },
+    "D14": {
+      "text": "contamination-scan.py is copied byte for byte from claude/modest-wozniak-mwpzbm into tools/: the plan says to reuse it unchanged, but it was not on the Stage 1 branch",
+      "at": "2026-11-11 21:26",
+      "why": "plan 3.1; sha256 8e5ee96bc2daea925083135f154d894c67f6e6f7287e8b43f782a9955d4b2dd7 equals the source; reversible"
+    },
+    "D15": {
+      "text": "The bare-arm intervention counter is tested on synthetic transcripts and on one real Claude Code session transcript, not on the S3 record: the S3 bare transcript was never committed",
+      "at": "2026-11-11 21:26",
+      "why": "plan P-4 asks for a test on the S3 record; git ls-tree shows no bare session jsonl on any S4 branch"
     }
   },
   "risks": {
@@ -350,12 +369,16 @@
     "R6": {
       "text": "Not exercised in the dry run: a real model start and model network access from inside the sandbox",
       "at": "2026-11-11 20:58"
+    },
+    "R7": {
+      "text": "A cloud container is reclaimed after inactivity, and an arm may run up to 8 hours: a Stage 1 run in the cloud must write each arm's record to the repository as soon as the arm exits",
+      "at": "2026-11-11 21:26"
     }
   },
   "next": [
-    "Owner: choose the Stage 1 host (Docker daemon + bubblewrap) and open a session there; follow docs/build/gf-s4-stage1-runbook.md",
-    "Unblocked anywhere: bare-arm intervention counter and P-8 tools (T9)",
-    "On the Stage 1 host: a separate fresh session writes the hidden suite, rubric and review brief (T3)"
+    "Write the remaining P-8 tools once the hidden suite's driver interface is fixed (T9)",
+    "Start a separate fresh session to write the hidden suite, rubric and review brief (T3); it must not see any arm",
+    "Commit the arm-order seed, then run Stage 1 within the approved 500M ceiling (T5)"
   ],
   "log": [
     {
@@ -489,6 +512,14 @@
     {
       "at": "2026-11-11 20:58",
       "text": "AC8 verified: dry run 2026-11-11: s4-operator prepare a,b,c ok; s4-launch probe a,b,c ok:true; no model started. Bare-arm intervention counter (P-4) and P-8 scoring tools are tracked separately as T9"
+    },
+    {
+      "at": "2026-11-11 21:26",
+      "text": "AC9 verified: this cloud host: dockerd started and 'docker run --rm hello-world' printed 'Hello from Docker!' (Docker 29.9.2, overlayfs); bwrap 0.9.0 works. Recorded as the Stage 1 host option (D13)"
+    },
+    {
+      "at": "2026-11-11 21:26",
+      "text": "T9 -> running (done: tools/count-transcript-interventions.js (5 tests), contamination-scan.py brought over. Still open: criteria.py, repro-union.py, adapter checklist and smoke, contamination scan list - these depend on the hidden suite's shape)"
     }
   ],
   "cli": "/home/user/Supervisor-Skill/skills/autonomous-supervisor/scripts/supervisor.py",
@@ -533,7 +564,7 @@
       "at": "2026-11-11 19:46"
     }
   },
-  "dispatches": 4,
+  "dispatches": 5,
   "questions": {
     "Q1": {
       "text": "Confirm interpretations I-1 (a refusal and the operator action on it count as one intervention) and I-2 (an operator-ceiling stop with no budget refusal counts as none)?",
