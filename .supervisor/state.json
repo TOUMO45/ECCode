@@ -12,8 +12,8 @@
     "M": 4,
     "AC": 15,
     "T": 9,
-    "D": 15,
-    "Q": 8,
+    "D": 16,
+    "Q": 9,
     "R": 7
   },
   "criteria": {
@@ -157,7 +157,7 @@
     },
     "T3": {
       "title": "Write the Stage 1 hidden suite, manifest, rubric and review brief (not by a builder session)",
-      "status": "pending",
+      "status": "blocked",
       "owner": null,
       "depends": [],
       "criteria": [
@@ -168,7 +168,7 @@
       "files": [],
       "attempts": [],
       "strategy": null,
-      "note": "unblocked by Q4: a separate fresh session with no access to the arms' output, as the plan requires"
+      "note": "waiting on Q9: A model API key for the arms and the hidden-suite author (headless claude -p). Inside the clean sandbox Claude Code answers 'Not logged in'; the session's own login must not be copied into an arm"
     },
     "T4": {
       "title": "Write and dry-run the operator scripts",
@@ -188,7 +188,7 @@
     },
     "T5": {
       "title": "Run Meterline Stage 1",
-      "status": "pending",
+      "status": "blocked",
       "owner": null,
       "depends": [
         "T3",
@@ -201,7 +201,7 @@
       "files": [],
       "attempts": [],
       "strategy": null,
-      "note": "unblocked by Q8: yes: it is the only way init can run as the plan describes, and it keeps ECCode's own history out of the arm's workspace; recorded in every run.json"
+      "note": "waiting on Q9: A model API key for the arms and the hidden-suite author (headless claude -p). Inside the clean sandbox Claude Code answers 'Not logged in'; the session's own login must not be copied into an arm"
     },
     "T6": {
       "title": "Write the Stage 1 report",
@@ -343,6 +343,11 @@
       "text": "The bare-arm intervention counter is tested on synthetic transcripts and on one real Claude Code session transcript, not on the S3 record: the S3 bare transcript was never committed",
       "at": "2026-11-11 21:26",
       "why": "plan P-4 asks for a test on the S3 record; git ls-tree shows no bare session jsonl on any S4 branch"
+    },
+    "D16": {
+      "text": "Arms run as an unprivileged user (uid 1000) inside the sandbox",
+      "at": "2026-11-11 21:26",
+      "why": "first smoke start: Claude Code refuses bypassPermissions as root, and the cloud host runs as root; reversible"
     }
   },
   "risks": {
@@ -376,9 +381,8 @@
     }
   },
   "next": [
-    "Write the remaining P-8 tools once the hidden suite's driver interface is fixed (T9)",
-    "Start a separate fresh session to write the hidden suite, rubric and review brief (T3); it must not see any arm",
-    "Commit the arm-order seed, then run Stage 1 within the approved 500M ceiling (T5)"
+    "Owner: provide the model API key (Q9), the only thing work is waiting for",
+    "Then: hidden-suite author and rubric author as headless agents in the sandbox (T3), remaining P-8 tools (T9), seed, Stage 1 (T5)"
   ],
   "log": [
     {
@@ -520,6 +524,10 @@
     {
       "at": "2026-11-11 21:26",
       "text": "T9 -> running (done: tools/count-transcript-interventions.js (5 tests), contamination-scan.py brought over. Still open: criteria.py, repro-union.py, adapter checklist and smoke, contamination scan list - these depend on the hidden suite's shape)"
+    },
+    {
+      "at": "2026-11-11 21:26",
+      "text": "Q9 asked: A model API key for the arms and the hidden-suite author (headless claude -p). Inside the clean sandbox Claude Code answers 'Not logged in'; the session's own login must not be copied into an arm"
     }
   ],
   "cli": "/home/user/Supervisor-Skill/skills/autonomous-supervisor/scripts/supervisor.py",
@@ -649,6 +657,17 @@
       "at": "2026-11-11 20:44",
       "answer": "yes: it is the only way init can run as the plan describes, and it keeps ECCode's own history out of the arm's workspace; recorded in every run.json",
       "answered": "2026-11-11 20:53"
+    },
+    "Q9": {
+      "text": "A model API key for the arms and the hidden-suite author (headless claude -p). Inside the clean sandbox Claude Code answers 'Not logged in'; the session's own login must not be copied into an arm",
+      "default": "add an Anthropic API key to the cloud environment as a network secret for api.anthropic.com; it is never written to a file or shown in chat",
+      "blocks": [
+        "T3",
+        "T5"
+      ],
+      "status": "open",
+      "at": "2026-11-11 21:26",
+      "because": "access"
     }
   }
 }

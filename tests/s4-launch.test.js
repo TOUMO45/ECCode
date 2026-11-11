@@ -24,7 +24,7 @@ test('probe: the arm can write its workspace and cannot see the checkout, the pr
   fs.mkdirSync(hidden);
   const res = launch.probe(a.runDir, { deny: [hidden] });
   assert.deepStrictEqual(res.visible, []);
-  assert.deepStrictEqual(res.checks, { ran: true, workspaceWritable: true, systemReadOnly: true, deniedPathsInvisible: true, noStrayEnvironment: true, toolchain: true });
+  assert.deepStrictEqual(res.checks, { ran: true, notRoot: true, workspaceWritable: true, systemReadOnly: true, deniedPathsInvisible: true, noStrayEnvironment: true, toolchain: true });
   assert.strictEqual(res.ok, true);
   assert.ok(res.denied.includes(REPO) && res.denied.includes(path.join(out, 'arm-b')) && res.denied.includes(hidden));
   assert.ok(!fs.existsSync(path.join(a.workspace, '.s4-canary')), 'the canary file is removed');

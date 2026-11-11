@@ -40,6 +40,9 @@ change on 2026-11-11** (decision D12 in `.supervisor/MEMORY.md`).
   see the ECCode checkout, `run.json`, `prompt.md`, or the other arms' directories.
 - Inside the arm b sandbox: `claude --version` printed 2.1.322 and `node bin/eccode-gf.js status` reported the
   compose profile.
+- First smoke start (a one-line prompt, arm sandbox): Claude Code refused `bypassPermissions` as root, so arms now
+  run as uid 1000 inside the sandbox. The second attempt reached Claude Code, which answered "Not logged in": the
+  arms need a model API key in the operator's environment. Nothing else failed.
 - Not exercised: a real model start, network access to the model from inside the sandbox, and Docker (the plan's
   decision D-6 gives arms no Docker socket; the operator's deployability check M7 needs a daemon on the host).
 - The sandbox binds `/opt` read-only because Node and Claude Code are installed there on this host. On another

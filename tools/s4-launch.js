@@ -35,7 +35,10 @@ function sandboxArgv(runDir, command, env = process.env) {
   const workspace = path.join(dir, 'workspace');
   const home = path.join(dir, 'home');
   const config = path.join(dir, 'claude-config');
-  const args = ['--die-with-parent', '--new-session', '--unshare-pid', '--unshare-ipc', '--unshare-uts', '--clearenv',
+  // The arm is never root: Claude Code refuses bypassPermissions as root (found by the first smoke start), and an
+  // unprivileged uid is the weaker position for anything the arm runs.
+  const args = ['--die-with-parent', '--new-session', '--unshare-user', '--uid', '1000', '--gid', '1000',
+    '--unshare-pid', '--unshare-ipc', '--unshare-uts', '--clearenv',
     '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/tmp', '--tmpfs', '/run'];
   for (const p of SYSTEM_RO) {
     if (!fs.existsSync(p)) continue;
@@ -93,6 +96,7 @@ function probe(runDir, { deny = [], env = process.env } = {}) {
   const strayEnv = envNames.filter((n) => !allowedEnv.has(n));
   const checks = {
     ran: r.status === 0 && got.uid !== undefined,
+    notRoot: got.uid !== undefined && got.uid !== '0',
     workspaceWritable: wroteWorkspace && got.write_workspace === 'yes',
     systemReadOnly: !wroteSystem && got.write_system === 'no',
     deniedPathsInvisible: visible.length === 0,
