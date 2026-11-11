@@ -2,7 +2,7 @@
   "schema": 1,
   "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
   "created": "2026-11-11 19:46",
-  "updated": "2026-11-11 21:30",
+  "updated": "2026-11-11 21:31",
   "budget": {
     "max_parallel": 3,
     "max_attempts": 3,
@@ -12,7 +12,7 @@
     "M": 4,
     "AC": 15,
     "T": 10,
-    "D": 17,
+    "D": 18,
     "Q": 9,
     "R": 7
   },
@@ -369,6 +369,11 @@
       "text": "repro-union.py, the adapter checklist and the contamination scan list are written after the hidden suite and the review brief exist: their inputs (finding format, suite file names, rubric ids) are produced by those authors",
       "at": "2026-11-11 21:30",
       "why": "plan 3.1 and section 6 M3; writing them now would mean guessing a format"
+    },
+    "D18": {
+      "text": "The arms cannot get model access in a Claude cloud session. Q9's suggested route (a network secret for api.anthropic.com) does not exist: the secure form refuses Anthropic hosts because the session authenticates itself, and the session's own token must not be handed to an arm that runs with permissions bypassed. Stage 1 therefore runs where Claude Code has its own login or key: the owner's machine or a VM. Docker and bubblewrap are not the obstacle (D13 stands for those)",
+      "at": "2026-11-11 21:31",
+      "why": "tried 2026-11-11: smoke start answered 'Not logged in'; request for a key form was refused by the platform"
     }
   },
   "risks": {
@@ -402,8 +407,8 @@
     }
   },
   "next": [
-    "Owner: provide the model API key (Q9), the only thing work is waiting for",
-    "Then: hidden-suite author and rubric author as headless agents in the sandbox (T3), remaining P-8 tools (T9), seed, Stage 1 (T5)"
+    "Owner: on a machine where Claude Code is logged in (or ANTHROPIC_API_KEY is set), with Docker and bubblewrap, open a session on branch claude/happy-lamport-u5fr7k and say 'resume' (Q9)",
+    "That session: hidden-suite and rubric authors as headless agents in the sandbox (T3), then T10, the seed, and Stage 1 (T5)"
   ],
   "log": [
     {

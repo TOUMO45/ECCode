@@ -44,6 +44,10 @@ change on 2026-11-11** (decision D12 in `.supervisor/MEMORY.md`).
 - First smoke start (a one-line prompt, arm sandbox): Claude Code refused `bypassPermissions` as root, so arms now
   run as uid 1000 inside the sandbox. The second attempt reached Claude Code, which answered "Not logged in": the
   arms need a model API key in the operator's environment. Nothing else failed.
+- Model access cannot be given to an arm in a Claude cloud session: the platform accepts no user key for Anthropic's
+  hosts there (the session authenticates itself), and the session's own token must not be passed to an arm that runs
+  with permissions bypassed. **Stage 1 therefore runs on a machine where Claude Code has its own login or
+  `ANTHROPIC_API_KEY`**, with Docker and bubblewrap. Everything else in this runbook was rehearsed in the cloud.
 - Not exercised: a real model start, network access to the model from inside the sandbox, and Docker (the plan's
   decision D-6 gives arms no Docker socket; the operator's deployability check M7 needs a daemon on the host).
 - The sandbox binds `/opt` read-only because Node and Claude Code are installed there on this host. On another
