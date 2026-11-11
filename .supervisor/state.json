@@ -2,7 +2,7 @@
   "schema": 1,
   "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
   "created": "2026-11-11 19:46",
-  "updated": "2026-11-11 21:26",
+  "updated": "2026-11-11 21:30",
   "budget": {
     "max_parallel": 3,
     "max_attempts": 3,
@@ -11,8 +11,8 @@
   "counters": {
     "M": 4,
     "AC": 15,
-    "T": 9,
-    "D": 16,
+    "T": 10,
+    "D": 17,
     "Q": 9,
     "R": 7
   },
@@ -255,7 +255,7 @@
     },
     "T9": {
       "title": "Bare-arm transcript intervention counter (P-4) and the P-8 tools",
-      "status": "running",
+      "status": "verified",
       "owner": "supervisor",
       "depends": [],
       "criteria": [
@@ -265,7 +265,23 @@
       "attempts": [],
       "strategy": null,
       "started": "2026-11-11 21:26",
-      "note": "done: tools/count-transcript-interventions.js (5 tests), contamination-scan.py brought over. Still open: criteria.py, repro-union.py, adapter checklist and smoke, contamination scan list - these depend on the hidden suite's shape"
+      "note": "done: count-transcript-interventions.js (5 tests), criteria.py (4 tests), contamination-scan.py brought over. Left: repro-union.py, adapter checklist and smoke, contamination scan list - each needs an input that does not exist until the suite and review brief are written",
+      "fingerprint": {},
+      "evidence": "node --test tests/s4-transcript-interventions.test.js tests/s4-criteria.test.js: 9 pass; npm run check: 1854 tests, 1794 pass, 0 fail, 60 skipped"
+    },
+    "T10": {
+      "title": "After the suite and brief exist: repro-union.py, adapter checklist and smoke, contamination scan list",
+      "status": "pending",
+      "owner": null,
+      "depends": [
+        "T3"
+      ],
+      "criteria": [
+        "AC15"
+      ],
+      "files": [],
+      "attempts": [],
+      "strategy": null
     }
   },
   "decisions": {
@@ -348,6 +364,11 @@
       "text": "Arms run as an unprivileged user (uid 1000) inside the sandbox",
       "at": "2026-11-11 21:26",
       "why": "first smoke start: Claude Code refuses bypassPermissions as root, and the cloud host runs as root; reversible"
+    },
+    "D17": {
+      "text": "repro-union.py, the adapter checklist and the contamination scan list are written after the hidden suite and the review brief exist: their inputs (finding format, suite file names, rubric ids) are produced by those authors",
+      "at": "2026-11-11 21:30",
+      "why": "plan 3.1 and section 6 M3; writing them now would mean guessing a format"
     }
   },
   "risks": {
@@ -528,6 +549,14 @@
     {
       "at": "2026-11-11 21:26",
       "text": "Q9 asked: A model API key for the arms and the hidden-suite author (headless claude -p). Inside the clean sandbox Claude Code answers 'Not logged in'; the session's own login must not be copied into an arm"
+    },
+    {
+      "at": "2026-11-11 21:30",
+      "text": "T9 -> running (done: count-transcript-interventions.js (5 tests), criteria.py (4 tests), contamination-scan.py brought over. Left: repro-union.py, adapter checklist and smoke, contamination scan list - each needs an input that does not exist until the suite and review brief are written)"
+    },
+    {
+      "at": "2026-11-11 21:30",
+      "text": "T9 -> verified"
     }
   ],
   "cli": "/home/user/Supervisor-Skill/skills/autonomous-supervisor/scripts/supervisor.py",

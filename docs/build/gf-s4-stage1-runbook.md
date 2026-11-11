@@ -23,6 +23,7 @@ Live status and open questions: `.supervisor/MEMORY.md`.
 | Arm workspaces a, b, c with the frozen inputs verified by sha256, `init`, and the config switches | `node tools/s4-operator.js prepare --arm a --out <run dir>` | same test file, 6 pass |
 | Arm sandbox (plan 3.1): probe, print, start | `node tools/s4-launch.js probe --run <run dir>/arm-a` | `tests/s4-launch.test.js`, 5 pass |
 | Bare-arm intervention count and the C5 check against the operator log | `node tools/count-transcript-interventions.js <session.jsonl> --log <operator-log.jsonl>` | `tests/s4-transcript-interventions.test.js`, 5 pass |
+| M1 scoring: criteria passed / total, fail-closed, and the two-run stability check (C3) | `python3 tools/criteria.py junit.xml criteria.json --second junit2.xml` | `tests/s4-criteria.test.js`, 4 pass |
 | Contamination scan (S3 script, byte-identical copy) | `tools/contamination-scan.py` | sha256 equals the source on `claude/modest-wozniak-mwpzbm` |
 | ECCode-side intervention count | `tools/count-interventions.js` | existing |
 
@@ -52,8 +53,9 @@ change on 2026-11-11** (decision D12 in `.supervisor/MEMORY.md`).
 
 1. Hidden acceptance suite, manifest, rubric and review brief (Appendices A, C, F). They are stored outside the
    repository on the Stage 1 host. A cloud container is deleted after the session, so they cannot be written here.
-2. P-8, remaining: `criteria.py`, `repro-union.py`, the adapter checklist and smoke, the contamination scan list.
-   They depend on the hidden suite's driver interface.
+2. P-8, remaining: `repro-union.py`, the adapter checklist and smoke, the contamination scan list. Their inputs
+   (finding format, suite file names, rubric ids) exist only after the suite and the review brief are written.
+   The model API key is the one item waiting on the owner (question Q9).
 3. (closed) P-4, bare arm: `tools/count-transcript-interventions.js`, 5 tests. It could not be tested on the S3
    record because the S3 bare transcript was never committed; it was checked on one real session transcript.
 4. The seed for the arm order, committed before Stage 1.
