@@ -2,7 +2,7 @@
   "schema": 1,
   "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
   "created": "2026-11-11 19:46",
-  "updated": "2026-11-11 23:45",
+  "updated": "2026-11-12 14:21",
   "budget": {
     "max_parallel": 3,
     "max_attempts": 3,
@@ -12,7 +12,7 @@
     "M": 4,
     "AC": 15,
     "T": 10,
-    "D": 20,
+    "D": 21,
     "Q": 9,
     "R": 7
   },
@@ -384,6 +384,11 @@
       "text": "The arms cannot get model access in the cloud by any route: the platform refuses a key for Anthropic hosts, and the safety check refuses mounting the session's login into the sandbox. Stage 1 runs on a machine with its own Claude login",
       "at": "2026-11-11 23:45",
       "why": "both attempted 2026-11-11 and refused; not worked around"
+    },
+    "D21": {
+      "text": "Weak-model pilot W1 is registered (docs/build/weak-model-pilot.md) and its runner is tools/weak-pilot.js. It has not run: the cloud session's safety check refused starting unsandboxed headless agents, and inside the eval sandbox the shell is read-only, where ECCode's own CLI cannot write its record, so that route would be unfair to ECCode. W1 runs on the owner's machine",
+      "at": "2026-11-12 14:21",
+      "why": "owner goal 2026-11-12: lift weak agents; every earlier comparison used Sonnet or Opus"
     }
   },
   "risks": {
@@ -417,8 +422,9 @@
     }
   },
   "next": [
-    "Owner: on a machine where Claude Code is logged in (or ANTHROPIC_API_KEY is set), with Docker and bubblewrap, open a session on branch claude/happy-lamport-u5fr7k and say 'resume' (Q9)",
-    "That session: hidden-suite and rubric authors as headless agents in the sandbox (T3), then T10, the seed, and Stage 1 (T5)"
+    "Owner: run W1 on a machine with Claude Code logged in (commands in docs/build/weak-model-pilot.md, section 'How to run')",
+    "Then: read the result by the rule fixed in that file; if it shows a gain, repeat on a medium project",
+    "Stage 1 on Opus stays prepared but is second priority: it does not test the weak-agent goal"
   ],
   "log": [
     {

@@ -61,3 +61,24 @@ Arms w and e: 3 runs per project (12 runs). Arm s: 1 run per project (2 runs). O
 - ECCode is entered through its documented command text. A different entry (for example `eccode-gf`) may behave
   differently and is not tested here.
 - The oracles were written for another repository's benchmark. They were never shown to any arm.
+
+## Status and how to run (added 2026-11-12, after registration; nothing above was changed)
+
+**Not run yet.** In the Claude cloud session two routes were tried and neither is usable: starting unsandboxed
+headless agents was refused by the session's safety check, and inside the plugin-eval sandbox the shell cannot write
+the project, where ECCode's own CLI cannot keep its record, which would handicap arm e. W1 therefore runs on a
+machine where Claude Code is logged in. Use a scratch directory or a throwaway VM: the arms run shell commands.
+
+The two briefs, the starter and the oracles are in the public repository `TOUMO45/Supervisor-Skill` under
+`tests/e2e/`. Clone it next to this one, outside any arm's workspace.
+
+```bash
+E=../Supervisor-Skill/tests/e2e; OUT=~/w1
+node tools/weak-pilot.js run --arm w --project csvmd --run 1 --out $OUT --brief $E/brief.md --starter $E/starter --oracle $E/hidden_acceptance.py
+node tools/weak-pilot.js run --arm e --project csvmd --run 1 --out $OUT --brief $E/brief.md --starter $E/starter --oracle $E/hidden_acceptance.py
+node tools/weak-pilot.js run --arm w --project textkit --run 1 --out $OUT --brief $E/parallel/brief.md --oracle $E/parallel/hidden_acceptance.py
+node tools/weak-pilot.js run --arm e --project textkit --run 1 --out $OUT --brief $E/parallel/brief.md --oracle $E/parallel/hidden_acceptance.py
+```
+
+Repeat with `--run 2` and `--run 3`, then once each with `--arm s`. Each call prints one line (oracle score, cost,
+turns, seconds, whether ECCode was used) and writes `result.json` and the transcript beside the workspace.
