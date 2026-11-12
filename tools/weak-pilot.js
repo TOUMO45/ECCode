@@ -12,6 +12,10 @@ const MODELS = { w: 'claude-haiku-5-5', e: 'claude-haiku-5-5', s: 'claude-sonnet
 const P = 'Deliver the project described in brief.md in this directory. I am unreachable, so do not ask me anything: decide and finish.';
 const TOOLS = ['Bash', 'Write', 'Edit', 'MultiEdit', 'Read', 'Glob', 'Grep', 'Task', 'Agent', 'Skill', 'TodoWrite'];
 const WALL_MS = 40 * 60 * 1000;
+const WIN = process.platform === 'win32';
+const PYTHON = process.env.W1_PYTHON || (WIN ? 'python' : 'python3');
+// On Windows `claude` is usually a .cmd shim, which needs a shell; arguments are then quoted by hand.
+const quote = (a) => (a === '' ? '""' : /[\s"]/.test(a) ? `"${a.replace(/"/g, '\\"')}"` : a);
 
 function flags(argv) {
   const f = {};
@@ -41,7 +45,7 @@ function run(f) {
   if (fs.existsSync(dir)) throw new Error(`${dir} exists: a run is done once`);
   const ws = path.join(dir, 'workspace');
   fs.mkdirSync(ws, { recursive: true });
-  if (f.starter) execFileSync('cp', ['-r', `${path.resolve(f.starter)}/.`, ws]);
+  if (f.starter) fs.cpSync(path.resolve(f.starter), ws, { recursive: true });
   fs.copyFileSync(path.resolve(f.brief), path.join(ws, 'brief.md'));
   const args = ['-p', '--model', MODELS[arm], '--setting-sources', '', '--strict-mcp-config', '--allowedTools', ...TOOLS,
     '--max-turns', '200', '--output-format', 'stream-json', '--verbose'];
@@ -51,7 +55,10 @@ function run(f) {
     prompt = entryPrompt(repo);
   }
   const started = Date.now();
-  const r = spawnSync('claude', args, { cwd: ws, input: prompt, encoding: 'utf8', timeout: WALL_MS, maxBuffer: 1 << 30 });
+  const r = WIN
+    ? spawnSync(['claude', ...args.map(quote)].join(' '), { cwd: ws, input: prompt, encoding: 'utf8', timeout: WALL_MS, maxBuffer: 1 << 30, shell: true })
+    : spawnSync('claude', args, { cwd: ws, input: prompt, encoding: 'utf8', timeout: WALL_MS, maxBuffer: 1 << 30 });
+  if (r.error && r.error.code !== 'ETIMEDOUT') throw new Error(`could not start claude: ${r.error.message}`);
   const wall = Math.round((Date.now() - started) / 1000);
   fs.writeFileSync(path.join(dir, 'transcript.jsonl'), r.stdout || '');
   let last = null;
@@ -70,7 +77,7 @@ function run(f) {
     }
   }
   const contaminated = /hidden_acceptance|Supervisor-Skill|tests\/e2e/.test(r.stdout || '');
-  const oracle = spawnSync('python3', ['-I', path.resolve(f.oracle), ws], { encoding: 'utf8', timeout: 300000 });
+  const oracle = spawnSync(PYTHON, ['-I', path.resolve(f.oracle), ws], { encoding: 'utf8', timeout: 300000 });
   const m = /SCORE (\d+)\/(\d+)/.exec(oracle.stdout || '');
   const result = {
     project: f.project, arm, run: Number(f.run), model: MODELS[arm], prompt,
