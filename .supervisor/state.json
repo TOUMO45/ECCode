@@ -2,7 +2,7 @@
   "schema": 1,
   "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
   "created": "2026-11-11 19:46",
-  "updated": "2026-11-12 14:21",
+  "updated": "2026-11-13 01:28",
   "budget": {
     "max_parallel": 3,
     "max_attempts": 3,
@@ -12,7 +12,7 @@
     "M": 4,
     "AC": 15,
     "T": 10,
-    "D": 21,
+    "D": 22,
     "Q": 9,
     "R": 7
   },
@@ -389,6 +389,11 @@
       "text": "Weak-model pilot W1 is registered (docs/build/weak-model-pilot.md) and its runner is tools/weak-pilot.js. It has not run: the cloud session's safety check refused starting unsandboxed headless agents, and inside the eval sandbox the shell is read-only, where ECCode's own CLI cannot write its record, so that route would be unfair to ECCode. W1 runs on the owner's machine",
       "at": "2026-11-12 14:21",
       "why": "owner goal 2026-11-12: lift weak agents; every earlier comparison used Sonnet or Opus"
+    },
+    "D22": {
+      "text": "Pilot W1 result: no quality difference between Haiku alone and Haiku with ECCode on two small projects; ECCode hit the 40-minute limit in all six runs; the apparent lift on textkit was the oracle failing CRLF output on Windows. Haiku alone is already at the ceiling on these projects, so the weak-agent claim needs a project the weak agent fails",
+      "at": "2026-11-13 01:28",
+      "why": "docs/build/weak-model-pilot.md, Result section; owner's runs of 2026-11-13"
     }
   },
   "risks": {
@@ -422,9 +427,9 @@
     }
   },
   "next": [
-    "Owner: run W1 on a machine with Claude Code logged in (commands in docs/build/weak-model-pilot.md, section 'How to run')",
-    "Then: read the result by the rule fixed in that file; if it shows a gain, repeat on a medium project",
-    "Stage 1 on Opus stays prepared but is second priority: it does not test the weak-agent goal"
+    "Choose a medium project that Haiku alone fails (check that first, with 3 plain runs) before any further ECCode comparison",
+    "Find why ECCode does not finish: read one arm-e transcript from the owner's machine",
+    "Runner: report cost and turns for runs stopped by the wall limit"
   ],
   "log": [
     {

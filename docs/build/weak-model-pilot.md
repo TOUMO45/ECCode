@@ -82,3 +82,47 @@ node tools/weak-pilot.js run --arm e --project textkit --run 1 --out $OUT --brie
 
 Repeat with `--run 2` and `--run 3`, then once each with `--arm s`. Each call prints one line (oracle score, cost,
 turns, seconds, whether ECCode was used) and writes `result.json` and the transcript beside the workspace.
+
+## Result (2026-11-13; run by the owner on Windows; nothing above was changed)
+
+All 14 registered runs were done, plus one uncounted trial (`textkit w0`). ECCode was used in all six arm-e runs
+and no transcript was contaminated. The table is copied from the owner's terminal; the raw `result.json` files
+and transcripts are on the owner's machine and are not in this repository.
+
+| Run | Q as scored | Cost $ | Turns | Seconds | Timed out |
+|---|---|---|---|---|---|
+| csvmd w1, w2, w3 | 18/18, 18/18, 18/18 | 0.76, 0.58, 0.64 | 18, 16, 16 | 103, 79, 85 | no |
+| csvmd e1, e2, e3 | 17/18, 18/18, 18/18 | not reported | not reported | 2400 each | **yes, all three** |
+| csvmd s1 | 18/18 | 0.42 | 14 | 64 | no |
+| textkit w1, w2, w3 | 5/21, 5/21, 21/21 | 0.63, 0.81, 0.97 | 17, 21, 17 | 90, 114, 140 | no |
+| textkit e1, e2, e3 | 21/21, 21/21, 21/21 | not reported | not reported | 2400 each | **yes, all three** |
+| textkit s1 | 21/21 | 0.46 | 8 | 81 | no |
+
+**Read by the registered rule, as scored:** on textkit arm e is "better" than arm w (mean 21 against 10.3, worst
+21 against 5), so the rule says ECCode lifts the weak agent on textkit and closes the gap to arm s. On csvmd there
+is no difference.
+
+**That reading does not hold: the oracle was wrong on Windows.** The textkit oracle compared program output byte
+for byte with text ending in LF. Python on Windows prints CRLF. A correct project that prints CRLF fails every
+output check and passes exactly the five that compare no printed text, which is the score 5. Re-scored on the same
+workspaces with CRLF accepted, **all eight textkit projects, from every arm, score the same** (20/21 each; the one
+shared miss comes from how the patched copy of the oracle was made on Windows, which damaged the accented test
+string, and is not a property of any project). The oracles are corrected in `TOUMO45/Supervisor-Skill`.
+
+**What W1 shows**
+- **No quality difference between Haiku alone and Haiku with ECCode** on either project, once the oracle is fair.
+- **ECCode did not finish in 40 minutes in any of six runs.** Haiku alone took 79 to 140 seconds. The product was
+  already passing when the limit cut the run off, so the time went to ECCode's own process.
+- **Cost of arm e is unknown**: a run stopped by the limit does not report it. "Worth its cost" cannot be judged.
+- **Sonnet alone** matched or beat both Haiku arms, was the fastest, and cost less per run than Haiku alone
+  (0.42-0.46 against 0.58-0.97). On these projects the weak model was not the cheap one.
+- One observation, not a finding: before the oracle fix, all three arm-e runs and the Sonnet run printed LF and
+  three of four Haiku-alone runs printed CRLF. This may reflect more careful output handling. It was not planned
+  as a measure and nothing is claimed from it.
+
+**Limits, as registered:** two small projects, one weak model, three runs per arm. Both projects are at the
+ceiling for Haiku alone, so W1 could only have shown a lift where the weak agent fails, and it did not fail here.
+W1 says nothing about medium or large projects.
+
+**Defects of the pilot itself:** the oracle's line endings (fixed); the runner loses cost and turns when a run
+hits the wall limit; the 40-minute limit was too short to see whether ECCode ever finishes.
