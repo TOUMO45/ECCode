@@ -2,7 +2,7 @@
   "schema": 1,
   "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
   "created": "2026-11-11 19:46",
-  "updated": "2026-11-13 01:28",
+  "updated": "2026-11-13 01:53",
   "budget": {
     "max_parallel": 3,
     "max_attempts": 3,
@@ -12,7 +12,7 @@
     "M": 4,
     "AC": 15,
     "T": 10,
-    "D": 22,
+    "D": 24,
     "Q": 9,
     "R": 7
   },
@@ -129,11 +129,11 @@
       "started": "2026-11-11 19:46",
       "fingerprint": {
         "README.md": "0f0393d2d7cd53e0",
-        "bin/eccode.js": "00b46b8f67aa6b28",
+        "bin/eccode.js": "1418b69e21d933a9",
         "docs/usage.md": "57b202c10a23b234",
         "tests/cli-missing-file.test.js": "bea42c49630de28f"
       },
-      "evidence": "node --test tests/cli-missing-file.test.js: 3 pass, 0 fail (failed 2 of 3 before the fix); npm run check: 1834 tests, 1771 pass, 1 fail (pre-existing A1), 62 skipped"
+      "evidence": "after the review fixes: node --test tests/cli-missing-file.test.js tests/review-pinned-check.test.js pass; npm run check 1858 tests, 1798 pass, 0 fail, 60 skipped"
     },
     "T2": {
       "title": "Make sandbox test A1 pass or skip honestly on a Landlock-only host",
@@ -394,6 +394,16 @@
       "text": "Pilot W1 result: no quality difference between Haiku alone and Haiku with ECCode on two small projects; ECCode hit the 40-minute limit in all six runs; the apparent lift on textkit was the oracle failing CRLF output on Windows. Haiku alone is already at the ceiling on these projects, so the weak-agent claim needs a project the weak agent fails",
       "at": "2026-11-13 01:28",
       "why": "docs/build/weak-model-pilot.md, Result section; owner's runs of 2026-11-13"
+    },
+    "D23": {
+      "text": "Whole-code review of 2026-11-13 (docs/review-2026-11-13.md): five root causes - heaviest process for every idea, process held in the lead agent head, exact files from memory and errors without a next step, gates passable without correct work, stops for a human and Claude-only. The feature freeze is replaced by the fix plan P1-P5 in that file; new gates and roles stay frozen",
+      "at": "2026-11-13 01:53",
+      "why": "owner request 2026-11-13; pilot W1; three independent reviews, key claims reproduced by the lead"
+    },
+    "D24": {
+      "text": "A reviewer approval now requires the reviewer own passing run of each pinned verification command; evidence run exits 3 on a failed check; start routes small work to quick",
+      "at": "2026-11-13 01:53",
+      "why": "reproduced: a project with failing tests was delivered on a reviewer check of true"
     }
   },
   "risks": {
@@ -427,9 +437,9 @@
     }
   },
   "next": [
-    "Choose a medium project that Haiku alone fails (check that first, with 3 plain runs) before any further ECCode comparison",
-    "Find why ECCode does not finish: read one arm-e transcript from the owner's machine",
-    "Runner: report cost and turns for runs stopped by the wall limit"
+    "P1 of docs/review-2026-11-13.md: tool-chosen track, quick without a separate verification gate, draft commands, automatic run accounting, orchestrator as a NEXT loop",
+    "Owner: re-run pilot W1 after P1 with a longer limit",
+    "Then P2 to P5 in order"
   ],
   "log": [
     {
@@ -591,6 +601,10 @@
     {
       "at": "2026-11-11 23:40",
       "text": "fresh-clone test passed: resume from committed memory, npm run check 1794 pass 0 fail, arms a b c prepare + probe ok"
+    },
+    {
+      "at": "2026-11-13 01:53",
+      "text": "T1 -> verified"
     }
   ],
   "cli": "/home/user/Supervisor-Skill/skills/autonomous-supervisor/scripts/supervisor.py",

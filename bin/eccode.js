@@ -1132,7 +1132,9 @@ function main(argv) {
           timeoutMs: timeoutOf(flags),
         });
         print(flags, `Evidence ev:${ev.id} — ${ev.status.toUpperCase()} (exit ${ev.exitCode}, ${ev.durationMs}ms)\n${ev.outputTail}`, ev);
-        return 0;
+        // The run is recorded either way. A failed check exits 3 so that a script or an agent chaining commands
+        // cannot read "recorded" as "passed". A reproduction is expected to fail, so it keeps exit 0.
+        return ev.status === 'passed' || (flags.purpose || 'check') === 'reproduction' ? 0 : 3;
       }
       if (sub === 'file') {
         const ev = evidence.recordFile(store, need(actor, '--actor'), { file: need(arg, '<path>'), label: flags.label, note: flags.note, gate: flags.gate, task: flags.task });

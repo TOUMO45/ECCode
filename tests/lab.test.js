@@ -169,7 +169,8 @@ test('an existing test\'s lines changed by the fix must be declared, and the rev
   require('../lib/mutate').record(store, 'backend-engineer', { command: 'npm test', base: 'HEAD', score: 1, total: 1, killed: 1, survived: 0, invalid: 0, timeouts: 0, survivors: [] }, { task: 'fix' });
   recordLesson(store);
   gates.submit(store, config, 'phase:fix', 'backend-engineer');
-  const ev = passCheck(store, 'technical-reviewer');
+  // the reviewer runs the task's pinned command itself: any other passing command no longer supports an approval
+  const ev = evidence.runCommand(store, 'technical-reviewer', { label: 'review', command: 'npm test', gate: 'phase:fix' });
   const review = approval([[`ev:${ev.id}`]]);
   assert.match(expectCode(() => gates.recordReview(store, config, 'phase:fix', 'technical-reviewer', review), 'REVIEW_REJECTED').message, /declared a change to the test file or infrastructure tests\/price\.test\.js; approval must acknowledge it/);
   gates.recordReview(store, config, 'phase:fix', 'technical-reviewer', { ...review, acknowledgedTestChanges: [{ file: 'tests/price.test.js', verdict: 'legitimate', reason: 'the assertion change keeps the same expected price; the fix is in src/price.js' }] });
