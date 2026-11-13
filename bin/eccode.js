@@ -11,6 +11,16 @@ const { EccodeError, readJson, toPosix, ensureDir } = require('../lib/util');
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
 Start here
+  start "<idea>" [--command <cmd>] [--files <globs>] [--owner <role>]
+                                         Small work, shortest path: creates the record if needed, one task, ONE gate
+                                         (the review of the work is the last gate), and prints seven complete steps:
+                                         eight commands to "Delivered", no file written by hand. The reviewer must
+                                         still run the pinned check itself. Use this unless the work needs designing.
+  gate review <gate> --actor <reviewer> --approve --summary "<verdict>"
+                                         Approve from the record (criteria and your own passing checks are filled in);
+                                         --draft prints a review file to edit; --file takes a hand-written one
+  task complete <task> --actor <owner> --done "<what is true now>" [--notes "<decisions>"]
+                                         Complete with a handoff built from the record; --handoff takes a file
   quick "<change>" --actor orchestrator [--owner <role>] [--files <globs>] [--command <cmd>]
                                          One small, reviewed change: creates the record if needed, a one-task
                                          quick work item with its check and ownership read from the repository,
@@ -620,6 +630,22 @@ function main(argv) {
     return 0;
   }
   if (group === 'debug' && LAB_SUBCOMMANDS.has(sub)) return labCli({ root, sub, arg, args, flags, actor, print });
+  // The short path: one small piece of work, one gate, eight commands, nothing written by hand.
+  if (group === 'start') {
+    const q = require('../lib/quick');
+    const who = actor || 'orchestrator';
+    const res = q.start(root, who, { request: need(sub, '"<idea in one line>"'), owner: flags.owner, files: flags.files || '**', command: flags.command, name: flags.name, track: 'quick', oneGate: true });
+    const t = res.task;
+    const steps = q.steps('eccode', t, 'quick', { oneGate: true });
+    print(flags, [
+      `Started ${res.workId}${res.created ? ' (new record)' : ''}: "${t.title}"`,
+      `  owner ${t.owner}; files ${t.files.join(', ')}; check: ${t.verification.command}`,
+      '',
+      'Do these in order. Each line is the whole command:',
+      ...steps,
+    ].join('\n'), { workId: res.workId, task: t, steps, oneGate: true });
+    return 0;
+  }
   if (group === 'quick' || group === 'debug') {
     const q = require('../lib/quick');
     const res = q.start(root, need(actor, '--actor'), { request: need(sub, group === 'debug' ? '"<bug>"' : '"<request>"'), owner: flags.owner, files: flags.files, command: flags.command, name: flags.name, track: group });
@@ -1062,8 +1088,21 @@ function main(argv) {
           notes: flags.notes,
         });
         print(flags, `Submitted ${gateId} as ${event.data.submissionId} (${event.data.artifacts.length} artifact(s)). Next: independent review.`, event.data);
+      } else if (sub === 'review' && flags.draft) {
+        // A filled-in start for the review file, built from the record. Printed, or written with --out.
+        const draft = gates.draftReview(store, gateId, need(actor, '--actor'));
+        const text = JSON.stringify(draft, null, 2) + '\n';
+        if (flags.out && flags.out !== true) {
+          const out = path.resolve(root, flags.out);
+          ensureDir(path.dirname(out));
+          fs.writeFileSync(out, text);
+          process.stdout.write(`Review draft written to ${toPosix(path.relative(store.root, out))}: set "decision" and "summary" (and findings, to request changes), then eccode gate review ${gateId} --actor ${actor} --file ${toPosix(path.relative(store.root, out))}\n`);
+        } else process.stdout.write(text);
       } else if (sub === 'review') {
-        const review = loadJsonFile(need(flags.file, '--file'));
+        // --approve --summary "<verdict>" builds the approval from the record; --file takes a hand-written review.
+        const review = flags.approve
+          ? gates.draftReview(store, gateId, need(actor, '--actor'), { summary: need(flags.summary, '--summary "<verdict in one or two sentences>"') })
+          : loadJsonFile(need(flags.file, '--file <review.json> (or --approve --summary "<verdict>")'));
         const { event, state } = gates.recordReview(store, config, gateId, need(actor, '--actor'), review);
         gates.archiveReview(store, event.data.reviewId, review);
         const g = store.state().gates[gateId];
@@ -1101,7 +1140,15 @@ function main(argv) {
         const lessons = require('../lib/memory/draft').lessonsForTask(store, config, arg);
         print(flags, [`Claimed ${arg} (base ${event.data.baseCommit || 'no git'}).`, ...require('../lib/memory/draft').lessonsText(lessons)].join('\n'), { ...event.data, lessons });
       } else if (sub === 'complete') {
-        tasks.complete(store, config, need(arg, '<task>'), need(actor, '--actor'), loadJsonFile(need(flags.handoff, '--handoff')));
+        // --done "<what is true now>" builds the handoff from the record (changed files, the passing check);
+        // --handoff takes a hand-written one.
+        let handoff;
+        if (flags.done && flags.done !== true && !flags.handoff) {
+          handoff = require('../lib/quick').draftHandoff(store, need(arg, '<task>'), need(actor, '--actor'));
+          handoff.completedWork = String(flags.done);
+          handoff.context = flags.notes && flags.notes !== true ? String(flags.notes) : 'No decisions or constraints beyond the task text.';
+        } else handoff = loadJsonFile(need(flags.handoff, '--handoff <handoff.json> (or --done "<what is true now and how the check shows it>")'));
+        tasks.complete(store, config, need(arg, '<task>'), need(actor, '--actor'), handoff);
         print(flags, `Task ${arg} completed with validated handoff.`);
       } else if (sub === 'fail') {
         const { state } = tasks.fail(store, config, need(arg, '<task>'), need(actor, '--actor'), need(flags.reason, '--reason'));

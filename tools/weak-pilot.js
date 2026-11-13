@@ -11,7 +11,7 @@ const { spawnSync, execFileSync } = require('child_process');
 const MODELS = { w: 'claude-haiku-5-5', e: 'claude-haiku-5-5', s: 'claude-sonnet-5-5' };
 const P = 'Deliver the project described in brief.md in this directory. I am unreachable, so do not ask me anything: decide and finish.';
 const TOOLS = ['Bash', 'Write', 'Edit', 'MultiEdit', 'Read', 'Glob', 'Grep', 'Task', 'Agent', 'Skill', 'TodoWrite'];
-const WALL_MS = 40 * 60 * 1000;
+const WALL_MS = 40 * 60 * 1000; // default; --wall-minutes <n> overrides it for a run
 const WIN = process.platform === 'win32';
 const PYTHON = process.env.W1_PYTHON || (WIN ? 'python' : 'python3');
 // On Windows `claude` is usually a .cmd shim, which needs a shell; arguments are then quoted by hand.
@@ -54,20 +54,23 @@ function run(f) {
     args.push('--plugin-dir', pluginExport(repo, path.resolve(f.out, 'eccode-plugin')));
     prompt = entryPrompt(repo);
   }
+  const wallMs = f['wall-minutes'] ? Number(f['wall-minutes']) * 60 * 1000 : WALL_MS;
   const started = Date.now();
   const r = WIN
-    ? spawnSync(['claude', ...args.map(quote)].join(' '), { cwd: ws, input: prompt, encoding: 'utf8', timeout: WALL_MS, maxBuffer: 1 << 30, shell: true })
-    : spawnSync('claude', args, { cwd: ws, input: prompt, encoding: 'utf8', timeout: WALL_MS, maxBuffer: 1 << 30 });
+    ? spawnSync(['claude', ...args.map(quote)].join(' '), { cwd: ws, input: prompt, encoding: 'utf8', timeout: wallMs, maxBuffer: 1 << 30, shell: true })
+    : spawnSync('claude', args, { cwd: ws, input: prompt, encoding: 'utf8', timeout: wallMs, maxBuffer: 1 << 30 });
   if (r.error && r.error.code !== 'ETIMEDOUT') throw new Error(`could not start claude: ${r.error.message}`);
   const wall = Math.round((Date.now() - started) / 1000);
   fs.writeFileSync(path.join(dir, 'transcript.jsonl'), r.stdout || '');
   let last = null;
   let usedEccode = false;
   let toolCalls = 0;
+  let assistantMessages = 0; // a run cut off by the wall limit reports no turns or cost: this is the fallback count
   for (const line of (r.stdout || '').split('\n')) {
     if (!line.trim()) continue;
     let o; try { o = JSON.parse(line); } catch { continue; }
     if (o.type === 'result') last = o;
+    if (o.type === 'assistant') assistantMessages += 1;
     const content = o.message && Array.isArray(o.message.content) ? o.message.content : [];
     for (const b of content) {
       if (b.type !== 'tool_use') continue;
@@ -82,7 +85,7 @@ function run(f) {
   const result = {
     project: f.project, arm, run: Number(f.run), model: MODELS[arm], prompt,
     exit: r.status, timedOut: Boolean(r.error && r.error.code === 'ETIMEDOUT'), wallSeconds: wall,
-    turns: last ? last.num_turns : null, costUsd: last ? last.total_cost_usd : null, stopReason: last ? last.subtype : null,
+    turns: last ? last.num_turns : null, assistantMessages, wallLimitMinutes: wallMs / 60000, costUsd: last ? last.total_cost_usd : null, stopReason: last ? last.subtype : null,
     toolCalls, usedEccode: arm === 'e' ? usedEccode : null, contaminated,
     oracle: m ? { passed: Number(m[1]), total: Number(m[2]) } : null,
     oracleTail: (oracle.stdout || oracle.stderr || '').trim().split('\n').slice(-3),
