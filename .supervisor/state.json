@@ -2,7 +2,7 @@
   "schema": 1,
   "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
   "created": "2026-11-11 19:46",
-  "updated": "2026-11-13 18:13",
+  "updated": "2026-11-14 16:47",
   "budget": {
     "max_parallel": 3,
     "max_attempts": 3,
@@ -12,7 +12,7 @@
     "M": 4,
     "AC": 15,
     "T": 10,
-    "D": 25,
+    "D": 26,
     "Q": 9,
     "R": 7
   },
@@ -133,7 +133,7 @@
         "docs/usage.md": "57b202c10a23b234",
         "tests/cli-missing-file.test.js": "bea42c49630de28f"
       },
-      "evidence": "npm run check after stage P1: 1864 tests, 1804 pass, 0 fail, 60 skipped"
+      "evidence": "npm run check after the one-dispatch change: 1865 tests, 1805 pass, 0 fail, 60 skipped"
     },
     "T2": {
       "title": "Make sandbox test A1 pass or skip honestly on a Landlock-only host",
@@ -409,6 +409,11 @@
       "text": "Stage P1 for small work is built: eccode start (one task, one gate, seven printed steps), approvals and handoffs built from the record, a correct next step after a rejection. Toy project: 30 commands, 12 hand-written files, 5 gates before; 8 commands, 0 files, 1 gate now",
       "at": "2026-11-13 18:13",
       "why": "docs/review-2026-11-13.md section 7; tests/start-short-path.test.js 6 pass; npm run check 1864 tests 0 fail"
+    },
+    "D26": {
+      "text": "On one-gate work the main session builds and one separate agent reviews (one dispatch). The hook allows the main session to act as the owner of the work own task only",
+      "at": "2026-11-14 16:47",
+      "why": "S3 record: builders used 15 percent of tokens; addyosmani/agent-skills orchestration-patterns names the sequential orchestrator as an anti-pattern; tests/start-short-path.test.js test 7"
     }
   },
   "risks": {
@@ -442,9 +447,9 @@
     }
   },
   "next": [
-    "Owner: re-run pilot W1 arm e and arm w on the machine used before, with new run numbers (commands in the final message of 2026-11-13)",
-    "Then: P1.4 automatic run accounting, plan draft, and the medium-project path (feature track with drafts)",
-    "Then P2 to P5 of docs/review-2026-11-13.md"
+    "Owner: send the transcript summaries of the second pilot run (node tools/pilot-trace.js) and the commit the runs used",
+    "Then one single arm-e run on the current commit, not six",
+    "No further engine work until a transcript has been read"
   ],
   "log": [
     {
@@ -613,6 +618,10 @@
     },
     {
       "at": "2026-11-13 18:13",
+      "text": "T1 -> verified"
+    },
+    {
+      "at": "2026-11-14 16:47",
       "text": "T1 -> verified"
     }
   ],

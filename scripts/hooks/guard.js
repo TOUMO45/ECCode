@@ -359,6 +359,23 @@ function expandedText(cmd) {
   return out;
 }
 
+/**
+ * One-gate work (eccode start): the main session may act as the owner of the work's own task and build it
+ * itself. A dispatch that only relays the task costs a whole context and adds nothing; the independent view that
+ * matters is the reviewer's, and no reviewer role ever owns a task, so the review still needs a separate agent.
+ */
+function soloOwner(root, lib, actors) {
+  try {
+    const { Store } = require(path.join(lib, 'store'));
+    const state = new Store(root).state();
+    if (!state.work || !state.work.oneGate) return false;
+    const owners = new Set(Object.values(state.tasks || {}).map((t) => t.owner));
+    return actors.filter((a) => ROLES.has(a)).every((a) => owners.has(a));
+  } catch {
+    return false;
+  }
+}
+
 function roleOf(agentType) {
   if (!agentType) return null;
   const name = String(agentType).split(':').pop();
@@ -440,7 +457,7 @@ function main(input) {
         }
       } else {
         const roleActor = actors.find((a) => ROLES.has(a));
-        if (roleActor && process.env.ECCODE_SEQUENTIAL_ROLES !== '1') {
+        if (roleActor && process.env.ECCODE_SEQUENTIAL_ROLES !== '1' && !soloOwner(root, lib, actors)) {
           out('deny', `The main session is the orchestrator; dispatch the ${roleActor} subagent instead of acting as it. (Sequential single-context mode requires ECCODE_SEQUENTIAL_ROLES=1 and must be disclosed to the user.)`);
         }
         if (actors.includes('user')) {

@@ -141,3 +141,24 @@ test('after a rejection NEXT says how to rework, and following it leads to an ap
   ok('gate', 'review', 'phase:change', '--actor', 'technical-reviewer', '--approve', '--summary', 'The negative-number test was added and the whole suite passes.');
   assert.match(ok('deliver', '--actor', 'orchestrator').stdout, /Delivered/);
 });
+
+test('the hook lets the main session build one-gate work itself, and still demands a separate agent for the review', { skip }, () => {
+  const GUARD = path.join(__dirname, '..', 'scripts', 'hooks', 'guard.js');
+  const guard = (cwd, command) => {
+    const r = spawnSync(process.execPath, [GUARD], { cwd, encoding: 'utf8', input: JSON.stringify({ tool_name: 'Bash', tool_input: { command }, cwd }) });
+    return r.stdout ? JSON.parse(r.stdout).hookSpecificOutput : null;
+  };
+  const dir = emptyProject();
+  ec(dir, 'start', 'build the adder in brief.md', '--command', CHECK);
+  assert.strictEqual(guard(dir, 'eccode task claim change --actor backend-engineer'), null);
+  assert.strictEqual(guard(dir, 'eccode gate submit phase:change --actor backend-engineer'), null);
+  const review = guard(dir, 'eccode gate review phase:change --actor technical-reviewer --approve --summary "fine"');
+  assert.strictEqual(review.permissionDecision, 'deny');
+  assert.match(review.permissionDecisionReason, /dispatch the technical-reviewer subagent/);
+  // ordinary (two-gate) quick work is unchanged: the main session may not act as the owner
+  const other = emptyProject();
+  fs.mkdirSync(path.join(other, 'tests'));
+  fs.writeFileSync(path.join(other, 'tests', 'test_x.py'), 'import unittest\n');
+  ec(other, 'quick', 'add a function', '--actor', 'orchestrator');
+  assert.strictEqual(guard(other, 'eccode task claim change --actor backend-engineer').permissionDecision, 'deny');
+});
