@@ -126,3 +126,24 @@ W1 says nothing about medium or large projects.
 
 **Defects of the pilot itself:** the oracle's line endings (fixed); the runner loses cost and turns when a run
 hits the wall limit; the 40-minute limit was too short to see whether ECCode ever finishes.
+
+## Second run of arm e, after the short path (2026-11-14; run by the owner on Windows)
+
+Arm e was run again (3 runs per project, new result folder) after `eccode start` and the rewritten
+`commands/start.md` were pushed. Table copied from the owner's terminal. Whether the owner's checkout had the new
+commit is **not confirmed**: the first `git pull` failed on a network error and the retry was not shown.
+
+| Run | Q | Cost $ | Turns | Seconds |
+|---|---|---|---|---|
+| csvmd e1 | 18/18 | not reported | not reported | 2400 (cut off) |
+| csvmd e2 | 18/18 | 17.61 | 81 | 2354 |
+| csvmd e3 | 0/18 | not reported | not reported | 2400 (cut off) |
+| textkit e1 | 20/21 | not reported | not reported | 2400 (cut off) |
+| textkit e2 | 1/21 | 12.04 | 60 | 2371 |
+| textkit e3 | 21/21 | not reported | not reported | 2400 (cut off) |
+
+**Reading:** no improvement in time, and worse than the first run on quality (two runs near zero) and far worse
+than Haiku alone on cost: the two runs that reported a cost spent 12 and 17.6 dollars against 0.58-0.97 for Haiku
+alone and 0.42-0.46 for Sonnet alone. The change made on 2026-11-13 either did not reach these runs or did not
+address what consumes the time. The cause is unknown until a transcript is read; `tools/pilot-trace.js <run dir>`
+summarises one. No conclusion about the short path is drawn from these runs yet.
