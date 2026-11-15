@@ -249,3 +249,15 @@ increasing size (csvmd, textkit, shelfmark) are now all at the ceiling for it.
 one sitting. It could only be shown where the plain agent actually fails: work much larger than one context,
 work spread over several sessions, changes inside a large existing codebase, or a model that is weaker than this
 one. None of those has been tested.
+
+## W3: three sessions, requirements said only in a session
+
+W2 stopped because the weak model alone scored full marks, so a harder kind of work was needed, not a bigger single
+sitting. W3 spreads shelfmark over three fresh sessions and has the owner say nine requirements only in the session
+prompts (a new option, two changed numbers, a new filter). It asks whether those survive to the end for the weak model
+alone, with the autonomous-supervisor skill, and with ECCode.
+
+The protocol, runner, oracle and decision rule live in the Supervisor-Skill repository under `tests/e2e/sessions/`
+(README there, committed before any run). ECCode is arm e: each session's request goes through `commands/start.md`.
+
+Results: none yet.
