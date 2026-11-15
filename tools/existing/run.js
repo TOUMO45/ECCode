@@ -45,7 +45,8 @@ function baseTree(out) {
 
 /** Names of the failing tests when the BASE test files run against `tree`. */
 function failing(tree, baseDir, scratch, ignore = new Set()) {
-  fs.rmSync(scratch, { recursive: true, force: true });
+  // On Windows a test's leftover child process can keep the folder locked: never reuse a name, and clean up best-effort.
+  scratch = `${scratch}-${Date.now().toString(36)}`;
   fs.cpSync(tree, scratch, { recursive: true, filter: (src) => !/[\\/](\.git|node_modules|\.eccode)$/.test(src) });
   fs.rmSync(path.join(scratch, 'tests'), { recursive: true, force: true });
   fs.cpSync(path.join(baseDir, 'tests'), path.join(scratch, 'tests'), { recursive: true });
@@ -71,7 +72,7 @@ function failing(tree, baseDir, scratch, ignore = new Set()) {
     }
     if (/^# tests \d+/m.test(again.stdout || '')) for (const n of suspects) if (!still.has(n)) names.delete(n);
   }
-  fs.rmSync(scratch, { recursive: true, force: true });
+  try { fs.rmSync(scratch, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 }); } catch { /* left behind; harmless */ }
   return { names: [...names].sort(), total: total ? Number(total[1]) : null, finished: Boolean(total) };
 }
 
