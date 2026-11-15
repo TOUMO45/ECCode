@@ -80,5 +80,5 @@ test('quick starts on a plain Python project with unittest files, and says the w
   sh(empty, 'git', ['init', '-q']);
   const no = ec(empty, 'quick', 'build the tool in brief.md', '--actor', 'orchestrator');
   assert.strictEqual(no.status, 2);
-  assert.match(no.stderr, /eccode quick "build the tool in brief\.md" --actor orchestrator --command "/);
+  assert.match(no.stderr, /eccode quick "build the tool in brief\.md" --actor orchestrator --files "\*\*" --command "/);
 });
