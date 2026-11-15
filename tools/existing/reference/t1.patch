@@ -1,0 +1,35 @@
+diff -ruN base/bin/eccode.js t1/bin/eccode.js
+--- a/bin/eccode.js	2026-11-09 20:06:09.000000000 +0000
++++ b/bin/eccode.js	2026-11-15 16:10:45.383454066 +0000
+@@ -589,13 +589,20 @@
+ }
+ 
+ function loadJsonFile(file) {
+-  return readJson(path.resolve(file));
++  const resolved = path.resolve(file);
++  // A missing input file is the caller's mistake: refuse with a code, do not crash with a stack trace.
++  if (!fs.existsSync(resolved)) throw new EccodeError('NOT_FOUND', `File not found: ${file}`);
++  return readJson(resolved);
+ }
+ 
+ function main(argv) {
+   const args = parseArgs(argv);
+   const { flags } = args;
+   const [group, sub, arg] = args._;
++  if (flags.version && !group) {
++    process.stdout.write(`${require('../package.json').version}\n`);
++    return 0;
++  }
+   if (!group || flags.help || group === 'help') {
+     process.stdout.write(HELP);
+     return 0;
+@@ -1125,7 +1132,8 @@
+           timeoutMs: timeoutOf(flags),
+         });
+         print(flags, `Evidence ev:${ev.id} — ${ev.status.toUpperCase()} (exit ${ev.exitCode}, ${ev.durationMs}ms)\n${ev.outputTail}`, ev);
+-        return 0;
++        // Recorded either way; a failed check exits 3 so that 'recorded' is never read as 'passed'. A reproduction may fail.
++        return ev.status === 'passed' || (flags.purpose || 'check') === 'reproduction' ? 0 : 3;
+       }
+       if (sub === 'file') {
+         const ev = evidence.recordFile(store, need(actor, '--actor'), { file: need(arg, '<path>'), label: flags.label, note: flags.note, gate: flags.gate, task: flags.task });

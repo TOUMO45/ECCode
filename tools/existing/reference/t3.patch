@@ -1,0 +1,90 @@
+diff -ruN base/bin/eccode.js t3/bin/eccode.js
+--- a/bin/eccode.js	2026-11-09 20:06:09.000000000 +0000
++++ b/bin/eccode.js	2026-11-15 16:10:45.393653428 +0000
+@@ -42,7 +42,7 @@
+ Gates (architecture, design, plan, phase:<id>, verification)
+   gate start <gate> --actor <role> [--reviewers r1,r2]   (orchestrator: each named reviewer must approve)
+   gate submit <gate> --actor <role> --artifact <path>... [--responds-to <reviewId>] [--notes <text>]
+-  gate review <gate> --actor <reviewer> --file <review.json>
++  gate review <gate> --actor <reviewer> --file <review.json> | --approve --summary "<verdict>"
+   gate reopen <gate> --actor user --resolution <text>        (headless: --actor orchestrator reopens an approved gate whose artifacts changed after approval)
+   gate show <gate> [--json]
+ 
+@@ -50,7 +50,7 @@
+   plan validate <plan.json>
+   task list [--json] | task next
+   task claim <id> --actor <owner> [--run <runId>]
+-  task complete <id> --actor <owner> --handoff <handoff.json>
++  task complete <id> --actor <owner> --handoff <handoff.json> | --done "<what is true now>"
+   task fail <id> --actor <owner> --reason <text>
+   task reset <id> --actor <orchestrator|delivery-lead|user> --reason <text>
+   task rescope <id> [--files <glob,glob>] [--command "<cmd>"] --actor <orchestrator (quick, debug tracks)|user> --reason <text>
+@@ -1056,7 +1056,10 @@
+         });
+         print(flags, `Submitted ${gateId} as ${event.data.submissionId} (${event.data.artifacts.length} artifact(s)). Next: independent review.`, event.data);
+       } else if (sub === 'review') {
+-        const review = loadJsonFile(need(flags.file, '--file'));
++        // --approve --summary "<verdict>" builds the approval from the record; --file takes a hand-written review.
++        const review = flags.approve
++          ? gates.draftReview(store, gateId, need(actor, '--actor'), { summary: need(flags.summary !== true && flags.summary, '--summary "<verdict in one or two sentences>"') })
++          : loadJsonFile(need(flags.file, '--file <review.json> (or --approve --summary "<verdict>")'));
+         const { event, state } = gates.recordReview(store, config, gateId, need(actor, '--actor'), review);
+         gates.archiveReview(store, event.data.reviewId, review);
+         const g = store.state().gates[gateId];
+@@ -1094,7 +1097,14 @@
+         const lessons = require('../lib/memory/draft').lessonsForTask(store, config, arg);
+         print(flags, [`Claimed ${arg} (base ${event.data.baseCommit || 'no git'}).`, ...require('../lib/memory/draft').lessonsText(lessons)].join('\n'), { ...event.data, lessons });
+       } else if (sub === 'complete') {
+-        tasks.complete(store, config, need(arg, '<task>'), need(actor, '--actor'), loadJsonFile(need(flags.handoff, '--handoff')));
++        // --done "<what is true now>" builds the handoff from the record; --handoff takes a hand-written one.
++        let handoff;
++        if (flags.done && flags.done !== true && !flags.handoff) {
++          handoff = require('../lib/quick').draftHandoff(store, need(arg, '<task>'), need(actor, '--actor'));
++          handoff.completedWork = String(flags.done);
++          handoff.context = flags.notes && flags.notes !== true ? String(flags.notes) : 'No decisions or constraints beyond the task text.';
++        } else handoff = loadJsonFile(need(flags.handoff, '--handoff <handoff.json> (or --done "<what is true now and how the check shows it>")'));
++        tasks.complete(store, config, need(arg, '<task>'), need(actor, '--actor'), handoff);
+         print(flags, `Task ${arg} completed with validated handoff.`);
+       } else if (sub === 'fail') {
+         const { state } = tasks.fail(store, config, need(arg, '<task>'), need(actor, '--actor'), need(flags.reason, '--reason'));
+diff -ruN base/lib/gates.js t3/lib/gates.js
+--- a/lib/gates.js	2026-11-09 20:06:09.000000000 +0000
++++ b/lib/gates.js	2026-11-15 16:10:45.388095871 +0000
+@@ -397,4 +397,36 @@
+   writeJson(store.path('reviews', `${reviewId}.json`), review);
+ }
+ 
+-module.exports = { startGate, submit, recordReview, reopenGate, checkReview, gateAuthors, predecessor, archiveReview, ORCHESTRATOR, USER };
++/**
++ * A review prefilled from the record, so that no reviewer writes the JSON from memory: the criteria are the
++ * acceptance criteria of the tasks under review, each citing the checks this reviewer ran and saw pass after the
++ * submission. With a summary it is a complete approval; without one it is a draft to edit (for example into a
++ * changes_requested review). recordReview still applies every rule to it.
++ */
++function draftReview(store, gateId, reviewer, { summary } = {}) {
++  const state = store.state();
++  const g = state.gates[gateId];
++  if (!g) throw new EccodeError('UNKNOWN_GATE', `Unknown gate ${gateId}. Gates: ${state.gateOrder.join(', ')}`);
++  const sub = (g.submissions || [])[g.submissions.length - 1];
++  if (g.status !== 'submitted' || !sub) {
++    throw new EccodeError('INVALID_TRANSITION', `Gate ${gateId} is ${g.status}: only a submitted gate can be reviewed. Run eccode status --brief and do what NEXT says.`);
++  }
++  const scope = gateKind(gateId) === 'phase' ? phaseTasks(state, gateId) : Object.values(state.tasks);
++  const mine = Object.values(state.evidence)
++    .filter((e) => e.kind === 'command' && e.recordedBy === reviewer && e.status === 'passed' && e.at >= sub.at)
++    .map((e) => `ev:${e.id}`);
++  const wanted = [...new Set(scope.flatMap((t) => t.acceptanceCriteria || []))];
++  const criteria = (wanted.length ? wanted : ['the submitted work does what was asked and its checks pass'])
++    .map((description, i) => ({ id: `C${i + 1}`, description, met: true, evidence: mine }));
++  return {
++    decision: 'approve',
++    summary: summary || 'TODO: the verdict in one or two sentences, grounded in the checks you ran',
++    criteria,
++    findings: [],
++    // After a rejection, an approval must say each earlier finding is resolved, on the reviewer's fresh evidence.
++    resolvedFindings: (g.openFindings || []).map((f) => ({ id: f.id, resolution: `Addressed in ${sub.id}; checked again after the resubmission.`, evidence: mine })),
++    lessonsConsulted: [],
++  };
++}
++
++module.exports = { draftReview, startGate, submit, recordReview, reopenGate, checkReview, gateAuthors, predecessor, archiveReview, ORCHESTRATOR, USER };
