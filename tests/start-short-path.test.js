@@ -185,3 +185,32 @@ test('a project that is not a git repository goes through the same eight command
   assert.match(run('status', '--brief').stdout, /eccode deliver --actor orchestrator/);
   assert.match(run('deliver', '--actor', 'orchestrator').stdout, /Delivered/);
 });
+
+test('medium work: three slices, each built, checked and reviewed before the next can start', { skip }, () => {
+  const dir = emptyProject();
+  const ok = (...args) => { const r = ec(dir, ...args); assert.strictEqual(r.status, 0, `${args.join(' ')}\n${r.stdout}\n${r.stderr}`); return r; };
+  const started = ok('start', 'a small library system', '--command', CHECK, '--slice', 'catalogue: add and list books', '--slice', 'members: register members', '--slice', 'lending: check out and return');
+  assert.match(started.stdout, /There are 3 slices\. Finish each one completely/);
+  assert.match(started.stdout, /Slice 3 of 3: lending: check out and return/);
+  let state = JSON.parse(fs.readFileSync(path.join(dir, '.eccode', 'state.json'), 'utf8'));
+  assert.deepStrictEqual(state.gateOrder, ['phase:s1', 'phase:s2', 'phase:s3']);
+  // slice 2 cannot be claimed while slice 1 is unfinished
+  assert.notStrictEqual(ec(dir, 'task', 'claim', 's2', '--actor', 'backend-engineer').status, 0);
+  fs.mkdirSync(path.join(dir, 'tests'), { recursive: true });
+  for (const i of [1, 2, 3]) {
+    if (i > 1) ok('gate', 'start', `phase:s${i}`, '--actor', 'orchestrator');
+    ok('task', 'claim', `s${i}`, '--actor', 'backend-engineer');
+    fs.writeFileSync(path.join(dir, `m${i}.py`), `def f${i}():\n    return ${i}\n`);
+    fs.writeFileSync(path.join(dir, 'tests', `test_m${i}.py`), `import unittest\nfrom m${i} import f${i}\n\n\nclass T${i}(unittest.TestCase):\n    def test_f(self):\n        self.assertEqual(f${i}(), ${i})\n`);
+    ok('evidence', 'run', '--actor', 'backend-engineer', '--task', `s${i}`, '--label', 'verify', '--', CHECK);
+    ok('task', 'complete', `s${i}`, '--actor', 'backend-engineer', '--done', `slice ${i} is built and the unittest suite passes with it`);
+    ok('gate', 'submit', `phase:s${i}`, '--actor', 'backend-engineer');
+    // delivery is refused until every slice has been reviewed
+    if (i < 3) assert.match(ec(dir, 'deliver', '--actor', 'orchestrator').stderr, /DELIVERY_BLOCKED/);
+    ok('evidence', 'run', '--actor', 'technical-reviewer', '--gate', `phase:s${i}`, '--label', 'review', '--', CHECK);
+    ok('gate', 'review', `phase:s${i}`, '--actor', 'technical-reviewer', '--approve', '--summary', `Slice ${i} does what it says and the whole suite passes when I run it.`);
+  }
+  assert.match(ok('deliver', '--actor', 'orchestrator').stdout, /Delivered/);
+  assert.match(ec(dir, 'audit').stdout, /Audit OK/);
+  assert.strictEqual(ec(dir, 'start', 'too many', '--command', CHECK, ...Array.from({ length: 13 }, (_, k) => ['--slice', `slice number ${k}`]).flat()).status, 1);
+});

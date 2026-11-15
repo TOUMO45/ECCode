@@ -23,6 +23,17 @@ No separate frontend and backend, no database migration plan, no deployment desi
 
 Do not load the `orchestrate` skill for small work, and do not ask the user anything: where the idea leaves something open, decide, and say what you decided in the report.
 
-## Anything larger
+## Medium: several features one engineer builds over a day (a tool with storage and several commands, a small service)
+
+Same path, in slices. A slice is one outcome a user could see working ("books can be added and listed"), through every layer it needs. Never slice by layer ("the database", "the CLI").
+
+1. Read the brief and list 2 to 8 slices in build order: what everything else depends on first, the riskiest part early.
+2. Run `eccode start "<the idea in one line>" --command "<test command>" --slice "<outcome 1>" --slice "<outcome 2>" ...`
+3. It prints the steps for every slice. For each slice, in order: do the builder lines yourself, then dispatch one `eccode:technical-reviewer` with that slice's two reviewer lines copied word for word. Do not start a slice before the one before it is approved.
+4. After the last slice run the `deliver` line, then report what was built and paste the last passing check.
+
+If you lose your place, run `eccode status --brief` and do what NEXT says. Do not load the `orchestrate` skill, and do not ask the user anything: decide, and report what you decided.
+
+## Anything larger (separate frontend and backend teams, migrations, deployment design)
 
 Use the `orchestrate` skill. Initialize the project record, then follow the workflow. Show the user `eccode status --brief` after every gate decision.

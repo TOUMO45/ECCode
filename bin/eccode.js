@@ -11,11 +11,14 @@ const { EccodeError, readJson, toPosix, ensureDir } = require('../lib/util');
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
 Start here
-  start "<idea>" [--command <cmd>] [--files <globs>] [--owner <role>]
+  start "<idea>" [--command <cmd>] [--slice "<outcome>" ...] [--files <globs>] [--owner <role>]
                                          Small work, shortest path: creates the record if needed, one task, ONE gate
                                          (the review of the work is the last gate), and prints seven complete steps:
                                          eight commands to "Delivered", no file written by hand. The reviewer must
                                          still run the pinned check itself. Use this unless the work needs designing.
+                                         Medium work: give 2 to 12 --slice outcomes in build order ("users can
+                                         register", "users can log in"); each slice is built, checked and reviewed
+                                         before the next starts.
   gate review <gate> --actor <reviewer> --approve --summary "<verdict>"
                                          Approve from the record (criteria and your own passing checks are filled in);
                                          --draft prints a review file to edit; --file takes a hand-written one
@@ -643,11 +646,13 @@ function main(argv) {
   if (group === 'start') {
     const q = require('../lib/quick');
     const who = actor || 'orchestrator';
-    const res = q.start(root, who, { request: need(sub, '"<idea in one line>"'), owner: flags.owner, files: flags.files || '**', command: flags.command, name: flags.name, track: 'quick', oneGate: true });
+    const slices = [].concat(flags.slice || []).filter((x) => x && x !== true);
+    if (slices.length > 12) throw new EccodeError('USAGE', 'At most 12 slices: work that needs more is planned with the orchestrate skill');
+    const res = q.start(root, who, { request: need(sub, '"<idea in one line>"'), owner: flags.owner, files: flags.files || '**', command: flags.command, name: flags.name, track: 'quick', oneGate: true, slices });
     const t = res.task;
     // Print the steps with the invocation that works in this shell. A pilot run on 2026-11-15 stopped before
     // building anything because the printed name `eccode` was not on PATH and the agent could not find the CLI.
-    const steps = q.steps(cliInvocation(), t, 'quick', { oneGate: true });
+    const steps = q.steps(cliInvocation(), t, 'quick', { oneGate: true, tasks: res.tasks });
     print(flags, [
       `Started ${res.workId}${res.created ? ' (new record)' : ''}: "${t.title}"`,
       `  owner ${t.owner}; files ${t.files.join(', ')}; check: ${t.verification.command}`,

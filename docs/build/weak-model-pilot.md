@@ -194,3 +194,38 @@ the patched oracle, so "21 against 20" is not a difference.
   artifact") and the agent had to guess `--artifact`;
 - `status` named `delivery-lead` for the delivery, which the hook then refused; it now names `orchestrator` on
   one-gate work.
+
+## Six more runs on the short path (2026-11-15, run by the owner; commit `f369ebc` or later)
+
+| Run | Q | Cost $ | Seconds |
+|---|---|---|---|
+| textkit e3, e4, e5 | 21/21, 21/21, 21/21 | 1.41, 1.55, 3.20 | 206, 239, 673 |
+| csvmd e3, e4, e5 | 18/18, 18/18, 18/18 | 1.12, 0.97, 1.58 | 158, 133, 239 |
+
+With the earlier textkit run: **7 of 7 short-path runs delivered through ECCode with full marks.** Median about
+200 seconds and 1.4 dollars; one run took 673 seconds and 3.20 dollars. Haiku alone on the same projects: 79-140
+seconds, 0.58-0.97 dollars, also full marks once the oracle is fair. So on small work the short path is reliable
+and costs roughly 1.5 to 2 times the plain agent in time and money, for the same score. No lift can show here:
+both projects are at the ceiling for Haiku alone.
+
+## Pilot W2, medium project: registered 2026-11-15, before any run
+
+**Claim under test:** on a medium project, a weak agent with ECCode's sliced short path delivers more of the
+brief than the same weak agent alone.
+
+- **Project:** `shelfmark` (library lending: catalogue, members, lending, overdue report; SQLite; nine commands),
+  from an empty directory and `brief.md`. Hidden oracle: 35 black-box checks, CRLF-tolerant, self-checked against
+  a reference implementation (35/35). Brief, oracle and reference are in `TOUMO45/Supervisor-Skill` under
+  `tests/e2e/medium/`. Neither the oracle nor the reference is shown to any arm.
+- **Arms and prompt:** as in W1. Arm e gets the text of `commands/start.md`, which now has a Medium section
+  (`eccode start ... --slice ...`); whether to slice, and how, is the agent's decision. Arm w and arm s get `P`.
+- **Runs:** arm w 3, arm e 3, arm s 1. Wall limit 30 minutes per run. No resumes.
+- **Measures:** Q (checks passed of 35), cost, seconds, whether ECCode was used, and for arm e whether it used
+  slices (from the transcript summary).
+- **Reading, fixed now:** "better" on Q means a mean at least **3 checks** higher and a worst run not below the
+  other arm's worst run. ECCode **lifts the weak agent** if e is better than w. It **closes the gap** if e's mean
+  is within 2 checks of arm s. It is **worth its cost** only if e is better than w **and** e's mean cost is below
+  arm s's cost. If w already averages 33 or more of 35, the project is too easy and W2 shows nothing either way.
+- **Validity:** contamination scan as in W1; a run that hits the limit is scored as it stands.
+- **Limits known now:** one project, one weak model, three runs per arm; the oracle was written by the same party
+  that built the short path (it tests only what the brief states, and the brief is given to every arm).
