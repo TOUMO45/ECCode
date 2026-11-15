@@ -31,10 +31,12 @@ function pluginExport(repo, dest) {
   return dest;
 }
 
-function entryPrompt(repo) {
-  // ECCode's own entry command, body only, with the idea in place of $ARGUMENTS
+function entryPrompt(repo, pluginDir) {
+  // ECCode's own entry command, body only, with the idea in place of $ARGUMENTS. Claude Code fills in
+  // ${CLAUDE_PLUGIN_ROOT} when it expands a plugin command; a prompt sent as plain text gets no such expansion,
+  // so the runner does it. (Without this the first run on the short path could not find the CLI and built nothing.)
   const body = fs.readFileSync(path.join(repo, 'commands', 'start.md'), 'utf8').replace(/^---[\s\S]*?---\s*/, '');
-  return body.replace('$ARGUMENTS', P);
+  return body.replace('$ARGUMENTS', P).split('${CLAUDE_PLUGIN_ROOT}').join(pluginDir.split(path.sep).join('/'));
 }
 
 function run(f) {
@@ -51,8 +53,9 @@ function run(f) {
     '--max-turns', '200', '--output-format', 'stream-json', '--verbose'];
   let prompt = P;
   if (arm === 'e') {
-    args.push('--plugin-dir', pluginExport(repo, path.resolve(f.out, 'eccode-plugin')));
-    prompt = entryPrompt(repo);
+    const pluginDir = pluginExport(repo, path.resolve(f.out, 'eccode-plugin'));
+    args.push('--plugin-dir', pluginDir);
+    prompt = entryPrompt(repo, pluginDir);
   }
   const wallMs = f['wall-minutes'] ? Number(f['wall-minutes']) * 60 * 1000 : WALL_MS;
   const started = Date.now();

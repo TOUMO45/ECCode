@@ -147,3 +147,24 @@ than Haiku alone on cost: the two runs that reported a cost spent 12 and 17.6 do
 alone and 0.42-0.46 for Sonnet alone. The change made on 2026-11-13 either did not reach these runs or did not
 address what consumes the time. The cause is unknown until a transcript is read; `tools/pilot-trace.js <run dir>`
 summarises one. No conclusion about the short path is drawn from these runs yet.
+
+## Correction and first run on the short path (2026-11-15)
+
+**Correction:** the "second run of arm e" above used commit `9a19291`, the old code: the owner's `git pull` had
+failed and the checkout was never updated (`git log --oneline -1` on the owner's machine). Those six runs are
+six more samples of the old path, not a test of the short path.
+
+**First run on the short path** (commit `6c46a7c`, textkit, 15-minute limit): `Q 0/21, cost 0.41, 17 turns, 166 s`.
+From its transcript summary (`tools/pilot-trace.js`):
+
+- The agent received the new entry text, but could not find the CLI: `eccode` was not on PATH, and
+  `${CLAUDE_PLUGIN_ROOT}` in the text was never filled in, because the runner sends the command's body as plain
+  text and only Claude Code's own command expansion substitutes it. This is a defect of the runner, not of ECCode.
+- It searched the disk, loaded the `eccode:deliver` skill, tried `eccode audit`, then **stopped and asked** what
+  to do, with nothing built. So the score is 0 because no project exists, not because a project was wrong.
+- It never reached `eccode start`. The short path itself is still untested on a weak model.
+
+**Fixed after this run:** the runner fills in the plugin path as Claude Code would; `eccode start` prints its
+steps with the invocation that works in the current shell (`node "<path>/bin/eccode.js"` when `eccode` is not on
+PATH); the entry text tells the agent to build directly and say so if the CLI cannot run, never to stop with
+nothing built.

@@ -598,6 +598,15 @@ function print(flags, human, json) {
   else process.stdout.write((typeof human === 'string' ? human : JSON.stringify(human, null, 2)) + '\n');
 }
 
+/** How to call this CLI from the user's shell: `eccode` when it is on PATH, else node with this file's path. */
+function cliInvocation() {
+  const names = process.platform === 'win32' ? ['eccode.cmd', 'eccode.exe', 'eccode.bat', 'eccode'] : ['eccode'];
+  for (const dir of String(process.env.PATH || '').split(path.delimiter).filter(Boolean)) {
+    if (names.some((n) => fs.existsSync(path.join(dir, n)))) return 'eccode';
+  }
+  return `node "${toPosix(path.resolve(__filename))}"`; // forward slashes work in bash, PowerShell and cmd
+}
+
 function loadJsonFile(file) {
   const resolved = path.resolve(file);
   // A missing input file is the caller's mistake: refuse with a code, do not crash with a stack trace.
@@ -636,7 +645,9 @@ function main(argv) {
     const who = actor || 'orchestrator';
     const res = q.start(root, who, { request: need(sub, '"<idea in one line>"'), owner: flags.owner, files: flags.files || '**', command: flags.command, name: flags.name, track: 'quick', oneGate: true });
     const t = res.task;
-    const steps = q.steps('eccode', t, 'quick', { oneGate: true });
+    // Print the steps with the invocation that works in this shell. A pilot run on 2026-11-15 stopped before
+    // building anything because the printed name `eccode` was not on PATH and the agent could not find the CLI.
+    const steps = q.steps(cliInvocation(), t, 'quick', { oneGate: true });
     print(flags, [
       `Started ${res.workId}${res.created ? ' (new record)' : ''}: "${t.title}"`,
       `  owner ${t.owner}; files ${t.files.join(', ')}; check: ${t.verification.command}`,

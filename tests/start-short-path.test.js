@@ -38,7 +38,8 @@ test('an empty project is delivered in eight commands, with nothing written by h
   const run = (...args) => { const r = ec(dir, ...args); commands.push(args.slice(0, 2).join(' ')); assert.strictEqual(r.status, 0, `${args.join(' ')}\n${r.stdout}\n${r.stderr}`); return r; };
   const started = run('start', 'build the adder in brief.md', '--command', CHECK);
   assert.match(started.stdout, /Do these in order\. Each line is the whole command:/);
-  assert.match(started.stdout, /7\. orchestrator: eccode deliver --actor orchestrator/);
+  // the steps name the CLI in a form that runs in this shell: `eccode` on PATH, else node with the file's path
+  assert.match(started.stdout, /7\. orchestrator: (eccode|node "[^"]*bin\/eccode\.js") deliver --actor orchestrator/);
   run('task', 'claim', 'change', '--actor', 'backend-engineer');
   build(dir);
   run('evidence', 'run', '--actor', 'backend-engineer', '--task', 'change', '--label', 'verify', '--', CHECK);

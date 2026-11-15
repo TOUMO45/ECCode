@@ -7,7 +7,7 @@ Deliver this idea with ECCode:
 
 $ARGUMENTS
 
-**CLI.** Use `eccode` if it is on PATH, else `node ${CLAUDE_PLUGIN_ROOT}/bin/eccode.js`. Below it is written `eccode`.
+**CLI.** Use `eccode` if it is on PATH, else `node "${CLAUDE_PLUGIN_ROOT}/bin/eccode.js"`. Below it is written `eccode`. Once `start` has run, copy the commands exactly as it prints them: they already contain the right path. If you cannot run the CLI at all, build the project directly to the brief, test it, and say in the report that ECCode's gates were not used. Never stop with nothing built.
 
 **Choose the path by size first. This is a rule, not a judgement call.**
 
