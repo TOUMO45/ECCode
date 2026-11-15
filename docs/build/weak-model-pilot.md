@@ -260,4 +260,6 @@ alone, with the autonomous-supervisor skill, and with ECCode.
 The protocol, runner, oracle and decision rule live in the Supervisor-Skill repository under `tests/e2e/sessions/`
 (README there, committed before any run). ECCode is arm e: each session's request goes through `commands/start.md`.
 
-Results: none yet.
+Result (2026-11-15): the weak model alone scored 41/41 with all nine chat-only requirements kept in all three runs
+($2.69 to $2.89, 381 to 437 s per run). Stopped by the pre-registered rule; the skill and ECCode arms were not run.
+Full table and the limit of what this shows are in the Supervisor-Skill README for the test.
