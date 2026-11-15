@@ -78,4 +78,23 @@ node tools/existing/run.js --task t1 --arm w --run 1 --out <dir>
 
 ## Results
 
-None yet.
+### Deviation 1 (2026-11-15): the t2 task text was wrong, the first run is void
+
+Run t2-w-1 (owner's Windows machine, runner at `16b566f`): new behaviour 7/7, 593 base tests broken, stopped at the
+45-minute limit while rewriting existing tests one by one.
+
+Cause, found from the agent's diff: the task text said the rule covers "for any other gate, all tasks". The reference
+change applies it only to phase gates and the verification gate. The agent followed the text, applied the rule to
+plan and design approvals too, and every existing flow with such an approval was refused. Rebuilding the agent's rule
+on the base tree here reproduces it (over 600 failing tests). The measurement was right; the task was wrong.
+
+This is a fault in the test, not a result about the model, so the run is void and does not count for either side.
+`tools/existing/tasks/t2.md` now states which gates the rule covers. t1 and t3 were re-read against their reference
+changes and left as they are. Runs of t2 start again from run 2 (the run-1 folder is kept as evidence).
+
+One observation is kept, labelled as an observation and not a result: faced with hundreds of failing tests after its
+change, the agent did not question its reading of the task; it started editing the tests to match.
+
+### Runs
+
+None counted yet.
