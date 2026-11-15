@@ -168,3 +168,29 @@ From its transcript summary (`tools/pilot-trace.js`):
 steps with the invocation that works in the current shell (`node "<path>/bin/eccode.js"` when `eccode` is not on
 PATH); the entry text tells the agent to build directly and say so if the CLI cannot run, never to stop with
 nothing built.
+
+## First complete run on the short path (2026-11-15, commit `b2e57ad`, run by the owner on Windows)
+
+`textkit e2: Q 21/21, cost 1.44, 189 s`. The transcript summary shows the whole path: `start`, claim, the pinned
+check passing (46 tests), completion, submission, **one** reviewer subagent that ran the pinned check itself and
+approved, `deliver`, status `delivered`. ECCode was used end to end.
+
+| textkit, weak model | Score | Seconds | Cost $ |
+|---|---|---|---|
+| Haiku alone (3 runs, re-scored) | 20, 20, 20 of 21 | 90-140 | 0.63-0.97 |
+| Haiku + ECCode, old path (6 runs over two batches) | 21, 21, 21, 20, 1, 21 of 21 | 2,371-2,400 | 12.04 where reported |
+| Haiku + ECCode, **short path (1 run)** | 21 of 21 | **189** | **1.44** |
+| Sonnet alone (1 run) | 21 of 21 | 81 | 0.46 |
+
+**Reading, with n = 1:** the short path finished, in about 3 minutes where the old path took 40, at about a
+ninth of the old path's reported cost. Against Haiku alone it is still slower (about 1.5 times) and dearer (about
+1.5 to 2 times), for the same score on a project Haiku alone already passes. One run is an indicator of "it now
+works", not a measurement of quality. The Haiku-alone scores are the re-scored 20/21, whose one miss came from
+the patched oracle, so "21 against 20" is not a difference.
+
+**Three rough edges this run exposed, fixed after it:**
+- the "no test command" refusal named `eccode quick` although `start` was called;
+- outside a git repository the handoff listed no changed files, so `gate submit` refused ("needs at least one
+  artifact") and the agent had to guess `--artifact`;
+- `status` named `delivery-lead` for the delivery, which the hook then refused; it now names `orchestrator` on
+  one-gate work.

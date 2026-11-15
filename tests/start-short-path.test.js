@@ -163,3 +163,25 @@ test('the hook lets the main session build one-gate work itself, and still deman
   ec(other, 'quick', 'add a function', '--actor', 'orchestrator');
   assert.strictEqual(guard(other, 'eccode task claim change --actor backend-engineer').permissionDecision, 'deny');
 });
+
+test('a project that is not a git repository goes through the same eight commands', { skip }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'eccode-nogit-'));
+  fs.writeFileSync(path.join(dir, 'brief.md'), '# Brief\nBuild add(a, b).\n');
+  const env = { ...process.env, GIT_CEILING_DIRECTORIES: path.dirname(dir) };
+  const run = (...args) => { const r = spawnSync(process.execPath, [BIN, ...args], { cwd: dir, encoding: 'utf8', env }); assert.strictEqual(r.status, 0, `${args.join(' ')}\n${r.stdout}\n${r.stderr}`); return r; };
+  // without --command the refusal names the command that was used, `start`, not `quick`
+  const refused = spawnSync(process.execPath, [BIN, 'start', 'build the adder in brief.md'], { cwd: dir, encoding: 'utf8', env });
+  assert.strictEqual(refused.status, 2);
+  assert.match(refused.stderr, /eccode start "build the adder in brief\.md" --command "/);
+  assert.doesNotMatch(refused.stderr, /eccode quick/);
+  run('start', 'build the adder in brief.md', '--command', CHECK);
+  run('task', 'claim', 'change', '--actor', 'backend-engineer');
+  build(dir);
+  run('evidence', 'run', '--actor', 'backend-engineer', '--task', 'change', '--label', 'verify', '--', CHECK);
+  run('task', 'complete', 'change', '--actor', 'backend-engineer', '--done', 'adder.add exists and its unittest suite passes');
+  assert.match(run('gate', 'submit', 'phase:change', '--actor', 'backend-engineer').stdout, /Submitted phase:change/);
+  run('evidence', 'run', '--actor', 'technical-reviewer', '--gate', 'phase:change', '--label', 'review', '--', CHECK);
+  run('gate', 'review', 'phase:change', '--actor', 'technical-reviewer', '--approve', '--summary', 'The adder matches the brief and its tests pass when I run them.');
+  assert.match(run('status', '--brief').stdout, /eccode deliver --actor orchestrator/);
+  assert.match(run('deliver', '--actor', 'orchestrator').stdout, /Delivered/);
+});

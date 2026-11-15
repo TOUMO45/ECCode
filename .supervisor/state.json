@@ -2,7 +2,7 @@
   "schema": 1,
   "objective": "Show, by a registered measurement that can fail, the claim in docs/build/gf-s4-plan.md:11: with ECCode an agent builds medium and large projects from a short master prompt with almost no human help, better or more reliably than plain Claude Code. Until then, keep the toolkit healthy and say only what is measured.",
   "created": "2026-11-11 19:46",
-  "updated": "2026-11-14 16:47",
+  "updated": "2026-11-15 09:53",
   "budget": {
     "max_parallel": 3,
     "max_attempts": 3,
@@ -12,7 +12,7 @@
     "M": 4,
     "AC": 15,
     "T": 10,
-    "D": 26,
+    "D": 27,
     "Q": 9,
     "R": 7
   },
@@ -129,11 +129,11 @@
       "started": "2026-11-11 19:46",
       "fingerprint": {
         "README.md": "0f0393d2d7cd53e0",
-        "bin/eccode.js": "d66a8d5a7c5001ee",
+        "bin/eccode.js": "e35948368e14964f",
         "docs/usage.md": "57b202c10a23b234",
         "tests/cli-missing-file.test.js": "bea42c49630de28f"
       },
-      "evidence": "npm run check after the one-dispatch change: 1865 tests, 1805 pass, 0 fail, 60 skipped"
+      "evidence": "npm run check after the three fixes from the first complete run: 1866 tests, 0 fail"
     },
     "T2": {
       "title": "Make sandbox test A1 pass or skip honestly on a Landlock-only host",
@@ -414,6 +414,11 @@
       "text": "On one-gate work the main session builds and one separate agent reviews (one dispatch). The hook allows the main session to act as the owner of the work own task only",
       "at": "2026-11-14 16:47",
       "why": "S3 record: builders used 15 percent of tokens; addyosmani/agent-skills orchestration-patterns names the sequential orchestrator as an anti-pattern; tests/start-short-path.test.js test 7"
+    },
+    "D27": {
+      "text": "First weak-model run on the short path completed: textkit 21/21 in 189 s for 1.44 dollars, ECCode used end to end with one reviewer dispatch (old path: about 2400 s and 12 dollars). n=1",
+      "at": "2026-11-15 09:53",
+      "why": "docs/build/weak-model-pilot.md; owner run of 2026-11-15 on commit b2e57ad"
     }
   },
   "risks": {
@@ -447,9 +452,9 @@
     }
   },
   "next": [
-    "Owner: send the transcript summaries of the second pilot run (node tools/pilot-trace.js) and the commit the runs used",
-    "Then one single arm-e run on the current commit, not six",
-    "No further engine work until a transcript has been read"
+    "Owner: 3 runs each of arm e on textkit and csvmd at the current commit, to replace n=1 with n=3",
+    "Then the medium-project path: several tasks with the same lightness (feature track with drafts), and a medium project Haiku alone fails",
+    "P3 of docs/review-2026-11-13.md: evidence tied to task, actor and files"
   ],
   "log": [
     {
@@ -622,6 +627,10 @@
     },
     {
       "at": "2026-11-14 16:47",
+      "text": "T1 -> verified"
+    },
+    {
+      "at": "2026-11-15 09:53",
       "text": "T1 -> verified"
     }
   ],
