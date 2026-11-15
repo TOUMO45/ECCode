@@ -229,3 +229,23 @@ brief than the same weak agent alone.
 - **Validity:** contamination scan as in W1; a run that hits the limit is scored as it stands.
 - **Limits known now:** one project, one weak model, three runs per arm; the oracle was written by the same party
   that built the short path (it tests only what the brief states, and the brief is given to every arm).
+
+## W2 result, arm w (2026-11-15, run by the owner; commit `2d47035`)
+
+| Run | Q | Cost $ | Seconds |
+|---|---|---|---|
+| shelfmark w1, w2, w3 | 35/35, 35/35, 35/35 | 1.25, 1.08, 1.00 | 154, 162, 150 |
+
+**Read by the registered rule: the project is too easy, and W2 shows nothing either way.** Haiku alone averages
+35 of 35, above the 33 threshold fixed before the run. Arm e and arm s were not run: no arm can score higher, so
+the only thing they could show is cost.
+
+**What this does establish:** `claude-haiku-5-5` alone builds a nine-command SQLite application with 35 stated
+rules from one prompt in about two and a half minutes for about a dollar, three times out of three. For
+self-contained projects up to this size it is not a "weak agent" in the sense the claim needs. Three projects of
+increasing size (csvmd, textkit, shelfmark) are now all at the ceiling for it.
+
+**Consequence for the claim.** "ECCode lifts a weak agent" cannot be shown with this model on projects that fit in
+one sitting. It could only be shown where the plain agent actually fails: work much larger than one context,
+work spread over several sessions, changes inside a large existing codebase, or a model that is weaker than this
+one. None of those has been tested.
