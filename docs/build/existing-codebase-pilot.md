@@ -95,6 +95,27 @@ changes and left as they are. Runs of t2 start again from run 2 (the run-1 folde
 One observation is kept, labelled as an observation and not a result: faced with hundreds of failing tests after its
 change, the agent did not question its reading of the task; it started editing the tests to match.
 
+### Deviation 2 (2026-11-16): the owner's disk filled up during scoring
+
+After t2-w-2 (solved, see below) the runs t2-w-3 and t1-w-1 reported 384 and 766 broken tests, and the next three
+runs could not start: "not enough space on the disk". The test suite leaves its temporary folders in the system temp
+directory, and on Windows the runner's own scratch copies were not always deleted. With the disk nearly full,
+hundreds of unrelated tests fail, so those two "broke" counts are not measurements. Their new-behaviour scores (7/7
+and 8/8) and their workspaces are kept.
+
+Runner changes: the suite and the oracle get a temp folder of their own inside the output folder, deleted afterwards;
+a run refuses to start with under 4 GB free; a suite run that hits a full disk reports "NOT MEASURED" instead of a
+count; `--rescore yes` scores an existing workspace again without running the agent. The baseline is measured again
+under the new method. t2-w-3 and t1-w-1 are rescored, not rerun.
+
 ### Runs
 
-None counted yet.
+| Run | New behaviour | Broke | Turns | Seconds | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| t2-w-1 | 7/7 | 593 | n/a | 2700 (limit) | void: task text wrong (deviation 1) |
+| t2-w-2 | 7/7 | 0 | 48 | 255 | solved |
+| t2-w-3 | 7/7 | to be rescored | 35 | 796 | pending |
+| t1-w-1 | 8/8 | to be rescored | 38 | 162 | pending |
+
+Reported cost was $0.06 to $0.07 per run, far below earlier pilots at similar length; not explained, so cost is not
+used here.
