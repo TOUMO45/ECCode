@@ -5,7 +5,22 @@
     "t2": [
       "an existing test's lines changed by the fix must be declared, and the reviewer must acknowledge it; an appended test is free"
     ],
-    "t3": []
+    "t3": [],
+    "t2x": [
+      "an existing test's lines changed by the fix must be declared, and the reviewer must acknowledge it; an appended test is free"
+    ],
+    "t4": []
   },
-  "note": "allowed: base tests that the reference change for that task itself makes fail (measured 2026-11-15 by running the base test files against base + reference patch)."
+  "note": "allowed: base tests that the reference change for that task itself makes fail (measured 2026-11-15 by running the base test files against base + reference patch).",
+  "oracle": {
+    "t2x": "t2"
+  },
+  "plant": {
+    "t4": {
+      "file": "lib/tasks.js",
+      "find": "if (active.length >= config.limits.maxConcurrency) {",
+      "replace": "if (active.length > config.limits.maxConcurrency) {"
+    }
+  },
+  "note2": "t2x is t2 with the task text as first written, which wrongly says the rule covers every gate (a trap). t4 plants one bug before the agent starts (plant), which makes one base test fail, and asks for the failing suite to be fixed; it has no oracle checks: it is solved when the base tests pass against the agent's tree."
 }

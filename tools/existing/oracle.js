@@ -219,6 +219,7 @@ const CHECKS = {
       assert(r.status === 0, `exit ${r.status}: ${both(r).slice(0, 300)}`);
     }],
   ],
+  t4: [], // no outside checks: the base test files, run against the tree, are the measure
 };
 
 const list = CHECKS[task];

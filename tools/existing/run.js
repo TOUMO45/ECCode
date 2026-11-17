@@ -109,7 +109,7 @@ function supervisorPlugin(skillRepo, dest) {
 function main() {
   const f = flags(process.argv.slice(2));
   const { task, arm } = f;
-  if (!META.allowed[task] || !MODELS[arm] || !f.run || !f.out) throw new Error('usage: run.js --task t1|t2|t3 --arm w|k|s --run <n> --out <dir> [--skill <Supervisor-Skill checkout>] [--wall-minutes <n>]');
+  if (!META.allowed[task] || !MODELS[arm] || !f.run || !f.out) throw new Error('usage: run.js --task t1|t2|t3|t2x|t4 --arm w|k|s --run <n> --out <dir> [--skill <Supervisor-Skill checkout>] [--wall-minutes <n>]');
   const out = path.resolve(f.out);
   for (const repo of [REPO, f.skill].filter(Boolean)) {
     const rel = path.relative(path.resolve(repo), out);
@@ -132,6 +132,13 @@ function main() {
   fs.mkdirSync(dir, { recursive: true });
   fs.cpSync(baseDir, ws, { recursive: true });
   fs.copyFileSync(path.join(HERE, 'tasks', `${task}.md`), path.join(ws, 'TASK.md'));
+  const plant = (META.plant || {})[task];
+  if (plant) { // a bug put in before the agent starts; it is part of the first commit, so git shows nothing unusual
+    const file = path.join(ws, plant.file);
+    const src = fs.readFileSync(file, 'utf8');
+    if (src.split(plant.find).length !== 2) throw new Error(`plant for ${task}: expected exactly one place in ${plant.file}`);
+    fs.writeFileSync(file, src.replace(plant.find, () => plant.replace));
+  }
   for (const a of [['init', '-q'], ['config', 'user.email', 'pilot@example.invalid'], ['config', 'user.name', 'pilot'], ['config', 'core.autocrlf', 'false'], ['add', '-A'], ['commit', '-qm', 'ECCode at the pilot base, with TASK.md']]) git(ws, ...a);
 
   const args = ['-p', '--model', MODELS[arm], '--setting-sources', '', '--strict-mcp-config', '--allowedTools', ...TOOLS,
@@ -171,7 +178,7 @@ function scoreRun({ f, task, arm, out, dir, ws, baseDir, base, text, prev }) {
 
   const otmp = path.join(out, `scratch-oracle-${Date.now().toString(36)}`);
   fs.mkdirSync(otmp, { recursive: true });
-  const oracle = spawnSync(process.execPath, [path.join(HERE, 'oracle.js'), task, ws], { encoding: 'utf8', timeout: 20 * 60 * 1000, env: { ...process.env, TEMP: otmp, TMP: otmp, TMPDIR: otmp } });
+  const oracle = spawnSync(process.execPath, [path.join(HERE, 'oracle.js'), (META.oracle || {})[task] || task, ws], { encoding: 'utf8', timeout: 20 * 60 * 1000, env: { ...process.env, TEMP: otmp, TMP: otmp, TMPDIR: otmp } });
   try { fs.rmSync(otmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 }); } catch { /* left behind */ }
   const m = /SCORE (\d+)\/(\d+)/.exec(oracle.stdout || '');
   process.stdout.write('  running the base test suite against the result (several minutes)...\n');
@@ -179,6 +186,9 @@ function scoreRun({ f, task, arm, out, dir, ws, baseDir, base, text, prev }) {
   const after = failing(ws, baseDir, path.join(out, `scratch-${task}-${arm}-${f.run}`), expected);
   const broke = after.finished ? after.names.filter((n) => !expected.has(n)) : null;
   const changed = git(ws, 'status', '--porcelain').stdout.split('\n').filter((l) => l.trim() && !/\.eccode\/|\.supervisor\//.test(l)).map((l) => l.slice(3));
+  // Existing test files the agent changed or removed. Not a fault in itself (a behaviour change needs it), but the
+  // number shows an agent that made a failing suite pass by rewriting the tests.
+  const testsEdited = git(ws, 'status', '--porcelain', '--', 'tests').stdout.split('\n').filter((l) => /^( M|M |MM| D|D )/.test(l)).length;
   const full = Boolean(m && m[1] === m[2]);
   const result = {
     project: `existing-${task}`, task, arm, run: Number(f.run), model: MODELS[arm], base: META.base, prompt: prev.prompt,
@@ -188,7 +198,7 @@ function scoreRun({ f, task, arm, out, dir, ws, baseDir, base, text, prev }) {
     contaminated: /tools[\\/]+existing|oracle\.js|reference[\\/]+t\d\.patch/.test(text),
     oracle: m ? { passed: Number(m[1]), total: Number(m[2]) } : null,
     failed: (oracle.stdout || '').split('\n').filter((l) => l.startsWith('FAIL')).map((l) => l.slice(0, 240)),
-    suiteFinished: after.finished, diskFull: after.diskFull, broke, filesChanged: changed,
+    suiteFinished: after.finished, diskFull: after.diskFull, broke, testsEdited, filesChanged: changed,
     solved: full && after.finished && broke.length === 0,
     oracleTail: (oracle.stdout || oracle.stderr || '').trim().split('\n').slice(-3),
     finalMessage: last && typeof last.result === 'string' ? last.result.slice(0, 1500) : null,
@@ -196,7 +206,7 @@ function scoreRun({ f, task, arm, out, dir, ws, baseDir, base, text, prev }) {
   if (f.rescore === 'yes') fs.copyFileSync(path.join(dir, 'result.json'), path.join(dir, `result.before-rescore-${Date.now().toString(36)}.json`));
   fs.writeFileSync(path.join(dir, 'result.json'), `${JSON.stringify(result, null, 2)}\n`);
   const cost = result.costUsd === null ? 'n/a' : result.costUsd.toFixed(2);
-  process.stdout.write(`${task} ${arm}${f.run}: ${result.solved ? 'SOLVED' : 'not solved'}  new ${m ? `${m[1]}/${m[2]}` : 'n/a'}  broke ${broke === null ? (after.diskFull ? 'NOT MEASURED (disk full)' : 'suite did not finish') : broke.length}  cost ${cost}  ${result.turns} turns  ${result.wallSeconds}s${result.timedOut ? '  TIMED OUT' : ''}${arm === 'k' ? `  skill:${usedSkill}` : ''}  contaminated:${result.contaminated}\n`);
+  process.stdout.write(`${task} ${arm}${f.run}: ${result.solved ? 'SOLVED' : 'not solved'}  new ${m ? `${m[1]}/${m[2]}` : 'n/a'}  broke ${broke === null ? (after.diskFull ? 'NOT MEASURED (disk full)' : 'suite did not finish') : broke.length}  cost ${cost}  tests edited ${testsEdited}  ${result.turns} turns  ${result.wallSeconds}s${result.timedOut ? '  TIMED OUT' : ''}${arm === 'k' ? `  skill:${usedSkill}` : ''}  contaminated:${result.contaminated}\n`);
   for (const n of (broke || []).slice(0, 8)) process.stdout.write(`    broke: ${n.slice(0, 150)}\n`);
 }
 
