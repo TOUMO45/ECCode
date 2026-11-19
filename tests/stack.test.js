@@ -222,7 +222,7 @@ test('a check that times out says so, names --timeout, and is stopped with every
   // The CLI takes --timeout for both paths, and says so in its help.
   const out = spawnSync(process.execPath, [CLI, 'stack', 'run', 'node-test', '--timeout', '0.7'], { cwd: dir, encoding: 'utf8' });
   assert.match(out.stdout, /node-test: TIMED OUT after 0\.7 s/);
-  assert.match(execFileSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' }), /stack run <id\|all> \[--timeout <s>\]/);
+  assert.match(execFileSync(process.execPath, [CLI, 'help', 'all'], { encoding: 'utf8' }), /stack run <id\|all> \[--timeout <s>\]/);
 });
 
 test('a check whose eccode process is killed stops with it', { skip: process.platform === 'win32' && 'process groups are POSIX' }, () => {

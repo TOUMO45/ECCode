@@ -244,6 +244,6 @@ evidence.runCommand(new Store(${JSON.stringify(dir)}), 'backend-engineer', { lab
 });
 
 test('evidence run --timeout is in the help', () => {
-  const res = require('child_process').spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), 'help'], { encoding: 'utf8' });
+  const res = require('child_process').spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), 'help', 'all'], { encoding: 'utf8' });
   assert.match(res.stdout, /evidence run [^\n]*--timeout <s>/);
 });

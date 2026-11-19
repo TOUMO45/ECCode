@@ -220,7 +220,7 @@ test('gate 4: a blocking ambiguity stops planning; only the user clarifies; a re
 test('the CLI and MCP expose the design and request groups', () => {
   const tools = require('../lib/mcp').tools().map((t) => t.name);
   for (const n of ['design_alternatives', 'design_decide', 'design_adr', 'design_amend', 'design_spike_start', 'design_spike_close', 'design_show', 'request_ambiguity', 'request_assume', 'request_show']) assert.ok(tools.includes(n), n);
-  const help = execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), '--help'], { encoding: 'utf8' });
+  const help = execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'eccode.js'), 'help', 'all'], { encoding: 'utf8' });
   assert.match(help, /design alternatives --file/);
   assert.match(help, /request ambiguity --file/);
 });

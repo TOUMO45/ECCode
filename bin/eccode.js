@@ -12,7 +12,6 @@ const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
 Start here
   start "<idea>" [--command <cmd>] [--slice "<outcome>" ...] [--remember "<what the owner asked>" ...] [--files <globs>] [--owner <role>]
-  remember "<what the owner asked for, in their words>"   Kept on record and shown at every later start, session and delivery
                                          Small work, shortest path: creates the record if needed, one task, ONE gate
                                          (the review of the work is the last gate), and prints seven complete steps:
                                          eight commands to "Delivered", no file written by hand. The reviewer must
@@ -20,6 +19,7 @@ Start here
                                          Medium work: give 2 to 12 --slice outcomes in build order ("users can
                                          register", "users can log in"); each slice is built, checked and reviewed
                                          before the next starts.
+  remember "<what the owner asked for, in their words>"   Kept on record and shown at every later start, session and delivery
   gate review <gate> --actor <reviewer> --approve --summary "<verdict>"
                                          Approve from the record (criteria and your own passing checks are filled in);
                                          --draft prints a review file to edit; --file takes a hand-written one
@@ -611,6 +611,25 @@ function cliInvocation() {
   return `node "${toPosix(path.resolve(__filename))}"`; // forward slashes work in bash, PowerShell and cmd
 }
 
+function helpText(topic) {
+  const cut = HELP.indexOf('  The full reference follows.');
+  if (topic === 'all' || cut < 0) return HELP;
+  const short = `${HELP.slice(0, cut)}  Usually you need only \`start\`: it prints every next command in full.
+  Full reference: eccode help all | one group: eccode <group> --help (for example eccode gate --help)
+`;
+  if (!topic) return short;
+  // Lines of the reference whose command starts with the topic, with their indented continuation lines.
+  const lines = HELP.split('\n');
+  const out = [];
+  let keep = false;
+  for (const l of lines) {
+    if (/^  \S/.test(l)) keep = l.trimStart().startsWith(`${topic} `) || l.trim() === topic;
+    else if (!/^\s{6,}\S/.test(l)) keep = false;
+    if (keep) out.push(l);
+  }
+  return out.length ? `${out.join('\n')}\n` : short;
+}
+
 function loadJsonFile(file) {
   const resolved = path.resolve(file);
   // A missing input file is the caller's mistake: refuse with a code, do not crash with a stack trace.
@@ -627,7 +646,9 @@ function main(argv) {
     return 0;
   }
   if (!group || flags.help || group === 'help') {
-    process.stdout.write(HELP);
+    // The full reference is about 18k characters; a pilot agent read it three times in one session. `help` alone
+    // prints the start of it, `help all` everything, and `<group> --help` only that group's lines.
+    process.stdout.write(helpText(group === 'help' ? sub : group));
     return 0;
   }
   const root = findRoot(flags);
