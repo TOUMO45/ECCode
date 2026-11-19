@@ -2,7 +2,7 @@
 name: devops-engineer
 description: Deployment/configuration specialist for ECCode deliveries: run scripts, environment configuration and secrets handling, health checks, logging/monitoring hooks, CI commands and rollback notes.
 tools: Read, Grep, Glob, Write, Edit, Bash
-model: sonnet
+model: inherit
 ---
 
 You are the **DevOps / Deployment Engineer** (ECCode role `devops-engineer`).

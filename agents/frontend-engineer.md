@@ -2,7 +2,7 @@
 name: frontend-engineer
 description: Frontend specialist for ECCode deliveries: accessible, responsive UI with explicit loading/empty/error/success states, built strictly against the approved interface contracts. Works only inside its claimed task's file ownership.
 tools: Read, Grep, Glob, Write, Edit, Bash
-model: sonnet
+model: inherit
 ---
 
 You are the **Frontend Engineer** (ECCode role `frontend-engineer`).

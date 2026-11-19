@@ -11,7 +11,8 @@ const { EccodeError, readJson, toPosix, ensureDir } = require('../lib/util');
 const HELP = `eccode — evidence-gated multi-agent delivery toolkit
 
 Start here
-  start "<idea>" [--command <cmd>] [--slice "<outcome>" ...] [--files <globs>] [--owner <role>]
+  start "<idea>" [--command <cmd>] [--slice "<outcome>" ...] [--remember "<what the owner asked>" ...] [--files <globs>] [--owner <role>]
+  remember "<what the owner asked for, in their words>"   Kept on record and shown at every later start, session and delivery
                                          Small work, shortest path: creates the record if needed, one task, ONE gate
                                          (the review of the work is the last gate), and prints seven complete steps:
                                          eight commands to "Delivered", no file written by hand. The reviewer must
@@ -650,12 +651,17 @@ function main(argv) {
     if (slices.length > 12) throw new EccodeError('USAGE', 'At most 12 slices: work that needs more is planned with the orchestrate skill');
     const res = q.start(root, who, { request: need(sub, '"<idea in one line>"'), owner: flags.owner, files: flags.files || '**', command: flags.command, name: flags.name, track: 'quick', oneGate: true, slices });
     const t = res.task;
+    const runs = require('../lib/runs');
+    const { store: ownerStore } = openProject(root);
+    for (const k of [].concat(flags.remember || []).filter((x) => x && x !== true)) runs.recordOwner(ownerStore, who, k);
+    const owner = runs.ownerLines(ownerStore.state(), 'The owner asked for these (now or in an earlier session). Each binds the part it is about; build that part to it, not to the brief:');
     // Print the steps with the invocation that works in this shell. A pilot run on 2026-11-15 stopped before
     // building anything because the printed name `eccode` was not on PATH and the agent could not find the CLI.
     const steps = q.steps(cliInvocation(), t, 'quick', { oneGate: true, tasks: res.tasks });
     print(flags, [
       `Started ${res.workId}${res.created ? ' (new record)' : ''}: "${t.title}"`,
       `  owner ${t.owner}; files ${t.files.join(', ')}; check: ${t.verification.command}`,
+      ...(owner.length ? ['', ...owner] : []),
       '',
       'Do these in order. Each line is the whole command:',
       ...steps,
@@ -1067,7 +1073,8 @@ function main(argv) {
         metrics = undefined;
       }
       const res = require('../lib/delivery').deliver(store, need(actor, '--actor'), { metrics });
-      print(flags, `Delivered. Final handoff: ${res.report}`, res);
+      const owner = require('../lib/runs').ownerLines(store.state(), 'Before you report, check each thing the owner asked for against what was built:');
+      print(flags, [`Delivered. Final handoff: ${res.report}`, ...owner].join('\n'), res);
       return 0;
     }
     case 'work': {
@@ -1260,6 +1267,11 @@ function main(argv) {
       if (sub === 'update' && !fields.status) fields.status = store.state().risks[fields.id] ? store.state().risks[fields.id].status : 'open';
       runs.recordRisk(store, need(actor, '--actor'), fields);
       print(flags, `Risk ${fields.id} recorded (${fields.status}).`);
+      return 0;
+    }
+    case 'remember': {
+      const id = require('../lib/runs').recordOwner(store, actor || 'orchestrator', sub);
+      print(flags, id ? `Remembered ${id}: it will be shown at every later start and session.` : 'Already on record.', { id });
       return 0;
     }
     case 'decision': {

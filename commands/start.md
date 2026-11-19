@@ -9,6 +9,8 @@ $ARGUMENTS
 
 **CLI.** Use `eccode` if it is on PATH, else `node "${CLAUDE_PLUGIN_ROOT}/bin/eccode.js"`. Below it is written `eccode`. Once `start` has run, copy the commands exactly as it prints them: they already contain the right path. If you cannot run the CLI at all, build the project directly to the brief, test it, and say in the report that ECCode's gates were not used. Never stop with nothing built.
 
+**What the owner asks for outside the brief is remembered by the record, not by you.** Every requirement the owner states that the brief does not say (a changed number, an extra option, a rule for a part built later) goes on the `start` command as `--remember "<the owner's words>"`, one per requirement, the first time you see it; later, `eccode remember "<words>"`. `start` prints everything remembered in earlier sessions: build each part to that, not to the brief.
+
 **Choose the path by size first. This is a rule, not a judgement call.**
 
 ## Small: one package, tool, script or service that one engineer builds in one sitting

@@ -263,3 +263,19 @@ The protocol, runner, oracle and decision rule live in the Supervisor-Skill repo
 Result (2026-11-15): the weak model alone scored 41/41 with all nine chat-only requirements kept in all three runs
 ($2.69 to $2.89, 381 to 437 s per run). Stopped by the pre-registered rule; the skill and ECCode arms were not run.
 Full table and the limit of what this shows are in the Supervisor-Skill README for the test.
+
+## Correction (2026-11-19): the ECCode arm was never weak-model-only
+
+Every ECCode agent was pinned to a stronger model in its frontmatter: `technical-reviewer`, `delivery-lead`,
+`architecture-reviewer` and four others to `opus`, the builder roles to `sonnet`. The pilot runners passed
+`--model claude-haiku-5-5` for the main session only, so in every arm-e run of W1, W2 and W3 the reviewer subagent ran
+on Opus. ECCode's own `bench` already rewrites agents to `model: inherit` for this reason ("the process is compared,
+not a model mix"); the pilot runners did not.
+
+Consequences: every arm-e result recorded above is "Haiku + an Opus reviewer", not "Haiku + ECCode". Part of arm e's
+extra cost and time came from that. None of the recorded arm-e scores was higher than arm w's, so no claimed lift has
+to be withdrawn.
+
+Fixed: all fifteen agents now say `model: inherit`, so ECCode runs on whatever model it is installed with. A user who
+wants a stronger reviewer can set `model:` in that agent's file.
+
